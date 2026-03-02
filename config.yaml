@@ -1,0 +1,41 @@
+# NBA-VAR Configuration
+
+# Market parameters (2025-2026 season)
+market:
+  dollars_per_win: 3.5  # $3.5M per win
+  salary_cap: 141.0     # $141M salary cap
+  discount_rate: 0.08   # 8% annual discount rate
+
+# Aging curve parameters
+aging:
+  default_peak_age: 28.0
+  growth_rate: 0.07
+  decline_rate: -0.05
+
+# Analysis thresholds
+thresholds:
+  breakout:
+    min_opportunity_score: 40
+    min_signal_strength: 35
+    min_confidence: 0.5
+  
+  defense:
+    high_portability: 0.7
+    medium_portability: 0.5
+  
+  trust:
+    high_games: 60
+    high_minutes: 25
+    medium_games: 40
+    medium_minutes: 20
+
+# Data quality
+data_quality:
+  min_games_for_actual: 50
+  min_minutes_for_rotation: 15
+
+# Output settings
+output:
+  indent: 2
+  include_metadata: true
+  save_individual_reports: true
