@@ -70,22 +70,41 @@ class PlayerValuator:
     
     def convert_impact_to_wins(self, card: Dict[str, Any]) -> float:
         """Convert player impact to wins added"""
-        impact = card.get('impact', {})
-        metadata = card.get('metadata', {})
+        # Try new format first (data_sample)
+        performance = card.get('performance', {})
+        traditional = performance.get('traditional', {})
+        advanced = performance.get('advanced', {})
         
-        net_impact = impact.get('net', 0.0)
-        minutes = float(metadata.get('minutes', 0.0))
-        games = int(str(metadata.get('games_played', '0')).replace(',', ''))
+        plus_minus = advanced.get('plus_minus', 0.0)
+        minutes = traditional.get('minutes_per_game', 0.0)
+        games = traditional.get('games_played', 0)
         
         if minutes > 0 and games > 0:
-            # WAR ≈ (Net Rating × Minutes / 48 × Games) / 30
-            wins = (net_impact * (minutes / 48) * games) / 30.0
+            # WAR ≈ (Plus/Minus × Minutes / 48 × Games) / 30
+            wins = (plus_minus * (minutes / 48) * games) / 30.0
         else:
-            # Fallback estimate
-            wins = net_impact * 0.5
+            # Try legacy format
+            impact = card.get('impact', {})
+            metadata = card.get('metadata', {})
+            
+            net_impact = impact.get('net', 0.0)
+            minutes = float(metadata.get('minutes', 0.0))
+            games = int(str(metadata.get('games_played', '0')).replace(',', ''))
+            
+            if minutes > 0 and games > 0:
+                wins = (net_impact * (minutes / 48) * games) / 30.0
+            else:
+                # Fallback estimate
+                wins = net_impact * 0.5 if net_impact else plus_minus * 0.5
         
-        # Apply trust adjustment
-        trust = card.get('trust', {}).get('score', 0.5)
+        # Apply trust adjustment (try both formats)
+        trust_score = card.get('v1_1_enhancements', {}).get('trust_assessment', {}).get('score', 50.0)
+        trust = trust_score / 100.0  # Convert to 0-1 scale
+        
+        # Fallback to legacy format
+        if trust == 0.5:
+            trust = card.get('trust', {}).get('score', 0.5)
+        
         wins *= trust
         
         return wins
@@ -211,8 +230,11 @@ class PlayerValuator:
         surplus = self.calculate_surplus(market_values, salaries)
         npv_surplus = self.calculate_npv(surplus)
         
-        # Trade value bands
-        uncertainty = card.get('uncertainty', {}).get('overall', 0.5)
+        # Trade value bands - try both formats for uncertainty
+        uncertainty = card.get('v1_1_enhancements', {}).get('uncertainty_estimates', {}).get('overall_uncertainty', 0.5)
+        if uncertainty == 0.5:
+            uncertainty = card.get('uncertainty', {}).get('overall', 0.5)
+        
         trade_low, trade_base, trade_high = self.calculate_trade_value_bands(npv_surplus, uncertainty)
         
         # Aging
