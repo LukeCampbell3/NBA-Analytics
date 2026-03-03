@@ -3,7 +3,7 @@
 prepare_web_data.py - Prepare data for web frontend
 
 This script:
-1. Copies player card JSON files from data_sample/processed to web/data
+1. Copies player card JSON files from data/processed/player_cards to web/data
 2. Generates valuation JSON files for each player
 3. Creates combined cards.json and valuations.json for the web app
 """
@@ -23,8 +23,8 @@ from value_players import PlayerValuator
 def prepare_web_data():
     """Prepare all data for web frontend"""
     
-    # Paths
-    source_dir = Path('data_sample/processed')
+    # Paths - use full data directory
+    source_dir = Path('data/processed/player_cards')
     web_data_dir = Path('web/data')
     
     # Create web data directory
@@ -46,7 +46,7 @@ def prepare_web_data():
     all_cards = []
     all_valuations = []
     
-    for card_file in card_files:
+    for i, card_file in enumerate(card_files, 1):
         try:
             # Load card
             with open(card_file, 'r') as f:
@@ -59,7 +59,8 @@ def prepare_web_data():
             valuation = valuator.generate_report(result)
             all_valuations.append(valuation)
             
-            print(f"  Processed: {card['player']['name']}")
+            if i % 50 == 0:
+                print(f"  Processed {i}/{len(card_files)} players...")
             
         except Exception as e:
             print(f"  Error processing {card_file.name}: {e}")

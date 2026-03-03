@@ -605,3 +605,413 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* Tab Navigation */
+.tab-navigation {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 1.5rem;
+    padding: 0 1rem;
+}
+
+.tab-button {
+    padding: 0.75rem 1.5rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    bottom: -2px;
+}
+
+.tab-button:hover {
+    color: var(--primary-color);
+    background: var(--bg-secondary);
+}
+
+.tab-button.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Archetype Tab Styles */
+.archetype-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.archetype-primary {
+    text-align: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+    border-radius: 12px;
+}
+
+.archetype-badge-large {
+    display: inline-block;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    border-radius: 50px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.archetype-confidence {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.archetype-description {
+    font-size: 1rem;
+    color: var(--text-primary);
+    font-style: italic;
+}
+
+.secondary-archetypes {
+    padding: 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+}
+
+.secondary-archetypes h4 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+}
+
+.secondary-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.secondary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    border-left: 3px solid var(--secondary-color);
+}
+
+.secondary-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.secondary-prob {
+    font-weight: 700;
+    color: var(--secondary-color);
+}
+
+.comparables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.comparable-card {
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.comparable-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.comparable-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.comparable-name {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.comparable-similarity {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--success-color);
+    background: rgba(16, 185, 129, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.comparable-meta {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.comparable-stats {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Breakout Scenario Styles */
+.breakout-header {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.breakout-likelihood {
+    text-align: center;
+    padding: 2rem;
+    border-radius: 12px;
+    min-width: 300px;
+}
+
+.breakout-likelihood.high {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.2) 100%);
+    border: 2px solid var(--success-color);
+}
+
+.breakout-likelihood.medium {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.2) 100%);
+    border: 2px solid var(--accent-color);
+}
+
+.breakout-likelihood.low {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.2) 100%);
+    border: 2px solid var(--danger-color);
+}
+
+.likelihood-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+}
+
+.likelihood-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.breakout-likelihood.high .likelihood-value {
+    color: var(--success-color);
+}
+
+.breakout-likelihood.medium .likelihood-value {
+    color: var(--accent-color);
+}
+
+.breakout-likelihood.low .likelihood-value {
+    color: var(--danger-color);
+}
+
+.likelihood-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.likelihood-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    transition: width 0.5s ease;
+}
+
+.projection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.projection-card {
+    padding: 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    text-align: center;
+    border: 2px solid var(--border-color);
+}
+
+.projection-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.projection-values {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.current-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.projection-arrow {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+}
+
+.projected-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.projection-change {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--success-color);
+}
+
+.constraints-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.constraint-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border-left: 3px solid var(--accent-color);
+}
+
+.constraint-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.constraint-text {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.factors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.factor-item {
+    padding: 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+    border: 2px solid var(--border-color);
+}
+
+.factor-item.positive {
+    background: rgba(16, 185, 129, 0.05);
+    border-color: var(--success-color);
+}
+
+.factor-item.neutral {
+    background: rgba(245, 158, 11, 0.05);
+    border-color: var(--accent-color);
+}
+
+.factor-item.negative {
+    background: rgba(239, 68, 68, 0.05);
+    border-color: var(--danger-color);
+}
+
+.factor-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.factor-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.factor-item.positive .factor-value {
+    color: var(--success-color);
+}
+
+.factor-item.neutral .factor-value {
+    color: var(--accent-color);
+}
+
+.factor-item.negative .factor-value {
+    color: var(--danger-color);
+}
+
+.factor-assessment {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Percentile Styles */
+.detail-item-percentile {
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-top: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.percentile-high {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success-color);
+}
+
+.percentile-mid {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--accent-color);
+}
+
+.percentile-low {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger-color);
+}

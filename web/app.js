@@ -23,12 +23,14 @@ class PlayerCardsApp {
         this.analyses = [];
         this.valuations = [];
         this.currentSort = 'name';
+        this.courtImage = null;
         
         this.init();
     }
 
     async init() {
         await this.loadData();
+        await this.loadCourtImage();
         this.setupEventListeners();
         this.populateArchetypeFilter();
         this.populateTeamFilter();
@@ -36,11 +38,32 @@ class PlayerCardsApp {
         this.updateStats();
     }
 
+    async loadCourtImage() {
+        return new Promise((resolve) => {
+            this.courtImage = new Image();
+            this.courtImage.onload = () => resolve();
+            this.courtImage.onerror = () => {
+                console.warn('Court image not found, will draw without background');
+                resolve();
+            };
+            this.courtImage.src = 'NBA-half-court.png';
+        });
+    }
+
     async loadData() {
         try {
+            console.log('Starting to load data...');
+            
             // Load player cards from data_sample format
             const cardsResponse = await fetch('data/cards.json');
+            console.log('Cards response status:', cardsResponse.status);
+            
+            if (!cardsResponse.ok) {
+                throw new Error(`Failed to load cards: ${cardsResponse.status}`);
+            }
+            
             const cardsData = await cardsResponse.json();
+            console.log('Cards loaded:', cardsData.length, 'players');
             
             // Handle both array and object formats
             this.players = Array.isArray(cardsData) ? cardsData : [cardsData];
@@ -50,8 +73,9 @@ class PlayerCardsApp {
                 const valuationsResponse = await fetch('data/valuations.json');
                 const valuationsData = await valuationsResponse.json();
                 this.valuations = Array.isArray(valuationsData) ? valuationsData : [valuationsData];
+                console.log('Valuations loaded:', this.valuations.length);
             } catch (e) {
-                console.log('Valuations not available');
+                console.log('Valuations not available:', e);
                 this.valuations = [];
             }
 
@@ -59,10 +83,11 @@ class PlayerCardsApp {
             this.mergePlayerData();
             this.filteredPlayers = [...this.players];
             
+            console.log('Data loading complete. Total players:', this.players.length);
             document.getElementById('loading').style.display = 'none';
         } catch (error) {
             console.error('Error loading data:', error);
-            document.getElementById('loading').innerHTML = '<p>Error loading player data. Please ensure data files are available.</p>';
+            document.getElementById('loading').innerHTML = `<p>Error loading player data: ${error.message}</p><p>Please ensure data files are available.</p>`;
         }
     }
 
@@ -119,11 +144,13 @@ class PlayerCardsApp {
         
         closeBtn.addEventListener('click', () => {
             modal.style.display = 'none';
+            document.body.style.overflow = 'auto'; // Re-enable scroll
         });
 
         window.addEventListener('click', (e) => {
             if (e.target === modal) {
                 modal.style.display = 'none';
+                document.body.style.overflow = 'auto'; // Re-enable scroll
             }
         });
     }
@@ -327,12 +354,36 @@ class PlayerCardsApp {
 
         modalBody.innerHTML = this.createPlayerDetail(player);
         modal.style.display = 'block';
+        
+        // Disable body scroll
+        document.body.style.overflow = 'hidden';
 
-        // Draw charts after modal is visible
+        // Setup tab switching
+        this.setupTabs();
+
+        // Draw charts after modal is visible (only for visuals tab)
         setTimeout(() => {
             this.drawShotChart(player);
             this.drawValueDriversChart(player);
         }, 50);
+    }
+
+    setupTabs() {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons and contents
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+
+                // Add active class to clicked button and corresponding content
+                button.classList.add('active');
+                const tabId = button.getAttribute('data-tab');
+                document.getElementById(`tab-${tabId}`).classList.add('active');
+            });
+        });
     }
 
     createPlayerDetail(player) {
@@ -342,6 +393,7 @@ class PlayerCardsApp {
         const adv = perf.advanced || {};
         const trust = player.v1_1_enhancements?.trust_assessment || {};
         const uncertainty = player.v1_1_enhancements?.uncertainty_estimates || {};
+        const constraints = player.v1_1_enhancements?.scenario_constraints || {};
 
         return `
             <div class="modal-header">
@@ -353,10 +405,17 @@ class PlayerCardsApp {
                 </div>
             </div>
 
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <button class="tab-button active" data-tab="visuals">Visuals</button>
+                <button class="tab-button" data-tab="metrics">Metrics</button>
+                <button class="tab-button" data-tab="archetype">Archetype & Similarity</button>
+                <button class="tab-button" data-tab="breakout">Breakout Scenario</button>
+            </div>
+
             <div class="modal-body">
-                <!-- Visual Analytics Section -->
-                <div class="detail-section">
-                    <h3>Visual Analytics</h3>
+                <!-- Visuals Tab -->
+                <div class="tab-content active" id="tab-visuals">
                     <div class="visual-grid">
                         <div class="visual-card">
                             <h4>Shot Distribution</h4>
@@ -377,215 +436,287 @@ class PlayerCardsApp {
                     </div>
                 </div>
 
-                <div class="modal-body">
-                <!-- Performance Metrics -->
-                <div class="detail-section">
-                    <h3>Performance Metrics</h3>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <div class="detail-item-label">Plus/Minus</div>
-                            <div class="detail-item-value">${(adv.plus_minus || 0).toFixed(1)}</div>
+                <!-- Metrics Tab -->
+                <div class="tab-content" id="tab-metrics">
+                    <!-- Performance Metrics -->
+                    <div class="detail-section">
+                        <h3>Performance Metrics</h3>
+                        <div class="detail-grid">
+                            ${this.formatMetricWithPercentile(player, 'Plus/Minus', (adv.plus_minus || 0).toFixed(1), 'plus_minus')}
+                            ${this.formatMetricWithPercentile(player, 'Points Per Game', (trad.points_per_game || 0).toFixed(1), 'points')}
+                            ${this.formatMetricWithPercentile(player, 'Assists Per Game', (trad.assists_per_game || 0).toFixed(1), 'assists')}
+                            ${this.formatMetricWithPercentile(player, 'Rebounds Per Game', (trad.rebounds_per_game || 0).toFixed(1), 'rebounds')}
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">Points Per Game</div>
-                            <div class="detail-item-value">${(trad.points_per_game || 0).toFixed(1)}</div>
+                    </div>
+
+                    <!-- Shot Profile -->
+                    <div class="detail-section">
+                        <h3>Shot Profile</h3>
+                        <div class="detail-grid">
+                            ${this.formatMetricWithPercentile(player, 'Rim Frequency', ((player.shot_profile?.rim_frequency || 0) * 100).toFixed(0) + '%', 'rim_freq')}
+                            ${this.formatMetricWithPercentile(player, 'Three-Point Frequency', ((player.shot_profile?.three_point_frequency || 0) * 100).toFixed(0) + '%', 'three_freq')}
+                            ${this.formatMetricWithPercentile(player, 'FG%', ((trad.field_goal_pct || 0) * 100).toFixed(1) + '%', 'fg_pct')}
+                            ${this.formatMetricWithPercentile(player, '3P%', ((trad.three_point_pct || 0) * 100).toFixed(1) + '%', 'three_pct')}
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">Assists Per Game</div>
-                            <div class="detail-item-value">${(trad.assists_per_game || 0).toFixed(1)}</div>
+                    </div>
+
+                    <!-- Creation Profile -->
+                    <div class="detail-section">
+                        <h3>Creation Profile</h3>
+                        <div class="detail-grid">
+                            ${this.formatMetricWithPercentile(player, 'Drives Per Game', (player.creation_profile?.drives_per_game || 0).toFixed(1), 'drives')}
+                            ${this.formatMetricWithPercentile(player, 'Paint Touches', (player.creation_profile?.paint_touches_per_game || 0).toFixed(1), 'paint_touches')}
+                            ${this.formatMetricWithPercentile(player, 'Assisted Rate', ((player.creation_profile?.assisted_rate || 0) * 100).toFixed(0) + '%', 'assisted_rate')}
+                            ${this.formatMetricWithPercentile(player, 'Usage Rate', ((adv.usage_rate || 0) * 100).toFixed(1) + '%', 'usage')}
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">Rebounds Per Game</div>
-                            <div class="detail-item-value">${(trad.rebounds_per_game || 0).toFixed(1)}</div>
+                    </div>
+
+                    <!-- Defense Assessment -->
+                    <div class="detail-section">
+                        <h3>Defense Assessment</h3>
+                        <div class="detail-grid">
+                            ${this.formatMetricWithPercentile(player, 'Steals Per Game', (trad.steals_per_game || 0).toFixed(1), 'steals')}
+                            ${this.formatMetricWithPercentile(player, 'Blocks Per Game', (trad.blocks_per_game || 0).toFixed(1), 'blocks')}
+                            ${this.formatMetricWithPercentile(player, 'Defensive Rating', (player.defense_assessment?.estimated_metrics?.defensive_rating || 0).toFixed(1), 'def_rating')}
+                            <div class="detail-item">
+                                <div class="detail-item-label">Observability</div>
+                                <div class="detail-item-value">${(player.defense_assessment?.visibility?.observability_level || 'N/A').toUpperCase()}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${valuation ? `
+                    <!-- Valuation -->
+                    <div class="detail-section">
+                        <h3>Valuation & Contract</h3>
+                        <div class="detail-grid">
+                            ${this.formatMetricWithPercentile(player, 'Wins Added', valuation.impact.wins_added.toFixed(1), 'wins_added')}
+                            ${this.formatMetricWithPercentile(player, 'Trade Value (Base)', valuation.trade_value.base.toFixed(1) + 'M', 'trade_value')}
+                            <div class="detail-item">
+                                <div class="detail-item-label">Aging Phase</div>
+                                <div class="detail-item-value">${this.formatAgingPhase(valuation.aging.current_phase)}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-item-label">Peak Age</div>
+                                <div class="detail-item-value">${valuation.aging.peak_age.toFixed(1)}</div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <!-- Trust & Uncertainty -->
+                    <div class="detail-section">
+                        <h3>Data Quality & Trust</h3>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <div class="detail-item-label">Trust Score</div>
+                                <div class="detail-item-value">${(trust.score || 0).toFixed(0)}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-item-label">Trust Level</div>
+                                <div class="detail-item-value">${(trust.level || 'N/A').toUpperCase()}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-item-label">Overall Uncertainty</div>
+                                <div class="detail-item-value">${((uncertainty.overall_uncertainty || 0) * 100).toFixed(1)}%</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-item-label">Confidence Level</div>
+                                <div class="detail-item-value">${(uncertainty.confidence_level || 'N/A').toUpperCase()}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Shot Profile -->
-                <div class="detail-section">
-                    <h3>Shot Profile</h3>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <div class="detail-item-label">Rim Frequency</div>
-                            <div class="detail-item-value">${((player.shot_profile?.rim_frequency || 0) * 100).toFixed(0)}%</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">Three-Point Frequency</div>
-                            <div class="detail-item-value">${((player.shot_profile?.three_point_frequency || 0) * 100).toFixed(0)}%</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">FG%</div>
-                            <div class="detail-item-value">${((trad.field_goal_pct || 0) * 100).toFixed(1)}%</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">3P%</div>
-                            <div class="detail-item-value">${((trad.three_point_pct || 0) * 100).toFixed(1)}%</div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Archetype & Similarity Tab -->
+                <div class="tab-content" id="tab-archetype">
+                    <div class="detail-section">
+                        <h3>Archetype Identity</h3>
+                        <div class="archetype-info">
+                            <div class="archetype-primary">
+                                <div class="archetype-badge-large">
+                                    ${this.formatArchetype(player.identity?.primary_archetype || 'unknown')}
+                                </div>
+                                <div class="archetype-confidence">
+                                    Confidence: ${((player.identity?.archetype_confidence || 0) * 100).toFixed(0)}%
+                                </div>
+                                <div class="archetype-description">
+                                    ${player.identity?.role_description || 'No description available'}
+                                </div>
+                            </div>
 
-                <!-- Creation Profile -->
-                <div class="detail-section">
-                    <h3>Creation Profile</h3>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <div class="detail-item-label">Drives Per Game</div>
-                            <div class="detail-item-value">${(player.creation_profile?.drives_per_game || 0).toFixed(1)}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">Paint Touches</div>
-                            <div class="detail-item-value">${(player.creation_profile?.paint_touches_per_game || 0).toFixed(1)}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">Assisted Rate</div>
-                            <div class="detail-item-value">${((player.creation_profile?.assisted_rate || 0) * 100).toFixed(0)}%</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">Usage Rate</div>
-                            <div class="detail-item-value">${((adv.usage_rate || 0) * 100).toFixed(1)}%</div>
+                            ${player.identity?.secondary_archetypes && player.identity.secondary_archetypes.length > 0 ? `
+                            <div class="secondary-archetypes">
+                                <h4>Secondary Archetypes</h4>
+                                <div class="secondary-list">
+                                    ${player.identity.secondary_archetypes.map(arch => `
+                                        <div class="secondary-item">
+                                            <span class="secondary-name">${this.formatArchetype(arch.name)}</span>
+                                            <span class="secondary-prob">${(arch.probability * 100).toFixed(0)}%</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            ` : ''}
                         </div>
                     </div>
-                </div>
 
-                <!-- Defense Assessment -->
-                <div class="detail-section">
-                    <h3>Defense Assessment</h3>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <div class="detail-item-label">Steals Per Game</div>
-                            <div class="detail-item-value">${(trad.steals_per_game || 0).toFixed(1)}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">Blocks Per Game</div>
-                            <div class="detail-item-value">${(trad.blocks_per_game || 0).toFixed(1)}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">Defensive Rating</div>
-                            <div class="detail-item-value">${(player.defense_assessment?.estimated_metrics?.defensive_rating || 0).toFixed(1)}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">Observability</div>
-                            <div class="detail-item-value">${(player.defense_assessment?.visibility?.observability_level || 'N/A').toUpperCase()}</div>
-                        </div>
-                    </div>
-                </div>
-
-                ${valuation ? `
-                <!-- Valuation -->
-                <div class="detail-section">
-                    <h3>Valuation & Contract</h3>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <div class="detail-item-label">Wins Added</div>
-                            <div class="detail-item-value">${valuation.impact.wins_added.toFixed(1)}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">Trade Value (Base)</div>
-                            <div class="detail-item-value">$${valuation.trade_value.base.toFixed(1)}M</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">Aging Phase</div>
-                            <div class="detail-item-value">${this.formatAgingPhase(valuation.aging.current_phase)}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">Peak Age</div>
-                            <div class="detail-item-value">${valuation.aging.peak_age.toFixed(1)}</div>
-                        </div>
-                    </div>
-                </div>
-                ` : ''}
-
-                <!-- Trust & Uncertainty -->
-                <div class="detail-section">
-                    <h3>Data Quality & Trust</h3>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <div class="detail-item-label">Trust Score</div>
-                            <div class="detail-item-value">${(trust.score || 0).toFixed(0)}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">Trust Level</div>
-                            <div class="detail-item-value">${(trust.level || 'N/A').toUpperCase()}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">Overall Uncertainty</div>
-                            <div class="detail-item-value">${((uncertainty.overall_uncertainty || 0) * 100).toFixed(1)}%</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">Confidence Level</div>
-                            <div class="detail-item-value">${(uncertainty.confidence_level || 'N/A').toUpperCase()}</div>
-                        </div>
-                    </div>
-                    
-                    ${trust.factors && trust.factors.length > 0 ? `
-                    <div style="margin-top: 1rem;">
-                        <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-secondary);">Trust Factors:</h4>
-                        <ul style="list-style: none; padding: 0;">
-                            ${trust.factors.map(([factor, value]) => `
-                                <li style="padding: 0.25rem 0; font-size: 0.85rem;">
-                                    <strong>${this.formatFactor(factor)}:</strong> ${value}
-                                </li>
+                    ${player.comparables?.similar_players && player.comparables.similar_players.length > 0 ? `
+                    <div class="detail-section">
+                        <h3>Similar Players</h3>
+                        <div class="comparables-grid">
+                            ${player.comparables.similar_players.slice(0, 5).map(comp => `
+                                <div class="comparable-card">
+                                    <div class="comparable-header">
+                                        <div class="comparable-name">${comp.name}</div>
+                                        <div class="comparable-similarity">${(comp.similarity_score * 100).toFixed(0)}% similar</div>
+                                    </div>
+                                    <div class="comparable-meta">${comp.team} • ${this.formatArchetype(comp.archetype)}</div>
+                                    <div class="comparable-stats">
+                                        ${comp.stats.points.toFixed(1)} PPG • 
+                                        ${comp.stats.assists.toFixed(1)} APG • 
+                                        ${comp.stats.rebounds.toFixed(1)} RPG
+                                    </div>
+                                </div>
                             `).join('')}
-                        </ul>
+                        </div>
                     </div>
                     ` : ''}
                 </div>
 
-                <!-- Comparables -->
-                ${player.comparables?.similar_players && player.comparables.similar_players.length > 0 ? `
-                <div class="detail-section">
-                    <h3>Similar Players</h3>
-                    <div style="display: grid; gap: 0.75rem;">
-                        ${player.comparables.similar_players.slice(0, 5).map(comp => `
-                            <div style="background: var(--bg-secondary); padding: 0.75rem; border-radius: 6px;">
-                                <div style="font-weight: 600; margin-bottom: 0.25rem;">
-                                    ${comp.name} (${comp.team}) - ${(comp.similarity_score * 100).toFixed(0)}% similar
-                                </div>
-                                <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                                    ${comp.stats.points.toFixed(1)} PPG, 
-                                    ${comp.stats.assists.toFixed(1)} APG, 
-                                    ${comp.stats.rebounds.toFixed(1)} RPG
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                ` : ''}
-
-                <!-- Sample Info -->
-                <div class="detail-section">
-                    <h3>Sample Information</h3>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <div class="detail-item-label">Games Played</div>
-                            <div class="detail-item-value">${trad.games_played || 'N/A'}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">Minutes Per Game</div>
-                            <div class="detail-item-value">${(trad.minutes_per_game || 0).toFixed(1)}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">Data Version</div>
-                            <div class="detail-item-value">${player.metadata?.data_version || 'N/A'}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-item-label">Archetype Confidence</div>
-                            <div class="detail-item-value">${((player.identity?.archetype_confidence || 0) * 100).toFixed(0)}%</div>
-                        </div>
-                    </div>
+                <!-- Breakout Scenario Tab -->
+                <div class="tab-content" id="tab-breakout">
+                    ${this.generateBreakoutScenario(player, constraints, trad, adv)}
                 </div>
             </div>
         `;
     }
 
-    formatFactor(factor) {
-        return factor.split('_').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1)
-        ).join(' ');
+    calculateArchetypePercentile(player, metric) {
+        // Get all players with same archetype
+        const archetype = player.identity?.primary_archetype;
+        const archetypePlayers = this.players.filter(p => 
+            p.identity?.primary_archetype === archetype
+        );
+
+        if (archetypePlayers.length < 2) return null;
+
+        // Get metric value for current player
+        let playerValue;
+        const trad = player.performance?.traditional || {};
+        const adv = player.performance?.advanced || {};
+        const shot = player.shot_profile || {};
+        const creation = player.creation_profile || {};
+        const defense = player.defense_assessment || {};
+
+        switch(metric) {
+            case 'plus_minus':
+                playerValue = adv.plus_minus || 0;
+                break;
+            case 'points':
+                playerValue = trad.points_per_game || 0;
+                break;
+            case 'assists':
+                playerValue = trad.assists_per_game || 0;
+                break;
+            case 'rebounds':
+                playerValue = trad.rebounds_per_game || 0;
+                break;
+            case 'fg_pct':
+                playerValue = trad.field_goal_pct || 0;
+                break;
+            case 'three_pct':
+                playerValue = trad.three_point_pct || 0;
+                break;
+            case 'usage':
+                playerValue = adv.usage_rate || 0;
+                break;
+            case 'steals':
+                playerValue = trad.steals_per_game || 0;
+                break;
+            case 'blocks':
+                playerValue = trad.blocks_per_game || 0;
+                break;
+            case 'rim_freq':
+                playerValue = shot.rim_frequency || 0;
+                break;
+            case 'three_freq':
+                playerValue = shot.three_point_frequency || 0;
+                break;
+            case 'drives':
+                playerValue = creation.drives_per_game || 0;
+                break;
+            case 'paint_touches':
+                playerValue = creation.paint_touches_per_game || 0;
+                break;
+            case 'assisted_rate':
+                playerValue = creation.assisted_rate || 0;
+                break;
+            case 'def_rating':
+                playerValue = defense.estimated_metrics?.defensive_rating || 0;
+                break;
+            case 'wins_added':
+                playerValue = player.valuation?.impact?.wins_added || 0;
+                break;
+            case 'trade_value':
+                playerValue = player.valuation?.trade_value?.base || 0;
+                break;
+            default:
+                return null;
+        }
+
+        // Get all values for this metric
+        const allValues = archetypePlayers.map(p => {
+            const t = p.performance?.traditional || {};
+            const a = p.performance?.advanced || {};
+            const s = p.shot_profile || {};
+            const c = p.creation_profile || {};
+            const d = p.defense_assessment || {};
+            
+            switch(metric) {
+                case 'plus_minus': return a.plus_minus || 0;
+                case 'points': return t.points_per_game || 0;
+                case 'assists': return t.assists_per_game || 0;
+                case 'rebounds': return t.rebounds_per_game || 0;
+                case 'fg_pct': return t.field_goal_pct || 0;
+                case 'three_pct': return t.three_point_pct || 0;
+                case 'usage': return a.usage_rate || 0;
+                case 'steals': return t.steals_per_game || 0;
+                case 'blocks': return t.blocks_per_game || 0;
+                case 'rim_freq': return s.rim_frequency || 0;
+                case 'three_freq': return s.three_point_frequency || 0;
+                case 'drives': return c.drives_per_game || 0;
+                case 'paint_touches': return c.paint_touches_per_game || 0;
+                case 'assisted_rate': return c.assisted_rate || 0;
+                case 'def_rating': return d.estimated_metrics?.defensive_rating || 0;
+                case 'wins_added': return p.valuation?.impact?.wins_added || 0;
+                case 'trade_value': return p.valuation?.trade_value?.base || 0;
+                default: return 0;
+            }
+        }).sort((a, b) => a - b);
+
+        // Calculate percentile
+        const rank = allValues.filter(v => v < playerValue).length;
+        const percentile = (rank / allValues.length) * 100;
+
+        return Math.round(percentile);
     }
 
-    updateStats() {
-        // Stats summary removed from UI
+    formatMetricWithPercentile(player, label, value, metric) {
+        const percentile = this.calculateArchetypePercentile(player, metric);
+        const percentileClass = percentile >= 75 ? 'percentile-high' : percentile >= 50 ? 'percentile-mid' : 'percentile-low';
+        
+        return `
+            <div class="detail-item">
+                <div class="detail-item-label">${label}</div>
+                <div class="detail-item-value">${value}</div>
+                ${percentile !== null ? `
+                    <div class="detail-item-percentile ${percentileClass}">
+                        ${percentile}th percentile
+                    </div>
+                ` : ''}
+            </div>
+        `;
     }
 
     resetFilters() {
@@ -627,198 +758,221 @@ class PlayerCardsApp {
         // Clear canvas
         ctx.clearRect(0, 0, width, height);
 
-        // Get shot frequencies
+        // Get shot frequencies and percentages
         const rimFreq = player.shot_profile?.rim_frequency || 0;
         const midFreq = player.shot_profile?.mid_range_frequency || 0;
         const threeFreq = player.shot_profile?.three_point_frequency || 0;
+        const fgPct = player.performance?.traditional?.field_goal_pct || 0;
+        const threePct = player.performance?.traditional?.three_point_pct || 0;
 
-        // Scale factors
-        const courtWidth = width - 40;
-        const courtHeight = height - 60;
-        const offsetX = 20;
-        const offsetY = 20;
+        // Draw court image as background (flipped 180 degrees)
+        if (this.courtImage && this.courtImage.complete) {
+            ctx.save();
+            ctx.translate(width / 2, height / 2);
+            ctx.rotate(Math.PI); // 180 degree rotation
+            ctx.drawImage(this.courtImage, -width / 2, -height / 2, width, height);
+            ctx.restore();
+        } else {
+            // Fallback: light background
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(0, 0, width, height);
+        }
 
-        // Draw court background
-        ctx.fillStyle = '#1a1a2e';
-        ctx.fillRect(offsetX, offsetY, courtWidth, courtHeight);
+        // Hexagon parameters
+        const hexSize = 28;
+        
+        // Court dimensions (flipped)
+        const courtWidth = width;
+        const courtHeight = height - 50;
+        const centerX = courtWidth / 2;
+        const baselineY = courtHeight;
 
-        // Draw court lines
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
+        // Define shot zones with hexagon coverage and shooting percentages
+        const shotZones = this.generateShotZonesWithPercentages(centerX, baselineY, rimFreq, midFreq, threeFreq, fgPct, threePct);
 
-        // Baseline
-        ctx.beginPath();
-        ctx.moveTo(offsetX, offsetY + courtHeight);
-        ctx.lineTo(offsetX + courtWidth, offsetY + courtHeight);
-        ctx.stroke();
+        // Draw hexagons
+        shotZones.forEach(zone => {
+            const intensity = zone.frequency;
+            
+            if (intensity > 0.01) {
+                // Color based on zone type
+                let baseColor;
+                if (zone.type === 'rim') baseColor = { r: 255, g: 107, b: 107 };
+                else if (zone.type === 'paint') baseColor = { r: 255, g: 217, b: 61 };
+                else if (zone.type === 'mid') baseColor = { r: 255, g: 179, b: 71 };
+                else if (zone.type === 'three') baseColor = { r: 107, g: 207, b: 127 };
+                else baseColor = { r: 78, g: 205, b: 196 };
 
-        // Sidelines
-        ctx.beginPath();
-        ctx.moveTo(offsetX, offsetY);
-        ctx.lineTo(offsetX, offsetY + courtHeight);
-        ctx.moveTo(offsetX + courtWidth, offsetY);
-        ctx.lineTo(offsetX + courtWidth, offsetY + courtHeight);
-        ctx.stroke();
+                // Alpha based on frequency
+                const alpha = 0.25 + (intensity * 0.65);
+                
+                ctx.fillStyle = `rgba(${baseColor.r}, ${baseColor.g}, ${baseColor.b}, ${alpha})`;
+                ctx.strokeStyle = `rgba(255, 255, 255, 0.3)`;
+                ctx.lineWidth = 1;
 
-        // Free throw line (19 feet from baseline, ~40% of half court)
-        const ftLineY = offsetY + courtHeight - (courtHeight * 0.4);
-        ctx.beginPath();
-        ctx.moveTo(offsetX + courtWidth * 0.2, ftLineY);
-        ctx.lineTo(offsetX + courtWidth * 0.8, ftLineY);
-        ctx.stroke();
-
-        // Paint (16 feet wide, ~43% of court width)
-        const paintWidth = courtWidth * 0.43;
-        const paintX = offsetX + (courtWidth - paintWidth) / 2;
-        ctx.strokeRect(paintX, offsetY + courtHeight - (courtHeight * 0.4), paintWidth, courtHeight * 0.4);
-
-        // Free throw circle
-        ctx.beginPath();
-        ctx.arc(offsetX + courtWidth / 2, ftLineY, courtWidth * 0.1, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // Three-point arc (23.75 feet, ~50% of half court depth)
-        const threePointRadius = courtWidth * 0.45;
-        ctx.beginPath();
-        ctx.arc(offsetX + courtWidth / 2, offsetY + courtHeight, threePointRadius, Math.PI * 1.15, Math.PI * 1.85);
-        ctx.stroke();
-
-        // Three-point corners
-        ctx.beginPath();
-        ctx.moveTo(offsetX, offsetY + courtHeight - courtHeight * 0.15);
-        ctx.lineTo(offsetX, offsetY + courtHeight);
-        ctx.moveTo(offsetX + courtWidth, offsetY + courtHeight - courtHeight * 0.15);
-        ctx.lineTo(offsetX + courtWidth, offsetY + courtHeight);
-        ctx.stroke();
-
-        // Rim
-        ctx.beginPath();
-        ctx.arc(offsetX + courtWidth / 2, offsetY + courtHeight - courtHeight * 0.08, 8, 0, Math.PI * 2);
-        ctx.fillStyle = '#ff6b6b';
-        ctx.fill();
-        ctx.stroke();
-
-        // Heat zones with better colors
-        const zones = [
-            // Rim zone (restricted area)
-            {
-                type: 'circle',
-                x: offsetX + courtWidth / 2,
-                y: offsetY + courtHeight - courtHeight * 0.08,
-                radius: courtWidth * 0.15,
-                freq: rimFreq,
-                color: '#ff6b6b',
-                label: 'Rim'
-            },
-            // Mid-range zones (paint + mid-range)
-            {
-                type: 'rect',
-                x: paintX,
-                y: ftLineY,
-                width: paintWidth,
-                height: courtHeight * 0.4,
-                freq: midFreq * 0.6,
-                color: '#ffd93d',
-                label: 'Paint'
-            },
-            {
-                type: 'arc',
-                x: offsetX + courtWidth / 2,
-                y: offsetY + courtHeight,
-                innerRadius: courtWidth * 0.15,
-                outerRadius: threePointRadius - 10,
-                startAngle: Math.PI * 1.15,
-                endAngle: Math.PI * 1.85,
-                freq: midFreq * 0.4,
-                color: '#ffb347',
-                label: 'Mid-Range'
-            },
-            // Three-point zones
-            {
-                type: 'arc',
-                x: offsetX + courtWidth / 2,
-                y: offsetY + courtHeight,
-                innerRadius: threePointRadius - 10,
-                outerRadius: threePointRadius + 40,
-                startAngle: Math.PI * 1.15,
-                endAngle: Math.PI * 1.85,
-                freq: threeFreq * 0.7,
-                color: '#6bcf7f',
-                label: 'Three'
-            },
-            // Corners
-            {
-                type: 'rect',
-                x: offsetX,
-                y: offsetY + courtHeight - courtHeight * 0.15,
-                width: 40,
-                height: courtHeight * 0.15,
-                freq: threeFreq * 0.15,
-                color: '#4ecdc4',
-                label: 'Corner'
-            },
-            {
-                type: 'rect',
-                x: offsetX + courtWidth - 40,
-                y: offsetY + courtHeight - courtHeight * 0.15,
-                width: 40,
-                height: courtHeight * 0.15,
-                freq: threeFreq * 0.15,
-                color: '#4ecdc4',
-                label: 'Corner'
-            }
-        ];
-
-        // Draw heat zones
-        zones.forEach(zone => {
-            const intensity = Math.min(zone.freq * 2, 1); // Scale up for visibility
-            const alpha = 0.2 + (intensity * 0.6);
-
-            ctx.globalAlpha = alpha;
-            ctx.fillStyle = zone.color;
-
-            if (zone.type === 'circle') {
-                ctx.beginPath();
-                ctx.arc(zone.x, zone.y, zone.radius, 0, Math.PI * 2);
+                this.drawHexagon(ctx, zone.x, zone.y, hexSize);
                 ctx.fill();
-            } else if (zone.type === 'rect') {
-                ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
-            } else if (zone.type === 'arc') {
-                ctx.beginPath();
-                ctx.arc(zone.x, zone.y, zone.outerRadius, zone.startAngle, zone.endAngle);
-                ctx.arc(zone.x, zone.y, zone.innerRadius, zone.endAngle, zone.startAngle, true);
-                ctx.closePath();
-                ctx.fill();
+                ctx.stroke();
+
+                // Draw shooting percentage if significant frequency
+                if (intensity > 0.15 && zone.shootingPct > 0) {
+                    ctx.fillStyle = '#2c3e50';
+                    ctx.font = 'bold 10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(`${(zone.shootingPct * 100).toFixed(0)}%`, zone.x, zone.y);
+                }
             }
         });
 
-        ctx.globalAlpha = 1;
-
         // Draw legend at bottom
-        const legendY = offsetY + courtHeight + 25;
+        const legendY = height - 35;
         const legendItems = [
-            { color: '#ff6b6b', label: `Rim: ${(rimFreq * 100).toFixed(0)}%` },
-            { color: '#ffd93d', label: `Mid: ${(midFreq * 100).toFixed(0)}%` },
-            { color: '#6bcf7f', label: `3PT: ${(threeFreq * 100).toFixed(0)}%` }
+            { color: 'rgba(255, 107, 107, 0.7)', label: `Rim: ${(rimFreq * 100).toFixed(0)}%`, pct: `${(fgPct * 100).toFixed(1)}% FG` },
+            { color: 'rgba(255, 217, 61, 0.7)', label: `Mid: ${(midFreq * 100).toFixed(0)}%`, pct: `${(fgPct * 100).toFixed(1)}% FG` },
+            { color: 'rgba(107, 207, 127, 0.7)', label: `3PT: ${(threeFreq * 100).toFixed(0)}%`, pct: `${(threePct * 100).toFixed(1)}%` }
         ];
 
-        let legendX = offsetX;
+        // Center the legend
+        const totalLegendWidth = legendItems.length * 130;
+        let legendX = (width - totalLegendWidth) / 2;
+
         legendItems.forEach(item => {
-            // Color box
+            // Color box with shadow
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+            ctx.shadowBlur = 3;
+            ctx.shadowOffsetY = 2;
+            
             ctx.fillStyle = item.color;
-            ctx.fillRect(legendX, legendY, 20, 20);
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(legendX, legendY, 20, 20);
+            ctx.fillRect(legendX, legendY, 22, 22);
+            
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+            
+            ctx.strokeStyle = '#dee2e6';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(legendX, legendY, 22, 22);
 
             // Label
             ctx.fillStyle = '#2c3e50';
-            ctx.font = 'bold 13px Arial';
+            ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
             ctx.textAlign = 'left';
-            ctx.fillText(item.label, legendX + 25, legendY + 15);
+            ctx.fillText(item.label, legendX + 28, legendY + 10);
+            
+            // Shooting percentage
+            ctx.font = '10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
+            ctx.fillStyle = '#6b7280';
+            ctx.fillText(item.pct, legendX + 28, legendY + 20);
 
-            legendX += 120;
+            legendX += 130;
         });
+    }
+
+    drawHexagon(ctx, x, y, size) {
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+            const angle = (Math.PI / 3) * i;
+            const hx = x + size * Math.cos(angle);
+            const hy = y + size * Math.sin(angle);
+            if (i === 0) {
+                ctx.moveTo(hx, hy);
+            } else {
+                ctx.lineTo(hx, hy);
+            }
+        }
+        ctx.closePath();
+    }
+
+    generateShotZonesWithPercentages(centerX, baselineY, rimFreq, midFreq, threeFreq, fgPct, threePct) {
+        const zones = [];
+        const hexSize = 28;
+        const hexWidth = hexSize * 2;
+        const hexHeight = hexSize * Math.sqrt(3);
+
+        // Helper function to calculate distance from rim (now at top since court is flipped)
+        const rimX = centerX;
+        const rimY = baselineY * 0.12; // Flipped position
+        
+        const getDistance = (x, y) => {
+            return Math.sqrt(Math.pow(x - rimX, 2) + Math.pow(y - rimY, 2));
+        };
+
+        // Generate hexagon grid
+        const rows = 14;
+        const cols = 12;
+
+        for (let row = 0; row < rows; row++) {
+            for (let col = 0; col < cols; col++) {
+                const xOffset = (row % 2) * (hexWidth * 0.75);
+                const x = 20 + col * (hexWidth * 1.5) + xOffset;
+                const y = 30 + row * (hexHeight * 0.75);
+
+                // Skip if outside court bounds
+                if (x < 10 || x > centerX * 2 - 10 || y > baselineY) continue;
+
+                const distance = getDistance(x, y);
+                const angleFromCenter = Math.atan2(y - rimY, x - centerX);
+                
+                // Determine zone type, frequency, and shooting percentage
+                let type, frequency, shootingPct;
+
+                // Rim zone (within ~60 pixels of rim)
+                if (distance < 65) {
+                    type = 'rim';
+                    frequency = rimFreq * (1.2 - distance / 100);
+                    shootingPct = fgPct * 1.15; // Rim shots typically higher %
+                }
+                // Paint/short mid-range
+                else if (distance < 120 && y < baselineY * 0.45) {
+                    type = 'paint';
+                    frequency = midFreq * 0.8;
+                    shootingPct = fgPct * 1.05;
+                }
+                // Mid-range (120-200 pixels from rim)
+                else if (distance < 200) {
+                    type = 'mid';
+                    frequency = midFreq * 0.6;
+                    shootingPct = fgPct * 0.9; // Mid-range typically lower %
+                }
+                // Three-point zone
+                else if (distance >= 200 && distance < 280) {
+                    const isCorner = (x < 60 || x > centerX * 2 - 60) && y < baselineY * 0.35;
+                    
+                    if (isCorner) {
+                        type = 'corner';
+                        frequency = threeFreq * 0.4;
+                        shootingPct = threePct * 1.05; // Corner 3s typically better
+                    } else {
+                        type = 'three';
+                        const normalizedAngle = Math.abs(angleFromCenter);
+                        const isWing = normalizedAngle > 0.5 && normalizedAngle < 1.5;
+                        frequency = threeFreq * (isWing ? 0.7 : 0.5);
+                        shootingPct = threePct;
+                    }
+                }
+                // Deep three / beyond arc
+                else if (distance >= 280 && y < baselineY * 0.5) {
+                    type = 'three';
+                    frequency = threeFreq * 0.2;
+                    shootingPct = threePct * 0.85; // Deep 3s typically lower %
+                }
+                else {
+                    continue;
+                }
+
+                // Add some randomness for visual variety (±15%)
+                frequency *= (0.85 + Math.random() * 0.3);
+                frequency = Math.min(frequency, 1.0);
+                
+                // Ensure shooting percentage is realistic
+                shootingPct = Math.min(Math.max(shootingPct, 0.2), 0.75);
+
+                zones.push({ x, y, type, frequency, shootingPct });
+            }
+        }
+
+        return zones;
     }
 
     drawValueDriversChart(player) {
@@ -1064,6 +1218,176 @@ class PlayerCardsApp {
                 <span class="insight-text">${insight.text}</span>
             </div>
         `).join('');
+    }
+
+    generateBreakoutScenario(player, constraints, trad, adv) {
+        const currentUsage = adv.usage_rate || 0.2;
+        const currentMinutes = trad.minutes_per_game || 25;
+        const currentPPG = trad.points_per_game || 10;
+        const currentAPG = trad.assists_per_game || 2;
+        const currentRPG = trad.rebounds_per_game || 5;
+
+        // Get constraints
+        const applicable = constraints?.applicable !== false;
+        const maxUsageIncrease = constraints?.feasible_changes?.max_usage_increase || 0.1;
+        const maxMinutesIncrease = constraints?.feasible_changes?.max_minutes_increase || 5;
+        const projectedUsageCap = constraints?.feasible_changes?.projected_usage_cap || (currentUsage + 0.1);
+        const projectedMinutesCap = constraints?.feasible_changes?.projected_minutes_cap || (currentMinutes + 5);
+
+        // Calculate breakout projections
+        const usageMultiplier = projectedUsageCap / currentUsage;
+        const minutesMultiplier = projectedMinutesCap / currentMinutes;
+        const overallMultiplier = Math.min(usageMultiplier * 0.7 + minutesMultiplier * 0.3, 1.5);
+
+        const projectedPPG = currentPPG * overallMultiplier;
+        const projectedAPG = currentAPG * overallMultiplier;
+        const projectedRPG = currentRPG * Math.min(minutesMultiplier, 1.3);
+
+        // Determine breakout likelihood
+        const age = player.player.age || 25;
+        const trustScore = player.v1_1_enhancements?.trust_assessment?.score || 50;
+        const archetype = player.identity?.primary_archetype || 'unknown';
+
+        let likelihood = 'Medium';
+        let likelihoodClass = 'medium';
+        let likelihoodPct = 50;
+
+        if (age < 24 && trustScore > 70 && maxUsageIncrease > 0.08) {
+            likelihood = 'High';
+            likelihoodClass = 'high';
+            likelihoodPct = 75;
+        } else if (age > 28 || trustScore < 60 || maxUsageIncrease < 0.05) {
+            likelihood = 'Low';
+            likelihoodClass = 'low';
+            likelihoodPct = 25;
+        }
+
+        return `
+            <div class="detail-section">
+                <h3>Breakout Potential</h3>
+                <div class="breakout-header">
+                    <div class="breakout-likelihood ${likelihoodClass}">
+                        <div class="likelihood-label">Breakout Likelihood</div>
+                        <div class="likelihood-value">${likelihood}</div>
+                        <div class="likelihood-bar">
+                            <div class="likelihood-fill" style="width: ${likelihoodPct}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>Current vs Projected Stats</h3>
+                <div class="projection-grid">
+                    <div class="projection-card">
+                        <div class="projection-label">Points Per Game</div>
+                        <div class="projection-values">
+                            <span class="current-value">${currentPPG.toFixed(1)}</span>
+                            <span class="projection-arrow">→</span>
+                            <span class="projected-value">${projectedPPG.toFixed(1)}</span>
+                        </div>
+                        <div class="projection-change">+${(projectedPPG - currentPPG).toFixed(1)} PPG</div>
+                    </div>
+
+                    <div class="projection-card">
+                        <div class="projection-label">Assists Per Game</div>
+                        <div class="projection-values">
+                            <span class="current-value">${currentAPG.toFixed(1)}</span>
+                            <span class="projection-arrow">→</span>
+                            <span class="projected-value">${projectedAPG.toFixed(1)}</span>
+                        </div>
+                        <div class="projection-change">+${(projectedAPG - currentAPG).toFixed(1)} APG</div>
+                    </div>
+
+                    <div class="projection-card">
+                        <div class="projection-label">Rebounds Per Game</div>
+                        <div class="projection-values">
+                            <span class="current-value">${currentRPG.toFixed(1)}</span>
+                            <span class="projection-arrow">→</span>
+                            <span class="projected-value">${projectedRPG.toFixed(1)}</span>
+                        </div>
+                        <div class="projection-change">+${(projectedRPG - currentRPG).toFixed(1)} RPG</div>
+                    </div>
+
+                    <div class="projection-card">
+                        <div class="projection-label">Usage Rate</div>
+                        <div class="projection-values">
+                            <span class="current-value">${(currentUsage * 100).toFixed(1)}%</span>
+                            <span class="projection-arrow">→</span>
+                            <span class="projected-value">${(projectedUsageCap * 100).toFixed(1)}%</span>
+                        </div>
+                        <div class="projection-change">+${(maxUsageIncrease * 100).toFixed(1)}%</div>
+                    </div>
+
+                    <div class="projection-card">
+                        <div class="projection-label">Minutes Per Game</div>
+                        <div class="projection-values">
+                            <span class="current-value">${currentMinutes.toFixed(1)}</span>
+                            <span class="projection-arrow">→</span>
+                            <span class="projected-value">${projectedMinutesCap.toFixed(1)}</span>
+                        </div>
+                        <div class="projection-change">+${maxMinutesIncrease.toFixed(1)} MPG</div>
+                    </div>
+                </div>
+            </div>
+
+            ${constraints?.constraints && constraints.constraints.length > 0 ? `
+            <div class="detail-section">
+                <h3>Scenario Constraints</h3>
+                <div class="constraints-list">
+                    ${constraints.constraints.map(constraint => `
+                        <div class="constraint-item">
+                            <span class="constraint-icon">⚠️</span>
+                            <span class="constraint-text">${constraint}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            ` : ''}
+
+            ${constraints?.shot_diet_constraints && constraints.shot_diet_constraints.length > 0 ? `
+            <div class="detail-section">
+                <h3>Shot Diet Constraints</h3>
+                <div class="constraints-list">
+                    ${constraints.shot_diet_constraints.map(constraint => `
+                        <div class="constraint-item">
+                            <span class="constraint-icon">🎯</span>
+                            <span class="constraint-text">${constraint}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            ` : ''}
+
+            <div class="detail-section">
+                <h3>Breakout Factors</h3>
+                <div class="factors-grid">
+                    <div class="factor-item ${age < 25 ? 'positive' : age > 28 ? 'negative' : 'neutral'}">
+                        <div class="factor-label">Age</div>
+                        <div class="factor-value">${age.toFixed(1)}</div>
+                        <div class="factor-assessment">${age < 25 ? 'Prime development window' : age > 28 ? 'Limited upside' : 'Entering prime'}</div>
+                    </div>
+
+                    <div class="factor-item ${trustScore > 70 ? 'positive' : trustScore < 60 ? 'negative' : 'neutral'}">
+                        <div class="factor-label">Data Reliability</div>
+                        <div class="factor-value">${trustScore.toFixed(0)}</div>
+                        <div class="factor-assessment">${trustScore > 70 ? 'High confidence' : trustScore < 60 ? 'Limited sample' : 'Moderate confidence'}</div>
+                    </div>
+
+                    <div class="factor-item ${maxUsageIncrease > 0.08 ? 'positive' : maxUsageIncrease < 0.05 ? 'negative' : 'neutral'}">
+                        <div class="factor-label">Usage Upside</div>
+                        <div class="factor-value">+${(maxUsageIncrease * 100).toFixed(0)}%</div>
+                        <div class="factor-assessment">${maxUsageIncrease > 0.08 ? 'Significant room' : maxUsageIncrease < 0.05 ? 'Limited room' : 'Moderate room'}</div>
+                    </div>
+
+                    <div class="factor-item ${maxMinutesIncrease > 5 ? 'positive' : maxMinutesIncrease < 3 ? 'negative' : 'neutral'}">
+                        <div class="factor-label">Minutes Upside</div>
+                        <div class="factor-value">+${maxMinutesIncrease.toFixed(1)}</div>
+                        <div class="factor-assessment">${maxMinutesIncrease > 5 ? 'Significant room' : maxMinutesIncrease < 3 ? 'Limited room' : 'Moderate room'}</div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 }
 
