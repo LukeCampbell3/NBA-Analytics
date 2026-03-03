@@ -83,6 +83,20 @@ Options:
 - `--cards`: Player cards directory or single card file
 - `--output`: Output directory for analysis reports (default: `analysis`)
 
+### 4. View in Web Interface (Optional)
+
+```bash
+# Prepare data for web
+python prepare_web_data.py
+
+# Serve the web app
+python -m http.server 8000 --directory web
+
+# Open browser to http://localhost:8000
+```
+
+See [web/README.md](web/README.md) for detailed web interface documentation.
+
 ## Data Requirements
 
 ### Input Data Format

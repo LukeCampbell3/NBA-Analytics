@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Player Cards</title>
+    <link rel="stylesheet" href="styles.css?v=3">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="container">
+                <h1 class="logo">NBA Valuation Engine</h1>
+                <p class="tagline">Player Valuation & Analysis</p>
+            </div>
+        </header>
+
+        <!-- Filters -->
+        <section class="filters">
+            <div class="container">
+                <div class="filter-group">
+                    <input type="text" id="searchInput" placeholder="Search players..." class="search-input">
+                </div>
+                
+                <div class="filter-group">
+                    <label>Archetype:</label>
+                    <select id="archetypeFilter" class="filter-select">
+                        <option value="">All Archetypes</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Usage:</label>
+                    <select id="usageFilter" class="filter-select">
+                        <option value="">All Usage</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Team:</label>
+                    <select id="teamFilter" class="filter-select">
+                        <option value="">All Teams</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Sort By:</label>
+                    <select id="sortBy" class="filter-select">
+                        <option value="name">Name</option>
+                        <option value="impact">Impact (High to Low)</option>
+                        <option value="age">Age (Young to Old)</option>
+                        <option value="wins">Wins Added</option>
+                        <option value="breakout">Breakout Score</option>
+                    </select>
+                </div>
+
+                <button id="resetFilters" class="btn-secondary">Reset Filters</button>
+            </div>
+        </section>
+
+        <!-- Player Cards Grid -->
+        <section class="player-grid">
+            <div class="container">
+                <div id="playerCards" class="cards-container">
+                    <!-- Player cards will be dynamically inserted here -->
+                </div>
+                <div id="noResults" class="no-results" style="display: none;">
+                    <p>No players found matching your filters.</p>
+                </div>
+                <div id="loading" class="loading">
+                    <p>Loading player data...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Player Detail Modal -->
+        <div id="playerModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <div id="modalBody">
+                    <!-- Player details will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=7"></script>
+</body>
+</html>
