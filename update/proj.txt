@@ -1,0 +1,254 @@
+The identity you’re building
+
+Mechanism-first NBA analytics that is decision-grade:
+	1.	Explain value (mechanisms) instead of only measuring it (one-number leaderboards).
+	2.	Model constraints (clamps) so counterfactuals don’t become fantasy.
+	3.	Quantify uncertainty + disagreement so claims are graded, not asserted.
+	4.	Support counterfactuals (“Team X fit”) with a traceable chain: why → how → where it breaks → how confident.
+
+Below are the pillars in explicit form, plus the “airtight” plan to make it real and defensible.
+
+⸻
+
+Pillar 1 — Define “value” as a decomposition, not a number
+
+What it is
+
+Represent a player as a value vector across mechanisms:
+
+V = [V_{\text{on-ball}}, V_{\text{off-ball}}, V_{\text{spacing}}, V_{\text{creation}}, V_{\text{finishing}}, V_{\text{rim}}, V_{\text{POA}}, V_{\text{switch}}, V_{\text{rebounding}}, V_{\text{foul-risk}}, \dots]
+
+Then compute team-/context-specific rollups:
+
+\text{OverallValue(team)} = \sum_i w_i(\text{team needs}, \text{playoff context}) \cdot V_i
+
+Why it’s unique
+
+Most public tools give you “impact” or “stat tables.”
+You give a causal-ish explanation of value: which parts exist, which scale, which don’t.
+
+⸻
+
+Pillar 2 — Separate intrinsic skill from deployment and environment
+
+What it is
+
+Split observed production into:
+
+P_{\text{observed}} = P_{\text{intrinsic}} + P_{\text{context}} + \epsilon
+	•	P_{\text{intrinsic}}: what should travel across teams
+	•	P_{\text{context}}: team help/hurt, schedule strength, scheme usage
+	•	\epsilon: noise
+
+Your “bubble” isn’t pretending full isolation is possible — it’s an accounting system for what is plausibly intrinsic vs contextual.
+
+Why it’s unique
+
+You output the decomposition and directionality (“suppressed by current system”, “boosted by teammates”), not just a blended result.
+
+⸻
+
+Pillar 3 — Counterfactuals must be constrained by clamps
+
+What it is
+
+Every “Team X” projection is a constrained optimization:
+
+\max_{\theta} \Delta \text{Value}(\theta, \text{Team}) \quad \text{s.t.} \quad \theta \in \mathcal{C}
+	•	\theta: role parameters (usage, minutes, shot mix, defensive assignment)
+	•	\mathcal{C}: clamps (role budgets, scenario caps, defense portability, contract feasibility, etc.)
+
+Outputs required for identity
+	•	best achievable role
+	•	which clamps fired (and how hard)
+	•	what would need to change to unlock more
+
+Why it’s unique
+
+Public analytics usually does “what if usage ↑” without forcing feasibility.
+You make feasibility part of the result.
+
+⸻
+
+Pillar 4 — Confidence governance is part of the product
+
+What it is
+
+No strong claim without a confidence trace:
+
+C = f(\text{data quality}, \text{sample}, \text{extrapolation}, \text{model agreement}, \text{isolation}, \text{clamps})
+
+Confidence itself is decomposed so it’s inspectable.
+
+Why it’s unique
+
+You’re building an evaluator that can say:
+	•	“This is plausible but not validated (why).”
+	•	“This is validated (why).”
+	•	“This is internally consistent but likely wrong (impact prior disagreement).”
+
+That’s how you get “less smoke.”
+
+⸻
+
+Pillar 5 — Handle uniqueness and comparables honestly (comp density)
+
+What it is
+
+Comparables are conditional. You explicitly measure “how comparable is this player?”
+
+D(p)=\frac{1}{k}\sum_{q\in \text{TopK}(p)} s(p,q)
+
+Low D(p) ⇒ “unique role, comps are weak anchors” ⇒ confidence penalty / narrative constraint.
+
+Why it’s unique
+
+You prevent forced comps and forced conclusions.
+
+⸻
+
+Pillar 6 — Add two reality anchors: impact priors + defense portability
+
+A) Impact sanity-check (anti-drift anchor)
+
+You compare your conclusions to an independent impact family prior. If disagreement is large:
+	•	flag for review
+	•	reduce confidence
+	•	require justification (injury, role mismatch, data issues, etc.)
+
+B) Defense + matchup portability (playoff survivability anchor)
+
+Defense becomes:
+	•	a role identity (what they defend)
+	•	a portability score (will it survive targeting?)
+	•	a scenario clamp (limits the counterfactual role/team)
+
+Why this is identity-defining
+
+This is the “adult supervision” layer. Your system becomes self-auditing and playoff-aware.
+
+⸻
+
+Pillar 7 — Contracts + aging curves turn it into valuation
+
+What it is
+
+You’re not just saying “good/bad,” you’re estimating decision value:
+
+\text{SurplusValue} = \text{ProjectedValue} - \text{ContractCost}
+
+And you adjust projected value through archetype aging curves:
+
+V_{t+1} = V_t + \Delta V_{\text{context}} + \Delta V_{\text{age}}(\text{age}, \text{archetype})
+
+Why it’s unique
+
+This is how you become closer to a front office tool: value relative to constraints, time, and cost.
+
+⸻
+
+Pillar 8 — The output format must encode the identity
+
+Your reports and JSON must force the system to show its work.
+
+Every player output should always include:
+	1.	Identity snapshot (role, archetype, comp density)
+	2.	Value decomposition (visible + hidden + defense + priors)
+	3.	Counterfactual (best team, clamps, projected deltas)
+	4.	Decision layer (risks, confidence trace, feasibility, contract/age)
+
+If your output doesn’t encode this, the system’s identity will blur.
+
+⸻
+
+The airtight approach: “iron it out” plan
+
+Keep these steps explicit and treat them like a build checklist.
+
+1) Create a glossary (definition contract)
+
+Goal: every metric/component has a stable meaning.
+
+For each component (examples you gave):
+	•	spacing_gravity_skill
+	•	suppression_relief
+	•	portability_score
+	•	impact_prior_disagreement
+	•	comp_density
+	•	clamp_severity
+
+Define:
+	•	what it is (plain language)
+	•	input fields used (card dependencies)
+	•	output scale (0–1? 0–100? units?)
+	•	how to interpret high/low
+	•	known failure modes (“this can be wrong if X is missing”)
+
+This is what makes the system legible and maintainable.
+
+2) Standardize outputs (one schema for every tool)
+
+Goal: tools become composable, and you can backtest easily.
+
+Do this with:
+	•	a common header: player_id, season, team, generated_at, tool_version
+	•	a common signals block (your vector components)
+	•	a common confidence block (components + final)
+	•	a common warnings block
+	•	a common evidence block (which fields were missing, sample size proxies, comp density)
+
+If outputs vary per tool, you can’t calibrate confidence reliably.
+
+3) Backtest calibration (make confidence truthful)
+
+Goal: “0.70 confidence” means ~70% hit rate for the defined event.
+
+Step A: pick a season window
+
+Example: 3–5 seasons; train/calibrate on earlier, validate on later.
+
+Step B: define “breakout label” operationally
+
+Pick labels that can be measured:
+	•	Impact breakout: \Delta in impact prior (e.g., +X points/100)
+	•	Role breakout: usage/minutes increase + efficiency maintained/improved
+	•	Ecosystem breakout: impact prior rises without big box score rise (your key niche)
+
+The “label definition” is crucial — it’s what turns the system from narrative to measurable.
+
+Step C: calibrate thresholds so confidence matches hit rates
+
+You’re doing probability calibration:
+	•	bucket predictions by confidence (0.5–0.6, 0.6–0.7, etc.)
+	•	compute empirical success in each bucket
+	•	adjust weights/thresholds until the curve matches
+
+This is what makes your confidence system not “made up.”
+
+4) Measure drift (protect against internal-consistency hallucinations)
+
+Goal: detect when your model is confidently wrong relative to reality anchors.
+
+Track:
+	•	how often you disagree with impact priors
+	•	which archetypes disagree most
+	•	whether disagreements are systematic (bias) or isolated (edge cases)
+
+Create explicit drift flags:
+	•	“impact prior contradicts claim”
+	•	“defense portability contradicts role expansion”
+	•	“comp density too low for strong claim”
+
+This is how you keep the system stable as you add features.
+
+⸻
+
+Why this produces “less smoke”
+
+Because the system stops being “a set of opinions” and becomes:
+	•	defined terms (glossary)
+	•	standard outputs (schema)
+	•	measured truthfulness (calibrated confidence)
+	•	self-audited (drift + priors + clamps)
+
+That’s what makes it feel closer to engineering than commentary.

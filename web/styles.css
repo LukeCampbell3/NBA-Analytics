@@ -53,6 +53,51 @@ body {
     opacity: 0.9;
 }
 
+.header-layout {
+    display: grid;
+    grid-template-columns: minmax(260px, 1fr) minmax(420px, 1.7fr);
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.header-copy {
+    min-width: 0;
+}
+
+.header-distribution-panel {
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 10px;
+    background: rgba(17, 24, 39, 0.18);
+    backdrop-filter: blur(1px);
+    padding: 0.75rem 0.9rem;
+}
+
+.distribution-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 0.35rem;
+}
+
+.distribution-title-row h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.distribution-count {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+#valueDistributionChart {
+    width: 100%;
+    height: 160px;
+    display: block;
+}
+
 /* Filters */
 .filters {
     background: var(--bg-primary);
@@ -125,6 +170,20 @@ body {
 
 .btn-secondary:hover {
     background: var(--border-color);
+}
+
+@media (max-width: 980px) {
+    .header-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .header-distribution-panel {
+        margin-top: 0.35rem;
+    }
+
+    #valueDistributionChart {
+        height: 150px;
+    }
 }
 
 /* Stats Summary */
@@ -544,6 +603,38 @@ body {
     border-radius: 8px;
     max-width: 100%;
     height: auto;
+    background: transparent;
+}
+
+.chart-mode-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: -0.25rem 0 0.75rem 0;
+    flex-wrap: wrap;
+}
+
+.mode-btn {
+    border: 1px solid var(--border-color);
+    background: #ffffff;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.mode-btn:hover {
+    border-color: #c8ccd4;
+    color: var(--text-primary);
+}
+
+.mode-btn.active {
+    background: #1f2937;
+    border-color: #1f2937;
+    color: #ffffff;
 }
 
 .shot-legend {
@@ -1014,4 +1105,27 @@ body {
 .percentile-low {
     background: rgba(239, 68, 68, 0.15);
     color: var(--danger-color);
+}
+
+/* Impact Analysis Styles */
+.impact-explanation {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border-left: 4px solid var(--primary-color);
+}
+
+.impact-explanation p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+}
+
+.detail-item-note {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+    font-style: italic;
 }
