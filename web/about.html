@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About Metrics - NBA Valuation Engine</title>
-    <link rel="stylesheet" href="styles.css?v=12">
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="styles.css">
     <style>
         .about-wrap {
             max-width: 1100px;
             margin: 0 auto;
-            padding: 72px 20px 48px;
+            padding: 28px 20px 48px;
         }
         .about-nav {
             display: flex;
@@ -19,54 +20,58 @@
         }
         .about-nav a {
             text-decoration: none;
-            color: #14213d;
-            border: 1px solid #c8d0e0;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
             border-radius: 999px;
             padding: 8px 14px;
             font-weight: 600;
-            background: #ffffff;
+            background: var(--bg-primary);
         }
         .about-nav a.active {
-            background: #14213d;
+            background: var(--primary-color);
             color: #ffffff;
-            border-color: #14213d;
+            border-color: var(--primary-color);
         }
         .about-card {
-            background: #ffffff;
-            border: 1px solid #dde2ee;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
             border-radius: 14px;
             padding: 18px;
             margin-bottom: 14px;
-            box-shadow: 0 6px 20px rgba(20, 33, 61, 0.05);
+            box-shadow: var(--shadow);
         }
         .about-card h2 {
             margin: 0 0 8px;
-            color: #14213d;
+            color: var(--text-primary);
         }
         .about-card h3 {
             margin: 16px 0 6px;
-            color: #1d3557;
+            color: var(--text-secondary);
         }
         .about-card p, .about-card li {
-            color: #2f3f5b;
+            color: var(--text-secondary);
             line-height: 1.5;
         }
         .about-card ul {
             margin: 8px 0 0 18px;
             padding: 0;
         }
+        .about-card ol {
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
         .formula {
             font-family: Consolas, "Courier New", monospace;
-            background: #f5f8ff;
-            border: 1px solid #d9e3f9;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
             border-radius: 10px;
             padding: 10px 12px;
             margin: 10px 0;
-            color: #11213d;
+            color: var(--text-primary);
             overflow-x: auto;
         }
         .muted {
-            color: #60708f;
+            color: var(--text-secondary);
             font-size: 0.95rem;
         }
         .pillars {
@@ -76,10 +81,10 @@
             margin-top: 10px;
         }
         .pillar {
-            border: 1px solid #e7ecf6;
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 12px;
-            background: #fbfcff;
+            background: var(--bg-secondary);
         }
         .kpi-grid {
             display: grid;
@@ -88,68 +93,26 @@
             margin-top: 10px;
         }
         .kpi {
-            border: 1px solid #e7ecf6;
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 12px;
-            background: #ffffff;
+            background: var(--bg-primary);
         }
         .tag {
             display: inline-block;
             padding: 2px 10px;
             border-radius: 999px;
-            border: 1px solid #d9e3f9;
-            background: #f5f8ff;
-            color: #11213d;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
             font-size: 0.85rem;
             font-weight: 700;
             margin-right: 6px;
             margin-top: 6px;
         }
-        body.theme-dark .about-card {
-            background: #0f172a;
-            border-color: #334155;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-        }
-        body.theme-dark .about-card h2 { color: #e2e8f0; }
-        body.theme-dark .about-card h3 { color: #bfdbfe; }
-        body.theme-dark .about-card p,
-        body.theme-dark .about-card li { color: #cbd5e1; }
-        body.theme-dark .formula {
-            background: #111827;
-            border-color: #334155;
-            color: #dbeafe;
-        }
-        body.theme-dark .pillar,
-        body.theme-dark .kpi {
-            background: #0b1223;
-            border-color: #334155;
-        }
-        body.theme-dark .tag {
-            background: #1e293b;
-            border-color: #334155;
-            color: #e2e8f0;
-        }
-        body.theme-dark .muted { color: #94a3b8; }
     </style>
 </head>
 <body>
-    <button id="siteMenuButton" class="site-menu-button" aria-label="Open site navigation" aria-controls="siteNavDrawer" aria-expanded="false">
-        <span class="site-menu-icon">☰</span>
-    </button>
-    <div id="siteNavOverlay" class="site-nav-overlay"></div>
-    <aside id="siteNavDrawer" class="site-nav-drawer" aria-label="Site navigation">
-        <div class="site-nav-head">
-            <div class="site-nav-title">Navigate</div>
-            <button id="siteNavClose" class="site-nav-close" aria-label="Close site navigation">&times;</button>
-        </div>
-        <nav class="site-nav-links">
-            <a class="site-nav-link" href="index.html">Home</a>
-            <a class="site-nav-link" href="about.html">About</a>
-        </nav>
-        <div class="site-nav-footer">
-            <button id="themeToggleButton" class="theme-toggle-radial" aria-label="Toggle dark mode" title="Toggle dark/light mode">◐</button>
-        </div>
-    </aside>
     <div class="about-wrap">
         <nav class="about-nav">
             <a href="index.html">Home</a>
@@ -478,7 +441,7 @@
 
         <section class="about-card">
             <h2>The “Airtight” Plan (How This Becomes Defensible)</h2>
-            <ol style="margin: 8px 0 0 18px; color:#2f3f5b; line-height:1.5;">
+            <ol style="margin: 8px 0 0 18px; color:var(--text-secondary); line-height:1.5;">
                 <li>
                     <strong>Glossary contract</strong>:
                     define each metric (inputs, scale, interpretation, failure modes) so the system stays legible.
@@ -498,6 +461,6 @@
             </ol>
         </section>
     </div>
-    <script src="nav.js?v=3"></script>
+    <script src="nav.js?v=6"></script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 (() => {
     const body = document.body;
+    const root = document.documentElement;
     const menuBtn = document.getElementById('siteMenuButton');
     const drawer = document.getElementById('siteNavDrawer');
     const overlay = document.getElementById('siteNavOverlay');
@@ -7,6 +8,35 @@
     const themeToggleBtn = document.getElementById('themeToggleButton');
     const THEME_KEY = 'nba_theme_preference';
 
+    const getPreferredTheme = () => {
+        const saved = localStorage.getItem(THEME_KEY);
+        if (saved === 'dark' || saved === 'light') return saved;
+        return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    };
+
+    const applyTheme = (theme) => {
+        const isDark = theme === 'dark';
+        body.classList.toggle('theme-dark', isDark);
+        root.classList.toggle('theme-dark', isDark);
+        window.dispatchEvent(new CustomEvent('themechange', { detail: { theme } }));
+        if (themeToggleBtn) {
+            themeToggleBtn.textContent = isDark ? 'L' : 'D';
+            themeToggleBtn.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+            themeToggleBtn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+    };
+
+    applyTheme(getPreferredTheme());
+
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', () => {
+            const next = body.classList.contains('theme-dark') ? 'light' : 'dark';
+            localStorage.setItem(THEME_KEY, next);
+            applyTheme(next);
+        });
+    }
+
+    // Optional drawer wiring (some pages do not include drawer markup).
     if (!menuBtn || !drawer || !overlay) return;
 
     const openNav = () => {
@@ -36,32 +66,6 @@
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && isOpen()) closeNav();
     });
-
-    const getPreferredTheme = () => {
-        const saved = localStorage.getItem(THEME_KEY);
-        if (saved === 'dark' || saved === 'light') return saved;
-        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    };
-
-    const applyTheme = (theme) => {
-        const isDark = theme === 'dark';
-        body.classList.toggle('theme-dark', isDark);
-        if (themeToggleBtn) {
-            themeToggleBtn.textContent = isDark ? '☀' : '◐';
-            themeToggleBtn.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
-            themeToggleBtn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
-        }
-    };
-
-    applyTheme(getPreferredTheme());
-
-    if (themeToggleBtn) {
-        themeToggleBtn.addEventListener('click', () => {
-            const next = body.classList.contains('theme-dark') ? 'light' : 'dark';
-            localStorage.setItem(THEME_KEY, next);
-            applyTheme(next);
-        });
-    }
 
     // Highlight active page by filename.
     const current = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
