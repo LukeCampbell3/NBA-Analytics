@@ -4,9 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NBA Player Cards</title>
-    <link rel="stylesheet" href="styles.css?v=9">
+    <link rel="stylesheet" href="styles.css?v=12">
 </head>
 <body>
+    <button id="siteMenuButton" class="site-menu-button" aria-label="Open site navigation" aria-controls="siteNavDrawer" aria-expanded="false">
+        <span class="site-menu-icon">☰</span>
+    </button>
+    <div id="siteNavOverlay" class="site-nav-overlay"></div>
+    <aside id="siteNavDrawer" class="site-nav-drawer" aria-label="Site navigation">
+        <div class="site-nav-head">
+            <div class="site-nav-title">Navigate</div>
+            <button id="siteNavClose" class="site-nav-close" aria-label="Close site navigation">&times;</button>
+        </div>
+        <nav class="site-nav-links">
+            <a class="site-nav-link" href="index.html">Home</a>
+            <a class="site-nav-link" href="about.html">About</a>
+        </nav>
+        <div class="site-nav-footer">
+            <button id="themeToggleButton" class="theme-toggle-radial" aria-label="Toggle dark mode" title="Toggle dark/light mode">◐</button>
+        </div>
+    </aside>
     <div id="app">
         <!-- Header -->
         <header class="header">
@@ -102,6 +119,7 @@
         </div>
     </div>
 
+    <script src="nav.js?v=3"></script>
     <script src="app.js?v=32"></script>
 </body>
 </html>
