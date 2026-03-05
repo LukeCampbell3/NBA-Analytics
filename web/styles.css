@@ -65,6 +65,7 @@ body {
 }
 
 .header-distribution-panel {
+    position: relative;
     border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 10px;
     background: rgba(17, 24, 39, 0.18);
@@ -76,8 +77,9 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 0.8rem;
-    margin-bottom: 0.35rem;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.2rem;
 }
 
 .distribution-title-row h3 {
@@ -90,11 +92,33 @@ body {
 .distribution-count {
     font-size: 0.8rem;
     color: rgba(255, 255, 255, 0.82);
+    margin-left: auto;
+}
+
+.distribution-metric-label {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.86);
+    white-space: nowrap;
+}
+
+.distribution-tooltip {
+    position: absolute;
+    pointer-events: none;
+    z-index: 3;
+    background: rgba(17, 24, 39, 0.95);
+    color: #f9fafb;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    border-radius: 8px;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.74rem;
+    line-height: 1.25;
+    transform: translate(8px, -8px);
+    white-space: nowrap;
 }
 
 #valueDistributionChart {
     width: 100%;
-    height: 160px;
+    height: 180px;
     display: block;
 }
 
@@ -182,7 +206,7 @@ body {
     }
 
     #valueDistributionChart {
-        height: 150px;
+        height: 170px;
     }
 }
 
@@ -285,7 +309,7 @@ body {
 
 .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1rem;
     margin-bottom: 1rem;
 }
@@ -335,6 +359,17 @@ body {
     flex-wrap: wrap;
     gap: 0.5rem;
     margin-top: 1rem;
+}
+
+.card-mechanism-note {
+    font-size: 0.83rem;
+    color: #374151;
+    background: rgba(30, 64, 175, 0.08);
+    border-left: 3px solid rgba(30, 64, 175, 0.55);
+    border-radius: 6px;
+    padding: 0.55rem 0.65rem;
+    margin-top: 0.55rem;
+    line-height: 1.35;
 }
 
 .tag {
@@ -526,6 +561,10 @@ body {
 
     .detail-grid {
         grid-template-columns: 1fr;
+    }
+
+    .metrics-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
@@ -1128,4 +1167,53 @@ body {
     color: var(--text-secondary);
     margin-top: 0.25rem;
     font-style: italic;
+}
+
+.mechanism-explainer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.9rem;
+}
+
+.mechanism-explainer-card {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0.8rem 0.9rem;
+}
+
+.mechanism-explainer-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 0.45rem;
+}
+
+.mechanism-explainer-label {
+    font-size: 0.8rem;
+    color: #4b5563;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.mechanism-explainer-value {
+    font-size: 1rem;
+    color: #111827;
+    font-weight: 800;
+}
+
+.mechanism-explainer-meaning {
+    font-size: 0.8rem;
+    color: #374151;
+    line-height: 1.4;
+    margin-bottom: 0.35rem;
+}
+
+.mechanism-explainer-read {
+    font-size: 0.78rem;
+    color: #1f2937;
+    font-weight: 600;
+    line-height: 1.35;
 }

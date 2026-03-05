@@ -25,6 +25,10 @@ class PlayerCardsApp {
         this.currentSort = 'name';
         this.courtImage = null;
         this.distributionRaf = null;
+        this.distributionPoints = [];
+        this.distributionMetricConfig = null;
+        this.teamFitScoreCache = null;
+        this.teamFitPercentileCache = null;
         
         this.init();
     }
@@ -87,6 +91,8 @@ class PlayerCardsApp {
             this.computePlayerValueScores();
             this.teamProfiles = this.buildTeamProfiles();
             this.computeBreakoutScoreIndex();
+            this.teamFitScoreCache = null;
+            this.teamFitPercentileCache = null;
             this.filteredPlayers = [...this.players];
             
             console.log('Data loading complete. Total players:', this.players.length);
@@ -115,6 +121,111 @@ class PlayerCardsApp {
 
     getPlayerValue(player) {
         return player.value_metrics?.player_value_score ?? 50;
+    }
+
+    computeCompDensity(player) {
+        const comps = player.comparables?.similar_players || [];
+        if (!comps.length) return 0.35;
+        const top = comps.slice(0, 5).map(c => Number(c.similarity_score || 0));
+        const avg = top.reduce((s, v) => s + v, 0) / Math.max(1, top.length);
+        return this.clampNum(avg, 0, 1);
+    }
+
+    computeMechanismMetrics(player, evalOut = null) {
+        const fitEval = evalOut || this.evaluateBreakoutScenario(player);
+        const fit = fitEval.fitScenario || {};
+        const sb = fit.score_breakdown || {};
+        const shot = player.shot_profile || {};
+        const trad = player.performance?.traditional || {};
+        const creation = player.creation_profile || {};
+        const trust = (player.v1_1_enhancements?.trust_assessment?.score || 60) / 100;
+        const compDensity = this.computeCompDensity(player);
+
+        const threeFreq = Number(shot.three_point_frequency || 0);
+        const threePct = Number(trad.three_point_pct || 0);
+        const assisted = Number(creation.assisted_rate || 0.55);
+        const spacingGravitySkill = this.clampNum(
+            (0.45 * this.clampNum(threeFreq / 0.55, 0, 1)) +
+            (0.40 * this.clampNum((threePct - 0.30) / 0.14, 0, 1)) +
+            (0.15 * this.clampNum(assisted / 0.8, 0, 1)),
+            0,
+            1
+        );
+
+        const suppressionRelief = this.clampNum(
+            ((sb.scheme_complementarity || 0) * 0.55) +
+            ((sb.role_fit || 0) * 0.30) +
+            ((sb.usage_headroom || 0) * 0.15),
+            0,
+            1
+        );
+
+        const portabilityScore = this.clampNum(
+            (0.45 * (sb.switch_fit || 0)) +
+            (0.35 * (sb.defense_fit || 0)) +
+            (0.20 * this.matchupVersatility(player)),
+            0,
+            1
+        );
+
+        const maxClamp = Math.max(1e-6, (fitEval.maxUsageIncrease || 0.1) + ((fitEval.maxMinutesIncrease || 8) / 100));
+        const realizedClamp = (fitEval.usageDelta || 0) + ((fitEval.minutesDelta || 0) / 100);
+        const clampSeverity = this.clampNum(1 - this.safeDiv(realizedClamp, maxClamp, 0), 0, 1);
+
+        const epm = this.getRawEpm(player);
+        const lebron = this.getRawLebron(player);
+        const impactPriorDisagreement = (epm !== null && lebron !== null)
+            ? this.clampNum(Math.abs(epm - lebron) / 3.0, 0, 1)
+            : 0.35;
+
+        const confidence = this.clampNum(
+            (0.35 * (fit.confidence || 0.6)) +
+            (0.30 * trust) +
+            (0.20 * compDensity) +
+            (0.15 * (1 - impactPriorDisagreement)),
+            0.2,
+            0.95
+        );
+
+        return {
+            spacing_gravity_skill: spacingGravitySkill,
+            suppression_relief: suppressionRelief,
+            portability_score: portabilityScore,
+            clamp_severity: clampSeverity,
+            comp_density: compDensity,
+            impact_prior_disagreement: impactPriorDisagreement,
+            confidence
+        };
+    }
+
+    buildCardScenarioSummary(player, evalOut, mechanism) {
+        const fit = evalOut.fitScenario || {};
+        const sb = fit.score_breakdown || {};
+        const team = fit.team && fit.team !== 'No Clear Team Edge' ? fit.team : (player.player?.team || 'Current team');
+
+        const driverPool = [
+            { key: 'spacing gravity', v: mechanism.spacing_gravity_skill, text: 'spacing gravity creates weak-side defensive pull' },
+            { key: 'suppression relief', v: mechanism.suppression_relief, text: 'context shift unlocks suppressed on-court value' },
+            { key: 'portability', v: mechanism.portability_score, text: 'defensive role is portable across matchups' },
+            { key: 'creation fit', v: sb.creation_fit || 0, text: 'on-ball creation fit fills team initiator gap' },
+            { key: 'off-ball fit', v: sb.offball_fit || 0, text: 'off-ball profile scales next to primary creators' },
+            { key: 'role fit', v: sb.role_fit || 0, text: 'role alignment raises lineup stability' },
+            { key: 'usage headroom', v: sb.usage_headroom || 0, text: 'available usage headroom supports controlled expansion' }
+        ].sort((a, b) => b.v - a.v);
+
+        const topA = driverPool[0];
+        const topB = driverPool[1];
+        const topDrivers = [topA?.text, topB?.text].filter(Boolean).join('; ');
+
+        const clampLabel = mechanism.clamp_severity <= 0.35
+            ? 'light clamp pressure'
+            : (mechanism.clamp_severity <= 0.6 ? 'controlled clamp pressure' : 'heavy clamp pressure');
+        const priorLabel = mechanism.impact_prior_disagreement <= 0.35
+            ? 'low prior disagreement'
+            : (mechanism.impact_prior_disagreement <= 0.6 ? 'moderate prior disagreement' : 'high prior disagreement');
+        const signalLabel = (fit.signal_strength || 'weak').toUpperCase();
+
+        return `${team} scenario: ${topDrivers}. Signal ${signalLabel}; ${(mechanism.confidence * 100).toFixed(0)}% confidence with ${clampLabel} and ${priorLabel}.`;
     }
 
     getPlayerKey(player) {
@@ -616,6 +727,7 @@ class PlayerCardsApp {
         const projectedMinutes = Math.min(projectedMinutesCap, currentMinutes + (maxMinutesIncrease * minutesGainFactor * signalMultiplier));
         const usageDelta = Math.max(0, projectedUsage - currentUsage);
         const minutesDelta = Math.max(0, projectedMinutes - currentMinutes);
+        const breakdown = fitScenario.score_breakdown || {};
 
         const usageMultiplier = currentUsage > 0 ? (projectedUsage / currentUsage) : 1.0;
         const minutesMultiplier = currentMinutes > 0 ? (projectedMinutes / currentMinutes) : 1.0;
@@ -630,19 +742,108 @@ class PlayerCardsApp {
         const minutesUpside = this.clampNum(minutesDelta / 8.0, 0, 1);
         const fitEdge = this.clampNum((fitScenario.fit_score - 0.12) / 0.28, 0, 1);
         const trustNorm = this.clampNum(trustScore / 100, 0, 1);
+        const mechanism = this.computeMechanismMetrics(player, {
+            fitScenario,
+            usageDelta,
+            minutesDelta,
+            maxUsageIncrease,
+            maxMinutesIncrease
+        });
+
+        // Team contribution channels (x, y, z) used to validate genuine breakout signals.
+        const creationLift = this.clampNum(
+            (0.55 * (breakdown.creation_fit || 0)) +
+            (0.30 * (breakdown.usage_headroom || 0)) +
+            (0.15 * usageUpside),
+            0,
+            1
+        );
+        const spacingLift = this.clampNum(
+            (0.50 * (breakdown.shooting_fit || 0)) +
+            (0.30 * (breakdown.offball_fit || 0)) +
+            (0.20 * mechanism.spacing_gravity_skill),
+            0,
+            1
+        );
+        const defenseLift = this.clampNum(
+            (0.45 * (breakdown.defense_fit || 0)) +
+            (0.35 * (breakdown.switch_fit || 0)) +
+            (0.20 * mechanism.portability_score),
+            0,
+            1
+        );
+        const roleStabilityLift = this.clampNum(
+            (0.60 * (breakdown.role_fit || 0)) +
+            (0.25 * (breakdown.minutes_fit || 0)) +
+            (0.15 * (1 - mechanism.clamp_severity)),
+            0,
+            1
+        );
+        const contributionStrength = this.clampNum(
+            (0.30 * creationLift) +
+            (0.25 * spacingLift) +
+            (0.25 * defenseLift) +
+            (0.20 * roleStabilityLift),
+            0,
+            1
+        );
+        const contributionProfile = [
+            { key: 'creation', label: 'Creation Lift', value: creationLift, note: 'on-ball creation + usage headroom conversion' },
+            { key: 'spacing', label: 'Spacing Lift', value: spacingLift, note: 'shot gravity + off-ball scheme translation' },
+            { key: 'defense', label: 'Defense Lift', value: defenseLift, note: 'defensive disruption + switch portability' },
+            { key: 'stability', label: 'Role Stability', value: roleStabilityLift, note: 'minutes feasibility + role continuity' }
+        ].sort((a, b) => b.value - a.value);
 
         let breakoutScoreRaw = 100 * (
-            0.30 * ageCurve +
-            0.25 * usageUpside +
-            0.20 * minutesUpside +
-            0.15 * trustNorm +
-            0.10 * fitEdge
+            0.18 * ageCurve +
+            0.12 * usageUpside +
+            0.10 * minutesUpside +
+            0.20 * fitEdge +
+            0.22 * contributionStrength +
+            0.10 * mechanism.suppression_relief +
+            0.08 * mechanism.portability_score
         );
-        if (fitScenario.signal_strength === 'weak') breakoutScoreRaw -= 6;
+        // Confidence governance penalties to prevent "usage-only" breakouts.
+        breakoutScoreRaw -= (8 * mechanism.clamp_severity);
+        breakoutScoreRaw -= (6 * mechanism.impact_prior_disagreement);
+        if (contributionStrength < 0.36) breakoutScoreRaw -= 10;
+        if (usageUpside > 0.65 && contributionStrength < 0.45) breakoutScoreRaw -= 10;
+        if (fitScenario.signal_strength === 'weak') breakoutScoreRaw -= 8;
+        breakoutScoreRaw += (3 * trustNorm);
         breakoutScoreRaw = this.clampNum(breakoutScoreRaw, 0, 100);
 
         const key = this.getPlayerKey(player);
-        const breakoutScore = this.breakoutScoreByKey?.[key] ?? breakoutScoreRaw;
+        const relativeScore = this.breakoutScoreByKey?.[key] ?? breakoutScoreRaw;
+        let breakoutScore = this.clampNum((0.72 * breakoutScoreRaw) + (0.28 * relativeScore), 0, 100);
+
+        // Hard realism gates: weak contribution/fit cannot be "high breakout".
+        const schemeComplementarity = breakdown.scheme_complementarity || 0;
+        const weakFit = (fitScenario.fit_score || 0) < 0.07;
+        const weakContribution = contributionStrength < 0.35;
+        const weakScheme = schemeComplementarity < 0.08;
+        const weakSignal = (fitScenario.signal_strength || 'weak') === 'weak';
+
+        if ((weakFit && weakContribution) || (weakFit && weakScheme)) {
+            breakoutScore = Math.min(breakoutScore, 44); // force Low
+        } else if (weakContribution || weakScheme || weakSignal) {
+            breakoutScore = Math.min(breakoutScore, 64); // cap to Medium ceiling
+        }
+
+        // Likelihood signal is tied to team contribution quality, fit strength, clamp pressure, and confidence.
+        const fitStrengthNorm = this.clampNum((fitScenario.fit_score || 0) / 0.10, 0, 1);
+        const breakoutLikelihoodScore = this.clampNum(
+            100 * (
+                0.45 * contributionStrength +
+                0.25 * fitStrengthNorm +
+                0.15 * (1 - mechanism.clamp_severity) +
+                0.15 * (fitScenario.confidence || 0.6)
+            ),
+            0,
+            100
+        );
+
+        // Final score reflects both raw breakout score and likelihood quality.
+        breakoutScore = this.clampNum((0.78 * breakoutScore) + (0.22 * breakoutLikelihoodScore), 0, 100);
 
         let likelihood = 'Low';
         let likelihoodClass = 'low';
@@ -654,7 +855,13 @@ class PlayerCardsApp {
             likelihoodClass = 'medium';
         }
 
-        const likelihoodPct = Math.round(this.clampNum(breakoutScore, 20, 85));
+        const likelihoodPct = Math.round(this.clampNum(breakoutScore, 0, 100));
+        const genuineBreakout =
+            breakoutScore >= 70 &&
+            breakoutLikelihoodScore >= 70 &&
+            contributionStrength >= 0.55 &&
+            (fitScenario.fit_score || 0) >= 0.08 &&
+            (fitScenario.signal_strength || 'weak') !== 'weak';
 
         return {
             fitScenario,
@@ -675,8 +882,14 @@ class PlayerCardsApp {
             minutesDelta,
             maxUsageIncrease,
             maxMinutesIncrease,
+            contributionStrength,
+            contributionProfile,
+            mechanism,
             breakoutScore,
             breakoutScoreRaw,
+            breakoutScoreRelative: relativeScore,
+            breakoutLikelihoodScore,
+            genuineBreakout,
             likelihood,
             likelihoodClass,
             likelihoodPct
@@ -734,6 +947,7 @@ class PlayerCardsApp {
             if (this.distributionRaf) cancelAnimationFrame(this.distributionRaf);
             this.distributionRaf = requestAnimationFrame(() => this.drawValueDistributionChart());
         });
+        this.setupDistributionInteractions();
     }
 
     populateArchetypeFilter() {
@@ -804,6 +1018,9 @@ class PlayerCardsApp {
                 
                 case 'impact':
                     return this.getPlayerValue(b) - this.getPlayerValue(a);
+
+                case 'team_fit':
+                    return this.getTeamFitScore(b) - this.getTeamFitScore(a);
                 
                 case 'age':
                     return (a.player.age || 25) - (b.player.age || 25);
@@ -818,6 +1035,100 @@ class PlayerCardsApp {
                     return 0;
             }
         });
+    }
+
+    getTeamFitScore(player) {
+        if (!this.teamFitScoreCache) this.teamFitScoreCache = {};
+        const key = this.getPlayerKey(player);
+        if (this.teamFitScoreCache[key] !== undefined) return this.teamFitScoreCache[key];
+        const fit = this.evaluateBreakoutScenario(player).fitScenario?.fit_score || 0;
+        this.teamFitScoreCache[key] = fit;
+        return fit;
+    }
+
+    getTeamFitPercentile(player) {
+        if (!this.teamFitPercentileCache) {
+            const rows = this.players.map(p => ({
+                key: this.getPlayerKey(p),
+                v: this.getTeamFitScore(p)
+            }));
+            const sorted = rows.map(r => r.v).sort((a, b) => a - b);
+            const n = Math.max(1, sorted.length);
+            const map = {};
+            for (const r of rows) {
+                let lo = 0;
+                let hi = n;
+                while (lo < hi) {
+                    const mid = (lo + hi) >> 1;
+                    if (sorted[mid] <= r.v) lo = mid + 1;
+                    else hi = mid;
+                }
+                map[r.key] = Math.round(this.clampNum((lo / n) * 100, 0, 100));
+            }
+            this.teamFitPercentileCache = map;
+        }
+        return this.teamFitPercentileCache[this.getPlayerKey(player)] ?? 50;
+    }
+
+    getDistributionMetricConfig() {
+        const breakoutGetter = (p) => this.evaluateBreakoutScenario(p).breakoutScore;
+        switch (this.currentSort) {
+            case 'name':
+                return {
+                    key: 'none',
+                    label: 'Showing: Name sort selected (distribution hidden)',
+                    accessor: null,
+                    format: null
+                };
+            case 'impact':
+                return {
+                    key: 'impact',
+                    label: 'Showing: Player Value',
+                    accessor: (p) => this.getPlayerValue(p),
+                    format: (v) => `${v.toFixed(1)}`
+                };
+            case 'team_fit':
+                return {
+                    key: 'team_fit',
+                    label: 'Showing: Team Fit Context (%)',
+                    accessor: (p) => this.getTeamFitScore(p) * 100,
+                    format: (v) => `${v.toFixed(1)}%`
+                };
+            case 'age':
+                return {
+                    key: 'age',
+                    label: 'Showing: Age',
+                    accessor: (p) => Number(p.player?.age || 0),
+                    format: (v) => `${v.toFixed(1)}`
+                };
+            case 'wins':
+                return {
+                    key: 'wins',
+                    label: 'Showing: Wins Added',
+                    accessor: (p) => Number(p.valuation?.impact?.wins_added || 0),
+                    format: (v) => `${v.toFixed(1)}`,
+                    transform: (v) => {
+                        // Center-expanding signed log scale around 0.
+                        // k<1 expands dense near-zero values and compresses tails.
+                        const k = 0.6;
+                        return Math.sign(v) * Math.log1p(Math.abs(v) / k);
+                    }
+                };
+            case 'breakout':
+                return {
+                    key: 'breakout',
+                    label: 'Showing: Breakout Score',
+                    accessor: (p) => breakoutGetter(p),
+                    format: (v) => `${v.toFixed(1)}`
+                };
+            default:
+                return {
+                    key: 'impact',
+                    label: 'Showing: Player Value',
+                    accessor: (p) => this.getPlayerValue(p),
+                    format: (v) => `${v.toFixed(1)}`
+                };
+        }
     }
 
     renderPlayers() {
@@ -847,6 +1158,10 @@ class PlayerCardsApp {
     drawValueDistributionChart() {
         const canvas = document.getElementById('valueDistributionChart');
         if (!canvas) return;
+        const metricLabelEl = document.getElementById('distributionMetricLabel');
+        const config = this.getDistributionMetricConfig();
+        this.distributionMetricConfig = config;
+        if (metricLabelEl) metricLabelEl.textContent = config.label;
 
         const countEl = document.getElementById('distributionCount');
         const total = this.filteredPlayers.length;
@@ -857,12 +1172,13 @@ class PlayerCardsApp {
         const rect = canvas.getBoundingClientRect();
         const dpr = window.devicePixelRatio || 1;
         const cssWidth = Math.max(300, Math.floor(rect.width || 860));
-        const cssHeight = Math.max(130, Math.floor(rect.height || 160));
+        const cssHeight = Math.max(150, Math.floor(rect.height || 180));
         canvas.width = Math.floor(cssWidth * dpr);
         canvas.height = Math.floor(cssHeight * dpr);
         const ctx = canvas.getContext('2d');
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, cssWidth, cssHeight);
+        this.distributionPoints = [];
 
         // Background
         const bg = ctx.createLinearGradient(0, 0, cssWidth, cssHeight);
@@ -871,10 +1187,10 @@ class PlayerCardsApp {
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, cssWidth, cssHeight);
 
-        const pad = { left: 44, right: 20, top: 20, bottom: 28 };
+        const pad = { left: 44, right: 20, top: 18, bottom: 30 };
         const plotW = Math.max(1, cssWidth - pad.left - pad.right);
-        const centerY = Math.round((cssHeight - pad.top - pad.bottom) * 0.52 + pad.top);
-        const amp = Math.max(14, Math.floor((cssHeight - pad.top - pad.bottom) * 0.38));
+        const centerY = Math.round((cssHeight - pad.top - pad.bottom) * 0.50 + pad.top);
+        const amp = Math.max(20, Math.floor((cssHeight - pad.top - pad.bottom) * 0.48));
 
         // Axis
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
@@ -892,15 +1208,31 @@ class PlayerCardsApp {
             return;
         }
 
+        if (!config.accessor) {
+            ctx.fillStyle = 'rgba(255,255,255,0.82)';
+            ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Choose a metric sort to render distribution nodes', cssWidth / 2, centerY - 8);
+            return;
+        }
+
         const values = this.filteredPlayers
-            .map(p => this.getPlayerValue(p))
+            .map(p => config.accessor(p))
             .filter(v => Number.isFinite(v));
         if (!values.length) return;
 
+        const xTransform = typeof config.transform === 'function' ? config.transform : (v) => v;
+        const transformedValues = values.map(v => xTransform(v));
         const minV = Math.min(...values);
         const maxV = Math.max(...values);
+        const minT = Math.min(...transformedValues);
+        const maxT = Math.max(...transformedValues);
         const span = Math.max(0.0001, maxV - minV);
-        const toX = (v) => pad.left + ((v - minV) / span) * plotW;
+        const spanT = Math.max(0.0001, maxT - minT);
+        const toX = (v) => {
+            const tv = xTransform(v);
+            return pad.left + ((tv - minT) / spanT) * plotW;
+        };
         const q = (arr, p) => {
             const s = [...arr].sort((a, b) => a - b);
             const idx = Math.min(s.length - 1, Math.max(0, Math.floor(p * (s.length - 1))));
@@ -922,22 +1254,54 @@ class PlayerCardsApp {
             ctx.moveTo(x, centerY - amp - 7);
             ctx.lineTo(x, centerY + amp + 7);
             ctx.stroke();
-            ctx.fillText(t.toFixed(1), x, cssHeight - 8);
+            ctx.fillText((config.format ? config.format(t) : t.toFixed(1)), x, cssHeight - 8);
         }
 
-        // Beeswarm-like mirrored jitter by x-bins.
+        // Beeswarm-like mirrored jitter by x-bins with adaptive spacing.
+        // Dense metrics (e.g. Wins Added around 0) can cluster heavily, so we:
+        // 1) increase bin resolution, 2) adapt vertical layer spacing,
+        // 3) add small deterministic x-jitter to avoid rectangular blocks.
+        const binCount = Math.max(48, Math.min(96, Math.floor(plotW / 11)));
         const bins = new Map();
-        const points = this.filteredPlayers.map((p, idx) => {
-            const v = this.getPlayerValue(p);
+        const rawPoints = this.filteredPlayers.map((p, idx) => {
+            const v = config.accessor(p);
             const x = toX(v);
-            const b = Math.floor(((x - pad.left) / plotW) * 42);
-            const key = Math.max(0, Math.min(41, b));
+            const b = Math.floor(((x - pad.left) / plotW) * binCount);
+            const key = Math.max(0, Math.min(binCount - 1, b));
             const stack = bins.get(key) || 0;
             bins.set(key, stack + 1);
-            const layer = Math.floor(stack / 2) + 1;
-            const sign = stack % 2 === 0 ? -1 : 1;
-            const y = centerY + sign * Math.min(amp, layer * 3.3);
-            return { player: p, x, y, v, idx };
+            return { player: p, x, v, idx, key, stack };
+        });
+
+        let maxLayer = 1;
+        for (const c of bins.values()) {
+            maxLayer = Math.max(maxLayer, Math.floor((c - 1) / 2) + 1);
+        }
+        const layerStep = Math.max(2.0, Math.min(4.8, amp / (maxLayer + 1)));
+
+        const points = rawPoints.map((pt) => {
+            const count = bins.get(pt.key) || 1;
+            const layer = Math.floor(pt.stack / 2) + 1;
+            const sign = pt.stack % 2 === 0 ? -1 : 1;
+            const rawOffset = layer * layerStep;
+            // Use tanh squash instead of hard clipping to prevent flat "box" edges.
+            const yOffset = amp * Math.tanh(rawOffset / Math.max(amp, 1));
+
+            // Small deterministic x-jitter for dense bins to improve distinguishability.
+            const denseFactor = this.clampNum((count - 6) / 26, 0, 1);
+            const phase = (Math.floor(pt.stack / 2) % 3) + 1;
+            const seed = (((pt.idx * 1103515245 + 12345) >>> 16) & 1023) / 1023; // deterministic 0..1
+            const jitterMag = (0.35 + 0.95 * denseFactor) * phase;
+            const jitterSign = pt.stack % 2 === 0 ? -1 : 1;
+            const xJitter = jitterSign * jitterMag + (seed - 0.5) * 0.65;
+
+            return {
+                player: pt.player,
+                x: pt.x + xJitter,
+                y: centerY + sign * yOffset,
+                v: pt.v,
+                idx: pt.idx
+            };
         });
 
         points.sort((a, b) => a.v - b.v);
@@ -952,22 +1316,82 @@ class PlayerCardsApp {
             ctx.arc(pt.x, pt.y, 2.7, 0, Math.PI * 2);
             ctx.fill();
         }
+
+        this.distributionPoints = points.map(pt => ({
+            x: pt.x,
+            y: pt.y,
+            radius: 4.5,
+            name: pt.player?.player?.name || 'Unknown',
+            value: pt.v
+        }));
+    }
+
+    setupDistributionInteractions() {
+        const canvas = document.getElementById('valueDistributionChart');
+        const tooltip = document.getElementById('distributionTooltip');
+        if (!canvas || !tooltip) return;
+
+        const hideTooltip = () => {
+            tooltip.style.display = 'none';
+        };
+
+        canvas.addEventListener('mouseleave', hideTooltip);
+        canvas.addEventListener('mousemove', (e) => {
+            if (!this.distributionPoints?.length || !this.distributionMetricConfig?.format) {
+                hideTooltip();
+                return;
+            }
+            const rect = canvas.getBoundingClientRect();
+            const px = e.clientX - rect.left;
+            const py = e.clientY - rect.top;
+            let hit = null;
+            let bestD2 = Number.POSITIVE_INFINITY;
+            for (const p of this.distributionPoints) {
+                const dx = px - p.x;
+                const dy = py - p.y;
+                const d2 = dx * dx + dy * dy;
+                if (d2 <= (p.radius * p.radius) && d2 < bestD2) {
+                    bestD2 = d2;
+                    hit = p;
+                }
+            }
+            if (!hit) {
+                hideTooltip();
+                return;
+            }
+
+            tooltip.innerHTML = `<strong>${hit.name}</strong><br>${this.distributionMetricConfig.label.replace('Showing: ', '')}: ${this.distributionMetricConfig.format(hit.value)}`;
+            tooltip.style.display = 'block';
+            // Edge-aware positioning so tooltip never gets clipped at chart boundaries.
+            const tipW = tooltip.offsetWidth || 160;
+            const tipH = tooltip.offsetHeight || 44;
+            let left = px + 10;
+            let top = py + 10;
+
+            if (left + tipW > rect.width - 6) left = px - tipW - 10;
+            if (left < 6) left = 6;
+            if (top + tipH > rect.height - 6) top = py - tipH - 10;
+            if (top < 6) top = 6;
+
+            tooltip.style.left = `${left}px`;
+            tooltip.style.top = `${top}px`;
+            tooltip.style.display = 'block';
+        });
     }
 
     createPlayerCard(player) {
         // Extract data from data_sample format
         const playerValue = this.getPlayerValue(player);
         const impactClass = playerValue >= 60 ? 'positive' : (playerValue <= 40 ? 'negative' : '');
+        const evalOut = this.evaluateBreakoutScenario(player);
+        const mechanism = this.computeMechanismMetrics(player, evalOut);
         
         const trustScore = player.v1_1_enhancements?.trust_assessment?.score || 0;
-        const trustLevel = player.v1_1_enhancements?.trust_assessment?.level || 'low';
-        
-        const winsAdded = player.valuation?.impact?.wins_added || 0;
-        
-        const points = player.performance?.traditional?.points_per_game || 0;
-        const assists = player.performance?.traditional?.assists_per_game || 0;
-        const rebounds = player.performance?.traditional?.rebounds_per_game || 0;
-        
+        const fitScorePct = (evalOut.fitScenario?.fit_score || 0) * 100;
+        const fitPercentile = this.getTeamFitPercentile(player);
+        const breakoutScore = evalOut.breakoutScore || 0;
+        const scenarioSummary = this.buildCardScenarioSummary(player, evalOut, mechanism);
+
         // Get usage rate (stored as decimal, e.g., 0.2 = 20%)
         const usageRate = player.performance?.advanced?.usage_rate ?? 0;
         const usageDisplay = (usageRate * 100).toFixed(1) + '%';
@@ -976,6 +1400,9 @@ class PlayerCardsApp {
         const tags = [];
         if (trustScore >= 75) tags.push('<span class="tag high-impact">High Trust</span>');
         if (playerValue >= 70) tags.push('<span class="tag high-impact">High Value</span>');
+        if (mechanism.portability_score >= 0.62) tags.push('<span class="tag high-portability">Portable Defense</span>');
+        if ((evalOut.fitScenario?.signal_strength || 'weak') === 'strong') tags.push('<span class="tag high-impact">Strong Fit Signal</span>');
+        if (evalOut.genuineBreakout) tags.push('<span class="tag high-impact">Genuine Breakout Signal</span>');
         
         // High usage tag (usage > 25%)
         if (usageRate >= 0.25) tags.push('<span class="tag breakout">High Usage</span>');
@@ -1004,18 +1431,29 @@ class PlayerCardsApp {
                             ${this.createPercentileIndicator(playerValue, 0, 100)}
                         </div>
                         <div class="metric">
-                            <div class="metric-label">Usage</div>
-                            <div class="metric-value">${usageDisplay}</div>
+                            <div class="metric-label">Breakout Score</div>
+                            <div class="metric-value">${breakoutScore.toFixed(1)}</div>
                         </div>
                         <div class="metric">
-                            <div class="metric-label">Points</div>
-                            <div class="metric-value">${points.toFixed(1)}</div>
+                            <div class="metric-label">Team Fit Context</div>
+                            <div class="metric-value">${fitScorePct.toFixed(0)}% <span style="font-size:0.72rem;color:#6b7280;">(p${fitPercentile})</span></div>
                         </div>
                         <div class="metric">
-                            <div class="metric-label">Trust Score</div>
-                            <div class="metric-value">${trustScore.toFixed(0)}</div>
-                            ${this.createPercentileIndicator(trustScore, 0, 100)}
+                            <div class="metric-label">Suppression Relief</div>
+                            <div class="metric-value">${(mechanism.suppression_relief * 100).toFixed(0)}%</div>
                         </div>
+                        <div class="metric">
+                            <div class="metric-label">Portability</div>
+                            <div class="metric-value">${(mechanism.portability_score * 100).toFixed(0)}%</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Clamp Pressure</div>
+                            <div class="metric-value">${(mechanism.clamp_severity * 100).toFixed(0)}%</div>
+                        </div>
+                    </div>
+
+                    <div class="card-mechanism-note">
+                        ${scenarioSummary}
                     </div>
 
                     ${tags.length > 0 ? `<div class="tags">${tags.join('')}</div>` : ''}
@@ -1105,6 +1543,8 @@ class PlayerCardsApp {
         const perf = player.performance || {};
         const trad = perf.traditional || {};
         const adv = perf.advanced || {};
+        const evalOut = this.evaluateBreakoutScenario(player);
+        const mechanism = this.computeMechanismMetrics(player, evalOut);
         const trust = player.v1_1_enhancements?.trust_assessment || {};
         const uncertainty = player.v1_1_enhancements?.uncertainty_estimates || {};
         const constraints = player.v1_1_enhancements?.scenario_constraints || {};
@@ -1158,131 +1598,7 @@ class PlayerCardsApp {
 
                 <!-- Metrics Tab -->
                 <div class="tab-content" id="tab-metrics">
-                    <!-- Performance Metrics -->
-                    <div class="detail-section">
-                        <h3>Performance Metrics</h3>
-                        <div class="detail-grid">
-                            ${this.formatMetricWithPercentile(player, 'Player Value', this.getPlayerValue(player).toFixed(1), 'player_value')}
-                            ${this.formatMetricWithPercentile(player, 'Points Per Game', (trad.points_per_game || 0).toFixed(1), 'points')}
-                            ${this.formatMetricWithPercentile(player, 'Assists Per Game', (trad.assists_per_game || 0).toFixed(1), 'assists')}
-                            ${this.formatMetricWithPercentile(player, 'Rebounds Per Game', (trad.rebounds_per_game || 0).toFixed(1), 'rebounds')}
-                        </div>
-                    </div>
-
-                    ${player.possession_decomposition ? `
-                    <!-- Advanced Impact Metrics -->
-                    <div class="detail-section">
-                        <h3>Advanced Impact Analysis</h3>
-                        <div class="impact-explanation">
-                            <p>${player.possession_decomposition.interpretation_summary || 'Advanced possession-based impact analysis'}</p>
-                        </div>
-                        <div class="detail-grid">
-                            <div class="detail-item">
-                                <div class="detail-item-label">Intrinsic Offense</div>
-                                <div class="detail-item-value">${(player.possession_decomposition.intrinsic_offense || 0).toFixed(1)}</div>
-                                <div class="detail-item-note">Raw offensive ability per 100 poss</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-item-label">Adjusted Value</div>
-                                <div class="detail-item-value">${(player.possession_decomposition.adjusted_value || 0).toFixed(1)}</div>
-                                <div class="detail-item-note">Context-adjusted impact</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-item-label">Opponent Defense</div>
-                                <div class="detail-item-value">${((player.possession_decomposition.opponent_defense_context || 0) * 100).toFixed(0)}%</div>
-                                <div class="detail-item-note">${(player.possession_decomposition.opponent_defense_context || 0) > 0.5 ? 'Easier defenses' : 'Tougher defenses'}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-item-label">Team Context</div>
-                                <div class="detail-item-value">${(player.possession_decomposition.team_context_adjustment || 0) > 0 ? '+' : ''}${((player.possession_decomposition.team_context_adjustment || 0) * 100).toFixed(1)}%</div>
-                                <div class="detail-item-note">${(player.possession_decomposition.team_context_adjustment || 0) > 0
-                                    ? `Team environment boosts expected output by ${((player.possession_decomposition.team_context_adjustment || 0) * 100).toFixed(1)}%`
-                                    : (player.possession_decomposition.team_context_adjustment || 0) < 0
-                                        ? `Team environment suppresses expected output by ${Math.abs((player.possession_decomposition.team_context_adjustment || 0) * 100).toFixed(1)}%`
-                                        : 'Neutral team context (no material boost or drag)'
-                                }</div>
-                            </div>
-                        </div>
-                    </div>
-                    ` : ''}
-
-                    <!-- Shot Profile -->
-                    <div class="detail-section">
-                        <h3>Shot Profile</h3>
-                        <div class="detail-grid">
-                            ${this.formatMetricWithPercentile(player, 'Rim Frequency', ((player.shot_profile?.rim_frequency || 0) * 100).toFixed(0) + '%', 'rim_freq')}
-                            ${this.formatMetricWithPercentile(player, 'Three-Point Frequency', ((player.shot_profile?.three_point_frequency || 0) * 100).toFixed(0) + '%', 'three_freq')}
-                            ${this.formatMetricWithPercentile(player, 'FG%', ((trad.field_goal_pct || 0) * 100).toFixed(1) + '%', 'fg_pct')}
-                            ${this.formatMetricWithPercentile(player, '3P%', ((trad.three_point_pct || 0) * 100).toFixed(1) + '%', 'three_pct')}
-                        </div>
-                    </div>
-
-                    <!-- Creation Profile -->
-                    <div class="detail-section">
-                        <h3>Creation Profile</h3>
-                        <div class="detail-grid">
-                            ${this.formatMetricWithPercentile(player, 'Drives Per Game', (player.creation_profile?.drives_per_game || 0).toFixed(1), 'drives')}
-                            ${this.formatMetricWithPercentile(player, 'Paint Touches', (player.creation_profile?.paint_touches_per_game || 0).toFixed(1), 'paint_touches')}
-                            ${this.formatMetricWithPercentile(player, 'Assisted Rate', ((player.creation_profile?.assisted_rate || 0) * 100).toFixed(0) + '%', 'assisted_rate')}
-                            ${this.formatMetricWithPercentile(player, 'Usage Rate', ((adv.usage_rate ?? 0) * 100).toFixed(1) + '%', 'usage')}
-                        </div>
-                    </div>
-
-                    <!-- Defense Assessment -->
-                    <div class="detail-section">
-                        <h3>Defense Assessment</h3>
-                        <div class="detail-grid">
-                            ${this.formatMetricWithPercentile(player, 'Steals Per Game', (trad.steals_per_game || 0).toFixed(1), 'steals')}
-                            ${this.formatMetricWithPercentile(player, 'Blocks Per Game', (trad.blocks_per_game || 0).toFixed(1), 'blocks')}
-                            ${this.formatMetricWithPercentile(player, 'Defensive Rating', (player.defense_assessment?.estimated_metrics?.defensive_rating || 0).toFixed(1), 'def_rating')}
-                            <div class="detail-item">
-                                <div class="detail-item-label">Observability</div>
-                                <div class="detail-item-value">${(player.defense_assessment?.visibility?.observability_level || 'N/A').toUpperCase()}</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    ${valuation ? `
-                    <!-- Valuation -->
-                    <div class="detail-section">
-                        <h3>Valuation & Contract</h3>
-                        <div class="detail-grid">
-                            ${this.formatMetricWithPercentile(player, 'Wins Added', valuation.impact.wins_added.toFixed(1), 'wins_added')}
-                            ${this.formatMetricWithPercentile(player, 'Trade Value (Base)', valuation.trade_value.base.toFixed(1) + 'M', 'trade_value')}
-                            <div class="detail-item">
-                                <div class="detail-item-label">Aging Phase</div>
-                                <div class="detail-item-value">${this.formatAgingPhase(valuation.aging.current_phase)}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-item-label">Peak Age</div>
-                                <div class="detail-item-value">${valuation.aging.peak_age.toFixed(1)}</div>
-                            </div>
-                        </div>
-                    </div>
-                    ` : ''}
-
-                    <!-- Trust & Uncertainty -->
-                    <div class="detail-section">
-                        <h3>Data Quality & Trust</h3>
-                        <div class="detail-grid">
-                            <div class="detail-item">
-                                <div class="detail-item-label">Trust Score</div>
-                                <div class="detail-item-value">${(trust.score || 0).toFixed(0)}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-item-label">Trust Level</div>
-                                <div class="detail-item-value">${(trust.level || 'N/A').toUpperCase()}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-item-label">Overall Uncertainty</div>
-                                <div class="detail-item-value">${((uncertainty.overall_uncertainty || 0) * 100).toFixed(1)}%</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-item-label">Confidence Level</div>
-                                <div class="detail-item-value">${(uncertainty.confidence_level || 'N/A').toUpperCase()}</div>
-                            </div>
-                        </div>
-                    </div>
+                    ${this.renderMetricsTab(player, evalOut, mechanism, valuation, trad, adv, trust, uncertainty)}
                 </div>
 
                 <!-- Archetype & Similarity Tab -->
@@ -1346,6 +1662,146 @@ class PlayerCardsApp {
                     ${this.generateBreakoutScenario(player, constraints, trad, adv)}
                 </div>
             </div>
+        `;
+    }
+
+    renderMetricsTab(player, evalOut, mechanism, valuation, trad, adv, trust, uncertainty) {
+        const fit = evalOut.fitScenario || {};
+        const fitPercentile = this.getTeamFitPercentile(player);
+        const usage = ((adv.usage_rate ?? 0) * 100).toFixed(1);
+        const mechanismRows = [
+            {
+                label: 'Suppression Relief',
+                value: `${(mechanism.suppression_relief * 100).toFixed(0)}%`,
+                meaning: 'Estimated value unlocked when role + scheme friction is removed.',
+                interpretation: mechanism.suppression_relief >= 0.6 ? 'High unlock potential in better context.' : (mechanism.suppression_relief < 0.4 ? 'Limited latent value unlock.' : 'Moderate contextual unlock.')
+            },
+            {
+                label: 'Spacing Gravity Skill',
+                value: `${(mechanism.spacing_gravity_skill * 100).toFixed(0)}%`,
+                meaning: 'Off-ball defensive pull generated by shooting profile/deployment.',
+                interpretation: mechanism.spacing_gravity_skill >= 0.6 ? 'Defenses must account for this spacing threat.' : 'Spacing impact is currently secondary.'
+            },
+            {
+                label: 'Defense Portability',
+                value: `${(mechanism.portability_score * 100).toFixed(0)}%`,
+                meaning: 'How well defensive role survives matchup targeting and scheme shifts.',
+                interpretation: mechanism.portability_score >= 0.6 ? 'Playoff-resilient defensive translation.' : (mechanism.portability_score < 0.45 ? 'Likely requires tactical protection.' : 'Situationally stable.')
+            },
+            {
+                label: 'Clamp Severity',
+                value: `${(mechanism.clamp_severity * 100).toFixed(0)}%`,
+                meaning: 'Constraint pressure from role/usage/minutes feasibility limits.',
+                interpretation: mechanism.clamp_severity <= 0.4 ? 'Scenario is loosely constrained.' : (mechanism.clamp_severity >= 0.65 ? 'Projection heavily constrained by feasibility.' : 'Moderate constraint pressure.')
+            },
+            {
+                label: 'Prior Disagreement',
+                value: `${(mechanism.impact_prior_disagreement * 100).toFixed(0)}%`,
+                meaning: 'Distance between internal value signals and external impact priors.',
+                interpretation: mechanism.impact_prior_disagreement <= 0.35 ? 'Signals align well with priors.' : 'Disagreement requires caution and review.'
+            },
+            {
+                label: 'Comp Density',
+                value: `${(mechanism.comp_density * 100).toFixed(0)}%`,
+                meaning: 'How dense/anchored this profile is among similar players.',
+                interpretation: mechanism.comp_density < 0.5 ? 'Unique profile; wider uncertainty band.' : 'Comparable archetype support is decent.'
+            }
+        ];
+
+        return `
+            <div class="detail-section">
+                <h3>Mechanism Dashboard</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-item-label">Player Value</div>
+                        <div class="detail-item-value">${this.getPlayerValue(player).toFixed(1)}</div>
+                        <div class="detail-item-note">Uniformly scaled intrinsic value proxy (EPM + LEBRON blend).</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Breakout Score</div>
+                        <div class="detail-item-value">${evalOut.breakoutScore.toFixed(1)}</div>
+                        <div class="detail-item-note">Context-aware breakout likelihood, calibrated by role constraints.</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Team Fit Context</div>
+                        <div class="detail-item-value">${((fit.fit_score || 0) * 100).toFixed(0)}% (p${fitPercentile})</div>
+                        <div class="detail-item-note">How strongly team tactical needs match this player profile; percentile is league-relative.</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Scenario Confidence</div>
+                        <div class="detail-item-value">${(mechanism.confidence * 100).toFixed(0)}%</div>
+                        <div class="detail-item-note">Confidence governance combining data quality, comp density, and agreement.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>What The Complex Metrics Mean</h3>
+                <div class="mechanism-explainer-grid">
+                    ${mechanismRows.map(row => `
+                        <div class="mechanism-explainer-card">
+                            <div class="mechanism-explainer-head">
+                                <div class="mechanism-explainer-label">${row.label}</div>
+                                <div class="mechanism-explainer-value">${row.value}</div>
+                            </div>
+                            <div class="mechanism-explainer-meaning">${row.meaning}</div>
+                            <div class="mechanism-explainer-read">${row.interpretation}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>Observed Box & Role Context</h3>
+                <div class="detail-grid">
+                    ${this.formatMetricWithPercentile(player, 'Usage Rate', usage + '%', 'usage')}
+                    ${this.formatMetricWithPercentile(player, 'Points Per Game', (trad.points_per_game || 0).toFixed(1), 'points')}
+                    ${this.formatMetricWithPercentile(player, 'Assists Per Game', (trad.assists_per_game || 0).toFixed(1), 'assists')}
+                    ${this.formatMetricWithPercentile(player, 'Rebounds Per Game', (trad.rebounds_per_game || 0).toFixed(1), 'rebounds')}
+                    ${this.formatMetricWithPercentile(player, 'Rim Frequency', ((player.shot_profile?.rim_frequency || 0) * 100).toFixed(0) + '%', 'rim_freq')}
+                    ${this.formatMetricWithPercentile(player, 'Three-Point Frequency', ((player.shot_profile?.three_point_frequency || 0) * 100).toFixed(0) + '%', 'three_freq')}
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>Data Governance</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-item-label">Trust Score</div>
+                        <div class="detail-item-value">${(trust.score || 0).toFixed(0)}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Trust Level</div>
+                        <div class="detail-item-value">${(trust.level || 'N/A').toUpperCase()}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Overall Uncertainty</div>
+                        <div class="detail-item-value">${((uncertainty.overall_uncertainty || 0) * 100).toFixed(1)}%</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Signal Strength</div>
+                        <div class="detail-item-value">${(fit.signal_strength || 'weak').toUpperCase()}</div>
+                    </div>
+                </div>
+            </div>
+
+            ${valuation ? `
+                <div class="detail-section">
+                    <h3>Valuation Context</h3>
+                    <div class="detail-grid">
+                        ${this.formatMetricWithPercentile(player, 'Wins Added', valuation.impact.wins_added.toFixed(1), 'wins_added')}
+                        ${this.formatMetricWithPercentile(player, 'Trade Value (Base)', valuation.trade_value.base.toFixed(1) + 'M', 'trade_value')}
+                        <div class="detail-item">
+                            <div class="detail-item-label">Aging Phase</div>
+                            <div class="detail-item-value">${this.formatAgingPhase(valuation.aging.current_phase)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-item-label">Peak Age</div>
+                            <div class="detail-item-value">${valuation.aging.peak_age.toFixed(1)}</div>
+                        </div>
+                    </div>
+                </div>
+            ` : ''}
         `;
     }
 
@@ -2251,6 +2707,7 @@ class PlayerCardsApp {
 
     generateBreakoutScenario(player, constraints, trad, adv) {
         const evalOut = this.evaluateBreakoutScenario(player);
+        const fitPercentile = this.getTeamFitPercentile(player);
         const {
             fitScenario,
             age,
@@ -2269,10 +2726,15 @@ class PlayerCardsApp {
             minutesDelta,
             maxUsageIncrease,
             maxMinutesIncrease,
+            contributionStrength,
+            contributionProfile,
+            mechanism,
             breakoutScore,
             likelihood,
             likelihoodClass,
-            likelihoodPct
+            likelihoodPct,
+            breakoutLikelihoodScore,
+            genuineBreakout
         } = evalOut;
 
         const usageImpactWeight = this.clampNum((usageDelta * 100) / 12, 0.1, 1.0);
@@ -2289,6 +2751,8 @@ class PlayerCardsApp {
                         <div class="likelihood-label">Breakout Likelihood</div>
                         <div class="likelihood-value">${likelihood}</div>
                         <div class="likelihood-label">Score: ${breakoutScore.toFixed(1)}</div>
+                        <div class="likelihood-label">Likelihood Signal: ${breakoutLikelihoodScore.toFixed(0)}</div>
+                        <div class="likelihood-label">${genuineBreakout ? 'Genuine Breakout Signal: YES' : 'Genuine Breakout Signal: NO'}</div>
                         <div class="likelihood-bar">
                             <div class="likelihood-fill" style="width: ${likelihoodPct}%"></div>
                         </div>
@@ -2329,6 +2793,87 @@ class PlayerCardsApp {
                             <span class="constraint-text">Next best fits: ${fitScenario.alternatives.slice(1).map(a => `${a.team} (${(a.fit_score * 100).toFixed(0)}%)`).join(', ')}</span>
                         </div>
                     ` : ''}
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>Team Contribution Channels (X / Y / Z)</h3>
+                <div class="factors-grid">
+                    ${contributionProfile.slice(0, 3).map((c, i) => `
+                        <div class="factor-item ${c.value >= 0.62 ? 'positive' : c.value < 0.42 ? 'negative' : 'neutral'}">
+                            <div class="factor-label">Channel ${i + 1}: ${c.label}</div>
+                            <div class="factor-value">${(c.value * 100).toFixed(0)}%</div>
+                            <div class="factor-assessment">${c.note}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="constraints-list" style="margin-top: 0.75rem;">
+                    <div class="constraint-item">
+                        <span class="constraint-icon">🧭</span>
+                        <span class="constraint-text">Composite contribution strength: <strong>${(contributionStrength * 100).toFixed(0)}%</strong> for ${fitScenario.team === 'No Clear Team Edge' ? 'exploratory context' : fitScenario.team}.</span>
+                    </div>
+                    <div class="constraint-item">
+                        <span class="constraint-icon">🛡️</span>
+                        <span class="constraint-text">Portability ${(mechanism.portability_score * 100).toFixed(0)}% and clamp pressure ${(mechanism.clamp_severity * 100).toFixed(0)}% shape whether this value translates in-game.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>Mechanism Trace (Why, Not Just What)</h3>
+                <div class="factors-grid">
+                    <div class="factor-item ${mechanism.suppression_relief >= 0.6 ? 'positive' : mechanism.suppression_relief < 0.4 ? 'negative' : 'neutral'}">
+                        <div class="factor-label">Suppression Relief</div>
+                        <div class="factor-value">${(mechanism.suppression_relief * 100).toFixed(0)}%</div>
+                        <div class="factor-assessment">Expected role unlock from better scheme + usage fit.</div>
+                    </div>
+                    <div class="factor-item ${mechanism.spacing_gravity_skill >= 0.6 ? 'positive' : mechanism.spacing_gravity_skill < 0.4 ? 'negative' : 'neutral'}">
+                        <div class="factor-label">Spacing Gravity Skill</div>
+                        <div class="factor-value">${(mechanism.spacing_gravity_skill * 100).toFixed(0)}%</div>
+                        <div class="factor-assessment">How much off-ball spacing pressure this player creates.</div>
+                    </div>
+                    <div class="factor-item ${mechanism.portability_score >= 0.6 ? 'positive' : mechanism.portability_score < 0.45 ? 'negative' : 'neutral'}">
+                        <div class="factor-label">Defense Portability</div>
+                        <div class="factor-value">${(mechanism.portability_score * 100).toFixed(0)}%</div>
+                        <div class="factor-assessment">Survivability across matchup targeting and switch stress.</div>
+                    </div>
+                    <div class="factor-item ${mechanism.clamp_severity <= 0.4 ? 'positive' : mechanism.clamp_severity >= 0.65 ? 'negative' : 'neutral'}">
+                        <div class="factor-label">Clamp Severity</div>
+                        <div class="factor-value">${(mechanism.clamp_severity * 100).toFixed(0)}%</div>
+                        <div class="factor-assessment">How hard feasibility constraints limit scenario upside.</div>
+                    </div>
+                    <div class="factor-item ${mechanism.impact_prior_disagreement <= 0.35 ? 'positive' : mechanism.impact_prior_disagreement >= 0.6 ? 'negative' : 'neutral'}">
+                        <div class="factor-label">Prior Disagreement</div>
+                        <div class="factor-value">${(mechanism.impact_prior_disagreement * 100).toFixed(0)}%</div>
+                        <div class="factor-assessment">Lower is better; high disagreement reduces claim strength.</div>
+                    </div>
+                    <div class="factor-item ${mechanism.comp_density >= 0.65 ? 'positive' : mechanism.comp_density < 0.5 ? 'negative' : 'neutral'}">
+                        <div class="factor-label">Comp Density</div>
+                        <div class="factor-value">${(mechanism.comp_density * 100).toFixed(0)}%</div>
+                        <div class="factor-assessment">Lower density means more uniqueness and wider uncertainty.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>Causal Chain: Why This Breakout Happens</h3>
+                <div class="constraints-list">
+                    <div class="constraint-item">
+                        <span class="constraint-icon">1</span>
+                        <span class="constraint-text"><strong>Skill signal:</strong> spacing gravity ${(mechanism.spacing_gravity_skill * 100).toFixed(0)}% + portability ${(mechanism.portability_score * 100).toFixed(0)}% create scalable role fit.</span>
+                    </div>
+                    <div class="constraint-item">
+                        <span class="constraint-icon">2</span>
+                        <span class="constraint-text"><strong>Context translation:</strong> suppression relief ${(mechanism.suppression_relief * 100).toFixed(0)}% implies this team can convert hidden skills into usable possessions.</span>
+                    </div>
+                    <div class="constraint-item">
+                        <span class="constraint-icon">3</span>
+                        <span class="constraint-text"><strong>Feasibility check:</strong> clamp pressure ${(mechanism.clamp_severity * 100).toFixed(0)}% limits upside if role/minutes/usage caps are tight.</span>
+                    </div>
+                    <div class="constraint-item">
+                        <span class="constraint-icon">4</span>
+                        <span class="constraint-text"><strong>Claim strength:</strong> prior disagreement ${(mechanism.impact_prior_disagreement * 100).toFixed(0)}% and confidence ${(mechanism.confidence * 100).toFixed(0)}% determine reliability of this scenario.</span>
+                    </div>
                 </div>
             </div>
 
@@ -2462,8 +3007,8 @@ class PlayerCardsApp {
 
                     <div class="factor-item ${fitScenario.fit_score >= 0.09 ? 'positive' : fitScenario.fit_score >= 0.06 ? 'neutral' : 'negative'}">
                         <div class="factor-label">Team Fit Context</div>
-                        <div class="factor-value">${(fitScenario.fit_score * 100).toFixed(0)}%</div>
-                        <div class="factor-assessment">${fitScenario.fit_score >= 0.09 ? 'Amazing fit path' : fitScenario.fit_score >= 0.06 ? 'Good fit path' : 'Weak fit path'}</div>
+                        <div class="factor-value">${(fitScenario.fit_score * 100).toFixed(0)}% (p${fitPercentile})</div>
+                        <div class="factor-assessment">${fitScenario.fit_score >= 0.09 ? 'Amazing fit path' : fitScenario.fit_score >= 0.06 ? 'Good fit path' : 'Weak fit path'} • relative league rank p${fitPercentile}</div>
                     </div>
 
                     <div class="factor-item ${fitScenario.confidence > 0.72 ? 'positive' : fitScenario.confidence < 0.58 ? 'negative' : 'neutral'}">

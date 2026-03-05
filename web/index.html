@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NBA Player Cards</title>
-    <link rel="stylesheet" href="styles.css?v=5">
+    <link rel="stylesheet" href="styles.css?v=9">
 </head>
 <body>
     <div id="app">
@@ -19,9 +19,11 @@
                     <div class="header-distribution-panel">
                         <div class="distribution-title-row">
                             <h3>Player Value Distribution</h3>
+                            <span id="distributionMetricLabel" class="distribution-metric-label">Showing: Player Value</span>
                             <span id="distributionCount" class="distribution-count">0 players</span>
                         </div>
                         <canvas id="valueDistributionChart" width="860" height="180" aria-label="Player value distribution chart"></canvas>
+                        <div id="distributionTooltip" class="distribution-tooltip" style="display:none;"></div>
                     </div>
                 </div>
             </div>
@@ -63,6 +65,7 @@
                     <select id="sortBy" class="filter-select">
                         <option value="name">Name</option>
                         <option value="impact">Player Value (High to Low)</option>
+                        <option value="team_fit">Team Fit (High to Low)</option>
                         <option value="age">Age (Young to Old)</option>
                         <option value="wins">Wins Added</option>
                         <option value="breakout">Breakout Score</option>
@@ -99,6 +102,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=21"></script>
+    <script src="app.js?v=32"></script>
 </body>
 </html>
