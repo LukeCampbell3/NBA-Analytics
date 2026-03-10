@@ -532,6 +532,287 @@ body.theme-dark .player-card:hover {
     z-index: 1;
 }
 
+.trading-card {
+    border-radius: 26px;
+    border: 2px solid rgba(239, 68, 68, 0.78);
+    background: linear-gradient(180deg, #fef2f2 0%, #ffffff 100%);
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22);
+}
+
+body.theme-dark .trading-card {
+    border-color: rgba(248, 113, 113, 0.8);
+    background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+}
+
+.trading-hero {
+    min-height: 560px;
+    padding: 0;
+    border-radius: 24px;
+    overflow: hidden;
+}
+
+.trading-hero .type-card-headshot {
+    opacity: 0.95;
+    object-position: center top;
+    filter: saturate(1.08) contrast(1.02);
+}
+
+.trading-hero .type-card-team-logo {
+    opacity: 0.16;
+}
+
+.trading-topline {
+    position: absolute;
+    top: 0.7rem;
+    left: 0.85rem;
+    right: 0.85rem;
+    z-index: 3;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(59, 130, 246, 0.45);
+    border-radius: 14px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.2);
+    padding: 0.35rem 0.8rem 0.38rem;
+}
+
+.trading-name {
+    font-family: 'Barlow Condensed', 'Manrope', sans-serif;
+    color: #0284c7;
+    font-size: 2.25rem;
+    line-height: 1;
+    letter-spacing: 0.03em;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.trading-position-ribbon {
+    position: absolute;
+    top: 4rem;
+    left: -1rem;
+    z-index: 4;
+    transform: rotate(-12deg);
+    background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+    color: #fff7ed;
+    font-family: 'Barlow Condensed', 'Manrope', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.62rem 1.4rem;
+    border-radius: 10px;
+    box-shadow: 0 12px 24px rgba(131, 24, 67, 0.45);
+}
+
+.trading-breakout-strip {
+    position: absolute;
+    top: 5.35rem;
+    left: 0.95rem;
+    right: 0.95rem;
+    z-index: 3;
+    text-align: center;
+    background: var(--breakout-bg, #d97706);
+    color: var(--breakout-fg, #fffbeb);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.65rem 0.43rem;
+    border-radius: 10px;
+    text-shadow: 0 1px 0 rgba(2, 6, 23, 0.2);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25) inset, 0 10px 18px var(--breakout-glow, rgba(217, 119, 6, 0.42));
+}
+
+.trading-team-ribbon {
+    position: absolute;
+    right: -0.85rem;
+    bottom: 1.2rem;
+    z-index: 4;
+    transform: rotate(-8deg);
+    background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);
+    color: #f0f9ff;
+    font-family: 'Barlow Condensed', 'Manrope', sans-serif;
+    font-size: 1.9rem;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.4rem 1.4rem;
+    border-radius: 12px;
+    border: 1px solid rgba(240, 249, 255, 0.6);
+    box-shadow: 0 14px 30px rgba(3, 105, 161, 0.45);
+}
+
+.trading-rookie-badge {
+    position: absolute;
+    right: 1.25rem;
+    bottom: 5.25rem;
+    z-index: 4;
+    background: linear-gradient(135deg, #facc15 0%, #ca8a04 100%);
+    color: #1f2937;
+    font-family: 'Barlow Condensed', 'Manrope', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.28rem 0.62rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.68);
+    box-shadow: 0 10px 20px rgba(120, 53, 15, 0.35);
+}
+
+.trading-subtype {
+    position: absolute;
+    left: 1.1rem;
+    bottom: 4.4rem;
+    z-index: 3;
+    color: #ffffff;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(2, 6, 23, 0.5);
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    padding: 0.25rem 0.6rem;
+}
+
+.trading-card-badge {
+    position: absolute;
+    left: 1rem;
+    bottom: 2.45rem;
+    z-index: 3;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: 999px;
+    background: rgba(2, 6, 23, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e2e8f0;
+    padding: 0.25rem 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.trading-card-badge.positive {
+    color: #86efac;
+}
+
+.trading-card-badge.negative {
+    color: #fca5a5;
+}
+
+.trading-click-hint {
+    position: absolute;
+    left: 1rem;
+    bottom: 1.2rem;
+    z-index: 3;
+    font-size: 0.66rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(2, 6, 23, 0.56);
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.26);
+    padding: 0.25rem 0.56rem;
+}
+
+.trading-photo-vignette,
+.trading-photo-grain,
+.trading-photo-frame,
+.trading-photo-corner,
+.trading-photo-border,
+.trading-photo-shadow,
+.trading-photo-light,
+.trading-photo-band {
+    position: absolute;
+    pointer-events: none;
+}
+
+.trading-photo-vignette {
+    inset: 0;
+    z-index: 2;
+    background: radial-gradient(circle at 50% 45%, rgba(2, 6, 23, 0) 40%, rgba(2, 6, 23, 0.52) 100%);
+}
+
+.trading-photo-grain {
+    inset: 0;
+    z-index: 2;
+    opacity: 0.1;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.5) 0.4px, transparent 0.4px);
+    background-size: 3px 3px;
+}
+
+.trading-photo-frame {
+    inset: 0.55rem;
+    z-index: 2;
+    border-radius: 20px;
+    border: 2px solid rgba(239, 68, 68, 0.72);
+}
+
+.trading-photo-corner {
+    top: 0.68rem;
+    left: 0.68rem;
+    width: 22px;
+    height: 22px;
+    z-index: 2;
+    border-left: 3px solid rgba(239, 68, 68, 0.84);
+    border-top: 3px solid rgba(239, 68, 68, 0.84);
+    border-top-left-radius: 5px;
+}
+
+.trading-photo-corner.bottom {
+    top: auto;
+    left: auto;
+    right: 0.68rem;
+    bottom: 0.68rem;
+    border-left: none;
+    border-top: none;
+    border-right: 3px solid rgba(239, 68, 68, 0.84);
+    border-bottom: 3px solid rgba(239, 68, 68, 0.84);
+    border-bottom-right-radius: 5px;
+}
+
+.trading-photo-border {
+    inset: 0;
+    z-index: 2;
+    border-radius: 24px;
+    box-shadow: inset 0 0 0 2px rgba(248, 113, 113, 0.68);
+}
+
+.trading-photo-shadow {
+    inset: 0;
+    z-index: 2;
+    border-radius: 24px;
+    box-shadow: inset 0 -120px 120px rgba(2, 6, 23, 0.38);
+}
+
+.trading-photo-light {
+    top: 0;
+    left: -15%;
+    width: 60%;
+    height: 45%;
+    z-index: 2;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0) 70%);
+}
+
+.trading-photo-band {
+    left: 0.92rem;
+    right: 0.92rem;
+    top: 7.1rem;
+    z-index: 3;
+    background: rgba(2, 6, 23, 0.58);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 8px;
+    padding: 0.28rem 0.5rem;
+}
+
+.trading-photo-band-text {
+    color: #e2e8f0;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    text-align: center;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
 .type-card-monogram {
     width: 50px;
     height: 50px;
@@ -937,6 +1218,32 @@ body.theme-dark .card-mechanism-note {
 
     .type-signals {
         grid-template-columns: 1fr;
+    }
+
+    .trading-hero {
+        min-height: 500px;
+    }
+
+    .trading-name {
+        font-size: 1.85rem;
+    }
+
+    .trading-team-ribbon {
+        font-size: 1.45rem;
+        right: -0.55rem;
+        bottom: 1rem;
+        padding: 0.35rem 1rem;
+    }
+
+    .trading-rookie-badge {
+        right: 1rem;
+        bottom: 4.85rem;
+        font-size: 0.8rem;
+    }
+
+    .trading-position-ribbon {
+        font-size: 0.86rem;
+        top: 3.9rem;
     }
 }
 
