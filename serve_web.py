@@ -12,6 +12,7 @@ import os
 import sys
 from pathlib import Path
 import argparse
+from urllib.parse import urlparse
 
 
 def find_free_port(start_port=8000, max_attempts=10):
@@ -23,6 +24,42 @@ def find_free_port(start_port=8000, max_attempts=10):
         except OSError:
             continue
     return None
+
+
+class MultiPageRequestHandler(http.server.SimpleHTTPRequestHandler):
+    """Static file handler with clean-page routes.
+
+    Examples:
+      /          -> /index.html
+      /about     -> /about.html (if file exists)
+      /about/    -> /about.html (if file exists)
+    """
+
+    def _normalize_clean_route(self, request_path: str) -> str:
+        parsed = urlparse(request_path or "/")
+        path = parsed.path or "/"
+
+        if path == "/":
+            return "/index.html"
+
+        # Let normal static file requests pass through.
+        if "." in Path(path).name:
+            return path
+
+        # Support clean routes for html pages.
+        slug = path.rstrip("/")
+        candidate = f"{slug}.html"
+        if candidate.startswith("/"):
+            candidate = candidate[1:]
+        if Path(candidate).exists():
+            return f"/{candidate}"
+
+        # No clean-route match; keep default behavior (404/static handling).
+        return path
+
+    def do_GET(self):
+        self.path = self._normalize_clean_route(self.path)
+        return super().do_GET()
 
 
 def serve(port=8000, directory="web", open_browser=True):
@@ -60,7 +97,13 @@ def serve(port=8000, directory="web", open_browser=True):
         print(f"Port {port} is busy, using port {actual_port} instead")
     
     # Create server
-    Handler = http.server.SimpleHTTPRequestHandler
+    Handler = MultiPageRequestHandler
+
+    # Discover available pages to make adding future pages obvious.
+    pages = sorted(
+        p.stem for p in web_dir.glob("*.html")
+        if p.is_file()
+    )
     
     try:
         with socketserver.TCPServer(("", actual_port), Handler) as httpd:
@@ -71,6 +114,8 @@ def serve(port=8000, directory="web", open_browser=True):
             print("="*60)
             print(f"\nServing at: {url}")
             print(f"Directory: {web_dir.absolute()}")
+            if pages:
+                print(f"Pages: {', '.join('/' + p for p in pages)}")
             print("\nPress Ctrl+C to stop the server")
             print("="*60 + "\n")
             
