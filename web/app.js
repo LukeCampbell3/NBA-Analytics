@@ -23,6 +23,7 @@ class PlayerCardsApp {
         this.analyses = [];
         this.valuations = [];
         this.currentSort = 'name';
+        this.initialDistributionMetricKey = 'team_fit';
         this.courtImage = null;
         this.distributionRaf = null;
         this.distributionPoints = [];
@@ -39,9 +40,11 @@ class PlayerCardsApp {
         this.setupEventListeners();
         this.populateArchetypeFilter();
         this.populateTeamFilter();
+        const sortEl = document.getElementById('sortBy');
+        if (sortEl) sortEl.value = this.currentSort;
+        this.sortPlayers();
         this.renderPlayers();
         this.updateStats();
-        this.drawValueDistributionChart();
     }
 
     async loadCourtImage() {
@@ -201,6 +204,8 @@ class PlayerCardsApp {
     buildCardScenarioSummary(player, evalOut, mechanism) {
         const fit = evalOut.fitScenario || {};
         const sb = fit.score_breakdown || {};
+        const audit = evalOut.impactAudit || { verdict: 'insufficient_data' };
+        const evidence = evalOut.evidence || { coverage: 0.7, grade: 'moderate' };
         const team = fit.team && fit.team !== 'No Clear Team Edge' ? fit.team : (player.player?.team || 'Current team');
 
         const driverPool = [
@@ -224,8 +229,8 @@ class PlayerCardsApp {
             ? 'low prior disagreement'
             : (mechanism.impact_prior_disagreement <= 0.6 ? 'moderate prior disagreement' : 'high prior disagreement');
         const signalLabel = (fit.signal_strength || 'weak').toUpperCase();
-
-        return `${team} scenario: ${topDrivers}. Signal ${signalLabel}; ${(mechanism.confidence * 100).toFixed(0)}% confidence with ${clampLabel} and ${priorLabel}.`;
+        const auditLabel = String(audit.verdict || 'insufficient_data').replace('_', ' ');
+        return `${team} scenario: ${topDrivers}. Signal ${signalLabel}; ${(mechanism.confidence * 100).toFixed(0)}% confidence with ${clampLabel} and ${priorLabel}. Audit ${auditLabel}; evidence ${(100 * (evidence.coverage || 0)).toFixed(0)}% (${String(evidence.grade || 'moderate').toUpperCase()}).`;
     }
 
     getPlayerKey(player) {
@@ -286,6 +291,405 @@ class PlayerCardsApp {
             this.toFiniteNumber(player.performance?.advanced?.lebron) ??
             this.toFiniteNumber(player.impact?.lebron)
         );
+    }
+
+    getNested(obj, path, fallback = null) {
+        let cur = obj;
+        for (const key of path) {
+            if (cur == null || cur[key] === undefined || cur[key] === null) return fallback;
+            cur = cur[key];
+        }
+        return cur;
+    }
+
+    getArchetypePeakAge(archetype) {
+        const map = {
+            lead_guard: 26.5,
+            versatile_wing: 27.0,
+            stretch_big: 28.0,
+            rim_pressure_guard: 26.0,
+            '3_and_d_wing': 27.5
+        };
+        return map[String(archetype || '').toLowerCase()] || 27.0;
+    }
+
+    getAgingAdjustmentSummary(player, valuation) {
+        const age = Number(player.player?.age || 25);
+        const archetype = String(player.identity?.primary_archetype || '');
+        const peakAge = Number(valuation?.aging?.peak_age ?? this.getArchetypePeakAge(archetype));
+        const mult = this.toFiniteNumber(valuation?.aging?.multipliers?.year_0);
+        const multiplier = mult !== null ? mult : this.clampNum(1 - ((age - peakAge) * 0.018), 0.82, 1.12);
+        const pct = (multiplier - 1) * 100;
+        return {
+            peak_age: peakAge,
+            multiplier,
+            pct,
+            source: mult !== null ? 'valuation_curve' : 'archetype_proxy'
+        };
+    }
+
+    getContractSurplusSummary(valuation) {
+        if (!valuation) {
+            return { available: false };
+        }
+        const npvSurplus = this.toFiniteNumber(valuation?.contract?.npv_surplus);
+        const byYear = valuation?.contract?.surplus_by_year || {};
+        const years = Object.keys(byYear).sort();
+        const firstYear = years.length ? years[0] : null;
+        const firstYearSurplus = firstYear ? this.toFiniteNumber(byYear[firstYear]) : null;
+        const salaryByYear = valuation?.contract?.salary_by_year || {};
+        const firstYearSalary = firstYear ? this.toFiniteNumber(salaryByYear[firstYear]) : null;
+        const marketByYear = valuation?.market_value?.by_year || {};
+        const firstYearMarket = firstYear ? this.toFiniteNumber(marketByYear[firstYear]) : null;
+        return {
+            available: npvSurplus !== null || firstYearSurplus !== null,
+            npv_surplus: npvSurplus,
+            current_year: firstYear,
+            current_year_surplus: firstYearSurplus,
+            current_year_salary: firstYearSalary,
+            current_year_market: firstYearMarket
+        };
+    }
+
+    inferDefenseRoleIdentity(player) {
+        const position = String(player.player?.position || '').toLowerCase();
+        const mp = player.defense_assessment?.matchup_profile || {};
+        const guardShare = Number(mp.vs_guards || 0);
+        const wingShare = Number(mp.vs_wings || 0);
+        const bigShare = Number(mp.vs_bigs || 0);
+        const totalShare = guardShare + wingShare + bigShare;
+        const guardPct = totalShare > 0 ? guardShare / totalShare : 0.33;
+        const wingPct = totalShare > 0 ? wingShare / totalShare : 0.34;
+        const bigPct = totalShare > 0 ? bigShare / totalShare : 0.33;
+
+        const steals = Number(player.performance?.traditional?.steals_per_game || 0);
+        const blocks = Number(player.performance?.traditional?.blocks_per_game || 0);
+        const foulRate = Number(player.defense_assessment?.estimated_metrics?.foul_rate || 0);
+        const versatility = this.matchupVersatility(player);
+
+        let primaryRole = 'Wing Containment';
+        if (bigPct >= 0.46 || position === 'big') primaryRole = 'Rim/Interior';
+        else if (guardPct >= 0.46 || position === 'guard') primaryRole = 'POA/Navigation';
+        else if (wingPct >= 0.46 || position === 'wing') primaryRole = 'Wing Containment';
+
+        const navigationRisk = this.clampNum((0.22 - guardPct) * 2.2 + 0.15, 0, 1);
+        const sizeMismatchRisk = this.clampNum(Math.abs(guardPct - bigPct) + (1 - versatility) * 0.55, 0, 1);
+        const foulRisk = this.clampNum((foulRate - 3.0) / 2.2, 0, 1);
+        const disruption = this.clampNum((steals + blocks) / 2.3, 0, 1);
+        const targetingRisk = this.clampNum(
+            (0.40 * (1 - versatility)) +
+            (0.25 * sizeMismatchRisk) +
+            (0.20 * foulRisk) +
+            (0.15 * navigationRisk) -
+            (0.15 * disruption),
+            0,
+            1
+        );
+
+        const warnings = [];
+        if (targetingRisk >= 0.62) warnings.push('High playoff targeting risk in switch-heavy possessions.');
+        if (foulRisk >= 0.55) warnings.push('Foul pressure can compress high-minute defensive deployment.');
+        if (sizeMismatchRisk >= 0.58) warnings.push('Cross-matchup size profile may require protection coverage.');
+        if (!warnings.length) warnings.push('No major playoff targeting breakpoint from current profile proxies.');
+
+        return {
+            primary_role: primaryRole,
+            role_mix: { guards: guardPct, wings: wingPct, bigs: bigPct },
+            targeting_risk: targetingRisk,
+            warnings
+        };
+    }
+
+    computeImpactAudit(player, fitScenario, contributionStrength, breakoutSignal) {
+        const epm = this.getRawEpm(player);
+        const lebron = this.getRawLebron(player);
+        const usable = [epm, lebron].filter(v => v !== null);
+        if (!usable.length) {
+            return {
+                verdict: 'insufficient_data',
+                consensus: null,
+                disagreement: 1.0,
+                required_justification: ['Missing EPM/LEBRON prior anchor values; scenario requires manual review.'],
+                bonus: 0
+            };
+        }
+
+        const consensus = usable.reduce((a, b) => a + b, 0) / usable.length;
+        const disagreement = (epm !== null && lebron !== null)
+            ? this.clampNum(Math.abs(epm - lebron) / 3.0, 0, 1)
+            : 0.35;
+
+        const fitStrength = this.clampNum((fitScenario?.fit_score || 0) / 0.10, 0, 1);
+        const modelSignal = this.clampNum((0.5 * contributionStrength) + (0.3 * fitStrength) + (0.2 * breakoutSignal), 0, 1);
+        const priorSignal = this.clampNum((consensus + 2.0) / 4.0, 0, 1);
+        const signalGap = modelSignal - priorSignal;
+
+        let verdict = 'support';
+        if (Math.abs(signalGap) <= 0.18) verdict = 'support';
+        else if (signalGap > 0.18 && consensus < -0.2) verdict = 'contradict';
+        else if (signalGap < -0.18 && consensus > 0.2) verdict = 'contradict';
+        else verdict = 'support';
+
+        const requiredJustification = [];
+        if (verdict === 'contradict') {
+            requiredJustification.push('Model signal contradicts impact priors; verify role change/injury context before promotion.');
+            requiredJustification.push('Confirm projected usage/minutes jump is observable in lineup context.');
+        }
+        if (disagreement >= 0.6) {
+            requiredJustification.push('EPM and LEBRON disagreement is high; confidence should be discounted.');
+        }
+
+        const bonus = verdict === 'support' ? 2.5 : (verdict === 'contradict' ? -5.0 : -2.0);
+        return {
+            verdict,
+            consensus,
+            disagreement,
+            required_justification: requiredJustification,
+            bonus
+        };
+    }
+
+    computeEvidenceQuality(player, valuation) {
+        const checks = [
+            { key: 'minutes_per_game', ok: this.toFiniteNumber(player.performance?.traditional?.minutes_per_game) !== null },
+            { key: 'usage_rate', ok: this.toFiniteNumber(player.performance?.advanced?.usage_rate) !== null },
+            { key: 'three_point_pct', ok: this.toFiniteNumber(player.performance?.traditional?.three_point_pct) !== null },
+            { key: 'rim_frequency', ok: this.toFiniteNumber(player.shot_profile?.rim_frequency) !== null },
+            { key: 'three_point_frequency', ok: this.toFiniteNumber(player.shot_profile?.three_point_frequency) !== null },
+            { key: 'assisted_rate', ok: this.toFiniteNumber(player.creation_profile?.assisted_rate) !== null },
+            { key: 'matchup_profile', ok: player.defense_assessment?.matchup_profile != null },
+            { key: 'trust_score', ok: this.toFiniteNumber(player.v1_1_enhancements?.trust_assessment?.score) !== null },
+            { key: 'epm_or_lebron', ok: this.getRawEpm(player) !== null || this.getRawLebron(player) !== null },
+            { key: 'contract_surplus', ok: this.toFiniteNumber(valuation?.contract?.npv_surplus) !== null }
+        ];
+        const total = checks.length;
+        const present = checks.filter(x => x.ok).length;
+        const coverage = this.safeDiv(present, total, 0);
+        const missing = checks.filter(x => !x.ok).map(x => x.key);
+        const penalty = this.clampNum((0.82 - coverage) * 0.55, 0, 0.22);
+        const grade = coverage >= 0.9 ? 'high' : (coverage >= 0.75 ? 'moderate' : 'limited');
+        return { coverage, missing, penalty, grade };
+    }
+
+    computeIntrinsicContextLedger(player, fitScenario, mechanism, contributionStrength, usageUpside, minutesUpside, fitEdge) {
+        const valueNorm = this.clampNum(this.getPlayerValue(player) / 100, 0, 1);
+        const intrinsic = this.clampNum(
+            (0.32 * valueNorm) +
+            (0.18 * mechanism.spacing_gravity_skill) +
+            (0.20 * mechanism.portability_score) +
+            (0.12 * (1 - mechanism.impact_prior_disagreement)) +
+            (0.18 * (1 - mechanism.clamp_severity)),
+            0,
+            1
+        );
+        const context = this.clampNum(
+            (0.28 * fitEdge) +
+            (0.24 * (fitScenario.score_breakdown?.scheme_complementarity || 0)) +
+            (0.18 * (fitScenario.score_breakdown?.usage_headroom || 0)) +
+            (0.14 * usageUpside) +
+            (0.10 * minutesUpside) +
+            (0.06 * contributionStrength),
+            0,
+            1
+        );
+        const projectedTotal = this.clampNum((0.52 * intrinsic) + (0.48 * context), 0, 1);
+        const residual = this.clampNum(1 - projectedTotal, 0, 1);
+        const contextShare = this.safeDiv(context, (intrinsic + context), 0.5);
+        const intrinsicShare = this.safeDiv(intrinsic, (intrinsic + context), 0.5);
+        return {
+            intrinsic,
+            context,
+            residual,
+            intrinsic_share: intrinsicShare,
+            context_share: contextShare
+        };
+    }
+
+    buildValueDecomposition(player, fitScenario) {
+        const scheme = this.getPlayerSchemeVector(player).vector || {};
+        const blocks = [
+            { key: 'on_ball_creation', label: 'On-Ball Creation', value: scheme.on_ball_creation || 0 },
+            { key: 'off_ball_play', label: 'Off-Ball Play', value: scheme.off_ball_play || 0 },
+            { key: 'spacing_gravity', label: 'Spacing Gravity', value: scheme.spacing_gravity || 0 },
+            { key: 'rim_pressure', label: 'Finishing Pressure', value: scheme.rim_pressure || 0 },
+            { key: 'defensive_disruption', label: 'POA/Disruption', value: scheme.defensive_disruption || 0 },
+            { key: 'switchability', label: 'Switchability', value: scheme.switchability || 0 },
+            { key: 'role_scalability', label: 'Role Scalability', value: scheme.role_scalability || 0 },
+            { key: 'possession_stability', label: 'Possession Stability', value: scheme.possession_stability || 0 }
+        ];
+        const sb = fitScenario?.score_breakdown || {};
+        const teamWeights = {
+            on_ball_creation: sb.creation_fit || 0,
+            off_ball_play: sb.offball_fit || 0,
+            spacing_gravity: sb.shooting_fit || 0,
+            rim_pressure: sb.rim_fit || 0,
+            defensive_disruption: sb.defense_fit || 0,
+            switchability: sb.switch_fit || 0,
+            role_scalability: sb.role_fit || 0,
+            possession_stability: sb.minutes_fit || 0
+        };
+        const weighted = blocks.map(b => ({
+            ...b,
+            team_weight: teamWeights[b.key] || 0,
+            team_weighted_value: (b.value || 0) * (teamWeights[b.key] || 0)
+        }));
+        const baseScore = weighted.reduce((s, b) => s + b.value, 0) / Math.max(1, weighted.length);
+        const teamWeightedScore = weighted.reduce((s, b) => s + b.team_weighted_value, 0) / Math.max(1e-6, weighted.reduce((s, b) => s + b.team_weight, 0));
+        return {
+            blocks: weighted,
+            base_score: this.clampNum(baseScore, 0, 1),
+            team_weighted_score: this.clampNum(teamWeightedScore, 0, 1)
+        };
+    }
+
+    buildClampReport(ctx) {
+        const {
+            currentUsage,
+            projectedUsage,
+            projectedUsageCap,
+            currentMinutes,
+            projectedMinutes,
+            projectedMinutesCap,
+            constraints,
+            defenseRole,
+            roleExpansionSeverity,
+            evidencePenalty,
+            minutesGovernance
+        } = ctx;
+
+        const fired = [];
+        const usageGap = Math.max(0, projectedUsageCap - projectedUsage);
+        const minutesGap = Math.max(0, projectedMinutesCap - projectedMinutes);
+        const usageCapHit = projectedUsage >= (projectedUsageCap - 0.001);
+        const minutesCapHit = projectedMinutes >= (projectedMinutesCap - 0.08);
+
+        if (usageCapHit) {
+            fired.push({
+                clamp: 'usage_cap',
+                severity: this.clampNum(1 - this.safeDiv(usageGap, Math.max(0.0001, projectedUsageCap - currentUsage), 0), 0, 1),
+                message: `Usage increase bounded near cap (${(projectedUsageCap * 100).toFixed(1)}%).`,
+                unlock: 'Increase feasible on-ball share or reduce incumbent usage concentration.'
+            });
+        }
+        if (minutesCapHit) {
+            fired.push({
+                clamp: 'minutes_cap',
+                severity: this.clampNum(1 - this.safeDiv(minutesGap, Math.max(0.01, projectedMinutesCap - currentMinutes), 0), 0, 1),
+                message: `Minutes increase bounded near cap (${projectedMinutesCap.toFixed(1)} MPG).`,
+                unlock: 'Create rotation runway through role continuity and defensive survivability.'
+            });
+        }
+
+        const shotConstraints = constraints?.shot_diet_constraints || [];
+        if (shotConstraints.length) {
+            fired.push({
+                clamp: 'shot_mix_cap',
+                severity: this.clampNum(0.35 + (shotConstraints.length / 10), 0.25, 0.75),
+                message: `Shot diet constraints active (${shotConstraints.length} rules).`,
+                unlock: 'Demonstrate in-role shot growth without violating diet constraints.'
+            });
+        }
+
+        if ((defenseRole?.targeting_risk || 0) > 0.62 && roleExpansionSeverity > 0.52) {
+            fired.push({
+                clamp: 'defense_portability_cap',
+                severity: this.clampNum(defenseRole.targeting_risk || 0, 0, 1),
+                message: `Defensive targeting risk ${(100 * (defenseRole.targeting_risk || 0)).toFixed(0)}% constrained offensive expansion.`,
+                unlock: 'Improve lineup protection, matchup insulation, and foul/size stability.'
+            });
+        }
+
+        if (evidencePenalty > 0.04) {
+            fired.push({
+                clamp: 'evidence_quality_cap',
+                severity: this.clampNum(evidencePenalty / 0.22, 0, 1),
+                message: `Evidence quality penalty ${(evidencePenalty * 100).toFixed(1)}% reduced confidence ceiling.`,
+                unlock: 'Increase observability coverage for missing priors/profile fields.'
+            });
+        }
+
+        if ((minutesGovernance?.requires_rotation_promotion || false) || (minutesGovernance?.status === 'fail')) {
+            fired.push({
+                clamp: 'rotation_promotion_cap',
+                severity: this.clampNum(minutesGovernance?.feasibility_penalty || 0.1, 0, 1),
+                message: minutesGovernance?.reason || 'Low-minute baseline requires role promotion before validating breakout.',
+                unlock: 'Sustain stable rotation role over larger sample and reduce promotion dependency.'
+            });
+        }
+
+        return fired;
+    }
+
+    computeMinutesGovernance(ctx) {
+        const {
+            player,
+            constraints,
+            currentMinutes,
+            projectedMinutes,
+            minutesDelta,
+            trustScore,
+            mechanism,
+            impactAudit
+        } = ctx;
+        const gp = Number(player.performance?.traditional?.games_played || 0);
+        const mpg = Number(currentMinutes || 0);
+        const constraintNotes = constraints?.constraints || [];
+        const noteText = constraintNotes.join(' ').toLowerCase();
+        const injuryFlag = /(injury|return|rehab|recovery|coming back|minutes restriction)/i.test(noteText);
+
+        let status = mpg >= 16 ? 'pass' : (mpg >= 12 ? 'watch' : 'fail');
+        if (gp < 25) {
+            status = status === 'pass' ? 'watch' : 'fail';
+        }
+        if (status === 'fail' && injuryFlag) {
+            status = 'watch';
+        }
+
+        let evidencePenalty = status === 'fail' ? 0.20 : (status === 'watch' ? 0.10 : 0.02);
+        if (gp < 25) evidencePenalty += 0.06;
+        evidencePenalty = this.clampNum(evidencePenalty, 0.02, 0.30);
+
+        const requiresRotationPromotion =
+            (mpg < 12 && projectedMinutes >= 18) ||
+            (mpg < 16 && minutesDelta > 4.5) ||
+            minutesDelta > 6.0;
+        let feasibilityPenalty = requiresRotationPromotion
+            ? this.clampNum((Math.max(0, minutesDelta - 3.5) / 8.0) + (Math.max(0, 16 - mpg) / 26.0), 0.06, 0.26)
+            : 0;
+        if (status === 'fail') feasibilityPenalty = Math.max(feasibilityPenalty, 0.09);
+
+        // Visible-breakout carve-out.
+        let visibleStatus = status;
+        const priorAgree = impactAudit?.verdict === 'support' && (impactAudit?.disagreement ?? 1) <= 0.35;
+        const lowClampPressure = ((mechanism?.clamp_severity || 1) + feasibilityPenalty) <= 0.42;
+        if (mpg >= 12 && mpg < 16 && trustScore >= 75 && priorAgree && lowClampPressure) {
+            visibleStatus = 'pass';
+        }
+        if (mpg < 12 && !injuryFlag) {
+            visibleStatus = 'fail';
+        }
+        if (gp < 25 && visibleStatus === 'pass') {
+            visibleStatus = 'watch';
+        }
+
+        const reason = visibleStatus === 'pass'
+            ? `Minutes baseline supports visible validation (${mpg.toFixed(1)} MPG, ${gp} GP).`
+            : (visibleStatus === 'watch'
+                ? `Minutes are in watch zone (${mpg.toFixed(1)} MPG, ${gp} GP); scenario needs controlled promotion.`
+                : `MPG/GP baseline too low for visible validation (${mpg.toFixed(1)} MPG, ${gp} GP).`);
+
+        return {
+            status,
+            visible_status: visibleStatus,
+            reason,
+            games_played: gp,
+            mpg,
+            injury_flag: injuryFlag,
+            evidence_penalty: evidencePenalty,
+            evidence_score: this.clampNum(1 - evidencePenalty, 0, 1),
+            feasibility_penalty: feasibilityPenalty,
+            requires_rotation_promotion: requiresRotationPromotion
+        };
     }
 
     computeMeanStd(values) {
@@ -723,32 +1127,57 @@ class PlayerCardsApp {
             1.0
         );
         const signalMultiplier = fitScenario.signal_strength === 'strong' ? 1.0 : (fitScenario.signal_strength === 'moderate' ? 0.85 : 0.70);
-        const projectedUsage = Math.min(projectedUsageCap, currentUsage + (maxUsageIncrease * usageGainFactor * signalMultiplier));
-        const projectedMinutes = Math.min(projectedMinutesCap, currentMinutes + (maxMinutesIncrease * minutesGainFactor * signalMultiplier));
-        const usageDelta = Math.max(0, projectedUsage - currentUsage);
-        const minutesDelta = Math.max(0, projectedMinutes - currentMinutes);
+        let projectedUsage = Math.min(projectedUsageCap, currentUsage + (maxUsageIncrease * usageGainFactor * signalMultiplier));
+        let projectedMinutes = Math.min(projectedMinutesCap, currentMinutes + (maxMinutesIncrease * minutesGainFactor * signalMultiplier));
+        let usageDelta = Math.max(0, projectedUsage - currentUsage);
+        let minutesDelta = Math.max(0, projectedMinutes - currentMinutes);
         const breakdown = fitScenario.score_breakdown || {};
 
         const usageMultiplier = currentUsage > 0 ? (projectedUsage / currentUsage) : 1.0;
         const minutesMultiplier = currentMinutes > 0 ? (projectedMinutes / currentMinutes) : 1.0;
         const overallMultiplier = Math.min(usageMultiplier * 0.7 + minutesMultiplier * 0.3, 1.5);
 
-        const projectedPPG = currentPPG * overallMultiplier;
-        const projectedAPG = currentAPG * overallMultiplier;
-        const projectedRPG = currentRPG * Math.min(minutesMultiplier, 1.3);
+        let projectedPPG = currentPPG * overallMultiplier;
+        let projectedAPG = currentAPG * overallMultiplier;
+        let projectedRPG = currentRPG * Math.min(minutesMultiplier, 1.3);
 
         const ageCurve = this.clampNum(1 - Math.abs(age - 25) / 9, 0, 1);
         const usageUpside = this.clampNum(usageDelta / 0.10, 0, 1);
         const minutesUpside = this.clampNum(minutesDelta / 8.0, 0, 1);
         const fitEdge = this.clampNum((fitScenario.fit_score - 0.12) / 0.28, 0, 1);
         const trustNorm = this.clampNum(trustScore / 100, 0, 1);
-        const mechanism = this.computeMechanismMetrics(player, {
+        let mechanism = this.computeMechanismMetrics(player, {
             fitScenario,
             usageDelta,
             minutesDelta,
             maxUsageIncrease,
             maxMinutesIncrease
         });
+        const defenseRole = this.inferDefenseRoleIdentity(player);
+
+        // Defensive feasibility gate: high targeting risk reduces offensive role expansion realism.
+        const roleExpansionSeverity = this.clampNum((usageDelta / 0.10) + (minutesDelta / 8.0), 0, 1);
+        if (defenseRole.targeting_risk > 0.62 && roleExpansionSeverity > 0.52) {
+            const offenseClamp = this.clampNum(1 - ((defenseRole.targeting_risk - 0.62) * 0.45), 0.78, 1.0);
+            const minutesClamp = this.clampNum(1 - ((defenseRole.targeting_risk - 0.62) * 0.35), 0.84, 1.0);
+            projectedUsage = currentUsage + (usageDelta * offenseClamp);
+            projectedMinutes = currentMinutes + (minutesDelta * minutesClamp);
+            usageDelta = Math.max(0, projectedUsage - currentUsage);
+            minutesDelta = Math.max(0, projectedMinutes - currentMinutes);
+            const usageMultAdj = currentUsage > 0 ? (projectedUsage / currentUsage) : 1.0;
+            const minutesMultAdj = currentMinutes > 0 ? (projectedMinutes / currentMinutes) : 1.0;
+            const overallAdj = Math.min(usageMultAdj * 0.7 + minutesMultAdj * 0.3, 1.5);
+            projectedPPG = currentPPG * overallAdj;
+            projectedAPG = currentAPG * overallAdj;
+            projectedRPG = currentRPG * Math.min(minutesMultAdj, 1.3);
+            mechanism = this.computeMechanismMetrics(player, {
+                fitScenario,
+                usageDelta,
+                minutesDelta,
+                maxUsageIncrease,
+                maxMinutesIncrease
+            });
+        }
 
         // Team contribution channels (x, y, z) used to validate genuine breakout signals.
         const creationLift = this.clampNum(
@@ -793,6 +1222,50 @@ class PlayerCardsApp {
             { key: 'defense', label: 'Defense Lift', value: defenseLift, note: 'defensive disruption + switch portability' },
             { key: 'stability', label: 'Role Stability', value: roleStabilityLift, note: 'minutes feasibility + role continuity' }
         ].sort((a, b) => b.value - a.value);
+        const intrinsicContextLedger = this.computeIntrinsicContextLedger(
+            player,
+            fitScenario,
+            mechanism,
+            contributionStrength,
+            usageUpside,
+            minutesUpside,
+            fitEdge
+        );
+        const valueDecomposition = this.buildValueDecomposition(player, fitScenario);
+        const breakoutSignalNorm = this.clampNum(
+            (0.45 * contributionStrength) + (0.30 * fitEdge) + (0.25 * (1 - mechanism.clamp_severity)),
+            0,
+            1
+        );
+        const impactAudit = this.computeImpactAudit(player, fitScenario, contributionStrength, breakoutSignalNorm);
+        const evidence = this.computeEvidenceQuality(player, player.valuation);
+        const minutesGovernance = this.computeMinutesGovernance({
+            player,
+            constraints,
+            currentMinutes,
+            projectedMinutes,
+            minutesDelta,
+            trustScore,
+            mechanism,
+            impactAudit
+        });
+        const evidencePenaltyTotal = this.clampNum((evidence.penalty || 0) + (minutesGovernance.evidence_penalty || 0), 0, 0.38);
+        const effectiveEvidenceCoverage = this.clampNum((evidence.coverage || 0) - (minutesGovernance.evidence_penalty || 0) * 0.55, 0, 1);
+        const agingSummary = this.getAgingAdjustmentSummary(player, player.valuation);
+        const contractSummary = this.getContractSurplusSummary(player.valuation);
+        const clampReport = this.buildClampReport({
+            currentUsage,
+            projectedUsage,
+            projectedUsageCap,
+            currentMinutes,
+            projectedMinutes,
+            projectedMinutesCap,
+            constraints,
+            defenseRole,
+            roleExpansionSeverity,
+            evidencePenalty: evidencePenaltyTotal,
+            minutesGovernance
+        });
 
         let breakoutScoreRaw = 100 * (
             0.18 * ageCurve +
@@ -806,6 +1279,9 @@ class PlayerCardsApp {
         // Confidence governance penalties to prevent "usage-only" breakouts.
         breakoutScoreRaw -= (8 * mechanism.clamp_severity);
         breakoutScoreRaw -= (6 * mechanism.impact_prior_disagreement);
+        breakoutScoreRaw -= (10 * evidencePenaltyTotal);
+        breakoutScoreRaw -= (7 * (minutesGovernance.feasibility_penalty || 0));
+        breakoutScoreRaw += impactAudit.bonus;
         if (contributionStrength < 0.36) breakoutScoreRaw -= 10;
         if (usageUpside > 0.65 && contributionStrength < 0.45) breakoutScoreRaw -= 10;
         if (fitScenario.signal_strength === 'weak') breakoutScoreRaw -= 8;
@@ -829,14 +1305,34 @@ class PlayerCardsApp {
             breakoutScore = Math.min(breakoutScore, 64); // cap to Medium ceiling
         }
 
+        // Impact-audit governor: contradictory priors block promotion.
+        let promotionBlocked = false;
+        const promotionBlockReasons = [];
+        if (impactAudit.verdict === 'contradict') {
+            promotionBlocked = true;
+            promotionBlockReasons.push('Impact audit contradicts prior anchor consensus.');
+            breakoutScore = Math.min(breakoutScore, effectiveEvidenceCoverage < 0.78 ? 44 : 64);
+        }
+        if (effectiveEvidenceCoverage < 0.65) {
+            promotionBlocked = true;
+            promotionBlockReasons.push('Evidence coverage is too low for high-confidence promotion.');
+            breakoutScore = Math.min(breakoutScore, 44);
+        }
+
         // Likelihood signal is tied to team contribution quality, fit strength, clamp pressure, and confidence.
         const fitStrengthNorm = this.clampNum((fitScenario.fit_score || 0) / 0.10, 0, 1);
+        const auditConfidenceAdj = impactAudit.verdict === 'support' ? 0.05 : (impactAudit.verdict === 'contradict' ? -0.08 : -0.03);
+        const effectiveScenarioConfidence = this.clampNum(
+            (fitScenario.confidence || 0.6) + auditConfidenceAdj - evidencePenaltyTotal - (minutesGovernance.feasibility_penalty || 0) * 0.4,
+            0.2,
+            0.95
+        );
         const breakoutLikelihoodScore = this.clampNum(
             100 * (
                 0.45 * contributionStrength +
                 0.25 * fitStrengthNorm +
-                0.15 * (1 - mechanism.clamp_severity) +
-                0.15 * (fitScenario.confidence || 0.6)
+                0.15 * (1 - this.clampNum((mechanism.clamp_severity || 0) + (minutesGovernance.feasibility_penalty || 0), 0, 1)) +
+                0.15 * effectiveScenarioConfidence
             ),
             0,
             100
@@ -844,6 +1340,36 @@ class PlayerCardsApp {
 
         // Final score reflects both raw breakout score and likelihood quality.
         breakoutScore = this.clampNum((0.78 * breakoutScore) + (0.22 * breakoutLikelihoodScore), 0, 100);
+
+        // Ecosystem breakout carve-out: allow validated hidden-value path at low minutes.
+        const hiddenSkillSignal = this.clampNum(
+            (0.42 * mechanism.suppression_relief) +
+            (0.28 * mechanism.spacing_gravity_skill) +
+            (0.16 * intrinsicContextLedger.context_share) +
+            (0.14 * mechanism.portability_score),
+            0,
+            1
+        );
+        const utilizationUplift = this.clampNum(
+            (0.6 * intrinsicContextLedger.context_share) +
+            (0.4 * fitStrengthNorm),
+            0,
+            1
+        );
+        const ecosystemValidated =
+            hiddenSkillSignal >= 0.58 &&
+            utilizationUplift >= 0.55 &&
+            mechanism.portability_score >= 0.33 &&
+            effectiveScenarioConfidence >= 0.60;
+
+        if (minutesGovernance.visible_status === 'fail' && !ecosystemValidated) {
+            promotionBlocked = true;
+            promotionBlockReasons.push('Visible breakout blocked: low-minute baseline requires watchlist status.');
+            breakoutScore = Math.min(breakoutScore, 44);
+        } else if (minutesGovernance.visible_status === 'watch' && !ecosystemValidated) {
+            breakoutScore = Math.min(breakoutScore, 64);
+            if (!promotionBlocked) promotionBlockReasons.push('Visible breakout in watch zone until minute sample improves.');
+        }
 
         let likelihood = 'Low';
         let likelihoodClass = 'low';
@@ -861,7 +1387,16 @@ class PlayerCardsApp {
             breakoutLikelihoodScore >= 70 &&
             contributionStrength >= 0.55 &&
             (fitScenario.fit_score || 0) >= 0.08 &&
-            (fitScenario.signal_strength || 'weak') !== 'weak';
+            (fitScenario.signal_strength || 'weak') !== 'weak' &&
+            !promotionBlocked;
+        const visibleBreakoutValidated = minutesGovernance.visible_status === 'pass' && !promotionBlocked;
+
+        const reportContract = {
+            identity_snapshot: true,
+            value_decomposition: !!valueDecomposition,
+            counterfactual_with_clamps: clampReport.length > 0,
+            decision_layer: (!!contractSummary?.available) || !!agingSummary
+        };
 
         return {
             fitScenario,
@@ -885,6 +1420,27 @@ class PlayerCardsApp {
             contributionStrength,
             contributionProfile,
             mechanism,
+            valueDecomposition,
+            intrinsicContextLedger,
+            clampReport,
+            impactAudit,
+            defenseRole,
+            evidence: {
+                ...evidence,
+                coverage_effective: effectiveEvidenceCoverage,
+                penalty_total: evidencePenaltyTotal
+            },
+            minutesGovernance,
+            agingSummary,
+            contractSummary,
+            effectiveScenarioConfidence,
+            promotionBlocked,
+            promotionBlockReasons,
+            reportContract,
+            ecosystemValidated,
+            visibleBreakoutValidated,
+            hiddenSkillSignal,
+            utilizationUplift,
             breakoutScore,
             breakoutScoreRaw,
             breakoutScoreRelative: relativeScore,
@@ -946,6 +1502,14 @@ class PlayerCardsApp {
         window.addEventListener('resize', () => {
             if (this.distributionRaf) cancelAnimationFrame(this.distributionRaf);
             this.distributionRaf = requestAnimationFrame(() => this.drawValueDistributionChart());
+        });
+        window.addEventListener('themechange', () => {
+            if (this.distributionRaf) cancelAnimationFrame(this.distributionRaf);
+            this.distributionRaf = requestAnimationFrame(() => this.drawValueDistributionChart());
+            if (this.currentModalPlayer) {
+                this.drawShotChart(this.currentModalPlayer);
+                this.drawValueDriversChart(this.currentModalPlayer);
+            }
         });
         this.setupDistributionInteractions();
     }
@@ -1037,6 +1601,29 @@ class PlayerCardsApp {
         });
     }
 
+    updateStats() {
+        // Stats widgets are optional in the current layout.
+        const setText = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value;
+        };
+
+        const total = this.players.length;
+        const visible = this.filteredPlayers.length;
+        const breakoutCandidates = this.filteredPlayers.filter(p => {
+            const s = this.evaluateBreakoutScenario(p);
+            return s.likelihoodClass === 'high' && (s.breakoutScore || 0) >= 60;
+        }).length;
+        const highTrust = this.filteredPlayers.filter(
+            p => Number(p.v1_1_enhancements?.trust_assessment?.score || 0) >= 75
+        ).length;
+
+        setText('totalPlayers', total.toLocaleString());
+        setText('visiblePlayers', visible.toLocaleString());
+        setText('breakoutCandidates', breakoutCandidates.toLocaleString());
+        setText('highTrustPlayers', highTrust.toLocaleString());
+    }
+
     getTeamFitScore(player) {
         if (!this.teamFitScoreCache) this.teamFitScoreCache = {};
         const key = this.getPlayerKey(player);
@@ -1074,6 +1661,15 @@ class PlayerCardsApp {
         const breakoutGetter = (p) => this.evaluateBreakoutScenario(p).breakoutScore;
         switch (this.currentSort) {
             case 'name':
+                if (this.initialDistributionMetricKey === 'team_fit') {
+                    return {
+                        key: 'team_fit',
+                        label: 'Showing: Team Fit Context (%)',
+                        accessor: (p) => this.getTeamFitScore(p) * 100,
+                        format: (v) => `${v.toFixed(1)}%`,
+                        _initialOverride: true
+                    };
+                }
                 return {
                     key: 'none',
                     label: 'Showing: Name sort selected (distribution hidden)',
@@ -1161,6 +1757,9 @@ class PlayerCardsApp {
         const metricLabelEl = document.getElementById('distributionMetricLabel');
         const config = this.getDistributionMetricConfig();
         this.distributionMetricConfig = config;
+        if (config && config._initialOverride) {
+            this.initialDistributionMetricKey = null;
+        }
         if (metricLabelEl) metricLabelEl.textContent = config.label;
 
         const countEl = document.getElementById('distributionCount');
@@ -1216,7 +1815,13 @@ class PlayerCardsApp {
             return;
         }
 
-        const values = this.filteredPlayers
+        // Keep distribution geometry stable regardless of card sort order.
+        // Card sort can change this.filteredPlayers sequence; chart should not.
+        const distributionPlayers = [...this.filteredPlayers].sort((a, b) =>
+            (a.player?.name || '').localeCompare(b.player?.name || '')
+        );
+
+        const values = distributionPlayers
             .map(p => config.accessor(p))
             .filter(v => Number.isFinite(v));
         if (!values.length) return;
@@ -1263,7 +1868,7 @@ class PlayerCardsApp {
         // 3) add small deterministic x-jitter to avoid rectangular blocks.
         const binCount = Math.max(48, Math.min(96, Math.floor(plotW / 11)));
         const bins = new Map();
-        const rawPoints = this.filteredPlayers.map((p, idx) => {
+        const rawPoints = distributionPlayers.map((p, idx) => {
             const v = config.accessor(p);
             const x = toX(v);
             const b = Math.floor(((x - pad.left) / plotW) * binCount);
@@ -1384,7 +1989,48 @@ class PlayerCardsApp {
         const playerValue = this.getPlayerValue(player);
         const impactClass = playerValue >= 60 ? 'positive' : (playerValue <= 40 ? 'negative' : '');
         const evalOut = this.evaluateBreakoutScenario(player);
-        const mechanism = this.computeMechanismMetrics(player, evalOut);
+        const typeCardProfile = this.getBasketballTypeProfile(player);
+        const typeCardHeadshotUrl = this.getPlayerHeadshotUrl(player);
+        const typeCardTeamLogoUrl = this.getTeamLogoUrl(player.player?.team);
+        const breakoutStyle = this.getBreakoutTierStyle(evalOut.likelihoodClass, evalOut.likelihoodPct);
+        const isRookie = this.isLikelyRookie(player);
+        const typeCardMonogram = this.getPlayerMonogram(player.player?.name || 'NA');
+
+        return `
+            <div class="player-card type-card trading-card" data-player="${player.player.name}" style="--type-primary:${typeCardProfile.primaryColor};--type-secondary:${typeCardProfile.secondaryColor};--type-glow:${typeCardProfile.glowColor};--breakout-bg:${breakoutStyle.bg};--breakout-fg:${breakoutStyle.fg};--breakout-glow:${breakoutStyle.glow};">
+                <div class="type-card-hero trading-hero">
+                    ${typeCardTeamLogoUrl ? `<div class="type-card-team-logo" style="background-image:url('${typeCardTeamLogoUrl}');"></div>` : ''}
+                    <img
+                        class="type-card-headshot"
+                        src="${typeCardHeadshotUrl}"
+                        alt="${player.player.name} headshot"
+                        loading="lazy"
+                        onerror="this.style.display='none'; this.closest('.type-card-hero').classList.add('no-headshot');"
+                    />
+                    <div class="type-card-monogram">${typeCardMonogram}</div>
+                    <div class="trading-topline">
+                        <div class="trading-name">${player.player.name}</div>
+                    </div>
+                    <div class="trading-position-ribbon">${player.player.position || 'N/A'}</div>
+                    <div class="trading-breakout-strip">${breakoutStyle.label} BREAKOUT &bull; ${Math.round(evalOut.likelihoodPct || 0)}%</div>
+                    ${isRookie ? `<div class="trading-rookie-badge">ROOKIE</div>` : ''}
+                    <div class="trading-team-ribbon">${player.player.team}</div>
+                    <div class="trading-card-badge ${impactClass}">Value ${playerValue.toFixed(1)}</div>
+                    <div class="trading-subtype">${typeCardProfile.typeLabel}</div>
+                    <div class="trading-photo-vignette"></div>
+                    <div class="trading-photo-grain"></div>
+                    <div class="trading-photo-frame"></div>
+                    <div class="trading-photo-corner"></div>
+                    <div class="trading-photo-corner bottom"></div>
+                    <div class="trading-photo-border"></div>
+                    <div class="trading-photo-shadow"></div>
+                    <div class="trading-photo-light"></div>
+                    <div class="trading-photo-band">
+                        <div class="trading-photo-band-text">${typeCardProfile.subtitle}</div>
+                    </div>
+                </div>
+            </div>
+        `;
         
         const trustScore = player.v1_1_enhancements?.trust_assessment?.score || 0;
         const fitScorePct = (evalOut.fitScenario?.fit_score || 0) * 100;
@@ -1403,6 +2049,7 @@ class PlayerCardsApp {
         if (mechanism.portability_score >= 0.62) tags.push('<span class="tag high-portability">Portable Defense</span>');
         if ((evalOut.fitScenario?.signal_strength || 'weak') === 'strong') tags.push('<span class="tag high-impact">Strong Fit Signal</span>');
         if (evalOut.genuineBreakout) tags.push('<span class="tag high-impact">Genuine Breakout Signal</span>');
+        if (evalOut.promotionBlocked) tags.push('<span class="tag breakout">Promotion Blocked</span>');
         
         // High usage tag (usage > 25%)
         if (usageRate >= 0.25) tags.push('<span class="tag breakout">High Usage</span>');
@@ -1669,6 +2316,16 @@ class PlayerCardsApp {
         const fit = evalOut.fitScenario || {};
         const fitPercentile = this.getTeamFitPercentile(player);
         const usage = ((adv.usage_rate ?? 0) * 100).toFixed(1);
+        const ledger = evalOut.intrinsicContextLedger || { intrinsic: 0.5, context: 0.5, residual: 0, intrinsic_share: 0.5, context_share: 0.5 };
+        const valueDecomposition = evalOut.valueDecomposition || { blocks: [], base_score: 0, team_weighted_score: 0 };
+        const clampReport = evalOut.clampReport || [];
+        const impactAudit = evalOut.impactAudit || { verdict: 'insufficient_data', disagreement: 1, required_justification: [] };
+        const defenseRole = evalOut.defenseRole || { primary_role: 'Unknown', targeting_risk: 0.5, warnings: [] };
+        const evidence = evalOut.evidence || { coverage: 0.7, coverage_effective: 0.7, missing: [], penalty: 0, penalty_total: 0, grade: 'moderate' };
+        const minutesGov = evalOut.minutesGovernance || { visible_status: 'watch', reason: 'No minutes governance output', evidence_penalty: 0, feasibility_penalty: 0, mpg: 0, games_played: 0 };
+        const agingSummary = evalOut.agingSummary || this.getAgingAdjustmentSummary(player, valuation);
+        const contractSummary = evalOut.contractSummary || this.getContractSurplusSummary(valuation);
+        const reportContract = evalOut.reportContract || {};
         const mechanismRows = [
             {
                 label: 'Suppression Relief',
@@ -1752,6 +2409,155 @@ class PlayerCardsApp {
             </div>
 
             <div class="detail-section">
+                <h3>Value Decomposition Vector</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-item-label">Base Vector Score</div>
+                        <div class="detail-item-value">${(100 * (valueDecomposition.base_score || 0)).toFixed(0)}%</div>
+                        <div class="detail-item-note">Unweighted player mechanism profile across offense/defense role blocks.</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Team-Weighted Vector Score</div>
+                        <div class="detail-item-value">${(100 * (valueDecomposition.team_weighted_score || 0)).toFixed(0)}%</div>
+                        <div class="detail-item-note">Mechanism profile re-weighted by team context fit dimensions.</div>
+                    </div>
+                </div>
+                <div class="mechanism-explainer-grid" style="margin-top: 0.8rem;">
+                    ${(valueDecomposition.blocks || []).map(b => `
+                        <div class="mechanism-explainer-card">
+                            <div class="mechanism-explainer-head">
+                                <div class="mechanism-explainer-label">${b.label}</div>
+                                <div class="mechanism-explainer-value">${(100 * (b.value || 0)).toFixed(0)}%</div>
+                            </div>
+                            <div class="mechanism-explainer-meaning">Team weight ${(100 * (b.team_weight || 0)).toFixed(0)}%</div>
+                            <div class="mechanism-explainer-read">Weighted contribution ${(100 * (b.team_weighted_value || 0)).toFixed(0)}%.</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>Intrinsic vs Context Ledger</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-item-label">Intrinsic Component</div>
+                        <div class="detail-item-value">${(ledger.intrinsic * 100).toFixed(0)}%</div>
+                        <div class="detail-item-note">Player-owned signal from value priors, spacing skill, and defensive portability.</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Context Component</div>
+                        <div class="detail-item-value">${(ledger.context * 100).toFixed(0)}%</div>
+                        <div class="detail-item-note">System translation signal from fit edge, usage/minutes runway, and scheme complementarity.</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Intrinsic Share</div>
+                        <div class="detail-item-value">${(ledger.intrinsic_share * 100).toFixed(0)}%</div>
+                        <div class="detail-item-note">Share of explainable breakout path attributable to player-owned factors.</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Context Share</div>
+                        <div class="detail-item-value">${(ledger.context_share * 100).toFixed(0)}%</div>
+                        <div class="detail-item-note">Share of explainable breakout path attributable to team/deployment context.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>Clamps Fired</h3>
+                <div class="constraints-list">
+                    ${clampReport.length ? clampReport.map(c => `
+                        <div class="constraint-item">
+                            <span class="constraint-icon">⛓️</span>
+                            <span class="constraint-text"><strong>${c.clamp}</strong> (${(100 * (c.severity || 0)).toFixed(0)}%): ${c.message} Unlock path: ${c.unlock}</span>
+                        </div>
+                    `).join('') : `
+                        <div class="constraint-item">
+                            <span class="constraint-icon">✅</span>
+                            <span class="constraint-text">No explicit clamp fire events were triggered for this scenario.</span>
+                        </div>
+                    `}
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>Minutes Governance</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-item-label">Minutes Gate</div>
+                        <div class="detail-item-value">${String(minutesGov.visible_status || 'watch').toUpperCase()}</div>
+                        <div class="detail-item-note">${minutesGov.reason || 'Minutes governance reason unavailable.'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">MPG / GP</div>
+                        <div class="detail-item-value">${(minutesGov.mpg || 0).toFixed(1)} / ${(minutesGov.games_played || 0).toFixed(0)}</div>
+                        <div class="detail-item-note">Low minutes are treated as confidence + feasibility clamps, not hard exclusion.</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Minutes Evidence Penalty</div>
+                        <div class="detail-item-value">${((minutesGov.evidence_penalty || 0) * 100).toFixed(1)}%</div>
+                        <div class="detail-item-note">Penalty applied to confidence governance for low-minute or low-game evidence.</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Minutes Feasibility Penalty</div>
+                        <div class="detail-item-value">${((minutesGov.feasibility_penalty || 0) * 100).toFixed(1)}%</div>
+                        <div class="detail-item-note">Penalty applied when scenario requires aggressive rotation promotion.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>Impact Audit (Adult Supervision)</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-item-label">Audit Verdict</div>
+                        <div class="detail-item-value">${String(impactAudit.verdict || 'insufficient_data').replace('_', ' ').toUpperCase()}</div>
+                        <div class="detail-item-note">Compares breakout signal quality vs EPM/LEBRON prior anchor consensus.</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Prior Consensus</div>
+                        <div class="detail-item-value">${impactAudit.consensus === null || impactAudit.consensus === undefined ? 'N/A' : impactAudit.consensus.toFixed(2)}</div>
+                        <div class="detail-item-note">Positive values support strong projected impact; negative values increase scrutiny.</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Prior Disagreement</div>
+                        <div class="detail-item-value">${(100 * (impactAudit.disagreement ?? mechanism.impact_prior_disagreement ?? 0)).toFixed(0)}%</div>
+                        <div class="detail-item-note">Distance between priors; high disagreement lowers confidence.</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Required Justification</div>
+                        <div class="detail-item-value">${impactAudit.required_justification?.length ? impactAudit.required_justification.length : 0}</div>
+                        <div class="detail-item-note">${impactAudit.required_justification?.length ? impactAudit.required_justification[0] : 'No mandatory contradiction note triggered.'}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>Defense Role Identity</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-item-label">Primary Defensive Role</div>
+                        <div class="detail-item-value">${defenseRole.primary_role || 'Unknown'}</div>
+                        <div class="detail-item-note">Role identity proxy from matchup profile distribution + position context.</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Playoff Targeting Risk</div>
+                        <div class="detail-item-value">${(100 * (defenseRole.targeting_risk || 0)).toFixed(0)}%</div>
+                        <div class="detail-item-note">Higher risk automatically clamps aggressive offensive role expansion.</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Role Mix</div>
+                        <div class="detail-item-value">G ${(100 * (defenseRole.role_mix?.guards || 0)).toFixed(0)} / W ${(100 * (defenseRole.role_mix?.wings || 0)).toFixed(0)} / B ${(100 * (defenseRole.role_mix?.bigs || 0)).toFixed(0)}</div>
+                        <div class="detail-item-note">Guard/Wing/Big matchup distribution used to infer portability stress.</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Breakpoint Warning</div>
+                        <div class="detail-item-value">${defenseRole.warnings?.length ? 'ACTIVE' : 'CLEAR'}</div>
+                        <div class="detail-item-note">${defenseRole.warnings?.[0] || 'No major defensive breakpoint warning triggered.'}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
                 <h3>Observed Box & Role Context</h3>
                 <div class="detail-grid">
                     ${this.formatMetricWithPercentile(player, 'Usage Rate', usage + '%', 'usage')}
@@ -1782,6 +2588,48 @@ class PlayerCardsApp {
                         <div class="detail-item-label">Signal Strength</div>
                         <div class="detail-item-value">${(fit.signal_strength || 'weak').toUpperCase()}</div>
                     </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Effective Scenario Confidence</div>
+                        <div class="detail-item-value">${(100 * (evalOut.effectiveScenarioConfidence || fit.confidence || 0)).toFixed(0)}%</div>
+                        <div class="detail-item-note">Fit confidence after audit/evidence governance dampeners.</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Evidence Coverage</div>
+                        <div class="detail-item-value">${(evidence.coverage_effective * 100).toFixed(0)}%</div>
+                        <div class="detail-item-note">Observed field coverage driving confidence governance (${evidence.grade.toUpperCase()}).</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Missing Inputs</div>
+                        <div class="detail-item-value">${evidence.missing.length}</div>
+                        <div class="detail-item-note">${evidence.missing.length ? evidence.missing.slice(0, 3).join(', ') : 'No major required fields missing.'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Total Evidence Penalty</div>
+                        <div class="detail-item-value">${((evidence.penalty_total || evidence.penalty || 0) * 100).toFixed(1)}%</div>
+                        <div class="detail-item-note">Base missingness penalty plus minutes-evidence penalty.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>Report Contract</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-item-label">Identity Snapshot</div>
+                        <div class="detail-item-value">${reportContract.identity_snapshot ? 'PRESENT' : 'MISSING'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Value Decomposition</div>
+                        <div class="detail-item-value">${reportContract.value_decomposition ? 'PRESENT' : 'MISSING'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Counterfactual + Clamps</div>
+                        <div class="detail-item-value">${reportContract.counterfactual_with_clamps ? 'PRESENT' : 'MISSING'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Decision Layer</div>
+                        <div class="detail-item-value">${reportContract.decision_layer ? 'PRESENT' : 'MISSING'}</div>
+                    </div>
                 </div>
             </div>
 
@@ -1792,12 +2640,22 @@ class PlayerCardsApp {
                         ${this.formatMetricWithPercentile(player, 'Wins Added', valuation.impact.wins_added.toFixed(1), 'wins_added')}
                         ${this.formatMetricWithPercentile(player, 'Trade Value (Base)', valuation.trade_value.base.toFixed(1) + 'M', 'trade_value')}
                         <div class="detail-item">
+                            <div class="detail-item-label">Contract NPV Surplus</div>
+                            <div class="detail-item-value">${contractSummary.npv_surplus !== null && contractSummary.npv_surplus !== undefined ? contractSummary.npv_surplus.toFixed(2) + 'M' : 'N/A'}</div>
+                            <div class="detail-item-note">Projected value minus contract cost over control horizon.</div>
+                        </div>
+                        <div class="detail-item">
                             <div class="detail-item-label">Aging Phase</div>
                             <div class="detail-item-value">${this.formatAgingPhase(valuation.aging.current_phase)}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-item-label">Peak Age</div>
                             <div class="detail-item-value">${valuation.aging.peak_age.toFixed(1)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-item-label">Aging Adjustment</div>
+                            <div class="detail-item-value">${agingSummary.pct >= 0 ? '+' : ''}${agingSummary.pct.toFixed(1)}%</div>
+                            <div class="detail-item-note">Current age vs archetype/valuation curve baseline (${agingSummary.source}).</div>
                         </div>
                     </div>
                 </div>
@@ -1939,6 +2797,8 @@ class PlayerCardsApp {
         document.getElementById('teamFilter').value = '';
         document.getElementById('sortBy').value = 'name';
         this.currentSort = 'name';
+        // Restore landing behavior: cards by name, distribution by team fit.
+        this.initialDistributionMetricKey = 'team_fit';
         this.filterPlayers();
     }
 
@@ -1946,6 +2806,132 @@ class PlayerCardsApp {
         return archetype.split('_').map(word => 
             word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' ');
+    }
+
+    getPlayerMonogram(name) {
+        const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+        if (!parts.length) return 'NA';
+        if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+        return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    }
+
+    getPlayerHeadshotUrl(player) {
+        const id = String(player.player?.id || '').trim();
+        return `https://cdn.nba.com/headshots/nba/latest/1040x760/${id}.png`;
+    }
+
+    getTeamLogoUrl(team) {
+        const codeMap = {
+            ATL: 'atl', BOS: 'bos', BKN: 'bkn', CHA: 'cha', CHI: 'chi',
+            CLE: 'cle', DAL: 'dal', DEN: 'den', DET: 'det', GSW: 'gs',
+            HOU: 'hou', IND: 'ind', LAC: 'lac', LAL: 'lal', MEM: 'mem',
+            MIA: 'mia', MIL: 'mil', MIN: 'min', NOP: 'no', NYK: 'ny',
+            OKC: 'okc', ORL: 'orl', PHI: 'phi', PHX: 'phx', POR: 'por',
+            SAC: 'sac', SAS: 'sa', TOR: 'tor', UTA: 'uta', WAS: 'wsh'
+        };
+        const clean = String(team || '').toUpperCase().trim();
+        const espnCode = codeMap[clean];
+        return espnCode ? `https://a.espncdn.com/i/teamlogos/nba/500/${espnCode}.png` : '';
+    }
+
+    getBreakoutTierStyle(likelihoodClass, likelihoodPct) {
+        const cls = String(likelihoodClass || '').toLowerCase();
+        const pct = Number(likelihoodPct || 0);
+        if (cls === 'high' || pct >= 70) {
+            return { label: 'HIGH', bg: '#16a34a', fg: '#ecfdf5', glow: 'rgba(22,163,74,0.45)' };
+        }
+        if (cls === 'medium' || pct >= 45) {
+            return { label: 'MEDIUM', bg: '#d97706', fg: '#fffbeb', glow: 'rgba(217,119,6,0.42)' };
+        }
+        return { label: 'LOW', bg: '#dc2626', fg: '#fef2f2', glow: 'rgba(220,38,38,0.42)' };
+    }
+
+    isLikelyRookie(player) {
+        const candidateFlags = [
+            player?.player?.rookie,
+            player?.player?.is_rookie,
+            player?.player?.isRookie,
+            player?.identity?.rookie,
+            player?.identity?.is_rookie,
+            player?.identity?.isRookie
+        ];
+        for (const flag of candidateFlags) {
+            if (flag === true) return true;
+            if (String(flag || '').toLowerCase() === 'true') return true;
+        }
+
+        const expCandidates = [
+            player?.player?.years_experience,
+            player?.player?.experience,
+            player?.player?.nba_experience,
+            player?.identity?.years_experience,
+            player?.identity?.experience
+        ];
+        for (const exp of expCandidates) {
+            const n = Number(exp);
+            if (Number.isFinite(n)) return n <= 0;
+            const s = String(exp || '').trim().toLowerCase();
+            if (s === 'r' || s === 'rookie' || s === '0') return true;
+        }
+
+        // Conservative fallback for this dataset shape.
+        const age = Number(player?.player?.age);
+        return Number.isFinite(age) ? age <= 20 : false;
+    }
+
+    getBasketballTypeProfile(player) {
+        const archetype = String(player.identity?.primary_archetype || '').toLowerCase();
+        const map = {
+            lead_guard: {
+                typeLabel: 'Lead Engine',
+                subtitle: 'Tempo Creator',
+                styleLine: 'Primary organizer who bends defenses with initiation volume, touch creation, and pace control.',
+                primaryColor: '#8f1dff',
+                secondaryColor: '#1d8dff',
+                glowColor: 'rgba(143, 29, 255, 0.32)'
+            },
+            versatile_wing: {
+                typeLabel: 'Two-Way Wing',
+                subtitle: 'Switch Connector',
+                styleLine: 'Flexible wing profile built for off-ball scaling, matchup switching, and lineup glue value.',
+                primaryColor: '#0057d9',
+                secondaryColor: '#00a8a8',
+                glowColor: 'rgba(0, 87, 217, 0.30)'
+            },
+            stretch_big: {
+                typeLabel: 'Stretch Anchor',
+                subtitle: 'Paint-to-Perimeter Big',
+                styleLine: 'Frontcourt spacer that preserves interior gravity while stretching coverage past the arc.',
+                primaryColor: '#d97706',
+                secondaryColor: '#f59e0b',
+                glowColor: 'rgba(217, 119, 6, 0.34)'
+            },
+            rim_pressure_guard: {
+                typeLabel: 'Pressure Guard',
+                subtitle: 'Rim Collapse Driver',
+                styleLine: 'Downhill guard archetype that collapses shell coverages and creates chain-reaction passing lanes.',
+                primaryColor: '#dc2626',
+                secondaryColor: '#f97316',
+                glowColor: 'rgba(220, 38, 38, 0.30)'
+            },
+            '3_and_d_wing': {
+                typeLabel: '3-and-D Wing',
+                subtitle: 'Spacing Stopper',
+                styleLine: 'Role-optimized wing focused on floor spacing, shot discipline, and possession-level defensive containment.',
+                primaryColor: '#0f766e',
+                secondaryColor: '#22c55e',
+                glowColor: 'rgba(15, 118, 110, 0.30)'
+            }
+        };
+
+        return map[archetype] || {
+            typeLabel: this.formatArchetype(archetype || 'balanced role'),
+            subtitle: 'Balanced Contributor',
+            styleLine: 'Hybrid profile with mixed on-ball and off-ball utility that adapts to lineup context.',
+            primaryColor: '#334155',
+            secondaryColor: '#64748b',
+            glowColor: 'rgba(71, 85, 105, 0.30)'
+        };
     }
 
     formatRole(role) {
@@ -2467,9 +3453,15 @@ class PlayerCardsApp {
         const ctx = canvas.getContext('2d');
         const width = canvas.width;
         const height = canvas.height;
-        const padding = 60;
-        const barHeight = 45;
-        const barSpacing = 20;
+        const paddingX = 56;
+        const topPadding = 34;
+        const bottomPadding = 24;
+        const barHeight = 42;
+        const rowGap = 24;
+        const styles = getComputedStyle(document.documentElement);
+        const textPrimary = (styles.getPropertyValue('--text-primary') || '#111827').trim();
+        const textSecondary = (styles.getPropertyValue('--text-secondary') || '#6b7280').trim();
+        const isDark = document.documentElement.classList.contains('theme-dark') || document.body.classList.contains('theme-dark');
 
         // Transparent background: just clear the canvas.
         ctx.clearRect(0, 0, width, height);
@@ -2492,24 +3484,25 @@ class PlayerCardsApp {
         });
 
         const maxValue = Math.max(...drivers.map(d => d.value), 1);
-        const barWidth = width - padding * 2;
-        const chartHeight = drivers.length * (barHeight + barSpacing);
-        const startY = (height - chartHeight) / 2;
+        const barWidth = Math.max(120, width - (paddingX * 2));
+        const totalRowsHeight = drivers.length * barHeight + Math.max(0, drivers.length - 1) * rowGap;
+        const availableHeight = Math.max(0, height - topPadding - bottomPadding);
+        const startY = topPadding + Math.max(0, (availableHeight - totalRowsHeight) / 2);
 
         drivers.forEach((driver, index) => {
-            const y = startY + (index * (barHeight + barSpacing));
+            const y = startY + (index * (barHeight + rowGap));
             const fillWidth = (driver.value / maxValue) * barWidth;
 
             // Draw shadow
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
-            ctx.shadowBlur = 8;
+            ctx.shadowColor = isDark ? 'rgba(0, 0, 0, 0.32)' : 'rgba(0, 0, 0, 0.12)';
+            ctx.shadowBlur = 7;
             ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 4;
+            ctx.shadowOffsetY = 3;
 
             // Background bar (subtle translucent track)
-            ctx.fillStyle = 'rgba(31, 41, 55, 0.10)';
+            ctx.fillStyle = isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(15, 23, 42, 0.12)';
             ctx.beginPath();
-            ctx.roundRect(padding, y, barWidth, barHeight, 8);
+            ctx.roundRect(paddingX, y, barWidth, barHeight, 8);
             ctx.fill();
 
             // Reset shadow
@@ -2519,35 +3512,37 @@ class PlayerCardsApp {
             ctx.shadowOffsetY = 0;
 
             // Value bar with gradient
-            const gradient = ctx.createLinearGradient(padding, 0, padding + fillWidth, 0);
+            const gradient = ctx.createLinearGradient(paddingX, 0, paddingX + fillWidth, 0);
             gradient.addColorStop(0, driver.gradient.start);
             gradient.addColorStop(1, driver.gradient.end);
             ctx.fillStyle = gradient;
             ctx.beginPath();
-            ctx.roundRect(padding, y, fillWidth, barHeight, 8);
+            ctx.roundRect(paddingX, y, fillWidth, barHeight, 8);
             ctx.fill();
 
-            // Label (above bar) with stronger contrast.
-            ctx.fillStyle = '#111827';
+            // Label inside track for stable readability in both themes.
+            ctx.fillStyle = textPrimary;
             ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
             ctx.textAlign = 'left';
-            ctx.fillText(driver.label, padding, y - 8);
+            ctx.textBaseline = 'middle';
+            ctx.fillText(driver.label, paddingX + 12, y + (barHeight / 2));
 
             // Value (inside bar if it fits, otherwise outside)
             const valueText = driver.value.toFixed(1);
             ctx.font = 'bold 16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
             const textWidth = ctx.measureText(valueText).width;
 
-            if (fillWidth > textWidth + 20) {
-                // Inside bar (white text)
+            if (fillWidth > textWidth + 34) {
+                // Inside bar near right edge.
                 ctx.fillStyle = '#ffffff';
                 ctx.textAlign = 'right';
-                ctx.fillText(valueText, padding + fillWidth - 12, y + barHeight / 2 + 6);
+                ctx.fillText(valueText, paddingX + fillWidth - 12, y + (barHeight / 2));
             } else {
-                // Outside bar (dark text)
-                ctx.fillStyle = '#111827';
+                // Outside bar, clamped so text never falls out of bounds.
+                ctx.fillStyle = textSecondary;
                 ctx.textAlign = 'left';
-                ctx.fillText(valueText, padding + fillWidth + 8, y + barHeight / 2 + 6);
+                const outsideX = Math.min(paddingX + barWidth - textWidth - 6, paddingX + fillWidth + 8);
+                ctx.fillText(valueText, outsideX, y + (barHeight / 2));
             }
         });
     }
@@ -2729,12 +3724,25 @@ class PlayerCardsApp {
             contributionStrength,
             contributionProfile,
             mechanism,
+            intrinsicContextLedger,
+            clampReport,
+            impactAudit,
+            defenseRole,
+            evidence,
+            minutesGovernance,
             breakoutScore,
             likelihood,
             likelihoodClass,
             likelihoodPct,
             breakoutLikelihoodScore,
-            genuineBreakout
+            genuineBreakout,
+            promotionBlocked,
+            promotionBlockReasons,
+            valueDecomposition,
+            ecosystemValidated,
+            visibleBreakoutValidated,
+            hiddenSkillSignal,
+            utilizationUplift
         } = evalOut;
 
         const usageImpactWeight = this.clampNum((usageDelta * 100) / 12, 0.1, 1.0);
@@ -2753,9 +3761,44 @@ class PlayerCardsApp {
                         <div class="likelihood-label">Score: ${breakoutScore.toFixed(1)}</div>
                         <div class="likelihood-label">Likelihood Signal: ${breakoutLikelihoodScore.toFixed(0)}</div>
                         <div class="likelihood-label">${genuineBreakout ? 'Genuine Breakout Signal: YES' : 'Genuine Breakout Signal: NO'}</div>
+                        <div class="likelihood-label">${promotionBlocked ? 'Promotion Gate: BLOCKED' : 'Promotion Gate: OPEN'}</div>
+                        <div class="likelihood-label">${visibleBreakoutValidated ? 'Visible Validation: PASS' : `Visible Validation: ${String(minutesGovernance.visible_status || 'watch').toUpperCase()}`}</div>
+                        <div class="likelihood-label">${ecosystemValidated ? 'Ecosystem Validation: PASS' : 'Ecosystem Validation: NOT VALIDATED'}</div>
                         <div class="likelihood-bar">
                             <div class="likelihood-fill" style="width: ${likelihoodPct}%"></div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            ${promotionBlocked ? `
+            <div class="detail-section">
+                <h3>Promotion Block</h3>
+                <div class="constraints-list">
+                    ${(promotionBlockReasons || []).map(r => `
+                        <div class="constraint-item">
+                            <span class="constraint-icon">⛔</span>
+                            <span class="constraint-text">${r}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            ` : ''}
+
+            <div class="detail-section">
+                <h3>Minutes Gate</h3>
+                <div class="constraints-list">
+                    <div class="constraint-item">
+                        <span class="constraint-icon">⏱️</span>
+                        <span class="constraint-text"><strong>Status:</strong> ${String(minutesGovernance.visible_status || 'watch').toUpperCase()} (${(minutesGovernance.mpg || 0).toFixed(1)} MPG, ${(minutesGovernance.games_played || 0).toFixed(0)} GP).</span>
+                    </div>
+                    <div class="constraint-item">
+                        <span class="constraint-icon">🧪</span>
+                        <span class="constraint-text"><strong>Evidence penalty:</strong> ${((minutesGovernance.evidence_penalty || 0) * 100).toFixed(1)}%, <strong>feasibility penalty:</strong> ${((minutesGovernance.feasibility_penalty || 0) * 100).toFixed(1)}%.</span>
+                    </div>
+                    <div class="constraint-item">
+                        <span class="constraint-icon">📝</span>
+                        <span class="constraint-text">${minutesGovernance.reason || 'Minutes gate reason unavailable.'}</span>
                     </div>
                 </div>
             </div>
@@ -2820,6 +3863,43 @@ class PlayerCardsApp {
             </div>
 
             <div class="detail-section">
+                <h3>Intrinsic vs Context Ledger</h3>
+                <div class="factors-grid">
+                    <div class="factor-item ${(intrinsicContextLedger.intrinsic_share || 0.5) >= 0.5 ? 'positive' : 'neutral'}">
+                        <div class="factor-label">Intrinsic Share</div>
+                        <div class="factor-value">${(100 * (intrinsicContextLedger.intrinsic_share || 0.5)).toFixed(0)}%</div>
+                        <div class="factor-assessment">Player-owned contribution path (skills + priors + portability).</div>
+                    </div>
+                    <div class="factor-item ${(intrinsicContextLedger.context_share || 0.5) >= 0.5 ? 'positive' : 'neutral'}">
+                        <div class="factor-label">Context Share</div>
+                        <div class="factor-value">${(100 * (intrinsicContextLedger.context_share || 0.5)).toFixed(0)}%</div>
+                        <div class="factor-assessment">Team/deployment translation path (fit + role runway).</div>
+                    </div>
+                    <div class="factor-item ${(intrinsicContextLedger.residual || 0) <= 0.25 ? 'positive' : 'negative'}">
+                        <div class="factor-label">Residual Unexplained</div>
+                        <div class="factor-value">${(100 * (intrinsicContextLedger.residual || 0)).toFixed(0)}%</div>
+                        <div class="factor-assessment">Lower is better; high residual implies weaker explanation completeness.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>Value Decomposition (Team-Weighted)</h3>
+                <div class="constraints-list">
+                    <div class="constraint-item">
+                        <span class="constraint-icon">🧮</span>
+                        <span class="constraint-text">Base vector ${(100 * (valueDecomposition.base_score || 0)).toFixed(0)}% vs team-weighted ${(100 * (valueDecomposition.team_weighted_score || 0)).toFixed(0)}%.</span>
+                    </div>
+                    ${(valueDecomposition.blocks || []).slice(0, 4).map(b => `
+                        <div class="constraint-item">
+                            <span class="constraint-icon">•</span>
+                            <span class="constraint-text"><strong>${b.label}</strong>: ${(100 * (b.value || 0)).toFixed(0)}% with team weight ${(100 * (b.team_weight || 0)).toFixed(0)}%.</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="detail-section">
                 <h3>Mechanism Trace (Why, Not Just What)</h3>
                 <div class="factors-grid">
                     <div class="factor-item ${mechanism.suppression_relief >= 0.6 ? 'positive' : mechanism.suppression_relief < 0.4 ? 'negative' : 'neutral'}">
@@ -2852,6 +3932,88 @@ class PlayerCardsApp {
                         <div class="factor-value">${(mechanism.comp_density * 100).toFixed(0)}%</div>
                         <div class="factor-assessment">Lower density means more uniqueness and wider uncertainty.</div>
                     </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>Impact Audit Verdict</h3>
+                <div class="constraints-list">
+                    <div class="constraint-item">
+                        <span class="constraint-icon">🔎</span>
+                        <span class="constraint-text"><strong>Verdict:</strong> ${String(impactAudit.verdict || 'insufficient_data').replace('_', ' ').toUpperCase()} (prior disagreement ${(100 * (impactAudit.disagreement ?? mechanism.impact_prior_disagreement ?? 0)).toFixed(0)}%).</span>
+                    </div>
+                    <div class="constraint-item">
+                        <span class="constraint-icon">🧾</span>
+                        <span class="constraint-text"><strong>Consensus prior:</strong> ${impactAudit.consensus === null || impactAudit.consensus === undefined ? 'N/A' : impactAudit.consensus.toFixed(2)} from available EPM/LEBRON anchors.</span>
+                    </div>
+                    ${impactAudit.required_justification && impactAudit.required_justification.length ? impactAudit.required_justification.map(j => `
+                        <div class="constraint-item">
+                            <span class="constraint-icon">⚠️</span>
+                            <span class="constraint-text">${j}</span>
+                        </div>
+                    `).join('') : `
+                        <div class="constraint-item">
+                            <span class="constraint-icon">✅</span>
+                            <span class="constraint-text>No mandatory contradiction justification triggered.</span>
+                        </div>
+                    `}
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>Defense Role Identity & Breakpoints</h3>
+                <div class="constraints-list">
+                    <div class="constraint-item">
+                        <span class="constraint-icon">🛡️</span>
+                        <span class="constraint-text"><strong>${defenseRole.primary_role || 'Unknown'}</strong> profile with targeting risk ${(100 * (defenseRole.targeting_risk || 0)).toFixed(0)}% (G ${(100 * (defenseRole.role_mix?.guards || 0)).toFixed(0)} / W ${(100 * (defenseRole.role_mix?.wings || 0)).toFixed(0)} / B ${(100 * (defenseRole.role_mix?.bigs || 0)).toFixed(0)}).</span>
+                    </div>
+                    ${defenseRole.warnings && defenseRole.warnings.length ? defenseRole.warnings.map(w => `
+                        <div class="constraint-item">
+                            <span class="constraint-icon">⚠️</span>
+                            <span class="constraint-text">${w}</span>
+                        </div>
+                    `).join('') : ''}
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>Evidence Coverage & Missingness</h3>
+                <div class="constraints-list">
+                    <div class="constraint-item">
+                        <span class="constraint-icon">📚</span>
+                        <span class="constraint-text">Evidence coverage ${(100 * (evidence.coverage_effective || evidence.coverage || 0)).toFixed(0)}% (${String(evidence.grade || 'moderate').toUpperCase()}); confidence penalty ${(100 * (evidence.penalty_total || evidence.penalty || 0)).toFixed(1)}%.</span>
+                    </div>
+                    <div class="constraint-item">
+                        <span class="constraint-icon">🧩</span>
+                        <span class="constraint-text">${evidence.missing && evidence.missing.length ? `Missing inputs: ${evidence.missing.slice(0, 6).join(', ')}` : 'No major required fields missing for mechanism audit.'}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>Ecosystem Carve-Out</h3>
+                <div class="constraints-list">
+                    <div class="constraint-item">
+                        <span class="constraint-icon">🌐</span>
+                        <span class="constraint-text"><strong>${ecosystemValidated ? 'Validated ecosystem breakout path.' : 'Ecosystem path not validated.'}</strong> Hidden skill ${(100 * (hiddenSkillSignal || 0)).toFixed(0)}%, utilization uplift ${(100 * (utilizationUplift || 0)).toFixed(0)}%.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>Clamps Fired</h3>
+                <div class="constraints-list">
+                    ${clampReport && clampReport.length ? clampReport.map(c => `
+                        <div class="constraint-item">
+                            <span class="constraint-icon">⛓️</span>
+                            <span class="constraint-text"><strong>${c.clamp}</strong> (${(100 * (c.severity || 0)).toFixed(0)}%): ${c.message} Unlock path: ${c.unlock}</span>
+                        </div>
+                    `).join('') : `
+                        <div class="constraint-item">
+                            <span class="constraint-icon">✅</span>
+                            <span class="constraint-text">No explicit clamp events fired in this scenario.</span>
+                        </div>
+                    `}
                 </div>
             </div>
 
