@@ -1990,6 +1990,95 @@ class PlayerCardsApp {
         const impactClass = playerValue >= 60 ? 'positive' : (playerValue <= 40 ? 'negative' : '');
         const evalOut = this.evaluateBreakoutScenario(player);
         const mechanism = this.computeMechanismMetrics(player, evalOut);
+        const typeCardProfile = this.getBasketballTypeProfile(player);
+        const typeCardTrustScore = player.v1_1_enhancements?.trust_assessment?.score || 0;
+        const typeCardFitScorePct = (evalOut.fitScenario?.fit_score || 0) * 100;
+        const typeCardFitPercentile = this.getTeamFitPercentile(player);
+        const typeCardBreakoutScore = evalOut.breakoutScore || 0;
+        const typeCardScenarioSummary = this.buildCardScenarioSummary(player, evalOut, mechanism);
+        const typeCardUsageRate = player.performance?.advanced?.usage_rate ?? 0;
+        const typeCardHeadshotUrl = this.getPlayerHeadshotUrl(player);
+        const typeCardTeamLogoUrl = this.getTeamLogoUrl(player.player?.team);
+        const typeCardMonogram = this.getPlayerMonogram(player.player?.name || 'NA');
+
+        const typeCardTags = [];
+        if (typeCardTrustScore >= 75) typeCardTags.push('<span class="tag high-impact">High Trust</span>');
+        if (playerValue >= 70) typeCardTags.push('<span class="tag high-impact">High Value</span>');
+        if (mechanism.portability_score >= 0.62) typeCardTags.push('<span class="tag high-portability">Portable Defense</span>');
+        if ((evalOut.fitScenario?.signal_strength || 'weak') === 'strong') typeCardTags.push('<span class="tag high-impact">Strong Fit Signal</span>');
+        if (evalOut.genuineBreakout) typeCardTags.push('<span class="tag high-impact">Genuine Breakout Signal</span>');
+        if (evalOut.promotionBlocked) typeCardTags.push('<span class="tag breakout">Promotion Blocked</span>');
+        if (typeCardUsageRate >= 0.25) typeCardTags.push('<span class="tag breakout">High Usage</span>');
+
+        const typeCardSignals = [
+            { label: 'Type Confidence', value: Math.round((player.identity?.archetype_confidence || 0) * 100) },
+            { label: 'Team Fit', value: Math.round(typeCardFitScorePct) },
+            { label: 'Portability', value: Math.round(mechanism.portability_score * 100) },
+            { label: 'Suppression Relief', value: Math.round(mechanism.suppression_relief * 100) }
+        ];
+
+        return `
+            <div class="player-card type-card" data-player="${player.player.name}" style="--type-primary:${typeCardProfile.primaryColor};--type-secondary:${typeCardProfile.secondaryColor};--type-glow:${typeCardProfile.glowColor};">
+                <div class="type-card-hero">
+                    ${typeCardTeamLogoUrl ? `<div class="type-card-team-logo" style="background-image:url('${typeCardTeamLogoUrl}');"></div>` : ''}
+                    <img
+                        class="type-card-headshot"
+                        src="${typeCardHeadshotUrl}"
+                        alt="${player.player.name} headshot"
+                        loading="lazy"
+                        onerror="this.style.display='none'; this.closest('.type-card-hero').classList.add('no-headshot');"
+                    />
+                    <div class="type-card-monogram">${typeCardMonogram}</div>
+                    <div class="type-card-topline">
+                        <span class="type-card-team">${player.player.team}</span>
+                        <span class="type-card-role">${player.player.position || 'N/A'} &bull; Age ${Math.round(player.player.age) || 'N/A'}</span>
+                    </div>
+                    <div class="type-pill">${typeCardProfile.typeLabel}</div>
+                    <div class="type-card-title-wrap">
+                        <div class="player-name">${player.player.name}</div>
+                        <div class="type-card-subtitle">${typeCardProfile.subtitle}</div>
+                    </div>
+                </div>
+                <div class="card-body type-card-body">
+                    <div class="type-card-scout-note">
+                        ${typeCardProfile.styleLine}
+                    </div>
+
+                    <div class="type-metrics-grid">
+                        <div class="metric">
+                            <div class="metric-label">Player Value</div>
+                            <div class="metric-value ${impactClass}">${playerValue.toFixed(1)}</div>
+                            ${this.createPercentileIndicator(playerValue, 0, 100)}
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Breakout Score</div>
+                            <div class="metric-value">${typeCardBreakoutScore.toFixed(1)}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Team Fit Context</div>
+                            <div class="metric-value">${typeCardFitScorePct.toFixed(0)}% <span style="font-size:0.72rem;color:#6b7280;">(p${typeCardFitPercentile})</span></div>
+                        </div>
+                    </div>
+
+                    <div class="type-signals">
+                        ${typeCardSignals.map(signal => `
+                            <div class="type-signal">
+                                <div class="type-signal-label">${signal.label}</div>
+                                <div class="type-signal-bar">
+                                    <span style="width:${Math.max(0, Math.min(100, signal.value))}%"></span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="card-mechanism-note">
+                        ${typeCardScenarioSummary}
+                    </div>
+
+                    ${typeCardTags.length > 0 ? `<div class="tags">${typeCardTags.join('')}</div>` : ''}
+                </div>
+            </div>
+        `;
         
         const trustScore = player.v1_1_enhancements?.trust_assessment?.score || 0;
         const fitScorePct = (evalOut.fitScenario?.fit_score || 0) * 100;
@@ -2765,6 +2854,87 @@ class PlayerCardsApp {
         return archetype.split('_').map(word => 
             word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' ');
+    }
+
+    getPlayerMonogram(name) {
+        const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+        if (!parts.length) return 'NA';
+        if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+        return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    }
+
+    getPlayerHeadshotUrl(player) {
+        const id = String(player.player?.id || '').trim();
+        return `https://cdn.nba.com/headshots/nba/latest/1040x760/${id}.png`;
+    }
+
+    getTeamLogoUrl(team) {
+        const codeMap = {
+            ATL: 'atl', BOS: 'bos', BKN: 'bkn', CHA: 'cha', CHI: 'chi',
+            CLE: 'cle', DAL: 'dal', DEN: 'den', DET: 'det', GSW: 'gs',
+            HOU: 'hou', IND: 'ind', LAC: 'lac', LAL: 'lal', MEM: 'mem',
+            MIA: 'mia', MIL: 'mil', MIN: 'min', NOP: 'no', NYK: 'ny',
+            OKC: 'okc', ORL: 'orl', PHI: 'phi', PHX: 'phx', POR: 'por',
+            SAC: 'sac', SAS: 'sa', TOR: 'tor', UTA: 'uta', WAS: 'wsh'
+        };
+        const clean = String(team || '').toUpperCase().trim();
+        const espnCode = codeMap[clean];
+        return espnCode ? `https://a.espncdn.com/i/teamlogos/nba/500/${espnCode}.png` : '';
+    }
+
+    getBasketballTypeProfile(player) {
+        const archetype = String(player.identity?.primary_archetype || '').toLowerCase();
+        const map = {
+            lead_guard: {
+                typeLabel: 'Lead Engine',
+                subtitle: 'Tempo Creator',
+                styleLine: 'Primary organizer who bends defenses with initiation volume, touch creation, and pace control.',
+                primaryColor: '#8f1dff',
+                secondaryColor: '#1d8dff',
+                glowColor: 'rgba(143, 29, 255, 0.32)'
+            },
+            versatile_wing: {
+                typeLabel: 'Two-Way Wing',
+                subtitle: 'Switch Connector',
+                styleLine: 'Flexible wing profile built for off-ball scaling, matchup switching, and lineup glue value.',
+                primaryColor: '#0057d9',
+                secondaryColor: '#00a8a8',
+                glowColor: 'rgba(0, 87, 217, 0.30)'
+            },
+            stretch_big: {
+                typeLabel: 'Stretch Anchor',
+                subtitle: 'Paint-to-Perimeter Big',
+                styleLine: 'Frontcourt spacer that preserves interior gravity while stretching coverage past the arc.',
+                primaryColor: '#d97706',
+                secondaryColor: '#f59e0b',
+                glowColor: 'rgba(217, 119, 6, 0.34)'
+            },
+            rim_pressure_guard: {
+                typeLabel: 'Pressure Guard',
+                subtitle: 'Rim Collapse Driver',
+                styleLine: 'Downhill guard archetype that collapses shell coverages and creates chain-reaction passing lanes.',
+                primaryColor: '#dc2626',
+                secondaryColor: '#f97316',
+                glowColor: 'rgba(220, 38, 38, 0.30)'
+            },
+            '3_and_d_wing': {
+                typeLabel: '3-and-D Wing',
+                subtitle: 'Spacing Stopper',
+                styleLine: 'Role-optimized wing focused on floor spacing, shot discipline, and possession-level defensive containment.',
+                primaryColor: '#0f766e',
+                secondaryColor: '#22c55e',
+                glowColor: 'rgba(15, 118, 110, 0.30)'
+            }
+        };
+
+        return map[archetype] || {
+            typeLabel: this.formatArchetype(archetype || 'balanced role'),
+            subtitle: 'Balanced Contributor',
+            styleLine: 'Hybrid profile with mixed on-ball and off-ball utility that adapts to lineup context.',
+            primaryColor: '#334155',
+            secondaryColor: '#64748b',
+            glowColor: 'rgba(71, 85, 105, 0.30)'
+        };
     }
 
     formatRole(role) {
