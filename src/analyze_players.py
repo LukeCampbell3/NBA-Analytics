@@ -45,9 +45,13 @@ def detect_breakout_potential(card: Dict[str, Any]) -> Dict[str, Any]:
     identity = card.get('identity', {})
     offense = card.get('offense', {})
     metadata = card.get('metadata', {})
+    performance = card.get('performance', {})
+    traditional = performance.get('traditional', {})
+    advanced = performance.get('advanced', {})
     
     age = player.get('age', 25.0)
     usage_band = identity.get('usage_band', 'low')
+    usage_rate = safe_float(advanced.get('usage_rate', None), float('nan'))
     archetype = identity.get('primary_archetype', 'default')
     
     # Opportunity score (based on age and current usage)
@@ -60,7 +64,19 @@ def detect_breakout_potential(card: Dict[str, Any]) -> Dict[str, Any]:
     else:
         age_factor = 0.4
     
-    usage_factor = 0.5 if usage_band == 'low' else (0.7 if usage_band == 'med' else 0.3)
+    # Prefer precise usage rate when available; keep band fallback for legacy cards.
+    if not math.isnan(usage_rate):
+        if usage_rate <= 0.22:
+            usage_factor = 0.5
+        elif usage_rate <= 0.26:
+            # Peak opportunity in medium-usage range.
+            usage_factor = 0.5 + ((usage_rate - 0.22) / 0.04) * 0.2
+        elif usage_rate <= 0.32:
+            usage_factor = 0.7 - ((usage_rate - 0.26) / 0.06) * 0.4
+        else:
+            usage_factor = 0.3
+    else:
+        usage_factor = 0.5 if usage_band == 'low' else (0.7 if usage_band == 'med' else 0.3)
     
     opportunity_score = (age_factor * 0.6 + usage_factor * 0.4) * 100
     
@@ -68,13 +84,18 @@ def detect_breakout_potential(card: Dict[str, Any]) -> Dict[str, Any]:
     creation = offense.get('creation', {})
     efficiency = offense.get('efficiency', {})
     
-    scoring = safe_float(creation.get('scoring', 0.0))
-    ast_tov = safe_float(efficiency.get('ast_tov_ratio', 1.0))
+    scoring = safe_float(creation.get('scoring', traditional.get('points_per_game', 0.0)))
+    ast_tov = safe_float(efficiency.get('ast_tov_ratio', 0.0))
+    if ast_tov <= 0:
+        assists = safe_float(traditional.get('assists_per_game', 0.0))
+        turnovers = safe_float(traditional.get('turnovers_per_game', 0.0))
+        ast_tov = assists / max(turnovers, 0.8) if assists > 0 else 1.0
     
     signal_strength = min(100, (scoring / 20.0 * 50) + (min(ast_tov / 2.0, 1.0) * 50))
     
     # Confidence (based on sample size)
-    games = int(str(metadata.get('games_played', '0')).replace(',', ''))
+    games_source = metadata.get('games_played', traditional.get('games_played', 0))
+    games = int(str(games_source).replace(',', ''))
     confidence = min(1.0, games / 60.0)
     
     # Can breakout happen?
@@ -93,7 +114,8 @@ def detect_breakout_potential(card: Dict[str, Any]) -> Dict[str, Any]:
         "factors": {
             "age_factor": round(age_factor, 2),
             "usage_factor": round(usage_factor, 2),
-            "current_usage": usage_band
+            "current_usage_band": usage_band,
+            "current_usage_rate": None if math.isnan(usage_rate) else round(usage_rate, 3)
         }
     }
 
@@ -106,54 +128,82 @@ def analyze_defense_portability(card: Dict[str, Any]) -> Dict[str, Any]:
     """Analyze defensive portability and matchup flexibility"""
     player = card.get('player', {})
     defense = card.get('defense', {})
+    defense_assessment = card.get('defense_assessment', {})
     identity = card.get('identity', {})
+    performance = card.get('performance', {})
+    traditional = performance.get('traditional', {})
     
-    position = identity.get('position', '')
-    burden = defense.get('burden', {})
+    position = (
+        identity.get('position')
+        or player.get('position')
+        or ''
+    )
     performance = defense.get('performance', {})
+    matchup_profile = defense_assessment.get('matchup_profile', {})
     
     # Defensive role
-    burden_level = burden.get('level', 'low')
-    stocks = safe_float(performance.get('stocks_per_game', 0.0))
+    stocks = safe_float(
+        performance.get(
+            'stocks_per_game',
+            safe_float(traditional.get('steals_per_game', 0.0)) + safe_float(traditional.get('blocks_per_game', 0.0))
+        )
+    )
     
     # Position-based role weights
-    pos_upper = position.upper()
-    if pos_upper in ['PG', 'SG']:
+    pos_upper = str(position).upper()
+    if pos_upper in ['PG', 'SG', 'G', 'GUARD']:
         role = "perimeter_guard"
-        switch_ability = 0.6
-    elif pos_upper in ['SF']:
+        role_base = 0.55
+    elif pos_upper in ['SF', 'F', 'WING', 'FORWARD']:
         role = "wing_defender"
-        switch_ability = 0.8
-    elif pos_upper in ['PF']:
+        role_base = 0.75
+    elif pos_upper in ['PF', 'C', 'BIG', 'CENTER']:
         role = "versatile_forward"
-        switch_ability = 0.7
-    elif pos_upper in ['C']:
-        role = "rim_protector"
-        switch_ability = 0.4
+        role_base = 0.45
     else:
         role = "unknown"
-        switch_ability = 0.5
+        role_base = 0.5
     
-    # Portability score
-    event_creation = min(1.0, stocks / 2.5)
-    burden_factor = 0.3 if burden_level == 'low' else (0.6 if burden_level == 'med' else 0.9)
+    # Versatility from matchup profile distribution.
+    vs_guards = safe_float(matchup_profile.get('vs_guards', 0.0))
+    vs_wings = safe_float(matchup_profile.get('vs_wings', 0.0))
+    vs_bigs = safe_float(matchup_profile.get('vs_bigs', 0.0))
+    matchup_total = vs_guards + vs_wings + vs_bigs
+    if matchup_total > 0:
+        probs = [vs_guards / matchup_total, vs_wings / matchup_total, vs_bigs / matchup_total]
+        entropy = 0.0
+        for p in probs:
+            if p > 0:
+                entropy += -p * math.log(p)
+        versatility = entropy / math.log(3.0)
+    else:
+        versatility = 0.5
+
+    switch_ability = clamp(0.5 * role_base + 0.5 * versatility, 0.0, 1.0)
+
+    # Portability score based on player-only inputs (no team defensive metrics).
+    mpg = safe_float(traditional.get('minutes_per_game', 0.0))
+    games = safe_float(traditional.get('games_played', 0.0))
+    stocks_per_36 = stocks * 36.0 / max(mpg, 8.0)
+    event_creation = min(1.0, stocks_per_36 / 3.2)
+    burden_factor = clamp((mpg / 36.0) * 0.8 + min(1.0, games / 82.0) * 0.2, 0.0, 1.0)
     
-    portability_score = (switch_ability * 0.4 + event_creation * 0.3 + burden_factor * 0.3)
+    portability_score = (switch_ability * 0.45 + event_creation * 0.35 + burden_factor * 0.20)
     
-    if portability_score >= 0.7:
+    if portability_score >= 0.75:
         portability_level = "high"
-    elif portability_score >= 0.5:
+    elif portability_score >= 0.55:
         portability_level = "medium"
     else:
         portability_level = "low"
     
     # Failure modes
     failure_modes = []
-    if stocks < 0.8:
+    if stocks_per_36 < 1.2:
         failure_modes.append("Low defensive event creation")
     if switch_ability < 0.5:
         failure_modes.append("Limited switchability")
-    if burden_level == 'low':
+    if burden_factor < 0.4:
         failure_modes.append("Low defensive burden - role player")
     
     return {
@@ -369,6 +419,11 @@ def main():
     # Generate summary
     summary = {
         "total_players": len(results),
+        "breakout_count": len(breakout_candidates),
+        "breakout_rate": round((len(breakout_candidates) / len(results)) if results else 0.0, 4),
+        "high_portability_count": len(high_portability),
+        "high_portability_rate": round((len(high_portability) / len(results)) if results else 0.0, 4),
+        "impact_sanity_failure_count": len(sanity_failures),
         "breakout_candidates": sorted(
             breakout_candidates,
             key=lambda x: x['opportunity_score'],
