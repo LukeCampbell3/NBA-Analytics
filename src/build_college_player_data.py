@@ -423,6 +423,97 @@ class SportsReferenceCollegeCollector:
                 letter_urls.add(f"{base}{href}")
         return sorted(letter_urls)
 
+    def _school_stats_urls(self, season: int) -> List[str]:
+        """Candidate school-stats season URLs used to discover school pages."""
+        base = self.source.base_url.rstrip("/")
+        return [
+            f"{base}/cbb/seasons/men/{season}-school-stats.html",
+            f"{base}/cbb/seasons/{season}-school-stats.html",
+        ]
+
+    def _school_urls_for_season(self, season: int) -> List[str]:
+        """Discover team season pages from the school-stats index page."""
+        html: Optional[str] = None
+        last_error: Optional[Exception] = None
+        for url in self._school_stats_urls(season):
+            try:
+                html = self.client.get(url, min_delay_seconds=self.source.min_delay_seconds)
+                break
+            except Exception as exc:  # pylint: disable=broad-except
+                last_error = exc
+                continue
+
+        if html is None:
+            if last_error is not None:
+                raise last_error
+            raise RuntimeError(f"Could not resolve school-stats page for season {season}.")
+
+        soup = BeautifulSoup(html, "html.parser")
+        base = self.source.base_url.rstrip("/")
+        school_urls: Set[str] = set()
+        pattern = rf"^/cbb/schools/[a-z0-9-]+/men/{season}\.html$"
+        for a in soup.select('a[href^="/cbb/schools/"]'):
+            href = str(a.get("href", "")).strip()
+            if re.match(pattern, href):
+                school_urls.add(f"{base}{href}")
+        return sorted(school_urls)
+
+    def _extract_school_name(self, html: str, school_url: str) -> str:
+        """Extract school/team name from page header with URL fallback."""
+        soup = BeautifulSoup(html, "html.parser")
+        h1 = soup.find("h1")
+        if h1:
+            txt = h1.get_text(" ", strip=True)
+            if txt:
+                # Typical format: "<School> Men's Stats"
+                txt = re.sub(r"\s+Men'?s.*$", "", txt, flags=re.IGNORECASE).strip()
+                if txt:
+                    return txt
+
+        parts = [p for p in Path(urlparse(school_url).path).parts if p]
+        if len(parts) >= 3:
+            slug = parts[2]
+            return " ".join(w.capitalize() for w in slug.split("-"))
+        return "UNKNOWN"
+
+    def _clean_school_page_table(
+        self,
+        df: pd.DataFrame,
+        season: int,
+        school_name: str,
+        source_url: str,
+        source_table: str,
+    ) -> pd.DataFrame:
+        """Normalize school roster table to canonical player-season rows."""
+        if df.empty:
+            return df
+
+        first_col = str(df.columns[0])
+        df = df[df[first_col].astype(str).str.lower() != first_col.lower()].copy()
+        df.columns = unique_column_names([str(c) for c in df.columns])
+
+        if "player" in df.columns:
+            df["player_name"] = df["player"]
+        else:
+            return pd.DataFrame()
+
+        df["team_name"] = school_name
+
+        for col in df.columns:
+            df[col] = maybe_numeric(df[col])
+
+        df["season"] = season
+        df["source_site"] = self.source.name
+        df["source_table"] = source_table
+        df["source_url"] = source_url
+        df["scraped_at_utc"] = utc_now_iso()
+
+        player_name = df["player_name"].astype(str)
+        team_name = df["team_name"].astype(str)
+        df["player_key"] = [f"{slugify(p)}_{season}_{slugify(t)}" for p, t in zip(player_name, team_name)]
+        df["team_key"] = [f"{slugify(t)}_{season}" for t in team_name]
+        return df.reset_index(drop=True)
+
     def _player_urls_from_directory_index(self) -> List[str]:
         """
         Fetch /cbb/players/ and extract direct player profile URLs.
@@ -437,7 +528,7 @@ class SportsReferenceCollegeCollector:
         urls: Set[str] = set()
         for a in soup.select('a[href^="/cbb/players/"]'):
             href = str(a.get("href", "")).strip()
-            if re.match(r"^/cbb/players/[a-z0-9\\-]+\\.html$", href) and not href.endswith("-index.html"):
+            if re.match(r"^/cbb/players/[a-z0-9-]+\.html$", href) and not href.endswith("-index.html"):
                 urls.add(f"{base}{href}")
         return sorted(urls)
 
@@ -449,7 +540,7 @@ class SportsReferenceCollegeCollector:
         urls: Set[str] = set()
         for a in soup.select('a[href^="/cbb/players/"]'):
             href = str(a.get("href", "")).strip()
-            if re.match(r"^/cbb/players/[a-z0-9\\-]+\\.html$", href) and not href.endswith("-index.html"):
+            if re.match(r"^/cbb/players/[a-z0-9-]+\.html$", href) and not href.endswith("-index.html"):
                 urls.add(f"{base}{href}")
         return sorted(urls)
 
@@ -580,6 +671,82 @@ class SportsReferenceCollegeCollector:
             "players_advanced_raw": pd.concat(advanced_rows, ignore_index=True) if advanced_rows else pd.DataFrame(),
         }
 
+    def collect_from_school_pages(
+        self,
+        seasons: List[int],
+        max_school_pages: Optional[int] = None,
+    ) -> Dict[str, pd.DataFrame]:
+        """
+        Collect player rows by crawling school season pages.
+
+        This is the preferred fallback when season-level player tables are unavailable.
+        """
+        per_game_rows: List[pd.DataFrame] = []
+        advanced_rows: List[pd.DataFrame] = []
+
+        processed = 0
+        for season in seasons:
+            school_urls = self._school_urls_for_season(season)
+            LOGGER.info(
+                "School-page fallback discovered %s school pages for %s (extracting player-level tables from each).",
+                len(school_urls),
+                season,
+            )
+
+            for school_url in school_urls:
+                if max_school_pages is not None and processed >= max_school_pages:
+                    break
+
+                try:
+                    html = self.client.get(school_url, min_delay_seconds=self.source.min_delay_seconds)
+                    school_name = self._extract_school_name(html, school_url=school_url)
+
+                    pg_html = self._find_table_html(html, "players_per_game")
+                    pg_df = self._table_to_dataframe(pg_html)
+                    pg_df = self._clean_school_page_table(
+                        pg_df,
+                        season=season,
+                        school_name=school_name,
+                        source_url=school_url,
+                        source_table="players_per_game_raw",
+                    )
+                    if not pg_df.empty:
+                        per_game_rows.append(pg_df)
+
+                    try:
+                        adv_html = self._find_table_html(html, "players_advanced")
+                        adv_df = self._table_to_dataframe(adv_html)
+                        adv_df = self._clean_school_page_table(
+                            adv_df,
+                            season=season,
+                            school_name=school_name,
+                            source_url=school_url,
+                            source_table="players_advanced_raw",
+                        )
+                        if not adv_df.empty:
+                            advanced_rows.append(adv_df)
+                    except Exception:
+                        # Some school pages may not expose advanced table for older seasons.
+                        pass
+
+                    processed += 1
+                    if processed % 25 == 0:
+                        LOGGER.info("Processed %s school pages...", processed)
+                except RobotsDisallowedError:
+                    LOGGER.warning("Robots disallowed school page: %s", school_url)
+                    continue
+                except Exception as exc:  # pylint: disable=broad-except
+                    LOGGER.debug("Failed school page %s: %s", school_url, exc)
+                    continue
+
+            if max_school_pages is not None and processed >= max_school_pages:
+                break
+
+        return {
+            "players_per_game_raw": pd.concat(per_game_rows, ignore_index=True) if per_game_rows else pd.DataFrame(),
+            "players_advanced_raw": pd.concat(advanced_rows, ignore_index=True) if advanced_rows else pd.DataFrame(),
+        }
+
 
 def merge_player_tables(
     per_game: pd.DataFrame,
@@ -635,6 +802,7 @@ def run_pipeline(
     strict_robots: bool,
     collection_mode: str,
     max_player_pages: Optional[int],
+    max_school_pages: Optional[int],
 ) -> Dict[str, object]:
     """Execute end-to-end collection and canonical player backend build."""
     raw_dir.mkdir(parents=True, exist_ok=True)
@@ -649,6 +817,7 @@ def run_pipeline(
     per_game_frames: List[pd.DataFrame] = []
     advanced_frames: List[pd.DataFrame] = []
     errors: List[Dict[str, str]] = []
+    warnings: List[Dict[str, str]] = []
     mode_used = collection_mode
 
     if collection_mode in ("season_pages", "auto"):
@@ -659,12 +828,28 @@ def run_pipeline(
             except RobotsDisallowedError as exc:
                 msg = f"Season {season} skipped due to robots policy: {exc}"
                 LOGGER.warning(msg)
-                errors.append({"season": str(season), "error": msg})
+                if collection_mode == "auto":
+                    warnings.append({"season": str(season), "warning": msg})
+                else:
+                    errors.append({"season": str(season), "error": msg})
                 continue
             except Exception as exc:  # pylint: disable=broad-except
-                msg = f"Season {season} collection failed: {exc}"
-                LOGGER.exception(msg)
-                errors.append({"season": str(season), "error": msg})
+                status_code = getattr(getattr(exc, "response", None), "status_code", None)
+                if collection_mode == "auto":
+                    if status_code == 404:
+                        msg = (
+                            f"Season {season} season-page endpoints unavailable (404); "
+                            f"continuing to fallback collection."
+                        )
+                    else:
+                        msg = f"Season {season} collection failed in season-page mode: {exc}"
+                    LOGGER.warning(msg)
+                    LOGGER.debug("Season-page exception detail for %s", season, exc_info=True)
+                    warnings.append({"season": str(season), "warning": msg})
+                else:
+                    msg = f"Season {season} collection failed: {exc}"
+                    LOGGER.exception(msg)
+                    errors.append({"season": str(season), "error": msg})
                 continue
 
             season_success = True
@@ -677,17 +862,40 @@ def run_pipeline(
             save_table(adv, raw_dir / "players_advanced_raw" / f"players_advanced_{season}.csv")
 
         if collection_mode == "auto" and not season_success:
-            LOGGER.warning("Season-page mode produced no data; falling back to player-page mode.")
-            mode_used = "player_pages"
+            LOGGER.warning("Season-page mode produced no data; falling back to school-page mode.")
+            mode_used = "school_pages"
             try:
-                fallback_tables = collector.collect_from_player_pages(seasons=seasons, max_player_pages=max_player_pages)
+                fallback_tables = collector.collect_from_school_pages(seasons=seasons, max_school_pages=max_school_pages)
                 per_game_frames.append(fallback_tables.get("players_per_game_raw", pd.DataFrame()))
                 advanced_frames.append(fallback_tables.get("players_advanced_raw", pd.DataFrame()))
             except Exception as exc:  # pylint: disable=broad-except
-                msg = f"Player-page fallback failed: {exc}"
+                msg = f"School-page fallback failed: {exc}"
                 LOGGER.exception(msg)
                 errors.append({"season": "all", "error": msg})
+                LOGGER.warning("School-page fallback failed; attempting player-page fallback.")
+                mode_used = "player_pages"
+                try:
+                    fallback_tables = collector.collect_from_player_pages(
+                        seasons=seasons,
+                        max_player_pages=max_player_pages,
+                    )
+                    per_game_frames.append(fallback_tables.get("players_per_game_raw", pd.DataFrame()))
+                    advanced_frames.append(fallback_tables.get("players_advanced_raw", pd.DataFrame()))
+                except Exception as player_exc:  # pylint: disable=broad-except
+                    player_msg = f"Player-page fallback failed: {player_exc}"
+                    LOGGER.exception(player_msg)
+                    errors.append({"season": "all", "error": player_msg})
 
+    elif collection_mode == "school_pages":
+        mode_used = "school_pages"
+        try:
+            fallback_tables = collector.collect_from_school_pages(seasons=seasons, max_school_pages=max_school_pages)
+            per_game_frames.append(fallback_tables.get("players_per_game_raw", pd.DataFrame()))
+            advanced_frames.append(fallback_tables.get("players_advanced_raw", pd.DataFrame()))
+        except Exception as exc:  # pylint: disable=broad-except
+            msg = f"School-page collection failed: {exc}"
+            LOGGER.exception(msg)
+            errors.append({"season": "all", "error": msg})
     elif collection_mode == "player_pages":
         mode_used = "player_pages"
         try:
@@ -718,11 +926,13 @@ def run_pipeline(
         "raw_dir": str(raw_dir),
         "processed_dir": str(processed_dir),
         "errors": errors,
+        "warnings": warnings,
         "strict_robots": bool(strict_robots),
         "user_agent": user_agent,
         "collection_mode_requested": collection_mode,
         "collection_mode_used": mode_used,
         "max_player_pages": max_player_pages,
+        "max_school_pages": max_school_pages,
     }
     with open(processed_dir / "build_summary.json", "w", encoding="utf-8") as handle:
         json.dump(summary, handle, indent=2)
@@ -776,15 +986,21 @@ def main() -> int:
     )
     parser.add_argument(
         "--collection-mode",
-        choices=["auto", "season_pages", "player_pages"],
+        choices=["auto", "season_pages", "school_pages", "player_pages"],
         default="auto",
-        help="Data collection strategy. 'auto' tries season pages then falls back to player pages.",
+        help="Data collection strategy. 'auto' tries season pages then falls back to school pages.",
     )
     parser.add_argument(
         "--max-player-pages",
         type=int,
         default=None,
         help="Optional cap for player-page mode (useful for smoke tests).",
+    )
+    parser.add_argument(
+        "--max-school-pages",
+        type=int,
+        default=None,
+        help="Optional cap for school-page mode (useful for smoke tests).",
     )
     parser.add_argument("--verbose", action="store_true", help="Enable debug logs.")
     args = parser.parse_args()
@@ -801,6 +1017,7 @@ def main() -> int:
             strict_robots=not args.non_strict_robots,
             collection_mode=args.collection_mode,
             max_player_pages=args.max_player_pages,
+            max_school_pages=args.max_school_pages,
         )
         LOGGER.info("Build complete: %s", summary)
         return 0

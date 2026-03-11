@@ -66,6 +66,12 @@ If you already have final cards in `data/processed/player_cards/*_final.json`:
 python prepare_web_data.py
 ```
 
+If you also want the college card page payload:
+
+```bash
+python prepare_web_college_data.py
+```
+
 ### 3. Serve the site locally
 
 ```bash
@@ -75,6 +81,7 @@ python serve_web.py
 Then open:
 
 - `http://localhost:8000/` (landing page)
+- `http://localhost:8000/college` (college cards page)
 - `http://localhost:8000/about` (methodology page)
 
 ## Full Pipeline (From Raw Stats)
@@ -187,6 +194,24 @@ Use a non-failing verification mode if you want output even when checks fail:
 ```bash
 python src/value_college_players.py --non-strict-verify
 ```
+
+## College Pillar Parity Audit
+
+Validate whether college rows can compute the same core pillars used for NBA valuation + breakout:
+
+```bash
+python src/validate_college_metric_parity.py --input data/processed/college/players_season.csv
+```
+
+Output:
+
+- `data/processed/college/metric_parity_report.json`
+
+The audit checks three groups:
+
+- valuation pillars (`wins_added`, market curve, surplus/NPV, trade bands, aging)
+- breakout pillars (opportunity, signal strength, confidence, defense portability, impact sanity)
+- isolation pillars (trust/uncertainty + player-signal + provenance availability)
 
 ## Notes
 
