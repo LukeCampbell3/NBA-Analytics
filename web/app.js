@@ -30,6 +30,10 @@ class PlayerCardsApp {
         this.distributionMetricConfig = null;
         this.teamFitScoreCache = null;
         this.teamFitPercentileCache = null;
+        const bodyDataset = document.body?.dataset || {};
+        this.cardsDataPath = bodyDataset.cardsSrc || 'data/cards.json';
+        this.valuationsDataPath = bodyDataset.valuationsSrc || 'data/valuations.json';
+        this.pageLabel = bodyDataset.pageLabel || '';
         
         this.init();
     }
@@ -65,11 +69,11 @@ class PlayerCardsApp {
             
             // Load player cards from data_sample format
             const cacheBust = `v=${Date.now()}`;
-            const cardsResponse = await fetch(`data/cards.json?${cacheBust}`);
+            const cardsResponse = await fetch(`${this.cardsDataPath}?${cacheBust}`);
             console.log('Cards response status:', cardsResponse.status);
             
             if (!cardsResponse.ok) {
-                throw new Error(`Failed to load cards: ${cardsResponse.status}`);
+                throw new Error(`Failed to load cards (${this.cardsDataPath}): ${cardsResponse.status}`);
             }
             
             const cardsData = await cardsResponse.json();
@@ -80,7 +84,7 @@ class PlayerCardsApp {
 
             // Load valuations if available
             try {
-                const valuationsResponse = await fetch(`data/valuations.json?${cacheBust}`);
+                const valuationsResponse = await fetch(`${this.valuationsDataPath}?${cacheBust}`);
                 const valuationsData = await valuationsResponse.json();
                 this.valuations = Array.isArray(valuationsData) ? valuationsData : [valuationsData];
                 console.log('Valuations loaded:', this.valuations.length);
@@ -100,24 +104,43 @@ class PlayerCardsApp {
             
             console.log('Data loading complete. Total players:', this.players.length);
             document.getElementById('loading').style.display = 'none';
+            if (this.pageLabel) {
+                const logoEl = document.querySelector('.logo');
+                if (logoEl) logoEl.textContent = this.pageLabel;
+            }
         } catch (error) {
             console.error('Error loading data:', error);
-            document.getElementById('loading').innerHTML = `<p>Error loading player data: ${error.message}</p><p>Please ensure data files are available.</p>`;
+            document.getElementById('loading').innerHTML = `<p>Error loading player data: ${error.message}</p><p>Please ensure web data files are prepared for this page.</p>`;
         }
     }
 
     mergePlayerData() {
+        const normalize = (value) => String(value || '').trim().toLowerCase();
+        const byNameSeason = new Map();
+        const byName = new Map();
+
+        for (const valuation of this.valuations) {
+            const nameNorm = normalize(valuation?.player?.name);
+            const season = valuation?.player?.season;
+            if (!nameNorm) continue;
+            if (season !== undefined && season !== null) {
+                const nsKey = `${nameNorm}|${season}`;
+                if (!byNameSeason.has(nsKey)) byNameSeason.set(nsKey, valuation);
+            }
+            if (!byName.has(nameNorm)) byName.set(nameNorm, valuation);
+        }
+
         this.players = this.players.map(player => {
-            const playerName = player.player.name;
+            const playerNameNorm = normalize(player?.player?.name);
+            const playerSeason = player?.player?.season;
+            const lookupKey = `${playerNameNorm}|${playerSeason}`;
             
             // Find matching valuation
-            const valuation = this.valuations.find(v => 
-                v.player?.name === playerName
-            );
+            const valuation = byNameSeason.get(lookupKey) || byName.get(playerNameNorm) || null;
 
             return {
                 ...player,
-                valuation: valuation || null
+                valuation
             };
         });
     }
@@ -1543,6 +1566,10 @@ class PlayerCardsApp {
         const archetypeFilter = document.getElementById('archetypeFilter').value;
         const usageFilter = document.getElementById('usageFilter').value;
         const teamFilter = document.getElementById('teamFilter').value;
+        const normalizeUsageBand = (value) => {
+            const u = String(value || '').toLowerCase();
+            return u === 'med' ? 'medium' : u;
+        };
 
         this.filteredPlayers = this.players.filter(player => {
             // Search filter
@@ -1557,7 +1584,7 @@ class PlayerCardsApp {
                 playerArchetype.includes(archetypeFilter);
 
             // Usage filter - handle data_sample format
-            const playerUsage = player.identity?.usage_band || '';
+            const playerUsage = normalizeUsageBand(player.identity?.usage_band || '');
             const matchesUsage = !usageFilter || 
                 playerUsage === usageFilter ||
                 playerUsage.toLowerCase() === usageFilter.toLowerCase();
@@ -1995,6 +2022,7 @@ class PlayerCardsApp {
         const breakoutStyle = this.getBreakoutTierStyle(evalOut.likelihoodClass, evalOut.likelihoodPct);
         const isRookie = this.isLikelyRookie(player);
         const typeCardMonogram = this.getPlayerMonogram(player.player?.name || 'NA');
+        const teamRibbonLabel = this.formatTeamRibbonLabel(player.player?.team);
 
         return `
             <div class="player-card type-card trading-card" data-player="${player.player.name}" style="--type-primary:${typeCardProfile.primaryColor};--type-secondary:${typeCardProfile.secondaryColor};--type-glow:${typeCardProfile.glowColor};--breakout-bg:${breakoutStyle.bg};--breakout-fg:${breakoutStyle.fg};--breakout-glow:${breakoutStyle.glow};">
@@ -2014,7 +2042,7 @@ class PlayerCardsApp {
                     <div class="trading-position-ribbon">${player.player.position || 'N/A'}</div>
                     <div class="trading-breakout-strip">${breakoutStyle.label} BREAKOUT &bull; ${Math.round(evalOut.likelihoodPct || 0)}%</div>
                     ${isRookie ? `<div class="trading-rookie-badge">ROOKIE</div>` : ''}
-                    <div class="trading-team-ribbon">${player.player.team}</div>
+                    <div class="trading-team-ribbon">${teamRibbonLabel}</div>
                     <div class="trading-card-badge ${impactClass}">Value ${playerValue.toFixed(1)}</div>
                     <div class="trading-subtype">${typeCardProfile.typeLabel}</div>
                     <div class="trading-photo-vignette"></div>
@@ -2813,6 +2841,12 @@ class PlayerCardsApp {
         if (!parts.length) return 'NA';
         if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
         return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    }
+
+    formatTeamRibbonLabel(team) {
+        const label = String(team || '').trim();
+        if (!label) return 'TEAM';
+        return label.replace(/^\d{4}\s*[-–]\s*\d{2,4}\s+/u, '').trim();
     }
 
     getPlayerHeadshotUrl(player) {

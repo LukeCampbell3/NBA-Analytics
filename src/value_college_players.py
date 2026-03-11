@@ -206,6 +206,15 @@ def build_card_from_row(row: pd.Series, col_map: Dict[str, Optional[str]]) -> Di
     steals = max(0.0, safe_float(get_row_value(row, col_map["steals"], 0.0), 0.0))
     blocks = max(0.0, safe_float(get_row_value(row, col_map["blocks"], 0.0), 0.0))
     turnovers = max(0.0, safe_float(get_row_value(row, col_map["turnovers"], 0.0), 0.0))
+    ast_tov_ratio = assists / max(turnovers, 0.8) if assists > 0 else 1.0
+    stocks = steals + blocks
+
+    if stocks >= 2.0:
+        burden_level = "high"
+    elif stocks >= 1.0:
+        burden_level = "med"
+    else:
+        burden_level = "low"
 
     # Keep valuation stable even if BPM is missing.
     if math.isnan(plus_minus):
@@ -254,6 +263,29 @@ def build_card_from_row(row: pd.Series, col_map: Dict[str, Optional[str]]) -> Di
                 "plus_minus": plus_minus,
                 "usage_rate": usage_rate,
                 "wins_share": wins_share if not math.isnan(wins_share) else None,
+            },
+        },
+        "offense": {
+            "shot_profile": {
+                "three_rate": round(three_rate, 3),
+                "volume": round(fga, 1),
+            },
+            "creation": {
+                "scoring": round(points, 1),
+                "playmaking": round(assists, 1),
+            },
+            "efficiency": {
+                "ast_tov_ratio": round(ast_tov_ratio, 2),
+            },
+        },
+        "defense": {
+            "burden": {
+                "level": burden_level,
+                "score": round(min(stocks / 3.0, 1.0), 3),
+            },
+            "performance": {
+                "stocks_per_game": round(stocks, 2),
+                "dreb_per_game": round(max(rebounds * 0.65, 0.0), 1),
             },
         },
         "impact": {

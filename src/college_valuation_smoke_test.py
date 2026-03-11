@@ -11,6 +11,7 @@ from pathlib import Path
 import pandas as pd
 
 from value_college_players import run_college_valuation
+from validate_college_metric_parity import run_parity_validation
 
 
 def run_test() -> None:
@@ -100,6 +101,14 @@ def run_test() -> None:
     assert len(valuation_files) == 2, f"Expected 2 output valuation files, got {len(valuation_files)}"
     assert (out_dir / "college_valuation_summary.json").exists(), "Missing valuation summary output"
     assert (out_dir / "college_valuation_verification.json").exists(), "Missing verification output"
+
+    parity = run_parity_validation(
+        input_path=input_csv,
+        build_summary_path=build_summary,
+        max_players=None,
+        coverage_threshold=0.95,
+    )
+    assert parity["overall_status"] == "pass", f"Expected pass parity, got {parity['overall_status']}"
 
     print("[PASS] College valuation smoke test passed.")
 
