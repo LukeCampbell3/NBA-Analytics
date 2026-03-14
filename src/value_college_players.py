@@ -29,6 +29,7 @@ COLUMN_CANDIDATES: Dict[str, List[str]] = {
     "season": ["season"],
     "position": ["pos", "position", "pos_per_game", "pos_advanced"],
     "class_year": ["class", "class_per_game", "class_advanced"],
+    "age": ["age", "age_per_game", "age_advanced"],
     "games": ["g", "games_played", "g_per_game", "g_advanced"],
     "minutes": ["mp", "minutes_per_game", "mp_per_game", "mp_advanced"],
     "plus_minus": ["plus_minus", "bpm", "bpm_advanced", "bpm_per_game", "bpm_advanced_advanced"],
@@ -185,6 +186,7 @@ def build_card_from_row(row: pd.Series, col_map: Dict[str, Optional[str]]) -> Di
     season = safe_int(get_row_value(row, col_map["season"], 0), 0)
     position = str(get_row_value(row, col_map["position"], ""))
     class_year = str(get_row_value(row, col_map["class_year"], ""))
+    raw_age = safe_float(get_row_value(row, col_map["age"], float("nan")), float("nan"))
     player_key = str(get_row_value(row, col_map["player_key"], ""))
 
     games = max(0, safe_int(get_row_value(row, col_map["games"], 0), 0))
@@ -229,7 +231,7 @@ def build_card_from_row(row: pd.Series, col_map: Dict[str, Optional[str]]) -> Di
     uncertainty = clamp(1.0 - trust_score, 0.05, 0.95)
 
     archetype = infer_archetype(position=position, usage_rate=usage_rate, three_rate=three_rate)
-    age = estimate_age_from_class(class_year)
+    age = raw_age if (not math.isnan(raw_age) and raw_age > 0) else estimate_age_from_class(class_year)
     player_id = player_key or f"{slugify(player_name)}_{season}_{slugify(team_name)}"
 
     return {

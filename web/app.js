@@ -30,10 +30,17 @@ class PlayerCardsApp {
         this.distributionMetricConfig = null;
         this.teamFitScoreCache = null;
         this.teamFitPercentileCache = null;
+        this.bestAvailableScoreCache = null;
+        this.breakoutEvalCache = {};
+        this.breakoutScoreByKey = null;
+        this.breakoutScoreRawByKey = null;
+        this.breakoutPercentileByKey = null;
+        this.breakoutTierByKey = null;
         const bodyDataset = document.body?.dataset || {};
         this.cardsDataPath = bodyDataset.cardsSrc || 'data/cards.json';
         this.valuationsDataPath = bodyDataset.valuationsSrc || 'data/valuations.json';
         this.pageLabel = bodyDataset.pageLabel || '';
+        this.isCollegeDeck = /college/i.test(this.cardsDataPath) || /college/i.test(this.pageLabel);
         
         this.init();
     }
@@ -97,9 +104,15 @@ class PlayerCardsApp {
             this.mergePlayerData();
             this.computePlayerValueScores();
             this.teamProfiles = this.buildTeamProfiles();
+            this.breakoutEvalCache = {};
+            this.breakoutScoreByKey = null;
+            this.breakoutScoreRawByKey = null;
+            this.breakoutPercentileByKey = null;
+            this.breakoutTierByKey = null;
             this.computeBreakoutScoreIndex();
             this.teamFitScoreCache = null;
             this.teamFitPercentileCache = null;
+            this.bestAvailableScoreCache = null;
             this.filteredPlayers = [...this.players];
             
             console.log('Data loading complete. Total players:', this.players.length);
@@ -147,6 +160,104 @@ class PlayerCardsApp {
 
     getPlayerValue(player) {
         return player.value_metrics?.player_value_score ?? 50;
+    }
+
+    getPlayerRawValue(player) {
+        return (
+            player.value_metrics?.player_value_score_raw ??
+            player.value_metrics?.player_value_score ??
+            50
+        );
+    }
+
+    getPlayerTrustScore(player) {
+        const trustV1 = this.toFiniteNumber(player.v1_1_enhancements?.trust_assessment?.score);
+        if (trustV1 !== null) return this.clampNum(trustV1, 0, 100);
+        const trustLegacy = this.toFiniteNumber(player.trust?.score);
+        if (trustLegacy !== null) {
+            const val = trustLegacy <= 1.2 ? (trustLegacy * 100.0) : trustLegacy;
+            return this.clampNum(val, 0, 100);
+        }
+        return 60;
+    }
+
+    getPlayerUncertainty(player) {
+        const u1 = this.toFiniteNumber(player.v1_1_enhancements?.uncertainty_estimates?.overall_uncertainty);
+        if (u1 !== null) return this.clampNum(u1, 0, 1);
+        const u2 = this.toFiniteNumber(player.uncertainty?.overall);
+        if (u2 !== null) return this.clampNum(u2, 0, 1);
+        return null;
+    }
+
+    getPlayerDataConfidenceWeight(player) {
+        const trustNorm = this.clampNum(this.getPlayerTrustScore(player) / 100, 0, 1);
+        const uncertainty = this.getPlayerUncertainty(player);
+        const certaintyNorm = uncertainty === null ? trustNorm : this.clampNum(1 - uncertainty, 0, 1);
+        const trad = player.performance?.traditional || {};
+        const games = Number(trad.games_played || 0);
+        const mpg = Number(trad.minutes_per_game || 0);
+        const sampleNorm = this.clampNum((0.55 * (games / 32.0)) + (0.45 * (mpg / 24.0)), 0, 1);
+
+        // Confidence governance: trust is primary; uncertainty/sample quality are secondary.
+        return this.clampNum(
+            (0.10) +
+            (0.62 * trustNorm) +
+            (0.18 * certaintyNorm) +
+            (0.10 * sampleNorm),
+            0.2,
+            0.98
+        );
+    }
+
+    getBestAvailableProfile(player) {
+        if (!this.bestAvailableScoreCache) this.bestAvailableScoreCache = {};
+        const key = this.getPlayerKey(player);
+        if (this.bestAvailableScoreCache[key]) return this.bestAvailableScoreCache[key];
+
+        const rawValue = this.getPlayerRawValue(player);
+        const age = this.toFiniteNumber(player.player?.age) ?? 24;
+        const youthNorm = this.clampNum((27 - age) / 9.0, 0, 1);
+        const youthBoost = 8.0 * youthNorm;
+        const trustNorm = this.clampNum(this.getPlayerTrustScore(player) / 100.0, 0, 1);
+        const baseDataConfidence = this.getPlayerDataConfidenceWeight(player);
+        const fitConfidence = this.clampNum(this.evaluateBreakoutScenario(player).fitScenario?.confidence || 0.6, 0, 1);
+        const uncertainty = this.getPlayerUncertainty(player);
+        const certaintyNorm = uncertainty === null ? trustNorm : this.clampNum(1 - uncertainty, 0, 1);
+
+        const validationConfidence = this.clampNum(
+            (0.55 * trustNorm) +
+            (0.20 * certaintyNorm) +
+            (0.15 * fitConfidence) +
+            (0.10 * baseDataConfidence),
+            0.2,
+            0.98
+        );
+
+        let validatedScore = (rawValue * (0.38 + (0.56 * validationConfidence))) + youthBoost;
+        if (validationConfidence < 0.60) {
+            validatedScore = Math.min(validatedScore, rawValue * 0.78, 72);
+        }
+        if (validationConfidence < 0.50) {
+            validatedScore = Math.min(validatedScore, 64);
+        }
+        if (validationConfidence < 0.40) {
+            validatedScore = Math.min(validatedScore, 56);
+        }
+
+        const tier = validationConfidence >= 0.75
+            ? 'high'
+            : (validationConfidence >= 0.60 ? 'medium' : 'low');
+
+        const profile = {
+            validated_score: Math.round(validatedScore * 10) / 10,
+            validation_confidence: Math.round(validationConfidence * 1000) / 1000,
+            raw_value: rawValue,
+            age,
+            youth_score: Math.round(youthNorm * 1000) / 1000,
+            tier
+        };
+        this.bestAvailableScoreCache[key] = profile;
+        return profile;
     }
 
     computeCompDensity(player) {
@@ -262,10 +373,50 @@ class PlayerCardsApp {
         return `name:${player.player?.name || 'unknown'}|team:${player.player?.team || 'UNK'}`;
     }
 
+    buildPercentileMap(rows, valueKey = 'value') {
+        if (!Array.isArray(rows) || rows.length === 0) return {};
+        const sorted = rows
+            .map(r => Number(r?.[valueKey] ?? 0))
+            .sort((a, b) => a - b);
+        const n = Math.max(1, sorted.length);
+        const map = {};
+        for (const row of rows) {
+            const value = Number(row?.[valueKey] ?? 0);
+            let lo = 0;
+            let hi = n;
+            while (lo < hi) {
+                const mid = (lo + hi) >> 1;
+                if (sorted[mid] <= value) lo = mid + 1;
+                else hi = mid;
+            }
+            map[row.key] = this.clampNum((lo / n) * 100, 0, 100);
+        }
+        return map;
+    }
+
+    getRelativeTierFromPercentile(percentile) {
+        const pct = this.clampNum(Number(percentile || 0), 0, 100);
+        if (pct >= 67) return { label: 'High', className: 'high' };
+        if (pct >= 34) return { label: 'Medium', className: 'medium' };
+        return { label: 'Low', className: 'low' };
+    }
+
+    getBreakoutDisplayTier(player, evalOut = null) {
+        const key = this.getPlayerKey(player);
+        const pct = this.breakoutScoreByKey?.[key];
+        if (Number.isFinite(pct)) {
+            return this.getRelativeTierFromPercentile(pct);
+        }
+        const out = evalOut || this.evaluateBreakoutScenario(player);
+        return {
+            label: String(out?.likelihood || 'Low'),
+            className: String(out?.likelihoodClass || 'low')
+        };
+    }
+
     computeBreakoutScoreIndex() {
         const previous = this.breakoutScoreByKey;
         this.breakoutScoreByKey = null;
-
         const rows = this.players.map(p => {
             const out = this.evaluateBreakoutScenario(p);
             const raw = Number(out.breakoutScoreRaw ?? out.breakoutScore ?? 0);
@@ -751,7 +902,8 @@ class PlayerCardsApp {
             else if (lebron !== null) source = 'lebron_only';
 
             const compositeZ = zParts.length ? (zParts.reduce((a, b) => a + b, 0) / zParts.length) : 0;
-            const valueScore = Math.max(0, Math.min(100, 50 + 15 * compositeZ));
+            const rawScore = this.clampNum(50 + (15 * compositeZ), 0, 100);
+            const confidenceWeight = this.getPlayerDataConfidenceWeight(player);
 
             return {
                 ...player,
@@ -759,7 +911,9 @@ class PlayerCardsApp {
                     ...(player.value_metrics || {}),
                     epm_raw: epm,
                     lebron_raw: lebron,
-                    player_value_score: Math.round(valueScore * 10) / 10,
+                    player_value_score_raw: Math.round(rawScore * 10) / 10,
+                    player_value_confidence_weight: Math.round(confidenceWeight * 1000) / 1000,
+                    player_value_score: Math.round(rawScore * 10) / 10,
                     player_value_source: source
                 }
             };
@@ -840,7 +994,238 @@ class PlayerCardsApp {
         return { vector, confidence };
     }
 
+    getPositionBucket(position) {
+        const pos = String(position || '').toUpperCase();
+        if (pos.includes('C') || pos.includes('B')) return 'big';
+        if (pos.includes('F')) return 'wing';
+        if (pos.includes('G')) return 'guard';
+        return 'wing';
+    }
+
+    inferProjectedRole(player, positionBucket = null) {
+        const bucket = positionBucket || this.getPositionBucket(player.player?.position);
+        const archetype = String(player.identity?.primary_archetype || '').toLowerCase();
+        if (bucket === 'guard') {
+            if (archetype.includes('initiator')) return 'Primary Initiator Guard';
+            if (archetype.includes('shoot')) return 'Movement Shooter Guard';
+            return 'Secondary Creation Guard';
+        }
+        if (bucket === 'big') {
+            if (archetype.includes('rim')) return 'Anchor Rim Protector';
+            if (archetype.includes('connector')) return 'Connector Big';
+            return 'Mobile Frontcourt Big';
+        }
+        if (archetype.includes('shoot')) return 'Floor-Spacer Wing';
+        return 'Two-Way Wing';
+    }
+
+    computeTeamFitBaselines(profiles) {
+        const teamRows = Object.values(profiles || {});
+        const statKeys = ['rotation_size', 'avg_usage', 'usage_concentration'];
+        const dimKeys = ['on_ball_creation', 'rim_pressure', 'spacing_gravity', 'off_ball_play', 'defensive_disruption', 'switchability', 'role_scalability', 'possession_stability'];
+
+        this.teamFitBaselines = {};
+        for (const key of statKeys) {
+            const vals = teamRows.map(r => Number(r?.[key] || 0));
+            this.teamFitBaselines[key] = this.computeMeanStd(vals);
+        }
+        for (const key of dimKeys) {
+            const vals = teamRows.map(r => Number(r?.scheme?.[key] || 0));
+            this.teamFitBaselines[`scheme_${key}`] = this.computeMeanStd(vals);
+        }
+    }
+
+    applyTeamAttractorBias(profiles) {
+        const playersScheme = this.players.map(p => this.getPlayerSchemeVector(p).vector);
+        if (!playersScheme.length) return;
+
+        const fitWeight = {
+            on_ball_creation: 0.20,
+            rim_pressure: 0.12,
+            spacing_gravity: 0.16,
+            off_ball_play: 0.14,
+            defensive_disruption: 0.14,
+            switchability: 0.12,
+            role_scalability: 0.12
+        };
+        const gapFromScheme = (teamScheme, dim) => this.clampNum((0.62 - (teamScheme?.[dim] || 0)) / 0.62, 0, 1);
+        const attractorRaw = {};
+        for (const [team, profile] of Object.entries(profiles || {})) {
+            const teamScheme = profile?.scheme || {};
+            let sum = 0;
+            for (const pv of playersScheme) {
+                let v = 0;
+                for (const [dim, w] of Object.entries(fitWeight)) {
+                    v += w * gapFromScheme(teamScheme, dim) * (pv[dim] || 0);
+                }
+                sum += v;
+            }
+            attractorRaw[team] = playersScheme.length ? (sum / playersScheme.length) : 0;
+        }
+
+        const attractorVals = Object.values(attractorRaw);
+        const attractorMean = attractorVals.reduce((a, b) => a + b, 0) / Math.max(1, attractorVals.length);
+        const attractorStd = Math.sqrt(
+            attractorVals.reduce((a, b) => a + ((b - attractorMean) ** 2), 0) / Math.max(1, attractorVals.length)
+        ) || 1;
+
+        for (const [team, raw] of Object.entries(attractorRaw)) {
+            profiles[team].attractor_bias = this.clampNum((raw - attractorMean) / attractorStd, -2.5, 2.5);
+        }
+    }
+
+    buildNbaDraftTeamProfiles() {
+        const dimNames = [
+            'on_ball_creation',
+            'rim_pressure',
+            'spacing_gravity',
+            'off_ball_play',
+            'defensive_disruption',
+            'switchability',
+            'role_scalability',
+            'possession_stability'
+        ];
+        const roleBlueprints = {
+            lead_guard: {
+                need: { on_ball_creation: 1.0, rim_pressure: 0.78, spacing_gravity: 0.46, off_ball_play: 0.35, defensive_disruption: 0.30, switchability: 0.24, role_scalability: 0.56, possession_stability: 0.58 },
+                position: { guard: 1.0, wing: 0.18, big: 0.0 }
+            },
+            off_ball_shooter: {
+                need: { on_ball_creation: 0.26, rim_pressure: 0.38, spacing_gravity: 1.0, off_ball_play: 0.90, defensive_disruption: 0.46, switchability: 0.52, role_scalability: 0.78, possession_stability: 0.60 },
+                position: { guard: 0.44, wing: 0.80, big: 0.0 }
+            },
+            two_way_wing: {
+                need: { on_ball_creation: 0.46, rim_pressure: 0.56, spacing_gravity: 0.72, off_ball_play: 0.66, defensive_disruption: 0.92, switchability: 0.92, role_scalability: 0.78, possession_stability: 0.68 },
+                position: { guard: 0.12, wing: 1.0, big: 0.12 }
+            },
+            rim_protector: {
+                need: { on_ball_creation: 0.16, rim_pressure: 0.56, spacing_gravity: 0.20, off_ball_play: 0.44, defensive_disruption: 1.0, switchability: 0.68, role_scalability: 0.66, possession_stability: 0.80 },
+                position: { guard: 0.0, wing: 0.22, big: 1.0 }
+            },
+            switch_big: {
+                need: { on_ball_creation: 0.24, rim_pressure: 0.64, spacing_gravity: 0.52, off_ball_play: 0.58, defensive_disruption: 0.86, switchability: 0.88, role_scalability: 0.82, possession_stability: 0.78 },
+                position: { guard: 0.0, wing: 0.28, big: 1.0 }
+            },
+            connector_big: {
+                need: { on_ball_creation: 0.44, rim_pressure: 0.56, spacing_gravity: 0.62, off_ball_play: 0.74, defensive_disruption: 0.66, switchability: 0.60, role_scalability: 0.90, possession_stability: 0.94 },
+                position: { guard: 0.0, wing: 0.34, big: 0.92 }
+            },
+            microwave_guard: {
+                need: { on_ball_creation: 0.78, rim_pressure: 0.68, spacing_gravity: 0.70, off_ball_play: 0.42, defensive_disruption: 0.28, switchability: 0.20, role_scalability: 0.46, possession_stability: 0.48 },
+                position: { guard: 1.0, wing: 0.20, big: 0.0 }
+            }
+        };
+        const teamSeeds = {
+            ATL: { primary: 'two_way_wing', secondary: 'rim_protector', growth: 0.58, usage: 0.56, timeline: 'competitive_retool' },
+            BOS: { primary: 'connector_big', secondary: 'off_ball_shooter', growth: 0.40, usage: 0.63, timeline: 'contender' },
+            BKN: { primary: 'lead_guard', secondary: 'rim_protector', growth: 0.78, usage: 0.43, timeline: 'rebuild' },
+            CHA: { primary: 'two_way_wing', secondary: 'rim_protector', growth: 0.84, usage: 0.48, timeline: 'rebuild' },
+            CHI: { primary: 'lead_guard', secondary: 'rim_protector', growth: 0.62, usage: 0.52, timeline: 'retool' },
+            CLE: { primary: 'off_ball_shooter', secondary: 'two_way_wing', growth: 0.52, usage: 0.58, timeline: 'playoff' },
+            DAL: { primary: 'two_way_wing', secondary: 'rim_protector', growth: 0.48, usage: 0.66, timeline: 'contender' },
+            DEN: { primary: 'off_ball_shooter', secondary: 'rim_protector', growth: 0.50, usage: 0.60, timeline: 'contender' },
+            DET: { primary: 'off_ball_shooter', secondary: 'rim_protector', growth: 0.86, usage: 0.46, timeline: 'rebuild' },
+            GSW: { primary: 'rim_protector', secondary: 'microwave_guard', growth: 0.42, usage: 0.60, timeline: 'competitive_retool' },
+            HOU: { primary: 'off_ball_shooter', secondary: 'connector_big', growth: 0.66, usage: 0.54, timeline: 'ascending' },
+            IND: { primary: 'two_way_wing', secondary: 'rim_protector', growth: 0.64, usage: 0.52, timeline: 'ascending' },
+            LAC: { primary: 'lead_guard', secondary: 'rim_protector', growth: 0.38, usage: 0.62, timeline: 'contender' },
+            LAL: { primary: 'two_way_wing', secondary: 'off_ball_shooter', growth: 0.46, usage: 0.62, timeline: 'competitive_retool' },
+            MEM: { primary: 'off_ball_shooter', secondary: 'switch_big', growth: 0.62, usage: 0.54, timeline: 'ascending' },
+            MIA: { primary: 'lead_guard', secondary: 'switch_big', growth: 0.50, usage: 0.56, timeline: 'playoff' },
+            MIL: { primary: 'lead_guard', secondary: 'two_way_wing', growth: 0.42, usage: 0.64, timeline: 'contender' },
+            MIN: { primary: 'lead_guard', secondary: 'off_ball_shooter', growth: 0.54, usage: 0.58, timeline: 'playoff' },
+            NOP: { primary: 'lead_guard', secondary: 'rim_protector', growth: 0.58, usage: 0.56, timeline: 'competitive_retool' },
+            NYK: { primary: 'lead_guard', secondary: 'connector_big', growth: 0.44, usage: 0.62, timeline: 'playoff' },
+            OKC: { primary: 'connector_big', secondary: 'off_ball_shooter', growth: 0.70, usage: 0.54, timeline: 'ascending' },
+            ORL: { primary: 'off_ball_shooter', secondary: 'lead_guard', growth: 0.68, usage: 0.48, timeline: 'ascending' },
+            PHI: { primary: 'lead_guard', secondary: 'switch_big', growth: 0.50, usage: 0.58, timeline: 'playoff' },
+            PHX: { primary: 'two_way_wing', secondary: 'connector_big', growth: 0.40, usage: 0.64, timeline: 'contender' },
+            POR: { primary: 'two_way_wing', secondary: 'switch_big', growth: 0.86, usage: 0.42, timeline: 'rebuild' },
+            SAC: { primary: 'two_way_wing', secondary: 'rim_protector', growth: 0.52, usage: 0.56, timeline: 'playoff' },
+            SAS: { primary: 'off_ball_shooter', secondary: 'rim_protector', growth: 0.90, usage: 0.44, timeline: 'rebuild' },
+            TOR: { primary: 'lead_guard', secondary: 'off_ball_shooter', growth: 0.80, usage: 0.46, timeline: 'rebuild' },
+            UTA: { primary: 'lead_guard', secondary: 'rim_protector', growth: 0.88, usage: 0.42, timeline: 'rebuild' },
+            WAS: { primary: 'lead_guard', secondary: 'two_way_wing', growth: 0.92, usage: 0.40, timeline: 'rebuild' }
+        };
+        const dimLabel = {
+            on_ball_creation: 'on-ball creation',
+            rim_pressure: 'rim pressure',
+            spacing_gravity: 'spacing gravity',
+            off_ball_play: 'off-ball execution',
+            defensive_disruption: 'defensive disruption',
+            switchability: 'switch coverage',
+            role_scalability: 'role scalability',
+            possession_stability: 'possession stability'
+        };
+
+        const profiles = {};
+        for (const [team, seed] of Object.entries(teamSeeds)) {
+            const primary = roleBlueprints[seed.primary] || roleBlueprints.two_way_wing;
+            const secondary = roleBlueprints[seed.secondary] || roleBlueprints.off_ball_shooter;
+            const needVector = {};
+            for (const dim of dimNames) {
+                const primaryNeed = primary.need?.[dim] ?? 0.5;
+                const secondaryNeed = secondary.need?.[dim] ?? 0.5;
+                needVector[dim] = this.clampNum((0.65 * primaryNeed) + (0.35 * secondaryNeed), 0, 1);
+            }
+
+            const scheme = {};
+            for (const dim of dimNames) {
+                scheme[dim] = this.clampNum(0.70 - (0.47 * (needVector[dim] || 0)), 0.2, 0.78);
+            }
+
+            const positionNeed = { guard: 0.34, wing: 0.34, big: 0.34 };
+            const roleMix = [
+                { blueprint: primary, weight: 0.65 },
+                { blueprint: secondary, weight: 0.35 }
+            ];
+            for (const role of roleMix) {
+                positionNeed.guard += (role.blueprint.position?.guard || 0) * role.weight * 0.72;
+                positionNeed.wing += (role.blueprint.position?.wing || 0) * role.weight * 0.72;
+                positionNeed.big += (role.blueprint.position?.big || 0) * role.weight * 0.72;
+            }
+            positionNeed.guard = this.clampNum(positionNeed.guard, 0, 1);
+            positionNeed.wing = this.clampNum(positionNeed.wing, 0, 1);
+            positionNeed.big = this.clampNum(positionNeed.big, 0, 1);
+
+            const roleNeeds = {
+                initiator_creator: this.clampNum((0.55 * needVector.on_ball_creation) + (0.25 * needVector.rim_pressure) + (0.20 * positionNeed.guard), 0, 1),
+                shooting_specialist: this.clampNum((0.60 * needVector.spacing_gravity) + (0.25 * needVector.off_ball_play) + (0.15 * Math.max(positionNeed.guard, positionNeed.wing)), 0, 1),
+                versatile_wing: this.clampNum((0.32 * needVector.switchability) + (0.24 * needVector.defensive_disruption) + (0.24 * needVector.off_ball_play) + (0.20 * positionNeed.wing), 0, 1),
+                rim_protector: this.clampNum((0.56 * needVector.defensive_disruption) + (0.20 * needVector.switchability) + (0.24 * positionNeed.big), 0, 1),
+                connector: this.clampNum((0.36 * needVector.role_scalability) + (0.28 * needVector.off_ball_play) + (0.18 * needVector.possession_stability) + (0.18 * Math.max(positionNeed.wing, positionNeed.big)), 0, 1),
+                default: this.clampNum((needVector.on_ball_creation + needVector.spacing_gravity + needVector.defensive_disruption + needVector.role_scalability) / 4.0, 0, 1)
+            };
+
+            const topNeeds = Object.entries(needVector)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 2)
+                .map(([dim]) => dimLabel[dim] || dim);
+
+            profiles[team] = {
+                roster_size: 15,
+                rotation_size: 8,
+                avg_usage: this.clampNum(0.208 + ((seed.usage - 0.5) * 0.03), 0.19, 0.25),
+                usage_concentration: this.clampNum(seed.usage, 0.25, 0.8),
+                scheme,
+                position_need: positionNeed,
+                role_needs: roleNeeds,
+                growth_environment: this.clampNum(seed.growth, 0.25, 0.95),
+                development_timeline: seed.timeline,
+                needs_summary: topNeeds
+            };
+        }
+
+        this.computeTeamFitBaselines(profiles);
+        this.applyTeamAttractorBias(profiles);
+        return profiles;
+    }
+
     buildTeamProfiles() {
+        if (this.isCollegeDeck) {
+            return this.buildNbaDraftTeamProfiles();
+        }
+
         const byTeam = new Map();
         for (const p of this.players) {
             const team = p.player?.team;
@@ -850,7 +1235,6 @@ class PlayerCardsApp {
         }
 
         const profiles = {};
-        const teamRows = [];
         for (const [team, roster] of byTeam.entries()) {
             const rotation = roster.filter(p => (p.performance?.traditional?.minutes_per_game || 0) >= 18);
             const active = rotation.length ? rotation : roster;
@@ -884,64 +1268,17 @@ class PlayerCardsApp {
             const usageMean = usageVals.length ? usageVals.reduce((a, b) => a + b, 0) / usageVals.length : 0.2;
             const usageVar = usageVals.length ? usageVals.reduce((acc, v) => acc + ((v - usageMean) ** 2), 0) / usageVals.length : 0;
 
-            const profile = {
+            profiles[team] = {
                 roster_size: roster.length,
                 rotation_size: active.length,
                 avg_usage: usageMean,
                 usage_concentration: this.clampNum(Math.sqrt(usageVar) / 0.08, 0, 1),
                 scheme
             };
-            profiles[team] = profile;
-            teamRows.push(profile);
         }
 
-        const statKeys = ['rotation_size', 'avg_usage', 'usage_concentration'];
-        const dimKeys = ['on_ball_creation', 'rim_pressure', 'spacing_gravity', 'off_ball_play', 'defensive_disruption', 'switchability', 'role_scalability', 'possession_stability'];
-
-        this.teamFitBaselines = {};
-        for (const key of statKeys) {
-            const vals = teamRows.map(r => Number(r[key] || 0));
-            this.teamFitBaselines[key] = this.computeMeanStd(vals);
-        }
-        for (const key of dimKeys) {
-            const vals = teamRows.map(r => Number(r.scheme?.[key] || 0));
-            this.teamFitBaselines[`scheme_${key}`] = this.computeMeanStd(vals);
-        }
-
-        // Team attractor bias: generic destination magnetism across the whole player pool.
-        const playersScheme = this.players.map(p => this.getPlayerSchemeVector(p).vector);
-        const fitWeight = {
-            on_ball_creation: 0.20,
-            rim_pressure: 0.12,
-            spacing_gravity: 0.16,
-            off_ball_play: 0.14,
-            defensive_disruption: 0.14,
-            switchability: 0.12,
-            role_scalability: 0.12
-        };
-        const gapFromScheme = (teamScheme, dim) => this.clampNum((0.62 - (teamScheme?.[dim] || 0)) / 0.62, 0, 1);
-        const attractorRaw = {};
-        for (const [team, profile] of Object.entries(profiles)) {
-            const teamScheme = profile.scheme || {};
-            let sum = 0;
-            for (const pv of playersScheme) {
-                let v = 0;
-                for (const [dim, w] of Object.entries(fitWeight)) {
-                    v += w * gapFromScheme(teamScheme, dim) * (pv[dim] || 0);
-                }
-                sum += v;
-            }
-            attractorRaw[team] = playersScheme.length ? (sum / playersScheme.length) : 0;
-        }
-        const attractorVals = Object.values(attractorRaw);
-        const attractorMean = attractorVals.reduce((a, b) => a + b, 0) / Math.max(1, attractorVals.length);
-        const attractorStd = Math.sqrt(
-            attractorVals.reduce((a, b) => a + ((b - attractorMean) ** 2), 0) / Math.max(1, attractorVals.length)
-        ) || 1;
-        for (const [team, raw] of Object.entries(attractorRaw)) {
-            profiles[team].attractor_bias = this.clampNum((raw - attractorMean) / attractorStd, -2.5, 2.5);
-        }
-
+        this.computeTeamFitBaselines(profiles);
+        this.applyTeamAttractorBias(profiles);
         return profiles;
     }
 
@@ -949,7 +1286,9 @@ class PlayerCardsApp {
         const currentTeam = player.player?.team;
         const trad = player.performance?.traditional || {};
         const adv = player.performance?.advanced || {};
-        const pos = String(player.player?.position || '').toLowerCase();
+        const positionBucket = this.getPositionBucket(player.player?.position);
+        const projectedRole = this.inferProjectedRole(player, positionBucket);
+        const archetypeKey = String(player.identity?.primary_archetype || 'default').toLowerCase();
         const trustScore = player.v1_1_enhancements?.trust_assessment?.score || 60;
         const playerMpg = trad.minutes_per_game || 0;
         const playerUsage = adv.usage_rate ?? 0.2;
@@ -996,21 +1335,66 @@ class PlayerCardsApp {
             const switchFit = switchNeed * fit('switchability');
             const scaleFit = scaleNeed * fit('role_scalability');
 
-            const roleFit = pos.includes('wing')
-                ? this.clampNum((0.4 * spacingFit) + (0.3 * switchFit) + (0.3 * offBallFit) + 0.2, 0, 1)
-                : this.clampNum((0.45 * creationFit) + (0.25 * scaleFit) + (0.30 * offBallFit) + 0.15, 0, 1);
+            let roleFit = this.clampNum((0.4 * spacingFit) + (0.3 * switchFit) + (0.3 * offBallFit) + 0.2, 0, 1);
+            if (positionBucket === 'guard') {
+                roleFit = this.clampNum((0.45 * creationFit) + (0.25 * scaleFit) + (0.30 * offBallFit) + 0.15, 0, 1);
+            } else if (positionBucket === 'big') {
+                roleFit = this.clampNum((0.36 * defenseFit) + (0.26 * switchFit) + (0.18 * rimFit) + (0.20 * scaleFit) + 0.15, 0, 1);
+            }
 
             const minutesOpportunity = this.clampNum((0.60 * minutesNeed) + (0.20 * concentrationNeed) + (0.20 * roleFit), 0, 1);
+            const archetypeNeed = this.clampNum(
+                profile.role_needs?.[archetypeKey] ??
+                profile.role_needs?.default ??
+                0.5,
+                0,
+                1
+            );
+            const positionNeed = this.clampNum(profile.position_need?.[positionBucket] ?? 0.5, 0, 1);
+            const roleNeedScore = this.clampNum((0.55 * archetypeNeed) + (0.45 * positionNeed), 0, 1);
+
+            let skillMatchScore = this.clampNum(
+                (0.24 * creationFit) +
+                (0.16 * spacingFit) +
+                (0.14 * offBallFit) +
+                (0.14 * defenseFit) +
+                (0.12 * switchFit) +
+                (0.10 * rimFit) +
+                (0.10 * scaleFit),
+                0,
+                1
+            );
+            if (positionBucket === 'guard') {
+                skillMatchScore = this.clampNum(
+                    (0.34 * creationFit) + (0.16 * rimFit) + (0.15 * spacingFit) + (0.13 * offBallFit) + (0.12 * scaleFit) + (0.10 * usageHeadroom),
+                    0,
+                    1
+                );
+            } else if (positionBucket === 'big') {
+                skillMatchScore = this.clampNum(
+                    (0.30 * defenseFit) + (0.20 * switchFit) + (0.18 * rimFit) + (0.14 * scaleFit) + (0.10 * spacingFit) + (0.08 * offBallFit),
+                    0,
+                    1
+                );
+            }
+
+            const growthEnvironment = this.clampNum(profile.growth_environment ?? 0.55, 0, 1);
+            const growthFitScore = this.clampNum(
+                (0.45 * growthEnvironment) +
+                (0.35 * minutesOpportunity) +
+                (0.20 * scaleFit),
+                0,
+                1
+            );
+            const teamNeedScore = this.clampNum((0.60 * roleNeedScore) + (0.40 * skillMatchScore), 0, 1);
+            const schemeComplementarity = this.clampNum((creationFit + spacingFit + offBallFit + defenseFit + switchFit) / 5.0, 0, 1);
 
             const rawFit =
-                0.18 * creationFit +
-                0.12 * rimFit +
-                0.14 * spacingFit +
-                0.12 * offBallFit +
-                0.12 * defenseFit +
-                0.10 * switchFit +
-                0.08 * scaleFit +
-                0.14 * minutesOpportunity;
+                0.34 * schemeComplementarity +
+                0.22 * skillMatchScore +
+                0.18 * teamNeedScore +
+                0.14 * growthFitScore +
+                0.12 * minutesOpportunity;
 
             const rosterConfidence = this.clampNum(profile.rotation_size / 8.0, 0.55, 1.0);
             const sampleConfidence = this.clampNum(playerMpg / 20.0, 0.55, 1.0);
@@ -1022,21 +1406,29 @@ class PlayerCardsApp {
             const specializationPenalty = this.clampNum(((needMean - 0.36) * 0.35) + ((0.18 - needStd) * 0.40), 0, 0.18);
             const attractorPenalty = this.clampNum((profile.attractor_bias || 0) * 0.045, 0, 0.10);
             let fitScore = this.clampNum((rawFit * confidence) - genericPenalty - specializationPenalty - attractorPenalty, 0, 1);
-            if (team === currentTeam) {
-                // Continuity bonus to avoid noisy external-team over-selection in weak-signal cases.
-                fitScore = this.clampNum(fitScore + 0.01, 0, 1);
-            } else {
-                // Small relocation friction for external scenarios.
-                fitScore = this.clampNum(fitScore - 0.015, 0, 1);
+            if (!this.isCollegeDeck) {
+                if (team === currentTeam) {
+                    // Continuity bonus to avoid noisy external-team over-selection in weak-signal cases.
+                    fitScore = this.clampNum(fitScore + 0.01, 0, 1);
+                } else {
+                    // Small relocation friction for external scenarios.
+                    fitScore = this.clampNum(fitScore - 0.015, 0, 1);
+                }
             }
 
             const reasons = [];
             if (minutesOpportunity > 0.42) reasons.push(`Rotation runway and role scalability create stable minutes upside`);
+            if (roleNeedScore > 0.56) reasons.push(`${team} has meaningful ${positionBucket} role demand this profile addresses`);
+            if (archetypeNeed > 0.58) reasons.push(`Archetype demand aligns: ${this.formatArchetype(archetypeKey)} profile maps to team need`);
             if (creationFit > 0.10) reasons.push(`On-ball creation gap match: player creation profile fills tactical initiator need`);
             if (spacingFit > 0.09) reasons.push(`Spacing gravity fit: team scheme lacks shooting gravity this player provides`);
             if (offBallFit > 0.09) reasons.push(`Off-ball scheme fit: assisted/off-ball profile aligns with team possession design`);
             if (defenseFit + switchFit > 0.16) reasons.push(`Defensive scheme compatibility: disruption + switchability improve lineup portability`);
             if (usageHeadroom > 0.38) reasons.push(`Usage headroom is available without overloading existing high-usage creators`);
+            if (growthFitScore > 0.56) reasons.push(`Growth runway is favorable through minutes path + development environment`);
+
+            const growthOutlook = growthFitScore >= 0.67 ? 'strong' : (growthFitScore >= 0.5 ? 'moderate' : 'limited');
+            const needsRole = roleNeedScore >= 0.58;
 
             const scenario = {
                 team,
@@ -1054,10 +1446,30 @@ class PlayerCardsApp {
                     switch_fit: switchFit,
                     offball_fit: offBallFit,
                     role_fit: roleFit,
-                    scheme_complementarity: this.clampNum((creationFit + spacingFit + offBallFit + defenseFit + switchFit) / 5.0, 0, 1),
+                    scheme_complementarity: schemeComplementarity,
+                    role_need: roleNeedScore,
+                    position_need: positionNeed,
+                    archetype_need: archetypeNeed,
+                    skill_match: skillMatchScore,
+                    growth_fit: growthFitScore,
                     generic_need_penalty: genericPenalty,
                     specialization_penalty: specializationPenalty,
                     attractor_penalty: attractorPenalty
+                },
+                draft_context: {
+                    mode: this.isCollegeDeck ? 'nba_draft' : 'context_fit',
+                    projected_role: projectedRole,
+                    position_bucket: positionBucket,
+                    team_need_score: teamNeedScore,
+                    role_need_score: roleNeedScore,
+                    position_need_score: positionNeed,
+                    archetype_need_score: archetypeNeed,
+                    skill_match_score: skillMatchScore,
+                    growth_fit_score: growthFitScore,
+                    growth_environment_score: growthEnvironment,
+                    growth_outlook: growthOutlook,
+                    needs_role: needsRole,
+                    timeline: profile.development_timeline || ''
                 },
                 reasons: reasons.slice(0, 4)
             };
@@ -1105,7 +1517,27 @@ class PlayerCardsApp {
                 offball_fit: 0.4,
                 role_fit: 0.5,
                 scheme_complementarity: 0.4,
+                role_need: 0.5,
+                position_need: 0.5,
+                archetype_need: 0.5,
+                skill_match: 0.5,
+                growth_fit: 0.5,
                 generic_need_penalty: 0
+            },
+            draft_context: {
+                mode: this.isCollegeDeck ? 'nba_draft' : 'context_fit',
+                projected_role: projectedRole,
+                position_bucket: positionBucket,
+                team_need_score: 0.5,
+                role_need_score: 0.5,
+                position_need_score: 0.5,
+                archetype_need_score: 0.5,
+                skill_match_score: 0.5,
+                growth_fit_score: 0.5,
+                growth_environment_score: 0.5,
+                growth_outlook: 'moderate',
+                needs_role: false,
+                timeline: ''
             },
             fit_gap: 0,
             signal_strength: 'weak',
@@ -1115,6 +1547,10 @@ class PlayerCardsApp {
     }
 
     evaluateBreakoutScenario(player) {
+        const evalKey = this.getPlayerKey(player);
+        if (this.breakoutEvalCache?.[evalKey]) {
+            return this.breakoutEvalCache[evalKey];
+        }
         const trad = player.performance?.traditional || {};
         const adv = player.performance?.advanced || {};
         const constraints = player.v1_1_enhancements?.scenario_constraints || {};
@@ -1421,7 +1857,7 @@ class PlayerCardsApp {
             decision_layer: (!!contractSummary?.available) || !!agingSummary
         };
 
-        return {
+        const result = {
             fitScenario,
             age,
             trustScore,
@@ -1473,6 +1909,8 @@ class PlayerCardsApp {
             likelihoodClass,
             likelihoodPct
         };
+        this.breakoutEvalCache[evalKey] = result;
+        return result;
     }
 
     setupEventListeners() {
@@ -1550,7 +1988,9 @@ class PlayerCardsApp {
     }
 
     populateTeamFilter() {
-        const teams = [...new Set(this.players.map(p => p.player.team))].sort();
+        const teams = this.isCollegeDeck
+            ? Object.keys(this.teamProfiles || {}).sort()
+            : [...new Set(this.players.map(p => p.player.team))].sort();
         const teamFilter = document.getElementById('teamFilter');
         
         teams.forEach(team => {
@@ -1590,8 +2030,17 @@ class PlayerCardsApp {
                 playerUsage.toLowerCase() === usageFilter.toLowerCase();
 
             // Team filter
-            const matchesTeam = !teamFilter || 
-                player.player.team === teamFilter;
+            let matchesTeam = true;
+            if (teamFilter) {
+                if (this.isCollegeDeck) {
+                    const fit = this.evaluateBreakoutScenario(player).fitScenario || {};
+                    const candidateTeams = [fit.team, ...((fit.alternatives || []).map(a => a.team))]
+                        .filter(Boolean);
+                    matchesTeam = candidateTeams.includes(teamFilter);
+                } else {
+                    matchesTeam = player.player.team === teamFilter;
+                }
+            }
 
             return matchesSearch && matchesArchetype && matchesUsage && matchesTeam;
         });
@@ -1607,6 +2056,21 @@ class PlayerCardsApp {
                 case 'name':
                     return a.player.name.localeCompare(b.player.name);
                 
+                case 'best_available':
+                    {
+                        const bProf = this.getBestAvailableProfile(b);
+                        const aProf = this.getBestAvailableProfile(a);
+                        if (bProf.validated_score !== aProf.validated_score) {
+                            return bProf.validated_score - aProf.validated_score;
+                        }
+                        if (bProf.validation_confidence !== aProf.validation_confidence) {
+                            return bProf.validation_confidence - aProf.validation_confidence;
+                        }
+                        if (bProf.youth_score !== aProf.youth_score) {
+                            return bProf.youth_score - aProf.youth_score;
+                        }
+                        return this.getPlayerValue(b) - this.getPlayerValue(a);
+                    }
                 case 'impact':
                     return this.getPlayerValue(b) - this.getPlayerValue(a);
 
@@ -1638,8 +2102,8 @@ class PlayerCardsApp {
         const total = this.players.length;
         const visible = this.filteredPlayers.length;
         const breakoutCandidates = this.filteredPlayers.filter(p => {
-            const s = this.evaluateBreakoutScenario(p);
-            return s.likelihoodClass === 'high' && (s.breakoutScore || 0) >= 60;
+            const tier = this.getBreakoutDisplayTier(p);
+            return tier.className === 'high';
         }).length;
         const highTrust = this.filteredPlayers.filter(
             p => Number(p.v1_1_enhancements?.trust_assessment?.score || 0) >= 75
@@ -2019,10 +2483,16 @@ class PlayerCardsApp {
         const typeCardProfile = this.getBasketballTypeProfile(player);
         const typeCardHeadshotUrl = this.getPlayerHeadshotUrl(player);
         const typeCardTeamLogoUrl = this.getTeamLogoUrl(player.player?.team);
-        const breakoutStyle = this.getBreakoutTierStyle(evalOut.likelihoodClass, evalOut.likelihoodPct);
+        const breakoutDisplayTier = this.getBreakoutDisplayTier(player, evalOut);
+        const breakoutStyle = this.getBreakoutTierStyle(breakoutDisplayTier.className, evalOut.likelihoodPct);
         const isRookie = this.isLikelyRookie(player);
+        const rookieBadgeLabel = this.isCollegeDeck ? 'FRESHMAN' : 'ROOKIE';
         const typeCardMonogram = this.getPlayerMonogram(player.player?.name || 'NA');
         const teamRibbonLabel = this.formatTeamRibbonLabel(player.player?.team);
+        const draftContext = evalOut.fitScenario?.draft_context || {};
+        const cardBandText = (this.isCollegeDeck && evalOut.fitScenario?.team && evalOut.fitScenario.team !== 'No Clear Team Edge')
+            ? `Draft Fit ${evalOut.fitScenario.team} • Need ${Math.round(100 * (draftContext.team_need_score ?? evalOut.fitScenario.fit_score ?? 0))}%`
+            : typeCardProfile.subtitle;
 
         return `
             <div class="player-card type-card trading-card" data-player="${player.player.name}" style="--type-primary:${typeCardProfile.primaryColor};--type-secondary:${typeCardProfile.secondaryColor};--type-glow:${typeCardProfile.glowColor};--breakout-bg:${breakoutStyle.bg};--breakout-fg:${breakoutStyle.fg};--breakout-glow:${breakoutStyle.glow};">
@@ -2041,7 +2511,7 @@ class PlayerCardsApp {
                     </div>
                     <div class="trading-position-ribbon">${player.player.position || 'N/A'}</div>
                     <div class="trading-breakout-strip">${breakoutStyle.label} BREAKOUT &bull; ${Math.round(evalOut.likelihoodPct || 0)}%</div>
-                    ${isRookie ? `<div class="trading-rookie-badge">ROOKIE</div>` : ''}
+                    ${isRookie ? `<div class="trading-rookie-badge">${rookieBadgeLabel}</div>` : ''}
                     <div class="trading-team-ribbon">${teamRibbonLabel}</div>
                     <div class="trading-card-badge ${impactClass}">Value ${playerValue.toFixed(1)}</div>
                     <div class="trading-subtype">${typeCardProfile.typeLabel}</div>
@@ -2054,7 +2524,7 @@ class PlayerCardsApp {
                     <div class="trading-photo-shadow"></div>
                     <div class="trading-photo-light"></div>
                     <div class="trading-photo-band">
-                        <div class="trading-photo-band-text">${typeCardProfile.subtitle}</div>
+                        <div class="trading-photo-band-text">${cardBandText}</div>
                     </div>
                 </div>
             </div>
@@ -2342,6 +2812,9 @@ class PlayerCardsApp {
 
     renderMetricsTab(player, evalOut, mechanism, valuation, trad, adv, trust, uncertainty) {
         const fit = evalOut.fitScenario || {};
+        const draftContext = fit.draft_context || {};
+        const targetTeamLabel = fit.team || 'No Clear Team Edge';
+        const projectedRoleLabel = draftContext.projected_role || this.inferProjectedRole(player);
         const fitPercentile = this.getTeamFitPercentile(player);
         const usage = ((adv.usage_rate ?? 0) * 100).toFixed(1);
         const ledger = evalOut.intrinsicContextLedger || { intrinsic: 0.5, context: 0.5, residual: 0, intrinsic_share: 0.5, context_share: 0.5 };
@@ -2410,12 +2883,48 @@ class PlayerCardsApp {
                     <div class="detail-item">
                         <div class="detail-item-label">Team Fit Context</div>
                         <div class="detail-item-value">${((fit.fit_score || 0) * 100).toFixed(0)}% (p${fitPercentile})</div>
-                        <div class="detail-item-note">How strongly team tactical needs match this player profile; percentile is league-relative.</div>
+                        <div class="detail-item-note">${this.isCollegeDeck ? 'NBA draft context fit using team need + skill translation; percentile is league-relative.' : 'How strongly team tactical needs match this player profile; percentile is league-relative.'}</div>
                     </div>
                     <div class="detail-item">
                         <div class="detail-item-label">Scenario Confidence</div>
                         <div class="detail-item-value">${(mechanism.confidence * 100).toFixed(0)}%</div>
                         <div class="detail-item-note">Confidence governance combining data quality, comp density, and agreement.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>${this.isCollegeDeck ? 'NBA Draft Fit Snapshot' : 'Role Fit Snapshot'}</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-item-label">${this.isCollegeDeck ? 'Best Draft Team' : 'Best Team Context'}</div>
+                        <div class="detail-item-value">${targetTeamLabel}</div>
+                        <div class="detail-item-note">${fit.signal_strength === 'weak' ? 'Weak edge: treat destination as exploratory.' : 'Highest-confidence contextual destination from fit engine.'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Projected Role</div>
+                        <div class="detail-item-value">${projectedRoleLabel}</div>
+                        <div class="detail-item-note">Role assignment built from position bucket + archetype translation.</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Role Need</div>
+                        <div class="detail-item-value">${(100 * (draftContext.role_need_score || 0)).toFixed(0)}%</div>
+                        <div class="detail-item-note">${draftContext.needs_role ? 'Team has clear need for this role profile.' : 'Role need is present but not urgent.'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Skill Match</div>
+                        <div class="detail-item-value">${(100 * (draftContext.skill_match_score || 0)).toFixed(0)}%</div>
+                        <div class="detail-item-note">How well player strengths map directly into team tactical gaps.</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Team Need Composite</div>
+                        <div class="detail-item-value">${(100 * (draftContext.team_need_score || 0)).toFixed(0)}%</div>
+                        <div class="detail-item-note">Blend of role demand and skill matching for draft prioritization.</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-item-label">Growth Runway</div>
+                        <div class="detail-item-value">${(100 * (draftContext.growth_fit_score || 0)).toFixed(0)}%</div>
+                        <div class="detail-item-note">Minutes runway + development environment for player growth on that team.</div>
                     </div>
                 </div>
             </div>
@@ -3703,10 +4212,15 @@ class PlayerCardsApp {
 
         // General uniqueness factors
         const playerValue = this.getPlayerValue(player);
+        const bestAvailable = this.getBestAvailableProfile(player);
         if (playerValue >= 70) {
-            insights.push({ icon: '📈', text: `Elite player value score: ${playerValue.toFixed(1)}` });
+            if ((bestAvailable.validation_confidence || 0) >= 0.75) {
+                insights.push({ icon: 'ELITE', text: `Elite validated value score: ${playerValue.toFixed(1)}` });
+            } else {
+                insights.push({ icon: 'INFO', text: `High raw value signal (${playerValue.toFixed(1)}), but validation confidence is below elite threshold` });
+            }
         } else if (playerValue < 40) {
-            insights.push({ icon: '📉', text: `Low player value score: ${playerValue.toFixed(1)}` });
+            insights.push({ icon: 'LOW', text: `Low player value score: ${playerValue.toFixed(1)}` });
         }
 
         const trustScore = player.v1_1_enhancements?.trust_assessment?.score || 0;
@@ -3714,6 +4228,13 @@ class PlayerCardsApp {
             insights.push({ icon: '✅', text: `High data reliability (${trustScore.toFixed(0)} trust score)` });
         } else if (trustScore < 60) {
             insights.push({ icon: '⚠️', text: `Limited data (${trustScore.toFixed(0)} trust score)` });
+        }
+
+        if (bestAvailable.tier !== 'high') {
+            insights.push({
+                icon: 'INFO',
+                text: `Validated availability confidence ${(100 * (bestAvailable.validation_confidence || 0)).toFixed(0)}% (${bestAvailable.tier.toUpperCase()})`
+            });
         }
 
         // Compare to archetype peers
@@ -3778,6 +4299,8 @@ class PlayerCardsApp {
             hiddenSkillSignal,
             utilizationUplift
         } = evalOut;
+        const breakoutDisplayTier = this.getBreakoutDisplayTier(player, evalOut);
+        const draftContext = fitScenario.draft_context || {};
 
         const usageImpactWeight = this.clampNum((usageDelta * 100) / 12, 0.1, 1.0);
         const minutesImpactWeight = this.clampNum(minutesDelta / 8, 0.1, 1.0);
@@ -3789,9 +4312,9 @@ class PlayerCardsApp {
             <div class="detail-section">
                 <h3>Breakout Potential</h3>
                 <div class="breakout-header">
-                    <div class="breakout-likelihood ${likelihoodClass}">
+                    <div class="breakout-likelihood ${breakoutDisplayTier.className}">
                         <div class="likelihood-label">Breakout Likelihood</div>
-                        <div class="likelihood-value">${likelihood}</div>
+                        <div class="likelihood-value">${breakoutDisplayTier.label}</div>
                         <div class="likelihood-label">Score: ${breakoutScore.toFixed(1)}</div>
                         <div class="likelihood-label">Likelihood Signal: ${breakoutLikelihoodScore.toFixed(0)}</div>
                         <div class="likelihood-label">${genuineBreakout ? 'Genuine Breakout Signal: YES' : 'Genuine Breakout Signal: NO'}</div>
@@ -3853,6 +4376,14 @@ class PlayerCardsApp {
                     <div class="constraint-item">
                         <span class="constraint-icon">🧪</span>
                         <span class="constraint-text">Signal strength: <strong>${(fitScenario.signal_strength || 'weak').toUpperCase()}</strong> (edge over next option ${(100 * (fitScenario.fit_gap || 0)).toFixed(1)}%)</span>
+                    </div>
+                    <div class="constraint-item">
+                        <span class="constraint-icon">R</span>
+                        <span class="constraint-text"><strong>Projected role:</strong> ${draftContext.projected_role || this.inferProjectedRole(player)}. Team role need ${(100 * (draftContext.role_need_score || 0)).toFixed(0)}%, skill match ${(100 * (draftContext.skill_match_score || 0)).toFixed(0)}%.</span>
+                    </div>
+                    <div class="constraint-item">
+                        <span class="constraint-icon">G</span>
+                        <span class="constraint-text"><strong>Growth path:</strong> ${(100 * (draftContext.growth_fit_score || 0)).toFixed(0)}% runway (${String(draftContext.growth_outlook || 'moderate').toUpperCase()}) from minutes opportunity + development environment.</span>
                     </div>
                     ${fitScenario.reasons.map(reason => `
                         <div class="constraint-item">

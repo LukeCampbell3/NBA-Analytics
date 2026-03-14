@@ -5,13 +5,14 @@ serve_web.py - Quick server for NBA-VAR web frontend
 Serves the web interface on localhost with automatic browser opening.
 """
 
-import http.server
-import socketserver
-import webbrowser
 import os
-import sys
-from pathlib import Path
 import argparse
+import http.server
+import json
+import socketserver
+import sys
+import webbrowser
+from pathlib import Path
 from urllib.parse import urlparse
 
 
@@ -35,6 +36,9 @@ class MultiPageRequestHandler(http.server.SimpleHTTPRequestHandler):
       /about/    -> /about.html (if file exists)
     """
 
+    # Populated at server startup (path -> bytes), e.g. "data/cards.json".
+    json_payload_cache = {}
+
     def _normalize_clean_route(self, request_path: str) -> str:
         parsed = urlparse(request_path or "/")
         path = parsed.path or "/"
@@ -57,16 +61,117 @@ class MultiPageRequestHandler(http.server.SimpleHTTPRequestHandler):
         # No clean-route match; keep default behavior (404/static handling).
         return path
 
+    def _serve_preloaded_payload(self, normalized_path: str) -> bool:
+        cache_key = normalized_path.lstrip("/")
+        payload = self.json_payload_cache.get(cache_key)
+        if payload is None:
+            return False
+
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(payload)))
+        # Short cache to reduce redundant fetch/parsing when navigating pages.
+        self.send_header("Cache-Control", "public, max-age=120")
+        self.end_headers()
+        self.wfile.write(payload)
+        return True
+
     def do_GET(self):
-        self.path = self._normalize_clean_route(self.path)
+        normalized = self._normalize_clean_route(self.path)
+        if self._serve_preloaded_payload(normalized):
+            return
+        self.path = normalized
         return super().do_GET()
 
 
-def serve(port=8000, directory="web", open_browser=True):
+def player_identity_key(record):
+    """Stable key for mapping cards <-> valuations."""
+    player = record.get("player", {}) if isinstance(record, dict) else {}
+    pid = str(player.get("id", "")).strip()
+    if pid:
+        return f"id:{pid}"
+    name = str(player.get("name", "")).strip().lower()
+    season = str(player.get("season", "")).strip()
+    team = str(player.get("team", "")).strip().lower()
+    return f"name:{name}|season:{season}|team:{team}"
+
+
+def card_value_score(card):
+    """Sortable player value score with safe fallback."""
+    if not isinstance(card, dict):
+        return 0.0
+    metrics = card.get("value_metrics", {})
+    try:
+        return float(metrics.get("player_value_score", 0.0) or 0.0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def preload_web_payloads(web_dir: Path, college_card_limit: int | None):
+    """
+    Preload JSON payloads into memory for faster first fetch and cross-page nav.
+    Returns dict keyed by relative path (e.g. "data/cards.json") -> bytes payload.
+    """
+    payloads = {}
+    data_dir = web_dir / "data"
+    if not data_dir.exists():
+        return payloads
+
+    nba_cards_path = data_dir / "cards.json"
+    nba_vals_path = data_dir / "valuations.json"
+    college_cards_path = data_dir / "college_cards.json"
+    college_vals_path = data_dir / "college_valuations.json"
+
+    if nba_cards_path.exists():
+        payloads["data/cards.json"] = nba_cards_path.read_bytes()
+    if nba_vals_path.exists():
+        payloads["data/valuations.json"] = nba_vals_path.read_bytes()
+
+    if college_cards_path.exists():
+        # Fast path: preload raw bytes when no trimming is requested.
+        if college_card_limit is None or college_card_limit <= 0:
+            payloads["data/college_cards.json"] = college_cards_path.read_bytes()
+            if college_vals_path.exists():
+                payloads["data/college_valuations.json"] = college_vals_path.read_bytes()
+        else:
+            cards = json.loads(college_cards_path.read_text(encoding="utf-8"))
+            vals = []
+            if college_vals_path.exists():
+                vals = json.loads(college_vals_path.read_text(encoding="utf-8"))
+
+            original_count = len(cards) if isinstance(cards, list) else 0
+            if isinstance(cards, list):
+                if original_count > college_card_limit:
+                    cards = sorted(cards, key=card_value_score, reverse=True)[:college_card_limit]
+                    keep_keys = {player_identity_key(card) for card in cards}
+                    if isinstance(vals, list):
+                        vals = [v for v in vals if player_identity_key(v) in keep_keys]
+                    print(
+                        f"[preload] College payload trimmed: {original_count} -> {len(cards)} cards "
+                        f"(limit={college_card_limit})"
+                    )
+                else:
+                    print(f"[preload] College payload under limit: {original_count} cards")
+
+            payloads["data/college_cards.json"] = json.dumps(
+                cards if isinstance(cards, list) else [],
+                separators=(",", ":"),
+                ensure_ascii=False,
+            ).encode("utf-8")
+            payloads["data/college_valuations.json"] = json.dumps(
+                vals if isinstance(vals, list) else [],
+                separators=(",", ":"),
+                ensure_ascii=False,
+            ).encode("utf-8")
+
+    return payloads
+
+
+def serve(port=8000, directory="web", open_browser=True, college_card_limit=1200):
     """Serve the web app"""
     
     # Change to web directory
-    web_dir = Path(directory)
+    web_dir = Path(directory).resolve()
     if not web_dir.exists():
         print(f"Error: Directory '{directory}' does not exist")
         return 1
@@ -98,6 +203,11 @@ def serve(port=8000, directory="web", open_browser=True):
     
     # Create server
     Handler = MultiPageRequestHandler
+    effective_limit = None if (college_card_limit is None or college_card_limit <= 0) else int(college_card_limit)
+    Handler.json_payload_cache = preload_web_payloads(web_dir=web_dir, college_card_limit=effective_limit)
+    if Handler.json_payload_cache:
+        preloaded_keys = ", ".join(sorted(Handler.json_payload_cache.keys()))
+        print(f"[preload] Loaded JSON payloads at startup: {preloaded_keys}")
 
     # Discover available pages to make adding future pages obvious.
     pages = sorted(
@@ -167,13 +277,20 @@ Examples:
         action='store_true',
         help='Do not open browser automatically'
     )
+    parser.add_argument(
+        '--college-card-limit',
+        type=int,
+        default=1200,
+        help='Max number of college cards to serve (default: 1200, use 0 to disable limit).'
+    )
     
     args = parser.parse_args()
     
     return serve(
         port=args.port,
         directory=args.dir,
-        open_browser=not args.no_browser
+        open_browser=not args.no_browser,
+        college_card_limit=args.college_card_limit,
     )
 
 

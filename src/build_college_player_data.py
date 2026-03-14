@@ -22,10 +22,10 @@ import logging
 import re
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 from urllib.robotparser import RobotFileParser
 
 import pandas as pd
@@ -45,6 +45,48 @@ class RobotsDisallowedError(RuntimeError):
 def utc_now_iso() -> str:
     """UTC timestamp in ISO8601 with timezone."""
     return datetime.now(timezone.utc).isoformat()
+
+
+def parse_birth_date(value: object) -> Optional[date]:
+    """Parse common birth-date formats into date."""
+    text = str(value or "").strip()
+    if not text:
+        return None
+    text = text.replace("Born:", "").strip()
+    if "T" in text and text.endswith("Z"):
+        text = text[:-1]
+
+    for fmt in ("%Y-%m-%d", "%B %d, %Y", "%b %d, %Y", "%m/%d/%Y"):
+        try:
+            return datetime.strptime(text, fmt).date()
+        except ValueError:
+            continue
+
+    # Handles timestamps like 2004-12-21T00:00:00
+    try:
+        return datetime.fromisoformat(text).date()
+    except ValueError:
+        pass
+
+    # Fallback for embedded ISO strings in larger text blobs.
+    match = re.search(r"(\d{4}-\d{2}-\d{2})", text)
+    if match:
+        try:
+            return datetime.strptime(match.group(1), "%Y-%m-%d").date()
+        except ValueError:
+            return None
+    return None
+
+
+def age_on_reference_date(birth_date: Optional[date], reference_date: date) -> Optional[float]:
+    """Age in years (1 decimal) on reference date."""
+    if birth_date is None:
+        return None
+    delta_days = (reference_date - birth_date).days
+    if delta_days <= 0:
+        return None
+    years = delta_days / 365.2425
+    return round(float(years), 1)
 
 
 def slugify(value: str) -> str:
@@ -291,6 +333,17 @@ class SportsReferenceCollegeCollector:
             ),
         ]
 
+    def _resolve_player_url(self, href_or_url: object) -> Optional[str]:
+        """Normalize player href/url into an absolute Sports-Reference profile URL."""
+        raw = str(href_or_url or "").strip()
+        if not raw or raw.lower() == "nan":
+            return None
+        if raw.startswith("http://") or raw.startswith("https://"):
+            return raw
+        if raw.startswith("/"):
+            return urljoin(self.source.base_url, raw)
+        return None
+
     def _find_table_html(self, html: str, table_id: str) -> str:
         """Find table by id, including tables embedded inside HTML comments."""
         soup = BeautifulSoup(html, "html.parser")
@@ -325,12 +378,14 @@ class SportsReferenceCollegeCollector:
 
         header_cells = header_rows[-1].find_all(["th", "td"])
         columns = [cell.get_text(" ", strip=True) for cell in header_cells]
+        header_stats = [str(cell.get("data-stat", "")).strip().lower() for cell in header_cells]
 
         body = table.find("tbody")
         if body is None:
             return pd.DataFrame(columns=columns)
 
         rows: List[List[str]] = []
+        player_hrefs: List[str] = []
         for tr in body.find_all("tr"):
             if "thead" in (tr.get("class") or []):
                 continue
@@ -339,13 +394,27 @@ class SportsReferenceCollegeCollector:
             if not any(row):
                 continue
 
+            player_href = ""
+            for idx, cell in enumerate(cells):
+                data_stat = str(cell.get("data-stat", "")).strip().lower()
+                stat_name = data_stat if data_stat else (header_stats[idx] if idx < len(header_stats) else "")
+                if stat_name in {"player", "name_display", "player_name"}:
+                    anchor = cell.find("a", href=True)
+                    if anchor and anchor.get("href"):
+                        player_href = str(anchor["href"]).strip()
+                        break
+
             if len(row) < len(columns):
                 row.extend([""] * (len(columns) - len(row)))
             elif len(row) > len(columns):
                 row = row[: len(columns)]
             rows.append(row)
+            player_hrefs.append(player_href)
 
-        return pd.DataFrame(rows, columns=columns)
+        df = pd.DataFrame(rows, columns=columns)
+        if player_hrefs and any(player_hrefs):
+            df["player_href"] = player_hrefs
+        return df
 
     def _clean_player_table(self, df: pd.DataFrame, season: int, source_url: str, source_table: str) -> pd.DataFrame:
         """Normalize table to canonical shape and attach provenance."""
@@ -362,6 +431,8 @@ class SportsReferenceCollegeCollector:
             df["player_name"] = df["player"]
         if "school" in df.columns:
             df["team_name"] = df["school"]
+        if "player_href" in df.columns:
+            df["player_url"] = [self._resolve_player_url(href) for href in df["player_href"]]
 
         for col in df.columns:
             df[col] = maybe_numeric(df[col])
@@ -476,6 +547,32 @@ class SportsReferenceCollegeCollector:
             return " ".join(w.capitalize() for w in slug.split("-"))
         return "UNKNOWN"
 
+    def _player_name_key(self, name: object) -> str:
+        """Normalize player names for cross-table joins inside one page."""
+        return re.sub(r"[^a-z0-9]+", "", str(name or "").lower())
+
+    def _extract_roster_class_map(self, html: str) -> Dict[str, str]:
+        """Extract player->class mapping from school roster table, when present."""
+        try:
+            roster_html = self._find_table_html(html, "roster")
+        except Exception:
+            return {}
+
+        roster_df = self._table_to_dataframe(roster_html)
+        if roster_df.empty:
+            return {}
+        roster_df.columns = unique_column_names([str(c) for c in roster_df.columns])
+        if "player" not in roster_df.columns or "class" not in roster_df.columns:
+            return {}
+
+        class_map: Dict[str, str] = {}
+        for _, row in roster_df.iterrows():
+            key = self._player_name_key(row.get("player", ""))
+            class_label = str(row.get("class", "")).strip()
+            if key and class_label:
+                class_map[key] = class_label
+        return class_map
+
     def _clean_school_page_table(
         self,
         df: pd.DataFrame,
@@ -483,6 +580,7 @@ class SportsReferenceCollegeCollector:
         school_name: str,
         source_url: str,
         source_table: str,
+        roster_class_map: Optional[Dict[str, str]] = None,
     ) -> pd.DataFrame:
         """Normalize school roster table to canonical player-season rows."""
         if df.empty:
@@ -498,6 +596,17 @@ class SportsReferenceCollegeCollector:
             return pd.DataFrame()
 
         df["team_name"] = school_name
+        if roster_class_map:
+            mapped_class = df["player_name"].astype(str).map(
+                lambda name: roster_class_map.get(self._player_name_key(name), "")
+            )
+            if "class" in df.columns:
+                current_class = df["class"].astype(str).str.strip()
+                df["class"] = current_class.where(current_class != "", mapped_class)
+            else:
+                df["class"] = mapped_class
+        if "player_href" in df.columns:
+            df["player_url"] = [self._resolve_player_url(href) for href in df["player_href"]]
 
         for col in df.columns:
             df[col] = maybe_numeric(df[col])
@@ -586,6 +695,7 @@ class SportsReferenceCollegeCollector:
         else:
             df["team_name"] = "UNKNOWN"
         df["player_name"] = player_name
+        df["player_url"] = source_url
 
         for col in df.columns:
             df[col] = maybe_numeric(df[col])
@@ -597,6 +707,164 @@ class SportsReferenceCollegeCollector:
         df["player_key"] = [f"{slugify(player_name)}_{int(s)}_{slugify(t)}" for s, t in zip(df["season"], df["team_name"])]
         df["team_key"] = [f"{slugify(t)}_{int(s)}" for s, t in zip(df["season"], df["team_name"])]
         return df.reset_index(drop=True)
+
+    def _extract_birth_date_from_html(self, html: str) -> Optional[date]:
+        """Extract player birth date from profile page metadata."""
+        soup = BeautifulSoup(html, "html.parser")
+        candidates: List[str] = []
+
+        for selector in [
+            "#necro-birth",
+            '[itemprop="birthDate"]',
+            'meta[itemprop="birthDate"]',
+            'meta[name="birthdate"]',
+            'meta[property="birthDate"]',
+        ]:
+            for node in soup.select(selector):
+                for attr in ("data-birth", "datetime", "content", "value"):
+                    raw = node.get(attr)
+                    if raw:
+                        candidates.append(str(raw).strip())
+                text = node.get_text(" ", strip=True)
+                if text:
+                    candidates.append(text)
+
+        for raw in candidates:
+            parsed = parse_birth_date(raw)
+            if parsed is not None:
+                return parsed
+
+        # JSON-LD fallback.
+        json_ld_match = re.search(r'"birthDate"\s*:\s*"([^"]+)"', html)
+        if json_ld_match:
+            return parse_birth_date(json_ld_match.group(1))
+        return None
+
+    def enrich_with_player_ages(
+        self,
+        canonical: pd.DataFrame,
+        cache_path: Optional[Path] = None,
+    ) -> pd.DataFrame:
+        """
+        Enrich canonical player-season rows with birth_date and season-specific age.
+
+        Age reference date is February 1 of the season year (e.g. 2025-02-01 for season=2025).
+        """
+        if canonical.empty:
+            return canonical
+
+        out = canonical.copy()
+        if "player_url" not in out.columns:
+            out["birth_date"] = pd.NA
+            out["age"] = pd.NA
+            out["age_reference_date"] = pd.NA
+            return out
+
+        invalid_url_tokens = {"", "nan", "none", "<na>", "nat"}
+        url_series = out["player_url"].apply(lambda value: str(value).strip() if pd.notna(value) else "")
+        url_series = url_series.apply(
+            lambda value: value if value.lower() not in invalid_url_tokens else None
+        )
+
+        cached_birth_by_url: Dict[str, str] = {}
+        if cache_path is not None and cache_path.exists():
+            try:
+                with open(cache_path, "r", encoding="utf-8") as handle:
+                    loaded = json.load(handle)
+                if isinstance(loaded, dict):
+                    for key, value in loaded.items():
+                        parsed = parse_birth_date(value)
+                        if parsed is not None:
+                            cached_birth_by_url[str(key)] = parsed.isoformat()
+            except Exception as exc:  # pylint: disable=broad-except
+                LOGGER.warning("Failed to load age cache %s: %s", cache_path, exc)
+
+        unique_urls = sorted({u for u in url_series.dropna().tolist() if isinstance(u, str) and u})
+        urls_to_fetch = [u for u in unique_urls if u not in cached_birth_by_url]
+        LOGGER.info(
+            "Age enrichment for %s unique player URLs (%s cached, %s to fetch).",
+            len(unique_urls),
+            len(cached_birth_by_url),
+            len(urls_to_fetch),
+        )
+
+        def _fetch_birth(player_url: str) -> Optional[str]:
+            try:
+                html = self.client.get(player_url, min_delay_seconds=self.source.min_delay_seconds)
+                birth = self._extract_birth_date_from_html(html)
+                return birth.isoformat() if birth is not None else None
+            except RobotsDisallowedError:
+                LOGGER.warning("Robots disallowed player profile for age enrichment: %s", player_url)
+                return None
+            except Exception as exc:  # pylint: disable=broad-except
+                LOGGER.debug("Age enrichment failed for %s: %s", player_url, exc)
+                return None
+
+        fetched_birth_by_url: Dict[str, str] = {}
+        probe_limit = min(len(urls_to_fetch), 25)
+        probe_urls = urls_to_fetch[:probe_limit]
+        remaining_urls = urls_to_fetch[probe_limit:]
+
+        for idx, player_url in enumerate(probe_urls, start=1):
+            birth_iso = _fetch_birth(player_url)
+            if birth_iso:
+                fetched_birth_by_url[player_url] = birth_iso
+            if idx % 25 == 0 or idx == len(probe_urls):
+                LOGGER.info("Age enrichment probe progress: %s/%s", idx, len(probe_urls))
+
+        if not fetched_birth_by_url and remaining_urls:
+            LOGGER.warning(
+                "No birth-date metadata found in first %s profile pages; "
+                "skipping remaining %s fetches and relying on class-based age fallback.",
+                probe_limit,
+                len(remaining_urls),
+            )
+            remaining_urls = []
+
+        for idx, player_url in enumerate(remaining_urls, start=1):
+            birth_iso = _fetch_birth(player_url)
+            if birth_iso:
+                fetched_birth_by_url[player_url] = birth_iso
+            if idx % 250 == 0:
+                LOGGER.info("Age enrichment fetched %s/%s additional profiles...", idx, len(remaining_urls))
+
+        birth_by_url = dict(cached_birth_by_url)
+        birth_by_url.update(fetched_birth_by_url)
+        out["birth_date"] = url_series.map(birth_by_url)
+
+        def _reference_date_text(season_value: object) -> Optional[str]:
+            season_int = int(safe_float(season_value, 0))
+            if season_int <= 0:
+                return None
+            return f"{season_int:04d}-02-01"
+
+        out["age_reference_date"] = out["season"].apply(_reference_date_text)
+
+        def _age_for_row(row: pd.Series) -> Optional[float]:
+            birth = parse_birth_date(row.get("birth_date"))
+            season_int = int(safe_float(row.get("season"), 0))
+            if birth is None or season_int <= 0:
+                return None
+            return age_on_reference_date(birth, date(season_int, 2, 1))
+
+        out["age"] = out.apply(_age_for_row, axis=1)
+
+        if cache_path is not None and fetched_birth_by_url:
+            try:
+                cache_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(cache_path, "w", encoding="utf-8") as handle:
+                    json.dump(birth_by_url, handle, indent=2, sort_keys=True)
+            except Exception as exc:  # pylint: disable=broad-except
+                LOGGER.warning("Failed to persist age cache %s: %s", cache_path, exc)
+
+        LOGGER.info(
+            "Age enrichment complete: %s/%s rows with birth_date, %s/%s rows with age.",
+            int(out["birth_date"].notna().sum()),
+            len(out),
+            int(out["age"].notna().sum()),
+            len(out),
+        )
+        return out
 
     def collect_from_player_pages(
         self,
@@ -700,6 +968,7 @@ class SportsReferenceCollegeCollector:
                 try:
                     html = self.client.get(school_url, min_delay_seconds=self.source.min_delay_seconds)
                     school_name = self._extract_school_name(html, school_url=school_url)
+                    roster_class_map = self._extract_roster_class_map(html)
 
                     pg_html = self._find_table_html(html, "players_per_game")
                     pg_df = self._table_to_dataframe(pg_html)
@@ -709,6 +978,7 @@ class SportsReferenceCollegeCollector:
                         school_name=school_name,
                         source_url=school_url,
                         source_table="players_per_game_raw",
+                        roster_class_map=roster_class_map,
                     )
                     if not pg_df.empty:
                         per_game_rows.append(pg_df)
@@ -722,6 +992,7 @@ class SportsReferenceCollegeCollector:
                             school_name=school_name,
                             source_url=school_url,
                             source_table="players_advanced_raw",
+                            roster_class_map=roster_class_map,
                         )
                         if not adv_df.empty:
                             advanced_rows.append(adv_df)
@@ -771,7 +1042,7 @@ def merge_player_tables(
     )
 
     # Prefer explicit class/position names without suffix if only one exists.
-    for base_col in ["class", "pos", "conf", "g", "mp"]:
+    for base_col in ["class", "pos", "conf", "g", "mp", "player_url", "player_href", "birth_date", "age", "age_reference_date"]:
         c1 = f"{base_col}_per_game"
         c2 = f"{base_col}_advanced"
         if c1 in canonical.columns and c2 in canonical.columns:
@@ -912,6 +1183,10 @@ def run_pipeline(
     per_game_all = pd.concat(per_game_frames, ignore_index=True) if per_game_frames else pd.DataFrame()
     advanced_all = pd.concat(advanced_frames, ignore_index=True) if advanced_frames else pd.DataFrame()
     canonical_players = merge_player_tables(per_game_all, advanced_all)
+    canonical_players = collector.enrich_with_player_ages(
+        canonical_players,
+        cache_path=processed_dir / "player_birth_dates_cache.json",
+    )
 
     save_table(per_game_all, raw_dir / "players_per_game_raw.csv")
     save_table(advanced_all, raw_dir / "players_advanced_raw.csv")
