@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap');
+
 /* Reset and Base Styles */
 * {
     margin: 0;
@@ -39,7 +41,7 @@ html.theme-dark {
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Manrope', 'Segoe UI', sans-serif;
     background-color: var(--bg-secondary);
     color: var(--text-primary);
     line-height: 1.6;
@@ -452,73 +454,499 @@ body.theme-dark .theme-toggle-radial {
 }
 
 .player-card {
-    background: var(--bg-primary);
-    border-radius: 12px;
-    box-shadow: var(--shadow);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(241, 245, 249, 0.96) 100%);
+    border-radius: 18px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
     overflow: hidden;
-    transition: all 0.3s;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
     cursor: pointer;
 }
 
-.player-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
+body.theme-dark .player-card {
+    background: linear-gradient(180deg, rgba(10, 16, 28, 0.95) 0%, rgba(17, 24, 39, 0.96) 100%);
+    border-color: rgba(148, 163, 184, 0.28);
+    box-shadow: 0 12px 32px rgba(2, 6, 23, 0.55);
 }
 
-.card-header {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    color: white;
-    padding: 1.5rem;
+.player-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.2);
+}
+
+body.theme-dark .player-card:hover {
+    box-shadow: 0 20px 48px rgba(2, 6, 23, 0.62);
+}
+
+.type-card-hero {
+    position: relative;
+    min-height: 216px;
+    padding: 0.85rem;
+    color: #f8fafc;
+    background:
+        radial-gradient(circle at 14% 16%, rgba(255, 255, 255, 0.3) 0, rgba(255, 255, 255, 0) 48%),
+        linear-gradient(130deg, var(--type-primary, #1d4ed8) 0%, var(--type-secondary, #0ea5e9) 62%, #0f172a 100%);
+}
+
+.type-card-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(2, 6, 23, 0.05) 0%, rgba(2, 6, 23, 0.62) 100%);
+    pointer-events: none;
+}
+
+.type-card-team-logo {
+    position: absolute;
+    right: -10%;
+    bottom: -20%;
+    width: 75%;
+    aspect-ratio: 1 / 1;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    opacity: 0.2;
+    filter: saturate(1.2) brightness(1.06);
+    mix-blend-mode: screen;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.type-card-topline,
+.type-pill,
+.type-card-title-wrap,
+.type-card-monogram {
+    position: relative;
+    z-index: 2;
+}
+
+.type-card-headshot {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    opacity: 0.58;
+    filter: saturate(1.08) contrast(1.06);
+    z-index: 1;
+}
+
+.trading-card {
+    border-radius: 26px;
+    border: 1px solid rgba(148, 163, 184, 0.42);
+    background: linear-gradient(180deg, #fef2f2 0%, #ffffff 100%);
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22);
+}
+
+body.theme-dark .trading-card {
+    border-color: rgba(148, 163, 184, 0.55);
+    background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+}
+
+.trading-hero {
+    min-height: 560px;
+    padding: 0;
+    border-radius: 24px;
+    overflow: hidden;
+}
+
+.trading-hero .type-card-headshot {
+    opacity: 0.95;
+    object-position: center top;
+    filter: saturate(1.08) contrast(1.02);
+}
+
+.trading-hero .type-card-team-logo {
+    opacity: 0.16;
+}
+
+.trading-topline {
+    position: absolute;
+    top: 0.7rem;
+    left: 0.85rem;
+    right: 0.85rem;
+    z-index: 3;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(59, 130, 246, 0.45);
+    border-radius: 14px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.2);
+    padding: 0.35rem 0.8rem 0.38rem;
+}
+
+.trading-name {
+    font-family: 'Barlow Condensed', 'Manrope', sans-serif;
+    color: #0284c7;
+    font-size: 2.25rem;
+    line-height: 1;
+    letter-spacing: 0.03em;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.trading-position-ribbon {
+    position: absolute;
+    top: 4rem;
+    left: -1rem;
+    z-index: 4;
+    transform: rotate(-12deg);
+    background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+    color: #fff7ed;
+    font-family: 'Barlow Condensed', 'Manrope', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.62rem 1.4rem;
+    border-radius: 10px;
+    box-shadow: 0 12px 24px rgba(131, 24, 67, 0.45);
+}
+
+.trading-breakout-strip {
+    position: absolute;
+    top: 5.35rem;
+    left: 0.95rem;
+    right: 0.95rem;
+    z-index: 3;
+    text-align: center;
+    background: var(--breakout-bg, #d97706);
+    color: var(--breakout-fg, #fffbeb);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.65rem 0.43rem;
+    border-radius: 10px;
+    text-shadow: 0 1px 0 rgba(2, 6, 23, 0.2);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25) inset, 0 10px 18px var(--breakout-glow, rgba(217, 119, 6, 0.42));
+}
+
+.trading-team-ribbon {
+    position: absolute;
+    right: -0.85rem;
+    bottom: 1.2rem;
+    z-index: 4;
+    transform: rotate(-8deg);
+    background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);
+    color: #f0f9ff;
+    font-family: 'Barlow Condensed', 'Manrope', sans-serif;
+    font-size: 1.45rem;
+    line-height: 1.1;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.34rem 1.05rem;
+    max-width: calc(100% - 1.8rem);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    border-radius: 12px;
+    border: 1px solid rgba(240, 249, 255, 0.6);
+    box-shadow: 0 14px 30px rgba(3, 105, 161, 0.45);
+}
+
+.trading-rookie-badge {
+    position: absolute;
+    right: 1.25rem;
+    bottom: 5.25rem;
+    z-index: 4;
+    background: linear-gradient(135deg, #facc15 0%, #ca8a04 100%);
+    color: #1f2937;
+    font-family: 'Barlow Condensed', 'Manrope', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.28rem 0.62rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.68);
+    box-shadow: 0 10px 20px rgba(120, 53, 15, 0.35);
+}
+
+.trading-subtype {
+    position: absolute;
+    left: 1.1rem;
+    bottom: 4.4rem;
+    z-index: 3;
+    color: #ffffff;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(2, 6, 23, 0.5);
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    padding: 0.25rem 0.6rem;
+}
+
+.trading-card-badge {
+    position: absolute;
+    left: 1rem;
+    bottom: 2.45rem;
+    z-index: 3;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: 999px;
+    background: rgba(2, 6, 23, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e2e8f0;
+    padding: 0.25rem 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.trading-card-badge.positive {
+    color: #86efac;
+}
+
+.trading-card-badge.negative {
+    color: #fca5a5;
+}
+
+.trading-click-hint {
+    position: absolute;
+    left: 1rem;
+    bottom: 1.2rem;
+    z-index: 3;
+    font-size: 0.66rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(2, 6, 23, 0.56);
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.26);
+    padding: 0.25rem 0.56rem;
+}
+
+.trading-photo-vignette,
+.trading-photo-grain,
+.trading-photo-frame,
+.trading-photo-corner,
+.trading-photo-border,
+.trading-photo-shadow,
+.trading-photo-light,
+.trading-photo-band {
+    position: absolute;
+    pointer-events: none;
+}
+
+.trading-photo-vignette {
+    inset: 0;
+    z-index: 2;
+    background: radial-gradient(circle at 50% 45%, rgba(2, 6, 23, 0) 40%, rgba(2, 6, 23, 0.52) 100%);
+}
+
+.trading-photo-grain {
+    inset: 0;
+    z-index: 2;
+    opacity: 0.1;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.5) 0.4px, transparent 0.4px);
+    background-size: 3px 3px;
+}
+
+.trading-photo-frame {
+    inset: 0.55rem;
+    z-index: 2;
+    border-radius: 20px;
+    border: 1px solid rgba(191, 219, 254, 0.5);
+}
+
+.trading-photo-corner {
+    top: 0.68rem;
+    left: 0.68rem;
+    width: 22px;
+    height: 22px;
+    z-index: 2;
+    border-left: 2px solid rgba(191, 219, 254, 0.62);
+    border-top: 2px solid rgba(191, 219, 254, 0.62);
+    border-top-left-radius: 5px;
+}
+
+.trading-photo-corner.bottom {
+    top: auto;
+    left: auto;
+    right: 0.68rem;
+    bottom: 0.68rem;
+    border-left: none;
+    border-top: none;
+    border-right: 2px solid rgba(191, 219, 254, 0.62);
+    border-bottom: 2px solid rgba(191, 219, 254, 0.62);
+    border-bottom-right-radius: 5px;
+}
+
+.trading-photo-border {
+    inset: 0;
+    z-index: 2;
+    border-radius: 24px;
+    box-shadow: inset 0 0 0 1px rgba(191, 219, 254, 0.5);
+}
+
+.trading-photo-shadow {
+    inset: 0;
+    z-index: 2;
+    border-radius: 24px;
+    box-shadow: inset 0 -120px 120px rgba(2, 6, 23, 0.38);
+}
+
+.trading-photo-light {
+    top: 0;
+    left: -15%;
+    width: 60%;
+    height: 45%;
+    z-index: 2;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0) 70%);
+}
+
+.trading-photo-band {
+    left: 0.92rem;
+    right: 0.92rem;
+    top: 7.1rem;
+    z-index: 3;
+    background: rgba(2, 6, 23, 0.58);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 8px;
+    padding: 0.28rem 0.5rem;
+}
+
+.trading-photo-band-text {
+    color: #e2e8f0;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    text-align: center;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.type-card-monogram {
+    width: 50px;
+    height: 50px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.42);
+    background: rgba(2, 6, 23, 0.5);
+    font-family: 'Barlow Condensed', 'Manrope', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.type-card-hero.no-headshot .type-card-monogram {
+    display: inline-flex;
+}
+
+.type-card-topline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.type-card-team,
+.type-card-role {
+    background: rgba(2, 6, 23, 0.42);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+    padding: 0.22rem 0.5rem;
+    white-space: nowrap;
+}
+
+.type-pill {
+    display: inline-flex;
+    margin-top: 0.8rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.17);
+    border: 1px solid rgba(255, 255, 255, 0.26);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.type-card-title-wrap {
+    margin-top: 0.95rem;
 }
 
 .player-name {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
+    font-family: 'Barlow Condensed', 'Manrope', sans-serif;
+    font-size: 2rem;
+    line-height: 0.95;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.2rem;
 }
 
-.player-meta {
-    display: flex;
-    gap: 1rem;
-    font-size: 0.9rem;
-    opacity: 0.9;
+.type-card-subtitle {
+    font-size: 0.83rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .card-body {
     padding: 1.5rem;
 }
 
-.archetype-badge {
-    display: inline-block;
-    padding: 0.4rem 0.8rem;
-    background: var(--bg-secondary);
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin-bottom: 1rem;
+.type-card-body {
+    padding: 1rem 1rem 1.1rem;
 }
 
-.metrics-grid {
+.type-card-scout-note {
+    margin-bottom: 0.8rem;
+    padding: 0.55rem 0.65rem;
+    border-radius: 10px;
+    font-size: 0.83rem;
+    line-height: 1.38;
+    color: var(--text-primary);
+    background: color-mix(in srgb, var(--type-secondary, #0ea5e9) 15%, white);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+body.theme-dark .type-card-scout-note {
+    color: #e2e8f0;
+    background: color-mix(in srgb, var(--type-secondary, #0ea5e9) 25%, #0f172a);
+    border-color: rgba(148, 163, 184, 0.25);
+}
+
+.type-metrics-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1rem;
-    margin-bottom: 1rem;
+    gap: 0.75rem;
+    margin-bottom: 0.8rem;
 }
 
 .metric {
     display: flex;
     flex-direction: column;
+    background: rgba(248, 250, 252, 0.88);
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    padding: 0.5rem 0.55rem 0.58rem;
+}
+
+body.theme-dark .metric {
+    background: rgba(15, 23, 42, 0.72);
+    border-color: rgba(100, 116, 139, 0.42);
 }
 
 .metric-label {
-    font-size: 0.8rem;
+    font-size: 0.68rem;
     color: var(--text-secondary);
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.15rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .metric-value {
-    font-size: 1.3rem;
+    font-size: 1.12rem;
     font-weight: 600;
     color: var(--text-primary);
 }
@@ -546,28 +974,57 @@ body.theme-dark .theme-toggle-radial {
     transition: width 0.3s;
 }
 
+.type-signals {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem 0.6rem;
+    margin-bottom: 0.68rem;
+}
+
+.type-signal-label {
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.type-signal-bar {
+    height: 7px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(100, 116, 139, 0.28);
+}
+
+.type-signal-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--type-primary, #1d4ed8), var(--type-secondary, #0ea5e9));
+}
+
 .tags {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin-top: 1rem;
+    margin-top: 0.8rem;
 }
 
 .card-mechanism-note {
     font-size: 0.83rem;
-    color: #111827;
-    background: rgba(30, 64, 175, 0.08);
-    border-left: 3px solid rgba(30, 64, 175, 0.55);
-    border-radius: 6px;
-    padding: 0.55rem 0.65rem;
-    margin-top: 0.55rem;
+    color: var(--text-primary);
+    background: rgba(148, 163, 184, 0.13);
+    border-left: 3px solid var(--type-primary, rgba(30, 64, 175, 0.55));
+    border-radius: 8px;
+    padding: 0.58rem 0.68rem;
+    margin-top: 0.35rem;
     line-height: 1.35;
 }
 
 body.theme-dark .card-mechanism-note {
-    color: #ffffff;
-    background: rgba(59, 130, 246, 0.20);
-    border-left-color: rgba(147, 197, 253, 0.9);
+    color: #e2e8f0;
+    background: rgba(51, 65, 85, 0.38);
+    border-left-color: var(--type-secondary, #93c5fd);
 }
 
 .tag {
@@ -761,8 +1218,38 @@ body.theme-dark .card-mechanism-note {
         grid-template-columns: 1fr;
     }
 
-    .metrics-grid {
+    .type-metrics-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .type-signals {
+        grid-template-columns: 1fr;
+    }
+
+    .trading-hero {
+        min-height: 500px;
+    }
+
+    .trading-name {
+        font-size: 1.85rem;
+    }
+
+    .trading-team-ribbon {
+        font-size: 1.1rem;
+        right: -0.55rem;
+        bottom: 1rem;
+        padding: 0.3rem 0.85rem;
+    }
+
+    .trading-rookie-badge {
+        right: 1rem;
+        bottom: 4.85rem;
+        font-size: 0.8rem;
+    }
+
+    .trading-position-ribbon {
+        font-size: 0.86rem;
+        top: 3.9rem;
     }
 }
 

@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBA Type Cards</title>
+    <title>College Type Cards</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=17">
+    <link rel="stylesheet" href="styles.css?v=18">
 </head>
-<body>
+<body data-cards-src="data/college_cards.json" data-valuations-src="data/college_valuations.json" data-page-label="College Type Deck">
     <button id="siteMenuButton" class="site-menu-button" aria-label="Open site navigation" aria-controls="siteNavDrawer" aria-expanded="false">
         <span class="site-menu-icon">&#9776;</span>
     </button>
@@ -27,13 +27,12 @@
         </div>
     </aside>
     <div id="app">
-        <!-- Header -->
         <header class="header">
             <div class="container">
                 <div class="header-layout">
                     <div class="header-copy">
-                        <h1 class="logo">NBA Type Deck</h1>
-                        <p class="tagline">Player Archetypes, Context, and Value Signals</p>
+                        <h1 class="logo">College Type Deck</h1>
+                        <p class="tagline">Prospect Archetypes, Context, and Value Signals</p>
                     </div>
                     <div class="header-distribution-panel">
                         <div class="distribution-title-row">
@@ -51,7 +50,6 @@
             </div>
         </header>
 
-        <!-- Filters -->
         <section class="filters">
             <div class="container">
                 <div class="filter-group">
@@ -98,12 +96,9 @@
             </div>
         </section>
 
-        <!-- Player Cards Grid -->
         <section class="player-grid">
             <div class="container">
-                <div id="playerCards" class="cards-container">
-                    <!-- Player cards will be dynamically inserted here -->
-                </div>
+                <div id="playerCards" class="cards-container"></div>
                 <div id="noResults" class="no-results" style="display: none;">
                     <p>No players found matching your filters.</p>
                 </div>
@@ -113,13 +108,10 @@
             </div>
         </section>
 
-        <!-- Player Detail Modal -->
         <div id="playerModal" class="modal">
             <div class="modal-content">
                 <span class="close">&times;</span>
-                <div id="modalBody">
-                    <!-- Player details will be inserted here -->
-                </div>
+                <div id="modalBody"></div>
             </div>
         </div>
     </div>
@@ -128,4 +120,3 @@
     <script src="app.js?v=44"></script>
 </body>
 </html>
-

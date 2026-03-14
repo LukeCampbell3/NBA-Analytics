@@ -66,6 +66,12 @@ If you already have final cards in `data/processed/player_cards/*_final.json`:
 python prepare_web_data.py
 ```
 
+If you also want the college card page payload:
+
+```bash
+python prepare_web_college_data.py
+```
+
 ### 3. Serve the site locally
 
 ```bash
@@ -75,6 +81,7 @@ python serve_web.py
 Then open:
 
 - `http://localhost:8000/` (landing page)
+- `http://localhost:8000/college` (college cards page)
 - `http://localhost:8000/about` (methodology page)
 
 ## Full Pipeline (From Raw Stats)
@@ -128,6 +135,83 @@ Your raw CSV should include (at minimum):
 - `data/breakout/`: breakout and fit analysis reports
 - `web/data/cards.json`: combined card payload for frontend
 - `web/data/valuations.json`: combined valuation payload for frontend
+
+## College Data Backend (Robots-Compliant)
+
+Build raw and canonical college player-season data (Sports-Reference CBB) with robots.txt enforcement:
+
+```bash
+python src/build_college_player_data.py --season-start 2021 --season-end 2025
+```
+
+If season-level player pages are unavailable, auto mode falls back to player profile crawling:
+
+```bash
+python src/build_college_player_data.py --season-start 2024 --season-end 2025 --collection-mode auto
+```
+
+For quick smoke tests:
+
+```bash
+python src/build_college_player_data.py --season-start 2024 --season-end 2024 --collection-mode player_pages --max-player-pages 250
+```
+
+Outputs:
+
+- `data/raw/college/players_per_game_raw/*.csv`
+- `data/raw/college/players_advanced_raw/*.csv`
+- `data/processed/college/players_season.csv`
+- `data/processed/college/build_summary.json`
+
+Compliance behavior:
+
+- checks `robots.txt` before each request
+- enforces crawl-delay where available
+- throttles requests with conservative fallback delay
+- skips disallowed URLs and records them in summary output
+
+## College Player Valuation (NBA-Style + Verification)
+
+Run the same valuation framework used for NBA cards against college player-season rows:
+
+```bash
+python src/value_college_players.py --input data/processed/college/players_season.csv --output data/valuations/college
+```
+
+The valuation run also writes a compliance/logic verification report:
+
+- `data/valuations/college/college_valuation_summary.json`
+- `data/valuations/college/college_valuation_verification.json`
+
+Verification checks include:
+
+- required core/provenance columns (`player_key`, `team_key`, `source_url`, etc.)
+- robots enforcement status from `data/processed/college/build_summary.json`
+- valuation invariants (finite values, surplus consistency, NPV consistency, trade-band ordering)
+
+Use a non-failing verification mode if you want output even when checks fail:
+
+```bash
+python src/value_college_players.py --non-strict-verify
+```
+
+## College Pillar Parity Audit
+
+Validate whether college rows can compute the same core pillars used for NBA valuation + breakout:
+
+```bash
+python src/validate_college_metric_parity.py --input data/processed/college/players_season.csv
+```
+
+Output:
+
+- `data/processed/college/metric_parity_report.json`
+
+The audit checks three groups:
+
+- valuation pillars (`wins_added`, market curve, surplus/NPV, trade bands, aging)
+- breakout pillars (opportunity, signal strength, confidence, defense portability, impact sanity)
+- isolation pillars (trust/uncertainty + player-signal + provenance availability)
 
 ## Notes
 
