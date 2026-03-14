@@ -1,0 +1,664 @@
+Here’s the pipeline you’re trying to build for a **college-to-NBA draft board analysis system**.
+
+At a high level, the goal is:
+
+**collect public college data → normalize it for competition/context → isolate player signal as much as possible → build player archetypes/value indicators/upside indicators → generate draft-board cards and rankings**
+
+---
+
+# 1) Core objective
+
+You are not just building a college stat scraper.
+
+You are building a **draft evaluation engine** that answers:
+
+* How good was this player really?
+* How much of his production was inflated or suppressed by team/context/conference?
+* What role does he actually play?
+* Which NBA-style archetype does he project toward?
+* How scalable is his game to stronger competition?
+* What is his upside, floor, and portability?
+
+So the pipeline should be built around **player isolation + translation to NBA context**, not just box score collection.
+
+---
+
+# 2) Data pipeline layers
+
+## Layer A — Raw source ingestion
+
+This is the collection layer.
+
+### Main public sources
+
+* **Sports-Reference CBB**
+
+  * team season tables
+  * player season tables
+  * player advanced tables
+  * conference pages
+  * player page/game logs
+* **Bart Torvik**
+
+  * team ratings
+  * team context strength
+  * player tables if parseable
+* **Optional later**
+
+  * play-by-play sources
+  * recruiting/ranking sources
+  * age/class/measurements/mock-draft sources
+  * combine/pro day data
+
+### Output of this layer
+
+Raw tables saved locally:
+
+* `teams_raw`
+* `players_per_game_raw`
+* `players_advanced_raw`
+* `player_game_logs_raw`
+* `team_strength_raw`
+* `conference_raw`
+* `games_raw`
+
+This layer should preserve source provenance.
+
+---
+
+## Layer B — Canonical cleaning and harmonization
+
+This is where the raw messy web data becomes one coherent dataset.
+
+### Main tasks
+
+* normalize column names
+* deduplicate repeated header rows
+* enforce unique column names
+* standardize team names across sources
+* standardize player names across sources
+* attach season IDs
+* attach conference IDs
+* link players to teams
+* link game logs to player-season rows
+
+### Important derived keys
+
+* `player_key`
+* `team_key`
+* `conference_key`
+* `season`
+* `game_id` or game surrogate key
+* `source_table`
+* `source_url`
+
+### Output of this layer
+
+Canonical tables:
+
+* `players_season`
+* `players_advanced`
+* `player_game_logs`
+* `teams_season`
+* `games`
+* `team_strength_public`
+
+This is the first “usable” dataset.
+
+---
+
+# 3) Context normalization layer
+
+This is the most important part of the pipeline.
+
+College data is much noisier than NBA data because:
+
+* conference strength varies a lot
+* schedule strength varies a lot
+* role inflation is common on weak teams
+* team ecosystem heavily affects raw production
+
+So you need to normalize for context before ranking prospects.
+
+## A) Team strength model
+
+Build public team-strength estimates from:
+
+* Bart Torvik team ratings
+* Sports-Reference SRS / SOS / team stats
+* conference game network
+* interconference game results
+
+### Outputs
+
+* `team_strength_raw`
+* `team_strength_z`
+* `team_off_strength`
+* `team_def_strength`
+* `schedule_strength`
+* `conference_strength`
+
+This gives you the first pass of:
+
+* “how hard was the environment?”
+* “how much should player production be adjusted?”
+
+---
+
+## B) Conference normalization
+
+This is not a manual “Big Ten multiplier.”
+
+Instead:
+
+* estimate conference offsets from interconference results
+* shrink them so they do not overreact
+* apply these only as **supporting adjustments**, not absolute truth
+
+### Outputs
+
+* `conference_offset`
+* `player_conf_norm_metrics`
+
+Use this to reduce conference-driven inflation.
+
+---
+
+## C) Opponent-adjusted player scaling
+
+For each player:
+
+* attach opponent team strength from game logs
+* compute rolling strength of opponents faced
+* estimate how the player performed vs:
+
+  * strong defenses
+  * weak defenses
+  * strong teams overall
+  * high-major vs low-major competition
+
+### Outputs
+
+* `pts_adj`
+* `efficiency_adj`
+* `usage_adj`
+* `vs_top50`
+* `vs_top100`
+* `vs_strong_defense`
+* `competition_portability_score`
+
+This is where college stats start to become draft-useful.
+
+---
+
+# 4) Player feature engine
+
+This layer turns cleaned + normalized data into draft-analysis inputs.
+
+## A) Basic production features
+
+* points
+* rebounds
+* assists
+* steals
+* blocks
+* turnovers
+* minutes
+* starts
+* fouls
+
+## B) Efficiency features
+
+* FG%
+* 3P%
+* FT%
+* TS%
+* eFG%
+* ORtg / DRtg if available
+* assist-to-turnover ratio
+* usage proxy
+* scoring per 40
+* rebound/assist/steal/block per 40
+
+## C) Role-shape features
+
+These are critical for archetypes:
+
+* three-point attempt rate
+* free throw rate
+* turnover load
+* assist load
+* rebound profile
+* stocks profile
+* usage level
+* size/position proxy
+* on-ball vs off-ball proxy
+* creation vs finishing proxy
+
+## D) Stability / volatility features
+
+From game logs:
+
+* rolling means
+* rolling std dev
+* consistency scores
+* hot/cold volatility
+* production under stronger competition
+* minutes stability
+* usage stability
+
+### Output of this layer
+
+A single player-feature table like:
+
+* `player_features_card_staging`
+
+This becomes the core input to cards and draft models.
+
+---
+
+# 5) Possession / process approximation layer
+
+Because you do not have full NBA-style tracking, you need a public-data approximation.
+
+The goal here is to separate:
+
+* raw results
+* underlying process
+* team inflation
+* competition effect
+
+## Approximate process metrics
+
+You can build:
+
+* usage-adjusted scoring efficiency
+* turnover pressure cost
+* shot diet profile
+* free throw creation signal
+* passing burden signal
+* defensive event load
+* opponent-adjusted game performance
+
+This will not be NBA EPV-level, but it will still let you estimate:
+
+* intrinsic offense
+* context adjustment
+* variance/luck sensitivity
+* competition scaling
+
+### Output
+
+* `intrinsic_offense_est`
+* `context_adjustment_est`
+* `adjusted_value_est`
+* `translation_confidence`
+
+This becomes very valuable for draft ranking.
+
+---
+
+# 6) Archetype engine
+
+This is where the model starts becoming a real board tool instead of a stats table.
+
+## Goal
+
+Cluster players by style, not just output.
+
+Examples:
+
+* primary creator guard
+* secondary creator combo guard
+* movement shooter
+* low-usage floor spacer
+* slashing wing
+* connective wing
+* rim-running big
+* stretch big
+* defensive event big
+* hybrid forward
+
+## Inputs
+
+Use normalized role-shape features:
+
+* shot volume profile
+* 3PA rate
+* FT rate
+* assist load
+* turnover load
+* rebound/block/steal load
+* per-40 signals
+* usage
+* efficiency profile
+* size/position
+
+## Outputs
+
+* `primary_archetype`
+* `secondary_archetype`
+* `archetype_confidence`
+* nearest comps
+* role portability
+
+This is essential for draft translation because raw production without role identity is misleading.
+
+---
+
+# 7) Draft translation layer
+
+This is where college data becomes an NBA draft board tool.
+
+## Questions this layer answers
+
+* Does this player’s role scale upward?
+* Is he dominating because of weak competition or because he has translatable skill?
+* Does he project as an NBA on-ball player, off-ball player, wing, or big?
+* What is the likely NBA role outcome?
+
+## Translation feature families
+
+### A) Scalable skill indicators
+
+* FT% as shooting indicator
+* 3PA volume + 3P%
+* assist burden
+* turnover tolerance
+* stocks for defensive activity
+* age/class
+* consistency vs stronger opponents
+* efficiency under larger role
+
+### B) Role portability indicators
+
+* low-usage efficiency
+* scalable spacing
+* secondary creation
+* defensive event generation
+* multi-role rebounding/passing
+* usage elasticity
+
+### C) Risk indicators
+
+* inflated production on weak teams
+* poor translation vs strong opponents
+* weak shooting signal
+* poor defensive event profile
+* high TO for role
+* unstable game logs
+* low trust score
+
+### Outputs
+
+* `nba_translation_score`
+* `draft_risk_score`
+* `role_portability_score`
+* `scalable_shooting_score`
+* `creator_translation_score`
+* `defensive_projection_score`
+
+These become the real draft-board levers.
+
+---
+
+# 8) Upside and breakout layer
+
+This is different from current value.
+
+## Current value asks:
+
+How good is he right now in college?
+
+## Upside asks:
+
+How much better can he become, and in what direction?
+
+### Inputs
+
+* age/class
+* game-log trend slope
+* usage/efficiency balance
+* role growth
+* competition-adjusted improvement
+* archetype trajectory comps
+* toolsy indicators (stocks, rebounding, FT%, etc.)
+
+### Outputs
+
+* `upside_score`
+* `floor_score`
+* `star_path_probability`
+* `starter_probability`
+* `rotation_probability`
+* `bust_risk`
+* `development_curve_type`
+
+This becomes huge for draft rankings.
+
+---
+
+# 9) Trust / uncertainty layer
+
+This is mandatory.
+
+College data is noisy, incomplete, and public-only. So every player card needs a trust layer.
+
+## Trust inputs
+
+* games played
+* minutes
+* schedule diversity
+* source coverage
+* advanced metric availability
+* game-log availability
+* archetype confidence
+* team-context reliability
+* translation extrapolation distance
+
+## Outputs
+
+* `trust_score`
+* `data_quality_score`
+* `model_confidence`
+* `translation_confidence`
+* `warning_flags`
+
+Without this, your board will overrate noisy profiles.
+
+---
+
+# 10) Player card layer
+
+This is the final product layer.
+
+Each college prospect card should include:
+
+## Identity
+
+* name
+* school
+* conference
+* class
+* age if available
+* height/weight if available
+* position / role label
+
+## Production
+
+* per-game
+* per-40
+* advanced
+* normalized stats
+
+## Context
+
+* team strength
+* schedule strength
+* conference strength
+* opponent-adjusted performance
+
+## Archetype
+
+* primary
+* secondary
+* confidence
+* comps
+
+## Translation
+
+* scalable traits
+* NBA role projection
+* portability score
+* risk flags
+
+## Value
+
+* intrinsic offense estimate
+* context adjustment
+* adjusted value
+* percentile ranks
+
+## Upside
+
+* upside score
+* floor score
+* development comps
+* draft range estimate
+
+## Trust
+
+* trust score
+* uncertainty
+* warnings
+* source provenance
+
+That is your real draft board artifact.
+
+---
+
+# 11) Draft board layer
+
+After cards, you rank.
+
+## Board output types
+
+### A) Pure current-value board
+
+Who is best right now after context adjustment?
+
+### B) Pure upside board
+
+Who has the highest long-term ceiling?
+
+### C) Balanced draft board
+
+Weighted blend of:
+
+* current value
+* translation
+* upside
+* trust
+* risk
+
+### D) Archetype-specific boards
+
+Best creators
+Best wings
+Best stretch bigs
+Best defensive event players
+Best sleepers
+
+This is much more useful than one flat ranking.
+
+---
+
+# 12) Recommended table structure
+
+You should aim to end up with these final tables:
+
+* `teams_season`
+* `team_strength_public`
+* `games`
+* `players_season_basic`
+* `players_season_advanced`
+* `player_game_logs`
+* `player_features_card_staging`
+* `player_archetypes`
+* `player_translation_features`
+* `player_upside_features`
+* `player_cards`
+* `draft_board_rankings`
+
+That’s the real data pipeline.
+
+---
+
+# 13) Implementation order
+
+Build it in this order:
+
+## Phase 1 — Data foundation
+
+* source ingestion
+* cleaning
+* canonical player/team tables
+
+## Phase 2 — Team context
+
+* team strength
+* conference offsets
+* opponent joins
+
+## Phase 3 — Player features
+
+* per-game
+* advanced
+* per-40
+* rolling logs
+* normalized features
+
+## Phase 4 — Archetypes + comps
+
+* role clustering
+* nearest neighbors
+* confidence
+
+## Phase 5 — Translation + trust
+
+* NBA portability
+* risk
+* trust score
+
+## Phase 6 — Cards + draft boards
+
+* prospect cards
+* board rankings
+* filters by role/upside/value
+
+That sequence matters a lot.
+
+---
+
+# 14) What makes this powerful for draft analysis
+
+This pipeline will be strong because it avoids the most common draft mistakes:
+
+* overvaluing raw box score production
+* ignoring conference/schedule inflation
+* ignoring role context
+* confusing current output with NBA scalability
+* over-trusting small-sample hot streaks
+* forcing one-number rankings without uncertainty
+
+Instead, you’re building:
+
+* **context-adjusted**
+* **role-aware**
+* **translation-aware**
+* **uncertainty-aware**
+  player evaluation.
+
+That is exactly what a serious draft board should do.
+
+---
