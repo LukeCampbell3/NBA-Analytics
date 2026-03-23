@@ -67,8 +67,28 @@
         if (e.key === 'Escape' && isOpen()) closeNav();
     });
 
-    // Highlight active page by filename.
-    const current = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
+    // Highlight active page by filename. Supports:
+    // /index.html, /about.html, /about/, /about/index.html
+    const getCurrentPage = () => {
+        const segments = window.location.pathname
+            .split('/')
+            .filter(Boolean)
+            .map((part) => part.toLowerCase());
+
+        if (!segments.length) return 'index.html';
+
+        const last = segments[segments.length - 1];
+        if (last.endsWith('.html')) {
+            if (last === 'index.html' && segments.length > 1) {
+                return `${segments[segments.length - 2]}.html`;
+            }
+            return last;
+        }
+
+        return `${last}.html`;
+    };
+
+    const current = getCurrentPage();
     document.querySelectorAll('.site-nav-link').forEach((link) => {
         const href = (link.getAttribute('href') || '').toLowerCase();
         if (href === current || (current === '' && href === 'index.html')) {

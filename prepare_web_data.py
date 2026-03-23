@@ -214,8 +214,8 @@ def prepare_web_data():
     print(f"\n[SUCCESS] Prepared web data:")
     print(f"  - {len(all_cards)} player cards -> {cards_path}")
     print(f"  - {len(all_valuations)} valuations -> {valuations_path}")
-    print(f"\nTo view the web app:")
-    print(f"  python serve_web.py")
+    print(f"\nTo build the static site bundle:")
+    print(f"  python build_static_site.py")
     
     return 0
 
