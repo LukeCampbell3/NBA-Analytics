@@ -243,6 +243,7 @@ def preload_web_payloads(web_dir: Path, college_card_limit: int | None):
 
     nba_cards_path = data_dir / "cards.json"
     nba_vals_path = data_dir / "valuations.json"
+    daily_predictions_path = data_dir / "daily_predictions.json"
     college_cards_path = data_dir / "college_cards.json"
     college_vals_path = data_dir / "college_valuations.json"
 
@@ -254,6 +255,10 @@ def preload_web_payloads(web_dir: Path, college_card_limit: int | None):
         nba_vals = read_binary_payload(nba_vals_path, "NBA valuations")
         if nba_vals is not None:
             payloads["data/valuations.json"] = nba_vals
+    if daily_predictions_path.exists():
+        daily_predictions = read_binary_payload(daily_predictions_path, "daily predictions")
+        if daily_predictions is not None:
+            payloads["data/daily_predictions.json"] = daily_predictions
 
     if college_cards_path.exists():
         # Fast path: preload raw bytes when no trimming is requested.
