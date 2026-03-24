@@ -214,6 +214,16 @@ def main() -> None:
     manifest_path = run_dir / f"daily_market_pipeline_manifest_{run_stamp}.json"
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
+    run_step(
+        "Export Static Daily Predictions Page Data",
+        [
+            args.python,
+            "scripts/export_daily_predictions_web.py",
+            "--manifest",
+            str(manifest_path),
+        ],
+    )
+
     print("\n" + "=" * 90)
     print("DAILY MARKET PIPELINE COMPLETE")
     print("=" * 90)
