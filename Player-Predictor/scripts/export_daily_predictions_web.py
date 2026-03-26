@@ -17,13 +17,15 @@ PLAYER_PREDICTOR_ROOT = Path(__file__).resolve().parent.parent
 SITE_ROOT = PLAYER_PREDICTOR_ROOT.parent
 DAILY_RUNS_ROOT = PLAYER_PREDICTOR_ROOT / "model" / "analysis" / "daily_runs"
 DEFAULT_WEB_JSON = SITE_ROOT / "web" / "data" / "daily_predictions.json"
+DEFAULT_DIST_JSON = SITE_ROOT / "dist" / "data" / "daily_predictions.json"
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Export daily market predictions to static web JSON.")
     parser.add_argument("--manifest", type=Path, default=None, help="Explicit daily pipeline manifest JSON.")
     parser.add_argument("--daily-runs-root", type=Path, default=DAILY_RUNS_ROOT, help="Root directory containing daily run folders.")
-    parser.add_argument("--out-json", type=Path, default=DEFAULT_WEB_JSON, help="Static web JSON output path.")
+    parser.add_argument("--out-json", type=Path, default=DEFAULT_WEB_JSON, help="Static web JSON output path (web/data).")
+    parser.add_argument("--out-dist", type=Path, default=DEFAULT_DIST_JSON, help="Static dist JSON output path (dist/data).")
     return parser.parse_args()
 
 
@@ -140,12 +142,17 @@ def main() -> None:
     args.out_json.parent.mkdir(parents=True, exist_ok=True)
     args.out_json.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
+    # Also copy to dist/data for the predictor page
+    args.out_dist.parent.mkdir(parents=True, exist_ok=True)
+    args.out_dist.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
     print("\n" + "=" * 90)
     print("DAILY PREDICTIONS WEB EXPORT COMPLETE")
     print("=" * 90)
     print(f"Manifest: {manifest_path}")
     print(f"Rows:     {len(plays)}")
     print(f"Output:   {args.out_json}")
+    print(f"Dist:     {args.out_dist}")
 
 
 if __name__ == "__main__":
