@@ -1,0 +1,6 @@
+ARG BASE_IMAGE=qdi-rust-catboost
+FROM ${BASE_IMAGE}
+
+RUN python -m pip install --no-cache-dir catboost
+
+WORKDIR /workspace
