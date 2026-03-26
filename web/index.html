@@ -6,6 +6,7 @@
     <title>NBA Type Cards</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="styles.css?v=17">
+    <link rel="stylesheet" href="card-store.css?v=1">
 </head>
 <body>
     <button id="siteMenuButton" class="site-menu-button" aria-label="Open site navigation" aria-controls="siteNavDrawer" aria-expanded="false">
@@ -97,11 +98,18 @@
             </div>
         </section>
 
-        <!-- Player Cards Grid -->
+        <!-- Player Cards Display Case -->
         <section class="player-grid">
             <div class="container">
-                <div id="playerCards" class="cards-container">
-                    <!-- Player cards will be dynamically inserted here -->
+                <div class="card-store-case">
+                    <div class="card-store-shelf">
+                        <div class="set-filter-row" id="setFilterRow">
+                            <!-- Set filter pills injected by JS -->
+                        </div>
+                        <div id="playerCards" class="card-store-grid">
+                            <!-- Player cards will be dynamically inserted here -->
+                        </div>
+                    </div>
                 </div>
                 <div id="noResults" class="no-results" style="display: none;">
                     <p>No players found matching your filters.</p>
@@ -112,7 +120,22 @@
             </div>
         </section>
 
-        <!-- Player Detail Modal -->
+        <!-- Card Pickup Overlay (replaces old modal for card view) -->
+        <div class="card-pickup-overlay" id="cardPickupOverlay">
+            <button class="card-pickup-close" id="cardPickupClose" aria-label="Put card back">&times;</button>
+            <div class="card-pickup-container">
+                <div class="card-pickup-card" id="cardPickupCard">
+                    <!-- Enlarged card rendered here -->
+                </div>
+                <div class="card-pickup-detail" id="cardPickupDetail">
+                    <div class="card-pickup-detail-inner" id="cardPickupDetailInner">
+                        <!-- Player detail rendered here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Player Detail Modal (kept for legacy/tab views) -->
         <div id="playerModal" class="modal">
             <div class="modal-content">
                 <span class="close">&times;</span>
@@ -124,6 +147,7 @@
     </div>
 
     <script src="nav.js?v=6"></script>
-    <script src="app.js?v=43"></script>
+    <script src="card-sets.js?v=1"></script>
+    <script src="app.js?v=44"></script>
 </body>
 </html>

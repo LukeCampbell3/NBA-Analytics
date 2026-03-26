@@ -1499,6 +1499,24 @@ class PlayerCardsApp {
             }
         });
 
+        // Card Pickup Overlay close handlers
+        const pickupOverlay = document.getElementById('cardPickupOverlay');
+        const pickupClose = document.getElementById('cardPickupClose');
+        
+        if (pickupClose) {
+            pickupClose.addEventListener('click', () => this.putCardBack());
+        }
+        if (pickupOverlay) {
+            pickupOverlay.addEventListener('click', (e) => {
+                if (e.target === pickupOverlay) this.putCardBack();
+            });
+        }
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && pickupOverlay?.classList.contains('active')) {
+                this.putCardBack();
+            }
+        });
+
         window.addEventListener('resize', () => {
             if (this.distributionRaf) cancelAnimationFrame(this.distributionRaf);
             this.distributionRaf = requestAnimationFrame(() => this.drawValueDistributionChart());
@@ -1739,16 +1757,184 @@ class PlayerCardsApp {
         }
 
         noResults.style.display = 'none';
-        container.innerHTML = this.filteredPlayers.map(player => this.createPlayerCard(player)).join('');
 
-        // Add click listeners
-        document.querySelectorAll('.player-card').forEach((card, index) => {
-            card.addEventListener('click', () => {
-                this.showPlayerDetail(this.filteredPlayers[index]);
+        // Render set filter pills
+        this.renderSetFilterPills();
+
+        // Render cards in store display case format
+        container.innerHTML = this.filteredPlayers.map(player => this.createStoreCard(player)).join('');
+
+        // Add click listeners for card pickup
+        document.querySelectorAll('.store-card-slot').forEach((slot, index) => {
+            slot.addEventListener('click', () => {
+                this.pickUpCard(this.filteredPlayers[index]);
             });
         });
 
         this.drawValueDistributionChart();
+    }
+
+    renderSetFilterPills() {
+        const row = document.getElementById('setFilterRow');
+        if (!row) return;
+        const allSets = typeof CARD_SETS !== 'undefined' ? CARD_SETS : [];
+        const pills = [
+            `<button class="set-filter-pill active" data-set="all">All Sets</button>`
+        ];
+        allSets.forEach(s => {
+            pills.push(`<button class="set-filter-pill" data-set="${s.id}">${s.brand} ${s.rarity}</button>`);
+        });
+        row.innerHTML = pills.join('');
+
+        row.querySelectorAll('.set-filter-pill').forEach(pill => {
+            pill.addEventListener('click', () => {
+                row.querySelectorAll('.set-filter-pill').forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                const setId = pill.getAttribute('data-set');
+                this.filterBySet(setId);
+            });
+        });
+    }
+
+    filterBySet(setId) {
+        const slots = document.querySelectorAll('.store-card-slot');
+        slots.forEach(slot => {
+            if (setId === 'all') {
+                slot.style.display = '';
+            } else {
+                slot.style.display = slot.getAttribute('data-set-id') === setId ? '' : 'none';
+            }
+        });
+    }
+
+    createStoreCard(player) {
+        const set = typeof getCardSet === 'function' ? getCardSet(player.player?.name || 'Unknown') : null;
+        const headshotUrl = this.getPlayerHeadshotUrl(player);
+        const teamLogoUrl = this.getTeamLogoUrl(player.player?.team);
+        const playerValue = this.getPlayerValue(player);
+        const monogram = this.getPlayerMonogram(player.player?.name || 'NA');
+        const shimmerClass = set && typeof getSetShimmerClass === 'function' ? getSetShimmerClass(set) : '';
+
+        const borderBg = set ? set.borderStyle : 'linear-gradient(135deg, #334155, #475569)';
+        const cardBg = set ? set.bgStyle : 'linear-gradient(160deg, #1a1a2e, #16213e)';
+        const textCol = set ? set.textColor : '#e2e8f0';
+        const nameCol = set ? set.nameColor : '#ffffff';
+        const accentCol = set ? set.accentColor : '#94a3b8';
+        const frameW = set ? set.frameWidth : '3px';
+        const frameCol = set ? set.frameColor : 'rgba(148,163,184,0.4)';
+        const labelBg = set ? set.labelBg : 'rgba(148,163,184,0.12)';
+        const brand = set ? set.brand : 'NBA';
+        const rarity = set ? set.rarity : 'Base';
+        const setId = set ? set.id : 'base';
+
+        const valueColor = playerValue >= 60 ? '#86efac' : (playerValue <= 40 ? '#fca5a5' : accentCol);
+
+        return `
+            <div class="store-card-slot" data-player="${player.player.name}" data-set-id="${setId}">
+                <div class="store-card ${shimmerClass}"
+                     style="background: ${borderBg}; padding: ${frameW}; border-radius: 14px;">
+                    <div style="background: ${cardBg}; border-radius: 11px; overflow: hidden; display: flex; flex-direction: column; height: 100%; position: relative;">
+                    ${teamLogoUrl ? `<div class="store-card-team-logo" style="background-image:url('${teamLogoUrl}');"></div>` : ''}
+                    <div class="store-card-brand" style="background:${labelBg}; color:${accentCol};">${brand}</div>
+                    <div class="store-card-rarity" style="background:${labelBg}; color:${accentCol};">${rarity}</div>
+                    <div class="store-card-value" style="background:rgba(0,0,0,0.5); color:${valueColor};">${playerValue.toFixed(1)}</div>
+                    <div class="store-card-photo">
+                        <img src="${headshotUrl}"
+                             alt="${player.player.name}"
+                             loading="lazy"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                        <div class="store-card-photo-fallback" style="display:none; color:${accentCol};">${monogram}</div>
+                    </div>
+                    <div class="store-card-info" style="color:${textCol};">
+                        <div class="store-card-name" style="color:${nameCol};">${player.player.name}</div>
+                        <div class="store-card-meta">
+                            <span>${player.player.team}</span>
+                            <span>${player.player.position || ''}</span>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    pickUpCard(player) {
+        const overlay = document.getElementById('cardPickupOverlay');
+        const cardEl = document.getElementById('cardPickupCard');
+        const detailEl = document.getElementById('cardPickupDetailInner');
+        if (!overlay || !cardEl || !detailEl) return;
+
+        // Render the enlarged card
+        const set = typeof getCardSet === 'function' ? getCardSet(player.player?.name || 'Unknown') : null;
+        cardEl.innerHTML = this.createPickupCardInner(player, set);
+        cardEl.style.background = set ? set.bgStyle : 'linear-gradient(160deg, #1a1a2e, #16213e)';
+        cardEl.style.border = `${set ? set.frameWidth : '3px'} solid ${set ? set.frameColor : 'rgba(148,163,184,0.4)'}`;
+
+        // Render the detail panel
+        this.currentModalPlayer = player;
+        this.shotChartMode = this.shotChartMode || 'volume';
+        detailEl.innerHTML = this.createPlayerDetail(player);
+
+        // Show overlay
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        // Setup tabs and charts after visible
+        setTimeout(() => {
+            this.setupTabs();
+            this.setupShotModeToggle();
+            this.drawShotChart(player);
+            this.drawValueDriversChart(player);
+        }, 80);
+    }
+
+    createPickupCardInner(player, set) {
+        const headshotUrl = this.getPlayerHeadshotUrl(player);
+        const teamLogoUrl = this.getTeamLogoUrl(player.player?.team);
+        const playerValue = this.getPlayerValue(player);
+        const monogram = this.getPlayerMonogram(player.player?.name || 'NA');
+        const evalOut = this.evaluateBreakoutScenario(player);
+        const breakoutStyle = this.getBreakoutTierStyle(evalOut.likelihoodClass, evalOut.likelihoodPct);
+        const isRookie = this.isLikelyRookie(player);
+
+        const textCol = set ? set.textColor : '#e2e8f0';
+        const nameCol = set ? set.nameColor : '#ffffff';
+        const accentCol = set ? set.accentColor : '#94a3b8';
+        const labelBg = set ? set.labelBg : 'rgba(148,163,184,0.12)';
+        const brand = set ? set.brand : 'NBA';
+        const rarity = set ? set.rarity : 'Base';
+        const valueColor = playerValue >= 60 ? '#86efac' : (playerValue <= 40 ? '#fca5a5' : accentCol);
+        const shimmerClass = set && typeof getSetShimmerClass === 'function' ? getSetShimmerClass(set) : '';
+
+        return `
+            <div class="${shimmerClass}" style="position:absolute;inset:0;border-radius:16px;overflow:hidden;pointer-events:none;z-index:4;"></div>
+            ${teamLogoUrl ? `<div style="position:absolute;right:-8%;top:8%;width:50%;aspect-ratio:1;background:url('${teamLogoUrl}') center/contain no-repeat;opacity:0.15;mix-blend-mode:screen;z-index:0;pointer-events:none;"></div>` : ''}
+            <div style="position:absolute;top:10px;left:10px;z-index:5;font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:3px 8px;border-radius:5px;background:${labelBg};color:${accentCol};">${brand}</div>
+            <div style="position:absolute;top:10px;right:10px;z-index:5;font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:5px;background:${labelBg};color:${accentCol};">${rarity}</div>
+            <div style="position:relative;flex:1;overflow:hidden;z-index:1;">
+                <img src="${headshotUrl}" alt="${player.player.name}" style="width:100%;height:100%;object-fit:cover;object-position:top center;filter:saturate(1.1) contrast(1.05);"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                <div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:3.5rem;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:${accentCol};opacity:0.6;">${monogram}</div>
+                <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(0,0,0,0.75) 100%);z-index:1;pointer-events:none;"></div>
+                ${isRookie ? `<div style="position:absolute;top:38px;right:10px;z-index:5;background:linear-gradient(135deg,#facc15,#ca8a04);color:#1f2937;font-family:'Barlow Condensed',sans-serif;font-size:0.7rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;padding:3px 10px;border-radius:999px;">ROOKIE</div>` : ''}
+                <div style="position:absolute;bottom:8px;left:10px;right:10px;z-index:5;text-align:center;background:${breakoutStyle.bg};color:${breakoutStyle.fg};font-weight:800;letter-spacing:0.08em;text-transform:uppercase;font-size:0.7rem;padding:4px 8px;border-radius:8px;text-shadow:0 1px 0 rgba(0,0,0,0.2);">${breakoutStyle.label} BREAKOUT &bull; ${Math.round(evalOut.likelihoodPct || 0)}%</div>
+            </div>
+            <div style="position:relative;z-index:2;padding:0.75rem 0.8rem 0.85rem;color:${textCol};">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;line-height:1.1;margin-bottom:0.25rem;color:${nameCol};">${player.player.name}</div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.72rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;opacity:0.85;">
+                    <span>${player.player.team} &bull; ${player.player.position || ''} &bull; Age ${Math.round(player.player.age) || '?'}</span>
+                    <span style="color:${valueColor};font-weight:800;">VAL ${playerValue.toFixed(1)}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    putCardBack() {
+        const overlay = document.getElementById('cardPickupOverlay');
+        if (overlay) {
+            overlay.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
     }
 
     drawValueDistributionChart() {

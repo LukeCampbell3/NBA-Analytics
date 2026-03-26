@@ -1,0 +1,558 @@
+/* ============================================
+   CARD STORE DISPLAY CASE
+   A glass showcase for trading cards
+   ============================================ */
+
+/* Display case wrapper - the glass cabinet */
+.card-store-case {
+    position: relative;
+    background:
+        linear-gradient(180deg, rgba(15,23,42,0.02) 0%, rgba(15,23,42,0.06) 100%);
+    border: 1px solid rgba(148,163,184,0.18);
+    border-radius: 20px;
+    padding: 2rem 1.5rem 2.5rem;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.5),
+        0 20px 60px rgba(15,23,42,0.12),
+        0 1px 3px rgba(15,23,42,0.08);
+    overflow: hidden;
+}
+
+body.theme-dark .card-store-case {
+    background:
+        linear-gradient(180deg, rgba(15,23,42,0.4) 0%, rgba(2,6,23,0.6) 100%);
+    border-color: rgba(100,116,139,0.25);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.05),
+        0 20px 60px rgba(0,0,0,0.4),
+        0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Glass reflection overlay */
+.card-store-case::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    background: linear-gradient(180deg,
+        rgba(255,255,255,0.08) 0%,
+        rgba(255,255,255,0.02) 60%,
+        transparent 100%);
+    pointer-events: none;
+    z-index: 1;
+    border-radius: 20px 20px 0 0;
+}
+
+body.theme-dark .card-store-case::before {
+    background: linear-gradient(180deg,
+        rgba(255,255,255,0.03) 0%,
+        rgba(255,255,255,0.005) 60%,
+        transparent 100%);
+}
+
+/* Felt shelf surface */
+.card-store-shelf {
+    position: relative;
+    z-index: 2;
+}
+
+/* The cards grid inside the case */
+.card-store-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.25rem;
+    padding: 0.5rem;
+}
+
+/* ============================================
+   INDIVIDUAL CARD IN THE CASE
+   ============================================ */
+
+.store-card-slot {
+    perspective: 1200px;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+}
+
+.store-card {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.35s ease;
+    transform-origin: center bottom;
+    aspect-ratio: 2.5 / 3.5;
+}
+
+.store-card > div {
+    aspect-ratio: 2.5 / 3.5;
+}
+
+.store-card:hover {
+    transform: translateY(-12px) rotateX(2deg) scale(1.03);
+    box-shadow:
+        0 25px 50px rgba(0,0,0,0.25),
+        0 0 0 1px rgba(255,255,255,0.1);
+    z-index: 10;
+}
+
+/* Card frame border from set */
+.store-card-frame {
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    z-index: 3;
+    pointer-events: none;
+}
+
+/* Card background */
+.store-card-bg {
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    z-index: 0;
+}
+
+/* Player headshot area */
+.store-card-photo {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.store-card-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    filter: saturate(1.1) contrast(1.05);
+}
+
+.store-card-photo-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 800;
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 0.05em;
+    opacity: 0.6;
+}
+
+/* Photo vignette */
+.store-card-photo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.7) 100%),
+        radial-gradient(circle at 50% 30%, transparent 30%, rgba(0,0,0,0.2) 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Brand label top-left */
+.store-card-brand {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 5;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
+}
+
+/* Rarity badge top-right */
+.store-card-rarity {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 5;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
+}
+
+/* Player info strip at bottom of card */
+.store-card-info {
+    position: relative;
+    z-index: 2;
+    padding: 0.6rem 0.65rem 0.7rem;
+}
+
+.store-card-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    line-height: 1.1;
+    margin-bottom: 0.2rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.store-card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.8;
+}
+
+.store-card-team-logo {
+    position: absolute;
+    right: -5%;
+    top: 10%;
+    width: 45%;
+    aspect-ratio: 1;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: 0.12;
+    z-index: 0;
+    pointer-events: none;
+    mix-blend-mode: screen;
+}
+
+/* Value badge */
+.store-card-value {
+    position: absolute;
+    bottom: 52px;
+    right: 8px;
+    z-index: 5;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 6px;
+    backdrop-filter: blur(4px);
+    letter-spacing: 0.04em;
+}
+
+/* ============================================
+   SHIMMER / HOLO EFFECTS
+   ============================================ */
+
+.card-shimmer {
+    overflow: hidden;
+    position: relative;
+}
+
+.card-shimmer::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    z-index: 4;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: inherit;
+}
+
+.store-card:hover .card-shimmer::after,
+.card-shimmer:hover::after {
+    opacity: 1;
+    animation: shimmerSweep 1.5s ease-in-out;
+}
+
+.card-shimmer-silver::after {
+    background: linear-gradient(
+        115deg,
+        transparent 20%,
+        rgba(255,255,255,0.15) 40%,
+        rgba(255,255,255,0.3) 50%,
+        rgba(255,255,255,0.15) 60%,
+        transparent 80%
+    );
+}
+
+.card-shimmer-gold::after {
+    background: linear-gradient(
+        115deg,
+        transparent 20%,
+        rgba(255,215,0,0.12) 40%,
+        rgba(255,235,100,0.25) 50%,
+        rgba(255,215,0,0.12) 60%,
+        transparent 80%
+    );
+}
+
+.card-shimmer-chrome::after {
+    background: linear-gradient(
+        115deg,
+        transparent 20%,
+        rgba(59,130,246,0.1) 40%,
+        rgba(147,197,253,0.2) 50%,
+        rgba(59,130,246,0.1) 60%,
+        transparent 80%
+    );
+}
+
+.card-shimmer-purple::after {
+    background: linear-gradient(
+        115deg,
+        transparent 20%,
+        rgba(167,139,250,0.12) 40%,
+        rgba(196,181,253,0.25) 50%,
+        rgba(167,139,250,0.12) 60%,
+        transparent 80%
+    );
+}
+
+.card-shimmer-teal::after {
+    background: linear-gradient(
+        115deg,
+        transparent 20%,
+        rgba(34,211,238,0.12) 40%,
+        rgba(103,232,249,0.25) 50%,
+        rgba(34,211,238,0.12) 60%,
+        transparent 80%
+    );
+}
+
+.card-shimmer-rose::after {
+    background: linear-gradient(
+        115deg,
+        transparent 20%,
+        rgba(251,113,133,0.12) 40%,
+        rgba(253,164,175,0.25) 50%,
+        rgba(251,113,133,0.12) 60%,
+        transparent 80%
+    );
+}
+
+.card-shimmer-orange::after {
+    background: linear-gradient(
+        115deg,
+        transparent 20%,
+        rgba(251,146,60,0.12) 40%,
+        rgba(253,186,116,0.25) 50%,
+        rgba(251,146,60,0.12) 60%,
+        transparent 80%
+    );
+}
+
+@keyframes shimmerSweep {
+    0% { transform: translateX(-100%) rotate(0deg); }
+    100% { transform: translateX(100%) rotate(0deg); }
+}
+
+/* ============================================
+   PICKED UP CARD OVERLAY
+   When you click a card, it "lifts" out of the case
+   ============================================ */
+
+.card-pickup-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0);
+    backdrop-filter: blur(0px);
+    opacity: 0;
+    pointer-events: none;
+    transition: background 0.4s ease, backdrop-filter 0.4s ease, opacity 0.3s ease;
+}
+
+.card-pickup-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(8px);
+}
+
+body.theme-dark .card-pickup-overlay.active {
+    background: rgba(0,0,0,0.75);
+}
+
+.card-pickup-container {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    max-width: 95vw;
+    max-height: 92vh;
+    padding: 1rem;
+}
+
+/* The enlarged card in the pickup view */
+.card-pickup-card {
+    width: 320px;
+    min-width: 280px;
+    flex-shrink: 0;
+    border-radius: 18px;
+    overflow: hidden;
+    aspect-ratio: 2.5 / 3.5;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transform: scale(0.6) rotateY(-15deg) translateY(40px);
+    opacity: 0;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+                opacity 0.4s ease;
+    box-shadow:
+        0 30px 80px rgba(0,0,0,0.4),
+        0 0 0 1px rgba(255,255,255,0.08);
+}
+
+.card-pickup-overlay.active .card-pickup-card {
+    transform: scale(1) rotateY(0deg) translateY(0);
+    opacity: 1;
+}
+
+/* Detail panel next to the picked-up card */
+.card-pickup-detail {
+    flex: 1;
+    max-width: 560px;
+    max-height: 85vh;
+    overflow-y: auto;
+    background: var(--bg-primary);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    transform: translateX(30px);
+    opacity: 0;
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.15s,
+                opacity 0.4s ease 0.15s;
+}
+
+.card-pickup-overlay.active .card-pickup-detail {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.card-pickup-detail-inner {
+    padding: 1.5rem;
+}
+
+/* Close button for pickup overlay */
+.card-pickup-close {
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    z-index: 2010;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    font-size: 1.3rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    transition: background 0.2s, transform 0.2s;
+}
+
+.card-pickup-close:hover {
+    background: rgba(0,0,0,0.7);
+    transform: scale(1.1);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 900px) {
+    .card-pickup-container {
+        flex-direction: column;
+        align-items: center;
+        overflow-y: auto;
+    }
+
+    .card-pickup-card {
+        width: 240px;
+        min-width: 200px;
+    }
+
+    .card-pickup-detail {
+        max-width: 95vw;
+        max-height: none;
+    }
+
+    .card-store-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 0.85rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .card-store-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 0.65rem;
+    }
+
+    .card-pickup-card {
+        width: 200px;
+        min-width: 180px;
+    }
+
+    .store-card-name {
+        font-size: 0.85rem;
+    }
+}
+
+/* ============================================
+   CARD SET FILTER PILLS
+   ============================================ */
+
+.set-filter-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    padding: 0 0.5rem;
+}
+
+.set-filter-pill {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.set-filter-pill:hover {
+    border-color: var(--secondary-color);
+    color: var(--text-primary);
+}
+
+.set-filter-pill.active {
+    background: var(--secondary-color);
+    border-color: var(--secondary-color);
+    color: #fff;
+}
