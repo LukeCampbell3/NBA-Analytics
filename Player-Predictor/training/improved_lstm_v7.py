@@ -45,6 +45,13 @@ import joblib
 sys.path.insert(0, os.path.dirname(__file__))
 from unified_moe_trainer import UnifiedMoETrainer
 from improved_stacking_trainer import prepare_gbm_features_v2
+from structured_stack_contract import (
+    ARTIFACT_CONTRACT_VERSION,
+    build_schema_payload,
+    build_schema_signature,
+    normalize_catboost_model_info,
+    validate_metadata_contract,
+)
 
 try:
     from catboost import CatBoostRegressor
@@ -2774,18 +2781,36 @@ def main(epochs_override=None, batch_size_override=None, save_only=False):
         "scaler_x": str((run_dir / "lstm_v7_scaler_x.pkl").as_posix()),
         "scaler_y": str((run_dir / "lstm_v7_scaler_y.pkl").as_posix()),
         "metadata": str((run_dir / "lstm_v7_metadata.json").as_posix()),
+        "schema": str((run_dir / "lstm_v7_feature_schema.json").as_posix()),
     }
     if meta_models:
         run_artifact_paths["meta_models"] = str((run_dir / "lstm_v7_meta_models.pkl").as_posix())
 
+    cb_model_info = normalize_catboost_model_info(cb_model_info, trainer.target_columns, cb_models)
+    scaler_x_n_features = int(getattr(trainer.scaler_x, "n_features_in_", n_features - 3))
+    scaler_y_n_features = int(getattr(trainer.scaler_y, "n_features_in_", n_targets))
+    schema_signature = build_schema_signature(
+        trainer.feature_columns,
+        trainer.target_columns,
+        trainer.baseline_features,
+        seq_len,
+        n_features,
+        n_targets,
+        counts,
+    )
+
     metadata = {
         "model_type": "structured_lstm_stack",
+        "artifact_contract_version": ARTIFACT_CONTRACT_VERSION,
+        "schema_signature": schema_signature,
         "best_method": best_method,
         "promoted_to_production": promoted_to_production,
         "n_models": n_models,
         "seq_len": seq_len,
         "n_features": n_features,
         "n_targets": n_targets,
+        "scaler_x_n_features": scaler_x_n_features,
+        "scaler_y_n_features": scaler_y_n_features,
         "target_columns": trainer.target_columns,
         "baseline_features": trainer.baseline_features,
         "feature_columns": trainer.feature_columns,
@@ -2828,6 +2853,26 @@ def main(epochs_override=None, batch_size_override=None, save_only=False):
         metadata["rolling_window_validation"] = {
             "catboost_delta": cb_rolling_summary,
         }
+
+    contract_errors = validate_metadata_contract(
+        metadata,
+        scaler_x=trainer.scaler_x,
+        scaler_y=trainer.scaler_y,
+        cb_models=cb_models,
+    )
+    if contract_errors:
+        error_lines = "\n".join(f"  - {line}" for line in contract_errors)
+        raise ValueError(
+            "Structured stack artifact contract validation failed before save:\n"
+            f"{error_lines}"
+        )
+
+    schema_payload = build_schema_payload(metadata)
+    schema_text = json.dumps(schema_payload, indent=2)
+
+    Path("model/lstm_v7_feature_schema.json").write_text(schema_text, encoding="utf-8")
+    (run_dir / "lstm_v7_feature_schema.json").write_text(schema_text, encoding="utf-8")
+
     with open("model/lstm_v7_metadata.json", "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2)
     (run_dir / "lstm_v7_metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
@@ -2866,6 +2911,8 @@ def main(epochs_override=None, batch_size_override=None, save_only=False):
     if not save_only and promoted_to_production:
         production_metadata = {
             "model_type": "structured_lstm_stack_targetwise",
+            "artifact_contract_version": ARTIFACT_CONTRACT_VERSION,
+            "schema_signature": schema_signature,
             "avg_mae": float(best_avg_mae),
             "best_method": best_method,
             "target_columns": trainer.target_columns,

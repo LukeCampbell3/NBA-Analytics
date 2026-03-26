@@ -299,7 +299,13 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     manifest_path = resolve_manifest_path(args.run_id, args.latest)
-    predictor = StructuredStackInference(model_dir=str(MODEL_DIR), manifest_path=manifest_path)
+    predictor: StructuredStackInference | None = None
+    predictor_error = None
+    try:
+        predictor = StructuredStackInference(model_dir=str(MODEL_DIR), manifest_path=manifest_path)
+    except Exception as exc:
+        predictor_error = f"{type(exc).__name__}: {exc}"
+        print(f"Warning: model inference unavailable, using heuristic fallback only ({predictor_error})")
     market_df = load_market_wide(args.market_wide_path)
     records, skipped = build_records(predictor, market_df, args.season)
 
@@ -312,7 +318,8 @@ def main() -> None:
     results_df.to_csv(args.csv_out, index=False)
     payload = {
         "manifest_path": str(manifest_path),
-        "run_id": predictor.metadata.get("run_id"),
+        "run_id": predictor.metadata.get("run_id") if predictor is not None else None,
+        "predictor_error": predictor_error,
         "market_snapshot": str(args.market_wide_path),
         "season": args.season,
         "rows": int(len(results_df)),

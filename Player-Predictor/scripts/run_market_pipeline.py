@@ -217,7 +217,13 @@ def main() -> None:
     policy_payload = resolve_policy(args)
 
     manifest_path = resolve_manifest_path(args.run_id, args.latest)
-    predictor = StructuredStackInference(model_dir=str(MODEL_DIR), manifest_path=manifest_path)
+    predictor: StructuredStackInference | None = None
+    predictor_error = None
+    try:
+        predictor = StructuredStackInference(model_dir=str(MODEL_DIR), manifest_path=manifest_path)
+    except Exception as exc:
+        predictor_error = f"{type(exc).__name__}: {exc}"
+        print(f"Warning: model inference unavailable, using heuristic fallback only ({predictor_error})")
 
     market_df = load_market_wide(args.market_wide_path)
     slate_records, slate_skipped = build_records(predictor, market_df, args.season)
@@ -266,7 +272,8 @@ def main() -> None:
 
     payload = {
         "manifest_path": str(manifest_path),
-        "run_id": predictor.metadata.get("run_id"),
+        "run_id": predictor.metadata.get("run_id") if predictor is not None else None,
+        "predictor_error": predictor_error,
         "market_snapshot": str(args.market_wide_path),
         "history_csv": str(history_path),
         "history_mode": history_mode,
@@ -284,7 +291,7 @@ def main() -> None:
     print("\n" + "=" * 90)
     print("MARKET PIPELINE COMPLETE")
     print("=" * 90)
-    print(f"Run id:        {predictor.metadata.get('run_id')}")
+    print(f"Run id:        {predictor.metadata.get('run_id') if predictor is not None else 'n/a'}")
     print(f"Policy:        {args.policy_profile}")
     print(f"Slate rows:    {len(slate_df)}")
     print(f"Selector rows: {len(selector_df)}")

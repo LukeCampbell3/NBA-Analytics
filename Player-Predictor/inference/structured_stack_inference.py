@@ -41,6 +41,11 @@ from improved_lstm_v7 import (
     weighted_ensemble_diagnostics,
 )
 from improved_stacking_trainer import prepare_gbm_features_v2
+from structured_stack_contract import (
+    apply_schema_sidecar,
+    normalize_catboost_model_info,
+    validate_metadata_contract,
+)
 
 
 TEAM_ID_BY_ABBREV = {
@@ -117,16 +122,87 @@ class StructuredStackInference:
             return net([x, baseline], training=False)
         return forward
 
+    def _load_schema_sidecar(self):
+        candidates = []
+        try:
+            candidates.append(self._artifact_path("schema", fallback="lstm_v7_feature_schema.json"))
+        except Exception:
+            pass
+        candidates.append(self.model_dir / "lstm_v7_feature_schema.json")
+        for path in candidates:
+            try:
+                if path.exists():
+                    return json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+        return None
+
+    def _maybe_persist_metadata(self):
+        try:
+            self.metadata_path.write_text(json.dumps(self.metadata, indent=2), encoding="utf-8")
+        except Exception:
+            pass
+
+    def _validate_or_repair_metadata_contract(self):
+        normalized = dict(self.metadata or {})
+        normalized["catboost_model_info"] = normalize_catboost_model_info(
+            normalized.get("catboost_model_info"),
+            normalized.get("target_columns", []),
+            self.cb_models,
+        )
+        errors = validate_metadata_contract(
+            normalized,
+            scaler_x=self.scaler_x,
+            scaler_y=self.scaler_y,
+            cb_models=self.cb_models,
+        )
+        if not errors:
+            self.metadata = normalized
+            return
+
+        schema_payload = self._load_schema_sidecar()
+        if schema_payload:
+            repaired = apply_schema_sidecar(normalized, schema_payload)
+            repaired["catboost_model_info"] = normalize_catboost_model_info(
+                repaired.get("catboost_model_info"),
+                repaired.get("target_columns", []),
+                self.cb_models,
+            )
+            repaired_errors = validate_metadata_contract(
+                repaired,
+                scaler_x=self.scaler_x,
+                scaler_y=self.scaler_y,
+                cb_models=self.cb_models,
+            )
+            if not repaired_errors:
+                self.metadata = repaired
+                self._maybe_persist_metadata()
+                return
+            error_lines = "\n  - ".join(repaired_errors[:12])
+            raise ValueError(
+                "Structured stack metadata is invalid even after schema sidecar repair.\n"
+                f"  - {error_lines}"
+            )
+
+        error_lines = "\n  - ".join(errors[:12])
+        raise ValueError(
+            "Structured stack metadata contract is invalid and no schema sidecar is available.\n"
+            "  Run: python scripts/repair_structured_stack_contract.py\n"
+            f"  - {error_lines}"
+        )
+
     def __init__(self, model_dir="model", manifest_path=None, allow_schema_repair: bool = True):
         self.model_dir = Path(model_dir)
         self.manifest_path = Path(manifest_path) if manifest_path is not None else None
         self.allow_schema_repair = bool(allow_schema_repair)
         self.production = self._load_manifest()
         self.artifact_paths = self.production.get("artifact_paths", {})
-        self.metadata = json.loads(self._artifact_path("metadata", fallback="lstm_v7_metadata.json").read_text(encoding="utf-8"))
+        self.metadata_path = self._artifact_path("metadata", fallback="lstm_v7_metadata.json")
+        self.metadata = json.loads(self.metadata_path.read_text(encoding="utf-8"))
         self.scaler_x = joblib.load(self._artifact_path("scaler_x", fallback="lstm_v7_scaler_x.pkl"))
         self.scaler_y = joblib.load(self._artifact_path("scaler_y", fallback="lstm_v7_scaler_y.pkl"))
         self.cb_models = joblib.load(self._artifact_path("catboost_models", fallback="lstm_v7_catboost_models.pkl"))
+        self._validate_or_repair_metadata_contract()
         self.target_columns = self.metadata["target_columns"]
         self.feature_columns = self.metadata["feature_columns"]
         self.baseline_features = self.metadata["baseline_features"]
@@ -148,7 +224,7 @@ class StructuredStackInference:
             counts = infer_counts_from_weights(self.model_dir / "lstm_v7_member_0.weights.h5")
         self.counts = counts
         self.member_configs = self.metadata.get("ensemble_member_configs") or get_ensemble_variants()[: self.metadata["n_models"]]
-        self.val_losses = self.metadata["val_losses"]
+        self.val_losses = list(self.metadata.get("val_losses") or [1.0] * len(self.member_configs))
         self.catboost_model_info = {entry["target"]: entry for entry in self.metadata["catboost_model_info"]}
         self.enable_pts_residual_split = bool(self.metadata.get("enable_pts_residual_split", False))
         self.required_feature_versions = {
