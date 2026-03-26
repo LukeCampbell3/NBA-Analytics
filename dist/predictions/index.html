@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <base href="../">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Predictor - NBA Analytics</title>
+    <title>Daily Predictions - NBA Analytics</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="styles.css?v=19">
 </head>
@@ -21,7 +22,6 @@
             <a class="site-nav-link" href="index.html">Home</a>
             <a class="site-nav-link" href="predictions.html">Predictions</a>
             <a class="site-nav-link" href="college.html">College</a>
-            <a class="site-nav-link" href="predictor.html">Predictor</a>
             <a class="site-nav-link" href="about.html">About</a>
         </nav>
         <div class="site-nav-footer">
@@ -34,10 +34,10 @@
             <div class="container">
                 <div class="predictions-hero-grid">
                     <div class="predictions-hero-copy">
-                        <p class="predictions-kicker">Daily Prediction Engine</p>
-                        <h1>NBA Player Predictions</h1>
+                        <p class="predictions-kicker">Static Daily Board</p>
+                        <h1>Market Predictions</h1>
                         <p class="predictions-subtitle">
-                            Real-time predictions for today's NBA games using our hybrid LSTM + CatBoost ensemble model.
+                            Daily prop recommendations exported from the prediction pipeline into a static publishable page.
                         </p>
                         <div id="predictionsMeta" class="predictions-meta"></div>
                     </div>
@@ -53,15 +53,9 @@
                 <input id="predictionSearch" class="search-input prediction-search" type="search" placeholder="Search player or prop...">
                 <select id="predictionTargetFilter" class="filter-select">
                     <option value="">All Targets</option>
-                    <option value="PTS">PTS</option>
-                    <option value="TRB">TRB</option>
-                    <option value="AST">AST</option>
                 </select>
                 <select id="predictionRecommendationFilter" class="filter-select">
                     <option value="">All Tiers</option>
-                    <option value="consider">Consider</option>
-                    <option value="strong">Strong</option>
-                    <option value="elite">Elite</option>
                 </select>
             </div>
         </section>
@@ -79,6 +73,6 @@
     </main>
 
     <script src="nav.js?v=7"></script>
-    <script src="predictor.js?v=1"></script>
+    <script src="predictions.js?v=1"></script>
 </body>
 </html>
