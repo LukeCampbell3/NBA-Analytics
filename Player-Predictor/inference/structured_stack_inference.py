@@ -130,7 +130,13 @@ class StructuredStackInference:
         self.target_columns = self.metadata["target_columns"]
         self.feature_columns = self.metadata["feature_columns"]
         self.baseline_features = self.metadata["baseline_features"]
-        self.feature_spec = self.metadata["feature_spec"]
+        raw_feature_spec = self.metadata.get("feature_spec", {})
+        if isinstance(raw_feature_spec, dict) and {"player_idx", "team_idx", "opp_idx"}.issubset(raw_feature_spec.keys()):
+            self.feature_spec = raw_feature_spec
+        else:
+            # Backward compatibility: older metadata stored grouped feature names
+            # instead of index-based spec required by the current model builders.
+            self.feature_spec = build_feature_spec(self.feature_columns)
         self.seq_len = int(self.metadata["seq_len"])
         self.n_features = int(self.metadata["n_features"])
         self.n_targets = int(self.metadata["n_targets"])
@@ -307,6 +313,8 @@ class StructuredStackInference:
                 config=cfg,
             )
             wrapped = StructuredLSTMTrainingModel(net, feature_spec=self.feature_spec)
+            # Keras 3 requires subclassed models to be built before loading weights.
+            wrapped([np.zeros((1, self.seq_len, self.n_features), dtype=np.float32), np.zeros((1, self.n_targets), dtype=np.float32)], training=False)
             wrapped.load_weights(self._artifact_path("lstm_weights", fallback=f"lstm_v7_member_{idx}.weights.h5", index=idx), skip_mismatch=True)
 
             class Wrapper:
