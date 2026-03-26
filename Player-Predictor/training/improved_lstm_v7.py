@@ -1121,7 +1121,7 @@ class CosineAnnealingWarmRestarts(tf.keras.callbacks.Callback):
                 t -= current
                 current = int(current * self.t_mult)
             lr = self.min_lr + 0.5 * (self.max_lr - self.min_lr) * (1 + np.cos(np.pi * t / max(1, current)))
-        tf.keras.backend.set_value(self.model.optimizer.learning_rate, lr)
+        tf.keras.backend.set_value(self.model.optimizer.learning_rate, float(lr))
 
 
 class SWACallback(tf.keras.callbacks.Callback):
@@ -1208,7 +1208,7 @@ def train_single(X_train, b_train, delta_train, X_val, b_val, delta_val, y_val_r
         volatility_regime_weight=cfg.get("volatility_regime_weight", 0.04),
         context_regime_weight=cfg.get("context_regime_weight", 0.03),
     )
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=max_lr, clipnorm=1.0))
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=float(max_lr), clipnorm=1.0))
 
     callbacks = [
         EarlyStopping(monitor="val_loss", patience=24, restore_best_weights=True, verbose=1),
