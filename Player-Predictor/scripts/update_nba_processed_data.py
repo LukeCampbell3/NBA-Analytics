@@ -349,6 +349,28 @@ def parse_minutes(value) -> float:
 def fetch_player_logs(scraper: NBAEnrichmentScraper, season: int, through_date: str | None, max_games: int | None) -> pd.DataFrame:
     season_dir = RAW_ROOT / f"season={season}"
     season_dir.mkdir(parents=True, exist_ok=True)
+    logs_path = season_dir / "player_game_logs.parquet"
+
+    # Check if we have cached logs and can skip fetching
+    existing_logs = None
+    if logs_path.exists():
+        try:
+            existing_logs = pd.read_parquet(logs_path)
+            existing_logs["GAME_DATE"] = pd.to_datetime(existing_logs["GAME_DATE"], errors="coerce")
+            if not existing_logs.empty:
+                latest_cached_date = existing_logs["GAME_DATE"].max()
+                print(f"Found cached logs with latest date: {latest_cached_date.date() if pd.notna(latest_cached_date) else 'unknown'}")
+
+                # If we have data up to the requested through_date, skip fetching
+                if through_date:
+                    cutoff = pd.Timestamp(through_date)
+                    if pd.notna(latest_cached_date) and latest_cached_date >= cutoff:
+                        print("Cached data is up to date; skipping API fetch")
+                        return existing_logs.loc[existing_logs["GAME_DATE"] <= cutoff].copy()
+        except Exception as e:
+            print(f"Warning: Could not load cached logs ({e}); fetching fresh data")
+
+    # Fetch fresh data
     logs = scraper.fetch_player_game_logs(season)
     logs["GAME_DATE"] = pd.to_datetime(logs["GAME_DATE"], errors="coerce")
     if through_date:
@@ -357,7 +379,7 @@ def fetch_player_logs(scraper: NBAEnrichmentScraper, season: int, through_date: 
     if max_games is not None:
         keep_game_ids = sorted(logs["GAME_ID"].astype(str).unique().tolist())[:max_games]
         logs = logs.loc[logs["GAME_ID"].astype(str).isin(keep_game_ids)].copy()
-    logs.to_parquet(season_dir / "player_game_logs.parquet", index=False)
+    logs.to_parquet(logs_path, index=False)
     return logs
 
 
