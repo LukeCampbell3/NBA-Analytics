@@ -480,9 +480,17 @@ def build_processed_season(
         100.0 * df["PTS"] / (df["FGA"] + 0.44 * df["FTA"] + df["TOV"]),
         100.0,
     )
-    df["ORTG"] = pd.to_numeric(df.get("offensiveRating"), errors="coerce").fillna(pd.Series(ortg_fallback, index=df.index))
+    ortg_col = df.get("offensiveRating")
+    if ortg_col is not None:
+        df["ORTG"] = pd.to_numeric(ortg_col, errors="coerce").fillna(pd.Series(ortg_fallback, index=df.index))
+    else:
+        df["ORTG"] = ortg_fallback
+    drtg_col = df.get("defensiveRating")
     drtg_fallback = pd.Series(110.0, index=df.index)
-    df["DRTG"] = pd.to_numeric(df.get("defensiveRating"), errors="coerce").fillna(drtg_fallback)
+    if drtg_col is not None:
+        df["DRTG"] = pd.to_numeric(drtg_col, errors="coerce").fillna(drtg_fallback)
+    else:
+        df["DRTG"] = drtg_fallback
     df["BPM"] = bpm_proxy(df)
     df["GmSc"] = df.apply(game_score, axis=1)
     df["Did_Not_Play"] = (
