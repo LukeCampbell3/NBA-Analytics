@@ -42,6 +42,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--skip-update-data", action="store_true", help="Skip official game-log refresh.")
     parser.add_argument("--skip-collect-market", action="store_true", help="Skip Covers market collection.")
     parser.add_argument("--skip-align", action="store_true", help="Skip market alignment onto processed files.")
+    parser.add_argument(
+        "--allow-heuristic-fallback",
+        action="store_true",
+        help="Allow market pipeline to run with heuristic-only predictions when model load fails.",
+    )
     parser.add_argument("--python", type=str, default=sys.executable, help="Python executable to use for child steps.")
     return parser.parse_args()
 
@@ -188,6 +193,7 @@ def main() -> None:
             str(final_csv),
             "--final-json-out",
             str(final_json),
+            *(["--allow-heuristic-fallback"] if args.allow_heuristic_fallback else []),
             *(["--latest"] if args.latest else []),
         ],
     )
@@ -210,6 +216,7 @@ def main() -> None:
         "skip_update_data": bool(args.skip_update_data),
         "skip_collect_market": bool(args.skip_collect_market),
         "skip_align": bool(args.skip_align),
+        "allow_heuristic_fallback": bool(args.allow_heuristic_fallback),
         "updated_at_utc": datetime.utcnow().isoformat() + "Z",
     }
     manifest_path = run_dir / f"daily_market_pipeline_manifest_{run_stamp}.json"

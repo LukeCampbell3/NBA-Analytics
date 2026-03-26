@@ -291,6 +291,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--market-wide-path", type=Path, default=DEFAULT_MARKET_WIDE, help="Normalized wide market snapshot.")
     parser.add_argument("--run-id", type=str, default=None, help="Specific immutable run id.")
     parser.add_argument("--latest", action="store_true", help="Use latest manifest instead of production.")
+    parser.add_argument(
+        "--allow-heuristic-fallback",
+        action="store_true",
+        help="Allow slate build to continue with heuristic-only predictions when model load fails.",
+    )
     parser.add_argument("--csv-out", type=Path, default=REPO_ROOT / "model" / "analysis" / "upcoming_market_slate.csv", help="Output CSV path.")
     parser.add_argument("--json-out", type=Path, default=REPO_ROOT / "model" / "analysis" / "upcoming_market_slate.json", help="Output JSON path.")
     return parser.parse_args()
@@ -305,6 +310,12 @@ def main() -> None:
         predictor = StructuredStackInference(model_dir=str(MODEL_DIR), manifest_path=manifest_path)
     except Exception as exc:
         predictor_error = f"{type(exc).__name__}: {exc}"
+        if not args.allow_heuristic_fallback:
+            raise RuntimeError(
+                "Model inference failed while heuristic fallback is disabled. "
+                "Pass --allow-heuristic-fallback to continue anyway. "
+                f"Root cause: {predictor_error}"
+            ) from exc
         print(f"Warning: model inference unavailable, using heuristic fallback only ({predictor_error})")
     market_df = load_market_wide(args.market_wide_path)
     records, skipped = build_records(predictor, market_df, args.season)
