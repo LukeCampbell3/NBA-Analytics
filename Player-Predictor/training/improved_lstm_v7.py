@@ -57,10 +57,7 @@ PRODUCTION_BEST_MAE = 4.441093564966795
 
 def gather_feature(x, idx, width=1):
     if idx < 0:
-        shape = tf.shape(x)
-        if width == 1:
-            return tf.zeros([shape[0], shape[1], 1], dtype=x.dtype)
-        return tf.zeros([shape[0], shape[1], width], dtype=x.dtype)
+        return x[:, :, :width] * 0.0
     if width == 1:
         return x[:, :, idx:idx + 1]
     return x[:, :, idx:idx + width]
@@ -68,10 +65,7 @@ def gather_feature(x, idx, width=1):
 
 def gather_last(x, idx, width=1):
     if idx < 0:
-        shape = tf.shape(x)
-        if width == 1:
-            return tf.zeros([shape[0], 1], dtype=x.dtype)
-        return tf.zeros([shape[0], width], dtype=x.dtype)
+        return x[:, -1, :width] * 0.0
     if width == 1:
         return x[:, -1, idx:idx + 1]
     return x[:, -1, idx:idx + width]
@@ -150,9 +144,21 @@ def build_structured_lstm(seq_len, n_features, n_targets, feature_spec, counts, 
     seq_input = Input(shape=(seq_len, n_features), name="seq_input")
     base_input = Input(shape=(n_targets,), name="base_input")
 
-    player_ids = Lambda(lambda x: tf.cast(x[:, -1, feature_spec["player_idx"]], tf.int32), name="player_ids")(seq_input)
-    team_ids = Lambda(lambda x: tf.cast(x[:, -1, feature_spec["team_idx"]], tf.int32), name="team_ids")(seq_input)
-    opp_ids = Lambda(lambda x: tf.cast(x[:, -1, feature_spec["opp_idx"]], tf.int32), name="opp_ids")(seq_input)
+    player_ids = Lambda(
+        lambda x: tf.cast(x[:, -1, feature_spec["player_idx"]], tf.int32),
+        output_shape=(),
+        name="player_ids",
+    )(seq_input)
+    team_ids = Lambda(
+        lambda x: tf.cast(x[:, -1, feature_spec["team_idx"]], tf.int32),
+        output_shape=(),
+        name="team_ids",
+    )(seq_input)
+    opp_ids = Lambda(
+        lambda x: tf.cast(x[:, -1, feature_spec["opp_idx"]], tf.int32),
+        output_shape=(),
+        name="opp_ids",
+    )(seq_input)
 
     player_embed = Embedding(max(1, counts["players"]), 16, name="player_embed")(player_ids)
     team_embed = Embedding(max(1, counts["teams"]), 8, name="team_embed")(team_ids)
@@ -164,6 +170,7 @@ def build_structured_lstm(seq_len, n_features, n_targets, feature_spec, counts, 
 
     stat_hist = Lambda(
         lambda xs: tf.concat(xs, axis=-1),
+        output_shape=(seq_len, 3),
         name="stat_hist",
     )([pts_proxy, trb_proxy, ast_proxy])
     baseline_hist = Lambda(
@@ -175,20 +182,28 @@ def build_structured_lstm(seq_len, n_features, n_targets, feature_spec, counts, 
             ],
             axis=-1,
         ),
+        output_shape=(seq_len, 3),
         name="baseline_hist",
     )(seq_input)
-    residual_hist = Lambda(lambda xs: xs[0] - xs[1], name="residual_hist")([stat_hist, baseline_hist])
+    residual_hist = Lambda(
+        lambda xs: xs[0] - xs[1],
+        output_shape=(seq_len, 3),
+        name="residual_hist",
+    )([stat_hist, baseline_hist])
 
     pts_vol = gather_feature(seq_input, feature_spec["pts_std_idx"]) if feature_spec["pts_std_idx"] >= 0 else Lambda(
         lambda xs: tf.abs(xs[0] - xs[1]),
+        output_shape=(seq_len, 1),
         name="pts_vol_proxy",
     )([pts_proxy, gather_feature(seq_input, feature_spec["pts_roll_idx"])])
     trb_vol = gather_feature(seq_input, feature_spec["trb_std_idx"]) if feature_spec["trb_std_idx"] >= 0 else Lambda(
         lambda xs: tf.abs(xs[0] - xs[1]),
+        output_shape=(seq_len, 1),
         name="trb_vol_proxy",
     )([trb_proxy, gather_feature(seq_input, feature_spec["trb_roll_idx"])])
     ast_vol = gather_feature(seq_input, feature_spec["ast_std_idx"]) if feature_spec["ast_std_idx"] >= 0 else Lambda(
         lambda xs: tf.maximum(tf.abs(xs[0] - xs[1]), xs[2]),
+        output_shape=(seq_len, 1),
         name="ast_vol_proxy",
     )([
         ast_proxy,
@@ -197,6 +212,7 @@ def build_structured_lstm(seq_len, n_features, n_targets, feature_spec, counts, 
     ])
     volatility_hist = Lambda(
         lambda xs: tf.concat(xs, axis=-1),
+        output_shape=(seq_len, 3),
         name="volatility_hist",
     )([pts_vol, trb_vol, ast_vol])
     usage_hist = Lambda(
@@ -209,6 +225,7 @@ def build_structured_lstm(seq_len, n_features, n_targets, feature_spec, counts, 
             ],
             axis=-1,
         ),
+        output_shape=(seq_len, 4),
         name="usage_hist",
     )(seq_input)
     market_pts_idx = feature_spec.get("market_pts_idx", -1)
@@ -247,6 +264,7 @@ def build_structured_lstm(seq_len, n_features, n_targets, feature_spec, counts, 
             ],
             axis=-1,
         ),
+        output_shape=(seq_len, 15),
         name="market_hist",
     )(seq_input)
 
@@ -288,19 +306,32 @@ def build_structured_lstm(seq_len, n_features, n_targets, feature_spec, counts, 
     x2 = Add(name="attn_skip")([x2, attn])
     x2 = LayerNormalization(name="attn_ln")(x2)
 
-    last_hidden = Lambda(lambda z: z[:, -1, :], name="last_hidden")(x2)
+    last_hidden = Lambda(
+        lambda z: z[:, -1, :],
+        output_shape=(lstm2_units,),
+        name="last_hidden",
+    )(x2)
     avg_hidden = GlobalAveragePooling1D(name="avg_hidden")(x2)
     residual_summary = GlobalAveragePooling1D(name="residual_summary")(residual_hist)
     vol_summary = GlobalAveragePooling1D(name="vol_summary")(volatility_hist)
     usage_summary = GlobalAveragePooling1D(name="usage_summary")(usage_hist)
     market_summary = GlobalAveragePooling1D(name="market_summary")(market_hist)
-    baseline_summary = Lambda(lambda x: x[:, -1, :], name="baseline_summary")(baseline_hist)
-    year_state = Lambda(lambda x: gather_last(x, feature_spec["year_idx"]), name="year_state")(seq_input)
+    baseline_summary = Lambda(
+        lambda x: x[:, -1, :],
+        output_shape=(3,),
+        name="baseline_summary",
+    )(baseline_hist)
+    year_state = Lambda(
+        lambda x: gather_last(x, feature_spec["year_idx"]),
+        output_shape=(1,),
+        name="year_state",
+    )(seq_input)
     month_state = Lambda(
         lambda x: tf.concat(
             [gather_last(x, feature_spec["month_sin_idx"]), gather_last(x, feature_spec["month_cos_idx"])],
             axis=-1,
         ),
+        output_shape=(2,),
         name="month_state",
     )(seq_input)
 
@@ -322,7 +353,11 @@ def build_structured_lstm(seq_len, n_features, n_targets, feature_spec, counts, 
 
     belief_mu = Dense(belief_dim, activation=None, kernel_regularizer=regularizers.l2(l2_reg), name="belief_mu")(last_hidden)
     belief_logvar = Dense(belief_dim, activation=None, kernel_regularizer=regularizers.l2(l2_reg), name="belief_logvar")(last_hidden)
-    belief_std = Lambda(lambda x: tf.nn.softplus(x) + 1e-3, name="belief_std")(belief_logvar)
+    belief_std = Lambda(
+        lambda x: tf.nn.softplus(x) + 1e-3,
+        output_shape=(belief_dim,),
+        name="belief_std",
+    )(belief_logvar)
 
     env_in = Concatenate(name="env_in")([slow_mode, avg_hidden, vol_summary, usage_summary, market_summary, month_state])
     stable_env = Dense(env_dim, activation="swish", kernel_regularizer=regularizers.l2(l2_reg), name="stable_env")(env_in)
@@ -378,7 +413,11 @@ def build_structured_lstm(seq_len, n_features, n_targets, feature_spec, counts, 
 
     delta_tail = Dense(dense_dim // 2, activation="swish", kernel_regularizer=regularizers.l2(l2_reg), name="delta_tail_fc")(z)
     delta_tail = Dense(n_targets, activation="tanh", name="delta_tail_raw")(delta_tail)
-    delta_tail = Lambda(lambda x: x * 2.5, name="delta_tail")(delta_tail)
+    delta_tail = Lambda(
+        lambda x: x * 2.5,
+        output_shape=(n_targets,),
+        name="delta_tail",
+    )(delta_tail)
 
     spike_in = Concatenate(name="spike_in")([z, residual_summary, vol_summary, belief_std])
     spike_prob = Dense(dense_dim // 2, activation="swish", kernel_regularizer=regularizers.l2(l2_reg), name="spike_fc")(spike_in)
@@ -387,13 +426,21 @@ def build_structured_lstm(seq_len, n_features, n_targets, feature_spec, counts, 
     sigma_in = Concatenate(name="sigma_in")([z, vol_summary, belief_std])
     sigma = Dense(dense_dim // 2, activation="swish", kernel_regularizer=regularizers.l2(l2_reg), name="sigma_fc")(sigma_in)
     sigma = Dense(n_targets, activation="softplus", name="sigma_raw")(sigma)
-    sigma = Lambda(lambda x: x + 5e-2, name="sigma")(sigma)
+    sigma = Lambda(
+        lambda x: x + 5e-2,
+        output_shape=(n_targets,),
+        name="sigma",
+    )(sigma)
 
     feasibility_in = Concatenate(name="feasibility_in")([z, vol_summary, usage_summary])
     feasibility = Dense(dense_dim // 3, activation="swish", kernel_regularizer=regularizers.l2(l2_reg), name="feasibility_fc")(feasibility_in)
     feasibility = Dense(1, activation="sigmoid", name="feasibility")(feasibility)
 
-    delta = Lambda(lambda xs: xs[0] + xs[1] * xs[2], name="delta_pred")([delta_normal, spike_prob, delta_tail])
+    delta = Lambda(
+        lambda xs: xs[0] + xs[1] * xs[2],
+        output_shape=(n_targets,),
+        name="delta_pred",
+    )([delta_normal, spike_prob, delta_tail])
 
     return Model(
         inputs=[seq_input, base_input],
@@ -435,22 +482,54 @@ def build_pts_embedding_model(seq_len, n_features, feature_spec, counts, seed=42
     seq_input = Input(shape=(seq_len, n_features), name="pts_seq_input")
     base_input = Input(shape=(1,), name="pts_base_input")
 
-    player_ids = Lambda(lambda x: tf.cast(x[:, -1, feature_spec["player_idx"]], tf.int32), name="pts_player_ids")(seq_input)
-    team_ids = Lambda(lambda x: tf.cast(x[:, -1, feature_spec["team_idx"]], tf.int32), name="pts_team_ids")(seq_input)
-    opp_ids = Lambda(lambda x: tf.cast(x[:, -1, feature_spec["opp_idx"]], tf.int32), name="pts_opp_ids")(seq_input)
+    player_ids = Lambda(
+        lambda x: tf.cast(x[:, -1, feature_spec["player_idx"]], tf.int32),
+        output_shape=(),
+        name="pts_player_ids",
+    )(seq_input)
+    team_ids = Lambda(
+        lambda x: tf.cast(x[:, -1, feature_spec["team_idx"]], tf.int32),
+        output_shape=(),
+        name="pts_team_ids",
+    )(seq_input)
+    opp_ids = Lambda(
+        lambda x: tf.cast(x[:, -1, feature_spec["opp_idx"]], tf.int32),
+        output_shape=(),
+        name="pts_opp_ids",
+    )(seq_input)
 
     player_embed = Embedding(max(1, counts["players"]), 12, name="pts_player_embed")(player_ids)
     team_embed = Embedding(max(1, counts["teams"]), 6, name="pts_team_embed")(team_ids)
     opp_embed = Embedding(max(1, counts["opponents"]), 6, name="pts_opp_embed")(opp_ids)
 
     pts_hist_idx = feature_spec["pts_idx"] if feature_spec["pts_idx"] >= 0 else feature_spec["pts_lag_idx"]
-    pts_hist = Lambda(lambda x: gather_feature(x, pts_hist_idx), name="pts_hist_only")(seq_input)
-    pts_base_hist = Lambda(lambda x: gather_feature(x, feature_spec["pts_roll_idx"]), name="pts_base_hist")(seq_input)
-    pts_resid = Lambda(lambda xs: xs[0] - xs[1], name="pts_resid_hist")([pts_hist, pts_base_hist])
+    pts_hist = Lambda(
+        lambda x: gather_feature(x, pts_hist_idx),
+        output_shape=(seq_len, 1),
+        name="pts_hist_only",
+    )(seq_input)
+    pts_base_hist = Lambda(
+        lambda x: gather_feature(x, feature_spec["pts_roll_idx"]),
+        output_shape=(seq_len, 1),
+        name="pts_base_hist",
+    )(seq_input)
+    pts_resid = Lambda(
+        lambda xs: xs[0] - xs[1],
+        output_shape=(seq_len, 1),
+        name="pts_resid_hist",
+    )([pts_hist, pts_base_hist])
     if feature_spec["pts_std_idx"] >= 0:
-        pts_vol = Lambda(lambda x: gather_feature(x, feature_spec["pts_std_idx"]), name="pts_vol_hist")(seq_input)
+        pts_vol = Lambda(
+            lambda x: gather_feature(x, feature_spec["pts_std_idx"]),
+            output_shape=(seq_len, 1),
+            name="pts_vol_hist",
+        )(seq_input)
     else:
-        pts_vol = Lambda(lambda xs: tf.abs(xs[0] - xs[1]), name="pts_vol_hist")([pts_hist, pts_base_hist])
+        pts_vol = Lambda(
+            lambda xs: tf.abs(xs[0] - xs[1]),
+            output_shape=(seq_len, 1),
+            name="pts_vol_hist",
+        )([pts_hist, pts_base_hist])
     usage_hist = Lambda(
         lambda x: tf.concat(
             [
@@ -461,6 +540,7 @@ def build_pts_embedding_model(seq_len, n_features, feature_spec, counts, seed=42
             ],
             axis=-1,
         ),
+        output_shape=(seq_len, 4),
         name="pts_usage_hist",
     )(seq_input)
     pts_market_idx = feature_spec.get("market_pts_idx", -1)
@@ -479,6 +559,7 @@ def build_pts_embedding_model(seq_len, n_features, feature_spec, counts, seed=42
             ],
             axis=-1,
         ),
+        output_shape=(seq_len, 5),
         name="pts_market_hist",
     )(seq_input)
 
@@ -501,7 +582,11 @@ def build_pts_embedding_model(seq_len, n_features, feature_spec, counts, seed=42
     x = Add(name="pts_attn_skip")([x, attn])
     x = LayerNormalization(name="pts_attn_ln")(x)
 
-    short_state = Lambda(lambda z: tf.reduce_mean(z[:, -3:, :], axis=1), name="pts_short_state")(x)
+    short_state = Lambda(
+        lambda z: tf.reduce_mean(z[:, -3:, :], axis=1),
+        output_shape=(lstm_units,),
+        name="pts_short_state",
+    )(x)
     medium_state = GlobalAveragePooling1D(name="pts_medium_state")(x)
     max_state = GlobalMaxPooling1D(name="pts_max_state")(x)
     resid_state = GlobalAveragePooling1D(name="pts_resid_state")(pts_resid)
@@ -510,10 +595,12 @@ def build_pts_embedding_model(seq_len, n_features, feature_spec, counts, seed=42
     market_state = GlobalAveragePooling1D(name="pts_market_state")(market_hist)
     trend_state = Lambda(
         lambda x: tf.reduce_mean(x[:, -3:, :], axis=1) - tf.reduce_mean(x[:, :3, :], axis=1),
+        output_shape=(1,),
         name="pts_trend_state",
     )(pts_hist)
     trend_resid_state = Lambda(
         lambda x: tf.reduce_mean(x[:, -3:, :], axis=1) - tf.reduce_mean(x[:, :3, :], axis=1),
+        output_shape=(1,),
         name="pts_trend_resid_state",
     )(pts_resid)
     slow_in = Concatenate(name="pts_slow_in")([player_embed, team_embed, opp_embed, usage_state, market_state, base_input])
@@ -599,6 +686,7 @@ def build_pts_embedding_model(seq_len, n_features, feature_spec, counts, seed=42
                 - 0.42
             )
         ),
+        output_shape=(1,),
         name="pts_spike_gate",
     )([
         pts_spike,
@@ -610,10 +698,12 @@ def build_pts_embedding_model(seq_len, n_features, feature_spec, counts, seed=42
     ])
     pts_spike_delta = Lambda(
         lambda xs: xs[0] * xs[1],
+        output_shape=(1,),
         name="pts_spike_delta",
     )([pts_delta, pts_spike_gate])
     pts_normal_delta = Lambda(
         lambda xs: xs[0] - xs[1],
+        output_shape=(1,),
         name="pts_normal_delta",
     )([pts_delta, pts_spike_delta])
 

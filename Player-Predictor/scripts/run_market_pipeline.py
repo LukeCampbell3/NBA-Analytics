@@ -231,10 +231,15 @@ def main() -> None:
     slate_df.to_csv(args.slate_csv_out, index=False)
 
     history_path = args.history_csv.resolve()
-    if not history_path.exists():
-        raise FileNotFoundError(f"History CSV not found: {history_path}")
-    history_df = pd.read_csv(history_path)
-    history_lookup = build_history_lookup(history_df)
+    history_df = pd.DataFrame()
+    history_lookup: dict[str, dict] = {}
+    history_mode = "historical_backtest"
+    if history_path.exists():
+        history_df = pd.read_csv(history_path)
+        history_lookup = build_history_lookup(history_df)
+    else:
+        history_mode = "heuristic_fallback"
+        print(f"Warning: history CSV not found ({history_path}); using heuristic edge calibration.")
     selector_df = build_play_rows(slate_df, history_lookup)
     selector_df = apply_live_policy_calibration(selector_df, policy_payload)
     if selector_df.empty:
@@ -264,6 +269,7 @@ def main() -> None:
         "run_id": predictor.metadata.get("run_id"),
         "market_snapshot": str(args.market_wide_path),
         "history_csv": str(history_path),
+        "history_mode": history_mode,
         "season": args.season,
         "policy_profile": args.policy_profile,
         "policy": policy_payload,

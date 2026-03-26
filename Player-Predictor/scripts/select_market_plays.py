@@ -29,6 +29,11 @@ TARGET_THRESHOLDS = {
     "TRB": {"consider_pct": 0.85, "strong_pct": 0.95},
     "AST": {"consider_pct": 0.85, "strong_pct": 0.95},
 }
+HEURISTIC_EDGE_SCALES = {
+    "PTS": 3.0,
+    "TRB": 1.2,
+    "AST": 1.0,
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -156,6 +161,13 @@ def expected_rate_for(target: str, percentile: float, history_info: dict) -> flo
     return float(history_info["all_rate"])
 
 
+def heuristic_percentile_and_rate(target: str, abs_gap: float) -> tuple[float, float]:
+    scale = float(HEURISTIC_EDGE_SCALES[target])
+    gap_pct = float(np.clip(abs_gap / scale, 0.01, 0.99))
+    expected_rate = float(np.clip(0.50 + 0.35 * gap_pct, 0.50, 0.85))
+    return gap_pct, expected_rate
+
+
 def build_play_rows(slate_df: pd.DataFrame, history_lookup: dict[str, dict]) -> pd.DataFrame:
     rows: list[dict] = []
     for _, row in slate_df.iterrows():
@@ -163,8 +175,6 @@ def build_play_rows(slate_df: pd.DataFrame, history_lookup: dict[str, dict]) -> 
         feas = max(0.0, safe_float(row.get("feasibility"), default=0.0))
         for target in TARGETS:
             history_info = history_lookup.get(target)
-            if history_info is None:
-                continue
             pred = safe_float(row.get(f"pred_{target}"))
             market = safe_float(row.get(f"market_{target}"))
             if np.isnan(pred) or np.isnan(market):
@@ -177,9 +187,12 @@ def build_play_rows(slate_df: pd.DataFrame, history_lookup: dict[str, dict]) -> 
             else:
                 direction = "UNDER"
             abs_gap = abs(edge)
-            gap_pct = percentile_of_gap(history_info["gaps_sorted"], abs_gap)
+            if history_info is None:
+                gap_pct, expected_rate = heuristic_percentile_and_rate(target, abs_gap)
+            else:
+                gap_pct = percentile_of_gap(history_info["gaps_sorted"], abs_gap)
+                expected_rate = expected_rate_for(target, gap_pct, history_info)
             recommendation = classify_play(target, gap_pct)
-            expected_rate = expected_rate_for(target, gap_pct, history_info)
             confidence_score = abs_gap * np.clip(1.0 - belief, 0.0, 1.0) * feas
             rows.append(
                 {

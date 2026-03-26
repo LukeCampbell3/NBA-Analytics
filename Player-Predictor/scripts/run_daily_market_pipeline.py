@@ -25,6 +25,7 @@ import pandas as pd
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+SITE_ROOT = REPO_ROOT.parent
 MARKET_ROOT = REPO_ROOT / "data copy" / "raw" / "market_odds" / "nba"
 ANALYSIS_ROOT = REPO_ROOT / "model" / "analysis" / "daily_runs"
 
