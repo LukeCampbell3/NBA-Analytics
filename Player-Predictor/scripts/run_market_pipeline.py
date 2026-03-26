@@ -86,8 +86,13 @@ def parse_args() -> argparse.Namespace:
         default=REPO_ROOT / "model" / "analysis" / "final_market_plays.json",
         help="Final play board JSON summary.",
     )
+    parser.add_argument(
+        "--allow-heuristic-fallback",
+        action="store_true",
+        help="Allow pipeline to continue with heuristic-only predictions when model load fails.",
+    )
     parser.add_argument("--american-odds", type=int, default=DEFAULT_POLICY.american_odds, help="Assumed American odds for EV.")
-    parser.add_argument("--probability-shrink-factor", type=float, default=DEFAULT_POLICY.probability_shrink_factor, help="Shrink expected win rate toward 50%.")
+    parser.add_argument("--probability-shrink-factor", type=float, default=DEFAULT_POLICY.probability_shrink_factor, help="Shrink expected win rate toward 50%%.")
     parser.add_argument("--elite-pct", type=float, default=DEFAULT_POLICY.elite_pct, help="Percentile cutoff for elite priority plays.")
     parser.add_argument("--min-ev", type=float, default=DEFAULT_POLICY.min_ev, help="Minimum EV to keep a play.")
     parser.add_argument("--min-final-confidence", type=float, default=DEFAULT_POLICY.min_final_confidence, help="Minimum final confidence to keep a play.")
@@ -223,6 +228,12 @@ def main() -> None:
         predictor = StructuredStackInference(model_dir=str(MODEL_DIR), manifest_path=manifest_path)
     except Exception as exc:
         predictor_error = f"{type(exc).__name__}: {exc}"
+        if not args.allow_heuristic_fallback:
+            raise RuntimeError(
+                "Model inference failed while heuristic fallback is disabled. "
+                "Pass --allow-heuristic-fallback to continue anyway. "
+                f"Root cause: {predictor_error}"
+            ) from exc
         print(f"Warning: model inference unavailable, using heuristic fallback only ({predictor_error})")
 
     market_df = load_market_wide(args.market_wide_path)
