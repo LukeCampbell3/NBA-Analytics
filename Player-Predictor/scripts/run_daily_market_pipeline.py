@@ -221,6 +221,8 @@ def main() -> None:
             "scripts/export_daily_predictions_web.py",
             "--manifest",
             str(manifest_path),
+            "--out-dist",
+            str(SITE_ROOT / "dist" / "data" / "daily_predictions.json"),
         ],
     )
 
