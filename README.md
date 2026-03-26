@@ -1,264 +1,220 @@
-# NBA-VAR Simplified
+﻿# NBA Analytics Engine
 
-A minimal, concise NBA player valuation and analysis system.
+Mechanism-first NBA player valuation and breakout analysis with a local web app.
 
-## Overview
+This project builds player cards, computes value and breakout signals, and serves an interactive site for filtering and deep-dive scenario analysis.
 
-This repository provides a streamlined approach to NBA player evaluation with three core components:
+## What The Project Does
 
-1. **Player Card Generation** - Create comprehensive player profiles from raw data
-2. **Player Valuation** - Calculate contract value and aging projections
-3. **Player Analysis** - Breakout detection, defense portability, and impact sanity checks
+1. Creates standardized player cards from raw stat data.
+2. Computes player value (including EPM/LEBRON-informed signals where available).
+3. Runs breakout/fit analysis with constraints and confidence governance.
+4. Prepares a web-ready dataset and serves a local frontend.
 
-## Architecture
+## Project Layout
 
-The simplified system uses just 5 core files:
+- `src/create_cards.py`: Generate player card JSON files from CSV/Parquet.
+- `src/backfill_usage_rates.py`: Recompute/backfill usage rate on existing cards.
+- `src/value_players.py`: Value engine (wins-added style valuation, aging, surplus).
+- `src/analyze_players.py`: Breakout, portability, sanity checks, and report outputs.
+- `prepare_web_data.py`: Consolidate cards + valuations into `web/data`.
+- `serve_web.py`: Local multi-page server (`/`, `/about`, etc.).
+- `web/`: Frontend application.
 
-```
-├── create_cards.py          # Generate player cards from data
-├── value_players.py         # Contract valuation & aging curves
-├── analyze_players.py       # Comprehensive player analysis
-├── utils.py                 # Shared utilities
-├── models.py                # Data models
-└── config.yaml              # Configuration
-```
+## Requirements
 
-## Features
+- Python 3.10+ recommended
+- Pip
 
-### 1. Player Cards (`create_cards.py`)
-Consolidates card generation logic from multiple modules:
-- Generate player profiles from raw statistics (CSV/Parquet)
-- Calculate offensive/defensive metrics
-- Classify player archetypes
-- Compute trust/uncertainty scores
-- Output: Individual JSON cards + summary
-
-### 2. Player Valuation (`value_players.py`)
-Combines contract valuation and aging curve analysis:
-- Convert impact metrics to wins added
-- Calculate market value using $/win conversion
-- Estimate contract surplus value (market value - salary)
-- Apply archetype-based aging curves
-- Generate trade value bands (low/base/high)
-- Output: Valuation reports + top surplus players
-
-### 3. Player Analysis (`analyze_players.py`)
-Comprehensive analysis combining multiple tools:
-- **Breakout Detection**: Identify players with growth potential
-- **Defense Portability**: Assess defensive versatility and matchup flexibility
-- **Impact Sanity Check**: Validate impact metrics for consistency
-- **Scouting Report**: Generate strengths/weaknesses summary
-- Output: Individual analysis + summary of interesting cases
-
-## Quick Start
-
-### 1. Generate Player Cards
+Install dependencies:
 
 ```bash
-python create_cards.py --input data/raw/stats.csv --output data/player_cards
+pip install -r requirements.txt
 ```
 
-Options:
-- `--input`: Input CSV or Parquet file with player stats
-- `--output`: Output directory for player cards (default: `data/player_cards`)
-- `--limit`: Limit number of cards to generate (optional)
-
-### 2. Run Valuation Analysis
+Optional (only if you use Parquet input):
 
 ```bash
-python value_players.py --cards data/player_cards --output valuations/
+pip install pyarrow
 ```
 
-Options:
-- `--cards`: Player cards directory or single card file
-- `--output`: Output directory for valuation reports (default: `valuations`)
+## Quick Start (Local Build + Run)
 
-### 3. Run Comprehensive Analysis
+### 1. Create a virtual environment
+
+Windows (PowerShell):
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+macOS/Linux:
 
 ```bash
-python analyze_players.py --cards data/player_cards --output analysis/
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-Options:
-- `--cards`: Player cards directory or single card file
-- `--output`: Output directory for analysis reports (default: `analysis`)
+### 2. Build/refresh web data
 
-## Data Requirements
-
-### Input Data Format
-
-Player statistics file (CSV or Parquet) should include:
-
-**Required fields:**
-- `player_name` or `name`: Player name
-- `team`: Team abbreviation
-- `season`: Season year
-- `position`: Position (PG, SG, SF, PF, C)
-- `age`: Player age
-
-**Performance metrics:**
-- `points_per_game`, `assists_per_game`, `rebounds_per_game`
-- `steals_per_game`, `blocks_per_game`, `turnovers_per_game`
-- `field_goal_attempts_per_game`, `three_point_attempts_per_game`
-- `minutes_per_game`, `games_played`
-- `usage_rate`, `plus_minus`
-
-**Optional fields:**
-- `player_id`: Unique player identifier
-- `height_in`: Height in inches
-- `weight_lb`: Weight in pounds
-- `defensive_rebounds_per_game`
-
-## Output Structure
-
-### Player Cards
-```json
-{
-  "player": {
-    "id": "...",
-    "name": "...",
-    "team": "...",
-    "season": 2025,
-    "position": "SG",
-    "age": 25.5
-  },
-  "identity": {
-    "usage_band": "med",
-    "primary_archetype": "shooting_specialist",
-    "position": "SG"
-  },
-  "offense": { ... },
-  "defense": { ... },
-  "impact": { ... },
-  "metadata": { ... },
-  "trust": { ... },
-  "uncertainty": { ... }
-}
-```
-
-### Valuation Reports
-```json
-{
-  "player": { ... },
-  "impact": {
-    "wins_added": 3.2
-  },
-  "market_value": {
-    "by_year": { "2025": 11.2, "2026": 11.8, ... }
-  },
-  "contract": {
-    "surplus_by_year": { ... },
-    "npv_surplus": 8.5
-  },
-  "trade_value": {
-    "low": 6.8,
-    "base": 8.5,
-    "high": 10.2
-  },
-  "aging": {
-    "current_phase": "growth",
-    "peak_age": 30.0,
-    "multipliers": { ... }
-  }
-}
-```
-
-### Analysis Reports
-```json
-{
-  "scouting_report": {
-    "role_summary": "Medium-usage shooting_specialist",
-    "strengths": [ ... ],
-    "weaknesses": [ ... ]
-  },
-  "breakout_potential": {
-    "can_breakout": true,
-    "opportunity_score": 72.5,
-    "signal_strength": 68.3
-  },
-  "defense_portability": {
-    "defensive_role": "wing_defender",
-    "portability": {
-      "score": 0.75,
-      "level": "high"
-    }
-  },
-  "impact_sanity": {
-    "sanity_level": "pass",
-    "flags": []
-  }
-}
-```
-
-## Configuration
-
-Edit `config.yaml` to customize:
-- Market parameters ($/win, salary cap, discount rate)
-- Aging curve defaults
-- Analysis thresholds (breakout, defense, trust)
-- Data quality requirements
-- Output settings
-
-## Archetypes
-
-Supported player archetypes:
-- `initiator_creator`: Primary ball handlers, playmakers
-- `shooting_specialist`: 3-point specialists, catch-and-shoot
-- `rim_protector`: Centers, shot blockers
-- `versatile_wing`: 3&D, multi-position defenders
-- `connector`: Role players, high IQ glue guys
-- `athletic_finisher`: Slashers, rim runners
-- `combo_guard`: Secondary creators
-
-Each archetype has unique aging curves and valuation parameters.
-
-## Aging Phases
-
-Players progress through aging phases:
-- `pre_growth`: Very young, developing (< 20)
-- `growth`: Rapid improvement phase (20-26)
-- `plateau`: Peak performance window (26-32)
-- `decline`: Gradual decline phase (32+)
-
-Timing varies by archetype (e.g., shooters peak later, athletic players earlier).
-
-## Dependencies
+If you already have final cards in `data/processed/player_cards/*_final.json`:
 
 ```bash
-pip install pandas numpy pyyaml
+python prepare_web_data.py
 ```
 
-Optional:
-```bash
-pip install pyarrow  # For Parquet support
-```
-
-## Example Workflow
+If you also want the college card page payload:
 
 ```bash
-# 1. Generate cards from your data
-python create_cards.py --input data/nba_stats_2025.csv --output data/cards
-
-# 2. Run valuation
-python value_players.py --cards data/cards --output reports/valuations
-
-# 3. Run analysis
-python analyze_players.py --cards data/cards --output reports/analysis
-
-# 4. Check outputs
-ls reports/valuations/valuation_summary.json
-ls reports/analysis/analysis_summary.json
+python prepare_web_college_data.py
 ```
 
-## Legacy System
+### 3. Serve the site locally
 
-The original complex system is preserved in:
-- `core/`: Original modular implementation
-- `nba_var/`: NBA-VAR 7-engine architecture
-- `data/`: Data pipeline and processing
+```bash
+python serve_web.py
+```
 
-This simplified system consolidates that functionality into minimal files for easier use and maintenance.
+Then open:
 
-## License
+- `http://localhost:8000/` (landing page)
+- `http://localhost:8000/college` (college cards page)
+- `http://localhost:8000/about` (methodology page)
 
-MIT License
+## Full Pipeline (From Raw Stats)
+
+### A. Generate cards from raw data
+
+```bash
+python src/create_cards.py --input data/raw/practical_player_card_data.csv --output data/processed/player_cards
+```
+
+### B. (Optional) Backfill accurate usage rates
+
+```bash
+python src/backfill_usage_rates.py --raw data/raw/practical_player_card_data.csv --cards data/processed/player_cards
+```
+
+### C. Run valuation outputs
+
+```bash
+python src/value_players.py --cards data/processed/player_cards --output data/valuations
+```
+
+### D. Run analysis outputs
+
+```bash
+python src/analyze_players.py --cards data/processed/player_cards --output data/breakout
+```
+
+### E. Build frontend data bundle and run site
+
+```bash
+python prepare_web_data.py
+python serve_web.py
+```
+
+## Expected Input Data
+
+Your raw CSV should include (at minimum):
+
+- Player identifiers: `player_name` or `name`, `team`, `season`, `position`, `age`
+- Box stats: `points_per_game`, `assists_per_game`, `rebounds_per_game`
+- Supporting stats: `steals_per_game`, `blocks_per_game`, `turnovers_per_game`
+- Volume fields: `field_goal_attempts_per_game`, `three_point_attempts_per_game`
+- Time/sample: `minutes_per_game`, `games_played`
+- Impact/context fields when available: `usage_rate`, `plus_minus`
+
+## Output Artifacts
+
+- `data/processed/player_cards/*_final.json`: canonical card objects
+- `data/valuations/`: valuation reports and summaries
+- `data/breakout/`: breakout and fit analysis reports
+- `web/data/cards.json`: combined card payload for frontend
+- `web/data/valuations.json`: combined valuation payload for frontend
+
+## College Data Backend (Robots-Compliant)
+
+Build raw and canonical college player-season data (Sports-Reference CBB) with robots.txt enforcement:
+
+```bash
+python src/build_college_player_data.py --season-start 2021 --season-end 2025
+```
+
+If season-level player pages are unavailable, auto mode falls back to player profile crawling:
+
+```bash
+python src/build_college_player_data.py --season-start 2024 --season-end 2025 --collection-mode auto
+```
+
+For quick smoke tests:
+
+```bash
+python src/build_college_player_data.py --season-start 2024 --season-end 2024 --collection-mode player_pages --max-player-pages 250
+```
+
+Outputs:
+
+- `data/raw/college/players_per_game_raw/*.csv`
+- `data/raw/college/players_advanced_raw/*.csv`
+- `data/processed/college/players_season.csv`
+- `data/processed/college/build_summary.json`
+
+Compliance behavior:
+
+- checks `robots.txt` before each request
+- enforces crawl-delay where available
+- throttles requests with conservative fallback delay
+- skips disallowed URLs and records them in summary output
+
+## College Player Valuation (NBA-Style + Verification)
+
+Run the same valuation framework used for NBA cards against college player-season rows:
+
+```bash
+python src/value_college_players.py --input data/processed/college/players_season.csv --output data/valuations/college
+```
+
+The valuation run also writes a compliance/logic verification report:
+
+- `data/valuations/college/college_valuation_summary.json`
+- `data/valuations/college/college_valuation_verification.json`
+
+Verification checks include:
+
+- required core/provenance columns (`player_key`, `team_key`, `source_url`, etc.)
+- robots enforcement status from `data/processed/college/build_summary.json`
+- valuation invariants (finite values, surplus consistency, NPV consistency, trade-band ordering)
+
+Use a non-failing verification mode if you want output even when checks fail:
+
+```bash
+python src/value_college_players.py --non-strict-verify
+```
+
+## College Pillar Parity Audit
+
+Validate whether college rows can compute the same core pillars used for NBA valuation + breakout:
+
+```bash
+python src/validate_college_metric_parity.py --input data/processed/college/players_season.csv
+```
+
+Output:
+
+- `data/processed/college/metric_parity_report.json`
+
+The audit checks three groups:
+
+- valuation pillars (`wins_added`, market curve, surplus/NPV, trade bands, aging)
+- breakout pillars (opportunity, signal strength, confidence, defense portability, impact sanity)
+- isolation pillars (trust/uncertainty + player-signal + provenance availability)
+
+## Notes
+
+- The web app reads from `web/data/cards.json` and `web/data/valuations.json`.
+- `serve_web.py` supports clean routes for HTML pages (example: `/about` -> `about.html`).
+- If frontend changes do not appear, do a hard refresh (`Ctrl+F5`).
