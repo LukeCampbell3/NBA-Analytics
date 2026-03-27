@@ -15,6 +15,7 @@ import pandas as pd
 REPO_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(REPO_ROOT / "inference"))
 
+from market_validation import backtest_history, print_validation_summary, save_validation_outputs, summarize_validation_records
 from structured_stack_inference import StructuredStackInference
 
 
@@ -62,6 +63,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--run-id", type=str, default=None, help="Specific immutable run id.")
     parser.add_argument("--latest", action="store_true", help="Use latest manifest instead of production.")
     parser.add_argument("--debug", action="store_true", help="Include debug payload in output.")
+    parser.add_argument("--validate-history", action="store_true", help="Backtest historical rows in this CSV against actual stats and market lines.")
+    parser.add_argument("--max-validation-rows", type=int, default=0, help="Optional limit for the most recent validation rows.")
+    parser.add_argument("--validation-csv-out", type=Path, default=None, help="Optional row-level validation CSV output.")
+    parser.add_argument("--validation-json-out", type=Path, default=None, help="Optional validation summary JSON output.")
     return parser.parse_args()
 
 
@@ -79,6 +84,40 @@ def main() -> None:
     history_df = pd.read_csv(csv_path)
     if history_df.empty:
         raise RuntimeError(f"History CSV is empty: {csv_path}")
+
+    if args.validate_history:
+        rows, failures = backtest_history(
+            predictor,
+            history_df,
+            csv_path=csv_path,
+            player_name=args.player or (str(history_df["Player"].iloc[0]) if "Player" in history_df.columns else csv_path.parent.name),
+            min_history_rows=int(getattr(predictor, "seq_len", 10)),
+            max_predictions=args.max_validation_rows if args.max_validation_rows > 0 else None,
+        )
+        rows_df = pd.DataFrame.from_records(rows)
+        summary = summarize_validation_records(rows_df, failures=failures)
+        print_validation_summary(summary)
+        if not rows_df.empty:
+            preview_cols = [
+                "date",
+                "actual_PTS",
+                "pred_PTS",
+                "market_PTS",
+                "directional_correct_PTS",
+                "actual_TRB",
+                "pred_TRB",
+                "market_TRB",
+                "directional_correct_TRB",
+                "actual_AST",
+                "pred_AST",
+                "market_AST",
+                "directional_correct_AST",
+            ]
+            preview_cols = [col for col in preview_cols if col in rows_df.columns]
+            print("\nRecent rows:")
+            print(rows_df[preview_cols].tail(10).to_string(index=False))
+        save_validation_outputs(rows_df, summary, args.validation_csv_out, args.validation_json_out)
+        return
 
     explain = predictor.predict(history_df.tail(int(args.rows)), assume_prepared=True, return_debug=bool(args.debug))
 

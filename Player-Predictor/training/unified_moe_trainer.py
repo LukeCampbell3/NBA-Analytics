@@ -19,7 +19,6 @@ KEY ANTI-COLLAPSE FEATURES:
 Expected: All 11 experts at 5-15% usage each
 """
 
-import os
 import sys
 from pathlib import Path
 import tensorflow as tf
@@ -79,103 +78,6 @@ class RouterNoise(tf.keras.layers.Layer):
 
 def _huber(delta=1.0):
     return tf.keras.losses.Huber(delta=delta, reduction=tf.keras.losses.Reduction.NONE)
-
-
-def _iter_training_csvs(player_dir: Path):
-    """Yield candidate processed season files for a player directory."""
-    patterns = ("*_processed.csv", "*_processed_processed.csv", "*.csv")
-    seen = set()
-    for pattern in patterns:
-        for file_path in player_dir.glob(pattern):
-            resolved = str(file_path.resolve())
-            if resolved in seen:
-                continue
-            seen.add(resolved)
-            yield file_path
-
-
-def _contains_training_csvs(data_dir: Path) -> bool:
-    """Return True when a directory looks like a player-organized training root."""
-    if not data_dir.exists() or not data_dir.is_dir():
-        return False
-    for player_dir in data_dir.iterdir():
-        if not player_dir.is_dir():
-            continue
-        if any(_iter_training_csvs(player_dir)):
-            return True
-    return False
-
-
-def _resolve_training_data_dir() -> Path:
-    """
-    Locate the processed training dataset across legacy and current repo layouts.
-
-    Expected layout:
-      <data_root>/<Player_Name>/<season>_processed.csv
-      <data_root>/<Player_Name>/<season>_processed_processed.csv
-    """
-    module_root = Path(__file__).resolve().parent.parent
-    search_roots = [
-        module_root,
-        module_root.parent,
-        Path.cwd().resolve(),
-        Path.cwd().resolve().parent,
-    ]
-    candidate_suffixes = [
-        Path("Data"),
-        Path("Data-Proc"),
-        Path("Data-Proc-OG"),
-        Path("Data-org"),
-        Path("data"),
-        Path("data") / "processed",
-        Path("data copy"),
-        Path("data copy") / "processed",
-    ]
-    env_candidates = [
-        os.environ.get("PLAYER_PREDICTOR_DATA_DIR"),
-        os.environ.get("NBA_ANALYTICS_DATA_DIR"),
-    ]
-
-    candidates = []
-    for raw_path in env_candidates:
-        if raw_path:
-            candidates.append(Path(raw_path).expanduser())
-    for root in search_roots:
-        candidates.extend(root / suffix for suffix in candidate_suffixes)
-
-    seen = set()
-    existing_dirs = []
-    searched_dirs = []
-    for candidate in candidates:
-        try:
-            resolved = candidate.resolve(strict=False)
-        except OSError:
-            resolved = candidate
-        dedupe_key = str(resolved).lower()
-        if dedupe_key in seen:
-            continue
-        seen.add(dedupe_key)
-        searched_dirs.append(resolved)
-        if not resolved.exists() or not resolved.is_dir():
-            continue
-        existing_dirs.append(resolved)
-        if _contains_training_csvs(resolved):
-            return resolved
-
-    searched = ", ".join(str(path) for path in searched_dirs)
-    if existing_dirs:
-        existing = ", ".join(str(path) for path in existing_dirs)
-        raise FileNotFoundError(
-            "Found candidate data directories, but none contained player season CSVs. "
-            f"Existing directories: {existing}. Searched: {searched}. "
-            "Expected layout is <data_root>/<Player>/<season>_processed.csv. "
-            "Set PLAYER_PREDICTOR_DATA_DIR to the correct folder or rebuild Data-Proc with "
-            "scripts/update_nba_processed_data.py."
-        )
-    raise FileNotFoundError(
-        f"No data directory found. Searched: {searched}. "
-        "Set PLAYER_PREDICTOR_DATA_DIR to your processed data root if it lives elsewhere."
-    )
 
 
 def focal_bce(y_true, y_prob, gamma=2.0, alpha=0.25, eps=1e-7):
@@ -1080,7 +982,17 @@ class UnifiedMoETrainer(ImprovedBaselineTrainer):
         print("\n Loading and preparing data...")
         
         # Load data from all players
-        data_dir = _resolve_training_data_dir()
+        repo_root = Path(__file__).resolve().parent.parent
+        candidate_dirs = [
+            repo_root / "Data",
+            repo_root / "Data-Proc",
+            repo_root / "Data-Proc-OG",
+            repo_root / "Data-org",
+        ]
+        data_dir = next((path for path in candidate_dirs if path.exists() and path.is_dir()), None)
+        if data_dir is None:
+            searched = ", ".join(str(path) for path in candidate_dirs)
+            raise FileNotFoundError(f"No data directory found. Searched: {searched}")
         print(f"   Using data directory: {data_dir}")
         all_dfs = []
         
@@ -1089,7 +1001,11 @@ class UnifiedMoETrainer(ImprovedBaselineTrainer):
                 continue
             
             player_name = player_dir.name
-            processed_files = list(_iter_training_csvs(player_dir))
+            processed_files = list(player_dir.glob("*_processed.csv"))
+            if not processed_files:
+                processed_files = list(player_dir.glob("*_processed_processed.csv"))
+            if not processed_files:
+                processed_files = list(player_dir.glob("*.csv"))
             
             for file in processed_files:
                 df = pd.read_csv(file)
