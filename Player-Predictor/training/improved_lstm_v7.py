@@ -2870,11 +2870,8 @@ def main(epochs_override=None, batch_size_override=None, save_only=False):
     schema_payload = build_schema_payload(metadata)
     schema_text = json.dumps(schema_payload, indent=2)
 
-    Path("model/lstm_v7_feature_schema.json").write_text(schema_text, encoding="utf-8")
     (run_dir / "lstm_v7_feature_schema.json").write_text(schema_text, encoding="utf-8")
 
-    with open("model/lstm_v7_metadata.json", "w", encoding="utf-8") as f:
-        json.dump(metadata, f, indent=2)
     (run_dir / "lstm_v7_metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
 
     latest_manifest = {
