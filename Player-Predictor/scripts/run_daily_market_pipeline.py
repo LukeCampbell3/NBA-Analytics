@@ -8,8 +8,10 @@ It performs:
 2. collect recent Covers prop lines for both recent historical games and the
    current/upcoming slate
 3. align historical market lines onto the current season processed files
-4. build a filtered current-slate market snapshot
-5. run the market decision pipeline and write dated outputs
+4. refresh the historical inference backtest calibration CSV
+5. build a filtered current-slate market snapshot
+6. run the market decision pipeline and write dated outputs
+7. rebuild the static site bundle so dist/predictions/index.html is current
 """
 
 from __future__ import annotations
@@ -42,6 +44,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--skip-update-data", action="store_true", help="Skip official game-log refresh.")
     parser.add_argument("--skip-collect-market", action="store_true", help="Skip Covers market collection.")
     parser.add_argument("--skip-align", action="store_true", help="Skip market alignment onto processed files.")
+    parser.add_argument("--skip-backtest", action="store_true", help="Skip refreshing the historical inference calibration CSV.")
     parser.add_argument(
         "--allow-heuristic-fallback",
         action="store_true",
@@ -165,6 +168,20 @@ def main() -> None:
             ],
         )
 
+    if not args.skip_backtest:
+        run_step(
+            f"Refresh Historical Inference Backtest For Season {season}",
+            [
+                args.python,
+                "scripts/backtest_inference_accuracy.py",
+                "--season",
+                str(season),
+                "--strict-csv-out",
+                str(args.history_csv),
+                *(["--latest"] if args.latest else []),
+            ],
+        )
+
     latest_market_path = MARKET_ROOT / "latest_player_props_wide.parquet"
     current_snapshot_path = run_dir / f"current_market_snapshot_{run_stamp}.parquet"
     current_rows, snapshot_meta = filter_current_market_snapshot(latest_market_path, current_snapshot_path, local_date, args.future_days)
@@ -216,6 +233,7 @@ def main() -> None:
         "skip_update_data": bool(args.skip_update_data),
         "skip_collect_market": bool(args.skip_collect_market),
         "skip_align": bool(args.skip_align),
+        "skip_backtest": bool(args.skip_backtest),
         "allow_heuristic_fallback": bool(args.allow_heuristic_fallback),
         "updated_at_utc": datetime.utcnow().isoformat() + "Z",
     }
@@ -231,6 +249,18 @@ def main() -> None:
             str(manifest_path),
             "--out-dist",
             str(SITE_ROOT / "dist" / "data" / "daily_predictions.json"),
+        ],
+    )
+
+    run_step(
+        "Rebuild Static Site Bundle",
+        [
+            args.python,
+            str(SITE_ROOT / "build_static_site.py"),
+            "--source",
+            str(SITE_ROOT / "web"),
+            "--output",
+            str(SITE_ROOT / "dist"),
         ],
     )
 
