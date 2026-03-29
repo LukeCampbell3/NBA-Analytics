@@ -22,6 +22,9 @@ class StrategyConfig:
     american_odds: int = -110
     elite_pct: float = 0.95
     probability_shrink_factor: float = 0.80
+    ranking_mode: str = "ev_adjusted"
+    xgb_ltr_min_train_rows: int = 4000
+    xgb_ltr_num_pair_per_sample: int = 12
     min_ev: float = 0.0
     min_final_confidence: float = 0.03
     min_recommendation: str = "consider"
