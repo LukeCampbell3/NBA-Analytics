@@ -28,6 +28,7 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 from build_upcoming_slate import MODEL_DIR, build_records, load_market_wide, resolve_manifest_path
 from decision_engine.policy_tuning import build_default_shadow_strategies
+from decision_engine.xgb_ltr_reranker import score_selector_with_xgb_ltr
 from post_process_market_plays import compute_final_board
 from select_market_plays import build_history_lookup, build_play_rows
 from structured_stack_inference import StructuredStackInference
@@ -160,6 +161,24 @@ def apply_live_policy_calibration(selector_df: pd.DataFrame, policy_payload: dic
     return out
 
 
+def maybe_apply_xgb_ltr_reranker(selector_df: pd.DataFrame, history_df: pd.DataFrame, policy_payload: dict) -> tuple[pd.DataFrame, dict | None]:
+    if selector_df.empty:
+        return selector_df.copy(), None
+    if str(policy_payload.get("ranking_mode", "ev_adjusted")) != "xgb_ltr":
+        return selector_df.copy(), None
+    if history_df.empty:
+        out = selector_df.copy()
+        out["xgb_ltr_score"] = np.nan
+        out["xgb_ltr_enabled"] = False
+        return out, {"enabled": False, "reason": "empty_history"}
+    return score_selector_with_xgb_ltr(
+        selector_df,
+        history_df,
+        min_train_rows=int(policy_payload.get("xgb_ltr_min_train_rows", 4000)),
+        num_pair_per_sample=int(policy_payload.get("xgb_ltr_num_pair_per_sample", 12)),
+    )
+
+
 def summarize_skip_reasons(skipped_rows: list[dict]) -> dict[str, int]:
     counts: dict[str, int] = {}
     for item in skipped_rows:
@@ -259,6 +278,7 @@ def main() -> None:
         print(f"Warning: history CSV not found ({history_path}); using heuristic edge calibration.")
     selector_df = build_play_rows(slate_df, history_lookup)
     selector_df = apply_live_policy_calibration(selector_df, policy_payload)
+    selector_df, xgb_ltr_summary = maybe_apply_xgb_ltr_reranker(selector_df, history_df, policy_payload)
     if selector_df.empty:
         raise RuntimeError("Selector produced no rows from the current slate.")
     args.selector_csv_out.parent.mkdir(parents=True, exist_ok=True)
@@ -270,6 +290,7 @@ def main() -> None:
         min_ev=policy_payload["min_ev"],
         min_final_confidence=policy_payload["min_final_confidence"],
         min_recommendation=policy_payload["min_recommendation"],
+        ranking_mode=policy_payload.get("ranking_mode", "ev_adjusted"),
         max_plays_per_player=policy_payload["max_plays_per_player"],
         max_plays_per_target=policy_payload["max_plays_per_target"],
         max_total_plays=policy_payload["max_total_plays"],
@@ -291,6 +312,7 @@ def main() -> None:
         "season": args.season,
         "policy_profile": args.policy_profile,
         "policy": policy_payload,
+        "xgb_ltr": xgb_ltr_summary,
         "slate_rows": int(len(slate_df)),
         "selector_rows": int(len(selector_df)),
         "final_rows": int(len(final_board)),

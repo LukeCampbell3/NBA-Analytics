@@ -20,6 +20,7 @@ import contextlib
 from pathlib import Path
 from datetime import datetime
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 from tensorflow.keras import Model, regularizers
 from tensorflow.keras.layers import (
@@ -1873,7 +1874,81 @@ def evaluate_predictions(pred_orig, y_val_orig, b_val_orig, target_names, header
     return avg_mae, metrics
 
 
-def evaluate_rolling_windows(pred_orig, y_true_orig, target_names, header, n_windows=4):
+def _sequence_order_values(sequence_meta):
+    if sequence_meta is None:
+        return None
+    meta = pd.DataFrame(sequence_meta).reset_index(drop=True)
+    if meta.empty:
+        return None
+
+    if "target_date" in meta.columns:
+        parsed_dates = pd.to_datetime(meta["target_date"], errors="coerce")
+        if int(parsed_dates.notna().sum()) >= max(8, len(meta) // 4):
+            values = parsed_dates.map(lambda value: float(value.value) if pd.notna(value) else np.nan).to_numpy(dtype=np.float64)
+            if np.isfinite(values).any():
+                fill_value = float(np.nanmin(values))
+                missing = ~np.isfinite(values)
+                if missing.any():
+                    values[missing] = fill_value - 1.0
+                return values
+
+    if "game_index" in meta.columns:
+        values = pd.to_numeric(meta["game_index"], errors="coerce").to_numpy(dtype=np.float64)
+        if np.isfinite(values).any():
+            fill_value = float(np.nanmin(values))
+            missing = ~np.isfinite(values)
+            if missing.any():
+                values[missing] = fill_value - 1.0
+            return values
+
+    return np.arange(len(meta), dtype=np.float64)
+
+
+def build_player_tail_split(sequence_meta, val_fraction=0.20, min_train_rows=8, min_val_rows=1):
+    if sequence_meta is None:
+        return None, None
+    meta = pd.DataFrame(sequence_meta).reset_index(drop=True)
+    if meta.empty or "player" not in meta.columns:
+        return None, None
+
+    val_mask = np.zeros(len(meta), dtype=bool)
+    for _player, player_rows in meta.groupby("player", sort=False):
+        player_idx = player_rows.index.to_numpy(dtype=int)
+        row_count = len(player_idx)
+        if row_count < (int(min_train_rows) + int(min_val_rows)):
+            continue
+        val_count = max(int(min_val_rows), int(np.floor(row_count * float(val_fraction))))
+        val_count = min(val_count, row_count - int(min_train_rows))
+        if val_count <= 0:
+            continue
+        val_mask[player_idx[-val_count:]] = True
+
+    if not val_mask.any() or int((~val_mask).sum()) == 0:
+        return None, None
+    return np.flatnonzero(~val_mask), np.flatnonzero(val_mask)
+
+
+def build_recency_sample_weights(sequence_meta):
+    if sequence_meta is None:
+        return None
+    order_values = _sequence_order_values(sequence_meta)
+    if order_values is None or len(order_values) == 0:
+        return None
+    order_values = np.asarray(order_values, dtype=np.float64)
+    order_rank = pd.Series(order_values).rank(method="average").to_numpy(dtype=np.float64)
+    if not np.isfinite(order_rank).any():
+        return None
+    lo = float(np.nanmin(order_rank))
+    hi = float(np.nanmax(order_rank))
+    if hi <= lo:
+        return np.ones(len(order_rank), dtype=np.float32)
+    scaled = (order_rank - lo) / (hi - lo)
+    weights = np.exp(-1.0 + scaled)
+    weights /= np.mean(weights)
+    return weights.astype(np.float32)
+
+
+def evaluate_rolling_windows(pred_orig, y_true_orig, target_names, header, n_windows=4, sequence_meta=None):
     n_samples = len(y_true_orig)
     if n_samples < max(40, n_windows * 8):
         return {
@@ -1881,6 +1956,12 @@ def evaluate_rolling_windows(pred_orig, y_true_orig, target_names, header, n_win
             "window_size": int(n_samples),
             "targets": {},
         }
+
+    order_values = _sequence_order_values(sequence_meta)
+    if order_values is not None and len(order_values) == n_samples:
+        order = np.argsort(order_values, kind="mergesort")
+        pred_orig = np.asarray(pred_orig)[order]
+        y_true_orig = np.asarray(y_true_orig)[order]
 
     window_size = max(1, n_samples // n_windows)
     summary = {
@@ -1912,7 +1993,13 @@ def evaluate_rolling_windows(pred_orig, y_true_orig, target_names, header, n_win
     return summary
 
 
-def rolling_window_stats_1d(pred, truth, n_windows=4):
+def rolling_window_stats_1d(pred, truth, n_windows=4, order_values=None):
+    pred = np.asarray(pred)
+    truth = np.asarray(truth)
+    if order_values is not None and len(order_values) == len(truth):
+        order = np.argsort(np.asarray(order_values), kind="mergesort")
+        pred = pred[order]
+        truth = truth[order]
     n_samples = len(truth)
     if n_samples == 0:
         return {"mean": 0.0, "std": 0.0, "max": 0.0, "min": 0.0}
@@ -2150,7 +2237,8 @@ def run_pts_latent_ablation(
 
 
 def train_catboost_delta(X_train, b_train, delta_train, X_val, b_val, delta_val, y_val_orig, scaler_y, target_names,
-                         pts_augmented=None, latent_augmented=None, structured_latent_pair=None, config=None):
+                         pts_augmented=None, latent_augmented=None, structured_latent_pair=None, config=None,
+                         train_sequence_meta=None, val_sequence_meta=None):
     if CatBoostRegressor is None:
         raise ImportError("catboost is required for improved_lstm stacking mode")
 
@@ -2186,8 +2274,11 @@ def train_catboost_delta(X_train, b_train, delta_train, X_val, b_val, delta_val,
     models = []
     delta_pred = np.zeros_like(delta_val)
     model_info = []
-    recency_weight_train = np.exp(np.linspace(-1.0, 0.0, len(X_train))).astype(np.float32)
-    recency_weight_train = recency_weight_train / np.mean(recency_weight_train)
+    recency_weight_train = build_recency_sample_weights(train_sequence_meta)
+    if recency_weight_train is None or len(recency_weight_train) != len(X_train):
+        recency_weight_train = np.exp(np.linspace(-1.0, 0.0, len(X_train))).astype(np.float32)
+        recency_weight_train = recency_weight_train / np.mean(recency_weight_train)
+    val_order_values = _sequence_order_values(val_sequence_meta)
     print("\n" + "=" * 80)
     print("CATBOOST DELTA MODEL")
     print("=" * 80)
@@ -2416,7 +2507,12 @@ def train_catboost_delta(X_train, b_train, delta_train, X_val, b_val, delta_val,
             full_delta[:, t_idx] = candidate_delta
             pred_orig = scaler_y.inverse_transform(b_val + full_delta)
             mae = mean_absolute_error(y_val_orig[:, t_idx], pred_orig[:, t_idx])
-            rolling_stats = rolling_window_stats_1d(pred_orig[:, t_idx], y_val_orig[:, t_idx], n_windows=4)
+            rolling_stats = rolling_window_stats_1d(
+                pred_orig[:, t_idx],
+                y_val_orig[:, t_idx],
+                n_windows=4,
+                order_values=val_order_values,
+            )
             score = candidate_score(mae, rolling_stats)
             candidate_records.append({
                 "name": candidate_name,
@@ -2465,7 +2561,12 @@ def train_catboost_delta(X_train, b_train, delta_train, X_val, b_val, delta_val,
                 full_delta[:, t_idx] = blended_delta
                 pred_orig = scaler_y.inverse_transform(b_val + full_delta)
                 mae = mean_absolute_error(y_val_orig[:, t_idx], pred_orig[:, t_idx])
-                rolling_stats = rolling_window_stats_1d(pred_orig[:, t_idx], y_val_orig[:, t_idx], n_windows=4)
+                rolling_stats = rolling_window_stats_1d(
+                    pred_orig[:, t_idx],
+                    y_val_orig[:, t_idx],
+                    n_windows=4,
+                    order_values=val_order_values,
+                )
                 score = candidate_score(mae, rolling_stats)
                 if score + 1e-8 < best_score or (abs(score - best_score) <= 1e-8 and mae + 1e-6 < best_mae):
                     best_mae = float(mae)
@@ -2567,12 +2668,27 @@ def main(epochs_override=None, batch_size_override=None, save_only=False):
     print("=" * 80)
 
     trainer = create_shared_trainer()
-    X, baselines, y, _df = trainer.prepare_data()
+    X, baselines, y, sequence_meta = trainer.prepare_data()
 
-    split_idx = int(len(X) * 0.8)
-    X_train, X_val = X[:split_idx], X[split_idx:]
-    b_train, b_val = baselines[:split_idx], baselines[split_idx:]
-    y_train, y_val = y[:split_idx], y[split_idx:]
+    train_idx, val_idx = build_player_tail_split(sequence_meta, val_fraction=0.20, min_train_rows=8, min_val_rows=1)
+    split_strategy = "player_tail_holdout"
+    if train_idx is None or val_idx is None:
+        split_idx = int(len(X) * 0.8)
+        train_idx = np.arange(split_idx, dtype=int)
+        val_idx = np.arange(split_idx, len(X), dtype=int)
+        split_strategy = "global_position_fallback"
+
+    X_train, X_val = X[train_idx], X[val_idx]
+    b_train, b_val = baselines[train_idx], baselines[val_idx]
+    y_train, y_val = y[train_idx], y[val_idx]
+    train_meta = None if sequence_meta is None else pd.DataFrame(sequence_meta).iloc[train_idx].reset_index(drop=True)
+    val_meta = None if sequence_meta is None else pd.DataFrame(sequence_meta).iloc[val_idx].reset_index(drop=True)
+
+    print(f"\nValidation split: {split_strategy} | train={len(train_idx)} val={len(val_idx)}")
+    if val_meta is not None and not val_meta.empty and "target_date" in val_meta.columns:
+        val_dates = pd.to_datetime(val_meta["target_date"], errors="coerce").dropna()
+        if not val_dates.empty:
+            print(f"  Validation target dates: {val_dates.min().date()} -> {val_dates.max().date()}")
 
     delta_train = y_train - b_train
     delta_val = y_val - b_val
@@ -2701,6 +2817,8 @@ def main(epochs_override=None, batch_size_override=None, save_only=False):
         latent_augmented=latent_augmented,
         structured_latent_pair=(structured_train_latents, structured_val_latents),
         config=config,
+        train_sequence_meta=train_meta,
+        val_sequence_meta=val_meta,
     )
     extra_feature_block_dims = {}
     if pts_latent_ablation and pts_latent_ablation.get("best_subset_blocks"):
@@ -2786,6 +2904,7 @@ def main(epochs_override=None, batch_size_override=None, save_only=False):
             trainer.target_columns,
             "CATBOOST DELTA ROLLING-WINDOW ROBUSTNESS",
             n_windows=4,
+            sequence_meta=val_meta,
         )
 
         meta_models, meta_delta = train_meta_blend(
@@ -2928,6 +3047,14 @@ def main(epochs_override=None, batch_size_override=None, save_only=False):
         "pts_latent_ablation": pts_latent_ablation,
         "targetwise_methods": targetwise_methods,
         "targetwise_summary": targetwise_summary,
+        "validation_split": {
+            "strategy": split_strategy,
+            "train_rows": int(len(train_idx)),
+            "val_rows": int(len(val_idx)),
+            "val_fraction": 0.20,
+            "val_date_min": str(pd.to_datetime(val_meta["target_date"], errors="coerce").min().date()) if val_meta is not None and not val_meta.empty and "target_date" in val_meta.columns and pd.to_datetime(val_meta["target_date"], errors="coerce").notna().any() else None,
+            "val_date_max": str(pd.to_datetime(val_meta["target_date"], errors="coerce").max().date()) if val_meta is not None and not val_meta.empty and "target_date" in val_meta.columns and pd.to_datetime(val_meta["target_date"], errors="coerce").notna().any() else None,
+        },
         "config": config,
         "results": {
             "structured_lstm_ensemble": structured_metrics,

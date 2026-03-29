@@ -138,6 +138,7 @@ def compute_final_board(
     min_ev: float = 0.0,
     min_final_confidence: float = 0.02,
     min_recommendation: str = "consider",
+    ranking_mode: str = "ev_adjusted",
     max_plays_per_player: int = 1,
     max_plays_per_target: int = 8,
     max_total_plays: int = 20,
@@ -162,6 +163,7 @@ def compute_final_board(
     edge_baseline = out.groupby("target")["abs_edge"].transform(lambda s: s.median() if len(s) else 1.0).replace(0.0, 1.0)
     out["edge_scale"] = (out["abs_edge"] / edge_baseline).clip(lower=0.50, upper=2.50)
     out["ev_adjusted"] = out["ev"] * (1.0 + float(edge_adjust_k) * (out["edge_scale"] - 1.0))
+    out["ranking_mode"] = str(ranking_mode)
 
     out = out.loc[out["recommendation_rank"] <= minimum_recommendation_rank(min_recommendation)].copy()
     out = out.loc[out["ev"] >= float(min_ev)].copy()
@@ -170,10 +172,12 @@ def compute_final_board(
     if out.empty:
         return out
 
-    out = out.sort_values(
-        ["ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"],
-        ascending=[False, False, False, False],
-    )
+    rank_columns = ["ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
+    if str(ranking_mode) == "xgb_ltr" and "xgb_ltr_score" in out.columns:
+        out["xgb_ltr_score"] = pd.to_numeric(out["xgb_ltr_score"], errors="coerce").fillna(-1.0)
+        rank_columns = ["xgb_ltr_score", "ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
+
+    out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns))
     out = out.groupby("player", as_index=False, sort=False).head(max_plays_per_player).copy()
     if max_target_plays:
         parts = []
@@ -184,10 +188,7 @@ def compute_final_board(
         out = out.groupby("target", as_index=False, sort=False).head(max_plays_per_target).copy()
     if max_total_plays > 0:
         out = out.head(max_total_plays).copy()
-    out = out.sort_values(
-        ["ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"],
-        ascending=[False, False, False, False],
-    ).drop(columns=["recommendation_rank"])
+    out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).drop(columns=["recommendation_rank"])
     out = out.reset_index(drop=True)
     return out
 
@@ -205,6 +206,7 @@ def main() -> None:
         min_ev=args.min_ev,
         min_final_confidence=args.min_final_confidence,
         min_recommendation=args.min_recommendation,
+        ranking_mode="ev_adjusted",
         max_plays_per_player=args.max_plays_per_player,
         max_plays_per_target=args.max_plays_per_target,
         max_total_plays=args.max_total_plays,
