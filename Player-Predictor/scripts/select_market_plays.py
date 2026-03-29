@@ -62,6 +62,11 @@ def parse_args() -> argparse.Namespace:
         default=Path("model/analysis/upcoming_market_play_selector.csv"),
         help="Output ranked plays CSV path",
     )
+    parser.add_argument(
+        "--disable-volatility-adjustment",
+        action="store_true",
+        help="Disable volatility/spike-aware risk adjustment and use raw gap logic only.",
+    )
     return parser.parse_args()
 
 
@@ -168,7 +173,96 @@ def heuristic_percentile_and_rate(target: str, abs_gap: float) -> tuple[float, f
     return gap_pct, expected_rate
 
 
-def build_play_rows(slate_df: pd.DataFrame, history_lookup: dict[str, dict]) -> pd.DataFrame:
+def _clip01(value: float, default: float = 0.0) -> float:
+    numeric = safe_float(value, default=default)
+    return float(np.clip(numeric, 0.0, 1.0))
+
+
+def _risk_profile(
+    row: pd.Series,
+    target: str,
+    pred: float,
+    direction: str,
+) -> dict[str, float | bool]:
+    sigma = max(0.0, safe_float(row.get(f"{target}_uncertainty_sigma"), default=0.0))
+    pred_scale = max(1.0, abs(pred))
+    sigma_ratio = sigma / pred_scale
+    sigma_norm = float(np.clip(sigma_ratio / 0.45, 0.0, 1.0))
+    spike_probability = _clip01(row.get(f"{target}_spike_probability"), default=0.50)
+    belief = _clip01(row.get("belief_uncertainty"), default=0.50)
+    volatility_regime = _clip01(row.get("volatility_regime_risk"), default=sigma_norm)
+    feasibility = _clip01(row.get("feasibility"), default=0.60)
+    minutes_instability = float(np.clip(1.0 - feasibility, 0.0, 1.0))
+    if direction == "UNDER":
+        tail_imbalance = spike_probability
+    elif direction == "OVER":
+        tail_imbalance = 1.0 - spike_probability
+    else:
+        tail_imbalance = 0.50
+
+    volatility_score = float(
+        np.clip(
+            0.28 * sigma_norm
+            + 0.28 * spike_probability
+            + 0.18 * belief
+            + 0.14 * volatility_regime
+            + 0.12 * minutes_instability,
+            0.0,
+            1.0,
+        )
+    )
+    risk_penalty = float(np.clip(0.80 * volatility_score + 0.20 * tail_imbalance, 0.0, 0.90))
+    spike_flag = bool(
+        (spike_probability >= 0.72 and sigma_norm >= 0.30)
+        or (volatility_score >= 0.67)
+        or (belief >= 0.75 and sigma_norm >= 0.20)
+    )
+    return {
+        "sigma_ratio": sigma_ratio,
+        "sigma_norm": sigma_norm,
+        "spike_probability": spike_probability,
+        "belief_uncertainty": belief,
+        "volatility_regime_risk": volatility_regime,
+        "minutes_instability": minutes_instability,
+        "tail_imbalance": tail_imbalance,
+        "volatility_score": volatility_score,
+        "risk_penalty": risk_penalty,
+        "spike_flag": spike_flag,
+    }
+
+
+def _apply_volatility_adjustments(
+    abs_gap: float,
+    expected_rate: float,
+    recommendation: str,
+    risk_profile: dict[str, float | bool],
+) -> tuple[float, float, str]:
+    risk_penalty = float(risk_profile["risk_penalty"])
+    spike_flag = bool(risk_profile["spike_flag"])
+    adjusted_gap = float(max(0.0, abs_gap * (1.0 - 0.60 * risk_penalty)))
+    if spike_flag:
+        adjusted_gap *= 0.85
+
+    margin = float(expected_rate - 0.50)
+    adjusted_rate = float(0.50 + margin * max(0.0, 1.0 - 0.90 * risk_penalty))
+    if spike_flag:
+        adjusted_rate -= 0.0125
+    adjusted_rate = float(np.clip(adjusted_rate, 0.50, 0.95))
+
+    adjusted_recommendation = recommendation
+    if spike_flag:
+        if recommendation == "strong":
+            adjusted_recommendation = "consider"
+    elif risk_penalty >= 0.55 and recommendation == "strong":
+        adjusted_recommendation = "consider"
+    return adjusted_gap, adjusted_rate, adjusted_recommendation
+
+
+def build_play_rows(
+    slate_df: pd.DataFrame,
+    history_lookup: dict[str, dict],
+    volatility_adjustment: bool = True,
+) -> pd.DataFrame:
     rows: list[dict] = []
     for _, row in slate_df.iterrows():
         belief = safe_float(row.get("belief_uncertainty"), default=1.0)
@@ -193,7 +287,21 @@ def build_play_rows(slate_df: pd.DataFrame, history_lookup: dict[str, dict]) -> 
                 gap_pct = percentile_of_gap(history_info["gaps_sorted"], abs_gap)
                 expected_rate = expected_rate_for(target, gap_pct, history_info)
             recommendation = classify_play(target, gap_pct)
-            confidence_score = abs_gap * np.clip(1.0 - belief, 0.0, 1.0) * feas
+            risk_profile = _risk_profile(row, target, pred, direction)
+            adjusted_abs_gap = abs_gap
+            adjusted_expected_rate = expected_rate
+            adjusted_recommendation = recommendation
+            if volatility_adjustment:
+                adjusted_abs_gap, adjusted_expected_rate, adjusted_recommendation = _apply_volatility_adjustments(
+                    abs_gap,
+                    expected_rate,
+                    recommendation,
+                    risk_profile,
+                )
+                adjusted_gap_pct = gap_pct
+            else:
+                adjusted_gap_pct = gap_pct
+            confidence_score = adjusted_abs_gap * np.clip(1.0 - belief, 0.0, 1.0) * feas * (1.0 - float(risk_profile["risk_penalty"]))
             rows.append(
                 {
                     "player": row["player"],
@@ -204,9 +312,12 @@ def build_play_rows(slate_df: pd.DataFrame, history_lookup: dict[str, dict]) -> 
                     "market_line": market,
                     "edge": edge,
                     "abs_edge": abs_gap,
-                    "gap_percentile": gap_pct,
-                    "recommendation": recommendation,
-                    "expected_win_rate": expected_rate,
+                    "raw_gap_percentile": gap_pct,
+                    "gap_percentile": adjusted_gap_pct,
+                    "recommendation": adjusted_recommendation,
+                    "raw_recommendation": recommendation,
+                    "expected_win_rate": adjusted_expected_rate,
+                    "raw_expected_win_rate": expected_rate,
                     "confidence_score": confidence_score,
                     "belief_uncertainty": belief,
                     "feasibility": feas,
@@ -216,6 +327,12 @@ def build_play_rows(slate_df: pd.DataFrame, history_lookup: dict[str, dict]) -> 
                     "baseline_edge": safe_float(row.get(f"baseline_edge_{target}"), default=np.nan),
                     "uncertainty_sigma": safe_float(row.get(f"{target}_uncertainty_sigma"), default=np.nan),
                     "spike_probability": safe_float(row.get(f"{target}_spike_probability"), default=np.nan),
+                    "sigma_ratio": float(risk_profile["sigma_ratio"]),
+                    "volatility_score": float(risk_profile["volatility_score"]),
+                    "risk_penalty": float(risk_profile["risk_penalty"]),
+                    "tail_imbalance": float(risk_profile["tail_imbalance"]),
+                    "spike_flag": bool(risk_profile["spike_flag"]),
+                    "adjusted_abs_edge": adjusted_abs_gap,
                     "history_rows": int(row.get("history_rows", 0)),
                     "last_history_date": row.get("last_history_date"),
                     "csv": row.get("csv"),
@@ -248,7 +365,7 @@ def main() -> None:
     slate_df = pd.read_csv(slate_path)
     history_df = pd.read_csv(history_path)
     history_lookup = build_history_lookup(history_df)
-    plays = build_play_rows(slate_df, history_lookup)
+    plays = build_play_rows(slate_df, history_lookup, volatility_adjustment=not args.disable_volatility_adjustment)
     if plays.empty:
         raise RuntimeError("No playable rows were produced from the provided slate/history inputs.")
 

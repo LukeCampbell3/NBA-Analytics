@@ -15,7 +15,13 @@ import pandas as pd
 REPO_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(REPO_ROOT / "inference"))
 
-from market_validation import backtest_history, print_validation_summary, save_validation_outputs, summarize_validation_records
+try:
+    from market_validation import backtest_history, print_validation_summary, save_validation_outputs, summarize_validation_records
+except Exception:  # pragma: no cover - optional helper module
+    backtest_history = None
+    print_validation_summary = None
+    save_validation_outputs = None
+    summarize_validation_records = None
 from structured_stack_inference import StructuredStackInference
 
 
@@ -86,6 +92,11 @@ def main() -> None:
         raise RuntimeError(f"History CSV is empty: {csv_path}")
 
     if args.validate_history:
+        if backtest_history is None or summarize_validation_records is None:
+            raise RuntimeError(
+                "History validation helpers are unavailable (missing inference/market_validation.py). "
+                "Run prediction mode without --validate-history, or add the validation helper module."
+            )
         rows, failures = backtest_history(
             predictor,
             history_df,

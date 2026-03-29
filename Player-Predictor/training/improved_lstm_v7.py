@@ -45,13 +45,104 @@ import joblib
 sys.path.insert(0, os.path.dirname(__file__))
 from unified_moe_trainer import UnifiedMoETrainer
 from improved_stacking_trainer import prepare_gbm_features_v2
-from structured_stack_contract import (
-    ARTIFACT_CONTRACT_VERSION,
-    build_schema_payload,
-    build_schema_signature,
-    normalize_catboost_model_info,
-    validate_metadata_contract,
-)
+try:
+    from structured_stack_contract import (
+        ARTIFACT_CONTRACT_VERSION,
+        build_schema_payload,
+        build_schema_signature,
+        normalize_catboost_model_info,
+        validate_metadata_contract,
+    )
+except Exception:  # pragma: no cover - fallback when contract helpers are unavailable
+    import hashlib
+
+    ARTIFACT_CONTRACT_VERSION = "1.0.0"
+
+    def build_schema_signature(feature_columns, target_columns, baseline_features, seq_len, n_features, n_targets, counts=None):
+        payload = {
+            "feature_columns": list(feature_columns or []),
+            "target_columns": list(target_columns or []),
+            "baseline_features": list(baseline_features or []),
+            "seq_len": int(seq_len),
+            "n_features": int(n_features),
+            "n_targets": int(n_targets),
+            "counts": dict(counts or {}),
+        }
+        text = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+        return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+    def normalize_catboost_model_info(catboost_model_info, target_columns, cb_models):
+        targets = [str(target) for target in (target_columns or [])]
+        existing = {}
+        if isinstance(catboost_model_info, list):
+            for item in catboost_model_info:
+                if isinstance(item, dict) and item.get("target") is not None:
+                    existing[str(item["target"])] = dict(item)
+        normalized = []
+        for idx, target in enumerate(targets):
+            model_bundle = cb_models[idx] if isinstance(cb_models, (list, tuple)) and idx < len(cb_models) else None
+            entry = existing.get(target, {})
+            feature_versions = entry.get("feature_versions")
+            if not feature_versions:
+                if entry.get("feature_version"):
+                    feature_versions = [entry.get("feature_version")]
+                elif isinstance(model_bundle, dict):
+                    members = model_bundle.get("members", [])
+                    feature_versions = [member.get("feature_version") for member in members if isinstance(member, dict) and member.get("feature_version")]
+                else:
+                    feature_versions = ["v3"]
+            feature_versions = [str(value) for value in feature_versions if value]
+            if not feature_versions:
+                feature_versions = ["v3"]
+            normalized.append(
+                {
+                    "target": target,
+                    "feature_version": str(entry.get("feature_version") or feature_versions[0]),
+                    "feature_versions": feature_versions,
+                }
+            )
+        return normalized
+
+    def validate_metadata_contract(metadata, scaler_x=None, scaler_y=None, cb_models=None):
+        errors = []
+        if not isinstance(metadata, dict):
+            return ["metadata must be a dictionary"]
+        for key in ["target_columns", "feature_columns", "baseline_features", "n_targets", "n_features", "catboost_model_info"]:
+            if key not in metadata:
+                errors.append(f"missing required metadata key: {key}")
+        return errors
+
+    def build_schema_payload(metadata):
+        payload = dict(metadata or {})
+        payload.setdefault("artifact_contract_version", ARTIFACT_CONTRACT_VERSION)
+        payload.setdefault(
+            "schema_signature",
+            build_schema_signature(
+                payload.get("feature_columns", []),
+                payload.get("target_columns", []),
+                payload.get("baseline_features", []),
+                payload.get("seq_len", 0),
+                payload.get("n_features", len(payload.get("feature_columns", []))),
+                payload.get("n_targets", len(payload.get("target_columns", []))),
+                payload.get("counts", {}),
+            ),
+        )
+        return {
+            "artifact_contract_version": payload.get("artifact_contract_version"),
+            "schema_signature": payload.get("schema_signature"),
+            "model_type": payload.get("model_type", "structured_lstm_stack"),
+            "seq_len": payload.get("seq_len"),
+            "n_features": payload.get("n_features"),
+            "n_targets": payload.get("n_targets"),
+            "feature_columns": payload.get("feature_columns", []),
+            "target_columns": payload.get("target_columns", []),
+            "baseline_features": payload.get("baseline_features", []),
+            "feature_spec": payload.get("feature_spec", {}),
+            "counts": payload.get("counts", {}),
+            "scaler_x_n_features": payload.get("scaler_x_n_features"),
+            "scaler_y_n_features": payload.get("scaler_y_n_features"),
+            "catboost_model_info": payload.get("catboost_model_info", []),
+        }
 
 try:
     from catboost import CatBoostRegressor
