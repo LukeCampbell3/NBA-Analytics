@@ -306,6 +306,11 @@ def build_play_rows(
                 {
                     "player": row["player"],
                     "market_date": row.get("market_date"),
+                    "market_player_raw": row.get("market_player_raw"),
+                    "market_event_id": row.get("market_event_id"),
+                    "market_commence_time_utc": row.get("market_commence_time_utc"),
+                    "market_home_team": row.get("market_home_team"),
+                    "market_away_team": row.get("market_away_team"),
                     "target": target,
                     "direction": direction,
                     "prediction": pred,
