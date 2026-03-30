@@ -27,6 +27,7 @@ sys.path.insert(0, str(REPO_ROOT / "inference"))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 from build_upcoming_slate import MODEL_DIR, build_records, load_market_wide, resolve_manifest_path
+from decision_engine.conditional_promotion import apply_conditional_promotion
 from decision_engine.policy_tuning import build_default_shadow_strategies
 from post_process_market_plays import compute_final_board
 from select_market_plays import build_history_lookup, build_play_rows
@@ -131,6 +132,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-ast-plays", type=int, default=None, help="Maximum final AST plays to keep.")
     parser.add_argument("--max-total-plays", type=int, default=None, help="Maximum total plays to keep.")
     parser.add_argument("--max-plays-per-game", type=int, default=None, help="Maximum selected plays to keep from the same game/event.")
+    parser.add_argument(
+        "--max-plays-per-script-cluster",
+        type=int,
+        default=None,
+        help="Maximum selected plays to keep from the same inferred script cluster.",
+    )
     parser.add_argument("--non-pts-min-gap-percentile", type=float, default=None, help="Minimum disagreement percentile for TRB/AST plays.")
     parser.add_argument("--edge-adjust-k", type=float, default=None, help="Weight for edge-adjusted EV ranking.")
     parser.add_argument(
@@ -146,6 +153,42 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--market-regression-ceiling", type=float, default=None, help="Maximum market-regression lambda for prediction shrinkage.")
     parser.add_argument("--belief-uncertainty-lower", type=float, default=None, help="Lower anchor for belief uncertainty confidence scaling.")
     parser.add_argument("--belief-uncertainty-upper", type=float, default=None, help="Upper anchor for belief uncertainty confidence scaling.")
+    parser.add_argument(
+        "--disable-conditional-framework",
+        action="store_true",
+        help="Disable structured conditional promotion and run baseline-only selection.",
+    )
+    parser.add_argument(
+        "--conditional-framework-mode",
+        type=str,
+        default=None,
+        choices=["auto", "full", "reduced", "baseline_only", "safe_shutdown"],
+        help="Override conditional framework mode.",
+    )
+    parser.add_argument(
+        "--conditional-failure-memory-path",
+        type=Path,
+        default=None,
+        help="Optional path for persisted conditional failure memory.",
+    )
+    parser.add_argument(
+        "--conditional-max-promotions-per-slate",
+        type=int,
+        default=None,
+        help="Optional override for total conditional promotions per slate.",
+    )
+    parser.add_argument(
+        "--conditional-max-promotions-per-game",
+        type=int,
+        default=None,
+        help="Optional override for per-game conditional promotions.",
+    )
+    parser.add_argument(
+        "--conditional-max-promoted-share",
+        type=float,
+        default=None,
+        help="Optional override for promoted share cap within recoverable weak plays.",
+    )
     return parser.parse_args()
 
 
@@ -166,6 +209,7 @@ def resolve_policy(args: argparse.Namespace):
         "max_ast_plays": args.max_ast_plays,
         "max_total_plays": args.max_total_plays,
         "max_plays_per_game": args.max_plays_per_game,
+        "max_plays_per_script_cluster": args.max_plays_per_script_cluster,
         "non_pts_min_gap_percentile": args.non_pts_min_gap_percentile,
         "edge_adjust_k": args.edge_adjust_k,
         "selection_mode": args.selection_mode,
@@ -175,6 +219,12 @@ def resolve_policy(args: argparse.Namespace):
         "market_regression_ceiling": args.market_regression_ceiling,
         "belief_uncertainty_lower": args.belief_uncertainty_lower,
         "belief_uncertainty_upper": args.belief_uncertainty_upper,
+        "conditional_framework_enabled": None if not args.disable_conditional_framework else False,
+        "conditional_framework_mode": args.conditional_framework_mode,
+        "conditional_failure_memory_path": str(args.conditional_failure_memory_path) if args.conditional_failure_memory_path else None,
+        "conditional_max_promotions_per_slate": args.conditional_max_promotions_per_slate,
+        "conditional_max_promotions_per_game": args.conditional_max_promotions_per_game,
+        "conditional_max_promoted_share_of_recoverable": args.conditional_max_promoted_share,
     }
     for key, value in override_fields.items():
         if value is not None:
@@ -443,6 +493,26 @@ def main() -> None:
     selector_df, xgb_ltr_summary = maybe_apply_xgb_ltr_reranker(selector_df, history_df, policy_payload)
     selector_df, accept_reject_summary = maybe_apply_accept_rejector(selector_df, history_df, policy_payload)
     selector_df, robust_reranker_summary = maybe_apply_robust_reranker(selector_df, history_df, policy_payload)
+    conditional_summary: dict | None = None
+    try:
+        selector_df, conditional_summary = apply_conditional_promotion(
+            selector_df=selector_df,
+            policy_payload=policy_payload,
+            history_df=history_df,
+            american_odds=int(policy_payload.get("american_odds", -110)),
+        )
+    except Exception as exc:
+        conditional_summary = {
+            "fallback_mode": "C_baseline_only",
+            "fallback_reasons": ["conditional_framework_exception"],
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+        selector_df = selector_df.copy()
+        selector_df["conditional_eligible_for_board"] = True
+        selector_df["conditional_promoted"] = False
+        selector_df["decision_tier"] = "Tier A - Baseline"
+        selector_df["weak_bucket"] = "K"
+        selector_df["conditional_audit_summary"] = "Conditional layer failed; fell back to baseline-only mode."
     if selector_df.empty:
         raise RuntimeError("Selector produced no rows from the current slate.")
     args.selector_csv_out.parent.mkdir(parents=True, exist_ok=True)
@@ -461,6 +531,7 @@ def main() -> None:
         max_total_plays=policy_payload["max_total_plays"],
         max_target_plays={"PTS": policy_payload["max_pts_plays"], "TRB": policy_payload["max_trb_plays"], "AST": policy_payload["max_ast_plays"]},
         max_plays_per_game=policy_payload.get("max_plays_per_game", 2),
+        max_plays_per_script_cluster=policy_payload.get("max_plays_per_script_cluster", 2),
         non_pts_min_gap_percentile=policy_payload["non_pts_min_gap_percentile"],
         edge_adjust_k=policy_payload["edge_adjust_k"],
         thompson_temperature=policy_payload.get("thompson_temperature", 1.0),
@@ -482,6 +553,17 @@ def main() -> None:
     args.final_csv_out.parent.mkdir(parents=True, exist_ok=True)
     args.final_json_out.parent.mkdir(parents=True, exist_ok=True)
     final_board.to_csv(args.final_csv_out, index=False)
+    promoted_mask = (
+        pd.to_numeric(final_board["conditional_promoted"], errors="coerce").fillna(0).astype(bool)
+        if "conditional_promoted" in final_board.columns
+        else pd.Series(False, index=final_board.index)
+    )
+    tier_a_board = final_board.loc[~promoted_mask].copy()
+    tier_b_board = final_board.loc[promoted_mask].copy()
+    tier_a_csv = args.final_csv_out.with_name(f"{args.final_csv_out.stem}_tier_a{args.final_csv_out.suffix}")
+    tier_b_csv = args.final_csv_out.with_name(f"{args.final_csv_out.stem}_tier_b{args.final_csv_out.suffix}")
+    tier_a_board.to_csv(tier_a_csv, index=False)
+    tier_b_board.to_csv(tier_b_csv, index=False)
 
     payload = {
         "manifest_path": str(manifest_path),
@@ -496,11 +578,18 @@ def main() -> None:
         "xgb_ltr": xgb_ltr_summary,
         "accept_reject": accept_reject_summary,
         "robust_reranker": robust_reranker_summary,
+        "conditional_framework": conditional_summary,
         "slate_rows": int(len(slate_df)),
         "selector_rows": int(len(selector_df)),
         "final_rows": int(len(final_board)),
+        "tier_a_rows": int(len(tier_a_board)),
+        "tier_b_rows": int(len(tier_b_board)),
+        "tier_a_csv": str(tier_a_csv),
+        "tier_b_csv": str(tier_b_csv),
         "input_validation": input_validation,
         "top_plays": final_board.head(20).to_dict(orient="records"),
+        "tier_a_top_plays": tier_a_board.head(20).to_dict(orient="records"),
+        "tier_b_top_plays": tier_b_board.head(20).to_dict(orient="records"),
     }
     args.final_json_out.write_text(json.dumps(sanitize_for_json(payload), indent=2), encoding="utf-8")
 
@@ -512,9 +601,13 @@ def main() -> None:
     print(f"Slate rows:    {len(slate_df)}")
     print(f"Selector rows: {len(selector_df)}")
     print(f"Final rows:    {len(final_board)}")
+    print(f"Tier A rows:   {len(tier_a_board)}")
+    print(f"Tier B rows:   {len(tier_b_board)}")
     print(f"Slate CSV:     {args.slate_csv_out}")
     print(f"Selector CSV:  {args.selector_csv_out}")
     print(f"Final CSV:     {args.final_csv_out}")
+    print(f"Tier A CSV:    {tier_a_csv}")
+    print(f"Tier B CSV:    {tier_b_csv}")
     print(f"Final JSON:    {args.final_json_out}")
     print("Input validation:")
     print(f"  Market rows:        {input_validation['market_lines']['market_rows']}")
