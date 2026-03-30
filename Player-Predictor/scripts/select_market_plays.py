@@ -18,9 +18,34 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
+
+try:
+    from decision_engine.uncertainty import (
+        BELIEF_UNCERTAINTY_LOWER,
+        BELIEF_UNCERTAINTY_UPPER,
+        belief_confidence_factor,
+        normalize_belief_uncertainty,
+    )
+except Exception:  # pragma: no cover - fallback for standalone execution
+    BELIEF_UNCERTAINTY_LOWER = 0.75
+    BELIEF_UNCERTAINTY_UPPER = 1.15
+
+    def normalize_belief_uncertainty(value, default: float = 1.0, lower: float = BELIEF_UNCERTAINTY_LOWER, upper: float = BELIEF_UNCERTAINTY_UPPER):
+        span = max(float(upper) - float(lower), 1e-9)
+        numeric = pd.to_numeric(value, errors="coerce") if isinstance(value, pd.Series) else safe_float(value, default=default)
+        if isinstance(numeric, pd.Series):
+            return ((numeric.fillna(float(default)) - float(lower)) / span).clip(lower=0.0, upper=1.0)
+        return float(np.clip((float(numeric) - float(lower)) / span, 0.0, 1.0))
+
+    def belief_confidence_factor(value, default: float = 1.0, lower: float = BELIEF_UNCERTAINTY_LOWER, upper: float = BELIEF_UNCERTAINTY_UPPER):
+        normalized = normalize_belief_uncertainty(value, default=default, lower=lower, upper=upper)
+        if isinstance(normalized, pd.Series):
+            return (1.0 - normalized).clip(lower=0.0, upper=1.0)
+        return float(np.clip(1.0 - float(normalized), 0.0, 1.0))
 
 
 TARGETS = ["PTS", "TRB", "AST"]
@@ -34,6 +59,12 @@ HEURISTIC_EDGE_SCALES = {
     "TRB": 1.2,
     "AST": 1.0,
 }
+DEFAULT_BETA_PRIOR_ALPHA = 1.0
+DEFAULT_BETA_PRIOR_BETA = 1.0
+DEFAULT_CALIBRATION_BINS = 12
+DEFAULT_CALIBRATION_MIN_ROWS = 40
+DEFAULT_MARKET_REGRESSION_FLOOR = 0.25
+DEFAULT_MARKET_REGRESSION_CEILING = 0.95
 
 
 def parse_args() -> argparse.Namespace:
@@ -67,6 +98,30 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Disable volatility/spike-aware risk adjustment and use raw gap logic only.",
     )
+    parser.add_argument(
+        "--belief-uncertainty-lower",
+        type=float,
+        default=BELIEF_UNCERTAINTY_LOWER,
+        help="Lower anchor used when converting latent belief uncertainty into a confidence penalty.",
+    )
+    parser.add_argument(
+        "--belief-uncertainty-upper",
+        type=float,
+        default=BELIEF_UNCERTAINTY_UPPER,
+        help="Upper anchor used when converting latent belief uncertainty into a confidence penalty.",
+    )
+    parser.add_argument(
+        "--market-regression-floor",
+        type=float,
+        default=DEFAULT_MARKET_REGRESSION_FLOOR,
+        help="Minimum shrinkage lambda used when regressing prediction toward market line.",
+    )
+    parser.add_argument(
+        "--market-regression-ceiling",
+        type=float,
+        default=DEFAULT_MARKET_REGRESSION_CEILING,
+        help="Maximum shrinkage lambda used when regressing prediction toward market line.",
+    )
     return parser.parse_args()
 
 
@@ -93,16 +148,164 @@ def safe_float(value, default=np.nan) -> float:
         return float(default)
 
 
+def _beta_posterior_stats(
+    wins: int,
+    losses: int,
+    alpha_prior: float,
+    beta_prior: float,
+) -> dict[str, float]:
+    alpha = float(alpha_prior) + float(max(0, wins))
+    beta = float(beta_prior) + float(max(0, losses))
+    total = max(1e-9, alpha + beta)
+    mean = float(alpha / total)
+    variance = float((alpha * beta) / ((total ** 2) * (total + 1.0)))
+    std = float(np.sqrt(max(0.0, variance)))
+    return {
+        "alpha": alpha,
+        "beta": beta,
+        "mean": mean,
+        "variance": variance,
+        "ci_low": float(np.clip(mean - 1.96 * std, 0.0, 1.0)),
+        "ci_high": float(np.clip(mean + 1.96 * std, 0.0, 1.0)),
+    }
+
+
+def _global_beta_prior(target_frames: dict[str, pd.DataFrame]) -> tuple[float, float, float]:
+    wins = 0
+    losses = 0
+    for frame in target_frames.values():
+        resolved = frame["actual_minus_market"].to_numpy(dtype=float) != 0.0
+        correct = frame["directional_correct"].to_numpy(dtype=bool)
+        wins += int((resolved & correct).sum())
+        losses += int((resolved & (~correct)).sum())
+
+    if wins + losses <= 0:
+        return DEFAULT_BETA_PRIOR_ALPHA, DEFAULT_BETA_PRIOR_BETA, 0.5
+
+    global_mean = float((wins + DEFAULT_BETA_PRIOR_ALPHA) / (wins + losses + DEFAULT_BETA_PRIOR_ALPHA + DEFAULT_BETA_PRIOR_BETA))
+    prior_strength = float(np.clip(np.sqrt(wins + losses), 8.0, 32.0))
+    alpha_prior = max(0.1, global_mean * prior_strength)
+    beta_prior = max(0.1, (1.0 - global_mean) * prior_strength)
+    return float(alpha_prior), float(beta_prior), global_mean
+
+
+def _bucket_summary(frame: pd.DataFrame, alpha_prior: float, beta_prior: float) -> dict[str, Any] | None:
+    if frame.empty:
+        return None
+
+    resolved = frame["actual_minus_market"].to_numpy(dtype=float) != 0.0
+    correct = frame["directional_correct"].to_numpy(dtype=bool)
+    wins = int((resolved & correct).sum())
+    losses = int((resolved & (~correct)).sum())
+    pushes = int((~resolved).sum())
+    rows = int(len(frame))
+    resolved_rows = wins + losses
+    resolved_rate = float(resolved_rows / rows) if rows > 0 else 0.0
+    push_rate = float(pushes / rows) if rows > 0 else 0.0
+
+    posterior = _beta_posterior_stats(wins=wins, losses=losses, alpha_prior=alpha_prior, beta_prior=beta_prior)
+    win_rate = float(np.clip(posterior["mean"] * resolved_rate, 0.0, 1.0 - push_rate))
+    loss_rate = float(np.clip(1.0 - win_rate - push_rate, 0.0, 1.0))
+
+    return {
+        "rows": rows,
+        "resolved_rows": int(resolved_rows),
+        "wins": int(wins),
+        "losses": int(losses),
+        "pushes": int(pushes),
+        "resolved_rate": resolved_rate,
+        "win_rate": win_rate,
+        "push_rate": push_rate,
+        "loss_rate": loss_rate,
+        "posterior_alpha": float(posterior["alpha"]),
+        "posterior_beta": float(posterior["beta"]),
+        "posterior_mean": float(posterior["mean"]),
+        "posterior_variance": float(posterior["variance"]),
+        "posterior_ci_low": float(posterior["ci_low"]),
+        "posterior_ci_high": float(posterior["ci_high"]),
+    }
+
+
+def _fit_monotonic_calibration(
+    frame: pd.DataFrame,
+    gaps_sorted: np.ndarray,
+    alpha_prior: float,
+    beta_prior: float,
+    min_rows: int = DEFAULT_CALIBRATION_MIN_ROWS,
+    max_bins: int = DEFAULT_CALIBRATION_BINS,
+) -> dict[str, Any] | None:
+    if frame.empty or gaps_sorted.size == 0:
+        return None
+
+    resolved_mask = frame["actual_minus_market"].to_numpy(dtype=float) != 0.0
+    if int(resolved_mask.sum()) < int(min_rows):
+        return None
+
+    resolved_frame = frame.loc[resolved_mask].copy()
+    gap_values = resolved_frame["abs_gap"].to_numpy(dtype=float)
+    percentiles = np.searchsorted(gaps_sorted, gap_values, side="right") / max(1, gaps_sorted.size)
+    outcomes = resolved_frame["directional_correct"].to_numpy(dtype=bool)
+
+    n_bins = int(np.clip(np.sqrt(len(resolved_frame)), 6, max_bins))
+    edges = np.linspace(0.0, 1.0, n_bins + 1)
+    centers = (edges[:-1] + edges[1:]) / 2.0
+    bin_ids = np.clip(np.digitize(percentiles, edges[1:-1], right=False), 0, n_bins - 1)
+
+    rates = np.full(n_bins, np.nan, dtype=float)
+    counts = np.zeros(n_bins, dtype=int)
+    for idx in range(n_bins):
+        mask = bin_ids == idx
+        count = int(mask.sum())
+        counts[idx] = count
+        if count <= 0:
+            continue
+        wins = int(outcomes[mask].sum())
+        losses = int(count - wins)
+        posterior = _beta_posterior_stats(wins=wins, losses=losses, alpha_prior=alpha_prior, beta_prior=beta_prior)
+        rates[idx] = float(posterior["mean"])
+
+    valid = np.flatnonzero(~np.isnan(rates))
+    if valid.size == 0:
+        return None
+
+    interpolated = np.interp(np.arange(n_bins), valid, rates[valid])
+    monotonic = np.maximum.accumulate(interpolated)
+    monotonic = np.clip(monotonic, 0.35, 0.95)
+
+    return {
+        "bin_centers": centers,
+        "bin_rates": monotonic,
+        "bin_counts": counts,
+        "resolved_rows": int(len(resolved_frame)),
+    }
+
+
+def _apply_calibration_curve(calibration_curve: dict[str, Any] | None, percentile: float) -> float | None:
+    if not calibration_curve:
+        return None
+    centers = np.asarray(calibration_curve.get("bin_centers", []), dtype=float)
+    rates = np.asarray(calibration_curve.get("bin_rates", []), dtype=float)
+    if centers.size == 0 or rates.size == 0:
+        return None
+    pct = float(np.clip(percentile, 0.0, 1.0))
+    return float(np.interp(pct, centers, rates))
+
+
 def build_history_lookup(history_df: pd.DataFrame) -> dict[str, dict]:
     active_history = history_df.loc[active_only_mask(history_df)].copy()
-    lookup: dict[str, dict] = {}
+    target_frames: dict[str, pd.DataFrame] = {}
+
     for target in TARGETS:
         market_col = f"market_{target}"
         pred_col = f"pred_{target}"
         actual_col = f"actual_{target}"
-        covered = active_history.loc[active_history[market_col].notna()].copy()
+        if market_col not in active_history.columns or pred_col not in active_history.columns or actual_col not in active_history.columns:
+            continue
+
+        covered = active_history.loc[pd.to_numeric(active_history[market_col], errors="coerce").notna()].copy()
         if covered.empty:
             continue
+
         pred_minus_market = pd.to_numeric(covered[pred_col], errors="coerce") - pd.to_numeric(covered[market_col], errors="coerce")
         actual_minus_market = pd.to_numeric(covered[actual_col], errors="coerce") - pd.to_numeric(covered[market_col], errors="coerce")
         abs_gap = pred_minus_market.abs()
@@ -117,26 +320,46 @@ def build_history_lookup(history_df: pd.DataFrame) -> dict[str, dict]:
                 "directional_correct": correct,
             }
         )
-        working = working.loc[working["directional_called"]].copy()
+        working = working.loc[working["directional_called"] & working["abs_gap"].notna()].copy()
         if working.empty:
             continue
+        target_frames[target] = working
 
+    alpha_prior, beta_prior, global_mean = _global_beta_prior(target_frames)
+    lookup: dict[str, dict] = {
+        "__meta__": {
+            "global_prior_alpha": float(alpha_prior),
+            "global_prior_beta": float(beta_prior),
+            "global_prior_mean": float(global_mean),
+        }
+    }
+
+    for target, working in target_frames.items():
         quartile_cut = float(working["abs_gap"].quantile(0.75))
         decile_cut = float(working["abs_gap"].quantile(0.90))
+        gaps_sorted = np.sort(working["abs_gap"].to_numpy(dtype=float))
 
-        def rate(mask: pd.Series) -> float | None:
-            subset = working.loc[mask]
-            if subset.empty:
-                return None
-            return float(subset["directional_correct"].mean())
+        all_bucket = _bucket_summary(working, alpha_prior=alpha_prior, beta_prior=beta_prior)
+        top_quartile = _bucket_summary(working.loc[working["abs_gap"] >= quartile_cut], alpha_prior=alpha_prior, beta_prior=beta_prior)
+        top_decile = _bucket_summary(working.loc[working["abs_gap"] >= decile_cut], alpha_prior=alpha_prior, beta_prior=beta_prior)
+        calibration_curve = _fit_monotonic_calibration(
+            working,
+            gaps_sorted=gaps_sorted,
+            alpha_prior=alpha_prior,
+            beta_prior=beta_prior,
+        )
 
         lookup[target] = {
-            "all_rate": float(working["directional_correct"].mean()),
+            "rows": int(len(working)),
             "quartile_cut": quartile_cut,
             "decile_cut": decile_cut,
-            "top_quartile_rate": rate(working["abs_gap"] >= quartile_cut),
-            "top_decile_rate": rate(working["abs_gap"] >= decile_cut),
-            "gaps_sorted": np.sort(working["abs_gap"].to_numpy(dtype=float)),
+            "gaps_sorted": gaps_sorted,
+            "all": all_bucket,
+            "top_quartile": top_quartile,
+            "top_decile": top_decile,
+            "calibration_curve": calibration_curve,
+            "prior_alpha": float(alpha_prior),
+            "prior_beta": float(beta_prior),
         }
     return lookup
 
@@ -157,20 +380,112 @@ def classify_play(target: str, percentile: float) -> str:
     return "pass"
 
 
-def expected_rate_for(target: str, percentile: float, history_info: dict) -> float:
+def expected_rate_for(target: str, percentile: float, history_info: dict[str, Any]) -> dict[str, Any]:
     thresholds = TARGET_THRESHOLDS[target]
-    if percentile >= thresholds["strong_pct"] and history_info.get("top_decile_rate") is not None:
-        return float(history_info["top_decile_rate"])
-    if percentile >= thresholds["consider_pct"] and history_info.get("top_quartile_rate") is not None:
-        return float(history_info["top_quartile_rate"])
-    return float(history_info["all_rate"])
+    bucket_key = "all"
+    bucket = history_info.get("all")
+
+    if percentile >= thresholds["strong_pct"] and history_info.get("top_decile") is not None:
+        bucket_key = "top_decile"
+        bucket = history_info.get("top_decile")
+    elif percentile >= thresholds["consider_pct"] and history_info.get("top_quartile") is not None:
+        bucket_key = "top_quartile"
+        bucket = history_info.get("top_quartile")
+
+    if not bucket:
+        return {
+            "bucket": "empty",
+            "base_expected_win_rate": 0.5,
+            "expected_win_rate": 0.5,
+            "expected_push_rate": 0.0,
+            "expected_loss_rate": 0.5,
+            "posterior_alpha": DEFAULT_BETA_PRIOR_ALPHA,
+            "posterior_beta": DEFAULT_BETA_PRIOR_BETA,
+            "posterior_variance": 0.25,
+            "posterior_ci_low": 0.0,
+            "posterior_ci_high": 1.0,
+            "calibrated_conditional_win_rate": None,
+            "calibration_weight": 0.0,
+            "calibration_source": "empty",
+            "bucket_rows": 0,
+        }
+
+    base_win_rate = float(bucket.get("win_rate", 0.5))
+    push_rate = float(np.clip(bucket.get("push_rate", 0.0), 0.0, 1.0))
+    resolved_rate = float(np.clip(bucket.get("resolved_rate", 1.0 - push_rate), 0.0, 1.0))
+    calibrated_conditional_rate = _apply_calibration_curve(history_info.get("calibration_curve"), percentile)
+
+    if calibrated_conditional_rate is None:
+        win_rate = base_win_rate
+        calibration_weight = 0.0
+        calibration_source = "bayesian_bucket"
+    else:
+        calibrated_win_rate = float(np.clip(calibrated_conditional_rate * resolved_rate, 0.0, 1.0 - push_rate))
+        calibration_rows = int((history_info.get("calibration_curve") or {}).get("resolved_rows", 0))
+        bucket_rows = int(bucket.get("rows", 0))
+        calibration_weight = float(np.clip(calibration_rows / max(1.0, calibration_rows + 0.75 * bucket_rows), 0.20, 0.85))
+        win_rate = float(calibration_weight * calibrated_win_rate + (1.0 - calibration_weight) * base_win_rate)
+        calibration_source = "bayesian_isotonic_blend"
+
+    non_push = max(0.0, 1.0 - push_rate)
+    win_rate = float(np.clip(win_rate, 0.0, non_push))
+    loss_rate = float(np.clip(non_push - win_rate, 0.0, 1.0))
+
+    return {
+        "bucket": bucket_key,
+        "base_expected_win_rate": base_win_rate,
+        "expected_win_rate": win_rate,
+        "expected_push_rate": push_rate,
+        "expected_loss_rate": loss_rate,
+        "posterior_alpha": float(bucket.get("posterior_alpha", DEFAULT_BETA_PRIOR_ALPHA)),
+        "posterior_beta": float(bucket.get("posterior_beta", DEFAULT_BETA_PRIOR_BETA)),
+        "posterior_variance": float(bucket.get("posterior_variance", 0.25)),
+        "posterior_ci_low": float(bucket.get("posterior_ci_low", 0.0)),
+        "posterior_ci_high": float(bucket.get("posterior_ci_high", 1.0)),
+        "calibrated_conditional_win_rate": calibrated_conditional_rate,
+        "calibration_weight": calibration_weight,
+        "calibration_source": calibration_source,
+        "bucket_rows": int(bucket.get("rows", 0)),
+    }
 
 
-def heuristic_percentile_and_rate(target: str, abs_gap: float) -> tuple[float, float]:
+def heuristic_percentile_and_rate(target: str, abs_gap: float) -> dict[str, Any]:
     scale = float(HEURISTIC_EDGE_SCALES[target])
     gap_pct = float(np.clip(abs_gap / scale, 0.01, 0.99))
-    expected_rate = float(np.clip(0.50 + 0.35 * gap_pct, 0.50, 0.85))
-    return gap_pct, expected_rate
+    win_rate = float(np.clip(0.50 + 0.30 * gap_pct, 0.50, 0.82))
+    push_rate = float(np.clip(0.06 - 0.04 * gap_pct, 0.01, 0.06))
+    loss_rate = float(np.clip(1.0 - win_rate - push_rate, 0.0, 1.0))
+    return {
+        "gap_percentile": gap_pct,
+        "bucket": "heuristic",
+        "base_expected_win_rate": win_rate,
+        "expected_win_rate": win_rate,
+        "expected_push_rate": push_rate,
+        "expected_loss_rate": loss_rate,
+        "posterior_alpha": DEFAULT_BETA_PRIOR_ALPHA,
+        "posterior_beta": DEFAULT_BETA_PRIOR_BETA,
+        "posterior_variance": 0.25,
+        "posterior_ci_low": 0.0,
+        "posterior_ci_high": 1.0,
+        "calibrated_conditional_win_rate": None,
+        "calibration_weight": 0.0,
+        "calibration_source": "heuristic",
+        "bucket_rows": 0,
+    }
+
+
+def _prediction_shrink_lambda(
+    belief_conf: float,
+    feasibility: float,
+    fallback_blend: float,
+    floor: float,
+    ceiling: float,
+) -> float:
+    fallback = _clip01(fallback_blend, default=0.0)
+    confidence = float(np.clip(belief_conf * feasibility * (1.0 - fallback), 0.0, 1.0))
+    lower = float(np.clip(floor, 0.0, 1.0))
+    upper = float(np.clip(ceiling, lower, 1.0))
+    return float(np.clip(lower + (upper - lower) * confidence, lower, upper))
 
 
 def _clip01(value: float, default: float = 0.0) -> float:
@@ -183,13 +498,22 @@ def _risk_profile(
     target: str,
     pred: float,
     direction: str,
+    belief_uncertainty_lower: float,
+    belief_uncertainty_upper: float,
 ) -> dict[str, float | bool]:
     sigma = max(0.0, safe_float(row.get(f"{target}_uncertainty_sigma"), default=0.0))
     pred_scale = max(1.0, abs(pred))
     sigma_ratio = sigma / pred_scale
     sigma_norm = float(np.clip(sigma_ratio / 0.45, 0.0, 1.0))
     spike_probability = _clip01(row.get(f"{target}_spike_probability"), default=0.50)
-    belief = _clip01(row.get("belief_uncertainty"), default=0.50)
+    belief = float(
+        normalize_belief_uncertainty(
+            row.get("belief_uncertainty"),
+            default=0.50,
+            lower=float(belief_uncertainty_lower),
+            upper=float(belief_uncertainty_upper),
+        )
+    )
     volatility_regime = _clip01(row.get("volatility_regime_risk"), default=sigma_norm)
     feasibility = _clip01(row.get("feasibility"), default=0.60)
     minutes_instability = float(np.clip(1.0 - feasibility, 0.0, 1.0))
@@ -262,18 +586,49 @@ def build_play_rows(
     slate_df: pd.DataFrame,
     history_lookup: dict[str, dict],
     volatility_adjustment: bool = True,
+    belief_uncertainty_lower: float = BELIEF_UNCERTAINTY_LOWER,
+    belief_uncertainty_upper: float = BELIEF_UNCERTAINTY_UPPER,
+    market_regression_floor: float = DEFAULT_MARKET_REGRESSION_FLOOR,
+    market_regression_ceiling: float = DEFAULT_MARKET_REGRESSION_CEILING,
 ) -> pd.DataFrame:
     rows: list[dict] = []
     for _, row in slate_df.iterrows():
-        belief = safe_float(row.get("belief_uncertainty"), default=1.0)
+        belief_raw = safe_float(row.get("belief_uncertainty"), default=1.0)
+        belief = float(
+            normalize_belief_uncertainty(
+                belief_raw,
+                default=1.0,
+                lower=float(belief_uncertainty_lower),
+                upper=float(belief_uncertainty_upper),
+            )
+        )
+        belief_conf = float(
+            belief_confidence_factor(
+                belief_raw,
+                default=1.0,
+                lower=float(belief_uncertainty_lower),
+                upper=float(belief_uncertainty_upper),
+            )
+        )
         feas = max(0.0, safe_float(row.get("feasibility"), default=0.0))
+        fallback_blend = safe_float(row.get("fallback_blend"), default=0.0)
         for target in TARGETS:
             history_info = history_lookup.get(target)
-            pred = safe_float(row.get(f"pred_{target}"))
+            raw_pred = safe_float(row.get(f"pred_{target}"))
             market = safe_float(row.get(f"market_{target}"))
-            if np.isnan(pred) or np.isnan(market):
+            if np.isnan(raw_pred) or np.isnan(market):
                 continue
+
+            prediction_shrink_lambda = _prediction_shrink_lambda(
+                belief_conf=belief_conf,
+                feasibility=feas,
+                fallback_blend=fallback_blend,
+                floor=float(market_regression_floor),
+                ceiling=float(market_regression_ceiling),
+            )
+            pred = float(market + prediction_shrink_lambda * (raw_pred - market))
             edge = pred - market
+            raw_edge = raw_pred - market
             if edge == 0.0:
                 direction = "PUSH"
             elif edge > 0.0:
@@ -282,46 +637,93 @@ def build_play_rows(
                 direction = "UNDER"
             abs_gap = abs(edge)
             if history_info is None:
-                gap_pct, expected_rate = heuristic_percentile_and_rate(target, abs_gap)
+                heuristic = heuristic_percentile_and_rate(target, abs_gap)
+                gap_pct = float(heuristic["gap_percentile"])
+                expected_triplet = heuristic
             else:
                 gap_pct = percentile_of_gap(history_info["gaps_sorted"], abs_gap)
-                expected_rate = expected_rate_for(target, gap_pct, history_info)
+                expected_triplet = expected_rate_for(target, gap_pct, history_info)
             recommendation = classify_play(target, gap_pct)
-            risk_profile = _risk_profile(row, target, pred, direction)
+            risk_profile = _risk_profile(
+                row,
+                target,
+                pred,
+                direction,
+                belief_uncertainty_lower=float(belief_uncertainty_lower),
+                belief_uncertainty_upper=float(belief_uncertainty_upper),
+            )
+            base_expected_rate = float(expected_triplet["expected_win_rate"])
             adjusted_abs_gap = abs_gap
-            adjusted_expected_rate = expected_rate
+            adjusted_expected_rate = base_expected_rate
             adjusted_recommendation = recommendation
             if volatility_adjustment:
                 adjusted_abs_gap, adjusted_expected_rate, adjusted_recommendation = _apply_volatility_adjustments(
                     abs_gap,
-                    expected_rate,
+                    base_expected_rate,
                     recommendation,
                     risk_profile,
                 )
-                adjusted_gap_pct = gap_pct
-            else:
-                adjusted_gap_pct = gap_pct
-            confidence_score = adjusted_abs_gap * np.clip(1.0 - belief, 0.0, 1.0) * feas * (1.0 - float(risk_profile["risk_penalty"]))
+            adjusted_gap_pct = gap_pct
+
+            posterior_variance = float(expected_triplet.get("posterior_variance", 0.25))
+            posterior_std = float(np.sqrt(max(0.0, posterior_variance)))
+            uncertainty_discount = float(np.clip(0.35 * posterior_std, 0.0, 0.07))
+            adjusted_expected_rate = float(np.clip(adjusted_expected_rate - uncertainty_discount, 0.50, 0.95))
+
+            expected_push_rate = float(np.clip(expected_triplet.get("expected_push_rate", 0.0), 0.0, 1.0))
+            expected_loss_rate = float(np.clip(1.0 - adjusted_expected_rate - expected_push_rate, 0.0, 1.0))
+            confidence_score = (
+                adjusted_abs_gap
+                * belief_conf
+                * feas
+                * (1.0 - float(risk_profile["risk_penalty"]))
+                * (1.0 - min(0.75, posterior_std))
+            )
             rows.append(
                 {
                     "player": row["player"],
                     "market_date": row.get("market_date"),
+                    "market_player_raw": row.get("market_player_raw"),
+                    "market_event_id": row.get("market_event_id"),
+                    "market_commence_time_utc": row.get("market_commence_time_utc"),
+                    "market_home_team": row.get("market_home_team"),
+                    "market_away_team": row.get("market_away_team"),
                     "target": target,
                     "direction": direction,
                     "prediction": pred,
+                    "raw_prediction": raw_pred,
+                    "prediction_shrink_lambda": prediction_shrink_lambda,
                     "market_line": market,
                     "edge": edge,
+                    "raw_edge": raw_edge,
                     "abs_edge": abs_gap,
                     "raw_gap_percentile": gap_pct,
                     "gap_percentile": adjusted_gap_pct,
                     "recommendation": adjusted_recommendation,
                     "raw_recommendation": recommendation,
                     "expected_win_rate": adjusted_expected_rate,
-                    "raw_expected_win_rate": expected_rate,
+                    "raw_expected_win_rate": float(expected_triplet.get("base_expected_win_rate", base_expected_rate)),
+                    "bayesian_expected_win_rate": base_expected_rate,
+                    "expected_push_rate": expected_push_rate,
+                    "raw_expected_push_rate": expected_push_rate,
+                    "expected_loss_rate": expected_loss_rate,
+                    "raw_expected_loss_rate": float(expected_triplet.get("expected_loss_rate", expected_loss_rate)),
+                    "posterior_alpha": float(expected_triplet.get("posterior_alpha", DEFAULT_BETA_PRIOR_ALPHA)),
+                    "posterior_beta": float(expected_triplet.get("posterior_beta", DEFAULT_BETA_PRIOR_BETA)),
+                    "posterior_variance": posterior_variance,
+                    "posterior_ci_low": float(expected_triplet.get("posterior_ci_low", 0.0)),
+                    "posterior_ci_high": float(expected_triplet.get("posterior_ci_high", 1.0)),
+                    "calibrated_conditional_win_rate": expected_triplet.get("calibrated_conditional_win_rate"),
+                    "calibration_weight": float(expected_triplet.get("calibration_weight", 0.0)),
+                    "calibration_source": str(expected_triplet.get("calibration_source", "unknown")),
+                    "calibration_bucket": str(expected_triplet.get("bucket", "unknown")),
+                    "calibration_bucket_rows": int(expected_triplet.get("bucket_rows", 0)),
                     "confidence_score": confidence_score,
-                    "belief_uncertainty": belief,
+                    "belief_uncertainty": belief_raw,
+                    "belief_uncertainty_normalized": belief,
+                    "belief_confidence_factor": belief_conf,
                     "feasibility": feas,
-                    "fallback_blend": safe_float(row.get("fallback_blend"), default=0.0),
+                    "fallback_blend": fallback_blend,
                     "market_books": safe_float(row.get(f"market_books_{target}"), default=np.nan),
                     "baseline": safe_float(row.get(f"baseline_{target}"), default=np.nan),
                     "baseline_edge": safe_float(row.get(f"baseline_edge_{target}"), default=np.nan),
@@ -349,8 +751,8 @@ def build_play_rows(
 
 
 def recommendation_rank(label: str) -> int:
-    order = {"strong": 0, "consider": 1, "pass": 2}
-    return order.get(label, 3)
+    order = {"elite": 0, "strong": 1, "consider": 2, "pass": 3}
+    return order.get(label, 4)
 
 
 def main() -> None:
@@ -365,7 +767,15 @@ def main() -> None:
     slate_df = pd.read_csv(slate_path)
     history_df = pd.read_csv(history_path)
     history_lookup = build_history_lookup(history_df)
-    plays = build_play_rows(slate_df, history_lookup, volatility_adjustment=not args.disable_volatility_adjustment)
+    plays = build_play_rows(
+        slate_df,
+        history_lookup,
+        volatility_adjustment=not args.disable_volatility_adjustment,
+        belief_uncertainty_lower=float(args.belief_uncertainty_lower),
+        belief_uncertainty_upper=float(args.belief_uncertainty_upper),
+        market_regression_floor=float(args.market_regression_floor),
+        market_regression_ceiling=float(args.market_regression_ceiling),
+    )
     if plays.empty:
         raise RuntimeError("No playable rows were produced from the provided slate/history inputs.")
 
@@ -409,6 +819,7 @@ def main() -> None:
         "edge",
         "gap_percentile",
         "expected_win_rate",
+        "expected_push_rate",
         "confidence_score",
         "recommendation",
     ]
