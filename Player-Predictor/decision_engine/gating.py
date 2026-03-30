@@ -7,6 +7,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from .uncertainty import BELIEF_UNCERTAINTY_LOWER, BELIEF_UNCERTAINTY_UPPER, belief_confidence_factor
+
 
 TARGETS = ("PTS", "TRB", "AST")
 DEFAULT_TARGET_THRESHOLDS = {
@@ -21,10 +23,23 @@ class StrategyConfig:
     name: str
     american_odds: int = -110
     elite_pct: float = 0.95
-    probability_shrink_factor: float = 0.80
+    probability_shrink_factor: float = 0.75
     ranking_mode: str = "ev_adjusted"
     xgb_ltr_min_train_rows: int = 4000
     xgb_ltr_num_pair_per_sample: int = 12
+    robust_reranker_min_train_rows: int = 4000
+    robust_reranker_holdout_days: int = 45
+    robust_reranker_min_holdout_rows: int = 250
+    robust_reranker_num_pair_per_sample: int = 12
+    robust_reranker_min_candidate_win_rate: float = 0.55
+    robust_reranker_min_candidate_final_confidence: float = 0.03
+    robust_reranker_min_candidate_recommendation: str = "consider"
+    accept_reject_enabled: bool = False
+    accept_reject_min_train_rows: int = 3000
+    accept_reject_holdout_days: int = 45
+    accept_reject_min_holdout_rows: int = 250
+    accept_reject_min_accept_rate: float = 0.05
+    accept_reject_threshold_floor: float = 0.0
     min_ev: float = 0.0
     min_final_confidence: float = 0.03
     min_recommendation: str = "consider"
@@ -36,6 +51,14 @@ class StrategyConfig:
     max_total_plays: int = 12
     non_pts_min_gap_percentile: float = 0.90
     edge_adjust_k: float = 0.30
+    min_bet_win_rate: float = 0.57
+    medium_bet_win_rate: float = 0.60
+    full_bet_win_rate: float = 0.65
+    medium_tier_percentile: float = 0.80
+    strong_tier_percentile: float = 0.90
+    elite_tier_percentile: float = 0.95
+    belief_uncertainty_lower: float = BELIEF_UNCERTAINTY_LOWER
+    belief_uncertainty_upper: float = BELIEF_UNCERTAINTY_UPPER
     min_history_rows: int = 90
     min_history_rows_per_target: int = 25
     starting_bankroll: float = 1000.0
@@ -43,11 +66,15 @@ class StrategyConfig:
     flat_stake: float = 10.0
     base_bet_fraction: float = 0.015
     kelly_fraction: float = 0.25
+    small_bet_fraction: float = 0.005
+    medium_bet_fraction: float = 0.010
+    full_bet_fraction: float = 0.015
     edge_scale_start_percentile: float = 0.75
     edge_scale_span: float = 0.25
     edge_scale_lift: float = 0.15
     edge_scale_max_multiplier: float = 1.25
     max_bet_fraction: float = 0.05
+    max_total_bet_fraction: float = 0.05
     min_bet_fraction: float = 0.0
     target_thresholds: dict[str, dict[str, float]] = field(
         default_factory=lambda: {target: values.copy() for target, values in DEFAULT_TARGET_THRESHOLDS.items()}
@@ -283,9 +310,15 @@ def score_candidates(current_df: pd.DataFrame, history_lookup: dict[str, dict[st
         expected_rates = expected_rates_for(target, gap_percentile, history_info, thresholds)
 
         belief = safe_float(row.get("belief_uncertainty"), default=1.0)
+        belief_conf = belief_confidence_factor(
+            belief,
+            default=1.0,
+            lower=float(config.belief_uncertainty_lower),
+            upper=float(config.belief_uncertainty_upper),
+        )
         feasibility = max(0.0, safe_float(row.get("feasibility"), default=0.0))
-        confidence_score = abs_edge * np.clip(1.0 - belief, 0.0, 1.0) * feasibility
-        final_confidence = gap_percentile * np.clip(1.0 - belief, 0.0, 1.0) * feasibility
+        confidence_score = abs_edge * belief_conf * feasibility
+        final_confidence = gap_percentile * belief_conf * feasibility
 
         rows.append(
             {

@@ -36,6 +36,18 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the daily market data + prediction pipeline.")
     parser.add_argument("--season", type=int, default=None, help="Season end year. Defaults from current date.")
     parser.add_argument("--latest", action="store_true", help="Use latest manifest instead of production for the final board.")
+    parser.add_argument(
+        "--policy-profile",
+        type=str,
+        default="production_high_precision",
+        help="Primary market policy profile for the live board.",
+    )
+    parser.add_argument(
+        "--shadow-policy-profiles",
+        nargs="*",
+        default=["production_calibrated"],
+        help="Optional additional policy profiles to run for research/monitoring only.",
+    )
     parser.add_argument("--history-csv", type=Path, default=REPO_ROOT / "model" / "analysis" / "latest_market_comparison_strict_rows.csv", help="Historical row-level backtest CSV for edge calibration.")
     parser.add_argument("--lookback-days", type=int, default=10, help="How many recent days of historical market lines to collect.")
     parser.add_argument("--future-days", type=int, default=2, help="How many days ahead of today to keep in the current slate snapshot.")
@@ -120,6 +132,8 @@ def main() -> None:
     args = parse_args()
     local_date = pd.Timestamp(args.run_date).normalize() if args.run_date else pd.Timestamp.now().normalize()
     season = args.season or infer_season(local_date)
+    primary_policy = str(args.policy_profile)
+    shadow_policies = [profile for profile in args.shadow_policy_profiles if str(profile) and str(profile) != primary_policy]
     yesterday = (local_date - pd.Timedelta(days=1)).date()
     lookback_start = (local_date - pd.Timedelta(days=int(args.lookback_days))).date()
     future_end = (local_date + pd.Timedelta(days=int(args.future_days))).date()
@@ -198,6 +212,8 @@ def main() -> None:
             "scripts/run_market_pipeline.py",
             "--season",
             str(season),
+            "--policy-profile",
+            primary_policy,
             "--history-csv",
             str(args.history_csv),
             "--market-wide-path",
@@ -215,6 +231,49 @@ def main() -> None:
         ],
     )
 
+    shadow_outputs: list[dict] = []
+    for profile in shadow_policies:
+        shadow_dir = run_dir / "shadow" / profile
+        shadow_dir.mkdir(parents=True, exist_ok=True)
+        shadow_final_csv = shadow_dir / f"final_market_plays_{run_stamp}_{profile}.csv"
+        shadow_final_json = shadow_dir / f"final_market_plays_{run_stamp}_{profile}.json"
+        shadow_slate_csv = shadow_dir / f"upcoming_market_slate_{run_stamp}_{profile}.csv"
+        shadow_selector_csv = shadow_dir / f"upcoming_market_play_selector_{run_stamp}_{profile}.csv"
+        run_step(
+            f"Run Shadow Market Decision Pipeline [{profile}]",
+            [
+                args.python,
+                "scripts/run_market_pipeline.py",
+                "--season",
+                str(season),
+                "--policy-profile",
+                str(profile),
+                "--history-csv",
+                str(args.history_csv),
+                "--market-wide-path",
+                str(current_snapshot_path),
+                "--slate-csv-out",
+                str(shadow_slate_csv),
+                "--selector-csv-out",
+                str(shadow_selector_csv),
+                "--final-csv-out",
+                str(shadow_final_csv),
+                "--final-json-out",
+                str(shadow_final_json),
+                *(["--allow-heuristic-fallback"] if args.allow_heuristic_fallback else []),
+                *(["--latest"] if args.latest else []),
+            ],
+        )
+        shadow_outputs.append(
+            {
+                "policy_profile": str(profile),
+                "slate_csv": str(shadow_slate_csv),
+                "selector_csv": str(shadow_selector_csv),
+                "final_csv": str(shadow_final_csv),
+                "final_json": str(shadow_final_json),
+            }
+        )
+
     manifest = {
         "run_date": str(local_date.date()),
         "season": int(season),
@@ -229,6 +288,9 @@ def main() -> None:
         "final_json": str(final_json),
         "slate_csv": str(slate_csv),
         "selector_csv": str(selector_csv),
+        "policy_profile": primary_policy,
+        "shadow_policy_profiles": shadow_policies,
+        "shadow_runs": shadow_outputs,
         "used_latest_manifest": bool(args.latest),
         "skip_update_data": bool(args.skip_update_data),
         "skip_collect_market": bool(args.skip_collect_market),
@@ -271,6 +333,9 @@ def main() -> None:
     print(f"Season:               {season}")
     print(f"Current market rows:  {current_rows}")
     print(f"Snapshot mode:        {snapshot_meta['mode']}")
+    print(f"Primary policy:       {primary_policy}")
+    if shadow_policies:
+        print(f"Shadow policies:      {', '.join(shadow_policies)}")
     if snapshot_meta["mode"] == "stale_fallback":
         print(f"Selected market date: {snapshot_meta['selected_market_date']}")
     print(f"Run directory:        {run_dir}")
