@@ -17,6 +17,7 @@ import argparse
 import contextlib
 import io
 import json
+import re
 from functools import lru_cache
 from pathlib import Path
 
@@ -140,6 +141,13 @@ def normalize_name(value: str) -> str:
     return out
 
 
+def team_abbr_from_matchup(value: str | None) -> str | None:
+    if not value:
+        return None
+    match = re.match(r"\s*([A-Z]{2,3})\b", str(value))
+    return match.group(1) if match else None
+
+
 def resolve_manifest_path(run_id: str | None, latest: bool) -> Path:
     if run_id:
         return MODEL_DIR / "runs" / run_id / "lstm_v7_metadata.json"
@@ -208,8 +216,9 @@ def infer_player_csv(player_name: str, season: int, player_csv_index: dict[str, 
         if override_path.exists():
             return override_path
 
-    # Stable fallback when still ambiguous.
-    return sorted(matches, key=lambda path: path.as_posix())[0]
+    # Skip unresolved ambiguous aliases instead of forcing a potentially wrong
+    # mapping that can contaminate predictions and downstream validation.
+    return None
 
 
 def build_records(
@@ -253,9 +262,26 @@ def build_records(
             explanation = build_heuristic_explanation(history_df)
 
         latest_row = history_df.iloc[-1]
+        player_team = team_abbr_from_matchup(latest_row.get("MATCHUP")) if "MATCHUP" in latest_row.index else None
+        market_home_team = market_row.get("Market_Home_Team")
+        market_away_team = market_row.get("Market_Away_Team")
+        market_teams = {str(item) for item in [market_home_team, market_away_team] if pd.notna(item) and str(item)}
+        if market_teams and player_team is not None and player_team not in market_teams:
+            skipped.append(
+                {
+                    "player": player,
+                    "reason": f"market_team_mismatch:{player_team} not in {sorted(market_teams)}",
+                }
+            )
+            continue
         record = {
             "player": player,
             "market_date": str(market_row["Market_Date"].date()) if pd.notna(market_row["Market_Date"]) else None,
+            "market_player_raw": market_row.get("Market_Player_Raw"),
+            "market_event_id": market_row.get("Market_Event_ID"),
+            "market_commence_time_utc": market_row.get("Market_Commence_Time_UTC"),
+            "market_home_team": market_home_team if pd.notna(market_home_team) else None,
+            "market_away_team": market_away_team if pd.notna(market_away_team) else None,
             "history_rows": int(len(history_df)),
             "last_history_date": str(pd.to_datetime(latest_row["Date"]).date()) if "Date" in latest_row.index and pd.notna(latest_row["Date"]) else None,
             "csv": str(csv_path),

@@ -32,6 +32,27 @@ from post_process_market_plays import compute_final_board
 from select_market_plays import build_history_lookup, build_play_rows
 from structured_stack_inference import StructuredStackInference
 
+try:
+    from decision_engine.xgb_ltr_reranker import score_selector_with_xgb_ltr
+
+    HAS_XGB_LTR = True
+except Exception:
+    HAS_XGB_LTR = False
+
+try:
+    from decision_engine.accept_reject_model import apply_acceptor_to_selector
+
+    HAS_ACCEPT_REJECT = True
+except Exception:
+    HAS_ACCEPT_REJECT = False
+
+try:
+    from decision_engine.robust_reranker import score_selector_with_robust_reranker
+
+    HAS_ROBUST_RERANKER = True
+except Exception:
+    HAS_ROBUST_RERANKER = False
+
 
 POLICY_PROFILES = {config.name: config for config in build_default_shadow_strategies()}
 DEFAULT_POLICY = POLICY_PROFILES["production_calibrated"]
@@ -91,51 +112,99 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Allow pipeline to continue with heuristic-only predictions when model load fails.",
     )
-    parser.add_argument("--american-odds", type=int, default=DEFAULT_POLICY.american_odds, help="Assumed American odds for EV.")
-    parser.add_argument("--probability-shrink-factor", type=float, default=DEFAULT_POLICY.probability_shrink_factor, help="Shrink expected win rate toward 50%%.")
-    parser.add_argument("--elite-pct", type=float, default=DEFAULT_POLICY.elite_pct, help="Percentile cutoff for elite priority plays.")
-    parser.add_argument("--min-ev", type=float, default=DEFAULT_POLICY.min_ev, help="Minimum EV to keep a play.")
-    parser.add_argument("--min-final-confidence", type=float, default=DEFAULT_POLICY.min_final_confidence, help="Minimum final confidence to keep a play.")
+    parser.add_argument("--american-odds", type=int, default=None, help="Assumed American odds for EV.")
+    parser.add_argument("--probability-shrink-factor", type=float, default=None, help="Shrink expected win rate toward 50%%.")
+    parser.add_argument("--elite-pct", type=float, default=None, help="Percentile cutoff for elite priority plays.")
+    parser.add_argument("--min-ev", type=float, default=None, help="Minimum EV to keep a play.")
+    parser.add_argument("--min-final-confidence", type=float, default=None, help="Minimum final confidence to keep a play.")
     parser.add_argument(
         "--min-recommendation",
         type=str,
-        default=DEFAULT_POLICY.min_recommendation,
-        choices=["consider", "strong", "elite"],
+        default=None,
+        choices=["pass", "consider", "strong", "elite"],
         help="Lowest selector recommendation allowed into the final board.",
     )
-    parser.add_argument("--max-plays-per-player", type=int, default=DEFAULT_POLICY.max_plays_per_player, help="Maximum final plays to keep per player.")
-    parser.add_argument("--max-plays-per-target", type=int, default=DEFAULT_POLICY.max_plays_per_target, help="Maximum final plays to keep per target when target-specific caps are not supplied.")
-    parser.add_argument("--max-pts-plays", type=int, default=DEFAULT_POLICY.max_pts_plays, help="Maximum final PTS plays to keep.")
-    parser.add_argument("--max-trb-plays", type=int, default=DEFAULT_POLICY.max_trb_plays, help="Maximum final TRB plays to keep.")
-    parser.add_argument("--max-ast-plays", type=int, default=DEFAULT_POLICY.max_ast_plays, help="Maximum final AST plays to keep.")
-    parser.add_argument("--max-total-plays", type=int, default=DEFAULT_POLICY.max_total_plays, help="Maximum total plays to keep.")
-    parser.add_argument("--non-pts-min-gap-percentile", type=float, default=DEFAULT_POLICY.non_pts_min_gap_percentile, help="Minimum disagreement percentile for TRB/AST plays.")
-    parser.add_argument("--edge-adjust-k", type=float, default=DEFAULT_POLICY.edge_adjust_k, help="Weight for edge-adjusted EV ranking.")
+    parser.add_argument("--max-plays-per-player", type=int, default=None, help="Maximum final plays to keep per player.")
+    parser.add_argument("--max-plays-per-target", type=int, default=None, help="Maximum final plays to keep per target when target-specific caps are not supplied.")
+    parser.add_argument("--max-pts-plays", type=int, default=None, help="Maximum final PTS plays to keep.")
+    parser.add_argument("--max-trb-plays", type=int, default=None, help="Maximum final TRB plays to keep.")
+    parser.add_argument("--max-ast-plays", type=int, default=None, help="Maximum final AST plays to keep.")
+    parser.add_argument("--max-total-plays", type=int, default=None, help="Maximum total plays to keep.")
+    parser.add_argument("--max-plays-per-game", type=int, default=None, help="Maximum selected plays to keep from the same game/event.")
+    parser.add_argument("--non-pts-min-gap-percentile", type=float, default=None, help="Minimum disagreement percentile for TRB/AST plays.")
+    parser.add_argument("--edge-adjust-k", type=float, default=None, help="Weight for edge-adjusted EV ranking.")
+    parser.add_argument(
+        "--selection-mode",
+        type=str,
+        default=None,
+        choices=["ev_adjusted", "edge", "xgb_ltr", "robust_reranker", "thompson_ev"],
+        help="Final board ranking mode before portfolio constraints.",
+    )
+    parser.add_argument("--thompson-temperature", type=float, default=None, help="Temperature used for Thompson sampling.")
+    parser.add_argument("--thompson-seed", type=int, default=None, help="Seed salt used for deterministic Thompson sampling.")
+    parser.add_argument("--market-regression-floor", type=float, default=None, help="Minimum market-regression lambda for prediction shrinkage.")
+    parser.add_argument("--market-regression-ceiling", type=float, default=None, help="Maximum market-regression lambda for prediction shrinkage.")
+    parser.add_argument("--belief-uncertainty-lower", type=float, default=None, help="Lower anchor for belief uncertainty confidence scaling.")
+    parser.add_argument("--belief-uncertainty-upper", type=float, default=None, help="Upper anchor for belief uncertainty confidence scaling.")
     return parser.parse_args()
 
 
 def resolve_policy(args: argparse.Namespace):
     base = POLICY_PROFILES[args.policy_profile]
     payload = base.to_dict()
-    payload.update(
-        {
-            "american_odds": int(args.american_odds),
-            "probability_shrink_factor": float(args.probability_shrink_factor),
-            "elite_pct": float(args.elite_pct),
-            "min_ev": float(args.min_ev),
-            "min_final_confidence": float(args.min_final_confidence),
-            "min_recommendation": str(args.min_recommendation),
-            "max_plays_per_player": int(args.max_plays_per_player),
-            "max_plays_per_target": int(args.max_plays_per_target),
-            "max_pts_plays": int(args.max_pts_plays),
-            "max_trb_plays": int(args.max_trb_plays),
-            "max_ast_plays": int(args.max_ast_plays),
-            "max_total_plays": int(args.max_total_plays),
-            "non_pts_min_gap_percentile": float(args.non_pts_min_gap_percentile),
-            "edge_adjust_k": float(args.edge_adjust_k),
-        }
-    )
+    override_fields = {
+        "american_odds": args.american_odds,
+        "probability_shrink_factor": args.probability_shrink_factor,
+        "elite_pct": args.elite_pct,
+        "min_ev": args.min_ev,
+        "min_final_confidence": args.min_final_confidence,
+        "min_recommendation": args.min_recommendation,
+        "max_plays_per_player": args.max_plays_per_player,
+        "max_plays_per_target": args.max_plays_per_target,
+        "max_pts_plays": args.max_pts_plays,
+        "max_trb_plays": args.max_trb_plays,
+        "max_ast_plays": args.max_ast_plays,
+        "max_total_plays": args.max_total_plays,
+        "max_plays_per_game": args.max_plays_per_game,
+        "non_pts_min_gap_percentile": args.non_pts_min_gap_percentile,
+        "edge_adjust_k": args.edge_adjust_k,
+        "selection_mode": args.selection_mode,
+        "thompson_temperature": args.thompson_temperature,
+        "thompson_seed": args.thompson_seed,
+        "market_regression_floor": args.market_regression_floor,
+        "market_regression_ceiling": args.market_regression_ceiling,
+        "belief_uncertainty_lower": args.belief_uncertainty_lower,
+        "belief_uncertainty_upper": args.belief_uncertainty_upper,
+    }
+    for key, value in override_fields.items():
+        if value is not None:
+            payload[key] = value
     return payload
+
+
+def apply_heuristic_policy_overrides(policy_payload: dict) -> dict:
+    """
+    When historical calibration rows are unavailable, switch to a deterministic
+    edge-first fallback policy so boards remain actionable.
+    """
+    out = dict(policy_payload)
+    out["selection_mode"] = "edge"
+    out["ranking_mode"] = "edge"
+    out["min_recommendation"] = "pass"
+    out["min_ev"] = min(float(out.get("min_ev", 0.0)), -0.20)
+    out["min_final_confidence"] = min(float(out.get("min_final_confidence", 0.0)), 0.0)
+    out["non_pts_min_gap_percentile"] = min(float(out.get("non_pts_min_gap_percentile", 0.90)), 0.0)
+    out["max_total_plays"] = max(int(out.get("max_total_plays", 0)), 8)
+    out["max_pts_plays"] = max(int(out.get("max_pts_plays", 0)), 8)
+    out["max_plays_per_game"] = 0
+    out["min_bet_win_rate"] = min(float(out.get("min_bet_win_rate", 0.57)), 0.49)
+    out["medium_bet_win_rate"] = min(float(out.get("medium_bet_win_rate", 0.60)), 0.52)
+    out["full_bet_win_rate"] = min(float(out.get("full_bet_win_rate", 0.65)), 0.56)
+    out["medium_tier_percentile"] = min(float(out.get("medium_tier_percentile", 0.80)), 0.00)
+    out["strong_tier_percentile"] = min(float(out.get("strong_tier_percentile", 0.90)), 0.00)
+    out["elite_tier_percentile"] = min(float(out.get("elite_tier_percentile", out.get("elite_pct", 0.95))), 0.00)
+    out["heuristic_overrides_applied"] = True
+    return out
 
 
 def shrink_expected_win_rate(raw_rate: pd.Series, shrink_factor: float) -> pd.Series:
@@ -150,7 +219,24 @@ def apply_live_policy_calibration(selector_df: pd.DataFrame, policy_payload: dic
 
     out = selector_df.copy()
     out["raw_expected_win_rate"] = pd.to_numeric(out["expected_win_rate"], errors="coerce").fillna(0.5)
-    out["expected_win_rate"] = shrink_expected_win_rate(out["raw_expected_win_rate"], policy_payload["probability_shrink_factor"])
+    out["expected_push_rate"] = pd.to_numeric(out.get("expected_push_rate"), errors="coerce").fillna(0.0).clip(lower=0.0, upper=1.0)
+    out["belief_confidence_factor"] = pd.to_numeric(out.get("belief_confidence_factor"), errors="coerce").fillna(
+        (1.0 - pd.to_numeric(out.get("belief_uncertainty_normalized"), errors="coerce").fillna(1.0)).clip(lower=0.0, upper=1.0)
+    )
+    out["feasibility"] = pd.to_numeric(out.get("feasibility"), errors="coerce").fillna(0.0).clip(lower=0.0, upper=1.0)
+    out["posterior_variance"] = pd.to_numeric(out.get("posterior_variance"), errors="coerce").fillna(0.25).clip(lower=0.0, upper=1.0)
+
+    policy_shrink = float(np.clip(policy_payload["probability_shrink_factor"], 0.0, 1.0))
+    confidence = (
+        out["belief_confidence_factor"]
+        * out["feasibility"]
+        * (1.0 - np.clip(np.sqrt(out["posterior_variance"]), 0.0, 1.0))
+    ).clip(lower=0.0, upper=1.0)
+    calibration_weight = np.clip(0.15 + policy_shrink * confidence, 0.10, 0.95)
+    out["policy_calibration_weight"] = calibration_weight
+    out["expected_win_rate"] = calibration_weight * out["raw_expected_win_rate"] + (1.0 - calibration_weight) * 0.5
+    out["expected_win_rate"] = out["expected_win_rate"].clip(lower=0.0, upper=1.0 - out["expected_push_rate"])
+    out["expected_loss_rate"] = np.clip(1.0 - out["expected_win_rate"] - out["expected_push_rate"], 0.0, 1.0)
     elite_pct = float(policy_payload["elite_pct"])
     out["recommendation"] = np.where(
         pd.to_numeric(out["gap_percentile"], errors="coerce").fillna(0.0) >= elite_pct,
@@ -160,12 +246,99 @@ def apply_live_policy_calibration(selector_df: pd.DataFrame, policy_payload: dic
     return out
 
 
+def maybe_apply_xgb_ltr_reranker(selector_df: pd.DataFrame, history_df: pd.DataFrame, policy_payload: dict) -> tuple[pd.DataFrame, dict | None]:
+    if selector_df.empty:
+        return selector_df.copy(), None
+    if str(policy_payload.get("ranking_mode", "ev_adjusted")) != "xgb_ltr":
+        return selector_df.copy(), None
+    if not HAS_XGB_LTR:
+        out = selector_df.copy()
+        out["xgb_ltr_score"] = np.nan
+        out["xgb_ltr_enabled"] = False
+        return out, {"enabled": False, "reason": "module_missing"}
+    if history_df.empty:
+        out = selector_df.copy()
+        out["xgb_ltr_score"] = np.nan
+        out["xgb_ltr_enabled"] = False
+        return out, {"enabled": False, "reason": "empty_history"}
+    return score_selector_with_xgb_ltr(
+        selector_df,
+        history_df,
+        min_train_rows=int(policy_payload.get("xgb_ltr_min_train_rows", 4000)),
+        num_pair_per_sample=int(policy_payload.get("xgb_ltr_num_pair_per_sample", 12)),
+    )
+
+
+def maybe_apply_accept_rejector(selector_df: pd.DataFrame, history_df: pd.DataFrame, policy_payload: dict) -> tuple[pd.DataFrame, dict | None]:
+    if selector_df.empty:
+        return selector_df.copy(), None
+    if not bool(policy_payload.get("accept_reject_enabled", False)):
+        return selector_df.copy(), None
+    if not HAS_ACCEPT_REJECT:
+        out = selector_df.copy()
+        out["accept_reject_probability"] = np.nan
+        out["accept_reject_enabled"] = False
+        return out, {"enabled": False, "reason": "module_missing"}
+    return apply_acceptor_to_selector(
+        selector_df,
+        history_df,
+        probability_shrink_factor=float(policy_payload.get("probability_shrink_factor", 0.75)),
+        elite_pct=float(policy_payload.get("elite_pct", 0.95)),
+        min_train_rows=int(policy_payload.get("accept_reject_min_train_rows", 3000)),
+        holdout_days=int(policy_payload.get("accept_reject_holdout_days", 45)),
+        min_holdout_rows=int(policy_payload.get("accept_reject_min_holdout_rows", 250)),
+        min_accept_rate=float(policy_payload.get("accept_reject_min_accept_rate", 0.05)),
+        threshold_floor=float(policy_payload.get("accept_reject_threshold_floor", 0.0)),
+    )
+
+
+def maybe_apply_robust_reranker(selector_df: pd.DataFrame, history_df: pd.DataFrame, policy_payload: dict) -> tuple[pd.DataFrame, dict | None]:
+    if selector_df.empty:
+        return selector_df.copy(), None
+    if str(policy_payload.get("ranking_mode", "ev_adjusted")) != "robust_reranker":
+        return selector_df.copy(), None
+    if not HAS_ROBUST_RERANKER:
+        out = selector_df.copy()
+        out["robust_reranker_prob"] = np.nan
+        out["robust_reranker_enabled"] = False
+        return out, {"enabled": False, "reason": "module_missing"}
+    return score_selector_with_robust_reranker(
+        selector_df,
+        history_df,
+        probability_shrink_factor=float(policy_payload.get("probability_shrink_factor", 0.75)),
+        elite_pct=float(policy_payload.get("elite_pct", 0.95)),
+        min_train_rows=int(policy_payload.get("robust_reranker_min_train_rows", 4000)),
+        holdout_days=int(policy_payload.get("robust_reranker_holdout_days", 45)),
+        min_holdout_rows=int(policy_payload.get("robust_reranker_min_holdout_rows", 250)),
+        num_pair_per_sample=int(policy_payload.get("robust_reranker_num_pair_per_sample", 12)),
+        min_candidate_expected_win_rate=float(policy_payload.get("robust_reranker_min_candidate_win_rate", 0.55)),
+        min_candidate_final_confidence=float(policy_payload.get("robust_reranker_min_candidate_final_confidence", 0.03)),
+        min_candidate_recommendation=str(policy_payload.get("robust_reranker_min_candidate_recommendation", "consider")),
+    )
+
+
 def summarize_skip_reasons(skipped_rows: list[dict]) -> dict[str, int]:
     counts: dict[str, int] = {}
     for item in skipped_rows:
         reason = str(item.get("reason", "unknown"))
         counts[reason] = counts.get(reason, 0) + 1
     return counts
+
+
+def sanitize_for_json(value):
+    if isinstance(value, dict):
+        return {str(key): sanitize_for_json(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [sanitize_for_json(item) for item in value]
+    if isinstance(value, tuple):
+        return [sanitize_for_json(item) for item in value]
+    if pd.isna(value):
+        return None
+    if isinstance(value, pd.Timestamp):
+        return value.isoformat()
+    if isinstance(value, np.generic):
+        return value.item()
+    return value
 
 
 def validate_pipeline_inputs(market_df: pd.DataFrame, slate_df: pd.DataFrame, skipped_rows: list[dict]) -> dict:
@@ -257,8 +430,19 @@ def main() -> None:
     else:
         history_mode = "heuristic_fallback"
         print(f"Warning: history CSV not found ({history_path}); using heuristic edge calibration.")
-    selector_df = build_play_rows(slate_df, history_lookup)
+        policy_payload = apply_heuristic_policy_overrides(policy_payload)
+    selector_df = build_play_rows(
+        slate_df,
+        history_lookup,
+        belief_uncertainty_lower=float(policy_payload.get("belief_uncertainty_lower", 0.75)),
+        belief_uncertainty_upper=float(policy_payload.get("belief_uncertainty_upper", 1.15)),
+        market_regression_floor=float(policy_payload.get("market_regression_floor", 0.25)),
+        market_regression_ceiling=float(policy_payload.get("market_regression_ceiling", 0.95)),
+    )
     selector_df = apply_live_policy_calibration(selector_df, policy_payload)
+    selector_df, xgb_ltr_summary = maybe_apply_xgb_ltr_reranker(selector_df, history_df, policy_payload)
+    selector_df, accept_reject_summary = maybe_apply_accept_rejector(selector_df, history_df, policy_payload)
+    selector_df, robust_reranker_summary = maybe_apply_robust_reranker(selector_df, history_df, policy_payload)
     if selector_df.empty:
         raise RuntimeError("Selector produced no rows from the current slate.")
     args.selector_csv_out.parent.mkdir(parents=True, exist_ok=True)
@@ -270,12 +454,30 @@ def main() -> None:
         min_ev=policy_payload["min_ev"],
         min_final_confidence=policy_payload["min_final_confidence"],
         min_recommendation=policy_payload["min_recommendation"],
+        selection_mode=policy_payload.get("selection_mode", policy_payload.get("ranking_mode", "ev_adjusted")),
+        ranking_mode=policy_payload.get("ranking_mode", "ev_adjusted"),
         max_plays_per_player=policy_payload["max_plays_per_player"],
         max_plays_per_target=policy_payload["max_plays_per_target"],
         max_total_plays=policy_payload["max_total_plays"],
         max_target_plays={"PTS": policy_payload["max_pts_plays"], "TRB": policy_payload["max_trb_plays"], "AST": policy_payload["max_ast_plays"]},
+        max_plays_per_game=policy_payload.get("max_plays_per_game", 2),
         non_pts_min_gap_percentile=policy_payload["non_pts_min_gap_percentile"],
         edge_adjust_k=policy_payload["edge_adjust_k"],
+        thompson_temperature=policy_payload.get("thompson_temperature", 1.0),
+        thompson_seed=policy_payload.get("thompson_seed", 17),
+        min_bet_win_rate=policy_payload.get("min_bet_win_rate", 0.57),
+        medium_bet_win_rate=policy_payload.get("medium_bet_win_rate", 0.60),
+        full_bet_win_rate=policy_payload.get("full_bet_win_rate", 0.65),
+        medium_tier_percentile=policy_payload.get("medium_tier_percentile", 0.80),
+        strong_tier_percentile=policy_payload.get("strong_tier_percentile", 0.90),
+        elite_tier_percentile=policy_payload.get("elite_tier_percentile", policy_payload.get("elite_pct", 0.95)),
+        small_bet_fraction=policy_payload.get("small_bet_fraction", 0.005),
+        medium_bet_fraction=policy_payload.get("medium_bet_fraction", 0.010),
+        full_bet_fraction=policy_payload.get("full_bet_fraction", 0.015),
+        max_bet_fraction=policy_payload.get("max_bet_fraction", 0.02),
+        max_total_bet_fraction=policy_payload.get("max_total_bet_fraction", 0.05),
+        belief_uncertainty_lower=policy_payload.get("belief_uncertainty_lower", 0.75),
+        belief_uncertainty_upper=policy_payload.get("belief_uncertainty_upper", 1.15),
     )
     args.final_csv_out.parent.mkdir(parents=True, exist_ok=True)
     args.final_json_out.parent.mkdir(parents=True, exist_ok=True)
@@ -291,13 +493,16 @@ def main() -> None:
         "season": args.season,
         "policy_profile": args.policy_profile,
         "policy": policy_payload,
+        "xgb_ltr": xgb_ltr_summary,
+        "accept_reject": accept_reject_summary,
+        "robust_reranker": robust_reranker_summary,
         "slate_rows": int(len(slate_df)),
         "selector_rows": int(len(selector_df)),
         "final_rows": int(len(final_board)),
         "input_validation": input_validation,
         "top_plays": final_board.head(20).to_dict(orient="records"),
     }
-    args.final_json_out.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    args.final_json_out.write_text(json.dumps(sanitize_for_json(payload), indent=2), encoding="utf-8")
 
     print("\n" + "=" * 90)
     print("MARKET PIPELINE COMPLETE")
@@ -328,6 +533,9 @@ def main() -> None:
             "expected_win_rate",
             "ev",
             "final_confidence",
+            "allocation_tier",
+            "allocation_action",
+            "bet_fraction",
             "recommendation",
         ]
         present_cols = [column for column in show_cols if column in final_board.columns]

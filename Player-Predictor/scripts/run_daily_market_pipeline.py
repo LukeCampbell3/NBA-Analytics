@@ -30,15 +30,39 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SITE_ROOT = REPO_ROOT.parent
 MARKET_ROOT = REPO_ROOT / "data copy" / "raw" / "market_odds" / "nba"
 ANALYSIS_ROOT = REPO_ROOT / "model" / "analysis" / "daily_runs"
+DATA_PROC_ROOT = REPO_ROOT / "Data-Proc"
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the daily market data + prediction pipeline.")
     parser.add_argument("--season", type=int, default=None, help="Season end year. Defaults from current date.")
     parser.add_argument("--latest", action="store_true", help="Use latest manifest instead of production for the final board.")
+    parser.add_argument(
+        "--policy-profile",
+        type=str,
+        default="production_high_precision",
+        help="Primary market policy profile for the live board.",
+    )
+    parser.add_argument(
+        "--shadow-policy-profiles",
+        nargs="*",
+        default=["production_calibrated"],
+        help="Optional additional policy profiles to run for research/monitoring only.",
+    )
     parser.add_argument("--history-csv", type=Path, default=REPO_ROOT / "model" / "analysis" / "latest_market_comparison_strict_rows.csv", help="Historical row-level backtest CSV for edge calibration.")
     parser.add_argument("--lookback-days", type=int, default=10, help="How many recent days of historical market lines to collect.")
     parser.add_argument("--future-days", type=int, default=2, help="How many days ahead of today to keep in the current slate snapshot.")
+    parser.add_argument(
+        "--snapshot-policy",
+        type=str,
+        default="auto",
+        choices=["auto", "live_only"],
+        help=(
+            "Snapshot fallback policy. "
+            "'auto' allows historical backfill and stale fallback when the requested window is empty. "
+            "'live_only' disables both fallbacks and fails if no requested-window rows exist."
+        ),
+    )
     parser.add_argument("--collect-scan-count", type=int, default=500, help="Maximum Covers matchup ids to scan for the nightly collection window.")
     parser.add_argument("--run-date", type=str, default=None, help="Optional YYYY-MM-DD override for local run date.")
     parser.add_argument("--skip-update-data", action="store_true", help="Skip official game-log refresh.")
@@ -50,6 +74,8 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Allow market pipeline to run with heuristic-only predictions when model load fails.",
     )
+    parser.add_argument("--skip-export-web", action="store_true", help="Skip exporting web daily predictions payload.")
+    parser.add_argument("--skip-build-site", action="store_true", help="Skip static site rebuild step.")
     parser.add_argument("--python", type=str, default=sys.executable, help="Python executable to use for child steps.")
     return parser.parse_args()
 
@@ -66,7 +92,175 @@ def run_step(label: str, args: list[str]) -> None:
     subprocess.run(args, cwd=REPO_ROOT, check=True)
 
 
-def filter_current_market_snapshot(source_path: Path, out_path: Path, run_date: pd.Timestamp, future_days: int) -> tuple[int, dict]:
+def _normalize_player_name(value: str) -> str:
+    out = str(value)
+    for old, new in [
+        (" ", "_"),
+        (".", ""),
+        ("'", ""),
+        (",", ""),
+        ("/", "-"),
+        ("\\", "-"),
+        (":", ""),
+    ]:
+        out = out.replace(old, new)
+    return out
+
+
+def build_historical_market_snapshot(
+    out_path: Path,
+    run_date: pd.Timestamp,
+    future_days: int,
+    season: int,
+) -> tuple[int, dict]:
+    start_date = run_date.normalize()
+    end_date = (run_date + pd.Timedelta(days=int(future_days))).normalize()
+    use_cols = {
+        "Date",
+        "Player",
+        "Market_PTS",
+        "Market_TRB",
+        "Market_AST",
+        "Market_PTS_books",
+        "Market_TRB_books",
+        "Market_AST_books",
+        "Market_PTS_over_price",
+        "Market_TRB_over_price",
+        "Market_AST_over_price",
+        "Market_PTS_under_price",
+        "Market_TRB_under_price",
+        "Market_AST_under_price",
+        "Market_PTS_line_std",
+        "Market_TRB_line_std",
+        "Market_AST_line_std",
+        "Market_Fetched_At_UTC",
+    }
+    rows: list[dict] = []
+    for csv_path in sorted(DATA_PROC_ROOT.glob(f"*/*{season}_processed_processed.csv")):
+        try:
+            df = pd.read_csv(csv_path, usecols=lambda col: col in use_cols)
+        except Exception:
+            continue
+        if df.empty or "Date" not in df.columns:
+            continue
+
+        date_series = pd.to_datetime(df["Date"], errors="coerce")
+        mask = (date_series >= start_date) & (date_series <= end_date)
+        if not mask.any():
+            continue
+
+        subset = df.loc[mask].copy()
+        if subset.empty:
+            continue
+
+        for column in [
+            "Market_PTS",
+            "Market_TRB",
+            "Market_AST",
+            "Market_PTS_books",
+            "Market_TRB_books",
+            "Market_AST_books",
+            "Market_PTS_over_price",
+            "Market_TRB_over_price",
+            "Market_AST_over_price",
+            "Market_PTS_under_price",
+            "Market_TRB_under_price",
+            "Market_AST_under_price",
+            "Market_PTS_line_std",
+            "Market_TRB_line_std",
+            "Market_AST_line_std",
+        ]:
+            if column in subset.columns:
+                subset[column] = pd.to_numeric(subset[column], errors="coerce")
+
+        line_cols = [column for column in ["Market_PTS", "Market_TRB", "Market_AST"] if column in subset.columns]
+        if line_cols:
+            subset = subset.loc[subset[line_cols].notna().any(axis=1)].copy()
+        if subset.empty:
+            continue
+
+        player_series = subset["Player"] if "Player" in subset.columns else pd.Series(csv_path.parent.name, index=subset.index)
+        player_series = player_series.fillna(csv_path.parent.name).astype(str)
+        market_dates = pd.to_datetime(subset["Date"], errors="coerce")
+
+        for idx in subset.index:
+            market_date = market_dates.loc[idx]
+            if pd.isna(market_date):
+                continue
+            player_raw = str(player_series.loc[idx]).strip()
+            if not player_raw:
+                player_raw = csv_path.parent.name.replace("_", " ")
+            row = {
+                "Player": _normalize_player_name(player_raw),
+                "Market_Player_Raw": player_raw,
+                "Market_Date": market_date,
+            }
+            for column in [
+                "Market_PTS",
+                "Market_TRB",
+                "Market_AST",
+                "Market_PTS_books",
+                "Market_TRB_books",
+                "Market_AST_books",
+                "Market_PTS_over_price",
+                "Market_TRB_over_price",
+                "Market_AST_over_price",
+                "Market_PTS_under_price",
+                "Market_TRB_under_price",
+                "Market_AST_under_price",
+                "Market_PTS_line_std",
+                "Market_TRB_line_std",
+                "Market_AST_line_std",
+                "Market_Fetched_At_UTC",
+            ]:
+                row[column] = subset.loc[idx, column] if column in subset.columns else None
+            rows.append(row)
+
+    frame = pd.DataFrame.from_records(rows)
+    if frame.empty:
+        return 0, {
+            "mode": "historical_backfill_empty",
+            "requested_start_date": str(start_date.date()),
+            "requested_end_date": str(end_date.date()),
+            "selected_row_count": 0,
+        }
+
+    frame["Market_Date"] = pd.to_datetime(frame["Market_Date"], errors="coerce")
+    frame = frame.loc[frame["Market_Date"].notna()].copy()
+    frame = frame.sort_values(["Market_Date", "Player"]).drop_duplicates(subset=["Market_Date", "Player"], keep="last").reset_index(drop=True)
+    if frame.empty:
+        return 0, {
+            "mode": "historical_backfill_empty",
+            "requested_start_date": str(start_date.date()),
+            "requested_end_date": str(end_date.date()),
+            "selected_row_count": 0,
+        }
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    if out_path.suffix.lower() == ".parquet":
+        frame.to_parquet(out_path, index=False)
+    else:
+        frame.to_csv(out_path, index=False)
+
+    return int(len(frame)), {
+        "mode": "historical_backfill_window",
+        "requested_start_date": str(start_date.date()),
+        "requested_end_date": str(end_date.date()),
+        "selected_market_date_min": str(pd.Timestamp(frame["Market_Date"].min()).date()),
+        "selected_market_date_max": str(pd.Timestamp(frame["Market_Date"].max()).date()),
+        "selected_row_count": int(len(frame)),
+    }
+
+
+def filter_current_market_snapshot(
+    source_path: Path,
+    out_path: Path,
+    run_date: pd.Timestamp,
+    future_days: int,
+    season: int,
+    allow_historical_backfill: bool = True,
+    allow_stale_fallback: bool = True,
+) -> tuple[int, dict]:
     if not source_path.exists():
         raise FileNotFoundError(f"Market snapshot not found: {source_path}")
     if source_path.suffix.lower() == ".parquet":
@@ -83,21 +277,37 @@ def filter_current_market_snapshot(source_path: Path, out_path: Path, run_date: 
     end_date = (run_date + pd.Timedelta(days=int(future_days))).normalize()
     filtered = df.loc[(market_dates >= start_date) & (market_dates <= end_date)].copy()
     if filtered.empty:
-        fallback_date = market_dates.max()
-        if pd.isna(fallback_date):
-            raise RuntimeError(f"No valid Market_Date values found in {source_path}")
-        filtered = df.loc[market_dates == fallback_date].copy()
-        if filtered.empty:
-            raise RuntimeError(
-                f"No current/upcoming market rows found between {start_date.date()} and {end_date.date()} in {source_path}"
+        if allow_historical_backfill:
+            historical_rows, historical_meta = build_historical_market_snapshot(
+                out_path=out_path,
+                run_date=run_date,
+                future_days=future_days,
+                season=season,
             )
-        snapshot_meta = {
-            "mode": "stale_fallback",
-            "requested_start_date": str(start_date.date()),
-            "requested_end_date": str(end_date.date()),
-            "selected_market_date": str(pd.Timestamp(fallback_date).date()),
-            "selected_row_count": int(len(filtered)),
-        }
+            if historical_rows > 0:
+                return historical_rows, historical_meta
+
+        if allow_stale_fallback:
+            fallback_date = market_dates.max()
+            if pd.isna(fallback_date):
+                raise RuntimeError(f"No valid Market_Date values found in {source_path}")
+            filtered = df.loc[market_dates == fallback_date].copy()
+            if filtered.empty:
+                raise RuntimeError(
+                    f"No current/upcoming market rows found between {start_date.date()} and {end_date.date()} in {source_path}"
+                )
+            snapshot_meta = {
+                "mode": "stale_fallback",
+                "requested_start_date": str(start_date.date()),
+                "requested_end_date": str(end_date.date()),
+                "selected_market_date": str(pd.Timestamp(fallback_date).date()),
+                "selected_row_count": int(len(filtered)),
+            }
+        else:
+            raise RuntimeError(
+                "Requested market window is empty and snapshot-policy disallows historical/stale fallback. "
+                f"Window={start_date.date()}..{end_date.date()} source={source_path}"
+            )
     else:
         snapshot_meta = {
             "mode": "requested_window",
@@ -120,6 +330,8 @@ def main() -> None:
     args = parse_args()
     local_date = pd.Timestamp(args.run_date).normalize() if args.run_date else pd.Timestamp.now().normalize()
     season = args.season or infer_season(local_date)
+    primary_policy = str(args.policy_profile)
+    shadow_policies = [profile for profile in args.shadow_policy_profiles if str(profile) and str(profile) != primary_policy]
     yesterday = (local_date - pd.Timedelta(days=1)).date()
     lookback_start = (local_date - pd.Timedelta(days=int(args.lookback_days))).date()
     future_end = (local_date + pd.Timedelta(days=int(args.future_days))).date()
@@ -184,7 +396,16 @@ def main() -> None:
 
     latest_market_path = MARKET_ROOT / "latest_player_props_wide.parquet"
     current_snapshot_path = run_dir / f"current_market_snapshot_{run_stamp}.parquet"
-    current_rows, snapshot_meta = filter_current_market_snapshot(latest_market_path, current_snapshot_path, local_date, args.future_days)
+    allow_fallbacks = str(args.snapshot_policy).lower() != "live_only"
+    current_rows, snapshot_meta = filter_current_market_snapshot(
+        latest_market_path,
+        current_snapshot_path,
+        local_date,
+        args.future_days,
+        season,
+        allow_historical_backfill=allow_fallbacks,
+        allow_stale_fallback=allow_fallbacks,
+    )
 
     final_csv = run_dir / f"final_market_plays_{run_stamp}.csv"
     final_json = run_dir / f"final_market_plays_{run_stamp}.json"
@@ -198,6 +419,8 @@ def main() -> None:
             "scripts/run_market_pipeline.py",
             "--season",
             str(season),
+            "--policy-profile",
+            primary_policy,
             "--history-csv",
             str(args.history_csv),
             "--market-wide-path",
@@ -215,12 +438,56 @@ def main() -> None:
         ],
     )
 
+    shadow_outputs: list[dict] = []
+    for profile in shadow_policies:
+        shadow_dir = run_dir / "shadow" / profile
+        shadow_dir.mkdir(parents=True, exist_ok=True)
+        shadow_final_csv = shadow_dir / f"final_market_plays_{run_stamp}_{profile}.csv"
+        shadow_final_json = shadow_dir / f"final_market_plays_{run_stamp}_{profile}.json"
+        shadow_slate_csv = shadow_dir / f"upcoming_market_slate_{run_stamp}_{profile}.csv"
+        shadow_selector_csv = shadow_dir / f"upcoming_market_play_selector_{run_stamp}_{profile}.csv"
+        run_step(
+            f"Run Shadow Market Decision Pipeline [{profile}]",
+            [
+                args.python,
+                "scripts/run_market_pipeline.py",
+                "--season",
+                str(season),
+                "--policy-profile",
+                str(profile),
+                "--history-csv",
+                str(args.history_csv),
+                "--market-wide-path",
+                str(current_snapshot_path),
+                "--slate-csv-out",
+                str(shadow_slate_csv),
+                "--selector-csv-out",
+                str(shadow_selector_csv),
+                "--final-csv-out",
+                str(shadow_final_csv),
+                "--final-json-out",
+                str(shadow_final_json),
+                *(["--allow-heuristic-fallback"] if args.allow_heuristic_fallback else []),
+                *(["--latest"] if args.latest else []),
+            ],
+        )
+        shadow_outputs.append(
+            {
+                "policy_profile": str(profile),
+                "slate_csv": str(shadow_slate_csv),
+                "selector_csv": str(shadow_selector_csv),
+                "final_csv": str(shadow_final_csv),
+                "final_json": str(shadow_final_json),
+            }
+        )
+
     manifest = {
         "run_date": str(local_date.date()),
         "season": int(season),
         "through_date": str(yesterday),
         "lookback_start": str(lookback_start),
         "future_end": str(future_end),
+        "snapshot_policy": str(args.snapshot_policy),
         "history_csv": str(args.history_csv),
         "current_market_snapshot": str(current_snapshot_path),
         "current_market_rows": int(current_rows),
@@ -229,40 +496,46 @@ def main() -> None:
         "final_json": str(final_json),
         "slate_csv": str(slate_csv),
         "selector_csv": str(selector_csv),
+        "policy_profile": primary_policy,
+        "shadow_policy_profiles": shadow_policies,
+        "shadow_runs": shadow_outputs,
         "used_latest_manifest": bool(args.latest),
         "skip_update_data": bool(args.skip_update_data),
         "skip_collect_market": bool(args.skip_collect_market),
         "skip_align": bool(args.skip_align),
         "skip_backtest": bool(args.skip_backtest),
+        "skip_export_web": bool(args.skip_export_web),
+        "skip_build_site": bool(args.skip_build_site),
         "allow_heuristic_fallback": bool(args.allow_heuristic_fallback),
         "updated_at_utc": datetime.utcnow().isoformat() + "Z",
     }
     manifest_path = run_dir / f"daily_market_pipeline_manifest_{run_stamp}.json"
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
-    run_step(
-        "Export Static Daily Predictions Page Data",
-        [
-            args.python,
-            "scripts/export_daily_predictions_web.py",
-            "--manifest",
-            str(manifest_path),
-            "--out-dist",
-            str(SITE_ROOT / "dist" / "data" / "daily_predictions.json"),
-        ],
-    )
-
-    run_step(
-        "Rebuild Static Site Bundle",
-        [
-            args.python,
-            str(SITE_ROOT / "build_static_site.py"),
-            "--source",
-            str(SITE_ROOT / "web"),
-            "--output",
-            str(SITE_ROOT / "dist"),
-        ],
-    )
+    if not args.skip_export_web:
+        run_step(
+            "Export Static Daily Predictions Page Data",
+            [
+                args.python,
+                "scripts/export_daily_predictions_web.py",
+                "--manifest",
+                str(manifest_path),
+                "--out-dist",
+                str(SITE_ROOT / "dist" / "data" / "daily_predictions.json"),
+            ],
+        )
+    if not args.skip_build_site:
+        run_step(
+            "Rebuild Static Site Bundle",
+            [
+                args.python,
+                str(SITE_ROOT / "build_static_site.py"),
+                "--source",
+                str(SITE_ROOT / "web"),
+                "--output",
+                str(SITE_ROOT / "dist"),
+            ],
+        )
 
     print("\n" + "=" * 90)
     print("DAILY MARKET PIPELINE COMPLETE")
@@ -271,6 +544,9 @@ def main() -> None:
     print(f"Season:               {season}")
     print(f"Current market rows:  {current_rows}")
     print(f"Snapshot mode:        {snapshot_meta['mode']}")
+    print(f"Primary policy:       {primary_policy}")
+    if shadow_policies:
+        print(f"Shadow policies:      {', '.join(shadow_policies)}")
     if snapshot_meta["mode"] == "stale_fallback":
         print(f"Selected market date: {snapshot_meta['selected_market_date']}")
     print(f"Run directory:        {run_dir}")
