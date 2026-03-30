@@ -158,6 +158,12 @@ def parse_args() -> argparse.Namespace:
         help="Maximum selected plays from the same game/event to limit correlation.",
     )
     parser.add_argument(
+        "--max-plays-per-script-cluster",
+        type=int,
+        default=2,
+        help="Maximum selected plays from the same inferred script cluster.",
+    )
+    parser.add_argument(
         "--thompson-temperature",
         type=float,
         default=1.0,
@@ -264,6 +270,7 @@ def _apply_portfolio_caps(
     max_total_plays: int,
     max_target_plays: dict[str, int] | None,
     max_plays_per_game: int,
+    max_plays_per_script_cluster: int,
 ) -> pd.DataFrame:
     if ranked.empty:
         return ranked.copy()
@@ -272,6 +279,7 @@ def _apply_portfolio_caps(
     player_counts: dict[str, int] = {}
     target_counts: dict[str, int] = {}
     game_counts: dict[str, int] = {}
+    script_cluster_counts: dict[str, int] = {}
 
     caps = {k: int(v) for k, v in (max_target_plays or {}).items()}
     if not caps and max_plays_per_target > 0:
@@ -284,6 +292,7 @@ def _apply_portfolio_caps(
         player = str(row.get("player", ""))
         target = str(row.get("target", ""))
         game_key = str(row.get("game_key", ""))
+        script_cluster = str(row.get("script_cluster_id", ""))
 
         if max_plays_per_player > 0 and player_counts.get(player, 0) >= int(max_plays_per_player):
             continue
@@ -292,11 +301,14 @@ def _apply_portfolio_caps(
             continue
         if max_plays_per_game > 0 and game_counts.get(game_key, 0) >= int(max_plays_per_game):
             continue
+        if max_plays_per_script_cluster > 0 and script_cluster_counts.get(script_cluster, 0) >= int(max_plays_per_script_cluster):
+            continue
 
         selected_rows.append(row.to_dict())
         player_counts[player] = player_counts.get(player, 0) + 1
         target_counts[target] = target_counts.get(target, 0) + 1
         game_counts[game_key] = game_counts.get(game_key, 0) + 1
+        script_cluster_counts[script_cluster] = script_cluster_counts.get(script_cluster, 0) + 1
 
     if not selected_rows:
         return ranked.iloc[0:0].copy()
@@ -316,6 +328,7 @@ def compute_final_board(
     max_total_plays: int = 20,
     max_target_plays: dict[str, int] | None = None,
     max_plays_per_game: int = 2,
+    max_plays_per_script_cluster: int = 2,
     non_pts_min_gap_percentile: float = 0.90,
     edge_adjust_k: float = 0.30,
     thompson_temperature: float = 1.0,
@@ -412,6 +425,12 @@ def compute_final_board(
     out["thompson_loss_rate"] = np.clip(resolved_share - out["thompson_win_rate"], 0.0, 1.0)
     out["thompson_ev"] = out["thompson_win_rate"] * payout - out["thompson_loss_rate"]
 
+    if "conditional_eligible_for_board" in out.columns:
+        eligible_mask = pd.to_numeric(out["conditional_eligible_for_board"], errors="coerce").fillna(0).astype(bool)
+        out = out.loc[eligible_mask].copy()
+        if out.empty:
+            return out
+
     out = out.loc[out["recommendation_rank"] <= minimum_recommendation_rank(min_recommendation)].copy()
     out = out.loc[out["ev"] >= float(min_ev)].copy()
     out = out.loc[out["final_confidence"] >= float(min_final_confidence)].copy()
@@ -441,6 +460,7 @@ def compute_final_board(
         max_total_plays=max_total_plays,
         max_target_plays=max_target_plays,
         max_plays_per_game=max_plays_per_game,
+        max_plays_per_script_cluster=max_plays_per_script_cluster,
     )
     if out.empty:
         return out
@@ -505,6 +525,7 @@ def main() -> None:
         max_total_plays=args.max_total_plays,
         max_target_plays={"PTS": args.max_pts_plays, "TRB": args.max_trb_plays, "AST": args.max_ast_plays},
         max_plays_per_game=args.max_plays_per_game,
+        max_plays_per_script_cluster=args.max_plays_per_script_cluster,
         non_pts_min_gap_percentile=args.non_pts_min_gap_percentile,
         edge_adjust_k=args.edge_adjust_k,
         thompson_temperature=args.thompson_temperature,
@@ -540,6 +561,7 @@ def main() -> None:
         "max_plays_per_player": int(args.max_plays_per_player),
         "max_plays_per_target": int(args.max_plays_per_target),
         "max_plays_per_game": int(args.max_plays_per_game),
+        "max_plays_per_script_cluster": int(args.max_plays_per_script_cluster),
         "max_pts_plays": int(args.max_pts_plays),
         "max_trb_plays": int(args.max_trb_plays),
         "max_ast_plays": int(args.max_ast_plays),

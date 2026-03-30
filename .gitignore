@@ -17,3 +17,10 @@
 !web/**
 !dist/
 !dist/**
+
+# Keep conditional promotion framework code/tests.
+!Player-Predictor/
+!Player-Predictor/decision_engine/
+!Player-Predictor/decision_engine/conditional_promotion.py
+!tests/
+!tests/test_conditional_framework.py
