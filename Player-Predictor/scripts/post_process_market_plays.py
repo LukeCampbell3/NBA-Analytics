@@ -18,6 +18,14 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from decision_engine.sizing import apply_tiered_bet_sizing
+from decision_engine.uncertainty import (
+    BELIEF_UNCERTAINTY_LOWER,
+    BELIEF_UNCERTAINTY_UPPER,
+    belief_confidence_factor,
+    normalize_belief_uncertainty,
+)
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Post-process selected market plays into a final board.")
@@ -112,6 +120,29 @@ def parse_args() -> argparse.Namespace:
         default=0.30,
         help="Weight for edge-adjusted EV ranking.",
     )
+    parser.add_argument("--min-bet-win-rate", type=float, default=0.57, help="Minimum expected win rate required to place any bet.")
+    parser.add_argument("--medium-bet-win-rate", type=float, default=0.60, help="Expected win rate for a medium-sized bet.")
+    parser.add_argument("--full-bet-win-rate", type=float, default=0.65, help="Expected win rate for a full-sized bet.")
+    parser.add_argument("--medium-tier-percentile", type=float, default=0.80, help="Minimum percentile for a medium-tier candidate.")
+    parser.add_argument("--strong-tier-percentile", type=float, default=0.90, help="Minimum percentile for a strong-tier candidate.")
+    parser.add_argument("--elite-tier-percentile", type=float, default=0.95, help="Minimum percentile for an elite-tier candidate.")
+    parser.add_argument("--small-bet-fraction", type=float, default=0.005, help="Bankroll fraction for a small bet.")
+    parser.add_argument("--medium-bet-fraction", type=float, default=0.010, help="Bankroll fraction for a medium bet.")
+    parser.add_argument("--full-bet-fraction", type=float, default=0.015, help="Bankroll fraction for a full bet.")
+    parser.add_argument("--max-bet-fraction", type=float, default=0.02, help="Maximum bankroll fraction per play.")
+    parser.add_argument("--max-total-bet-fraction", type=float, default=0.05, help="Maximum total bankroll fraction across the board.")
+    parser.add_argument(
+        "--belief-uncertainty-lower",
+        type=float,
+        default=BELIEF_UNCERTAINTY_LOWER,
+        help="Lower anchor used when converting latent belief uncertainty into a confidence penalty.",
+    )
+    parser.add_argument(
+        "--belief-uncertainty-upper",
+        type=float,
+        default=BELIEF_UNCERTAINTY_UPPER,
+        help="Upper anchor used when converting latent belief uncertainty into a confidence penalty.",
+    )
     return parser.parse_args()
 
 
@@ -145,6 +176,19 @@ def compute_final_board(
     max_target_plays: dict[str, int] | None = None,
     non_pts_min_gap_percentile: float = 0.90,
     edge_adjust_k: float = 0.30,
+    min_bet_win_rate: float = 0.57,
+    medium_bet_win_rate: float = 0.60,
+    full_bet_win_rate: float = 0.65,
+    medium_tier_percentile: float = 0.80,
+    strong_tier_percentile: float = 0.90,
+    elite_tier_percentile: float = 0.95,
+    small_bet_fraction: float = 0.005,
+    medium_bet_fraction: float = 0.010,
+    full_bet_fraction: float = 0.015,
+    max_bet_fraction: float = 0.02,
+    max_total_bet_fraction: float = 0.05,
+    belief_uncertainty_lower: float = BELIEF_UNCERTAINTY_LOWER,
+    belief_uncertainty_upper: float = BELIEF_UNCERTAINTY_UPPER,
 ) -> pd.DataFrame:
     out = plays.copy()
     if out.empty:
@@ -154,11 +198,31 @@ def compute_final_board(
     out["expected_win_rate"] = pd.to_numeric(out["expected_win_rate"], errors="coerce")
     out["gap_percentile"] = pd.to_numeric(out["gap_percentile"], errors="coerce").fillna(0.0)
     out["belief_uncertainty"] = pd.to_numeric(out.get("belief_uncertainty"), errors="coerce").fillna(1.0)
+    normalized_belief = normalize_belief_uncertainty(
+        out["belief_uncertainty"],
+        default=1.0,
+        lower=float(belief_uncertainty_lower),
+        upper=float(belief_uncertainty_upper),
+    )
+    belief_conf = belief_confidence_factor(
+        out["belief_uncertainty"],
+        default=1.0,
+        lower=float(belief_uncertainty_lower),
+        upper=float(belief_uncertainty_upper),
+    )
+    if "belief_uncertainty_normalized" in out.columns:
+        out["belief_uncertainty_normalized"] = pd.to_numeric(out["belief_uncertainty_normalized"], errors="coerce").fillna(normalized_belief)
+    else:
+        out["belief_uncertainty_normalized"] = normalized_belief
+    if "belief_confidence_factor" in out.columns:
+        out["belief_confidence_factor"] = pd.to_numeric(out["belief_confidence_factor"], errors="coerce").fillna(belief_conf)
+    else:
+        out["belief_confidence_factor"] = belief_conf
     out["feasibility"] = pd.to_numeric(out.get("feasibility"), errors="coerce").fillna(0.0)
     out["abs_edge"] = pd.to_numeric(out.get("abs_edge"), errors="coerce").fillna(0.0)
 
     out["ev"] = out["expected_win_rate"] * payout - (1.0 - out["expected_win_rate"])
-    out["final_confidence"] = out["gap_percentile"] * np.clip(1.0 - out["belief_uncertainty"], 0.0, 1.0) * np.clip(out["feasibility"], 0.0, None)
+    out["final_confidence"] = out["gap_percentile"] * out["belief_confidence_factor"] * np.clip(out["feasibility"], 0.0, None)
     out["recommendation_rank"] = out["recommendation"].map(recommendation_rank)
     edge_baseline = out.groupby("target")["abs_edge"].transform(lambda s: s.median() if len(s) else 1.0).replace(0.0, 1.0)
     out["edge_scale"] = (out["abs_edge"] / edge_baseline).clip(lower=0.50, upper=2.50)
@@ -176,6 +240,10 @@ def compute_final_board(
     if str(ranking_mode) == "xgb_ltr" and "xgb_ltr_score" in out.columns:
         out["xgb_ltr_score"] = pd.to_numeric(out["xgb_ltr_score"], errors="coerce").fillna(-1.0)
         rank_columns = ["xgb_ltr_score", "ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
+    elif str(ranking_mode) == "robust_reranker" and "robust_reranker_prob" in out.columns:
+        out["robust_reranker_prob"] = pd.to_numeric(out["robust_reranker_prob"], errors="coerce").fillna(-1.0)
+        out["robust_reranker_blend_raw"] = pd.to_numeric(out.get("robust_reranker_blend_raw"), errors="coerce").fillna(-1.0)
+        rank_columns = ["robust_reranker_prob", "robust_reranker_blend_raw", "ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
 
     out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns))
     out = out.groupby("player", as_index=False, sort=False).head(max_plays_per_player).copy()
@@ -187,8 +255,30 @@ def compute_final_board(
     elif max_plays_per_target > 0:
         out = out.groupby("target", as_index=False, sort=False).head(max_plays_per_target).copy()
     if max_total_plays > 0:
-        out = out.head(max_total_plays).copy()
-    out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).drop(columns=["recommendation_rank"])
+        out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).head(max_total_plays).copy()
+    else:
+        out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).copy()
+    out = apply_tiered_bet_sizing(
+        out,
+        expected_win_rate_col="expected_win_rate",
+        gap_percentile_col="gap_percentile",
+        min_bet_win_rate=min_bet_win_rate,
+        medium_bet_win_rate=medium_bet_win_rate,
+        full_bet_win_rate=full_bet_win_rate,
+        medium_tier_percentile=medium_tier_percentile,
+        strong_tier_percentile=strong_tier_percentile,
+        elite_tier_percentile=elite_tier_percentile,
+        small_bet_fraction=small_bet_fraction,
+        medium_bet_fraction=medium_bet_fraction,
+        full_bet_fraction=full_bet_fraction,
+        max_bet_fraction=max_bet_fraction,
+        max_total_bet_fraction=max_total_bet_fraction,
+    )
+    out["expected_profit_fraction"] = pd.to_numeric(out["bet_fraction"], errors="coerce").fillna(0.0) * pd.to_numeric(out["ev"], errors="coerce").fillna(0.0)
+    out = out.loc[pd.to_numeric(out["bet_fraction"], errors="coerce").fillna(0.0) > 0.0].copy()
+    if out.empty:
+        return out
+    out = out.drop(columns=["recommendation_rank"])
     out = out.reset_index(drop=True)
     return out
 
@@ -213,6 +303,19 @@ def main() -> None:
         max_target_plays={"PTS": args.max_pts_plays, "TRB": args.max_trb_plays, "AST": args.max_ast_plays},
         non_pts_min_gap_percentile=args.non_pts_min_gap_percentile,
         edge_adjust_k=args.edge_adjust_k,
+        min_bet_win_rate=args.min_bet_win_rate,
+        medium_bet_win_rate=args.medium_bet_win_rate,
+        full_bet_win_rate=args.full_bet_win_rate,
+        medium_tier_percentile=args.medium_tier_percentile,
+        strong_tier_percentile=args.strong_tier_percentile,
+        elite_tier_percentile=args.elite_tier_percentile,
+        small_bet_fraction=args.small_bet_fraction,
+        medium_bet_fraction=args.medium_bet_fraction,
+        full_bet_fraction=args.full_bet_fraction,
+        max_bet_fraction=args.max_bet_fraction,
+        max_total_bet_fraction=args.max_total_bet_fraction,
+        belief_uncertainty_lower=args.belief_uncertainty_lower,
+        belief_uncertainty_upper=args.belief_uncertainty_upper,
     )
 
     args.csv_out.parent.mkdir(parents=True, exist_ok=True)
@@ -235,6 +338,19 @@ def main() -> None:
         "max_total_plays": int(args.max_total_plays),
         "non_pts_min_gap_percentile": float(args.non_pts_min_gap_percentile),
         "edge_adjust_k": float(args.edge_adjust_k),
+        "min_bet_win_rate": float(args.min_bet_win_rate),
+        "medium_bet_win_rate": float(args.medium_bet_win_rate),
+        "full_bet_win_rate": float(args.full_bet_win_rate),
+        "medium_tier_percentile": float(args.medium_tier_percentile),
+        "strong_tier_percentile": float(args.strong_tier_percentile),
+        "elite_tier_percentile": float(args.elite_tier_percentile),
+        "small_bet_fraction": float(args.small_bet_fraction),
+        "medium_bet_fraction": float(args.medium_bet_fraction),
+        "full_bet_fraction": float(args.full_bet_fraction),
+        "max_bet_fraction": float(args.max_bet_fraction),
+        "max_total_bet_fraction": float(args.max_total_bet_fraction),
+        "belief_uncertainty_lower": float(args.belief_uncertainty_lower),
+        "belief_uncertainty_upper": float(args.belief_uncertainty_upper),
         "top_plays": final_board.head(20).to_dict(orient="records"),
     }
     args.json_out.write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -258,6 +374,9 @@ def main() -> None:
             "ev",
             "ev_adjusted",
             "final_confidence",
+            "allocation_tier",
+            "allocation_action",
+            "bet_fraction",
             "recommendation",
         ]
         print("\nTop final plays:")

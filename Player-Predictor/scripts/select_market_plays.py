@@ -22,6 +22,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from decision_engine.uncertainty import (
+    BELIEF_UNCERTAINTY_LOWER,
+    BELIEF_UNCERTAINTY_UPPER,
+    belief_confidence_factor,
+    normalize_belief_uncertainty,
+)
+
 
 TARGETS = ["PTS", "TRB", "AST"]
 TARGET_THRESHOLDS = {
@@ -66,6 +73,18 @@ def parse_args() -> argparse.Namespace:
         "--disable-volatility-adjustment",
         action="store_true",
         help="Disable volatility/spike-aware risk adjustment and use raw gap logic only.",
+    )
+    parser.add_argument(
+        "--belief-uncertainty-lower",
+        type=float,
+        default=BELIEF_UNCERTAINTY_LOWER,
+        help="Lower anchor used when converting latent belief uncertainty into a confidence penalty.",
+    )
+    parser.add_argument(
+        "--belief-uncertainty-upper",
+        type=float,
+        default=BELIEF_UNCERTAINTY_UPPER,
+        help="Upper anchor used when converting latent belief uncertainty into a confidence penalty.",
     )
     return parser.parse_args()
 
@@ -123,6 +142,19 @@ def build_history_lookup(history_df: pd.DataFrame) -> dict[str, dict]:
 
         quartile_cut = float(working["abs_gap"].quantile(0.75))
         decile_cut = float(working["abs_gap"].quantile(0.90))
+        percentile_points = np.array([0.50, 0.60, 0.70, 0.75, 0.80, 0.85, 0.90, 0.93, 0.95, 0.97, 0.99], dtype=float)
+        percentile_thresholds = np.quantile(working["abs_gap"].to_numpy(dtype=float), percentile_points)
+        min_tail_rows = max(25, int(len(working) * 0.01))
+        percentile_rates: list[float] = []
+        percentile_counts: list[int] = []
+        running_rate = float(working["directional_correct"].mean())
+        for threshold in percentile_thresholds:
+            subset = working.loc[working["abs_gap"] >= float(threshold)]
+            subset_count = int(len(subset))
+            if subset_count >= min_tail_rows:
+                running_rate = max(running_rate, float(subset["directional_correct"].mean()))
+            percentile_rates.append(float(running_rate))
+            percentile_counts.append(subset_count)
 
         def rate(mask: pd.Series) -> float | None:
             subset = working.loc[mask]
@@ -137,6 +169,10 @@ def build_history_lookup(history_df: pd.DataFrame) -> dict[str, dict]:
             "top_quartile_rate": rate(working["abs_gap"] >= quartile_cut),
             "top_decile_rate": rate(working["abs_gap"] >= decile_cut),
             "gaps_sorted": np.sort(working["abs_gap"].to_numpy(dtype=float)),
+            "percentile_points": percentile_points,
+            "percentile_thresholds": percentile_thresholds,
+            "percentile_rates": np.array(percentile_rates, dtype=float),
+            "percentile_counts": np.array(percentile_counts, dtype=int),
         }
     return lookup
 
@@ -158,12 +194,23 @@ def classify_play(target: str, percentile: float) -> str:
 
 
 def expected_rate_for(target: str, percentile: float, history_info: dict) -> float:
+    percentile_points = np.asarray(history_info.get("percentile_points", []), dtype=float)
+    percentile_rates = np.asarray(history_info.get("percentile_rates", []), dtype=float)
+    all_rate = float(history_info["all_rate"])
+    if percentile_points.size and percentile_rates.size:
+        pct = float(np.clip(percentile, 0.0, 1.0))
+        if pct <= float(percentile_points[0]):
+            lower_anchor = float(percentile_points[0])
+            blend = 0.0 if lower_anchor <= 0.0 else pct / lower_anchor
+            return float(all_rate + blend * (float(percentile_rates[0]) - all_rate))
+        return float(np.interp(pct, percentile_points, percentile_rates))
+
     thresholds = TARGET_THRESHOLDS[target]
     if percentile >= thresholds["strong_pct"] and history_info.get("top_decile_rate") is not None:
         return float(history_info["top_decile_rate"])
     if percentile >= thresholds["consider_pct"] and history_info.get("top_quartile_rate") is not None:
         return float(history_info["top_quartile_rate"])
-    return float(history_info["all_rate"])
+    return all_rate
 
 
 def heuristic_percentile_and_rate(target: str, abs_gap: float) -> tuple[float, float]:
@@ -183,13 +230,22 @@ def _risk_profile(
     target: str,
     pred: float,
     direction: str,
+    belief_uncertainty_lower: float,
+    belief_uncertainty_upper: float,
 ) -> dict[str, float | bool]:
     sigma = max(0.0, safe_float(row.get(f"{target}_uncertainty_sigma"), default=0.0))
     pred_scale = max(1.0, abs(pred))
     sigma_ratio = sigma / pred_scale
     sigma_norm = float(np.clip(sigma_ratio / 0.45, 0.0, 1.0))
     spike_probability = _clip01(row.get(f"{target}_spike_probability"), default=0.50)
-    belief = _clip01(row.get("belief_uncertainty"), default=0.50)
+    belief = float(
+        normalize_belief_uncertainty(
+            row.get("belief_uncertainty"),
+            default=0.50,
+            lower=float(belief_uncertainty_lower),
+            upper=float(belief_uncertainty_upper),
+        )
+    )
     volatility_regime = _clip01(row.get("volatility_regime_risk"), default=sigma_norm)
     feasibility = _clip01(row.get("feasibility"), default=0.60)
     minutes_instability = float(np.clip(1.0 - feasibility, 0.0, 1.0))
@@ -262,10 +318,28 @@ def build_play_rows(
     slate_df: pd.DataFrame,
     history_lookup: dict[str, dict],
     volatility_adjustment: bool = True,
+    belief_uncertainty_lower: float = BELIEF_UNCERTAINTY_LOWER,
+    belief_uncertainty_upper: float = BELIEF_UNCERTAINTY_UPPER,
 ) -> pd.DataFrame:
     rows: list[dict] = []
     for _, row in slate_df.iterrows():
-        belief = safe_float(row.get("belief_uncertainty"), default=1.0)
+        belief_raw = safe_float(row.get("belief_uncertainty"), default=1.0)
+        belief = float(
+            normalize_belief_uncertainty(
+                belief_raw,
+                default=1.0,
+                lower=float(belief_uncertainty_lower),
+                upper=float(belief_uncertainty_upper),
+            )
+        )
+        belief_conf = float(
+            belief_confidence_factor(
+                belief_raw,
+                default=1.0,
+                lower=float(belief_uncertainty_lower),
+                upper=float(belief_uncertainty_upper),
+            )
+        )
         feas = max(0.0, safe_float(row.get("feasibility"), default=0.0))
         for target in TARGETS:
             history_info = history_lookup.get(target)
@@ -287,7 +361,14 @@ def build_play_rows(
                 gap_pct = percentile_of_gap(history_info["gaps_sorted"], abs_gap)
                 expected_rate = expected_rate_for(target, gap_pct, history_info)
             recommendation = classify_play(target, gap_pct)
-            risk_profile = _risk_profile(row, target, pred, direction)
+            risk_profile = _risk_profile(
+                row,
+                target,
+                pred,
+                direction,
+                belief_uncertainty_lower=float(belief_uncertainty_lower),
+                belief_uncertainty_upper=float(belief_uncertainty_upper),
+            )
             adjusted_abs_gap = abs_gap
             adjusted_expected_rate = expected_rate
             adjusted_recommendation = recommendation
@@ -301,7 +382,7 @@ def build_play_rows(
                 adjusted_gap_pct = gap_pct
             else:
                 adjusted_gap_pct = gap_pct
-            confidence_score = adjusted_abs_gap * np.clip(1.0 - belief, 0.0, 1.0) * feas * (1.0 - float(risk_profile["risk_penalty"]))
+            confidence_score = adjusted_abs_gap * belief_conf * feas * (1.0 - float(risk_profile["risk_penalty"]))
             rows.append(
                 {
                     "player": row["player"],
@@ -324,7 +405,9 @@ def build_play_rows(
                     "expected_win_rate": adjusted_expected_rate,
                     "raw_expected_win_rate": expected_rate,
                     "confidence_score": confidence_score,
-                    "belief_uncertainty": belief,
+                    "belief_uncertainty": belief_raw,
+                    "belief_uncertainty_normalized": belief,
+                    "belief_confidence_factor": belief_conf,
                     "feasibility": feas,
                     "fallback_blend": safe_float(row.get("fallback_blend"), default=0.0),
                     "market_books": safe_float(row.get(f"market_books_{target}"), default=np.nan),
@@ -370,7 +453,13 @@ def main() -> None:
     slate_df = pd.read_csv(slate_path)
     history_df = pd.read_csv(history_path)
     history_lookup = build_history_lookup(history_df)
-    plays = build_play_rows(slate_df, history_lookup, volatility_adjustment=not args.disable_volatility_adjustment)
+    plays = build_play_rows(
+        slate_df,
+        history_lookup,
+        volatility_adjustment=not args.disable_volatility_adjustment,
+        belief_uncertainty_lower=float(args.belief_uncertainty_lower),
+        belief_uncertainty_upper=float(args.belief_uncertainty_upper),
+    )
     if plays.empty:
         raise RuntimeError("No playable rows were produced from the provided slate/history inputs.")
 
