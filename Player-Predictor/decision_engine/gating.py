@@ -7,7 +7,22 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from .uncertainty import BELIEF_UNCERTAINTY_LOWER, BELIEF_UNCERTAINTY_UPPER, belief_confidence_factor
+try:
+    from .uncertainty import BELIEF_UNCERTAINTY_LOWER, BELIEF_UNCERTAINTY_UPPER, belief_confidence_factor
+except Exception:  # pragma: no cover - fallback when uncertainty helper module is unavailable
+    BELIEF_UNCERTAINTY_LOWER = 0.75
+    BELIEF_UNCERTAINTY_UPPER = 1.15
+
+    def belief_confidence_factor(value, default: float = 1.0, lower: float = BELIEF_UNCERTAINTY_LOWER, upper: float = BELIEF_UNCERTAINTY_UPPER):
+        try:
+            numeric = float(value)
+            if np.isnan(numeric):
+                numeric = float(default)
+        except Exception:
+            numeric = float(default)
+        span = max(float(upper) - float(lower), 1e-9)
+        normalized = (numeric - float(lower)) / span
+        return float(np.clip(1.0 - normalized, 0.0, 1.0))
 
 
 TARGETS = ("PTS", "TRB", "AST")
@@ -51,6 +66,12 @@ class StrategyConfig:
     max_total_plays: int = 12
     non_pts_min_gap_percentile: float = 0.90
     edge_adjust_k: float = 0.30
+    selection_mode: str = "ev_adjusted"
+    max_plays_per_game: int = 2
+    thompson_temperature: float = 1.0
+    thompson_seed: int = 17
+    market_regression_floor: float = 0.25
+    market_regression_ceiling: float = 0.95
     min_bet_win_rate: float = 0.57
     medium_bet_win_rate: float = 0.60
     full_bet_win_rate: float = 0.65
