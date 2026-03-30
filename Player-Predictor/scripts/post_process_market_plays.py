@@ -12,6 +12,7 @@ This layer is intentionally separate from selection so we can:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -19,12 +20,35 @@ import numpy as np
 import pandas as pd
 
 from decision_engine.sizing import apply_tiered_bet_sizing
-from decision_engine.uncertainty import (
-    BELIEF_UNCERTAINTY_LOWER,
-    BELIEF_UNCERTAINTY_UPPER,
-    belief_confidence_factor,
-    normalize_belief_uncertainty,
-)
+try:
+    from decision_engine.uncertainty import (
+        BELIEF_UNCERTAINTY_LOWER,
+        BELIEF_UNCERTAINTY_UPPER,
+        belief_confidence_factor,
+        normalize_belief_uncertainty,
+    )
+except Exception:  # pragma: no cover - fallback for standalone execution
+    BELIEF_UNCERTAINTY_LOWER = 0.75
+    BELIEF_UNCERTAINTY_UPPER = 1.15
+
+    def normalize_belief_uncertainty(value, default: float = 1.0, lower: float = BELIEF_UNCERTAINTY_LOWER, upper: float = BELIEF_UNCERTAINTY_UPPER):
+        span = max(float(upper) - float(lower), 1e-9)
+        if isinstance(value, pd.Series):
+            numeric = pd.to_numeric(value, errors="coerce").fillna(float(default))
+            return ((numeric - float(lower)) / span).clip(lower=0.0, upper=1.0)
+        try:
+            numeric = float(value)
+            if np.isnan(numeric):
+                numeric = float(default)
+        except Exception:
+            numeric = float(default)
+        return float(np.clip((numeric - float(lower)) / span, 0.0, 1.0))
+
+    def belief_confidence_factor(value, default: float = 1.0, lower: float = BELIEF_UNCERTAINTY_LOWER, upper: float = BELIEF_UNCERTAINTY_UPPER):
+        normalized = normalize_belief_uncertainty(value, default=default, lower=lower, upper=upper)
+        if isinstance(normalized, pd.Series):
+            return (1.0 - normalized).clip(lower=0.0, upper=1.0)
+        return float(np.clip(1.0 - float(normalized), 0.0, 1.0))
 
 
 def parse_args() -> argparse.Namespace:
@@ -69,7 +93,7 @@ def parse_args() -> argparse.Namespace:
         "--min-recommendation",
         type=str,
         default="consider",
-        choices=["consider", "strong", "elite"],
+        choices=["pass", "consider", "strong", "elite"],
         help="Lowest selector recommendation allowed into the final board.",
     )
     parser.add_argument(
@@ -120,6 +144,31 @@ def parse_args() -> argparse.Namespace:
         default=0.30,
         help="Weight for edge-adjusted EV ranking.",
     )
+    parser.add_argument(
+        "--selection-mode",
+        type=str,
+        default="thompson_ev",
+        choices=["ev_adjusted", "edge", "xgb_ltr", "robust_reranker", "thompson_ev"],
+        help="Final ranking mode used before portfolio constraints are applied.",
+    )
+    parser.add_argument(
+        "--max-plays-per-game",
+        type=int,
+        default=2,
+        help="Maximum selected plays from the same game/event to limit correlation.",
+    )
+    parser.add_argument(
+        "--thompson-temperature",
+        type=float,
+        default=1.0,
+        help="Temperature on Thompson beta posterior sampling (>1 explores more).",
+    )
+    parser.add_argument(
+        "--thompson-seed",
+        type=int,
+        default=17,
+        help="Seed salt for deterministic Thompson sampling.",
+    )
     parser.add_argument("--min-bet-win-rate", type=float, default=0.57, help="Minimum expected win rate required to place any bet.")
     parser.add_argument("--medium-bet-win-rate", type=float, default=0.60, help="Expected win rate for a medium-sized bet.")
     parser.add_argument("--full-bet-win-rate", type=float, default=0.65, help="Expected win rate for a full-sized bet.")
@@ -160,7 +209,98 @@ def recommendation_rank(label: str) -> int:
 
 
 def minimum_recommendation_rank(label: str) -> int:
-    return {"elite": 0, "strong": 1, "consider": 2}[label]
+    return {"elite": 0, "strong": 1, "consider": 2, "pass": 3}[label]
+
+
+def _numeric_series(df: pd.DataFrame, column: str, default: float) -> pd.Series:
+    if column in df.columns:
+        return pd.to_numeric(df[column], errors="coerce").fillna(default)
+    return pd.Series(default, index=df.index, dtype="float64")
+
+
+def _stable_seed_from_row(row: pd.Series, base_seed: int) -> int:
+    key = "|".join(
+        [
+            str(base_seed),
+            str(row.get("player", "")),
+            str(row.get("target", "")),
+            str(row.get("market_date", "")),
+            str(row.get("market_event_id", "")),
+            str(row.get("direction", "")),
+        ]
+    )
+    digest = hashlib.sha256(key.encode("utf-8")).hexdigest()[:16]
+    return int(digest, 16) % (2**32 - 1)
+
+
+def _build_game_key(df: pd.DataFrame) -> pd.Series:
+    if "market_event_id" in df.columns:
+        event_key = df["market_event_id"].astype(str).str.strip()
+    else:
+        event_key = pd.Series("", index=df.index, dtype=str)
+
+    home = df.get("market_home_team", pd.Series("", index=df.index)).astype(str).str.strip()
+    away = df.get("market_away_team", pd.Series("", index=df.index)).astype(str).str.strip()
+    teams_sorted = np.where(home <= away, home + "@" + away, away + "@" + home)
+    teams_sorted = pd.Series(teams_sorted, index=df.index, dtype=str)
+    market_date = df.get("market_date", pd.Series("", index=df.index)).astype(str).str.slice(0, 10)
+    player = df.get("player", pd.Series("", index=df.index)).astype(str).str.strip()
+    target = df.get("target", pd.Series("", index=df.index)).astype(str).str.strip()
+    teams_missing = home.eq("") & away.eq("")
+    fallback_team_key = market_date + "|" + teams_sorted
+    fallback_player_key = market_date + "|" + player + "|" + target
+    fallback_key = pd.Series(
+        np.where(teams_missing, fallback_player_key, fallback_team_key),
+        index=df.index,
+        dtype=str,
+    )
+    return np.where(event_key.ne("") & event_key.ne("nan"), event_key, fallback_key)
+
+
+def _apply_portfolio_caps(
+    ranked: pd.DataFrame,
+    max_plays_per_player: int,
+    max_plays_per_target: int,
+    max_total_plays: int,
+    max_target_plays: dict[str, int] | None,
+    max_plays_per_game: int,
+) -> pd.DataFrame:
+    if ranked.empty:
+        return ranked.copy()
+
+    selected_rows: list[dict] = []
+    player_counts: dict[str, int] = {}
+    target_counts: dict[str, int] = {}
+    game_counts: dict[str, int] = {}
+
+    caps = {k: int(v) for k, v in (max_target_plays or {}).items()}
+    if not caps and max_plays_per_target > 0:
+        caps = {target: int(max_plays_per_target) for target in ranked.get("target", pd.Series(dtype=str)).astype(str).unique()}
+
+    for _, row in ranked.iterrows():
+        if max_total_plays > 0 and len(selected_rows) >= int(max_total_plays):
+            break
+
+        player = str(row.get("player", ""))
+        target = str(row.get("target", ""))
+        game_key = str(row.get("game_key", ""))
+
+        if max_plays_per_player > 0 and player_counts.get(player, 0) >= int(max_plays_per_player):
+            continue
+        target_cap = int(caps.get(target, 0))
+        if target_cap > 0 and target_counts.get(target, 0) >= target_cap:
+            continue
+        if max_plays_per_game > 0 and game_counts.get(game_key, 0) >= int(max_plays_per_game):
+            continue
+
+        selected_rows.append(row.to_dict())
+        player_counts[player] = player_counts.get(player, 0) + 1
+        target_counts[target] = target_counts.get(target, 0) + 1
+        game_counts[game_key] = game_counts.get(game_key, 0) + 1
+
+    if not selected_rows:
+        return ranked.iloc[0:0].copy()
+    return pd.DataFrame.from_records(selected_rows)
 
 
 def compute_final_board(
@@ -169,13 +309,17 @@ def compute_final_board(
     min_ev: float = 0.0,
     min_final_confidence: float = 0.02,
     min_recommendation: str = "consider",
+    selection_mode: str = "thompson_ev",
     ranking_mode: str = "ev_adjusted",
     max_plays_per_player: int = 1,
     max_plays_per_target: int = 8,
     max_total_plays: int = 20,
     max_target_plays: dict[str, int] | None = None,
+    max_plays_per_game: int = 2,
     non_pts_min_gap_percentile: float = 0.90,
     edge_adjust_k: float = 0.30,
+    thompson_temperature: float = 1.0,
+    thompson_seed: int = 17,
     min_bet_win_rate: float = 0.57,
     medium_bet_win_rate: float = 0.60,
     full_bet_win_rate: float = 0.65,
@@ -195,9 +339,14 @@ def compute_final_board(
         return out
 
     payout = american_profit_per_unit(american_odds)
-    out["expected_win_rate"] = pd.to_numeric(out["expected_win_rate"], errors="coerce")
+    out["expected_win_rate"] = pd.to_numeric(out["expected_win_rate"], errors="coerce").fillna(0.5)
+    out["expected_push_rate"] = _numeric_series(out, "expected_push_rate", 0.0).clip(lower=0.0, upper=1.0)
+    if "expected_loss_rate" in out.columns:
+        out["expected_loss_rate"] = _numeric_series(out, "expected_loss_rate", 0.0)
+    else:
+        out["expected_loss_rate"] = np.clip(1.0 - out["expected_win_rate"] - out["expected_push_rate"], 0.0, 1.0)
     out["gap_percentile"] = pd.to_numeric(out["gap_percentile"], errors="coerce").fillna(0.0)
-    out["belief_uncertainty"] = pd.to_numeric(out.get("belief_uncertainty"), errors="coerce").fillna(1.0)
+    out["belief_uncertainty"] = _numeric_series(out, "belief_uncertainty", 1.0)
     normalized_belief = normalize_belief_uncertainty(
         out["belief_uncertainty"],
         default=1.0,
@@ -218,16 +367,50 @@ def compute_final_board(
         out["belief_confidence_factor"] = pd.to_numeric(out["belief_confidence_factor"], errors="coerce").fillna(belief_conf)
     else:
         out["belief_confidence_factor"] = belief_conf
-    out["feasibility"] = pd.to_numeric(out.get("feasibility"), errors="coerce").fillna(0.0)
-    out["abs_edge"] = pd.to_numeric(out.get("abs_edge"), errors="coerce").fillna(0.0)
+    out["feasibility"] = _numeric_series(out, "feasibility", 0.0)
+    out["abs_edge"] = _numeric_series(out, "abs_edge", 0.0)
+    out["edge"] = _numeric_series(out, "edge", 0.0)
+    out["posterior_alpha"] = _numeric_series(out, "posterior_alpha", 1.0)
+    out["posterior_beta"] = _numeric_series(out, "posterior_beta", 1.0)
+    out["posterior_variance"] = _numeric_series(out, "posterior_variance", 0.25)
 
-    out["ev"] = out["expected_win_rate"] * payout - (1.0 - out["expected_win_rate"])
-    out["final_confidence"] = out["gap_percentile"] * out["belief_confidence_factor"] * np.clip(out["feasibility"], 0.0, None)
+    out["game_key"] = _build_game_key(out)
+    out["market_prior_win_rate"] = 0.5
+    base_confidence = out["gap_percentile"] * out["belief_confidence_factor"] * np.clip(out["feasibility"], 0.0, None)
+    confidence_blend = np.clip(pd.to_numeric(base_confidence, errors="coerce").fillna(0.0), 0.0, 1.0)
+    uncertainty_penalty = np.clip(np.sqrt(np.clip(out["posterior_variance"], 0.0, 1.0)) * 0.6, 0.0, 0.45)
+    out["calibration_blend_weight"] = np.clip(confidence_blend * (1.0 - uncertainty_penalty), 0.10, 0.95)
+    out["calibrated_win_rate"] = (
+        out["calibration_blend_weight"] * out["expected_win_rate"]
+        + (1.0 - out["calibration_blend_weight"]) * out["market_prior_win_rate"]
+    )
+    out["expected_win_rate"] = out["calibrated_win_rate"].clip(lower=0.0, upper=1.0 - out["expected_push_rate"])
+    out["expected_loss_rate"] = np.clip(1.0 - out["expected_win_rate"] - out["expected_push_rate"], 0.0, 1.0)
+
+    out["ev"] = out["expected_win_rate"] * payout - out["expected_loss_rate"]
+    out["final_confidence"] = base_confidence
     out["recommendation_rank"] = out["recommendation"].map(recommendation_rank)
     edge_baseline = out.groupby("target")["abs_edge"].transform(lambda s: s.median() if len(s) else 1.0).replace(0.0, 1.0)
     out["edge_scale"] = (out["abs_edge"] / edge_baseline).clip(lower=0.50, upper=2.50)
     out["ev_adjusted"] = out["ev"] * (1.0 + float(edge_adjust_k) * (out["edge_scale"] - 1.0))
-    out["ranking_mode"] = str(ranking_mode)
+    out["ranking_mode"] = str(selection_mode or ranking_mode)
+
+    temp = max(float(thompson_temperature), 1e-6)
+    out["thompson_alpha"] = out["posterior_alpha"] / temp
+    out["thompson_beta"] = out["posterior_beta"] / temp
+
+    thompson_conditional: list[float] = []
+    for _, sample_row in out.iterrows():
+        seed = _stable_seed_from_row(sample_row, int(thompson_seed))
+        rng = np.random.default_rng(seed)
+        alpha = max(0.1, float(sample_row["thompson_alpha"]))
+        beta = max(0.1, float(sample_row["thompson_beta"]))
+        thompson_conditional.append(float(rng.beta(alpha, beta)))
+    out["thompson_conditional_win_rate"] = thompson_conditional
+    resolved_share = np.clip(1.0 - out["expected_push_rate"], 0.0, 1.0)
+    out["thompson_win_rate"] = np.clip(out["thompson_conditional_win_rate"] * resolved_share, 0.0, resolved_share)
+    out["thompson_loss_rate"] = np.clip(resolved_share - out["thompson_win_rate"], 0.0, 1.0)
+    out["thompson_ev"] = out["thompson_win_rate"] * payout - out["thompson_loss_rate"]
 
     out = out.loc[out["recommendation_rank"] <= minimum_recommendation_rank(min_recommendation)].copy()
     out = out.loc[out["ev"] >= float(min_ev)].copy()
@@ -236,28 +419,31 @@ def compute_final_board(
     if out.empty:
         return out
 
+    effective_mode = str(selection_mode or ranking_mode)
     rank_columns = ["ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
-    if str(ranking_mode) == "xgb_ltr" and "xgb_ltr_score" in out.columns:
+    if effective_mode == "xgb_ltr" and "xgb_ltr_score" in out.columns:
         out["xgb_ltr_score"] = pd.to_numeric(out["xgb_ltr_score"], errors="coerce").fillna(-1.0)
         rank_columns = ["xgb_ltr_score", "ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
-    elif str(ranking_mode) == "robust_reranker" and "robust_reranker_prob" in out.columns:
+    elif effective_mode == "robust_reranker" and "robust_reranker_prob" in out.columns:
         out["robust_reranker_prob"] = pd.to_numeric(out["robust_reranker_prob"], errors="coerce").fillna(-1.0)
-        out["robust_reranker_blend_raw"] = pd.to_numeric(out.get("robust_reranker_blend_raw"), errors="coerce").fillna(-1.0)
+        out["robust_reranker_blend_raw"] = _numeric_series(out, "robust_reranker_blend_raw", -1.0)
         rank_columns = ["robust_reranker_prob", "robust_reranker_blend_raw", "ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
+    elif effective_mode == "edge":
+        rank_columns = ["edge", "abs_edge", "expected_win_rate", "final_confidence"]
+    elif effective_mode == "thompson_ev":
+        rank_columns = ["thompson_ev", "ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
 
-    out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns))
-    out = out.groupby("player", as_index=False, sort=False).head(max_plays_per_player).copy()
-    if max_target_plays:
-        parts = []
-        for target, cap in max_target_plays.items():
-            parts.append(out.loc[out["target"] == target].head(int(cap)))
-        out = pd.concat(parts, ignore_index=True) if parts else out.iloc[0:0].copy()
-    elif max_plays_per_target > 0:
-        out = out.groupby("target", as_index=False, sort=False).head(max_plays_per_target).copy()
-    if max_total_plays > 0:
-        out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).head(max_total_plays).copy()
-    else:
-        out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).copy()
+    out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).copy()
+    out = _apply_portfolio_caps(
+        out,
+        max_plays_per_player=max_plays_per_player,
+        max_plays_per_target=max_plays_per_target,
+        max_total_plays=max_total_plays,
+        max_target_plays=max_target_plays,
+        max_plays_per_game=max_plays_per_game,
+    )
+    if out.empty:
+        return out
     out = apply_tiered_bet_sizing(
         out,
         expected_win_rate_col="expected_win_rate",
@@ -275,9 +461,25 @@ def compute_final_board(
         max_total_bet_fraction=max_total_bet_fraction,
     )
     out["expected_profit_fraction"] = pd.to_numeric(out["bet_fraction"], errors="coerce").fillna(0.0) * pd.to_numeric(out["ev"], errors="coerce").fillna(0.0)
-    out = out.loc[pd.to_numeric(out["bet_fraction"], errors="coerce").fillna(0.0) > 0.0].copy()
-    if out.empty:
-        return out
+    active_mask = pd.to_numeric(out["bet_fraction"], errors="coerce").fillna(0.0) > 0.0
+    if active_mask.any():
+        out = out.loc[active_mask].copy()
+    else:
+        # Fallback: keep a small fractional allocation on the best-ranked plays
+        # so the board remains actionable when strict tier gates reject all rows.
+        fallback_fraction = float(np.clip(small_bet_fraction, 0.0, max_bet_fraction))
+        if fallback_fraction <= 0.0:
+            return out.iloc[0:0].copy()
+        out = out.head(max_total_plays if max_total_plays > 0 else len(out)).copy()
+        out["allocation_tier"] = "fallback_small"
+        out["allocation_action"] = "fallback_small"
+        out["bet_fraction"] = fallback_fraction
+        if max_total_bet_fraction > 0 and float(out["bet_fraction"].sum()) > float(max_total_bet_fraction):
+            scale = float(max_total_bet_fraction) / float(out["bet_fraction"].sum())
+            out["bet_fraction"] = out["bet_fraction"] * scale
+        out["expected_profit_fraction"] = pd.to_numeric(out["bet_fraction"], errors="coerce").fillna(0.0) * pd.to_numeric(out["ev"], errors="coerce").fillna(0.0)
+    out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).copy()
+    out["selected_rank"] = np.arange(1, len(out) + 1)
     out = out.drop(columns=["recommendation_rank"])
     out = out.reset_index(drop=True)
     return out
@@ -296,13 +498,17 @@ def main() -> None:
         min_ev=args.min_ev,
         min_final_confidence=args.min_final_confidence,
         min_recommendation=args.min_recommendation,
-        ranking_mode="ev_adjusted",
+        selection_mode=args.selection_mode,
+        ranking_mode=args.selection_mode,
         max_plays_per_player=args.max_plays_per_player,
         max_plays_per_target=args.max_plays_per_target,
         max_total_plays=args.max_total_plays,
         max_target_plays={"PTS": args.max_pts_plays, "TRB": args.max_trb_plays, "AST": args.max_ast_plays},
+        max_plays_per_game=args.max_plays_per_game,
         non_pts_min_gap_percentile=args.non_pts_min_gap_percentile,
         edge_adjust_k=args.edge_adjust_k,
+        thompson_temperature=args.thompson_temperature,
+        thompson_seed=args.thompson_seed,
         min_bet_win_rate=args.min_bet_win_rate,
         medium_bet_win_rate=args.medium_bet_win_rate,
         full_bet_win_rate=args.full_bet_win_rate,
@@ -330,14 +536,18 @@ def main() -> None:
         "min_ev": float(args.min_ev),
         "min_final_confidence": float(args.min_final_confidence),
         "min_recommendation": args.min_recommendation,
+        "selection_mode": args.selection_mode,
         "max_plays_per_player": int(args.max_plays_per_player),
         "max_plays_per_target": int(args.max_plays_per_target),
+        "max_plays_per_game": int(args.max_plays_per_game),
         "max_pts_plays": int(args.max_pts_plays),
         "max_trb_plays": int(args.max_trb_plays),
         "max_ast_plays": int(args.max_ast_plays),
         "max_total_plays": int(args.max_total_plays),
         "non_pts_min_gap_percentile": float(args.non_pts_min_gap_percentile),
         "edge_adjust_k": float(args.edge_adjust_k),
+        "thompson_temperature": float(args.thompson_temperature),
+        "thompson_seed": int(args.thompson_seed),
         "min_bet_win_rate": float(args.min_bet_win_rate),
         "medium_bet_win_rate": float(args.medium_bet_win_rate),
         "full_bet_win_rate": float(args.full_bet_win_rate),
@@ -371,9 +581,12 @@ def main() -> None:
             "market_line",
             "abs_edge",
             "expected_win_rate",
+            "expected_push_rate",
             "ev",
             "ev_adjusted",
+            "thompson_ev",
             "final_confidence",
+            "selected_rank",
             "allocation_tier",
             "allocation_action",
             "bet_fraction",

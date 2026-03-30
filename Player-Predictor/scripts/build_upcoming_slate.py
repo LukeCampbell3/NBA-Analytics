@@ -216,8 +216,9 @@ def infer_player_csv(player_name: str, season: int, player_csv_index: dict[str, 
         if override_path.exists():
             return override_path
 
-    # Stable fallback when still ambiguous.
-    return sorted(matches, key=lambda path: path.as_posix())[0]
+    # Skip unresolved ambiguous aliases instead of forcing a potentially wrong
+    # mapping that can contaminate predictions and downstream validation.
+    return None
 
 
 def build_records(

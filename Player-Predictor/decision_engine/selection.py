@@ -5,7 +5,24 @@ import pandas as pd
 
 from .gating import StrategyConfig
 from .sizing import american_profit_per_unit
-from .uncertainty import belief_confidence_factor
+try:
+    from .uncertainty import belief_confidence_factor
+except Exception:  # pragma: no cover - fallback when uncertainty helper module is unavailable
+    def belief_confidence_factor(value, default: float = 1.0, lower: float = 0.75, upper: float = 1.15):
+        series = pd.to_numeric(value, errors="coerce") if isinstance(value, pd.Series) else value
+        if isinstance(series, pd.Series):
+            span = max(float(upper) - float(lower), 1e-9)
+            normalized = ((series.fillna(float(default)) - float(lower)) / span).clip(lower=0.0, upper=1.0)
+            return (1.0 - normalized).clip(lower=0.0, upper=1.0)
+        try:
+            numeric = float(series)
+            if np.isnan(numeric):
+                numeric = float(default)
+        except Exception:
+            numeric = float(default)
+        span = max(float(upper) - float(lower), 1e-9)
+        normalized = float(np.clip((numeric - float(lower)) / span, 0.0, 1.0))
+        return float(np.clip(1.0 - normalized, 0.0, 1.0))
 
 
 def recommendation_rank(label: str) -> int:

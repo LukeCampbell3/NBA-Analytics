@@ -30,6 +30,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SITE_ROOT = REPO_ROOT.parent
 MARKET_ROOT = REPO_ROOT / "data copy" / "raw" / "market_odds" / "nba"
 ANALYSIS_ROOT = REPO_ROOT / "model" / "analysis" / "daily_runs"
+DATA_PROC_ROOT = REPO_ROOT / "Data-Proc"
 
 
 def parse_args() -> argparse.Namespace:
@@ -78,7 +79,167 @@ def run_step(label: str, args: list[str]) -> None:
     subprocess.run(args, cwd=REPO_ROOT, check=True)
 
 
-def filter_current_market_snapshot(source_path: Path, out_path: Path, run_date: pd.Timestamp, future_days: int) -> tuple[int, dict]:
+def _normalize_player_name(value: str) -> str:
+    out = str(value)
+    for old, new in [
+        (" ", "_"),
+        (".", ""),
+        ("'", ""),
+        (",", ""),
+        ("/", "-"),
+        ("\\", "-"),
+        (":", ""),
+    ]:
+        out = out.replace(old, new)
+    return out
+
+
+def build_historical_market_snapshot(
+    out_path: Path,
+    run_date: pd.Timestamp,
+    future_days: int,
+    season: int,
+) -> tuple[int, dict]:
+    start_date = run_date.normalize()
+    end_date = (run_date + pd.Timedelta(days=int(future_days))).normalize()
+    use_cols = {
+        "Date",
+        "Player",
+        "Market_PTS",
+        "Market_TRB",
+        "Market_AST",
+        "Market_PTS_books",
+        "Market_TRB_books",
+        "Market_AST_books",
+        "Market_PTS_over_price",
+        "Market_TRB_over_price",
+        "Market_AST_over_price",
+        "Market_PTS_under_price",
+        "Market_TRB_under_price",
+        "Market_AST_under_price",
+        "Market_PTS_line_std",
+        "Market_TRB_line_std",
+        "Market_AST_line_std",
+        "Market_Fetched_At_UTC",
+    }
+    rows: list[dict] = []
+    for csv_path in sorted(DATA_PROC_ROOT.glob(f"*/*{season}_processed_processed.csv")):
+        try:
+            df = pd.read_csv(csv_path, usecols=lambda col: col in use_cols)
+        except Exception:
+            continue
+        if df.empty or "Date" not in df.columns:
+            continue
+
+        date_series = pd.to_datetime(df["Date"], errors="coerce")
+        mask = (date_series >= start_date) & (date_series <= end_date)
+        if not mask.any():
+            continue
+
+        subset = df.loc[mask].copy()
+        if subset.empty:
+            continue
+
+        for column in [
+            "Market_PTS",
+            "Market_TRB",
+            "Market_AST",
+            "Market_PTS_books",
+            "Market_TRB_books",
+            "Market_AST_books",
+            "Market_PTS_over_price",
+            "Market_TRB_over_price",
+            "Market_AST_over_price",
+            "Market_PTS_under_price",
+            "Market_TRB_under_price",
+            "Market_AST_under_price",
+            "Market_PTS_line_std",
+            "Market_TRB_line_std",
+            "Market_AST_line_std",
+        ]:
+            if column in subset.columns:
+                subset[column] = pd.to_numeric(subset[column], errors="coerce")
+
+        line_cols = [column for column in ["Market_PTS", "Market_TRB", "Market_AST"] if column in subset.columns]
+        if line_cols:
+            subset = subset.loc[subset[line_cols].notna().any(axis=1)].copy()
+        if subset.empty:
+            continue
+
+        player_series = subset["Player"] if "Player" in subset.columns else pd.Series(csv_path.parent.name, index=subset.index)
+        player_series = player_series.fillna(csv_path.parent.name).astype(str)
+        market_dates = pd.to_datetime(subset["Date"], errors="coerce")
+
+        for idx in subset.index:
+            market_date = market_dates.loc[idx]
+            if pd.isna(market_date):
+                continue
+            player_raw = str(player_series.loc[idx]).strip()
+            if not player_raw:
+                player_raw = csv_path.parent.name.replace("_", " ")
+            row = {
+                "Player": _normalize_player_name(player_raw),
+                "Market_Player_Raw": player_raw,
+                "Market_Date": market_date,
+            }
+            for column in [
+                "Market_PTS",
+                "Market_TRB",
+                "Market_AST",
+                "Market_PTS_books",
+                "Market_TRB_books",
+                "Market_AST_books",
+                "Market_PTS_over_price",
+                "Market_TRB_over_price",
+                "Market_AST_over_price",
+                "Market_PTS_under_price",
+                "Market_TRB_under_price",
+                "Market_AST_under_price",
+                "Market_PTS_line_std",
+                "Market_TRB_line_std",
+                "Market_AST_line_std",
+                "Market_Fetched_At_UTC",
+            ]:
+                row[column] = subset.loc[idx, column] if column in subset.columns else None
+            rows.append(row)
+
+    frame = pd.DataFrame.from_records(rows)
+    if frame.empty:
+        return 0, {
+            "mode": "historical_backfill_empty",
+            "requested_start_date": str(start_date.date()),
+            "requested_end_date": str(end_date.date()),
+            "selected_row_count": 0,
+        }
+
+    frame["Market_Date"] = pd.to_datetime(frame["Market_Date"], errors="coerce")
+    frame = frame.loc[frame["Market_Date"].notna()].copy()
+    frame = frame.sort_values(["Market_Date", "Player"]).drop_duplicates(subset=["Market_Date", "Player"], keep="last").reset_index(drop=True)
+    if frame.empty:
+        return 0, {
+            "mode": "historical_backfill_empty",
+            "requested_start_date": str(start_date.date()),
+            "requested_end_date": str(end_date.date()),
+            "selected_row_count": 0,
+        }
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    if out_path.suffix.lower() == ".parquet":
+        frame.to_parquet(out_path, index=False)
+    else:
+        frame.to_csv(out_path, index=False)
+
+    return int(len(frame)), {
+        "mode": "historical_backfill_window",
+        "requested_start_date": str(start_date.date()),
+        "requested_end_date": str(end_date.date()),
+        "selected_market_date_min": str(pd.Timestamp(frame["Market_Date"].min()).date()),
+        "selected_market_date_max": str(pd.Timestamp(frame["Market_Date"].max()).date()),
+        "selected_row_count": int(len(frame)),
+    }
+
+
+def filter_current_market_snapshot(source_path: Path, out_path: Path, run_date: pd.Timestamp, future_days: int, season: int) -> tuple[int, dict]:
     if not source_path.exists():
         raise FileNotFoundError(f"Market snapshot not found: {source_path}")
     if source_path.suffix.lower() == ".parquet":
@@ -95,6 +256,15 @@ def filter_current_market_snapshot(source_path: Path, out_path: Path, run_date: 
     end_date = (run_date + pd.Timedelta(days=int(future_days))).normalize()
     filtered = df.loc[(market_dates >= start_date) & (market_dates <= end_date)].copy()
     if filtered.empty:
+        historical_rows, historical_meta = build_historical_market_snapshot(
+            out_path=out_path,
+            run_date=run_date,
+            future_days=future_days,
+            season=season,
+        )
+        if historical_rows > 0:
+            return historical_rows, historical_meta
+
         fallback_date = market_dates.max()
         if pd.isna(fallback_date):
             raise RuntimeError(f"No valid Market_Date values found in {source_path}")
@@ -198,7 +368,13 @@ def main() -> None:
 
     latest_market_path = MARKET_ROOT / "latest_player_props_wide.parquet"
     current_snapshot_path = run_dir / f"current_market_snapshot_{run_stamp}.parquet"
-    current_rows, snapshot_meta = filter_current_market_snapshot(latest_market_path, current_snapshot_path, local_date, args.future_days)
+    current_rows, snapshot_meta = filter_current_market_snapshot(
+        latest_market_path,
+        current_snapshot_path,
+        local_date,
+        args.future_days,
+        season,
+    )
 
     final_csv = run_dir / f"final_market_plays_{run_stamp}.csv"
     final_json = run_dir / f"final_market_plays_{run_stamp}.json"
