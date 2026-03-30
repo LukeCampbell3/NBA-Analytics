@@ -52,6 +52,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--history-csv", type=Path, default=REPO_ROOT / "model" / "analysis" / "latest_market_comparison_strict_rows.csv", help="Historical row-level backtest CSV for edge calibration.")
     parser.add_argument("--lookback-days", type=int, default=10, help="How many recent days of historical market lines to collect.")
     parser.add_argument("--future-days", type=int, default=2, help="How many days ahead of today to keep in the current slate snapshot.")
+    parser.add_argument(
+        "--snapshot-policy",
+        type=str,
+        default="auto",
+        choices=["auto", "live_only"],
+        help=(
+            "Snapshot fallback policy. "
+            "'auto' allows historical backfill and stale fallback when the requested window is empty. "
+            "'live_only' disables both fallbacks and fails if no requested-window rows exist."
+        ),
+    )
     parser.add_argument("--collect-scan-count", type=int, default=500, help="Maximum Covers matchup ids to scan for the nightly collection window.")
     parser.add_argument("--run-date", type=str, default=None, help="Optional YYYY-MM-DD override for local run date.")
     parser.add_argument("--skip-update-data", action="store_true", help="Skip official game-log refresh.")
@@ -63,6 +74,8 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Allow market pipeline to run with heuristic-only predictions when model load fails.",
     )
+    parser.add_argument("--skip-export-web", action="store_true", help="Skip exporting web daily predictions payload.")
+    parser.add_argument("--skip-build-site", action="store_true", help="Skip static site rebuild step.")
     parser.add_argument("--python", type=str, default=sys.executable, help="Python executable to use for child steps.")
     return parser.parse_args()
 
@@ -239,7 +252,15 @@ def build_historical_market_snapshot(
     }
 
 
-def filter_current_market_snapshot(source_path: Path, out_path: Path, run_date: pd.Timestamp, future_days: int, season: int) -> tuple[int, dict]:
+def filter_current_market_snapshot(
+    source_path: Path,
+    out_path: Path,
+    run_date: pd.Timestamp,
+    future_days: int,
+    season: int,
+    allow_historical_backfill: bool = True,
+    allow_stale_fallback: bool = True,
+) -> tuple[int, dict]:
     if not source_path.exists():
         raise FileNotFoundError(f"Market snapshot not found: {source_path}")
     if source_path.suffix.lower() == ".parquet":
@@ -256,30 +277,37 @@ def filter_current_market_snapshot(source_path: Path, out_path: Path, run_date: 
     end_date = (run_date + pd.Timedelta(days=int(future_days))).normalize()
     filtered = df.loc[(market_dates >= start_date) & (market_dates <= end_date)].copy()
     if filtered.empty:
-        historical_rows, historical_meta = build_historical_market_snapshot(
-            out_path=out_path,
-            run_date=run_date,
-            future_days=future_days,
-            season=season,
-        )
-        if historical_rows > 0:
-            return historical_rows, historical_meta
-
-        fallback_date = market_dates.max()
-        if pd.isna(fallback_date):
-            raise RuntimeError(f"No valid Market_Date values found in {source_path}")
-        filtered = df.loc[market_dates == fallback_date].copy()
-        if filtered.empty:
-            raise RuntimeError(
-                f"No current/upcoming market rows found between {start_date.date()} and {end_date.date()} in {source_path}"
+        if allow_historical_backfill:
+            historical_rows, historical_meta = build_historical_market_snapshot(
+                out_path=out_path,
+                run_date=run_date,
+                future_days=future_days,
+                season=season,
             )
-        snapshot_meta = {
-            "mode": "stale_fallback",
-            "requested_start_date": str(start_date.date()),
-            "requested_end_date": str(end_date.date()),
-            "selected_market_date": str(pd.Timestamp(fallback_date).date()),
-            "selected_row_count": int(len(filtered)),
-        }
+            if historical_rows > 0:
+                return historical_rows, historical_meta
+
+        if allow_stale_fallback:
+            fallback_date = market_dates.max()
+            if pd.isna(fallback_date):
+                raise RuntimeError(f"No valid Market_Date values found in {source_path}")
+            filtered = df.loc[market_dates == fallback_date].copy()
+            if filtered.empty:
+                raise RuntimeError(
+                    f"No current/upcoming market rows found between {start_date.date()} and {end_date.date()} in {source_path}"
+                )
+            snapshot_meta = {
+                "mode": "stale_fallback",
+                "requested_start_date": str(start_date.date()),
+                "requested_end_date": str(end_date.date()),
+                "selected_market_date": str(pd.Timestamp(fallback_date).date()),
+                "selected_row_count": int(len(filtered)),
+            }
+        else:
+            raise RuntimeError(
+                "Requested market window is empty and snapshot-policy disallows historical/stale fallback. "
+                f"Window={start_date.date()}..{end_date.date()} source={source_path}"
+            )
     else:
         snapshot_meta = {
             "mode": "requested_window",
@@ -368,12 +396,15 @@ def main() -> None:
 
     latest_market_path = MARKET_ROOT / "latest_player_props_wide.parquet"
     current_snapshot_path = run_dir / f"current_market_snapshot_{run_stamp}.parquet"
+    allow_fallbacks = str(args.snapshot_policy).lower() != "live_only"
     current_rows, snapshot_meta = filter_current_market_snapshot(
         latest_market_path,
         current_snapshot_path,
         local_date,
         args.future_days,
         season,
+        allow_historical_backfill=allow_fallbacks,
+        allow_stale_fallback=allow_fallbacks,
     )
 
     final_csv = run_dir / f"final_market_plays_{run_stamp}.csv"
@@ -456,6 +487,7 @@ def main() -> None:
         "through_date": str(yesterday),
         "lookback_start": str(lookback_start),
         "future_end": str(future_end),
+        "snapshot_policy": str(args.snapshot_policy),
         "history_csv": str(args.history_csv),
         "current_market_snapshot": str(current_snapshot_path),
         "current_market_rows": int(current_rows),
@@ -472,35 +504,38 @@ def main() -> None:
         "skip_collect_market": bool(args.skip_collect_market),
         "skip_align": bool(args.skip_align),
         "skip_backtest": bool(args.skip_backtest),
+        "skip_export_web": bool(args.skip_export_web),
+        "skip_build_site": bool(args.skip_build_site),
         "allow_heuristic_fallback": bool(args.allow_heuristic_fallback),
         "updated_at_utc": datetime.utcnow().isoformat() + "Z",
     }
     manifest_path = run_dir / f"daily_market_pipeline_manifest_{run_stamp}.json"
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
-    run_step(
-        "Export Static Daily Predictions Page Data",
-        [
-            args.python,
-            "scripts/export_daily_predictions_web.py",
-            "--manifest",
-            str(manifest_path),
-            "--out-dist",
-            str(SITE_ROOT / "dist" / "data" / "daily_predictions.json"),
-        ],
-    )
-
-    run_step(
-        "Rebuild Static Site Bundle",
-        [
-            args.python,
-            str(SITE_ROOT / "build_static_site.py"),
-            "--source",
-            str(SITE_ROOT / "web"),
-            "--output",
-            str(SITE_ROOT / "dist"),
-        ],
-    )
+    if not args.skip_export_web:
+        run_step(
+            "Export Static Daily Predictions Page Data",
+            [
+                args.python,
+                "scripts/export_daily_predictions_web.py",
+                "--manifest",
+                str(manifest_path),
+                "--out-dist",
+                str(SITE_ROOT / "dist" / "data" / "daily_predictions.json"),
+            ],
+        )
+    if not args.skip_build_site:
+        run_step(
+            "Rebuild Static Site Bundle",
+            [
+                args.python,
+                str(SITE_ROOT / "build_static_site.py"),
+                "--source",
+                str(SITE_ROOT / "web"),
+                "--output",
+                str(SITE_ROOT / "dist"),
+            ],
+        )
 
     print("\n" + "=" * 90)
     print("DAILY MARKET PIPELINE COMPLETE")
