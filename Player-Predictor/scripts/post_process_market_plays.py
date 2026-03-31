@@ -263,6 +263,13 @@ def _build_game_key(df: pd.DataFrame) -> pd.Series:
     return np.where(event_key.ne("") & event_key.ne("nan"), event_key, fallback_key)
 
 
+def _normalize_script_cluster(value: object) -> str:
+    text = str(value if value is not None else "").strip().lower()
+    if text in {"", "nan", "none", "null", "unknown", "script=unknown", "uninferred", "script=uninferred"}:
+        return ""
+    return text
+
+
 def _apply_portfolio_caps(
     ranked: pd.DataFrame,
     max_plays_per_player: int,
@@ -292,7 +299,7 @@ def _apply_portfolio_caps(
         player = str(row.get("player", ""))
         target = str(row.get("target", ""))
         game_key = str(row.get("game_key", ""))
-        script_cluster = str(row.get("script_cluster_id", ""))
+        script_cluster = _normalize_script_cluster(row.get("script_cluster_id", ""))
 
         if max_plays_per_player > 0 and player_counts.get(player, 0) >= int(max_plays_per_player):
             continue
@@ -301,14 +308,19 @@ def _apply_portfolio_caps(
             continue
         if max_plays_per_game > 0 and game_counts.get(game_key, 0) >= int(max_plays_per_game):
             continue
-        if max_plays_per_script_cluster > 0 and script_cluster_counts.get(script_cluster, 0) >= int(max_plays_per_script_cluster):
+        if (
+            max_plays_per_script_cluster > 0
+            and script_cluster
+            and script_cluster_counts.get(script_cluster, 0) >= int(max_plays_per_script_cluster)
+        ):
             continue
 
         selected_rows.append(row.to_dict())
         player_counts[player] = player_counts.get(player, 0) + 1
         target_counts[target] = target_counts.get(target, 0) + 1
         game_counts[game_key] = game_counts.get(game_key, 0) + 1
-        script_cluster_counts[script_cluster] = script_cluster_counts.get(script_cluster, 0) + 1
+        if script_cluster:
+            script_cluster_counts[script_cluster] = script_cluster_counts.get(script_cluster, 0) + 1
 
     if not selected_rows:
         return ranked.iloc[0:0].copy()

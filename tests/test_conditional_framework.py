@@ -125,3 +125,48 @@ def test_final_board_respects_conditional_eligibility_gate() -> None:
     )
     assert not board.empty
     assert (board["conditional_eligible_for_board"] == True).all()  # noqa: E712
+
+
+def test_script_cluster_cap_ignores_unknown_cluster() -> None:
+    frame = pd.concat([_sample_selector_frame()] * 2, ignore_index=True)
+    frame.loc[:, "player"] = ["Alpha One", "Beta Two", "Gamma Three", "Delta Four"]
+    frame.loc[:, "target"] = ["PTS", "PTS", "PTS", "PTS"]
+    frame.loc[:, "expected_win_rate"] = [0.72, 0.71, 0.70, 0.69]
+    frame.loc[:, "expected_push_rate"] = [0.02, 0.02, 0.02, 0.02]
+    frame.loc[:, "recommendation"] = "pass"
+    frame.loc[:, "script_cluster_id"] = "script=unknown"
+    frame.loc[:, "conditional_eligible_for_board"] = True
+    frame.loc[:, "market_event_id"] = ""
+    frame.loc[:, "market_home_team"] = ""
+    frame.loc[:, "market_away_team"] = ""
+    frame.loc[:, "gap_percentile"] = 0.9
+    frame.loc[:, "belief_confidence_factor"] = 0.9
+    frame.loc[:, "feasibility"] = 0.9
+    frame.loc[:, "posterior_variance"] = 0.02
+    frame.loc[:, "edge"] = [2.0, 1.8, 1.6, 1.4]
+    frame.loc[:, "abs_edge"] = [2.0, 1.8, 1.6, 1.4]
+    frame.loc[:, "market_line"] = [10.5, 11.5, 12.5, 13.5]
+    frame.loc[:, "prediction"] = [12.5, 13.3, 14.1, 14.9]
+
+    board = compute_final_board(
+        frame,
+        american_odds=-110,
+        min_ev=-1.0,
+        min_final_confidence=0.0,
+        min_recommendation="pass",
+        selection_mode="edge",
+        max_plays_per_player=5,
+        max_plays_per_target=0,
+        max_total_plays=4,
+        max_target_plays={"PTS": 4, "TRB": 4, "AST": 4},
+        max_plays_per_game=0,
+        max_plays_per_script_cluster=2,
+        non_pts_min_gap_percentile=0.0,
+        min_bet_win_rate=0.49,
+        medium_bet_win_rate=0.52,
+        full_bet_win_rate=0.56,
+        medium_tier_percentile=0.0,
+        strong_tier_percentile=0.0,
+        elite_tier_percentile=0.0,
+    )
+    assert len(board) == 4
