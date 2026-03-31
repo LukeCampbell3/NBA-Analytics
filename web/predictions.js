@@ -91,7 +91,7 @@ class DailyPredictionsPage {
     }
 
     renderSummary() {
-        const summary = this.data?.summary || {};
+        const summary = this.buildSummaryFromPlays();
         const items = [
             ['Published Plays', summary.play_count],
             ['Avg Win Rate', this.formatPct(summary.avg_expected_win_rate)],
@@ -104,6 +104,33 @@ class DailyPredictionsPage {
                 <strong class="prediction-summary-value">${value ?? 'n/a'}</strong>
             </article>
         `).join('');
+    }
+
+    buildSummaryFromPlays() {
+        const plays = Array.isArray(this.plays) ? this.plays : [];
+        if (!plays.length) {
+            return this.data?.summary || {
+                play_count: 0,
+                avg_expected_win_rate: null,
+                avg_ev: null,
+                avg_edge: null,
+            };
+        }
+        const toNum = (value) => {
+            const num = Number(value);
+            return Number.isFinite(num) ? num : null;
+        };
+        const avg = (values) => {
+            const nums = values.map(toNum).filter((value) => value !== null);
+            if (!nums.length) return null;
+            return nums.reduce((acc, value) => acc + value, 0) / nums.length;
+        };
+        return {
+            play_count: plays.length,
+            avg_expected_win_rate: avg(plays.map((play) => play.expected_win_rate)),
+            avg_ev: avg(plays.map((play) => play.ev)),
+            avg_edge: avg(plays.map((play) => play.abs_edge ?? play.edge)),
+        };
     }
 
     renderSource() {

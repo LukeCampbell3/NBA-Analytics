@@ -67,6 +67,9 @@ class StrategyConfig:
     non_pts_min_gap_percentile: float = 0.90
     edge_adjust_k: float = 0.30
     selection_mode: str = "ev_adjusted"
+    append_agreement_min: int = 3
+    append_edge_percentile_min: float = 0.90
+    append_max_extra_plays: int = 3
     max_plays_per_game: int = 2
     max_plays_per_script_cluster: int = 2
     thompson_temperature: float = 1.0

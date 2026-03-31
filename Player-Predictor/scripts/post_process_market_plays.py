@@ -148,7 +148,7 @@ def parse_args() -> argparse.Namespace:
         "--selection-mode",
         type=str,
         default="thompson_ev",
-        choices=["ev_adjusted", "edge", "xgb_ltr", "robust_reranker", "thompson_ev"],
+        choices=["ev_adjusted", "edge", "xgb_ltr", "robust_reranker", "thompson_ev", "set_theory", "edge_append_shadow"],
         help="Final ranking mode used before portfolio constraints are applied.",
     )
     parser.add_argument(
@@ -197,6 +197,24 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=BELIEF_UNCERTAINTY_UPPER,
         help="Upper anchor used when converting latent belief uncertainty into a confidence penalty.",
+    )
+    parser.add_argument(
+        "--append-agreement-min",
+        type=int,
+        default=3,
+        help="Minimum E/T/V agreement count required for append-only shadow candidates.",
+    )
+    parser.add_argument(
+        "--append-edge-percentile-min",
+        type=float,
+        default=0.90,
+        help="Minimum abs-edge percentile required for append-only shadow candidates.",
+    )
+    parser.add_argument(
+        "--append-max-extra-plays",
+        type=int,
+        default=3,
+        help="Maximum number of append-only shadow plays added beyond the edge base board.",
     )
     return parser.parse_args()
 
@@ -270,6 +288,359 @@ def _normalize_script_cluster(value: object) -> str:
     return text
 
 
+def _resolve_target_caps(
+    ranked: pd.DataFrame,
+    max_plays_per_target: int,
+    max_target_plays: dict[str, int] | None,
+) -> dict[str, int]:
+    caps = {k: int(v) for k, v in (max_target_plays or {}).items()}
+    if not caps and max_plays_per_target > 0:
+        caps = {target: int(max_plays_per_target) for target in ranked.get("target", pd.Series(dtype=str)).astype(str).unique()}
+    return caps
+
+
+def _zscore_series(values: pd.Series) -> pd.Series:
+    numeric = pd.to_numeric(values, errors="coerce").fillna(0.0)
+    std = float(numeric.std(ddof=0))
+    if std <= 1e-12:
+        return pd.Series(0.0, index=numeric.index, dtype="float64")
+    mean = float(numeric.mean())
+    return (numeric - mean) / std
+
+
+def _append_rows_with_caps(
+    ranked: pd.DataFrame,
+    selected_rows: list[dict],
+    seen_indices: set,
+    player_counts: dict[str, int],
+    target_counts: dict[str, int],
+    game_counts: dict[str, int],
+    script_cluster_counts: dict[str, int],
+    caps: dict[str, int],
+    max_plays_per_player: int,
+    max_plays_per_game: int,
+    max_plays_per_script_cluster: int,
+    max_total_plays: int,
+    max_new_rows: int | None = None,
+) -> int:
+    if ranked.empty:
+        return 0
+    if max_new_rows is not None and int(max_new_rows) <= 0:
+        return 0
+
+    added = 0
+    for row_index, row in ranked.iterrows():
+        if max_total_plays > 0 and len(selected_rows) >= int(max_total_plays):
+            break
+        if max_new_rows is not None and added >= int(max_new_rows):
+            break
+        if row_index in seen_indices:
+            continue
+
+        player = str(row.get("player", ""))
+        target = str(row.get("target", ""))
+        game_key = str(row.get("game_key", ""))
+        script_cluster = _normalize_script_cluster(row.get("script_cluster_id", ""))
+
+        if max_plays_per_player > 0 and player_counts.get(player, 0) >= int(max_plays_per_player):
+            continue
+        target_cap = int(caps.get(target, 0))
+        if target_cap > 0 and target_counts.get(target, 0) >= target_cap:
+            continue
+        if max_plays_per_game > 0 and game_counts.get(game_key, 0) >= int(max_plays_per_game):
+            continue
+        if (
+            max_plays_per_script_cluster > 0
+            and script_cluster
+            and script_cluster_counts.get(script_cluster, 0) >= int(max_plays_per_script_cluster)
+        ):
+            continue
+
+        selected_rows.append(row.to_dict())
+        seen_indices.add(row_index)
+        player_counts[player] = player_counts.get(player, 0) + 1
+        target_counts[target] = target_counts.get(target, 0) + 1
+        game_counts[game_key] = game_counts.get(game_key, 0) + 1
+        if script_cluster:
+            script_cluster_counts[script_cluster] = script_cluster_counts.get(script_cluster, 0) + 1
+        added += 1
+    return added
+
+
+def _selection_counters_from_rows(selected_rows: list[dict]) -> tuple[dict[str, int], dict[str, int], dict[str, int], dict[str, int]]:
+    player_counts: dict[str, int] = {}
+    target_counts: dict[str, int] = {}
+    game_counts: dict[str, int] = {}
+    script_cluster_counts: dict[str, int] = {}
+    for row in selected_rows:
+        player = str(row.get("player", ""))
+        target = str(row.get("target", ""))
+        game_key = str(row.get("game_key", ""))
+        script_cluster = _normalize_script_cluster(row.get("script_cluster_id", ""))
+        player_counts[player] = player_counts.get(player, 0) + 1
+        target_counts[target] = target_counts.get(target, 0) + 1
+        game_counts[game_key] = game_counts.get(game_key, 0) + 1
+        if script_cluster:
+            script_cluster_counts[script_cluster] = script_cluster_counts.get(script_cluster, 0) + 1
+    return player_counts, target_counts, game_counts, script_cluster_counts
+
+
+def _select_edge_append_shadow_board(
+    candidates: pd.DataFrame,
+    max_plays_per_player: int,
+    max_plays_per_target: int,
+    max_total_plays: int,
+    max_target_plays: dict[str, int] | None,
+    max_plays_per_game: int,
+    max_plays_per_script_cluster: int,
+    append_agreement_min: int,
+    append_edge_percentile_min: float,
+    append_max_extra_plays: int,
+) -> pd.DataFrame:
+    if candidates.empty:
+        return candidates.copy()
+
+    base_size = int(max_total_plays) if max_total_plays > 0 else int(len(candidates))
+    if base_size <= 0:
+        return candidates.iloc[0:0].copy()
+
+    working = candidates.copy()
+    working["_source_index"] = working.index
+
+    # 1) Base board is pure edge, fully capped.
+    edge_ranked = working.sort_values(["edge", "abs_edge", "expected_win_rate", "final_confidence"], ascending=[False, False, False, False]).copy()
+    base_board = _apply_portfolio_caps(
+        edge_ranked,
+        max_plays_per_player=max_plays_per_player,
+        max_plays_per_target=max_plays_per_target,
+        max_total_plays=base_size,
+        max_target_plays=max_target_plays,
+        max_plays_per_game=max_plays_per_game,
+        max_plays_per_script_cluster=max_plays_per_script_cluster,
+    )
+    if base_board.empty:
+        return base_board
+
+    base_indices = set(pd.to_numeric(base_board["_source_index"], errors="coerce").dropna().astype(int).tolist())
+    base_board = base_board.copy()
+    base_board["append_shadow_added"] = False
+
+    extra_cap = max(0, int(append_max_extra_plays))
+    if extra_cap <= 0:
+        base_board["append_anchor_member"] = 1
+        base_board["append_agreement_count"] = np.nan
+        base_board["append_edge_percentile"] = np.nan
+        base_board["append_sources"] = ""
+        return base_board
+
+    # 2) Build strict append-only candidate gates.
+    overfetch = int(np.clip(3 * base_size, 1, len(working)))
+    idx_e = set(working.sort_values(["edge", "abs_edge", "expected_win_rate", "final_confidence"], ascending=[False, False, False, False]).head(overfetch).index.tolist())
+    idx_t = set(
+        working.sort_values(["thompson_ev", "ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"], ascending=[False, False, False, False, False])
+        .head(overfetch)
+        .index.tolist()
+    )
+    idx_v = set(working.sort_values(["ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"], ascending=[False, False, False, False]).head(overfetch).index.tolist())
+
+    agreement = working.index.to_series().map(lambda idx: int(idx in idx_e) + int(idx in idx_t) + int(idx in idx_v)).astype(int)
+    edge_pct = pd.to_numeric(working["abs_edge"], errors="coerce").fillna(0.0).rank(method="average", pct=True)
+
+    working["append_agreement_count"] = agreement
+    working["append_edge_percentile"] = edge_pct
+    working["append_sources"] = working.apply(
+        lambda row: ",".join(
+            part
+            for part, enabled in (
+                ("E", bool(row.name in idx_e)),
+                ("T", bool(row.name in idx_t)),
+                ("V", bool(row.name in idx_v)),
+            )
+            if enabled
+        ),
+        axis=1,
+    )
+    quality_mask = (
+        (_numeric_series(working, "market_books", 0.0) >= 4.0)
+        & (_numeric_series(working, "history_rows", 0.0) >= 35.0)
+        & (_numeric_series(working, "final_confidence", 0.0) >= 0.03)
+    )
+    append_mask = (
+        (~working.index.isin(base_indices))
+        & (working["append_agreement_count"] >= int(max(1, append_agreement_min)))
+        & (working["append_edge_percentile"] >= float(np.clip(append_edge_percentile_min, 0.0, 1.0)))
+        & quality_mask
+    )
+    append_ranked = working.loc[append_mask].sort_values(
+        ["append_agreement_count", "append_edge_percentile", "edge", "expected_win_rate", "final_confidence"],
+        ascending=[False, False, False, False, False],
+    ).copy()
+
+    selected_rows = [row.to_dict() for _, row in base_board.iterrows()]
+    seen_indices = set(base_indices)
+    player_counts, target_counts, game_counts, script_cluster_counts = _selection_counters_from_rows(selected_rows)
+
+    caps = _resolve_target_caps(working, max_plays_per_target=max_plays_per_target, max_target_plays=max_target_plays)
+    # Append mode is intentionally additive; widen target caps by extra_cap.
+    widened_caps = {target: (int(cap) + extra_cap if int(cap) > 0 else 0) for target, cap in caps.items()}
+
+    _append_rows_with_caps(
+        append_ranked,
+        selected_rows,
+        seen_indices,
+        player_counts,
+        target_counts,
+        game_counts,
+        script_cluster_counts,
+        widened_caps,
+        max_plays_per_player=max_plays_per_player,
+        max_plays_per_game=max_plays_per_game,
+        max_plays_per_script_cluster=max_plays_per_script_cluster,
+        max_total_plays=base_size + extra_cap,
+        max_new_rows=extra_cap,
+    )
+
+    out = pd.DataFrame.from_records(selected_rows) if selected_rows else working.iloc[0:0].copy()
+    if out.empty:
+        return out
+    out["_source_index"] = pd.to_numeric(out.get("_source_index"), errors="coerce").fillna(-1).astype(int)
+    out["append_shadow_added"] = ~out["_source_index"].isin(base_indices)
+    out["append_anchor_member"] = (~out["append_shadow_added"]).astype(int)
+    out.loc[~out["append_shadow_added"], "append_sources"] = ""
+    out.loc[~out["append_shadow_added"], "append_agreement_count"] = np.nan
+    out.loc[~out["append_shadow_added"], "append_edge_percentile"] = np.nan
+    return out
+
+
+def _select_set_theory_board(
+    candidates: pd.DataFrame,
+    max_plays_per_player: int,
+    max_plays_per_target: int,
+    max_total_plays: int,
+    max_target_plays: dict[str, int] | None,
+    max_plays_per_game: int,
+    max_plays_per_script_cluster: int,
+) -> pd.DataFrame:
+    if candidates.empty:
+        return candidates.copy()
+
+    board_size = int(max_total_plays) if max_total_plays > 0 else int(len(candidates))
+    if board_size <= 0:
+        return candidates.iloc[0:0].copy()
+
+    # Edge is the anchor universe. Thompson/EV are used as confirmation overlays.
+    overfetch = int(np.clip(3 * board_size, 1, len(candidates)))
+    edge_ranked = candidates.sort_values(["edge", "abs_edge", "expected_win_rate", "final_confidence"], ascending=[False, False, False, False]).copy()
+    thompson_ranked = candidates.sort_values(
+        ["thompson_ev", "ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"], ascending=[False, False, False, False, False]
+    ).copy()
+    ev_ranked = candidates.sort_values(["ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"], ascending=[False, False, False, False]).copy()
+
+    edge_idx = set(edge_ranked.head(overfetch).index.tolist())
+    thompson_idx = set(thompson_ranked.head(overfetch).index.tolist())
+    ev_idx = set(ev_ranked.head(overfetch).index.tolist())
+
+    scored = candidates.loc[candidates.index.isin(edge_idx)].copy()
+    if scored.empty:
+        return scored
+    scored["in_edge_set"] = True
+    scored["in_thompson_set"] = scored.index.isin(thompson_idx)
+    scored["in_ev_set"] = scored.index.isin(ev_idx)
+    scored["agreement_count"] = 1 + scored["in_thompson_set"].astype(int) + scored["in_ev_set"].astype(int)
+    scored["set_sources"] = scored.apply(
+        lambda row: ",".join(
+            part
+            for part, enabled in (
+                ("E", bool(row.get("in_edge_set"))),
+                ("T", bool(row.get("in_thompson_set"))),
+                ("V", bool(row.get("in_ev_set"))),
+            )
+            if enabled
+        ),
+        axis=1,
+    )
+
+    scored["set_group"] = "anchor_fallback"
+    scored.loc[scored["in_thompson_set"] | scored["in_ev_set"], "set_group"] = "strong_expansion"
+    scored.loc[scored["in_thompson_set"] & scored["in_ev_set"], "set_group"] = "core"
+    scored["set_strength"] = scored["set_group"].map({"core": 3, "strong_expansion": 2, "anchor_fallback": 1}).fillna(0).astype(int)
+
+    scored["z_edge"] = _zscore_series(scored["edge"])
+    scored["z_expected_win_rate"] = _zscore_series(scored["expected_win_rate"])
+    scored["z_ev_adjusted"] = _zscore_series(scored["ev_adjusted"])
+    scored["consensus_score"] = (
+        0.45 * scored["z_edge"]
+        + 0.20 * scored["z_expected_win_rate"]
+        + 0.20 * scored["z_ev_adjusted"]
+        + 0.15 * (scored["agreement_count"] - 1.0)
+    )
+
+    sort_consensus = ["consensus_score", "agreement_count", "edge", "expected_win_rate", "ev_adjusted", "abs_edge", "final_confidence"]
+    core_ranked = scored.loc[scored["set_group"].eq("core")].sort_values(sort_consensus, ascending=[False] * len(sort_consensus)).copy()
+    strong_ranked = scored.loc[scored["set_group"].eq("strong_expansion")].sort_values(sort_consensus, ascending=[False] * len(sort_consensus)).copy()
+    fallback_ranked = scored.loc[scored["set_group"].eq("anchor_fallback")].sort_values(
+        ["edge", "abs_edge", "expected_win_rate", "final_confidence"], ascending=[False, False, False, False]
+    ).copy()
+
+    selected_rows: list[dict] = []
+    seen_indices: set = set()
+    player_counts: dict[str, int] = {}
+    target_counts: dict[str, int] = {}
+    game_counts: dict[str, int] = {}
+    script_cluster_counts: dict[str, int] = {}
+    caps = _resolve_target_caps(scored, max_plays_per_target=max_plays_per_target, max_target_plays=max_target_plays)
+
+    _append_rows_with_caps(
+        core_ranked,
+        selected_rows,
+        seen_indices,
+        player_counts,
+        target_counts,
+        game_counts,
+        script_cluster_counts,
+        caps,
+        max_plays_per_player=max_plays_per_player,
+        max_plays_per_game=max_plays_per_game,
+        max_plays_per_script_cluster=max_plays_per_script_cluster,
+        max_total_plays=board_size,
+    )
+    _append_rows_with_caps(
+        strong_ranked,
+        selected_rows,
+        seen_indices,
+        player_counts,
+        target_counts,
+        game_counts,
+        script_cluster_counts,
+        caps,
+        max_plays_per_player=max_plays_per_player,
+        max_plays_per_game=max_plays_per_game,
+        max_plays_per_script_cluster=max_plays_per_script_cluster,
+        max_total_plays=board_size,
+    )
+
+    if len(selected_rows) < board_size:
+        _append_rows_with_caps(
+            fallback_ranked,
+            selected_rows,
+            seen_indices,
+            player_counts,
+            target_counts,
+            game_counts,
+            script_cluster_counts,
+            caps,
+            max_plays_per_player=max_plays_per_player,
+            max_plays_per_game=max_plays_per_game,
+            max_plays_per_script_cluster=max_plays_per_script_cluster,
+            max_total_plays=board_size,
+            max_new_rows=board_size - len(selected_rows),
+        )
+
+    if not selected_rows:
+        return scored.iloc[0:0].copy()
+    return pd.DataFrame.from_records(selected_rows)
+
+
 def _apply_portfolio_caps(
     ranked: pd.DataFrame,
     max_plays_per_player: int,
@@ -288,9 +659,7 @@ def _apply_portfolio_caps(
     game_counts: dict[str, int] = {}
     script_cluster_counts: dict[str, int] = {}
 
-    caps = {k: int(v) for k, v in (max_target_plays or {}).items()}
-    if not caps and max_plays_per_target > 0:
-        caps = {target: int(max_plays_per_target) for target in ranked.get("target", pd.Series(dtype=str)).astype(str).unique()}
+    caps = _resolve_target_caps(ranked, max_plays_per_target=max_plays_per_target, max_target_plays=max_target_plays)
 
     for _, row in ranked.iterrows():
         if max_total_plays > 0 and len(selected_rows) >= int(max_total_plays):
@@ -358,6 +727,9 @@ def compute_final_board(
     max_total_bet_fraction: float = 0.05,
     belief_uncertainty_lower: float = BELIEF_UNCERTAINTY_LOWER,
     belief_uncertainty_upper: float = BELIEF_UNCERTAINTY_UPPER,
+    append_agreement_min: int = 3,
+    append_edge_percentile_min: float = 0.90,
+    append_max_extra_plays: int = 3,
 ) -> pd.DataFrame:
     out = plays.copy()
     if out.empty:
@@ -452,6 +824,7 @@ def compute_final_board(
 
     effective_mode = str(selection_mode or ranking_mode)
     rank_columns = ["ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
+    caps_already_applied = False
     if effective_mode == "xgb_ltr" and "xgb_ltr_score" in out.columns:
         out["xgb_ltr_score"] = pd.to_numeric(out["xgb_ltr_score"], errors="coerce").fillna(-1.0)
         rank_columns = ["xgb_ltr_score", "ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
@@ -463,17 +836,52 @@ def compute_final_board(
         rank_columns = ["edge", "abs_edge", "expected_win_rate", "final_confidence"]
     elif effective_mode == "thompson_ev":
         rank_columns = ["thompson_ev", "ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
+    elif effective_mode == "set_theory":
+        out = _select_set_theory_board(
+            out,
+            max_plays_per_player=max_plays_per_player,
+            max_plays_per_target=max_plays_per_target,
+            max_total_plays=max_total_plays,
+            max_target_plays=max_target_plays,
+            max_plays_per_game=max_plays_per_game,
+            max_plays_per_script_cluster=max_plays_per_script_cluster,
+        )
+        caps_already_applied = True
+        rank_columns = ["set_strength", "consensus_score", "agreement_count", "expected_win_rate", "ev_adjusted", "abs_edge"]
+    elif effective_mode == "edge_append_shadow":
+        out = _select_edge_append_shadow_board(
+            out,
+            max_plays_per_player=max_plays_per_player,
+            max_plays_per_target=max_plays_per_target,
+            max_total_plays=max_total_plays,
+            max_target_plays=max_target_plays,
+            max_plays_per_game=max_plays_per_game,
+            max_plays_per_script_cluster=max_plays_per_script_cluster,
+            append_agreement_min=append_agreement_min,
+            append_edge_percentile_min=append_edge_percentile_min,
+            append_max_extra_plays=append_max_extra_plays,
+        )
+        caps_already_applied = True
+        rank_columns = ["append_anchor_member", "edge", "abs_edge", "expected_win_rate", "final_confidence"]
 
-    out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).copy()
-    out = _apply_portfolio_caps(
-        out,
-        max_plays_per_player=max_plays_per_player,
-        max_plays_per_target=max_plays_per_target,
-        max_total_plays=max_total_plays,
-        max_target_plays=max_target_plays,
-        max_plays_per_game=max_plays_per_game,
-        max_plays_per_script_cluster=max_plays_per_script_cluster,
-    )
+    if not caps_already_applied:
+        out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).copy()
+        out = _apply_portfolio_caps(
+            out,
+            max_plays_per_player=max_plays_per_player,
+            max_plays_per_target=max_plays_per_target,
+            max_total_plays=max_total_plays,
+            max_target_plays=max_target_plays,
+            max_plays_per_game=max_plays_per_game,
+            max_plays_per_script_cluster=max_plays_per_script_cluster,
+        )
+    else:
+        if out.empty:
+            return out
+        missing_rank_cols = [column for column in rank_columns if column not in out.columns]
+        if missing_rank_cols:
+            return out.iloc[0:0].copy()
+        out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).copy()
     if out.empty:
         return out
     out = apply_tiered_bet_sizing(
@@ -512,6 +920,8 @@ def compute_final_board(
         out["expected_profit_fraction"] = pd.to_numeric(out["bet_fraction"], errors="coerce").fillna(0.0) * pd.to_numeric(out["ev"], errors="coerce").fillna(0.0)
     out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).copy()
     out["selected_rank"] = np.arange(1, len(out) + 1)
+    if "_source_index" in out.columns:
+        out = out.drop(columns=["_source_index"])
     out = out.drop(columns=["recommendation_rank"])
     out = out.reset_index(drop=True)
     return out
@@ -555,6 +965,9 @@ def main() -> None:
         max_total_bet_fraction=args.max_total_bet_fraction,
         belief_uncertainty_lower=args.belief_uncertainty_lower,
         belief_uncertainty_upper=args.belief_uncertainty_upper,
+        append_agreement_min=args.append_agreement_min,
+        append_edge_percentile_min=args.append_edge_percentile_min,
+        append_max_extra_plays=args.append_max_extra_plays,
     )
 
     args.csv_out.parent.mkdir(parents=True, exist_ok=True)
@@ -595,6 +1008,9 @@ def main() -> None:
         "max_total_bet_fraction": float(args.max_total_bet_fraction),
         "belief_uncertainty_lower": float(args.belief_uncertainty_lower),
         "belief_uncertainty_upper": float(args.belief_uncertainty_upper),
+        "append_agreement_min": int(args.append_agreement_min),
+        "append_edge_percentile_min": float(args.append_edge_percentile_min),
+        "append_max_extra_plays": int(args.append_max_extra_plays),
         "top_plays": final_board.head(20).to_dict(orient="records"),
     }
     args.json_out.write_text(json.dumps(payload, indent=2), encoding="utf-8")

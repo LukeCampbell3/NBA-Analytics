@@ -56,7 +56,7 @@ except Exception:
 
 
 POLICY_PROFILES = {config.name: config for config in build_default_shadow_strategies()}
-DEFAULT_POLICY = POLICY_PROFILES["production_calibrated"]
+DEFAULT_POLICY = POLICY_PROFILES["production_edge_b12"]
 TARGETS = ["PTS", "TRB", "AST"]
 
 
@@ -68,7 +68,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--policy-profile",
         type=str,
-        default="production_calibrated",
+        default="production_edge_b12",
         choices=sorted(POLICY_PROFILES.keys()),
         help="Policy profile used for live play selection defaults.",
     )
@@ -144,7 +144,7 @@ def parse_args() -> argparse.Namespace:
         "--selection-mode",
         type=str,
         default=None,
-        choices=["ev_adjusted", "edge", "xgb_ltr", "robust_reranker", "thompson_ev"],
+        choices=["ev_adjusted", "edge", "xgb_ltr", "robust_reranker", "thompson_ev", "set_theory", "edge_append_shadow"],
         help="Final board ranking mode before portfolio constraints.",
     )
     parser.add_argument("--thompson-temperature", type=float, default=None, help="Temperature used for Thompson sampling.")
@@ -153,6 +153,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--market-regression-ceiling", type=float, default=None, help="Maximum market-regression lambda for prediction shrinkage.")
     parser.add_argument("--belief-uncertainty-lower", type=float, default=None, help="Lower anchor for belief uncertainty confidence scaling.")
     parser.add_argument("--belief-uncertainty-upper", type=float, default=None, help="Upper anchor for belief uncertainty confidence scaling.")
+    parser.add_argument("--append-agreement-min", type=int, default=None, help="Minimum E/T/V agreement count required for append-only shadow candidates.")
+    parser.add_argument("--append-edge-percentile-min", type=float, default=None, help="Minimum abs-edge percentile required for append-only shadow candidates.")
+    parser.add_argument("--append-max-extra-plays", type=int, default=None, help="Maximum append-only shadow plays added beyond the edge base board.")
     parser.add_argument(
         "--disable-conditional-framework",
         action="store_true",
@@ -219,6 +222,9 @@ def resolve_policy(args: argparse.Namespace):
         "market_regression_ceiling": args.market_regression_ceiling,
         "belief_uncertainty_lower": args.belief_uncertainty_lower,
         "belief_uncertainty_upper": args.belief_uncertainty_upper,
+        "append_agreement_min": args.append_agreement_min,
+        "append_edge_percentile_min": args.append_edge_percentile_min,
+        "append_max_extra_plays": args.append_max_extra_plays,
         "conditional_framework_enabled": None if not args.disable_conditional_framework else False,
         "conditional_framework_mode": args.conditional_framework_mode,
         "conditional_failure_memory_path": str(args.conditional_failure_memory_path) if args.conditional_failure_memory_path else None,
@@ -254,6 +260,29 @@ def apply_heuristic_policy_overrides(policy_payload: dict) -> dict:
     out["strong_tier_percentile"] = min(float(out.get("strong_tier_percentile", 0.90)), 0.00)
     out["elite_tier_percentile"] = min(float(out.get("elite_tier_percentile", out.get("elite_pct", 0.95))), 0.00)
     out["heuristic_overrides_applied"] = True
+    return out
+
+
+def apply_weak_play_capacity_overrides(policy_payload: dict) -> dict:
+    """
+    If the policy intentionally allows weak/pass recommendations, expand board
+    capacity so the slate has more optional plays to choose from.
+    """
+    out = dict(policy_payload)
+    min_recommendation = str(out.get("min_recommendation", "consider")).lower()
+    if min_recommendation != "pass":
+        out["weak_play_expanded_board"] = False
+        return out
+
+    out["max_total_plays"] = max(int(out.get("max_total_plays", 0)), 12)
+    out["max_pts_plays"] = max(int(out.get("max_pts_plays", 0)), 10)
+    out["max_trb_plays"] = max(int(out.get("max_trb_plays", 0)), 4)
+    out["max_ast_plays"] = max(int(out.get("max_ast_plays", 0)), 4)
+    if int(out.get("max_plays_per_target", 0)) > 0:
+        out["max_plays_per_target"] = max(int(out.get("max_plays_per_target", 0)), 4)
+    if int(out.get("max_plays_per_game", 0)) > 0:
+        out["max_plays_per_game"] = max(int(out.get("max_plays_per_game", 0)), 3)
+    out["weak_play_expanded_board"] = True
     return out
 
 
@@ -481,6 +510,7 @@ def main() -> None:
         history_mode = "heuristic_fallback"
         print(f"Warning: history CSV not found ({history_path}); using heuristic edge calibration.")
         policy_payload = apply_heuristic_policy_overrides(policy_payload)
+    policy_payload = apply_weak_play_capacity_overrides(policy_payload)
     selector_df = build_play_rows(
         slate_df,
         history_lookup,
@@ -549,6 +579,9 @@ def main() -> None:
         max_total_bet_fraction=policy_payload.get("max_total_bet_fraction", 0.05),
         belief_uncertainty_lower=policy_payload.get("belief_uncertainty_lower", 0.75),
         belief_uncertainty_upper=policy_payload.get("belief_uncertainty_upper", 1.15),
+        append_agreement_min=policy_payload.get("append_agreement_min", 3),
+        append_edge_percentile_min=policy_payload.get("append_edge_percentile_min", 0.90),
+        append_max_extra_plays=policy_payload.get("append_max_extra_plays", 3),
     )
     args.final_csv_out.parent.mkdir(parents=True, exist_ok=True)
     args.final_json_out.parent.mkdir(parents=True, exist_ok=True)
