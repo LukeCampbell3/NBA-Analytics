@@ -40,13 +40,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--policy-profile",
         type=str,
-        default="production_high_precision",
+        default="production_edge_b12",
         help="Primary market policy profile for the live board.",
     )
     parser.add_argument(
         "--shadow-policy-profiles",
         nargs="*",
-        default=["production_calibrated"],
+        default=["shadow_edge_append_agree1_p90_x1"],
         help="Optional additional policy profiles to run for research/monitoring only.",
     )
     parser.add_argument("--history-csv", type=Path, default=REPO_ROOT / "model" / "analysis" / "latest_market_comparison_strict_rows.csv", help="Historical row-level backtest CSV for edge calibration.")

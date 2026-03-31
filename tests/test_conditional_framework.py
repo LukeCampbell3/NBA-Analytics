@@ -170,3 +170,145 @@ def test_script_cluster_cap_ignores_unknown_cluster() -> None:
         elite_tier_percentile=0.0,
     )
     assert len(board) == 4
+
+
+def test_set_theory_mode_emits_consensus_columns() -> None:
+    frame = pd.concat([_sample_selector_frame()] * 5, ignore_index=True)
+    frame.loc[:, "player"] = [f"Player {idx}" for idx in range(len(frame))]
+    frame.loc[:, "target"] = "PTS"
+    frame.loc[:, "direction"] = ["OVER" if idx % 2 == 0 else "UNDER" for idx in range(len(frame))]
+    frame.loc[:, "expected_win_rate"] = [0.72 - 0.01 * idx for idx in range(len(frame))]
+    frame.loc[:, "expected_push_rate"] = 0.02
+    frame.loc[:, "posterior_alpha"] = [22 - idx for idx in range(len(frame))]
+    frame.loc[:, "posterior_beta"] = [10 + idx for idx in range(len(frame))]
+    frame.loc[:, "posterior_variance"] = 0.03
+    frame.loc[:, "recommendation"] = "pass"
+    frame.loc[:, "conditional_eligible_for_board"] = True
+    frame.loc[:, "script_cluster_id"] = [f"cluster_{idx % 3}" for idx in range(len(frame))]
+    frame.loc[:, "market_event_id"] = ""
+    frame.loc[:, "market_home_team"] = ""
+    frame.loc[:, "market_away_team"] = ""
+    frame.loc[:, "gap_percentile"] = 0.88
+    frame.loc[:, "belief_confidence_factor"] = 0.90
+    frame.loc[:, "feasibility"] = 0.90
+    frame.loc[:, "market_books"] = 6
+    frame.loc[:, "history_rows"] = 80
+    frame.loc[:, "edge"] = [2.4 - 0.2 * idx for idx in range(len(frame))]
+    frame.loc[:, "abs_edge"] = pd.Series(frame["edge"]).abs()
+    frame.loc[:, "market_line"] = [10.0 + idx for idx in range(len(frame))]
+    frame.loc[:, "prediction"] = frame["market_line"] + frame["edge"]
+
+    board = compute_final_board(
+        frame,
+        american_odds=-110,
+        min_ev=-1.0,
+        min_final_confidence=0.0,
+        min_recommendation="pass",
+        selection_mode="set_theory",
+        ranking_mode="set_theory",
+        max_plays_per_player=1,
+        max_plays_per_target=0,
+        max_total_plays=6,
+        max_target_plays={"PTS": 6, "TRB": 6, "AST": 6},
+        max_plays_per_game=0,
+        max_plays_per_script_cluster=6,
+        non_pts_min_gap_percentile=0.0,
+        min_bet_win_rate=0.49,
+        medium_bet_win_rate=0.52,
+        full_bet_win_rate=0.56,
+        medium_tier_percentile=0.0,
+        strong_tier_percentile=0.0,
+        elite_tier_percentile=0.0,
+    )
+    assert not board.empty
+    assert len(board) <= 6
+    required_cols = {"set_group", "agreement_count", "set_sources", "consensus_score", "set_strength"}
+    assert required_cols.issubset(set(board.columns))
+    assert board["set_group"].isin({"core", "strong_expansion", "anchor_fallback"}).all()
+    assert board["agreement_count"].between(1, 3).all()
+
+
+def test_edge_append_shadow_mode_is_append_only() -> None:
+    frame = pd.concat([_sample_selector_frame()] * 6, ignore_index=True)
+    frame.loc[:, "player"] = [f"Append Player {idx}" for idx in range(len(frame))]
+    frame.loc[:, "target"] = "PTS"
+    frame.loc[:, "direction"] = ["OVER" if idx % 2 == 0 else "UNDER" for idx in range(len(frame))]
+    frame.loc[:, "expected_win_rate"] = [0.74 - 0.01 * idx for idx in range(len(frame))]
+    frame.loc[:, "expected_push_rate"] = 0.02
+    frame.loc[:, "posterior_alpha"] = [24 - idx for idx in range(len(frame))]
+    frame.loc[:, "posterior_beta"] = [9 + idx for idx in range(len(frame))]
+    frame.loc[:, "posterior_variance"] = 0.03
+    frame.loc[:, "recommendation"] = "pass"
+    frame.loc[:, "conditional_eligible_for_board"] = True
+    frame.loc[:, "script_cluster_id"] = [f"cluster_{idx % 3}" for idx in range(len(frame))]
+    frame.loc[:, "market_event_id"] = ""
+    frame.loc[:, "market_home_team"] = ""
+    frame.loc[:, "market_away_team"] = ""
+    frame.loc[:, "gap_percentile"] = 0.88
+    frame.loc[:, "belief_confidence_factor"] = 0.90
+    frame.loc[:, "feasibility"] = 0.90
+    frame.loc[:, "market_books"] = 6
+    frame.loc[:, "history_rows"] = 80
+    frame.loc[:, "edge"] = [2.4 - 0.1 * idx for idx in range(len(frame))]
+    frame.loc[:, "abs_edge"] = pd.Series(frame["edge"]).abs()
+    frame.loc[:, "market_line"] = [10.0 + idx for idx in range(len(frame))]
+    frame.loc[:, "prediction"] = frame["market_line"] + frame["edge"]
+
+    base_board = compute_final_board(
+        frame,
+        american_odds=-110,
+        min_ev=-1.0,
+        min_final_confidence=0.0,
+        min_recommendation="pass",
+        selection_mode="edge",
+        ranking_mode="edge",
+        max_plays_per_player=1,
+        max_plays_per_target=0,
+        max_total_plays=4,
+        max_target_plays={"PTS": 10, "TRB": 4, "AST": 4},
+        max_plays_per_game=0,
+        max_plays_per_script_cluster=0,
+        non_pts_min_gap_percentile=0.0,
+        min_bet_win_rate=0.49,
+        medium_bet_win_rate=0.52,
+        full_bet_win_rate=0.56,
+        medium_tier_percentile=0.0,
+        strong_tier_percentile=0.0,
+        elite_tier_percentile=0.0,
+    )
+    append_board = compute_final_board(
+        frame,
+        american_odds=-110,
+        min_ev=-1.0,
+        min_final_confidence=0.0,
+        min_recommendation="pass",
+        selection_mode="edge_append_shadow",
+        ranking_mode="edge_append_shadow",
+        max_plays_per_player=1,
+        max_plays_per_target=0,
+        max_total_plays=4,
+        max_target_plays={"PTS": 10, "TRB": 4, "AST": 4},
+        max_plays_per_game=0,
+        max_plays_per_script_cluster=0,
+        non_pts_min_gap_percentile=0.0,
+        min_bet_win_rate=0.49,
+        medium_bet_win_rate=0.52,
+        full_bet_win_rate=0.56,
+        medium_tier_percentile=0.0,
+        strong_tier_percentile=0.0,
+        elite_tier_percentile=0.0,
+        append_agreement_min=1,
+        append_edge_percentile_min=0.0,
+        append_max_extra_plays=2,
+    )
+    assert not base_board.empty
+    assert not append_board.empty
+    assert len(append_board) <= len(base_board) + 2
+    assert {"append_shadow_added", "append_anchor_member"}.issubset(set(append_board.columns))
+
+    key_cols = ["player", "target", "direction", "market_line"]
+    base_keys = set(tuple(row) for row in base_board.loc[:, key_cols].to_numpy())
+    append_keys = set(tuple(row) for row in append_board.loc[:, key_cols].to_numpy())
+    assert base_keys.issubset(append_keys)
+    assert int(append_board["append_shadow_added"].sum()) >= 1
+    assert int(append_board["append_shadow_added"].sum()) <= 2
