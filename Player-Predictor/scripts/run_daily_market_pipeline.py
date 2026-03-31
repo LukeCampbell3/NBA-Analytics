@@ -49,6 +49,53 @@ def parse_args() -> argparse.Namespace:
         default=["shadow_edge_append_agree1_p90_x1"],
         help="Optional additional policy profiles to run for research/monitoring only.",
     )
+    parser.add_argument(
+        "--cutoff-meta-monitor-lookback-days",
+        type=int,
+        default=21,
+        help="Lookback span for daily unified cutoff-meta monitor.",
+    )
+    parser.add_argument(
+        "--cutoff-meta-monitor-start-date",
+        type=str,
+        default=None,
+        help="Optional YYYY-MM-DD override for monitor start date.",
+    )
+    parser.add_argument(
+        "--cutoff-meta-monitor-end-date",
+        type=str,
+        default=None,
+        help="Optional YYYY-MM-DD override for monitor end date.",
+    )
+    parser.add_argument(
+        "--cutoff-meta-monitor-board-size",
+        type=int,
+        default=12,
+        help="Board size for unified cutoff-meta monitor.",
+    )
+    parser.add_argument(
+        "--cutoff-meta-monitor-live-veto-corr-score",
+        type=float,
+        default=1.25,
+        help="Unified veto corr score for operational challenger monitor.",
+    )
+    parser.add_argument(
+        "--cutoff-meta-monitor-research-veto-corr-score",
+        type=float,
+        default=999.0,
+        help="Unified veto corr score for research comparator monitor.",
+    )
+    parser.add_argument(
+        "--cutoff-meta-monitor-output-dir",
+        type=Path,
+        default=None,
+        help="Optional output directory for monitor artifacts. Defaults under the run folder.",
+    )
+    parser.add_argument(
+        "--skip-cutoff-meta-monitor",
+        action="store_true",
+        help="Skip the daily unified cutoff-meta side-by-side monitor step.",
+    )
     parser.add_argument("--history-csv", type=Path, default=REPO_ROOT / "model" / "analysis" / "latest_market_comparison_strict_rows.csv", help="Historical row-level backtest CSV for edge calibration.")
     parser.add_argument("--lookback-days", type=int, default=10, help="How many recent days of historical market lines to collect.")
     parser.add_argument("--future-days", type=int, default=2, help="How many days ahead of today to keep in the current slate snapshot.")
@@ -481,6 +528,63 @@ def main() -> None:
             }
         )
 
+    cutoff_meta_monitor_outputs: dict = {}
+    if not args.skip_cutoff_meta_monitor:
+        monitor_dir = (args.cutoff_meta_monitor_output_dir or (run_dir / "shadow" / "unified_cutoff_meta_monitor")).resolve()
+        monitor_compare_json = monitor_dir / f"cutoff_meta_monitor_compare_{run_stamp}.json"
+        monitor_compare_csv = monitor_dir / f"cutoff_meta_monitor_compare_{run_stamp}.csv"
+        monitor_cmd = [
+            args.python,
+            "scripts/run_daily_cutoff_meta_monitor.py",
+            "--run-date",
+            str(local_date.date()),
+            "--daily-runs-dir",
+            str(ANALYSIS_ROOT),
+            "--lookback-days",
+            str(int(args.cutoff_meta_monitor_lookback_days)),
+            "--board-size",
+            str(int(args.cutoff_meta_monitor_board_size)),
+            "--live-unified-veto-corr-score",
+            str(float(args.cutoff_meta_monitor_live_veto_corr_score)),
+            "--research-unified-veto-corr-score",
+            str(float(args.cutoff_meta_monitor_research_veto_corr_score)),
+            "--output-dir",
+            str(monitor_dir),
+            "--comparison-json-out",
+            str(monitor_compare_json),
+            "--comparison-csv-out",
+            str(monitor_compare_csv),
+            "--python",
+            str(args.python),
+        ]
+        if args.cutoff_meta_monitor_start_date:
+            monitor_cmd.extend(["--start-date", str(args.cutoff_meta_monitor_start_date)])
+        if args.cutoff_meta_monitor_end_date:
+            monitor_cmd.extend(["--end-date", str(args.cutoff_meta_monitor_end_date)])
+
+        run_step(
+            "Run Unified Cutoff Meta Daily Monitor (Live vs Research Corr Veto)",
+            monitor_cmd,
+        )
+
+        cutoff_meta_monitor_outputs = {
+            "enabled": True,
+            "run_date": str(local_date.date()),
+            "lookback_days": int(args.cutoff_meta_monitor_lookback_days),
+            "start_date_override": str(args.cutoff_meta_monitor_start_date) if args.cutoff_meta_monitor_start_date else None,
+            "end_date_override": str(args.cutoff_meta_monitor_end_date) if args.cutoff_meta_monitor_end_date else None,
+            "board_size": int(args.cutoff_meta_monitor_board_size),
+            "live_veto_corr_score": float(args.cutoff_meta_monitor_live_veto_corr_score),
+            "research_veto_corr_score": float(args.cutoff_meta_monitor_research_veto_corr_score),
+            "output_dir": str(monitor_dir),
+            "comparison_json": str(monitor_compare_json),
+            "comparison_csv": str(monitor_compare_csv),
+        }
+    else:
+        cutoff_meta_monitor_outputs = {
+            "enabled": False,
+        }
+
     manifest = {
         "run_date": str(local_date.date()),
         "season": int(season),
@@ -499,11 +603,13 @@ def main() -> None:
         "policy_profile": primary_policy,
         "shadow_policy_profiles": shadow_policies,
         "shadow_runs": shadow_outputs,
+        "cutoff_meta_monitor": cutoff_meta_monitor_outputs,
         "used_latest_manifest": bool(args.latest),
         "skip_update_data": bool(args.skip_update_data),
         "skip_collect_market": bool(args.skip_collect_market),
         "skip_align": bool(args.skip_align),
         "skip_backtest": bool(args.skip_backtest),
+        "skip_cutoff_meta_monitor": bool(args.skip_cutoff_meta_monitor),
         "skip_export_web": bool(args.skip_export_web),
         "skip_build_site": bool(args.skip_build_site),
         "allow_heuristic_fallback": bool(args.allow_heuristic_fallback),
@@ -547,6 +653,8 @@ def main() -> None:
     print(f"Primary policy:       {primary_policy}")
     if shadow_policies:
         print(f"Shadow policies:      {', '.join(shadow_policies)}")
+    if cutoff_meta_monitor_outputs.get("enabled"):
+        print(f"Cutoff monitor:       {cutoff_meta_monitor_outputs.get('comparison_json')}")
     if snapshot_meta["mode"] == "stale_fallback":
         print(f"Selected market date: {snapshot_meta['selected_market_date']}")
     print(f"Run directory:        {run_dir}")
