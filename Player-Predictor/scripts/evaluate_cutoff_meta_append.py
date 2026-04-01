@@ -63,6 +63,37 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--gap-quantile-threshold", type=float, default=0.60, help="Require day cutoff-gap <= this train quantile.")
     parser.add_argument("--max-corr-score", type=float, default=1.25, help="Maximum correlation score allowed for appended row.")
     parser.add_argument(
+        "--research-pool-min-agreement",
+        type=float,
+        default=1.0,
+        help="Minimum agreement_count for research append-pool opportunity diagnostics.",
+    )
+    parser.add_argument(
+        "--research-corr-mode",
+        type=str,
+        default="auto",
+        choices=["auto", "none", "absolute", "percentile", "zscore"],
+        help="Research corr feasibility mode for append-pool diagnostics.",
+    )
+    parser.add_argument(
+        "--research-pool-max-corr-score",
+        type=float,
+        default=None,
+        help="Optional corr_score ceiling for research append-pool diagnostics. Defaults to no ceiling.",
+    )
+    parser.add_argument(
+        "--research-corr-percentile-max",
+        type=float,
+        default=None,
+        help="Optional within-day corr percentile cap [0,1] for research diagnostics.",
+    )
+    parser.add_argument(
+        "--research-corr-zscore-max",
+        type=float,
+        default=None,
+        help="Optional within-day corr z-score cap for research diagnostics.",
+    )
+    parser.add_argument(
         "--unified-veto-corr-score",
         type=float,
         default=1.25,
@@ -98,6 +129,12 @@ def parse_args() -> argparse.Namespace:
         help="CSV output for per-day summary.",
     )
     parser.add_argument(
+        "--daily-context-out",
+        type=Path,
+        default=REPO_ROOT / "model" / "analysis" / "daily_runs" / "cutoff_meta_append_daily_context_20260314_20260330_b12.csv",
+        help="CSV output for per-day slate-context validation dataset.",
+    )
+    parser.add_argument(
         "--summary-out",
         type=Path,
         default=REPO_ROOT / "model" / "analysis" / "daily_runs" / "cutoff_meta_append_summary_20260314_20260330_b12.json",
@@ -108,6 +145,12 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=REPO_ROOT / "model" / "analysis" / "daily_runs" / "cutoff_meta_append_abstain_20260314_20260330_b12.csv",
         help="CSV output for per-day abstention diagnostics.",
+    )
+    parser.add_argument(
+        "--exclude-snapshot-modes",
+        nargs="*",
+        default=[],
+        help="Optional current_market_snapshot_meta.mode values to exclude (for example: stale_fallback).",
     )
     return parser.parse_args()
 
@@ -125,6 +168,18 @@ def _read_run_dirs(root: Path, start: pd.Timestamp, end: pd.Timestamp) -> list[P
         if start <= run_dt <= end:
             out.append(child)
     return out
+
+
+def _load_snapshot_meta(run_dir: Path) -> dict[str, Any]:
+    manifest_path = run_dir / f"daily_market_pipeline_manifest_{run_dir.name}.json"
+    if not manifest_path.exists():
+        return {}
+    try:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    meta = payload.get("current_market_snapshot_meta")
+    return meta if isinstance(meta, dict) else {}
 
 
 def _load_actual_lookup():
@@ -521,6 +576,474 @@ def _add_slate_relative_features(feature_df: pd.DataFrame, board_size: int) -> p
     return out
 
 
+def _decision_time_append_score(pool_df: pd.DataFrame) -> pd.Series:
+    """Decision-time-only append score used for top-1 feasible diagnostics."""
+    edge_z = pd.to_numeric(pool_df.get("pool_edge_z"), errors="coerce").fillna(0.0)
+    conf_z = pd.to_numeric(pool_df.get("pool_conf_z"), errors="coerce").fillna(0.0)
+    agr_z = pd.to_numeric(pool_df.get("pool_agreement_z"), errors="coerce").fillna(0.0)
+    corr_z = pd.to_numeric(pool_df.get("pool_corr_z"), errors="coerce").fillna(0.0)
+    edge_pct = pd.to_numeric(pool_df.get("edge_percentile"), errors="coerce").fillna(0.0)
+    conf = pd.to_numeric(pool_df.get("final_confidence"), errors="coerce").fillna(0.0)
+
+    # Weighted blend emphasizing edge/confidence/consensus with correlation penalty.
+    return (
+        0.55 * edge_z
+        + 0.25 * conf_z
+        + 0.20 * agr_z
+        - 0.20 * corr_z
+        + 0.10 * edge_pct
+        + 0.05 * conf
+    )
+
+
+def _build_daily_context_dataset(
+    feature_df: pd.DataFrame,
+    eval_df: pd.DataFrame,
+    abstain_df: pd.DataFrame,
+    *,
+    research_pool_min_agreement: float = 1.0,
+    research_corr_mode: str = "none",
+    research_corr_threshold: float | None = None,
+) -> pd.DataFrame:
+    if feature_df.empty:
+        return pd.DataFrame()
+
+    def _nunique_nonempty(df: pd.DataFrame, col: str) -> int:
+        if col not in df.columns or df.empty:
+            return 0
+        series = df[col].astype(str).str.strip()
+        series = series.loc[series != ""]
+        return int(series.nunique())
+
+    def _max_count_nonempty(df: pd.DataFrame, col: str) -> int:
+        if col not in df.columns or df.empty:
+            return 0
+        series = df[col].astype(str).str.strip()
+        series = series.loc[series != ""]
+        if series.empty:
+            return 0
+        return int(series.value_counts(dropna=False).max())
+
+    abstain_by_date: dict[str, dict[str, Any]] = {}
+    if not abstain_df.empty and "run_date" in abstain_df.columns:
+        tmp = abstain_df.copy()
+        tmp["run_date"] = tmp["run_date"].astype(str)
+        for _, row in tmp.drop_duplicates(subset=["run_date"], keep="last").iterrows():
+            abstain_by_date[str(row.get("run_date", ""))] = row.to_dict()
+
+    run_dates = sorted(feature_df["run_date"].dropna().astype(str).unique().tolist())
+    rows: list[dict[str, Any]] = []
+
+    for run_date in run_dates:
+        day_features = feature_df.loc[feature_df["run_date"].astype(str) == str(run_date)].copy()
+        if day_features.empty:
+            continue
+        day_head = day_features.iloc[0]
+        board = day_features.loc[day_features["is_base_board_member"] == True].copy()
+        pool = day_features.loc[day_features["is_append_pool"] == True].copy()
+        if not pool.empty:
+            pool["decision_time_score"] = _decision_time_append_score(pool)
+        else:
+            pool["decision_time_score"] = np.nan
+        pool_resolved = pool.loc[pd.to_numeric(pool.get("ev_label"), errors="coerce").notna()].copy()
+        pool_agreement = pd.to_numeric(pool.get("agreement_count"), errors="coerce").fillna(0.0)
+        pool_corr = pd.to_numeric(pool.get("corr_score"), errors="coerce")
+        feasible_mask = pool_agreement >= float(research_pool_min_agreement)
+        mode = str(research_corr_mode or "none").lower()
+        threshold = None if research_corr_threshold is None else float(research_corr_threshold)
+        if mode == "absolute" and threshold is not None and not np.isinf(threshold):
+            feasible_mask = feasible_mask & (pool_corr.isna() | (pool_corr <= float(threshold)))
+        elif mode == "percentile" and threshold is not None:
+            corr_pct = pd.to_numeric(pool_corr.rank(method="average", pct=True), errors="coerce")
+            feasible_mask = feasible_mask & (corr_pct <= float(threshold))
+        elif mode == "zscore" and threshold is not None:
+            corr_z = _zscore_within_group(pool_corr.fillna(0.0))
+            feasible_mask = feasible_mask & (pd.to_numeric(corr_z, errors="coerce") <= float(threshold))
+        pool_feasible = pool.loc[feasible_mask].copy()
+        pool_feasible_resolved = pool_feasible.loc[pd.to_numeric(pool_feasible.get("ev_label"), errors="coerce").notna()].copy()
+
+        edge_values = pd.to_numeric(pool.get("edge"), errors="coerce").dropna().sort_values(ascending=False).tolist()
+        conf_values = pd.to_numeric(pool.get("final_confidence"), errors="coerce").dropna().sort_values(ascending=False).tolist()
+
+        pool_edge_top1 = float(edge_values[0]) if len(edge_values) >= 1 else np.nan
+        pool_edge_top2 = float(edge_values[1]) if len(edge_values) >= 2 else np.nan
+        pool_edge_gap_1_2 = float(pool_edge_top1 - pool_edge_top2) if len(edge_values) >= 2 else np.nan
+        pool_conf_top1 = float(conf_values[0]) if len(conf_values) >= 1 else np.nan
+        pool_conf_top2 = float(conf_values[1]) if len(conf_values) >= 2 else np.nan
+        pool_conf_gap_1_2 = float(pool_conf_top1 - pool_conf_top2) if len(conf_values) >= 2 else np.nan
+
+        if not pool_resolved.empty:
+            ranked_pool = pool_resolved.sort_values(
+                ["ev_label", "edge", "final_confidence"],
+                ascending=[False, False, False],
+            ).copy()
+            best_pool = ranked_pool.iloc[0]
+            best_pool_player = str(best_pool.get("player", ""))
+            best_pool_target = str(best_pool.get("target", ""))
+            best_pool_direction = str(best_pool.get("direction", ""))
+            best_pool_result = str(best_pool.get("result", ""))
+            best_pool_ev_label = _safe_num(best_pool.get("ev_label"), default=np.nan)
+            best_pool_edge_rank = int(_safe_num(best_pool.get("edge_rank"), default=np.nan)) if not pd.isna(_safe_num(best_pool.get("edge_rank"), default=np.nan)) else 0
+        else:
+            best_pool_player = ""
+            best_pool_target = ""
+            best_pool_direction = ""
+            best_pool_result = ""
+            best_pool_ev_label = np.nan
+            best_pool_edge_rank = 0
+
+        pool_resolved_mean_ev = float(pd.to_numeric(pool_resolved.get("ev_label"), errors="coerce").mean()) if not pool_resolved.empty else np.nan
+        if not pool_feasible_resolved.empty:
+            ranked_feasible = pool_feasible_resolved.sort_values(
+                ["ev_label", "edge", "final_confidence"],
+                ascending=[False, False, False],
+            ).copy()
+            best_feasible = ranked_feasible.iloc[0]
+            best_feasible_player = str(best_feasible.get("player", ""))
+            best_feasible_target = str(best_feasible.get("target", ""))
+            best_feasible_direction = str(best_feasible.get("direction", ""))
+            best_feasible_result = str(best_feasible.get("result", ""))
+            best_feasible_ev_label = _safe_num(best_feasible.get("ev_label"), default=np.nan)
+            best_feasible_edge_rank = int(_safe_num(best_feasible.get("edge_rank"), default=np.nan)) if not pd.isna(_safe_num(best_feasible.get("edge_rank"), default=np.nan)) else 0
+            feasible_positive_count = int((pd.to_numeric(pool_feasible_resolved.get("ev_label"), errors="coerce") > 0.0).sum())
+        else:
+            best_feasible_player = ""
+            best_feasible_target = ""
+            best_feasible_direction = ""
+            best_feasible_result = ""
+            best_feasible_ev_label = np.nan
+            best_feasible_edge_rank = 0
+            feasible_positive_count = 0
+
+        top1_feasible_exists = bool(not pool_feasible.empty)
+        top1_feasible_player = ""
+        top1_feasible_target = ""
+        top1_feasible_direction = ""
+        top1_feasible_result = ""
+        top1_feasible_ev_label = np.nan
+        top1_feasible_edge_rank = 0
+        top1_feasible_score = np.nan
+        top1_feasible_resolved = 0
+        if top1_feasible_exists:
+            ranked_top1 = pool_feasible.sort_values(
+                ["decision_time_score", "edge", "final_confidence", "agreement_count"],
+                ascending=[False, False, False, False],
+            ).copy()
+            top1 = ranked_top1.iloc[0]
+            top1_feasible_player = str(top1.get("player", ""))
+            top1_feasible_target = str(top1.get("target", ""))
+            top1_feasible_direction = str(top1.get("direction", ""))
+            top1_feasible_result = str(top1.get("result", ""))
+            top1_feasible_score = _safe_num(top1.get("decision_time_score"), default=np.nan)
+            top1_feasible_ev_label = _safe_num(top1.get("ev_label"), default=np.nan)
+            top1_feasible_edge_rank = int(_safe_num(top1.get("edge_rank"), default=np.nan)) if not pd.isna(_safe_num(top1.get("edge_rank"), default=np.nan)) else 0
+            top1_feasible_resolved = int(top1_feasible_result in {"win", "loss"})
+
+        day_eval = eval_df.loc[eval_df["run_date"].astype(str) == str(run_date)].copy() if not eval_df.empty else pd.DataFrame()
+        edge_day = day_eval.loc[day_eval["variant"] == "edge_baseline"].copy()
+        shadow_day = day_eval.loc[day_eval["variant"] == "shadow_append_a1_p90_x1"].copy()
+        unified_day = day_eval.loc[day_eval["variant"] == "unified_shadow_meta_x1"].copy()
+
+        edge_metrics = _metrics(edge_day)
+        shadow_metrics = _metrics(shadow_day)
+        unified_metrics = _metrics(unified_day)
+
+        edge_keys = {
+            _play_key_from_values(r.get("player"), r.get("target"), r.get("direction"), r.get("market_line"))
+            for _, r in edge_day.iterrows()
+        }
+        shadow_only = shadow_day.loc[
+            ~shadow_day.apply(
+                lambda r: _play_key_from_values(r.get("player"), r.get("target"), r.get("direction"), r.get("market_line")) in edge_keys,
+                axis=1,
+            )
+        ].copy() if not shadow_day.empty else pd.DataFrame()
+        shadow_candidate_exists = bool(not shadow_only.empty)
+        shadow_candidate_player = ""
+        shadow_candidate_target = ""
+        shadow_candidate_direction = ""
+        shadow_candidate_result = ""
+        shadow_candidate_edge = np.nan
+        shadow_candidate_conf = np.nan
+        shadow_candidate_agreement = np.nan
+        shadow_candidate_corr = np.nan
+        shadow_candidate_ev_label = np.nan
+        shadow_candidate_edge_rank = 0
+        shadow_candidate_score = np.nan
+        shadow_candidate_resolved = 0
+        if shadow_candidate_exists:
+            cand = shadow_only.iloc[0]
+            shadow_candidate_player = str(cand.get("player", ""))
+            shadow_candidate_target = str(cand.get("target", ""))
+            shadow_candidate_direction = str(cand.get("direction", ""))
+            shadow_candidate_result = str(cand.get("result", ""))
+            shadow_candidate_ev_label = (100.0 / 110.0) if shadow_candidate_result == "win" else (-1.0 if shadow_candidate_result == "loss" else np.nan)
+            shadow_candidate_resolved = int(shadow_candidate_result in {"win", "loss"})
+
+            candidate_feature_row = day_features.loc[
+                (day_features["player"].astype(str) == shadow_candidate_player)
+                & (day_features["target"].astype(str) == shadow_candidate_target)
+                & (day_features["direction"].astype(str) == shadow_candidate_direction)
+            ].copy()
+            if not candidate_feature_row.empty:
+                candidate_feature_row = candidate_feature_row.sort_values(["edge_rank", "edge"], ascending=[True, False]).head(1)
+                candidate_row = candidate_feature_row.iloc[0]
+                shadow_candidate_edge = _safe_num(candidate_row.get("edge"), default=np.nan)
+                shadow_candidate_conf = _safe_num(candidate_row.get("final_confidence"), default=np.nan)
+                shadow_candidate_agreement = _safe_num(candidate_row.get("agreement_count"), default=np.nan)
+                shadow_candidate_corr = _safe_num(candidate_row.get("corr_score"), default=np.nan)
+                rank_value = _safe_num(candidate_row.get("edge_rank"), default=np.nan)
+                shadow_candidate_edge_rank = int(rank_value) if not pd.isna(rank_value) else 0
+                shadow_candidate_score = _safe_num(
+                    _decision_time_append_score(candidate_feature_row).iloc[0],
+                    default=np.nan,
+                )
+
+            shadow_pool_row = pool.loc[
+                (pool["player"].astype(str) == shadow_candidate_player)
+                & (pool["target"].astype(str) == shadow_candidate_target)
+                & (pool["direction"].astype(str) == shadow_candidate_direction)
+            ].copy()
+            if not shadow_pool_row.empty:
+                shadow_pool_row = shadow_pool_row.sort_values(["edge_rank", "edge"], ascending=[True, False]).head(1)
+                shadow_candidate_score = _safe_num(shadow_pool_row.iloc[0].get("decision_time_score"), default=np.nan)
+
+        abstain_row = abstain_by_date.get(str(run_date), {})
+        model_ready = bool(abstain_row.get("model_ready", False))
+        day_shallow_enough = bool(abstain_row.get("day_shallow_enough", False))
+        meta_reason = str(abstain_row.get("meta_reason", ""))
+        unified_reason = str(abstain_row.get("unified_reason", ""))
+
+        delta_shadow_edge_ev = (
+            float(shadow_metrics["ev_per_resolved"]) - float(edge_metrics["ev_per_resolved"])
+            if int(shadow_metrics.get("resolved", 0)) > 0 and int(edge_metrics.get("resolved", 0)) > 0
+            else np.nan
+        )
+        delta_unified_edge_ev = (
+            float(unified_metrics["ev_per_resolved"]) - float(edge_metrics["ev_per_resolved"])
+            if int(unified_metrics.get("resolved", 0)) > 0 and int(edge_metrics.get("resolved", 0)) > 0
+            else np.nan
+        )
+
+        label_best_append_positive = int(best_pool_ev_label > 0.0) if not pd.isna(best_pool_ev_label) else np.nan
+        label_shadow_candidate_positive = (
+            int(shadow_candidate_ev_label > 0.0) if not pd.isna(shadow_candidate_ev_label) else np.nan
+        )
+        if shadow_candidate_exists and shadow_candidate_result in {"win", "loss"}:
+            label_abstain_correct = int(shadow_candidate_result == "loss")
+        elif (not shadow_candidate_exists) and not pd.isna(best_pool_ev_label):
+            label_abstain_correct = int(best_pool_ev_label <= 0.0)
+        else:
+            label_abstain_correct = np.nan
+
+        label_shadow_day_improves_edge = int(delta_shadow_edge_ev > 0.0) if not pd.isna(delta_shadow_edge_ev) else np.nan
+        label_unified_day_improves_edge = int(delta_unified_edge_ev > 0.0) if not pd.isna(delta_unified_edge_ev) else np.nan
+        label_unified_veto_correct = (
+            int(shadow_candidate_result == "loss")
+            if ("veto" in unified_reason.lower() and shadow_candidate_result in {"win", "loss"})
+            else np.nan
+        )
+        best_feasible_append_uplift_vs_pool_mean = (
+            float(best_feasible_ev_label - pool_resolved_mean_ev)
+            if (not pd.isna(best_feasible_ev_label) and not pd.isna(pool_resolved_mean_ev))
+            else np.nan
+        )
+        best_feasible_append_delta_vs_edge_mean = (
+            float(best_feasible_ev_label - float(edge_metrics.get("ev_per_resolved", np.nan)))
+            if (not pd.isna(best_feasible_ev_label) and int(edge_metrics.get("resolved", 0)) > 0)
+            else np.nan
+        )
+        top1_feasible_value_delta = (
+            float(top1_feasible_ev_label - float(edge_metrics.get("ev_per_resolved", np.nan)))
+            if (not pd.isna(top1_feasible_ev_label) and int(edge_metrics.get("resolved", 0)) > 0)
+            else np.nan
+        )
+        top1_feasible_uplift_vs_pool_mean = (
+            float(top1_feasible_ev_label - pool_resolved_mean_ev)
+            if (not pd.isna(top1_feasible_ev_label) and not pd.isna(pool_resolved_mean_ev))
+            else np.nan
+        )
+        label_top1_feasible_positive = (
+            int(top1_feasible_ev_label > 0.0)
+            if not pd.isna(top1_feasible_ev_label)
+            else np.nan
+        )
+        label_top1_feasible_improves_edge = (
+            int(top1_feasible_value_delta > 0.0)
+            if not pd.isna(top1_feasible_value_delta)
+            else np.nan
+        )
+        shadow_matches_top1_feasible = (
+            int(
+                shadow_candidate_exists
+                and top1_feasible_exists
+                and shadow_candidate_player == top1_feasible_player
+                and shadow_candidate_target == top1_feasible_target
+                and shadow_candidate_direction == top1_feasible_direction
+            )
+            if top1_feasible_exists
+            else np.nan
+        )
+        label_shadow_missed_positive_top1 = (
+            int((label_top1_feasible_positive == 1) and (shadow_matches_top1_feasible != 1))
+            if not pd.isna(label_top1_feasible_positive)
+            else np.nan
+        )
+        top1_shadow_score_gap = (
+            float(top1_feasible_score - shadow_candidate_score)
+            if (not pd.isna(top1_feasible_score) and not pd.isna(shadow_candidate_score))
+            else np.nan
+        )
+        label_any_feasible_positive = (
+            int(feasible_positive_count > 0)
+            if not pool_feasible_resolved.empty
+            else np.nan
+        )
+        label_any_feasible_improves_edge = (
+            int(best_feasible_append_delta_vs_edge_mean > 0.0)
+            if not pd.isna(best_feasible_append_delta_vs_edge_mean)
+            else np.nan
+        )
+        if not pd.isna(label_any_feasible_positive) and int(label_any_feasible_positive) == 1:
+            label_shadow_missed_feasible_positive = int(shadow_candidate_result != "win")
+        elif not pd.isna(label_any_feasible_positive):
+            label_shadow_missed_feasible_positive = 0
+        else:
+            label_shadow_missed_feasible_positive = np.nan
+
+        board_target_entropy = np.nan
+        if "target" in board.columns and not board.empty:
+            probs = board["target"].astype(str).value_counts(normalize=True)
+            board_target_entropy = float(-(probs * np.log(np.clip(probs, 1e-12, None))).sum())
+
+        pool_target_dir_series = (
+            pool.get("target", pd.Series("", index=pool.index)).astype(str)
+            + "|"
+            + pool.get("direction", pd.Series("", index=pool.index)).astype(str)
+        ) if not pool.empty else pd.Series(dtype="object")
+        pool_target_dir_max_count = int(pool_target_dir_series.value_counts().max()) if not pool_target_dir_series.empty else 0
+
+        rows.append(
+            {
+                "run_date": str(run_date),
+                "snapshot_mode": str(day_head.get("snapshot_mode", "")),
+                "snapshot_selected_market_date": str(day_head.get("snapshot_selected_market_date", "")),
+                "snapshot_selected_row_count": _safe_num(day_head.get("snapshot_selected_row_count"), default=np.nan),
+                "model_ready": model_ready,
+                "day_shallow_enough": day_shallow_enough,
+                "meta_reason": meta_reason,
+                "unified_reason": unified_reason,
+                "board_size": int(len(board)),
+                "board_player_unique_count": _nunique_nonempty(board, "player"),
+                "board_target_unique_count": _nunique_nonempty(board, "target"),
+                "board_target_entropy": board_target_entropy,
+                "board_edge_mean": _safe_num(day_features.get("board_edge_mean", pd.Series([np.nan])).iloc[0], default=np.nan),
+                "board_edge_std": _safe_num(day_features.get("board_edge_std", pd.Series([np.nan])).iloc[0], default=np.nan),
+                "board_cutoff_gap": _safe_num(day_features.get("board_cutoff_gap", pd.Series([np.nan])).iloc[0], default=np.nan),
+                "board_top_to_cutoff_gap": _safe_num(day_features.get("board_top_to_cutoff_gap", pd.Series([np.nan])).iloc[0], default=np.nan),
+                "near_miss_local_slope": _safe_num(day_features.get("near_miss_local_slope", pd.Series([np.nan])).iloc[0], default=np.nan),
+                "board_concentration": _safe_num(day_features.get("board_concentration", pd.Series([np.nan])).iloc[0], default=np.nan),
+                "pool_size": int(len(pool)),
+                "pool_resolved_count": int(len(pool_resolved)),
+                "pool_resolved_share": float(len(pool_resolved) / len(pool)) if len(pool) > 0 else np.nan,
+                "pool_feasible_count": int(len(pool_feasible)),
+                "pool_feasible_resolved_count": int(len(pool_feasible_resolved)),
+                "pool_feasible_positive_count": int(feasible_positive_count),
+                "pool_player_unique_count": _nunique_nonempty(pool, "player"),
+                "pool_target_unique_count": _nunique_nonempty(pool, "target"),
+                "pool_game_unique_count": _nunique_nonempty(pool, "game_key"),
+                "pool_script_cluster_unique_count": _nunique_nonempty(pool, "script_cluster_id"),
+                "pool_game_max_count": _max_count_nonempty(pool, "game_key"),
+                "pool_target_dir_max_count": pool_target_dir_max_count,
+                "pool_edge_mean": float(pd.to_numeric(pool.get("edge"), errors="coerce").mean()) if not pool.empty else np.nan,
+                "pool_edge_std": float(pd.to_numeric(pool.get("edge"), errors="coerce").std(ddof=0)) if not pool.empty else np.nan,
+                "pool_conf_mean": float(pd.to_numeric(pool.get("final_confidence"), errors="coerce").mean()) if not pool.empty else np.nan,
+                "pool_conf_std": float(pd.to_numeric(pool.get("final_confidence"), errors="coerce").std(ddof=0)) if not pool.empty else np.nan,
+                "pool_corr_mean": float(pd.to_numeric(pool.get("corr_score"), errors="coerce").mean()) if not pool.empty else np.nan,
+                "pool_corr_std": float(pd.to_numeric(pool.get("corr_score"), errors="coerce").std(ddof=0)) if not pool.empty else np.nan,
+                "pool_edge_top1": pool_edge_top1,
+                "pool_edge_top2": pool_edge_top2,
+                "pool_edge_gap_1_2": pool_edge_gap_1_2,
+                "pool_conf_top1": pool_conf_top1,
+                "pool_conf_top2": pool_conf_top2,
+                "pool_conf_gap_1_2": pool_conf_gap_1_2,
+                "pool_agreement_ge1_count": int((pd.to_numeric(pool.get("agreement_count"), errors="coerce").fillna(0.0) >= 1.0).sum()) if not pool.empty else 0,
+                "pool_agreement_ge2_count": int((pd.to_numeric(pool.get("agreement_count"), errors="coerce").fillna(0.0) >= 2.0).sum()) if not pool.empty else 0,
+                "pool_agreement_ge3_count": int((pd.to_numeric(pool.get("agreement_count"), errors="coerce").fillna(0.0) >= 3.0).sum()) if not pool.empty else 0,
+                "best_pool_player": best_pool_player,
+                "best_pool_target": best_pool_target,
+                "best_pool_direction": best_pool_direction,
+                "best_pool_result": best_pool_result,
+                "best_pool_ev_label": best_pool_ev_label,
+                "best_pool_edge_rank": best_pool_edge_rank,
+                "best_feasible_player": best_feasible_player,
+                "best_feasible_target": best_feasible_target,
+                "best_feasible_direction": best_feasible_direction,
+                "best_feasible_result": best_feasible_result,
+                "best_feasible_ev_label": best_feasible_ev_label,
+                "best_feasible_edge_rank": best_feasible_edge_rank,
+                "best_feasible_append_uplift_vs_pool_mean": best_feasible_append_uplift_vs_pool_mean,
+                "best_feasible_append_delta_vs_edge_mean": best_feasible_append_delta_vs_edge_mean,
+                "top1_feasible_exists": int(top1_feasible_exists),
+                "top1_feasible_player": top1_feasible_player,
+                "top1_feasible_target": top1_feasible_target,
+                "top1_feasible_direction": top1_feasible_direction,
+                "top1_feasible_result": top1_feasible_result,
+                "top1_feasible_resolved": int(top1_feasible_resolved),
+                "top1_feasible_ev_label": top1_feasible_ev_label,
+                "top1_feasible_edge_rank": top1_feasible_edge_rank,
+                "top1_feasible_decision_score": top1_feasible_score,
+                "top1_feasible_uplift_vs_pool_mean": top1_feasible_uplift_vs_pool_mean,
+                "top1_feasible_value_delta": top1_feasible_value_delta,
+                "shadow_candidate_exists": shadow_candidate_exists,
+                "shadow_candidate_player": shadow_candidate_player,
+                "shadow_candidate_target": shadow_candidate_target,
+                "shadow_candidate_direction": shadow_candidate_direction,
+                "shadow_candidate_result": shadow_candidate_result,
+                "shadow_candidate_resolved": int(shadow_candidate_resolved),
+                "shadow_candidate_ev_label": shadow_candidate_ev_label,
+                "shadow_candidate_edge": shadow_candidate_edge,
+                "shadow_candidate_confidence": shadow_candidate_conf,
+                "shadow_candidate_agreement": shadow_candidate_agreement,
+                "shadow_candidate_corr_score": shadow_candidate_corr,
+                "shadow_candidate_decision_score": shadow_candidate_score,
+                "shadow_candidate_edge_rank": shadow_candidate_edge_rank,
+                "shadow_candidate_uplift_vs_pool_mean": (
+                    float(shadow_candidate_ev_label - float(pd.to_numeric(pool_resolved.get("ev_label"), errors="coerce").mean()))
+                    if shadow_candidate_resolved and not pool_resolved.empty
+                    else np.nan
+                ),
+                "edge_day_resolved": int(edge_metrics.get("resolved", 0)),
+                "edge_day_hit_rate": float(edge_metrics.get("resolved_hit_rate", np.nan)),
+                "edge_day_ev_per_resolved": float(edge_metrics.get("ev_per_resolved", np.nan)),
+                "shadow_day_resolved": int(shadow_metrics.get("resolved", 0)),
+                "shadow_day_hit_rate": float(shadow_metrics.get("resolved_hit_rate", np.nan)),
+                "shadow_day_ev_per_resolved": float(shadow_metrics.get("ev_per_resolved", np.nan)),
+                "unified_day_resolved": int(unified_metrics.get("resolved", 0)),
+                "unified_day_hit_rate": float(unified_metrics.get("resolved_hit_rate", np.nan)),
+                "unified_day_ev_per_resolved": float(unified_metrics.get("ev_per_resolved", np.nan)),
+                "shadow_minus_edge_ev_per_resolved": delta_shadow_edge_ev,
+                "unified_minus_edge_ev_per_resolved": delta_unified_edge_ev,
+                "label_best_append_positive": label_best_append_positive,
+                "label_shadow_candidate_positive": label_shadow_candidate_positive,
+                "label_abstain_correct": label_abstain_correct,
+                "label_shadow_day_improves_edge": label_shadow_day_improves_edge,
+                "label_unified_day_improves_edge": label_unified_day_improves_edge,
+                "label_unified_veto_correct": label_unified_veto_correct,
+                "label_any_feasible_positive": label_any_feasible_positive,
+                "label_any_feasible_improves_edge": label_any_feasible_improves_edge,
+                "label_shadow_missed_feasible_positive": label_shadow_missed_feasible_positive,
+                "label_top1_feasible_positive": label_top1_feasible_positive,
+                "label_top1_feasible_improves_edge": label_top1_feasible_improves_edge,
+                "shadow_matches_top1_feasible": shadow_matches_top1_feasible,
+                "label_shadow_missed_positive_top1": label_shadow_missed_positive_top1,
+                "top1_shadow_score_gap": top1_shadow_score_gap,
+            }
+        )
+
+    return pd.DataFrame.from_records(rows)
+
+
 def main() -> None:
     args = parse_args()
     start = pd.to_datetime(args.start_date)
@@ -550,12 +1073,20 @@ def main() -> None:
     append_window = int(args.append_window)
     append_rank_low = board_size + 1
     append_rank_high = board_size + append_window
+    exclude_snapshot_modes = {str(x).strip().lower() for x in (args.exclude_snapshot_modes or []) if str(x).strip()}
 
     for run_dir in run_dirs:
         run_date = pd.to_datetime(run_dir.name, format="%Y%m%d", errors="coerce")
         if pd.isna(run_date):
             continue
         run_date_str = run_date.strftime("%Y-%m-%d")
+        snapshot_meta = _load_snapshot_meta(run_dir)
+        snapshot_mode = str(snapshot_meta.get("mode", "")).strip()
+        snapshot_mode_key = snapshot_mode.lower()
+        if snapshot_mode_key in exclude_snapshot_modes:
+            continue
+        snapshot_selected_market_date = snapshot_meta.get("selected_market_date")
+        snapshot_selected_row_count = snapshot_meta.get("selected_row_count")
         selector_path = run_dir / f"upcoming_market_play_selector_{run_dir.name}.csv"
         if not selector_path.exists():
             continue
@@ -630,6 +1161,9 @@ def main() -> None:
             feature_rows.append(
                 {
                     "run_date": run_date_str,
+                    "snapshot_mode": snapshot_mode,
+                    "snapshot_selected_market_date": snapshot_selected_market_date,
+                    "snapshot_selected_row_count": snapshot_selected_row_count,
                     "market_date": market_date_str,
                     "player": row.get("player"),
                     "target": target,
@@ -650,6 +1184,8 @@ def main() -> None:
                     "history_rows": _safe_num(row.get("history_rows")),
                     "agreement_count": _safe_num(row.get("agreement_count")),
                     "set_sources": str(row.get("set_sources", "")),
+                    "game_key": str(row.get("game_key", "")),
+                    "script_cluster_id": str(row.get("script_cluster_id", "")),
                     "risk_penalty": _safe_num(row.get("risk_penalty")),
                     "uncertainty_sigma": _safe_num(row.get("uncertainty_sigma")),
                     "volatility_score": _safe_num(row.get("volatility_score")),
@@ -954,6 +1490,49 @@ def main() -> None:
         raise RuntimeError("No evaluation rows produced.")
     daily_df = pd.DataFrame.from_records(daily_rows).drop_duplicates(subset=["run_date", "variant"], keep="last")
     abstain_df = pd.DataFrame.from_records(abstain_rows)
+    research_corr_mode = str(args.research_corr_mode or "auto").lower()
+    if research_corr_mode == "auto":
+        if args.research_corr_percentile_max is not None:
+            research_corr_mode = "percentile"
+        elif args.research_corr_zscore_max is not None:
+            research_corr_mode = "zscore"
+        elif args.research_pool_max_corr_score is not None:
+            research_corr_mode = "absolute"
+        else:
+            research_corr_mode = "none"
+
+    if research_corr_mode == "none":
+        research_corr_threshold = None
+    elif research_corr_mode == "absolute":
+        research_corr_threshold = (
+            float(args.research_pool_max_corr_score)
+            if args.research_pool_max_corr_score is not None
+            else float("inf")
+        )
+    elif research_corr_mode == "percentile":
+        research_corr_threshold = (
+            float(args.research_corr_percentile_max)
+            if args.research_corr_percentile_max is not None
+            else 1.0
+        )
+        research_corr_threshold = min(max(research_corr_threshold, 0.0), 1.0)
+    elif research_corr_mode == "zscore":
+        research_corr_threshold = (
+            float(args.research_corr_zscore_max)
+            if args.research_corr_zscore_max is not None
+            else 0.0
+        )
+    else:
+        raise ValueError(f"Unsupported research corr mode: {research_corr_mode}")
+
+    daily_context_df = _build_daily_context_dataset(
+        feature_df,
+        eval_df,
+        abstain_df,
+        research_pool_min_agreement=float(args.research_pool_min_agreement),
+        research_corr_mode=research_corr_mode,
+        research_corr_threshold=research_corr_threshold,
+    )
 
     summary: dict[str, Any] = {}
     for variant in all_variants:
@@ -1044,9 +1623,203 @@ def main() -> None:
         "numeric_features": numeric_features,
         "categorical_features": categorical_features,
     }
+    summary["research_pool_config"] = {
+        "min_agreement": float(args.research_pool_min_agreement),
+        "corr_mode": str(research_corr_mode),
+        "corr_threshold": (
+            None
+            if (research_corr_threshold is None or (isinstance(research_corr_threshold, float) and np.isinf(research_corr_threshold)))
+            else float(research_corr_threshold)
+        ),
+        "max_corr_score_absolute": (
+            None
+            if args.research_pool_max_corr_score is None
+            else float(args.research_pool_max_corr_score)
+        ),
+        "corr_percentile_max": (
+            None
+            if args.research_corr_percentile_max is None
+            else float(args.research_corr_percentile_max)
+        ),
+        "corr_zscore_max": (
+            None
+            if args.research_corr_zscore_max is None
+            else float(args.research_corr_zscore_max)
+        ),
+        "top1_decision_score": {
+            "edge_z": 0.55,
+            "confidence_z": 0.25,
+            "agreement_z": 0.20,
+            "corr_z_penalty": -0.20,
+            "edge_percentile": 0.10,
+            "confidence_level": 0.05,
+        },
+    }
+    summary["daily_context_dataset"] = {
+        "rows": int(len(daily_context_df)),
+        "model_ready_days": int(pd.to_numeric(daily_context_df.get("model_ready"), errors="coerce").fillna(0).astype(bool).sum()) if not daily_context_df.empty else 0,
+        "shallow_days": int(pd.to_numeric(daily_context_df.get("day_shallow_enough"), errors="coerce").fillna(0).astype(bool).sum()) if not daily_context_df.empty else 0,
+        "shadow_candidate_days": int(pd.to_numeric(daily_context_df.get("shadow_candidate_exists"), errors="coerce").fillna(0).astype(bool).sum()) if not daily_context_df.empty else 0,
+        "pool_resolved_days": int(pd.to_numeric(daily_context_df.get("pool_resolved_count"), errors="coerce").fillna(0).gt(0).sum()) if not daily_context_df.empty else 0,
+        "pool_feasible_days": int(pd.to_numeric(daily_context_df.get("pool_feasible_count"), errors="coerce").fillna(0).gt(0).sum()) if not daily_context_df.empty else 0,
+        "pool_feasible_resolved_days": int(pd.to_numeric(daily_context_df.get("pool_feasible_resolved_count"), errors="coerce").fillna(0).gt(0).sum()) if not daily_context_df.empty else 0,
+        "snapshot_mode_counts": (
+            daily_context_df.get("snapshot_mode", pd.Series(dtype="object")).fillna("").astype(str).value_counts(dropna=False).to_dict()
+            if not daily_context_df.empty
+            else {}
+        ),
+        "label_coverage": {
+            "label_best_append_positive": int(pd.to_numeric(daily_context_df.get("label_best_append_positive"), errors="coerce").notna().sum()) if not daily_context_df.empty else 0,
+            "label_shadow_candidate_positive": int(pd.to_numeric(daily_context_df.get("label_shadow_candidate_positive"), errors="coerce").notna().sum()) if not daily_context_df.empty else 0,
+            "label_abstain_correct": int(pd.to_numeric(daily_context_df.get("label_abstain_correct"), errors="coerce").notna().sum()) if not daily_context_df.empty else 0,
+            "label_shadow_day_improves_edge": int(pd.to_numeric(daily_context_df.get("label_shadow_day_improves_edge"), errors="coerce").notna().sum()) if not daily_context_df.empty else 0,
+            "label_unified_veto_correct": int(pd.to_numeric(daily_context_df.get("label_unified_veto_correct"), errors="coerce").notna().sum()) if not daily_context_df.empty else 0,
+            "label_any_feasible_positive": int(pd.to_numeric(daily_context_df.get("label_any_feasible_positive"), errors="coerce").notna().sum()) if not daily_context_df.empty else 0,
+            "label_any_feasible_improves_edge": int(pd.to_numeric(daily_context_df.get("label_any_feasible_improves_edge"), errors="coerce").notna().sum()) if not daily_context_df.empty else 0,
+            "label_shadow_missed_feasible_positive": int(pd.to_numeric(daily_context_df.get("label_shadow_missed_feasible_positive"), errors="coerce").notna().sum()) if not daily_context_df.empty else 0,
+            "label_top1_feasible_positive": int(pd.to_numeric(daily_context_df.get("label_top1_feasible_positive"), errors="coerce").notna().sum()) if not daily_context_df.empty else 0,
+            "label_top1_feasible_improves_edge": int(pd.to_numeric(daily_context_df.get("label_top1_feasible_improves_edge"), errors="coerce").notna().sum()) if not daily_context_df.empty else 0,
+            "shadow_matches_top1_feasible": int(pd.to_numeric(daily_context_df.get("shadow_matches_top1_feasible"), errors="coerce").notna().sum()) if not daily_context_df.empty else 0,
+            "label_shadow_missed_positive_top1": int(pd.to_numeric(daily_context_df.get("label_shadow_missed_positive_top1"), errors="coerce").notna().sum()) if not daily_context_df.empty else 0,
+        },
+    }
+    if not daily_context_df.empty:
+        resolved_mask = pd.to_numeric(daily_context_df.get("pool_feasible_resolved_count"), errors="coerce").fillna(0).gt(0)
+        resolved_df = daily_context_df.loc[resolved_mask].copy()
+        any_positive = pd.to_numeric(resolved_df.get("label_any_feasible_positive"), errors="coerce")
+        any_improves_edge = pd.to_numeric(resolved_df.get("label_any_feasible_improves_edge"), errors="coerce")
+        shadow_missed = pd.to_numeric(resolved_df.get("label_shadow_missed_feasible_positive"), errors="coerce")
+        best_delta = pd.to_numeric(resolved_df.get("best_feasible_append_delta_vs_edge_mean"), errors="coerce")
+        best_uplift = pd.to_numeric(resolved_df.get("best_feasible_append_uplift_vs_pool_mean"), errors="coerce")
+        positive_days = int((any_positive == 1).sum())
+        shadow_hits = int(((any_positive == 1) & (shadow_missed == 0)).sum())
+        top1_resolved_df = resolved_df.loc[pd.to_numeric(resolved_df.get("top1_feasible_resolved"), errors="coerce").fillna(0).astype(bool)].copy()
+        top1_positive = pd.to_numeric(top1_resolved_df.get("label_top1_feasible_positive"), errors="coerce")
+        top1_improves_edge = pd.to_numeric(top1_resolved_df.get("label_top1_feasible_improves_edge"), errors="coerce")
+        top1_shadow_match = pd.to_numeric(top1_resolved_df.get("shadow_matches_top1_feasible"), errors="coerce")
+        top1_shadow_missed = pd.to_numeric(top1_resolved_df.get("label_shadow_missed_positive_top1"), errors="coerce")
+        top1_delta = pd.to_numeric(top1_resolved_df.get("top1_feasible_value_delta"), errors="coerce")
+        top1_uplift = pd.to_numeric(top1_resolved_df.get("top1_feasible_uplift_vs_pool_mean"), errors="coerce")
+        top1_score_gap = pd.to_numeric(top1_resolved_df.get("top1_shadow_score_gap"), errors="coerce")
+        top1_positive_days = int((top1_positive == 1).sum())
+        top1_shadow_hits = int(((top1_positive == 1) & (top1_shadow_match == 1)).sum())
+        summary["research_pool_opportunity_diagnostics"] = {
+            "diagnostic_target_primary": "top1_feasible_by_decision_time",
+            "resolved_feasible_days": int(len(resolved_df)),
+            "days_any_feasible_positive": positive_days,
+            "days_any_feasible_improves_edge": int((any_improves_edge == 1).sum()),
+            "days_shadow_missed_feasible_positive": int((shadow_missed == 1).sum()),
+            "shadow_recall_on_feasible_positive_days": (float(shadow_hits / positive_days) if positive_days > 0 else np.nan),
+            "best_feasible_delta_vs_edge_mean": {
+                "mean": float(best_delta.mean()) if best_delta.notna().any() else np.nan,
+                "median": float(best_delta.median()) if best_delta.notna().any() else np.nan,
+                "p10": float(best_delta.quantile(0.10)) if best_delta.notna().any() else np.nan,
+                "p90": float(best_delta.quantile(0.90)) if best_delta.notna().any() else np.nan,
+            },
+            "best_feasible_uplift_vs_pool_mean": {
+                "mean": float(best_uplift.mean()) if best_uplift.notna().any() else np.nan,
+                "median": float(best_uplift.median()) if best_uplift.notna().any() else np.nan,
+                "p10": float(best_uplift.quantile(0.10)) if best_uplift.notna().any() else np.nan,
+                "p90": float(best_uplift.quantile(0.90)) if best_uplift.notna().any() else np.nan,
+            },
+            "top1_feasible_by_decision_time": {
+                "resolved_top1_days": int(len(top1_resolved_df)),
+                "days_top1_positive": top1_positive_days,
+                "days_top1_improves_edge": int((top1_improves_edge == 1).sum()),
+                "days_shadow_matches_top1": int((top1_shadow_match == 1).sum()),
+                "days_shadow_missed_positive_top1": int((top1_shadow_missed == 1).sum()),
+                "shadow_recall_on_positive_top1_days": (float(top1_shadow_hits / top1_positive_days) if top1_positive_days > 0 else np.nan),
+                "top1_value_delta_vs_edge": {
+                    "mean": float(top1_delta.mean()) if top1_delta.notna().any() else np.nan,
+                    "median": float(top1_delta.median()) if top1_delta.notna().any() else np.nan,
+                    "p10": float(top1_delta.quantile(0.10)) if top1_delta.notna().any() else np.nan,
+                    "p90": float(top1_delta.quantile(0.90)) if top1_delta.notna().any() else np.nan,
+                },
+                "top1_uplift_vs_pool_mean": {
+                    "mean": float(top1_uplift.mean()) if top1_uplift.notna().any() else np.nan,
+                    "median": float(top1_uplift.median()) if top1_uplift.notna().any() else np.nan,
+                    "p10": float(top1_uplift.quantile(0.10)) if top1_uplift.notna().any() else np.nan,
+                    "p90": float(top1_uplift.quantile(0.90)) if top1_uplift.notna().any() else np.nan,
+                },
+                "top1_shadow_score_gap": {
+                    "mean": float(top1_score_gap.mean()) if top1_score_gap.notna().any() else np.nan,
+                    "median": float(top1_score_gap.median()) if top1_score_gap.notna().any() else np.nan,
+                    "p10": float(top1_score_gap.quantile(0.10)) if top1_score_gap.notna().any() else np.nan,
+                    "p90": float(top1_score_gap.quantile(0.90)) if top1_score_gap.notna().any() else np.nan,
+                },
+            },
+        }
+    else:
+        summary["research_pool_opportunity_diagnostics"] = {}
+
+    append_pool_all = feature_df.loc[feature_df["is_append_pool"] == True].copy()
+    if not append_pool_all.empty:
+        corr_all = pd.to_numeric(append_pool_all.get("corr_score"), errors="coerce")
+        agreement_all = pd.to_numeric(append_pool_all.get("agreement_count"), errors="coerce").fillna(0.0)
+        corr_quantiles = {
+            "min": float(corr_all.min()) if corr_all.notna().any() else np.nan,
+            "p10": float(corr_all.quantile(0.10)) if corr_all.notna().any() else np.nan,
+            "p25": float(corr_all.quantile(0.25)) if corr_all.notna().any() else np.nan,
+            "median": float(corr_all.quantile(0.50)) if corr_all.notna().any() else np.nan,
+            "p75": float(corr_all.quantile(0.75)) if corr_all.notna().any() else np.nan,
+            "p90": float(corr_all.quantile(0.90)) if corr_all.notna().any() else np.nan,
+            "max": float(corr_all.max()) if corr_all.notna().any() else np.nan,
+        }
+        canonical_caps = [1.25, 2.0, 3.0, 6.0, 8.0, 10.0]
+        feasible_days_by_cap: dict[str, int] = {}
+        for cap in canonical_caps:
+            mask = (agreement_all >= float(args.research_pool_min_agreement)) & corr_all.notna() & (corr_all <= float(cap))
+            day_count = int(append_pool_all.loc[mask, "run_date"].astype(str).nunique())
+            feasible_days_by_cap[f"corr_le_{cap:g}"] = day_count
+        summary["research_pool_corr_diagnostics"] = {
+            "append_pool_rows": int(len(append_pool_all)),
+            "run_days_with_append_pool_rows": int(append_pool_all["run_date"].astype(str).nunique()),
+            "corr_quantiles": corr_quantiles,
+            "feasible_run_days_by_corr_cap": feasible_days_by_cap,
+        }
+
+        # Corr-score calibration table on research pool rows.
+        calib_rows = append_pool_all.loc[agreement_all >= float(args.research_pool_min_agreement)].copy()
+        corr_bins = [-np.inf, 6.0, 8.0, 10.0, 12.0, 14.0, np.inf]
+        corr_labels = ["<=6", "(6,8]", "(8,10]", "(10,12]", "(12,14]", ">14"]
+        calib_rows["corr_bin"] = pd.cut(
+            pd.to_numeric(calib_rows.get("corr_score"), errors="coerce"),
+            bins=corr_bins,
+            labels=corr_labels,
+            right=True,
+            include_lowest=True,
+        )
+        calibration_table: list[dict[str, Any]] = []
+        for label in corr_labels:
+            grp = calib_rows.loc[calib_rows["corr_bin"] == label].copy()
+            resolved = grp.loc[pd.to_numeric(grp.get("ev_label"), errors="coerce").notna()].copy()
+            wins = int((resolved.get("result", pd.Series("", index=resolved.index)).astype(str) == "win").sum())
+            resolved_count = int(len(resolved))
+            win_rate = float(wins / resolved_count) if resolved_count > 0 else np.nan
+            ev_per_resolved = float(pd.to_numeric(resolved.get("ev_label"), errors="coerce").mean()) if resolved_count > 0 else np.nan
+            same_game_dup_rate = float((pd.to_numeric(grp.get("corr_same_game_count"), errors="coerce").fillna(0.0) > 0.0).mean()) if not grp.empty else np.nan
+            same_target_dup_rate = float((pd.to_numeric(grp.get("corr_same_target_dir_count"), errors="coerce").fillna(0.0) > 0.0).mean()) if not grp.empty else np.nan
+            same_script_dup_rate = float((pd.to_numeric(grp.get("corr_same_script_cluster_count"), errors="coerce").fillna(0.0) > 0.0).mean()) if not grp.empty else np.nan
+            calibration_table.append(
+                {
+                    "corr_bin": str(label),
+                    "candidate_count": int(len(grp)),
+                    "resolved_count": resolved_count,
+                    "win_rate": win_rate,
+                    "ev_per_resolved": ev_per_resolved,
+                    "same_game_dup_rate": same_game_dup_rate,
+                    "same_target_dup_rate": same_target_dup_rate,
+                    "same_script_dup_rate": same_script_dup_rate,
+                }
+            )
+        summary["research_pool_corr_calibration"] = calibration_table
+    else:
+        summary["research_pool_corr_diagnostics"] = {}
+        summary["research_pool_corr_calibration"] = []
     summary["window"] = {
         "requested_start": args.start_date,
         "requested_end": args.end_date,
+        "exclude_snapshot_modes": [str(x) for x in (args.exclude_snapshot_modes or [])],
         "covered_run_dates": run_dates,
         "covered_run_date_count": int(len(run_dates)),
     }
@@ -1054,12 +1827,14 @@ def main() -> None:
     args.dataset_out.parent.mkdir(parents=True, exist_ok=True)
     args.rows_out.parent.mkdir(parents=True, exist_ok=True)
     args.daily_out.parent.mkdir(parents=True, exist_ok=True)
+    args.daily_context_out.parent.mkdir(parents=True, exist_ok=True)
     args.summary_out.parent.mkdir(parents=True, exist_ok=True)
     args.abstain_out.parent.mkdir(parents=True, exist_ok=True)
 
     feature_df.to_csv(args.dataset_out, index=False)
     eval_df.to_csv(args.rows_out, index=False)
     daily_df.to_csv(args.daily_out, index=False)
+    daily_context_df.to_csv(args.daily_context_out, index=False)
     abstain_df.to_csv(args.abstain_out, index=False)
     with args.summary_out.open("w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
@@ -1083,6 +1858,7 @@ def main() -> None:
     print(f"  Dataset: {args.dataset_out}")
     print(f"  Rows:    {args.rows_out}")
     print(f"  Daily:   {args.daily_out}")
+    print(f"  Daily Context: {args.daily_context_out}")
     print(f"  Abstain: {args.abstain_out}")
     print(f"  Summary: {args.summary_out}")
 

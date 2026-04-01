@@ -18,6 +18,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 
@@ -99,6 +100,32 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Optional explicit path for combined comparison CSV.",
     )
+    parser.add_argument(
+        "--skip-stage1-daily-model",
+        action="store_true",
+        help="Skip Stage-1 daily permission model evaluation.",
+    )
+    parser.add_argument(
+        "--stage1-target-mode",
+        type=str,
+        default="best_pool_positive",
+        choices=[
+            "best_pool_positive",
+            "shadow_improves_edge",
+            "best_feasible_append_value",
+            "top1_feasible_positive",
+            "top1_feasible_value",
+        ],
+        help="Stage-1 daily permission target mode.",
+    )
+    parser.add_argument("--stage1-threshold", type=float, default=0.55, help="Stage-1 permission probability threshold.")
+    parser.add_argument("--stage1-min-train-days", type=int, default=12, help="Stage-1 minimum labeled training days.")
+    parser.add_argument(
+        "--exclude-snapshot-modes",
+        nargs="*",
+        default=[],
+        help="Optional snapshot modes to exclude from evaluation/training windows (for example: stale_fallback).",
+    )
     parser.add_argument("--python", type=str, default=sys.executable, help="Python executable for child evaluator runs.")
     return parser.parse_args()
 
@@ -119,6 +146,7 @@ def _run_eval(
     dataset_out = output_dir / f"{stem}_dataset.csv"
     rows_out = output_dir / f"{stem}_rows.csv"
     daily_out = output_dir / f"{stem}_daily.csv"
+    daily_context_out = output_dir / f"{stem}_daily_context.csv"
     abstain_out = output_dir / f"{stem}_abstain.csv"
     summary_out = output_dir / f"{stem}_summary.json"
 
@@ -159,6 +187,8 @@ def _run_eval(
         str(rows_out),
         "--daily-out",
         str(daily_out),
+        "--daily-context-out",
+        str(daily_context_out),
         "--abstain-out",
         str(abstain_out),
         "--summary-out",
@@ -166,6 +196,8 @@ def _run_eval(
     ]
     if args.unified_require_shallow_day:
         cmd.append("--unified-require-shallow-day")
+    if args.exclude_snapshot_modes:
+        cmd += ["--exclude-snapshot-modes", *[str(x) for x in args.exclude_snapshot_modes]]
 
     print("\n" + "=" * 96)
     print(f"RUN CUTOFF META MONITOR PROFILE [{profile_name}]")
@@ -174,16 +206,53 @@ def _run_eval(
     subprocess.run(cmd, cwd=REPO_ROOT, check=True)
 
     summary = json.loads(summary_out.read_text(encoding="utf-8"))
+    stage1_paths: dict[str, str] = {}
+    stage1_summary: dict[str, Any] = {}
+    if not args.skip_stage1_daily_model:
+        stage1_scored_out = output_dir / f"{stem}_stage1_daily_scored.csv"
+        stage1_summary_out = output_dir / f"{stem}_stage1_daily_summary.json"
+        stage1_cmd = [
+            args.python,
+            str(REPO_ROOT / "scripts" / "evaluate_stage1_daily_append_permission.py"),
+            "--daily-context-csv",
+            str(daily_context_out),
+            "--target-mode",
+            str(args.stage1_target_mode),
+            "--threshold",
+            str(float(args.stage1_threshold)),
+            "--min-train-days",
+            str(int(args.stage1_min_train_days)),
+            "--out-scored-csv",
+            str(stage1_scored_out),
+            "--out-summary-json",
+            str(stage1_summary_out),
+        ]
+        if args.exclude_snapshot_modes:
+            stage1_cmd += ["--exclude-snapshot-modes", *[str(x) for x in args.exclude_snapshot_modes]]
+        print("\n" + "-" * 96)
+        print(f"RUN STAGE1 DAILY MODEL [{profile_name}]")
+        print("-" * 96)
+        print("Command:", " ".join(stage1_cmd))
+        subprocess.run(stage1_cmd, cwd=REPO_ROOT, check=True)
+        stage1_paths = {
+            "stage1_scored": str(stage1_scored_out),
+            "stage1_summary": str(stage1_summary_out),
+        }
+        stage1_summary = json.loads(stage1_summary_out.read_text(encoding="utf-8"))
+
     return {
         "profile_name": profile_name,
         "unified_veto_corr_score": float(unified_veto_corr_score),
         "summary": summary,
+        "stage1_summary": stage1_summary,
         "paths": {
             "dataset": str(dataset_out),
             "rows": str(rows_out),
             "daily": str(daily_out),
+            "daily_context": str(daily_context_out),
             "abstain": str(abstain_out),
             "summary": str(summary_out),
+            **stage1_paths,
         },
     }
 
@@ -197,6 +266,8 @@ def _profile_row(payload: dict[str, Any]) -> dict[str, Any]:
     unified = summary.get("unified_shadow_meta_x1", {})
     delta = summary.get("delta_unified_minus_edge", {})
     unified_diag = summary.get("unified_gate_diagnostics", {})
+    stage1_summary = payload.get("stage1_summary", {}) if isinstance(payload.get("stage1_summary"), dict) else {}
+    stage1_actionable = stage1_summary.get("metrics_actionable_days", {}) if isinstance(stage1_summary, dict) else {}
 
     return {
         "profile_name": profile_name,
@@ -215,10 +286,27 @@ def _profile_row(payload: dict[str, Any]) -> dict[str, Any]:
         "unified_appended_rows_total": int(unified_diag.get("appended_rows_total", 0) or 0),
         "unified_appended_resolved_total": int(unified_diag.get("appended_resolved_total", 0) or 0),
         "unified_abstain_reasons": json.dumps(unified_diag.get("abstain_reasons", {}), sort_keys=True),
+        "stage1_target_mode": str(stage1_summary.get("target_mode", "")) if stage1_summary else "",
+        "stage1_effective_target_mode": str(stage1_summary.get("effective_target_mode", "")) if stage1_summary else "",
+        "stage1_fallback_used": bool(stage1_summary.get("fallback_used", False)) if stage1_summary else False,
+        "stage1_target_class_count_primary": int(stage1_summary.get("target_class_count_primary", 0) or 0) if stage1_summary else 0,
+        "stage1_threshold": float(stage1_summary.get("threshold", np.nan)) if stage1_summary else np.nan,
+        "stage1_rows_total": int(stage1_summary.get("rows_total", 0) or 0) if stage1_summary else 0,
+        "stage1_rows_model_ready": int(stage1_summary.get("rows_model_ready", 0) or 0) if stage1_summary else 0,
+        "stage1_actionable_labeled_days": int(stage1_actionable.get("labeled_days", 0) or 0) if stage1_summary else 0,
+        "stage1_actionable_permit_days": int(stage1_actionable.get("permit_days", 0) or 0) if stage1_summary else 0,
+        "stage1_actionable_precision": float(stage1_actionable.get("precision_on_permit", np.nan)) if stage1_summary else np.nan,
+        "stage1_actionable_recall": float(stage1_actionable.get("recall_on_positive", np.nan)) if stage1_summary else np.nan,
+        "stage1_actionable_false_permit_rate": float(stage1_actionable.get("false_permit_rate", np.nan)) if stage1_summary else np.nan,
+        "stage1_actionable_veto_regret_rate": float(stage1_actionable.get("veto_regret_rate", np.nan)) if stage1_summary else np.nan,
+        "stage1_actionable_permit_mean_value_delta": float(stage1_actionable.get("permit_mean_value_delta", np.nan)) if stage1_summary else np.nan,
         "summary_path": str(payload["paths"]["summary"]),
         "rows_path": str(payload["paths"]["rows"]),
         "daily_path": str(payload["paths"]["daily"]),
         "abstain_path": str(payload["paths"]["abstain"]),
+        "daily_context_path": str(payload["paths"]["daily_context"]),
+        "stage1_scored_path": str(payload["paths"].get("stage1_scored", "")),
+        "stage1_summary_path": str(payload["paths"].get("stage1_summary", "")),
         "dataset_path": str(payload["paths"]["dataset"]),
     }
 
@@ -285,6 +373,11 @@ def main() -> None:
             "meta_max_corr_score": float(args.max_corr_score),
             "meta_fallback_enabled": False,
             "live_default_uses_research_corr": False,
+            "stage1_daily_model_enabled": bool(not args.skip_stage1_daily_model),
+            "stage1_target_mode": str(args.stage1_target_mode),
+            "stage1_threshold": float(args.stage1_threshold),
+            "stage1_min_train_days": int(args.stage1_min_train_days),
+            "exclude_snapshot_modes": [str(x) for x in args.exclude_snapshot_modes],
         },
         "profiles": {
             "live": live_payload,
@@ -328,4 +421,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
