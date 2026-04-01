@@ -328,12 +328,17 @@ def derive_local_date_range(player_limit: int | None = None) -> tuple[pd.Timesta
     return pd.Timestamp(min_date).normalize(), pd.Timestamp(max_date).normalize()
 
 
-def infer_start_game_id(session: requests.Session) -> int:
+def infer_odds_page_game_ids(session: requests.Session) -> list[int]:
     response = session.get(COVERS_ODDS_URL, timeout=30)
     response.raise_for_status()
     ids = [int(match) for match in re.findall(r"/sport/basketball/nba/matchup/(\d+)", response.text)]
     if not ids:
-        raise RuntimeError("Unable to infer latest Covers game id from current odds page.")
+        raise RuntimeError("Unable to infer Covers matchup ids from current odds page.")
+    return sorted(set(ids), reverse=True)
+
+
+def infer_start_game_id(session: requests.Session) -> int:
+    ids = infer_odds_page_game_ids(session)
     return max(ids)
 
 
@@ -606,9 +611,18 @@ def main() -> None:
     date_to = pd.Timestamp(args.date_to).normalize() if args.date_to else local_max
 
     session = make_session()
-    start_game_id = args.start_game_id or infer_start_game_id(session)
     scan_count = args.scan_count or estimate_scan_count(date_from, date_to)
-    game_ids = list(range(start_game_id, start_game_id - scan_count, -1))
+    odds_page_ids: list[int] = []
+    if args.start_game_id is None:
+        odds_page_ids = infer_odds_page_game_ids(session)
+        start_game_id = max(odds_page_ids)
+        scan_anchor_game_id = min(odds_page_ids)
+        descending_ids = list(range(scan_anchor_game_id, scan_anchor_game_id - scan_count, -1))
+        game_ids = list(dict.fromkeys([*odds_page_ids, *descending_ids]))
+    else:
+        start_game_id = args.start_game_id
+        scan_anchor_game_id = start_game_id
+        game_ids = list(range(start_game_id, start_game_id - scan_count, -1))
 
     results: list[ParsedGame] = []
     for offset in range(0, len(game_ids), args.batch_size):
@@ -658,6 +672,8 @@ def main() -> None:
         "date_from": str(date_from.date()),
         "date_to": str(date_to.date()),
         "start_game_id": start_game_id,
+        "scan_anchor_game_id": scan_anchor_game_id,
+        "odds_page_seed_ids": int(len(odds_page_ids)),
         "scan_count": scan_count,
         "games_scanned": len(game_ids),
         "games_with_props": len(kept),
@@ -676,6 +692,8 @@ def main() -> None:
     print("=" * 80)
     print(f"Date range:       {manifest['date_from']} -> {manifest['date_to']}")
     print(f"Start game id:    {start_game_id}")
+    print(f"Scan anchor id:   {scan_anchor_game_id}")
+    print(f"Odds seed ids:    {len(odds_page_ids)}")
     print(f"Games scanned:    {len(game_ids)}")
     print(f"Games with props: {len(kept)}")
     print(f"Long rows:        {len(long_df)}")
