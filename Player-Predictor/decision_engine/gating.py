@@ -57,6 +57,8 @@ class StrategyConfig:
     accept_reject_threshold_floor: float = 0.0
     min_ev: float = 0.0
     min_final_confidence: float = 0.03
+    max_history_staleness_days: int = 0
+    min_recency_factor: float = 0.0
     min_recommendation: str = "consider"
     max_plays_per_player: int = 1
     max_plays_per_target: int = 0
