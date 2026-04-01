@@ -69,6 +69,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model-uplift-margin", type=float, default=0.015, help="Meta append top1-top2 uplift margin.")
     parser.add_argument("--gap-quantile-threshold", type=float, default=0.60, help="Cutoff-gap quantile threshold.")
     parser.add_argument("--max-corr-score", type=float, default=1.25, help="Meta append correlation ceiling.")
+    parser.add_argument("--research-pool-min-agreement", type=float, default=1.0, help="Research pool min agreement for diagnostics.")
+    parser.add_argument(
+        "--research-corr-mode",
+        type=str,
+        default="percentile",
+        choices=["auto", "none", "absolute", "percentile", "zscore"],
+        help="Research corr feasibility mode for append-pool diagnostics.",
+    )
+    parser.add_argument("--research-pool-max-corr-score", type=float, default=None, help="Optional research pool corr ceiling.")
+    parser.add_argument("--research-corr-percentile-max", type=float, default=0.25, help="Optional within-day corr percentile cap [0,1].")
+    parser.add_argument("--research-corr-zscore-max", type=float, default=None, help="Optional within-day corr z-score cap.")
     parser.add_argument(
         "--unified-shadow-uplift-floor",
         type=float,
@@ -108,15 +119,23 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--stage1-target-mode",
         type=str,
-        default="best_pool_positive",
+        default="top1_feasible_positive",
         choices=[
             "best_pool_positive",
             "shadow_improves_edge",
             "best_feasible_append_value",
             "top1_feasible_positive",
+            "top1_feasible_improves_edge",
             "top1_feasible_value",
         ],
         help="Stage-1 daily permission target mode.",
+    )
+    parser.add_argument(
+        "--stage1-candidate-mode",
+        type=str,
+        default="top1_feasible",
+        choices=["shadow", "top1_feasible", "none"],
+        help="Candidate availability gate used by Stage-1 permit decisions.",
     )
     parser.add_argument("--stage1-threshold", type=float, default=0.55, help="Stage-1 permission probability threshold.")
     parser.add_argument("--stage1-min-train-days", type=int, default=12, help="Stage-1 minimum labeled training days.")
@@ -148,6 +167,11 @@ def _run_eval(
     daily_out = output_dir / f"{stem}_daily.csv"
     daily_context_out = output_dir / f"{stem}_daily_context.csv"
     abstain_out = output_dir / f"{stem}_abstain.csv"
+    shadow_top1_miss_out = output_dir / f"{stem}_shadow_top1_miss_reasons.csv"
+    shadow_top1_miss_summary_out = output_dir / f"{stem}_top1_shadow_miss_reasons_summary.json"
+    stage2_table_out = output_dir / f"{stem}_stage2_proposal_table.csv"
+    stage2_pairs_out = output_dir / f"{stem}_stage2_proposal_pairs.csv"
+    stage2_summary_out = output_dir / f"{stem}_stage2_proposal_summary.json"
     summary_out = output_dir / f"{stem}_summary.json"
 
     cmd = [
@@ -177,6 +201,10 @@ def _run_eval(
         str(float(args.gap_quantile_threshold)),
         "--max-corr-score",
         str(float(args.max_corr_score)),
+        "--research-pool-min-agreement",
+        str(float(args.research_pool_min_agreement)),
+        "--research-corr-mode",
+        str(args.research_corr_mode),
         "--unified-veto-corr-score",
         str(float(unified_veto_corr_score)),
         "--unified-shadow-uplift-floor",
@@ -191,9 +219,25 @@ def _run_eval(
         str(daily_context_out),
         "--abstain-out",
         str(abstain_out),
+        "--shadow-top1-miss-out",
+        str(shadow_top1_miss_out),
+        "--top1-shadow-miss-summary-out",
+        str(shadow_top1_miss_summary_out),
+        "--stage2-proposal-table-out",
+        str(stage2_table_out),
+        "--stage2-proposal-pairs-out",
+        str(stage2_pairs_out),
+        "--stage2-proposal-summary-out",
+        str(stage2_summary_out),
         "--summary-out",
         str(summary_out),
     ]
+    if args.research_pool_max_corr_score is not None:
+        cmd += ["--research-pool-max-corr-score", str(float(args.research_pool_max_corr_score))]
+    if args.research_corr_percentile_max is not None:
+        cmd += ["--research-corr-percentile-max", str(float(args.research_corr_percentile_max))]
+    if args.research_corr_zscore_max is not None:
+        cmd += ["--research-corr-zscore-max", str(float(args.research_corr_zscore_max))]
     if args.unified_require_shallow_day:
         cmd.append("--unified-require-shallow-day")
     if args.exclude_snapshot_modes:
@@ -218,6 +262,8 @@ def _run_eval(
             str(daily_context_out),
             "--target-mode",
             str(args.stage1_target_mode),
+            "--candidate-mode",
+            str(args.stage1_candidate_mode),
             "--threshold",
             str(float(args.stage1_threshold)),
             "--min-train-days",
@@ -251,6 +297,11 @@ def _run_eval(
             "daily": str(daily_out),
             "daily_context": str(daily_context_out),
             "abstain": str(abstain_out),
+            "shadow_top1_miss": str(shadow_top1_miss_out),
+            "shadow_top1_miss_summary": str(shadow_top1_miss_summary_out),
+            "stage2_proposal_table": str(stage2_table_out),
+            "stage2_proposal_pairs": str(stage2_pairs_out),
+            "stage2_proposal_summary": str(stage2_summary_out),
             "summary": str(summary_out),
             **stage1_paths,
         },
@@ -288,11 +339,13 @@ def _profile_row(payload: dict[str, Any]) -> dict[str, Any]:
         "unified_abstain_reasons": json.dumps(unified_diag.get("abstain_reasons", {}), sort_keys=True),
         "stage1_target_mode": str(stage1_summary.get("target_mode", "")) if stage1_summary else "",
         "stage1_effective_target_mode": str(stage1_summary.get("effective_target_mode", "")) if stage1_summary else "",
+        "stage1_candidate_mode": str(stage1_summary.get("candidate_mode", "")) if stage1_summary else "",
         "stage1_fallback_used": bool(stage1_summary.get("fallback_used", False)) if stage1_summary else False,
         "stage1_target_class_count_primary": int(stage1_summary.get("target_class_count_primary", 0) or 0) if stage1_summary else 0,
         "stage1_threshold": float(stage1_summary.get("threshold", np.nan)) if stage1_summary else np.nan,
         "stage1_rows_total": int(stage1_summary.get("rows_total", 0) or 0) if stage1_summary else 0,
         "stage1_rows_model_ready": int(stage1_summary.get("rows_model_ready", 0) or 0) if stage1_summary else 0,
+        "stage1_rows_candidate_exists": int(stage1_summary.get("rows_candidate_exists", 0) or 0) if stage1_summary else 0,
         "stage1_actionable_labeled_days": int(stage1_actionable.get("labeled_days", 0) or 0) if stage1_summary else 0,
         "stage1_actionable_permit_days": int(stage1_actionable.get("permit_days", 0) or 0) if stage1_summary else 0,
         "stage1_actionable_precision": float(stage1_actionable.get("precision_on_permit", np.nan)) if stage1_summary else np.nan,
@@ -304,6 +357,11 @@ def _profile_row(payload: dict[str, Any]) -> dict[str, Any]:
         "rows_path": str(payload["paths"]["rows"]),
         "daily_path": str(payload["paths"]["daily"]),
         "abstain_path": str(payload["paths"]["abstain"]),
+        "shadow_top1_miss_path": str(payload["paths"].get("shadow_top1_miss", "")),
+        "shadow_top1_miss_summary_path": str(payload["paths"].get("shadow_top1_miss_summary", "")),
+        "stage2_proposal_table_path": str(payload["paths"].get("stage2_proposal_table", "")),
+        "stage2_proposal_pairs_path": str(payload["paths"].get("stage2_proposal_pairs", "")),
+        "stage2_proposal_summary_path": str(payload["paths"].get("stage2_proposal_summary", "")),
         "daily_context_path": str(payload["paths"]["daily_context"]),
         "stage1_scored_path": str(payload["paths"].get("stage1_scored", "")),
         "stage1_summary_path": str(payload["paths"].get("stage1_summary", "")),
@@ -375,9 +433,15 @@ def main() -> None:
             "live_default_uses_research_corr": False,
             "stage1_daily_model_enabled": bool(not args.skip_stage1_daily_model),
             "stage1_target_mode": str(args.stage1_target_mode),
+            "stage1_candidate_mode": str(args.stage1_candidate_mode),
             "stage1_threshold": float(args.stage1_threshold),
             "stage1_min_train_days": int(args.stage1_min_train_days),
             "exclude_snapshot_modes": [str(x) for x in args.exclude_snapshot_modes],
+            "research_pool_min_agreement": float(args.research_pool_min_agreement),
+            "research_corr_mode": str(args.research_corr_mode),
+            "research_pool_max_corr_score": (None if args.research_pool_max_corr_score is None else float(args.research_pool_max_corr_score)),
+            "research_corr_percentile_max": (None if args.research_corr_percentile_max is None else float(args.research_corr_percentile_max)),
+            "research_corr_zscore_max": (None if args.research_corr_zscore_max is None else float(args.research_corr_zscore_max)),
         },
         "profiles": {
             "live": live_payload,

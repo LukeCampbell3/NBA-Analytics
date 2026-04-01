@@ -97,6 +97,17 @@ def parse_args() -> argparse.Namespace:
         help="Skip the daily unified cutoff-meta side-by-side monitor step.",
     )
     parser.add_argument("--history-csv", type=Path, default=REPO_ROOT / "model" / "analysis" / "latest_market_comparison_strict_rows.csv", help="Historical row-level backtest CSV for edge calibration.")
+    parser.add_argument(
+        "--history-fallback-rows-csv",
+        type=Path,
+        default=REPO_ROOT / "model" / "analysis" / "date_hit_rate_validation_rows.csv",
+        help="Fallback long-format validation rows used to rebuild history-csv when missing.",
+    )
+    parser.add_argument(
+        "--disable-history-fallback",
+        action="store_true",
+        help="Disable automatic history-csv reconstruction from validation rows when history-csv is missing.",
+    )
     parser.add_argument("--lookback-days", type=int, default=10, help="How many recent days of historical market lines to collect.")
     parser.add_argument("--future-days", type=int, default=2, help="How many days ahead of today to keep in the current slate snapshot.")
     parser.add_argument(
@@ -137,6 +148,82 @@ def run_step(label: str, args: list[str]) -> None:
     print("=" * 90)
     print("Command:", " ".join(args))
     subprocess.run(args, cwd=REPO_ROOT, check=True)
+
+
+def print_notice(label: str, message: str) -> None:
+    print("\n" + "=" * 90)
+    print(label)
+    print("=" * 90)
+    print(message)
+
+
+def rebuild_history_csv_from_validation_rows(source_csv: Path, history_csv: Path) -> tuple[bool, str]:
+    required = ["player", "market_date", "target", "prediction", "market_line", "actual"]
+    if not source_csv.exists():
+        return False, f"fallback source not found: {source_csv}"
+
+    try:
+        source_df = pd.read_csv(source_csv, usecols=lambda c: c in set(required))
+    except Exception as exc:
+        return False, f"failed reading fallback source {source_csv}: {exc}"
+
+    missing_cols = [c for c in required if c not in source_df.columns]
+    if missing_cols:
+        return False, f"fallback source missing required columns: {missing_cols}"
+
+    working = source_df.copy()
+    working["target"] = working["target"].astype(str).str.upper().str.strip()
+    working = working.loc[working["target"].isin(["PTS", "TRB", "AST"])].copy()
+    if working.empty:
+        return False, "fallback source has no PTS/TRB/AST rows"
+
+    working["market_date"] = pd.to_datetime(working["market_date"], errors="coerce").dt.strftime("%Y-%m-%d")
+    working["prediction"] = pd.to_numeric(working["prediction"], errors="coerce")
+    working["market_line"] = pd.to_numeric(working["market_line"], errors="coerce")
+    working["actual"] = pd.to_numeric(working["actual"], errors="coerce")
+    working["player"] = working["player"].astype(str).str.strip()
+    working = working.loc[
+        working["market_date"].notna()
+        & (working["player"] != "")
+        & working["prediction"].notna()
+        & working["market_line"].notna()
+    ].copy()
+    if working.empty:
+        return False, "fallback source has no usable rows after cleaning"
+
+    working = (
+        working.sort_values(["market_date", "player", "target"])
+        .drop_duplicates(subset=["player", "market_date", "target"], keep="last")
+        .reset_index(drop=True)
+    )
+
+    base = working[["player", "market_date"]].drop_duplicates().reset_index(drop=True)
+    out = base.copy()
+    for target in ["PTS", "TRB", "AST"]:
+        part = (
+            working.loc[working["target"] == target, ["player", "market_date", "prediction", "market_line", "actual"]]
+            .rename(
+                columns={
+                    "prediction": f"pred_{target}",
+                    "market_line": f"market_{target}",
+                    "actual": f"actual_{target}",
+                }
+            )
+            .copy()
+        )
+        out = out.merge(part, on=["player", "market_date"], how="left")
+
+    out["did_not_play"] = 0
+    out["minutes"] = 1.0
+
+    market_cols = [f"market_{t}" for t in ["PTS", "TRB", "AST"]]
+    out = out.loc[out[market_cols].notna().any(axis=1)].copy()
+    if out.empty:
+        return False, "reconstructed history had zero rows after market filters"
+
+    history_csv.parent.mkdir(parents=True, exist_ok=True)
+    out.to_csv(history_csv, index=False)
+    return True, f"reconstructed {len(out):,} rows from {source_csv}"
 
 
 def _normalize_player_name(value: str) -> str:
@@ -382,6 +469,9 @@ def main() -> None:
     yesterday = (local_date - pd.Timedelta(days=1)).date()
     lookback_start = (local_date - pd.Timedelta(days=int(args.lookback_days))).date()
     future_end = (local_date + pd.Timedelta(days=int(args.future_days))).date()
+    history_csv_path = args.history_csv.resolve()
+    backtest_script_path = REPO_ROOT / "scripts" / "backtest_inference_accuracy.py"
+    history_fallback_source_path = args.history_fallback_rows_csv.resolve()
 
     run_stamp = local_date.strftime("%Y%m%d")
     run_dir = ANALYSIS_ROOT / run_stamp
@@ -428,18 +518,64 @@ def main() -> None:
         )
 
     if not args.skip_backtest:
-        run_step(
-            f"Refresh Historical Inference Backtest For Season {season}",
-            [
-                args.python,
-                "scripts/backtest_inference_accuracy.py",
-                "--season",
-                str(season),
-                "--strict-csv-out",
-                str(args.history_csv),
-                *(["--latest"] if args.latest else []),
-            ],
-        )
+        if backtest_script_path.exists():
+            run_step(
+                f"Refresh Historical Inference Backtest For Season {season}",
+                [
+                    args.python,
+                    "scripts/backtest_inference_accuracy.py",
+                    "--season",
+                    str(season),
+                    "--strict-csv-out",
+                    str(args.history_csv),
+                    *(["--latest"] if args.latest else []),
+                ],
+            )
+        else:
+            if history_csv_path.exists():
+                print_notice(
+                    "Backtest Step Skipped (Script Missing)",
+                    "scripts/backtest_inference_accuracy.py was not found. "
+                    f"Continuing with existing history CSV: {history_csv_path}",
+                )
+            elif not args.disable_history_fallback:
+                rebuilt, detail = rebuild_history_csv_from_validation_rows(
+                    history_fallback_source_path,
+                    history_csv_path,
+                )
+                if rebuilt:
+                    print_notice(
+                        "Backtest Step Skipped (Script Missing, Fallback Rebuilt)",
+                        detail,
+                    )
+                else:
+                    raise FileNotFoundError(
+                        "Backtest step cannot run because scripts/backtest_inference_accuracy.py is missing, "
+                        f"history CSV is missing ({history_csv_path}), and fallback reconstruction failed ({detail})."
+                    )
+            else:
+                raise FileNotFoundError(
+                    "Backtest step cannot run because scripts/backtest_inference_accuracy.py is missing and "
+                    f"history CSV is missing: {history_csv_path}"
+                )
+
+    if not history_csv_path.exists():
+        if not args.disable_history_fallback:
+            rebuilt, detail = rebuild_history_csv_from_validation_rows(
+                history_fallback_source_path,
+                history_csv_path,
+            )
+            if rebuilt:
+                print_notice("History CSV Rebuilt", detail)
+            else:
+                raise FileNotFoundError(
+                    f"History CSV not found at {history_csv_path}, and fallback reconstruction failed ({detail})."
+                )
+        else:
+            raise FileNotFoundError(
+                f"History CSV not found at {history_csv_path}. "
+                "Either provide --history-csv, enable backtest refresh, or remove --disable-history-fallback."
+            )
 
     latest_market_path = MARKET_ROOT / "latest_player_props_wide.parquet"
     current_snapshot_path = run_dir / f"current_market_snapshot_{run_stamp}.parquet"
