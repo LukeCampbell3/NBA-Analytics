@@ -66,6 +66,7 @@ class StrategyConfig:
     max_trb_plays: int = 4
     max_ast_plays: int = 2
     max_total_plays: int = 12
+    min_board_plays: int = 0
     non_pts_min_gap_percentile: float = 0.90
     edge_adjust_k: float = 0.30
     selection_mode: str = "ev_adjusted"

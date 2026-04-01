@@ -133,6 +133,12 @@ def parse_args() -> argparse.Namespace:
         help="Maximum number of final plays to keep overall.",
     )
     parser.add_argument(
+        "--min-board-plays",
+        type=int,
+        default=0,
+        help="Minimum final-board rows to target by dynamically relaxing EV cutoff when possible.",
+    )
+    parser.add_argument(
         "--non-pts-min-gap-percentile",
         type=float,
         default=0.90,
@@ -269,19 +275,25 @@ def _stable_seed_from_row(row: pd.Series, base_seed: int) -> int:
     return int(digest, 16) % (2**32 - 1)
 
 
+def _clean_key_component(series: pd.Series) -> pd.Series:
+    raw = series.fillna("").astype(str).str.strip()
+    lowered = raw.str.lower()
+    return raw.mask(lowered.isin({"", "nan", "none", "null", "nat"}), "")
+
+
 def _build_game_key(df: pd.DataFrame) -> pd.Series:
     if "market_event_id" in df.columns:
-        event_key = df["market_event_id"].astype(str).str.strip()
+        event_key = _clean_key_component(df["market_event_id"])
     else:
         event_key = pd.Series("", index=df.index, dtype=str)
 
-    home = df.get("market_home_team", pd.Series("", index=df.index)).astype(str).str.strip()
-    away = df.get("market_away_team", pd.Series("", index=df.index)).astype(str).str.strip()
+    home = _clean_key_component(df.get("market_home_team", pd.Series("", index=df.index)))
+    away = _clean_key_component(df.get("market_away_team", pd.Series("", index=df.index)))
     teams_sorted = np.where(home <= away, home + "@" + away, away + "@" + home)
     teams_sorted = pd.Series(teams_sorted, index=df.index, dtype=str)
-    market_date = df.get("market_date", pd.Series("", index=df.index)).astype(str).str.slice(0, 10)
-    player = df.get("player", pd.Series("", index=df.index)).astype(str).str.strip()
-    target = df.get("target", pd.Series("", index=df.index)).astype(str).str.strip()
+    market_date = _clean_key_component(df.get("market_date", pd.Series("", index=df.index))).str.slice(0, 10)
+    player = _clean_key_component(df.get("player", pd.Series("", index=df.index)))
+    target = _clean_key_component(df.get("target", pd.Series("", index=df.index)))
     teams_missing = home.eq("") & away.eq("")
     fallback_team_key = market_date + "|" + teams_sorted
     fallback_player_key = market_date + "|" + player + "|" + target
@@ -290,7 +302,7 @@ def _build_game_key(df: pd.DataFrame) -> pd.Series:
         index=df.index,
         dtype=str,
     )
-    return np.where(event_key.ne("") & event_key.ne("nan"), event_key, fallback_key)
+    return np.where(event_key.ne(""), event_key, fallback_key)
 
 
 def _normalize_script_cluster(value: object) -> str:
@@ -719,6 +731,7 @@ def compute_final_board(
     max_plays_per_player: int = 1,
     max_plays_per_target: int = 8,
     max_total_plays: int = 20,
+    min_board_plays: int = 0,
     max_target_plays: dict[str, int] | None = None,
     max_plays_per_game: int = 2,
     max_plays_per_script_cluster: int = 2,
@@ -847,11 +860,27 @@ def compute_final_board(
             return out
 
     out = out.loc[out["recommendation_rank"] <= minimum_recommendation_rank(min_recommendation)].copy()
-    out = out.loc[out["ev"] >= float(min_ev)].copy()
     out = out.loc[out["final_confidence"] >= float(min_final_confidence)].copy()
     out = out.loc[(out["target"] == "PTS") | (out["gap_percentile"] >= float(non_pts_min_gap_percentile))].copy()
     if out.empty:
         return out
+
+    effective_min_ev = float(min_ev)
+    requested_min_board = max(0, int(min_board_plays))
+    if max_total_plays > 0:
+        requested_min_board = min(requested_min_board, int(max_total_plays))
+    if requested_min_board > 0:
+        ev_sorted = pd.to_numeric(out["ev"], errors="coerce").fillna(-np.inf).sort_values(ascending=False).reset_index(drop=True)
+        if not ev_sorted.empty:
+            floor_index = max(0, min(int(requested_min_board), len(ev_sorted)) - 1)
+            adaptive_floor = float(ev_sorted.iloc[floor_index])
+            if np.isfinite(adaptive_floor):
+                effective_min_ev = min(effective_min_ev, adaptive_floor)
+    out = out.loc[pd.to_numeric(out["ev"], errors="coerce") >= float(effective_min_ev)].copy()
+    if out.empty:
+        return out
+    out["ev_gate_effective_min_ev"] = float(effective_min_ev)
+    out["ev_gate_relaxed"] = bool(effective_min_ev < float(min_ev))
 
     effective_mode = str(selection_mode or ranking_mode)
     rank_columns = ["ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
@@ -898,9 +927,9 @@ def compute_final_board(
         rank_columns = ["append_anchor_member", "edge", "abs_edge", "expected_win_rate", "final_confidence"]
 
     if not caps_already_applied:
-        out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).copy()
+        ranked_pool = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).copy()
         out = _apply_portfolio_caps(
-            out,
+            ranked_pool,
             max_plays_per_player=max_plays_per_player,
             max_plays_per_target=max_plays_per_target,
             max_total_plays=max_total_plays,
@@ -908,6 +937,24 @@ def compute_final_board(
             max_plays_per_game=max_plays_per_game,
             max_plays_per_script_cluster=max_plays_per_script_cluster,
         )
+        caps_relaxed = False
+        if requested_min_board > 0 and len(out) < requested_min_board:
+            relaxed_target_caps = None
+            relaxed_per_target_cap = 0
+            relaxed_out = _apply_portfolio_caps(
+                ranked_pool,
+                max_plays_per_player=max_plays_per_player,
+                max_plays_per_target=relaxed_per_target_cap,
+                max_total_plays=max_total_plays,
+                max_target_plays=relaxed_target_caps,
+                max_plays_per_game=max_plays_per_game,
+                max_plays_per_script_cluster=max_plays_per_script_cluster,
+            )
+            if len(relaxed_out) > len(out):
+                out = relaxed_out
+                caps_relaxed = True
+        if not out.empty:
+            out["board_caps_relaxed"] = bool(caps_relaxed)
     else:
         if out.empty:
             return out
@@ -915,9 +962,10 @@ def compute_final_board(
         if missing_rank_cols:
             return out.iloc[0:0].copy()
         out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).copy()
+        out["board_caps_relaxed"] = False
     if out.empty:
         return out
-    out = apply_tiered_bet_sizing(
+    sized_out = apply_tiered_bet_sizing(
         out,
         expected_win_rate_col="expected_win_rate",
         gap_percentile_col="gap_percentile",
@@ -933,23 +981,51 @@ def compute_final_board(
         max_bet_fraction=max_bet_fraction,
         max_total_bet_fraction=max_total_bet_fraction,
     )
-    out["expected_profit_fraction"] = pd.to_numeric(out["bet_fraction"], errors="coerce").fillna(0.0) * pd.to_numeric(out["ev"], errors="coerce").fillna(0.0)
-    active_mask = pd.to_numeric(out["bet_fraction"], errors="coerce").fillna(0.0) > 0.0
+    sized_out["expected_profit_fraction"] = pd.to_numeric(sized_out["bet_fraction"], errors="coerce").fillna(0.0) * pd.to_numeric(
+        sized_out["ev"], errors="coerce"
+    ).fillna(0.0)
+    active_mask = pd.to_numeric(sized_out["bet_fraction"], errors="coerce").fillna(0.0) > 0.0
     if active_mask.any():
-        out = out.loc[active_mask].copy()
+        out = sized_out.loc[active_mask].copy()
     else:
         # Fallback: keep a small fractional allocation on the best-ranked plays
         # so the board remains actionable when strict tier gates reject all rows.
         fallback_fraction = float(np.clip(small_bet_fraction, 0.0, max_bet_fraction))
         if fallback_fraction <= 0.0:
-            return out.iloc[0:0].copy()
-        out = out.head(max_total_plays if max_total_plays > 0 else len(out)).copy()
+            return sized_out.iloc[0:0].copy()
+        out = sized_out.head(max_total_plays if max_total_plays > 0 else len(sized_out)).copy()
         out["allocation_tier"] = "fallback_small"
         out["allocation_action"] = "fallback_small"
+        out["bet_fraction_raw"] = fallback_fraction
+        out["bet_fraction_scale"] = 1.0
         out["bet_fraction"] = fallback_fraction
-        if max_total_bet_fraction > 0 and float(out["bet_fraction"].sum()) > float(max_total_bet_fraction):
-            scale = float(max_total_bet_fraction) / float(out["bet_fraction"].sum())
-            out["bet_fraction"] = out["bet_fraction"] * scale
+        out["expected_profit_fraction"] = pd.to_numeric(out["bet_fraction"], errors="coerce").fillna(0.0) * pd.to_numeric(
+            out["ev"], errors="coerce"
+        ).fillna(0.0)
+
+    if requested_min_board > 0 and len(out) < requested_min_board:
+        target_size = min(requested_min_board, int(max_total_plays) if int(max_total_plays) > 0 else requested_min_board)
+        deficit = max(0, int(target_size) - int(len(out)))
+        if deficit > 0:
+            remaining = sized_out.loc[~sized_out.index.isin(out.index)].copy()
+            filler = remaining.head(deficit).copy()
+            if not filler.empty:
+                fallback_fraction = float(np.clip(small_bet_fraction, 0.0, max_bet_fraction))
+                filler["allocation_tier"] = "fallback_small"
+                filler["allocation_action"] = "fallback_small"
+                filler["bet_fraction_raw"] = fallback_fraction
+                filler["bet_fraction_scale"] = 1.0
+                filler["bet_fraction"] = fallback_fraction
+                filler["expected_profit_fraction"] = pd.to_numeric(filler["bet_fraction"], errors="coerce").fillna(0.0) * pd.to_numeric(
+                    filler["ev"], errors="coerce"
+                ).fillna(0.0)
+                out = pd.concat([out, filler], axis=0, ignore_index=False)
+
+    if max_total_bet_fraction > 0 and float(pd.to_numeric(out.get("bet_fraction"), errors="coerce").fillna(0.0).sum()) > float(max_total_bet_fraction):
+        scale = float(max_total_bet_fraction) / float(pd.to_numeric(out.get("bet_fraction"), errors="coerce").fillna(0.0).sum())
+        out["bet_fraction"] = pd.to_numeric(out.get("bet_fraction"), errors="coerce").fillna(0.0) * scale
+        if "bet_fraction_scale" in out.columns:
+            out["bet_fraction_scale"] = pd.to_numeric(out["bet_fraction_scale"], errors="coerce").fillna(1.0) * scale
         out["expected_profit_fraction"] = pd.to_numeric(out["bet_fraction"], errors="coerce").fillna(0.0) * pd.to_numeric(out["ev"], errors="coerce").fillna(0.0)
     out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).copy()
     out["selected_rank"] = np.arange(1, len(out) + 1)
@@ -978,6 +1054,7 @@ def main() -> None:
         max_plays_per_player=args.max_plays_per_player,
         max_plays_per_target=args.max_plays_per_target,
         max_total_plays=args.max_total_plays,
+        min_board_plays=args.min_board_plays,
         max_target_plays={"PTS": args.max_pts_plays, "TRB": args.max_trb_plays, "AST": args.max_ast_plays},
         max_plays_per_game=args.max_plays_per_game,
         max_plays_per_script_cluster=args.max_plays_per_script_cluster,
@@ -1026,6 +1103,7 @@ def main() -> None:
         "max_trb_plays": int(args.max_trb_plays),
         "max_ast_plays": int(args.max_ast_plays),
         "max_total_plays": int(args.max_total_plays),
+        "min_board_plays": int(args.min_board_plays),
         "non_pts_min_gap_percentile": float(args.non_pts_min_gap_percentile),
         "edge_adjust_k": float(args.edge_adjust_k),
         "thompson_temperature": float(args.thompson_temperature),
