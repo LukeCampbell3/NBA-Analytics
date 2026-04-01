@@ -94,7 +94,7 @@ class DailyPredictionsPage {
         const summary = this.data?.summary || {};
         const items = [
             ['Published Plays', summary.play_count],
-            ['Avg Win Rate', this.formatPct(summary.avg_expected_win_rate)],
+            ['Avg Expected Win Rate', this.formatPct(summary.avg_expected_win_rate)],
             ['Avg EV', this.formatSignedPct(summary.avg_ev)],
             ['Avg Edge', this.formatNumber(summary.avg_edge)],
         ];
@@ -161,8 +161,8 @@ class DailyPredictionsPage {
                         </div>
                     </div>
                     <div class="prediction-stat-grid">
-                        ${this.statCell('Win Rate', this.formatPct(play.expected_win_rate))}
-                        ${this.statCell('Raw Win', this.formatPct(play.raw_expected_win_rate))}
+                        ${this.statCell('Expected Win Rate', this.formatPct(play.expected_win_rate))}
+                        ${this.statCell('Raw Expected Win', this.formatPct(play.raw_expected_win_rate))}
                         ${this.statCell('EV', this.formatSignedPct(play.ev))}
                         ${this.statCell('Confidence', this.formatPct(play.final_confidence))}
                         ${this.statCell('Percentile', this.formatPct(play.gap_percentile))}
