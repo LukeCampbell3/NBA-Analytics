@@ -695,6 +695,11 @@ def _build_shadow_top1_miss_report(daily_context_df: pd.DataFrame) -> pd.DataFra
         "top1_feasible_history_rows",
         "top1_feasible_edge_percentile",
         "top1_shadow_rule_eligible",
+        "top1_shadow_rule_pass_agreement",
+        "top1_shadow_rule_pass_edge_percentile",
+        "top1_shadow_rule_pass_market_books",
+        "top1_shadow_rule_pass_history_rows",
+        "top1_shadow_rule_pass_confidence",
         "top1_shadow_rule_rank_all_candidates",
         "top1_shadow_rule_rank_pool_candidates",
         "top1_shadow_rule_fail_reasons",
@@ -771,11 +776,26 @@ def _gate_ablation_recovery_counts(miss_df: pd.DataFrame) -> dict[str, int]:
             "recover_if_relax_confidence_only": 0,
             "recover_if_relax_agreement_only": 0,
         }
-    passes_edge = pd.to_numeric(miss_df.get("top1_shadow_rule_pass_edge_percentile"), errors="coerce").fillna(0).astype(int)
-    passes_books = pd.to_numeric(miss_df.get("top1_shadow_rule_pass_market_books"), errors="coerce").fillna(0).astype(int)
-    passes_hist = pd.to_numeric(miss_df.get("top1_shadow_rule_pass_history_rows"), errors="coerce").fillna(0).astype(int)
-    passes_conf = pd.to_numeric(miss_df.get("top1_shadow_rule_pass_confidence"), errors="coerce").fillna(0).astype(int)
-    passes_agr = pd.to_numeric(miss_df.get("top1_shadow_rule_pass_agreement"), errors="coerce").fillna(0).astype(int)
+    passes_edge = pd.to_numeric(
+        miss_df.get("top1_shadow_rule_pass_edge_percentile", pd.Series(np.nan, index=miss_df.index)),
+        errors="coerce",
+    ).fillna(0).astype(int)
+    passes_books = pd.to_numeric(
+        miss_df.get("top1_shadow_rule_pass_market_books", pd.Series(np.nan, index=miss_df.index)),
+        errors="coerce",
+    ).fillna(0).astype(int)
+    passes_hist = pd.to_numeric(
+        miss_df.get("top1_shadow_rule_pass_history_rows", pd.Series(np.nan, index=miss_df.index)),
+        errors="coerce",
+    ).fillna(0).astype(int)
+    passes_conf = pd.to_numeric(
+        miss_df.get("top1_shadow_rule_pass_confidence", pd.Series(np.nan, index=miss_df.index)),
+        errors="coerce",
+    ).fillna(0).astype(int)
+    passes_agr = pd.to_numeric(
+        miss_df.get("top1_shadow_rule_pass_agreement", pd.Series(np.nan, index=miss_df.index)),
+        errors="coerce",
+    ).fillna(0).astype(int)
     return {
         "recover_if_relax_edge_percentile_only": int(((passes_edge == 0) & (passes_books == 1) & (passes_hist == 1) & (passes_conf == 1) & (passes_agr == 1)).sum()),
         "recover_if_relax_market_books_only": int(((passes_edge == 1) & (passes_books == 0) & (passes_hist == 1) & (passes_conf == 1) & (passes_agr == 1)).sum()),
@@ -862,8 +882,14 @@ def _build_top1_shadow_miss_summary(
         if miss_df.empty:
             gate_gap_summary[gate] = {"failed_count": 0, "mean_gap": np.nan, "median_gap": np.nan}
             continue
-        pass_series = pd.to_numeric(miss_df.get(pass_cols[gate]), errors="coerce")
-        value_series = pd.to_numeric(miss_df.get(value_cols[gate]), errors="coerce")
+        pass_series = pd.to_numeric(
+            miss_df.get(pass_cols[gate], pd.Series(np.nan, index=miss_df.index)),
+            errors="coerce",
+        )
+        value_series = pd.to_numeric(
+            miss_df.get(value_cols[gate], pd.Series(np.nan, index=miss_df.index)),
+            errors="coerce",
+        )
         gap_series = value_series - float(threshold)
         fail_mask = pass_series == 0
         failed_gaps = gap_series.loc[fail_mask].dropna()
