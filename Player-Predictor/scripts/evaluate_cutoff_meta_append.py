@@ -33,6 +33,13 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 from post_process_market_plays import compute_final_board
 
 
+SHADOW_APPEND_AGREEMENT_MIN = 1.0
+SHADOW_APPEND_EDGE_PERCENTILE_MIN = 0.90
+SHADOW_APPEND_MARKET_BOOKS_MIN = 4.0
+SHADOW_APPEND_HISTORY_ROWS_MIN = 35.0
+SHADOW_APPEND_CONFIDENCE_MIN = 0.03
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Evaluate cutoff-band append-only meta-model.")
     parser.add_argument(
@@ -145,6 +152,36 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=REPO_ROOT / "model" / "analysis" / "daily_runs" / "cutoff_meta_append_abstain_20260314_20260330_b12.csv",
         help="CSV output for per-day abstention diagnostics.",
+    )
+    parser.add_argument(
+        "--shadow-top1-miss-out",
+        type=Path,
+        default=None,
+        help="Optional CSV output for positive top1 days missed by shadow append, with miss reasons.",
+    )
+    parser.add_argument(
+        "--top1-shadow-miss-summary-out",
+        type=Path,
+        default=None,
+        help="Optional JSON summary artifact for top1 shadow miss reasons.",
+    )
+    parser.add_argument(
+        "--stage2-proposal-table-out",
+        type=Path,
+        default=None,
+        help="Optional CSV output for Stage-2 proposal-ranker training rows (candidate-level).",
+    )
+    parser.add_argument(
+        "--stage2-proposal-pairs-out",
+        type=Path,
+        default=None,
+        help="Optional CSV output for Stage-2 pairwise ranking rows.",
+    )
+    parser.add_argument(
+        "--stage2-proposal-summary-out",
+        type=Path,
+        default=None,
+        help="Optional JSON output with Stage-2 proposal table diagnostics.",
     )
     parser.add_argument(
         "--exclude-snapshot-modes",
@@ -596,6 +633,481 @@ def _decision_time_append_score(pool_df: pd.DataFrame) -> pd.Series:
     )
 
 
+def _shadow_append_eligibility_mask(df: pd.DataFrame) -> pd.Series:
+    agreement = pd.to_numeric(df.get("agreement_count"), errors="coerce").fillna(0.0)
+    edge_pct = pd.to_numeric(df.get("edge_percentile"), errors="coerce").fillna(0.0)
+    books = pd.to_numeric(df.get("market_books"), errors="coerce").fillna(0.0)
+    history = pd.to_numeric(df.get("history_rows"), errors="coerce").fillna(0.0)
+    confidence = pd.to_numeric(df.get("final_confidence"), errors="coerce").fillna(0.0)
+    return (
+        (agreement >= float(SHADOW_APPEND_AGREEMENT_MIN))
+        & (edge_pct >= float(SHADOW_APPEND_EDGE_PERCENTILE_MIN))
+        & (books >= float(SHADOW_APPEND_MARKET_BOOKS_MIN))
+        & (history >= float(SHADOW_APPEND_HISTORY_ROWS_MIN))
+        & (confidence >= float(SHADOW_APPEND_CONFIDENCE_MIN))
+    )
+
+
+def _compose_shadow_gate_fail_reasons(
+    *,
+    pass_agreement: bool,
+    pass_edge_pct: bool,
+    pass_books: bool,
+    pass_history: bool,
+    pass_confidence: bool,
+) -> str:
+    reasons: list[str] = []
+    if not pass_agreement:
+        reasons.append("agreement_below_min")
+    if not pass_edge_pct:
+        reasons.append("edge_percentile_below_min")
+    if not pass_books:
+        reasons.append("market_books_below_min")
+    if not pass_history:
+        reasons.append("history_rows_below_min")
+    if not pass_confidence:
+        reasons.append("confidence_below_min")
+    return "|".join(reasons)
+
+
+def _build_shadow_top1_miss_report(daily_context_df: pd.DataFrame) -> pd.DataFrame:
+    cols = [
+        "run_date",
+        "snapshot_mode",
+        "pool_size",
+        "pool_feasible_count",
+        "pool_feasible_resolved_count",
+        "top1_feasible_player",
+        "top1_feasible_target",
+        "top1_feasible_direction",
+        "top1_feasible_result",
+        "top1_feasible_ev_label",
+        "top1_feasible_value_delta",
+        "top1_feasible_decision_score",
+        "top1_feasible_market_line",
+        "top1_feasible_edge_rank",
+        "top1_feasible_edge",
+        "top1_feasible_confidence",
+        "top1_feasible_agreement",
+        "top1_feasible_corr_score",
+        "top1_feasible_corr_percentile_in_pool",
+        "top1_feasible_market_books",
+        "top1_feasible_history_rows",
+        "top1_feasible_edge_percentile",
+        "top1_shadow_rule_eligible",
+        "top1_shadow_rule_rank_all_candidates",
+        "top1_shadow_rule_rank_pool_candidates",
+        "top1_shadow_rule_fail_reasons",
+        "shadow_candidate_exists",
+        "shadow_candidate_player",
+        "shadow_candidate_target",
+        "shadow_candidate_direction",
+        "shadow_candidate_result",
+        "shadow_candidate_edge_rank",
+        "shadow_candidate_edge",
+        "shadow_candidate_confidence",
+        "shadow_candidate_agreement",
+        "shadow_candidate_corr_score",
+        "shadow_candidate_in_research_pool",
+        "shadow_top1_miss_stage",
+        "shadow_top1_miss_reason",
+        "shadow_top1_generation_blocked",
+        "shadow_top1_safety_blocked",
+    ]
+    if daily_context_df.empty:
+        return pd.DataFrame(columns=cols)
+    top1_positive = pd.to_numeric(daily_context_df.get("label_top1_feasible_positive"), errors="coerce")
+    shadow_missed = pd.to_numeric(daily_context_df.get("label_shadow_missed_positive_top1"), errors="coerce")
+    mask = (top1_positive == 1) & (shadow_missed == 1)
+    out = daily_context_df.loc[mask].copy()
+    if out.empty:
+        return pd.DataFrame(columns=cols)
+    keep_cols = [c for c in cols if c in out.columns]
+    return out.loc[:, keep_cols].sort_values("run_date").reset_index(drop=True)
+
+
+def _normalize_research_envelope_label(research_corr_mode: str, research_corr_threshold: float | None) -> str:
+    mode = str(research_corr_mode or "none").strip().lower()
+    if mode == "percentile" and research_corr_threshold is not None and np.isfinite(float(research_corr_threshold)):
+        return f"pct_{float(research_corr_threshold):.2f}"
+    if mode == "absolute" and research_corr_threshold is not None and np.isfinite(float(research_corr_threshold)):
+        return f"abs_{float(research_corr_threshold):g}"
+    if mode == "zscore" and research_corr_threshold is not None and np.isfinite(float(research_corr_threshold)):
+        return f"z_{float(research_corr_threshold):g}"
+    return mode
+
+
+def _research_feasible_mask(
+    df: pd.DataFrame,
+    *,
+    research_pool_min_agreement: float,
+    research_corr_mode: str,
+    research_corr_threshold: float | None,
+) -> pd.Series:
+    if df.empty:
+        return pd.Series(dtype="bool")
+    agreement = pd.to_numeric(df.get("agreement_count"), errors="coerce").fillna(0.0)
+    corr = pd.to_numeric(df.get("corr_score"), errors="coerce")
+    feasible = agreement >= float(research_pool_min_agreement)
+    mode = str(research_corr_mode or "none").strip().lower()
+    threshold = None if research_corr_threshold is None else float(research_corr_threshold)
+    if mode == "absolute" and threshold is not None and not np.isinf(threshold):
+        feasible = feasible & (corr.isna() | (corr <= float(threshold)))
+    elif mode == "percentile" and threshold is not None:
+        corr_pct = pd.to_numeric(corr.rank(method="average", pct=True), errors="coerce")
+        feasible = feasible & (corr_pct <= float(threshold))
+    elif mode == "zscore" and threshold is not None:
+        corr_z = _zscore_within_group(corr.fillna(0.0))
+        feasible = feasible & (pd.to_numeric(corr_z, errors="coerce") <= float(threshold))
+    return feasible.astype(bool)
+
+
+def _gate_ablation_recovery_counts(miss_df: pd.DataFrame) -> dict[str, int]:
+    if miss_df.empty:
+        return {
+            "recover_if_relax_edge_percentile_only": 0,
+            "recover_if_relax_market_books_only": 0,
+            "recover_if_relax_history_rows_only": 0,
+            "recover_if_relax_confidence_only": 0,
+            "recover_if_relax_agreement_only": 0,
+        }
+    passes_edge = pd.to_numeric(miss_df.get("top1_shadow_rule_pass_edge_percentile"), errors="coerce").fillna(0).astype(int)
+    passes_books = pd.to_numeric(miss_df.get("top1_shadow_rule_pass_market_books"), errors="coerce").fillna(0).astype(int)
+    passes_hist = pd.to_numeric(miss_df.get("top1_shadow_rule_pass_history_rows"), errors="coerce").fillna(0).astype(int)
+    passes_conf = pd.to_numeric(miss_df.get("top1_shadow_rule_pass_confidence"), errors="coerce").fillna(0).astype(int)
+    passes_agr = pd.to_numeric(miss_df.get("top1_shadow_rule_pass_agreement"), errors="coerce").fillna(0).astype(int)
+    return {
+        "recover_if_relax_edge_percentile_only": int(((passes_edge == 0) & (passes_books == 1) & (passes_hist == 1) & (passes_conf == 1) & (passes_agr == 1)).sum()),
+        "recover_if_relax_market_books_only": int(((passes_edge == 1) & (passes_books == 0) & (passes_hist == 1) & (passes_conf == 1) & (passes_agr == 1)).sum()),
+        "recover_if_relax_history_rows_only": int(((passes_edge == 1) & (passes_books == 1) & (passes_hist == 0) & (passes_conf == 1) & (passes_agr == 1)).sum()),
+        "recover_if_relax_confidence_only": int(((passes_edge == 1) & (passes_books == 1) & (passes_hist == 1) & (passes_conf == 0) & (passes_agr == 1)).sum()),
+        "recover_if_relax_agreement_only": int(((passes_edge == 1) & (passes_books == 1) & (passes_hist == 1) & (passes_conf == 1) & (passes_agr == 0)).sum()),
+    }
+
+
+def _build_top1_shadow_miss_summary(
+    daily_context_df: pd.DataFrame,
+    miss_df: pd.DataFrame,
+    *,
+    research_corr_mode: str,
+    research_corr_threshold: float | None,
+) -> dict[str, Any]:
+    envelope_label = _normalize_research_envelope_label(research_corr_mode, research_corr_threshold)
+    top1_positive = pd.to_numeric(daily_context_df.get("label_top1_feasible_positive"), errors="coerce") if not daily_context_df.empty else pd.Series(dtype="float64")
+    positive_top1_days = int((top1_positive == 1).sum()) if not top1_positive.empty else 0
+    missed_positive_days = int(len(miss_df))
+    recall = float((positive_top1_days - missed_positive_days) / positive_top1_days) if positive_top1_days > 0 else np.nan
+
+    miss_stage_counts = (
+        miss_df.get("shadow_top1_miss_stage", pd.Series(dtype="object"))
+        .fillna("")
+        .astype(str)
+        .value_counts(dropna=False)
+        .to_dict()
+        if not miss_df.empty
+        else {}
+    )
+    miss_reason_counts = (
+        miss_df.get("shadow_top1_miss_reason", pd.Series(dtype="object"))
+        .fillna("")
+        .astype(str)
+        .value_counts(dropna=False)
+        .to_dict()
+        if not miss_df.empty
+        else {}
+    )
+
+    gate_key_map = {
+        "edge_percentile_below_min": "edge_percentile",
+        "market_books_below_min": "market_books",
+        "history_rows_below_min": "history_rows",
+        "confidence_below_min": "confidence",
+        "agreement_below_min": "agreement",
+    }
+    gate_fail_counts: dict[str, int] = {v: 0 for v in gate_key_map.values()}
+    gate_combo_counts: dict[str, int] = {}
+    if not miss_df.empty:
+        fail_series = miss_df.get("top1_shadow_rule_fail_reasons", pd.Series("", index=miss_df.index)).fillna("").astype(str)
+        for raw in fail_series:
+            parts = [p for p in raw.split("|") if p]
+            mapped = [gate_key_map.get(p, p) for p in parts]
+            for gate in mapped:
+                gate_fail_counts[gate] = int(gate_fail_counts.get(gate, 0) + 1)
+            combo_key = "|".join(mapped)
+            gate_combo_counts[combo_key] = int(gate_combo_counts.get(combo_key, 0) + 1)
+
+    threshold_map = {
+        "edge_percentile": float(SHADOW_APPEND_EDGE_PERCENTILE_MIN),
+        "market_books": float(SHADOW_APPEND_MARKET_BOOKS_MIN),
+        "history_rows": float(SHADOW_APPEND_HISTORY_ROWS_MIN),
+        "confidence": float(SHADOW_APPEND_CONFIDENCE_MIN),
+        "agreement": float(SHADOW_APPEND_AGREEMENT_MIN),
+    }
+    value_cols = {
+        "edge_percentile": "top1_feasible_edge_percentile",
+        "market_books": "top1_feasible_market_books",
+        "history_rows": "top1_feasible_history_rows",
+        "confidence": "top1_feasible_confidence",
+        "agreement": "top1_feasible_agreement",
+    }
+    pass_cols = {
+        "edge_percentile": "top1_shadow_rule_pass_edge_percentile",
+        "market_books": "top1_shadow_rule_pass_market_books",
+        "history_rows": "top1_shadow_rule_pass_history_rows",
+        "confidence": "top1_shadow_rule_pass_confidence",
+        "agreement": "top1_shadow_rule_pass_agreement",
+    }
+    gate_gap_summary: dict[str, dict[str, float | int]] = {}
+    for gate, threshold in threshold_map.items():
+        if miss_df.empty:
+            gate_gap_summary[gate] = {"failed_count": 0, "mean_gap": np.nan, "median_gap": np.nan}
+            continue
+        pass_series = pd.to_numeric(miss_df.get(pass_cols[gate]), errors="coerce")
+        value_series = pd.to_numeric(miss_df.get(value_cols[gate]), errors="coerce")
+        gap_series = value_series - float(threshold)
+        fail_mask = pass_series == 0
+        failed_gaps = gap_series.loc[fail_mask].dropna()
+        gate_gap_summary[gate] = {
+            "failed_count": int(len(failed_gaps)),
+            "mean_gap": float(failed_gaps.mean()) if not failed_gaps.empty else np.nan,
+            "median_gap": float(failed_gaps.median()) if not failed_gaps.empty else np.nan,
+        }
+
+    envelope_payload = {
+        "research_envelope": envelope_label,
+        "positive_top1_days": positive_top1_days,
+        "shadow_recall_on_positive_top1_days": recall,
+        "miss_stage_breakdown": miss_stage_counts,
+        "gate_fail_counts": gate_fail_counts,
+        "gate_fail_combinations": gate_combo_counts,
+        "gate_gap_to_threshold": gate_gap_summary,
+        "gate_ablation_counterfactual": _gate_ablation_recovery_counts(miss_df),
+    }
+    by_env = {
+        "pct_0.25": None,
+        "pct_0.50": None,
+    }
+    if envelope_label in by_env:
+        by_env[envelope_label] = envelope_payload
+
+    return {
+        "research_envelope": envelope_label,
+        "rows_missed_positive_top1": missed_positive_days,
+        "positive_top1_days": positive_top1_days,
+        "shadow_recall_on_positive_top1_days": recall,
+        "miss_stage_breakdown": miss_stage_counts,
+        "miss_reason_counts": miss_reason_counts,
+        "gate_fail_counts": gate_fail_counts,
+        "gate_fail_combinations": gate_combo_counts,
+        "gate_gap_to_threshold": gate_gap_summary,
+        "gate_ablation_counterfactual": _gate_ablation_recovery_counts(miss_df),
+        "by_research_envelope": by_env,
+    }
+
+
+def _build_stage2_proposal_tables(
+    feature_df: pd.DataFrame,
+    daily_context_df: pd.DataFrame,
+    *,
+    research_pool_min_agreement: float,
+    research_corr_mode: str,
+    research_corr_threshold: float | None,
+) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
+    if feature_df.empty or daily_context_df.empty:
+        empty = pd.DataFrame()
+        return empty, empty, {"candidate_rows": 0, "pair_rows": 0}
+
+    pool = feature_df.loc[feature_df["is_append_pool"] == True].copy()
+    if pool.empty:
+        empty = pd.DataFrame()
+        return empty, empty, {"candidate_rows": 0, "pair_rows": 0}
+
+    pool["decision_time_score"] = _decision_time_append_score(pool)
+    pool["corr_percentile_in_pool"] = (
+        pool.groupby("run_date")["corr_score"].rank(method="average", pct=True)
+    )
+    pool["corr_z_in_pool"] = (
+        pool.groupby("run_date")["corr_score"].transform(lambda s: _zscore_within_group(pd.to_numeric(s, errors="coerce").fillna(0.0)))
+    )
+    pool["is_research_feasible"] = (
+        pool.groupby("run_date", group_keys=False)
+        .apply(
+            lambda g: _research_feasible_mask(
+                g,
+                research_pool_min_agreement=float(research_pool_min_agreement),
+                research_corr_mode=research_corr_mode,
+                research_corr_threshold=research_corr_threshold,
+            )
+        )
+        .astype(bool)
+    )
+
+    daily_context = daily_context_df.copy()
+    daily_context["run_date"] = daily_context["run_date"].astype(str)
+    resolved_days = set(
+        daily_context.loc[
+            pd.to_numeric(daily_context.get("pool_feasible_resolved_count"), errors="coerce").fillna(0).gt(0),
+            "run_date",
+        ].astype(str)
+    )
+
+    candidates = pool.loc[
+        pool["is_research_feasible"].astype(bool) & pool["run_date"].astype(str).isin(resolved_days)
+    ].copy()
+    if candidates.empty:
+        empty = pd.DataFrame()
+        return empty, empty, {"candidate_rows": 0, "pair_rows": 0}
+
+    day_cols = [
+        "run_date",
+        "snapshot_mode",
+        "pool_size",
+        "pool_feasible_count",
+        "pool_feasible_resolved_count",
+        "board_cutoff_gap",
+        "board_top_to_cutoff_gap",
+        "near_miss_local_slope",
+        "board_concentration",
+        "pool_edge_gap_1_2",
+        "pool_conf_gap_1_2",
+        "pool_edge_mean",
+        "pool_edge_std",
+        "pool_conf_mean",
+        "pool_conf_std",
+        "pool_corr_mean",
+        "pool_corr_std",
+        "label_top1_feasible_positive",
+        "label_top1_feasible_improves_edge",
+        "top1_feasible_value_delta",
+        "label_shadow_missed_positive_top1",
+        "top1_feasible_player",
+        "top1_feasible_target",
+        "top1_feasible_direction",
+        "top1_feasible_market_line",
+        "top1_feasible_decision_score",
+    ]
+    day_cols = [c for c in day_cols if c in daily_context.columns]
+    day_frame = daily_context.loc[:, day_cols].copy()
+    candidates["run_date"] = candidates["run_date"].astype(str)
+    candidates = candidates.merge(day_frame, on="run_date", how="left", suffixes=("", "_day"))
+
+    candidates["candidate_key"] = candidates.apply(
+        lambda r: _play_key_from_values(r.get("player"), r.get("target"), r.get("direction"), r.get("market_line")),
+        axis=1,
+    )
+    top1_market_line = pd.to_numeric(
+        candidates.get("top1_feasible_market_line", pd.Series(np.nan, index=candidates.index)),
+        errors="coerce",
+    )
+    candidates["top1_key"] = candidates.apply(
+        lambda r: _play_key_from_values(
+            r.get("top1_feasible_player"),
+            r.get("top1_feasible_target"),
+            r.get("top1_feasible_direction"),
+            top1_market_line.loc[r.name] if r.name in top1_market_line.index else np.nan,
+        ),
+        axis=1,
+    )
+    fallback_top1_match = (
+        (candidates["player"].astype(str) == candidates.get("top1_feasible_player", pd.Series("", index=candidates.index)).astype(str))
+        & (candidates["target"].astype(str) == candidates.get("top1_feasible_target", pd.Series("", index=candidates.index)).astype(str))
+        & (candidates["direction"].astype(str) == candidates.get("top1_feasible_direction", pd.Series("", index=candidates.index)).astype(str))
+    )
+    candidates["candidate_is_day_top1_feasible"] = (
+        (candidates["candidate_key"].astype(str) == candidates["top1_key"].astype(str)) | fallback_top1_match
+    ).astype(int)
+
+    candidates["candidate_id"] = candidates["run_date"].astype(str) + "::" + candidates["candidate_key"].astype(str)
+    candidates["label_day_top1_feasible_positive"] = pd.to_numeric(candidates.get("label_top1_feasible_positive"), errors="coerce")
+    candidates["label_day_top1_feasible_improves_edge"] = pd.to_numeric(candidates.get("label_top1_feasible_improves_edge"), errors="coerce")
+    candidates["label_day_top1_value_delta_vs_edge"] = pd.to_numeric(candidates.get("top1_feasible_value_delta"), errors="coerce")
+    candidates["label_day_is_missed_positive_top1"] = (
+        (
+            (pd.to_numeric(candidates.get("label_top1_feasible_positive"), errors="coerce") == 1)
+            & (pd.to_numeric(candidates.get("label_shadow_missed_positive_top1"), errors="coerce") == 1)
+        )
+        .astype(int)
+    )
+    candidates["label_candidate_is_matched_non_top1_from_missed_positive_day"] = (
+        (candidates["label_day_is_missed_positive_top1"] == 1)
+        & (candidates["candidate_is_day_top1_feasible"] == 0)
+    ).astype(int)
+
+    candidates["edge_percentile_minus_shadow_threshold"] = pd.to_numeric(candidates.get("edge_percentile"), errors="coerce") - float(SHADOW_APPEND_EDGE_PERCENTILE_MIN)
+    candidates["market_books_minus_shadow_threshold"] = pd.to_numeric(candidates.get("market_books"), errors="coerce") - float(SHADOW_APPEND_MARKET_BOOKS_MIN)
+    candidates["history_rows_minus_shadow_threshold"] = pd.to_numeric(candidates.get("history_rows"), errors="coerce") - float(SHADOW_APPEND_HISTORY_ROWS_MIN)
+    candidates["confidence_minus_shadow_threshold"] = pd.to_numeric(candidates.get("final_confidence"), errors="coerce") - float(SHADOW_APPEND_CONFIDENCE_MIN)
+    candidates["agreement_minus_shadow_threshold"] = pd.to_numeric(candidates.get("agreement_count"), errors="coerce") - float(SHADOW_APPEND_AGREEMENT_MIN)
+    candidates["passes_shadow_gate_edge_percentile"] = (candidates["edge_percentile_minus_shadow_threshold"] >= 0.0).astype(int)
+    candidates["passes_shadow_gate_market_books"] = (candidates["market_books_minus_shadow_threshold"] >= 0.0).astype(int)
+    candidates["passes_shadow_gate_history_rows"] = (candidates["history_rows_minus_shadow_threshold"] >= 0.0).astype(int)
+    candidates["passes_shadow_gate_confidence"] = (candidates["confidence_minus_shadow_threshold"] >= 0.0).astype(int)
+    candidates["passes_shadow_gate_agreement"] = (candidates["agreement_minus_shadow_threshold"] >= 0.0).astype(int)
+    candidates["research_envelope"] = _normalize_research_envelope_label(research_corr_mode, research_corr_threshold)
+
+    # Pairwise rows: top1 candidate should outrank all other feasible candidates on the same day.
+    pair_rows: list[dict[str, Any]] = []
+    for run_date, day_df in candidates.groupby("run_date", sort=True):
+        top_rows = day_df.loc[day_df["candidate_is_day_top1_feasible"] == 1].copy()
+        if top_rows.empty:
+            continue
+        top_row = top_rows.sort_values(["decision_time_score", "edge"], ascending=[False, False]).iloc[0]
+        others = day_df.loc[day_df["candidate_id"].astype(str) != str(top_row.get("candidate_id", ""))].copy()
+        for _, other in others.iterrows():
+            other_ev = pd.to_numeric(pd.Series([other.get("ev_label")]), errors="coerce").iloc[0]
+            top1_positive = pd.to_numeric(pd.Series([top_row.get("label_day_top1_feasible_positive")]), errors="coerce").iloc[0]
+            label_positive_vs_nonpositive = (
+                int((top1_positive == 1) and (not pd.isna(other_ev)) and (float(other_ev) <= 0.0))
+                if not pd.isna(top1_positive)
+                else np.nan
+            )
+            pair_rows.append(
+                {
+                    "run_date": str(run_date),
+                    "research_envelope": _normalize_research_envelope_label(research_corr_mode, research_corr_threshold),
+                    "top_candidate_id": str(top_row.get("candidate_id", "")),
+                    "other_candidate_id": str(other.get("candidate_id", "")),
+                    "label_top1_outranks_other": 1,
+                    "label_top1_positive_outranks_nonpositive_other": label_positive_vs_nonpositive,
+                    "label_day_top1_feasible_positive": top1_positive,
+                    "label_day_top1_feasible_improves_edge": pd.to_numeric(pd.Series([top_row.get("label_day_top1_feasible_improves_edge")]), errors="coerce").iloc[0],
+                    "label_day_top1_value_delta_vs_edge": pd.to_numeric(pd.Series([top_row.get("label_day_top1_value_delta_vs_edge")]), errors="coerce").iloc[0],
+                    "label_day_is_missed_positive_top1": int(top_row.get("label_day_is_missed_positive_top1", 0)),
+                    "top_decision_time_score": pd.to_numeric(pd.Series([top_row.get("decision_time_score")]), errors="coerce").iloc[0],
+                    "other_decision_time_score": pd.to_numeric(pd.Series([other.get("decision_time_score")]), errors="coerce").iloc[0],
+                    "delta_decision_time_score": (
+                        pd.to_numeric(pd.Series([top_row.get("decision_time_score")]), errors="coerce").iloc[0]
+                        - pd.to_numeric(pd.Series([other.get("decision_time_score")]), errors="coerce").iloc[0]
+                    ),
+                    "top_edge": pd.to_numeric(pd.Series([top_row.get("edge")]), errors="coerce").iloc[0],
+                    "other_edge": pd.to_numeric(pd.Series([other.get("edge")]), errors="coerce").iloc[0],
+                    "delta_edge": (
+                        pd.to_numeric(pd.Series([top_row.get("edge")]), errors="coerce").iloc[0]
+                        - pd.to_numeric(pd.Series([other.get("edge")]), errors="coerce").iloc[0]
+                    ),
+                    "top_confidence": pd.to_numeric(pd.Series([top_row.get("final_confidence")]), errors="coerce").iloc[0],
+                    "other_confidence": pd.to_numeric(pd.Series([other.get("final_confidence")]), errors="coerce").iloc[0],
+                    "delta_confidence": (
+                        pd.to_numeric(pd.Series([top_row.get("final_confidence")]), errors="coerce").iloc[0]
+                        - pd.to_numeric(pd.Series([other.get("final_confidence")]), errors="coerce").iloc[0]
+                    ),
+                }
+            )
+    pair_df = pd.DataFrame.from_records(pair_rows)
+
+    summary = {
+        "research_envelope": _normalize_research_envelope_label(research_corr_mode, research_corr_threshold),
+        "candidate_rows": int(len(candidates)),
+        "pair_rows": int(len(pair_df)),
+        "candidate_days": int(candidates["run_date"].astype(str).nunique()),
+        "candidate_top1_rows": int((candidates["candidate_is_day_top1_feasible"] == 1).sum()),
+        "candidate_rows_missed_positive_top1_days": int((candidates["label_day_is_missed_positive_top1"] == 1).sum()),
+        "candidate_rows_matched_non_top1_from_missed_positive_days": int((candidates["label_candidate_is_matched_non_top1_from_missed_positive_day"] == 1).sum()),
+        "pair_rows_missed_positive_top1_days": int((pd.to_numeric(pair_df.get("label_day_is_missed_positive_top1"), errors="coerce") == 1).sum()) if not pair_df.empty else 0,
+    }
+    return candidates, pair_df, summary
+
+
 def _build_daily_context_dataset(
     feature_df: pd.DataFrame,
     eval_df: pd.DataFrame,
@@ -724,6 +1236,24 @@ def _build_daily_context_dataset(
         top1_feasible_edge_rank = 0
         top1_feasible_score = np.nan
         top1_feasible_resolved = 0
+        top1_feasible_edge = np.nan
+        top1_feasible_confidence = np.nan
+        top1_feasible_agreement = np.nan
+        top1_feasible_corr_score = np.nan
+        top1_feasible_corr_percentile_in_pool = np.nan
+        top1_feasible_market_books = np.nan
+        top1_feasible_history_rows = np.nan
+        top1_feasible_edge_percentile = np.nan
+        top1_shadow_rule_pass_agreement = np.nan
+        top1_shadow_rule_pass_edge_percentile = np.nan
+        top1_shadow_rule_pass_market_books = np.nan
+        top1_shadow_rule_pass_history_rows = np.nan
+        top1_shadow_rule_pass_confidence = np.nan
+        top1_shadow_rule_eligible = np.nan
+        top1_shadow_rule_fail_reasons = ""
+        top1_shadow_rule_rank_all_candidates = np.nan
+        top1_shadow_rule_rank_pool_candidates = np.nan
+        top1_market_line = np.nan
         if top1_feasible_exists:
             ranked_top1 = pool_feasible.sort_values(
                 ["decision_time_score", "edge", "final_confidence", "agreement_count"],
@@ -738,6 +1268,81 @@ def _build_daily_context_dataset(
             top1_feasible_ev_label = _safe_num(top1.get("ev_label"), default=np.nan)
             top1_feasible_edge_rank = int(_safe_num(top1.get("edge_rank"), default=np.nan)) if not pd.isna(_safe_num(top1.get("edge_rank"), default=np.nan)) else 0
             top1_feasible_resolved = int(top1_feasible_result in {"win", "loss"})
+            top1_feasible_edge = _safe_num(top1.get("edge"), default=np.nan)
+            top1_feasible_confidence = _safe_num(top1.get("final_confidence"), default=np.nan)
+            top1_feasible_agreement = _safe_num(top1.get("agreement_count"), default=np.nan)
+            top1_feasible_corr_score = _safe_num(top1.get("corr_score"), default=np.nan)
+            top1_feasible_market_books = _safe_num(top1.get("market_books"), default=np.nan)
+            top1_feasible_history_rows = _safe_num(top1.get("history_rows"), default=np.nan)
+            top1_feasible_edge_percentile = _safe_num(top1.get("edge_percentile"), default=np.nan)
+            top1_market_line = _safe_num(top1.get("market_line"), default=np.nan)
+
+            if not pool.empty:
+                pool_corr_pct = pd.to_numeric(pool_corr.rank(method="average", pct=True), errors="coerce")
+                top1_feasible_corr_percentile_in_pool = _safe_num(pool_corr_pct.loc[top1.name], default=np.nan) if top1.name in pool_corr_pct.index else np.nan
+
+            pass_agreement = bool(top1_feasible_agreement >= float(SHADOW_APPEND_AGREEMENT_MIN))
+            pass_edge_pct = bool(top1_feasible_edge_percentile >= float(SHADOW_APPEND_EDGE_PERCENTILE_MIN))
+            pass_books = bool(top1_feasible_market_books >= float(SHADOW_APPEND_MARKET_BOOKS_MIN))
+            pass_history = bool(top1_feasible_history_rows >= float(SHADOW_APPEND_HISTORY_ROWS_MIN))
+            pass_confidence = bool(top1_feasible_confidence >= float(SHADOW_APPEND_CONFIDENCE_MIN))
+            top1_shadow_rule_pass_agreement = int(pass_agreement)
+            top1_shadow_rule_pass_edge_percentile = int(pass_edge_pct)
+            top1_shadow_rule_pass_market_books = int(pass_books)
+            top1_shadow_rule_pass_history_rows = int(pass_history)
+            top1_shadow_rule_pass_confidence = int(pass_confidence)
+            top1_shadow_rule_eligible = int(pass_agreement and pass_edge_pct and pass_books and pass_history and pass_confidence)
+            top1_shadow_rule_fail_reasons = _compose_shadow_gate_fail_reasons(
+                pass_agreement=pass_agreement,
+                pass_edge_pct=pass_edge_pct,
+                pass_books=pass_books,
+                pass_history=pass_history,
+                pass_confidence=pass_confidence,
+            )
+
+            # Rank position of top1 within shadow-rule eligible universes.
+            shadow_universe = day_features.loc[~day_features["is_base_board_member"].astype(bool)].copy()
+            if not shadow_universe.empty:
+                shadow_eligible_all = shadow_universe.loc[_shadow_append_eligibility_mask(shadow_universe)].copy()
+                if not shadow_eligible_all.empty:
+                    shadow_eligible_all = shadow_eligible_all.sort_values(
+                        ["agreement_count", "edge_percentile", "edge", "expected_win_rate", "final_confidence"],
+                        ascending=[False, False, False, False, False],
+                    ).copy()
+                    top1_key_all = _play_key_from_values(
+                        top1_feasible_player,
+                        top1_feasible_target,
+                        top1_feasible_direction,
+                        top1_market_line,
+                    )
+                    shadow_eligible_all["shadow_key"] = shadow_eligible_all.apply(
+                        lambda r: _play_key_from_values(r.get("player"), r.get("target"), r.get("direction"), r.get("market_line")),
+                        axis=1,
+                    )
+                    ranked_keys_all = shadow_eligible_all["shadow_key"].astype(str).tolist()
+                    if top1_key_all in ranked_keys_all:
+                        top1_shadow_rule_rank_all_candidates = int(ranked_keys_all.index(top1_key_all) + 1)
+
+            if not pool.empty:
+                shadow_eligible_pool = pool.loc[_shadow_append_eligibility_mask(pool)].copy()
+                if not shadow_eligible_pool.empty:
+                    shadow_eligible_pool = shadow_eligible_pool.sort_values(
+                        ["agreement_count", "edge_percentile", "edge", "expected_win_rate", "final_confidence"],
+                        ascending=[False, False, False, False, False],
+                    ).copy()
+                    top1_key_pool = _play_key_from_values(
+                        top1_feasible_player,
+                        top1_feasible_target,
+                        top1_feasible_direction,
+                        top1_market_line,
+                    )
+                    shadow_eligible_pool["shadow_key"] = shadow_eligible_pool.apply(
+                        lambda r: _play_key_from_values(r.get("player"), r.get("target"), r.get("direction"), r.get("market_line")),
+                        axis=1,
+                    )
+                    ranked_keys_pool = shadow_eligible_pool["shadow_key"].astype(str).tolist()
+                    if top1_key_pool in ranked_keys_pool:
+                        top1_shadow_rule_rank_pool_candidates = int(ranked_keys_pool.index(top1_key_pool) + 1)
 
         day_eval = eval_df.loc[eval_df["run_date"].astype(str) == str(run_date)].copy() if not eval_df.empty else pd.DataFrame()
         edge_day = day_eval.loc[day_eval["variant"] == "edge_baseline"].copy()
@@ -771,6 +1376,7 @@ def _build_daily_context_dataset(
         shadow_candidate_edge_rank = 0
         shadow_candidate_score = np.nan
         shadow_candidate_resolved = 0
+        shadow_candidate_in_research_pool = 0
         if shadow_candidate_exists:
             cand = shadow_only.iloc[0]
             shadow_candidate_player = str(cand.get("player", ""))
@@ -805,6 +1411,7 @@ def _build_daily_context_dataset(
                 & (pool["direction"].astype(str) == shadow_candidate_direction)
             ].copy()
             if not shadow_pool_row.empty:
+                shadow_candidate_in_research_pool = 1
                 shadow_pool_row = shadow_pool_row.sort_values(["edge_rank", "edge"], ascending=[True, False]).head(1)
                 shadow_candidate_score = _safe_num(shadow_pool_row.iloc[0].get("decision_time_score"), default=np.nan)
 
@@ -894,6 +1501,40 @@ def _build_daily_context_dataset(
             if (not pd.isna(top1_feasible_score) and not pd.isna(shadow_candidate_score))
             else np.nan
         )
+        shadow_top1_miss_stage = ""
+        shadow_top1_miss_reason = ""
+        shadow_top1_generation_blocked = np.nan
+        shadow_top1_safety_blocked = np.nan
+        if (not pd.isna(label_shadow_missed_positive_top1)) and int(label_shadow_missed_positive_top1) == 1:
+            if int(_safe_num(top1_shadow_rule_eligible, default=0.0)) != 1:
+                shadow_top1_miss_stage = "candidate_generation"
+                shadow_top1_miss_reason = (
+                    f"shadow_gate_blocked:{top1_shadow_rule_fail_reasons}"
+                    if top1_shadow_rule_fail_reasons
+                    else "shadow_gate_blocked"
+                )
+                shadow_top1_generation_blocked = 1
+                shadow_top1_safety_blocked = 0
+            elif shadow_candidate_exists and int(shadow_candidate_in_research_pool) == 0:
+                shadow_top1_miss_stage = "candidate_generation"
+                shadow_top1_miss_reason = "shadow_selected_outside_research_pool"
+                shadow_top1_generation_blocked = 1
+                shadow_top1_safety_blocked = 0
+            elif not pd.isna(top1_shadow_rule_rank_all_candidates) and float(top1_shadow_rule_rank_all_candidates) > 1.0:
+                shadow_top1_miss_stage = "candidate_generation"
+                shadow_top1_miss_reason = "shadow_ranked_other_candidate_higher"
+                shadow_top1_generation_blocked = 1
+                shadow_top1_safety_blocked = 0
+            elif not shadow_candidate_exists:
+                shadow_top1_miss_stage = "post_generation_safety"
+                shadow_top1_miss_reason = "shadow_no_append_after_caps"
+                shadow_top1_generation_blocked = 0
+                shadow_top1_safety_blocked = 1
+            else:
+                shadow_top1_miss_stage = "post_generation_safety"
+                shadow_top1_miss_reason = "shadow_selected_different_candidate_after_caps"
+                shadow_top1_generation_blocked = 0
+                shadow_top1_safety_blocked = 1
         label_any_feasible_positive = (
             int(feasible_positive_count > 0)
             if not pool_feasible_resolved.empty
@@ -993,14 +1634,33 @@ def _build_daily_context_dataset(
                 "top1_feasible_ev_label": top1_feasible_ev_label,
                 "top1_feasible_edge_rank": top1_feasible_edge_rank,
                 "top1_feasible_decision_score": top1_feasible_score,
+                "top1_feasible_market_line": top1_market_line,
                 "top1_feasible_uplift_vs_pool_mean": top1_feasible_uplift_vs_pool_mean,
                 "top1_feasible_value_delta": top1_feasible_value_delta,
+                "top1_feasible_edge": top1_feasible_edge,
+                "top1_feasible_confidence": top1_feasible_confidence,
+                "top1_feasible_agreement": top1_feasible_agreement,
+                "top1_feasible_corr_score": top1_feasible_corr_score,
+                "top1_feasible_corr_percentile_in_pool": top1_feasible_corr_percentile_in_pool,
+                "top1_feasible_market_books": top1_feasible_market_books,
+                "top1_feasible_history_rows": top1_feasible_history_rows,
+                "top1_feasible_edge_percentile": top1_feasible_edge_percentile,
+                "top1_shadow_rule_pass_agreement": top1_shadow_rule_pass_agreement,
+                "top1_shadow_rule_pass_edge_percentile": top1_shadow_rule_pass_edge_percentile,
+                "top1_shadow_rule_pass_market_books": top1_shadow_rule_pass_market_books,
+                "top1_shadow_rule_pass_history_rows": top1_shadow_rule_pass_history_rows,
+                "top1_shadow_rule_pass_confidence": top1_shadow_rule_pass_confidence,
+                "top1_shadow_rule_eligible": top1_shadow_rule_eligible,
+                "top1_shadow_rule_fail_reasons": top1_shadow_rule_fail_reasons,
+                "top1_shadow_rule_rank_all_candidates": top1_shadow_rule_rank_all_candidates,
+                "top1_shadow_rule_rank_pool_candidates": top1_shadow_rule_rank_pool_candidates,
                 "shadow_candidate_exists": shadow_candidate_exists,
                 "shadow_candidate_player": shadow_candidate_player,
                 "shadow_candidate_target": shadow_candidate_target,
                 "shadow_candidate_direction": shadow_candidate_direction,
                 "shadow_candidate_result": shadow_candidate_result,
                 "shadow_candidate_resolved": int(shadow_candidate_resolved),
+                "shadow_candidate_in_research_pool": int(shadow_candidate_in_research_pool),
                 "shadow_candidate_ev_label": shadow_candidate_ev_label,
                 "shadow_candidate_edge": shadow_candidate_edge,
                 "shadow_candidate_confidence": shadow_candidate_conf,
@@ -1038,6 +1698,10 @@ def _build_daily_context_dataset(
                 "shadow_matches_top1_feasible": shadow_matches_top1_feasible,
                 "label_shadow_missed_positive_top1": label_shadow_missed_positive_top1,
                 "top1_shadow_score_gap": top1_shadow_score_gap,
+                "shadow_top1_miss_stage": shadow_top1_miss_stage,
+                "shadow_top1_miss_reason": shadow_top1_miss_reason,
+                "shadow_top1_generation_blocked": shadow_top1_generation_blocked,
+                "shadow_top1_safety_blocked": shadow_top1_safety_blocked,
             }
         )
 
@@ -1614,6 +2278,13 @@ def main() -> None:
         "veto_uplift_floor": float(args.unified_shadow_uplift_floor),
         "veto_corr_ceiling": float(args.unified_veto_corr_score),
     }
+    summary["shadow_append_rule"] = {
+        "agreement_min": float(SHADOW_APPEND_AGREEMENT_MIN),
+        "edge_percentile_min": float(SHADOW_APPEND_EDGE_PERCENTILE_MIN),
+        "market_books_min": float(SHADOW_APPEND_MARKET_BOOKS_MIN),
+        "history_rows_min": float(SHADOW_APPEND_HISTORY_ROWS_MIN),
+        "confidence_min": float(SHADOW_APPEND_CONFIDENCE_MIN),
+    }
     summary["feature_spec"] = {
         "near_cutoff_rank_range": [cutoff_low, cutoff_high],
         "append_pool_rank_range": [append_rank_low, append_rank_high],
@@ -1681,6 +2352,9 @@ def main() -> None:
             "label_top1_feasible_improves_edge": int(pd.to_numeric(daily_context_df.get("label_top1_feasible_improves_edge"), errors="coerce").notna().sum()) if not daily_context_df.empty else 0,
             "shadow_matches_top1_feasible": int(pd.to_numeric(daily_context_df.get("shadow_matches_top1_feasible"), errors="coerce").notna().sum()) if not daily_context_df.empty else 0,
             "label_shadow_missed_positive_top1": int(pd.to_numeric(daily_context_df.get("label_shadow_missed_positive_top1"), errors="coerce").notna().sum()) if not daily_context_df.empty else 0,
+            "top1_shadow_rule_eligible": int(pd.to_numeric(daily_context_df.get("top1_shadow_rule_eligible"), errors="coerce").notna().sum()) if not daily_context_df.empty else 0,
+            "shadow_top1_generation_blocked": int(pd.to_numeric(daily_context_df.get("shadow_top1_generation_blocked"), errors="coerce").notna().sum()) if not daily_context_df.empty else 0,
+            "shadow_top1_safety_blocked": int(pd.to_numeric(daily_context_df.get("shadow_top1_safety_blocked"), errors="coerce").notna().sum()) if not daily_context_df.empty else 0,
         },
     }
     if not daily_context_df.empty:
@@ -1751,6 +2425,33 @@ def main() -> None:
         }
     else:
         summary["research_pool_opportunity_diagnostics"] = {}
+
+    shadow_top1_miss_df = _build_shadow_top1_miss_report(daily_context_df)
+    shadow_top1_miss_summary = _build_top1_shadow_miss_summary(
+        daily_context_df,
+        shadow_top1_miss_df,
+        research_corr_mode=research_corr_mode,
+        research_corr_threshold=research_corr_threshold,
+    )
+    summary["shadow_top1_miss_diagnostics"] = {
+        "positive_top1_days": int(shadow_top1_miss_summary.get("positive_top1_days", 0)),
+        "missed_positive_top1_days": int(shadow_top1_miss_summary.get("rows_missed_positive_top1", 0)),
+        "shadow_recall_on_positive_top1_days": shadow_top1_miss_summary.get("shadow_recall_on_positive_top1_days", np.nan),
+        "miss_stage_counts": shadow_top1_miss_summary.get("miss_stage_breakdown", {}),
+        "miss_reason_counts": shadow_top1_miss_summary.get("miss_reason_counts", {}),
+        "generation_blocked_days": int(pd.to_numeric(shadow_top1_miss_df.get("shadow_top1_generation_blocked"), errors="coerce").fillna(0).sum()) if not shadow_top1_miss_df.empty else 0,
+        "safety_blocked_days": int(pd.to_numeric(shadow_top1_miss_df.get("shadow_top1_safety_blocked"), errors="coerce").fillna(0).sum()) if not shadow_top1_miss_df.empty else 0,
+    }
+    summary["top1_shadow_miss_reasons_summary"] = shadow_top1_miss_summary
+
+    stage2_candidate_df, stage2_pair_df, stage2_summary = _build_stage2_proposal_tables(
+        feature_df,
+        daily_context_df,
+        research_pool_min_agreement=float(args.research_pool_min_agreement),
+        research_corr_mode=research_corr_mode,
+        research_corr_threshold=research_corr_threshold,
+    )
+    summary["stage2_proposal_ranker"] = stage2_summary
 
     append_pool_all = feature_df.loc[feature_df["is_append_pool"] == True].copy()
     if not append_pool_all.empty:
@@ -1823,6 +2524,40 @@ def main() -> None:
         "covered_run_dates": run_dates,
         "covered_run_date_count": int(len(run_dates)),
     }
+    shadow_top1_miss_out = args.shadow_top1_miss_out
+    if shadow_top1_miss_out is None:
+        default_stem = args.daily_context_out.stem.replace("daily_context", "shadow_top1_miss_reasons")
+        if default_stem == args.daily_context_out.stem:
+            default_stem = f"{args.daily_context_out.stem}_shadow_top1_miss_reasons"
+        shadow_top1_miss_out = args.daily_context_out.with_name(f"{default_stem}{args.daily_context_out.suffix}")
+    top1_shadow_miss_summary_out = args.top1_shadow_miss_summary_out
+    if top1_shadow_miss_summary_out is None:
+        top1_shadow_miss_summary_out = shadow_top1_miss_out.with_name(
+            shadow_top1_miss_out.stem.replace("reasons", "reasons_summary") + ".json"
+        )
+    stage2_proposal_table_out = args.stage2_proposal_table_out
+    if stage2_proposal_table_out is None:
+        default_stem = args.daily_context_out.stem.replace("daily_context", "stage2_proposal_table")
+        if default_stem == args.daily_context_out.stem:
+            default_stem = f"{args.daily_context_out.stem}_stage2_proposal_table"
+        stage2_proposal_table_out = args.daily_context_out.with_name(f"{default_stem}{args.daily_context_out.suffix}")
+    stage2_proposal_pairs_out = args.stage2_proposal_pairs_out
+    if stage2_proposal_pairs_out is None:
+        stage2_proposal_pairs_out = stage2_proposal_table_out.with_name(
+            stage2_proposal_table_out.stem.replace("table", "pairs") + stage2_proposal_table_out.suffix
+        )
+    stage2_proposal_summary_out = args.stage2_proposal_summary_out
+    if stage2_proposal_summary_out is None:
+        stage2_proposal_summary_out = stage2_proposal_table_out.with_name(
+            stage2_proposal_table_out.stem.replace("table", "summary") + ".json"
+        )
+    summary["artifacts"] = {
+        "shadow_top1_miss_out": str(shadow_top1_miss_out),
+        "top1_shadow_miss_summary_out": str(top1_shadow_miss_summary_out),
+        "stage2_proposal_table_out": str(stage2_proposal_table_out),
+        "stage2_proposal_pairs_out": str(stage2_proposal_pairs_out),
+        "stage2_proposal_summary_out": str(stage2_proposal_summary_out),
+    }
 
     args.dataset_out.parent.mkdir(parents=True, exist_ok=True)
     args.rows_out.parent.mkdir(parents=True, exist_ok=True)
@@ -1830,12 +2565,24 @@ def main() -> None:
     args.daily_context_out.parent.mkdir(parents=True, exist_ok=True)
     args.summary_out.parent.mkdir(parents=True, exist_ok=True)
     args.abstain_out.parent.mkdir(parents=True, exist_ok=True)
+    shadow_top1_miss_out.parent.mkdir(parents=True, exist_ok=True)
+    top1_shadow_miss_summary_out.parent.mkdir(parents=True, exist_ok=True)
+    stage2_proposal_table_out.parent.mkdir(parents=True, exist_ok=True)
+    stage2_proposal_pairs_out.parent.mkdir(parents=True, exist_ok=True)
+    stage2_proposal_summary_out.parent.mkdir(parents=True, exist_ok=True)
 
     feature_df.to_csv(args.dataset_out, index=False)
     eval_df.to_csv(args.rows_out, index=False)
     daily_df.to_csv(args.daily_out, index=False)
     daily_context_df.to_csv(args.daily_context_out, index=False)
     abstain_df.to_csv(args.abstain_out, index=False)
+    shadow_top1_miss_df.to_csv(shadow_top1_miss_out, index=False)
+    stage2_candidate_df.to_csv(stage2_proposal_table_out, index=False)
+    stage2_pair_df.to_csv(stage2_proposal_pairs_out, index=False)
+    with top1_shadow_miss_summary_out.open("w", encoding="utf-8") as f:
+        json.dump(shadow_top1_miss_summary, f, indent=2)
+    with stage2_proposal_summary_out.open("w", encoding="utf-8") as f:
+        json.dump(stage2_summary, f, indent=2)
     with args.summary_out.open("w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
 
@@ -1860,6 +2607,11 @@ def main() -> None:
     print(f"  Daily:   {args.daily_out}")
     print(f"  Daily Context: {args.daily_context_out}")
     print(f"  Abstain: {args.abstain_out}")
+    print(f"  Shadow Miss: {shadow_top1_miss_out}")
+    print(f"  Shadow Miss Summary: {top1_shadow_miss_summary_out}")
+    print(f"  Stage2 Table: {stage2_proposal_table_out}")
+    print(f"  Stage2 Pairs: {stage2_proposal_pairs_out}")
+    print(f"  Stage2 Summary: {stage2_proposal_summary_out}")
     print(f"  Summary: {args.summary_out}")
 
 

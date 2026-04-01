@@ -61,12 +61,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--target-mode",
         type=str,
-        default="best_pool_positive",
+        default="top1_feasible_positive",
         choices=[
             "best_pool_positive",
             "shadow_improves_edge",
             "best_feasible_append_value",
             "top1_feasible_positive",
+            "top1_feasible_improves_edge",
             "top1_feasible_value",
         ],
         help=(
@@ -75,15 +76,34 @@ def parse_args() -> argparse.Namespace:
             "'shadow_improves_edge' => shadow candidate improved edge on resolved days. "
             "'best_feasible_append_value' => continuous best-available append value delta for the day. "
             "'top1_feasible_positive' => decision-time top1 feasible append is positive. "
+            "'top1_feasible_improves_edge' => decision-time top1 feasible append improves edge EV/resolved. "
             "'top1_feasible_value' => decision-time top1 feasible append value delta."
         ),
     )
     parser.add_argument(
         "--fallback-target-mode",
         type=str,
-        default="shadow_improves_edge",
-        choices=["none", "shadow_improves_edge"],
+        default="none",
+        choices=[
+            "none",
+            "best_pool_positive",
+            "shadow_improves_edge",
+            "top1_feasible_positive",
+            "top1_feasible_improves_edge",
+        ],
         help="Optional fallback target when primary target has only one class.",
+    )
+    parser.add_argument(
+        "--candidate-mode",
+        type=str,
+        default="top1_feasible",
+        choices=["shadow", "top1_feasible", "none"],
+        help=(
+            "Candidate availability gate used for permit decisions. "
+            "'shadow' uses shadow_candidate_exists, "
+            "'top1_feasible' uses top1_feasible_exists, "
+            "'none' ignores candidate-availability gating."
+        ),
     )
     parser.add_argument("--threshold", type=float, default=0.55, help="Permit threshold on predicted probability.")
     parser.add_argument("--min-train-days", type=int, default=12, help="Minimum labeled prior days required before fitting walk-forward model.")
@@ -125,6 +145,12 @@ def _target_series(df: pd.DataFrame, target_mode: str) -> pd.Series:
             fallback = pd.to_numeric(df.get("top1_feasible_ev_label"), errors="coerce")
             return pd.Series(np.where(fallback.notna(), (fallback > 0).astype(float), np.nan), index=df.index)
         return base
+    if target_mode == "top1_feasible_improves_edge":
+        base = pd.to_numeric(df.get("label_top1_feasible_improves_edge"), errors="coerce")
+        if base.notna().sum() == 0:
+            fallback = pd.to_numeric(df.get("top1_feasible_value_delta"), errors="coerce")
+            return pd.Series(np.where(fallback.notna(), (fallback > 0).astype(float), np.nan), index=df.index)
+        return base
     if target_mode == "top1_feasible_value":
         base = pd.to_numeric(df.get("top1_feasible_value_delta"), errors="coerce")
         if base.notna().sum() == 0:
@@ -140,6 +166,17 @@ def _target_series(df: pd.DataFrame, target_mode: str) -> pd.Series:
 
 def _is_regression_target(target_mode: str) -> bool:
     return str(target_mode) in {"best_feasible_append_value", "top1_feasible_value"}
+
+
+def _candidate_exists_series(df: pd.DataFrame, candidate_mode: str) -> pd.Series:
+    mode = str(candidate_mode or "shadow").strip().lower()
+    if mode == "shadow":
+        return _safe_bool_as_int(df.get("shadow_candidate_exists", pd.Series(0, index=df.index))).astype(int)
+    if mode == "top1_feasible":
+        return _safe_bool_as_int(df.get("top1_feasible_exists", pd.Series(0, index=df.index))).astype(int)
+    if mode == "none":
+        return pd.Series(1, index=df.index, dtype="int64")
+    raise ValueError(f"Unsupported candidate mode: {candidate_mode}")
 
 
 def _build_feature_frame(df: pd.DataFrame) -> pd.DataFrame:
@@ -302,8 +339,11 @@ def main() -> None:
             target = fallback_target.copy()
             effective_target_mode = str(args.fallback_target_mode)
             fallback_used = True
-    value_delta = pd.to_numeric(df.get("shadow_minus_edge_ev_per_resolved"), errors="coerce")
+    value_delta = pd.to_numeric(df.get("top1_feasible_value_delta"), errors="coerce")
+    value_delta_fallback = pd.to_numeric(df.get("shadow_minus_edge_ev_per_resolved"), errors="coerce")
+    value_delta = value_delta.where(value_delta.notna(), value_delta_fallback)
     shadow_exists = _safe_bool_as_int(df.get("shadow_candidate_exists", pd.Series(0, index=df.index))).astype(int)
+    candidate_exists = _candidate_exists_series(df, args.candidate_mode).astype(int)
 
     x_all = _build_feature_frame(df)
     run_dates = sorted(df["run_date"].dropna().astype(str).unique().tolist())
@@ -336,8 +376,8 @@ def main() -> None:
                     pred_value = float(model.predict(x_all.loc[[current_idx]])[0])
                     pred_score = pred_value
                     model_ready = True
-                    if int(shadow_exists.loc[current_idx]) <= 0:
-                        gate_reason = "abstain_no_shadow_candidate"
+                    if int(candidate_exists.loc[current_idx]) <= 0:
+                        gate_reason = "abstain_no_candidate"
                     elif pred_score >= float(args.threshold):
                         gate_reason = "permit_value_above_threshold"
                     else:
@@ -353,8 +393,8 @@ def main() -> None:
                     pred_proba = float(proba[0])
                     pred_score = pred_proba
                     model_ready = True
-                    if int(shadow_exists.loc[current_idx]) <= 0:
-                        gate_reason = "abstain_no_shadow_candidate"
+                    if int(candidate_exists.loc[current_idx]) <= 0:
+                        gate_reason = "abstain_no_candidate"
                     elif pred_score >= float(args.threshold):
                         gate_reason = "permit_probability_above_threshold"
                     else:
@@ -366,7 +406,7 @@ def main() -> None:
 
         permit = int(
             model_ready
-            and (int(shadow_exists.loc[current_idx]) == 1)
+            and (int(candidate_exists.loc[current_idx]) == 1)
             and (not pd.isna(pred_score))
             and (pred_score >= float(args.threshold))
         )
@@ -381,6 +421,8 @@ def main() -> None:
                 "target_value_day": target_value,
                 "target_append_positive_day": target_binary,
                 "shadow_candidate_exists": int(shadow_exists.loc[current_idx]),
+                "candidate_mode": str(args.candidate_mode),
+                "candidate_exists": int(candidate_exists.loc[current_idx]),
                 "shadow_minus_edge_ev_per_resolved": _safe_num(value_delta.loc[current_idx], default=np.nan),
                 "model_ready": bool(model_ready),
                 "train_rows": train_rows,
@@ -399,12 +441,13 @@ def main() -> None:
     scored_df["target_append_positive_day"] = pd.to_numeric(scored_df["target_append_positive_day"], errors="coerce")
     scored_df["permit_append_day"] = pd.to_numeric(scored_df["permit_append_day"], errors="coerce").fillna(0).astype(int)
     scored_df["shadow_candidate_exists"] = pd.to_numeric(scored_df["shadow_candidate_exists"], errors="coerce").fillna(0).astype(int)
+    scored_df["candidate_exists"] = pd.to_numeric(scored_df["candidate_exists"], errors="coerce").fillna(0).astype(int)
     scored_df["shadow_minus_edge_ev_per_resolved"] = pd.to_numeric(scored_df["shadow_minus_edge_ev_per_resolved"], errors="coerce")
     scored_df["predicted_permission_score"] = pd.to_numeric(scored_df["predicted_permission_score"], errors="coerce")
     scored_df["predicted_permission_probability"] = pd.to_numeric(scored_df["predicted_permission_probability"], errors="coerce")
     scored_df["predicted_append_value"] = pd.to_numeric(scored_df["predicted_append_value"], errors="coerce")
 
-    actionable_mask = scored_df["shadow_candidate_exists"] == 1
+    actionable_mask = scored_df["candidate_exists"] == 1
     all_metrics = _binary_metrics(
         scored_df["target_append_positive_day"],
         scored_df["permit_append_day"],
@@ -420,6 +463,7 @@ def main() -> None:
         "task_type": ("regression" if is_regression_target else "classification"),
         "target_mode": str(args.target_mode),
         "effective_target_mode": effective_target_mode,
+        "candidate_mode": str(args.candidate_mode),
         "fallback_target_mode": str(args.fallback_target_mode),
         "fallback_used": bool(fallback_used),
         "target_class_count_primary": int(primary_class_count),
@@ -441,7 +485,8 @@ def main() -> None:
         "snapshot_mode_counts_retained": snapshot_mode_counts_retained,
         "rows_total": int(len(scored_df)),
         "rows_model_ready": int(pd.to_numeric(scored_df["model_ready"], errors="coerce").fillna(0).astype(bool).sum()),
-        "rows_shadow_candidate_exists": int(actionable_mask.sum()),
+        "rows_candidate_exists": int(actionable_mask.sum()),
+        "rows_shadow_candidate_exists": int((scored_df["shadow_candidate_exists"] == 1).sum()),
         "window": {
             "start": str(scored_df["run_date"].min()) if not scored_df.empty else None,
             "end": str(scored_df["run_date"].max()) if not scored_df.empty else None,

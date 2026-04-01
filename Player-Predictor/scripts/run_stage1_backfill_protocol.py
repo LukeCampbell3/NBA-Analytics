@@ -38,7 +38,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--research-corr-mode",
         type=str,
-        default="auto",
+        default="percentile",
         choices=["auto", "none", "absolute", "percentile", "zscore"],
         help="Research corr feasibility mode for append diagnostics.",
     )
@@ -51,7 +51,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--research-corr-percentile-max",
         type=float,
-        default=None,
+        default=0.25,
         help="Optional within-day corr percentile cap [0,1] for research diagnostics.",
     )
     parser.add_argument(
@@ -63,14 +63,22 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--stage1-target-mode",
         type=str,
-        default="best_pool_positive",
+        default="top1_feasible_positive",
         choices=[
             "best_pool_positive",
             "shadow_improves_edge",
             "best_feasible_append_value",
             "top1_feasible_positive",
+            "top1_feasible_improves_edge",
             "top1_feasible_value",
         ],
+    )
+    parser.add_argument(
+        "--stage1-candidate-mode",
+        type=str,
+        default="top1_feasible",
+        choices=["shadow", "top1_feasible", "none"],
+        help="Candidate availability gate used by Stage-1 permit decisions.",
     )
     parser.add_argument("--stage1-min-train-days", type=int, default=12, help="Stage-1 minimum labeled train days.")
     parser.add_argument("--stage1-thresholds", type=float, nargs="+", default=[0.50, 0.55, 0.60], help="Stage-1 permission thresholds.")
@@ -206,6 +214,11 @@ def main() -> None:
     daily_out = out_dir / "cutoff_meta_daily.csv"
     daily_context_out = out_dir / "cutoff_meta_daily_context.csv"
     abstain_out = out_dir / "cutoff_meta_abstain.csv"
+    shadow_miss_out = out_dir / "cutoff_meta_shadow_top1_miss_reasons.csv"
+    shadow_miss_summary_out = out_dir / "top1_shadow_miss_reasons_summary.json"
+    stage2_table_out = out_dir / "stage2_proposal_table.csv"
+    stage2_pairs_out = out_dir / "stage2_proposal_pairs.csv"
+    stage2_summary_out = out_dir / "stage2_proposal_summary.json"
     summary_out = out_dir / "cutoff_meta_summary.json"
 
     eval_cmd = [
@@ -241,6 +254,16 @@ def main() -> None:
         str(daily_context_out),
         "--abstain-out",
         str(abstain_out),
+        "--shadow-top1-miss-out",
+        str(shadow_miss_out),
+        "--top1-shadow-miss-summary-out",
+        str(shadow_miss_summary_out),
+        "--stage2-proposal-table-out",
+        str(stage2_table_out),
+        "--stage2-proposal-pairs-out",
+        str(stage2_pairs_out),
+        "--stage2-proposal-summary-out",
+        str(stage2_summary_out),
         "--summary-out",
         str(summary_out),
     ]
@@ -271,6 +294,8 @@ def main() -> None:
             str(daily_context_out),
             "--target-mode",
             str(args.stage1_target_mode),
+            "--candidate-mode",
+            str(args.stage1_candidate_mode),
             "--min-train-days",
             str(int(args.stage1_min_train_days)),
             "--threshold",
@@ -291,10 +316,12 @@ def main() -> None:
                 "threshold": float(threshold),
                 "target_mode": payload.get("target_mode"),
                 "effective_target_mode": payload.get("effective_target_mode"),
+                "candidate_mode": payload.get("candidate_mode"),
                 "fallback_used": bool(payload.get("fallback_used", False)),
                 "target_class_count_primary": int(payload.get("target_class_count_primary", 0) or 0),
                 "rows_total": int(payload.get("rows_total", 0) or 0),
                 "rows_model_ready": int(payload.get("rows_model_ready", 0) or 0),
+                "rows_candidate_exists": int(payload.get("rows_candidate_exists", 0) or 0),
                 "rows_shadow_candidate_exists": int(payload.get("rows_shadow_candidate_exists", 0) or 0),
                 "actionable_labeled_days": int(actionable.get("labeled_days", 0) or 0),
                 "actionable_permit_days": int(actionable.get("permit_days", 0) or 0),
@@ -335,6 +362,9 @@ def main() -> None:
         "pool_feasible_resolved_days": int(pd.to_numeric(daily_context_df.get("pool_feasible_resolved_count"), errors="coerce").fillna(0).gt(0).sum()),
         "top1_feasible_days": int(pd.to_numeric(daily_context_df.get("top1_feasible_exists"), errors="coerce").fillna(0).astype(bool).sum()),
         "top1_feasible_resolved_days": int(pd.to_numeric(daily_context_df.get("top1_feasible_resolved"), errors="coerce").fillna(0).astype(bool).sum()),
+        "top1_shadow_missed_positive_days": int((pd.to_numeric(daily_context_df.get("label_shadow_missed_positive_top1"), errors="coerce") == 1).sum()),
+        "top1_shadow_generation_blocked_days": int(pd.to_numeric(daily_context_df.get("shadow_top1_generation_blocked"), errors="coerce").fillna(0).sum()),
+        "top1_shadow_safety_blocked_days": int(pd.to_numeric(daily_context_df.get("shadow_top1_safety_blocked"), errors="coerce").fillna(0).sum()),
         "label_non_null": {
             "label_best_append_positive": _nn("label_best_append_positive"),
             "label_shadow_candidate_positive": _nn("label_shadow_candidate_positive"),
@@ -367,6 +397,12 @@ def main() -> None:
             "corr_percentile_max": (None if args.research_corr_percentile_max is None else float(args.research_corr_percentile_max)),
             "corr_zscore_max": (None if args.research_corr_zscore_max is None else float(args.research_corr_zscore_max)),
         },
+        "stage1_config": {
+            "target_mode": str(args.stage1_target_mode),
+            "candidate_mode": str(args.stage1_candidate_mode),
+            "thresholds": [float(t) for t in args.stage1_thresholds],
+            "min_train_days": int(args.stage1_min_train_days),
+        },
     }
 
     if not gen_df.empty:
@@ -394,6 +430,11 @@ def main() -> None:
             "cutoff_meta_daily": str(daily_out),
             "cutoff_meta_daily_context": str(daily_context_out),
             "cutoff_meta_abstain": str(abstain_out),
+            "cutoff_meta_shadow_top1_miss_reasons": str(shadow_miss_out),
+            "top1_shadow_miss_reasons_summary": str(shadow_miss_summary_out),
+            "stage2_proposal_table": str(stage2_table_out),
+            "stage2_proposal_pairs": str(stage2_pairs_out),
+            "stage2_proposal_summary": str(stage2_summary_out),
             "cutoff_meta_summary": str(summary_out),
             "stage1_threshold_sweep_summary": str(sweep_csv),
         },
