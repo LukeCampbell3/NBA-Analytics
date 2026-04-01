@@ -154,7 +154,17 @@ def parse_args() -> argparse.Namespace:
         "--selection-mode",
         type=str,
         default="thompson_ev",
-        choices=["ev_adjusted", "edge", "abs_edge", "xgb_ltr", "robust_reranker", "thompson_ev", "set_theory", "edge_append_shadow"],
+        choices=[
+            "ev_adjusted",
+            "edge",
+            "abs_edge",
+            "xgb_ltr",
+            "robust_reranker",
+            "thompson_ev",
+            "set_theory",
+            "edge_append_shadow",
+            "board_objective",
+        ],
         help="Final ranking mode used before portfolio constraints are applied.",
     )
     parser.add_argument(
@@ -233,6 +243,84 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=3,
         help="Maximum number of append-only shadow plays added beyond the edge base board.",
+    )
+    parser.add_argument(
+        "--board-objective-overfetch",
+        type=float,
+        default=4.0,
+        help="Multiplier for board-objective candidate overfetch relative to board size.",
+    )
+    parser.add_argument(
+        "--board-objective-candidate-limit",
+        type=int,
+        default=36,
+        help="Hard cap on candidate universe size for exact board-objective solving (0 disables).",
+    )
+    parser.add_argument(
+        "--board-objective-max-search-nodes",
+        type=int,
+        default=750000,
+        help="Maximum branch-and-bound nodes explored by exact board-objective search before fallback.",
+    )
+    parser.add_argument(
+        "--board-objective-lambda-corr",
+        type=float,
+        default=0.12,
+        help="Penalty weight for pairwise correlation in board-objective mode.",
+    )
+    parser.add_argument(
+        "--board-objective-lambda-conc",
+        type=float,
+        default=0.07,
+        help="Penalty weight for concentration in board-objective mode.",
+    )
+    parser.add_argument(
+        "--board-objective-lambda-unc",
+        type=float,
+        default=0.06,
+        help="Penalty weight for uncertainty in board-objective mode.",
+    )
+    parser.add_argument(
+        "--board-objective-corr-same-game",
+        type=float,
+        default=0.65,
+        help="Pairwise dependency contribution when two candidates share the same game.",
+    )
+    parser.add_argument(
+        "--board-objective-corr-same-player",
+        type=float,
+        default=1.0,
+        help="Pairwise dependency contribution when two candidates share the same player.",
+    )
+    parser.add_argument(
+        "--board-objective-corr-same-target",
+        type=float,
+        default=0.15,
+        help="Pairwise dependency contribution when two candidates share the same target family.",
+    )
+    parser.add_argument(
+        "--board-objective-corr-same-direction",
+        type=float,
+        default=0.05,
+        help="Pairwise dependency contribution when two candidates share the same direction.",
+    )
+    parser.add_argument(
+        "--board-objective-corr-same-script-cluster",
+        type=float,
+        default=0.30,
+        help="Pairwise dependency contribution when two candidates share the same inferred script cluster.",
+    )
+    parser.add_argument(
+        "--board-objective-swap-candidates",
+        type=int,
+        default=18,
+        help="Maximum number of out-of-universe swap candidates evaluated after exact board solve.",
+    )
+    parser.add_argument(
+        "--board-objective-swap-rounds",
+        type=int,
+        default=2,
+        help="Maximum number of improving swap rounds after exact board solve.",
     )
     return parser.parse_args()
 
@@ -330,6 +418,648 @@ def _zscore_series(values: pd.Series) -> pd.Series:
         return pd.Series(0.0, index=numeric.index, dtype="float64")
     mean = float(numeric.mean())
     return (numeric - mean) / std
+
+
+def _safe_logit(prob: pd.Series | np.ndarray) -> np.ndarray:
+    clipped = np.clip(np.asarray(prob, dtype="float64"), 1e-6, 1.0 - 1e-6)
+    return np.log(clipped / (1.0 - clipped))
+
+
+def _safe_sigmoid(logit_values: np.ndarray) -> np.ndarray:
+    return 1.0 / (1.0 + np.exp(-np.clip(np.asarray(logit_values, dtype="float64"), -40.0, 40.0)))
+
+
+def _build_board_probability_features(candidates: pd.DataFrame) -> pd.DataFrame:
+    """
+    Build calibrated board-level play probability and uncertainty columns.
+
+    This keeps expected_win_rate as the anchor but adds modest feature-driven
+    separation (abs edge, confidence, support depth, uncertainty) and applies a
+    conservative target+direction shrink for low-support rows.
+    """
+    if candidates.empty:
+        return candidates.copy()
+
+    out = candidates.copy()
+    base = pd.to_numeric(out.get("expected_win_rate"), errors="coerce").fillna(0.5).clip(lower=0.01, upper=0.99)
+    abs_edge = _numeric_series(out, "abs_edge", 0.0).clip(lower=0.0)
+    final_conf = _numeric_series(out, "final_confidence", 0.0).clip(lower=0.0)
+    history_rows = _numeric_series(out, "history_rows", 0.0).clip(lower=0.0)
+    posterior_var = _numeric_series(out, "posterior_variance", 0.25).clip(lower=0.0, upper=1.0)
+
+    abs_edge_z = _zscore_series(np.log1p(abs_edge))
+    conf_z = _zscore_series(final_conf)
+    support_norm = np.log1p(history_rows)
+    support_denom = float(np.nanmax(support_norm.to_numpy(dtype="float64"))) if len(support_norm) else 1.0
+    support_norm = support_norm / max(support_denom, 1e-9)
+    unc_norm = np.sqrt(posterior_var)
+    unc_min = float(unc_norm.min()) if len(unc_norm) else 0.0
+    unc_span = max(float(unc_norm.max()) - unc_min, 1e-9) if len(unc_norm) else 1.0
+    unc_norm = (unc_norm - unc_min) / unc_span
+
+    # Small, conservative dispersion over the anchored probability.
+    logit = _safe_logit(base.to_numpy(dtype="float64"))
+    logit += 0.18 * abs_edge_z.to_numpy(dtype="float64")
+    logit += 0.10 * conf_z.to_numpy(dtype="float64")
+    logit += 0.08 * (support_norm.to_numpy(dtype="float64") - 0.5)
+    logit -= 0.15 * (unc_norm.to_numpy(dtype="float64") - 0.5)
+    modeled = pd.Series(_safe_sigmoid(logit), index=out.index, dtype="float64")
+
+    if {"target", "direction"}.issubset(out.columns):
+        grouped = out[["target", "direction"]].fillna("").astype(str)
+        group_mean = modeled.groupby([grouped["target"], grouped["direction"]]).transform("mean")
+    else:
+        group_mean = pd.Series(float(modeled.mean()) if len(modeled) else 0.5, index=out.index, dtype="float64")
+
+    calibration_k = 25.0
+    support_weight = history_rows / (history_rows + calibration_k)
+    support_weight = support_weight.clip(lower=0.0, upper=1.0)
+    calibrated = support_weight * modeled + (1.0 - support_weight) * group_mean
+    board_prob = (0.75 * base + 0.25 * calibrated).clip(lower=0.01, upper=0.99)
+
+    out["board_play_win_prob"] = board_prob
+    out["board_uncertainty_penalty"] = unc_norm.clip(lower=0.0, upper=1.0)
+    out["board_prob_dispersion"] = board_prob - base
+    return out
+
+
+def _build_pairwise_dependency_matrix(
+    candidates: pd.DataFrame,
+    same_game_weight: float,
+    same_player_weight: float,
+    same_target_weight: float,
+    same_direction_weight: float,
+    same_script_cluster_weight: float,
+) -> np.ndarray:
+    if candidates.empty:
+        return np.zeros((0, 0), dtype="float64")
+
+    n_rows = int(len(candidates))
+    matrix = np.zeros((n_rows, n_rows), dtype="float64")
+
+    players = _clean_key_component(candidates.get("player", pd.Series("", index=candidates.index))).to_numpy(dtype=str)
+    games = _clean_key_component(candidates.get("game_key", pd.Series("", index=candidates.index))).to_numpy(dtype=str)
+    targets = _clean_key_component(candidates.get("target", pd.Series("", index=candidates.index))).to_numpy(dtype=str)
+    directions = _clean_key_component(candidates.get("direction", pd.Series("", index=candidates.index))).to_numpy(dtype=str)
+    scripts = candidates.get("script_cluster_id", pd.Series("", index=candidates.index)).map(_normalize_script_cluster).to_numpy(dtype=str)
+
+    for i in range(n_rows):
+        for j in range(i + 1, n_rows):
+            rho = 0.0
+            if players[i] and players[i] == players[j]:
+                rho += float(same_player_weight)
+            if games[i] and games[i] == games[j]:
+                rho += float(same_game_weight)
+            if targets[i] and targets[i] == targets[j]:
+                rho += float(same_target_weight)
+            if directions[i] and directions[i] == directions[j]:
+                rho += float(same_direction_weight)
+            if scripts[i] and scripts[i] == scripts[j]:
+                rho += float(same_script_cluster_weight)
+            matrix[i, j] = rho
+            matrix[j, i] = rho
+    return matrix
+
+
+def _compute_concentration_penalty(
+    selected_indices: list[int],
+    targets: np.ndarray,
+    directions: np.ndarray,
+    games: np.ndarray,
+) -> float:
+    if not selected_indices:
+        return 0.0
+    k = float(len(selected_indices))
+    inv_k_sq = 1.0 / max(k * k, 1e-9)
+
+    def hhi(values: np.ndarray) -> float:
+        counts: dict[str, int] = {}
+        for idx in selected_indices:
+            key = str(values[idx])
+            counts[key] = counts.get(key, 0) + 1
+        return float(sum((count * count) * inv_k_sq for count in counts.values()))
+
+    target_hhi = hhi(targets)
+    direction_hhi = hhi(directions)
+    game_hhi = hhi(games)
+    return 0.50 * target_hhi + 0.30 * direction_hhi + 0.20 * game_hhi
+
+
+def _is_candidate_feasible(
+    idx: int,
+    players: np.ndarray,
+    targets: np.ndarray,
+    games: np.ndarray,
+    scripts: np.ndarray,
+    player_counts: dict[str, int],
+    target_counts: dict[str, int],
+    game_counts: dict[str, int],
+    script_counts: dict[str, int],
+    target_caps: dict[str, int],
+    max_plays_per_player: int,
+    max_plays_per_game: int,
+    max_plays_per_script_cluster: int,
+) -> bool:
+    player = str(players[idx])
+    target = str(targets[idx])
+    game = str(games[idx])
+    script = str(scripts[idx])
+
+    if max_plays_per_player > 0 and player_counts.get(player, 0) >= int(max_plays_per_player):
+        return False
+    target_cap = int(target_caps.get(target, 0))
+    if target_cap > 0 and target_counts.get(target, 0) >= target_cap:
+        return False
+    if max_plays_per_game > 0 and game_counts.get(game, 0) >= int(max_plays_per_game):
+        return False
+    if max_plays_per_script_cluster > 0 and script and script_counts.get(script, 0) >= int(max_plays_per_script_cluster):
+        return False
+    return True
+
+
+def _score_selected_indices(
+    selected_indices: list[int],
+    probs: np.ndarray,
+    unc: np.ndarray,
+    dep_matrix: np.ndarray,
+    targets: np.ndarray,
+    directions: np.ndarray,
+    games: np.ndarray,
+    lambda_corr: float,
+    lambda_conc: float,
+    lambda_unc: float,
+) -> float:
+    if not selected_indices:
+        return -np.inf
+
+    node_score = float(np.sum(probs[selected_indices] - float(lambda_unc) * unc[selected_indices]))
+    pair_penalty = 0.0
+    for pos_i, idx_i in enumerate(selected_indices):
+        for idx_j in selected_indices[pos_i + 1 :]:
+            pair_penalty += float(dep_matrix[idx_i, idx_j])
+    concentration = _compute_concentration_penalty(selected_indices, targets=targets, directions=directions, games=games)
+    return node_score - float(lambda_corr) * pair_penalty - float(lambda_conc) * concentration
+
+
+def _select_board_objective_board(
+    candidates: pd.DataFrame,
+    max_plays_per_player: int,
+    max_plays_per_target: int,
+    max_total_plays: int,
+    max_target_plays: dict[str, int] | None,
+    max_plays_per_game: int,
+    max_plays_per_script_cluster: int,
+    min_board_plays: int,
+    board_objective_overfetch: float,
+    board_objective_candidate_limit: int,
+    board_objective_max_search_nodes: int,
+    board_objective_lambda_corr: float,
+    board_objective_lambda_conc: float,
+    board_objective_lambda_unc: float,
+    board_objective_corr_same_game: float,
+    board_objective_corr_same_player: float,
+    board_objective_corr_same_target: float,
+    board_objective_corr_same_direction: float,
+    board_objective_corr_same_script_cluster: float,
+    board_objective_swap_candidates: int,
+    board_objective_swap_rounds: int,
+) -> pd.DataFrame:
+    if candidates.empty:
+        return candidates.copy()
+
+    board_size = int(max_total_plays) if int(max_total_plays) > 0 else int(len(candidates))
+    if board_size <= 0:
+        return candidates.iloc[0:0].copy()
+    board_size = min(board_size, int(len(candidates)))
+    requested_min = max(0, int(min_board_plays))
+    if requested_min > 0:
+        board_size = max(board_size, min(requested_min, int(len(candidates))))
+
+    base = _build_board_probability_features(candidates.copy())
+    base["_source_index"] = base.index
+
+    overfetch_count = int(np.clip(np.ceil(max(float(board_objective_overfetch), 1.0) * board_size), board_size, len(base)))
+    idx_abs = set(base.sort_values(["abs_edge", "ev_adjusted", "expected_win_rate", "final_confidence"], ascending=[False, False, False, False]).head(overfetch_count).index.tolist())
+    idx_ev = set(base.sort_values(["ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"], ascending=[False, False, False, False]).head(overfetch_count).index.tolist())
+    idx_prob = set(base.sort_values(["board_play_win_prob", "final_confidence", "abs_edge", "ev_adjusted"], ascending=[False, False, False, False]).head(overfetch_count).index.tolist())
+    idx_th = set(base.sort_values(["thompson_ev", "board_play_win_prob", "ev_adjusted", "abs_edge"], ascending=[False, False, False, False]).head(overfetch_count).index.tolist()) if "thompson_ev" in base.columns else set()
+
+    universe_idx = sorted(idx_abs | idx_ev | idx_prob | idx_th)
+    universe = base.loc[universe_idx].copy() if universe_idx else base.copy()
+    if universe.empty:
+        return universe
+
+    universe["board_universe_rank"] = (
+        0.55 * _zscore_series(universe["board_play_win_prob"])
+        + 0.25 * _zscore_series(universe["abs_edge"])
+        + 0.20 * _zscore_series(universe["ev_adjusted"])
+    )
+    candidate_cap = int(board_objective_candidate_limit)
+    if candidate_cap > 0 and len(universe) > candidate_cap:
+        universe = universe.sort_values(["board_universe_rank", "board_play_win_prob", "abs_edge"], ascending=[False, False, False]).head(candidate_cap).copy()
+
+    universe = universe.sort_values(["board_universe_rank", "board_play_win_prob", "abs_edge"], ascending=[False, False, False]).reset_index(drop=True)
+    n = int(len(universe))
+    if n <= 0:
+        return base.iloc[0:0].copy()
+    k = min(board_size, n)
+    if k <= 0:
+        return base.iloc[0:0].copy()
+
+    target_caps = _resolve_target_caps(universe, max_plays_per_target=max_plays_per_target, max_target_plays=max_target_plays)
+    players = _clean_key_component(universe.get("player", pd.Series("", index=universe.index))).to_numpy(dtype=str)
+    targets = _clean_key_component(universe.get("target", pd.Series("", index=universe.index))).to_numpy(dtype=str)
+    games = _clean_key_component(universe.get("game_key", pd.Series("", index=universe.index))).to_numpy(dtype=str)
+    directions = _clean_key_component(universe.get("direction", pd.Series("", index=universe.index))).to_numpy(dtype=str)
+    scripts = universe.get("script_cluster_id", pd.Series("", index=universe.index)).map(_normalize_script_cluster).to_numpy(dtype=str)
+
+    probs = pd.to_numeric(universe["board_play_win_prob"], errors="coerce").fillna(0.5).to_numpy(dtype="float64")
+    unc = pd.to_numeric(universe["board_uncertainty_penalty"], errors="coerce").fillna(0.5).to_numpy(dtype="float64")
+    node_values = probs - float(board_objective_lambda_unc) * unc
+    order = np.argsort(-node_values)
+    universe = universe.iloc[order].reset_index(drop=True)
+    probs = probs[order]
+    unc = unc[order]
+    players = players[order]
+    targets = targets[order]
+    games = games[order]
+    directions = directions[order]
+    scripts = scripts[order]
+
+    dep = _build_pairwise_dependency_matrix(
+        universe,
+        same_game_weight=float(board_objective_corr_same_game),
+        same_player_weight=float(board_objective_corr_same_player),
+        same_target_weight=float(board_objective_corr_same_target),
+        same_direction_weight=float(board_objective_corr_same_direction),
+        same_script_cluster_weight=float(board_objective_corr_same_script_cluster),
+    )
+    node_values = probs - float(board_objective_lambda_unc) * unc
+    prefix = np.concatenate(([0.0], np.cumsum(node_values)))
+
+    max_nodes = max(1000, int(board_objective_max_search_nodes))
+    node_counter = {"count": 0, "truncated": False}
+    best_score = -np.inf
+    best_indices: list[int] = []
+
+    # Warm start with deterministic capped top-node picks.
+    warm_selected: list[int] = []
+    warm_player_counts: dict[str, int] = {}
+    warm_target_counts: dict[str, int] = {}
+    warm_game_counts: dict[str, int] = {}
+    warm_script_counts: dict[str, int] = {}
+    for idx in range(n):
+        if len(warm_selected) >= k:
+            break
+        if not _is_candidate_feasible(
+            idx,
+            players=players,
+            targets=targets,
+            games=games,
+            scripts=scripts,
+            player_counts=warm_player_counts,
+            target_counts=warm_target_counts,
+            game_counts=warm_game_counts,
+            script_counts=warm_script_counts,
+            target_caps=target_caps,
+            max_plays_per_player=max_plays_per_player,
+            max_plays_per_game=max_plays_per_game,
+            max_plays_per_script_cluster=max_plays_per_script_cluster,
+        ):
+            continue
+        warm_selected.append(idx)
+        player = str(players[idx])
+        target = str(targets[idx])
+        game = str(games[idx])
+        script = str(scripts[idx])
+        warm_player_counts[player] = warm_player_counts.get(player, 0) + 1
+        warm_target_counts[target] = warm_target_counts.get(target, 0) + 1
+        warm_game_counts[game] = warm_game_counts.get(game, 0) + 1
+        if script:
+            warm_script_counts[script] = warm_script_counts.get(script, 0) + 1
+    if len(warm_selected) == k:
+        best_indices = warm_selected[:]
+        best_score = _score_selected_indices(
+            best_indices,
+            probs=probs,
+            unc=unc,
+            dep_matrix=dep,
+            targets=targets,
+            directions=directions,
+            games=games,
+            lambda_corr=float(board_objective_lambda_corr),
+            lambda_conc=float(board_objective_lambda_conc),
+            lambda_unc=float(board_objective_lambda_unc),
+        )
+
+    def dfs(
+        pos: int,
+        selected: list[int],
+        node_sum: float,
+        pair_penalty: float,
+        player_counts: dict[str, int],
+        target_counts: dict[str, int],
+        game_counts: dict[str, int],
+        script_counts: dict[str, int],
+    ) -> None:
+        nonlocal best_score, best_indices
+        if node_counter["truncated"]:
+            return
+        node_counter["count"] += 1
+        if node_counter["count"] > max_nodes:
+            node_counter["truncated"] = True
+            return
+
+        selected_count = len(selected)
+        remaining_needed = k - selected_count
+        remaining_rows = n - pos
+        if remaining_needed <= 0:
+            score = float(node_sum) - float(board_objective_lambda_corr) * float(pair_penalty) - float(board_objective_lambda_conc) * _compute_concentration_penalty(
+                selected,
+                targets=targets,
+                directions=directions,
+                games=games,
+            )
+            if score > best_score:
+                best_score = score
+                best_indices = selected[:]
+            return
+        if remaining_rows < remaining_needed:
+            return
+
+        # Optimistic upper bound ignores pair/concentration penalties.
+        upper = float(node_sum) + float(prefix[min(n, pos + remaining_needed)] - prefix[pos])
+        if upper <= best_score + 1e-12:
+            return
+
+        idx = pos
+        if _is_candidate_feasible(
+            idx,
+            players=players,
+            targets=targets,
+            games=games,
+            scripts=scripts,
+            player_counts=player_counts,
+            target_counts=target_counts,
+            game_counts=game_counts,
+            script_counts=script_counts,
+            target_caps=target_caps,
+            max_plays_per_player=max_plays_per_player,
+            max_plays_per_game=max_plays_per_game,
+            max_plays_per_script_cluster=max_plays_per_script_cluster,
+        ):
+            player = str(players[idx])
+            target = str(targets[idx])
+            game = str(games[idx])
+            script = str(scripts[idx])
+
+            add_pair_penalty = 0.0
+            for existing in selected:
+                add_pair_penalty += float(dep[idx, existing])
+
+            player_counts[player] = player_counts.get(player, 0) + 1
+            target_counts[target] = target_counts.get(target, 0) + 1
+            game_counts[game] = game_counts.get(game, 0) + 1
+            if script:
+                script_counts[script] = script_counts.get(script, 0) + 1
+            selected.append(idx)
+
+            dfs(
+                pos + 1,
+                selected,
+                node_sum=float(node_sum + node_values[idx]),
+                pair_penalty=float(pair_penalty + add_pair_penalty),
+                player_counts=player_counts,
+                target_counts=target_counts,
+                game_counts=game_counts,
+                script_counts=script_counts,
+            )
+
+            selected.pop()
+            player_counts[player] -= 1
+            if player_counts[player] <= 0:
+                del player_counts[player]
+            target_counts[target] -= 1
+            if target_counts[target] <= 0:
+                del target_counts[target]
+            game_counts[game] -= 1
+            if game_counts[game] <= 0:
+                del game_counts[game]
+            if script:
+                script_counts[script] = script_counts.get(script, 0) - 1
+                if script_counts[script] <= 0:
+                    script_counts.pop(script, None)
+
+        dfs(
+            pos + 1,
+            selected,
+            node_sum=node_sum,
+            pair_penalty=pair_penalty,
+            player_counts=player_counts,
+            target_counts=target_counts,
+            game_counts=game_counts,
+            script_counts=script_counts,
+        )
+
+    dfs(
+        pos=0,
+        selected=[],
+        node_sum=0.0,
+        pair_penalty=0.0,
+        player_counts={},
+        target_counts={},
+        game_counts={},
+        script_counts={},
+    )
+
+    if not best_indices:
+        ranked_fallback = base.sort_values(["board_play_win_prob", "ev_adjusted", "abs_edge"], ascending=[False, False, False]).copy()
+        fallback = _apply_portfolio_caps(
+            ranked_fallback,
+            max_plays_per_player=max_plays_per_player,
+            max_plays_per_target=max_plays_per_target,
+            max_total_plays=k,
+            max_target_plays=max_target_plays,
+            max_plays_per_game=max_plays_per_game,
+            max_plays_per_script_cluster=max_plays_per_script_cluster,
+        )
+        fallback["board_objective_search_truncated"] = bool(node_counter["truncated"])
+        fallback["board_objective_solver_mode"] = "fallback_capped_rank"
+        fallback["board_objective_score"] = np.nan
+        fallback["board_objective_swap_applied"] = False
+        return fallback
+
+    selected_board = universe.iloc[best_indices].copy()
+    selected_board["board_objective_search_truncated"] = bool(node_counter["truncated"])
+    selected_board["board_objective_solver_mode"] = "exact_branch_and_bound"
+
+    # Swap optimization pass against an append pool from outside the selected board.
+    current = selected_board.copy()
+    current["_swap_member"] = True
+    swap_pool_cap = max(0, int(board_objective_swap_candidates))
+    if swap_pool_cap > 0:
+        selected_sources = set(pd.to_numeric(current["_source_index"], errors="coerce").fillna(-1).astype(int).tolist())
+        swap_pool = base.loc[~base["_source_index"].isin(selected_sources)].copy()
+        if not swap_pool.empty:
+            swap_pool = swap_pool.sort_values(["board_play_win_prob", "ev_adjusted", "abs_edge", "expected_win_rate"], ascending=[False, False, False, False]).head(swap_pool_cap).copy()
+        swap_applied = False
+        for _ in range(max(0, int(board_objective_swap_rounds))):
+            if swap_pool.empty:
+                break
+            best_trial_gain = 0.0
+            best_trial_board: pd.DataFrame | None = None
+            current_score = _score_selected_indices(
+                list(range(len(current))),
+                probs=pd.to_numeric(current["board_play_win_prob"], errors="coerce").fillna(0.5).to_numpy(dtype="float64"),
+                unc=pd.to_numeric(current["board_uncertainty_penalty"], errors="coerce").fillna(0.5).to_numpy(dtype="float64"),
+                dep_matrix=_build_pairwise_dependency_matrix(
+                    current,
+                    same_game_weight=float(board_objective_corr_same_game),
+                    same_player_weight=float(board_objective_corr_same_player),
+                    same_target_weight=float(board_objective_corr_same_target),
+                    same_direction_weight=float(board_objective_corr_same_direction),
+                    same_script_cluster_weight=float(board_objective_corr_same_script_cluster),
+                ),
+                targets=_clean_key_component(current.get("target", pd.Series("", index=current.index))).to_numpy(dtype=str),
+                directions=_clean_key_component(current.get("direction", pd.Series("", index=current.index))).to_numpy(dtype=str),
+                games=_clean_key_component(current.get("game_key", pd.Series("", index=current.index))).to_numpy(dtype=str),
+                lambda_corr=float(board_objective_lambda_corr),
+                lambda_conc=float(board_objective_lambda_conc),
+                lambda_unc=float(board_objective_lambda_unc),
+            )
+            for remove_idx in current.index.tolist():
+                keep = current.drop(index=remove_idx).copy()
+                for _, add_row in swap_pool.iterrows():
+                    add_source = int(pd.to_numeric(pd.Series([add_row.get("_source_index", -1)]), errors="coerce").fillna(-1).iloc[0])
+                    if add_source in set(pd.to_numeric(keep["_source_index"], errors="coerce").fillna(-1).astype(int).tolist()):
+                        continue
+                    trial = pd.concat([keep, add_row.to_frame().T], axis=0, ignore_index=True)
+                    trial_ranked = trial.sort_values(["board_play_win_prob", "ev_adjusted", "abs_edge"], ascending=[False, False, False]).copy()
+                    capped = _apply_portfolio_caps(
+                        trial_ranked,
+                        max_plays_per_player=max_plays_per_player,
+                        max_plays_per_target=max_plays_per_target,
+                        max_total_plays=k,
+                        max_target_plays=max_target_plays,
+                        max_plays_per_game=max_plays_per_game,
+                        max_plays_per_script_cluster=max_plays_per_script_cluster,
+                    )
+                    if len(capped) != k:
+                        continue
+                    trial_score = _score_selected_indices(
+                        list(range(len(capped))),
+                        probs=pd.to_numeric(capped["board_play_win_prob"], errors="coerce").fillna(0.5).to_numpy(dtype="float64"),
+                        unc=pd.to_numeric(capped["board_uncertainty_penalty"], errors="coerce").fillna(0.5).to_numpy(dtype="float64"),
+                        dep_matrix=_build_pairwise_dependency_matrix(
+                            capped,
+                            same_game_weight=float(board_objective_corr_same_game),
+                            same_player_weight=float(board_objective_corr_same_player),
+                            same_target_weight=float(board_objective_corr_same_target),
+                            same_direction_weight=float(board_objective_corr_same_direction),
+                            same_script_cluster_weight=float(board_objective_corr_same_script_cluster),
+                        ),
+                        targets=_clean_key_component(capped.get("target", pd.Series("", index=capped.index))).to_numpy(dtype=str),
+                        directions=_clean_key_component(capped.get("direction", pd.Series("", index=capped.index))).to_numpy(dtype=str),
+                        games=_clean_key_component(capped.get("game_key", pd.Series("", index=capped.index))).to_numpy(dtype=str),
+                        lambda_corr=float(board_objective_lambda_corr),
+                        lambda_conc=float(board_objective_lambda_conc),
+                        lambda_unc=float(board_objective_lambda_unc),
+                    )
+                    gain = float(trial_score - current_score)
+                    if gain > best_trial_gain + 1e-12:
+                        best_trial_gain = gain
+                        best_trial_board = capped
+            if best_trial_board is None:
+                break
+            current = best_trial_board.copy()
+            swap_applied = True
+        current["board_objective_swap_applied"] = bool(swap_applied)
+    else:
+        current["board_objective_swap_applied"] = False
+
+    final = current.sort_values(["board_play_win_prob", "ev_adjusted", "abs_edge"], ascending=[False, False, False]).copy()
+    caps_relaxed = False
+
+    # Keep fixed-K behavior when feasible by filling any residual deficit from the full candidate pool.
+    if len(final) < k:
+        selected_rows = [row.to_dict() for _, row in final.iterrows()]
+        seen_indices = set(pd.to_numeric(final.get("_source_index"), errors="coerce").fillna(-1).astype(int).tolist())
+        player_counts, target_counts, game_counts, script_cluster_counts = _selection_counters_from_rows(selected_rows)
+        full_caps = _resolve_target_caps(base, max_plays_per_target=max_plays_per_target, max_target_plays=max_target_plays)
+        filler_ranked = base.sort_values(["board_play_win_prob", "ev_adjusted", "abs_edge", "expected_win_rate"], ascending=[False, False, False, False]).copy()
+        _append_rows_with_caps(
+            filler_ranked,
+            selected_rows,
+            seen_indices,
+            player_counts,
+            target_counts,
+            game_counts,
+            script_cluster_counts,
+            full_caps,
+            max_plays_per_player=max_plays_per_player,
+            max_plays_per_game=max_plays_per_game,
+            max_plays_per_script_cluster=max_plays_per_script_cluster,
+            max_total_plays=k,
+        )
+        final = pd.DataFrame.from_records(selected_rows) if selected_rows else final.iloc[0:0].copy()
+        if not final.empty:
+            if "board_objective_swap_applied" in final.columns:
+                final["board_objective_swap_applied"] = pd.to_numeric(final["board_objective_swap_applied"], errors="coerce").fillna(0).astype(bool)
+            else:
+                final["board_objective_swap_applied"] = False
+
+    # Mirror baseline behavior: if min-board target is unmet, relax target-family caps.
+    target_size = min(requested_min, k) if requested_min > 0 else 0
+    if target_size > 0 and len(final) < target_size:
+        selected_rows = [row.to_dict() for _, row in final.iterrows()]
+        seen_indices = set(pd.to_numeric(final.get("_source_index"), errors="coerce").fillna(-1).astype(int).tolist())
+        player_counts, target_counts, game_counts, script_cluster_counts = _selection_counters_from_rows(selected_rows)
+        ranked_base = base.sort_values(["board_play_win_prob", "ev_adjusted", "abs_edge", "expected_win_rate"], ascending=[False, False, False, False]).copy()
+        relaxed_caps: dict[str, int] = {}
+        added = _append_rows_with_caps(
+            ranked_base,
+            selected_rows,
+            seen_indices,
+            player_counts,
+            target_counts,
+            game_counts,
+            script_cluster_counts,
+            relaxed_caps,
+            max_plays_per_player=max_plays_per_player,
+            max_plays_per_game=max_plays_per_game,
+            max_plays_per_script_cluster=max_plays_per_script_cluster,
+            max_total_plays=target_size,
+            max_new_rows=target_size - len(selected_rows),
+        )
+        if added > 0:
+            caps_relaxed = True
+            final = pd.DataFrame.from_records(selected_rows)
+            if "board_objective_swap_applied" not in final.columns:
+                final["board_objective_swap_applied"] = False
+            final["board_objective_solver_mode"] = final.get("board_objective_solver_mode", "exact_branch_and_bound")
+            final["board_objective_search_truncated"] = pd.to_numeric(final.get("board_objective_search_truncated"), errors="coerce").fillna(0).astype(bool)
+
+    final["board_objective_score"] = _score_selected_indices(
+        list(range(len(final))),
+        probs=pd.to_numeric(final["board_play_win_prob"], errors="coerce").fillna(0.5).to_numpy(dtype="float64"),
+        unc=pd.to_numeric(final["board_uncertainty_penalty"], errors="coerce").fillna(0.5).to_numpy(dtype="float64"),
+        dep_matrix=_build_pairwise_dependency_matrix(
+            final,
+            same_game_weight=float(board_objective_corr_same_game),
+            same_player_weight=float(board_objective_corr_same_player),
+            same_target_weight=float(board_objective_corr_same_target),
+            same_direction_weight=float(board_objective_corr_same_direction),
+            same_script_cluster_weight=float(board_objective_corr_same_script_cluster),
+        ),
+        targets=_clean_key_component(final.get("target", pd.Series("", index=final.index))).to_numpy(dtype=str),
+        directions=_clean_key_component(final.get("direction", pd.Series("", index=final.index))).to_numpy(dtype=str),
+        games=_clean_key_component(final.get("game_key", pd.Series("", index=final.index))).to_numpy(dtype=str),
+        lambda_corr=float(board_objective_lambda_corr),
+        lambda_conc=float(board_objective_lambda_conc),
+        lambda_unc=float(board_objective_lambda_unc),
+    )
+    final["board_caps_relaxed"] = bool(caps_relaxed)
+    return final
 
 
 def _append_rows_with_caps(
@@ -755,6 +1485,19 @@ def compute_final_board(
     append_agreement_min: int = 3,
     append_edge_percentile_min: float = 0.90,
     append_max_extra_plays: int = 3,
+    board_objective_overfetch: float = 4.0,
+    board_objective_candidate_limit: int = 36,
+    board_objective_max_search_nodes: int = 750000,
+    board_objective_lambda_corr: float = 0.12,
+    board_objective_lambda_conc: float = 0.07,
+    board_objective_lambda_unc: float = 0.06,
+    board_objective_corr_same_game: float = 0.65,
+    board_objective_corr_same_player: float = 1.0,
+    board_objective_corr_same_target: float = 0.15,
+    board_objective_corr_same_direction: float = 0.05,
+    board_objective_corr_same_script_cluster: float = 0.30,
+    board_objective_swap_candidates: int = 18,
+    board_objective_swap_rounds: int = 2,
     max_history_staleness_days: int = 0,
     min_recency_factor: float = 0.0,
 ) -> pd.DataFrame:
@@ -925,6 +1668,32 @@ def compute_final_board(
         )
         caps_already_applied = True
         rank_columns = ["append_anchor_member", "edge", "abs_edge", "expected_win_rate", "final_confidence"]
+    elif effective_mode == "board_objective":
+        out = _select_board_objective_board(
+            out,
+            max_plays_per_player=max_plays_per_player,
+            max_plays_per_target=max_plays_per_target,
+            max_total_plays=max_total_plays,
+            max_target_plays=max_target_plays,
+            max_plays_per_game=max_plays_per_game,
+            max_plays_per_script_cluster=max_plays_per_script_cluster,
+            min_board_plays=min_board_plays,
+            board_objective_overfetch=board_objective_overfetch,
+            board_objective_candidate_limit=board_objective_candidate_limit,
+            board_objective_max_search_nodes=board_objective_max_search_nodes,
+            board_objective_lambda_corr=board_objective_lambda_corr,
+            board_objective_lambda_conc=board_objective_lambda_conc,
+            board_objective_lambda_unc=board_objective_lambda_unc,
+            board_objective_corr_same_game=board_objective_corr_same_game,
+            board_objective_corr_same_player=board_objective_corr_same_player,
+            board_objective_corr_same_target=board_objective_corr_same_target,
+            board_objective_corr_same_direction=board_objective_corr_same_direction,
+            board_objective_corr_same_script_cluster=board_objective_corr_same_script_cluster,
+            board_objective_swap_candidates=board_objective_swap_candidates,
+            board_objective_swap_rounds=board_objective_swap_rounds,
+        )
+        caps_already_applied = True
+        rank_columns = ["board_play_win_prob", "ev_adjusted", "abs_edge", "final_confidence"]
 
     if not caps_already_applied:
         ranked_pool = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).copy()
@@ -962,7 +1731,10 @@ def compute_final_board(
         if missing_rank_cols:
             return out.iloc[0:0].copy()
         out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).copy()
-        out["board_caps_relaxed"] = False
+        if "board_caps_relaxed" in out.columns:
+            out["board_caps_relaxed"] = pd.to_numeric(out["board_caps_relaxed"], errors="coerce").fillna(0).astype(bool)
+        else:
+            out["board_caps_relaxed"] = False
     if out.empty:
         return out
     sized_out = apply_tiered_bet_sizing(
@@ -1078,6 +1850,19 @@ def main() -> None:
         append_agreement_min=args.append_agreement_min,
         append_edge_percentile_min=args.append_edge_percentile_min,
         append_max_extra_plays=args.append_max_extra_plays,
+        board_objective_overfetch=args.board_objective_overfetch,
+        board_objective_candidate_limit=args.board_objective_candidate_limit,
+        board_objective_max_search_nodes=args.board_objective_max_search_nodes,
+        board_objective_lambda_corr=args.board_objective_lambda_corr,
+        board_objective_lambda_conc=args.board_objective_lambda_conc,
+        board_objective_lambda_unc=args.board_objective_lambda_unc,
+        board_objective_corr_same_game=args.board_objective_corr_same_game,
+        board_objective_corr_same_player=args.board_objective_corr_same_player,
+        board_objective_corr_same_target=args.board_objective_corr_same_target,
+        board_objective_corr_same_direction=args.board_objective_corr_same_direction,
+        board_objective_corr_same_script_cluster=args.board_objective_corr_same_script_cluster,
+        board_objective_swap_candidates=args.board_objective_swap_candidates,
+        board_objective_swap_rounds=args.board_objective_swap_rounds,
         max_history_staleness_days=args.max_history_staleness_days,
         min_recency_factor=args.min_recency_factor,
     )
@@ -1124,6 +1909,19 @@ def main() -> None:
         "append_agreement_min": int(args.append_agreement_min),
         "append_edge_percentile_min": float(args.append_edge_percentile_min),
         "append_max_extra_plays": int(args.append_max_extra_plays),
+        "board_objective_overfetch": float(args.board_objective_overfetch),
+        "board_objective_candidate_limit": int(args.board_objective_candidate_limit),
+        "board_objective_max_search_nodes": int(args.board_objective_max_search_nodes),
+        "board_objective_lambda_corr": float(args.board_objective_lambda_corr),
+        "board_objective_lambda_conc": float(args.board_objective_lambda_conc),
+        "board_objective_lambda_unc": float(args.board_objective_lambda_unc),
+        "board_objective_corr_same_game": float(args.board_objective_corr_same_game),
+        "board_objective_corr_same_player": float(args.board_objective_corr_same_player),
+        "board_objective_corr_same_target": float(args.board_objective_corr_same_target),
+        "board_objective_corr_same_direction": float(args.board_objective_corr_same_direction),
+        "board_objective_corr_same_script_cluster": float(args.board_objective_corr_same_script_cluster),
+        "board_objective_swap_candidates": int(args.board_objective_swap_candidates),
+        "board_objective_swap_rounds": int(args.board_objective_swap_rounds),
         "max_history_staleness_days": int(args.max_history_staleness_days),
         "min_recency_factor": float(args.min_recency_factor),
         "top_plays": final_board.head(20).to_dict(orient="records"),
