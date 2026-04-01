@@ -143,6 +143,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-trb-plays", type=int, default=None, help="Maximum final TRB plays to keep.")
     parser.add_argument("--max-ast-plays", type=int, default=None, help="Maximum final AST plays to keep.")
     parser.add_argument("--max-total-plays", type=int, default=None, help="Maximum total plays to keep.")
+    parser.add_argument("--min-board-plays", type=int, default=None, help="Minimum final-board rows to target by adaptive EV relaxation.")
     parser.add_argument("--max-plays-per-game", type=int, default=None, help="Maximum selected plays to keep from the same game/event.")
     parser.add_argument(
         "--max-plays-per-script-cluster",
@@ -225,6 +226,7 @@ def resolve_policy(args: argparse.Namespace):
         "max_trb_plays": args.max_trb_plays,
         "max_ast_plays": args.max_ast_plays,
         "max_total_plays": args.max_total_plays,
+        "min_board_plays": args.min_board_plays,
         "max_plays_per_game": args.max_plays_per_game,
         "max_plays_per_script_cluster": args.max_plays_per_script_cluster,
         "non_pts_min_gap_percentile": args.non_pts_min_gap_percentile,
@@ -576,6 +578,7 @@ def main() -> None:
         max_plays_per_player=policy_payload["max_plays_per_player"],
         max_plays_per_target=policy_payload["max_plays_per_target"],
         max_total_plays=policy_payload["max_total_plays"],
+        min_board_plays=policy_payload.get("min_board_plays", 0),
         max_target_plays={"PTS": policy_payload["max_pts_plays"], "TRB": policy_payload["max_trb_plays"], "AST": policy_payload["max_ast_plays"]},
         max_plays_per_game=policy_payload.get("max_plays_per_game", 2),
         max_plays_per_script_cluster=policy_payload.get("max_plays_per_script_cluster", 2),
