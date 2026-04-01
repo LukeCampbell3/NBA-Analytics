@@ -164,6 +164,18 @@ def parse_args() -> argparse.Namespace:
         help="Maximum selected plays from the same inferred script cluster.",
     )
     parser.add_argument(
+        "--max-history-staleness-days",
+        type=int,
+        default=0,
+        help="Optional max days between market_date and last_history_date (0 disables staleness filtering).",
+    )
+    parser.add_argument(
+        "--min-recency-factor",
+        type=float,
+        default=0.0,
+        help="Optional minimum recency_factor required to keep a play (0 disables).",
+    )
+    parser.add_argument(
         "--thompson-temperature",
         type=float,
         default=1.0,
@@ -730,6 +742,8 @@ def compute_final_board(
     append_agreement_min: int = 3,
     append_edge_percentile_min: float = 0.90,
     append_max_extra_plays: int = 3,
+    max_history_staleness_days: int = 0,
+    min_recency_factor: float = 0.0,
 ) -> pd.DataFrame:
     out = plays.copy()
     if out.empty:
@@ -812,6 +826,23 @@ def compute_final_board(
     if "conditional_eligible_for_board" in out.columns:
         eligible_mask = pd.to_numeric(out["conditional_eligible_for_board"], errors="coerce").fillna(0).astype(bool)
         out = out.loc[eligible_mask].copy()
+        if out.empty:
+            return out
+
+    min_recency = float(min_recency_factor)
+    if min_recency > 0.0 and "recency_factor" in out.columns:
+        out["recency_factor"] = _numeric_series(out, "recency_factor", 0.0)
+        out = out.loc[out["recency_factor"] >= min_recency].copy()
+        if out.empty:
+            return out
+
+    staleness_cap = int(max_history_staleness_days)
+    if staleness_cap > 0 and "market_date" in out.columns and "last_history_date" in out.columns:
+        market_dates = pd.to_datetime(out["market_date"], errors="coerce")
+        history_dates = pd.to_datetime(out["last_history_date"], errors="coerce")
+        staleness_days = (market_dates - history_dates).dt.days
+        out["history_staleness_days"] = staleness_days
+        out = out.loc[staleness_days.isna() | (staleness_days <= staleness_cap)].copy()
         if out.empty:
             return out
 
@@ -968,6 +999,8 @@ def main() -> None:
         append_agreement_min=args.append_agreement_min,
         append_edge_percentile_min=args.append_edge_percentile_min,
         append_max_extra_plays=args.append_max_extra_plays,
+        max_history_staleness_days=args.max_history_staleness_days,
+        min_recency_factor=args.min_recency_factor,
     )
 
     args.csv_out.parent.mkdir(parents=True, exist_ok=True)
@@ -1011,6 +1044,8 @@ def main() -> None:
         "append_agreement_min": int(args.append_agreement_min),
         "append_edge_percentile_min": float(args.append_edge_percentile_min),
         "append_max_extra_plays": int(args.append_max_extra_plays),
+        "max_history_staleness_days": int(args.max_history_staleness_days),
+        "min_recency_factor": float(args.min_recency_factor),
         "top_plays": final_board.head(20).to_dict(orient="records"),
     }
     args.json_out.write_text(json.dumps(payload, indent=2), encoding="utf-8")

@@ -635,13 +635,17 @@ def build_play_rows(
                 direction = "OVER"
             else:
                 direction = "UNDER"
+            # Use the same edge scale as historical calibration (raw model-vs-market)
+            # when computing percentiles/recommendations. The shrunk edge remains the
+            # execution margin used downstream for risk and sizing.
             abs_gap = abs(edge)
+            raw_abs_gap = abs(raw_edge)
             if history_info is None:
                 heuristic = heuristic_percentile_and_rate(target, abs_gap)
                 gap_pct = float(heuristic["gap_percentile"])
                 expected_triplet = heuristic
             else:
-                gap_pct = percentile_of_gap(history_info["gaps_sorted"], abs_gap)
+                gap_pct = percentile_of_gap(history_info["gaps_sorted"], raw_abs_gap)
                 expected_triplet = expected_rate_for(target, gap_pct, history_info)
             recommendation = classify_play(target, gap_pct)
             risk_profile = _risk_profile(

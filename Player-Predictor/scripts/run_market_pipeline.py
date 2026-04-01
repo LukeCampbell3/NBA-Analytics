@@ -56,7 +56,7 @@ except Exception:
 
 
 POLICY_PROFILES = {config.name: config for config in build_default_shadow_strategies()}
-DEFAULT_POLICY = POLICY_PROFILES["production_edge_b12"]
+DEFAULT_POLICY = POLICY_PROFILES["production_calibrated"]
 TARGETS = ["PTS", "TRB", "AST"]
 
 
@@ -68,7 +68,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--policy-profile",
         type=str,
-        default="production_edge_b12",
+        default="production_calibrated",
         choices=sorted(POLICY_PROFILES.keys()),
         help="Policy profile used for live play selection defaults.",
     )
@@ -118,6 +118,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--elite-pct", type=float, default=None, help="Percentile cutoff for elite priority plays.")
     parser.add_argument("--min-ev", type=float, default=None, help="Minimum EV to keep a play.")
     parser.add_argument("--min-final-confidence", type=float, default=None, help="Minimum final confidence to keep a play.")
+    parser.add_argument(
+        "--max-history-staleness-days",
+        type=int,
+        default=None,
+        help="Optional max days between market_date and last_history_date (0 disables staleness filtering).",
+    )
+    parser.add_argument(
+        "--min-recency-factor",
+        type=float,
+        default=None,
+        help="Optional minimum recency_factor required to keep a play (0 disables).",
+    )
     parser.add_argument(
         "--min-recommendation",
         type=str,
@@ -204,6 +216,8 @@ def resolve_policy(args: argparse.Namespace):
         "elite_pct": args.elite_pct,
         "min_ev": args.min_ev,
         "min_final_confidence": args.min_final_confidence,
+        "max_history_staleness_days": args.max_history_staleness_days,
+        "min_recency_factor": args.min_recency_factor,
         "min_recommendation": args.min_recommendation,
         "max_plays_per_player": args.max_plays_per_player,
         "max_plays_per_target": args.max_plays_per_target,
@@ -270,7 +284,10 @@ def apply_weak_play_capacity_overrides(policy_payload: dict) -> dict:
     """
     out = dict(policy_payload)
     min_recommendation = str(out.get("min_recommendation", "consider")).lower()
-    if min_recommendation != "pass":
+    min_ev = float(out.get("min_ev", 0.0))
+    min_final_confidence = float(out.get("min_final_confidence", 0.0))
+    intentionally_weak_gate = (min_recommendation == "pass") and (min_ev < 0.0) and (min_final_confidence <= 0.0)
+    if not intentionally_weak_gate:
         out["weak_play_expanded_board"] = False
         return out
 
@@ -582,6 +599,8 @@ def main() -> None:
         append_agreement_min=policy_payload.get("append_agreement_min", 3),
         append_edge_percentile_min=policy_payload.get("append_edge_percentile_min", 0.90),
         append_max_extra_plays=policy_payload.get("append_max_extra_plays", 3),
+        max_history_staleness_days=policy_payload.get("max_history_staleness_days", 0),
+        min_recency_factor=policy_payload.get("min_recency_factor", 0.0),
     )
     args.final_csv_out.parent.mkdir(parents=True, exist_ok=True)
     args.final_json_out.parent.mkdir(parents=True, exist_ok=True)
