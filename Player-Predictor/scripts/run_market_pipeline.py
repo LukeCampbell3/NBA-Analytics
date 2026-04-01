@@ -56,7 +56,7 @@ except Exception:
 
 
 POLICY_PROFILES = {config.name: config for config in build_default_shadow_strategies()}
-DEFAULT_POLICY = POLICY_PROFILES["production_abs_edge_b12"]
+DEFAULT_POLICY = POLICY_PROFILES["production_board_objective_b12"]
 TARGETS = ["PTS", "TRB", "AST"]
 
 
@@ -68,7 +68,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--policy-profile",
         type=str,
-        default="production_abs_edge_b12",
+        default="production_board_objective_b12",
         choices=sorted(POLICY_PROFILES.keys()),
         help="Policy profile used for live play selection defaults.",
     )
@@ -157,7 +157,7 @@ def parse_args() -> argparse.Namespace:
         "--selection-mode",
         type=str,
         default=None,
-        choices=["ev_adjusted", "edge", "abs_edge", "xgb_ltr", "robust_reranker", "thompson_ev", "set_theory", "edge_append_shadow"],
+        choices=["ev_adjusted", "edge", "abs_edge", "xgb_ltr", "robust_reranker", "thompson_ev", "set_theory", "edge_append_shadow", "board_objective"],
         help="Final board ranking mode before portfolio constraints.",
     )
     parser.add_argument("--thompson-temperature", type=float, default=None, help="Temperature used for Thompson sampling.")
@@ -169,6 +169,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--append-agreement-min", type=int, default=None, help="Minimum E/T/V agreement count required for append-only shadow candidates.")
     parser.add_argument("--append-edge-percentile-min", type=float, default=None, help="Minimum abs-edge percentile required for append-only shadow candidates.")
     parser.add_argument("--append-max-extra-plays", type=int, default=None, help="Maximum append-only shadow plays added beyond the edge base board.")
+    parser.add_argument("--board-objective-overfetch", type=float, default=None, help="Candidate overfetch multiplier for board-objective mode.")
+    parser.add_argument("--board-objective-candidate-limit", type=int, default=None, help="Candidate universe cap for board-objective mode (0 disables).")
+    parser.add_argument("--board-objective-max-search-nodes", type=int, default=None, help="Branch-and-bound node cap for board-objective exact solve.")
+    parser.add_argument("--board-objective-lambda-corr", type=float, default=None, help="Correlation penalty weight for board-objective mode.")
+    parser.add_argument("--board-objective-lambda-conc", type=float, default=None, help="Concentration penalty weight for board-objective mode.")
+    parser.add_argument("--board-objective-lambda-unc", type=float, default=None, help="Uncertainty penalty weight for board-objective mode.")
+    parser.add_argument("--board-objective-corr-same-game", type=float, default=None, help="Pairwise dependency contribution for same-game candidates.")
+    parser.add_argument("--board-objective-corr-same-player", type=float, default=None, help="Pairwise dependency contribution for same-player candidates.")
+    parser.add_argument("--board-objective-corr-same-target", type=float, default=None, help="Pairwise dependency contribution for same-target candidates.")
+    parser.add_argument("--board-objective-corr-same-direction", type=float, default=None, help="Pairwise dependency contribution for same-direction candidates.")
+    parser.add_argument("--board-objective-corr-same-script-cluster", type=float, default=None, help="Pairwise dependency contribution for same-script-cluster candidates.")
+    parser.add_argument("--board-objective-swap-candidates", type=int, default=None, help="Out-of-universe candidates considered for swap optimization.")
+    parser.add_argument("--board-objective-swap-rounds", type=int, default=None, help="Max improving swap rounds for board-objective mode.")
     parser.add_argument(
         "--disable-conditional-framework",
         action="store_true",
@@ -241,6 +254,19 @@ def resolve_policy(args: argparse.Namespace):
         "append_agreement_min": args.append_agreement_min,
         "append_edge_percentile_min": args.append_edge_percentile_min,
         "append_max_extra_plays": args.append_max_extra_plays,
+        "board_objective_overfetch": args.board_objective_overfetch,
+        "board_objective_candidate_limit": args.board_objective_candidate_limit,
+        "board_objective_max_search_nodes": args.board_objective_max_search_nodes,
+        "board_objective_lambda_corr": args.board_objective_lambda_corr,
+        "board_objective_lambda_conc": args.board_objective_lambda_conc,
+        "board_objective_lambda_unc": args.board_objective_lambda_unc,
+        "board_objective_corr_same_game": args.board_objective_corr_same_game,
+        "board_objective_corr_same_player": args.board_objective_corr_same_player,
+        "board_objective_corr_same_target": args.board_objective_corr_same_target,
+        "board_objective_corr_same_direction": args.board_objective_corr_same_direction,
+        "board_objective_corr_same_script_cluster": args.board_objective_corr_same_script_cluster,
+        "board_objective_swap_candidates": args.board_objective_swap_candidates,
+        "board_objective_swap_rounds": args.board_objective_swap_rounds,
         "conditional_framework_enabled": None if not args.disable_conditional_framework else False,
         "conditional_framework_mode": args.conditional_framework_mode,
         "conditional_failure_memory_path": str(args.conditional_failure_memory_path) if args.conditional_failure_memory_path else None,
@@ -602,6 +628,19 @@ def main() -> None:
         append_agreement_min=policy_payload.get("append_agreement_min", 3),
         append_edge_percentile_min=policy_payload.get("append_edge_percentile_min", 0.90),
         append_max_extra_plays=policy_payload.get("append_max_extra_plays", 3),
+        board_objective_overfetch=policy_payload.get("board_objective_overfetch", 4.0),
+        board_objective_candidate_limit=policy_payload.get("board_objective_candidate_limit", 36),
+        board_objective_max_search_nodes=policy_payload.get("board_objective_max_search_nodes", 750000),
+        board_objective_lambda_corr=policy_payload.get("board_objective_lambda_corr", 0.12),
+        board_objective_lambda_conc=policy_payload.get("board_objective_lambda_conc", 0.07),
+        board_objective_lambda_unc=policy_payload.get("board_objective_lambda_unc", 0.06),
+        board_objective_corr_same_game=policy_payload.get("board_objective_corr_same_game", 0.65),
+        board_objective_corr_same_player=policy_payload.get("board_objective_corr_same_player", 1.0),
+        board_objective_corr_same_target=policy_payload.get("board_objective_corr_same_target", 0.15),
+        board_objective_corr_same_direction=policy_payload.get("board_objective_corr_same_direction", 0.05),
+        board_objective_corr_same_script_cluster=policy_payload.get("board_objective_corr_same_script_cluster", 0.30),
+        board_objective_swap_candidates=policy_payload.get("board_objective_swap_candidates", 18),
+        board_objective_swap_rounds=policy_payload.get("board_objective_swap_rounds", 2),
         max_history_staleness_days=policy_payload.get("max_history_staleness_days", 0),
         min_recency_factor=policy_payload.get("min_recency_factor", 0.0),
     )

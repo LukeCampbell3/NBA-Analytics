@@ -40,7 +40,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--policy-profile",
         type=str,
-        default="production_abs_edge_b12",
+        default="production_board_objective_b12",
         help="Primary market policy profile for the live board.",
     )
     parser.add_argument(
