@@ -148,7 +148,7 @@ def parse_args() -> argparse.Namespace:
         "--selection-mode",
         type=str,
         default="thompson_ev",
-        choices=["ev_adjusted", "edge", "xgb_ltr", "robust_reranker", "thompson_ev", "set_theory", "edge_append_shadow"],
+        choices=["ev_adjusted", "edge", "abs_edge", "xgb_ltr", "robust_reranker", "thompson_ev", "set_theory", "edge_append_shadow"],
         help="Final ranking mode used before portfolio constraints are applied.",
     )
     parser.add_argument(
@@ -865,6 +865,8 @@ def compute_final_board(
         rank_columns = ["robust_reranker_prob", "robust_reranker_blend_raw", "ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
     elif effective_mode == "edge":
         rank_columns = ["edge", "abs_edge", "expected_win_rate", "final_confidence"]
+    elif effective_mode == "abs_edge":
+        rank_columns = ["abs_edge", "ev_adjusted", "expected_win_rate", "final_confidence"]
     elif effective_mode == "thompson_ev":
         rank_columns = ["thompson_ev", "ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
     elif effective_mode == "set_theory":

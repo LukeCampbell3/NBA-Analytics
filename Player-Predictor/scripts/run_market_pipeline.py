@@ -56,7 +56,7 @@ except Exception:
 
 
 POLICY_PROFILES = {config.name: config for config in build_default_shadow_strategies()}
-DEFAULT_POLICY = POLICY_PROFILES["production_calibrated"]
+DEFAULT_POLICY = POLICY_PROFILES["production_abs_edge_b12"]
 TARGETS = ["PTS", "TRB", "AST"]
 
 
@@ -68,7 +68,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--policy-profile",
         type=str,
-        default="production_calibrated",
+        default="production_abs_edge_b12",
         choices=sorted(POLICY_PROFILES.keys()),
         help="Policy profile used for live play selection defaults.",
     )
@@ -156,7 +156,7 @@ def parse_args() -> argparse.Namespace:
         "--selection-mode",
         type=str,
         default=None,
-        choices=["ev_adjusted", "edge", "xgb_ltr", "robust_reranker", "thompson_ev", "set_theory", "edge_append_shadow"],
+        choices=["ev_adjusted", "edge", "abs_edge", "xgb_ltr", "robust_reranker", "thompson_ev", "set_theory", "edge_append_shadow"],
         help="Final board ranking mode before portfolio constraints.",
     )
     parser.add_argument("--thompson-temperature", type=float, default=None, help="Temperature used for Thompson sampling.")
@@ -255,11 +255,11 @@ def resolve_policy(args: argparse.Namespace):
 def apply_heuristic_policy_overrides(policy_payload: dict) -> dict:
     """
     When historical calibration rows are unavailable, switch to a deterministic
-    edge-first fallback policy so boards remain actionable.
+    abs-edge fallback policy so boards remain actionable.
     """
     out = dict(policy_payload)
-    out["selection_mode"] = "edge"
-    out["ranking_mode"] = "edge"
+    out["selection_mode"] = "abs_edge"
+    out["ranking_mode"] = "abs_edge"
     out["min_recommendation"] = "pass"
     out["min_ev"] = min(float(out.get("min_ev", 0.0)), -0.20)
     out["min_final_confidence"] = min(float(out.get("min_final_confidence", 0.0)), 0.0)
