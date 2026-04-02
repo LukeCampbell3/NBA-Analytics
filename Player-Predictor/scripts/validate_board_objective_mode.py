@@ -81,6 +81,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--rows-csv-out", type=Path, default=None, help="Row-level output CSV.")
     parser.add_argument("--summary-csv-out", type=Path, default=None, help="Mode summary output CSV.")
     parser.add_argument("--summary-json-out", type=Path, default=None, help="Mode summary output JSON.")
+    parser.add_argument(
+        "--selected-board-calibrator-json",
+        type=Path,
+        default=REPO_ROOT / "model" / "analysis" / "calibration" / "selected_board_calibrator.json",
+        help="Optional selected-board calibrator payload JSON.",
+    )
+    parser.add_argument(
+        "--disable-selected-board-calibration",
+        action="store_true",
+        help="Disable selected-board calibration during replay validation.",
+    )
     return parser.parse_args()
 
 
@@ -289,9 +300,25 @@ def _policy_kwargs(payload: dict, mode: str) -> dict:
     }
 
 
+def _load_selected_board_calibrator(path: Path, disabled: bool) -> dict | None:
+    if disabled:
+        return None
+    resolved = path.resolve()
+    if not resolved.exists():
+        return None
+    try:
+        return json.loads(resolved.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
 def main() -> None:
     args = parse_args()
     base_profile = POLICY_PROFILES[args.policy_profile].to_dict()
+    selected_board_calibrator = _load_selected_board_calibrator(
+        args.selected_board_calibrator_json,
+        disabled=bool(args.disable_selected_board_calibration),
+    )
 
     mode_token = "_".join(args.modes)
     token = f"{args.start_run_date}_{args.end_run_date}"
@@ -317,7 +344,11 @@ def main() -> None:
         if selector_df.empty:
             continue
         for mode in args.modes:
-            board = compute_final_board(selector_df.copy(), **_policy_kwargs(base_profile, mode=mode))
+            kwargs = _policy_kwargs(base_profile, mode=mode)
+            kwargs["selected_board_calibrator"] = selected_board_calibrator
+            run_month = pd.to_datetime(run_date, format="%Y%m%d", errors="coerce")
+            kwargs["selected_board_calibration_month"] = run_month.strftime("%Y-%m") if pd.notna(run_month) else None
+            board = compute_final_board(selector_df.copy(), **kwargs)
             if board.empty:
                 continue
             for _, row in board.iterrows():
@@ -358,6 +389,7 @@ def main() -> None:
                         "prediction": float(pd.to_numeric(pd.Series([row.get("prediction")]), errors="coerce").iloc[0]),
                         "expected_win_rate": float(pd.to_numeric(pd.Series([row.get("expected_win_rate")]), errors="coerce").fillna(np.nan).iloc[0]),
                         "board_play_win_prob": float(pd.to_numeric(pd.Series([row.get("board_play_win_prob")]), errors="coerce").fillna(np.nan).iloc[0]),
+                        "p_calibrated": float(pd.to_numeric(pd.Series([row.get("p_calibrated")]), errors="coerce").fillna(np.nan).iloc[0]),
                         "ev": float(pd.to_numeric(pd.Series([row.get("ev")]), errors="coerce").fillna(np.nan).iloc[0]),
                         "actual": float(actual) if pd.notna(actual) else np.nan,
                         "result": result,
@@ -379,6 +411,12 @@ def main() -> None:
         pushes = int((part["result"] == "push").sum())
         missing = int((part["result"] == "missing").sum())
         resolved_count = int(len(resolved))
+        resolved_probs = pd.to_numeric(
+            resolved["p_calibrated"] if "p_calibrated" in resolved.columns else resolved["expected_win_rate"],
+            errors="coerce",
+        ).dropna()
+        avg_expected_resolved = float(resolved_probs.mean()) if len(resolved_probs) else np.nan
+        hit_rate = float(wins / resolved_count) if resolved_count > 0 else np.nan
         summary_rows.append(
             {
                 "mode": mode,
@@ -392,9 +430,12 @@ def main() -> None:
                 "losses": losses,
                 "pushes": pushes,
                 "missing": missing,
-                "hit_rate": float(wins / resolved_count) if resolved_count > 0 else np.nan,
+                "hit_rate": hit_rate,
                 "avg_expected_win_rate": float(pd.to_numeric(part["expected_win_rate"], errors="coerce").mean()),
                 "avg_board_play_win_prob": float(pd.to_numeric(part["board_play_win_prob"], errors="coerce").mean()),
+                "avg_p_calibrated": float(pd.to_numeric(part["p_calibrated"], errors="coerce").mean()) if "p_calibrated" in part.columns else np.nan,
+                "avg_expected_resolved": avg_expected_resolved,
+                "calibration_gap_pp": float((hit_rate - avg_expected_resolved) * 100.0) if resolved_count > 0 and avg_expected_resolved == avg_expected_resolved else np.nan,
                 "avg_ev": float(pd.to_numeric(part["ev"], errors="coerce").mean()),
             }
         )

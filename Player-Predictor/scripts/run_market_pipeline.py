@@ -218,6 +218,23 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Optional override for promoted share cap within recoverable weak plays.",
     )
+    parser.add_argument(
+        "--selected-board-calibrator-json",
+        type=Path,
+        default=REPO_ROOT / "model" / "analysis" / "calibration" / "selected_board_calibrator.json",
+        help="Optional selected-board calibrator payload JSON (monthly walk-forward).",
+    )
+    parser.add_argument(
+        "--disable-selected-board-calibration",
+        action="store_true",
+        help="Disable selected-board calibration and keep identity probabilities.",
+    )
+    parser.add_argument(
+        "--selected-board-calibration-month",
+        type=str,
+        default=None,
+        help="Optional YYYY-MM month hint when applying selected-board calibration.",
+    )
     return parser.parse_args()
 
 
@@ -344,23 +361,16 @@ def apply_live_policy_calibration(selector_df: pd.DataFrame, policy_payload: dic
     out = selector_df.copy()
     out["raw_expected_win_rate"] = pd.to_numeric(out["expected_win_rate"], errors="coerce").fillna(0.5)
     out["expected_push_rate"] = pd.to_numeric(out.get("expected_push_rate"), errors="coerce").fillna(0.0).clip(lower=0.0, upper=1.0)
-    out["belief_confidence_factor"] = pd.to_numeric(out.get("belief_confidence_factor"), errors="coerce").fillna(
-        (1.0 - pd.to_numeric(out.get("belief_uncertainty_normalized"), errors="coerce").fillna(1.0)).clip(lower=0.0, upper=1.0)
-    )
-    out["feasibility"] = pd.to_numeric(out.get("feasibility"), errors="coerce").fillna(0.0).clip(lower=0.0, upper=1.0)
-    out["posterior_variance"] = pd.to_numeric(out.get("posterior_variance"), errors="coerce").fillna(0.25).clip(lower=0.0, upper=1.0)
+    non_push = np.clip(1.0 - out["expected_push_rate"], 0.0, 1.0)
 
-    policy_shrink = float(np.clip(policy_payload["probability_shrink_factor"], 0.0, 1.0))
-    confidence = (
-        out["belief_confidence_factor"]
-        * out["feasibility"]
-        * (1.0 - np.clip(np.sqrt(out["posterior_variance"]), 0.0, 1.0))
-    ).clip(lower=0.0, upper=1.0)
-    calibration_weight = np.clip(0.15 + policy_shrink * confidence, 0.10, 0.95)
-    out["policy_calibration_weight"] = calibration_weight
-    out["expected_win_rate"] = calibration_weight * out["raw_expected_win_rate"] + (1.0 - calibration_weight) * 0.5
-    out["expected_win_rate"] = out["expected_win_rate"].clip(lower=0.0, upper=1.0 - out["expected_push_rate"])
-    out["expected_loss_rate"] = np.clip(1.0 - out["expected_win_rate"] - out["expected_push_rate"], 0.0, 1.0)
+    # Single-stage probability policy: keep selector output as the canonical
+    # calibrated probability and avoid additional generic shrink-to-0.5 passes.
+    out["p_selector"] = out["raw_expected_win_rate"].clip(lower=0.0, upper=1.0)
+    out["p_calibrated"] = out["p_selector"].clip(lower=0.0, upper=non_push)
+    out["policy_calibration_weight"] = 1.0
+    out["policy_calibration_source"] = "single_stage_selector"
+    out["expected_win_rate"] = out["p_calibrated"]
+    out["expected_loss_rate"] = np.clip(non_push - out["expected_win_rate"], 0.0, 1.0)
     elite_pct = float(policy_payload["elite_pct"])
     out["recommendation"] = np.where(
         pd.to_numeric(out["gap_percentile"], errors="coerce").fillna(0.0) >= elite_pct,
@@ -463,6 +473,30 @@ def sanitize_for_json(value):
     if isinstance(value, np.generic):
         return value.item()
     return value
+
+
+def load_selected_board_calibrator(path: Path, disabled: bool) -> tuple[dict | None, dict]:
+    if disabled:
+        return None, {"enabled": False, "reason": "disabled_flag"}
+    resolved = path.resolve()
+    if not resolved.exists():
+        return None, {"enabled": False, "reason": "missing_file", "path": str(resolved)}
+    try:
+        payload = json.loads(resolved.read_text(encoding="utf-8"))
+        months = payload.get("months", {}) if isinstance(payload, dict) else {}
+        return payload, {
+            "enabled": True,
+            "path": str(resolved),
+            "months": int(len(months)) if isinstance(months, dict) else 0,
+            "version": int(payload.get("version", 0)) if isinstance(payload, dict) else 0,
+        }
+    except Exception as exc:
+        return None, {
+            "enabled": False,
+            "reason": "load_error",
+            "path": str(resolved),
+            "error": f"{type(exc).__name__}: {exc}",
+        }
 
 
 def validate_pipeline_inputs(market_df: pd.DataFrame, slate_df: pd.DataFrame, skipped_rows: list[dict]) -> dict:
@@ -593,6 +627,11 @@ def main() -> None:
     args.selector_csv_out.parent.mkdir(parents=True, exist_ok=True)
     selector_df.to_csv(args.selector_csv_out, index=False)
 
+    selected_board_calibrator, selected_board_calibrator_summary = load_selected_board_calibrator(
+        args.selected_board_calibrator_json,
+        disabled=bool(args.disable_selected_board_calibration),
+    )
+
     final_board = compute_final_board(
         selector_df,
         american_odds=policy_payload["american_odds"],
@@ -643,6 +682,8 @@ def main() -> None:
         board_objective_swap_rounds=policy_payload.get("board_objective_swap_rounds", 2),
         max_history_staleness_days=policy_payload.get("max_history_staleness_days", 0),
         min_recency_factor=policy_payload.get("min_recency_factor", 0.0),
+        selected_board_calibrator=selected_board_calibrator,
+        selected_board_calibration_month=args.selected_board_calibration_month,
     )
     args.final_csv_out.parent.mkdir(parents=True, exist_ok=True)
     args.final_json_out.parent.mkdir(parents=True, exist_ok=True)
@@ -659,6 +700,17 @@ def main() -> None:
     tier_a_board.to_csv(tier_a_csv, index=False)
     tier_b_board.to_csv(tier_b_csv, index=False)
 
+    requested_board_size = int(policy_payload.get("max_total_plays", 0))
+    final_board_size = int(len(final_board))
+    board_diagnostics = {
+        "requested_board_size": requested_board_size,
+        "selector_pool_size": int(len(selector_df)),
+        "final_board_size": final_board_size,
+        "size_deficit": int(max(0, requested_board_size - final_board_size)) if requested_board_size > 0 else 0,
+        "deficit_fill_active": bool(requested_board_size > 0 and final_board_size < requested_board_size),
+        "avg_expected_wins_per_board": float(pd.to_numeric(final_board.get("expected_win_rate"), errors="coerce").fillna(0.0).sum()),
+    }
+
     payload = {
         "manifest_path": str(manifest_path),
         "run_id": predictor.metadata.get("run_id") if predictor is not None else None,
@@ -673,6 +725,7 @@ def main() -> None:
         "accept_reject": accept_reject_summary,
         "robust_reranker": robust_reranker_summary,
         "conditional_framework": conditional_summary,
+        "selected_board_calibrator": selected_board_calibrator_summary,
         "slate_rows": int(len(slate_df)),
         "selector_rows": int(len(selector_df)),
         "final_rows": int(len(final_board)),
@@ -680,6 +733,7 @@ def main() -> None:
         "tier_b_rows": int(len(tier_b_board)),
         "tier_a_csv": str(tier_a_csv),
         "tier_b_csv": str(tier_b_csv),
+        "board_diagnostics": board_diagnostics,
         "input_validation": input_validation,
         "top_plays": final_board.head(20).to_dict(orient="records"),
         "tier_a_top_plays": tier_a_board.head(20).to_dict(orient="records"),
@@ -703,6 +757,8 @@ def main() -> None:
     print(f"Tier A CSV:    {tier_a_csv}")
     print(f"Tier B CSV:    {tier_b_csv}")
     print(f"Final JSON:    {args.final_json_out}")
+    print(f"Selected-board calibrator: {selected_board_calibrator_summary}")
+    print(f"Board diagnostics: {board_diagnostics}")
     print("Input validation:")
     print(f"  Market rows:        {input_validation['market_lines']['market_rows']}")
     print(f"  Prior-history rows: {input_validation['prior_game_data']['slate_rows']}")
