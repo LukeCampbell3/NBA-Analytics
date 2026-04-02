@@ -235,6 +235,34 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Optional YYYY-MM month hint when applying selected-board calibration.",
     )
+    parser.add_argument(
+        "--learned-gate-json",
+        type=Path,
+        default=REPO_ROOT / "model" / "analysis" / "calibration" / "learned_pool_gate.json",
+        help="Optional learned pool-gate payload JSON.",
+    )
+    parser.add_argument(
+        "--disable-learned-gate",
+        action="store_true",
+        help="Disable learned pool-gate filtering even if policy enables it.",
+    )
+    parser.add_argument(
+        "--enable-learned-gate",
+        action="store_true",
+        help="Enable learned pool-gate filtering even if policy disables it.",
+    )
+    parser.add_argument(
+        "--learned-gate-month",
+        type=str,
+        default=None,
+        help="Optional YYYY-MM month hint when applying learned pool-gate thresholds.",
+    )
+    parser.add_argument(
+        "--learned-gate-min-rows",
+        type=int,
+        default=None,
+        help="Minimum rows that must pass learned gate before enforcement (0 delegates to payload/policy).",
+    )
     return parser.parse_args()
 
 
@@ -290,6 +318,8 @@ def resolve_policy(args: argparse.Namespace):
         "conditional_max_promotions_per_slate": args.conditional_max_promotions_per_slate,
         "conditional_max_promotions_per_game": args.conditional_max_promotions_per_game,
         "conditional_max_promoted_share_of_recoverable": args.conditional_max_promoted_share,
+        "learned_gate_enabled": True if args.enable_learned_gate else (False if args.disable_learned_gate else None),
+        "learned_gate_min_rows": args.learned_gate_min_rows,
     }
     for key, value in override_fields.items():
         if value is not None:
@@ -318,6 +348,7 @@ def apply_heuristic_policy_overrides(policy_payload: dict) -> dict:
     out["medium_tier_percentile"] = min(float(out.get("medium_tier_percentile", 0.80)), 0.00)
     out["strong_tier_percentile"] = min(float(out.get("strong_tier_percentile", 0.90)), 0.00)
     out["elite_tier_percentile"] = min(float(out.get("elite_tier_percentile", out.get("elite_pct", 0.95))), 0.00)
+    out["learned_gate_enabled"] = False
     out["heuristic_overrides_applied"] = True
     return out
 
@@ -499,6 +530,31 @@ def load_selected_board_calibrator(path: Path, disabled: bool) -> tuple[dict | N
         }
 
 
+def load_learned_pool_gate(path: Path, disabled: bool) -> tuple[dict | None, dict]:
+    if disabled:
+        return None, {"enabled": False, "reason": "disabled_flag"}
+    resolved = path.resolve()
+    if not resolved.exists():
+        return None, {"enabled": False, "reason": "missing_file", "path": str(resolved)}
+    try:
+        payload = json.loads(resolved.read_text(encoding="utf-8"))
+        months = payload.get("months", {}) if isinstance(payload, dict) else {}
+        return payload, {
+            "enabled": True,
+            "path": str(resolved),
+            "months": int(len(months)) if isinstance(months, dict) else 0,
+            "version": int(payload.get("version", 0)) if isinstance(payload, dict) else 0,
+            "recommended_min_rows": int(payload.get("recommended_min_rows", 0)) if isinstance(payload, dict) else 0,
+        }
+    except Exception as exc:
+        return None, {
+            "enabled": False,
+            "reason": "load_error",
+            "path": str(resolved),
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+
+
 def validate_pipeline_inputs(market_df: pd.DataFrame, slate_df: pd.DataFrame, skipped_rows: list[dict]) -> dict:
     market_validation = {
         "market_rows": int(len(market_df)),
@@ -550,6 +606,8 @@ def validate_pipeline_inputs(market_df: pd.DataFrame, slate_df: pd.DataFrame, sk
 
 def main() -> None:
     args = parse_args()
+    if args.enable_learned_gate and args.disable_learned_gate:
+        raise ValueError("Cannot pass both --enable-learned-gate and --disable-learned-gate.")
     policy_payload = resolve_policy(args)
 
     manifest_path = resolve_manifest_path(args.run_id, args.latest)
@@ -631,6 +689,11 @@ def main() -> None:
         args.selected_board_calibrator_json,
         disabled=bool(args.disable_selected_board_calibration),
     )
+    learned_gate_disabled = bool(not policy_payload.get("learned_gate_enabled", False))
+    learned_pool_gate, learned_pool_gate_summary = load_learned_pool_gate(
+        args.learned_gate_json,
+        disabled=learned_gate_disabled,
+    )
 
     final_board = compute_final_board(
         selector_df,
@@ -684,6 +747,9 @@ def main() -> None:
         min_recency_factor=policy_payload.get("min_recency_factor", 0.0),
         selected_board_calibrator=selected_board_calibrator,
         selected_board_calibration_month=args.selected_board_calibration_month,
+        learned_gate_payload=learned_pool_gate,
+        learned_gate_month=args.learned_gate_month,
+        learned_gate_min_rows=int(policy_payload.get("learned_gate_min_rows", 0)),
     )
     args.final_csv_out.parent.mkdir(parents=True, exist_ok=True)
     args.final_json_out.parent.mkdir(parents=True, exist_ok=True)
@@ -726,6 +792,7 @@ def main() -> None:
         "robust_reranker": robust_reranker_summary,
         "conditional_framework": conditional_summary,
         "selected_board_calibrator": selected_board_calibrator_summary,
+        "learned_pool_gate": learned_pool_gate_summary,
         "slate_rows": int(len(slate_df)),
         "selector_rows": int(len(selector_df)),
         "final_rows": int(len(final_board)),
@@ -758,6 +825,7 @@ def main() -> None:
     print(f"Tier B CSV:    {tier_b_csv}")
     print(f"Final JSON:    {args.final_json_out}")
     print(f"Selected-board calibrator: {selected_board_calibrator_summary}")
+    print(f"Learned pool gate: {learned_pool_gate_summary}")
     print(f"Board diagnostics: {board_diagnostics}")
     print("Input validation:")
     print(f"  Market rows:        {input_validation['market_lines']['market_rows']}")

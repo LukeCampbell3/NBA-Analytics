@@ -35,6 +35,23 @@ except Exception:  # pragma: no cover - fallback when calibrator module is unava
         return probs.astype("float64"), pd.Series("identity_module_missing", index=frame.index, dtype="object"), ""
 
 try:
+    from decision_engine.learned_pool_gate import apply_learned_pool_gate as apply_learned_pool_gate_fn
+except Exception:  # pragma: no cover - fallback when gate module is unavailable
+    def apply_learned_pool_gate_fn(
+        frame: pd.DataFrame,
+        payload: dict | None,
+        run_date_hint: str | None = None,
+        prob_col: str = "expected_win_rate",
+        target_col: str = "target",
+        direction_col: str = "direction",
+    ) -> tuple[pd.Series, pd.Series, pd.Series, str, dict]:
+        index = frame.index
+        pass_mask = pd.Series(True, index=index, dtype=bool)
+        thresholds = pd.Series(float("-inf"), index=index, dtype="float64")
+        source = pd.Series("identity_module_missing", index=index, dtype="object")
+        return pass_mask, thresholds, source, "", {"enabled": False, "reason": "module_missing"}
+
+try:
     from decision_engine.uncertainty import (
         BELIEF_UNCERTAINTY_LOWER,
         BELIEF_UNCERTAINTY_UPPER,
@@ -335,6 +352,29 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=2,
         help="Maximum number of improving swap rounds after exact board solve.",
+    )
+    parser.add_argument(
+        "--learned-gate-json",
+        type=Path,
+        default=Path("model/analysis/calibration/learned_pool_gate.json"),
+        help="Optional learned pool-gate payload JSON.",
+    )
+    parser.add_argument(
+        "--enable-learned-gate",
+        action="store_true",
+        help="Enable learned pool-gate filtering before final board construction.",
+    )
+    parser.add_argument(
+        "--learned-gate-month",
+        type=str,
+        default=None,
+        help="Optional YYYY-MM month override for learned gate selection.",
+    )
+    parser.add_argument(
+        "--learned-gate-min-rows",
+        type=int,
+        default=0,
+        help="Minimum rows that must pass learned gate before enforcement (0 uses payload/default policy).",
     )
     return parser.parse_args()
 
@@ -1518,6 +1558,9 @@ def compute_final_board(
     min_recency_factor: float = 0.0,
     selected_board_calibrator: dict | None = None,
     selected_board_calibration_month: str | None = None,
+    learned_gate_payload: dict | None = None,
+    learned_gate_month: str | None = None,
+    learned_gate_min_rows: int = 0,
 ) -> pd.DataFrame:
     out = plays.copy()
     if out.empty:
@@ -1623,6 +1666,10 @@ def compute_final_board(
         if out.empty:
             return out
 
+    requested_min_board = max(0, int(min_board_plays))
+    if max_total_plays > 0:
+        requested_min_board = min(requested_min_board, int(max_total_plays))
+
     out = out.loc[out["recommendation_rank"] <= minimum_recommendation_rank(min_recommendation)].copy()
     out = out.loc[out["final_confidence"] >= float(min_final_confidence)].copy()
     out = out.loc[(out["target"] == "PTS") | (out["gap_percentile"] >= float(non_pts_min_gap_percentile))].copy()
@@ -1630,9 +1677,6 @@ def compute_final_board(
         return out
 
     effective_min_ev = float(min_ev)
-    requested_min_board = max(0, int(min_board_plays))
-    if max_total_plays > 0:
-        requested_min_board = min(requested_min_board, int(max_total_plays))
     if requested_min_board > 0:
         ev_sorted = pd.to_numeric(out["ev"], errors="coerce").fillna(-np.inf).sort_values(ascending=False).reset_index(drop=True)
         if not ev_sorted.empty:
@@ -1645,6 +1689,49 @@ def compute_final_board(
         return out
     out["ev_gate_effective_min_ev"] = float(effective_min_ev)
     out["ev_gate_relaxed"] = bool(effective_min_ev < float(min_ev))
+    gate_backfill_pool = out.iloc[0:0].copy()
+    if isinstance(learned_gate_payload, dict):
+        gate_frame = pd.DataFrame(
+            {
+                "expected_win_rate": pd.to_numeric(out.get("expected_win_rate"), errors="coerce").fillna(0.5),
+                "target": out.get("target", pd.Series("", index=out.index)),
+                "direction": out.get("direction", pd.Series("", index=out.index)),
+                "market_date": out.get("market_date", pd.Series("", index=out.index)),
+            },
+            index=out.index,
+        )
+        gate_pass_mask, gate_threshold, gate_source, gate_month, gate_details = apply_learned_pool_gate_fn(
+            gate_frame,
+            payload=learned_gate_payload,
+            run_date_hint=learned_gate_month,
+            prob_col="expected_win_rate",
+            target_col="target",
+            direction_col="direction",
+        )
+        gate_pass_mask = pd.to_numeric(gate_pass_mask, errors="coerce").fillna(0).astype(bool)
+        out["learned_gate_threshold"] = pd.to_numeric(gate_threshold, errors="coerce").fillna(float("-inf"))
+        out["learned_gate_source"] = gate_source.astype(str)
+        out["learned_gate_month"] = str(gate_month or "")
+        out["learned_gate_pass"] = gate_pass_mask
+        out["learned_gate_pass_rows"] = int(gate_pass_mask.sum())
+        out["learned_gate_enabled"] = bool(gate_details.get("enabled", True))
+        gate_required_rows = max(1, int(learned_gate_min_rows) if learned_gate_min_rows is not None else 1)
+        out["learned_gate_required_rows"] = int(gate_required_rows)
+        enforce_gate = bool(gate_pass_mask.sum() >= int(gate_required_rows))
+        out["learned_gate_enforced"] = bool(enforce_gate)
+        out["learned_gate_blocked_reason"] = "" if enforce_gate else "insufficient_pass_rows"
+        if enforce_gate:
+            gate_backfill_pool = out.loc[~gate_pass_mask].copy()
+            out = out.loc[gate_pass_mask].copy()
+            if out.empty:
+                return out
+    else:
+        out["learned_gate_enabled"] = False
+        out["learned_gate_enforced"] = False
+        out["learned_gate_pass"] = True
+        out["learned_gate_pass_rows"] = int(len(out))
+        out["learned_gate_required_rows"] = 0
+        out["learned_gate_blocked_reason"] = ""
 
     effective_mode = str(selection_mode or ranking_mode)
     rank_columns = ["ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
@@ -1848,7 +1935,24 @@ def compute_final_board(
                 filler["expected_profit_fraction"] = pd.to_numeric(filler["bet_fraction"], errors="coerce").fillna(0.0) * pd.to_numeric(
                     filler["ev"], errors="coerce"
                 ).fillna(0.0)
+                filler["learned_gate_override_fill"] = False
                 out = pd.concat([out, filler], axis=0, ignore_index=False)
+                deficit = max(0, int(target_size) - int(len(out)))
+            if deficit > 0 and not gate_backfill_pool.empty:
+                gate_remaining = gate_backfill_pool.loc[~gate_backfill_pool.index.isin(out.index)].copy()
+                if not gate_remaining.empty:
+                    gate_remaining = gate_remaining.sort_values(rank_columns, ascending=[False] * len(rank_columns)).head(deficit).copy()
+                    fallback_fraction = float(np.clip(small_bet_fraction, 0.0, max_bet_fraction))
+                    gate_remaining["allocation_tier"] = "fallback_small"
+                    gate_remaining["allocation_action"] = "fallback_small"
+                    gate_remaining["bet_fraction_raw"] = fallback_fraction
+                    gate_remaining["bet_fraction_scale"] = 1.0
+                    gate_remaining["bet_fraction"] = fallback_fraction
+                    gate_remaining["expected_profit_fraction"] = pd.to_numeric(gate_remaining["bet_fraction"], errors="coerce").fillna(0.0) * pd.to_numeric(
+                        gate_remaining["ev"], errors="coerce"
+                    ).fillna(0.0)
+                    gate_remaining["learned_gate_override_fill"] = True
+                    out = pd.concat([out, gate_remaining], axis=0, ignore_index=False)
 
     if max_total_bet_fraction > 0 and float(pd.to_numeric(out.get("bet_fraction"), errors="coerce").fillna(0.0).sum()) > float(max_total_bet_fraction):
         scale = float(max_total_bet_fraction) / float(pd.to_numeric(out.get("bet_fraction"), errors="coerce").fillna(0.0).sum())
@@ -1856,6 +1960,10 @@ def compute_final_board(
         if "bet_fraction_scale" in out.columns:
             out["bet_fraction_scale"] = pd.to_numeric(out["bet_fraction_scale"], errors="coerce").fillna(1.0) * scale
         out["expected_profit_fraction"] = pd.to_numeric(out["bet_fraction"], errors="coerce").fillna(0.0) * pd.to_numeric(out["ev"], errors="coerce").fillna(0.0)
+    if "learned_gate_override_fill" not in out.columns:
+        out["learned_gate_override_fill"] = False
+    else:
+        out["learned_gate_override_fill"] = pd.to_numeric(out["learned_gate_override_fill"], errors="coerce").fillna(0).astype(bool)
     out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).copy()
     out["selected_rank"] = np.arange(1, len(out) + 1)
     if "_source_index" in out.columns:
@@ -1872,6 +1980,39 @@ def main() -> None:
         raise FileNotFoundError(f"Selector CSV not found: {csv_path}")
 
     plays = pd.read_csv(csv_path)
+    learned_gate_payload = None
+    learned_gate_summary: dict[str, object] = {"enabled": False, "reason": "disabled_flag"}
+    if args.enable_learned_gate:
+        learned_gate_path = args.learned_gate_json.resolve()
+        if learned_gate_path.exists():
+            try:
+                learned_gate_payload = json.loads(learned_gate_path.read_text(encoding="utf-8"))
+                month_count = 0
+                if isinstance(learned_gate_payload, dict):
+                    months = learned_gate_payload.get("months", {})
+                    if isinstance(months, dict):
+                        month_count = int(len(months))
+                learned_gate_summary = {
+                    "enabled": True,
+                    "path": str(learned_gate_path),
+                    "months": month_count,
+                    "version": int(learned_gate_payload.get("version", 0)) if isinstance(learned_gate_payload, dict) else 0,
+                }
+            except Exception as exc:
+                learned_gate_payload = None
+                learned_gate_summary = {
+                    "enabled": False,
+                    "reason": "load_error",
+                    "path": str(learned_gate_path),
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+        else:
+            learned_gate_summary = {
+                "enabled": False,
+                "reason": "missing_file",
+                "path": str(learned_gate_path),
+            }
+
     final_board = compute_final_board(
         plays,
         american_odds=args.american_odds,
@@ -1922,6 +2063,9 @@ def main() -> None:
         board_objective_swap_rounds=args.board_objective_swap_rounds,
         max_history_staleness_days=args.max_history_staleness_days,
         min_recency_factor=args.min_recency_factor,
+        learned_gate_payload=learned_gate_payload,
+        learned_gate_month=args.learned_gate_month,
+        learned_gate_min_rows=args.learned_gate_min_rows,
     )
 
     args.csv_out.parent.mkdir(parents=True, exist_ok=True)
@@ -1981,6 +2125,9 @@ def main() -> None:
         "board_objective_swap_rounds": int(args.board_objective_swap_rounds),
         "max_history_staleness_days": int(args.max_history_staleness_days),
         "min_recency_factor": float(args.min_recency_factor),
+        "learned_gate": learned_gate_summary,
+        "learned_gate_min_rows": int(args.learned_gate_min_rows),
+        "learned_gate_month": str(args.learned_gate_month or ""),
         "top_plays": final_board.head(20).to_dict(orient="records"),
     }
     args.json_out.write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -1992,6 +2139,8 @@ def main() -> None:
     print(f"Output rows:  {len(final_board)}")
     print(f"CSV:          {args.csv_out}")
     print(f"JSON:         {args.json_out}")
+    if args.enable_learned_gate:
+        print(f"Learned gate: {learned_gate_summary}")
     if not final_board.empty:
         show_cols = [
             "player",

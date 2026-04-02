@@ -92,6 +92,23 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Disable selected-board calibration during replay validation.",
     )
+    parser.add_argument(
+        "--learned-gate-json",
+        type=Path,
+        default=REPO_ROOT / "model" / "analysis" / "calibration" / "learned_pool_gate.json",
+        help="Optional learned pool-gate payload JSON.",
+    )
+    parser.add_argument(
+        "--enable-learned-gate",
+        action="store_true",
+        help="Enable learned pool-gate filtering during replay validation.",
+    )
+    parser.add_argument(
+        "--learned-gate-min-rows",
+        type=int,
+        default=0,
+        help="Minimum rows that must pass learned gate before enforcement (0 uses payload/default policy).",
+    )
     return parser.parse_args()
 
 
@@ -297,11 +314,24 @@ def _policy_kwargs(payload: dict, mode: str) -> dict:
         "board_objective_swap_rounds": payload.get("board_objective_swap_rounds", 2),
         "max_history_staleness_days": payload.get("max_history_staleness_days", 0),
         "min_recency_factor": payload.get("min_recency_factor", 0.0),
+        "learned_gate_min_rows": payload.get("learned_gate_min_rows", 0),
     }
 
 
 def _load_selected_board_calibrator(path: Path, disabled: bool) -> dict | None:
     if disabled:
+        return None
+    resolved = path.resolve()
+    if not resolved.exists():
+        return None
+    try:
+        return json.loads(resolved.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def _load_learned_pool_gate(path: Path, enabled: bool) -> dict | None:
+    if not enabled:
         return None
     resolved = path.resolve()
     if not resolved.exists():
@@ -318,6 +348,10 @@ def main() -> None:
     selected_board_calibrator = _load_selected_board_calibrator(
         args.selected_board_calibrator_json,
         disabled=bool(args.disable_selected_board_calibration),
+    )
+    learned_pool_gate = _load_learned_pool_gate(
+        args.learned_gate_json,
+        enabled=bool(args.enable_learned_gate),
     )
 
     mode_token = "_".join(args.modes)
@@ -348,6 +382,9 @@ def main() -> None:
             kwargs["selected_board_calibrator"] = selected_board_calibrator
             run_month = pd.to_datetime(run_date, format="%Y%m%d", errors="coerce")
             kwargs["selected_board_calibration_month"] = run_month.strftime("%Y-%m") if pd.notna(run_month) else None
+            kwargs["learned_gate_payload"] = learned_pool_gate
+            kwargs["learned_gate_month"] = run_month.strftime("%Y-%m") if pd.notna(run_month) else None
+            kwargs["learned_gate_min_rows"] = int(args.learned_gate_min_rows)
             board = compute_final_board(selector_df.copy(), **kwargs)
             if board.empty:
                 continue
@@ -391,6 +428,10 @@ def main() -> None:
                         "board_play_win_prob": float(pd.to_numeric(pd.Series([row.get("board_play_win_prob")]), errors="coerce").fillna(np.nan).iloc[0]),
                         "p_calibrated": float(pd.to_numeric(pd.Series([row.get("p_calibrated")]), errors="coerce").fillna(np.nan).iloc[0]),
                         "ev": float(pd.to_numeric(pd.Series([row.get("ev")]), errors="coerce").fillna(np.nan).iloc[0]),
+                        "learned_gate_enabled": bool(pd.to_numeric(pd.Series([row.get("learned_gate_enabled")]), errors="coerce").fillna(0).iloc[0]),
+                        "learned_gate_enforced": bool(pd.to_numeric(pd.Series([row.get("learned_gate_enforced")]), errors="coerce").fillna(0).iloc[0]),
+                        "learned_gate_pass": bool(pd.to_numeric(pd.Series([row.get("learned_gate_pass")]), errors="coerce").fillna(1).iloc[0]),
+                        "learned_gate_threshold": float(pd.to_numeric(pd.Series([row.get("learned_gate_threshold")]), errors="coerce").fillna(np.nan).iloc[0]),
                         "actual": float(actual) if pd.notna(actual) else np.nan,
                         "result": result,
                     }
@@ -437,6 +478,8 @@ def main() -> None:
                 "avg_expected_resolved": avg_expected_resolved,
                 "calibration_gap_pp": float((hit_rate - avg_expected_resolved) * 100.0) if resolved_count > 0 and avg_expected_resolved == avg_expected_resolved else np.nan,
                 "avg_ev": float(pd.to_numeric(part["ev"], errors="coerce").mean()),
+                "learned_gate_enforced_rate": float(pd.to_numeric(part.get("learned_gate_enforced"), errors="coerce").fillna(0).mean()) if "learned_gate_enforced" in part.columns else np.nan,
+                "learned_gate_pass_rate": float(pd.to_numeric(part.get("learned_gate_pass"), errors="coerce").fillna(1).mean()) if "learned_gate_pass" in part.columns else np.nan,
             }
         )
 

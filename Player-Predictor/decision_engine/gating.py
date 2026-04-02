@@ -86,6 +86,8 @@ class StrategyConfig:
     board_objective_corr_same_script_cluster: float = 0.30
     board_objective_swap_candidates: int = 18
     board_objective_swap_rounds: int = 2
+    learned_gate_enabled: bool = False
+    learned_gate_min_rows: int = 0
     max_plays_per_game: int = 2
     max_plays_per_script_cluster: int = 2
     thompson_temperature: float = 1.0

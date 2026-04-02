@@ -178,6 +178,8 @@ def build_default_shadow_strategies() -> list[StrategyConfig]:
             board_objective_corr_same_script_cluster=0.30,
             board_objective_swap_candidates=18,
             board_objective_swap_rounds=2,
+            learned_gate_enabled=True,
+            learned_gate_min_rows=0,
             target_thresholds={
                 "PTS": {"consider_pct": 0.80, "strong_pct": 0.90, "elite_pct": 0.95},
                 "TRB": {"consider_pct": 0.90, "strong_pct": 0.95, "elite_pct": 0.975},
