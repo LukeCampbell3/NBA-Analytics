@@ -175,6 +175,13 @@ def fit_selected_board_calibrator_payload(
     df["_direction"] = df[direction_col].astype(str).str.upper().str.strip()
 
     months = sorted(df["_month"].dropna().unique().tolist())
+    months_to_fit = months[:]
+    if months:
+        last_month = pd.to_datetime(f"{months[-1]}-01", errors="coerce")
+        if pd.notna(last_month):
+            next_month = (last_month + pd.offsets.MonthBegin(1)).strftime("%Y-%m")
+            if next_month not in months_to_fit:
+                months_to_fit.append(next_month)
     payload: dict[str, Any] = {
         "version": 1,
         "config": cfg.__dict__.copy(),
@@ -182,7 +189,7 @@ def fit_selected_board_calibrator_payload(
         "months": {},
     }
 
-    for month in months:
+    for month in months_to_fit:
         month_start = pd.to_datetime(f"{month}-01", errors="coerce")
         if pd.isna(month_start):
             continue

@@ -142,14 +142,39 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--disable-selected-board-calibration",
+        dest="disable_selected_board_calibration",
         action="store_true",
+        default=True,
         help="Disable selected-board calibration in child market pipeline runs.",
+    )
+    parser.add_argument(
+        "--enable-selected-board-calibration",
+        dest="disable_selected_board_calibration",
+        action="store_false",
+        help="Enable selected-board calibration in child market pipeline runs.",
     )
     parser.add_argument(
         "--selected-board-calibration-month",
         type=str,
         default=None,
         help="Optional YYYY-MM month override for selected-board calibration (defaults to run month).",
+    )
+    parser.add_argument(
+        "--learned-gate-json",
+        type=Path,
+        default=REPO_ROOT / "model" / "analysis" / "calibration" / "learned_pool_gate.json",
+        help="Learned pool-gate payload JSON forwarded to run_market_pipeline.py.",
+    )
+    parser.add_argument(
+        "--disable-learned-gate",
+        action="store_true",
+        help="Disable learned pool-gate filtering in child market pipeline runs.",
+    )
+    parser.add_argument(
+        "--learned-gate-month",
+        type=str,
+        default=None,
+        help="Optional YYYY-MM month override for learned pool-gate thresholds (defaults to run month).",
     )
     parser.add_argument("--python", type=str, default=sys.executable, help="Python executable to use for child steps.")
     return parser.parse_args()
@@ -489,6 +514,14 @@ def main() -> None:
         "enabled": not bool(args.disable_selected_board_calibration),
         "calibration_month": selected_board_calibration_month,
     }
+    learned_gate_month = str(args.learned_gate_month or local_date.strftime("%Y-%m"))
+    learned_gate_path = args.learned_gate_json.resolve()
+    learned_gate_meta = {
+        "path": str(learned_gate_path),
+        "exists": bool(learned_gate_path.exists()),
+        "enabled": not bool(args.disable_learned_gate),
+        "month": learned_gate_month,
+    }
     primary_policy = str(args.policy_profile)
     shadow_policies = [profile for profile in args.shadow_policy_profiles if str(profile) and str(profile) != primary_policy]
     yesterday = (local_date - pd.Timedelta(days=1)).date()
@@ -645,7 +678,12 @@ def main() -> None:
             str(selected_board_calibrator_path),
             "--selected-board-calibration-month",
             selected_board_calibration_month,
+            "--learned-gate-json",
+            str(learned_gate_path),
+            "--learned-gate-month",
+            learned_gate_month,
             *(["--disable-selected-board-calibration"] if args.disable_selected_board_calibration else []),
+            *(["--disable-learned-gate"] if args.disable_learned_gate else []),
             *(["--allow-heuristic-fallback"] if args.allow_heuristic_fallback else []),
             *(["--latest"] if args.latest else []),
         ],
@@ -684,7 +722,12 @@ def main() -> None:
                 str(selected_board_calibrator_path),
                 "--selected-board-calibration-month",
                 selected_board_calibration_month,
+                "--learned-gate-json",
+                str(learned_gate_path),
+                "--learned-gate-month",
+                learned_gate_month,
                 *(["--disable-selected-board-calibration"] if args.disable_selected_board_calibration else []),
+                *(["--disable-learned-gate"] if args.disable_learned_gate else []),
                 *(["--allow-heuristic-fallback"] if args.allow_heuristic_fallback else []),
                 *(["--latest"] if args.latest else []),
             ],
@@ -785,6 +828,7 @@ def main() -> None:
         "skip_build_site": bool(args.skip_build_site),
         "allow_heuristic_fallback": bool(args.allow_heuristic_fallback),
         "selected_board_calibrator": selected_board_calibrator_meta,
+        "learned_pool_gate": learned_gate_meta,
         "updated_at_utc": datetime.utcnow().isoformat() + "Z",
     }
     manifest_path = run_dir / f"daily_market_pipeline_manifest_{run_stamp}.json"
@@ -802,6 +846,11 @@ def main() -> None:
                 str(SITE_ROOT / "dist" / "data" / "daily_predictions.json"),
             ],
         )
+    else:
+        print(
+            "[warning] Web export skipped; web/dist daily_predictions.json may be stale "
+            "relative to this run's final board."
+        )
     if not args.skip_build_site:
         run_step(
             "Rebuild Static Site Bundle",
@@ -813,6 +862,10 @@ def main() -> None:
                 "--output",
                 str(SITE_ROOT / "dist"),
             ],
+        )
+    else:
+        print(
+            "[warning] Static site rebuild skipped; dist assets may not reflect the latest web payload."
         )
 
     print("\n" + "=" * 90)
@@ -828,6 +881,7 @@ def main() -> None:
     if cutoff_meta_monitor_outputs.get("enabled"):
         print(f"Cutoff monitor:       {cutoff_meta_monitor_outputs.get('comparison_json')}")
     print(f"Selected calibrator:  {selected_board_calibrator_meta}")
+    print(f"Learned pool gate:    {learned_gate_meta}")
     if snapshot_meta["mode"] == "stale_fallback":
         print(f"Selected market date: {snapshot_meta['selected_market_date']}")
     print(f"Run directory:        {run_dir}")
