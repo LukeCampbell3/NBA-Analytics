@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Manrope:wght@400;500;600;700&family=Orbitron:wght@500;700;800&display=swap');
 
 /* Reset and Base Styles */
 * {
@@ -1411,6 +1411,359 @@ body.theme-dark .card-mechanism-note {
     color: #1e40af;
 }
 
+/* Premium Trading Card Layer */
+.cards-container {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+.trading-card {
+    position: relative;
+    isolation: isolate;
+    transform-style: preserve-3d;
+    transform: perspective(1400px) rotateX(var(--rotate-x, 0deg)) rotateY(var(--rotate-y, 0deg));
+    transition: transform 200ms ease, box-shadow 240ms ease, filter 220ms ease;
+}
+
+.trading-card-grid {
+    min-height: 560px;
+}
+
+.trading-card-detail {
+    max-width: 360px;
+    margin: 0 auto;
+    cursor: default;
+}
+
+.trading-card-grid:hover {
+    box-shadow: 0 24px 60px rgba(8, 15, 35, 0.34);
+    filter: saturate(1.03);
+}
+
+.trading-card.card-static:hover,
+.trading-card.trading-card-detail:hover {
+    transform: none;
+    filter: none;
+}
+
+.trading-card.card-static,
+.trading-card.trading-card-detail {
+    transform: none;
+}
+
+.trading-surface,
+.trading-prism,
+.trading-gloss {
+    position: absolute;
+    inset: 0;
+    border-radius: 25px;
+    pointer-events: none;
+}
+
+.trading-surface {
+    z-index: 0;
+    background:
+        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.48), rgba(255, 255, 255, 0) 42%),
+        radial-gradient(circle at 78% 16%, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0) 38%),
+        linear-gradient(145deg, var(--family-primary, #1f2937), var(--family-secondary, #334155) 58%, var(--family-tertiary, #94a3b8));
+    opacity: 0.88;
+}
+
+.trading-prism {
+    z-index: 1;
+    opacity: var(--foil-opacity, 0.2);
+    mix-blend-mode: screen;
+    background:
+        radial-gradient(circle at var(--pointer-x, 50%) var(--pointer-y, 50%), rgba(255, 255, 255, 0.84), rgba(255, 255, 255, 0) 40%),
+        linear-gradient(120deg, rgba(255, 38, 158, 0.2), rgba(85, 217, 255, 0.2) 30%, rgba(189, 255, 55, 0.18) 55%, rgba(255, 194, 74, 0.2) 80%, rgba(255, 38, 158, 0.2));
+    background-size: 100% 100%, 220% 220%;
+    background-position: center, var(--pointer-x, 50%) var(--pointer-y, 50%);
+}
+
+.trading-gloss {
+    z-index: 2;
+    opacity: 0.72;
+    background:
+        repeating-linear-gradient(132deg, rgba(255, 255, 255, var(--grain-opacity, 0.08)) 0 2px, rgba(255, 255, 255, 0) 2px 6px),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0) 44%);
+}
+
+.trading-card.is-tilting .trading-prism {
+    opacity: calc(var(--foil-opacity, 0.2) + 0.05);
+}
+
+.trading-card .type-card-hero {
+    z-index: 3;
+}
+
+.family-auto .trading-breakout-strip {
+    border-color: rgba(148, 163, 184, 0.6);
+}
+
+.family-patch .trading-surface {
+    background:
+        radial-gradient(circle at 22% 22%, rgba(255, 244, 202, 0.48), rgba(255, 244, 202, 0) 48%),
+        linear-gradient(136deg, #7f1d1d 0%, #b45309 44%, #fbbf24 100%);
+}
+
+.family-manga .trading-surface {
+    background:
+        radial-gradient(circle at 85% 15%, rgba(253, 242, 248, 0.5), rgba(253, 242, 248, 0) 42%),
+        linear-gradient(136deg, #581c87 0%, #be123c 52%, #fb7185 100%);
+}
+
+.family-ice .trading-surface {
+    background:
+        radial-gradient(circle at 20% 78%, rgba(224, 242, 254, 0.55), rgba(224, 242, 254, 0) 45%),
+        linear-gradient(136deg, #0c4a6e 0%, #0284c7 48%, #67e8f9 100%);
+}
+
+.family-chrome .trading-surface {
+    background:
+        radial-gradient(circle at 18% 18%, rgba(248, 250, 252, 0.5), rgba(248, 250, 252, 0) 45%),
+        linear-gradient(136deg, #111827 0%, #475569 48%, #cbd5e1 100%);
+}
+
+.family-refractor .trading-surface {
+    background:
+        radial-gradient(circle at 78% 18%, rgba(191, 219, 254, 0.48), rgba(191, 219, 254, 0) 42%),
+        linear-gradient(136deg, #1e3a8a 0%, #7e22ce 44%, #38bdf8 100%);
+}
+
+.trading-series-badge {
+    position: absolute;
+    top: 0.95rem;
+    right: 1rem;
+    z-index: 4;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.48);
+    background: rgba(3, 7, 18, 0.56);
+    color: #f8fafc;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.62rem;
+    font-family: 'Orbitron', 'Barlow Condensed', sans-serif;
+}
+
+.trading-card-number {
+    position: absolute;
+    top: 2.65rem;
+    right: 1rem;
+    z-index: 4;
+    color: rgba(255, 255, 255, 0.96);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    font-family: 'Orbitron', 'Barlow Condensed', sans-serif;
+    text-shadow: 0 2px 8px rgba(2, 6, 23, 0.45);
+}
+
+.trading-click-hint {
+    bottom: 5.9rem;
+    background: rgba(2, 6, 23, 0.64);
+}
+
+.trading-metric-row {
+    position: absolute;
+    left: 1rem;
+    right: 7.2rem;
+    bottom: 0.95rem;
+    z-index: 4;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.35rem;
+}
+
+.trading-mini-metric {
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    background: rgba(2, 6, 23, 0.62);
+    color: #f8fafc;
+    padding: 0.28rem 0.34rem 0.34rem;
+    text-align: center;
+}
+
+.trading-mini-metric span {
+    display: block;
+    font-size: 0.56rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.88;
+}
+
+.trading-mini-metric strong {
+    font-size: 0.82rem;
+    line-height: 1;
+    font-family: 'Orbitron', 'Barlow Condensed', sans-serif;
+}
+
+.modal-content {
+    max-width: 1180px;
+}
+
+.inspection-stage {
+    display: grid;
+    grid-template-columns: minmax(300px, 360px) minmax(320px, 1fr);
+    gap: 1.1rem;
+    padding: 1.15rem 1.4rem 0.4rem;
+    background:
+        radial-gradient(circle at 15% 0%, rgba(59, 130, 246, 0.09), transparent 50%),
+        linear-gradient(180deg, rgba(148, 163, 184, 0.08), rgba(148, 163, 184, 0));
+}
+
+.inspection-card-slot {
+    min-height: 420px;
+}
+
+.inspection-card-slot .trading-card {
+    margin: 0 auto;
+}
+
+.inspection-info-panel {
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--bg-primary) 88%, #0f172a 12%);
+    box-shadow: var(--shadow);
+    padding: 1rem 1rem 0.9rem;
+}
+
+.inspection-family-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    background: rgba(59, 130, 246, 0.12);
+    color: var(--text-primary);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.28rem 0.66rem;
+    margin-bottom: 0.55rem;
+}
+
+.inspection-info-panel h3 {
+    font-size: 1.15rem;
+    margin-bottom: 0.45rem;
+}
+
+.inspection-info-panel p {
+    color: var(--text-secondary);
+    line-height: 1.45;
+    margin-bottom: 0.8rem;
+}
+
+.inspection-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.55rem;
+}
+
+.inspection-kpi {
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    padding: 0.5rem 0.42rem 0.55rem;
+    text-align: center;
+}
+
+.inspection-kpi span {
+    display: block;
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    margin-bottom: 0.18rem;
+}
+
+.inspection-kpi strong {
+    font-family: 'Orbitron', 'Barlow Condensed', sans-serif;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+body.theme-dark .inspection-info-panel {
+    background: rgba(15, 23, 42, 0.84);
+    border-color: rgba(148, 163, 184, 0.32);
+}
+
+body.theme-dark .inspection-family-pill {
+    background: rgba(30, 64, 175, 0.22);
+    border-color: rgba(96, 165, 250, 0.52);
+}
+
+body.theme-dark .inspection-kpi {
+    background: rgba(15, 23, 42, 0.62);
+    border-color: rgba(148, 163, 184, 0.24);
+}
+
+.transition-origin-hidden {
+    opacity: 0.25;
+}
+
+.transition-target-hidden {
+    visibility: hidden;
+}
+
+.transition-target-entered {
+    animation: cardAppear 320ms ease;
+}
+
+.card-transition-clone {
+    position: fixed;
+    margin: 0;
+    z-index: 1500;
+    pointer-events: none;
+    transform-origin: top left;
+    box-shadow: 0 24px 60px rgba(2, 6, 23, 0.42);
+}
+
+@keyframes cardAppear {
+    from {
+        opacity: 0.3;
+        transform: scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@media (max-width: 980px) {
+    .cards-container {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+
+    .inspection-stage {
+        grid-template-columns: 1fr;
+    }
+
+    .inspection-kpi-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .trading-series-badge {
+        top: 0.75rem;
+        right: 0.75rem;
+        font-size: 0.6rem;
+    }
+
+    .trading-card-number {
+        top: 2.35rem;
+        right: 0.76rem;
+        font-size: 0.62rem;
+    }
+
+    .trading-metric-row {
+        left: 0.86rem;
+        right: 6.2rem;
+        bottom: 0.85rem;
+    }
+}
+
 /* Modal */
 .modal {
     display: none;
@@ -1524,7 +1877,7 @@ body.theme-dark .card-mechanism-note {
 }
 
 .strengths-list li::before {
-    content: "✓";
+    content: "âœ“";
     position: absolute;
     left: 0;
     color: var(--success-color);
@@ -1532,7 +1885,7 @@ body.theme-dark .card-mechanism-note {
 }
 
 .weaknesses-list li::before {
-    content: "✗";
+    content: "âœ—";
     position: absolute;
     left: 0;
     color: var(--danger-color);
