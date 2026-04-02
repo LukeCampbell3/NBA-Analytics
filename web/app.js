@@ -36,6 +36,10 @@ class PlayerCardsApp {
         this.breakoutScoreRawByKey = null;
         this.breakoutPercentileByKey = null;
         this.breakoutTierByKey = null;
+        this.currentModalPlayer = null;
+        this.activeCardTransitionCleanup = null;
+        this.supportsFinePointer = window.matchMedia?.('(hover: hover) and (pointer: fine)')?.matches ?? false;
+        this.prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
         const bodyDataset = document.body?.dataset || {};
         this.cardsDataPath = bodyDataset.cardsSrc || 'data/cards.json';
         this.valuationsDataPath = bodyDataset.valuationsSrc || 'data/valuations.json';
@@ -1947,18 +1951,19 @@ class PlayerCardsApp {
         // Modal
         const modal = document.getElementById('playerModal');
         const closeBtn = document.querySelector('.close');
-        
-        closeBtn.addEventListener('click', () => {
-            modal.style.display = 'none';
-            document.body.style.overflow = 'auto'; // Re-enable scroll
-        });
-
-        window.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-                document.body.style.overflow = 'auto'; // Re-enable scroll
-            }
-        });
+        if (modal && closeBtn) {
+            closeBtn.addEventListener('click', () => this.closePlayerDetail());
+            window.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.closePlayerDetail();
+                }
+            });
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modal.style.display === 'block') {
+                    this.closePlayerDetail();
+                }
+            });
+        }
 
         window.addEventListener('resize', () => {
             if (this.distributionRaf) cancelAnimationFrame(this.distributionRaf);
@@ -2235,9 +2240,10 @@ class PlayerCardsApp {
         // Add click listeners
         document.querySelectorAll('.player-card').forEach((card, index) => {
             card.addEventListener('click', () => {
-                this.showPlayerDetail(this.filteredPlayers[index]);
+                this.showPlayerDetail(this.filteredPlayers[index], card);
             });
         });
+        this.initializeTradingCardEffects(container);
 
         this.drawValueDistributionChart();
     }
@@ -2475,46 +2481,73 @@ class PlayerCardsApp {
         });
     }
 
-    createPlayerCard(player) {
-        // Extract data from data_sample format
+    createPlayerCard(player, options = {}) {
+        const opts = {
+            context: 'grid',
+            interactive: true,
+            showClickHint: true,
+            evalOut: null,
+            ...options
+        };
         const playerValue = this.getPlayerValue(player);
+        const playerTrust = Math.round(this.getPlayerTrustScore(player));
+        const fitPercentile = Math.round(this.getTeamFitPercentile(player));
         const impactClass = playerValue >= 60 ? 'positive' : (playerValue <= 40 ? 'negative' : '');
-        const evalOut = this.evaluateBreakoutScenario(player);
+        const evalOut = opts.evalOut || this.evaluateBreakoutScenario(player);
+        const mechanism = evalOut.mechanism || this.computeMechanismMetrics(player, evalOut);
         const typeCardProfile = this.getBasketballTypeProfile(player);
         const typeCardHeadshotUrl = this.getPlayerHeadshotUrl(player);
         const typeCardTeamLogoUrl = this.getTeamLogoUrl(player.player?.team);
         const breakoutDisplayTier = this.getBreakoutDisplayTier(player, evalOut);
         const breakoutStyle = this.getBreakoutTierStyle(breakoutDisplayTier.className, evalOut.likelihoodPct);
+        const cardFamily = this.getCardFamilyProfile(player, evalOut, mechanism);
+        const cardSerial = this.getCardSerial(player, cardFamily);
         const isRookie = this.isLikelyRookie(player);
         const rookieBadgeLabel = this.isCollegeDeck ? 'FRESHMAN' : 'ROOKIE';
         const typeCardMonogram = this.getPlayerMonogram(player.player?.name || 'NA');
         const teamRibbonLabel = this.formatTeamRibbonLabel(player.player?.team);
         const draftContext = evalOut.fitScenario?.draft_context || {};
         const cardBandText = (this.isCollegeDeck && evalOut.fitScenario?.team && evalOut.fitScenario.team !== 'No Clear Team Edge')
-            ? `Draft Fit ${evalOut.fitScenario.team} • Need ${Math.round(100 * (draftContext.team_need_score ?? evalOut.fitScenario.fit_score ?? 0))}%`
+            ? `Draft Fit ${evalOut.fitScenario.team} - Need ${Math.round(100 * (draftContext.team_need_score ?? evalOut.fitScenario.fit_score ?? 0))}%`
             : typeCardProfile.subtitle;
+        const breakoutPct = Math.round(evalOut.likelihoodPct || evalOut.breakoutScore || 0);
+        const playerName = this.escapeHtml(player.player?.name || 'Unknown Player');
+
+        const cardClasses = [
+            'player-card',
+            'type-card',
+            'trading-card',
+            `family-${cardFamily.key}`,
+            opts.context === 'detail' ? 'trading-card-detail' : 'trading-card-grid',
+            opts.interactive ? 'trading-card-interactive' : 'card-static'
+        ];
 
         return `
-            <div class="player-card type-card trading-card" data-player="${player.player.name}" style="--type-primary:${typeCardProfile.primaryColor};--type-secondary:${typeCardProfile.secondaryColor};--type-glow:${typeCardProfile.glowColor};--breakout-bg:${breakoutStyle.bg};--breakout-fg:${breakoutStyle.fg};--breakout-glow:${breakoutStyle.glow};">
+            <article class="${cardClasses.join(' ')}" data-player="${this.escapeAttr(player.player?.name || '')}" data-player-key="${this.escapeAttr(this.getPlayerKey(player))}" data-card-family="${cardFamily.key}" style="--type-primary:${typeCardProfile.primaryColor};--type-secondary:${typeCardProfile.secondaryColor};--type-glow:${typeCardProfile.glowColor};--breakout-bg:${breakoutStyle.bg};--breakout-fg:${breakoutStyle.fg};--breakout-glow:${breakoutStyle.glow};--family-primary:${cardFamily.primary};--family-secondary:${cardFamily.secondary};--family-tertiary:${cardFamily.tertiary};--family-glow:${cardFamily.glow};--foil-opacity:${cardFamily.foilOpacity};--grain-opacity:${cardFamily.grainOpacity};--pointer-x:50%;--pointer-y:50%;--rotate-x:0deg;--rotate-y:0deg;">
+                <div class="trading-surface"></div>
+                <div class="trading-prism"></div>
+                <div class="trading-gloss"></div>
                 <div class="type-card-hero trading-hero">
-                    ${typeCardTeamLogoUrl ? `<div class="type-card-team-logo" style="background-image:url('${typeCardTeamLogoUrl}');"></div>` : ''}
+                    ${typeCardTeamLogoUrl ? `<div class="type-card-team-logo" style="background-image:url('${this.escapeAttr(typeCardTeamLogoUrl)}');"></div>` : ''}
                     <img
                         class="type-card-headshot"
-                        src="${typeCardHeadshotUrl}"
-                        alt="${player.player.name} headshot"
+                        src="${this.escapeAttr(typeCardHeadshotUrl)}"
+                        alt="${this.escapeAttr(player.player?.name || 'Player')} headshot"
                         loading="lazy"
                         onerror="this.style.display='none'; this.closest('.type-card-hero').classList.add('no-headshot');"
                     />
-                    <div class="type-card-monogram">${typeCardMonogram}</div>
+                    <div class="type-card-monogram">${this.escapeHtml(typeCardMonogram)}</div>
                     <div class="trading-topline">
-                        <div class="trading-name">${player.player.name}</div>
+                        <div class="trading-name">${playerName}</div>
                     </div>
-                    <div class="trading-position-ribbon">${player.player.position || 'N/A'}</div>
-                    <div class="trading-breakout-strip">${breakoutStyle.label} BREAKOUT &bull; ${Math.round(evalOut.likelihoodPct || 0)}%</div>
-                    ${isRookie ? `<div class="trading-rookie-badge">${rookieBadgeLabel}</div>` : ''}
-                    <div class="trading-team-ribbon">${teamRibbonLabel}</div>
+                    <div class="trading-series-badge">${this.escapeHtml(cardFamily.label)} SERIES</div>
+                    <div class="trading-card-number">${this.escapeHtml(cardSerial)}</div>
+                    <div class="trading-position-ribbon">${this.escapeHtml(player.player?.position || 'N/A')}</div>
+                    <div class="trading-breakout-strip">${this.escapeHtml(breakoutStyle.label)} BREAKOUT &bull; ${breakoutPct}%</div>
+                    ${isRookie ? `<div class="trading-rookie-badge">${this.escapeHtml(rookieBadgeLabel)}</div>` : ''}
+                    <div class="trading-team-ribbon">${this.escapeHtml(teamRibbonLabel)}</div>
                     <div class="trading-card-badge ${impactClass}">Value ${playerValue.toFixed(1)}</div>
-                    <div class="trading-subtype">${typeCardProfile.typeLabel}</div>
+                    <div class="trading-subtype">${this.escapeHtml(typeCardProfile.typeLabel)}</div>
                     <div class="trading-photo-vignette"></div>
                     <div class="trading-photo-grain"></div>
                     <div class="trading-photo-frame"></div>
@@ -2524,86 +2557,25 @@ class PlayerCardsApp {
                     <div class="trading-photo-shadow"></div>
                     <div class="trading-photo-light"></div>
                     <div class="trading-photo-band">
-                        <div class="trading-photo-band-text">${cardBandText}</div>
+                        <div class="trading-photo-band-text">${this.escapeHtml(cardBandText)}</div>
                     </div>
+                    <div class="trading-metric-row">
+                        <div class="trading-mini-metric">
+                            <span>Fit</span>
+                            <strong>p${fitPercentile}</strong>
+                        </div>
+                        <div class="trading-mini-metric">
+                            <span>Trust</span>
+                            <strong>${playerTrust}</strong>
+                        </div>
+                        <div class="trading-mini-metric">
+                            <span>Breakout</span>
+                            <strong>${Math.round(evalOut.breakoutScore || 0)}</strong>
+                        </div>
+                    </div>
+                    ${opts.showClickHint ? '<div class="trading-click-hint">Click for full scouting inspection</div>' : ''}
                 </div>
-            </div>
-        `;
-        
-        const trustScore = player.v1_1_enhancements?.trust_assessment?.score || 0;
-        const fitScorePct = (evalOut.fitScenario?.fit_score || 0) * 100;
-        const fitPercentile = this.getTeamFitPercentile(player);
-        const breakoutScore = evalOut.breakoutScore || 0;
-        const scenarioSummary = this.buildCardScenarioSummary(player, evalOut, mechanism);
-
-        // Get usage rate (stored as decimal, e.g., 0.2 = 20%)
-        const usageRate = player.performance?.advanced?.usage_rate ?? 0;
-        const usageDisplay = (usageRate * 100).toFixed(1) + '%';
-
-        // Tags
-        const tags = [];
-        if (trustScore >= 75) tags.push('<span class="tag high-impact">High Trust</span>');
-        if (playerValue >= 70) tags.push('<span class="tag high-impact">High Value</span>');
-        if (mechanism.portability_score >= 0.62) tags.push('<span class="tag high-portability">Portable Defense</span>');
-        if ((evalOut.fitScenario?.signal_strength || 'weak') === 'strong') tags.push('<span class="tag high-impact">Strong Fit Signal</span>');
-        if (evalOut.genuineBreakout) tags.push('<span class="tag high-impact">Genuine Breakout Signal</span>');
-        if (evalOut.promotionBlocked) tags.push('<span class="tag breakout">Promotion Blocked</span>');
-        
-        // High usage tag (usage > 25%)
-        if (usageRate >= 0.25) tags.push('<span class="tag breakout">High Usage</span>');
-
-        return `
-            <div class="player-card" data-player="${player.player.name}">
-                <div class="card-header">
-                    <div class="player-name">${player.player.name}</div>
-                    <div class="player-meta">
-                        <span>${player.player.team}</span>
-                        <span>•</span>
-                        <span>${player.player.position || 'N/A'}</span>
-                        <span>•</span>
-                        <span>Age ${Math.round(player.player.age) || 'N/A'}</span>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="archetype-badge">
-                        ${this.formatArchetype(player.identity?.primary_archetype || 'unknown')}
-                    </div>
-                    
-                    <div class="metrics-grid">
-                        <div class="metric">
-                            <div class="metric-label">Player Value</div>
-                            <div class="metric-value ${impactClass}">${playerValue.toFixed(1)}</div>
-                            ${this.createPercentileIndicator(playerValue, 0, 100)}
-                        </div>
-                        <div class="metric">
-                            <div class="metric-label">Breakout Score</div>
-                            <div class="metric-value">${breakoutScore.toFixed(1)}</div>
-                        </div>
-                        <div class="metric">
-                            <div class="metric-label">Team Fit Context</div>
-                            <div class="metric-value">${fitScorePct.toFixed(0)}% <span style="font-size:0.72rem;color:#6b7280;">(p${fitPercentile})</span></div>
-                        </div>
-                        <div class="metric">
-                            <div class="metric-label">Suppression Relief</div>
-                            <div class="metric-value">${(mechanism.suppression_relief * 100).toFixed(0)}%</div>
-                        </div>
-                        <div class="metric">
-                            <div class="metric-label">Portability</div>
-                            <div class="metric-value">${(mechanism.portability_score * 100).toFixed(0)}%</div>
-                        </div>
-                        <div class="metric">
-                            <div class="metric-label">Clamp Pressure</div>
-                            <div class="metric-value">${(mechanism.clamp_severity * 100).toFixed(0)}%</div>
-                        </div>
-                    </div>
-
-                    <div class="card-mechanism-note">
-                        ${scenarioSummary}
-                    </div>
-
-                    ${tags.length > 0 ? `<div class="tags">${tags.join('')}</div>` : ''}
-                </div>
-            </div>
+            </article>
         `;
     }
 
@@ -2625,17 +2597,23 @@ class PlayerCardsApp {
         `;
     }
 
-    showPlayerDetail(player) {
+    showPlayerDetail(player, sourceCard = null) {
         const modal = document.getElementById('playerModal');
         const modalBody = document.getElementById('modalBody');
         this.currentModalPlayer = player;
         this.shotChartMode = this.shotChartMode || 'volume';
+        if (typeof this.activeCardTransitionCleanup === 'function') {
+            this.activeCardTransitionCleanup();
+            this.activeCardTransitionCleanup = null;
+        }
 
         modalBody.innerHTML = this.createPlayerDetail(player);
         modal.style.display = 'block';
         
         // Disable body scroll
         document.body.style.overflow = 'hidden';
+        this.initializeTradingCardEffects(modalBody);
+        this.runCardToDetailTransition(sourceCard);
 
         // Setup tab switching
         this.setupTabs();
@@ -2646,6 +2624,113 @@ class PlayerCardsApp {
             this.drawShotChart(player);
             this.drawValueDriversChart(player);
         }, 50);
+    }
+
+    closePlayerDetail() {
+        if (typeof this.activeCardTransitionCleanup === 'function') {
+            this.activeCardTransitionCleanup(true);
+            this.activeCardTransitionCleanup = null;
+        }
+        const modal = document.getElementById('playerModal');
+        if (modal) modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        this.currentModalPlayer = null;
+    }
+
+    initializeTradingCardEffects(scope = document) {
+        const cards = scope.querySelectorAll('.trading-card:not(.card-static)');
+        cards.forEach((card) => {
+            if (card.dataset.tiltBound === '1') return;
+            card.dataset.tiltBound = '1';
+
+            card.addEventListener('pointermove', (event) => {
+                if (!this.supportsFinePointer || card.classList.contains('trading-card-detail')) return;
+                const rect = card.getBoundingClientRect();
+                if (rect.width <= 0 || rect.height <= 0) return;
+                const x = this.clampNum((event.clientX - rect.left) / rect.width, 0, 1);
+                const y = this.clampNum((event.clientY - rect.top) / rect.height, 0, 1);
+                const rotateY = (x - 0.5) * 16;
+                const rotateX = (0.5 - y) * 14;
+                card.style.setProperty('--pointer-x', `${(x * 100).toFixed(2)}%`);
+                card.style.setProperty('--pointer-y', `${(y * 100).toFixed(2)}%`);
+                card.style.setProperty('--rotate-x', `${rotateX.toFixed(2)}deg`);
+                card.style.setProperty('--rotate-y', `${rotateY.toFixed(2)}deg`);
+                card.classList.add('is-tilting');
+            });
+
+            card.addEventListener('pointerleave', () => this.resetTradingCardTilt(card));
+            card.addEventListener('pointercancel', () => this.resetTradingCardTilt(card));
+        });
+    }
+
+    resetTradingCardTilt(card) {
+        if (!card) return;
+        card.style.setProperty('--pointer-x', '50%');
+        card.style.setProperty('--pointer-y', '50%');
+        card.style.setProperty('--rotate-x', '0deg');
+        card.style.setProperty('--rotate-y', '0deg');
+        card.classList.remove('is-tilting');
+    }
+
+    runCardToDetailTransition(sourceCard) {
+        if (!sourceCard || this.prefersReducedMotion || typeof sourceCard.getBoundingClientRect !== 'function') {
+            return;
+        }
+        const targetCard = document.querySelector('#detailCardSlot .player-card');
+        if (!targetCard) return;
+
+        const from = sourceCard.getBoundingClientRect();
+        const to = targetCard.getBoundingClientRect();
+        if (!from.width || !from.height || !to.width || !to.height) return;
+
+        const clone = sourceCard.cloneNode(true);
+        clone.classList.add('card-transition-clone');
+        clone.classList.remove('is-tilting');
+        clone.style.setProperty('--rotate-x', '0deg');
+        clone.style.setProperty('--rotate-y', '0deg');
+        clone.style.setProperty('--pointer-x', '50%');
+        clone.style.setProperty('--pointer-y', '50%');
+        clone.style.left = `${from.left}px`;
+        clone.style.top = `${from.top}px`;
+        clone.style.width = `${from.width}px`;
+        clone.style.height = `${from.height}px`;
+
+        document.body.appendChild(clone);
+        targetCard.classList.add('transition-target-hidden');
+        sourceCard.classList.add('transition-origin-hidden');
+
+        const deltaX = to.left - from.left;
+        const deltaY = to.top - from.top;
+        const scaleX = to.width / from.width;
+        const scaleY = to.height / from.height;
+
+        const cleanup = (force = false) => {
+            if (clone.parentNode) clone.remove();
+            targetCard.classList.remove('transition-target-hidden');
+            sourceCard.classList.remove('transition-origin-hidden');
+            if (!force) targetCard.classList.add('transition-target-entered');
+        };
+        this.activeCardTransitionCleanup = cleanup;
+
+        const animation = clone.animate(
+            [
+                {
+                    transform: 'translate3d(0, 0, 0) scale(1, 1)',
+                    opacity: 0.98
+                },
+                {
+                    transform: `translate3d(${deltaX}px, ${deltaY}px, 0) scale(${scaleX}, ${scaleY})`,
+                    opacity: 1
+                }
+            ],
+            {
+                duration: 520,
+                easing: 'cubic-bezier(0.2, 0.9, 0.2, 1)',
+                fill: 'forwards'
+            }
+        );
+        animation.onfinish = () => cleanup(false);
+        animation.oncancel = () => cleanup(true);
     }
 
     setupShotModeToggle() {
@@ -2690,6 +2775,11 @@ class PlayerCardsApp {
         const adv = perf.advanced || {};
         const evalOut = this.evaluateBreakoutScenario(player);
         const mechanism = this.computeMechanismMetrics(player, evalOut);
+        const cardFamily = this.getCardFamilyProfile(player, evalOut, mechanism);
+        const scenarioSummary = this.buildCardScenarioSummary(player, evalOut, mechanism);
+        const fitPercentile = Math.round(this.getTeamFitPercentile(player));
+        const breakoutPct = Math.round(evalOut.likelihoodPct || evalOut.breakoutScore || 0);
+        const trustScore = Math.round(this.getPlayerTrustScore(player));
         const trust = player.v1_1_enhancements?.trust_assessment || {};
         const uncertainty = player.v1_1_enhancements?.uncertainty_estimates || {};
         const constraints = player.v1_1_enhancements?.scenario_constraints || {};
@@ -2698,9 +2788,38 @@ class PlayerCardsApp {
             <div class="modal-header">
                 <h2>${player.player.name}</h2>
                 <div style="margin-top: 0.5rem; opacity: 0.9;">
-                    ${player.player.team} • ${player.player.position || 'N/A'} • 
-                    Age ${Math.round(player.player.age) || 'N/A'} • 
+                    ${player.player.team} &bull; ${player.player.position || 'N/A'} &bull;
+                    Age ${Math.round(player.player.age) || 'N/A'} &bull;
                     ${this.formatArchetype(player.identity?.primary_archetype || 'unknown')}
+                </div>
+            </div>
+
+            <div class="inspection-stage">
+                <div id="detailCardSlot" class="inspection-card-slot">
+                    ${this.createPlayerCard(player, { context: 'detail', interactive: false, showClickHint: false, evalOut })}
+                </div>
+                <div class="inspection-info-panel">
+                    <div class="inspection-family-pill">${this.escapeHtml(cardFamily.label)} Family</div>
+                    <h3>Inspection Summary</h3>
+                    <p>${this.escapeHtml(scenarioSummary)}</p>
+                    <div class="inspection-kpi-row">
+                        <div class="inspection-kpi">
+                            <span>Value</span>
+                            <strong>${this.getPlayerValue(player).toFixed(1)}</strong>
+                        </div>
+                        <div class="inspection-kpi">
+                            <span>Team Fit</span>
+                            <strong>p${fitPercentile}</strong>
+                        </div>
+                        <div class="inspection-kpi">
+                            <span>Breakout</span>
+                            <strong>${breakoutPct}%</strong>
+                        </div>
+                        <div class="inspection-kpi">
+                            <span>Trust</span>
+                            <strong>${trustScore}</strong>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -2789,10 +2908,10 @@ class PlayerCardsApp {
                                         <div class="comparable-name">${comp.name}</div>
                                         <div class="comparable-similarity">${(comp.similarity_score * 100).toFixed(0)}% similar</div>
                                     </div>
-                                    <div class="comparable-meta">${comp.team} • ${this.formatArchetype(comp.archetype)}</div>
+                                    <div class="comparable-meta">${comp.team} Ã¢â‚¬Â¢ ${this.formatArchetype(comp.archetype)}</div>
                                     <div class="comparable-stats">
-                                        ${comp.stats.points.toFixed(1)} PPG • 
-                                        ${comp.stats.assists.toFixed(1)} APG • 
+                                        ${comp.stats.points.toFixed(1)} PPG Ã¢â‚¬Â¢ 
+                                        ${comp.stats.assists.toFixed(1)} APG Ã¢â‚¬Â¢ 
                                         ${comp.stats.rebounds.toFixed(1)} RPG
                                     </div>
                                 </div>
@@ -3004,12 +3123,12 @@ class PlayerCardsApp {
                 <div class="constraints-list">
                     ${clampReport.length ? clampReport.map(c => `
                         <div class="constraint-item">
-                            <span class="constraint-icon">⛓️</span>
+                            <span class="constraint-icon">Ã¢â€ºâ€œÃ¯Â¸Â</span>
                             <span class="constraint-text"><strong>${c.clamp}</strong> (${(100 * (c.severity || 0)).toFixed(0)}%): ${c.message} Unlock path: ${c.unlock}</span>
                         </div>
                     `).join('') : `
                         <div class="constraint-item">
-                            <span class="constraint-icon">✅</span>
+                            <span class="constraint-icon">Ã¢Å“â€¦</span>
                             <span class="constraint-text">No explicit clamp fire events were triggered for this scenario.</span>
                         </div>
                     `}
@@ -3345,6 +3464,19 @@ class PlayerCardsApp {
         ).join(' ');
     }
 
+    escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    escapeAttr(value) {
+        return this.escapeHtml(value).replace(/`/g, '&#96;');
+    }
+
     getPlayerMonogram(name) {
         const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
         if (!parts.length) return 'NA';
@@ -3355,7 +3487,7 @@ class PlayerCardsApp {
     formatTeamRibbonLabel(team) {
         const label = String(team || '').trim();
         if (!label) return 'TEAM';
-        return label.replace(/^\d{4}\s*[-–]\s*\d{2,4}\s+/u, '').trim();
+        return label.replace(/^\d{4}\s*[-Ã¢â‚¬â€œ]\s*\d{2,4}\s+/u, '').trim();
     }
 
     getPlayerHeadshotUrl(player) {
@@ -3387,6 +3519,122 @@ class PlayerCardsApp {
             return { label: 'MEDIUM', bg: '#d97706', fg: '#fffbeb', glow: 'rgba(217,119,6,0.42)' };
         }
         return { label: 'LOW', bg: '#dc2626', fg: '#fef2f2', glow: 'rgba(220,38,38,0.42)' };
+    }
+
+    getCardFamilyProfile(player, evalOut = null, mechanism = null) {
+        const breakoutEval = evalOut || this.evaluateBreakoutScenario(player);
+        const mechanismProfile = mechanism || breakoutEval.mechanism || this.computeMechanismMetrics(player, breakoutEval);
+        const valueScore = this.clampNum(this.getPlayerValue(player), 0, 100);
+        const fitPercentile = this.clampNum(this.getTeamFitPercentile(player), 0, 100);
+        const breakoutScore = this.clampNum(Number(breakoutEval.breakoutScore || 0), 0, 100);
+        const trustScore = this.clampNum(this.getPlayerTrustScore(player), 0, 100);
+        const portability = this.clampNum(Number(mechanismProfile.portability_score || 0.5), 0, 1);
+        const composite = (
+            0.37 * valueScore +
+            0.25 * fitPercentile +
+            0.21 * breakoutScore +
+            0.11 * trustScore +
+            0.06 * (portability * 100)
+        );
+        const isRookie = this.isLikelyRookie(player);
+
+        let key = 'auto';
+        if (composite >= 85 && breakoutScore >= 70 && trustScore >= 62) {
+            key = 'refractor';
+        } else if (composite >= 76) {
+            key = 'chrome';
+        } else if (fitPercentile >= 74 && breakoutScore >= 58) {
+            key = 'ice';
+        } else if (valueScore >= 66 && trustScore >= 62) {
+            key = 'patch';
+        } else if (isRookie || breakoutScore >= 64) {
+            key = 'manga';
+        }
+
+        const profiles = {
+            auto: {
+                key: 'auto',
+                label: 'Auto',
+                primary: '#1f2937',
+                secondary: '#334155',
+                tertiary: '#94a3b8',
+                glow: 'rgba(148, 163, 184, 0.42)',
+                foilOpacity: '0.15',
+                grainOpacity: '0.06'
+            },
+            patch: {
+                key: 'patch',
+                label: 'Patch',
+                primary: '#7f1d1d',
+                secondary: '#b45309',
+                tertiary: '#fef3c7',
+                glow: 'rgba(245, 158, 11, 0.45)',
+                foilOpacity: '0.22',
+                grainOpacity: '0.08'
+            },
+            manga: {
+                key: 'manga',
+                label: 'Manga',
+                primary: '#4c1d95',
+                secondary: '#be123c',
+                tertiary: '#fdf2f8',
+                glow: 'rgba(236, 72, 153, 0.5)',
+                foilOpacity: '0.20',
+                grainOpacity: '0.10'
+            },
+            ice: {
+                key: 'ice',
+                label: 'Ice',
+                primary: '#0c4a6e',
+                secondary: '#0ea5e9',
+                tertiary: '#e0f2fe',
+                glow: 'rgba(56, 189, 248, 0.52)',
+                foilOpacity: '0.26',
+                grainOpacity: '0.07'
+            },
+            chrome: {
+                key: 'chrome',
+                label: 'Chrome',
+                primary: '#0f172a',
+                secondary: '#475569',
+                tertiary: '#e2e8f0',
+                glow: 'rgba(148, 163, 184, 0.58)',
+                foilOpacity: '0.30',
+                grainOpacity: '0.08'
+            },
+            refractor: {
+                key: 'refractor',
+                label: 'Refractor',
+                primary: '#1e3a8a',
+                secondary: '#9333ea',
+                tertiary: '#f8fafc',
+                glow: 'rgba(59, 130, 246, 0.62)',
+                foilOpacity: '0.36',
+                grainOpacity: '0.09'
+            }
+        };
+
+        return profiles[key] || profiles.auto;
+    }
+
+    getCardSerial(player, familyProfile) {
+        const runByFamily = {
+            refractor: 99,
+            chrome: 199,
+            ice: 249,
+            manga: 399,
+            patch: 499,
+            auto: 799
+        };
+        const familyKey = familyProfile?.key || 'auto';
+        const printRun = runByFamily[familyKey] || 999;
+        const hashSource = `${this.getPlayerKey(player)}|${familyKey}`;
+        let hash = 0;
+        for (let i = 0; i < hashSource.length; i += 1) {
+            hash = ((hash * 31) + hashSource.charCodeAt(i)) >>> 0;
+        }
+        const serial = (hash % printRun) + 1;
+        return `${String(serial).padStart(3, '0')}/${printRun}`;
     }
 
     isLikelyRookie(player) {
@@ -4163,49 +4411,49 @@ class PlayerCardsApp {
         switch (archetype) {
             case 'defensive_anchor':
                 if ((trad.blocks_per_game || 0) > 1.5) {
-                    insights.push({ icon: '🛡️', text: `Elite rim protector with ${trad.blocks_per_game.toFixed(1)} BPG` });
+                    insights.push({ icon: 'Ã°Å¸â€ºÂ¡Ã¯Â¸Â', text: `Elite rim protector with ${trad.blocks_per_game.toFixed(1)} BPG` });
                 }
                 if ((trad.rebounds_per_game || 0) > 10) {
-                    insights.push({ icon: '💪', text: `Dominant rebounder at ${trad.rebounds_per_game.toFixed(1)} RPG` });
+                    insights.push({ icon: 'Ã°Å¸â€™Âª', text: `Dominant rebounder at ${trad.rebounds_per_game.toFixed(1)} RPG` });
                 }
                 if ((shot.rim_frequency || 0) > 0.6) {
-                    insights.push({ icon: '🎯', text: `${((shot.rim_frequency || 0) * 100).toFixed(0)}% of shots at the rim` });
+                    insights.push({ icon: 'Ã°Å¸Å½Â¯', text: `${((shot.rim_frequency || 0) * 100).toFixed(0)}% of shots at the rim` });
                 }
                 break;
 
             case 'rim_runner':
                 if ((trad.field_goal_pct || 0) > 0.55) {
-                    insights.push({ icon: '🔥', text: `Efficient finisher at ${((trad.field_goal_pct || 0) * 100).toFixed(1)}% FG` });
+                    insights.push({ icon: 'Ã°Å¸â€Â¥', text: `Efficient finisher at ${((trad.field_goal_pct || 0) * 100).toFixed(1)}% FG` });
                 }
                 if ((creation.paint_touches_per_game || 0) > 8) {
-                    insights.push({ icon: '🏀', text: `High paint activity: ${creation.paint_touches_per_game.toFixed(1)} touches/game` });
+                    insights.push({ icon: 'Ã°Å¸Ââ‚¬', text: `High paint activity: ${creation.paint_touches_per_game.toFixed(1)} touches/game` });
                 }
                 if ((creation.assisted_rate || 0) > 0.7) {
-                    insights.push({ icon: '🤝', text: `Team-oriented: ${((creation.assisted_rate || 0) * 100).toFixed(0)}% assisted` });
+                    insights.push({ icon: 'Ã°Å¸Â¤Â', text: `Team-oriented: ${((creation.assisted_rate || 0) * 100).toFixed(0)}% assisted` });
                 }
                 break;
 
             case 'stretch_big':
                 if ((trad.three_point_pct || 0) > 0.35) {
-                    insights.push({ icon: '🎯', text: `Reliable shooter at ${((trad.three_point_pct || 0) * 100).toFixed(1)}% from three` });
+                    insights.push({ icon: 'Ã°Å¸Å½Â¯', text: `Reliable shooter at ${((trad.three_point_pct || 0) * 100).toFixed(1)}% from three` });
                 }
                 if ((shot.three_point_frequency || 0) > 0.3) {
-                    insights.push({ icon: '📊', text: `Modern big: ${((shot.three_point_frequency || 0) * 100).toFixed(0)}% of shots from three` });
+                    insights.push({ icon: 'Ã°Å¸â€œÅ ', text: `Modern big: ${((shot.three_point_frequency || 0) * 100).toFixed(0)}% of shots from three` });
                 }
                 if ((trad.rebounds_per_game || 0) > 8) {
-                    insights.push({ icon: '💪', text: `Two-way value with ${trad.rebounds_per_game.toFixed(1)} RPG` });
+                    insights.push({ icon: 'Ã°Å¸â€™Âª', text: `Two-way value with ${trad.rebounds_per_game.toFixed(1)} RPG` });
                 }
                 break;
 
             case 'versatile_wing':
                 if ((trad.points_per_game || 0) > 15 && (trad.assists_per_game || 0) > 3) {
-                    insights.push({ icon: '⭐', text: `Dual threat: ${trad.points_per_game.toFixed(1)} PPG, ${trad.assists_per_game.toFixed(1)} APG` });
+                    insights.push({ icon: 'Ã¢Â­Â', text: `Dual threat: ${trad.points_per_game.toFixed(1)} PPG, ${trad.assists_per_game.toFixed(1)} APG` });
                 }
                 if ((trad.steals_per_game || 0) > 1.0) {
-                    insights.push({ icon: '🛡️', text: `Defensive playmaker with ${trad.steals_per_game.toFixed(1)} SPG` });
+                    insights.push({ icon: 'Ã°Å¸â€ºÂ¡Ã¯Â¸Â', text: `Defensive playmaker with ${trad.steals_per_game.toFixed(1)} SPG` });
                 }
                 if ((adv.usage_rate ?? 0) > 0.25) {
-                    insights.push({ icon: '🎯', text: `High usage player at ${((adv.usage_rate ?? 0) * 100).toFixed(1)}%` });
+                    insights.push({ icon: 'Ã°Å¸Å½Â¯', text: `High usage player at ${((adv.usage_rate ?? 0) * 100).toFixed(1)}%` });
                 }
                 break;
         }
@@ -4225,9 +4473,9 @@ class PlayerCardsApp {
 
         const trustScore = player.v1_1_enhancements?.trust_assessment?.score || 0;
         if (trustScore >= 80) {
-            insights.push({ icon: '✅', text: `High data reliability (${trustScore.toFixed(0)} trust score)` });
+            insights.push({ icon: 'Ã¢Å“â€¦', text: `High data reliability (${trustScore.toFixed(0)} trust score)` });
         } else if (trustScore < 60) {
-            insights.push({ icon: '⚠️', text: `Limited data (${trustScore.toFixed(0)} trust score)` });
+            insights.push({ icon: 'Ã¢Å¡Â Ã¯Â¸Â', text: `Limited data (${trustScore.toFixed(0)} trust score)` });
         }
 
         if (bestAvailable.tier !== 'high') {
@@ -4240,11 +4488,11 @@ class PlayerCardsApp {
         // Compare to archetype peers
         if (player.comparables?.similar_players?.length > 0) {
             const topComp = player.comparables.similar_players[0];
-            insights.push({ icon: '👥', text: `Most similar to ${topComp.name} (${(topComp.similarity_score * 100).toFixed(0)}%)` });
+            insights.push({ icon: 'Ã°Å¸â€˜Â¥', text: `Most similar to ${topComp.name} (${(topComp.similarity_score * 100).toFixed(0)}%)` });
         }
 
         if (insights.length === 0) {
-            insights.push({ icon: '📊', text: 'Standard archetype profile' });
+            insights.push({ icon: 'Ã°Å¸â€œÅ ', text: 'Standard archetype profile' });
         }
 
         return insights.map(insight => `
@@ -4334,7 +4582,7 @@ class PlayerCardsApp {
                 <div class="constraints-list">
                     ${(promotionBlockReasons || []).map(r => `
                         <div class="constraint-item">
-                            <span class="constraint-icon">⛔</span>
+                            <span class="constraint-icon">Ã¢â€ºâ€</span>
                             <span class="constraint-text">${r}</span>
                         </div>
                     `).join('')}
@@ -4346,15 +4594,15 @@ class PlayerCardsApp {
                 <h3>Minutes Gate</h3>
                 <div class="constraints-list">
                     <div class="constraint-item">
-                        <span class="constraint-icon">⏱️</span>
+                        <span class="constraint-icon">Ã¢ÂÂ±Ã¯Â¸Â</span>
                         <span class="constraint-text"><strong>Status:</strong> ${String(minutesGovernance.visible_status || 'watch').toUpperCase()} (${(minutesGovernance.mpg || 0).toFixed(1)} MPG, ${(minutesGovernance.games_played || 0).toFixed(0)} GP).</span>
                     </div>
                     <div class="constraint-item">
-                        <span class="constraint-icon">🧪</span>
+                        <span class="constraint-icon">Ã°Å¸Â§Âª</span>
                         <span class="constraint-text"><strong>Evidence penalty:</strong> ${((minutesGovernance.evidence_penalty || 0) * 100).toFixed(1)}%, <strong>feasibility penalty:</strong> ${((minutesGovernance.feasibility_penalty || 0) * 100).toFixed(1)}%.</span>
                     </div>
                     <div class="constraint-item">
-                        <span class="constraint-icon">📝</span>
+                        <span class="constraint-icon">Ã°Å¸â€œÂ</span>
                         <span class="constraint-text">${minutesGovernance.reason || 'Minutes gate reason unavailable.'}</span>
                     </div>
                 </div>
@@ -4364,7 +4612,7 @@ class PlayerCardsApp {
                 <h3>Best Team Scenario</h3>
                 <div class="constraints-list">
                     <div class="constraint-item">
-                        <span class="constraint-icon">🏀</span>
+                        <span class="constraint-icon">Ã°Å¸Ââ‚¬</span>
                         <span class="constraint-text">${fitScenario.signal_strength === 'weak'
                             ? `${fitScenario.team === 'No Clear Team Edge'
                                 ? `No clear destination edge (fit score ${(fitScenario.fit_score * 100).toFixed(0)}%, confidence ${(fitScenario.confidence * 100).toFixed(0)}%)`
@@ -4374,7 +4622,7 @@ class PlayerCardsApp {
                         }</span>
                     </div>
                     <div class="constraint-item">
-                        <span class="constraint-icon">🧪</span>
+                        <span class="constraint-icon">Ã°Å¸Â§Âª</span>
                         <span class="constraint-text">Signal strength: <strong>${(fitScenario.signal_strength || 'weak').toUpperCase()}</strong> (edge over next option ${(100 * (fitScenario.fit_gap || 0)).toFixed(1)}%)</span>
                     </div>
                     <div class="constraint-item">
@@ -4387,17 +4635,17 @@ class PlayerCardsApp {
                     </div>
                     ${fitScenario.reasons.map(reason => `
                         <div class="constraint-item">
-                            <span class="constraint-icon">✓</span>
+                            <span class="constraint-icon">Ã¢Å“â€œ</span>
                             <span class="constraint-text">${reason}</span>
                         </div>
                     `).join('')}
                     <div class="constraint-item">
-                        <span class="constraint-icon">🧩</span>
+                        <span class="constraint-icon">Ã°Å¸Â§Â©</span>
                         <span class="constraint-text">Scheme complementarity ${(100 * (fitScenario.score_breakdown?.scheme_complementarity || 0)).toFixed(0)}% (creation, spacing, off-ball, and defensive role alignment)</span>
                     </div>
                     ${fitScenario.alternatives && fitScenario.alternatives.length > 1 ? `
                         <div class="constraint-item">
-                            <span class="constraint-icon">📊</span>
+                            <span class="constraint-icon">Ã°Å¸â€œÅ </span>
                             <span class="constraint-text">Next best fits: ${fitScenario.alternatives.slice(1).map(a => `${a.team} (${(a.fit_score * 100).toFixed(0)}%)`).join(', ')}</span>
                         </div>
                     ` : ''}
@@ -4417,11 +4665,11 @@ class PlayerCardsApp {
                 </div>
                 <div class="constraints-list" style="margin-top: 0.75rem;">
                     <div class="constraint-item">
-                        <span class="constraint-icon">🧭</span>
+                        <span class="constraint-icon">Ã°Å¸Â§Â­</span>
                         <span class="constraint-text">Composite contribution strength: <strong>${(contributionStrength * 100).toFixed(0)}%</strong> for ${fitScenario.team === 'No Clear Team Edge' ? 'exploratory context' : fitScenario.team}.</span>
                     </div>
                     <div class="constraint-item">
-                        <span class="constraint-icon">🛡️</span>
+                        <span class="constraint-icon">Ã°Å¸â€ºÂ¡Ã¯Â¸Â</span>
                         <span class="constraint-text">Portability ${(mechanism.portability_score * 100).toFixed(0)}% and clamp pressure ${(mechanism.clamp_severity * 100).toFixed(0)}% shape whether this value translates in-game.</span>
                     </div>
                 </div>
@@ -4452,12 +4700,12 @@ class PlayerCardsApp {
                 <h3>Value Decomposition (Team-Weighted)</h3>
                 <div class="constraints-list">
                     <div class="constraint-item">
-                        <span class="constraint-icon">🧮</span>
+                        <span class="constraint-icon">Ã°Å¸Â§Â®</span>
                         <span class="constraint-text">Base vector ${(100 * (valueDecomposition.base_score || 0)).toFixed(0)}% vs team-weighted ${(100 * (valueDecomposition.team_weighted_score || 0)).toFixed(0)}%.</span>
                     </div>
                     ${(valueDecomposition.blocks || []).slice(0, 4).map(b => `
                         <div class="constraint-item">
-                            <span class="constraint-icon">•</span>
+                            <span class="constraint-icon">Ã¢â‚¬Â¢</span>
                             <span class="constraint-text"><strong>${b.label}</strong>: ${(100 * (b.value || 0)).toFixed(0)}% with team weight ${(100 * (b.team_weight || 0)).toFixed(0)}%.</span>
                         </div>
                     `).join('')}
@@ -4504,21 +4752,21 @@ class PlayerCardsApp {
                 <h3>Impact Audit Verdict</h3>
                 <div class="constraints-list">
                     <div class="constraint-item">
-                        <span class="constraint-icon">🔎</span>
+                        <span class="constraint-icon">Ã°Å¸â€Å½</span>
                         <span class="constraint-text"><strong>Verdict:</strong> ${String(impactAudit.verdict || 'insufficient_data').replace('_', ' ').toUpperCase()} (prior disagreement ${(100 * (impactAudit.disagreement ?? mechanism.impact_prior_disagreement ?? 0)).toFixed(0)}%).</span>
                     </div>
                     <div class="constraint-item">
-                        <span class="constraint-icon">🧾</span>
+                        <span class="constraint-icon">Ã°Å¸Â§Â¾</span>
                         <span class="constraint-text"><strong>Consensus prior:</strong> ${impactAudit.consensus === null || impactAudit.consensus === undefined ? 'N/A' : impactAudit.consensus.toFixed(2)} from available EPM/LEBRON anchors.</span>
                     </div>
                     ${impactAudit.required_justification && impactAudit.required_justification.length ? impactAudit.required_justification.map(j => `
                         <div class="constraint-item">
-                            <span class="constraint-icon">⚠️</span>
+                            <span class="constraint-icon">Ã¢Å¡Â Ã¯Â¸Â</span>
                             <span class="constraint-text">${j}</span>
                         </div>
                     `).join('') : `
                         <div class="constraint-item">
-                            <span class="constraint-icon">✅</span>
+                            <span class="constraint-icon">Ã¢Å“â€¦</span>
                             <span class="constraint-text>No mandatory contradiction justification triggered.</span>
                         </div>
                     `}
@@ -4529,12 +4777,12 @@ class PlayerCardsApp {
                 <h3>Defense Role Identity & Breakpoints</h3>
                 <div class="constraints-list">
                     <div class="constraint-item">
-                        <span class="constraint-icon">🛡️</span>
+                        <span class="constraint-icon">Ã°Å¸â€ºÂ¡Ã¯Â¸Â</span>
                         <span class="constraint-text"><strong>${defenseRole.primary_role || 'Unknown'}</strong> profile with targeting risk ${(100 * (defenseRole.targeting_risk || 0)).toFixed(0)}% (G ${(100 * (defenseRole.role_mix?.guards || 0)).toFixed(0)} / W ${(100 * (defenseRole.role_mix?.wings || 0)).toFixed(0)} / B ${(100 * (defenseRole.role_mix?.bigs || 0)).toFixed(0)}).</span>
                     </div>
                     ${defenseRole.warnings && defenseRole.warnings.length ? defenseRole.warnings.map(w => `
                         <div class="constraint-item">
-                            <span class="constraint-icon">⚠️</span>
+                            <span class="constraint-icon">Ã¢Å¡Â Ã¯Â¸Â</span>
                             <span class="constraint-text">${w}</span>
                         </div>
                     `).join('') : ''}
@@ -4545,11 +4793,11 @@ class PlayerCardsApp {
                 <h3>Evidence Coverage & Missingness</h3>
                 <div class="constraints-list">
                     <div class="constraint-item">
-                        <span class="constraint-icon">📚</span>
+                        <span class="constraint-icon">Ã°Å¸â€œÅ¡</span>
                         <span class="constraint-text">Evidence coverage ${(100 * (evidence.coverage_effective || evidence.coverage || 0)).toFixed(0)}% (${String(evidence.grade || 'moderate').toUpperCase()}); confidence penalty ${(100 * (evidence.penalty_total || evidence.penalty || 0)).toFixed(1)}%.</span>
                     </div>
                     <div class="constraint-item">
-                        <span class="constraint-icon">🧩</span>
+                        <span class="constraint-icon">Ã°Å¸Â§Â©</span>
                         <span class="constraint-text">${evidence.missing && evidence.missing.length ? `Missing inputs: ${evidence.missing.slice(0, 6).join(', ')}` : 'No major required fields missing for mechanism audit.'}</span>
                     </div>
                 </div>
@@ -4559,7 +4807,7 @@ class PlayerCardsApp {
                 <h3>Ecosystem Carve-Out</h3>
                 <div class="constraints-list">
                     <div class="constraint-item">
-                        <span class="constraint-icon">🌐</span>
+                        <span class="constraint-icon">Ã°Å¸Å’Â</span>
                         <span class="constraint-text"><strong>${ecosystemValidated ? 'Validated ecosystem breakout path.' : 'Ecosystem path not validated.'}</strong> Hidden skill ${(100 * (hiddenSkillSignal || 0)).toFixed(0)}%, utilization uplift ${(100 * (utilizationUplift || 0)).toFixed(0)}%.</span>
                     </div>
                 </div>
@@ -4570,12 +4818,12 @@ class PlayerCardsApp {
                 <div class="constraints-list">
                     ${clampReport && clampReport.length ? clampReport.map(c => `
                         <div class="constraint-item">
-                            <span class="constraint-icon">⛓️</span>
+                            <span class="constraint-icon">Ã¢â€ºâ€œÃ¯Â¸Â</span>
                             <span class="constraint-text"><strong>${c.clamp}</strong> (${(100 * (c.severity || 0)).toFixed(0)}%): ${c.message} Unlock path: ${c.unlock}</span>
                         </div>
                     `).join('') : `
                         <div class="constraint-item">
-                            <span class="constraint-icon">✅</span>
+                            <span class="constraint-icon">Ã¢Å“â€¦</span>
                             <span class="constraint-text">No explicit clamp events fired in this scenario.</span>
                         </div>
                     `}
@@ -4611,7 +4859,7 @@ class PlayerCardsApp {
                         <div class="projection-label">Points Per Game</div>
                         <div class="projection-values">
                             <span class="current-value">${currentPPG.toFixed(1)}</span>
-                            <span class="projection-arrow">→</span>
+                            <span class="projection-arrow">Ã¢â€ â€™</span>
                             <span class="projected-value">${projectedPPG.toFixed(1)}</span>
                         </div>
                         <div class="projection-change">+${(projectedPPG - currentPPG).toFixed(1)} PPG</div>
@@ -4621,7 +4869,7 @@ class PlayerCardsApp {
                         <div class="projection-label">Assists Per Game</div>
                         <div class="projection-values">
                             <span class="current-value">${currentAPG.toFixed(1)}</span>
-                            <span class="projection-arrow">→</span>
+                            <span class="projection-arrow">Ã¢â€ â€™</span>
                             <span class="projected-value">${projectedAPG.toFixed(1)}</span>
                         </div>
                         <div class="projection-change">+${(projectedAPG - currentAPG).toFixed(1)} APG</div>
@@ -4631,7 +4879,7 @@ class PlayerCardsApp {
                         <div class="projection-label">Rebounds Per Game</div>
                         <div class="projection-values">
                             <span class="current-value">${currentRPG.toFixed(1)}</span>
-                            <span class="projection-arrow">→</span>
+                            <span class="projection-arrow">Ã¢â€ â€™</span>
                             <span class="projected-value">${projectedRPG.toFixed(1)}</span>
                         </div>
                         <div class="projection-change">+${(projectedRPG - currentRPG).toFixed(1)} RPG</div>
@@ -4641,7 +4889,7 @@ class PlayerCardsApp {
                         <div class="projection-label">Usage Rate</div>
                         <div class="projection-values">
                             <span class="current-value">${(currentUsage * 100).toFixed(1)}%</span>
-                            <span class="projection-arrow">→</span>
+                            <span class="projection-arrow">Ã¢â€ â€™</span>
                             <span class="projected-value">${(projectedUsage * 100).toFixed(1)}%</span>
                         </div>
                         <div class="projection-change">+${(usageDelta * 100).toFixed(1)}%</div>
@@ -4651,7 +4899,7 @@ class PlayerCardsApp {
                         <div class="projection-label">Minutes Per Game</div>
                         <div class="projection-values">
                             <span class="current-value">${currentMinutes.toFixed(1)}</span>
-                            <span class="projection-arrow">→</span>
+                            <span class="projection-arrow">Ã¢â€ â€™</span>
                             <span class="projected-value">${projectedMinutes.toFixed(1)}</span>
                         </div>
                         <div class="projection-change">+${minutesDelta.toFixed(1)} MPG</div>
@@ -4665,7 +4913,7 @@ class PlayerCardsApp {
                 <div class="constraints-list">
                     ${constraints.constraints.map(constraint => `
                         <div class="constraint-item">
-                            <span class="constraint-icon">⚠️</span>
+                            <span class="constraint-icon">Ã¢Å¡Â Ã¯Â¸Â</span>
                             <span class="constraint-text">${constraint}</span>
                         </div>
                     `).join('')}
@@ -4679,7 +4927,7 @@ class PlayerCardsApp {
                 <div class="constraints-list">
                     ${constraints.shot_diet_constraints.map(constraint => `
                         <div class="constraint-item">
-                            <span class="constraint-icon">🎯</span>
+                            <span class="constraint-icon">Ã°Å¸Å½Â¯</span>
                             <span class="constraint-text">${constraint}</span>
                         </div>
                     `).join('')}
@@ -4691,15 +4939,15 @@ class PlayerCardsApp {
                 <h3>Why The Numbers Improve</h3>
                 <div class="constraints-list">
                     <div class="constraint-item">
-                        <span class="constraint-icon">📈</span>
+                        <span class="constraint-icon">Ã°Å¸â€œË†</span>
                         <span class="constraint-text">PPG rises by ${((projectedPPG - currentPPG)).toFixed(1)} from combined usage/minutes lift (impact mix ${ppgBoostPct.toFixed(0)}%).</span>
                     </div>
                     <div class="constraint-item">
-                        <span class="constraint-icon">🧠</span>
+                        <span class="constraint-icon">Ã°Å¸Â§Â </span>
                         <span class="constraint-text">APG increases by ${((projectedAPG - currentAPG)).toFixed(1)} because this team fit creates more on-ball possessions (${(usageDelta * 100).toFixed(1)}% usage gain).</span>
                     </div>
                     <div class="constraint-item">
-                        <span class="constraint-icon">💪</span>
+                        <span class="constraint-icon">Ã°Å¸â€™Âª</span>
                         <span class="constraint-text">RPG improves by ${((projectedRPG - currentRPG)).toFixed(1)} mainly from court-time increase (+${minutesDelta.toFixed(1)} MPG).</span>
                     </div>
                 </div>
@@ -4735,7 +4983,7 @@ class PlayerCardsApp {
                     <div class="factor-item ${fitScenario.fit_score >= 0.09 ? 'positive' : fitScenario.fit_score >= 0.06 ? 'neutral' : 'negative'}">
                         <div class="factor-label">Team Fit Context</div>
                         <div class="factor-value">${(fitScenario.fit_score * 100).toFixed(0)}% (p${fitPercentile})</div>
-                        <div class="factor-assessment">${fitScenario.fit_score >= 0.09 ? 'Amazing fit path' : fitScenario.fit_score >= 0.06 ? 'Good fit path' : 'Weak fit path'} • relative league rank p${fitPercentile}</div>
+                        <div class="factor-assessment">${fitScenario.fit_score >= 0.09 ? 'Amazing fit path' : fitScenario.fit_score >= 0.06 ? 'Good fit path' : 'Weak fit path'} Ã¢â‚¬Â¢ relative league rank p${fitPercentile}</div>
                     </div>
 
                     <div class="factor-item ${fitScenario.confidence > 0.72 ? 'positive' : fitScenario.confidence < 0.58 ? 'negative' : 'neutral'}">
@@ -4753,3 +5001,4 @@ class PlayerCardsApp {
 document.addEventListener('DOMContentLoaded', () => {
     new PlayerCardsApp();
 });
+
