@@ -21,6 +21,20 @@ import pandas as pd
 
 from decision_engine.sizing import apply_tiered_bet_sizing
 try:
+    from decision_engine.selected_board_calibration import apply_selected_board_calibration as apply_selected_board_calibration_fn
+except Exception:  # pragma: no cover - fallback when calibrator module is unavailable
+    def apply_selected_board_calibration_fn(
+        frame: pd.DataFrame,
+        payload: dict | None,
+        run_date_hint: str | None = None,
+        prob_col: str = "board_play_win_prob",
+        target_col: str = "target",
+        direction_col: str = "direction",
+    ) -> tuple[pd.Series, pd.Series, str]:
+        probs = pd.to_numeric(frame.get(prob_col), errors="coerce").fillna(0.5).clip(lower=0.01, upper=0.99)
+        return probs.astype("float64"), pd.Series("identity_module_missing", index=frame.index, dtype="object"), ""
+
+try:
     from decision_engine.uncertainty import (
         BELIEF_UNCERTAINTY_LOWER,
         BELIEF_UNCERTAINTY_UPPER,
@@ -433,15 +447,16 @@ def _build_board_probability_features(candidates: pd.DataFrame) -> pd.DataFrame:
     """
     Build calibrated board-level play probability and uncertainty columns.
 
-    This keeps expected_win_rate as the anchor but adds modest feature-driven
-    separation (abs edge, confidence, support depth, uncertainty) and applies a
-    conservative target+direction shrink for low-support rows.
+    Anchor on the canonical calibrated probability (`p_calibrated` when
+    available, else `expected_win_rate`) and add modest feature-driven
+    separation for board-level solve quality.
     """
     if candidates.empty:
         return candidates.copy()
 
     out = candidates.copy()
-    base = pd.to_numeric(out.get("expected_win_rate"), errors="coerce").fillna(0.5).clip(lower=0.01, upper=0.99)
+    base_source = out["p_calibrated"] if "p_calibrated" in out.columns else out.get("expected_win_rate")
+    base = pd.to_numeric(base_source, errors="coerce").fillna(0.5).clip(lower=0.01, upper=0.99)
     abs_edge = _numeric_series(out, "abs_edge", 0.0).clip(lower=0.0)
     final_conf = _numeric_series(out, "final_confidence", 0.0).clip(lower=0.0)
     history_rows = _numeric_series(out, "history_rows", 0.0).clip(lower=0.0)
@@ -477,6 +492,7 @@ def _build_board_probability_features(candidates: pd.DataFrame) -> pd.DataFrame:
     calibrated = support_weight * modeled + (1.0 - support_weight) * group_mean
     board_prob = (0.75 * base + 0.25 * calibrated).clip(lower=0.01, upper=0.99)
 
+    out["board_play_strength"] = calibrated.clip(lower=0.01, upper=0.99)
     out["board_play_win_prob"] = board_prob
     out["board_uncertainty_penalty"] = unc_norm.clip(lower=0.0, upper=1.0)
     out["board_prob_dispersion"] = board_prob - base
@@ -1500,6 +1516,8 @@ def compute_final_board(
     board_objective_swap_rounds: int = 2,
     max_history_staleness_days: int = 0,
     min_recency_factor: float = 0.0,
+    selected_board_calibrator: dict | None = None,
+    selected_board_calibration_month: str | None = None,
 ) -> pd.DataFrame:
     out = plays.copy()
     if out.empty:
@@ -1512,6 +1530,7 @@ def compute_final_board(
         out["expected_loss_rate"] = _numeric_series(out, "expected_loss_rate", 0.0)
     else:
         out["expected_loss_rate"] = np.clip(1.0 - out["expected_win_rate"] - out["expected_push_rate"], 0.0, 1.0)
+    out["selector_expected_win_rate"] = out["expected_win_rate"].clip(lower=0.0, upper=1.0)
     out["gap_percentile"] = pd.to_numeric(out["gap_percentile"], errors="coerce").fillna(0.0)
     out["belief_uncertainty"] = _numeric_series(out, "belief_uncertainty", 1.0)
     normalized_belief = normalize_belief_uncertainty(
@@ -1553,6 +1572,8 @@ def compute_final_board(
     )
     out["expected_win_rate"] = out["calibrated_win_rate"].clip(lower=0.0, upper=1.0 - out["expected_push_rate"])
     out["expected_loss_rate"] = np.clip(1.0 - out["expected_win_rate"] - out["expected_push_rate"], 0.0, 1.0)
+    out["p_calibrated"] = out["expected_win_rate"]
+    out["board_play_win_prob"] = out["p_calibrated"]
 
     out["ev"] = out["expected_win_rate"] * payout - out["expected_loss_rate"]
     out["final_confidence"] = base_confidence
@@ -1737,6 +1758,42 @@ def compute_final_board(
             out["board_caps_relaxed"] = False
     if out.empty:
         return out
+
+    # Single canonical published probability for downstream sizing/UI/diagnostics.
+    if "board_play_win_prob" in out.columns:
+        canonical = pd.to_numeric(out["board_play_win_prob"], errors="coerce").fillna(
+            pd.to_numeric(out["expected_win_rate"], errors="coerce").fillna(0.5)
+        )
+    else:
+        canonical = pd.to_numeric(out["expected_win_rate"], errors="coerce").fillna(0.5)
+    out["selected_board_prob_raw"] = canonical.astype("float64")
+    calibration_frame = pd.DataFrame(
+        {
+            "target": out.get("target", pd.Series("", index=out.index)),
+            "direction": out.get("direction", pd.Series("", index=out.index)),
+            "board_play_win_prob": out["selected_board_prob_raw"],
+            "market_date": out.get("market_date", pd.Series("", index=out.index)),
+        },
+        index=out.index,
+    )
+    calibrated_probs, calibration_source, calibration_month = apply_selected_board_calibration_fn(
+        calibration_frame,
+        payload=selected_board_calibrator,
+        run_date_hint=selected_board_calibration_month,
+        prob_col="board_play_win_prob",
+        target_col="target",
+        direction_col="direction",
+    )
+    out["selected_board_calibration_source"] = calibration_source.reindex(out.index).fillna("identity")
+    out["selected_board_calibration_month"] = str(calibration_month or "")
+    canonical = pd.to_numeric(calibrated_probs, errors="coerce").fillna(out["selected_board_prob_raw"])
+    out["p_calibrated"] = canonical.clip(lower=0.0, upper=1.0 - out["expected_push_rate"])
+    out["board_play_win_prob"] = out["p_calibrated"]
+    out["expected_win_rate"] = out["p_calibrated"]
+    out["expected_loss_rate"] = np.clip(1.0 - out["expected_win_rate"] - out["expected_push_rate"], 0.0, 1.0)
+    out["ev"] = out["expected_win_rate"] * payout - out["expected_loss_rate"]
+    out["ev_adjusted"] = out["ev"] * (1.0 + float(edge_adjust_k) * (out["edge_scale"] - 1.0))
+
     sized_out = apply_tiered_bet_sizing(
         out,
         expected_win_rate_col="expected_win_rate",

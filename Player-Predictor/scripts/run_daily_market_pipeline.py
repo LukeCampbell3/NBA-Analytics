@@ -134,6 +134,23 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--skip-export-web", action="store_true", help="Skip exporting web daily predictions payload.")
     parser.add_argument("--skip-build-site", action="store_true", help="Skip static site rebuild step.")
+    parser.add_argument(
+        "--selected-board-calibrator-json",
+        type=Path,
+        default=REPO_ROOT / "model" / "analysis" / "calibration" / "selected_board_calibrator.json",
+        help="Selected-board calibrator payload JSON forwarded to run_market_pipeline.py.",
+    )
+    parser.add_argument(
+        "--disable-selected-board-calibration",
+        action="store_true",
+        help="Disable selected-board calibration in child market pipeline runs.",
+    )
+    parser.add_argument(
+        "--selected-board-calibration-month",
+        type=str,
+        default=None,
+        help="Optional YYYY-MM month override for selected-board calibration (defaults to run month).",
+    )
     parser.add_argument("--python", type=str, default=sys.executable, help="Python executable to use for child steps.")
     return parser.parse_args()
 
@@ -464,6 +481,14 @@ def main() -> None:
     args = parse_args()
     local_date = pd.Timestamp(args.run_date).normalize() if args.run_date else pd.Timestamp.now().normalize()
     season = args.season or infer_season(local_date)
+    selected_board_calibration_month = str(args.selected_board_calibration_month or local_date.strftime("%Y-%m"))
+    selected_board_calibrator_path = args.selected_board_calibrator_json.resolve()
+    selected_board_calibrator_meta = {
+        "path": str(selected_board_calibrator_path),
+        "exists": bool(selected_board_calibrator_path.exists()),
+        "enabled": not bool(args.disable_selected_board_calibration),
+        "calibration_month": selected_board_calibration_month,
+    }
     primary_policy = str(args.policy_profile)
     shadow_policies = [profile for profile in args.shadow_policy_profiles if str(profile) and str(profile) != primary_policy]
     yesterday = (local_date - pd.Timedelta(days=1)).date()
@@ -616,6 +641,11 @@ def main() -> None:
             str(final_csv),
             "--final-json-out",
             str(final_json),
+            "--selected-board-calibrator-json",
+            str(selected_board_calibrator_path),
+            "--selected-board-calibration-month",
+            selected_board_calibration_month,
+            *(["--disable-selected-board-calibration"] if args.disable_selected_board_calibration else []),
             *(["--allow-heuristic-fallback"] if args.allow_heuristic_fallback else []),
             *(["--latest"] if args.latest else []),
         ],
@@ -650,6 +680,11 @@ def main() -> None:
                 str(shadow_final_csv),
                 "--final-json-out",
                 str(shadow_final_json),
+                "--selected-board-calibrator-json",
+                str(selected_board_calibrator_path),
+                "--selected-board-calibration-month",
+                selected_board_calibration_month,
+                *(["--disable-selected-board-calibration"] if args.disable_selected_board_calibration else []),
                 *(["--allow-heuristic-fallback"] if args.allow_heuristic_fallback else []),
                 *(["--latest"] if args.latest else []),
             ],
@@ -749,6 +784,7 @@ def main() -> None:
         "skip_export_web": bool(args.skip_export_web),
         "skip_build_site": bool(args.skip_build_site),
         "allow_heuristic_fallback": bool(args.allow_heuristic_fallback),
+        "selected_board_calibrator": selected_board_calibrator_meta,
         "updated_at_utc": datetime.utcnow().isoformat() + "Z",
     }
     manifest_path = run_dir / f"daily_market_pipeline_manifest_{run_stamp}.json"
@@ -791,6 +827,7 @@ def main() -> None:
         print(f"Shadow policies:      {', '.join(shadow_policies)}")
     if cutoff_meta_monitor_outputs.get("enabled"):
         print(f"Cutoff monitor:       {cutoff_meta_monitor_outputs.get('comparison_json')}")
+    print(f"Selected calibrator:  {selected_board_calibrator_meta}")
     if snapshot_meta["mode"] == "stale_fallback":
         print(f"Selected market date: {snapshot_meta['selected_market_date']}")
     print(f"Run directory:        {run_dir}")
