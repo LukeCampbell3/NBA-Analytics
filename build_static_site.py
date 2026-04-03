@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
@@ -104,6 +105,18 @@ def nonempty_html_files(directory: Path) -> Iterable[Path]:
             yield path
 
 
+def normalize_home_links(directory: Path) -> None:
+    """
+    Ensure Home anchors always route to root (/), not index.html.
+    """
+    pattern = re.compile(r'(<a\b[^>]*\bhref=["\'])index\.html(["\'][^>]*>\s*Home\s*</a>)', re.IGNORECASE)
+    for html_file in nonempty_html_files(directory):
+        src_text = html_file.read_text(encoding="utf-8")
+        normalized = pattern.sub(r'\1/\2', src_text)
+        if normalized != src_text:
+            html_file.write_text(normalized, encoding="utf-8")
+
+
 def create_clean_routes(out_dir: Path) -> None:
     for html_file in nonempty_html_files(out_dir):
         stem = html_file.stem.lower()
@@ -134,6 +147,7 @@ def build_static_site(
     print(f"[copy] {source_dir} -> {output_dir}")
 
     trim_college_payload(output_dir / "data", college_card_limit)
+    normalize_home_links(output_dir)
     create_clean_routes(output_dir)
 
     print("\n[SUCCESS] Static site build complete.")

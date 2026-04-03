@@ -88,9 +88,24 @@
         return `${last}.html`;
     };
 
+    const canonicalNavHref = (href) => {
+        const normalized = String(href || '').trim().toLowerCase();
+        if (!normalized || normalized === '/' || normalized === 'index.html' || normalized === '/index.html') {
+            return 'index.html';
+        }
+        return normalized.startsWith('/') ? normalized.slice(1) : normalized;
+    };
+
     const current = getCurrentPage();
     document.querySelectorAll('.site-nav-link').forEach((link) => {
-        const href = (link.getAttribute('href') || '').toLowerCase();
+        const hrefRaw = link.getAttribute('href') || '';
+        const href = canonicalNavHref(hrefRaw);
+
+        // Keep Home canonical so generator drift back to index.html does not persist in runtime.
+        if (href === 'index.html' && (link.textContent || '').trim().toLowerCase() === 'home') {
+            link.setAttribute('href', '/');
+        }
+
         if (href === current || (current === '' && href === 'index.html')) {
             link.classList.add('active');
             link.setAttribute('aria-current', 'page');
