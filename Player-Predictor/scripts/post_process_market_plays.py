@@ -52,6 +52,21 @@ except Exception:  # pragma: no cover - fallback when gate module is unavailable
         return pass_mask, thresholds, source, "", {"enabled": False, "reason": "module_missing"}
 
 try:
+    from decision_engine.staking_bucket_model_v2 import apply_staking_bucket_model_v2 as apply_staking_bucket_model_v2_fn
+except Exception:  # pragma: no cover - fallback when staking model module is unavailable
+    def apply_staking_bucket_model_v2_fn(
+        frame: pd.DataFrame,
+        payload: dict | None,
+        run_date_hint: str | None = None,
+        prob_col: str = "p_calibrated",
+        payout_per_unit: float = (100.0 / 110.0),
+        min_train_rows: int = 0,
+    ) -> tuple[pd.Series, pd.Series, str, dict]:
+        probs = pd.to_numeric(frame.get(prob_col), errors="coerce").fillna(0.5).clip(lower=0.0, upper=1.0)
+        source = pd.Series("identity_module_missing", index=frame.index, dtype="object")
+        return probs.astype("float64"), source, "", {"enabled": False, "reason": "module_missing"}
+
+try:
     from decision_engine.uncertainty import (
         BELIEF_UNCERTAINTY_LOWER,
         BELIEF_UNCERTAINTY_UPPER,
@@ -246,6 +261,118 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-bet-fraction", type=float, default=0.02, help="Maximum bankroll fraction per play.")
     parser.add_argument("--max-total-bet-fraction", type=float, default=0.05, help="Maximum total bankroll fraction across the board.")
     parser.add_argument(
+        "--sizing-method",
+        type=str,
+        default="tiered_probability",
+        choices=["tiered_probability", "flat_fraction", "coarse_bucket"],
+        help="Stake allocation method: tiered probabilities, conservative flat fraction, or conservative coarse buckets.",
+    )
+    parser.add_argument(
+        "--flat-bet-fraction",
+        type=float,
+        default=0.0,
+        help="When sizing-method=flat_fraction, per-play bankroll fraction before total-cap scaling (<=0 falls back to small-bet-fraction).",
+    )
+    parser.add_argument("--coarse-low-bet-fraction", type=float, default=0.003, help="When sizing-method=coarse_bucket, low-tier bankroll fraction.")
+    parser.add_argument("--coarse-mid-bet-fraction", type=float, default=0.005, help="When sizing-method=coarse_bucket, mid-tier bankroll fraction.")
+    parser.add_argument("--coarse-high-bet-fraction", type=float, default=0.007, help="When sizing-method=coarse_bucket, high-tier bankroll fraction.")
+    parser.add_argument(
+        "--coarse-high-max-share",
+        type=float,
+        default=0.30,
+        help="When sizing-method=coarse_bucket, hard cap on high-tier share of selected plays.",
+    )
+    parser.add_argument(
+        "--coarse-mid-max-share",
+        type=float,
+        default=0.50,
+        help="When sizing-method=coarse_bucket, hard cap on mid-tier share of selected plays.",
+    )
+    parser.add_argument(
+        "--coarse-high-max-plays",
+        type=int,
+        default=0,
+        help="When sizing-method=coarse_bucket, optional hard cap on high-tier play count (0 disables explicit count cap).",
+    )
+    parser.add_argument(
+        "--coarse-mid-max-plays",
+        type=int,
+        default=0,
+        help="When sizing-method=coarse_bucket, optional hard cap on mid-tier play count (0 disables explicit count cap).",
+    )
+    parser.add_argument(
+        "--coarse-score-alpha-uncertainty",
+        type=float,
+        default=0.18,
+        help="Weight on uncertainty penalty in coarse bucket stake score.",
+    )
+    parser.add_argument(
+        "--coarse-score-beta-dependency",
+        type=float,
+        default=0.12,
+        help="Weight on dependency burden penalty in coarse bucket stake score.",
+    )
+    parser.add_argument(
+        "--coarse-score-gamma-support",
+        type=float,
+        default=0.08,
+        help="Weight on support-strength lift in coarse bucket stake score.",
+    )
+    parser.add_argument(
+        "--coarse-score-model",
+        type=str,
+        default="legacy",
+        choices=["legacy", "stake_score_v1", "stake_model_v2"],
+        help="Coarse bucket stake-score model variant.",
+    )
+    parser.add_argument(
+        "--coarse-score-delta-prob-weight",
+        type=float,
+        default=0.0,
+        help="Additional weight on calibrated non-push win-edge strength in coarse stake score.",
+    )
+    parser.add_argument(
+        "--coarse-score-ev-weight",
+        type=float,
+        default=0.0,
+        help="Additional weight on within-board EV strength in coarse stake score.",
+    )
+    parser.add_argument(
+        "--coarse-score-risk-weight",
+        type=float,
+        default=0.0,
+        help="Penalty weight on risk composite (risk/volatility/spike/tail imbalance) in coarse stake score.",
+    )
+    parser.add_argument(
+        "--coarse-score-recency-weight",
+        type=float,
+        default=0.0,
+        help="Additional weight on recency support in coarse stake score.",
+    )
+    parser.add_argument(
+        "--staking-bucket-model-json",
+        type=Path,
+        default=Path("model/analysis/calibration/staking_bucket_model_v2.json"),
+        help="Optional walk-forward staking bucket model payload JSON.",
+    )
+    parser.add_argument(
+        "--disable-staking-bucket-model",
+        action="store_true",
+        help="Disable walk-forward staking bucket model usage even when coarse-score-model=stake_model_v2.",
+    )
+    parser.add_argument(
+        "--staking-bucket-model-month",
+        type=str,
+        default=None,
+        help="Optional YYYY-MM month hint used for walk-forward staking bucket model lookup.",
+    )
+    parser.add_argument(
+        "--staking-bucket-model-min-rows",
+        type=int,
+        default=0,
+        help="Minimum monthly training rows required before applying walk-forward staking bucket model (0 disables this guard).",
+    )
+    parser.add_argument(
         "--belief-uncertainty-lower",
         type=float,
         default=BELIEF_UNCERTAINTY_LOWER,
@@ -352,6 +479,63 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=2,
         help="Maximum number of improving swap rounds after exact board solve.",
+    )
+    parser.add_argument(
+        "--board-objective-instability-enabled",
+        action="store_true",
+        help="Enable shadow-instability penalty/veto handling for near-cutoff board-objective candidates.",
+    )
+    parser.add_argument(
+        "--board-objective-lambda-shadow-disagreement",
+        type=float,
+        default=0.0,
+        help="Penalty weight on shadow-model disagreement for near-cutoff board-objective candidates.",
+    )
+    parser.add_argument(
+        "--board-objective-lambda-segment-weakness",
+        type=float,
+        default=0.0,
+        help="Penalty weight on segment-level recent weakness for near-cutoff board-objective candidates.",
+    )
+    parser.add_argument(
+        "--board-objective-instability-near-cutoff-window",
+        type=int,
+        default=3,
+        help="Rank-distance window around the board cutoff where instability penalties apply.",
+    )
+    parser.add_argument(
+        "--board-objective-instability-top-protected",
+        type=int,
+        default=3,
+        help="Top ranked candidates protected from instability penalties/vetoes.",
+    )
+    parser.add_argument(
+        "--board-objective-instability-veto-enabled",
+        action="store_true",
+        help="Enable near-cutoff veto for high-instability in-cutoff candidates.",
+    )
+    parser.add_argument(
+        "--board-objective-instability-veto-quantile",
+        type=float,
+        default=0.85,
+        help="Quantile threshold for triggering near-cutoff instability vetoes.",
+    )
+    parser.add_argument(
+        "--board-objective-dynamic-size-enabled",
+        action="store_true",
+        help="Allow board-objective mode to shrink board size on unstable slates.",
+    )
+    parser.add_argument(
+        "--board-objective-dynamic-size-max-shrink",
+        type=int,
+        default=0,
+        help="Maximum board rows that dynamic-size mode can shrink below requested max-total-plays.",
+    )
+    parser.add_argument(
+        "--board-objective-dynamic-size-trigger",
+        type=float,
+        default=0.62,
+        help="Composite instability trigger above which dynamic-size shrink activates.",
     )
     parser.add_argument(
         "--learned-gate-json",
@@ -577,6 +761,380 @@ def _build_pairwise_dependency_matrix(
     return matrix
 
 
+def _normalize_0_1(series: pd.Series, constant_value: float = 0.0) -> pd.Series:
+    values = pd.to_numeric(series, errors="coerce").fillna(0.0).astype("float64")
+    if values.empty:
+        return values
+    lo = float(values.min())
+    hi = float(values.max())
+    span = hi - lo
+    if span <= 1e-9:
+        return pd.Series(float(constant_value), index=values.index, dtype="float64")
+    return ((values - lo) / span).clip(lower=0.0, upper=1.0).astype("float64")
+
+
+def _segment_key_series(frame: pd.DataFrame) -> pd.Series:
+    target = _clean_key_component(frame.get("target", pd.Series("", index=frame.index))).str.upper().replace("", "UNK")
+    direction = _clean_key_component(frame.get("direction", pd.Series("", index=frame.index))).str.upper().replace("", "UNK")
+    return (target + "|" + direction).astype("object")
+
+
+def _tier_from_rank_pct(rank_pct: pd.Series) -> pd.Series:
+    pct = pd.to_numeric(rank_pct, errors="coerce").fillna(0.5).clip(lower=0.0, upper=1.0)
+    values = np.where(pct >= (2.0 / 3.0), 2, np.where(pct >= (1.0 / 3.0), 1, 0))
+    return pd.Series(values.astype(int), index=pct.index, dtype="int64")
+
+
+def _segment_recent_weakness_series(frame: pd.DataFrame, disagreement: pd.Series) -> tuple[pd.Series, str]:
+    if "segment_recent_weakness" in frame.columns:
+        weak = pd.to_numeric(frame.get("segment_recent_weakness"), errors="coerce").fillna(0.0).clip(lower=0.0, upper=1.0)
+        return weak.astype("float64"), "segment_recent_weakness"
+
+    cal_gap = _numeric_series(frame, "segment_recent_calibration_gap_pp", np.nan)
+    margin_under = _numeric_series(frame, "segment_recent_margin_underperformance", np.nan)
+    loss_conc = _numeric_series(frame, "segment_recent_loss_concentration", np.nan)
+    has_recent = cal_gap.notna().any() or margin_under.notna().any() or loss_conc.notna().any()
+    if has_recent:
+        cal_component = _normalize_0_1(cal_gap.fillna(0.0).clip(lower=0.0), constant_value=0.0)
+        margin_component = _normalize_0_1(margin_under.fillna(0.0).clip(lower=0.0), constant_value=0.0)
+        loss_component = _normalize_0_1(loss_conc.fillna(0.0).clip(lower=0.0), constant_value=0.0)
+        weak = (0.40 * cal_component + 0.35 * margin_component + 0.25 * loss_component).clip(lower=0.0, upper=1.0)
+        return weak.astype("float64"), "segment_recent_metrics"
+
+    segment_key = _segment_key_series(frame)
+    seg_mean = pd.to_numeric(disagreement, errors="coerce").fillna(0.0).groupby(segment_key).transform("mean")
+    weak = _normalize_0_1(seg_mean, constant_value=0.5)
+    return weak.astype("float64"), "shadow_disagreement_proxy"
+
+
+def _build_board_instability_features(
+    candidates: pd.DataFrame,
+    payout_per_unit: float,
+    staking_bucket_model_payload: dict | None,
+    staking_bucket_model_month: str | None,
+    staking_bucket_model_min_rows: int,
+    same_game_weight: float,
+    same_player_weight: float,
+    same_target_weight: float,
+    same_direction_weight: float,
+    same_script_cluster_weight: float,
+) -> pd.DataFrame:
+    out = candidates.copy()
+    if out.empty:
+        return out
+
+    prob = _numeric_series(out, "board_play_win_prob", np.nan)
+    prob = prob.where(prob.notna(), _numeric_series(out, "p_calibrated", np.nan))
+    prob = prob.where(prob.notna(), _numeric_series(out, "expected_win_rate", 0.5)).fillna(0.5).clip(lower=0.0, upper=1.0)
+
+    expected_push = _numeric_series(out, "expected_push_rate", 0.0).clip(lower=0.0, upper=0.95)
+    non_push = (1.0 - expected_push).clip(lower=0.05, upper=1.0)
+    cond_prob = (prob / non_push).clip(lower=0.0, upper=1.0)
+    break_even_cond = 1.0 / (1.0 + max(float(payout_per_unit), 1e-9))
+    delta_prob = (cond_prob - float(break_even_cond)).clip(lower=-1.0, upper=1.0)
+    delta_prob_strength = _normalize_0_1(delta_prob, constant_value=0.5)
+
+    ev_source = _numeric_series(out, "ev_adjusted", np.nan)
+    ev_source = ev_source.where(ev_source.notna(), _numeric_series(out, "ev", 0.0)).fillna(0.0)
+    ev_strength = _normalize_0_1(ev_source, constant_value=0.5)
+
+    unc = pd.to_numeric(out.get("board_uncertainty_penalty"), errors="coerce")
+    if unc.isna().all():
+        unc = pd.to_numeric(out.get("belief_uncertainty_normalized"), errors="coerce")
+    if unc.isna().all():
+        unc = np.sqrt(pd.to_numeric(out.get("posterior_variance"), errors="coerce").fillna(0.25).clip(lower=0.0, upper=1.0))
+    unc = pd.to_numeric(unc, errors="coerce").fillna(0.5).clip(lower=0.0, upper=1.0)
+
+    dep_matrix = _build_pairwise_dependency_matrix(
+        out,
+        same_game_weight=float(same_game_weight),
+        same_player_weight=float(same_player_weight),
+        same_target_weight=float(same_target_weight),
+        same_direction_weight=float(same_direction_weight),
+        same_script_cluster_weight=float(same_script_cluster_weight),
+    )
+    dep_burden = pd.Series(dep_matrix.mean(axis=1) if dep_matrix.size else np.zeros(len(out), dtype="float64"), index=out.index, dtype="float64")
+    dep_strength = _normalize_0_1(dep_burden, constant_value=0.0)
+
+    history_rows = _numeric_series(out, "history_rows", 0.0).clip(lower=0.0)
+    calibration_rows = _numeric_series(out, "calibration_bucket_rows", 0.0).clip(lower=0.0)
+    support_raw = 0.70 * np.log1p(history_rows) + 0.30 * np.log1p(calibration_rows)
+    support_strength = _normalize_0_1(pd.Series(support_raw, index=out.index, dtype="float64"), constant_value=0.0)
+
+    recency_strength = _numeric_series(out, "recency_factor", 1.0).clip(lower=0.0, upper=1.0)
+    risk_penalty = _numeric_series(out, "risk_penalty", 0.0).clip(lower=0.0)
+    volatility_score = _numeric_series(out, "volatility_score", 0.0).clip(lower=0.0)
+    spike_probability = _numeric_series(out, "spike_probability", 0.0).clip(lower=0.0)
+    tail_imbalance = _numeric_series(out, "tail_imbalance", 0.0).abs()
+    risk_component = (0.45 * risk_penalty + 0.30 * volatility_score + 0.15 * spike_probability + 0.10 * tail_imbalance).clip(lower=0.0)
+
+    legacy_score = (
+        cond_prob
+        - 0.18 * unc
+        - 0.12 * dep_strength
+        + 0.08 * support_strength
+    )
+    score_v1 = (
+        legacy_score
+        + 0.18 * delta_prob_strength
+        + 0.14 * ev_strength
+        + 0.06 * recency_strength
+        - 0.16 * risk_component
+    )
+    score_v2_prob, score_v2_source, score_v2_month, score_v2_details = apply_staking_bucket_model_v2_fn(
+        out,
+        payload=staking_bucket_model_payload,
+        run_date_hint=staking_bucket_model_month,
+        prob_col="board_play_win_prob",
+        payout_per_unit=float(payout_per_unit),
+        min_train_rows=int(staking_bucket_model_min_rows),
+    )
+    score_v2 = pd.to_numeric(score_v2_prob, errors="coerce").fillna(prob).clip(lower=0.0, upper=1.0)
+
+    rank_legacy = pd.to_numeric(legacy_score, errors="coerce").rank(method="average", pct=True).fillna(0.5)
+    rank_v1 = pd.to_numeric(score_v1, errors="coerce").rank(method="average", pct=True).fillna(0.5)
+    rank_v2 = pd.to_numeric(score_v2, errors="coerce").rank(method="average", pct=True).fillna(0.5)
+    rank_matrix = np.column_stack(
+        [
+            rank_legacy.to_numpy(dtype="float64"),
+            rank_v1.to_numpy(dtype="float64"),
+            rank_v2.to_numpy(dtype="float64"),
+        ]
+    )
+    rank_std = pd.Series(np.std(rank_matrix, axis=1), index=out.index, dtype="float64")
+    rank_std_norm = _normalize_0_1(rank_std, constant_value=0.0)
+
+    bucket_legacy = _tier_from_rank_pct(rank_legacy)
+    bucket_v1 = _tier_from_rank_pct(rank_v1)
+    bucket_v2 = _tier_from_rank_pct(rank_v2)
+    bucket_matrix = np.column_stack(
+        [
+            bucket_legacy.to_numpy(dtype="int64"),
+            bucket_v1.to_numpy(dtype="int64"),
+            bucket_v2.to_numpy(dtype="int64"),
+        ]
+    )
+    bucket_unique_count = np.apply_along_axis(lambda row: len(set(int(value) for value in row)), 1, bucket_matrix)
+    bucket_disagreement = pd.Series(np.clip((bucket_unique_count - 1.0) / 2.0, 0.0, 1.0), index=out.index, dtype="float64")
+
+    shadow_disagreement = (0.70 * rank_std_norm + 0.30 * bucket_disagreement).clip(lower=0.0, upper=1.0)
+    segment_weakness, segment_weakness_source = _segment_recent_weakness_series(out, shadow_disagreement)
+    instability_raw = 0.50 * shadow_disagreement + 0.20 * unc + 0.20 * dep_strength + 0.10 * segment_weakness
+    instability_score = _normalize_0_1(pd.Series(instability_raw, index=out.index, dtype="float64"), constant_value=0.5)
+
+    out["board_dependency_burden"] = dep_strength.astype("float64")
+    out["board_shadow_disagreement"] = shadow_disagreement.astype("float64")
+    out["board_shadow_rank_std"] = rank_std_norm.astype("float64")
+    out["board_shadow_bucket_disagreement"] = bucket_disagreement.astype("float64")
+    out["board_shadow_score_legacy"] = pd.to_numeric(legacy_score, errors="coerce").astype("float64")
+    out["board_shadow_score_v1"] = pd.to_numeric(score_v1, errors="coerce").astype("float64")
+    out["board_shadow_score_v2"] = pd.to_numeric(score_v2, errors="coerce").astype("float64")
+    out["board_shadow_bucket_legacy"] = bucket_legacy.astype("int64")
+    out["board_shadow_bucket_v1"] = bucket_v1.astype("int64")
+    out["board_shadow_bucket_v2"] = bucket_v2.astype("int64")
+    out["board_segment_key"] = _segment_key_series(out)
+    out["board_segment_recent_weakness"] = segment_weakness.astype("float64")
+    out["board_segment_recent_weakness_source"] = str(segment_weakness_source)
+    out["board_instability_score"] = instability_score.astype("float64")
+    out["board_shadow_score_v2_source"] = score_v2_source.astype("object")
+    out["board_shadow_score_v2_month"] = str(score_v2_month)
+    out["board_shadow_score_v2_details"] = json.dumps(score_v2_details, sort_keys=True)
+    return out
+
+
+def _apply_coarse_bucket_sizing(
+    board: pd.DataFrame,
+    max_bet_fraction: float,
+    max_total_bet_fraction: float,
+    low_bet_fraction: float,
+    mid_bet_fraction: float,
+    high_bet_fraction: float,
+    high_max_share: float,
+    mid_max_share: float,
+    high_max_plays: int,
+    mid_max_plays: int,
+    score_alpha_uncertainty: float,
+    score_beta_dependency: float,
+    score_gamma_support: float,
+    score_model: str,
+    score_delta_prob_weight: float,
+    score_ev_weight: float,
+    score_risk_weight: float,
+    score_recency_weight: float,
+    payout_per_unit: float,
+    staking_bucket_model_payload: dict | None,
+    staking_bucket_model_month: str | None,
+    staking_bucket_model_min_rows: int,
+    same_game_weight: float,
+    same_player_weight: float,
+    same_target_weight: float,
+    same_direction_weight: float,
+    same_script_cluster_weight: float,
+) -> pd.DataFrame:
+    out = board.copy()
+    n_rows = int(len(out))
+    if n_rows <= 0:
+        return out
+
+    # Conservative scoring inputs.
+    score_model_name = str(score_model or "legacy").strip().lower()
+    if score_model_name not in {"legacy", "stake_score_v1", "stake_model_v2"}:
+        score_model_name = "legacy"
+
+    prob = _numeric_series(out, "p_calibrated", np.nan)
+    prob = prob.where(prob.notna(), _numeric_series(out, "expected_win_rate", 0.5)).fillna(0.5).clip(lower=0.0, upper=1.0)
+    expected_push = _numeric_series(out, "expected_push_rate", 0.0).clip(lower=0.0, upper=0.95)
+    non_push = (1.0 - expected_push).clip(lower=0.05, upper=1.0)
+    cond_prob = (prob / non_push).clip(lower=0.0, upper=1.0)
+    safe_payout = max(float(payout_per_unit), 1e-9)
+    break_even_cond = 1.0 / (1.0 + safe_payout)
+    delta_prob = (cond_prob - float(break_even_cond)).clip(lower=-1.0, upper=1.0)
+    delta_prob_strength = _normalize_0_1(delta_prob, constant_value=0.5)
+
+    ev_source = _numeric_series(out, "ev_adjusted", np.nan)
+    ev_source = ev_source.where(ev_source.notna(), _numeric_series(out, "ev", 0.0)).fillna(0.0)
+    ev_strength = _normalize_0_1(ev_source, constant_value=0.5)
+
+    unc = pd.to_numeric(out.get("board_uncertainty_penalty"), errors="coerce")
+    if unc.isna().all():
+        unc = pd.to_numeric(out.get("belief_uncertainty_normalized"), errors="coerce")
+    if unc.isna().all():
+        unc = np.sqrt(pd.to_numeric(out.get("posterior_variance"), errors="coerce").fillna(0.25).clip(lower=0.0, upper=1.0))
+    unc = pd.to_numeric(unc, errors="coerce").fillna(0.5).clip(lower=0.0, upper=1.0)
+
+    history_rows = _numeric_series(out, "history_rows", 0.0).clip(lower=0.0)
+    calibration_rows = _numeric_series(out, "calibration_bucket_rows", 0.0).clip(lower=0.0)
+    market_books = _numeric_series(out, "market_books", 0.0).clip(lower=0.0)
+    recency_strength = _numeric_series(out, "recency_factor", 1.0).clip(lower=0.0, upper=1.0)
+    recency_strength = _normalize_0_1(recency_strength, constant_value=0.5)
+    support_strength = (
+        0.60 * _normalize_0_1(np.log1p(history_rows), constant_value=0.0)
+        + 0.20 * _normalize_0_1(np.log1p(calibration_rows), constant_value=0.0)
+        + 0.20 * _normalize_0_1(
+        np.log1p(market_books), constant_value=0.0
+        )
+    )
+
+    risk_penalty = _numeric_series(out, "risk_penalty", 0.0).clip(lower=0.0)
+    volatility = _numeric_series(out, "volatility_score", 0.0).clip(lower=0.0)
+    spike_probability = _numeric_series(out, "spike_probability", 0.0).clip(lower=0.0)
+    tail_imbalance = _numeric_series(out, "tail_imbalance", 0.0).abs()
+    risk_component = (
+        0.45 * _normalize_0_1(risk_penalty, constant_value=0.0)
+        + 0.30 * _normalize_0_1(volatility, constant_value=0.0)
+        + 0.15 * _normalize_0_1(spike_probability, constant_value=0.0)
+        + 0.10 * _normalize_0_1(tail_imbalance, constant_value=0.0)
+    )
+
+    dep_matrix = _build_pairwise_dependency_matrix(
+        out,
+        same_game_weight=float(same_game_weight),
+        same_player_weight=float(same_player_weight),
+        same_target_weight=float(same_target_weight),
+        same_direction_weight=float(same_direction_weight),
+        same_script_cluster_weight=float(same_script_cluster_weight),
+    )
+    if n_rows > 1:
+        dep_raw = pd.Series(dep_matrix.sum(axis=1) / float(n_rows - 1), index=out.index, dtype="float64")
+    else:
+        dep_raw = pd.Series(0.0, index=out.index, dtype="float64")
+    dep_burden = _normalize_0_1(dep_raw, constant_value=0.0)
+
+    score = (
+        prob
+        - float(score_alpha_uncertainty) * unc
+        - float(score_beta_dependency) * dep_burden
+        + float(score_gamma_support) * support_strength
+    )
+    if score_model_name == "stake_model_v2":
+        run_date_hint = str(staking_bucket_model_month or "")
+        if not run_date_hint:
+            run_date_hint = str(pd.to_datetime(out.get("market_date"), errors="coerce").max()) if "market_date" in out.columns else ""
+        v2_score, v2_source, v2_month, v2_details = apply_staking_bucket_model_v2_fn(
+            out,
+            payload=staking_bucket_model_payload,
+            run_date_hint=run_date_hint,
+            prob_col="p_calibrated",
+            payout_per_unit=float(payout_per_unit),
+            min_train_rows=int(max(0, staking_bucket_model_min_rows)),
+        )
+        score = (
+            pd.to_numeric(v2_score, errors="coerce").fillna(prob)
+            - float(score_alpha_uncertainty) * unc
+            - float(score_beta_dependency) * dep_burden
+            + float(score_gamma_support) * support_strength
+        )
+        out["coarse_score_v2_source"] = pd.Series(v2_source, index=out.index, dtype="object")
+        out["coarse_score_v2_month"] = str(v2_month)
+        out["coarse_score_v2_details"] = json.dumps(v2_details, sort_keys=True)
+    if score_model_name == "stake_score_v1":
+        score = (
+            score
+            + float(score_delta_prob_weight) * delta_prob_strength
+            + float(score_ev_weight) * ev_strength
+            - float(score_risk_weight) * risk_component
+            + float(score_recency_weight) * recency_strength
+        )
+
+    out["coarse_score_model"] = score_model_name
+    out["coarse_score_prob"] = prob
+    out["coarse_score_cond_prob"] = cond_prob
+    out["coarse_score_delta_prob"] = delta_prob
+    out["coarse_score_delta_prob_strength"] = delta_prob_strength
+    out["coarse_score_ev_strength"] = ev_strength
+    out["coarse_score_uncertainty"] = unc
+    out["coarse_score_dependency_burden"] = dep_burden
+    out["coarse_score_support"] = support_strength
+    out["coarse_score_recency"] = recency_strength
+    out["coarse_score_risk"] = risk_component
+    out["coarse_score_break_even_conditional"] = float(break_even_cond)
+    out["coarse_score"] = pd.to_numeric(score, errors="coerce").fillna(0.0)
+
+    high_share = float(np.clip(high_max_share, 0.0, 1.0))
+    mid_share = float(np.clip(mid_max_share, 0.0, 1.0))
+    high_cap = int(np.floor(high_share * float(n_rows)))
+    mid_cap = int(np.floor(mid_share * float(n_rows)))
+    if int(high_max_plays) > 0:
+        high_cap = min(high_cap, int(high_max_plays))
+    high_cap = max(0, min(high_cap, n_rows))
+    remaining = max(0, n_rows - high_cap)
+    if int(mid_max_plays) > 0:
+        mid_cap = min(mid_cap, int(mid_max_plays))
+    mid_cap = max(0, min(mid_cap, remaining))
+
+    out = out.sort_values(["coarse_score", "p_calibrated", "ev_adjusted", "abs_edge"], ascending=[False, False, False, False]).copy()
+    out["coarse_score_rank"] = np.arange(1, len(out) + 1)
+    out["coarse_bucket"] = "low"
+    if high_cap > 0:
+        out.iloc[:high_cap, out.columns.get_loc("coarse_bucket")] = "high"
+    if mid_cap > 0:
+        out.iloc[high_cap : high_cap + mid_cap, out.columns.get_loc("coarse_bucket")] = "mid"
+    out["coarse_bucket_high_cap"] = int(high_cap)
+    out["coarse_bucket_mid_cap"] = int(mid_cap)
+    out["coarse_bucket_total_rows"] = int(n_rows)
+
+    bucket_to_fraction = {
+        "low": float(low_bet_fraction),
+        "mid": float(mid_bet_fraction),
+        "high": float(high_bet_fraction),
+    }
+    out["allocation_tier"] = "coarse_" + out["coarse_bucket"].astype(str)
+    out["allocation_action"] = out["allocation_tier"]
+    out["allocation_action_from_tier"] = out["allocation_tier"]
+    out["allocation_action_from_probability"] = out["allocation_tier"]
+    out["allocation_action_level"] = out["coarse_bucket"].map({"low": 1, "mid": 2, "high": 3}).fillna(1).astype(int)
+    out["bet_fraction_raw"] = pd.to_numeric(out["coarse_bucket"].map(bucket_to_fraction), errors="coerce").fillna(0.0)
+    out["bet_fraction_raw"] = out["bet_fraction_raw"].clip(lower=0.0, upper=float(max_bet_fraction))
+
+    raw_total = float(pd.to_numeric(out["bet_fraction_raw"], errors="coerce").fillna(0.0).sum())
+    scale = 1.0
+    if raw_total > 0.0 and float(max_total_bet_fraction) > 0.0:
+        scale = min(1.0, float(max_total_bet_fraction) / raw_total)
+    out["bet_fraction_scale"] = float(scale)
+    out["bet_fraction"] = pd.to_numeric(out["bet_fraction_raw"], errors="coerce").fillna(0.0) * float(scale)
+    return out
+
+
 def _compute_concentration_penalty(
     selected_indices: list[int],
     targets: np.ndarray,
@@ -637,6 +1195,7 @@ def _score_selected_indices(
     selected_indices: list[int],
     probs: np.ndarray,
     unc: np.ndarray,
+    node_penalty: np.ndarray | None,
     dep_matrix: np.ndarray,
     targets: np.ndarray,
     directions: np.ndarray,
@@ -649,6 +1208,8 @@ def _score_selected_indices(
         return -np.inf
 
     node_score = float(np.sum(probs[selected_indices] - float(lambda_unc) * unc[selected_indices]))
+    if node_penalty is not None and len(node_penalty) > 0:
+        node_score -= float(np.sum(np.asarray(node_penalty, dtype="float64")[selected_indices]))
     pair_penalty = 0.0
     for pos_i, idx_i in enumerate(selected_indices):
         for idx_j in selected_indices[pos_i + 1 :]:
@@ -679,6 +1240,20 @@ def _select_board_objective_board(
     board_objective_corr_same_script_cluster: float,
     board_objective_swap_candidates: int,
     board_objective_swap_rounds: int,
+    payout_per_unit: float,
+    staking_bucket_model_payload: dict | None,
+    staking_bucket_model_month: str | None,
+    staking_bucket_model_min_rows: int,
+    board_objective_instability_enabled: bool,
+    board_objective_lambda_shadow_disagreement: float,
+    board_objective_lambda_segment_weakness: float,
+    board_objective_instability_near_cutoff_window: int,
+    board_objective_instability_top_protected: int,
+    board_objective_instability_veto_enabled: bool,
+    board_objective_instability_veto_quantile: float,
+    board_objective_dynamic_size_enabled: bool,
+    board_objective_dynamic_size_max_shrink: int,
+    board_objective_dynamic_size_trigger: float,
 ) -> pd.DataFrame:
     if candidates.empty:
         return candidates.copy()
@@ -693,6 +1268,35 @@ def _select_board_objective_board(
 
     base = _build_board_probability_features(candidates.copy())
     base["_source_index"] = base.index
+    instability_active = bool(
+        board_objective_instability_enabled
+        and (
+            float(board_objective_lambda_shadow_disagreement) > 0.0
+            or float(board_objective_lambda_segment_weakness) > 0.0
+            or bool(board_objective_instability_veto_enabled)
+            or bool(board_objective_dynamic_size_enabled)
+        )
+    )
+    if instability_active:
+        base = _build_board_instability_features(
+            base,
+            payout_per_unit=float(payout_per_unit),
+            staking_bucket_model_payload=staking_bucket_model_payload,
+            staking_bucket_model_month=staking_bucket_model_month,
+            staking_bucket_model_min_rows=int(staking_bucket_model_min_rows),
+            same_game_weight=float(board_objective_corr_same_game),
+            same_player_weight=float(board_objective_corr_same_player),
+            same_target_weight=float(board_objective_corr_same_target),
+            same_direction_weight=float(board_objective_corr_same_direction),
+            same_script_cluster_weight=float(board_objective_corr_same_script_cluster),
+        )
+    else:
+        base["board_dependency_burden"] = 0.0
+        base["board_shadow_disagreement"] = 0.0
+        base["board_segment_recent_weakness"] = 0.0
+        base["board_segment_recent_weakness_source"] = "disabled"
+        base["board_instability_score"] = 0.0
+        base["board_instability_penalty"] = 0.0
 
     overfetch_count = int(np.clip(np.ceil(max(float(board_objective_overfetch), 1.0) * board_size), board_size, len(base)))
     idx_abs = set(base.sort_values(["abs_edge", "ev_adjusted", "expected_win_rate", "final_confidence"], ascending=[False, False, False, False]).head(overfetch_count).index.tolist())
@@ -705,11 +1309,12 @@ def _select_board_objective_board(
     if universe.empty:
         return universe
 
-    universe["board_universe_rank"] = (
+    universe["board_universe_rank_base"] = (
         0.55 * _zscore_series(universe["board_play_win_prob"])
         + 0.25 * _zscore_series(universe["abs_edge"])
         + 0.20 * _zscore_series(universe["ev_adjusted"])
     )
+    universe["board_universe_rank"] = pd.to_numeric(universe["board_universe_rank_base"], errors="coerce").fillna(0.0)
     candidate_cap = int(board_objective_candidate_limit)
     if candidate_cap > 0 and len(universe) > candidate_cap:
         universe = universe.sort_values(["board_universe_rank", "board_play_win_prob", "abs_edge"], ascending=[False, False, False]).head(candidate_cap).copy()
@@ -722,6 +1327,108 @@ def _select_board_objective_board(
     if k <= 0:
         return base.iloc[0:0].copy()
 
+    dynamic_day_score = np.nan
+    dynamic_cutoff_separation = np.nan
+    dynamic_shrink = 0
+    dynamic_target_size = int(k)
+    instability_veto_count = 0
+
+    if instability_active and not universe.empty:
+        rank_positions = np.arange(1, len(universe) + 1, dtype="float64")
+        near_window = max(1, int(board_objective_instability_near_cutoff_window))
+        top_protected = max(0, int(board_objective_instability_top_protected))
+        rank_distance = np.abs(rank_positions - float(k))
+        near_cutoff_mask = (rank_distance <= float(near_window)) & (rank_positions > float(top_protected))
+
+        if bool(board_objective_instability_veto_enabled) and np.any(near_cutoff_mask):
+            q = float(np.clip(board_objective_instability_veto_quantile, 0.50, 0.99))
+            instability = pd.to_numeric(universe.get("board_instability_score"), errors="coerce").fillna(0.0).to_numpy(dtype="float64")
+            inclusion_mask = near_cutoff_mask & (rank_positions <= float(k))
+            if np.any(inclusion_mask):
+                threshold = float(np.nanquantile(instability[inclusion_mask], q))
+                veto_idx = np.where(inclusion_mask & (instability >= threshold))[0]
+                max_drop = max(0, int(len(universe)) - int(k))
+                if len(veto_idx) > 0 and max_drop > 0:
+                    drop_n = min(int(len(veto_idx)), int(max_drop))
+                    veto_sorted = sorted(veto_idx.tolist(), key=lambda idx: float(instability[idx]), reverse=True)
+                    drop_idx = veto_sorted[:drop_n]
+                    if drop_idx:
+                        universe = universe.drop(index=drop_idx).reset_index(drop=True)
+                        instability_veto_count = int(len(drop_idx))
+                        n = int(len(universe))
+                        if n <= 0:
+                            return base.iloc[0:0].copy()
+                        k = min(k, n)
+                        if k <= 0:
+                            return base.iloc[0:0].copy()
+                        rank_positions = np.arange(1, len(universe) + 1, dtype="float64")
+                        rank_distance = np.abs(rank_positions - float(k))
+                        near_cutoff_mask = (rank_distance <= float(near_window)) & (rank_positions > float(top_protected))
+
+        lambda_shadow = max(0.0, float(board_objective_lambda_shadow_disagreement))
+        lambda_segment = max(0.0, float(board_objective_lambda_segment_weakness))
+        proximity = np.clip(1.0 - (rank_distance / max(float(near_window), 1.0)), 0.0, 1.0)
+        shadow_disagreement = pd.to_numeric(universe.get("board_shadow_disagreement"), errors="coerce").fillna(0.0).to_numpy(dtype="float64")
+        segment_weakness = pd.to_numeric(universe.get("board_segment_recent_weakness"), errors="coerce").fillna(0.0).to_numpy(dtype="float64")
+        penalty = np.where(
+            near_cutoff_mask,
+            proximity * (lambda_shadow * shadow_disagreement + lambda_segment * segment_weakness),
+            0.0,
+        )
+        universe["board_instability_penalty"] = pd.Series(penalty, index=universe.index, dtype="float64")
+        universe["board_instability_near_cutoff"] = pd.Series(near_cutoff_mask, index=universe.index, dtype=bool)
+        universe["board_universe_rank"] = (
+            pd.to_numeric(universe.get("board_universe_rank_base"), errors="coerce").fillna(0.0)
+            - pd.to_numeric(universe.get("board_instability_penalty"), errors="coerce").fillna(0.0)
+        )
+        universe = universe.sort_values(["board_universe_rank", "board_play_win_prob", "abs_edge"], ascending=[False, False, False]).reset_index(drop=True)
+
+        if bool(board_objective_dynamic_size_enabled) and len(universe) > k and k > 0:
+            ranks_dyn = np.arange(1, len(universe) + 1, dtype="float64")
+            distance_dyn = np.abs(ranks_dyn - float(k))
+            near_dyn = (distance_dyn <= float(near_window)) & (ranks_dyn > float(top_protected))
+            if not np.any(near_dyn):
+                near_dyn = ranks_dyn <= float(min(len(universe), max(k, 1)))
+
+            instability_near = float(pd.to_numeric(universe.loc[near_dyn, "board_instability_score"], errors="coerce").fillna(0.0).mean())
+            dependency_near = float(pd.to_numeric(universe.loc[near_dyn, "board_dependency_burden"], errors="coerce").fillna(0.0).mean())
+            rank_scores = pd.to_numeric(universe.get("board_universe_rank"), errors="coerce").fillna(0.0).to_numpy(dtype="float64")
+            if len(rank_scores) > k:
+                raw_gap = float(rank_scores[k - 1] - rank_scores[k])
+                diff_scale = float(np.std(rank_scores, ddof=0))
+                if diff_scale <= 1e-9:
+                    diff_scale = float(np.max(np.abs(np.diff(rank_scores)))) if len(rank_scores) > 1 else 1.0
+                dynamic_cutoff_separation = float(np.clip(raw_gap / max(diff_scale, 1e-9), 0.0, 1.0))
+            else:
+                dynamic_cutoff_separation = 1.0
+
+            dynamic_day_score = float(
+                0.50 * np.clip(instability_near, 0.0, 1.0)
+                + 0.30 * np.clip(dependency_near, 0.0, 1.0)
+                + 0.20 * (1.0 - np.clip(dynamic_cutoff_separation, 0.0, 1.0))
+            )
+            trigger = float(np.clip(board_objective_dynamic_size_trigger, 0.20, 0.95))
+            max_shrink = max(0, int(board_objective_dynamic_size_max_shrink))
+            lower_bound = max(1, min(int(max(requested_min, 1)), int(k)))
+            allowed_shrink = max(0, min(max_shrink, int(k) - int(lower_bound)))
+            if dynamic_day_score > trigger and allowed_shrink > 0:
+                ratio = (dynamic_day_score - trigger) / max(1.0 - trigger, 1e-9)
+                dynamic_shrink = int(np.ceil(np.clip(ratio, 0.0, 1.0) * float(allowed_shrink)))
+                dynamic_shrink = max(0, min(dynamic_shrink, allowed_shrink))
+                if dynamic_shrink > 0:
+                    k = max(lower_bound, int(k) - int(dynamic_shrink))
+                    dynamic_target_size = int(k)
+    else:
+        universe["board_instability_penalty"] = 0.0
+        universe["board_instability_near_cutoff"] = False
+
+    n = int(len(universe))
+    if n <= 0:
+        return base.iloc[0:0].copy()
+    k = min(k, n)
+    if k <= 0:
+        return base.iloc[0:0].copy()
+
     target_caps = _resolve_target_caps(universe, max_plays_per_target=max_plays_per_target, max_target_plays=max_target_plays)
     players = _clean_key_component(universe.get("player", pd.Series("", index=universe.index))).to_numpy(dtype=str)
     targets = _clean_key_component(universe.get("target", pd.Series("", index=universe.index))).to_numpy(dtype=str)
@@ -731,11 +1438,13 @@ def _select_board_objective_board(
 
     probs = pd.to_numeric(universe["board_play_win_prob"], errors="coerce").fillna(0.5).to_numpy(dtype="float64")
     unc = pd.to_numeric(universe["board_uncertainty_penalty"], errors="coerce").fillna(0.5).to_numpy(dtype="float64")
-    node_values = probs - float(board_objective_lambda_unc) * unc
+    node_penalty = pd.to_numeric(universe.get("board_instability_penalty"), errors="coerce").fillna(0.0).to_numpy(dtype="float64")
+    node_values = probs - float(board_objective_lambda_unc) * unc - node_penalty
     order = np.argsort(-node_values)
     universe = universe.iloc[order].reset_index(drop=True)
     probs = probs[order]
     unc = unc[order]
+    node_penalty = node_penalty[order]
     players = players[order]
     targets = targets[order]
     games = games[order]
@@ -750,7 +1459,7 @@ def _select_board_objective_board(
         same_direction_weight=float(board_objective_corr_same_direction),
         same_script_cluster_weight=float(board_objective_corr_same_script_cluster),
     )
-    node_values = probs - float(board_objective_lambda_unc) * unc
+    node_values = probs - float(board_objective_lambda_unc) * unc - node_penalty
     prefix = np.concatenate(([0.0], np.cumsum(node_values)))
 
     max_nodes = max(1000, int(board_objective_max_search_nodes))
@@ -799,6 +1508,7 @@ def _select_board_objective_board(
             best_indices,
             probs=probs,
             unc=unc,
+            node_penalty=node_penalty,
             dep_matrix=dep,
             targets=targets,
             directions=directions,
@@ -943,6 +1653,14 @@ def _select_board_objective_board(
         fallback["board_objective_solver_mode"] = "fallback_capped_rank"
         fallback["board_objective_score"] = np.nan
         fallback["board_objective_swap_applied"] = False
+        fallback["board_objective_instability_enabled"] = bool(instability_active)
+        fallback["board_objective_instability_veto_count"] = int(instability_veto_count)
+        fallback["board_objective_dynamic_size_enabled"] = bool(board_objective_dynamic_size_enabled)
+        fallback["board_objective_dynamic_day_score"] = float(dynamic_day_score) if np.isfinite(dynamic_day_score) else np.nan
+        fallback["board_objective_dynamic_cutoff_separation"] = float(dynamic_cutoff_separation) if np.isfinite(dynamic_cutoff_separation) else np.nan
+        fallback["board_objective_dynamic_shrink"] = int(dynamic_shrink)
+        fallback["board_objective_dynamic_target_size"] = int(dynamic_target_size)
+        fallback["board_objective_target_size_requested"] = int(board_size)
         return fallback
 
     selected_board = universe.iloc[best_indices].copy()
@@ -968,6 +1686,7 @@ def _select_board_objective_board(
                 list(range(len(current))),
                 probs=pd.to_numeric(current["board_play_win_prob"], errors="coerce").fillna(0.5).to_numpy(dtype="float64"),
                 unc=pd.to_numeric(current["board_uncertainty_penalty"], errors="coerce").fillna(0.5).to_numpy(dtype="float64"),
+                node_penalty=pd.to_numeric(current.get("board_instability_penalty"), errors="coerce").fillna(0.0).to_numpy(dtype="float64"),
                 dep_matrix=_build_pairwise_dependency_matrix(
                     current,
                     same_game_weight=float(board_objective_corr_same_game),
@@ -1006,6 +1725,7 @@ def _select_board_objective_board(
                         list(range(len(capped))),
                         probs=pd.to_numeric(capped["board_play_win_prob"], errors="coerce").fillna(0.5).to_numpy(dtype="float64"),
                         unc=pd.to_numeric(capped["board_uncertainty_penalty"], errors="coerce").fillna(0.5).to_numpy(dtype="float64"),
+                        node_penalty=pd.to_numeric(capped.get("board_instability_penalty"), errors="coerce").fillna(0.0).to_numpy(dtype="float64"),
                         dep_matrix=_build_pairwise_dependency_matrix(
                             capped,
                             same_game_weight=float(board_objective_corr_same_game),
@@ -1099,6 +1819,7 @@ def _select_board_objective_board(
         list(range(len(final))),
         probs=pd.to_numeric(final["board_play_win_prob"], errors="coerce").fillna(0.5).to_numpy(dtype="float64"),
         unc=pd.to_numeric(final["board_uncertainty_penalty"], errors="coerce").fillna(0.5).to_numpy(dtype="float64"),
+        node_penalty=pd.to_numeric(final.get("board_instability_penalty"), errors="coerce").fillna(0.0).to_numpy(dtype="float64"),
         dep_matrix=_build_pairwise_dependency_matrix(
             final,
             same_game_weight=float(board_objective_corr_same_game),
@@ -1114,6 +1835,14 @@ def _select_board_objective_board(
         lambda_conc=float(board_objective_lambda_conc),
         lambda_unc=float(board_objective_lambda_unc),
     )
+    final["board_objective_instability_enabled"] = bool(instability_active)
+    final["board_objective_instability_veto_count"] = int(instability_veto_count)
+    final["board_objective_dynamic_size_enabled"] = bool(board_objective_dynamic_size_enabled)
+    final["board_objective_dynamic_day_score"] = float(dynamic_day_score) if np.isfinite(dynamic_day_score) else np.nan
+    final["board_objective_dynamic_cutoff_separation"] = float(dynamic_cutoff_separation) if np.isfinite(dynamic_cutoff_separation) else np.nan
+    final["board_objective_dynamic_shrink"] = int(dynamic_shrink)
+    final["board_objective_dynamic_target_size"] = int(dynamic_target_size)
+    final["board_objective_target_size_requested"] = int(board_size)
     final["board_caps_relaxed"] = bool(caps_relaxed)
     return final
 
@@ -1536,6 +2265,26 @@ def compute_final_board(
     full_bet_fraction: float = 0.015,
     max_bet_fraction: float = 0.02,
     max_total_bet_fraction: float = 0.05,
+    sizing_method: str = "tiered_probability",
+    flat_bet_fraction: float = 0.0,
+    coarse_low_bet_fraction: float = 0.003,
+    coarse_mid_bet_fraction: float = 0.005,
+    coarse_high_bet_fraction: float = 0.007,
+    coarse_high_max_share: float = 0.30,
+    coarse_mid_max_share: float = 0.50,
+    coarse_high_max_plays: int = 0,
+    coarse_mid_max_plays: int = 0,
+    coarse_score_alpha_uncertainty: float = 0.18,
+    coarse_score_beta_dependency: float = 0.12,
+    coarse_score_gamma_support: float = 0.08,
+    coarse_score_model: str = "legacy",
+    coarse_score_delta_prob_weight: float = 0.0,
+    coarse_score_ev_weight: float = 0.0,
+    coarse_score_risk_weight: float = 0.0,
+    coarse_score_recency_weight: float = 0.0,
+    staking_bucket_model_payload: dict | None = None,
+    staking_bucket_model_month: str | None = None,
+    staking_bucket_model_min_rows: int = 0,
     belief_uncertainty_lower: float = BELIEF_UNCERTAINTY_LOWER,
     belief_uncertainty_upper: float = BELIEF_UNCERTAINTY_UPPER,
     append_agreement_min: int = 3,
@@ -1554,6 +2303,16 @@ def compute_final_board(
     board_objective_corr_same_script_cluster: float = 0.30,
     board_objective_swap_candidates: int = 18,
     board_objective_swap_rounds: int = 2,
+    board_objective_instability_enabled: bool = False,
+    board_objective_lambda_shadow_disagreement: float = 0.0,
+    board_objective_lambda_segment_weakness: float = 0.0,
+    board_objective_instability_near_cutoff_window: int = 3,
+    board_objective_instability_top_protected: int = 3,
+    board_objective_instability_veto_enabled: bool = False,
+    board_objective_instability_veto_quantile: float = 0.85,
+    board_objective_dynamic_size_enabled: bool = False,
+    board_objective_dynamic_size_max_shrink: int = 0,
+    board_objective_dynamic_size_trigger: float = 0.62,
     max_history_staleness_days: int = 0,
     min_recency_factor: float = 0.0,
     selected_board_calibrator: dict | None = None,
@@ -1799,6 +2558,20 @@ def compute_final_board(
             board_objective_corr_same_script_cluster=board_objective_corr_same_script_cluster,
             board_objective_swap_candidates=board_objective_swap_candidates,
             board_objective_swap_rounds=board_objective_swap_rounds,
+            payout_per_unit=float(payout),
+            staking_bucket_model_payload=staking_bucket_model_payload,
+            staking_bucket_model_month=staking_bucket_model_month,
+            staking_bucket_model_min_rows=int(staking_bucket_model_min_rows),
+            board_objective_instability_enabled=bool(board_objective_instability_enabled),
+            board_objective_lambda_shadow_disagreement=float(board_objective_lambda_shadow_disagreement),
+            board_objective_lambda_segment_weakness=float(board_objective_lambda_segment_weakness),
+            board_objective_instability_near_cutoff_window=int(board_objective_instability_near_cutoff_window),
+            board_objective_instability_top_protected=int(board_objective_instability_top_protected),
+            board_objective_instability_veto_enabled=bool(board_objective_instability_veto_enabled),
+            board_objective_instability_veto_quantile=float(board_objective_instability_veto_quantile),
+            board_objective_dynamic_size_enabled=bool(board_objective_dynamic_size_enabled),
+            board_objective_dynamic_size_max_shrink=int(board_objective_dynamic_size_max_shrink),
+            board_objective_dynamic_size_trigger=float(board_objective_dynamic_size_trigger),
         )
         caps_already_applied = True
         rank_columns = ["board_play_win_prob", "ev_adjusted", "abs_edge", "final_confidence"]
@@ -1881,22 +2654,73 @@ def compute_final_board(
     out["ev"] = out["expected_win_rate"] * payout - out["expected_loss_rate"]
     out["ev_adjusted"] = out["ev"] * (1.0 + float(edge_adjust_k) * (out["edge_scale"] - 1.0))
 
-    sized_out = apply_tiered_bet_sizing(
-        out,
-        expected_win_rate_col="expected_win_rate",
-        gap_percentile_col="gap_percentile",
-        min_bet_win_rate=min_bet_win_rate,
-        medium_bet_win_rate=medium_bet_win_rate,
-        full_bet_win_rate=full_bet_win_rate,
-        medium_tier_percentile=medium_tier_percentile,
-        strong_tier_percentile=strong_tier_percentile,
-        elite_tier_percentile=elite_tier_percentile,
-        small_bet_fraction=small_bet_fraction,
-        medium_bet_fraction=medium_bet_fraction,
-        full_bet_fraction=full_bet_fraction,
-        max_bet_fraction=max_bet_fraction,
-        max_total_bet_fraction=max_total_bet_fraction,
-    )
+    effective_sizing_method = str(sizing_method or "tiered_probability").strip().lower()
+    if effective_sizing_method == "flat_fraction":
+        sized_out = out.copy()
+        per_play_fraction = float(flat_bet_fraction)
+        if per_play_fraction <= 0.0:
+            per_play_fraction = float(small_bet_fraction)
+        per_play_fraction = float(np.clip(per_play_fraction, 0.0, max_bet_fraction))
+        sized_out["allocation_tier"] = "flat"
+        sized_out["allocation_action"] = "flat"
+        sized_out["allocation_action_from_tier"] = "flat"
+        sized_out["allocation_action_from_probability"] = "flat"
+        sized_out["allocation_action_level"] = 1 if per_play_fraction > 0.0 else 0
+        sized_out["bet_fraction_raw"] = per_play_fraction
+        total_raw_fraction = per_play_fraction * float(len(sized_out))
+        scale = 1.0
+        if total_raw_fraction > 0.0 and float(max_total_bet_fraction) > 0.0:
+            scale = min(1.0, float(max_total_bet_fraction) / total_raw_fraction)
+        sized_out["bet_fraction_scale"] = float(scale)
+        sized_out["bet_fraction"] = pd.to_numeric(sized_out["bet_fraction_raw"], errors="coerce").fillna(0.0) * float(scale)
+    elif effective_sizing_method == "coarse_bucket":
+        sized_out = _apply_coarse_bucket_sizing(
+            out,
+            max_bet_fraction=float(max_bet_fraction),
+            max_total_bet_fraction=float(max_total_bet_fraction),
+            low_bet_fraction=float(coarse_low_bet_fraction),
+            mid_bet_fraction=float(coarse_mid_bet_fraction),
+            high_bet_fraction=float(coarse_high_bet_fraction),
+            high_max_share=float(coarse_high_max_share),
+            mid_max_share=float(coarse_mid_max_share),
+            high_max_plays=int(coarse_high_max_plays),
+            mid_max_plays=int(coarse_mid_max_plays),
+            score_alpha_uncertainty=float(coarse_score_alpha_uncertainty),
+            score_beta_dependency=float(coarse_score_beta_dependency),
+            score_gamma_support=float(coarse_score_gamma_support),
+            score_model=str(coarse_score_model),
+            score_delta_prob_weight=float(coarse_score_delta_prob_weight),
+            score_ev_weight=float(coarse_score_ev_weight),
+            score_risk_weight=float(coarse_score_risk_weight),
+            score_recency_weight=float(coarse_score_recency_weight),
+            payout_per_unit=float(payout),
+            staking_bucket_model_payload=staking_bucket_model_payload,
+            staking_bucket_model_month=staking_bucket_model_month,
+            staking_bucket_model_min_rows=int(staking_bucket_model_min_rows),
+            same_game_weight=float(board_objective_corr_same_game),
+            same_player_weight=float(board_objective_corr_same_player),
+            same_target_weight=float(board_objective_corr_same_target),
+            same_direction_weight=float(board_objective_corr_same_direction),
+            same_script_cluster_weight=float(board_objective_corr_same_script_cluster),
+        )
+    else:
+        sized_out = apply_tiered_bet_sizing(
+            out,
+            expected_win_rate_col="expected_win_rate",
+            gap_percentile_col="gap_percentile",
+            min_bet_win_rate=min_bet_win_rate,
+            medium_bet_win_rate=medium_bet_win_rate,
+            full_bet_win_rate=full_bet_win_rate,
+            medium_tier_percentile=medium_tier_percentile,
+            strong_tier_percentile=strong_tier_percentile,
+            elite_tier_percentile=elite_tier_percentile,
+            small_bet_fraction=small_bet_fraction,
+            medium_bet_fraction=medium_bet_fraction,
+            full_bet_fraction=full_bet_fraction,
+            max_bet_fraction=max_bet_fraction,
+            max_total_bet_fraction=max_total_bet_fraction,
+        )
+    sized_out["sizing_method"] = effective_sizing_method
     sized_out["expected_profit_fraction"] = pd.to_numeric(sized_out["bet_fraction"], errors="coerce").fillna(0.0) * pd.to_numeric(
         sized_out["ev"], errors="coerce"
     ).fillna(0.0)
@@ -2012,6 +2836,38 @@ def main() -> None:
                 "reason": "missing_file",
                 "path": str(learned_gate_path),
             }
+    staking_bucket_model_payload = None
+    staking_bucket_model_summary: dict[str, object] = {"enabled": False, "reason": "disabled_flag"}
+    if not args.disable_staking_bucket_model:
+        staking_bucket_model_path = args.staking_bucket_model_json.resolve()
+        if staking_bucket_model_path.exists():
+            try:
+                staking_bucket_model_payload = json.loads(staking_bucket_model_path.read_text(encoding="utf-8"))
+                month_count = 0
+                if isinstance(staking_bucket_model_payload, dict):
+                    months = staking_bucket_model_payload.get("months", {})
+                    if isinstance(months, dict):
+                        month_count = int(len(months))
+                staking_bucket_model_summary = {
+                    "enabled": True,
+                    "path": str(staking_bucket_model_path),
+                    "months": month_count,
+                    "version": int(staking_bucket_model_payload.get("version", 0)) if isinstance(staking_bucket_model_payload, dict) else 0,
+                }
+            except Exception as exc:
+                staking_bucket_model_payload = None
+                staking_bucket_model_summary = {
+                    "enabled": False,
+                    "reason": "load_error",
+                    "path": str(staking_bucket_model_path),
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+        else:
+            staking_bucket_model_summary = {
+                "enabled": False,
+                "reason": "missing_file",
+                "path": str(staking_bucket_model_path),
+            }
 
     final_board = compute_final_board(
         plays,
@@ -2043,6 +2899,26 @@ def main() -> None:
         full_bet_fraction=args.full_bet_fraction,
         max_bet_fraction=args.max_bet_fraction,
         max_total_bet_fraction=args.max_total_bet_fraction,
+        sizing_method=args.sizing_method,
+        flat_bet_fraction=args.flat_bet_fraction,
+        coarse_low_bet_fraction=args.coarse_low_bet_fraction,
+        coarse_mid_bet_fraction=args.coarse_mid_bet_fraction,
+        coarse_high_bet_fraction=args.coarse_high_bet_fraction,
+        coarse_high_max_share=args.coarse_high_max_share,
+        coarse_mid_max_share=args.coarse_mid_max_share,
+        coarse_high_max_plays=args.coarse_high_max_plays,
+        coarse_mid_max_plays=args.coarse_mid_max_plays,
+        coarse_score_alpha_uncertainty=args.coarse_score_alpha_uncertainty,
+        coarse_score_beta_dependency=args.coarse_score_beta_dependency,
+        coarse_score_gamma_support=args.coarse_score_gamma_support,
+        coarse_score_model=args.coarse_score_model,
+        coarse_score_delta_prob_weight=args.coarse_score_delta_prob_weight,
+        coarse_score_ev_weight=args.coarse_score_ev_weight,
+        coarse_score_risk_weight=args.coarse_score_risk_weight,
+        coarse_score_recency_weight=args.coarse_score_recency_weight,
+        staking_bucket_model_payload=staking_bucket_model_payload,
+        staking_bucket_model_month=args.staking_bucket_model_month,
+        staking_bucket_model_min_rows=args.staking_bucket_model_min_rows,
         belief_uncertainty_lower=args.belief_uncertainty_lower,
         belief_uncertainty_upper=args.belief_uncertainty_upper,
         append_agreement_min=args.append_agreement_min,
@@ -2061,6 +2937,16 @@ def main() -> None:
         board_objective_corr_same_script_cluster=args.board_objective_corr_same_script_cluster,
         board_objective_swap_candidates=args.board_objective_swap_candidates,
         board_objective_swap_rounds=args.board_objective_swap_rounds,
+        board_objective_instability_enabled=args.board_objective_instability_enabled,
+        board_objective_lambda_shadow_disagreement=args.board_objective_lambda_shadow_disagreement,
+        board_objective_lambda_segment_weakness=args.board_objective_lambda_segment_weakness,
+        board_objective_instability_near_cutoff_window=args.board_objective_instability_near_cutoff_window,
+        board_objective_instability_top_protected=args.board_objective_instability_top_protected,
+        board_objective_instability_veto_enabled=args.board_objective_instability_veto_enabled,
+        board_objective_instability_veto_quantile=args.board_objective_instability_veto_quantile,
+        board_objective_dynamic_size_enabled=args.board_objective_dynamic_size_enabled,
+        board_objective_dynamic_size_max_shrink=args.board_objective_dynamic_size_max_shrink,
+        board_objective_dynamic_size_trigger=args.board_objective_dynamic_size_trigger,
         max_history_staleness_days=args.max_history_staleness_days,
         min_recency_factor=args.min_recency_factor,
         learned_gate_payload=learned_gate_payload,
@@ -2105,6 +2991,26 @@ def main() -> None:
         "full_bet_fraction": float(args.full_bet_fraction),
         "max_bet_fraction": float(args.max_bet_fraction),
         "max_total_bet_fraction": float(args.max_total_bet_fraction),
+        "sizing_method": str(args.sizing_method),
+        "flat_bet_fraction": float(args.flat_bet_fraction),
+        "coarse_low_bet_fraction": float(args.coarse_low_bet_fraction),
+        "coarse_mid_bet_fraction": float(args.coarse_mid_bet_fraction),
+        "coarse_high_bet_fraction": float(args.coarse_high_bet_fraction),
+        "coarse_high_max_share": float(args.coarse_high_max_share),
+        "coarse_mid_max_share": float(args.coarse_mid_max_share),
+        "coarse_high_max_plays": int(args.coarse_high_max_plays),
+        "coarse_mid_max_plays": int(args.coarse_mid_max_plays),
+        "coarse_score_alpha_uncertainty": float(args.coarse_score_alpha_uncertainty),
+        "coarse_score_beta_dependency": float(args.coarse_score_beta_dependency),
+        "coarse_score_gamma_support": float(args.coarse_score_gamma_support),
+        "coarse_score_model": str(args.coarse_score_model),
+        "coarse_score_delta_prob_weight": float(args.coarse_score_delta_prob_weight),
+        "coarse_score_ev_weight": float(args.coarse_score_ev_weight),
+        "coarse_score_risk_weight": float(args.coarse_score_risk_weight),
+        "coarse_score_recency_weight": float(args.coarse_score_recency_weight),
+        "staking_bucket_model": staking_bucket_model_summary,
+        "staking_bucket_model_month": str(args.staking_bucket_model_month or ""),
+        "staking_bucket_model_min_rows": int(args.staking_bucket_model_min_rows),
         "belief_uncertainty_lower": float(args.belief_uncertainty_lower),
         "belief_uncertainty_upper": float(args.belief_uncertainty_upper),
         "append_agreement_min": int(args.append_agreement_min),
@@ -2123,6 +3029,16 @@ def main() -> None:
         "board_objective_corr_same_script_cluster": float(args.board_objective_corr_same_script_cluster),
         "board_objective_swap_candidates": int(args.board_objective_swap_candidates),
         "board_objective_swap_rounds": int(args.board_objective_swap_rounds),
+        "board_objective_instability_enabled": bool(args.board_objective_instability_enabled),
+        "board_objective_lambda_shadow_disagreement": float(args.board_objective_lambda_shadow_disagreement),
+        "board_objective_lambda_segment_weakness": float(args.board_objective_lambda_segment_weakness),
+        "board_objective_instability_near_cutoff_window": int(args.board_objective_instability_near_cutoff_window),
+        "board_objective_instability_top_protected": int(args.board_objective_instability_top_protected),
+        "board_objective_instability_veto_enabled": bool(args.board_objective_instability_veto_enabled),
+        "board_objective_instability_veto_quantile": float(args.board_objective_instability_veto_quantile),
+        "board_objective_dynamic_size_enabled": bool(args.board_objective_dynamic_size_enabled),
+        "board_objective_dynamic_size_max_shrink": int(args.board_objective_dynamic_size_max_shrink),
+        "board_objective_dynamic_size_trigger": float(args.board_objective_dynamic_size_trigger),
         "max_history_staleness_days": int(args.max_history_staleness_days),
         "min_recency_factor": float(args.min_recency_factor),
         "learned_gate": learned_gate_summary,
@@ -2141,6 +3057,8 @@ def main() -> None:
     print(f"JSON:         {args.json_out}")
     if args.enable_learned_gate:
         print(f"Learned gate: {learned_gate_summary}")
+    if not args.disable_staking_bucket_model:
+        print(f"Staking bucket model: {staking_bucket_model_summary}")
     if not final_board.empty:
         show_cols = [
             "player",

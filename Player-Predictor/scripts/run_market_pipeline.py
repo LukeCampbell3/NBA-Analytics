@@ -162,6 +162,40 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--thompson-temperature", type=float, default=None, help="Temperature used for Thompson sampling.")
     parser.add_argument("--thompson-seed", type=int, default=None, help="Seed salt used for deterministic Thompson sampling.")
+    parser.add_argument(
+        "--sizing-method",
+        type=str,
+        default=None,
+        choices=["tiered_probability", "flat_fraction", "coarse_bucket"],
+        help="Stake allocation method applied on the final board.",
+    )
+    parser.add_argument(
+        "--flat-bet-fraction",
+        type=float,
+        default=None,
+        help="Per-play bankroll fraction when sizing-method=flat_fraction.",
+    )
+    parser.add_argument("--coarse-low-bet-fraction", type=float, default=None, help="When sizing-method=coarse_bucket, low-tier bankroll fraction.")
+    parser.add_argument("--coarse-mid-bet-fraction", type=float, default=None, help="When sizing-method=coarse_bucket, mid-tier bankroll fraction.")
+    parser.add_argument("--coarse-high-bet-fraction", type=float, default=None, help="When sizing-method=coarse_bucket, high-tier bankroll fraction.")
+    parser.add_argument("--coarse-high-max-share", type=float, default=None, help="When sizing-method=coarse_bucket, hard cap on high-tier share.")
+    parser.add_argument("--coarse-mid-max-share", type=float, default=None, help="When sizing-method=coarse_bucket, hard cap on mid-tier share.")
+    parser.add_argument("--coarse-high-max-plays", type=int, default=None, help="When sizing-method=coarse_bucket, optional hard cap on high-tier play count.")
+    parser.add_argument("--coarse-mid-max-plays", type=int, default=None, help="When sizing-method=coarse_bucket, optional hard cap on mid-tier play count.")
+    parser.add_argument("--coarse-score-alpha-uncertainty", type=float, default=None, help="Weight on uncertainty penalty in coarse bucket stake score.")
+    parser.add_argument("--coarse-score-beta-dependency", type=float, default=None, help="Weight on dependency burden penalty in coarse bucket stake score.")
+    parser.add_argument("--coarse-score-gamma-support", type=float, default=None, help="Weight on support-strength lift in coarse bucket stake score.")
+    parser.add_argument(
+        "--coarse-score-model",
+        type=str,
+        default=None,
+        choices=["legacy", "stake_score_v1", "stake_model_v2"],
+        help="Coarse bucket stake-score model variant.",
+    )
+    parser.add_argument("--coarse-score-delta-prob-weight", type=float, default=None, help="Additional weight on calibrated non-push win-edge strength in coarse stake score.")
+    parser.add_argument("--coarse-score-ev-weight", type=float, default=None, help="Additional weight on within-board EV strength in coarse stake score.")
+    parser.add_argument("--coarse-score-risk-weight", type=float, default=None, help="Penalty weight on risk composite in coarse stake score.")
+    parser.add_argument("--coarse-score-recency-weight", type=float, default=None, help="Additional weight on recency support in coarse stake score.")
     parser.add_argument("--market-regression-floor", type=float, default=None, help="Minimum market-regression lambda for prediction shrinkage.")
     parser.add_argument("--market-regression-ceiling", type=float, default=None, help="Maximum market-regression lambda for prediction shrinkage.")
     parser.add_argument("--belief-uncertainty-lower", type=float, default=None, help="Lower anchor for belief uncertainty confidence scaling.")
@@ -182,6 +216,78 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--board-objective-corr-same-script-cluster", type=float, default=None, help="Pairwise dependency contribution for same-script-cluster candidates.")
     parser.add_argument("--board-objective-swap-candidates", type=int, default=None, help="Out-of-universe candidates considered for swap optimization.")
     parser.add_argument("--board-objective-swap-rounds", type=int, default=None, help="Max improving swap rounds for board-objective mode.")
+    parser.add_argument(
+        "--board-objective-instability-enabled",
+        action="store_true",
+        help="Enable near-cutoff instability penalties/vetoes in board-objective mode.",
+    )
+    parser.add_argument(
+        "--board-objective-instability-disabled",
+        action="store_true",
+        help="Disable near-cutoff instability penalties/vetoes in board-objective mode.",
+    )
+    parser.add_argument(
+        "--board-objective-lambda-shadow-disagreement",
+        type=float,
+        default=None,
+        help="Penalty weight on shadow-model disagreement near the board cutoff.",
+    )
+    parser.add_argument(
+        "--board-objective-lambda-segment-weakness",
+        type=float,
+        default=None,
+        help="Penalty weight on segment recent weakness near the board cutoff.",
+    )
+    parser.add_argument(
+        "--board-objective-instability-near-cutoff-window",
+        type=int,
+        default=None,
+        help="Rank-distance window around cutoff where instability penalties apply.",
+    )
+    parser.add_argument(
+        "--board-objective-instability-top-protected",
+        type=int,
+        default=None,
+        help="Top ranked rows protected from instability penalties/veto.",
+    )
+    parser.add_argument(
+        "--board-objective-instability-veto-enabled",
+        action="store_true",
+        help="Enable near-cutoff veto of highest-instability inclusion candidates.",
+    )
+    parser.add_argument(
+        "--board-objective-instability-veto-disabled",
+        action="store_true",
+        help="Disable near-cutoff instability veto even when policy enables it.",
+    )
+    parser.add_argument(
+        "--board-objective-instability-veto-quantile",
+        type=float,
+        default=None,
+        help="Quantile threshold for near-cutoff instability veto.",
+    )
+    parser.add_argument(
+        "--board-objective-dynamic-size-enabled",
+        action="store_true",
+        help="Enable dynamic board-size shrink on unstable slates in board-objective mode.",
+    )
+    parser.add_argument(
+        "--board-objective-dynamic-size-disabled",
+        action="store_true",
+        help="Disable dynamic board-size shrink on unstable slates in board-objective mode.",
+    )
+    parser.add_argument(
+        "--board-objective-dynamic-size-max-shrink",
+        type=int,
+        default=None,
+        help="Maximum rows dynamic board size may shrink below max-total-plays.",
+    )
+    parser.add_argument(
+        "--board-objective-dynamic-size-trigger",
+        type=float,
+        default=None,
+        help="Composite instability trigger for dynamic board-size shrink.",
+    )
     parser.add_argument(
         "--disable-conditional-framework",
         action="store_true",
@@ -263,6 +369,34 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Minimum rows that must pass learned gate before enforcement (0 delegates to payload/policy).",
     )
+    parser.add_argument(
+        "--staking-bucket-model-json",
+        type=Path,
+        default=REPO_ROOT / "model" / "analysis" / "calibration" / "staking_bucket_model_v2.json",
+        help="Optional walk-forward staking bucket model payload JSON.",
+    )
+    parser.add_argument(
+        "--disable-staking-bucket-model",
+        action="store_true",
+        help="Disable walk-forward staking bucket model usage even if policy enables it.",
+    )
+    parser.add_argument(
+        "--enable-staking-bucket-model",
+        action="store_true",
+        help="Enable walk-forward staking bucket model usage even if policy disables it.",
+    )
+    parser.add_argument(
+        "--staking-bucket-model-month",
+        type=str,
+        default=None,
+        help="Optional YYYY-MM month hint for walk-forward staking bucket model lookup.",
+    )
+    parser.add_argument(
+        "--staking-bucket-model-min-rows",
+        type=int,
+        default=None,
+        help="Minimum monthly train rows required before applying walk-forward staking bucket model (0 disables this guard).",
+    )
     return parser.parse_args()
 
 
@@ -292,6 +426,25 @@ def resolve_policy(args: argparse.Namespace):
         "selection_mode": args.selection_mode,
         "thompson_temperature": args.thompson_temperature,
         "thompson_seed": args.thompson_seed,
+        "sizing_method": args.sizing_method,
+        "flat_bet_fraction": args.flat_bet_fraction,
+        "coarse_low_bet_fraction": args.coarse_low_bet_fraction,
+        "coarse_mid_bet_fraction": args.coarse_mid_bet_fraction,
+        "coarse_high_bet_fraction": args.coarse_high_bet_fraction,
+        "coarse_high_max_share": args.coarse_high_max_share,
+        "coarse_mid_max_share": args.coarse_mid_max_share,
+        "coarse_high_max_plays": args.coarse_high_max_plays,
+        "coarse_mid_max_plays": args.coarse_mid_max_plays,
+        "coarse_score_alpha_uncertainty": args.coarse_score_alpha_uncertainty,
+        "coarse_score_beta_dependency": args.coarse_score_beta_dependency,
+        "coarse_score_gamma_support": args.coarse_score_gamma_support,
+        "coarse_score_model": args.coarse_score_model,
+        "coarse_score_delta_prob_weight": args.coarse_score_delta_prob_weight,
+        "coarse_score_ev_weight": args.coarse_score_ev_weight,
+        "coarse_score_risk_weight": args.coarse_score_risk_weight,
+        "coarse_score_recency_weight": args.coarse_score_recency_weight,
+        "staking_bucket_model_enabled": True if args.enable_staking_bucket_model else (False if args.disable_staking_bucket_model else None),
+        "staking_bucket_model_min_rows": args.staking_bucket_model_min_rows,
         "market_regression_floor": args.market_regression_floor,
         "market_regression_ceiling": args.market_regression_ceiling,
         "belief_uncertainty_lower": args.belief_uncertainty_lower,
@@ -312,6 +465,22 @@ def resolve_policy(args: argparse.Namespace):
         "board_objective_corr_same_script_cluster": args.board_objective_corr_same_script_cluster,
         "board_objective_swap_candidates": args.board_objective_swap_candidates,
         "board_objective_swap_rounds": args.board_objective_swap_rounds,
+        "board_objective_instability_enabled": True
+        if args.board_objective_instability_enabled
+        else (False if args.board_objective_instability_disabled else None),
+        "board_objective_lambda_shadow_disagreement": args.board_objective_lambda_shadow_disagreement,
+        "board_objective_lambda_segment_weakness": args.board_objective_lambda_segment_weakness,
+        "board_objective_instability_near_cutoff_window": args.board_objective_instability_near_cutoff_window,
+        "board_objective_instability_top_protected": args.board_objective_instability_top_protected,
+        "board_objective_instability_veto_enabled": True
+        if args.board_objective_instability_veto_enabled
+        else (False if args.board_objective_instability_veto_disabled else None),
+        "board_objective_instability_veto_quantile": args.board_objective_instability_veto_quantile,
+        "board_objective_dynamic_size_enabled": True
+        if args.board_objective_dynamic_size_enabled
+        else (False if args.board_objective_dynamic_size_disabled else None),
+        "board_objective_dynamic_size_max_shrink": args.board_objective_dynamic_size_max_shrink,
+        "board_objective_dynamic_size_trigger": args.board_objective_dynamic_size_trigger,
         "conditional_framework_enabled": None if not args.disable_conditional_framework else False,
         "conditional_framework_mode": args.conditional_framework_mode,
         "conditional_failure_memory_path": str(args.conditional_failure_memory_path) if args.conditional_failure_memory_path else None,
@@ -349,6 +518,8 @@ def apply_heuristic_policy_overrides(policy_payload: dict) -> dict:
     out["strong_tier_percentile"] = min(float(out.get("strong_tier_percentile", 0.90)), 0.00)
     out["elite_tier_percentile"] = min(float(out.get("elite_tier_percentile", out.get("elite_pct", 0.95))), 0.00)
     out["learned_gate_enabled"] = False
+    out["board_objective_instability_enabled"] = False
+    out["board_objective_dynamic_size_enabled"] = False
     out["heuristic_overrides_applied"] = True
     return out
 
@@ -555,6 +726,30 @@ def load_learned_pool_gate(path: Path, disabled: bool) -> tuple[dict | None, dic
         }
 
 
+def load_staking_bucket_model(path: Path, disabled: bool) -> tuple[dict | None, dict]:
+    if disabled:
+        return None, {"enabled": False, "reason": "disabled_flag"}
+    resolved = path.resolve()
+    if not resolved.exists():
+        return None, {"enabled": False, "reason": "missing_file", "path": str(resolved)}
+    try:
+        payload = json.loads(resolved.read_text(encoding="utf-8"))
+        months = payload.get("months", {}) if isinstance(payload, dict) else {}
+        return payload, {
+            "enabled": True,
+            "path": str(resolved),
+            "months": int(len(months)) if isinstance(months, dict) else 0,
+            "version": int(payload.get("version", 0)) if isinstance(payload, dict) else 0,
+        }
+    except Exception as exc:
+        return None, {
+            "enabled": False,
+            "reason": "load_error",
+            "path": str(resolved),
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+
+
 def validate_pipeline_inputs(market_df: pd.DataFrame, slate_df: pd.DataFrame, skipped_rows: list[dict]) -> dict:
     market_validation = {
         "market_rows": int(len(market_df)),
@@ -608,6 +803,14 @@ def main() -> None:
     args = parse_args()
     if args.enable_learned_gate and args.disable_learned_gate:
         raise ValueError("Cannot pass both --enable-learned-gate and --disable-learned-gate.")
+    if args.enable_staking_bucket_model and args.disable_staking_bucket_model:
+        raise ValueError("Cannot pass both --enable-staking-bucket-model and --disable-staking-bucket-model.")
+    if args.board_objective_instability_enabled and args.board_objective_instability_disabled:
+        raise ValueError("Cannot pass both --board-objective-instability-enabled and --board-objective-instability-disabled.")
+    if args.board_objective_instability_veto_enabled and args.board_objective_instability_veto_disabled:
+        raise ValueError("Cannot pass both --board-objective-instability-veto-enabled and --board-objective-instability-veto-disabled.")
+    if args.board_objective_dynamic_size_enabled and args.board_objective_dynamic_size_disabled:
+        raise ValueError("Cannot pass both --board-objective-dynamic-size-enabled and --board-objective-dynamic-size-disabled.")
     policy_payload = resolve_policy(args)
 
     manifest_path = resolve_manifest_path(args.run_id, args.latest)
@@ -694,6 +897,11 @@ def main() -> None:
         args.learned_gate_json,
         disabled=learned_gate_disabled,
     )
+    staking_bucket_model_disabled = bool(not policy_payload.get("staking_bucket_model_enabled", False))
+    staking_bucket_model, staking_bucket_model_summary = load_staking_bucket_model(
+        args.staking_bucket_model_json,
+        disabled=staking_bucket_model_disabled,
+    )
 
     final_board = compute_final_board(
         selector_df,
@@ -725,6 +933,29 @@ def main() -> None:
         full_bet_fraction=policy_payload.get("full_bet_fraction", 0.015),
         max_bet_fraction=policy_payload.get("max_bet_fraction", 0.02),
         max_total_bet_fraction=policy_payload.get("max_total_bet_fraction", 0.05),
+        sizing_method=policy_payload.get("sizing_method", "tiered_probability"),
+        flat_bet_fraction=policy_payload.get(
+            "flat_bet_fraction",
+            policy_payload.get("base_bet_fraction", policy_payload.get("small_bet_fraction", 0.005)),
+        ),
+        coarse_low_bet_fraction=policy_payload.get("coarse_low_bet_fraction", 0.003),
+        coarse_mid_bet_fraction=policy_payload.get("coarse_mid_bet_fraction", 0.005),
+        coarse_high_bet_fraction=policy_payload.get("coarse_high_bet_fraction", 0.007),
+        coarse_high_max_share=policy_payload.get("coarse_high_max_share", 0.30),
+        coarse_mid_max_share=policy_payload.get("coarse_mid_max_share", 0.50),
+        coarse_high_max_plays=policy_payload.get("coarse_high_max_plays", 0),
+        coarse_mid_max_plays=policy_payload.get("coarse_mid_max_plays", 0),
+        coarse_score_alpha_uncertainty=policy_payload.get("coarse_score_alpha_uncertainty", 0.18),
+        coarse_score_beta_dependency=policy_payload.get("coarse_score_beta_dependency", 0.12),
+        coarse_score_gamma_support=policy_payload.get("coarse_score_gamma_support", 0.08),
+        coarse_score_model=policy_payload.get("coarse_score_model", "legacy"),
+        coarse_score_delta_prob_weight=policy_payload.get("coarse_score_delta_prob_weight", 0.0),
+        coarse_score_ev_weight=policy_payload.get("coarse_score_ev_weight", 0.0),
+        coarse_score_risk_weight=policy_payload.get("coarse_score_risk_weight", 0.0),
+        coarse_score_recency_weight=policy_payload.get("coarse_score_recency_weight", 0.0),
+        staking_bucket_model_payload=staking_bucket_model,
+        staking_bucket_model_month=args.staking_bucket_model_month,
+        staking_bucket_model_min_rows=int(policy_payload.get("staking_bucket_model_min_rows", 0)),
         belief_uncertainty_lower=policy_payload.get("belief_uncertainty_lower", 0.75),
         belief_uncertainty_upper=policy_payload.get("belief_uncertainty_upper", 1.15),
         append_agreement_min=policy_payload.get("append_agreement_min", 3),
@@ -743,6 +974,16 @@ def main() -> None:
         board_objective_corr_same_script_cluster=policy_payload.get("board_objective_corr_same_script_cluster", 0.30),
         board_objective_swap_candidates=policy_payload.get("board_objective_swap_candidates", 18),
         board_objective_swap_rounds=policy_payload.get("board_objective_swap_rounds", 2),
+        board_objective_instability_enabled=bool(policy_payload.get("board_objective_instability_enabled", False)),
+        board_objective_lambda_shadow_disagreement=policy_payload.get("board_objective_lambda_shadow_disagreement", 0.0),
+        board_objective_lambda_segment_weakness=policy_payload.get("board_objective_lambda_segment_weakness", 0.0),
+        board_objective_instability_near_cutoff_window=policy_payload.get("board_objective_instability_near_cutoff_window", 3),
+        board_objective_instability_top_protected=policy_payload.get("board_objective_instability_top_protected", 3),
+        board_objective_instability_veto_enabled=bool(policy_payload.get("board_objective_instability_veto_enabled", False)),
+        board_objective_instability_veto_quantile=policy_payload.get("board_objective_instability_veto_quantile", 0.85),
+        board_objective_dynamic_size_enabled=bool(policy_payload.get("board_objective_dynamic_size_enabled", False)),
+        board_objective_dynamic_size_max_shrink=policy_payload.get("board_objective_dynamic_size_max_shrink", 0),
+        board_objective_dynamic_size_trigger=policy_payload.get("board_objective_dynamic_size_trigger", 0.62),
         max_history_staleness_days=policy_payload.get("max_history_staleness_days", 0),
         min_recency_factor=policy_payload.get("min_recency_factor", 0.0),
         selected_board_calibrator=selected_board_calibrator,
@@ -775,6 +1016,18 @@ def main() -> None:
         "size_deficit": int(max(0, requested_board_size - final_board_size)) if requested_board_size > 0 else 0,
         "deficit_fill_active": bool(requested_board_size > 0 and final_board_size < requested_board_size),
         "avg_expected_wins_per_board": float(pd.to_numeric(final_board.get("expected_win_rate"), errors="coerce").fillna(0.0).sum()),
+        "instability_enabled": bool(pd.to_numeric(final_board.get("board_objective_instability_enabled"), errors="coerce").fillna(0).astype(bool).any())
+        if "board_objective_instability_enabled" in final_board.columns
+        else False,
+        "instability_mean_score": float(pd.to_numeric(final_board.get("board_instability_score"), errors="coerce").fillna(np.nan).mean())
+        if "board_instability_score" in final_board.columns
+        else np.nan,
+        "dynamic_size_shrink": int(pd.to_numeric(final_board.get("board_objective_dynamic_shrink"), errors="coerce").fillna(0).max())
+        if "board_objective_dynamic_shrink" in final_board.columns and not final_board.empty
+        else 0,
+        "dynamic_size_target": int(pd.to_numeric(final_board.get("board_objective_dynamic_target_size"), errors="coerce").fillna(final_board_size).max())
+        if "board_objective_dynamic_target_size" in final_board.columns and not final_board.empty
+        else final_board_size,
     }
 
     payload = {
@@ -793,6 +1046,7 @@ def main() -> None:
         "conditional_framework": conditional_summary,
         "selected_board_calibrator": selected_board_calibrator_summary,
         "learned_pool_gate": learned_pool_gate_summary,
+        "staking_bucket_model": staking_bucket_model_summary,
         "slate_rows": int(len(slate_df)),
         "selector_rows": int(len(selector_df)),
         "final_rows": int(len(final_board)),

@@ -109,6 +109,100 @@ def parse_args() -> argparse.Namespace:
         default=0,
         help="Minimum rows that must pass learned gate before enforcement (0 uses payload/default policy).",
     )
+    parser.add_argument(
+        "--staking-bucket-model-json",
+        type=Path,
+        default=REPO_ROOT / "model" / "analysis" / "calibration" / "staking_bucket_model_v2.json",
+        help="Optional walk-forward staking bucket model payload JSON.",
+    )
+    parser.add_argument(
+        "--disable-staking-bucket-model",
+        action="store_true",
+        help="Disable walk-forward staking bucket model during replay validation.",
+    )
+    parser.add_argument(
+        "--enable-staking-bucket-model",
+        action="store_true",
+        help="Enable walk-forward staking bucket model during replay validation.",
+    )
+    parser.add_argument(
+        "--staking-bucket-model-min-rows",
+        type=int,
+        default=None,
+        help="Optional override for minimum monthly train rows required by walk-forward staking bucket model.",
+    )
+    parser.add_argument(
+        "--board-objective-instability-enabled",
+        action="store_true",
+        help="Enable near-cutoff instability penalties/vetoes in board-objective mode.",
+    )
+    parser.add_argument(
+        "--board-objective-instability-disabled",
+        action="store_true",
+        help="Disable near-cutoff instability penalties/vetoes in board-objective mode.",
+    )
+    parser.add_argument(
+        "--board-objective-lambda-shadow-disagreement",
+        type=float,
+        default=None,
+        help="Penalty weight on shadow-model disagreement near board cutoff.",
+    )
+    parser.add_argument(
+        "--board-objective-lambda-segment-weakness",
+        type=float,
+        default=None,
+        help="Penalty weight on segment-level recent weakness near board cutoff.",
+    )
+    parser.add_argument(
+        "--board-objective-instability-near-cutoff-window",
+        type=int,
+        default=None,
+        help="Rank-distance window around cutoff where instability penalties apply.",
+    )
+    parser.add_argument(
+        "--board-objective-instability-top-protected",
+        type=int,
+        default=None,
+        help="Top-ranked candidates protected from instability penalties/veto.",
+    )
+    parser.add_argument(
+        "--board-objective-instability-veto-enabled",
+        action="store_true",
+        help="Enable near-cutoff veto for highest-instability inclusion candidates.",
+    )
+    parser.add_argument(
+        "--board-objective-instability-veto-disabled",
+        action="store_true",
+        help="Disable near-cutoff instability veto behavior.",
+    )
+    parser.add_argument(
+        "--board-objective-instability-veto-quantile",
+        type=float,
+        default=None,
+        help="Quantile threshold used by near-cutoff instability veto.",
+    )
+    parser.add_argument(
+        "--board-objective-dynamic-size-enabled",
+        action="store_true",
+        help="Enable dynamic board-size shrink on unstable slates.",
+    )
+    parser.add_argument(
+        "--board-objective-dynamic-size-disabled",
+        action="store_true",
+        help="Disable dynamic board-size shrink on unstable slates.",
+    )
+    parser.add_argument(
+        "--board-objective-dynamic-size-max-shrink",
+        type=int,
+        default=None,
+        help="Maximum board rows dynamic-size mode can shrink.",
+    )
+    parser.add_argument(
+        "--board-objective-dynamic-size-trigger",
+        type=float,
+        default=None,
+        help="Composite instability trigger above which dynamic-size shrink activates.",
+    )
     return parser.parse_args()
 
 
@@ -136,6 +230,31 @@ def _normalize_player_key(value: str) -> str:
     folded = unicodedata.normalize("NFKD", text)
     ascii_text = "".join(ch for ch in folded if not unicodedata.combining(ch))
     return ascii_text
+
+
+def _abbreviate_player_key(value: str) -> str:
+    normalized = _normalize_player_key(value)
+    if not normalized:
+        return ""
+    parts = [part for part in normalized.split("_") if part]
+    if len(parts) < 2:
+        return normalized
+    return f"{parts[0][0].upper()}_{'_'.join(parts[1:])}"
+
+
+def _player_key_variants(*values: str) -> set[str]:
+    out: set[str] = set()
+    for value in values:
+        raw = str(value or "").strip()
+        normalized = _normalize_player_key(raw)
+        for key in (raw, normalized):
+            if not key:
+                continue
+            out.add(key)
+            abbr = _abbreviate_player_key(key)
+            if abbr:
+                out.add(abbr)
+    return {key for key in out if key}
 
 
 def _build_data_proc_actual_lookup(data_proc_root: Path, start_token: str, end_token: str) -> dict[tuple[str, str, str], float]:
@@ -181,7 +300,7 @@ def _build_data_proc_actual_lookup(data_proc_root: Path, start_token: str, end_t
             market_date = str(row.get("Date", ""))
             player_raw = str(row.get("Player", folder_player)).strip() if pd.notna(row.get("Player")) else folder_player
             player_raw_norm = _normalize_player_key(player_raw)
-            player_keys = {folder_player, folder_norm, player_raw, player_raw_norm}
+            player_keys = _player_key_variants(folder_player, folder_norm, player_raw, player_raw_norm)
             for target in ("PTS", "TRB", "AST"):
                 value = pd.to_numeric(pd.Series([row.get(target)]), errors="coerce").iloc[0]
                 if pd.isna(value):
@@ -215,8 +334,9 @@ def _build_actual_lookup(history_csv: Path) -> dict[tuple[str, str, str], float]
         if part.empty:
             continue
         for _, row in part.iterrows():
-            key = (str(row["market_date"]), str(row["player"]), target)
-            lookup[key] = float(row[actual_col]) if pd.notna(row[actual_col]) else np.nan
+            for player_key in _player_key_variants(str(row["player"])):
+                key = (str(row["market_date"]), str(player_key), target)
+                lookup[key] = float(row[actual_col]) if pd.notna(row[actual_col]) else np.nan
     return lookup
 
 
@@ -264,6 +384,53 @@ def _build_rows_actual_lookup(rows_csv: Path | None) -> dict[tuple[str, str, str
     return out
 
 
+def _lookup_actual_with_date_fallback(
+    market_date_key: str,
+    player_keys: set[str],
+    target: str,
+    data_proc_actual_lookup: dict[tuple[str, str, str], float],
+    history_actual_lookup: dict[tuple[str, str, str], float],
+    near_date_days: int = 1,
+) -> tuple[float, str, str]:
+    # Exact date first.
+    for player_key in player_keys:
+        lookup_key = (market_date_key, str(player_key), target)
+        if lookup_key in data_proc_actual_lookup:
+            return float(data_proc_actual_lookup[lookup_key]), "data_proc_exact", market_date_key
+        if lookup_key in history_actual_lookup:
+            return float(history_actual_lookup[lookup_key]), "history_exact", market_date_key
+
+    if near_date_days <= 0:
+        return np.nan, "unmatched", ""
+    anchor = pd.to_datetime(market_date_key, errors="coerce")
+    if pd.isna(anchor):
+        return np.nan, "unmatched", ""
+
+    for delta in range(1, int(near_date_days) + 1):
+        match_rows: list[tuple[float, str, str]] = []
+        for sign in (-1, 1):
+            shifted = (anchor + pd.Timedelta(days=int(sign * delta))).strftime("%Y-%m-%d")
+            for player_key in player_keys:
+                lookup_key = (shifted, str(player_key), target)
+                if lookup_key in data_proc_actual_lookup:
+                    value = data_proc_actual_lookup[lookup_key]
+                    if pd.notna(value):
+                        match_rows.append((float(value), "data_proc_near_date", shifted))
+                if lookup_key in history_actual_lookup:
+                    value = history_actual_lookup[lookup_key]
+                    if pd.notna(value):
+                        match_rows.append((float(value), "history_near_date", shifted))
+        if not match_rows:
+            continue
+        unique_values = sorted({round(val, 6) for val, _, _ in match_rows})
+        if len(unique_values) == 1:
+            value, source, matched_date = match_rows[0]
+            return float(value), source, matched_date
+        return np.nan, "near_date_ambiguous", ""
+
+    return np.nan, "unmatched", ""
+
+
 def _policy_kwargs(payload: dict, mode: str) -> dict:
     return {
         "american_odds": payload["american_odds"],
@@ -294,6 +461,24 @@ def _policy_kwargs(payload: dict, mode: str) -> dict:
         "full_bet_fraction": payload.get("full_bet_fraction", 0.015),
         "max_bet_fraction": payload.get("max_bet_fraction", 0.02),
         "max_total_bet_fraction": payload.get("max_total_bet_fraction", 0.06),
+        "sizing_method": payload.get("sizing_method", "tiered_probability"),
+        "flat_bet_fraction": payload.get("flat_bet_fraction", payload.get("base_bet_fraction", payload.get("small_bet_fraction", 0.005))),
+        "coarse_low_bet_fraction": payload.get("coarse_low_bet_fraction", 0.003),
+        "coarse_mid_bet_fraction": payload.get("coarse_mid_bet_fraction", 0.005),
+        "coarse_high_bet_fraction": payload.get("coarse_high_bet_fraction", 0.007),
+        "coarse_high_max_share": payload.get("coarse_high_max_share", 0.30),
+        "coarse_mid_max_share": payload.get("coarse_mid_max_share", 0.50),
+        "coarse_high_max_plays": payload.get("coarse_high_max_plays", 0),
+        "coarse_mid_max_plays": payload.get("coarse_mid_max_plays", 0),
+        "coarse_score_alpha_uncertainty": payload.get("coarse_score_alpha_uncertainty", 0.18),
+        "coarse_score_beta_dependency": payload.get("coarse_score_beta_dependency", 0.12),
+        "coarse_score_gamma_support": payload.get("coarse_score_gamma_support", 0.08),
+        "coarse_score_model": payload.get("coarse_score_model", "legacy"),
+        "coarse_score_delta_prob_weight": payload.get("coarse_score_delta_prob_weight", 0.0),
+        "coarse_score_ev_weight": payload.get("coarse_score_ev_weight", 0.0),
+        "coarse_score_risk_weight": payload.get("coarse_score_risk_weight", 0.0),
+        "coarse_score_recency_weight": payload.get("coarse_score_recency_weight", 0.0),
+        "staking_bucket_model_min_rows": payload.get("staking_bucket_model_min_rows", 0),
         "belief_uncertainty_lower": payload.get("belief_uncertainty_lower", 0.75),
         "belief_uncertainty_upper": payload.get("belief_uncertainty_upper", 1.15),
         "append_agreement_min": payload.get("append_agreement_min", 3),
@@ -312,6 +497,16 @@ def _policy_kwargs(payload: dict, mode: str) -> dict:
         "board_objective_corr_same_script_cluster": payload.get("board_objective_corr_same_script_cluster", 0.30),
         "board_objective_swap_candidates": payload.get("board_objective_swap_candidates", 18),
         "board_objective_swap_rounds": payload.get("board_objective_swap_rounds", 2),
+        "board_objective_instability_enabled": payload.get("board_objective_instability_enabled", False),
+        "board_objective_lambda_shadow_disagreement": payload.get("board_objective_lambda_shadow_disagreement", 0.0),
+        "board_objective_lambda_segment_weakness": payload.get("board_objective_lambda_segment_weakness", 0.0),
+        "board_objective_instability_near_cutoff_window": payload.get("board_objective_instability_near_cutoff_window", 3),
+        "board_objective_instability_top_protected": payload.get("board_objective_instability_top_protected", 3),
+        "board_objective_instability_veto_enabled": payload.get("board_objective_instability_veto_enabled", False),
+        "board_objective_instability_veto_quantile": payload.get("board_objective_instability_veto_quantile", 0.85),
+        "board_objective_dynamic_size_enabled": payload.get("board_objective_dynamic_size_enabled", False),
+        "board_objective_dynamic_size_max_shrink": payload.get("board_objective_dynamic_size_max_shrink", 0),
+        "board_objective_dynamic_size_trigger": payload.get("board_objective_dynamic_size_trigger", 0.62),
         "max_history_staleness_days": payload.get("max_history_staleness_days", 0),
         "min_recency_factor": payload.get("min_recency_factor", 0.0),
         "learned_gate_min_rows": payload.get("learned_gate_min_rows", 0),
@@ -342,9 +537,55 @@ def _load_learned_pool_gate(path: Path, enabled: bool) -> dict | None:
         return None
 
 
+def _load_staking_bucket_model(path: Path, enabled: bool) -> dict | None:
+    if not enabled:
+        return None
+    resolved = path.resolve()
+    if not resolved.exists():
+        return None
+    try:
+        return json.loads(resolved.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
 def main() -> None:
     args = parse_args()
+    if args.enable_staking_bucket_model and args.disable_staking_bucket_model:
+        raise ValueError("Cannot pass both --enable-staking-bucket-model and --disable-staking-bucket-model.")
+    if args.board_objective_instability_enabled and args.board_objective_instability_disabled:
+        raise ValueError("Cannot pass both --board-objective-instability-enabled and --board-objective-instability-disabled.")
+    if args.board_objective_instability_veto_enabled and args.board_objective_instability_veto_disabled:
+        raise ValueError("Cannot pass both --board-objective-instability-veto-enabled and --board-objective-instability-veto-disabled.")
+    if args.board_objective_dynamic_size_enabled and args.board_objective_dynamic_size_disabled:
+        raise ValueError("Cannot pass both --board-objective-dynamic-size-enabled and --board-objective-dynamic-size-disabled.")
     base_profile = POLICY_PROFILES[args.policy_profile].to_dict()
+    if args.board_objective_instability_enabled:
+        base_profile["board_objective_instability_enabled"] = True
+    if args.board_objective_instability_disabled:
+        base_profile["board_objective_instability_enabled"] = False
+    if args.board_objective_lambda_shadow_disagreement is not None:
+        base_profile["board_objective_lambda_shadow_disagreement"] = float(args.board_objective_lambda_shadow_disagreement)
+    if args.board_objective_lambda_segment_weakness is not None:
+        base_profile["board_objective_lambda_segment_weakness"] = float(args.board_objective_lambda_segment_weakness)
+    if args.board_objective_instability_near_cutoff_window is not None:
+        base_profile["board_objective_instability_near_cutoff_window"] = int(args.board_objective_instability_near_cutoff_window)
+    if args.board_objective_instability_top_protected is not None:
+        base_profile["board_objective_instability_top_protected"] = int(args.board_objective_instability_top_protected)
+    if args.board_objective_instability_veto_enabled:
+        base_profile["board_objective_instability_veto_enabled"] = True
+    if args.board_objective_instability_veto_disabled:
+        base_profile["board_objective_instability_veto_enabled"] = False
+    if args.board_objective_instability_veto_quantile is not None:
+        base_profile["board_objective_instability_veto_quantile"] = float(args.board_objective_instability_veto_quantile)
+    if args.board_objective_dynamic_size_enabled:
+        base_profile["board_objective_dynamic_size_enabled"] = True
+    if args.board_objective_dynamic_size_disabled:
+        base_profile["board_objective_dynamic_size_enabled"] = False
+    if args.board_objective_dynamic_size_max_shrink is not None:
+        base_profile["board_objective_dynamic_size_max_shrink"] = int(args.board_objective_dynamic_size_max_shrink)
+    if args.board_objective_dynamic_size_trigger is not None:
+        base_profile["board_objective_dynamic_size_trigger"] = float(args.board_objective_dynamic_size_trigger)
     selected_board_calibrator = _load_selected_board_calibrator(
         args.selected_board_calibrator_json,
         disabled=bool(args.disable_selected_board_calibration),
@@ -352,6 +593,15 @@ def main() -> None:
     learned_pool_gate = _load_learned_pool_gate(
         args.learned_gate_json,
         enabled=bool(args.enable_learned_gate),
+    )
+    model_enabled_default = bool(base_profile.get("staking_bucket_model_enabled", False))
+    if args.enable_staking_bucket_model:
+        model_enabled_default = True
+    if args.disable_staking_bucket_model:
+        model_enabled_default = False
+    staking_bucket_model = _load_staking_bucket_model(
+        args.staking_bucket_model_json,
+        enabled=model_enabled_default,
     )
 
     mode_token = "_".join(args.modes)
@@ -385,6 +635,15 @@ def main() -> None:
             kwargs["learned_gate_payload"] = learned_pool_gate
             kwargs["learned_gate_month"] = run_month.strftime("%Y-%m") if pd.notna(run_month) else None
             kwargs["learned_gate_min_rows"] = int(args.learned_gate_min_rows)
+            model_enabled = bool(base_profile.get("staking_bucket_model_enabled", False))
+            if args.enable_staking_bucket_model:
+                model_enabled = True
+            if args.disable_staking_bucket_model:
+                model_enabled = False
+            kwargs["staking_bucket_model_payload"] = staking_bucket_model if model_enabled else None
+            kwargs["staking_bucket_model_month"] = run_month.strftime("%Y-%m") if pd.notna(run_month) else None
+            if args.staking_bucket_model_min_rows is not None:
+                kwargs["staking_bucket_model_min_rows"] = int(args.staking_bucket_model_min_rows)
             board = compute_final_board(selector_df.copy(), **kwargs)
             if board.empty:
                 continue
@@ -399,19 +658,20 @@ def main() -> None:
                 line = pd.to_numeric(pd.Series([row.get("market_line")]), errors="coerce").iloc[0]
                 rounded_line = float(np.round(line, 6)) if pd.notna(line) else np.nan
                 fallback_key = (run_date_key, player, target, str(row.get("direction", "")).upper(), rounded_line)
-                actual = np.nan
-                for player_key in (player, player_norm):
-                    if not player_key:
-                        continue
-                    lookup_key = (market_date_key, str(player_key), target)
-                    if lookup_key in data_proc_actual_lookup:
-                        actual = data_proc_actual_lookup[lookup_key]
-                        break
-                    if lookup_key in actual_lookup:
-                        actual = actual_lookup[lookup_key]
-                        break
+                player_keys = _player_key_variants(player, player_norm)
+                actual, actual_source, actual_match_date = _lookup_actual_with_date_fallback(
+                    market_date_key=market_date_key,
+                    player_keys=player_keys,
+                    target=target,
+                    data_proc_actual_lookup=data_proc_actual_lookup,
+                    history_actual_lookup=actual_lookup,
+                    near_date_days=1,
+                )
                 if pd.isna(actual) and rounded_line == rounded_line:
                     actual = rows_actual_lookup.get(fallback_key, np.nan)
+                    if pd.notna(actual):
+                        actual_source = "rows_fallback"
+                        actual_match_date = run_date_key
                 result = _resolve_result(str(row.get("direction", "")), line=float(line) if pd.notna(line) else np.nan, actual=actual)
 
                 rows.append(
@@ -432,7 +692,14 @@ def main() -> None:
                         "learned_gate_enforced": bool(pd.to_numeric(pd.Series([row.get("learned_gate_enforced")]), errors="coerce").fillna(0).iloc[0]),
                         "learned_gate_pass": bool(pd.to_numeric(pd.Series([row.get("learned_gate_pass")]), errors="coerce").fillna(1).iloc[0]),
                         "learned_gate_threshold": float(pd.to_numeric(pd.Series([row.get("learned_gate_threshold")]), errors="coerce").fillna(np.nan).iloc[0]),
+                        "board_instability_score": float(pd.to_numeric(pd.Series([row.get("board_instability_score")]), errors="coerce").fillna(np.nan).iloc[0]),
+                        "board_shadow_disagreement": float(pd.to_numeric(pd.Series([row.get("board_shadow_disagreement")]), errors="coerce").fillna(np.nan).iloc[0]),
+                        "board_segment_recent_weakness": float(pd.to_numeric(pd.Series([row.get("board_segment_recent_weakness")]), errors="coerce").fillna(np.nan).iloc[0]),
+                        "board_objective_dynamic_shrink": float(pd.to_numeric(pd.Series([row.get("board_objective_dynamic_shrink")]), errors="coerce").fillna(0).iloc[0]),
+                        "board_objective_dynamic_day_score": float(pd.to_numeric(pd.Series([row.get("board_objective_dynamic_day_score")]), errors="coerce").fillna(np.nan).iloc[0]),
                         "actual": float(actual) if pd.notna(actual) else np.nan,
+                        "actual_source": str(actual_source),
+                        "actual_match_date": str(actual_match_date),
                         "result": result,
                     }
                 )
@@ -478,6 +745,10 @@ def main() -> None:
                 "avg_expected_resolved": avg_expected_resolved,
                 "calibration_gap_pp": float((hit_rate - avg_expected_resolved) * 100.0) if resolved_count > 0 and avg_expected_resolved == avg_expected_resolved else np.nan,
                 "avg_ev": float(pd.to_numeric(part["ev"], errors="coerce").mean()),
+                "avg_board_instability_score": float(pd.to_numeric(part.get("board_instability_score"), errors="coerce").mean()) if "board_instability_score" in part.columns else np.nan,
+                "avg_board_shadow_disagreement": float(pd.to_numeric(part.get("board_shadow_disagreement"), errors="coerce").mean()) if "board_shadow_disagreement" in part.columns else np.nan,
+                "avg_board_segment_recent_weakness": float(pd.to_numeric(part.get("board_segment_recent_weakness"), errors="coerce").mean()) if "board_segment_recent_weakness" in part.columns else np.nan,
+                "avg_dynamic_shrink": float(pd.to_numeric(part.get("board_objective_dynamic_shrink"), errors="coerce").mean()) if "board_objective_dynamic_shrink" in part.columns else np.nan,
                 "learned_gate_enforced_rate": float(pd.to_numeric(part.get("learned_gate_enforced"), errors="coerce").fillna(0).mean()) if "learned_gate_enforced" in part.columns else np.nan,
                 "learned_gate_pass_rate": float(pd.to_numeric(part.get("learned_gate_pass"), errors="coerce").fillna(1).mean()) if "learned_gate_pass" in part.columns else np.nan,
             }
