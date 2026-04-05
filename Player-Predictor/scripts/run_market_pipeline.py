@@ -984,6 +984,12 @@ def main() -> None:
         board_objective_dynamic_size_enabled=bool(policy_payload.get("board_objective_dynamic_size_enabled", False)),
         board_objective_dynamic_size_max_shrink=policy_payload.get("board_objective_dynamic_size_max_shrink", 0),
         board_objective_dynamic_size_trigger=policy_payload.get("board_objective_dynamic_size_trigger", 0.62),
+        board_objective_fp_veto_enabled=bool(policy_payload.get("board_objective_fp_veto_enabled", False)),
+        board_objective_fp_veto_live=bool(policy_payload.get("board_objective_fp_veto_live", False)),
+        board_objective_fp_veto_tail_slots=policy_payload.get("board_objective_fp_veto_tail_slots", 2),
+        board_objective_fp_veto_top_protected=policy_payload.get("board_objective_fp_veto_top_protected", 6),
+        board_objective_fp_veto_threshold=policy_payload.get("board_objective_fp_veto_threshold", 0.80),
+        board_objective_fp_veto_max_drops=policy_payload.get("board_objective_fp_veto_max_drops", 1),
         max_history_staleness_days=policy_payload.get("max_history_staleness_days", 0),
         min_recency_factor=policy_payload.get("min_recency_factor", 0.0),
         selected_board_calibrator=selected_board_calibrator,
@@ -1028,6 +1034,18 @@ def main() -> None:
         "dynamic_size_target": int(pd.to_numeric(final_board.get("board_objective_dynamic_target_size"), errors="coerce").fillna(final_board_size).max())
         if "board_objective_dynamic_target_size" in final_board.columns and not final_board.empty
         else final_board_size,
+        "fp_veto_enabled": bool(pd.to_numeric(final_board.get("board_objective_fp_veto_enabled"), errors="coerce").fillna(0).astype(bool).any())
+        if "board_objective_fp_veto_enabled" in final_board.columns and not final_board.empty
+        else False,
+        "fp_veto_live": bool(pd.to_numeric(final_board.get("board_objective_fp_veto_live"), errors="coerce").fillna(0).astype(bool).any())
+        if "board_objective_fp_veto_live" in final_board.columns and not final_board.empty
+        else False,
+        "fp_veto_drop_count": int(pd.to_numeric(final_board.get("board_objective_fp_veto_drop_count"), errors="coerce").fillna(0).max())
+        if "board_objective_fp_veto_drop_count" in final_board.columns and not final_board.empty
+        else 0,
+        "fp_veto_flagged_share": float(pd.to_numeric(final_board.get("board_objective_fp_veto_flagged"), errors="coerce").fillna(0).mean())
+        if "board_objective_fp_veto_flagged" in final_board.columns and not final_board.empty
+        else 0.0,
     }
 
     payload = {

@@ -96,6 +96,12 @@ class StrategyConfig:
     board_objective_dynamic_size_enabled: bool = False
     board_objective_dynamic_size_max_shrink: int = 0
     board_objective_dynamic_size_trigger: float = 0.62
+    board_objective_fp_veto_enabled: bool = False
+    board_objective_fp_veto_live: bool = False
+    board_objective_fp_veto_tail_slots: int = 2
+    board_objective_fp_veto_top_protected: int = 6
+    board_objective_fp_veto_threshold: float = 0.80
+    board_objective_fp_veto_max_drops: int = 1
     learned_gate_enabled: bool = False
     learned_gate_min_rows: int = 0
     max_plays_per_game: int = 2

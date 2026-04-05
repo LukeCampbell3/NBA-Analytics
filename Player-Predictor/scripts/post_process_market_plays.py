@@ -538,6 +538,40 @@ def parse_args() -> argparse.Namespace:
         help="Composite instability trigger above which dynamic-size shrink activates.",
     )
     parser.add_argument(
+        "--board-objective-fp-veto-enabled",
+        action="store_true",
+        help="Enable precision-first false-positive veto scoring on selected board rows.",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-live",
+        action="store_true",
+        help="Apply false-positive veto drops live (otherwise shadow telemetry only).",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-tail-slots",
+        type=int,
+        default=2,
+        help="Number of tail slots eligible for false-positive veto checks.",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-top-protected",
+        type=int,
+        default=6,
+        help="Top-ranked board slots protected from false-positive veto checks.",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-threshold",
+        type=float,
+        default=0.80,
+        help="Minimum veto risk score required to flag a selected play.",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-max-drops",
+        type=int,
+        default=1,
+        help="Maximum number of selected plays the live false-positive veto can drop.",
+    )
+    parser.add_argument(
         "--learned-gate-json",
         type=Path,
         default=Path("model/analysis/calibration/learned_pool_gate.json"),
@@ -1254,6 +1288,12 @@ def _select_board_objective_board(
     board_objective_dynamic_size_enabled: bool,
     board_objective_dynamic_size_max_shrink: int,
     board_objective_dynamic_size_trigger: float,
+    board_objective_fp_veto_enabled: bool,
+    board_objective_fp_veto_live: bool,
+    board_objective_fp_veto_tail_slots: int,
+    board_objective_fp_veto_top_protected: int,
+    board_objective_fp_veto_threshold: float,
+    board_objective_fp_veto_max_drops: int,
 ) -> pd.DataFrame:
     if candidates.empty:
         return candidates.copy()
@@ -1661,6 +1701,19 @@ def _select_board_objective_board(
         fallback["board_objective_dynamic_shrink"] = int(dynamic_shrink)
         fallback["board_objective_dynamic_target_size"] = int(dynamic_target_size)
         fallback["board_objective_target_size_requested"] = int(board_size)
+        fallback["board_objective_fp_veto_enabled"] = bool(board_objective_fp_veto_enabled)
+        fallback["board_objective_fp_veto_live"] = bool(board_objective_fp_veto_live and board_objective_fp_veto_enabled)
+        fallback["board_objective_fp_veto_tail_slots"] = int(max(1, board_objective_fp_veto_tail_slots))
+        fallback["board_objective_fp_veto_top_protected"] = int(max(0, board_objective_fp_veto_top_protected))
+        fallback["board_objective_fp_veto_threshold"] = float(np.clip(board_objective_fp_veto_threshold, 0.0, 1.0))
+        fallback["board_objective_fp_veto_max_drops"] = int(max(0, board_objective_fp_veto_max_drops))
+        fallback["board_objective_fp_veto_score"] = 0.0
+        fallback["board_objective_fp_veto_eligible"] = False
+        fallback["board_objective_fp_veto_flagged"] = False
+        fallback["board_objective_fp_veto_applied"] = False
+        fallback["board_objective_fp_veto_drop_count"] = 0
+        fallback["board_objective_fp_veto_removed_slots_json"] = "[]"
+        fallback["board_objective_fp_veto_removed_sources_json"] = "[]"
         return fallback
 
     selected_board = universe.iloc[best_indices].copy()
@@ -1814,6 +1867,89 @@ def _select_board_objective_board(
                 final["board_objective_swap_applied"] = False
             final["board_objective_solver_mode"] = final.get("board_objective_solver_mode", "exact_branch_and_bound")
             final["board_objective_search_truncated"] = pd.to_numeric(final.get("board_objective_search_truncated"), errors="coerce").fillna(0).astype(bool)
+
+    fp_veto_enabled = bool(board_objective_fp_veto_enabled)
+    fp_veto_live = bool(board_objective_fp_veto_live and fp_veto_enabled)
+    fp_veto_tail_slots = max(1, int(board_objective_fp_veto_tail_slots))
+    fp_veto_top_protected = max(0, int(board_objective_fp_veto_top_protected))
+    fp_veto_threshold = float(np.clip(board_objective_fp_veto_threshold, 0.0, 1.0))
+    fp_veto_max_drops = max(0, int(board_objective_fp_veto_max_drops))
+    fp_veto_applied = False
+    fp_veto_drop_count = 0
+    fp_veto_removed_slots: list[int] = []
+    fp_veto_removed_sources: list[int] = []
+    fp_score_map: dict[int, float] = {}
+    fp_eligible_map: dict[int, bool] = {}
+    fp_flagged_map: dict[int, bool] = {}
+    if fp_veto_enabled and not final.empty:
+        ranked_fp = final.sort_values(["board_play_win_prob", "ev_adjusted", "abs_edge"], ascending=[False, False, False]).copy()
+        ranked_fp["_source_idx_int"] = pd.to_numeric(ranked_fp.get("_source_index"), errors="coerce").fillna(-1).astype(int)
+        ranked_fp["_slot"] = np.arange(1, len(ranked_fp) + 1, dtype=int)
+        min_tail_slot = max(1, int(len(ranked_fp) - fp_veto_tail_slots + 1))
+
+        risk_prob = 1.0 - pd.to_numeric(ranked_fp.get("board_play_win_prob"), errors="coerce").fillna(0.5).clip(lower=0.0, upper=1.0)
+        risk_unc = pd.to_numeric(ranked_fp.get("board_uncertainty_penalty"), errors="coerce").fillna(0.5).clip(lower=0.0, upper=1.0)
+        risk_dep = pd.to_numeric(ranked_fp.get("board_dependency_burden"), errors="coerce").fillna(0.0).clip(lower=0.0, upper=1.0)
+        risk_inst = pd.to_numeric(ranked_fp.get("board_instability_score"), errors="coerce").fillna(0.0).clip(lower=0.0, upper=1.0)
+        abs_edge = pd.to_numeric(ranked_fp.get("abs_edge"), errors="coerce").fillna(0.0)
+        low_edge = 1.0 - _normalize_0_1(abs_edge, constant_value=0.5)
+        fp_score = (
+            0.30 * risk_prob
+            + 0.25 * risk_unc
+            + 0.20 * risk_dep
+            + 0.15 * risk_inst
+            + 0.10 * low_edge
+        ).clip(lower=0.0, upper=1.0)
+        eligible = (ranked_fp["_slot"] > int(fp_veto_top_protected)) & (ranked_fp["_slot"] >= int(min_tail_slot))
+        flagged = eligible & (fp_score >= float(fp_veto_threshold))
+
+        ranked_fp["board_objective_fp_veto_score"] = fp_score.astype("float64")
+        ranked_fp["board_objective_fp_veto_eligible"] = eligible.astype(bool)
+        ranked_fp["board_objective_fp_veto_flagged"] = flagged.astype(bool)
+
+        for _, fp_row in ranked_fp.iterrows():
+            source_idx = int(pd.to_numeric(pd.Series([fp_row.get("_source_idx_int", -1)]), errors="coerce").fillna(-1).iloc[0])
+            if source_idx < 0:
+                continue
+            fp_score_map[source_idx] = float(pd.to_numeric(pd.Series([fp_row.get("board_objective_fp_veto_score")]), errors="coerce").fillna(0.0).iloc[0])
+            fp_eligible_map[source_idx] = bool(fp_row.get("board_objective_fp_veto_eligible", False))
+            fp_flagged_map[source_idx] = bool(fp_row.get("board_objective_fp_veto_flagged", False))
+
+        if fp_veto_live and fp_veto_max_drops > 0 and bool(flagged.any()):
+            lower_bound = max(1, int(requested_min) if int(requested_min) > 0 else 1)
+            allowed_drops = max(0, int(len(ranked_fp)) - int(lower_bound))
+            drop_n = min(int(fp_veto_max_drops), int(allowed_drops), int(flagged.sum()))
+            if drop_n > 0:
+                drop_frame = ranked_fp.loc[flagged].sort_values(
+                    ["board_objective_fp_veto_score", "_slot"],
+                    ascending=[False, False],
+                ).head(drop_n)
+                drop_sources = pd.to_numeric(drop_frame.get("_source_idx_int"), errors="coerce").fillna(-1).astype(int)
+                drop_sources = [int(v) for v in drop_sources.tolist() if int(v) >= 0]
+                if drop_sources:
+                    fp_veto_applied = True
+                    fp_veto_removed_sources = [int(v) for v in drop_sources]
+                    fp_veto_removed_slots = [int(v) for v in pd.to_numeric(drop_frame.get("_slot"), errors="coerce").fillna(0).astype(int).tolist() if int(v) > 0]
+                    fp_veto_drop_count = int(len(fp_veto_removed_sources))
+                    source_series = pd.to_numeric(final.get("_source_index"), errors="coerce").fillna(-1).astype(int)
+                    final = final.loc[~source_series.isin(set(fp_veto_removed_sources))].copy()
+                    final = final.sort_values(["board_play_win_prob", "ev_adjusted", "abs_edge"], ascending=[False, False, False]).copy()
+
+    if not final.empty:
+        source_series_final = pd.to_numeric(final.get("_source_index"), errors="coerce").fillna(-1).astype(int)
+        final["board_objective_fp_veto_score"] = source_series_final.map(fp_score_map).fillna(0.0).astype("float64")
+        final["board_objective_fp_veto_eligible"] = source_series_final.map(fp_eligible_map).fillna(False).astype(bool)
+        final["board_objective_fp_veto_flagged"] = source_series_final.map(fp_flagged_map).fillna(False).astype(bool)
+        final["board_objective_fp_veto_enabled"] = bool(fp_veto_enabled)
+        final["board_objective_fp_veto_live"] = bool(fp_veto_live)
+        final["board_objective_fp_veto_tail_slots"] = int(fp_veto_tail_slots)
+        final["board_objective_fp_veto_top_protected"] = int(fp_veto_top_protected)
+        final["board_objective_fp_veto_threshold"] = float(fp_veto_threshold)
+        final["board_objective_fp_veto_max_drops"] = int(fp_veto_max_drops)
+        final["board_objective_fp_veto_applied"] = bool(fp_veto_applied)
+        final["board_objective_fp_veto_drop_count"] = int(fp_veto_drop_count)
+        final["board_objective_fp_veto_removed_slots_json"] = json.dumps(fp_veto_removed_slots)
+        final["board_objective_fp_veto_removed_sources_json"] = json.dumps(fp_veto_removed_sources)
 
     final["board_objective_score"] = _score_selected_indices(
         list(range(len(final))),
@@ -2313,6 +2449,12 @@ def compute_final_board(
     board_objective_dynamic_size_enabled: bool = False,
     board_objective_dynamic_size_max_shrink: int = 0,
     board_objective_dynamic_size_trigger: float = 0.62,
+    board_objective_fp_veto_enabled: bool = False,
+    board_objective_fp_veto_live: bool = False,
+    board_objective_fp_veto_tail_slots: int = 2,
+    board_objective_fp_veto_top_protected: int = 6,
+    board_objective_fp_veto_threshold: float = 0.80,
+    board_objective_fp_veto_max_drops: int = 1,
     max_history_staleness_days: int = 0,
     min_recency_factor: float = 0.0,
     selected_board_calibrator: dict | None = None,
@@ -2572,6 +2714,12 @@ def compute_final_board(
             board_objective_dynamic_size_enabled=bool(board_objective_dynamic_size_enabled),
             board_objective_dynamic_size_max_shrink=int(board_objective_dynamic_size_max_shrink),
             board_objective_dynamic_size_trigger=float(board_objective_dynamic_size_trigger),
+            board_objective_fp_veto_enabled=bool(board_objective_fp_veto_enabled),
+            board_objective_fp_veto_live=bool(board_objective_fp_veto_live),
+            board_objective_fp_veto_tail_slots=int(board_objective_fp_veto_tail_slots),
+            board_objective_fp_veto_top_protected=int(board_objective_fp_veto_top_protected),
+            board_objective_fp_veto_threshold=float(board_objective_fp_veto_threshold),
+            board_objective_fp_veto_max_drops=int(board_objective_fp_veto_max_drops),
         )
         caps_already_applied = True
         rank_columns = ["board_play_win_prob", "ev_adjusted", "abs_edge", "final_confidence"]
@@ -2947,6 +3095,12 @@ def main() -> None:
         board_objective_dynamic_size_enabled=args.board_objective_dynamic_size_enabled,
         board_objective_dynamic_size_max_shrink=args.board_objective_dynamic_size_max_shrink,
         board_objective_dynamic_size_trigger=args.board_objective_dynamic_size_trigger,
+        board_objective_fp_veto_enabled=args.board_objective_fp_veto_enabled,
+        board_objective_fp_veto_live=args.board_objective_fp_veto_live,
+        board_objective_fp_veto_tail_slots=args.board_objective_fp_veto_tail_slots,
+        board_objective_fp_veto_top_protected=args.board_objective_fp_veto_top_protected,
+        board_objective_fp_veto_threshold=args.board_objective_fp_veto_threshold,
+        board_objective_fp_veto_max_drops=args.board_objective_fp_veto_max_drops,
         max_history_staleness_days=args.max_history_staleness_days,
         min_recency_factor=args.min_recency_factor,
         learned_gate_payload=learned_gate_payload,
@@ -3039,6 +3193,12 @@ def main() -> None:
         "board_objective_dynamic_size_enabled": bool(args.board_objective_dynamic_size_enabled),
         "board_objective_dynamic_size_max_shrink": int(args.board_objective_dynamic_size_max_shrink),
         "board_objective_dynamic_size_trigger": float(args.board_objective_dynamic_size_trigger),
+        "board_objective_fp_veto_enabled": bool(args.board_objective_fp_veto_enabled),
+        "board_objective_fp_veto_live": bool(args.board_objective_fp_veto_live),
+        "board_objective_fp_veto_tail_slots": int(args.board_objective_fp_veto_tail_slots),
+        "board_objective_fp_veto_top_protected": int(args.board_objective_fp_veto_top_protected),
+        "board_objective_fp_veto_threshold": float(args.board_objective_fp_veto_threshold),
+        "board_objective_fp_veto_max_drops": int(args.board_objective_fp_veto_max_drops),
         "max_history_staleness_days": int(args.max_history_staleness_days),
         "min_recency_factor": float(args.min_recency_factor),
         "learned_gate": learned_gate_summary,

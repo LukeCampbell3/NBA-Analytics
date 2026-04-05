@@ -165,6 +165,12 @@ def _policy_kwargs(payload: dict, lambda_corr: float, lambda_conc: float, lambda
         "board_objective_dynamic_size_enabled": payload.get("board_objective_dynamic_size_enabled", False),
         "board_objective_dynamic_size_max_shrink": payload.get("board_objective_dynamic_size_max_shrink", 0),
         "board_objective_dynamic_size_trigger": payload.get("board_objective_dynamic_size_trigger", 0.62),
+        "board_objective_fp_veto_enabled": payload.get("board_objective_fp_veto_enabled", False),
+        "board_objective_fp_veto_live": payload.get("board_objective_fp_veto_live", False),
+        "board_objective_fp_veto_tail_slots": payload.get("board_objective_fp_veto_tail_slots", 2),
+        "board_objective_fp_veto_top_protected": payload.get("board_objective_fp_veto_top_protected", 6),
+        "board_objective_fp_veto_threshold": payload.get("board_objective_fp_veto_threshold", 0.80),
+        "board_objective_fp_veto_max_drops": payload.get("board_objective_fp_veto_max_drops", 1),
         "max_history_staleness_days": payload.get("max_history_staleness_days", 0),
         "min_recency_factor": payload.get("min_recency_factor", 0.0),
     }
