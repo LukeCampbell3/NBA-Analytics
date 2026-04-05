@@ -203,6 +203,50 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Composite instability trigger above which dynamic-size shrink activates.",
     )
+    parser.add_argument(
+        "--board-objective-fp-veto-enabled",
+        action="store_true",
+        help="Enable false-positive veto scoring on selected board rows.",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-disabled",
+        action="store_true",
+        help="Disable false-positive veto scoring on selected board rows.",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-live",
+        action="store_true",
+        help="Enable live false-positive veto drops (not shadow-only).",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-shadow",
+        action="store_true",
+        help="Force false-positive veto to shadow mode (no live drops).",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-tail-slots",
+        type=int,
+        default=None,
+        help="Number of board tail slots eligible for false-positive veto checks.",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-top-protected",
+        type=int,
+        default=None,
+        help="Top-ranked selected slots protected from false-positive veto checks.",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-threshold",
+        type=float,
+        default=None,
+        help="Risk threshold for flagging selected rows in false-positive veto logic.",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-max-drops",
+        type=int,
+        default=None,
+        help="Maximum number of selected rows that live false-positive veto can drop.",
+    )
     return parser.parse_args()
 
 
@@ -507,6 +551,12 @@ def _policy_kwargs(payload: dict, mode: str) -> dict:
         "board_objective_dynamic_size_enabled": payload.get("board_objective_dynamic_size_enabled", False),
         "board_objective_dynamic_size_max_shrink": payload.get("board_objective_dynamic_size_max_shrink", 0),
         "board_objective_dynamic_size_trigger": payload.get("board_objective_dynamic_size_trigger", 0.62),
+        "board_objective_fp_veto_enabled": payload.get("board_objective_fp_veto_enabled", False),
+        "board_objective_fp_veto_live": payload.get("board_objective_fp_veto_live", False),
+        "board_objective_fp_veto_tail_slots": payload.get("board_objective_fp_veto_tail_slots", 2),
+        "board_objective_fp_veto_top_protected": payload.get("board_objective_fp_veto_top_protected", 6),
+        "board_objective_fp_veto_threshold": payload.get("board_objective_fp_veto_threshold", 0.80),
+        "board_objective_fp_veto_max_drops": payload.get("board_objective_fp_veto_max_drops", 1),
         "max_history_staleness_days": payload.get("max_history_staleness_days", 0),
         "min_recency_factor": payload.get("min_recency_factor", 0.0),
         "learned_gate_min_rows": payload.get("learned_gate_min_rows", 0),
@@ -559,6 +609,10 @@ def main() -> None:
         raise ValueError("Cannot pass both --board-objective-instability-veto-enabled and --board-objective-instability-veto-disabled.")
     if args.board_objective_dynamic_size_enabled and args.board_objective_dynamic_size_disabled:
         raise ValueError("Cannot pass both --board-objective-dynamic-size-enabled and --board-objective-dynamic-size-disabled.")
+    if args.board_objective_fp_veto_enabled and args.board_objective_fp_veto_disabled:
+        raise ValueError("Cannot pass both --board-objective-fp-veto-enabled and --board-objective-fp-veto-disabled.")
+    if args.board_objective_fp_veto_live and args.board_objective_fp_veto_shadow:
+        raise ValueError("Cannot pass both --board-objective-fp-veto-live and --board-objective-fp-veto-shadow.")
     base_profile = POLICY_PROFILES[args.policy_profile].to_dict()
     if args.board_objective_instability_enabled:
         base_profile["board_objective_instability_enabled"] = True
@@ -586,6 +640,22 @@ def main() -> None:
         base_profile["board_objective_dynamic_size_max_shrink"] = int(args.board_objective_dynamic_size_max_shrink)
     if args.board_objective_dynamic_size_trigger is not None:
         base_profile["board_objective_dynamic_size_trigger"] = float(args.board_objective_dynamic_size_trigger)
+    if args.board_objective_fp_veto_enabled:
+        base_profile["board_objective_fp_veto_enabled"] = True
+    if args.board_objective_fp_veto_disabled:
+        base_profile["board_objective_fp_veto_enabled"] = False
+    if args.board_objective_fp_veto_live:
+        base_profile["board_objective_fp_veto_live"] = True
+    if args.board_objective_fp_veto_shadow:
+        base_profile["board_objective_fp_veto_live"] = False
+    if args.board_objective_fp_veto_tail_slots is not None:
+        base_profile["board_objective_fp_veto_tail_slots"] = int(args.board_objective_fp_veto_tail_slots)
+    if args.board_objective_fp_veto_top_protected is not None:
+        base_profile["board_objective_fp_veto_top_protected"] = int(args.board_objective_fp_veto_top_protected)
+    if args.board_objective_fp_veto_threshold is not None:
+        base_profile["board_objective_fp_veto_threshold"] = float(args.board_objective_fp_veto_threshold)
+    if args.board_objective_fp_veto_max_drops is not None:
+        base_profile["board_objective_fp_veto_max_drops"] = int(args.board_objective_fp_veto_max_drops)
     selected_board_calibrator = _load_selected_board_calibrator(
         args.selected_board_calibrator_json,
         disabled=bool(args.disable_selected_board_calibration),
@@ -697,6 +767,15 @@ def main() -> None:
                         "board_segment_recent_weakness": float(pd.to_numeric(pd.Series([row.get("board_segment_recent_weakness")]), errors="coerce").fillna(np.nan).iloc[0]),
                         "board_objective_dynamic_shrink": float(pd.to_numeric(pd.Series([row.get("board_objective_dynamic_shrink")]), errors="coerce").fillna(0).iloc[0]),
                         "board_objective_dynamic_day_score": float(pd.to_numeric(pd.Series([row.get("board_objective_dynamic_day_score")]), errors="coerce").fillna(np.nan).iloc[0]),
+                        "board_objective_fp_veto_enabled": bool(pd.to_numeric(pd.Series([row.get("board_objective_fp_veto_enabled")]), errors="coerce").fillna(0).iloc[0]),
+                        "board_objective_fp_veto_live": bool(pd.to_numeric(pd.Series([row.get("board_objective_fp_veto_live")]), errors="coerce").fillna(0).iloc[0]),
+                        "board_objective_fp_veto_score": float(pd.to_numeric(pd.Series([row.get("board_objective_fp_veto_score")]), errors="coerce").fillna(0.0).iloc[0]),
+                        "board_objective_fp_veto_eligible": bool(pd.to_numeric(pd.Series([row.get("board_objective_fp_veto_eligible")]), errors="coerce").fillna(0).iloc[0]),
+                        "board_objective_fp_veto_flagged": bool(pd.to_numeric(pd.Series([row.get("board_objective_fp_veto_flagged")]), errors="coerce").fillna(0).iloc[0]),
+                        "board_objective_fp_veto_applied": bool(pd.to_numeric(pd.Series([row.get("board_objective_fp_veto_applied")]), errors="coerce").fillna(0).iloc[0]),
+                        "board_objective_fp_veto_drop_count": float(pd.to_numeric(pd.Series([row.get("board_objective_fp_veto_drop_count")]), errors="coerce").fillna(0).iloc[0]),
+                        "board_objective_fp_veto_removed_slots_json": str(row.get("board_objective_fp_veto_removed_slots_json", "[]")),
+                        "board_objective_fp_veto_removed_sources_json": str(row.get("board_objective_fp_veto_removed_sources_json", "[]")),
                         "actual": float(actual) if pd.notna(actual) else np.nan,
                         "actual_source": str(actual_source),
                         "actual_match_date": str(actual_match_date),
@@ -718,7 +797,10 @@ def main() -> None:
         losses = int((resolved["result"] == "loss").sum())
         pushes = int((part["result"] == "push").sum())
         missing = int((part["result"] == "missing").sum())
-        resolved_count = int(len(resolved))
+        other_results = int((~part["result"].isin(["win", "loss", "push", "missing"])).sum())
+        resolved_count = int(len(resolved))  # Bets with binary outcome (wins+losses), excludes pushes.
+        resolved_with_pushes = int(wins + losses + pushes)
+        row_accounted = int(resolved_with_pushes + missing + other_results)
         resolved_probs = pd.to_numeric(
             resolved["p_calibrated"] if "p_calibrated" in resolved.columns else resolved["expected_win_rate"],
             errors="coerce",
@@ -734,10 +816,14 @@ def main() -> None:
                 "over": int((part["direction"].astype(str).str.upper() == "OVER").sum()),
                 "under_share": float((part["direction"].astype(str).str.upper() == "UNDER").mean()) if len(part) else np.nan,
                 "resolved": resolved_count,
+                "resolved_with_pushes": resolved_with_pushes,
                 "wins": wins,
                 "losses": losses,
                 "pushes": pushes,
                 "missing": missing,
+                "other_results": other_results,
+                "row_accounted": row_accounted,
+                "row_accounting_ok": bool(row_accounted == int(len(part))),
                 "hit_rate": hit_rate,
                 "avg_expected_win_rate": float(pd.to_numeric(part["expected_win_rate"], errors="coerce").mean()),
                 "avg_board_play_win_prob": float(pd.to_numeric(part["board_play_win_prob"], errors="coerce").mean()),
@@ -749,6 +835,13 @@ def main() -> None:
                 "avg_board_shadow_disagreement": float(pd.to_numeric(part.get("board_shadow_disagreement"), errors="coerce").mean()) if "board_shadow_disagreement" in part.columns else np.nan,
                 "avg_board_segment_recent_weakness": float(pd.to_numeric(part.get("board_segment_recent_weakness"), errors="coerce").mean()) if "board_segment_recent_weakness" in part.columns else np.nan,
                 "avg_dynamic_shrink": float(pd.to_numeric(part.get("board_objective_dynamic_shrink"), errors="coerce").mean()) if "board_objective_dynamic_shrink" in part.columns else np.nan,
+                "fp_veto_enabled_rate": float(pd.to_numeric(part.get("board_objective_fp_veto_enabled"), errors="coerce").fillna(0).mean()) if "board_objective_fp_veto_enabled" in part.columns else 0.0,
+                "fp_veto_live_rate": float(pd.to_numeric(part.get("board_objective_fp_veto_live"), errors="coerce").fillna(0).mean()) if "board_objective_fp_veto_live" in part.columns else 0.0,
+                "fp_veto_eligible_share": float(pd.to_numeric(part.get("board_objective_fp_veto_eligible"), errors="coerce").fillna(0).mean()) if "board_objective_fp_veto_eligible" in part.columns else 0.0,
+                "fp_veto_flagged_share": float(pd.to_numeric(part.get("board_objective_fp_veto_flagged"), errors="coerce").fillna(0).mean()) if "board_objective_fp_veto_flagged" in part.columns else 0.0,
+                "fp_veto_applied_rate": float(pd.to_numeric(part.get("board_objective_fp_veto_applied"), errors="coerce").fillna(0).mean()) if "board_objective_fp_veto_applied" in part.columns else 0.0,
+                "avg_fp_veto_drop_count": float(pd.to_numeric(part.get("board_objective_fp_veto_drop_count"), errors="coerce").mean()) if "board_objective_fp_veto_drop_count" in part.columns else 0.0,
+                "avg_fp_veto_score": float(pd.to_numeric(part.get("board_objective_fp_veto_score"), errors="coerce").mean()) if "board_objective_fp_veto_score" in part.columns else 0.0,
                 "learned_gate_enforced_rate": float(pd.to_numeric(part.get("learned_gate_enforced"), errors="coerce").fillna(0).mean()) if "learned_gate_enforced" in part.columns else np.nan,
                 "learned_gate_pass_rate": float(pd.to_numeric(part.get("learned_gate_pass"), errors="coerce").fillna(1).mean()) if "learned_gate_pass" in part.columns else np.nan,
             }
