@@ -1,23 +1,22 @@
 {
-  "generated_at_utc": "2026-04-06T03:11:15.536410+00:00",
-  "manifest_path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\Player-Predictor\\model\\analysis\\daily_runs\\20260405\\daily_market_pipeline_manifest_20260405.json",
-  "run_date": "2026-04-05",
+  "generated_at_utc": "2026-04-06T04:18:29.290753+00:00",
+  "manifest_path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\Player-Predictor\\model\\analysis\\daily_runs\\20260406\\daily_market_pipeline_manifest_20260406.json",
+  "run_date": "2026-04-06",
   "season": 2026,
-  "through_date": "2026-04-04",
-  "current_market_rows": 124,
+  "through_date": "2026-04-05",
+  "current_market_rows": 128,
   "current_market_snapshot_meta": {
-    "mode": "requested_window",
-    "requested_start_date": "2026-04-05",
-    "requested_end_date": "2026-04-07",
-    "selected_market_date_min": "2026-04-05",
-    "selected_market_date_max": "2026-04-05",
-    "selected_row_count": 124
+    "mode": "stale_fallback",
+    "requested_start_date": "2026-04-06",
+    "requested_end_date": "2026-04-08",
+    "selected_market_date": "2026-04-05",
+    "selected_row_count": 128
   },
   "used_latest_manifest": false,
   "shadow_policy_profiles": [
     "shadow_edge_append_agree1_p90_x1"
   ],
-  "market_snapshot": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\Player-Predictor\\model\\analysis\\daily_runs\\20260405\\current_market_snapshot_20260405.parquet",
+  "market_snapshot": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\Player-Predictor\\model\\analysis\\daily_runs\\20260406\\current_market_snapshot_20260406.parquet",
   "model_run_id": "artifact_free_heuristic",
   "policy_profile": "production_board_objective_b12",
   "policy": {
@@ -195,15 +194,15 @@
   },
   "input_validation": {
     "market_lines": {
-      "market_rows": 124,
-      "market_dates_non_null": 124,
-      "unique_market_players": 124,
-      "market_pts_lines": 118,
-      "market_pts_books": 118,
-      "market_trb_lines": 116,
-      "market_trb_books": 116,
-      "market_ast_lines": 97,
-      "market_ast_books": 97
+      "market_rows": 128,
+      "market_dates_non_null": 128,
+      "unique_market_players": 128,
+      "market_pts_lines": 122,
+      "market_pts_books": 122,
+      "market_trb_lines": 120,
+      "market_trb_books": 120,
+      "market_ast_lines": 101,
+      "market_ast_books": 101
     },
     "prior_game_data": {
       "slate_rows": 117,
@@ -216,14 +215,23 @@
       "csv_exists_rows": 117
     },
     "skipped_rows": {
-      "count": 7,
+      "count": 11,
       "reasons": {
-        "missing processed csv for season 2026": 6,
+        "missing processed csv for season 2026": 9,
+        "market_team_mismatch:NYK not in ['CHA', 'MIN']": 1,
         "insufficient history rows (8)": 1
       },
       "sample": [
         {
+          "player": "D_Mitchell",
+          "reason": "missing processed csv for season 2026"
+        },
+        {
           "player": "D_Powell",
+          "reason": "missing processed csv for season 2026"
+        },
+        {
+          "player": "J_Green",
           "reason": "missing processed csv for season 2026"
         },
         {
@@ -237,6 +245,10 @@
         {
           "player": "L_Ball",
           "reason": "missing processed csv for season 2026"
+        },
+        {
+          "player": "M_Bridges",
+          "reason": "market_team_mismatch:NYK not in ['CHA', 'MIN']"
         },
         {
           "player": "M_Diabate",
@@ -407,7 +419,7 @@
   "shadow_runs": [
     {
       "policy_profile": "shadow_edge_append_agree1_p90_x1",
-      "final_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\Player-Predictor\\model\\analysis\\daily_runs\\20260405\\shadow\\shadow_edge_append_agree1_p90_x1\\final_market_plays_20260405_shadow_edge_append_agree1_p90_x1.csv",
+      "final_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\Player-Predictor\\model\\analysis\\daily_runs\\20260406\\shadow\\shadow_edge_append_agree1_p90_x1\\final_market_plays_20260406_shadow_edge_append_agree1_p90_x1.csv",
       "summary": {
         "play_count": 5,
         "avg_expected_win_rate": 0.5610706555001715,
