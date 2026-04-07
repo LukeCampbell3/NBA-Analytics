@@ -68,6 +68,10 @@ class StrategyConfig:
     max_total_plays: int = 12
     min_board_plays: int = 0
     non_pts_min_gap_percentile: float = 0.90
+    exclude_micro_lines_enabled: bool = True
+    exclude_micro_line_targets: tuple[str, ...] = ("PTS", "TRB", "AST")
+    exclude_micro_line_min: float = 0.5
+    exclude_micro_line_max: float = 1.5
     edge_adjust_k: float = 0.30
     selection_mode: str = "ev_adjusted"
     append_agreement_min: int = 3
