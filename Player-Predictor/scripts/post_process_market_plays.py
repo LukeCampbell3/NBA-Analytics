@@ -219,6 +219,35 @@ def parse_args() -> argparse.Namespace:
         help="Minimum disagreement percentile required for TRB/AST plays.",
     )
     parser.add_argument(
+        "--exclude-micro-lines-enabled",
+        action="store_true",
+        default=True,
+        help="Exclude micro-line props (default enabled).",
+    )
+    parser.add_argument(
+        "--disable-exclude-micro-lines",
+        action="store_true",
+        help="Disable micro-line exclusion filter.",
+    )
+    parser.add_argument(
+        "--exclude-micro-line-targets",
+        type=str,
+        default="PTS,TRB,AST",
+        help="Comma-separated targets for micro-line exclusion.",
+    )
+    parser.add_argument(
+        "--exclude-micro-line-min",
+        type=float,
+        default=0.5,
+        help="Inclusive minimum market line for micro-line exclusion.",
+    )
+    parser.add_argument(
+        "--exclude-micro-line-max",
+        type=float,
+        default=1.5,
+        help="Inclusive maximum market line for micro-line exclusion.",
+    )
+    parser.add_argument(
         "--edge-adjust-k",
         type=float,
         default=0.30,
@@ -2948,6 +2977,10 @@ def compute_final_board(
     max_plays_per_game: int = 2,
     max_plays_per_script_cluster: int = 2,
     non_pts_min_gap_percentile: float = 0.90,
+    exclude_micro_lines_enabled: bool = True,
+    exclude_micro_line_targets: tuple[str, ...] | list[str] = ("PTS", "TRB", "AST"),
+    exclude_micro_line_min: float = 0.5,
+    exclude_micro_line_max: float = 1.5,
     edge_adjust_k: float = 0.30,
     thompson_temperature: float = 1.0,
     thompson_seed: int = 17,
@@ -3151,6 +3184,21 @@ def compute_final_board(
     out = out.loc[out["recommendation_rank"] <= minimum_recommendation_rank(min_recommendation)].copy()
     out = out.loc[out["final_confidence"] >= float(min_final_confidence)].copy()
     out = out.loc[(out["target"] == "PTS") | (out["gap_percentile"] >= float(non_pts_min_gap_percentile))].copy()
+    if bool(exclude_micro_lines_enabled):
+        micro_targets = {
+            str(token).upper().strip()
+            for token in (exclude_micro_line_targets or ())
+            if str(token).strip()
+        }
+        if micro_targets:
+            market_line = pd.to_numeric(out.get("market_line"), errors="coerce")
+            target = out.get("target", pd.Series("", index=out.index)).fillna("").astype(str).str.upper().str.strip()
+            micro_mask = (
+                target.isin(micro_targets)
+                & market_line.ge(float(exclude_micro_line_min))
+                & market_line.le(float(exclude_micro_line_max))
+            )
+            out = out.loc[~micro_mask].copy()
     if out.empty:
         return out
 
@@ -3845,6 +3893,13 @@ def main() -> None:
                 "path": str(staking_bucket_model_path),
             }
 
+    micro_line_targets = tuple(
+        token.strip().upper()
+        for token in str(args.exclude_micro_line_targets or "").split(",")
+        if token.strip()
+    )
+    exclude_micro_lines_enabled = bool(args.exclude_micro_lines_enabled and not args.disable_exclude_micro_lines)
+
     final_board = compute_final_board(
         plays,
         american_odds=args.american_odds,
@@ -3861,6 +3916,10 @@ def main() -> None:
         max_plays_per_game=args.max_plays_per_game,
         max_plays_per_script_cluster=args.max_plays_per_script_cluster,
         non_pts_min_gap_percentile=args.non_pts_min_gap_percentile,
+        exclude_micro_lines_enabled=exclude_micro_lines_enabled,
+        exclude_micro_line_targets=micro_line_targets,
+        exclude_micro_line_min=args.exclude_micro_line_min,
+        exclude_micro_line_max=args.exclude_micro_line_max,
         edge_adjust_k=args.edge_adjust_k,
         thompson_temperature=args.thompson_temperature,
         thompson_seed=args.thompson_seed,
@@ -3974,6 +4033,10 @@ def main() -> None:
         "max_total_plays": int(args.max_total_plays),
         "min_board_plays": int(args.min_board_plays),
         "non_pts_min_gap_percentile": float(args.non_pts_min_gap_percentile),
+        "exclude_micro_lines_enabled": bool(exclude_micro_lines_enabled),
+        "exclude_micro_line_targets": list(micro_line_targets),
+        "exclude_micro_line_min": float(args.exclude_micro_line_min),
+        "exclude_micro_line_max": float(args.exclude_micro_line_max),
         "edge_adjust_k": float(args.edge_adjust_k),
         "thompson_temperature": float(args.thompson_temperature),
         "thompson_seed": int(args.thompson_seed),

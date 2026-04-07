@@ -1000,6 +1000,14 @@ def main() -> None:
         max_plays_per_game=policy_payload.get("max_plays_per_game", 2),
         max_plays_per_script_cluster=policy_payload.get("max_plays_per_script_cluster", 2),
         non_pts_min_gap_percentile=policy_payload["non_pts_min_gap_percentile"],
+        exclude_micro_lines_enabled=bool(policy_payload.get("exclude_micro_lines_enabled", True)),
+        exclude_micro_line_targets=tuple(
+            str(token).upper().strip()
+            for token in policy_payload.get("exclude_micro_line_targets", ("PTS", "TRB", "AST"))
+            if str(token).strip()
+        ),
+        exclude_micro_line_min=float(policy_payload.get("exclude_micro_line_min", 0.5)),
+        exclude_micro_line_max=float(policy_payload.get("exclude_micro_line_max", 1.5)),
         edge_adjust_k=policy_payload["edge_adjust_k"],
         thompson_temperature=policy_payload.get("thompson_temperature", 1.0),
         thompson_seed=policy_payload.get("thompson_seed", 17),

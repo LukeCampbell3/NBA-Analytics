@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-04-07T02:57:52.578537+00:00",
+  "generated_at_utc": "2026-04-07T03:39:59.250243+00:00",
   "manifest_path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\Player-Predictor\\model\\analysis\\daily_runs\\20260406\\daily_market_pipeline_manifest_20260406.json",
   "run_date": "2026-04-06",
   "season": 2026,
@@ -19,9 +19,9 @@
   ],
   "market_snapshot": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\Player-Predictor\\model\\analysis\\daily_runs\\20260406\\current_market_snapshot_20260406.parquet",
   "model_run_id": "artifact_free_heuristic",
-  "policy_profile": "production_board_objective_b12_accepted_gate_live_v1",
+  "policy_profile": "production_board_objective_b12",
   "policy": {
-    "name": "production_board_objective_b12_accepted_gate_live_v1",
+    "name": "production_board_objective_b12",
     "american_odds": -110,
     "elite_pct": 0.95,
     "probability_shrink_factor": 0.75,
@@ -54,6 +54,14 @@
     "max_total_plays": 10,
     "min_board_plays": 8,
     "non_pts_min_gap_percentile": 0.0,
+    "exclude_micro_lines_enabled": true,
+    "exclude_micro_line_targets": [
+      "PTS",
+      "TRB",
+      "AST"
+    ],
+    "exclude_micro_line_min": 0.5,
+    "exclude_micro_line_max": 1.5,
     "edge_adjust_k": 0.3,
     "selection_mode": "board_objective",
     "append_agreement_min": 3,
@@ -97,7 +105,7 @@
     "learned_gate_enabled": true,
     "learned_gate_min_rows": 0,
     "accepted_pick_gate_enabled": true,
-    "accepted_pick_gate_live": true,
+    "accepted_pick_gate_live": false,
     "accepted_pick_gate_min_rows": 6,
     "max_plays_per_game": 2,
     "max_plays_per_script_cluster": 2,
@@ -633,6 +641,14 @@
         "max_total_plays": 12,
         "min_board_plays": 0,
         "non_pts_min_gap_percentile": 0.0,
+        "exclude_micro_lines_enabled": true,
+        "exclude_micro_line_targets": [
+          "PTS",
+          "TRB",
+          "AST"
+        ],
+        "exclude_micro_line_min": 0.5,
+        "exclude_micro_line_max": 1.5,
         "edge_adjust_k": 0.3,
         "selection_mode": "edge_append_shadow",
         "append_agreement_min": 1,
