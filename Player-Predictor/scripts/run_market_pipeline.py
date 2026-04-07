@@ -370,6 +370,44 @@ def parse_args() -> argparse.Namespace:
         help="Minimum rows that must pass learned gate before enforcement (0 delegates to payload/policy).",
     )
     parser.add_argument(
+        "--accepted-pick-gate-json",
+        type=Path,
+        default=REPO_ROOT / "model" / "analysis" / "accepted_pick_gate" / "candidates" / "accepted_pick_gate_candidate.json",
+        help="Optional accepted-pick keep/drop gate payload JSON.",
+    )
+    parser.add_argument(
+        "--enable-accepted-pick-gate",
+        action="store_true",
+        help="Enable accepted-pick gate in final board filtering.",
+    )
+    parser.add_argument(
+        "--disable-accepted-pick-gate",
+        action="store_true",
+        help="Disable accepted-pick gate even if policy enables it.",
+    )
+    parser.add_argument(
+        "--accepted-pick-gate-month",
+        type=str,
+        default=None,
+        help="Optional YYYY-MM month hint when applying accepted-pick gate payloads.",
+    )
+    parser.add_argument(
+        "--accepted-pick-gate-min-rows",
+        type=int,
+        default=None,
+        help="Minimum rows required before enforcing accepted-pick gate (0 disables row floor).",
+    )
+    parser.add_argument(
+        "--accepted-pick-gate-live",
+        action="store_true",
+        help="Apply accepted-pick gate vetoes live (drop vetoed rows).",
+    )
+    parser.add_argument(
+        "--accepted-pick-gate-shadow",
+        action="store_true",
+        help="Force accepted-pick gate to shadow-only tagging (no live drops).",
+    )
+    parser.add_argument(
         "--staking-bucket-model-json",
         type=Path,
         default=REPO_ROOT / "model" / "analysis" / "calibration" / "staking_bucket_model_v2.json",
@@ -489,6 +527,13 @@ def resolve_policy(args: argparse.Namespace):
         "conditional_max_promoted_share_of_recoverable": args.conditional_max_promoted_share,
         "learned_gate_enabled": True if args.enable_learned_gate else (False if args.disable_learned_gate else None),
         "learned_gate_min_rows": args.learned_gate_min_rows,
+        "accepted_pick_gate_enabled": True
+        if args.enable_accepted_pick_gate
+        else (False if args.disable_accepted_pick_gate else None),
+        "accepted_pick_gate_live": True
+        if args.accepted_pick_gate_live
+        else (False if args.accepted_pick_gate_shadow else None),
+        "accepted_pick_gate_min_rows": args.accepted_pick_gate_min_rows,
     }
     for key, value in override_fields.items():
         if value is not None:
@@ -518,6 +563,8 @@ def apply_heuristic_policy_overrides(policy_payload: dict) -> dict:
     out["strong_tier_percentile"] = min(float(out.get("strong_tier_percentile", 0.90)), 0.00)
     out["elite_tier_percentile"] = min(float(out.get("elite_tier_percentile", out.get("elite_pct", 0.95))), 0.00)
     out["learned_gate_enabled"] = False
+    out["accepted_pick_gate_enabled"] = False
+    out["accepted_pick_gate_live"] = False
     out["board_objective_instability_enabled"] = False
     out["board_objective_dynamic_size_enabled"] = False
     out["heuristic_overrides_applied"] = True
@@ -726,6 +773,31 @@ def load_learned_pool_gate(path: Path, disabled: bool) -> tuple[dict | None, dic
         }
 
 
+def load_accepted_pick_gate(path: Path, disabled: bool) -> tuple[dict | None, dict]:
+    if disabled:
+        return None, {"enabled": False, "reason": "disabled_flag"}
+    resolved = path.resolve()
+    if not resolved.exists():
+        return None, {"enabled": False, "reason": "missing_file", "path": str(resolved)}
+    try:
+        payload = json.loads(resolved.read_text(encoding="utf-8"))
+        months = payload.get("months", {}) if isinstance(payload, dict) else {}
+        return payload, {
+            "enabled": True,
+            "path": str(resolved),
+            "months": int(len(months)) if isinstance(months, dict) else 0,
+            "version": int(payload.get("version", 0)) if isinstance(payload, dict) else 0,
+            "threshold": float(payload.get("threshold", np.nan)) if isinstance(payload, dict) else np.nan,
+        }
+    except Exception as exc:
+        return None, {
+            "enabled": False,
+            "reason": "load_error",
+            "path": str(resolved),
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+
+
 def load_staking_bucket_model(path: Path, disabled: bool) -> tuple[dict | None, dict]:
     if disabled:
         return None, {"enabled": False, "reason": "disabled_flag"}
@@ -803,6 +875,10 @@ def main() -> None:
     args = parse_args()
     if args.enable_learned_gate and args.disable_learned_gate:
         raise ValueError("Cannot pass both --enable-learned-gate and --disable-learned-gate.")
+    if args.enable_accepted_pick_gate and args.disable_accepted_pick_gate:
+        raise ValueError("Cannot pass both --enable-accepted-pick-gate and --disable-accepted-pick-gate.")
+    if args.accepted_pick_gate_live and args.accepted_pick_gate_shadow:
+        raise ValueError("Cannot pass both --accepted-pick-gate-live and --accepted-pick-gate-shadow.")
     if args.enable_staking_bucket_model and args.disable_staking_bucket_model:
         raise ValueError("Cannot pass both --enable-staking-bucket-model and --disable-staking-bucket-model.")
     if args.board_objective_instability_enabled and args.board_objective_instability_disabled:
@@ -897,6 +973,11 @@ def main() -> None:
         args.learned_gate_json,
         disabled=learned_gate_disabled,
     )
+    accepted_pick_gate_disabled = bool(not policy_payload.get("accepted_pick_gate_enabled", False))
+    accepted_pick_gate, accepted_pick_gate_summary = load_accepted_pick_gate(
+        args.accepted_pick_gate_json,
+        disabled=accepted_pick_gate_disabled,
+    )
     staking_bucket_model_disabled = bool(not policy_payload.get("staking_bucket_model_enabled", False))
     staking_bucket_model, staking_bucket_model_summary = load_staking_bucket_model(
         args.staking_bucket_model_json,
@@ -990,6 +1071,12 @@ def main() -> None:
         board_objective_fp_veto_top_protected=policy_payload.get("board_objective_fp_veto_top_protected", 6),
         board_objective_fp_veto_threshold=policy_payload.get("board_objective_fp_veto_threshold", 0.80),
         board_objective_fp_veto_max_drops=policy_payload.get("board_objective_fp_veto_max_drops", 1),
+        board_objective_fp_veto_quantile=policy_payload.get("board_objective_fp_veto_quantile", 0.70),
+        board_objective_fp_veto_max_swaps=policy_payload.get("board_objective_fp_veto_max_swaps", 1),
+        board_objective_fp_veto_swap_candidates=policy_payload.get("board_objective_fp_veto_swap_candidates", 24),
+        board_objective_fp_veto_min_swap_gain=policy_payload.get("board_objective_fp_veto_min_swap_gain", 0.0025),
+        board_objective_fp_veto_risk_lambda=policy_payload.get("board_objective_fp_veto_risk_lambda", 0.18),
+        board_objective_fp_veto_ml_weight=policy_payload.get("board_objective_fp_veto_ml_weight", 0.45),
         max_history_staleness_days=policy_payload.get("max_history_staleness_days", 0),
         min_recency_factor=policy_payload.get("min_recency_factor", 0.0),
         selected_board_calibrator=selected_board_calibrator,
@@ -997,6 +1084,11 @@ def main() -> None:
         learned_gate_payload=learned_pool_gate,
         learned_gate_month=args.learned_gate_month,
         learned_gate_min_rows=int(policy_payload.get("learned_gate_min_rows", 0)),
+        accepted_pick_gate_payload=accepted_pick_gate,
+        accepted_pick_gate_month=args.accepted_pick_gate_month,
+        accepted_pick_gate_enabled=bool(policy_payload.get("accepted_pick_gate_enabled", False)),
+        accepted_pick_gate_live=bool(policy_payload.get("accepted_pick_gate_live", False)),
+        accepted_pick_gate_min_rows=int(policy_payload.get("accepted_pick_gate_min_rows", 0)),
     )
     args.final_csv_out.parent.mkdir(parents=True, exist_ok=True)
     args.final_json_out.parent.mkdir(parents=True, exist_ok=True)
@@ -1043,9 +1135,36 @@ def main() -> None:
         "fp_veto_drop_count": int(pd.to_numeric(final_board.get("board_objective_fp_veto_drop_count"), errors="coerce").fillna(0).max())
         if "board_objective_fp_veto_drop_count" in final_board.columns and not final_board.empty
         else 0,
+        "fp_veto_swap_count": int(pd.to_numeric(final_board.get("board_objective_fp_veto_swap_count"), errors="coerce").fillna(0).max())
+        if "board_objective_fp_veto_swap_count" in final_board.columns and not final_board.empty
+        else 0,
         "fp_veto_flagged_share": float(pd.to_numeric(final_board.get("board_objective_fp_veto_flagged"), errors="coerce").fillna(0).mean())
         if "board_objective_fp_veto_flagged" in final_board.columns and not final_board.empty
         else 0.0,
+        "fp_veto_swap_selected_share": float(pd.to_numeric(final_board.get("board_objective_fp_veto_swap_selected"), errors="coerce").fillna(0).mean())
+        if "board_objective_fp_veto_swap_selected" in final_board.columns and not final_board.empty
+        else 0.0,
+        "fp_veto_threshold_effective": float(pd.to_numeric(final_board.get("board_objective_fp_veto_threshold_effective"), errors="coerce").fillna(np.nan).mean())
+        if "board_objective_fp_veto_threshold_effective" in final_board.columns and not final_board.empty
+        else np.nan,
+        "accepted_pick_gate_enabled": bool(pd.to_numeric(final_board.get("accepted_pick_gate_enabled"), errors="coerce").fillna(0).astype(bool).any())
+        if "accepted_pick_gate_enabled" in final_board.columns and not final_board.empty
+        else False,
+        "accepted_pick_gate_enforced": bool(pd.to_numeric(final_board.get("accepted_pick_gate_enforced"), errors="coerce").fillna(0).astype(bool).any())
+        if "accepted_pick_gate_enforced" in final_board.columns and not final_board.empty
+        else False,
+        "accepted_pick_gate_live": bool(pd.to_numeric(final_board.get("accepted_pick_gate_live"), errors="coerce").fillna(0).astype(bool).any())
+        if "accepted_pick_gate_live" in final_board.columns and not final_board.empty
+        else False,
+        "accepted_pick_gate_veto_share": float(pd.to_numeric(final_board.get("accepted_pick_gate_veto"), errors="coerce").fillna(0).mean())
+        if "accepted_pick_gate_veto" in final_board.columns and not final_board.empty
+        else 0.0,
+        "accepted_pick_gate_drop_count": int(pd.to_numeric(final_board.get("accepted_pick_gate_drop_count"), errors="coerce").fillna(0).max())
+        if "accepted_pick_gate_drop_count" in final_board.columns and not final_board.empty
+        else 0,
+        "accepted_pick_gate_threshold": float(pd.to_numeric(final_board.get("accepted_pick_gate_threshold"), errors="coerce").fillna(np.nan).mean())
+        if "accepted_pick_gate_threshold" in final_board.columns and not final_board.empty
+        else np.nan,
     }
 
     payload = {
@@ -1064,6 +1183,7 @@ def main() -> None:
         "conditional_framework": conditional_summary,
         "selected_board_calibrator": selected_board_calibrator_summary,
         "learned_pool_gate": learned_pool_gate_summary,
+        "accepted_pick_gate": accepted_pick_gate_summary,
         "staking_bucket_model": staking_bucket_model_summary,
         "slate_rows": int(len(slate_df)),
         "selector_rows": int(len(selector_df)),
@@ -1098,6 +1218,7 @@ def main() -> None:
     print(f"Final JSON:    {args.final_json_out}")
     print(f"Selected-board calibrator: {selected_board_calibrator_summary}")
     print(f"Learned pool gate: {learned_pool_gate_summary}")
+    print(f"Accepted-pick gate: {accepted_pick_gate_summary}")
     print(f"Board diagnostics: {board_diagnostics}")
     print("Input validation:")
     print(f"  Market rows:        {input_validation['market_lines']['market_rows']}")
