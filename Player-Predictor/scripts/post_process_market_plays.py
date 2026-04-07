@@ -67,6 +67,34 @@ except Exception:  # pragma: no cover - fallback when staking model module is un
         return probs.astype("float64"), source, "", {"enabled": False, "reason": "module_missing"}
 
 try:
+    from decision_engine.accepted_pick_gate import apply_accepted_pick_gate as apply_accepted_pick_gate_fn
+except Exception:  # pragma: no cover - fallback when accepted-pick gate module is unavailable
+    def apply_accepted_pick_gate_fn(
+        frame: pd.DataFrame,
+        payload: dict | None,
+        run_date_hint: str | None = None,
+        date_col: str = "market_date",
+        player_col: str = "market_player_raw",
+        target_col: str = "target",
+        direction_col: str = "direction",
+        live: bool = False,
+        min_rows: int = 0,
+    ) -> tuple[pd.DataFrame, dict]:
+        out = frame.copy()
+        out["accepted_pick_gate_keep_prob"] = np.nan
+        out["accepted_pick_gate_threshold"] = np.nan
+        out["accepted_pick_gate_veto"] = False
+        out["accepted_pick_gate_veto_reason"] = ""
+        out["accepted_pick_gate_enabled"] = False
+        out["accepted_pick_gate_enforced"] = False
+        out["accepted_pick_gate_live"] = bool(live)
+        out["accepted_pick_gate_month"] = ""
+        out["accepted_pick_gate_drop_applied"] = False
+        out["accepted_pick_gate_drop_count"] = 0
+        out["accepted_pick_gate_policy"] = "identity_module_missing"
+        return out, {"enabled": False, "enforced": False, "reason": "module_missing"}
+
+try:
     from decision_engine.uncertainty import (
         BELIEF_UNCERTAINTY_LOWER,
         BELIEF_UNCERTAINTY_UPPER,
@@ -572,6 +600,42 @@ def parse_args() -> argparse.Namespace:
         help="Maximum number of selected plays the live false-positive veto can drop.",
     )
     parser.add_argument(
+        "--board-objective-fp-veto-quantile",
+        type=float,
+        default=0.70,
+        help="Adaptive quantile cutoff used to relax false-positive veto threshold on compressed slates.",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-max-swaps",
+        type=int,
+        default=1,
+        help="Maximum number of risk-reducing swaps attempted before any live veto drops.",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-swap-candidates",
+        type=int,
+        default=24,
+        help="Maximum off-board candidates scanned as swap replacements in live false-positive veto mode.",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-min-swap-gain",
+        type=float,
+        default=0.0025,
+        help="Minimum objective gain required before applying a live false-positive veto swap.",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-risk-lambda",
+        type=float,
+        default=0.18,
+        help="Risk-penalty weight used when scoring veto swaps/drops for board-objective mode.",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-ml-weight",
+        type=float,
+        default=0.45,
+        help="Blend weight on shadow-model ensemble risk in false-positive veto scoring.",
+    )
+    parser.add_argument(
         "--learned-gate-json",
         type=Path,
         default=Path("model/analysis/calibration/learned_pool_gate.json"),
@@ -593,6 +657,57 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=0,
         help="Minimum rows that must pass learned gate before enforcement (0 uses payload/default policy).",
+    )
+    parser.add_argument(
+        "--disable-learned-gate-rescue",
+        action="store_true",
+        help="Disable adaptive rescue rows from the learned-gate filtered pool.",
+    )
+    parser.add_argument(
+        "--learned-gate-rescue-target-share",
+        type=float,
+        default=0.35,
+        help="Maximum share of target board slots that adaptive learned-gate rescue can reclaim.",
+    )
+    parser.add_argument(
+        "--learned-gate-rescue-floor-quantile",
+        type=float,
+        default=0.35,
+        help="Rescue score quantile floor anchored on pass rows (lower preserves more candidates).",
+    )
+    parser.add_argument(
+        "--learned-gate-rescue-max-rows",
+        type=int,
+        default=0,
+        help="Hard cap on rescued rows (0 means no additional cap).",
+    )
+    parser.add_argument(
+        "--accepted-pick-gate-json",
+        type=Path,
+        default=Path("model/analysis/accepted_pick_gate/candidates/accepted_pick_gate_candidate.json"),
+        help="Optional accepted-pick keep/drop gate payload JSON.",
+    )
+    parser.add_argument(
+        "--enable-accepted-pick-gate",
+        action="store_true",
+        help="Enable accepted-pick gate scoring/filtering on the final board.",
+    )
+    parser.add_argument(
+        "--accepted-pick-gate-live",
+        action="store_true",
+        help="Apply accepted-pick gate vetoes live (drops rows) instead of shadow-only tagging.",
+    )
+    parser.add_argument(
+        "--accepted-pick-gate-month",
+        type=str,
+        default=None,
+        help="Optional YYYY-MM month override for accepted-pick gate payload selection.",
+    )
+    parser.add_argument(
+        "--accepted-pick-gate-min-rows",
+        type=int,
+        default=0,
+        help="Minimum board rows required before enforcing accepted-pick gate (0 disables row floor).",
     )
     return parser.parse_args()
 
@@ -1252,6 +1367,165 @@ def _score_selected_indices(
     return node_score - float(lambda_corr) * pair_penalty - float(lambda_conc) * concentration
 
 
+def _candidate_passes_caps_row(
+    row: pd.Series,
+    player_counts: dict[str, int],
+    target_counts: dict[str, int],
+    game_counts: dict[str, int],
+    script_counts: dict[str, int],
+    caps: dict[str, int],
+    max_plays_per_player: int,
+    max_plays_per_game: int,
+    max_plays_per_script_cluster: int,
+) -> bool:
+    player = str(row.get("player", ""))
+    target = str(row.get("target", ""))
+    game_key = str(row.get("game_key", ""))
+    script_cluster = _normalize_script_cluster(row.get("script_cluster_id", ""))
+
+    if max_plays_per_player > 0 and player_counts.get(player, 0) >= int(max_plays_per_player):
+        return False
+    target_cap = int(caps.get(target, 0))
+    if target_cap > 0 and target_counts.get(target, 0) >= target_cap:
+        return False
+    if max_plays_per_game > 0 and game_counts.get(game_key, 0) >= int(max_plays_per_game):
+        return False
+    if max_plays_per_script_cluster > 0 and script_cluster and script_counts.get(script_cluster, 0) >= int(max_plays_per_script_cluster):
+        return False
+    return True
+
+
+def _board_objective_fp_veto_score_components(
+    candidates: pd.DataFrame,
+    reference: pd.DataFrame,
+    ml_weight: float,
+) -> tuple[pd.Series, pd.Series, pd.Series]:
+    if candidates.empty:
+        empty = pd.Series(dtype="float64")
+        return empty, empty, empty
+
+    ref = reference if reference is not None and not reference.empty else candidates
+    risk_prob = 1.0 - _numeric_series(candidates, "board_play_win_prob", 0.5).clip(lower=0.0, upper=1.0)
+    risk_unc = _numeric_series(candidates, "board_uncertainty_penalty", 0.5).clip(lower=0.0, upper=1.0)
+    risk_dep = _numeric_series(candidates, "board_dependency_burden", 0.0).clip(lower=0.0, upper=1.0)
+    risk_inst = _numeric_series(candidates, "board_instability_score", 0.0).clip(lower=0.0, upper=1.0)
+    low_edge = 1.0 - _normalize_to_reference_0_1(
+        _numeric_series(candidates, "abs_edge", 0.0).clip(lower=0.0),
+        _numeric_series(ref, "abs_edge", 0.0).clip(lower=0.0),
+        constant_value=0.5,
+    )
+    low_conf = 1.0 - _normalize_to_reference_0_1(
+        _numeric_series(candidates, "final_confidence", 0.0).clip(lower=0.0),
+        _numeric_series(ref, "final_confidence", 0.0).clip(lower=0.0),
+        constant_value=0.5,
+    )
+    support_raw = (
+        np.log1p(_numeric_series(candidates, "history_rows", 0.0).clip(lower=0.0))
+        + 0.35 * np.log1p(_numeric_series(candidates, "calibration_bucket_rows", 0.0).clip(lower=0.0))
+        + 0.35 * np.log1p(_numeric_series(candidates, "market_books", 0.0).clip(lower=0.0))
+    )
+    support_ref = (
+        np.log1p(_numeric_series(ref, "history_rows", 0.0).clip(lower=0.0))
+        + 0.35 * np.log1p(_numeric_series(ref, "calibration_bucket_rows", 0.0).clip(lower=0.0))
+        + 0.35 * np.log1p(_numeric_series(ref, "market_books", 0.0).clip(lower=0.0))
+    )
+    low_support = 1.0 - _normalize_to_reference_0_1(support_raw, support_ref, constant_value=0.5)
+    risk_shadow = _numeric_series(candidates, "board_shadow_disagreement", 0.0).clip(lower=0.0, upper=1.0)
+    risk_segment = _numeric_series(candidates, "board_segment_recent_weakness", 0.0).clip(lower=0.0, upper=1.0)
+
+    heuristic_score = (
+        0.27 * risk_prob
+        + 0.20 * risk_unc
+        + 0.15 * risk_dep
+        + 0.13 * risk_inst
+        + 0.10 * low_edge
+        + 0.06 * low_conf
+        + 0.05 * low_support
+        + 0.03 * risk_shadow
+        + 0.01 * risk_segment
+    ).clip(lower=0.0, upper=1.0)
+
+    has_shadow_models = any(
+        column in candidates.columns or column in ref.columns
+        for column in ("board_shadow_score_legacy", "board_shadow_score_v1", "board_shadow_score_v2")
+    )
+    ml_share = float(np.clip(ml_weight, 0.0, 1.0))
+    if has_shadow_models:
+        strength_legacy = _normalize_to_reference_0_1(
+            _numeric_series(candidates, "board_shadow_score_legacy", _numeric_series(candidates, "board_play_win_prob", 0.5)),
+            _numeric_series(ref, "board_shadow_score_legacy", _numeric_series(ref, "board_play_win_prob", 0.5)),
+            constant_value=0.5,
+        )
+        strength_v1 = _normalize_to_reference_0_1(
+            _numeric_series(candidates, "board_shadow_score_v1", _numeric_series(candidates, "board_play_win_prob", 0.5)),
+            _numeric_series(ref, "board_shadow_score_v1", _numeric_series(ref, "board_play_win_prob", 0.5)),
+            constant_value=0.5,
+        )
+        strength_v2 = _normalize_to_reference_0_1(
+            _numeric_series(candidates, "board_shadow_score_v2", _numeric_series(candidates, "board_play_win_prob", 0.5)),
+            _numeric_series(ref, "board_shadow_score_v2", _numeric_series(ref, "board_play_win_prob", 0.5)),
+            constant_value=0.5,
+        )
+        disagreement = _normalize_to_reference_0_1(
+            _numeric_series(candidates, "board_shadow_rank_std", _numeric_series(candidates, "board_shadow_disagreement", 0.0)),
+            _numeric_series(ref, "board_shadow_rank_std", _numeric_series(ref, "board_shadow_disagreement", 0.0)),
+            constant_value=0.0,
+        )
+        model_strength = (0.20 * strength_legacy + 0.30 * strength_v1 + 0.50 * strength_v2).clip(lower=0.0, upper=1.0)
+        ml_score = (
+            1.0
+            - model_strength
+            + 0.35 * disagreement
+            + 0.15 * risk_segment
+            + 0.10 * risk_prob
+        ).clip(lower=0.0, upper=1.0)
+    else:
+        ml_share = 0.0
+        ml_score = heuristic_score.copy()
+
+    blended = ((1.0 - ml_share) * heuristic_score + ml_share * ml_score).clip(lower=0.0, upper=1.0)
+    return blended.astype("float64"), heuristic_score.astype("float64"), ml_score.astype("float64")
+
+
+def _score_board_with_fp_veto_penalty(
+    frame: pd.DataFrame,
+    lambda_corr: float,
+    lambda_conc: float,
+    lambda_unc: float,
+    corr_same_game: float,
+    corr_same_player: float,
+    corr_same_target: float,
+    corr_same_direction: float,
+    corr_same_script_cluster: float,
+    fp_penalty_lambda: float,
+) -> float:
+    if frame.empty:
+        return -np.inf
+    node_penalty = pd.to_numeric(frame.get("board_instability_penalty"), errors="coerce").fillna(0.0).to_numpy(dtype="float64")
+    fp_penalty = pd.to_numeric(frame.get("board_objective_fp_veto_score"), errors="coerce").fillna(0.0).to_numpy(dtype="float64")
+    node_penalty = node_penalty + float(max(fp_penalty_lambda, 0.0)) * fp_penalty
+    return _score_selected_indices(
+        list(range(len(frame))),
+        probs=pd.to_numeric(frame["board_play_win_prob"], errors="coerce").fillna(0.5).to_numpy(dtype="float64"),
+        unc=pd.to_numeric(frame["board_uncertainty_penalty"], errors="coerce").fillna(0.5).to_numpy(dtype="float64"),
+        node_penalty=node_penalty,
+        dep_matrix=_build_pairwise_dependency_matrix(
+            frame,
+            same_game_weight=float(corr_same_game),
+            same_player_weight=float(corr_same_player),
+            same_target_weight=float(corr_same_target),
+            same_direction_weight=float(corr_same_direction),
+            same_script_cluster_weight=float(corr_same_script_cluster),
+        ),
+        targets=_clean_key_component(frame.get("target", pd.Series("", index=frame.index))).to_numpy(dtype=str),
+        directions=_clean_key_component(frame.get("direction", pd.Series("", index=frame.index))).to_numpy(dtype=str),
+        games=_clean_key_component(frame.get("game_key", pd.Series("", index=frame.index))).to_numpy(dtype=str),
+        lambda_corr=float(lambda_corr),
+        lambda_conc=float(lambda_conc),
+        lambda_unc=float(lambda_unc),
+    )
+
+
 def _select_board_objective_board(
     candidates: pd.DataFrame,
     max_plays_per_player: int,
@@ -1294,6 +1568,12 @@ def _select_board_objective_board(
     board_objective_fp_veto_top_protected: int,
     board_objective_fp_veto_threshold: float,
     board_objective_fp_veto_max_drops: int,
+    board_objective_fp_veto_quantile: float,
+    board_objective_fp_veto_max_swaps: int,
+    board_objective_fp_veto_swap_candidates: int,
+    board_objective_fp_veto_min_swap_gain: float,
+    board_objective_fp_veto_risk_lambda: float,
+    board_objective_fp_veto_ml_weight: float,
 ) -> pd.DataFrame:
     if candidates.empty:
         return candidates.copy()
@@ -1706,14 +1986,28 @@ def _select_board_objective_board(
         fallback["board_objective_fp_veto_tail_slots"] = int(max(1, board_objective_fp_veto_tail_slots))
         fallback["board_objective_fp_veto_top_protected"] = int(max(0, board_objective_fp_veto_top_protected))
         fallback["board_objective_fp_veto_threshold"] = float(np.clip(board_objective_fp_veto_threshold, 0.0, 1.0))
+        fallback["board_objective_fp_veto_threshold_effective"] = float(np.clip(board_objective_fp_veto_threshold, 0.0, 1.0))
+        fallback["board_objective_fp_veto_quantile"] = float(np.clip(board_objective_fp_veto_quantile, 0.50, 0.95))
         fallback["board_objective_fp_veto_max_drops"] = int(max(0, board_objective_fp_veto_max_drops))
+        fallback["board_objective_fp_veto_max_swaps"] = int(max(0, board_objective_fp_veto_max_swaps))
+        fallback["board_objective_fp_veto_swap_candidates"] = int(max(0, board_objective_fp_veto_swap_candidates))
+        fallback["board_objective_fp_veto_min_swap_gain"] = float(max(0.0, board_objective_fp_veto_min_swap_gain))
+        fallback["board_objective_fp_veto_risk_lambda"] = float(max(0.0, board_objective_fp_veto_risk_lambda))
+        fallback["board_objective_fp_veto_ml_weight"] = float(np.clip(board_objective_fp_veto_ml_weight, 0.0, 1.0))
         fallback["board_objective_fp_veto_score"] = 0.0
+        fallback["board_objective_fp_veto_score_heuristic"] = 0.0
+        fallback["board_objective_fp_veto_score_ml"] = 0.0
         fallback["board_objective_fp_veto_eligible"] = False
         fallback["board_objective_fp_veto_flagged"] = False
         fallback["board_objective_fp_veto_applied"] = False
         fallback["board_objective_fp_veto_drop_count"] = 0
+        fallback["board_objective_fp_veto_swap_count"] = 0
+        fallback["board_objective_fp_veto_swap_selected"] = False
         fallback["board_objective_fp_veto_removed_slots_json"] = "[]"
         fallback["board_objective_fp_veto_removed_sources_json"] = "[]"
+        fallback["board_objective_fp_veto_swapped_slots_json"] = "[]"
+        fallback["board_objective_fp_veto_swapped_out_sources_json"] = "[]"
+        fallback["board_objective_fp_veto_swapped_in_sources_json"] = "[]"
         return fallback
 
     selected_board = universe.iloc[best_indices].copy()
@@ -1873,103 +2167,305 @@ def _select_board_objective_board(
     fp_veto_tail_slots = max(1, int(board_objective_fp_veto_tail_slots))
     fp_veto_top_protected = max(0, int(board_objective_fp_veto_top_protected))
     fp_veto_threshold = float(np.clip(board_objective_fp_veto_threshold, 0.0, 1.0))
+    fp_veto_threshold_effective = float(fp_veto_threshold)
+    fp_veto_quantile = float(np.clip(board_objective_fp_veto_quantile, 0.50, 0.95))
     fp_veto_max_drops = max(0, int(board_objective_fp_veto_max_drops))
+    fp_veto_max_swaps = max(0, int(board_objective_fp_veto_max_swaps))
+    fp_veto_swap_candidates = max(0, int(board_objective_fp_veto_swap_candidates))
+    fp_veto_min_swap_gain = float(max(0.0, board_objective_fp_veto_min_swap_gain))
+    fp_veto_risk_lambda = float(max(0.0, board_objective_fp_veto_risk_lambda))
+    fp_veto_ml_weight = float(np.clip(board_objective_fp_veto_ml_weight, 0.0, 1.0))
     fp_veto_applied = False
     fp_veto_drop_count = 0
+    fp_veto_swap_count = 0
     fp_veto_removed_slots: list[int] = []
     fp_veto_removed_sources: list[int] = []
+    fp_veto_swapped_slots: list[int] = []
+    fp_veto_swapped_out_sources: list[int] = []
+    fp_veto_swapped_in_sources: list[int] = []
+    fp_veto_swap_selected_sources: set[int] = set()
     fp_score_map: dict[int, float] = {}
+    fp_score_heuristic_map: dict[int, float] = {}
+    fp_score_ml_map: dict[int, float] = {}
     fp_eligible_map: dict[int, bool] = {}
     fp_flagged_map: dict[int, bool] = {}
+
     if fp_veto_enabled and not final.empty:
-        ranked_fp = final.sort_values(["board_play_win_prob", "ev_adjusted", "abs_edge"], ascending=[False, False, False]).copy()
-        ranked_fp["_source_idx_int"] = pd.to_numeric(ranked_fp.get("_source_index"), errors="coerce").fillna(-1).astype(int)
-        ranked_fp["_slot"] = np.arange(1, len(ranked_fp) + 1, dtype=int)
-        min_tail_slot = max(1, int(len(ranked_fp) - fp_veto_tail_slots + 1))
+        fp_caps = _resolve_target_caps(base, max_plays_per_target=max_plays_per_target, max_target_plays=max_target_plays)
+        fp_pool = base.copy()
+        fp_pool["_source_idx_int"] = pd.to_numeric(fp_pool.get("_source_index"), errors="coerce").fillna(-1).astype(int)
+        fp_score, fp_score_heuristic, fp_score_ml = _board_objective_fp_veto_score_components(
+            fp_pool,
+            reference=base,
+            ml_weight=float(fp_veto_ml_weight),
+        )
+        fp_pool["board_objective_fp_veto_score"] = fp_score.reindex(fp_pool.index).fillna(0.0)
+        fp_pool["board_objective_fp_veto_score_heuristic"] = fp_score_heuristic.reindex(fp_pool.index).fillna(0.0)
+        fp_pool["board_objective_fp_veto_score_ml"] = fp_score_ml.reindex(fp_pool.index).fillna(0.0)
 
-        risk_prob = 1.0 - pd.to_numeric(ranked_fp.get("board_play_win_prob"), errors="coerce").fillna(0.5).clip(lower=0.0, upper=1.0)
-        risk_unc = pd.to_numeric(ranked_fp.get("board_uncertainty_penalty"), errors="coerce").fillna(0.5).clip(lower=0.0, upper=1.0)
-        risk_dep = pd.to_numeric(ranked_fp.get("board_dependency_burden"), errors="coerce").fillna(0.0).clip(lower=0.0, upper=1.0)
-        risk_inst = pd.to_numeric(ranked_fp.get("board_instability_score"), errors="coerce").fillna(0.0).clip(lower=0.0, upper=1.0)
-        abs_edge = pd.to_numeric(ranked_fp.get("abs_edge"), errors="coerce").fillna(0.0)
-        low_edge = 1.0 - _normalize_0_1(abs_edge, constant_value=0.5)
-        fp_score = (
-            0.30 * risk_prob
-            + 0.25 * risk_unc
-            + 0.20 * risk_dep
-            + 0.15 * risk_inst
-            + 0.10 * low_edge
-        ).clip(lower=0.0, upper=1.0)
-        eligible = (ranked_fp["_slot"] > int(fp_veto_top_protected)) & (ranked_fp["_slot"] >= int(min_tail_slot))
-        flagged = eligible & (fp_score >= float(fp_veto_threshold))
-
-        ranked_fp["board_objective_fp_veto_score"] = fp_score.astype("float64")
-        ranked_fp["board_objective_fp_veto_eligible"] = eligible.astype(bool)
-        ranked_fp["board_objective_fp_veto_flagged"] = flagged.astype(bool)
-
-        for _, fp_row in ranked_fp.iterrows():
+        for _, fp_row in fp_pool.iterrows():
             source_idx = int(pd.to_numeric(pd.Series([fp_row.get("_source_idx_int", -1)]), errors="coerce").fillna(-1).iloc[0])
             if source_idx < 0:
                 continue
             fp_score_map[source_idx] = float(pd.to_numeric(pd.Series([fp_row.get("board_objective_fp_veto_score")]), errors="coerce").fillna(0.0).iloc[0])
+            fp_score_heuristic_map[source_idx] = float(pd.to_numeric(pd.Series([fp_row.get("board_objective_fp_veto_score_heuristic")]), errors="coerce").fillna(0.0).iloc[0])
+            fp_score_ml_map[source_idx] = float(pd.to_numeric(pd.Series([fp_row.get("board_objective_fp_veto_score_ml")]), errors="coerce").fillna(0.0).iloc[0])
+
+        def _rank_fp_rows(board_frame: pd.DataFrame) -> tuple[pd.DataFrame, float]:
+            ranked = board_frame.sort_values(["board_play_win_prob", "ev_adjusted", "abs_edge"], ascending=[False, False, False]).copy()
+            ranked["_source_idx_int"] = pd.to_numeric(ranked.get("_source_index"), errors="coerce").fillna(-1).astype(int)
+            ranked["_slot"] = np.arange(1, len(ranked) + 1, dtype=int)
+            min_tail_slot = max(1, int(len(ranked) - fp_veto_tail_slots + 1))
+            ranked["board_objective_fp_veto_score"] = (
+                ranked["_source_idx_int"].map(fp_score_map).fillna(0.0).astype("float64")
+            )
+            ranked["board_objective_fp_veto_score_heuristic"] = (
+                ranked["_source_idx_int"].map(fp_score_heuristic_map).fillna(0.0).astype("float64")
+            )
+            ranked["board_objective_fp_veto_score_ml"] = (
+                ranked["_source_idx_int"].map(fp_score_ml_map).fillna(0.0).astype("float64")
+            )
+            eligible_mask = (ranked["_slot"] > int(fp_veto_top_protected)) & (ranked["_slot"] >= int(min_tail_slot))
+            threshold_effective = float(fp_veto_threshold)
+            eligible_scores = ranked.loc[eligible_mask, "board_objective_fp_veto_score"]
+            if not eligible_scores.empty:
+                dynamic_threshold = float(np.nanquantile(eligible_scores.to_numpy(dtype="float64"), float(fp_veto_quantile)))
+                threshold_effective = float(np.clip(min(threshold_effective, dynamic_threshold), 0.0, 1.0))
+            flagged_mask = eligible_mask & (ranked["board_objective_fp_veto_score"] >= float(threshold_effective))
+            ranked["board_objective_fp_veto_eligible"] = eligible_mask.astype(bool)
+            ranked["board_objective_fp_veto_flagged"] = flagged_mask.astype(bool)
+            return ranked, float(threshold_effective)
+
+        ranked_fp_initial, fp_veto_threshold_effective = _rank_fp_rows(final)
+        for _, fp_row in ranked_fp_initial.iterrows():
+            source_idx = int(pd.to_numeric(pd.Series([fp_row.get("_source_idx_int", -1)]), errors="coerce").fillna(-1).iloc[0])
+            if source_idx < 0:
+                continue
             fp_eligible_map[source_idx] = bool(fp_row.get("board_objective_fp_veto_eligible", False))
             fp_flagged_map[source_idx] = bool(fp_row.get("board_objective_fp_veto_flagged", False))
 
-        if fp_veto_live and fp_veto_max_drops > 0 and bool(flagged.any()):
-            lower_bound = max(1, int(requested_min) if int(requested_min) > 0 else 1)
-            allowed_drops = max(0, int(len(ranked_fp)) - int(lower_bound))
-            drop_n = min(int(fp_veto_max_drops), int(allowed_drops), int(flagged.sum()))
-            if drop_n > 0:
-                drop_frame = ranked_fp.loc[flagged].sort_values(
+        if fp_veto_live:
+            for _ in range(int(fp_veto_max_swaps)):
+                if final.empty:
+                    break
+                ranked_fp_live, fp_veto_threshold_effective = _rank_fp_rows(final)
+                flagged_frame = ranked_fp_live.loc[ranked_fp_live["board_objective_fp_veto_flagged"]].copy()
+                if flagged_frame.empty:
+                    break
+
+                selected_sources = set(pd.to_numeric(final.get("_source_index"), errors="coerce").fillna(-1).astype(int).tolist())
+                swap_pool = fp_pool.loc[~fp_pool["_source_idx_int"].isin(selected_sources)].copy()
+                if swap_pool.empty or fp_veto_swap_candidates <= 0:
+                    break
+                swap_pool = swap_pool.sort_values(
+                    ["board_objective_fp_veto_score", "board_play_win_prob", "ev_adjusted", "abs_edge"],
+                    ascending=[True, False, False, False],
+                ).head(int(fp_veto_swap_candidates))
+                if swap_pool.empty:
+                    break
+
+                current_for_score = final.copy()
+                current_for_score["board_objective_fp_veto_score"] = (
+                    pd.to_numeric(current_for_score.get("_source_index"), errors="coerce").fillna(-1).astype(int).map(fp_score_map).fillna(0.0)
+                )
+                current_score = _score_board_with_fp_veto_penalty(
+                    current_for_score,
+                    lambda_corr=float(board_objective_lambda_corr),
+                    lambda_conc=float(board_objective_lambda_conc),
+                    lambda_unc=float(board_objective_lambda_unc),
+                    corr_same_game=float(board_objective_corr_same_game),
+                    corr_same_player=float(board_objective_corr_same_player),
+                    corr_same_target=float(board_objective_corr_same_target),
+                    corr_same_direction=float(board_objective_corr_same_direction),
+                    corr_same_script_cluster=float(board_objective_corr_same_script_cluster),
+                    fp_penalty_lambda=float(fp_veto_risk_lambda),
+                )
+
+                best_swap_gain = 0.0
+                best_swap_board: pd.DataFrame | None = None
+                best_swap_drop_source = -1
+                best_swap_drop_slot = -1
+                best_swap_add_source = -1
+
+                flagged_frame = flagged_frame.sort_values(
                     ["board_objective_fp_veto_score", "_slot"],
                     ascending=[False, False],
-                ).head(drop_n)
-                drop_sources = pd.to_numeric(drop_frame.get("_source_idx_int"), errors="coerce").fillna(-1).astype(int)
-                drop_sources = [int(v) for v in drop_sources.tolist() if int(v) >= 0]
-                if drop_sources:
-                    fp_veto_applied = True
-                    fp_veto_removed_sources = [int(v) for v in drop_sources]
-                    fp_veto_removed_slots = [int(v) for v in pd.to_numeric(drop_frame.get("_slot"), errors="coerce").fillna(0).astype(int).tolist() if int(v) > 0]
-                    fp_veto_drop_count = int(len(fp_veto_removed_sources))
-                    source_series = pd.to_numeric(final.get("_source_index"), errors="coerce").fillna(-1).astype(int)
-                    final = final.loc[~source_series.isin(set(fp_veto_removed_sources))].copy()
-                    final = final.sort_values(["board_play_win_prob", "ev_adjusted", "abs_edge"], ascending=[False, False, False]).copy()
+                )
+                for _, drop_row in flagged_frame.iterrows():
+                    drop_source = int(pd.to_numeric(pd.Series([drop_row.get("_source_idx_int", -1)]), errors="coerce").fillna(-1).iloc[0])
+                    drop_slot = int(pd.to_numeric(pd.Series([drop_row.get("_slot", 0)]), errors="coerce").fillna(0).iloc[0])
+                    if drop_source < 0:
+                        continue
+                    board_without = final.loc[
+                        pd.to_numeric(final.get("_source_index"), errors="coerce").fillna(-1).astype(int) != int(drop_source)
+                    ].copy()
+                    if board_without.empty:
+                        continue
+                    selected_rows_without = [row.to_dict() for _, row in board_without.iterrows()]
+                    player_counts, target_counts, game_counts, script_cluster_counts = _selection_counters_from_rows(selected_rows_without)
+                    drop_score = float(pd.to_numeric(pd.Series([drop_row.get("board_objective_fp_veto_score")]), errors="coerce").fillna(0.0).iloc[0])
+
+                    for _, add_row in swap_pool.iterrows():
+                        add_source = int(pd.to_numeric(pd.Series([add_row.get("_source_idx_int", -1)]), errors="coerce").fillna(-1).iloc[0])
+                        if add_source < 0 or add_source in selected_sources:
+                            continue
+                        add_score = float(pd.to_numeric(pd.Series([add_row.get("board_objective_fp_veto_score")]), errors="coerce").fillna(0.0).iloc[0])
+                        if add_score >= drop_score:
+                            continue
+                        if not _candidate_passes_caps_row(
+                            add_row,
+                            player_counts=player_counts,
+                            target_counts=target_counts,
+                            game_counts=game_counts,
+                            script_counts=script_cluster_counts,
+                            caps=fp_caps,
+                            max_plays_per_player=max_plays_per_player,
+                            max_plays_per_game=max_plays_per_game,
+                            max_plays_per_script_cluster=max_plays_per_script_cluster,
+                        ):
+                            continue
+
+                        trial = pd.concat([board_without, pd.DataFrame([add_row.to_dict()])], ignore_index=False)
+                        trial["board_objective_fp_veto_score"] = (
+                            pd.to_numeric(trial.get("_source_index"), errors="coerce").fillna(-1).astype(int).map(fp_score_map).fillna(0.0)
+                        )
+                        trial_score = _score_board_with_fp_veto_penalty(
+                            trial,
+                            lambda_corr=float(board_objective_lambda_corr),
+                            lambda_conc=float(board_objective_lambda_conc),
+                            lambda_unc=float(board_objective_lambda_unc),
+                            corr_same_game=float(board_objective_corr_same_game),
+                            corr_same_player=float(board_objective_corr_same_player),
+                            corr_same_target=float(board_objective_corr_same_target),
+                            corr_same_direction=float(board_objective_corr_same_direction),
+                            corr_same_script_cluster=float(board_objective_corr_same_script_cluster),
+                            fp_penalty_lambda=float(fp_veto_risk_lambda),
+                        )
+                        gain = float(trial_score - current_score)
+                        if gain > best_swap_gain + 1e-12:
+                            best_swap_gain = gain
+                            best_swap_board = trial.copy()
+                            best_swap_drop_source = int(drop_source)
+                            best_swap_drop_slot = int(drop_slot)
+                            best_swap_add_source = int(add_source)
+
+                if best_swap_board is None or best_swap_gain < float(fp_veto_min_swap_gain):
+                    break
+
+                fp_veto_applied = True
+                fp_veto_swap_count += 1
+                fp_veto_swapped_slots.append(int(best_swap_drop_slot))
+                fp_veto_swapped_out_sources.append(int(best_swap_drop_source))
+                fp_veto_swapped_in_sources.append(int(best_swap_add_source))
+                fp_veto_swap_selected_sources.add(int(best_swap_add_source))
+                final = best_swap_board.sort_values(["board_play_win_prob", "ev_adjusted", "abs_edge"], ascending=[False, False, False]).copy()
+
+            ranked_fp_live, fp_veto_threshold_effective = _rank_fp_rows(final)
+            flagged_live = ranked_fp_live["board_objective_fp_veto_flagged"].astype(bool)
+            if fp_veto_max_drops > 0 and bool(flagged_live.any()):
+                lower_bound = max(1, int(requested_min) if int(requested_min) > 0 else 1)
+                allowed_drops = max(0, int(len(ranked_fp_live)) - int(lower_bound))
+                drop_n = min(int(fp_veto_max_drops), int(allowed_drops), int(flagged_live.sum()))
+                if drop_n > 0:
+                    drop_frame = ranked_fp_live.loc[flagged_live].sort_values(
+                        ["board_objective_fp_veto_score", "_slot"],
+                        ascending=[False, False],
+                    ).head(drop_n)
+                    drop_sources = pd.to_numeric(drop_frame.get("_source_idx_int"), errors="coerce").fillna(-1).astype(int)
+                    drop_sources = [int(v) for v in drop_sources.tolist() if int(v) >= 0]
+                    if drop_sources:
+                        fp_veto_applied = True
+                        fp_veto_removed_sources = [int(v) for v in drop_sources]
+                        fp_veto_removed_slots = [
+                            int(v)
+                            for v in pd.to_numeric(drop_frame.get("_slot"), errors="coerce").fillna(0).astype(int).tolist()
+                            if int(v) > 0
+                        ]
+                        fp_veto_drop_count = int(len(fp_veto_removed_sources))
+                        source_series = pd.to_numeric(final.get("_source_index"), errors="coerce").fillna(-1).astype(int)
+                        final = final.loc[~source_series.isin(set(fp_veto_removed_sources))].copy()
+                        final = final.sort_values(["board_play_win_prob", "ev_adjusted", "abs_edge"], ascending=[False, False, False]).copy()
+                        target_after_veto = int(len(ranked_fp_live))
+                        if target_after_veto > 0 and len(final) < target_after_veto:
+                            selected_rows = [row.to_dict() for _, row in final.iterrows()]
+                            seen_sources = set(pd.to_numeric(final.get("_source_index"), errors="coerce").fillna(-1).astype(int).tolist())
+                            player_counts, target_counts, game_counts, script_cluster_counts = _selection_counters_from_rows(selected_rows)
+                            fill_pool = fp_pool.loc[~fp_pool["_source_idx_int"].isin(seen_sources)].copy()
+                            fill_pool = fill_pool.set_index("_source_idx_int", drop=False)
+                            fill_pool = fill_pool.sort_values(
+                                ["board_objective_fp_veto_score", "board_play_win_prob", "ev_adjusted", "abs_edge"],
+                                ascending=[True, False, False, False],
+                            )
+                            _append_rows_with_caps(
+                                fill_pool,
+                                selected_rows,
+                                seen_sources,
+                                player_counts,
+                                target_counts,
+                                game_counts,
+                                script_cluster_counts,
+                                fp_caps,
+                                max_plays_per_player=max_plays_per_player,
+                                max_plays_per_game=max_plays_per_game,
+                                max_plays_per_script_cluster=max_plays_per_script_cluster,
+                                max_total_plays=target_after_veto,
+                                max_new_rows=max(0, target_after_veto - len(selected_rows)),
+                            )
+                            final = pd.DataFrame.from_records(selected_rows) if selected_rows else final.iloc[0:0].copy()
+                            if not final.empty:
+                                final = final.sort_values(["board_play_win_prob", "ev_adjusted", "abs_edge"], ascending=[False, False, False]).copy()
+
+        ranked_fp_final, fp_veto_threshold_effective = _rank_fp_rows(final) if not final.empty else (final.copy(), float(fp_veto_threshold))
+        fp_eligible_map.clear()
+        fp_flagged_map.clear()
+        for _, fp_row in ranked_fp_final.iterrows():
+            source_idx = int(pd.to_numeric(pd.Series([fp_row.get("_source_idx_int", -1)]), errors="coerce").fillna(-1).iloc[0])
+            if source_idx < 0:
+                continue
+            fp_eligible_map[source_idx] = bool(fp_row.get("board_objective_fp_veto_eligible", False))
+            fp_flagged_map[source_idx] = bool(fp_row.get("board_objective_fp_veto_flagged", False))
 
     if not final.empty:
         source_series_final = pd.to_numeric(final.get("_source_index"), errors="coerce").fillna(-1).astype(int)
         final["board_objective_fp_veto_score"] = source_series_final.map(fp_score_map).fillna(0.0).astype("float64")
+        final["board_objective_fp_veto_score_heuristic"] = source_series_final.map(fp_score_heuristic_map).fillna(0.0).astype("float64")
+        final["board_objective_fp_veto_score_ml"] = source_series_final.map(fp_score_ml_map).fillna(0.0).astype("float64")
         final["board_objective_fp_veto_eligible"] = source_series_final.map(fp_eligible_map).fillna(False).astype(bool)
         final["board_objective_fp_veto_flagged"] = source_series_final.map(fp_flagged_map).fillna(False).astype(bool)
+        final["board_objective_fp_veto_swap_selected"] = source_series_final.isin(fp_veto_swap_selected_sources).astype(bool)
         final["board_objective_fp_veto_enabled"] = bool(fp_veto_enabled)
         final["board_objective_fp_veto_live"] = bool(fp_veto_live)
         final["board_objective_fp_veto_tail_slots"] = int(fp_veto_tail_slots)
         final["board_objective_fp_veto_top_protected"] = int(fp_veto_top_protected)
         final["board_objective_fp_veto_threshold"] = float(fp_veto_threshold)
+        final["board_objective_fp_veto_threshold_effective"] = float(fp_veto_threshold_effective)
+        final["board_objective_fp_veto_quantile"] = float(fp_veto_quantile)
         final["board_objective_fp_veto_max_drops"] = int(fp_veto_max_drops)
+        final["board_objective_fp_veto_max_swaps"] = int(fp_veto_max_swaps)
+        final["board_objective_fp_veto_swap_candidates"] = int(fp_veto_swap_candidates)
+        final["board_objective_fp_veto_min_swap_gain"] = float(fp_veto_min_swap_gain)
+        final["board_objective_fp_veto_risk_lambda"] = float(fp_veto_risk_lambda)
+        final["board_objective_fp_veto_ml_weight"] = float(fp_veto_ml_weight)
         final["board_objective_fp_veto_applied"] = bool(fp_veto_applied)
         final["board_objective_fp_veto_drop_count"] = int(fp_veto_drop_count)
+        final["board_objective_fp_veto_swap_count"] = int(fp_veto_swap_count)
         final["board_objective_fp_veto_removed_slots_json"] = json.dumps(fp_veto_removed_slots)
         final["board_objective_fp_veto_removed_sources_json"] = json.dumps(fp_veto_removed_sources)
+        final["board_objective_fp_veto_swapped_slots_json"] = json.dumps(fp_veto_swapped_slots)
+        final["board_objective_fp_veto_swapped_out_sources_json"] = json.dumps(fp_veto_swapped_out_sources)
+        final["board_objective_fp_veto_swapped_in_sources_json"] = json.dumps(fp_veto_swapped_in_sources)
 
-    final["board_objective_score"] = _score_selected_indices(
-        list(range(len(final))),
-        probs=pd.to_numeric(final["board_play_win_prob"], errors="coerce").fillna(0.5).to_numpy(dtype="float64"),
-        unc=pd.to_numeric(final["board_uncertainty_penalty"], errors="coerce").fillna(0.5).to_numpy(dtype="float64"),
-        node_penalty=pd.to_numeric(final.get("board_instability_penalty"), errors="coerce").fillna(0.0).to_numpy(dtype="float64"),
-        dep_matrix=_build_pairwise_dependency_matrix(
-            final,
-            same_game_weight=float(board_objective_corr_same_game),
-            same_player_weight=float(board_objective_corr_same_player),
-            same_target_weight=float(board_objective_corr_same_target),
-            same_direction_weight=float(board_objective_corr_same_direction),
-            same_script_cluster_weight=float(board_objective_corr_same_script_cluster),
-        ),
-        targets=_clean_key_component(final.get("target", pd.Series("", index=final.index))).to_numpy(dtype=str),
-        directions=_clean_key_component(final.get("direction", pd.Series("", index=final.index))).to_numpy(dtype=str),
-        games=_clean_key_component(final.get("game_key", pd.Series("", index=final.index))).to_numpy(dtype=str),
+    final["board_objective_score"] = _score_board_with_fp_veto_penalty(
+        final,
         lambda_corr=float(board_objective_lambda_corr),
         lambda_conc=float(board_objective_lambda_conc),
         lambda_unc=float(board_objective_lambda_unc),
+        corr_same_game=float(board_objective_corr_same_game),
+        corr_same_player=float(board_objective_corr_same_player),
+        corr_same_target=float(board_objective_corr_same_target),
+        corr_same_direction=float(board_objective_corr_same_direction),
+        corr_same_script_cluster=float(board_objective_corr_same_script_cluster),
+        fp_penalty_lambda=float(fp_veto_risk_lambda if fp_veto_enabled else 0.0),
     )
     final["board_objective_instability_enabled"] = bool(instability_active)
     final["board_objective_instability_veto_count"] = int(instability_veto_count)
@@ -2371,6 +2867,71 @@ def _apply_portfolio_caps(
     return pd.DataFrame.from_records(selected_rows)
 
 
+def _normalize_to_reference_0_1(values: pd.Series, reference: pd.Series, constant_value: float = 0.0) -> pd.Series:
+    current = pd.to_numeric(values, errors="coerce").fillna(0.0).astype("float64")
+    ref_values = pd.to_numeric(reference, errors="coerce").fillna(0.0).astype("float64")
+    if current.empty:
+        return current
+    if ref_values.empty:
+        return pd.Series(float(constant_value), index=current.index, dtype="float64")
+    lo = float(ref_values.min())
+    hi = float(ref_values.max())
+    span = hi - lo
+    if span <= 1e-9:
+        return pd.Series(float(constant_value), index=current.index, dtype="float64")
+    return ((current - lo) / span).clip(lower=0.0, upper=1.0).astype("float64")
+
+
+def _learned_gate_rescue_score_series(candidates: pd.DataFrame, reference: pd.DataFrame) -> pd.Series:
+    if candidates.empty:
+        return pd.Series(dtype="float64")
+    ref = reference if reference is not None and not reference.empty else candidates
+    ev_strength = _normalize_to_reference_0_1(
+        _numeric_series(candidates, "ev_adjusted", 0.0),
+        _numeric_series(ref, "ev_adjusted", 0.0),
+        constant_value=0.5,
+    )
+    prob_strength = _normalize_to_reference_0_1(
+        _numeric_series(candidates, "expected_win_rate", 0.5),
+        _numeric_series(ref, "expected_win_rate", 0.5),
+        constant_value=0.5,
+    )
+    confidence_strength = _normalize_to_reference_0_1(
+        _numeric_series(candidates, "final_confidence", 0.0),
+        _numeric_series(ref, "final_confidence", 0.0),
+        constant_value=0.5,
+    )
+    edge_strength = _normalize_to_reference_0_1(
+        _numeric_series(candidates, "abs_edge", 0.0),
+        _numeric_series(ref, "abs_edge", 0.0),
+        constant_value=0.5,
+    )
+    variance_penalty = _normalize_to_reference_0_1(
+        _numeric_series(candidates, "posterior_variance", 0.25).clip(lower=0.0),
+        _numeric_series(ref, "posterior_variance", 0.25).clip(lower=0.0),
+        constant_value=0.0,
+    )
+    if "belief_uncertainty_normalized" in candidates.columns or "belief_uncertainty_normalized" in ref.columns:
+        unc_candidates = _numeric_series(candidates, "belief_uncertainty_normalized", 0.5).clip(lower=0.0, upper=1.0)
+        unc_reference = _numeric_series(ref, "belief_uncertainty_normalized", 0.5).clip(lower=0.0, upper=1.0)
+    else:
+        unc_candidates = _numeric_series(candidates, "belief_uncertainty", 1.0).clip(lower=0.0)
+        unc_reference = _numeric_series(ref, "belief_uncertainty", 1.0).clip(lower=0.0)
+    uncertainty_penalty = _normalize_to_reference_0_1(
+        unc_candidates,
+        unc_reference,
+        constant_value=0.0,
+    )
+    push_penalty = _normalize_to_reference_0_1(
+        _numeric_series(candidates, "expected_push_rate", 0.0).clip(lower=0.0, upper=1.0),
+        _numeric_series(ref, "expected_push_rate", 0.0).clip(lower=0.0, upper=1.0),
+        constant_value=0.0,
+    )
+    core = 0.40 * ev_strength + 0.25 * prob_strength + 0.20 * confidence_strength + 0.15 * edge_strength
+    risk = 0.45 * variance_penalty + 0.35 * uncertainty_penalty + 0.20 * push_penalty
+    return (core - 0.22 * risk).astype("float64")
+
+
 def compute_final_board(
     plays: pd.DataFrame,
     american_odds: int = -110,
@@ -2455,6 +3016,12 @@ def compute_final_board(
     board_objective_fp_veto_top_protected: int = 6,
     board_objective_fp_veto_threshold: float = 0.80,
     board_objective_fp_veto_max_drops: int = 1,
+    board_objective_fp_veto_quantile: float = 0.70,
+    board_objective_fp_veto_max_swaps: int = 1,
+    board_objective_fp_veto_swap_candidates: int = 24,
+    board_objective_fp_veto_min_swap_gain: float = 0.0025,
+    board_objective_fp_veto_risk_lambda: float = 0.18,
+    board_objective_fp_veto_ml_weight: float = 0.45,
     max_history_staleness_days: int = 0,
     min_recency_factor: float = 0.0,
     selected_board_calibrator: dict | None = None,
@@ -2462,10 +3029,20 @@ def compute_final_board(
     learned_gate_payload: dict | None = None,
     learned_gate_month: str | None = None,
     learned_gate_min_rows: int = 0,
+    learned_gate_rescue_enabled: bool = True,
+    learned_gate_rescue_target_share: float = 0.35,
+    learned_gate_rescue_floor_quantile: float = 0.35,
+    learned_gate_rescue_max_rows: int = 0,
+    accepted_pick_gate_payload: dict | None = None,
+    accepted_pick_gate_month: str | None = None,
+    accepted_pick_gate_enabled: bool = False,
+    accepted_pick_gate_live: bool = False,
+    accepted_pick_gate_min_rows: int = 0,
 ) -> pd.DataFrame:
     out = plays.copy()
     if out.empty:
         return out
+    out["_gate_row_id"] = np.arange(len(out), dtype=int)
 
     payout = american_profit_per_unit(american_odds)
     out["expected_win_rate"] = pd.to_numeric(out["expected_win_rate"], errors="coerce").fillna(0.5)
@@ -2591,6 +3168,13 @@ def compute_final_board(
     out["ev_gate_effective_min_ev"] = float(effective_min_ev)
     out["ev_gate_relaxed"] = bool(effective_min_ev < float(min_ev))
     gate_backfill_pool = out.iloc[0:0].copy()
+    out["learned_gate_rescue_selected"] = False
+    out["learned_gate_rescue_eligible"] = False
+    out["learned_gate_rescue_score"] = np.nan
+    out["learned_gate_rescue_floor"] = np.nan
+    out["learned_gate_rescue_budget"] = 0
+    out["learned_gate_rescue_pressure"] = 0.0
+    out["learned_gate_fill_source"] = "ungated"
     if isinstance(learned_gate_payload, dict):
         gate_frame = pd.DataFrame(
             {
@@ -2616,16 +3200,80 @@ def compute_final_board(
         out["learned_gate_pass"] = gate_pass_mask
         out["learned_gate_pass_rows"] = int(gate_pass_mask.sum())
         out["learned_gate_enabled"] = bool(gate_details.get("enabled", True))
+        out["learned_gate_fill_source"] = np.where(gate_pass_mask, "pass", "gate_filtered")
         gate_required_rows = max(1, int(learned_gate_min_rows) if learned_gate_min_rows is not None else 1)
         out["learned_gate_required_rows"] = int(gate_required_rows)
         enforce_gate = bool(gate_pass_mask.sum() >= int(gate_required_rows))
         out["learned_gate_enforced"] = bool(enforce_gate)
         out["learned_gate_blocked_reason"] = "" if enforce_gate else "insufficient_pass_rows"
         if enforce_gate:
+            pre_gate_pool = out.copy()
+            pass_pool = out.loc[gate_pass_mask].copy()
             gate_backfill_pool = out.loc[~gate_pass_mask].copy()
-            out = out.loc[gate_pass_mask].copy()
+            gate_backfill_pool["learned_gate_rescue_selected"] = False
+            gate_backfill_pool["learned_gate_fill_source"] = "gate_filtered"
+
+            total_gate_rows = int(len(pre_gate_pool))
+            gate_pressure = float(len(gate_backfill_pool)) / float(max(1, total_gate_rows))
+            pass_pool["learned_gate_rescue_pressure"] = float(gate_pressure)
+            gate_backfill_pool["learned_gate_rescue_pressure"] = float(gate_pressure)
+
+            pass_scores = _learned_gate_rescue_score_series(pass_pool, pre_gate_pool)
+            gate_scores = _learned_gate_rescue_score_series(gate_backfill_pool, pre_gate_pool)
+            pass_pool["learned_gate_rescue_score"] = pass_scores.reindex(pass_pool.index).fillna(0.0)
+            gate_backfill_pool["learned_gate_rescue_score"] = gate_scores.reindex(gate_backfill_pool.index).fillna(0.0)
+
+            target_board_size = int(requested_min_board) if int(requested_min_board) > 0 else int(max_total_plays)
+            if target_board_size <= 0:
+                target_board_size = max(1, total_gate_rows)
+            rescue_share_cap = float(np.clip(learned_gate_rescue_target_share, 0.0, 1.0))
+            adaptive_share = float(np.clip(rescue_share_cap * (0.50 + 0.50 * gate_pressure), 0.0, 1.0))
+            pressure_budget = int(np.ceil(float(target_board_size) * adaptive_share))
+            rescue_budget = int(pressure_budget)
+            if int(requested_min_board) > 0:
+                shortfall = max(0, int(requested_min_board) - int(len(pass_pool)))
+                reserve_for_fill = int(np.ceil(float(shortfall) * 0.50))
+                rescue_budget = min(rescue_budget, max(0, int(len(gate_backfill_pool)) - reserve_for_fill))
+            if int(max_total_plays) > 0:
+                rescue_budget = min(rescue_budget, max(0, int(max_total_plays) - int(len(pass_pool))))
+            if int(learned_gate_rescue_max_rows) > 0:
+                rescue_budget = min(rescue_budget, int(learned_gate_rescue_max_rows))
+            rescue_budget = max(0, min(rescue_budget, int(len(gate_backfill_pool))))
+            pass_pool["learned_gate_rescue_budget"] = int(rescue_budget)
+            gate_backfill_pool["learned_gate_rescue_budget"] = int(rescue_budget)
+
+            floor_quantile = float(np.clip(learned_gate_rescue_floor_quantile, 0.05, 0.95))
+            if not pass_scores.empty:
+                rescue_floor = float(pass_scores.quantile(floor_quantile))
+            elif not gate_scores.empty:
+                rescue_floor = float(gate_scores.quantile(max(0.50, floor_quantile)))
+            else:
+                rescue_floor = float("-inf")
+            pass_pool["learned_gate_rescue_floor"] = float(rescue_floor)
+            gate_backfill_pool["learned_gate_rescue_floor"] = float(rescue_floor)
+            gate_backfill_pool["learned_gate_rescue_eligible"] = (
+                pd.to_numeric(gate_backfill_pool["learned_gate_rescue_score"], errors="coerce").fillna(-np.inf) >= float(rescue_floor)
+            )
+
+            rescue_rows = gate_backfill_pool.iloc[0:0].copy()
+            if bool(learned_gate_rescue_enabled) and rescue_budget > 0 and not gate_backfill_pool.empty:
+                rescue_pool = gate_backfill_pool.loc[gate_backfill_pool["learned_gate_rescue_eligible"]].copy()
+                if rescue_pool.empty:
+                    rescue_pool = gate_backfill_pool.copy()
+                rescue_sort_columns = ["learned_gate_rescue_score", "ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
+                rescue_pool = rescue_pool.sort_values(rescue_sort_columns, ascending=[False] * len(rescue_sort_columns))
+                rescue_rows = rescue_pool.head(int(rescue_budget)).copy()
+                if not rescue_rows.empty:
+                    rescue_rows["learned_gate_rescue_selected"] = True
+                    rescue_rows["learned_gate_fill_source"] = "rescue"
+
+            pass_pool["learned_gate_fill_source"] = "pass"
+            pass_pool["learned_gate_rescue_selected"] = False
+            out = pd.concat([pass_pool, rescue_rows], axis=0, ignore_index=False)
             if out.empty:
                 return out
+        else:
+            out["learned_gate_fill_source"] = "gate_not_enforced"
     else:
         out["learned_gate_enabled"] = False
         out["learned_gate_enforced"] = False
@@ -2633,6 +3281,7 @@ def compute_final_board(
         out["learned_gate_pass_rows"] = int(len(out))
         out["learned_gate_required_rows"] = 0
         out["learned_gate_blocked_reason"] = ""
+        out["learned_gate_fill_source"] = "ungated"
 
     effective_mode = str(selection_mode or ranking_mode)
     rank_columns = ["ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
@@ -2720,6 +3369,12 @@ def compute_final_board(
             board_objective_fp_veto_top_protected=int(board_objective_fp_veto_top_protected),
             board_objective_fp_veto_threshold=float(board_objective_fp_veto_threshold),
             board_objective_fp_veto_max_drops=int(board_objective_fp_veto_max_drops),
+            board_objective_fp_veto_quantile=float(board_objective_fp_veto_quantile),
+            board_objective_fp_veto_max_swaps=int(board_objective_fp_veto_max_swaps),
+            board_objective_fp_veto_swap_candidates=int(board_objective_fp_veto_swap_candidates),
+            board_objective_fp_veto_min_swap_gain=float(board_objective_fp_veto_min_swap_gain),
+            board_objective_fp_veto_risk_lambda=float(board_objective_fp_veto_risk_lambda),
+            board_objective_fp_veto_ml_weight=float(board_objective_fp_veto_ml_weight),
         )
         caps_already_applied = True
         rank_columns = ["board_play_win_prob", "ev_adjusted", "abs_edge", "final_confidence"]
@@ -2801,6 +3456,42 @@ def compute_final_board(
     out["expected_loss_rate"] = np.clip(1.0 - out["expected_win_rate"] - out["expected_push_rate"], 0.0, 1.0)
     out["ev"] = out["expected_win_rate"] * payout - out["expected_loss_rate"]
     out["ev_adjusted"] = out["ev"] * (1.0 + float(edge_adjust_k) * (out["edge_scale"] - 1.0))
+
+    accepted_pick_gate_details = {
+        "enabled": False,
+        "enforced": False,
+        "live": bool(accepted_pick_gate_live),
+        "reason": "disabled_flag",
+        "rows_in": int(len(out)),
+        "rows_out": int(len(out)),
+        "drop_rows": 0,
+    }
+    if bool(accepted_pick_gate_enabled) and isinstance(accepted_pick_gate_payload, dict):
+        out, accepted_pick_gate_details = apply_accepted_pick_gate_fn(
+            out,
+            accepted_pick_gate_payload,
+            run_date_hint=accepted_pick_gate_month,
+            date_col="market_date",
+            player_col="market_player_raw",
+            target_col="target",
+            direction_col="direction",
+            live=bool(accepted_pick_gate_live),
+            min_rows=int(max(0, accepted_pick_gate_min_rows)),
+        )
+        if out.empty:
+            return out
+    else:
+        out["accepted_pick_gate_keep_prob"] = np.nan
+        out["accepted_pick_gate_threshold"] = np.nan
+        out["accepted_pick_gate_veto"] = False
+        out["accepted_pick_gate_veto_reason"] = ""
+        out["accepted_pick_gate_enabled"] = bool(accepted_pick_gate_enabled)
+        out["accepted_pick_gate_enforced"] = False
+        out["accepted_pick_gate_live"] = bool(accepted_pick_gate_live and accepted_pick_gate_enabled)
+        out["accepted_pick_gate_month"] = str(accepted_pick_gate_month or "")
+        out["accepted_pick_gate_drop_applied"] = False
+        out["accepted_pick_gate_drop_count"] = 0
+        out["accepted_pick_gate_policy"] = "disabled"
 
     effective_sizing_method = str(sizing_method or "tiered_probability").strip().lower()
     if effective_sizing_method == "flat_fraction":
@@ -2896,6 +3587,12 @@ def compute_final_board(
         deficit = max(0, int(target_size) - int(len(out)))
         if deficit > 0:
             remaining = sized_out.loc[~sized_out.index.isin(out.index)].copy()
+            fill_source = remaining.get("learned_gate_fill_source", pd.Series("pass", index=remaining.index)).astype(str)
+            fill_priority = fill_source.map({"pass": 0, "ungated": 0, "gate_not_enforced": 0, "rescue": 1}).fillna(2).astype("float64")
+            remaining["learned_gate_fill_priority"] = fill_priority
+            fill_sort_columns = ["learned_gate_fill_priority"] + [column for column in rank_columns if column in remaining.columns]
+            fill_ascending = [True] + ([False] * max(0, len(fill_sort_columns) - 1))
+            remaining = remaining.sort_values(fill_sort_columns, ascending=fill_ascending)
             filler = remaining.head(deficit).copy()
             if not filler.empty:
                 fallback_fraction = float(np.clip(small_bet_fraction, 0.0, max_bet_fraction))
@@ -2908,12 +3605,33 @@ def compute_final_board(
                     filler["ev"], errors="coerce"
                 ).fillna(0.0)
                 filler["learned_gate_override_fill"] = False
+                filler = filler.drop(columns=["learned_gate_fill_priority"], errors="ignore")
                 out = pd.concat([out, filler], axis=0, ignore_index=False)
                 deficit = max(0, int(target_size) - int(len(out)))
             if deficit > 0 and not gate_backfill_pool.empty:
-                gate_remaining = gate_backfill_pool.loc[~gate_backfill_pool.index.isin(out.index)].copy()
+                gate_remaining = gate_backfill_pool.copy()
+                if "_gate_row_id" in gate_remaining.columns and "_gate_row_id" in out.columns:
+                    selected_gate_ids = set(pd.to_numeric(out["_gate_row_id"], errors="coerce").fillna(-1).astype(int).tolist())
+                    candidate_gate_ids = pd.to_numeric(gate_remaining["_gate_row_id"], errors="coerce").fillna(-1).astype(int)
+                    gate_remaining = gate_remaining.loc[~candidate_gate_ids.isin(selected_gate_ids)].copy()
+                else:
+                    gate_remaining = gate_remaining.loc[~gate_remaining.index.isin(out.index)].copy()
                 if not gate_remaining.empty:
-                    gate_remaining = gate_remaining.sort_values(rank_columns, ascending=[False] * len(rank_columns)).head(deficit).copy()
+                    gate_sort_columns: list[str] = []
+                    gate_ascending: list[bool] = []
+                    if "learned_gate_rescue_eligible" in gate_remaining.columns:
+                        gate_sort_columns.append("learned_gate_rescue_eligible")
+                        gate_ascending.append(False)
+                    if "learned_gate_rescue_score" in gate_remaining.columns:
+                        gate_sort_columns.append("learned_gate_rescue_score")
+                        gate_ascending.append(False)
+                    for column in rank_columns:
+                        if column in gate_remaining.columns:
+                            gate_sort_columns.append(column)
+                            gate_ascending.append(False)
+                    if gate_sort_columns:
+                        gate_remaining = gate_remaining.sort_values(gate_sort_columns, ascending=gate_ascending)
+                    gate_remaining = gate_remaining.head(deficit).copy()
                     fallback_fraction = float(np.clip(small_bet_fraction, 0.0, max_bet_fraction))
                     gate_remaining["allocation_tier"] = "fallback_small"
                     gate_remaining["allocation_action"] = "fallback_small"
@@ -2924,6 +3642,7 @@ def compute_final_board(
                         gate_remaining["ev"], errors="coerce"
                     ).fillna(0.0)
                     gate_remaining["learned_gate_override_fill"] = True
+                    gate_remaining["learned_gate_fill_source"] = "override"
                     out = pd.concat([out, gate_remaining], axis=0, ignore_index=False)
 
     if max_total_bet_fraction > 0 and float(pd.to_numeric(out.get("bet_fraction"), errors="coerce").fillna(0.0).sum()) > float(max_total_bet_fraction):
@@ -2936,10 +3655,84 @@ def compute_final_board(
         out["learned_gate_override_fill"] = False
     else:
         out["learned_gate_override_fill"] = pd.to_numeric(out["learned_gate_override_fill"], errors="coerce").fillna(0).astype(bool)
+    if "learned_gate_rescue_selected" not in out.columns:
+        out["learned_gate_rescue_selected"] = False
+    else:
+        out["learned_gate_rescue_selected"] = pd.to_numeric(out["learned_gate_rescue_selected"], errors="coerce").fillna(0).astype(bool)
+    if "learned_gate_rescue_eligible" not in out.columns:
+        out["learned_gate_rescue_eligible"] = False
+    else:
+        out["learned_gate_rescue_eligible"] = pd.to_numeric(out["learned_gate_rescue_eligible"], errors="coerce").fillna(0).astype(bool)
+    if "learned_gate_fill_source" not in out.columns:
+        out["learned_gate_fill_source"] = "ungated"
+    else:
+        out["learned_gate_fill_source"] = out["learned_gate_fill_source"].fillna("ungated").astype(str)
+    if "learned_gate_rescue_score" not in out.columns:
+        out["learned_gate_rescue_score"] = np.nan
+    else:
+        out["learned_gate_rescue_score"] = pd.to_numeric(out["learned_gate_rescue_score"], errors="coerce")
+    if "learned_gate_rescue_floor" not in out.columns:
+        out["learned_gate_rescue_floor"] = np.nan
+    else:
+        out["learned_gate_rescue_floor"] = pd.to_numeric(out["learned_gate_rescue_floor"], errors="coerce")
+    if "learned_gate_rescue_budget" not in out.columns:
+        out["learned_gate_rescue_budget"] = 0
+    else:
+        out["learned_gate_rescue_budget"] = pd.to_numeric(out["learned_gate_rescue_budget"], errors="coerce").fillna(0).astype(int)
+    if "learned_gate_rescue_pressure" not in out.columns:
+        out["learned_gate_rescue_pressure"] = 0.0
+    else:
+        out["learned_gate_rescue_pressure"] = pd.to_numeric(out["learned_gate_rescue_pressure"], errors="coerce").fillna(0.0)
+    if "accepted_pick_gate_keep_prob" not in out.columns:
+        out["accepted_pick_gate_keep_prob"] = np.nan
+    else:
+        out["accepted_pick_gate_keep_prob"] = pd.to_numeric(out["accepted_pick_gate_keep_prob"], errors="coerce")
+    if "accepted_pick_gate_threshold" not in out.columns:
+        out["accepted_pick_gate_threshold"] = np.nan
+    else:
+        out["accepted_pick_gate_threshold"] = pd.to_numeric(out["accepted_pick_gate_threshold"], errors="coerce")
+    if "accepted_pick_gate_veto" not in out.columns:
+        out["accepted_pick_gate_veto"] = False
+    else:
+        out["accepted_pick_gate_veto"] = pd.to_numeric(out["accepted_pick_gate_veto"], errors="coerce").fillna(0).astype(bool)
+    if "accepted_pick_gate_veto_reason" not in out.columns:
+        out["accepted_pick_gate_veto_reason"] = ""
+    else:
+        out["accepted_pick_gate_veto_reason"] = out["accepted_pick_gate_veto_reason"].fillna("").astype(str)
+    if "accepted_pick_gate_enabled" not in out.columns:
+        out["accepted_pick_gate_enabled"] = False
+    else:
+        out["accepted_pick_gate_enabled"] = pd.to_numeric(out["accepted_pick_gate_enabled"], errors="coerce").fillna(0).astype(bool)
+    if "accepted_pick_gate_enforced" not in out.columns:
+        out["accepted_pick_gate_enforced"] = False
+    else:
+        out["accepted_pick_gate_enforced"] = pd.to_numeric(out["accepted_pick_gate_enforced"], errors="coerce").fillna(0).astype(bool)
+    if "accepted_pick_gate_live" not in out.columns:
+        out["accepted_pick_gate_live"] = False
+    else:
+        out["accepted_pick_gate_live"] = pd.to_numeric(out["accepted_pick_gate_live"], errors="coerce").fillna(0).astype(bool)
+    if "accepted_pick_gate_month" not in out.columns:
+        out["accepted_pick_gate_month"] = ""
+    else:
+        out["accepted_pick_gate_month"] = out["accepted_pick_gate_month"].fillna("").astype(str)
+    if "accepted_pick_gate_drop_applied" not in out.columns:
+        out["accepted_pick_gate_drop_applied"] = False
+    else:
+        out["accepted_pick_gate_drop_applied"] = pd.to_numeric(out["accepted_pick_gate_drop_applied"], errors="coerce").fillna(0).astype(bool)
+    if "accepted_pick_gate_drop_count" not in out.columns:
+        out["accepted_pick_gate_drop_count"] = 0
+    else:
+        out["accepted_pick_gate_drop_count"] = pd.to_numeric(out["accepted_pick_gate_drop_count"], errors="coerce").fillna(0).astype(int)
+    if "accepted_pick_gate_policy" not in out.columns:
+        out["accepted_pick_gate_policy"] = ""
+    else:
+        out["accepted_pick_gate_policy"] = out["accepted_pick_gate_policy"].fillna("").astype(str)
     out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).copy()
     out["selected_rank"] = np.arange(1, len(out) + 1)
     if "_source_index" in out.columns:
         out = out.drop(columns=["_source_index"])
+    if "_gate_row_id" in out.columns:
+        out = out.drop(columns=["_gate_row_id"])
     out = out.drop(columns=["recommendation_rank"])
     out = out.reset_index(drop=True)
     return out
@@ -2983,6 +3776,41 @@ def main() -> None:
                 "enabled": False,
                 "reason": "missing_file",
                 "path": str(learned_gate_path),
+            }
+    accepted_pick_gate_payload = None
+    accepted_pick_gate_summary: dict[str, object] = {"enabled": False, "reason": "disabled_flag"}
+    if args.enable_accepted_pick_gate:
+        accepted_pick_gate_path = args.accepted_pick_gate_json.resolve()
+        if accepted_pick_gate_path.exists():
+            try:
+                accepted_pick_gate_payload = json.loads(accepted_pick_gate_path.read_text(encoding="utf-8"))
+                month_count = 0
+                if isinstance(accepted_pick_gate_payload, dict):
+                    months = accepted_pick_gate_payload.get("months", {})
+                    if isinstance(months, dict):
+                        month_count = int(len(months))
+                accepted_pick_gate_summary = {
+                    "enabled": True,
+                    "path": str(accepted_pick_gate_path),
+                    "months": month_count,
+                    "version": int(accepted_pick_gate_payload.get("version", 0))
+                    if isinstance(accepted_pick_gate_payload, dict)
+                    else 0,
+                    "live": bool(args.accepted_pick_gate_live),
+                }
+            except Exception as exc:
+                accepted_pick_gate_payload = None
+                accepted_pick_gate_summary = {
+                    "enabled": False,
+                    "reason": "load_error",
+                    "path": str(accepted_pick_gate_path),
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+        else:
+            accepted_pick_gate_summary = {
+                "enabled": False,
+                "reason": "missing_file",
+                "path": str(accepted_pick_gate_path),
             }
     staking_bucket_model_payload = None
     staking_bucket_model_summary: dict[str, object] = {"enabled": False, "reason": "disabled_flag"}
@@ -3101,11 +3929,26 @@ def main() -> None:
         board_objective_fp_veto_top_protected=args.board_objective_fp_veto_top_protected,
         board_objective_fp_veto_threshold=args.board_objective_fp_veto_threshold,
         board_objective_fp_veto_max_drops=args.board_objective_fp_veto_max_drops,
+        board_objective_fp_veto_quantile=args.board_objective_fp_veto_quantile,
+        board_objective_fp_veto_max_swaps=args.board_objective_fp_veto_max_swaps,
+        board_objective_fp_veto_swap_candidates=args.board_objective_fp_veto_swap_candidates,
+        board_objective_fp_veto_min_swap_gain=args.board_objective_fp_veto_min_swap_gain,
+        board_objective_fp_veto_risk_lambda=args.board_objective_fp_veto_risk_lambda,
+        board_objective_fp_veto_ml_weight=args.board_objective_fp_veto_ml_weight,
         max_history_staleness_days=args.max_history_staleness_days,
         min_recency_factor=args.min_recency_factor,
         learned_gate_payload=learned_gate_payload,
         learned_gate_month=args.learned_gate_month,
         learned_gate_min_rows=args.learned_gate_min_rows,
+        learned_gate_rescue_enabled=not args.disable_learned_gate_rescue,
+        learned_gate_rescue_target_share=args.learned_gate_rescue_target_share,
+        learned_gate_rescue_floor_quantile=args.learned_gate_rescue_floor_quantile,
+        learned_gate_rescue_max_rows=args.learned_gate_rescue_max_rows,
+        accepted_pick_gate_payload=accepted_pick_gate_payload,
+        accepted_pick_gate_month=args.accepted_pick_gate_month,
+        accepted_pick_gate_enabled=args.enable_accepted_pick_gate,
+        accepted_pick_gate_live=args.accepted_pick_gate_live,
+        accepted_pick_gate_min_rows=args.accepted_pick_gate_min_rows,
     )
 
     args.csv_out.parent.mkdir(parents=True, exist_ok=True)
@@ -3199,11 +4042,25 @@ def main() -> None:
         "board_objective_fp_veto_top_protected": int(args.board_objective_fp_veto_top_protected),
         "board_objective_fp_veto_threshold": float(args.board_objective_fp_veto_threshold),
         "board_objective_fp_veto_max_drops": int(args.board_objective_fp_veto_max_drops),
+        "board_objective_fp_veto_quantile": float(args.board_objective_fp_veto_quantile),
+        "board_objective_fp_veto_max_swaps": int(args.board_objective_fp_veto_max_swaps),
+        "board_objective_fp_veto_swap_candidates": int(args.board_objective_fp_veto_swap_candidates),
+        "board_objective_fp_veto_min_swap_gain": float(args.board_objective_fp_veto_min_swap_gain),
+        "board_objective_fp_veto_risk_lambda": float(args.board_objective_fp_veto_risk_lambda),
+        "board_objective_fp_veto_ml_weight": float(args.board_objective_fp_veto_ml_weight),
         "max_history_staleness_days": int(args.max_history_staleness_days),
         "min_recency_factor": float(args.min_recency_factor),
         "learned_gate": learned_gate_summary,
         "learned_gate_min_rows": int(args.learned_gate_min_rows),
         "learned_gate_month": str(args.learned_gate_month or ""),
+        "learned_gate_rescue_enabled": bool(not args.disable_learned_gate_rescue),
+        "learned_gate_rescue_target_share": float(args.learned_gate_rescue_target_share),
+        "learned_gate_rescue_floor_quantile": float(args.learned_gate_rescue_floor_quantile),
+        "learned_gate_rescue_max_rows": int(args.learned_gate_rescue_max_rows),
+        "accepted_pick_gate": accepted_pick_gate_summary,
+        "accepted_pick_gate_month": str(args.accepted_pick_gate_month or ""),
+        "accepted_pick_gate_min_rows": int(args.accepted_pick_gate_min_rows),
+        "accepted_pick_gate_live": bool(args.accepted_pick_gate_live and args.enable_accepted_pick_gate),
         "top_plays": final_board.head(20).to_dict(orient="records"),
     }
     args.json_out.write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -3217,6 +4074,8 @@ def main() -> None:
     print(f"JSON:         {args.json_out}")
     if args.enable_learned_gate:
         print(f"Learned gate: {learned_gate_summary}")
+    if args.enable_accepted_pick_gate:
+        print(f"Accepted pick gate: {accepted_pick_gate_summary}")
     if not args.disable_staking_bucket_model:
         print(f"Staking bucket model: {staking_bucket_model_summary}")
     if not final_board.empty:

@@ -110,6 +110,44 @@ def parse_args() -> argparse.Namespace:
         help="Minimum rows that must pass learned gate before enforcement (0 uses payload/default policy).",
     )
     parser.add_argument(
+        "--accepted-pick-gate-json",
+        type=Path,
+        default=REPO_ROOT / "model" / "analysis" / "accepted_pick_gate" / "candidates" / "accepted_pick_gate_candidate.json",
+        help="Optional accepted-pick keep/drop gate payload JSON.",
+    )
+    parser.add_argument(
+        "--enable-accepted-pick-gate",
+        action="store_true",
+        help="Enable accepted-pick gate in replay.",
+    )
+    parser.add_argument(
+        "--disable-accepted-pick-gate",
+        action="store_true",
+        help="Disable accepted-pick gate in replay.",
+    )
+    parser.add_argument(
+        "--accepted-pick-gate-live",
+        action="store_true",
+        help="Apply accepted-pick gate vetoes live (drop rows).",
+    )
+    parser.add_argument(
+        "--accepted-pick-gate-shadow",
+        action="store_true",
+        help="Force accepted-pick gate to shadow-only tagging in replay.",
+    )
+    parser.add_argument(
+        "--accepted-pick-gate-min-rows",
+        type=int,
+        default=None,
+        help="Minimum rows required before enforcing accepted-pick gate (0 disables this guard).",
+    )
+    parser.add_argument(
+        "--accepted-pick-gate-month",
+        type=str,
+        default=None,
+        help="Optional YYYY-MM month hint for accepted-pick gate payload lookup.",
+    )
+    parser.add_argument(
         "--staking-bucket-model-json",
         type=Path,
         default=REPO_ROOT / "model" / "analysis" / "calibration" / "staking_bucket_model_v2.json",
@@ -246,6 +284,42 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=None,
         help="Maximum number of selected rows that live false-positive veto can drop.",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-quantile",
+        type=float,
+        default=None,
+        help="Adaptive quantile cutoff used to relax false-positive veto threshold on compressed slates.",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-max-swaps",
+        type=int,
+        default=None,
+        help="Maximum number of risk-reducing swaps attempted before any live veto drops.",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-swap-candidates",
+        type=int,
+        default=None,
+        help="Maximum off-board rows scanned as swap replacements in live false-positive veto mode.",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-min-swap-gain",
+        type=float,
+        default=None,
+        help="Minimum objective gain required before applying a live false-positive veto swap.",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-risk-lambda",
+        type=float,
+        default=None,
+        help="Risk-penalty weight used when scoring veto swaps/drops for board-objective mode.",
+    )
+    parser.add_argument(
+        "--board-objective-fp-veto-ml-weight",
+        type=float,
+        default=None,
+        help="Blend weight on shadow-model ensemble risk in false-positive veto scoring.",
     )
     return parser.parse_args()
 
@@ -557,9 +631,18 @@ def _policy_kwargs(payload: dict, mode: str) -> dict:
         "board_objective_fp_veto_top_protected": payload.get("board_objective_fp_veto_top_protected", 6),
         "board_objective_fp_veto_threshold": payload.get("board_objective_fp_veto_threshold", 0.80),
         "board_objective_fp_veto_max_drops": payload.get("board_objective_fp_veto_max_drops", 1),
+        "board_objective_fp_veto_quantile": payload.get("board_objective_fp_veto_quantile", 0.70),
+        "board_objective_fp_veto_max_swaps": payload.get("board_objective_fp_veto_max_swaps", 1),
+        "board_objective_fp_veto_swap_candidates": payload.get("board_objective_fp_veto_swap_candidates", 24),
+        "board_objective_fp_veto_min_swap_gain": payload.get("board_objective_fp_veto_min_swap_gain", 0.0025),
+        "board_objective_fp_veto_risk_lambda": payload.get("board_objective_fp_veto_risk_lambda", 0.18),
+        "board_objective_fp_veto_ml_weight": payload.get("board_objective_fp_veto_ml_weight", 0.45),
         "max_history_staleness_days": payload.get("max_history_staleness_days", 0),
         "min_recency_factor": payload.get("min_recency_factor", 0.0),
         "learned_gate_min_rows": payload.get("learned_gate_min_rows", 0),
+        "accepted_pick_gate_enabled": payload.get("accepted_pick_gate_enabled", False),
+        "accepted_pick_gate_live": payload.get("accepted_pick_gate_live", False),
+        "accepted_pick_gate_min_rows": payload.get("accepted_pick_gate_min_rows", 0),
     }
 
 
@@ -576,6 +659,18 @@ def _load_selected_board_calibrator(path: Path, disabled: bool) -> dict | None:
 
 
 def _load_learned_pool_gate(path: Path, enabled: bool) -> dict | None:
+    if not enabled:
+        return None
+    resolved = path.resolve()
+    if not resolved.exists():
+        return None
+    try:
+        return json.loads(resolved.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def _load_accepted_pick_gate(path: Path, enabled: bool) -> dict | None:
     if not enabled:
         return None
     resolved = path.resolve()
@@ -613,6 +708,10 @@ def main() -> None:
         raise ValueError("Cannot pass both --board-objective-fp-veto-enabled and --board-objective-fp-veto-disabled.")
     if args.board_objective_fp_veto_live and args.board_objective_fp_veto_shadow:
         raise ValueError("Cannot pass both --board-objective-fp-veto-live and --board-objective-fp-veto-shadow.")
+    if args.enable_accepted_pick_gate and args.disable_accepted_pick_gate:
+        raise ValueError("Cannot pass both --enable-accepted-pick-gate and --disable-accepted-pick-gate.")
+    if args.accepted_pick_gate_live and args.accepted_pick_gate_shadow:
+        raise ValueError("Cannot pass both --accepted-pick-gate-live and --accepted-pick-gate-shadow.")
     base_profile = POLICY_PROFILES[args.policy_profile].to_dict()
     if args.board_objective_instability_enabled:
         base_profile["board_objective_instability_enabled"] = True
@@ -656,6 +755,28 @@ def main() -> None:
         base_profile["board_objective_fp_veto_threshold"] = float(args.board_objective_fp_veto_threshold)
     if args.board_objective_fp_veto_max_drops is not None:
         base_profile["board_objective_fp_veto_max_drops"] = int(args.board_objective_fp_veto_max_drops)
+    if args.board_objective_fp_veto_quantile is not None:
+        base_profile["board_objective_fp_veto_quantile"] = float(args.board_objective_fp_veto_quantile)
+    if args.board_objective_fp_veto_max_swaps is not None:
+        base_profile["board_objective_fp_veto_max_swaps"] = int(args.board_objective_fp_veto_max_swaps)
+    if args.board_objective_fp_veto_swap_candidates is not None:
+        base_profile["board_objective_fp_veto_swap_candidates"] = int(args.board_objective_fp_veto_swap_candidates)
+    if args.board_objective_fp_veto_min_swap_gain is not None:
+        base_profile["board_objective_fp_veto_min_swap_gain"] = float(args.board_objective_fp_veto_min_swap_gain)
+    if args.board_objective_fp_veto_risk_lambda is not None:
+        base_profile["board_objective_fp_veto_risk_lambda"] = float(args.board_objective_fp_veto_risk_lambda)
+    if args.board_objective_fp_veto_ml_weight is not None:
+        base_profile["board_objective_fp_veto_ml_weight"] = float(args.board_objective_fp_veto_ml_weight)
+    if args.enable_accepted_pick_gate:
+        base_profile["accepted_pick_gate_enabled"] = True
+    if args.disable_accepted_pick_gate:
+        base_profile["accepted_pick_gate_enabled"] = False
+    if args.accepted_pick_gate_live:
+        base_profile["accepted_pick_gate_live"] = True
+    if args.accepted_pick_gate_shadow:
+        base_profile["accepted_pick_gate_live"] = False
+    if args.accepted_pick_gate_min_rows is not None:
+        base_profile["accepted_pick_gate_min_rows"] = int(args.accepted_pick_gate_min_rows)
     selected_board_calibrator = _load_selected_board_calibrator(
         args.selected_board_calibrator_json,
         disabled=bool(args.disable_selected_board_calibration),
@@ -663,6 +784,10 @@ def main() -> None:
     learned_pool_gate = _load_learned_pool_gate(
         args.learned_gate_json,
         enabled=bool(args.enable_learned_gate),
+    )
+    accepted_pick_gate = _load_accepted_pick_gate(
+        args.accepted_pick_gate_json,
+        enabled=bool(base_profile.get("accepted_pick_gate_enabled", False)),
     )
     model_enabled_default = bool(base_profile.get("staking_bucket_model_enabled", False))
     if args.enable_staking_bucket_model:
@@ -705,6 +830,15 @@ def main() -> None:
             kwargs["learned_gate_payload"] = learned_pool_gate
             kwargs["learned_gate_month"] = run_month.strftime("%Y-%m") if pd.notna(run_month) else None
             kwargs["learned_gate_min_rows"] = int(args.learned_gate_min_rows)
+            kwargs["accepted_pick_gate_payload"] = accepted_pick_gate
+            kwargs["accepted_pick_gate_month"] = (
+                str(args.accepted_pick_gate_month)
+                if args.accepted_pick_gate_month
+                else (run_month.strftime("%Y-%m") if pd.notna(run_month) else None)
+            )
+            kwargs["accepted_pick_gate_enabled"] = bool(base_profile.get("accepted_pick_gate_enabled", False))
+            kwargs["accepted_pick_gate_live"] = bool(base_profile.get("accepted_pick_gate_live", False))
+            kwargs["accepted_pick_gate_min_rows"] = int(base_profile.get("accepted_pick_gate_min_rows", 0))
             model_enabled = bool(base_profile.get("staking_bucket_model_enabled", False))
             if args.enable_staking_bucket_model:
                 model_enabled = True
@@ -762,6 +896,13 @@ def main() -> None:
                         "learned_gate_enforced": bool(pd.to_numeric(pd.Series([row.get("learned_gate_enforced")]), errors="coerce").fillna(0).iloc[0]),
                         "learned_gate_pass": bool(pd.to_numeric(pd.Series([row.get("learned_gate_pass")]), errors="coerce").fillna(1).iloc[0]),
                         "learned_gate_threshold": float(pd.to_numeric(pd.Series([row.get("learned_gate_threshold")]), errors="coerce").fillna(np.nan).iloc[0]),
+                        "accepted_pick_gate_enabled": bool(pd.to_numeric(pd.Series([row.get("accepted_pick_gate_enabled")]), errors="coerce").fillna(0).iloc[0]),
+                        "accepted_pick_gate_enforced": bool(pd.to_numeric(pd.Series([row.get("accepted_pick_gate_enforced")]), errors="coerce").fillna(0).iloc[0]),
+                        "accepted_pick_gate_live": bool(pd.to_numeric(pd.Series([row.get("accepted_pick_gate_live")]), errors="coerce").fillna(0).iloc[0]),
+                        "accepted_pick_gate_veto": bool(pd.to_numeric(pd.Series([row.get("accepted_pick_gate_veto")]), errors="coerce").fillna(0).iloc[0]),
+                        "accepted_pick_gate_keep_prob": float(pd.to_numeric(pd.Series([row.get("accepted_pick_gate_keep_prob")]), errors="coerce").fillna(np.nan).iloc[0]),
+                        "accepted_pick_gate_threshold": float(pd.to_numeric(pd.Series([row.get("accepted_pick_gate_threshold")]), errors="coerce").fillna(np.nan).iloc[0]),
+                        "accepted_pick_gate_drop_count": float(pd.to_numeric(pd.Series([row.get("accepted_pick_gate_drop_count")]), errors="coerce").fillna(0).iloc[0]),
                         "board_instability_score": float(pd.to_numeric(pd.Series([row.get("board_instability_score")]), errors="coerce").fillna(np.nan).iloc[0]),
                         "board_shadow_disagreement": float(pd.to_numeric(pd.Series([row.get("board_shadow_disagreement")]), errors="coerce").fillna(np.nan).iloc[0]),
                         "board_segment_recent_weakness": float(pd.to_numeric(pd.Series([row.get("board_segment_recent_weakness")]), errors="coerce").fillna(np.nan).iloc[0]),
@@ -770,12 +911,20 @@ def main() -> None:
                         "board_objective_fp_veto_enabled": bool(pd.to_numeric(pd.Series([row.get("board_objective_fp_veto_enabled")]), errors="coerce").fillna(0).iloc[0]),
                         "board_objective_fp_veto_live": bool(pd.to_numeric(pd.Series([row.get("board_objective_fp_veto_live")]), errors="coerce").fillna(0).iloc[0]),
                         "board_objective_fp_veto_score": float(pd.to_numeric(pd.Series([row.get("board_objective_fp_veto_score")]), errors="coerce").fillna(0.0).iloc[0]),
+                        "board_objective_fp_veto_score_heuristic": float(pd.to_numeric(pd.Series([row.get("board_objective_fp_veto_score_heuristic")]), errors="coerce").fillna(0.0).iloc[0]),
+                        "board_objective_fp_veto_score_ml": float(pd.to_numeric(pd.Series([row.get("board_objective_fp_veto_score_ml")]), errors="coerce").fillna(0.0).iloc[0]),
                         "board_objective_fp_veto_eligible": bool(pd.to_numeric(pd.Series([row.get("board_objective_fp_veto_eligible")]), errors="coerce").fillna(0).iloc[0]),
                         "board_objective_fp_veto_flagged": bool(pd.to_numeric(pd.Series([row.get("board_objective_fp_veto_flagged")]), errors="coerce").fillna(0).iloc[0]),
                         "board_objective_fp_veto_applied": bool(pd.to_numeric(pd.Series([row.get("board_objective_fp_veto_applied")]), errors="coerce").fillna(0).iloc[0]),
+                        "board_objective_fp_veto_swap_selected": bool(pd.to_numeric(pd.Series([row.get("board_objective_fp_veto_swap_selected")]), errors="coerce").fillna(0).iloc[0]),
                         "board_objective_fp_veto_drop_count": float(pd.to_numeric(pd.Series([row.get("board_objective_fp_veto_drop_count")]), errors="coerce").fillna(0).iloc[0]),
+                        "board_objective_fp_veto_swap_count": float(pd.to_numeric(pd.Series([row.get("board_objective_fp_veto_swap_count")]), errors="coerce").fillna(0).iloc[0]),
+                        "board_objective_fp_veto_threshold_effective": float(pd.to_numeric(pd.Series([row.get("board_objective_fp_veto_threshold_effective")]), errors="coerce").fillna(np.nan).iloc[0]),
                         "board_objective_fp_veto_removed_slots_json": str(row.get("board_objective_fp_veto_removed_slots_json", "[]")),
                         "board_objective_fp_veto_removed_sources_json": str(row.get("board_objective_fp_veto_removed_sources_json", "[]")),
+                        "board_objective_fp_veto_swapped_slots_json": str(row.get("board_objective_fp_veto_swapped_slots_json", "[]")),
+                        "board_objective_fp_veto_swapped_out_sources_json": str(row.get("board_objective_fp_veto_swapped_out_sources_json", "[]")),
+                        "board_objective_fp_veto_swapped_in_sources_json": str(row.get("board_objective_fp_veto_swapped_in_sources_json", "[]")),
                         "actual": float(actual) if pd.notna(actual) else np.nan,
                         "actual_source": str(actual_source),
                         "actual_match_date": str(actual_match_date),
@@ -841,9 +990,21 @@ def main() -> None:
                 "fp_veto_flagged_share": float(pd.to_numeric(part.get("board_objective_fp_veto_flagged"), errors="coerce").fillna(0).mean()) if "board_objective_fp_veto_flagged" in part.columns else 0.0,
                 "fp_veto_applied_rate": float(pd.to_numeric(part.get("board_objective_fp_veto_applied"), errors="coerce").fillna(0).mean()) if "board_objective_fp_veto_applied" in part.columns else 0.0,
                 "avg_fp_veto_drop_count": float(pd.to_numeric(part.get("board_objective_fp_veto_drop_count"), errors="coerce").mean()) if "board_objective_fp_veto_drop_count" in part.columns else 0.0,
+                "avg_fp_veto_swap_count": float(pd.to_numeric(part.get("board_objective_fp_veto_swap_count"), errors="coerce").mean()) if "board_objective_fp_veto_swap_count" in part.columns else 0.0,
                 "avg_fp_veto_score": float(pd.to_numeric(part.get("board_objective_fp_veto_score"), errors="coerce").mean()) if "board_objective_fp_veto_score" in part.columns else 0.0,
+                "avg_fp_veto_score_heuristic": float(pd.to_numeric(part.get("board_objective_fp_veto_score_heuristic"), errors="coerce").mean()) if "board_objective_fp_veto_score_heuristic" in part.columns else 0.0,
+                "avg_fp_veto_score_ml": float(pd.to_numeric(part.get("board_objective_fp_veto_score_ml"), errors="coerce").mean()) if "board_objective_fp_veto_score_ml" in part.columns else 0.0,
+                "fp_veto_swap_selected_share": float(pd.to_numeric(part.get("board_objective_fp_veto_swap_selected"), errors="coerce").fillna(0).mean()) if "board_objective_fp_veto_swap_selected" in part.columns else 0.0,
+                "avg_fp_veto_threshold_effective": float(pd.to_numeric(part.get("board_objective_fp_veto_threshold_effective"), errors="coerce").mean()) if "board_objective_fp_veto_threshold_effective" in part.columns else np.nan,
                 "learned_gate_enforced_rate": float(pd.to_numeric(part.get("learned_gate_enforced"), errors="coerce").fillna(0).mean()) if "learned_gate_enforced" in part.columns else np.nan,
                 "learned_gate_pass_rate": float(pd.to_numeric(part.get("learned_gate_pass"), errors="coerce").fillna(1).mean()) if "learned_gate_pass" in part.columns else np.nan,
+                "accepted_pick_gate_enabled_rate": float(pd.to_numeric(part.get("accepted_pick_gate_enabled"), errors="coerce").fillna(0).mean()) if "accepted_pick_gate_enabled" in part.columns else np.nan,
+                "accepted_pick_gate_enforced_rate": float(pd.to_numeric(part.get("accepted_pick_gate_enforced"), errors="coerce").fillna(0).mean()) if "accepted_pick_gate_enforced" in part.columns else np.nan,
+                "accepted_pick_gate_live_rate": float(pd.to_numeric(part.get("accepted_pick_gate_live"), errors="coerce").fillna(0).mean()) if "accepted_pick_gate_live" in part.columns else np.nan,
+                "accepted_pick_gate_veto_share": float(pd.to_numeric(part.get("accepted_pick_gate_veto"), errors="coerce").fillna(0).mean()) if "accepted_pick_gate_veto" in part.columns else np.nan,
+                "avg_accepted_pick_gate_keep_prob": float(pd.to_numeric(part.get("accepted_pick_gate_keep_prob"), errors="coerce").mean()) if "accepted_pick_gate_keep_prob" in part.columns else np.nan,
+                "avg_accepted_pick_gate_threshold": float(pd.to_numeric(part.get("accepted_pick_gate_threshold"), errors="coerce").mean()) if "accepted_pick_gate_threshold" in part.columns else np.nan,
+                "avg_accepted_pick_gate_drop_count": float(pd.to_numeric(part.get("accepted_pick_gate_drop_count"), errors="coerce").mean()) if "accepted_pick_gate_drop_count" in part.columns else np.nan,
             }
         )
 
@@ -861,6 +1022,14 @@ def main() -> None:
         "policy_profile": args.policy_profile,
         "modes": args.modes,
         "days_replayed": int(len(run_dates)),
+        "accepted_pick_gate": {
+            "enabled": bool(base_profile.get("accepted_pick_gate_enabled", False)),
+            "live": bool(base_profile.get("accepted_pick_gate_live", False)),
+            "min_rows": int(base_profile.get("accepted_pick_gate_min_rows", 0)),
+            "month_hint": str(args.accepted_pick_gate_month or ""),
+            "payload_path": str(args.accepted_pick_gate_json.resolve()),
+            "payload_loaded": bool(accepted_pick_gate is not None),
+        },
         "summary": summary_rows,
         "rows_csv": str(rows_csv),
         "summary_csv": str(summary_csv),

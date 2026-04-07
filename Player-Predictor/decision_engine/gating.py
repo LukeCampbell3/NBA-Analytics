@@ -102,8 +102,17 @@ class StrategyConfig:
     board_objective_fp_veto_top_protected: int = 6
     board_objective_fp_veto_threshold: float = 0.80
     board_objective_fp_veto_max_drops: int = 1
+    board_objective_fp_veto_quantile: float = 0.70
+    board_objective_fp_veto_max_swaps: int = 1
+    board_objective_fp_veto_swap_candidates: int = 24
+    board_objective_fp_veto_min_swap_gain: float = 0.0025
+    board_objective_fp_veto_risk_lambda: float = 0.18
+    board_objective_fp_veto_ml_weight: float = 0.45
     learned_gate_enabled: bool = False
     learned_gate_min_rows: int = 0
+    accepted_pick_gate_enabled: bool = False
+    accepted_pick_gate_live: bool = False
+    accepted_pick_gate_min_rows: int = 0
     max_plays_per_game: int = 2
     max_plays_per_script_cluster: int = 2
     thompson_temperature: float = 1.0
