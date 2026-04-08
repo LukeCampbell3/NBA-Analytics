@@ -37,6 +37,7 @@ from decision_engine.accepted_pick_gate import (
     WalkForwardConfig,
     apply_accepted_pick_gate,
     apply_shadow_gate_policy,
+    build_meta_cohort_columns,
     build_pick_key,
     build_promotion_recommendation,
     concentration_stats,
@@ -80,6 +81,18 @@ def _safe_int(value: Any, default: int = 0) -> int:
         return int(value)
     except Exception:
         return int(default)
+
+
+def _coerce_event_datetime(values: Any) -> pd.Series:
+    series = values if isinstance(values, pd.Series) else pd.Series(values)
+    out = pd.to_datetime(series, errors="coerce")
+    numeric = pd.to_numeric(series, errors="coerce")
+    ymd_mask = numeric.between(19000101, 21001231, inclusive="both")
+    if bool(ymd_mask.any()):
+        ymd_text = numeric.round().astype("Int64").astype(str)
+        parsed_ymd = pd.to_datetime(ymd_text.where(ymd_mask), format="%Y%m%d", errors="coerce")
+        out = out.where(~ymd_mask, parsed_ymd)
+    return out
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -810,7 +823,7 @@ def cmd_prepare_replay_history(args: argparse.Namespace) -> None:
         raise ValueError(f"Result column not found in rows CSV: {result_col}")
 
     out = rows.copy()
-    out["_event_date"] = pd.to_datetime(out.get(date_col), errors="coerce")
+    out["_event_date"] = _coerce_event_datetime(out.get(date_col))
     out = out.loc[out["_event_date"].notna()].copy()
     if out.empty:
         raise RuntimeError("No valid dated rows found after parsing replay rows.")
@@ -908,7 +921,7 @@ def cmd_paired_eval(args: argparse.Namespace) -> None:
     target_col = _resolve_target_col(rows)
     direction_col = _resolve_direction_col(rows)
 
-    rows["_event_date"] = pd.to_datetime(rows.get(date_col), errors="coerce")
+    rows["_event_date"] = _coerce_event_datetime(rows.get(date_col))
     rows = rows.loc[rows["_event_date"].notna()].copy()
     if args.start_date:
         rows = rows.loc[rows["_event_date"] >= pd.to_datetime(args.start_date, errors="coerce")].copy()
@@ -937,17 +950,17 @@ def cmd_paired_eval(args: argparse.Namespace) -> None:
     )
 
     broad_summary = summarize_paired_outcomes(scored, veto_col="accepted_pick_gate_veto", result_col=result_col)
-    max_date = pd.to_datetime(scored.get("_event_date"), errors="coerce").max()
+    max_date = _coerce_event_datetime(scored.get("_event_date")).max()
     short_days = int(max(1, args.short_days))
     recent_days = int(max(1, args.recent_days))
     short_start = max_date - pd.Timedelta(days=short_days - 1) if pd.notna(max_date) else pd.NaT
     recent_start = max_date - pd.Timedelta(days=recent_days - 1) if pd.notna(max_date) else pd.NaT
     if pd.notna(short_start):
-        short_frame = scored.loc[pd.to_datetime(scored.get("_event_date"), errors="coerce") >= short_start].copy()
+        short_frame = scored.loc[_coerce_event_datetime(scored.get("_event_date")) >= short_start].copy()
     else:
         short_frame = scored.iloc[0:0].copy()
     if pd.notna(recent_start):
-        recent_frame = scored.loc[pd.to_datetime(scored.get("_event_date"), errors="coerce") >= recent_start].copy()
+        recent_frame = scored.loc[_coerce_event_datetime(scored.get("_event_date")) >= recent_start].copy()
     else:
         recent_frame = scored.iloc[0:0].copy()
 
@@ -1101,7 +1114,7 @@ def _prepare_history_frame(
     result_col: str,
 ) -> pd.DataFrame:
     out = history.copy()
-    out["_event_date"] = pd.to_datetime(out.get(date_col), errors="coerce")
+    out["_event_date"] = _coerce_event_datetime(out.get(date_col))
     out = out.loc[out["_event_date"].notna()].copy()
     out[result_col] = out.get(result_col, pd.Series("missing", index=out.index)).astype(str).str.lower().str.strip()
     if label_col not in out.columns:
@@ -1205,27 +1218,51 @@ def _parse_quantiles(raw: str) -> list[float]:
     return sorted(set(values))
 
 
-def _build_threshold_grid(frame: pd.DataFrame, keep_prob_col: str, quantiles: list[float]) -> list[float]:
+def _build_threshold_grid(
+    frame: pd.DataFrame,
+    keep_prob_col: str,
+    quantiles: list[float],
+    *,
+    max_candidates: int = 48,
+) -> list[float]:
     probs = pd.to_numeric(frame.get(keep_prob_col), errors="coerce").dropna().clip(lower=0.0, upper=1.0)
     if probs.empty:
         return [-1.0, 0.50]
-    out = sorted(set(float(probs.quantile(float(q))) for q in quantiles))
+    base_quantiles = sorted(set(float(np.clip(q, 0.0, 1.0)) for q in quantiles))
+    default_ladder = [0.50, 0.60, 0.70, 0.80, 0.90]
+    ladder = sorted(set(base_quantiles + default_ladder))
+    out = sorted(set(float(probs.quantile(float(q))) for q in ladder))
     # Add micro-threshold candidates so we can evaluate tiny (1-3 row) veto behavior.
-    # Quantile-only grids can skip these and force over-pruning.
+    # Quantile-only grids can skip these and force over-/under-pruning.
     unique = sorted(set(float(v) for v in probs.tolist()))
     if unique:
-        head = unique[: min(len(unique), 24)]
-        if len(head) == 1:
-            out.append(float(head[0] + 1e-9))
-        else:
-            for i in range(len(head) - 1):
-                lo = float(head[i])
-                hi = float(head[i + 1])
-                mid = float((lo + hi) / 2.0)
-                if mid > lo:
-                    out.append(mid)
-            out.append(float(head[0] + 1e-9))
+        slices: list[list[float]] = []
+        slices.append(unique[: min(len(unique), 12)])
+        slices.append(unique[max(0, len(unique) - 12) :])
+        for edge in slices:
+            if not edge:
+                continue
+            if len(edge) == 1:
+                out.append(float(np.clip(edge[0] + 1e-9, 0.0, 1.0)))
+            else:
+                for i in range(len(edge) - 1):
+                    lo = float(edge[i])
+                    hi = float(edge[i + 1])
+                    mid = float((lo + hi) / 2.0)
+                    if mid > lo:
+                        out.append(float(np.clip(mid, 0.0, 1.0)))
+                out.append(float(np.clip(edge[0] + 1e-9, 0.0, 1.0)))
+                out.append(float(np.clip(edge[-1] - 1e-9, 0.0, 1.0)))
     out = sorted(set(out + [-1.0]))
+    max_candidates = int(max(8, max_candidates))
+    if len(out) > max_candidates:
+        core = sorted(v for v in out if float(v) > -0.999999)
+        if core:
+            q = np.linspace(0.0, 1.0, num=max(2, max_candidates - 1))
+            sampled = sorted(set(float(np.quantile(core, float(qq))) for qq in q))
+            out = sorted(set([-1.0] + sampled))
+        else:
+            out = [-1.0]
     if not out:
         return [-1.0, 0.50]
     return out
@@ -1236,13 +1273,75 @@ def _segment_subsets_for_search(
     *,
     target_col: str,
     direction_col: str,
+    result_col: str,
     max_size: int,
     max_subsets: int,
+    min_segment_rows: int,
+    segment_seed_limit: int,
 ) -> list[tuple[str, ...]]:
     target = frame.get(target_col, pd.Series("", index=frame.index)).fillna("").astype(str).str.upper().str.strip()
     direction = frame.get(direction_col, pd.Series("", index=frame.index)).fillna("").astype(str).str.upper().str.strip()
     seg = (target + "|" + direction).astype("object")
-    segments = sorted(seg.loc[seg.str.len() > 1].unique().tolist())
+    result = frame.get(result_col, pd.Series("", index=frame.index)).astype(str).str.lower().str.strip()
+    win = result.eq("win").astype(float)
+    loss = result.eq("loss").astype(float)
+    resolved_mask = (win + loss) > 0
+    baseline_hit = float(win.loc[resolved_mask].mean()) if bool(resolved_mask.any()) else float("nan")
+
+    per_segment_rows: list[dict[str, Any]] = []
+    if bool(resolved_mask.any()):
+        tmp = pd.DataFrame(
+            {
+                "_seg": seg,
+                "_win": win,
+                "_resolved": resolved_mask.astype(int),
+            }
+        )
+        grouped = (
+            tmp.loc[tmp["_resolved"] > 0]
+            .groupby("_seg", dropna=False)
+            .agg(rows=("_win", "size"), hit_rate=("_win", "mean"))
+            .reset_index()
+        )
+        min_rows = int(max(1, min_segment_rows))
+        grouped = grouped.loc[grouped["rows"] >= min_rows].copy()
+        for _, row in grouped.iterrows():
+            segment = str(row.get("_seg", "")).strip().upper()
+            if "|" not in segment:
+                continue
+            rows = int(row.get("rows", 0))
+            hit = _safe_float(row.get("hit_rate"), float("nan"))
+            delta_pp = float((hit - baseline_hit) * 100.0) if (hit == hit and baseline_hit == baseline_hit) else 0.0
+            weakness = max(0.0, -delta_pp)
+            score = float(weakness * np.log1p(max(1, rows)))
+            per_segment_rows.append(
+                {
+                    "segment": segment,
+                    "rows": rows,
+                    "hit_rate": hit,
+                    "delta_pp": delta_pp,
+                    "score": score,
+                }
+            )
+
+    if not per_segment_rows:
+        segments = sorted(seg.loc[seg.str.len() > 1].unique().tolist())
+        per_segment_rows = [{"segment": str(s), "rows": 0, "hit_rate": float("nan"), "delta_pp": 0.0, "score": 0.0} for s in segments]
+
+    per_segment_rows = sorted(
+        per_segment_rows,
+        key=lambda row: (
+            float(row.get("score", 0.0)),
+            -float(row.get("delta_pp", 0.0)),
+            int(row.get("rows", 0)),
+        ),
+        reverse=True,
+    )
+    segment_seed_limit = int(max(1, segment_seed_limit))
+    ranked_segments = [str(row.get("segment", "")) for row in per_segment_rows if str(row.get("segment", ""))]
+    segments = ranked_segments[:segment_seed_limit]
+    if not segments:
+        segments = ranked_segments
     if not segments:
         return [tuple()]
     max_size = int(max(0, max_size))
@@ -1250,12 +1349,181 @@ def _segment_subsets_for_search(
     subsets: list[tuple[str, ...]] = [tuple()]  # empty tuple means no segment filter
     if max_size <= 0:
         return subsets
+    segment_score = {str(row.get("segment", "")): float(row.get("score", 0.0)) for row in per_segment_rows}
+    ranked_combos: list[tuple[float, tuple[str, ...]]] = []
     for size in range(1, min(len(segments), max_size) + 1):
         for combo in itertools.combinations(segments, size):
-            subsets.append(tuple(sorted(str(v) for v in combo)))
-            if len(subsets) >= max_subsets:
-                return subsets
+            combo_tuple = tuple(sorted(str(v) for v in combo))
+            combo_score = float(sum(float(segment_score.get(seg_name, 0.0)) for seg_name in combo_tuple))
+            # Favor broader packs when raw weakness score is similar.
+            combo_score += 0.10 * float(size - 1)
+            ranked_combos.append((combo_score, combo_tuple))
+    ranked_combos.sort(key=lambda item: (float(item[0]), len(item[1])), reverse=True)
+    for _, combo in ranked_combos:
+        subsets.append(combo)
+        if len(subsets) >= max_subsets:
+            break
     return subsets
+
+
+def _meta_cohort_packs_for_search(
+    frame: pd.DataFrame,
+    *,
+    target_col: str,
+    direction_col: str,
+    result_col: str,
+    max_size: int,
+    max_subsets: int,
+    min_cohort_rows: int,
+    seed_limit: int,
+    min_negative_delta_pp: float,
+    enabled: bool,
+) -> list[tuple[str, ...]]:
+    subsets: list[tuple[str, ...]] = [tuple()]
+    if not bool(enabled):
+        return subsets
+    if frame.empty:
+        return subsets
+
+    result = frame.get(result_col, pd.Series("", index=frame.index)).astype(str).str.lower().str.strip()
+    win = result.eq("win").astype(float)
+    loss = result.eq("loss").astype(float)
+    resolved_mask = (win + loss) > 0
+    if not bool(resolved_mask.any()):
+        return subsets
+    baseline_hit = _safe_float(win.loc[resolved_mask].mean(), float("nan"))
+    if baseline_hit != baseline_hit:
+        return subsets
+
+    cohort_cols = build_meta_cohort_columns(frame, target_col=target_col, direction_col=direction_col)
+    if cohort_cols.empty:
+        return subsets
+
+    min_rows = int(max(1, min_cohort_rows))
+    min_neg_delta = float(min_negative_delta_pp)
+    rows: list[dict[str, Any]] = []
+    for cohort_col in cohort_cols.columns:
+        labels = cohort_cols.get(cohort_col, pd.Series("", index=frame.index)).fillna("").astype(str).str.upper().str.strip()
+        tmp = pd.DataFrame(
+            {
+                "_label": labels,
+                "_win": win,
+                "_resolved": resolved_mask.astype(int),
+            }
+        )
+        grouped = (
+            tmp.loc[(tmp["_resolved"] > 0) & tmp["_label"].str.len().gt(0)]
+            .groupby("_label", dropna=False)
+            .agg(rows=("_win", "size"), hit_rate=("_win", "mean"))
+            .reset_index()
+        )
+        if grouped.empty:
+            continue
+        for _, row in grouped.iterrows():
+            label = str(row.get("_label", "")).strip().upper()
+            if not label:
+                continue
+            cohort_rows = int(row.get("rows", 0))
+            if cohort_rows < min_rows:
+                continue
+            hit = _safe_float(row.get("hit_rate"), float("nan"))
+            if hit != hit:
+                continue
+            delta_pp = float((hit - baseline_hit) * 100.0)
+            if delta_pp > min_neg_delta:
+                continue
+            score = float(max(0.0, -delta_pp) * np.log1p(max(1, cohort_rows)))
+            rows.append(
+                {
+                    "label": label,
+                    "rows": cohort_rows,
+                    "hit_rate": hit,
+                    "delta_pp": delta_pp,
+                    "score": score,
+                }
+            )
+
+    if not rows:
+        return subsets
+
+    rows = sorted(
+        rows,
+        key=lambda row: (
+            float(row.get("score", 0.0)),
+            -float(row.get("delta_pp", 0.0)),
+            int(row.get("rows", 0)),
+        ),
+        reverse=True,
+    )
+    seed_limit = int(max(1, seed_limit))
+    seeds = [str(row.get("label", "")) for row in rows[:seed_limit] if str(row.get("label", ""))]
+    if not seeds:
+        return subsets
+
+    max_size = int(max(0, max_size))
+    max_subsets = int(max(1, max_subsets))
+    if max_size <= 0:
+        return subsets
+
+    label_score = {str(row.get("label", "")): float(row.get("score", 0.0)) for row in rows}
+    ranked_combos: list[tuple[float, tuple[str, ...]]] = []
+    for size in range(1, min(len(seeds), max_size) + 1):
+        for combo in itertools.combinations(seeds, size):
+            combo_tuple = tuple(sorted(str(v) for v in combo))
+            combo_score = float(sum(float(label_score.get(item, 0.0)) for item in combo_tuple))
+            combo_score += 0.10 * float(size - 1)
+            ranked_combos.append((combo_score, combo_tuple))
+    ranked_combos.sort(key=lambda item: (float(item[0]), len(item[1])), reverse=True)
+    for _, combo in ranked_combos:
+        subsets.append(combo)
+        if len(subsets) >= max_subsets:
+            break
+    return subsets
+
+
+def _policy_variants_for_search(policy: GatePolicyConfig) -> list[GatePolicyConfig]:
+    variants: list[GatePolicyConfig] = []
+
+    def _emit(gap: float, tail_slots: int, require_keep_prob_filter: bool) -> None:
+        variants.append(
+            GatePolicyConfig(
+                max_fire_rate=float(policy.max_fire_rate),
+                min_coverage_rate=float(policy.min_coverage_rate),
+                max_removed_per_day=int(policy.max_removed_per_day),
+                max_removed_per_player_per_day=int(policy.max_removed_per_player_per_day),
+                max_removed_per_segment_per_day=int(policy.max_removed_per_segment_per_day),
+                max_removed_per_target_per_day=int(policy.max_removed_per_target_per_day),
+                tail_slots_only=int(max(0, tail_slots)),
+                min_veto_gap=float(max(0.0, gap)),
+                require_keep_prob_filter=bool(require_keep_prob_filter),
+                allowed_segments=tuple(policy.allowed_segments or ()),
+                allowed_meta_cohorts=tuple(policy.allowed_meta_cohorts or ()),
+            )
+        )
+
+    _emit(float(policy.min_veto_gap), int(policy.tail_slots_only), True)
+    if float(policy.min_veto_gap) > 1e-9:
+        _emit(0.0, int(policy.tail_slots_only), True)
+    if int(policy.tail_slots_only) > 0:
+        _emit(float(policy.min_veto_gap), 0, True)
+    if float(policy.min_veto_gap) > 1e-9 and int(policy.tail_slots_only) > 0:
+        _emit(0.0, 0, True)
+    # Cohort-only gating variant: allow strong cohort rules even when keep_prob is not below threshold.
+    _emit(0.0, 0, False)
+
+    dedup: list[GatePolicyConfig] = []
+    seen: set[tuple[float, int, int]] = set()
+    for item in variants:
+        key = (
+            round(float(item.min_veto_gap), 6),
+            int(item.tail_slots_only),
+            1 if bool(item.require_keep_prob_filter) else 0,
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        dedup.append(item)
+    return dedup
 
 
 def _search_train_threshold(
@@ -1269,58 +1537,214 @@ def _search_train_threshold(
     result_col: str,
     policy: GatePolicyConfig,
     quantiles: list[float],
+    threshold_max_candidates: int,
+    segment_search_max_size: int,
+    segment_search_max_subsets: int,
+    segment_search_min_rows: int,
+    segment_search_seed_limit: int,
+    cohort_search_enabled: bool,
+    cohort_search_min_delta_pp: float,
+    min_affected_share: float,
+    max_top_removed_player_share: float,
+    max_top_removed_segment_share: float,
+    max_top_removed_target_share: float,
+    min_coverage_retention: float,
+    prefer_non_noop_when_close: bool,
+    non_noop_objective_margin: float,
 ) -> tuple[float, dict[str, Any]]:
     if train_frame.empty:
         return -1.0, {"threshold": -1.0, "reason": "empty_train"}
-    candidates = _build_threshold_grid(train_frame, keep_prob_col=keep_prob_col, quantiles=quantiles)
+    candidates = _build_threshold_grid(
+        train_frame,
+        keep_prob_col=keep_prob_col,
+        quantiles=quantiles,
+        max_candidates=int(threshold_max_candidates),
+    )
+    segment_subsets = _segment_subsets_for_search(
+        train_frame,
+        target_col=target_col,
+        direction_col=direction_col,
+        result_col=result_col,
+        max_size=int(segment_search_max_size),
+        max_subsets=int(segment_search_max_subsets),
+        min_segment_rows=int(segment_search_min_rows),
+        segment_seed_limit=int(segment_search_seed_limit),
+    )
+    cohort_packs = _meta_cohort_packs_for_search(
+        train_frame,
+        target_col=target_col,
+        direction_col=direction_col,
+        result_col=result_col,
+        max_size=int(segment_search_max_size),
+        max_subsets=int(segment_search_max_subsets),
+        min_cohort_rows=int(segment_search_min_rows),
+        seed_limit=int(segment_search_seed_limit),
+        min_negative_delta_pp=float(cohort_search_min_delta_pp),
+        enabled=bool(cohort_search_enabled),
+    )
+    if len(cohort_packs) > 1:
+        # Cohort packs already encode segment context; keep segment search neutral
+        # to avoid a combinatorial explosion and over-constraining.
+        segment_subsets = [tuple()]
     best_threshold = -1.0
     best_payload: dict[str, Any] | None = None
+    best_relaxed: dict[str, Any] | None = None
+    best_non_noop: dict[str, Any] | None = None
+    policy_variants = _policy_variants_for_search(policy)
     for threshold in candidates:
-        scored = apply_shadow_gate_policy(
-            train_frame,
-            keep_prob_col=keep_prob_col,
-            date_col=date_col,
-            player_col=player_col,
-            target_col=target_col,
-            direction_col=direction_col,
-            threshold=float(threshold),
-            policy=policy,
-        )
-        summary = summarize_paired_outcomes(scored, veto_col="gate_veto", result_col=result_col)
-        delta = summary.get("delta", {})
-        broad_profit = _safe_float(delta.get("profit_units"), float("-inf"))
-        broad_hit = _safe_float(delta.get("hit_rate_pp"), float("-inf"))
-        fire_rate = _safe_float(scored.get("gate_veto", pd.Series(dtype="float64")).mean(), 0.0)
-        payload = {
-            "threshold": float(threshold),
-            "delta_profit_units": broad_profit,
-            "delta_hit_rate_pp": broad_hit,
-            "fire_rate": fire_rate,
-            "summary": summary,
-        }
-        if best_payload is None:
-            best_payload = payload
-            best_threshold = float(threshold)
-            continue
-        if payload["delta_profit_units"] > best_payload["delta_profit_units"] + 1e-12:
-            best_payload = payload
-            best_threshold = float(threshold)
-            continue
+        for seg_subset in segment_subsets:
+            for cohort_pack in cohort_packs:
+                for variant in policy_variants:
+                    if not bool(variant.require_keep_prob_filter) and not cohort_pack:
+                        continue
+                    cand_policy = GatePolicyConfig(
+                        max_fire_rate=float(variant.max_fire_rate),
+                        min_coverage_rate=float(variant.min_coverage_rate),
+                        max_removed_per_day=int(variant.max_removed_per_day),
+                        max_removed_per_player_per_day=int(variant.max_removed_per_player_per_day),
+                        max_removed_per_segment_per_day=int(variant.max_removed_per_segment_per_day),
+                        max_removed_per_target_per_day=int(variant.max_removed_per_target_per_day),
+                        tail_slots_only=int(variant.tail_slots_only),
+                        min_veto_gap=float(variant.min_veto_gap),
+                        require_keep_prob_filter=bool(variant.require_keep_prob_filter),
+                        allowed_segments=tuple(seg_subset),
+                        allowed_meta_cohorts=tuple(cohort_pack),
+                    )
+                    scored = apply_shadow_gate_policy(
+                        train_frame,
+                        keep_prob_col=keep_prob_col,
+                        date_col=date_col,
+                        player_col=player_col,
+                        target_col=target_col,
+                        direction_col=direction_col,
+                        threshold=float(threshold),
+                        policy=cand_policy,
+                    )
+                    summary = summarize_paired_outcomes(scored, veto_col="gate_veto", result_col=result_col)
+                    delta = summary.get("delta", {})
+                    broad_profit = _safe_float(delta.get("profit_units"), float("-inf"))
+                    broad_hit = _safe_float(delta.get("hit_rate_pp"), float("-inf"))
+                    fire_rate = _safe_float(scored.get("gate_veto", pd.Series(dtype="float64")).mean(), 0.0)
+                    resolved = scored.loc[scored[result_col].astype(str).str.lower().isin(["win", "loss"])].copy()
+                    affected_share = _safe_float(pd.to_numeric(resolved.get("gate_veto"), errors="coerce").fillna(0).mean(), 0.0)
+                    base_resolved = _safe_float(summary.get("baseline", {}).get("resolved"), 0.0)
+                    gated_resolved = _safe_float(summary.get("gated", {}).get("resolved"), 0.0)
+                    coverage_retention = float(gated_resolved / base_resolved) if base_resolved > 0.0 else 1.0
+                    concentration = concentration_stats(
+                        scored,
+                        veto_col="gate_veto",
+                        player_col=player_col,
+                        target_col=target_col,
+                        direction_col=direction_col,
+                    )
+                    top_player_share = _safe_float(concentration.get("top_player_share"), 0.0)
+                    top_segment_share = _safe_float(concentration.get("top_segment_share"), 0.0)
+                    top_target_share = _safe_float(concentration.get("top_target_share"), 0.0)
+                    constraints_passed = bool(
+                        affected_share >= float(min_affected_share)
+                        and coverage_retention >= float(min_coverage_retention)
+                        and top_player_share <= float(max_top_removed_player_share)
+                        and top_segment_share <= float(max_top_removed_segment_share)
+                        and top_target_share <= float(max_top_removed_target_share)
+                    )
+                    objective_score = (
+                        float(broad_profit)
+                        + 0.05 * float(broad_hit)
+                        + 0.20 * float(affected_share)
+                        - 2.0 * max(0.0, float(min_affected_share) - float(affected_share))
+                        - 3.0 * max(0.0, float(min_coverage_retention) - float(coverage_retention))
+                        - 2.5 * max(0.0, float(top_player_share) - float(max_top_removed_player_share))
+                        - 2.5 * max(0.0, float(top_segment_share) - float(max_top_removed_segment_share))
+                        - 2.0 * max(0.0, float(top_target_share) - float(max_top_removed_target_share))
+                        - 1.0 * max(0.0, float(fire_rate) - float(variant.max_fire_rate))
+                    )
+                    payload = {
+                        "threshold": float(threshold),
+                        "allowed_segments": [str(v) for v in seg_subset],
+                        "segment_count": int(len(seg_subset)),
+                        "allowed_meta_cohorts": [str(v) for v in cohort_pack],
+                        "meta_cohort_count": int(len(cohort_pack)),
+                        "tail_slots_only": int(cand_policy.tail_slots_only),
+                        "min_veto_gap": float(cand_policy.min_veto_gap),
+                        "require_keep_prob_filter": bool(cand_policy.require_keep_prob_filter),
+                        "delta_profit_units": broad_profit,
+                        "delta_hit_rate_pp": broad_hit,
+                        "fire_rate": fire_rate,
+                        "affected_share": float(affected_share),
+                        "coverage_retention": float(coverage_retention),
+                        "top_player_share": float(top_player_share),
+                        "top_segment_share": float(top_segment_share),
+                        "top_target_share": float(top_target_share),
+                        "constraints_passed": bool(constraints_passed),
+                        "objective_score": float(objective_score),
+                        "summary": summary,
+                    }
+                    if float(threshold) > -0.999999:
+                        if best_non_noop is None or payload["objective_score"] > best_non_noop.get("objective_score", float("-inf")) + 1e-12:
+                            best_non_noop = payload
+                    if best_relaxed is None or payload["objective_score"] > best_relaxed.get("objective_score", float("-inf")) + 1e-12:
+                        best_relaxed = payload
+                    if not bool(payload["constraints_passed"]):
+                        continue
+                    if best_payload is None:
+                        best_payload = payload
+                        best_threshold = float(threshold)
+                        continue
+                    if payload["objective_score"] > best_payload.get("objective_score", float("-inf")) + 1e-12:
+                        best_payload = payload
+                        best_threshold = float(threshold)
+                        continue
+                    if (
+                        abs(payload["objective_score"] - best_payload.get("objective_score", float("-inf"))) <= 1e-12
+                        and payload["delta_profit_units"] > best_payload["delta_profit_units"] + 1e-12
+                    ):
+                        best_payload = payload
+                        best_threshold = float(threshold)
+                        continue
+                    if (
+                        abs(payload["objective_score"] - best_payload.get("objective_score", float("-inf"))) <= 1e-12
+                        and abs(payload["delta_profit_units"] - best_payload["delta_profit_units"]) <= 1e-12
+                        and payload["delta_hit_rate_pp"] > best_payload["delta_hit_rate_pp"] + 1e-12
+                    ):
+                        best_payload = payload
+                        best_threshold = float(threshold)
+                        continue
+                    if (
+                        abs(payload["objective_score"] - best_payload.get("objective_score", float("-inf"))) <= 1e-12
+                        and abs(payload["delta_profit_units"] - best_payload["delta_profit_units"]) <= 1e-12
+                        and abs(payload["delta_hit_rate_pp"] - best_payload["delta_hit_rate_pp"]) <= 1e-12
+                        and payload["affected_share"] > best_payload.get("affected_share", 0.0) + 1e-12
+                    ):
+                        best_payload = payload
+                        best_threshold = float(threshold)
+                        continue
+                    if (
+                        abs(payload["objective_score"] - best_payload.get("objective_score", float("-inf"))) <= 1e-12
+                        and abs(payload["delta_profit_units"] - best_payload["delta_profit_units"]) <= 1e-12
+                        and abs(payload["delta_hit_rate_pp"] - best_payload["delta_hit_rate_pp"]) <= 1e-12
+                        and abs(payload["affected_share"] - best_payload.get("affected_share", 0.0)) <= 1e-12
+                        and payload["fire_rate"] < best_payload["fire_rate"] - 1e-12
+                    ):
+                        best_payload = payload
+                        best_threshold = float(threshold)
+    if best_payload is not None:
         if (
-            abs(payload["delta_profit_units"] - best_payload["delta_profit_units"]) <= 1e-12
-            and payload["delta_hit_rate_pp"] > best_payload["delta_hit_rate_pp"] + 1e-12
+            bool(prefer_non_noop_when_close)
+            and float(best_payload.get("threshold", -1.0)) <= -0.999999
+            and best_non_noop is not None
+            and float(best_non_noop.get("objective_score", float("-inf")))
+            >= float(best_payload.get("objective_score", float("-inf"))) - float(max(0.0, non_noop_objective_margin))
         ):
-            best_payload = payload
-            best_threshold = float(threshold)
-            continue
-        if (
-            abs(payload["delta_profit_units"] - best_payload["delta_profit_units"]) <= 1e-12
-            and abs(payload["delta_hit_rate_pp"] - best_payload["delta_hit_rate_pp"]) <= 1e-12
-            and payload["fire_rate"] < best_payload["fire_rate"] - 1e-12
-        ):
-            best_payload = payload
-            best_threshold = float(threshold)
-    return float(best_threshold), (best_payload or {"threshold": float(best_threshold), "reason": "fallback"})
+            out = dict(best_non_noop)
+            out["selection_mode"] = "exploratory_non_noop"
+            out["exploratory_margin"] = float(max(0.0, non_noop_objective_margin))
+            return float(out.get("threshold", -1.0)), out
+        best_payload["selection_mode"] = "constraint_aware"
+        return float(best_threshold), best_payload
+    if best_relaxed is not None:
+        best_relaxed["selection_mode"] = "relaxed_objective"
+        return float(best_relaxed["threshold"]), best_relaxed
+    return float(best_threshold), {"threshold": float(best_threshold), "reason": "fallback"}
 
 
 def _select_final_threshold_from_oof(
@@ -1334,6 +1758,7 @@ def _select_final_threshold_from_oof(
     result_col: str,
     policy: GatePolicyConfig,
     quantiles: list[float],
+    threshold_max_candidates: int,
     recent_days: int,
     recent_hit_floor_pp: float,
     recent_profit_floor: float,
@@ -1343,166 +1768,282 @@ def _select_final_threshold_from_oof(
     max_fire_rate: float,
     segment_search_max_size: int,
     segment_search_max_subsets: int,
+    segment_search_min_rows: int,
+    segment_search_seed_limit: int,
+    cohort_search_enabled: bool,
+    cohort_search_min_delta_pp: float,
+    min_affected_share: float,
+    max_top_removed_player_share: float,
+    max_top_removed_segment_share: float,
+    max_top_removed_target_share: float,
+    prefer_relaxed_non_noop_when_close: bool,
+    relaxed_non_noop_objective_margin: float,
 ) -> tuple[float, dict[str, Any]]:
     if oof.empty:
         return -1.0, {"reason": "empty_oof", "threshold": -1.0}
-    candidates = _build_threshold_grid(oof, keep_prob_col=keep_prob_col, quantiles=quantiles)
-    dates = pd.to_datetime(oof.get(date_col), errors="coerce")
+    candidates = _build_threshold_grid(
+        oof,
+        keep_prob_col=keep_prob_col,
+        quantiles=quantiles,
+        max_candidates=int(threshold_max_candidates),
+    )
+    dates = _coerce_event_datetime(oof.get(date_col))
     max_date = dates.max()
     recent_start = max_date - pd.Timedelta(days=int(max(1, recent_days)) - 1) if pd.notna(max_date) else pd.NaT
     segment_subsets = _segment_subsets_for_search(
         oof,
         target_col=target_col,
         direction_col=direction_col,
+        result_col=result_col,
         max_size=int(segment_search_max_size),
         max_subsets=int(segment_search_max_subsets),
+        min_segment_rows=int(segment_search_min_rows),
+        segment_seed_limit=int(segment_search_seed_limit),
     )
+    cohort_packs = _meta_cohort_packs_for_search(
+        oof,
+        target_col=target_col,
+        direction_col=direction_col,
+        result_col=result_col,
+        max_size=int(segment_search_max_size),
+        max_subsets=int(segment_search_max_subsets),
+        min_cohort_rows=int(segment_search_min_rows),
+        seed_limit=int(segment_search_seed_limit),
+        min_negative_delta_pp=float(cohort_search_min_delta_pp),
+        enabled=bool(cohort_search_enabled),
+    )
+    if len(cohort_packs) > 1:
+        segment_subsets = [tuple()]
     best: dict[str, Any] | None = None
     best_relaxed: dict[str, Any] | None = None
     all_candidates: list[dict[str, Any]] = []
+    policy_variants = _policy_variants_for_search(policy)
     for threshold in candidates:
         for seg_subset in segment_subsets:
-            cand_policy = GatePolicyConfig(
-                max_fire_rate=float(policy.max_fire_rate),
-                min_coverage_rate=float(policy.min_coverage_rate),
-                max_removed_per_day=int(policy.max_removed_per_day),
-                max_removed_per_player_per_day=int(policy.max_removed_per_player_per_day),
-                max_removed_per_segment_per_day=int(policy.max_removed_per_segment_per_day),
-                max_removed_per_target_per_day=int(policy.max_removed_per_target_per_day),
-                tail_slots_only=int(policy.tail_slots_only),
-                min_veto_gap=float(policy.min_veto_gap),
-                allowed_segments=tuple(seg_subset),
-            )
-            scored = apply_shadow_gate_policy(
-                oof,
-                keep_prob_col=keep_prob_col,
-                date_col=date_col,
-                player_col=player_col,
-                target_col=target_col,
-                direction_col=direction_col,
-                threshold=float(threshold),
-                policy=cand_policy,
-            )
-            broad_summary = summarize_paired_outcomes(scored, veto_col="gate_veto", result_col=result_col)
-            if pd.notna(recent_start):
-                recent_part = scored.loc[dates >= recent_start].copy()
-            else:
-                recent_part = scored.iloc[0:0].copy()
-            recent_summary = summarize_paired_outcomes(recent_part, veto_col="gate_veto", result_col=result_col)
-            broad_delta = broad_summary.get("delta", {})
-            recent_delta = recent_summary.get("delta", {})
-            broad_profit = _safe_float(broad_delta.get("profit_units"), float("-inf"))
-            broad_hit = _safe_float(broad_delta.get("hit_rate_pp"), float("-inf"))
-            recent_profit = _safe_float(recent_delta.get("profit_units"), float("-inf"))
-            recent_hit = _safe_float(recent_delta.get("hit_rate_pp"), float("-inf"))
-            fire_rate = _safe_float(pd.to_numeric(scored.get("gate_veto"), errors="coerce").fillna(0).mean(), 0.0)
-            base_resolved = _safe_float(broad_summary.get("baseline", {}).get("resolved"), 0.0)
-            gated_resolved = _safe_float(broad_summary.get("gated", {}).get("resolved"), 0.0)
-            coverage_retention = float(gated_resolved / base_resolved) if base_resolved > 0.0 else 1.0
-            constraints_passed = bool(
-                broad_profit >= float(broad_profit_floor)
-                and broad_hit >= float(broad_hit_floor_pp)
-                and recent_hit >= float(recent_hit_floor_pp)
-                and recent_profit >= float(recent_profit_floor)
-                and coverage_retention >= float(min_coverage_retention)
-                and fire_rate <= float(max_fire_rate)
-            )
-            candidate = {
-                "threshold": float(threshold),
-                "allowed_segments": list(seg_subset),
-                "segment_count": int(len(seg_subset)),
-                "broad_profit_units": float(broad_profit),
-                "broad_hit_rate_pp": float(broad_hit),
-                "recent_profit_units": float(recent_profit),
-                "recent_hit_rate_pp": float(recent_hit),
-                "coverage_retention": float(coverage_retention),
-                "fire_rate": float(fire_rate),
-                "broad_summary": broad_summary,
-                "recent_summary": recent_summary,
-                "constraints_passed": constraints_passed,
-                "recent_days": int(max(1, recent_days)),
-                "constraints": {
-                    "broad_profit_floor": float(broad_profit_floor),
-                    "broad_hit_floor_pp": float(broad_hit_floor_pp),
-                    "recent_profit_floor": float(recent_profit_floor),
-                    "recent_hit_floor_pp": float(recent_hit_floor_pp),
-                    "min_coverage_retention": float(min_coverage_retention),
-                    "max_fire_rate": float(max_fire_rate),
-                    "segment_search_max_size": int(segment_search_max_size),
-                    "segment_search_max_subsets": int(segment_search_max_subsets),
-                },
-            }
-            all_candidates.append(candidate)
-            if candidate["constraints_passed"]:
-                if best is None:
-                    best = candidate
-                elif candidate["broad_profit_units"] > best["broad_profit_units"] + 1e-12:
-                    best = candidate
+            for cohort_pack in cohort_packs:
+                for variant in policy_variants:
+                    if not bool(variant.require_keep_prob_filter) and not cohort_pack:
+                        continue
+                    cand_policy = GatePolicyConfig(
+                        max_fire_rate=float(variant.max_fire_rate),
+                        min_coverage_rate=float(variant.min_coverage_rate),
+                        max_removed_per_day=int(variant.max_removed_per_day),
+                        max_removed_per_player_per_day=int(variant.max_removed_per_player_per_day),
+                        max_removed_per_segment_per_day=int(variant.max_removed_per_segment_per_day),
+                        max_removed_per_target_per_day=int(variant.max_removed_per_target_per_day),
+                        tail_slots_only=int(variant.tail_slots_only),
+                        min_veto_gap=float(variant.min_veto_gap),
+                        require_keep_prob_filter=bool(variant.require_keep_prob_filter),
+                        allowed_segments=tuple(seg_subset),
+                        allowed_meta_cohorts=tuple(cohort_pack),
+                    )
+                    scored = apply_shadow_gate_policy(
+                        oof,
+                        keep_prob_col=keep_prob_col,
+                        date_col=date_col,
+                        player_col=player_col,
+                        target_col=target_col,
+                        direction_col=direction_col,
+                        threshold=float(threshold),
+                        policy=cand_policy,
+                    )
+                    broad_summary = summarize_paired_outcomes(scored, veto_col="gate_veto", result_col=result_col)
+                    if pd.notna(recent_start):
+                        recent_part = scored.loc[dates >= recent_start].copy()
+                    else:
+                        recent_part = scored.iloc[0:0].copy()
+                    recent_summary = summarize_paired_outcomes(recent_part, veto_col="gate_veto", result_col=result_col)
+                    broad_delta = broad_summary.get("delta", {})
+                    recent_delta = recent_summary.get("delta", {})
+                    broad_profit = _safe_float(broad_delta.get("profit_units"), float("-inf"))
+                    broad_hit = _safe_float(broad_delta.get("hit_rate_pp"), float("-inf"))
+                    recent_profit = _safe_float(recent_delta.get("profit_units"), float("-inf"))
+                    recent_hit = _safe_float(recent_delta.get("hit_rate_pp"), float("-inf"))
+                    fire_rate = _safe_float(pd.to_numeric(scored.get("gate_veto"), errors="coerce").fillna(0).mean(), 0.0)
+                    resolved = scored.loc[scored[result_col].astype(str).str.lower().isin(["win", "loss"])].copy()
+                    affected_share = _safe_float(pd.to_numeric(resolved.get("gate_veto"), errors="coerce").fillna(0).mean(), 0.0)
+                    base_resolved = _safe_float(broad_summary.get("baseline", {}).get("resolved"), 0.0)
+                    gated_resolved = _safe_float(broad_summary.get("gated", {}).get("resolved"), 0.0)
+                    coverage_retention = float(gated_resolved / base_resolved) if base_resolved > 0.0 else 1.0
+                    concentration = concentration_stats(
+                        scored,
+                        veto_col="gate_veto",
+                        player_col=player_col,
+                        target_col=target_col,
+                        direction_col=direction_col,
+                    )
+                    top_player_share = _safe_float(concentration.get("top_player_share"), 0.0)
+                    top_segment_share = _safe_float(concentration.get("top_segment_share"), 0.0)
+                    top_target_share = _safe_float(concentration.get("top_target_share"), 0.0)
+                    constraints_passed = bool(
+                        broad_profit >= float(broad_profit_floor)
+                        and broad_hit >= float(broad_hit_floor_pp)
+                        and recent_hit >= float(recent_hit_floor_pp)
+                        and recent_profit >= float(recent_profit_floor)
+                        and coverage_retention >= float(min_coverage_retention)
+                        and fire_rate <= float(max_fire_rate)
+                        and affected_share >= float(min_affected_share)
+                        and top_player_share <= float(max_top_removed_player_share)
+                        and top_segment_share <= float(max_top_removed_segment_share)
+                        and top_target_share <= float(max_top_removed_target_share)
+                    )
+                    objective_score = (
+                        float(broad_profit)
+                        + 0.80 * float(recent_profit)
+                        + 0.02 * float(broad_hit)
+                        + 0.03 * float(recent_hit)
+                        + 0.40 * float(affected_share)
+                        - 3.0 * max(0.0, float(min_coverage_retention) - float(coverage_retention))
+                        - 3.0 * max(0.0, float(min_affected_share) - float(affected_share))
+                        - 4.0 * max(0.0, float(top_player_share) - float(max_top_removed_player_share))
+                        - 4.0 * max(0.0, float(top_segment_share) - float(max_top_removed_segment_share))
+                        - 3.0 * max(0.0, float(top_target_share) - float(max_top_removed_target_share))
+                        - 2.0 * max(0.0, float(fire_rate) - float(max_fire_rate))
+                    )
+                    candidate = {
+                        "threshold": float(threshold),
+                        "allowed_segments": list(seg_subset),
+                        "segment_count": int(len(seg_subset)),
+                        "allowed_meta_cohorts": [str(v) for v in cohort_pack],
+                        "meta_cohort_count": int(len(cohort_pack)),
+                        "tail_slots_only": int(cand_policy.tail_slots_only),
+                        "min_veto_gap": float(cand_policy.min_veto_gap),
+                        "require_keep_prob_filter": bool(cand_policy.require_keep_prob_filter),
+                        "broad_profit_units": float(broad_profit),
+                        "broad_hit_rate_pp": float(broad_hit),
+                        "recent_profit_units": float(recent_profit),
+                        "recent_hit_rate_pp": float(recent_hit),
+                        "coverage_retention": float(coverage_retention),
+                        "fire_rate": float(fire_rate),
+                        "affected_share": float(affected_share),
+                        "top_player_share": float(top_player_share),
+                        "top_segment_share": float(top_segment_share),
+                        "top_target_share": float(top_target_share),
+                        "objective_score": float(objective_score),
+                        "broad_summary": broad_summary,
+                        "recent_summary": recent_summary,
+                        "constraints_passed": constraints_passed,
+                        "recent_days": int(max(1, recent_days)),
+                        "constraints": {
+                            "broad_profit_floor": float(broad_profit_floor),
+                            "broad_hit_floor_pp": float(broad_hit_floor_pp),
+                            "recent_profit_floor": float(recent_profit_floor),
+                            "recent_hit_floor_pp": float(recent_hit_floor_pp),
+                            "min_coverage_retention": float(min_coverage_retention),
+                            "max_fire_rate": float(max_fire_rate),
+                            "segment_search_max_size": int(segment_search_max_size),
+                            "segment_search_max_subsets": int(segment_search_max_subsets),
+                            "segment_search_min_rows": int(segment_search_min_rows),
+                            "segment_search_seed_limit": int(segment_search_seed_limit),
+                            "cohort_search_enabled": bool(cohort_search_enabled),
+                            "cohort_search_min_delta_pp": float(cohort_search_min_delta_pp),
+                            "min_affected_share": float(min_affected_share),
+                            "max_top_removed_player_share": float(max_top_removed_player_share),
+                            "max_top_removed_segment_share": float(max_top_removed_segment_share),
+                            "max_top_removed_target_share": float(max_top_removed_target_share),
+                        },
+                    }
+                    all_candidates.append(candidate)
+                if candidate["constraints_passed"]:
+                    if best is None:
+                        best = candidate
+                    elif candidate["objective_score"] > best.get("objective_score", float("-inf")) + 1e-12:
+                        best = candidate
+                    elif candidate["broad_profit_units"] > best["broad_profit_units"] + 1e-12:
+                        best = candidate
+                    elif (
+                        abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
+                        and abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
+                        and candidate["recent_profit_units"] > best["recent_profit_units"] + 1e-12
+                    ):
+                        best = candidate
+                    elif (
+                        abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
+                        and abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
+                        and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
+                        and candidate["broad_hit_rate_pp"] > best["broad_hit_rate_pp"] + 1e-12
+                    ):
+                        best = candidate
+                    elif (
+                        abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
+                        and abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
+                        and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
+                        and abs(candidate["broad_hit_rate_pp"] - best["broad_hit_rate_pp"]) <= 1e-12
+                        and candidate["recent_hit_rate_pp"] > best["recent_hit_rate_pp"] + 1e-12
+                    ):
+                        best = candidate
+                    elif (
+                        abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
+                        and abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
+                        and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
+                        and abs(candidate["broad_hit_rate_pp"] - best["broad_hit_rate_pp"]) <= 1e-12
+                        and abs(candidate["recent_hit_rate_pp"] - best["recent_hit_rate_pp"]) <= 1e-12
+                        and candidate["affected_share"] > best.get("affected_share", 0.0) + 1e-12
+                    ):
+                        best = candidate
+                    elif (
+                        abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
+                        and abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
+                        and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
+                        and abs(candidate["broad_hit_rate_pp"] - best["broad_hit_rate_pp"]) <= 1e-12
+                        and abs(candidate["recent_hit_rate_pp"] - best["recent_hit_rate_pp"]) <= 1e-12
+                        and abs(candidate["affected_share"] - best.get("affected_share", 0.0)) <= 1e-12
+                        and candidate["fire_rate"] < best["fire_rate"] - 1e-12
+                    ):
+                        best = candidate
+                    elif (
+                        abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
+                        and abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
+                        and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
+                        and abs(candidate["broad_hit_rate_pp"] - best["broad_hit_rate_pp"]) <= 1e-12
+                        and abs(candidate["recent_hit_rate_pp"] - best["recent_hit_rate_pp"]) <= 1e-12
+                        and abs(candidate["affected_share"] - best.get("affected_share", 0.0)) <= 1e-12
+                        and abs(candidate["fire_rate"] - best["fire_rate"]) <= 1e-12
+                        and candidate["segment_count"] < best.get("segment_count", 0)
+                    ):
+                        best = candidate
+                if best_relaxed is None:
+                    best_relaxed = candidate
+                elif candidate["objective_score"] > best_relaxed.get("objective_score", float("-inf")) + 1e-12:
+                    best_relaxed = candidate
                 elif (
-                    abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
-                    and candidate["recent_profit_units"] > best["recent_profit_units"] + 1e-12
+                    abs(candidate["objective_score"] - best_relaxed.get("objective_score", float("-inf"))) <= 1e-12
+                    and abs(candidate["broad_profit_units"] - best_relaxed["broad_profit_units"]) <= 1e-12
+                    and candidate["broad_hit_rate_pp"] > best_relaxed["broad_hit_rate_pp"] + 1e-12
                 ):
-                    best = candidate
+                    best_relaxed = candidate
                 elif (
-                    abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
-                    and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
-                    and candidate["broad_hit_rate_pp"] > best["broad_hit_rate_pp"] + 1e-12
+                    abs(candidate["objective_score"] - best_relaxed.get("objective_score", float("-inf"))) <= 1e-12
+                    and abs(candidate["broad_profit_units"] - best_relaxed["broad_profit_units"]) <= 1e-12
+                    and abs(candidate["broad_hit_rate_pp"] - best_relaxed["broad_hit_rate_pp"]) <= 1e-12
+                    and candidate.get("affected_share", 0.0) > best_relaxed.get("affected_share", 0.0) + 1e-12
                 ):
-                    best = candidate
+                    best_relaxed = candidate
                 elif (
-                    abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
-                    and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
-                    and abs(candidate["broad_hit_rate_pp"] - best["broad_hit_rate_pp"]) <= 1e-12
-                    and candidate["recent_hit_rate_pp"] > best["recent_hit_rate_pp"] + 1e-12
+                    abs(candidate["objective_score"] - best_relaxed.get("objective_score", float("-inf"))) <= 1e-12
+                    and abs(candidate["broad_profit_units"] - best_relaxed["broad_profit_units"]) <= 1e-12
+                    and abs(candidate["broad_hit_rate_pp"] - best_relaxed["broad_hit_rate_pp"]) <= 1e-12
+                    and abs(candidate.get("affected_share", 0.0) - best_relaxed.get("affected_share", 0.0)) <= 1e-12
+                    and candidate["fire_rate"] < best_relaxed["fire_rate"] - 1e-12
                 ):
-                    best = candidate
-                elif (
-                    abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
-                    and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
-                    and abs(candidate["broad_hit_rate_pp"] - best["broad_hit_rate_pp"]) <= 1e-12
-                    and abs(candidate["recent_hit_rate_pp"] - best["recent_hit_rate_pp"]) <= 1e-12
-                    and candidate["coverage_retention"] > best["coverage_retention"] + 1e-12
-                ):
-                    best = candidate
-                elif (
-                    abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
-                    and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
-                    and abs(candidate["broad_hit_rate_pp"] - best["broad_hit_rate_pp"]) <= 1e-12
-                    and abs(candidate["recent_hit_rate_pp"] - best["recent_hit_rate_pp"]) <= 1e-12
-                    and abs(candidate["coverage_retention"] - best["coverage_retention"]) <= 1e-12
-                    and candidate["fire_rate"] < best["fire_rate"] - 1e-12
-                ):
-                    best = candidate
-                elif (
-                    abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
-                    and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
-                    and abs(candidate["broad_hit_rate_pp"] - best["broad_hit_rate_pp"]) <= 1e-12
-                    and abs(candidate["recent_hit_rate_pp"] - best["recent_hit_rate_pp"]) <= 1e-12
-                    and abs(candidate["coverage_retention"] - best["coverage_retention"]) <= 1e-12
-                    and abs(candidate["fire_rate"] - best["fire_rate"]) <= 1e-12
-                    and candidate["segment_count"] < best.get("segment_count", 0)
-                ):
-                    best = candidate
-            if best_relaxed is None:
-                best_relaxed = candidate
-            elif candidate["broad_profit_units"] > best_relaxed["broad_profit_units"] + 1e-12:
-                best_relaxed = candidate
-            elif (
-                abs(candidate["broad_profit_units"] - best_relaxed["broad_profit_units"]) <= 1e-12
-                and candidate["broad_hit_rate_pp"] > best_relaxed["broad_hit_rate_pp"] + 1e-12
-            ):
-                best_relaxed = candidate
-            elif (
-                abs(candidate["broad_profit_units"] - best_relaxed["broad_profit_units"]) <= 1e-12
-                and abs(candidate["broad_hit_rate_pp"] - best_relaxed["broad_hit_rate_pp"]) <= 1e-12
-                and candidate["fire_rate"] < best_relaxed["fire_rate"] - 1e-12
-            ):
-                best_relaxed = candidate
+                    best_relaxed = candidate
 
     if best is not None:
         best["selection_mode"] = "constrained"
         return float(best["threshold"]), best
     no_op = next((cand for cand in all_candidates if float(cand.get("threshold", 0.0)) <= -0.999999), None)
+    if (
+        bool(prefer_relaxed_non_noop_when_close)
+        and best_relaxed is not None
+        and float(best_relaxed.get("threshold", -1.0)) > -0.999999
+        and no_op is not None
+        and float(best_relaxed.get("objective_score", float("-inf")))
+        >= float(no_op.get("objective_score", float("-inf"))) - float(max(0.0, relaxed_non_noop_objective_margin))
+    ):
+        best_relaxed["selection_mode"] = "relaxed_exploratory"
+        best_relaxed["reason"] = "no_constrained_candidate_selected_relaxed_non_noop"
+        best_relaxed["relaxed_objective_margin"] = float(max(0.0, relaxed_non_noop_objective_margin))
+        return float(best_relaxed["threshold"]), best_relaxed
     if no_op is not None:
         no_op["selection_mode"] = "no_op_fallback"
         no_op["reason"] = "no_threshold_passed_constraints"
@@ -1512,6 +2053,184 @@ def _select_final_threshold_from_oof(
         best_relaxed["selection_mode"] = "relaxed_no_noop"
         return float(best_relaxed["threshold"]), best_relaxed
     return -1.0, {"reason": "no_candidates", "threshold": -1.0, "selection_mode": "fallback"}
+
+
+def _select_fullframe_cohort_fallback(
+    frame: pd.DataFrame,
+    *,
+    keep_prob_col: str,
+    date_col: str,
+    player_col: str,
+    target_col: str,
+    direction_col: str,
+    result_col: str,
+    base_policy: GatePolicyConfig,
+    recent_days: int,
+    recent_hit_floor_pp: float,
+    recent_profit_floor: float,
+    broad_profit_floor: float,
+    broad_hit_floor_pp: float,
+    min_coverage_retention: float,
+    max_fire_rate: float,
+    segment_search_max_size: int,
+    segment_search_max_subsets: int,
+    segment_search_min_rows: int,
+    segment_search_seed_limit: int,
+    cohort_search_min_delta_pp: float,
+    min_affected_share: float,
+    max_top_removed_player_share: float,
+    max_top_removed_segment_share: float,
+    max_top_removed_target_share: float,
+) -> dict[str, Any] | None:
+    if frame.empty:
+        return None
+    cohort_packs = _meta_cohort_packs_for_search(
+        frame,
+        target_col=target_col,
+        direction_col=direction_col,
+        result_col=result_col,
+        max_size=int(segment_search_max_size),
+        max_subsets=int(segment_search_max_subsets),
+        min_cohort_rows=int(segment_search_min_rows),
+        seed_limit=int(segment_search_seed_limit),
+        min_negative_delta_pp=float(cohort_search_min_delta_pp),
+        enabled=True,
+    )
+    cohort_packs = [pack for pack in cohort_packs if pack]
+    if not cohort_packs:
+        return None
+
+    dates = _coerce_event_datetime(frame.get(date_col))
+    max_date = dates.max()
+    recent_start = max_date - pd.Timedelta(days=int(max(1, recent_days)) - 1) if pd.notna(max_date) else pd.NaT
+    best: dict[str, Any] | None = None
+    for cohort_pack in cohort_packs:
+        policy = GatePolicyConfig(
+            max_fire_rate=float(base_policy.max_fire_rate),
+            min_coverage_rate=float(base_policy.min_coverage_rate),
+            max_removed_per_day=int(base_policy.max_removed_per_day),
+            max_removed_per_player_per_day=int(base_policy.max_removed_per_player_per_day),
+            max_removed_per_segment_per_day=int(base_policy.max_removed_per_segment_per_day),
+            max_removed_per_target_per_day=int(base_policy.max_removed_per_target_per_day),
+            tail_slots_only=0,
+            min_veto_gap=0.0,
+            require_keep_prob_filter=False,
+            allowed_segments=tuple(),
+            allowed_meta_cohorts=tuple(cohort_pack),
+        )
+        scored = apply_shadow_gate_policy(
+            frame,
+            keep_prob_col=keep_prob_col,
+            date_col=date_col,
+            player_col=player_col,
+            target_col=target_col,
+            direction_col=direction_col,
+            threshold=-1.0,
+            policy=policy,
+        )
+        broad_summary = summarize_paired_outcomes(scored, veto_col="gate_veto", result_col=result_col)
+        if pd.notna(recent_start):
+            recent_part = scored.loc[dates >= recent_start].copy()
+        else:
+            recent_part = scored.iloc[0:0].copy()
+        recent_summary = summarize_paired_outcomes(recent_part, veto_col="gate_veto", result_col=result_col)
+        broad_delta = broad_summary.get("delta", {})
+        recent_delta = recent_summary.get("delta", {})
+        broad_profit = _safe_float(broad_delta.get("profit_units"), float("-inf"))
+        broad_hit = _safe_float(broad_delta.get("hit_rate_pp"), float("-inf"))
+        recent_profit = _safe_float(recent_delta.get("profit_units"), float("-inf"))
+        recent_hit = _safe_float(recent_delta.get("hit_rate_pp"), float("-inf"))
+        fire_rate = _safe_float(pd.to_numeric(scored.get("gate_veto"), errors="coerce").fillna(0).mean(), 0.0)
+        resolved = scored.loc[scored[result_col].astype(str).str.lower().isin(["win", "loss"])].copy()
+        affected_share = _safe_float(pd.to_numeric(resolved.get("gate_veto"), errors="coerce").fillna(0).mean(), 0.0)
+        base_resolved = _safe_float(broad_summary.get("baseline", {}).get("resolved"), 0.0)
+        gated_resolved = _safe_float(broad_summary.get("gated", {}).get("resolved"), 0.0)
+        coverage_retention = float(gated_resolved / base_resolved) if base_resolved > 0.0 else 1.0
+        concentration = concentration_stats(
+            scored,
+            veto_col="gate_veto",
+            player_col=player_col,
+            target_col=target_col,
+            direction_col=direction_col,
+        )
+        top_player_share = _safe_float(concentration.get("top_player_share"), 0.0)
+        top_segment_share = _safe_float(concentration.get("top_segment_share"), 0.0)
+        top_target_share = _safe_float(concentration.get("top_target_share"), 0.0)
+        constraints_passed = bool(
+            broad_profit >= float(broad_profit_floor)
+            and broad_hit >= float(broad_hit_floor_pp)
+            and recent_hit >= float(recent_hit_floor_pp)
+            and recent_profit >= float(recent_profit_floor)
+            and coverage_retention >= float(min_coverage_retention)
+            and fire_rate <= float(max_fire_rate)
+            and affected_share >= float(min_affected_share)
+            and top_player_share <= float(max_top_removed_player_share)
+            and top_segment_share <= float(max_top_removed_segment_share)
+            and top_target_share <= float(max_top_removed_target_share)
+        )
+        if not constraints_passed:
+            continue
+        objective_score = (
+            float(broad_profit)
+            + 0.80 * float(recent_profit)
+            + 0.03 * float(broad_hit)
+            + 0.04 * float(recent_hit)
+            + 0.30 * float(affected_share)
+        )
+        candidate = {
+            "threshold": -1.0,
+            "allowed_segments": [],
+            "segment_count": 0,
+            "allowed_meta_cohorts": [str(v) for v in cohort_pack],
+            "meta_cohort_count": int(len(cohort_pack)),
+            "tail_slots_only": 0,
+            "min_veto_gap": 0.0,
+            "require_keep_prob_filter": False,
+            "broad_profit_units": float(broad_profit),
+            "broad_hit_rate_pp": float(broad_hit),
+            "recent_profit_units": float(recent_profit),
+            "recent_hit_rate_pp": float(recent_hit),
+            "coverage_retention": float(coverage_retention),
+            "fire_rate": float(fire_rate),
+            "affected_share": float(affected_share),
+            "top_player_share": float(top_player_share),
+            "top_segment_share": float(top_segment_share),
+            "top_target_share": float(top_target_share),
+            "objective_score": float(objective_score),
+            "broad_summary": broad_summary,
+            "recent_summary": recent_summary,
+            "constraints_passed": True,
+            "recent_days": int(max(1, recent_days)),
+            "selection_mode": "fullframe_cohort_fallback",
+            "reason": "oof_noop_fullframe_cohort_fallback_selected",
+        }
+        if best is None:
+            best = candidate
+            continue
+        if candidate["objective_score"] > best.get("objective_score", float("-inf")) + 1e-12:
+            best = candidate
+            continue
+        if (
+            abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
+            and candidate["broad_profit_units"] > best["broad_profit_units"] + 1e-12
+        ):
+            best = candidate
+            continue
+        if (
+            abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
+            and abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
+            and candidate["recent_profit_units"] > best["recent_profit_units"] + 1e-12
+        ):
+            best = candidate
+            continue
+        if (
+            abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
+            and abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
+            and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
+            and candidate["recent_hit_rate_pp"] > best["recent_hit_rate_pp"] + 1e-12
+        ):
+            best = candidate
+    return best
 
 
 def cmd_train_shadow(args: argparse.Namespace) -> None:
@@ -1568,6 +2287,7 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
         max_removed_per_target_per_day=int(args.max_removed_per_target_per_day),
         tail_slots_only=int(args.tail_slots_only),
         min_veto_gap=float(args.min_veto_gap),
+        require_keep_prob_filter=True,
     )
     criteria = PromotionCriteria(
         min_broad_profit_delta_units=float(args.min_broad_profit_delta_units),
@@ -1643,8 +2363,45 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
             result_col=result_col,
             policy=gate_policy,
             quantiles=quantiles,
+            threshold_max_candidates=int(args.threshold_max_candidates),
+            segment_search_max_size=int(args.segment_search_max_size),
+            segment_search_max_subsets=int(args.segment_search_max_subsets),
+            segment_search_min_rows=int(args.segment_search_min_rows),
+            segment_search_seed_limit=int(args.segment_search_seed_limit),
+            cohort_search_enabled=bool(not args.disable_cohort_search),
+            cohort_search_min_delta_pp=float(args.cohort_search_min_delta_pp),
+            min_affected_share=float(args.train_threshold_min_affected_share),
+            max_top_removed_player_share=float(args.train_threshold_max_top_removed_player_share),
+            max_top_removed_segment_share=float(args.train_threshold_max_top_removed_segment_share),
+            max_top_removed_target_share=float(args.train_threshold_max_top_removed_target_share),
+            min_coverage_retention=float(args.train_threshold_min_coverage_retention),
+            prefer_non_noop_when_close=bool(not args.disable_train_non_noop_exploration),
+            non_noop_objective_margin=float(args.train_non_noop_objective_margin),
         )
         fold_thresholds.append(float(threshold))
+        fold_allowed_segments = tuple(
+            str(seg).upper().strip()
+            for seg in threshold_diag.get("allowed_segments", [])
+            if str(seg).strip()
+        )
+        fold_allowed_meta_cohorts = tuple(
+            str(seg).upper().strip()
+            for seg in threshold_diag.get("allowed_meta_cohorts", [])
+            if str(seg).strip()
+        )
+        fold_policy = GatePolicyConfig(
+            max_fire_rate=float(gate_policy.max_fire_rate),
+            min_coverage_rate=float(gate_policy.min_coverage_rate),
+            max_removed_per_day=int(gate_policy.max_removed_per_day),
+            max_removed_per_player_per_day=int(gate_policy.max_removed_per_player_per_day),
+            max_removed_per_segment_per_day=int(gate_policy.max_removed_per_segment_per_day),
+            max_removed_per_target_per_day=int(gate_policy.max_removed_per_target_per_day),
+            tail_slots_only=int(_safe_int(threshold_diag.get("tail_slots_only"), gate_policy.tail_slots_only)),
+            min_veto_gap=float(_safe_float(threshold_diag.get("min_veto_gap"), gate_policy.min_veto_gap)),
+            require_keep_prob_filter=bool(threshold_diag.get("require_keep_prob_filter", gate_policy.require_keep_prob_filter)),
+            allowed_segments=fold_allowed_segments,
+            allowed_meta_cohorts=fold_allowed_meta_cohorts,
+        )
 
         test["gate_keep_prob"] = model.predict_proba_dataframe(test)
         scored = apply_shadow_gate_policy(
@@ -1655,10 +2412,12 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
             target_col=target_col,
             direction_col=direction_col,
             threshold=float(threshold),
-            policy=gate_policy,
+            policy=fold_policy,
         )
         scored["fold_index"] = int(fold_idx)
         scored["fold_threshold"] = float(threshold)
+        scored["fold_allowed_segments"] = "||".join(fold_allowed_segments)
+        scored["fold_allowed_meta_cohorts"] = "||".join(fold_allowed_meta_cohorts)
         fold_rows.append(scored)
 
         fold_summary = summarize_paired_outcomes(scored, veto_col="gate_veto", result_col=result_col)
@@ -1672,6 +2431,8 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
                 "train_rows": int(fold.get("train_rows", len(train))),
                 "test_rows": int(fold.get("test_rows", len(test))),
                 "threshold": float(threshold),
+                "allowed_segments": [str(v) for v in fold_allowed_segments],
+                "allowed_meta_cohorts": [str(v) for v in fold_allowed_meta_cohorts],
                 "threshold_diagnostics": threshold_diag,
                 "summary": fold_summary,
             }
@@ -1722,6 +2483,7 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
         result_col=result_col,
         policy=gate_policy,
         quantiles=quantiles,
+        threshold_max_candidates=int(args.threshold_max_candidates),
         recent_days=int(args.threshold_recent_days),
         recent_hit_floor_pp=float(args.threshold_recent_hit_floor_pp),
         recent_profit_floor=float(args.threshold_recent_profit_floor),
@@ -1731,10 +2493,25 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
         max_fire_rate=float(args.threshold_max_fire_rate),
         segment_search_max_size=int(args.segment_search_max_size),
         segment_search_max_subsets=int(args.segment_search_max_subsets),
+        segment_search_min_rows=int(args.segment_search_min_rows),
+        segment_search_seed_limit=int(args.segment_search_seed_limit),
+        cohort_search_enabled=bool(not args.disable_cohort_search),
+        cohort_search_min_delta_pp=float(args.cohort_search_min_delta_pp),
+        min_affected_share=float(args.threshold_min_affected_share),
+        max_top_removed_player_share=float(args.threshold_max_top_removed_player_share),
+        max_top_removed_segment_share=float(args.threshold_max_top_removed_segment_share),
+        max_top_removed_target_share=float(args.threshold_max_top_removed_target_share),
+        prefer_relaxed_non_noop_when_close=bool(not args.disable_final_non_noop_exploration),
+        relaxed_non_noop_objective_margin=float(args.final_non_noop_objective_margin),
     )
     selected_allowed_segments = tuple(
         str(seg).upper().strip()
         for seg in threshold_selection.get("allowed_segments", [])
+        if str(seg).strip()
+    )
+    selected_allowed_meta_cohorts = tuple(
+        str(seg).upper().strip()
+        for seg in threshold_selection.get("allowed_meta_cohorts", [])
         if str(seg).strip()
     )
     final_gate_policy = GatePolicyConfig(
@@ -1744,9 +2521,11 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
         max_removed_per_player_per_day=int(gate_policy.max_removed_per_player_per_day),
         max_removed_per_segment_per_day=int(gate_policy.max_removed_per_segment_per_day),
         max_removed_per_target_per_day=int(gate_policy.max_removed_per_target_per_day),
-        tail_slots_only=int(gate_policy.tail_slots_only),
-        min_veto_gap=float(gate_policy.min_veto_gap),
+        tail_slots_only=int(_safe_int(threshold_selection.get("tail_slots_only"), gate_policy.tail_slots_only)),
+        min_veto_gap=float(_safe_float(threshold_selection.get("min_veto_gap"), gate_policy.min_veto_gap)),
+        require_keep_prob_filter=bool(threshold_selection.get("require_keep_prob_filter", gate_policy.require_keep_prob_filter)),
         allowed_segments=selected_allowed_segments,
+        allowed_meta_cohorts=selected_allowed_meta_cohorts,
     )
 
     final_model = RegularizedLogisticGate(config=logistic_cfg)
@@ -1758,7 +2537,61 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
     )
     full_scored = working.copy()
     full_scored["gate_keep_prob"] = final_model.predict_proba_dataframe(full_scored)
-    full_scored = apply_shadow_gate_policy(
+    fullframe_fallback_triggered = bool(
+        float(final_threshold) <= -0.999999
+        or not bool(threshold_selection.get("constraints_passed", False))
+    )
+    if bool(not args.disable_fullframe_cohort_fallback) and fullframe_fallback_triggered:
+        fallback_selection = _select_fullframe_cohort_fallback(
+            full_scored,
+            keep_prob_col="gate_keep_prob",
+            date_col="_event_date",
+            player_col=player_col,
+            target_col=target_col,
+            direction_col=direction_col,
+            result_col=result_col,
+            base_policy=gate_policy,
+            recent_days=int(args.threshold_recent_days),
+            recent_hit_floor_pp=float(args.threshold_recent_hit_floor_pp),
+            recent_profit_floor=float(args.threshold_recent_profit_floor),
+            broad_profit_floor=float(args.threshold_broad_profit_floor),
+            broad_hit_floor_pp=float(args.threshold_broad_hit_floor_pp),
+            min_coverage_retention=float(args.threshold_min_coverage_retention),
+            max_fire_rate=float(args.threshold_max_fire_rate),
+            segment_search_max_size=int(args.segment_search_max_size),
+            segment_search_max_subsets=int(args.segment_search_max_subsets),
+            segment_search_min_rows=int(args.segment_search_min_rows),
+            segment_search_seed_limit=int(args.segment_search_seed_limit),
+            cohort_search_min_delta_pp=float(args.cohort_search_min_delta_pp),
+            min_affected_share=float(args.threshold_min_affected_share),
+            max_top_removed_player_share=float(args.threshold_max_top_removed_player_share),
+            max_top_removed_segment_share=float(args.threshold_max_top_removed_segment_share),
+            max_top_removed_target_share=float(args.threshold_max_top_removed_target_share),
+        )
+        if fallback_selection is not None:
+            threshold_selection["oof_selection"] = dict(threshold_selection)
+            threshold_selection = fallback_selection
+            final_threshold = float(threshold_selection.get("threshold", -1.0))
+            selected_allowed_segments = tuple()
+            selected_allowed_meta_cohorts = tuple(
+                str(seg).upper().strip()
+                for seg in threshold_selection.get("allowed_meta_cohorts", [])
+                if str(seg).strip()
+            )
+            final_gate_policy = GatePolicyConfig(
+                max_fire_rate=float(gate_policy.max_fire_rate),
+                min_coverage_rate=float(gate_policy.min_coverage_rate),
+                max_removed_per_day=int(gate_policy.max_removed_per_day),
+                max_removed_per_player_per_day=int(gate_policy.max_removed_per_player_per_day),
+                max_removed_per_segment_per_day=int(gate_policy.max_removed_per_segment_per_day),
+                max_removed_per_target_per_day=int(gate_policy.max_removed_per_target_per_day),
+                tail_slots_only=0,
+                min_veto_gap=0.0,
+                require_keep_prob_filter=False,
+                allowed_segments=selected_allowed_segments,
+                allowed_meta_cohorts=selected_allowed_meta_cohorts,
+            )
+    full_scored_candidate = apply_shadow_gate_policy(
         full_scored,
         keep_prob_col="gate_keep_prob",
         date_col="_event_date",
@@ -1768,8 +2601,114 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
         threshold=float(final_threshold),
         policy=final_gate_policy,
     )
+    guard_broad_summary = summarize_paired_outcomes(full_scored_candidate, veto_col="gate_veto", result_col=result_col)
+    guard_max_date = _coerce_event_datetime(full_scored_candidate.get("_event_date")).max()
+    guard_recent_start = (
+        guard_max_date - pd.Timedelta(days=int(max(1, args.threshold_recent_days)) - 1)
+        if pd.notna(guard_max_date)
+        else pd.NaT
+    )
+    if pd.notna(guard_recent_start):
+        guard_recent_frame = full_scored_candidate.loc[_coerce_event_datetime(full_scored_candidate.get("_event_date")) >= guard_recent_start].copy()
+    else:
+        guard_recent_frame = full_scored_candidate.iloc[0:0].copy()
+    guard_recent_summary = summarize_paired_outcomes(guard_recent_frame, veto_col="gate_veto", result_col=result_col)
+    guard_broad_delta = guard_broad_summary.get("delta", {})
+    guard_recent_delta = guard_recent_summary.get("delta", {})
+    guard_broad_profit = _safe_float(guard_broad_delta.get("profit_units"), float("-inf"))
+    guard_broad_hit = _safe_float(guard_broad_delta.get("hit_rate_pp"), float("-inf"))
+    guard_recent_profit = _safe_float(guard_recent_delta.get("profit_units"), float("-inf"))
+    guard_recent_hit = _safe_float(guard_recent_delta.get("hit_rate_pp"), float("-inf"))
+    full_fit_guard_pass = bool(
+        guard_broad_profit >= float(args.threshold_broad_profit_floor)
+        and guard_broad_hit >= float(args.threshold_broad_hit_floor_pp)
+        and guard_recent_profit >= float(args.threshold_recent_profit_floor)
+        and guard_recent_hit >= float(args.threshold_recent_hit_floor_pp)
+    )
+    threshold_selection["full_fit_guard"] = {
+        "pass": bool(full_fit_guard_pass),
+        "broad_profit_units": float(guard_broad_profit),
+        "broad_hit_rate_pp": float(guard_broad_hit),
+        "recent_profit_units": float(guard_recent_profit),
+        "recent_hit_rate_pp": float(guard_recent_hit),
+        "recent_days": int(max(1, args.threshold_recent_days)),
+    }
+    if not bool(full_fit_guard_pass) and float(final_threshold) > -0.999999:
+        final_threshold = -1.0
+        selected_allowed_segments = tuple()
+        selected_allowed_meta_cohorts = tuple()
+        final_gate_policy = GatePolicyConfig(
+            max_fire_rate=float(gate_policy.max_fire_rate),
+            min_coverage_rate=float(gate_policy.min_coverage_rate),
+            max_removed_per_day=int(gate_policy.max_removed_per_day),
+            max_removed_per_player_per_day=int(gate_policy.max_removed_per_player_per_day),
+            max_removed_per_segment_per_day=int(gate_policy.max_removed_per_segment_per_day),
+            max_removed_per_target_per_day=int(gate_policy.max_removed_per_target_per_day),
+            tail_slots_only=int(gate_policy.tail_slots_only),
+            min_veto_gap=float(gate_policy.min_veto_gap),
+            require_keep_prob_filter=True,
+            allowed_segments=selected_allowed_segments,
+            allowed_meta_cohorts=selected_allowed_meta_cohorts,
+        )
+        threshold_selection["selection_mode"] = "full_fit_guard_no_op_fallback"
+        threshold_selection["reason"] = "full_fit_guard_failed_no_harm_fallback"
+        threshold_selection["threshold"] = float(final_threshold)
+        threshold_selection["allowed_segments"] = []
+        threshold_selection["allowed_meta_cohorts"] = []
+        threshold_selection["segment_count"] = 0
+        threshold_selection["meta_cohort_count"] = 0
+        threshold_selection["full_fit_guard"]["fallback_applied"] = True
+        full_scored = apply_shadow_gate_policy(
+            full_scored,
+            keep_prob_col="gate_keep_prob",
+            date_col="_event_date",
+            player_col=player_col,
+            target_col=target_col,
+            direction_col=direction_col,
+            threshold=float(final_threshold),
+            policy=final_gate_policy,
+        )
+    else:
+        threshold_selection["full_fit_guard"]["fallback_applied"] = False
+        full_scored = full_scored_candidate
     full_scored["fold_index"] = -1
     full_scored["fold_threshold"] = float(final_threshold)
+
+    final_broad_summary = summarize_paired_outcomes(full_scored, veto_col="gate_veto", result_col=result_col)
+    final_max_date = _coerce_event_datetime(full_scored.get("_event_date")).max()
+    final_recent_start = final_max_date - pd.Timedelta(days=int(max(1, args.recent_days)) - 1) if pd.notna(final_max_date) else pd.NaT
+    if pd.notna(final_recent_start):
+        final_recent = full_scored.loc[_coerce_event_datetime(full_scored.get("_event_date")) >= final_recent_start].copy()
+    else:
+        final_recent = full_scored.iloc[0:0].copy()
+    final_recent_summary = summarize_paired_outcomes(final_recent, veto_col="gate_veto", result_col=result_col)
+    final_resolved = full_scored.loc[full_scored[result_col].isin(["win", "loss"])].copy()
+    final_affected_share = _safe_float(final_resolved.get("gate_veto", pd.Series(dtype="float64")).mean(), 0.0)
+    final_observed_fire_rate = float(final_affected_share)
+    final_concentration = concentration_stats(
+        full_scored,
+        veto_col="gate_veto",
+        player_col=player_col,
+        target_col=target_col,
+        direction_col=direction_col,
+    )
+    final_rolling = rolling_window_paired_deltas(
+        full_scored,
+        date_col="_event_date",
+        veto_col="gate_veto",
+        result_col=result_col,
+        window_days=int(args.rolling_window_days),
+        step_days=int(args.rolling_step_days),
+    )
+    final_recommendation = build_promotion_recommendation(
+        broad_delta=final_broad_summary.get("delta", {}),
+        recent_delta=final_recent_summary.get("delta", {}),
+        affected_share=float(final_affected_share),
+        concentration=final_concentration,
+        rolling=final_rolling,
+        observed_fire_rate=float(final_observed_fire_rate),
+        criteria=criteria,
+    )
 
     model_payload = {
         "version": 1,
@@ -1791,7 +2730,7 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
         "categorical_features": categorical_features,
         "model": final_model.to_dict(),
         "shadow_only": True,
-        "live_ready": bool(recommendation.get("pass", False)),
+        "live_ready": bool(final_recommendation.get("pass", False)),
         "notes": "Candidate gate artifact; does not mutate production policy automatically.",
     }
 
@@ -1816,30 +2755,47 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
             "broad_profit_floor": float(args.threshold_broad_profit_floor),
             "broad_hit_floor_pp": float(args.threshold_broad_hit_floor_pp),
             "recent_days": int(args.threshold_recent_days),
+            "threshold_max_candidates": int(args.threshold_max_candidates),
             "recent_profit_floor": float(args.threshold_recent_profit_floor),
             "recent_hit_floor_pp": float(args.threshold_recent_hit_floor_pp),
             "min_coverage_retention": float(args.threshold_min_coverage_retention),
             "max_fire_rate": float(args.threshold_max_fire_rate),
             "segment_search_max_size": int(args.segment_search_max_size),
             "segment_search_max_subsets": int(args.segment_search_max_subsets),
+            "segment_search_min_rows": int(args.segment_search_min_rows),
+            "segment_search_seed_limit": int(args.segment_search_seed_limit),
+            "cohort_search_enabled": bool(not args.disable_cohort_search),
+            "cohort_search_min_delta_pp": float(args.cohort_search_min_delta_pp),
+            "fullframe_cohort_fallback_enabled": bool(not args.disable_fullframe_cohort_fallback),
+            "min_affected_share": float(args.threshold_min_affected_share),
+            "max_top_removed_player_share": float(args.threshold_max_top_removed_player_share),
+            "max_top_removed_segment_share": float(args.threshold_max_top_removed_segment_share),
+            "max_top_removed_target_share": float(args.threshold_max_top_removed_target_share),
+            "final_non_noop_exploration_enabled": bool(not args.disable_final_non_noop_exploration),
+            "final_non_noop_objective_margin": float(args.final_non_noop_objective_margin),
+            "train_non_noop_exploration_enabled": bool(not args.disable_train_non_noop_exploration),
+            "train_non_noop_objective_margin": float(args.train_non_noop_objective_margin),
         },
-        "broad_summary": broad_summary,
-        "recent_summary": recent_summary,
+        "broad_summary": final_broad_summary,
+        "recent_summary": final_recent_summary,
+        "oof_broad_summary": broad_summary,
+        "oof_recent_summary": recent_summary,
         "recent_window": {
             "days": int(args.recent_days),
-            "start": str(recent_start.date()),
-            "end": str(max_date.date()) if pd.notna(max_date) else "",
-            "rows": int(len(recent)),
+            "start": str(final_recent_start.date()) if pd.notna(final_recent_start) else "",
+            "end": str(final_max_date.date()) if pd.notna(final_max_date) else "",
+            "rows": int(len(final_recent)),
         },
-        "affected_share": float(affected_share),
-        "observed_fire_rate": float(observed_fire_rate),
-        "concentration": concentration,
+        "affected_share": float(final_affected_share),
+        "observed_fire_rate": float(final_observed_fire_rate),
+        "concentration": final_concentration,
         "rolling_window": {
             "days": int(args.rolling_window_days),
             "step_days": int(args.rolling_step_days),
-            "rows": int(len(rolling)),
+            "rows": int(len(final_rolling)),
         },
-        "promotion_recommendation": recommendation,
+        "promotion_recommendation": final_recommendation,
+        "oof_promotion_recommendation": recommendation,
         "fold_reports": fold_reports,
         "model_threshold": float(final_threshold),
     }
@@ -1863,9 +2819,9 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
     print("Accepted-pick gate shadow training complete.")
     print(f"History rows (resolved): {len(working)}")
     print(f"Walk-forward folds:      {len(fold_reports)}")
-    print(f"Broad delta hit-rate:    {_safe_float(broad_summary.get('delta', {}).get('hit_rate_pp'), np.nan):.4f} pp")
-    print(f"Broad delta EV/resolved: {_safe_float(broad_summary.get('delta', {}).get('ev_per_resolved'), np.nan):.6f}")
-    print(f"Promotion pass:          {bool(recommendation.get('pass', False))}")
+    print(f"Broad delta hit-rate:    {_safe_float(final_broad_summary.get('delta', {}).get('hit_rate_pp'), np.nan):.4f} pp")
+    print(f"Broad delta EV/resolved: {_safe_float(final_broad_summary.get('delta', {}).get('ev_per_resolved'), np.nan):.6f}")
+    print(f"Promotion pass:          {bool(final_recommendation.get('pass', False))}")
     print(f"Candidate model JSON:    {model_out}")
     print(f"Training report JSON:    {report_out}")
     print(f"Scored rows CSV:         {scored_rows_out}")
@@ -1974,6 +2930,7 @@ def build_parser() -> argparse.ArgumentParser:
     tr.add_argument("--min-train-rows", type=int, default=250)
     tr.add_argument("--min-test-rows", type=int, default=20)
     tr.add_argument("--threshold-quantiles", type=str, default="0.05,0.10,0.15,0.20,0.25,0.30,0.35,0.40")
+    tr.add_argument("--threshold-max-candidates", type=int, default=48)
     tr.add_argument("--max-fire-rate", type=float, default=0.08)
     tr.add_argument("--min-coverage-rate", type=float, default=0.97)
     tr.add_argument("--max-removed-per-day", type=int, default=1)
@@ -1992,8 +2949,26 @@ def build_parser() -> argparse.ArgumentParser:
     tr.add_argument("--threshold-broad-hit-floor-pp", type=float, default=0.0)
     tr.add_argument("--threshold-min-coverage-retention", type=float, default=0.98)
     tr.add_argument("--threshold-max-fire-rate", type=float, default=0.03)
+    tr.add_argument("--threshold-min-affected-share", type=float, default=0.02)
+    tr.add_argument("--threshold-max-top-removed-player-share", type=float, default=0.30)
+    tr.add_argument("--threshold-max-top-removed-segment-share", type=float, default=0.35)
+    tr.add_argument("--threshold-max-top-removed-target-share", type=float, default=0.55)
+    tr.add_argument("--disable-final-non-noop-exploration", action="store_true")
+    tr.add_argument("--final-non-noop-objective-margin", type=float, default=0.20)
+    tr.add_argument("--segment-search-min-rows", type=int, default=24)
+    tr.add_argument("--segment-search-seed-limit", type=int, default=6)
     tr.add_argument("--segment-search-max-size", type=int, default=3)
     tr.add_argument("--segment-search-max-subsets", type=int, default=128)
+    tr.add_argument("--disable-cohort-search", action="store_true")
+    tr.add_argument("--cohort-search-min-delta-pp", type=float, default=-4.0)
+    tr.add_argument("--disable-fullframe-cohort-fallback", action="store_true")
+    tr.add_argument("--train-threshold-min-affected-share", type=float, default=0.01)
+    tr.add_argument("--train-threshold-max-top-removed-player-share", type=float, default=0.40)
+    tr.add_argument("--train-threshold-max-top-removed-segment-share", type=float, default=0.65)
+    tr.add_argument("--train-threshold-max-top-removed-target-share", type=float, default=0.80)
+    tr.add_argument("--train-threshold-min-coverage-retention", type=float, default=0.96)
+    tr.add_argument("--disable-train-non-noop-exploration", action="store_true")
+    tr.add_argument("--train-non-noop-objective-margin", type=float, default=0.30)
     tr.add_argument("--min-broad-profit-delta-units", type=float, default=0.0)
     tr.add_argument("--min-recent-profit-delta-units", type=float, default=0.0)
     tr.add_argument("--min-recent-hit-rate-delta-pp", type=float, default=0.0)

@@ -26,6 +26,18 @@ def normalize_player_name(value: Any) -> str:
     return "" if text in PLAYER_NULL_TOKENS else text
 
 
+def coerce_event_datetime(values: Any) -> pd.Series:
+    series = values if isinstance(values, pd.Series) else pd.Series(values)
+    out = pd.to_datetime(series, errors="coerce")
+    numeric = pd.to_numeric(series, errors="coerce")
+    ymd_mask = numeric.between(19000101, 21001231, inclusive="both")
+    if bool(ymd_mask.any()):
+        ymd_text = numeric.round().astype("Int64").astype(str)
+        parsed_ymd = pd.to_datetime(ymd_text.where(ymd_mask), format="%Y%m%d", errors="coerce")
+        out = out.where(~ymd_mask, parsed_ymd)
+    return out
+
+
 def abbreviate_player_name(normalized: str) -> str:
     if not normalized:
         return ""
@@ -120,7 +132,89 @@ class GatePolicyConfig:
     max_removed_per_target_per_day: int = 2
     tail_slots_only: int = 2
     min_veto_gap: float = 0.02
+    require_keep_prob_filter: bool = True
     allowed_segments: tuple[str, ...] = ()
+    allowed_meta_cohorts: tuple[str, ...] = ()
+
+
+def _bucketize_numeric(values: pd.Series, bins: list[float], labels: list[str]) -> pd.Series:
+    numeric = pd.to_numeric(values, errors="coerce")
+    bucket = pd.cut(numeric, bins=bins, labels=labels, include_lowest=True)
+    out = bucket.astype("object").astype(str)
+    out = out.where(out.str.lower().ne("nan"), "")
+    out = out.fillna("")
+    return out.astype("object")
+
+
+def build_meta_cohort_columns(
+    frame: pd.DataFrame,
+    *,
+    target_col: str = "target",
+    direction_col: str = "direction",
+) -> pd.DataFrame:
+    if frame.empty:
+        return pd.DataFrame(index=frame.index)
+    target = frame.get(target_col, pd.Series("", index=frame.index)).fillna("").astype(str).str.upper().str.strip()
+    direction = frame.get(direction_col, pd.Series("", index=frame.index)).fillna("").astype(str).str.upper().str.strip()
+    segment = (target + "|" + direction).where(target.str.len().gt(0) & direction.str.len().gt(0), "")
+
+    cohorts = pd.DataFrame(index=frame.index)
+    cohorts["meta_seg"] = ("SEG|" + segment).where(segment.str.len().gt(0), "")
+
+    if "p_calibrated" in frame.columns:
+        p_band = _bucketize_numeric(
+            frame.get("p_calibrated", pd.Series(np.nan, index=frame.index)),
+            bins=[-np.inf, 0.55, 0.60, 0.65, 0.70, 0.75, np.inf],
+            labels=["LE_055", "B055_060", "B060_065", "B065_070", "B070_075", "GT_075"],
+        )
+        cohorts["meta_seg_p"] = ("SEGP|" + segment + "|" + p_band).where(segment.str.len().gt(0) & p_band.str.len().gt(0), "")
+
+    if "expected_win_rate" in frame.columns:
+        ew_band = _bucketize_numeric(
+            frame.get("expected_win_rate", pd.Series(np.nan, index=frame.index)),
+            bins=[-np.inf, 0.55, 0.60, 0.65, 0.70, 0.75, np.inf],
+            labels=["LE_055", "B055_060", "B060_065", "B065_070", "B070_075", "GT_075"],
+        )
+        cohorts["meta_seg_ew"] = ("SEGEW|" + segment + "|" + ew_band).where(segment.str.len().gt(0) & ew_band.str.len().gt(0), "")
+
+    if "ev" in frame.columns:
+        ev_band = _bucketize_numeric(
+            frame.get("ev", pd.Series(np.nan, index=frame.index)),
+            bins=[-np.inf, 0.00, 0.02, 0.04, 0.06, 0.08, np.inf],
+            labels=["LE_000", "B000_002", "B002_004", "B004_006", "B006_008", "GT_008"],
+        )
+        cohorts["meta_seg_ev"] = ("SEGEV|" + segment + "|" + ev_band).where(segment.str.len().gt(0) & ev_band.str.len().gt(0), "")
+
+    if "market_line" in frame.columns:
+        line_band = _bucketize_numeric(
+            frame.get("market_line", pd.Series(np.nan, index=frame.index)),
+            bins=[-np.inf, 0.5, 1.5, 3.5, 5.5, 8.5, np.inf],
+            labels=["L00_05", "L05_15", "L15_35", "L35_55", "L55_85", "L85P"],
+        )
+        cohorts["meta_seg_line"] = ("SEGLINE|" + segment + "|" + line_band).where(segment.str.len().gt(0) & line_band.str.len().gt(0), "")
+
+    if "board_instability_score" in frame.columns:
+        inst_band = _bucketize_numeric(
+            frame.get("board_instability_score", pd.Series(np.nan, index=frame.index)),
+            bins=[-np.inf, 0.05, 0.10, 0.20, 0.30, np.inf],
+            labels=["I00_05", "I05_10", "I10_20", "I20_30", "I30P"],
+        )
+        cohorts["meta_seg_instability"] = ("SEGINST|" + segment + "|" + inst_band).where(segment.str.len().gt(0) & inst_band.str.len().gt(0), "")
+
+    if "board_segment_recent_weakness" in frame.columns:
+        weakness_band = _bucketize_numeric(
+            frame.get("board_segment_recent_weakness", pd.Series(np.nan, index=frame.index)),
+            bins=[-np.inf, -0.10, 0.0, 0.10, 0.20, np.inf],
+            labels=["WLT_M010", "WM010_000", "W000_010", "W010_020", "W020P"],
+        )
+        cohorts["meta_seg_weakness"] = ("SEGWEAK|" + segment + "|" + weakness_band).where(
+            segment.str.len().gt(0) & weakness_band.str.len().gt(0),
+            "",
+        )
+
+    for col in cohorts.columns:
+        cohorts[col] = cohorts[col].fillna("").astype(str).str.upper().str.strip()
+    return cohorts
 
 
 @dataclass
@@ -306,7 +400,7 @@ def iter_walk_forward_windows(
 ) -> list[dict[str, Any]]:
     if frame.empty:
         return []
-    dates = pd.to_datetime(frame.get(date_col), errors="coerce")
+    dates = coerce_event_datetime(frame.get(date_col))
     if dates.isna().all():
         return []
     min_date = dates.min()
@@ -369,12 +463,18 @@ def apply_shadow_gate_policy(
     out["_gate_target"] = out.get(target_col, pd.Series("", index=out.index)).fillna("").astype(str).str.upper().str.strip()
     out["_gate_direction"] = out.get(direction_col, pd.Series("", index=out.index)).fillna("").astype(str).str.upper().str.strip()
     out["_gate_segment"] = (out["_gate_target"] + "|" + out["_gate_direction"]).astype("object")
-    out["_gate_date"] = pd.to_datetime(out.get(date_col), errors="coerce").dt.strftime("%Y-%m-%d").fillna("")
+    out["_gate_date"] = coerce_event_datetime(out.get(date_col)).dt.strftime("%Y-%m-%d").fillna("")
     allowed_segments = {
         str(seg).upper().strip()
         for seg in (policy.allowed_segments or ())
         if str(seg).strip()
     }
+    allowed_meta_cohorts = {
+        str(tag).upper().strip()
+        for tag in (policy.allowed_meta_cohorts or ())
+        if str(tag).strip()
+    }
+    meta_cohorts = build_meta_cohort_columns(out, target_col=target_col, direction_col=direction_col)
 
     for gate_date, part in out.groupby("_gate_date", sort=True):
         if not gate_date:
@@ -391,10 +491,22 @@ def apply_shadow_gate_policy(
         if max_veto <= 0:
             continue
 
-        candidates = part.loc[part["gate_keep_prob"] < float(threshold)].copy()
+        if bool(policy.require_keep_prob_filter):
+            candidates = part.loc[part["gate_keep_prob"] < float(threshold)].copy()
+        else:
+            candidates = part.copy()
+            # Safety: never allow unrestricted global rewrites when no cohort/segment scope exists.
+            if not allowed_segments and not allowed_meta_cohorts:
+                candidates = part.loc[part["gate_keep_prob"] < float(threshold)].copy()
         if allowed_segments and not candidates.empty:
             candidates = candidates.loc[candidates["_gate_segment"].isin(allowed_segments)].copy()
-        min_gap = float(max(0.0, policy.min_veto_gap))
+        if allowed_meta_cohorts and not candidates.empty:
+            cohort_part = meta_cohorts.loc[candidates.index] if not meta_cohorts.empty else pd.DataFrame(index=candidates.index)
+            cohort_mask = pd.Series(False, index=candidates.index, dtype=bool)
+            for cohort_col in cohort_part.columns:
+                cohort_mask = cohort_mask | cohort_part[cohort_col].isin(allowed_meta_cohorts)
+            candidates = candidates.loc[cohort_mask].copy()
+        min_gap = float(max(0.0, policy.min_veto_gap)) if bool(policy.require_keep_prob_filter) else 0.0
         if min_gap > 0.0 and not candidates.empty:
             candidates = candidates.loc[candidates["gate_keep_prob_gap"] >= min_gap].copy()
         tail_slots = int(max(0, policy.tail_slots_only))
@@ -426,7 +538,7 @@ def apply_shadow_gate_policy(
             if target and target_counts.get(target, 0) >= int(max(0, policy.max_removed_per_target_per_day)):
                 continue
             out.loc[idx, "gate_veto"] = True
-            out.loc[idx, "gate_veto_reason"] = "low_keep_prob"
+            out.loc[idx, "gate_veto_reason"] = "low_keep_prob" if bool(policy.require_keep_prob_filter) else "meta_cohort_rule"
             veto_count += 1
             if player:
                 player_counts[player] = player_counts.get(player, 0) + 1
@@ -513,7 +625,7 @@ def rolling_window_paired_deltas(
 ) -> pd.DataFrame:
     if frame.empty:
         return pd.DataFrame()
-    dates = pd.to_datetime(frame.get(date_col), errors="coerce")
+    dates = coerce_event_datetime(frame.get(date_col))
     if dates.isna().all():
         return pd.DataFrame()
     start = dates.min()
@@ -666,7 +778,7 @@ def build_promotion_recommendation(
 
 
 def _month_token(value: Any) -> str:
-    ts = pd.to_datetime(value, errors="coerce")
+    ts = coerce_event_datetime(pd.Series([value])).iloc[0]
     if pd.isna(ts):
         return ""
     return ts.strftime("%Y-%m")
@@ -751,7 +863,7 @@ def apply_accepted_pick_gate(
 
     month_hint = _month_token(run_date_hint)
     if not month_hint and date_col in out.columns:
-        month_hint = _month_token(pd.to_datetime(out[date_col], errors="coerce").max())
+        month_hint = _month_token(coerce_event_datetime(out[date_col]).max())
     if not month_hint:
         month_hint = _month_token(pd.Timestamp.utcnow())
     resolved_month, month_payload = _resolve_month_payload(payload, month_hint)
@@ -790,9 +902,15 @@ def apply_accepted_pick_gate(
             max_removed_per_target_per_day=int(policy_payload.get("max_removed_per_target_per_day", policy.max_removed_per_target_per_day)),
             tail_slots_only=int(policy_payload.get("tail_slots_only", policy.tail_slots_only)),
             min_veto_gap=float(policy_payload.get("min_veto_gap", policy.min_veto_gap)),
+            require_keep_prob_filter=bool(policy_payload.get("require_keep_prob_filter", policy.require_keep_prob_filter)),
             allowed_segments=tuple(
                 str(seg).upper().strip()
                 for seg in policy_payload.get("allowed_segments", [])
+                if str(seg).strip()
+            ),
+            allowed_meta_cohorts=tuple(
+                str(seg).upper().strip()
+                for seg in policy_payload.get("allowed_meta_cohorts", [])
                 if str(seg).strip()
             ),
         )
@@ -841,7 +959,9 @@ def apply_accepted_pick_gate(
         f"segment<={int(policy.max_removed_per_segment_per_day)};"
         f"target<={int(policy.max_removed_per_target_per_day)};"
         f"tail={int(policy.tail_slots_only)};gap>={float(policy.min_veto_gap):.3f};"
-        f"allowed_segments={int(len(policy.allowed_segments or ()))}"
+        f"keep_prob_filter={1 if bool(policy.require_keep_prob_filter) else 0};"
+        f"allowed_segments={int(len(policy.allowed_segments or ()))};"
+        f"allowed_meta_cohorts={int(len(policy.allowed_meta_cohorts or ()))}"
     )
     drop_count = int(veto_mask.sum()) if bool(live_effective) else 0
     scored["accepted_pick_gate_drop_applied"] = bool(live_effective and drop_count > 0)
