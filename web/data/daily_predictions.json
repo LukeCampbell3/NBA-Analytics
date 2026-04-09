@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-04-09T19:17:06.582544+00:00",
+  "generated_at_utc": "2026-04-09T19:57:02.323475+00:00",
   "manifest_path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\Player-Predictor\\model\\analysis\\daily_runs\\20260409\\daily_market_pipeline_manifest_20260409.json",
   "run_date": "2026-04-09",
   "season": 2026,
@@ -274,6 +274,118 @@
     "by_allocation_action": {
       "flat": 7,
       "fallback_small": 1
+    }
+  },
+  "accuracy_metrics": {
+    "available": true,
+    "source_history_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\Player-Predictor\\model\\analysis\\latest_market_comparison_strict_rows.csv",
+    "as_of_market_date": "2026-03-28",
+    "computed_at_utc": "2026-04-09T19:57:02.388128+00:00",
+    "overall": {
+      "signal_count": 27,
+      "settled_count": 27,
+      "graded_count": 26,
+      "win_count": 19,
+      "loss_count": 7,
+      "push_count": 1,
+      "unresolved_count": 0,
+      "win_rate": 0.7307692307692307,
+      "loss_rate": 0.2692307692307692,
+      "push_rate": 0.037037037037037035,
+      "roi_per_graded_play": 0.3951048951048951,
+      "unit_profit": 10.272727272727273,
+      "mean_abs_error": 3.7268377646454987,
+      "rmse": 4.904572910941824,
+      "mean_abs_edge": 3.076097501581476
+    },
+    "by_target": {
+      "PTS": {
+        "signal_count": 16,
+        "settled_count": 16,
+        "graded_count": 16,
+        "win_count": 12,
+        "loss_count": 4,
+        "push_count": 0,
+        "unresolved_count": 0,
+        "win_rate": 0.75,
+        "loss_rate": 0.25,
+        "push_rate": 0.0,
+        "roi_per_graded_play": 0.43181818181818177,
+        "unit_profit": 6.909090909090908,
+        "mean_abs_error": 5.172408438167061,
+        "rmse": 6.1193119825939215,
+        "mean_abs_edge": 4.235346927461868
+      },
+      "TRB": {
+        "signal_count": 6,
+        "settled_count": 6,
+        "graded_count": 6,
+        "win_count": 5,
+        "loss_count": 1,
+        "push_count": 0,
+        "unresolved_count": 0,
+        "win_rate": 0.8333333333333334,
+        "loss_rate": 0.16666666666666666,
+        "push_rate": 0.0,
+        "roi_per_graded_play": 0.5909090909090908,
+        "unit_profit": 3.545454545454545,
+        "mean_abs_error": 1.5925954620126646,
+        "rmse": 2.040653023401483,
+        "mean_abs_edge": 1.583615806771742
+      },
+      "AST": {
+        "signal_count": 5,
+        "settled_count": 5,
+        "graded_count": 4,
+        "win_count": 2,
+        "loss_count": 2,
+        "push_count": 1,
+        "unresolved_count": 0,
+        "win_rate": 0.5,
+        "loss_rate": 0.5,
+        "push_rate": 0.2,
+        "roi_per_graded_play": -0.04545454545454547,
+        "unit_profit": -0.18181818181818188,
+        "mean_abs_error": 1.6621023725359052,
+        "rmse": 2.252079129582752,
+        "mean_abs_edge": 1.157477372535905
+      }
+    },
+    "by_direction": {
+      "OVER": {
+        "signal_count": 18,
+        "settled_count": 18,
+        "graded_count": 18,
+        "win_count": 13,
+        "loss_count": 5,
+        "push_count": 0,
+        "unresolved_count": 0,
+        "win_rate": 0.7222222222222222,
+        "loss_rate": 0.2777777777777778,
+        "push_rate": 0.0,
+        "roi_per_graded_play": 0.3787878787878788,
+        "unit_profit": 6.818181818181818,
+        "mean_abs_error": 4.160387340654219,
+        "rmse": 5.509819850284693,
+        "mean_abs_edge": 3.43290784224825
+      },
+      "UNDER": {
+        "signal_count": 9,
+        "settled_count": 9,
+        "graded_count": 8,
+        "win_count": 6,
+        "loss_count": 2,
+        "push_count": 1,
+        "unresolved_count": 0,
+        "win_rate": 0.75,
+        "loss_rate": 0.25,
+        "push_rate": 0.1111111111111111,
+        "roi_per_graded_play": 0.43181818181818177,
+        "unit_profit": 3.454545454545454,
+        "mean_abs_error": 2.8597386126280613,
+        "rmse": 3.383530220206492,
+        "mean_abs_edge": 2.36247682024793
+      }
     }
   },
   "plays": [

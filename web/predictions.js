@@ -2,17 +2,10 @@ class DailyPredictionsPage {
     constructor() {
         this.data = null;
         this.plays = [];
-        this.filtered = [];
         this.elements = {
-            status: document.getElementById('predictionStatus'),
-            meta: document.getElementById('predictionsMeta'),
-            summary: document.getElementById('predictionsSummary'),
-            source: document.getElementById('predictionSource'),
             cards: document.getElementById('predictionCards'),
             empty: document.getElementById('predictionEmpty'),
-            search: document.getElementById('predictionSearch'),
-            target: document.getElementById('predictionTargetFilter'),
-            recommendation: document.getElementById('predictionRecommendationFilter'),
+            runMeta: document.getElementById('predictionRunMeta'),
         };
         this.init();
     }
@@ -20,12 +13,10 @@ class DailyPredictionsPage {
     async init() {
         try {
             await this.load();
-            this.populateFilters();
-            this.bind();
-            this.applyFilters();
+            this.renderCards();
         } catch (error) {
             console.error(error);
-            this.elements.status.textContent = `Unable to load daily predictions: ${error.message}`;
+            this.elements.cards.innerHTML = `<div class="prediction-about-empty">Unable to load daily predictions: ${this.escapeHtml(error.message)}</div>`;
         }
     }
 
@@ -39,47 +30,14 @@ class DailyPredictionsPage {
             if (Math.abs(evDiff) > 1e-9) return evDiff;
             return (Number(b.abs_edge) || 0) - (Number(a.abs_edge) || 0);
         });
-        this.elements.status.textContent = `${this.plays.length} published plays loaded`;
-        this.renderMeta();
-        this.renderSummary();
-        this.renderSource();
+        this.renderRunMeta();
     }
 
-    bind() {
-        this.elements.search.addEventListener('input', () => this.applyFilters());
-        this.elements.target.addEventListener('change', () => this.applyFilters());
-        this.elements.recommendation.addEventListener('change', () => this.applyFilters());
-    }
-
-    populateFilters() {
-        const targets = [...new Set(this.plays.map((play) => play.target).filter(Boolean))];
-        const recommendations = [...new Set(this.plays.map((play) => play.recommendation).filter(Boolean))];
-        for (const target of targets) {
-            const option = document.createElement('option');
-            option.value = target;
-            option.textContent = target;
-            this.elements.target.appendChild(option);
-        }
-        for (const recommendation of recommendations) {
-            const option = document.createElement('option');
-            option.value = recommendation;
-            option.textContent = recommendation.toUpperCase();
-            this.elements.recommendation.appendChild(option);
-        }
-    }
-
-    applyFilters() {
-        const q = (this.elements.search.value || '').trim().toLowerCase();
-        const target = this.elements.target.value;
-        const recommendation = this.elements.recommendation.value;
-        this.filtered = this.plays.filter((play) => {
-            const displayName = this.getPlayDisplayName(play);
-            const matchesQuery = !q || `${displayName} ${play.target || ''} ${play.direction || ''}`.toLowerCase().includes(q);
-            const matchesTarget = !target || play.target === target;
-            const matchesRecommendation = !recommendation || play.recommendation === recommendation;
-            return matchesQuery && matchesTarget && matchesRecommendation;
-        });
-        this.renderCards();
+    renderRunMeta() {
+        const runDate = this.data?.run_date || 'n/a';
+        const throughDate = this.data?.through_date || 'n/a';
+        const policy = this.data?.policy_profile || 'n/a';
+        this.elements.runMeta.textContent = `Run ${runDate} | Data through ${throughDate} | Policy ${policy}`;
     }
 
     getPlayDisplayName(play) {
@@ -106,83 +64,9 @@ class DailyPredictionsPage {
         return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
     }
 
-    renderMeta() {
-        const meta = [];
-        if (this.data?.run_date) meta.push(`Run Date ${this.data.run_date}`);
-        if (this.data?.through_date) meta.push(`Data Through ${this.data.through_date}`);
-        if (this.data?.policy_profile) meta.push(`Policy ${this.data.policy_profile}`);
-        if (this.data?.model_run_id) meta.push(`Model ${this.data.model_run_id}`);
-        this.elements.meta.innerHTML = meta.map((item) => `<span class="prediction-meta-pill">${this.escapeHtml(item)}</span>`).join('');
-    }
-
-    renderSummary() {
-        const summary = this.buildSummaryFromPlays();
-        const items = [
-            ['Published Plays', summary.play_count],
-            ['Avg Expected Win Rate', this.formatPct(summary.avg_expected_win_rate)],
-            ['Avg EV', this.formatSignedPct(summary.avg_ev)],
-            ['Avg Edge', this.formatNumber(summary.avg_edge)],
-        ];
-        this.elements.summary.innerHTML = items.map(([label, value]) => `
-            <article class="prediction-summary-card">
-                <span class="prediction-summary-label">${this.escapeHtml(label)}</span>
-                <strong class="prediction-summary-value">${this.escapeHtml(String(value ?? 'n/a'))}</strong>
-            </article>
-        `).join('');
-    }
-
-    buildSummaryFromPlays() {
-        const plays = Array.isArray(this.plays) ? this.plays : [];
-        if (!plays.length) {
-            return this.data?.summary || {
-                play_count: 0,
-                avg_expected_win_rate: null,
-                avg_ev: null,
-                avg_edge: null,
-            };
-        }
-        const toNum = (value) => {
-            const num = Number(value);
-            return Number.isFinite(num) ? num : null;
-        };
-        const avg = (values) => {
-            const nums = values.map(toNum).filter((value) => value !== null);
-            if (!nums.length) return null;
-            return nums.reduce((acc, value) => acc + value, 0) / nums.length;
-        };
-        return {
-            play_count: plays.length,
-            avg_expected_win_rate: avg(plays.map((play) => play.expected_win_rate)),
-            avg_ev: avg(plays.map((play) => play.ev)),
-            avg_edge: avg(plays.map((play) => play.abs_edge ?? play.edge)),
-        };
-    }
-
-    renderSource() {
-        const snapshot = this.data?.current_market_snapshot_meta || {};
-        const validation = this.data?.input_validation || {};
-        const market = validation.market_lines || {};
-        const prior = validation.prior_game_data || {};
-        const skipped = validation.skipped_rows || {};
-        this.elements.source.innerHTML = `
-            <div class="prediction-source-grid">
-                <div>
-                    <h3>Market Snapshot</h3>
-                    <p>${this.escapeHtml(snapshot.mode || 'unknown')} &bull; ${this.escapeHtml(snapshot.selected_market_date || snapshot.selected_market_date_min || 'n/a')}</p>
-                    <p>${this.escapeHtml(String(market.market_rows || 0))} market rows &bull; PTS ${this.escapeHtml(String(market.market_pts_lines || 0))} &bull; TRB ${this.escapeHtml(String(market.market_trb_lines || 0))} &bull; AST ${this.escapeHtml(String(market.market_ast_lines || 0))}</p>
-                </div>
-                <div>
-                    <h3>Prior Game Data</h3>
-                    <p>${this.escapeHtml(String(prior.slate_rows || 0))} player histories &bull; median ${this.escapeHtml(String(prior.history_rows_median || 0))} games</p>
-                    <p>${this.escapeHtml(String(prior.history_before_market_violations || 0))} history violations &bull; ${this.escapeHtml(String(skipped.count || 0))} skipped rows</p>
-                </div>
-            </div>
-        `;
-    }
-
     renderCards() {
-        this.elements.empty.style.display = this.filtered.length ? 'none' : 'block';
-        this.elements.cards.innerHTML = this.filtered.map((play) => this.renderWantedCard(play)).join('');
+        this.elements.empty.style.display = this.plays.length ? 'none' : 'block';
+        this.elements.cards.innerHTML = this.plays.map((play) => this.renderWantedCard(play)).join('');
     }
 
     renderWantedCard(play) {
@@ -222,14 +106,6 @@ class DailyPredictionsPage {
                 <div class="wanted-footer">${this.escapeHtml(footerParts.join(' | '))}</div>
             </article>
         `;
-    }
-
-    formatPct(value) {
-        return Number.isFinite(Number(value)) ? `${(Number(value) * 100).toFixed(1)}%` : 'n/a';
-    }
-
-    formatSignedPct(value) {
-        return Number.isFinite(Number(value)) ? `${Number(value) >= 0 ? '+' : ''}${(Number(value) * 100).toFixed(1)}%` : 'n/a';
     }
 
     formatNumber(value) {
