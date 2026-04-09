@@ -1160,6 +1160,7 @@ class UnifiedMoETrainer(ImprovedBaselineTrainer):
         
         # Create sequences
         X_list, baseline_list, y_list, indices = [], [], [], []
+        sequence_meta_rows = []
         baseline_scaled_cols = ['_baseline_scaled_0', '_baseline_scaled_1', '_baseline_scaled_2']
         target_scaled_cols = ['_target_scaled_0', '_target_scaled_1', '_target_scaled_2']
         
@@ -1185,6 +1186,13 @@ class UnifiedMoETrainer(ImprovedBaselineTrainer):
                 baseline_list.append(baseline)
                 y_list.append(y_target)
                 indices.append(i+seq_len)
+                sequence_meta_rows.append({
+                    "player": player,
+                    "sequence_end_index": int(i + seq_len - 1),
+                    "target_index": int(i + seq_len),
+                    "target_date": target_row.get("Date") if "Date" in target_row.index else None,
+                    "game_index": float(target_row.get("Game_Index")) if "Game_Index" in target_row.index else np.nan,
+                })
         
         X = np.array(X_list, dtype=np.float32)
         baselines = np.array(baseline_list, dtype=np.float32)
@@ -1200,8 +1208,9 @@ class UnifiedMoETrainer(ImprovedBaselineTrainer):
             "MP_trend", "High_MP_Flag", "FGA_trend", "AST_trend",
             "AST_variance", "USG_AST_ratio_trend", "High_Playmaker_Flag"
         ]
-        
-        return X, baselines, y, df
+
+        sequence_meta = pd.DataFrame.from_records(sequence_meta_rows)
+        return X, baselines, y, sequence_meta
 
     # ============================== PATCH: REPLACE build_model_with_anti_collapse() ==============================
     def build_model_with_anti_collapse(self):

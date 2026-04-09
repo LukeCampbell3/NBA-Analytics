@@ -20,6 +20,7 @@ import contextlib
 from pathlib import Path
 from datetime import datetime
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 from tensorflow.keras import Model, regularizers
 from tensorflow.keras.layers import (
@@ -45,6 +46,104 @@ import joblib
 sys.path.insert(0, os.path.dirname(__file__))
 from unified_moe_trainer import UnifiedMoETrainer
 from improved_stacking_trainer import prepare_gbm_features_v2
+try:
+    from structured_stack_contract import (
+        ARTIFACT_CONTRACT_VERSION,
+        build_schema_payload,
+        build_schema_signature,
+        normalize_catboost_model_info,
+        validate_metadata_contract,
+    )
+except Exception:  # pragma: no cover - fallback when contract helpers are unavailable
+    import hashlib
+
+    ARTIFACT_CONTRACT_VERSION = "1.0.0"
+
+    def build_schema_signature(feature_columns, target_columns, baseline_features, seq_len, n_features, n_targets, counts=None):
+        payload = {
+            "feature_columns": list(feature_columns or []),
+            "target_columns": list(target_columns or []),
+            "baseline_features": list(baseline_features or []),
+            "seq_len": int(seq_len),
+            "n_features": int(n_features),
+            "n_targets": int(n_targets),
+            "counts": dict(counts or {}),
+        }
+        text = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+        return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+    def normalize_catboost_model_info(catboost_model_info, target_columns, cb_models):
+        targets = [str(target) for target in (target_columns or [])]
+        existing = {}
+        if isinstance(catboost_model_info, list):
+            for item in catboost_model_info:
+                if isinstance(item, dict) and item.get("target") is not None:
+                    existing[str(item["target"])] = dict(item)
+        normalized = []
+        for idx, target in enumerate(targets):
+            model_bundle = cb_models[idx] if isinstance(cb_models, (list, tuple)) and idx < len(cb_models) else None
+            entry = existing.get(target, {})
+            feature_versions = entry.get("feature_versions")
+            if not feature_versions:
+                if entry.get("feature_version"):
+                    feature_versions = [entry.get("feature_version")]
+                elif isinstance(model_bundle, dict):
+                    members = model_bundle.get("members", [])
+                    feature_versions = [member.get("feature_version") for member in members if isinstance(member, dict) and member.get("feature_version")]
+                else:
+                    feature_versions = ["v3"]
+            feature_versions = [str(value) for value in feature_versions if value]
+            if not feature_versions:
+                feature_versions = ["v3"]
+            normalized.append(
+                {
+                    "target": target,
+                    "feature_version": str(entry.get("feature_version") or feature_versions[0]),
+                    "feature_versions": feature_versions,
+                }
+            )
+        return normalized
+
+    def validate_metadata_contract(metadata, scaler_x=None, scaler_y=None, cb_models=None):
+        errors = []
+        if not isinstance(metadata, dict):
+            return ["metadata must be a dictionary"]
+        for key in ["target_columns", "feature_columns", "baseline_features", "n_targets", "n_features", "catboost_model_info"]:
+            if key not in metadata:
+                errors.append(f"missing required metadata key: {key}")
+        return errors
+
+    def build_schema_payload(metadata):
+        payload = dict(metadata or {})
+        payload.setdefault("artifact_contract_version", ARTIFACT_CONTRACT_VERSION)
+        payload.setdefault(
+            "schema_signature",
+            build_schema_signature(
+                payload.get("feature_columns", []),
+                payload.get("target_columns", []),
+                payload.get("baseline_features", []),
+                payload.get("seq_len", 0),
+                payload.get("n_features", len(payload.get("feature_columns", []))),
+                payload.get("n_targets", len(payload.get("target_columns", []))),
+                payload.get("counts", {}),
+            ),
+        )
+        return {
+            "artifact_contract_version": payload.get("artifact_contract_version"),
+            "schema_signature": payload.get("schema_signature"),
+            "model_type": payload.get("model_type", "structured_lstm_stack"),
+            "seq_len": payload.get("seq_len"),
+            "n_features": payload.get("n_features"),
+            "n_targets": payload.get("n_targets"),
+            "feature_columns": payload.get("feature_columns", []),
+            "target_columns": payload.get("target_columns", []),
+            "baseline_features": payload.get("baseline_features", []),
+            "feature_spec": payload.get("feature_spec", {}),
+            "counts": payload.get("counts", {}),
+            "scaler_x_n_features": payload.get("scaler_x_n_features"),
+            "scaler_y_n_features": payload.get("scaler_y_n_features"),
+            "catboost_model_info": payload.get("catboost_model_info", []),
+        }
 
 try:
     from catboost import CatBoostRegressor
@@ -57,10 +156,7 @@ PRODUCTION_BEST_MAE = 4.441093564966795
 
 def gather_feature(x, idx, width=1):
     if idx < 0:
-        shape = tf.shape(x)
-        if width == 1:
-            return tf.zeros([shape[0], shape[1], 1], dtype=x.dtype)
-        return tf.zeros([shape[0], shape[1], width], dtype=x.dtype)
+        return x[:, :, :width] * 0.0
     if width == 1:
         return x[:, :, idx:idx + 1]
     return x[:, :, idx:idx + width]
@@ -68,10 +164,7 @@ def gather_feature(x, idx, width=1):
 
 def gather_last(x, idx, width=1):
     if idx < 0:
-        shape = tf.shape(x)
-        if width == 1:
-            return tf.zeros([shape[0], 1], dtype=x.dtype)
-        return tf.zeros([shape[0], width], dtype=x.dtype)
+        return x[:, -1, :width] * 0.0
     if width == 1:
         return x[:, -1, idx:idx + 1]
     return x[:, -1, idx:idx + width]
@@ -150,9 +243,21 @@ def build_structured_lstm(seq_len, n_features, n_targets, feature_spec, counts, 
     seq_input = Input(shape=(seq_len, n_features), name="seq_input")
     base_input = Input(shape=(n_targets,), name="base_input")
 
-    player_ids = Lambda(lambda x: tf.cast(x[:, -1, feature_spec["player_idx"]], tf.int32), name="player_ids")(seq_input)
-    team_ids = Lambda(lambda x: tf.cast(x[:, -1, feature_spec["team_idx"]], tf.int32), name="team_ids")(seq_input)
-    opp_ids = Lambda(lambda x: tf.cast(x[:, -1, feature_spec["opp_idx"]], tf.int32), name="opp_ids")(seq_input)
+    player_ids = Lambda(
+        lambda x: tf.cast(x[:, -1, feature_spec["player_idx"]], tf.int32),
+        output_shape=(),
+        name="player_ids",
+    )(seq_input)
+    team_ids = Lambda(
+        lambda x: tf.cast(x[:, -1, feature_spec["team_idx"]], tf.int32),
+        output_shape=(),
+        name="team_ids",
+    )(seq_input)
+    opp_ids = Lambda(
+        lambda x: tf.cast(x[:, -1, feature_spec["opp_idx"]], tf.int32),
+        output_shape=(),
+        name="opp_ids",
+    )(seq_input)
 
     player_embed = Embedding(max(1, counts["players"]), 16, name="player_embed")(player_ids)
     team_embed = Embedding(max(1, counts["teams"]), 8, name="team_embed")(team_ids)
@@ -164,6 +269,7 @@ def build_structured_lstm(seq_len, n_features, n_targets, feature_spec, counts, 
 
     stat_hist = Lambda(
         lambda xs: tf.concat(xs, axis=-1),
+        output_shape=(seq_len, 3),
         name="stat_hist",
     )([pts_proxy, trb_proxy, ast_proxy])
     baseline_hist = Lambda(
@@ -175,20 +281,28 @@ def build_structured_lstm(seq_len, n_features, n_targets, feature_spec, counts, 
             ],
             axis=-1,
         ),
+        output_shape=(seq_len, 3),
         name="baseline_hist",
     )(seq_input)
-    residual_hist = Lambda(lambda xs: xs[0] - xs[1], name="residual_hist")([stat_hist, baseline_hist])
+    residual_hist = Lambda(
+        lambda xs: xs[0] - xs[1],
+        output_shape=(seq_len, 3),
+        name="residual_hist",
+    )([stat_hist, baseline_hist])
 
     pts_vol = gather_feature(seq_input, feature_spec["pts_std_idx"]) if feature_spec["pts_std_idx"] >= 0 else Lambda(
         lambda xs: tf.abs(xs[0] - xs[1]),
+        output_shape=(seq_len, 1),
         name="pts_vol_proxy",
     )([pts_proxy, gather_feature(seq_input, feature_spec["pts_roll_idx"])])
     trb_vol = gather_feature(seq_input, feature_spec["trb_std_idx"]) if feature_spec["trb_std_idx"] >= 0 else Lambda(
         lambda xs: tf.abs(xs[0] - xs[1]),
+        output_shape=(seq_len, 1),
         name="trb_vol_proxy",
     )([trb_proxy, gather_feature(seq_input, feature_spec["trb_roll_idx"])])
     ast_vol = gather_feature(seq_input, feature_spec["ast_std_idx"]) if feature_spec["ast_std_idx"] >= 0 else Lambda(
         lambda xs: tf.maximum(tf.abs(xs[0] - xs[1]), xs[2]),
+        output_shape=(seq_len, 1),
         name="ast_vol_proxy",
     )([
         ast_proxy,
@@ -197,6 +311,7 @@ def build_structured_lstm(seq_len, n_features, n_targets, feature_spec, counts, 
     ])
     volatility_hist = Lambda(
         lambda xs: tf.concat(xs, axis=-1),
+        output_shape=(seq_len, 3),
         name="volatility_hist",
     )([pts_vol, trb_vol, ast_vol])
     usage_hist = Lambda(
@@ -209,6 +324,7 @@ def build_structured_lstm(seq_len, n_features, n_targets, feature_spec, counts, 
             ],
             axis=-1,
         ),
+        output_shape=(seq_len, 4),
         name="usage_hist",
     )(seq_input)
     market_pts_idx = feature_spec.get("market_pts_idx", -1)
@@ -247,6 +363,7 @@ def build_structured_lstm(seq_len, n_features, n_targets, feature_spec, counts, 
             ],
             axis=-1,
         ),
+        output_shape=(seq_len, 15),
         name="market_hist",
     )(seq_input)
 
@@ -288,19 +405,32 @@ def build_structured_lstm(seq_len, n_features, n_targets, feature_spec, counts, 
     x2 = Add(name="attn_skip")([x2, attn])
     x2 = LayerNormalization(name="attn_ln")(x2)
 
-    last_hidden = Lambda(lambda z: z[:, -1, :], name="last_hidden")(x2)
+    last_hidden = Lambda(
+        lambda z: z[:, -1, :],
+        output_shape=(lstm2_units,),
+        name="last_hidden",
+    )(x2)
     avg_hidden = GlobalAveragePooling1D(name="avg_hidden")(x2)
     residual_summary = GlobalAveragePooling1D(name="residual_summary")(residual_hist)
     vol_summary = GlobalAveragePooling1D(name="vol_summary")(volatility_hist)
     usage_summary = GlobalAveragePooling1D(name="usage_summary")(usage_hist)
     market_summary = GlobalAveragePooling1D(name="market_summary")(market_hist)
-    baseline_summary = Lambda(lambda x: x[:, -1, :], name="baseline_summary")(baseline_hist)
-    year_state = Lambda(lambda x: gather_last(x, feature_spec["year_idx"]), name="year_state")(seq_input)
+    baseline_summary = Lambda(
+        lambda x: x[:, -1, :],
+        output_shape=(3,),
+        name="baseline_summary",
+    )(baseline_hist)
+    year_state = Lambda(
+        lambda x: gather_last(x, feature_spec["year_idx"]),
+        output_shape=(1,),
+        name="year_state",
+    )(seq_input)
     month_state = Lambda(
         lambda x: tf.concat(
             [gather_last(x, feature_spec["month_sin_idx"]), gather_last(x, feature_spec["month_cos_idx"])],
             axis=-1,
         ),
+        output_shape=(2,),
         name="month_state",
     )(seq_input)
 
@@ -322,7 +452,11 @@ def build_structured_lstm(seq_len, n_features, n_targets, feature_spec, counts, 
 
     belief_mu = Dense(belief_dim, activation=None, kernel_regularizer=regularizers.l2(l2_reg), name="belief_mu")(last_hidden)
     belief_logvar = Dense(belief_dim, activation=None, kernel_regularizer=regularizers.l2(l2_reg), name="belief_logvar")(last_hidden)
-    belief_std = Lambda(lambda x: tf.nn.softplus(x) + 1e-3, name="belief_std")(belief_logvar)
+    belief_std = Lambda(
+        lambda x: tf.nn.softplus(x) + 1e-3,
+        output_shape=(belief_dim,),
+        name="belief_std",
+    )(belief_logvar)
 
     env_in = Concatenate(name="env_in")([slow_mode, avg_hidden, vol_summary, usage_summary, market_summary, month_state])
     stable_env = Dense(env_dim, activation="swish", kernel_regularizer=regularizers.l2(l2_reg), name="stable_env")(env_in)
@@ -378,7 +512,11 @@ def build_structured_lstm(seq_len, n_features, n_targets, feature_spec, counts, 
 
     delta_tail = Dense(dense_dim // 2, activation="swish", kernel_regularizer=regularizers.l2(l2_reg), name="delta_tail_fc")(z)
     delta_tail = Dense(n_targets, activation="tanh", name="delta_tail_raw")(delta_tail)
-    delta_tail = Lambda(lambda x: x * 2.5, name="delta_tail")(delta_tail)
+    delta_tail = Lambda(
+        lambda x: x * 2.5,
+        output_shape=(n_targets,),
+        name="delta_tail",
+    )(delta_tail)
 
     spike_in = Concatenate(name="spike_in")([z, residual_summary, vol_summary, belief_std])
     spike_prob = Dense(dense_dim // 2, activation="swish", kernel_regularizer=regularizers.l2(l2_reg), name="spike_fc")(spike_in)
@@ -387,13 +525,21 @@ def build_structured_lstm(seq_len, n_features, n_targets, feature_spec, counts, 
     sigma_in = Concatenate(name="sigma_in")([z, vol_summary, belief_std])
     sigma = Dense(dense_dim // 2, activation="swish", kernel_regularizer=regularizers.l2(l2_reg), name="sigma_fc")(sigma_in)
     sigma = Dense(n_targets, activation="softplus", name="sigma_raw")(sigma)
-    sigma = Lambda(lambda x: x + 5e-2, name="sigma")(sigma)
+    sigma = Lambda(
+        lambda x: x + 5e-2,
+        output_shape=(n_targets,),
+        name="sigma",
+    )(sigma)
 
     feasibility_in = Concatenate(name="feasibility_in")([z, vol_summary, usage_summary])
     feasibility = Dense(dense_dim // 3, activation="swish", kernel_regularizer=regularizers.l2(l2_reg), name="feasibility_fc")(feasibility_in)
     feasibility = Dense(1, activation="sigmoid", name="feasibility")(feasibility)
 
-    delta = Lambda(lambda xs: xs[0] + xs[1] * xs[2], name="delta_pred")([delta_normal, spike_prob, delta_tail])
+    delta = Lambda(
+        lambda xs: xs[0] + xs[1] * xs[2],
+        output_shape=(n_targets,),
+        name="delta_pred",
+    )([delta_normal, spike_prob, delta_tail])
 
     return Model(
         inputs=[seq_input, base_input],
@@ -435,22 +581,54 @@ def build_pts_embedding_model(seq_len, n_features, feature_spec, counts, seed=42
     seq_input = Input(shape=(seq_len, n_features), name="pts_seq_input")
     base_input = Input(shape=(1,), name="pts_base_input")
 
-    player_ids = Lambda(lambda x: tf.cast(x[:, -1, feature_spec["player_idx"]], tf.int32), name="pts_player_ids")(seq_input)
-    team_ids = Lambda(lambda x: tf.cast(x[:, -1, feature_spec["team_idx"]], tf.int32), name="pts_team_ids")(seq_input)
-    opp_ids = Lambda(lambda x: tf.cast(x[:, -1, feature_spec["opp_idx"]], tf.int32), name="pts_opp_ids")(seq_input)
+    player_ids = Lambda(
+        lambda x: tf.cast(x[:, -1, feature_spec["player_idx"]], tf.int32),
+        output_shape=(),
+        name="pts_player_ids",
+    )(seq_input)
+    team_ids = Lambda(
+        lambda x: tf.cast(x[:, -1, feature_spec["team_idx"]], tf.int32),
+        output_shape=(),
+        name="pts_team_ids",
+    )(seq_input)
+    opp_ids = Lambda(
+        lambda x: tf.cast(x[:, -1, feature_spec["opp_idx"]], tf.int32),
+        output_shape=(),
+        name="pts_opp_ids",
+    )(seq_input)
 
     player_embed = Embedding(max(1, counts["players"]), 12, name="pts_player_embed")(player_ids)
     team_embed = Embedding(max(1, counts["teams"]), 6, name="pts_team_embed")(team_ids)
     opp_embed = Embedding(max(1, counts["opponents"]), 6, name="pts_opp_embed")(opp_ids)
 
     pts_hist_idx = feature_spec["pts_idx"] if feature_spec["pts_idx"] >= 0 else feature_spec["pts_lag_idx"]
-    pts_hist = Lambda(lambda x: gather_feature(x, pts_hist_idx), name="pts_hist_only")(seq_input)
-    pts_base_hist = Lambda(lambda x: gather_feature(x, feature_spec["pts_roll_idx"]), name="pts_base_hist")(seq_input)
-    pts_resid = Lambda(lambda xs: xs[0] - xs[1], name="pts_resid_hist")([pts_hist, pts_base_hist])
+    pts_hist = Lambda(
+        lambda x: gather_feature(x, pts_hist_idx),
+        output_shape=(seq_len, 1),
+        name="pts_hist_only",
+    )(seq_input)
+    pts_base_hist = Lambda(
+        lambda x: gather_feature(x, feature_spec["pts_roll_idx"]),
+        output_shape=(seq_len, 1),
+        name="pts_base_hist",
+    )(seq_input)
+    pts_resid = Lambda(
+        lambda xs: xs[0] - xs[1],
+        output_shape=(seq_len, 1),
+        name="pts_resid_hist",
+    )([pts_hist, pts_base_hist])
     if feature_spec["pts_std_idx"] >= 0:
-        pts_vol = Lambda(lambda x: gather_feature(x, feature_spec["pts_std_idx"]), name="pts_vol_hist")(seq_input)
+        pts_vol = Lambda(
+            lambda x: gather_feature(x, feature_spec["pts_std_idx"]),
+            output_shape=(seq_len, 1),
+            name="pts_vol_hist",
+        )(seq_input)
     else:
-        pts_vol = Lambda(lambda xs: tf.abs(xs[0] - xs[1]), name="pts_vol_hist")([pts_hist, pts_base_hist])
+        pts_vol = Lambda(
+            lambda xs: tf.abs(xs[0] - xs[1]),
+            output_shape=(seq_len, 1),
+            name="pts_vol_hist",
+        )([pts_hist, pts_base_hist])
     usage_hist = Lambda(
         lambda x: tf.concat(
             [
@@ -461,6 +639,7 @@ def build_pts_embedding_model(seq_len, n_features, feature_spec, counts, seed=42
             ],
             axis=-1,
         ),
+        output_shape=(seq_len, 4),
         name="pts_usage_hist",
     )(seq_input)
     pts_market_idx = feature_spec.get("market_pts_idx", -1)
@@ -479,6 +658,7 @@ def build_pts_embedding_model(seq_len, n_features, feature_spec, counts, seed=42
             ],
             axis=-1,
         ),
+        output_shape=(seq_len, 5),
         name="pts_market_hist",
     )(seq_input)
 
@@ -501,7 +681,11 @@ def build_pts_embedding_model(seq_len, n_features, feature_spec, counts, seed=42
     x = Add(name="pts_attn_skip")([x, attn])
     x = LayerNormalization(name="pts_attn_ln")(x)
 
-    short_state = Lambda(lambda z: tf.reduce_mean(z[:, -3:, :], axis=1), name="pts_short_state")(x)
+    short_state = Lambda(
+        lambda z: tf.reduce_mean(z[:, -3:, :], axis=1),
+        output_shape=(lstm_units,),
+        name="pts_short_state",
+    )(x)
     medium_state = GlobalAveragePooling1D(name="pts_medium_state")(x)
     max_state = GlobalMaxPooling1D(name="pts_max_state")(x)
     resid_state = GlobalAveragePooling1D(name="pts_resid_state")(pts_resid)
@@ -510,10 +694,12 @@ def build_pts_embedding_model(seq_len, n_features, feature_spec, counts, seed=42
     market_state = GlobalAveragePooling1D(name="pts_market_state")(market_hist)
     trend_state = Lambda(
         lambda x: tf.reduce_mean(x[:, -3:, :], axis=1) - tf.reduce_mean(x[:, :3, :], axis=1),
+        output_shape=(1,),
         name="pts_trend_state",
     )(pts_hist)
     trend_resid_state = Lambda(
         lambda x: tf.reduce_mean(x[:, -3:, :], axis=1) - tf.reduce_mean(x[:, :3, :], axis=1),
+        output_shape=(1,),
         name="pts_trend_resid_state",
     )(pts_resid)
     slow_in = Concatenate(name="pts_slow_in")([player_embed, team_embed, opp_embed, usage_state, market_state, base_input])
@@ -599,6 +785,7 @@ def build_pts_embedding_model(seq_len, n_features, feature_spec, counts, seed=42
                 - 0.42
             )
         ),
+        output_shape=(1,),
         name="pts_spike_gate",
     )([
         pts_spike,
@@ -610,10 +797,12 @@ def build_pts_embedding_model(seq_len, n_features, feature_spec, counts, seed=42
     ])
     pts_spike_delta = Lambda(
         lambda xs: xs[0] * xs[1],
+        output_shape=(1,),
         name="pts_spike_delta",
     )([pts_delta, pts_spike_gate])
     pts_normal_delta = Lambda(
         lambda xs: xs[0] - xs[1],
+        output_shape=(1,),
         name="pts_normal_delta",
     )([pts_delta, pts_spike_delta])
 
@@ -1121,7 +1310,7 @@ class CosineAnnealingWarmRestarts(tf.keras.callbacks.Callback):
                 t -= current
                 current = int(current * self.t_mult)
             lr = self.min_lr + 0.5 * (self.max_lr - self.min_lr) * (1 + np.cos(np.pi * t / max(1, current)))
-        tf.keras.backend.set_value(self.model.optimizer.learning_rate, lr)
+        tf.keras.backend.set_value(self.model.optimizer.learning_rate, float(lr))
 
 
 class SWACallback(tf.keras.callbacks.Callback):
@@ -1208,7 +1397,7 @@ def train_single(X_train, b_train, delta_train, X_val, b_val, delta_val, y_val_r
         volatility_regime_weight=cfg.get("volatility_regime_weight", 0.04),
         context_regime_weight=cfg.get("context_regime_weight", 0.03),
     )
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=max_lr, clipnorm=1.0))
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=float(max_lr), clipnorm=1.0))
 
     callbacks = [
         EarlyStopping(monitor="val_loss", patience=24, restore_best_weights=True, verbose=1),
@@ -1685,7 +1874,81 @@ def evaluate_predictions(pred_orig, y_val_orig, b_val_orig, target_names, header
     return avg_mae, metrics
 
 
-def evaluate_rolling_windows(pred_orig, y_true_orig, target_names, header, n_windows=4):
+def _sequence_order_values(sequence_meta):
+    if sequence_meta is None:
+        return None
+    meta = pd.DataFrame(sequence_meta).reset_index(drop=True)
+    if meta.empty:
+        return None
+
+    if "target_date" in meta.columns:
+        parsed_dates = pd.to_datetime(meta["target_date"], errors="coerce")
+        if int(parsed_dates.notna().sum()) >= max(8, len(meta) // 4):
+            values = parsed_dates.map(lambda value: float(value.value) if pd.notna(value) else np.nan).to_numpy(dtype=np.float64)
+            if np.isfinite(values).any():
+                fill_value = float(np.nanmin(values))
+                missing = ~np.isfinite(values)
+                if missing.any():
+                    values[missing] = fill_value - 1.0
+                return values
+
+    if "game_index" in meta.columns:
+        values = pd.to_numeric(meta["game_index"], errors="coerce").to_numpy(dtype=np.float64)
+        if np.isfinite(values).any():
+            fill_value = float(np.nanmin(values))
+            missing = ~np.isfinite(values)
+            if missing.any():
+                values[missing] = fill_value - 1.0
+            return values
+
+    return np.arange(len(meta), dtype=np.float64)
+
+
+def build_player_tail_split(sequence_meta, val_fraction=0.20, min_train_rows=8, min_val_rows=1):
+    if sequence_meta is None:
+        return None, None
+    meta = pd.DataFrame(sequence_meta).reset_index(drop=True)
+    if meta.empty or "player" not in meta.columns:
+        return None, None
+
+    val_mask = np.zeros(len(meta), dtype=bool)
+    for _player, player_rows in meta.groupby("player", sort=False):
+        player_idx = player_rows.index.to_numpy(dtype=int)
+        row_count = len(player_idx)
+        if row_count < (int(min_train_rows) + int(min_val_rows)):
+            continue
+        val_count = max(int(min_val_rows), int(np.floor(row_count * float(val_fraction))))
+        val_count = min(val_count, row_count - int(min_train_rows))
+        if val_count <= 0:
+            continue
+        val_mask[player_idx[-val_count:]] = True
+
+    if not val_mask.any() or int((~val_mask).sum()) == 0:
+        return None, None
+    return np.flatnonzero(~val_mask), np.flatnonzero(val_mask)
+
+
+def build_recency_sample_weights(sequence_meta):
+    if sequence_meta is None:
+        return None
+    order_values = _sequence_order_values(sequence_meta)
+    if order_values is None or len(order_values) == 0:
+        return None
+    order_values = np.asarray(order_values, dtype=np.float64)
+    order_rank = pd.Series(order_values).rank(method="average").to_numpy(dtype=np.float64)
+    if not np.isfinite(order_rank).any():
+        return None
+    lo = float(np.nanmin(order_rank))
+    hi = float(np.nanmax(order_rank))
+    if hi <= lo:
+        return np.ones(len(order_rank), dtype=np.float32)
+    scaled = (order_rank - lo) / (hi - lo)
+    weights = np.exp(-1.0 + scaled)
+    weights /= np.mean(weights)
+    return weights.astype(np.float32)
+
+
+def evaluate_rolling_windows(pred_orig, y_true_orig, target_names, header, n_windows=4, sequence_meta=None):
     n_samples = len(y_true_orig)
     if n_samples < max(40, n_windows * 8):
         return {
@@ -1693,6 +1956,12 @@ def evaluate_rolling_windows(pred_orig, y_true_orig, target_names, header, n_win
             "window_size": int(n_samples),
             "targets": {},
         }
+
+    order_values = _sequence_order_values(sequence_meta)
+    if order_values is not None and len(order_values) == n_samples:
+        order = np.argsort(order_values, kind="mergesort")
+        pred_orig = np.asarray(pred_orig)[order]
+        y_true_orig = np.asarray(y_true_orig)[order]
 
     window_size = max(1, n_samples // n_windows)
     summary = {
@@ -1724,7 +1993,13 @@ def evaluate_rolling_windows(pred_orig, y_true_orig, target_names, header, n_win
     return summary
 
 
-def rolling_window_stats_1d(pred, truth, n_windows=4):
+def rolling_window_stats_1d(pred, truth, n_windows=4, order_values=None):
+    pred = np.asarray(pred)
+    truth = np.asarray(truth)
+    if order_values is not None and len(order_values) == len(truth):
+        order = np.argsort(np.asarray(order_values), kind="mergesort")
+        pred = pred[order]
+        truth = truth[order]
     n_samples = len(truth)
     if n_samples == 0:
         return {"mean": 0.0, "std": 0.0, "max": 0.0, "min": 0.0}
@@ -1962,7 +2237,8 @@ def run_pts_latent_ablation(
 
 
 def train_catboost_delta(X_train, b_train, delta_train, X_val, b_val, delta_val, y_val_orig, scaler_y, target_names,
-                         pts_augmented=None, latent_augmented=None, structured_latent_pair=None, config=None):
+                         pts_augmented=None, latent_augmented=None, structured_latent_pair=None, config=None,
+                         train_sequence_meta=None, val_sequence_meta=None):
     if CatBoostRegressor is None:
         raise ImportError("catboost is required for improved_lstm stacking mode")
 
@@ -1998,8 +2274,11 @@ def train_catboost_delta(X_train, b_train, delta_train, X_val, b_val, delta_val,
     models = []
     delta_pred = np.zeros_like(delta_val)
     model_info = []
-    recency_weight_train = np.exp(np.linspace(-1.0, 0.0, len(X_train))).astype(np.float32)
-    recency_weight_train = recency_weight_train / np.mean(recency_weight_train)
+    recency_weight_train = build_recency_sample_weights(train_sequence_meta)
+    if recency_weight_train is None or len(recency_weight_train) != len(X_train):
+        recency_weight_train = np.exp(np.linspace(-1.0, 0.0, len(X_train))).astype(np.float32)
+        recency_weight_train = recency_weight_train / np.mean(recency_weight_train)
+    val_order_values = _sequence_order_values(val_sequence_meta)
     print("\n" + "=" * 80)
     print("CATBOOST DELTA MODEL")
     print("=" * 80)
@@ -2228,7 +2507,12 @@ def train_catboost_delta(X_train, b_train, delta_train, X_val, b_val, delta_val,
             full_delta[:, t_idx] = candidate_delta
             pred_orig = scaler_y.inverse_transform(b_val + full_delta)
             mae = mean_absolute_error(y_val_orig[:, t_idx], pred_orig[:, t_idx])
-            rolling_stats = rolling_window_stats_1d(pred_orig[:, t_idx], y_val_orig[:, t_idx], n_windows=4)
+            rolling_stats = rolling_window_stats_1d(
+                pred_orig[:, t_idx],
+                y_val_orig[:, t_idx],
+                n_windows=4,
+                order_values=val_order_values,
+            )
             score = candidate_score(mae, rolling_stats)
             candidate_records.append({
                 "name": candidate_name,
@@ -2277,7 +2561,12 @@ def train_catboost_delta(X_train, b_train, delta_train, X_val, b_val, delta_val,
                 full_delta[:, t_idx] = blended_delta
                 pred_orig = scaler_y.inverse_transform(b_val + full_delta)
                 mae = mean_absolute_error(y_val_orig[:, t_idx], pred_orig[:, t_idx])
-                rolling_stats = rolling_window_stats_1d(pred_orig[:, t_idx], y_val_orig[:, t_idx], n_windows=4)
+                rolling_stats = rolling_window_stats_1d(
+                    pred_orig[:, t_idx],
+                    y_val_orig[:, t_idx],
+                    n_windows=4,
+                    order_values=val_order_values,
+                )
                 score = candidate_score(mae, rolling_stats)
                 if score + 1e-8 < best_score or (abs(score - best_score) <= 1e-8 and mae + 1e-6 < best_mae):
                     best_mae = float(mae)
@@ -2379,12 +2668,27 @@ def main(epochs_override=None, batch_size_override=None, save_only=False):
     print("=" * 80)
 
     trainer = create_shared_trainer()
-    X, baselines, y, _df = trainer.prepare_data()
+    X, baselines, y, sequence_meta = trainer.prepare_data()
 
-    split_idx = int(len(X) * 0.8)
-    X_train, X_val = X[:split_idx], X[split_idx:]
-    b_train, b_val = baselines[:split_idx], baselines[split_idx:]
-    y_train, y_val = y[:split_idx], y[split_idx:]
+    train_idx, val_idx = build_player_tail_split(sequence_meta, val_fraction=0.20, min_train_rows=8, min_val_rows=1)
+    split_strategy = "player_tail_holdout"
+    if train_idx is None or val_idx is None:
+        split_idx = int(len(X) * 0.8)
+        train_idx = np.arange(split_idx, dtype=int)
+        val_idx = np.arange(split_idx, len(X), dtype=int)
+        split_strategy = "global_position_fallback"
+
+    X_train, X_val = X[train_idx], X[val_idx]
+    b_train, b_val = baselines[train_idx], baselines[val_idx]
+    y_train, y_val = y[train_idx], y[val_idx]
+    train_meta = None if sequence_meta is None else pd.DataFrame(sequence_meta).iloc[train_idx].reset_index(drop=True)
+    val_meta = None if sequence_meta is None else pd.DataFrame(sequence_meta).iloc[val_idx].reset_index(drop=True)
+
+    print(f"\nValidation split: {split_strategy} | train={len(train_idx)} val={len(val_idx)}")
+    if val_meta is not None and not val_meta.empty and "target_date" in val_meta.columns:
+        val_dates = pd.to_datetime(val_meta["target_date"], errors="coerce").dropna()
+        if not val_dates.empty:
+            print(f"  Validation target dates: {val_dates.min().date()} -> {val_dates.max().date()}")
 
     delta_train = y_train - b_train
     delta_val = y_val - b_val
@@ -2513,6 +2817,8 @@ def main(epochs_override=None, batch_size_override=None, save_only=False):
         latent_augmented=latent_augmented,
         structured_latent_pair=(structured_train_latents, structured_val_latents),
         config=config,
+        train_sequence_meta=train_meta,
+        val_sequence_meta=val_meta,
     )
     extra_feature_block_dims = {}
     if pts_latent_ablation and pts_latent_ablation.get("best_subset_blocks"):
@@ -2598,6 +2904,7 @@ def main(epochs_override=None, batch_size_override=None, save_only=False):
             trainer.target_columns,
             "CATBOOST DELTA ROLLING-WINDOW ROBUSTNESS",
             n_windows=4,
+            sequence_meta=val_meta,
         )
 
         meta_models, meta_delta = train_meta_blend(
@@ -2684,18 +2991,36 @@ def main(epochs_override=None, batch_size_override=None, save_only=False):
         "scaler_x": str((run_dir / "lstm_v7_scaler_x.pkl").as_posix()),
         "scaler_y": str((run_dir / "lstm_v7_scaler_y.pkl").as_posix()),
         "metadata": str((run_dir / "lstm_v7_metadata.json").as_posix()),
+        "schema": str((run_dir / "lstm_v7_feature_schema.json").as_posix()),
     }
     if meta_models:
         run_artifact_paths["meta_models"] = str((run_dir / "lstm_v7_meta_models.pkl").as_posix())
 
+    cb_model_info = normalize_catboost_model_info(cb_model_info, trainer.target_columns, cb_models)
+    scaler_x_n_features = int(getattr(trainer.scaler_x, "n_features_in_", n_features - 3))
+    scaler_y_n_features = int(getattr(trainer.scaler_y, "n_features_in_", n_targets))
+    schema_signature = build_schema_signature(
+        trainer.feature_columns,
+        trainer.target_columns,
+        trainer.baseline_features,
+        seq_len,
+        n_features,
+        n_targets,
+        counts,
+    )
+
     metadata = {
         "model_type": "structured_lstm_stack",
+        "artifact_contract_version": ARTIFACT_CONTRACT_VERSION,
+        "schema_signature": schema_signature,
         "best_method": best_method,
         "promoted_to_production": promoted_to_production,
         "n_models": n_models,
         "seq_len": seq_len,
         "n_features": n_features,
         "n_targets": n_targets,
+        "scaler_x_n_features": scaler_x_n_features,
+        "scaler_y_n_features": scaler_y_n_features,
         "target_columns": trainer.target_columns,
         "baseline_features": trainer.baseline_features,
         "feature_columns": trainer.feature_columns,
@@ -2722,6 +3047,14 @@ def main(epochs_override=None, batch_size_override=None, save_only=False):
         "pts_latent_ablation": pts_latent_ablation,
         "targetwise_methods": targetwise_methods,
         "targetwise_summary": targetwise_summary,
+        "validation_split": {
+            "strategy": split_strategy,
+            "train_rows": int(len(train_idx)),
+            "val_rows": int(len(val_idx)),
+            "val_fraction": 0.20,
+            "val_date_min": str(pd.to_datetime(val_meta["target_date"], errors="coerce").min().date()) if val_meta is not None and not val_meta.empty and "target_date" in val_meta.columns and pd.to_datetime(val_meta["target_date"], errors="coerce").notna().any() else None,
+            "val_date_max": str(pd.to_datetime(val_meta["target_date"], errors="coerce").max().date()) if val_meta is not None and not val_meta.empty and "target_date" in val_meta.columns and pd.to_datetime(val_meta["target_date"], errors="coerce").notna().any() else None,
+        },
         "config": config,
         "results": {
             "structured_lstm_ensemble": structured_metrics,
@@ -2738,8 +3071,25 @@ def main(epochs_override=None, batch_size_override=None, save_only=False):
         metadata["rolling_window_validation"] = {
             "catboost_delta": cb_rolling_summary,
         }
-    with open("model/lstm_v7_metadata.json", "w", encoding="utf-8") as f:
-        json.dump(metadata, f, indent=2)
+
+    contract_errors = validate_metadata_contract(
+        metadata,
+        scaler_x=trainer.scaler_x,
+        scaler_y=trainer.scaler_y,
+        cb_models=cb_models,
+    )
+    if contract_errors:
+        error_lines = "\n".join(f"  - {line}" for line in contract_errors)
+        raise ValueError(
+            "Structured stack artifact contract validation failed before save:\n"
+            f"{error_lines}"
+        )
+
+    schema_payload = build_schema_payload(metadata)
+    schema_text = json.dumps(schema_payload, indent=2)
+
+    (run_dir / "lstm_v7_feature_schema.json").write_text(schema_text, encoding="utf-8")
+
     (run_dir / "lstm_v7_metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
 
     latest_manifest = {
@@ -2776,6 +3126,8 @@ def main(epochs_override=None, batch_size_override=None, save_only=False):
     if not save_only and promoted_to_production:
         production_metadata = {
             "model_type": "structured_lstm_stack_targetwise",
+            "artifact_contract_version": ARTIFACT_CONTRACT_VERSION,
+            "schema_signature": schema_signature,
             "avg_mae": float(best_avg_mae),
             "best_method": best_method,
             "target_columns": trainer.target_columns,

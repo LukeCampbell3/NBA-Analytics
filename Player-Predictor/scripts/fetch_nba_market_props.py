@@ -42,6 +42,10 @@ MARKET_WIDE_COLUMNS = [
     "Market_Date",
     "Player",
     "Market_Player_Raw",
+    "Market_Event_ID",
+    "Market_Commence_Time_UTC",
+    "Market_Home_Team",
+    "Market_Away_Team",
     "Market_PTS",
     "Market_TRB",
     "Market_AST",
@@ -242,7 +246,10 @@ def normalize_event_odds(events: list[dict], event_odds: dict[str, dict], fetche
             under_price_avg=("under_price", "mean"),
             book_count=("bookmaker_key", "nunique"),
             event_count=("event_id", "nunique"),
+            first_event_id=("event_id", "min"),
             first_commence_time_utc=("commence_time_utc", "min"),
+            first_home_team=("home_team", "min"),
+            first_away_team=("away_team", "min"),
         )
         .reset_index()
     )
@@ -288,7 +295,23 @@ def normalize_event_odds(events: list[dict], event_odds: dict[str, dict], fetche
         wide.columns.name = None
         return wide
 
-    wide = _pivot("market_line", value_map)
+    metadata = consensus[
+        [
+            "event_date_et",
+            "player_name_norm",
+            "player_name_raw",
+            "first_event_id",
+            "first_commence_time_utc",
+            "first_home_team",
+            "first_away_team",
+        ]
+    ].drop_duplicates(subset=["event_date_et", "player_name_norm", "player_name_raw"], keep="last")
+
+    wide = metadata.merge(
+        _pivot("market_line", value_map),
+        how="left",
+        on=["event_date_et", "player_name_norm", "player_name_raw"],
+    )
     for metric_col, rename_map in [
         ("book_count", books_map),
         ("over_price_avg", over_map),
@@ -306,6 +329,10 @@ def normalize_event_odds(events: list[dict], event_odds: dict[str, dict], fetche
             "event_date_et": "Market_Date",
             "player_name_norm": "Player",
             "player_name_raw": "Market_Player_Raw",
+            "first_event_id": "Market_Event_ID",
+            "first_commence_time_utc": "Market_Commence_Time_UTC",
+            "first_home_team": "Market_Home_Team",
+            "first_away_team": "Market_Away_Team",
         }
     )
     wide["Market_Fetched_At_UTC"] = fetched_at_utc
@@ -336,6 +363,9 @@ def normalize_wide_snapshot(df: pd.DataFrame, fetched_at_utc: str) -> tuple[pd.D
     out["Market_Date"] = pd.to_datetime(out["Market_Date"], errors="coerce").dt.date.astype(str)
     if "Market_Player_Raw" not in out.columns:
         out["Market_Player_Raw"] = out["Player"]
+    for market_col in ["Market_Event_ID", "Market_Commence_Time_UTC", "Market_Home_Team", "Market_Away_Team"]:
+        if market_col not in out.columns:
+            out[market_col] = pd.NA
     if "Market_Fetched_At_UTC" not in out.columns:
         out["Market_Fetched_At_UTC"] = fetched_at_utc
 
@@ -343,7 +373,21 @@ def normalize_wide_snapshot(df: pd.DataFrame, fetched_at_utc: str) -> tuple[pd.D
         if col not in out.columns:
             out[col] = np.nan
 
-    numeric_cols = [col for col in MARKET_WIDE_COLUMNS if col.startswith("Market_") and col not in {"Market_Date", "Market_Player_Raw", "Market_Fetched_At_UTC"}]
+    numeric_cols = [
+        col
+        for col in MARKET_WIDE_COLUMNS
+        if col.startswith("Market_")
+        and col
+        not in {
+            "Market_Date",
+            "Market_Player_Raw",
+            "Market_Event_ID",
+            "Market_Commence_Time_UTC",
+            "Market_Home_Team",
+            "Market_Away_Team",
+            "Market_Fetched_At_UTC",
+        }
+    ]
     for col in numeric_cols:
         out[col] = pd.to_numeric(out[col], errors="coerce")
 
@@ -363,11 +407,11 @@ def normalize_wide_snapshot(df: pd.DataFrame, fetched_at_utc: str) -> tuple[pd.D
             long_rows.append(
                 {
                     "fetched_at_utc": row.get("Market_Fetched_At_UTC", fetched_at_utc),
-                    "event_id": np.nan,
-                    "commence_time_utc": np.nan,
+                    "event_id": row.get("Market_Event_ID", np.nan),
+                    "commence_time_utc": row.get("Market_Commence_Time_UTC", np.nan),
                     "event_date_et": row["Market_Date"],
-                    "home_team": np.nan,
-                    "away_team": np.nan,
+                    "home_team": row.get("Market_Home_Team", np.nan),
+                    "away_team": row.get("Market_Away_Team", np.nan),
                     "bookmaker_key": np.nan,
                     "bookmaker_title": np.nan,
                     "market_key": market_key,
