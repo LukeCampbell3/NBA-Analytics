@@ -1,6 +1,6 @@
-{
+﻿{
   "generated_at_utc": "2026-04-09T19:57:02.323475+00:00",
-  "manifest_path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\Player-Predictor\\model\\analysis\\daily_runs\\20260409\\daily_market_pipeline_manifest_20260409.json",
+  "manifest_path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\model\\analysis\\daily_runs\\20260409\\daily_market_pipeline_manifest_20260409.json",
   "run_date": "2026-04-09",
   "season": 2026,
   "through_date": "2026-04-08",
@@ -17,7 +17,7 @@
   "shadow_policy_profiles": [
     "shadow_edge_append_agree1_p90_x1"
   ],
-  "market_snapshot": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\Player-Predictor\\model\\analysis\\daily_runs\\20260409\\current_market_snapshot_20260409.parquet",
+  "market_snapshot": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\model\\analysis\\daily_runs\\20260409\\current_market_snapshot_20260409.parquet",
   "model_run_id": "artifact_free_heuristic",
   "policy_profile": "production_board_objective_b12",
   "policy": {
@@ -278,7 +278,7 @@
   },
   "accuracy_metrics": {
     "available": true,
-    "source_history_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\Player-Predictor\\model\\analysis\\latest_market_comparison_strict_rows.csv",
+    "source_history_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\model\\analysis\\latest_market_comparison_strict_rows.csv",
     "as_of_market_date": "2026-03-28",
     "computed_at_utc": "2026-04-09T19:57:02.388128+00:00",
     "overall": {
@@ -769,7 +769,7 @@
   "shadow_runs": [
     {
       "policy_profile": "shadow_edge_append_agree1_p90_x1",
-      "final_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\Player-Predictor\\model\\analysis\\daily_runs\\20260409\\shadow\\shadow_edge_append_agree1_p90_x1\\final_market_plays_20260409_shadow_edge_append_agree1_p90_x1.csv",
+      "final_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\model\\analysis\\daily_runs\\20260409\\shadow\\shadow_edge_append_agree1_p90_x1\\final_market_plays_20260409_shadow_edge_append_agree1_p90_x1.csv",
       "summary": {
         "play_count": 13,
         "avg_expected_win_rate": 0.515546720970838,

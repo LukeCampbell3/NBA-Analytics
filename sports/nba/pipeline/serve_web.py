@@ -18,6 +18,9 @@ from urllib.parse import unquote, urlsplit
 
 
 DEFAULT_BIND_HOST = "127.0.0.1"
+SCRIPT_PATH = Path(__file__).resolve()
+NBA_ROOT = SCRIPT_PATH.parents[1]
+DEFAULT_WEB_DIR = NBA_ROOT / "web"
 
 
 class RobustThreadingHTTPServer(http.server.ThreadingHTTPServer):
@@ -302,7 +305,7 @@ def preload_web_payloads(web_dir: Path, college_card_limit: int | None):
 
 def serve(
     port=8000,
-    directory="web",
+    directory=str(DEFAULT_WEB_DIR),
     host=DEFAULT_BIND_HOST,
     open_browser=True,
     college_card_limit=1200,
@@ -334,7 +337,7 @@ def serve(
         print("  1. Generate cards: python create_cards.py --input data.csv --output data/cards")
         print("  2. Run analysis: python analyze_players.py --cards data/cards --output analysis")
         print("  3. Run valuation: python value_players.py --cards data/cards --output valuations")
-        print("  4. Prepare web data: python prepare_web_data.py")
+        print("  4. Prepare web data: python sports/nba/pipeline/prepare_web_data.py")
         print("\n" + "="*60 + "\n")
 
     # Find free port
@@ -408,7 +411,7 @@ Examples:
   python serve_web.py --port 3000        # Serve on port 3000
   python serve_web.py --host 0.0.0.0     # Expose on your local network
   python serve_web.py --no-browser       # Don't open browser
-  python serve_web.py --dir web          # Serve from 'web' directory
+  python serve_web.py --dir ../web       # Serve from a custom directory
         """
     )
     
@@ -422,8 +425,8 @@ Examples:
     parser.add_argument(
         '--dir', '-d',
         type=str,
-        default='web',
-        help='Directory to serve (default: web)'
+        default=str(DEFAULT_WEB_DIR),
+        help=f"Directory to serve (default: {DEFAULT_WEB_DIR})"
     )
 
     parser.add_argument(

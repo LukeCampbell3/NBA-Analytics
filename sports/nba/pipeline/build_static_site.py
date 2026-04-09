@@ -17,6 +17,11 @@ import shutil
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
+SCRIPT_PATH = Path(__file__).resolve()
+NBA_ROOT = SCRIPT_PATH.parents[1]
+DEFAULT_SOURCE_DIR = NBA_ROOT / "web"
+DEFAULT_OUTPUT_DIR = NBA_ROOT / "dist"
+
 
 def player_identity_key(record: Dict) -> str:
     """Stable key for mapping cards <-> valuations."""
@@ -158,16 +163,16 @@ def build_static_site(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Build a deployable static bundle from web/")
+    parser = argparse.ArgumentParser(description="Build a deployable static bundle from sports/nba/web/")
     parser.add_argument(
         "--source",
-        default="web",
-        help="Source web directory (default: web)",
+        default=str(DEFAULT_SOURCE_DIR),
+        help=f"Source web directory (default: {DEFAULT_SOURCE_DIR})",
     )
     parser.add_argument(
         "--output",
-        default="dist",
-        help="Output directory for static bundle (default: dist)",
+        default=str(DEFAULT_OUTPUT_DIR),
+        help=f"Output directory for static bundle (default: {DEFAULT_OUTPUT_DIR})",
     )
     parser.add_argument(
         "--college-card-limit",

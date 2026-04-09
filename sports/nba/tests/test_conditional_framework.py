@@ -6,8 +6,8 @@ from pathlib import Path
 import pandas as pd
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-PLAYER_PREDICTOR_ROOT = REPO_ROOT / "Player-Predictor"
+REPO_ROOT = Path(__file__).resolve().parents[3]
+PLAYER_PREDICTOR_ROOT = REPO_ROOT / "sports" / "nba" / "predictions" / "Player-Predictor"
 sys.path.insert(0, str(PLAYER_PREDICTOR_ROOT))
 sys.path.insert(0, str(PLAYER_PREDICTOR_ROOT / "scripts"))
 

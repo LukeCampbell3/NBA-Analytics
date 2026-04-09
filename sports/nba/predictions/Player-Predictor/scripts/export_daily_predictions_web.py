@@ -19,7 +19,7 @@ import pandas as pd
 
 
 PLAYER_PREDICTOR_ROOT = Path(__file__).resolve().parent.parent
-SITE_ROOT = PLAYER_PREDICTOR_ROOT.parent
+SITE_ROOT = PLAYER_PREDICTOR_ROOT.parents[1]
 DAILY_RUNS_ROOT = PLAYER_PREDICTOR_ROOT / "model" / "analysis" / "daily_runs"
 DEFAULT_WEB_JSON = SITE_ROOT / "web" / "data" / "daily_predictions.json"
 DEFAULT_DIST_JSON = SITE_ROOT / "dist" / "data" / "daily_predictions.json"

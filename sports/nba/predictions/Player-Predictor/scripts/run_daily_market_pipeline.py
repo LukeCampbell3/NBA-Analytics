@@ -27,7 +27,7 @@ import pandas as pd
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SITE_ROOT = REPO_ROOT.parent
+SITE_ROOT = REPO_ROOT.parents[1]
 MARKET_ROOT = REPO_ROOT / "data copy" / "raw" / "market_odds" / "nba"
 ANALYSIS_ROOT = REPO_ROOT / "model" / "analysis" / "daily_runs"
 DATA_PROC_ROOT = REPO_ROOT / "Data-Proc"
@@ -864,7 +864,7 @@ def main() -> None:
             "Rebuild Static Site Bundle",
             [
                 args.python,
-                str(SITE_ROOT / "build_static_site.py"),
+                str(SITE_ROOT / "pipeline" / "build_static_site.py"),
                 "--source",
                 str(SITE_ROOT / "web"),
                 "--output",
