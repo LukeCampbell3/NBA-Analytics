@@ -18,6 +18,12 @@
 !dist/
 !dist/**
 
+# Keep isolated MLB stack.
+!sports/
+sports/*
+!sports/mlb/
+!sports/mlb/**
+
 # Keep conditional promotion framework code/tests.
 !Player-Predictor/
 !Player-Predictor/decision_engine/
@@ -33,12 +39,8 @@
 !Player-Predictor/scripts/train_learned_pool_gate.py
 !Player-Predictor/scripts/report_reliability_diagnostics.py
 !Player-Predictor/scripts/run_accepted_pick_gate_research.py
-!Player-Predictor/scripts/validate_mlb_processed_contract.py
 !Player-Predictor/decision_engine/selected_board_calibration.py
 !Player-Predictor/decision_engine/learned_pool_gate.py
 !Player-Predictor/decision_engine/accepted_pick_gate.py
-!Player-Predictor/MLB_MODEL_DATA_REQUIREMENTS.md
-!Player-Predictor/Data-Proc-MLB/
-!Player-Predictor/Data-Proc-MLB/**
 !tests/
 !tests/test_conditional_framework.py
