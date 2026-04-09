@@ -133,6 +133,12 @@ def parse_args() -> argparse.Namespace:
         help="Allow market pipeline to run with heuristic-only predictions when model load fails.",
     )
     parser.add_argument("--skip-export-web", action="store_true", help="Skip exporting web daily predictions payload.")
+    parser.add_argument(
+        "--web-cards-json",
+        type=Path,
+        default=SITE_ROOT / "web" / "data" / "cards.json",
+        help="cards.json used during web export to enrich player display names/headshots.",
+    )
     parser.add_argument("--skip-build-site", action="store_true", help="Skip static site rebuild step.")
     parser.add_argument(
         "--selected-board-calibrator-json",
@@ -844,6 +850,8 @@ def main() -> None:
                 str(manifest_path),
                 "--out-dist",
                 str(SITE_ROOT / "dist" / "data" / "daily_predictions.json"),
+                "--cards-json",
+                str(args.web_cards_json),
             ],
         )
     else:
