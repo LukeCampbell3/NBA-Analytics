@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import unicodedata
 from collections import defaultdict
@@ -44,6 +45,168 @@ def parse_args() -> argparse.Namespace:
 class PlayerIdentityLookup:
     name_to_id: dict[str, int]
     abbr_to_id: dict[str, int]
+
+
+def safe_div(numerator: float, denominator: float) -> float | None:
+    if denominator is None:
+        return None
+    try:
+        den = float(denominator)
+        if den == 0:
+            return None
+        return float(numerator) / den
+    except Exception:
+        return None
+
+
+def summarize_accuracy_bucket(rows: pd.DataFrame) -> dict:
+    if rows.empty:
+        return {
+            "signal_count": 0,
+            "settled_count": 0,
+            "graded_count": 0,
+            "win_count": 0,
+            "loss_count": 0,
+            "push_count": 0,
+            "unresolved_count": 0,
+            "win_rate": None,
+            "loss_rate": None,
+            "push_rate": None,
+            "roi_per_graded_play": None,
+            "unit_profit": 0.0,
+            "mean_abs_error": None,
+            "rmse": None,
+            "mean_abs_edge": None,
+        }
+
+    signal_count = int(len(rows))
+    settled_mask = rows["outcome"].isin(["win", "loss", "push"])
+    graded_mask = rows["outcome"].isin(["win", "loss"])
+    settled = rows.loc[settled_mask]
+    graded = rows.loc[graded_mask]
+
+    win_count = int((rows["outcome"] == "win").sum())
+    loss_count = int((rows["outcome"] == "loss").sum())
+    push_count = int((rows["outcome"] == "push").sum())
+    unresolved_count = int((rows["outcome"] == "unresolved").sum())
+    settled_count = int(len(settled))
+    graded_count = int(len(graded))
+
+    unit_profit = (win_count * (100.0 / 110.0)) - loss_count
+
+    abs_error = pd.to_numeric(settled.get("abs_error"), errors="coerce")
+    sq_error = pd.to_numeric(settled.get("sq_error"), errors="coerce")
+    abs_edge = pd.to_numeric(rows.get("abs_edge"), errors="coerce")
+
+    mean_abs_error = safe_float(abs_error.mean())
+    rmse = safe_float(math.sqrt(sq_error.mean())) if sq_error.notna().any() else None
+    mean_abs_edge = safe_float(abs_edge.mean())
+
+    return {
+        "signal_count": signal_count,
+        "settled_count": settled_count,
+        "graded_count": graded_count,
+        "win_count": win_count,
+        "loss_count": loss_count,
+        "push_count": push_count,
+        "unresolved_count": unresolved_count,
+        "win_rate": safe_float(safe_div(win_count, graded_count)),
+        "loss_rate": safe_float(safe_div(loss_count, graded_count)),
+        "push_rate": safe_float(safe_div(push_count, settled_count)),
+        "roi_per_graded_play": safe_float(safe_div(unit_profit, graded_count)),
+        "unit_profit": safe_float(unit_profit),
+        "mean_abs_error": mean_abs_error,
+        "rmse": rmse,
+        "mean_abs_edge": mean_abs_edge,
+    }
+
+
+def build_accuracy_metrics(history_csv_path: Path | None) -> dict:
+    if history_csv_path is None:
+        return {"available": False, "reason": "history csv path not provided"}
+    if not history_csv_path.exists():
+        return {"available": False, "reason": f"history csv not found: {history_csv_path}"}
+
+    try:
+        history = pd.read_csv(history_csv_path)
+    except Exception as exc:
+        return {"available": False, "reason": f"failed reading history csv: {exc}"}
+
+    if history.empty:
+        return {"available": False, "reason": "history csv is empty"}
+
+    row_parts: list[pd.DataFrame] = []
+    for target in ("PTS", "TRB", "AST"):
+        pred_col = f"pred_{target}"
+        market_col = f"market_{target}"
+        actual_col = f"actual_{target}"
+        required_cols = {"market_date", pred_col, market_col, actual_col}
+        if not required_cols.issubset(set(history.columns)):
+            continue
+
+        part = history.loc[:, [pred_col, market_col, actual_col, "market_date"]].copy()
+        part["prediction"] = pd.to_numeric(part[pred_col], errors="coerce")
+        part["market_line"] = pd.to_numeric(part[market_col], errors="coerce")
+        part["actual"] = pd.to_numeric(part[actual_col], errors="coerce")
+        part["market_date"] = pd.to_datetime(part["market_date"], errors="coerce").dt.strftime("%Y-%m-%d")
+
+        part = part.loc[part["prediction"].notna() & part["market_line"].notna()].copy()
+        if part.empty:
+            continue
+
+        part = part.loc[part["prediction"] != part["market_line"]].copy()
+        if part.empty:
+            continue
+
+        part["target"] = target
+        part["direction"] = part["prediction"].gt(part["market_line"]).map({True: "OVER", False: "UNDER"})
+        part["outcome"] = "unresolved"
+        actual_known = part["actual"].notna()
+        push_mask = actual_known & part["actual"].eq(part["market_line"])
+        over_win_mask = actual_known & part["direction"].eq("OVER") & part["actual"].gt(part["market_line"])
+        under_win_mask = actual_known & part["direction"].eq("UNDER") & part["actual"].lt(part["market_line"])
+        win_mask = over_win_mask | under_win_mask
+        loss_mask = actual_known & ~push_mask & ~win_mask
+        part.loc[push_mask, "outcome"] = "push"
+        part.loc[win_mask, "outcome"] = "win"
+        part.loc[loss_mask, "outcome"] = "loss"
+        part["abs_error"] = (part["prediction"] - part["actual"]).abs()
+        part["sq_error"] = (part["prediction"] - part["actual"]).pow(2)
+        part["abs_edge"] = (part["prediction"] - part["market_line"]).abs()
+        row_parts.append(part[["market_date", "target", "direction", "outcome", "abs_error", "sq_error", "abs_edge"]])
+
+    if not row_parts:
+        return {"available": False, "reason": "history csv did not contain usable target columns"}
+
+    rows = pd.concat(row_parts, ignore_index=True)
+    if rows.empty:
+        return {"available": False, "reason": "history csv produced no usable resolved rows"}
+
+    market_dates = pd.to_datetime(rows["market_date"], errors="coerce")
+    as_of_market_date = None
+    if market_dates.notna().any():
+        as_of_market_date = market_dates.max().strftime("%Y-%m-%d")
+
+    by_target = {
+        target: summarize_accuracy_bucket(rows.loc[rows["target"] == target].copy())
+        for target in ("PTS", "TRB", "AST")
+        if not rows.loc[rows["target"] == target].empty
+    }
+    by_direction = {
+        direction: summarize_accuracy_bucket(rows.loc[rows["direction"] == direction].copy())
+        for direction in ("OVER", "UNDER")
+        if not rows.loc[rows["direction"] == direction].empty
+    }
+
+    return {
+        "available": True,
+        "source_history_csv": str(history_csv_path),
+        "as_of_market_date": as_of_market_date,
+        "computed_at_utc": datetime.now(timezone.utc).isoformat(),
+        "overall": summarize_accuracy_bucket(rows),
+        "by_target": by_target,
+        "by_direction": by_direction,
+    }
 
 
 def find_latest_manifest(root: Path) -> Path:
@@ -298,6 +461,7 @@ def main() -> None:
 
     final_csv = resolve_artifact_path(manifest.get("final_csv"), manifest_path.parent)
     final_json = resolve_artifact_path(manifest.get("final_json"), manifest_path.parent)
+    history_csv = resolve_artifact_path(manifest.get("history_csv"), manifest_path.parent)
     plays = pd.read_csv(final_csv) if final_csv and final_csv.exists() else pd.DataFrame()
     final_payload = json.loads(final_json.read_text(encoding="utf-8")) if final_json and final_json.exists() else {}
 
@@ -317,6 +481,7 @@ def main() -> None:
         "policy": final_payload.get("policy", {}),
         "input_validation": final_payload.get("input_validation", {}),
         "summary": build_summary(plays),
+        "accuracy_metrics": build_accuracy_metrics(history_csv),
         "plays": normalize_play_rows(plays, identity_lookup),
         "shadow_runs": load_shadow_runs(manifest, manifest_path, identity_lookup),
     }

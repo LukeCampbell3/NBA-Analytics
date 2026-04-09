@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Predictions - NBA Analytics</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=21">
+    <link rel="stylesheet" href="styles.css?v=23">
 </head>
 <body>
     <button id="siteMenuButton" class="site-menu-button" aria-label="Open site navigation" aria-controls="siteNavDrawer" aria-expanded="false">
@@ -20,6 +20,7 @@
         <nav class="site-nav-links">
             <a class="site-nav-link" href="/">Home</a>
             <a class="site-nav-link" href="predictions.html">Predictions</a>
+            <a class="site-nav-link" href="prediction-about.html">Prediction About</a>
             <a class="site-nav-link" href="college.html">College</a>
             <a class="site-nav-link" href="about.html">About</a>
         </nav>
@@ -29,49 +30,25 @@
     </aside>
 
     <main class="predictions-page">
-        <section class="predictions-hero">
+        <section class="prediction-stage">
             <div class="container">
-                <div class="predictions-hero-grid">
-                    <div class="predictions-hero-copy">
-                        <p class="predictions-kicker">Static Daily Board</p>
-                        <h1>Market Predictions</h1>
-                        <p class="predictions-subtitle">
-                            Daily prop recommendations shown as wanted-style posters generated from the daily market pipeline.
-                        </p>
-                        <div id="predictionsMeta" class="predictions-meta"></div>
+                <header class="prediction-stage-header">
+                    <div class="prediction-sign">
+                        <a class="prediction-about-icon" href="prediction-about.html" aria-label="Open prediction about page" title="How it works and accuracy">i</a>
+                        <p class="prediction-sign-kicker">Daily Board</p>
+                        <h1>Prediction Bounties</h1>
+                        <p id="predictionRunMeta" class="prediction-run-meta">Loading board details...</p>
                     </div>
-                    <div class="predictions-hero-panel">
-                        <div id="predictionsSummary" class="predictions-summary-grid"></div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="predictions-toolbar">
-            <div class="container predictions-toolbar-inner">
-                <input id="predictionSearch" class="search-input prediction-search" type="search" placeholder="Search player or prop...">
-                <select id="predictionTargetFilter" class="filter-select">
-                    <option value="">All Targets</option>
-                </select>
-                <select id="predictionRecommendationFilter" class="filter-select">
-                    <option value="">All Tiers</option>
-                </select>
-            </div>
-        </section>
-
-        <section class="predictions-board">
-            <div class="container">
-                <div id="predictionStatus" class="predictions-status">Loading daily predictions...</div>
-                <div id="predictionSource" class="prediction-source-card"></div>
+                </header>
                 <div id="predictionCards" class="prediction-cards"></div>
                 <div id="predictionEmpty" class="no-results" style="display:none;">
-                    <p>No predictions match the current filters.</p>
+                    <p>No prediction bounties available right now.</p>
                 </div>
             </div>
         </section>
     </main>
 
     <script src="nav.js?v=7"></script>
-    <script src="predictions.js?v=2"></script>
+    <script src="predictions.js?v=4"></script>
 </body>
 </html>
