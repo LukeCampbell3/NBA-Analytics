@@ -9,7 +9,6 @@ This script:
 """
 
 import json
-import shutil
 from pathlib import Path
 from typing import Dict, Any, List
 import sys
@@ -17,8 +16,12 @@ import re
 import unicodedata
 import pandas as pd
 
-# Add src to path for imports
-sys.path.insert(0, str(Path(__file__).parent / 'src'))
+SCRIPT_PATH = Path(__file__).resolve()
+NBA_ROOT = SCRIPT_PATH.parents[1]
+REPO_ROOT = NBA_ROOT.parents[1]
+
+# Add shared src to path for imports.
+sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from value_players import PlayerValuator
 
@@ -163,10 +166,9 @@ def lookup_metric(card: Dict[str, Any], lookup: Dict[str, Dict[str, float]]) -> 
 def prepare_web_data():
     """Prepare all data for web frontend"""
     
-    # Paths - use full data directory
-    source_dir = Path('data/processed/player_cards')
-    web_data_dir = Path('web/data')
-    raw_dir = Path('data/raw')
+    source_dir = REPO_ROOT / "data" / "processed" / "player_cards"
+    web_data_dir = NBA_ROOT / "web" / "data"
+    raw_dir = REPO_ROOT / "data" / "raw"
     
     # Create web data directory
     web_data_dir.mkdir(parents=True, exist_ok=True)
@@ -235,9 +237,9 @@ def prepare_web_data():
     print(f"\n[SUCCESS] Prepared web data:")
     print(f"  - {len(all_cards)} player cards -> {cards_path}")
     print(f"  - {len(all_valuations)} valuations -> {valuations_path}")
-    normalize_home_links(Path("web"))
+    normalize_home_links(NBA_ROOT / "web")
     print(f"\nTo build the static site bundle:")
-    print(f"  python build_static_site.py")
+    print("  python sports/nba/pipeline/build_static_site.py")
     
     return 0
 

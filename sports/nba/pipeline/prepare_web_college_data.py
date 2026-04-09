@@ -18,8 +18,12 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-# Add src to path for imports
-sys.path.insert(0, str(Path(__file__).parent / "src"))
+SCRIPT_PATH = Path(__file__).resolve()
+NBA_ROOT = SCRIPT_PATH.parents[1]
+REPO_ROOT = NBA_ROOT.parents[1]
+
+# Add shared src to path for imports.
+sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from value_college_players import build_card_from_row, resolve_column_map  # noqa: E402
 from value_players import PlayerValuator  # noqa: E402
@@ -211,13 +215,13 @@ def build_web_college_payloads(input_path: Path, web_data_dir: Path) -> int:
 
     print(f"[SUCCESS] Wrote {len(cards)} college cards -> {cards_path}")
     print(f"[SUCCESS] Wrote {len(valuations)} college valuations -> {valuations_path}")
-    normalize_home_links(Path("web"))
+    normalize_home_links(NBA_ROOT / "web")
     return 0
 
 
 def main() -> int:
-    input_path = Path("data/processed/college/players_season.csv")
-    web_data_dir = Path("web/data")
+    input_path = REPO_ROOT / "data" / "processed" / "college" / "players_season.csv"
+    web_data_dir = NBA_ROOT / "web" / "data"
     return build_web_college_payloads(input_path=input_path, web_data_dir=web_data_dir)
 
 
