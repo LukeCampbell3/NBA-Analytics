@@ -1,212 +1,159 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
-UNIFIED INFERENCE - All Inference Functionality in One File
-
-Combines:
-- ensemble_inference.py
-- evaluate_simple.py
-- predict_game.py
-- visualize_predictions.py
-
-Usage:
-    python inference.py                    # Evaluate ensemble
-    python inference.py --visualize        # Evaluate + visualize
-    python inference.py --predict          # Predict next game
-    python inference.py --player "LeBron_James" --games 5  # Predict specific player
+Structured-stack inference CLI for a single player history file.
 """
 
-import sys
+from __future__ import annotations
+
 import argparse
-import numpy as np
-import pandas as pd
-import tensorflow as tf
-from pathlib import Path
-import joblib
 import json
-import warnings
-warnings.filterwarnings("ignore")
+import sys
+from pathlib import Path
 
-# Add training directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent / "training"))
+import pandas as pd
 
-from hybrid_spike_moe_trainer import HybridSpikeMoETrainer, ConditionalSpikeOutput
-from sklearn.metrics import mean_absolute_error, r2_score
+REPO_ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(REPO_ROOT / "inference"))
 
-
-class UnifiedInference:
-    """Unified inference engine for all prediction tasks."""
-    
-    def __init__(self, model_dir="model"):
-        self.model_dir = Path(model_dir)
-        self.models = []
-        self.metadata = None
-        self.scaler_x = None
-        self.trainer = None
-        
-        print("🔧 Initializing Unified Inference Engine...")
-        self._load_models()
-        print("✅ Inference engine ready!")
-    
-    def _load_models(self):
-        """Load ensemble models and metadata."""
-        metadata_path = self.model_dir / "hybrid_spike_metadata.json"
-        if not metadata_path.exists():
-            raise FileNotFoundError(f"Metadata not found: {metadata_path}")
-        
-        with open(metadata_path, 'r') as f:
-            self.metadata = json.load(f)
-        
-        print(f"📋 Loaded metadata: {self.metadata['model_type']}")
-        print(f"   Ensemble size: {self.metadata['ensemble_size']}")
-        
-        scaler_path = self.model_dir / "hybrid_spike_scaler_x.pkl"
-        if not scaler_path.exists():
-            raise FileNotFoundError(f"Scaler not found: {scaler_path}")
-        
-        self.scaler_x = joblib.load(scaler_path)
-        print(f"✅ Loaded feature scaler")
-        
-        self.trainer = HybridSpikeMoETrainer(ensemble_size=self.metadata['ensemble_size'])
-        self.trainer.feature_columns = self.metadata['feature_columns']
-        self.trainer.baseline_features = self.metadata['baseline_features']
-        self.trainer.target_columns = self.metadata['target_columns']
-        self.trainer.player_mapping = self.metadata['player_mapping']
-        self.trainer.team_mapping = self.metadata['team_mapping']
-        self.trainer.opponent_mapping = self.metadata['opponent_mapping']
-        self.trainer.scaler_x = self.scaler_x
-        
-        self.trainer.spike_features = [
-            "MP_trend", "High_MP_Flag", "FGA_trend", "AST_trend", 
-            "AST_variance", "USG_AST_ratio_trend", "High_Playmaker_Flag"
-        ]
-        
-        for i in range(self.metadata['ensemble_size']):
-            weights_path = self.model_dir / f"hybrid_spike_ensemble_{i}_weights.h5"
-            if not weights_path.exists():
-                raise FileNotFoundError(f"Model weights not found: {weights_path}")
-            
-            model = self.trainer.build_model()
-            
-            try:
-                model.load_weights(str(weights_path))
-            except ValueError as e:
-                if "Layer count mismatch" in str(e):
-                    print(f"⚠️  Warning: Layer count mismatch for model {i+1}, loading by name...")
-                    model.load_weights(str(weights_path), by_name=True, skip_mismatch=True)
-                else:
-                    raise
-            
-            self.models.append(model)
-            strategy = self.metadata['ensemble_strategies'][i]
-            print(f"✅ Loaded model {i+1}/{self.metadata['ensemble_size']}: {strategy}")
-
-    
-    def evaluate(self):
-        """Evaluate ensemble on test data."""
-        print("\n📂 Loading test data...")
-        X, baselines, y, df = self.trainer.prepare_data()
-        
-        test_idx = int(0.8 * len(X))
-        X_test = X[test_idx:]
-        baselines_test = baselines[test_idx:]
-        y_test = y[test_idx:]
-        
-        X_test_flat = X_test.reshape(-1, X_test.shape[-1])
-        X_test_numeric = X_test_flat[:, 3:]
-        X_test_numeric_scaled = self.scaler_x.transform(X_test_numeric)
-        X_test_scaled = np.concatenate([X_test_flat[:, :3], X_test_numeric_scaled], axis=1)
-        X_test_scaled = X_test_scaled.reshape(X_test.shape)
-        
-        print(f"✅ Loaded {len(X_test)} test samples")
-        
-        print(f"\n📊 Evaluating ensemble on {len(X_test)} samples...")
-        
-        all_preds = []
-        for i, model in enumerate(self.models):
-            print(f"   Model {i+1}/{len(self.models)}: {self.metadata['ensemble_strategies'][i]}")
-            preds = model.predict([X_test_scaled, baselines_test], verbose=0)
-            all_preds.append(preds)
-        
-        individual_means = [p[:, :3] for p in all_preds]
-        ensemble_means = np.mean(individual_means, axis=0)
-        
-        results = {
-            'n_samples': len(X_test),
-            'targets': self.metadata['target_columns'],
-            'ensemble': {}
-        }
-        
-        for i, target in enumerate(self.metadata['target_columns']):
-            mae = mean_absolute_error(y_test[:, i], ensemble_means[:, i])
-            r2 = r2_score(y_test[:, i], ensemble_means[:, i])
-            
-            results['ensemble'][f'{target}_mae'] = float(mae)
-            results['ensemble'][f'{target}_r2'] = float(r2)
-        
-        results['ensemble']['mae_macro'] = float(np.mean([results['ensemble'][f'{t}_mae'] for t in self.metadata['target_columns']]))
-        results['ensemble']['r2_macro'] = float(np.mean([results['ensemble'][f'{t}_r2'] for t in self.metadata['target_columns']]))
-        
-        self._print_results(results)
-        
-        output_path = Path("inference/evaluation_results.json")
-        output_path.parent.mkdir(exist_ok=True)
-        with open(output_path, 'w') as f:
-            json.dump(results, f, indent=2)
-        print(f"\n💾 Results saved to: {output_path}")
-        
-        return results
-    
-    def _print_results(self, results):
-        """Print evaluation results."""
-        print("\n" + "="*80)
-        print("EVALUATION RESULTS")
-        print("="*80)
-        
-        print(f"\n📊 Dataset: {results['n_samples']} samples")
-        print(f"🎯 Targets: {', '.join(results['targets'])}")
-        
-        print("\n" + "-"*80)
-        print("ENSEMBLE PERFORMANCE")
-        print("-"*80)
-        metrics = results['ensemble']
-        print(f"\nOverall:")
-        print(f"  MAE: {metrics['mae_macro']:.3f}")
-        print(f"  R²:  {metrics['r2_macro']:.3f}")
-        
-        print(f"\nPer-Target:")
-        for target in results['targets']:
-            print(f"  {target}:")
-            print(f"    MAE: {metrics[f'{target}_mae']:.3f}")
-            print(f"    R²:  {metrics[f'{target}_r2']:.3f}")
-        
-        print("\n" + "="*80)
+try:
+    from market_validation import backtest_history, print_validation_summary, save_validation_outputs, summarize_validation_records
+except Exception:  # pragma: no cover - optional helper module
+    backtest_history = None
+    print_validation_summary = None
+    save_validation_outputs = None
+    summarize_validation_records = None
+from structured_stack_inference import StructuredStackInference
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Unified NBA Player Prediction Inference")
-    parser.add_argument("--visualize", action="store_true", help="Generate visualizations")
-    parser.add_argument("--predict", action="store_true", help="Predict next game")
-    parser.add_argument("--player", type=str, help="Player name for prediction")
-    parser.add_argument("--games", type=int, default=10, help="Number of recent games to use")
-    
-    args = parser.parse_args()
-    
-    print("="*80)
-    print("UNIFIED INFERENCE ENGINE")
-    print("="*80)
-    
-    inference = UnifiedInference(model_dir="model")
-    
-    if args.predict:
-        print("\n🔮 Prediction mode not yet implemented")
-        print("   Use: python inference/predict_game.py")
-    elif args.visualize:
-        print("\n📊 Visualization mode not yet implemented")
-        print("   Use: python inference/visualize_predictions.py")
-    else:
-        inference.evaluate()
-    
-    print("\n✅ Inference complete!")
+def normalize_name(value: str) -> str:
+    out = str(value)
+    for old, new in [
+        (" ", "_"),
+        (".", ""),
+        ("'", ""),
+        (",", ""),
+        ("/", "-"),
+        ("\\", "-"),
+        (":", ""),
+    ]:
+        out = out.replace(old, new)
+    return out
+
+
+def resolve_manifest_path(model_dir: Path, run_id: str | None, latest: bool, explicit: Path | None) -> Path | None:
+    if explicit is not None:
+        return explicit
+    if run_id:
+        return model_dir / "runs" / run_id / "lstm_v7_metadata.json"
+    if latest:
+        return model_dir / "latest_structured_lstm_stack.json"
+    return model_dir / "production_structured_lstm_stack.json"
+
+
+def resolve_csv_path(csv_path: Path | None, player: str | None, season: int) -> Path:
+    if csv_path is not None:
+        return csv_path
+    if not player:
+        raise ValueError("Provide either --csv or --player")
+    return REPO_ROOT / "Data-Proc" / normalize_name(player) / f"{int(season)}_processed_processed.csv"
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run structured-stack inference for one player history CSV.")
+    parser.add_argument("--csv", type=Path, default=None, help="Explicit processed player CSV path.")
+    parser.add_argument("--player", type=str, default=None, help="Player name (used with --season) to resolve Data-Proc CSV.")
+    parser.add_argument("--season", type=int, default=2026, help="Season end year for --player resolution.")
+    parser.add_argument("--rows", type=int, default=30, help="How many recent rows to feed into inference.")
+    parser.add_argument("--model-dir", type=Path, default=REPO_ROOT / "model", help="Model directory.")
+    parser.add_argument("--manifest", type=Path, default=None, help="Explicit manifest path.")
+    parser.add_argument("--run-id", type=str, default=None, help="Specific immutable run id.")
+    parser.add_argument("--latest", action="store_true", help="Use latest manifest instead of production.")
+    parser.add_argument("--debug", action="store_true", help="Include debug payload in output.")
+    parser.add_argument("--validate-history", action="store_true", help="Backtest historical rows in this CSV against actual stats and market lines.")
+    parser.add_argument("--max-validation-rows", type=int, default=0, help="Optional limit for the most recent validation rows.")
+    parser.add_argument("--validation-csv-out", type=Path, default=None, help="Optional row-level validation CSV output.")
+    parser.add_argument("--validation-json-out", type=Path, default=None, help="Optional validation summary JSON output.")
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+
+    csv_path = resolve_csv_path(args.csv, args.player, args.season)
+    if not csv_path.exists():
+        raise FileNotFoundError(f"History CSV not found: {csv_path}")
+
+    model_dir = args.model_dir.resolve()
+    manifest_path = resolve_manifest_path(model_dir, args.run_id, args.latest, args.manifest)
+    predictor = StructuredStackInference(model_dir=str(model_dir), manifest_path=manifest_path)
+
+    history_df = pd.read_csv(csv_path)
+    if history_df.empty:
+        raise RuntimeError(f"History CSV is empty: {csv_path}")
+
+    if args.validate_history:
+        if backtest_history is None or summarize_validation_records is None:
+            raise RuntimeError(
+                "History validation helpers are unavailable (missing inference/market_validation.py). "
+                "Run prediction mode without --validate-history, or add the validation helper module."
+            )
+        rows, failures = backtest_history(
+            predictor,
+            history_df,
+            csv_path=csv_path,
+            player_name=args.player or (str(history_df["Player"].iloc[0]) if "Player" in history_df.columns else csv_path.parent.name),
+            min_history_rows=int(getattr(predictor, "seq_len", 10)),
+            max_predictions=args.max_validation_rows if args.max_validation_rows > 0 else None,
+        )
+        rows_df = pd.DataFrame.from_records(rows)
+        summary = summarize_validation_records(rows_df, failures=failures)
+        print_validation_summary(summary)
+        if not rows_df.empty:
+            preview_cols = [
+                "date",
+                "actual_PTS",
+                "pred_PTS",
+                "market_PTS",
+                "directional_correct_PTS",
+                "actual_TRB",
+                "pred_TRB",
+                "market_TRB",
+                "directional_correct_TRB",
+                "actual_AST",
+                "pred_AST",
+                "market_AST",
+                "directional_correct_AST",
+            ]
+            preview_cols = [col for col in preview_cols if col in rows_df.columns]
+            print("\nRecent rows:")
+            print(rows_df[preview_cols].tail(10).to_string(index=False))
+        save_validation_outputs(rows_df, summary, args.validation_csv_out, args.validation_json_out)
+        return
+
+    explain = predictor.predict(history_df.tail(int(args.rows)), assume_prepared=True, return_debug=bool(args.debug))
+
+    print("\n" + "=" * 80)
+    print("STRUCTURED STACK INFERENCE")
+    print("=" * 80)
+    print(f"CSV:      {csv_path}")
+    print(f"Run id:   {predictor.metadata.get('run_id')}")
+    print("\nPredicted:")
+    for target, value in explain.get("predicted", {}).items():
+        print(f"  {target}: {float(value):.2f}")
+
+    print("\nBaseline:")
+    for target, value in explain.get("baseline", {}).items():
+        print(f"  {target}: {float(value):.2f}")
+
+    print("\nData quality:")
+    quality = explain.get("data_quality", {})
+    print(f"  schema_repaired: {quality.get('schema_repaired')}")
+    print(f"  used_default_ids: {quality.get('used_default_ids')}")
+    print(f"  fallback_blend: {quality.get('fallback_blend')}")
+    print(f"  fallback_reasons: {quality.get('fallback_reasons')}")
+
+    print("\nJSON:")
+    print(json.dumps(explain, indent=2))
 
 
 if __name__ == "__main__":
