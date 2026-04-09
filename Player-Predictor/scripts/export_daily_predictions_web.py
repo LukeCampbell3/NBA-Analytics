@@ -7,6 +7,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
+import unicodedata
+from collections import defaultdict
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -18,6 +22,7 @@ SITE_ROOT = PLAYER_PREDICTOR_ROOT.parent
 DAILY_RUNS_ROOT = PLAYER_PREDICTOR_ROOT / "model" / "analysis" / "daily_runs"
 DEFAULT_WEB_JSON = SITE_ROOT / "web" / "data" / "daily_predictions.json"
 DEFAULT_DIST_JSON = SITE_ROOT / "dist" / "data" / "daily_predictions.json"
+DEFAULT_CARDS_JSON = SITE_ROOT / "web" / "data" / "cards.json"
 
 
 def parse_args() -> argparse.Namespace:
@@ -26,7 +31,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--daily-runs-root", type=Path, default=DAILY_RUNS_ROOT, help="Root directory containing daily run folders.")
     parser.add_argument("--out-json", type=Path, default=DEFAULT_WEB_JSON, help="Static web JSON output path (web/data).")
     parser.add_argument("--out-dist", type=Path, default=DEFAULT_DIST_JSON, help="Static dist JSON output path (dist/data).")
+    parser.add_argument(
+        "--cards-json",
+        type=Path,
+        default=DEFAULT_CARDS_JSON,
+        help="Optional cards.json used to enrich output with player ids/headshot URLs.",
+    )
     return parser.parse_args()
+
+
+@dataclass(frozen=True)
+class PlayerIdentityLookup:
+    name_to_id: dict[str, int]
+    abbr_to_id: dict[str, int]
 
 
 def find_latest_manifest(root: Path) -> Path:
@@ -46,6 +63,118 @@ def resolve_artifact_path(raw_path: str | None, manifest_dir: Path) -> Path | No
     if local_fallback.exists():
         return local_fallback
     return candidate
+
+
+def normalize_player_key(value: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    text = text.replace(" ", "_")
+    for old, new in [(".", ""), ("'", ""), ("`", ""), (",", ""), ("/", "-"), ("\\", "-"), (":", "")]:
+        text = text.replace(old, new)
+    text = "_".join(part for part in text.split("_") if part)
+    folded = unicodedata.normalize("NFKD", text)
+    ascii_text = "".join(ch for ch in folded if not unicodedata.combining(ch))
+    return ascii_text.lower()
+
+
+def abbreviate_player_key(value: str) -> str:
+    normalized = normalize_player_key(value)
+    if not normalized:
+        return ""
+    parts = [part for part in normalized.split("_") if part]
+    if len(parts) < 2:
+        return normalized
+    return f"{parts[0][0]}_{'_'.join(parts[1:])}"
+
+
+def display_name_from_csv_path(csv_path: str | None) -> str:
+    raw = str(csv_path or "").strip()
+    if not raw:
+        return ""
+    folder_name = Path(raw).parent.name
+    if not folder_name:
+        return ""
+    pretty = re.sub(r"\s+", " ", folder_name.replace("_", " ").strip())
+    lowered = pretty.lower()
+    if lowered in {"data proc", "data-proc"}:
+        return ""
+    return pretty
+
+
+def build_player_identity_lookup(cards_json_path: Path | None) -> PlayerIdentityLookup:
+    if cards_json_path is None or not cards_json_path.exists():
+        return PlayerIdentityLookup(name_to_id={}, abbr_to_id={})
+
+    try:
+        cards_payload = json.loads(cards_json_path.read_text(encoding="utf-8"))
+    except Exception:
+        return PlayerIdentityLookup(name_to_id={}, abbr_to_id={})
+
+    if not isinstance(cards_payload, list):
+        return PlayerIdentityLookup(name_to_id={}, abbr_to_id={})
+
+    name_to_id: dict[str, int] = {}
+    abbr_to_ids: dict[str, set[int]] = defaultdict(set)
+    for item in cards_payload:
+        if not isinstance(item, dict):
+            continue
+        player = item.get("player", {})
+        if not isinstance(player, dict):
+            continue
+        name = str(player.get("name", "")).strip()
+        raw_id = player.get("id")
+        try:
+            player_id = int(raw_id)
+        except Exception:
+            continue
+        normalized = normalize_player_key(name)
+        if normalized and normalized not in name_to_id:
+            name_to_id[normalized] = player_id
+        abbr = abbreviate_player_key(name)
+        if abbr:
+            abbr_to_ids[abbr].add(player_id)
+
+    abbr_to_id = {key: next(iter(ids)) for key, ids in abbr_to_ids.items() if len(ids) == 1}
+    return PlayerIdentityLookup(name_to_id=name_to_id, abbr_to_id=abbr_to_id)
+
+
+def build_player_headshot_url(player_id: int | None) -> str | None:
+    if player_id is None:
+        return None
+    return f"https://cdn.nba.com/headshots/nba/latest/1040x760/{int(player_id)}.png"
+
+
+def resolve_player_identity(row: pd.Series, lookup: PlayerIdentityLookup) -> tuple[str, int | None, str | None]:
+    player_code = str(row.get("player", "")).strip()
+    display_name = display_name_from_csv_path(row.get("csv"))
+    if not display_name:
+        market_player_raw = str(row.get("market_player_raw", "")).replace(".", " ").strip()
+        display_name = re.sub(r"\s+", " ", market_player_raw) if market_player_raw else ""
+    if not display_name:
+        display_name = re.sub(r"\s+", " ", player_code.replace("_", " ")).strip()
+
+    candidates = [
+        display_name,
+        player_code,
+        str(row.get("market_player_raw", "")).strip(),
+        str(row.get("player", "")).strip().replace("_", " "),
+    ]
+
+    player_id: int | None = None
+    for candidate in candidates:
+        normalized = normalize_player_key(candidate)
+        if normalized and normalized in lookup.name_to_id:
+            player_id = lookup.name_to_id[normalized]
+            break
+    if player_id is None:
+        for candidate in candidates:
+            abbr = abbreviate_player_key(candidate)
+            if abbr and abbr in lookup.abbr_to_id:
+                player_id = lookup.abbr_to_id[abbr]
+                break
+
+    return display_name, player_id, build_player_headshot_url(player_id)
 
 
 def safe_float(value) -> float | None:
@@ -84,18 +213,24 @@ def build_summary(plays: pd.DataFrame) -> dict:
     }
 
 
-def normalize_play_rows(plays: pd.DataFrame) -> list[dict]:
+def normalize_play_rows(plays: pd.DataFrame, identity_lookup: PlayerIdentityLookup) -> list[dict]:
     rows: list[dict] = []
     ordered = plays.copy().reset_index(drop=True)
     ordered["rank"] = ordered.index + 1
     for _, row in ordered.iterrows():
+        player_display_name, player_id, player_headshot_url = resolve_player_identity(row, identity_lookup)
         rows.append(
             {
                 "rank": int(row["rank"]),
                 "player": str(row.get("player", "")),
+                "player_display_name": str(player_display_name or row.get("player", "")),
+                "player_id": int(player_id) if player_id is not None else None,
+                "player_headshot_url": player_headshot_url,
                 "target": str(row.get("target", "")),
                 "direction": str(row.get("direction", "")),
                 "market_date": str(row.get("market_date", "")) if pd.notna(row.get("market_date")) else None,
+                "market_home_team": str(row.get("market_home_team", "")),
+                "market_away_team": str(row.get("market_away_team", "")),
                 "last_history_date": str(row.get("last_history_date", "")) if pd.notna(row.get("last_history_date")) else None,
                 "prediction": safe_float(row.get("prediction")),
                 "market_line": safe_float(row.get("market_line")),
@@ -136,7 +271,7 @@ def normalize_play_rows(plays: pd.DataFrame) -> list[dict]:
     return rows
 
 
-def load_shadow_runs(manifest: dict, manifest_path: Path) -> list[dict]:
+def load_shadow_runs(manifest: dict, manifest_path: Path, identity_lookup: PlayerIdentityLookup) -> list[dict]:
     out: list[dict] = []
     for item in manifest.get("shadow_runs", []):
         final_csv = resolve_artifact_path(item.get("final_csv"), manifest_path.parent)
@@ -149,7 +284,7 @@ def load_shadow_runs(manifest: dict, manifest_path: Path) -> list[dict]:
                 "final_csv": str(final_csv) if final_csv else None,
                 "summary": build_summary(plays),
                 "policy": final_payload.get("policy", {}),
-                "top_plays": normalize_play_rows(plays.head(10)),
+                "top_plays": normalize_play_rows(plays.head(10), identity_lookup),
             }
         )
     return out
@@ -159,6 +294,7 @@ def main() -> None:
     args = parse_args()
     manifest_path = args.manifest.resolve() if args.manifest else find_latest_manifest(args.daily_runs_root.resolve())
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    identity_lookup = build_player_identity_lookup(args.cards_json.resolve())
 
     final_csv = resolve_artifact_path(manifest.get("final_csv"), manifest_path.parent)
     final_json = resolve_artifact_path(manifest.get("final_json"), manifest_path.parent)
@@ -181,8 +317,8 @@ def main() -> None:
         "policy": final_payload.get("policy", {}),
         "input_validation": final_payload.get("input_validation", {}),
         "summary": build_summary(plays),
-        "plays": normalize_play_rows(plays),
-        "shadow_runs": load_shadow_runs(manifest, manifest_path),
+        "plays": normalize_play_rows(plays, identity_lookup),
+        "shadow_runs": load_shadow_runs(manifest, manifest_path, identity_lookup),
     }
 
     args.out_json.parent.mkdir(parents=True, exist_ok=True)
