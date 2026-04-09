@@ -7,6 +7,23 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+try:
+    from .uncertainty import BELIEF_UNCERTAINTY_LOWER, BELIEF_UNCERTAINTY_UPPER, belief_confidence_factor
+except Exception:  # pragma: no cover - fallback when uncertainty helper module is unavailable
+    BELIEF_UNCERTAINTY_LOWER = 0.75
+    BELIEF_UNCERTAINTY_UPPER = 1.15
+
+    def belief_confidence_factor(value, default: float = 1.0, lower: float = BELIEF_UNCERTAINTY_LOWER, upper: float = BELIEF_UNCERTAINTY_UPPER):
+        try:
+            numeric = float(value)
+            if np.isnan(numeric):
+                numeric = float(default)
+        except Exception:
+            numeric = float(default)
+        span = max(float(upper) - float(lower), 1e-9)
+        normalized = (numeric - float(lower)) / span
+        return float(np.clip(1.0 - normalized, 0.0, 1.0))
+
 
 TARGETS = ("PTS", "TRB", "AST")
 DEFAULT_TARGET_THRESHOLDS = {
@@ -21,9 +38,27 @@ class StrategyConfig:
     name: str
     american_odds: int = -110
     elite_pct: float = 0.95
-    probability_shrink_factor: float = 0.80
+    probability_shrink_factor: float = 0.75
+    ranking_mode: str = "ev_adjusted"
+    xgb_ltr_min_train_rows: int = 4000
+    xgb_ltr_num_pair_per_sample: int = 12
+    robust_reranker_min_train_rows: int = 4000
+    robust_reranker_holdout_days: int = 45
+    robust_reranker_min_holdout_rows: int = 250
+    robust_reranker_num_pair_per_sample: int = 12
+    robust_reranker_min_candidate_win_rate: float = 0.55
+    robust_reranker_min_candidate_final_confidence: float = 0.03
+    robust_reranker_min_candidate_recommendation: str = "consider"
+    accept_reject_enabled: bool = False
+    accept_reject_min_train_rows: int = 3000
+    accept_reject_holdout_days: int = 45
+    accept_reject_min_holdout_rows: int = 250
+    accept_reject_min_accept_rate: float = 0.05
+    accept_reject_threshold_floor: float = 0.0
     min_ev: float = 0.0
     min_final_confidence: float = 0.03
+    max_history_staleness_days: int = 0
+    min_recency_factor: float = 0.0
     min_recommendation: str = "consider"
     max_plays_per_player: int = 1
     max_plays_per_target: int = 0
@@ -31,8 +66,71 @@ class StrategyConfig:
     max_trb_plays: int = 4
     max_ast_plays: int = 2
     max_total_plays: int = 12
+    min_board_plays: int = 0
     non_pts_min_gap_percentile: float = 0.90
+    exclude_micro_lines_enabled: bool = True
+    exclude_micro_line_targets: tuple[str, ...] = ("PTS", "TRB", "AST")
+    exclude_micro_line_min: float = 0.5
+    exclude_micro_line_max: float = 1.5
     edge_adjust_k: float = 0.30
+    selection_mode: str = "ev_adjusted"
+    append_agreement_min: int = 3
+    append_edge_percentile_min: float = 0.90
+    append_max_extra_plays: int = 3
+    board_objective_overfetch: float = 4.0
+    board_objective_candidate_limit: int = 36
+    board_objective_max_search_nodes: int = 750000
+    board_objective_lambda_corr: float = 0.12
+    board_objective_lambda_conc: float = 0.07
+    board_objective_lambda_unc: float = 0.06
+    board_objective_corr_same_game: float = 0.65
+    board_objective_corr_same_player: float = 1.0
+    board_objective_corr_same_target: float = 0.15
+    board_objective_corr_same_direction: float = 0.05
+    board_objective_corr_same_script_cluster: float = 0.30
+    board_objective_swap_candidates: int = 18
+    board_objective_swap_rounds: int = 2
+    board_objective_instability_enabled: bool = False
+    board_objective_lambda_shadow_disagreement: float = 0.0
+    board_objective_lambda_segment_weakness: float = 0.0
+    board_objective_instability_near_cutoff_window: int = 3
+    board_objective_instability_top_protected: int = 3
+    board_objective_instability_veto_enabled: bool = False
+    board_objective_instability_veto_quantile: float = 0.85
+    board_objective_dynamic_size_enabled: bool = False
+    board_objective_dynamic_size_max_shrink: int = 0
+    board_objective_dynamic_size_trigger: float = 0.62
+    board_objective_fp_veto_enabled: bool = False
+    board_objective_fp_veto_live: bool = False
+    board_objective_fp_veto_tail_slots: int = 2
+    board_objective_fp_veto_top_protected: int = 6
+    board_objective_fp_veto_threshold: float = 0.80
+    board_objective_fp_veto_max_drops: int = 1
+    board_objective_fp_veto_quantile: float = 0.70
+    board_objective_fp_veto_max_swaps: int = 1
+    board_objective_fp_veto_swap_candidates: int = 24
+    board_objective_fp_veto_min_swap_gain: float = 0.0025
+    board_objective_fp_veto_risk_lambda: float = 0.18
+    board_objective_fp_veto_ml_weight: float = 0.45
+    learned_gate_enabled: bool = False
+    learned_gate_min_rows: int = 0
+    accepted_pick_gate_enabled: bool = False
+    accepted_pick_gate_live: bool = False
+    accepted_pick_gate_min_rows: int = 0
+    max_plays_per_game: int = 2
+    max_plays_per_script_cluster: int = 2
+    thompson_temperature: float = 1.0
+    thompson_seed: int = 17
+    market_regression_floor: float = 0.25
+    market_regression_ceiling: float = 0.95
+    min_bet_win_rate: float = 0.57
+    medium_bet_win_rate: float = 0.60
+    full_bet_win_rate: float = 0.65
+    medium_tier_percentile: float = 0.80
+    strong_tier_percentile: float = 0.90
+    elite_tier_percentile: float = 0.95
+    belief_uncertainty_lower: float = BELIEF_UNCERTAINTY_LOWER
+    belief_uncertainty_upper: float = BELIEF_UNCERTAINTY_UPPER
     min_history_rows: int = 90
     min_history_rows_per_target: int = 25
     starting_bankroll: float = 1000.0
@@ -40,12 +138,69 @@ class StrategyConfig:
     flat_stake: float = 10.0
     base_bet_fraction: float = 0.015
     kelly_fraction: float = 0.25
+    small_bet_fraction: float = 0.005
+    medium_bet_fraction: float = 0.010
+    full_bet_fraction: float = 0.015
+    coarse_low_bet_fraction: float = 0.003
+    coarse_mid_bet_fraction: float = 0.005
+    coarse_high_bet_fraction: float = 0.007
+    coarse_high_max_share: float = 0.30
+    coarse_mid_max_share: float = 0.50
+    coarse_high_max_plays: int = 0
+    coarse_mid_max_plays: int = 0
+    coarse_score_alpha_uncertainty: float = 0.18
+    coarse_score_beta_dependency: float = 0.12
+    coarse_score_gamma_support: float = 0.08
+    coarse_score_model: str = "legacy"
+    coarse_score_delta_prob_weight: float = 0.0
+    coarse_score_ev_weight: float = 0.0
+    coarse_score_risk_weight: float = 0.0
+    coarse_score_recency_weight: float = 0.0
+    staking_bucket_model_enabled: bool = False
+    staking_bucket_model_min_rows: int = 0
     edge_scale_start_percentile: float = 0.75
     edge_scale_span: float = 0.25
     edge_scale_lift: float = 0.15
     edge_scale_max_multiplier: float = 1.25
     max_bet_fraction: float = 0.05
+    max_total_bet_fraction: float = 0.05
     min_bet_fraction: float = 0.0
+    conditional_framework_enabled: bool = True
+    conditional_framework_mode: str = "auto"
+    conditional_anchor_min_probability: float = 0.57
+    conditional_anchor_min_confidence: float = 0.05
+    conditional_anchor_max_risk_penalty: float = 0.62
+    conditional_min_anchor_count: int = 2
+    conditional_recoverability_threshold: float = 0.52
+    conditional_contradiction_threshold: float = 0.62
+    conditional_noise_threshold: float = 0.68
+    conditional_lambda: float = 0.45
+    conditional_max_score: float = 0.35
+    conditional_lift_shrinkage_k: float = 40.0
+    conditional_min_pair_count: float = 25.0
+    conditional_min_recent_pair_count: float = 10.0
+    conditional_min_regime_pair_count: float = 8.0
+    conditional_min_support: float = 0.10
+    conditional_promotion_min_probability: float = 0.56
+    conditional_promotion_min_ev: float = 0.02
+    conditional_max_promotions_per_slate: int = 3
+    conditional_max_promotions_per_game: int = 1
+    conditional_max_promotions_per_player: int = 1
+    conditional_max_promotions_per_script_cluster: int = 2
+    conditional_max_promoted_share_of_recoverable: float = 0.35
+    conditional_contrastive_weight: float = 0.20
+    conditional_contrastive_clip: float = 0.08
+    conditional_market_modifier_strength: float = 0.04
+    conditional_market_modifier_clip: float = 0.03
+    conditional_max_failure_memory_penalty: float = 0.06
+    conditional_recency_half_life_days: float = 35.0
+    conditional_stale_history_days: int = 21
+    conditional_min_script_anchors_per_game: int = 1
+    conditional_kill_switch_failure_rate: float = 0.60
+    conditional_kill_switch_min_failures: int = 25
+    conditional_promoted_min_recommendation: str = "consider"
+    conditional_baseline_min_recommendation: str = "consider"
+    conditional_failure_memory_path: str = "model/analysis/conditional_failure_memory.json"
     target_thresholds: dict[str, dict[str, float]] = field(
         default_factory=lambda: {target: values.copy() for target, values in DEFAULT_TARGET_THRESHOLDS.items()}
     )
@@ -280,9 +435,15 @@ def score_candidates(current_df: pd.DataFrame, history_lookup: dict[str, dict[st
         expected_rates = expected_rates_for(target, gap_percentile, history_info, thresholds)
 
         belief = safe_float(row.get("belief_uncertainty"), default=1.0)
+        belief_conf = belief_confidence_factor(
+            belief,
+            default=1.0,
+            lower=float(config.belief_uncertainty_lower),
+            upper=float(config.belief_uncertainty_upper),
+        )
         feasibility = max(0.0, safe_float(row.get("feasibility"), default=0.0))
-        confidence_score = abs_edge * np.clip(1.0 - belief, 0.0, 1.0) * feasibility
-        final_confidence = gap_percentile * np.clip(1.0 - belief, 0.0, 1.0) * feasibility
+        confidence_score = abs_edge * belief_conf * feasibility
+        final_confidence = gap_percentile * belief_conf * feasibility
 
         rows.append(
             {

@@ -33,6 +33,11 @@ DATA_DIR = REPO_ROOT / "Data-Proc"
 MARKET_ROOT = REPO_ROOT / "data copy" / "raw" / "market_odds" / "nba"
 MANIFEST_DIR = DATA_DIR
 TARGETS = ["PTS", "TRB", "AST"]
+AMBIGUOUS_PLAYER_OVERRIDES = {
+    # Covers frequently uses first-initial aliases (for example M_Bridges) that
+    # are ambiguous across multiple players.
+    "M_Bridges": "Mikal_Bridges",
+}
 
 REAL_MARKET_FIELDS = [
     "Market_PTS",
@@ -88,6 +93,49 @@ def load_market_history(path: Path) -> pd.DataFrame:
     sort_cols = ["Player", "Market_Date", "Market_Fetched_At_UTC"]
     df = df.sort_values(sort_cols).drop_duplicates(subset=["Player", "Market_Date"], keep="last")
     return df
+
+
+def _player_aliases(player_dir_name: str) -> set[str]:
+    normalized = normalize_name(player_dir_name)
+    aliases = {normalized}
+    parts = [part for part in normalized.split("_") if part]
+    if len(parts) >= 2:
+        aliases.add(f"{parts[0][0]}_{'_'.join(parts[1:])}")
+        aliases.add(f"{parts[0][0]}_{parts[-1]}")
+    return aliases
+
+
+def build_market_player_alias_map(csv_paths: list[Path]) -> tuple[dict[str, str], dict[str, list[str]]]:
+    alias_candidates: dict[str, set[str]] = {}
+    canonical_players = {normalize_name(path.parent.name) for path in csv_paths}
+    for canonical in canonical_players:
+        for alias in _player_aliases(canonical):
+            alias_candidates.setdefault(alias, set()).add(canonical)
+
+    resolved: dict[str, str] = {}
+    ambiguous: dict[str, list[str]] = {}
+    for alias, candidates in alias_candidates.items():
+        if len(candidates) == 1:
+            resolved[alias] = next(iter(candidates))
+        else:
+            ambiguous[alias] = sorted(candidates)
+
+    for alias, canonical in AMBIGUOUS_PLAYER_OVERRIDES.items():
+        alias_norm = normalize_name(alias)
+        canonical_norm = normalize_name(canonical)
+        if canonical_norm in canonical_players:
+            resolved[alias_norm] = canonical_norm
+            ambiguous.pop(alias_norm, None)
+    return resolved, ambiguous
+
+
+def remap_market_history_players(market_history: pd.DataFrame, alias_map: dict[str, str]) -> pd.DataFrame:
+    if market_history.empty or not alias_map:
+        return market_history
+    out = market_history.copy()
+    player_series = out["Player"].astype(str).map(normalize_name)
+    out["Player"] = player_series.map(lambda player: alias_map.get(player, player))
+    return out
 
 
 def gather_player_csvs(season: int, player_limit: int | None) -> list[Path]:
@@ -219,15 +267,17 @@ def process_player_csv(path: Path, market_history: pd.DataFrame, market_anchor_b
 def main() -> None:
     args = parse_args()
     aligned_at_utc = utc_now_iso()
+    csv_paths = gather_player_csvs(args.season, args.player_limit)
+    if not csv_paths:
+        raise RuntimeError(f"No processed CSVs found for season {args.season}")
+    alias_map, ambiguous_aliases = build_market_player_alias_map(csv_paths)
+
     market_history = load_market_history(args.history_wide_path)
+    market_history = remap_market_history_players(market_history, alias_map)
     market_anchor_bundle = None
     market_anchor_meta = {"available": False, "path": None, "targets": []}
     if not args.skip_market_anchor:
         market_anchor_bundle, market_anchor_meta = load_market_anchor_bundle(args.market_anchor_path)
-
-    csv_paths = gather_player_csvs(args.season, args.player_limit)
-    if not csv_paths:
-        raise RuntimeError(f"No processed CSVs found for season {args.season}")
 
     results = []
     for path in csv_paths:
@@ -238,6 +288,11 @@ def main() -> None:
         "season": args.season,
         "history_wide_path": str(args.history_wide_path),
         "history_rows": int(len(market_history)),
+        "market_aliases": {
+            "resolved_aliases": int(len(alias_map)),
+            "ambiguous_aliases": int(len(ambiguous_aliases)),
+            "ambiguous_samples": {key: value for key, value in list(ambiguous_aliases.items())[:25]},
+        },
         "market_anchor": market_anchor_meta,
         "players_processed": int(len(results)),
         "real_market_rows": int(sum(item["real_market_rows"] for item in results)),
