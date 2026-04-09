@@ -5,6 +5,24 @@ import pandas as pd
 
 from .gating import StrategyConfig
 from .sizing import american_profit_per_unit
+try:
+    from .uncertainty import belief_confidence_factor
+except Exception:  # pragma: no cover - fallback when uncertainty helper module is unavailable
+    def belief_confidence_factor(value, default: float = 1.0, lower: float = 0.75, upper: float = 1.15):
+        series = pd.to_numeric(value, errors="coerce") if isinstance(value, pd.Series) else value
+        if isinstance(series, pd.Series):
+            span = max(float(upper) - float(lower), 1e-9)
+            normalized = ((series.fillna(float(default)) - float(lower)) / span).clip(lower=0.0, upper=1.0)
+            return (1.0 - normalized).clip(lower=0.0, upper=1.0)
+        try:
+            numeric = float(series)
+            if np.isnan(numeric):
+                numeric = float(default)
+        except Exception:
+            numeric = float(default)
+        span = max(float(upper) - float(lower), 1e-9)
+        normalized = float(np.clip((numeric - float(lower)) / span, 0.0, 1.0))
+        return float(np.clip(1.0 - normalized, 0.0, 1.0))
 
 
 def recommendation_rank(label: str) -> int:
@@ -29,7 +47,13 @@ def numeric_series(df: pd.DataFrame, column: str, default: float) -> pd.Series:
     return pd.Series(default, index=df.index, dtype="float64")
 
 
-def compute_ev_columns(df: pd.DataFrame, american_odds: int, edge_adjust_k: float) -> pd.DataFrame:
+def compute_ev_columns(
+    df: pd.DataFrame,
+    american_odds: int,
+    edge_adjust_k: float,
+    belief_uncertainty_lower: float,
+    belief_uncertainty_upper: float,
+) -> pd.DataFrame:
     out = df.copy()
     payout = american_profit_per_unit(american_odds)
     out["expected_win_rate"] = numeric_series(out, "expected_win_rate", 0.0)
@@ -37,10 +61,18 @@ def compute_ev_columns(df: pd.DataFrame, american_odds: int, edge_adjust_k: floa
     out["expected_loss_rate"] = (1.0 - out["expected_win_rate"] - out["expected_push_rate"]).clip(lower=0.0, upper=1.0)
     out["gap_percentile"] = numeric_series(out, "gap_percentile", 0.0)
     out["belief_uncertainty"] = numeric_series(out, "belief_uncertainty", 1.0)
+    out["belief_confidence_factor"] = numeric_series(out, "belief_confidence_factor", np.nan).fillna(
+        belief_confidence_factor(
+            out["belief_uncertainty"],
+            default=1.0,
+            lower=float(belief_uncertainty_lower),
+            upper=float(belief_uncertainty_upper),
+        )
+    )
     out["feasibility"] = numeric_series(out, "feasibility", 0.0)
     out["abs_edge"] = numeric_series(out, "abs_edge", 0.0)
     out["final_confidence"] = numeric_series(out, "final_confidence", np.nan).fillna(
-        out["gap_percentile"] * np.clip(1.0 - out["belief_uncertainty"], 0.0, 1.0) * np.clip(out["feasibility"], 0.0, None)
+        out["gap_percentile"] * out["belief_confidence_factor"] * np.clip(out["feasibility"], 0.0, None)
     )
     out["ev"] = out["expected_win_rate"] * payout - out["expected_loss_rate"]
     out["recommendation_rank"] = out["recommendation"].map(recommendation_rank)
@@ -54,7 +86,13 @@ def apply_policy(scored: pd.DataFrame, config: StrategyConfig) -> pd.DataFrame:
     if scored.empty:
         return scored.copy()
 
-    out = compute_ev_columns(scored, config.american_odds, config.edge_adjust_k)
+    out = compute_ev_columns(
+        scored,
+        config.american_odds,
+        config.edge_adjust_k,
+        config.belief_uncertainty_lower,
+        config.belief_uncertainty_upper,
+    )
     out["passes_recommendation"] = out["recommendation_rank"] <= minimum_recommendation_rank(config.min_recommendation)
     out["passes_ev"] = out["ev"] >= float(config.min_ev)
     out["passes_final_confidence"] = out["final_confidence"] >= float(config.min_final_confidence)

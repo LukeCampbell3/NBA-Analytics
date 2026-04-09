@@ -1,55 +1,40 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-ENV/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+# Ignore everything by default.
+*
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# Keep ignore rules file itself.
+!.gitignore
 
-# Data
-*.csv
-*.parquet
-*.json
+# Keep minimal project docs + static build tooling.
+!README.md
+!requirements.txt
+!build_static_site.py
+!prepare_web_data.py
+!prepare_web_college_data.py
 !config.yaml
 
-# Outputs
-data_sample/
-valuations/
-analysis/
-outputs/
-test_outputs/
-tests/
+# Keep static site source and built output.
+!web/
+!web/**
+!dist/
+!dist/**
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Temp
-*.tmp
-*.bak
-temp/
-tmp/
+# Keep conditional promotion framework code/tests.
+!Player-Predictor/
+!Player-Predictor/decision_engine/
+!Player-Predictor/decision_engine/conditional_promotion.py
+!Player-Predictor/scripts/
+!Player-Predictor/scripts/evaluate_cutoff_meta_append.py
+!Player-Predictor/scripts/run_daily_cutoff_meta_monitor.py
+!Player-Predictor/scripts/evaluate_stage1_daily_append_permission.py
+!Player-Predictor/scripts/run_stage1_backfill_protocol.py
+!Player-Predictor/scripts/validate_board_objective_mode.py
+!Player-Predictor/scripts/tune_board_objective_lambdas.py
+!Player-Predictor/scripts/train_selected_board_calibrator.py
+!Player-Predictor/scripts/train_learned_pool_gate.py
+!Player-Predictor/scripts/report_reliability_diagnostics.py
+!Player-Predictor/scripts/run_accepted_pick_gate_research.py
+!Player-Predictor/decision_engine/selected_board_calibration.py
+!Player-Predictor/decision_engine/learned_pool_gate.py
+!Player-Predictor/decision_engine/accepted_pick_gate.py
+!tests/
+!tests/test_conditional_framework.py

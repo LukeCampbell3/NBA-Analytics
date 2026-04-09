@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, List
@@ -22,6 +23,26 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from value_college_players import build_card_from_row, resolve_column_map  # noqa: E402
 from value_players import PlayerValuator  # noqa: E402
+
+
+def normalize_home_links(web_dir: Path) -> None:
+    """
+    Normalize Home nav anchors so they always point to site root (/).
+    """
+    if not web_dir.exists():
+        return
+
+    html_files = sorted(web_dir.glob("*.html"))
+    pattern = re.compile(r'(<a\b[^>]*\bhref=["\'])index\.html(["\'][^>]*>\s*Home\s*</a>)', re.IGNORECASE)
+
+    for html_path in html_files:
+        try:
+            original = html_path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        updated = pattern.sub(r'\1/\2', original)
+        if updated != original:
+            html_path.write_text(updated, encoding="utf-8")
 
 
 def clamp(value: float, lo: float, hi: float) -> float:
@@ -190,6 +211,7 @@ def build_web_college_payloads(input_path: Path, web_data_dir: Path) -> int:
 
     print(f"[SUCCESS] Wrote {len(cards)} college cards -> {cards_path}")
     print(f"[SUCCESS] Wrote {len(valuations)} college valuations -> {valuations_path}")
+    normalize_home_links(Path("web"))
     return 0
 
 

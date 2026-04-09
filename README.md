@@ -18,7 +18,7 @@ This project builds player cards, computes value and breakout signals, and serve
 - `src/value_players.py`: Value engine (wins-added style valuation, aging, surplus).
 - `src/analyze_players.py`: Breakout, portability, sanity checks, and report outputs.
 - `prepare_web_data.py`: Consolidate cards + valuations into `web/data`.
-- `serve_web.py`: Local multi-page server (`/`, `/about`, etc.).
+- `build_static_site.py`: Build deployable static bundle (clean routes + optional college payload trim).
 - `web/`: Frontend application.
 
 ## Requirements
@@ -72,10 +72,16 @@ If you also want the college card page payload:
 python prepare_web_college_data.py
 ```
 
-### 3. Serve the site locally
+### 3. Build static site bundle
 
 ```bash
-python serve_web.py
+python build_static_site.py
+```
+
+### 4. Preview locally (optional)
+
+```bash
+python -m http.server 8000 --directory dist
 ```
 
 Then open:
@@ -110,11 +116,11 @@ python src/value_players.py --cards data/processed/player_cards --output data/va
 python src/analyze_players.py --cards data/processed/player_cards --output data/breakout
 ```
 
-### E. Build frontend data bundle and run site
+### E. Build frontend data bundle and static site
 
 ```bash
 python prepare_web_data.py
-python serve_web.py
+python build_static_site.py
 ```
 
 ## Expected Input Data
@@ -135,6 +141,7 @@ Your raw CSV should include (at minimum):
 - `data/breakout/`: breakout and fit analysis reports
 - `web/data/cards.json`: combined card payload for frontend
 - `web/data/valuations.json`: combined valuation payload for frontend
+- `dist/`: deployable static bundle
 
 ## College Data Backend (Robots-Compliant)
 
@@ -216,5 +223,5 @@ The audit checks three groups:
 ## Notes
 
 - The web app reads from `web/data/cards.json` and `web/data/valuations.json`.
-- `serve_web.py` supports clean routes for HTML pages (example: `/about` -> `about.html`).
+- `build_static_site.py` creates clean static routes in `dist/` (example: `/about/` and `/about.html` both work).
 - If frontend changes do not appear, do a hard refresh (`Ctrl+F5`).

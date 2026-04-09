@@ -23,6 +23,27 @@ sys.path.insert(0, str(Path(__file__).parent / 'src'))
 from value_players import PlayerValuator
 
 
+def normalize_home_links(web_dir: Path) -> None:
+    """
+    Normalize Home nav anchors so they always point to site root (/).
+    """
+    if not web_dir.exists():
+        return
+
+    html_files = sorted(web_dir.glob("*.html"))
+    # href="index.html" ...>Home</a>  -> href="/" ...>Home</a>
+    pattern = re.compile(r'(<a\b[^>]*\bhref=["\'])index\.html(["\'][^>]*>\s*Home\s*</a>)', re.IGNORECASE)
+
+    for html_path in html_files:
+        try:
+            original = html_path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        updated = pattern.sub(r'\1/\2', original)
+        if updated != original:
+            html_path.write_text(updated, encoding="utf-8")
+
+
 def normalize_name(value: str) -> str:
     """Normalize names for fuzzy cross-source matching."""
     text = unicodedata.normalize('NFKD', str(value or ''))
@@ -214,8 +235,9 @@ def prepare_web_data():
     print(f"\n[SUCCESS] Prepared web data:")
     print(f"  - {len(all_cards)} player cards -> {cards_path}")
     print(f"  - {len(all_valuations)} valuations -> {valuations_path}")
-    print(f"\nTo view the web app:")
-    print(f"  python serve_web.py")
+    normalize_home_links(Path("web"))
+    print(f"\nTo build the static site bundle:")
+    print(f"  python build_static_site.py")
     
     return 0
 

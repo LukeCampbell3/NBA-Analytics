@@ -1,5 +1,6 @@
 """Decision-policy simulation utilities for market play validation."""
 
+from .conditional_promotion import ConditionalPromotionConfig, apply_conditional_promotion
 from .gating import StrategyConfig, build_history_lookup, prepare_historical_decisions, score_candidates
 from .policy_tuning import build_default_shadow_strategies, run_policy_tuning
 from .selection import apply_policy
@@ -8,7 +9,9 @@ from .validation import summarize_simulation
 
 __all__ = [
     "StrategyConfig",
+    "ConditionalPromotionConfig",
     "apply_policy",
+    "apply_conditional_promotion",
     "build_default_shadow_strategies",
     "build_history_lookup",
     "prepare_historical_decisions",
