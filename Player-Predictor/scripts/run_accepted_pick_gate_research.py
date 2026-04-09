@@ -12,6 +12,7 @@ keep/drop gate on accepted picks:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import itertools
 import json
 import math
@@ -30,10 +31,14 @@ sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 from decision_engine.accepted_pick_gate import (
+    CatBoostGateConfig,
+    CatBoostKeepDropGate,
     GatePolicyConfig,
     LogisticGateConfig,
     PromotionCriteria,
     RegularizedLogisticGate,
+    UpliftCatBoostGate,
+    UpliftCatBoostGateConfig,
     WalkForwardConfig,
     apply_accepted_pick_gate,
     apply_shadow_gate_policy,
@@ -44,6 +49,7 @@ from decision_engine.accepted_pick_gate import (
     expected_utility_from_result,
     iter_walk_forward_windows,
     normalize_player_name,
+    predict_keep_harm_scores,
     result_to_keep_label,
     rolling_window_paired_deltas,
     summarize_paired_outcomes,
@@ -81,6 +87,220 @@ def _safe_int(value: Any, default: int = 0) -> int:
         return int(value)
     except Exception:
         return int(default)
+
+
+def _player_concentration_features(concentration: dict[str, Any] | None) -> dict[str, float]:
+    payload = concentration if isinstance(concentration, dict) else {}
+    top_player = _safe_float(payload.get("top_player_share"), 0.0)
+    player_hhi = _safe_float(payload.get("player_hhi"), 0.0)
+    player_diversity = _safe_float(payload.get("player_diversity"), 0.0)
+    unique_players = float(max(0, _safe_int(payload.get("unique_players"), 0)))
+    veto_rows = float(max(0, _safe_int(payload.get("veto_rows"), 0)))
+    if player_diversity <= 0.0 and veto_rows > 0.0:
+        player_diversity = float(min(1.0, unique_players / veto_rows))
+    return {
+        "top_player_share": float(max(0.0, top_player)),
+        "player_hhi": float(max(0.0, player_hhi)),
+        "player_diversity": float(np.clip(player_diversity, 0.0, 1.0)),
+    }
+
+
+def _player_concentration_objective_adjustment(
+    concentration: dict[str, Any] | None,
+    *,
+    top_share_penalty: float,
+    hhi_penalty: float,
+    diversity_bonus: float,
+) -> float:
+    features = _player_concentration_features(concentration)
+    return (
+        -float(max(0.0, top_share_penalty)) * float(features["top_player_share"])
+        - float(max(0.0, hhi_penalty)) * float(features["player_hhi"])
+        + float(max(0.0, diversity_bonus)) * float(features["player_diversity"])
+    )
+
+
+def _effective_target_cap(
+    *,
+    base_cap: float,
+    top_player_share: float,
+    recent_profit: float,
+    recent_hit_pp: float,
+    conditional_enabled: bool,
+    conditional_relaxed_cap: float,
+    conditional_player_share_max: float,
+    conditional_require_recent_non_negative: bool,
+    conditional_recent_profit_floor: float,
+    conditional_recent_hit_floor_pp: float,
+) -> tuple[float, bool]:
+    cap = float(base_cap)
+    active = False
+    if not bool(conditional_enabled):
+        return cap, active
+    player_ok = float(top_player_share) <= float(conditional_player_share_max)
+    recent_ok = True
+    if bool(conditional_require_recent_non_negative):
+        recent_ok = bool(
+            float(recent_profit) >= float(conditional_recent_profit_floor)
+            and (
+                float(recent_hit_pp) != float(recent_hit_pp)
+                or float(recent_hit_pp) >= float(conditional_recent_hit_floor_pp)
+            )
+        )
+    if player_ok and recent_ok:
+        active = True
+        cap = float(max(float(base_cap), float(conditional_relaxed_cap)))
+    return float(cap), bool(active)
+
+
+def _bootstrap_paired_deltas(
+    frame: pd.DataFrame,
+    *,
+    veto_col: str,
+    result_col: str,
+    iterations: int,
+    alpha: float,
+    seed: int,
+) -> dict[str, Any]:
+    out = {
+        "enabled": False,
+        "iterations": int(max(0, iterations)),
+        "alpha": float(alpha),
+        "sample_rows": int(len(frame)),
+        "profit_units_ci": [float("nan"), float("nan")],
+        "hit_rate_pp_ci": [float("nan"), float("nan")],
+        "profit_units_mean": float("nan"),
+        "hit_rate_pp_mean": float("nan"),
+    }
+    if frame.empty or int(iterations) <= 0:
+        return out
+    resolved = frame.loc[frame[result_col].astype(str).str.lower().isin(["win", "loss"])].copy()
+    if resolved.empty:
+        return out
+    rng = np.random.default_rng(int(seed))
+    n = int(len(resolved))
+    if n <= 0:
+        return out
+    profit_vals: list[float] = []
+    hit_vals: list[float] = []
+    for _ in range(int(iterations)):
+        idx = rng.integers(0, n, n)
+        sample = resolved.iloc[idx].copy()
+        summary = summarize_paired_outcomes(sample, veto_col=veto_col, result_col=result_col)
+        delta = summary.get("delta", {})
+        profit_vals.append(_safe_float(delta.get("profit_units"), float("nan")))
+        hit_vals.append(_safe_float(delta.get("hit_rate_pp"), float("nan")))
+    profit_arr = np.asarray(profit_vals, dtype="float64")
+    hit_arr = np.asarray(hit_vals, dtype="float64")
+    lo_q = float(np.clip(float(alpha) / 2.0, 0.0, 0.5))
+    hi_q = float(1.0 - lo_q)
+    out["enabled"] = True
+    out["profit_units_ci"] = [float(np.nanquantile(profit_arr, lo_q)), float(np.nanquantile(profit_arr, hi_q))]
+    out["hit_rate_pp_ci"] = [float(np.nanquantile(hit_arr, lo_q)), float(np.nanquantile(hit_arr, hi_q))]
+    out["profit_units_mean"] = float(np.nanmean(profit_arr))
+    out["hit_rate_pp_mean"] = float(np.nanmean(hit_arr))
+    return out
+
+
+def _leave_one_player_out_validation(
+    frame: pd.DataFrame,
+    *,
+    player_col: str,
+    veto_col: str,
+    result_col: str,
+    min_player_rows: int,
+    profit_floor: float,
+    hit_floor_pp: float,
+) -> dict[str, Any]:
+    out = {
+        "enabled": False,
+        "players_evaluated": 0,
+        "profit_pass_rate": float("nan"),
+        "hit_pass_rate": float("nan"),
+        "profit_floor": float(profit_floor),
+        "hit_floor_pp": float(hit_floor_pp),
+        "min_player_rows": int(max(1, min_player_rows)),
+        "worst_profit_units": float("nan"),
+        "worst_hit_rate_pp": float("nan"),
+    }
+    if frame.empty:
+        return out
+    resolved = frame.loc[frame[result_col].astype(str).str.lower().isin(["win", "loss"])].copy()
+    if resolved.empty:
+        return out
+    players = resolved.get(player_col, pd.Series("", index=resolved.index)).map(normalize_player_name)
+    counts = players.value_counts()
+    keep_players = [str(name) for name, cnt in counts.items() if int(cnt) >= int(max(1, min_player_rows)) and str(name).strip()]
+    if not keep_players:
+        return out
+    profits: list[float] = []
+    hits: list[float] = []
+    for player in keep_players:
+        mask = players.ne(player)
+        part = resolved.loc[mask].copy()
+        if part.empty:
+            continue
+        summary = summarize_paired_outcomes(part, veto_col=veto_col, result_col=result_col)
+        delta = summary.get("delta", {})
+        profits.append(_safe_float(delta.get("profit_units"), float("nan")))
+        hits.append(_safe_float(delta.get("hit_rate_pp"), float("nan")))
+    if not profits:
+        return out
+    profit_arr = np.asarray(profits, dtype="float64")
+    hit_arr = np.asarray(hits, dtype="float64")
+    out["enabled"] = True
+    out["players_evaluated"] = int(len(profit_arr))
+    out["profit_pass_rate"] = float(np.nanmean(profit_arr >= float(profit_floor)))
+    out["hit_pass_rate"] = float(np.nanmean(hit_arr >= float(hit_floor_pp)))
+    out["worst_profit_units"] = float(np.nanmin(profit_arr))
+    out["worst_hit_rate_pp"] = float(np.nanmin(hit_arr))
+    return out
+
+
+def _apply_small_lift_validation_to_recommendation(
+    recommendation: dict[str, Any],
+    *,
+    lopo: dict[str, Any],
+    bootstrap: dict[str, Any],
+    enforce: bool,
+    min_lopo_profit_pass_rate: float,
+    min_lopo_hit_pass_rate: float,
+    min_bootstrap_profit_ci_lower: float,
+    min_bootstrap_hit_ci_lower_pp: float,
+) -> dict[str, Any]:
+    rec = dict(recommendation or {})
+    failures = [str(x) for x in rec.get("failures", [])]
+    if bool(enforce):
+        if bool(lopo.get("enabled", False)):
+            if _safe_float(lopo.get("profit_pass_rate"), float("-inf")) < float(min_lopo_profit_pass_rate):
+                failures.append("lopo_profit_pass_rate_below_floor")
+            if _safe_float(lopo.get("hit_pass_rate"), float("-inf")) < float(min_lopo_hit_pass_rate):
+                failures.append("lopo_hit_pass_rate_below_floor")
+        profit_ci = lopo_ci_default = [float("nan"), float("nan")]
+        hit_ci = lopo_ci_default
+        if isinstance(bootstrap.get("profit_units_ci"), list) and len(bootstrap.get("profit_units_ci")) >= 2:
+            profit_ci = bootstrap.get("profit_units_ci")
+        if isinstance(bootstrap.get("hit_rate_pp_ci"), list) and len(bootstrap.get("hit_rate_pp_ci")) >= 2:
+            hit_ci = bootstrap.get("hit_rate_pp_ci")
+        if bool(bootstrap.get("enabled", False)):
+            if _safe_float(profit_ci[0], float("-inf")) < float(min_bootstrap_profit_ci_lower):
+                failures.append("bootstrap_profit_ci_lower_below_floor")
+            if _safe_float(hit_ci[0], float("-inf")) < float(min_bootstrap_hit_ci_lower_pp):
+                failures.append("bootstrap_hit_ci_lower_below_floor")
+    rec["small_lift_validation"] = {
+        "enabled": bool(enforce),
+        "leave_one_player_out": lopo,
+        "bootstrap": bootstrap,
+        "floors": {
+            "min_lopo_profit_pass_rate": float(min_lopo_profit_pass_rate),
+            "min_lopo_hit_pass_rate": float(min_lopo_hit_pass_rate),
+            "min_bootstrap_profit_ci_lower": float(min_bootstrap_profit_ci_lower),
+            "min_bootstrap_hit_ci_lower_pp": float(min_bootstrap_hit_ci_lower_pp),
+        },
+    }
+    rec["failures"] = sorted(set(failures))
+    rec["pass"] = bool(len(rec["failures"]) == 0)
+    return rec
 
 
 def _coerce_event_datetime(values: Any) -> pd.Series:
@@ -994,6 +1214,15 @@ def cmd_paired_eval(args: argparse.Namespace) -> None:
         max_top_removed_player_share=float(args.max_top_removed_player_share),
         max_top_removed_segment_share=float(args.max_top_removed_segment_share),
         max_top_removed_target_share=float(args.max_top_removed_target_share),
+        concentration_min_veto_rows=int(args.concentration_min_veto_rows),
+        conditional_target_cap_enabled=bool(not args.disable_conditional_target_cap),
+        conditional_target_relaxed_cap=float(args.conditional_target_relaxed_cap),
+        conditional_target_player_share_max=float(args.conditional_target_player_share_max),
+        conditional_target_require_recent_non_negative=bool(
+            not args.disable_conditional_target_require_recent_non_negative
+        ),
+        conditional_target_recent_hit_floor_pp=float(args.conditional_target_recent_hit_floor_pp),
+        conditional_target_recent_profit_floor=float(args.conditional_target_recent_profit_floor),
         min_rolling_pass_rate=float(args.min_rolling_pass_rate),
         max_observed_fire_rate=float(args.max_observed_fire_rate),
         rolling_profit_delta_floor=float(args.rolling_profit_delta_floor),
@@ -1007,6 +1236,33 @@ def cmd_paired_eval(args: argparse.Namespace) -> None:
         rolling=rolling,
         observed_fire_rate=float(affected_share),
         criteria=criteria,
+    )
+    lopo = _leave_one_player_out_validation(
+        scored,
+        player_col=player_col,
+        veto_col="accepted_pick_gate_veto",
+        result_col=result_col,
+        min_player_rows=int(args.lopo_min_player_rows),
+        profit_floor=float(args.lopo_profit_floor),
+        hit_floor_pp=float(args.lopo_hit_floor_pp),
+    )
+    bootstrap = _bootstrap_paired_deltas(
+        scored,
+        veto_col="accepted_pick_gate_veto",
+        result_col=result_col,
+        iterations=int(args.bootstrap_iterations),
+        alpha=float(args.bootstrap_alpha),
+        seed=int(args.bootstrap_seed),
+    )
+    recommendation = _apply_small_lift_validation_to_recommendation(
+        recommendation,
+        lopo=lopo,
+        bootstrap=bootstrap,
+        enforce=bool(not args.disable_small_lift_validation),
+        min_lopo_profit_pass_rate=float(args.min_lopo_profit_pass_rate),
+        min_lopo_hit_pass_rate=float(args.min_lopo_hit_pass_rate),
+        min_bootstrap_profit_ci_lower=float(args.min_bootstrap_profit_ci_lower),
+        min_bootstrap_hit_ci_lower_pp=float(args.min_bootstrap_hit_ci_lower_pp),
     )
 
     out_payload = {
@@ -1206,6 +1462,147 @@ def _feature_column_candidates(frame: pd.DataFrame) -> tuple[list[str], list[str
     return numeric_features, categorical_features
 
 
+def _build_gate_model_configs(
+    args: argparse.Namespace,
+) -> tuple[str, LogisticGateConfig | None, CatBoostGateConfig | None, UpliftCatBoostGateConfig | None]:
+    model_family = str(getattr(args, "model_family", "logistic")).strip().lower()
+    if model_family not in {"logistic", "catboost", "uplift_catboost"}:
+        raise ValueError(f"Unsupported --model-family: {model_family}")
+    logistic_cfg: LogisticGateConfig | None = None
+    catboost_cfg: CatBoostGateConfig | None = None
+    uplift_cfg: UpliftCatBoostGateConfig | None = None
+    if model_family == "catboost":
+        catboost_cfg = CatBoostGateConfig(
+            iterations=int(getattr(args, "catboost_iterations", 320)),
+            depth=int(getattr(args, "catboost_depth", 5)),
+            learning_rate=float(getattr(args, "catboost_learning_rate", 0.05)),
+            l2_leaf_reg=float(getattr(args, "catboost_l2_leaf_reg", 8.0)),
+            random_strength=float(getattr(args, "catboost_random_strength", 1.0)),
+            bagging_temperature=float(getattr(args, "catboost_bagging_temperature", 0.0)),
+            min_data_in_leaf=int(getattr(args, "catboost_min_data_in_leaf", 20)),
+            random_seed=int(getattr(args, "catboost_seed", 42)),
+            class_weight_positive=float(getattr(args, "class_weight_positive", 1.0)),
+            class_weight_negative=float(getattr(args, "class_weight_negative", 1.0)),
+            segment_weight_power=float(getattr(args, "catboost_segment_weight_power", 0.0)),
+            segment_weight_cap=float(getattr(args, "catboost_segment_weight_cap", 3.0)),
+        )
+    elif model_family == "uplift_catboost":
+        uplift_cfg = UpliftCatBoostGateConfig(
+            iterations=int(getattr(args, "catboost_iterations", 320)),
+            depth=int(getattr(args, "catboost_depth", 5)),
+            learning_rate=float(getattr(args, "catboost_learning_rate", 0.05)),
+            l2_leaf_reg=float(getattr(args, "catboost_l2_leaf_reg", 8.0)),
+            random_strength=float(getattr(args, "catboost_random_strength", 1.0)),
+            bagging_temperature=float(getattr(args, "catboost_bagging_temperature", 0.0)),
+            min_data_in_leaf=int(getattr(args, "catboost_min_data_in_leaf", 20)),
+            random_seed=int(getattr(args, "catboost_seed", 42)),
+            class_weight_positive=float(getattr(args, "class_weight_positive", 1.0)),
+            class_weight_negative=float(getattr(args, "class_weight_negative", 1.0)),
+            segment_weight_power=float(getattr(args, "catboost_segment_weight_power", 0.0)),
+            segment_weight_cap=float(getattr(args, "catboost_segment_weight_cap", 3.0)),
+            keep_prob_temperature=float(getattr(args, "uplift_keep_prob_temperature", 0.25)),
+            harm_head_enabled=bool(not getattr(args, "disable_uplift_harm_head", False)),
+            harm_positive_weight=float(getattr(args, "uplift_harm_positive_weight", 1.5)),
+            harm_temperature=float(getattr(args, "uplift_harm_temperature", 1.0)),
+        )
+    else:
+        logistic_cfg = LogisticGateConfig(
+            learning_rate=float(getattr(args, "learning_rate", 0.05)),
+            l2_strength=float(getattr(args, "l2_strength", 2.5)),
+            max_iter=int(getattr(args, "max_iter", 3500)),
+            tolerance=float(getattr(args, "tolerance", 1e-7)),
+            class_weight_positive=float(getattr(args, "class_weight_positive", 1.0)),
+            class_weight_negative=float(getattr(args, "class_weight_negative", 1.0)),
+        )
+    return model_family, logistic_cfg, catboost_cfg, uplift_cfg
+
+
+def _new_gate_model(
+    model_family: str,
+    *,
+    logistic_cfg: LogisticGateConfig | None,
+    catboost_cfg: CatBoostGateConfig | None,
+    uplift_cfg: UpliftCatBoostGateConfig | None,
+) -> Any:
+    family = str(model_family).strip().lower()
+    if family == "catboost":
+        if catboost_cfg is None:
+            raise RuntimeError("catboost model family selected but no CatBoost config was provided.")
+        return CatBoostKeepDropGate(config=catboost_cfg)
+    if family == "uplift_catboost":
+        if uplift_cfg is None:
+            raise RuntimeError("uplift_catboost model family selected but no uplift config was provided.")
+        return UpliftCatBoostGate(config=uplift_cfg)
+    if logistic_cfg is None:
+        raise RuntimeError("logistic model family selected but no Logistic config was provided.")
+    return RegularizedLogisticGate(config=logistic_cfg)
+
+
+def _feature_signature_hash(
+    *,
+    model_family: str,
+    numeric_features: list[str],
+    categorical_features: list[str],
+) -> str:
+    payload = {
+        "model_family": str(model_family).strip().lower(),
+        "numeric_features": sorted(str(v) for v in numeric_features),
+        "categorical_features": sorted(str(v) for v in categorical_features),
+    }
+    blob = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(blob).hexdigest()[:16]
+
+
+def _segment_paired_deltas(
+    frame: pd.DataFrame,
+    *,
+    target_col: str,
+    direction_col: str,
+    result_col: str,
+    veto_col: str = "gate_veto",
+    min_resolved_rows: int = 10,
+) -> list[dict[str, Any]]:
+    if frame.empty:
+        return []
+    out: list[dict[str, Any]] = []
+    target = frame.get(target_col, pd.Series("", index=frame.index)).fillna("").astype(str).str.upper().str.strip()
+    direction = frame.get(direction_col, pd.Series("", index=frame.index)).fillna("").astype(str).str.upper().str.strip()
+    segment = (target + "|" + direction).where(target.str.len().gt(0) & direction.str.len().gt(0), "")
+    for seg_name, idx in segment.groupby(segment).groups.items():
+        seg = str(seg_name).strip().upper()
+        if not seg:
+            continue
+        part = frame.loc[idx].copy()
+        summary = summarize_paired_outcomes(part, veto_col=veto_col, result_col=result_col)
+        baseline = summary.get("baseline", {})
+        delta = summary.get("delta", {})
+        resolved_rows = int(_safe_int(baseline.get("resolved"), 0))
+        if resolved_rows < int(max(1, min_resolved_rows)):
+            continue
+        out.append(
+            {
+                "segment": seg,
+                "resolved_rows": resolved_rows,
+                "rows": int(_safe_int(summary.get("rows"), 0)),
+                "baseline_hit_rate": _safe_float(baseline.get("hit_rate"), float("nan")),
+                "gated_hit_rate": _safe_float(summary.get("gated", {}).get("hit_rate"), float("nan")),
+                "delta_hit_rate_pp": _safe_float(delta.get("hit_rate_pp"), float("nan")),
+                "delta_profit_units": _safe_float(delta.get("profit_units"), float("nan")),
+                "delta_ev_per_resolved": _safe_float(delta.get("ev_per_resolved"), float("nan")),
+                "delta_resolved": int(_safe_int(delta.get("resolved"), 0)),
+            }
+        )
+    out.sort(
+        key=lambda row: (
+            _safe_float(row.get("delta_profit_units"), float("-inf")),
+            _safe_float(row.get("delta_hit_rate_pp"), float("-inf")),
+            int(row.get("resolved_rows", 0)),
+        ),
+        reverse=True,
+    )
+    return out
+
+
 def _parse_quantiles(raw: str) -> list[float]:
     values: list[float] = []
     for token in str(raw).split(","):
@@ -1216,6 +1613,42 @@ def _parse_quantiles(raw: str) -> list[float]:
     if not values:
         return [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40]
     return sorted(set(values))
+
+
+def _parse_float_grid(raw: str, *, default: list[float], clip_min: float | None = None, clip_max: float | None = None) -> list[float]:
+    values: list[float] = []
+    for token in str(raw).split(","):
+        token = token.strip()
+        if not token:
+            continue
+        try:
+            value = float(token)
+        except Exception:
+            continue
+        if clip_min is not None:
+            value = max(float(clip_min), value)
+        if clip_max is not None:
+            value = min(float(clip_max), value)
+        values.append(float(value))
+    if not values:
+        values = [float(v) for v in default]
+    return sorted(set(float(v) for v in values))
+
+
+def _parse_int_grid(raw: str, *, default: list[int], min_value: int = 0) -> list[int]:
+    values: list[int] = []
+    for token in str(raw).split(","):
+        token = token.strip()
+        if not token:
+            continue
+        try:
+            value = int(token)
+        except Exception:
+            continue
+        values.append(int(max(int(min_value), value)))
+    if not values:
+        values = [int(max(int(min_value), v)) for v in default]
+    return sorted(set(int(v) for v in values))
 
 
 def _build_threshold_grid(
@@ -1493,6 +1926,21 @@ def _policy_variants_for_search(policy: GatePolicyConfig) -> list[GatePolicyConf
                 max_removed_per_player_per_day=int(policy.max_removed_per_player_per_day),
                 max_removed_per_segment_per_day=int(policy.max_removed_per_segment_per_day),
                 max_removed_per_target_per_day=int(policy.max_removed_per_target_per_day),
+                max_global_removed_per_player=int(policy.max_global_removed_per_player),
+                max_global_removed_share_per_player=float(policy.max_global_removed_share_per_player),
+                global_player_cap_min_veto_rows=int(policy.global_player_cap_min_veto_rows),
+                relax_player_global_cap_for_budget=bool(policy.relax_player_global_cap_for_budget),
+                player_penalty_alpha=float(policy.player_penalty_alpha),
+                player_penalty_power=float(policy.player_penalty_power),
+                optimizer_enabled=bool(policy.optimizer_enabled),
+                optimizer_beam_width=int(policy.optimizer_beam_width),
+                optimizer_max_candidates_per_day=int(policy.optimizer_max_candidates_per_day),
+                optimizer_keep_prob_weight=float(policy.optimizer_keep_prob_weight),
+                optimizer_gap_weight=float(policy.optimizer_gap_weight),
+                optimizer_harm_weight=float(policy.optimizer_harm_weight),
+                optimizer_rank_weight=float(policy.optimizer_rank_weight),
+                segment_threshold_overrides=dict(policy.segment_threshold_overrides or {}),
+                segment_budget_overrides=dict(policy.segment_budget_overrides or {}),
                 tail_slots_only=int(max(0, tail_slots)),
                 min_veto_gap=float(max(0.0, gap)),
                 require_keep_prob_filter=bool(require_keep_prob_filter),
@@ -1548,9 +1996,19 @@ def _search_train_threshold(
     max_top_removed_player_share: float,
     max_top_removed_segment_share: float,
     max_top_removed_target_share: float,
+    concentration_min_veto_rows: int,
     min_coverage_retention: float,
     prefer_non_noop_when_close: bool,
     non_noop_objective_margin: float,
+    objective_player_top_share_penalty: float,
+    objective_player_hhi_penalty: float,
+    objective_player_diversity_bonus: float,
+    conditional_target_cap_enabled: bool,
+    conditional_target_relaxed_cap: float,
+    conditional_target_player_share_max: float,
+    conditional_target_require_recent_non_negative: bool,
+    conditional_target_recent_hit_floor_pp: float,
+    conditional_target_recent_profit_floor: float,
 ) -> tuple[float, dict[str, Any]]:
     if train_frame.empty:
         return -1.0, {"threshold": -1.0, "reason": "empty_train"}
@@ -1590,6 +2048,8 @@ def _search_train_threshold(
     best_payload: dict[str, Any] | None = None
     best_relaxed: dict[str, Any] | None = None
     best_non_noop: dict[str, Any] | None = None
+    best_relaxed_structural: dict[str, Any] | None = None
+    best_non_noop_structural: dict[str, Any] | None = None
     policy_variants = _policy_variants_for_search(policy)
     for threshold in candidates:
         for seg_subset in segment_subsets:
@@ -1604,6 +2064,21 @@ def _search_train_threshold(
                         max_removed_per_player_per_day=int(variant.max_removed_per_player_per_day),
                         max_removed_per_segment_per_day=int(variant.max_removed_per_segment_per_day),
                         max_removed_per_target_per_day=int(variant.max_removed_per_target_per_day),
+                        max_global_removed_per_player=int(variant.max_global_removed_per_player),
+                        max_global_removed_share_per_player=float(variant.max_global_removed_share_per_player),
+                        global_player_cap_min_veto_rows=int(variant.global_player_cap_min_veto_rows),
+                        relax_player_global_cap_for_budget=bool(variant.relax_player_global_cap_for_budget),
+                        player_penalty_alpha=float(variant.player_penalty_alpha),
+                        player_penalty_power=float(variant.player_penalty_power),
+                        optimizer_enabled=bool(variant.optimizer_enabled),
+                        optimizer_beam_width=int(variant.optimizer_beam_width),
+                        optimizer_max_candidates_per_day=int(variant.optimizer_max_candidates_per_day),
+                        optimizer_keep_prob_weight=float(variant.optimizer_keep_prob_weight),
+                        optimizer_gap_weight=float(variant.optimizer_gap_weight),
+                        optimizer_harm_weight=float(variant.optimizer_harm_weight),
+                        optimizer_rank_weight=float(variant.optimizer_rank_weight),
+                        segment_threshold_overrides=dict(variant.segment_threshold_overrides or {}),
+                        segment_budget_overrides=dict(variant.segment_budget_overrides or {}),
                         tail_slots_only=int(variant.tail_slots_only),
                         min_veto_gap=float(variant.min_veto_gap),
                         require_keep_prob_filter=bool(variant.require_keep_prob_filter),
@@ -1640,22 +2115,56 @@ def _search_train_threshold(
                     top_player_share = _safe_float(concentration.get("top_player_share"), 0.0)
                     top_segment_share = _safe_float(concentration.get("top_segment_share"), 0.0)
                     top_target_share = _safe_float(concentration.get("top_target_share"), 0.0)
+                    veto_rows = int(max(0, _safe_int(concentration.get("veto_rows"), 0)))
+                    concentration_enforced = bool(veto_rows >= int(max(1, concentration_min_veto_rows)))
+                    effective_target_cap, conditional_target_cap_active = _effective_target_cap(
+                        base_cap=float(max_top_removed_target_share),
+                        top_player_share=float(top_player_share),
+                        recent_profit=float(broad_profit),
+                        recent_hit_pp=float(broad_hit),
+                        conditional_enabled=bool(conditional_target_cap_enabled),
+                        conditional_relaxed_cap=float(conditional_target_relaxed_cap),
+                        conditional_player_share_max=float(conditional_target_player_share_max),
+                        conditional_require_recent_non_negative=bool(conditional_target_require_recent_non_negative),
+                        conditional_recent_profit_floor=float(conditional_target_recent_profit_floor),
+                        conditional_recent_hit_floor_pp=float(conditional_target_recent_hit_floor_pp),
+                    )
+                    effective_player_cap = float(max_top_removed_player_share if concentration_enforced else 1.0)
+                    effective_segment_cap = float(max_top_removed_segment_share if concentration_enforced else 1.0)
+                    effective_target_cap = float(effective_target_cap if concentration_enforced else 1.0)
+                    concentration_features = _player_concentration_features(concentration)
+                    player_hhi = float(concentration_features.get("player_hhi", 0.0))
+                    player_diversity = float(concentration_features.get("player_diversity", 0.0))
                     constraints_passed = bool(
                         affected_share >= float(min_affected_share)
                         and coverage_retention >= float(min_coverage_retention)
-                        and top_player_share <= float(max_top_removed_player_share)
-                        and top_segment_share <= float(max_top_removed_segment_share)
-                        and top_target_share <= float(max_top_removed_target_share)
+                        and top_player_share <= float(effective_player_cap)
+                        and top_segment_share <= float(effective_segment_cap)
+                        and top_target_share <= float(effective_target_cap)
+                    )
+                    structural_pass = bool(
+                        coverage_retention >= float(min_coverage_retention)
+                        and affected_share >= float(min_affected_share)
+                        and top_player_share <= float(effective_player_cap)
+                        and top_segment_share <= float(effective_segment_cap)
+                        and top_target_share <= float(effective_target_cap)
+                        and fire_rate <= float(variant.max_fire_rate)
                     )
                     objective_score = (
                         float(broad_profit)
                         + 0.05 * float(broad_hit)
                         + 0.20 * float(affected_share)
+                        + _player_concentration_objective_adjustment(
+                            concentration,
+                            top_share_penalty=float(objective_player_top_share_penalty),
+                            hhi_penalty=float(objective_player_hhi_penalty),
+                            diversity_bonus=float(objective_player_diversity_bonus),
+                        )
                         - 2.0 * max(0.0, float(min_affected_share) - float(affected_share))
                         - 3.0 * max(0.0, float(min_coverage_retention) - float(coverage_retention))
                         - 2.5 * max(0.0, float(top_player_share) - float(max_top_removed_player_share))
                         - 2.5 * max(0.0, float(top_segment_share) - float(max_top_removed_segment_share))
-                        - 2.0 * max(0.0, float(top_target_share) - float(max_top_removed_target_share))
+                        - 2.0 * max(0.0, float(top_target_share) - float(effective_target_cap))
                         - 1.0 * max(0.0, float(fire_rate) - float(variant.max_fire_rate))
                     )
                     payload = {
@@ -1667,6 +2176,21 @@ def _search_train_threshold(
                         "tail_slots_only": int(cand_policy.tail_slots_only),
                         "min_veto_gap": float(cand_policy.min_veto_gap),
                         "require_keep_prob_filter": bool(cand_policy.require_keep_prob_filter),
+                        "max_global_removed_per_player": int(cand_policy.max_global_removed_per_player),
+                        "max_global_removed_share_per_player": float(cand_policy.max_global_removed_share_per_player),
+                        "global_player_cap_min_veto_rows": int(cand_policy.global_player_cap_min_veto_rows),
+                        "relax_player_global_cap_for_budget": bool(cand_policy.relax_player_global_cap_for_budget),
+                        "player_penalty_alpha": float(cand_policy.player_penalty_alpha),
+                        "player_penalty_power": float(cand_policy.player_penalty_power),
+                        "optimizer_enabled": bool(cand_policy.optimizer_enabled),
+                        "optimizer_beam_width": int(cand_policy.optimizer_beam_width),
+                        "optimizer_max_candidates_per_day": int(cand_policy.optimizer_max_candidates_per_day),
+                        "optimizer_keep_prob_weight": float(cand_policy.optimizer_keep_prob_weight),
+                        "optimizer_gap_weight": float(cand_policy.optimizer_gap_weight),
+                        "optimizer_harm_weight": float(cand_policy.optimizer_harm_weight),
+                        "optimizer_rank_weight": float(cand_policy.optimizer_rank_weight),
+                        "segment_threshold_overrides": dict(cand_policy.segment_threshold_overrides or {}),
+                        "segment_budget_overrides": dict(cand_policy.segment_budget_overrides or {}),
                         "delta_profit_units": broad_profit,
                         "delta_hit_rate_pp": broad_hit,
                         "fire_rate": fire_rate,
@@ -1675,15 +2199,36 @@ def _search_train_threshold(
                         "top_player_share": float(top_player_share),
                         "top_segment_share": float(top_segment_share),
                         "top_target_share": float(top_target_share),
+                        "veto_rows": int(veto_rows),
+                        "concentration_enforced": bool(concentration_enforced),
+                        "effective_player_cap": float(effective_player_cap),
+                        "effective_segment_cap": float(effective_segment_cap),
+                        "effective_target_cap": float(effective_target_cap),
+                        "conditional_target_cap_active": bool(conditional_target_cap_active),
+                        "player_hhi": float(player_hhi),
+                        "player_diversity": float(player_diversity),
                         "constraints_passed": bool(constraints_passed),
+                        "structural_pass": bool(structural_pass),
                         "objective_score": float(objective_score),
                         "summary": summary,
                     }
                     if float(threshold) > -0.999999:
                         if best_non_noop is None or payload["objective_score"] > best_non_noop.get("objective_score", float("-inf")) + 1e-12:
                             best_non_noop = payload
+                        if bool(payload.get("structural_pass", False)):
+                            if (
+                                best_non_noop_structural is None
+                                or payload["objective_score"] > best_non_noop_structural.get("objective_score", float("-inf")) + 1e-12
+                            ):
+                                best_non_noop_structural = payload
                     if best_relaxed is None or payload["objective_score"] > best_relaxed.get("objective_score", float("-inf")) + 1e-12:
                         best_relaxed = payload
+                    if bool(payload.get("structural_pass", False)):
+                        if (
+                            best_relaxed_structural is None
+                            or payload["objective_score"] > best_relaxed_structural.get("objective_score", float("-inf")) + 1e-12
+                        ):
+                            best_relaxed_structural = payload
                     if not bool(payload["constraints_passed"]):
                         continue
                     if best_payload is None:
@@ -1731,19 +2276,26 @@ def _search_train_threshold(
         if (
             bool(prefer_non_noop_when_close)
             and float(best_payload.get("threshold", -1.0)) <= -0.999999
-            and best_non_noop is not None
-            and float(best_non_noop.get("objective_score", float("-inf")))
+            and best_non_noop_structural is not None
+            and float(best_non_noop_structural.get("objective_score", float("-inf")))
             >= float(best_payload.get("objective_score", float("-inf"))) - float(max(0.0, non_noop_objective_margin))
         ):
-            out = dict(best_non_noop)
+            out = dict(best_non_noop_structural)
             out["selection_mode"] = "exploratory_non_noop"
             out["exploratory_margin"] = float(max(0.0, non_noop_objective_margin))
             return float(out.get("threshold", -1.0)), out
         best_payload["selection_mode"] = "constraint_aware"
         return float(best_threshold), best_payload
+    if best_relaxed_structural is not None:
+        best_relaxed_structural["selection_mode"] = "relaxed_objective_structural"
+        return float(best_relaxed_structural["threshold"]), best_relaxed_structural
     if best_relaxed is not None:
-        best_relaxed["selection_mode"] = "relaxed_objective"
-        return float(best_relaxed["threshold"]), best_relaxed
+        return -1.0, {
+            "threshold": -1.0,
+            "selection_mode": "no_op_structural_fallback",
+            "reason": "no_relaxed_candidate_met_structural_constraints",
+            "rejected_relaxed_candidate": best_relaxed,
+        }
     return float(best_threshold), {"threshold": float(best_threshold), "reason": "fallback"}
 
 
@@ -1776,8 +2328,18 @@ def _select_final_threshold_from_oof(
     max_top_removed_player_share: float,
     max_top_removed_segment_share: float,
     max_top_removed_target_share: float,
+    concentration_min_veto_rows: int,
     prefer_relaxed_non_noop_when_close: bool,
     relaxed_non_noop_objective_margin: float,
+    objective_player_top_share_penalty: float,
+    objective_player_hhi_penalty: float,
+    objective_player_diversity_bonus: float,
+    conditional_target_cap_enabled: bool,
+    conditional_target_relaxed_cap: float,
+    conditional_target_player_share_max: float,
+    conditional_target_require_recent_non_negative: bool,
+    conditional_target_recent_hit_floor_pp: float,
+    conditional_target_recent_profit_floor: float,
 ) -> tuple[float, dict[str, Any]]:
     if oof.empty:
         return -1.0, {"reason": "empty_oof", "threshold": -1.0}
@@ -1816,6 +2378,7 @@ def _select_final_threshold_from_oof(
         segment_subsets = [tuple()]
     best: dict[str, Any] | None = None
     best_relaxed: dict[str, Any] | None = None
+    best_relaxed_structural: dict[str, Any] | None = None
     all_candidates: list[dict[str, Any]] = []
     policy_variants = _policy_variants_for_search(policy)
     for threshold in candidates:
@@ -1831,6 +2394,21 @@ def _select_final_threshold_from_oof(
                         max_removed_per_player_per_day=int(variant.max_removed_per_player_per_day),
                         max_removed_per_segment_per_day=int(variant.max_removed_per_segment_per_day),
                         max_removed_per_target_per_day=int(variant.max_removed_per_target_per_day),
+                        max_global_removed_per_player=int(variant.max_global_removed_per_player),
+                        max_global_removed_share_per_player=float(variant.max_global_removed_share_per_player),
+                        global_player_cap_min_veto_rows=int(variant.global_player_cap_min_veto_rows),
+                        relax_player_global_cap_for_budget=bool(variant.relax_player_global_cap_for_budget),
+                        player_penalty_alpha=float(variant.player_penalty_alpha),
+                        player_penalty_power=float(variant.player_penalty_power),
+                        optimizer_enabled=bool(variant.optimizer_enabled),
+                        optimizer_beam_width=int(variant.optimizer_beam_width),
+                        optimizer_max_candidates_per_day=int(variant.optimizer_max_candidates_per_day),
+                        optimizer_keep_prob_weight=float(variant.optimizer_keep_prob_weight),
+                        optimizer_gap_weight=float(variant.optimizer_gap_weight),
+                        optimizer_harm_weight=float(variant.optimizer_harm_weight),
+                        optimizer_rank_weight=float(variant.optimizer_rank_weight),
+                        segment_threshold_overrides=dict(variant.segment_threshold_overrides or {}),
+                        segment_budget_overrides=dict(variant.segment_budget_overrides or {}),
                         tail_slots_only=int(variant.tail_slots_only),
                         min_veto_gap=float(variant.min_veto_gap),
                         require_keep_prob_filter=bool(variant.require_keep_prob_filter),
@@ -1875,6 +2453,26 @@ def _select_final_threshold_from_oof(
                     top_player_share = _safe_float(concentration.get("top_player_share"), 0.0)
                     top_segment_share = _safe_float(concentration.get("top_segment_share"), 0.0)
                     top_target_share = _safe_float(concentration.get("top_target_share"), 0.0)
+                    veto_rows = int(max(0, _safe_int(concentration.get("veto_rows"), 0)))
+                    concentration_enforced = bool(veto_rows >= int(max(1, concentration_min_veto_rows)))
+                    effective_target_cap, conditional_target_cap_active = _effective_target_cap(
+                        base_cap=float(max_top_removed_target_share),
+                        top_player_share=float(top_player_share),
+                        recent_profit=float(recent_profit),
+                        recent_hit_pp=float(recent_hit),
+                        conditional_enabled=bool(conditional_target_cap_enabled),
+                        conditional_relaxed_cap=float(conditional_target_relaxed_cap),
+                        conditional_player_share_max=float(conditional_target_player_share_max),
+                        conditional_require_recent_non_negative=bool(conditional_target_require_recent_non_negative),
+                        conditional_recent_profit_floor=float(conditional_target_recent_profit_floor),
+                        conditional_recent_hit_floor_pp=float(conditional_target_recent_hit_floor_pp),
+                    )
+                    effective_player_cap = float(max_top_removed_player_share if concentration_enforced else 1.0)
+                    effective_segment_cap = float(max_top_removed_segment_share if concentration_enforced else 1.0)
+                    effective_target_cap = float(effective_target_cap if concentration_enforced else 1.0)
+                    concentration_features = _player_concentration_features(concentration)
+                    player_hhi = float(concentration_features.get("player_hhi", 0.0))
+                    player_diversity = float(concentration_features.get("player_diversity", 0.0))
                     constraints_passed = bool(
                         broad_profit >= float(broad_profit_floor)
                         and broad_hit >= float(broad_hit_floor_pp)
@@ -1883,9 +2481,17 @@ def _select_final_threshold_from_oof(
                         and coverage_retention >= float(min_coverage_retention)
                         and fire_rate <= float(max_fire_rate)
                         and affected_share >= float(min_affected_share)
-                        and top_player_share <= float(max_top_removed_player_share)
-                        and top_segment_share <= float(max_top_removed_segment_share)
-                        and top_target_share <= float(max_top_removed_target_share)
+                        and top_player_share <= float(effective_player_cap)
+                        and top_segment_share <= float(effective_segment_cap)
+                        and top_target_share <= float(effective_target_cap)
+                    )
+                    structural_pass = bool(
+                        coverage_retention >= float(min_coverage_retention)
+                        and fire_rate <= float(max_fire_rate)
+                        and affected_share >= float(min_affected_share)
+                        and top_player_share <= float(effective_player_cap)
+                        and top_segment_share <= float(effective_segment_cap)
+                        and top_target_share <= float(effective_target_cap)
                     )
                     objective_score = (
                         float(broad_profit)
@@ -1893,11 +2499,17 @@ def _select_final_threshold_from_oof(
                         + 0.02 * float(broad_hit)
                         + 0.03 * float(recent_hit)
                         + 0.40 * float(affected_share)
+                        + _player_concentration_objective_adjustment(
+                            concentration,
+                            top_share_penalty=float(objective_player_top_share_penalty),
+                            hhi_penalty=float(objective_player_hhi_penalty),
+                            diversity_bonus=float(objective_player_diversity_bonus),
+                        )
                         - 3.0 * max(0.0, float(min_coverage_retention) - float(coverage_retention))
                         - 3.0 * max(0.0, float(min_affected_share) - float(affected_share))
                         - 4.0 * max(0.0, float(top_player_share) - float(max_top_removed_player_share))
                         - 4.0 * max(0.0, float(top_segment_share) - float(max_top_removed_segment_share))
-                        - 3.0 * max(0.0, float(top_target_share) - float(max_top_removed_target_share))
+                        - 3.0 * max(0.0, float(top_target_share) - float(effective_target_cap))
                         - 2.0 * max(0.0, float(fire_rate) - float(max_fire_rate))
                     )
                     candidate = {
@@ -1909,6 +2521,21 @@ def _select_final_threshold_from_oof(
                         "tail_slots_only": int(cand_policy.tail_slots_only),
                         "min_veto_gap": float(cand_policy.min_veto_gap),
                         "require_keep_prob_filter": bool(cand_policy.require_keep_prob_filter),
+                        "max_global_removed_per_player": int(cand_policy.max_global_removed_per_player),
+                        "max_global_removed_share_per_player": float(cand_policy.max_global_removed_share_per_player),
+                        "global_player_cap_min_veto_rows": int(cand_policy.global_player_cap_min_veto_rows),
+                        "relax_player_global_cap_for_budget": bool(cand_policy.relax_player_global_cap_for_budget),
+                        "player_penalty_alpha": float(cand_policy.player_penalty_alpha),
+                        "player_penalty_power": float(cand_policy.player_penalty_power),
+                        "optimizer_enabled": bool(cand_policy.optimizer_enabled),
+                        "optimizer_beam_width": int(cand_policy.optimizer_beam_width),
+                        "optimizer_max_candidates_per_day": int(cand_policy.optimizer_max_candidates_per_day),
+                        "optimizer_keep_prob_weight": float(cand_policy.optimizer_keep_prob_weight),
+                        "optimizer_gap_weight": float(cand_policy.optimizer_gap_weight),
+                        "optimizer_harm_weight": float(cand_policy.optimizer_harm_weight),
+                        "optimizer_rank_weight": float(cand_policy.optimizer_rank_weight),
+                        "segment_threshold_overrides": dict(cand_policy.segment_threshold_overrides or {}),
+                        "segment_budget_overrides": dict(cand_policy.segment_budget_overrides or {}),
                         "broad_profit_units": float(broad_profit),
                         "broad_hit_rate_pp": float(broad_hit),
                         "recent_profit_units": float(recent_profit),
@@ -1919,10 +2546,19 @@ def _select_final_threshold_from_oof(
                         "top_player_share": float(top_player_share),
                         "top_segment_share": float(top_segment_share),
                         "top_target_share": float(top_target_share),
+                        "veto_rows": int(veto_rows),
+                        "concentration_enforced": bool(concentration_enforced),
+                        "effective_player_cap": float(effective_player_cap),
+                        "effective_segment_cap": float(effective_segment_cap),
+                        "effective_target_cap": float(effective_target_cap),
+                        "conditional_target_cap_active": bool(conditional_target_cap_active),
+                        "player_hhi": float(player_hhi),
+                        "player_diversity": float(player_diversity),
                         "objective_score": float(objective_score),
                         "broad_summary": broad_summary,
                         "recent_summary": recent_summary,
                         "constraints_passed": constraints_passed,
+                        "structural_pass": structural_pass,
                         "recent_days": int(max(1, recent_days)),
                         "constraints": {
                             "broad_profit_floor": float(broad_profit_floor),
@@ -1941,117 +2577,182 @@ def _select_final_threshold_from_oof(
                             "max_top_removed_player_share": float(max_top_removed_player_share),
                             "max_top_removed_segment_share": float(max_top_removed_segment_share),
                             "max_top_removed_target_share": float(max_top_removed_target_share),
+                            "concentration_min_veto_rows": int(max(1, concentration_min_veto_rows)),
+                            "effective_target_cap": float(effective_target_cap),
+                            "max_global_removed_per_player": int(cand_policy.max_global_removed_per_player),
+                            "max_global_removed_share_per_player": float(cand_policy.max_global_removed_share_per_player),
+                            "global_player_cap_min_veto_rows": int(cand_policy.global_player_cap_min_veto_rows),
+                            "relax_player_global_cap_for_budget": bool(cand_policy.relax_player_global_cap_for_budget),
+                            "player_penalty_alpha": float(cand_policy.player_penalty_alpha),
+                            "player_penalty_power": float(cand_policy.player_penalty_power),
+                            "objective_player_top_share_penalty": float(objective_player_top_share_penalty),
+                            "objective_player_hhi_penalty": float(objective_player_hhi_penalty),
+                            "objective_player_diversity_bonus": float(objective_player_diversity_bonus),
+                            "conditional_target_cap_enabled": bool(conditional_target_cap_enabled),
+                            "conditional_target_relaxed_cap": float(conditional_target_relaxed_cap),
+                            "conditional_target_player_share_max": float(conditional_target_player_share_max),
+                            "conditional_target_require_recent_non_negative": bool(conditional_target_require_recent_non_negative),
+                            "conditional_target_recent_hit_floor_pp": float(conditional_target_recent_hit_floor_pp),
+                            "conditional_target_recent_profit_floor": float(conditional_target_recent_profit_floor),
                         },
                     }
                     all_candidates.append(candidate)
-                if candidate["constraints_passed"]:
-                    if best is None:
-                        best = candidate
-                    elif candidate["objective_score"] > best.get("objective_score", float("-inf")) + 1e-12:
-                        best = candidate
-                    elif candidate["broad_profit_units"] > best["broad_profit_units"] + 1e-12:
-                        best = candidate
+                    if candidate["constraints_passed"]:
+                        if best is None:
+                            best = candidate
+                        elif candidate["objective_score"] > best.get("objective_score", float("-inf")) + 1e-12:
+                            best = candidate
+                        elif candidate["broad_profit_units"] > best["broad_profit_units"] + 1e-12:
+                            best = candidate
+                        elif (
+                            abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
+                            and abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
+                            and candidate["recent_profit_units"] > best["recent_profit_units"] + 1e-12
+                        ):
+                            best = candidate
+                        elif (
+                            abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
+                            and abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
+                            and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
+                            and candidate["broad_hit_rate_pp"] > best["broad_hit_rate_pp"] + 1e-12
+                        ):
+                            best = candidate
+                        elif (
+                            abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
+                            and abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
+                            and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
+                            and abs(candidate["broad_hit_rate_pp"] - best["broad_hit_rate_pp"]) <= 1e-12
+                            and candidate["recent_hit_rate_pp"] > best["recent_hit_rate_pp"] + 1e-12
+                        ):
+                            best = candidate
+                        elif (
+                            abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
+                            and abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
+                            and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
+                            and abs(candidate["broad_hit_rate_pp"] - best["broad_hit_rate_pp"]) <= 1e-12
+                            and abs(candidate["recent_hit_rate_pp"] - best["recent_hit_rate_pp"]) <= 1e-12
+                            and candidate["affected_share"] > best.get("affected_share", 0.0) + 1e-12
+                        ):
+                            best = candidate
+                        elif (
+                            abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
+                            and abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
+                            and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
+                            and abs(candidate["broad_hit_rate_pp"] - best["broad_hit_rate_pp"]) <= 1e-12
+                            and abs(candidate["recent_hit_rate_pp"] - best["recent_hit_rate_pp"]) <= 1e-12
+                            and abs(candidate["affected_share"] - best.get("affected_share", 0.0)) <= 1e-12
+                            and candidate["fire_rate"] < best["fire_rate"] - 1e-12
+                        ):
+                            best = candidate
+                        elif (
+                            abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
+                            and abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
+                            and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
+                            and abs(candidate["broad_hit_rate_pp"] - best["broad_hit_rate_pp"]) <= 1e-12
+                            and abs(candidate["recent_hit_rate_pp"] - best["recent_hit_rate_pp"]) <= 1e-12
+                            and abs(candidate["affected_share"] - best.get("affected_share", 0.0)) <= 1e-12
+                            and abs(candidate["fire_rate"] - best["fire_rate"]) <= 1e-12
+                            and candidate["segment_count"] < best.get("segment_count", 0)
+                        ):
+                            best = candidate
+                    if best_relaxed is None:
+                        best_relaxed = candidate
+                    elif candidate["objective_score"] > best_relaxed.get("objective_score", float("-inf")) + 1e-12:
+                        best_relaxed = candidate
                     elif (
-                        abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
-                        and abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
-                        and candidate["recent_profit_units"] > best["recent_profit_units"] + 1e-12
+                        abs(candidate["objective_score"] - best_relaxed.get("objective_score", float("-inf"))) <= 1e-12
+                        and abs(candidate["broad_profit_units"] - best_relaxed["broad_profit_units"]) <= 1e-12
+                        and candidate["broad_hit_rate_pp"] > best_relaxed["broad_hit_rate_pp"] + 1e-12
                     ):
-                        best = candidate
+                        best_relaxed = candidate
                     elif (
-                        abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
-                        and abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
-                        and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
-                        and candidate["broad_hit_rate_pp"] > best["broad_hit_rate_pp"] + 1e-12
+                        abs(candidate["objective_score"] - best_relaxed.get("objective_score", float("-inf"))) <= 1e-12
+                        and abs(candidate["broad_profit_units"] - best_relaxed["broad_profit_units"]) <= 1e-12
+                        and abs(candidate["broad_hit_rate_pp"] - best_relaxed["broad_hit_rate_pp"]) <= 1e-12
+                        and candidate.get("affected_share", 0.0) > best_relaxed.get("affected_share", 0.0) + 1e-12
                     ):
-                        best = candidate
+                        best_relaxed = candidate
                     elif (
-                        abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
-                        and abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
-                        and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
-                        and abs(candidate["broad_hit_rate_pp"] - best["broad_hit_rate_pp"]) <= 1e-12
-                        and candidate["recent_hit_rate_pp"] > best["recent_hit_rate_pp"] + 1e-12
+                        abs(candidate["objective_score"] - best_relaxed.get("objective_score", float("-inf"))) <= 1e-12
+                        and abs(candidate["broad_profit_units"] - best_relaxed["broad_profit_units"]) <= 1e-12
+                        and abs(candidate["broad_hit_rate_pp"] - best_relaxed["broad_hit_rate_pp"]) <= 1e-12
+                        and abs(candidate.get("affected_share", 0.0) - best_relaxed.get("affected_share", 0.0)) <= 1e-12
+                        and candidate["fire_rate"] < best_relaxed["fire_rate"] - 1e-12
                     ):
-                        best = candidate
-                    elif (
-                        abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
-                        and abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
-                        and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
-                        and abs(candidate["broad_hit_rate_pp"] - best["broad_hit_rate_pp"]) <= 1e-12
-                        and abs(candidate["recent_hit_rate_pp"] - best["recent_hit_rate_pp"]) <= 1e-12
-                        and candidate["affected_share"] > best.get("affected_share", 0.0) + 1e-12
-                    ):
-                        best = candidate
-                    elif (
-                        abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
-                        and abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
-                        and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
-                        and abs(candidate["broad_hit_rate_pp"] - best["broad_hit_rate_pp"]) <= 1e-12
-                        and abs(candidate["recent_hit_rate_pp"] - best["recent_hit_rate_pp"]) <= 1e-12
-                        and abs(candidate["affected_share"] - best.get("affected_share", 0.0)) <= 1e-12
-                        and candidate["fire_rate"] < best["fire_rate"] - 1e-12
-                    ):
-                        best = candidate
-                    elif (
-                        abs(candidate["objective_score"] - best.get("objective_score", float("-inf"))) <= 1e-12
-                        and abs(candidate["broad_profit_units"] - best["broad_profit_units"]) <= 1e-12
-                        and abs(candidate["recent_profit_units"] - best["recent_profit_units"]) <= 1e-12
-                        and abs(candidate["broad_hit_rate_pp"] - best["broad_hit_rate_pp"]) <= 1e-12
-                        and abs(candidate["recent_hit_rate_pp"] - best["recent_hit_rate_pp"]) <= 1e-12
-                        and abs(candidate["affected_share"] - best.get("affected_share", 0.0)) <= 1e-12
-                        and abs(candidate["fire_rate"] - best["fire_rate"]) <= 1e-12
-                        and candidate["segment_count"] < best.get("segment_count", 0)
-                    ):
-                        best = candidate
-                if best_relaxed is None:
-                    best_relaxed = candidate
-                elif candidate["objective_score"] > best_relaxed.get("objective_score", float("-inf")) + 1e-12:
-                    best_relaxed = candidate
-                elif (
-                    abs(candidate["objective_score"] - best_relaxed.get("objective_score", float("-inf"))) <= 1e-12
-                    and abs(candidate["broad_profit_units"] - best_relaxed["broad_profit_units"]) <= 1e-12
-                    and candidate["broad_hit_rate_pp"] > best_relaxed["broad_hit_rate_pp"] + 1e-12
-                ):
-                    best_relaxed = candidate
-                elif (
-                    abs(candidate["objective_score"] - best_relaxed.get("objective_score", float("-inf"))) <= 1e-12
-                    and abs(candidate["broad_profit_units"] - best_relaxed["broad_profit_units"]) <= 1e-12
-                    and abs(candidate["broad_hit_rate_pp"] - best_relaxed["broad_hit_rate_pp"]) <= 1e-12
-                    and candidate.get("affected_share", 0.0) > best_relaxed.get("affected_share", 0.0) + 1e-12
-                ):
-                    best_relaxed = candidate
-                elif (
-                    abs(candidate["objective_score"] - best_relaxed.get("objective_score", float("-inf"))) <= 1e-12
-                    and abs(candidate["broad_profit_units"] - best_relaxed["broad_profit_units"]) <= 1e-12
-                    and abs(candidate["broad_hit_rate_pp"] - best_relaxed["broad_hit_rate_pp"]) <= 1e-12
-                    and abs(candidate.get("affected_share", 0.0) - best_relaxed.get("affected_share", 0.0)) <= 1e-12
-                    and candidate["fire_rate"] < best_relaxed["fire_rate"] - 1e-12
-                ):
-                    best_relaxed = candidate
+                        best_relaxed = candidate
+                    if bool(candidate.get("structural_pass", False)):
+                        if best_relaxed_structural is None:
+                            best_relaxed_structural = candidate
+                        elif candidate["objective_score"] > best_relaxed_structural.get("objective_score", float("-inf")) + 1e-12:
+                            best_relaxed_structural = candidate
+                        elif (
+                            abs(candidate["objective_score"] - best_relaxed_structural.get("objective_score", float("-inf"))) <= 1e-12
+                            and abs(candidate["broad_profit_units"] - best_relaxed_structural["broad_profit_units"]) <= 1e-12
+                            and candidate["broad_hit_rate_pp"] > best_relaxed_structural["broad_hit_rate_pp"] + 1e-12
+                        ):
+                            best_relaxed_structural = candidate
+                        elif (
+                            abs(candidate["objective_score"] - best_relaxed_structural.get("objective_score", float("-inf"))) <= 1e-12
+                            and abs(candidate["broad_profit_units"] - best_relaxed_structural["broad_profit_units"]) <= 1e-12
+                            and abs(candidate["broad_hit_rate_pp"] - best_relaxed_structural["broad_hit_rate_pp"]) <= 1e-12
+                            and candidate.get("affected_share", 0.0) > best_relaxed_structural.get("affected_share", 0.0) + 1e-12
+                        ):
+                            best_relaxed_structural = candidate
 
     if best is not None:
         best["selection_mode"] = "constrained"
         return float(best["threshold"]), best
-    no_op = next((cand for cand in all_candidates if float(cand.get("threshold", 0.0)) <= -0.999999), None)
+    no_op_candidates = [
+        cand
+        for cand in all_candidates
+        if float(cand.get("threshold", 0.0)) <= -0.999999
+        and abs(_safe_float(cand.get("affected_share"), 0.0)) <= 1e-12
+    ]
+    if not no_op_candidates:
+        no_op_candidates = [
+            cand
+            for cand in all_candidates
+            if float(cand.get("threshold", 0.0)) <= -0.999999
+            and bool(cand.get("require_keep_prob_filter", True))
+        ]
+    if not no_op_candidates:
+        no_op_candidates = [cand for cand in all_candidates if float(cand.get("threshold", 0.0)) <= -0.999999]
+    no_op = (
+        max(no_op_candidates, key=lambda cand: float(cand.get("objective_score", float("-inf"))))
+        if no_op_candidates
+        else None
+    )
     if (
         bool(prefer_relaxed_non_noop_when_close)
-        and best_relaxed is not None
-        and float(best_relaxed.get("threshold", -1.0)) > -0.999999
+        and best_relaxed_structural is not None
+        and float(best_relaxed_structural.get("threshold", -1.0)) > -0.999999
         and no_op is not None
-        and float(best_relaxed.get("objective_score", float("-inf")))
+        and float(best_relaxed_structural.get("objective_score", float("-inf")))
         >= float(no_op.get("objective_score", float("-inf"))) - float(max(0.0, relaxed_non_noop_objective_margin))
     ):
-        best_relaxed["selection_mode"] = "relaxed_exploratory"
-        best_relaxed["reason"] = "no_constrained_candidate_selected_relaxed_non_noop"
-        best_relaxed["relaxed_objective_margin"] = float(max(0.0, relaxed_non_noop_objective_margin))
-        return float(best_relaxed["threshold"]), best_relaxed
+        best_relaxed_structural["selection_mode"] = "relaxed_exploratory"
+        best_relaxed_structural["reason"] = "no_constrained_candidate_selected_relaxed_non_noop"
+        best_relaxed_structural["relaxed_objective_margin"] = float(max(0.0, relaxed_non_noop_objective_margin))
+        return float(best_relaxed_structural["threshold"]), best_relaxed_structural
     if no_op is not None:
         no_op["selection_mode"] = "no_op_fallback"
         no_op["reason"] = "no_threshold_passed_constraints"
         no_op["failed_candidate_count"] = int(sum(1 for cand in all_candidates if not bool(cand.get("constraints_passed", False))))
+        no_op["failed_structural_count"] = int(sum(1 for cand in all_candidates if not bool(cand.get("structural_pass", False))))
+        if best_relaxed is not None and not bool(best_relaxed.get("structural_pass", False)):
+            no_op["relaxed_rejected_reason"] = "best_relaxed_failed_structural_constraints"
+            no_op["rejected_relaxed_candidate"] = best_relaxed
         return float(no_op["threshold"]), no_op
+    if best_relaxed_structural is not None:
+        best_relaxed_structural["selection_mode"] = "relaxed_no_noop_structural"
+        return float(best_relaxed_structural["threshold"]), best_relaxed_structural
     if best_relaxed is not None:
-        best_relaxed["selection_mode"] = "relaxed_no_noop"
-        return float(best_relaxed["threshold"]), best_relaxed
+        return -1.0, {
+            "reason": "no_relaxed_candidate_met_structural_constraints",
+            "threshold": -1.0,
+            "selection_mode": "fallback_structural_noop",
+            "rejected_relaxed_candidate": best_relaxed,
+        }
     return -1.0, {"reason": "no_candidates", "threshold": -1.0, "selection_mode": "fallback"}
 
 
@@ -2081,6 +2782,16 @@ def _select_fullframe_cohort_fallback(
     max_top_removed_player_share: float,
     max_top_removed_segment_share: float,
     max_top_removed_target_share: float,
+    concentration_min_veto_rows: int,
+    conditional_target_cap_enabled: bool,
+    conditional_target_relaxed_cap: float,
+    conditional_target_player_share_max: float,
+    conditional_target_require_recent_non_negative: bool,
+    conditional_target_recent_hit_floor_pp: float,
+    conditional_target_recent_profit_floor: float,
+    objective_player_top_share_penalty: float,
+    objective_player_hhi_penalty: float,
+    objective_player_diversity_bonus: float,
 ) -> dict[str, Any] | None:
     if frame.empty:
         return None
@@ -2103,15 +2814,23 @@ def _select_fullframe_cohort_fallback(
     dates = _coerce_event_datetime(frame.get(date_col))
     max_date = dates.max()
     recent_start = max_date - pd.Timedelta(days=int(max(1, recent_days)) - 1) if pd.notna(max_date) else pd.NaT
+    effective_fire_rate = float(min(1.0, max(float(base_policy.max_fire_rate), float(max_fire_rate))))
+    effective_min_coverage = float(max(0.0, min(float(base_policy.min_coverage_rate), float(min_coverage_retention))))
     best: dict[str, Any] | None = None
     for cohort_pack in cohort_packs:
         policy = GatePolicyConfig(
-            max_fire_rate=float(base_policy.max_fire_rate),
-            min_coverage_rate=float(base_policy.min_coverage_rate),
+            max_fire_rate=float(effective_fire_rate),
+            min_coverage_rate=float(effective_min_coverage),
             max_removed_per_day=int(base_policy.max_removed_per_day),
             max_removed_per_player_per_day=int(base_policy.max_removed_per_player_per_day),
             max_removed_per_segment_per_day=int(base_policy.max_removed_per_segment_per_day),
             max_removed_per_target_per_day=int(base_policy.max_removed_per_target_per_day),
+            max_global_removed_per_player=int(base_policy.max_global_removed_per_player),
+            max_global_removed_share_per_player=float(base_policy.max_global_removed_share_per_player),
+            global_player_cap_min_veto_rows=int(base_policy.global_player_cap_min_veto_rows),
+            relax_player_global_cap_for_budget=bool(base_policy.relax_player_global_cap_for_budget),
+            player_penalty_alpha=float(base_policy.player_penalty_alpha),
+            player_penalty_power=float(base_policy.player_penalty_power),
             tail_slots_only=0,
             min_veto_gap=0.0,
             require_keep_prob_filter=False,
@@ -2156,6 +2875,26 @@ def _select_fullframe_cohort_fallback(
         top_player_share = _safe_float(concentration.get("top_player_share"), 0.0)
         top_segment_share = _safe_float(concentration.get("top_segment_share"), 0.0)
         top_target_share = _safe_float(concentration.get("top_target_share"), 0.0)
+        veto_rows = int(max(0, _safe_int(concentration.get("veto_rows"), 0)))
+        concentration_enforced = bool(veto_rows >= int(max(1, concentration_min_veto_rows)))
+        effective_target_cap, conditional_target_cap_active = _effective_target_cap(
+            base_cap=float(max_top_removed_target_share),
+            top_player_share=float(top_player_share),
+            recent_profit=float(recent_profit),
+            recent_hit_pp=float(recent_hit),
+            conditional_enabled=bool(conditional_target_cap_enabled),
+            conditional_relaxed_cap=float(conditional_target_relaxed_cap),
+            conditional_player_share_max=float(conditional_target_player_share_max),
+            conditional_require_recent_non_negative=bool(conditional_target_require_recent_non_negative),
+            conditional_recent_profit_floor=float(conditional_target_recent_profit_floor),
+            conditional_recent_hit_floor_pp=float(conditional_target_recent_hit_floor_pp),
+        )
+        effective_player_cap = float(max_top_removed_player_share if concentration_enforced else 1.0)
+        effective_segment_cap = float(max_top_removed_segment_share if concentration_enforced else 1.0)
+        effective_target_cap = float(effective_target_cap if concentration_enforced else 1.0)
+        concentration_features = _player_concentration_features(concentration)
+        player_hhi = float(concentration_features.get("player_hhi", 0.0))
+        player_diversity = float(concentration_features.get("player_diversity", 0.0))
         constraints_passed = bool(
             broad_profit >= float(broad_profit_floor)
             and broad_hit >= float(broad_hit_floor_pp)
@@ -2164,9 +2903,9 @@ def _select_fullframe_cohort_fallback(
             and coverage_retention >= float(min_coverage_retention)
             and fire_rate <= float(max_fire_rate)
             and affected_share >= float(min_affected_share)
-            and top_player_share <= float(max_top_removed_player_share)
-            and top_segment_share <= float(max_top_removed_segment_share)
-            and top_target_share <= float(max_top_removed_target_share)
+            and top_player_share <= float(effective_player_cap)
+            and top_segment_share <= float(effective_segment_cap)
+            and top_target_share <= float(effective_target_cap)
         )
         if not constraints_passed:
             continue
@@ -2176,6 +2915,12 @@ def _select_fullframe_cohort_fallback(
             + 0.03 * float(broad_hit)
             + 0.04 * float(recent_hit)
             + 0.30 * float(affected_share)
+            + _player_concentration_objective_adjustment(
+                concentration,
+                top_share_penalty=float(objective_player_top_share_penalty),
+                hhi_penalty=float(objective_player_hhi_penalty),
+                diversity_bonus=float(objective_player_diversity_bonus),
+            )
         )
         candidate = {
             "threshold": -1.0,
@@ -2186,6 +2931,12 @@ def _select_fullframe_cohort_fallback(
             "tail_slots_only": 0,
             "min_veto_gap": 0.0,
             "require_keep_prob_filter": False,
+            "max_global_removed_per_player": int(policy.max_global_removed_per_player),
+            "max_global_removed_share_per_player": float(policy.max_global_removed_share_per_player),
+            "global_player_cap_min_veto_rows": int(policy.global_player_cap_min_veto_rows),
+            "relax_player_global_cap_for_budget": bool(policy.relax_player_global_cap_for_budget),
+            "player_penalty_alpha": float(policy.player_penalty_alpha),
+            "player_penalty_power": float(policy.player_penalty_power),
             "broad_profit_units": float(broad_profit),
             "broad_hit_rate_pp": float(broad_hit),
             "recent_profit_units": float(recent_profit),
@@ -2196,6 +2947,14 @@ def _select_fullframe_cohort_fallback(
             "top_player_share": float(top_player_share),
             "top_segment_share": float(top_segment_share),
             "top_target_share": float(top_target_share),
+            "veto_rows": int(veto_rows),
+            "concentration_enforced": bool(concentration_enforced),
+            "effective_player_cap": float(effective_player_cap),
+            "effective_segment_cap": float(effective_segment_cap),
+            "effective_target_cap": float(effective_target_cap),
+            "conditional_target_cap_active": bool(conditional_target_cap_active),
+            "player_hhi": float(player_hhi),
+            "player_diversity": float(player_diversity),
             "objective_score": float(objective_score),
             "broad_summary": broad_summary,
             "recent_summary": recent_summary,
@@ -2233,6 +2992,256 @@ def _select_fullframe_cohort_fallback(
     return best
 
 
+def _search_segment_override_on_oof(
+    frame: pd.DataFrame,
+    *,
+    keep_prob_col: str,
+    date_col: str,
+    player_col: str,
+    target_col: str,
+    direction_col: str,
+    result_col: str,
+    base_threshold: float,
+    base_policy: GatePolicyConfig,
+    segment_key: str,
+    threshold_candidates: list[float],
+    budget_candidates: list[int],
+    recent_days: int,
+    recent_hit_floor_pp: float,
+    recent_profit_floor: float,
+    broad_profit_floor: float,
+    broad_hit_floor_pp: float,
+    min_coverage_retention: float,
+    max_fire_rate: float,
+    min_affected_share: float,
+    max_top_removed_player_share: float,
+    max_top_removed_segment_share: float,
+    max_top_removed_target_share: float,
+    concentration_min_veto_rows: int,
+    conditional_target_cap_enabled: bool,
+    conditional_target_relaxed_cap: float,
+    conditional_target_player_share_max: float,
+    conditional_target_require_recent_non_negative: bool,
+    conditional_target_recent_hit_floor_pp: float,
+    conditional_target_recent_profit_floor: float,
+    objective_player_top_share_penalty: float,
+    objective_player_hhi_penalty: float,
+    objective_player_diversity_bonus: float,
+    min_objective_gain: float,
+    min_broad_profit_gain: float,
+    min_recent_profit_gain: float,
+    min_affected_share_gain: float,
+) -> dict[str, Any] | None:
+    if frame.empty:
+        return None
+    segment = str(segment_key).upper().strip()
+    if not segment:
+        return None
+    targets = frame.get(target_col, pd.Series("", index=frame.index)).fillna("").astype(str).str.upper().str.strip()
+    directions = frame.get(direction_col, pd.Series("", index=frame.index)).fillna("").astype(str).str.upper().str.strip()
+    segments = (targets + "|" + directions).astype(str)
+    if not bool(segments.eq(segment).any()):
+        return None
+
+    dates = _coerce_event_datetime(frame.get(date_col))
+    max_date = dates.max()
+    recent_start = max_date - pd.Timedelta(days=int(max(1, recent_days)) - 1) if pd.notna(max_date) else pd.NaT
+
+    def _evaluate(scored: pd.DataFrame) -> dict[str, Any]:
+        broad_summary = summarize_paired_outcomes(scored, veto_col="gate_veto", result_col=result_col)
+        if pd.notna(recent_start):
+            recent_part = scored.loc[dates >= recent_start].copy()
+        else:
+            recent_part = scored.iloc[0:0].copy()
+        recent_summary = summarize_paired_outcomes(recent_part, veto_col="gate_veto", result_col=result_col)
+        broad_delta = broad_summary.get("delta", {})
+        recent_delta = recent_summary.get("delta", {})
+        broad_profit = _safe_float(broad_delta.get("profit_units"), float("-inf"))
+        broad_hit = _safe_float(broad_delta.get("hit_rate_pp"), float("-inf"))
+        recent_profit = _safe_float(recent_delta.get("profit_units"), float("-inf"))
+        recent_hit = _safe_float(recent_delta.get("hit_rate_pp"), float("-inf"))
+        fire_rate = _safe_float(pd.to_numeric(scored.get("gate_veto"), errors="coerce").fillna(0).mean(), 0.0)
+        resolved = scored.loc[scored[result_col].astype(str).str.lower().isin(["win", "loss"])].copy()
+        affected_share = _safe_float(pd.to_numeric(resolved.get("gate_veto"), errors="coerce").fillna(0).mean(), 0.0)
+        base_resolved = _safe_float(broad_summary.get("baseline", {}).get("resolved"), 0.0)
+        gated_resolved = _safe_float(broad_summary.get("gated", {}).get("resolved"), 0.0)
+        coverage_retention = float(gated_resolved / base_resolved) if base_resolved > 0.0 else 1.0
+        concentration = concentration_stats(
+            scored,
+            veto_col="gate_veto",
+            player_col=player_col,
+            target_col=target_col,
+            direction_col=direction_col,
+        )
+        top_player_share = _safe_float(concentration.get("top_player_share"), 0.0)
+        top_segment_share = _safe_float(concentration.get("top_segment_share"), 0.0)
+        top_target_share = _safe_float(concentration.get("top_target_share"), 0.0)
+        veto_rows = int(max(0, _safe_int(concentration.get("veto_rows"), 0)))
+        concentration_enforced = bool(veto_rows >= int(max(1, concentration_min_veto_rows)))
+        effective_target_cap, conditional_target_cap_active = _effective_target_cap(
+            base_cap=float(max_top_removed_target_share),
+            top_player_share=float(top_player_share),
+            recent_profit=float(recent_profit),
+            recent_hit_pp=float(recent_hit),
+            conditional_enabled=bool(conditional_target_cap_enabled),
+            conditional_relaxed_cap=float(conditional_target_relaxed_cap),
+            conditional_player_share_max=float(conditional_target_player_share_max),
+            conditional_require_recent_non_negative=bool(conditional_target_require_recent_non_negative),
+            conditional_recent_profit_floor=float(conditional_target_recent_profit_floor),
+            conditional_recent_hit_floor_pp=float(conditional_target_recent_hit_floor_pp),
+        )
+        effective_player_cap = float(max_top_removed_player_share if concentration_enforced else 1.0)
+        effective_segment_cap = float(max_top_removed_segment_share if concentration_enforced else 1.0)
+        effective_target_cap = float(effective_target_cap if concentration_enforced else 1.0)
+        constraints_passed = bool(
+            broad_profit >= float(broad_profit_floor)
+            and broad_hit >= float(broad_hit_floor_pp)
+            and recent_hit >= float(recent_hit_floor_pp)
+            and recent_profit >= float(recent_profit_floor)
+            and coverage_retention >= float(min_coverage_retention)
+            and fire_rate <= float(max_fire_rate)
+            and affected_share >= float(min_affected_share)
+            and top_player_share <= float(effective_player_cap)
+            and top_segment_share <= float(effective_segment_cap)
+            and top_target_share <= float(effective_target_cap)
+        )
+        objective_score = (
+            float(broad_profit)
+            + 0.80 * float(recent_profit)
+            + 0.03 * float(broad_hit)
+            + 0.04 * float(recent_hit)
+            + 0.30 * float(affected_share)
+            + _player_concentration_objective_adjustment(
+                concentration,
+                top_share_penalty=float(objective_player_top_share_penalty),
+                hhi_penalty=float(objective_player_hhi_penalty),
+                diversity_bonus=float(objective_player_diversity_bonus),
+            )
+        )
+        return {
+            "broad_summary": broad_summary,
+            "recent_summary": recent_summary,
+            "broad_profit_units": float(broad_profit),
+            "broad_hit_rate_pp": float(broad_hit),
+            "recent_profit_units": float(recent_profit),
+            "recent_hit_rate_pp": float(recent_hit),
+            "coverage_retention": float(coverage_retention),
+            "fire_rate": float(fire_rate),
+            "affected_share": float(affected_share),
+            "top_player_share": float(top_player_share),
+            "top_segment_share": float(top_segment_share),
+            "top_target_share": float(top_target_share),
+            "veto_rows": int(veto_rows),
+            "concentration_enforced": bool(concentration_enforced),
+            "effective_player_cap": float(effective_player_cap),
+            "effective_segment_cap": float(effective_segment_cap),
+            "effective_target_cap": float(effective_target_cap),
+            "conditional_target_cap_active": bool(conditional_target_cap_active),
+            "objective_score": float(objective_score),
+            "constraints_passed": bool(constraints_passed),
+        }
+
+    baseline_scored = apply_shadow_gate_policy(
+        frame,
+        keep_prob_col=keep_prob_col,
+        date_col=date_col,
+        player_col=player_col,
+        target_col=target_col,
+        direction_col=direction_col,
+        threshold=float(base_threshold),
+        policy=base_policy,
+    )
+    baseline_eval = _evaluate(baseline_scored)
+
+    best: dict[str, Any] | None = None
+    threshold_values = sorted(set(float(np.clip(v, 0.0, 1.0)) for v in threshold_candidates))
+    budget_values = sorted(set(int(max(1, v)) for v in budget_candidates))
+    for seg_threshold in threshold_values:
+        for seg_budget in budget_values:
+            if seg_threshold <= -0.999999:
+                continue
+            merged_segment_thresholds = dict(base_policy.segment_threshold_overrides or {})
+            merged_segment_thresholds[segment] = float(max(seg_threshold, base_threshold))
+            merged_segment_budgets = dict(base_policy.segment_budget_overrides or {})
+            merged_segment_budgets[segment] = int(seg_budget)
+            policy_payload = asdict(base_policy)
+            policy_payload["segment_threshold_overrides"] = merged_segment_thresholds
+            policy_payload["segment_budget_overrides"] = merged_segment_budgets
+            cand_policy = GatePolicyConfig(**policy_payload)
+            scored = apply_shadow_gate_policy(
+                frame,
+                keep_prob_col=keep_prob_col,
+                date_col=date_col,
+                player_col=player_col,
+                target_col=target_col,
+                direction_col=direction_col,
+                threshold=float(base_threshold),
+                policy=cand_policy,
+            )
+            veto_mask = pd.to_numeric(scored.get("gate_veto"), errors="coerce").fillna(0).astype(bool)
+            veto_in_segment = int(veto_mask.loc[segments.eq(segment)].sum())
+            if veto_in_segment <= 0:
+                continue
+            eval_payload = _evaluate(scored)
+            if not bool(eval_payload.get("constraints_passed", False)):
+                continue
+            if float(eval_payload.get("objective_score", float("-inf"))) < float(
+                baseline_eval.get("objective_score", float("-inf"))
+            ) + float(min_objective_gain):
+                continue
+            if float(eval_payload.get("broad_profit_units", float("-inf"))) < float(
+                baseline_eval.get("broad_profit_units", float("-inf"))
+            ) + float(min_broad_profit_gain):
+                continue
+            if float(eval_payload.get("recent_profit_units", float("-inf"))) < float(
+                baseline_eval.get("recent_profit_units", float("-inf"))
+            ) + float(min_recent_profit_gain):
+                continue
+            if float(eval_payload.get("affected_share", 0.0)) < float(
+                baseline_eval.get("affected_share", 0.0)
+            ) + float(min_affected_share_gain):
+                continue
+            candidate = {
+                **eval_payload,
+                "segment_key": segment,
+                "segment_threshold": float(seg_threshold),
+                "segment_budget": int(seg_budget),
+                "segment_veto_rows": int(veto_in_segment),
+                "segment_threshold_overrides": merged_segment_thresholds,
+                "segment_budget_overrides": merged_segment_budgets,
+                "selection_mode": "segment_override",
+            }
+            if best is None:
+                best = candidate
+                continue
+            if float(candidate["objective_score"]) > float(best.get("objective_score", float("-inf"))) + 1e-12:
+                best = candidate
+                continue
+            if float(candidate["broad_profit_units"]) > float(best.get("broad_profit_units", float("-inf"))) + 1e-12:
+                best = candidate
+                continue
+            if float(candidate["recent_profit_units"]) > float(best.get("recent_profit_units", float("-inf"))) + 1e-12:
+                best = candidate
+                continue
+            if int(candidate["segment_veto_rows"]) > int(best.get("segment_veto_rows", 0)):
+                best = candidate
+    if best is None:
+        return None
+    return {
+        "baseline": baseline_eval,
+        "selected": best,
+        "constraints": {
+            "segment_key": str(segment),
+            "threshold_candidates": [float(v) for v in threshold_values],
+            "budget_candidates": [int(v) for v in budget_values],
+            "min_objective_gain": float(min_objective_gain),
+            "min_broad_profit_gain": float(min_broad_profit_gain),
+            "min_recent_profit_gain": float(min_recent_profit_gain),
+            "min_affected_share_gain": float(min_affected_share_gain),
+        },
+    }
+
+
 def cmd_train_shadow(args: argparse.Namespace) -> None:
     history_csv = args.history_csv.resolve()
     if not history_csv.exists():
@@ -2263,13 +3272,11 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
     if not numeric_features and not categorical_features:
         raise RuntimeError("No usable features found for gate training.")
 
-    logistic_cfg = LogisticGateConfig(
-        learning_rate=float(args.learning_rate),
-        l2_strength=float(args.l2_strength),
-        max_iter=int(args.max_iter),
-        tolerance=float(args.tolerance),
-        class_weight_positive=float(args.class_weight_positive),
-        class_weight_negative=float(args.class_weight_negative),
+    model_family, logistic_cfg, catboost_cfg, uplift_cfg = _build_gate_model_configs(args)
+    feature_hash = _feature_signature_hash(
+        model_family=model_family,
+        numeric_features=numeric_features,
+        categorical_features=categorical_features,
     )
     walk_cfg = WalkForwardConfig(
         train_window_days=int(args.train_window_days),
@@ -2285,6 +3292,19 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
         max_removed_per_player_per_day=int(args.max_removed_per_player_per_day),
         max_removed_per_segment_per_day=int(args.max_removed_per_segment_per_day),
         max_removed_per_target_per_day=int(args.max_removed_per_target_per_day),
+        max_global_removed_per_player=int(args.max_global_removed_per_player),
+        max_global_removed_share_per_player=float(args.max_global_removed_share_per_player),
+        global_player_cap_min_veto_rows=int(args.global_player_cap_min_veto_rows),
+        relax_player_global_cap_for_budget=bool(not args.disable_player_cap_relaxation),
+        player_penalty_alpha=float(args.player_penalty_alpha),
+        player_penalty_power=float(args.player_penalty_power),
+        optimizer_enabled=bool(not args.disable_optimizer),
+        optimizer_beam_width=int(args.optimizer_beam_width),
+        optimizer_max_candidates_per_day=int(args.optimizer_max_candidates_per_day),
+        optimizer_keep_prob_weight=float(args.optimizer_keep_prob_weight),
+        optimizer_gap_weight=float(args.optimizer_gap_weight),
+        optimizer_harm_weight=float(args.optimizer_harm_weight),
+        optimizer_rank_weight=float(args.optimizer_rank_weight),
         tail_slots_only=int(args.tail_slots_only),
         min_veto_gap=float(args.min_veto_gap),
         require_keep_prob_filter=True,
@@ -2299,6 +3319,15 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
         max_top_removed_player_share=float(args.max_top_removed_player_share),
         max_top_removed_segment_share=float(args.max_top_removed_segment_share),
         max_top_removed_target_share=float(args.max_top_removed_target_share),
+        concentration_min_veto_rows=int(args.concentration_min_veto_rows),
+        conditional_target_cap_enabled=bool(not args.disable_conditional_target_cap),
+        conditional_target_relaxed_cap=float(args.conditional_target_relaxed_cap),
+        conditional_target_player_share_max=float(args.conditional_target_player_share_max),
+        conditional_target_require_recent_non_negative=bool(
+            not args.disable_conditional_target_require_recent_non_negative
+        ),
+        conditional_target_recent_hit_floor_pp=float(args.conditional_target_recent_hit_floor_pp),
+        conditional_target_recent_profit_floor=float(args.conditional_target_recent_profit_floor),
         min_rolling_pass_rate=float(args.min_rolling_pass_rate),
         max_observed_fire_rate=float(args.max_observed_fire_rate),
         rolling_profit_delta_floor=float(args.rolling_profit_delta_floor),
@@ -2344,7 +3373,12 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
     for fold_idx, fold in enumerate(folds):
         train = working.loc[fold["train_mask"]].copy()
         test = working.loc[fold["test_mask"]].copy()
-        model = RegularizedLogisticGate(config=logistic_cfg)
+        model = _new_gate_model(
+            model_family,
+            logistic_cfg=logistic_cfg,
+            catboost_cfg=catboost_cfg,
+            uplift_cfg=uplift_cfg,
+        )
         model.fit_dataframe(
             train,
             label_col=label_col,
@@ -2352,7 +3386,9 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
             categorical_features=categorical_features,
         )
 
-        train["gate_keep_prob"] = model.predict_proba_dataframe(train)
+        train_keep_prob, train_harm = predict_keep_harm_scores(model, train)
+        train["gate_keep_prob"] = pd.Series(train_keep_prob, index=train.index, dtype="float64")
+        train["gate_harm_score"] = pd.Series(train_harm, index=train.index, dtype="float64")
         threshold, threshold_diag = _search_train_threshold(
             train,
             keep_prob_col="gate_keep_prob",
@@ -2374,9 +3410,21 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
             max_top_removed_player_share=float(args.train_threshold_max_top_removed_player_share),
             max_top_removed_segment_share=float(args.train_threshold_max_top_removed_segment_share),
             max_top_removed_target_share=float(args.train_threshold_max_top_removed_target_share),
+            concentration_min_veto_rows=int(args.concentration_min_veto_rows),
             min_coverage_retention=float(args.train_threshold_min_coverage_retention),
             prefer_non_noop_when_close=bool(not args.disable_train_non_noop_exploration),
             non_noop_objective_margin=float(args.train_non_noop_objective_margin),
+            objective_player_top_share_penalty=float(args.objective_player_top_share_penalty),
+            objective_player_hhi_penalty=float(args.objective_player_hhi_penalty),
+            objective_player_diversity_bonus=float(args.objective_player_diversity_bonus),
+            conditional_target_cap_enabled=bool(not args.disable_conditional_target_cap),
+            conditional_target_relaxed_cap=float(args.conditional_target_relaxed_cap),
+            conditional_target_player_share_max=float(args.conditional_target_player_share_max),
+            conditional_target_require_recent_non_negative=bool(
+                not args.disable_conditional_target_require_recent_non_negative
+            ),
+            conditional_target_recent_hit_floor_pp=float(args.conditional_target_recent_hit_floor_pp),
+            conditional_target_recent_profit_floor=float(args.conditional_target_recent_profit_floor),
         )
         fold_thresholds.append(float(threshold))
         fold_allowed_segments = tuple(
@@ -2396,6 +3444,65 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
             max_removed_per_player_per_day=int(gate_policy.max_removed_per_player_per_day),
             max_removed_per_segment_per_day=int(gate_policy.max_removed_per_segment_per_day),
             max_removed_per_target_per_day=int(gate_policy.max_removed_per_target_per_day),
+            max_global_removed_per_player=int(
+                _safe_int(threshold_diag.get("max_global_removed_per_player"), gate_policy.max_global_removed_per_player)
+            ),
+            max_global_removed_share_per_player=float(
+                _safe_float(
+                    threshold_diag.get("max_global_removed_share_per_player"),
+                    gate_policy.max_global_removed_share_per_player,
+                )
+            ),
+            global_player_cap_min_veto_rows=int(
+                _safe_int(
+                    threshold_diag.get("global_player_cap_min_veto_rows"),
+                    gate_policy.global_player_cap_min_veto_rows,
+                )
+            ),
+            relax_player_global_cap_for_budget=bool(
+                threshold_diag.get(
+                    "relax_player_global_cap_for_budget",
+                    gate_policy.relax_player_global_cap_for_budget,
+                )
+            ),
+            player_penalty_alpha=float(
+                _safe_float(threshold_diag.get("player_penalty_alpha"), gate_policy.player_penalty_alpha)
+            ),
+            player_penalty_power=float(
+                _safe_float(threshold_diag.get("player_penalty_power"), gate_policy.player_penalty_power)
+            ),
+            optimizer_enabled=bool(threshold_diag.get("optimizer_enabled", gate_policy.optimizer_enabled)),
+            optimizer_beam_width=int(
+                _safe_int(threshold_diag.get("optimizer_beam_width"), gate_policy.optimizer_beam_width)
+            ),
+            optimizer_max_candidates_per_day=int(
+                _safe_int(
+                    threshold_diag.get("optimizer_max_candidates_per_day"),
+                    gate_policy.optimizer_max_candidates_per_day,
+                )
+            ),
+            optimizer_keep_prob_weight=float(
+                _safe_float(threshold_diag.get("optimizer_keep_prob_weight"), gate_policy.optimizer_keep_prob_weight)
+            ),
+            optimizer_gap_weight=float(
+                _safe_float(threshold_diag.get("optimizer_gap_weight"), gate_policy.optimizer_gap_weight)
+            ),
+            optimizer_harm_weight=float(
+                _safe_float(threshold_diag.get("optimizer_harm_weight"), gate_policy.optimizer_harm_weight)
+            ),
+            optimizer_rank_weight=float(
+                _safe_float(threshold_diag.get("optimizer_rank_weight"), gate_policy.optimizer_rank_weight)
+            ),
+            segment_threshold_overrides={
+                str(seg).upper().strip(): float(val)
+                for seg, val in dict(threshold_diag.get("segment_threshold_overrides", gate_policy.segment_threshold_overrides) or {}).items()
+                if str(seg).strip()
+            },
+            segment_budget_overrides={
+                str(seg).upper().strip(): int(max(0, int(val)))
+                for seg, val in dict(threshold_diag.get("segment_budget_overrides", gate_policy.segment_budget_overrides) or {}).items()
+                if str(seg).strip()
+            },
             tail_slots_only=int(_safe_int(threshold_diag.get("tail_slots_only"), gate_policy.tail_slots_only)),
             min_veto_gap=float(_safe_float(threshold_diag.get("min_veto_gap"), gate_policy.min_veto_gap)),
             require_keep_prob_filter=bool(threshold_diag.get("require_keep_prob_filter", gate_policy.require_keep_prob_filter)),
@@ -2403,7 +3510,9 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
             allowed_meta_cohorts=fold_allowed_meta_cohorts,
         )
 
-        test["gate_keep_prob"] = model.predict_proba_dataframe(test)
+        test_keep_prob, test_harm = predict_keep_harm_scores(model, test)
+        test["gate_keep_prob"] = pd.Series(test_keep_prob, index=test.index, dtype="float64")
+        test["gate_harm_score"] = pd.Series(test_harm, index=test.index, dtype="float64")
         scored = apply_shadow_gate_policy(
             test,
             keep_prob_col="gate_keep_prob",
@@ -2472,6 +3581,33 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
         observed_fire_rate=float(observed_fire_rate),
         criteria=criteria,
     )
+    oof_lopo = _leave_one_player_out_validation(
+        oof,
+        player_col=player_col,
+        veto_col="gate_veto",
+        result_col=result_col,
+        min_player_rows=int(args.lopo_min_player_rows),
+        profit_floor=float(args.lopo_profit_floor),
+        hit_floor_pp=float(args.lopo_hit_floor_pp),
+    )
+    oof_bootstrap = _bootstrap_paired_deltas(
+        oof,
+        veto_col="gate_veto",
+        result_col=result_col,
+        iterations=int(args.bootstrap_iterations),
+        alpha=float(args.bootstrap_alpha),
+        seed=int(args.bootstrap_seed),
+    )
+    recommendation = _apply_small_lift_validation_to_recommendation(
+        recommendation,
+        lopo=oof_lopo,
+        bootstrap=oof_bootstrap,
+        enforce=bool(not args.disable_small_lift_validation),
+        min_lopo_profit_pass_rate=float(args.min_lopo_profit_pass_rate),
+        min_lopo_hit_pass_rate=float(args.min_lopo_hit_pass_rate),
+        min_bootstrap_profit_ci_lower=float(args.min_bootstrap_profit_ci_lower),
+        min_bootstrap_hit_ci_lower_pp=float(args.min_bootstrap_hit_ci_lower_pp),
+    )
 
     final_threshold, threshold_selection = _select_final_threshold_from_oof(
         oof=oof,
@@ -2501,8 +3637,20 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
         max_top_removed_player_share=float(args.threshold_max_top_removed_player_share),
         max_top_removed_segment_share=float(args.threshold_max_top_removed_segment_share),
         max_top_removed_target_share=float(args.threshold_max_top_removed_target_share),
+        concentration_min_veto_rows=int(args.concentration_min_veto_rows),
         prefer_relaxed_non_noop_when_close=bool(not args.disable_final_non_noop_exploration),
         relaxed_non_noop_objective_margin=float(args.final_non_noop_objective_margin),
+        objective_player_top_share_penalty=float(args.objective_player_top_share_penalty),
+        objective_player_hhi_penalty=float(args.objective_player_hhi_penalty),
+        objective_player_diversity_bonus=float(args.objective_player_diversity_bonus),
+        conditional_target_cap_enabled=bool(not args.disable_conditional_target_cap),
+        conditional_target_relaxed_cap=float(args.conditional_target_relaxed_cap),
+        conditional_target_player_share_max=float(args.conditional_target_player_share_max),
+        conditional_target_require_recent_non_negative=bool(
+            not args.disable_conditional_target_require_recent_non_negative
+        ),
+        conditional_target_recent_hit_floor_pp=float(args.conditional_target_recent_hit_floor_pp),
+        conditional_target_recent_profit_floor=float(args.conditional_target_recent_profit_floor),
     )
     selected_allowed_segments = tuple(
         str(seg).upper().strip()
@@ -2521,14 +3669,162 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
         max_removed_per_player_per_day=int(gate_policy.max_removed_per_player_per_day),
         max_removed_per_segment_per_day=int(gate_policy.max_removed_per_segment_per_day),
         max_removed_per_target_per_day=int(gate_policy.max_removed_per_target_per_day),
+        max_global_removed_per_player=int(
+            _safe_int(threshold_selection.get("max_global_removed_per_player"), gate_policy.max_global_removed_per_player)
+        ),
+        max_global_removed_share_per_player=float(
+            _safe_float(
+                threshold_selection.get("max_global_removed_share_per_player"),
+                gate_policy.max_global_removed_share_per_player,
+            )
+        ),
+        global_player_cap_min_veto_rows=int(
+            _safe_int(
+                threshold_selection.get("global_player_cap_min_veto_rows"),
+                gate_policy.global_player_cap_min_veto_rows,
+            )
+        ),
+        relax_player_global_cap_for_budget=bool(
+            threshold_selection.get(
+                "relax_player_global_cap_for_budget",
+                gate_policy.relax_player_global_cap_for_budget,
+            )
+        ),
+        player_penalty_alpha=float(
+            _safe_float(threshold_selection.get("player_penalty_alpha"), gate_policy.player_penalty_alpha)
+        ),
+        player_penalty_power=float(
+            _safe_float(threshold_selection.get("player_penalty_power"), gate_policy.player_penalty_power)
+        ),
+        optimizer_enabled=bool(threshold_selection.get("optimizer_enabled", gate_policy.optimizer_enabled)),
+        optimizer_beam_width=int(
+            _safe_int(threshold_selection.get("optimizer_beam_width"), gate_policy.optimizer_beam_width)
+        ),
+        optimizer_max_candidates_per_day=int(
+            _safe_int(
+                threshold_selection.get("optimizer_max_candidates_per_day"),
+                gate_policy.optimizer_max_candidates_per_day,
+            )
+        ),
+        optimizer_keep_prob_weight=float(
+            _safe_float(
+                threshold_selection.get("optimizer_keep_prob_weight"),
+                gate_policy.optimizer_keep_prob_weight,
+            )
+        ),
+        optimizer_gap_weight=float(
+            _safe_float(threshold_selection.get("optimizer_gap_weight"), gate_policy.optimizer_gap_weight)
+        ),
+        optimizer_harm_weight=float(
+            _safe_float(threshold_selection.get("optimizer_harm_weight"), gate_policy.optimizer_harm_weight)
+        ),
+        optimizer_rank_weight=float(
+            _safe_float(threshold_selection.get("optimizer_rank_weight"), gate_policy.optimizer_rank_weight)
+        ),
+        segment_threshold_overrides={
+            str(seg).upper().strip(): float(val)
+            for seg, val in dict(
+                threshold_selection.get("segment_threshold_overrides", gate_policy.segment_threshold_overrides) or {}
+            ).items()
+            if str(seg).strip()
+        },
+        segment_budget_overrides={
+            str(seg).upper().strip(): int(max(0, int(val)))
+            for seg, val in dict(
+                threshold_selection.get("segment_budget_overrides", gate_policy.segment_budget_overrides) or {}
+            ).items()
+            if str(seg).strip()
+        },
         tail_slots_only=int(_safe_int(threshold_selection.get("tail_slots_only"), gate_policy.tail_slots_only)),
         min_veto_gap=float(_safe_float(threshold_selection.get("min_veto_gap"), gate_policy.min_veto_gap)),
         require_keep_prob_filter=bool(threshold_selection.get("require_keep_prob_filter", gate_policy.require_keep_prob_filter)),
         allowed_segments=selected_allowed_segments,
         allowed_meta_cohorts=selected_allowed_meta_cohorts,
     )
+    segment_override_result: dict[str, Any] | None = None
+    if bool(not args.disable_segment_override_search):
+        segment_override_result = _search_segment_override_on_oof(
+            oof,
+            keep_prob_col="gate_keep_prob",
+            date_col="_event_date",
+            player_col=player_col,
+            target_col=target_col,
+            direction_col=direction_col,
+            result_col=result_col,
+            base_threshold=float(final_threshold),
+            base_policy=final_gate_policy,
+            segment_key=str(args.segment_override_key),
+            threshold_candidates=_parse_float_grid(
+                str(args.segment_override_thresholds),
+                default=[0.58, 0.60, 0.62, 0.64, 0.66],
+                clip_min=0.0,
+                clip_max=1.0,
+            ),
+            budget_candidates=_parse_int_grid(
+                str(args.segment_override_budgets),
+                default=[1, 2],
+                min_value=1,
+            ),
+            recent_days=int(args.threshold_recent_days),
+            recent_hit_floor_pp=float(args.threshold_recent_hit_floor_pp),
+            recent_profit_floor=float(args.threshold_recent_profit_floor),
+            broad_profit_floor=float(args.threshold_broad_profit_floor),
+            broad_hit_floor_pp=float(args.threshold_broad_hit_floor_pp),
+            min_coverage_retention=float(args.threshold_min_coverage_retention),
+            max_fire_rate=float(args.threshold_max_fire_rate),
+            min_affected_share=float(args.threshold_min_affected_share),
+            max_top_removed_player_share=float(args.threshold_max_top_removed_player_share),
+            max_top_removed_segment_share=float(args.threshold_max_top_removed_segment_share),
+            max_top_removed_target_share=float(args.threshold_max_top_removed_target_share),
+            concentration_min_veto_rows=int(args.concentration_min_veto_rows),
+            conditional_target_cap_enabled=bool(not args.disable_conditional_target_cap),
+            conditional_target_relaxed_cap=float(args.conditional_target_relaxed_cap),
+            conditional_target_player_share_max=float(args.conditional_target_player_share_max),
+            conditional_target_require_recent_non_negative=bool(
+                not args.disable_conditional_target_require_recent_non_negative
+            ),
+            conditional_target_recent_hit_floor_pp=float(args.conditional_target_recent_hit_floor_pp),
+            conditional_target_recent_profit_floor=float(args.conditional_target_recent_profit_floor),
+            objective_player_top_share_penalty=float(args.objective_player_top_share_penalty),
+            objective_player_hhi_penalty=float(args.objective_player_hhi_penalty),
+            objective_player_diversity_bonus=float(args.objective_player_diversity_bonus),
+            min_objective_gain=float(args.segment_override_min_objective_gain),
+            min_broad_profit_gain=float(args.segment_override_min_broad_profit_gain),
+            min_recent_profit_gain=float(args.segment_override_min_recent_profit_gain),
+            min_affected_share_gain=float(args.segment_override_min_affected_share_gain),
+        )
+    threshold_selection["segment_override_search"] = segment_override_result or {
+        "selection_mode": "segment_override",
+        "applied": False,
+        "reason": "no_candidate_passed_or_disabled",
+    }
+    if segment_override_result and isinstance(segment_override_result.get("selected"), dict):
+        selected_override = segment_override_result.get("selected", {})
+        threshold_selection["segment_override_search"]["applied"] = True
+        threshold_selection["segment_override_search"]["reason"] = "candidate_selected"
+        threshold_selection["segment_override_search"]["selected"] = selected_override
+        final_gate_policy = GatePolicyConfig(
+            **{
+                **asdict(final_gate_policy),
+                "segment_threshold_overrides": {
+                    str(seg).upper().strip(): float(val)
+                    for seg, val in dict(selected_override.get("segment_threshold_overrides", {})).items()
+                    if str(seg).strip()
+                },
+                "segment_budget_overrides": {
+                    str(seg).upper().strip(): int(max(0, int(val)))
+                    for seg, val in dict(selected_override.get("segment_budget_overrides", {})).items()
+                    if str(seg).strip()
+                },
+            }
+        )
 
-    final_model = RegularizedLogisticGate(config=logistic_cfg)
+    final_model = _new_gate_model(
+        model_family,
+        logistic_cfg=logistic_cfg,
+        catboost_cfg=catboost_cfg,
+        uplift_cfg=uplift_cfg,
+    )
     final_model.fit_dataframe(
         working,
         label_col=label_col,
@@ -2536,10 +3832,45 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
         categorical_features=categorical_features,
     )
     full_scored = working.copy()
-    full_scored["gate_keep_prob"] = final_model.predict_proba_dataframe(full_scored)
+    full_keep_prob, full_harm = predict_keep_harm_scores(final_model, full_scored)
+    full_scored["gate_keep_prob"] = pd.Series(full_keep_prob, index=full_scored.index, dtype="float64")
+    full_scored["gate_harm_score"] = pd.Series(full_harm, index=full_scored.index, dtype="float64")
+    fallback_base_policy = GatePolicyConfig(
+        max_fire_rate=float(max(float(gate_policy.max_fire_rate), float(args.threshold_max_fire_rate))),
+        min_coverage_rate=float(min(float(gate_policy.min_coverage_rate), float(args.threshold_min_coverage_retention))),
+        max_removed_per_day=int(gate_policy.max_removed_per_day),
+        max_removed_per_player_per_day=int(gate_policy.max_removed_per_player_per_day),
+        max_removed_per_segment_per_day=int(gate_policy.max_removed_per_segment_per_day),
+        max_removed_per_target_per_day=int(gate_policy.max_removed_per_target_per_day),
+        max_global_removed_per_player=int(gate_policy.max_global_removed_per_player),
+        max_global_removed_share_per_player=float(gate_policy.max_global_removed_share_per_player),
+        global_player_cap_min_veto_rows=int(gate_policy.global_player_cap_min_veto_rows),
+        relax_player_global_cap_for_budget=bool(gate_policy.relax_player_global_cap_for_budget),
+        player_penalty_alpha=float(gate_policy.player_penalty_alpha),
+        player_penalty_power=float(gate_policy.player_penalty_power),
+        optimizer_enabled=bool(gate_policy.optimizer_enabled),
+        optimizer_beam_width=int(gate_policy.optimizer_beam_width),
+        optimizer_max_candidates_per_day=int(gate_policy.optimizer_max_candidates_per_day),
+        optimizer_keep_prob_weight=float(gate_policy.optimizer_keep_prob_weight),
+        optimizer_gap_weight=float(gate_policy.optimizer_gap_weight),
+        optimizer_harm_weight=float(gate_policy.optimizer_harm_weight),
+        optimizer_rank_weight=float(gate_policy.optimizer_rank_weight),
+        segment_threshold_overrides=dict(gate_policy.segment_threshold_overrides or {}),
+        segment_budget_overrides=dict(gate_policy.segment_budget_overrides or {}),
+        tail_slots_only=0,
+        min_veto_gap=0.0,
+        require_keep_prob_filter=False,
+    )
+    segment_override_applied = bool(
+        isinstance(threshold_selection.get("segment_override_search"), dict)
+        and threshold_selection.get("segment_override_search", {}).get("applied", False)
+    )
     fullframe_fallback_triggered = bool(
-        float(final_threshold) <= -0.999999
-        or not bool(threshold_selection.get("constraints_passed", False))
+        (
+            float(final_threshold) <= -0.999999
+            or not bool(threshold_selection.get("constraints_passed", False))
+        )
+        and not bool(segment_override_applied)
     )
     if bool(not args.disable_fullframe_cohort_fallback) and fullframe_fallback_triggered:
         fallback_selection = _select_fullframe_cohort_fallback(
@@ -2550,7 +3881,7 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
             target_col=target_col,
             direction_col=direction_col,
             result_col=result_col,
-            base_policy=gate_policy,
+            base_policy=fallback_base_policy,
             recent_days=int(args.threshold_recent_days),
             recent_hit_floor_pp=float(args.threshold_recent_hit_floor_pp),
             recent_profit_floor=float(args.threshold_recent_profit_floor),
@@ -2567,6 +3898,18 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
             max_top_removed_player_share=float(args.threshold_max_top_removed_player_share),
             max_top_removed_segment_share=float(args.threshold_max_top_removed_segment_share),
             max_top_removed_target_share=float(args.threshold_max_top_removed_target_share),
+            concentration_min_veto_rows=int(args.concentration_min_veto_rows),
+            conditional_target_cap_enabled=bool(not args.disable_conditional_target_cap),
+            conditional_target_relaxed_cap=float(args.conditional_target_relaxed_cap),
+            conditional_target_player_share_max=float(args.conditional_target_player_share_max),
+            conditional_target_require_recent_non_negative=bool(
+                not args.disable_conditional_target_require_recent_non_negative
+            ),
+            conditional_target_recent_hit_floor_pp=float(args.conditional_target_recent_hit_floor_pp),
+            conditional_target_recent_profit_floor=float(args.conditional_target_recent_profit_floor),
+            objective_player_top_share_penalty=float(args.objective_player_top_share_penalty),
+            objective_player_hhi_penalty=float(args.objective_player_hhi_penalty),
+            objective_player_diversity_bonus=float(args.objective_player_diversity_bonus),
         )
         if fallback_selection is not None:
             threshold_selection["oof_selection"] = dict(threshold_selection)
@@ -2585,6 +3928,72 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
                 max_removed_per_player_per_day=int(gate_policy.max_removed_per_player_per_day),
                 max_removed_per_segment_per_day=int(gate_policy.max_removed_per_segment_per_day),
                 max_removed_per_target_per_day=int(gate_policy.max_removed_per_target_per_day),
+                max_global_removed_per_player=int(
+                    _safe_int(threshold_selection.get("max_global_removed_per_player"), gate_policy.max_global_removed_per_player)
+                ),
+                max_global_removed_share_per_player=float(
+                    _safe_float(
+                        threshold_selection.get("max_global_removed_share_per_player"),
+                        gate_policy.max_global_removed_share_per_player,
+                    )
+                ),
+                global_player_cap_min_veto_rows=int(
+                    _safe_int(
+                        threshold_selection.get("global_player_cap_min_veto_rows"),
+                        gate_policy.global_player_cap_min_veto_rows,
+                    )
+                ),
+                relax_player_global_cap_for_budget=bool(
+                    threshold_selection.get(
+                        "relax_player_global_cap_for_budget",
+                        gate_policy.relax_player_global_cap_for_budget,
+                    )
+                ),
+                player_penalty_alpha=float(
+                    _safe_float(threshold_selection.get("player_penalty_alpha"), gate_policy.player_penalty_alpha)
+                ),
+                player_penalty_power=float(
+                    _safe_float(threshold_selection.get("player_penalty_power"), gate_policy.player_penalty_power)
+                ),
+                optimizer_enabled=bool(threshold_selection.get("optimizer_enabled", gate_policy.optimizer_enabled)),
+                optimizer_beam_width=int(
+                    _safe_int(threshold_selection.get("optimizer_beam_width"), gate_policy.optimizer_beam_width)
+                ),
+                optimizer_max_candidates_per_day=int(
+                    _safe_int(
+                        threshold_selection.get("optimizer_max_candidates_per_day"),
+                        gate_policy.optimizer_max_candidates_per_day,
+                    )
+                ),
+                optimizer_keep_prob_weight=float(
+                    _safe_float(
+                        threshold_selection.get("optimizer_keep_prob_weight"),
+                        gate_policy.optimizer_keep_prob_weight,
+                    )
+                ),
+                optimizer_gap_weight=float(
+                    _safe_float(threshold_selection.get("optimizer_gap_weight"), gate_policy.optimizer_gap_weight)
+                ),
+                optimizer_harm_weight=float(
+                    _safe_float(threshold_selection.get("optimizer_harm_weight"), gate_policy.optimizer_harm_weight)
+                ),
+                optimizer_rank_weight=float(
+                    _safe_float(threshold_selection.get("optimizer_rank_weight"), gate_policy.optimizer_rank_weight)
+                ),
+                segment_threshold_overrides={
+                    str(seg).upper().strip(): float(val)
+                    for seg, val in dict(
+                        threshold_selection.get("segment_threshold_overrides", gate_policy.segment_threshold_overrides) or {}
+                    ).items()
+                    if str(seg).strip()
+                },
+                segment_budget_overrides={
+                    str(seg).upper().strip(): int(max(0, int(val)))
+                    for seg, val in dict(
+                        threshold_selection.get("segment_budget_overrides", gate_policy.segment_budget_overrides) or {}
+                    ).items()
+                    if str(seg).strip()
+                },
                 tail_slots_only=0,
                 min_veto_gap=0.0,
                 require_keep_prob_filter=False,
@@ -2619,11 +4028,52 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
     guard_broad_hit = _safe_float(guard_broad_delta.get("hit_rate_pp"), float("-inf"))
     guard_recent_profit = _safe_float(guard_recent_delta.get("profit_units"), float("-inf"))
     guard_recent_hit = _safe_float(guard_recent_delta.get("hit_rate_pp"), float("-inf"))
+    guard_resolved = full_scored_candidate.loc[full_scored_candidate[result_col].isin(["win", "loss"])].copy()
+    guard_affected_share = _safe_float(pd.to_numeric(guard_resolved.get("gate_veto"), errors="coerce").fillna(0).mean(), 0.0)
+    guard_observed_fire_rate = float(guard_affected_share)
+    guard_base_resolved = _safe_float(guard_broad_summary.get("baseline", {}).get("resolved"), 0.0)
+    guard_gated_resolved = _safe_float(guard_broad_summary.get("gated", {}).get("resolved"), 0.0)
+    guard_coverage_retention = float(guard_gated_resolved / guard_base_resolved) if guard_base_resolved > 0.0 else 1.0
+    guard_concentration = concentration_stats(
+        full_scored_candidate,
+        veto_col="gate_veto",
+        player_col=player_col,
+        target_col=target_col,
+        direction_col=direction_col,
+    )
+    guard_top_player_share = _safe_float(guard_concentration.get("top_player_share"), 0.0)
+    guard_top_segment_share = _safe_float(guard_concentration.get("top_segment_share"), 0.0)
+    guard_top_target_share = _safe_float(guard_concentration.get("top_target_share"), 0.0)
+    guard_veto_rows = int(max(0, _safe_int(guard_concentration.get("veto_rows"), 0)))
+    guard_concentration_enforced = bool(guard_veto_rows >= int(max(1, args.concentration_min_veto_rows)))
+    guard_effective_target_cap, guard_conditional_target_cap_active = _effective_target_cap(
+        base_cap=float(args.threshold_max_top_removed_target_share),
+        top_player_share=float(guard_top_player_share),
+        recent_profit=float(guard_recent_profit),
+        recent_hit_pp=float(guard_recent_hit),
+        conditional_enabled=bool(not args.disable_conditional_target_cap),
+        conditional_relaxed_cap=float(args.conditional_target_relaxed_cap),
+        conditional_player_share_max=float(args.conditional_target_player_share_max),
+        conditional_require_recent_non_negative=bool(
+            not args.disable_conditional_target_require_recent_non_negative
+        ),
+        conditional_recent_profit_floor=float(args.conditional_target_recent_profit_floor),
+        conditional_recent_hit_floor_pp=float(args.conditional_target_recent_hit_floor_pp),
+    )
+    guard_effective_player_cap = float(args.threshold_max_top_removed_player_share if guard_concentration_enforced else 1.0)
+    guard_effective_segment_cap = float(args.threshold_max_top_removed_segment_share if guard_concentration_enforced else 1.0)
+    guard_effective_target_cap = float(guard_effective_target_cap if guard_concentration_enforced else 1.0)
     full_fit_guard_pass = bool(
         guard_broad_profit >= float(args.threshold_broad_profit_floor)
         and guard_broad_hit >= float(args.threshold_broad_hit_floor_pp)
         and guard_recent_profit >= float(args.threshold_recent_profit_floor)
         and guard_recent_hit >= float(args.threshold_recent_hit_floor_pp)
+        and guard_coverage_retention >= float(args.threshold_min_coverage_retention)
+        and guard_observed_fire_rate <= float(args.threshold_max_fire_rate)
+        and guard_affected_share >= float(args.threshold_min_affected_share)
+        and guard_top_player_share <= float(guard_effective_player_cap)
+        and guard_top_segment_share <= float(guard_effective_segment_cap)
+        and guard_top_target_share <= float(guard_effective_target_cap)
     )
     threshold_selection["full_fit_guard"] = {
         "pass": bool(full_fit_guard_pass),
@@ -2631,6 +4081,18 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
         "broad_hit_rate_pp": float(guard_broad_hit),
         "recent_profit_units": float(guard_recent_profit),
         "recent_hit_rate_pp": float(guard_recent_hit),
+        "coverage_retention": float(guard_coverage_retention),
+        "observed_fire_rate": float(guard_observed_fire_rate),
+        "affected_share": float(guard_affected_share),
+        "top_player_share": float(guard_top_player_share),
+        "top_segment_share": float(guard_top_segment_share),
+        "top_target_share": float(guard_top_target_share),
+        "veto_rows": int(guard_veto_rows),
+        "concentration_enforced": bool(guard_concentration_enforced),
+        "effective_player_cap": float(guard_effective_player_cap),
+        "effective_segment_cap": float(guard_effective_segment_cap),
+        "effective_target_cap": float(guard_effective_target_cap),
+        "conditional_target_cap_active": bool(guard_conditional_target_cap_active),
         "recent_days": int(max(1, args.threshold_recent_days)),
     }
     if not bool(full_fit_guard_pass) and float(final_threshold) > -0.999999:
@@ -2644,6 +4106,21 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
             max_removed_per_player_per_day=int(gate_policy.max_removed_per_player_per_day),
             max_removed_per_segment_per_day=int(gate_policy.max_removed_per_segment_per_day),
             max_removed_per_target_per_day=int(gate_policy.max_removed_per_target_per_day),
+            max_global_removed_per_player=int(gate_policy.max_global_removed_per_player),
+            max_global_removed_share_per_player=float(gate_policy.max_global_removed_share_per_player),
+            global_player_cap_min_veto_rows=int(gate_policy.global_player_cap_min_veto_rows),
+            relax_player_global_cap_for_budget=bool(gate_policy.relax_player_global_cap_for_budget),
+            player_penalty_alpha=float(gate_policy.player_penalty_alpha),
+            player_penalty_power=float(gate_policy.player_penalty_power),
+            optimizer_enabled=bool(gate_policy.optimizer_enabled),
+            optimizer_beam_width=int(gate_policy.optimizer_beam_width),
+            optimizer_max_candidates_per_day=int(gate_policy.optimizer_max_candidates_per_day),
+            optimizer_keep_prob_weight=float(gate_policy.optimizer_keep_prob_weight),
+            optimizer_gap_weight=float(gate_policy.optimizer_gap_weight),
+            optimizer_harm_weight=float(gate_policy.optimizer_harm_weight),
+            optimizer_rank_weight=float(gate_policy.optimizer_rank_weight),
+            segment_threshold_overrides={},
+            segment_budget_overrides={},
             tail_slots_only=int(gate_policy.tail_slots_only),
             min_veto_gap=float(gate_policy.min_veto_gap),
             require_keep_prob_filter=True,
@@ -2709,11 +4186,58 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
         observed_fire_rate=float(final_observed_fire_rate),
         criteria=criteria,
     )
+    final_lopo = _leave_one_player_out_validation(
+        full_scored,
+        player_col=player_col,
+        veto_col="gate_veto",
+        result_col=result_col,
+        min_player_rows=int(args.lopo_min_player_rows),
+        profit_floor=float(args.lopo_profit_floor),
+        hit_floor_pp=float(args.lopo_hit_floor_pp),
+    )
+    final_bootstrap = _bootstrap_paired_deltas(
+        full_scored,
+        veto_col="gate_veto",
+        result_col=result_col,
+        iterations=int(args.bootstrap_iterations),
+        alpha=float(args.bootstrap_alpha),
+        seed=int(args.bootstrap_seed) + 1,
+    )
+    final_recommendation = _apply_small_lift_validation_to_recommendation(
+        final_recommendation,
+        lopo=final_lopo,
+        bootstrap=final_bootstrap,
+        enforce=bool(not args.disable_small_lift_validation),
+        min_lopo_profit_pass_rate=float(args.min_lopo_profit_pass_rate),
+        min_lopo_hit_pass_rate=float(args.min_lopo_hit_pass_rate),
+        min_bootstrap_profit_ci_lower=float(args.min_bootstrap_profit_ci_lower),
+        min_bootstrap_hit_ci_lower_pp=float(args.min_bootstrap_hit_ci_lower_pp),
+    )
+    train_start_ts = _coerce_event_datetime(working.get("_event_date")).min()
+    train_end_ts = _coerce_event_datetime(working.get("_event_date")).max()
+    segment_deltas_broad = _segment_paired_deltas(
+        full_scored,
+        target_col=target_col,
+        direction_col=direction_col,
+        result_col=result_col,
+        veto_col="gate_veto",
+        min_resolved_rows=10,
+    )
+    segment_deltas_recent = _segment_paired_deltas(
+        final_recent,
+        target_col=target_col,
+        direction_col=direction_col,
+        result_col=result_col,
+        veto_col="gate_veto",
+        min_resolved_rows=5,
+    )
 
     model_payload = {
         "version": 1,
         "created_at_utc": _utc_now_iso(),
         "mode": "shadow_candidate",
+        "model_family": str(model_family),
+        "feature_hash": str(feature_hash),
         "label_column": label_col,
         "result_column": result_col,
         "date_column": date_col,
@@ -2723,7 +4247,9 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
         "threshold": float(final_threshold),
         "threshold_source": "oof_constrained_selection_or_noop",
         "gate_policy": asdict(final_gate_policy),
-        "logistic_config": asdict(logistic_cfg),
+        "logistic_config": asdict(logistic_cfg) if logistic_cfg is not None else None,
+        "catboost_config": asdict(catboost_cfg) if catboost_cfg is not None else None,
+        "uplift_config": asdict(uplift_cfg) if uplift_cfg is not None else None,
         "walk_forward_config": asdict(walk_cfg),
         "promotion_criteria": asdict(criteria),
         "numeric_features": numeric_features,
@@ -2737,6 +4263,11 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
     report_payload = {
         "version": 1,
         "created_at_utc": _utc_now_iso(),
+        "model_family": str(model_family),
+        "feature_hash": str(feature_hash),
+        "logistic_config": asdict(logistic_cfg) if logistic_cfg is not None else None,
+        "catboost_config": asdict(catboost_cfg) if catboost_cfg is not None else None,
+        "uplift_config": asdict(uplift_cfg) if uplift_cfg is not None else None,
         "history_csv": str(history_csv),
         "rows_total": int(len(history)),
         "rows_resolved_trainable": int(len(working)),
@@ -2771,10 +4302,63 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
             "max_top_removed_player_share": float(args.threshold_max_top_removed_player_share),
             "max_top_removed_segment_share": float(args.threshold_max_top_removed_segment_share),
             "max_top_removed_target_share": float(args.threshold_max_top_removed_target_share),
+            "concentration_min_veto_rows": int(args.concentration_min_veto_rows),
+            "max_global_removed_per_player": int(args.max_global_removed_per_player),
+            "max_global_removed_share_per_player": float(args.max_global_removed_share_per_player),
+            "global_player_cap_min_veto_rows": int(args.global_player_cap_min_veto_rows),
+            "player_cap_relaxation_enabled": bool(not args.disable_player_cap_relaxation),
+            "player_penalty_alpha": float(args.player_penalty_alpha),
+            "player_penalty_power": float(args.player_penalty_power),
+            "optimizer_enabled": bool(not args.disable_optimizer),
+            "optimizer_beam_width": int(args.optimizer_beam_width),
+            "optimizer_max_candidates_per_day": int(args.optimizer_max_candidates_per_day),
+            "optimizer_keep_prob_weight": float(args.optimizer_keep_prob_weight),
+            "optimizer_gap_weight": float(args.optimizer_gap_weight),
+            "optimizer_harm_weight": float(args.optimizer_harm_weight),
+            "optimizer_rank_weight": float(args.optimizer_rank_weight),
+            "objective_player_top_share_penalty": float(args.objective_player_top_share_penalty),
+            "objective_player_hhi_penalty": float(args.objective_player_hhi_penalty),
+            "objective_player_diversity_bonus": float(args.objective_player_diversity_bonus),
+            "conditional_target_cap_enabled": bool(not args.disable_conditional_target_cap),
+            "conditional_target_relaxed_cap": float(args.conditional_target_relaxed_cap),
+            "conditional_target_player_share_max": float(args.conditional_target_player_share_max),
+            "conditional_target_require_recent_non_negative": bool(
+                not args.disable_conditional_target_require_recent_non_negative
+            ),
+            "conditional_target_recent_hit_floor_pp": float(args.conditional_target_recent_hit_floor_pp),
+            "conditional_target_recent_profit_floor": float(args.conditional_target_recent_profit_floor),
             "final_non_noop_exploration_enabled": bool(not args.disable_final_non_noop_exploration),
             "final_non_noop_objective_margin": float(args.final_non_noop_objective_margin),
             "train_non_noop_exploration_enabled": bool(not args.disable_train_non_noop_exploration),
             "train_non_noop_objective_margin": float(args.train_non_noop_objective_margin),
+            "segment_override_search_enabled": bool(not args.disable_segment_override_search),
+            "segment_override_key": str(args.segment_override_key),
+            "segment_override_thresholds": _parse_float_grid(
+                str(args.segment_override_thresholds),
+                default=[0.58, 0.60, 0.62, 0.64, 0.66],
+                clip_min=0.0,
+                clip_max=1.0,
+            ),
+            "segment_override_budgets": _parse_int_grid(
+                str(args.segment_override_budgets),
+                default=[1, 2],
+                min_value=1,
+            ),
+            "segment_override_min_objective_gain": float(args.segment_override_min_objective_gain),
+            "segment_override_min_broad_profit_gain": float(args.segment_override_min_broad_profit_gain),
+            "segment_override_min_recent_profit_gain": float(args.segment_override_min_recent_profit_gain),
+            "segment_override_min_affected_share_gain": float(args.segment_override_min_affected_share_gain),
+            "small_lift_validation_enabled": bool(not args.disable_small_lift_validation),
+            "lopo_min_player_rows": int(args.lopo_min_player_rows),
+            "lopo_profit_floor": float(args.lopo_profit_floor),
+            "lopo_hit_floor_pp": float(args.lopo_hit_floor_pp),
+            "min_lopo_profit_pass_rate": float(args.min_lopo_profit_pass_rate),
+            "min_lopo_hit_pass_rate": float(args.min_lopo_hit_pass_rate),
+            "bootstrap_iterations": int(args.bootstrap_iterations),
+            "bootstrap_alpha": float(args.bootstrap_alpha),
+            "bootstrap_seed": int(args.bootstrap_seed),
+            "min_bootstrap_profit_ci_lower": float(args.min_bootstrap_profit_ci_lower),
+            "min_bootstrap_hit_ci_lower_pp": float(args.min_bootstrap_hit_ci_lower_pp),
         },
         "broad_summary": final_broad_summary,
         "recent_summary": final_recent_summary,
@@ -2798,11 +4382,28 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
         "oof_promotion_recommendation": recommendation,
         "fold_reports": fold_reports,
         "model_threshold": float(final_threshold),
+        "training_window": {
+            "start": str(train_start_ts.date()) if pd.notna(train_start_ts) else "",
+            "end": str(train_end_ts.date()) if pd.notna(train_end_ts) else "",
+            "resolved_rows": int(len(working)),
+        },
+        "segment_level_deltas": {
+            "broad": segment_deltas_broad,
+            "recent": segment_deltas_recent,
+        },
     }
 
     model_out = args.model_out.resolve()
     report_out = args.report_out.resolve()
     scored_rows_out = args.scored_rows_out.resolve()
+    model_id = f"{str(model_family)}_{str(feature_hash)}_{model_out.stem}"
+    model_payload["model_id"] = str(model_id)
+    report_payload["model_id"] = str(model_id)
+    report_payload["artifacts"] = {
+        "model_json": str(model_out),
+        "report_json": str(report_out),
+        "scored_rows_csv": str(scored_rows_out),
+    }
     model_out.parent.mkdir(parents=True, exist_ok=True)
     report_out.parent.mkdir(parents=True, exist_ok=True)
     scored_rows_out.parent.mkdir(parents=True, exist_ok=True)
@@ -2817,6 +4418,7 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
         rolling.to_csv(rolling_out, index=False)
 
     print("Accepted-pick gate shadow training complete.")
+    print(f"Model family:           {model_family}")
     print(f"History rows (resolved): {len(working)}")
     print(f"Walk-forward folds:      {len(fold_reports)}")
     print(f"Broad delta hit-rate:    {_safe_float(final_broad_summary.get('delta', {}).get('hit_rate_pp'), np.nan):.4f} pp")
@@ -2903,27 +4505,60 @@ def build_parser() -> argparse.ArgumentParser:
     pe.add_argument("--min-recent-profit-delta-units", type=float, default=0.0)
     pe.add_argument("--min-recent-hit-rate-delta-pp", type=float, default=0.0)
     pe.add_argument("--min-broad-hit-rate-delta-pp", type=float, default=-0.05)
-    pe.add_argument("--min-coverage-retention", type=float, default=0.98)
-    pe.add_argument("--min-affected-share", type=float, default=0.02)
+    pe.add_argument("--min-coverage-retention", type=float, default=0.96)
+    pe.add_argument("--min-affected-share", type=float, default=0.01)
     pe.add_argument("--max-top-removed-player-share", type=float, default=0.30)
     pe.add_argument("--max-top-removed-segment-share", type=float, default=0.35)
     pe.add_argument("--max-top-removed-target-share", type=float, default=0.55)
+    pe.add_argument("--concentration-min-veto-rows", type=int, default=25)
+    pe.add_argument("--disable-conditional-target-cap", action="store_true")
+    pe.add_argument("--conditional-target-relaxed-cap", type=float, default=0.90)
+    pe.add_argument("--conditional-target-player-share-max", type=float, default=0.15)
+    pe.add_argument("--disable-conditional-target-require-recent-non-negative", action="store_true")
+    pe.add_argument("--conditional-target-recent-hit-floor-pp", type=float, default=0.0)
+    pe.add_argument("--conditional-target-recent-profit-floor", type=float, default=0.0)
     pe.add_argument("--min-rolling-pass-rate", type=float, default=0.55)
-    pe.add_argument("--max-observed-fire-rate", type=float, default=0.12)
+    pe.add_argument("--max-observed-fire-rate", type=float, default=0.20)
     pe.add_argument("--rolling-profit-delta-floor", type=float, default=0.0)
     pe.add_argument("--rolling-hit-rate-delta-floor-pp", type=float, default=-0.10)
+    pe.add_argument("--disable-small-lift-validation", action="store_true")
+    pe.add_argument("--lopo-min-player-rows", type=int, default=12)
+    pe.add_argument("--lopo-profit-floor", type=float, default=0.0)
+    pe.add_argument("--lopo-hit-floor-pp", type=float, default=0.0)
+    pe.add_argument("--min-lopo-profit-pass-rate", type=float, default=0.60)
+    pe.add_argument("--min-lopo-hit-pass-rate", type=float, default=0.60)
+    pe.add_argument("--bootstrap-iterations", type=int, default=600)
+    pe.add_argument("--bootstrap-alpha", type=float, default=0.10)
+    pe.add_argument("--bootstrap-seed", type=int, default=29)
+    pe.add_argument("--min-bootstrap-profit-ci-lower", type=float, default=0.0)
+    pe.add_argument("--min-bootstrap-hit-ci-lower-pp", type=float, default=0.0)
     pe.set_defaults(func=cmd_paired_eval)
 
     tr = sub.add_parser("train-shadow", help="Train and evaluate candidate accepted-pick gate in shadow-only mode.")
     tr.add_argument("--history-csv", type=Path, default=DEFAULT_HISTORY_CSV)
     tr.add_argument("--run-date-col", type=str, default="market_date")
     tr.add_argument("--label-col", type=str, default="keep_label")
+    tr.add_argument("--model-family", choices=["logistic", "catboost", "uplift_catboost"], default="logistic")
     tr.add_argument("--learning-rate", type=float, default=0.05)
     tr.add_argument("--l2-strength", type=float, default=2.5)
     tr.add_argument("--max-iter", type=int, default=3500)
     tr.add_argument("--tolerance", type=float, default=1e-7)
     tr.add_argument("--class-weight-positive", type=float, default=1.0)
     tr.add_argument("--class-weight-negative", type=float, default=1.0)
+    tr.add_argument("--catboost-iterations", type=int, default=320)
+    tr.add_argument("--catboost-depth", type=int, default=5)
+    tr.add_argument("--catboost-learning-rate", type=float, default=0.05)
+    tr.add_argument("--catboost-l2-leaf-reg", type=float, default=8.0)
+    tr.add_argument("--catboost-random-strength", type=float, default=1.0)
+    tr.add_argument("--catboost-bagging-temperature", type=float, default=0.0)
+    tr.add_argument("--catboost-min-data-in-leaf", type=int, default=20)
+    tr.add_argument("--catboost-seed", type=int, default=42)
+    tr.add_argument("--catboost-segment-weight-power", type=float, default=0.0)
+    tr.add_argument("--catboost-segment-weight-cap", type=float, default=3.0)
+    tr.add_argument("--uplift-keep-prob-temperature", type=float, default=0.25)
+    tr.add_argument("--disable-uplift-harm-head", action="store_true")
+    tr.add_argument("--uplift-harm-positive-weight", type=float, default=1.5)
+    tr.add_argument("--uplift-harm-temperature", type=float, default=1.0)
     tr.add_argument("--train-window-days", type=int, default=120)
     tr.add_argument("--test-window-days", type=int, default=14)
     tr.add_argument("--step-days", type=int, default=7)
@@ -2931,14 +4566,30 @@ def build_parser() -> argparse.ArgumentParser:
     tr.add_argument("--min-test-rows", type=int, default=20)
     tr.add_argument("--threshold-quantiles", type=str, default="0.05,0.10,0.15,0.20,0.25,0.30,0.35,0.40")
     tr.add_argument("--threshold-max-candidates", type=int, default=48)
-    tr.add_argument("--max-fire-rate", type=float, default=0.08)
-    tr.add_argument("--min-coverage-rate", type=float, default=0.97)
+    tr.add_argument("--max-fire-rate", type=float, default=0.20)
+    tr.add_argument("--min-coverage-rate", type=float, default=0.90)
     tr.add_argument("--max-removed-per-day", type=int, default=1)
     tr.add_argument("--max-removed-per-player-per-day", type=int, default=1)
     tr.add_argument("--max-removed-per-segment-per-day", type=int, default=2)
     tr.add_argument("--max-removed-per-target-per-day", type=int, default=2)
+    tr.add_argument("--max-global-removed-per-player", type=int, default=0)
+    tr.add_argument("--max-global-removed-share-per-player", type=float, default=1.0)
+    tr.add_argument("--global-player-cap-min-veto-rows", type=int, default=8)
+    tr.add_argument("--disable-player-cap-relaxation", action="store_true")
+    tr.add_argument("--player-penalty-alpha", type=float, default=0.0)
+    tr.add_argument("--player-penalty-power", type=float, default=1.0)
+    tr.add_argument("--disable-optimizer", action="store_true")
+    tr.add_argument("--optimizer-beam-width", type=int, default=96)
+    tr.add_argument("--optimizer-max-candidates-per-day", type=int, default=64)
+    tr.add_argument("--optimizer-keep-prob-weight", type=float, default=1.0)
+    tr.add_argument("--optimizer-gap-weight", type=float, default=0.60)
+    tr.add_argument("--optimizer-harm-weight", type=float, default=0.80)
+    tr.add_argument("--optimizer-rank-weight", type=float, default=0.0)
     tr.add_argument("--tail-slots-only", type=int, default=2)
     tr.add_argument("--min-veto-gap", type=float, default=0.02)
+    tr.add_argument("--objective-player-top-share-penalty", type=float, default=0.0)
+    tr.add_argument("--objective-player-hhi-penalty", type=float, default=0.0)
+    tr.add_argument("--objective-player-diversity-bonus", type=float, default=0.0)
     tr.add_argument("--recent-days", type=int, default=28)
     tr.add_argument("--rolling-window-days", type=int, default=21)
     tr.add_argument("--rolling-step-days", type=int, default=7)
@@ -2947,12 +4598,18 @@ def build_parser() -> argparse.ArgumentParser:
     tr.add_argument("--threshold-recent-profit-floor", type=float, default=0.0)
     tr.add_argument("--threshold-broad-profit-floor", type=float, default=0.0)
     tr.add_argument("--threshold-broad-hit-floor-pp", type=float, default=0.0)
-    tr.add_argument("--threshold-min-coverage-retention", type=float, default=0.98)
-    tr.add_argument("--threshold-max-fire-rate", type=float, default=0.03)
-    tr.add_argument("--threshold-min-affected-share", type=float, default=0.02)
+    tr.add_argument("--threshold-min-coverage-retention", type=float, default=0.96)
+    tr.add_argument("--threshold-max-fire-rate", type=float, default=0.20)
+    tr.add_argument("--threshold-min-affected-share", type=float, default=0.01)
     tr.add_argument("--threshold-max-top-removed-player-share", type=float, default=0.30)
     tr.add_argument("--threshold-max-top-removed-segment-share", type=float, default=0.35)
     tr.add_argument("--threshold-max-top-removed-target-share", type=float, default=0.55)
+    tr.add_argument("--disable-conditional-target-cap", action="store_true")
+    tr.add_argument("--conditional-target-relaxed-cap", type=float, default=0.90)
+    tr.add_argument("--conditional-target-player-share-max", type=float, default=0.15)
+    tr.add_argument("--disable-conditional-target-require-recent-non-negative", action="store_true")
+    tr.add_argument("--conditional-target-recent-hit-floor-pp", type=float, default=0.0)
+    tr.add_argument("--conditional-target-recent-profit-floor", type=float, default=0.0)
     tr.add_argument("--disable-final-non-noop-exploration", action="store_true")
     tr.add_argument("--final-non-noop-objective-margin", type=float, default=0.20)
     tr.add_argument("--segment-search-min-rows", type=int, default=24)
@@ -2962,6 +4619,14 @@ def build_parser() -> argparse.ArgumentParser:
     tr.add_argument("--disable-cohort-search", action="store_true")
     tr.add_argument("--cohort-search-min-delta-pp", type=float, default=-4.0)
     tr.add_argument("--disable-fullframe-cohort-fallback", action="store_true")
+    tr.add_argument("--disable-segment-override-search", action="store_true")
+    tr.add_argument("--segment-override-key", type=str, default="PTS|OVER")
+    tr.add_argument("--segment-override-thresholds", type=str, default="0.58,0.60,0.62,0.64,0.66")
+    tr.add_argument("--segment-override-budgets", type=str, default="1,2")
+    tr.add_argument("--segment-override-min-objective-gain", type=float, default=0.0)
+    tr.add_argument("--segment-override-min-broad-profit-gain", type=float, default=0.0)
+    tr.add_argument("--segment-override-min-recent-profit-gain", type=float, default=0.0)
+    tr.add_argument("--segment-override-min-affected-share-gain", type=float, default=0.0)
     tr.add_argument("--train-threshold-min-affected-share", type=float, default=0.01)
     tr.add_argument("--train-threshold-max-top-removed-player-share", type=float, default=0.40)
     tr.add_argument("--train-threshold-max-top-removed-segment-share", type=float, default=0.65)
@@ -2973,15 +4638,27 @@ def build_parser() -> argparse.ArgumentParser:
     tr.add_argument("--min-recent-profit-delta-units", type=float, default=0.0)
     tr.add_argument("--min-recent-hit-rate-delta-pp", type=float, default=0.0)
     tr.add_argument("--min-broad-hit-rate-delta-pp", type=float, default=-0.05)
-    tr.add_argument("--min-coverage-retention", type=float, default=0.98)
-    tr.add_argument("--min-affected-share", type=float, default=0.02)
+    tr.add_argument("--min-coverage-retention", type=float, default=0.96)
+    tr.add_argument("--min-affected-share", type=float, default=0.01)
     tr.add_argument("--max-top-removed-player-share", type=float, default=0.30)
     tr.add_argument("--max-top-removed-segment-share", type=float, default=0.35)
     tr.add_argument("--max-top-removed-target-share", type=float, default=0.55)
+    tr.add_argument("--concentration-min-veto-rows", type=int, default=25)
     tr.add_argument("--min-rolling-pass-rate", type=float, default=0.55)
-    tr.add_argument("--max-observed-fire-rate", type=float, default=0.12)
+    tr.add_argument("--max-observed-fire-rate", type=float, default=0.20)
     tr.add_argument("--rolling-profit-delta-floor", type=float, default=0.0)
     tr.add_argument("--rolling-hit-rate-delta-floor-pp", type=float, default=-0.10)
+    tr.add_argument("--disable-small-lift-validation", action="store_true")
+    tr.add_argument("--lopo-min-player-rows", type=int, default=12)
+    tr.add_argument("--lopo-profit-floor", type=float, default=0.0)
+    tr.add_argument("--lopo-hit-floor-pp", type=float, default=0.0)
+    tr.add_argument("--min-lopo-profit-pass-rate", type=float, default=0.60)
+    tr.add_argument("--min-lopo-hit-pass-rate", type=float, default=0.60)
+    tr.add_argument("--bootstrap-iterations", type=int, default=600)
+    tr.add_argument("--bootstrap-alpha", type=float, default=0.10)
+    tr.add_argument("--bootstrap-seed", type=int, default=29)
+    tr.add_argument("--min-bootstrap-profit-ci-lower", type=float, default=0.0)
+    tr.add_argument("--min-bootstrap-hit-ci-lower-pp", type=float, default=0.0)
     tr.add_argument("--model-out", type=Path, default=DEFAULT_CANDIDATE_JSON)
     tr.add_argument("--report-out", type=Path, default=DEFAULT_REPORT_JSON)
     tr.add_argument("--scored-rows-out", type=Path, default=DEFAULT_SCORED_ROWS_CSV)
