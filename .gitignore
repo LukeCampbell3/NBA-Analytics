@@ -1,22 +1,40 @@
-# Ignore everything by default.
+# Ignore everything by default. We explicitly opt in tracked source surfaces.
 *
 
-# Keep ignore rules file itself.
+# Repo metadata and root docs/config.
 !.gitignore
-
-# Keep minimal project docs + static build tooling.
 !README.md
 !requirements.txt
-!build_static_site.py
-!prepare_web_data.py
-!prepare_web_college_data.py
 !config.yaml
 
-# Keep static site source and built output.
-!web/
-!web/**
-!dist/
-!dist/**
+# Sports workspace (NBA today, MLB/NFL scaffolds ready).
+!sports/
+!sports/**
+
+# Re-ignore large local runtime artifacts under predictor workspace.
+sports/nba/predictions/Player-Predictor/model/**
+sports/nba/predictions/Player-Predictor/data copy/**
+sports/nba/predictions/Player-Predictor/Data-Proc/**
+sports/nba/predictions/Player-Predictor/Data-Proc-NFL/**
+sports/nba/predictions/Player-Predictor/tmp/**
+sports/nba/predictions/Player-Predictor/**/__pycache__/**
+sports/nba/predictions/model_root_legacy/**
+sports/**/__pycache__/**
+
+# Re-ignore local-only exploratory scripts not part of the committed framework.
+sports/nba/predictions/Player-Predictor/decision_engine/staking_bucket_model_v2.py
+sports/nba/predictions/Player-Predictor/scripts/analyze_miss_taxonomy.py
+sports/nba/predictions/Player-Predictor/scripts/evaluate_fp_veto_behavior.py
+sports/nba/predictions/Player-Predictor/scripts/evaluate_overlay_frontier.py
+sports/nba/predictions/Player-Predictor/scripts/evaluate_staking_shadow_rolling.py
+sports/nba/predictions/Player-Predictor/scripts/generate_abs_edge_policy_brief.py
+sports/nba/predictions/Player-Predictor/scripts/train_staking_bucket_model_v2.py
+
+# Re-ignore generated/static media folders not currently source-controlled.
+sports/nba/web/art/**
+sports/nba/web/images/**
+sports/nba/dist/art/**
+sports/nba/dist/images/**
 
 # Keep conditional promotion framework code/tests.
 !Player-Predictor/
@@ -40,5 +58,8 @@
 !Player-Predictor/decision_engine/selected_board_calibration.py
 !Player-Predictor/decision_engine/learned_pool_gate.py
 !Player-Predictor/decision_engine/accepted_pick_gate.py
+!Player-Predictor/MLB_MODEL_DATA_REQUIREMENTS.md
+!Player-Predictor/Data-Proc-MLB/
+!Player-Predictor/Data-Proc-MLB/**
 !tests/
 !tests/test_conditional_framework.py
