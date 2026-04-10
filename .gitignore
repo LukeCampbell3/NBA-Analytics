@@ -36,6 +36,30 @@ sports/nba/web/images/**
 sports/nba/dist/art/**
 sports/nba/dist/images/**
 
-# OS/editor clutter.
-sports/**/.DS_Store
-sports/**/Thumbs.db
+# Keep conditional promotion framework code/tests.
+!Player-Predictor/
+!Player-Predictor/decision_engine/
+!Player-Predictor/decision_engine/conditional_promotion.py
+!Player-Predictor/scripts/
+!Player-Predictor/scripts/evaluate_cutoff_meta_append.py
+!Player-Predictor/scripts/run_daily_cutoff_meta_monitor.py
+!Player-Predictor/scripts/evaluate_stage1_daily_append_permission.py
+!Player-Predictor/scripts/run_stage1_backfill_protocol.py
+!Player-Predictor/scripts/validate_board_objective_mode.py
+!Player-Predictor/scripts/tune_board_objective_lambdas.py
+!Player-Predictor/scripts/train_selected_board_calibrator.py
+!Player-Predictor/scripts/train_learned_pool_gate.py
+!Player-Predictor/scripts/report_reliability_diagnostics.py
+!Player-Predictor/scripts/run_accepted_pick_gate_research.py
+!Player-Predictor/scripts/fetch_nfl_enrichment.py
+!Player-Predictor/scripts/fetch_nfl_market_props.py
+!Player-Predictor/scripts/update_nfl_processed_data.py
+!Player-Predictor/NFL_MODEL_REPLICATION_PLAN.md
+!Player-Predictor/decision_engine/selected_board_calibration.py
+!Player-Predictor/decision_engine/learned_pool_gate.py
+!Player-Predictor/decision_engine/accepted_pick_gate.py
+!Player-Predictor/MLB_MODEL_DATA_REQUIREMENTS.md
+!Player-Predictor/Data-Proc-MLB/
+!Player-Predictor/Data-Proc-MLB/**
+!tests/
+!tests/test_conditional_framework.py
