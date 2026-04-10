@@ -1,0 +1,44 @@
+{
+  "status": "ok",
+  "provider": "odds_api_io",
+  "mode": "current",
+  "event_date": "2026-04-09",
+  "bookmakers": [
+    "DraftKings",
+    "FanDuel",
+    "BetMGM",
+    "Caesars"
+  ],
+  "markets": [
+    "H",
+    "HR",
+    "RBI",
+    "K",
+    "ER"
+  ],
+  "raw_event_count": 0,
+  "normalized_long_rows": 0,
+  "normalized_wide_rows": 0,
+  "unique_players": 0,
+  "target_rows": {
+    "H": 0,
+    "HR": 0,
+    "RBI": 0,
+    "K": 0,
+    "ER": 0
+  },
+  "avg_books_by_target": {
+    "H": 0.0,
+    "HR": 0.0,
+    "RBI": 0.0,
+    "K": 0.0,
+    "ER": 0.0
+  },
+  "quality_score": 0.0,
+  "output_files": {
+    "long": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\raw\\market_odds\\mlb\\odds_api_io\\latest_player_props_long.csv",
+    "wide": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\raw\\market_odds\\mlb\\odds_api_io\\latest_player_props_wide.csv",
+    "manifest": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\raw\\market_odds\\mlb\\odds_api_io\\latest_manifest.json"
+  },
+  "updated_at_utc": "2026-04-10T00:33:16.662218+00:00"
+}

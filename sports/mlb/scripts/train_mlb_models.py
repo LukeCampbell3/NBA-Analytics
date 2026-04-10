@@ -33,6 +33,23 @@ def parse_args() -> argparse.Namespace:
         default=200,
         help="Minimum row count per role required before training.",
     )
+    parser.add_argument(
+        "--min-real-market-rows",
+        type=int,
+        default=1,
+        help="Minimum matched real market rows per role required before training.",
+    )
+    parser.add_argument(
+        "--min-real-market-dates",
+        type=int,
+        default=1,
+        help="Minimum matched real market dates per role required before training.",
+    )
+    parser.add_argument(
+        "--allow-synthetic-market-only",
+        action="store_true",
+        help="Bypass the real-market-line gate and allow synthetic-only training.",
+    )
     return parser.parse_args()
 
 
@@ -44,6 +61,9 @@ def main() -> None:
             model_dir=args.model_dir,
             season=int(args.season),
             min_rows=int(args.min_rows),
+            require_real_market_lines=not bool(args.allow_synthetic_market_only),
+            min_real_market_rows=int(args.min_real_market_rows),
+            min_real_market_dates=int(args.min_real_market_dates),
         )
     )
     print(json.dumps(manifest, indent=2))

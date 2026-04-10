@@ -1,11 +1,49 @@
 {
   "role": "hitter",
   "season": 2026,
-  "row_count": 647,
-  "train_rows": 365,
-  "val_rows": 282,
+  "row_count": 2211,
+  "train_rows": 1852,
+  "val_rows": 359,
   "date_min": "2026-04-01",
-  "date_max": "2026-04-03",
+  "date_max": "2026-04-09",
+  "unique_dates": 9,
+  "market_coverage": {
+    "rows_with_any_real_market": 10,
+    "dates_with_any_real_market": 1,
+    "players_with_any_real_market": 10,
+    "targets": {
+      "H": {
+        "real_rows": 9,
+        "real_dates": 1,
+        "real_players": 9
+      },
+      "HR": {
+        "real_rows": 7,
+        "real_dates": 1,
+        "real_players": 7
+      },
+      "RBI": {
+        "real_rows": 10,
+        "real_dates": 1,
+        "real_players": 10
+      }
+    }
+  },
+  "target_variance": {
+    "H": {
+      "variance": 0.6872168494315561,
+      "mean": 0.7684305744007237
+    },
+    "HR": {
+      "variance": 0.07892734837387423,
+      "mean": 0.08095884215287201
+    },
+    "RBI": {
+      "variance": 0.5965301161639687,
+      "mean": 0.39620081411126185
+    }
+  },
+  "skipped_targets": [],
   "targets": [
     {
       "target": "H",
@@ -58,43 +96,61 @@
         "H_lag1",
         "HR_lag1",
         "RBI_lag1",
-        "Player_ID"
+        "Player_ID",
+        "Market_Event_ID",
+        "Market_Commence_Time_UTC",
+        "Market_Home_Team",
+        "Market_Away_Team",
+        "Market_K",
+        "Synthetic_Market_K",
+        "Market_K_books",
+        "Market_K_over_price",
+        "Market_K_under_price",
+        "Market_K_line_std",
+        "Market_Provider_K",
+        "Market_ER",
+        "Synthetic_Market_ER",
+        "Market_ER_books",
+        "Market_ER_over_price",
+        "Market_ER_under_price",
+        "Market_ER_line_std",
+        "Market_Provider_ER"
       ],
-      "baseline_mae": 0.7417257683215129,
+      "baseline_mae": 0.7232590529247912,
       "candidate_scores": [
         {
-          "name": "et",
-          "mae": 0.6644754137115839,
-          "rmse": 0.8640076088348456
-        },
-        {
           "name": "rf",
-          "mae": 0.7026838478503372,
-          "rmse": 0.8947983080972841
+          "mae": 0.7013410994143585,
+          "rmse": 0.8686371598810733
         },
         {
-          "name": "hgb",
-          "mae": 0.719797706805076,
-          "rmse": 0.9214943661967667
+          "name": "et",
+          "mae": 0.7090173630454968,
+          "rmse": 0.877392758545667
         },
         {
           "name": "baseline",
-          "mae": 0.7417257683215129,
-          "rmse": 1.0733078569139238
+          "mae": 0.7232590529247912,
+          "rmse": 0.9243043006020369
+        },
+        {
+          "name": "hgb",
+          "mae": 0.7509109675385244,
+          "rmse": 0.9218956868363846
         }
       ],
       "selected": {
-        "name": "et",
+        "name": "rf",
         "members": [
-          "et"
+          "rf"
         ],
         "weights": [
           1.0
         ],
-        "mae": 0.6644754137115839,
-        "rmse": 0.8640076088348456
+        "mae": 0.7013410994143585,
+        "rmse": 0.8686371598810733
       },
-      "artifact_path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\mlb\\models\\hitter\\h_model.joblib"
+      "artifact_path": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\models\\hitter\\h_model.joblib"
     },
     {
       "target": "HR",
@@ -147,29 +203,47 @@
         "H_lag1",
         "HR_lag1",
         "RBI_lag1",
-        "Player_ID"
+        "Player_ID",
+        "Market_Event_ID",
+        "Market_Commence_Time_UTC",
+        "Market_Home_Team",
+        "Market_Away_Team",
+        "Market_K",
+        "Synthetic_Market_K",
+        "Market_K_books",
+        "Market_K_over_price",
+        "Market_K_under_price",
+        "Market_K_line_std",
+        "Market_Provider_K",
+        "Market_ER",
+        "Synthetic_Market_ER",
+        "Market_ER_books",
+        "Market_ER_over_price",
+        "Market_ER_under_price",
+        "Market_ER_line_std",
+        "Market_Provider_ER"
       ],
-      "baseline_mae": 0.16666666666666666,
+      "baseline_mae": 0.10886722376973072,
       "candidate_scores": [
         {
           "name": "baseline",
-          "mae": 0.16666666666666666,
-          "rmse": 0.408248290463863
+          "mae": 0.10886722376973072,
+          "rmse": 0.24153736175100152
         },
         {
           "name": "et",
-          "mae": 0.21601394799054371,
-          "rmse": 0.3533231895372499
+          "mae": 0.11230176415970287,
+          "rmse": 0.20065004916125054
         },
         {
           "name": "rf",
-          "mae": 0.2329401591906911,
-          "rmse": 0.35927908432299044
+          "mae": 0.11736394345363703,
+          "rmse": 0.20120739554894757
         },
         {
           "name": "hgb",
-          "mae": 0.23407841867440232,
-          "rmse": 0.37446178309660316
+          "mae": 0.12476143982887279,
+          "rmse": 0.21288908749247423
         }
       ],
       "selected": {
@@ -180,10 +254,10 @@
         "weights": [
           1.0
         ],
-        "mae": 0.16666666666666666,
-        "rmse": 0.408248290463863
+        "mae": 0.10886722376973072,
+        "rmse": 0.24153736175100152
       },
-      "artifact_path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\mlb\\models\\hitter\\hr_model.joblib"
+      "artifact_path": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\models\\hitter\\hr_model.joblib"
     },
     {
       "target": "RBI",
@@ -236,29 +310,47 @@
         "H_lag1",
         "HR_lag1",
         "RBI_lag1",
-        "Player_ID"
+        "Player_ID",
+        "Market_Event_ID",
+        "Market_Commence_Time_UTC",
+        "Market_Home_Team",
+        "Market_Away_Team",
+        "Market_K",
+        "Synthetic_Market_K",
+        "Market_K_books",
+        "Market_K_over_price",
+        "Market_K_under_price",
+        "Market_K_line_std",
+        "Market_Provider_K",
+        "Market_ER",
+        "Synthetic_Market_ER",
+        "Market_ER_books",
+        "Market_ER_over_price",
+        "Market_ER_under_price",
+        "Market_ER_line_std",
+        "Market_Provider_ER"
       ],
-      "baseline_mae": 0.5868794326241135,
+      "baseline_mae": 0.519405756731662,
       "candidate_scores": [
         {
           "name": "baseline",
-          "mae": 0.5868794326241135,
-          "rmse": 1.0480478306447416
+          "mae": 0.519405756731662,
+          "rmse": 0.7648650665981128
         },
         {
           "name": "et",
-          "mae": 0.6028542553191488,
-          "rmse": 0.8848683569344232
-        },
-        {
-          "name": "rf",
-          "mae": 0.652037005055622,
-          "rmse": 0.8924456434430296
+          "mae": 0.5321097890966971,
+          "rmse": 0.6895178121176669
         },
         {
           "name": "hgb",
-          "mae": 0.6859048078789944,
-          "rmse": 0.955905127043399
+          "mae": 0.5353668772838741,
+          "rmse": 0.7271026030241047
+        },
+        {
+          "name": "rf",
+          "mae": 0.5579809280629615,
+          "rmse": 0.7155303636197006
         }
       ],
       "selected": {
@@ -269,11 +361,11 @@
         "weights": [
           1.0
         ],
-        "mae": 0.5868794326241135,
-        "rmse": 1.0480478306447416
+        "mae": 0.519405756731662,
+        "rmse": 0.7648650665981128
       },
-      "artifact_path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\mlb\\models\\hitter\\rbi_model.joblib"
+      "artifact_path": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\models\\hitter\\rbi_model.joblib"
     }
   ],
-  "trained_at_utc": "2026-04-09T22:17:23.157224+00:00"
+  "trained_at_utc": "2026-04-10T01:21:36.020463+00:00"
 }

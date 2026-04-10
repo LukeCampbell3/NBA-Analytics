@@ -1,0 +1,321 @@
+{
+  "season": 2026,
+  "processed_dir": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\processed",
+  "rows_csv": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\models\\analysis\\backtest_rows_with_synthetic.csv",
+  "config": {
+    "min_train_rows": 100,
+    "min_train_dates": 2,
+    "min_edge": 0.0,
+    "include_synthetic_market": true,
+    "val_fraction": 0.2
+  },
+  "overall": {
+    "rows": 7108,
+    "prediction_dates": 7,
+    "date_min": "2026-04-03",
+    "date_max": "2026-04-09",
+    "mae": 0.5545464373366298,
+    "rmse": 0.9074631924180561,
+    "market_rows_any": 7108,
+    "market_rows_real": 26,
+    "market_rows_scoped": 7108,
+    "graded_bets": 2087,
+    "wins": 881,
+    "losses": 479,
+    "pushes": 727,
+    "win_rate": 0.6477941176470589,
+    "roi_per_bet": 0.2362853004838299,
+    "net_units": 321.34800865800867,
+    "line_mae_any": 0.5514095452474743,
+    "line_mae_scoped": 0.5514095452474743,
+    "market_scope": "real+synthetic"
+  },
+  "roles": {
+    "hitter": {
+      "role": "hitter",
+      "rows_available": 2211,
+      "unique_dates_available": 9,
+      "prediction_dates_scored": 7,
+      "selected_model_counts": {
+        "H": {
+          "baseline": 2,
+          "et": 1,
+          "blend": 3,
+          "rf": 1
+        },
+        "HR": {
+          "et": 2,
+          "baseline": 5
+        },
+        "RBI": {
+          "rf": 1,
+          "baseline": 6
+        }
+      },
+      "skipped_dates": [
+        {
+          "date": "2026-04-01",
+          "reason": "history_rows_lt_100",
+          "history_rows": 0,
+          "history_dates": 0
+        },
+        {
+          "date": "2026-04-02",
+          "reason": "history_dates_lt_2",
+          "history_rows": 303,
+          "history_dates": 1
+        }
+      ],
+      "targets": {
+        "H": {
+          "rows": 1846,
+          "prediction_dates": 7,
+          "date_min": "2026-04-03",
+          "date_max": "2026-04-09",
+          "mae": 0.735951157757793,
+          "rmse": 0.9295381130152867,
+          "market_rows_any": 1846,
+          "market_rows_real": 9,
+          "market_rows_scoped": 1846,
+          "graded_bets": 1234,
+          "wins": 624,
+          "losses": 407,
+          "pushes": 203,
+          "win_rate": 0.6052376333656644,
+          "roi_per_bet": 0.154909452009355,
+          "net_units": 159.71164502164498,
+          "line_mae_any": 0.7415931486354022,
+          "line_mae_scoped": 0.7415931486354022,
+          "market_scope": "real+synthetic"
+        },
+        "HR": {
+          "rows": 1846,
+          "prediction_dates": 7,
+          "date_min": "2026-04-03",
+          "date_max": "2026-04-09",
+          "mae": 0.16134234638600836,
+          "rmse": 0.3160924728786093,
+          "market_rows_any": 1846,
+          "market_rows_real": 7,
+          "market_rows_scoped": 1846,
+          "graded_bets": 525,
+          "wins": 128,
+          "losses": 24,
+          "pushes": 373,
+          "win_rate": 0.8421052631578947,
+          "roi_per_bet": 0.6076555023923446,
+          "net_units": 92.36363636363637,
+          "line_mae_any": 0.14761646803900325,
+          "line_mae_scoped": 0.14761646803900325,
+          "market_scope": "real+synthetic"
+        },
+        "RBI": {
+          "rows": 1846,
+          "prediction_dates": 7,
+          "date_min": "2026-04-03",
+          "date_max": "2026-04-09",
+          "mae": 0.5895453004350891,
+          "rmse": 0.8827815906802793,
+          "market_rows_any": 1846,
+          "market_rows_real": 10,
+          "market_rows_scoped": 1846,
+          "graded_bets": 292,
+          "wins": 111,
+          "losses": 41,
+          "pushes": 140,
+          "win_rate": 0.7302631578947368,
+          "roi_per_bet": 0.39413875598086123,
+          "net_units": 59.90909090909091,
+          "line_mae_any": 0.579372388175205,
+          "line_mae_scoped": 0.579372388175205,
+          "market_scope": "real+synthetic"
+        }
+      },
+      "overall": {
+        "rows": 5538,
+        "prediction_dates": 7,
+        "date_min": "2026-04-03",
+        "date_max": "2026-04-09",
+        "mae": 0.4956129348596302,
+        "rmse": 0.7622901660571996,
+        "market_rows_any": 5538,
+        "market_rows_real": 26,
+        "market_rows_scoped": 5538,
+        "graded_bets": 2051,
+        "wins": 863,
+        "losses": 472,
+        "pushes": 716,
+        "win_rate": 0.6464419475655431,
+        "roi_per_bet": 0.23369615902200166,
+        "net_units": 311.98437229437224,
+        "line_mae_any": 0.48952733494987016,
+        "line_mae_scoped": 0.48952733494987016,
+        "market_scope": "real+synthetic"
+      }
+    },
+    "pitcher": {
+      "role": "pitcher",
+      "rows_available": 936,
+      "unique_dates_available": 9,
+      "prediction_dates_scored": 7,
+      "selected_model_counts": {
+        "K": {
+          "baseline": 6,
+          "blend": 1
+        },
+        "ER": {
+          "baseline": 6,
+          "rf": 1
+        }
+      },
+      "skipped_dates": [
+        {
+          "date": "2026-04-01",
+          "reason": "history_rows_lt_100",
+          "history_rows": 0,
+          "history_dates": 0
+        },
+        {
+          "date": "2026-04-02",
+          "reason": "history_dates_lt_2",
+          "history_rows": 129,
+          "history_dates": 1
+        },
+        {
+          "date": "2026-04-03",
+          "reason": "ERA_zero_variance",
+          "history_rows": 151,
+          "history_dates": 2
+        },
+        {
+          "date": "2026-04-04",
+          "reason": "ERA_zero_variance",
+          "history_rows": 273,
+          "history_dates": 3
+        },
+        {
+          "date": "2026-04-05",
+          "reason": "ERA_zero_variance",
+          "history_rows": 407,
+          "history_dates": 4
+        },
+        {
+          "date": "2026-04-06",
+          "reason": "ERA_zero_variance",
+          "history_rows": 560,
+          "history_dates": 5
+        },
+        {
+          "date": "2026-04-07",
+          "reason": "ERA_zero_variance",
+          "history_rows": 666,
+          "history_dates": 6
+        },
+        {
+          "date": "2026-04-08",
+          "reason": "ERA_zero_variance",
+          "history_rows": 792,
+          "history_dates": 7
+        },
+        {
+          "date": "2026-04-09",
+          "reason": "ERA_zero_variance",
+          "history_rows": 918,
+          "history_dates": 8
+        }
+      ],
+      "targets": {
+        "K": {
+          "rows": 785,
+          "prediction_dates": 7,
+          "date_min": "2026-04-03",
+          "date_max": "2026-04-09",
+          "mae": 0.8124778372109442,
+          "rmse": 1.2656967317987016,
+          "market_rows_any": 785,
+          "market_rows_real": 0,
+          "market_rows_scoped": 785,
+          "graded_bets": 18,
+          "wins": 9,
+          "losses": 4,
+          "pushes": 5,
+          "win_rate": 0.6923076923076923,
+          "roi_per_bet": 0.32167832167832167,
+          "net_units": 4.181818181818182,
+          "line_mae_any": 0.817515923566879,
+          "line_mae_scoped": 0.817515923566879,
+          "market_scope": "real+synthetic"
+        },
+        "ER": {
+          "rows": 785,
+          "prediction_dates": 7,
+          "date_min": "2026-04-03",
+          "date_max": "2026-04-09",
+          "mae": 0.7123777593955938,
+          "rmse": 1.3247984174292862,
+          "market_rows_any": 785,
+          "market_rows_real": 0,
+          "market_rows_scoped": 785,
+          "graded_bets": 18,
+          "wins": 9,
+          "losses": 3,
+          "pushes": 6,
+          "win_rate": 0.75,
+          "roi_per_bet": 0.4318181818181818,
+          "net_units": 5.181818181818182,
+          "line_mae_any": 0.721868365180467,
+          "line_mae_scoped": 0.721868365180467,
+          "market_scope": "real+synthetic"
+        },
+        "ERA": {
+          "rows": 0,
+          "prediction_dates": 0,
+          "date_min": null,
+          "date_max": null,
+          "mae": null,
+          "rmse": null,
+          "market_rows_any": 0,
+          "market_rows_real": 0,
+          "market_rows_scoped": 0,
+          "graded_bets": 0,
+          "wins": 0,
+          "losses": 0,
+          "pushes": 0,
+          "win_rate": null,
+          "roi_per_bet": null,
+          "net_units": 0.0,
+          "line_mae_any": null,
+          "line_mae_scoped": null,
+          "market_scope": "real+synthetic"
+        }
+      },
+      "overall": {
+        "rows": 1570,
+        "prediction_dates": 7,
+        "date_min": "2026-04-03",
+        "date_max": "2026-04-09",
+        "mae": 0.7624277983032689,
+        "rmse": 1.2955846293679654,
+        "market_rows_any": 1570,
+        "market_rows_real": 0,
+        "market_rows_scoped": 1570,
+        "graded_bets": 36,
+        "wins": 18,
+        "losses": 7,
+        "pushes": 11,
+        "win_rate": 0.72,
+        "roi_per_bet": 0.37454545454545446,
+        "net_units": 9.363636363636362,
+        "line_mae_any": 0.769692144373673,
+        "line_mae_scoped": 0.769692144373673,
+        "market_scope": "real+synthetic"
+      }
+    }
+  },
+  "failures": {},
+  "notes": [
+    "Bet grading uses only rows with Market_* values present.",
+    "By default, only rows with Market_Source_* == real are graded as betting-line validation.",
+    "Synthetic market rows can be included explicitly for debugging, but they are not real sportsbook validation."
+  ]
+}
