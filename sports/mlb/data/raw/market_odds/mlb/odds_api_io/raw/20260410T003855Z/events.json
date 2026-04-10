@@ -1,0 +1,86 @@
+{
+  "provider": "odds_api_io",
+  "event_date": "2026-04-09",
+  "attempts": [
+    {
+      "note": "league+bookmaker+day_window+pending_live",
+      "params": {
+        "sport": "baseball",
+        "limit": 100,
+        "league": "usa-mlb-spring-training",
+        "bookmaker": "DraftKings",
+        "status": "pending,live",
+        "from": "2026-04-09T04:00:00Z",
+        "to": "2026-04-10T04:00:00Z"
+      },
+      "raw_count": 3,
+      "date_filtered_count": 3,
+      "mlb_filtered_count": 2
+    }
+  ],
+  "data": [
+    {
+      "id": 69057788,
+      "home": "Worcester Red Sox",
+      "away": "Columbus Clippers",
+      "homeId": 788148,
+      "awayId": 325513,
+      "date": "2026-04-09T22:05:00Z",
+      "sport": {
+        "name": "Baseball",
+        "slug": "baseball"
+      },
+      "league": {
+        "name": "USA - Triple-A International League",
+        "slug": "usa-triple-a-international-league"
+      },
+      "status": "live",
+      "scores": {
+        "home": 3,
+        "away": 0
+      }
+    },
+    {
+      "id": 63300397,
+      "home": "New York Mets",
+      "away": "Arizona Diamondbacks",
+      "homeId": 3629,
+      "awayId": 3640,
+      "date": "2026-04-09T23:10:00Z",
+      "sport": {
+        "name": "Baseball",
+        "slug": "baseball"
+      },
+      "league": {
+        "name": "USA - MLB",
+        "slug": "usa-mlb"
+      },
+      "status": "live",
+      "scores": {
+        "home": 0,
+        "away": 0
+      }
+    },
+    {
+      "id": 63299939,
+      "home": "Kansas City Royals",
+      "away": "Chicago White Sox",
+      "homeId": 3651,
+      "awayId": 3644,
+      "date": "2026-04-09T23:40:00Z",
+      "sport": {
+        "name": "Baseball",
+        "slug": "baseball"
+      },
+      "league": {
+        "name": "USA - MLB",
+        "slug": "usa-mlb"
+      },
+      "status": "live",
+      "scores": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  ]
+}

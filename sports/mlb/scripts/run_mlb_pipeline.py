@@ -28,6 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--season", type=int, default=2026)
     parser.add_argument("--start-date", type=str, required=True)
     parser.add_argument("--end-date", type=str, required=True)
+    parser.add_argument("--market-file", type=Path, default=None)
     parser.add_argument("--skip-collect", action="store_true")
     parser.add_argument("--skip-train", action="store_true")
     parser.add_argument(
@@ -37,6 +38,9 @@ def parse_args() -> argparse.Namespace:
         help="Minimum rows required by validator per player file.",
     )
     parser.add_argument("--min-train-rows", type=int, default=200)
+    parser.add_argument("--min-real-market-rows", type=int, default=1)
+    parser.add_argument("--min-real-market-dates", type=int, default=1)
+    parser.add_argument("--allow-synthetic-market-only", action="store_true")
     return parser.parse_args()
 
 
@@ -60,12 +64,12 @@ def main() -> None:
 
     logs.append(
         _run(
-            [
+            ([
                 sys.executable,
                 str(ROOT / "scripts" / "build_mlb_features.py"),
                 "--season",
                 str(args.season),
-            ]
+            ] + (["--market-file", str(args.market_file)] if args.market_file is not None else []))
         )
     )
 
@@ -92,7 +96,12 @@ def main() -> None:
                     str(args.season),
                     "--min-rows",
                     str(args.min_train_rows),
+                    "--min-real-market-rows",
+                    str(args.min_real_market_rows),
+                    "--min-real-market-dates",
+                    str(args.min_real_market_dates),
                 ]
+                + (["--allow-synthetic-market-only"] if args.allow_synthetic_market_only else [])
             )
         )
 

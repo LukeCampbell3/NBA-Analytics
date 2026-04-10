@@ -1,11 +1,56 @@
 {
   "role": "pitcher",
   "season": 2026,
-  "row_count": 273,
-  "train_rows": 151,
-  "val_rows": 122,
+  "row_count": 936,
+  "train_rows": 792,
+  "val_rows": 144,
   "date_min": "2026-04-01",
-  "date_max": "2026-04-03",
+  "date_max": "2026-04-09",
+  "unique_dates": 9,
+  "market_coverage": {
+    "rows_with_any_real_market": 0,
+    "dates_with_any_real_market": 0,
+    "players_with_any_real_market": 0,
+    "targets": {
+      "K": {
+        "real_rows": 0,
+        "real_dates": 0,
+        "real_players": 0
+      },
+      "ER": {
+        "real_rows": 0,
+        "real_dates": 0,
+        "real_players": 0
+      },
+      "ERA": {
+        "real_rows": 0,
+        "real_dates": 0,
+        "real_players": 0
+      }
+    }
+  },
+  "target_variance": {
+    "K": {
+      "variance": 4.5113400814522615,
+      "mean": 1.9797008547008548
+    },
+    "ER": {
+      "variance": 1.9889589725326908,
+      "mean": 0.8899572649572649
+    },
+    "ERA": {
+      "variance": 0.0,
+      "mean": 0.0
+    }
+  },
+  "skipped_targets": [
+    {
+      "target": "ERA",
+      "reason": "near_zero_variance",
+      "variance": 0.0,
+      "mean": 0.0
+    }
+  ],
   "targets": [
     {
       "target": "K",
@@ -58,43 +103,74 @@
         "ER_lag1",
         "ERA_lag1",
         "Player_ID",
-        "Is_Starter"
+        "Is_Starter",
+        "Market_Player_Norm",
+        "Market_Event_ID",
+        "Market_Commence_Time_UTC",
+        "Market_Home_Team",
+        "Market_Away_Team",
+        "Market_Provider",
+        "Market_H",
+        "Synthetic_Market_H",
+        "Market_H_books",
+        "Market_H_over_price",
+        "Market_H_under_price",
+        "Market_H_line_std",
+        "Market_Provider_H",
+        "Market_RBI",
+        "Synthetic_Market_RBI",
+        "Market_RBI_books",
+        "Market_RBI_over_price",
+        "Market_RBI_under_price",
+        "Market_RBI_line_std",
+        "Market_Provider_RBI",
+        "Market_HR",
+        "Synthetic_Market_HR",
+        "Market_HR_books",
+        "Market_HR_over_price",
+        "Market_HR_under_price",
+        "Market_HR_line_std",
+        "Market_Provider_HR",
+        "Market_Provider_K",
+        "Market_Provider_ER"
       ],
-      "baseline_mae": 0.23770491803278687,
+      "baseline_mae": 1.1030092592592593,
       "candidate_scores": [
         {
-          "name": "baseline",
-          "mae": 0.23770491803278687,
-          "rmse": 0.6835298930947339
-        },
-        {
           "name": "et",
-          "mae": 0.27063674863387943,
-          "rmse": 0.6901814279953034
+          "mae": 1.0112505621693122,
+          "rmse": 1.4712922608378338
         },
         {
           "name": "rf",
-          "mae": 0.32468992974238886,
-          "rmse": 0.6921322207172883
+          "mae": 1.0116350148308482,
+          "rmse": 1.471282638858397
+        },
+        {
+          "name": "baseline",
+          "mae": 1.1030092592592593,
+          "rmse": 1.6029185861506379
         },
         {
           "name": "hgb",
-          "mae": 0.5453191340855302,
-          "rmse": 0.9384339075843406
+          "mae": 1.133663067658767,
+          "rmse": 1.5270596774255167
         }
       ],
       "selected": {
-        "name": "baseline",
+        "name": "blend",
         "members": [
-          "baseline"
+          "et",
+          "rf"
         ],
         "weights": [
-          1.0
+          0.5000950258051932,
+          0.4999049741948069
         ],
-        "mae": 0.23770491803278687,
-        "rmse": 0.6835298930947339
+        "mae": 0.9853765740188813,
+        "rmse": 1.4411126536834842
       },
-      "artifact_path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\mlb\\models\\pitcher\\k_model.joblib"
+      "artifact_path": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\models\\pitcher\\k_model.joblib"
     },
     {
       "target": "ER",
@@ -147,133 +223,75 @@
         "ER_lag1",
         "ERA_lag1",
         "Player_ID",
-        "Is_Starter"
+        "Is_Starter",
+        "Market_Player_Norm",
+        "Market_Event_ID",
+        "Market_Commence_Time_UTC",
+        "Market_Home_Team",
+        "Market_Away_Team",
+        "Market_Provider",
+        "Market_H",
+        "Synthetic_Market_H",
+        "Market_H_books",
+        "Market_H_over_price",
+        "Market_H_under_price",
+        "Market_H_line_std",
+        "Market_Provider_H",
+        "Market_RBI",
+        "Synthetic_Market_RBI",
+        "Market_RBI_books",
+        "Market_RBI_over_price",
+        "Market_RBI_under_price",
+        "Market_RBI_line_std",
+        "Market_Provider_RBI",
+        "Market_HR",
+        "Synthetic_Market_HR",
+        "Market_HR_books",
+        "Market_HR_over_price",
+        "Market_HR_under_price",
+        "Market_HR_line_std",
+        "Market_Provider_HR",
+        "Market_Provider_K",
+        "Market_Provider_ER"
       ],
-      "baseline_mae": 0.1557377049180328,
+      "baseline_mae": 1.1782407407407407,
       "candidate_scores": [
         {
-          "name": "baseline",
-          "mae": 0.1557377049180328,
-          "rmse": 0.6206818038571328
-        },
-        {
           "name": "et",
-          "mae": 0.4555215846994536,
-          "rmse": 0.8462220833363114
+          "mae": 0.8716030092592592,
+          "rmse": 1.3110587685967805
         },
         {
           "name": "rf",
-          "mae": 0.4678842831121518,
-          "rmse": 0.8830205588675667
+          "mae": 0.8902535894660895,
+          "rmse": 1.3083465328454345
         },
         {
           "name": "hgb",
-          "mae": 0.6725223085897174,
-          "rmse": 1.2680661638017119
-        }
-      ],
-      "selected": {
-        "name": "baseline",
-        "members": [
-          "baseline"
-        ],
-        "weights": [
-          1.0
-        ],
-        "mae": 0.1557377049180328,
-        "rmse": 0.6206818038571328
-      },
-      "artifact_path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\mlb\\models\\pitcher\\er_model.joblib"
-    },
-    {
-      "target": "ERA",
-      "feature_cols": [
-        "Season",
-        "Game_Index",
-        "Team_ID",
-        "Opponent_ID",
-        "Is_Home",
-        "FIP",
-        "xFIP",
-        "CSW%",
-        "Whiff%",
-        "Opp_Lineup_wOBA_3",
-        "Opp_Lineup_K_rate_3",
-        "Park_Factor",
-        "Wind_Out_MPH",
-        "Temp_F",
-        "Did_Not_Play",
-        "Rest_Days",
-        "Month_sin",
-        "Month_cos",
-        "DayOfWeek_sin",
-        "DayOfWeek_cos",
-        "Market_K",
-        "Synthetic_Market_K",
-        "Market_K_books",
-        "Market_K_over_price",
-        "Market_K_under_price",
-        "Market_K_line_std",
-        "Market_ER",
-        "Synthetic_Market_ER",
-        "Market_ER_books",
-        "Market_ER_over_price",
-        "Market_ER_under_price",
-        "Market_ER_line_std",
-        "Market_ERA",
-        "Synthetic_Market_ERA",
-        "Market_ERA_books",
-        "Market_ERA_over_price",
-        "Market_ERA_under_price",
-        "Market_ERA_line_std",
-        "K_market_gap",
-        "ER_market_gap",
-        "ERA_market_gap",
-        "K_rolling_avg",
-        "ER_rolling_avg",
-        "ERA_rolling_avg",
-        "K_lag1",
-        "ER_lag1",
-        "ERA_lag1",
-        "Player_ID",
-        "Is_Starter"
-      ],
-      "baseline_mae": 0.0,
-      "candidate_scores": [
+          "mae": 1.063091203291026,
+          "rmse": 1.5553549957981951
+        },
         {
           "name": "baseline",
-          "mae": 0.0,
-          "rmse": 0.0
-        },
-        {
-          "name": "hgb",
-          "mae": 0.0,
-          "rmse": 0.0
-        },
-        {
-          "name": "rf",
-          "mae": 0.0,
-          "rmse": 0.0
-        },
-        {
-          "name": "et",
-          "mae": 0.0,
-          "rmse": 0.0
+          "mae": 1.1782407407407407,
+          "rmse": 1.9886832606302873
         }
       ],
       "selected": {
-        "name": "baseline",
+        "name": "blend",
         "members": [
-          "baseline"
+          "et",
+          "rf"
         ],
         "weights": [
-          1.0
+          0.5052928769061918,
+          0.4947071230938081
         ],
-        "mae": 0.0,
-        "rmse": 0.0
+        "mae": 0.8714914140665982,
+        "rmse": 1.3030267246866947
       },
-      "artifact_path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\mlb\\models\\pitcher\\era_model.joblib"
+      "artifact_path": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\models\\pitcher\\er_model.joblib"
     }
   ],
-  "trained_at_utc": "2026-04-09T22:17:33.831236+00:00"
+  "trained_at_utc": "2026-04-10T01:21:39.873849+00:00"
 }

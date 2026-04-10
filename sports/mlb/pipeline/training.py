@@ -298,6 +298,44 @@ class TrainConfig:
     model_dir: Path
     season: int = 2026
     min_rows: int = 200
+    require_real_market_lines: bool = True
+    min_real_market_rows: int = 1
+    min_real_market_dates: int = 1
+
+
+def _market_coverage_summary(df: pd.DataFrame, *, targets: list[str]) -> dict[str, Any]:
+    per_target: dict[str, dict[str, int]] = {}
+    any_real = pd.Series(False, index=df.index)
+    for target in targets:
+        source_col = f"Market_Source_{target}"
+        mask = (
+            df[source_col].astype(str).str.lower().eq("real")
+            if source_col in df.columns
+            else pd.Series(False, index=df.index)
+        )
+        any_real = any_real | mask
+        per_target[target] = {
+            "real_rows": int(mask.sum()),
+            "real_dates": int(df.loc[mask, "Date"].dt.normalize().nunique()),
+            "real_players": int(df.loc[mask, "Player"].nunique()),
+        }
+    return {
+        "rows_with_any_real_market": int(any_real.sum()),
+        "dates_with_any_real_market": int(df.loc[any_real, "Date"].dt.normalize().nunique()),
+        "players_with_any_real_market": int(df.loc[any_real, "Player"].nunique()),
+        "targets": per_target,
+    }
+
+
+def _target_variance_summary(df: pd.DataFrame, *, targets: list[str]) -> dict[str, dict[str, float]]:
+    payload: dict[str, dict[str, float]] = {}
+    for target in targets:
+        values = pd.to_numeric(df[target], errors="coerce").fillna(0.0).to_numpy(dtype=np.float64)
+        payload[target] = {
+            "variance": float(np.var(values)) if len(values) else 0.0,
+            "mean": float(np.mean(values)) if len(values) else 0.0,
+        }
+    return payload
 
 
 def train_role_models(config: TrainConfig, role: str) -> dict:
@@ -314,6 +352,27 @@ def train_role_models(config: TrainConfig, role: str) -> dict:
         )
 
     targets = ROLE_TARGETS[role]
+    market_coverage = _market_coverage_summary(df, targets=targets)
+    if config.require_real_market_lines:
+        if market_coverage["rows_with_any_real_market"] < int(config.min_real_market_rows):
+            raise RuntimeError(
+                f"{role} training requires real market lines before training, "
+                f"but matched real rows={market_coverage['rows_with_any_real_market']} "
+                f"< min_real_market_rows={int(config.min_real_market_rows)}"
+            )
+        if market_coverage["dates_with_any_real_market"] < int(config.min_real_market_dates):
+            raise RuntimeError(
+            f"{role} training requires real market line date coverage before training, "
+            f"but matched real dates={market_coverage['dates_with_any_real_market']} "
+            f"< min_real_market_dates={int(config.min_real_market_dates)}"
+        )
+
+    target_variance = _target_variance_summary(df, targets=targets)
+    near_zero_targets = {
+        target for target, stats in target_variance.items()
+        if float(stats["variance"]) <= 1e-12
+    }
+
     feature_cols = _feature_columns(df, targets=targets, role=role)
     if not feature_cols:
         raise RuntimeError(f"No numeric feature columns available for {role} training")
@@ -323,7 +382,18 @@ def train_role_models(config: TrainConfig, role: str) -> dict:
         raise RuntimeError(f"Could not create train/validation split for {role}")
 
     target_summaries = []
+    skipped_targets = []
     for target in targets:
+        if target in near_zero_targets:
+            skipped_targets.append(
+                {
+                    "target": target,
+                    "reason": "near_zero_variance",
+                    "variance": float(target_variance[target]["variance"]),
+                    "mean": float(target_variance[target]["mean"]),
+                }
+            )
+            continue
         payload = _fit_target_models(train_df, val_df, feature_cols=feature_cols, target=target)
         bundle = payload.pop("model_bundle")
         artifact = {
@@ -342,6 +412,12 @@ def train_role_models(config: TrainConfig, role: str) -> dict:
         payload["artifact_path"] = str(model_path)
         target_summaries.append(payload)
 
+    if not target_summaries:
+        skipped = ", ".join(item["target"] for item in skipped_targets) or "none"
+        raise RuntimeError(
+            f"No trainable {role} targets remain after reliability checks. Skipped targets: {skipped}"
+        )
+
     summary = {
         "role": role,
         "season": int(config.season),
@@ -350,6 +426,10 @@ def train_role_models(config: TrainConfig, role: str) -> dict:
         "val_rows": int(len(val_df)),
         "date_min": str(df["Date"].min().date()),
         "date_max": str(df["Date"].max().date()),
+        "unique_dates": int(df["Date"].dt.normalize().nunique()),
+        "market_coverage": market_coverage,
+        "target_variance": target_variance,
+        "skipped_targets": skipped_targets,
         "targets": target_summaries,
         "trained_at_utc": datetime.now(timezone.utc).isoformat(),
     }

@@ -77,6 +77,46 @@ def _parse_market_fetched_at(date_series: pd.Series) -> pd.Series:
     return pd.to_datetime(date_series, errors="coerce").dt.strftime("%Y-%m-%dT16:00:00Z")
 
 
+def _market_merge_summary(df: pd.DataFrame, *, targets: list[str]) -> dict[str, Any]:
+    if df.empty:
+        return {
+            "rows_with_any_real_market": 0,
+            "dates_with_any_real_market": 0,
+            "players_with_any_real_market": 0,
+            "targets": {
+                target: {
+                    "real_rows": 0,
+                    "real_dates": 0,
+                    "real_players": 0,
+                }
+                for target in targets
+            },
+        }
+
+    any_real = pd.Series(False, index=df.index)
+    target_summary: dict[str, dict[str, int]] = {}
+    for target in targets:
+        source_col = f"Market_Source_{target}"
+        mask = (
+            df[source_col].astype(str).str.lower().eq("real")
+            if source_col in df.columns
+            else pd.Series(False, index=df.index)
+        )
+        any_real = any_real | mask
+        target_summary[target] = {
+            "real_rows": int(mask.sum()),
+            "real_dates": int(df.loc[mask, "Date"].dt.normalize().nunique()),
+            "real_players": int(df.loc[mask, "Player"].nunique()),
+        }
+
+    return {
+        "rows_with_any_real_market": int(any_real.sum()),
+        "dates_with_any_real_market": int(df.loc[any_real, "Date"].dt.normalize().nunique()),
+        "players_with_any_real_market": int(df.loc[any_real, "Player"].nunique()),
+        "targets": target_summary,
+    }
+
+
 def _apply_market_columns(
     df: pd.DataFrame,
     *,
@@ -84,13 +124,21 @@ def _apply_market_columns(
     market_df: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     out = df.copy()
-    key_cols = ["Date", "Player", "Player_Type"]
     if market_df is not None and not market_df.empty:
         md = market_df.copy()
         md["Date"] = pd.to_datetime(md["Date"], errors="coerce")
         md["Player"] = md["Player"].astype(str)
         md["Player_Type"] = md["Player_Type"].astype(str).str.lower()
-        out = out.merge(md, on=key_cols, how="left", suffixes=("", "_marketfile"))
+        out["__market_player_key"] = out["Player"].map(normalize_player_name)
+        md["__market_player_key"] = md["Player"].map(normalize_player_name)
+        md = md.drop(columns=["Player"], errors="ignore")
+        out = out.merge(
+            md,
+            on=["Date", "Player_Type", "__market_player_key"],
+            how="left",
+            suffixes=("", "_marketfile"),
+        )
+        out = out.drop(columns=["__market_player_key"], errors="ignore")
 
     for target in targets:
         market_col = f"Market_{target}"
@@ -495,6 +543,8 @@ def _load_market_file(path: Path | None) -> pd.DataFrame | None:
     if "Date" not in df.columns or "Player" not in df.columns or "Player_Type" not in df.columns:
         return None
     df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+    df["Player"] = df["Player"].astype(str)
+    df["Player_Type"] = df["Player_Type"].astype(str).str.lower()
     return df
 
 
@@ -571,6 +621,59 @@ def build_processed_mlb_features(config: FeatureBuildConfig) -> dict:
             "available": bool(market_df is not None and not market_df.empty),
             "path": str(config.market_file) if config.market_file is not None else None,
             "rows": int(len(market_df)) if market_df is not None else 0,
+            "matched": {
+                "hitter": _market_merge_summary(hitters, targets=["H", "HR", "RBI"]),
+                "pitcher": _market_merge_summary(pitchers, targets=["K", "ER", "ERA"]),
+                "overall": {
+                    "rows_with_any_real_market": int(
+                        (
+                            (
+                                hitters["Market_Source_H"].astype(str).str.lower().eq("real")
+                                | hitters["Market_Source_HR"].astype(str).str.lower().eq("real")
+                                | hitters["Market_Source_RBI"].astype(str).str.lower().eq("real")
+                            ).sum()
+                            if not hitters.empty
+                            else 0
+                        )
+                        + (
+                            (
+                                pitchers["Market_Source_K"].astype(str).str.lower().eq("real")
+                                | pitchers["Market_Source_ER"].astype(str).str.lower().eq("real")
+                                | pitchers["Market_Source_ERA"].astype(str).str.lower().eq("real")
+                            ).sum()
+                            if not pitchers.empty
+                            else 0
+                        )
+                    ),
+                    "dates_with_any_real_market": int(
+                        pd.concat(
+                            [
+                                hitters.loc[
+                                    (
+                                        hitters["Market_Source_H"].astype(str).str.lower().eq("real")
+                                        | hitters["Market_Source_HR"].astype(str).str.lower().eq("real")
+                                        | hitters["Market_Source_RBI"].astype(str).str.lower().eq("real")
+                                    ),
+                                    "Date",
+                                ]
+                                if not hitters.empty
+                                else pd.Series(dtype="datetime64[ns]"),
+                                pitchers.loc[
+                                    (
+                                        pitchers["Market_Source_K"].astype(str).str.lower().eq("real")
+                                        | pitchers["Market_Source_ER"].astype(str).str.lower().eq("real")
+                                        | pitchers["Market_Source_ERA"].astype(str).str.lower().eq("real")
+                                    ),
+                                    "Date",
+                                ]
+                                if not pitchers.empty
+                                else pd.Series(dtype="datetime64[ns]"),
+                            ],
+                            ignore_index=True,
+                        ).dt.normalize().nunique()
+                    ),
+                },
+            },
         },
         "players_written": int(len(players_written)),
         "written": players_written,

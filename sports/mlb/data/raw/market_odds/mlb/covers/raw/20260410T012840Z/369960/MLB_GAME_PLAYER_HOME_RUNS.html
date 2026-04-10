@@ -1,0 +1,46 @@
+
+
+<style>
+    .playerImgFallback{
+        width: 2.25rem;
+        height: 2.25rem;
+        background-color: #eef1f4;
+        border-radius: 100%;
+        padding: 0.25rem;
+        display: inline-block;
+        text-align: center;
+    }
+
+    .teamImgFallback{
+        width: 2.813rem;
+        height: 2.813rem;
+        border-radius: 100%;
+        background-color: #eef1f4;
+        padding: 0.25rem;
+    }
+</style>
+
+    <div class="player-prop-article player-props-header MLB">
+        <div>Player</div>
+        <div class="player-props-projection-bestOdds-div MLB">
+            <div class="other-odds-label">Prop</div>
+            <div class="other-over-odds">Season Avg.</div>
+            <div class="best-odds-heading">Best Odds</div>
+                <div class="projection-rating-heading">
+                    Projection Rating
+                </div>
+        </div>
+            <div></div>
+    </div>
+    <dialog class="covers-dialog" id="player-best-odds-modal">
+        <h3>How is Value calculated?</h3>
+        <article>
+            <p>Our value picks are based on the <a href="https://www.covers.com/guides/what-is-expected-value-in-sports-betting" target="_blank">Expected Value (EV)</a> of placing the bet, using our projections and the current odds price:</p>
+            <div><strong>0-2 Stars:</strong> Negative to Even EV</div>
+            <div><strong>3-4 Stars:</strong> Positive EV</div>
+            <div><strong>5 Stars:</strong> Highest EV</div>
+        </article>
+        <footer>
+            <button class="closeModal" autofocus type="button">Close</button>
+        </footer>
+    </dialog>

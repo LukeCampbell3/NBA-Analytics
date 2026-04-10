@@ -1,0 +1,118 @@
+{
+  "evaluated_at_utc": "2026-04-10T01:29:21.144748+00:00",
+  "winner_provider": "covers",
+  "winner_quality_score": 434.212,
+  "ranked": [
+    {
+      "status": "ok",
+      "provider": "covers",
+      "mode": "current",
+      "event_date": "2026-04-09",
+      "bookmakers": [
+        "DraftKings",
+        "FanDuel",
+        "BetMGM",
+        "Caesars"
+      ],
+      "markets": [
+        "H",
+        "HR",
+        "RBI",
+        "K",
+        "ER"
+      ],
+      "raw_event_count": 0,
+      "normalized_long_rows": 753,
+      "normalized_wide_rows": 129,
+      "unique_players": 129,
+      "target_rows": {
+        "H": 109,
+        "HR": 101,
+        "RBI": 113,
+        "K": 14,
+        "ER": 1
+      },
+      "avg_books_by_target": {
+        "H": 2.2477064220183487,
+        "HR": 2.287128712871287,
+        "RBI": 2.1769911504424777,
+        "K": 2.0,
+        "ER": 3.0
+      },
+      "quality_score": 434.212,
+      "output_files": {
+        "long": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\raw\\market_odds\\mlb\\covers\\latest_player_props_long.csv",
+        "wide": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\raw\\market_odds\\mlb\\covers\\latest_player_props_wide.csv",
+        "manifest": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\raw\\market_odds\\mlb\\covers\\latest_manifest.json"
+      },
+      "updated_at_utc": "2026-04-10T01:29:19.980156+00:00"
+    }
+  ],
+  "published_files": {
+    "long": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\raw\\market_odds\\mlb\\latest_player_props_long.csv",
+    "wide": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\raw\\market_odds\\mlb\\latest_player_props_wide.csv",
+    "manifest": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\raw\\market_odds\\mlb\\latest_manifest.json"
+  },
+  "providers": [
+    {
+      "status": "ok",
+      "provider": "covers",
+      "mode": "current",
+      "event_date": "2026-04-09",
+      "bookmakers": [
+        "DraftKings",
+        "FanDuel",
+        "BetMGM",
+        "Caesars"
+      ],
+      "markets": [
+        "H",
+        "HR",
+        "RBI",
+        "K",
+        "ER"
+      ],
+      "raw_event_count": 0,
+      "normalized_long_rows": 753,
+      "normalized_wide_rows": 129,
+      "unique_players": 129,
+      "target_rows": {
+        "H": 109,
+        "HR": 101,
+        "RBI": 113,
+        "K": 14,
+        "ER": 1
+      },
+      "avg_books_by_target": {
+        "H": 2.2477064220183487,
+        "HR": 2.287128712871287,
+        "RBI": 2.1769911504424777,
+        "K": 2.0,
+        "ER": 3.0
+      },
+      "quality_score": 434.212,
+      "output_files": {
+        "long": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\raw\\market_odds\\mlb\\covers\\latest_player_props_long.csv",
+        "wide": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\raw\\market_odds\\mlb\\covers\\latest_player_props_wide.csv",
+        "manifest": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\raw\\market_odds\\mlb\\covers\\latest_manifest.json"
+      },
+      "updated_at_utc": "2026-04-10T01:29:19.980156+00:00"
+    },
+    {
+      "status": "error",
+      "provider": "odds_api_io",
+      "event_date": "2026-04-09",
+      "reason": "HTTP 403 while fetching https://api.odds-api.io/v3/odds/multi: {\"error\":\"Access denied. You're allowed max 2 bookmakers. Allowed: . To reset your selections, use PUT /bookmakers/selected/clear?apiKey=YOUR_API_KEY or visit https://docs.odds-api.io/api-reference/bookmakers/clear-selected-bookmakers. Upgrade your plan at https://odds-api.io/manage\"}"
+    },
+    {
+      "status": "skipped",
+      "provider": "sportsgameodds",
+      "reason": "Missing API key (SPORTSGAMEODDS_API_KEY/SPORTS_GAME_ODDS_API_KEY/SPORTS_ODDS_API_KEY_HEADER)",
+      "event_date": "2026-04-09"
+    }
+  ],
+  "requested_event_date": "2026-04-09",
+  "missing_keys": [
+    "sportsgameodds:SPORTSGAMEODDS_API_KEY/SPORTS_GAME_ODDS_API_KEY/SPORTS_ODDS_API_KEY_HEADER"
+  ]
+}
