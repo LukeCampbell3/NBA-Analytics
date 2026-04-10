@@ -1,0 +1,79 @@
+{
+  "pool_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260410\\daily_prediction_pool_20260410.csv",
+  "out_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260410\\daily_prediction_pool_20260410_best_predictions.csv",
+  "rows_in_pool": 1554,
+  "rows_before_cleanup": 1554,
+  "rows_after_numeric_cleanup": 1554,
+  "selection": {
+    "top_n": 50,
+    "min_abs_edge": 0.35,
+    "min_history_rows": 10,
+    "max_per_player": 1,
+    "allow_baseline": false
+  },
+  "pool_build": {
+    "built_in_this_run": true,
+    "run_date": "2026-04-10",
+    "season": 2026,
+    "daily_runs_root": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs",
+    "summary": {
+      "run_date": "2026-04-10",
+      "season": 2026,
+      "game_type": "R",
+      "processed_dir": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\mlb\\data\\processed",
+      "model_dir": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\mlb\\models",
+      "pool_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260410\\daily_prediction_pool_20260410.csv",
+      "rows": 1554,
+      "games": 15,
+      "players": 518,
+      "rows_by_role": {
+        "hitter": 1062,
+        "pitcher": 492
+      },
+      "rows_by_target": {
+        "ER": 164,
+        "ERA": 164,
+        "H": 354,
+        "HR": 354,
+        "K": 164,
+        "RBI": 354
+      },
+      "role_status": {
+        "hitter": {
+          "history_rows": 3798,
+          "candidate_rows": 354,
+          "prediction_rows": 1062,
+          "targets": [
+            "H",
+            "HR",
+            "RBI"
+          ],
+          "status": "ok"
+        },
+        "pitcher": {
+          "history_rows": 1635,
+          "candidate_rows": 164,
+          "prediction_rows": 492,
+          "targets": [
+            "K",
+            "ER",
+            "ERA"
+          ],
+          "status": "ok"
+        }
+      },
+      "updated_at_utc": "2026-04-10T21:39:31.300997+00:00"
+    }
+  },
+  "rows_selected": 50,
+  "avg_abs_edge": 0.620526,
+  "avg_quality_score": 2.384830253591656,
+  "by_target": {
+    "H": 50
+  },
+  "by_direction": {
+    "OVER": 34,
+    "UNDER": 16
+  },
+  "updated_at_utc": "2026-04-10T21:39:31.357318+00:00"
+}
