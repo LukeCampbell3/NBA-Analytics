@@ -711,6 +711,29 @@ def parse_args() -> argparse.Namespace:
         help="Hard cap on rescued rows (0 means no additional cap).",
     )
     parser.add_argument(
+        "--disable-initial-pool-gate",
+        action="store_true",
+        help="Disable pre-board initial pool pruning before learned-gate and board-objective selection.",
+    )
+    parser.add_argument(
+        "--initial-pool-gate-drop-fraction",
+        type=float,
+        default=0.10,
+        help="Drop fraction of the lowest-scoring initial pool rows for board-objective mode (0 disables pruning).",
+    )
+    parser.add_argument(
+        "--initial-pool-gate-score-col",
+        type=str,
+        default="selector_expected_win_rate",
+        help="Primary numeric column used to rank rows for initial pool pruning.",
+    )
+    parser.add_argument(
+        "--initial-pool-gate-min-keep-rows",
+        type=int,
+        default=20,
+        help="Minimum rows preserved after initial pool pruning.",
+    )
+    parser.add_argument(
         "--accepted-pick-gate-json",
         type=Path,
         default=Path("model/analysis/accepted_pick_gate/candidates/accepted_pick_gate_candidate.json"),
@@ -3066,6 +3089,10 @@ def compute_final_board(
     learned_gate_rescue_target_share: float = 0.35,
     learned_gate_rescue_floor_quantile: float = 0.35,
     learned_gate_rescue_max_rows: int = 0,
+    initial_pool_gate_enabled: bool = True,
+    initial_pool_gate_drop_fraction: float = 0.10,
+    initial_pool_gate_score_col: str = "selector_expected_win_rate",
+    initial_pool_gate_min_keep_rows: int = 20,
     accepted_pick_gate_payload: dict | None = None,
     accepted_pick_gate_month: str | None = None,
     accepted_pick_gate_enabled: bool = False,
@@ -3076,6 +3103,45 @@ def compute_final_board(
     if out.empty:
         return out
     out["_gate_row_id"] = np.arange(len(out), dtype=int)
+    requested_min_board = max(0, int(min_board_plays))
+    if max_total_plays > 0:
+        requested_min_board = min(requested_min_board, int(max_total_plays))
+
+    effective_mode = str(selection_mode or ranking_mode).strip().lower()
+    initial_pool_gate_active = bool(initial_pool_gate_enabled) and effective_mode == "board_objective"
+    initial_pool_drop_fraction = float(np.clip(initial_pool_gate_drop_fraction, 0.0, 0.95))
+    initial_pool_score_col = str(initial_pool_gate_score_col or "").strip()
+    if not initial_pool_score_col or initial_pool_score_col not in out.columns:
+        initial_pool_score_col = "expected_win_rate"
+    initial_rows_before = int(len(out))
+    min_keep_floor = max(
+        int(max(0, initial_pool_gate_min_keep_rows)),
+        int(max(0, requested_min_board)),
+        int(max(0, max_total_plays)),
+    )
+    min_keep_floor = max(1, min(initial_rows_before, min_keep_floor))
+    initial_pool_applied = False
+    if initial_pool_gate_active and initial_pool_drop_fraction > 0.0 and initial_rows_before > min_keep_floor:
+        keep_n = int(np.ceil(float(initial_rows_before) * (1.0 - float(initial_pool_drop_fraction))))
+        keep_n = int(max(min_keep_floor, min(initial_rows_before, keep_n)))
+        if keep_n < initial_rows_before:
+            primary_score = pd.to_numeric(out.get(initial_pool_score_col), errors="coerce").fillna(-np.inf)
+            if not np.isfinite(primary_score.to_numpy(dtype="float64", copy=False)).any():
+                primary_score = pd.to_numeric(out.get("expected_win_rate"), errors="coerce").fillna(-np.inf)
+            keep_index = primary_score.sort_values(ascending=False).head(keep_n).index
+            out = out.loc[out.index.isin(keep_index)].copy().sort_values("_gate_row_id")
+            initial_pool_applied = bool(len(out) < initial_rows_before)
+            if out.empty:
+                return out
+    initial_rows_after = int(len(out))
+    out["initial_pool_gate_enabled"] = bool(initial_pool_gate_active)
+    out["initial_pool_gate_applied"] = bool(initial_pool_applied)
+    out["initial_pool_gate_drop_fraction"] = float(initial_pool_drop_fraction if initial_pool_gate_active else 0.0)
+    out["initial_pool_gate_score_col"] = str(initial_pool_score_col)
+    out["initial_pool_gate_min_keep_rows"] = int(min_keep_floor)
+    out["initial_pool_gate_rows_before"] = int(initial_rows_before)
+    out["initial_pool_gate_rows_after"] = int(initial_rows_after)
+    out["initial_pool_gate_dropped_rows"] = int(max(0, initial_rows_before - initial_rows_after))
 
     payout = american_profit_per_unit(american_odds)
     out["expected_win_rate"] = pd.to_numeric(out["expected_win_rate"], errors="coerce").fillna(0.5)
@@ -3177,10 +3243,6 @@ def compute_final_board(
         if out.empty:
             return out
 
-    requested_min_board = max(0, int(min_board_plays))
-    if max_total_plays > 0:
-        requested_min_board = min(requested_min_board, int(max_total_plays))
-
     out = out.loc[out["recommendation_rank"] <= minimum_recommendation_rank(min_recommendation)].copy()
     out = out.loc[out["final_confidence"] >= float(min_final_confidence)].copy()
     out = out.loc[(out["target"] == "PTS") | (out["gap_percentile"] >= float(non_pts_min_gap_percentile))].copy()
@@ -3215,6 +3277,7 @@ def compute_final_board(
         return out
     out["ev_gate_effective_min_ev"] = float(effective_min_ev)
     out["ev_gate_relaxed"] = bool(effective_min_ev < float(min_ev))
+
     gate_backfill_pool = out.iloc[0:0].copy()
     out["learned_gate_rescue_selected"] = False
     out["learned_gate_rescue_eligible"] = False
@@ -4003,6 +4066,10 @@ def main() -> None:
         learned_gate_rescue_target_share=args.learned_gate_rescue_target_share,
         learned_gate_rescue_floor_quantile=args.learned_gate_rescue_floor_quantile,
         learned_gate_rescue_max_rows=args.learned_gate_rescue_max_rows,
+        initial_pool_gate_enabled=not args.disable_initial_pool_gate,
+        initial_pool_gate_drop_fraction=args.initial_pool_gate_drop_fraction,
+        initial_pool_gate_score_col=args.initial_pool_gate_score_col,
+        initial_pool_gate_min_keep_rows=args.initial_pool_gate_min_keep_rows,
         accepted_pick_gate_payload=accepted_pick_gate_payload,
         accepted_pick_gate_month=args.accepted_pick_gate_month,
         accepted_pick_gate_enabled=args.enable_accepted_pick_gate,
@@ -4120,6 +4187,10 @@ def main() -> None:
         "learned_gate_rescue_target_share": float(args.learned_gate_rescue_target_share),
         "learned_gate_rescue_floor_quantile": float(args.learned_gate_rescue_floor_quantile),
         "learned_gate_rescue_max_rows": int(args.learned_gate_rescue_max_rows),
+        "initial_pool_gate_enabled": bool(not args.disable_initial_pool_gate),
+        "initial_pool_gate_drop_fraction": float(args.initial_pool_gate_drop_fraction),
+        "initial_pool_gate_score_col": str(args.initial_pool_gate_score_col),
+        "initial_pool_gate_min_keep_rows": int(args.initial_pool_gate_min_keep_rows),
         "accepted_pick_gate": accepted_pick_gate_summary,
         "accepted_pick_gate_month": str(args.accepted_pick_gate_month or ""),
         "accepted_pick_gate_min_rows": int(args.accepted_pick_gate_min_rows),
