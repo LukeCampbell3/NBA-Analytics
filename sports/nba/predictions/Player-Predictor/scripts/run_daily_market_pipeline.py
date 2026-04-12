@@ -121,7 +121,7 @@ def parse_args() -> argparse.Namespace:
             "'live_only' disables both fallbacks and fails if no requested-window rows exist."
         ),
     )
-    parser.add_argument("--collect-scan-count", type=int, default=500, help="Maximum Covers matchup ids to scan for the nightly collection window.")
+    parser.add_argument("--collect-scan-count", type=int, default=800, help="Maximum Covers matchup ids to scan for the nightly collection window.")
     parser.add_argument("--run-date", type=str, default=None, help="Optional YYYY-MM-DD override for local run date.")
     parser.add_argument("--skip-update-data", action="store_true", help="Skip official game-log refresh.")
     parser.add_argument("--skip-collect-market", action="store_true", help="Skip Covers market collection.")
@@ -181,6 +181,29 @@ def parse_args() -> argparse.Namespace:
         type=str,
         default=None,
         help="Optional YYYY-MM month override for learned pool-gate thresholds (defaults to run month).",
+    )
+    parser.add_argument(
+        "--disable-initial-pool-gate",
+        action="store_true",
+        help="Disable pre-board initial pool pruning in child market pipeline runs.",
+    )
+    parser.add_argument(
+        "--initial-pool-gate-drop-fraction",
+        type=float,
+        default=None,
+        help="Optional override for initial pool drop fraction in child market pipeline runs.",
+    )
+    parser.add_argument(
+        "--initial-pool-gate-score-col",
+        type=str,
+        default=None,
+        help="Optional override for ranking column used by initial pool pruning in child runs.",
+    )
+    parser.add_argument(
+        "--initial-pool-gate-min-keep-rows",
+        type=int,
+        default=None,
+        help="Optional override for minimum rows kept after initial pool pruning in child runs.",
     )
     parser.add_argument("--python", type=str, default=sys.executable, help="Python executable to use for child steps.")
     return parser.parse_args()
@@ -528,6 +551,36 @@ def main() -> None:
         "enabled": not bool(args.disable_learned_gate),
         "month": learned_gate_month,
     }
+    initial_pool_gate_meta = {
+        "enabled": not bool(args.disable_initial_pool_gate),
+        "drop_fraction": float(args.initial_pool_gate_drop_fraction)
+        if args.initial_pool_gate_drop_fraction is not None
+        else None,
+        "score_col": str(args.initial_pool_gate_score_col)
+        if args.initial_pool_gate_score_col is not None
+        else None,
+        "min_keep_rows": int(args.initial_pool_gate_min_keep_rows)
+        if args.initial_pool_gate_min_keep_rows is not None
+        else None,
+    }
+    initial_pool_gate_args = [
+        *(["--disable-initial-pool-gate"] if args.disable_initial_pool_gate else []),
+        *(
+            ["--initial-pool-gate-drop-fraction", str(float(args.initial_pool_gate_drop_fraction))]
+            if args.initial_pool_gate_drop_fraction is not None
+            else []
+        ),
+        *(
+            ["--initial-pool-gate-score-col", str(args.initial_pool_gate_score_col)]
+            if args.initial_pool_gate_score_col is not None
+            else []
+        ),
+        *(
+            ["--initial-pool-gate-min-keep-rows", str(int(args.initial_pool_gate_min_keep_rows))]
+            if args.initial_pool_gate_min_keep_rows is not None
+            else []
+        ),
+    ]
     primary_policy = str(args.policy_profile)
     shadow_policies = [profile for profile in args.shadow_policy_profiles if str(profile) and str(profile) != primary_policy]
     yesterday = (local_date - pd.Timedelta(days=1)).date()
@@ -688,6 +741,7 @@ def main() -> None:
             str(learned_gate_path),
             "--learned-gate-month",
             learned_gate_month,
+            *initial_pool_gate_args,
             *(["--disable-selected-board-calibration"] if args.disable_selected_board_calibration else []),
             *(["--disable-learned-gate"] if args.disable_learned_gate else []),
             *(["--allow-heuristic-fallback"] if args.allow_heuristic_fallback else []),
@@ -732,6 +786,7 @@ def main() -> None:
                 str(learned_gate_path),
                 "--learned-gate-month",
                 learned_gate_month,
+                *initial_pool_gate_args,
                 *(["--disable-selected-board-calibration"] if args.disable_selected_board_calibration else []),
                 *(["--disable-learned-gate"] if args.disable_learned_gate else []),
                 *(["--allow-heuristic-fallback"] if args.allow_heuristic_fallback else []),
@@ -835,6 +890,7 @@ def main() -> None:
         "allow_heuristic_fallback": bool(args.allow_heuristic_fallback),
         "selected_board_calibrator": selected_board_calibrator_meta,
         "learned_pool_gate": learned_gate_meta,
+        "initial_pool_gate": initial_pool_gate_meta,
         "updated_at_utc": datetime.utcnow().isoformat() + "Z",
     }
     manifest_path = run_dir / f"daily_market_pipeline_manifest_{run_stamp}.json"
@@ -890,6 +946,7 @@ def main() -> None:
         print(f"Cutoff monitor:       {cutoff_meta_monitor_outputs.get('comparison_json')}")
     print(f"Selected calibrator:  {selected_board_calibrator_meta}")
     print(f"Learned pool gate:    {learned_gate_meta}")
+    print(f"Initial pool gate:    {initial_pool_gate_meta}")
     if snapshot_meta["mode"] == "stale_fallback":
         print(f"Selected market date: {snapshot_meta['selected_market_date']}")
     print(f"Run directory:        {run_dir}")

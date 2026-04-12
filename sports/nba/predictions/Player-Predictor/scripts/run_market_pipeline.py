@@ -370,6 +370,29 @@ def parse_args() -> argparse.Namespace:
         help="Minimum rows that must pass learned gate before enforcement (0 delegates to payload/policy).",
     )
     parser.add_argument(
+        "--disable-initial-pool-gate",
+        action="store_true",
+        help="Disable pre-board initial pool pruning before learned-gate and board-objective selection.",
+    )
+    parser.add_argument(
+        "--initial-pool-gate-drop-fraction",
+        type=float,
+        default=None,
+        help="Drop fraction of lowest-scoring initial pool rows in board-objective mode.",
+    )
+    parser.add_argument(
+        "--initial-pool-gate-score-col",
+        type=str,
+        default=None,
+        help="Primary numeric selector column used to rank rows for initial pool pruning.",
+    )
+    parser.add_argument(
+        "--initial-pool-gate-min-keep-rows",
+        type=int,
+        default=None,
+        help="Minimum rows preserved after initial pool pruning.",
+    )
+    parser.add_argument(
         "--accepted-pick-gate-json",
         type=Path,
         default=REPO_ROOT / "model" / "analysis" / "accepted_pick_gate" / "candidates" / "accepted_pick_gate_candidate.json",
@@ -527,6 +550,10 @@ def resolve_policy(args: argparse.Namespace):
         "conditional_max_promoted_share_of_recoverable": args.conditional_max_promoted_share,
         "learned_gate_enabled": True if args.enable_learned_gate else (False if args.disable_learned_gate else None),
         "learned_gate_min_rows": args.learned_gate_min_rows,
+        "initial_pool_gate_enabled": False if args.disable_initial_pool_gate else None,
+        "initial_pool_gate_drop_fraction": args.initial_pool_gate_drop_fraction,
+        "initial_pool_gate_score_col": args.initial_pool_gate_score_col,
+        "initial_pool_gate_min_keep_rows": args.initial_pool_gate_min_keep_rows,
         "accepted_pick_gate_enabled": True
         if args.enable_accepted_pick_gate
         else (False if args.disable_accepted_pick_gate else None),
@@ -1092,6 +1119,10 @@ def main() -> None:
         learned_gate_payload=learned_pool_gate,
         learned_gate_month=args.learned_gate_month,
         learned_gate_min_rows=int(policy_payload.get("learned_gate_min_rows", 0)),
+        initial_pool_gate_enabled=bool(policy_payload.get("initial_pool_gate_enabled", True)),
+        initial_pool_gate_drop_fraction=float(policy_payload.get("initial_pool_gate_drop_fraction", 0.10)),
+        initial_pool_gate_score_col=str(policy_payload.get("initial_pool_gate_score_col", "selector_expected_win_rate")),
+        initial_pool_gate_min_keep_rows=int(policy_payload.get("initial_pool_gate_min_keep_rows", 20)),
         accepted_pick_gate_payload=accepted_pick_gate,
         accepted_pick_gate_month=args.accepted_pick_gate_month,
         accepted_pick_gate_enabled=bool(policy_payload.get("accepted_pick_gate_enabled", False)),
@@ -1134,6 +1165,24 @@ def main() -> None:
         "dynamic_size_target": int(pd.to_numeric(final_board.get("board_objective_dynamic_target_size"), errors="coerce").fillna(final_board_size).max())
         if "board_objective_dynamic_target_size" in final_board.columns and not final_board.empty
         else final_board_size,
+        "initial_pool_gate_enabled": bool(pd.to_numeric(final_board.get("initial_pool_gate_enabled"), errors="coerce").fillna(0).astype(bool).any())
+        if "initial_pool_gate_enabled" in final_board.columns and not final_board.empty
+        else bool(policy_payload.get("initial_pool_gate_enabled", True)),
+        "initial_pool_gate_applied": bool(pd.to_numeric(final_board.get("initial_pool_gate_applied"), errors="coerce").fillna(0).astype(bool).any())
+        if "initial_pool_gate_applied" in final_board.columns and not final_board.empty
+        else False,
+        "initial_pool_gate_drop_fraction": float(pd.to_numeric(final_board.get("initial_pool_gate_drop_fraction"), errors="coerce").fillna(np.nan).max())
+        if "initial_pool_gate_drop_fraction" in final_board.columns and not final_board.empty
+        else float(policy_payload.get("initial_pool_gate_drop_fraction", 0.10)),
+        "initial_pool_gate_rows_before": int(pd.to_numeric(final_board.get("initial_pool_gate_rows_before"), errors="coerce").fillna(np.nan).max())
+        if "initial_pool_gate_rows_before" in final_board.columns and not final_board.empty
+        else int(len(selector_df)),
+        "initial_pool_gate_rows_after": int(pd.to_numeric(final_board.get("initial_pool_gate_rows_after"), errors="coerce").fillna(np.nan).max())
+        if "initial_pool_gate_rows_after" in final_board.columns and not final_board.empty
+        else int(len(selector_df)),
+        "initial_pool_gate_dropped_rows": int(pd.to_numeric(final_board.get("initial_pool_gate_dropped_rows"), errors="coerce").fillna(0).max())
+        if "initial_pool_gate_dropped_rows" in final_board.columns and not final_board.empty
+        else 0,
         "fp_veto_enabled": bool(pd.to_numeric(final_board.get("board_objective_fp_veto_enabled"), errors="coerce").fillna(0).astype(bool).any())
         if "board_objective_fp_veto_enabled" in final_board.columns and not final_board.empty
         else False,

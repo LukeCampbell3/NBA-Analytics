@@ -1,23 +1,22 @@
 {
-  "generated_at_utc": "2026-04-10T23:38:59.617163+00:00",
-  "manifest_path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\model\\analysis\\daily_runs\\20260410\\daily_market_pipeline_manifest_20260410.json",
-  "run_date": "2026-04-10",
+  "generated_at_utc": "2026-04-12T00:18:32.469529+00:00",
+  "manifest_path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\model\\analysis\\daily_runs\\20260411\\daily_market_pipeline_manifest_20260411.json",
+  "run_date": "2026-04-11",
   "season": 2026,
-  "through_date": "2026-04-09",
-  "current_market_rows": 132,
+  "through_date": "2026-04-10",
+  "current_market_rows": 150,
   "current_market_snapshot_meta": {
-    "mode": "requested_window",
-    "requested_start_date": "2026-04-10",
-    "requested_end_date": "2026-04-12",
-    "selected_market_date_min": "2026-04-10",
-    "selected_market_date_max": "2026-04-10",
-    "selected_row_count": 132
+    "mode": "stale_fallback",
+    "requested_start_date": "2026-04-11",
+    "requested_end_date": "2026-04-13",
+    "selected_market_date": "2026-04-10",
+    "selected_row_count": 150
   },
   "used_latest_manifest": false,
   "shadow_policy_profiles": [
     "shadow_edge_append_agree1_p90_x1"
   ],
-  "market_snapshot": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\model\\analysis\\daily_runs\\20260410\\current_market_snapshot_20260410.parquet",
+  "market_snapshot": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\model\\analysis\\daily_runs\\20260411\\current_market_snapshot_20260411.parquet",
   "model_run_id": "artifact_free_heuristic",
   "policy_profile": "production_board_objective_b12",
   "policy": {
@@ -104,6 +103,10 @@
     "board_objective_fp_veto_ml_weight": 0.45,
     "learned_gate_enabled": true,
     "learned_gate_min_rows": 0,
+    "initial_pool_gate_enabled": true,
+    "initial_pool_gate_drop_fraction": 0.1,
+    "initial_pool_gate_score_col": "selector_expected_win_rate",
+    "initial_pool_gate_min_keep_rows": 20,
     "accepted_pick_gate_enabled": true,
     "accepted_pick_gate_live": false,
     "accepted_pick_gate_min_rows": 6,
@@ -212,38 +215,34 @@
   },
   "input_validation": {
     "market_lines": {
-      "market_rows": 132,
-      "market_dates_non_null": 132,
-      "unique_market_players": 132,
-      "market_pts_lines": 95,
-      "market_pts_books": 95,
-      "market_trb_lines": 103,
-      "market_trb_books": 103,
-      "market_ast_lines": 92,
-      "market_ast_books": 92
+      "market_rows": 150,
+      "market_dates_non_null": 150,
+      "unique_market_players": 150,
+      "market_pts_lines": 118,
+      "market_pts_books": 118,
+      "market_trb_lines": 111,
+      "market_trb_books": 111,
+      "market_ast_lines": 97,
+      "market_ast_books": 97
     },
     "prior_game_data": {
-      "slate_rows": 120,
+      "slate_rows": 136,
       "history_rows_min": 10,
-      "history_rows_median": 66.5,
+      "history_rows_median": 67.0,
       "history_rows_max": 80,
-      "last_history_date_non_null": 120,
-      "history_before_market_ok_rows": 120,
+      "last_history_date_non_null": 136,
+      "history_before_market_ok_rows": 136,
       "history_before_market_violations": 0,
-      "csv_exists_rows": 120
+      "csv_exists_rows": 136
     },
     "skipped_rows": {
-      "count": 12,
+      "count": 14,
       "reasons": {
-        "missing processed csv for season 2026": 12
+        "missing processed csv for season 2026": 14
       },
       "sample": [
         {
           "player": "A_Thompson",
-          "reason": "missing processed csv for season 2026"
-        },
-        {
-          "player": "A_Wiggins",
           "reason": "missing processed csv for season 2026"
         },
         {
@@ -255,11 +254,19 @@
           "reason": "missing processed csv for season 2026"
         },
         {
-          "player": "J_Green",
+          "player": "D_Schroder",
+          "reason": "missing processed csv for season 2026"
+        },
+        {
+          "player": "J_Champagnie",
           "reason": "missing processed csv for season 2026"
         },
         {
           "player": "J_Walker",
+          "reason": "missing processed csv for season 2026"
+        },
+        {
+          "player": "K_Johnson",
           "reason": "missing processed csv for season 2026"
         },
         {
@@ -273,41 +280,37 @@
         {
           "player": "M_Diabate",
           "reason": "missing processed csv for season 2026"
-        },
-        {
-          "player": "N_Jokic",
-          "reason": "missing processed csv for season 2026"
         }
       ]
     }
   },
   "summary": {
-    "play_count": 2,
-    "avg_expected_win_rate": 0.558840875085848,
-    "avg_ev": 0.0668780342548006,
-    "avg_edge": 0.6552888280740379,
-    "total_bet_fraction": 0.01,
+    "play_count": 3,
+    "avg_expected_win_rate": 0.5594848587270549,
+    "avg_ev": 0.06810745756983207,
+    "avg_edge": 0.5601913860045823,
+    "total_bet_fraction": 0.015,
     "avg_bet_fraction": 0.005,
-    "expected_profit_fraction": 0.0006687803425479,
+    "expected_profit_fraction": 0.0010216118635474,
     "by_target": {
-      "TRB": 1,
-      "AST": 1
+      "AST": 2,
+      "TRB": 1
     },
     "by_recommendation": {
-      "elite": 2
+      "elite": 3
     },
     "by_allocation_tier": {
-      "flat": 2
+      "flat": 3
     },
     "by_allocation_action": {
-      "flat": 2
+      "flat": 3
     }
   },
   "accuracy_metrics": {
     "available": true,
     "source_history_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\model\\analysis\\latest_market_comparison_strict_rows.csv",
     "as_of_market_date": "2026-03-28",
-    "computed_at_utc": "2026-04-10T23:38:59.689926+00:00",
+    "computed_at_utc": "2026-04-12T00:18:32.566201+00:00",
     "overall": {
       "signal_count": 27,
       "settled_count": 27,
@@ -432,21 +435,21 @@
       "market_line": 9.5,
       "edge": 0.9426153273809526,
       "abs_edge": 0.9426153273809526,
-      "expected_win_rate": 0.5787669280231914,
+      "expected_win_rate": 0.5852520712577359,
       "expected_push_rate": 0.0,
-      "expected_loss_rate": 0.4212330719768086,
+      "expected_loss_rate": 0.414747928742264,
       "raw_expected_win_rate": 0.599630777340475,
-      "ev": 0.1049186807715472,
+      "ev": 0.1172994087647685,
       "thompson_ev": 0.5191646999280989,
       "final_confidence": 0.8282352941176472,
       "gap_percentile": 1.0,
       "allocation_tier": "flat",
       "allocation_action": "flat",
       "bet_fraction": 0.005,
-      "expected_profit_fraction": 0.0005245934038577,
+      "expected_profit_fraction": 0.0005864970438238,
       "selected_rank": 1,
       "game_key": "363226",
-      "script_cluster_id": "usage=high|pace=neutral|minutes=stable|rebound=concentrated",
+      "script_cluster_id": "usage=neutral|pace=low|minutes=stable|rebound=concentrated",
       "recommendation": "elite",
       "decision_tier": "Tier A - Baseline",
       "weak_bucket": "K",
@@ -465,6 +468,53 @@
     },
     {
       "rank": 2,
+      "player": "D_Harper",
+      "player_display_name": "Dylan Harper",
+      "player_id": 1642844,
+      "player_headshot_url": "https://cdn.nba.com/headshots/nba/latest/1040x760/1642844.png",
+      "target": "AST",
+      "direction": "UNDER",
+      "market_date": "2026-04-10",
+      "market_home_team": "DAL",
+      "market_away_team": "SAS",
+      "last_history_date": "2026-04-08",
+      "prediction": 5.130003498134329,
+      "market_line": 5.5,
+      "edge": -0.3699965018656712,
+      "abs_edge": 0.3699965018656712,
+      "expected_win_rate": 0.5489900355324524,
+      "expected_push_rate": 0.0,
+      "expected_loss_rate": 0.4510099644675476,
+      "raw_expected_win_rate": 0.6135911393891114,
+      "ev": 0.0480718860165,
+      "thompson_ev": 0.4473626049742556,
+      "final_confidence": 0.7332352941176471,
+      "gap_percentile": 1.0,
+      "allocation_tier": "flat",
+      "allocation_action": "flat",
+      "bet_fraction": 0.005,
+      "expected_profit_fraction": 0.0002403594300825,
+      "selected_rank": 2,
+      "game_key": "363226",
+      "script_cluster_id": "usage=neutral|pace=low|minutes=stable|rebound=concentrated",
+      "recommendation": "elite",
+      "decision_tier": "Tier A - Baseline",
+      "weak_bucket": "K",
+      "conditional_promoted": false,
+      "conditional_audit_summary": "Kept as baseline anchor (strong calibrated base signal).",
+      "promotion_reason_codes": "nan",
+      "p_base": 0.5809036056579169,
+      "p_final": 0.5809036056579169,
+      "recoverability_score": 0.0,
+      "contradiction_score": 0.0,
+      "conditional_support": 0.0,
+      "history_rows": 67,
+      "market_books": 5.0,
+      "uncertainty_sigma": 1.2332207155790618,
+      "spike_probability": 0.4594557901727165
+    },
+    {
+      "rank": 3,
       "player": "J_Jaquez_Jr",
       "player_display_name": "Jaime Jaquez Jr",
       "player_id": 1631170,
@@ -479,19 +529,19 @@
       "market_line": 5.5,
       "edge": -0.3679623287671232,
       "abs_edge": 0.3679623287671232,
-      "expected_win_rate": 0.5389148221485045,
+      "expected_win_rate": 0.5442124693909764,
       "expected_push_rate": 0.0,
-      "expected_loss_rate": 0.4610851778514955,
+      "expected_loss_rate": 0.4557875306090235,
       "raw_expected_win_rate": 0.6024672186815174,
-      "ev": 0.028837387738054,
+      "ev": 0.0389510779282277,
       "thompson_ev": -0.0269388241416964,
       "final_confidence": 0.7344117647058823,
       "gap_percentile": 1.0,
       "allocation_tier": "flat",
       "allocation_action": "flat",
       "bet_fraction": 0.005,
-      "expected_profit_fraction": 0.0001441869386902,
-      "selected_rank": 2,
+      "expected_profit_fraction": 0.0001947553896411,
+      "selected_rank": 3,
       "game_key": "363219",
       "script_cluster_id": "usage=high|pace=low|minutes=stable|rebound=neutral",
       "recommendation": "elite",
@@ -514,27 +564,27 @@
   "shadow_runs": [
     {
       "policy_profile": "shadow_edge_append_agree1_p90_x1",
-      "final_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\model\\analysis\\daily_runs\\20260410\\shadow\\shadow_edge_append_agree1_p90_x1\\final_market_plays_20260410_shadow_edge_append_agree1_p90_x1.csv",
+      "final_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\model\\analysis\\daily_runs\\20260411\\shadow\\shadow_edge_append_agree1_p90_x1\\final_market_plays_20260411_shadow_edge_append_agree1_p90_x1.csv",
       "summary": {
-        "play_count": 2,
-        "avg_expected_win_rate": 0.552272041835477,
-        "avg_ev": 0.0543375344131831,
-        "avg_edge": 0.6552888280740379,
-        "total_bet_fraction": 0.02,
+        "play_count": 3,
+        "avg_expected_win_rate": 0.5529887328534827,
+        "avg_ev": 0.055705762720285025,
+        "avg_edge": 0.5601913860045823,
+        "total_bet_fraction": 0.03,
         "avg_bet_fraction": 0.01,
-        "expected_profit_fraction": 0.0010867506882635,
+        "expected_profit_fraction": 0.0016711728816083,
         "by_target": {
-          "TRB": 1,
-          "AST": 1
+          "AST": 2,
+          "TRB": 1
         },
         "by_recommendation": {
-          "elite": 2
+          "elite": 3
         },
         "by_allocation_tier": {
-          "elite": 2
+          "elite": 3
         },
         "by_allocation_action": {
-          "medium": 2
+          "medium": 3
         }
       },
       "policy": {
@@ -621,6 +671,10 @@
         "board_objective_fp_veto_ml_weight": 0.45,
         "learned_gate_enabled": false,
         "learned_gate_min_rows": 0,
+        "initial_pool_gate_enabled": true,
+        "initial_pool_gate_drop_fraction": 0.1,
+        "initial_pool_gate_score_col": "selector_expected_win_rate",
+        "initial_pool_gate_min_keep_rows": 20,
         "accepted_pick_gate_enabled": false,
         "accepted_pick_gate_live": false,
         "accepted_pick_gate_min_rows": 0,
@@ -755,7 +809,7 @@
           "expected_profit_fraction": 0.0006022601682903,
           "selected_rank": 1,
           "game_key": "363226",
-          "script_cluster_id": "usage=high|pace=neutral|minutes=stable|rebound=concentrated",
+          "script_cluster_id": "usage=neutral|pace=low|minutes=stable|rebound=concentrated",
           "recommendation": "elite",
           "decision_tier": "Tier A - Baseline",
           "weak_bucket": "K",
@@ -818,6 +872,53 @@
           "market_books": 2.0,
           "uncertainty_sigma": 1.707825127659933,
           "spike_probability": 0.4414460299087822
+        },
+        {
+          "rank": 3,
+          "player": "D_Harper",
+          "player_display_name": "Dylan Harper",
+          "player_id": 1642844,
+          "player_headshot_url": "https://cdn.nba.com/headshots/nba/latest/1040x760/1642844.png",
+          "target": "AST",
+          "direction": "UNDER",
+          "market_date": "2026-04-10",
+          "market_home_team": "DAL",
+          "market_away_team": "SAS",
+          "last_history_date": "2026-04-08",
+          "prediction": 5.130003498134329,
+          "market_line": 5.5,
+          "edge": -0.3699965018656712,
+          "abs_edge": 0.3699965018656712,
+          "expected_win_rate": 0.5544221148894942,
+          "expected_push_rate": 0.0,
+          "expected_loss_rate": 0.4455778851105058,
+          "raw_expected_win_rate": 0.6135911393891114,
+          "ev": 0.0584422193344889,
+          "thompson_ev": 0.4473626049742556,
+          "final_confidence": 0.7332352941176471,
+          "gap_percentile": 1.0,
+          "allocation_tier": "elite",
+          "allocation_action": "medium",
+          "bet_fraction": 0.01,
+          "expected_profit_fraction": 0.0005844221933448,
+          "selected_rank": 3,
+          "game_key": "363226",
+          "script_cluster_id": "usage=neutral|pace=low|minutes=stable|rebound=concentrated",
+          "recommendation": "elite",
+          "decision_tier": "Tier A - Baseline",
+          "weak_bucket": "K",
+          "conditional_promoted": false,
+          "conditional_audit_summary": "Kept as baseline anchor (strong calibrated base signal).",
+          "promotion_reason_codes": "nan",
+          "p_base": 0.5809036056579169,
+          "p_final": 0.5809036056579169,
+          "recoverability_score": 0.0,
+          "contradiction_score": 0.0,
+          "conditional_support": 0.0,
+          "history_rows": 67,
+          "market_books": 5.0,
+          "uncertainty_sigma": 1.2332207155790618,
+          "spike_probability": 0.4594557901727165
         }
       ]
     }
