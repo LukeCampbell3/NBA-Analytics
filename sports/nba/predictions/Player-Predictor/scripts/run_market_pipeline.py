@@ -26,7 +26,13 @@ sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "inference"))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-from build_upcoming_slate import MODEL_DIR, build_records, load_market_wide, resolve_manifest_path
+from build_upcoming_slate import (
+    DEFAULT_TARGET_PREDICTION_CALIBRATOR,
+    MODEL_DIR,
+    build_records,
+    load_market_wide,
+    resolve_manifest_path,
+)
 from decision_engine.conditional_promotion import apply_conditional_promotion
 from decision_engine.policy_tuning import build_default_shadow_strategies
 from post_process_market_plays import compute_final_board
@@ -112,6 +118,17 @@ def parse_args() -> argparse.Namespace:
         "--allow-heuristic-fallback",
         action="store_true",
         help="Allow pipeline to continue with heuristic-only predictions when model load fails.",
+    )
+    parser.add_argument(
+        "--target-prediction-calibrator-json",
+        type=Path,
+        default=DEFAULT_TARGET_PREDICTION_CALIBRATOR,
+        help="Optional target-level short-term prediction calibrator JSON applied before selector ranking.",
+    )
+    parser.add_argument(
+        "--disable-target-prediction-calibration",
+        action="store_true",
+        help="Disable target-level short-term prediction calibration and keep raw predictor outputs.",
     )
     parser.add_argument("--american-odds", type=int, default=None, help="Assumed American odds for EV.")
     parser.add_argument("--probability-shrink-factor", type=float, default=None, help="Shrink expected win rate toward 50%%.")
@@ -932,7 +949,13 @@ def main() -> None:
         print(f"Warning: model inference unavailable, using heuristic fallback only ({predictor_error})")
 
     market_df = load_market_wide(args.market_wide_path)
-    slate_records, slate_skipped = build_records(predictor, market_df, args.season)
+    calibrator_path = None if args.disable_target_prediction_calibration else args.target_prediction_calibrator_json
+    slate_records, slate_skipped = build_records(
+        predictor,
+        market_df,
+        args.season,
+        target_prediction_calibrator_path=calibrator_path,
+    )
     if not slate_records:
         raise RuntimeError(f"No upcoming slate rows built. Skipped={len(slate_skipped)} sample={slate_skipped[:5]}")
 
@@ -1231,6 +1254,8 @@ def main() -> None:
         "market_snapshot": str(args.market_wide_path),
         "history_csv": str(history_path),
         "history_mode": history_mode,
+        "target_prediction_calibrator_json": str(calibrator_path) if calibrator_path is not None else None,
+        "target_prediction_calibration_enabled": bool(not args.disable_target_prediction_calibration),
         "season": args.season,
         "policy_profile": args.policy_profile,
         "policy": policy_payload,

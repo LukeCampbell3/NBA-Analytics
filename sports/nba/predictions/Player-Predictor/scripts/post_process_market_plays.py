@@ -3226,6 +3226,12 @@ def compute_final_board(
         if out.empty:
             return out
 
+    if "line_decision_trade_eligible" in out.columns:
+        trade_eligible_mask = pd.to_numeric(out["line_decision_trade_eligible"], errors="coerce").fillna(0).astype(bool)
+        out = out.loc[trade_eligible_mask].copy()
+        if out.empty:
+            return out
+
     min_recency = float(min_recency_factor)
     if min_recency > 0.0 and "recency_factor" in out.columns:
         out["recency_factor"] = _numeric_series(out, "recency_factor", 0.0)
