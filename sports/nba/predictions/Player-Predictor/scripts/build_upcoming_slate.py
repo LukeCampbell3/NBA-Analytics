@@ -20,6 +20,7 @@ import json
 import re
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -35,6 +36,7 @@ from structured_stack_inference import StructuredStackInference  # noqa: E402
 DATA_DIR = REPO_ROOT / "Data-Proc"
 MODEL_DIR = REPO_ROOT / "model"
 DEFAULT_MARKET_WIDE = REPO_ROOT / "data copy" / "raw" / "market_odds" / "nba" / "latest_player_props_wide.parquet"
+DEFAULT_TARGET_PREDICTION_CALIBRATOR = REPO_ROOT / "model" / "analysis" / "calibration" / "short_term_target_prediction_calibrator.json"
 TARGETS = ["PTS", "TRB", "AST"]
 
 # Covers feed uses first-initial names (e.g., J_Brunson); these disambiguate
@@ -173,6 +175,67 @@ def load_market_wide(path: Path) -> pd.DataFrame:
     return df
 
 
+def load_target_prediction_calibrator(path: Path | None) -> dict[str, dict] | None:
+    if path is None:
+        return None
+    resolved = path.resolve()
+    if not resolved.exists():
+        return None
+    payload = json.loads(resolved.read_text(encoding="utf-8"))
+    target_block = payload.get("targets", payload) if isinstance(payload, dict) else {}
+    if not isinstance(target_block, dict):
+        return None
+    out: dict[str, dict] = {}
+    for key, value in target_block.items():
+        if str(key).upper().strip() not in TARGETS or not isinstance(value, dict):
+            continue
+        out[str(key).upper().strip()] = dict(value)
+    return out or None
+
+
+def apply_target_prediction_calibration(
+    target: str,
+    raw_prediction: float,
+    market_line: float,
+    calibrator: dict[str, dict] | None,
+) -> tuple[float, dict[str, Any]]:
+    meta = {
+        "applied": False,
+        "source": "identity",
+        "edge_multiplier": 1.0,
+        "edge_bias": 0.0,
+        "support_rows": 0,
+    }
+    if calibrator is None:
+        return float(raw_prediction), meta
+    payload = calibrator.get(str(target).upper().strip())
+    if not payload or not bool(payload.get("enabled", True)):
+        meta["source"] = "disabled"
+        return float(raw_prediction), meta
+    raw_prediction = float(raw_prediction)
+    market_line = float(market_line)
+    if not np.isfinite(raw_prediction) or not np.isfinite(market_line):
+        meta["source"] = "non_finite_input"
+        return float(raw_prediction), meta
+
+    edge_multiplier = float(np.clip(float(payload.get("edge_multiplier", 1.0)), 0.0, 1.25))
+    edge_bias = float(payload.get("edge_bias", 0.0))
+    tuned_prediction = float(market_line + edge_bias + edge_multiplier * (raw_prediction - market_line))
+    max_adjustment_abs = float(payload.get("max_adjustment_abs", {"PTS": 3.0, "TRB": 2.0, "AST": 1.5}.get(str(target).upper().strip(), 2.0)))
+    if np.isfinite(max_adjustment_abs) and max_adjustment_abs > 0.0:
+        tuned_prediction = float(raw_prediction + np.clip(tuned_prediction - raw_prediction, -max_adjustment_abs, max_adjustment_abs))
+    meta.update(
+        {
+            "applied": True,
+            "source": str(payload.get("source", "target_prediction_calibrator")),
+            "edge_multiplier": edge_multiplier,
+            "edge_bias": edge_bias,
+            "support_rows": int(payload.get("support_rows", 0)),
+        }
+    )
+    return tuned_prediction, meta
+
+
 def _player_aliases(player_dir_name: str) -> set[str]:
     normalized = normalize_name(player_dir_name)
     aliases = {normalized}
@@ -225,10 +288,12 @@ def build_records(
     predictor: StructuredStackInference | None,
     market_df: pd.DataFrame,
     season: int,
+    target_prediction_calibrator_path: Path | None = None,
 ) -> tuple[list[dict], list[dict]]:
     records: list[dict] = []
     skipped: list[dict] = []
     player_csv_index = build_player_csv_index(season)
+    target_prediction_calibrator = load_target_prediction_calibrator(target_prediction_calibrator_path)
 
     for _, market_row in market_df.iterrows():
         player = str(market_row["Player"])
@@ -294,18 +359,40 @@ def build_records(
             "fallback_reasons": ",".join(explanation.get("data_quality", {}).get("fallback_reasons", [])),
         }
         for target in TARGETS:
-            pred_value = float(explanation["predicted"][target])
+            raw_pred_value = float(explanation["predicted"][target])
             baseline_value = float(explanation["baseline"][target])
             market_value = market_row.get(f"Market_{target}", np.nan)
             market_value = float(market_value) if pd.notna(market_value) else np.nan
+            pred_value = raw_pred_value
+            calibration_meta = {
+                "applied": False,
+                "source": "identity",
+                "edge_multiplier": 1.0,
+                "edge_bias": 0.0,
+                "support_rows": 0,
+            }
+            if pd.notna(market_value):
+                pred_value, calibration_meta = apply_target_prediction_calibration(
+                    target,
+                    raw_prediction=raw_pred_value,
+                    market_line=market_value,
+                    calibrator=target_prediction_calibrator,
+                )
             record[f"pred_{target}"] = pred_value
+            record[f"raw_pred_{target}"] = raw_pred_value
             record[f"baseline_{target}"] = baseline_value
             record[f"market_{target}"] = market_value
             record[f"edge_{target}"] = pred_value - market_value if pd.notna(market_value) else np.nan
+            record[f"raw_edge_{target}"] = raw_pred_value - market_value if pd.notna(market_value) else np.nan
             record[f"baseline_edge_{target}"] = baseline_value - market_value if pd.notna(market_value) else np.nan
             record[f"{target}_uncertainty_sigma"] = float(explanation["target_factors"][target].get("uncertainty_sigma", 0.0))
             record[f"{target}_spike_probability"] = float(explanation["target_factors"][target].get("spike_probability", 0.0))
             record[f"market_books_{target}"] = float(market_row.get(f"Market_{target}_books", np.nan)) if pd.notna(market_row.get(f"Market_{target}_books", np.nan)) else np.nan
+            record[f"prediction_calibration_applied_{target}"] = bool(calibration_meta["applied"])
+            record[f"prediction_calibration_source_{target}"] = str(calibration_meta["source"])
+            record[f"prediction_calibration_multiplier_{target}"] = float(calibration_meta["edge_multiplier"])
+            record[f"prediction_calibration_bias_{target}"] = float(calibration_meta["edge_bias"])
+            record[f"prediction_calibration_support_rows_{target}"] = int(calibration_meta["support_rows"])
         records.append(record)
 
     return records, skipped
@@ -321,6 +408,17 @@ def parse_args() -> argparse.Namespace:
         "--allow-heuristic-fallback",
         action="store_true",
         help="Allow slate build to continue with heuristic-only predictions when model load fails.",
+    )
+    parser.add_argument(
+        "--target-prediction-calibrator-json",
+        type=Path,
+        default=DEFAULT_TARGET_PREDICTION_CALIBRATOR,
+        help="Optional target-level short-term prediction calibrator JSON.",
+    )
+    parser.add_argument(
+        "--disable-target-prediction-calibration",
+        action="store_true",
+        help="Disable target-level prediction calibration and keep raw model outputs.",
     )
     parser.add_argument("--csv-out", type=Path, default=REPO_ROOT / "model" / "analysis" / "upcoming_market_slate.csv", help="Output CSV path.")
     parser.add_argument("--json-out", type=Path, default=REPO_ROOT / "model" / "analysis" / "upcoming_market_slate.json", help="Output JSON path.")
@@ -344,7 +442,13 @@ def main() -> None:
             ) from exc
         print(f"Warning: model inference unavailable, using heuristic fallback only ({predictor_error})")
     market_df = load_market_wide(args.market_wide_path)
-    records, skipped = build_records(predictor, market_df, args.season)
+    calibrator_path = None if args.disable_target_prediction_calibration else args.target_prediction_calibrator_json
+    records, skipped = build_records(
+        predictor,
+        market_df,
+        args.season,
+        target_prediction_calibrator_path=calibrator_path,
+    )
 
     if not records:
         raise RuntimeError(f"No upcoming slate rows built. Skipped={len(skipped)} sample={skipped[:5]}")
@@ -361,6 +465,8 @@ def main() -> None:
         "season": args.season,
         "rows": int(len(results_df)),
         "skipped": skipped,
+        "target_prediction_calibrator_json": str(calibrator_path) if calibrator_path is not None else None,
+        "target_prediction_calibration_enabled": bool(not args.disable_target_prediction_calibration),
     }
     args.json_out.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
