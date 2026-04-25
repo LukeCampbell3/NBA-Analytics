@@ -10,6 +10,14 @@ Build the combined site:
 python sports/site/pipeline/build_static_site.py
 ```
 
+Run the shared daily predictor refresh for the published site:
+
+```bash
+python sports/site/pipeline/run_daily_predictions.py
+```
+
+That command refreshes the NBA board, tightens and exports the latest MLB board, then rebuilds the unified static bundle.
+
 Serve the built site locally:
 
 ```bash
@@ -20,6 +28,7 @@ python sports/site/pipeline/serve_web.py
 
 - `web/`: landing page source for `/`
 - `pipeline/build_static_site.py`: copies the landing page and mounts each `sports/*/web/` site under its own route
+- `pipeline/run_daily_predictions.py`: shared daily predictor entrypoint for NBA + MLB + dist rebuild
 - `pipeline/serve_web.py`: serves the built site from the repo-root `dist/`
 
 Each sport can publish its own `site.json` metadata file so the landing page can describe it without hardcoding every card.

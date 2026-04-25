@@ -40,6 +40,14 @@ Run daily market pipeline:
 python sports/nba/predictions/Player-Predictor/scripts/run_daily_market_pipeline.py
 ```
 
+For the shared published site, the preferred entrypoint is:
+
+```bash
+python sports/site/pipeline/run_daily_predictions.py
+```
+
+That command refreshes NBA, refreshes MLB, and rebuilds the unified `dist/` bundle in one pass.
+
 ## Data Paths
 
 - NBA frontend payloads: `sports/nba/web/data/*.json`

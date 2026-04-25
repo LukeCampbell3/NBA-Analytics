@@ -14,22 +14,50 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_RUN_DIR = REPO_ROOT / "sports" / "mlb" / "data" / "predictions" / "daily_runs" / "20260410"
-DEFAULT_CSV = DEFAULT_RUN_DIR / "daily_prediction_pool_20260410_high_precision_predictions.csv"
-DEFAULT_SUMMARY = DEFAULT_RUN_DIR / "daily_prediction_pool_20260410_high_precision_predictions_summary.json"
+DEFAULT_DAILY_RUNS_ROOT = REPO_ROOT / "sports" / "mlb" / "data" / "predictions" / "daily_runs"
 DEFAULT_OUT = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "daily_predictions.json"
+DEFAULT_OUT_DIST = REPO_ROOT / "dist" / "mlb" / "data" / "daily_predictions.json"
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Export the MLB web prediction payload.")
-    parser.add_argument("--input-csv", type=Path, default=DEFAULT_CSV, help="High-precision selection CSV.")
-    parser.add_argument("--summary-json", type=Path, default=DEFAULT_SUMMARY, help="High-precision selection summary JSON.")
+    parser.add_argument(
+        "--daily-runs-root",
+        type=Path,
+        default=DEFAULT_DAILY_RUNS_ROOT,
+        help="Root directory containing MLB daily prediction run folders.",
+    )
+    parser.add_argument("--input-csv", type=Path, default=None, help="High-precision selection CSV.")
+    parser.add_argument("--summary-json", type=Path, default=None, help="High-precision selection summary JSON.")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUT, help="Destination web payload JSON.")
+    parser.add_argument(
+        "--output-dist",
+        type=Path,
+        default=DEFAULT_OUT_DIST,
+        help="Optional destination for the published dist payload JSON.",
+    )
     return parser.parse_args()
 
 
+def find_latest_selected_csv(daily_runs_root: Path) -> Path:
+    candidates = sorted(
+        daily_runs_root.glob("**/daily_prediction_pool_*_high_precision_predictions.csv"),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    if not candidates:
+        raise FileNotFoundError(
+            f"No MLB high-precision selection CSV was found under {daily_runs_root}"
+        )
+    return candidates[0]
+
+
+def infer_summary_path(selected_csv: Path) -> Path:
+    return selected_csv.with_name(f"{selected_csv.stem}_summary.json")
+
+
 def load_rows(path: Path) -> list[dict[str, str]]:
-    with open(path, "r", encoding="utf-8", newline="") as handle:
+    with open(path, "r", encoding="utf-8-sig", newline="") as handle:
         return list(csv.DictReader(handle))
 
 
@@ -60,8 +88,10 @@ def build_splits(source: dict[str, int], total: int) -> dict[str, dict[str, floa
 
 def main() -> None:
     args = parse_args()
-    rows = load_rows(args.input_csv)
-    summary = json.loads(args.summary_json.read_text(encoding="utf-8"))
+    selected_csv = args.input_csv.resolve() if args.input_csv else find_latest_selected_csv(args.daily_runs_root.resolve())
+    summary_json = args.summary_json.resolve() if args.summary_json else infer_summary_path(selected_csv)
+    rows = load_rows(selected_csv)
+    summary = json.loads(summary_json.read_text(encoding="utf-8-sig"))
     total = len(rows)
 
     through_date = max((row.get("Last_History_Date", "") for row in rows), default="")
@@ -125,7 +155,14 @@ def main() -> None:
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    if args.output_dist:
+        args.output_dist.parent.mkdir(parents=True, exist_ok=True)
+        args.output_dist.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
     print(f"Wrote MLB web payload -> {args.output}")
+    if args.output_dist:
+        print(f"Wrote MLB dist payload -> {args.output_dist}")
 
 
 if __name__ == "__main__":

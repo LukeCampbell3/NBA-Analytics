@@ -27,7 +27,9 @@ import pandas as pd
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SITE_ROOT = REPO_ROOT.parents[1]
+SPORT_ROOT = REPO_ROOT.parents[1]
+WORKSPACE_ROOT = SPORT_ROOT.parents[1]
+UNIFIED_SITE_PIPELINE_ROOT = WORKSPACE_ROOT / "sports" / "site" / "pipeline"
 MARKET_ROOT = REPO_ROOT / "data copy" / "raw" / "market_odds" / "nba"
 ANALYSIS_ROOT = REPO_ROOT / "model" / "analysis" / "daily_runs"
 DATA_PROC_ROOT = REPO_ROOT / "Data-Proc"
@@ -136,7 +138,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--web-cards-json",
         type=Path,
-        default=SITE_ROOT / "web" / "data" / "cards.json",
+        default=SPORT_ROOT / "web" / "data" / "cards.json",
         help="cards.json used during web export to enrich player display names/headshots.",
     )
     parser.add_argument("--skip-build-site", action="store_true", help="Skip static site rebuild step.")
@@ -904,8 +906,10 @@ def main() -> None:
                 "scripts/export_daily_predictions_web.py",
                 "--manifest",
                 str(manifest_path),
+                "--out-json",
+                str(SPORT_ROOT / "web" / "data" / "daily_predictions.json"),
                 "--out-dist",
-                str(SITE_ROOT / "dist" / "data" / "daily_predictions.json"),
+                str(WORKSPACE_ROOT / "dist" / "nba" / "data" / "daily_predictions.json"),
                 "--cards-json",
                 str(args.web_cards_json),
             ],
@@ -920,11 +924,9 @@ def main() -> None:
             "Rebuild Static Site Bundle",
             [
                 args.python,
-                str(SITE_ROOT / "pipeline" / "build_static_site.py"),
-                "--source",
-                str(SITE_ROOT / "web"),
+                str(UNIFIED_SITE_PIPELINE_ROOT / "build_static_site.py"),
                 "--output",
-                str(SITE_ROOT / "dist"),
+                str(WORKSPACE_ROOT / "dist"),
             ],
         )
     else:

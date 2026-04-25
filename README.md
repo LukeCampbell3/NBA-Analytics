@@ -21,13 +21,21 @@ sports/
 
 ## Multi-Sport Quick Start
 
-1. Build the shared site:
+1. Run the shared daily prediction refresh:
+
+```bash
+python sports/site/pipeline/run_daily_predictions.py
+```
+
+This refreshes NBA predictions, tightens the latest MLB pool into the published board, and rebuilds the unified static site into `dist/`.
+
+2. Build the shared site only:
 
 ```bash
 python sports/site/pipeline/build_static_site.py
 ```
 
-2. Serve the shared site locally:
+3. Serve the shared site locally:
 
 ```bash
 python sports/site/pipeline/serve_web.py
@@ -57,10 +65,12 @@ python sports/nba/pipeline/build_static_site.py
 python sports/nba/pipeline/serve_web.py
 ```
 
-4. Run NBA prediction pipeline:
+4. Run NBA prediction pipeline only:
 
 ```bash
 python sports/nba/predictions/Player-Predictor/scripts/run_daily_market_pipeline.py
 ```
+
+For the shared published site, prefer `python sports/site/pipeline/run_daily_predictions.py` so both NBA and MLB payloads refresh together and `dist/` stays in sync.
 
 See `sports/nba/README.md` for full NBA pipeline details.

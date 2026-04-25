@@ -19,11 +19,12 @@ import pandas as pd
 
 
 PLAYER_PREDICTOR_ROOT = Path(__file__).resolve().parent.parent
-SITE_ROOT = PLAYER_PREDICTOR_ROOT.parents[1]
+SPORT_ROOT = PLAYER_PREDICTOR_ROOT.parents[1]
+WORKSPACE_ROOT = SPORT_ROOT.parents[1]
 DAILY_RUNS_ROOT = PLAYER_PREDICTOR_ROOT / "model" / "analysis" / "daily_runs"
-DEFAULT_WEB_JSON = SITE_ROOT / "web" / "data" / "daily_predictions.json"
-DEFAULT_DIST_JSON = SITE_ROOT / "dist" / "data" / "daily_predictions.json"
-DEFAULT_CARDS_JSON = SITE_ROOT / "web" / "data" / "cards.json"
+DEFAULT_WEB_JSON = SPORT_ROOT / "web" / "data" / "daily_predictions.json"
+DEFAULT_DIST_JSON = WORKSPACE_ROOT / "dist" / "nba" / "data" / "daily_predictions.json"
+DEFAULT_CARDS_JSON = SPORT_ROOT / "web" / "data" / "cards.json"
 
 
 def parse_args() -> argparse.Namespace:

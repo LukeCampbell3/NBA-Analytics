@@ -45,3 +45,11 @@ To rebuild that payload from the latest high-precision selector output:
 ```bash
 python sports/mlb/scripts/export_web_prediction_payload.py
 ```
+
+For the shared published site, the preferred one-shot command is:
+
+```bash
+python sports/site/pipeline/run_daily_predictions.py
+```
+
+That command selects the latest MLB high-precision board, updates the MLB web payload, refreshes NBA, and rebuilds the shared `dist/` bundle.
