@@ -20,6 +20,16 @@ python sports/site/pipeline/serve_web.py
 
 - `web/`: landing page source for `/`
 - `pipeline/build_static_site.py`: copies the landing page and mounts each `sports/*/web/` site under its own route
-- `pipeline/serve_web.py`: serves the built site from `dist/`
+- `pipeline/serve_web.py`: serves the built site from the repo-root `dist/`
 
 Each sport can publish its own `site.json` metadata file so the landing page can describe it without hardcoding every card.
+
+## Output Directory
+
+The unified deployable static bundle now defaults to:
+
+```text
+dist/
+```
+
+That folder contains the landing page plus every published sport page and asset, so it can be deployed directly as a static site.

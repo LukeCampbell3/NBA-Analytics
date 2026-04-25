@@ -8,7 +8,6 @@ This repository is organized by sport so NBA, MLB, and NFL can evolve independen
 sports/
   site/
     web/                   # Shared landing page source
-    dist/                  # Built multi-sport site
     pipeline/              # Multi-sport build + local serving scripts
   nba/
     web/                   # NBA web app source
@@ -36,6 +35,7 @@ python sports/site/pipeline/serve_web.py
 ```
 
 This gives you a landing page at `/` and sport workspaces like `/nba/`, `/mlb/`, and `/nfl/`.
+The combined static output is written to `dist/` at the repo root.
 
 ## NBA Quick Start
 

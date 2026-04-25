@@ -19,7 +19,8 @@ from urllib.parse import unquote, urlsplit
 DEFAULT_BIND_HOST = "127.0.0.1"
 SCRIPT_PATH = Path(__file__).resolve()
 SITE_ROOT = SCRIPT_PATH.parents[1]
-DEFAULT_WEB_DIR = SITE_ROOT / "dist"
+REPO_ROOT = SITE_ROOT.parent.parent
+DEFAULT_WEB_DIR = REPO_ROOT / "dist"
 
 
 class RobustThreadingHTTPServer(http.server.ThreadingHTTPServer):
