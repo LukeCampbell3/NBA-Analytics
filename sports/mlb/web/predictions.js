@@ -28,9 +28,9 @@ class DailyPredictionsPage {
         this.plays.sort((a, b) => {
             const parlayDiff = Number(Boolean(b.parlay_candidate)) - Number(Boolean(a.parlay_candidate));
             if (parlayDiff !== 0) return parlayDiff;
-            const scoreDiff = (Number(b.precision_score) || 0) - (Number(a.precision_score) || 0);
+            const scoreDiff = (Number(b.value_score) || 0) - (Number(a.value_score) || 0);
             if (Math.abs(scoreDiff) > 1e-9) return scoreDiff;
-            return (Number(b.estimated_graded_hit_rate) || 0) - (Number(a.estimated_graded_hit_rate) || 0);
+            return (Number(b.abs_edge) || 0) - (Number(a.abs_edge) || 0);
         });
         this.renderRunMeta();
     }
@@ -66,10 +66,12 @@ class DailyPredictionsPage {
         const direction = directionRaw === "UNDER" ? "UNDER" : "OVER";
         const displayName = this.getPlayDisplayName(play);
         const monogram = this.escapeHtml(this.getMonogram(displayName));
-        const reward = Number(play.estimated_graded_hit_rate);
+        const edge = Number(play.edge);
         const lineText = this.formatNumber(play.market_line);
         const predictionText = this.formatNumber(play.prediction);
-        const edgeText = this.formatNumber(play.abs_edge);
+        const edgeText = this.formatSignedNumber(play.edge);
+        const valueText = this.formatNumber(play.value_score);
+        const hitRateText = this.formatPct(play.estimated_graded_hit_rate);
         const gameText = [play.market_away_team, play.market_home_team].filter(Boolean).join(" @ ");
         const parlayPartner = String(play.parlay_partner_name || "").trim();
         const parlayRate = this.formatPct(play.parlay_projected_hit_rate);
@@ -87,19 +89,23 @@ class DailyPredictionsPage {
                         <span class="wanted-tag wanted-tag-support">PAIR ${this.escapeHtml(parlayRate)}</span>
                     </div>
                 ` : ""}
-                <div class="wanted-reward-label">HIT RATE</div>
-                <div class="wanted-reward-value">${this.escapeHtml(this.formatPct(reward))}</div>
+                <div class="wanted-reward-label">EDGE</div>
+                <div class="wanted-reward-value">${this.escapeHtml(this.formatSignedNumber(edge))}</div>
                 <div class="wanted-name">${this.escapeHtml(displayName)}</div>
                 <div class="wanted-direction">${this.escapeHtml(direction)}</div>
                 <div class="wanted-prop-line">${this.escapeHtml(play.target || "")} | LINE ${this.escapeHtml(lineText)} | PRED ${this.escapeHtml(predictionText)}</div>
                 ${play.parlay_candidate ? `<div class="wanted-parlay-note">Best paired with ${this.escapeHtml(parlayPartner || "another tagged leg")}</div>` : ""}
-                <div class="wanted-footer">${this.escapeHtml(`${edgeText} EDGE | ${gameText}`)}</div>
+                <div class="wanted-footer">${this.escapeHtml(`${hitRateText} HIT | VALUE ${valueText} | ${edgeText} EDGE | ${gameText}`)}</div>
             </article>
         `;
     }
 
     formatNumber(value) {
         return Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "n/a";
+    }
+
+    formatSignedNumber(value) {
+        return Number.isFinite(Number(value)) ? `${Number(value) >= 0 ? "+" : ""}${Number(value).toFixed(2)}` : "n/a";
     }
 
     formatPct(value) {
