@@ -5,7 +5,6 @@ This folder now includes a published MLB landing page, bounty-style prediction b
 Suggested next folders:
 
 - `web/` active MLB frontend pages
-- `dist/`
 - `pipeline/`
 - `predictions/`
 - `tests/`
@@ -15,6 +14,8 @@ Suggested next folders:
 - `/mlb/` MLB home page
 - `/mlb/predictions/` MLB prediction bounty board
 - `/mlb/prediction-about/` MLB prediction method page
+
+These pages are published through the repo-root `dist/` bundle.
 
 ## High-Precision Selection
 

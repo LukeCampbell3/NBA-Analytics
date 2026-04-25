@@ -5,7 +5,6 @@ This folder is reserved for NFL pages, prediction pipelines, and model artifacts
 Suggested next folders:
 
 - `web/` placeholder NFL landing page
-- `dist/`
 - `pipeline/`
 - `predictions/`
 - `tests/`
