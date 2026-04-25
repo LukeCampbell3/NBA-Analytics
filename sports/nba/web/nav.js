@@ -6,7 +6,7 @@
     const overlay = document.getElementById('siteNavOverlay');
     const closeBtn = document.getElementById('siteNavClose');
     const themeToggleBtn = document.getElementById('themeToggleButton');
-    const THEME_KEY = 'nba_theme_preference';
+    const THEME_KEY = 'sports_site_theme_preference';
 
     const getPreferredTheme = () => {
         const saved = localStorage.getItem(THEME_KEY);
@@ -75,38 +75,49 @@
             .filter(Boolean)
             .map((part) => part.toLowerCase());
 
-        if (!segments.length) return 'index.html';
+        if (!segments.length) return { page: 'index.html', atSiteRoot: true };
 
         const last = segments[segments.length - 1];
         if (last.endsWith('.html')) {
             if (last === 'index.html' && segments.length > 1) {
-                return `${segments[segments.length - 2]}.html`;
+                return { page: `${segments[segments.length - 2]}.html`, atSiteRoot: false };
             }
-            return last;
+            return { page: last, atSiteRoot: false };
         }
 
-        return `${last}.html`;
+        return { page: `${last}.html`, atSiteRoot: false };
     };
 
     const canonicalNavHref = (href) => {
         const normalized = String(href || '').trim().toLowerCase();
-        if (!normalized || normalized === '/' || normalized === 'index.html' || normalized === '/index.html') {
-            return 'index.html';
+        if (!normalized || normalized === '/' || normalized === '/index.html') {
+            return 'site-root';
         }
-        return normalized.startsWith('/') ? normalized.slice(1) : normalized;
+
+        const withoutLeadingSlash = normalized.startsWith('/') ? normalized.slice(1) : normalized;
+        if (withoutLeadingSlash.endsWith('.html')) {
+            const parts = withoutLeadingSlash.split('/').filter(Boolean);
+            return parts[parts.length - 1] || 'index.html';
+        }
+
+        const trimmed = withoutLeadingSlash.replace(/\/+$/, '');
+        if (!trimmed) return 'site-root';
+
+        const parts = trimmed.split('/').filter(Boolean);
+        if (!parts.length) return 'site-root';
+        if (parts.length === 1) return 'index.html';
+        return `${parts[parts.length - 1]}.html`;
     };
 
     const current = getCurrentPage();
     document.querySelectorAll('.site-nav-link').forEach((link) => {
         const hrefRaw = link.getAttribute('href') || '';
         const href = canonicalNavHref(hrefRaw);
+        const isActive = href === 'site-root'
+            ? current.atSiteRoot
+            : (!current.atSiteRoot && href === current.page);
 
-        // Keep Home canonical so generator drift back to index.html does not persist in runtime.
-        if (href === 'index.html' && (link.textContent || '').trim().toLowerCase() === 'home') {
-            link.setAttribute('href', '/');
-        }
-
-        if (href === current || (current === '' && href === 'index.html')) {
+        if (isActive) {
             link.classList.add('active');
             link.setAttribute('aria-current', 'page');
         }

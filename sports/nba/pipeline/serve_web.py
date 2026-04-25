@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-serve_web.py - Quick server for NBA-VAR web frontend
+serve_web.py - Quick server for the NBA web frontend
 
 Serves the web interface on localhost with automatic browser opening.
 """
@@ -372,7 +372,7 @@ def serve(
             url = f"http://{browser_host}:{actual_port}"
 
             print("\n" + "="*60)
-            print("NBA-VAR Web Frontend")
+            print("NBA Analytics Web Frontend")
             print("="*60)
             print(f"\nServing at: {url}")
             print(f"Bound to: {bind_host}:{actual_port}")
@@ -403,7 +403,7 @@ def serve(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Serve NBA-VAR web frontend",
+        description="Serve NBA web frontend",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

@@ -1,11 +1,15 @@
 ﻿# Multi-Sport Analytics Workspace
 
-This repository is now organized by sport so NBA, MLB, and NFL can evolve independently without path collisions.
+This repository is organized by sport so NBA, MLB, and NFL can evolve independently without path collisions, while still shipping through one shared landing page.
 
 ## Repository Structure
 
 ```text
 sports/
+  site/
+    web/                   # Shared landing page source
+    dist/                  # Built multi-sport site
+    pipeline/              # Multi-sport build + local serving scripts
   nba/
     web/                   # NBA web app source
     dist/                  # Built static bundle
@@ -16,6 +20,22 @@ sports/
   mlb/                     # MLB scaffold
   nfl/                     # NFL scaffold
 ```
+
+## Multi-Sport Quick Start
+
+1. Build the shared site:
+
+```bash
+python sports/site/pipeline/build_static_site.py
+```
+
+2. Serve the shared site locally:
+
+```bash
+python sports/site/pipeline/serve_web.py
+```
+
+This gives you a landing page at `/` and sport workspaces like `/nba/`, `/mlb/`, and `/nfl/`.
 
 ## NBA Quick Start
 
