@@ -114,6 +114,10 @@ class StrategyConfig:
     board_objective_fp_veto_ml_weight: float = 0.45
     learned_gate_enabled: bool = False
     learned_gate_min_rows: int = 0
+    initial_pool_gate_enabled: bool = True
+    initial_pool_gate_drop_fraction: float = 0.10
+    initial_pool_gate_score_col: str = "selector_expected_win_rate"
+    initial_pool_gate_min_keep_rows: int = 20
     accepted_pick_gate_enabled: bool = False
     accepted_pick_gate_live: bool = False
     accepted_pick_gate_min_rows: int = 0

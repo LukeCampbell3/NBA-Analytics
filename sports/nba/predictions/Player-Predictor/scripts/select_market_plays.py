@@ -24,6 +24,53 @@ import numpy as np
 import pandas as pd
 
 try:
+    from decision_engine.line_decision import (
+        LineDecisionConfig,
+        build_line_decision_lookup,
+        estimate_line_decision,
+    )
+except Exception:  # pragma: no cover - fallback for standalone execution
+    LineDecisionConfig = None
+
+    def build_line_decision_lookup(history_df: pd.DataFrame) -> dict[str, dict]:
+        return {}
+
+    def estimate_line_decision(**kwargs) -> dict[str, Any]:
+        direction = str(kwargs.get("direction", "NO_TRADE")).upper().strip()
+        prior_win_rate = float(np.clip(kwargs.get("prior_direction_win_rate", 0.5), 0.0, 1.0))
+        prior_neutral = float(np.clip(kwargs.get("prior_neutral_rate", 0.0), 0.0, 1.0))
+        prior_loss = float(np.clip(1.0 - prior_win_rate - prior_neutral, 0.0, 1.0))
+        if direction == "OVER":
+            over_prob = prior_win_rate
+            under_prob = prior_loss
+        elif direction == "UNDER":
+            over_prob = prior_loss
+            under_prob = prior_win_rate
+        else:
+            over_prob = 0.5
+            under_prob = 0.5
+        return {
+            "over_prob": float(over_prob),
+            "under_prob": float(under_prob),
+            "no_trade_prob": float(prior_neutral),
+            "chosen_direction_prob": float(prior_win_rate),
+            "opposite_direction_prob": float(prior_loss),
+            "chosen_direction_conditional_prob": float(prior_win_rate),
+            "opposite_direction_conditional_prob": float(prior_loss),
+            "conditional_prob_gap": float(prior_win_rate - prior_loss),
+            "trade_prob_floor": float(kwargs.get("config").min_trade_prob if kwargs.get("config") is not None else 0.63),
+            "trade_eligible": direction in {"OVER", "UNDER"},
+            "action": direction if direction in {"OVER", "UNDER"} else "NO_TRADE",
+            "source": "module_missing",
+            "support_rows": 0.0,
+            "support_strength": 0.0,
+            "sigma_pressure": 1.0,
+            "instability_score": 1.0,
+            "fragility_score": 1.0,
+            "empirical_blend_weight": 0.0,
+        }
+
+try:
     from decision_engine.uncertainty import (
         BELIEF_UNCERTAINTY_LOWER,
         BELIEF_UNCERTAINTY_UPPER,
@@ -121,6 +168,29 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=DEFAULT_MARKET_REGRESSION_CEILING,
         help="Maximum shrinkage lambda used when regressing prediction toward market line.",
+    )
+    parser.add_argument(
+        "--disable-line-decision-sidecar",
+        action="store_true",
+        help="Disable the line-aware decision sidecar and keep the legacy selector probability mapping only.",
+    )
+    parser.add_argument(
+        "--line-decision-no-trade-threshold",
+        type=float,
+        default=0.45,
+        help="Minimum sidecar neutral/no-trade probability that blocks a trade.",
+    )
+    parser.add_argument(
+        "--line-decision-min-trade-prob",
+        type=float,
+        default=LineDecisionConfig().min_trade_prob if LineDecisionConfig is not None else 0.63,
+        help="Minimum chosen-direction probability required for a trade to remain eligible.",
+    )
+    parser.add_argument(
+        "--line-decision-min-prob-gap",
+        type=float,
+        default=LineDecisionConfig().min_trade_prob_gap if LineDecisionConfig is not None else 0.06,
+        help="Minimum chosen-vs-opposite probability gap required for a trade to remain eligible.",
     )
     return parser.parse_args()
 
@@ -585,11 +655,14 @@ def _apply_volatility_adjustments(
 def build_play_rows(
     slate_df: pd.DataFrame,
     history_lookup: dict[str, dict],
+    line_decision_lookup: dict[str, dict] | None = None,
     volatility_adjustment: bool = True,
     belief_uncertainty_lower: float = BELIEF_UNCERTAINTY_LOWER,
     belief_uncertainty_upper: float = BELIEF_UNCERTAINTY_UPPER,
     market_regression_floor: float = DEFAULT_MARKET_REGRESSION_FLOOR,
     market_regression_ceiling: float = DEFAULT_MARKET_REGRESSION_CEILING,
+    line_decision_enabled: bool = True,
+    line_decision_config: LineDecisionConfig | None = None,
 ) -> pd.DataFrame:
     rows: list[dict] = []
     for _, row in slate_df.iterrows():
@@ -674,14 +747,105 @@ def build_play_rows(
             uncertainty_discount = float(np.clip(0.35 * posterior_std, 0.0, 0.07))
             adjusted_expected_rate = float(np.clip(adjusted_expected_rate - uncertainty_discount, 0.50, 0.95))
 
-            expected_push_rate = float(np.clip(expected_triplet.get("expected_push_rate", 0.0), 0.0, 1.0))
-            expected_loss_rate = float(np.clip(1.0 - adjusted_expected_rate - expected_push_rate, 0.0, 1.0))
+            historical_push_rate = float(np.clip(expected_triplet.get("expected_push_rate", 0.0), 0.0, 1.0))
+            prior_expected_loss_rate = float(np.clip(1.0 - adjusted_expected_rate - historical_push_rate, 0.0, 1.0))
+            if direction == "PUSH":
+                line_decision = {
+                    "over_prob": 0.0,
+                    "under_prob": 0.0,
+                    "no_trade_prob": 1.0,
+                    "chosen_direction_prob": 0.0,
+                    "opposite_direction_prob": 0.0,
+                    "chosen_direction_conditional_prob": 0.0,
+                    "opposite_direction_conditional_prob": 0.0,
+                    "conditional_prob_gap": 0.0,
+                    "trade_prob_floor": float((line_decision_config or LineDecisionConfig()).min_trade_prob if LineDecisionConfig is not None else 0.63),
+                    "trade_eligible": False,
+                    "action": "NO_TRADE",
+                    "source": "zero_edge",
+                    "support_rows": 0.0,
+                    "support_strength": 0.0,
+                    "sigma_pressure": 1.0,
+                    "instability_score": 1.0,
+                    "fragility_score": 1.0,
+                    "empirical_blend_weight": 0.0,
+                }
+            elif line_decision_enabled:
+                line_decision = estimate_line_decision(
+                    lookup=line_decision_lookup or {},
+                    target=target,
+                    prediction=pred,
+                    market_line=market,
+                    direction=direction,
+                    gap_percentile=gap_pct,
+                    uncertainty_sigma=safe_float(row.get(f"{target}_uncertainty_sigma"), default=np.nan),
+                    belief_confidence_factor=belief_conf,
+                    feasibility=feas,
+                    history_rows=row.get("history_rows"),
+                    market_books=row.get(f"market_books_{target}"),
+                    fallback_blend=fallback_blend,
+                    prior_direction_win_rate=adjusted_expected_rate,
+                    prior_neutral_rate=historical_push_rate,
+                    config=line_decision_config,
+                )
+            else:
+                if direction == "OVER":
+                    line_over_prob = adjusted_expected_rate
+                    line_under_prob = prior_expected_loss_rate
+                else:
+                    line_over_prob = prior_expected_loss_rate
+                    line_under_prob = adjusted_expected_rate
+                line_decision = {
+                    "over_prob": float(line_over_prob),
+                    "under_prob": float(line_under_prob),
+                    "no_trade_prob": float(historical_push_rate),
+                    "chosen_direction_prob": float(adjusted_expected_rate),
+                    "opposite_direction_prob": float(prior_expected_loss_rate),
+                    "chosen_direction_conditional_prob": float(adjusted_expected_rate / max(1e-9, adjusted_expected_rate + prior_expected_loss_rate)),
+                    "opposite_direction_conditional_prob": float(prior_expected_loss_rate / max(1e-9, adjusted_expected_rate + prior_expected_loss_rate)),
+                    "conditional_prob_gap": float((adjusted_expected_rate - prior_expected_loss_rate) / max(1e-9, adjusted_expected_rate + prior_expected_loss_rate)),
+                    "trade_prob_floor": float((line_decision_config or LineDecisionConfig()).min_trade_prob if LineDecisionConfig is not None else 0.63),
+                    "trade_eligible": True,
+                    "action": direction,
+                    "source": "disabled",
+                    "support_rows": 0.0,
+                    "support_strength": 0.0,
+                    "sigma_pressure": 0.0,
+                    "instability_score": 0.0,
+                    "fragility_score": 0.0,
+                    "empirical_blend_weight": 0.0,
+                }
+
+            line_over_prob = float(np.clip(line_decision.get("over_prob", 0.5), 0.0, 1.0))
+            line_under_prob = float(np.clip(line_decision.get("under_prob", 0.5), 0.0, 1.0))
+            line_no_trade_prob = float(np.clip(line_decision.get("no_trade_prob", 0.0), 0.0, 1.0))
+            chosen_direction_prob = float(np.clip(line_decision.get("chosen_direction_prob", adjusted_expected_rate), 0.0, 1.0))
+            opposite_direction_prob = float(np.clip(line_decision.get("opposite_direction_prob", prior_expected_loss_rate), 0.0, 1.0))
+            chosen_direction_conditional_prob = float(
+                np.clip(line_decision.get("chosen_direction_conditional_prob", adjusted_expected_rate), 0.0, 1.0)
+            )
+            opposite_direction_conditional_prob = float(
+                np.clip(line_decision.get("opposite_direction_conditional_prob", prior_expected_loss_rate), 0.0, 1.0)
+            )
+            expected_push_rate = historical_push_rate
+            expected_loss_rate = prior_expected_loss_rate
+            trade_eligible = bool(line_decision.get("trade_eligible", False))
+            if not trade_eligible:
+                adjusted_recommendation = "pass"
+            elif adjusted_recommendation == "pass":
+                adjusted_recommendation = "consider"
+            elif adjusted_recommendation == "elite" and adjusted_expected_rate < 0.62:
+                adjusted_recommendation = "strong"
+            elif adjusted_recommendation in {"elite", "strong"} and adjusted_expected_rate < 0.58:
+                adjusted_recommendation = "consider"
+
             confidence_score = (
                 adjusted_abs_gap
                 * belief_conf
                 * feas
                 * (1.0 - float(risk_profile["risk_penalty"]))
                 * (1.0 - min(0.75, posterior_std))
+                * (1.0 - min(0.80, line_no_trade_prob))
             )
             rows.append(
                 {
@@ -696,6 +860,24 @@ def build_play_rows(
                     "direction": direction,
                     "prediction": pred,
                     "raw_prediction": raw_pred,
+                    "line_decision_action": str(line_decision.get("action", "NO_TRADE")),
+                    "line_decision_trade_eligible": bool(line_decision.get("trade_eligible", False)),
+                    "line_over_prob": line_over_prob,
+                    "line_under_prob": line_under_prob,
+                    "line_no_trade_prob": line_no_trade_prob,
+                    "line_chosen_direction_prob": adjusted_expected_rate,
+                    "line_opposite_direction_prob": expected_loss_rate,
+                    "line_chosen_direction_conditional_prob": chosen_direction_conditional_prob,
+                    "line_opposite_direction_conditional_prob": opposite_direction_conditional_prob,
+                    "line_conditional_prob_gap": float(line_decision.get("conditional_prob_gap", 0.0)),
+                    "line_trade_prob_floor": float(line_decision.get("trade_prob_floor", 0.0)),
+                    "line_decision_source": str(line_decision.get("source", "unknown")),
+                    "line_decision_support_rows": float(line_decision.get("support_rows", 0.0)),
+                    "line_decision_support_strength": float(line_decision.get("support_strength", 0.0)),
+                    "line_decision_sigma_pressure": float(line_decision.get("sigma_pressure", 1.0)),
+                    "line_decision_instability_score": float(line_decision.get("instability_score", 1.0)),
+                    "line_decision_fragility_score": float(line_decision.get("fragility_score", 1.0)),
+                    "line_decision_empirical_blend_weight": float(line_decision.get("empirical_blend_weight", 0.0)),
                     "prediction_shrink_lambda": prediction_shrink_lambda,
                     "market_line": market,
                     "edge": edge,
@@ -709,9 +891,11 @@ def build_play_rows(
                     "raw_expected_win_rate": float(expected_triplet.get("base_expected_win_rate", base_expected_rate)),
                     "bayesian_expected_win_rate": base_expected_rate,
                     "expected_push_rate": expected_push_rate,
-                    "raw_expected_push_rate": expected_push_rate,
+                    "historical_push_rate": historical_push_rate,
+                    "expected_fragile_rate": float(np.clip(line_no_trade_prob - historical_push_rate, 0.0, 1.0)),
+                    "raw_expected_push_rate": historical_push_rate,
                     "expected_loss_rate": expected_loss_rate,
-                    "raw_expected_loss_rate": float(expected_triplet.get("expected_loss_rate", expected_loss_rate)),
+                    "raw_expected_loss_rate": prior_expected_loss_rate,
                     "posterior_alpha": float(expected_triplet.get("posterior_alpha", DEFAULT_BETA_PRIOR_ALPHA)),
                     "posterior_beta": float(expected_triplet.get("posterior_beta", DEFAULT_BETA_PRIOR_BETA)),
                     "posterior_variance": posterior_variance,
@@ -771,14 +955,27 @@ def main() -> None:
     slate_df = pd.read_csv(slate_path)
     history_df = pd.read_csv(history_path)
     history_lookup = build_history_lookup(history_df)
+    line_decision_lookup = build_line_decision_lookup(history_df)
+    line_decision_cfg = (
+        LineDecisionConfig(
+            no_trade_threshold=float(args.line_decision_no_trade_threshold),
+            min_trade_prob=float(args.line_decision_min_trade_prob),
+            min_trade_prob_gap=float(args.line_decision_min_prob_gap),
+        )
+        if LineDecisionConfig is not None
+        else None
+    )
     plays = build_play_rows(
         slate_df,
         history_lookup,
+        line_decision_lookup=line_decision_lookup,
         volatility_adjustment=not args.disable_volatility_adjustment,
         belief_uncertainty_lower=float(args.belief_uncertainty_lower),
         belief_uncertainty_upper=float(args.belief_uncertainty_upper),
         market_regression_floor=float(args.market_regression_floor),
         market_regression_ceiling=float(args.market_regression_ceiling),
+        line_decision_enabled=not args.disable_line_decision_sidecar,
+        line_decision_config=line_decision_cfg,
     )
     if plays.empty:
         raise RuntimeError("No playable rows were produced from the provided slate/history inputs.")
@@ -798,6 +995,8 @@ def main() -> None:
         "history_csv": str(history_path),
         "n_plays": int(len(plays)),
         "recommendation_counts": plays["recommendation"].value_counts().to_dict(),
+        "line_decision_action_counts": plays["line_decision_action"].value_counts().to_dict() if "line_decision_action" in plays.columns else {},
+        "trade_eligible_rows": int(pd.to_numeric(plays.get("line_decision_trade_eligible"), errors="coerce").fillna(0).astype(bool).sum()) if "line_decision_trade_eligible" in plays.columns else int(len(plays)),
         "top_strong": plays.loc[plays["recommendation"] == "strong"].head(10).to_dict(orient="records"),
         "top_consider": plays.loc[plays["recommendation"] == "consider"].head(10).to_dict(orient="records"),
     }
@@ -824,6 +1023,7 @@ def main() -> None:
         "gap_percentile",
         "expected_win_rate",
         "expected_push_rate",
+        "line_decision_action",
         "confidence_score",
         "recommendation",
     ]
