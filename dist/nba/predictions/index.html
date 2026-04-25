@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="../">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Analytics | Daily Predictions</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="styles.css?v=23">
+</head>
+<body>
+    <button id="siteMenuButton" class="site-menu-button" aria-label="Open site navigation" aria-controls="siteNavDrawer" aria-expanded="false">
+        <span class="site-menu-icon">&#9776;</span>
+    </button>
+    <div id="siteNavOverlay" class="site-nav-overlay"></div>
+    <aside id="siteNavDrawer" class="site-nav-drawer" aria-label="Site navigation">
+        <div class="site-nav-head">
+            <div class="site-nav-title">Navigate</div>
+            <button id="siteNavClose" class="site-nav-close" aria-label="Close site navigation">&times;</button>
+        </div>
+        <nav class="site-nav-links">
+            <a class="site-nav-link" href="/">Site Home</a>
+            <a class="site-nav-link" href="index.html">NBA Dashboard</a>
+            <a class="site-nav-link" href="predictions.html">Predictions</a>
+            <a class="site-nav-link" href="prediction-about.html">Prediction About</a>
+            <a class="site-nav-link" href="college.html">College</a>
+            <a class="site-nav-link" href="about.html">About</a>
+        </nav>
+        <div class="site-nav-footer">
+            <button id="themeToggleButton" class="theme-toggle-radial" aria-label="Toggle dark mode" title="Toggle dark/light mode">&#9680;</button>
+        </div>
+    </aside>
+
+    <main class="predictions-page">
+        <section class="prediction-stage">
+            <div class="container">
+                <header class="prediction-stage-header">
+                    <div class="prediction-sign">
+                        <a class="prediction-about-icon" href="prediction-about.html" aria-label="Open prediction about page" title="How it works and accuracy">i</a>
+                        <p class="prediction-sign-kicker">Daily Board</p>
+                        <h1>Prediction Bounties</h1>
+                        <p id="predictionRunMeta" class="prediction-run-meta">Loading board details...</p>
+                    </div>
+                </header>
+                <div id="predictionCards" class="prediction-cards"></div>
+                <div id="predictionEmpty" class="no-results" style="display:none;">
+                    <p>No prediction bounties available right now.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="nav.js?v=7"></script>
+    <script src="predictions.js?v=4"></script>
+</body>
+</html>

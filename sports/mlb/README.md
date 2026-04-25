@@ -1,14 +1,20 @@
-# MLB Workspace Scaffold
+# MLB Workspace
 
-This folder is reserved for MLB pages, prediction pipelines, and model artifacts, and now includes a small `web/` entry point so baseball has its own frontend route.
+This folder now includes a published MLB landing page, bounty-style prediction board, and prediction method page under the shared multi-sport site.
 
 Suggested next folders:
 
-- `web/` placeholder MLB landing page
+- `web/` active MLB frontend pages
 - `dist/`
 - `pipeline/`
 - `predictions/`
 - `tests/`
+
+## Frontend Pages
+
+- `/mlb/` MLB home page
+- `/mlb/predictions/` MLB prediction bounty board
+- `/mlb/prediction-about/` MLB prediction method page
 
 ## High-Precision Selection
 
@@ -29,3 +35,12 @@ By default the selector:
 - estimates directional hit probability from the model mean and line
 - filters out weak edge / stale history / high-push plays
 - limits concentration by player, game, and team
+
+## Web Payload Export
+
+The predictions pages read from `sports/mlb/web/data/daily_predictions.json`.
+To rebuild that payload from the latest high-precision selector output:
+
+```bash
+python sports/mlb/scripts/export_web_prediction_payload.py
+```

@@ -3,44 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MLB Analytics</title>
+    <title>MLB Analytics | Home</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=1">
+    <link rel="stylesheet" href="styles.css?v=2">
 </head>
-<body class="sport-page sport-page-mlb">
-    <main class="shell">
-        <a class="back-link" href="/">Back to sports hub</a>
+<body class="mlb-home-page">
+    <button id="siteMenuButton" class="site-menu-button" aria-label="Open site navigation" aria-controls="siteNavDrawer" aria-expanded="false">
+        <span class="site-menu-icon">&#9776;</span>
+    </button>
+    <div id="siteNavOverlay" class="site-nav-overlay"></div>
+    <aside id="siteNavDrawer" class="site-nav-drawer" aria-label="Site navigation">
+        <div class="site-nav-head">
+            <div class="site-nav-title">Navigate</div>
+            <button id="siteNavClose" class="site-nav-close" aria-label="Close site navigation">&times;</button>
+        </div>
+        <nav class="site-nav-links">
+            <a class="site-nav-link" href="/">Site Home</a>
+            <a class="site-nav-link" href="index.html">MLB Home</a>
+            <a class="site-nav-link" href="predictions.html">Predictions</a>
+            <a class="site-nav-link" href="prediction-about.html">Prediction About</a>
+        </nav>
+        <div class="site-nav-footer">
+            <button id="themeToggleButton" class="theme-toggle-radial" aria-label="Toggle dark mode" title="Toggle dark/light mode">&#9680;</button>
+        </div>
+    </aside>
 
-        <section class="hero">
-            <p class="eyebrow">MLB Workspace</p>
-            <h1>Baseball now has its own landing page.</h1>
-            <p class="lede">
-                This section is intentionally light right now, but it is no longer blocked on the NBA homepage.
-                MLB pages can expand here with their own cards, predictions, and reports.
-            </p>
-            <div class="status-pill">Status: Scaffold</div>
+    <main class="mlb-stage">
+        <section class="mlb-hero">
+            <div class="container mlb-hero-grid">
+                <div class="mlb-hero-copy">
+                    <p class="mlb-kicker">MLB Workspace</p>
+                    <h1>Choose your baseball page and keep the bounty board front and center.</h1>
+                    <p class="mlb-lede">
+                        This MLB home page now acts as the sport landing page inside the shared site. From here,
+                        users can jump into the daily prediction board, read how the board is built, or switch sports from the hub.
+                    </p>
+                    <div class="mlb-hero-actions">
+                        <a class="mlb-primary-link" href="predictions.html">Open MLB Predictions</a>
+                        <a class="mlb-secondary-link" href="prediction-about.html">How This Board Works</a>
+                    </div>
+                </div>
+                <div class="mlb-hero-panel">
+                    <p class="mlb-panel-kicker">Current Experience</p>
+                    <ul class="mlb-panel-list">
+                        <li>Shared landing page lets users pick a sport first.</li>
+                        <li>MLB has its own home page and navigation drawer.</li>
+                        <li>Prediction pages keep the wanted-poster bounty feel.</li>
+                    </ul>
+                </div>
+            </div>
         </section>
 
-        <section class="panel-grid">
-            <article class="panel">
-                <p class="panel-label">Planned Modules</p>
-                <h2>What belongs in this space</h2>
-                <ul class="module-list">
-                    <li>Player and team cards tailored to baseball roles</li>
-                    <li>Market pages for batter, pitcher, and game props</li>
-                    <li>Pipeline outputs for schedule-aware daily builds</li>
-                </ul>
-            </article>
+        <section class="mlb-page-section">
+            <div class="container">
+                <div class="mlb-section-head">
+                    <p class="mlb-kicker">MLB Pages</p>
+                    <h2>Start with a page, then stay inside the sport.</h2>
+                </div>
+                <div class="mlb-link-grid">
+                    <a class="mlb-link-card" href="predictions.html">
+                        <span class="mlb-link-tag">Daily Board</span>
+                        <h3>Prediction Bounties</h3>
+                        <p>Open the current high-precision MLB board and scan the wanted posters for today’s best plays.</p>
+                    </a>
+                    <a class="mlb-link-card" href="prediction-about.html">
+                        <span class="mlb-link-tag">Method</span>
+                        <h3>Prediction About</h3>
+                        <p>See how the MLB board is filtered, ranked, and trimmed down for a tighter hit-focused pool.</p>
+                    </a>
+                    <a class="mlb-link-card" href="/">
+                        <span class="mlb-link-tag">Sport Select</span>
+                        <h3>Back To Sports Hub</h3>
+                        <p>Return to the main landing page to switch between MLB, NBA, and the other sport workspaces.</p>
+                    </a>
+                </div>
+            </div>
+        </section>
 
-            <article class="panel">
-                <p class="panel-label">Repo Fit</p>
-                <h2>Why this matters</h2>
-                <p>
-                    MLB can now ship frontend pages under `/mlb/` without overwriting the NBA experience or pretending one homepage fits every sport.
-                </p>
-                <a class="inline-link" href="/nba/">See the live NBA example</a>
-            </article>
+        <section class="mlb-page-section mlb-page-section-alt">
+            <div class="container">
+                <div class="mlb-section-head">
+                    <p class="mlb-kicker">Sport Switcher</p>
+                    <h2>Select another sport when you need to branch out.</h2>
+                </div>
+                <div class="sport-selector-mini">
+                    <a class="sport-selector-pill" href="/mlb/">MLB</a>
+                    <a class="sport-selector-pill" href="/nba/">NBA</a>
+                    <a class="sport-selector-pill" href="/nfl/">NFL</a>
+                </div>
+            </div>
         </section>
     </main>
+
+    <script src="nav.js?v=1"></script>
 </body>
 </html>

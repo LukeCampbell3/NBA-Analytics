@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Analytics Workspace</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="styles.css?v=1">
+</head>
+<body>
+    <div class="site-shell">
+        <header class="hero">
+            <div class="hero-copy">
+                <p class="eyebrow">Sports Analytics Workspace</p>
+                <h1>Choose a sport, then live inside that sport’s pages.</h1>
+                <p class="hero-text">
+                    The site now treats each sport as its own workspace instead of forcing everything through one league-specific homepage.
+                    Pick a sport below, then navigate its own prediction pages, dashboards, and docs from there.
+                </p>
+            </div>
+            <div class="hero-panel">
+                <p class="hero-panel-label">What this hub does</p>
+                <ul class="hero-points">
+                    <li>Surfaces every tracked sport workspace from one root route.</li>
+                    <li>Keeps each sport mounted on its own clean URL namespace.</li>
+                    <li>Makes room for sport-specific dashboards, predictions, and docs.</li>
+                </ul>
+            </div>
+        </header>
+
+        <section class="summary-strip" aria-label="Workspace summary">
+            <article class="summary-card">
+                <span id="sportCount" class="summary-value">0</span>
+                <span class="summary-label">Sport Sites</span>
+            </article>
+            <article class="summary-card">
+                <span id="activeCount" class="summary-value">0</span>
+                <span class="summary-label">Active Workspaces</span>
+            </article>
+            <article class="summary-card">
+                <span id="pageCount" class="summary-value">0</span>
+                <span class="summary-label">Published Pages</span>
+            </article>
+        </section>
+
+        <main>
+            <section class="section-head">
+                <p class="section-kicker">Choose A Sport</p>
+                <h2>Available workspaces</h2>
+                <p class="section-copy">
+                    The cards below are generated from the repo structure, so adding another `sports/<slug>/web` site gives the landing page something real to point at.
+                </p>
+            </section>
+
+            <section id="sportsGrid" class="sports-grid" aria-live="polite">
+                <article class="sport-card sport-card-loading">
+                    <p>Loading workspaces...</p>
+                </article>
+            </section>
+
+            <section class="notes-grid">
+                <article class="note-card">
+                    <p class="note-label">Routing</p>
+                    <h3>Each sport owns its own path</h3>
+                    <p>
+                        NBA lives under `/nba/`, MLB under `/mlb/`, NFL under `/nfl/`, and future sports can follow the same pattern.
+                    </p>
+                </article>
+                <article class="note-card">
+                    <p class="note-label">Frontend</p>
+                    <h3>The landing page is now a hub, not a product page</h3>
+                    <p>
+                        The old assumption that the home page had to be the NBA card view is gone, which keeps the frontend honest as the repo expands.
+                    </p>
+                </article>
+                <article class="note-card">
+                    <p class="note-label">Scalability</p>
+                    <h3>New sports can start small</h3>
+                    <p>
+                        A scaffold sport can ship a placeholder page now and grow into its own dashboard later without breaking the main navigation model.
+                    </p>
+                </article>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js?v=1"></script>
+</body>
+</html>

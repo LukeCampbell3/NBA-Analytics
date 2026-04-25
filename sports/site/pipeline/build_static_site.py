@@ -21,8 +21,9 @@ from typing import Dict, Iterable, List, Optional
 SCRIPT_PATH = Path(__file__).resolve()
 SITE_ROOT = SCRIPT_PATH.parents[1]
 SPORTS_ROOT = SITE_ROOT.parent
+REPO_ROOT = SPORTS_ROOT.parent
 DEFAULT_SOURCE_DIR = SITE_ROOT / "web"
-DEFAULT_OUTPUT_DIR = SITE_ROOT / "dist"
+DEFAULT_OUTPUT_DIR = REPO_ROOT / "dist"
 
 
 def nonempty_html_files(directory: Path) -> Iterable[Path]:
