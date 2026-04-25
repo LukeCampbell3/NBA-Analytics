@@ -131,8 +131,9 @@ class DailyPredictionsPage {
     renderCards() {
         this.elements.empty.style.display = this.filtered.length ? 'none' : 'block';
         this.elements.cards.innerHTML = this.filtered.map(play => {
-            const tier = (play.recommendation || 'consider').toLowerCase();
+            const tier = play.parlay_candidate ? 'parlay' : (play.recommendation || 'consider').toLowerCase();
             const edgeClass = (play.direction || '').toLowerCase() === 'over' ? 'prediction-pill-over' : 'prediction-pill-under';
+            const primaryBadge = play.parlay_candidate ? 'PARLAY' : (play.recommendation || 'consider').toUpperCase();
             return `
                 <article class="prediction-card prediction-card-${tier}">
                     <div class="prediction-card-top">
@@ -142,7 +143,7 @@ class DailyPredictionsPage {
                             <p class="prediction-card-sub">${play.target} • ${play.market_date || 'n/a'}</p>
                         </div>
                         <div class="prediction-card-badges">
-                            <span class="prediction-badge prediction-badge-${tier}">${(play.recommendation || 'consider').toUpperCase()}</span>
+                            <span class="prediction-badge prediction-badge-${tier}">${primaryBadge}</span>
                             <span class="prediction-badge ${edgeClass}">${play.direction}</span>
                         </div>
                     </div>

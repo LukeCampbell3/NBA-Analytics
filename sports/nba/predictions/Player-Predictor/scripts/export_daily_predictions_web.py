@@ -9,6 +9,7 @@ import argparse
 import json
 import math
 import re
+import sys
 import unicodedata
 from collections import defaultdict
 from dataclasses import dataclass
@@ -17,7 +18,6 @@ from pathlib import Path
 
 import pandas as pd
 
-
 PLAYER_PREDICTOR_ROOT = Path(__file__).resolve().parent.parent
 SPORT_ROOT = PLAYER_PREDICTOR_ROOT.parents[1]
 WORKSPACE_ROOT = SPORT_ROOT.parents[1]
@@ -25,6 +25,11 @@ DAILY_RUNS_ROOT = PLAYER_PREDICTOR_ROOT / "model" / "analysis" / "daily_runs"
 DEFAULT_WEB_JSON = SPORT_ROOT / "web" / "data" / "daily_predictions.json"
 DEFAULT_DIST_JSON = WORKSPACE_ROOT / "dist" / "nba" / "data" / "daily_predictions.json"
 DEFAULT_CARDS_JSON = SPORT_ROOT / "web" / "data" / "cards.json"
+
+if str(WORKSPACE_ROOT) not in sys.path:
+    sys.path.insert(0, str(WORKSPACE_ROOT))
+
+from sports.parlay_analysis import annotate_parlay_board, evaluate_historical_parlays
 
 
 def parse_args() -> argparse.Namespace:
@@ -210,6 +215,110 @@ def build_accuracy_metrics(history_csv_path: Path | None) -> dict:
     }
 
 
+def heuristic_nba_leg_probability(target: str, prediction: float, market_line: float) -> float:
+    gap = abs(float(prediction) - float(market_line))
+    scale_map = {"PTS": 3.4, "TRB": 2.2, "AST": 2.0}
+    scale = float(scale_map.get(str(target).upper(), 2.8))
+    return max(0.5, min(0.86, 0.5 + (0.23 * math.tanh(gap / max(scale, 1e-6)))))
+
+
+def build_parlay_validation(history_csv_path: Path | None) -> dict:
+    if history_csv_path is None:
+        return {"available": False, "reason": "history csv path not provided"}
+    if not history_csv_path.exists():
+        return {"available": False, "reason": f"history csv not found: {history_csv_path}"}
+
+    try:
+        history = pd.read_csv(history_csv_path)
+    except Exception as exc:
+        return {"available": False, "reason": f"failed reading history csv: {exc}"}
+
+    if history.empty:
+        return {"available": False, "reason": "history csv is empty"}
+
+    row_parts: list[pd.DataFrame] = []
+    for target in ("PTS", "TRB", "AST"):
+        pred_col = f"pred_{target}"
+        market_col = f"market_{target}"
+        actual_col = f"actual_{target}"
+        required_cols = {"market_date", pred_col, market_col, actual_col}
+        if not required_cols.issubset(set(history.columns)):
+            continue
+
+        part = history.loc[:, [pred_col, market_col, actual_col, "market_date"]].copy()
+        for optional_col in ("Player", "player", "Team", "Opponent", "Game_ID"):
+            if optional_col in history.columns:
+                part[optional_col] = history[optional_col]
+        part["prediction"] = pd.to_numeric(part[pred_col], errors="coerce")
+        part["market_line"] = pd.to_numeric(part[market_col], errors="coerce")
+        part["actual"] = pd.to_numeric(part[actual_col], errors="coerce")
+        part = part.loc[part["prediction"].notna() & part["market_line"].notna() & part["actual"].notna()].copy()
+        if part.empty:
+            continue
+
+        part = part.loc[part["prediction"] != part["market_line"]].copy()
+        if part.empty:
+            continue
+
+        part["market_date"] = pd.to_datetime(part["market_date"], errors="coerce").dt.strftime("%Y-%m-%d")
+        part["target"] = target
+        part["direction"] = part["prediction"].gt(part["market_line"]).map({True: "OVER", False: "UNDER"})
+        part["estimated_win_rate"] = [
+            heuristic_nba_leg_probability(target, pred, line)
+            for pred, line in zip(part["prediction"], part["market_line"])
+        ]
+        part["player"] = (
+            part.get("Player", pd.Series("", index=part.index))
+            .fillna(part.get("player", pd.Series("", index=part.index)))
+            .astype(str)
+            .str.strip()
+        )
+        part["player_display_name"] = part["player"]
+        part["team"] = part.get("Team", pd.Series("", index=part.index)).fillna("").astype(str).str.strip()
+        part["opponent"] = part.get("Opponent", pd.Series("", index=part.index)).fillna("").astype(str).str.strip()
+        part["game_id"] = part.get("Game_ID", pd.Series("", index=part.index)).fillna("").astype(str).str.strip()
+        part["result"] = "loss"
+        part.loc[part["actual"] == part["market_line"], "result"] = "push"
+        over_win = part["direction"].eq("OVER") & part["actual"].gt(part["market_line"])
+        under_win = part["direction"].eq("UNDER") & part["actual"].lt(part["market_line"])
+        part.loc[over_win | under_win, "result"] = "win"
+        row_parts.append(
+            part[
+                [
+                    "market_date",
+                    "player",
+                    "player_display_name",
+                    "team",
+                    "opponent",
+                    "game_id",
+                    "target",
+                    "direction",
+                    "estimated_win_rate",
+                    "result",
+                ]
+            ]
+        )
+
+    if not row_parts:
+        return {"available": False, "reason": "history csv did not contain usable target columns for parlay validation"}
+
+    rows = pd.concat(row_parts, ignore_index=True)
+    if rows.empty:
+        return {"available": False, "reason": "history csv produced no usable pair-validation rows"}
+
+    summary = evaluate_historical_parlays(
+        rows,
+        sport="nba",
+        date_col="market_date",
+        probability_col="estimated_win_rate",
+        result_col="result",
+        max_pairs_per_day=1,
+    )
+    summary["source_history_csv"] = str(history_csv_path)
+    summary["history_row_count"] = int(len(rows))
+    return summary
+
+
 def find_latest_manifest(root: Path) -> Path:
     manifests = sorted(root.glob("**/daily_market_pipeline_manifest_*.json"), key=lambda path: path.stat().st_mtime, reverse=True)
     if not manifests:
@@ -392,6 +501,8 @@ def normalize_play_rows(plays: pd.DataFrame, identity_lookup: PlayerIdentityLook
                 "player_headshot_url": player_headshot_url,
                 "target": str(row.get("target", "")),
                 "direction": str(row.get("direction", "")),
+                "team": str(row.get("team", "")),
+                "opponent": str(row.get("opponent", "")),
                 "market_date": str(row.get("market_date", "")) if pd.notna(row.get("market_date")) else None,
                 "market_home_team": str(row.get("market_home_team", "")),
                 "market_away_team": str(row.get("market_away_team", "")),
@@ -466,6 +577,13 @@ def main() -> None:
     plays = pd.read_csv(final_csv) if final_csv and final_csv.exists() else pd.DataFrame()
     final_payload = json.loads(final_json.read_text(encoding="utf-8")) if final_json and final_json.exists() else {}
 
+    plays_json = normalize_play_rows(plays, identity_lookup)
+    parlay_payload = annotate_parlay_board(
+        plays_json,
+        sport="nba",
+        probability_field="expected_win_rate",
+    )
+
     payload = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "manifest_path": str(manifest_path),
@@ -483,9 +601,14 @@ def main() -> None:
         "input_validation": final_payload.get("input_validation", {}),
         "summary": build_summary(plays),
         "accuracy_metrics": build_accuracy_metrics(history_csv),
-        "plays": normalize_play_rows(plays, identity_lookup),
+        "parlay_summary": parlay_payload["summary"],
+        "parlay_pairs": parlay_payload["pairs"],
+        "parlay_validation": build_parlay_validation(history_csv),
+        "plays": parlay_payload["plays"],
         "shadow_runs": load_shadow_runs(manifest, manifest_path, identity_lookup),
     }
+    payload["summary"]["parlay_tagged_plays"] = int(payload["parlay_summary"].get("tagged_play_count", 0))
+    payload["summary"]["parlay_pairs"] = int(payload["parlay_summary"].get("selected_pair_count", 0))
 
     args.out_json.parent.mkdir(parents=True, exist_ok=True)
     args.out_json.write_text(json.dumps(payload, indent=2), encoding="utf-8")

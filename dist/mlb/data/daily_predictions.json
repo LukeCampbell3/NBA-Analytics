@@ -5,7 +5,7 @@
   "through_date": "2026-04-09",
   "model_run_id": "mlb_high_precision_selector_v1",
   "policy_profile": "high_precision_hits",
-  "generated_at_utc": "2026-04-25T15:28:22.301492+00:00",
+  "generated_at_utc": "2026-04-25T16:51:45.804028+00:00",
   "summary": {
     "play_count": 15,
     "supported_rows": 354,
@@ -14,7 +14,9 @@
     "avg_expected_hit_rate": 0.789791,
     "avg_graded_hit_rate": 0.789791,
     "avg_abs_edge": 0.637724,
-    "avg_precision_score": 0.907003
+    "avg_precision_score": 0.907003,
+    "parlay_tagged_plays": 6,
+    "parlay_pairs": 3
   },
   "selection": {
     "top_n": 15,
@@ -60,6 +62,153 @@
       "share": 0.2
     }
   },
+  "parlay_summary": {
+    "candidate_pair_count": 105,
+    "selected_pair_count": 3,
+    "tagged_play_count": 6,
+    "avg_projected_pair_hit_rate": 0.791631695940754,
+    "best_projected_pair_hit_rate": 0.8472880742907124,
+    "min_leg_probability": 0.6,
+    "min_pair_probability": 0.38
+  },
+  "parlay_pairs": [
+    {
+      "left_index": 0,
+      "right_index": 3,
+      "left_key": "2026-04-10|824858|gunnar henderson|h|under",
+      "right_key": "2026-04-10|823808|luis garcía jr.|h|under",
+      "left_name": "Gunnar Henderson",
+      "right_name": "Luis García Jr.",
+      "left_target": "H",
+      "right_target": "H",
+      "left_direction": "UNDER",
+      "right_direction": "UNDER",
+      "projected_probability": 0.8472880742907124,
+      "independent_probability": 0.76105419543,
+      "pair_score": 0.9150711202339694,
+      "adjustment_factor": 1.11330846,
+      "same_player": false,
+      "same_game": false,
+      "same_team": false,
+      "same_target": true,
+      "same_direction": true,
+      "pair_rank": 1,
+      "legs": [
+        {
+          "play_key": "2026-04-10|824858|gunnar henderson|h|under",
+          "player": "Gunnar Henderson",
+          "target": "H",
+          "direction": "UNDER"
+        },
+        {
+          "play_key": "2026-04-10|823808|luis garcía jr.|h|under",
+          "player": "Luis García Jr.",
+          "target": "H",
+          "direction": "UNDER"
+        }
+      ]
+    },
+    {
+      "left_index": 6,
+      "right_index": 8,
+      "left_key": "2026-04-10|823156|jose altuve|h|under",
+      "right_key": "2026-04-10|823076|willson contreras|h|under",
+      "left_name": "Jose Altuve",
+      "right_name": "Willson Contreras",
+      "left_target": "H",
+      "right_target": "H",
+      "left_direction": "UNDER",
+      "right_direction": "UNDER",
+      "projected_probability": 0.7841051151041931,
+      "independent_probability": 0.70430176656,
+      "pair_score": 0.8468335243125287,
+      "adjustment_factor": 1.11330846,
+      "same_player": false,
+      "same_game": false,
+      "same_team": false,
+      "same_target": true,
+      "same_direction": true,
+      "pair_rank": 2,
+      "legs": [
+        {
+          "play_key": "2026-04-10|823156|jose altuve|h|under",
+          "player": "Jose Altuve",
+          "target": "H",
+          "direction": "UNDER"
+        },
+        {
+          "play_key": "2026-04-10|823076|willson contreras|h|under",
+          "player": "Willson Contreras",
+          "target": "H",
+          "direction": "UNDER"
+        }
+      ]
+    },
+    {
+      "left_index": 4,
+      "right_index": 5,
+      "left_key": "2026-04-10|823156|christian walker|h|under",
+      "right_key": "2026-04-10|822997|aaron judge|h|under",
+      "left_name": "Christian Walker",
+      "right_name": "Aaron Judge",
+      "left_target": "H",
+      "right_target": "H",
+      "left_direction": "UNDER",
+      "right_direction": "UNDER",
+      "projected_probability": 0.7435018984273565,
+      "independent_probability": 0.667830996656,
+      "pair_score": 0.802982050301545,
+      "adjustment_factor": 1.11330846,
+      "same_player": false,
+      "same_game": false,
+      "same_team": false,
+      "same_target": true,
+      "same_direction": true,
+      "pair_rank": 3,
+      "legs": [
+        {
+          "play_key": "2026-04-10|823156|christian walker|h|under",
+          "player": "Christian Walker",
+          "target": "H",
+          "direction": "UNDER"
+        },
+        {
+          "play_key": "2026-04-10|822997|aaron judge|h|under",
+          "player": "Aaron Judge",
+          "target": "H",
+          "direction": "UNDER"
+        }
+      ]
+    }
+  ],
+  "parlay_validation": {
+    "available": true,
+    "sample_dates": 6,
+    "max_pairs_per_day": 1,
+    "selected": {
+      "pair_count": 6,
+      "graded_pair_count": 6,
+      "hit_pair_count": 3,
+      "miss_pair_count": 3,
+      "push_pair_count": 0,
+      "unresolved_pair_count": 0,
+      "pair_hit_rate": 0.5,
+      "avg_projected_pair_hit_rate": 0.5930952711772814
+    },
+    "baseline_all_pairs": {
+      "pair_count": 12,
+      "graded_pair_count": 12,
+      "hit_pair_count": 7,
+      "miss_pair_count": 5,
+      "push_pair_count": 0,
+      "unresolved_pair_count": 0,
+      "pair_hit_rate": 0.5833333333333334,
+      "avg_projected_pair_hit_rate": 0.5457879445519911
+    },
+    "hit_rate_lift_vs_all_pairs": -0.08333333333333337,
+    "source_manifest": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\Player-Predictor\\Data-Proc-MLB\\update_manifest_2026.json",
+    "history_row_count": 31
+  },
   "plays": [
     {
       "rank": 1,
@@ -82,7 +231,15 @@
       "estimated_hit_probability": 0.889055,
       "estimated_graded_hit_rate": 0.889055,
       "precision_score": 1.03998,
-      "confidence_tier": "elite"
+      "confidence_tier": "elite",
+      "play_key": "2026-04-10|824858|gunnar henderson|h|under",
+      "parlay_tag": "parlay",
+      "parlay_candidate": true,
+      "parlay_pair_rank": 1,
+      "parlay_score": 0.9150711202339694,
+      "parlay_projected_hit_rate": 0.8472880742907124,
+      "parlay_partner_key": "2026-04-10|823808|luis garcía jr.|h|under",
+      "parlay_partner_name": "Luis García Jr."
     },
     {
       "rank": 2,
@@ -105,7 +262,15 @@
       "estimated_hit_probability": 0.780023,
       "estimated_graded_hit_rate": 0.780023,
       "precision_score": 0.950988,
-      "confidence_tier": "strong"
+      "confidence_tier": "strong",
+      "play_key": "2026-04-10|823968|shohei ohtani|h|under",
+      "parlay_tag": "",
+      "parlay_candidate": false,
+      "parlay_pair_rank": null,
+      "parlay_score": null,
+      "parlay_projected_hit_rate": null,
+      "parlay_partner_key": null,
+      "parlay_partner_name": null
     },
     {
       "rank": 3,
@@ -128,7 +293,15 @@
       "estimated_hit_probability": 0.806154,
       "estimated_graded_hit_rate": 0.806154,
       "precision_score": 0.941897,
-      "confidence_tier": "strong"
+      "confidence_tier": "strong",
+      "play_key": "2026-04-10|823968|teoscar hernández|h|under",
+      "parlay_tag": "",
+      "parlay_candidate": false,
+      "parlay_pair_rank": null,
+      "parlay_score": null,
+      "parlay_projected_hit_rate": null,
+      "parlay_partner_key": null,
+      "parlay_partner_name": null
     },
     {
       "rank": 4,
@@ -151,7 +324,15 @@
       "estimated_hit_probability": 0.856026,
       "estimated_graded_hit_rate": 0.856026,
       "precision_score": 0.940932,
-      "confidence_tier": "strong"
+      "confidence_tier": "strong",
+      "play_key": "2026-04-10|823808|luis garcía jr.|h|under",
+      "parlay_tag": "parlay",
+      "parlay_candidate": true,
+      "parlay_pair_rank": 1,
+      "parlay_score": 0.9150711202339694,
+      "parlay_projected_hit_rate": 0.8472880742907124,
+      "parlay_partner_key": "2026-04-10|824858|gunnar henderson|h|under",
+      "parlay_partner_name": "Gunnar Henderson"
     },
     {
       "rank": 5,
@@ -174,7 +355,15 @@
       "estimated_hit_probability": 0.821872,
       "estimated_graded_hit_rate": 0.821872,
       "precision_score": 0.939484,
-      "confidence_tier": "strong"
+      "confidence_tier": "strong",
+      "play_key": "2026-04-10|823156|christian walker|h|under",
+      "parlay_tag": "parlay",
+      "parlay_candidate": true,
+      "parlay_pair_rank": 3,
+      "parlay_score": 0.802982050301545,
+      "parlay_projected_hit_rate": 0.7435018984273565,
+      "parlay_partner_key": "2026-04-10|822997|aaron judge|h|under",
+      "parlay_partner_name": "Aaron Judge"
     },
     {
       "rank": 6,
@@ -197,7 +386,15 @@
       "estimated_hit_probability": 0.812573,
       "estimated_graded_hit_rate": 0.812573,
       "precision_score": 0.930714,
-      "confidence_tier": "strong"
+      "confidence_tier": "strong",
+      "play_key": "2026-04-10|822997|aaron judge|h|under",
+      "parlay_tag": "parlay",
+      "parlay_candidate": true,
+      "parlay_pair_rank": 3,
+      "parlay_score": 0.802982050301545,
+      "parlay_projected_hit_rate": 0.7435018984273565,
+      "parlay_partner_key": "2026-04-10|823156|christian walker|h|under",
+      "parlay_partner_name": "Christian Walker"
     },
     {
       "rank": 7,
@@ -220,7 +417,15 @@
       "estimated_hit_probability": 0.839664,
       "estimated_graded_hit_rate": 0.839664,
       "precision_score": 0.92313,
-      "confidence_tier": "strong"
+      "confidence_tier": "strong",
+      "play_key": "2026-04-10|823156|jose altuve|h|under",
+      "parlay_tag": "parlay",
+      "parlay_candidate": true,
+      "parlay_pair_rank": 2,
+      "parlay_score": 0.8468335243125287,
+      "parlay_projected_hit_rate": 0.7841051151041931,
+      "parlay_partner_key": "2026-04-10|823076|willson contreras|h|under",
+      "parlay_partner_name": "Willson Contreras"
     },
     {
       "rank": 8,
@@ -243,7 +448,15 @@
       "estimated_hit_probability": 0.801899,
       "estimated_graded_hit_rate": 0.801899,
       "precision_score": 0.922128,
-      "confidence_tier": "strong"
+      "confidence_tier": "strong",
+      "play_key": "2026-04-10|822829|matt wallner|h|under",
+      "parlay_tag": "",
+      "parlay_candidate": false,
+      "parlay_pair_rank": null,
+      "parlay_score": null,
+      "parlay_projected_hit_rate": null,
+      "parlay_partner_key": null,
+      "parlay_partner_name": null
     },
     {
       "rank": 9,
@@ -266,7 +479,15 @@
       "estimated_hit_probability": 0.83879,
       "estimated_graded_hit_rate": 0.83879,
       "precision_score": 0.914244,
-      "confidence_tier": "strong"
+      "confidence_tier": "strong",
+      "play_key": "2026-04-10|823076|willson contreras|h|under",
+      "parlay_tag": "parlay",
+      "parlay_candidate": true,
+      "parlay_pair_rank": 2,
+      "parlay_score": 0.8468335243125287,
+      "parlay_projected_hit_rate": 0.7841051151041931,
+      "parlay_partner_key": "2026-04-10|823156|jose altuve|h|under",
+      "parlay_partner_name": "Jose Altuve"
     },
     {
       "rank": 10,
@@ -289,7 +510,15 @@
       "estimated_hit_probability": 0.781008,
       "estimated_graded_hit_rate": 0.781008,
       "precision_score": 0.862356,
-      "confidence_tier": "consider"
+      "confidence_tier": "consider",
+      "play_key": "2026-04-10|823808|cj abrams|h|under",
+      "parlay_tag": "",
+      "parlay_candidate": false,
+      "parlay_pair_rank": null,
+      "parlay_score": null,
+      "parlay_projected_hit_rate": null,
+      "parlay_partner_key": null,
+      "parlay_partner_name": null
     },
     {
       "rank": 11,
@@ -312,7 +541,15 @@
       "estimated_hit_probability": 0.737917,
       "estimated_graded_hit_rate": 0.737917,
       "precision_score": 0.854633,
-      "confidence_tier": "consider"
+      "confidence_tier": "consider",
+      "play_key": "2026-04-10|824941|drake baldwin|h|under",
+      "parlay_tag": "",
+      "parlay_candidate": false,
+      "parlay_pair_rank": null,
+      "parlay_score": null,
+      "parlay_projected_hit_rate": null,
+      "parlay_partner_key": null,
+      "parlay_partner_name": null
     },
     {
       "rank": 12,
@@ -335,7 +572,15 @@
       "estimated_hit_probability": 0.698715,
       "estimated_graded_hit_rate": 0.698715,
       "precision_score": 0.852709,
-      "confidence_tier": "consider"
+      "confidence_tier": "consider",
+      "play_key": "2026-04-10|824297|heriberto hernández|h|over",
+      "parlay_tag": "",
+      "parlay_candidate": false,
+      "parlay_pair_rank": null,
+      "parlay_score": null,
+      "parlay_projected_hit_rate": null,
+      "parlay_partner_key": null,
+      "parlay_partner_name": null
     },
     {
       "rank": 13,
@@ -358,7 +603,15 @@
       "estimated_hit_probability": 0.759629,
       "estimated_graded_hit_rate": 0.759629,
       "precision_score": 0.851525,
-      "confidence_tier": "consider"
+      "confidence_tier": "consider",
+      "play_key": "2026-04-10|823318|willi castro|h|under",
+      "parlay_tag": "",
+      "parlay_candidate": false,
+      "parlay_pair_rank": null,
+      "parlay_score": null,
+      "parlay_projected_hit_rate": null,
+      "parlay_partner_key": null,
+      "parlay_partner_name": null
     },
     {
       "rank": 14,
@@ -381,7 +634,15 @@
       "estimated_hit_probability": 0.69521,
       "estimated_graded_hit_rate": 0.69521,
       "precision_score": 0.849421,
-      "confidence_tier": "consider"
+      "confidence_tier": "consider",
+      "play_key": "2026-04-10|824941|austin riley|h|over",
+      "parlay_tag": "",
+      "parlay_candidate": false,
+      "parlay_pair_rank": null,
+      "parlay_score": null,
+      "parlay_projected_hit_rate": null,
+      "parlay_partner_key": null,
+      "parlay_partner_name": null
     },
     {
       "rank": 15,
@@ -404,7 +665,15 @@
       "estimated_hit_probability": 0.72833,
       "estimated_graded_hit_rate": 0.72833,
       "precision_score": 0.830905,
-      "confidence_tier": "consider"
+      "confidence_tier": "consider",
+      "play_key": "2026-04-10|823318|ramón laureano|h|over",
+      "parlay_tag": "",
+      "parlay_candidate": false,
+      "parlay_pair_rank": null,
+      "parlay_score": null,
+      "parlay_projected_hit_rate": null,
+      "parlay_partner_key": null,
+      "parlay_partner_name": null
     }
   ]
 }

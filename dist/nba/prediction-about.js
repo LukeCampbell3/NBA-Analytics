@@ -50,12 +50,15 @@ class PredictionAboutPage {
         }
 
         const overall = metrics.overall || {};
+        const parlaySummary = this.data?.parlay_summary || {};
         const overviewItems = [
             ['Win Rate', this.formatPct(overall.win_rate)],
             ['ROI / Graded Play', this.formatSignedPct(overall.roi_per_graded_play)],
             ['Signal Count', this.formatInt(overall.signal_count)],
             ['Graded Plays', this.formatInt(overall.graded_count)],
             ['Push Rate', this.formatPct(overall.push_rate)],
+            ['Parlay Tagged Plays', this.formatInt(parlaySummary.tagged_play_count)],
+            ['Parlay Pairs', this.formatInt(parlaySummary.selected_pair_count)],
             ['Mean Abs Edge', this.formatNum(overall.mean_abs_edge)],
             ['MAE', this.formatNum(overall.mean_abs_error)],
             ['RMSE', this.formatNum(overall.rmse)],
@@ -110,6 +113,8 @@ class PredictionAboutPage {
         const summary = this.data?.summary || {};
         const policy = this.data?.policy || {};
         const asOf = this.data?.accuracy_metrics?.as_of_market_date || 'n/a';
+        const parlaySummary = this.data?.parlay_summary || {};
+        const parlayValidation = this.data?.parlay_validation || {};
         this.elements.boardSummary.innerHTML = `
             <p>
                 <strong>Current board profile:</strong> ${this.formatInt(summary.play_count)} published plays,
@@ -125,6 +130,16 @@ class PredictionAboutPage {
             <p>
                 <strong>Historical snapshot as of ${this.escapeHtml(asOf)}:</strong>
                 metrics are recomputed during web export from the pipeline history CSV so this page always reflects the latest available run context.
+            </p>
+            <p>
+                <strong>Parlay screen:</strong> ${this.formatInt(parlaySummary.tagged_play_count)} plays are tagged into
+                ${this.formatInt(parlaySummary.selected_pair_count)} suggested 2-leg combos, averaging
+                ${this.formatPct(parlaySummary.avg_projected_pair_hit_rate)} projected pair hit rate.
+            </p>
+            <p>
+                <strong>Historical pair validation:</strong> ${parlayValidation.available
+                    ? `${this.formatPct(parlayValidation.selected?.pair_hit_rate)} hit rate across ${this.formatInt(parlayValidation.selected?.graded_pair_count)} graded tagged pairs`
+                    : this.escapeHtml(parlayValidation.reason || 'not available for this export')}.
             </p>
         `;
     }

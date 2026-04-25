@@ -26,6 +26,8 @@ class DailyPredictionsPage {
         this.data = await response.json();
         this.plays = Array.isArray(this.data.plays) ? this.data.plays.slice() : [];
         this.plays.sort((a, b) => {
+            const parlayDiff = Number(Boolean(b.parlay_candidate)) - Number(Boolean(a.parlay_candidate));
+            if (parlayDiff !== 0) return parlayDiff;
             const evDiff = (Number(b.ev) || 0) - (Number(a.ev) || 0);
             if (Math.abs(evDiff) > 1e-9) return evDiff;
             return (Number(b.abs_edge) || 0) - (Number(a.abs_edge) || 0);
@@ -71,7 +73,7 @@ class DailyPredictionsPage {
 
     renderWantedCard(play) {
         const tierRaw = String(play.recommendation || 'consider').toLowerCase();
-        const tier = ['elite', 'strong', 'consider', 'pass'].includes(tierRaw) ? tierRaw : 'consider';
+        const tier = play.parlay_candidate ? 'parlay' : (['elite', 'strong', 'consider', 'pass'].includes(tierRaw) ? tierRaw : 'consider');
         const directionRaw = String(play.direction || '').toUpperCase();
         const direction = directionRaw === 'UNDER' ? 'UNDER' : 'OVER';
         const displayName = this.getPlayDisplayName(play);
@@ -82,6 +84,8 @@ class DailyPredictionsPage {
         const predictionText = this.formatNumber(play.prediction);
         const gameText = [play.market_away_team, play.market_home_team].filter(Boolean).join(' @ ');
         const footerParts = [play.target || '', play.market_date || '', gameText].filter(Boolean);
+        const parlayPartner = String(play.parlay_partner_name || '').trim();
+        const parlayRate = this.formatPct(play.parlay_projected_hit_rate);
         return `
             <article class="prediction-card wanted-card wanted-card-${tier}" data-direction="${this.escapeAttr(direction)}">
                 <div class="wanted-rank">#${this.escapeHtml(String(play.rank || '-'))}</div>
@@ -98,11 +102,18 @@ class DailyPredictionsPage {
                     ` : ''}
                     <div class="wanted-photo-fallback">${monogram}</div>
                 </div>
+                ${play.parlay_candidate ? `
+                    <div class="wanted-tag-row">
+                        <span class="wanted-tag wanted-tag-parlay">PARLAY</span>
+                        <span class="wanted-tag wanted-tag-support">PAIR ${this.escapeHtml(parlayRate)}</span>
+                    </div>
+                ` : ''}
                 <div class="wanted-reward-label">REWARD</div>
                 <div class="wanted-reward-value">${this.escapeHtml(this.formatReward(play.ev))}</div>
                 <div class="wanted-name">${escapedName}</div>
                 <div class="wanted-direction">${this.escapeHtml(direction)}</div>
                 <div class="wanted-prop-line">LINE ${this.escapeHtml(lineText)} | PRED ${this.escapeHtml(predictionText)}</div>
+                ${play.parlay_candidate ? `<div class="wanted-parlay-note">Best paired with ${this.escapeHtml(parlayPartner || 'another tagged leg')}</div>` : ''}
                 <div class="wanted-footer">${this.escapeHtml(footerParts.join(' | '))}</div>
             </article>
         `;
@@ -114,6 +125,10 @@ class DailyPredictionsPage {
 
     formatReward(value) {
         return Number.isFinite(Number(value)) ? `${Number(value) >= 0 ? '+' : ''}${(Number(value) * 100).toFixed(1)}% EV` : 'n/a EV';
+    }
+
+    formatPct(value) {
+        return Number.isFinite(Number(value)) ? `${(Number(value) * 100).toFixed(1)}%` : 'n/a';
     }
 
     escapeHtml(value) {

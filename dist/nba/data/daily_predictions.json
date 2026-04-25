@@ -304,7 +304,9 @@
     "by_allocation_action": {
       "flat": 4,
       "fallback_small": 1
-    }
+    },
+    "parlay_tagged_plays": 4,
+    "parlay_pairs": 2
   },
   "accuracy_metrics": {
     "available": true,
@@ -464,7 +466,15 @@
       "history_rows": 72,
       "market_books": 5.0,
       "uncertainty_sigma": 3.2914029430219167,
-      "spike_probability": 0.1961782821825642
+      "spike_probability": 0.1961782821825642,
+      "play_key": "2026-04-12|363236|jalen johnson|ast|under",
+      "parlay_tag": "parlay",
+      "parlay_candidate": true,
+      "parlay_pair_rank": 1,
+      "parlay_score": 0.40050321981159404,
+      "parlay_projected_hit_rate": 0.3708363146403648,
+      "parlay_partner_key": "2026-04-12|363245|jeremiah fears|trb|under",
+      "parlay_partner_name": "Jeremiah Fears"
     },
     {
       "rank": 2,
@@ -511,7 +521,15 @@
       "history_rows": 81,
       "market_books": 3.0,
       "uncertainty_sigma": 2.034425935955617,
-      "spike_probability": 0.5163846303566935
+      "spike_probability": 0.5163846303566935,
+      "play_key": "2026-04-12|363245|jeremiah fears|trb|under",
+      "parlay_tag": "parlay",
+      "parlay_candidate": true,
+      "parlay_pair_rank": 1,
+      "parlay_score": 0.40050321981159404,
+      "parlay_projected_hit_rate": 0.3708363146403648,
+      "parlay_partner_key": "2026-04-12|363236|jalen johnson|ast|under",
+      "parlay_partner_name": "Jalen Johnson"
     },
     {
       "rank": 3,
@@ -558,7 +576,15 @@
       "history_rows": 71,
       "market_books": 2.0,
       "uncertainty_sigma": 3.0402393911591163,
-      "spike_probability": 0.4396977509191515
+      "spike_probability": 0.4396977509191515,
+      "play_key": "2026-04-12|363242|deandre ayton|trb|under",
+      "parlay_tag": "parlay",
+      "parlay_candidate": true,
+      "parlay_pair_rank": 2,
+      "parlay_score": 0.367707392169201,
+      "parlay_projected_hit_rate": 0.34046980756407497,
+      "parlay_partner_key": "2026-04-12|363241|darius garland|ast|under",
+      "parlay_partner_name": "Darius Garland"
     },
     {
       "rank": 4,
@@ -605,7 +631,15 @@
       "history_rows": 44,
       "market_books": 6.0,
       "uncertainty_sigma": 2.5967394084804805,
-      "spike_probability": 0.5320915148318954
+      "spike_probability": 0.5320915148318954,
+      "play_key": "2026-04-12|363241|darius garland|ast|under",
+      "parlay_tag": "parlay",
+      "parlay_candidate": true,
+      "parlay_pair_rank": 2,
+      "parlay_score": 0.367707392169201,
+      "parlay_projected_hit_rate": 0.34046980756407497,
+      "parlay_partner_key": "2026-04-12|363242|deandre ayton|trb|under",
+      "parlay_partner_name": "Deandre Ayton"
     },
     {
       "rank": 5,
@@ -652,7 +686,15 @@
       "history_rows": 72,
       "market_books": 5.0,
       "uncertainty_sigma": 2.203217344400381,
-      "spike_probability": 0.7950229611386526
+      "spike_probability": 0.7950229611386526,
+      "play_key": "2026-04-12|363236|bam adebayo|ast|over",
+      "parlay_tag": "",
+      "parlay_candidate": false,
+      "parlay_pair_rank": null,
+      "parlay_score": null,
+      "parlay_projected_hit_rate": null,
+      "parlay_partner_key": null,
+      "parlay_partner_name": null
     }
   ],
   "shadow_runs": [
@@ -1112,5 +1154,92 @@
         }
       ]
     }
-  ]
+  ],
+  "parlay_summary": {
+    "candidate_pair_count": 6,
+    "selected_pair_count": 2,
+    "tagged_play_count": 4,
+    "avg_projected_pair_hit_rate": 0.3556530611022199,
+    "best_projected_pair_hit_rate": 0.3708363146403648,
+    "min_leg_probability": 0.54,
+    "min_pair_probability": 0.29
+  },
+  "parlay_pairs": [
+    {
+      "left_index": 0,
+      "right_index": 1,
+      "left_key": "2026-04-12|363236|jalen johnson|ast|under",
+      "right_key": "2026-04-12|363245|jeremiah fears|trb|under",
+      "left_name": "Jalen Johnson",
+      "right_name": "Jeremiah Fears",
+      "left_target": "AST",
+      "right_target": "TRB",
+      "left_direction": "UNDER",
+      "right_direction": "UNDER",
+      "projected_probability": 0.3708363146403648,
+      "independent_probability": 0.34282415309127656,
+      "pair_score": 0.40050321981159404,
+      "adjustment_factor": 1.0817100000000002,
+      "same_player": false,
+      "same_game": false,
+      "same_team": false,
+      "same_target": false,
+      "same_direction": true,
+      "pair_rank": 1,
+      "legs": [
+        {
+          "play_key": "2026-04-12|363236|jalen johnson|ast|under",
+          "player": "Jalen Johnson",
+          "target": "AST",
+          "direction": "UNDER"
+        },
+        {
+          "play_key": "2026-04-12|363245|jeremiah fears|trb|under",
+          "player": "Jeremiah Fears",
+          "target": "TRB",
+          "direction": "UNDER"
+        }
+      ]
+    },
+    {
+      "left_index": 2,
+      "right_index": 3,
+      "left_key": "2026-04-12|363242|deandre ayton|trb|under",
+      "right_key": "2026-04-12|363241|darius garland|ast|under",
+      "left_name": "Deandre Ayton",
+      "right_name": "Darius Garland",
+      "left_target": "TRB",
+      "right_target": "AST",
+      "left_direction": "UNDER",
+      "right_direction": "UNDER",
+      "projected_probability": 0.34046980756407497,
+      "independent_probability": 0.31475146533181253,
+      "pair_score": 0.367707392169201,
+      "adjustment_factor": 1.0817100000000002,
+      "same_player": false,
+      "same_game": false,
+      "same_team": false,
+      "same_target": false,
+      "same_direction": true,
+      "pair_rank": 2,
+      "legs": [
+        {
+          "play_key": "2026-04-12|363242|deandre ayton|trb|under",
+          "player": "Deandre Ayton",
+          "target": "TRB",
+          "direction": "UNDER"
+        },
+        {
+          "play_key": "2026-04-12|363241|darius garland|ast|under",
+          "player": "Darius Garland",
+          "target": "AST",
+          "direction": "UNDER"
+        }
+      ]
+    }
+  ],
+  "parlay_validation": {
+    "available": false,
+    "reason": "historical pair validation requires an export run with a local history csv"
+  }
 }
