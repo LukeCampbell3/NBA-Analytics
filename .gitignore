@@ -1,69 +1,17 @@
-# Ignore everything by default. We explicitly opt in tracked source surfaces.
+# Ignore everything by default
 *
 
-# Repo metadata and root docs/config.
+# Keep repo metadata and root docs/config
 !.gitignore
 !README.md
 !requirements.txt
 !config.yaml
 
-# Sports workspace (NBA today, MLB/NFL scaffolds ready).
-!sports/
-!sports/**
+# Ignore these workspaces completely
+/sports/
+/Player-Predictor/
+/player-predictor/
 
-# Re-ignore large local runtime artifacts under predictor workspace.
-sports/nba/predictions/Player-Predictor/model/**
-sports/nba/predictions/Player-Predictor/data copy/**
-sports/nba/predictions/Player-Predictor/Data-Proc/**
-sports/nba/predictions/Player-Predictor/Data-Proc-NFL/**
-sports/nba/predictions/Player-Predictor/tmp/**
-sports/nba/predictions/Player-Predictor/**/__pycache__/**
-sports/nba/predictions/model_root_legacy/**
-sports/**/__pycache__/**
-
-# Re-ignore local-only exploratory scripts not part of the committed framework.
-sports/nba/predictions/Player-Predictor/decision_engine/staking_bucket_model_v2.py
-sports/nba/predictions/Player-Predictor/scripts/analyze_miss_taxonomy.py
-sports/nba/predictions/Player-Predictor/scripts/evaluate_fp_veto_behavior.py
-sports/nba/predictions/Player-Predictor/scripts/evaluate_overlay_frontier.py
-sports/nba/predictions/Player-Predictor/scripts/evaluate_staking_shadow_rolling.py
-sports/nba/predictions/Player-Predictor/scripts/generate_abs_edge_policy_brief.py
-sports/nba/predictions/Player-Predictor/scripts/train_staking_bucket_model_v2.py
-
-# Re-ignore generated/static media folders not currently source-controlled.
-sports/nba/web/art/**
-sports/nba/web/images/**
-sports/nba/dist/art/**
-sports/nba/dist/images/**
-
-# Keep conditional promotion framework code/tests.
-!Player-Predictor/
-!Player-Predictor/decision_engine/
-!Player-Predictor/decision_engine/conditional_promotion.py
-!Player-Predictor/scripts/
-!Player-Predictor/scripts/evaluate_cutoff_meta_append.py
-!Player-Predictor/scripts/run_daily_cutoff_meta_monitor.py
-!Player-Predictor/scripts/evaluate_stage1_daily_append_permission.py
-!Player-Predictor/scripts/run_stage1_backfill_protocol.py
-!Player-Predictor/scripts/validate_board_objective_mode.py
-!Player-Predictor/scripts/tune_board_objective_lambdas.py
-!Player-Predictor/scripts/train_selected_board_calibrator.py
-!Player-Predictor/scripts/train_learned_pool_gate.py
-!Player-Predictor/scripts/report_reliability_diagnostics.py
-!Player-Predictor/scripts/run_accepted_pick_gate_research.py
-!Player-Predictor/scripts/fetch_nfl_enrichment.py
-!Player-Predictor/scripts/fetch_nfl_market_props.py
-!Player-Predictor/scripts/update_nfl_processed_data.py
-!Player-Predictor/NFL_MODEL_REPLICATION_PLAN.md
-!Player-Predictor/decision_engine/selected_board_calibration.py
-!Player-Predictor/decision_engine/learned_pool_gate.py
-!Player-Predictor/decision_engine/accepted_pick_gate.py
-!Player-Predictor/MLB_MODEL_DATA_REQUIREMENTS.md
-!Player-Predictor/Data-Proc-MLB/
-!Player-Predictor/Data-Proc-MLB/**
-!tests/
-!tests/test_conditional_framework.py
-
-
-!dist/
-!dist/**
+# Keep root dist if needed
+!/dist/
+!/dist/**

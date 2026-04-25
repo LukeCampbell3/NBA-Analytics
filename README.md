@@ -11,7 +11,6 @@ sports/
     pipeline/              # Multi-sport build + local serving scripts
   nba/
     web/                   # NBA web app source
-    dist/                  # Built static bundle
     pipeline/              # NBA web/data build + local serving scripts
     predictions/
       Player-Predictor/    # NBA market prediction engine + model artifacts
