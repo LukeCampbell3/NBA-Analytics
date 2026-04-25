@@ -1,6 +1,6 @@
-﻿# NBA Analytics Workspace
+# NBA Analytics Workspace
 
-NBA code is isolated under `sports/nba` so future MLB/NFL expansions can reuse the same repo cleanly.
+NBA code is isolated under `sports/nba`, and the shared site now mounts it beneath `/nba/` instead of treating the NBA homepage as the root of the whole product.
 
 ## Layout
 
@@ -12,6 +12,8 @@ NBA code is isolated under `sports/nba` so future MLB/NFL expansions can reuse t
 - `pipeline/serve_web.py`: Serve NBA web app locally
 - `predictions/Player-Predictor/`: NBA daily market prediction/model stack
 - `tests/test_conditional_framework.py`: NBA predictor gate/regression tests
+
+For the combined multi-sport site, see `sports/site/README.md`.
 
 ## Common Commands
 
