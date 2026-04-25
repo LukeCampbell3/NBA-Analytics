@@ -266,10 +266,12 @@ def main() -> None:
                 "target": row.get("Target", ""),
                 "prediction": to_float(row.get("Prediction")),
                 "market_line": to_float(row.get("Market_Line")),
+                "edge": to_float(row.get("Edge")),
                 "abs_edge": to_float(row.get("Abs_Edge")),
                 "estimated_hit_probability": to_float(row.get("Estimated_Hit_Probability")),
                 "estimated_graded_hit_rate": to_float(row.get("Estimated_Graded_Hit_Rate")),
                 "precision_score": to_float(row.get("Precision_Score")),
+                "value_score": to_float(row.get("Precision_Score")) * to_float(row.get("Abs_Edge")),
                 "confidence_tier": row.get("Confidence_Tier", "consider"),
             }
         )
@@ -296,7 +298,9 @@ def main() -> None:
             "rejected_rows": max(0, int(summary.get("rows_supported", 0)) - int(summary.get("rows_after_filters", 0))),
             "avg_expected_hit_rate": float(summary.get("avg_hit_probability", 0.0)),
             "avg_graded_hit_rate": float(summary.get("avg_graded_hit_rate", 0.0)),
+            "avg_edge": (sum(to_float(row.get("Edge")) for row in rows) / total) if total else 0.0,
             "avg_abs_edge": float(summary.get("avg_abs_edge", 0.0)),
+            "avg_value_score": (sum(to_float(row.get("Precision_Score")) * to_float(row.get("Abs_Edge")) for row in rows) / total) if total else 0.0,
             "avg_precision_score": float(summary.get("avg_precision_score", 0.0)),
         },
         "selection": summary.get("selection", {}),

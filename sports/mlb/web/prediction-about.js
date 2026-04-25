@@ -43,7 +43,9 @@ class PredictionAboutPage {
             ["Board Size", this.formatInt(summary.play_count)],
             ["Avg Hit Rate", this.formatPct(summary.avg_expected_hit_rate)],
             ["Avg Graded Hit Rate", this.formatPct(summary.avg_graded_hit_rate)],
+            ["Avg Edge", this.formatSignedNum(summary.avg_edge)],
             ["Avg Abs Edge", this.formatNum(summary.avg_abs_edge)],
+            ["Avg Value Score", this.formatNum(summary.avg_value_score)],
             ["Avg Precision Score", this.formatNum(summary.avg_precision_score)],
             ["Parlay Tagged Plays", this.formatInt(parlaySummary.tagged_play_count)],
             ["Parlay Pairs", this.formatInt(parlaySummary.selected_pair_count)],
@@ -135,6 +137,10 @@ class PredictionAboutPage {
 
     formatNum(value) {
         return Number.isFinite(Number(value)) ? Number(value).toFixed(3) : "n/a";
+    }
+
+    formatSignedNum(value) {
+        return Number.isFinite(Number(value)) ? `${Number(value) >= 0 ? "+" : ""}${Number(value).toFixed(3)}` : "n/a";
     }
 
     formatInt(value) {
