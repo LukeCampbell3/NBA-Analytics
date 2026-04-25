@@ -9,14 +9,24 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+import pandas as pd
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_DAILY_RUNS_ROOT = REPO_ROOT / "sports" / "mlb" / "data" / "predictions" / "daily_runs"
 DEFAULT_OUT = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "daily_predictions.json"
 DEFAULT_OUT_DIST = REPO_ROOT / "dist" / "mlb" / "data" / "daily_predictions.json"
+MLB_MANIFEST_PATH = REPO_ROOT / "Player-Predictor" / "Data-Proc-MLB" / "update_manifest_2026.json"
+
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from sports.parlay_analysis import annotate_parlay_board, evaluate_historical_parlays
 
 
 def parse_args() -> argparse.Namespace:
@@ -86,6 +96,142 @@ def build_splits(source: dict[str, int], total: int) -> dict[str, dict[str, floa
     return out
 
 
+def poisson_pmf(k: int, lam: float) -> float:
+    if k < 0:
+        return 0.0
+    lam = max(0.0, float(lam))
+    if lam == 0.0:
+        return 1.0 if k == 0 else 0.0
+    log_p = (-lam) + (k * math.log(lam)) - math.lgamma(k + 1)
+    return math.exp(log_p)
+
+
+def poisson_cdf(k: int, lam: float) -> float:
+    if k < 0:
+        return 0.0
+    return min(1.0, sum(poisson_pmf(i, lam) for i in range(k + 1)))
+
+
+def estimate_count_hit_probabilities(prediction: float, market_line: float, direction: str) -> tuple[float, float, float]:
+    lam = max(0.0, float(prediction))
+    rounded = round(float(market_line))
+    is_integer_line = abs(float(market_line) - rounded) < 1e-9
+
+    if is_integer_line:
+        push_probability = poisson_pmf(int(rounded), lam)
+        if direction == "OVER":
+            hit_probability = 1.0 - poisson_cdf(int(rounded), lam)
+        else:
+            hit_probability = poisson_cdf(int(rounded) - 1, lam)
+    else:
+        floor_line = math.floor(float(market_line))
+        push_probability = 0.0
+        if direction == "OVER":
+            hit_probability = 1.0 - poisson_cdf(int(floor_line), lam)
+        else:
+            hit_probability = poisson_cdf(int(floor_line), lam)
+
+    settle_probability = max(1e-9, 1.0 - push_probability)
+    graded_hit_rate = hit_probability / settle_probability
+    return (
+        max(0.0, min(1.0, hit_probability)),
+        max(0.0, min(1.0, push_probability)),
+        max(0.0, min(1.0, graded_hit_rate)),
+    )
+
+
+def build_mlb_parlay_validation(manifest_path: Path) -> dict:
+    if not manifest_path.exists():
+        return {"available": False, "reason": f"manifest not found: {manifest_path}"}
+
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return {"available": False, "reason": f"failed reading manifest: {exc}"}
+
+    written = manifest.get("written", {})
+    if not isinstance(written, dict) or not written:
+        return {"available": False, "reason": "manifest does not contain processed MLB player files"}
+
+    target_map = {
+        "H": ("H", "Market_H", "H_market_gap"),
+        "HR": ("HR", "Market_HR", "HR_market_gap"),
+        "RBI": ("RBI", "Market_RBI", "RBI_market_gap"),
+    }
+    rows: list[dict] = []
+
+    for player_name, item in written.items():
+        raw_path = item.get("path")
+        if not raw_path:
+            continue
+        source_path = Path(raw_path)
+        if not source_path.exists():
+            fallback = manifest_path.parent / player_name / "2026_processed_processed.csv"
+            source_path = fallback if fallback.exists() else source_path
+        if not source_path.exists():
+            continue
+
+        try:
+            frame = pd.read_csv(source_path)
+        except Exception:
+            continue
+        if frame.empty:
+            continue
+
+        for _, row in frame.iterrows():
+            market_date = str(row.get("Date", "")).strip()
+            player = str(row.get("Player", "") or player_name).strip()
+            team = str(row.get("Team", "")).strip()
+            opponent = str(row.get("Opponent", "")).strip()
+            game_id = str(row.get("Game_ID", "")).strip()
+            for target, (actual_col, market_col, gap_col) in target_map.items():
+                try:
+                    market_line = float(row.get(market_col))
+                    gap = float(row.get(gap_col))
+                    actual = float(row.get(actual_col))
+                except (TypeError, ValueError):
+                    continue
+                if not math.isfinite(market_line) or not math.isfinite(gap) or not math.isfinite(actual) or abs(gap) < 1e-9:
+                    continue
+                prediction = market_line + gap
+                direction = "OVER" if gap > 0 else "UNDER"
+                _, _, graded_hit_rate = estimate_count_hit_probabilities(prediction, market_line, direction)
+                if direction == "OVER":
+                    result = "win" if actual > market_line else "push" if actual == market_line else "loss"
+                else:
+                    result = "win" if actual < market_line else "push" if actual == market_line else "loss"
+                rows.append(
+                    {
+                        "market_date": market_date,
+                        "player": player,
+                        "player_display_name": player,
+                        "team": team,
+                        "opponent": opponent,
+                        "game_id": game_id,
+                        "target": target,
+                        "direction": direction,
+                        "estimated_graded_hit_rate": graded_hit_rate,
+                        "result": result,
+                    }
+                )
+
+    history = pd.DataFrame(rows)
+    if history.empty:
+        return {"available": False, "reason": "processed MLB history did not yield usable pair rows"}
+
+    summary = evaluate_historical_parlays(
+        history,
+        sport="mlb",
+        date_col="market_date",
+        probability_col="estimated_graded_hit_rate",
+        result_col="result",
+        max_pairs_per_day=1,
+    )
+    summary["source_manifest"] = str(manifest_path)
+    summary["history_row_count"] = int(len(history))
+    return summary
+
+
 def main() -> None:
     args = parse_args()
     selected_csv = args.input_csv.resolve() if args.input_csv else find_latest_selected_csv(args.daily_runs_root.resolve())
@@ -128,6 +274,13 @@ def main() -> None:
             }
         )
 
+    parlay_payload = annotate_parlay_board(
+        plays,
+        sport="mlb",
+        probability_field="estimated_graded_hit_rate",
+    )
+    plays = parlay_payload["plays"]
+
     payload = {
         "sport": "MLB",
         "board_title": "MLB Prediction Bounties",
@@ -150,8 +303,13 @@ def main() -> None:
         "filter_rejections": summary.get("filter_rejections", {}),
         "by_target": build_splits(summary.get("by_target", {}), total),
         "by_direction": build_splits(summary.get("by_direction", {}), total),
+        "parlay_summary": parlay_payload["summary"],
+        "parlay_pairs": parlay_payload["pairs"],
+        "parlay_validation": build_mlb_parlay_validation(MLB_MANIFEST_PATH),
         "plays": plays,
     }
+    payload["summary"]["parlay_tagged_plays"] = int(payload["parlay_summary"].get("tagged_play_count", 0))
+    payload["summary"]["parlay_pairs"] = int(payload["parlay_summary"].get("selected_pair_count", 0))
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
