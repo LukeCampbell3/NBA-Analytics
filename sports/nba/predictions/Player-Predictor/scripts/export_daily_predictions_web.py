@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
 
 PLAYER_PREDICTOR_ROOT = Path(__file__).resolve().parent.parent
 SPORT_ROOT = PLAYER_PREDICTOR_ROOT.parents[1]
@@ -30,6 +31,39 @@ if str(WORKSPACE_ROOT) not in sys.path:
     sys.path.insert(0, str(WORKSPACE_ROOT))
 
 from sports.parlay_analysis import annotate_parlay_board, evaluate_historical_parlays
+
+
+NBA_SELECTOR_FALLBACK_MAX_PLAYS = 4
+NBA_SELECTOR_FALLBACK_PROFILES: tuple[dict[str, float], ...] = (
+    {
+        "min_selection_probability": 0.510,
+        "min_ev": 0.0,
+        "min_final_confidence": 0.05,
+        "min_abs_edge": 0.0,
+    },
+    {
+        "min_selection_probability": 0.505,
+        "min_ev": 0.0,
+        "min_final_confidence": 0.05,
+        "min_abs_edge": 0.50,
+    },
+    {
+        "min_selection_probability": 0.5045,
+        "min_ev": 0.0,
+        "min_final_confidence": 0.05,
+        "min_abs_edge": 0.45,
+    },
+)
+NBA_ADAPTIVE_BOARD_RANK_RULES: dict[int, dict[str, float]] = {
+    3: {
+        "max_score_gap_from_top": 0.40,
+        "max_conf_gap_from_top": 0.20,
+    },
+    4: {
+        "max_score_gap_from_top": 0.35,
+        "max_conf_gap_from_top": 0.15,
+    },
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -460,6 +494,110 @@ def safe_float(value) -> float | None:
         return None
 
 
+def _numeric_series(frame: pd.DataFrame, column: str, default: float = 0.0) -> pd.Series:
+    if column not in frame.columns:
+        return pd.Series(default, index=frame.index, dtype="float64")
+    return pd.to_numeric(frame[column], errors="coerce").fillna(default)
+
+
+def _zscore_series(series: pd.Series) -> pd.Series:
+    numeric = pd.to_numeric(series, errors="coerce")
+    std = float(numeric.std(ddof=0))
+    if not math.isfinite(std) or std <= 1e-12:
+        return pd.Series(0.0, index=numeric.index, dtype="float64")
+    mean = float(numeric.mean())
+    return (numeric - mean) / std
+
+
+def enrich_selector_pool_candidates(plays: pd.DataFrame) -> pd.DataFrame:
+    if plays.empty:
+        return plays.copy()
+
+    enriched = plays.copy()
+    probability_inputs = pd.concat(
+        [
+            _numeric_series(enriched, "expected_win_rate", np.nan),
+            _numeric_series(enriched, "p_calibrated", np.nan),
+            _numeric_series(enriched, "board_play_win_prob", np.nan),
+            _numeric_series(enriched, "selector_expected_win_rate", np.nan),
+        ],
+        axis=1,
+    )
+    enriched["selection_probability"] = probability_inputs.mean(axis=1, skipna=True).fillna(0.5).clip(lower=0.0, upper=1.0)
+
+    ev_inputs = pd.concat(
+        [
+            _numeric_series(enriched, "ev_adjusted", np.nan),
+            _numeric_series(enriched, "thompson_ev", np.nan),
+            _numeric_series(enriched, "ev", np.nan),
+        ],
+        axis=1,
+    )
+    enriched["selection_ev"] = ev_inputs.mean(axis=1, skipna=True).fillna(0.0)
+
+    enriched["selection_confidence"] = _numeric_series(enriched, "final_confidence", 0.0).clip(lower=0.0)
+    enriched["selection_abs_edge"] = _numeric_series(enriched, "abs_edge", 0.0).clip(lower=0.0)
+    enriched["selection_uncertainty"] = _numeric_series(enriched, "uncertainty_sigma", np.nan).replace(0.0, np.nan)
+    enriched["selection_uncertainty"] = enriched["selection_uncertainty"].fillna(
+        enriched["selection_abs_edge"].where(enriched["selection_abs_edge"] > 0.0, 1.0)
+    ).clip(lower=0.5)
+    enriched["selection_edge_to_sigma"] = (
+        enriched["selection_abs_edge"] / enriched["selection_uncertainty"]
+    ).replace([np.inf, -np.inf], np.nan).fillna(0.0)
+    enriched["selection_history_rows"] = _numeric_series(enriched, "history_rows", 0.0).clip(lower=0.0)
+    enriched["selection_spike_probability"] = _numeric_series(enriched, "spike_probability", 0.5).clip(lower=0.0, upper=1.0)
+    enriched["selection_contradiction"] = _numeric_series(enriched, "contradiction_score", 0.0).clip(lower=0.0)
+    enriched["selection_recoverability"] = _numeric_series(enriched, "recoverability_score", 0.0).clip(lower=0.0)
+    enriched["selection_agreement"] = _numeric_series(enriched, "agreement_count", 0.0).clip(lower=0.0)
+
+    enriched["pool_selection_score"] = (
+        0.30 * _zscore_series(enriched["selection_probability"])
+        + 0.24 * _zscore_series(enriched["selection_ev"])
+        + 0.18 * _zscore_series(enriched["selection_confidence"])
+        + 0.16 * _zscore_series(enriched["selection_edge_to_sigma"])
+        + 0.06 * _zscore_series(enriched["selection_history_rows"])
+        + 0.04 * _zscore_series(enriched["selection_recoverability"])
+        + 0.04 * _zscore_series(enriched["selection_agreement"])
+        - 0.04 * _zscore_series(enriched["selection_spike_probability"])
+        - 0.04 * _zscore_series(enriched["selection_contradiction"])
+    )
+    return enriched
+
+
+def apply_adaptive_board_sizing(plays: pd.DataFrame) -> pd.DataFrame:
+    if plays.empty:
+        return plays.copy()
+    if "pool_selection_score" not in plays.columns or "selection_confidence" not in plays.columns:
+        return plays.copy().reset_index(drop=True)
+
+    ordered = plays.copy().reset_index(drop=True)
+    score_series = pd.to_numeric(ordered["pool_selection_score"], errors="coerce")
+    conf_series = pd.to_numeric(ordered["selection_confidence"], errors="coerce").fillna(0.0)
+    if score_series.empty or not math.isfinite(float(score_series.iloc[0])):
+        return ordered
+
+    top_score = float(score_series.iloc[0])
+    top_conf = float(conf_series.iloc[0])
+    keep_indices: list[int] = []
+    for idx, row in ordered.iterrows():
+        rank = idx + 1
+        if rank <= 2:
+            keep_indices.append(idx)
+            continue
+        rule = NBA_ADAPTIVE_BOARD_RANK_RULES.get(rank)
+        if not rule:
+            continue
+        score_value = safe_float(row.get("pool_selection_score"))
+        conf_value = safe_float(row.get("selection_confidence")) or 0.0
+        if score_value is None:
+            continue
+        score_gap = top_score - float(score_value)
+        conf_gap = top_conf - float(conf_value)
+        if score_gap <= float(rule["max_score_gap_from_top"]) and conf_gap <= float(rule["max_conf_gap_from_top"]):
+            keep_indices.append(idx)
+    return ordered.iloc[keep_indices].reset_index(drop=True)
+
+
 def build_summary(plays: pd.DataFrame) -> dict:
     if plays.empty:
         return {
@@ -517,6 +655,11 @@ def normalize_play_rows(plays: pd.DataFrame, identity_lookup: PlayerIdentityLook
                 "raw_expected_win_rate": safe_float(row.get("raw_expected_win_rate")),
                 "ev": safe_float(row.get("ev")),
                 "thompson_ev": safe_float(row.get("thompson_ev")),
+                "selection_probability": safe_float(row.get("selection_probability")),
+                "selection_ev": safe_float(row.get("selection_ev")),
+                "selection_confidence": safe_float(row.get("selection_confidence")),
+                "selection_edge_to_sigma": safe_float(row.get("selection_edge_to_sigma")),
+                "pool_selection_score": safe_float(row.get("pool_selection_score")),
                 "final_confidence": safe_float(row.get("final_confidence")),
                 "gap_percentile": safe_float(row.get("gap_percentile")),
                 "allocation_tier": str(row.get("allocation_tier", "")),
@@ -565,44 +708,57 @@ def load_shadow_runs(manifest: dict, manifest_path: Path, identity_lookup: Playe
     return out
 
 
-def build_selector_pool_fallback(plays: pd.DataFrame, *, limit: int = 12) -> pd.DataFrame:
+def build_selector_pool_fallback(plays: pd.DataFrame, *, limit: int = NBA_SELECTOR_FALLBACK_MAX_PLAYS) -> pd.DataFrame:
     if plays.empty:
         return plays.copy()
 
-    ordered = plays.copy()
-    for column in ("expected_win_rate", "ev", "final_confidence", "abs_edge"):
-        ordered[column] = pd.to_numeric(ordered.get(column), errors="coerce")
+    ordered = enrich_selector_pool_candidates(plays)
+    ordered["_source_index"] = ordered.index
     ordered = ordered.sort_values(
-        ["expected_win_rate", "ev", "final_confidence", "abs_edge"],
-        ascending=[False, False, False, False],
+        ["pool_selection_score", "selection_probability", "selection_ev", "selection_confidence", "selection_edge_to_sigma", "selection_abs_edge"],
+        ascending=[False, False, False, False, False, False],
         na_position="last",
     ).reset_index(drop=True)
-    positive_ev = ordered.loc[pd.to_numeric(ordered.get("ev"), errors="coerce").fillna(-1.0) >= 0].copy()
-    negative_ev = ordered.loc[~ordered.index.isin(positive_ev.index)].copy()
-    if not positive_ev.empty:
-        ordered = pd.concat([positive_ev, negative_ev], ignore_index=True)
 
     selected_rows: list[pd.Series] = []
+    selected_source_indices: set[int] = set()
     seen_players: set[str] = set()
     per_game_counts: dict[str, int] = {}
-    for _, row in ordered.iterrows():
-        player = str(row.get("player", "")).strip().lower()
-        game_key = str(row.get("game_key", "") or row.get("market_event_id", "")).strip().lower()
-        if player and player in seen_players:
+    for profile in NBA_SELECTOR_FALLBACK_PROFILES:
+        eligible = ordered.loc[
+            ordered["selection_probability"].ge(float(profile["min_selection_probability"]))
+            & ordered["selection_ev"].ge(float(profile["min_ev"]))
+            & ordered["selection_confidence"].ge(float(profile["min_final_confidence"]))
+            & ordered["selection_abs_edge"].ge(float(profile["min_abs_edge"]))
+        ].copy()
+        if eligible.empty:
             continue
-        if game_key and per_game_counts.get(game_key, 0) >= 2:
-            continue
-        selected_rows.append(row)
-        if player:
-            seen_players.add(player)
-        if game_key:
-            per_game_counts[game_key] = per_game_counts.get(game_key, 0) + 1
+
+        for _, row in eligible.iterrows():
+            source_index = int(row.get("_source_index", -1))
+            if source_index in selected_source_indices:
+                continue
+            player = str(row.get("player", "")).strip().lower()
+            game_key = str(row.get("game_key", "") or row.get("market_event_id", "")).strip().lower()
+            if player and player in seen_players:
+                continue
+            if game_key and per_game_counts.get(game_key, 0) >= 2:
+                continue
+            selected_rows.append(row)
+            selected_source_indices.add(source_index)
+            if player:
+                seen_players.add(player)
+            if game_key:
+                per_game_counts[game_key] = per_game_counts.get(game_key, 0) + 1
+            if len(selected_rows) >= int(limit):
+                break
         if len(selected_rows) >= int(limit):
             break
 
     if not selected_rows:
-        return ordered.head(int(limit)).copy()
-    return pd.DataFrame(selected_rows).reset_index(drop=True)
+        return ordered.head(0).drop(columns="_source_index", errors="ignore").copy()
+    selected = pd.DataFrame(selected_rows).drop(columns="_source_index", errors="ignore").reset_index(drop=True)
+    return apply_adaptive_board_sizing(selected)
 
 
 def resolve_published_board(manifest: dict, manifest_path: Path) -> tuple[pd.DataFrame, dict, str]:
@@ -617,9 +773,10 @@ def resolve_published_board(manifest: dict, manifest_path: Path) -> tuple[pd.Dat
     selector_plays = pd.read_csv(selector_csv) if selector_csv and selector_csv.exists() else pd.DataFrame()
     if not selector_plays.empty:
         fallback_plays = build_selector_pool_fallback(selector_plays)
-        final_payload.setdefault("policy_profile", manifest.get("policy_profile"))
-        final_payload.setdefault("market_snapshot", manifest.get("current_market_snapshot"))
-        return fallback_plays, final_payload, "primary_selector_pool_fallback"
+        if not fallback_plays.empty:
+            final_payload.setdefault("policy_profile", manifest.get("policy_profile"))
+            final_payload.setdefault("market_snapshot", manifest.get("current_market_snapshot"))
+            return fallback_plays, final_payload, "primary_selector_pool_fallback"
 
     for item in manifest.get("shadow_runs", []):
         shadow_csv = resolve_artifact_path(item.get("final_csv"), manifest_path.parent)
@@ -632,10 +789,16 @@ def resolve_published_board(manifest: dict, manifest_path: Path) -> tuple[pd.Dat
                 continue
             shadow_payload = json.loads(shadow_json.read_text(encoding="utf-8")) if shadow_json and shadow_json.exists() else {}
             shadow_payload.setdefault("policy_profile", item.get("policy_profile"))
-            return build_selector_pool_fallback(shadow_selector), shadow_payload, "shadow_selector_pool_fallback"
+            shadow_fallback = build_selector_pool_fallback(shadow_selector)
+            if shadow_fallback.empty:
+                continue
+            return shadow_fallback, shadow_payload, "shadow_selector_pool_fallback"
         shadow_payload = json.loads(shadow_json.read_text(encoding="utf-8")) if shadow_json and shadow_json.exists() else {}
         shadow_payload.setdefault("policy_profile", item.get("policy_profile"))
-        return shadow_plays, shadow_payload, "shadow_final_board_fallback"
+        shadow_final_fallback = build_selector_pool_fallback(shadow_plays)
+        if shadow_final_fallback.empty:
+            continue
+        return shadow_final_fallback, shadow_payload, "shadow_final_board_fallback"
 
     return plays, final_payload, "primary_final_board_empty"
 
