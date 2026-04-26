@@ -52,4 +52,4 @@ For the shared published site, the preferred one-shot command is:
 python sports/site/pipeline/run_daily_predictions.py
 ```
 
-That command selects the latest MLB high-precision board, updates the MLB web payload, refreshes NBA, and rebuilds the shared `dist/` bundle.
+That command checks local time and runs at `2:00 AM` by default. When it runs, it selects the latest MLB high-precision board, updates the MLB web payload, refreshes NBA, and rebuilds the shared `dist/` bundle.

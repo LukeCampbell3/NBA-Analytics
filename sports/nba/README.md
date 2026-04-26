@@ -46,7 +46,7 @@ For the shared published site, the preferred entrypoint is:
 python sports/site/pipeline/run_daily_predictions.py
 ```
 
-That command refreshes NBA, refreshes MLB, and rebuilds the unified `dist/` bundle in one pass.
+That command checks local time and runs at `2:00 AM` by default. When it runs, it refreshes NBA, refreshes MLB, and rebuilds the unified `dist/` bundle in one pass. Use `--force-run` for a manual refresh outside the scheduled window.
 
 ## Data Paths
 
