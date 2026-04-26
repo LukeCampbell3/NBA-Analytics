@@ -71,3 +71,46 @@ def test_evaluate_historical_parlays_reports_pair_hit_rate() -> None:
     assert summary["selected"]["graded_pair_count"] == 2
     assert summary["selected"]["hit_pair_count"] == 1
     assert summary["selected"]["pair_hit_rate"] == 0.5
+
+
+def test_annotate_parlay_board_uses_fallback_for_weak_nba_slate() -> None:
+    plays = [
+        {
+            "player": "Austin Reaves",
+            "player_display_name": "Austin Reaves",
+            "team": "LAL",
+            "target": "PTS",
+            "direction": "OVER",
+            "game_id": "g1",
+            "expected_win_rate": 0.5093,
+            "ev": 0.008,
+        },
+        {
+            "player": "Stephon Castle",
+            "player_display_name": "Stephon Castle",
+            "team": "SAS",
+            "target": "AST",
+            "direction": "OVER",
+            "game_id": "g2",
+            "expected_win_rate": 0.5071,
+            "ev": 0.004,
+        },
+        {
+            "player": "Toumani Camara",
+            "player_display_name": "Toumani Camara",
+            "team": "POR",
+            "target": "PTS",
+            "direction": "OVER",
+            "game_id": "g3",
+            "expected_win_rate": 0.5024,
+            "ev": -0.002,
+        },
+    ]
+
+    payload = annotate_parlay_board(plays, sport="nba", probability_field="expected_win_rate")
+
+    assert payload["summary"]["selection_mode"] == "fallback"
+    assert payload["summary"]["selected_pair_count"] == 1
+    tagged = [play for play in payload["plays"] if play["parlay_candidate"]]
+    assert len(tagged) == 2
+    assert {play["player"] for play in tagged} == {"Austin Reaves", "Stephon Castle"}

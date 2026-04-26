@@ -12,6 +12,9 @@ SPORT_CONFIG: dict[str, dict[str, float | int]] = {
         "min_leg_probability": 0.54,
         "min_pair_probability": 0.29,
         "max_pairs": 3,
+        "fallback_min_leg_probability": 0.50,
+        "fallback_min_pair_probability": 0.24,
+        "fallback_max_pairs": 1,
         "same_player_factor": 0.52,
         "same_game_factor": 0.90,
         "same_team_factor": 0.96,
@@ -26,6 +29,9 @@ SPORT_CONFIG: dict[str, dict[str, float | int]] = {
         "min_leg_probability": 0.60,
         "min_pair_probability": 0.38,
         "max_pairs": 3,
+        "fallback_min_leg_probability": 0.58,
+        "fallback_min_pair_probability": 0.34,
+        "fallback_max_pairs": 2,
         "same_player_factor": 0.72,
         "same_game_factor": 0.95,
         "same_team_factor": 0.97,
@@ -258,8 +264,34 @@ def annotate_parlay_board(
         min_pair_probability=float(config["min_pair_probability"]),
     )
 
+    selection_mode = "strict"
+    if not candidate_pairs:
+        fallback_pairs = score_candidate_pairs(
+            prepared,
+            sport=sport,
+            probability_field=probability_field,
+            min_leg_probability=float(config.get("fallback_min_leg_probability", config["min_leg_probability"])),
+            min_pair_probability=float(config.get("fallback_min_pair_probability", config["min_pair_probability"])),
+        )
+        if fallback_pairs:
+            candidate_pairs = fallback_pairs
+            selection_mode = "fallback"
+            non_negative_ev_pairs = [
+                pair
+                for pair in candidate_pairs
+                if (_safe_float(prepared[int(pair["left_index"])].get("ev")) or 0.0) >= 0.0
+                and (_safe_float(prepared[int(pair["right_index"])].get("ev")) or 0.0) >= 0.0
+            ]
+            if non_negative_ev_pairs:
+                candidate_pairs = non_negative_ev_pairs
+
     selected_pairs: list[dict[str, Any]] = []
     used_indices: set[int] = set()
+    max_pairs_to_select = int(
+        config["max_pairs"]
+        if selection_mode == "strict"
+        else config.get("fallback_max_pairs", config["max_pairs"])
+    )
     for pair in candidate_pairs:
         left_index = int(pair["left_index"])
         right_index = int(pair["right_index"])
@@ -268,7 +300,7 @@ def annotate_parlay_board(
         selected_pairs.append(dict(pair))
         used_indices.add(left_index)
         used_indices.add(right_index)
-        if len(selected_pairs) >= int(config["max_pairs"]):
+        if len(selected_pairs) >= max_pairs_to_select:
             break
 
     for pair_rank, pair in enumerate(selected_pairs, start=1):
@@ -307,6 +339,7 @@ def annotate_parlay_board(
     ]
 
     summary = {
+        "selection_mode": selection_mode,
         "candidate_pair_count": int(len(candidate_pairs)),
         "selected_pair_count": int(len(selected_pairs)),
         "tagged_play_count": int(sum(1 for play in prepared if play["parlay_candidate"])),
@@ -314,6 +347,8 @@ def annotate_parlay_board(
         "best_projected_pair_hit_rate": max(tagged_probability) if tagged_probability else None,
         "min_leg_probability": float(config["min_leg_probability"]),
         "min_pair_probability": float(config["min_pair_probability"]),
+        "fallback_min_leg_probability": float(config.get("fallback_min_leg_probability", config["min_leg_probability"])),
+        "fallback_min_pair_probability": float(config.get("fallback_min_pair_probability", config["min_pair_probability"])),
     }
     return {
         "plays": prepared,
