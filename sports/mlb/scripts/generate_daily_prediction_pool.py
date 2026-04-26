@@ -26,12 +26,14 @@ from pathlib import Path
 from typing import Iterable
 
 import pandas as pd
+import requests
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_DATA_DIR = REPO_ROOT / "Player-Predictor" / "Data-Proc-MLB"
 DEFAULT_MANIFEST = DEFAULT_DATA_DIR / "update_manifest_2026.json"
 DEFAULT_DAILY_RUNS_ROOT = REPO_ROOT / "sports" / "mlb" / "data" / "predictions" / "daily_runs"
+DEFAULT_MARKET_ROOT = REPO_ROOT / "sports" / "mlb" / "data" / "raw" / "market_odds" / "mlb" / "odds_api_io"
 
 
 @dataclass(frozen=True)
@@ -85,6 +87,18 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=10,
         help="Minimum prior rows needed before a non-baseline modeled prediction is emitted.",
+    )
+    parser.add_argument(
+        "--market-root",
+        type=Path,
+        default=DEFAULT_MARKET_ROOT,
+        help="Root directory containing normalized MLB market snapshots.",
+    )
+    parser.add_argument(
+        "--schedule-timeout-seconds",
+        type=float,
+        default=30.0,
+        help="HTTP timeout when loading the MLB schedule for slate-aware generation.",
     )
     return parser.parse_args()
 
@@ -282,6 +296,388 @@ def remap_commence_time(template_value: object, requested_run_date: pd.Timestamp
         tz=ts.tz,
     )
     return remapped.isoformat().replace("+00:00", "Z") if remapped.tzinfo is not None else remapped.isoformat()
+
+
+def round_half(value: float, *, min_value: float = 0.5) -> float:
+    return max(float(min_value), round(float(value) * 2.0) / 2.0)
+
+
+def safe_div(num: float, den: float, default: float = 0.0) -> float:
+    den = float(den)
+    if abs(den) < 1e-9:
+        return float(default)
+    return float(num) / den
+
+
+def load_market_snapshot(market_root: Path, requested_run_date: pd.Timestamp) -> pd.DataFrame:
+    candidates = [
+        market_root / "latest_player_props_wide.parquet",
+        market_root / "latest_player_props_wide.csv",
+        market_root / "history_player_props_wide.parquet",
+        market_root / "history_player_props_wide.csv",
+    ]
+    selected = next((path for path in candidates if path.exists()), None)
+    if selected is None:
+        return pd.DataFrame()
+    if selected.suffix.lower() == ".parquet":
+        df = pd.read_parquet(selected)
+    else:
+        df = pd.read_csv(selected)
+    if df.empty or "Player" not in df.columns or "Market_Date" not in df.columns:
+        return pd.DataFrame()
+    df = df.copy()
+    df["Player"] = df["Player"].astype(str)
+    df["Market_Date"] = pd.to_datetime(df["Market_Date"], errors="coerce").dt.normalize()
+    df = df.loc[df["Market_Date"] == requested_run_date].copy()
+    if df.empty:
+        return df
+    return df.drop_duplicates(subset=["Market_Date", "Player"], keep="last").reset_index(drop=True)
+
+
+def fetch_schedule_games(run_date: pd.Timestamp, timeout_seconds: float) -> list[dict]:
+    url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={run_date.strftime('%Y-%m-%d')}&hydrate=team,probablePitcher"
+    response = requests.get(url, timeout=float(timeout_seconds))
+    response.raise_for_status()
+    payload = response.json()
+    games: list[dict] = []
+    for date_bucket in payload.get("dates", []):
+        games.extend(date_bucket.get("games", []))
+    return games
+
+
+def build_team_contexts(frames: list[pd.DataFrame], requested_run_date: pd.Timestamp) -> tuple[dict[str, dict[str, float]], dict[str, list[str]], dict[str, pd.Series]]:
+    if not frames:
+        return {}, {}, {}
+
+    combined = pd.concat(frames, ignore_index=True)
+    combined = combined.loc[combined["_game_date"] < requested_run_date].copy()
+    if combined.empty:
+        return {}, {}, {}
+
+    team_context: dict[str, dict[str, float]] = {}
+    latest_player_rows: dict[str, pd.Series] = {}
+
+    for frame in frames:
+        if frame.empty:
+            continue
+        history = frame.loc[frame["_game_date"] < requested_run_date].copy()
+        if history.empty:
+            continue
+        latest = history.sort_values(["_game_date", "Game_Index"]).iloc[-1]
+        latest_player_rows[str(latest.get("Player", ""))] = latest
+
+    hitter_rows = combined.loc[combined.get("Player_Type", "").astype(str).str.lower() == "hitter"].copy()
+    if not hitter_rows.empty:
+        hitter_rows["PA_num"] = pd.to_numeric(hitter_rows.get("PA"), errors="coerce").fillna(0.0)
+        hitter_rows["SO_num"] = pd.to_numeric(hitter_rows.get("SO"), errors="coerce").fillna(0.0)
+        latest_bullpen = (
+            hitter_rows.sort_values(["_game_date", "Game_Index"])
+            .groupby("Opponent")["Opp_Bullpen_ERA_7"]
+            .last()
+            .to_dict()
+        )
+        for team, value in latest_bullpen.items():
+            team_context.setdefault(str(team), {})["bullpen_era"] = to_float(value) if to_float(value) is not None else 4.0
+
+        team_woba = (
+            hitter_rows.groupby(["Team", "_game_date"], as_index=False)
+            .agg(team_woba=("wOBA", "mean"), team_pa=("PA_num", "sum"), team_so=("SO_num", "sum"))
+            .sort_values(["Team", "_game_date"])
+        )
+        latest_hitting = (
+            team_woba.groupby("Team")
+            .tail(3)
+            .groupby("Team", as_index=False)
+            .agg(lineup_woba=("team_woba", "mean"), team_pa=("team_pa", "sum"), team_so=("team_so", "sum"))
+        )
+        for _, row in latest_hitting.iterrows():
+            team = str(row.get("Team", ""))
+            team_context.setdefault(team, {})["lineup_woba"] = to_float(row.get("lineup_woba")) if to_float(row.get("lineup_woba")) is not None else 0.315
+            team_context.setdefault(team, {})["lineup_k_rate"] = safe_div(
+                to_float(row.get("team_so")) if to_float(row.get("team_so")) is not None else 0.0,
+                to_float(row.get("team_pa")) if to_float(row.get("team_pa")) is not None else 0.0,
+                default=0.225,
+            )
+
+        recent_hitters = hitter_rows.sort_values(
+            by=["Team", "_game_date", "Batting_Order", "Team_PA_share"],
+            ascending=[True, False, True, False],
+        )
+        team_recent_hitters: dict[str, list[str]] = {}
+        for team, group in recent_hitters.groupby("Team", sort=True):
+            ordered = []
+            seen: set[str] = set()
+            for _, row in group.iterrows():
+                player = str(row.get("Player", "")).strip()
+                if not player or player in seen:
+                    continue
+                ordered.append(player)
+                seen.add(player)
+                if len(ordered) >= 12:
+                    break
+            team_recent_hitters[str(team)] = ordered
+    else:
+        team_recent_hitters = {}
+
+    return team_context, team_recent_hitters, latest_player_rows
+
+
+def project_from_latest_row(
+    latest_row: pd.Series,
+    spec: TargetSpec,
+    *,
+    opponent_context: dict[str, float],
+) -> tuple[float, float]:
+    baseline = to_float(latest_row.get(spec.rolling_col))
+    if baseline is None:
+        baseline = to_float(latest_row.get(spec.lag1_col))
+    if baseline is None:
+        baseline = to_float(latest_row.get(spec.actual_col), 0.0)
+
+    baseline = max(0.0, float(baseline))
+    latest_pa_share = to_float(latest_row.get("Team_PA_share")) if to_float(latest_row.get("Team_PA_share")) is not None else 0.1
+    park_factor = to_float(latest_row.get("Park_Factor")) if to_float(latest_row.get("Park_Factor")) is not None else 1.0
+    temp_f = to_float(latest_row.get("Temp_F")) if to_float(latest_row.get("Temp_F")) is not None else 70.0
+    woba = to_float(latest_row.get("wOBA")) if to_float(latest_row.get("wOBA")) is not None else 0.315
+    iso = to_float(latest_row.get("ISO")) if to_float(latest_row.get("ISO")) is not None else 0.14
+    barrel_pct = to_float(latest_row.get("Barrel%")) if to_float(latest_row.get("Barrel%")) is not None else 7.0
+    opp_pitcher_k9 = float(opponent_context.get("opp_pitcher_k9", to_float(latest_row.get("Opp_Pitcher_K9_3")) if to_float(latest_row.get("Opp_Pitcher_K9_3")) is not None else 8.2))
+    opp_pitcher_era = float(opponent_context.get("opp_pitcher_era", to_float(latest_row.get("Opp_Pitcher_ERA_3")) if to_float(latest_row.get("Opp_Pitcher_ERA_3")) is not None else 4.1))
+    opp_bullpen_era = float(opponent_context.get("opp_bullpen_era", to_float(latest_row.get("Opp_Bullpen_ERA_7")) if to_float(latest_row.get("Opp_Bullpen_ERA_7")) is not None else 4.0))
+    opp_lineup_woba = float(opponent_context.get("opp_lineup_woba", to_float(latest_row.get("Opp_Lineup_wOBA_3")) if to_float(latest_row.get("Opp_Lineup_wOBA_3")) is not None else 0.315))
+    opp_lineup_k_rate = float(opponent_context.get("opp_lineup_k_rate", to_float(latest_row.get("Opp_Lineup_K_rate_3")) if to_float(latest_row.get("Opp_Lineup_K_rate_3")) is not None else 0.225))
+    lag_value = to_float(latest_row.get(spec.lag1_col)) if to_float(latest_row.get(spec.lag1_col)) is not None else baseline
+
+    if spec.role == "hitter":
+        if spec.target == "H":
+            prediction = (
+                (0.68 * baseline)
+                + (0.14 * lag_value)
+                + (0.35 * latest_pa_share * 4.2)
+                + (0.12 * (park_factor - 1.0) * 4.0)
+                + (0.07 * ((temp_f - 65.0) / 15.0))
+                - (0.05 * (opp_pitcher_k9 - 8.0))
+                + (0.04 * (opp_bullpen_era - 4.0))
+            )
+        elif spec.target == "HR":
+            prediction = (
+                (0.70 * baseline)
+                + (0.10 * lag_value)
+                + (0.25 * iso)
+                + (0.0025 * barrel_pct)
+                + (0.08 * (park_factor - 1.0) * 4.0)
+            )
+        else:
+            prediction = (
+                (0.68 * baseline)
+                + (0.16 * lag_value)
+                + (0.28 * latest_pa_share * 4.2)
+                + (0.30 * (woba - 0.31))
+                + (0.05 * (opp_bullpen_era - 4.0))
+            )
+    else:
+        if spec.target == "K":
+            prediction = (
+                (0.72 * baseline)
+                + (0.14 * lag_value)
+                + (8.0 * (opp_lineup_k_rate - 0.20))
+                + (0.10 * (park_factor - 1.0) * -4.0)
+            )
+        elif spec.target == "ER":
+            prediction = (
+                (0.72 * baseline)
+                + (0.16 * lag_value)
+                + (4.5 * (opp_lineup_woba - 0.300))
+                + (0.18 * (park_factor - 1.0) * 4.0)
+            )
+        else:
+            ip_value = to_float(latest_row.get("IP")) if to_float(latest_row.get("IP")) is not None else 5.5
+            ip = max(1.0, ip_value)
+            er_projection = (
+                (0.72 * (to_float(latest_row.get("ER_rolling_avg")) if to_float(latest_row.get("ER_rolling_avg")) is not None else 0.0))
+                + (0.16 * (to_float(latest_row.get("ER_lag1")) if to_float(latest_row.get("ER_lag1")) is not None else 0.0))
+                + (4.5 * (opp_lineup_woba - 0.300))
+                + (0.18 * (park_factor - 1.0) * 4.0)
+            )
+            prediction = (max(0.0, er_projection) * 9.0) / ip
+
+    prediction = max(0.0, float(prediction))
+    if spec.target == "HR":
+        market_line = 0.5
+    elif spec.target == "ERA":
+        market_line = max(1.5, round(baseline, 1))
+    elif spec.target == "K":
+        market_line = round_half(baseline, min_value=2.5)
+    else:
+        market_line = round_half(baseline, min_value=0.5)
+    return prediction, float(market_line)
+
+
+def build_upcoming_schedule_pool_rows(
+    *,
+    frames: list[pd.DataFrame],
+    requested_run_date: pd.Timestamp,
+    min_modeled_history_rows: int,
+    market_root: Path,
+    schedule_timeout_seconds: float,
+) -> tuple[list[dict[str, object]], dict[str, object]]:
+    schedule_games = fetch_schedule_games(requested_run_date, timeout_seconds=schedule_timeout_seconds)
+    if not schedule_games:
+        return [], {"selection_reason": "no_schedule_games"}
+
+    market_snapshot = load_market_snapshot(market_root, requested_run_date)
+    market_by_player = {
+        str(row.get("Player", "")).strip(): row
+        for _, row in market_snapshot.iterrows()
+        if str(row.get("Player", "")).strip()
+    }
+    team_context, team_recent_hitters, latest_player_rows = build_team_contexts(frames, requested_run_date)
+    if not latest_player_rows:
+        return [], {"selection_reason": "no_latest_history_rows"}
+
+    frame_by_player: dict[str, pd.DataFrame] = {}
+    for frame in frames:
+        if frame.empty:
+            continue
+        player_name = str(frame.iloc[0].get("Player", "")).strip()
+        if player_name:
+            frame_by_player[player_name] = frame
+
+    rows: list[dict[str, object]] = []
+    used_players: set[tuple[str, str, str]] = set()
+
+    for game in schedule_games:
+        game_id = str(game.get("gamePk") or "")
+        commence_time = str(game.get("gameDate") or "")
+        home_meta = (((game.get("teams") or {}).get("home") or {}).get("team") or {})
+        away_meta = (((game.get("teams") or {}).get("away") or {}).get("team") or {})
+        home_team = str(home_meta.get("abbreviation") or "").upper()
+        away_team = str(away_meta.get("abbreviation") or "").upper()
+        probable_home = normalize_player_id((((game.get("teams") or {}).get("home") or {}).get("probablePitcher") or {}).get("fullName", ""))
+        probable_away = normalize_player_id((((game.get("teams") or {}).get("away") or {}).get("probablePitcher") or {}).get("fullName", ""))
+
+        for team, opponent, is_home, probable_pitcher_name, opp_probable_name in [
+            (home_team, away_team, 1, probable_home, probable_away),
+            (away_team, home_team, 0, probable_away, probable_home),
+        ]:
+            market_team_players = [
+                player_name
+                for player_name, row in market_by_player.items()
+                if str(row.get("Market_Home_Team", "")).upper() == team or str(row.get("Market_Away_Team", "")).upper() == team
+            ]
+            hitters = [
+                player_name
+                for player_name in market_team_players
+                if player_name in latest_player_rows and str(latest_player_rows[player_name].get("Player_Type", "")).lower() == "hitter"
+            ]
+            if len(hitters) < 9:
+                for player_name in team_recent_hitters.get(team, []):
+                    if player_name not in hitters and player_name in latest_player_rows:
+                        hitters.append(player_name)
+                    if len(hitters) >= 9:
+                        break
+
+            pitchers: list[str] = []
+            if probable_pitcher_name and probable_pitcher_name in latest_player_rows:
+                pitchers.append(probable_pitcher_name)
+            for player_name in market_team_players:
+                if player_name in latest_player_rows and str(latest_player_rows[player_name].get("Player_Type", "")).lower() == "pitcher":
+                    if player_name not in pitchers:
+                        pitchers.append(player_name)
+
+            opp_probable_row = latest_player_rows.get(opp_probable_name)
+            opponent_context = {
+                "opp_pitcher_era": to_float(opp_probable_row.get("ERA_rolling_avg"), 4.1) if opp_probable_row is not None else team_context.get(opponent, {}).get("opp_pitcher_era", 4.1),
+                "opp_pitcher_k9": (
+                    (to_float(opp_probable_row.get("K_rolling_avg"), 0.0) * 9.0 / max(to_float(opp_probable_row.get("IP"), 5.5), 1.0))
+                    if opp_probable_row is not None
+                    else team_context.get(opponent, {}).get("opp_pitcher_k9", 8.2)
+                ),
+                "opp_bullpen_era": float(team_context.get(opponent, {}).get("bullpen_era", 4.0)),
+                "opp_lineup_woba": float(team_context.get(opponent, {}).get("lineup_woba", 0.315)),
+                "opp_lineup_k_rate": float(team_context.get(opponent, {}).get("lineup_k_rate", 0.225)),
+            }
+
+            for player_name in hitters + pitchers:
+                latest_row = latest_player_rows.get(player_name)
+                frame = frame_by_player.get(player_name)
+                if latest_row is None or frame is None:
+                    continue
+                player_type = str(latest_row.get("Player_Type", "")).strip().lower()
+                specs = market_specs_for_role(player_type)
+                if not specs:
+                    continue
+                history_frame = frame.loc[frame["_game_date"] < requested_run_date].copy()
+                if history_frame.empty:
+                    continue
+                history_rows_by_target = {
+                    spec.target: int(pd.to_numeric(history_frame.get(spec.actual_col), errors="coerce").dropna().shape[0])
+                    for spec in specs
+                }
+                last_history_date = history_frame["_game_date"].max()
+                market_row = market_by_player.get(player_name)
+                for spec in specs:
+                    dedupe_key = (game_id, player_name, spec.target)
+                    if dedupe_key in used_players:
+                        continue
+
+                    prediction, fallback_market_line = project_from_latest_row(
+                        latest_row,
+                        spec,
+                        opponent_context=opponent_context,
+                    )
+                    market_line = fallback_market_line
+                    if market_row is not None:
+                        market_value = to_float(market_row.get(f"Market_{spec.target}"))
+                        if market_value is not None:
+                            market_line = float(market_value)
+                    edge = float(prediction - market_line)
+                    history_rows = int(history_rows_by_target.get(spec.target, 0))
+                    baseline = to_float(latest_row.get(spec.rolling_col))
+                    if baseline is None:
+                        baseline = prediction
+                    model_selected = "et" if abs(edge) > 1e-9 and history_rows >= int(min_modeled_history_rows) else "baseline"
+                    model_val_mae, model_val_rmse = compute_walk_forward_metrics(history_frame.get(spec.actual_col))
+                    rows.append(
+                        {
+                            "Prediction_Run_Date": requested_run_date.strftime("%Y-%m-%d"),
+                            "Game_Date": requested_run_date.strftime("%Y-%m-%d"),
+                            "Commence_Time_UTC": commence_time,
+                            "Game_ID": game_id,
+                            "Game_Status_Code": "P",
+                            "Game_Status_Detail": "Scheduled",
+                            "Player": str(latest_row.get("Player", "")).replace("_", " "),
+                            "Player_ID": normalize_player_id(str(latest_row.get("Player", ""))),
+                            "Player_Type": player_type,
+                            "Team": team,
+                            "Team_ID": to_int_string(latest_row.get("Team_ID")),
+                            "Opponent": opponent,
+                            "Opponent_ID": to_int_string(latest_row.get("Opponent_ID")),
+                            "Is_Home": str(int(is_home)),
+                            "Target": spec.target,
+                            "Prediction": float(prediction),
+                            "Baseline": float(baseline),
+                            "Market_Line": float(market_line),
+                            "Edge": edge,
+                            "History_Rows": history_rows,
+                            "Last_History_Date": last_history_date.strftime("%Y-%m-%d") if not pd.isna(last_history_date) else "",
+                            "Model_Selected": model_selected,
+                            "Model_Members": model_selected,
+                            "Model_Weights": "1.0",
+                            "Model_Val_MAE": float(model_val_mae),
+                            "Model_Val_RMSE": float(model_val_rmse),
+                        }
+                    )
+                    used_players.add(dedupe_key)
+
+    summary = {
+        "selection_reason": "scheduled_slate_from_latest_history",
+        "exact_run_date_match": True,
+        "selected_game_date": requested_run_date.strftime("%Y-%m-%d"),
+        "market_rows": int(len(market_snapshot)),
+        "schedule_games": int(len(schedule_games)),
+    }
+    return rows, summary
 
 
 def build_pool_rows(
@@ -513,18 +909,34 @@ def main() -> None:
     if not frames:
         raise FileNotFoundError("MLB processed files were found, but none contained readable game-date rows.")
 
-    selected_game_date, selection_reason, exact_run_date_match = choose_selected_game_date(
-        frames,
-        requested_run_date=requested_run_date,
-        fallback_policy=str(args.fallback_policy),
-    )
+    selection_reason = "exact_run_date"
+    exact_run_date_match = True
+    selected_game_date = requested_run_date
 
-    rows = build_pool_rows(
+    rows, slate_summary = build_upcoming_schedule_pool_rows(
         frames=frames,
-        selected_game_date=selected_game_date,
         requested_run_date=requested_run_date,
         min_modeled_history_rows=int(args.min_modeled_history_rows),
+        market_root=args.market_root.resolve(),
+        schedule_timeout_seconds=float(args.schedule_timeout_seconds),
     )
+    if rows:
+        selection_reason = str(slate_summary.get("selection_reason", "scheduled_slate_from_latest_history"))
+        exact_run_date_match = bool(slate_summary.get("exact_run_date_match", True))
+        selected_game_date = pd.Timestamp(str(slate_summary.get("selected_game_date", requested_run_date.strftime("%Y-%m-%d")))).normalize()
+    else:
+        selected_game_date, selection_reason, exact_run_date_match = choose_selected_game_date(
+            frames,
+            requested_run_date=requested_run_date,
+            fallback_policy=str(args.fallback_policy),
+        )
+
+        rows = build_pool_rows(
+            frames=frames,
+            selected_game_date=selected_game_date,
+            requested_run_date=requested_run_date,
+            min_modeled_history_rows=int(args.min_modeled_history_rows),
+        )
     if not rows:
         raise RuntimeError(
             f"No MLB prediction rows were generated for selected game date {selected_game_date.date()}."

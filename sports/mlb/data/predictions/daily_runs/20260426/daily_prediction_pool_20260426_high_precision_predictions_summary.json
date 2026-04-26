@@ -1,9 +1,9 @@
 {
   "pool_csv": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260426\\daily_prediction_pool_20260426.csv",
   "out_csv": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260426\\daily_prediction_pool_20260426_high_precision_predictions.csv",
-  "rows_supported": 3,
-  "rows_after_filters": 2,
-  "rows_selected": 1,
+  "rows_supported": 864,
+  "rows_after_filters": 147,
+  "rows_selected": 15,
   "selection": {
     "top_n": 15,
     "min_abs_edge": 0.45,
@@ -25,33 +25,156 @@
     ]
   },
   "filter_rejections": {
-    "edge_too_small": 1
+    "edge_too_small": 702,
+    "hit_probability_too_low": 13,
+    "push_probability_too_high": 2
   },
-  "avg_abs_edge": 0.5,
-  "avg_hit_probability": 1.0,
-  "avg_graded_hit_rate": 1.0,
-  "avg_precision_score": 1.040905,
+  "avg_abs_edge": 0.475727,
+  "avg_hit_probability": 0.976022,
+  "avg_graded_hit_rate": 0.976022,
+  "avg_precision_score": 1.492859,
   "by_target": {
+    "HR": 14,
     "RBI": 1
   },
   "by_direction": {
-    "UNDER": 1
+    "UNDER": 15
   },
   "by_team": {
-    "LAD": 1
+    "KC": 1,
+    "LAA": 1,
+    "WSH": 2,
+    "PIT": 1,
+    "MIL": 1,
+    "SF": 1,
+    "ATL": 1,
+    "TB": 1,
+    "BOS": 2,
+    "MIN": 1,
+    "NYY": 1,
+    "TEX": 1,
+    "SD": 1
   },
   "selected_preview": [
     {
       "rank": 1,
-      "player": "Mookie Betts",
-      "team": "LAD",
+      "player": "Isaac Collins",
+      "team": "KC",
+      "target": "HR",
+      "direction": "UNDER",
+      "market_line": 0.5,
+      "prediction": 0.0192,
+      "estimated_hit_probability": 0.981,
+      "estimated_graded_hit_rate": 0.981,
+      "precision_score": 1.499
+    },
+    {
+      "rank": 2,
+      "player": "Yo\u00e1n Moncada",
+      "team": "LAA",
+      "target": "HR",
+      "direction": "UNDER",
+      "market_line": 0.5,
+      "prediction": 0.0192,
+      "estimated_hit_probability": 0.981,
+      "estimated_graded_hit_rate": 0.981,
+      "precision_score": 1.499
+    },
+    {
+      "rank": 3,
+      "player": "Andr\u00e9s Chaparro",
+      "team": "WSH",
       "target": "RBI",
       "direction": "UNDER",
       "market_line": 0.5,
-      "prediction": 0.0,
-      "estimated_hit_probability": 1.0,
-      "estimated_graded_hit_rate": 1.0,
-      "precision_score": 1.0409
+      "prediction": 0.0228,
+      "estimated_hit_probability": 0.9775,
+      "estimated_graded_hit_rate": 0.9775,
+      "precision_score": 1.4947
+    },
+    {
+      "rank": 4,
+      "player": "Bryan Reynolds",
+      "team": "PIT",
+      "target": "HR",
+      "direction": "UNDER",
+      "market_line": 0.5,
+      "prediction": 0.0235,
+      "estimated_hit_probability": 0.9768,
+      "estimated_graded_hit_rate": 0.9768,
+      "precision_score": 1.4938
+    },
+    {
+      "rank": 5,
+      "player": "Sal Frelick",
+      "team": "MIL",
+      "target": "HR",
+      "direction": "UNDER",
+      "market_line": 0.5,
+      "prediction": 0.0235,
+      "estimated_hit_probability": 0.9768,
+      "estimated_graded_hit_rate": 0.9768,
+      "precision_score": 1.4938
+    },
+    {
+      "rank": 6,
+      "player": "Luis Garc\u00eda Jr",
+      "team": "WSH",
+      "target": "HR",
+      "direction": "UNDER",
+      "market_line": 0.5,
+      "prediction": 0.0256,
+      "estimated_hit_probability": 0.9747,
+      "estimated_graded_hit_rate": 0.9747,
+      "precision_score": 1.4913
+    },
+    {
+      "rank": 7,
+      "player": "Willy Adames",
+      "team": "SF",
+      "target": "HR",
+      "direction": "UNDER",
+      "market_line": 0.5,
+      "prediction": 0.0256,
+      "estimated_hit_probability": 0.9747,
+      "estimated_graded_hit_rate": 0.9747,
+      "precision_score": 1.4913
+    },
+    {
+      "rank": 8,
+      "player": "Mauricio Dub\u00f3n",
+      "team": "ATL",
+      "target": "HR",
+      "direction": "UNDER",
+      "market_line": 0.5,
+      "prediction": 0.0256,
+      "estimated_hit_probability": 0.9747,
+      "estimated_graded_hit_rate": 0.9747,
+      "precision_score": 1.4913
+    },
+    {
+      "rank": 9,
+      "player": "Chandler Simpson",
+      "team": "TB",
+      "target": "HR",
+      "direction": "UNDER",
+      "market_line": 0.5,
+      "prediction": 0.0256,
+      "estimated_hit_probability": 0.9747,
+      "estimated_graded_hit_rate": 0.9747,
+      "precision_score": 1.4913
+    },
+    {
+      "rank": 10,
+      "player": "Trevor Story",
+      "team": "BOS",
+      "target": "HR",
+      "direction": "UNDER",
+      "market_line": 0.5,
+      "prediction": 0.0256,
+      "estimated_hit_probability": 0.9747,
+      "estimated_graded_hit_rate": 0.9747,
+      "precision_score": 1.4913
     }
   ]
 }
