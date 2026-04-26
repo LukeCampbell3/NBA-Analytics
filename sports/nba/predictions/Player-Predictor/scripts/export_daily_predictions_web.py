@@ -565,6 +565,46 @@ def load_shadow_runs(manifest: dict, manifest_path: Path, identity_lookup: Playe
     return out
 
 
+def build_selector_pool_fallback(plays: pd.DataFrame, *, limit: int = 12) -> pd.DataFrame:
+    if plays.empty:
+        return plays.copy()
+
+    ordered = plays.copy()
+    for column in ("expected_win_rate", "ev", "final_confidence", "abs_edge"):
+        ordered[column] = pd.to_numeric(ordered.get(column), errors="coerce")
+    ordered = ordered.sort_values(
+        ["expected_win_rate", "ev", "final_confidence", "abs_edge"],
+        ascending=[False, False, False, False],
+        na_position="last",
+    ).reset_index(drop=True)
+    positive_ev = ordered.loc[pd.to_numeric(ordered.get("ev"), errors="coerce").fillna(-1.0) >= 0].copy()
+    negative_ev = ordered.loc[~ordered.index.isin(positive_ev.index)].copy()
+    if not positive_ev.empty:
+        ordered = pd.concat([positive_ev, negative_ev], ignore_index=True)
+
+    selected_rows: list[pd.Series] = []
+    seen_players: set[str] = set()
+    per_game_counts: dict[str, int] = {}
+    for _, row in ordered.iterrows():
+        player = str(row.get("player", "")).strip().lower()
+        game_key = str(row.get("game_key", "") or row.get("market_event_id", "")).strip().lower()
+        if player and player in seen_players:
+            continue
+        if game_key and per_game_counts.get(game_key, 0) >= 2:
+            continue
+        selected_rows.append(row)
+        if player:
+            seen_players.add(player)
+        if game_key:
+            per_game_counts[game_key] = per_game_counts.get(game_key, 0) + 1
+        if len(selected_rows) >= int(limit):
+            break
+
+    if not selected_rows:
+        return ordered.head(int(limit)).copy()
+    return pd.DataFrame(selected_rows).reset_index(drop=True)
+
+
 def resolve_published_board(manifest: dict, manifest_path: Path) -> tuple[pd.DataFrame, dict, str]:
     final_csv = resolve_artifact_path(manifest.get("final_csv"), manifest_path.parent)
     final_json = resolve_artifact_path(manifest.get("final_json"), manifest_path.parent)
@@ -573,12 +613,26 @@ def resolve_published_board(manifest: dict, manifest_path: Path) -> tuple[pd.Dat
     if not plays.empty:
         return plays, final_payload, "primary_final_board"
 
+    selector_csv = resolve_artifact_path(manifest.get("selector_csv"), manifest_path.parent)
+    selector_plays = pd.read_csv(selector_csv) if selector_csv and selector_csv.exists() else pd.DataFrame()
+    if not selector_plays.empty:
+        fallback_plays = build_selector_pool_fallback(selector_plays)
+        final_payload.setdefault("policy_profile", manifest.get("policy_profile"))
+        final_payload.setdefault("market_snapshot", manifest.get("current_market_snapshot"))
+        return fallback_plays, final_payload, "primary_selector_pool_fallback"
+
     for item in manifest.get("shadow_runs", []):
         shadow_csv = resolve_artifact_path(item.get("final_csv"), manifest_path.parent)
         shadow_json = resolve_artifact_path(item.get("final_json"), manifest_path.parent)
         shadow_plays = pd.read_csv(shadow_csv) if shadow_csv and shadow_csv.exists() else pd.DataFrame()
         if shadow_plays.empty:
-            continue
+            shadow_selector_csv = resolve_artifact_path(item.get("selector_csv"), manifest_path.parent)
+            shadow_selector = pd.read_csv(shadow_selector_csv) if shadow_selector_csv and shadow_selector_csv.exists() else pd.DataFrame()
+            if shadow_selector.empty:
+                continue
+            shadow_payload = json.loads(shadow_json.read_text(encoding="utf-8")) if shadow_json and shadow_json.exists() else {}
+            shadow_payload.setdefault("policy_profile", item.get("policy_profile"))
+            return build_selector_pool_fallback(shadow_selector), shadow_payload, "shadow_selector_pool_fallback"
         shadow_payload = json.loads(shadow_json.read_text(encoding="utf-8")) if shadow_json and shadow_json.exists() else {}
         shadow_payload.setdefault("policy_profile", item.get("policy_profile"))
         return shadow_plays, shadow_payload, "shadow_final_board_fallback"
