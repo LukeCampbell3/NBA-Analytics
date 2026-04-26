@@ -26,7 +26,7 @@ sys.path.insert(0, str(REPO_ROOT / "inference"))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 from structured_stack_inference import StructuredStackInference
-from export_daily_predictions_web import apply_adaptive_board_sizing
+from export_daily_predictions_web import apply_adaptive_board_sizing, apply_variance_aware_reexpand
 
 
 DEFAULT_START_DATE = "2026-04-06"
@@ -34,6 +34,9 @@ DEFAULT_END_DATE = "2026-04-12"
 DEFAULT_TOP_K = 4
 PAYOUT_MINUS_110 = 100.0 / 110.0
 TARGETS = ("PTS", "TRB", "AST")
+BACKTEST_REEXPAND_TOP2_AVG_PROBABILITY_MAX = 0.76
+BACKTEST_REEXPAND_THIRD_PROBABILITY_MIN = 0.72
+BACKTEST_REEXPAND_THIRD_CONFIDENCE_MIN = 0.75
 
 
 @dataclass(frozen=True)
@@ -349,6 +352,7 @@ def build_strategy_selection(
     strategy: StrategyConfig,
     top_k: int,
     adaptive_sizing: bool = False,
+    variance_aware_reexpand: bool = False,
 ) -> pd.DataFrame:
     selections: list[pd.DataFrame] = []
     for _, part in candidates.groupby("market_date", dropna=False):
@@ -357,10 +361,25 @@ def build_strategy_selection(
             adaptive_ready = picked.copy()
             adaptive_ready["pool_selection_score"] = pd.to_numeric(adaptive_ready.get("robust_pool_score"), errors="coerce")
             picked = apply_adaptive_board_sizing(adaptive_ready)
+            if variance_aware_reexpand and not picked.empty:
+                picked = apply_variance_aware_reexpand(
+                    picked,
+                    adaptive_ready,
+                    probability_field="estimated_win_rate",
+                    confidence_field="selection_confidence",
+                    ev_field="estimated_ev",
+                    max_top2_avg_probability=float(BACKTEST_REEXPAND_TOP2_AVG_PROBABILITY_MAX),
+                    min_third_probability=float(BACKTEST_REEXPAND_THIRD_PROBABILITY_MIN),
+                    min_third_confidence=float(BACKTEST_REEXPAND_THIRD_CONFIDENCE_MIN),
+                    min_third_ev=0.0,
+                )
         if picked.empty:
             continue
         picked = picked.copy()
-        picked["strategy"] = strategy.name + ("_adaptive" if adaptive_sizing else "")
+        suffix = ""
+        if adaptive_sizing:
+            suffix = "_adaptive_reexpand" if variance_aware_reexpand else "_adaptive"
+        picked["strategy"] = strategy.name + suffix
         selections.append(picked)
     if not selections:
         return candidates.head(0).copy()
@@ -402,6 +421,14 @@ def main() -> None:
         if strategy.name == "robust_pool_score":
             adaptive_df = build_strategy_selection(candidates, strategy=strategy, top_k=int(args.top_k), adaptive_sizing=True)
             summary["strategies"][f"{strategy.name}_adaptive"] = summarize_selection(adaptive_df)
+            adaptive_reexpand_df = build_strategy_selection(
+                candidates,
+                strategy=strategy,
+                top_k=int(args.top_k),
+                adaptive_sizing=True,
+                variance_aware_reexpand=True,
+            )
+            summary["strategies"][f"{strategy.name}_adaptive_reexpand"] = summarize_selection(adaptive_reexpand_df)
 
     if args.rows_csv_out is not None:
         args.rows_csv_out.resolve().parent.mkdir(parents=True, exist_ok=True)

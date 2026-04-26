@@ -64,6 +64,12 @@ NBA_ADAPTIVE_BOARD_RANK_RULES: dict[int, dict[str, float]] = {
         "max_conf_gap_from_top": 0.15,
     },
 }
+NBA_VARIANCE_AWARE_REEXPAND_RULE: dict[str, float] = {
+    "max_top2_avg_selection_probability": 0.526,
+    "min_third_selection_probability": 0.512,
+    "min_third_selection_confidence": 0.12,
+    "min_third_selection_ev": 0.0,
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -598,6 +604,55 @@ def apply_adaptive_board_sizing(plays: pd.DataFrame) -> pd.DataFrame:
     return ordered.iloc[keep_indices].reset_index(drop=True)
 
 
+def apply_variance_aware_reexpand(
+    plays: pd.DataFrame,
+    candidate_universe: pd.DataFrame,
+    *,
+    probability_field: str,
+    confidence_field: str,
+    ev_field: str,
+    max_top2_avg_probability: float,
+    min_third_probability: float,
+    min_third_confidence: float,
+    min_third_ev: float = 0.0,
+) -> pd.DataFrame:
+    if plays.empty or candidate_universe.empty:
+        return plays.copy()
+
+    final = plays.copy().reset_index(drop=True)
+    universe = candidate_universe.copy().reset_index(drop=True)
+    if len(final.index) != 2 or len(universe.index) < 3:
+        return final
+
+    prob_series = pd.to_numeric(final.get(probability_field), errors="coerce")
+    if len(prob_series.index) < 2:
+        return final
+    top2_avg_probability = float(prob_series.head(2).mean())
+    if not math.isfinite(top2_avg_probability) or top2_avg_probability >= float(max_top2_avg_probability):
+        return final
+
+    third = universe.iloc[[2]].copy()
+    third_probability = safe_float(third.iloc[0].get(probability_field))
+    third_confidence = safe_float(third.iloc[0].get(confidence_field))
+    third_ev = safe_float(third.iloc[0].get(ev_field))
+    if (
+        third_probability is None
+        or third_probability < float(min_third_probability)
+        or third_confidence is None
+        or third_confidence < float(min_third_confidence)
+        or third_ev is None
+        or third_ev < float(min_third_ev)
+    ):
+        return final
+
+    existing_players = final.get("player", pd.Series(dtype=str)).astype(str).str.strip().str.lower()
+    third_player = str(third.iloc[0].get("player", "")).strip().lower()
+    if third_player and third_player in set(existing_players.tolist()):
+        return final
+
+    return pd.concat([final, third], ignore_index=True)
+
+
 def build_summary(plays: pd.DataFrame) -> dict:
     if plays.empty:
         return {
@@ -758,7 +813,18 @@ def build_selector_pool_fallback(plays: pd.DataFrame, *, limit: int = NBA_SELECT
     if not selected_rows:
         return ordered.head(0).drop(columns="_source_index", errors="ignore").copy()
     selected = pd.DataFrame(selected_rows).drop(columns="_source_index", errors="ignore").reset_index(drop=True)
-    return apply_adaptive_board_sizing(selected)
+    adaptive_selected = apply_adaptive_board_sizing(selected)
+    return apply_variance_aware_reexpand(
+        adaptive_selected,
+        selected,
+        probability_field="selection_probability",
+        confidence_field="selection_confidence",
+        ev_field="selection_ev",
+        max_top2_avg_probability=float(NBA_VARIANCE_AWARE_REEXPAND_RULE["max_top2_avg_selection_probability"]),
+        min_third_probability=float(NBA_VARIANCE_AWARE_REEXPAND_RULE["min_third_selection_probability"]),
+        min_third_confidence=float(NBA_VARIANCE_AWARE_REEXPAND_RULE["min_third_selection_confidence"]),
+        min_third_ev=float(NBA_VARIANCE_AWARE_REEXPAND_RULE["min_third_selection_ev"]),
+    )
 
 
 def resolve_published_board(manifest: dict, manifest_path: Path) -> tuple[pd.DataFrame, dict, str]:
