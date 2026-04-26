@@ -3228,7 +3228,15 @@ def compute_final_board(
 
     if "line_decision_trade_eligible" in out.columns:
         trade_eligible_mask = pd.to_numeric(out["line_decision_trade_eligible"], errors="coerce").fillna(0).astype(bool)
-        out = out.loc[trade_eligible_mask].copy()
+        if trade_eligible_mask.any():
+            out = out.loc[trade_eligible_mask].copy()
+            out["line_decision_gate_fail_open"] = False
+        else:
+            # Fail open when the upstream line-decision layer vetoes the entire
+            # selector pool; publishing zero plays is less useful than letting
+            # the downstream board logic rank the available candidates.
+            out = out.copy()
+            out["line_decision_gate_fail_open"] = True
         if out.empty:
             return out
 

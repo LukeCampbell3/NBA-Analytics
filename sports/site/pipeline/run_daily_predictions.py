@@ -12,6 +12,7 @@ This orchestrates:
 from __future__ import annotations
 
 import argparse
+import json
 import subprocess
 import sys
 from datetime import datetime
@@ -31,6 +32,9 @@ NBA_WEB_JSON = REPO_ROOT / "sports" / "nba" / "web" / "data" / "daily_prediction
 NBA_CARDS_JSON = REPO_ROOT / "sports" / "nba" / "web" / "data" / "cards.json"
 
 MLB_DAILY_RUNS_ROOT = REPO_ROOT / "sports" / "mlb" / "data" / "predictions" / "daily_runs"
+MLB_DATA_DIR = REPO_ROOT / "Player-Predictor" / "Data-Proc-MLB"
+MLB_MANIFEST = MLB_DATA_DIR / "update_manifest_2026.json"
+MLB_GENERATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "generate_daily_prediction_pool.py"
 MLB_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_high_precision_predictions.py"
 MLB_EXPORTER = REPO_ROOT / "sports" / "mlb" / "scripts" / "export_web_prediction_payload.py"
 MLB_WEB_JSON = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "daily_predictions.json"
@@ -73,6 +77,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--nba-skip-cutoff-meta-monitor", action="store_true", help="Skip the NBA cutoff-meta monitor step.")
 
     parser.add_argument("--mlb-pool-csv", type=Path, default=None, help="Explicit raw MLB daily prediction pool CSV.")
+    parser.add_argument("--mlb-skip-generate", action="store_true", help="Skip generating a fresh MLB raw prediction pool from processed MLB data.")
+    parser.add_argument("--mlb-data-dir", type=Path, default=MLB_DATA_DIR, help="MLB processed-data root used by the raw pool generator.")
+    parser.add_argument("--mlb-manifest", type=Path, default=MLB_MANIFEST, help="Optional MLB processed-data manifest used by the raw pool generator.")
+    parser.add_argument(
+        "--mlb-fallback-policy",
+        type=str,
+        default="exact_or_latest",
+        choices=["exact_only", "exact_or_latest", "latest_available"],
+        help="Fallback policy forwarded to the MLB raw pool generator.",
+    )
     parser.add_argument("--mlb-top-n", type=int, default=15, help="Maximum number of MLB plays to keep.")
     return parser.parse_args()
 
@@ -131,7 +145,12 @@ def candidate_mlb_pool_csvs(run_dir: Path) -> list[Path]:
     return candidates
 
 
-def find_latest_mlb_pool_csv(daily_runs_root: Path, preferred_run_stamp: str | None) -> Path:
+def find_latest_mlb_pool_csv(
+    daily_runs_root: Path,
+    preferred_run_stamp: str | None,
+    exclude_paths: set[Path] | None = None,
+) -> Path:
+    excluded = {path.resolve() for path in (exclude_paths or set())}
     run_dirs = [path for path in sorted(daily_runs_root.iterdir(), reverse=True) if path.is_dir()]
     if not run_dirs:
         raise FileNotFoundError(f"No MLB run directories found under {daily_runs_root}")
@@ -140,13 +159,15 @@ def find_latest_mlb_pool_csv(daily_runs_root: Path, preferred_run_stamp: str | N
         preferred_dir = daily_runs_root / preferred_run_stamp
         if preferred_dir.is_dir():
             preferred_candidates = candidate_mlb_pool_csvs(preferred_dir)
-            if preferred_candidates:
-                return preferred_candidates[0]
+            for candidate in preferred_candidates:
+                if candidate.resolve() not in excluded:
+                    return candidate
 
     for run_dir in run_dirs:
         candidates = candidate_mlb_pool_csvs(run_dir)
-        if candidates:
-            return candidates[0]
+        for candidate in candidates:
+            if candidate.resolve() not in excluded:
+                return candidate
 
     raise FileNotFoundError(f"No raw MLB daily prediction pool CSV was found under {daily_runs_root}")
 
@@ -156,6 +177,16 @@ def derive_mlb_selector_outputs(pool_csv: Path) -> tuple[Path, Path]:
     return (
         pool_csv.with_name(f"{stem}_high_precision_predictions.csv"),
         pool_csv.with_name(f"{stem}_high_precision_predictions_summary.json"),
+    )
+
+
+def derive_generated_mlb_pool_outputs(run_date: str | None) -> tuple[Path, Path]:
+    local_date = datetime.now().astimezone().date() if not run_date else datetime.fromisoformat(str(run_date)).date()
+    run_stamp = local_date.strftime("%Y%m%d")
+    run_dir = MLB_DAILY_RUNS_ROOT / run_stamp
+    return (
+        run_dir / f"daily_prediction_pool_{run_stamp}.csv",
+        run_dir / f"daily_prediction_pool_{run_stamp}.json",
     )
 
 
@@ -225,7 +256,45 @@ def run_nba(args: argparse.Namespace, output_dir: Path) -> None:
 
 def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Path]:
     preferred_run_stamp = run_stamp_from_date(args.run_date)
-    pool_csv = args.mlb_pool_csv.resolve() if args.mlb_pool_csv else find_latest_mlb_pool_csv(MLB_DAILY_RUNS_ROOT, preferred_run_stamp)
+    generated_pool_csv: Path | None = None
+    generated_summary_json: Path | None = None
+
+    if args.mlb_pool_csv:
+        pool_csv = args.mlb_pool_csv.resolve()
+    else:
+        if not args.mlb_skip_generate:
+            generated_pool_csv, generated_summary_json = derive_generated_mlb_pool_outputs(args.run_date)
+            command = [
+                args.python,
+                str(MLB_GENERATOR),
+                "--daily-runs-root",
+                str(MLB_DAILY_RUNS_ROOT),
+                "--data-dir",
+                str(args.mlb_data_dir.resolve()),
+                "--manifest",
+                str(args.mlb_manifest.resolve()),
+                "--fallback-policy",
+                str(args.mlb_fallback_policy),
+            ]
+            if args.run_date:
+                command.extend(["--run-date", str(args.run_date)])
+            run_step("Generate MLB Raw Prediction Pool", command)
+            if generated_pool_csv and generated_pool_csv.exists() and generated_summary_json.exists():
+                try:
+                    summary = json.loads(generated_summary_json.read_text(encoding="utf-8"))
+                    if not bool(summary.get("exact_run_date_match", True)):
+                        print(
+                            "[warning] MLB raw pool used the latest available processed row template for this run date; "
+                            "publishing the generated current-day pool anyway."
+                        )
+                except Exception:
+                    pass
+
+        if generated_pool_csv and generated_pool_csv.exists():
+            pool_csv = generated_pool_csv
+        else:
+            pool_csv = find_latest_mlb_pool_csv(MLB_DAILY_RUNS_ROOT, preferred_run_stamp)
+
     selected_csv, summary_json = derive_mlb_selector_outputs(pool_csv)
     mlb_dist_json = output_dir / "mlb" / "data" / "daily_predictions.json"
 

@@ -565,17 +565,35 @@ def load_shadow_runs(manifest: dict, manifest_path: Path, identity_lookup: Playe
     return out
 
 
+def resolve_published_board(manifest: dict, manifest_path: Path) -> tuple[pd.DataFrame, dict, str]:
+    final_csv = resolve_artifact_path(manifest.get("final_csv"), manifest_path.parent)
+    final_json = resolve_artifact_path(manifest.get("final_json"), manifest_path.parent)
+    plays = pd.read_csv(final_csv) if final_csv and final_csv.exists() else pd.DataFrame()
+    final_payload = json.loads(final_json.read_text(encoding="utf-8")) if final_json and final_json.exists() else {}
+    if not plays.empty:
+        return plays, final_payload, "primary_final_board"
+
+    for item in manifest.get("shadow_runs", []):
+        shadow_csv = resolve_artifact_path(item.get("final_csv"), manifest_path.parent)
+        shadow_json = resolve_artifact_path(item.get("final_json"), manifest_path.parent)
+        shadow_plays = pd.read_csv(shadow_csv) if shadow_csv and shadow_csv.exists() else pd.DataFrame()
+        if shadow_plays.empty:
+            continue
+        shadow_payload = json.loads(shadow_json.read_text(encoding="utf-8")) if shadow_json and shadow_json.exists() else {}
+        shadow_payload.setdefault("policy_profile", item.get("policy_profile"))
+        return shadow_plays, shadow_payload, "shadow_final_board_fallback"
+
+    return plays, final_payload, "primary_final_board_empty"
+
+
 def main() -> None:
     args = parse_args()
     manifest_path = args.manifest.resolve() if args.manifest else find_latest_manifest(args.daily_runs_root.resolve())
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     identity_lookup = build_player_identity_lookup(args.cards_json.resolve())
 
-    final_csv = resolve_artifact_path(manifest.get("final_csv"), manifest_path.parent)
-    final_json = resolve_artifact_path(manifest.get("final_json"), manifest_path.parent)
     history_csv = resolve_artifact_path(manifest.get("history_csv"), manifest_path.parent)
-    plays = pd.read_csv(final_csv) if final_csv and final_csv.exists() else pd.DataFrame()
-    final_payload = json.loads(final_json.read_text(encoding="utf-8")) if final_json and final_json.exists() else {}
+    plays, final_payload, published_board_source = resolve_published_board(manifest, manifest_path)
 
     plays_json = normalize_play_rows(plays, identity_lookup)
     parlay_payload = annotate_parlay_board(
@@ -590,6 +608,7 @@ def main() -> None:
         "run_date": manifest.get("run_date"),
         "season": manifest.get("season"),
         "through_date": manifest.get("through_date"),
+        "published_board_source": published_board_source,
         "current_market_rows": manifest.get("current_market_rows"),
         "current_market_snapshot_meta": manifest.get("current_market_snapshot_meta", {}),
         "used_latest_manifest": manifest.get("used_latest_manifest"),

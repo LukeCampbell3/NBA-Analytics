@@ -1,0 +1,39 @@
+{
+  "run_date_requested": "2026-04-26",
+  "selected_game_date": "2026-04-05",
+  "selection_reason": "latest_on_or_before_run_date",
+  "exact_run_date_match": false,
+  "season": 2026,
+  "sport": "mlb",
+  "model_contract": "mlb_native_player_v1",
+  "processed_dir": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\Player-Predictor\\Data-Proc-MLB",
+  "processed_files": [
+    "C:\\Users\\jcthi\\Code\\NBA-Analytics\\Player-Predictor\\Data-Proc-MLB\\Mookie_Betts\\2026_processed_processed.csv"
+  ],
+  "pool_csv": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260426\\daily_prediction_pool_20260426.csv",
+  "rows": 3,
+  "games": 1,
+  "players": 1,
+  "rows_by_role": {
+    "hitter": 3
+  },
+  "rows_by_target": {
+    "H": 1,
+    "HR": 1,
+    "RBI": 1
+  },
+  "role_status": {
+    "hitter": {
+      "history_rows": 33,
+      "candidate_rows": 3,
+      "prediction_rows": 3,
+      "targets": [
+        "H",
+        "HR",
+        "RBI"
+      ],
+      "status": "ok"
+    }
+  },
+  "updated_at_utc": "2026-04-26T14:03:45.909084+00:00"
+}
