@@ -11,7 +11,12 @@ PLAYER_PREDICTOR_ROOT = REPO_ROOT / "sports" / "nba" / "predictions" / "Player-P
 sys.path.insert(0, str(PLAYER_PREDICTOR_ROOT))
 sys.path.insert(0, str(PLAYER_PREDICTOR_ROOT / "scripts"))
 
-from export_daily_predictions_web import apply_adaptive_board_sizing, build_selector_pool_fallback, enrich_selector_pool_candidates
+from export_daily_predictions_web import (
+    apply_adaptive_board_sizing,
+    apply_variance_aware_reexpand,
+    build_selector_pool_fallback,
+    enrich_selector_pool_candidates,
+)
 
 
 def test_build_selector_pool_fallback_keeps_only_quality_rows() -> None:
@@ -92,7 +97,7 @@ def test_build_selector_pool_fallback_returns_empty_when_slate_is_too_weak() -> 
     assert fallback.empty
 
 
-def test_build_selector_pool_fallback_applies_adaptive_sizing() -> None:
+def test_build_selector_pool_fallback_applies_adaptive_sizing_then_reexpands_to_three() -> None:
     plays = pd.DataFrame(
         [
             {
@@ -156,7 +161,7 @@ def test_build_selector_pool_fallback_applies_adaptive_sizing() -> None:
 
     fallback = build_selector_pool_fallback(plays)
 
-    assert fallback["player"].tolist() == ["Core One", "Core Two"]
+    assert fallback["player"].tolist() == ["Core One", "Core Two", "Expand Three"]
 
 
 def test_enrich_selector_pool_candidates_prefers_balanced_profile() -> None:
@@ -213,3 +218,28 @@ def test_apply_adaptive_board_sizing_trims_marginal_tail() -> None:
     sized = apply_adaptive_board_sizing(plays)
 
     assert sized["player"].tolist() == ["Top One", "Top Two"]
+
+
+def test_apply_variance_aware_reexpand_adds_third_play_on_low_conviction_two_leg_board() -> None:
+    universe = pd.DataFrame(
+        [
+            {"player": "Top One", "selection_probability": 0.530, "selection_confidence": 0.11, "selection_ev": 0.02},
+            {"player": "Top Two", "selection_probability": 0.519, "selection_confidence": 0.13, "selection_ev": 0.02},
+            {"player": "Third Qualifier", "selection_probability": 0.513, "selection_confidence": 0.15, "selection_ev": 0.005},
+        ]
+    )
+    trimmed = universe.iloc[:2].copy().reset_index(drop=True)
+
+    expanded = apply_variance_aware_reexpand(
+        trimmed,
+        universe,
+        probability_field="selection_probability",
+        confidence_field="selection_confidence",
+        ev_field="selection_ev",
+        max_top2_avg_probability=0.526,
+        min_third_probability=0.512,
+        min_third_confidence=0.12,
+        min_third_ev=0.0,
+    )
+
+    assert expanded["player"].tolist() == ["Top One", "Top Two", "Third Qualifier"]
