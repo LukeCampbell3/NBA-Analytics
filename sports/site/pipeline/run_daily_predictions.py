@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 
@@ -42,6 +43,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--python", default=sys.executable, help="Python executable used for child steps.")
     parser.add_argument("--run-date", type=str, default=None, help="Optional YYYY-MM-DD run date.")
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help="Published static output directory.")
+    parser.add_argument("--scheduled-hour", type=int, default=2, help="Local hour when the shared refresh is allowed to run.")
+    parser.add_argument("--scheduled-minute", type=int, default=0, help="Local minute when the shared refresh is allowed to run.")
+    parser.add_argument("--force-run", action="store_true", help="Bypass the local schedule gate and run immediately.")
     parser.add_argument("--skip-nba", action="store_true", help="Skip NBA prediction refresh/export.")
     parser.add_argument("--skip-mlb", action="store_true", help="Skip MLB prediction refresh/export.")
     parser.add_argument("--skip-build-site", action="store_true", help="Skip rebuilding the shared static site.")
@@ -79,6 +83,35 @@ def run_step(label: str, command: list[str], cwd: Path = REPO_ROOT) -> None:
     print("=" * 88)
     print("Command:", " ".join(command))
     subprocess.run(command, cwd=cwd, check=True)
+
+
+def validate_schedule_args(hour: int, minute: int) -> tuple[int, int]:
+    if not 0 <= int(hour) <= 23:
+        raise SystemExit(f"--scheduled-hour must be between 0 and 23, received {hour!r}")
+    if not 0 <= int(minute) <= 59:
+        raise SystemExit(f"--scheduled-minute must be between 0 and 59, received {minute!r}")
+    return int(hour), int(minute)
+
+
+def check_schedule_gate(args: argparse.Namespace) -> tuple[bool, str]:
+    scheduled_hour, scheduled_minute = validate_schedule_args(args.scheduled_hour, args.scheduled_minute)
+    now_local = datetime.now().astimezone()
+    timezone_label = str(now_local.tzname() or "local")
+    scheduled_label = f"{scheduled_hour:02d}:{scheduled_minute:02d} {timezone_label}"
+
+    if args.force_run:
+        return True, (
+            f"Bypassing schedule gate at {now_local.isoformat()} because --force-run was provided. "
+            f"Configured run time remains {scheduled_label}."
+        )
+
+    if now_local.hour == scheduled_hour and now_local.minute == scheduled_minute:
+        return True, f"Schedule gate passed at {now_local.isoformat()} (configured run time: {scheduled_label})."
+
+    return False, (
+        f"Skipping shared daily prediction refresh at {now_local.isoformat()} because the configured run time is "
+        f"{scheduled_label}. Re-run at that time or pass --force-run for a manual execution."
+    )
 
 
 def run_stamp_from_date(run_date: str | None) -> str | None:
@@ -249,6 +282,14 @@ def main() -> None:
 
     if args.skip_nba and args.skip_mlb:
         raise SystemExit("Nothing to do: both --skip-nba and --skip-mlb were set.")
+
+    should_run, schedule_message = check_schedule_gate(args)
+    print("\n" + "=" * 88)
+    print("SCHEDULE CHECK")
+    print("=" * 88)
+    print(schedule_message)
+    if not should_run:
+        return
 
     mlb_pool_csv: Path | None = None
     mlb_selected_csv: Path | None = None

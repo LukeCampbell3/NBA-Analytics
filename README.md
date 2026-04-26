@@ -27,7 +27,13 @@ sports/
 python sports/site/pipeline/run_daily_predictions.py
 ```
 
-This refreshes NBA predictions, tightens the latest MLB pool into the published board, and rebuilds the unified static site into `dist/`.
+This command now checks local time and runs only at `2:00 AM` by default. At the scheduled time it refreshes NBA predictions, tightens the latest MLB pool into the published board, and rebuilds the unified static site into `dist/`.
+
+For a manual run outside the 2:00 AM window:
+
+```bash
+python sports/site/pipeline/run_daily_predictions.py --force-run
+```
 
 2. Build the shared site only:
 

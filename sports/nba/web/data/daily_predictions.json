@@ -1,23 +1,23 @@
 {
-  "generated_at_utc": "2026-04-25T17:05:15.870984+00:00",
-  "manifest_path": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\model\\analysis\\daily_runs\\20260425\\daily_market_pipeline_manifest_20260425.json",
-  "run_date": "2026-04-25",
+  "generated_at_utc": "2026-04-26T13:40:55.383036+00:00",
+  "manifest_path": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\model\\analysis\\daily_runs\\20260426\\daily_market_pipeline_manifest_20260426.json",
+  "run_date": "2026-04-26",
   "season": 2026,
-  "through_date": "2026-04-24",
+  "through_date": "2026-04-25",
   "current_market_rows": 46,
   "current_market_snapshot_meta": {
     "mode": "requested_window",
-    "requested_start_date": "2026-04-25",
-    "requested_end_date": "2026-04-27",
-    "selected_market_date_min": "2026-04-25",
-    "selected_market_date_max": "2026-04-25",
+    "requested_start_date": "2026-04-26",
+    "requested_end_date": "2026-04-28",
+    "selected_market_date_min": "2026-04-26",
+    "selected_market_date_max": "2026-04-26",
     "selected_row_count": 46
   },
   "used_latest_manifest": false,
   "shadow_policy_profiles": [
     "shadow_edge_append_agree1_p90_x1"
   ],
-  "market_snapshot": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\model\\analysis\\daily_runs\\20260425\\current_market_snapshot_20260425.parquet",
+  "market_snapshot": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\model\\analysis\\daily_runs\\20260426\\current_market_snapshot_20260426.parquet",
   "model_run_id": "artifact_free_heuristic",
   "policy_profile": "production_board_objective_b12",
   "policy": {
@@ -219,35 +219,31 @@
       "market_rows": 46,
       "market_dates_non_null": 46,
       "unique_market_players": 46,
-      "market_pts_lines": 44,
-      "market_pts_books": 44,
-      "market_trb_lines": 43,
-      "market_trb_books": 43,
-      "market_ast_lines": 41,
-      "market_ast_books": 41
+      "market_pts_lines": 46,
+      "market_pts_books": 46,
+      "market_trb_lines": 46,
+      "market_trb_books": 46,
+      "market_ast_lines": 39,
+      "market_ast_books": 39
     },
     "prior_game_data": {
-      "slate_rows": 44,
-      "history_rows_min": 34,
-      "history_rows_median": 70.0,
+      "slate_rows": 45,
+      "history_rows_min": 12,
+      "history_rows_median": 68.0,
       "history_rows_max": 82,
-      "last_history_date_non_null": 44,
-      "history_before_market_ok_rows": 44,
+      "last_history_date_non_null": 45,
+      "history_before_market_ok_rows": 45,
       "history_before_market_violations": 0,
-      "csv_exists_rows": 44
+      "csv_exists_rows": 45
     },
     "skipped_rows": {
-      "count": 2,
+      "count": 1,
       "reasons": {
-        "missing processed csv for season 2026": 2
+        "missing processed csv for season 2026": 1
       },
       "sample": [
         {
-          "player": "A_Thompson",
-          "reason": "missing processed csv for season 2026"
-        },
-        {
-          "player": "N_Jokic",
+          "player": "J_Champagnie",
           "reason": "missing processed csv for season 2026"
         }
       ]
@@ -285,7 +281,7 @@
   "shadow_runs": [
     {
       "policy_profile": "shadow_edge_append_agree1_p90_x1",
-      "final_csv": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\model\\analysis\\daily_runs\\20260425\\shadow\\shadow_edge_append_agree1_p90_x1\\final_market_plays_20260425_shadow_edge_append_agree1_p90_x1.csv",
+      "final_csv": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\model\\analysis\\daily_runs\\20260426\\shadow\\shadow_edge_append_agree1_p90_x1\\final_market_plays_20260426_shadow_edge_append_agree1_p90_x1.csv",
       "summary": {
         "play_count": 0,
         "avg_expected_win_rate": null,

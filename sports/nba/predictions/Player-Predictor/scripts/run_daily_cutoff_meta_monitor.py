@@ -48,6 +48,50 @@ def _safe_int(summary: dict[str, Any], variant: str, key: str) -> int:
         return 0
 
 
+def _write_text(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+
+
+def _write_empty_csv(path: Path) -> None:
+    _write_text(path, "")
+
+
+def _write_json(path: Path, payload: dict[str, Any]) -> None:
+    _write_text(path, json.dumps(payload, indent=2))
+
+
+def _empty_summary_payload(*, profile_name: str, reason: str, start_date: pd.Timestamp, end_date: pd.Timestamp) -> dict[str, Any]:
+    zero_node = {
+        "resolved": 0,
+        "wins": 0,
+        "losses": 0,
+        "resolved_hit_rate": 0.0,
+        "ev_per_resolved": 0.0,
+    }
+    return {
+        "available": False,
+        "profile_name": str(profile_name),
+        "reason": str(reason),
+        "window_start": start_date.strftime("%Y-%m-%d"),
+        "window_end": end_date.strftime("%Y-%m-%d"),
+        "edge_baseline": dict(zero_node),
+        "shadow_append_a1_p90_x1": dict(zero_node),
+        "unified_shadow_meta_x1": dict(zero_node),
+        "delta_unified_minus_edge": {
+            "delta_hit_rate_pp": 0.0,
+            "delta_ev_per_resolved": 0.0,
+        },
+        "unified_gate_diagnostics": {
+            "appended_rows_total": 0,
+            "appended_resolved_total": 0,
+            "abstain_reasons": {
+                "no_cutoff_band_rows": 1,
+            },
+        },
+    }
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run daily unified veto side-by-side monitor.")
     parser.add_argument(
@@ -247,7 +291,61 @@ def _run_eval(
     print(f"RUN CUTOFF META MONITOR PROFILE [{profile_name}]")
     print("=" * 96)
     print("Command:", " ".join(cmd))
-    subprocess.run(cmd, cwd=REPO_ROOT, check=True)
+    completed = subprocess.run(cmd, cwd=REPO_ROOT, text=True, capture_output=True)
+    if completed.stdout:
+        print(completed.stdout, end="" if completed.stdout.endswith("\n") else "\n")
+    if completed.returncode != 0:
+        combined_output = "\n".join(part for part in [completed.stdout, completed.stderr] if part)
+        if "No cutoff-band feature rows were produced." in combined_output:
+            reason = (
+                "No cutoff-band feature rows were produced for the requested monitor window. "
+                "Treating the monitor as a no-data skip instead of a pipeline failure."
+            )
+            print(f"[warning] {reason}")
+            summary = _empty_summary_payload(
+                profile_name=profile_name,
+                reason=reason,
+                start_date=start_date,
+                end_date=end_date,
+            )
+            _write_json(summary_out, summary)
+            _write_json(shadow_top1_miss_summary_out, {"available": False, "reason": reason})
+            _write_json(stage2_summary_out, {"available": False, "reason": reason})
+            for empty_path in [
+                dataset_out,
+                rows_out,
+                daily_out,
+                daily_context_out,
+                abstain_out,
+                shadow_top1_miss_out,
+                stage2_table_out,
+                stage2_pairs_out,
+            ]:
+                _write_empty_csv(empty_path)
+            return {
+                "profile_name": profile_name,
+                "unified_veto_corr_score": float(unified_veto_corr_score),
+                "summary": summary,
+                "stage1_summary": {},
+                "paths": {
+                    "dataset": str(dataset_out),
+                    "rows": str(rows_out),
+                    "daily": str(daily_out),
+                    "daily_context": str(daily_context_out),
+                    "abstain": str(abstain_out),
+                    "shadow_top1_miss": str(shadow_top1_miss_out),
+                    "shadow_top1_miss_summary": str(shadow_top1_miss_summary_out),
+                    "stage2_proposal_table": str(stage2_table_out),
+                    "stage2_proposal_pairs": str(stage2_pairs_out),
+                    "stage2_proposal_summary": str(stage2_summary_out),
+                    "summary": str(summary_out),
+                },
+            }
+        if completed.stderr:
+            print(completed.stderr, file=sys.stderr, end="" if completed.stderr.endswith("\n") else "\n")
+        raise subprocess.CalledProcessError(completed.returncode, cmd)
+    if completed.stderr:
+        print(completed.stderr, file=sys.stderr, end="" if completed.stderr.endswith("\n") else "\n")
 
     summary = json.loads(summary_out.read_text(encoding="utf-8"))
     stage1_paths: dict[str, str] = {}
