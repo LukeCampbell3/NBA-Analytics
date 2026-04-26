@@ -19,12 +19,16 @@ These pages are published through the repo-root `dist/` bundle.
 
 ## High-Precision Selection
 
-The repo now includes an MLB tightening script at `sports/mlb/scripts/select_high_precision_predictions.py`.
-It takes a large daily pool and produces a smaller board optimized for hit probability instead of raw volume.
+The repo now includes:
+
+- `sports/mlb/scripts/generate_daily_prediction_pool.py`: builds a raw MLB daily pool from `Player-Predictor/Data-Proc-MLB`
+- `sports/mlb/scripts/select_high_precision_predictions.py`: tightens the raw pool into a smaller board optimized for hit probability instead of raw volume
 
 Example:
 
 ```bash
+python sports/mlb/scripts/generate_daily_prediction_pool.py --run-date 2026-04-05
+
 python sports/mlb/scripts/select_high_precision_predictions.py ^
   --pool-csv sports/mlb/data/predictions/daily_runs/20260410/daily_prediction_pool_20260410.csv
 ```
@@ -52,4 +56,4 @@ For the shared published site, the preferred one-shot command is:
 python sports/site/pipeline/run_daily_predictions.py
 ```
 
-That command checks local time and runs at `2:00 AM` by default. When it runs, it selects the latest MLB high-precision board, updates the MLB web payload, refreshes NBA, and rebuilds the shared `dist/` bundle.
+That command checks local time and runs at `2:00 AM` by default. When it runs, it now tries to generate a fresh MLB raw pool from `Data-Proc-MLB`, tightens that pool into the published board, updates the MLB web payload, refreshes NBA, and rebuilds the shared `dist/` bundle. If the requested MLB run date is not present in processed MLB data yet, it falls back to the latest existing MLB raw pool for publication.

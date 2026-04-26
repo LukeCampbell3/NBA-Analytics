@@ -1,0 +1,57 @@
+{
+  "pool_csv": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260426\\daily_prediction_pool_20260426.csv",
+  "out_csv": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260426\\daily_prediction_pool_20260426_high_precision_predictions.csv",
+  "rows_supported": 3,
+  "rows_after_filters": 2,
+  "rows_selected": 1,
+  "selection": {
+    "top_n": 15,
+    "min_abs_edge": 0.45,
+    "min_history_rows": 11,
+    "min_hit_probability": 0.58,
+    "min_graded_hit_rate": 0.6,
+    "max_push_probability": 0.24,
+    "max_days_since_history": 4,
+    "max_per_player": 1,
+    "max_per_game": 2,
+    "max_per_team": 3,
+    "allow_baseline": false,
+    "targets": [
+      "ER",
+      "H",
+      "HR",
+      "K",
+      "RBI"
+    ]
+  },
+  "filter_rejections": {
+    "edge_too_small": 1
+  },
+  "avg_abs_edge": 0.5,
+  "avg_hit_probability": 1.0,
+  "avg_graded_hit_rate": 1.0,
+  "avg_precision_score": 1.040905,
+  "by_target": {
+    "RBI": 1
+  },
+  "by_direction": {
+    "UNDER": 1
+  },
+  "by_team": {
+    "LAD": 1
+  },
+  "selected_preview": [
+    {
+      "rank": 1,
+      "player": "Mookie Betts",
+      "team": "LAD",
+      "target": "RBI",
+      "direction": "UNDER",
+      "market_line": 0.5,
+      "prediction": 0.0,
+      "estimated_hit_probability": 1.0,
+      "estimated_graded_hit_rate": 1.0,
+      "precision_score": 1.0409
+    }
+  ]
+}
