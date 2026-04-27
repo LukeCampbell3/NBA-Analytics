@@ -34,9 +34,20 @@ DEFAULT_END_DATE = "2026-04-12"
 DEFAULT_TOP_K = 4
 PAYOUT_MINUS_110 = 100.0 / 110.0
 TARGETS = ("PTS", "TRB", "AST")
-BACKTEST_REEXPAND_TOP2_AVG_PROBABILITY_MAX = 0.76
-BACKTEST_REEXPAND_THIRD_PROBABILITY_MIN = 0.72
-BACKTEST_REEXPAND_THIRD_CONFIDENCE_MIN = 0.75
+BACKTEST_REEXPAND_RANK_RULES: dict[int, dict[str, float]] = {
+    3: {
+        "max_top_avg_selection_probability": 0.77,
+        "min_selection_probability": 0.73,
+        "min_selection_confidence": 0.70,
+        "min_selection_ev": 0.0,
+    },
+    4: {
+        "max_top_avg_selection_probability": 0.76,
+        "min_selection_probability": 0.72,
+        "min_selection_confidence": 0.72,
+        "min_selection_ev": 0.0,
+    },
+}
 
 
 @dataclass(frozen=True)
@@ -368,10 +379,7 @@ def build_strategy_selection(
                     probability_field="estimated_win_rate",
                     confidence_field="selection_confidence",
                     ev_field="estimated_ev",
-                    max_top2_avg_probability=float(BACKTEST_REEXPAND_TOP2_AVG_PROBABILITY_MAX),
-                    min_third_probability=float(BACKTEST_REEXPAND_THIRD_PROBABILITY_MIN),
-                    min_third_confidence=float(BACKTEST_REEXPAND_THIRD_CONFIDENCE_MIN),
-                    min_third_ev=0.0,
+                    rank_rules=BACKTEST_REEXPAND_RANK_RULES,
                 )
         if picked.empty:
             continue

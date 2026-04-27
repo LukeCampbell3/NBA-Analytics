@@ -64,11 +64,19 @@ NBA_ADAPTIVE_BOARD_RANK_RULES: dict[int, dict[str, float]] = {
         "max_conf_gap_from_top": 0.15,
     },
 }
-NBA_VARIANCE_AWARE_REEXPAND_RULE: dict[str, float] = {
-    "max_top2_avg_selection_probability": 0.526,
-    "min_third_selection_probability": 0.512,
-    "min_third_selection_confidence": 0.12,
-    "min_third_selection_ev": 0.0,
+NBA_VARIANCE_AWARE_REEXPAND_RULES: dict[int, dict[str, float]] = {
+    3: {
+        "max_top_avg_selection_probability": 0.526,
+        "min_selection_probability": 0.512,
+        "min_selection_confidence": 0.12,
+        "min_selection_ev": 0.0,
+    },
+    4: {
+        "max_top_avg_selection_probability": 0.523,
+        "min_selection_probability": 0.509,
+        "min_selection_confidence": 0.10,
+        "min_selection_ev": 0.0,
+    },
 }
 
 
@@ -611,46 +619,53 @@ def apply_variance_aware_reexpand(
     probability_field: str,
     confidence_field: str,
     ev_field: str,
-    max_top2_avg_probability: float,
-    min_third_probability: float,
-    min_third_confidence: float,
-    min_third_ev: float = 0.0,
+    rank_rules: dict[int, dict[str, float]],
 ) -> pd.DataFrame:
     if plays.empty or candidate_universe.empty:
         return plays.copy()
 
     final = plays.copy().reset_index(drop=True)
     universe = candidate_universe.copy().reset_index(drop=True)
-    if len(final.index) != 2 or len(universe.index) < 3:
+    if len(final.index) < 2 or len(universe.index) <= len(final.index):
         return final
 
-    prob_series = pd.to_numeric(final.get(probability_field), errors="coerce")
-    if len(prob_series.index) < 2:
-        return final
-    top2_avg_probability = float(prob_series.head(2).mean())
-    if not math.isfinite(top2_avg_probability) or top2_avg_probability >= float(max_top2_avg_probability):
-        return final
+    for target_rank in sorted(rank_rules):
+        if len(final.index) != target_rank - 1 or len(universe.index) < target_rank:
+            continue
 
-    third = universe.iloc[[2]].copy()
-    third_probability = safe_float(third.iloc[0].get(probability_field))
-    third_confidence = safe_float(third.iloc[0].get(confidence_field))
-    third_ev = safe_float(third.iloc[0].get(ev_field))
-    if (
-        third_probability is None
-        or third_probability < float(min_third_probability)
-        or third_confidence is None
-        or third_confidence < float(min_third_confidence)
-        or third_ev is None
-        or third_ev < float(min_third_ev)
-    ):
-        return final
+        probability_series = pd.to_numeric(final.get(probability_field), errors="coerce")
+        if len(probability_series.index) < target_rank - 1:
+            break
+        top_avg_probability = float(probability_series.head(target_rank - 1).mean())
+        rule = rank_rules[target_rank]
+        if (
+            not math.isfinite(top_avg_probability)
+            or top_avg_probability >= float(rule["max_top_avg_selection_probability"])
+        ):
+            continue
 
-    existing_players = final.get("player", pd.Series(dtype=str)).astype(str).str.strip().str.lower()
-    third_player = str(third.iloc[0].get("player", "")).strip().lower()
-    if third_player and third_player in set(existing_players.tolist()):
-        return final
+        candidate = universe.iloc[[target_rank - 1]].copy()
+        candidate_probability = safe_float(candidate.iloc[0].get(probability_field))
+        candidate_confidence = safe_float(candidate.iloc[0].get(confidence_field))
+        candidate_ev = safe_float(candidate.iloc[0].get(ev_field))
+        if (
+            candidate_probability is None
+            or candidate_probability < float(rule["min_selection_probability"])
+            or candidate_confidence is None
+            or candidate_confidence < float(rule["min_selection_confidence"])
+            or candidate_ev is None
+            or candidate_ev < float(rule.get("min_selection_ev", 0.0))
+        ):
+            continue
 
-    return pd.concat([final, third], ignore_index=True)
+        existing_players = final.get("player", pd.Series(dtype=str)).astype(str).str.strip().str.lower()
+        candidate_player = str(candidate.iloc[0].get("player", "")).strip().lower()
+        if candidate_player and candidate_player in set(existing_players.tolist()):
+            continue
+
+        final = pd.concat([final, candidate], ignore_index=True)
+
+    return final
 
 
 def build_summary(plays: pd.DataFrame) -> dict:
@@ -820,10 +835,7 @@ def build_selector_pool_fallback(plays: pd.DataFrame, *, limit: int = NBA_SELECT
         probability_field="selection_probability",
         confidence_field="selection_confidence",
         ev_field="selection_ev",
-        max_top2_avg_probability=float(NBA_VARIANCE_AWARE_REEXPAND_RULE["max_top2_avg_selection_probability"]),
-        min_third_probability=float(NBA_VARIANCE_AWARE_REEXPAND_RULE["min_third_selection_probability"]),
-        min_third_confidence=float(NBA_VARIANCE_AWARE_REEXPAND_RULE["min_third_selection_confidence"]),
-        min_third_ev=float(NBA_VARIANCE_AWARE_REEXPAND_RULE["min_third_selection_ev"]),
+        rank_rules=NBA_VARIANCE_AWARE_REEXPAND_RULES,
     )
 
 
