@@ -57,7 +57,10 @@ def resolve_month_payload(payload: dict[str, Any] | None, run_date_hint: str | N
         if prior:
             key = prior[-1]
             return key, normalized[key]
-        # No prior month payload: return identity to avoid future leakage.
+        future = [key for key in keys if key > requested]
+        if future:
+            key = future[0]
+            return key, normalized[key]
         return "", {}
 
     key = keys[-1]

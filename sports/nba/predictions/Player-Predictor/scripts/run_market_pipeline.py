@@ -1180,6 +1180,23 @@ def main() -> None:
                 "publishing a relaxed fallback board from the selector pool instead."
             )
     policy_payload = effective_policy_payload
+    board_stage_counts_raw = {
+        str(key): int(value)
+        for key, value in getattr(final_board, "attrs", {}).get("stage_counts", {}).items()
+    }
+    pipeline_stage_counts = {
+        "raw_market_rows": int(input_validation["market_lines"]["market_rows"]),
+        "slate_rows": int(len(slate_df)),
+        "selector_rows": int(len(selector_df)),
+        "after_initial_pool_gate": int(board_stage_counts_raw.get("after_initial_pool_gate", len(selector_df))),
+        "after_recency": int(board_stage_counts_raw.get("after_recency", len(selector_df))),
+        "after_confidence": int(board_stage_counts_raw.get("after_confidence", len(selector_df))),
+        "after_min_ev": int(board_stage_counts_raw.get("after_min_ev", len(selector_df))),
+        "after_learned_gate": int(board_stage_counts_raw.get("after_learned_gate", len(selector_df))),
+        "candidate_universe": int(board_stage_counts_raw.get("candidate_universe", board_stage_counts_raw.get("after_learned_gate", len(selector_df)))),
+        "after_accepted_pick_gate": int(board_stage_counts_raw.get("after_accepted_pick_gate", len(final_board))),
+        "final_board_rows": int(board_stage_counts_raw.get("final_board_rows", len(final_board))),
+    }
     args.final_csv_out.parent.mkdir(parents=True, exist_ok=True)
     args.final_json_out.parent.mkdir(parents=True, exist_ok=True)
     final_board.to_csv(args.final_csv_out, index=False)
@@ -1273,6 +1290,7 @@ def main() -> None:
         "accepted_pick_gate_threshold": float(pd.to_numeric(final_board.get("accepted_pick_gate_threshold"), errors="coerce").fillna(np.nan).mean())
         if "accepted_pick_gate_threshold" in final_board.columns and not final_board.empty
         else np.nan,
+        "stage_counts": pipeline_stage_counts,
     }
 
     payload = {
@@ -1305,6 +1323,7 @@ def main() -> None:
         "tier_a_csv": str(tier_a_csv),
         "tier_b_csv": str(tier_b_csv),
         "board_diagnostics": board_diagnostics,
+        "pipeline_stage_counts": pipeline_stage_counts,
         "input_validation": input_validation,
         "top_plays": final_board.head(20).to_dict(orient="records"),
         "tier_a_top_plays": tier_a_board.head(20).to_dict(orient="records"),
@@ -1332,6 +1351,21 @@ def main() -> None:
     print(f"Learned pool gate: {learned_pool_gate_summary}")
     print(f"Accepted-pick gate: {accepted_pick_gate_summary}")
     print(f"Board diagnostics: {board_diagnostics}")
+    print("Stage counts:")
+    for stage_name in [
+        "raw_market_rows",
+        "slate_rows",
+        "selector_rows",
+        "after_initial_pool_gate",
+        "after_recency",
+        "after_confidence",
+        "after_min_ev",
+        "after_learned_gate",
+        "candidate_universe",
+        "after_accepted_pick_gate",
+        "final_board_rows",
+    ]:
+        print(f"  {stage_name}: {pipeline_stage_counts[stage_name]}")
     print("Input validation:")
     print(f"  Market rows:        {input_validation['market_lines']['market_rows']}")
     print(f"  Prior-history rows: {input_validation['prior_game_data']['slate_rows']}")
