@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -12,10 +13,12 @@ sys.path.insert(0, str(PLAYER_PREDICTOR_ROOT))
 sys.path.insert(0, str(PLAYER_PREDICTOR_ROOT / "scripts"))
 
 from export_daily_predictions_web import (
+    _evaluate_publication_candidate,
     apply_adaptive_board_sizing,
     apply_variance_aware_reexpand,
     build_selector_pool_fallback,
     enrich_selector_pool_candidates,
+    resolve_published_board,
 )
 
 
@@ -243,3 +246,110 @@ def test_apply_variance_aware_reexpand_adds_third_play_on_low_conviction_two_leg
     )
 
     assert expanded["player"].tolist() == ["Top One", "Top Two", "Third Qualifier"]
+
+
+def test_publication_candidate_blocks_heuristic_fallback_board() -> None:
+    plays = pd.DataFrame(
+        [
+            {
+                "player": "Heuristic Weak",
+                "expected_win_rate": 0.512,
+                "final_confidence": 0.06,
+                "recommendation": "pass",
+            }
+        ]
+    )
+
+    report = _evaluate_publication_candidate(
+        plays,
+        {
+            "run_id": "artifact_free_heuristic",
+            "history_mode": "heuristic_fallback_empty_history",
+        },
+        source_label="primary_selector_pool_fallback",
+        accuracy_metrics={"available": False},
+    )
+
+    assert report["passes"] is False
+    assert "artifact_free_model" in report["reasons"]
+    assert "fallback_source_not_publishable" in report["reasons"]
+    assert "accuracy_metrics_unavailable" in report["reasons"]
+
+
+def test_resolve_published_board_prefers_shadow_final_board_over_selector_fallback(tmp_path: Path) -> None:
+    primary_final_csv = tmp_path / "final.csv"
+    primary_final_json = tmp_path / "final.json"
+    primary_selector_csv = tmp_path / "selector.csv"
+    shadow_final_csv = tmp_path / "shadow_final.csv"
+    shadow_final_json = tmp_path / "shadow_final.json"
+    manifest_path = tmp_path / "manifest.json"
+
+    pd.DataFrame(columns=["player", "expected_win_rate"]).to_csv(primary_final_csv, index=False)
+    primary_selector = pd.DataFrame(
+        [
+            {
+                "player": "Fallback Only",
+                "game_key": "g1",
+                "expected_win_rate": 0.511,
+                "ev": 0.006,
+                "final_confidence": 0.06,
+                "abs_edge": 0.9,
+                "recommendation": "pass",
+            }
+        ]
+    )
+    primary_selector.to_csv(primary_selector_csv, index=False)
+    shadow_final = pd.DataFrame(
+        [
+            {
+                "player": "Shadow Strong",
+                "target": "PTS",
+                "direction": "OVER",
+                "expected_win_rate": 0.548,
+                "final_confidence": 0.18,
+                "recommendation": "strong",
+                "selected_rank": 1,
+            }
+        ]
+    )
+    shadow_final.to_csv(shadow_final_csv, index=False)
+
+    primary_payload = {
+        "run_id": "artifact_free_heuristic",
+        "policy_profile": "production_board_objective_b12",
+        "history_mode": "heuristic_fallback_empty_history",
+    }
+    shadow_payload = {
+        "run_id": "shadow_real_model",
+        "policy_profile": "shadow_policy",
+        "history_mode": "historical_backtest",
+    }
+    primary_final_json.write_text(json.dumps(primary_payload), encoding="utf-8")
+    shadow_final_json.write_text(json.dumps(shadow_payload), encoding="utf-8")
+
+    manifest = {
+        "policy_profile": "production_board_objective_b12",
+        "current_market_snapshot": str(tmp_path / "snapshot.parquet"),
+        "final_csv": str(primary_final_csv),
+        "final_json": str(primary_final_json),
+        "selector_csv": str(primary_selector_csv),
+        "shadow_runs": [
+            {
+                "policy_profile": "shadow_policy",
+                "final_csv": str(shadow_final_csv),
+                "final_json": str(shadow_final_json),
+            }
+        ],
+    }
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    plays, final_payload, source, publication_gate = resolve_published_board(
+        manifest,
+        manifest_path,
+        accuracy_metrics={"available": True},
+    )
+
+    assert source == "shadow_final_board"
+    assert plays["player"].tolist() == ["Shadow Strong"]
+    assert final_payload["policy_profile"] == "shadow_policy"
+    assert publication_gate["status"] == "ready"
