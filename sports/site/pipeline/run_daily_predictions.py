@@ -286,6 +286,8 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
                 "--provider",
                 str(args.mlb_market_provider),
             ]
+            if args.run_date:
+                fetch_command.extend(["--event-date", str(args.run_date)])
             if args.mlb_market_input_path:
                 fetch_command.extend(["--input-path", str(args.mlb_market_input_path.resolve())])
             run_step("Fetch MLB Market Props", fetch_command)

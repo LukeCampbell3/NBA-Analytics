@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Iterable
 
 
-SUPPORTED_COUNT_TARGETS = {"H", "HR", "RBI", "K", "ER"}
+SUPPORTED_COUNT_TARGETS = {"H", "TB", "R", "K"}
 FINAL_STATUS_CODES = {"F", "C", "D", "X"}
 UPCOMING_STATUS_CODES = {"", "P", "S", "NS"}
 
@@ -42,6 +42,7 @@ class Candidate:
     direction: str
     prediction: float
     market_line: float
+    market_source: str
     edge: float
     abs_edge: float
     history_rows: int
@@ -214,6 +215,7 @@ def build_candidate(row: dict[str, str]) -> Candidate | None:
 
     prediction = max(0.0, to_float(row.get("Prediction")))
     market_line = max(0.0, to_float(row.get("Market_Line")))
+    market_source = str(row.get("Market_Source", "")).strip().lower() or "synthetic"
     history_rows = to_int(row.get("History_Rows"))
     model_val_mae = max(0.05, to_float(row.get("Model_Val_MAE"), default=0.0))
     model_val_rmse = max(model_val_mae, to_float(row.get("Model_Val_RMSE"), default=model_val_mae))
@@ -247,6 +249,7 @@ def build_candidate(row: dict[str, str]) -> Candidate | None:
         direction=direction,
         prediction=prediction,
         market_line=market_line,
+        market_source=market_source,
         edge=edge,
         abs_edge=abs(edge),
         history_rows=history_rows,
@@ -301,6 +304,12 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
         if candidate.history_rows < int(args.min_history_rows):
             rejected["history_too_short"] += 1
             continue
+        if candidate.market_source != "real" and candidate.target not in {"H", "TB", "R", "K"}:
+            rejected["non_core_synthetic_market"] += 1
+            continue
+        if candidate.market_source != "real" and candidate.direction == "UNDER":
+            rejected["synthetic_under_not_actionable"] += 1
+            continue
         if candidate.hit_probability < float(args.min_hit_probability):
             rejected["hit_probability_too_low"] += 1
             continue
@@ -323,6 +332,7 @@ def select_top_candidates(candidates: list[Candidate], args: argparse.Namespace)
         candidates,
         key=lambda row: (
             row.precision_score,
+            1.0 if row.market_source == "real" else 0.0,
             row.hit_probability,
             row.graded_hit_rate,
             row.abs_edge,
@@ -373,6 +383,7 @@ def write_selected_csv(path: Path, selected: list[Candidate]) -> None:
         "Direction",
         "Prediction",
         "Market_Line",
+        "Market_Source",
         "Edge",
         "Abs_Edge",
         "History_Rows",
@@ -412,6 +423,7 @@ def write_selected_csv(path: Path, selected: list[Candidate]) -> None:
                     "Direction": candidate.direction,
                     "Prediction": f"{candidate.prediction:.6f}",
                     "Market_Line": f"{candidate.market_line:.6f}",
+                    "Market_Source": candidate.market_source,
                     "Edge": f"{candidate.edge:.6f}",
                     "Abs_Edge": f"{candidate.abs_edge:.6f}",
                     "History_Rows": candidate.history_rows,
@@ -479,6 +491,7 @@ def write_summary_json(
                 "target": candidate.target,
                 "direction": candidate.direction,
                 "market_line": candidate.market_line,
+                "market_source": candidate.market_source,
                 "prediction": round(candidate.prediction, 4),
                 "estimated_hit_probability": round(candidate.hit_probability, 4),
                 "estimated_graded_hit_rate": round(candidate.graded_hit_rate, 4),
