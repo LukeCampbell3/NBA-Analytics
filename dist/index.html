@@ -3,87 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sports Analytics Workspace</title>
+    <title>NBA Analytics | Dashboard</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=1">
+    <link rel="stylesheet" href="styles.css?v=20">
 </head>
 <body>
-    <div class="site-shell">
-        <header class="hero">
-            <div class="hero-copy">
-                <p class="eyebrow">Sports Analytics Workspace</p>
-                <h1>Choose a sport, then live inside that sport’s pages.</h1>
-                <p class="hero-text">
-                    The site now treats each sport as its own workspace instead of forcing everything through one league-specific homepage.
-                    Pick a sport below, then navigate its own prediction pages, dashboards, and docs from there.
-                </p>
-            </div>
-            <div class="hero-panel">
-                <p class="hero-panel-label">What this hub does</p>
-                <ul class="hero-points">
-                    <li>Surfaces every tracked sport workspace from one root route.</li>
-                    <li>Keeps each sport mounted on its own clean URL namespace.</li>
-                    <li>Makes room for sport-specific dashboards, predictions, and docs.</li>
-                </ul>
+    <button id="siteMenuButton" class="site-menu-button" aria-label="Open site navigation" aria-controls="siteNavDrawer" aria-expanded="false">
+        <span class="site-menu-icon">&#9776;</span>
+    </button>
+    <div id="siteNavOverlay" class="site-nav-overlay"></div>
+    <aside id="siteNavDrawer" class="site-nav-drawer" aria-label="Site navigation">
+        <div class="site-nav-head">
+            <div class="site-nav-title">Navigate</div>
+            <button id="siteNavClose" class="site-nav-close" aria-label="Close site navigation">&times;</button>
+        </div>
+        <nav class="site-nav-links">
+            <a class="site-nav-link" href="/">Site Home</a>
+            <a class="site-nav-link" href="index.html">NBA Dashboard</a>
+            <a class="site-nav-link" href="predictions.html">Predictions</a>
+            <a class="site-nav-link" href="college.html">College</a>
+            <a class="site-nav-link" href="about.html">About</a>
+        </nav>
+        <div class="site-nav-footer">
+            <button id="themeToggleButton" class="theme-toggle-radial" aria-label="Toggle dark mode" title="Toggle dark/light mode">&#9680;</button>
+        </div>
+    </aside>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="container">
+                <div class="header-layout">
+                    <div class="header-copy">
+                        <h1 class="logo">NBA Analytics Dashboard</h1>
+                        <p class="tagline">Player archetypes, context, valuation, and prediction-adjacent research</p>
+                    </div>
+                    <div class="header-distribution-panel">
+                        <div class="distribution-title-row">
+                            <h3>Player Value Distribution</h3>
+                            <span class="distribution-metric-wrap">
+                                <span id="distributionMetricLabel" class="distribution-metric-label">Showing: Player Value</span>
+                                <a class="distribution-info-link" href="about.html" title="Learn about these metrics" aria-label="Learn about these metrics">i</a>
+                            </span>
+                            <span id="distributionCount" class="distribution-count">0 players</span>
+                        </div>
+                        <canvas id="valueDistributionChart" width="860" height="180" aria-label="Player value distribution chart"></canvas>
+                        <div id="distributionTooltip" class="distribution-tooltip" style="display:none;"></div>
+                    </div>
+                </div>
             </div>
         </header>
 
-        <section class="summary-strip" aria-label="Workspace summary">
-            <article class="summary-card">
-                <span id="sportCount" class="summary-value">0</span>
-                <span class="summary-label">Sport Sites</span>
-            </article>
-            <article class="summary-card">
-                <span id="activeCount" class="summary-value">0</span>
-                <span class="summary-label">Active Workspaces</span>
-            </article>
-            <article class="summary-card">
-                <span id="pageCount" class="summary-value">0</span>
-                <span class="summary-label">Published Pages</span>
-            </article>
+        <!-- Filters -->
+        <section class="filters">
+            <div class="container">
+                <div class="filter-group">
+                    <input type="text" id="searchInput" placeholder="Search players..." class="search-input">
+                </div>
+                
+                <div class="filter-group">
+                    <label>Archetype:</label>
+                    <select id="archetypeFilter" class="filter-select">
+                        <option value="">All Archetypes</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Usage:</label>
+                    <select id="usageFilter" class="filter-select">
+                        <option value="">All Usage</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Team:</label>
+                    <select id="teamFilter" class="filter-select">
+                        <option value="">All Teams</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Sort By:</label>
+                    <select id="sortBy" class="filter-select">
+                        <option value="name" selected>Name</option>
+                        <option value="best_available">Best Available (Validated)</option>
+                        <option value="team_fit">Team Fit (High to Low)</option>
+                        <option value="age">Age (Young to Old)</option>
+                        <option value="wins">Wins Added</option>
+                        <option value="breakout">Breakout Score</option>
+                    </select>
+                </div>
+
+                <button id="resetFilters" class="btn-secondary">Reset Filters</button>
+            </div>
         </section>
 
-        <main>
-            <section class="section-head">
-                <p class="section-kicker">Choose A Sport</p>
-                <h2>Available workspaces</h2>
-                <p class="section-copy">
-                    The cards below are generated from the repo structure, so adding another `sports/<slug>/web` site gives the landing page something real to point at.
-                </p>
-            </section>
+        <!-- Player Cards Grid -->
+        <section class="player-grid">
+            <div class="container">
+                <div id="playerCards" class="cards-container">
+                    <!-- Player cards will be dynamically inserted here -->
+                </div>
+                <div id="noResults" class="no-results" style="display: none;">
+                    <p>No players found matching your filters.</p>
+                </div>
+                <div id="loading" class="loading">
+                    <p>Loading player data...</p>
+                </div>
+            </div>
+        </section>
 
-            <section id="sportsGrid" class="sports-grid" aria-live="polite">
-                <article class="sport-card sport-card-loading">
-                    <p>Loading workspaces...</p>
-                </article>
-            </section>
-
-            <section class="notes-grid">
-                <article class="note-card">
-                    <p class="note-label">Routing</p>
-                    <h3>Each sport owns its own path</h3>
-                    <p>
-                        NBA lives under `/nba/`, MLB under `/mlb/`, NFL under `/nfl/`, and future sports can follow the same pattern.
-                    </p>
-                </article>
-                <article class="note-card">
-                    <p class="note-label">Frontend</p>
-                    <h3>The landing page is now a hub, not a product page</h3>
-                    <p>
-                        The old assumption that the home page had to be the NBA card view is gone, which keeps the frontend honest as the repo expands.
-                    </p>
-                </article>
-                <article class="note-card">
-                    <p class="note-label">Scalability</p>
-                    <h3>New sports can start small</h3>
-                    <p>
-                        A scaffold sport can ship a placeholder page now and grow into its own dashboard later without breaking the main navigation model.
-                    </p>
-                </article>
-            </section>
-        </main>
+        <!-- Player Detail Modal -->
+        <div id="playerModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <div id="modalBody">
+                    <!-- Player details will be inserted here -->
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script src="app.js?v=1"></script>
+    <script src="nav.js?v=7"></script>
+    <script src="app.js?v=45"></script>
 </body>
 </html>
+
