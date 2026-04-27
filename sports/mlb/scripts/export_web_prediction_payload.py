@@ -11,8 +11,12 @@ import csv
 import json
 import math
 import sys
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 import pandas as pd
 
@@ -27,6 +31,10 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from sports.parlay_analysis import annotate_parlay_board, evaluate_historical_parlays
+
+
+MLB_STATS_API_ROOT = "https://statsapi.mlb.com/api/v1"
+MLB_HEADSHOT_BASE_URL = "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/{person_id}/headshot/67/current"
 
 
 def parse_args() -> argparse.Namespace:
@@ -232,6 +240,130 @@ def build_mlb_parlay_validation(manifest_path: Path) -> dict:
     return summary
 
 
+def normalize_player_name(value: str) -> str:
+    text = unicodedata.normalize("NFKD", str(value or ""))
+    ascii_text = text.encode("ascii", "ignore").decode("ascii")
+    lowered = ascii_text.lower()
+    cleaned = []
+    for char in lowered:
+        cleaned.append(char if char.isalnum() else " ")
+    normalized = " ".join("".join(cleaned).split())
+    normalized = normalized.replace(" jr", "").replace(" sr", "")
+    normalized = normalized.replace(" ii", "").replace(" iii", "").replace(" iv", "")
+    return " ".join(normalized.split())
+
+
+def fetch_json(url: str) -> dict:
+    request = Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urlopen(request, timeout=20) as response:
+        return json.load(response)
+
+
+def fetch_team_id_lookup(season: int) -> dict[str, int]:
+    url = f"{MLB_STATS_API_ROOT}/teams?{urlencode({'sportId': 1, 'season': season})}"
+    payload = fetch_json(url)
+    lookup: dict[str, int] = {}
+    for team in payload.get("teams", []):
+        try:
+            team_id = int(team.get("id"))
+        except (TypeError, ValueError):
+            continue
+        abbr = str(team.get("abbreviation", "")).strip().upper()
+        if abbr:
+            lookup[abbr] = team_id
+    return lookup
+
+
+def fetch_team_roster_lookup(team_id: int, run_date: str) -> dict[str, int]:
+    url = f"{MLB_STATS_API_ROOT}/teams/{int(team_id)}/roster?{urlencode({'rosterType': 'active', 'date': run_date, 'hydrate': 'person'})}"
+    payload = fetch_json(url)
+    lookup: dict[str, int] = {}
+    for entry in payload.get("roster", []):
+        person = entry.get("person") or {}
+        try:
+            person_id = int(person.get("id"))
+        except (TypeError, ValueError):
+            continue
+        full_name = str(person.get("fullName", "")).strip()
+        if not full_name:
+            continue
+        lookup[normalize_player_name(full_name)] = person_id
+    return lookup
+
+
+def search_person_id_by_name(player_name: str) -> int | None:
+    query = str(player_name or "").strip()
+    if not query:
+        return None
+    url = f"{MLB_STATS_API_ROOT}/people/search?{urlencode({'names': query})}"
+    payload = fetch_json(url)
+    normalized_query = normalize_player_name(query)
+    for person in payload.get("people", []):
+        full_name = str(person.get("fullName", "")).strip()
+        if normalize_player_name(full_name) != normalized_query:
+            continue
+        try:
+            return int(person.get("id"))
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
+def build_headshot_url(person_id: int | None) -> str | None:
+    if not person_id:
+        return None
+    return MLB_HEADSHOT_BASE_URL.format(person_id=int(person_id))
+
+
+def build_player_headshot_lookup(rows: list[dict[str, str]], run_date: str) -> dict[tuple[str, str], dict[str, int | str | None]]:
+    if not rows or not run_date:
+        return {}
+
+    try:
+        season = int(str(run_date).split("-", 1)[0])
+    except (TypeError, ValueError):
+        return {}
+
+    try:
+        team_id_lookup = fetch_team_id_lookup(season)
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError):
+        return {}
+
+    teams_needed = {
+        str(row.get("Team", "")).strip().upper()
+        for row in rows
+        if str(row.get("Team", "")).strip()
+    }
+    roster_by_team: dict[str, dict[str, int]] = {}
+    for team_abbr in sorted(teams_needed):
+        team_id = team_id_lookup.get(team_abbr)
+        if not team_id:
+            continue
+        try:
+            roster_by_team[team_abbr] = fetch_team_roster_lookup(team_id, run_date)
+        except (HTTPError, URLError, TimeoutError, json.JSONDecodeError):
+            continue
+
+    lookup: dict[tuple[str, str], dict[str, int | str | None]] = {}
+    for row in rows:
+        team_abbr = str(row.get("Team", "")).strip().upper()
+        player_name = str(row.get("Player", "")).strip()
+        if not team_abbr or not player_name:
+            continue
+        roster_lookup = roster_by_team.get(team_abbr, {})
+        person_id = roster_lookup.get(normalize_player_name(player_name))
+        if not person_id:
+            try:
+                person_id = search_person_id_by_name(player_name)
+            except (HTTPError, URLError, TimeoutError, json.JSONDecodeError):
+                person_id = None
+        lookup[(team_abbr, player_name)] = {
+            "player_mlbam_id": person_id,
+            "player_headshot_url": build_headshot_url(person_id),
+        }
+    return lookup
+
+
 def main() -> None:
     args = parse_args()
     selected_csv = args.input_csv.resolve() if args.input_csv else find_latest_selected_csv(args.daily_runs_root.resolve())
@@ -241,19 +373,25 @@ def main() -> None:
     total = len(rows)
 
     through_date = max((row.get("Last_History_Date", "") for row in rows), default="")
+    run_date = rows[0].get("Prediction_Run_Date", "") if rows else ""
+    headshot_lookup = build_player_headshot_lookup(rows, run_date)
     plays = []
     for row in rows:
         is_home = to_int(row.get("Is_Home", "0"))
-        team = row.get("Team", "")
-        opponent = row.get("Opponent", "")
+        team = str(row.get("Team", "")).strip()
+        opponent = str(row.get("Opponent", "")).strip()
+        player_name = str(row.get("Player", "")).strip()
         home_team = team if is_home else opponent
         away_team = opponent if is_home else team
+        player_lookup = headshot_lookup.get((team.upper(), player_name), {}) or {}
         plays.append(
             {
                 "rank": to_int(row.get("Rank")),
-                "player": row.get("Player", ""),
-                "player_display_name": row.get("Player", ""),
+                "player": player_name,
+                "player_display_name": player_name,
                 "player_id": row.get("Player_ID", ""),
+                "player_mlbam_id": player_lookup.get("player_mlbam_id"),
+                "player_headshot_url": player_lookup.get("player_headshot_url"),
                 "team": team,
                 "opponent": opponent,
                 "market_home_team": home_team,
@@ -286,7 +424,7 @@ def main() -> None:
     payload = {
         "sport": "MLB",
         "board_title": "MLB Prediction Bounties",
-        "run_date": rows[0].get("Prediction_Run_Date", "") if rows else "",
+        "run_date": run_date,
         "through_date": through_date,
         "model_run_id": "mlb_high_precision_selector_v1",
         "policy_profile": "high_precision_hits",

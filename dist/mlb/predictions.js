@@ -47,6 +47,16 @@ class DailyPredictionsPage {
         return value || "Unknown Player";
     }
 
+    getPlayHeadshotUrl(play) {
+        const explicitUrl = String(play.player_headshot_url || "").trim();
+        if (explicitUrl) return explicitUrl;
+        const id = Number(play.player_mlbam_id);
+        if (Number.isFinite(id) && id > 0) {
+            return `https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/${id}/headshot/67/current`;
+        }
+        return "";
+    }
+
     getMonogram(name) {
         const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
         if (!parts.length) return "NA";
@@ -65,6 +75,7 @@ class DailyPredictionsPage {
         const directionRaw = String(play.direction || "").toUpperCase();
         const direction = directionRaw === "UNDER" ? "UNDER" : "OVER";
         const displayName = this.getPlayDisplayName(play);
+        const headshotUrl = this.getPlayHeadshotUrl(play);
         const monogram = this.escapeHtml(this.getMonogram(displayName));
         const edge = Number(play.edge);
         const lineText = this.formatNumber(play.market_line);
@@ -80,7 +91,16 @@ class DailyPredictionsPage {
             <article class="prediction-card wanted-card wanted-card-${tier}" data-direction="${this.escapeAttr(direction)}">
                 <div class="wanted-rank">#${this.escapeHtml(String(play.rank || "-"))}</div>
                 <div class="wanted-title">WANTED</div>
-                <div class="wanted-photo-frame is-fallback-visible">
+                <div class="wanted-photo-frame ${headshotUrl ? "" : "is-fallback-visible"}">
+                    ${headshotUrl ? `
+                        <img
+                            class="wanted-photo"
+                            src="${this.escapeAttr(headshotUrl)}"
+                            alt="${this.escapeAttr(displayName)} headshot"
+                            loading="lazy"
+                            onerror="this.remove(); this.parentElement.classList.add('is-fallback-visible');"
+                        />
+                    ` : ""}
                     <div class="wanted-photo-fallback">${monogram}</div>
                 </div>
                 ${play.parlay_candidate ? `
