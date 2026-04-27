@@ -1,0 +1,29 @@
+{
+  "provider": "odds_api",
+  "fetched_at_utc": "2026-04-27T01:19:20.270636+00:00",
+  "sport": "baseball_mlb",
+  "markets": [
+    "batter_hits",
+    "batter_total_bases",
+    "batter_runs_scored",
+    "batter_home_runs",
+    "batter_rbis",
+    "pitcher_strikeouts",
+    "pitcher_earned_runs"
+  ],
+  "bookmakers": [
+    "draftkings",
+    "fanduel"
+  ],
+  "event_count_requested": 0,
+  "event_count_fetched": 0,
+  "long_rows": 0,
+  "wide_rows": 0,
+  "errors": [
+    {
+      "event_id": "",
+      "error": "missing_odds_api_key"
+    }
+  ],
+  "skipped": true
+}

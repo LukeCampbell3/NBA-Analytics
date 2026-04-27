@@ -804,29 +804,48 @@
     "C:\\Users\\jcthi\\Code\\NBA-Analytics\\Player-Predictor\\Data-Proc-MLB\\Zyhir_Hope\\2026_processed_processed.csv"
   ],
   "pool_csv": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260426\\daily_prediction_pool_20260426.csv",
-  "rows": 864,
+  "rows": 1728,
   "games": 16,
-  "players": 269,
+  "players": 359,
   "rows_by_role": {
-    "hitter": 864
+    "hitter": 1440,
+    "pitcher": 288
   },
   "rows_by_target": {
     "H": 288,
+    "TB": 288,
+    "R": 288,
     "HR": 288,
-    "RBI": 288
+    "RBI": 288,
+    "K": 96,
+    "ER": 96,
+    "ERA": 96
   },
   "role_status": {
     "hitter": {
-      "history_rows": 28485,
-      "candidate_rows": 864,
-      "prediction_rows": 864,
+      "history_rows": 47475,
+      "candidate_rows": 1440,
+      "prediction_rows": 1440,
       "targets": [
         "H",
         "HR",
-        "RBI"
+        "R",
+        "RBI",
+        "TB"
+      ],
+      "status": "ok"
+    },
+    "pitcher": {
+      "history_rows": 4635,
+      "candidate_rows": 288,
+      "prediction_rows": 288,
+      "targets": [
+        "ER",
+        "ERA",
+        "K"
       ],
       "status": "ok"
     }
   },
-  "updated_at_utc": "2026-04-26T14:42:24.419959+00:00"
+  "updated_at_utc": "2026-04-27T01:29:53.735381+00:00"
 }

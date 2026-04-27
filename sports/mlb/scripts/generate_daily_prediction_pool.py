@@ -42,18 +42,21 @@ class TargetSpec:
     role: str
     actual_col: str
     market_col: str
+    market_source_col: str
     gap_col: str
     rolling_col: str
     lag1_col: str
 
 
 TARGET_SPECS: tuple[TargetSpec, ...] = (
-    TargetSpec("H", "hitter", "H", "Market_H", "H_market_gap", "H_rolling_avg", "H_lag1"),
-    TargetSpec("HR", "hitter", "HR", "Market_HR", "HR_market_gap", "HR_rolling_avg", "HR_lag1"),
-    TargetSpec("RBI", "hitter", "RBI", "Market_RBI", "RBI_market_gap", "RBI_rolling_avg", "RBI_lag1"),
-    TargetSpec("K", "pitcher", "K", "Market_K", "K_market_gap", "K_rolling_avg", "K_lag1"),
-    TargetSpec("ER", "pitcher", "ER", "Market_ER", "ER_market_gap", "ER_rolling_avg", "ER_lag1"),
-    TargetSpec("ERA", "pitcher", "ERA", "Market_ERA", "ERA_market_gap", "ERA_rolling_avg", "ERA_lag1"),
+    TargetSpec("H", "hitter", "H", "Market_H", "Market_Source_H", "H_market_gap", "H_rolling_avg", "H_lag1"),
+    TargetSpec("TB", "hitter", "TB", "Market_TB", "Market_Source_TB", "TB_market_gap", "TB_rolling_avg", "TB_lag1"),
+    TargetSpec("R", "hitter", "R", "Market_R", "Market_Source_R", "R_market_gap", "R_rolling_avg", "R_lag1"),
+    TargetSpec("HR", "hitter", "HR", "Market_HR", "Market_Source_HR", "HR_market_gap", "HR_rolling_avg", "HR_lag1"),
+    TargetSpec("RBI", "hitter", "RBI", "Market_RBI", "Market_Source_RBI", "RBI_market_gap", "RBI_rolling_avg", "RBI_lag1"),
+    TargetSpec("K", "pitcher", "K", "Market_K", "Market_Source_K", "K_market_gap", "K_rolling_avg", "K_lag1"),
+    TargetSpec("ER", "pitcher", "ER", "Market_ER", "Market_Source_ER", "ER_market_gap", "ER_rolling_avg", "ER_lag1"),
+    TargetSpec("ERA", "pitcher", "ERA", "Market_ERA", "Market_Source_ERA", "ERA_market_gap", "ERA_rolling_avg", "ERA_lag1"),
 )
 
 
@@ -302,6 +305,10 @@ def round_half(value: float, *, min_value: float = 0.5) -> float:
     return max(float(min_value), round(float(value) * 2.0) / 2.0)
 
 
+def round_book_half(value: float, *, min_value: float = 0.5) -> float:
+    return max(float(min_value), math.ceil(float(value)) - 0.5)
+
+
 def safe_div(num: float, den: float, default: float = 0.0) -> float:
     den = float(den)
     if abs(den) < 1e-9:
@@ -345,14 +352,17 @@ def fetch_schedule_games(run_date: pd.Timestamp, timeout_seconds: float) -> list
     return games
 
 
-def build_team_contexts(frames: list[pd.DataFrame], requested_run_date: pd.Timestamp) -> tuple[dict[str, dict[str, float]], dict[str, list[str]], dict[str, pd.Series]]:
+def build_team_contexts(
+    frames: list[pd.DataFrame],
+    requested_run_date: pd.Timestamp,
+) -> tuple[dict[str, dict[str, float]], dict[str, list[str]], dict[str, list[str]], dict[str, pd.Series]]:
     if not frames:
-        return {}, {}, {}
+        return {}, {}, {}, {}
 
     combined = pd.concat(frames, ignore_index=True)
     combined = combined.loc[combined["_game_date"] < requested_run_date].copy()
     if combined.empty:
-        return {}, {}, {}
+        return {}, {}, {}, {}
 
     team_context: dict[str, dict[str, float]] = {}
     latest_player_rows: dict[str, pd.Series] = {}
@@ -419,7 +429,31 @@ def build_team_contexts(frames: list[pd.DataFrame], requested_run_date: pd.Times
     else:
         team_recent_hitters = {}
 
-    return team_context, team_recent_hitters, latest_player_rows
+    pitcher_rows = combined.loc[combined.get("Player_Type", "").astype(str).str.lower() == "pitcher"].copy()
+    if not pitcher_rows.empty:
+        if "Was_Starter" not in pitcher_rows.columns:
+            pitcher_rows["Was_Starter"] = 0
+        recent_pitchers = pitcher_rows.sort_values(
+            by=["Team", "_game_date", "Was_Starter", "IP"],
+            ascending=[True, False, False, False],
+        )
+        team_recent_pitchers: dict[str, list[str]] = {}
+        for team, group in recent_pitchers.groupby("Team", sort=True):
+            ordered = []
+            seen: set[str] = set()
+            for _, row in group.iterrows():
+                player = str(row.get("Player", "")).strip()
+                if not player or player in seen:
+                    continue
+                ordered.append(player)
+                seen.add(player)
+                if len(ordered) >= 6:
+                    break
+            team_recent_pitchers[str(team)] = ordered
+    else:
+        team_recent_pitchers = {}
+
+    return team_context, team_recent_hitters, team_recent_pitchers, latest_player_rows
 
 
 def project_from_latest_row(
@@ -458,6 +492,26 @@ def project_from_latest_row(
                 + (0.07 * ((temp_f - 65.0) / 15.0))
                 - (0.05 * (opp_pitcher_k9 - 8.0))
                 + (0.04 * (opp_bullpen_era - 4.0))
+            )
+        elif spec.target == "TB":
+            prediction = (
+                (0.62 * baseline)
+                + (0.14 * lag_value)
+                + (0.26 * latest_pa_share * 4.2)
+                + (1.20 * iso)
+                + (0.45 * (woba - 0.315))
+                + (0.12 * (park_factor - 1.0) * 4.0)
+            )
+        elif spec.target == "R":
+            batting_order = to_float(latest_row.get("Batting_Order")) if to_float(latest_row.get("Batting_Order")) is not None else 9.0
+            lineup_slot_boost = 1.0 - ((batting_order - 1.0) / 8.0)
+            prediction = (
+                (0.64 * baseline)
+                + (0.14 * lag_value)
+                + (0.30 * latest_pa_share * 4.2)
+                + (0.55 * (woba - 0.315))
+                + (0.08 * lineup_slot_boost)
+                + (0.05 * (opp_bullpen_era - 4.0))
             )
         elif spec.target == "HR":
             prediction = (
@@ -507,9 +561,9 @@ def project_from_latest_row(
     elif spec.target == "ERA":
         market_line = max(1.5, round(baseline, 1))
     elif spec.target == "K":
-        market_line = round_half(baseline, min_value=2.5)
+        market_line = round_book_half(baseline, min_value=2.5)
     else:
-        market_line = round_half(baseline, min_value=0.5)
+        market_line = round_book_half(baseline, min_value=0.5)
     return prediction, float(market_line)
 
 
@@ -531,7 +585,7 @@ def build_upcoming_schedule_pool_rows(
         for _, row in market_snapshot.iterrows()
         if str(row.get("Player", "")).strip()
     }
-    team_context, team_recent_hitters, latest_player_rows = build_team_contexts(frames, requested_run_date)
+    team_context, team_recent_hitters, team_recent_pitchers, latest_player_rows = build_team_contexts(frames, requested_run_date)
     if not latest_player_rows:
         return [], {"selection_reason": "no_latest_history_rows"}
 
@@ -580,16 +634,29 @@ def build_upcoming_schedule_pool_rows(
             pitchers: list[str] = []
             if probable_pitcher_name and probable_pitcher_name in latest_player_rows:
                 pitchers.append(probable_pitcher_name)
+            for player_name in team_recent_pitchers.get(team, []):
+                if player_name in latest_player_rows and player_name not in pitchers:
+                    pitchers.append(player_name)
+                if len(pitchers) >= 3:
+                    break
             for player_name in market_team_players:
                 if player_name in latest_player_rows and str(latest_player_rows[player_name].get("Player_Type", "")).lower() == "pitcher":
                     if player_name not in pitchers:
                         pitchers.append(player_name)
 
             opp_probable_row = latest_player_rows.get(opp_probable_name)
+            if opp_probable_row is None:
+                for fallback_pitcher_name in team_recent_pitchers.get(opponent, []):
+                    opp_probable_row = latest_player_rows.get(fallback_pitcher_name)
+                    if opp_probable_row is not None:
+                        break
+            opp_pitcher_era = to_float(opp_probable_row.get("ERA_rolling_avg")) if opp_probable_row is not None else None
+            opp_pitcher_ip = to_float(opp_probable_row.get("IP")) if opp_probable_row is not None else None
+            opp_pitcher_k = to_float(opp_probable_row.get("K_rolling_avg")) if opp_probable_row is not None else None
             opponent_context = {
-                "opp_pitcher_era": to_float(opp_probable_row.get("ERA_rolling_avg"), 4.1) if opp_probable_row is not None else team_context.get(opponent, {}).get("opp_pitcher_era", 4.1),
+                "opp_pitcher_era": opp_pitcher_era if opp_pitcher_era is not None else team_context.get(opponent, {}).get("opp_pitcher_era", 4.1),
                 "opp_pitcher_k9": (
-                    (to_float(opp_probable_row.get("K_rolling_avg"), 0.0) * 9.0 / max(to_float(opp_probable_row.get("IP"), 5.5), 1.0))
+                    ((opp_pitcher_k if opp_pitcher_k is not None else 0.0) * 9.0 / max(opp_pitcher_ip if opp_pitcher_ip is not None else 5.5, 1.0))
                     if opp_probable_row is not None
                     else team_context.get(opponent, {}).get("opp_pitcher_k9", 8.2)
                 ),
@@ -658,6 +725,7 @@ def build_upcoming_schedule_pool_rows(
                             "Prediction": float(prediction),
                             "Baseline": float(baseline),
                             "Market_Line": float(market_line),
+                            "Market_Source": str(latest_row.get(spec.market_source_col, "synthetic") or "synthetic"),
                             "Edge": edge,
                             "History_Rows": history_rows,
                             "Last_History_Date": last_history_date.strftime("%Y-%m-%d") if not pd.isna(last_history_date) else "",
@@ -760,6 +828,7 @@ def build_pool_rows(
                         "Prediction": prediction,
                         "Baseline": float(baseline),
                         "Market_Line": float(market_line),
+                        "Market_Source": str(current.get(spec.market_source_col, "synthetic") or "synthetic"),
                         "Edge": edge,
                         "History_Rows": history_rows,
                         "Last_History_Date": (
@@ -802,6 +871,7 @@ def write_pool_csv(path: Path, rows: list[dict[str, object]]) -> None:
         "Prediction",
         "Baseline",
         "Market_Line",
+        "Market_Source",
         "Edge",
         "History_Rows",
         "Last_History_Date",

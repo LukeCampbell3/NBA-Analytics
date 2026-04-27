@@ -50,6 +50,27 @@ python sports/site/pipeline/serve_web.py
 This gives you a landing page at `/` and sport workspaces like `/nba/`, `/mlb/`, and `/nfl/`.
 The combined static output is written to `dist/` at the repo root.
 
+## Odds API Key
+
+For local market fetches, you can store your Odds API key in a repo-local `config.local.yaml` file instead of setting a shell environment variable each time:
+
+```yaml
+odds_api:
+  api_key: "paste-your-key-here"
+```
+
+The fetchers check in this order:
+
+1. `--api-key`
+2. `THE_ODDS_API_KEY` or `ODDS_API_KEY`
+3. `config.local.yaml`
+4. `.env.local` or `.env`
+
+For MLB, the Odds API fetcher now also minimizes spend by:
+
+- reusing a fresh matching local snapshot instead of refetching
+- filtering live requests to the requested game date when the shared daily pipeline passes `--run-date`
+
 ## NBA Quick Start
 
 1. Build NBA web payloads:

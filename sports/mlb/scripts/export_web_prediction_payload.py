@@ -163,8 +163,11 @@ def build_mlb_parlay_validation(manifest_path: Path) -> dict:
 
     target_map = {
         "H": ("H", "Market_H", "H_market_gap"),
+        "TB": ("TB", "Market_TB", "TB_market_gap"),
+        "R": ("R", "Market_R", "R_market_gap"),
         "HR": ("HR", "Market_HR", "HR_market_gap"),
         "RBI": ("RBI", "Market_RBI", "RBI_market_gap"),
+        "K": ("K", "Market_K", "K_market_gap"),
     }
     rows: list[dict] = []
 
@@ -404,6 +407,7 @@ def main() -> None:
                 "target": row.get("Target", ""),
                 "prediction": to_float(row.get("Prediction")),
                 "market_line": to_float(row.get("Market_Line")),
+                "market_source": row.get("Market_Source", "synthetic"),
                 "edge": to_float(row.get("Edge")),
                 "abs_edge": to_float(row.get("Abs_Edge")),
                 "estimated_hit_probability": to_float(row.get("Estimated_Hit_Probability")),
@@ -427,7 +431,7 @@ def main() -> None:
         "run_date": run_date,
         "through_date": through_date,
         "model_run_id": "mlb_high_precision_selector_v1",
-        "policy_profile": "high_precision_hits",
+        "policy_profile": "core_market_props",
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "summary": {
             "play_count": total,

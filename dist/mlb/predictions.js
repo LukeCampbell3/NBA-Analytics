@@ -69,6 +69,23 @@ class DailyPredictionsPage {
         this.elements.cards.innerHTML = this.plays.map((play) => this.renderWantedCard(play)).join("");
     }
 
+    formatTarget(target) {
+        const lookup = {
+            H: "HITS",
+            TB: "TOTAL BASES",
+            R: "RUNS",
+            K: "PITCHER K",
+            HR: "HOME RUNS",
+            RBI: "RBIS",
+            ER: "EARNED RUNS",
+        };
+        return lookup[String(target || "").toUpperCase()] || String(target || "").toUpperCase();
+    }
+
+    formatSource(source) {
+        return String(source || "").toLowerCase() === "real" ? "BOOK LINE" : "BENCHMARK LINE";
+    }
+
     renderWantedCard(play) {
         const tierRaw = String(play.confidence_tier || "consider").toLowerCase();
         const tier = play.parlay_candidate ? "parlay" : (["elite", "strong", "consider", "pass"].includes(tierRaw) ? tierRaw : "consider");
@@ -86,6 +103,8 @@ class DailyPredictionsPage {
         const gameText = [play.market_away_team, play.market_home_team].filter(Boolean).join(" @ ");
         const parlayPartner = String(play.parlay_partner_name || "").trim();
         const parlayRate = this.formatPct(play.parlay_projected_hit_rate);
+        const targetText = this.formatTarget(play.target);
+        const sourceText = this.formatSource(play.market_source);
 
         return `
             <article class="prediction-card wanted-card wanted-card-${tier}" data-direction="${this.escapeAttr(direction)}">
@@ -113,9 +132,9 @@ class DailyPredictionsPage {
                 <div class="wanted-reward-value">${this.escapeHtml(this.formatSignedNumber(edge))}</div>
                 <div class="wanted-name">${this.escapeHtml(displayName)}</div>
                 <div class="wanted-direction">${this.escapeHtml(direction)}</div>
-                <div class="wanted-prop-line">${this.escapeHtml(play.target || "")} | LINE ${this.escapeHtml(lineText)} | PRED ${this.escapeHtml(predictionText)}</div>
+                <div class="wanted-prop-line">${this.escapeHtml(targetText)} | LINE ${this.escapeHtml(lineText)} | PRED ${this.escapeHtml(predictionText)}</div>
                 ${play.parlay_candidate ? `<div class="wanted-parlay-note">Best paired with ${this.escapeHtml(parlayPartner || "another tagged leg")}</div>` : ""}
-                <div class="wanted-footer">${this.escapeHtml(`${hitRateText} HIT | VALUE ${valueText} | ${edgeText} EDGE | ${gameText}`)}</div>
+                <div class="wanted-footer">${this.escapeHtml(`${hitRateText} HIT | VALUE ${valueText} | ${edgeText} EDGE | ${sourceText} | ${gameText}`)}</div>
             </article>
         `;
     }

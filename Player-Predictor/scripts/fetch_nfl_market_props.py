@@ -23,6 +23,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import yaml
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -103,6 +104,72 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _first_non_empty(*values: object) -> str | None:
+    for value in values:
+        text = str(value or "").strip()
+        lowered = text.lower()
+        if text and "paste-your" not in lowered and "your_api_key" not in lowered:
+            return text
+    return None
+
+
+def _load_api_key_from_yaml(path: Path) -> str | None:
+    try:
+        payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    if not isinstance(payload, dict):
+        return None
+
+    odds_api = payload.get("odds_api")
+    secrets = payload.get("secrets")
+    return _first_non_empty(
+        payload.get("ODDS_API_KEY"),
+        payload.get("THE_ODDS_API_KEY"),
+        odds_api.get("api_key") if isinstance(odds_api, dict) else None,
+        odds_api.get("odds_api_key") if isinstance(odds_api, dict) else None,
+        secrets.get("ODDS_API_KEY") if isinstance(secrets, dict) else None,
+        secrets.get("THE_ODDS_API_KEY") if isinstance(secrets, dict) else None,
+        secrets.get("odds_api_key") if isinstance(secrets, dict) else None,
+    )
+
+
+def _load_api_key_from_dotenv(path: Path) -> str | None:
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except Exception:
+        return None
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        if key.strip() not in {"ODDS_API_KEY", "THE_ODDS_API_KEY"}:
+            continue
+        cleaned = value.strip().strip('"').strip("'")
+        if cleaned:
+            return cleaned
+    return None
+
+
+def _load_api_key_from_local_files(start_path: Path) -> str | None:
+    candidate_names = ("config.local.yaml", ".env.local", ".env", "config.yaml")
+    checked: set[Path] = set()
+    for base in [start_path, *start_path.parents]:
+        for name in candidate_names:
+            candidate = (base / name).resolve()
+            if candidate in checked or not candidate.exists():
+                continue
+            checked.add(candidate)
+            if candidate.suffix.lower() in {".yaml", ".yml"}:
+                value = _load_api_key_from_yaml(candidate)
+            else:
+                value = _load_api_key_from_dotenv(candidate)
+            if value:
+                return value
+    return None
+
+
 def resolve_api_key(explicit_key: str | None) -> str:
     if explicit_key:
         return explicit_key
@@ -110,7 +177,10 @@ def resolve_api_key(explicit_key: str | None) -> str:
         value = os.getenv(key)
         if value:
             return value
-    raise RuntimeError("Missing Odds API key. Set THE_ODDS_API_KEY or pass --api-key.")
+    local_value = _load_api_key_from_local_files(Path(__file__).resolve().parent)
+    if local_value:
+        return local_value
+    raise RuntimeError("Missing Odds API key. Set THE_ODDS_API_KEY, create config.local.yaml, or pass --api-key.")
 
 
 def request_json(base_url: str, params: dict[str, object]) -> tuple[object, dict[str, str]]:
