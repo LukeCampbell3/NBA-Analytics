@@ -69,6 +69,18 @@ def _normalized_text(value: Any) -> str:
     return _clean_text(value).lower()
 
 
+def _leg_quality(play: dict[str, Any], probability_field: str) -> float:
+    for key in ("parlay_leg_quality_score", "final_pool_quality_score"):
+        quality = _safe_float(play.get(key))
+        if quality is not None:
+            return max(0.0, min(1.0, quality))
+    probability = _safe_float(play.get(probability_field))
+    confidence = _safe_float(play.get("final_confidence")) or 0.0
+    ev = _safe_float(play.get("ev")) or 0.0
+    derived = 0.75 * (probability if probability is not None else 0.5) + 0.20 * max(0.0, min(1.0, confidence)) + 0.05 * max(0.0, min(1.0, 0.5 + (4.0 * ev)))
+    return max(0.0, min(1.0, derived))
+
+
 def _play_key(play: dict[str, Any], fallback_index: int) -> str:
     player = _normalized_text(play.get("player_display_name") or play.get("player"))
     target = _normalized_text(play.get("target"))
@@ -130,6 +142,7 @@ def score_candidate_pairs(
         left_probability = _safe_float(left.get(probability_field))
         if left_probability is None or left_probability < min_leg:
             continue
+        left_quality = _leg_quality(left, probability_field)
 
         left_player = _normalized_text(left.get("player_display_name") or left.get("player"))
         left_team = _normalized_text(left.get("team"))
@@ -143,6 +156,7 @@ def score_candidate_pairs(
             right_probability = _safe_float(right.get(probability_field))
             if right_probability is None or right_probability < min_leg:
                 continue
+            right_quality = _leg_quality(right, probability_field)
 
             right_player = _normalized_text(right.get("player_display_name") or right.get("player"))
             right_team = _normalized_text(right.get("team"))
@@ -192,7 +206,9 @@ def score_candidate_pairs(
             if same_script_cluster:
                 diversity_bonus -= 0.03
 
-            pair_score = projected_probability * max(0.75, diversity_bonus)
+            avg_leg_quality = (left_quality + right_quality) / 2.0
+            quality_factor = 0.85 + (0.30 * avg_leg_quality)
+            pair_score = projected_probability * max(0.75, diversity_bonus) * quality_factor
             pairs.append(
                 {
                     "left_index": left_index,
@@ -208,6 +224,7 @@ def score_candidate_pairs(
                     "projected_probability": projected_probability,
                     "independent_probability": independent_probability,
                     "pair_score": pair_score,
+                    "avg_leg_quality": avg_leg_quality,
                     "adjustment_factor": factor,
                     "same_player": same_player,
                     "same_game": same_game,

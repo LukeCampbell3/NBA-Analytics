@@ -52,6 +52,30 @@ except Exception:  # pragma: no cover - fallback when gate module is unavailable
         return pass_mask, thresholds, source, "", {"enabled": False, "reason": "module_missing"}
 
 try:
+    from decision_engine.pool_quality import annotate_final_pool_quality as annotate_final_pool_quality_fn
+    from decision_engine.pool_quality import infer_run_date_hint as infer_run_date_hint_fn
+except Exception:  # pragma: no cover - fallback when pool-quality module is unavailable
+    def annotate_final_pool_quality_fn(
+        frame: pd.DataFrame,
+        *,
+        payload: dict | None,
+        run_date_hint: str | None = None,
+        probability_col: str = "expected_win_rate",
+        target_col: str = "target",
+        direction_col: str = "direction",
+        belief_uncertainty_lower: float = 0.75,
+        belief_uncertainty_upper: float = 1.15,
+        near_miss_margin: float = 0.003,
+    ) -> pd.DataFrame:
+        out = frame.copy()
+        out["final_pool_quality_score"] = 0.5
+        out["parlay_leg_quality_score"] = 0.5
+        return out
+
+    def infer_run_date_hint_fn(frame: pd.DataFrame) -> str:
+        return ""
+
+try:
     from decision_engine.staking_bucket_model_v2 import apply_staking_bucket_model_v2 as apply_staking_bucket_model_v2_fn
 except Exception:  # pragma: no cover - fallback when staking model module is unavailable
     def apply_staking_bucket_model_v2_fn(
@@ -1660,6 +1684,8 @@ def _select_board_objective_board(
 
     base = _build_board_probability_features(candidates.copy())
     base["_source_index"] = base.index
+    base["final_pool_quality_score"] = _numeric_series(base, "final_pool_quality_score", 0.50).clip(lower=0.0, upper=1.0)
+    base["parlay_leg_quality_score"] = _numeric_series(base, "parlay_leg_quality_score", np.nan).fillna(base["final_pool_quality_score"]).clip(lower=0.0, upper=1.0)
     instability_active = bool(
         board_objective_instability_enabled
         and (
@@ -1694,25 +1720,27 @@ def _select_board_objective_board(
     idx_abs = set(base.sort_values(["abs_edge", "ev_adjusted", "expected_win_rate", "final_confidence"], ascending=[False, False, False, False]).head(overfetch_count).index.tolist())
     idx_ev = set(base.sort_values(["ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"], ascending=[False, False, False, False]).head(overfetch_count).index.tolist())
     idx_prob = set(base.sort_values(["board_play_win_prob", "final_confidence", "abs_edge", "ev_adjusted"], ascending=[False, False, False, False]).head(overfetch_count).index.tolist())
+    idx_quality = set(base.sort_values(["final_pool_quality_score", "board_play_win_prob", "final_confidence", "abs_edge"], ascending=[False, False, False, False]).head(overfetch_count).index.tolist())
     idx_th = set(base.sort_values(["thompson_ev", "board_play_win_prob", "ev_adjusted", "abs_edge"], ascending=[False, False, False, False]).head(overfetch_count).index.tolist()) if "thompson_ev" in base.columns else set()
 
-    universe_idx = sorted(idx_abs | idx_ev | idx_prob | idx_th)
+    universe_idx = sorted(idx_abs | idx_ev | idx_prob | idx_quality | idx_th)
     universe = base.loc[universe_idx].copy() if universe_idx else base.copy()
     selection_stage_counts["candidate_universe"] = int(len(universe))
     if universe.empty:
         return _finalize_selection(universe)
 
     universe["board_universe_rank_base"] = (
-        0.55 * _zscore_series(universe["board_play_win_prob"])
-        + 0.25 * _zscore_series(universe["abs_edge"])
-        + 0.20 * _zscore_series(universe["ev_adjusted"])
+        0.42 * _zscore_series(universe["board_play_win_prob"])
+        + 0.22 * _zscore_series(universe["abs_edge"])
+        + 0.16 * _zscore_series(universe["ev_adjusted"])
+        + 0.20 * _zscore_series(universe["final_pool_quality_score"])
     )
     universe["board_universe_rank"] = pd.to_numeric(universe["board_universe_rank_base"], errors="coerce").fillna(0.0)
     candidate_cap = int(board_objective_candidate_limit)
     if candidate_cap > 0 and len(universe) > candidate_cap:
-        universe = universe.sort_values(["board_universe_rank", "board_play_win_prob", "abs_edge"], ascending=[False, False, False]).head(candidate_cap).copy()
+        universe = universe.sort_values(["board_universe_rank", "final_pool_quality_score", "board_play_win_prob", "abs_edge"], ascending=[False, False, False, False]).head(candidate_cap).copy()
 
-    universe = universe.sort_values(["board_universe_rank", "board_play_win_prob", "abs_edge"], ascending=[False, False, False]).reset_index(drop=True)
+    universe = universe.sort_values(["board_universe_rank", "final_pool_quality_score", "board_play_win_prob", "abs_edge"], ascending=[False, False, False, False]).reset_index(drop=True)
     n = int(len(universe))
     if n <= 0:
         return _finalize_selection(base.iloc[0:0].copy())
@@ -1775,7 +1803,7 @@ def _select_board_objective_board(
             pd.to_numeric(universe.get("board_universe_rank_base"), errors="coerce").fillna(0.0)
             - pd.to_numeric(universe.get("board_instability_penalty"), errors="coerce").fillna(0.0)
         )
-        universe = universe.sort_values(["board_universe_rank", "board_play_win_prob", "abs_edge"], ascending=[False, False, False]).reset_index(drop=True)
+        universe = universe.sort_values(["board_universe_rank", "final_pool_quality_score", "board_play_win_prob", "abs_edge"], ascending=[False, False, False, False]).reset_index(drop=True)
 
         if bool(board_objective_dynamic_size_enabled) and len(universe) > k and k > 0:
             ranks_dyn = np.arange(1, len(universe) + 1, dtype="float64")
@@ -1832,12 +1860,14 @@ def _select_board_objective_board(
 
     probs = pd.to_numeric(universe["board_play_win_prob"], errors="coerce").fillna(0.5).to_numpy(dtype="float64")
     unc = pd.to_numeric(universe["board_uncertainty_penalty"], errors="coerce").fillna(0.5).to_numpy(dtype="float64")
+    quality = pd.to_numeric(universe.get("final_pool_quality_score"), errors="coerce").fillna(0.5).to_numpy(dtype="float64")
     node_penalty = pd.to_numeric(universe.get("board_instability_penalty"), errors="coerce").fillna(0.0).to_numpy(dtype="float64")
-    node_values = probs - float(board_objective_lambda_unc) * unc - node_penalty
+    node_values = probs + 0.10 * np.clip(quality - 0.50, -0.50, 0.50) - float(board_objective_lambda_unc) * unc - node_penalty
     order = np.argsort(-node_values)
     universe = universe.iloc[order].reset_index(drop=True)
     probs = probs[order]
     unc = unc[order]
+    quality = quality[order]
     node_penalty = node_penalty[order]
     players = players[order]
     targets = targets[order]
@@ -1853,7 +1883,7 @@ def _select_board_objective_board(
         same_direction_weight=float(board_objective_corr_same_direction),
         same_script_cluster_weight=float(board_objective_corr_same_script_cluster),
     )
-    node_values = probs - float(board_objective_lambda_unc) * unc - node_penalty
+    node_values = probs + 0.10 * np.clip(quality - 0.50, -0.50, 0.50) - float(board_objective_lambda_unc) * unc - node_penalty
     prefix = np.concatenate(([0.0], np.cumsum(node_values)))
 
     max_nodes = max(1000, int(board_objective_max_search_nodes))
@@ -2033,7 +2063,7 @@ def _select_board_objective_board(
     )
 
     if not best_indices:
-        ranked_fallback = base.sort_values(["board_play_win_prob", "ev_adjusted", "abs_edge"], ascending=[False, False, False]).copy()
+        ranked_fallback = base.sort_values(["final_pool_quality_score", "board_play_win_prob", "ev_adjusted", "abs_edge"], ascending=[False, False, False, False]).copy()
         fallback = _apply_portfolio_caps(
             ranked_fallback,
             max_plays_per_player=max_plays_per_player,
@@ -2096,7 +2126,7 @@ def _select_board_objective_board(
         selected_sources = set(pd.to_numeric(current["_source_index"], errors="coerce").fillna(-1).astype(int).tolist())
         swap_pool = base.loc[~base["_source_index"].isin(selected_sources)].copy()
         if not swap_pool.empty:
-            swap_pool = swap_pool.sort_values(["board_play_win_prob", "ev_adjusted", "abs_edge", "expected_win_rate"], ascending=[False, False, False, False]).head(swap_pool_cap).copy()
+            swap_pool = swap_pool.sort_values(["final_pool_quality_score", "board_play_win_prob", "ev_adjusted", "abs_edge", "expected_win_rate"], ascending=[False, False, False, False, False]).head(swap_pool_cap).copy()
         swap_applied = False
         for _ in range(max(0, int(board_objective_swap_rounds))):
             if swap_pool.empty:
@@ -3467,7 +3497,40 @@ def compute_final_board(
         out["learned_gate_blocked_reason"] = ""
         out["learned_gate_fill_source"] = "ungated"
 
+<<<<<<< HEAD
     _record_stage("after_learned_gate", out)
+=======
+    out = annotate_final_pool_quality_fn(
+        out,
+        payload=learned_gate_payload if isinstance(learned_gate_payload, dict) else None,
+        run_date_hint=str(learned_gate_month or infer_run_date_hint_fn(out)),
+        belief_uncertainty_lower=float(belief_uncertainty_lower),
+        belief_uncertainty_upper=float(belief_uncertainty_upper),
+        near_miss_margin=0.003,
+    )
+    out["final_pool_gate_enabled"] = bool(initial_pool_gate_active)
+    out["final_pool_gate_applied"] = False
+    out["final_pool_gate_rows_before"] = int(len(out))
+    out["final_pool_gate_rows_after"] = int(len(out))
+    out["final_pool_gate_dropped_rows"] = 0
+    out["final_pool_gate_kept"] = True
+    if initial_pool_gate_active and not out.empty:
+        quality_rows_before = int(len(out))
+        quality_keep_floor = max(1, min(quality_rows_before, min_keep_floor))
+        quality_keep_n = int(np.ceil(float(quality_rows_before) * (1.0 - initial_pool_drop_fraction)))
+        quality_keep_n = int(max(quality_keep_floor, min(quality_rows_before, quality_keep_n)))
+        if quality_keep_n < quality_rows_before:
+            keep_index = out.sort_values(
+                ["final_pool_quality_score", "learned_gate_pass", "board_play_win_prob", "ev_adjusted", "final_confidence", "abs_edge"],
+                ascending=[False, False, False, False, False, False],
+            ).head(quality_keep_n).index
+            out["final_pool_gate_kept"] = out.index.isin(keep_index)
+            out = out.loc[out.index.isin(keep_index)].copy()
+            out["final_pool_gate_applied"] = True
+            out["final_pool_gate_rows_before"] = int(quality_rows_before)
+            out["final_pool_gate_rows_after"] = int(len(out))
+            out["final_pool_gate_dropped_rows"] = int(max(0, quality_rows_before - len(out)))
+>>>>>>> e4f3a2943a11306b776fe149cd406fba821c1e53
 
     effective_mode = str(selection_mode or ranking_mode)
     rank_columns = ["ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
