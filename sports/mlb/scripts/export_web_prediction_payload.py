@@ -35,6 +35,7 @@ from sports.parlay_analysis import annotate_parlay_board, evaluate_historical_pa
 
 MLB_STATS_API_ROOT = "https://statsapi.mlb.com/api/v1"
 MLB_HEADSHOT_BASE_URL = "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/{person_id}/headshot/67/current"
+MLB_HEADSHOT_FALLBACK_URL = "https://midfield.mlbstatic.com/v1/people/{person_id}/headshot/67/current"
 
 
 def parse_args() -> argparse.Namespace:
@@ -318,6 +319,12 @@ def build_headshot_url(person_id: int | None) -> str | None:
     return MLB_HEADSHOT_BASE_URL.format(person_id=int(person_id))
 
 
+def build_headshot_fallback_url(person_id: int | None) -> str | None:
+    if not person_id:
+        return None
+    return MLB_HEADSHOT_FALLBACK_URL.format(person_id=int(person_id))
+
+
 def build_player_headshot_lookup(rows: list[dict[str, str]], run_date: str) -> dict[tuple[str, str], dict[str, int | str | None]]:
     if not rows or not run_date:
         return {}
@@ -363,6 +370,7 @@ def build_player_headshot_lookup(rows: list[dict[str, str]], run_date: str) -> d
         lookup[(team_abbr, player_name)] = {
             "player_mlbam_id": person_id,
             "player_headshot_url": build_headshot_url(person_id),
+            "player_headshot_fallback_url": build_headshot_fallback_url(person_id),
         }
     return lookup
 
@@ -395,6 +403,7 @@ def main() -> None:
                 "player_id": row.get("Player_ID", ""),
                 "player_mlbam_id": player_lookup.get("player_mlbam_id"),
                 "player_headshot_url": player_lookup.get("player_headshot_url"),
+                "player_headshot_fallback_url": player_lookup.get("player_headshot_fallback_url"),
                 "team": team,
                 "opponent": opponent,
                 "market_home_team": home_team,
