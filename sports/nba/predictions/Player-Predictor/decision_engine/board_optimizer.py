@@ -85,11 +85,13 @@ def prepare_board_candidates(candidates: pd.DataFrame, config: StrategyConfig) -
     out["final_confidence"] = numeric_series(out, "final_confidence", 0.0)
     out["abs_edge"] = numeric_series(out, "abs_edge", 0.0)
     out["ev_adjusted"] = numeric_series(out, "ev_adjusted", np.nan).fillna(numeric_series(out, "ev", 0.0))
+    out["final_pool_quality_score"] = numeric_series(out, "final_pool_quality_score", 0.50).clip(lower=0.0, upper=1.0)
     out["board_objective_base_score"] = (
         1.00 * out["ev_adjusted"]
         + 0.35 * out["expected_win_rate"]
         + 0.20 * out["final_confidence"]
         + 0.10 * out["abs_edge"]
+        + float(config.final_pool_quality_weight) * out["final_pool_quality_score"]
         - 0.20 * out["belief_uncertainty_normalized"]
     )
     return out

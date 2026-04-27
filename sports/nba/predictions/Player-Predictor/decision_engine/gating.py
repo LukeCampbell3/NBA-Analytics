@@ -114,6 +114,11 @@ class StrategyConfig:
     board_objective_fp_veto_ml_weight: float = 0.45
     learned_gate_enabled: bool = False
     learned_gate_min_rows: int = 0
+    learned_gate_payload: dict[str, Any] | None = None
+    learned_gate_payload_path: str = ""
+    learned_gate_rescue_enabled: bool = True
+    learned_gate_rescue_max_rows: int = 0
+    learned_gate_near_miss_margin: float = 0.003
     initial_pool_gate_enabled: bool = True
     initial_pool_gate_drop_fraction: float = 0.10
     initial_pool_gate_score_col: str = "selector_expected_win_rate"
@@ -123,6 +128,7 @@ class StrategyConfig:
     accepted_pick_gate_min_rows: int = 0
     max_plays_per_game: int = 2
     max_plays_per_script_cluster: int = 2
+    final_pool_quality_weight: float = 0.25
     thompson_temperature: float = 1.0
     thompson_seed: int = 17
     market_regression_floor: float = 0.25

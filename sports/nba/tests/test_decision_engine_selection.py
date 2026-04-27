@@ -228,6 +228,191 @@ def test_board_objective_mode_optimizes_a_diverse_board() -> None:
     assert out.loc[out["player"] == "Beta Correlated", "decision_stage"].iloc[0] == "portfolio_excluded"
 
 
+def test_board_objective_uses_segment_specific_pool_gate() -> None:
+    frame = pd.DataFrame(
+        [
+            {
+                "player": "Safe Under",
+                "target": "PTS",
+                "direction": "UNDER",
+                "expected_win_rate": 0.492,
+                "expected_push_rate": 0.02,
+                "gap_percentile": 0.93,
+                "belief_uncertainty": 0.78,
+                "feasibility": 0.90,
+                "abs_edge": 1.8,
+                "edge": -1.8,
+                "recommendation": "pass",
+                "game_key": "g1",
+            },
+            {
+                "player": "Weak Over",
+                "target": "PTS",
+                "direction": "OVER",
+                "expected_win_rate": 0.492,
+                "expected_push_rate": 0.02,
+                "gap_percentile": 0.91,
+                "belief_uncertainty": 0.79,
+                "feasibility": 0.89,
+                "abs_edge": 1.7,
+                "edge": 1.7,
+                "recommendation": "pass",
+                "game_key": "g2",
+            },
+            {
+                "player": "Anchor Ast",
+                "target": "AST",
+                "direction": "UNDER",
+                "expected_win_rate": 0.505,
+                "expected_push_rate": 0.02,
+                "gap_percentile": 0.92,
+                "belief_uncertainty": 0.77,
+                "feasibility": 0.90,
+                "abs_edge": 1.6,
+                "edge": -1.6,
+                "recommendation": "pass",
+                "game_key": "g3",
+            },
+        ]
+    )
+    payload = {
+        "months": {
+            "2026-04": {
+                "global": {"threshold": 0.495, "hit_rate": 0.60},
+                "segments": {
+                    "PTS|UNDER": {"threshold": 0.491, "hit_rate": 0.68, "lift_pp": 6.0},
+                    "PTS|OVER": {"threshold": 0.495, "hit_rate": 0.56, "lift_pp": 1.0},
+                    "AST|UNDER": {"threshold": 0.500, "hit_rate": 0.66, "lift_pp": 4.0},
+                },
+            }
+        }
+    }
+    config = StrategyConfig(
+        name="segment_pool_gate_test",
+        selection_mode="board_objective",
+        ranking_mode="board_objective",
+        min_recommendation="pass",
+        min_ev=-1.0,
+        min_final_confidence=0.0,
+        max_total_plays=2,
+        non_pts_min_gap_percentile=0.0,
+        board_objective_candidate_limit=10,
+        board_objective_max_search_nodes=5000,
+        learned_gate_enabled=True,
+        learned_gate_payload=payload,
+        learned_gate_rescue_enabled=False,
+        initial_pool_gate_drop_fraction=0.0,
+    )
+
+    out = apply_policy(frame, config)
+
+    assert set(out.loc[out["selected"], "player"].tolist()) == {"Safe Under", "Anchor Ast"}
+    assert bool(out.loc[out["player"] == "Safe Under", "learned_gate_pass"].iloc[0]) is True
+    assert bool(out.loc[out["player"] == "Weak Over", "learned_gate_pass"].iloc[0]) is False
+    assert out.loc[out["player"] == "Weak Over", "decision_stage"].iloc[0] == "final_pool_gate_filtered"
+
+
+def test_board_objective_pool_gate_rescues_high_quality_near_miss() -> None:
+    frame = pd.DataFrame(
+        [
+            {
+                "player": "Anchor Pass",
+                "target": "AST",
+                "direction": "UNDER",
+                "expected_win_rate": 0.505,
+                "expected_push_rate": 0.02,
+                "gap_percentile": 0.90,
+                "belief_uncertainty": 0.78,
+                "feasibility": 0.90,
+                "abs_edge": 1.4,
+                "edge": -1.4,
+                "recommendation": "pass",
+                "game_key": "g1",
+                "noise_score": 0.10,
+                "contradiction_score": 0.05,
+                "recency_factor": 0.90,
+                "recoverability_score": 0.75,
+            },
+            {
+                "player": "Rescue Under",
+                "target": "PTS",
+                "direction": "UNDER",
+                "expected_win_rate": 0.494,
+                "expected_push_rate": 0.02,
+                "gap_percentile": 0.97,
+                "belief_uncertainty": 0.76,
+                "feasibility": 0.95,
+                "abs_edge": 2.1,
+                "edge": -2.1,
+                "recommendation": "pass",
+                "game_key": "g2",
+                "noise_score": 0.02,
+                "contradiction_score": 0.02,
+                "recency_factor": 0.96,
+                "recoverability_score": 0.90,
+            },
+            {
+                "player": "Filtered Over",
+                "target": "PTS",
+                "direction": "OVER",
+                "expected_win_rate": 0.494,
+                "expected_push_rate": 0.02,
+                "gap_percentile": 0.30,
+                "belief_uncertainty": 0.95,
+                "feasibility": 0.70,
+                "abs_edge": 0.7,
+                "edge": 0.7,
+                "recommendation": "pass",
+                "game_key": "g3",
+                "noise_score": 0.90,
+                "contradiction_score": 0.80,
+                "recency_factor": 0.45,
+                "recoverability_score": 0.20,
+            },
+        ]
+    )
+    payload = {
+        "months": {
+            "2026-04": {
+                "global": {"threshold": 0.500, "hit_rate": 0.60},
+                "segments": {
+                    "PTS|UNDER": {"threshold": 0.495, "hit_rate": 0.69, "lift_pp": 7.0},
+                    "PTS|OVER": {"threshold": 0.495, "hit_rate": 0.55, "lift_pp": 1.0},
+                    "AST|UNDER": {"threshold": 0.500, "hit_rate": 0.66, "lift_pp": 4.0},
+                },
+            }
+        }
+    }
+    config = StrategyConfig(
+        name="rescue_pool_gate_test",
+        selection_mode="board_objective",
+        ranking_mode="board_objective",
+        min_recommendation="pass",
+        min_ev=-1.0,
+        min_final_confidence=0.0,
+        max_total_plays=2,
+        non_pts_min_gap_percentile=0.0,
+        board_objective_candidate_limit=10,
+        board_objective_max_search_nodes=5000,
+        learned_gate_enabled=True,
+        learned_gate_payload=payload,
+        learned_gate_rescue_enabled=True,
+        learned_gate_rescue_max_rows=1,
+        learned_gate_near_miss_margin=0.003,
+        initial_pool_gate_drop_fraction=0.0,
+    )
+
+    out = apply_policy(frame, config)
+
+    assert set(out.loc[out["selected"], "player"].tolist()) == {"Anchor Pass", "Rescue Under"}
+    assert out.loc[out["player"] == "Rescue Under", "learned_gate_fill_source"].iloc[0] == "rescue"
+    assert bool(out.loc[out["player"] == "Rescue Under", "final_pool_gate_rescue_selected"].iloc[0]) is True
+    assert out.loc[out["player"] == "Filtered Over", "decision_stage"].iloc[0] == "final_pool_gate_filtered"
+    assert float(out.loc[out["player"] == "Rescue Under", "final_pool_quality_score"].iloc[0]) > float(
+        out.loc[out["player"] == "Filtered Over", "final_pool_quality_score"].iloc[0]
+    )
+
+
 def test_board_objective_uses_game_key_not_legacy_game_id() -> None:
     frame = pd.DataFrame(
         [
