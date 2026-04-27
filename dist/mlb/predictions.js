@@ -57,6 +57,17 @@ class DailyPredictionsPage {
         return "";
     }
 
+    getPlayHeadshotFallbackUrl(play, primaryUrl = "") {
+        const explicitUrl = String(play.player_headshot_fallback_url || "").trim();
+        if (explicitUrl && explicitUrl !== primaryUrl) return explicitUrl;
+        const id = Number(play.player_mlbam_id);
+        if (Number.isFinite(id) && id > 0) {
+            const midfieldUrl = `https://midfield.mlbstatic.com/v1/people/${id}/headshot/67/current`;
+            if (midfieldUrl !== primaryUrl) return midfieldUrl;
+        }
+        return "";
+    }
+
     getMonogram(name) {
         const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
         if (!parts.length) return "NA";
@@ -93,6 +104,7 @@ class DailyPredictionsPage {
         const direction = directionRaw === "UNDER" ? "UNDER" : "OVER";
         const displayName = this.getPlayDisplayName(play);
         const headshotUrl = this.getPlayHeadshotUrl(play);
+        const fallbackHeadshotUrl = this.getPlayHeadshotFallbackUrl(play, headshotUrl);
         const monogram = this.escapeHtml(this.getMonogram(displayName));
         const edge = Number(play.edge);
         const lineText = this.formatNumber(play.market_line);
@@ -115,9 +127,12 @@ class DailyPredictionsPage {
                         <img
                             class="wanted-photo"
                             src="${this.escapeAttr(headshotUrl)}"
+                            data-fallback-src="${this.escapeAttr(fallbackHeadshotUrl)}"
                             alt="${this.escapeAttr(displayName)} headshot"
                             loading="lazy"
-                            onerror="this.remove(); this.parentElement.classList.add('is-fallback-visible');"
+                            decoding="async"
+                            referrerpolicy="no-referrer"
+                            onerror="if (this.dataset.fallbackSrc && this.dataset.fallbackSrc !== this.currentSrc && this.dataset.fallbackSrc !== this.src) { const nextSrc = this.dataset.fallbackSrc; this.dataset.fallbackSrc = ''; this.src = nextSrc; return; } this.remove(); this.parentElement.classList.add('is-fallback-visible');"
                         />
                     ` : ""}
                     <div class="wanted-photo-fallback">${monogram}</div>
