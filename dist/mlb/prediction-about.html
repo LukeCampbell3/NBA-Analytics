@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLB Analytics | Prediction Method</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="styles.css?v=3">
+</head>
+<body>
+    <button id="siteMenuButton" class="site-menu-button" aria-label="Open site navigation" aria-controls="siteNavDrawer" aria-expanded="false">
+        <span class="site-menu-icon">&#9776;</span>
+    </button>
+    <div id="siteNavOverlay" class="site-nav-overlay"></div>
+    <aside id="siteNavDrawer" class="site-nav-drawer" aria-label="Site navigation">
+        <div class="site-nav-head">
+            <div class="site-nav-title">Navigate</div>
+            <button id="siteNavClose" class="site-nav-close" aria-label="Close site navigation">&times;</button>
+        </div>
+        <nav class="site-nav-links">
+            <a class="site-nav-link" href="/">Site Home</a>
+            <a class="site-nav-link" href="index.html">MLB Home</a>
+            <a class="site-nav-link" href="predictions.html">Predictions</a>
+            <a class="site-nav-link" href="prediction-about.html">Prediction About</a>
+        </nav>
+        <div class="site-nav-footer">
+            <button id="themeToggleButton" class="theme-toggle-radial" aria-label="Toggle dark mode" title="Toggle dark/light mode">&#9680;</button>
+        </div>
+    </aside>
+
+    <main class="prediction-about-page">
+        <section class="prediction-about-stage">
+            <div class="container prediction-about-container">
+                <header class="prediction-about-sign">
+                    <p class="prediction-about-kicker">MLB Prediction System Notes</p>
+                    <h1>How The MLB Board Works</h1>
+                    <p id="aboutRunFacts" class="prediction-about-run-facts">Loading run details...</p>
+                    <a class="prediction-about-back-link" href="predictions.html">Back to prediction bounties</a>
+                </header>
+
+                <section class="prediction-about-panel">
+                    <h2>Board Snapshot</h2>
+                    <p>
+                        This page summarizes the current MLB high-precision board. Instead of a wide “maybe playable” pool,
+                        the selector trims down to rows with stronger edge, fresher history, and better estimated hit probability.
+                    </p>
+                    <div id="accuracyOverview" class="prediction-about-metric-grid"></div>
+                    <div class="prediction-about-split-grid">
+                        <article>
+                            <h3>By Target</h3>
+                            <div id="accuracyByTarget" class="prediction-about-table-wrap"></div>
+                        </article>
+                        <article>
+                            <h3>By Direction</h3>
+                            <div id="accuracyByDirection" class="prediction-about-table-wrap"></div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="prediction-about-panel">
+                    <h2>Pipeline Overview</h2>
+                    <p>
+                        The current MLB board is built from the raw daily prediction pool, then reranked by a stricter
+                        hit-focused selector. Right now the strongest committed MLB signal in the repo is the hit market,
+                        so the board intentionally narrows rather than pretending every target is equally production-ready.
+                    </p>
+                    <p>
+                        Candidate rows are filtered on modeled support, edge size, history depth, recency, and push exposure.
+                        The board then applies concentration caps so one player, team, or game script cannot dominate the final set.
+                    </p>
+                </section>
+
+                <section class="prediction-about-panel">
+                    <h2>How A Play Is Built</h2>
+                    <ol class="prediction-about-list">
+                        <li>The model pool produces candidate rows for supported MLB stat targets.</li>
+                        <li>The selector estimates directional hit probability from the model mean and the posted line.</li>
+                        <li>Weak edge, stale-history, low-support, and high-push rows are filtered out.</li>
+                        <li>Remaining plays are ranked by a precision score that favors safer hit-focused profiles.</li>
+                        <li>Player, game, and team caps keep the published board from overconcentrating risk.</li>
+                    </ol>
+                </section>
+
+                <section class="prediction-about-panel">
+                    <h2>What The Metrics Mean</h2>
+                    <ul class="prediction-about-list">
+                        <li><strong>Estimated Hit Rate:</strong> directional win probability from the current model mean versus line.</li>
+                        <li><strong>Graded Hit Rate:</strong> hit rate after removing push probability from the denominator.</li>
+                        <li><strong>Abs Edge:</strong> absolute difference between prediction and market line.</li>
+                        <li><strong>Precision Score:</strong> a composite ranking score used to tighten the board.</li>
+                        <li><strong>Supported Rows:</strong> candidate rows with a non-baseline modeled signal the selector can trust.</li>
+                    </ul>
+                    <div id="boardSummary" class="prediction-about-callout"></div>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <script src="nav.js?v=1"></script>
+    <script src="prediction-about.js?v=2"></script>
+</body>
+</html>
