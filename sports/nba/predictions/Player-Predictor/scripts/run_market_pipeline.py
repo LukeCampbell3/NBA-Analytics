@@ -971,7 +971,16 @@ def main() -> None:
     history_mode = "historical_backtest"
     if history_path.exists():
         history_df = pd.read_csv(history_path)
-        history_lookup = build_history_lookup(history_df)
+        if history_df.empty:
+            history_mode = "heuristic_fallback_empty_history"
+            print(f"Warning: history CSV is empty ({history_path}); using heuristic edge calibration.")
+            policy_payload = apply_heuristic_policy_overrides(policy_payload)
+        else:
+            history_lookup = build_history_lookup(history_df)
+            if not history_lookup:
+                history_mode = "heuristic_fallback_unusable_history"
+                print(f"Warning: history CSV has no usable calibration rows ({history_path}); using heuristic edge calibration.")
+                policy_payload = apply_heuristic_policy_overrides(policy_payload)
     else:
         history_mode = "heuristic_fallback"
         print(f"Warning: history CSV not found ({history_path}); using heuristic edge calibration.")

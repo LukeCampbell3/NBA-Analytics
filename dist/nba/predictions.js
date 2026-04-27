@@ -39,7 +39,9 @@ class DailyPredictionsPage {
         const runDate = this.data?.run_date || 'n/a';
         const throughDate = this.data?.through_date || 'n/a';
         const policy = this.data?.policy_profile || 'n/a';
-        this.elements.runMeta.textContent = `Run ${runDate} | Data through ${throughDate} | Policy ${policy}`;
+        const publicationStatus = String(this.data?.publication_status || 'ready').toLowerCase();
+        const publicationLabel = publicationStatus === 'ready' ? 'Published' : 'Withheld';
+        this.elements.runMeta.textContent = `Run ${runDate} | Data through ${throughDate} | Policy ${policy} | ${publicationLabel}`;
     }
 
     getPlayDisplayName(play) {
@@ -67,6 +69,10 @@ class DailyPredictionsPage {
     }
 
     renderCards() {
+        if (!this.plays.length) {
+            const message = String(this.data?.publication_message || 'No prediction bounties available right now.').trim();
+            this.elements.empty.innerHTML = `<p>${this.escapeHtml(message || 'No prediction bounties available right now.')}</p>`;
+        }
         this.elements.empty.style.display = this.plays.length ? 'none' : 'block';
         this.elements.cards.innerHTML = this.plays.map((play) => this.renderWantedCard(play)).join('');
     }

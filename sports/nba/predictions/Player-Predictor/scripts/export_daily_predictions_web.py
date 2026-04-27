@@ -70,6 +70,11 @@ NBA_VARIANCE_AWARE_REEXPAND_RULE: dict[str, float] = {
     "min_third_selection_confidence": 0.12,
     "min_third_selection_ev": 0.0,
 }
+NBA_PUBLICATION_ALLOWED_SOURCES = {"primary_final_board", "shadow_final_board"}
+NBA_PUBLICATION_BLOCKED_RUN_IDS = {"artifact_free_heuristic"}
+NBA_PUBLICATION_MIN_AVG_EXPECTED_WIN_RATE = 0.515
+NBA_PUBLICATION_MIN_MAX_EXPECTED_WIN_RATE = 0.525
+NBA_PUBLICATION_MIN_AVG_FINAL_CONFIDENCE = 0.08
 
 
 def parse_args() -> argparse.Namespace:
@@ -827,13 +832,110 @@ def build_selector_pool_fallback(plays: pd.DataFrame, *, limit: int = NBA_SELECT
     )
 
 
-def resolve_published_board(manifest: dict, manifest_path: Path) -> tuple[pd.DataFrame, dict, str]:
+def _evaluate_publication_candidate(
+    plays: pd.DataFrame,
+    final_payload: dict,
+    *,
+    source_label: str,
+    accuracy_metrics: dict,
+) -> dict:
+    rows = plays.copy()
+    reasons: list[str] = []
+    run_id = str(final_payload.get("run_id") or "").strip()
+    history_mode = str(final_payload.get("history_mode") or "").strip()
+    predictor_error = str(final_payload.get("predictor_error") or "").strip()
+    board_fallback_reason = str(final_payload.get("board_fallback_reason") or "").strip()
+
+    expected_win_rate = pd.to_numeric(rows.get("expected_win_rate"), errors="coerce")
+    final_confidence = pd.to_numeric(rows.get("final_confidence"), errors="coerce")
+    selected_rank = _numeric_series(rows, "selected_rank", default=np.nan)
+    non_pass_count = int(
+        rows.get("recommendation", pd.Series(dtype="object"))
+        .fillna("")
+        .astype(str)
+        .str.lower()
+        .isin({"consider", "strong", "elite"})
+        .sum()
+    )
+    play_count = int(len(rows))
+    avg_expected_win_rate = safe_float(expected_win_rate.mean())
+    max_expected_win_rate = safe_float(expected_win_rate.max())
+    avg_final_confidence = safe_float(final_confidence.mean())
+    selected_rank_count = int(selected_rank.notna().sum()) if not selected_rank.empty else 0
+
+    if play_count <= 0:
+        reasons.append("empty_board")
+    if source_label not in NBA_PUBLICATION_ALLOWED_SOURCES:
+        reasons.append("fallback_source_not_publishable")
+    if run_id in NBA_PUBLICATION_BLOCKED_RUN_IDS:
+        reasons.append("artifact_free_model")
+    if predictor_error:
+        reasons.append("predictor_error_present")
+    if history_mode and history_mode != "historical_backtest":
+        reasons.append("history_mode_not_historical_backtest")
+    if not bool(accuracy_metrics.get("available")):
+        reasons.append("accuracy_metrics_unavailable")
+    if avg_expected_win_rate is None:
+        reasons.append("missing_expected_win_rate")
+    elif avg_expected_win_rate < float(NBA_PUBLICATION_MIN_AVG_EXPECTED_WIN_RATE):
+        reasons.append("avg_expected_win_rate_below_threshold")
+    if max_expected_win_rate is None:
+        reasons.append("missing_max_expected_win_rate")
+    elif max_expected_win_rate < float(NBA_PUBLICATION_MIN_MAX_EXPECTED_WIN_RATE):
+        reasons.append("max_expected_win_rate_below_threshold")
+    if avg_final_confidence is None:
+        reasons.append("missing_final_confidence")
+    elif avg_final_confidence < float(NBA_PUBLICATION_MIN_AVG_FINAL_CONFIDENCE):
+        reasons.append("avg_final_confidence_below_threshold")
+    if non_pass_count <= 0 and selected_rank_count <= 0:
+        reasons.append("no_publishable_play_labels")
+
+    return {
+        "source": str(source_label),
+        "policy_profile": final_payload.get("policy_profile"),
+        "run_id": run_id or None,
+        "play_count": play_count,
+        "avg_expected_win_rate": avg_expected_win_rate,
+        "max_expected_win_rate": max_expected_win_rate,
+        "avg_final_confidence": avg_final_confidence,
+        "non_pass_count": non_pass_count,
+        "selected_rank_count": selected_rank_count,
+        "history_mode": history_mode or None,
+        "predictor_error": predictor_error or None,
+        "board_fallback_reason": board_fallback_reason or None,
+        "passes": len(reasons) == 0,
+        "reasons": reasons,
+    }
+
+
+def _build_publication_message(publication_gate: dict) -> str:
+    if str(publication_gate.get("status")) == "ready":
+        return "Production board published."
+    blockers = set(str(reason) for reason in publication_gate.get("blockers", []))
+    if "artifact_free_model" in blockers:
+        return "Board withheld because production model artifacts were unavailable and only heuristic predictions were produced."
+    if "accuracy_metrics_unavailable" in blockers or "history_mode_not_historical_backtest" in blockers:
+        return "Board withheld because historical validation and calibration inputs were unavailable."
+    if "fallback_source_not_publishable" in blockers:
+        return "Board withheld because only fallback selector pools were available, not a production-gated final board."
+    if "empty_board" in blockers:
+        return "Board withheld because no plays cleared the production gates."
+    return "Board withheld because no candidate board cleared the production quality gate."
+
+
+def resolve_published_board(
+    manifest: dict,
+    manifest_path: Path,
+    *,
+    accuracy_metrics: dict,
+) -> tuple[pd.DataFrame, dict, str, dict]:
+    candidates: list[tuple[pd.DataFrame, dict, str]] = []
     final_csv = resolve_artifact_path(manifest.get("final_csv"), manifest_path.parent)
     final_json = resolve_artifact_path(manifest.get("final_json"), manifest_path.parent)
     plays = pd.read_csv(final_csv) if final_csv and final_csv.exists() else pd.DataFrame()
     final_payload = json.loads(final_json.read_text(encoding="utf-8")) if final_json and final_json.exists() else {}
     if not plays.empty:
-        return plays, final_payload, "primary_final_board"
+        candidates.append((plays, final_payload, "primary_final_board"))
 
     selector_csv = resolve_artifact_path(manifest.get("selector_csv"), manifest_path.parent)
     selector_plays = pd.read_csv(selector_csv) if selector_csv and selector_csv.exists() else pd.DataFrame()
@@ -842,31 +944,71 @@ def resolve_published_board(manifest: dict, manifest_path: Path) -> tuple[pd.Dat
         if not fallback_plays.empty:
             final_payload.setdefault("policy_profile", manifest.get("policy_profile"))
             final_payload.setdefault("market_snapshot", manifest.get("current_market_snapshot"))
-            return fallback_plays, final_payload, "primary_selector_pool_fallback"
+            candidates.append((fallback_plays, final_payload, "primary_selector_pool_fallback"))
 
     for item in manifest.get("shadow_runs", []):
         shadow_csv = resolve_artifact_path(item.get("final_csv"), manifest_path.parent)
         shadow_json = resolve_artifact_path(item.get("final_json"), manifest_path.parent)
         shadow_plays = pd.read_csv(shadow_csv) if shadow_csv and shadow_csv.exists() else pd.DataFrame()
+        shadow_payload = json.loads(shadow_json.read_text(encoding="utf-8")) if shadow_json and shadow_json.exists() else {}
+        shadow_payload.setdefault("policy_profile", item.get("policy_profile"))
+        shadow_payload.setdefault("market_snapshot", manifest.get("current_market_snapshot"))
+        if not shadow_plays.empty:
+            candidates.append((shadow_plays, shadow_payload, "shadow_final_board"))
         if shadow_plays.empty:
             shadow_selector_csv = resolve_artifact_path(item.get("selector_csv"), manifest_path.parent)
             shadow_selector = pd.read_csv(shadow_selector_csv) if shadow_selector_csv and shadow_selector_csv.exists() else pd.DataFrame()
             if shadow_selector.empty:
                 continue
-            shadow_payload = json.loads(shadow_json.read_text(encoding="utf-8")) if shadow_json and shadow_json.exists() else {}
-            shadow_payload.setdefault("policy_profile", item.get("policy_profile"))
             shadow_fallback = build_selector_pool_fallback(shadow_selector)
             if shadow_fallback.empty:
                 continue
-            return shadow_fallback, shadow_payload, "shadow_selector_pool_fallback"
-        shadow_payload = json.loads(shadow_json.read_text(encoding="utf-8")) if shadow_json and shadow_json.exists() else {}
-        shadow_payload.setdefault("policy_profile", item.get("policy_profile"))
-        shadow_final_fallback = build_selector_pool_fallback(shadow_plays)
-        if shadow_final_fallback.empty:
-            continue
-        return shadow_final_fallback, shadow_payload, "shadow_final_board_fallback"
+            candidates.append((shadow_fallback, shadow_payload, "shadow_selector_pool_fallback"))
 
-    return plays, final_payload, "primary_final_board_empty"
+    candidate_reports = [
+        _evaluate_publication_candidate(candidate_plays, candidate_payload, source_label=source_label, accuracy_metrics=accuracy_metrics)
+        for candidate_plays, candidate_payload, source_label in candidates
+    ]
+
+    for (candidate_plays, candidate_payload, source_label), report in zip(candidates, candidate_reports):
+        if report["passes"]:
+            publication_gate = {
+                "status": "ready",
+                "selected_source": source_label,
+                "selected_policy_profile": candidate_payload.get("policy_profile"),
+                "message": _build_publication_message({"status": "ready"}),
+                "blockers": [],
+                "candidates": candidate_reports,
+                "thresholds": {
+                    "allowed_sources": sorted(NBA_PUBLICATION_ALLOWED_SOURCES),
+                    "blocked_run_ids": sorted(NBA_PUBLICATION_BLOCKED_RUN_IDS),
+                    "min_avg_expected_win_rate": float(NBA_PUBLICATION_MIN_AVG_EXPECTED_WIN_RATE),
+                    "min_max_expected_win_rate": float(NBA_PUBLICATION_MIN_MAX_EXPECTED_WIN_RATE),
+                    "min_avg_final_confidence": float(NBA_PUBLICATION_MIN_AVG_FINAL_CONFIDENCE),
+                },
+            }
+            return candidate_plays, candidate_payload, source_label, publication_gate
+
+    blocked_source = candidate_reports[0]["source"] if candidate_reports else "primary_final_board_empty"
+    blocked_payload = candidates[0][1] if candidates else final_payload
+    blockers = candidate_reports[0]["reasons"] if candidate_reports else ["empty_board"]
+    publication_gate = {
+        "status": "suppressed",
+        "selected_source": None,
+        "selected_policy_profile": blocked_payload.get("policy_profile"),
+        "suppressed_source": blocked_source,
+        "message": _build_publication_message({"status": "suppressed", "blockers": blockers}),
+        "blockers": blockers,
+        "candidates": candidate_reports,
+        "thresholds": {
+            "allowed_sources": sorted(NBA_PUBLICATION_ALLOWED_SOURCES),
+            "blocked_run_ids": sorted(NBA_PUBLICATION_BLOCKED_RUN_IDS),
+            "min_avg_expected_win_rate": float(NBA_PUBLICATION_MIN_AVG_EXPECTED_WIN_RATE),
+            "min_max_expected_win_rate": float(NBA_PUBLICATION_MIN_MAX_EXPECTED_WIN_RATE),
+            "min_avg_final_confidence": float(NBA_PUBLICATION_MIN_AVG_FINAL_CONFIDENCE),
+        },
+    }
+    return pd.DataFrame(), blocked_payload, blocked_source, publication_gate
 
 
 def main() -> None:
@@ -876,7 +1018,13 @@ def main() -> None:
     identity_lookup = build_player_identity_lookup(args.cards_json.resolve())
 
     history_csv = resolve_artifact_path(manifest.get("history_csv"), manifest_path.parent)
-    plays, final_payload, published_board_source = resolve_published_board(manifest, manifest_path)
+    accuracy_metrics = build_accuracy_metrics(history_csv)
+    parlay_validation = build_parlay_validation(history_csv)
+    plays, final_payload, published_board_source, publication_gate = resolve_published_board(
+        manifest,
+        manifest_path,
+        accuracy_metrics=accuracy_metrics,
+    )
 
     plays_json = normalize_play_rows(plays, identity_lookup)
     parlay_payload = annotate_parlay_board(
@@ -899,13 +1047,16 @@ def main() -> None:
         "market_snapshot": final_payload.get("market_snapshot") or manifest.get("current_market_snapshot"),
         "model_run_id": final_payload.get("run_id"),
         "policy_profile": final_payload.get("policy_profile"),
+        "publication_status": publication_gate.get("status"),
+        "publication_message": publication_gate.get("message"),
+        "publication_gate": publication_gate,
         "policy": final_payload.get("policy", {}),
         "input_validation": final_payload.get("input_validation", {}),
         "summary": build_summary(plays),
-        "accuracy_metrics": build_accuracy_metrics(history_csv),
+        "accuracy_metrics": accuracy_metrics,
         "parlay_summary": parlay_payload["summary"],
         "parlay_pairs": parlay_payload["pairs"],
-        "parlay_validation": build_parlay_validation(history_csv),
+        "parlay_validation": parlay_validation,
         "plays": parlay_payload["plays"],
         "shadow_runs": load_shadow_runs(manifest, manifest_path, identity_lookup),
     }
