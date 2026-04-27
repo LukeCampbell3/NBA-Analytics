@@ -694,10 +694,12 @@ def build_upcoming_schedule_pool_rows(
                         opponent_context=opponent_context,
                     )
                     market_line = fallback_market_line
+                    market_source = "synthetic"
                     if market_row is not None:
                         market_value = to_float(market_row.get(f"Market_{spec.target}"))
                         if market_value is not None:
                             market_line = float(market_value)
+                            market_source = str(market_row.get(spec.market_source_col, "real") or "real")
                     edge = float(prediction - market_line)
                     history_rows = int(history_rows_by_target.get(spec.target, 0))
                     baseline = to_float(latest_row.get(spec.rolling_col))
@@ -725,7 +727,7 @@ def build_upcoming_schedule_pool_rows(
                             "Prediction": float(prediction),
                             "Baseline": float(baseline),
                             "Market_Line": float(market_line),
-                            "Market_Source": str(latest_row.get(spec.market_source_col, "synthetic") or "synthetic"),
+                            "Market_Source": market_source,
                             "Edge": edge,
                             "History_Rows": history_rows,
                             "Last_History_Date": last_history_date.strftime("%Y-%m-%d") if not pd.isna(last_history_date) else "",

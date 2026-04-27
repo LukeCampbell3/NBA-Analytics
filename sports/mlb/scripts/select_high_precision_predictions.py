@@ -89,6 +89,11 @@ def parse_args() -> argparse.Namespace:
         default=sorted(SUPPORTED_COUNT_TARGETS),
         help="Optional target whitelist. Defaults to supported count targets.",
     )
+    parser.add_argument(
+        "--require-real-market-source",
+        action="store_true",
+        help="Keep only rows backed by real sportsbook market lines.",
+    )
     return parser.parse_args()
 
 
@@ -304,6 +309,9 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
         if candidate.history_rows < int(args.min_history_rows):
             rejected["history_too_short"] += 1
             continue
+        if args.require_real_market_source and candidate.market_source != "real":
+            rejected["synthetic_market_source"] += 1
+            continue
         if candidate.market_source != "real" and candidate.target not in {"H", "TB", "R", "K"}:
             rejected["non_core_synthetic_market"] += 1
             continue
@@ -473,6 +481,7 @@ def write_summary_json(
             "max_per_game": int(args.max_per_game),
             "max_per_team": int(args.max_per_team),
             "allow_baseline": bool(args.allow_baseline),
+            "require_real_market_source": bool(args.require_real_market_source),
             "targets": [str(value).strip().upper() for value in args.targets],
         },
         "filter_rejections": dict(rejected),
