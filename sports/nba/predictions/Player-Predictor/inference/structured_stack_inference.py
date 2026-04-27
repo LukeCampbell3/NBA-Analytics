@@ -111,6 +111,13 @@ except Exception:  # pragma: no cover - fallback when contract helpers are unava
                     repaired[key] = sidecar[key]
         return repaired
 
+try:
+    from surrogate_market_predictor import DEFAULT_BUNDLE_PATH as DEFAULT_SURROGATE_BUNDLE_PATH
+    from surrogate_market_predictor import SurrogateMarketPredictor
+except Exception:  # pragma: no cover - keep legacy path usable even if surrogate module is unavailable
+    DEFAULT_SURROGATE_BUNDLE_PATH = Path("surrogate_market_predictor.joblib")
+    SurrogateMarketPredictor = None
+
 
 TEAM_ID_BY_ABBREV = {
     "ATL": 1610612737, "BOS": 1610612738, "BKN": 1610612751, "CHA": 1610612766,
@@ -189,6 +196,7 @@ class StructuredStackInference:
         return forward
 
     def _init_artifact_free_mode(self, reason: str):
+        self.surrogate_mode = False
         self.artifact_free = True
         self.artifact_free_reason = str(reason)
         self.metadata = {
@@ -226,6 +234,60 @@ class StructuredStackInference:
         self.pts_ablate_feature_key = None
         self.pts_ablate_blocks = []
         self.enable_pts_residual_split = False
+
+    def _init_surrogate_mode(self, reason: str) -> bool:
+        self.surrogate_mode = False
+        if SurrogateMarketPredictor is None:
+            return False
+        bundle_path = self.model_dir / DEFAULT_SURROGATE_BUNDLE_PATH
+        if not bundle_path.exists():
+            return False
+        try:
+            self.surrogate_predictor = SurrogateMarketPredictor(bundle_path)
+        except Exception:
+            self.surrogate_predictor = None
+            return False
+
+        self.surrogate_mode = True
+        self.artifact_free = False
+        self.artifact_free_reason = None
+        self.metadata = {
+            "model_type": "surrogate_market_predictor",
+            "run_id": self.surrogate_predictor.run_id,
+            "target_columns": list(self.DEFAULT_TARGET_COLUMNS),
+            "recovered_from_legacy_artifact_error": str(reason),
+        }
+        self.target_columns = list(self.DEFAULT_TARGET_COLUMNS)
+        self.feature_columns = list(getattr(self.surrogate_predictor, "feature_columns", []))
+        self.baseline_features = [f"{target}_rolling_avg" for target in self.target_columns]
+        self.feature_spec = {}
+        self.seq_len = int(getattr(self.surrogate_predictor, "min_history_games", 5))
+        self.n_features = len(self.feature_columns)
+        self.n_targets = len(self.target_columns)
+        self.player_mapping = {}
+        self.team_mapping = {}
+        self.opponent_mapping = {}
+        self.counts = {"players": 1, "teams": 1, "opponents": 1}
+        self.member_configs = []
+        self.val_losses = []
+        self.catboost_model_info = {
+            target: {
+                "target": target,
+                "feature_version": "surrogate_tabular_v1",
+                "feature_versions": ["surrogate_tabular_v1"],
+                "model_type": "surrogate_market_predictor",
+                "member_count": 1,
+            }
+            for target in self.target_columns
+        }
+        self.required_feature_versions = {"surrogate_tabular_v1"}
+        self.feature_trainer = None
+        self.models = []
+        self.pts_branch = None
+        self.pts_ablate_feature_key = None
+        self.pts_ablate_blocks = []
+        self.enable_pts_residual_split = False
+        return True
 
     @staticmethod
     def _heuristic_prediction_payload(history_df: pd.DataFrame, reason: str | None = None):
@@ -396,6 +458,8 @@ class StructuredStackInference:
         self.model_dir = Path(model_dir)
         self.manifest_path = Path(manifest_path) if manifest_path is not None else None
         self.allow_schema_repair = bool(allow_schema_repair)
+        self.surrogate_mode = False
+        self.surrogate_predictor = None
         self.artifact_free = False
         self.artifact_free_reason = None
         self.production = self._load_manifest()
@@ -407,6 +471,8 @@ class StructuredStackInference:
             self.scaler_y = joblib.load(self._artifact_path("scaler_y", fallback="lstm_v7_scaler_y.pkl"))
             self.cb_models = joblib.load(self._artifact_path("catboost_models", fallback="lstm_v7_catboost_models.pkl"))
         except FileNotFoundError as exc:
+            if self._init_surrogate_mode(reason=f"{type(exc).__name__}: {exc}"):
+                return
             self._init_artifact_free_mode(reason=f"{type(exc).__name__}: {exc}")
             return
         self._validate_or_repair_metadata_contract()
@@ -983,7 +1049,19 @@ class StructuredStackInference:
         fallback_reasons = list(dict.fromkeys(fallback_reasons))
         return pred_raw, float(np.clip(fallback_blend, 0.0, 0.90)), fallback_reasons, bool(floor_guard_applied)
 
-    def predict(self, recent_games_df: pd.DataFrame, assume_prepared: bool = False, return_debug: bool = False):
+    def predict(
+        self,
+        recent_games_df: pd.DataFrame,
+        assume_prepared: bool = False,
+        return_debug: bool = False,
+        market_context: dict | None = None,
+    ):
+        if self.surrogate_mode and self.surrogate_predictor is not None:
+            return self.surrogate_predictor.predict(
+                recent_games_df,
+                market_context=market_context,
+                return_debug=return_debug,
+            )
         if self.artifact_free:
             return self._heuristic_prediction_payload(recent_games_df, reason=self.artifact_free_reason)
         X, baseline_scaled, baseline_raw, repair_info, latest_context = self.prepare_input(recent_games_df, assume_prepared=assume_prepared)

@@ -91,6 +91,12 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Refresh Data-Proc season files from official NBA logs.")
     parser.add_argument("--season", type=int, required=True, help="Season end year. Example: 2026 for 2025-26.")
     parser.add_argument("--through-date", type=str, default=None, help="Optional inclusive cutoff date YYYY-MM-DD.")
+    parser.add_argument(
+        "--season-types",
+        nargs="+",
+        default=["Regular Season", "Playoffs"],
+        help="NBA season types to merge into the refreshed processed dataset.",
+    )
     parser.add_argument("--refresh-advanced", action="store_true", help="Fetch missing advanced boxscore cache for all season games up to the cutoff.")
     parser.add_argument("--sleep-seconds", type=float, default=0.35, help="API cooldown between calls when refreshing advanced data.")
     parser.add_argument("--timeout", type=int, default=30, help="nba_api timeout.")
@@ -346,41 +352,89 @@ def parse_minutes(value) -> float:
         return 0.0
 
 
-def fetch_player_logs(scraper: NBAEnrichmentScraper, season: int, through_date: str | None, max_games: int | None) -> pd.DataFrame:
+def _season_type_cache_slug(season_type: str) -> str:
+    slug = "".join(ch.lower() if ch.isalnum() else "_" for ch in str(season_type or "").strip())
+    slug = "_".join(part for part in slug.split("_") if part)
+    return slug or "unknown"
+
+
+def _load_cached_logs(path: Path) -> pd.DataFrame | None:
+    if not path.exists():
+        return None
+    try:
+        cached = pd.read_parquet(path)
+    except Exception:
+        return None
+    if "GAME_DATE" in cached.columns:
+        cached["GAME_DATE"] = pd.to_datetime(cached["GAME_DATE"], errors="coerce")
+    return cached
+
+
+def fetch_player_logs(
+    scraper: NBAEnrichmentScraper,
+    season: int,
+    season_types: list[str],
+    through_date: str | None,
+    max_games: int | None,
+) -> pd.DataFrame:
     season_dir = RAW_ROOT / f"season={season}"
     season_dir.mkdir(parents=True, exist_ok=True)
-    logs_path = season_dir / "player_game_logs.parquet"
+    cutoff = pd.Timestamp(through_date) if through_date else None
+    merged_frames: list[pd.DataFrame] = []
 
-    # Check if we have cached logs and can skip fetching
-    existing_logs = None
-    if logs_path.exists():
-        try:
-            existing_logs = pd.read_parquet(logs_path)
-            existing_logs["GAME_DATE"] = pd.to_datetime(existing_logs["GAME_DATE"], errors="coerce")
-            if not existing_logs.empty:
-                latest_cached_date = existing_logs["GAME_DATE"].max()
-                print(f"Found cached logs with latest date: {latest_cached_date.date() if pd.notna(latest_cached_date) else 'unknown'}")
+    for season_type in [str(item).strip() for item in season_types if str(item).strip()]:
+        logs_path = season_dir / f"player_game_logs_{_season_type_cache_slug(season_type)}.parquet"
+        cached_logs = _load_cached_logs(logs_path)
+        latest_cached_date = cached_logs["GAME_DATE"].max() if cached_logs is not None and not cached_logs.empty else pd.NaT
+        use_cached = bool(cached_logs is not None and not cached_logs.empty)
+        if use_cached and cutoff is not None and (pd.isna(latest_cached_date) or latest_cached_date < cutoff):
+            use_cached = False
 
-                # If we have data up to the requested through_date, skip fetching
-                if through_date:
-                    cutoff = pd.Timestamp(through_date)
-                    if pd.notna(latest_cached_date) and latest_cached_date >= cutoff:
-                        print("Cached data is up to date; skipping API fetch")
-                        return existing_logs.loc[existing_logs["GAME_DATE"] <= cutoff].copy()
-        except Exception as e:
-            print(f"Warning: Could not load cached logs ({e}); fetching fresh data")
+        if use_cached:
+            print(
+                f"Using cached {season_type} logs through "
+                f"{latest_cached_date.date() if pd.notna(latest_cached_date) else 'unknown'}"
+            )
+            logs = cached_logs.copy()
+        else:
+            if cached_logs is not None and not cached_logs.empty:
+                print(
+                    f"Refreshing {season_type} logs because cache only reached "
+                    f"{latest_cached_date.date() if pd.notna(latest_cached_date) else 'unknown'}"
+                )
+            original_season_type = scraper.season_type
+            scraper.season_type = season_type
+            try:
+                logs = scraper.fetch_player_game_logs(season)
+            finally:
+                scraper.season_type = original_season_type
+            logs["GAME_DATE"] = pd.to_datetime(logs["GAME_DATE"], errors="coerce")
+            logs["season_type"] = season_type
+            logs.to_parquet(logs_path, index=False)
 
-    # Fetch fresh data
-    logs = scraper.fetch_player_game_logs(season)
+        if "season_type" not in logs.columns:
+            logs["season_type"] = season_type
+        if cutoff is not None:
+            logs = logs.loc[pd.to_datetime(logs["GAME_DATE"], errors="coerce") <= cutoff].copy()
+        merged_frames.append(logs)
+
+    if not merged_frames:
+        return pd.DataFrame()
+
+    logs = pd.concat(merged_frames, ignore_index=True)
     logs["GAME_DATE"] = pd.to_datetime(logs["GAME_DATE"], errors="coerce")
-    if through_date:
-        cutoff = pd.Timestamp(through_date)
-        logs = logs.loc[logs["GAME_DATE"] <= cutoff].copy()
+    logs = logs.loc[logs["GAME_DATE"].notna()].copy()
+    logs["season_type"] = logs["season_type"].astype(str).str.strip()
     if max_games is not None:
         keep_game_ids = sorted(logs["GAME_ID"].astype(str).unique().tolist())[:max_games]
         logs = logs.loc[logs["GAME_ID"].astype(str).isin(keep_game_ids)].copy()
-    logs.to_parquet(logs_path, index=False)
-    return logs
+    sort_cols = ["GAME_DATE", "GAME_ID", "PLAYER_ID", "season_type"]
+    logs = logs.sort_values(sort_cols).drop_duplicates(
+        subset=["GAME_ID", "PLAYER_ID"],
+        keep="last",
+    )
+    logs.to_parquet(season_dir / "player_game_logs.parquet", index=False)
+    return logs.reset_index(drop=True)
 
 
 def refresh_advanced_cache(scraper: NBAEnrichmentScraper, season: int, game_ids: list[str]) -> None:
@@ -642,7 +696,11 @@ def main() -> None:
         include_playbyplay=False,
     )
 
-    logs = fetch_player_logs(scraper, args.season, args.through_date, args.max_games)
+    requested_season_types = [str(item).strip() for item in args.season_types if str(item).strip()]
+    if not requested_season_types:
+        raise ValueError("At least one season type is required.")
+
+    logs = fetch_player_logs(scraper, args.season, requested_season_types, args.through_date, args.max_games)
     max_api_date = logs["GAME_DATE"].max()
     print(f"Fetched {len(logs):,} player log rows across {logs['GAME_ID'].nunique():,} games.")
     print(f"Latest game date available from API: {max_api_date.date() if pd.notna(max_api_date) else 'unknown'}")
@@ -696,6 +754,7 @@ def main() -> None:
     manifest = {
         "season": args.season,
         "through_date_requested": args.through_date,
+        "season_types_requested": requested_season_types,
         "api_latest_game_date": str(max_api_date.date()) if pd.notna(max_api_date) else None,
         "refresh_advanced": bool(args.refresh_advanced),
         "advanced_player_rows": int(len(player_adv)),
