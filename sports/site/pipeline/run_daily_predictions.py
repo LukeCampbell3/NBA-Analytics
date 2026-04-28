@@ -96,10 +96,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--mlb-min-publish-plays",
         type=int,
-        default=8,
+        default=6,
         help="Minimum selected MLB plays required before publishing a generated pool; otherwise fall back to the latest richer existing pool when available.",
     )
-    parser.add_argument("--mlb-top-n", type=int, default=15, help="Maximum number of MLB plays to keep.")
+    parser.add_argument("--mlb-top-n", type=int, default=10, help="Maximum number of MLB plays to keep.")
     return parser.parse_args()
 
 

@@ -36,6 +36,10 @@ from sports.parlay_analysis import annotate_parlay_board, evaluate_historical_pa
 MLB_STATS_API_ROOT = "https://statsapi.mlb.com/api/v1"
 MLB_HEADSHOT_BASE_URL = "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/{person_id}/headshot/67/current"
 MLB_HEADSHOT_FALLBACK_URL = "https://midfield.mlbstatic.com/v1/people/{person_id}/headshot/67/current"
+MLB_API_TIMEOUT_SECONDS = 5
+ENABLE_PLAYER_SEARCH_FALLBACK = False
+MLB_PARLAY_VALIDATION_CACHE = REPO_ROOT / "sports" / "mlb" / "data" / "predictions" / "calibration" / "mlb_parlay_validation.json"
+ENABLE_PARLAY_VALIDATION_REBUILD = False
 
 
 def parse_args() -> argparse.Namespace:
@@ -150,6 +154,15 @@ def estimate_count_hit_probabilities(prediction: float, market_line: float, dire
 
 
 def build_mlb_parlay_validation(manifest_path: Path) -> dict:
+    if MLB_PARLAY_VALIDATION_CACHE.exists():
+        try:
+            return json.loads(MLB_PARLAY_VALIDATION_CACHE.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+    if not ENABLE_PARLAY_VALIDATION_REBUILD:
+        return {"available": False, "reason": "parlay validation rebuild disabled for fast web export"}
+
     if not manifest_path.exists():
         return {"available": False, "reason": f"manifest not found: {manifest_path}"}
 
@@ -241,6 +254,8 @@ def build_mlb_parlay_validation(manifest_path: Path) -> dict:
     )
     summary["source_manifest"] = str(manifest_path)
     summary["history_row_count"] = int(len(history))
+    MLB_PARLAY_VALIDATION_CACHE.parent.mkdir(parents=True, exist_ok=True)
+    MLB_PARLAY_VALIDATION_CACHE.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     return summary
 
 
@@ -259,7 +274,7 @@ def normalize_player_name(value: str) -> str:
 
 def fetch_json(url: str) -> dict:
     request = Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urlopen(request, timeout=20) as response:
+    with urlopen(request, timeout=MLB_API_TIMEOUT_SECONDS) as response:
         return json.load(response)
 
 
@@ -362,7 +377,7 @@ def build_player_headshot_lookup(rows: list[dict[str, str]], run_date: str) -> d
             continue
         roster_lookup = roster_by_team.get(team_abbr, {})
         person_id = roster_lookup.get(normalize_player_name(player_name))
-        if not person_id:
+        if not person_id and ENABLE_PLAYER_SEARCH_FALLBACK:
             try:
                 person_id = search_person_id_by_name(player_name)
             except (HTTPError, URLError, TimeoutError, json.JSONDecodeError):

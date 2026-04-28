@@ -1,0 +1,424 @@
+{
+  "season": 2026,
+  "history_dir": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\Player-Predictor\\Data-Proc-MLB",
+  "updated_at_utc": "2026-04-28T16:40:04.865716+00:00",
+  "source_file_count": 797,
+  "target_direction": {
+    "H|OVER": {
+      "rows": 8522,
+      "graded_rows": 8522,
+      "wins": 4486,
+      "losses": 4036,
+      "pushes": 0,
+      "win_rate": 0.5264022529922553,
+      "push_rate": 0.0
+    },
+    "H|UNDER": {
+      "rows": 6606,
+      "graded_rows": 6606,
+      "wins": 4176,
+      "losses": 2430,
+      "pushes": 0,
+      "win_rate": 0.6321525885558583,
+      "push_rate": 0.0
+    },
+    "K|OVER": {
+      "rows": 163,
+      "graded_rows": 163,
+      "wins": 50,
+      "losses": 113,
+      "pushes": 0,
+      "win_rate": 0.3067484662576687,
+      "push_rate": 0.0
+    },
+    "K|UNDER": {
+      "rows": 3360,
+      "graded_rows": 3360,
+      "wins": 3076,
+      "losses": 284,
+      "pushes": 0,
+      "win_rate": 0.9154761904761904,
+      "push_rate": 0.0
+    },
+    "R|OVER": {
+      "rows": 6509,
+      "graded_rows": 6509,
+      "wins": 3173,
+      "losses": 3336,
+      "pushes": 0,
+      "win_rate": 0.48747887540328777,
+      "push_rate": 0.0
+    },
+    "R|UNDER": {
+      "rows": 8619,
+      "graded_rows": 8619,
+      "wins": 6885,
+      "losses": 1734,
+      "pushes": 0,
+      "win_rate": 0.7988165680473372,
+      "push_rate": 0.0
+    },
+    "TB|OVER": {
+      "rows": 7206,
+      "graded_rows": 7206,
+      "wins": 4714,
+      "losses": 2492,
+      "pushes": 0,
+      "win_rate": 0.6541770746600055,
+      "push_rate": 0.0
+    },
+    "TB|UNDER": {
+      "rows": 7922,
+      "graded_rows": 7922,
+      "wins": 6698,
+      "losses": 1224,
+      "pushes": 0,
+      "win_rate": 0.8454935622317596,
+      "push_rate": 0.0
+    }
+  },
+  "line_buckets": {
+    "H|OVER|0.5": {
+      "rows": 7765,
+      "graded_rows": 7765,
+      "wins": 4278,
+      "losses": 3487,
+      "pushes": 0,
+      "win_rate": 0.5509336767546684,
+      "push_rate": 0.0
+    },
+    "H|OVER|1.5": {
+      "rows": 745,
+      "graded_rows": 745,
+      "wins": 203,
+      "losses": 542,
+      "pushes": 0,
+      "win_rate": 0.27248322147651005,
+      "push_rate": 0.0
+    },
+    "H|OVER|2.5": {
+      "rows": 11,
+      "graded_rows": 11,
+      "wins": 4,
+      "losses": 7,
+      "pushes": 0,
+      "win_rate": 0.36363636363636365,
+      "push_rate": 0.0
+    },
+    "H|OVER|3.5": {
+      "rows": 1,
+      "graded_rows": 1,
+      "wins": 1,
+      "losses": 0,
+      "pushes": 0,
+      "win_rate": 1.0,
+      "push_rate": 0.0
+    },
+    "H|UNDER|0.5": {
+      "rows": 4820,
+      "graded_rows": 4820,
+      "wins": 2740,
+      "losses": 2080,
+      "pushes": 0,
+      "win_rate": 0.5684647302904564,
+      "push_rate": 0.0
+    },
+    "H|UNDER|1.5": {
+      "rows": 1772,
+      "graded_rows": 1772,
+      "wins": 1422,
+      "losses": 350,
+      "pushes": 0,
+      "win_rate": 0.8024830699774267,
+      "push_rate": 0.0
+    },
+    "H|UNDER|2.5": {
+      "rows": 13,
+      "graded_rows": 13,
+      "wins": 13,
+      "losses": 0,
+      "pushes": 0,
+      "win_rate": 1.0,
+      "push_rate": 0.0
+    },
+    "H|UNDER|3.5": {
+      "rows": 1,
+      "graded_rows": 1,
+      "wins": 1,
+      "losses": 0,
+      "pushes": 0,
+      "win_rate": 1.0,
+      "push_rate": 0.0
+    },
+    "K|OVER|2.5": {
+      "rows": 138,
+      "graded_rows": 138,
+      "wins": 38,
+      "losses": 100,
+      "pushes": 0,
+      "win_rate": 0.2753623188405797,
+      "push_rate": 0.0
+    },
+    "K|OVER|3.5": {
+      "rows": 20,
+      "graded_rows": 20,
+      "wins": 8,
+      "losses": 12,
+      "pushes": 0,
+      "win_rate": 0.4,
+      "push_rate": 0.0
+    },
+    "K|OVER|4.5": {
+      "rows": 4,
+      "graded_rows": 4,
+      "wins": 3,
+      "losses": 1,
+      "pushes": 0,
+      "win_rate": 0.75,
+      "push_rate": 0.0
+    },
+    "K|OVER|5.5": {
+      "rows": 1,
+      "graded_rows": 1,
+      "wins": 1,
+      "losses": 0,
+      "pushes": 0,
+      "win_rate": 1.0,
+      "push_rate": 0.0
+    },
+    "K|UNDER|2.5": {
+      "rows": 3319,
+      "graded_rows": 3319,
+      "wins": 3051,
+      "losses": 268,
+      "pushes": 0,
+      "win_rate": 0.9192527869840313,
+      "push_rate": 0.0
+    },
+    "K|UNDER|3.5": {
+      "rows": 27,
+      "graded_rows": 27,
+      "wins": 17,
+      "losses": 10,
+      "pushes": 0,
+      "win_rate": 0.6296296296296297,
+      "push_rate": 0.0
+    },
+    "K|UNDER|4.5": {
+      "rows": 6,
+      "graded_rows": 6,
+      "wins": 4,
+      "losses": 2,
+      "pushes": 0,
+      "win_rate": 0.6666666666666666,
+      "push_rate": 0.0
+    },
+    "K|UNDER|5.5": {
+      "rows": 6,
+      "graded_rows": 6,
+      "wins": 2,
+      "losses": 4,
+      "pushes": 0,
+      "win_rate": 0.3333333333333333,
+      "push_rate": 0.0
+    },
+    "K|UNDER|6.5": {
+      "rows": 2,
+      "graded_rows": 2,
+      "wins": 2,
+      "losses": 0,
+      "pushes": 0,
+      "win_rate": 1.0,
+      "push_rate": 0.0
+    },
+    "R|OVER|0.5": {
+      "rows": 6388,
+      "graded_rows": 6388,
+      "wins": 3122,
+      "losses": 3266,
+      "pushes": 0,
+      "win_rate": 0.4887288666249217,
+      "push_rate": 0.0
+    },
+    "R|OVER|1.5": {
+      "rows": 117,
+      "graded_rows": 117,
+      "wins": 47,
+      "losses": 70,
+      "pushes": 0,
+      "win_rate": 0.4017094017094017,
+      "push_rate": 0.0
+    },
+    "R|OVER|2.5": {
+      "rows": 4,
+      "graded_rows": 4,
+      "wins": 4,
+      "losses": 0,
+      "pushes": 0,
+      "win_rate": 1.0,
+      "push_rate": 0.0
+    },
+    "R|UNDER|0.5": {
+      "rows": 8339,
+      "graded_rows": 8339,
+      "wins": 6620,
+      "losses": 1719,
+      "pushes": 0,
+      "win_rate": 0.793860175080945,
+      "push_rate": 0.0
+    },
+    "R|UNDER|1.5": {
+      "rows": 275,
+      "graded_rows": 275,
+      "wins": 260,
+      "losses": 15,
+      "pushes": 0,
+      "win_rate": 0.9454545454545454,
+      "push_rate": 0.0
+    },
+    "R|UNDER|2.5": {
+      "rows": 5,
+      "graded_rows": 5,
+      "wins": 5,
+      "losses": 0,
+      "pushes": 0,
+      "win_rate": 1.0,
+      "push_rate": 0.0
+    },
+    "TB|OVER|0.5": {
+      "rows": 4724,
+      "graded_rows": 4724,
+      "wins": 3106,
+      "losses": 1618,
+      "pushes": 0,
+      "win_rate": 0.657493649449619,
+      "push_rate": 0.0
+    },
+    "TB|OVER|1.5": {
+      "rows": 1892,
+      "graded_rows": 1892,
+      "wins": 1225,
+      "losses": 667,
+      "pushes": 0,
+      "win_rate": 0.6474630021141649,
+      "push_rate": 0.0
+    },
+    "TB|OVER|2.5": {
+      "rows": 445,
+      "graded_rows": 445,
+      "wins": 276,
+      "losses": 169,
+      "pushes": 0,
+      "win_rate": 0.6202247191011236,
+      "push_rate": 0.0
+    },
+    "TB|OVER|3.5": {
+      "rows": 96,
+      "graded_rows": 96,
+      "wins": 75,
+      "losses": 21,
+      "pushes": 0,
+      "win_rate": 0.78125,
+      "push_rate": 0.0
+    },
+    "TB|OVER|4.5": {
+      "rows": 34,
+      "graded_rows": 34,
+      "wins": 20,
+      "losses": 14,
+      "pushes": 0,
+      "win_rate": 0.5882352941176471,
+      "push_rate": 0.0
+    },
+    "TB|OVER|5.5": {
+      "rows": 12,
+      "graded_rows": 12,
+      "wins": 10,
+      "losses": 2,
+      "pushes": 0,
+      "win_rate": 0.8333333333333334,
+      "push_rate": 0.0
+    },
+    "TB|OVER|6.5": {
+      "rows": 1,
+      "graded_rows": 1,
+      "wins": 1,
+      "losses": 0,
+      "pushes": 0,
+      "win_rate": 1.0,
+      "push_rate": 0.0
+    },
+    "TB|OVER|7.5": {
+      "rows": 2,
+      "graded_rows": 2,
+      "wins": 1,
+      "losses": 1,
+      "pushes": 0,
+      "win_rate": 0.5,
+      "push_rate": 0.0
+    },
+    "TB|UNDER|0.5": {
+      "rows": 3527,
+      "graded_rows": 3527,
+      "wins": 2713,
+      "losses": 814,
+      "pushes": 0,
+      "win_rate": 0.7692089594556281,
+      "push_rate": 0.0
+    },
+    "TB|UNDER|1.5": {
+      "rows": 2945,
+      "graded_rows": 2945,
+      "wins": 2616,
+      "losses": 329,
+      "pushes": 0,
+      "win_rate": 0.8882852292020373,
+      "push_rate": 0.0
+    },
+    "TB|UNDER|2.5": {
+      "rows": 1131,
+      "graded_rows": 1131,
+      "wins": 1058,
+      "losses": 73,
+      "pushes": 0,
+      "win_rate": 0.9354553492484527,
+      "push_rate": 0.0
+    },
+    "TB|UNDER|3.5": {
+      "rows": 255,
+      "graded_rows": 255,
+      "wins": 249,
+      "losses": 6,
+      "pushes": 0,
+      "win_rate": 0.9764705882352941,
+      "push_rate": 0.0
+    },
+    "TB|UNDER|4.5": {
+      "rows": 49,
+      "graded_rows": 49,
+      "wins": 47,
+      "losses": 2,
+      "pushes": 0,
+      "win_rate": 0.9591836734693877,
+      "push_rate": 0.0
+    },
+    "TB|UNDER|5.5": {
+      "rows": 12,
+      "graded_rows": 12,
+      "wins": 12,
+      "losses": 0,
+      "pushes": 0,
+      "win_rate": 1.0,
+      "push_rate": 0.0
+    },
+    "TB|UNDER|6.5": {
+      "rows": 3,
+      "graded_rows": 3,
+      "wins": 3,
+      "losses": 0,
+      "pushes": 0,
+      "win_rate": 1.0,
+      "push_rate": 0.0
+    }
+  }
+}
