@@ -66,10 +66,7 @@ The fetchers check in this order:
 3. `config.local.yaml`
 4. `.env.local` or `.env`
 
-For MLB, the Odds API fetcher now also minimizes spend by:
-
-- reusing a fresh matching local snapshot instead of refetching
-- filtering live requests to the requested game date when the shared daily pipeline passes `--run-date`
+For MLB, the market fetch now pulls live player prop tables from RotoWire's MLB props page and writes them into the same normalized snapshot contract the prediction pipeline already consumes.
 
 ## NBA Quick Start
 
