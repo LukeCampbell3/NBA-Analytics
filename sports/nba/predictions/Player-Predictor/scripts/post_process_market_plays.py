@@ -1652,11 +1652,31 @@ def _select_board_objective_board(
     board_objective_fp_veto_ml_weight: float,
 ) -> pd.DataFrame:
     if candidates.empty:
-        return candidates.copy()
+        result = candidates.copy()
+        result.attrs["selection_stage_counts"] = {
+            "board_objective_rows_in": 0,
+            "candidate_universe": 0,
+            "board_objective_selected_rows": 0,
+        }
+        return result
+
+    selection_stage_counts = {
+        "board_objective_rows_in": int(len(candidates)),
+        "candidate_universe": int(len(candidates)),
+        "board_objective_selected_rows": 0,
+    }
+
+    def _finalize_selection(frame: pd.DataFrame) -> pd.DataFrame:
+        result = frame.copy()
+        selection_stage_counts["board_objective_selected_rows"] = int(len(result))
+        result.attrs["selection_stage_counts"] = {
+            key: int(value) for key, value in selection_stage_counts.items()
+        }
+        return result
 
     board_size = int(max_total_plays) if int(max_total_plays) > 0 else int(len(candidates))
     if board_size <= 0:
-        return candidates.iloc[0:0].copy()
+        return _finalize_selection(candidates.iloc[0:0].copy())
     board_size = min(board_size, int(len(candidates)))
     requested_min = max(0, int(min_board_plays))
     if requested_min > 0:
@@ -1705,8 +1725,9 @@ def _select_board_objective_board(
 
     universe_idx = sorted(idx_abs | idx_ev | idx_prob | idx_quality | idx_th)
     universe = base.loc[universe_idx].copy() if universe_idx else base.copy()
+    selection_stage_counts["candidate_universe"] = int(len(universe))
     if universe.empty:
-        return universe
+        return _finalize_selection(universe)
 
     universe["board_universe_rank_base"] = (
         0.42 * _zscore_series(universe["board_play_win_prob"])
@@ -1722,10 +1743,10 @@ def _select_board_objective_board(
     universe = universe.sort_values(["board_universe_rank", "final_pool_quality_score", "board_play_win_prob", "abs_edge"], ascending=[False, False, False, False]).reset_index(drop=True)
     n = int(len(universe))
     if n <= 0:
-        return base.iloc[0:0].copy()
+        return _finalize_selection(base.iloc[0:0].copy())
     k = min(board_size, n)
     if k <= 0:
-        return base.iloc[0:0].copy()
+        return _finalize_selection(base.iloc[0:0].copy())
 
     dynamic_day_score = np.nan
     dynamic_cutoff_separation = np.nan
@@ -1756,11 +1777,12 @@ def _select_board_objective_board(
                         universe = universe.drop(index=drop_idx).reset_index(drop=True)
                         instability_veto_count = int(len(drop_idx))
                         n = int(len(universe))
+                        selection_stage_counts["candidate_universe"] = int(n)
                         if n <= 0:
-                            return base.iloc[0:0].copy()
+                            return _finalize_selection(base.iloc[0:0].copy())
                         k = min(k, n)
                         if k <= 0:
-                            return base.iloc[0:0].copy()
+                            return _finalize_selection(base.iloc[0:0].copy())
                         rank_positions = np.arange(1, len(universe) + 1, dtype="float64")
                         rank_distance = np.abs(rank_positions - float(k))
                         near_cutoff_mask = (rank_distance <= float(near_window)) & (rank_positions > float(top_protected))
@@ -1824,10 +1846,10 @@ def _select_board_objective_board(
 
     n = int(len(universe))
     if n <= 0:
-        return base.iloc[0:0].copy()
+        return _finalize_selection(base.iloc[0:0].copy())
     k = min(k, n)
     if k <= 0:
-        return base.iloc[0:0].copy()
+        return _finalize_selection(base.iloc[0:0].copy())
 
     target_caps = _resolve_target_caps(universe, max_plays_per_target=max_plays_per_target, max_target_plays=max_target_plays)
     players = _clean_key_component(universe.get("player", pd.Series("", index=universe.index))).to_numpy(dtype=str)
@@ -2090,7 +2112,7 @@ def _select_board_objective_board(
         fallback["board_objective_fp_veto_swapped_slots_json"] = "[]"
         fallback["board_objective_fp_veto_swapped_out_sources_json"] = "[]"
         fallback["board_objective_fp_veto_swapped_in_sources_json"] = "[]"
-        return fallback
+        return _finalize_selection(fallback)
 
     selected_board = universe.iloc[best_indices].copy()
     selected_board["board_objective_search_truncated"] = bool(node_counter["truncated"])
@@ -2558,7 +2580,7 @@ def _select_board_objective_board(
     final["board_objective_dynamic_target_size"] = int(dynamic_target_size)
     final["board_objective_target_size_requested"] = int(board_size)
     final["board_caps_relaxed"] = bool(caps_relaxed)
-    return final
+    return _finalize_selection(final)
 
 
 def _append_rows_with_caps(
@@ -3130,8 +3152,34 @@ def compute_final_board(
     accepted_pick_gate_min_rows: int = 0,
 ) -> pd.DataFrame:
     out = plays.copy()
+    stage_counts: dict[str, int] = {
+        "selector_rows": int(len(out)),
+    }
+    selection_stage_counts: dict[str, int] = {}
+
+    def _record_stage(name: str, frame: pd.DataFrame) -> None:
+        stage_counts[name] = int(len(frame))
+
+    def _finalize(frame: pd.DataFrame) -> pd.DataFrame:
+        result = frame.copy()
+        if getattr(frame, "attrs", None):
+            result.attrs.update(frame.attrs)
+        merged_stage_counts = dict(stage_counts)
+        for key, value in selection_stage_counts.items():
+            merged_stage_counts[str(key)] = int(value)
+        merged_stage_counts.setdefault("after_initial_pool_gate", int(merged_stage_counts.get("selector_rows", len(result))))
+        merged_stage_counts.setdefault("after_recency", int(merged_stage_counts["after_initial_pool_gate"]))
+        merged_stage_counts.setdefault("after_confidence", int(merged_stage_counts["after_recency"]))
+        merged_stage_counts.setdefault("after_min_ev", int(merged_stage_counts["after_confidence"]))
+        merged_stage_counts.setdefault("after_learned_gate", int(merged_stage_counts["after_min_ev"]))
+        merged_stage_counts.setdefault("candidate_universe", int(merged_stage_counts["after_learned_gate"]))
+        merged_stage_counts.setdefault("after_accepted_pick_gate", int(len(result)))
+        merged_stage_counts["final_board_rows"] = int(len(result))
+        result.attrs["stage_counts"] = merged_stage_counts
+        return result
+
     if out.empty:
-        return out
+        return _finalize(out)
     out["_gate_row_id"] = np.arange(len(out), dtype=int)
     requested_min_board = max(0, int(min_board_plays))
     if max_total_plays > 0:
@@ -3161,9 +3209,10 @@ def compute_final_board(
             keep_index = primary_score.sort_values(ascending=False).head(keep_n).index
             out = out.loc[out.index.isin(keep_index)].copy().sort_values("_gate_row_id")
             initial_pool_applied = bool(len(out) < initial_rows_before)
-            if out.empty:
-                return out
     initial_rows_after = int(len(out))
+    _record_stage("after_initial_pool_gate", out)
+    if out.empty:
+        return _finalize(out)
     out["initial_pool_gate_enabled"] = bool(initial_pool_gate_active)
     out["initial_pool_gate_applied"] = bool(initial_pool_applied)
     out["initial_pool_gate_drop_fraction"] = float(initial_pool_drop_fraction if initial_pool_gate_active else 0.0)
@@ -3254,7 +3303,7 @@ def compute_final_board(
         eligible_mask = pd.to_numeric(out["conditional_eligible_for_board"], errors="coerce").fillna(0).astype(bool)
         out = out.loc[eligible_mask].copy()
         if out.empty:
-            return out
+            return _finalize(out)
 
     if "line_decision_trade_eligible" in out.columns:
         trade_eligible_mask = pd.to_numeric(out["line_decision_trade_eligible"], errors="coerce").fillna(0).astype(bool)
@@ -3268,14 +3317,15 @@ def compute_final_board(
             out = out.copy()
             out["line_decision_gate_fail_open"] = True
         if out.empty:
-            return out
+            return _finalize(out)
 
     min_recency = float(min_recency_factor)
     if min_recency > 0.0 and "recency_factor" in out.columns:
         out["recency_factor"] = _numeric_series(out, "recency_factor", 0.0)
         out = out.loc[out["recency_factor"] >= min_recency].copy()
         if out.empty:
-            return out
+            _record_stage("after_recency", out)
+            return _finalize(out)
 
     staleness_cap = int(max_history_staleness_days)
     if staleness_cap > 0 and "market_date" in out.columns and "last_history_date" in out.columns:
@@ -3285,7 +3335,10 @@ def compute_final_board(
         out["history_staleness_days"] = staleness_days
         out = out.loc[staleness_days.isna() | (staleness_days <= staleness_cap)].copy()
         if out.empty:
-            return out
+            _record_stage("after_recency", out)
+            return _finalize(out)
+
+    _record_stage("after_recency", out)
 
     out = out.loc[out["recommendation_rank"] <= minimum_recommendation_rank(min_recommendation)].copy()
     out = out.loc[out["final_confidence"] >= float(min_final_confidence)].copy()
@@ -3306,7 +3359,10 @@ def compute_final_board(
             )
             out = out.loc[~micro_mask].copy()
     if out.empty:
-        return out
+        _record_stage("after_confidence", out)
+        return _finalize(out)
+
+    _record_stage("after_confidence", out)
 
     effective_min_ev = float(min_ev)
     if requested_min_board > 0:
@@ -3318,9 +3374,11 @@ def compute_final_board(
                 effective_min_ev = min(effective_min_ev, adaptive_floor)
     out = out.loc[pd.to_numeric(out["ev"], errors="coerce") >= float(effective_min_ev)].copy()
     if out.empty:
-        return out
+        _record_stage("after_min_ev", out)
+        return _finalize(out)
     out["ev_gate_effective_min_ev"] = float(effective_min_ev)
     out["ev_gate_relaxed"] = bool(effective_min_ev < float(min_ev))
+    _record_stage("after_min_ev", out)
 
     gate_backfill_pool = out.iloc[0:0].copy()
     out["learned_gate_rescue_selected"] = False
@@ -3426,7 +3484,8 @@ def compute_final_board(
             pass_pool["learned_gate_rescue_selected"] = False
             out = pd.concat([pass_pool, rescue_rows], axis=0, ignore_index=False)
             if out.empty:
-                return out
+                _record_stage("after_learned_gate", out)
+                return _finalize(out)
         else:
             out["learned_gate_fill_source"] = "gate_not_enforced"
     else:
@@ -3438,6 +3497,9 @@ def compute_final_board(
         out["learned_gate_blocked_reason"] = ""
         out["learned_gate_fill_source"] = "ungated"
 
+<<<<<<< HEAD
+    _record_stage("after_learned_gate", out)
+=======
     out = annotate_final_pool_quality_fn(
         out,
         payload=learned_gate_payload if isinstance(learned_gate_payload, dict) else None,
@@ -3468,6 +3530,7 @@ def compute_final_board(
             out["final_pool_gate_rows_before"] = int(quality_rows_before)
             out["final_pool_gate_rows_after"] = int(len(out))
             out["final_pool_gate_dropped_rows"] = int(max(0, quality_rows_before - len(out)))
+>>>>>>> e4f3a2943a11306b776fe149cd406fba821c1e53
 
     effective_mode = str(selection_mode or ranking_mode)
     rank_columns = ["ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
@@ -3562,6 +3625,10 @@ def compute_final_board(
             board_objective_fp_veto_risk_lambda=float(board_objective_fp_veto_risk_lambda),
             board_objective_fp_veto_ml_weight=float(board_objective_fp_veto_ml_weight),
         )
+        selection_stage_counts = {
+            str(key): int(value)
+            for key, value in getattr(out, "attrs", {}).get("selection_stage_counts", {}).items()
+        }
         caps_already_applied = True
         rank_columns = ["board_play_win_prob", "ev_adjusted", "abs_edge", "final_confidence"]
 
@@ -3596,10 +3663,10 @@ def compute_final_board(
             out["board_caps_relaxed"] = bool(caps_relaxed)
     else:
         if out.empty:
-            return out
+            return _finalize(out)
         missing_rank_cols = [column for column in rank_columns if column not in out.columns]
         if missing_rank_cols:
-            return out.iloc[0:0].copy()
+            return _finalize(out.iloc[0:0].copy())
         out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).copy()
         if "board_caps_relaxed" in out.columns:
             out["board_caps_relaxed"] = pd.to_numeric(out["board_caps_relaxed"], errors="coerce").fillna(0).astype(bool)
@@ -3665,7 +3732,8 @@ def compute_final_board(
             min_rows=int(max(0, accepted_pick_gate_min_rows)),
         )
         if out.empty:
-            return out
+            _record_stage("after_accepted_pick_gate", out)
+            return _finalize(out)
     else:
         out["accepted_pick_gate_keep_prob"] = np.nan
         out["accepted_pick_gate_threshold"] = np.nan
@@ -3678,6 +3746,8 @@ def compute_final_board(
         out["accepted_pick_gate_drop_applied"] = False
         out["accepted_pick_gate_drop_count"] = 0
         out["accepted_pick_gate_policy"] = "disabled"
+
+    _record_stage("after_accepted_pick_gate", out)
 
     effective_sizing_method = str(sizing_method or "tiered_probability").strip().lower()
     if effective_sizing_method == "flat_fraction":
@@ -3757,7 +3827,7 @@ def compute_final_board(
         # so the board remains actionable when strict tier gates reject all rows.
         fallback_fraction = float(np.clip(small_bet_fraction, 0.0, max_bet_fraction))
         if fallback_fraction <= 0.0:
-            return sized_out.iloc[0:0].copy()
+            return _finalize(sized_out.iloc[0:0].copy())
         out = sized_out.head(max_total_plays if max_total_plays > 0 else len(sized_out)).copy()
         out["allocation_tier"] = "fallback_small"
         out["allocation_action"] = "fallback_small"
@@ -3921,7 +3991,7 @@ def compute_final_board(
         out = out.drop(columns=["_gate_row_id"])
     out = out.drop(columns=["recommendation_rank"])
     out = out.reset_index(drop=True)
-    return out
+    return _finalize(out)
 
 
 def main() -> None:
@@ -4155,11 +4225,16 @@ def main() -> None:
     args.csv_out.parent.mkdir(parents=True, exist_ok=True)
     args.json_out.parent.mkdir(parents=True, exist_ok=True)
     final_board.to_csv(args.csv_out, index=False)
+    stage_counts = {
+        str(key): int(value)
+        for key, value in getattr(final_board, "attrs", {}).get("stage_counts", {}).items()
+    }
 
     payload = {
         "source_csv": str(csv_path),
         "rows_in": int(len(plays)),
         "rows_out": int(len(final_board)),
+        "stage_counts": stage_counts,
         "american_odds": int(args.american_odds),
         "min_ev": float(args.min_ev),
         "min_final_confidence": float(args.min_final_confidence),
@@ -4281,6 +4356,8 @@ def main() -> None:
     print(f"Output rows:  {len(final_board)}")
     print(f"CSV:          {args.csv_out}")
     print(f"JSON:         {args.json_out}")
+    if stage_counts:
+        print(f"Stage counts: {stage_counts}")
     if args.enable_learned_gate:
         print(f"Learned gate: {learned_gate_summary}")
     if args.enable_accepted_pick_gate:
