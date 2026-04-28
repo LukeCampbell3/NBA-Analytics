@@ -1,8 +1,8 @@
 {
-  "pool_csv": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260426\\daily_prediction_pool_20260426.csv",
-  "out_csv": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260426\\daily_prediction_pool_20260426_high_precision_predictions.csv",
+  "pool_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260426\\daily_prediction_pool_20260426.csv",
+  "out_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260426\\daily_prediction_pool_20260426_high_precision_predictions.csv",
   "rows_supported": 960,
-  "rows_after_filters": 136,
+  "rows_after_filters": 113,
   "rows_selected": 15,
   "selection": {
     "top_n": 15,
@@ -15,42 +15,71 @@
     "max_per_player": 1,
     "max_per_game": 2,
     "max_per_team": 3,
+    "max_per_market_bucket": 4,
     "allow_baseline": false,
+    "require_real_market_source": false,
     "targets": [
       "H",
       "K",
       "R",
       "TB"
-    ]
+    ],
+    "history_season": 2026,
+    "min_history_bucket_rows": 50,
+    "max_history_prior_weight": 0.35,
+    "history_prior_strength": 400.0,
+    "historical_calibration_enabled": true
+  },
+  "historical_calibration": {
+    "cache_json": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\calibration\\historical_bucket_priors_2026.json",
+    "history_dir": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\Player-Predictor\\Data-Proc-MLB",
+    "season": 2026,
+    "source_file_count": 797,
+    "updated_at_utc": "2026-04-28T16:40:04.865716+00:00"
   },
   "filter_rejections": {
+    "hit_probability_too_low": 9,
     "edge_too_small": 625,
     "synthetic_under_not_actionable": 195,
-    "graded_hit_rate_too_low": 4
+    "graded_hit_rate_too_low": 18
   },
-  "avg_abs_edge": 1.768152,
-  "avg_hit_probability": 0.864608,
-  "avg_graded_hit_rate": 0.864608,
-  "avg_precision_score": 1.135779,
+  "avg_abs_edge": 1.561554,
+  "avg_model_hit_probability": 0.816464,
+  "avg_hit_probability": 0.738294,
+  "avg_model_graded_hit_rate": 0.816464,
+  "avg_graded_hit_rate": 0.738294,
+  "avg_precision_score": 0.85809,
+  "avg_historical_bucket_win_rate": 0.593122,
+  "avg_historical_prior_weight": 0.35,
   "by_target": {
-    "TB": 13,
-    "R": 2
+    "TB": 9,
+    "R": 4,
+    "H": 2
   },
   "by_direction": {
     "OVER": 15
   },
   "by_team": {
-    "ATH": 1,
+    "ATH": 2,
     "STL": 2,
     "TB": 1,
-    "CLE": 2,
-    "BOS": 2,
-    "SD": 1,
-    "CIN": 1,
-    "NYY": 2,
-    "LAA": 1,
+    "CLE": 1,
     "CHC": 1,
-    "SF": 1
+    "SF": 1,
+    "HOU": 1,
+    "CIN": 1,
+    "NYY": 1,
+    "TOR": 1,
+    "BAL": 1,
+    "DET": 1,
+    "MIN": 1
+  },
+  "by_market_bucket": {
+    "TB|OVER|0.5": 4,
+    "TB|OVER|1.5": 4,
+    "R|OVER|0.5": 4,
+    "H|OVER|0.5": 2,
+    "TB|OVER|2.5": 1
   },
   "selected_preview": [
     {
@@ -60,11 +89,14 @@
       "target": "TB",
       "direction": "OVER",
       "market_line": 0.5,
+      "market_bucket": "TB|OVER|0.5",
       "market_source": "synthetic",
       "prediction": 4.7131,
-      "estimated_hit_probability": 0.991,
-      "estimated_graded_hit_rate": 0.991,
-      "precision_score": 1.428
+      "model_hit_probability": 0.991,
+      "estimated_hit_probability": 0.8743,
+      "historical_bucket_win_rate": 0.6575,
+      "historical_bucket_support": 4724,
+      "precision_score": 1.0321
     },
     {
       "rank": 2,
@@ -73,11 +105,14 @@
       "target": "TB",
       "direction": "OVER",
       "market_line": 0.5,
+      "market_bucket": "TB|OVER|0.5",
       "market_source": "synthetic",
       "prediction": 2.4724,
-      "estimated_hit_probability": 0.9156,
-      "estimated_graded_hit_rate": 0.9156,
-      "precision_score": 1.2898
+      "model_hit_probability": 0.9156,
+      "estimated_hit_probability": 0.8253,
+      "historical_bucket_win_rate": 0.6575,
+      "historical_bucket_support": 4724,
+      "precision_score": 0.9708
     },
     {
       "rank": 3,
@@ -86,11 +121,14 @@
       "target": "TB",
       "direction": "OVER",
       "market_line": 0.5,
+      "market_bucket": "TB|OVER|0.5",
       "market_source": "synthetic",
       "prediction": 2.7294,
-      "estimated_hit_probability": 0.9347,
-      "estimated_graded_hit_rate": 0.9347,
-      "precision_score": 1.2731
+      "model_hit_probability": 0.9347,
+      "estimated_hit_probability": 0.8377,
+      "historical_bucket_win_rate": 0.6575,
+      "historical_bucket_support": 4724,
+      "precision_score": 0.966
     },
     {
       "rank": 4,
@@ -99,89 +137,110 @@
       "target": "TB",
       "direction": "OVER",
       "market_line": 0.5,
+      "market_bucket": "TB|OVER|0.5",
       "market_source": "synthetic",
       "prediction": 2.2787,
-      "estimated_hit_probability": 0.8976,
-      "estimated_graded_hit_rate": 0.8976,
-      "precision_score": 1.2268
+      "model_hit_probability": 0.8976,
+      "estimated_hit_probability": 0.8135,
+      "historical_bucket_win_rate": 0.6575,
+      "historical_bucket_support": 4724,
+      "precision_score": 0.944
     },
     {
       "rank": 5,
-      "player": "Kyle Manzardo",
-      "team": "CLE",
-      "target": "TB",
-      "direction": "OVER",
-      "market_line": 0.5,
-      "market_source": "synthetic",
-      "prediction": 2.0705,
-      "estimated_hit_probability": 0.8739,
-      "estimated_graded_hit_rate": 0.8739,
-      "precision_score": 1.1346
-    },
-    {
-      "rank": 6,
-      "player": "Caleb Durbin",
-      "team": "BOS",
-      "target": "TB",
-      "direction": "OVER",
-      "market_line": 0.5,
-      "market_source": "synthetic",
-      "prediction": 2.2073,
-      "estimated_hit_probability": 0.89,
-      "estimated_graded_hit_rate": 0.89,
-      "precision_score": 1.1261
-    },
-    {
-      "rank": 7,
-      "player": "Ty France",
-      "team": "SD",
-      "target": "TB",
-      "direction": "OVER",
-      "market_line": 0.5,
-      "market_source": "synthetic",
-      "prediction": 2.4081,
-      "estimated_hit_probability": 0.91,
-      "estimated_graded_hit_rate": 0.91,
-      "precision_score": 1.1224
-    },
-    {
-      "rank": 8,
       "player": "Nathan Church",
       "team": "STL",
       "target": "TB",
       "direction": "OVER",
       "market_line": 1.5,
+      "market_bucket": "TB|OVER|1.5",
       "market_source": "synthetic",
       "prediction": 3.3336,
-      "estimated_hit_probability": 0.8454,
-      "estimated_graded_hit_rate": 0.8454,
-      "precision_score": 1.1194
+      "model_hit_probability": 0.8454,
+      "estimated_hit_probability": 0.7762,
+      "historical_bucket_win_rate": 0.6475,
+      "historical_bucket_support": 1892,
+      "precision_score": 0.8924
+    },
+    {
+      "rank": 6,
+      "player": "Mois\u00e9s Ballesteros",
+      "team": "CHC",
+      "target": "TB",
+      "direction": "OVER",
+      "market_line": 1.5,
+      "market_bucket": "TB|OVER|1.5",
+      "market_source": "synthetic",
+      "prediction": 3.1855,
+      "model_hit_probability": 0.8269,
+      "estimated_hit_probability": 0.7641,
+      "historical_bucket_win_rate": 0.6475,
+      "historical_bucket_support": 1892,
+      "precision_score": 0.8522
+    },
+    {
+      "rank": 7,
+      "player": "Jung Hoo Lee",
+      "team": "SF",
+      "target": "TB",
+      "direction": "OVER",
+      "market_line": 1.5,
+      "market_bucket": "TB|OVER|1.5",
+      "market_source": "synthetic",
+      "prediction": 3.128,
+      "model_hit_probability": 0.8192,
+      "estimated_hit_probability": 0.7591,
+      "historical_bucket_win_rate": 0.6475,
+      "historical_bucket_support": 1892,
+      "precision_score": 0.8418
+    },
+    {
+      "rank": 8,
+      "player": "Carlos Correa",
+      "team": "HOU",
+      "target": "TB",
+      "direction": "OVER",
+      "market_line": 1.5,
+      "market_bucket": "TB|OVER|1.5",
+      "market_source": "synthetic",
+      "prediction": 2.9462,
+      "model_hit_probability": 0.7927,
+      "estimated_hit_probability": 0.7418,
+      "historical_bucket_win_rate": 0.6475,
+      "historical_bucket_support": 1892,
+      "precision_score": 0.8368
     },
     {
       "rank": 9,
-      "player": "Andruw Monasterio",
-      "team": "BOS",
-      "target": "TB",
-      "direction": "OVER",
-      "market_line": 0.5,
-      "market_source": "synthetic",
-      "prediction": 1.9957,
-      "estimated_hit_probability": 0.8641,
-      "estimated_graded_hit_rate": 0.8641,
-      "precision_score": 1.1106
-    },
-    {
-      "rank": 10,
       "player": "Nathaniel Lowe",
       "team": "CIN",
       "target": "R",
       "direction": "OVER",
       "market_line": 0.5,
+      "market_bucket": "R|OVER|0.5",
       "market_source": "synthetic",
       "prediction": 1.394,
-      "estimated_hit_probability": 0.7519,
-      "estimated_graded_hit_rate": 0.7519,
-      "precision_score": 1.0574
+      "model_hit_probability": 0.7519,
+      "estimated_hit_probability": 0.6598,
+      "historical_bucket_win_rate": 0.4887,
+      "historical_bucket_support": 6388,
+      "precision_score": 0.8057
+    },
+    {
+      "rank": 10,
+      "player": "Ben Rice",
+      "team": "NYY",
+      "target": "R",
+      "direction": "OVER",
+      "market_line": 0.5,
+      "market_bucket": "R|OVER|0.5",
+      "market_source": "synthetic",
+      "prediction": 1.5359,
+      "model_hit_probability": 0.7847,
+      "estimated_hit_probability": 0.6811,
+      "historical_bucket_win_rate": 0.4887,
+      "historical_bucket_support": 6388,
+      "precision_score": 0.801
     }
   ]
 }

@@ -38,8 +38,9 @@ By default the selector:
 - removes baseline-only rows
 - keeps only supported count targets
 - estimates directional hit probability from the model mean and line
+- calibrates those hit rates with empirical target/direction/line win buckets from processed MLB history
 - filters out weak edge / stale history / high-push plays
-- limits concentration by player, game, and team
+- limits concentration by player, game, team, and exact market bucket so one prop shape cannot dominate the board
 
 ## Web Payload Export
 
