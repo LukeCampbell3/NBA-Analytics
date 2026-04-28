@@ -235,12 +235,9 @@ def build_default_shadow_strategies() -> list[StrategyConfig]:
             board_objective_fp_veto_ml_weight=0.45,
             learned_gate_enabled=False,
             learned_gate_min_rows=0,
-<<<<<<< HEAD
             initial_pool_gate_drop_fraction=0.0,
-=======
             learned_gate_rescue_enabled=True,
             learned_gate_rescue_max_rows=3,
->>>>>>> e4f3a2943a11306b776fe149cd406fba821c1e53
             accepted_pick_gate_enabled=True,
             accepted_pick_gate_live=False,
             accepted_pick_gate_min_rows=6,
