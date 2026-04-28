@@ -1,32 +1,27 @@
 {
-  "provider": "odds_api",
-  "fetched_at_utc": "2026-04-27T02:00:02.937037+00:00",
-  "sport": "baseball_mlb",
-  "markets": [
-    "batter_hits",
-    "batter_total_bases",
-    "batter_runs_scored",
-    "batter_home_runs",
-    "batter_rbis",
-    "pitcher_strikeouts",
-    "pitcher_earned_runs"
+  "provider": "rotowire",
+  "provider_alias_used": false,
+  "fetched_at_utc": "2026-04-28T17:23:11.163256+00:00",
+  "source_url": "https://www.rotowire.com/betting/mlb/player-props.php",
+  "page_date": "2026-04-28",
+  "event_date_requested": "2026-04-28",
+  "bundle_kinds": [
+    "bases",
+    "er",
+    "moneyline",
+    "runs",
+    "strikeouts"
   ],
-  "bookmakers": [
-    "draftkings",
-    "fanduel"
-  ],
-  "regions": "us",
-  "odds_format": "american",
-  "event_date": "2026-04-27",
-  "event_count_requested": 8,
-  "event_count_fetched": 8,
-  "long_rows": 143,
-  "wide_rows": 103,
-  "events_remaining_header": "493",
-  "events_used_header": "7",
-  "estimated_requests_used": 17,
-  "http_calls_made": 9,
+  "bundle_rows": {
+    "moneyline": 308,
+    "strikeouts": 30,
+    "er": 30,
+    "bases": 284,
+    "runs": 284
+  },
+  "long_rows": 6368,
+  "wide_rows": 313,
   "errors": [],
-  "history_long_rows": 196,
-  "history_wide_rows": 144
+  "history_long_rows": 12930,
+  "history_wide_rows": 770
 }

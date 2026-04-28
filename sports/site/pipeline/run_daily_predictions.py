@@ -84,7 +84,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--mlb-skip-generate", action="store_true", help="Skip generating a fresh MLB raw prediction pool from processed MLB data.")
     parser.add_argument("--mlb-data-dir", type=Path, default=MLB_DATA_DIR, help="MLB processed-data root used by the raw pool generator.")
     parser.add_argument("--mlb-manifest", type=Path, default=MLB_MANIFEST, help="Optional MLB processed-data manifest used by the raw pool generator.")
-    parser.add_argument("--mlb-market-provider", type=str, default="odds_api", choices=["odds_api", "snapshot"], help="Provider used by the MLB market fetcher.")
+    parser.add_argument(
+        "--mlb-market-provider",
+        type=str,
+        default="rotowire",
+        choices=["rotowire", "odds_api", "snapshot"],
+        help="Provider used by the MLB market fetcher. 'odds_api' is preserved as a backward-compatible alias.",
+    )
     parser.add_argument("--mlb-market-input-path", type=Path, default=None, help="Optional snapshot input for the MLB market fetcher.")
     parser.add_argument(
         "--mlb-fallback-policy",
@@ -299,7 +305,13 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
             ]
             if args.run_date:
                 update_command.extend(["--through-date", str(args.run_date)])
-            run_step("Update MLB Processed Data", update_command)
+            if MLB_DATA_UPDATER.exists():
+                run_step("Update MLB Processed Data", update_command)
+            else:
+                print(
+                    f"[warning] MLB processed-data updater was not found at {MLB_DATA_UPDATER}; "
+                    "skipping that step and continuing with the latest checked-in processed data."
+                )
 
         if not args.mlb_skip_generate:
             generated_pool_csv, generated_summary_json = derive_generated_mlb_pool_outputs(args.run_date)
