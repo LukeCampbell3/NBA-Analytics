@@ -3497,9 +3497,7 @@ def compute_final_board(
         out["learned_gate_blocked_reason"] = ""
         out["learned_gate_fill_source"] = "ungated"
 
-<<<<<<< HEAD
     _record_stage("after_learned_gate", out)
-=======
     out = annotate_final_pool_quality_fn(
         out,
         payload=learned_gate_payload if isinstance(learned_gate_payload, dict) else None,
@@ -3530,7 +3528,7 @@ def compute_final_board(
             out["final_pool_gate_rows_before"] = int(quality_rows_before)
             out["final_pool_gate_rows_after"] = int(len(out))
             out["final_pool_gate_dropped_rows"] = int(max(0, quality_rows_before - len(out)))
->>>>>>> e4f3a2943a11306b776fe149cd406fba821c1e53
+    _record_stage("candidate_universe", out)
 
     effective_mode = str(selection_mode or ranking_mode)
     rank_columns = ["ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
