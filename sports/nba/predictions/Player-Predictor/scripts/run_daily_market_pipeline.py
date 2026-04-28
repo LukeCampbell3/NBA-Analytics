@@ -152,7 +152,7 @@ def parse_args() -> argparse.Namespace:
         "--disable-selected-board-calibration",
         dest="disable_selected_board_calibration",
         action="store_true",
-        default=True,
+        default=False,
         help="Disable selected-board calibration in child market pipeline runs.",
     )
     parser.add_argument(

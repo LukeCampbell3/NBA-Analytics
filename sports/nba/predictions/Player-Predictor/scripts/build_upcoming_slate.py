@@ -319,8 +319,14 @@ def build_records(
         explanation = None
         if predictor is not None:
             try:
+                market_context = {
+                    "player": player,
+                    "market_date": str(pd.to_datetime(market_row["Market_Date"], errors="coerce").date()) if pd.notna(market_row["Market_Date"]) else None,
+                    "market_home_team": market_row.get("Market_Home_Team"),
+                    "market_away_team": market_row.get("Market_Away_Team"),
+                }
                 with contextlib.redirect_stdout(io.StringIO()):
-                    explanation = predictor.predict(history_df, assume_prepared=True)
+                    explanation = predictor.predict(history_df, assume_prepared=True, market_context=market_context)
             except Exception as exc:
                 explanation = build_heuristic_explanation(history_df, failure_reason=f"{type(exc).__name__}")
         if explanation is None:

@@ -242,7 +242,13 @@ def _resolve_month_payload(payload: dict[str, Any], month: str) -> tuple[str, di
     if prior:
         key = prior[-1]
         return key, months[key]
-    # No prior calibrator is available yet (earliest month), so keep identity.
+    future = sorted([m for m in months.keys() if str(m) > str(month)])
+    if future:
+        # Bootstrap fallback: if we only have a cold-start calibrator trained on
+        # the immediately preceding resolved window, allow the earliest fitted
+        # month to service the current live month instead of forcing identity.
+        key = future[0]
+        return key, months[key]
     return "", None
 
 
