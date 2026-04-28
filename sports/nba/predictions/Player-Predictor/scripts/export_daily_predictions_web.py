@@ -71,10 +71,19 @@ NBA_VARIANCE_AWARE_REEXPAND_RULE: dict[str, float] = {
     "min_third_selection_ev": 0.0,
 }
 NBA_PUBLICATION_ALLOWED_SOURCES = {"primary_final_board", "shadow_final_board"}
+NBA_VALIDATED_HEURISTIC_ALLOWED_SOURCES = {"primary_selector_pool_fallback"}
 NBA_PUBLICATION_BLOCKED_RUN_IDS = {"artifact_free_heuristic"}
 NBA_PUBLICATION_MIN_AVG_EXPECTED_WIN_RATE = 0.515
 NBA_PUBLICATION_MIN_MAX_EXPECTED_WIN_RATE = 0.525
 NBA_PUBLICATION_MIN_AVG_FINAL_CONFIDENCE = 0.08
+NBA_VALIDATED_HEURISTIC_MIN_PLAYS = 2
+NBA_VALIDATED_HEURISTIC_MAX_PLAYS = NBA_SELECTOR_FALLBACK_MAX_PLAYS
+NBA_VALIDATED_HEURISTIC_MIN_AVG_EXPECTED_WIN_RATE = 0.585
+NBA_VALIDATED_HEURISTIC_MIN_MAX_EXPECTED_WIN_RATE = 0.600
+NBA_VALIDATED_HEURISTIC_MIN_AVG_FINAL_CONFIDENCE = 0.18
+NBA_VALIDATED_HEURISTIC_MIN_GRADED_PLAYS = 20
+NBA_VALIDATED_HEURISTIC_MIN_HISTORICAL_WIN_RATE = 0.60
+NBA_VALIDATED_HEURISTIC_MIN_HISTORICAL_ROI = 0.0
 
 
 def parse_args() -> argparse.Namespace:
@@ -505,6 +514,14 @@ def safe_float(value) -> float | None:
         return None
 
 
+def safe_int(value, default: int = 0) -> int:
+    try:
+        out = int(float(value))
+        return out
+    except Exception:
+        return int(default)
+
+
 def _numeric_series(frame: pd.DataFrame, column: str, default: float = 0.0) -> pd.Series:
     if column not in frame.columns:
         return pd.Series(default, index=frame.index, dtype="float64")
@@ -768,6 +785,78 @@ def load_shadow_runs(manifest: dict, manifest_path: Path, identity_lookup: Playe
     return out
 
 
+def _recommendation_rank(label: str) -> int:
+    return {"pass": 0, "consider": 1, "strong": 2, "elite": 3}.get(str(label).strip().lower(), 0)
+
+
+def _validated_fallback_recommendation(row: pd.Series) -> str:
+    existing = str(row.get("recommendation", "")).strip().lower()
+    if existing in {"consider", "strong", "elite"}:
+        return existing
+
+    selection_probability = safe_float(row.get("selection_probability"))
+    if selection_probability is None:
+        selection_probability = safe_float(row.get("expected_win_rate")) or 0.0
+    selection_confidence = safe_float(row.get("selection_confidence"))
+    if selection_confidence is None:
+        selection_confidence = safe_float(row.get("final_confidence")) or 0.0
+    selection_ev = safe_float(row.get("selection_ev"))
+    if selection_ev is None:
+        selection_ev = safe_float(row.get("ev")) or 0.0
+
+    if selection_probability >= 0.600 and selection_confidence >= 0.18 and selection_ev >= 0.08:
+        return "elite"
+    if selection_probability >= 0.575 and selection_confidence >= 0.12 and selection_ev >= 0.03:
+        return "strong"
+    if selection_probability >= 0.545 and selection_confidence >= 0.07 and selection_ev >= 0.0:
+        return "consider"
+    return "pass"
+
+
+def prepare_selector_pool_for_publication(plays: pd.DataFrame) -> pd.DataFrame:
+    if plays.empty:
+        return plays.copy()
+
+    prepared = plays.copy().reset_index(drop=True)
+    prepared["selected_rank"] = np.arange(1, len(prepared.index) + 1, dtype=int)
+    prepared["recommendation"] = [
+        _validated_fallback_recommendation(prepared.iloc[idx])
+        for idx in range(len(prepared.index))
+    ]
+
+    decision_tier_map = {
+        "elite": "Tier A - Validated Fallback",
+        "strong": "Tier A - Validated Fallback",
+        "consider": "Tier B - Validated Fallback",
+        "pass": "Tier C - Heuristic Fallback",
+    }
+    decision_tier = prepared.get("decision_tier", pd.Series("", index=prepared.index)).fillna("").astype(str).str.strip()
+    missing_decision_tier = decision_tier.eq("")
+    prepared.loc[missing_decision_tier, "decision_tier"] = prepared.loc[missing_decision_tier, "recommendation"].map(decision_tier_map)
+    return prepared
+
+
+def publication_thresholds_payload() -> dict:
+    return {
+        "allowed_sources": sorted(NBA_PUBLICATION_ALLOWED_SOURCES),
+        "blocked_run_ids": sorted(NBA_PUBLICATION_BLOCKED_RUN_IDS),
+        "min_avg_expected_win_rate": float(NBA_PUBLICATION_MIN_AVG_EXPECTED_WIN_RATE),
+        "min_max_expected_win_rate": float(NBA_PUBLICATION_MIN_MAX_EXPECTED_WIN_RATE),
+        "min_avg_final_confidence": float(NBA_PUBLICATION_MIN_AVG_FINAL_CONFIDENCE),
+        "validated_heuristic": {
+            "allowed_sources": sorted(NBA_VALIDATED_HEURISTIC_ALLOWED_SOURCES),
+            "min_play_count": int(NBA_VALIDATED_HEURISTIC_MIN_PLAYS),
+            "max_play_count": int(NBA_VALIDATED_HEURISTIC_MAX_PLAYS),
+            "min_avg_expected_win_rate": float(NBA_VALIDATED_HEURISTIC_MIN_AVG_EXPECTED_WIN_RATE),
+            "min_max_expected_win_rate": float(NBA_VALIDATED_HEURISTIC_MIN_MAX_EXPECTED_WIN_RATE),
+            "min_avg_final_confidence": float(NBA_VALIDATED_HEURISTIC_MIN_AVG_FINAL_CONFIDENCE),
+            "min_graded_plays": int(NBA_VALIDATED_HEURISTIC_MIN_GRADED_PLAYS),
+            "min_historical_win_rate": float(NBA_VALIDATED_HEURISTIC_MIN_HISTORICAL_WIN_RATE),
+            "min_historical_roi_per_graded_play": float(NBA_VALIDATED_HEURISTIC_MIN_HISTORICAL_ROI),
+        },
+    }
+
+
 def build_selector_pool_fallback(plays: pd.DataFrame, *, limit: int = NBA_SELECTOR_FALLBACK_MAX_PLAYS) -> pd.DataFrame:
     if plays.empty:
         return plays.copy()
@@ -832,6 +921,56 @@ def build_selector_pool_fallback(plays: pd.DataFrame, *, limit: int = NBA_SELECT
     )
 
 
+def _validated_heuristic_publication_ready(
+    *,
+    plays: pd.DataFrame,
+    source_label: str,
+    run_id: str,
+    history_mode: str,
+    predictor_error: str,
+    accuracy_metrics: dict,
+    avg_expected_win_rate: float | None,
+    max_expected_win_rate: float | None,
+    avg_final_confidence: float | None,
+    non_pass_count: int,
+    selected_rank_count: int,
+) -> bool:
+    if source_label not in NBA_VALIDATED_HEURISTIC_ALLOWED_SOURCES:
+        return False
+    if run_id not in NBA_PUBLICATION_BLOCKED_RUN_IDS:
+        return False
+    if predictor_error:
+        return False
+    if history_mode != "historical_backtest":
+        return False
+    if not bool(accuracy_metrics.get("available")):
+        return False
+
+    play_count = int(len(plays))
+    if play_count < int(NBA_VALIDATED_HEURISTIC_MIN_PLAYS) or play_count > int(NBA_VALIDATED_HEURISTIC_MAX_PLAYS):
+        return False
+    if avg_expected_win_rate is None or avg_expected_win_rate < float(NBA_VALIDATED_HEURISTIC_MIN_AVG_EXPECTED_WIN_RATE):
+        return False
+    if max_expected_win_rate is None or max_expected_win_rate < float(NBA_VALIDATED_HEURISTIC_MIN_MAX_EXPECTED_WIN_RATE):
+        return False
+    if avg_final_confidence is None or avg_final_confidence < float(NBA_VALIDATED_HEURISTIC_MIN_AVG_FINAL_CONFIDENCE):
+        return False
+    if non_pass_count <= 0 and selected_rank_count <= 0:
+        return False
+
+    overall_metrics = accuracy_metrics.get("overall", {}) if isinstance(accuracy_metrics, dict) else {}
+    graded_count = safe_int(overall_metrics.get("graded_count"), default=0)
+    win_rate = safe_float(overall_metrics.get("win_rate"))
+    roi_per_graded_play = safe_float(overall_metrics.get("roi_per_graded_play"))
+    if graded_count < int(NBA_VALIDATED_HEURISTIC_MIN_GRADED_PLAYS):
+        return False
+    if win_rate is None or win_rate < float(NBA_VALIDATED_HEURISTIC_MIN_HISTORICAL_WIN_RATE):
+        return False
+    if roi_per_graded_play is None or roi_per_graded_play <= float(NBA_VALIDATED_HEURISTIC_MIN_HISTORICAL_ROI):
+        return False
+    return True
+
+
 def _evaluate_publication_candidate(
     plays: pd.DataFrame,
     final_payload: dict,
@@ -862,12 +1001,25 @@ def _evaluate_publication_candidate(
     max_expected_win_rate = safe_float(expected_win_rate.max())
     avg_final_confidence = safe_float(final_confidence.mean())
     selected_rank_count = int(selected_rank.notna().sum()) if not selected_rank.empty else 0
+    validated_heuristic_ready = _validated_heuristic_publication_ready(
+        plays=rows,
+        source_label=source_label,
+        run_id=run_id,
+        history_mode=history_mode,
+        predictor_error=predictor_error,
+        accuracy_metrics=accuracy_metrics,
+        avg_expected_win_rate=avg_expected_win_rate,
+        max_expected_win_rate=max_expected_win_rate,
+        avg_final_confidence=avg_final_confidence,
+        non_pass_count=non_pass_count,
+        selected_rank_count=selected_rank_count,
+    )
 
     if play_count <= 0:
         reasons.append("empty_board")
-    if source_label not in NBA_PUBLICATION_ALLOWED_SOURCES:
+    if source_label not in NBA_PUBLICATION_ALLOWED_SOURCES and not validated_heuristic_ready:
         reasons.append("fallback_source_not_publishable")
-    if run_id in NBA_PUBLICATION_BLOCKED_RUN_IDS:
+    if run_id in NBA_PUBLICATION_BLOCKED_RUN_IDS and not validated_heuristic_ready:
         reasons.append("artifact_free_model")
     if predictor_error:
         reasons.append("predictor_error_present")
@@ -903,6 +1055,7 @@ def _evaluate_publication_candidate(
         "history_mode": history_mode or None,
         "predictor_error": predictor_error or None,
         "board_fallback_reason": board_fallback_reason or None,
+        "publication_mode": "validated_heuristic_fallback" if validated_heuristic_ready else "production",
         "passes": len(reasons) == 0,
         "reasons": reasons,
     }
@@ -910,6 +1063,8 @@ def _evaluate_publication_candidate(
 
 def _build_publication_message(publication_gate: dict) -> str:
     if str(publication_gate.get("status")) == "ready":
+        if str(publication_gate.get("publication_mode")) == "validated_heuristic_fallback":
+            return "Validated fallback board published while trained NBA model artifacts are unavailable."
         return "Production board published."
     blockers = set(str(reason) for reason in publication_gate.get("blockers", []))
     if "artifact_free_model" in blockers:
@@ -940,7 +1095,7 @@ def resolve_published_board(
     selector_csv = resolve_artifact_path(manifest.get("selector_csv"), manifest_path.parent)
     selector_plays = pd.read_csv(selector_csv) if selector_csv and selector_csv.exists() else pd.DataFrame()
     if not selector_plays.empty:
-        fallback_plays = build_selector_pool_fallback(selector_plays)
+        fallback_plays = prepare_selector_pool_for_publication(build_selector_pool_fallback(selector_plays))
         if not fallback_plays.empty:
             final_payload.setdefault("policy_profile", manifest.get("policy_profile"))
             final_payload.setdefault("market_snapshot", manifest.get("current_market_snapshot"))
@@ -960,7 +1115,7 @@ def resolve_published_board(
             shadow_selector = pd.read_csv(shadow_selector_csv) if shadow_selector_csv and shadow_selector_csv.exists() else pd.DataFrame()
             if shadow_selector.empty:
                 continue
-            shadow_fallback = build_selector_pool_fallback(shadow_selector)
+            shadow_fallback = prepare_selector_pool_for_publication(build_selector_pool_fallback(shadow_selector))
             if shadow_fallback.empty:
                 continue
             candidates.append((shadow_fallback, shadow_payload, "shadow_selector_pool_fallback"))
@@ -976,16 +1131,11 @@ def resolve_published_board(
                 "status": "ready",
                 "selected_source": source_label,
                 "selected_policy_profile": candidate_payload.get("policy_profile"),
-                "message": _build_publication_message({"status": "ready"}),
+                "publication_mode": report.get("publication_mode"),
+                "message": _build_publication_message({"status": "ready", "publication_mode": report.get("publication_mode")}),
                 "blockers": [],
                 "candidates": candidate_reports,
-                "thresholds": {
-                    "allowed_sources": sorted(NBA_PUBLICATION_ALLOWED_SOURCES),
-                    "blocked_run_ids": sorted(NBA_PUBLICATION_BLOCKED_RUN_IDS),
-                    "min_avg_expected_win_rate": float(NBA_PUBLICATION_MIN_AVG_EXPECTED_WIN_RATE),
-                    "min_max_expected_win_rate": float(NBA_PUBLICATION_MIN_MAX_EXPECTED_WIN_RATE),
-                    "min_avg_final_confidence": float(NBA_PUBLICATION_MIN_AVG_FINAL_CONFIDENCE),
-                },
+                "thresholds": publication_thresholds_payload(),
             }
             return candidate_plays, candidate_payload, source_label, publication_gate
 
@@ -1000,13 +1150,7 @@ def resolve_published_board(
         "message": _build_publication_message({"status": "suppressed", "blockers": blockers}),
         "blockers": blockers,
         "candidates": candidate_reports,
-        "thresholds": {
-            "allowed_sources": sorted(NBA_PUBLICATION_ALLOWED_SOURCES),
-            "blocked_run_ids": sorted(NBA_PUBLICATION_BLOCKED_RUN_IDS),
-            "min_avg_expected_win_rate": float(NBA_PUBLICATION_MIN_AVG_EXPECTED_WIN_RATE),
-            "min_max_expected_win_rate": float(NBA_PUBLICATION_MIN_MAX_EXPECTED_WIN_RATE),
-            "min_avg_final_confidence": float(NBA_PUBLICATION_MIN_AVG_FINAL_CONFIDENCE),
-        },
+        "thresholds": publication_thresholds_payload(),
     }
     return pd.DataFrame(), blocked_payload, blocked_source, publication_gate
 
