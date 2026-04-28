@@ -276,6 +276,60 @@ def test_publication_candidate_blocks_heuristic_fallback_board() -> None:
     assert "accuracy_metrics_unavailable" in report["reasons"]
 
 
+def test_publication_candidate_allows_validated_heuristic_fallback_board() -> None:
+    plays = pd.DataFrame(
+        [
+            {
+                "player": "Validated One",
+                "target": "PTS",
+                "direction": "UNDER",
+                "expected_win_rate": 0.612,
+                "ev": 0.151,
+                "final_confidence": 0.24,
+                "selection_probability": 0.612,
+                "selection_ev": 0.151,
+                "selection_confidence": 0.24,
+                "recommendation": "elite",
+                "selected_rank": 1,
+            },
+            {
+                "player": "Validated Two",
+                "target": "PTS",
+                "direction": "UNDER",
+                "expected_win_rate": 0.601,
+                "ev": 0.129,
+                "final_confidence": 0.19,
+                "selection_probability": 0.601,
+                "selection_ev": 0.129,
+                "selection_confidence": 0.19,
+                "recommendation": "strong",
+                "selected_rank": 2,
+            },
+        ]
+    )
+
+    report = _evaluate_publication_candidate(
+        plays,
+        {
+            "run_id": "artifact_free_heuristic",
+            "history_mode": "historical_backtest",
+        },
+        source_label="primary_selector_pool_fallback",
+        accuracy_metrics={
+            "available": True,
+            "overall": {
+                "graded_count": 24,
+                "win_rate": 0.67,
+                "roi_per_graded_play": 0.12,
+            },
+        },
+    )
+
+    assert report["passes"] is True
+    assert report["publication_mode"] == "validated_heuristic_fallback"
+    assert report["reasons"] == []
+
+
 def test_resolve_published_board_prefers_shadow_final_board_over_selector_fallback(tmp_path: Path) -> None:
     primary_final_csv = tmp_path / "final.csv"
     primary_final_json = tmp_path / "final.json"
@@ -353,3 +407,74 @@ def test_resolve_published_board_prefers_shadow_final_board_over_selector_fallba
     assert plays["player"].tolist() == ["Shadow Strong"]
     assert final_payload["policy_profile"] == "shadow_policy"
     assert publication_gate["status"] == "ready"
+
+
+def test_resolve_published_board_publishes_validated_primary_selector_fallback(tmp_path: Path) -> None:
+    primary_final_csv = tmp_path / "final.csv"
+    primary_final_json = tmp_path / "final.json"
+    primary_selector_csv = tmp_path / "selector.csv"
+    manifest_path = tmp_path / "manifest.json"
+
+    pd.DataFrame(columns=["player", "expected_win_rate"]).to_csv(primary_final_csv, index=False)
+    primary_selector = pd.DataFrame(
+        [
+            {
+                "player": "Validated One",
+                "game_key": "g1",
+                "target": "PTS",
+                "direction": "UNDER",
+                "expected_win_rate": 0.612,
+                "ev": 0.151,
+                "final_confidence": 0.24,
+                "abs_edge": 1.2,
+            },
+            {
+                "player": "Validated Two",
+                "game_key": "g2",
+                "target": "PTS",
+                "direction": "UNDER",
+                "expected_win_rate": 0.601,
+                "ev": 0.129,
+                "final_confidence": 0.19,
+                "abs_edge": 1.0,
+            },
+        ]
+    )
+    primary_selector.to_csv(primary_selector_csv, index=False)
+
+    primary_payload = {
+        "run_id": "artifact_free_heuristic",
+        "policy_profile": "production_board_objective_b12",
+        "history_mode": "historical_backtest",
+    }
+    primary_final_json.write_text(json.dumps(primary_payload), encoding="utf-8")
+
+    manifest = {
+        "policy_profile": "production_board_objective_b12",
+        "current_market_snapshot": str(tmp_path / "snapshot.parquet"),
+        "final_csv": str(primary_final_csv),
+        "final_json": str(primary_final_json),
+        "selector_csv": str(primary_selector_csv),
+        "shadow_runs": [],
+    }
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    plays, final_payload, source, publication_gate = resolve_published_board(
+        manifest,
+        manifest_path,
+        accuracy_metrics={
+            "available": True,
+            "overall": {
+                "graded_count": 24,
+                "win_rate": 0.67,
+                "roi_per_graded_play": 0.12,
+            },
+        },
+    )
+
+    assert source == "primary_selector_pool_fallback"
+    assert final_payload["policy_profile"] == "production_board_objective_b12"
+    assert publication_gate["status"] == "ready"
+    assert publication_gate["publication_mode"] == "validated_heuristic_fallback"
+    assert plays["selected_rank"].tolist() == [1, 2]
+    assert set(plays["recommendation"].tolist()) == {"elite"}
