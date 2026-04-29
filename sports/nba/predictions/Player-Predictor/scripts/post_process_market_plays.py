@@ -3036,6 +3036,252 @@ def _learned_gate_rescue_score_series(candidates: pd.DataFrame, reference: pd.Da
     return (core - 0.22 * risk).astype("float64")
 
 
+def _selector_pool_append_score_series(
+    candidates: pd.DataFrame,
+    reference: pd.DataFrame,
+    *,
+    current_board: pd.DataFrame | None = None,
+) -> pd.Series:
+    if candidates.empty:
+        return pd.Series(dtype="float64")
+
+    ref = reference if reference is not None and not reference.empty else candidates
+    prob_strength = _normalize_to_reference_0_1(
+        _numeric_series(candidates, "board_play_win_prob", 0.5),
+        _numeric_series(ref, "board_play_win_prob", 0.5),
+        constant_value=0.5,
+    )
+    quality_strength = _normalize_to_reference_0_1(
+        _numeric_series(candidates, "final_pool_quality_score", 0.5),
+        _numeric_series(ref, "final_pool_quality_score", 0.5),
+        constant_value=0.5,
+    )
+    ev_strength = _normalize_to_reference_0_1(
+        _numeric_series(candidates, "ev_adjusted", 0.0),
+        _numeric_series(ref, "ev_adjusted", 0.0),
+        constant_value=0.5,
+    )
+    confidence_strength = _normalize_to_reference_0_1(
+        _numeric_series(candidates, "final_confidence", 0.0),
+        _numeric_series(ref, "final_confidence", 0.0),
+        constant_value=0.5,
+    )
+    gap_strength = _normalize_to_reference_0_1(
+        _numeric_series(candidates, "gap_percentile", 0.0),
+        _numeric_series(ref, "gap_percentile", 0.0),
+        constant_value=0.5,
+    )
+    edge_strength = _normalize_to_reference_0_1(
+        _numeric_series(candidates, "abs_edge", 0.0),
+        _numeric_series(ref, "abs_edge", 0.0),
+        constant_value=0.5,
+    )
+    recency_strength = _normalize_to_reference_0_1(
+        _numeric_series(candidates, "recency_factor", 0.75).clip(lower=0.0, upper=1.0),
+        _numeric_series(ref, "recency_factor", 0.75).clip(lower=0.0, upper=1.0),
+        constant_value=0.5,
+    )
+    recoverability_strength = _normalize_to_reference_0_1(
+        _numeric_series(candidates, "recoverability_score", 0.5).clip(lower=0.0),
+        _numeric_series(ref, "recoverability_score", 0.5).clip(lower=0.0),
+        constant_value=0.5,
+    )
+    history_strength = _normalize_to_reference_0_1(
+        np.log1p(_numeric_series(candidates, "history_rows", 0.0).clip(lower=0.0)),
+        np.log1p(_numeric_series(ref, "history_rows", 0.0).clip(lower=0.0)),
+        constant_value=0.5,
+    )
+    contradiction_penalty = _normalize_to_reference_0_1(
+        _numeric_series(candidates, "contradiction_score", 0.0).clip(lower=0.0),
+        _numeric_series(ref, "contradiction_score", 0.0).clip(lower=0.0),
+        constant_value=0.0,
+    )
+    noise_penalty = _normalize_to_reference_0_1(
+        _numeric_series(candidates, "noise_score", 0.0).clip(lower=0.0),
+        _numeric_series(ref, "noise_score", 0.0).clip(lower=0.0),
+        constant_value=0.0,
+    )
+    uncertainty_penalty = _normalize_to_reference_0_1(
+        _numeric_series(candidates, "belief_uncertainty_normalized", _numeric_series(candidates, "belief_uncertainty", 1.0)).clip(lower=0.0),
+        _numeric_series(ref, "belief_uncertainty_normalized", _numeric_series(ref, "belief_uncertainty", 1.0)).clip(lower=0.0),
+        constant_value=0.0,
+    )
+    tail_penalty = _normalize_to_reference_0_1(
+        _numeric_series(candidates, "tail_imbalance", 0.0).abs(),
+        _numeric_series(ref, "tail_imbalance", 0.0).abs(),
+        constant_value=0.0,
+    )
+
+    target = candidates.get("target", pd.Series("", index=candidates.index)).fillna("").astype(str).str.upper().str.strip()
+    direction = candidates.get("direction", pd.Series("", index=candidates.index)).fillna("").astype(str).str.upper().str.strip()
+    segment = (target + "|" + direction).where(target.ne("") & direction.ne(""), "")
+    segment_bonus = segment.map(
+        {
+            "PTS|UNDER": 0.10,
+            "TRB|UNDER": 0.12,
+            "AST|UNDER": 0.08,
+            "TRB|OVER": 0.04,
+            "AST|OVER": 0.02,
+            "PTS|OVER": -0.06,
+        }
+    ).fillna(0.0)
+
+    if current_board is not None and not current_board.empty:
+        board_target_counts = (
+            current_board.get("target", pd.Series("", index=current_board.index)).fillna("").astype(str).str.upper().str.strip().value_counts()
+        )
+        board_direction_counts = (
+            current_board.get("direction", pd.Series("", index=current_board.index)).fillna("").astype(str).str.upper().str.strip().value_counts()
+        )
+        scarcity_bonus = target.map(lambda token: 0.02 if board_target_counts.get(token, 0) <= 0 else 0.0).astype("float64")
+        scarcity_bonus += direction.map(lambda token: 0.01 if board_direction_counts.get(token, 0) <= 0 else 0.0).astype("float64")
+    else:
+        scarcity_bonus = pd.Series(0.0, index=candidates.index, dtype="float64")
+
+    core = (
+        0.24 * quality_strength
+        + 0.18 * prob_strength
+        + 0.12 * ev_strength
+        + 0.10 * confidence_strength
+        + 0.10 * gap_strength
+        + 0.08 * edge_strength
+        + 0.06 * recency_strength
+        + 0.06 * recoverability_strength
+        + 0.04 * history_strength
+    )
+    risk = 0.10 * contradiction_penalty + 0.08 * noise_penalty + 0.06 * uncertainty_penalty + 0.04 * tail_penalty
+    return (core - risk + segment_bonus + scarcity_bonus).astype("float64")
+
+
+def _append_selector_pool_candidates(
+    current_board: pd.DataFrame,
+    selector_pool: pd.DataFrame,
+    *,
+    rank_columns: list[str],
+    max_plays_per_player: int,
+    max_plays_per_target: int,
+    max_total_plays: int,
+    max_target_plays: dict[str, int] | None,
+    max_plays_per_game: int,
+    max_plays_per_script_cluster: int,
+    requested_min_board: int,
+    selector_pool_append_max_rows: int,
+    selector_pool_append_rank_window: int,
+) -> pd.DataFrame:
+    extra_cap = max(0, int(selector_pool_append_max_rows))
+    if extra_cap <= 0 or selector_pool.empty:
+        return current_board.copy()
+
+    target_size = int(requested_min_board) if int(requested_min_board) > 0 else int(max_total_plays)
+    if int(max_total_plays) > 0 and target_size > 0:
+        target_size = min(int(max_total_plays), int(target_size))
+    elif target_size <= 0:
+        target_size = int(max_total_plays)
+    if target_size <= 0 or len(current_board) >= int(target_size):
+        return current_board.copy()
+
+    append_budget = min(extra_cap, max(0, int(target_size) - int(len(current_board))))
+    if append_budget <= 0:
+        return current_board.copy()
+
+    working = selector_pool.copy()
+    if "_gate_row_id" in working.columns:
+        working["_source_index"] = pd.to_numeric(working["_gate_row_id"], errors="coerce").fillna(-1).astype(int)
+    else:
+        working["_source_index"] = working.index
+    base_board = current_board.copy()
+    if "_gate_row_id" in base_board.columns:
+        base_board["_source_index"] = pd.to_numeric(base_board["_gate_row_id"], errors="coerce").fillna(-1).astype(int)
+    else:
+        base_board["_source_index"] = base_board.index
+    base_indices = set(base_board["_source_index"].tolist())
+
+    append_scores = _selector_pool_append_score_series(working, selector_pool, current_board=current_board)
+    working["selector_pool_append_score"] = append_scores.reindex(working.index).fillna(0.0)
+    base_rank_columns = [column for column in (rank_columns or []) if column in working.columns]
+    if not base_rank_columns:
+        base_rank_columns = ["board_play_win_prob", "ev_adjusted", "final_confidence", "abs_edge"]
+    base_ranked = working.sort_values(base_rank_columns, ascending=[False] * len(base_rank_columns)).copy()
+    base_ranked["selector_pool_append_base_rank"] = np.arange(1, len(base_ranked) + 1, dtype=int)
+    working = working.join(base_ranked[["selector_pool_append_base_rank"]], how="left")
+    working = working.sort_values(
+        ["selector_pool_append_score", "final_pool_quality_score", "board_play_win_prob", "ev_adjusted", "final_confidence", "abs_edge"],
+        ascending=[False, False, False, False, False, False],
+    ).copy()
+    working["selector_pool_append_rank"] = np.arange(1, len(working) + 1, dtype=int)
+
+    anchor_rank = int(max_total_plays) if int(max_total_plays) > 0 else max(int(requested_min_board), int(len(base_board)), 1)
+    anchor_rank = max(1, min(anchor_rank, int(len(working))))
+    rank_window = max(0, int(selector_pool_append_rank_window))
+    max_rank = min(int(len(working)), anchor_rank + rank_window)
+    rank_series = pd.to_numeric(working["selector_pool_append_base_rank"], errors="coerce").fillna(len(working) + 1).astype(int)
+    working["selector_pool_append_source"] = np.where(
+        rank_series <= anchor_rank,
+        "selected_override",
+        np.where(rank_series <= max_rank, "near_miss", ""),
+    )
+
+    quality_mask = (
+        (_numeric_series(working, "market_books", 0.0) >= 4.0)
+        & (_numeric_series(working, "history_rows", 0.0) >= 25.0)
+    )
+    eligible = working.loc[
+        (~working["_source_index"].isin(base_indices))
+        & (working["selector_pool_append_source"] != "")
+        & quality_mask
+    ].copy()
+    if eligible.empty:
+        return current_board.copy()
+
+    score_floor = float(pd.to_numeric(eligible["selector_pool_append_score"], errors="coerce").fillna(-np.inf).quantile(0.55))
+    if current_board is not None and len(current_board) >= max(5, int(np.ceil(float(target_size) * 0.6))):
+        board_scores = _selector_pool_append_score_series(current_board, selector_pool, current_board=current_board)
+        if not board_scores.empty:
+            score_floor = max(score_floor, float(board_scores.quantile(0.25)) - 0.05)
+    eligible["selector_pool_append_score_floor"] = float(score_floor)
+    eligible["selector_pool_append_eligible"] = pd.to_numeric(eligible["selector_pool_append_score"], errors="coerce").fillna(-np.inf) >= float(score_floor)
+    eligible = eligible.loc[eligible["selector_pool_append_eligible"]].copy()
+    if eligible.empty:
+        return current_board.copy()
+
+    eligible = eligible.sort_values(
+        ["selector_pool_append_score", "final_pool_quality_score", "board_play_win_prob", "ev_adjusted", "final_confidence", "abs_edge"],
+        ascending=[False, False, False, False, False, False],
+    ).copy()
+    selected_rows = [row.to_dict() for _, row in base_board.iterrows()]
+    seen_indices = set(base_indices)
+    player_counts, target_counts, game_counts, script_cluster_counts = _selection_counters_from_rows(selected_rows)
+    caps = _resolve_target_caps(working, max_plays_per_target=max_plays_per_target, max_target_plays=max_target_plays)
+
+    _append_rows_with_caps(
+        eligible,
+        selected_rows,
+        seen_indices,
+        player_counts,
+        target_counts,
+        game_counts,
+        script_cluster_counts,
+        caps,
+        max_plays_per_player=max_plays_per_player,
+        max_plays_per_game=max_plays_per_game,
+        max_plays_per_script_cluster=max_plays_per_script_cluster,
+        max_total_plays=int(target_size),
+        max_new_rows=int(append_budget),
+    )
+
+    out = pd.DataFrame.from_records(selected_rows) if selected_rows else working.iloc[0:0].copy()
+    if out.empty:
+        return out
+    out.index = out["_source_index"]
+    out["selector_pool_append_added"] = ~out["_source_index"].isin(base_indices)
+    out.loc[~out["selector_pool_append_added"], "selector_pool_append_source"] = ""
+    out.loc[~out["selector_pool_append_added"], "selector_pool_append_rank"] = np.nan
+    out.loc[~out["selector_pool_append_added"], "selector_pool_append_score"] = np.nan
+    out.loc[~out["selector_pool_append_added"], "selector_pool_append_score_floor"] = np.nan
+    out.loc[~out["selector_pool_append_added"], "selector_pool_append_eligible"] = False
+    return out
+
+
 def compute_final_board(
     plays: pd.DataFrame,
     american_odds: int = -110,
@@ -3150,6 +3396,8 @@ def compute_final_board(
     accepted_pick_gate_enabled: bool = False,
     accepted_pick_gate_live: bool = False,
     accepted_pick_gate_min_rows: int = 0,
+    selector_pool_append_max_rows: int = 0,
+    selector_pool_append_rank_window: int = 24,
 ) -> pd.DataFrame:
     out = plays.copy()
     stage_counts: dict[str, int] = {
@@ -3174,6 +3422,7 @@ def compute_final_board(
         merged_stage_counts.setdefault("after_learned_gate", int(merged_stage_counts["after_min_ev"]))
         merged_stage_counts.setdefault("candidate_universe", int(merged_stage_counts["after_learned_gate"]))
         merged_stage_counts.setdefault("after_accepted_pick_gate", int(len(result)))
+        merged_stage_counts.setdefault("after_selector_pool_append", int(merged_stage_counts["after_accepted_pick_gate"]))
         merged_stage_counts["final_board_rows"] = int(len(result))
         result.attrs["stage_counts"] = merged_stage_counts
         return result
@@ -3339,6 +3588,7 @@ def compute_final_board(
             return _finalize(out)
 
     _record_stage("after_recency", out)
+    selector_pool_append_reference = out.copy()
 
     out = out.loc[out["recommendation_rank"] <= minimum_recommendation_rank(min_recommendation)].copy()
     out = out.loc[out["final_confidence"] >= float(min_final_confidence)].copy()
@@ -3506,6 +3756,15 @@ def compute_final_board(
         belief_uncertainty_upper=float(belief_uncertainty_upper),
         near_miss_margin=0.003,
     )
+    if not selector_pool_append_reference.empty:
+        selector_pool_append_reference = annotate_final_pool_quality_fn(
+            selector_pool_append_reference,
+            payload=learned_gate_payload if isinstance(learned_gate_payload, dict) else None,
+            run_date_hint=str(learned_gate_month or infer_run_date_hint_fn(selector_pool_append_reference)),
+            belief_uncertainty_lower=float(belief_uncertainty_lower),
+            belief_uncertainty_upper=float(belief_uncertainty_upper),
+            near_miss_margin=0.003,
+        )
     out["final_pool_gate_enabled"] = bool(initial_pool_gate_active)
     out["final_pool_gate_applied"] = False
     out["final_pool_gate_rows_before"] = int(len(out))
@@ -3898,6 +4157,80 @@ def compute_final_board(
                     gate_remaining["learned_gate_override_fill"] = True
                     gate_remaining["learned_gate_fill_source"] = "override"
                     out = pd.concat([out, gate_remaining], axis=0, ignore_index=False)
+                    deficit = max(0, int(target_size) - int(len(out)))
+            if deficit > 0 and int(selector_pool_append_max_rows) > 0 and not selector_pool_append_reference.empty:
+                append_pool = _append_selector_pool_candidates(
+                    out,
+                    selector_pool_append_reference,
+                    rank_columns=rank_columns,
+                    max_plays_per_player=max_plays_per_player,
+                    max_plays_per_target=max_plays_per_target,
+                    max_total_plays=max_total_plays,
+                    max_target_plays=max_target_plays,
+                    max_plays_per_game=max_plays_per_game,
+                    max_plays_per_script_cluster=max_plays_per_script_cluster,
+                    requested_min_board=target_size,
+                    selector_pool_append_max_rows=min(int(selector_pool_append_max_rows), int(deficit)),
+                    selector_pool_append_rank_window=selector_pool_append_rank_window,
+                )
+                if len(append_pool) > len(out):
+                    appended = append_pool.loc[
+                        pd.to_numeric(append_pool.get("selector_pool_append_added"), errors="coerce").fillna(0).astype(bool)
+                    ].copy()
+                    if "_gate_row_id" in out.columns and "_gate_row_id" in appended.columns:
+                        selected_source_ids = set(pd.to_numeric(out["_gate_row_id"], errors="coerce").fillna(-1).astype(int).tolist())
+                        appended_source_ids = pd.to_numeric(appended["_gate_row_id"], errors="coerce").fillna(-1).astype(int)
+                        appended = appended.loc[~appended_source_ids.isin(selected_source_ids)].copy()
+                    else:
+                        appended = appended.loc[~appended.index.isin(out.index)].copy()
+                    if not appended.empty:
+                        fallback_fraction = float(np.clip(small_bet_fraction, 0.0, max_bet_fraction))
+                        appended["allocation_tier"] = "fallback_small"
+                        appended["allocation_action"] = "fallback_small"
+                        appended["bet_fraction_raw"] = fallback_fraction
+                        appended["bet_fraction_scale"] = 1.0
+                        appended["bet_fraction"] = fallback_fraction
+                        appended["expected_profit_fraction"] = pd.to_numeric(appended["bet_fraction"], errors="coerce").fillna(0.0) * pd.to_numeric(
+                            appended["ev"], errors="coerce"
+                        ).fillna(0.0)
+                        appended["selected_board_prob_raw"] = pd.to_numeric(
+                            appended.get("selected_board_prob_raw", appended.get("board_play_win_prob")),
+                            errors="coerce",
+                        ).fillna(pd.to_numeric(appended.get("board_play_win_prob"), errors="coerce").fillna(0.5))
+                        appended["selected_board_calibration_source"] = appended.get(
+                            "selected_board_calibration_source",
+                            pd.Series("selector_pool_append_identity", index=appended.index),
+                        ).fillna("selector_pool_append_identity")
+                        appended["selected_board_calibration_month"] = appended.get(
+                            "selected_board_calibration_month",
+                            pd.Series(str(selected_board_calibration_month or ""), index=appended.index),
+                        ).fillna(str(selected_board_calibration_month or ""))
+                        out["selector_pool_append_added"] = pd.to_numeric(
+                            out.get("selector_pool_append_added", pd.Series(False, index=out.index)),
+                            errors="coerce",
+                        ).fillna(0).astype(bool)
+                        out["selector_pool_append_source"] = out.get(
+                            "selector_pool_append_source",
+                            pd.Series("", index=out.index),
+                        ).fillna("").astype(str)
+                        out["selector_pool_append_rank"] = pd.to_numeric(
+                            out.get("selector_pool_append_rank", pd.Series(np.nan, index=out.index)),
+                            errors="coerce",
+                        )
+                        out["selector_pool_append_score"] = pd.to_numeric(
+                            out.get("selector_pool_append_score", pd.Series(np.nan, index=out.index)),
+                            errors="coerce",
+                        )
+                        out["selector_pool_append_score_floor"] = pd.to_numeric(
+                            out.get("selector_pool_append_score_floor", pd.Series(np.nan, index=out.index)),
+                            errors="coerce",
+                        )
+                        out["selector_pool_append_eligible"] = pd.to_numeric(
+                            out.get("selector_pool_append_eligible", pd.Series(False, index=out.index)),
+                            errors="coerce",
+                        ).fillna(0).astype(bool)
+                        out = pd.concat([out, appended], axis=0, ignore_index=False)
+    _record_stage("after_selector_pool_append", out)
 
     if max_total_bet_fraction > 0 and float(pd.to_numeric(out.get("bet_fraction"), errors="coerce").fillna(0.0).sum()) > float(max_total_bet_fraction):
         scale = float(max_total_bet_fraction) / float(pd.to_numeric(out.get("bet_fraction"), errors="coerce").fillna(0.0).sum())
@@ -3981,6 +4314,30 @@ def compute_final_board(
         out["accepted_pick_gate_policy"] = ""
     else:
         out["accepted_pick_gate_policy"] = out["accepted_pick_gate_policy"].fillna("").astype(str)
+    if "selector_pool_append_added" not in out.columns:
+        out["selector_pool_append_added"] = False
+    else:
+        out["selector_pool_append_added"] = pd.to_numeric(out["selector_pool_append_added"], errors="coerce").fillna(0).astype(bool)
+    if "selector_pool_append_source" not in out.columns:
+        out["selector_pool_append_source"] = ""
+    else:
+        out["selector_pool_append_source"] = out["selector_pool_append_source"].fillna("").astype(str)
+    if "selector_pool_append_rank" not in out.columns:
+        out["selector_pool_append_rank"] = np.nan
+    else:
+        out["selector_pool_append_rank"] = pd.to_numeric(out["selector_pool_append_rank"], errors="coerce")
+    if "selector_pool_append_score" not in out.columns:
+        out["selector_pool_append_score"] = np.nan
+    else:
+        out["selector_pool_append_score"] = pd.to_numeric(out["selector_pool_append_score"], errors="coerce")
+    if "selector_pool_append_score_floor" not in out.columns:
+        out["selector_pool_append_score_floor"] = np.nan
+    else:
+        out["selector_pool_append_score_floor"] = pd.to_numeric(out["selector_pool_append_score_floor"], errors="coerce")
+    if "selector_pool_append_eligible" not in out.columns:
+        out["selector_pool_append_eligible"] = False
+    else:
+        out["selector_pool_append_eligible"] = pd.to_numeric(out["selector_pool_append_eligible"], errors="coerce").fillna(0).astype(bool)
     out = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).copy()
     out["selected_rank"] = np.arange(1, len(out) + 1)
     if "_source_index" in out.columns:
