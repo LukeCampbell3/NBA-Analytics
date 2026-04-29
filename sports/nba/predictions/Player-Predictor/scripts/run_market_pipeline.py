@@ -1163,6 +1163,8 @@ def main() -> None:
             accepted_pick_gate_enabled=bool(active_policy.get("accepted_pick_gate_enabled", False)),
             accepted_pick_gate_live=bool(active_policy.get("accepted_pick_gate_live", False)),
             accepted_pick_gate_min_rows=int(active_policy.get("accepted_pick_gate_min_rows", 0)),
+            selector_pool_append_max_rows=int(active_policy.get("selector_pool_append_max_rows", 0)),
+            selector_pool_append_rank_window=int(active_policy.get("selector_pool_append_rank_window", 24)),
         )
 
     effective_policy_payload = dict(requested_policy_payload)

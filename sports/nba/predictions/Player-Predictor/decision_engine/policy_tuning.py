@@ -241,6 +241,8 @@ def build_default_shadow_strategies() -> list[StrategyConfig]:
             accepted_pick_gate_enabled=True,
             accepted_pick_gate_live=False,
             accepted_pick_gate_min_rows=6,
+            selector_pool_append_max_rows=6,
+            selector_pool_append_rank_window=24,
             final_pool_quality_weight=0.25,
             target_thresholds={
                 "PTS": {"consider_pct": 0.80, "strong_pct": 0.90, "elite_pct": 0.95},
@@ -316,6 +318,8 @@ def build_default_shadow_strategies() -> list[StrategyConfig]:
             accepted_pick_gate_enabled=True,
             accepted_pick_gate_live=True,
             accepted_pick_gate_min_rows=6,
+            selector_pool_append_max_rows=6,
+            selector_pool_append_rank_window=24,
             final_pool_quality_weight=0.25,
             target_thresholds={
                 "PTS": {"consider_pct": 0.80, "strong_pct": 0.90, "elite_pct": 0.95},

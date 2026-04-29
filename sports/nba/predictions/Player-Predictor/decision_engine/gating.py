@@ -126,6 +126,8 @@ class StrategyConfig:
     accepted_pick_gate_enabled: bool = False
     accepted_pick_gate_live: bool = False
     accepted_pick_gate_min_rows: int = 0
+    selector_pool_append_max_rows: int = 0
+    selector_pool_append_rank_window: int = 24
     max_plays_per_game: int = 2
     max_plays_per_script_cluster: int = 2
     final_pool_quality_weight: float = 0.25
