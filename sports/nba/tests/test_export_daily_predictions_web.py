@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 import json
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -18,6 +19,7 @@ from export_daily_predictions_web import (
     apply_variance_aware_reexpand,
     build_selector_pool_fallback,
     enrich_selector_pool_candidates,
+    find_latest_manifest,
     resolve_published_board,
 )
 
@@ -478,3 +480,17 @@ def test_resolve_published_board_publishes_validated_primary_selector_fallback(t
     assert publication_gate["publication_mode"] == "validated_heuristic_fallback"
     assert plays["selected_rank"].tolist() == [1, 2]
     assert set(plays["recommendation"].tolist()) == {"elite"}
+
+
+def test_find_latest_manifest_prefers_newer_run_stamp_over_mtime(tmp_path: Path) -> None:
+    older_manifest = tmp_path / "20260427" / "daily_market_pipeline_manifest_20260427.json"
+    newer_manifest = tmp_path / "20260428" / "daily_market_pipeline_manifest_20260428.json"
+    older_manifest.parent.mkdir(parents=True, exist_ok=True)
+    newer_manifest.parent.mkdir(parents=True, exist_ok=True)
+    older_manifest.write_text("{}", encoding="utf-8")
+    newer_manifest.write_text("{}", encoding="utf-8")
+
+    os.utime(newer_manifest, (100, 100))
+    os.utime(older_manifest, (200, 200))
+
+    assert find_latest_manifest(tmp_path) == newer_manifest

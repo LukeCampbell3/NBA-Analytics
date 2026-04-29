@@ -27,7 +27,7 @@ sports/
 python sports/site/pipeline/run_daily_predictions.py
 ```
 
-This command now checks local time and runs only at `2:00 AM` by default. At the scheduled time it refreshes NBA predictions, generates a fresh MLB raw pool when processed MLB data is available, tightens the MLB board for publication, and rebuilds the unified static site into `dist/`.
+This command now checks local time and runs once the local clock has passed `2:00 AM` by default whenever the current-day payloads are stale or missing. At that point it refreshes NBA predictions, generates a fresh MLB raw pool when processed MLB data is available, tightens the MLB board for publication, and rebuilds the unified static site into `dist/`.
 
 For a manual run outside the 2:00 AM window:
 

@@ -373,8 +373,20 @@ def build_parlay_validation(history_csv_path: Path | None) -> dict:
     return summary
 
 
+def manifest_run_stamp(path: Path) -> str:
+    for candidate in (path.stem, path.parent.name):
+        match = re.search(r"(\d{8})", str(candidate))
+        if match:
+            return match.group(1)
+    return ""
+
+
 def find_latest_manifest(root: Path) -> Path:
-    manifests = sorted(root.glob("**/daily_market_pipeline_manifest_*.json"), key=lambda path: path.stat().st_mtime, reverse=True)
+    manifests = sorted(
+        root.glob("**/daily_market_pipeline_manifest_*.json"),
+        key=lambda path: (manifest_run_stamp(path), path.stat().st_mtime, path.name),
+        reverse=True,
+    )
     if not manifests:
         raise FileNotFoundError(f"No daily pipeline manifest found under {root}")
     return manifests[0]

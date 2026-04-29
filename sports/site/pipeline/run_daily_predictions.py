@@ -15,7 +15,7 @@ import argparse
 import json
 import subprocess
 import sys
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 
@@ -125,24 +125,71 @@ def validate_schedule_args(hour: int, minute: int) -> tuple[int, int]:
     return int(hour), int(minute)
 
 
+def resolve_effective_run_date(run_date: str | None) -> date:
+    if run_date:
+        return datetime.fromisoformat(str(run_date)).date()
+    return datetime.now().astimezone().date()
+
+
+def load_payload_run_date(payload_path: Path) -> str | None:
+    if not payload_path.exists():
+        return None
+    try:
+        payload = json.loads(payload_path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    value = payload.get("run_date")
+    token = str(value).strip() if value is not None else ""
+    return token or None
+
+
+def stale_payload_sports(args: argparse.Namespace, target_run_date: str) -> list[str]:
+    stale: list[str] = []
+    if not args.skip_nba and load_payload_run_date(NBA_WEB_JSON) != target_run_date:
+        stale.append("NBA")
+    if not args.skip_mlb and load_payload_run_date(MLB_WEB_JSON) != target_run_date:
+        stale.append("MLB")
+    return stale
+
+
+def derive_nba_manifest_path(run_date: date) -> Path:
+    run_stamp = run_date.strftime("%Y%m%d")
+    return NBA_PREDICTOR_ROOT / "model" / "analysis" / "daily_runs" / run_stamp / f"daily_market_pipeline_manifest_{run_stamp}.json"
+
+
 def check_schedule_gate(args: argparse.Namespace) -> tuple[bool, str]:
     scheduled_hour, scheduled_minute = validate_schedule_args(args.scheduled_hour, args.scheduled_minute)
     now_local = datetime.now().astimezone()
+    target_run_date = str(resolve_effective_run_date(args.run_date))
+    stale_sports = stale_payload_sports(args, target_run_date)
     timezone_label = str(now_local.tzname() or "local")
     scheduled_label = f"{scheduled_hour:02d}:{scheduled_minute:02d} {timezone_label}"
+    scheduled_time_reached = (now_local.hour, now_local.minute) >= (scheduled_hour, scheduled_minute)
 
     if args.force_run:
         return True, (
             f"Bypassing schedule gate at {now_local.isoformat()} because --force-run was provided. "
-            f"Configured run time remains {scheduled_label}."
+            f"Configured run time remains {scheduled_label}. Target run date: {target_run_date}."
         )
 
-    if now_local.hour == scheduled_hour and now_local.minute == scheduled_minute:
-        return True, f"Schedule gate passed at {now_local.isoformat()} (configured run time: {scheduled_label})."
+    if scheduled_time_reached and stale_sports:
+        return True, (
+            f"Schedule gate passed at {now_local.isoformat()} because the configured run time "
+            f"({scheduled_label}) has passed and these payloads are still stale or missing for {target_run_date}: "
+            f"{', '.join(stale_sports)}."
+        )
+
+    if scheduled_time_reached:
+        return False, (
+            f"Skipping shared daily prediction refresh at {now_local.isoformat()} because the published payloads "
+            f"are already current for {target_run_date}. Pass --force-run to rebuild anyway."
+        )
 
     return False, (
         f"Skipping shared daily prediction refresh at {now_local.isoformat()} because the configured run time is "
-        f"{scheduled_label}. Re-run at that time or pass --force-run for a manual execution."
+        f"{scheduled_label}. The current stale/missing payloads for {target_run_date} are: "
+        f"{', '.join(stale_sports) if stale_sports else 'none'}. Re-run after the scheduled time or pass "
+        f"--force-run for a manual execution."
     )
 
 
@@ -261,11 +308,20 @@ def run_nba(args: argparse.Namespace, output_dir: Path) -> None:
         command.append("--skip-cutoff-meta-monitor")
 
     run_step("Run NBA Daily Prediction Pipeline", command)
+    run_date = resolve_effective_run_date(args.run_date)
+    expected_manifest = derive_nba_manifest_path(run_date)
+    if not expected_manifest.exists():
+        raise FileNotFoundError(
+            "NBA daily pipeline completed but the expected same-day manifest was not found: "
+            f"{expected_manifest}"
+        )
     run_step(
         "Export NBA Prediction Payload",
         [
             args.python,
             str(NBA_EXPORTER),
+            "--manifest",
+            str(expected_manifest),
             "--out-json",
             str(NBA_WEB_JSON),
             "--out-dist",

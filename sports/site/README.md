@@ -16,7 +16,7 @@ Run the shared daily predictor refresh for the published site:
 python sports/site/pipeline/run_daily_predictions.py
 ```
 
-That command now checks local time and runs only at `2:00 AM` by default. When the schedule gate passes, it refreshes the NBA board, generates and then tightens the MLB board when processed MLB data is available, exports the published payloads, and rebuilds the unified static bundle.
+That command now checks local time and runs once `2:00 AM` local time has passed whenever the current-day payloads are stale or missing. When the schedule gate passes, it refreshes the NBA board, generates and then tightens the MLB board when processed MLB data is available, exports the published payloads, and rebuilds the unified static bundle.
 
 For a manual refresh outside the scheduled window:
 
