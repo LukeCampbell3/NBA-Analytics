@@ -184,6 +184,37 @@ def _board_input() -> pd.DataFrame:
     )
 
 
+def _opposite_flip_history() -> pd.DataFrame:
+    rows: list[dict] = []
+    for idx in range(80):
+        if idx < 56:
+            pred_pts = 20.3 + 0.05 * (idx % 3)
+            market_pts = 19.5
+            actual_pts = 18.6 + 0.05 * (idx % 2)
+        else:
+            pred_pts = 18.8 - 0.05 * (idx % 3)
+            market_pts = 19.5
+            actual_pts = 18.7 + 0.05 * (idx % 2)
+        rows.append(
+            {
+                "player": f"Flip Hist {idx}",
+                "market_date": f"2026-03-{(idx % 28) + 1:02d}",
+                "pred_PTS": pred_pts,
+                "market_PTS": market_pts,
+                "actual_PTS": actual_pts,
+                "pred_TRB": None,
+                "market_TRB": None,
+                "actual_TRB": None,
+                "pred_AST": None,
+                "market_AST": None,
+                "actual_AST": None,
+                "did_not_play": 0,
+                "minutes": 30.0,
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def test_line_decision_prefers_trade_for_strong_edge() -> None:
     lookup = build_line_decision_lookup(_synthetic_history())
     decision = estimate_line_decision(
@@ -233,6 +264,33 @@ def test_line_decision_gate_uses_conditional_trade_confidence() -> None:
     assert decision["trade_eligible"] is True
 
 
+def test_line_decision_can_flip_to_opposite_side() -> None:
+    lookup = build_line_decision_lookup(_opposite_flip_history())
+    decision = estimate_line_decision(
+        lookup=lookup,
+        target="PTS",
+        prediction=20.35,
+        market_line=19.5,
+        direction="OVER",
+        gap_percentile=0.82,
+        uncertainty_sigma=0.55,
+        belief_confidence_factor=0.88,
+        feasibility=0.92,
+        history_rows=120,
+        market_books=5,
+        fallback_blend=0.0,
+        prior_direction_win_rate=0.56,
+        prior_neutral_rate=0.02,
+        config=LineDecisionConfig(no_trade_threshold=0.45, min_trade_prob=0.57, min_trade_prob_gap=0.06),
+    )
+
+    assert decision["trade_eligible"] is True
+    assert decision["action"] == "UNDER"
+    assert decision["action_is_opposite"] is True
+    assert decision["under_prob"] > decision["over_prob"]
+    assert decision["preferred_direction_conditional_prob"] >= 0.57
+
+
 def test_build_play_rows_marks_fragile_near_line_case_as_no_trade() -> None:
     history = _synthetic_history()
     slate = _synthetic_slate()
@@ -255,7 +313,69 @@ def test_build_play_rows_marks_fragile_near_line_case_as_no_trade() -> None:
     assert by_player.loc["Fragile Sidecar", "line_no_trade_prob"] > 0.36
 
 
-def test_compute_final_board_filters_line_decision_no_trade_rows() -> None:
+def test_build_play_rows_flips_effective_direction_when_opposite_side_is_preferred() -> None:
+    history = _opposite_flip_history()
+    slate = pd.DataFrame(
+        [
+            {
+                "player": "Flip Candidate",
+                "market_date": "2026-04-01",
+                "market_player_raw": "Flip Candidate",
+                "market_event_id": "game_flip",
+                "market_commence_time_utc": "2026-04-01T23:00:00Z",
+                "market_home_team": "AAA",
+                "market_away_team": "BBB",
+                "history_rows": 140,
+                "last_history_date": "2026-03-31",
+                "csv": "flip.csv",
+                "belief_uncertainty": 0.50,
+                "feasibility": 0.92,
+                "fallback_blend": 0.0,
+                "pred_PTS": 20.35,
+                "baseline_PTS": 19.8,
+                "market_PTS": 19.5,
+                "baseline_edge_PTS": 0.30,
+                "PTS_uncertainty_sigma": 0.55,
+                "PTS_spike_probability": 0.22,
+                "market_books_PTS": 5,
+                "pred_TRB": None,
+                "baseline_TRB": None,
+                "market_TRB": None,
+                "baseline_edge_TRB": None,
+                "TRB_uncertainty_sigma": None,
+                "TRB_spike_probability": None,
+                "market_books_TRB": None,
+                "pred_AST": None,
+                "baseline_AST": None,
+                "market_AST": None,
+                "baseline_edge_AST": None,
+                "AST_uncertainty_sigma": None,
+                "AST_spike_probability": None,
+                "market_books_AST": None,
+            }
+        ]
+    )
+
+    plays = build_play_rows(
+        slate,
+        build_history_lookup(history),
+        line_decision_lookup=build_line_decision_lookup(history),
+        line_decision_enabled=True,
+        line_decision_config=LineDecisionConfig(no_trade_threshold=0.45, min_trade_prob=0.57, min_trade_prob_gap=0.06),
+    )
+
+    assert len(plays) == 1
+    row = plays.iloc[0]
+    assert row["model_direction"] == "OVER"
+    assert row["direction"] == "UNDER"
+    assert row["line_decision_action"] == "UNDER"
+    assert bool(row["line_action_is_opposite"]) is True
+    assert bool(row["line_decision_trade_eligible"]) is True
+    assert float(row["expected_win_rate"]) > 0.50
+    assert float(row["prediction"]) < float(row["market_line"])
+
+
+def test_compute_final_board_keeps_no_trade_rows_when_line_gate_is_disabled() -> None:
     board = compute_final_board(
         _board_input(),
         american_odds=-110,
@@ -277,4 +397,5 @@ def test_compute_final_board_filters_line_decision_no_trade_rows() -> None:
         elite_tier_percentile=0.0,
     )
     assert not board.empty
-    assert board["player"].tolist() == ["Keep Me"]
+    assert set(board["player"].tolist()) == {"Keep Me", "Drop Me"}
+    assert set(board["line_decision_gate_mode"].unique().tolist()) == {"disabled_annotation_only"}

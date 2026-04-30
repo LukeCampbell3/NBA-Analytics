@@ -15,9 +15,11 @@ sys.path.insert(0, str(PLAYER_PREDICTOR_ROOT / "scripts"))
 
 from export_daily_predictions_web import (
     _evaluate_publication_candidate,
+    apply_parlay_safety_gate,
     apply_adaptive_board_sizing,
     apply_variance_aware_reexpand,
     build_selector_pool_fallback,
+    evaluate_parlay_safety_gate,
     enrich_selector_pool_candidates,
     find_latest_manifest,
     resolve_published_board,
@@ -399,7 +401,7 @@ def test_resolve_published_board_prefers_shadow_final_board_over_selector_fallba
     }
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
-    plays, final_payload, source, publication_gate = resolve_published_board(
+    plays, final_payload, source, publication_gate, parlay_plays, parlay_source = resolve_published_board(
         manifest,
         manifest_path,
         accuracy_metrics={"available": True},
@@ -409,6 +411,8 @@ def test_resolve_published_board_prefers_shadow_final_board_over_selector_fallba
     assert plays["player"].tolist() == ["Shadow Strong"]
     assert final_payload["policy_profile"] == "shadow_policy"
     assert publication_gate["status"] == "ready"
+    assert parlay_source == ""
+    assert len(parlay_plays.index) == 0
 
 
 def test_resolve_published_board_publishes_validated_primary_selector_fallback(tmp_path: Path) -> None:
@@ -461,7 +465,7 @@ def test_resolve_published_board_publishes_validated_primary_selector_fallback(t
     }
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
-    plays, final_payload, source, publication_gate = resolve_published_board(
+    plays, final_payload, source, publication_gate, parlay_plays, parlay_source = resolve_published_board(
         manifest,
         manifest_path,
         accuracy_metrics={
@@ -480,6 +484,114 @@ def test_resolve_published_board_publishes_validated_primary_selector_fallback(t
     assert publication_gate["publication_mode"] == "validated_heuristic_fallback"
     assert plays["selected_rank"].tolist() == [1, 2]
     assert set(plays["recommendation"].tolist()) == {"elite"}
+    assert parlay_source == "primary_selector_pool_fallback"
+    assert len(parlay_plays.index) == 2
+
+
+def test_resolve_published_board_prefers_trained_shadow_final_board_over_validated_primary_fallback(tmp_path: Path) -> None:
+    primary_final_csv = tmp_path / "final.csv"
+    primary_final_json = tmp_path / "final.json"
+    primary_selector_csv = tmp_path / "selector.csv"
+    shadow_final_csv = tmp_path / "shadow_final.csv"
+    shadow_final_json = tmp_path / "shadow_final.json"
+    manifest_path = tmp_path / "manifest.json"
+
+    pd.DataFrame(columns=["player", "expected_win_rate"]).to_csv(primary_final_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "player": "Fallback One",
+                "game_key": "g1",
+                "target": "PTS",
+                "direction": "UNDER",
+                "expected_win_rate": 0.612,
+                "ev": 0.151,
+                "final_confidence": 0.24,
+                "abs_edge": 1.2,
+            },
+            {
+                "player": "Fallback Two",
+                "game_key": "g2",
+                "target": "AST",
+                "direction": "OVER",
+                "expected_win_rate": 0.601,
+                "ev": 0.129,
+                "final_confidence": 0.19,
+                "abs_edge": 1.0,
+            },
+        ]
+    ).to_csv(primary_selector_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "player": "Shadow Anchor",
+                "target": "PTS",
+                "direction": "OVER",
+                "expected_win_rate": 0.552,
+                "final_confidence": 0.21,
+                "recommendation": "elite",
+                "selected_rank": 1,
+            },
+            {
+                "player": "Shadow Pair",
+                "target": "TRB",
+                "direction": "UNDER",
+                "expected_win_rate": 0.545,
+                "final_confidence": 0.18,
+                "recommendation": "strong",
+                "selected_rank": 2,
+            },
+        ]
+    ).to_csv(shadow_final_csv, index=False)
+
+    primary_payload = {
+        "run_id": "artifact_free_heuristic",
+        "policy_profile": "production_board_objective_b12",
+        "history_mode": "historical_backtest",
+    }
+    shadow_payload = {
+        "run_id": "surrogate_tabular_v1",
+        "policy_profile": "shadow_policy",
+        "history_mode": "historical_backtest",
+    }
+    primary_final_json.write_text(json.dumps(primary_payload), encoding="utf-8")
+    shadow_final_json.write_text(json.dumps(shadow_payload), encoding="utf-8")
+
+    manifest = {
+        "policy_profile": "production_board_objective_b12",
+        "current_market_snapshot": str(tmp_path / "snapshot.parquet"),
+        "final_csv": str(primary_final_csv),
+        "final_json": str(primary_final_json),
+        "selector_csv": str(primary_selector_csv),
+        "shadow_runs": [
+            {
+                "policy_profile": "shadow_policy",
+                "final_csv": str(shadow_final_csv),
+                "final_json": str(shadow_final_json),
+            }
+        ],
+    }
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    plays, final_payload, source, publication_gate, parlay_plays, parlay_source = resolve_published_board(
+        manifest,
+        manifest_path,
+        accuracy_metrics={
+            "available": True,
+            "overall": {
+                "graded_count": 24,
+                "win_rate": 0.67,
+                "roi_per_graded_play": 0.12,
+            },
+        },
+    )
+
+    assert source == "shadow_final_board"
+    assert final_payload["policy_profile"] == "shadow_policy"
+    assert publication_gate["status"] == "ready"
+    assert plays["player"].tolist() == ["Shadow Anchor", "Shadow Pair"]
+    assert parlay_source == "shadow_final_board"
+    assert len(parlay_plays.index) == 2
 
 
 def test_find_latest_manifest_prefers_newer_run_stamp_over_mtime(tmp_path: Path) -> None:
@@ -494,3 +606,63 @@ def test_find_latest_manifest_prefers_newer_run_stamp_over_mtime(tmp_path: Path)
     os.utime(older_manifest, (200, 200))
 
     assert find_latest_manifest(tmp_path) == newer_manifest
+
+
+def test_apply_parlay_safety_gate_blocks_unsupported_pairs() -> None:
+    parlay_payload = {
+        "plays": [
+            {
+                "player": "Alpha Guard",
+                "parlay_tag": "parlay",
+                "parlay_candidate": True,
+                "parlay_pair_rank": 1,
+                "parlay_score": 0.31,
+                "parlay_projected_hit_rate": 0.56,
+                "parlay_partner_key": "beta",
+                "parlay_partner_name": "Beta Wing",
+            },
+            {
+                "player": "Beta Wing",
+                "parlay_tag": "parlay",
+                "parlay_candidate": True,
+                "parlay_pair_rank": 1,
+                "parlay_score": 0.31,
+                "parlay_projected_hit_rate": 0.56,
+                "parlay_partner_key": "alpha",
+                "parlay_partner_name": "Alpha Guard",
+            },
+        ],
+        "pairs": [{"pair_rank": 1, "projected_probability": 0.56}],
+        "summary": {
+            "selection_mode": "strict",
+            "selected_pair_count": 1,
+            "tagged_play_count": 2,
+            "avg_projected_pair_hit_rate": 0.56,
+            "best_projected_pair_hit_rate": 0.56,
+        },
+    }
+    validation = {
+        "available": True,
+        "sample_dates": 3,
+        "selected": {
+            "graded_pair_count": 3,
+            "hit_pair_count": 1,
+            "pair_hit_rate": 0.3333333333,
+            "avg_projected_pair_hit_rate": 0.5459771766,
+        },
+        "baseline_all_pairs": {
+            "pair_hit_rate": 0.3278168215,
+        },
+        "hit_rate_lift_vs_all_pairs": 0.0055,
+    }
+
+    gate = evaluate_parlay_safety_gate(validation)
+    gated_payload, applied_gate = apply_parlay_safety_gate(parlay_payload, validation)
+
+    assert gate["passed"] is False
+    assert applied_gate["passed"] is False
+    assert "insufficient_sample_dates" in gate["blockers"]
+    assert gated_payload["summary"]["selection_mode"] == "empirical_gate_blocked"
+    assert gated_payload["summary"]["selected_pair_count"] == 0
+    assert all(play["parlay_candidate"] is False for play in gated_payload["plays"])
+    assert gated_payload["pairs"] == []

@@ -811,6 +811,277 @@ def _numeric_series(df: pd.DataFrame, column: str, default: float) -> pd.Series:
     return pd.Series(default, index=df.index, dtype="float64")
 
 
+def _apply_empirical_board_calibration(
+    frame: pd.DataFrame,
+    *,
+    calibrator_payload: dict | None,
+    run_date_hint: str | None,
+    payout: float,
+    edge_adjust_k: float,
+    raw_prob_col: str = "selected_board_prob_model_raw",
+) -> pd.DataFrame:
+    if frame.empty:
+        return frame.copy()
+
+    out = frame.copy()
+    if "board_play_win_prob" in out.columns:
+        raw_prob = pd.to_numeric(out["board_play_win_prob"], errors="coerce").fillna(
+            pd.to_numeric(out.get("expected_win_rate"), errors="coerce").fillna(0.5)
+        )
+    else:
+        raw_prob = pd.to_numeric(out.get("expected_win_rate"), errors="coerce").fillna(0.5)
+    out[raw_prob_col] = raw_prob.clip(lower=0.0, upper=1.0).astype("float64")
+
+    calibration_frame = pd.DataFrame(
+        {
+            "target": out.get("target", pd.Series("", index=out.index)),
+            "direction": out.get("direction", pd.Series("", index=out.index)),
+            "board_play_win_prob": out[raw_prob_col],
+            "market_date": out.get("market_date", pd.Series("", index=out.index)),
+        },
+        index=out.index,
+    )
+    calibrated_probs, calibration_source, calibration_month = apply_selected_board_calibration_fn(
+        calibration_frame,
+        payload=calibrator_payload,
+        run_date_hint=run_date_hint,
+        prob_col="board_play_win_prob",
+        target_col="target",
+        direction_col="direction",
+    )
+    out["selected_board_calibration_source"] = calibration_source.reindex(out.index).fillna("identity")
+    out["selected_board_calibration_month"] = str(calibration_month or "")
+
+    calibrated = pd.to_numeric(calibrated_probs, errors="coerce").fillna(out[raw_prob_col])
+    calibrated = calibrated.clip(lower=0.0, upper=1.0 - _numeric_series(out, "expected_push_rate", 0.0))
+    out["p_calibrated"] = calibrated
+    out["board_play_win_prob"] = calibrated
+    out["expected_win_rate"] = calibrated
+    out["expected_loss_rate"] = np.clip(1.0 - out["expected_win_rate"] - _numeric_series(out, "expected_push_rate", 0.0), 0.0, 1.0)
+    out["ev"] = out["expected_win_rate"] * payout - out["expected_loss_rate"]
+    out["ev_adjusted"] = out["ev"] * (1.0 + float(edge_adjust_k) * (_numeric_series(out, "edge_scale", 1.0) - 1.0))
+
+    raw_edge = (out[raw_prob_col] - 0.5).astype("float64")
+    cal_edge = (out["expected_win_rate"] - 0.5).astype("float64")
+    confidence_haircut = pd.Series(1.0, index=out.index, dtype="float64")
+    meaningful_mask = raw_edge.abs() >= 0.015
+    confidence_haircut.loc[meaningful_mask] = (
+        cal_edge.loc[meaningful_mask].abs() / raw_edge.loc[meaningful_mask].abs().clip(lower=1e-6)
+    ).clip(lower=0.35, upper=1.0)
+    out["selected_board_confidence_haircut"] = confidence_haircut
+    out["selected_board_prob_delta"] = (out["expected_win_rate"] - out[raw_prob_col]).astype("float64")
+    if "final_confidence_pre_selected_board_calibration" not in out.columns:
+        out["final_confidence_pre_selected_board_calibration"] = _numeric_series(out, "final_confidence", 0.0)
+    out["final_confidence"] = (
+        _numeric_series(out, "final_confidence_pre_selected_board_calibration", 0.0) * confidence_haircut
+    ).clip(lower=0.0, upper=1.0)
+    return out
+
+
+def _month_token(value: object) -> str:
+    ts = pd.to_datetime(value, errors="coerce")
+    if pd.isna(ts):
+        return ""
+    return ts.strftime("%Y-%m")
+
+
+def _resolve_selected_board_month_payload(
+    payload: dict | None,
+    run_date_hint: str | None,
+    frame: pd.DataFrame,
+) -> tuple[str, dict | None]:
+    if not isinstance(payload, dict):
+        return "", None
+    months = payload.get("months", {})
+    if not isinstance(months, dict) or not months:
+        return "", None
+
+    month_hint = _month_token(run_date_hint)
+    if not month_hint and "market_date" in frame.columns:
+        month_hint = _month_token(pd.to_datetime(frame["market_date"], errors="coerce").max())
+    if not month_hint:
+        month_hint = _month_token(pd.Timestamp.utcnow())
+
+    if month_hint in months:
+        return month_hint, months[month_hint]
+
+    prior = sorted([str(month) for month in months.keys() if str(month) <= month_hint])
+    if prior:
+        key = prior[-1]
+        return key, months[key]
+
+    future = sorted([str(month) for month in months.keys() if str(month) > month_hint])
+    if future:
+        key = future[0]
+        return key, months[key]
+    return "", None
+
+
+def _annotate_empirical_category_priors(
+    frame: pd.DataFrame,
+    *,
+    calibrator_payload: dict | None,
+    run_date_hint: str | None,
+) -> pd.DataFrame:
+    if frame.empty:
+        return frame.copy()
+
+    out = frame.copy()
+    month_key, month_payload = _resolve_selected_board_month_payload(calibrator_payload, run_date_hint, out)
+
+    neutral_prob = pd.to_numeric(out.get("board_play_win_prob"), errors="coerce").fillna(
+        pd.to_numeric(out.get("expected_win_rate"), errors="coerce").fillna(0.5)
+    )
+    neutral_rate = float(neutral_prob.mean()) if len(neutral_prob) else 0.5
+
+    global_rate = neutral_rate
+    global_prob = neutral_rate
+    segment_rates: dict[str, float] = {}
+    segment_probs: dict[str, float] = {}
+    segment_rows: dict[str, int] = {}
+    target_acc: dict[str, dict[str, float]] = {}
+
+    if isinstance(month_payload, dict):
+        safety_profile = month_payload.get("safety_profile", {})
+        if isinstance(safety_profile, dict):
+            global_rate = float(np.clip(safety_profile.get("mean_label", global_rate), 0.0, 1.0))
+            global_prob = float(np.clip(safety_profile.get("mean_prob", global_prob), 0.0, 1.0))
+
+        raw_segments = month_payload.get("segments", {})
+        if isinstance(raw_segments, dict):
+            for key, details in raw_segments.items():
+                if not isinstance(details, dict):
+                    continue
+                seg_key = str(key).upper().strip()
+                rows = int(max(0, details.get("rows", 0)))
+                rate = float(np.clip(details.get("mean_label", global_rate), 0.0, 1.0))
+                prob = float(np.clip(details.get("mean_raw_prob", global_prob), 0.0, 1.0))
+                segment_rates[seg_key] = rate
+                segment_probs[seg_key] = prob
+                segment_rows[seg_key] = rows
+                target = seg_key.split("_", 1)[0]
+                bucket = target_acc.setdefault(target, {"rows": 0.0, "rate_sum": 0.0, "prob_sum": 0.0})
+                bucket["rows"] += float(rows)
+                bucket["rate_sum"] += float(rows) * rate
+                bucket["prob_sum"] += float(rows) * prob
+
+    target_rates: dict[str, float] = {}
+    target_probs: dict[str, float] = {}
+    target_rows: dict[str, int] = {}
+    for target, bucket in target_acc.items():
+        rows = float(bucket.get("rows", 0.0))
+        if rows <= 0.0:
+            continue
+        target_rates[target] = float(np.clip(bucket["rate_sum"] / rows, 0.0, 1.0))
+        target_probs[target] = float(np.clip(bucket["prob_sum"] / rows, 0.0, 1.0))
+        target_rows[target] = int(rows)
+
+    target = out.get("target", pd.Series("", index=out.index)).fillna("").astype(str).str.upper().str.strip()
+    direction = out.get("direction", pd.Series("", index=out.index)).fillna("").astype(str).str.upper().str.strip()
+    seg_key = target + "_" + direction
+
+    seg_rate = seg_key.map(segment_rates).astype("float64")
+    seg_prob = seg_key.map(segment_probs).astype("float64")
+    seg_rows = pd.to_numeric(seg_key.map(segment_rows), errors="coerce").fillna(0.0)
+    tgt_rate = pd.to_numeric(target.map(target_rates), errors="coerce").fillna(np.nan)
+    tgt_prob = pd.to_numeric(target.map(target_probs), errors="coerce").fillna(np.nan)
+    tgt_rows = pd.to_numeric(target.map(target_rows), errors="coerce").fillna(0.0)
+
+    seg_support = (seg_rows / (seg_rows + 60.0)).clip(lower=0.0, upper=1.0)
+    tgt_support = (tgt_rows / (tgt_rows + 90.0)).clip(lower=0.0, upper=1.0)
+    target_anchor = (tgt_support * tgt_rate + (1.0 - tgt_support) * global_rate).fillna(global_rate)
+    segment_anchor = (seg_support * seg_rate + (1.0 - seg_support) * target_anchor).fillna(target_anchor)
+    prior_anchor = (0.65 * segment_anchor + 0.35 * target_anchor).clip(lower=0.0, upper=1.0)
+    prior_weight = (0.55 * seg_support + 0.35 * tgt_support).clip(lower=0.0, upper=0.55)
+
+    out["board_category_profile_month"] = str(month_key or "")
+    out["board_category_global_win_rate"] = float(global_rate)
+    out["board_category_global_raw_prob"] = float(global_prob)
+    out["board_target_empirical_win_rate"] = target_anchor.astype("float64")
+    out["board_target_empirical_raw_prob"] = tgt_prob.fillna(global_prob).astype("float64")
+    out["board_target_empirical_rows"] = tgt_rows.astype("float64")
+    out["board_target_empirical_support"] = tgt_support.astype("float64")
+    out["board_segment_empirical_win_rate"] = segment_anchor.astype("float64")
+    out["board_segment_empirical_raw_prob"] = seg_prob.fillna(tgt_prob).fillna(global_prob).astype("float64")
+    out["board_segment_empirical_rows"] = seg_rows.astype("float64")
+    out["board_segment_empirical_support"] = seg_support.astype("float64")
+    out["board_segment_prior_anchor"] = prior_anchor.astype("float64")
+    out["board_segment_empirical_weight"] = prior_weight.astype("float64")
+    out["board_category_prior_lift"] = (prior_anchor - float(global_rate)).astype("float64")
+    out["board_category_prior_gap_vs_raw"] = (
+        prior_anchor - pd.to_numeric(out.get("board_play_win_prob"), errors="coerce").fillna(global_rate)
+    ).astype("float64")
+    return out
+
+
+def _rebalance_target_caps_from_empirical_profiles(
+    universe: pd.DataFrame,
+    target_caps: dict[str, int],
+    *,
+    board_size: int,
+) -> dict[str, int]:
+    effective = {str(target): int(value) for target, value in (target_caps or {}).items()}
+    if not effective or universe.empty:
+        return effective
+    required = {"target", "board_target_empirical_win_rate", "board_target_empirical_rows", "board_play_win_prob"}
+    if not required.issubset(set(universe.columns)):
+        return effective
+
+    summary = (
+        universe.groupby(universe["target"].astype(str).str.upper().str.strip(), dropna=False)
+        .agg(
+            candidate_count=("target", "size"),
+            empirical_rate=("board_target_empirical_win_rate", "median"),
+            empirical_rows=("board_target_empirical_rows", "max"),
+            selection_prob=("board_play_win_prob", "mean"),
+        )
+        .reset_index(names="target")
+    )
+    if summary.empty:
+        return effective
+
+    global_rate = float(
+        np.average(
+            pd.to_numeric(summary["empirical_rate"], errors="coerce").fillna(0.5).to_numpy(dtype="float64"),
+            weights=np.maximum(pd.to_numeric(summary["empirical_rows"], errors="coerce").fillna(1.0).to_numpy(dtype="float64"), 1.0),
+        )
+    )
+    global_prob = float(pd.to_numeric(summary["selection_prob"], errors="coerce").fillna(0.5).mean())
+    summary["strength"] = (
+        0.60 * (pd.to_numeric(summary["empirical_rate"], errors="coerce").fillna(global_rate) - global_rate)
+        + 0.40 * (pd.to_numeric(summary["selection_prob"], errors="coerce").fillna(global_prob) - global_prob)
+    )
+    summary["support_ok"] = pd.to_numeric(summary["empirical_rows"], errors="coerce").fillna(0.0) >= 80.0
+
+    shift_budget = max(0, min(2, int(max(1, board_size // 6))))
+    if shift_budget <= 0:
+        return effective
+
+    while shift_budget > 0:
+        donors = summary.loc[
+            summary["support_ok"]
+            & (summary["strength"] <= -0.025)
+            & summary["target"].map(lambda key: effective.get(str(key), 0) > 1)
+        ].sort_values(["strength", "empirical_rows"], ascending=[True, False])
+        receivers = summary.loc[
+            summary["support_ok"]
+            & (summary["strength"] >= 0.020)
+            & summary["target"].map(lambda key: int(summary.loc[summary["target"] == key, "candidate_count"].iloc[0]) > effective.get(str(key), 0))
+        ].sort_values(["strength", "empirical_rows"], ascending=[False, False])
+        if donors.empty or receivers.empty:
+            break
+
+        donor = str(donors.iloc[0]["target"])
+        receiver = str(receivers.iloc[0]["target"])
+        if donor == receiver:
+            break
+        effective[donor] = max(1, int(effective.get(donor, 0)) - 1)
+        effective[receiver] = int(effective.get(receiver, 0)) + 1
+        shift_budget -= 1
+
+    return effective
+
+
 def _stable_seed_from_row(row: pd.Series, base_seed: int) -> int:
     key = "|".join(
         [
@@ -941,10 +1212,19 @@ def _build_board_probability_features(candidates: pd.DataFrame) -> pd.DataFrame:
     calibrated = support_weight * modeled + (1.0 - support_weight) * group_mean
     board_prob = (0.75 * base + 0.25 * calibrated).clip(lower=0.01, upper=0.99)
 
+    prior_anchor = _numeric_series(out, "board_segment_prior_anchor", np.nan)
+    prior_weight = _numeric_series(out, "board_segment_empirical_weight", 0.0).clip(lower=0.0, upper=0.55)
+    category_prob_before = board_prob.copy()
+    if prior_anchor.notna().any():
+        prior_anchor = prior_anchor.where(prior_anchor.notna(), group_mean).clip(lower=0.01, upper=0.99)
+        board_prob = ((1.0 - prior_weight) * board_prob + prior_weight * prior_anchor).clip(lower=0.01, upper=0.99)
+    category_adjustment = board_prob - category_prob_before
+
     out["board_play_strength"] = calibrated.clip(lower=0.01, upper=0.99)
     out["board_play_win_prob"] = board_prob
     out["board_uncertainty_penalty"] = unc_norm.clip(lower=0.0, upper=1.0)
     out["board_prob_dispersion"] = board_prob - base
+    out["board_category_prob_adjustment"] = category_adjustment.astype("float64")
     return out
 
 
@@ -1734,6 +2014,7 @@ def _select_board_objective_board(
         + 0.22 * _zscore_series(universe["abs_edge"])
         + 0.16 * _zscore_series(universe["ev_adjusted"])
         + 0.20 * _zscore_series(universe["final_pool_quality_score"])
+        + 0.12 * _zscore_series(universe.get("board_category_prior_lift", pd.Series(0.0, index=universe.index)))
     )
     universe["board_universe_rank"] = pd.to_numeric(universe["board_universe_rank_base"], errors="coerce").fillna(0.0)
     candidate_cap = int(board_objective_candidate_limit)
@@ -1852,6 +2133,13 @@ def _select_board_objective_board(
         return _finalize_selection(base.iloc[0:0].copy())
 
     target_caps = _resolve_target_caps(universe, max_plays_per_target=max_plays_per_target, max_target_plays=max_target_plays)
+    target_caps = _rebalance_target_caps_from_empirical_profiles(universe, target_caps, board_size=int(k))
+    if target_caps:
+        universe["board_target_cap_effective"] = (
+            universe.get("target", pd.Series("", index=universe.index)).fillna("").astype(str).str.upper().str.strip().map(target_caps).fillna(0).astype("int64")
+        )
+    else:
+        universe["board_target_cap_effective"] = 0
     players = _clean_key_component(universe.get("player", pd.Series("", index=universe.index))).to_numpy(dtype=str)
     targets = _clean_key_component(universe.get("target", pd.Series("", index=universe.index))).to_numpy(dtype=str)
     games = _clean_key_component(universe.get("game_key", pd.Series("", index=universe.index))).to_numpy(dtype=str)
@@ -1862,7 +2150,16 @@ def _select_board_objective_board(
     unc = pd.to_numeric(universe["board_uncertainty_penalty"], errors="coerce").fillna(0.5).to_numpy(dtype="float64")
     quality = pd.to_numeric(universe.get("final_pool_quality_score"), errors="coerce").fillna(0.5).to_numpy(dtype="float64")
     node_penalty = pd.to_numeric(universe.get("board_instability_penalty"), errors="coerce").fillna(0.0).to_numpy(dtype="float64")
-    node_values = probs + 0.10 * np.clip(quality - 0.50, -0.50, 0.50) - float(board_objective_lambda_unc) * unc - node_penalty
+    category_lift = pd.to_numeric(universe.get("board_category_prior_lift"), errors="coerce").fillna(0.0).to_numpy(dtype="float64")
+    category_adjustment = pd.to_numeric(universe.get("board_category_prob_adjustment"), errors="coerce").fillna(0.0).to_numpy(dtype="float64")
+    node_values = (
+        probs
+        + 0.10 * np.clip(quality - 0.50, -0.50, 0.50)
+        + 0.30 * category_lift
+        + 0.20 * category_adjustment
+        - float(board_objective_lambda_unc) * unc
+        - node_penalty
+    )
     order = np.argsort(-node_values)
     universe = universe.iloc[order].reset_index(drop=True)
     probs = probs[order]
@@ -1883,7 +2180,14 @@ def _select_board_objective_board(
         same_direction_weight=float(board_objective_corr_same_direction),
         same_script_cluster_weight=float(board_objective_corr_same_script_cluster),
     )
-    node_values = probs + 0.10 * np.clip(quality - 0.50, -0.50, 0.50) - float(board_objective_lambda_unc) * unc - node_penalty
+    node_values = (
+        probs
+        + 0.10 * np.clip(quality - 0.50, -0.50, 0.50)
+        + 0.30 * category_lift
+        + 0.20 * category_adjustment
+        - float(board_objective_lambda_unc) * unc
+        - node_penalty
+    )
     prefix = np.concatenate(([0.0], np.cumsum(node_values)))
 
     max_nodes = max(1000, int(board_objective_max_search_nodes))
@@ -3529,6 +3833,19 @@ def compute_final_board(
     edge_baseline = out.groupby("target")["abs_edge"].transform(lambda s: s.median() if len(s) else 1.0).replace(0.0, 1.0)
     out["edge_scale"] = (out["abs_edge"] / edge_baseline).clip(lower=0.50, upper=2.50)
     out["ev_adjusted"] = out["ev"] * (1.0 + float(edge_adjust_k) * (out["edge_scale"] - 1.0))
+    out = _apply_empirical_board_calibration(
+        out,
+        calibrator_payload=selected_board_calibrator,
+        run_date_hint=selected_board_calibration_month,
+        payout=float(payout),
+        edge_adjust_k=float(edge_adjust_k),
+        raw_prob_col="selected_board_prob_model_raw",
+    )
+    out = _annotate_empirical_category_priors(
+        out,
+        calibrator_payload=selected_board_calibrator,
+        run_date_hint=selected_board_calibration_month,
+    )
     out["ranking_mode"] = str(selection_mode or ranking_mode)
 
     temp = max(float(thompson_temperature), 1e-6)
@@ -3555,18 +3872,10 @@ def compute_final_board(
             return _finalize(out)
 
     if "line_decision_trade_eligible" in out.columns:
-        trade_eligible_mask = pd.to_numeric(out["line_decision_trade_eligible"], errors="coerce").fillna(0).astype(bool)
-        if trade_eligible_mask.any():
-            out = out.loc[trade_eligible_mask].copy()
-            out["line_decision_gate_fail_open"] = False
-        else:
-            # Fail open when the upstream line-decision layer vetoes the entire
-            # selector pool; publishing zero plays is less useful than letting
-            # the downstream board logic rank the available candidates.
-            out = out.copy()
-            out["line_decision_gate_fail_open"] = True
-        if out.empty:
-            return _finalize(out)
+        out = out.copy()
+        out["line_decision_gate_fail_open"] = False
+        out["line_decision_gate_mode"] = "disabled_annotation_only"
+        out["line_decision_rescue_selected"] = False
 
     staleness_cap = int(max_history_staleness_days)
     if "market_date" in out.columns and "last_history_date" in out.columns:
@@ -3968,40 +4277,21 @@ def compute_final_board(
     if out.empty:
         return out
 
-    # Single canonical published probability for downstream sizing/UI/diagnostics.
-    if "board_play_win_prob" in out.columns:
-        canonical = pd.to_numeric(out["board_play_win_prob"], errors="coerce").fillna(
-            pd.to_numeric(out["expected_win_rate"], errors="coerce").fillna(0.5)
+    # Carry forward the model probability before empirical shrink for diagnostics/UI.
+    if "selected_board_prob_model_raw" in out.columns:
+        out["selected_board_prob_raw"] = pd.to_numeric(out["selected_board_prob_model_raw"], errors="coerce").fillna(
+            pd.to_numeric(out.get("board_play_win_prob"), errors="coerce").fillna(0.5)
         )
     else:
-        canonical = pd.to_numeric(out["expected_win_rate"], errors="coerce").fillna(0.5)
-    out["selected_board_prob_raw"] = canonical.astype("float64")
-    calibration_frame = pd.DataFrame(
-        {
-            "target": out.get("target", pd.Series("", index=out.index)),
-            "direction": out.get("direction", pd.Series("", index=out.index)),
-            "board_play_win_prob": out["selected_board_prob_raw"],
-            "market_date": out.get("market_date", pd.Series("", index=out.index)),
-        },
-        index=out.index,
-    )
-    calibrated_probs, calibration_source, calibration_month = apply_selected_board_calibration_fn(
-        calibration_frame,
-        payload=selected_board_calibrator,
-        run_date_hint=selected_board_calibration_month,
-        prob_col="board_play_win_prob",
-        target_col="target",
-        direction_col="direction",
-    )
-    out["selected_board_calibration_source"] = calibration_source.reindex(out.index).fillna("identity")
-    out["selected_board_calibration_month"] = str(calibration_month or "")
-    canonical = pd.to_numeric(calibrated_probs, errors="coerce").fillna(out["selected_board_prob_raw"])
-    out["p_calibrated"] = canonical.clip(lower=0.0, upper=1.0 - out["expected_push_rate"])
-    out["board_play_win_prob"] = out["p_calibrated"]
-    out["expected_win_rate"] = out["p_calibrated"]
-    out["expected_loss_rate"] = np.clip(1.0 - out["expected_win_rate"] - out["expected_push_rate"], 0.0, 1.0)
-    out["ev"] = out["expected_win_rate"] * payout - out["expected_loss_rate"]
-    out["ev_adjusted"] = out["ev"] * (1.0 + float(edge_adjust_k) * (out["edge_scale"] - 1.0))
+        out = _apply_empirical_board_calibration(
+            out,
+            calibrator_payload=selected_board_calibrator,
+            run_date_hint=selected_board_calibration_month,
+            payout=float(payout),
+            edge_adjust_k=float(edge_adjust_k),
+            raw_prob_col="selected_board_prob_raw",
+        )
+        out["selected_board_prob_raw"] = pd.to_numeric(out.get("selected_board_prob_raw"), errors="coerce").fillna(0.5)
 
     accepted_pick_gate_details = {
         "enabled": False,
