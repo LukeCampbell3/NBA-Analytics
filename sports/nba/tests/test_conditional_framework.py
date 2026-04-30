@@ -476,6 +476,151 @@ def test_set_theory_mode_emits_consensus_columns() -> None:
     assert board["agreement_count"].between(1, 3).all()
 
 
+def test_recency_gate_fail_open_keeps_freshest_rows_within_staleness_cap() -> None:
+    frame = pd.DataFrame(
+        [
+            {
+                "player": "Freshest One",
+                "target": "PTS",
+                "direction": "UNDER",
+                "prediction": 21.0,
+                "market_line": 23.5,
+                "abs_edge": 2.5,
+                "edge": -2.5,
+                "expected_win_rate": 0.66,
+                "expected_push_rate": 0.02,
+                "posterior_variance": 0.03,
+                "belief_confidence_factor": 0.90,
+                "feasibility": 0.92,
+                "recommendation": "pass",
+                "history_rows": 120,
+                "market_date": "2026-04-29",
+                "last_history_date": "2026-04-19",
+                "market_event_id": "g_one",
+                "market_home_team": "AAA",
+                "market_away_team": "BBB",
+                "risk_penalty": 0.20,
+                "market_books": 6,
+                "gap_percentile": 0.92,
+                "confidence_score": 0.16,
+                "recency_factor": 0.751477293075286,
+            },
+            {
+                "player": "Freshest Two",
+                "target": "AST",
+                "direction": "OVER",
+                "prediction": 7.8,
+                "market_line": 6.5,
+                "abs_edge": 1.3,
+                "edge": 1.3,
+                "expected_win_rate": 0.63,
+                "expected_push_rate": 0.02,
+                "posterior_variance": 0.03,
+                "belief_confidence_factor": 0.88,
+                "feasibility": 0.90,
+                "recommendation": "pass",
+                "history_rows": 102,
+                "market_date": "2026-04-29",
+                "last_history_date": "2026-04-19",
+                "market_event_id": "g_two",
+                "market_home_team": "CCC",
+                "market_away_team": "DDD",
+                "risk_penalty": 0.21,
+                "market_books": 5,
+                "gap_percentile": 0.90,
+                "confidence_score": 0.14,
+                "recency_factor": 0.751477293075286,
+            },
+            {
+                "player": "Older Row",
+                "target": "TRB",
+                "direction": "UNDER",
+                "prediction": 8.6,
+                "market_line": 10.0,
+                "abs_edge": 1.4,
+                "edge": -1.4,
+                "expected_win_rate": 0.61,
+                "expected_push_rate": 0.02,
+                "posterior_variance": 0.04,
+                "belief_confidence_factor": 0.87,
+                "feasibility": 0.89,
+                "recommendation": "pass",
+                "history_rows": 98,
+                "market_date": "2026-04-29",
+                "last_history_date": "2026-04-18",
+                "market_event_id": "g_three",
+                "market_home_team": "EEE",
+                "market_away_team": "FFF",
+                "risk_penalty": 0.24,
+                "market_books": 5,
+                "gap_percentile": 0.88,
+                "confidence_score": 0.12,
+                "recency_factor": 0.7303103382513573,
+            },
+            {
+                "player": "Too Stale",
+                "target": "PTS",
+                "direction": "OVER",
+                "prediction": 25.0,
+                "market_line": 22.5,
+                "abs_edge": 2.5,
+                "edge": 2.5,
+                "expected_win_rate": 0.65,
+                "expected_push_rate": 0.02,
+                "posterior_variance": 0.03,
+                "belief_confidence_factor": 0.89,
+                "feasibility": 0.90,
+                "recommendation": "pass",
+                "history_rows": 90,
+                "market_date": "2026-04-29",
+                "last_history_date": "2026-04-02",
+                "market_event_id": "g_four",
+                "market_home_team": "GGG",
+                "market_away_team": "HHH",
+                "risk_penalty": 0.25,
+                "market_books": 6,
+                "gap_percentile": 0.89,
+                "confidence_score": 0.13,
+                "recency_factor": 0.4623520933081963,
+            },
+        ]
+    )
+
+    board = compute_final_board(
+        frame,
+        american_odds=-110,
+        min_ev=-1.0,
+        min_final_confidence=0.0,
+        min_recommendation="pass",
+        selection_mode="edge",
+        ranking_mode="edge",
+        max_plays_per_player=1,
+        max_plays_per_target=0,
+        max_total_plays=4,
+        max_target_plays={"PTS": 4, "TRB": 4, "AST": 4},
+        max_plays_per_game=0,
+        max_plays_per_script_cluster=0,
+        non_pts_min_gap_percentile=0.0,
+        min_bet_win_rate=0.49,
+        medium_bet_win_rate=0.52,
+        full_bet_win_rate=0.56,
+        medium_tier_percentile=0.0,
+        strong_tier_percentile=0.0,
+        elite_tier_percentile=0.0,
+        min_recency_factor=0.80,
+        max_history_staleness_days=21,
+    )
+
+    assert set(board["player"]) == {"Freshest One", "Freshest Two"}
+    assert bool(board["recency_gate_fail_open"].all())
+    assert (board["recency_gate_fail_open_reason"] == "freshest_history_within_staleness_cap").all()
+    assert (board["history_staleness_days"] == 10).all()
+    assert (board["recency_gate_threshold_requested"] == 0.80).all()
+    assert (board["recency_gate_threshold_effective"] < 0.80).all()
+    stage_counts = getattr(board, "attrs", {}).get("stage_counts", {})
+    assert int(stage_counts.get("after_recency", 0)) == 2
+
+
 def test_edge_append_shadow_mode_is_append_only() -> None:
     frame = pd.concat([_sample_selector_frame()] * 6, ignore_index=True)
     frame.loc[:, "player"] = [f"Append Player {idx}" for idx in range(len(frame))]

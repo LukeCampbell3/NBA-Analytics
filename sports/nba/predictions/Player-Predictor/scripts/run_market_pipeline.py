@@ -1253,6 +1253,25 @@ def main() -> None:
         "initial_pool_gate_dropped_rows": int(pd.to_numeric(final_board.get("initial_pool_gate_dropped_rows"), errors="coerce").fillna(0).max())
         if "initial_pool_gate_dropped_rows" in final_board.columns and not final_board.empty
         else 0,
+        "recency_gate_fail_open": bool(pd.to_numeric(final_board.get("recency_gate_fail_open"), errors="coerce").fillna(0).astype(bool).any())
+        if "recency_gate_fail_open" in final_board.columns and not final_board.empty
+        else False,
+        "recency_gate_fail_open_reason": next(
+            (
+                str(value)
+                for value in final_board.get("recency_gate_fail_open_reason", pd.Series(dtype=str)).fillna("").astype(str)
+                if str(value).strip()
+            ),
+            "",
+        )
+        if "recency_gate_fail_open_reason" in final_board.columns and not final_board.empty
+        else "",
+        "recency_gate_threshold_requested": float(pd.to_numeric(final_board.get("recency_gate_threshold_requested"), errors="coerce").fillna(np.nan).mean())
+        if "recency_gate_threshold_requested" in final_board.columns and not final_board.empty
+        else float(policy_payload.get("min_recency_factor", 0.0)),
+        "recency_gate_threshold_effective": float(pd.to_numeric(final_board.get("recency_gate_threshold_effective"), errors="coerce").fillna(np.nan).mean())
+        if "recency_gate_threshold_effective" in final_board.columns and not final_board.empty
+        else float(policy_payload.get("min_recency_factor", 0.0)),
         "fp_veto_enabled": bool(pd.to_numeric(final_board.get("board_objective_fp_veto_enabled"), errors="coerce").fillna(0).astype(bool).any())
         if "board_objective_fp_veto_enabled" in final_board.columns and not final_board.empty
         else False,
