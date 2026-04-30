@@ -312,6 +312,148 @@ def test_board_objective_uses_segment_specific_pool_gate() -> None:
     assert out.loc[out["player"] == "Weak Over", "decision_stage"].iloc[0] == "final_pool_gate_filtered"
 
 
+def test_board_objective_target_direction_allocation_fades_weak_overs() -> None:
+    frame = pd.DataFrame(
+        [
+            {
+                "player": "Weak Pts Over 1",
+                "target": "PTS",
+                "direction": "OVER",
+                "expected_win_rate": 0.68,
+                "expected_push_rate": 0.02,
+                "gap_percentile": 0.95,
+                "belief_uncertainty": 0.78,
+                "feasibility": 0.92,
+                "abs_edge": 2.2,
+                "edge": 2.2,
+                "recommendation": "pass",
+                "game_key": "g1",
+                "board_play_win_prob": 0.68,
+                "board_target_empirical_win_rate": 0.57,
+                "board_segment_empirical_win_rate": 0.47,
+                "board_segment_empirical_rows": 180,
+                "board_segment_recent_weakness": 0.24,
+            },
+            {
+                "player": "Weak Pts Over 2",
+                "target": "PTS",
+                "direction": "OVER",
+                "expected_win_rate": 0.67,
+                "expected_push_rate": 0.02,
+                "gap_percentile": 0.94,
+                "belief_uncertainty": 0.79,
+                "feasibility": 0.91,
+                "abs_edge": 2.1,
+                "edge": 2.1,
+                "recommendation": "pass",
+                "game_key": "g2",
+                "board_play_win_prob": 0.67,
+                "board_target_empirical_win_rate": 0.57,
+                "board_segment_empirical_win_rate": 0.47,
+                "board_segment_empirical_rows": 180,
+                "board_segment_recent_weakness": 0.24,
+            },
+            {
+                "player": "Strong Pts Under",
+                "target": "PTS",
+                "direction": "UNDER",
+                "expected_win_rate": 0.60,
+                "expected_push_rate": 0.02,
+                "gap_percentile": 0.93,
+                "belief_uncertainty": 0.76,
+                "feasibility": 0.91,
+                "abs_edge": 1.6,
+                "edge": -1.6,
+                "recommendation": "pass",
+                "game_key": "g3",
+                "board_play_win_prob": 0.60,
+                "board_target_empirical_win_rate": 0.57,
+                "board_segment_empirical_win_rate": 0.68,
+                "board_segment_empirical_rows": 180,
+                "board_segment_recent_weakness": 0.03,
+            },
+            {
+                "player": "Strong Ast Under",
+                "target": "AST",
+                "direction": "UNDER",
+                "expected_win_rate": 0.61,
+                "expected_push_rate": 0.02,
+                "gap_percentile": 0.94,
+                "belief_uncertainty": 0.76,
+                "feasibility": 0.92,
+                "abs_edge": 1.7,
+                "edge": -1.7,
+                "recommendation": "pass",
+                "game_key": "g4",
+                "board_play_win_prob": 0.61,
+                "board_target_empirical_win_rate": 0.65,
+                "board_segment_empirical_win_rate": 0.80,
+                "board_segment_empirical_rows": 160,
+                "board_segment_recent_weakness": 0.02,
+            },
+            {
+                "player": "Strong Trb Under",
+                "target": "TRB",
+                "direction": "UNDER",
+                "expected_win_rate": 0.59,
+                "expected_push_rate": 0.02,
+                "gap_percentile": 0.92,
+                "belief_uncertainty": 0.77,
+                "feasibility": 0.90,
+                "abs_edge": 1.5,
+                "edge": -1.5,
+                "recommendation": "pass",
+                "game_key": "g5",
+                "board_play_win_prob": 0.59,
+                "board_target_empirical_win_rate": 0.66,
+                "board_segment_empirical_win_rate": 0.72,
+                "board_segment_empirical_rows": 150,
+                "board_segment_recent_weakness": 0.03,
+            },
+        ]
+    )
+    config = StrategyConfig(
+        name="target_direction_allocation_test",
+        selection_mode="board_objective",
+        ranking_mode="board_objective",
+        min_recommendation="pass",
+        min_ev=-1.0,
+        min_final_confidence=0.0,
+        max_total_plays=3,
+        max_pts_plays=2,
+        max_trb_plays=1,
+        max_ast_plays=1,
+        max_plays_per_player=1,
+        max_plays_per_game=1,
+        max_plays_per_script_cluster=2,
+        non_pts_min_gap_percentile=0.0,
+        board_objective_candidate_limit=10,
+        board_objective_max_search_nodes=10000,
+        board_objective_lambda_corr=0.10,
+        board_objective_lambda_conc=0.10,
+        board_objective_lambda_unc=0.05,
+        target_direction_allocation_enabled=True,
+        target_direction_min_rows=80,
+        target_direction_strong_rate=0.64,
+        target_direction_weak_rate=0.56,
+        target_direction_very_weak_rate=0.52,
+        target_direction_max_weak_cap=1,
+        target_direction_max_very_weak_cap=0,
+        target_direction_weak_penalty_weight=0.05,
+        target_direction_recent_weakness_penalty_weight=0.04,
+        target_direction_reserve_max_slots=2,
+        target_direction_reserve_min_prob=0.58,
+    )
+
+    out = apply_policy(frame, config)
+
+    selected = set(out.loc[out["selected"], "player"].tolist())
+    assert "Weak Pts Over 1" not in selected
+    assert "Weak Pts Over 2" not in selected
+    assert "Strong Pts Under" in selected
+    assert "Strong Ast Under" in selected
+
+
 def test_board_objective_pool_gate_rescues_high_quality_near_miss() -> None:
     frame = pd.DataFrame(
         [

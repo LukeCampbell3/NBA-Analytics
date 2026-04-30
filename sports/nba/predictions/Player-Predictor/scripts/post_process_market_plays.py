@@ -1145,6 +1145,176 @@ def _resolve_target_caps(
     return caps
 
 
+def _build_target_direction_key(target: pd.Series, direction: pd.Series) -> pd.Series:
+    return target.fillna("").astype(str).str.upper().str.strip() + "|" + direction.fillna("").astype(str).str.upper().str.strip()
+
+
+def _cap_reached(counts: dict[str, int], caps: dict[str, int], key: str) -> bool:
+    if str(key) not in caps:
+        return False
+    return int(counts.get(str(key), 0)) >= int(caps[str(key)])
+
+
+def _resolve_target_direction_constraints(
+    universe: pd.DataFrame,
+    target_caps: dict[str, int],
+    *,
+    board_size: int,
+    allocation_enabled: bool,
+    min_rows: int,
+    strong_rate: float,
+    weak_rate: float,
+    very_weak_rate: float,
+    max_weak_cap: int,
+    max_very_weak_cap: int,
+    weak_penalty_weight: float,
+    recent_weakness_penalty_weight: float,
+    reserve_max_slots: int,
+    reserve_min_prob: float,
+) -> tuple[dict[str, int], dict[str, int], pd.DataFrame]:
+    annotated = universe.copy()
+    annotated["board_target_direction_key"] = _build_target_direction_key(
+        annotated.get("target", pd.Series("", index=annotated.index)),
+        annotated.get("direction", pd.Series("", index=annotated.index)),
+    )
+    annotated["board_target_direction_cap_effective"] = 0
+    annotated["board_target_direction_reserve_min"] = 0
+    annotated["board_target_direction_strength"] = 0.0
+    annotated["board_target_direction_penalty"] = 0.0
+    if annotated.empty or not allocation_enabled:
+        return {}, {}, annotated
+
+    segment_rate = pd.to_numeric(annotated.get("board_segment_empirical_win_rate"), errors="coerce")
+    target_rate = pd.to_numeric(annotated.get("board_target_empirical_win_rate"), errors="coerce")
+    selection_prob = pd.to_numeric(annotated.get("board_play_win_prob"), errors="coerce").fillna(
+        pd.to_numeric(annotated.get("expected_win_rate"), errors="coerce").fillna(0.5)
+    )
+    segment_rows = pd.to_numeric(annotated.get("board_segment_empirical_rows"), errors="coerce").fillna(0.0)
+    recent_weakness = pd.to_numeric(annotated.get("board_segment_recent_weakness"), errors="coerce").fillna(0.0).clip(lower=0.0, upper=1.0)
+    if target_rate.isna().any():
+        target_keys = annotated.get("target", pd.Series("", index=annotated.index)).fillna("").astype(str).str.upper().str.strip()
+        target_prob_fallback = pd.DataFrame({"target_key": target_keys, "selection_prob": selection_prob}).groupby("target_key")["selection_prob"].transform("median")
+        target_rate = target_rate.fillna(target_prob_fallback)
+    if segment_rate.isna().any():
+        segment_rate = segment_rate.fillna(
+            selection_prob.groupby(annotated["board_target_direction_key"]).transform("median")
+        )
+
+    summary = pd.DataFrame(
+        {
+            "board_target_direction_key": annotated["board_target_direction_key"],
+            "target": annotated.get("target", pd.Series("", index=annotated.index)).fillna("").astype(str).str.upper().str.strip(),
+            "direction": annotated.get("direction", pd.Series("", index=annotated.index)).fillna("").astype(str).str.upper().str.strip(),
+            "segment_rate": segment_rate,
+            "target_rate": target_rate.fillna(selection_prob),
+            "selection_prob": selection_prob,
+            "segment_rows": segment_rows,
+            "recent_weakness": recent_weakness,
+        }
+    ).groupby("board_target_direction_key", dropna=False).agg(
+        target=("target", "first"),
+        direction=("direction", "first"),
+        candidate_count=("board_target_direction_key", "size"),
+        empirical_rate=("segment_rate", "median"),
+        target_rate=("target_rate", "median"),
+        selection_prob=("selection_prob", "mean"),
+        empirical_rows=("segment_rows", "max"),
+        recent_weakness=("recent_weakness", "mean"),
+    ).reset_index()
+    if summary.empty:
+        return {}, {}, annotated
+
+    global_prob = float(pd.to_numeric(summary["selection_prob"], errors="coerce").fillna(0.5).mean())
+    global_rate = float(
+        np.average(
+            pd.to_numeric(summary["empirical_rate"], errors="coerce").fillna(global_prob).to_numpy(dtype="float64"),
+            weights=np.maximum(pd.to_numeric(summary["empirical_rows"], errors="coerce").fillna(1.0).to_numpy(dtype="float64"), 1.0),
+        )
+    )
+    summary["target_rate"] = pd.to_numeric(summary["target_rate"], errors="coerce").fillna(pd.to_numeric(summary["empirical_rate"], errors="coerce").fillna(global_rate))
+    summary["support_ok"] = pd.to_numeric(summary["empirical_rows"], errors="coerce").fillna(0.0) >= float(min_rows)
+    summary["strength"] = (
+        0.70 * (pd.to_numeric(summary["empirical_rate"], errors="coerce").fillna(global_rate) - pd.to_numeric(summary["target_rate"], errors="coerce").fillna(global_rate))
+        + 0.25 * (pd.to_numeric(summary["selection_prob"], errors="coerce").fillna(global_prob) - global_prob)
+        - 0.20 * pd.to_numeric(summary["recent_weakness"], errors="coerce").fillna(0.0).clip(lower=0.0, upper=1.0)
+    )
+
+    segment_caps: dict[str, int] = {}
+    for _, row in summary.iterrows():
+        segment_key = str(row["board_target_direction_key"])
+        target = str(row["target"]).upper().strip()
+        target_cap = int(target_caps.get(target, 0))
+        if target_cap <= 0:
+            continue
+        candidate_count = int(pd.to_numeric(pd.Series([row["candidate_count"]]), errors="coerce").fillna(0).iloc[0])
+        if candidate_count <= 0:
+            continue
+        support_ok = bool(row["support_ok"])
+        empirical_rate = float(pd.to_numeric(pd.Series([row["empirical_rate"]]), errors="coerce").fillna(global_rate).iloc[0])
+        strength = float(pd.to_numeric(pd.Series([row["strength"]]), errors="coerce").fillna(0.0).iloc[0])
+        recent = float(pd.to_numeric(pd.Series([row["recent_weakness"]]), errors="coerce").fillna(0.0).iloc[0])
+        effective_cap = target_cap
+        if support_ok and (
+            empirical_rate <= float(very_weak_rate)
+            or (recent >= 0.22 and strength <= -0.01)
+        ):
+            effective_cap = min(target_cap, int(max_very_weak_cap))
+        elif support_ok and (
+            empirical_rate <= float(weak_rate)
+            or strength <= -0.02
+            or recent >= 0.16
+        ):
+            effective_cap = min(target_cap, int(max_weak_cap))
+        segment_caps[segment_key] = max(0, min(candidate_count, int(effective_cap)))
+
+    reserve_budget = max(0, min(int(reserve_max_slots), int(board_size)))
+    reserve_candidates = summary.loc[
+        summary["support_ok"]
+        & (pd.to_numeric(summary["empirical_rate"], errors="coerce").fillna(global_rate) >= float(strong_rate))
+        & (pd.to_numeric(summary["selection_prob"], errors="coerce").fillna(global_prob) >= float(reserve_min_prob))
+        & (pd.to_numeric(summary["strength"], errors="coerce").fillna(0.0) >= 0.0)
+    ].sort_values(["strength", "empirical_rate", "empirical_rows"], ascending=[False, False, False])
+
+    segment_reserves: dict[str, int] = {}
+    reserved_targets: set[str] = set()
+    for _, row in reserve_candidates.iterrows():
+        if reserve_budget <= 0:
+            break
+        segment_key = str(row["board_target_direction_key"])
+        target = str(row["target"]).upper().strip()
+        effective_cap = int(segment_caps.get(segment_key, int(target_caps.get(target, 0))))
+        if effective_cap <= 0 or target in reserved_targets:
+            continue
+        segment_reserves[segment_key] = 1
+        reserved_targets.add(target)
+        reserve_budget -= 1
+
+    strength_map = summary.set_index("board_target_direction_key")["strength"].to_dict()
+    rate_map = pd.to_numeric(summary.set_index("board_target_direction_key")["empirical_rate"], errors="coerce").fillna(global_rate).to_dict()
+    weakness_map = pd.to_numeric(summary.set_index("board_target_direction_key")["recent_weakness"], errors="coerce").fillna(0.0).to_dict()
+    rows_map = pd.to_numeric(summary.set_index("board_target_direction_key")["empirical_rows"], errors="coerce").fillna(0.0).to_dict()
+
+    def _penalty_for(segment_key: str) -> float:
+        empirical_rate = float(rate_map.get(segment_key, global_rate))
+        recent = float(np.clip(weakness_map.get(segment_key, 0.0), 0.0, 1.0))
+        rows = float(rows_map.get(segment_key, 0.0))
+        strength = float(strength_map.get(segment_key, 0.0))
+        support_scale = float(np.clip(rows / max(float(min_rows), 1.0), 0.0, 1.0))
+        weak_gap = float(np.clip(float(weak_rate) - empirical_rate, 0.0, 0.20))
+        penalty = float(weak_penalty_weight) * support_scale * (weak_gap / 0.20)
+        penalty += float(recent_weakness_penalty_weight) * recent
+        if strength <= -0.02:
+            penalty += 0.5 * float(weak_penalty_weight) * support_scale
+        return float(max(0.0, penalty))
+
+    penalty_map = {str(key): _penalty_for(str(key)) for key in summary["board_target_direction_key"].tolist()}
+    annotated["board_target_direction_cap_effective"] = annotated["board_target_direction_key"].map(segment_caps).fillna(0).astype("int64")
+    annotated["board_target_direction_reserve_min"] = annotated["board_target_direction_key"].map(segment_reserves).fillna(0).astype("int64")
+    annotated["board_target_direction_strength"] = annotated["board_target_direction_key"].map(strength_map).fillna(0.0).astype("float64")
+    annotated["board_target_direction_penalty"] = annotated["board_target_direction_key"].map(penalty_map).fillna(0.0).astype("float64")
+    return segment_caps, segment_reserves, annotated
+
+
 def _zscore_series(values: pd.Series) -> pd.Series:
     numeric = pd.to_numeric(values, errors="coerce").fillna(0.0)
     std = float(numeric.std(ddof=0))
@@ -1668,26 +1838,32 @@ def _is_candidate_feasible(
     idx: int,
     players: np.ndarray,
     targets: np.ndarray,
+    directions: np.ndarray,
     games: np.ndarray,
     scripts: np.ndarray,
     player_counts: dict[str, int],
     target_counts: dict[str, int],
+    target_direction_counts: dict[str, int],
     game_counts: dict[str, int],
     script_counts: dict[str, int],
     target_caps: dict[str, int],
+    target_direction_caps: dict[str, int],
     max_plays_per_player: int,
     max_plays_per_game: int,
     max_plays_per_script_cluster: int,
 ) -> bool:
     player = str(players[idx])
     target = str(targets[idx])
+    direction = str(directions[idx])
+    target_direction = f"{target}|{direction}"
     game = str(games[idx])
     script = str(scripts[idx])
 
     if max_plays_per_player > 0 and player_counts.get(player, 0) >= int(max_plays_per_player):
         return False
-    target_cap = int(target_caps.get(target, 0))
-    if target_cap > 0 and target_counts.get(target, 0) >= target_cap:
+    if _cap_reached(target_counts, target_caps, target):
+        return False
+    if _cap_reached(target_direction_counts, target_direction_caps, target_direction):
         return False
     if max_plays_per_game > 0 and game_counts.get(game, 0) >= int(max_plays_per_game):
         return False
@@ -1727,22 +1903,27 @@ def _candidate_passes_caps_row(
     row: pd.Series,
     player_counts: dict[str, int],
     target_counts: dict[str, int],
+    target_direction_counts: dict[str, int],
     game_counts: dict[str, int],
     script_counts: dict[str, int],
     caps: dict[str, int],
+    target_direction_caps: dict[str, int],
     max_plays_per_player: int,
     max_plays_per_game: int,
     max_plays_per_script_cluster: int,
 ) -> bool:
     player = str(row.get("player", ""))
     target = str(row.get("target", ""))
+    direction = str(row.get("direction", "")).upper().strip()
+    target_direction = f"{target}|{direction}"
     game_key = str(row.get("game_key", ""))
     script_cluster = _normalize_script_cluster(row.get("script_cluster_id", ""))
 
     if max_plays_per_player > 0 and player_counts.get(player, 0) >= int(max_plays_per_player):
         return False
-    target_cap = int(caps.get(target, 0))
-    if target_cap > 0 and target_counts.get(target, 0) >= target_cap:
+    if _cap_reached(target_counts, caps, target):
+        return False
+    if _cap_reached(target_direction_counts, target_direction_caps, target_direction):
         return False
     if max_plays_per_game > 0 and game_counts.get(game_key, 0) >= int(max_plays_per_game):
         return False
@@ -1930,6 +2111,17 @@ def _select_board_objective_board(
     board_objective_fp_veto_min_swap_gain: float,
     board_objective_fp_veto_risk_lambda: float,
     board_objective_fp_veto_ml_weight: float,
+    target_direction_allocation_enabled: bool,
+    target_direction_min_rows: int,
+    target_direction_strong_rate: float,
+    target_direction_weak_rate: float,
+    target_direction_very_weak_rate: float,
+    target_direction_max_weak_cap: int,
+    target_direction_max_very_weak_cap: int,
+    target_direction_weak_penalty_weight: float,
+    target_direction_recent_weakness_penalty_weight: float,
+    target_direction_reserve_max_slots: int,
+    target_direction_reserve_min_prob: float,
 ) -> pd.DataFrame:
     if candidates.empty:
         result = candidates.copy()
@@ -2134,6 +2326,22 @@ def _select_board_objective_board(
 
     target_caps = _resolve_target_caps(universe, max_plays_per_target=max_plays_per_target, max_target_plays=max_target_plays)
     target_caps = _rebalance_target_caps_from_empirical_profiles(universe, target_caps, board_size=int(k))
+    target_direction_caps, target_direction_reserves, universe = _resolve_target_direction_constraints(
+        universe,
+        target_caps,
+        board_size=int(k),
+        allocation_enabled=bool(target_direction_allocation_enabled),
+        min_rows=int(target_direction_min_rows),
+        strong_rate=float(target_direction_strong_rate),
+        weak_rate=float(target_direction_weak_rate),
+        very_weak_rate=float(target_direction_very_weak_rate),
+        max_weak_cap=int(target_direction_max_weak_cap),
+        max_very_weak_cap=int(target_direction_max_very_weak_cap),
+        weak_penalty_weight=float(target_direction_weak_penalty_weight),
+        recent_weakness_penalty_weight=float(target_direction_recent_weakness_penalty_weight),
+        reserve_max_slots=int(target_direction_reserve_max_slots),
+        reserve_min_prob=float(target_direction_reserve_min_prob),
+    )
     if target_caps:
         universe["board_target_cap_effective"] = (
             universe.get("target", pd.Series("", index=universe.index)).fillna("").astype(str).str.upper().str.strip().map(target_caps).fillna(0).astype("int64")
@@ -2144,12 +2352,17 @@ def _select_board_objective_board(
     targets = _clean_key_component(universe.get("target", pd.Series("", index=universe.index))).to_numpy(dtype=str)
     games = _clean_key_component(universe.get("game_key", pd.Series("", index=universe.index))).to_numpy(dtype=str)
     directions = _clean_key_component(universe.get("direction", pd.Series("", index=universe.index))).to_numpy(dtype=str)
+    target_directions = _build_target_direction_key(
+        universe.get("target", pd.Series("", index=universe.index)),
+        universe.get("direction", pd.Series("", index=universe.index)),
+    ).fillna("").astype(str).to_numpy(dtype=str)
     scripts = universe.get("script_cluster_id", pd.Series("", index=universe.index)).map(_normalize_script_cluster).to_numpy(dtype=str)
 
     probs = pd.to_numeric(universe["board_play_win_prob"], errors="coerce").fillna(0.5).to_numpy(dtype="float64")
     unc = pd.to_numeric(universe["board_uncertainty_penalty"], errors="coerce").fillna(0.5).to_numpy(dtype="float64")
     quality = pd.to_numeric(universe.get("final_pool_quality_score"), errors="coerce").fillna(0.5).to_numpy(dtype="float64")
     node_penalty = pd.to_numeric(universe.get("board_instability_penalty"), errors="coerce").fillna(0.0).to_numpy(dtype="float64")
+    node_penalty = node_penalty + pd.to_numeric(universe.get("board_target_direction_penalty"), errors="coerce").fillna(0.0).to_numpy(dtype="float64")
     category_lift = pd.to_numeric(universe.get("board_category_prior_lift"), errors="coerce").fillna(0.0).to_numpy(dtype="float64")
     category_adjustment = pd.to_numeric(universe.get("board_category_prob_adjustment"), errors="coerce").fillna(0.0).to_numpy(dtype="float64")
     node_values = (
@@ -2170,7 +2383,47 @@ def _select_board_objective_board(
     targets = targets[order]
     games = games[order]
     directions = directions[order]
+    target_directions = target_directions[order]
     scripts = scripts[order]
+
+    reserve_keys = [str(key) for key, value in (target_direction_reserves or {}).items() if int(value) > 0]
+
+    def _reserves_still_feasible(pos: int, target_direction_counts: dict[str, int]) -> bool:
+        if not reserve_keys:
+            return True
+        remaining_segments = target_directions[pos:]
+        for segment_key in reserve_keys:
+            required = int(target_direction_reserves.get(segment_key, 0))
+            have = int(target_direction_counts.get(segment_key, 0))
+            if have >= required:
+                continue
+            available = int(np.sum(remaining_segments == segment_key))
+            if have + available < required:
+                return False
+        return True
+
+    def _meets_reserves(target_direction_counts: dict[str, int]) -> bool:
+        for segment_key in reserve_keys:
+            if int(target_direction_counts.get(segment_key, 0)) < int(target_direction_reserves.get(segment_key, 0)):
+                return False
+        return True
+
+    def _frame_target_direction_counts(frame: pd.DataFrame) -> dict[str, int]:
+        if frame.empty:
+            return {}
+        keys = _build_target_direction_key(
+            frame.get("target", pd.Series("", index=frame.index)),
+            frame.get("direction", pd.Series("", index=frame.index)),
+        ).fillna("").astype(str)
+        counts = keys.value_counts()
+        return {str(key): int(value) for key, value in counts.items()}
+
+    def _frame_respects_target_direction_constraints(frame: pd.DataFrame) -> bool:
+        counts = _frame_target_direction_counts(frame)
+        for segment_key, cap in (target_direction_caps or {}).items():
+            if int(counts.get(str(segment_key), 0)) > int(cap):
+                return False
+        return _meets_reserves(counts)
 
     dep = _build_pairwise_dependency_matrix(
         universe,
@@ -2199,6 +2452,7 @@ def _select_board_objective_board(
     warm_selected: list[int] = []
     warm_player_counts: dict[str, int] = {}
     warm_target_counts: dict[str, int] = {}
+    warm_target_direction_counts: dict[str, int] = {}
     warm_game_counts: dict[str, int] = {}
     warm_script_counts: dict[str, int] = {}
     for idx in range(n):
@@ -2208,13 +2462,16 @@ def _select_board_objective_board(
             idx,
             players=players,
             targets=targets,
+            directions=directions,
             games=games,
             scripts=scripts,
             player_counts=warm_player_counts,
             target_counts=warm_target_counts,
+            target_direction_counts=warm_target_direction_counts,
             game_counts=warm_game_counts,
             script_counts=warm_script_counts,
             target_caps=target_caps,
+            target_direction_caps=target_direction_caps,
             max_plays_per_player=max_plays_per_player,
             max_plays_per_game=max_plays_per_game,
             max_plays_per_script_cluster=max_plays_per_script_cluster,
@@ -2223,14 +2480,16 @@ def _select_board_objective_board(
         warm_selected.append(idx)
         player = str(players[idx])
         target = str(targets[idx])
+        target_direction = str(target_directions[idx])
         game = str(games[idx])
         script = str(scripts[idx])
         warm_player_counts[player] = warm_player_counts.get(player, 0) + 1
         warm_target_counts[target] = warm_target_counts.get(target, 0) + 1
+        warm_target_direction_counts[target_direction] = warm_target_direction_counts.get(target_direction, 0) + 1
         warm_game_counts[game] = warm_game_counts.get(game, 0) + 1
         if script:
             warm_script_counts[script] = warm_script_counts.get(script, 0) + 1
-    if len(warm_selected) == k:
+    if len(warm_selected) == k and _meets_reserves(warm_target_direction_counts):
         best_indices = warm_selected[:]
         best_score = _score_selected_indices(
             best_indices,
@@ -2253,6 +2512,7 @@ def _select_board_objective_board(
         pair_penalty: float,
         player_counts: dict[str, int],
         target_counts: dict[str, int],
+        target_direction_counts: dict[str, int],
         game_counts: dict[str, int],
         script_counts: dict[str, int],
     ) -> None:
@@ -2268,6 +2528,8 @@ def _select_board_objective_board(
         remaining_needed = k - selected_count
         remaining_rows = n - pos
         if remaining_needed <= 0:
+            if not _meets_reserves(target_direction_counts):
+                return
             score = float(node_sum) - float(board_objective_lambda_corr) * float(pair_penalty) - float(board_objective_lambda_conc) * _compute_concentration_penalty(
                 selected,
                 targets=targets,
@@ -2280,6 +2542,8 @@ def _select_board_objective_board(
             return
         if remaining_rows < remaining_needed:
             return
+        if not _reserves_still_feasible(pos, target_direction_counts):
+            return
 
         # Optimistic upper bound ignores pair/concentration penalties.
         upper = float(node_sum) + float(prefix[min(n, pos + remaining_needed)] - prefix[pos])
@@ -2291,19 +2555,23 @@ def _select_board_objective_board(
             idx,
             players=players,
             targets=targets,
+            directions=directions,
             games=games,
             scripts=scripts,
             player_counts=player_counts,
             target_counts=target_counts,
+            target_direction_counts=target_direction_counts,
             game_counts=game_counts,
             script_counts=script_counts,
             target_caps=target_caps,
+            target_direction_caps=target_direction_caps,
             max_plays_per_player=max_plays_per_player,
             max_plays_per_game=max_plays_per_game,
             max_plays_per_script_cluster=max_plays_per_script_cluster,
         ):
             player = str(players[idx])
             target = str(targets[idx])
+            target_direction = str(target_directions[idx])
             game = str(games[idx])
             script = str(scripts[idx])
 
@@ -2313,6 +2581,7 @@ def _select_board_objective_board(
 
             player_counts[player] = player_counts.get(player, 0) + 1
             target_counts[target] = target_counts.get(target, 0) + 1
+            target_direction_counts[target_direction] = target_direction_counts.get(target_direction, 0) + 1
             game_counts[game] = game_counts.get(game, 0) + 1
             if script:
                 script_counts[script] = script_counts.get(script, 0) + 1
@@ -2325,6 +2594,7 @@ def _select_board_objective_board(
                 pair_penalty=float(pair_penalty + add_pair_penalty),
                 player_counts=player_counts,
                 target_counts=target_counts,
+                target_direction_counts=target_direction_counts,
                 game_counts=game_counts,
                 script_counts=script_counts,
             )
@@ -2336,6 +2606,9 @@ def _select_board_objective_board(
             target_counts[target] -= 1
             if target_counts[target] <= 0:
                 del target_counts[target]
+            target_direction_counts[target_direction] -= 1
+            if target_direction_counts[target_direction] <= 0:
+                del target_direction_counts[target_direction]
             game_counts[game] -= 1
             if game_counts[game] <= 0:
                 del game_counts[game]
@@ -2351,6 +2624,7 @@ def _select_board_objective_board(
             pair_penalty=pair_penalty,
             player_counts=player_counts,
             target_counts=target_counts,
+            target_direction_counts=target_direction_counts,
             game_counts=game_counts,
             script_counts=script_counts,
         )
@@ -2362,21 +2636,70 @@ def _select_board_objective_board(
         pair_penalty=0.0,
         player_counts={},
         target_counts={},
+        target_direction_counts={},
         game_counts={},
         script_counts={},
     )
 
     if not best_indices:
-        ranked_fallback = base.sort_values(["final_pool_quality_score", "board_play_win_prob", "ev_adjusted", "abs_edge"], ascending=[False, False, False, False]).copy()
-        fallback = _apply_portfolio_caps(
+        ranked_fallback = universe.sort_values(
+            ["board_target_direction_reserve_min", "final_pool_quality_score", "board_play_win_prob", "ev_adjusted", "abs_edge"],
+            ascending=[False, False, False, False, False],
+        ).copy()
+        selected_rows: list[dict] = []
+        seen_indices: set[int] = set()
+        player_counts: dict[str, int] = {}
+        target_counts: dict[str, int] = {}
+        target_direction_counts: dict[str, int] = {}
+        game_counts: dict[str, int] = {}
+        script_cluster_counts: dict[str, int] = {}
+
+        reserve_ranked = ranked_fallback.loc[
+            pd.to_numeric(ranked_fallback.get("board_target_direction_reserve_min"), errors="coerce").fillna(0).astype(int) > 0
+        ].copy()
+        if not reserve_ranked.empty:
+            reserve_ranked = reserve_ranked.sort_values(
+                ["board_target_direction_strength", "final_pool_quality_score", "board_play_win_prob", "ev_adjusted", "abs_edge"],
+                ascending=[False, False, False, False, False],
+            )
+            for segment_key, reserve_group in reserve_ranked.groupby("board_target_direction_key", sort=False):
+                if int(target_direction_reserves.get(str(segment_key), 0)) <= 0:
+                    continue
+                _append_rows_with_caps(
+                    reserve_group,
+                    selected_rows,
+                    seen_indices,
+                    player_counts,
+                    target_counts,
+                    target_direction_counts,
+                    game_counts,
+                    script_cluster_counts,
+                    target_caps,
+                    target_direction_caps,
+                    max_plays_per_player=max_plays_per_player,
+                    max_plays_per_game=max_plays_per_game,
+                    max_plays_per_script_cluster=max_plays_per_script_cluster,
+                    max_total_plays=k,
+                    max_new_rows=1,
+                )
+
+        _append_rows_with_caps(
             ranked_fallback,
+            selected_rows,
+            seen_indices,
+            player_counts,
+            target_counts,
+            target_direction_counts,
+            game_counts,
+            script_cluster_counts,
+            target_caps,
+            target_direction_caps,
             max_plays_per_player=max_plays_per_player,
-            max_plays_per_target=max_plays_per_target,
-            max_total_plays=k,
-            max_target_plays=max_target_plays,
             max_plays_per_game=max_plays_per_game,
             max_plays_per_script_cluster=max_plays_per_script_cluster,
+            max_total_plays=k,
         )
+        fallback = pd.DataFrame.from_records(selected_rows) if selected_rows else ranked_fallback.iloc[0:0].copy()
         fallback["board_objective_search_truncated"] = bool(node_counter["truncated"])
         fallback["board_objective_solver_mode"] = "fallback_capped_rank"
         fallback["board_objective_score"] = np.nan
@@ -2474,7 +2797,7 @@ def _select_board_objective_board(
                         max_plays_per_game=max_plays_per_game,
                         max_plays_per_script_cluster=max_plays_per_script_cluster,
                     )
-                    if len(capped) != k:
+                    if len(capped) != k or not _frame_respects_target_direction_constraints(capped):
                         continue
                     trial_score = _score_selected_indices(
                         list(range(len(capped))),
@@ -2515,7 +2838,7 @@ def _select_board_objective_board(
     if len(final) < k:
         selected_rows = [row.to_dict() for _, row in final.iterrows()]
         seen_indices = set(pd.to_numeric(final.get("_source_index"), errors="coerce").fillna(-1).astype(int).tolist())
-        player_counts, target_counts, game_counts, script_cluster_counts = _selection_counters_from_rows(selected_rows)
+        player_counts, target_counts, target_direction_counts, game_counts, script_cluster_counts = _selection_counters_from_rows(selected_rows)
         full_caps = _resolve_target_caps(base, max_plays_per_target=max_plays_per_target, max_target_plays=max_target_plays)
         filler_ranked = base.sort_values(["board_play_win_prob", "ev_adjusted", "abs_edge", "expected_win_rate"], ascending=[False, False, False, False]).copy()
         _append_rows_with_caps(
@@ -2524,9 +2847,11 @@ def _select_board_objective_board(
             seen_indices,
             player_counts,
             target_counts,
+            target_direction_counts,
             game_counts,
             script_cluster_counts,
             full_caps,
+            target_direction_caps,
             max_plays_per_player=max_plays_per_player,
             max_plays_per_game=max_plays_per_game,
             max_plays_per_script_cluster=max_plays_per_script_cluster,
@@ -2544,7 +2869,7 @@ def _select_board_objective_board(
     if target_size > 0 and len(final) < target_size:
         selected_rows = [row.to_dict() for _, row in final.iterrows()]
         seen_indices = set(pd.to_numeric(final.get("_source_index"), errors="coerce").fillna(-1).astype(int).tolist())
-        player_counts, target_counts, game_counts, script_cluster_counts = _selection_counters_from_rows(selected_rows)
+        player_counts, target_counts, target_direction_counts, game_counts, script_cluster_counts = _selection_counters_from_rows(selected_rows)
         ranked_base = base.sort_values(["board_play_win_prob", "ev_adjusted", "abs_edge", "expected_win_rate"], ascending=[False, False, False, False]).copy()
         relaxed_caps: dict[str, int] = {}
         added = _append_rows_with_caps(
@@ -2553,9 +2878,11 @@ def _select_board_objective_board(
             seen_indices,
             player_counts,
             target_counts,
+            target_direction_counts,
             game_counts,
             script_cluster_counts,
             relaxed_caps,
+            target_direction_caps,
             max_plays_per_player=max_plays_per_player,
             max_plays_per_game=max_plays_per_game,
             max_plays_per_script_cluster=max_plays_per_script_cluster,
@@ -2710,7 +3037,7 @@ def _select_board_objective_board(
                     if board_without.empty:
                         continue
                     selected_rows_without = [row.to_dict() for _, row in board_without.iterrows()]
-                    player_counts, target_counts, game_counts, script_cluster_counts = _selection_counters_from_rows(selected_rows_without)
+                    player_counts, target_counts, target_direction_counts, game_counts, script_cluster_counts = _selection_counters_from_rows(selected_rows_without)
                     drop_score = float(pd.to_numeric(pd.Series([drop_row.get("board_objective_fp_veto_score")]), errors="coerce").fillna(0.0).iloc[0])
 
                     for _, add_row in swap_pool.iterrows():
@@ -2724,9 +3051,11 @@ def _select_board_objective_board(
                             add_row,
                             player_counts=player_counts,
                             target_counts=target_counts,
+                            target_direction_counts=target_direction_counts,
                             game_counts=game_counts,
                             script_counts=script_cluster_counts,
                             caps=fp_caps,
+                            target_direction_caps=target_direction_caps,
                             max_plays_per_player=max_plays_per_player,
                             max_plays_per_game=max_plays_per_game,
                             max_plays_per_script_cluster=max_plays_per_script_cluster,
@@ -2797,7 +3126,7 @@ def _select_board_objective_board(
                         if target_after_veto > 0 and len(final) < target_after_veto:
                             selected_rows = [row.to_dict() for _, row in final.iterrows()]
                             seen_sources = set(pd.to_numeric(final.get("_source_index"), errors="coerce").fillna(-1).astype(int).tolist())
-                            player_counts, target_counts, game_counts, script_cluster_counts = _selection_counters_from_rows(selected_rows)
+                            player_counts, target_counts, target_direction_counts, game_counts, script_cluster_counts = _selection_counters_from_rows(selected_rows)
                             fill_pool = fp_pool.loc[~fp_pool["_source_idx_int"].isin(seen_sources)].copy()
                             fill_pool = fill_pool.set_index("_source_idx_int", drop=False)
                             fill_pool = fill_pool.sort_values(
@@ -2810,9 +3139,11 @@ def _select_board_objective_board(
                                 seen_sources,
                                 player_counts,
                                 target_counts,
+                                target_direction_counts,
                                 game_counts,
                                 script_cluster_counts,
                                 fp_caps,
+                                target_direction_caps,
                                 max_plays_per_player=max_plays_per_player,
                                 max_plays_per_game=max_plays_per_game,
                                 max_plays_per_script_cluster=max_plays_per_script_cluster,
@@ -2893,9 +3224,11 @@ def _append_rows_with_caps(
     seen_indices: set,
     player_counts: dict[str, int],
     target_counts: dict[str, int],
+    target_direction_counts: dict[str, int],
     game_counts: dict[str, int],
     script_cluster_counts: dict[str, int],
     caps: dict[str, int],
+    target_direction_caps: dict[str, int],
     max_plays_per_player: int,
     max_plays_per_game: int,
     max_plays_per_script_cluster: int,
@@ -2918,13 +3251,16 @@ def _append_rows_with_caps(
 
         player = str(row.get("player", ""))
         target = str(row.get("target", ""))
+        direction = str(row.get("direction", "")).upper().strip()
+        target_direction = f"{target}|{direction}"
         game_key = str(row.get("game_key", ""))
         script_cluster = _normalize_script_cluster(row.get("script_cluster_id", ""))
 
         if max_plays_per_player > 0 and player_counts.get(player, 0) >= int(max_plays_per_player):
             continue
-        target_cap = int(caps.get(target, 0))
-        if target_cap > 0 and target_counts.get(target, 0) >= target_cap:
+        if _cap_reached(target_counts, caps, target):
+            continue
+        if _cap_reached(target_direction_counts, target_direction_caps, target_direction):
             continue
         if max_plays_per_game > 0 and game_counts.get(game_key, 0) >= int(max_plays_per_game):
             continue
@@ -2939,6 +3275,7 @@ def _append_rows_with_caps(
         seen_indices.add(row_index)
         player_counts[player] = player_counts.get(player, 0) + 1
         target_counts[target] = target_counts.get(target, 0) + 1
+        target_direction_counts[target_direction] = target_direction_counts.get(target_direction, 0) + 1
         game_counts[game_key] = game_counts.get(game_key, 0) + 1
         if script_cluster:
             script_cluster_counts[script_cluster] = script_cluster_counts.get(script_cluster, 0) + 1
@@ -2946,22 +3283,28 @@ def _append_rows_with_caps(
     return added
 
 
-def _selection_counters_from_rows(selected_rows: list[dict]) -> tuple[dict[str, int], dict[str, int], dict[str, int], dict[str, int]]:
+def _selection_counters_from_rows(
+    selected_rows: list[dict],
+) -> tuple[dict[str, int], dict[str, int], dict[str, int], dict[str, int], dict[str, int]]:
     player_counts: dict[str, int] = {}
     target_counts: dict[str, int] = {}
+    target_direction_counts: dict[str, int] = {}
     game_counts: dict[str, int] = {}
     script_cluster_counts: dict[str, int] = {}
     for row in selected_rows:
         player = str(row.get("player", ""))
         target = str(row.get("target", ""))
+        direction = str(row.get("direction", "")).upper().strip()
+        target_direction = f"{target}|{direction}"
         game_key = str(row.get("game_key", ""))
         script_cluster = _normalize_script_cluster(row.get("script_cluster_id", ""))
         player_counts[player] = player_counts.get(player, 0) + 1
         target_counts[target] = target_counts.get(target, 0) + 1
+        target_direction_counts[target_direction] = target_direction_counts.get(target_direction, 0) + 1
         game_counts[game_key] = game_counts.get(game_key, 0) + 1
         if script_cluster:
             script_cluster_counts[script_cluster] = script_cluster_counts.get(script_cluster, 0) + 1
-    return player_counts, target_counts, game_counts, script_cluster_counts
+    return player_counts, target_counts, target_direction_counts, game_counts, script_cluster_counts
 
 
 def _select_edge_append_shadow_board(
@@ -3057,7 +3400,7 @@ def _select_edge_append_shadow_board(
 
     selected_rows = [row.to_dict() for _, row in base_board.iterrows()]
     seen_indices = set(base_indices)
-    player_counts, target_counts, game_counts, script_cluster_counts = _selection_counters_from_rows(selected_rows)
+    player_counts, target_counts, target_direction_counts, game_counts, script_cluster_counts = _selection_counters_from_rows(selected_rows)
 
     caps = _resolve_target_caps(working, max_plays_per_target=max_plays_per_target, max_target_plays=max_target_plays)
     # Append mode is intentionally additive; widen target caps by extra_cap.
@@ -3069,9 +3412,11 @@ def _select_edge_append_shadow_board(
         seen_indices,
         player_counts,
         target_counts,
+        target_direction_counts,
         game_counts,
         script_cluster_counts,
         widened_caps,
+        {},
         max_plays_per_player=max_plays_per_player,
         max_plays_per_game=max_plays_per_game,
         max_plays_per_script_cluster=max_plays_per_script_cluster,
@@ -3165,6 +3510,7 @@ def _select_set_theory_board(
     seen_indices: set = set()
     player_counts: dict[str, int] = {}
     target_counts: dict[str, int] = {}
+    target_direction_counts: dict[str, int] = {}
     game_counts: dict[str, int] = {}
     script_cluster_counts: dict[str, int] = {}
     caps = _resolve_target_caps(scored, max_plays_per_target=max_plays_per_target, max_target_plays=max_target_plays)
@@ -3175,9 +3521,11 @@ def _select_set_theory_board(
         seen_indices,
         player_counts,
         target_counts,
+        target_direction_counts,
         game_counts,
         script_cluster_counts,
         caps,
+        {},
         max_plays_per_player=max_plays_per_player,
         max_plays_per_game=max_plays_per_game,
         max_plays_per_script_cluster=max_plays_per_script_cluster,
@@ -3189,9 +3537,11 @@ def _select_set_theory_board(
         seen_indices,
         player_counts,
         target_counts,
+        target_direction_counts,
         game_counts,
         script_cluster_counts,
         caps,
+        {},
         max_plays_per_player=max_plays_per_player,
         max_plays_per_game=max_plays_per_game,
         max_plays_per_script_cluster=max_plays_per_script_cluster,
@@ -3205,9 +3555,11 @@ def _select_set_theory_board(
             seen_indices,
             player_counts,
             target_counts,
+            target_direction_counts,
             game_counts,
             script_cluster_counts,
             caps,
+            {},
             max_plays_per_player=max_plays_per_player,
             max_plays_per_game=max_plays_per_game,
             max_plays_per_script_cluster=max_plays_per_script_cluster,
@@ -3554,7 +3906,7 @@ def _append_selector_pool_candidates(
     ).copy()
     selected_rows = [row.to_dict() for _, row in base_board.iterrows()]
     seen_indices = set(base_indices)
-    player_counts, target_counts, game_counts, script_cluster_counts = _selection_counters_from_rows(selected_rows)
+    player_counts, target_counts, target_direction_counts, game_counts, script_cluster_counts = _selection_counters_from_rows(selected_rows)
     caps = _resolve_target_caps(working, max_plays_per_target=max_plays_per_target, max_target_plays=max_target_plays)
 
     _append_rows_with_caps(
@@ -3563,9 +3915,11 @@ def _append_selector_pool_candidates(
         seen_indices,
         player_counts,
         target_counts,
+        target_direction_counts,
         game_counts,
         script_cluster_counts,
         caps,
+        {},
         max_plays_per_player=max_plays_per_player,
         max_plays_per_game=max_plays_per_game,
         max_plays_per_script_cluster=max_plays_per_script_cluster,
@@ -3680,6 +4034,17 @@ def compute_final_board(
     board_objective_fp_veto_min_swap_gain: float = 0.0025,
     board_objective_fp_veto_risk_lambda: float = 0.18,
     board_objective_fp_veto_ml_weight: float = 0.45,
+    target_direction_allocation_enabled: bool = False,
+    target_direction_min_rows: int = 80,
+    target_direction_strong_rate: float = 0.64,
+    target_direction_weak_rate: float = 0.56,
+    target_direction_very_weak_rate: float = 0.52,
+    target_direction_max_weak_cap: int = 1,
+    target_direction_max_very_weak_cap: int = 0,
+    target_direction_weak_penalty_weight: float = 0.035,
+    target_direction_recent_weakness_penalty_weight: float = 0.030,
+    target_direction_reserve_max_slots: int = 2,
+    target_direction_reserve_min_prob: float = 0.54,
     max_history_staleness_days: int = 0,
     min_recency_factor: float = 0.0,
     selected_board_calibrator: dict | None = None,
@@ -4226,6 +4591,17 @@ def compute_final_board(
             board_objective_fp_veto_min_swap_gain=float(board_objective_fp_veto_min_swap_gain),
             board_objective_fp_veto_risk_lambda=float(board_objective_fp_veto_risk_lambda),
             board_objective_fp_veto_ml_weight=float(board_objective_fp_veto_ml_weight),
+            target_direction_allocation_enabled=bool(target_direction_allocation_enabled),
+            target_direction_min_rows=int(target_direction_min_rows),
+            target_direction_strong_rate=float(target_direction_strong_rate),
+            target_direction_weak_rate=float(target_direction_weak_rate),
+            target_direction_very_weak_rate=float(target_direction_very_weak_rate),
+            target_direction_max_weak_cap=int(target_direction_max_weak_cap),
+            target_direction_max_very_weak_cap=int(target_direction_max_very_weak_cap),
+            target_direction_weak_penalty_weight=float(target_direction_weak_penalty_weight),
+            target_direction_recent_weakness_penalty_weight=float(target_direction_recent_weakness_penalty_weight),
+            target_direction_reserve_max_slots=int(target_direction_reserve_max_slots),
+            target_direction_reserve_min_prob=float(target_direction_reserve_min_prob),
         )
         selection_stage_counts = {
             str(key): int(value)

@@ -112,6 +112,17 @@ class StrategyConfig:
     board_objective_fp_veto_min_swap_gain: float = 0.0025
     board_objective_fp_veto_risk_lambda: float = 0.18
     board_objective_fp_veto_ml_weight: float = 0.45
+    target_direction_allocation_enabled: bool = False
+    target_direction_min_rows: int = 80
+    target_direction_strong_rate: float = 0.64
+    target_direction_weak_rate: float = 0.56
+    target_direction_very_weak_rate: float = 0.52
+    target_direction_max_weak_cap: int = 1
+    target_direction_max_very_weak_cap: int = 0
+    target_direction_weak_penalty_weight: float = 0.035
+    target_direction_recent_weakness_penalty_weight: float = 0.030
+    target_direction_reserve_max_slots: int = 2
+    target_direction_reserve_min_prob: float = 0.54
     learned_gate_enabled: bool = False
     learned_gate_min_rows: int = 0
     learned_gate_payload: dict[str, Any] | None = None

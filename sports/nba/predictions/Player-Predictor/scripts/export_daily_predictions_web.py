@@ -94,6 +94,16 @@ NBA_PARLAY_SAFETY_MIN_SAMPLE_DATES = 5
 NBA_PARLAY_SAFETY_MIN_GRADED_PAIRS = 8
 NBA_PARLAY_SAFETY_MIN_HIT_RATE_LIFT = 0.02
 NBA_PARLAY_SAFETY_MAX_OVERPROJECTION_GAP = 0.10
+NBA_PARLAY_PRECISION_MIN_LEG_PROBABILITY = 0.555
+NBA_PARLAY_PRECISION_MIN_FINAL_CONFIDENCE = 0.12
+NBA_PARLAY_PRECISION_MIN_SEGMENT_HIT_RATE = 0.60
+NBA_PARLAY_PRECISION_MIN_SEGMENT_ROWS = 60
+NBA_PARLAY_PRECISION_NEAR_MISS_SEGMENT_ROWS = 55
+NBA_PARLAY_PRECISION_ELITE_SEGMENT_HIT_RATE = 0.70
+NBA_PARLAY_PRECISION_MAX_ELIGIBLE_PLAYS = 4
+NBA_PARLAY_PRECISION_MAX_PAIRS = 1
+NBA_PARLAY_PRECISION_MAX_LEGS = 3
+NBA_PARLAY_PRECISION_MIN_PAIR_PROBABILITY = 0.31
 
 
 def parse_args() -> argparse.Namespace:
@@ -370,6 +380,24 @@ def build_parlay_validation(history_csv_path: Path | None) -> dict:
     if rows.empty:
         return {"available": False, "reason": "history csv produced no usable pair-validation rows"}
 
+    leg_segments: dict[str, dict[str, float | int]] = {}
+    graded_legs = rows.loc[rows["result"].isin(["win", "loss"])].copy()
+    if not graded_legs.empty:
+        graded_legs["win"] = graded_legs["result"].eq("win").astype(int)
+        segment_summary = (
+            graded_legs.groupby(["target", "direction"], dropna=False)["win"]
+            .agg(["size", "mean"])
+            .reset_index()
+        )
+        for _, row in segment_summary.iterrows():
+            key = f"{str(row.get('target', '')).strip().upper()}|{str(row.get('direction', '')).strip().upper()}"
+            if not key or key == "|":
+                continue
+            leg_segments[key] = {
+                "rows": int(row["size"]),
+                "hit_rate": float(row["mean"]),
+            }
+
     summary = evaluate_historical_parlays(
         rows,
         sport="nba",
@@ -377,10 +405,91 @@ def build_parlay_validation(history_csv_path: Path | None) -> dict:
         probability_col="estimated_win_rate",
         result_col="result",
         max_pairs_per_day=1,
+        min_legs_per_parlay=2,
+        max_legs_per_parlay=int(NBA_PARLAY_PRECISION_MAX_LEGS),
     )
     summary["source_history_csv"] = str(history_csv_path)
     summary["history_row_count"] = int(len(rows))
+    summary["leg_segments"] = leg_segments
     return summary
+
+
+def build_nba_precision_parlay_candidates(
+    plays: list[dict],
+    parlay_validation: dict | None,
+) -> tuple[list[dict], dict]:
+    segment_payload = parlay_validation.get("leg_segments", {}) if isinstance(parlay_validation, dict) else {}
+    if not isinstance(segment_payload, dict):
+        segment_payload = {}
+
+    prepared: list[dict] = []
+    eligible_indices: list[int] = []
+    for index, play in enumerate(plays):
+        item = dict(play)
+        segment_key = f"{str(item.get('target', '')).strip().upper()}|{str(item.get('direction', '')).strip().upper()}"
+        segment_meta = segment_payload.get(segment_key, {}) if segment_key else {}
+        segment_rows = int(segment_meta.get("rows", 0) or 0) if isinstance(segment_meta, dict) else 0
+        segment_hit_rate = safe_float(segment_meta.get("hit_rate")) if isinstance(segment_meta, dict) else None
+        probability = safe_float(item.get("expected_win_rate"))
+        final_confidence = safe_float(item.get("final_confidence"))
+        ev = safe_float(item.get("ev"))
+        segment_support_ok = bool(
+            segment_rows >= int(NBA_PARLAY_PRECISION_MIN_SEGMENT_ROWS)
+            or (
+                segment_rows >= int(NBA_PARLAY_PRECISION_NEAR_MISS_SEGMENT_ROWS)
+                and segment_hit_rate is not None
+                and segment_hit_rate >= float(NBA_PARLAY_PRECISION_ELITE_SEGMENT_HIT_RATE)
+            )
+        )
+
+        eligible = bool(
+            probability is not None
+            and probability >= float(NBA_PARLAY_PRECISION_MIN_LEG_PROBABILITY)
+            and final_confidence is not None
+            and final_confidence >= float(NBA_PARLAY_PRECISION_MIN_FINAL_CONFIDENCE)
+            and ev is not None
+            and ev >= 0.0
+            and segment_support_ok
+            and segment_hit_rate is not None
+            and segment_hit_rate >= float(NBA_PARLAY_PRECISION_MIN_SEGMENT_HIT_RATE)
+        )
+
+        item["parlay_precision_segment_key"] = segment_key
+        item["parlay_precision_segment_rows"] = int(segment_rows) if segment_rows > 0 else None
+        item["parlay_precision_segment_hit_rate"] = segment_hit_rate
+        item["parlay_precision_segment_support_ok"] = segment_support_ok
+        item["parlay_precision_eligible"] = eligible
+        prepared.append(item)
+        if eligible:
+            eligible_indices.append(index)
+
+    ranked_indices = sorted(
+        eligible_indices,
+        key=lambda idx: (
+            safe_float(prepared[idx].get("parlay_precision_segment_hit_rate")) or 0.0,
+            safe_float(prepared[idx].get("expected_win_rate")) or 0.0,
+            safe_float(prepared[idx].get("final_confidence")) or 0.0,
+            safe_float(prepared[idx].get("ev")) or 0.0,
+        ),
+        reverse=True,
+    )
+    keep_indices = set(ranked_indices[: int(NBA_PARLAY_PRECISION_MAX_ELIGIBLE_PLAYS)])
+    for index, item in enumerate(prepared):
+        if item.get("parlay_precision_eligible") and index not in keep_indices:
+            item["parlay_precision_eligible"] = False
+
+    eligible_after_cap = int(sum(1 for item in prepared if item.get("parlay_precision_eligible")))
+    summary = {
+        "precision_min_leg_probability": float(NBA_PARLAY_PRECISION_MIN_LEG_PROBABILITY),
+        "precision_min_final_confidence": float(NBA_PARLAY_PRECISION_MIN_FINAL_CONFIDENCE),
+        "precision_min_segment_hit_rate": float(NBA_PARLAY_PRECISION_MIN_SEGMENT_HIT_RATE),
+        "precision_min_segment_rows": int(NBA_PARLAY_PRECISION_MIN_SEGMENT_ROWS),
+        "precision_near_miss_segment_rows": int(NBA_PARLAY_PRECISION_NEAR_MISS_SEGMENT_ROWS),
+        "precision_elite_segment_hit_rate": float(NBA_PARLAY_PRECISION_ELITE_SEGMENT_HIT_RATE),
+        "precision_pre_cap_candidate_count": int(len(eligible_indices)),
+        "precision_eligible_play_count": eligible_after_cap,
+    }
+    return prepared, summary
 
 
 def evaluate_parlay_safety_gate(validation: dict | None) -> dict:
@@ -1323,11 +1432,20 @@ def main() -> None:
         display_board_source = str(parlay_source or published_board_source)
 
     plays_json = normalize_play_rows(display_plays, identity_lookup)
+    plays_json, parlay_precision_summary = build_nba_precision_parlay_candidates(plays_json, parlay_validation)
     parlay_payload = annotate_parlay_board(
         plays_json,
         sport="nba",
         probability_field="expected_win_rate",
+        eligibility_field="parlay_precision_eligible",
+        allow_fallback=False,
+        min_leg_probability=float(NBA_PARLAY_PRECISION_MIN_LEG_PROBABILITY),
+        min_pair_probability=float(NBA_PARLAY_PRECISION_MIN_PAIR_PROBABILITY),
+        max_pairs=int(NBA_PARLAY_PRECISION_MAX_PAIRS),
+        min_legs_per_parlay=2,
+        max_legs_per_parlay=int(NBA_PARLAY_PRECISION_MAX_LEGS),
     )
+    parlay_payload["summary"].update(parlay_precision_summary)
     parlay_payload, parlay_safety_gate = apply_parlay_safety_gate(parlay_payload, parlay_validation)
 
     payload = {
