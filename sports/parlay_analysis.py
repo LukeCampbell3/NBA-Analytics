@@ -78,6 +78,13 @@ def _normalized_text(value: Any) -> str:
     return _clean_text(value).lower()
 
 
+def _normalized_script_cluster(value: Any) -> str:
+    token = _normalized_text(value)
+    if token in {"", "nan", "none", "null", "unknown", "script=unknown", "uninferred", "script=uninferred"}:
+        return ""
+    return token
+
+
 def _leg_quality(play: dict[str, Any], probability_field: str) -> float:
     for key in ("parlay_leg_quality_score", "final_pool_quality_score"):
         quality = _safe_float(play.get(key))
@@ -160,14 +167,14 @@ def _pair_adjustment_factor(
     left_target = _normalized_text(left.get("target"))
     left_direction = _normalized_text(left.get("direction"))
     left_game = _normalized_text(left.get("game_id") or left.get("game_key"))
-    left_script_cluster = _normalized_text(left.get("script_cluster_id"))
+    left_script_cluster = _normalized_script_cluster(left.get("script_cluster_id"))
 
     right_player = _normalized_text(right.get("player_display_name") or right.get("player"))
     right_team = _normalized_text(right.get("team"))
     right_target = _normalized_text(right.get("target"))
     right_direction = _normalized_text(right.get("direction"))
     right_game = _normalized_text(right.get("game_id") or right.get("game_key"))
-    right_script_cluster = _normalized_text(right.get("script_cluster_id"))
+    right_script_cluster = _normalized_script_cluster(right.get("script_cluster_id"))
 
     same_player = bool(left_player and left_player == right_player)
     same_game = bool(left_game and left_game == right_game)
