@@ -212,3 +212,44 @@ def test_annotate_parlay_board_can_build_three_leg_ticket() -> None:
     assert payload["pairs"][0]["leg_count"] == 3
     assert payload["pairs"][0]["ticket_rank"] == 1
     assert all(play["parlay_leg_count"] == 3 for play in tagged)
+
+
+def test_annotate_parlay_board_ignores_unknown_script_cluster_penalty() -> None:
+    plays = [
+        {
+            "player": "Alpha Guard",
+            "player_display_name": "Alpha Guard",
+            "team": "A",
+            "target": "AST",
+            "direction": "UNDER",
+            "game_id": "game-1",
+            "expected_win_rate": 0.5560091784765044,
+            "script_cluster_id": "script=unknown",
+        },
+        {
+            "player": "Beta Wing",
+            "player_display_name": "Beta Wing",
+            "team": "B",
+            "target": "AST",
+            "direction": "UNDER",
+            "game_id": "game-2",
+            "expected_win_rate": 0.5560091784765044,
+            "script_cluster_id": "script=unknown",
+        },
+    ]
+
+    payload = annotate_parlay_board(
+        plays,
+        sport="nba",
+        probability_field="expected_win_rate",
+        allow_fallback=False,
+        min_leg_probability=0.555,
+        min_pair_probability=0.31,
+        max_pairs=1,
+        min_legs_per_parlay=2,
+        max_legs_per_parlay=2,
+    )
+
+    assert payload["summary"]["selected_parlay_count"] == 1
+    assert len(payload["pairs"]) == 1
+    assert payload["pairs"][0]["projected_probability"] > 0.31

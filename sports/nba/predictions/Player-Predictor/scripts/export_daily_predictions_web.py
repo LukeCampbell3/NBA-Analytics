@@ -548,6 +548,7 @@ def apply_parlay_safety_gate(parlay_payload: dict, parlay_validation: dict | Non
         "summary": dict(parlay_payload.get("summary", {})),
     }
     payload["summary"]["pre_gate_selected_pair_count"] = int(payload["summary"].get("selected_pair_count", 0) or 0)
+    payload["summary"]["pre_gate_selected_parlay_count"] = int(payload["summary"].get("selected_parlay_count", 0) or 0)
     payload["summary"]["pre_gate_tagged_play_count"] = int(payload["summary"].get("tagged_play_count", 0) or 0)
     payload["summary"]["empirical_gate_passed"] = bool(gate.get("passed"))
     payload["summary"]["empirical_gate_reason"] = str(gate.get("reason", ""))
@@ -566,6 +567,7 @@ def apply_parlay_safety_gate(parlay_payload: dict, parlay_validation: dict | Non
     payload["pairs"] = []
     payload["summary"]["selection_mode"] = "empirical_gate_blocked"
     payload["summary"]["selected_pair_count"] = 0
+    payload["summary"]["selected_parlay_count"] = 0
     payload["summary"]["tagged_play_count"] = 0
     payload["summary"]["avg_projected_pair_hit_rate"] = None
     payload["summary"]["best_projected_pair_hit_rate"] = None
