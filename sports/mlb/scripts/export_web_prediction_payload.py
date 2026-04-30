@@ -109,6 +109,41 @@ def build_splits(source: dict[str, int], total: int) -> dict[str, dict[str, floa
     return out
 
 
+def clamp01(value: float) -> float:
+    return max(0.0, min(1.0, float(value)))
+
+
+def build_mlb_parlay_leg_quality(
+    *,
+    graded_hit_rate: float,
+    precision_score: float,
+    historical_bucket_support: float,
+    historical_bucket_win_rate: float,
+) -> float:
+    support_score = 0.0
+    if historical_bucket_support > 0:
+        support_score = math.log1p(max(0.0, historical_bucket_support)) / math.log1p(3000.0)
+    return clamp01(
+        (0.55 * clamp01(graded_hit_rate))
+        + (0.20 * clamp01(precision_score / 1.15))
+        + (0.15 * clamp01(support_score))
+        + (0.10 * clamp01(historical_bucket_win_rate))
+    )
+
+
+def is_mlb_parlay_leg_eligible(
+    *,
+    graded_hit_rate: float,
+    leg_quality: float,
+    historical_bucket_support: float,
+) -> bool:
+    if graded_hit_rate < 0.64 or leg_quality < 0.78:
+        return False
+    if historical_bucket_support > 0 and historical_bucket_support < 200:
+        return False
+    return True
+
+
 def poisson_pmf(k: int, lam: float) -> float:
     if k < 0:
         return 0.0
@@ -410,6 +445,16 @@ def main() -> None:
         home_team = team if is_home else opponent
         away_team = opponent if is_home else team
         player_lookup = headshot_lookup.get((team.upper(), player_name), {}) or {}
+        estimated_graded_hit_rate = to_float(row.get("Estimated_Graded_Hit_Rate"))
+        precision_score = to_float(row.get("Precision_Score"))
+        historical_bucket_support = to_float(row.get("Historical_Bucket_Support"))
+        historical_bucket_win_rate = to_float(row.get("Historical_Bucket_Win_Rate"))
+        parlay_leg_quality = build_mlb_parlay_leg_quality(
+            graded_hit_rate=estimated_graded_hit_rate,
+            precision_score=precision_score,
+            historical_bucket_support=historical_bucket_support,
+            historical_bucket_win_rate=historical_bucket_win_rate,
+        )
         plays.append(
             {
                 "rank": to_int(row.get("Rank")),
@@ -435,9 +480,20 @@ def main() -> None:
                 "edge": to_float(row.get("Edge")),
                 "abs_edge": to_float(row.get("Abs_Edge")),
                 "estimated_hit_probability": to_float(row.get("Estimated_Hit_Probability")),
-                "estimated_graded_hit_rate": to_float(row.get("Estimated_Graded_Hit_Rate")),
-                "precision_score": to_float(row.get("Precision_Score")),
-                "value_score": to_float(row.get("Precision_Score")) * to_float(row.get("Abs_Edge")),
+                "estimated_graded_hit_rate": estimated_graded_hit_rate,
+                "precision_score": precision_score,
+                "value_score": precision_score * to_float(row.get("Abs_Edge")),
+                "historical_bucket_key": row.get("Historical_Bucket_Key", ""),
+                "historical_prior_source": row.get("Historical_Prior_Source", ""),
+                "historical_bucket_win_rate": historical_bucket_win_rate,
+                "historical_bucket_support": historical_bucket_support,
+                "market_bucket": row.get("Market_Bucket", ""),
+                "final_pool_quality_score": parlay_leg_quality,
+                "parlay_precision_eligible": is_mlb_parlay_leg_eligible(
+                    graded_hit_rate=estimated_graded_hit_rate,
+                    leg_quality=parlay_leg_quality,
+                    historical_bucket_support=historical_bucket_support,
+                ),
                 "confidence_tier": row.get("Confidence_Tier", "consider"),
             }
         )
@@ -446,6 +502,7 @@ def main() -> None:
         plays,
         sport="mlb",
         probability_field="estimated_graded_hit_rate",
+        eligibility_field="parlay_precision_eligible",
     )
     plays = parlay_payload["plays"]
 

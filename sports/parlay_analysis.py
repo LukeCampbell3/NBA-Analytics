@@ -29,16 +29,20 @@ SPORT_CONFIG: dict[str, dict[str, float | int]] = {
         "different_game_bonus": 1.05,
         "different_team_bonus": 1.02,
         "same_script_cluster_factor": 0.92,
+        "same_market_bucket_factor": 0.99,
+        "forbid_same_market_bucket_parlay": 0,
+        "avoid_reused_market_buckets_across_tickets": 0,
+        "cap_projected_probability_to_independent": 1,
     },
     "mlb": {
         "min_leg_probability": 0.60,
         "min_pair_probability": 0.38,
-        "max_pairs": 3,
+        "max_pairs": 2,
         "min_legs_per_parlay": 2,
         "max_legs_per_parlay": 2,
         "fallback_min_leg_probability": 0.58,
         "fallback_min_pair_probability": 0.34,
-        "fallback_max_pairs": 2,
+        "fallback_max_pairs": 1,
         "fallback_min_legs_per_parlay": 2,
         "fallback_max_legs_per_parlay": 2,
         "same_player_factor": 0.72,
@@ -50,6 +54,10 @@ SPORT_CONFIG: dict[str, dict[str, float | int]] = {
         "different_game_bonus": 1.06,
         "different_team_bonus": 1.03,
         "same_script_cluster_factor": 0.96,
+        "same_market_bucket_factor": 0.90,
+        "forbid_same_market_bucket_parlay": 1,
+        "avoid_reused_market_buckets_across_tickets": 1,
+        "cap_projected_probability_to_independent": 1,
     },
 }
 
@@ -81,6 +89,13 @@ def _normalized_text(value: Any) -> str:
 def _normalized_script_cluster(value: Any) -> str:
     token = _normalized_text(value)
     if token in {"", "nan", "none", "null", "unknown", "script=unknown", "uninferred", "script=uninferred"}:
+        return ""
+    return token
+
+
+def _normalized_market_bucket(value: Any) -> str:
+    token = _normalized_text(value)
+    if token in {"", "nan", "none", "null"}:
         return ""
     return token
 
@@ -168,6 +183,7 @@ def _pair_adjustment_factor(
     left_direction = _normalized_text(left.get("direction"))
     left_game = _normalized_text(left.get("game_id") or left.get("game_key"))
     left_script_cluster = _normalized_script_cluster(left.get("script_cluster_id"))
+    left_market_bucket = _normalized_market_bucket(left.get("market_bucket") or left.get("historical_bucket_key"))
 
     right_player = _normalized_text(right.get("player_display_name") or right.get("player"))
     right_team = _normalized_text(right.get("team"))
@@ -175,6 +191,7 @@ def _pair_adjustment_factor(
     right_direction = _normalized_text(right.get("direction"))
     right_game = _normalized_text(right.get("game_id") or right.get("game_key"))
     right_script_cluster = _normalized_script_cluster(right.get("script_cluster_id"))
+    right_market_bucket = _normalized_market_bucket(right.get("market_bucket") or right.get("historical_bucket_key"))
 
     same_player = bool(left_player and left_player == right_player)
     same_game = bool(left_game and left_game == right_game)
@@ -182,6 +199,7 @@ def _pair_adjustment_factor(
     same_target = bool(left_target and left_target == right_target)
     same_direction = bool(left_direction and left_direction == right_direction)
     same_script_cluster = bool(left_script_cluster and left_script_cluster == right_script_cluster)
+    same_market_bucket = bool(left_market_bucket and left_market_bucket == right_market_bucket)
 
     factor = 1.0
     if same_player:
@@ -199,6 +217,8 @@ def _pair_adjustment_factor(
     factor *= float(config["same_direction_factor"] if same_direction else config["mixed_direction_factor"])
     if same_script_cluster:
         factor *= float(config["same_script_cluster_factor"])
+    if same_market_bucket:
+        factor *= float(config.get("same_market_bucket_factor", 1.0))
 
     return factor, {
         "same_player": same_player,
@@ -207,6 +227,7 @@ def _pair_adjustment_factor(
         "same_target": same_target,
         "same_direction": same_direction,
         "same_script_cluster": same_script_cluster,
+        "same_market_bucket": same_market_bucket,
     }
 
 
@@ -263,6 +284,7 @@ def score_candidate_parlays(
             same_team = False
             same_target = False
             same_script_cluster = False
+            same_market_bucket = False
             direction_tokens: set[str] = set()
             for left_pos, right_pos in combinations(range(len(combo_plays)), 2):
                 factor, flags = _pair_adjustment_factor(combo_plays[left_pos], combo_plays[right_pos], config=config)
@@ -272,13 +294,20 @@ def score_candidate_parlays(
                 same_team = same_team or bool(flags["same_team"])
                 same_target = same_target or bool(flags["same_target"])
                 same_script_cluster = same_script_cluster or bool(flags["same_script_cluster"])
+                same_market_bucket = same_market_bucket or bool(flags["same_market_bucket"])
             for play in combo_plays:
                 direction = _normalized_text(play.get("direction"))
                 if direction:
                     direction_tokens.add(direction)
 
+            if same_market_bucket and int(config.get("forbid_same_market_bucket_parlay", 0)):
+                continue
+
             factor = math.prod(pair_factors) ** (1.0 / len(pair_factors)) if pair_factors else 1.0
             projected_probability = max(0.0, min(1.0, independent_probability * factor))
+            if int(config.get("cap_projected_probability_to_independent", 0)):
+                projected_probability = min(projected_probability, independent_probability)
+            projected_probability = min(projected_probability, min(probabilities))
             if projected_probability < min_ticket:
                 continue
 
@@ -291,6 +320,8 @@ def score_candidate_parlays(
                 diversity_bonus -= 0.04
             if same_script_cluster:
                 diversity_bonus -= 0.03
+            if same_market_bucket:
+                diversity_bonus -= 0.06
 
             avg_leg_quality = sum(qualities) / len(qualities)
             quality_factor = 0.85 + (0.30 * avg_leg_quality)
@@ -312,6 +343,7 @@ def score_candidate_parlays(
                     "same_game": same_game,
                     "same_team": same_team,
                     "same_target": same_target,
+                    "same_market_bucket": same_market_bucket,
                     "mixed_direction": len(direction_tokens) > 1,
                 }
             )
@@ -371,6 +403,7 @@ def score_candidate_pairs(
                 "same_game": parlay["same_game"],
                 "same_team": parlay["same_team"],
                 "same_target": parlay["same_target"],
+                "same_market_bucket": parlay["same_market_bucket"],
                 "same_direction": not parlay["mixed_direction"],
             }
         )
@@ -451,6 +484,7 @@ def annotate_parlay_board(
 
     selected_parlays: list[dict[str, Any]] = []
     used_indices: set[int] = set()
+    used_market_buckets: set[str] = set()
     max_parlays_to_select = int(
         config["max_pairs"]
         if selection_mode == "strict"
@@ -460,8 +494,16 @@ def annotate_parlay_board(
         leg_indices = [int(index) for index in parlay["leg_indices"]]
         if any(index in used_indices for index in leg_indices):
             continue
+        parlay_market_buckets = {
+            _normalized_market_bucket(prepared[index].get("market_bucket") or prepared[index].get("historical_bucket_key"))
+            for index in leg_indices
+        }
+        parlay_market_buckets.discard("")
+        if int(config.get("avoid_reused_market_buckets_across_tickets", 0)) and parlay_market_buckets & used_market_buckets:
+            continue
         selected_parlays.append(dict(parlay))
         used_indices.update(leg_indices)
+        used_market_buckets.update(parlay_market_buckets)
         if len(selected_parlays) >= max_parlays_to_select:
             break
 
