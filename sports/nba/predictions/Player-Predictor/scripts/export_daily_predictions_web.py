@@ -73,6 +73,12 @@ NBA_VARIANCE_AWARE_REEXPAND_RULE: dict[str, float] = {
 NBA_PUBLICATION_ALLOWED_SOURCES = {"primary_final_board", "shadow_final_board"}
 NBA_VALIDATED_HEURISTIC_ALLOWED_SOURCES = {"primary_selector_pool_fallback"}
 NBA_PUBLICATION_BLOCKED_RUN_IDS = {"artifact_free_heuristic"}
+PUBLICATION_SOURCE_PRIORITY: dict[str, int] = {
+    "primary_final_board": 400,
+    "shadow_final_board": 300,
+    "primary_selector_pool_fallback": 200,
+    "shadow_selector_pool_fallback": 100,
+}
 NBA_PUBLICATION_MIN_AVG_EXPECTED_WIN_RATE = 0.515
 NBA_PUBLICATION_MIN_MAX_EXPECTED_WIN_RATE = 0.525
 NBA_PUBLICATION_MIN_AVG_FINAL_CONFIDENCE = 0.08
@@ -84,6 +90,10 @@ NBA_VALIDATED_HEURISTIC_MIN_AVG_FINAL_CONFIDENCE = 0.18
 NBA_VALIDATED_HEURISTIC_MIN_GRADED_PLAYS = 20
 NBA_VALIDATED_HEURISTIC_MIN_HISTORICAL_WIN_RATE = 0.60
 NBA_VALIDATED_HEURISTIC_MIN_HISTORICAL_ROI = 0.0
+NBA_PARLAY_SAFETY_MIN_SAMPLE_DATES = 5
+NBA_PARLAY_SAFETY_MIN_GRADED_PAIRS = 8
+NBA_PARLAY_SAFETY_MIN_HIT_RATE_LIFT = 0.02
+NBA_PARLAY_SAFETY_MAX_OVERPROJECTION_GAP = 0.10
 
 
 def parse_args() -> argparse.Namespace:
@@ -371,6 +381,86 @@ def build_parlay_validation(history_csv_path: Path | None) -> dict:
     summary["source_history_csv"] = str(history_csv_path)
     summary["history_row_count"] = int(len(rows))
     return summary
+
+
+def evaluate_parlay_safety_gate(validation: dict | None) -> dict:
+    thresholds = {
+        "min_sample_dates": int(NBA_PARLAY_SAFETY_MIN_SAMPLE_DATES),
+        "min_graded_pairs": int(NBA_PARLAY_SAFETY_MIN_GRADED_PAIRS),
+        "min_hit_rate_lift": float(NBA_PARLAY_SAFETY_MIN_HIT_RATE_LIFT),
+        "max_overprojection_gap": float(NBA_PARLAY_SAFETY_MAX_OVERPROJECTION_GAP),
+    }
+    if not isinstance(validation, dict) or not validation.get("available"):
+        return {
+            "passed": False,
+            "reason": "validation_unavailable",
+            "thresholds": thresholds,
+        }
+
+    selected = validation.get("selected", {}) if isinstance(validation.get("selected"), dict) else {}
+    sample_dates = int(validation.get("sample_dates", 0) or 0)
+    graded_pairs = int(selected.get("graded_pair_count", 0) or 0)
+    pair_hit_rate = safe_div(float(selected.get("hit_pair_count", 0) or 0), graded_pairs) if graded_pairs > 0 else None
+    projected_pair_hit_rate = selected.get("avg_projected_pair_hit_rate")
+    hit_rate_lift = validation.get("hit_rate_lift_vs_all_pairs")
+    overprojection_gap = None
+    if pair_hit_rate is not None and projected_pair_hit_rate is not None:
+        overprojection_gap = float(projected_pair_hit_rate) - float(pair_hit_rate)
+
+    blockers: list[str] = []
+    if sample_dates < int(NBA_PARLAY_SAFETY_MIN_SAMPLE_DATES):
+        blockers.append("insufficient_sample_dates")
+    if graded_pairs < int(NBA_PARLAY_SAFETY_MIN_GRADED_PAIRS):
+        blockers.append("insufficient_graded_pairs")
+    if hit_rate_lift is None or float(hit_rate_lift) < float(NBA_PARLAY_SAFETY_MIN_HIT_RATE_LIFT):
+        blockers.append("insufficient_pair_lift")
+    if overprojection_gap is None or float(overprojection_gap) > float(NBA_PARLAY_SAFETY_MAX_OVERPROJECTION_GAP):
+        blockers.append("overprojected_pairs")
+
+    return {
+        "passed": not blockers,
+        "reason": "passed" if not blockers else blockers[0],
+        "blockers": blockers,
+        "sample_dates": sample_dates,
+        "graded_pairs": graded_pairs,
+        "pair_hit_rate": pair_hit_rate,
+        "projected_pair_hit_rate": float(projected_pair_hit_rate) if projected_pair_hit_rate is not None else None,
+        "hit_rate_lift_vs_all_pairs": float(hit_rate_lift) if hit_rate_lift is not None else None,
+        "overprojection_gap": overprojection_gap,
+        "thresholds": thresholds,
+    }
+
+
+def apply_parlay_safety_gate(parlay_payload: dict, parlay_validation: dict | None) -> tuple[dict, dict]:
+    gate = evaluate_parlay_safety_gate(parlay_validation)
+    payload = {
+        "plays": [dict(play) for play in parlay_payload.get("plays", [])],
+        "pairs": [dict(pair) for pair in parlay_payload.get("pairs", [])],
+        "summary": dict(parlay_payload.get("summary", {})),
+    }
+    payload["summary"]["pre_gate_selected_pair_count"] = int(payload["summary"].get("selected_pair_count", 0) or 0)
+    payload["summary"]["pre_gate_tagged_play_count"] = int(payload["summary"].get("tagged_play_count", 0) or 0)
+    payload["summary"]["empirical_gate_passed"] = bool(gate.get("passed"))
+    payload["summary"]["empirical_gate_reason"] = str(gate.get("reason", ""))
+
+    if gate.get("passed"):
+        return payload, gate
+
+    for play in payload["plays"]:
+        play["parlay_tag"] = ""
+        play["parlay_candidate"] = False
+        play["parlay_pair_rank"] = None
+        play["parlay_score"] = None
+        play["parlay_projected_hit_rate"] = None
+        play["parlay_partner_key"] = None
+        play["parlay_partner_name"] = None
+    payload["pairs"] = []
+    payload["summary"]["selection_mode"] = "empirical_gate_blocked"
+    payload["summary"]["selected_pair_count"] = 0
+    payload["summary"]["tagged_play_count"] = 0
+    payload["summary"]["avg_projected_pair_hit_rate"] = None
+    payload["summary"]["best_projected_pair_hit_rate"] = None
+    return payload, gate
 
 
 def manifest_run_stamp(path: Path) -> str:
@@ -1056,6 +1146,7 @@ def _evaluate_publication_candidate(
 
     return {
         "source": str(source_label),
+        "source_priority": int(PUBLICATION_SOURCE_PRIORITY.get(str(source_label), 0)),
         "policy_profile": final_payload.get("policy_profile"),
         "run_id": run_id or None,
         "play_count": play_count,
@@ -1071,6 +1162,41 @@ def _evaluate_publication_candidate(
         "passes": len(reasons) == 0,
         "reasons": reasons,
     }
+
+
+def _publication_candidate_sort_key(report: dict) -> tuple[float, ...]:
+    return (
+        float(report.get("source_priority", 0)),
+        1.0 if str(report.get("publication_mode")) == "production" else 0.0,
+        float(safe_float(report.get("avg_expected_win_rate")) or 0.0),
+        float(safe_float(report.get("avg_final_confidence")) or 0.0),
+        float(safe_float(report.get("max_expected_win_rate")) or 0.0),
+        float(report.get("play_count") or 0),
+    )
+
+
+def _select_parlay_source(
+    candidates: list[tuple[pd.DataFrame, dict, str]],
+    candidate_reports: list[dict],
+    published_source: str | None,
+) -> tuple[pd.DataFrame, str]:
+    if not candidates:
+        return pd.DataFrame(), ""
+
+    prepared: list[tuple[pd.DataFrame, str, tuple[float, ...]]] = []
+    for (candidate_plays, _, source_label), report in zip(candidates, candidate_reports):
+        if candidate_plays.empty or len(candidate_plays.index) < 2:
+            continue
+        report_key = _publication_candidate_sort_key(report)
+        published_boost = 10_000.0 if source_label == published_source else 0.0
+        prepared.append((candidate_plays, source_label, (published_boost + report_key[0], *report_key[1:])))
+
+    if not prepared:
+        return pd.DataFrame(), ""
+
+    prepared.sort(key=lambda item: item[2], reverse=True)
+    best_plays, best_source, _ = prepared[0]
+    return best_plays.copy(), str(best_source)
 
 
 def _build_publication_message(publication_gate: dict) -> str:
@@ -1095,7 +1221,7 @@ def resolve_published_board(
     manifest_path: Path,
     *,
     accuracy_metrics: dict,
-) -> tuple[pd.DataFrame, dict, str, dict]:
+) -> tuple[pd.DataFrame, dict, str, dict, pd.DataFrame, str]:
     candidates: list[tuple[pd.DataFrame, dict, str]] = []
     final_csv = resolve_artifact_path(manifest.get("final_csv"), manifest_path.parent)
     final_json = resolve_artifact_path(manifest.get("final_json"), manifest_path.parent)
@@ -1137,23 +1263,31 @@ def resolve_published_board(
         for candidate_plays, candidate_payload, source_label in candidates
     ]
 
-    for (candidate_plays, candidate_payload, source_label), report in zip(candidates, candidate_reports):
-        if report["passes"]:
-            publication_gate = {
-                "status": "ready",
-                "selected_source": source_label,
-                "selected_policy_profile": candidate_payload.get("policy_profile"),
-                "publication_mode": report.get("publication_mode"),
-                "message": _build_publication_message({"status": "ready", "publication_mode": report.get("publication_mode")}),
-                "blockers": [],
-                "candidates": candidate_reports,
-                "thresholds": publication_thresholds_payload(),
-            }
-            return candidate_plays, candidate_payload, source_label, publication_gate
+    passing_candidates = [
+        (candidate_plays, candidate_payload, source_label, report)
+        for (candidate_plays, candidate_payload, source_label), report in zip(candidates, candidate_reports)
+        if bool(report.get("passes"))
+    ]
+    if passing_candidates:
+        passing_candidates.sort(key=lambda item: _publication_candidate_sort_key(item[3]), reverse=True)
+        candidate_plays, candidate_payload, source_label, report = passing_candidates[0]
+        parlay_plays, parlay_source = _select_parlay_source(candidates, candidate_reports, str(source_label))
+        publication_gate = {
+            "status": "ready",
+            "selected_source": source_label,
+            "selected_policy_profile": candidate_payload.get("policy_profile"),
+            "publication_mode": report.get("publication_mode"),
+            "message": _build_publication_message({"status": "ready", "publication_mode": report.get("publication_mode")}),
+            "blockers": [],
+            "candidates": candidate_reports,
+            "thresholds": publication_thresholds_payload(),
+        }
+        return candidate_plays, candidate_payload, source_label, publication_gate, parlay_plays, parlay_source
 
     blocked_source = candidate_reports[0]["source"] if candidate_reports else "primary_final_board_empty"
     blocked_payload = candidates[0][1] if candidates else final_payload
     blockers = candidate_reports[0]["reasons"] if candidate_reports else ["empty_board"]
+    parlay_plays, parlay_source = _select_parlay_source(candidates, candidate_reports, None)
     publication_gate = {
         "status": "suppressed",
         "selected_source": None,
@@ -1164,7 +1298,7 @@ def resolve_published_board(
         "candidates": candidate_reports,
         "thresholds": publication_thresholds_payload(),
     }
-    return pd.DataFrame(), blocked_payload, blocked_source, publication_gate
+    return pd.DataFrame(), blocked_payload, blocked_source, publication_gate, parlay_plays, parlay_source
 
 
 def main() -> None:
@@ -1176,18 +1310,25 @@ def main() -> None:
     history_csv = resolve_artifact_path(manifest.get("history_csv"), manifest_path.parent)
     accuracy_metrics = build_accuracy_metrics(history_csv)
     parlay_validation = build_parlay_validation(history_csv)
-    plays, final_payload, published_board_source, publication_gate = resolve_published_board(
+    plays, final_payload, published_board_source, publication_gate, parlay_source_plays, parlay_source = resolve_published_board(
         manifest,
         manifest_path,
         accuracy_metrics=accuracy_metrics,
     )
 
-    plays_json = normalize_play_rows(plays, identity_lookup)
+    display_plays = plays.copy()
+    display_board_source = str(published_board_source)
+    if len(display_plays.index) < 2 and not parlay_source_plays.empty:
+        display_plays = parlay_source_plays.copy()
+        display_board_source = str(parlay_source or published_board_source)
+
+    plays_json = normalize_play_rows(display_plays, identity_lookup)
     parlay_payload = annotate_parlay_board(
         plays_json,
         sport="nba",
         probability_field="expected_win_rate",
     )
+    parlay_payload, parlay_safety_gate = apply_parlay_safety_gate(parlay_payload, parlay_validation)
 
     payload = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -1196,6 +1337,7 @@ def main() -> None:
         "season": manifest.get("season"),
         "through_date": manifest.get("through_date"),
         "published_board_source": published_board_source,
+        "display_board_source": display_board_source,
         "current_market_rows": manifest.get("current_market_rows"),
         "current_market_snapshot_meta": manifest.get("current_market_snapshot_meta", {}),
         "used_latest_manifest": manifest.get("used_latest_manifest"),
@@ -1208,8 +1350,10 @@ def main() -> None:
         "publication_gate": publication_gate,
         "policy": final_payload.get("policy", {}),
         "input_validation": final_payload.get("input_validation", {}),
-        "summary": build_summary(plays),
+        "summary": build_summary(display_plays),
         "accuracy_metrics": accuracy_metrics,
+        "parlay_source": parlay_source or published_board_source,
+        "parlay_safety_gate": parlay_safety_gate,
         "parlay_summary": parlay_payload["summary"],
         "parlay_pairs": parlay_payload["pairs"],
         "parlay_validation": parlay_validation,

@@ -470,53 +470,57 @@ class StructuredStackInference:
             self.scaler_x = joblib.load(self._artifact_path("scaler_x", fallback="lstm_v7_scaler_x.pkl"))
             self.scaler_y = joblib.load(self._artifact_path("scaler_y", fallback="lstm_v7_scaler_y.pkl"))
             self.cb_models = joblib.load(self._artifact_path("catboost_models", fallback="lstm_v7_catboost_models.pkl"))
+            self._validate_or_repair_metadata_contract()
+            self.target_columns = self.metadata["target_columns"]
+            self.feature_columns = self.metadata["feature_columns"]
+            self.baseline_features = self.metadata["baseline_features"]
+            raw_feature_spec = self.metadata.get("feature_spec", {})
+            if isinstance(raw_feature_spec, dict) and {"player_idx", "team_idx", "opp_idx"}.issubset(raw_feature_spec.keys()):
+                self.feature_spec = raw_feature_spec
+            else:
+                # Backward compatibility: older metadata stored grouped feature names
+                # instead of index-based spec required by the current model builders.
+                self.feature_spec = build_feature_spec(self.feature_columns)
+            self.seq_len = int(self.metadata["seq_len"])
+            self.n_features = int(self.metadata["n_features"])
+            self.n_targets = int(self.metadata["n_targets"])
+            self.player_mapping = self.metadata.get("player_mapping", {})
+            self.team_mapping = self.metadata.get("team_mapping", {})
+            self.opponent_mapping = self.metadata.get("opponent_mapping", {})
+            counts = self.metadata.get("counts")
+            if not counts:
+                counts = infer_counts_from_weights(self.model_dir / "lstm_v7_member_0.weights.h5")
+            self.counts = counts
+            self.member_configs = self.metadata.get("ensemble_member_configs") or get_ensemble_variants()[: self.metadata["n_models"]]
+            self.val_losses = list(self.metadata.get("val_losses") or [1.0] * len(self.member_configs))
+            self.catboost_model_info = {entry["target"]: entry for entry in self.metadata["catboost_model_info"]}
+            self.enable_pts_residual_split = bool(self.metadata.get("enable_pts_residual_split", False))
+            self.required_feature_versions = {
+                feature_version
+                for entry in self.metadata.get("catboost_model_info", [])
+                for feature_version in entry.get("feature_versions", [entry.get("feature_version")])
+                if feature_version
+            }
+            self.feature_trainer = create_shared_trainer()
+            self.models = self._load_models()
+            self.pts_branch = self._load_pts_branch() if self._needs_pts_branch() else None
+            pts_ablation = self.metadata.get("pts_latent_ablation") or {}
+            best_base_name = pts_ablation.get("best_base_name")
+            best_blocks = list(pts_ablation.get("best_subset_blocks", []))
+            self.pts_ablate_feature_key = None
+            self.pts_ablate_blocks = []
+            if best_base_name in {"v2", "v3"} and best_blocks:
+                self.pts_ablate_feature_key = f"pts_ablate_{best_base_name}"
+                self.pts_ablate_blocks = best_blocks
         except FileNotFoundError as exc:
             if self._init_surrogate_mode(reason=f"{type(exc).__name__}: {exc}"):
                 return
             self._init_artifact_free_mode(reason=f"{type(exc).__name__}: {exc}")
             return
-        self._validate_or_repair_metadata_contract()
-        self.target_columns = self.metadata["target_columns"]
-        self.feature_columns = self.metadata["feature_columns"]
-        self.baseline_features = self.metadata["baseline_features"]
-        raw_feature_spec = self.metadata.get("feature_spec", {})
-        if isinstance(raw_feature_spec, dict) and {"player_idx", "team_idx", "opp_idx"}.issubset(raw_feature_spec.keys()):
-            self.feature_spec = raw_feature_spec
-        else:
-            # Backward compatibility: older metadata stored grouped feature names
-            # instead of index-based spec required by the current model builders.
-            self.feature_spec = build_feature_spec(self.feature_columns)
-        self.seq_len = int(self.metadata["seq_len"])
-        self.n_features = int(self.metadata["n_features"])
-        self.n_targets = int(self.metadata["n_targets"])
-        self.player_mapping = self.metadata.get("player_mapping", {})
-        self.team_mapping = self.metadata.get("team_mapping", {})
-        self.opponent_mapping = self.metadata.get("opponent_mapping", {})
-        counts = self.metadata.get("counts")
-        if not counts:
-            counts = infer_counts_from_weights(self.model_dir / "lstm_v7_member_0.weights.h5")
-        self.counts = counts
-        self.member_configs = self.metadata.get("ensemble_member_configs") or get_ensemble_variants()[: self.metadata["n_models"]]
-        self.val_losses = list(self.metadata.get("val_losses") or [1.0] * len(self.member_configs))
-        self.catboost_model_info = {entry["target"]: entry for entry in self.metadata["catboost_model_info"]}
-        self.enable_pts_residual_split = bool(self.metadata.get("enable_pts_residual_split", False))
-        self.required_feature_versions = {
-            feature_version
-            for entry in self.metadata.get("catboost_model_info", [])
-            for feature_version in entry.get("feature_versions", [entry.get("feature_version")])
-            if feature_version
-        }
-        self.feature_trainer = create_shared_trainer()
-        self.models = self._load_models()
-        self.pts_branch = self._load_pts_branch() if self._needs_pts_branch() else None
-        pts_ablation = self.metadata.get("pts_latent_ablation") or {}
-        best_base_name = pts_ablation.get("best_base_name")
-        best_blocks = list(pts_ablation.get("best_subset_blocks", []))
-        self.pts_ablate_feature_key = None
-        self.pts_ablate_blocks = []
-        if best_base_name in {"v2", "v3"} and best_blocks:
-            self.pts_ablate_feature_key = f"pts_ablate_{best_base_name}"
-            self.pts_ablate_blocks = best_blocks
+        except Exception as exc:
+            if self._init_surrogate_mode(reason=f"{type(exc).__name__}: {exc}"):
+                return
+            raise
 
     @staticmethod
     def _mapping_key_kind(mapping: dict) -> str:

@@ -175,6 +175,57 @@ def build_line_decision_lookup(history_df: pd.DataFrame) -> dict[str, Any]:
     return lookup
 
 
+def _direction_candidates(
+    target_payload: dict[str, Any],
+    direction_key: str,
+    line_band: str,
+    gap_band: str,
+) -> list[tuple[str, dict[str, Any] | None, float]]:
+    return [
+        ("exact", target_payload.get("exact", {}).get((direction_key, line_band, gap_band)), SOURCE_WEIGHTS["exact"]),
+        ("line", target_payload.get("line", {}).get((direction_key, line_band)), SOURCE_WEIGHTS["line"]),
+        ("gap", target_payload.get("gap", {}).get((direction_key, gap_band)), SOURCE_WEIGHTS["gap"]),
+        ("direction", target_payload.get("direction", {}).get(direction_key), SOURCE_WEIGHTS["direction"]),
+        ("target", target_payload.get("target"), SOURCE_WEIGHTS["target"]),
+    ]
+
+
+def _blend_empirical_distribution(
+    candidates: list[tuple[str, dict[str, Any] | None, float]],
+    *,
+    margin: float,
+    market_line: float,
+    direction_tag: str,
+) -> tuple[float, float, float, float, list[str]]:
+    empirical_over = 0.0
+    empirical_under = 0.0
+    empirical_neutral = 0.0
+    empirical_weight_total = 0.0
+    support_rows = 0.0
+    source_tokens: list[str] = []
+    for name, payload, source_weight in candidates:
+        if not payload:
+            continue
+        rows = int(payload.get("rows", 0))
+        if rows <= 0:
+            continue
+        over_prob, under_prob, neutral_prob = _empirical_dist_for_margin(payload, margin=margin, market_line=float(market_line))
+        cohort_weight = float(max(1.0, np.sqrt(rows)) * source_weight)
+        empirical_over += cohort_weight * over_prob
+        empirical_under += cohort_weight * under_prob
+        empirical_neutral += cohort_weight * neutral_prob
+        empirical_weight_total += cohort_weight
+        support_rows += float(rows * source_weight)
+        source_tokens.append(f"{direction_tag}:{name}:{rows}")
+    if empirical_weight_total <= 1e-9:
+        return 0.5, 0.5, 0.0, 0.0, []
+    empirical_over /= empirical_weight_total
+    empirical_under /= empirical_weight_total
+    empirical_neutral /= empirical_weight_total
+    empirical_over, empirical_under, empirical_neutral = _normalize_dist(empirical_over, empirical_under, empirical_neutral)
+    return empirical_over, empirical_under, empirical_neutral, support_rows, source_tokens
+
+
 def estimate_line_decision(
     *,
     lookup: dict[str, Any],
@@ -222,45 +273,21 @@ def estimate_line_decision(
     target_payload = lookup.get(target_key, {})
     line_band = str(_target_line_band(target_key, pd.Series([market_line])).iloc[0])
     gap_band = str(_gap_percentile_band(pd.Series([gap_percentile])).iloc[0])
-
-    candidates: list[tuple[str, dict[str, Any] | None, float]] = [
-        ("exact", target_payload.get("exact", {}).get((direction_key, line_band, gap_band)), SOURCE_WEIGHTS["exact"]),
-        ("line", target_payload.get("line", {}).get((direction_key, line_band)), SOURCE_WEIGHTS["line"]),
-        ("gap", target_payload.get("gap", {}).get((direction_key, gap_band)), SOURCE_WEIGHTS["gap"]),
-        ("direction", target_payload.get("direction", {}).get(direction_key), SOURCE_WEIGHTS["direction"]),
-        ("target", target_payload.get("target"), SOURCE_WEIGHTS["target"]),
-    ]
-
-    empirical_over = 0.0
-    empirical_under = 0.0
-    empirical_neutral = 0.0
-    empirical_weight_total = 0.0
-    support_rows = 0.0
-    source_tokens: list[str] = []
-    for name, payload, source_weight in candidates:
-        if not payload:
-            continue
-        rows = int(payload.get("rows", 0))
-        if rows <= 0:
-            continue
-        over_prob, under_prob, neutral_prob = _empirical_dist_for_margin(payload, margin=margin, market_line=float(market_line))
-        cohort_weight = float(max(1.0, np.sqrt(rows)) * source_weight)
-        empirical_over += cohort_weight * over_prob
-        empirical_under += cohort_weight * under_prob
-        empirical_neutral += cohort_weight * neutral_prob
-        empirical_weight_total += cohort_weight
-        support_rows += float(rows * source_weight)
-        source_tokens.append(f"{name}:{rows}")
-
-    if empirical_weight_total <= 1e-9:
-        empirical_over, empirical_under, empirical_neutral = 0.5, 0.5, 0.0
-        support_rows = 0.0
-        source_tokens = ["prior_only"]
-    else:
-        empirical_over /= empirical_weight_total
-        empirical_under /= empirical_weight_total
-        empirical_neutral /= empirical_weight_total
-        empirical_over, empirical_under, empirical_neutral = _normalize_dist(empirical_over, empirical_under, empirical_neutral)
+    opposite_direction_key = "UNDER" if direction_key == "OVER" else "OVER"
+    current_candidates = _direction_candidates(target_payload, direction_key, line_band, gap_band)
+    opposite_candidates = _direction_candidates(target_payload, opposite_direction_key, line_band, gap_band)
+    current_over, current_under, current_neutral, current_support_rows, current_tokens = _blend_empirical_distribution(
+        current_candidates,
+        margin=margin,
+        market_line=float(market_line),
+        direction_tag="same",
+    )
+    opposite_over, opposite_under, opposite_neutral, opposite_support_rows, opposite_tokens = _blend_empirical_distribution(
+        opposite_candidates,
+        margin=margin,
+        market_line=float(market_line),
+        direction_tag="opp",
+    )
 
     prior_direction = float(np.clip(prior_direction_win_rate, 0.0, 1.0))
     prior_neutral = float(np.clip(prior_neutral_rate, 0.0, 1.0))
@@ -271,6 +298,52 @@ def estimate_line_decision(
         prior_over, prior_under = prior_opposite, prior_direction
     prior_over, prior_under, prior_neutral = _normalize_dist(prior_over, prior_under, prior_neutral)
 
+    sigma_value = max(0.0, _safe_float(uncertainty_sigma, default=0.0))
+    sigma_pressure = float(sigma_value / max(sigma_value + abs(margin), 1e-9))
+    fragile_near_line = float(np.exp(-abs(margin) / max(0.65, 0.35 + 0.35 * sigma_value)))
+    belief_conf = _clip01(belief_confidence_factor, default=0.5)
+    feasibility_value = _clip01(feasibility, default=0.5)
+    fallback_value = _clip01(fallback_blend, default=0.0)
+    pre_support_rows = max(current_support_rows, opposite_support_rows)
+    pre_support_strength = float(
+        np.clip(
+            0.45 * np.clip(np.log1p(max(0.0, _safe_float(history_rows, default=0.0))) / np.log1p(120.0), 0.0, 1.0)
+            + 0.20 * np.clip(np.log1p(max(0.0, _safe_float(market_books, default=0.0))) / np.log1p(8.0), 0.0, 1.0)
+            + 0.35 * np.clip(np.log1p(max(0.0, pre_support_rows)) / np.log1p(240.0), 0.0, 1.0),
+            0.0,
+            1.0,
+        )
+    )
+    opposite_context_weight = 0.0
+    if opposite_support_rows > 0.0:
+        if current_support_rows <= 0.0:
+            opposite_context_weight = 1.0
+        else:
+            opposite_context_weight = float(
+                np.clip(
+                    0.08
+                    + 0.34 * fragile_near_line
+                    + 0.16 * sigma_pressure
+                    + 0.12 * (1.0 - belief_conf)
+                    + 0.10 * (1.0 - feasibility_value)
+                    + 0.08 * fallback_value
+                    + 0.12 * (1.0 - pre_support_strength),
+                    0.05,
+                    0.65,
+                )
+            )
+    if current_support_rows <= 0.0 and opposite_support_rows <= 0.0:
+        empirical_over, empirical_under, empirical_neutral = 0.5, 0.5, 0.0
+        support_rows = 0.0
+        source_tokens = ["prior_only"]
+    else:
+        empirical_over = (1.0 - opposite_context_weight) * current_over + opposite_context_weight * opposite_over
+        empirical_under = (1.0 - opposite_context_weight) * current_under + opposite_context_weight * opposite_under
+        empirical_neutral = (1.0 - opposite_context_weight) * current_neutral + opposite_context_weight * opposite_neutral
+        empirical_over, empirical_under, empirical_neutral = _normalize_dist(empirical_over, empirical_under, empirical_neutral)
+        support_rows = (1.0 - opposite_context_weight) * current_support_rows + opposite_context_weight * opposite_support_rows
+        source_tokens = current_tokens + opposite_tokens
+
     support_scale = max(1.0, float(cfg.empirical_support_scale))
     empirical_blend_weight = float(np.clip(np.log1p(max(0.0, support_rows)) / np.log1p(support_scale), 0.22, 0.78))
     base_over = empirical_blend_weight * empirical_over + (1.0 - empirical_blend_weight) * prior_over
@@ -278,9 +351,6 @@ def estimate_line_decision(
     base_neutral = empirical_blend_weight * empirical_neutral + (1.0 - empirical_blend_weight) * prior_neutral
     base_over, base_under, base_neutral = _normalize_dist(base_over, base_under, base_neutral)
 
-    sigma_value = max(0.0, _safe_float(uncertainty_sigma, default=0.0))
-    sigma_pressure = float(sigma_value / max(sigma_value + abs(margin), 1e-9))
-    fragile_near_line = float(np.exp(-abs(margin) / max(0.65, 0.35 + 0.35 * sigma_value)))
     support_strength = float(
         np.clip(
             0.45 * np.clip(np.log1p(max(0.0, _safe_float(history_rows, default=0.0))) / np.log1p(120.0), 0.0, 1.0)
@@ -290,9 +360,6 @@ def estimate_line_decision(
             1.0,
         )
     )
-    belief_conf = _clip01(belief_confidence_factor, default=0.5)
-    feasibility_value = _clip01(feasibility, default=0.5)
-    fallback_value = _clip01(fallback_blend, default=0.0)
     instability_score = float(
         np.clip(
             0.50 * sigma_pressure
@@ -330,14 +397,18 @@ def estimate_line_decision(
     directional_mass_post_abstain = max(1e-9, chosen_direction_prob + opposite_direction_prob)
     chosen_direction_conditional_prob = float(chosen_direction_prob / directional_mass_post_abstain)
     opposite_direction_conditional_prob = float(opposite_direction_prob / directional_mass_post_abstain)
+    preferred_direction = "OVER" if over_prob >= under_prob else "UNDER"
+    preferred_direction_prob = over_prob if preferred_direction == "OVER" else under_prob
+    preferred_direction_conditional_prob = float(max(over_prob, under_prob) / directional_mass_post_abstain)
     effective_trade_prob_floor = float(np.clip(float(cfg.min_trade_prob), 0.50, 0.90))
     conditional_prob_gap = float(chosen_direction_conditional_prob - opposite_direction_conditional_prob)
+    preferred_direction_gap = float(abs(over_prob - under_prob) / directional_mass_post_abstain)
     trade_eligible = bool(
         neutral_prob < float(cfg.no_trade_threshold)
-        and chosen_direction_conditional_prob >= effective_trade_prob_floor
-        and conditional_prob_gap >= float(cfg.min_trade_prob_gap)
+        and preferred_direction_conditional_prob >= effective_trade_prob_floor
+        and preferred_direction_gap >= float(cfg.min_trade_prob_gap)
     )
-    action = direction_key if trade_eligible else "NO_TRADE"
+    action = preferred_direction if trade_eligible else "NO_TRADE"
     return {
         "over_prob": float(over_prob),
         "under_prob": float(under_prob),
@@ -350,6 +421,11 @@ def estimate_line_decision(
         "trade_prob_floor": float(effective_trade_prob_floor),
         "trade_eligible": bool(trade_eligible),
         "action": str(action),
+        "preferred_direction": str(preferred_direction),
+        "preferred_direction_prob": float(preferred_direction_prob),
+        "preferred_direction_conditional_prob": float(preferred_direction_conditional_prob),
+        "action_is_opposite": bool(action in {"OVER", "UNDER"} and action != direction_key),
+        "opposite_context_weight": float(opposite_context_weight),
         "source": "+".join(source_tokens),
         "support_rows": float(support_rows),
         "support_strength": float(support_strength),

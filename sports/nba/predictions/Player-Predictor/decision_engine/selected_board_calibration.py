@@ -144,6 +144,130 @@ class CalibratorFitConfig:
     min_rows_global: int = 250
     min_rows_segment: int = 80
     n_bins: int = 10
+    safety_min_rows: int = 60
+    safety_bin_edges: tuple[float, ...] = (0.50, 0.55, 0.60, 0.65, 0.70, 0.80, 1.00)
+    safety_min_bucket_rows: int = 12
+    safety_high_prob_threshold: float = 0.65
+    safety_gap_threshold: float = 0.04
+    safety_gap_retention: float = 0.35
+    safety_margin: float = 0.02
+
+
+def _fit_global_shrink_factor(probs: np.ndarray, labels: np.ndarray) -> float:
+    p = _clip_prob(probs, 0.01, 0.99)
+    y = np.asarray(labels, dtype="float64")
+    if len(p) < 20 or len(y) != len(p):
+        return 1.0
+    centered = p - float(np.mean(p))
+    variance = float(np.mean(centered ** 2))
+    if variance <= 1e-9:
+        return 1.0
+    covariance = float(np.mean(centered * (y - float(np.mean(y)))))
+    slope = covariance / variance
+    return float(np.clip(slope, 0.50, 1.00))
+
+
+def fit_empirical_safety_profile(
+    probs: np.ndarray,
+    labels: np.ndarray,
+    config: CalibratorFitConfig | None = None,
+) -> dict[str, Any] | None:
+    cfg = config or CalibratorFitConfig()
+    p = _clip_prob(probs, 0.01, 0.99)
+    y = np.asarray(labels, dtype="float64")
+    if len(p) < int(max(20, cfg.safety_min_rows)) or len(y) != len(p):
+        return None
+
+    edges = np.asarray(cfg.safety_bin_edges, dtype="float64")
+    if len(edges) < 2:
+        return None
+    edges = np.clip(edges, 0.0, 1.0)
+    edges[0] = min(edges[0], 0.0)
+    edges[-1] = max(edges[-1], 1.0)
+    edges = np.unique(edges)
+    if len(edges) < 2:
+        return None
+
+    mean_prob = float(np.mean(p))
+    mean_label = float(np.mean(y))
+    shrink_factor = 1.0
+    if (mean_prob - mean_label) >= 0.02:
+        high_conf_mask = p >= 0.55
+        shrink_probs = p[high_conf_mask] if int(np.sum(high_conf_mask)) >= 20 else p
+        shrink_labels = y[high_conf_mask] if int(np.sum(high_conf_mask)) >= 20 else y
+        shrink_factor = _fit_global_shrink_factor(shrink_probs, shrink_labels)
+    high_prob_buckets: list[dict[str, Any]] = []
+    for lower, upper in zip(edges[:-1], edges[1:]):
+        upper_bound = upper if upper < 1.0 else 1.000001
+        mask = (p >= float(lower)) & (p < float(upper_bound))
+        count = int(np.sum(mask))
+        if count < int(max(1, cfg.safety_min_bucket_rows)):
+            continue
+        avg_prob = float(np.mean(p[mask]))
+        if avg_prob < float(cfg.safety_high_prob_threshold):
+            continue
+        wins = float(np.sum(y[mask]))
+        smoothed_hit_rate = float((wins + 2.0) / (count + 4.0))
+        gap = float(avg_prob - smoothed_hit_rate)
+        if gap < float(cfg.safety_gap_threshold):
+            continue
+        cap = smoothed_hit_rate + float(cfg.safety_margin) + float(cfg.safety_gap_retention) * gap
+        high_prob_buckets.append(
+            {
+                "lower": float(lower),
+                "upper": float(upper),
+                "rows": count,
+                "wins": int(wins),
+                "avg_prob": avg_prob,
+                "smoothed_hit_rate": smoothed_hit_rate,
+                "gap": gap,
+                "cap": float(np.clip(cap, 0.50, avg_prob)),
+            }
+        )
+
+    if not high_prob_buckets and shrink_factor >= 0.995:
+        return None
+    return {
+        "rows": int(len(p)),
+        "mean_prob": mean_prob,
+        "mean_label": mean_label,
+        "global_shrink_factor": shrink_factor,
+        "high_prob_buckets": high_prob_buckets,
+    }
+
+
+def apply_empirical_safety_profile(
+    probs: np.ndarray,
+    safety_profile: dict[str, Any] | None,
+) -> tuple[np.ndarray, bool]:
+    p = _clip_prob(probs, 0.01, 0.99)
+    if not safety_profile:
+        return p, False
+
+    transformed = p.copy()
+    try:
+        shrink_factor = float(safety_profile.get("global_shrink_factor", 1.0))
+    except Exception:
+        shrink_factor = 1.0
+    shrink_factor = float(np.clip(shrink_factor, 0.50, 1.00))
+    transformed = 0.5 + shrink_factor * (transformed - 0.5)
+    applied = shrink_factor < 0.995
+
+    for bucket in safety_profile.get("high_prob_buckets", []) or []:
+        try:
+            lower = float(bucket.get("lower", 0.0))
+            upper = float(bucket.get("upper", 1.0))
+            cap = float(bucket.get("cap", 1.0))
+        except Exception:
+            continue
+        upper_bound = upper if upper < 1.0 else 1.000001
+        mask = (p >= lower) & (p < upper_bound)
+        if not np.any(mask):
+            continue
+        transformed[mask] = np.minimum(transformed[mask], float(np.clip(cap, 0.50, 0.99)))
+        applied = True
+
+    return _clip_prob(transformed, 0.01, 0.99), applied
 
 
 def fit_selected_board_calibrator_payload(
@@ -227,6 +351,11 @@ def fit_selected_board_calibrator_payload(
             "train_end": (month_start - pd.Timedelta(days=1)).strftime("%Y-%m-%d"),
             "global": global_cal,
             "segments": segments,
+            "safety_profile": fit_empirical_safety_profile(
+                train["_prob"].to_numpy(dtype="float64"),
+                train["_label"].to_numpy(dtype="float64"),
+                config=cfg,
+            ),
         }
 
     return payload
@@ -291,6 +420,7 @@ def apply_selected_board_calibration(
 
     global_cal = month_payload.get("global")
     segment_calibrators = month_payload.get("segments", {}) if isinstance(month_payload.get("segments"), dict) else {}
+    safety_profile = month_payload.get("safety_profile") if isinstance(month_payload, dict) else None
     targets = frame.get(target_col, pd.Series("", index=frame.index)).astype(str).str.upper().str.strip()
     directions = frame.get(direction_col, pd.Series("", index=frame.index)).astype(str).str.upper().str.strip()
     seg_keys = targets + "_" + directions
@@ -307,6 +437,16 @@ def apply_selected_board_calibration(
             continue
         calibrated[mask] = apply_monotonic_bin_calibrator(calibrated[mask], cal)
         sources[mask] = f"segment:{key}"
+
+    calibrated, safety_applied = apply_empirical_safety_profile(calibrated, safety_profile)
+    if safety_applied:
+        sources = np.asarray(
+            [
+                f"{str(source)}+safety" if str(source) != "identity" else "safety"
+                for source in sources
+            ],
+            dtype=object,
+        )
 
     return (
         pd.Series(_clip_prob(calibrated, 0.01, 0.99), index=frame.index, dtype="float64"),

@@ -828,22 +828,64 @@ def build_play_rows(
                 np.clip(line_decision.get("opposite_direction_conditional_prob", prior_expected_loss_rate), 0.0, 1.0)
             )
             expected_push_rate = historical_push_rate
-            expected_loss_rate = prior_expected_loss_rate
             trade_eligible = bool(line_decision.get("trade_eligible", False))
+            action_direction = str(line_decision.get("action", "NO_TRADE")).upper().strip()
+            if action_direction not in {"OVER", "UNDER"}:
+                action_direction = direction
+            action_is_opposite = bool(
+                trade_eligible
+                and action_direction in {"OVER", "UNDER"}
+                and action_direction != direction
+            )
+            action_conditional_prob = chosen_direction_conditional_prob if action_direction == direction else opposite_direction_conditional_prob
+            action_side_prob = line_over_prob if action_direction == "OVER" else line_under_prob
+            action_expected_rate_raw = float(np.clip(action_conditional_prob * max(0.0, 1.0 - historical_push_rate), 0.0, 0.99))
+            sidecar_blend_weight = float(np.clip(line_decision.get("empirical_blend_weight", 0.0), 0.0, 1.0))
+            if action_is_opposite:
+                sidecar_blend_weight = max(0.55, sidecar_blend_weight)
+            sidecar_effective_rate = float(
+                np.clip(
+                    sidecar_blend_weight * action_expected_rate_raw
+                    + (1.0 - sidecar_blend_weight) * adjusted_expected_rate,
+                    0.50,
+                    0.95,
+                )
+            )
+            effective_direction = action_direction if trade_eligible else direction
+            effective_prediction = pred
+            effective_raw_prediction = raw_pred
+            if action_is_opposite:
+                effective_prediction = float((2.0 * market) - pred)
+                effective_raw_prediction = float((2.0 * market) - raw_pred)
+            effective_edge = float(effective_prediction - market)
+            effective_raw_edge = float(effective_raw_prediction - market)
+            effective_abs_gap = abs(effective_edge)
+            effective_risk_profile = risk_profile
+            if action_is_opposite:
+                effective_risk_profile = _risk_profile(
+                    row,
+                    target,
+                    effective_prediction,
+                    effective_direction,
+                    belief_uncertainty_lower=float(belief_uncertainty_lower),
+                    belief_uncertainty_upper=float(belief_uncertainty_upper),
+                )
+            effective_expected_rate = sidecar_effective_rate if trade_eligible else adjusted_expected_rate
+            expected_loss_rate = float(np.clip(1.0 - effective_expected_rate - historical_push_rate, 0.0, 1.0))
             if not trade_eligible:
                 adjusted_recommendation = "pass"
             elif adjusted_recommendation == "pass":
                 adjusted_recommendation = "consider"
-            elif adjusted_recommendation == "elite" and adjusted_expected_rate < 0.62:
+            elif adjusted_recommendation == "elite" and effective_expected_rate < 0.62:
                 adjusted_recommendation = "strong"
-            elif adjusted_recommendation in {"elite", "strong"} and adjusted_expected_rate < 0.58:
+            elif adjusted_recommendation in {"elite", "strong"} and effective_expected_rate < 0.58:
                 adjusted_recommendation = "consider"
 
             confidence_score = (
-                adjusted_abs_gap
+                effective_abs_gap
                 * belief_conf
                 * feas
-                * (1.0 - float(risk_profile["risk_penalty"]))
+                * (1.0 - float(effective_risk_profile["risk_penalty"]))
                 * (1.0 - min(0.75, posterior_std))
                 * (1.0 - min(0.80, line_no_trade_prob))
             )
@@ -857,18 +899,32 @@ def build_play_rows(
                     "market_home_team": row.get("market_home_team"),
                     "market_away_team": row.get("market_away_team"),
                     "target": target,
-                    "direction": direction,
-                    "prediction": pred,
+                    "direction": effective_direction,
+                    "model_direction": direction,
+                    "prediction": effective_prediction,
                     "raw_prediction": raw_pred,
+                    "raw_prediction_effective": effective_raw_prediction,
                     "line_decision_action": str(line_decision.get("action", "NO_TRADE")),
+                    "line_action_direction": action_direction,
+                    "line_action_is_opposite": action_is_opposite,
                     "line_decision_trade_eligible": bool(line_decision.get("trade_eligible", False)),
                     "line_over_prob": line_over_prob,
                     "line_under_prob": line_under_prob,
                     "line_no_trade_prob": line_no_trade_prob,
-                    "line_chosen_direction_prob": adjusted_expected_rate,
-                    "line_opposite_direction_prob": expected_loss_rate,
+                    "line_chosen_direction_prob": chosen_direction_prob,
+                    "line_opposite_direction_prob": opposite_direction_prob,
                     "line_chosen_direction_conditional_prob": chosen_direction_conditional_prob,
                     "line_opposite_direction_conditional_prob": opposite_direction_conditional_prob,
+                    "line_preferred_direction": str(line_decision.get("preferred_direction", action_direction)),
+                    "line_preferred_direction_prob": float(line_decision.get("preferred_direction_prob", action_side_prob)),
+                    "line_preferred_direction_conditional_prob": float(
+                        line_decision.get("preferred_direction_conditional_prob", action_conditional_prob)
+                    ),
+                    "line_action_prob": action_side_prob,
+                    "line_action_conditional_prob": action_conditional_prob,
+                    "line_action_expected_win_rate": action_expected_rate_raw,
+                    "line_action_empirical_blend_weight": sidecar_blend_weight,
+                    "line_opposite_context_weight": float(line_decision.get("opposite_context_weight", 0.0)),
                     "line_conditional_prob_gap": float(line_decision.get("conditional_prob_gap", 0.0)),
                     "line_trade_prob_floor": float(line_decision.get("trade_prob_floor", 0.0)),
                     "line_decision_source": str(line_decision.get("source", "unknown")),
@@ -880,14 +936,15 @@ def build_play_rows(
                     "line_decision_empirical_blend_weight": float(line_decision.get("empirical_blend_weight", 0.0)),
                     "prediction_shrink_lambda": prediction_shrink_lambda,
                     "market_line": market,
-                    "edge": edge,
-                    "raw_edge": raw_edge,
-                    "abs_edge": abs_gap,
+                    "edge": effective_edge,
+                    "raw_edge": effective_raw_edge,
+                    "abs_edge": effective_abs_gap,
                     "raw_gap_percentile": gap_pct,
                     "gap_percentile": adjusted_gap_pct,
                     "recommendation": adjusted_recommendation,
                     "raw_recommendation": recommendation,
-                    "expected_win_rate": adjusted_expected_rate,
+                    "expected_win_rate": effective_expected_rate,
+                    "expected_win_rate_pre_sidecar": adjusted_expected_rate,
                     "raw_expected_win_rate": float(expected_triplet.get("base_expected_win_rate", base_expected_rate)),
                     "bayesian_expected_win_rate": base_expected_rate,
                     "expected_push_rate": expected_push_rate,
@@ -917,12 +974,12 @@ def build_play_rows(
                     "baseline_edge": safe_float(row.get(f"baseline_edge_{target}"), default=np.nan),
                     "uncertainty_sigma": safe_float(row.get(f"{target}_uncertainty_sigma"), default=np.nan),
                     "spike_probability": safe_float(row.get(f"{target}_spike_probability"), default=np.nan),
-                    "sigma_ratio": float(risk_profile["sigma_ratio"]),
-                    "volatility_score": float(risk_profile["volatility_score"]),
-                    "risk_penalty": float(risk_profile["risk_penalty"]),
-                    "tail_imbalance": float(risk_profile["tail_imbalance"]),
-                    "spike_flag": bool(risk_profile["spike_flag"]),
-                    "adjusted_abs_edge": adjusted_abs_gap,
+                    "sigma_ratio": float(effective_risk_profile["sigma_ratio"]),
+                    "volatility_score": float(effective_risk_profile["volatility_score"]),
+                    "risk_penalty": float(effective_risk_profile["risk_penalty"]),
+                    "tail_imbalance": float(effective_risk_profile["tail_imbalance"]),
+                    "spike_flag": bool(effective_risk_profile["spike_flag"]),
+                    "adjusted_abs_edge": effective_abs_gap,
                     "history_rows": int(row.get("history_rows", 0)),
                     "last_history_date": row.get("last_history_date"),
                     "csv": row.get("csv"),
