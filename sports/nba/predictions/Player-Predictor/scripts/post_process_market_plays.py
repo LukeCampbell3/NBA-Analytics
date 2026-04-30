@@ -3568,20 +3568,56 @@ def compute_final_board(
         if out.empty:
             return _finalize(out)
 
+    staleness_cap = int(max_history_staleness_days)
+    if "market_date" in out.columns and "last_history_date" in out.columns:
+        market_dates = pd.to_datetime(out["market_date"], errors="coerce")
+        history_dates = pd.to_datetime(out["last_history_date"], errors="coerce")
+        out["history_staleness_days"] = (market_dates - history_dates).dt.days
+
     min_recency = float(min_recency_factor)
     if min_recency > 0.0 and "recency_factor" in out.columns:
         out["recency_factor"] = _numeric_series(out, "recency_factor", 0.0)
-        out = out.loc[out["recency_factor"] >= min_recency].copy()
+        recency_filtered = out.loc[out["recency_factor"] >= min_recency].copy()
+        recency_fail_open = False
+        recency_fail_open_reason = ""
+        recency_threshold_effective = float(min_recency)
+        if recency_filtered.empty:
+            fallback = out.iloc[0:0].copy()
+            if "history_staleness_days" in out.columns:
+                staleness_days = pd.to_numeric(out["history_staleness_days"], errors="coerce")
+                eligible_mask = staleness_days.notna()
+                if staleness_cap > 0:
+                    eligible_mask &= staleness_days <= float(staleness_cap)
+                if eligible_mask.any():
+                    freshest_staleness = float(staleness_days.loc[eligible_mask].min())
+                    fallback = out.loc[eligible_mask & staleness_days.eq(freshest_staleness)].copy()
+                    recency_threshold_effective = float(
+                        pd.to_numeric(fallback.get("recency_factor"), errors="coerce").fillna(0.0).min()
+                    )
+                    recency_fail_open_reason = (
+                        "freshest_history_within_staleness_cap"
+                        if staleness_cap > 0
+                        else "freshest_history_available"
+                    )
+            if fallback.empty:
+                max_available_recency = float(pd.to_numeric(out.get("recency_factor"), errors="coerce").fillna(0.0).max())
+                fallback = out.loc[out["recency_factor"] >= max_available_recency].copy()
+                recency_threshold_effective = float(max_available_recency)
+                recency_fail_open_reason = "max_available_recency_factor"
+            out = fallback.copy()
+            recency_fail_open = not out.empty
+        else:
+            out = recency_filtered
         if out.empty:
             _record_stage("after_recency", out)
             return _finalize(out)
+        out["recency_gate_fail_open"] = bool(recency_fail_open)
+        out["recency_gate_fail_open_reason"] = str(recency_fail_open_reason)
+        out["recency_gate_threshold_requested"] = float(min_recency)
+        out["recency_gate_threshold_effective"] = float(recency_threshold_effective)
 
-    staleness_cap = int(max_history_staleness_days)
-    if staleness_cap > 0 and "market_date" in out.columns and "last_history_date" in out.columns:
-        market_dates = pd.to_datetime(out["market_date"], errors="coerce")
-        history_dates = pd.to_datetime(out["last_history_date"], errors="coerce")
-        staleness_days = (market_dates - history_dates).dt.days
-        out["history_staleness_days"] = staleness_days
+    if staleness_cap > 0 and "history_staleness_days" in out.columns:
+        staleness_days = pd.to_numeric(out["history_staleness_days"], errors="coerce")
         out = out.loc[staleness_days.isna() | (staleness_days <= staleness_cap)].copy()
         if out.empty:
             _record_stage("after_recency", out)
