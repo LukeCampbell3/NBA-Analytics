@@ -114,3 +114,101 @@ def test_annotate_parlay_board_uses_fallback_for_weak_nba_slate() -> None:
     tagged = [play for play in payload["plays"] if play["parlay_candidate"]]
     assert len(tagged) == 2
     assert {play["player"] for play in tagged} == {"Austin Reaves", "Stephon Castle"}
+
+
+def test_annotate_parlay_board_respects_explicit_leg_eligibility() -> None:
+    plays = [
+        {
+            "player": "Alpha Guard",
+            "player_display_name": "Alpha Guard",
+            "team": "A",
+            "target": "PTS",
+            "direction": "UNDER",
+            "game_id": "game-1",
+            "expected_win_rate": 0.60,
+            "parlay_precision_eligible": True,
+        },
+        {
+            "player": "Beta Wing",
+            "player_display_name": "Beta Wing",
+            "team": "B",
+            "target": "AST",
+            "direction": "OVER",
+            "game_id": "game-2",
+            "expected_win_rate": 0.64,
+            "parlay_precision_eligible": False,
+        },
+        {
+            "player": "Gamma Big",
+            "player_display_name": "Gamma Big",
+            "team": "C",
+            "target": "TRB",
+            "direction": "UNDER",
+            "game_id": "game-3",
+            "expected_win_rate": 0.59,
+            "parlay_precision_eligible": True,
+        },
+    ]
+
+    payload = annotate_parlay_board(
+        plays,
+        sport="nba",
+        probability_field="expected_win_rate",
+        eligibility_field="parlay_precision_eligible",
+        allow_fallback=False,
+        max_pairs=1,
+    )
+
+    tagged = [play for play in payload["plays"] if play["parlay_candidate"]]
+    assert len(tagged) == 2
+    assert {play["player"] for play in tagged} == {"Alpha Guard", "Gamma Big"}
+
+
+def test_annotate_parlay_board_can_build_three_leg_ticket() -> None:
+    plays = [
+        {
+            "player": "Alpha Guard",
+            "player_display_name": "Alpha Guard",
+            "team": "A",
+            "target": "PTS",
+            "direction": "UNDER",
+            "game_id": "game-1",
+            "expected_win_rate": 0.72,
+        },
+        {
+            "player": "Beta Wing",
+            "player_display_name": "Beta Wing",
+            "team": "B",
+            "target": "AST",
+            "direction": "UNDER",
+            "game_id": "game-2",
+            "expected_win_rate": 0.71,
+        },
+        {
+            "player": "Gamma Big",
+            "player_display_name": "Gamma Big",
+            "team": "C",
+            "target": "TRB",
+            "direction": "UNDER",
+            "game_id": "game-3",
+            "expected_win_rate": 0.70,
+        },
+    ]
+
+    payload = annotate_parlay_board(
+        plays,
+        sport="nba",
+        probability_field="expected_win_rate",
+        allow_fallback=False,
+        max_pairs=1,
+        min_legs_per_parlay=3,
+        max_legs_per_parlay=3,
+    )
+
+    tagged = [play for play in payload["plays"] if play["parlay_candidate"]]
+    assert len(tagged) == 3
+    assert payload["summary"]["selected_pair_count"] == 1
+    assert payload["summary"]["selected_parlay_count"] == 1
+    assert payload["pairs"][0]["leg_count"] == 3
+    assert payload["pairs"][0]["ticket_rank"] == 1
+    assert all(play["parlay_leg_count"] == 3 for play in tagged)

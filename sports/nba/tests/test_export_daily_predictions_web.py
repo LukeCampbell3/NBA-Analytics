@@ -18,6 +18,7 @@ from export_daily_predictions_web import (
     apply_parlay_safety_gate,
     apply_adaptive_board_sizing,
     apply_variance_aware_reexpand,
+    build_nba_precision_parlay_candidates,
     build_selector_pool_fallback,
     evaluate_parlay_safety_gate,
     enrich_selector_pool_candidates,
@@ -666,3 +667,93 @@ def test_apply_parlay_safety_gate_blocks_unsupported_pairs() -> None:
     assert gated_payload["summary"]["selected_pair_count"] == 0
     assert all(play["parlay_candidate"] is False for play in gated_payload["plays"])
     assert gated_payload["pairs"] == []
+
+
+def test_build_nba_precision_parlay_candidates_keeps_only_supported_legs() -> None:
+    plays = [
+        {
+            "player": "Trusted Under",
+            "target": "PTS",
+            "direction": "UNDER",
+            "expected_win_rate": 0.561,
+            "final_confidence": 0.16,
+            "ev": 0.03,
+        },
+        {
+            "player": "Weak Over",
+            "target": "PTS",
+            "direction": "OVER",
+            "expected_win_rate": 0.574,
+            "final_confidence": 0.19,
+            "ev": 0.04,
+        },
+        {
+            "player": "Low Confidence Under",
+            "target": "AST",
+            "direction": "UNDER",
+            "expected_win_rate": 0.558,
+            "final_confidence": 0.08,
+            "ev": 0.02,
+        },
+        {
+            "player": "Trusted Ast Under",
+            "target": "AST",
+            "direction": "UNDER",
+            "expected_win_rate": 0.556,
+            "final_confidence": 0.14,
+            "ev": 0.01,
+        },
+    ]
+    validation = {
+        "available": True,
+        "leg_segments": {
+            "PTS|UNDER": {"rows": 87, "hit_rate": 0.678},
+            "PTS|OVER": {"rows": 133, "hit_rate": 0.368},
+            "AST|UNDER": {"rows": 91, "hit_rate": 0.813},
+        },
+    }
+
+    prepared, summary = build_nba_precision_parlay_candidates(plays, validation)
+    eligible = [play["player"] for play in prepared if play["parlay_precision_eligible"]]
+
+    assert eligible == ["Trusted Under", "Trusted Ast Under"]
+    assert summary["precision_pre_cap_candidate_count"] == 2
+    assert summary["precision_eligible_play_count"] == 2
+
+
+def test_build_nba_precision_parlay_candidates_allows_elite_near_miss_segment_support() -> None:
+    plays = [
+        {
+            "player": "Elite Ast Under",
+            "target": "AST",
+            "direction": "UNDER",
+            "expected_win_rate": 0.559,
+            "final_confidence": 0.14,
+            "ev": 0.02,
+        },
+        {
+            "player": "Borderline Pts Under",
+            "target": "PTS",
+            "direction": "UNDER",
+            "expected_win_rate": 0.558,
+            "final_confidence": 0.15,
+            "ev": 0.02,
+        },
+    ]
+    validation = {
+        "available": True,
+        "leg_segments": {
+            "AST|UNDER": {"rows": 59, "hit_rate": 0.729},
+            "PTS|UNDER": {"rows": 55, "hit_rate": 0.545},
+        },
+    }
+
+    prepared, summary = build_nba_precision_parlay_candidates(plays, validation)
+    eligible = [play["player"] for play in prepared if play["parlay_precision_eligible"]]
+    support_ok = {play["player"]: play["parlay_precision_segment_support_ok"] for play in prepared}
+
+    assert eligible == ["Elite Ast Under"]
+    assert support_ok["Elite Ast Under"] is True
+    assert support_ok["Borderline Pts Under"] is False
+    assert summary["precision_near_miss_segment_rows"] == 55
+    assert summary["precision_elite_segment_hit_rate"] == 0.70

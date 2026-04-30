@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from itertools import combinations
 from collections import Counter
 from typing import Any
 
@@ -12,9 +13,13 @@ SPORT_CONFIG: dict[str, dict[str, float | int]] = {
         "min_leg_probability": 0.54,
         "min_pair_probability": 0.29,
         "max_pairs": 3,
+        "min_legs_per_parlay": 2,
+        "max_legs_per_parlay": 3,
         "fallback_min_leg_probability": 0.50,
         "fallback_min_pair_probability": 0.24,
         "fallback_max_pairs": 1,
+        "fallback_min_legs_per_parlay": 2,
+        "fallback_max_legs_per_parlay": 2,
         "same_player_factor": 0.52,
         "same_game_factor": 0.90,
         "same_team_factor": 0.96,
@@ -29,9 +34,13 @@ SPORT_CONFIG: dict[str, dict[str, float | int]] = {
         "min_leg_probability": 0.60,
         "min_pair_probability": 0.38,
         "max_pairs": 3,
+        "min_legs_per_parlay": 2,
+        "max_legs_per_parlay": 2,
         "fallback_min_leg_probability": 0.58,
         "fallback_min_pair_probability": 0.34,
         "fallback_max_pairs": 2,
+        "fallback_min_legs_per_parlay": 2,
+        "fallback_max_legs_per_parlay": 2,
         "same_player_factor": 0.72,
         "same_game_factor": 0.95,
         "same_team_factor": 0.97,
@@ -104,12 +113,27 @@ def _pair_outcome(left_result: str, right_result: str) -> str:
     return "unresolved"
 
 
+def _parlay_outcome(results: list[str]) -> str:
+    normalized = {_normalized_text(result) for result in results}
+    if not normalized or "unresolved" in normalized or "" in normalized:
+        return "unresolved"
+    if "loss" in normalized:
+        return "miss"
+    if normalized == {"win"}:
+        return "hit"
+    if "push" in normalized:
+        return "push"
+    return "unresolved"
+
+
 def _resolve_sport_config(
     sport: str,
     *,
     min_leg_probability: float | None = None,
     min_pair_probability: float | None = None,
     max_pairs: int | None = None,
+    min_legs_per_parlay: int | None = None,
+    max_legs_per_parlay: int | None = None,
 ) -> dict[str, float | int]:
     config = dict(SPORT_CONFIG.get(str(sport or "").strip().lower(), SPORT_CONFIG["nba"]))
     if min_leg_probability is not None:
@@ -118,87 +142,142 @@ def _resolve_sport_config(
         config["min_pair_probability"] = float(min_pair_probability)
     if max_pairs is not None:
         config["max_pairs"] = int(max_pairs)
+    if min_legs_per_parlay is not None:
+        config["min_legs_per_parlay"] = int(min_legs_per_parlay)
+    if max_legs_per_parlay is not None:
+        config["max_legs_per_parlay"] = int(max_legs_per_parlay)
     return config
 
 
-def score_candidate_pairs(
+def _pair_adjustment_factor(
+    left: dict[str, Any],
+    right: dict[str, Any],
+    *,
+    config: dict[str, float | int],
+) -> tuple[float, dict[str, bool]]:
+    left_player = _normalized_text(left.get("player_display_name") or left.get("player"))
+    left_team = _normalized_text(left.get("team"))
+    left_target = _normalized_text(left.get("target"))
+    left_direction = _normalized_text(left.get("direction"))
+    left_game = _normalized_text(left.get("game_id") or left.get("game_key"))
+    left_script_cluster = _normalized_text(left.get("script_cluster_id"))
+
+    right_player = _normalized_text(right.get("player_display_name") or right.get("player"))
+    right_team = _normalized_text(right.get("team"))
+    right_target = _normalized_text(right.get("target"))
+    right_direction = _normalized_text(right.get("direction"))
+    right_game = _normalized_text(right.get("game_id") or right.get("game_key"))
+    right_script_cluster = _normalized_text(right.get("script_cluster_id"))
+
+    same_player = bool(left_player and left_player == right_player)
+    same_game = bool(left_game and left_game == right_game)
+    same_team = bool(left_team and left_team == right_team)
+    same_target = bool(left_target and left_target == right_target)
+    same_direction = bool(left_direction and left_direction == right_direction)
+    same_script_cluster = bool(left_script_cluster and left_script_cluster == right_script_cluster)
+
+    factor = 1.0
+    if same_player:
+        factor *= float(config["same_player_factor"])
+    if same_game:
+        factor *= float(config["same_game_factor"])
+    else:
+        factor *= float(config["different_game_bonus"])
+    if same_team:
+        factor *= float(config["same_team_factor"])
+    else:
+        factor *= float(config["different_team_bonus"])
+    if same_target:
+        factor *= float(config["same_target_factor"])
+    factor *= float(config["same_direction_factor"] if same_direction else config["mixed_direction_factor"])
+    if same_script_cluster:
+        factor *= float(config["same_script_cluster_factor"])
+
+    return factor, {
+        "same_player": same_player,
+        "same_game": same_game,
+        "same_team": same_team,
+        "same_target": same_target,
+        "same_direction": same_direction,
+        "same_script_cluster": same_script_cluster,
+    }
+
+
+def score_candidate_parlays(
     plays: list[dict[str, Any]],
     *,
     sport: str,
     probability_field: str,
+    eligibility_field: str | None = None,
     min_leg_probability: float | None = None,
     min_pair_probability: float | None = None,
+    min_legs_per_parlay: int | None = None,
+    max_legs_per_parlay: int | None = None,
 ) -> list[dict[str, Any]]:
     config = _resolve_sport_config(
         sport,
         min_leg_probability=min_leg_probability,
         min_pair_probability=min_pair_probability,
+        min_legs_per_parlay=min_legs_per_parlay,
+        max_legs_per_parlay=max_legs_per_parlay,
     )
     min_leg = float(config["min_leg_probability"])
-    min_pair = float(config["min_pair_probability"])
+    min_ticket = float(config["min_pair_probability"])
+    min_legs = max(2, int(config.get("min_legs_per_parlay", 2)))
+    max_legs = max(min_legs, int(config.get("max_legs_per_parlay", min_legs)))
 
-    pairs: list[dict[str, Any]] = []
-    for left_index, left in enumerate(plays):
-        left_probability = _safe_float(left.get(probability_field))
-        if left_probability is None or left_probability < min_leg:
+    eligible_rows: list[tuple[int, dict[str, Any], float, float]] = []
+    for index, play in enumerate(plays):
+        if eligibility_field is not None and not bool(play.get(eligibility_field)):
             continue
-        left_quality = _leg_quality(left, probability_field)
+        probability = _safe_float(play.get(probability_field))
+        if probability is None or probability < min_leg:
+            continue
+        eligible_rows.append((index, play, probability, _leg_quality(play, probability_field)))
 
-        left_player = _normalized_text(left.get("player_display_name") or left.get("player"))
-        left_team = _normalized_text(left.get("team"))
-        left_target = _normalized_text(left.get("target"))
-        left_direction = _normalized_text(left.get("direction"))
-        left_game = _normalized_text(left.get("game_id") or left.get("game_key"))
-        left_script_cluster = _normalized_text(left.get("script_cluster_id"))
+    tickets: list[dict[str, Any]] = []
+    if len(eligible_rows) < min_legs:
+        return tickets
 
-        for right_index in range(left_index + 1, len(plays)):
-            right = plays[right_index]
-            right_probability = _safe_float(right.get(probability_field))
-            if right_probability is None or right_probability < min_leg:
-                continue
-            right_quality = _leg_quality(right, probability_field)
+    for leg_count in range(min_legs, min(max_legs, len(eligible_rows)) + 1):
+        for combo in combinations(eligible_rows, leg_count):
+            indices = [int(item[0]) for item in combo]
+            combo_plays = [item[1] for item in combo]
+            probabilities = [float(item[2]) for item in combo]
+            qualities = [float(item[3]) for item in combo]
 
-            right_player = _normalized_text(right.get("player_display_name") or right.get("player"))
-            right_team = _normalized_text(right.get("team"))
-            right_target = _normalized_text(right.get("target"))
-            right_direction = _normalized_text(right.get("direction"))
-            right_game = _normalized_text(right.get("game_id") or right.get("game_key"))
-            right_script_cluster = _normalized_text(right.get("script_cluster_id"))
+            independent_probability = 1.0
+            for probability in probabilities:
+                independent_probability *= probability
 
-            same_player = bool(left_player and left_player == right_player)
-            same_game = bool(left_game and left_game == right_game)
-            same_team = bool(left_team and left_team == right_team)
-            same_target = bool(left_target and left_target == right_target)
-            same_direction = bool(left_direction and left_direction == right_direction)
-            same_script_cluster = bool(left_script_cluster and left_script_cluster == right_script_cluster)
+            pair_factors: list[float] = []
+            same_player = False
+            same_game = False
+            same_team = False
+            same_target = False
+            same_script_cluster = False
+            direction_tokens: set[str] = set()
+            for left_pos, right_pos in combinations(range(len(combo_plays)), 2):
+                factor, flags = _pair_adjustment_factor(combo_plays[left_pos], combo_plays[right_pos], config=config)
+                pair_factors.append(float(factor))
+                same_player = same_player or bool(flags["same_player"])
+                same_game = same_game or bool(flags["same_game"])
+                same_team = same_team or bool(flags["same_team"])
+                same_target = same_target or bool(flags["same_target"])
+                same_script_cluster = same_script_cluster or bool(flags["same_script_cluster"])
+            for play in combo_plays:
+                direction = _normalized_text(play.get("direction"))
+                if direction:
+                    direction_tokens.add(direction)
 
-            factor = 1.0
-            if same_player:
-                factor *= float(config["same_player_factor"])
-            if same_game:
-                factor *= float(config["same_game_factor"])
-            else:
-                factor *= float(config["different_game_bonus"])
-            if same_team:
-                factor *= float(config["same_team_factor"])
-            else:
-                factor *= float(config["different_team_bonus"])
-            if same_target:
-                factor *= float(config["same_target_factor"])
-            factor *= float(config["same_direction_factor"] if same_direction else config["mixed_direction_factor"])
-            if same_script_cluster:
-                factor *= float(config["same_script_cluster_factor"])
-
-            independent_probability = left_probability * right_probability
+            factor = math.prod(pair_factors) ** (1.0 / len(pair_factors)) if pair_factors else 1.0
             projected_probability = max(0.0, min(1.0, independent_probability * factor))
-            if projected_probability < min_pair:
+            if projected_probability < min_ticket:
                 continue
 
-            diversity_bonus = 1.0
-            if not same_game:
-                diversity_bonus += 0.05
-            if not same_team:
-                diversity_bonus += 0.03
+            distinct_games = len({_normalized_text(play.get("game_id") or play.get("game_key")) for play in combo_plays if _normalized_text(play.get("game_id") or play.get("game_key"))})
+            distinct_teams = len({_normalized_text(play.get("team")) for play in combo_plays if _normalized_text(play.get("team"))})
+            diversity_bonus = 1.0 + (0.03 * max(0, distinct_games - 1)) + (0.02 * max(0, distinct_teams - 1))
             if same_player:
                 diversity_bonus -= 0.10
             if same_game:
@@ -206,42 +285,88 @@ def score_candidate_pairs(
             if same_script_cluster:
                 diversity_bonus -= 0.03
 
-            avg_leg_quality = (left_quality + right_quality) / 2.0
+            avg_leg_quality = sum(qualities) / len(qualities)
             quality_factor = 0.85 + (0.30 * avg_leg_quality)
-            pair_score = projected_probability * max(0.75, diversity_bonus) * quality_factor
-            pairs.append(
+            parlay_score = projected_probability * max(0.75, diversity_bonus) * quality_factor
+            tickets.append(
                 {
-                    "left_index": left_index,
-                    "right_index": right_index,
-                    "left_key": left.get("play_key"),
-                    "right_key": right.get("play_key"),
-                    "left_name": left.get("player_display_name") or left.get("player"),
-                    "right_name": right.get("player_display_name") or right.get("player"),
-                    "left_target": left.get("target"),
-                    "right_target": right.get("target"),
-                    "left_direction": left.get("direction"),
-                    "right_direction": right.get("direction"),
+                    "leg_indices": indices,
+                    "leg_keys": [play.get("play_key") for play in combo_plays],
+                    "leg_names": [play.get("player_display_name") or play.get("player") for play in combo_plays],
+                    "leg_targets": [play.get("target") for play in combo_plays],
+                    "leg_directions": [play.get("direction") for play in combo_plays],
+                    "leg_count": int(len(combo_plays)),
                     "projected_probability": projected_probability,
                     "independent_probability": independent_probability,
-                    "pair_score": pair_score,
+                    "pairwise_adjustment_factor": factor,
+                    "parlay_score": parlay_score,
                     "avg_leg_quality": avg_leg_quality,
-                    "adjustment_factor": factor,
                     "same_player": same_player,
                     "same_game": same_game,
                     "same_team": same_team,
                     "same_target": same_target,
-                    "same_direction": same_direction,
+                    "mixed_direction": len(direction_tokens) > 1,
                 }
             )
 
-    pairs.sort(
+    tickets.sort(
         key=lambda row: (
-            float(row["pair_score"]),
+            float(row["parlay_score"]),
             float(row["projected_probability"]),
+            -int(row["leg_count"]),
             float(row["independent_probability"]),
         ),
         reverse=True,
     )
+    return tickets
+
+
+def score_candidate_pairs(
+    plays: list[dict[str, Any]],
+    *,
+    sport: str,
+    probability_field: str,
+    eligibility_field: str | None = None,
+    min_leg_probability: float | None = None,
+    min_pair_probability: float | None = None,
+) -> list[dict[str, Any]]:
+    parlays = score_candidate_parlays(
+        plays,
+        sport=sport,
+        probability_field=probability_field,
+        eligibility_field=eligibility_field,
+        min_leg_probability=min_leg_probability,
+        min_pair_probability=min_pair_probability,
+        min_legs_per_parlay=2,
+        max_legs_per_parlay=2,
+    )
+    pairs: list[dict[str, Any]] = []
+    for parlay in parlays:
+        left_index, right_index = [int(value) for value in parlay["leg_indices"]]
+        pairs.append(
+            {
+                "left_index": left_index,
+                "right_index": right_index,
+                "left_key": parlay["leg_keys"][0],
+                "right_key": parlay["leg_keys"][1],
+                "left_name": parlay["leg_names"][0],
+                "right_name": parlay["leg_names"][1],
+                "left_target": parlay["leg_targets"][0],
+                "right_target": parlay["leg_targets"][1],
+                "left_direction": parlay["leg_directions"][0],
+                "right_direction": parlay["leg_directions"][1],
+                "projected_probability": parlay["projected_probability"],
+                "independent_probability": parlay["independent_probability"],
+                "pair_score": parlay["parlay_score"],
+                "avg_leg_quality": parlay["avg_leg_quality"],
+                "adjustment_factor": parlay["pairwise_adjustment_factor"],
+                "same_player": parlay["same_player"],
+                "same_game": parlay["same_game"],
+                "same_team": parlay["same_team"],
+                "same_target": parlay["same_target"],
+                "same_direction": not parlay["mixed_direction"],
+            }
+        )
     return pairs
 
 
@@ -250,15 +375,21 @@ def annotate_parlay_board(
     *,
     sport: str,
     probability_field: str,
+    eligibility_field: str | None = None,
+    allow_fallback: bool = True,
     min_leg_probability: float | None = None,
     min_pair_probability: float | None = None,
     max_pairs: int | None = None,
+    min_legs_per_parlay: int | None = None,
+    max_legs_per_parlay: int | None = None,
 ) -> dict[str, Any]:
     config = _resolve_sport_config(
         sport,
         min_leg_probability=min_leg_probability,
         min_pair_probability=min_pair_probability,
         max_pairs=max_pairs,
+        min_legs_per_parlay=min_legs_per_parlay,
+        max_legs_per_parlay=max_legs_per_parlay,
     )
     prepared: list[dict[str, Any]] = []
     for index, play in enumerate(plays):
@@ -266,110 +397,134 @@ def annotate_parlay_board(
         item["play_key"] = _play_key(item, index)
         item["parlay_tag"] = ""
         item["parlay_candidate"] = False
+        item["parlay_ticket_rank"] = None
         item["parlay_pair_rank"] = None
         item["parlay_score"] = None
         item["parlay_projected_hit_rate"] = None
+        item["parlay_leg_count"] = None
         item["parlay_partner_key"] = None
         item["parlay_partner_name"] = None
+        item["parlay_partner_keys"] = []
+        item["parlay_partner_names"] = []
         prepared.append(item)
 
-    candidate_pairs = score_candidate_pairs(
+    candidate_parlays = score_candidate_parlays(
         prepared,
         sport=sport,
         probability_field=probability_field,
+        eligibility_field=eligibility_field,
         min_leg_probability=float(config["min_leg_probability"]),
         min_pair_probability=float(config["min_pair_probability"]),
+        min_legs_per_parlay=int(config.get("min_legs_per_parlay", 2)),
+        max_legs_per_parlay=int(config.get("max_legs_per_parlay", 2)),
     )
 
     selection_mode = "strict"
-    if not candidate_pairs:
-        fallback_pairs = score_candidate_pairs(
+    if allow_fallback and not candidate_parlays:
+        fallback_parlays = score_candidate_parlays(
             prepared,
             sport=sport,
             probability_field=probability_field,
+            eligibility_field=eligibility_field,
             min_leg_probability=float(config.get("fallback_min_leg_probability", config["min_leg_probability"])),
             min_pair_probability=float(config.get("fallback_min_pair_probability", config["min_pair_probability"])),
+            min_legs_per_parlay=int(config.get("fallback_min_legs_per_parlay", config.get("min_legs_per_parlay", 2))),
+            max_legs_per_parlay=int(config.get("fallback_max_legs_per_parlay", config.get("max_legs_per_parlay", 2))),
         )
-        if fallback_pairs:
-            candidate_pairs = fallback_pairs
+        if fallback_parlays:
+            candidate_parlays = fallback_parlays
             selection_mode = "fallback"
-            non_negative_ev_pairs = [
-                pair
-                for pair in candidate_pairs
-                if (_safe_float(prepared[int(pair["left_index"])].get("ev")) or 0.0) >= 0.0
-                and (_safe_float(prepared[int(pair["right_index"])].get("ev")) or 0.0) >= 0.0
+            non_negative_ev_parlays = [
+                parlay
+                for parlay in candidate_parlays
+                if all((_safe_float(prepared[int(index)].get("ev")) or 0.0) >= 0.0 for index in parlay["leg_indices"])
             ]
-            if non_negative_ev_pairs:
-                candidate_pairs = non_negative_ev_pairs
+            if non_negative_ev_parlays:
+                candidate_parlays = non_negative_ev_parlays
 
-    selected_pairs: list[dict[str, Any]] = []
+    selected_parlays: list[dict[str, Any]] = []
     used_indices: set[int] = set()
-    max_pairs_to_select = int(
+    max_parlays_to_select = int(
         config["max_pairs"]
         if selection_mode == "strict"
         else config.get("fallback_max_pairs", config["max_pairs"])
     )
-    for pair in candidate_pairs:
-        left_index = int(pair["left_index"])
-        right_index = int(pair["right_index"])
-        if left_index in used_indices or right_index in used_indices:
+    for parlay in candidate_parlays:
+        leg_indices = [int(index) for index in parlay["leg_indices"]]
+        if any(index in used_indices for index in leg_indices):
             continue
-        selected_pairs.append(dict(pair))
-        used_indices.add(left_index)
-        used_indices.add(right_index)
-        if len(selected_pairs) >= max_pairs_to_select:
+        selected_parlays.append(dict(parlay))
+        used_indices.update(leg_indices)
+        if len(selected_parlays) >= max_parlays_to_select:
             break
 
-    for pair_rank, pair in enumerate(selected_pairs, start=1):
-        left_index = int(pair["left_index"])
-        right_index = int(pair["right_index"])
-        left = prepared[left_index]
-        right = prepared[right_index]
-        pair["pair_rank"] = pair_rank
-        pair["legs"] = [
+    for parlay_rank, parlay in enumerate(selected_parlays, start=1):
+        leg_indices = [int(index) for index in parlay["leg_indices"]]
+        leg_rows = [prepared[index] for index in leg_indices]
+        parlay["pair_rank"] = parlay_rank
+        parlay["ticket_rank"] = parlay_rank
+        parlay["pair_score"] = parlay["parlay_score"]
+        parlay["legs"] = [
             {
-                "play_key": left["play_key"],
-                "player": left.get("player_display_name") or left.get("player"),
-                "target": left.get("target"),
-                "direction": left.get("direction"),
-            },
-            {
-                "play_key": right["play_key"],
-                "player": right.get("player_display_name") or right.get("player"),
-                "target": right.get("target"),
-                "direction": right.get("direction"),
-            },
+                "play_key": leg["play_key"],
+                "player": leg.get("player_display_name") or leg.get("player"),
+                "target": leg.get("target"),
+                "direction": leg.get("direction"),
+            }
+            for leg in leg_rows
         ]
-        for current, partner in ((left, right), (right, left)):
+        for current in leg_rows:
+            partner_keys = [leg["play_key"] for leg in leg_rows if leg["play_key"] != current["play_key"]]
+            partner_names = [
+                leg.get("player_display_name") or leg.get("player")
+                for leg in leg_rows
+                if leg["play_key"] != current["play_key"]
+            ]
             current["parlay_tag"] = "parlay"
             current["parlay_candidate"] = True
-            current["parlay_pair_rank"] = pair_rank
-            current["parlay_score"] = pair["pair_score"]
-            current["parlay_projected_hit_rate"] = pair["projected_probability"]
-            current["parlay_partner_key"] = partner["play_key"]
-            current["parlay_partner_name"] = partner.get("player_display_name") or partner.get("player")
+            current["parlay_ticket_rank"] = parlay_rank
+            current["parlay_pair_rank"] = parlay_rank
+            current["parlay_score"] = parlay["parlay_score"]
+            current["parlay_projected_hit_rate"] = parlay["projected_probability"]
+            current["parlay_leg_count"] = int(parlay["leg_count"])
+            current["parlay_partner_keys"] = partner_keys
+            current["parlay_partner_names"] = partner_names
+            if len(partner_keys) == 1:
+                current["parlay_partner_key"] = partner_keys[0]
+                current["parlay_partner_name"] = partner_names[0]
+            else:
+                current["parlay_partner_key"] = None
+                current["parlay_partner_name"] = None
 
     tagged_probability = [
-        float(pair["projected_probability"])
-        for pair in selected_pairs
-        if _safe_float(pair.get("projected_probability")) is not None
+        float(parlay["projected_probability"])
+        for parlay in selected_parlays
+        if _safe_float(parlay.get("projected_probability")) is not None
     ]
 
     summary = {
         "selection_mode": selection_mode,
-        "candidate_pair_count": int(len(candidate_pairs)),
-        "selected_pair_count": int(len(selected_pairs)),
+        "candidate_pair_count": int(len(candidate_parlays)),
+        "selected_pair_count": int(len(selected_parlays)),
+        "candidate_parlay_count": int(len(candidate_parlays)),
+        "selected_parlay_count": int(len(selected_parlays)),
         "tagged_play_count": int(sum(1 for play in prepared if play["parlay_candidate"])),
         "avg_projected_pair_hit_rate": _safe_mean(tagged_probability),
         "best_projected_pair_hit_rate": max(tagged_probability) if tagged_probability else None,
+        "avg_projected_parlay_hit_rate": _safe_mean(tagged_probability),
+        "best_projected_parlay_hit_rate": max(tagged_probability) if tagged_probability else None,
         "min_leg_probability": float(config["min_leg_probability"]),
         "min_pair_probability": float(config["min_pair_probability"]),
+        "min_legs_per_parlay": int(config.get("min_legs_per_parlay", 2)),
+        "max_legs_per_parlay": int(config.get("max_legs_per_parlay", 2)),
         "fallback_min_leg_probability": float(config.get("fallback_min_leg_probability", config["min_leg_probability"])),
         "fallback_min_pair_probability": float(config.get("fallback_min_pair_probability", config["min_pair_probability"])),
+        "fallback_min_legs_per_parlay": int(config.get("fallback_min_legs_per_parlay", config.get("min_legs_per_parlay", 2))),
+        "fallback_max_legs_per_parlay": int(config.get("fallback_max_legs_per_parlay", config.get("max_legs_per_parlay", 2))),
     }
     return {
         "plays": prepared,
-        "pairs": selected_pairs,
+        "pairs": selected_parlays,
         "summary": summary,
     }
 
@@ -384,6 +539,8 @@ def evaluate_historical_parlays(
     min_leg_probability: float | None = None,
     min_pair_probability: float | None = None,
     max_pairs_per_day: int = 1,
+    min_legs_per_parlay: int | None = None,
+    max_legs_per_parlay: int | None = None,
 ) -> dict[str, Any]:
     if history_rows.empty:
         return {"available": False, "reason": "history rows are empty"}
@@ -399,7 +556,7 @@ def evaluate_historical_parlays(
     working[result_col] = working[result_col].astype(str).str.lower().str.strip()
     working = working.loc[working[date_col].notna()].copy()
     if working.empty:
-        return {"available": False, "reason": "no dated rows available for pair validation"}
+        return {"available": False, "reason": "no dated rows available for parlay validation"}
 
     selected_records: list[dict[str, Any]] = []
     baseline_records: list[dict[str, Any]] = []
@@ -409,52 +566,52 @@ def evaluate_historical_parlays(
         rows = part.to_dict(orient="records")
         for index, row in enumerate(rows):
             row["play_key"] = _play_key(row, index)
-        candidate_pairs = score_candidate_pairs(
+        candidate_parlays = score_candidate_parlays(
             rows,
             sport=sport,
             probability_field=probability_col,
             min_leg_probability=min_leg_probability,
             min_pair_probability=min_pair_probability,
+            min_legs_per_parlay=min_legs_per_parlay,
+            max_legs_per_parlay=max_legs_per_parlay,
         )
-        if not candidate_pairs:
+        if not candidate_parlays:
             continue
 
         dates_with_candidates += 1
-        for pair in candidate_pairs:
-            left_result = str(rows[int(pair["left_index"])].get(result_col, "unresolved"))
-            right_result = str(rows[int(pair["right_index"])].get(result_col, "unresolved"))
+        for parlay in candidate_parlays:
+            leg_results = [str(rows[int(index)].get(result_col, "unresolved")) for index in parlay["leg_indices"]]
             baseline_records.append(
                 {
                     "market_date": market_date,
-                    "pair_outcome": _pair_outcome(left_result, right_result),
-                    "projected_probability": pair["projected_probability"],
+                    "pair_outcome": _parlay_outcome(leg_results),
+                    "projected_probability": parlay["projected_probability"],
+                    "leg_count": int(parlay["leg_count"]),
                 }
             )
 
         chosen = 0
         used_indices: set[int] = set()
-        for pair in candidate_pairs:
-            left_index = int(pair["left_index"])
-            right_index = int(pair["right_index"])
-            if left_index in used_indices or right_index in used_indices:
+        for parlay in candidate_parlays:
+            leg_indices = [int(index) for index in parlay["leg_indices"]]
+            if any(index in used_indices for index in leg_indices):
                 continue
-            left_result = str(rows[left_index].get(result_col, "unresolved"))
-            right_result = str(rows[right_index].get(result_col, "unresolved"))
+            leg_results = [str(rows[index].get(result_col, "unresolved")) for index in leg_indices]
             selected_records.append(
                 {
                     "market_date": market_date,
-                    "pair_outcome": _pair_outcome(left_result, right_result),
-                    "projected_probability": pair["projected_probability"],
+                    "pair_outcome": _parlay_outcome(leg_results),
+                    "projected_probability": parlay["projected_probability"],
+                    "leg_count": int(parlay["leg_count"]),
                 }
             )
-            used_indices.add(left_index)
-            used_indices.add(right_index)
+            used_indices.update(leg_indices)
             chosen += 1
             if chosen >= int(max_pairs_per_day):
                 break
 
     if not selected_records:
-        return {"available": False, "reason": "no historical pair candidates met thresholds"}
+        return {"available": False, "reason": "no historical parlay candidates met thresholds"}
 
     def summarize(records: list[dict[str, Any]]) -> dict[str, Any]:
         outcome_counts = Counter(str(row.get("pair_outcome", "unresolved")) for row in records)
@@ -466,13 +623,21 @@ def evaluate_historical_parlays(
         ]
         return {
             "pair_count": int(len(records)),
+            "parlay_count": int(len(records)),
             "graded_pair_count": graded,
+            "graded_parlay_count": graded,
             "hit_pair_count": int(outcome_counts.get("hit", 0)),
+            "hit_parlay_count": int(outcome_counts.get("hit", 0)),
             "miss_pair_count": int(outcome_counts.get("miss", 0)),
+            "miss_parlay_count": int(outcome_counts.get("miss", 0)),
             "push_pair_count": int(outcome_counts.get("push", 0)),
+            "push_parlay_count": int(outcome_counts.get("push", 0)),
             "unresolved_pair_count": int(outcome_counts.get("unresolved", 0)),
+            "unresolved_parlay_count": int(outcome_counts.get("unresolved", 0)),
             "pair_hit_rate": (_safe_mean([1.0] * int(outcome_counts.get("hit", 0)) + [0.0] * int(outcome_counts.get("miss", 0))) if graded else None),
+            "parlay_hit_rate": (_safe_mean([1.0] * int(outcome_counts.get("hit", 0)) + [0.0] * int(outcome_counts.get("miss", 0))) if graded else None),
             "avg_projected_pair_hit_rate": _safe_mean(projected),
+            "avg_projected_parlay_hit_rate": _safe_mean(projected),
         }
 
     selected_summary = summarize(selected_records)
@@ -488,7 +653,10 @@ def evaluate_historical_parlays(
         "available": True,
         "sample_dates": int(dates_with_candidates),
         "max_pairs_per_day": int(max_pairs_per_day),
+        "max_parlays_per_day": int(max_pairs_per_day),
         "selected": selected_summary,
         "baseline_all_pairs": baseline_summary,
+        "baseline_all_parlays": baseline_summary,
         "hit_rate_lift_vs_all_pairs": hit_rate_lift,
+        "hit_rate_lift_vs_all_parlays": hit_rate_lift,
     }
