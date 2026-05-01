@@ -41,6 +41,12 @@ HISTORICAL_TARGET_SPECS: dict[str, tuple[str, str, str]] = {
     "R": ("R", "Market_R", "R_market_gap"),
     "K": ("K", "Market_K", "K_market_gap"),
 }
+HISTORICAL_BET_TARGET_SPECS: dict[str, tuple[str, str, str, str, str, str, str]] = {
+    "H": ("H", "Market_H", "H_market_gap", "Market_Source_H", "Market_H_books", "Market_H_over_price", "Market_H_under_price"),
+    "TB": ("TB", "Market_TB", "TB_market_gap", "Market_Source_TB", "Market_TB_books", "Market_TB_over_price", "Market_TB_under_price"),
+    "R": ("R", "Market_R", "R_market_gap", "Market_Source_R", "Market_R_books", "Market_R_over_price", "Market_R_under_price"),
+    "K": ("K", "Market_K", "K_market_gap", "Market_Source_K", "Market_K_books", "Market_K_over_price", "Market_K_under_price"),
+}
 
 
 @dataclass
@@ -75,6 +81,26 @@ class Candidate:
     historical_prior_weight: float
     calibrated_hit_probability: float
     calibrated_graded_hit_rate: float
+    market_books: int
+    market_line_std: float
+    market_over_price: float | None
+    market_under_price: float | None
+    selected_side_price: float | None
+    opposite_side_price: float | None
+    price_confirmed: bool
+    market_implied_probability: float | None
+    expected_value_per_unit: float | None
+    historical_bet_profile_key: str
+    historical_bet_profile_source: str
+    historical_bet_profile_win_rate: float
+    historical_bet_profile_support: int
+    historical_bet_profile_roi: float | None
+    historical_bet_profile_prior_weight: float
+    historical_market_availability_key: str
+    historical_market_availability_source: str
+    historical_market_availability_rate: float
+    historical_market_availability_support: int
+    historical_market_avg_books: float
     edge_over_mae: float
     history_score: float
     recency_score: float
@@ -90,11 +116,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--pool-csv", type=Path, required=True, help="Raw MLB prediction pool CSV.")
     parser.add_argument("--out-csv", type=Path, default=None, help="Output CSV for the selected board.")
     parser.add_argument("--summary-json", type=Path, default=None, help="Summary JSON path.")
-    parser.add_argument("--top-n", type=int, default=10, help="Maximum number of plays to keep.")
+    parser.add_argument("--top-n", type=int, default=6, help="Maximum number of plays to keep.")
     parser.add_argument("--min-abs-edge", type=float, default=0.45, help="Minimum absolute edge required.")
     parser.add_argument("--min-history-rows", type=int, default=11, help="Minimum history rows required.")
     parser.add_argument("--min-hit-probability", type=float, default=0.58, help="Minimum calibrated win probability.")
-    parser.add_argument("--min-graded-hit-rate", type=float, default=0.60, help="Minimum calibrated win rate on graded outcomes.")
+    parser.add_argument("--min-graded-hit-rate", type=float, default=0.68, help="Minimum calibrated win rate on graded outcomes.")
     parser.add_argument("--max-push-probability", type=float, default=0.24, help="Maximum push probability.")
     parser.add_argument("--max-days-since-history", type=int, default=4, help="Maximum staleness of last history row.")
     parser.add_argument("--max-per-player", type=int, default=1, help="Maximum selected rows per player.")
@@ -105,6 +131,24 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=4,
         help="Maximum selected rows from one exact target/direction/line market bucket.",
+    )
+    parser.add_argument(
+        "--min-market-books",
+        type=int,
+        default=2,
+        help="Optional minimum contributing books required for real-market rows. Set 0 to disable.",
+    )
+    parser.add_argument(
+        "--max-market-line-std",
+        type=float,
+        default=0.0,
+        help="Optional maximum line standard deviation allowed for real-market rows. Set 0 to disable.",
+    )
+    parser.add_argument(
+        "--min-expected-value",
+        type=float,
+        default=-1.0,
+        help="Optional minimum expected profit per unit for priced real-market rows. Set below -0.99 to disable.",
     )
     parser.add_argument(
         "--allow-baseline",
@@ -168,6 +212,46 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Disable empirical target/direction/line calibration and use model-only probabilities.",
     )
+    parser.add_argument(
+        "--bet-profile-cache-json",
+        type=Path,
+        default=None,
+        help="Optional cache JSON for settled real-market MLB bet-profile priors.",
+    )
+    parser.add_argument(
+        "--refresh-bet-profile-cache",
+        action="store_true",
+        help="Recompute historical bet-profile priors even if the cache JSON exists.",
+    )
+    parser.add_argument(
+        "--min-bet-profile-rows",
+        type=int,
+        default=12,
+        help="Minimum settled priced rows required before using a line-specific MLB bet-profile prior.",
+    )
+    parser.add_argument(
+        "--max-bet-profile-prior-weight",
+        type=float,
+        default=0.25,
+        help="Maximum weight given to settled real-market bet-profile priors when refining graded hit rates.",
+    )
+    parser.add_argument(
+        "--bet-profile-prior-strength",
+        type=float,
+        default=80.0,
+        help="Larger values make model calibration dominate longer before settled bet-profile priors take over.",
+    )
+    parser.add_argument(
+        "--min-market-availability-rows",
+        type=int,
+        default=12,
+        help="Minimum real-market rows required before using a line-specific side-price availability prior.",
+    )
+    parser.add_argument(
+        "--disable-historical-bet-profiles",
+        action="store_true",
+        help="Disable settled real-market bet-profile and placeability priors.",
+    )
     return parser.parse_args()
 
 
@@ -195,6 +279,10 @@ def infer_history_season(pool_csv: Path, requested: int | None) -> int:
 
 def default_history_cache_path(season: int) -> Path:
     return DEFAULT_CALIBRATION_ROOT / f"historical_bucket_priors_{int(season)}.json"
+
+
+def default_bet_profile_cache_path(season: int) -> Path:
+    return DEFAULT_CALIBRATION_ROOT / f"historical_bet_profile_priors_{int(season)}.json"
 
 
 def parse_date(value: str) -> date | None:
@@ -299,12 +387,77 @@ def format_market_line(line: float) -> str:
     return f"{float(line):.1f}"
 
 
+def clamp01(value: float) -> float:
+    return max(0.0, min(1.0, float(value)))
+
+
 def target_direction_key(target: str, direction: str) -> str:
     return f"{str(target).strip().upper()}|{str(direction).strip().upper()}"
 
 
 def market_bucket_key(target: str, direction: str, market_line: float) -> str:
     return f"{target_direction_key(target, direction)}|{format_market_line(market_line)}"
+
+
+def probability_bucket(probability: float) -> str:
+    bounded = clamp01(probability)
+    lower = math.floor(bounded * 20.0) / 20.0
+    upper = min(1.0, lower + 0.05)
+    return f"{lower:.2f}-{upper:.2f}"
+
+
+def target_probability_key(target: str, direction: str, graded_probability: float) -> str:
+    return f"{target_direction_key(target, direction)}|{probability_bucket(graded_probability)}"
+
+
+def line_probability_key(target: str, direction: str, market_line: float, graded_probability: float) -> str:
+    return f"{market_bucket_key(target, direction, market_line)}|{probability_bucket(graded_probability)}"
+
+
+def american_implied_probability(price: float | None) -> float | None:
+    if price is None:
+        return None
+    value = float(price)
+    if not math.isfinite(value) or abs(value) < 1e-9:
+        return None
+    if value > 0:
+        return 100.0 / (value + 100.0)
+    return abs(value) / (abs(value) + 100.0)
+
+
+def american_profit_per_unit(price: float | None) -> float | None:
+    if price is None:
+        return None
+    value = float(price)
+    if not math.isfinite(value) or abs(value) < 1e-9:
+        return None
+    if value > 0:
+        return value / 100.0
+    return 100.0 / abs(value)
+
+
+def no_vig_side_probability(
+    side_price: float | None,
+    opposite_price: float | None,
+) -> float | None:
+    side_implied = american_implied_probability(side_price)
+    if side_implied is None:
+        return None
+    opposite_implied = american_implied_probability(opposite_price)
+    if opposite_implied is None:
+        return side_implied
+    total = side_implied + opposite_implied
+    if total <= 1e-9:
+        return side_implied
+    return side_implied / total
+
+
+def expected_profit_per_unit(probability: float, price: float | None) -> float | None:
+    profit_if_win = american_profit_per_unit(price)
+    if profit_if_win is None:
+        return None
+    probability = clamp01(probability)
+    return (probability * profit_if_win) - ((1.0 - probability) * 1.0)
 
 
 def _empty_bucket_stats() -> dict[str, float | int]:
@@ -475,13 +628,336 @@ def blend_probability_with_prior(
     return float(max(0.0, min(1.0, blended))), float(weight)
 
 
+def _empty_availability_stats() -> dict[str, float | int]:
+    return {"rows": 0, "side_price_rows": 0, "books_sum": 0.0, "availability_rate": 0.0, "avg_books": 0.0}
+
+
+def _finalize_availability_stats(stats: dict[str, float | int]) -> dict[str, float | int]:
+    rows = int(stats.get("rows", 0))
+    side_price_rows = int(stats.get("side_price_rows", 0))
+    books_sum = float(stats.get("books_sum", 0.0))
+    availability_rate = (side_price_rows / rows) if rows else 0.0
+    avg_books = (books_sum / rows) if rows else 0.0
+    return {
+        "rows": rows,
+        "side_price_rows": side_price_rows,
+        "availability_rate": float(clamp01(availability_rate)),
+        "avg_books": float(max(0.0, avg_books)),
+    }
+
+
+def _update_availability_bucket(stats: dict[str, float | int], *, books: int, side_price_confirmed: bool) -> None:
+    stats["rows"] = int(stats.get("rows", 0)) + 1
+    stats["side_price_rows"] = int(stats.get("side_price_rows", 0)) + int(bool(side_price_confirmed))
+    stats["books_sum"] = float(stats.get("books_sum", 0.0)) + float(max(0, int(books)))
+
+
+def _empty_bet_profile_stats() -> dict[str, float | int]:
+    return {
+        "rows": 0,
+        "graded_rows": 0,
+        "wins": 0,
+        "losses": 0,
+        "pushes": 0,
+        "units_sum": 0.0,
+        "win_rate": 0.5,
+        "roi_per_bet": 0.0,
+    }
+
+
+def _finalize_bet_profile_stats(stats: dict[str, float | int]) -> dict[str, float | int]:
+    rows = int(stats.get("rows", 0))
+    wins = int(stats.get("wins", 0))
+    losses = int(stats.get("losses", 0))
+    pushes = int(stats.get("pushes", 0))
+    graded_rows = wins + losses
+    units_sum = float(stats.get("units_sum", 0.0))
+    win_rate = (wins / graded_rows) if graded_rows else 0.5
+    roi_per_bet = (units_sum / rows) if rows else 0.0
+    return {
+        "rows": rows,
+        "graded_rows": graded_rows,
+        "wins": wins,
+        "losses": losses,
+        "pushes": pushes,
+        "units_sum": units_sum,
+        "win_rate": float(clamp01(win_rate)),
+        "roi_per_bet": float(roi_per_bet),
+    }
+
+
+def _update_bet_profile_bucket(stats: dict[str, float | int], *, result: str, units: float | None) -> None:
+    stats["rows"] = int(stats.get("rows", 0)) + 1
+    if result == "win":
+        stats["wins"] = int(stats.get("wins", 0)) + 1
+    elif result == "loss":
+        stats["losses"] = int(stats.get("losses", 0)) + 1
+    elif result == "push":
+        stats["pushes"] = int(stats.get("pushes", 0)) + 1
+    if units is not None:
+        stats["units_sum"] = float(stats.get("units_sum", 0.0)) + float(units)
+
+
+def grade_result(actual: float, market_line: float, direction: str) -> str:
+    if direction == "OVER":
+        if actual > market_line:
+            return "win"
+        if actual == market_line:
+            return "push"
+        return "loss"
+    if actual < market_line:
+        return "win"
+    if actual == market_line:
+        return "push"
+    return "loss"
+
+
+def settled_units(result: str, side_price: float | None) -> float | None:
+    profit_if_win = american_profit_per_unit(side_price)
+    if profit_if_win is None:
+        return None
+    if result == "win":
+        return float(profit_if_win)
+    if result == "loss":
+        return -1.0
+    if result == "push":
+        return 0.0
+    return None
+
+
+def build_historical_bet_profile_priors(history_dir: Path, season: int) -> dict:
+    availability_target_direction: dict[str, dict[str, float | int]] = defaultdict(_empty_availability_stats)
+    availability_line_buckets: dict[str, dict[str, float | int]] = defaultdict(_empty_availability_stats)
+    bet_profiles_target_probability: dict[str, dict[str, float | int]] = defaultdict(_empty_bet_profile_stats)
+    bet_profiles_line_probability: dict[str, dict[str, float | int]] = defaultdict(_empty_bet_profile_stats)
+    files = sorted(history_dir.glob(f"*/{int(season)}_processed_processed.csv"))
+
+    required_columns = {"Date"}
+    for columns in HISTORICAL_BET_TARGET_SPECS.values():
+        required_columns.update(columns)
+
+    for path in files:
+        try:
+            frame = pd.read_csv(path, usecols=lambda column: column in required_columns)
+        except Exception:
+            continue
+        if frame.empty:
+            continue
+
+        for target, (actual_col, market_col, gap_col, source_col, books_col, over_col, under_col) in HISTORICAL_BET_TARGET_SPECS.items():
+            present_cols = {actual_col, market_col, gap_col, source_col, books_col, over_col, under_col}
+            if not present_cols.issubset(frame.columns):
+                continue
+
+            actual = pd.to_numeric(frame[actual_col], errors="coerce")
+            market_line = pd.to_numeric(frame[market_col], errors="coerce")
+            gap = pd.to_numeric(frame[gap_col], errors="coerce")
+            books = pd.to_numeric(frame[books_col], errors="coerce").fillna(0)
+            over_price = pd.to_numeric(frame[over_col], errors="coerce")
+            under_price = pd.to_numeric(frame[under_col], errors="coerce")
+            market_source = frame[source_col].astype(str).str.strip().str.lower()
+
+            mask = actual.notna() & market_line.notna() & gap.notna() & gap.ne(0)
+            if not bool(mask.any()):
+                continue
+
+            sub = pd.DataFrame(
+                {
+                    "actual": actual.loc[mask],
+                    "market_line": market_line.loc[mask],
+                    "gap": gap.loc[mask],
+                    "books": books.loc[mask],
+                    "over_price": over_price.loc[mask],
+                    "under_price": under_price.loc[mask],
+                    "market_source": market_source.loc[mask],
+                }
+            )
+            sub["direction"] = sub["gap"].gt(0).map({True: "OVER", False: "UNDER"})
+            sub["prediction"] = (sub["market_line"] + sub["gap"]).clip(lower=0.0)
+            sub["model_graded_hit_rate"] = sub.apply(
+                lambda row: estimate_count_hit_probabilities(
+                    float(row["prediction"]),
+                    float(row["market_line"]),
+                    str(row["direction"]),
+                )[2],
+                axis=1,
+            )
+
+            for _, row in sub.iterrows():
+                direction = str(row["direction"])
+                td_key = target_direction_key(target, direction)
+                line_key = market_bucket_key(target, direction, float(row["market_line"]))
+                books_value = int(max(0.0, float(row["books"])))
+                is_real = str(row["market_source"]) == "real" and books_value > 0
+                if not is_real:
+                    continue
+
+                selected_side_price = float(row["over_price"]) if direction == "OVER" and pd.notna(row["over_price"]) else None
+                if direction == "UNDER" and pd.notna(row["under_price"]):
+                    selected_side_price = float(row["under_price"])
+                side_price_confirmed = selected_side_price is not None and math.isfinite(selected_side_price) and abs(selected_side_price) > 1e-9
+
+                _update_availability_bucket(
+                    availability_target_direction[td_key],
+                    books=books_value,
+                    side_price_confirmed=side_price_confirmed,
+                )
+                _update_availability_bucket(
+                    availability_line_buckets[line_key],
+                    books=books_value,
+                    side_price_confirmed=side_price_confirmed,
+                )
+
+                if not side_price_confirmed:
+                    continue
+
+                profile_td_key = target_probability_key(target, direction, float(row["model_graded_hit_rate"]))
+                profile_line_key = line_probability_key(
+                    target,
+                    direction,
+                    float(row["market_line"]),
+                    float(row["model_graded_hit_rate"]),
+                )
+                result = grade_result(float(row["actual"]), float(row["market_line"]), direction)
+                units = settled_units(result, selected_side_price)
+                _update_bet_profile_bucket(bet_profiles_target_probability[profile_td_key], result=result, units=units)
+                _update_bet_profile_bucket(bet_profiles_line_probability[profile_line_key], result=result, units=units)
+
+    return {
+        "season": int(season),
+        "history_dir": str(history_dir.resolve()),
+        "updated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "source_file_count": int(len(files)),
+        "availability_target_direction": {
+            key: _finalize_availability_stats(value)
+            for key, value in sorted(availability_target_direction.items())
+        },
+        "availability_line_buckets": {
+            key: _finalize_availability_stats(value)
+            for key, value in sorted(availability_line_buckets.items())
+        },
+        "bet_profiles_target_probability": {
+            key: _finalize_bet_profile_stats(value)
+            for key, value in sorted(bet_profiles_target_probability.items())
+        },
+        "bet_profiles_line_probability": {
+            key: _finalize_bet_profile_stats(value)
+            for key, value in sorted(bet_profiles_line_probability.items())
+        },
+    }
+
+
+def load_or_build_historical_bet_profile_priors(
+    *,
+    history_dir: Path,
+    season: int,
+    cache_json: Path | None,
+    refresh: bool,
+) -> dict:
+    if cache_json is not None and cache_json.exists() and not refresh:
+        try:
+            payload = json.loads(cache_json.read_text(encoding="utf-8"))
+            if int(payload.get("season", season)) == int(season):
+                return payload
+        except Exception:
+            pass
+
+    payload = build_historical_bet_profile_priors(history_dir, season)
+    if cache_json is not None:
+        cache_json.parent.mkdir(parents=True, exist_ok=True)
+        cache_json.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return payload
+
+
+def lookup_historical_bet_profile_prior(
+    priors: dict | None,
+    *,
+    target: str,
+    direction: str,
+    market_line: float,
+    graded_hit_rate: float,
+    min_line_rows: int,
+) -> tuple[str, float, int, str, float | None]:
+    if not isinstance(priors, dict):
+        return "fallback", 0.5, 0, "fallback", None
+
+    line_key = line_probability_key(target, direction, market_line, graded_hit_rate)
+    line_bucket = priors.get("bet_profiles_line_probability", {}).get(line_key, {})
+    line_rows = int(line_bucket.get("rows", 0) or 0)
+    if line_rows >= int(max(0, min_line_rows)):
+        return (
+            line_key,
+            float(line_bucket.get("win_rate", 0.5) or 0.5),
+            line_rows,
+            "line_probability",
+            float(line_bucket.get("roi_per_bet", 0.0) or 0.0),
+        )
+
+    td_key = target_probability_key(target, direction, graded_hit_rate)
+    td_bucket = priors.get("bet_profiles_target_probability", {}).get(td_key, {})
+    td_rows = int(td_bucket.get("rows", 0) or 0)
+    if td_rows > 0:
+        return (
+            td_key,
+            float(td_bucket.get("win_rate", 0.5) or 0.5),
+            td_rows,
+            "target_probability",
+            float(td_bucket.get("roi_per_bet", 0.0) or 0.0),
+        )
+
+    return "fallback", 0.5, 0, "fallback", None
+
+
+def lookup_historical_market_availability_prior(
+    priors: dict | None,
+    *,
+    target: str,
+    direction: str,
+    market_line: float,
+    min_line_rows: int,
+) -> tuple[str, float, int, str, float]:
+    if not isinstance(priors, dict):
+        return "fallback", 0.0, 0, "fallback", 0.0
+
+    line_key = market_bucket_key(target, direction, market_line)
+    line_bucket = priors.get("availability_line_buckets", {}).get(line_key, {})
+    line_rows = int(line_bucket.get("rows", 0) or 0)
+    if line_rows >= int(max(0, min_line_rows)):
+        return (
+            line_key,
+            float(line_bucket.get("availability_rate", 0.0) or 0.0),
+            line_rows,
+            "line_bucket",
+            float(line_bucket.get("avg_books", 0.0) or 0.0),
+        )
+
+    td_key = target_direction_key(target, direction)
+    td_bucket = priors.get("availability_target_direction", {}).get(td_key, {})
+    td_rows = int(td_bucket.get("rows", 0) or 0)
+    if td_rows > 0:
+        return (
+            td_key,
+            float(td_bucket.get("availability_rate", 0.0) or 0.0),
+            td_rows,
+            "target_direction",
+            float(td_bucket.get("avg_books", 0.0) or 0.0),
+        )
+
+    return "fallback", 0.0, 0, "fallback", 0.0
+
+
 def build_candidate(
     row: dict[str, str],
     *,
     calibration: dict | None,
+    bet_profile_priors: dict | None = None,
     min_history_bucket_rows: int,
     max_history_prior_weight: float,
     history_prior_strength: float,
+    min_bet_profile_rows: int = 12,
+    max_bet_profile_prior_weight: float = 0.25,
+    bet_profile_prior_strength: float = 80.0,
+    min_market_availability_rows: int = 12,
 ) -> Candidate | None:
     target = str(row.get("Target", "")).strip().upper()
     if target not in SUPPORTED_COUNT_TARGETS:
@@ -528,20 +1004,98 @@ def build_candidate(
         strength=history_prior_strength,
     )
 
+    market_books = max(0, to_int(row.get("Market_Books")))
+    market_line_std = max(0.0, to_float(row.get("Market_Line_Std"), default=0.0))
+    market_over_price = to_float(row.get("Market_Over_Price"), default=float("nan"))
+    if not math.isfinite(market_over_price):
+        market_over_price = None
+    market_under_price = to_float(row.get("Market_Under_Price"), default=float("nan"))
+    if not math.isfinite(market_under_price):
+        market_under_price = None
+    selected_side_price = market_over_price if direction == "OVER" else market_under_price
+    opposite_side_price = market_under_price if direction == "OVER" else market_over_price
+    price_confirmed = selected_side_price is not None and math.isfinite(selected_side_price) and abs(selected_side_price) > 1e-9
+    market_implied_probability = no_vig_side_probability(selected_side_price, opposite_side_price)
+
+    (
+        historical_bet_profile_key,
+        historical_bet_profile_win_rate,
+        historical_bet_profile_support,
+        historical_bet_profile_source,
+        historical_bet_profile_roi,
+    ) = lookup_historical_bet_profile_prior(
+        bet_profile_priors,
+        target=target,
+        direction=direction,
+        market_line=market_line,
+        graded_hit_rate=calibrated_graded_hit_rate,
+        min_line_rows=min_bet_profile_rows,
+    )
+    (
+        validated_graded_hit_rate,
+        historical_bet_profile_prior_weight,
+    ) = blend_probability_with_prior(
+        calibrated_graded_hit_rate,
+        prior_probability=historical_bet_profile_win_rate,
+        support=historical_bet_profile_support,
+        max_weight=max_bet_profile_prior_weight,
+        strength=bet_profile_prior_strength,
+    )
+    (
+        historical_market_availability_key,
+        historical_market_availability_rate,
+        historical_market_availability_support,
+        historical_market_availability_source,
+        historical_market_avg_books,
+    ) = lookup_historical_market_availability_prior(
+        bet_profile_priors,
+        target=target,
+        direction=direction,
+        market_line=market_line,
+        min_line_rows=min_market_availability_rows,
+    )
+
+    expected_value_per_unit = expected_profit_per_unit(validated_graded_hit_rate, selected_side_price)
+
     history_score = min(history_rows / 18.0, 1.0)
     recency_score = 0.0 if days_since_history is None else max(0.0, 1.0 - (days_since_history / 7.0))
     edge_over_mae = abs(edge) / max(model_val_mae, 0.1)
     bucket_support_score = min(max(float(historical_bucket_support), 0.0) / 500.0, 1.0)
+    bet_profile_support_score = min(max(float(historical_bet_profile_support), 0.0) / 120.0, 1.0)
 
     reliability_core = (
-        0.54 * calibrated_hit_probability
-        + 0.16 * calibrated_graded_hit_rate
+        0.49 * calibrated_hit_probability
+        + 0.17 * validated_graded_hit_rate
         + 0.10 * history_score
         + 0.08 * recency_score
         + 0.07 * bucket_support_score
-        + 0.05 * max(0.0, historical_bucket_win_rate - 0.50)
+        + 0.04 * bet_profile_support_score
+        + 0.03 * max(0.0, historical_bucket_win_rate - 0.50)
+        + 0.02 * max(0.0, historical_bet_profile_win_rate - 0.50)
     )
     selection_score = reliability_core * (1.0 + 0.08 * min(edge_over_mae, 3.0)) * (1.0 - 0.55 * push_probability)
+    if market_source == "real":
+        books_score = clamp01(market_books / 5.0)
+        consensus_score = clamp01(1.0 - (market_line_std / 1.5)) if market_books > 1 else 0.5 if market_books == 1 else 0.0
+        ev_bonus = clamp01((((expected_value_per_unit or 0.0) + 0.05) / 0.20)) if expected_value_per_unit is not None else 0.0
+        availability_bonus = clamp01(historical_market_availability_rate)
+        roi_bonus = (
+            clamp01(((float(historical_bet_profile_roi) + 0.08) / 0.24))
+            if historical_bet_profile_roi is not None
+            else 0.0
+        )
+        price_confirmed_bonus = 1.0 if price_confirmed else 0.0
+        selection_score *= (
+            0.88
+            + (0.03 * books_score)
+            + (0.03 * consensus_score)
+            + (0.04 * ev_bonus)
+            + (0.04 * availability_bonus)
+            + (0.03 * roi_bonus)
+            + (0.03 * price_confirmed_bonus)
+        )
+        if not price_confirmed:
+            selection_score *= 0.88 + (0.12 * availability_bonus)
     selection_score = max(0.0, float(selection_score))
 
     return Candidate(
@@ -574,7 +1128,27 @@ def build_candidate(
         historical_bucket_support=historical_bucket_support,
         historical_prior_weight=historical_prior_weight,
         calibrated_hit_probability=calibrated_hit_probability,
-        calibrated_graded_hit_rate=calibrated_graded_hit_rate,
+        calibrated_graded_hit_rate=validated_graded_hit_rate,
+        market_books=market_books,
+        market_line_std=market_line_std,
+        market_over_price=market_over_price,
+        market_under_price=market_under_price,
+        selected_side_price=selected_side_price,
+        opposite_side_price=opposite_side_price,
+        price_confirmed=price_confirmed,
+        market_implied_probability=market_implied_probability,
+        expected_value_per_unit=expected_value_per_unit,
+        historical_bet_profile_key=historical_bet_profile_key,
+        historical_bet_profile_source=historical_bet_profile_source,
+        historical_bet_profile_win_rate=historical_bet_profile_win_rate,
+        historical_bet_profile_support=historical_bet_profile_support,
+        historical_bet_profile_roi=historical_bet_profile_roi,
+        historical_bet_profile_prior_weight=historical_bet_profile_prior_weight,
+        historical_market_availability_key=historical_market_availability_key,
+        historical_market_availability_source=historical_market_availability_source,
+        historical_market_availability_rate=historical_market_availability_rate,
+        historical_market_availability_support=historical_market_availability_support,
+        historical_market_avg_books=historical_market_avg_books,
         edge_over_mae=edge_over_mae,
         history_score=history_score,
         recency_score=recency_score,
@@ -590,9 +1164,14 @@ def load_candidates(
     pool_csv: Path,
     *,
     calibration: dict | None,
+    bet_profile_priors: dict | None = None,
     min_history_bucket_rows: int,
     max_history_prior_weight: float,
     history_prior_strength: float,
+    min_bet_profile_rows: int = 12,
+    max_bet_profile_prior_weight: float = 0.25,
+    bet_profile_prior_strength: float = 80.0,
+    min_market_availability_rows: int = 12,
 ) -> list[Candidate]:
     candidates: list[Candidate] = []
     with open(pool_csv, "r", encoding="utf-8", newline="") as handle:
@@ -601,9 +1180,14 @@ def load_candidates(
             candidate = build_candidate(
                 row,
                 calibration=calibration,
+                bet_profile_priors=bet_profile_priors,
                 min_history_bucket_rows=min_history_bucket_rows,
                 max_history_prior_weight=max_history_prior_weight,
                 history_prior_strength=history_prior_strength,
+                min_bet_profile_rows=min_bet_profile_rows,
+                max_bet_profile_prior_weight=max_bet_profile_prior_weight,
+                bet_profile_prior_strength=bet_profile_prior_strength,
+                min_market_availability_rows=min_market_availability_rows,
             )
             if candidate is not None:
                 candidates.append(candidate)
@@ -641,11 +1225,33 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
         if candidate.market_source != "real" and candidate.direction == "UNDER":
             rejected["synthetic_under_not_actionable"] += 1
             continue
+        if int(args.min_market_books) > 0 and candidate.market_source != "real":
+            rejected["synthetic_market_source"] += 1
+            continue
+        if candidate.market_source == "real" and int(args.min_market_books) > 0 and candidate.market_books < int(args.min_market_books):
+            rejected["market_books_too_low"] += 1
+            continue
+        if (
+            candidate.market_source == "real"
+            and float(args.max_market_line_std) > 0.0
+            and candidate.market_books > 1
+            and candidate.market_line_std > float(args.max_market_line_std)
+        ):
+            rejected["market_line_too_volatile"] += 1
+            continue
         if candidate.calibrated_hit_probability < float(args.min_hit_probability):
             rejected["hit_probability_too_low"] += 1
             continue
         if candidate.calibrated_graded_hit_rate < float(args.min_graded_hit_rate):
             rejected["graded_hit_rate_too_low"] += 1
+            continue
+        if (
+            candidate.market_source == "real"
+            and float(args.min_expected_value) > -0.99
+            and candidate.expected_value_per_unit is not None
+            and candidate.expected_value_per_unit < float(args.min_expected_value)
+        ):
+            rejected["expected_value_too_low"] += 1
             continue
         if candidate.push_probability > float(args.max_push_probability):
             rejected["push_probability_too_high"] += 1
@@ -663,6 +1269,11 @@ def select_top_candidates(candidates: list[Candidate], args: argparse.Namespace)
         candidates,
         key=lambda row: (
             row.selection_score,
+            (row.expected_value_per_unit if row.expected_value_per_unit is not None else -999.0),
+            1.0 if row.price_confirmed else 0.0,
+            row.market_books,
+            row.historical_market_availability_rate,
+            row.historical_bet_profile_win_rate,
             row.historical_bucket_win_rate,
             1.0 if row.market_source == "real" else 0.0,
             row.calibrated_hit_probability,
@@ -720,6 +1331,10 @@ def write_selected_csv(path: Path, selected: list[Candidate]) -> None:
         "Prediction",
         "Market_Line",
         "Market_Source",
+        "Market_Books",
+        "Market_Line_Std",
+        "Market_Over_Price",
+        "Market_Under_Price",
         "Edge",
         "Abs_Edge",
         "History_Rows",
@@ -739,6 +1354,20 @@ def write_selected_csv(path: Path, selected: list[Candidate]) -> None:
         "Historical_Bucket_Win_Rate",
         "Historical_Bucket_Support",
         "Historical_Prior_Weight",
+        "Market_Implied_Probability",
+        "Expected_Value_Per_Unit",
+        "Price_Confirmed",
+        "Historical_Bet_Profile_Key",
+        "Historical_Bet_Profile_Source",
+        "Historical_Bet_Profile_Win_Rate",
+        "Historical_Bet_Profile_Support",
+        "Historical_Bet_Profile_ROI",
+        "Historical_Bet_Profile_Prior_Weight",
+        "Historical_Market_Availability_Key",
+        "Historical_Market_Availability_Source",
+        "Historical_Market_Availability_Rate",
+        "Historical_Market_Availability_Support",
+        "Historical_Market_Avg_Books",
         "Edge_Over_MAE",
         "Precision_Score",
         "Selection_Score",
@@ -769,6 +1398,10 @@ def write_selected_csv(path: Path, selected: list[Candidate]) -> None:
                     "Prediction": f"{candidate.prediction:.6f}",
                     "Market_Line": f"{candidate.market_line:.6f}",
                     "Market_Source": candidate.market_source,
+                    "Market_Books": candidate.market_books,
+                    "Market_Line_Std": f"{candidate.market_line_std:.6f}",
+                    "Market_Over_Price": "" if candidate.market_over_price is None else f"{candidate.market_over_price:.6f}",
+                    "Market_Under_Price": "" if candidate.market_under_price is None else f"{candidate.market_under_price:.6f}",
                     "Edge": f"{candidate.edge:.6f}",
                     "Abs_Edge": f"{candidate.abs_edge:.6f}",
                     "History_Rows": candidate.history_rows,
@@ -788,6 +1421,20 @@ def write_selected_csv(path: Path, selected: list[Candidate]) -> None:
                     "Historical_Bucket_Win_Rate": f"{candidate.historical_bucket_win_rate:.6f}",
                     "Historical_Bucket_Support": candidate.historical_bucket_support,
                     "Historical_Prior_Weight": f"{candidate.historical_prior_weight:.6f}",
+                    "Market_Implied_Probability": "" if candidate.market_implied_probability is None else f"{candidate.market_implied_probability:.6f}",
+                    "Expected_Value_Per_Unit": "" if candidate.expected_value_per_unit is None else f"{candidate.expected_value_per_unit:.6f}",
+                    "Price_Confirmed": int(candidate.price_confirmed),
+                    "Historical_Bet_Profile_Key": candidate.historical_bet_profile_key,
+                    "Historical_Bet_Profile_Source": candidate.historical_bet_profile_source,
+                    "Historical_Bet_Profile_Win_Rate": f"{candidate.historical_bet_profile_win_rate:.6f}",
+                    "Historical_Bet_Profile_Support": candidate.historical_bet_profile_support,
+                    "Historical_Bet_Profile_ROI": "" if candidate.historical_bet_profile_roi is None else f"{candidate.historical_bet_profile_roi:.6f}",
+                    "Historical_Bet_Profile_Prior_Weight": f"{candidate.historical_bet_profile_prior_weight:.6f}",
+                    "Historical_Market_Availability_Key": candidate.historical_market_availability_key,
+                    "Historical_Market_Availability_Source": candidate.historical_market_availability_source,
+                    "Historical_Market_Availability_Rate": f"{candidate.historical_market_availability_rate:.6f}",
+                    "Historical_Market_Availability_Support": candidate.historical_market_availability_support,
+                    "Historical_Market_Avg_Books": f"{candidate.historical_market_avg_books:.6f}",
                     "Edge_Over_MAE": f"{candidate.edge_over_mae:.6f}",
                     "Precision_Score": f"{candidate.precision_score:.6f}",
                     "Selection_Score": f"{candidate.selection_score:.6f}",
@@ -806,6 +1453,7 @@ def write_summary_json(
     selected: list[Candidate],
     rejected: Counter,
     calibration: dict | None,
+    bet_profile_priors: dict | None,
 ) -> None:
     by_target = Counter(candidate.target for candidate in selected)
     by_direction = Counter(candidate.direction for candidate in selected)
@@ -829,6 +1477,9 @@ def write_summary_json(
             "max_per_game": int(args.max_per_game),
             "max_per_team": int(args.max_per_team),
             "max_per_market_bucket": int(args.max_per_market_bucket),
+            "min_market_books": int(args.min_market_books),
+            "max_market_line_std": float(args.max_market_line_std),
+            "min_expected_value": float(args.min_expected_value),
             "allow_baseline": bool(args.allow_baseline),
             "require_real_market_source": bool(args.require_real_market_source),
             "targets": [str(value).strip().upper() for value in args.targets],
@@ -837,6 +1488,11 @@ def write_summary_json(
             "max_history_prior_weight": float(args.max_history_prior_weight),
             "history_prior_strength": float(args.history_prior_strength),
             "historical_calibration_enabled": not bool(args.disable_historical_calibration),
+            "min_bet_profile_rows": int(args.min_bet_profile_rows),
+            "max_bet_profile_prior_weight": float(args.max_bet_profile_prior_weight),
+            "bet_profile_prior_strength": float(args.bet_profile_prior_strength),
+            "min_market_availability_rows": int(args.min_market_availability_rows),
+            "historical_bet_profiles_enabled": not bool(args.disable_historical_bet_profiles),
         },
         "historical_calibration": {
             "cache_json": str(args.history_cache_json.resolve()) if args.history_cache_json else "",
@@ -844,6 +1500,13 @@ def write_summary_json(
             "season": int(args.history_season),
             "source_file_count": int((calibration or {}).get("source_file_count", 0)),
             "updated_at_utc": (calibration or {}).get("updated_at_utc"),
+        },
+        "historical_bet_profiles": {
+            "cache_json": str(args.bet_profile_cache_json.resolve()) if args.bet_profile_cache_json else "",
+            "history_dir": str(args.history_dir.resolve()),
+            "season": int(args.history_season),
+            "source_file_count": int((bet_profile_priors or {}).get("source_file_count", 0)),
+            "updated_at_utc": (bet_profile_priors or {}).get("updated_at_utc"),
         },
         "filter_rejections": dict(rejected),
         "avg_abs_edge": round(sum(candidate.abs_edge for candidate in selected) / len(selected), 6) if selected else 0.0,
@@ -854,6 +1517,16 @@ def write_summary_json(
         "avg_precision_score": round(sum(candidate.precision_score for candidate in selected) / len(selected), 6) if selected else 0.0,
         "avg_historical_bucket_win_rate": round(sum(candidate.historical_bucket_win_rate for candidate in selected) / len(selected), 6) if selected else 0.0,
         "avg_historical_prior_weight": round(sum(candidate.historical_prior_weight for candidate in selected) / len(selected), 6) if selected else 0.0,
+        "avg_historical_bet_profile_win_rate": round(sum(candidate.historical_bet_profile_win_rate for candidate in selected) / len(selected), 6) if selected else 0.0,
+        "avg_historical_bet_profile_prior_weight": round(sum(candidate.historical_bet_profile_prior_weight for candidate in selected) / len(selected), 6) if selected else 0.0,
+        "avg_historical_market_availability_rate": round(sum(candidate.historical_market_availability_rate for candidate in selected) / len(selected), 6) if selected else 0.0,
+        "avg_market_books": round(sum(candidate.market_books for candidate in selected) / len(selected), 6) if selected else 0.0,
+        "price_confirmed_count": int(sum(candidate.price_confirmed for candidate in selected)),
+        "avg_expected_value_per_unit": round(
+            sum(candidate.expected_value_per_unit for candidate in selected if candidate.expected_value_per_unit is not None)
+            / max(1, sum(1 for candidate in selected if candidate.expected_value_per_unit is not None)),
+            6,
+        ) if selected else 0.0,
         "by_target": dict(by_target),
         "by_direction": dict(by_direction),
         "by_team": dict(by_team),
@@ -873,6 +1546,12 @@ def write_summary_json(
                 "estimated_hit_probability": round(candidate.calibrated_hit_probability, 4),
                 "historical_bucket_win_rate": round(candidate.historical_bucket_win_rate, 4),
                 "historical_bucket_support": int(candidate.historical_bucket_support),
+                "market_books": int(candidate.market_books),
+                "price_confirmed": bool(candidate.price_confirmed),
+                "historical_bet_profile_win_rate": round(candidate.historical_bet_profile_win_rate, 4),
+                "historical_bet_profile_support": int(candidate.historical_bet_profile_support),
+                "historical_market_availability_rate": round(candidate.historical_market_availability_rate, 4),
+                "expected_value_per_unit": None if candidate.expected_value_per_unit is None else round(candidate.expected_value_per_unit, 4),
                 "precision_score": round(candidate.precision_score, 4),
             }
             for idx, candidate in enumerate(selected[:10], start=1)
@@ -889,6 +1568,8 @@ def main() -> None:
     args.history_season = infer_history_season(args.pool_csv, args.history_season)
     if args.history_cache_json is None:
         args.history_cache_json = default_history_cache_path(args.history_season)
+    if args.bet_profile_cache_json is None:
+        args.bet_profile_cache_json = default_bet_profile_cache_path(args.history_season)
 
     default_csv, default_summary = default_output_paths(args.pool_csv)
     if args.out_csv is None:
@@ -904,19 +1585,42 @@ def main() -> None:
             cache_json=args.history_cache_json.resolve() if args.history_cache_json else None,
             refresh=bool(args.refresh_history_cache),
         )
+    bet_profile_priors = None
+    if not args.disable_historical_bet_profiles:
+        bet_profile_priors = load_or_build_historical_bet_profile_priors(
+            history_dir=args.history_dir.resolve(),
+            season=int(args.history_season),
+            cache_json=args.bet_profile_cache_json.resolve() if args.bet_profile_cache_json else None,
+            refresh=bool(args.refresh_bet_profile_cache),
+        )
 
     candidates = load_candidates(
         args.pool_csv,
         calibration=calibration,
+        bet_profile_priors=bet_profile_priors,
         min_history_bucket_rows=int(args.min_history_bucket_rows),
         max_history_prior_weight=float(args.max_history_prior_weight),
         history_prior_strength=float(args.history_prior_strength),
+        min_bet_profile_rows=int(args.min_bet_profile_rows),
+        max_bet_profile_prior_weight=float(args.max_bet_profile_prior_weight),
+        bet_profile_prior_strength=float(args.bet_profile_prior_strength),
+        min_market_availability_rows=int(args.min_market_availability_rows),
     )
     eligible, rejected = filter_candidates(candidates, args)
     selected = select_top_candidates(eligible, args)
 
     write_selected_csv(args.out_csv, selected)
-    write_summary_json(args.summary_json, args, args.pool_csv, len(candidates), eligible, selected, rejected, calibration)
+    write_summary_json(
+        args.summary_json,
+        args,
+        args.pool_csv,
+        len(candidates),
+        eligible,
+        selected,
+        rejected,
+        calibration,
+        bet_profile_priors,
+    )
 
     print("\n" + "=" * 88)
     print("MLB HIGH-PRECISION SELECTOR")
