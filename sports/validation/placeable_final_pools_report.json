@@ -1,0 +1,185 @@
+{
+  "generated_at_utc": "2026-05-01T23:49:21.559509+00:00",
+  "nba": {
+    "sport": "nba",
+    "payload_path": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nba\\web\\data\\daily_predictions.json",
+    "wide_snapshot_path": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\model\\analysis\\daily_runs\\20260430\\current_market_snapshot_20260430.parquet",
+    "long_snapshot_path": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\data copy\\raw\\market_odds\\nba\\latest_player_props_long.csv",
+    "plays": [
+      {
+        "player": "Tyrese Maxey",
+        "target": "AST",
+        "direction": "UNDER",
+        "market_date": "2026-04-30",
+        "market_line": 6.5,
+        "line_placeable": true,
+        "side_price_confirmed": true,
+        "books": 6.0,
+        "wide_side_price": null,
+        "long_side_price": -118.33333333333331
+      },
+      {
+        "player": "Christian Braun",
+        "target": "AST",
+        "direction": "UNDER",
+        "market_date": "2026-04-30",
+        "market_line": 2.5,
+        "line_placeable": true,
+        "side_price_confirmed": true,
+        "books": 5.0,
+        "wide_side_price": -154.2,
+        "long_side_price": -154.2
+      },
+      {
+        "player": "Karl-Anthony Towns",
+        "target": "TRB",
+        "direction": "UNDER",
+        "market_date": "2026-04-30",
+        "market_line": 12.5,
+        "line_placeable": true,
+        "side_price_confirmed": true,
+        "books": 6.0,
+        "wide_side_price": -93.5,
+        "long_side_price": -93.5
+      },
+      {
+        "player": "Julius Randle",
+        "target": "PTS",
+        "direction": "UNDER",
+        "market_date": "2026-04-30",
+        "market_line": 22.5,
+        "line_placeable": true,
+        "side_price_confirmed": true,
+        "books": 5.0,
+        "wide_side_price": -118.2,
+        "long_side_price": -118.2
+      },
+      {
+        "player": "Jalen Brunson",
+        "target": "PTS",
+        "direction": "UNDER",
+        "market_date": "2026-04-30",
+        "market_line": 27.5,
+        "line_placeable": true,
+        "side_price_confirmed": true,
+        "books": 6.0,
+        "wide_side_price": -112.83333333333333,
+        "long_side_price": -112.83333333333331
+      },
+      {
+        "player": "Jayson Tatum",
+        "target": "PTS",
+        "direction": "UNDER",
+        "market_date": "2026-04-30",
+        "market_line": 25.5,
+        "line_placeable": true,
+        "side_price_confirmed": true,
+        "books": 6.0,
+        "wide_side_price": -119.33333333333333,
+        "long_side_price": -119.33333333333331
+      }
+    ],
+    "summary": {
+      "play_count": 6,
+      "line_placeable_count": 6,
+      "side_price_confirmed_count": 6
+    }
+  },
+  "mlb": {
+    "sport": "mlb",
+    "payload_path": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\web\\data\\daily_predictions.json",
+    "selected_csv_path": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260429\\daily_prediction_pool_20260429_high_precision_predictions.csv",
+    "long_snapshot_path": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\raw\\market_odds\\mlb\\odds_api_io\\latest_player_props_long.csv",
+    "plays": [
+      {
+        "player": "Lawrence Butler",
+        "target": "TB",
+        "direction": "UNDER",
+        "market_date": "2026-04-29",
+        "market_line": 3.0,
+        "market_source": "real",
+        "line_placeable": true,
+        "side_price_confirmed": true,
+        "books": 8.0,
+        "csv_side_price": -162.5,
+        "long_line_match": false,
+        "long_side_price": null
+      },
+      {
+        "player": "Jac Caglianone",
+        "target": "TB",
+        "direction": "OVER",
+        "market_date": "2026-04-29",
+        "market_line": 0.5,
+        "market_source": "real",
+        "line_placeable": true,
+        "side_price_confirmed": true,
+        "books": 8.0,
+        "csv_side_price": 263.0,
+        "long_line_match": true,
+        "long_side_price": 163.0
+      },
+      {
+        "player": "Greg Jones",
+        "target": "TB",
+        "direction": "UNDER",
+        "market_date": "2026-04-29",
+        "market_line": 1.5,
+        "market_source": "real",
+        "line_placeable": true,
+        "side_price_confirmed": false,
+        "books": 6.0,
+        "csv_side_price": null,
+        "long_line_match": true,
+        "long_side_price": null
+      },
+      {
+        "player": "Luis Rengifo",
+        "target": "TB",
+        "direction": "UNDER",
+        "market_date": "2026-04-29",
+        "market_line": 3.5,
+        "market_source": "real",
+        "line_placeable": true,
+        "side_price_confirmed": false,
+        "books": 8.0,
+        "csv_side_price": null,
+        "long_line_match": true,
+        "long_side_price": null
+      },
+      {
+        "player": "Juan Soto",
+        "target": "TB",
+        "direction": "UNDER",
+        "market_date": "2026-04-29",
+        "market_line": 7.5,
+        "market_source": "real",
+        "line_placeable": true,
+        "side_price_confirmed": false,
+        "books": 8.0,
+        "csv_side_price": null,
+        "long_line_match": true,
+        "long_side_price": null
+      },
+      {
+        "player": "CJ Abrams",
+        "target": "TB",
+        "direction": "UNDER",
+        "market_date": "2026-04-29",
+        "market_line": 4.0,
+        "market_source": "real",
+        "line_placeable": true,
+        "side_price_confirmed": false,
+        "books": 8.0,
+        "csv_side_price": null,
+        "long_line_match": false,
+        "long_side_price": null
+      }
+    ],
+    "summary": {
+      "play_count": 6,
+      "line_placeable_count": 6,
+      "side_price_confirmed_count": 2
+    }
+  }
+}

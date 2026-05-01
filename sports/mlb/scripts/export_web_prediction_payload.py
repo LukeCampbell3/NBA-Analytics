@@ -119,15 +119,20 @@ def build_mlb_parlay_leg_quality(
     precision_score: float,
     historical_bucket_support: float,
     historical_bucket_win_rate: float,
+    expected_value_per_unit: float | None = None,
 ) -> float:
     support_score = 0.0
     if historical_bucket_support > 0:
         support_score = math.log1p(max(0.0, historical_bucket_support)) / math.log1p(3000.0)
+    ev_score = 0.0
+    if expected_value_per_unit is not None:
+        ev_score = clamp01((float(expected_value_per_unit) + 0.05) / 0.20)
     return clamp01(
-        (0.55 * clamp01(graded_hit_rate))
+        (0.50 * clamp01(graded_hit_rate))
         + (0.20 * clamp01(precision_score / 1.15))
         + (0.15 * clamp01(support_score))
         + (0.10 * clamp01(historical_bucket_win_rate))
+        + (0.05 * ev_score)
     )
 
 
@@ -136,10 +141,13 @@ def is_mlb_parlay_leg_eligible(
     graded_hit_rate: float,
     leg_quality: float,
     historical_bucket_support: float,
+    expected_value_per_unit: float | None = None,
 ) -> bool:
-    if graded_hit_rate < 0.64 or leg_quality < 0.78:
+    if graded_hit_rate < 0.68 or leg_quality < 0.82:
         return False
-    if historical_bucket_support > 0 and historical_bucket_support < 200:
+    if historical_bucket_support > 0 and historical_bucket_support < 250:
+        return False
+    if expected_value_per_unit is not None and expected_value_per_unit < -0.02:
         return False
     return True
 
@@ -449,11 +457,18 @@ def main() -> None:
         precision_score = to_float(row.get("Precision_Score"))
         historical_bucket_support = to_float(row.get("Historical_Bucket_Support"))
         historical_bucket_win_rate = to_float(row.get("Historical_Bucket_Win_Rate"))
+        expected_value_per_unit = to_float(row.get("Expected_Value_Per_Unit"), default=float("nan"))
+        if not math.isfinite(expected_value_per_unit):
+            expected_value_per_unit = None
+        market_implied_probability = to_float(row.get("Market_Implied_Probability"), default=float("nan"))
+        if not math.isfinite(market_implied_probability):
+            market_implied_probability = None
         parlay_leg_quality = build_mlb_parlay_leg_quality(
             graded_hit_rate=estimated_graded_hit_rate,
             precision_score=precision_score,
             historical_bucket_support=historical_bucket_support,
             historical_bucket_win_rate=historical_bucket_win_rate,
+            expected_value_per_unit=expected_value_per_unit,
         )
         plays.append(
             {
@@ -488,11 +503,16 @@ def main() -> None:
                 "historical_bucket_win_rate": historical_bucket_win_rate,
                 "historical_bucket_support": historical_bucket_support,
                 "market_bucket": row.get("Market_Bucket", ""),
+                "market_books": to_int(row.get("Market_Books", "0")),
+                "market_line_std": to_float(row.get("Market_Line_Std")),
+                "market_implied_probability": market_implied_probability,
+                "expected_value_per_unit": expected_value_per_unit,
                 "final_pool_quality_score": parlay_leg_quality,
                 "parlay_precision_eligible": is_mlb_parlay_leg_eligible(
                     graded_hit_rate=estimated_graded_hit_rate,
                     leg_quality=parlay_leg_quality,
                     historical_bucket_support=historical_bucket_support,
+                    expected_value_per_unit=expected_value_per_unit,
                 ),
                 "confidence_tier": row.get("Confidence_Tier", "consider"),
             }

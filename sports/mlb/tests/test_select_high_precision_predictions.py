@@ -106,6 +106,45 @@ def test_build_candidate_blends_model_probability_with_historical_prior() -> Non
     assert candidate.historical_prior_weight > 0.0
 
 
+def test_build_candidate_computes_price_aware_expected_value() -> None:
+    calibration = {
+        "target_direction": {
+            "TB|UNDER": {"graded_rows": 4000, "win_rate": 0.84},
+        },
+        "line_buckets": {
+            "TB|UNDER|1.5": {"graded_rows": 2500, "win_rate": 0.888},
+        },
+    }
+
+    row = _row(
+        player="Value Under",
+        team="AAA",
+        game_id="game_2",
+        target="TB",
+        prediction=0.35,
+        line=1.5,
+        edge=-1.15,
+    )
+    row["Market_Books"] = "4"
+    row["Market_Line_Std"] = "0.1"
+    row["Market_Over_Price"] = "130"
+    row["Market_Under_Price"] = "-180"
+
+    candidate = selector.build_candidate(
+        row,
+        calibration=calibration,
+        min_history_bucket_rows=50,
+        max_history_prior_weight=0.35,
+        history_prior_strength=400.0,
+    )
+
+    assert candidate is not None
+    assert candidate.selected_side_price == -180.0
+    assert candidate.market_books == 4
+    assert candidate.market_implied_probability is not None
+    assert candidate.expected_value_per_unit is not None
+
+
 def test_select_top_candidates_respects_market_bucket_cap() -> None:
     calibration = {
         "target_direction": {
@@ -169,3 +208,54 @@ def test_select_top_candidates_respects_market_bucket_cap() -> None:
     assert len(selected) == 4
     assert bucket_counts["H|OVER|0.5"] == 2
     assert bucket_counts["TB|UNDER|1.5"] == 2
+
+
+def test_lookup_historical_bet_profile_prior_prefers_line_probability_bucket() -> None:
+    priors = {
+        "bet_profiles_target_probability": {
+            "TB|UNDER|0.90-0.95": {"rows": 30, "win_rate": 0.82, "roi_per_bet": 0.18},
+        },
+        "bet_profiles_line_probability": {
+            "TB|UNDER|1.5|0.90-0.95": {"rows": 14, "win_rate": 0.93, "roi_per_bet": 0.31},
+        },
+    }
+
+    key, win_rate, support, source, roi = selector.lookup_historical_bet_profile_prior(
+        priors,
+        target="TB",
+        direction="UNDER",
+        market_line=1.5,
+        graded_hit_rate=0.93,
+        min_line_rows=12,
+    )
+
+    assert key == "TB|UNDER|1.5|0.90-0.95"
+    assert win_rate == 0.93
+    assert support == 14
+    assert source == "line_probability"
+    assert roi == 0.31
+
+
+def test_lookup_historical_market_availability_prior_falls_back_to_target_direction() -> None:
+    priors = {
+        "availability_target_direction": {
+            "TB|UNDER": {"rows": 40, "availability_rate": 0.58, "avg_books": 6.2},
+        },
+        "availability_line_buckets": {
+            "TB|UNDER|3.5": {"rows": 6, "availability_rate": 0.33, "avg_books": 7.0},
+        },
+    }
+
+    key, rate, support, source, avg_books = selector.lookup_historical_market_availability_prior(
+        priors,
+        target="TB",
+        direction="UNDER",
+        market_line=3.5,
+        min_line_rows=12,
+    )
+
+    assert key == "TB|UNDER"
+    assert rate == 0.58
+    assert support == 40
+    assert source == "target_direction"
+    assert avg_books == 6.2
