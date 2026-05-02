@@ -79,6 +79,25 @@ def infer_summary_path(selected_csv: Path) -> Path:
     return selected_csv.with_name(f"{selected_csv.stem}_summary.json")
 
 
+def infer_run_date(selected_csv: Path, summary: dict[str, object], rows: list[dict[str, str]]) -> str:
+    if rows:
+        return str(rows[0].get("Prediction_Run_Date", "")).strip()
+
+    selection = summary.get("selection", {})
+    if isinstance(selection, dict):
+        history_season = str(selection.get("history_season", "")).strip()
+    else:
+        history_season = ""
+
+    pool_csv = str(summary.get("pool_csv", "")).strip()
+    for source in [pool_csv, selected_csv.name]:
+        digits = "".join(char for char in source if char.isdigit())
+        if len(digits) >= 8:
+            return f"{digits[:4]}-{digits[4:6]}-{digits[6:8]}"
+
+    return history_season
+
+
 def load_rows(path: Path) -> list[dict[str, str]]:
     with open(path, "r", encoding="utf-8-sig", newline="") as handle:
         return list(csv.DictReader(handle))
@@ -442,7 +461,7 @@ def main() -> None:
     total = len(rows)
 
     through_date = max((row.get("Last_History_Date", "") for row in rows), default="")
-    run_date = rows[0].get("Prediction_Run_Date", "") if rows else ""
+    run_date = infer_run_date(selected_csv, summary, rows)
     headshot_lookup = build_player_headshot_lookup(rows, run_date)
     plays = []
     for row in rows:
