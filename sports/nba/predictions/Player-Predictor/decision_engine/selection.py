@@ -80,6 +80,7 @@ def ranking_columns_for_mode(df: pd.DataFrame, mode: str) -> list[str]:
     columns = {
         "edge": ["recommendation_rank", "edge", "abs_edge", "expected_win_rate", "final_confidence", "ev_adjusted"],
         "abs_edge": ["recommendation_rank", "abs_edge", "ev_adjusted", "expected_win_rate", "final_confidence"],
+        "robust_reranker": ["robust_reranker_prob", "robust_reranker_blend_raw", "ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"],
         "thompson_ev": ["recommendation_rank", "thompson_ev", "ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"],
         "board_objective": ["board_objective_base_score", "ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"],
     }.get(mode, ["recommendation_rank", "ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"])

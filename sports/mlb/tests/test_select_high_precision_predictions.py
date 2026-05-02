@@ -106,6 +106,56 @@ def test_build_candidate_blends_model_probability_with_historical_prior() -> Non
     assert candidate.historical_prior_weight > 0.0
 
 
+def test_build_candidate_recent_form_prior_can_raise_short_term_over_score() -> None:
+    base_calibration = {
+        "target_direction": {
+            "H|OVER": {"graded_rows": 8000, "win_rate": 0.49},
+        },
+        "line_buckets": {
+            "H|OVER|0.5": {"graded_rows": 5000, "win_rate": 0.48},
+        },
+    }
+    recent_calibration = {
+        **base_calibration,
+        "recent_target_direction": {
+            "H|OVER": {"graded_rows": 42, "win_rate": 0.71},
+        },
+        "recent_line_buckets": {
+            "H|OVER|0.5": {"graded_rows": 18, "win_rate": 0.74},
+        },
+    }
+
+    row = _row(
+        player="Recent Form Over",
+        team="AAA",
+        game_id="recent_1",
+        target="H",
+        prediction=1.0,
+        line=0.5,
+        edge=0.5,
+    )
+
+    baseline = selector.build_candidate(
+        row,
+        calibration=base_calibration,
+        min_history_bucket_rows=50,
+        max_history_prior_weight=0.35,
+        history_prior_strength=400.0,
+    )
+    recent = selector.build_candidate(
+        row,
+        calibration=recent_calibration,
+        min_history_bucket_rows=50,
+        max_history_prior_weight=0.35,
+        history_prior_strength=400.0,
+    )
+
+    assert baseline is not None
+    assert recent is not None
+    assert recent.calibrated_hit_probability > baseline.calibrated_hit_probability
+    assert recent.selection_score > baseline.selection_score
+
+
 def test_build_candidate_computes_price_aware_expected_value() -> None:
     calibration = {
         "target_direction": {

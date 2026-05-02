@@ -1,0 +1,83 @@
+{
+  "window": {
+    "start_run_date": "20260424",
+    "end_run_date": "20260501"
+  },
+  "candidate_backtest_source": "sports/validation/validation_recent_pool_selector_20260406_20260430_rows.csv",
+  "searched_parameters": {
+    "probability_shrink_factor": [
+      0.35,
+      0.55,
+      0.75
+    ],
+    "max_total_plays": [
+      4,
+      5,
+      6
+    ],
+    "min_ev": [
+      0.03,
+      0.05
+    ],
+    "min_final_confidence": [
+      0.03,
+      0.04
+    ]
+  },
+  "selected_profile_update": {
+    "profile": "production_selective_robust_reranker",
+    "changed": {
+      "min_ev": {
+        "from": 0.05,
+        "to": 0.03
+      }
+    },
+    "reason": "best recent final-board replay results tied with highest-quality reranker shrink and retained board volume"
+  },
+  "best_recent_final_board_configs": [
+    {
+      "probability_shrink_factor": 0.55,
+      "max_total_plays": 6,
+      "min_ev": 0.03,
+      "min_final_confidence": 0.03,
+      "rows": 20,
+      "wins": 16,
+      "losses": 2,
+      "missing": 2,
+      "hit_rate": 0.888889
+    },
+    {
+      "probability_shrink_factor": 0.55,
+      "max_total_plays": 6,
+      "min_ev": 0.03,
+      "min_final_confidence": 0.04,
+      "rows": 20,
+      "wins": 16,
+      "losses": 2,
+      "missing": 2,
+      "hit_rate": 0.888889
+    },
+    {
+      "probability_shrink_factor": 0.75,
+      "max_total_plays": 6,
+      "min_ev": 0.03,
+      "min_final_confidence": 0.03,
+      "rows": 20,
+      "wins": 16,
+      "losses": 2,
+      "missing": 2,
+      "hit_rate": 0.888889
+    },
+    {
+      "probability_shrink_factor": 0.75,
+      "max_total_plays": 6,
+      "min_ev": 0.03,
+      "min_final_confidence": 0.04,
+      "rows": 20,
+      "wins": 16,
+      "losses": 2,
+      "missing": 2,
+      "hit_rate": 0.888889
+    }
+  ]
+}

@@ -144,6 +144,11 @@ class CalibratorFitConfig:
     min_rows_global: int = 250
     min_rows_segment: int = 80
     n_bins: int = 10
+    recent_window_days: int = 21
+    recent_min_rows_global: int = 40
+    recent_min_rows_segment: int = 18
+    recent_strength: float = 20.0
+    recent_max_adjustment: float = 0.08
     safety_min_rows: int = 60
     safety_bin_edges: tuple[float, ...] = (0.50, 0.55, 0.60, 0.65, 0.70, 0.80, 1.00)
     safety_min_bucket_rows: int = 12
@@ -270,6 +275,79 @@ def apply_empirical_safety_profile(
     return _clip_prob(transformed, 0.01, 0.99), applied
 
 
+def _recent_profile_summary(frame: pd.DataFrame) -> dict[str, Any]:
+    return {
+        "rows": int(len(frame)),
+        "mean_label": float(np.clip(frame["_label"].mean(), 0.0, 1.0)) if not frame.empty else 0.5,
+        "mean_raw_prob": float(np.clip(frame["_prob"].mean(), 0.0, 1.0)) if not frame.empty else 0.5,
+    }
+
+
+def _apply_recent_regime_adjustment(
+    calibrated: np.ndarray,
+    seg_keys: pd.Series,
+    month_payload: dict[str, Any],
+    config_payload: dict[str, Any] | None,
+) -> tuple[np.ndarray, np.ndarray, bool]:
+    cfg = config_payload or {}
+    recent_segments = month_payload.get("recent_segments", {}) if isinstance(month_payload, dict) else {}
+    recent_global = month_payload.get("recent_global") if isinstance(month_payload, dict) else None
+    long_segments = month_payload.get("segments", {}) if isinstance(month_payload, dict) else {}
+    safety_profile = month_payload.get("safety_profile") if isinstance(month_payload, dict) else None
+
+    if not isinstance(recent_segments, dict) and not isinstance(recent_global, dict):
+        return calibrated, np.full(len(calibrated), "", dtype=object), False
+
+    global_long_rate = 0.5
+    if isinstance(safety_profile, dict):
+        try:
+            global_long_rate = float(np.clip(safety_profile.get("mean_label", global_long_rate), 0.0, 1.0))
+        except Exception:
+            global_long_rate = 0.5
+
+    recent_strength = max(1e-6, float(cfg.get("recent_strength", 20.0) or 20.0))
+    recent_max_adjustment = float(np.clip(cfg.get("recent_max_adjustment", 0.08) or 0.08, 0.0, 0.25))
+    recent_min_rows_segment = int(max(1, cfg.get("recent_min_rows_segment", 18) or 18))
+    recent_min_rows_global = int(max(1, cfg.get("recent_min_rows_global", 40) or 40))
+
+    adjusted = np.asarray(calibrated, dtype="float64").copy()
+    recent_sources = np.full(len(adjusted), "", dtype=object)
+    keys = seg_keys.astype(str).str.upper().str.strip()
+    applied = False
+
+    for idx, key in enumerate(keys.tolist()):
+        segment_long = long_segments.get(key, {}) if isinstance(long_segments, dict) else {}
+        segment_recent = recent_segments.get(key, {}) if isinstance(recent_segments, dict) else {}
+
+        use_segment = isinstance(segment_recent, dict) and int(segment_recent.get("rows", 0) or 0) >= recent_min_rows_segment
+        use_global = isinstance(recent_global, dict) and int(recent_global.get("rows", 0) or 0) >= recent_min_rows_global
+        if not use_segment and not use_global:
+            continue
+
+        if use_segment:
+            recent_rate = float(np.clip(segment_recent.get("mean_label", 0.5), 0.0, 1.0))
+            long_rate = float(np.clip(segment_long.get("mean_label", global_long_rate), 0.0, 1.0))
+            rows = int(segment_recent.get("rows", 0) or 0)
+            source = f"segment:{key}"
+        else:
+            recent_rate = float(np.clip(recent_global.get("mean_label", 0.5), 0.0, 1.0))
+            long_rate = global_long_rate
+            rows = int(recent_global.get("rows", 0) or 0)
+            source = "global"
+
+        support = float(rows) / (float(rows) + recent_strength)
+        shift = float(np.clip(recent_rate - long_rate, -recent_max_adjustment, recent_max_adjustment)) * float(
+            np.clip(support, 0.0, 1.0)
+        )
+        if abs(shift) < 1e-6:
+            continue
+        adjusted[idx] = float(np.clip(adjusted[idx] + shift, 0.01, 0.99))
+        recent_sources[idx] = source
+        applied = True
+
+    return adjusted, recent_sources, applied
+
+
 def fit_selected_board_calibrator_payload(
     rows_df: pd.DataFrame,
     run_date_col: str = "run_date",
@@ -345,12 +423,31 @@ def fit_selected_board_calibrator_payload(
                 if cal:
                     segments[key] = cal
 
+        recent_train = train.loc[train["_run_date"] >= (month_start - pd.Timedelta(days=int(max(1, cfg.recent_window_days))))].copy()
+        recent_global = None
+        if len(recent_train) >= int(cfg.recent_min_rows_global):
+            recent_global = _recent_profile_summary(recent_train)
+        recent_segments: dict[str, Any] = {}
+        for target in ("PTS", "TRB", "AST"):
+            for direction in ("OVER", "UNDER"):
+                key = f"{target}_{direction}"
+                recent_seg = recent_train.loc[
+                    (recent_train["_target"] == target) & (recent_train["_direction"] == direction)
+                ].copy()
+                if len(recent_seg) < int(cfg.recent_min_rows_segment):
+                    continue
+                recent_segments[key] = _recent_profile_summary(recent_seg)
+
         payload["months"][month] = {
             "train_rows": int(len(train)),
             "train_start": lookback_start.strftime("%Y-%m-%d"),
             "train_end": (month_start - pd.Timedelta(days=1)).strftime("%Y-%m-%d"),
             "global": global_cal,
             "segments": segments,
+            "recent_train_rows": int(len(recent_train)),
+            "recent_train_start": (month_start - pd.Timedelta(days=int(max(1, cfg.recent_window_days)))).strftime("%Y-%m-%d"),
+            "recent_global": recent_global,
+            "recent_segments": recent_segments,
             "safety_profile": fit_empirical_safety_profile(
                 train["_prob"].to_numpy(dtype="float64"),
                 train["_label"].to_numpy(dtype="float64"),
@@ -437,6 +534,27 @@ def apply_selected_board_calibration(
             continue
         calibrated[mask] = apply_monotonic_bin_calibrator(calibrated[mask], cal)
         sources[mask] = f"segment:{key}"
+
+    calibrated, recent_sources, recent_applied = _apply_recent_regime_adjustment(
+        calibrated,
+        seg_keys,
+        month_payload if isinstance(month_payload, dict) else {},
+        payload.get("config") if isinstance(payload, dict) else None,
+    )
+    if recent_applied:
+        sources = np.asarray(
+            [
+                (
+                    f"{str(source)}+recent:{recent_source}"
+                    if str(source) != "identity"
+                    else f"recent:{recent_source}"
+                )
+                if recent_source
+                else str(source)
+                for source, recent_source in zip(sources, recent_sources, strict=False)
+            ],
+            dtype=object,
+        )
 
     calibrated, safety_applied = apply_empirical_safety_profile(calibrated, safety_profile)
     if safety_applied:

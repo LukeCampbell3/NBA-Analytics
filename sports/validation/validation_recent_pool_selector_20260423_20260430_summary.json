@@ -1,0 +1,72 @@
+{
+  "window": {
+    "start_date": "2026-04-23",
+    "end_date": "2026-04-30",
+    "top_k": 4,
+    "candidate_rows": 1770,
+    "market_dates": [
+      "2026-04-23",
+      "2026-04-24",
+      "2026-04-25",
+      "2026-04-26",
+      "2026-04-27",
+      "2026-04-28",
+      "2026-04-29",
+      "2026-04-30"
+    ]
+  },
+  "predictor": {
+    "artifact_free": false,
+    "artifact_free_reason": null
+  },
+  "strategies": {
+    "win_rate_priority": {
+      "plays": 32,
+      "resolved": 23,
+      "wins": 11,
+      "losses": 12,
+      "pushes": 9,
+      "hit_rate": 0.4782608695652174,
+      "roi_per_play": -0.08695652173913043,
+      "avg_estimated_win_rate": 0.8853702131155184,
+      "avg_estimated_ev": 0.690252225038717,
+      "avg_selection_confidence": 0.8805181950836147
+    },
+    "robust_pool_score": {
+      "plays": 32,
+      "resolved": 24,
+      "wins": 13,
+      "losses": 11,
+      "pushes": 8,
+      "hit_rate": 0.5416666666666666,
+      "roi_per_play": 0.034090909090909095,
+      "avg_estimated_win_rate": 0.8802030109673502,
+      "avg_estimated_ev": 0.6803875663922141,
+      "avg_selection_confidence": 0.9105840350346031
+    },
+    "robust_pool_score_adaptive": {
+      "plays": 17,
+      "resolved": 10,
+      "wins": 6,
+      "losses": 4,
+      "pushes": 7,
+      "hit_rate": 0.6,
+      "roi_per_play": 0.14545454545454542,
+      "avg_estimated_win_rate": 0.9083915195236445,
+      "avg_estimated_ev": 0.7342019918178666,
+      "avg_selection_confidence": 0.9074324937778196
+    },
+    "robust_pool_score_adaptive_reexpand": {
+      "plays": 17,
+      "resolved": 10,
+      "wins": 6,
+      "losses": 4,
+      "pushes": 7,
+      "hit_rate": 0.6,
+      "roi_per_play": 0.14545454545454542,
+      "avg_estimated_win_rate": 0.9083915195236445,
+      "avg_estimated_ev": 0.7342019918178666,
+      "avg_selection_confidence": 0.9074324937778196
+    }
+  }
+}

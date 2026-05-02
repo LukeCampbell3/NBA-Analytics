@@ -112,10 +112,14 @@ except Exception:  # pragma: no cover - fallback when accepted-pick gate module 
         out["accepted_pick_gate_enabled"] = False
         out["accepted_pick_gate_enforced"] = False
         out["accepted_pick_gate_live"] = bool(live)
+        out["accepted_pick_gate_live_requested"] = bool(live)
         out["accepted_pick_gate_month"] = ""
         out["accepted_pick_gate_drop_applied"] = False
         out["accepted_pick_gate_drop_count"] = 0
         out["accepted_pick_gate_policy"] = "identity_module_missing"
+        out["accepted_pick_gate_live_control_source"] = ""
+        out["accepted_pick_gate_live_control_pass"] = np.nan
+        out["accepted_pick_gate_live_guard_reason"] = ""
         return out, {"enabled": False, "enforced": False, "reason": "module_missing"}
 
 try:
@@ -4701,10 +4705,14 @@ def compute_final_board(
         out["accepted_pick_gate_enabled"] = bool(accepted_pick_gate_enabled)
         out["accepted_pick_gate_enforced"] = False
         out["accepted_pick_gate_live"] = bool(accepted_pick_gate_live and accepted_pick_gate_enabled)
+        out["accepted_pick_gate_live_requested"] = bool(accepted_pick_gate_live and accepted_pick_gate_enabled)
         out["accepted_pick_gate_month"] = str(accepted_pick_gate_month or "")
         out["accepted_pick_gate_drop_applied"] = False
         out["accepted_pick_gate_drop_count"] = 0
         out["accepted_pick_gate_policy"] = "disabled"
+        out["accepted_pick_gate_live_control_source"] = ""
+        out["accepted_pick_gate_live_control_pass"] = np.nan
+        out["accepted_pick_gate_live_guard_reason"] = ""
 
     _record_stage("after_accepted_pick_gate", out)
 
@@ -5000,6 +5008,10 @@ def compute_final_board(
         out["accepted_pick_gate_live"] = False
     else:
         out["accepted_pick_gate_live"] = pd.to_numeric(out["accepted_pick_gate_live"], errors="coerce").fillna(0).astype(bool)
+    if "accepted_pick_gate_live_requested" not in out.columns:
+        out["accepted_pick_gate_live_requested"] = False
+    else:
+        out["accepted_pick_gate_live_requested"] = pd.to_numeric(out["accepted_pick_gate_live_requested"], errors="coerce").fillna(0).astype(bool)
     if "accepted_pick_gate_month" not in out.columns:
         out["accepted_pick_gate_month"] = ""
     else:
@@ -5016,6 +5028,18 @@ def compute_final_board(
         out["accepted_pick_gate_policy"] = ""
     else:
         out["accepted_pick_gate_policy"] = out["accepted_pick_gate_policy"].fillna("").astype(str)
+    if "accepted_pick_gate_live_control_source" not in out.columns:
+        out["accepted_pick_gate_live_control_source"] = ""
+    else:
+        out["accepted_pick_gate_live_control_source"] = out["accepted_pick_gate_live_control_source"].fillna("").astype(str)
+    if "accepted_pick_gate_live_control_pass" not in out.columns:
+        out["accepted_pick_gate_live_control_pass"] = np.nan
+    else:
+        out["accepted_pick_gate_live_control_pass"] = pd.to_numeric(out["accepted_pick_gate_live_control_pass"], errors="coerce")
+    if "accepted_pick_gate_live_guard_reason" not in out.columns:
+        out["accepted_pick_gate_live_guard_reason"] = ""
+    else:
+        out["accepted_pick_gate_live_guard_reason"] = out["accepted_pick_gate_live_guard_reason"].fillna("").astype(str)
     if "selector_pool_append_added" not in out.columns:
         out["selector_pool_append_added"] = False
     else:

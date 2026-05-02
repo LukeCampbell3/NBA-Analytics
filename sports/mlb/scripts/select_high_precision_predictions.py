@@ -19,7 +19,7 @@ import json
 import math
 from collections import Counter, defaultdict
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Iterable
 
@@ -35,6 +35,10 @@ DEFAULT_CALIBRATION_ROOT = SPORT_ROOT / "data" / "predictions" / "calibration"
 SUPPORTED_COUNT_TARGETS = {"H", "TB", "R", "K"}
 FINAL_STATUS_CODES = {"F", "C", "D", "X"}
 UPCOMING_STATUS_CODES = {"", "P", "S", "NS"}
+RECENT_FORM_LOOKBACK_DAYS = 14
+RECENT_FORM_MIN_LINE_ROWS = 10
+RECENT_FORM_MAX_WEIGHT = 0.22
+RECENT_FORM_STRENGTH = 45.0
 HISTORICAL_TARGET_SPECS: dict[str, tuple[str, str, str]] = {
     "H": ("H", "Market_H", "H_market_gap"),
     "TB": ("TB", "Market_TB", "TB_market_gap"),
@@ -532,10 +536,34 @@ def _update_bucket(stats: dict[str, float | int], *, wins: int, losses: int, pus
     stats["pushes"] = int(stats.get("pushes", 0)) + int(pushes)
 
 
+def infer_recent_history_cutoff(history_dir: Path, season: int, lookback_days: int) -> date | None:
+    files = sorted(history_dir.glob(f"*/{int(season)}_processed_processed.csv"))
+    max_game_date: date | None = None
+    for path in files:
+        try:
+            frame = pd.read_csv(path, usecols=["Date"])
+        except Exception:
+            continue
+        if frame.empty or "Date" not in frame.columns:
+            continue
+        dates = pd.to_datetime(frame["Date"], errors="coerce").dt.date.dropna()
+        if dates.empty:
+            continue
+        candidate = max(dates)
+        if max_game_date is None or candidate > max_game_date:
+            max_game_date = candidate
+    if max_game_date is None:
+        return None
+    return max_game_date - timedelta(days=max(1, int(lookback_days) - 1))
+
+
 def build_historical_bucket_priors(history_dir: Path, season: int) -> dict:
     target_direction_counts: dict[str, dict[str, float | int]] = defaultdict(_empty_bucket_stats)
     line_bucket_counts: dict[str, dict[str, float | int]] = defaultdict(_empty_bucket_stats)
+    recent_target_direction_counts: dict[str, dict[str, float | int]] = defaultdict(_empty_bucket_stats)
+    recent_line_bucket_counts: dict[str, dict[str, float | int]] = defaultdict(_empty_bucket_stats)
     files = sorted(history_dir.glob(f"*/{int(season)}_processed_processed.csv"))
+    recent_cutoff = infer_recent_history_cutoff(history_dir, season, RECENT_FORM_LOOKBACK_DAYS)
 
     required_columns = {"Date"}
     for actual_col, market_col, gap_col in HISTORICAL_TARGET_SPECS.values():
@@ -548,6 +576,8 @@ def build_historical_bucket_priors(history_dir: Path, season: int) -> dict:
             continue
         if frame.empty:
             continue
+        frame = frame.copy()
+        frame["_game_date"] = pd.to_datetime(frame["Date"], errors="coerce").dt.date
 
         for target, (actual_col, market_col, gap_col) in HISTORICAL_TARGET_SPECS.items():
             if actual_col not in frame.columns or market_col not in frame.columns or gap_col not in frame.columns:
@@ -565,6 +595,7 @@ def build_historical_bucket_priors(history_dir: Path, season: int) -> dict:
                     "actual": actual.loc[mask],
                     "market_line": market_line.loc[mask],
                     "gap": gap.loc[mask],
+                    "game_date": frame.loc[mask, "_game_date"],
                 }
             )
             sub["direction"] = sub["gap"].gt(0).map({True: "OVER", False: "UNDER"})
@@ -574,6 +605,10 @@ def build_historical_bucket_priors(history_dir: Path, season: int) -> dict:
             )
             sub["push"] = sub["actual"].eq(sub["market_line"])
             sub["loss"] = ~(sub["win"] | sub["push"])
+            if recent_cutoff is not None:
+                sub["is_recent"] = pd.to_datetime(sub["game_date"], errors="coerce").dt.date.ge(recent_cutoff)
+            else:
+                sub["is_recent"] = False
 
             for direction, part in sub.groupby("direction"):
                 td_key = target_direction_key(target, str(direction))
@@ -583,6 +618,14 @@ def build_historical_bucket_priors(history_dir: Path, season: int) -> dict:
                     losses=int(part["loss"].sum()),
                     pushes=int(part["push"].sum()),
                 )
+                recent_part = part.loc[part["is_recent"]].copy()
+                if not recent_part.empty:
+                    _update_bucket(
+                        recent_target_direction_counts[td_key],
+                        wins=int(recent_part["win"].sum()),
+                        losses=int(recent_part["loss"].sum()),
+                        pushes=int(recent_part["push"].sum()),
+                    )
 
                 for line_value, line_part in part.groupby("market_line"):
                     bucket_key = market_bucket_key(target, str(direction), float(line_value))
@@ -592,14 +635,30 @@ def build_historical_bucket_priors(history_dir: Path, season: int) -> dict:
                         losses=int(line_part["loss"].sum()),
                         pushes=int(line_part["push"].sum()),
                     )
+                    recent_line_part = line_part.loc[line_part["is_recent"]].copy()
+                    if not recent_line_part.empty:
+                        _update_bucket(
+                            recent_line_bucket_counts[bucket_key],
+                            wins=int(recent_line_part["win"].sum()),
+                            losses=int(recent_line_part["loss"].sum()),
+                            pushes=int(recent_line_part["push"].sum()),
+                        )
 
     return {
         "season": int(season),
         "history_dir": str(history_dir.resolve()),
         "updated_at_utc": datetime.now(timezone.utc).isoformat(),
         "source_file_count": int(len(files)),
+        "recent_form_lookback_days": int(RECENT_FORM_LOOKBACK_DAYS),
+        "recent_form_cutoff_date": recent_cutoff.isoformat() if recent_cutoff is not None else "",
         "target_direction": {key: _finalize_bucket_stats(value) for key, value in sorted(target_direction_counts.items())},
         "line_buckets": {key: _finalize_bucket_stats(value) for key, value in sorted(line_bucket_counts.items())},
+        "recent_target_direction": {
+            key: _finalize_bucket_stats(value) for key, value in sorted(recent_target_direction_counts.items())
+        },
+        "recent_line_buckets": {
+            key: _finalize_bucket_stats(value) for key, value in sorted(recent_line_bucket_counts.items())
+        },
     }
 
 
@@ -647,6 +706,32 @@ def lookup_historical_bucket_prior(
     td_rows = int(td_bucket.get("graded_rows", 0) or 0)
     if td_rows > 0:
         return td_key, float(td_bucket.get("win_rate", 0.5) or 0.5), td_rows, "target_direction"
+
+    return "fallback", 0.5, 0, "fallback"
+
+
+def lookup_recent_bucket_prior(
+    calibration: dict | None,
+    *,
+    target: str,
+    direction: str,
+    market_line: float,
+    min_line_rows: int = RECENT_FORM_MIN_LINE_ROWS,
+) -> tuple[str, float, int, str]:
+    if not isinstance(calibration, dict):
+        return "fallback", 0.5, 0, "fallback"
+
+    line_key = market_bucket_key(target, direction, market_line)
+    line_bucket = calibration.get("recent_line_buckets", {}).get(line_key, {})
+    line_rows = int(line_bucket.get("graded_rows", 0) or 0)
+    if line_rows >= int(max(0, min_line_rows)):
+        return line_key, float(line_bucket.get("win_rate", 0.5) or 0.5), line_rows, "recent_line_bucket"
+
+    td_key = target_direction_key(target, direction)
+    td_bucket = calibration.get("recent_target_direction", {}).get(td_key, {})
+    td_rows = int(td_bucket.get("graded_rows", 0) or 0)
+    if td_rows > 0:
+        return td_key, float(td_bucket.get("win_rate", 0.5) or 0.5), td_rows, "recent_target_direction"
 
     return "fallback", 0.5, 0, "fallback"
 
@@ -1032,19 +1117,40 @@ def build_candidate_for_direction(
         market_line=market_line,
         min_line_rows=min_history_bucket_rows,
     )
-    calibrated_hit_probability, historical_prior_weight = blend_probability_with_prior(
+    long_run_hit_probability, historical_prior_weight = blend_probability_with_prior(
         model_hit_probability,
         prior_probability=historical_bucket_win_rate,
         support=historical_bucket_support,
         max_weight=max_history_prior_weight,
         strength=history_prior_strength,
     )
-    calibrated_graded_hit_rate, _ = blend_probability_with_prior(
+    long_run_graded_hit_rate, _ = blend_probability_with_prior(
         model_graded_hit_rate,
         prior_probability=historical_bucket_win_rate,
         support=historical_bucket_support,
         max_weight=max_history_prior_weight,
         strength=history_prior_strength,
+    )
+    _, recent_bucket_win_rate, recent_bucket_support, recent_prior_source = lookup_recent_bucket_prior(
+        calibration,
+        target=target,
+        direction=direction,
+        market_line=market_line,
+        min_line_rows=RECENT_FORM_MIN_LINE_ROWS,
+    )
+    calibrated_hit_probability, recent_prior_weight = blend_probability_with_prior(
+        long_run_hit_probability,
+        prior_probability=recent_bucket_win_rate,
+        support=recent_bucket_support,
+        max_weight=RECENT_FORM_MAX_WEIGHT,
+        strength=RECENT_FORM_STRENGTH,
+    )
+    calibrated_graded_hit_rate, _ = blend_probability_with_prior(
+        long_run_graded_hit_rate,
+        prior_probability=recent_bucket_win_rate,
+        support=recent_bucket_support,
+        max_weight=RECENT_FORM_MAX_WEIGHT,
+        strength=RECENT_FORM_STRENGTH,
     )
 
     market_books = max(0, to_int(row.get("Market_Books")))
@@ -1105,6 +1211,10 @@ def build_candidate_for_direction(
     edge_over_mae = max(0.0, directional_model_gap(prediction, market_line, direction)) / max(model_val_mae, 0.1)
     bucket_support_score = min(max(float(historical_bucket_support), 0.0) / 500.0, 1.0)
     bet_profile_support_score = min(max(float(historical_bet_profile_support), 0.0) / 120.0, 1.0)
+    recent_support_score = min(max(float(recent_bucket_support), 0.0) / 60.0, 1.0)
+    recent_form_lift = 0.0
+    if recent_prior_source != "fallback":
+        recent_form_lift = max(-0.08, min(0.08, recent_bucket_win_rate - historical_bucket_win_rate))
 
     reliability_core = (
         0.49 * calibrated_hit_probability
@@ -1113,10 +1223,14 @@ def build_candidate_for_direction(
         + 0.08 * recency_score
         + 0.07 * bucket_support_score
         + 0.04 * bet_profile_support_score
+        + 0.03 * recent_support_score
         + 0.03 * max(0.0, historical_bucket_win_rate - 0.50)
         + 0.02 * max(0.0, historical_bet_profile_win_rate - 0.50)
+        + 0.05 * recent_form_lift
     )
     selection_score = reliability_core * (1.0 + 0.08 * min(edge_over_mae, 3.0)) * (1.0 - 0.55 * push_probability)
+    if recent_prior_source != "fallback":
+        selection_score *= 1.0 + (0.30 * recent_prior_weight * recent_form_lift)
     if market_source == "real":
         books_score = clamp01(market_books / 5.0)
         consensus_score = clamp01(1.0 - (market_line_std / 1.5)) if market_books > 1 else 0.5 if market_books == 1 else 0.0
