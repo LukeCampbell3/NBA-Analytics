@@ -1,0 +1,37 @@
+name: Daily Predictions Pipeline
+
+on:
+  schedule:
+    # Runs at 2:00 AM UTC (adjust below for your timezone)
+    - cron: "0 6 * * *" # # 2 AM EST/EDT depending on DST
+  workflow_dispatch:  # allows manual trigger
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Run prediction pipeline
+        run: |
+          python run_daily_predictions.py
+
+      - name: Commit & push results
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Auto-update daily predictions" || echo "No changes to commit"
+          git push
