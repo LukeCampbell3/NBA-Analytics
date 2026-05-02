@@ -22,7 +22,6 @@ jobs:
   nba-predictions:
     needs: setup
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -38,12 +37,12 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Run NBA predictions
-        continue-on-error: true
         run: |
           python sports/site/pipeline/run_daily_predictions.py --skip-mlb --skip-build-site --force-run
 
       - name: Upload NBA artifacts
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: nba-predictions-${{ github.run_id }}
@@ -53,7 +52,6 @@ jobs:
   mlb-predictions:
     needs: setup
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -69,12 +67,12 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Run MLB predictions
-        continue-on-error: true
         run: |
           python sports/site/pipeline/run_daily_predictions.py --skip-nba --skip-build-site --force-run
 
       - name: Upload MLB artifacts
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: mlb-predictions-${{ github.run_id }}
