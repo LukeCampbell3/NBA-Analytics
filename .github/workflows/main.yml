@@ -19,6 +19,7 @@ jobs:
   nba-predictions:
     needs: setup
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -34,6 +35,7 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Run NBA predictions
+        continue-on-error: true
         run: |
           python sports/site/pipeline/run_daily_predictions.py --skip-mlb --skip-build-site --force-run
 
@@ -48,6 +50,7 @@ jobs:
   mlb-predictions:
     needs: setup
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -63,6 +66,7 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Run MLB predictions
+        continue-on-error: true
         run: |
           python sports/site/pipeline/run_daily_predictions.py --skip-nba --skip-build-site --force-run
 
@@ -93,22 +97,26 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Download NBA artifacts
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: nba-predictions-${{ github.run_id }}
           path: sports/nba/web/data/
 
       - name: Download MLB artifacts
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: mlb-predictions-${{ github.run_id }}
           path: sports/mlb/web/data/
 
       - name: Build static site
+        continue-on-error: true
         run: |
           python sports/site/pipeline/build_static_site.py || echo "Site build completed"
 
       - name: Commit & push results
+        continue-on-error: true
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
