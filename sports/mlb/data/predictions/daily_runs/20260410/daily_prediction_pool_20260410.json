@@ -1,0 +1,48 @@
+{
+  "run_date": "2026-04-10",
+  "season": 2026,
+  "game_type": "R",
+  "processed_dir": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\mlb\\data\\processed",
+  "model_dir": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\mlb\\models",
+  "pool_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260410\\daily_prediction_pool_20260410.csv",
+  "rows": 1554,
+  "games": 15,
+  "players": 518,
+  "rows_by_role": {
+    "hitter": 1062,
+    "pitcher": 492
+  },
+  "rows_by_target": {
+    "ER": 164,
+    "ERA": 164,
+    "H": 354,
+    "HR": 354,
+    "K": 164,
+    "RBI": 354
+  },
+  "role_status": {
+    "hitter": {
+      "history_rows": 3798,
+      "candidate_rows": 354,
+      "prediction_rows": 1062,
+      "targets": [
+        "H",
+        "HR",
+        "RBI"
+      ],
+      "status": "ok"
+    },
+    "pitcher": {
+      "history_rows": 1635,
+      "candidate_rows": 164,
+      "prediction_rows": 492,
+      "targets": [
+        "K",
+        "ER",
+        "ERA"
+      ],
+      "status": "ok"
+    }
+  },
+  "updated_at_utc": "2026-04-10T21:39:31.300997+00:00"
+}

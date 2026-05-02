@@ -1,0 +1,1503 @@
+#!/usr/bin/env python3
+"""
+Export the latest daily market prediction run to a static web JSON payload.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import re
+import sys
+import unicodedata
+from collections import defaultdict
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+
+import pandas as pd
+import numpy as np
+
+PLAYER_PREDICTOR_ROOT = Path(__file__).resolve().parent.parent
+SPORT_ROOT = PLAYER_PREDICTOR_ROOT.parents[1]
+WORKSPACE_ROOT = SPORT_ROOT.parents[1]
+DAILY_RUNS_ROOT = PLAYER_PREDICTOR_ROOT / "model" / "analysis" / "daily_runs"
+DEFAULT_WEB_JSON = SPORT_ROOT / "web" / "data" / "daily_predictions.json"
+DEFAULT_DIST_JSON = WORKSPACE_ROOT / "dist" / "nba" / "data" / "daily_predictions.json"
+DEFAULT_CARDS_JSON = SPORT_ROOT / "web" / "data" / "cards.json"
+
+if str(WORKSPACE_ROOT) not in sys.path:
+    sys.path.insert(0, str(WORKSPACE_ROOT))
+
+from sports.parlay_analysis import annotate_parlay_board, evaluate_historical_parlays
+
+
+NBA_SELECTOR_FALLBACK_MAX_PLAYS = 4
+NBA_SELECTOR_FALLBACK_PROFILES: tuple[dict[str, float], ...] = (
+    {
+        "min_selection_probability": 0.510,
+        "min_ev": 0.0,
+        "min_final_confidence": 0.05,
+        "min_abs_edge": 0.0,
+    },
+    {
+        "min_selection_probability": 0.505,
+        "min_ev": 0.0,
+        "min_final_confidence": 0.05,
+        "min_abs_edge": 0.50,
+    },
+    {
+        "min_selection_probability": 0.5045,
+        "min_ev": 0.0,
+        "min_final_confidence": 0.05,
+        "min_abs_edge": 0.45,
+    },
+)
+NBA_ADAPTIVE_BOARD_RANK_RULES: dict[int, dict[str, float]] = {
+    3: {
+        "max_score_gap_from_top": 0.40,
+        "max_conf_gap_from_top": 0.20,
+    },
+    4: {
+        "max_score_gap_from_top": 0.35,
+        "max_conf_gap_from_top": 0.15,
+    },
+}
+NBA_VARIANCE_AWARE_REEXPAND_RULE: dict[str, float] = {
+    "max_top2_avg_selection_probability": 0.526,
+    "min_third_selection_probability": 0.512,
+    "min_third_selection_confidence": 0.12,
+    "min_third_selection_ev": 0.0,
+}
+NBA_PUBLICATION_ALLOWED_SOURCES = {"primary_final_board", "shadow_final_board"}
+NBA_VALIDATED_HEURISTIC_ALLOWED_SOURCES = {"primary_selector_pool_fallback"}
+NBA_PUBLICATION_BLOCKED_RUN_IDS = {"artifact_free_heuristic"}
+PUBLICATION_SOURCE_PRIORITY: dict[str, int] = {
+    "primary_final_board": 400,
+    "shadow_final_board": 300,
+    "primary_selector_pool_fallback": 200,
+    "shadow_selector_pool_fallback": 100,
+}
+NBA_PUBLICATION_MIN_AVG_EXPECTED_WIN_RATE = 0.515
+NBA_PUBLICATION_MIN_MAX_EXPECTED_WIN_RATE = 0.525
+NBA_PUBLICATION_MIN_AVG_FINAL_CONFIDENCE = 0.08
+NBA_VALIDATED_HEURISTIC_MIN_PLAYS = 2
+NBA_VALIDATED_HEURISTIC_MAX_PLAYS = NBA_SELECTOR_FALLBACK_MAX_PLAYS
+NBA_VALIDATED_HEURISTIC_MIN_AVG_EXPECTED_WIN_RATE = 0.585
+NBA_VALIDATED_HEURISTIC_MIN_MAX_EXPECTED_WIN_RATE = 0.600
+NBA_VALIDATED_HEURISTIC_MIN_AVG_FINAL_CONFIDENCE = 0.18
+NBA_VALIDATED_HEURISTIC_MIN_GRADED_PLAYS = 20
+NBA_VALIDATED_HEURISTIC_MIN_HISTORICAL_WIN_RATE = 0.60
+NBA_VALIDATED_HEURISTIC_MIN_HISTORICAL_ROI = 0.0
+NBA_PARLAY_SAFETY_MIN_SAMPLE_DATES = 5
+NBA_PARLAY_SAFETY_MIN_GRADED_PAIRS = 8
+NBA_PARLAY_SAFETY_MIN_HIT_RATE_LIFT = 0.02
+NBA_PARLAY_SAFETY_MAX_OVERPROJECTION_GAP = 0.10
+NBA_PARLAY_PRECISION_MIN_LEG_PROBABILITY = 0.555
+NBA_PARLAY_PRECISION_MIN_FINAL_CONFIDENCE = 0.12
+NBA_PARLAY_PRECISION_MIN_SEGMENT_HIT_RATE = 0.60
+NBA_PARLAY_PRECISION_MIN_SEGMENT_ROWS = 60
+NBA_PARLAY_PRECISION_NEAR_MISS_SEGMENT_ROWS = 55
+NBA_PARLAY_PRECISION_ELITE_SEGMENT_HIT_RATE = 0.70
+NBA_PARLAY_PRECISION_MAX_ELIGIBLE_PLAYS = 4
+NBA_PARLAY_PRECISION_MAX_PAIRS = 1
+NBA_PARLAY_PRECISION_MAX_LEGS = 3
+NBA_PARLAY_PRECISION_MIN_PAIR_PROBABILITY = 0.31
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Export daily market predictions to static web JSON.")
+    parser.add_argument("--manifest", type=Path, default=None, help="Explicit daily pipeline manifest JSON.")
+    parser.add_argument("--daily-runs-root", type=Path, default=DAILY_RUNS_ROOT, help="Root directory containing daily run folders.")
+    parser.add_argument("--out-json", type=Path, default=DEFAULT_WEB_JSON, help="Static web JSON output path (web/data).")
+    parser.add_argument("--out-dist", type=Path, default=DEFAULT_DIST_JSON, help="Static dist JSON output path (dist/data).")
+    parser.add_argument(
+        "--cards-json",
+        type=Path,
+        default=DEFAULT_CARDS_JSON,
+        help="Optional cards.json used to enrich output with player ids/headshot URLs.",
+    )
+    return parser.parse_args()
+
+
+@dataclass(frozen=True)
+class PlayerIdentityLookup:
+    name_to_id: dict[str, int]
+    abbr_to_id: dict[str, int]
+
+
+def safe_div(numerator: float, denominator: float) -> float | None:
+    if denominator is None:
+        return None
+    try:
+        den = float(denominator)
+        if den == 0:
+            return None
+        return float(numerator) / den
+    except Exception:
+        return None
+
+
+def summarize_accuracy_bucket(rows: pd.DataFrame) -> dict:
+    if rows.empty:
+        return {
+            "signal_count": 0,
+            "settled_count": 0,
+            "graded_count": 0,
+            "win_count": 0,
+            "loss_count": 0,
+            "push_count": 0,
+            "unresolved_count": 0,
+            "win_rate": None,
+            "loss_rate": None,
+            "push_rate": None,
+            "roi_per_graded_play": None,
+            "unit_profit": 0.0,
+            "mean_abs_error": None,
+            "rmse": None,
+            "mean_abs_edge": None,
+        }
+
+    signal_count = int(len(rows))
+    settled_mask = rows["outcome"].isin(["win", "loss", "push"])
+    graded_mask = rows["outcome"].isin(["win", "loss"])
+    settled = rows.loc[settled_mask]
+    graded = rows.loc[graded_mask]
+
+    win_count = int((rows["outcome"] == "win").sum())
+    loss_count = int((rows["outcome"] == "loss").sum())
+    push_count = int((rows["outcome"] == "push").sum())
+    unresolved_count = int((rows["outcome"] == "unresolved").sum())
+    settled_count = int(len(settled))
+    graded_count = int(len(graded))
+
+    unit_profit = (win_count * (100.0 / 110.0)) - loss_count
+
+    abs_error = pd.to_numeric(settled.get("abs_error"), errors="coerce")
+    sq_error = pd.to_numeric(settled.get("sq_error"), errors="coerce")
+    abs_edge = pd.to_numeric(rows.get("abs_edge"), errors="coerce")
+
+    mean_abs_error = safe_float(abs_error.mean())
+    rmse = safe_float(math.sqrt(sq_error.mean())) if sq_error.notna().any() else None
+    mean_abs_edge = safe_float(abs_edge.mean())
+
+    return {
+        "signal_count": signal_count,
+        "settled_count": settled_count,
+        "graded_count": graded_count,
+        "win_count": win_count,
+        "loss_count": loss_count,
+        "push_count": push_count,
+        "unresolved_count": unresolved_count,
+        "win_rate": safe_float(safe_div(win_count, graded_count)),
+        "loss_rate": safe_float(safe_div(loss_count, graded_count)),
+        "push_rate": safe_float(safe_div(push_count, settled_count)),
+        "roi_per_graded_play": safe_float(safe_div(unit_profit, graded_count)),
+        "unit_profit": safe_float(unit_profit),
+        "mean_abs_error": mean_abs_error,
+        "rmse": rmse,
+        "mean_abs_edge": mean_abs_edge,
+    }
+
+
+def build_accuracy_metrics(history_csv_path: Path | None) -> dict:
+    if history_csv_path is None:
+        return {"available": False, "reason": "history csv path not provided"}
+    if not history_csv_path.exists():
+        return {"available": False, "reason": f"history csv not found: {history_csv_path}"}
+
+    try:
+        history = pd.read_csv(history_csv_path)
+    except Exception as exc:
+        return {"available": False, "reason": f"failed reading history csv: {exc}"}
+
+    if history.empty:
+        return {"available": False, "reason": "history csv is empty"}
+
+    row_parts: list[pd.DataFrame] = []
+    for target in ("PTS", "TRB", "AST"):
+        pred_col = f"pred_{target}"
+        market_col = f"market_{target}"
+        actual_col = f"actual_{target}"
+        required_cols = {"market_date", pred_col, market_col, actual_col}
+        if not required_cols.issubset(set(history.columns)):
+            continue
+
+        part = history.loc[:, [pred_col, market_col, actual_col, "market_date"]].copy()
+        part["prediction"] = pd.to_numeric(part[pred_col], errors="coerce")
+        part["market_line"] = pd.to_numeric(part[market_col], errors="coerce")
+        part["actual"] = pd.to_numeric(part[actual_col], errors="coerce")
+        part["market_date"] = pd.to_datetime(part["market_date"], errors="coerce").dt.strftime("%Y-%m-%d")
+
+        part = part.loc[part["prediction"].notna() & part["market_line"].notna()].copy()
+        if part.empty:
+            continue
+
+        part = part.loc[part["prediction"] != part["market_line"]].copy()
+        if part.empty:
+            continue
+
+        part["target"] = target
+        part["direction"] = part["prediction"].gt(part["market_line"]).map({True: "OVER", False: "UNDER"})
+        part["outcome"] = "unresolved"
+        actual_known = part["actual"].notna()
+        push_mask = actual_known & part["actual"].eq(part["market_line"])
+        over_win_mask = actual_known & part["direction"].eq("OVER") & part["actual"].gt(part["market_line"])
+        under_win_mask = actual_known & part["direction"].eq("UNDER") & part["actual"].lt(part["market_line"])
+        win_mask = over_win_mask | under_win_mask
+        loss_mask = actual_known & ~push_mask & ~win_mask
+        part.loc[push_mask, "outcome"] = "push"
+        part.loc[win_mask, "outcome"] = "win"
+        part.loc[loss_mask, "outcome"] = "loss"
+        part["abs_error"] = (part["prediction"] - part["actual"]).abs()
+        part["sq_error"] = (part["prediction"] - part["actual"]).pow(2)
+        part["abs_edge"] = (part["prediction"] - part["market_line"]).abs()
+        row_parts.append(part[["market_date", "target", "direction", "outcome", "abs_error", "sq_error", "abs_edge"]])
+
+    if not row_parts:
+        return {"available": False, "reason": "history csv did not contain usable target columns"}
+
+    rows = pd.concat(row_parts, ignore_index=True)
+    if rows.empty:
+        return {"available": False, "reason": "history csv produced no usable resolved rows"}
+
+    market_dates = pd.to_datetime(rows["market_date"], errors="coerce")
+    as_of_market_date = None
+    if market_dates.notna().any():
+        as_of_market_date = market_dates.max().strftime("%Y-%m-%d")
+
+    by_target = {
+        target: summarize_accuracy_bucket(rows.loc[rows["target"] == target].copy())
+        for target in ("PTS", "TRB", "AST")
+        if not rows.loc[rows["target"] == target].empty
+    }
+    by_direction = {
+        direction: summarize_accuracy_bucket(rows.loc[rows["direction"] == direction].copy())
+        for direction in ("OVER", "UNDER")
+        if not rows.loc[rows["direction"] == direction].empty
+    }
+
+    return {
+        "available": True,
+        "source_history_csv": str(history_csv_path),
+        "as_of_market_date": as_of_market_date,
+        "computed_at_utc": datetime.now(timezone.utc).isoformat(),
+        "overall": summarize_accuracy_bucket(rows),
+        "by_target": by_target,
+        "by_direction": by_direction,
+    }
+
+
+def heuristic_nba_leg_probability(target: str, prediction: float, market_line: float) -> float:
+    gap = abs(float(prediction) - float(market_line))
+    scale_map = {"PTS": 3.4, "TRB": 2.2, "AST": 2.0}
+    scale = float(scale_map.get(str(target).upper(), 2.8))
+    return max(0.5, min(0.86, 0.5 + (0.23 * math.tanh(gap / max(scale, 1e-6)))))
+
+
+def build_parlay_validation(history_csv_path: Path | None) -> dict:
+    if history_csv_path is None:
+        return {"available": False, "reason": "history csv path not provided"}
+    if not history_csv_path.exists():
+        return {"available": False, "reason": f"history csv not found: {history_csv_path}"}
+
+    try:
+        history = pd.read_csv(history_csv_path)
+    except Exception as exc:
+        return {"available": False, "reason": f"failed reading history csv: {exc}"}
+
+    if history.empty:
+        return {"available": False, "reason": "history csv is empty"}
+
+    row_parts: list[pd.DataFrame] = []
+    for target in ("PTS", "TRB", "AST"):
+        pred_col = f"pred_{target}"
+        market_col = f"market_{target}"
+        actual_col = f"actual_{target}"
+        required_cols = {"market_date", pred_col, market_col, actual_col}
+        if not required_cols.issubset(set(history.columns)):
+            continue
+
+        part = history.loc[:, [pred_col, market_col, actual_col, "market_date"]].copy()
+        for optional_col in ("Player", "player", "Team", "Opponent", "Game_ID"):
+            if optional_col in history.columns:
+                part[optional_col] = history[optional_col]
+        part["prediction"] = pd.to_numeric(part[pred_col], errors="coerce")
+        part["market_line"] = pd.to_numeric(part[market_col], errors="coerce")
+        part["actual"] = pd.to_numeric(part[actual_col], errors="coerce")
+        part = part.loc[part["prediction"].notna() & part["market_line"].notna() & part["actual"].notna()].copy()
+        if part.empty:
+            continue
+
+        part = part.loc[part["prediction"] != part["market_line"]].copy()
+        if part.empty:
+            continue
+
+        part["market_date"] = pd.to_datetime(part["market_date"], errors="coerce").dt.strftime("%Y-%m-%d")
+        part["target"] = target
+        part["direction"] = part["prediction"].gt(part["market_line"]).map({True: "OVER", False: "UNDER"})
+        part["estimated_win_rate"] = [
+            heuristic_nba_leg_probability(target, pred, line)
+            for pred, line in zip(part["prediction"], part["market_line"])
+        ]
+        part["player"] = (
+            part.get("Player", pd.Series("", index=part.index))
+            .fillna(part.get("player", pd.Series("", index=part.index)))
+            .astype(str)
+            .str.strip()
+        )
+        part["player_display_name"] = part["player"]
+        part["team"] = part.get("Team", pd.Series("", index=part.index)).fillna("").astype(str).str.strip()
+        part["opponent"] = part.get("Opponent", pd.Series("", index=part.index)).fillna("").astype(str).str.strip()
+        part["game_id"] = part.get("Game_ID", pd.Series("", index=part.index)).fillna("").astype(str).str.strip()
+        part["result"] = "loss"
+        part.loc[part["actual"] == part["market_line"], "result"] = "push"
+        over_win = part["direction"].eq("OVER") & part["actual"].gt(part["market_line"])
+        under_win = part["direction"].eq("UNDER") & part["actual"].lt(part["market_line"])
+        part.loc[over_win | under_win, "result"] = "win"
+        row_parts.append(
+            part[
+                [
+                    "market_date",
+                    "player",
+                    "player_display_name",
+                    "team",
+                    "opponent",
+                    "game_id",
+                    "target",
+                    "direction",
+                    "estimated_win_rate",
+                    "result",
+                ]
+            ]
+        )
+
+    if not row_parts:
+        return {"available": False, "reason": "history csv did not contain usable target columns for parlay validation"}
+
+    rows = pd.concat(row_parts, ignore_index=True)
+    if rows.empty:
+        return {"available": False, "reason": "history csv produced no usable pair-validation rows"}
+
+    leg_segments: dict[str, dict[str, float | int]] = {}
+    graded_legs = rows.loc[rows["result"].isin(["win", "loss"])].copy()
+    if not graded_legs.empty:
+        graded_legs["win"] = graded_legs["result"].eq("win").astype(int)
+        segment_summary = (
+            graded_legs.groupby(["target", "direction"], dropna=False)["win"]
+            .agg(["size", "mean"])
+            .reset_index()
+        )
+        for _, row in segment_summary.iterrows():
+            key = f"{str(row.get('target', '')).strip().upper()}|{str(row.get('direction', '')).strip().upper()}"
+            if not key or key == "|":
+                continue
+            leg_segments[key] = {
+                "rows": int(row["size"]),
+                "hit_rate": float(row["mean"]),
+            }
+
+    summary = evaluate_historical_parlays(
+        rows,
+        sport="nba",
+        date_col="market_date",
+        probability_col="estimated_win_rate",
+        result_col="result",
+        max_pairs_per_day=1,
+        min_legs_per_parlay=2,
+        max_legs_per_parlay=int(NBA_PARLAY_PRECISION_MAX_LEGS),
+    )
+    summary["source_history_csv"] = str(history_csv_path)
+    summary["history_row_count"] = int(len(rows))
+    summary["leg_segments"] = leg_segments
+    return summary
+
+
+def build_nba_precision_parlay_candidates(
+    plays: list[dict],
+    parlay_validation: dict | None,
+) -> tuple[list[dict], dict]:
+    segment_payload = parlay_validation.get("leg_segments", {}) if isinstance(parlay_validation, dict) else {}
+    if not isinstance(segment_payload, dict):
+        segment_payload = {}
+
+    prepared: list[dict] = []
+    eligible_indices: list[int] = []
+    for index, play in enumerate(plays):
+        item = dict(play)
+        segment_key = f"{str(item.get('target', '')).strip().upper()}|{str(item.get('direction', '')).strip().upper()}"
+        segment_meta = segment_payload.get(segment_key, {}) if segment_key else {}
+        segment_rows = int(segment_meta.get("rows", 0) or 0) if isinstance(segment_meta, dict) else 0
+        segment_hit_rate = safe_float(segment_meta.get("hit_rate")) if isinstance(segment_meta, dict) else None
+        probability = safe_float(item.get("expected_win_rate"))
+        final_confidence = safe_float(item.get("final_confidence"))
+        ev = safe_float(item.get("ev"))
+        segment_support_ok = bool(
+            segment_rows >= int(NBA_PARLAY_PRECISION_MIN_SEGMENT_ROWS)
+            or (
+                segment_rows >= int(NBA_PARLAY_PRECISION_NEAR_MISS_SEGMENT_ROWS)
+                and segment_hit_rate is not None
+                and segment_hit_rate >= float(NBA_PARLAY_PRECISION_ELITE_SEGMENT_HIT_RATE)
+            )
+        )
+
+        eligible = bool(
+            probability is not None
+            and probability >= float(NBA_PARLAY_PRECISION_MIN_LEG_PROBABILITY)
+            and final_confidence is not None
+            and final_confidence >= float(NBA_PARLAY_PRECISION_MIN_FINAL_CONFIDENCE)
+            and ev is not None
+            and ev >= 0.0
+            and segment_support_ok
+            and segment_hit_rate is not None
+            and segment_hit_rate >= float(NBA_PARLAY_PRECISION_MIN_SEGMENT_HIT_RATE)
+        )
+
+        item["parlay_precision_segment_key"] = segment_key
+        item["parlay_precision_segment_rows"] = int(segment_rows) if segment_rows > 0 else None
+        item["parlay_precision_segment_hit_rate"] = segment_hit_rate
+        item["parlay_precision_segment_support_ok"] = segment_support_ok
+        item["parlay_precision_eligible"] = eligible
+        prepared.append(item)
+        if eligible:
+            eligible_indices.append(index)
+
+    ranked_indices = sorted(
+        eligible_indices,
+        key=lambda idx: (
+            safe_float(prepared[idx].get("parlay_precision_segment_hit_rate")) or 0.0,
+            safe_float(prepared[idx].get("expected_win_rate")) or 0.0,
+            safe_float(prepared[idx].get("final_confidence")) or 0.0,
+            safe_float(prepared[idx].get("ev")) or 0.0,
+        ),
+        reverse=True,
+    )
+    keep_indices = set(ranked_indices[: int(NBA_PARLAY_PRECISION_MAX_ELIGIBLE_PLAYS)])
+    for index, item in enumerate(prepared):
+        if item.get("parlay_precision_eligible") and index not in keep_indices:
+            item["parlay_precision_eligible"] = False
+
+    eligible_after_cap = int(sum(1 for item in prepared if item.get("parlay_precision_eligible")))
+    summary = {
+        "precision_min_leg_probability": float(NBA_PARLAY_PRECISION_MIN_LEG_PROBABILITY),
+        "precision_min_final_confidence": float(NBA_PARLAY_PRECISION_MIN_FINAL_CONFIDENCE),
+        "precision_min_segment_hit_rate": float(NBA_PARLAY_PRECISION_MIN_SEGMENT_HIT_RATE),
+        "precision_min_segment_rows": int(NBA_PARLAY_PRECISION_MIN_SEGMENT_ROWS),
+        "precision_near_miss_segment_rows": int(NBA_PARLAY_PRECISION_NEAR_MISS_SEGMENT_ROWS),
+        "precision_elite_segment_hit_rate": float(NBA_PARLAY_PRECISION_ELITE_SEGMENT_HIT_RATE),
+        "precision_pre_cap_candidate_count": int(len(eligible_indices)),
+        "precision_eligible_play_count": eligible_after_cap,
+    }
+    return prepared, summary
+
+
+def evaluate_parlay_safety_gate(validation: dict | None) -> dict:
+    thresholds = {
+        "min_sample_dates": int(NBA_PARLAY_SAFETY_MIN_SAMPLE_DATES),
+        "min_graded_pairs": int(NBA_PARLAY_SAFETY_MIN_GRADED_PAIRS),
+        "min_hit_rate_lift": float(NBA_PARLAY_SAFETY_MIN_HIT_RATE_LIFT),
+        "max_overprojection_gap": float(NBA_PARLAY_SAFETY_MAX_OVERPROJECTION_GAP),
+    }
+    if not isinstance(validation, dict) or not validation.get("available"):
+        return {
+            "passed": False,
+            "reason": "validation_unavailable",
+            "thresholds": thresholds,
+        }
+
+    selected = validation.get("selected", {}) if isinstance(validation.get("selected"), dict) else {}
+    sample_dates = int(validation.get("sample_dates", 0) or 0)
+    graded_pairs = int(selected.get("graded_pair_count", 0) or 0)
+    pair_hit_rate = safe_div(float(selected.get("hit_pair_count", 0) or 0), graded_pairs) if graded_pairs > 0 else None
+    projected_pair_hit_rate = selected.get("avg_projected_pair_hit_rate")
+    hit_rate_lift = validation.get("hit_rate_lift_vs_all_pairs")
+    overprojection_gap = None
+    if pair_hit_rate is not None and projected_pair_hit_rate is not None:
+        overprojection_gap = float(projected_pair_hit_rate) - float(pair_hit_rate)
+
+    blockers: list[str] = []
+    if sample_dates < int(NBA_PARLAY_SAFETY_MIN_SAMPLE_DATES):
+        blockers.append("insufficient_sample_dates")
+    if graded_pairs < int(NBA_PARLAY_SAFETY_MIN_GRADED_PAIRS):
+        blockers.append("insufficient_graded_pairs")
+    if hit_rate_lift is None or float(hit_rate_lift) < float(NBA_PARLAY_SAFETY_MIN_HIT_RATE_LIFT):
+        blockers.append("insufficient_pair_lift")
+    if overprojection_gap is None or float(overprojection_gap) > float(NBA_PARLAY_SAFETY_MAX_OVERPROJECTION_GAP):
+        blockers.append("overprojected_pairs")
+
+    return {
+        "passed": not blockers,
+        "reason": "passed" if not blockers else blockers[0],
+        "blockers": blockers,
+        "sample_dates": sample_dates,
+        "graded_pairs": graded_pairs,
+        "pair_hit_rate": pair_hit_rate,
+        "projected_pair_hit_rate": float(projected_pair_hit_rate) if projected_pair_hit_rate is not None else None,
+        "hit_rate_lift_vs_all_pairs": float(hit_rate_lift) if hit_rate_lift is not None else None,
+        "overprojection_gap": overprojection_gap,
+        "thresholds": thresholds,
+    }
+
+
+def apply_parlay_safety_gate(parlay_payload: dict, parlay_validation: dict | None) -> tuple[dict, dict]:
+    gate = evaluate_parlay_safety_gate(parlay_validation)
+    payload = {
+        "plays": [dict(play) for play in parlay_payload.get("plays", [])],
+        "pairs": [dict(pair) for pair in parlay_payload.get("pairs", [])],
+        "summary": dict(parlay_payload.get("summary", {})),
+    }
+    payload["summary"]["pre_gate_selected_pair_count"] = int(payload["summary"].get("selected_pair_count", 0) or 0)
+    payload["summary"]["pre_gate_selected_parlay_count"] = int(payload["summary"].get("selected_parlay_count", 0) or 0)
+    payload["summary"]["pre_gate_tagged_play_count"] = int(payload["summary"].get("tagged_play_count", 0) or 0)
+    payload["summary"]["empirical_gate_passed"] = bool(gate.get("passed"))
+    payload["summary"]["empirical_gate_reason"] = str(gate.get("reason", ""))
+
+    if gate.get("passed"):
+        return payload, gate
+
+    for play in payload["plays"]:
+        play["parlay_tag"] = ""
+        play["parlay_candidate"] = False
+        play["parlay_pair_rank"] = None
+        play["parlay_score"] = None
+        play["parlay_projected_hit_rate"] = None
+        play["parlay_partner_key"] = None
+        play["parlay_partner_name"] = None
+    payload["pairs"] = []
+    payload["summary"]["selection_mode"] = "empirical_gate_blocked"
+    payload["summary"]["selected_pair_count"] = 0
+    payload["summary"]["selected_parlay_count"] = 0
+    payload["summary"]["tagged_play_count"] = 0
+    payload["summary"]["avg_projected_pair_hit_rate"] = None
+    payload["summary"]["best_projected_pair_hit_rate"] = None
+    return payload, gate
+
+
+def manifest_run_stamp(path: Path) -> str:
+    for candidate in (path.stem, path.parent.name):
+        match = re.search(r"(\d{8})", str(candidate))
+        if match:
+            return match.group(1)
+    return ""
+
+
+def find_latest_manifest(root: Path) -> Path:
+    manifests = sorted(
+        root.glob("**/daily_market_pipeline_manifest_*.json"),
+        key=lambda path: (manifest_run_stamp(path), path.stat().st_mtime, path.name),
+        reverse=True,
+    )
+    if not manifests:
+        raise FileNotFoundError(f"No daily pipeline manifest found under {root}")
+    return manifests[0]
+
+
+def resolve_artifact_path(raw_path: str | None, manifest_dir: Path) -> Path | None:
+    if not raw_path:
+        return None
+    candidate = Path(raw_path)
+    if candidate.exists():
+        return candidate
+    local_fallback = manifest_dir / candidate.name
+    if local_fallback.exists():
+        return local_fallback
+    return candidate
+
+
+def normalize_player_key(value: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    text = text.replace(" ", "_")
+    for old, new in [(".", ""), ("'", ""), ("`", ""), (",", ""), ("/", "-"), ("\\", "-"), (":", "")]:
+        text = text.replace(old, new)
+    text = "_".join(part for part in text.split("_") if part)
+    folded = unicodedata.normalize("NFKD", text)
+    ascii_text = "".join(ch for ch in folded if not unicodedata.combining(ch))
+    return ascii_text.lower()
+
+
+def abbreviate_player_key(value: str) -> str:
+    normalized = normalize_player_key(value)
+    if not normalized:
+        return ""
+    parts = [part for part in normalized.split("_") if part]
+    if len(parts) < 2:
+        return normalized
+    return f"{parts[0][0]}_{'_'.join(parts[1:])}"
+
+
+def display_name_from_csv_path(csv_path: str | None) -> str:
+    raw = str(csv_path or "").strip()
+    if not raw:
+        return ""
+    folder_name = Path(raw).parent.name
+    if not folder_name:
+        return ""
+    pretty = re.sub(r"\s+", " ", folder_name.replace("_", " ").strip())
+    lowered = pretty.lower()
+    if lowered in {"data proc", "data-proc"}:
+        return ""
+    return pretty
+
+
+def build_player_identity_lookup(cards_json_path: Path | None) -> PlayerIdentityLookup:
+    if cards_json_path is None or not cards_json_path.exists():
+        return PlayerIdentityLookup(name_to_id={}, abbr_to_id={})
+
+    try:
+        cards_payload = json.loads(cards_json_path.read_text(encoding="utf-8"))
+    except Exception:
+        return PlayerIdentityLookup(name_to_id={}, abbr_to_id={})
+
+    if not isinstance(cards_payload, list):
+        return PlayerIdentityLookup(name_to_id={}, abbr_to_id={})
+
+    name_to_id: dict[str, int] = {}
+    abbr_to_ids: dict[str, set[int]] = defaultdict(set)
+    for item in cards_payload:
+        if not isinstance(item, dict):
+            continue
+        player = item.get("player", {})
+        if not isinstance(player, dict):
+            continue
+        name = str(player.get("name", "")).strip()
+        raw_id = player.get("id")
+        try:
+            player_id = int(raw_id)
+        except Exception:
+            continue
+        normalized = normalize_player_key(name)
+        if normalized and normalized not in name_to_id:
+            name_to_id[normalized] = player_id
+        abbr = abbreviate_player_key(name)
+        if abbr:
+            abbr_to_ids[abbr].add(player_id)
+
+    abbr_to_id = {key: next(iter(ids)) for key, ids in abbr_to_ids.items() if len(ids) == 1}
+    return PlayerIdentityLookup(name_to_id=name_to_id, abbr_to_id=abbr_to_id)
+
+
+def build_player_headshot_url(player_id: int | None) -> str | None:
+    if player_id is None:
+        return None
+    return f"https://cdn.nba.com/headshots/nba/latest/1040x760/{int(player_id)}.png"
+
+
+def resolve_player_identity(row: pd.Series, lookup: PlayerIdentityLookup) -> tuple[str, int | None, str | None]:
+    player_code = str(row.get("player", "")).strip()
+    display_name = display_name_from_csv_path(row.get("csv"))
+    if not display_name:
+        market_player_raw = str(row.get("market_player_raw", "")).replace(".", " ").strip()
+        display_name = re.sub(r"\s+", " ", market_player_raw) if market_player_raw else ""
+    if not display_name:
+        display_name = re.sub(r"\s+", " ", player_code.replace("_", " ")).strip()
+
+    candidates = [
+        display_name,
+        player_code,
+        str(row.get("market_player_raw", "")).strip(),
+        str(row.get("player", "")).strip().replace("_", " "),
+    ]
+
+    player_id: int | None = None
+    for candidate in candidates:
+        normalized = normalize_player_key(candidate)
+        if normalized and normalized in lookup.name_to_id:
+            player_id = lookup.name_to_id[normalized]
+            break
+    if player_id is None:
+        for candidate in candidates:
+            abbr = abbreviate_player_key(candidate)
+            if abbr and abbr in lookup.abbr_to_id:
+                player_id = lookup.abbr_to_id[abbr]
+                break
+
+    return display_name, player_id, build_player_headshot_url(player_id)
+
+
+def safe_float(value) -> float | None:
+    try:
+        out = float(value)
+        if pd.isna(out):
+            return None
+        return out
+    except Exception:
+        return None
+
+
+def safe_int(value, default: int = 0) -> int:
+    try:
+        out = int(float(value))
+        return out
+    except Exception:
+        return int(default)
+
+
+def _numeric_series(frame: pd.DataFrame, column: str, default: float = 0.0) -> pd.Series:
+    if column not in frame.columns:
+        return pd.Series(default, index=frame.index, dtype="float64")
+    return pd.to_numeric(frame[column], errors="coerce").fillna(default)
+
+
+def _zscore_series(series: pd.Series) -> pd.Series:
+    numeric = pd.to_numeric(series, errors="coerce")
+    std = float(numeric.std(ddof=0))
+    if not math.isfinite(std) or std <= 1e-12:
+        return pd.Series(0.0, index=numeric.index, dtype="float64")
+    mean = float(numeric.mean())
+    return (numeric - mean) / std
+
+
+def enrich_selector_pool_candidates(plays: pd.DataFrame) -> pd.DataFrame:
+    if plays.empty:
+        return plays.copy()
+
+    enriched = plays.copy()
+    probability_inputs = pd.concat(
+        [
+            _numeric_series(enriched, "expected_win_rate", np.nan),
+            _numeric_series(enriched, "p_calibrated", np.nan),
+            _numeric_series(enriched, "board_play_win_prob", np.nan),
+            _numeric_series(enriched, "selector_expected_win_rate", np.nan),
+        ],
+        axis=1,
+    )
+    enriched["selection_probability"] = probability_inputs.mean(axis=1, skipna=True).fillna(0.5).clip(lower=0.0, upper=1.0)
+
+    ev_inputs = pd.concat(
+        [
+            _numeric_series(enriched, "ev_adjusted", np.nan),
+            _numeric_series(enriched, "thompson_ev", np.nan),
+            _numeric_series(enriched, "ev", np.nan),
+        ],
+        axis=1,
+    )
+    enriched["selection_ev"] = ev_inputs.mean(axis=1, skipna=True).fillna(0.0)
+
+    enriched["selection_confidence"] = _numeric_series(enriched, "final_confidence", 0.0).clip(lower=0.0)
+    enriched["selection_abs_edge"] = _numeric_series(enriched, "abs_edge", 0.0).clip(lower=0.0)
+    enriched["selection_uncertainty"] = _numeric_series(enriched, "uncertainty_sigma", np.nan).replace(0.0, np.nan)
+    enriched["selection_uncertainty"] = enriched["selection_uncertainty"].fillna(
+        enriched["selection_abs_edge"].where(enriched["selection_abs_edge"] > 0.0, 1.0)
+    ).clip(lower=0.5)
+    enriched["selection_edge_to_sigma"] = (
+        enriched["selection_abs_edge"] / enriched["selection_uncertainty"]
+    ).replace([np.inf, -np.inf], np.nan).fillna(0.0)
+    enriched["selection_history_rows"] = _numeric_series(enriched, "history_rows", 0.0).clip(lower=0.0)
+    enriched["selection_spike_probability"] = _numeric_series(enriched, "spike_probability", 0.5).clip(lower=0.0, upper=1.0)
+    enriched["selection_contradiction"] = _numeric_series(enriched, "contradiction_score", 0.0).clip(lower=0.0)
+    enriched["selection_recoverability"] = _numeric_series(enriched, "recoverability_score", 0.0).clip(lower=0.0)
+    enriched["selection_agreement"] = _numeric_series(enriched, "agreement_count", 0.0).clip(lower=0.0)
+
+    enriched["pool_selection_score"] = (
+        0.30 * _zscore_series(enriched["selection_probability"])
+        + 0.24 * _zscore_series(enriched["selection_ev"])
+        + 0.18 * _zscore_series(enriched["selection_confidence"])
+        + 0.16 * _zscore_series(enriched["selection_edge_to_sigma"])
+        + 0.06 * _zscore_series(enriched["selection_history_rows"])
+        + 0.04 * _zscore_series(enriched["selection_recoverability"])
+        + 0.04 * _zscore_series(enriched["selection_agreement"])
+        - 0.04 * _zscore_series(enriched["selection_spike_probability"])
+        - 0.04 * _zscore_series(enriched["selection_contradiction"])
+    )
+    return enriched
+
+
+def apply_adaptive_board_sizing(plays: pd.DataFrame) -> pd.DataFrame:
+    if plays.empty:
+        return plays.copy()
+    if "pool_selection_score" not in plays.columns or "selection_confidence" not in plays.columns:
+        return plays.copy().reset_index(drop=True)
+
+    ordered = plays.copy().reset_index(drop=True)
+    score_series = pd.to_numeric(ordered["pool_selection_score"], errors="coerce")
+    conf_series = pd.to_numeric(ordered["selection_confidence"], errors="coerce").fillna(0.0)
+    if score_series.empty or not math.isfinite(float(score_series.iloc[0])):
+        return ordered
+
+    top_score = float(score_series.iloc[0])
+    top_conf = float(conf_series.iloc[0])
+    keep_indices: list[int] = []
+    for idx, row in ordered.iterrows():
+        rank = idx + 1
+        if rank <= 2:
+            keep_indices.append(idx)
+            continue
+        rule = NBA_ADAPTIVE_BOARD_RANK_RULES.get(rank)
+        if not rule:
+            continue
+        score_value = safe_float(row.get("pool_selection_score"))
+        conf_value = safe_float(row.get("selection_confidence")) or 0.0
+        if score_value is None:
+            continue
+        score_gap = top_score - float(score_value)
+        conf_gap = top_conf - float(conf_value)
+        if score_gap <= float(rule["max_score_gap_from_top"]) and conf_gap <= float(rule["max_conf_gap_from_top"]):
+            keep_indices.append(idx)
+    return ordered.iloc[keep_indices].reset_index(drop=True)
+
+
+def apply_variance_aware_reexpand(
+    plays: pd.DataFrame,
+    candidate_universe: pd.DataFrame,
+    *,
+    probability_field: str,
+    confidence_field: str,
+    ev_field: str,
+    max_top2_avg_probability: float,
+    min_third_probability: float,
+    min_third_confidence: float,
+    min_third_ev: float = 0.0,
+) -> pd.DataFrame:
+    if plays.empty or candidate_universe.empty:
+        return plays.copy()
+
+    final = plays.copy().reset_index(drop=True)
+    universe = candidate_universe.copy().reset_index(drop=True)
+    if len(final.index) != 2 or len(universe.index) < 3:
+        return final
+
+    prob_series = pd.to_numeric(final.get(probability_field), errors="coerce")
+    if len(prob_series.index) < 2:
+        return final
+    top2_avg_probability = float(prob_series.head(2).mean())
+    if not math.isfinite(top2_avg_probability) or top2_avg_probability >= float(max_top2_avg_probability):
+        return final
+
+    third = universe.iloc[[2]].copy()
+    third_probability = safe_float(third.iloc[0].get(probability_field))
+    third_confidence = safe_float(third.iloc[0].get(confidence_field))
+    third_ev = safe_float(third.iloc[0].get(ev_field))
+    if (
+        third_probability is None
+        or third_probability < float(min_third_probability)
+        or third_confidence is None
+        or third_confidence < float(min_third_confidence)
+        or third_ev is None
+        or third_ev < float(min_third_ev)
+    ):
+        return final
+
+    existing_players = final.get("player", pd.Series(dtype=str)).astype(str).str.strip().str.lower()
+    third_player = str(third.iloc[0].get("player", "")).strip().lower()
+    if third_player and third_player in set(existing_players.tolist()):
+        return final
+
+    return pd.concat([final, third], ignore_index=True)
+
+
+def build_summary(plays: pd.DataFrame) -> dict:
+    if plays.empty:
+        return {
+            "play_count": 0,
+            "avg_expected_win_rate": None,
+            "avg_ev": None,
+            "avg_edge": None,
+            "by_target": {},
+            "by_recommendation": {},
+        }
+
+    return {
+        "play_count": int(len(plays)),
+        "avg_expected_win_rate": safe_float(pd.to_numeric(plays.get("expected_win_rate"), errors="coerce").mean()),
+        "avg_ev": safe_float(pd.to_numeric(plays.get("ev"), errors="coerce").mean()),
+        "avg_edge": safe_float(pd.to_numeric(plays.get("abs_edge"), errors="coerce").mean()),
+        "total_bet_fraction": safe_float(pd.to_numeric(plays.get("bet_fraction"), errors="coerce").sum()),
+        "avg_bet_fraction": safe_float(pd.to_numeric(plays.get("bet_fraction"), errors="coerce").mean()),
+        "expected_profit_fraction": safe_float(pd.to_numeric(plays.get("expected_profit_fraction"), errors="coerce").sum()),
+        "by_target": plays.get("target", pd.Series(dtype=str)).value_counts().to_dict(),
+        "by_recommendation": plays.get("recommendation", pd.Series(dtype=str)).value_counts().to_dict(),
+        "by_allocation_tier": plays.get("allocation_tier", pd.Series(dtype=str)).value_counts().to_dict(),
+        "by_allocation_action": plays.get("allocation_action", pd.Series(dtype=str)).value_counts().to_dict(),
+    }
+
+
+def normalize_play_rows(plays: pd.DataFrame, identity_lookup: PlayerIdentityLookup) -> list[dict]:
+    rows: list[dict] = []
+    ordered = plays.copy().reset_index(drop=True)
+    ordered["rank"] = ordered.index + 1
+    for _, row in ordered.iterrows():
+        player_display_name, player_id, player_headshot_url = resolve_player_identity(row, identity_lookup)
+        rows.append(
+            {
+                "rank": int(row["rank"]),
+                "player": str(row.get("player", "")),
+                "player_display_name": str(player_display_name or row.get("player", "")),
+                "player_id": int(player_id) if player_id is not None else None,
+                "player_headshot_url": player_headshot_url,
+                "target": str(row.get("target", "")),
+                "direction": str(row.get("direction", "")),
+                "team": str(row.get("team", "")),
+                "opponent": str(row.get("opponent", "")),
+                "market_date": str(row.get("market_date", "")) if pd.notna(row.get("market_date")) else None,
+                "market_home_team": str(row.get("market_home_team", "")),
+                "market_away_team": str(row.get("market_away_team", "")),
+                "last_history_date": str(row.get("last_history_date", "")) if pd.notna(row.get("last_history_date")) else None,
+                "prediction": safe_float(row.get("prediction")),
+                "market_line": safe_float(row.get("market_line")),
+                "edge": safe_float(row.get("edge")),
+                "abs_edge": safe_float(row.get("abs_edge")),
+                "expected_win_rate": safe_float(row.get("expected_win_rate")),
+                "expected_push_rate": safe_float(row.get("expected_push_rate")),
+                "expected_loss_rate": safe_float(row.get("expected_loss_rate")),
+                "raw_expected_win_rate": safe_float(row.get("raw_expected_win_rate")),
+                "ev": safe_float(row.get("ev")),
+                "thompson_ev": safe_float(row.get("thompson_ev")),
+                "selection_probability": safe_float(row.get("selection_probability")),
+                "selection_ev": safe_float(row.get("selection_ev")),
+                "selection_confidence": safe_float(row.get("selection_confidence")),
+                "selection_edge_to_sigma": safe_float(row.get("selection_edge_to_sigma")),
+                "pool_selection_score": safe_float(row.get("pool_selection_score")),
+                "final_confidence": safe_float(row.get("final_confidence")),
+                "gap_percentile": safe_float(row.get("gap_percentile")),
+                "allocation_tier": str(row.get("allocation_tier", "")),
+                "allocation_action": str(row.get("allocation_action", "")),
+                "bet_fraction": safe_float(row.get("bet_fraction")),
+                "expected_profit_fraction": safe_float(row.get("expected_profit_fraction")),
+                "selected_rank": int(row.get("selected_rank", 0)) if pd.notna(row.get("selected_rank")) else None,
+                "game_key": str(row.get("game_key", "")),
+                "script_cluster_id": str(row.get("script_cluster_id", "")),
+                "recommendation": str(row.get("recommendation", "")),
+                "decision_tier": str(row.get("decision_tier", "")),
+                "weak_bucket": str(row.get("weak_bucket", "")),
+                "conditional_promoted": bool(row.get("conditional_promoted")) if pd.notna(row.get("conditional_promoted")) else False,
+                "conditional_audit_summary": str(row.get("conditional_audit_summary", "")),
+                "promotion_reason_codes": str(row.get("promotion_reason_codes", "")),
+                "p_base": safe_float(row.get("p_base")),
+                "p_final": safe_float(row.get("p_final")),
+                "recoverability_score": safe_float(row.get("recoverability_score")),
+                "contradiction_score": safe_float(row.get("contradiction_score")),
+                "conditional_support": safe_float(row.get("conditional_support")),
+                "history_rows": int(row.get("history_rows", 0)) if pd.notna(row.get("history_rows")) else None,
+                "market_books": safe_float(row.get("market_books")),
+                "uncertainty_sigma": safe_float(row.get("uncertainty_sigma")),
+                "spike_probability": safe_float(row.get("spike_probability")),
+            }
+        )
+    return rows
+
+
+def load_shadow_runs(manifest: dict, manifest_path: Path, identity_lookup: PlayerIdentityLookup) -> list[dict]:
+    out: list[dict] = []
+    for item in manifest.get("shadow_runs", []):
+        final_csv = resolve_artifact_path(item.get("final_csv"), manifest_path.parent)
+        final_json = resolve_artifact_path(item.get("final_json"), manifest_path.parent)
+        plays = pd.read_csv(final_csv) if final_csv and final_csv.exists() else pd.DataFrame()
+        final_payload = json.loads(final_json.read_text(encoding="utf-8")) if final_json and final_json.exists() else {}
+        out.append(
+            {
+                "policy_profile": item.get("policy_profile"),
+                "final_csv": str(final_csv) if final_csv else None,
+                "summary": build_summary(plays),
+                "policy": final_payload.get("policy", {}),
+                "top_plays": normalize_play_rows(plays.head(10), identity_lookup),
+            }
+        )
+    return out
+
+
+def _recommendation_rank(label: str) -> int:
+    return {"pass": 0, "consider": 1, "strong": 2, "elite": 3}.get(str(label).strip().lower(), 0)
+
+
+def _validated_fallback_recommendation(row: pd.Series) -> str:
+    existing = str(row.get("recommendation", "")).strip().lower()
+    if existing in {"consider", "strong", "elite"}:
+        return existing
+
+    selection_probability = safe_float(row.get("selection_probability"))
+    if selection_probability is None:
+        selection_probability = safe_float(row.get("expected_win_rate")) or 0.0
+    selection_confidence = safe_float(row.get("selection_confidence"))
+    if selection_confidence is None:
+        selection_confidence = safe_float(row.get("final_confidence")) or 0.0
+    selection_ev = safe_float(row.get("selection_ev"))
+    if selection_ev is None:
+        selection_ev = safe_float(row.get("ev")) or 0.0
+
+    if selection_probability >= 0.600 and selection_confidence >= 0.18 and selection_ev >= 0.08:
+        return "elite"
+    if selection_probability >= 0.575 and selection_confidence >= 0.12 and selection_ev >= 0.03:
+        return "strong"
+    if selection_probability >= 0.545 and selection_confidence >= 0.07 and selection_ev >= 0.0:
+        return "consider"
+    return "pass"
+
+
+def prepare_selector_pool_for_publication(plays: pd.DataFrame) -> pd.DataFrame:
+    if plays.empty:
+        return plays.copy()
+
+    prepared = plays.copy().reset_index(drop=True)
+    prepared["selected_rank"] = np.arange(1, len(prepared.index) + 1, dtype=int)
+    prepared["recommendation"] = [
+        _validated_fallback_recommendation(prepared.iloc[idx])
+        for idx in range(len(prepared.index))
+    ]
+
+    decision_tier_map = {
+        "elite": "Tier A - Validated Fallback",
+        "strong": "Tier A - Validated Fallback",
+        "consider": "Tier B - Validated Fallback",
+        "pass": "Tier C - Heuristic Fallback",
+    }
+    decision_tier = prepared.get("decision_tier", pd.Series("", index=prepared.index)).fillna("").astype(str).str.strip()
+    missing_decision_tier = decision_tier.eq("")
+    prepared.loc[missing_decision_tier, "decision_tier"] = prepared.loc[missing_decision_tier, "recommendation"].map(decision_tier_map)
+    return prepared
+
+
+def publication_thresholds_payload() -> dict:
+    return {
+        "allowed_sources": sorted(NBA_PUBLICATION_ALLOWED_SOURCES),
+        "blocked_run_ids": sorted(NBA_PUBLICATION_BLOCKED_RUN_IDS),
+        "min_avg_expected_win_rate": float(NBA_PUBLICATION_MIN_AVG_EXPECTED_WIN_RATE),
+        "min_max_expected_win_rate": float(NBA_PUBLICATION_MIN_MAX_EXPECTED_WIN_RATE),
+        "min_avg_final_confidence": float(NBA_PUBLICATION_MIN_AVG_FINAL_CONFIDENCE),
+        "validated_heuristic": {
+            "allowed_sources": sorted(NBA_VALIDATED_HEURISTIC_ALLOWED_SOURCES),
+            "min_play_count": int(NBA_VALIDATED_HEURISTIC_MIN_PLAYS),
+            "max_play_count": int(NBA_VALIDATED_HEURISTIC_MAX_PLAYS),
+            "min_avg_expected_win_rate": float(NBA_VALIDATED_HEURISTIC_MIN_AVG_EXPECTED_WIN_RATE),
+            "min_max_expected_win_rate": float(NBA_VALIDATED_HEURISTIC_MIN_MAX_EXPECTED_WIN_RATE),
+            "min_avg_final_confidence": float(NBA_VALIDATED_HEURISTIC_MIN_AVG_FINAL_CONFIDENCE),
+            "min_graded_plays": int(NBA_VALIDATED_HEURISTIC_MIN_GRADED_PLAYS),
+            "min_historical_win_rate": float(NBA_VALIDATED_HEURISTIC_MIN_HISTORICAL_WIN_RATE),
+            "min_historical_roi_per_graded_play": float(NBA_VALIDATED_HEURISTIC_MIN_HISTORICAL_ROI),
+        },
+    }
+
+
+def build_selector_pool_fallback(plays: pd.DataFrame, *, limit: int = NBA_SELECTOR_FALLBACK_MAX_PLAYS) -> pd.DataFrame:
+    if plays.empty:
+        return plays.copy()
+
+    ordered = enrich_selector_pool_candidates(plays)
+    ordered["_source_index"] = ordered.index
+    ordered = ordered.sort_values(
+        ["pool_selection_score", "selection_probability", "selection_ev", "selection_confidence", "selection_edge_to_sigma", "selection_abs_edge"],
+        ascending=[False, False, False, False, False, False],
+        na_position="last",
+    ).reset_index(drop=True)
+
+    selected_rows: list[pd.Series] = []
+    selected_source_indices: set[int] = set()
+    seen_players: set[str] = set()
+    per_game_counts: dict[str, int] = {}
+    for profile in NBA_SELECTOR_FALLBACK_PROFILES:
+        eligible = ordered.loc[
+            ordered["selection_probability"].ge(float(profile["min_selection_probability"]))
+            & ordered["selection_ev"].ge(float(profile["min_ev"]))
+            & ordered["selection_confidence"].ge(float(profile["min_final_confidence"]))
+            & ordered["selection_abs_edge"].ge(float(profile["min_abs_edge"]))
+        ].copy()
+        if eligible.empty:
+            continue
+
+        for _, row in eligible.iterrows():
+            source_index = int(row.get("_source_index", -1))
+            if source_index in selected_source_indices:
+                continue
+            player = str(row.get("player", "")).strip().lower()
+            game_key = str(row.get("game_key", "") or row.get("market_event_id", "")).strip().lower()
+            if player and player in seen_players:
+                continue
+            if game_key and per_game_counts.get(game_key, 0) >= 2:
+                continue
+            selected_rows.append(row)
+            selected_source_indices.add(source_index)
+            if player:
+                seen_players.add(player)
+            if game_key:
+                per_game_counts[game_key] = per_game_counts.get(game_key, 0) + 1
+            if len(selected_rows) >= int(limit):
+                break
+        if len(selected_rows) >= int(limit):
+            break
+
+    if not selected_rows:
+        return ordered.head(0).drop(columns="_source_index", errors="ignore").copy()
+    selected = pd.DataFrame(selected_rows).drop(columns="_source_index", errors="ignore").reset_index(drop=True)
+    adaptive_selected = apply_adaptive_board_sizing(selected)
+    return apply_variance_aware_reexpand(
+        adaptive_selected,
+        selected,
+        probability_field="selection_probability",
+        confidence_field="selection_confidence",
+        ev_field="selection_ev",
+        max_top2_avg_probability=float(NBA_VARIANCE_AWARE_REEXPAND_RULE["max_top2_avg_selection_probability"]),
+        min_third_probability=float(NBA_VARIANCE_AWARE_REEXPAND_RULE["min_third_selection_probability"]),
+        min_third_confidence=float(NBA_VARIANCE_AWARE_REEXPAND_RULE["min_third_selection_confidence"]),
+        min_third_ev=float(NBA_VARIANCE_AWARE_REEXPAND_RULE["min_third_selection_ev"]),
+    )
+
+
+def _validated_heuristic_publication_ready(
+    *,
+    plays: pd.DataFrame,
+    source_label: str,
+    run_id: str,
+    history_mode: str,
+    predictor_error: str,
+    accuracy_metrics: dict,
+    avg_expected_win_rate: float | None,
+    max_expected_win_rate: float | None,
+    avg_final_confidence: float | None,
+    non_pass_count: int,
+    selected_rank_count: int,
+) -> bool:
+    if source_label not in NBA_VALIDATED_HEURISTIC_ALLOWED_SOURCES:
+        return False
+    if run_id not in NBA_PUBLICATION_BLOCKED_RUN_IDS:
+        return False
+    if predictor_error:
+        return False
+    if history_mode != "historical_backtest":
+        return False
+    if not bool(accuracy_metrics.get("available")):
+        return False
+
+    play_count = int(len(plays))
+    if play_count < int(NBA_VALIDATED_HEURISTIC_MIN_PLAYS) or play_count > int(NBA_VALIDATED_HEURISTIC_MAX_PLAYS):
+        return False
+    if avg_expected_win_rate is None or avg_expected_win_rate < float(NBA_VALIDATED_HEURISTIC_MIN_AVG_EXPECTED_WIN_RATE):
+        return False
+    if max_expected_win_rate is None or max_expected_win_rate < float(NBA_VALIDATED_HEURISTIC_MIN_MAX_EXPECTED_WIN_RATE):
+        return False
+    if avg_final_confidence is None or avg_final_confidence < float(NBA_VALIDATED_HEURISTIC_MIN_AVG_FINAL_CONFIDENCE):
+        return False
+    if non_pass_count <= 0 and selected_rank_count <= 0:
+        return False
+
+    overall_metrics = accuracy_metrics.get("overall", {}) if isinstance(accuracy_metrics, dict) else {}
+    graded_count = safe_int(overall_metrics.get("graded_count"), default=0)
+    win_rate = safe_float(overall_metrics.get("win_rate"))
+    roi_per_graded_play = safe_float(overall_metrics.get("roi_per_graded_play"))
+    if graded_count < int(NBA_VALIDATED_HEURISTIC_MIN_GRADED_PLAYS):
+        return False
+    if win_rate is None or win_rate < float(NBA_VALIDATED_HEURISTIC_MIN_HISTORICAL_WIN_RATE):
+        return False
+    if roi_per_graded_play is None or roi_per_graded_play <= float(NBA_VALIDATED_HEURISTIC_MIN_HISTORICAL_ROI):
+        return False
+    return True
+
+
+def _evaluate_publication_candidate(
+    plays: pd.DataFrame,
+    final_payload: dict,
+    *,
+    source_label: str,
+    accuracy_metrics: dict,
+) -> dict:
+    rows = plays.copy()
+    reasons: list[str] = []
+    run_id = str(final_payload.get("run_id") or "").strip()
+    history_mode = str(final_payload.get("history_mode") or "").strip()
+    predictor_error = str(final_payload.get("predictor_error") or "").strip()
+    board_fallback_reason = str(final_payload.get("board_fallback_reason") or "").strip()
+
+    expected_win_rate = pd.to_numeric(rows.get("expected_win_rate"), errors="coerce")
+    final_confidence = pd.to_numeric(rows.get("final_confidence"), errors="coerce")
+    selected_rank = _numeric_series(rows, "selected_rank", default=np.nan)
+    non_pass_count = int(
+        rows.get("recommendation", pd.Series(dtype="object"))
+        .fillna("")
+        .astype(str)
+        .str.lower()
+        .isin({"consider", "strong", "elite"})
+        .sum()
+    )
+    play_count = int(len(rows))
+    avg_expected_win_rate = safe_float(expected_win_rate.mean())
+    max_expected_win_rate = safe_float(expected_win_rate.max())
+    avg_final_confidence = safe_float(final_confidence.mean())
+    selected_rank_count = int(selected_rank.notna().sum()) if not selected_rank.empty else 0
+    validated_heuristic_ready = _validated_heuristic_publication_ready(
+        plays=rows,
+        source_label=source_label,
+        run_id=run_id,
+        history_mode=history_mode,
+        predictor_error=predictor_error,
+        accuracy_metrics=accuracy_metrics,
+        avg_expected_win_rate=avg_expected_win_rate,
+        max_expected_win_rate=max_expected_win_rate,
+        avg_final_confidence=avg_final_confidence,
+        non_pass_count=non_pass_count,
+        selected_rank_count=selected_rank_count,
+    )
+
+    if play_count <= 0:
+        reasons.append("empty_board")
+    if source_label not in NBA_PUBLICATION_ALLOWED_SOURCES and not validated_heuristic_ready:
+        reasons.append("fallback_source_not_publishable")
+    if run_id in NBA_PUBLICATION_BLOCKED_RUN_IDS and not validated_heuristic_ready:
+        reasons.append("artifact_free_model")
+    if predictor_error:
+        reasons.append("predictor_error_present")
+    if history_mode and history_mode != "historical_backtest":
+        reasons.append("history_mode_not_historical_backtest")
+    if not bool(accuracy_metrics.get("available")):
+        reasons.append("accuracy_metrics_unavailable")
+    if avg_expected_win_rate is None:
+        reasons.append("missing_expected_win_rate")
+    elif avg_expected_win_rate < float(NBA_PUBLICATION_MIN_AVG_EXPECTED_WIN_RATE):
+        reasons.append("avg_expected_win_rate_below_threshold")
+    if max_expected_win_rate is None:
+        reasons.append("missing_max_expected_win_rate")
+    elif max_expected_win_rate < float(NBA_PUBLICATION_MIN_MAX_EXPECTED_WIN_RATE):
+        reasons.append("max_expected_win_rate_below_threshold")
+    if avg_final_confidence is None:
+        reasons.append("missing_final_confidence")
+    elif avg_final_confidence < float(NBA_PUBLICATION_MIN_AVG_FINAL_CONFIDENCE):
+        reasons.append("avg_final_confidence_below_threshold")
+    if non_pass_count <= 0 and selected_rank_count <= 0:
+        reasons.append("no_publishable_play_labels")
+
+    return {
+        "source": str(source_label),
+        "source_priority": int(PUBLICATION_SOURCE_PRIORITY.get(str(source_label), 0)),
+        "policy_profile": final_payload.get("policy_profile"),
+        "run_id": run_id or None,
+        "play_count": play_count,
+        "avg_expected_win_rate": avg_expected_win_rate,
+        "max_expected_win_rate": max_expected_win_rate,
+        "avg_final_confidence": avg_final_confidence,
+        "non_pass_count": non_pass_count,
+        "selected_rank_count": selected_rank_count,
+        "history_mode": history_mode or None,
+        "predictor_error": predictor_error or None,
+        "board_fallback_reason": board_fallback_reason or None,
+        "publication_mode": "validated_heuristic_fallback" if validated_heuristic_ready else "production",
+        "passes": len(reasons) == 0,
+        "reasons": reasons,
+    }
+
+
+def _publication_candidate_sort_key(report: dict) -> tuple[float, ...]:
+    return (
+        float(report.get("source_priority", 0)),
+        1.0 if str(report.get("publication_mode")) == "production" else 0.0,
+        float(safe_float(report.get("avg_expected_win_rate")) or 0.0),
+        float(safe_float(report.get("avg_final_confidence")) or 0.0),
+        float(safe_float(report.get("max_expected_win_rate")) or 0.0),
+        float(report.get("play_count") or 0),
+    )
+
+
+def _select_parlay_source(
+    candidates: list[tuple[pd.DataFrame, dict, str]],
+    candidate_reports: list[dict],
+    published_source: str | None,
+) -> tuple[pd.DataFrame, str]:
+    if not candidates:
+        return pd.DataFrame(), ""
+
+    prepared: list[tuple[pd.DataFrame, str, tuple[float, ...]]] = []
+    for (candidate_plays, _, source_label), report in zip(candidates, candidate_reports):
+        if candidate_plays.empty or len(candidate_plays.index) < 2:
+            continue
+        report_key = _publication_candidate_sort_key(report)
+        published_boost = 10_000.0 if source_label == published_source else 0.0
+        prepared.append((candidate_plays, source_label, (published_boost + report_key[0], *report_key[1:])))
+
+    if not prepared:
+        return pd.DataFrame(), ""
+
+    prepared.sort(key=lambda item: item[2], reverse=True)
+    best_plays, best_source, _ = prepared[0]
+    return best_plays.copy(), str(best_source)
+
+
+def _build_publication_message(publication_gate: dict) -> str:
+    if str(publication_gate.get("status")) == "ready":
+        if str(publication_gate.get("publication_mode")) == "validated_heuristic_fallback":
+            return "Validated fallback board published while trained NBA model artifacts are unavailable."
+        return "Production board published."
+    blockers = set(str(reason) for reason in publication_gate.get("blockers", []))
+    if "artifact_free_model" in blockers:
+        return "Board withheld because production model artifacts were unavailable and only heuristic predictions were produced."
+    if "accuracy_metrics_unavailable" in blockers or "history_mode_not_historical_backtest" in blockers:
+        return "Board withheld because historical validation and calibration inputs were unavailable."
+    if "fallback_source_not_publishable" in blockers:
+        return "Board withheld because only fallback selector pools were available, not a production-gated final board."
+    if "empty_board" in blockers:
+        return "Board withheld because no plays cleared the production gates."
+    return "Board withheld because no candidate board cleared the production quality gate."
+
+
+def resolve_published_board(
+    manifest: dict,
+    manifest_path: Path,
+    *,
+    accuracy_metrics: dict,
+) -> tuple[pd.DataFrame, dict, str, dict, pd.DataFrame, str]:
+    candidates: list[tuple[pd.DataFrame, dict, str]] = []
+    final_csv = resolve_artifact_path(manifest.get("final_csv"), manifest_path.parent)
+    final_json = resolve_artifact_path(manifest.get("final_json"), manifest_path.parent)
+    plays = pd.read_csv(final_csv) if final_csv and final_csv.exists() else pd.DataFrame()
+    final_payload = json.loads(final_json.read_text(encoding="utf-8")) if final_json and final_json.exists() else {}
+    if not plays.empty:
+        candidates.append((plays, final_payload, "primary_final_board"))
+
+    selector_csv = resolve_artifact_path(manifest.get("selector_csv"), manifest_path.parent)
+    selector_plays = pd.read_csv(selector_csv) if selector_csv and selector_csv.exists() else pd.DataFrame()
+    if not selector_plays.empty:
+        fallback_plays = prepare_selector_pool_for_publication(build_selector_pool_fallback(selector_plays))
+        if not fallback_plays.empty:
+            final_payload.setdefault("policy_profile", manifest.get("policy_profile"))
+            final_payload.setdefault("market_snapshot", manifest.get("current_market_snapshot"))
+            candidates.append((fallback_plays, final_payload, "primary_selector_pool_fallback"))
+
+    for item in manifest.get("shadow_runs", []):
+        shadow_csv = resolve_artifact_path(item.get("final_csv"), manifest_path.parent)
+        shadow_json = resolve_artifact_path(item.get("final_json"), manifest_path.parent)
+        shadow_plays = pd.read_csv(shadow_csv) if shadow_csv and shadow_csv.exists() else pd.DataFrame()
+        shadow_payload = json.loads(shadow_json.read_text(encoding="utf-8")) if shadow_json and shadow_json.exists() else {}
+        shadow_payload.setdefault("policy_profile", item.get("policy_profile"))
+        shadow_payload.setdefault("market_snapshot", manifest.get("current_market_snapshot"))
+        if not shadow_plays.empty:
+            candidates.append((shadow_plays, shadow_payload, "shadow_final_board"))
+        if shadow_plays.empty:
+            shadow_selector_csv = resolve_artifact_path(item.get("selector_csv"), manifest_path.parent)
+            shadow_selector = pd.read_csv(shadow_selector_csv) if shadow_selector_csv and shadow_selector_csv.exists() else pd.DataFrame()
+            if shadow_selector.empty:
+                continue
+            shadow_fallback = prepare_selector_pool_for_publication(build_selector_pool_fallback(shadow_selector))
+            if shadow_fallback.empty:
+                continue
+            candidates.append((shadow_fallback, shadow_payload, "shadow_selector_pool_fallback"))
+
+    candidate_reports = [
+        _evaluate_publication_candidate(candidate_plays, candidate_payload, source_label=source_label, accuracy_metrics=accuracy_metrics)
+        for candidate_plays, candidate_payload, source_label in candidates
+    ]
+
+    passing_candidates = [
+        (candidate_plays, candidate_payload, source_label, report)
+        for (candidate_plays, candidate_payload, source_label), report in zip(candidates, candidate_reports)
+        if bool(report.get("passes"))
+    ]
+    if passing_candidates:
+        passing_candidates.sort(key=lambda item: _publication_candidate_sort_key(item[3]), reverse=True)
+        candidate_plays, candidate_payload, source_label, report = passing_candidates[0]
+        parlay_plays, parlay_source = _select_parlay_source(candidates, candidate_reports, str(source_label))
+        publication_gate = {
+            "status": "ready",
+            "selected_source": source_label,
+            "selected_policy_profile": candidate_payload.get("policy_profile"),
+            "publication_mode": report.get("publication_mode"),
+            "message": _build_publication_message({"status": "ready", "publication_mode": report.get("publication_mode")}),
+            "blockers": [],
+            "candidates": candidate_reports,
+            "thresholds": publication_thresholds_payload(),
+        }
+        return candidate_plays, candidate_payload, source_label, publication_gate, parlay_plays, parlay_source
+
+    blocked_source = candidate_reports[0]["source"] if candidate_reports else "primary_final_board_empty"
+    blocked_payload = candidates[0][1] if candidates else final_payload
+    blockers = candidate_reports[0]["reasons"] if candidate_reports else ["empty_board"]
+    parlay_plays, parlay_source = _select_parlay_source(candidates, candidate_reports, None)
+    publication_gate = {
+        "status": "suppressed",
+        "selected_source": None,
+        "selected_policy_profile": blocked_payload.get("policy_profile"),
+        "suppressed_source": blocked_source,
+        "message": _build_publication_message({"status": "suppressed", "blockers": blockers}),
+        "blockers": blockers,
+        "candidates": candidate_reports,
+        "thresholds": publication_thresholds_payload(),
+    }
+    return pd.DataFrame(), blocked_payload, blocked_source, publication_gate, parlay_plays, parlay_source
+
+
+def main() -> None:
+    args = parse_args()
+    manifest_path = args.manifest.resolve() if args.manifest else find_latest_manifest(args.daily_runs_root.resolve())
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    identity_lookup = build_player_identity_lookup(args.cards_json.resolve())
+
+    history_csv = resolve_artifact_path(manifest.get("history_csv"), manifest_path.parent)
+    accuracy_metrics = build_accuracy_metrics(history_csv)
+    parlay_validation = build_parlay_validation(history_csv)
+    plays, final_payload, published_board_source, publication_gate, parlay_source_plays, parlay_source = resolve_published_board(
+        manifest,
+        manifest_path,
+        accuracy_metrics=accuracy_metrics,
+    )
+
+    display_plays = plays.copy()
+    display_board_source = str(published_board_source)
+    if len(display_plays.index) < 2 and not parlay_source_plays.empty:
+        display_plays = parlay_source_plays.copy()
+        display_board_source = str(parlay_source or published_board_source)
+
+    plays_json = normalize_play_rows(display_plays, identity_lookup)
+    plays_json, parlay_precision_summary = build_nba_precision_parlay_candidates(plays_json, parlay_validation)
+    parlay_payload = annotate_parlay_board(
+        plays_json,
+        sport="nba",
+        probability_field="expected_win_rate",
+        eligibility_field="parlay_precision_eligible",
+        allow_fallback=False,
+        min_leg_probability=float(NBA_PARLAY_PRECISION_MIN_LEG_PROBABILITY),
+        min_pair_probability=float(NBA_PARLAY_PRECISION_MIN_PAIR_PROBABILITY),
+        max_pairs=int(NBA_PARLAY_PRECISION_MAX_PAIRS),
+        min_legs_per_parlay=2,
+        max_legs_per_parlay=int(NBA_PARLAY_PRECISION_MAX_LEGS),
+    )
+    parlay_payload["summary"].update(parlay_precision_summary)
+    parlay_payload, parlay_safety_gate = apply_parlay_safety_gate(parlay_payload, parlay_validation)
+
+    payload = {
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "manifest_path": str(manifest_path),
+        "run_date": manifest.get("run_date"),
+        "season": manifest.get("season"),
+        "through_date": manifest.get("through_date"),
+        "published_board_source": published_board_source,
+        "display_board_source": display_board_source,
+        "current_market_rows": manifest.get("current_market_rows"),
+        "current_market_snapshot_meta": manifest.get("current_market_snapshot_meta", {}),
+        "used_latest_manifest": manifest.get("used_latest_manifest"),
+        "shadow_policy_profiles": manifest.get("shadow_policy_profiles", []),
+        "market_snapshot": final_payload.get("market_snapshot") or manifest.get("current_market_snapshot"),
+        "model_run_id": final_payload.get("run_id"),
+        "policy_profile": final_payload.get("policy_profile"),
+        "publication_status": publication_gate.get("status"),
+        "publication_message": publication_gate.get("message"),
+        "publication_gate": publication_gate,
+        "policy": final_payload.get("policy", {}),
+        "input_validation": final_payload.get("input_validation", {}),
+        "summary": build_summary(display_plays),
+        "accuracy_metrics": accuracy_metrics,
+        "parlay_source": parlay_source or published_board_source,
+        "parlay_safety_gate": parlay_safety_gate,
+        "parlay_summary": parlay_payload["summary"],
+        "parlay_pairs": parlay_payload["pairs"],
+        "parlay_validation": parlay_validation,
+        "plays": parlay_payload["plays"],
+        "shadow_runs": load_shadow_runs(manifest, manifest_path, identity_lookup),
+    }
+    payload["summary"]["parlay_tagged_plays"] = int(payload["parlay_summary"].get("tagged_play_count", 0))
+    payload["summary"]["parlay_pairs"] = int(payload["parlay_summary"].get("selected_pair_count", 0))
+
+    args.out_json.parent.mkdir(parents=True, exist_ok=True)
+    args.out_json.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+    # Also copy to dist/data for the predictor page
+    args.out_dist.parent.mkdir(parents=True, exist_ok=True)
+    args.out_dist.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+    print("\n" + "=" * 90)
+    print("DAILY PREDICTIONS WEB EXPORT COMPLETE")
+    print("=" * 90)
+    print(f"Manifest: {manifest_path}")
+    print(f"Rows:     {len(plays)}")
+    print(f"Output:   {args.out_json}")
+    print(f"Dist:     {args.out_dist}")
+
+
+if __name__ == "__main__":
+    main()
