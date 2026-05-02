@@ -6,6 +6,9 @@ on:
     - cron: "0 6 * * *" # # 2 AM EST/EDT depending on DST
   workflow_dispatch:  # allows manual trigger
 
+permissions:
+  contents: write
+
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -122,5 +125,5 @@ jobs:
           git config user.email "actions@github.com"
           git add .
           git commit -m "Auto-update daily predictions" || echo "No changes to commit"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          git push
 
