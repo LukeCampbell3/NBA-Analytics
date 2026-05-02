@@ -2,87 +2,21 @@ name: Daily Predictions Pipeline
 
 on:
   schedule:
-    # Runs at 2:00 AM UTC (adjust below for your timezone)
-    - cron: "0 6 * * *" # # 2 AM EST/EDT depending on DST
-  workflow_dispatch:  # allows manual trigger
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: daily-predictions-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
 
 jobs:
-  setup:
+  run-and-build:
     runs-on: ubuntu-latest
-    outputs:
-      python-version: ${{ steps.set-version.outputs.version }}
-    steps:
-      - name: Set Python version output
-        id: set-version
-        run: echo "version=3.10" >> $GITHUB_OUTPUT
+    timeout-minutes: 90
 
-  nba-predictions:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ needs.setup.outputs.python-version }}
-
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
-      - name: Run NBA predictions
-        run: |
-          python sports/site/pipeline/run_daily_predictions.py --skip-mlb --skip-build-site --force-run
-
-      - name: Upload NBA artifacts
-        if: always()
-        continue-on-error: true
-        uses: actions/upload-artifact@v4
-        with:
-          name: nba-predictions-${{ github.run_id }}
-          path: sports/nba/web/data/daily_predictions.json
-          retention-days: 1
-
-  mlb-predictions:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ needs.setup.outputs.python-version }}
-
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
-      - name: Run MLB predictions
-        run: |
-          python sports/site/pipeline/run_daily_predictions.py --skip-nba --skip-build-site --force-run
-
-      - name: Upload MLB artifacts
-        if: always()
-        continue-on-error: true
-        uses: actions/upload-artifact@v4
-        with:
-          name: mlb-predictions-${{ github.run_id }}
-          path: sports/mlb/web/data/daily_predictions.json
-          retention-days: 1
-
-  build-and-deploy:
-    needs: [nba-predictions, mlb-predictions]
-    runs-on: ubuntu-latest
-    if: always()
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -94,34 +28,48 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
 
-      - name: Download NBA artifacts
-        continue-on-error: true
-        uses: actions/download-artifact@v4
-        with:
-          name: nba-predictions-${{ github.run_id }}
-          path: sports/nba/web/data/
-
-      - name: Download MLB artifacts
-        continue-on-error: true
-        uses: actions/download-artifact@v4
-        with:
-          name: mlb-predictions-${{ github.run_id }}
-          path: sports/mlb/web/data/
-
-      - name: Build static site
-        continue-on-error: true
+      - name: Run shared daily pipeline and build site
         run: |
-          python sports/site/pipeline/build_static_site.py || echo "Site build completed"
+          for attempt in 1 2 3; do
+            python sports/site/pipeline/run_daily_predictions.py --force-run && exit 0
+            if [ "$attempt" -eq 3 ]; then
+              echo "Pipeline failed after $attempt attempts."
+              exit 1
+            fi
+            echo "Pipeline attempt $attempt failed. Retrying in 60 seconds..."
+            sleep 60
+          done
 
-      - name: Commit & push results
-        continue-on-error: true
+      - name: Upload built site artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-dist-${{ github.run_id }}
+          path: dist
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload prediction payloads
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-prediction-payloads-${{ github.run_id }}
+          path: |
+            sports/nba/web/data/daily_predictions.json
+            sports/nba/web/data/cards.json
+            sports/mlb/web/data/daily_predictions.json
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Commit and push generated outputs
+        if: success() && github.ref_name == github.event.repository.default_branch
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add .
-          git commit -m "Auto-update daily predictions" || echo "No changes to commit"
+          git add dist sports/nba/web/data/daily_predictions.json sports/nba/web/data/cards.json sports/mlb/web/data/daily_predictions.json
+          git diff --cached --quiet && echo "No generated output changes to commit" && exit 0
+          git commit -m "Auto-update daily predictions"
           git push
-
