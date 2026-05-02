@@ -58,6 +58,8 @@ class Candidate:
     game_id: str
     target: str
     direction: str
+    original_direction: str
+    direction_flip_applied: bool
     prediction: float
     market_line: float
     market_source: str
@@ -251,6 +253,40 @@ def parse_args() -> argparse.Namespace:
         "--disable-historical-bet-profiles",
         action="store_true",
         help="Disable settled real-market bet-profile and placeability priors.",
+    )
+    parser.add_argument(
+        "--allow-synthetic-unders",
+        action="store_true",
+        help="Allow synthetic under positions. Default behavior keeps synthetic fallback boards over-only.",
+    )
+    parser.add_argument(
+        "--prefer-confident-side",
+        action="store_true",
+        help="For synthetic or unpriced rows, compare both sides and keep the historically stronger direction.",
+    )
+    parser.add_argument(
+        "--min-historical-bet-profile-support",
+        type=int,
+        default=0,
+        help="Optional minimum settled historical bet-profile support required.",
+    )
+    parser.add_argument(
+        "--min-historical-bet-profile-win-rate",
+        type=float,
+        default=0.0,
+        help="Optional minimum settled historical bet-profile win rate required when support is present.",
+    )
+    parser.add_argument(
+        "--min-historical-market-availability-support",
+        type=int,
+        default=0,
+        help="Optional minimum historical market-availability support required.",
+    )
+    parser.add_argument(
+        "--min-historical-market-availability-rate",
+        type=float,
+        default=0.0,
+        help="Optional minimum historical rate at which this market side was actually priced.",
     )
     return parser.parse_args()
 
@@ -458,6 +494,12 @@ def expected_profit_per_unit(probability: float, price: float | None) -> float |
         return None
     probability = clamp01(probability)
     return (probability * profit_if_win) - ((1.0 - probability) * 1.0)
+
+
+def directional_model_gap(prediction: float, market_line: float, direction: str) -> float:
+    if str(direction).strip().upper() == "UNDER":
+        return float(market_line) - float(prediction)
+    return float(prediction) - float(market_line)
 
 
 def _empty_bucket_stats() -> dict[str, float | int]:
@@ -946,9 +988,10 @@ def lookup_historical_market_availability_prior(
     return "fallback", 0.0, 0, "fallback", 0.0
 
 
-def build_candidate(
+def build_candidate_for_direction(
     row: dict[str, str],
     *,
+    direction: str,
     calibration: dict | None,
     bet_profile_priors: dict | None = None,
     min_history_bucket_rows: int,
@@ -964,8 +1007,8 @@ def build_candidate(
         return None
 
     edge = to_float(row.get("Edge"))
-    direction = infer_direction(edge)
-    if direction is None:
+    direction = str(direction or "").strip().upper()
+    if direction not in {"OVER", "UNDER"}:
         return None
 
     prediction = max(0.0, to_float(row.get("Prediction")))
@@ -1059,7 +1102,7 @@ def build_candidate(
 
     history_score = min(history_rows / 18.0, 1.0)
     recency_score = 0.0 if days_since_history is None else max(0.0, 1.0 - (days_since_history / 7.0))
-    edge_over_mae = abs(edge) / max(model_val_mae, 0.1)
+    edge_over_mae = max(0.0, directional_model_gap(prediction, market_line, direction)) / max(model_val_mae, 0.1)
     bucket_support_score = min(max(float(historical_bucket_support), 0.0) / 500.0, 1.0)
     bet_profile_support_score = min(max(float(historical_bet_profile_support), 0.0) / 120.0, 1.0)
 
@@ -1106,6 +1149,8 @@ def build_candidate(
         game_id=str(row.get("Game_ID", "")).strip(),
         target=target,
         direction=direction,
+        original_direction=infer_direction(edge) or direction,
+        direction_flip_applied=bool((infer_direction(edge) or direction) != direction),
         prediction=prediction,
         market_line=market_line,
         market_source=market_source,
@@ -1160,6 +1205,88 @@ def build_candidate(
     )
 
 
+def build_candidate(
+    row: dict[str, str],
+    *,
+    calibration: dict | None,
+    bet_profile_priors: dict | None = None,
+    min_history_bucket_rows: int,
+    max_history_prior_weight: float,
+    history_prior_strength: float,
+    min_bet_profile_rows: int = 12,
+    max_bet_profile_prior_weight: float = 0.25,
+    bet_profile_prior_strength: float = 80.0,
+    min_market_availability_rows: int = 12,
+    prefer_confident_side: bool = False,
+) -> Candidate | None:
+    edge = to_float(row.get("Edge"))
+    primary_direction = infer_direction(edge)
+    if primary_direction is None:
+        return None
+
+    primary = build_candidate_for_direction(
+        row,
+        direction=primary_direction,
+        calibration=calibration,
+        bet_profile_priors=bet_profile_priors,
+        min_history_bucket_rows=min_history_bucket_rows,
+        max_history_prior_weight=max_history_prior_weight,
+        history_prior_strength=history_prior_strength,
+        min_bet_profile_rows=min_bet_profile_rows,
+        max_bet_profile_prior_weight=max_bet_profile_prior_weight,
+        bet_profile_prior_strength=bet_profile_prior_strength,
+        min_market_availability_rows=min_market_availability_rows,
+    )
+    if primary is None or not prefer_confident_side:
+        return primary
+
+    if primary.market_source == "real" and primary.price_confirmed:
+        return primary
+
+    alternate_direction = "UNDER" if primary_direction == "OVER" else "OVER"
+    alternate = build_candidate_for_direction(
+        row,
+        direction=alternate_direction,
+        calibration=calibration,
+        bet_profile_priors=bet_profile_priors,
+        min_history_bucket_rows=min_history_bucket_rows,
+        max_history_prior_weight=max_history_prior_weight,
+        history_prior_strength=history_prior_strength,
+        min_bet_profile_rows=min_bet_profile_rows,
+        max_bet_profile_prior_weight=max_bet_profile_prior_weight,
+        bet_profile_prior_strength=bet_profile_prior_strength,
+        min_market_availability_rows=min_market_availability_rows,
+    )
+    if alternate is None:
+        return primary
+
+    if directional_model_gap(alternate.prediction, alternate.market_line, alternate.direction) < -0.15:
+        return primary
+
+    primary_rank = (
+        primary.calibrated_graded_hit_rate,
+        primary.calibrated_hit_probability,
+        primary.selection_score,
+        primary.historical_bet_profile_win_rate,
+        primary.historical_market_availability_rate,
+    )
+    alternate_rank = (
+        alternate.calibrated_graded_hit_rate,
+        alternate.calibrated_hit_probability,
+        alternate.selection_score,
+        alternate.historical_bet_profile_win_rate,
+        alternate.historical_market_availability_rate,
+    )
+    if alternate_rank <= primary_rank:
+        return primary
+
+    graded_edge = alternate.calibrated_graded_hit_rate - primary.calibrated_graded_hit_rate
+    score_edge = alternate.selection_score - primary.selection_score
+    if graded_edge < 0.015 and score_edge < 0.03:
+        return primary
+    return alternate
+
+
 def load_candidates(
     pool_csv: Path,
     *,
@@ -1172,6 +1299,7 @@ def load_candidates(
     max_bet_profile_prior_weight: float = 0.25,
     bet_profile_prior_strength: float = 80.0,
     min_market_availability_rows: int = 12,
+    prefer_confident_side: bool = False,
 ) -> list[Candidate]:
     candidates: list[Candidate] = []
     with open(pool_csv, "r", encoding="utf-8", newline="") as handle:
@@ -1188,6 +1316,7 @@ def load_candidates(
                 max_bet_profile_prior_weight=max_bet_profile_prior_weight,
                 bet_profile_prior_strength=bet_profile_prior_strength,
                 min_market_availability_rows=min_market_availability_rows,
+                prefer_confident_side=prefer_confident_side,
             )
             if candidate is not None:
                 candidates.append(candidate)
@@ -1222,7 +1351,7 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
         if candidate.market_source != "real" and candidate.target not in {"H", "TB", "R", "K"}:
             rejected["non_core_synthetic_market"] += 1
             continue
-        if candidate.market_source != "real" and candidate.direction == "UNDER":
+        if candidate.market_source != "real" and candidate.direction == "UNDER" and not bool(args.allow_synthetic_unders):
             rejected["synthetic_under_not_actionable"] += 1
             continue
         if int(args.min_market_books) > 0 and candidate.market_source != "real":
@@ -1258,6 +1387,28 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
             continue
         if candidate.days_since_history is None or candidate.days_since_history > int(args.max_days_since_history):
             rejected["history_too_stale"] += 1
+            continue
+        if (
+            int(args.min_historical_bet_profile_support) > 0
+            and candidate.historical_bet_profile_support < int(args.min_historical_bet_profile_support)
+        ):
+            rejected["historical_bet_profile_support_too_low"] += 1
+            continue
+        if (
+            float(args.min_historical_bet_profile_win_rate) > 0.0
+            and candidate.historical_bet_profile_support > 0
+            and candidate.historical_bet_profile_win_rate < float(args.min_historical_bet_profile_win_rate)
+        ):
+            rejected["historical_bet_profile_win_rate_too_low"] += 1
+            continue
+        if (
+            int(args.min_historical_market_availability_support) > 0
+            and candidate.historical_market_availability_support < int(args.min_historical_market_availability_support)
+        ):
+            rejected["historical_market_availability_support_too_low"] += 1
+            continue
+        if candidate.historical_market_availability_rate < float(args.min_historical_market_availability_rate):
+            rejected["historical_market_availability_rate_too_low"] += 1
             continue
         kept.append(candidate)
 
@@ -1331,6 +1482,8 @@ def write_selected_csv(path: Path, selected: list[Candidate]) -> None:
         "Prediction",
         "Market_Line",
         "Market_Source",
+        "Original_Direction",
+        "Direction_Flip_Applied",
         "Market_Books",
         "Market_Line_Std",
         "Market_Over_Price",
@@ -1398,6 +1551,8 @@ def write_selected_csv(path: Path, selected: list[Candidate]) -> None:
                     "Prediction": f"{candidate.prediction:.6f}",
                     "Market_Line": f"{candidate.market_line:.6f}",
                     "Market_Source": candidate.market_source,
+                    "Original_Direction": candidate.original_direction,
+                    "Direction_Flip_Applied": int(candidate.direction_flip_applied),
                     "Market_Books": candidate.market_books,
                     "Market_Line_Std": f"{candidate.market_line_std:.6f}",
                     "Market_Over_Price": "" if candidate.market_over_price is None else f"{candidate.market_over_price:.6f}",
@@ -1493,6 +1648,12 @@ def write_summary_json(
             "bet_profile_prior_strength": float(args.bet_profile_prior_strength),
             "min_market_availability_rows": int(args.min_market_availability_rows),
             "historical_bet_profiles_enabled": not bool(args.disable_historical_bet_profiles),
+            "allow_synthetic_unders": bool(args.allow_synthetic_unders),
+            "prefer_confident_side": bool(args.prefer_confident_side),
+            "min_historical_bet_profile_support": int(args.min_historical_bet_profile_support),
+            "min_historical_bet_profile_win_rate": float(args.min_historical_bet_profile_win_rate),
+            "min_historical_market_availability_support": int(args.min_historical_market_availability_support),
+            "min_historical_market_availability_rate": float(args.min_historical_market_availability_rate),
         },
         "historical_calibration": {
             "cache_json": str(args.history_cache_json.resolve()) if args.history_cache_json else "",
@@ -1538,6 +1699,8 @@ def write_summary_json(
                 "team": candidate.team,
                 "target": candidate.target,
                 "direction": candidate.direction,
+                "original_direction": candidate.original_direction,
+                "direction_flip_applied": bool(candidate.direction_flip_applied),
                 "market_line": candidate.market_line,
                 "market_bucket": candidate.market_bucket,
                 "market_source": candidate.market_source,
@@ -1605,6 +1768,7 @@ def main() -> None:
         max_bet_profile_prior_weight=float(args.max_bet_profile_prior_weight),
         bet_profile_prior_strength=float(args.bet_profile_prior_strength),
         min_market_availability_rows=int(args.min_market_availability_rows),
+        prefer_confident_side=bool(args.prefer_confident_side),
     )
     eligible, rejected = filter_candidates(candidates, args)
     selected = select_top_candidates(eligible, args)
