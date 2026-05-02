@@ -39,7 +39,7 @@ jobs:
 
       - name: Upload NBA artifacts
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: nba-predictions-${{ github.run_id }}
           path: sports/nba/web/data/daily_predictions.json
@@ -68,7 +68,7 @@ jobs:
 
       - name: Upload MLB artifacts
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mlb-predictions-${{ github.run_id }}
           path: sports/mlb/web/data/daily_predictions.json
@@ -93,13 +93,13 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Download NBA artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: nba-predictions-${{ github.run_id }}
           path: sports/nba/web/data/
 
       - name: Download MLB artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: mlb-predictions-${{ github.run_id }}
           path: sports/mlb/web/data/
