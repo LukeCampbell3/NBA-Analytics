@@ -26,7 +26,7 @@ jobs:
 
       - name: Run prediction pipeline
         run: |
-          python scripts/run_market_pipeline.py
+          python run_daily_predictions.py
 
       - name: Commit & push results
         run: |
