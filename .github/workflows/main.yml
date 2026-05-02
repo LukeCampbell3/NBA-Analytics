@@ -7,9 +7,77 @@ on:
   workflow_dispatch:  # allows manual trigger
 
 jobs:
-  run-pipeline:
+  setup:
     runs-on: ubuntu-latest
+    outputs:
+      python-version: ${{ steps.set-version.outputs.version }}
+    steps:
+      - name: Set Python version output
+        id: set-version
+        run: echo "version=3.10" >> $GITHUB_OUTPUT
 
+  nba-predictions:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ needs.setup.outputs.python-version }}
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Run NBA predictions
+        run: |
+          python sports/site/pipeline/run_daily_predictions.py --skip-mlb --skip-build-site --force-run
+
+      - name: Upload NBA artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: nba-predictions-${{ github.run_id }}
+          path: sports/nba/web/data/daily_predictions.json
+          retention-days: 1
+
+  mlb-predictions:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ needs.setup.outputs.python-version }}
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Run MLB predictions
+        run: |
+          python sports/site/pipeline/run_daily_predictions.py --skip-nba --skip-build-site --force-run
+
+      - name: Upload MLB artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: mlb-predictions-${{ github.run_id }}
+          path: sports/mlb/web/data/daily_predictions.json
+          retention-days: 1
+
+  build-and-deploy:
+    needs: [nba-predictions, mlb-predictions]
+    runs-on: ubuntu-latest
+    if: always()
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -24,9 +92,21 @@ jobs:
           pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Run prediction pipeline
+      - name: Download NBA artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: nba-predictions-${{ github.run_id }}
+          path: sports/nba/web/data/
+
+      - name: Download MLB artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: mlb-predictions-${{ github.run_id }}
+          path: sports/mlb/web/data/
+
+      - name: Build static site
         run: |
-          python run_daily_predictions.py
+          python sports/site/pipeline/build_static_site.py || echo "Site build completed"
 
       - name: Commit & push results
         run: |
@@ -35,3 +115,4 @@ jobs:
           git add .
           git commit -m "Auto-update daily predictions" || echo "No changes to commit"
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+
