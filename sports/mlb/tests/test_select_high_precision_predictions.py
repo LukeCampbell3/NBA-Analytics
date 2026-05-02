@@ -259,3 +259,98 @@ def test_lookup_historical_market_availability_prior_falls_back_to_target_direct
     assert support == 40
     assert source == "target_direction"
     assert avg_books == 6.2
+
+
+def test_build_candidate_prefer_confident_side_keeps_model_side_when_flip_conflicts_with_model() -> None:
+    calibration = {
+        "target_direction": {
+            "H|OVER": {"graded_rows": 800, "win_rate": 0.46},
+            "H|UNDER": {"graded_rows": 800, "win_rate": 0.79},
+        },
+        "line_buckets": {
+            "H|OVER|0.5": {"graded_rows": 500, "win_rate": 0.44},
+            "H|UNDER|0.5": {"graded_rows": 500, "win_rate": 0.81},
+        },
+    }
+
+    candidate = selector.build_candidate(
+        _row(
+            player="Strong Over",
+            team="AAA",
+            game_id="flip_1",
+            target="H",
+            prediction=1.7,
+            line=0.5,
+            edge=1.2,
+        ),
+        calibration=calibration,
+        min_history_bucket_rows=50,
+        max_history_prior_weight=0.35,
+        history_prior_strength=400.0,
+        prefer_confident_side=True,
+    )
+
+    assert candidate is not None
+    assert candidate.direction == "OVER"
+    assert candidate.original_direction == "OVER"
+    assert candidate.direction_flip_applied is False
+
+
+def test_filter_candidates_can_require_historical_market_availability() -> None:
+    calibration = {
+        "target_direction": {"TB|OVER": {"graded_rows": 1000, "win_rate": 0.63}},
+        "line_buckets": {"TB|OVER|0.5": {"graded_rows": 700, "win_rate": 0.66}},
+    }
+    priors = {
+        "availability_target_direction": {
+            "TB|OVER": {"rows": 40, "availability_rate": 0.30, "avg_books": 2.8},
+        },
+        "availability_line_buckets": {},
+        "bet_profiles_target_probability": {
+            "TB|OVER|0.75-0.80": {"rows": 20, "win_rate": 0.61, "roi_per_bet": 0.08},
+        },
+        "bet_profiles_line_probability": {},
+    }
+
+    candidate = selector.build_candidate(
+        _row(
+            player="Availability Test",
+            team="AAA",
+            game_id="avail_1",
+            target="TB",
+            prediction=2.0,
+            line=0.5,
+            edge=1.5,
+        ),
+        calibration=calibration,
+        bet_profile_priors=priors,
+        min_history_bucket_rows=50,
+        max_history_prior_weight=0.35,
+        history_prior_strength=400.0,
+    )
+
+    assert candidate is not None
+    args = selector.argparse.Namespace(
+        targets=["TB"],
+        allow_baseline=False,
+        require_real_market_source=False,
+        allow_synthetic_unders=False,
+        min_abs_edge=0.45,
+        min_history_rows=11,
+        min_market_books=0,
+        max_market_line_std=0.0,
+        min_hit_probability=0.58,
+        min_graded_hit_rate=0.68,
+        min_expected_value=-1.0,
+        max_push_probability=0.24,
+        max_days_since_history=4,
+        min_historical_bet_profile_support=0,
+        min_historical_bet_profile_win_rate=0.0,
+        min_historical_market_availability_support=20,
+        min_historical_market_availability_rate=0.45,
+    )
+
+    kept, rejected = selector.filter_candidates([candidate], args)
+
+    assert kept == []
+    assert rejected["historical_market_availability_rate_too_low"] == 1

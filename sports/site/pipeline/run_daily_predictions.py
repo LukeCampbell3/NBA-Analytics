@@ -12,7 +12,9 @@ This orchestrates:
 from __future__ import annotations
 
 import argparse
+import csv
 import json
+import shutil
 import subprocess
 import sys
 from datetime import date, datetime
@@ -104,6 +106,12 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=6,
         help="Minimum selected MLB plays required before publishing a generated pool; otherwise fall back to the latest richer existing pool when available.",
+    )
+    parser.add_argument(
+        "--mlb-min-rescue-plays",
+        type=int,
+        default=3,
+        help="Minimum same-day MLB plays required for an empty-board rescue strategy to publish instead of falling back to an older pool.",
     )
     parser.add_argument("--mlb-top-n", type=int, default=10, help="Maximum number of MLB plays to keep.")
     return parser.parse_args()
@@ -237,8 +245,8 @@ def find_latest_mlb_pool_csv(
     raise FileNotFoundError(f"No raw MLB daily prediction pool CSV was found under {daily_runs_root}")
 
 
-def derive_mlb_selector_outputs(pool_csv: Path) -> tuple[Path, Path]:
-    stem = pool_csv.stem
+def derive_mlb_selector_outputs(pool_csv: Path, suffix: str | None = None) -> tuple[Path, Path]:
+    stem = pool_csv.stem if not suffix else f"{pool_csv.stem}_{suffix}"
     return (
         pool_csv.with_name(f"{stem}_high_precision_predictions.csv"),
         pool_csv.with_name(f"{stem}_high_precision_predictions_summary.json"),
@@ -247,6 +255,64 @@ def derive_mlb_selector_outputs(pool_csv: Path) -> tuple[Path, Path]:
 
 def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_mlb_market_profile(pool_csv: Path) -> dict[str, int]:
+    summary = {
+        "rows": 0,
+        "real_market_rows": 0,
+        "synthetic_rows": 0,
+        "price_confirmed_rows": 0,
+    }
+    with open(pool_csv, "r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            summary["rows"] += 1
+            market_source = str(row.get("Market_Source", "")).strip().lower()
+            if market_source == "real":
+                summary["real_market_rows"] += 1
+                direction = "OVER"
+                try:
+                    edge = float(row.get("Edge", 0.0) or 0.0)
+                    direction = "OVER" if edge >= 0 else "UNDER"
+                except (TypeError, ValueError):
+                    direction = "OVER"
+                price_key = "Market_Over_Price" if direction == "OVER" else "Market_Under_Price"
+                price_text = str(row.get(price_key, "")).strip()
+                if price_text:
+                    summary["price_confirmed_rows"] += 1
+            else:
+                summary["synthetic_rows"] += 1
+    return summary
+
+
+def selected_row_count(summary_json: Path) -> int:
+    if not summary_json.exists():
+        return 0
+    try:
+        payload = load_json(summary_json)
+    except Exception:
+        return 0
+    return int(payload.get("rows_selected", 0) or 0)
+
+
+def promote_mlb_selector_outputs(source_csv: Path, source_summary_json: Path, target_csv: Path, target_summary_json: Path) -> None:
+    target_csv.parent.mkdir(parents=True, exist_ok=True)
+    target_summary_json.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source_csv, target_csv)
+    shutil.copyfile(source_summary_json, target_summary_json)
+
+
+def annotate_mlb_summary(summary_json: Path, *, publication_strategy: str, market_profile: dict[str, int]) -> None:
+    if not summary_json.exists():
+        return
+    try:
+        payload = load_json(summary_json)
+    except Exception:
+        return
+    payload["publication_strategy"] = str(publication_strategy)
+    payload["pool_market_profile"] = {key: int(value) for key, value in market_profile.items()}
+    summary_json.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
 def derive_generated_mlb_pool_outputs(run_date: str | None) -> tuple[Path, Path]:
@@ -405,51 +471,147 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
 
     mlb_dist_json = output_dir / "mlb" / "data" / "daily_predictions.json"
 
-    def run_selector_for(active_pool_csv: Path) -> tuple[Path, Path]:
-        active_selected_csv, active_summary_json = derive_mlb_selector_outputs(active_pool_csv)
+    def run_selector_for(
+        active_pool_csv: Path,
+        *,
+        label: str = "Select MLB High-Precision Prediction Board",
+        suffix: str | None = None,
+        extra_args: list[str] | None = None,
+    ) -> tuple[Path, Path]:
+        active_selected_csv, active_summary_json = derive_mlb_selector_outputs(active_pool_csv, suffix=suffix)
+        command = [
+            args.python,
+            str(MLB_SELECTOR),
+            "--pool-csv",
+            str(active_pool_csv),
+            "--out-csv",
+            str(active_selected_csv),
+            "--summary-json",
+            str(active_summary_json),
+            "--top-n",
+            str(int(args.mlb_top_n)),
+        ]
+        if extra_args:
+            command.extend(extra_args)
         run_step(
-            "Select MLB High-Precision Prediction Board",
-            [
-                args.python,
-                str(MLB_SELECTOR),
-                "--pool-csv",
-                str(active_pool_csv),
-                "--out-csv",
-                str(active_selected_csv),
-                "--summary-json",
-                str(active_summary_json),
-                "--top-n",
-                str(int(args.mlb_top_n)),
-            ],
+            label,
+            command,
         )
         return active_selected_csv, active_summary_json
 
     selected_csv, summary_json = run_selector_for(pool_csv)
+    standard_selected_csv, standard_summary_json = derive_mlb_selector_outputs(pool_csv)
+    market_profile = load_mlb_market_profile(pool_csv) if used_generated_pool and pool_csv.exists() else {
+        "rows": 0,
+        "real_market_rows": 0,
+        "synthetic_rows": 0,
+        "price_confirmed_rows": 0,
+    }
+    publication_strategy = "primary"
 
     if used_generated_pool and summary_json.exists():
-        try:
-            selection_summary = load_json(summary_json)
-        except Exception:
-            selection_summary = {}
-        selected_rows = int(selection_summary.get("rows_selected", 0) or 0)
+        selected_rows = selected_row_count(summary_json)
         min_publish_plays = max(0, int(args.mlb_min_publish_plays))
+        min_rescue_plays = max(0, int(args.mlb_min_rescue_plays))
         if selected_rows < min_publish_plays:
-            try:
-                fallback_pool_csv = find_latest_mlb_pool_csv(
-                    MLB_DAILY_RUNS_ROOT,
-                    preferred_run_stamp,
-                    exclude_paths={pool_csv},
+            best_selected_csv = selected_csv
+            best_summary_json = summary_json
+            best_rows = selected_rows
+            best_strategy = "primary"
+
+            if market_profile.get("real_market_rows", 0) > 0:
+                rescue_selected_csv, rescue_summary_json = run_selector_for(
+                    pool_csv,
+                    label="Rescue MLB Board With Relaxed Real-Market Filters",
+                    suffix="real_market_rescue",
+                    extra_args=[
+                        "--min-market-books",
+                        "1",
+                        "--min-hit-probability",
+                        "0.60",
+                        "--min-graded-hit-rate",
+                        "0.72",
+                        "--min-abs-edge",
+                        "0.40",
+                    ],
                 )
-            except FileNotFoundError:
-                fallback_pool_csv = None
-            if fallback_pool_csv is not None:
-                print(
-                    "[warning] Generated MLB board was too small for publication "
-                    f"({selected_rows} plays < {min_publish_plays}); "
-                    "falling back to the latest richer existing MLB pool."
+                rescue_rows = selected_row_count(rescue_summary_json)
+                if rescue_rows > best_rows:
+                    best_selected_csv = rescue_selected_csv
+                    best_summary_json = rescue_summary_json
+                    best_rows = rescue_rows
+                    best_strategy = "real_market_rescue"
+
+            if best_rows < min_rescue_plays:
+                synthetic_top_n = max(min_rescue_plays, min(int(args.mlb_top_n), 4))
+                rescue_selected_csv, rescue_summary_json = run_selector_for(
+                    pool_csv,
+                    label="Rescue MLB Board With Historically Validated Synthetic Fallback",
+                    suffix="synthetic_rescue",
+                    extra_args=[
+                        "--top-n",
+                        str(int(synthetic_top_n)),
+                        "--min-market-books",
+                        "0",
+                        "--min-hit-probability",
+                        "0.64",
+                        "--min-graded-hit-rate",
+                        "0.78",
+                        "--min-abs-edge",
+                        "0.55",
+                        "--max-per-market-bucket",
+                        "2",
+                        "--prefer-confident-side",
+                        "--min-historical-bet-profile-support",
+                        "12",
+                        "--min-historical-bet-profile-win-rate",
+                        "0.55",
+                        "--min-historical-market-availability-support",
+                        "20",
+                        "--min-historical-market-availability-rate",
+                        "0.45",
+                    ],
                 )
-                pool_csv = fallback_pool_csv
-                selected_csv, summary_json = run_selector_for(pool_csv)
+                rescue_rows = selected_row_count(rescue_summary_json)
+                if rescue_rows > best_rows:
+                    best_selected_csv = rescue_selected_csv
+                    best_summary_json = rescue_summary_json
+                    best_rows = rescue_rows
+                    best_strategy = "synthetic_rescue"
+
+            if best_rows >= min_rescue_plays:
+                if best_selected_csv != standard_selected_csv or best_summary_json != standard_summary_json:
+                    promote_mlb_selector_outputs(
+                        best_selected_csv,
+                        best_summary_json,
+                        standard_selected_csv,
+                        standard_summary_json,
+                    )
+                selected_csv = standard_selected_csv
+                summary_json = standard_summary_json
+                publication_strategy = best_strategy
+                annotate_mlb_summary(summary_json, publication_strategy=publication_strategy, market_profile=market_profile)
+            else:
+                annotate_mlb_summary(summary_json, publication_strategy=best_strategy, market_profile=market_profile)
+                try:
+                    fallback_pool_csv = find_latest_mlb_pool_csv(
+                        MLB_DAILY_RUNS_ROOT,
+                        preferred_run_stamp,
+                        exclude_paths={pool_csv},
+                    )
+                except FileNotFoundError:
+                    fallback_pool_csv = None
+                if fallback_pool_csv is not None:
+                    print(
+                        "[warning] Generated MLB board was too small for publication "
+                        f"({best_rows} plays < {min_publish_plays}); "
+                        "falling back to the latest richer existing MLB pool."
+                    )
+                    pool_csv = fallback_pool_csv
+                    selected_csv, summary_json = run_selector_for(pool_csv)
+                    publication_strategy = "latest_existing_pool"
+        else:
+            annotate_mlb_summary(summary_json, publication_strategy=publication_strategy, market_profile=market_profile)
 
     run_step(
         "Export MLB Prediction Payload",
