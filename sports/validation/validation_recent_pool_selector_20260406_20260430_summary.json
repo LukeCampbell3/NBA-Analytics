@@ -1,0 +1,83 @@
+{
+  "window": {
+    "start_date": "2026-04-06",
+    "end_date": "2026-04-30",
+    "top_k": 4,
+    "candidate_rows": 6096,
+    "market_dates": [
+      "2026-04-06",
+      "2026-04-07",
+      "2026-04-08",
+      "2026-04-09",
+      "2026-04-10",
+      "2026-04-12",
+      "2026-04-18",
+      "2026-04-19",
+      "2026-04-20",
+      "2026-04-21",
+      "2026-04-22",
+      "2026-04-23",
+      "2026-04-24",
+      "2026-04-25",
+      "2026-04-26",
+      "2026-04-27",
+      "2026-04-28",
+      "2026-04-29",
+      "2026-04-30"
+    ]
+  },
+  "predictor": {
+    "artifact_free": false,
+    "artifact_free_reason": null
+  },
+  "strategies": {
+    "win_rate_priority": {
+      "plays": 76,
+      "resolved": 56,
+      "wins": 31,
+      "losses": 25,
+      "pushes": 20,
+      "hit_rate": 0.5535714285714286,
+      "roi_per_play": 0.05681818181818178,
+      "avg_estimated_win_rate": 0.8880046924464944,
+      "avg_estimated_ev": 0.6952816855796713,
+      "avg_selection_confidence": 0.8917183364820855
+    },
+    "robust_pool_score": {
+      "plays": 76,
+      "resolved": 58,
+      "wins": 35,
+      "losses": 23,
+      "pushes": 18,
+      "hit_rate": 0.603448275862069,
+      "roi_per_play": 0.1520376175548589,
+      "avg_estimated_win_rate": 0.8848077231706739,
+      "avg_estimated_ev": 0.6891783805985593,
+      "avg_selection_confidence": 0.9033541342283898
+    },
+    "robust_pool_score_adaptive": {
+      "plays": 45,
+      "resolved": 30,
+      "wins": 19,
+      "losses": 11,
+      "pushes": 15,
+      "hit_rate": 0.6333333333333333,
+      "roi_per_play": 0.2090909090909091,
+      "avg_estimated_win_rate": 0.9016348451448962,
+      "avg_estimated_ev": 0.7213028861857107,
+      "avg_selection_confidence": 0.9024689500488958
+    },
+    "robust_pool_score_adaptive_reexpand": {
+      "plays": 45,
+      "resolved": 30,
+      "wins": 19,
+      "losses": 11,
+      "pushes": 15,
+      "hit_rate": 0.6333333333333333,
+      "roi_per_play": 0.2090909090909091,
+      "avg_estimated_win_rate": 0.9016348451448962,
+      "avg_estimated_ev": 0.7213028861857107,
+      "avg_selection_confidence": 0.9024689500488958
+    }
+  }
+}
