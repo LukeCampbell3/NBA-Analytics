@@ -1,0 +1,413 @@
+{
+  "window": {
+    "start_run_date": "20260326",
+    "end_run_date": "20260501"
+  },
+  "run_dates": [
+    "20260326",
+    "20260327",
+    "20260328",
+    "20260424",
+    "20260425",
+    "20260426",
+    "20260428",
+    "20260429",
+    "20260430",
+    "20260501"
+  ],
+  "daily_run_roots": [
+    "c:\\Users\\jcthi\\Code\\NBA-Analytics\\Player-Predictor\\model\\analysis\\daily_runs",
+    "c:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\model\\analysis\\daily_runs"
+  ],
+  "candidate_backtest_source": "c:/Users/jcthi/Code/NBA-Analytics/sports/validation/validation_recent_pool_selector_20260406_20260430_rows.csv",
+  "searched_parameters": {
+    "probability_shrink_factor": [
+      0.35,
+      0.55,
+      0.75
+    ],
+    "max_total_plays": [
+      5,
+      6,
+      7,
+      8
+    ],
+    "min_ev": [
+      0.03,
+      0.05
+    ],
+    "min_final_confidence": [
+      0.03,
+      0.04,
+      0.05
+    ],
+    "max_plays_per_game": [
+      2,
+      3
+    ],
+    "max_plays_per_script_cluster": [
+      2,
+      3
+    ]
+  },
+  "top_configs": [
+    {
+      "probability_shrink_factor": 0.35,
+      "max_total_plays": 5,
+      "min_ev": 0.03,
+      "min_final_confidence": 0.03,
+      "max_plays_per_game": 2,
+      "max_plays_per_script_cluster": 2,
+      "days": 9,
+      "rows": 31,
+      "wins": 23,
+      "losses": 6,
+      "missing": 2,
+      "resolved": 29,
+      "hit_rate": 0.7931034482758621,
+      "avg_ev": 0.12730463017513094,
+      "avg_expected_win_rate": 0.5904929015203066
+    },
+    {
+      "probability_shrink_factor": 0.35,
+      "max_total_plays": 5,
+      "min_ev": 0.03,
+      "min_final_confidence": 0.03,
+      "max_plays_per_game": 2,
+      "max_plays_per_script_cluster": 3,
+      "days": 9,
+      "rows": 31,
+      "wins": 23,
+      "losses": 6,
+      "missing": 2,
+      "resolved": 29,
+      "hit_rate": 0.7931034482758621,
+      "avg_ev": 0.12730463017513094,
+      "avg_expected_win_rate": 0.5904929015203066
+    },
+    {
+      "probability_shrink_factor": 0.35,
+      "max_total_plays": 5,
+      "min_ev": 0.03,
+      "min_final_confidence": 0.03,
+      "max_plays_per_game": 3,
+      "max_plays_per_script_cluster": 2,
+      "days": 9,
+      "rows": 31,
+      "wins": 23,
+      "losses": 6,
+      "missing": 2,
+      "resolved": 29,
+      "hit_rate": 0.7931034482758621,
+      "avg_ev": 0.12730463017513094,
+      "avg_expected_win_rate": 0.5904929015203066
+    },
+    {
+      "probability_shrink_factor": 0.35,
+      "max_total_plays": 5,
+      "min_ev": 0.03,
+      "min_final_confidence": 0.03,
+      "max_plays_per_game": 3,
+      "max_plays_per_script_cluster": 3,
+      "days": 9,
+      "rows": 31,
+      "wins": 23,
+      "losses": 6,
+      "missing": 2,
+      "resolved": 29,
+      "hit_rate": 0.7931034482758621,
+      "avg_ev": 0.12730463017513094,
+      "avg_expected_win_rate": 0.5904929015203066
+    },
+    {
+      "probability_shrink_factor": 0.35,
+      "max_total_plays": 5,
+      "min_ev": 0.03,
+      "min_final_confidence": 0.04,
+      "max_plays_per_game": 2,
+      "max_plays_per_script_cluster": 2,
+      "days": 9,
+      "rows": 31,
+      "wins": 23,
+      "losses": 6,
+      "missing": 2,
+      "resolved": 29,
+      "hit_rate": 0.7931034482758621,
+      "avg_ev": 0.12730463017513094,
+      "avg_expected_win_rate": 0.5904929015203066
+    },
+    {
+      "probability_shrink_factor": 0.35,
+      "max_total_plays": 5,
+      "min_ev": 0.03,
+      "min_final_confidence": 0.04,
+      "max_plays_per_game": 2,
+      "max_plays_per_script_cluster": 3,
+      "days": 9,
+      "rows": 31,
+      "wins": 23,
+      "losses": 6,
+      "missing": 2,
+      "resolved": 29,
+      "hit_rate": 0.7931034482758621,
+      "avg_ev": 0.12730463017513094,
+      "avg_expected_win_rate": 0.5904929015203066
+    },
+    {
+      "probability_shrink_factor": 0.35,
+      "max_total_plays": 5,
+      "min_ev": 0.03,
+      "min_final_confidence": 0.04,
+      "max_plays_per_game": 3,
+      "max_plays_per_script_cluster": 2,
+      "days": 9,
+      "rows": 31,
+      "wins": 23,
+      "losses": 6,
+      "missing": 2,
+      "resolved": 29,
+      "hit_rate": 0.7931034482758621,
+      "avg_ev": 0.12730463017513094,
+      "avg_expected_win_rate": 0.5904929015203066
+    },
+    {
+      "probability_shrink_factor": 0.35,
+      "max_total_plays": 5,
+      "min_ev": 0.03,
+      "min_final_confidence": 0.04,
+      "max_plays_per_game": 3,
+      "max_plays_per_script_cluster": 3,
+      "days": 9,
+      "rows": 31,
+      "wins": 23,
+      "losses": 6,
+      "missing": 2,
+      "resolved": 29,
+      "hit_rate": 0.7931034482758621,
+      "avg_ev": 0.12730463017513094,
+      "avg_expected_win_rate": 0.5904929015203066
+    },
+    {
+      "probability_shrink_factor": 0.35,
+      "max_total_plays": 5,
+      "min_ev": 0.03,
+      "min_final_confidence": 0.05,
+      "max_plays_per_game": 2,
+      "max_plays_per_script_cluster": 2,
+      "days": 9,
+      "rows": 31,
+      "wins": 23,
+      "losses": 6,
+      "missing": 2,
+      "resolved": 29,
+      "hit_rate": 0.7931034482758621,
+      "avg_ev": 0.12730463017513094,
+      "avg_expected_win_rate": 0.5904929015203066
+    },
+    {
+      "probability_shrink_factor": 0.35,
+      "max_total_plays": 5,
+      "min_ev": 0.03,
+      "min_final_confidence": 0.05,
+      "max_plays_per_game": 2,
+      "max_plays_per_script_cluster": 3,
+      "days": 9,
+      "rows": 31,
+      "wins": 23,
+      "losses": 6,
+      "missing": 2,
+      "resolved": 29,
+      "hit_rate": 0.7931034482758621,
+      "avg_ev": 0.12730463017513094,
+      "avg_expected_win_rate": 0.5904929015203066
+    },
+    {
+      "probability_shrink_factor": 0.35,
+      "max_total_plays": 5,
+      "min_ev": 0.03,
+      "min_final_confidence": 0.05,
+      "max_plays_per_game": 3,
+      "max_plays_per_script_cluster": 2,
+      "days": 9,
+      "rows": 31,
+      "wins": 23,
+      "losses": 6,
+      "missing": 2,
+      "resolved": 29,
+      "hit_rate": 0.7931034482758621,
+      "avg_ev": 0.12730463017513094,
+      "avg_expected_win_rate": 0.5904929015203066
+    },
+    {
+      "probability_shrink_factor": 0.35,
+      "max_total_plays": 5,
+      "min_ev": 0.03,
+      "min_final_confidence": 0.05,
+      "max_plays_per_game": 3,
+      "max_plays_per_script_cluster": 3,
+      "days": 9,
+      "rows": 31,
+      "wins": 23,
+      "losses": 6,
+      "missing": 2,
+      "resolved": 29,
+      "hit_rate": 0.7931034482758621,
+      "avg_ev": 0.12730463017513094,
+      "avg_expected_win_rate": 0.5904929015203066
+    }
+  ],
+  "current_profile_metrics": {
+    "days": 9,
+    "rows": 35,
+    "wins": 25,
+    "losses": 8,
+    "pushes": 0,
+    "missing": 2,
+    "resolved": 33,
+    "hit_rate": 0.7575757575757576,
+    "avg_ev": 0.12510847246069376,
+    "avg_expected_win_rate": 0.5893425331936968,
+    "daily": [
+      {
+        "run_date": "20260326",
+        "rows": 5,
+        "wins": 3,
+        "losses": 2,
+        "missing": 0
+      },
+      {
+        "run_date": "20260327",
+        "rows": 6,
+        "wins": 4,
+        "losses": 2,
+        "missing": 0
+      },
+      {
+        "run_date": "20260328",
+        "rows": 4,
+        "wins": 2,
+        "losses": 2,
+        "missing": 0
+      },
+      {
+        "run_date": "20260424",
+        "rows": 4,
+        "wins": 4,
+        "losses": 0,
+        "missing": 0
+      },
+      {
+        "run_date": "20260426",
+        "rows": 3,
+        "wins": 1,
+        "losses": 2,
+        "missing": 0
+      },
+      {
+        "run_date": "20260428",
+        "rows": 4,
+        "wins": 4,
+        "losses": 0,
+        "missing": 0
+      },
+      {
+        "run_date": "20260429",
+        "rows": 4,
+        "wins": 4,
+        "losses": 0,
+        "missing": 0
+      },
+      {
+        "run_date": "20260430",
+        "rows": 3,
+        "wins": 3,
+        "losses": 0,
+        "missing": 0
+      },
+      {
+        "run_date": "20260501",
+        "rows": 2,
+        "wins": 0,
+        "losses": 0,
+        "missing": 2
+      }
+    ]
+  },
+  "current_ev_adjusted_metrics": {
+    "days": 9,
+    "rows": 36,
+    "wins": 26,
+    "losses": 8,
+    "pushes": 0,
+    "missing": 2,
+    "resolved": 34,
+    "hit_rate": 0.7647058823529411,
+    "avg_ev": 0.12438246698102759,
+    "avg_expected_win_rate": 0.5889622446091098,
+    "daily": [
+      {
+        "run_date": "20260326",
+        "rows": 5,
+        "wins": 3,
+        "losses": 2,
+        "missing": 0
+      },
+      {
+        "run_date": "20260327",
+        "rows": 6,
+        "wins": 4,
+        "losses": 2,
+        "missing": 0
+      },
+      {
+        "run_date": "20260328",
+        "rows": 4,
+        "wins": 2,
+        "losses": 2,
+        "missing": 0
+      },
+      {
+        "run_date": "20260424",
+        "rows": 4,
+        "wins": 4,
+        "losses": 0,
+        "missing": 0
+      },
+      {
+        "run_date": "20260426",
+        "rows": 3,
+        "wins": 1,
+        "losses": 2,
+        "missing": 0
+      },
+      {
+        "run_date": "20260428",
+        "rows": 5,
+        "wins": 5,
+        "losses": 0,
+        "missing": 0
+      },
+      {
+        "run_date": "20260429",
+        "rows": 4,
+        "wins": 4,
+        "losses": 0,
+        "missing": 0
+      },
+      {
+        "run_date": "20260430",
+        "rows": 3,
+        "wins": 3,
+        "losses": 0,
+        "missing": 0
+      },
+      {
+        "run_date": "20260501",
+        "rows": 2,
+        "wins": 0,
+        "losses": 0,
+        "missing": 2
+      }
+    ]
+  }
+}

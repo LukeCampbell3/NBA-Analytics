@@ -4232,6 +4232,8 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
         min_resolved_rows=5,
     )
 
+    live_control_recommendation = recommendation if isinstance(recommendation, dict) and recommendation else final_recommendation
+
     model_payload = {
         "version": 1,
         "created_at_utc": _utc_now_iso(),
@@ -4255,8 +4257,21 @@ def cmd_train_shadow(args: argparse.Namespace) -> None:
         "numeric_features": numeric_features,
         "categorical_features": categorical_features,
         "model": final_model.to_dict(),
+        "promotion_recommendation": final_recommendation,
+        "oof_promotion_recommendation": recommendation,
+        "adaptive_live_control": {
+            "enabled": True,
+            "source": "oof_promotion_recommendation" if live_control_recommendation is recommendation else "promotion_recommendation",
+            "pass": bool(live_control_recommendation.get("pass", False)) if isinstance(live_control_recommendation, dict) else False,
+            "failures": list(live_control_recommendation.get("failures", []))
+            if isinstance(live_control_recommendation, dict) and isinstance(live_control_recommendation.get("failures", []), list)
+            else [],
+            "checks": live_control_recommendation.get("checks", {})
+            if isinstance(live_control_recommendation, dict) and isinstance(live_control_recommendation.get("checks", {}), dict)
+            else {},
+        },
         "shadow_only": True,
-        "live_ready": bool(final_recommendation.get("pass", False)),
+        "live_ready": bool(live_control_recommendation.get("pass", False)) if isinstance(live_control_recommendation, dict) else False,
         "notes": "Candidate gate artifact; does not mutate production policy automatically.",
     }
 

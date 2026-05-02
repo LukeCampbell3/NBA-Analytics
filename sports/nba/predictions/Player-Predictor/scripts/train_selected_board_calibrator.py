@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
@@ -34,14 +35,46 @@ from decision_engine.selected_board_calibration import (
     fit_selected_board_calibrator_payload,
 )
 
+ANALYSIS_ROOT = REPO_ROOT / "model" / "analysis"
+WORKSPACE_ROOT = REPO_ROOT.parents[3]
+SHARED_VALIDATION_ROOT = WORKSPACE_ROOT / "sports" / "validation"
+DATE_COL_CANDIDATES = ("run_date", "market_date", "run_date_iso")
+TARGET_COL_CANDIDATES = ("target",)
+DIRECTION_COL_CANDIDATES = ("direction",)
+PROB_COL_CANDIDATES = ("expected_win_rate", "estimated_win_rate", "board_play_win_prob", "p_calibrated")
+RESULT_COL_CANDIDATES = ("result",)
+PREFERRED_ROWS_PATTERNS: tuple[tuple[str, int], ...] = (
+    ("validation_recent_pool_selector", 500),
+    ("selector_replay_rows_rebuilt", 400),
+    ("selector_replay_rows", 360),
+    ("board_size_history_rows_current_prod", 320),
+    ("validation_current_prod_hitrate_rows", 280),
+    ("line_decision_sidecar_backtest_rows_rebuilt", 240),
+)
+
+
+@dataclass(frozen=True)
+class ResolvedInputColumns:
+    run_date_col: str
+    target_col: str
+    direction_col: str
+    prob_col: str
+    result_col: str
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Train selected-board walk-forward calibrator.")
     parser.add_argument(
         "--rows-csv",
         type=Path,
-        required=True,
-        help="Resolved row-level CSV (e.g., validate_board_objective_mode rows output).",
+        default=None,
+        help="Resolved row-level CSV. When omitted, the trainer auto-discovers the best recent replay/validation CSV.",
+    )
+    parser.add_argument(
+        "--analysis-dir",
+        type=Path,
+        default=ANALYSIS_ROOT,
+        help="Analysis directory searched when --rows-csv is omitted.",
     )
     parser.add_argument("--run-date-col", type=str, default="run_date")
     parser.add_argument("--target-col", type=str, default="target")
@@ -67,21 +100,112 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _prepare_rows(df: pd.DataFrame, args: argparse.Namespace) -> pd.DataFrame:
-    required = {args.run_date_col, args.target_col, args.direction_col, args.prob_col, args.result_col}
-    missing = [c for c in required if c not in df.columns]
+def _parse_run_dates(series: pd.Series) -> pd.Series:
+    raw = series.astype(str).str.strip()
+    parsed_token = pd.to_datetime(raw, format="%Y%m%d", errors="coerce")
+    parsed_generic = pd.to_datetime(series, errors="coerce")
+    return parsed_token.fillna(parsed_generic)
+
+
+def _resolve_column(
+    df: pd.DataFrame,
+    preferred: str,
+    candidates: tuple[str, ...],
+) -> str:
+    if preferred in df.columns:
+        return str(preferred)
+    for candidate in candidates:
+        if candidate in df.columns:
+            return str(candidate)
+    raise ValueError(f"None of the candidate columns were found: {[preferred, *candidates]}")
+
+
+def resolve_input_columns(df: pd.DataFrame, args: argparse.Namespace) -> ResolvedInputColumns:
+    return ResolvedInputColumns(
+        run_date_col=_resolve_column(df, str(args.run_date_col), DATE_COL_CANDIDATES),
+        target_col=_resolve_column(df, str(args.target_col), TARGET_COL_CANDIDATES),
+        direction_col=_resolve_column(df, str(args.direction_col), DIRECTION_COL_CANDIDATES),
+        prob_col=_resolve_column(df, str(args.prob_col), PROB_COL_CANDIDATES),
+        result_col=_resolve_column(df, str(args.result_col), RESULT_COL_CANDIDATES),
+    )
+
+
+def _candidate_name_score(path: Path) -> int:
+    name = path.name.lower()
+    for token, score in PREFERRED_ROWS_PATTERNS:
+        if token in name:
+            return int(score)
+    return 0
+
+
+def discover_rows_csv(analysis_dir: Path, args: argparse.Namespace) -> Path:
+    if not analysis_dir.exists():
+        raise FileNotFoundError(f"Analysis directory not found for auto-discovery: {analysis_dir}")
+
+    best: tuple[tuple[int, int, int, int, str], Path] | None = None
+    search_roots = [analysis_dir]
+    if SHARED_VALIDATION_ROOT.exists() and SHARED_VALIDATION_ROOT.resolve() != analysis_dir.resolve():
+        search_roots.append(SHARED_VALIDATION_ROOT.resolve())
+
+    seen_paths: set[Path] = set()
+    for root in search_roots:
+        for path in sorted(root.glob("*.csv")):
+            resolved_path = path.resolve()
+            if resolved_path in seen_paths:
+                continue
+            seen_paths.add(resolved_path)
+            try:
+                df = pd.read_csv(path)
+                columns = resolve_input_columns(df, args)
+            except Exception:
+                continue
+
+            parsed_dates = _parse_run_dates(df[columns.run_date_col])
+            valid_targets = df[columns.target_col].astype(str).str.upper().str.strip().isin(["PTS", "TRB", "AST"])
+            valid_directions = df[columns.direction_col].astype(str).str.upper().str.strip().isin(["OVER", "UNDER"])
+            valid_results = df[columns.result_col].astype(str).str.lower().str.strip().isin(["win", "loss"])
+            valid_probs = pd.to_numeric(df[columns.prob_col], errors="coerce").notna()
+            valid_dates = parsed_dates.notna()
+            resolved_mask = valid_targets & valid_directions & valid_results & valid_probs & valid_dates
+            resolved_rows = int(resolved_mask.sum())
+            if resolved_rows <= 0:
+                continue
+
+            resolved_dates = parsed_dates.loc[resolved_mask]
+            unique_days = int(resolved_dates.dt.normalize().nunique())
+            latest_day = resolved_dates.max()
+            latest_ordinal = int(latest_day.toordinal()) if pd.notna(latest_day) else 0
+            rank = (
+                _candidate_name_score(path),
+                unique_days,
+                resolved_rows,
+                latest_ordinal,
+                str(path),
+            )
+            if best is None or rank > best[0]:
+                best = (rank, path)
+
+    if best is None:
+        raise FileNotFoundError(
+            f"No auto-discoverable selected-board calibrator rows CSV was found under {analysis_dir} or {SHARED_VALIDATION_ROOT}."
+        )
+    return best[1]
+
+
+def _prepare_rows(
+    df: pd.DataFrame,
+    columns: ResolvedInputColumns,
+) -> pd.DataFrame:
+    missing = [value for value in columns.__dict__.values() if value not in df.columns]
     if missing:
-        raise ValueError(f"Rows CSV missing required columns: {missing}")
+        raise ValueError(f"Rows CSV missing required resolved columns: {missing}")
 
     out = df.copy()
-    raw_dates = out[args.run_date_col]
-    parsed_token = pd.to_datetime(raw_dates.astype(str).str.strip(), format="%Y%m%d", errors="coerce")
-    parsed_generic = pd.to_datetime(raw_dates, errors="coerce")
-    out["_run_date"] = parsed_token.fillna(parsed_generic)
-    out["_target"] = out[args.target_col].astype(str).str.upper().str.strip()
-    out["_direction"] = out[args.direction_col].astype(str).str.upper().str.strip()
-    out["_prob"] = pd.to_numeric(out[args.prob_col], errors="coerce")
-    out["_result"] = out[args.result_col].astype(str).str.lower().str.strip()
+    out["_run_date"] = _parse_run_dates(out[columns.run_date_col])
+    out["_target"] = out[columns.target_col].astype(str).str.upper().str.strip()
+    out["_direction"] = out[columns.direction_col].astype(str).str.upper().str.strip()
+    out["_prob"] = pd.to_numeric(out[columns.prob_col], errors="coerce")
+    out["_result"] = out[columns.result_col].astype(str).str.lower().str.strip()
     out = out.loc[out["_run_date"].notna() & out["_target"].isin(["PTS", "TRB", "AST"]) & out["_direction"].isin(["OVER", "UNDER"])].copy()
     out = out.loc[out["_result"].isin(["win", "loss"])].copy()
     if out.empty:
@@ -153,12 +277,13 @@ def _segment_metrics(df: pd.DataFrame, prob_col: str) -> list[dict]:
 
 def main() -> None:
     args = parse_args()
-    rows_csv = args.rows_csv.resolve()
+    rows_csv = (args.rows_csv or discover_rows_csv(args.analysis_dir.resolve(), args)).resolve()
     if not rows_csv.exists():
         raise FileNotFoundError(f"Rows CSV not found: {rows_csv}")
 
     raw = pd.read_csv(rows_csv)
-    rows = _prepare_rows(raw, args)
+    resolved_columns = resolve_input_columns(raw, args)
+    rows = _prepare_rows(raw, resolved_columns)
 
     cfg = CalibratorFitConfig(
         lookback_days=int(args.lookback_days),
@@ -197,6 +322,7 @@ def main() -> None:
 
     report = {
         "rows_csv": str(rows_csv),
+        "resolved_columns": resolved_columns.__dict__.copy(),
         "rows_resolved": int(len(rows)),
         "config": cfg.__dict__.copy(),
         "months_fitted": sorted((payload.get("months") or {}).keys()),

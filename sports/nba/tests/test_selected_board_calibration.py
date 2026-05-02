@@ -68,6 +68,57 @@ def test_selected_board_calibration_safety_profile_shrinks_extreme_probabilities
     assert float(calibrated.iloc[1]) < 0.61
 
 
+def test_selected_board_calibration_applies_recent_segment_regime_adjustment() -> None:
+    frame = pd.DataFrame(
+        [
+            {"target": "PTS", "direction": "OVER", "board_play_win_prob": 0.58, "market_date": "2026-05-01"},
+            {"target": "AST", "direction": "UNDER", "board_play_win_prob": 0.58, "market_date": "2026-05-01"},
+        ]
+    )
+    payload = {
+        "version": 1,
+        "config": {
+            "recent_strength": 20.0,
+            "recent_max_adjustment": 0.08,
+            "recent_min_rows_segment": 18,
+            "recent_min_rows_global": 40,
+        },
+        "months": {
+            "2026-05": {
+                "train_rows": 240,
+                "train_start": "2026-01-01",
+                "train_end": "2026-04-30",
+                "global": None,
+                "segments": {
+                    "PTS_OVER": {"rows": 120, "mean_label": 0.54, "mean_raw_prob": 0.58},
+                    "AST_UNDER": {"rows": 90, "mean_label": 0.60, "mean_raw_prob": 0.58},
+                },
+                "recent_global": {"rows": 60, "mean_label": 0.56, "mean_raw_prob": 0.58},
+                "recent_segments": {
+                    "PTS_OVER": {"rows": 28, "mean_label": 0.72, "mean_raw_prob": 0.58},
+                    "AST_UNDER": {"rows": 24, "mean_label": 0.46, "mean_raw_prob": 0.58},
+                },
+                "safety_profile": None,
+            }
+        },
+    }
+
+    calibrated, source, month = apply_selected_board_calibration(
+        frame,
+        payload=payload,
+        run_date_hint="2026-05-01",
+        prob_col="board_play_win_prob",
+        target_col="target",
+        direction_col="direction",
+    )
+
+    assert month == "2026-05"
+    assert "recent:segment:PTS_OVER" in str(source.iloc[0])
+    assert "recent:segment:AST_UNDER" in str(source.iloc[1])
+    assert float(calibrated.iloc[0]) > 0.58
+    assert float(calibrated.iloc[1]) < 0.58
+
+
 def test_compute_final_board_applies_confidence_haircut_from_selected_board_calibration() -> None:
     plays = pd.DataFrame(
         [

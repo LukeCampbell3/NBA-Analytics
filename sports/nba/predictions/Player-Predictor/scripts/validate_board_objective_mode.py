@@ -27,6 +27,12 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 from decision_engine.policy_tuning import build_default_shadow_strategies
 from post_process_market_plays import compute_final_board
+try:
+    from decision_engine.robust_reranker import score_selector_with_robust_reranker
+
+    HAS_ROBUST_RERANKER = True
+except Exception:
+    HAS_ROBUST_RERANKER = False
 
 
 POLICY_PROFILES = {config.name: config for config in build_default_shadow_strategies()}
@@ -40,7 +46,7 @@ def parse_args() -> argparse.Namespace:
         "--modes",
         nargs="+",
         default=["abs_edge", "board_objective"],
-        choices=["edge", "abs_edge", "ev_adjusted", "thompson_ev", "board_objective"],
+        choices=["edge", "abs_edge", "ev_adjusted", "robust_reranker", "thompson_ev", "board_objective"],
         help="Selection modes to compare.",
     )
     parser.add_argument(
@@ -818,6 +824,7 @@ def main() -> None:
 
     data_proc_actual_lookup = _build_data_proc_actual_lookup(args.data_proc_root, args.start_run_date, args.end_run_date)
     actual_lookup = _build_actual_lookup(args.history_csv.resolve())
+    reranker_history_df = pd.read_csv(args.history_csv.resolve()) if args.history_csv.exists() else pd.DataFrame()
     fallback_rows_csv = args.actual_rows_csv
     if fallback_rows_csv is None:
         candidate = args.daily_runs_dir / f"mode_compare_edge_absedge_evadj_daily_rows_{token}.csv"
@@ -859,7 +866,22 @@ def main() -> None:
             kwargs["staking_bucket_model_month"] = run_month.strftime("%Y-%m") if pd.notna(run_month) else None
             if args.staking_bucket_model_min_rows is not None:
                 kwargs["staking_bucket_model_min_rows"] = int(args.staking_bucket_model_min_rows)
-            board = compute_final_board(selector_df.copy(), **kwargs)
+            selector_working = selector_df.copy()
+            if mode == "robust_reranker" and HAS_ROBUST_RERANKER:
+                selector_working, _ = score_selector_with_robust_reranker(
+                    selector_working,
+                    reranker_history_df,
+                    probability_shrink_factor=float(base_profile.get("probability_shrink_factor", 0.75)),
+                    elite_pct=float(base_profile.get("elite_pct", 0.95)),
+                    min_train_rows=int(base_profile.get("robust_reranker_min_train_rows", 4000)),
+                    holdout_days=int(base_profile.get("robust_reranker_holdout_days", 45)),
+                    min_holdout_rows=int(base_profile.get("robust_reranker_min_holdout_rows", 250)),
+                    num_pair_per_sample=int(base_profile.get("robust_reranker_num_pair_per_sample", 12)),
+                    min_candidate_expected_win_rate=float(base_profile.get("robust_reranker_min_candidate_win_rate", 0.55)),
+                    min_candidate_final_confidence=float(base_profile.get("robust_reranker_min_candidate_final_confidence", 0.03)),
+                    min_candidate_recommendation=str(base_profile.get("robust_reranker_min_candidate_recommendation", "consider")),
+                )
+            board = compute_final_board(selector_working, **kwargs)
             if board.empty:
                 continue
             for _, row in board.iterrows():

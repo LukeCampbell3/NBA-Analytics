@@ -1651,6 +1651,66 @@ def _resolve_month_payload(payload: dict[str, Any], month_hint: str) -> tuple[st
     return "", None
 
 
+def _coerce_optional_bool(value: Any) -> bool | None:
+    if isinstance(value, bool):
+        return bool(value)
+    if value is None:
+        return None
+    try:
+        if isinstance(value, (int, float, np.integer, np.floating)) and not pd.isna(value):
+            return bool(int(value))
+    except Exception:
+        return None
+    text = str(value).strip().lower()
+    if not text:
+        return None
+    if text in {"1", "true", "yes", "y", "pass", "passed"}:
+        return True
+    if text in {"0", "false", "no", "n", "fail", "failed"}:
+        return False
+    return None
+
+
+def _resolve_adaptive_live_control(
+    payload: dict[str, Any] | None,
+    month_payload: dict[str, Any] | None,
+) -> dict[str, Any]:
+    containers: list[tuple[str, dict[str, Any]]] = []
+    if isinstance(month_payload, dict):
+        containers.append(("month_payload", month_payload))
+    if isinstance(payload, dict):
+        containers.append(("payload", payload))
+
+    for container_name, container in containers:
+        for key in ("adaptive_live_control", "oof_promotion_recommendation", "promotion_recommendation"):
+            candidate = container.get(key)
+            if not isinstance(candidate, dict):
+                continue
+            enabled = bool(candidate.get("enabled", True)) if key == "adaptive_live_control" else True
+            pass_value = _coerce_optional_bool(candidate.get("pass"))
+            failures = candidate.get("failures", [])
+            if pass_value is None and isinstance(failures, list):
+                pass_value = bool(len(failures) == 0)
+            source = str(candidate.get("source", f"{container_name}.{key}")).strip() if key == "adaptive_live_control" else f"{container_name}.{key}"
+            return {
+                "enabled": bool(enabled),
+                "pass": pass_value,
+                "source": source,
+                "kind": str(key),
+                "failures": list(failures) if isinstance(failures, list) else [],
+                "checks": candidate.get("checks", {}) if isinstance(candidate.get("checks", {}), dict) else {},
+            }
+
+    return {
+        "enabled": False,
+        "pass": None,
+        "source": "",
+        "kind": "",
+        "failures": [],
+        "checks": {},
+    }
+
+
 def apply_accepted_pick_gate(
     frame: pd.DataFrame,
     payload: dict[str, Any] | None,
@@ -1689,6 +1749,9 @@ def apply_accepted_pick_gate(
     out["accepted_pick_gate_drop_applied"] = False
     out["accepted_pick_gate_drop_count"] = 0
     out["accepted_pick_gate_policy"] = ""
+    out["accepted_pick_gate_live_control_source"] = ""
+    out["accepted_pick_gate_live_control_pass"] = np.nan
+    out["accepted_pick_gate_live_guard_reason"] = ""
 
     if payload is None:
         return out, {
@@ -1734,6 +1797,7 @@ def apply_accepted_pick_gate(
     threshold = float(pd.to_numeric(pd.Series([month_payload.get("threshold", 0.5)]), errors="coerce").fillna(0.5).iloc[0])
     payload_shadow_only = bool(month_payload.get("shadow_only", payload.get("shadow_only", False)))
     payload_live_ready = bool(month_payload.get("live_ready", not payload_shadow_only))
+    adaptive_live_control = _resolve_adaptive_live_control(payload, month_payload)
     live_effective = bool(live_requested)
     live_guard_reason = ""
     if live_effective and payload_shadow_only:
@@ -1742,6 +1806,9 @@ def apply_accepted_pick_gate(
     elif live_effective and not payload_live_ready:
         live_effective = False
         live_guard_reason = "payload_live_not_ready"
+    elif live_effective and bool(adaptive_live_control.get("enabled")) and adaptive_live_control.get("pass") is False:
+        live_effective = False
+        live_guard_reason = "adaptive_live_control_failed"
     policy_payload = month_payload.get("gate_policy", {})
     policy = GatePolicyConfig()
     if isinstance(policy_payload, dict):
@@ -1850,6 +1917,9 @@ def apply_accepted_pick_gate(
     scored["accepted_pick_gate_live"] = bool(live_effective)
     scored["accepted_pick_gate_live_requested"] = bool(live_requested)
     scored["accepted_pick_gate_month"] = str(resolved_month or month_hint)
+    scored["accepted_pick_gate_live_control_source"] = str(adaptive_live_control.get("source", ""))
+    scored["accepted_pick_gate_live_control_pass"] = adaptive_live_control.get("pass")
+    scored["accepted_pick_gate_live_guard_reason"] = str(live_guard_reason)
     scored["accepted_pick_gate_policy"] = (
         f"fire<={float(policy.max_fire_rate):.3f};coverage>={float(policy.min_coverage_rate):.3f};"
         f"day<={int(policy.max_removed_per_day)};"
@@ -1903,6 +1973,7 @@ def apply_accepted_pick_gate(
         "live_guard_reason": str(live_guard_reason),
         "payload_shadow_only": bool(payload_shadow_only),
         "payload_live_ready": bool(payload_live_ready),
+        "adaptive_live_control": adaptive_live_control,
         "threshold": float(threshold),
         "month": str(resolved_month or month_hint),
         "model_type": model_type,
