@@ -15,14 +15,17 @@ import argparse
 import json
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+NBA_LOCAL_TIMEZONE = ZoneInfo("America/New_York")
 
 
 def _corr_token(value: float) -> str:
@@ -470,7 +473,10 @@ def _profile_row(payload: dict[str, Any]) -> dict[str, Any]:
 def main() -> None:
     args = parse_args()
 
-    run_date = pd.Timestamp(args.run_date).normalize() if args.run_date else pd.Timestamp.now().normalize()
+    if args.run_date:
+        run_date = pd.Timestamp(args.run_date).normalize()
+    else:
+        run_date = pd.Timestamp(datetime.now(NBA_LOCAL_TIMEZONE).date()).normalize()
     if args.end_date:
         end_date = pd.Timestamp(args.end_date).normalize()
     else:

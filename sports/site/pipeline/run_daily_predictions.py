@@ -19,6 +19,7 @@ import subprocess
 import sys
 from datetime import date, datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 
 SCRIPT_PATH = Path(__file__).resolve()
@@ -44,6 +45,7 @@ MLB_EXPORTER = REPO_ROOT / "sports" / "mlb" / "scripts" / "export_web_prediction
 MLB_WEB_JSON = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "daily_predictions.json"
 
 BUILD_STATIC_SITE = REPO_ROOT / "sports" / "site" / "pipeline" / "build_static_site.py"
+SPORTSBOOK_TIMEZONE = ZoneInfo("America/New_York")
 
 
 def parse_args() -> argparse.Namespace:
@@ -138,10 +140,15 @@ def validate_schedule_args(hour: int, minute: int) -> tuple[int, int]:
     return int(hour), int(minute)
 
 
-def resolve_effective_run_date(run_date: str | None) -> date:
+def resolve_effective_run_date(run_date: str | None, now: datetime | None = None) -> date:
     if run_date:
         return datetime.fromisoformat(str(run_date)).date()
-    return datetime.now().astimezone().date()
+    current = now or datetime.now(SPORTSBOOK_TIMEZONE)
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=SPORTSBOOK_TIMEZONE)
+    else:
+        current = current.astimezone(SPORTSBOOK_TIMEZONE)
+    return current.date()
 
 
 def load_payload_run_date(payload_path: Path) -> str | None:
@@ -340,7 +347,7 @@ def annotate_mlb_summary(summary_json: Path, *, publication_strategy: str, marke
 
 
 def derive_generated_mlb_pool_outputs(run_date: str | None) -> tuple[Path, Path]:
-    local_date = datetime.now().astimezone().date() if not run_date else datetime.fromisoformat(str(run_date)).date()
+    local_date = resolve_effective_run_date(run_date)
     run_stamp = local_date.strftime("%Y%m%d")
     run_dir = MLB_DAILY_RUNS_ROOT / run_stamp
     return (
