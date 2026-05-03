@@ -79,6 +79,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--nba-skip-align", action="store_true", help="Skip the NBA market alignment step.")
     parser.add_argument("--nba-skip-backtest", action="store_true", help="Skip the NBA backtest refresh step.")
     parser.add_argument("--nba-skip-cutoff-meta-monitor", action="store_true", help="Skip the NBA cutoff-meta monitor step.")
+    parser.add_argument(
+        "--nba-fallback-to-latest-manifest-on-failure",
+        action="store_true",
+        help="If the live NBA pipeline fails, export from the latest available checked-in NBA manifest instead of aborting.",
+    )
 
     parser.add_argument("--mlb-pool-csv", type=Path, default=None, help="Explicit raw MLB daily prediction pool CSV.")
     parser.add_argument("--mlb-skip-fetch-market", action="store_true", help="Skip fetching same-day MLB market props.")
@@ -163,6 +168,25 @@ def stale_payload_sports(args: argparse.Namespace, target_run_date: str) -> list
 def derive_nba_manifest_path(run_date: date) -> Path:
     run_stamp = run_date.strftime("%Y%m%d")
     return NBA_PREDICTOR_ROOT / "model" / "analysis" / "daily_runs" / run_stamp / f"daily_market_pipeline_manifest_{run_stamp}.json"
+
+
+def find_latest_nba_manifest(preferred_run_stamp: str | None = None) -> Path:
+    manifest_root = NBA_PREDICTOR_ROOT / "model" / "analysis" / "daily_runs"
+    manifests = sorted(
+        manifest_root.glob("**/daily_market_pipeline_manifest_*.json"),
+        key=lambda path: (path.stem, path.stat().st_mtime, path.name),
+        reverse=True,
+    )
+    if not manifests:
+        raise FileNotFoundError(f"No NBA daily pipeline manifest was found under {manifest_root}")
+
+    if preferred_run_stamp:
+        suffix = f"daily_market_pipeline_manifest_{preferred_run_stamp}"
+        for path in manifests:
+            if path.stem == suffix:
+                return path
+
+    return manifests[0]
 
 
 def check_schedule_gate(args: argparse.Namespace) -> tuple[bool, str]:
@@ -327,12 +351,12 @@ def derive_generated_mlb_pool_outputs(run_date: str | None) -> tuple[Path, Path]
 
 def run_nba(args: argparse.Namespace, output_dir: Path) -> None:
     nba_dist_json = output_dir / "nba" / "data" / "daily_predictions.json"
-    if args.nba_manifest:
+    def export_nba_manifest(manifest_path: Path, label: str) -> None:
         command = [
             args.python,
             str(NBA_EXPORTER),
             "--manifest",
-            str(args.nba_manifest.resolve()),
+            str(manifest_path.resolve()),
             "--out-json",
             str(NBA_WEB_JSON),
             "--out-dist",
@@ -340,7 +364,10 @@ def run_nba(args: argparse.Namespace, output_dir: Path) -> None:
             "--cards-json",
             str(NBA_CARDS_JSON),
         ]
-        run_step("Export NBA Predictions From Existing Manifest", command)
+        run_step(label, command)
+
+    if args.nba_manifest:
+        export_nba_manifest(args.nba_manifest, "Export NBA Predictions From Existing Manifest")
         return
 
     command = [
@@ -373,29 +400,27 @@ def run_nba(args: argparse.Namespace, output_dir: Path) -> None:
     if args.nba_skip_cutoff_meta_monitor:
         command.append("--skip-cutoff-meta-monitor")
 
-    run_step("Run NBA Daily Prediction Pipeline", command)
     run_date = resolve_effective_run_date(args.run_date)
     expected_manifest = derive_nba_manifest_path(run_date)
-    if not expected_manifest.exists():
-        raise FileNotFoundError(
-            "NBA daily pipeline completed but the expected same-day manifest was not found: "
-            f"{expected_manifest}"
+    preferred_run_stamp = run_date.strftime("%Y%m%d")
+
+    try:
+        run_step("Run NBA Daily Prediction Pipeline", command)
+        if not expected_manifest.exists():
+            raise FileNotFoundError(
+                "NBA daily pipeline completed but the expected same-day manifest was not found: "
+                f"{expected_manifest}"
+            )
+        export_nba_manifest(expected_manifest, "Export NBA Prediction Payload")
+    except Exception as exc:
+        if not args.nba_fallback_to_latest_manifest_on_failure:
+            raise
+        fallback_manifest = expected_manifest if expected_manifest.exists() else find_latest_nba_manifest(preferred_run_stamp)
+        print(
+            "[warning] Live NBA pipeline failed; falling back to checked-in manifest export. "
+            f"Using manifest: {fallback_manifest}. Root error: {exc}"
         )
-    run_step(
-        "Export NBA Prediction Payload",
-        [
-            args.python,
-            str(NBA_EXPORTER),
-            "--manifest",
-            str(expected_manifest),
-            "--out-json",
-            str(NBA_WEB_JSON),
-            "--out-dist",
-            str(nba_dist_json),
-            "--cards-json",
-            str(NBA_CARDS_JSON),
-        ],
-    )
+        export_nba_manifest(fallback_manifest, "Export NBA Prediction Payload From Fallback Manifest")
 
 
 def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Path]:

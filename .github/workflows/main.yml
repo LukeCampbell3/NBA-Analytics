@@ -34,7 +34,7 @@ jobs:
       - name: Run shared daily pipeline and build site
         run: |
           for attempt in 1 2 3; do
-            python sports/site/pipeline/run_daily_predictions.py --force-run && exit 0
+            python sports/site/pipeline/run_daily_predictions.py --force-run --nba-fallback-to-latest-manifest-on-failure && exit 0
             if [ "$attempt" -eq 3 ]; then
               echo "Pipeline failed after $attempt attempts."
               exit 1
