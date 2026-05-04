@@ -1236,5 +1236,54 @@
         }
       ]
     }
-  ]
+  ],
+  "parlay_board": {
+    "parlays": [
+      {
+        "type": "primary",
+        "leg_count": 2,
+        "joint_probability": 0.2989022605543321,
+        "adjusted_probability": 0.3078693283709621,
+        "avg_win_rate": 0.5468102288553929,
+        "score": 0.25977809267393454,
+        "n_games": 2,
+        "legs": [
+          {
+            "player": "C Cunningham",
+            "player_display_name": "C Cunningham",
+            "target": "AST",
+            "direction": "UNDER",
+            "market_line": 8.5,
+            "win_rate": 0.5567684328377868,
+            "expected_win_rate": 0.5567684328377868,
+            "abs_edge": 1.5508278527451242,
+            "game_key": "377483"
+          },
+          {
+            "player": "S Barnes",
+            "player_display_name": "S Barnes",
+            "target": "TRB",
+            "direction": "UNDER",
+            "market_line": 6.5,
+            "win_rate": 0.5368520248729989,
+            "expected_win_rate": 0.5368520248729989,
+            "abs_edge": 0.6997424097035809,
+            "game_key": "377319"
+          }
+        ]
+      }
+    ],
+    "diagnostics": {
+      "total_candidates": 51,
+      "eligible_legs": 9,
+      "under_legs": 9,
+      "over_legs": 0,
+      "primary_parlays": 1,
+      "secondary_parlays": 0,
+      "singles": 6,
+      "primary_avg_wr": 0.5468102288553929,
+      "primary_joint_prob": 0.2989022605543321,
+      "primary_leg_count": 2
+    }
+  }
 }

@@ -555,6 +555,205 @@ body.theme-dark .theme-toggle-radial {
     color: rgba(58, 36, 24, 0.72);
 }
 
+/* ─── Parlay Ticket: "Gang Bounty" ─── */
+
+.parlay-tickets {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.parlay-ticket {
+    position: relative;
+    border-radius: 18px;
+    border: 4px solid #2f1a0e;
+    padding: 0;
+    overflow: hidden;
+    box-shadow:
+        0 20px 48px rgba(30, 14, 4, 0.35),
+        inset 0 0 0 1px rgba(255, 240, 200, 0.25);
+    background:
+        radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.22), transparent 50%),
+        radial-gradient(circle at 80% 85%, rgba(60, 30, 10, 0.15), transparent 50%),
+        linear-gradient(180deg, #d4a85c 0%, #c49450 40%, #b8864a 100%);
+}
+
+.parlay-ticket::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+        radial-gradient(rgba(90, 50, 20, 0.18) 0.8px, transparent 0.8px) 0 0 / 10px 10px,
+        linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(100, 60, 25, 0.12));
+    mix-blend-mode: multiply;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.parlay-ticket::after {
+    content: "";
+    position: absolute;
+    inset: 8px;
+    border: 2px solid rgba(50, 28, 14, 0.7);
+    border-radius: 12px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.parlay-ticket > * {
+    position: relative;
+    z-index: 2;
+}
+
+.parlay-ticket-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 18px 20px 10px;
+    text-align: center;
+}
+
+.parlay-ticket-badge {
+    font-family: 'Rye', 'Barlow Condensed', serif;
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    letter-spacing: 0.10em;
+    color: #3a1e0c;
+    text-shadow: 0 2px 0 rgba(255, 255, 255, 0.18);
+    line-height: 1;
+}
+
+.parlay-ticket-legs {
+    font-family: 'Manrope', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #5a3419;
+    background: rgba(255, 245, 220, 0.55);
+    border: 1px solid rgba(55, 31, 16, 0.4);
+    border-radius: 999px;
+    padding: 4px 12px;
+}
+
+.parlay-ticket-payout {
+    font-family: 'Rye', 'Barlow Condensed', serif;
+    font-size: 0.95rem;
+    letter-spacing: 0.08em;
+    color: #1f5132;
+}
+
+.parlay-ticket-prob {
+    text-align: center;
+    padding: 4px 20px 14px;
+}
+
+.parlay-ticket-prob-label {
+    display: block;
+    font-family: 'Manrope', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #6f421f;
+}
+
+.parlay-ticket-prob-value {
+    display: block;
+    font-family: 'Rye', 'Barlow Condensed', serif;
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    line-height: 1;
+    letter-spacing: 0.04em;
+    color: #2a1508;
+    margin-top: 2px;
+}
+
+.parlay-ticket-legs-list {
+    border-top: 2px solid rgba(50, 28, 14, 0.6);
+    padding: 0;
+}
+
+.parlay-leg {
+    display: grid;
+    grid-template-columns: 32px 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(50, 28, 14, 0.25);
+    font-family: 'Manrope', sans-serif;
+}
+
+.parlay-leg:last-child {
+    border-bottom: none;
+}
+
+.parlay-leg-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 2px solid rgba(50, 28, 14, 0.65);
+    background: rgba(255, 245, 220, 0.5);
+    display: grid;
+    place-items: center;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #3a1e0c;
+}
+
+.parlay-leg-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #3a1e0c;
+    line-height: 1.2;
+}
+
+.parlay-leg-name small {
+    font-weight: 500;
+    font-size: 0.78rem;
+    color: #6f421f;
+}
+
+.parlay-leg-prop {
+    font-weight: 700;
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+    color: #5a3419;
+    white-space: nowrap;
+}
+
+.parlay-leg-prob {
+    font-weight: 800;
+    font-size: 0.88rem;
+    color: #1f5132;
+    white-space: nowrap;
+    min-width: 48px;
+    text-align: right;
+}
+
+.no-results {
+    border-radius: 12px;
+    border: 1px dashed rgba(89, 52, 29, 0.45);
+    padding: 10px;
+    color: #6d3f1e;
+    background: rgba(255, 247, 227, 0.72);
+    text-align: center;
+    font-family: 'Manrope', sans-serif;
+}
+
+@media (max-width: 600px) {
+    .parlay-leg {
+        grid-template-columns: 28px 1fr;
+        gap: 6px 10px;
+    }
+    .parlay-leg-prop,
+    .parlay-leg-prob {
+        grid-column: 2;
+    }
+}
+
 .prediction-about-container {
     max-width: 980px;
 }

@@ -3,6 +3,7 @@ class DailyPredictionsPage {
         this.data = null;
         this.plays = [];
         this.elements = {
+            parlayTickets: document.getElementById('parlayTickets'),
             cards: document.getElementById('predictionCards'),
             empty: document.getElementById('predictionEmpty'),
             runMeta: document.getElementById('predictionRunMeta'),
@@ -13,6 +14,7 @@ class DailyPredictionsPage {
     async init() {
         try {
             await this.load();
+            this.renderParlayTickets();
             this.renderCards();
         } catch (error) {
             console.error(error);
@@ -66,6 +68,49 @@ class DailyPredictionsPage {
         if (!parts.length) return 'NA';
         if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
         return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    }
+
+    renderParlayTickets() {
+        const container = this.elements.parlayTickets;
+        if (!container) return;
+        const parlays = Array.isArray(this.data?.parlay_board?.parlays) ? this.data.parlay_board.parlays : [];
+        if (!parlays.length) {
+            container.innerHTML = '';
+            return;
+        }
+        container.innerHTML = parlays.map((parlay, idx) => {
+            const legs = Array.isArray(parlay.legs) ? parlay.legs : [];
+            const n = legs.length;
+            const jointPct = this.formatPct(parlay.joint_probability || parlay.adjusted_probability);
+            const type = String(parlay.type || 'primary').toUpperCase();
+            const payout = Math.pow(1 + 100 / 110, n);
+            const payoutText = `${payout.toFixed(1)}x`;
+            const legsHtml = legs.map((leg, li) => {
+                const name = this.escapeHtml(String(leg.player_display_name || leg.player || '').replace(/_/g, ' '));
+                const target = this.escapeHtml(String(leg.target || ''));
+                const dir = this.escapeHtml(String(leg.direction || '').toUpperCase());
+                const line = this.formatNumber(leg.market_line);
+                const wr = this.formatPct(leg.win_rate || leg.hit_probability || leg.expected_win_rate);
+                return `<div class="parlay-leg">
+                    <span class="parlay-leg-num">${li + 1}</span>
+                    <span class="parlay-leg-name">${name}</span>
+                    <span class="parlay-leg-prop">${target} ${dir} ${this.escapeHtml(line)}</span>
+                    <span class="parlay-leg-prob">${this.escapeHtml(wr)}</span>
+                </div>`;
+            }).join('');
+            return `<article class="parlay-ticket">
+                <div class="parlay-ticket-header">
+                    <span class="parlay-ticket-badge">${this.escapeHtml(type)} PARLAY</span>
+                    <span class="parlay-ticket-legs">${n}-LEG</span>
+                    <span class="parlay-ticket-payout">${this.escapeHtml(payoutText)} PAYOUT</span>
+                </div>
+                <div class="parlay-ticket-prob">
+                    <span class="parlay-ticket-prob-label">Combined hit probability</span>
+                    <span class="parlay-ticket-prob-value">${this.escapeHtml(jointPct)}</span>
+                </div>
+                <div class="parlay-ticket-legs-list">${legsHtml}</div>
+            </article>`;
+        }).join('');
     }
 
     renderCards() {

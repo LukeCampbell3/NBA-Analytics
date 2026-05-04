@@ -696,5 +696,67 @@
         "Austin Wynns"
       ]
     }
-  ]
+  ],
+  "parlay_board": {
+    "parlays": [
+      {
+        "type": "primary",
+        "leg_count": 3,
+        "joint_probability": 0.8709934319252185,
+        "adjusted_probability": 0.9232530378407316,
+        "avg_hit_probability": 0.9550383333333334,
+        "score": 0.8987233202227242,
+        "n_games": 3,
+        "n_teams": 3,
+        "legs": [
+          {
+            "player": "Evan Carter",
+            "team": "DET",
+            "opponent": "TEX",
+            "target": "TB",
+            "direction": "UNDER",
+            "market_line": 1.5,
+            "hit_probability": 0.960827,
+            "abs_edge": 1.48495,
+            "confidence_tier": "elite"
+          },
+          {
+            "player": "Austin Wynns",
+            "team": "ATH",
+            "opponent": "CLE",
+            "target": "TB",
+            "direction": "UNDER",
+            "market_line": 1.5,
+            "hit_probability": 0.960763,
+            "abs_edge": 1.47935,
+            "confidence_tier": "elite"
+          },
+          {
+            "player": "Joey Ortiz",
+            "team": "WSH",
+            "opponent": "MIL",
+            "target": "TB",
+            "direction": "UNDER",
+            "market_line": 1.5,
+            "hit_probability": 0.943525,
+            "abs_edge": 1.248813,
+            "confidence_tier": "elite"
+          }
+        ]
+      }
+    ],
+    "diagnostics": {
+      "total_candidates": 6,
+      "eligible_legs": 6,
+      "eligible_by_target": {
+        "TB": 4,
+        "R": 2
+      },
+      "primary_parlays": 1,
+      "singles": 3,
+      "primary_avg_hit_prob": 0.9550383333333334,
+      "primary_joint_prob": 0.8709934319252185,
+      "primary_leg_count": 3
+    }
+  }
 }
