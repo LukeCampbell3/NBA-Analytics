@@ -206,74 +206,57 @@ body.theme-dark .theme-toggle-radial {
 .predictions-page,
 .prediction-about-page {
     min-height: 100vh;
-    background-color: #6f4526;
+    background-color: #1c1410;
     background-image:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(50, 29, 14, 0.28)),
-        repeating-linear-gradient(
-            90deg,
-            #8b5b33 0,
-            #8b5b33 72px,
-            #7a4e2a 72px,
-            #7a4e2a 148px,
-            #9a673b 148px,
-            #9a673b 226px
-        ),
-        repeating-linear-gradient(
-            180deg,
-            rgba(48, 29, 15, 0.28) 0,
-            rgba(48, 29, 15, 0.28) 2px,
-            rgba(255, 255, 255, 0.02) 2px,
-            rgba(255, 255, 255, 0.02) 18px
-        );
-    background-blend-mode: multiply, normal, overlay;
+        radial-gradient(ellipse at 50% 0%, rgba(180, 120, 60, 0.08) 0%, transparent 60%),
+        linear-gradient(180deg, #1c1410 0%, #241a14 100%);
 }
 
 .prediction-stage,
 .prediction-about-stage {
-    padding: 76px 0 42px;
+    padding: 80px 0 60px;
 }
 
 .prediction-stage-header {
     display: block;
-    margin-bottom: 14px;
+    margin-bottom: 28px;
 }
 
 .prediction-sign,
 .prediction-about-sign {
     position: relative;
-    background: linear-gradient(180deg, #f4ddaa 0%, #e9c786 100%);
-    border: 3px solid #5a3419;
-    border-radius: 18px;
-    padding: 16px 18px;
-    box-shadow: 0 16px 32px rgba(58, 31, 12, 0.24);
+    background: rgba(255, 248, 230, 0.04);
+    border: 1px solid rgba(200, 160, 100, 0.25);
+    border-radius: 12px;
+    padding: 24px 20px;
     text-align: center;
 }
 
 .prediction-sign-kicker,
 .prediction-about-kicker {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     text-transform: uppercase;
-    letter-spacing: 0.13em;
-    color: #7a4a23;
+    letter-spacing: 0.18em;
+    color: rgba(210, 170, 110, 0.7);
     font-weight: 700;
 }
 
 .prediction-sign h1,
 .prediction-about-sign h1 {
-    margin-top: 4px;
+    margin-top: 6px;
     font-family: 'Rye', 'Barlow Condensed', serif;
-    letter-spacing: 0.05em;
-    color: #4b2813;
-    font-size: clamp(1.8rem, 4.2vw, 3rem);
+    letter-spacing: 0.06em;
+    color: #e8d5b0;
+    font-size: clamp(1.8rem, 4.2vw, 2.8rem);
     line-height: 1;
 }
 
 .prediction-run-meta,
 .prediction-about-run-facts {
-    margin-top: 7px;
-    font-size: 0.86rem;
-    color: #6f421f;
-    font-weight: 700;
+    margin-top: 10px;
+    font-size: 0.8rem;
+    color: rgba(200, 170, 120, 0.6);
+    font-weight: 600;
 }
 
 .prediction-about-link,
@@ -285,88 +268,164 @@ body.theme-dark .theme-toggle-radial {
     border-radius: 999px;
     text-decoration: none;
     font-weight: 700;
-    border: 2px solid #5d3419;
-    color: #482710;
-    background: linear-gradient(180deg, #f8e3b7 0%, #efd197 100%);
-    box-shadow: 0 6px 16px rgba(58, 31, 12, 0.2);
+    border: 1px solid rgba(200, 160, 100, 0.35);
+    color: #e8d5b0;
+    background: rgba(200, 160, 100, 0.08);
 }
 
 .prediction-about-link:hover,
 .prediction-about-back-link:hover {
-    background: linear-gradient(180deg, #fbe8c4 0%, #f4d8a2 100%);
+    background: rgba(200, 160, 100, 0.14);
 }
 
 .prediction-about-icon {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 32px;
-    height: 32px;
+    top: 12px;
+    right: 12px;
+    width: 30px;
+    height: 30px;
     border-radius: 999px;
-    border: 2px solid rgba(80, 46, 21, 0.88);
-    background: rgba(255, 247, 226, 0.92);
-    color: #4b2813;
+    border: 1px solid rgba(200, 160, 100, 0.4);
+    background: rgba(200, 160, 100, 0.08);
+    color: #d4b078;
     text-decoration: none;
     font-family: 'Manrope', sans-serif;
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 800;
     line-height: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 10px rgba(58, 31, 12, 0.22);
 }
 
 .prediction-about-icon:hover {
-    background: #fff8df;
+    background: rgba(200, 160, 100, 0.18);
 }
 
 .prediction-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 18px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
 }
 
-.prediction-card {
-    position: relative;
-    border-radius: 14px;
-    min-height: 560px;
-    padding: 14px;
-    border: 3px solid #4e311f;
-    box-shadow: 0 12px 30px rgba(39, 24, 13, 0.28);
-    background:
-        radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.30), rgba(255, 255, 255, 0) 46%),
-        radial-gradient(circle at 74% 75%, rgba(69, 35, 17, 0.13), rgba(69, 35, 17, 0) 52%),
-        linear-gradient(180deg, #ead2a1 0%, #dbc08d 100%);
+/* ─── Minimal Bounty Card ─── */
+
+.bounty-card {
+    border-radius: 10px;
+    padding: 18px 20px;
+    border: 1px solid rgba(200, 160, 100, 0.25);
+    background: linear-gradient(180deg, #f7f0dc 0%, #f0e8d0 100%);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    font-family: 'Manrope', sans-serif;
+    color: #2a1a0c;
+}
+
+.bounty-top {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    text-align: center;
-    color: #3f2618;
-    overflow: hidden;
-    isolation: isolate;
+    justify-content: space-between;
+    margin-bottom: 10px;
 }
 
-.prediction-card::before {
-    content: "";
+.bounty-headshot {
+    width: 100%;
+    aspect-ratio: 1 / 0.85;
+    border-radius: 6px;
+    overflow: hidden;
+    background: rgba(200, 170, 120, 0.08);
+    margin-bottom: 12px;
+    position: relative;
+}
+
+.bounty-headshot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 15%;
+    filter: sepia(0.1) contrast(1.05);
+}
+
+.bounty-headshot-fallback {
     position: absolute;
     inset: 0;
-    z-index: -2;
-    background:
-        radial-gradient(rgba(111, 61, 33, 0.2) 0.75px, transparent 0.75px) 0 0 / 8px 8px,
-        linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(130, 82, 45, 0.16));
-    mix-blend-mode: multiply;
-    opacity: 0.42;
+    display: grid;
+    place-items: center;
+    font-family: 'Rye', serif;
+    font-size: 2.2rem;
+    color: rgba(100, 70, 40, 0.3);
+    opacity: 0;
 }
 
-.prediction-card::after {
-    content: "";
-    position: absolute;
-    inset: 8px;
-    border: 2px solid rgba(70, 41, 24, 0.78);
-    border-radius: 10px;
-    pointer-events: none;
-    z-index: -1;
+.bounty-headshot.is-fallback .bounty-headshot-fallback {
+    opacity: 1;
+}
+
+.bounty-rank {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #8a6a3a;
+}
+
+.bounty-ev {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+.bounty-ev.positive { color: #2a6b4a; }
+.bounty-ev.negative { color: #8b3a2a; }
+
+.bounty-name {
+    font-family: 'Rye', 'Barlow Condensed', serif;
+    font-size: 1.15rem;
+    letter-spacing: 0.03em;
+    color: #2a1508;
+    line-height: 1.2;
+    margin-bottom: 12px;
+}
+
+.bounty-pick {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.bounty-target {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #7a5a3a;
+    background: rgba(150, 110, 60, 0.1);
+    border: 1px solid rgba(150, 110, 60, 0.25);
+    border-radius: 4px;
+    padding: 2px 8px;
+}
+
+.bounty-direction {
+    font-family: 'Rye', 'Barlow Condensed', serif;
+    font-size: 1.3rem;
+    letter-spacing: 0.06em;
+    line-height: 1;
+}
+
+[data-direction="OVER"] .bounty-direction { color: #1f5132; }
+[data-direction="UNDER"] .bounty-direction { color: #7a2419; }
+
+.bounty-line {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #3a2010;
+}
+
+.bounty-meta {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #8a7a5a;
+    letter-spacing: 0.03em;
 }
 
 .wanted-card {
@@ -374,19 +433,19 @@ body.theme-dark .theme-toggle-radial {
 }
 
 .wanted-card-elite {
-    border-color: #633d21;
+    border-color: rgba(180, 130, 60, 0.6);
 }
 
 .wanted-card-strong {
-    border-color: #704623;
+    border-color: rgba(180, 130, 60, 0.45);
 }
 
 .wanted-card-consider {
-    border-color: #7a532f;
+    border-color: rgba(180, 130, 60, 0.3);
 }
 
 .wanted-card-pass {
-    border-color: #8b6440;
+    border-color: rgba(180, 130, 60, 0.2);
 }
 
 .wanted-card-parlay {
@@ -567,23 +626,18 @@ body.theme-dark .theme-toggle-radial {
 .parlay-tickets {
     display: flex;
     flex-direction: column;
-    gap: 18px;
-    margin-bottom: 24px;
+    gap: 20px;
+    margin-bottom: 32px;
 }
 
 .parlay-ticket {
     position: relative;
-    border-radius: 18px;
-    border: 4px solid #2f1a0e;
+    border-radius: 12px;
+    border: 1px solid rgba(200, 160, 100, 0.35);
     padding: 0;
     overflow: hidden;
-    box-shadow:
-        0 20px 48px rgba(30, 14, 4, 0.35),
-        inset 0 0 0 1px rgba(255, 240, 200, 0.25);
-    background:
-        radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.22), transparent 50%),
-        radial-gradient(circle at 80% 85%, rgba(60, 30, 10, 0.15), transparent 50%),
-        linear-gradient(180deg, #d4a85c 0%, #c49450 40%, #b8864a 100%);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+    background: linear-gradient(180deg, #f7efd9 0%, #ede0c4 100%);
 }
 
 .parlay-ticket::before {
@@ -591,20 +645,16 @@ body.theme-dark .theme-toggle-radial {
     position: absolute;
     inset: 0;
     z-index: 0;
-    background:
-        radial-gradient(rgba(90, 50, 20, 0.18) 0.8px, transparent 0.8px) 0 0 / 10px 10px,
-        linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(100, 60, 25, 0.12));
-    mix-blend-mode: multiply;
-    opacity: 0.5;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(200, 160, 100, 0.05) 100%);
     pointer-events: none;
 }
 
 .parlay-ticket::after {
     content: "";
     position: absolute;
-    inset: 8px;
-    border: 2px solid rgba(50, 28, 14, 0.7);
-    border-radius: 12px;
+    inset: 5px;
+    border: 1px solid rgba(70, 41, 24, 0.15);
+    border-radius: 9px;
     pointer-events: none;
     z-index: 1;
 }
@@ -618,78 +668,78 @@ body.theme-dark .theme-toggle-radial {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 14px;
     flex-wrap: wrap;
-    padding: 18px 20px 10px;
+    padding: 22px 24px 8px;
     text-align: center;
 }
 
 .parlay-ticket-badge {
     font-family: 'Rye', 'Barlow Condensed', serif;
-    font-size: clamp(1.6rem, 3vw, 2.2rem);
-    letter-spacing: 0.10em;
-    color: #3a1e0c;
-    text-shadow: 0 2px 0 rgba(255, 255, 255, 0.18);
+    font-size: clamp(1.4rem, 2.8vw, 1.9rem);
+    letter-spacing: 0.08em;
+    color: #3a2010;
     line-height: 1;
 }
 
 .parlay-ticket-legs {
     font-family: 'Manrope', sans-serif;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 800;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: #5a3419;
-    background: rgba(255, 245, 220, 0.55);
-    border: 1px solid rgba(55, 31, 16, 0.4);
+    color: #6b4a2a;
+    background: rgba(200, 160, 100, 0.15);
+    border: 1px solid rgba(150, 110, 60, 0.3);
     border-radius: 999px;
     padding: 4px 12px;
 }
 
 .parlay-ticket-payout {
-    font-family: 'Rye', 'Barlow Condensed', serif;
-    font-size: 0.95rem;
-    letter-spacing: 0.08em;
-    color: #1f5132;
+    font-family: 'Manrope', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #2a6b4a;
 }
 
 .parlay-ticket-prob {
     text-align: center;
-    padding: 4px 20px 14px;
+    padding: 6px 24px 18px;
 }
 
 .parlay-ticket-prob-label {
     display: block;
     font-family: 'Manrope', sans-serif;
-    font-size: 0.7rem;
+    font-size: 0.66rem;
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: #6f421f;
+    color: #8a6a3a;
 }
 
 .parlay-ticket-prob-value {
     display: block;
     font-family: 'Rye', 'Barlow Condensed', serif;
-    font-size: clamp(2rem, 4vw, 2.8rem);
+    font-size: clamp(1.8rem, 3.5vw, 2.4rem);
     line-height: 1;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.03em;
     color: #2a1508;
-    margin-top: 2px;
+    margin-top: 4px;
 }
 
 .parlay-ticket-legs-list {
-    border-top: 2px solid rgba(50, 28, 14, 0.6);
+    border-top: 1px solid rgba(100, 60, 30, 0.2);
     padding: 0;
 }
 
 .parlay-leg {
     display: grid;
-    grid-template-columns: 32px 1fr auto auto;
+    grid-template-columns: 30px 1fr auto auto;
     align-items: center;
-    gap: 10px;
-    padding: 14px 20px;
-    border-bottom: 1px solid rgba(50, 28, 14, 0.25);
+    gap: 12px;
+    padding: 14px 24px;
+    border-bottom: 1px solid rgba(100, 60, 30, 0.1);
     font-family: 'Manrope', sans-serif;
 }
 
@@ -698,61 +748,61 @@ body.theme-dark .theme-toggle-radial {
 }
 
 .parlay-leg-num {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     border-radius: 999px;
-    border: 2px solid rgba(50, 28, 14, 0.65);
-    background: rgba(255, 245, 220, 0.5);
+    border: 1px solid rgba(100, 60, 30, 0.35);
+    background: rgba(255, 248, 230, 0.6);
     display: grid;
     place-items: center;
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 800;
-    color: #3a1e0c;
+    color: #5a3a1a;
 }
 
 .parlay-leg-name {
     font-weight: 700;
-    font-size: 0.95rem;
-    color: #3a1e0c;
+    font-size: 0.92rem;
+    color: #3a2010;
     line-height: 1.2;
 }
 
 .parlay-leg-name small {
     font-weight: 500;
-    font-size: 0.78rem;
-    color: #6f421f;
+    font-size: 0.76rem;
+    color: #7a5a3a;
 }
 
 .parlay-leg-prop {
     font-weight: 700;
-    font-size: 0.82rem;
-    letter-spacing: 0.04em;
-    color: #5a3419;
+    font-size: 0.8rem;
+    letter-spacing: 0.03em;
+    color: #5a3a1a;
     white-space: nowrap;
 }
 
 .parlay-leg-prob {
     font-weight: 800;
-    font-size: 0.88rem;
-    color: #1f5132;
+    font-size: 0.85rem;
+    color: #2a6b4a;
     white-space: nowrap;
     min-width: 48px;
     text-align: right;
 }
 
 .no-results {
-    border-radius: 12px;
-    border: 1px dashed rgba(89, 52, 29, 0.45);
-    padding: 10px;
-    color: #6d3f1e;
-    background: rgba(255, 247, 227, 0.72);
+    border-radius: 10px;
+    border: 1px solid rgba(200, 160, 100, 0.25);
+    padding: 16px;
+    color: rgba(210, 180, 130, 0.7);
+    background: rgba(200, 160, 100, 0.04);
     text-align: center;
     font-family: 'Manrope', sans-serif;
 }
 
 @media (max-width: 600px) {
     .parlay-leg {
-        grid-template-columns: 28px 1fr;
+        grid-template-columns: 26px 1fr;
         gap: 6px 10px;
     }
     .parlay-leg-prop,

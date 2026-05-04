@@ -123,49 +123,34 @@ class DailyPredictionsPage {
     }
 
     renderWantedCard(play) {
-        const tierRaw = String(play.recommendation || 'consider').toLowerCase();
-        const tier = play.parlay_candidate ? 'parlay' : (['elite', 'strong', 'consider', 'pass'].includes(tierRaw) ? tierRaw : 'consider');
         const directionRaw = String(play.direction || '').toUpperCase();
         const direction = directionRaw === 'UNDER' ? 'UNDER' : 'OVER';
         const displayName = this.getPlayDisplayName(play);
-        const escapedName = this.escapeHtml(displayName);
+        const target = this.escapeHtml(String(play.target || ''));
+        const lineText = this.formatNumber(play.market_line);
+        const ev = Number(play.ev) || 0;
+        const evText = Number.isFinite(ev) ? `${ev >= 0 ? '+' : ''}${(ev * 100).toFixed(1)}%` : '';
+        const gameText = [play.market_away_team, play.market_home_team].filter(Boolean).join(' @ ');
         const headshotUrl = this.getPlayHeadshotUrl(play);
         const monogram = this.escapeHtml(this.getMonogram(displayName));
-        const lineText = this.formatNumber(play.market_line);
-        const predictionText = this.formatNumber(play.prediction);
-        const gameText = [play.market_away_team, play.market_home_team].filter(Boolean).join(' @ ');
-        const footerParts = [play.target || '', play.market_date || '', gameText].filter(Boolean);
-        const parlayPartner = String(play.parlay_partner_name || '').trim();
-        const parlayRate = this.formatPct(play.parlay_projected_hit_rate);
+
         return `
-            <article class="prediction-card wanted-card wanted-card-${tier}" data-direction="${this.escapeAttr(direction)}">
-                <div class="wanted-rank">#${this.escapeHtml(String(play.rank || '-'))}</div>
-                <div class="wanted-title">WANTED</div>
-                <div class="wanted-photo-frame ${headshotUrl ? '' : 'is-fallback-visible'}">
-                    ${headshotUrl ? `
-                        <img
-                            class="wanted-photo"
-                            src="${this.escapeAttr(headshotUrl)}"
-                            alt="${this.escapeAttr(displayName)} headshot"
-                            loading="lazy"
-                            onerror="this.remove(); this.parentElement.classList.add('is-fallback-visible');"
-                        />
-                    ` : ''}
-                    <div class="wanted-photo-fallback">${monogram}</div>
+            <article class="bounty-card" data-direction="${this.escapeAttr(direction)}">
+                <div class="bounty-top">
+                    <span class="bounty-rank">#${this.escapeHtml(String(play.rank || '-'))}</span>
+                    <span class="bounty-ev ${ev >= 0 ? 'positive' : 'negative'}">${this.escapeHtml(evText)} EV</span>
                 </div>
-                ${play.parlay_candidate ? `
-                    <div class="wanted-tag-row">
-                        <span class="wanted-tag wanted-tag-parlay">PARLAY</span>
-                        <span class="wanted-tag wanted-tag-support">PAIR ${this.escapeHtml(parlayRate)}</span>
-                    </div>
-                ` : ''}
-                <div class="wanted-reward-label">REWARD</div>
-                <div class="wanted-reward-value">${this.escapeHtml(this.formatReward(play.ev))}</div>
-                <div class="wanted-name">${escapedName}</div>
-                <div class="wanted-direction">${this.escapeHtml(direction)}</div>
-                <div class="wanted-prop-line">LINE ${this.escapeHtml(lineText)} | PRED ${this.escapeHtml(predictionText)}</div>
-                ${play.parlay_candidate ? `<div class="wanted-parlay-note">Best paired with ${this.escapeHtml(parlayPartner || 'another tagged leg')}</div>` : ''}
-                <div class="wanted-footer">${this.escapeHtml(footerParts.join(' | '))}</div>
+                <div class="bounty-headshot ${headshotUrl ? '' : 'is-fallback'}">
+                    ${headshotUrl ? `<img src="${this.escapeAttr(headshotUrl)}" alt="${this.escapeAttr(displayName)}" loading="lazy" onerror="this.remove(); this.parentElement.classList.add('is-fallback');" />` : ''}
+                    <span class="bounty-headshot-fallback">${monogram}</span>
+                </div>
+                <div class="bounty-name">${this.escapeHtml(displayName)}</div>
+                <div class="bounty-pick">
+                    <span class="bounty-target">${target}</span>
+                    <span class="bounty-direction">${this.escapeHtml(direction)}</span>
+                    <span class="bounty-line">${this.escapeHtml(lineText)}</span>
+                </div>
+                <div class="bounty-meta">${this.escapeHtml(gameText)}</div>
             </article>
         `;
     }
