@@ -90,20 +90,21 @@ NBA_VALIDATED_HEURISTIC_MIN_AVG_FINAL_CONFIDENCE = 0.18
 NBA_VALIDATED_HEURISTIC_MIN_GRADED_PLAYS = 20
 NBA_VALIDATED_HEURISTIC_MIN_HISTORICAL_WIN_RATE = 0.60
 NBA_VALIDATED_HEURISTIC_MIN_HISTORICAL_ROI = 0.0
-NBA_PARLAY_SAFETY_MIN_SAMPLE_DATES = 5
-NBA_PARLAY_SAFETY_MIN_GRADED_PAIRS = 8
-NBA_PARLAY_SAFETY_MIN_HIT_RATE_LIFT = 0.02
-NBA_PARLAY_SAFETY_MAX_OVERPROJECTION_GAP = 0.10
-NBA_PARLAY_PRECISION_MIN_LEG_PROBABILITY = 0.555
-NBA_PARLAY_PRECISION_MIN_FINAL_CONFIDENCE = 0.12
-NBA_PARLAY_PRECISION_MIN_SEGMENT_HIT_RATE = 0.60
-NBA_PARLAY_PRECISION_MIN_SEGMENT_ROWS = 60
-NBA_PARLAY_PRECISION_NEAR_MISS_SEGMENT_ROWS = 55
-NBA_PARLAY_PRECISION_ELITE_SEGMENT_HIT_RATE = 0.70
-NBA_PARLAY_PRECISION_MAX_ELIGIBLE_PLAYS = 4
+NBA_PARLAY_SAFETY_MIN_SAMPLE_DATES = 8
+NBA_PARLAY_SAFETY_MIN_GRADED_PAIRS = 12
+NBA_PARLAY_SAFETY_MIN_HIT_RATE_LIFT = 0.03
+NBA_PARLAY_SAFETY_MAX_OVERPROJECTION_GAP = 0.05
+NBA_PARLAY_PRECISION_MIN_LEG_PROBABILITY = 0.60
+NBA_PARLAY_PRECISION_MIN_FINAL_CONFIDENCE = 0.16
+NBA_PARLAY_PRECISION_MIN_SEGMENT_HIT_RATE = 0.68
+NBA_PARLAY_PRECISION_MIN_SEGMENT_ROWS = 75
+NBA_PARLAY_PRECISION_NEAR_MISS_SEGMENT_ROWS = 60
+NBA_PARLAY_PRECISION_ELITE_SEGMENT_HIT_RATE = 0.78
+NBA_PARLAY_PRECISION_MAX_ELIGIBLE_PLAYS = 3
 NBA_PARLAY_PRECISION_MAX_PAIRS = 1
-NBA_PARLAY_PRECISION_MAX_LEGS = 3
-NBA_PARLAY_PRECISION_MIN_PAIR_PROBABILITY = 0.31
+NBA_PARLAY_PRECISION_MAX_LEGS = 2
+NBA_PARLAY_PRECISION_MIN_PAIR_PROBABILITY = 0.36
+NBA_PARLAY_PRECISION_MIN_LEG_LCB = 0.56
 
 
 def parse_args() -> argparse.Namespace:
@@ -430,7 +431,12 @@ def build_nba_precision_parlay_candidates(
         segment_meta = segment_payload.get(segment_key, {}) if segment_key else {}
         segment_rows = int(segment_meta.get("rows", 0) or 0) if isinstance(segment_meta, dict) else 0
         segment_hit_rate = safe_float(segment_meta.get("hit_rate")) if isinstance(segment_meta, dict) else None
-        probability = safe_float(item.get("expected_win_rate"))
+        probability = safe_float(item.get("precision_pool_prob"))
+        if probability is None:
+            probability = safe_float(item.get("expected_win_rate"))
+        leg_lcb = safe_float(item.get("precision_pool_lcb"))
+        if leg_lcb is None:
+            leg_lcb = probability
         final_confidence = safe_float(item.get("final_confidence"))
         ev = safe_float(item.get("ev"))
         segment_support_ok = bool(
@@ -445,6 +451,8 @@ def build_nba_precision_parlay_candidates(
         eligible = bool(
             probability is not None
             and probability >= float(NBA_PARLAY_PRECISION_MIN_LEG_PROBABILITY)
+            and leg_lcb is not None
+            and leg_lcb >= float(NBA_PARLAY_PRECISION_MIN_LEG_LCB)
             and final_confidence is not None
             and final_confidence >= float(NBA_PARLAY_PRECISION_MIN_FINAL_CONFIDENCE)
             and ev is not None
@@ -458,6 +466,8 @@ def build_nba_precision_parlay_candidates(
         item["parlay_precision_segment_rows"] = int(segment_rows) if segment_rows > 0 else None
         item["parlay_precision_segment_hit_rate"] = segment_hit_rate
         item["parlay_precision_segment_support_ok"] = segment_support_ok
+        item["parlay_leg_probability"] = probability
+        item["parlay_leg_lcb"] = leg_lcb
         item["parlay_precision_eligible"] = eligible
         prepared.append(item)
         if eligible:
@@ -486,6 +496,7 @@ def build_nba_precision_parlay_candidates(
         "precision_min_segment_rows": int(NBA_PARLAY_PRECISION_MIN_SEGMENT_ROWS),
         "precision_near_miss_segment_rows": int(NBA_PARLAY_PRECISION_NEAR_MISS_SEGMENT_ROWS),
         "precision_elite_segment_hit_rate": float(NBA_PARLAY_PRECISION_ELITE_SEGMENT_HIT_RATE),
+        "precision_min_leg_lcb": float(NBA_PARLAY_PRECISION_MIN_LEG_LCB),
         "precision_pre_cap_candidate_count": int(len(eligible_indices)),
         "precision_eligible_play_count": eligible_after_cap,
     }
@@ -1438,7 +1449,7 @@ def main() -> None:
     parlay_payload = annotate_parlay_board(
         plays_json,
         sport="nba",
-        probability_field="expected_win_rate",
+        probability_field="parlay_leg_probability",
         eligibility_field="parlay_precision_eligible",
         allow_fallback=False,
         min_leg_probability=float(NBA_PARLAY_PRECISION_MIN_LEG_PROBABILITY),

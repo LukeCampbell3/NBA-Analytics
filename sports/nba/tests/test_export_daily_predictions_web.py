@@ -663,10 +663,35 @@ def test_apply_parlay_safety_gate_blocks_unsupported_pairs() -> None:
     assert gate["passed"] is False
     assert applied_gate["passed"] is False
     assert "insufficient_sample_dates" in gate["blockers"]
+    assert "insufficient_pair_lift" in gate["blockers"]
     assert gated_payload["summary"]["selection_mode"] == "empirical_gate_blocked"
     assert gated_payload["summary"]["selected_pair_count"] == 0
     assert all(play["parlay_candidate"] is False for play in gated_payload["plays"])
     assert gated_payload["pairs"] == []
+
+
+def test_evaluate_parlay_safety_gate_uses_empirical_lift_and_projection_control() -> None:
+    validation = {
+        "available": True,
+        "sample_dates": 12,
+        "selected": {
+            "graded_pair_count": 12,
+            "hit_pair_count": 9,
+            "pair_hit_rate": 9 / 12,
+            "avg_projected_pair_hit_rate": 0.77,
+        },
+        "baseline_all_pairs": {
+            "pair_hit_rate": 0.70,
+        },
+        "hit_rate_lift_vs_all_pairs": 0.05,
+    }
+
+    gate = evaluate_parlay_safety_gate(validation)
+
+    assert gate["passed"] is True
+    assert gate["pair_hit_rate"] == 0.75
+    assert gate["overprojection_gap"] <= gate["thresholds"]["max_overprojection_gap"]
+    assert "min_pair_hit_rate" not in gate["thresholds"]
 
 
 def test_build_nba_precision_parlay_candidates_keeps_only_supported_legs() -> None:
@@ -675,15 +700,15 @@ def test_build_nba_precision_parlay_candidates_keeps_only_supported_legs() -> No
             "player": "Trusted Under",
             "target": "PTS",
             "direction": "UNDER",
-            "expected_win_rate": 0.561,
-            "final_confidence": 0.16,
+            "expected_win_rate": 0.611,
+            "final_confidence": 0.18,
             "ev": 0.03,
         },
         {
             "player": "Weak Over",
             "target": "PTS",
             "direction": "OVER",
-            "expected_win_rate": 0.574,
+            "expected_win_rate": 0.624,
             "final_confidence": 0.19,
             "ev": 0.04,
         },
@@ -691,7 +716,7 @@ def test_build_nba_precision_parlay_candidates_keeps_only_supported_legs() -> No
             "player": "Low Confidence Under",
             "target": "AST",
             "direction": "UNDER",
-            "expected_win_rate": 0.558,
+            "expected_win_rate": 0.608,
             "final_confidence": 0.08,
             "ev": 0.02,
         },
@@ -699,15 +724,15 @@ def test_build_nba_precision_parlay_candidates_keeps_only_supported_legs() -> No
             "player": "Trusted Ast Under",
             "target": "AST",
             "direction": "UNDER",
-            "expected_win_rate": 0.556,
-            "final_confidence": 0.14,
+            "expected_win_rate": 0.606,
+            "final_confidence": 0.17,
             "ev": 0.01,
         },
     ]
     validation = {
         "available": True,
         "leg_segments": {
-            "PTS|UNDER": {"rows": 87, "hit_rate": 0.678},
+            "PTS|UNDER": {"rows": 87, "hit_rate": 0.718},
             "PTS|OVER": {"rows": 133, "hit_rate": 0.368},
             "AST|UNDER": {"rows": 91, "hit_rate": 0.813},
         },
@@ -727,24 +752,24 @@ def test_build_nba_precision_parlay_candidates_allows_elite_near_miss_segment_su
             "player": "Elite Ast Under",
             "target": "AST",
             "direction": "UNDER",
-            "expected_win_rate": 0.559,
-            "final_confidence": 0.14,
+            "expected_win_rate": 0.609,
+            "final_confidence": 0.17,
             "ev": 0.02,
         },
         {
             "player": "Borderline Pts Under",
             "target": "PTS",
             "direction": "UNDER",
-            "expected_win_rate": 0.558,
-            "final_confidence": 0.15,
+            "expected_win_rate": 0.608,
+            "final_confidence": 0.17,
             "ev": 0.02,
         },
     ]
     validation = {
         "available": True,
         "leg_segments": {
-            "AST|UNDER": {"rows": 59, "hit_rate": 0.729},
-            "PTS|UNDER": {"rows": 55, "hit_rate": 0.545},
+            "AST|UNDER": {"rows": 64, "hit_rate": 0.789},
+            "PTS|UNDER": {"rows": 60, "hit_rate": 0.679},
         },
     }
 
@@ -755,5 +780,5 @@ def test_build_nba_precision_parlay_candidates_allows_elite_near_miss_segment_su
     assert eligible == ["Elite Ast Under"]
     assert support_ok["Elite Ast Under"] is True
     assert support_ok["Borderline Pts Under"] is False
-    assert summary["precision_near_miss_segment_rows"] == 55
-    assert summary["precision_elite_segment_hit_rate"] == 0.70
+    assert summary["precision_near_miss_segment_rows"] == 60
+    assert summary["precision_elite_segment_hit_rate"] == 0.78

@@ -76,6 +76,40 @@ except Exception:  # pragma: no cover - fallback when pool-quality module is una
         return ""
 
 try:
+    from decision_engine.final_pool_precision import (
+        annotate_precision_pool as annotate_precision_pool_fn,
+        choose_precision_board_size as choose_precision_board_size_fn,
+    )
+except Exception:  # pragma: no cover - fallback when precision module is unavailable
+    def annotate_precision_pool_fn(
+        candidates: pd.DataFrame,
+        *,
+        history_frame: pd.DataFrame | None = None,
+        feedback_frame: pd.DataFrame | None = None,
+        target_accuracy: float = 0.83,
+        recent_days: int = 14,
+        prior_strength: float = 18.0,
+    ) -> tuple[pd.DataFrame, dict]:
+        out = candidates.copy()
+        out["precision_pool_enabled"] = False
+        out["precision_pool_prob"] = pd.to_numeric(out.get("expected_win_rate"), errors="coerce").fillna(0.5)
+        out["precision_pool_lcb"] = out["precision_pool_prob"] * 0.90
+        out["precision_pool_score"] = out["precision_pool_lcb"]
+        return out, {"enabled": False, "reason": "module_missing"}
+
+    def choose_precision_board_size_fn(
+        ranked: pd.DataFrame,
+        *,
+        max_total_plays: int,
+        min_board_plays: int = 0,
+        target_accuracy: float = 0.83,
+        miss_penalty: float = 2.4,
+        volume_reward: float = 0.015,
+    ) -> tuple[int, dict]:
+        size = int(max_total_plays) if int(max_total_plays) > 0 else int(len(ranked))
+        return max(0, min(size, int(len(ranked)))), {"enabled": False, "reason": "module_missing"}
+
+try:
     from decision_engine.staking_bucket_model_v2 import apply_staking_bucket_model_v2 as apply_staking_bucket_model_v2_fn
 except Exception:  # pragma: no cover - fallback when staking model module is unavailable
     def apply_staking_bucket_model_v2_fn(
@@ -4071,6 +4105,11 @@ def compute_final_board(
     accepted_pick_gate_min_rows: int = 0,
     selector_pool_append_max_rows: int = 0,
     selector_pool_append_rank_window: int = 24,
+    precision_pool_target_accuracy: float = 0.83,
+    precision_pool_recent_days: int = 14,
+    precision_pool_prior_strength: float = 18.0,
+    precision_pool_miss_penalty: float = 2.4,
+    precision_pool_volume_reward: float = 0.015,
 ) -> pd.DataFrame:
     out = plays.copy()
     stage_counts: dict[str, int] = {
@@ -4470,6 +4509,23 @@ def compute_final_board(
         belief_uncertainty_upper=float(belief_uncertainty_upper),
         near_miss_margin=0.003,
     )
+    precision_pool_summary: dict[str, object] = {"enabled": False, "reason": "mode_not_requested"}
+    if str(selection_mode or ranking_mode).strip().lower() == "precision_pool":
+        out, precision_pool_summary = annotate_precision_pool_fn(
+            out,
+            history_frame=None,
+            target_accuracy=float(precision_pool_target_accuracy),
+            recent_days=int(precision_pool_recent_days),
+            prior_strength=float(precision_pool_prior_strength),
+        )
+        if not selector_pool_append_reference.empty:
+            selector_pool_append_reference, _ = annotate_precision_pool_fn(
+                selector_pool_append_reference,
+                history_frame=None,
+                target_accuracy=float(precision_pool_target_accuracy),
+                recent_days=int(precision_pool_recent_days),
+                prior_strength=float(precision_pool_prior_strength),
+            )
     if not selector_pool_append_reference.empty:
         selector_pool_append_reference = annotate_final_pool_quality_fn(
             selector_pool_append_reference,
@@ -4513,6 +4569,11 @@ def compute_final_board(
         out["robust_reranker_prob"] = pd.to_numeric(out["robust_reranker_prob"], errors="coerce").fillna(-1.0)
         out["robust_reranker_blend_raw"] = _numeric_series(out, "robust_reranker_blend_raw", -1.0)
         rank_columns = ["robust_reranker_prob", "robust_reranker_blend_raw", "ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
+    elif effective_mode == "precision_pool" and "precision_pool_score" in out.columns:
+        out["precision_pool_prob"] = pd.to_numeric(out["precision_pool_prob"], errors="coerce").fillna(0.5)
+        out["precision_pool_lcb"] = pd.to_numeric(out["precision_pool_lcb"], errors="coerce").fillna(out["precision_pool_prob"])
+        out["precision_pool_score"] = pd.to_numeric(out["precision_pool_score"], errors="coerce").fillna(out["precision_pool_lcb"])
+        rank_columns = ["precision_pool_score", "precision_pool_lcb", "precision_pool_prob", "board_play_win_prob", "final_confidence", "abs_edge"]
     elif effective_mode == "edge":
         rank_columns = ["edge", "abs_edge", "expected_win_rate", "final_confidence"]
     elif effective_mode == "abs_edge":
@@ -4616,6 +4677,27 @@ def compute_final_board(
 
     if not caps_already_applied:
         ranked_pool = out.sort_values(rank_columns, ascending=[False] * len(rank_columns)).copy()
+        if effective_mode == "precision_pool":
+            dynamic_size, dynamic_summary = choose_precision_board_size_fn(
+                ranked_pool,
+                max_total_plays=max_total_plays,
+                min_board_plays=min_board_plays,
+                target_accuracy=float(precision_pool_target_accuracy),
+                miss_penalty=float(precision_pool_miss_penalty),
+                volume_reward=float(precision_pool_volume_reward),
+            )
+            dynamic_size = int(max(0, min(dynamic_size, len(ranked_pool))))
+            if dynamic_size > 0:
+                max_total_plays = dynamic_size
+            ranked_pool["precision_pool_dynamic_size"] = int(dynamic_size)
+            ranked_pool["precision_pool_target_attainable"] = bool(dynamic_summary.get("target_attainable", False))
+            ranked_pool["precision_pool_selected_avg_prob"] = float(dynamic_summary.get("selected_avg_prob", np.nan))
+            ranked_pool["precision_pool_selected_avg_lcb"] = float(dynamic_summary.get("selected_avg_lcb", np.nan))
+            ranked_pool["precision_pool_selected_avg_consistency"] = float(dynamic_summary.get("selected_avg_consistency", np.nan))
+            ranked_pool["precision_pool_selected_avg_strength"] = float(dynamic_summary.get("selected_avg_strength", np.nan))
+            if isinstance(precision_pool_summary, dict):
+                ranked_pool["precision_pool_history_rows"] = int(precision_pool_summary.get("history_rows", 0) or 0)
+                ranked_pool["precision_pool_recent_rows"] = int(precision_pool_summary.get("recent_rows", 0) or 0)
         out = _apply_portfolio_caps(
             ranked_pool,
             max_plays_per_player=max_plays_per_player,

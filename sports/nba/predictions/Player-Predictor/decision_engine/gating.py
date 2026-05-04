@@ -139,6 +139,11 @@ class StrategyConfig:
     accepted_pick_gate_min_rows: int = 0
     selector_pool_append_max_rows: int = 0
     selector_pool_append_rank_window: int = 24
+    precision_pool_target_accuracy: float = 0.83
+    precision_pool_recent_days: int = 14
+    precision_pool_prior_strength: float = 18.0
+    precision_pool_miss_penalty: float = 2.4
+    precision_pool_volume_reward: float = 0.015
     max_plays_per_game: int = 2
     max_plays_per_script_cluster: int = 2
     final_pool_quality_weight: float = 0.25

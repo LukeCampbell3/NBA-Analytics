@@ -174,7 +174,7 @@ def parse_args() -> argparse.Namespace:
         "--selection-mode",
         type=str,
         default=None,
-        choices=["ev_adjusted", "edge", "abs_edge", "xgb_ltr", "robust_reranker", "thompson_ev", "set_theory", "edge_append_shadow", "board_objective"],
+        choices=["ev_adjusted", "edge", "abs_edge", "xgb_ltr", "robust_reranker", "precision_pool", "thompson_ev", "set_theory", "edge_append_shadow", "board_objective"],
         help="Final board ranking mode before portfolio constraints.",
     )
     parser.add_argument("--thompson-temperature", type=float, default=None, help="Temperature used for Thompson sampling.")
@@ -1176,6 +1176,11 @@ def main() -> None:
             accepted_pick_gate_min_rows=int(active_policy.get("accepted_pick_gate_min_rows", 0)),
             selector_pool_append_max_rows=int(active_policy.get("selector_pool_append_max_rows", 0)),
             selector_pool_append_rank_window=int(active_policy.get("selector_pool_append_rank_window", 24)),
+            precision_pool_target_accuracy=float(active_policy.get("precision_pool_target_accuracy", 0.83)),
+            precision_pool_recent_days=int(active_policy.get("precision_pool_recent_days", 14)),
+            precision_pool_prior_strength=float(active_policy.get("precision_pool_prior_strength", 18.0)),
+            precision_pool_miss_penalty=float(active_policy.get("precision_pool_miss_penalty", 2.4)),
+            precision_pool_volume_reward=float(active_policy.get("precision_pool_volume_reward", 0.015)),
         )
 
     effective_policy_payload = dict(requested_policy_payload)

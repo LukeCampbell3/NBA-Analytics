@@ -322,7 +322,34 @@ def _read_json(path: Path) -> dict[str, Any]:
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    path.write_text(json.dumps(_json_safe(payload), indent=2), encoding="utf-8")
+
+
+def _json_safe(value: Any, seen: set[int] | None = None) -> Any:
+    if seen is None:
+        seen = set()
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, Path):
+        return str(value)
+    obj_id = id(value)
+    if isinstance(value, (dict, list, tuple, set)):
+        if obj_id in seen:
+            return "[circular]"
+        seen.add(obj_id)
+        if isinstance(value, dict):
+            out = {str(key): _json_safe(item, seen) for key, item in value.items()}
+        else:
+            out = [_json_safe(item, seen) for item in value]
+        seen.discard(obj_id)
+        return out
+    if isinstance(value, pd.Timestamp):
+        return value.isoformat()
+    if value != value:
+        return None
+    return str(value)
 
 
 def _to_run_stamp(run_date: str) -> str:

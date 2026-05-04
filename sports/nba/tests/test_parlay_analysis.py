@@ -145,7 +145,7 @@ def test_annotate_parlay_board_respects_explicit_leg_eligibility() -> None:
             "target": "TRB",
             "direction": "UNDER",
             "game_id": "game-3",
-            "expected_win_rate": 0.59,
+            "expected_win_rate": 0.61,
             "parlay_precision_eligible": True,
         },
     ]
@@ -173,7 +173,7 @@ def test_annotate_parlay_board_can_build_three_leg_ticket() -> None:
             "target": "PTS",
             "direction": "UNDER",
             "game_id": "game-1",
-            "expected_win_rate": 0.72,
+            "expected_win_rate": 0.75,
         },
         {
             "player": "Beta Wing",
@@ -182,7 +182,7 @@ def test_annotate_parlay_board_can_build_three_leg_ticket() -> None:
             "target": "AST",
             "direction": "UNDER",
             "game_id": "game-2",
-            "expected_win_rate": 0.71,
+            "expected_win_rate": 0.74,
         },
         {
             "player": "Gamma Big",
@@ -191,7 +191,7 @@ def test_annotate_parlay_board_can_build_three_leg_ticket() -> None:
             "target": "TRB",
             "direction": "UNDER",
             "game_id": "game-3",
-            "expected_win_rate": 0.70,
+            "expected_win_rate": 0.73,
         },
     ]
 
