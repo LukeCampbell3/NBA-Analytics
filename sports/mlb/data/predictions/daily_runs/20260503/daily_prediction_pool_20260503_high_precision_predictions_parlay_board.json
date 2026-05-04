@@ -3,12 +3,12 @@
     {
       "type": "primary",
       "leg_count": 3,
-      "joint_probability": 0.8828002266517213,
-      "adjusted_probability": 0.9357682402508246,
-      "avg_hit_probability": 0.9593016666666667,
+      "joint_probability": 0.8709934319252185,
+      "adjusted_probability": 0.9232530378407316,
+      "avg_hit_probability": 0.9550383333333334,
       "n_games": 3,
       "n_teams": 3,
-      "score": 0.9110694953369576,
+      "score": 0.8987233202227242,
       "legs": [
         {
           "player": "Evan Carter",
@@ -33,14 +33,14 @@
           "confidence_tier": "elite"
         },
         {
-          "player": "Jake Cronenworth",
-          "team": "SD",
-          "opponent": "CWS",
+          "player": "Joey Ortiz",
+          "team": "WSH",
+          "opponent": "MIL",
           "target": "TB",
           "direction": "UNDER",
           "market_line": 1.5,
-          "hit_probability": 0.956315,
-          "abs_edge": 1.37625,
+          "hit_probability": 0.943525,
+          "abs_edge": 1.248813,
           "confidence_tier": "elite"
         }
       ]
@@ -63,18 +63,18 @@
       "in_parlay": true
     },
     {
-      "player": "Cody Bellinger",
-      "team": "NYY",
-      "opponent": "BAL",
+      "player": "Kyle Manzardo",
+      "team": "ATH",
+      "opponent": "CLE",
       "target": "TB",
       "direction": "OVER",
       "market_line": 1.5,
-      "hit_probability": 0.82802,
-      "abs_edge": 2.75215,
+      "hit_probability": 0.839673,
+      "abs_edge": 3.0884,
       "confidence_tier": "elite",
       "stake_tier": "elite",
       "stake_fraction": 0.015,
-      "ev_per_unit": 0.874875,
+      "ev_per_unit": 0.42566,
       "in_parlay": false
     },
     {
@@ -94,16 +94,16 @@
     }
   ],
   "diagnostics": {
-    "total_candidates": 10,
-    "eligible_legs": 10,
+    "total_candidates": 6,
+    "eligible_legs": 6,
     "eligible_by_target": {
-      "TB": 6,
-      "R": 4
+      "TB": 4,
+      "R": 2
     },
     "primary_parlays": 1,
     "singles": 3,
-    "primary_avg_hit_prob": 0.9593016666666667,
-    "primary_joint_prob": 0.8828002266517213,
+    "primary_avg_hit_prob": 0.9550383333333334,
+    "primary_joint_prob": 0.8709934319252185,
     "primary_leg_count": 3
   },
   "source_csv": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260503\\daily_prediction_pool_20260503_high_precision_predictions.csv"
