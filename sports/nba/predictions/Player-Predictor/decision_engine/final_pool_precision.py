@@ -294,6 +294,37 @@ def annotate_precision_pool(
     feedback_lcbs: list[float] = []
     feedback_rows: list[int] = []
     feedback_adjustments: list[float] = []
+
+    # --- Direction-balanced fallback: when a segment (e.g. PTS|OVER) has no
+    # history, fall back to the *target-level* profile (PTS) and the
+    # *opposite-direction* segment (PTS|UNDER) with a conservative haircut
+    # instead of dropping the segment entirely.  This lets qualified OVERs
+    # surface when the system has only published UNDERs historically.
+    def _segment_fallback_profile(
+        profile_map: dict,
+        seg_key: str,
+        tgt_key: str,
+        direc_key: str,
+    ) -> tuple[dict | None, str]:
+        """Return (profile, source_label).  Tries the exact segment first,
+        then the target-level profile, then the opposite-direction segment
+        with a conservative haircut applied inline by the caller."""
+        profile = profile_map.get(seg_key)
+        if profile and float(profile.get("rows", 0)) > 0:
+            return profile, "segment"
+        # Try target-level (direction-agnostic)
+        target_profile = profile_map.get(tgt_key)
+        if target_profile and float(target_profile.get("rows", 0)) > 0:
+            return target_profile, "target_fallback"
+        # Try opposite direction segment
+        opposite_dir = "UNDER" if direc_key == "OVER" else "OVER"
+        opposite_seg = tgt_key + "|" + opposite_dir
+        opp_profile = profile_map.get(opposite_seg)
+        if opp_profile and float(opp_profile.get("rows", 0)) > 0:
+            # Return with a flag; caller applies haircut
+            return opp_profile, "opposite_fallback"
+        return None, "missing"
+
     for idx in out.index:
         pieces: list[tuple[float, float, float, str, float]] = []
         seg = str(segment_key.loc[idx])
@@ -310,10 +341,27 @@ def annotate_precision_pool(
             (direction_long, direc, 0.06, "direction"),
         ):
             profile = profile_map.get(key)
-            if not profile:
+            if profile:
+                support = float(np.clip(profile["rows"] / 40.0, 0.15, 1.0))
+                pieces.append((float(profile["mean"]), float(profile["lcb"]), base_weight * support, label, float(profile["rows"])))
                 continue
-            support = float(np.clip(profile["rows"] / 40.0, 0.15, 1.0))
-            pieces.append((float(profile["mean"]), float(profile["lcb"]), base_weight * support, label, float(profile["rows"])))
+            # Direction-balanced fallback for segment-level maps only
+            if label.startswith("segment_"):
+                fb_profile, fb_source = _segment_fallback_profile(profile_map, seg, tgt, direc)
+                if fb_profile:
+                    fb_support = float(np.clip(fb_profile["rows"] / 40.0, 0.15, 1.0))
+                    fb_mean = float(fb_profile["mean"])
+                    fb_lcb = float(fb_profile["lcb"])
+                    # Apply conservative haircut for fallback sources
+                    if fb_source == "opposite_fallback":
+                        fb_mean = fb_mean * 0.85  # 15% haircut for opposite direction (OVERs win at ~50% vs UNDERs at ~67%)
+                        fb_lcb = fb_lcb * 0.80    # 20% haircut on lower bound
+                        fb_support *= 0.45         # significantly reduce weight
+                    elif fb_source == "target_fallback":
+                        fb_mean = fb_mean * 0.93  # 7% haircut for target-level
+                        fb_lcb = fb_lcb * 0.90
+                        fb_support *= 0.65
+                    pieces.append((fb_mean, fb_lcb, base_weight * fb_support, f"{label}_{fb_source}", float(fb_profile["rows"])))
         pieces.append((float(model_prob.loc[idx]), float(model_prob.loc[idx]) - 0.04, 0.22 + 0.18 * float(confidence.loc[idx]), "model", 0.0))
         weight_sum = sum(piece[2] for piece in pieces) or 1.0
         empirical_prob = sum(piece[0] * piece[2] for piece in pieces) / weight_sum

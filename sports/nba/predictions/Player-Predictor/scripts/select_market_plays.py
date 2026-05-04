@@ -35,6 +35,24 @@ except Exception:  # pragma: no cover - fallback for standalone execution
     def build_line_decision_lookup(history_df: pd.DataFrame) -> dict[str, dict]:
         return {}
 
+try:
+    from decision_engine.direction_classifier import (
+        DirectionClassifierConfig,
+        classify_direction_quality,
+    )
+except Exception:  # pragma: no cover - fallback for standalone execution
+    DirectionClassifierConfig = None
+
+    def classify_direction_quality(**kwargs) -> dict[str, Any]:
+        return {
+            "direction_adjustment": 0.0,
+            "mispricing_detected": False,
+            "mispricing_direction": "",
+            "mispricing_strength": 0.0,
+            "over_quality_tier": "n/a",
+            "classification_source": "unavailable",
+        }
+
     def estimate_line_decision(**kwargs) -> dict[str, Any]:
         direction = str(kwargs.get("direction", "NO_TRADE")).upper().strip()
         prior_win_rate = float(np.clip(kwargs.get("prior_direction_win_rate", 0.5), 0.0, 1.0))
@@ -832,6 +850,35 @@ def build_play_rows(
             action_direction = str(line_decision.get("action", "NO_TRADE")).upper().strip()
             if action_direction not in {"OVER", "UNDER"}:
                 action_direction = direction
+
+            # --- Direction-aware relaxation: when the line_decision identifies
+            # OVER as the preferred direction with HIGH confidence AND strong
+            # empirical support, allow the OVER candidate through.  Historical
+            # data shows OVERs win at ~50% overall, so we require much stronger
+            # signals than for UNDERs.  This is intentionally very selective.
+            preferred_dir = str(line_decision.get("preferred_direction", "")).upper().strip()
+            preferred_cond_prob = float(line_decision.get("preferred_direction_conditional_prob", 0.0))
+            preferred_gap = abs(float(line_decision.get("over_prob", 0.5)) - float(line_decision.get("under_prob", 0.5)))
+            support_strength = float(line_decision.get("support_strength", 0.0))
+            instability = float(line_decision.get("instability_score", 1.0))
+            fragility = float(line_decision.get("fragility_score", 1.0))
+            near_miss_over = bool(
+                not trade_eligible
+                and preferred_dir == "OVER"
+                and preferred_cond_prob >= 0.62  # near the standard 0.63 threshold
+                and preferred_gap >= 0.05        # near the standard 0.06 gap
+                and line_no_trade_prob < 0.35     # strong directional signal
+                and raw_edge > 0.5               # meaningful raw model edge
+                and support_strength >= 0.45     # strong empirical support
+                and instability < 0.45           # stable signal
+                and fragility < 0.50             # not fragile
+                and belief_conf >= 0.60          # high model confidence
+                and feas >= 0.60                 # high feasibility
+            )
+            if near_miss_over:
+                trade_eligible = True
+                action_direction = "OVER"
+
             action_is_opposite = bool(
                 trade_eligible
                 and action_direction in {"OVER", "UNDER"}
@@ -872,6 +919,40 @@ def build_play_rows(
                 )
             effective_expected_rate = sidecar_effective_rate if trade_eligible else adjusted_expected_rate
             expected_loss_rate = float(np.clip(1.0 - effective_expected_rate - historical_push_rate, 0.0, 1.0))
+
+            # Apply confidence discount for near-miss OVER relaxation
+            if near_miss_over:
+                # Reduce effective rate slightly to reflect the lower confidence
+                near_miss_discount = float(np.clip(0.63 - preferred_cond_prob, 0.0, 0.07)) * 0.5
+                effective_expected_rate = float(np.clip(effective_expected_rate - near_miss_discount, 0.50, 0.95))
+                expected_loss_rate = float(np.clip(1.0 - effective_expected_rate - historical_push_rate, 0.0, 1.0))
+
+            # --- Direction-aware win-rate adjustment ---
+            # Apply empirically-calibrated adjustments based on direction,
+            # target, edge magnitude, and market mispricing signals.
+            direction_result = classify_direction_quality(
+                target=target,
+                direction=effective_direction,
+                abs_edge=effective_abs_gap,
+                raw_edge=raw_edge,
+                baseline=safe_float(row.get(f"baseline_{target}"), default=0.0),
+                market_line=market,
+                spike_probability=safe_float(row.get(f"{target}_spike_probability"), default=0.5),
+                uncertainty_sigma=safe_float(row.get(f"{target}_uncertainty_sigma"), default=1.0),
+                belief_conf=belief_conf,
+                feasibility=feas,
+                history_rows=int(row.get("history_rows", 0)),
+                expected_win_rate=effective_expected_rate,
+            )
+            direction_adjustment = float(direction_result["direction_adjustment"])
+            if abs(direction_adjustment) > 1e-6:
+                effective_expected_rate = float(np.clip(
+                    effective_expected_rate + direction_adjustment, 0.50, 0.95,
+                ))
+                expected_loss_rate = float(np.clip(
+                    1.0 - effective_expected_rate - historical_push_rate, 0.0, 1.0,
+                ))
+
             if not trade_eligible:
                 adjusted_recommendation = "pass"
             elif adjusted_recommendation == "pass":
@@ -908,6 +989,7 @@ def build_play_rows(
                     "line_action_direction": action_direction,
                     "line_action_is_opposite": action_is_opposite,
                     "line_decision_trade_eligible": bool(line_decision.get("trade_eligible", False)),
+                    "line_near_miss_over_relaxed": bool(near_miss_over),
                     "line_over_prob": line_over_prob,
                     "line_under_prob": line_under_prob,
                     "line_no_trade_prob": line_no_trade_prob,
@@ -980,6 +1062,12 @@ def build_play_rows(
                     "tail_imbalance": float(effective_risk_profile["tail_imbalance"]),
                     "spike_flag": bool(effective_risk_profile["spike_flag"]),
                     "adjusted_abs_edge": effective_abs_gap,
+                    "direction_adjustment": float(direction_result["direction_adjustment"]),
+                    "mispricing_detected": bool(direction_result["mispricing_detected"]),
+                    "mispricing_direction": str(direction_result["mispricing_direction"]),
+                    "mispricing_strength": float(direction_result["mispricing_strength"]),
+                    "over_quality_tier": str(direction_result["over_quality_tier"]),
+                    "direction_classification_source": str(direction_result["classification_source"]),
                     "history_rows": int(row.get("history_rows", 0)),
                     "last_history_date": row.get("last_history_date"),
                     "csv": row.get("csv"),

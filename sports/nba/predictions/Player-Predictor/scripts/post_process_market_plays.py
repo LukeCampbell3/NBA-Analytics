@@ -186,6 +186,31 @@ except Exception:  # pragma: no cover - fallback for standalone execution
             return (1.0 - normalized).clip(lower=0.0, upper=1.0)
         return float(np.clip(1.0 - float(normalized), 0.0, 1.0))
 
+try:
+    from decision_engine.direction_classifier import (
+        annotate_direction_quality as annotate_direction_quality_fn,
+        DirectionClassifierConfig,
+    )
+except Exception:  # pragma: no cover - fallback when direction classifier is unavailable
+    def annotate_direction_quality_fn(
+        candidates: pd.DataFrame,
+        *,
+        config=None,
+    ) -> pd.DataFrame:
+        out = candidates.copy()
+        out["direction_adjustment"] = 0.0
+        out["direction_adjusted_win_rate"] = pd.to_numeric(
+            out.get("expected_win_rate"), errors="coerce"
+        ).fillna(0.5)
+        out["mispricing_detected"] = False
+        out["mispricing_direction"] = ""
+        out["mispricing_strength"] = 0.0
+        out["over_quality_tier"] = "n/a"
+        out["direction_classification_source"] = "module_missing"
+        return out
+
+    DirectionClassifierConfig = None
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Post-process selected market plays into a final board.")
@@ -4254,6 +4279,58 @@ def compute_final_board(
         calibrator_payload=selected_board_calibrator,
         run_date_hint=selected_board_calibration_month,
     )
+
+    # --- Direction-aware win-rate adjustment ---
+    # Apply empirically-calibrated adjustments based on direction, target,
+    # edge magnitude, and market mispricing signals.  The adjustment is
+    # applied AFTER the board calibrator so the calibrator's safety caps
+    # remain authoritative.  The direction classifier only provides a
+    # modest lift/penalty that cannot override calibrator haircuts.
+    out = annotate_direction_quality_fn(out)
+    direction_adj = pd.to_numeric(out.get("direction_adjustment"), errors="coerce").fillna(0.0)
+    has_adjustment = direction_adj.abs() > 1e-6
+    if has_adjustment.any():
+        # Apply adjustment but cap so it cannot push win rate above the
+        # post-calibration rate (prevents undoing calibrator haircuts).
+        # The direction classifier can only lift within the calibrator's
+        # already-approved range, or penalize below it.
+        calibrated_rate = pd.to_numeric(
+            out.get("expected_win_rate"), errors="coerce"
+        ).fillna(0.5)
+        positive_adj = direction_adj.loc[has_adjustment].clip(lower=0.0)
+        negative_adj = direction_adj.loc[has_adjustment].clip(upper=0.0)
+        current_rate = calibrated_rate.loc[has_adjustment]
+        # Positive adjustments: only apply if direction is UNDER (already strong)
+        # or if the adjustment is from mispricing detection.  For OVERs, the
+        # calibrator haircut is authoritative — we don't add back.
+        direction_series = out.loc[has_adjustment, "direction"].astype(str).str.upper().str.strip()
+        mispricing_mask = pd.to_numeric(
+            out.loc[has_adjustment, "mispricing_detected"], errors="coerce"
+        ).fillna(0).astype(bool)
+        # Allow positive adjustments for UNDERs and mispriced OVERs only
+        allow_positive = (direction_series == "UNDER") | mispricing_mask
+        effective_adj = negative_adj.copy()
+        effective_adj.loc[allow_positive] = effective_adj.loc[allow_positive] + positive_adj.loc[allow_positive]
+        adjusted_rate = (current_rate + effective_adj).clip(lower=0.50, upper=0.95)
+        out.loc[has_adjustment, "expected_win_rate"] = adjusted_rate
+        out.loc[has_adjustment, "expected_loss_rate"] = np.clip(
+            1.0 - out.loc[has_adjustment, "expected_win_rate"] - pd.to_numeric(
+                out.loc[has_adjustment, "expected_push_rate"], errors="coerce"
+            ).fillna(0.0),
+            0.0, 1.0,
+        )
+        out.loc[has_adjustment, "p_calibrated"] = out.loc[has_adjustment, "expected_win_rate"]
+        out.loc[has_adjustment, "board_play_win_prob"] = out.loc[has_adjustment, "p_calibrated"]
+        out.loc[has_adjustment, "ev"] = (
+            out.loc[has_adjustment, "expected_win_rate"] * payout
+            - pd.to_numeric(out.loc[has_adjustment, "expected_loss_rate"], errors="coerce").fillna(0.0)
+        )
+        out.loc[has_adjustment, "ev_adjusted"] = out.loc[has_adjustment, "ev"] * (
+            1.0 + float(edge_adjust_k) * (
+                pd.to_numeric(out.loc[has_adjustment, "edge_scale"], errors="coerce").fillna(1.0) - 1.0
+            )
+        )
+
     out["ranking_mode"] = str(selection_mode or ranking_mode)
 
     temp = max(float(thompson_temperature), 1e-6)

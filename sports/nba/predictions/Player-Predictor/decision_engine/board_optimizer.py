@@ -308,10 +308,24 @@ def board_penalty(board: pd.DataFrame, config: StrategyConfig) -> float:
 
     uncertainty = float(pd.to_numeric(board["belief_uncertainty_normalized"], errors="coerce").fillna(0.0).mean())
     dependency = _pairwise_dependency_penalty(board, config)
+
+    # --- Direction diversity bonus: reduce penalty when the board has a mix
+    # of OVER and UNDER picks.  A board that is 100% one direction carries
+    # more correlated risk than a balanced board.  The bonus is small enough
+    # that it never overrides quality, but large enough to break ties in
+    # favour of diversity when qualified OVERs exist.
+    direction_series = board["direction"].astype(str).str.upper().str.strip()
+    n_over = int((direction_series == "OVER").sum())
+    n_under = int((direction_series == "UNDER").sum())
+    n_total = max(1, n_over + n_under)
+    direction_balance = float(min(n_over, n_under)) / float(n_total)  # 0 = mono, 0.5 = perfect balance
+    direction_diversity_bonus = 0.025 * direction_balance  # max ~0.0125 bonus
+
     return (
         float(config.board_objective_lambda_corr) * dependency
         + float(config.board_objective_lambda_conc) * concentration
         + float(config.board_objective_lambda_unc) * uncertainty
+        - direction_diversity_bonus
     )
 
 
