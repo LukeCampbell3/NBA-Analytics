@@ -90,31 +90,31 @@ class DailyPredictionsPage {
             const n = legs.length;
             const jointPct = this.formatPct(parlay.joint_probability || parlay.adjusted_probability);
             const type = String(parlay.type || "primary").toUpperCase();
-            const payout = Math.pow(1 + 100 / 110, n);
-            const payoutText = `${payout.toFixed(1)}x`;
+            const parlayOdds = parlay.odds_american || `+${Math.round((parlay.odds_decimal - 1) * 100)}`;
+            const parlayPayout = parlay.payout_per_dollar ? `$${(parlay.payout_per_dollar * 10).toFixed(0)} on $10` : "";
             const legsHtml = legs.map((leg, li) => {
                 const name = this.escapeHtml(String(leg.player || ""));
                 const target = this.escapeHtml(this.formatTarget(leg.target));
                 const dir = this.escapeHtml(String(leg.direction || "").toUpperCase());
                 const line = this.formatNumber(leg.market_line);
-                const prob = this.formatPct(leg.hit_probability);
+                const odds = leg.odds_american || "-110";
                 const team = this.escapeHtml(String(leg.team || ""));
                 return `<div class="parlay-leg">
                     <span class="parlay-leg-num">${li + 1}</span>
                     <span class="parlay-leg-name">${name} <small>(${team})</small></span>
                     <span class="parlay-leg-prop">${target} ${dir} ${this.escapeHtml(line)}</span>
-                    <span class="parlay-leg-prob">${this.escapeHtml(prob)}</span>
+                    <span class="parlay-leg-prob">${this.escapeHtml(String(odds))}</span>
                 </div>`;
             }).join("");
             return `<article class="parlay-ticket">
                 <div class="parlay-ticket-header">
                     <span class="parlay-ticket-badge">${this.escapeHtml(type)} PARLAY</span>
                     <span class="parlay-ticket-legs">${n}-LEG</span>
-                    <span class="parlay-ticket-payout">${this.escapeHtml(payoutText)} PAYOUT</span>
+                    <span class="parlay-ticket-payout">${this.escapeHtml(String(parlayOdds))}</span>
                 </div>
                 <div class="parlay-ticket-prob">
-                    <span class="parlay-ticket-prob-label">Combined hit probability</span>
-                    <span class="parlay-ticket-prob-value">${this.escapeHtml(jointPct)}</span>
+                    <span class="parlay-ticket-prob-label">${this.escapeHtml(parlayPayout)}</span>
+                    <span class="parlay-ticket-prob-value">${this.escapeHtml(jointPct)} hit rate</span>
                 </div>
                 <div class="parlay-ticket-legs-list">${legsHtml}</div>
             </article>`;

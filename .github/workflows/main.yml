@@ -2,7 +2,8 @@ name: Daily Predictions Pipeline
 
 on:
   schedule:
-    - cron: "0 6 * * *"
+    # Run at 2 PM ET (18:00 UTC) — after lines are posted, before games start
+    - cron: "0 18 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -17,6 +18,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
+    env:
+      ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -27,41 +31,42 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pandas numpy scikit-learn requests
+          pip install pandas numpy scikit-learn requests pyyaml
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Run daily predictions (skip external API calls)
+      # NBA: skip stats.nba.com (blocked from CI) but fetch market odds via Odds API
+      # MLB: fetch market data from rotowire (works from CI)
+      # Both: use checked-in player data (updated when you run locally)
+      - name: Run daily predictions pipeline
         run: |
           python sports/site/pipeline/run_daily_predictions.py \
             --force-run \
             --nba-skip-update-data \
-            --nba-skip-collect-market \
             --nba-skip-align \
             --nba-skip-backtest \
             --nba-skip-cutoff-meta-monitor \
             --nba-allow-heuristic-fallback \
             --nba-fallback-to-latest-manifest-on-failure \
-            --mlb-skip-fetch-market \
             --mlb-skip-update-data
 
       - name: Build static site
         if: always()
         run: python sports/site/pipeline/build_static_site.py
 
-      - name: Upload built site artifact
+      - name: Verify outputs exist
         if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: site-dist-${{ github.run_id }}
-          path: dist
-          if-no-files-found: warn
-          retention-days: 7
+        run: |
+          echo "=== Checking outputs ==="
+          test -f dist/nba/data/daily_predictions.json && echo "NBA predictions: OK" || echo "NBA predictions: MISSING"
+          test -f dist/mlb/data/daily_predictions.json && echo "MLB predictions: OK" || echo "MLB predictions: MISSING"
+          test -f dist/index.html && echo "Site index: OK" || echo "Site index: MISSING"
 
-      - name: Commit and push generated outputs
+      - name: Commit and push
         if: github.ref_name == github.event.repository.default_branch
         run: |
           git config user.name "github-actions"
@@ -70,7 +75,21 @@ jobs:
             dist/ \
             sports/nba/web/data/daily_predictions.json \
             sports/nba/web/data/cards.json \
-            sports/mlb/web/data/daily_predictions.json
+            sports/mlb/web/data/daily_predictions.json \
+            sports/mlb/data/predictions/daily_runs/ \
+            sports/nba/predictions/Player-Predictor/model/analysis/daily_runs/
           git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "Auto-update daily predictions [skip ci]"
+          git commit -m "Daily predictions update $(date -u +%Y-%m-%d) [skip ci]"
           git push
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: predictions-${{ github.run_id }}
+          path: |
+            dist/
+            sports/nba/web/data/daily_predictions.json
+            sports/mlb/web/data/daily_predictions.json
+          if-no-files-found: warn
+          retention-days: 7
