@@ -544,7 +544,20 @@ def build_daily_board(
         if len(board.singles) >= cfg.singles_max_picks:
             break
 
-    # --- 5. Summary diagnostics ---
+    # --- 5. Apply daily risk management ---
+    try:
+        from .daily_risk_manager import assess_daily_risk, DailyRiskConfig
+        risk_result = assess_daily_risk(board.singles, config=DailyRiskConfig())
+        board.singles = risk_result["approved_picks"]
+        board.diagnostics["risk_score"] = risk_result["risk_score"]
+        board.diagnostics["risk_adjustments"] = risk_result["adjustments_made"]
+        board.diagnostics["daily_max_loss_pct"] = risk_result.get("total_exposure_pct", 0)
+        board.diagnostics["game_concentration"] = risk_result["game_concentration"]
+        board.diagnostics["unique_games"] = risk_result.get("unique_games", 0)
+    except Exception:
+        pass
+
+    # --- 6. Summary diagnostics ---
     board.diagnostics.update({
         "primary_parlays": len(board.primary_parlays),
         "secondary_parlays": len(board.secondary_parlays),
