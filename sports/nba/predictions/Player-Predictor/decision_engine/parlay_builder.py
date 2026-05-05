@@ -157,6 +157,11 @@ def _is_eligible_leg(row: dict, cfg: ParlayConfig) -> tuple[bool, str]:
     if feas < cfg.min_leg_feasibility:
         return False, "low_feasibility"
 
+    # Precision filter gate: reject "danger" tier picks
+    pf_tier = str(row.get("pf_tier", "")).lower()
+    if pf_tier == "danger":
+        return False, "precision_danger"
+
     return True, "eligible"
 
 
@@ -167,12 +172,14 @@ def _leg_score(row: dict) -> float:
     - UNDER with high edge = most profitable segment
     - Edge magnitude is the strongest predictor of win rate
     """
-    wr = _sf(row.get("expected_win_rate"), 0.5)
+    # Use enhanced win rate if available, otherwise base
+    wr = _sf(row.get("precision_enhanced_win_rate", row.get("expected_win_rate")), 0.5)
     ev = _sf(row.get("ev"))
     edge = _sf(row.get("abs_edge"))
     conf = _sf(row.get("final_confidence"))
     quality = _sf(row.get("parlay_leg_quality_score", row.get("final_pool_quality_score")), 0.5)
     direction = str(row.get("direction", "")).upper()
+    enhancement_adj = _sf(row.get("precision_enhancement_adj"), 0.0)
     
     # UNDER bonus: UNDERs historically win at 68% vs OVERs at 50%
     direction_bonus = 0.08 if direction == "UNDER" else 0.0
@@ -180,13 +187,21 @@ def _leg_score(row: dict) -> float:
     # Edge is the strongest signal — normalize to 0-1 range
     edge_score = min(edge / 2.5, 1.0)
     
+    # Enhancement bonus: picks that passed all four checks get a lift
+    enhancement_score = float(np.clip(enhancement_adj * 5.0, -0.5, 0.5)) + 0.5
+
+    # Precision filter score (0-1, from empirical edge-to-sigma analysis)
+    pf_score = _sf(row.get("pf_score"), 0.5)
+    
     return (
-        0.30 * wr
-        + 0.25 * edge_score
-        + 0.15 * min(ev + 0.05, 0.35)  # shift ev so slightly negative ev isn't zero
-        + 0.10 * conf
-        + 0.10 * quality
-        + 0.10 * direction_bonus / 0.08  # normalize to 0-1
+        0.20 * wr
+        + 0.18 * edge_score
+        + 0.18 * pf_score
+        + 0.12 * min(ev + 0.05, 0.35)
+        + 0.08 * conf
+        + 0.08 * quality
+        + 0.08 * direction_bonus / 0.08
+        + 0.08 * enhancement_score
     )
 
 
@@ -315,6 +330,27 @@ def build_daily_board(
     if candidates.empty:
         board.diagnostics = {"status": "empty_candidates"}
         return board
+
+    # --- 0. Apply precision enhancements ---
+    try:
+        from .precision_enhancements import annotate_precision_enhancements
+        candidates = annotate_precision_enhancements(candidates)
+    except Exception:
+        pass  # graceful fallback if enhancements unavailable
+
+    # --- 0b. Apply precision filter ---
+    try:
+        from .precision_filter import annotate_precision_filter
+        candidates = annotate_precision_filter(candidates)
+    except Exception:
+        pass  # graceful fallback
+
+    # --- 0c. Apply streak regression ---
+    try:
+        from .streak_regression import annotate_streak_regression
+        candidates = annotate_streak_regression(candidates)
+    except Exception:
+        pass  # graceful fallback
 
     # --- 1. Annotate eligibility ---
     rows: list[dict] = []
@@ -472,17 +508,37 @@ def build_daily_board(
             continue
         seen_players.add(player)
 
-        # Assign stake tier
-        wr = _sf(r.get("expected_win_rate"))
-        if wr >= cfg.single_high_threshold:
-            r["stake_tier"] = "high"
-            r["stake_fraction"] = cfg.single_high_stake
-        elif wr >= cfg.single_med_threshold:
-            r["stake_tier"] = "medium"
-            r["stake_fraction"] = cfg.single_med_stake
-        else:
-            r["stake_tier"] = "low"
-            r["stake_fraction"] = cfg.single_low_stake
+        # Assign stake via Kelly sizing
+        wr = _sf(r.get("precision_enhanced_win_rate", r.get("expected_win_rate")), 0.5)
+        pf_tier = str(r.get("pf_tier", "consider"))
+        pf_score = _sf(r.get("pf_score"), 0.5)
+
+        # Add streak regression adjustment to win rate
+        streak_adj = _sf(r.get("streak_regression_adj"), 0.0)
+        wr_adjusted = float(np.clip(wr + streak_adj, 0.50, 0.95))
+
+        try:
+            from .kelly_sizing import compute_stake
+            sizing = compute_stake(
+                win_probability=wr_adjusted,
+                precision_tier=pf_tier,
+                precision_score=pf_score,
+                bankroll=1000.0,
+            )
+            r["stake_tier"] = sizing["sizing_tier"]
+            r["stake_fraction"] = sizing["stake_fraction"]
+            r["kelly_raw"] = sizing["kelly_raw"]
+        except Exception:
+            # Fallback to simple tier sizing
+            if wr >= cfg.single_high_threshold:
+                r["stake_tier"] = "high"
+                r["stake_fraction"] = cfg.single_high_stake
+            elif wr >= cfg.single_med_threshold:
+                r["stake_tier"] = "medium"
+                r["stake_fraction"] = cfg.single_med_stake
+            else:
+                r["stake_tier"] = "low"
+                r["stake_fraction"] = cfg.single_low_stake
 
         board.singles.append(r)
         if len(board.singles) >= cfg.singles_max_picks:
