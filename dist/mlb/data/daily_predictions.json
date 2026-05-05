@@ -702,60 +702,68 @@
       {
         "type": "primary",
         "leg_count": 3,
-        "joint_probability": 0.8909733021412176,
-        "adjusted_probability": 0.945716,
-        "avg_hit_probability": 0.9623413333333334,
-        "score": 0.8912772526030033,
+        "joint_probability": 0.883467225603922,
+        "adjusted_probability": 0.945443,
+        "avg_hit_probability": 0.959656,
         "n_games": 3,
         "n_teams": 3,
+        "odds_american": "+596",
+        "odds_decimal": 6.96,
+        "payout_per_dollar": 5.96,
         "legs": [
           {
-            "player": "Bryce Harper",
-            "team": "MIA",
-            "opponent": "PHI",
+            "player": "Zach Neto",
+            "team": "LAA",
+            "opponent": "CWS",
             "target": "TB",
             "direction": "UNDER",
-            "market_line": 6.5,
-            "hit_probability": 0.945716,
-            "abs_edge": 5.251379,
-            "confidence_tier": "elite"
+            "market_line": 1.5,
+            "hit_probability": 0.953278,
+            "abs_edge": 1.338447,
+            "confidence_tier": "elite",
+            "odds_american": -110,
+            "odds_decimal": 1.909
           },
           {
-            "player": "Carter Jensen",
-            "team": "KC",
-            "opponent": "CLE",
+            "player": "Trevor Story",
+            "team": "DET",
+            "opponent": "BOS",
             "target": "R",
             "direction": "UNDER",
             "market_line": 1.5,
-            "hit_probability": 0.97801,
-            "abs_edge": 1.402451,
-            "confidence_tier": "elite"
+            "hit_probability": 0.980247,
+            "abs_edge": 1.454173,
+            "confidence_tier": "elite",
+            "odds_american": -110,
+            "odds_decimal": 1.909
           },
           {
-            "player": "Masyn Winn",
-            "team": "STL",
-            "opponent": "MIL",
-            "target": "R",
+            "player": "Dylan Beavers",
+            "team": "MIA",
+            "opponent": "BAL",
+            "target": "TB",
             "direction": "UNDER",
             "market_line": 1.5,
-            "hit_probability": 0.963298,
-            "abs_edge": 1.24696,
-            "confidence_tier": "elite"
+            "hit_probability": 0.945443,
+            "abs_edge": 1.264278,
+            "confidence_tier": "strong",
+            "odds_american": -110,
+            "odds_decimal": 1.909
           }
         ]
       }
     ],
     "diagnostics": {
       "total_candidates": 6,
-      "eligible_legs": 6,
+      "eligible_legs": 5,
       "eligible_by_target": {
-        "TB": 3,
-        "R": 3
+        "TB": 4,
+        "R": 1
       },
       "primary_parlays": 1,
-      "singles": 5,
-      "primary_avg_hit_prob": 0.9623413333333334,
-      "primary_joint_prob": 0.8909733021412176,
+      "singles": 3,
+      "primary_avg_hit_prob": 0.959656,
+      "primary_joint_prob": 0.883467225603922,
       "primary_leg_count": 3
     }
   }

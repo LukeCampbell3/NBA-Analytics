@@ -83,30 +83,30 @@ class DailyPredictionsPage {
             const n = legs.length;
             const jointPct = this.formatPct(parlay.joint_probability || parlay.adjusted_probability);
             const type = String(parlay.type || 'primary').toUpperCase();
-            const payout = Math.pow(1 + 100 / 110, n);
-            const payoutText = `${payout.toFixed(1)}x`;
+            const parlayOdds = parlay.odds_american || `+${Math.round((parlay.odds_decimal - 1) * 100)}`;
+            const parlayPayout = parlay.payout_per_dollar ? `$${(parlay.payout_per_dollar * 10).toFixed(0)} on $10` : '';
             const legsHtml = legs.map((leg, li) => {
                 const name = this.escapeHtml(String(leg.player_display_name || leg.player || '').replace(/_/g, ' '));
                 const target = this.escapeHtml(String(leg.target || ''));
                 const dir = this.escapeHtml(String(leg.direction || '').toUpperCase());
                 const line = this.formatNumber(leg.market_line);
-                const wr = this.formatPct(leg.win_rate || leg.hit_probability || leg.expected_win_rate);
+                const odds = leg.odds_american || '-110';
                 return `<div class="parlay-leg">
                     <span class="parlay-leg-num">${li + 1}</span>
                     <span class="parlay-leg-name">${name}</span>
                     <span class="parlay-leg-prop">${target} ${dir} ${this.escapeHtml(line)}</span>
-                    <span class="parlay-leg-prob">${this.escapeHtml(wr)}</span>
+                    <span class="parlay-leg-prob">${this.escapeHtml(String(odds))}</span>
                 </div>`;
             }).join('');
             return `<article class="parlay-ticket">
                 <div class="parlay-ticket-header">
                     <span class="parlay-ticket-badge">${this.escapeHtml(type)} PARLAY</span>
                     <span class="parlay-ticket-legs">${n}-LEG</span>
-                    <span class="parlay-ticket-payout">${this.escapeHtml(payoutText)} PAYOUT</span>
+                    <span class="parlay-ticket-payout">${this.escapeHtml(String(parlayOdds))}</span>
                 </div>
                 <div class="parlay-ticket-prob">
-                    <span class="parlay-ticket-prob-label">Combined hit probability</span>
-                    <span class="parlay-ticket-prob-value">${this.escapeHtml(jointPct)}</span>
+                    <span class="parlay-ticket-prob-label">${this.escapeHtml(parlayPayout)}</span>
+                    <span class="parlay-ticket-prob-value">${this.escapeHtml(jointPct)} hit rate</span>
                 </div>
                 <div class="parlay-ticket-legs-list">${legsHtml}</div>
             </article>`;
@@ -133,12 +133,13 @@ class DailyPredictionsPage {
         const gameText = [play.market_away_team, play.market_home_team].filter(Boolean).join(' @ ');
         const headshotUrl = this.getPlayHeadshotUrl(play);
         const monogram = this.escapeHtml(this.getMonogram(displayName));
+        const odds = play.odds_american || -110;
 
         return `
             <article class="bounty-card" data-direction="${this.escapeAttr(direction)}">
                 <div class="bounty-top">
                     <span class="bounty-rank">#${this.escapeHtml(String(play.rank || '-'))}</span>
-                    <span class="bounty-ev ${ev >= 0 ? 'positive' : 'negative'}">${this.escapeHtml(evText)} EV</span>
+                    <span class="bounty-ev">${this.escapeHtml(String(odds))}</span>
                 </div>
                 <div class="bounty-headshot ${headshotUrl ? '' : 'is-fallback'}">
                     ${headshotUrl ? `<img src="${this.escapeAttr(headshotUrl)}" alt="${this.escapeAttr(displayName)}" loading="lazy" onerror="this.remove(); this.parentElement.classList.add('is-fallback');" />` : ''}
@@ -150,7 +151,7 @@ class DailyPredictionsPage {
                     <span class="bounty-direction">${this.escapeHtml(direction)}</span>
                     <span class="bounty-line">${this.escapeHtml(lineText)}</span>
                 </div>
-                <div class="bounty-meta">${this.escapeHtml(gameText)}</div>
+                <div class="bounty-meta">${this.escapeHtml(gameText)}${evText ? ' | ' + this.escapeHtml(evText) + ' EV' : ''}</div>
             </article>
         `;
     }
