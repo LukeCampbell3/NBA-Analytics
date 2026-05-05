@@ -1,0 +1,109 @@
+{
+  "parlays": [
+    {
+      "type": "primary",
+      "leg_count": 3,
+      "joint_probability": 0.8525320337067481,
+      "adjusted_probability": 0.903683955729153,
+      "avg_hit_probability": 0.9482146666666665,
+      "n_games": 3,
+      "n_teams": 3,
+      "score": 0.8467689514164695,
+      "legs": [
+        {
+          "player": "Zach Neto",
+          "team": "LAA",
+          "opponent": "CWS",
+          "target": "TB",
+          "direction": "UNDER",
+          "market_line": 1.5,
+          "hit_probability": 0.953278,
+          "abs_edge": 1.338447,
+          "confidence_tier": "elite"
+        },
+        {
+          "player": "Richie Palacios",
+          "team": "TB",
+          "opponent": "TOR",
+          "target": "TB",
+          "direction": "UNDER",
+          "market_line": 1.0,
+          "hit_probability": 0.945923,
+          "abs_edge": 1.0,
+          "confidence_tier": "elite"
+        },
+        {
+          "player": "Dylan Beavers",
+          "team": "MIA",
+          "opponent": "BAL",
+          "target": "TB",
+          "direction": "UNDER",
+          "market_line": 1.5,
+          "hit_probability": 0.945443,
+          "abs_edge": 1.264278,
+          "confidence_tier": "strong"
+        }
+      ]
+    }
+  ],
+  "singles": [
+    {
+      "player": "Adrian Del Castillo",
+      "team": "PIT",
+      "opponent": "AZ",
+      "target": "TB",
+      "direction": "OVER",
+      "market_line": 0.5,
+      "hit_probability": 0.8766,
+      "abs_edge": 4.71783,
+      "confidence_tier": "elite",
+      "stake_tier": "elite",
+      "stake_fraction": 0.015,
+      "ev_per_unit": 6.092452,
+      "in_parlay": false
+    },
+    {
+      "player": "Colton Cowser",
+      "team": "MIA",
+      "opponent": "BAL",
+      "target": "TB",
+      "direction": "UNDER",
+      "market_line": 1.5,
+      "hit_probability": 0.922454,
+      "abs_edge": 1.109028,
+      "confidence_tier": "elite",
+      "stake_tier": "elite",
+      "stake_fraction": 0.015,
+      "ev_per_unit": 0.823137,
+      "in_parlay": false
+    },
+    {
+      "player": "Richie Palacios",
+      "team": "TB",
+      "opponent": "TOR",
+      "target": "TB",
+      "direction": "UNDER",
+      "market_line": 1.0,
+      "hit_probability": 0.945923,
+      "abs_edge": 1.0,
+      "confidence_tier": "elite",
+      "stake_tier": "elite",
+      "stake_fraction": 0.015,
+      "ev_per_unit": 0.508032,
+      "in_parlay": true
+    }
+  ],
+  "diagnostics": {
+    "total_candidates": 6,
+    "eligible_legs": 6,
+    "eligible_by_target": {
+      "TB": 6
+    },
+    "primary_parlays": 1,
+    "singles": 3,
+    "primary_avg_hit_prob": 0.9482146666666665,
+    "primary_joint_prob": 0.8525320337067481,
+    "primary_leg_count": 3
+  },
+  "source_csv": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260505\\daily_prediction_pool_20260505_high_precision_predictions.csv"
+}
