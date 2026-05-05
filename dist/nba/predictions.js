@@ -138,8 +138,8 @@ class DailyPredictionsPage {
         return `
             <article class="bounty-card" data-direction="${this.escapeAttr(direction)}">
                 <div class="bounty-top">
-                    <span class="bounty-rank">#${this.escapeHtml(String(play.rank || '-'))}</span>
-                    <span class="bounty-ev">${this.escapeHtml(String(odds))}</span>
+                    <span class="bounty-wanted">WANTED</span>
+                    <span class="bounty-odds">${this.escapeHtml(String(odds))}</span>
                 </div>
                 <div class="bounty-headshot ${headshotUrl ? '' : 'is-fallback'}">
                     ${headshotUrl ? `<img src="${this.escapeAttr(headshotUrl)}" alt="${this.escapeAttr(displayName)}" loading="lazy" onerror="this.remove(); this.parentElement.classList.add('is-fallback');" />` : ''}

@@ -320,6 +320,24 @@ body.theme-dark .theme-toggle-radial {
     margin-bottom: 10px;
 }
 
+.bounty-wanted {
+    font-family: 'Rye', 'Barlow Condensed', serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.10em;
+    color: #5a3a1a;
+}
+
+.bounty-odds {
+    font-family: 'Manrope', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: #2a6b4a;
+    background: rgba(42, 107, 74, 0.08);
+    border: 1px solid rgba(42, 107, 74, 0.2);
+    border-radius: 4px;
+    padding: 2px 8px;
+}
+
 .bounty-headshot {
     width: 100%;
     aspect-ratio: 1 / 0.85;
@@ -352,22 +370,6 @@ body.theme-dark .theme-toggle-radial {
 .bounty-headshot.is-fallback .bounty-headshot-fallback {
     opacity: 1;
 }
-
-.bounty-rank {
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    color: #8a6a3a;
-}
-
-.bounty-ev {
-    font-size: 0.75rem;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-}
-
-.bounty-ev.positive { color: #2a6b4a; }
-.bounty-ev.negative { color: #8b3a2a; }
 
 .bounty-name {
     font-family: 'Rye', 'Barlow Condensed', serif;

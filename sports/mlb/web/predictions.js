@@ -149,19 +149,18 @@ class DailyPredictionsPage {
         const displayName = this.getPlayDisplayName(play);
         const target = this.escapeHtml(this.formatTarget(play.target));
         const lineText = this.formatNumber(play.market_line);
-        const edge = Number(play.edge) || 0;
-        const edgeText = Number.isFinite(edge) ? `${edge >= 0 ? "+" : ""}${edge.toFixed(2)}` : "";
         const hitRate = this.formatPct(play.estimated_graded_hit_rate);
         const gameText = [play.market_away_team, play.market_home_team].filter(Boolean).join(" @ ");
         const team = this.escapeHtml(String(play.team || ""));
         const headshotUrl = this.getPlayHeadshotUrl(play);
         const monogram = this.escapeHtml(this.getMonogram(displayName));
+        const odds = play.odds_american || -110;
 
         return `
             <article class="bounty-card" data-direction="${this.escapeAttr(direction)}">
                 <div class="bounty-top">
-                    <span class="bounty-rank">#${this.escapeHtml(String(play.rank || "-"))}</span>
-                    <span class="bounty-ev positive">${this.escapeHtml(hitRate)} HIT</span>
+                    <span class="bounty-wanted">WANTED</span>
+                    <span class="bounty-odds">${this.escapeHtml(String(odds))}</span>
                 </div>
                 <div class="bounty-headshot ${headshotUrl ? "" : "is-fallback"}">
                     ${headshotUrl ? `<img src="${this.escapeAttr(headshotUrl)}" alt="${this.escapeAttr(displayName)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove(); this.parentElement.classList.add('is-fallback');" />` : ""}
@@ -173,7 +172,7 @@ class DailyPredictionsPage {
                     <span class="bounty-direction">${this.escapeHtml(direction)}</span>
                     <span class="bounty-line">${this.escapeHtml(lineText)}</span>
                 </div>
-                <div class="bounty-meta">${team ? this.escapeHtml(team) + " · " : ""}${this.escapeHtml(gameText)}</div>
+                <div class="bounty-meta">${team ? this.escapeHtml(team) + " | " : ""}${this.escapeHtml(gameText)}${hitRate ? " | " + this.escapeHtml(hitRate) + " HIT" : ""}</div>
             </article>
         `;
     }
