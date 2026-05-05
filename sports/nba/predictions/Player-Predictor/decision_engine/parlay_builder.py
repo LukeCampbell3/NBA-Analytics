@@ -363,6 +363,37 @@ def build_daily_board(
         d["_game_key"] = _game_key(d)
         rows.append(d)
 
+    # --- 1b. Validate eligible legs against recent form ---
+    validated_count = 0
+    rejected_by_validator = 0
+    try:
+        from .leg_validator import validate_leg, LegValidatorConfig
+        val_cfg = LegValidatorConfig()
+        for r in rows:
+            if not r["parlay_eligible"]:
+                continue
+            result = validate_leg(
+                player=str(r.get("player", "")),
+                target=str(r.get("target", "")),
+                direction=str(r.get("direction", "")),
+                market_line=float(r.get("market_line", 0) or 0),
+                game_date=str(r.get("market_date", ""))[:10],
+                csv_path=str(r.get("csv", "")),
+                config=val_cfg,
+            )
+            r["leg_validation"] = result
+            if not result["valid"]:
+                r["parlay_eligible"] = False
+                r["parlay_reject_reason"] = f"validator:{result['reason']}"
+                rejected_by_validator += 1
+            else:
+                validated_count += 1
+                # Boost score for legs with strong recent form
+                if result.get("hit_rate", 0) >= 0.80:
+                    r["parlay_leg_score"] *= 1.15
+    except Exception:
+        pass
+
     board.all_candidates = rows
     eligible_legs = [r for r in rows if r["parlay_eligible"]]
     under_legs = [r for r in eligible_legs if str(r.get("direction", "")).upper() == "UNDER"]
@@ -377,6 +408,8 @@ def build_daily_board(
         "eligible_legs": len(eligible_legs),
         "under_legs": len(under_legs),
         "over_legs": len(over_legs),
+        "validated_legs": validated_count,
+        "rejected_by_validator": rejected_by_validator,
     }
 
     # --- 2. Build primary parlays (UNDER-focused) ---
