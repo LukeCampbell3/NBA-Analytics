@@ -1,0 +1,140 @@
+{
+  "parlays": [
+    {
+      "type": "primary",
+      "leg_count": 3,
+      "joint_probability": 0.9139732786598869,
+      "adjusted_probability": 0.963298,
+      "avg_hit_probability": 0.9704769999999999,
+      "n_games": 3,
+      "n_teams": 3,
+      "score": 0.9152873232070516,
+      "legs": [
+        {
+          "player": "Will Smith",
+          "team": "HOU",
+          "opponent": "LAD",
+          "target": "R",
+          "direction": "UNDER",
+          "market_line": 1.5,
+          "hit_probability": 0.977158,
+          "abs_edge": 1.388518,
+          "confidence_tier": "elite"
+        },
+        {
+          "player": "Ben Williamson",
+          "team": "TB",
+          "opponent": "TOR",
+          "target": "TB",
+          "direction": "UNDER",
+          "market_line": 2.5,
+          "hit_probability": 0.970975,
+          "abs_edge": 2.0656,
+          "confidence_tier": "elite"
+        },
+        {
+          "player": "Masyn Winn",
+          "team": "STL",
+          "opponent": "MIL",
+          "target": "R",
+          "direction": "UNDER",
+          "market_line": 1.5,
+          "hit_probability": 0.963298,
+          "abs_edge": 1.24696,
+          "confidence_tier": "elite"
+        }
+      ]
+    }
+  ],
+  "singles": [
+    {
+      "player": "David Fry",
+      "team": "KC",
+      "opponent": "CLE",
+      "target": "TB",
+      "direction": "UNDER",
+      "market_line": 4.5,
+      "hit_probability": 0.926811,
+      "abs_edge": 2.80335,
+      "confidence_tier": "elite",
+      "stake_tier": "elite",
+      "stake_fraction": 0.015,
+      "ev_per_unit": 0.662302,
+      "in_parlay": false
+    },
+    {
+      "player": "Bryce Harper",
+      "team": "MIA",
+      "opponent": "PHI",
+      "target": "TB",
+      "direction": "UNDER",
+      "market_line": 6.5,
+      "hit_probability": 0.945716,
+      "abs_edge": 5.251379,
+      "confidence_tier": "elite",
+      "stake_tier": "elite",
+      "stake_fraction": 0.015,
+      "ev_per_unit": 0.254764,
+      "in_parlay": false
+    },
+    {
+      "player": "Will Smith",
+      "team": "HOU",
+      "opponent": "LAD",
+      "target": "R",
+      "direction": "UNDER",
+      "market_line": 1.5,
+      "hit_probability": 0.977158,
+      "abs_edge": 1.388518,
+      "confidence_tier": "elite",
+      "stake_tier": "elite",
+      "stake_fraction": 0.015,
+      "ev_per_unit": 0.618251,
+      "in_parlay": true
+    },
+    {
+      "player": "Ben Williamson",
+      "team": "TB",
+      "opponent": "TOR",
+      "target": "TB",
+      "direction": "UNDER",
+      "market_line": 2.5,
+      "hit_probability": 0.970975,
+      "abs_edge": 2.0656,
+      "confidence_tier": "elite",
+      "stake_tier": "elite",
+      "stake_fraction": 0.015,
+      "ev_per_unit": 0.166471,
+      "in_parlay": true
+    },
+    {
+      "player": "Trent Grisham",
+      "team": "NYY",
+      "opponent": "BAL",
+      "target": "R",
+      "direction": "UNDER",
+      "market_line": 2.5,
+      "hit_probability": 0.887778,
+      "abs_edge": 1.591167,
+      "confidence_tier": "elite",
+      "stake_tier": "elite",
+      "stake_fraction": 0.015,
+      "ev_per_unit": 0.261881,
+      "in_parlay": false
+    }
+  ],
+  "diagnostics": {
+    "total_candidates": 6,
+    "eligible_legs": 6,
+    "eligible_by_target": {
+      "TB": 3,
+      "R": 3
+    },
+    "primary_parlays": 1,
+    "singles": 5,
+    "primary_avg_hit_prob": 0.9704769999999999,
+    "primary_joint_prob": 0.9139732786598869,
+    "primary_leg_count": 3
+  },
+  "source_csv": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260504\\daily_prediction_pool_20260504_high_precision_predictions.csv"
+}
