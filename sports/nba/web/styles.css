@@ -438,6 +438,19 @@ body.theme-dark .theme-toggle-radial {
     color: #1a5a3a;
 }
 
+.parlay-leg-link {
+    color: inherit;
+    text-decoration: none;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 0.12s;
+}
+
+.parlay-leg-link:hover {
+    background: rgba(42, 107, 74, 0.12);
+    text-decoration: underline;
+}
+
 .wanted-card {
     font-family: 'Rye', 'Barlow Condensed', serif;
 }

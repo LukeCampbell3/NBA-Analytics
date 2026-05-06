@@ -103,7 +103,7 @@ class DailyPredictionsPage {
                     <span class="parlay-leg-num">${li + 1}</span>
                     <span class="parlay-leg-name">${name} <small>(${team})</small></span>
                     <span class="parlay-leg-prop">${target} ${dir} ${this.escapeHtml(line)}</span>
-                    <span class="parlay-leg-prob">${this.escapeHtml(String(odds))}</span>
+                    <span class="parlay-leg-prob"><a class="parlay-leg-link" href="${leg.betslip_link || `https://sportsbook.fanduel.com/search?q=${encodeURIComponent(String(leg.player || ''))}&tab=player-props`}" target="_blank" rel="noopener">${this.escapeHtml(String(odds))}</a></span>
                 </div>`;
             }).join("");
             return `<article class="parlay-ticket">
@@ -118,10 +118,9 @@ class DailyPredictionsPage {
                 </div>
                 <div class="parlay-ticket-legs-list">${legsHtml}</div>
                 <div class="parlay-ticket-actions">
-                    <button class="bet-action-btn" onclick="navigator.clipboard.writeText(this.closest('.parlay-ticket').querySelector('.parlay-ticket-legs-list').innerText.replace(/\\d+/g,'').trim())">Copy Slip</button>
-                    <a class="bet-action-btn" href="https://sportsbook.draftkings.com/mlb-player-props" target="_blank" rel="noopener">DraftKings</a>
+                    <button class="bet-action-btn" onclick="navigator.clipboard.writeText(this.closest('.parlay-ticket').querySelector('.parlay-ticket-legs-list').innerText.trim());this.textContent='Copied!';setTimeout(()=>this.textContent='Copy Slip',2000)">Copy Slip</button>
                     <a class="bet-action-btn" href="https://sportsbook.fanduel.com/navigation/mlb" target="_blank" rel="noopener">FanDuel</a>
-                    <a class="bet-action-btn" href="https://www.bet365.com/#/AS/B63/" target="_blank" rel="noopener">bet365</a>
+                    <a class="bet-action-btn" href="https://sportsbook.draftkings.com/mlb-player-props" target="_blank" rel="noopener">DraftKings</a>
                 </div>
             </article>`;
         }).join("");
@@ -179,7 +178,7 @@ class DailyPredictionsPage {
                     <span class="bounty-line">${this.escapeHtml(lineText)}</span>
                 </div>
                 <div class="bounty-meta">${team ? this.escapeHtml(team) + " | " : ""}${this.escapeHtml(gameText)}${hitRate ? " | " + this.escapeHtml(hitRate) + " HIT" : ""}</div>
-                ${play.betslip_link ? `<a class="bet-action-btn bounty-betslip" href="${this.escapeAttr(play.betslip_link)}" target="_blank" rel="noopener">Place on FanDuel</a>` : ""}
+                <a class="bet-action-btn bounty-betslip" href="${play.betslip_link ? this.escapeAttr(play.betslip_link) : `https://sportsbook.fanduel.com/search?q=${encodeURIComponent(displayName)}&tab=player-props`}" target="_blank" rel="noopener">Place on FanDuel</a>
             </article>
         `;
     }
