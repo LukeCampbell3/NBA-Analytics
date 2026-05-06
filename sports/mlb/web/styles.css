@@ -430,6 +430,21 @@ body.theme-dark .theme-toggle-radial {
     letter-spacing: 0.03em;
 }
 
+.bounty-betslip {
+    display: block;
+    margin-top: 12px;
+    text-align: center;
+    color: #2a6b4a;
+    border-color: rgba(42, 107, 74, 0.3);
+    background: rgba(42, 107, 74, 0.06);
+}
+
+.bounty-betslip:hover {
+    background: rgba(42, 107, 74, 0.14);
+    border-color: rgba(42, 107, 74, 0.5);
+    color: #1a5a3a;
+}
+
 .wanted-card {
     font-family: 'Rye', 'Barlow Condensed', serif;
 }

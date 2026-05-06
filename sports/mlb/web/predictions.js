@@ -179,6 +179,7 @@ class DailyPredictionsPage {
                     <span class="bounty-line">${this.escapeHtml(lineText)}</span>
                 </div>
                 <div class="bounty-meta">${team ? this.escapeHtml(team) + " | " : ""}${this.escapeHtml(gameText)}${hitRate ? " | " + this.escapeHtml(hitRate) + " HIT" : ""}</div>
+                ${play.betslip_link ? `<a class="bet-action-btn bounty-betslip" href="${this.escapeAttr(play.betslip_link)}" target="_blank" rel="noopener">Place on FanDuel</a>` : ""}
             </article>
         `;
     }
