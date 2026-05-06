@@ -2,11 +2,13 @@ class DailyPredictionsPage {
     constructor() {
         this.data = null;
         this.plays = [];
+        this.singlesSportsbookOptions = [];
         this.elements = {
             parlayTickets: document.getElementById("parlayTickets"),
             cards: document.getElementById("predictionCards"),
             empty: document.getElementById("predictionEmpty"),
             runMeta: document.getElementById("predictionRunMeta"),
+            singlesBookLinks: document.getElementById("singlesBookLinks"),
         };
         this.init();
     }
@@ -35,6 +37,7 @@ class DailyPredictionsPage {
             if (Math.abs(scoreDiff) > 1e-9) return scoreDiff;
             return (Number(b.abs_edge) || 0) - (Number(a.abs_edge) || 0);
         });
+        this.singlesSportsbookOptions = this.buildSinglesSportsbookOptions();
         this.renderRunMeta();
     }
 
@@ -115,6 +118,65 @@ class DailyPredictionsPage {
         return options.find((option) => Array.isArray(option?.links) && option.links.length) || null;
     }
 
+    buildSinglesSportsbookOptions() {
+        const grouped = new Map();
+        this.plays.forEach((play, index) => {
+            const bookmaker = String(play.bookmaker || "").trim().toLowerCase();
+            const link = String(play.betslip_link || "").trim();
+            if (!bookmaker || !link) return;
+            const playKey = `${play.player_display_name || play.player || `play-${index}`}|${play.target || ""}|${play.direction || ""}|${play.market_line || ""}`;
+            if (!grouped.has(bookmaker)) {
+                grouped.set(bookmaker, {
+                    bookmaker,
+                    bookmakerTitle: String(play.bookmaker_title || "").trim() || this.getSportsbookTitle(bookmaker, "Sportsbook"),
+                    links: [],
+                    playKeys: new Set(),
+                });
+            }
+            const option = grouped.get(bookmaker);
+            if (!option.links.includes(link)) option.links.push(link);
+            option.playKeys.add(playKey);
+        });
+
+        return [...grouped.values()]
+            .map((option) => ({
+                bookmaker: option.bookmaker,
+                bookmakerTitle: option.bookmakerTitle,
+                links: option.links,
+                coveredPlayCount: option.playKeys.size,
+                totalPlayCount: this.plays.length,
+                complete: option.playKeys.size === this.plays.length && this.plays.length > 0,
+            }))
+            .sort((left, right) => {
+                const completeDiff = Number(Boolean(right.complete)) - Number(Boolean(left.complete));
+                if (completeDiff !== 0) return completeDiff;
+                return right.coveredPlayCount - left.coveredPlayCount;
+            });
+    }
+
+    launchSportsbookLinks(links) {
+        const uniqueLinks = [...new Set((Array.isArray(links) ? links : []).filter(Boolean))];
+        if (!uniqueLinks.length) return;
+        uniqueLinks.forEach((link) => window.open(link, "_blank", "noopener,noreferrer"));
+    }
+
+    renderSinglesBookLinks() {
+        const container = this.elements.singlesBookLinks;
+        if (!container) return;
+        const completeOptions = this.singlesSportsbookOptions.filter((option) => option.complete && option.links.length);
+        const statusMessage = this.plays.length && !completeOptions.length
+            ? `<span class="singles-book-links-status">One-click all-pick bet slip unavailable today. Use the per-pick sportsbook buttons above.</span>`
+            : "";
+        const buttonsHtml = completeOptions.map((option, index) => (
+            `<button class="bet-action-btn singles-sportsbook-launch" data-singles-option-index="${index}">Place All on ${this.escapeHtml(option.bookmakerTitle)}</button>`
+        )).join("");
+        container.innerHTML = `
+            <button class="bet-action-btn" id="copySinglesBtn">Copy All Picks</button>
+            ${buttonsHtml}
+            ${statusMessage}
+        `;
+    }
+
     wireSportsbookButtons() {
         document.querySelectorAll(".sportsbook-launch").forEach((button) => {
             button.addEventListener("click", (event) => {
@@ -125,7 +187,16 @@ class DailyPredictionsPage {
                 const option = this.getRecommendedParlayOption(parlay);
                 const links = Array.isArray(option?.links) ? [...new Set(option.links.filter(Boolean))] : [];
                 if (!links.length) return;
-                links.forEach((link) => window.open(link, "_blank", "noopener,noreferrer"));
+                this.launchSportsbookLinks(links);
+            });
+        });
+
+        document.querySelectorAll(".singles-sportsbook-launch").forEach((button) => {
+            button.addEventListener("click", (event) => {
+                const optionIndex = Number(event.currentTarget?.dataset?.singlesOptionIndex);
+                const option = this.singlesSportsbookOptions.filter((item) => item.complete && item.links.length)[optionIndex];
+                if (!option) return;
+                this.launchSportsbookLinks(option.links);
             });
         });
     }
@@ -186,6 +257,7 @@ class DailyPredictionsPage {
     renderCards() {
         this.elements.empty.style.display = this.plays.length ? "none" : "block";
         this.elements.cards.innerHTML = this.plays.map((play) => this.renderWantedCard(play)).join("");
+        this.renderSinglesBookLinks();
     }
 
     formatTarget(target) {
