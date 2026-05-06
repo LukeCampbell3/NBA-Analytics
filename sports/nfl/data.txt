@@ -1,0 +1,311 @@
+Yes. For NFL, I’d build this as a **local-file pipeline**, not a database pipeline.
+
+The expansion should have two data tracks:
+
+```text
+1. NFL actual/stat data
+   Source: nflverse / nflreadpy / nfl_data_py
+   Use: model labels, player history, features, game context
+
+2. NFL prop-line data
+   Source: one-time historical scraper + live prop snapshot collector
+   Use: market lines, over/under odds, edge calculation, backtesting
+```
+
+## 1. Stat data sources you need
+
+Use **nflreadpy/nflverse** as the primary source. It supports loaders for play-by-play, player stats, team stats, schedules, players, rosters, weekly rosters, snap counts, Next Gen Stats, injuries, depth charts, and more. ([NFLReadPy][1])
+
+The main local ingestion script should call:
+
+```python
+import nflreadpy as nfl
+
+seasons = list(range(2018, 2026))
+
+player_stats = nfl.load_player_stats(seasons, summary_level="week")
+pbp = nfl.load_pbp(seasons)
+schedules = nfl.load_schedules(seasons)
+snap_counts = nfl.load_snap_counts(seasons)
+injuries = nfl.load_injuries(seasons)
+depth_charts = nfl.load_depth_charts(seasons)
+```
+
+The most important actual-label file is `load_player_stats()`. It returns player weekly statistics and includes core box-score fields like completions, attempts, passing yards, passing touchdowns, team, opponent, season, week, and game ID. ([NFLReadPy][1])
+
+Use `load_pbp()` for richer context features because it loads play-by-play data back to 1999. ([NFLReadPy][1]) Use `load_schedules()` for season/week/game mapping and opponent/home-away structure. ([NFLReadPy][1]) Use `load_snap_counts()` for usage and playing-time share; snap count data is sourced from Pro Football Reference and is available since 2012. ([NFLReadPy][1]) Use injuries and depth charts for availability/role context; nflreadpy lists injuries from 2009 onward and depth charts from 2001 onward. ([NFLReadPy][1])
+
+You can also keep **nfl_data_py** as a fallback. It includes import functions for play-by-play, weekly data, seasonal data, rosters, win totals, scoring lines, schedules, team descriptions, combine data, and ID mappings. ([PyPI][2])
+
+## 2. Live prop-line endpoint
+
+For live/current NFL props, the cleanest endpoint to start with is BallDontLie’s NFL player props endpoint:
+
+```http
+GET https://api.balldontlie.io/nfl/v1/odds/player_props?game_id=<GAME_ID>
+```
+
+It requires a `game_id`, and it supports optional filters for `player_id`, `prop_type`, and sportsbook vendors such as DraftKings, FanDuel, Caesars, BetRivers, Betway, Fanatics, and others. ([Balldontlie NFL API][3])
+
+You also need the games endpoint to map current games to BallDontLie game IDs:
+
+```http
+GET https://api.balldontlie.io/nfl/v1/games?seasons[]=2026&weeks[]=1
+```
+
+The games endpoint supports filters by dates, seasons, team IDs, postseason flag, and weeks. ([Balldontlie NFL API][3])
+
+The prop endpoint supports the market types you care about:
+
+```text
+passing_yards
+passing_attempts
+passing_completions
+passing_tds
+interceptions
+rushing_yards
+rushing_attempts
+receiving_yards
+receptions
+rushing_receiving_yards
+anytime_td
+longest_pass
+longest_reception
+longest_rush
+kicking_points
+fg_made
+```
+
+BallDontLie explicitly says NFL player prop data is **live only** and that it does **not store historical data**, so this endpoint is for your **future archive**, not historical backfill. ([Balldontlie NFL API][3])
+
+## 3. Historical scraper you need
+
+You need one scraper:
+
+```text
+scrape_historical_nfl_props.py
+```
+
+This is a **one-time/backfill scraper**, not a daily dependency.
+
+Its job is to scrape historical prop-line rows from whatever historical source you find and normalize everything into your local file schema.
+
+The scraper should output this schema:
+
+```text
+season
+week
+game_date
+game_id
+source_game_id
+home_team
+away_team
+player_name
+player_id
+team
+opponent
+market
+line
+over_odds
+under_odds
+sportsbook
+snapshot_time
+source
+source_url
+scraped_at
+```
+
+For historical data, `snapshot_time` may be missing. If the source only gives one line per game, set:
+
+```text
+snapshot_type = "historical_close_or_unknown"
+snapshot_time = null
+```
+
+Do **not** pretend it is an opening or closing line unless the source explicitly says that.
+
+## 4. Live scraper you need
+
+You also need:
+
+```text
+collect_live_nfl_props.py
+```
+
+This runs during the season and saves line snapshots locally.
+
+Flow:
+
+```text
+1. Load current NFL schedule
+2. Find games for current week
+3. Map games to prop API game IDs
+4. For each game:
+     call /nfl/v1/odds/player_props?game_id=<id>
+5. Normalize prop rows
+6. Save timestamped local files
+```
+
+During the season, run it multiple times before games:
+
+```text
+Tuesday morning
+Thursday morning
+Game day morning
+1–2 hours before kickoff
+```
+
+That gives you your own line movement archive instead of relying on historical scraping forever.
+
+## 5. Local file structure
+
+Use this:
+
+```text
+sports/nfl/predictions/Player-Predictor/
+  data/
+    raw/
+      nflverse/
+        player_stats/
+          season=2024.parquet
+          season=2025.parquet
+        pbp/
+          season=2024.parquet
+          season=2025.parquet
+        schedules/
+          schedules.parquet
+        snap_counts/
+          season=2024.parquet
+        injuries/
+          season=2024.parquet
+        depth_charts/
+          season=2024.parquet
+
+      props/
+        historical_raw/
+          source=<name>/
+            season=2023_week=01_raw.json
+            season=2023_week=02_raw.json
+
+        live_raw/
+          snapshot_date=2026-09-10/
+            week=01_game=<game_id>_raw.json
+
+    processed/
+      player_game_logs.parquet
+      player_feature_table.parquet
+      game_context.parquet
+      player_id_map.parquet
+
+    market/
+      historical_props_normalized.parquet
+      live_prop_snapshots.parquet
+      resolved_props.parquet
+
+    training/
+      nfl_projection_training.parquet
+      nfl_market_training.parquet
+```
+
+## 6. The local pipeline
+
+Your NFL pipeline should look like this:
+
+```text
+01_ingest_nflverse.py
+  pulls nflreadpy/nfl_data_py files
+  writes local raw parquet files
+
+02_build_player_game_logs.py
+  creates clean weekly player rows
+
+03_scrape_historical_nfl_props.py
+  one-time historical prop backfill
+
+04_collect_live_nfl_props.py
+  current/future prop snapshots
+
+05_normalize_nfl_props.py
+  maps market names, odds, books, players, games
+
+06_resolve_nfl_props.py
+  joins props to actual player stats
+
+07_build_training_set.py
+  builds model-ready rows
+
+08_predict_current_week.py
+  generates stat projections
+
+09_build_market_board.py
+  compares projection vs prop line
+  creates final NFL board
+```
+
+## 7. Minimal files to create first
+
+Start with these four:
+
+```text
+sports/nfl/predictions/Player-Predictor/scripts/ingest_nflverse.py
+sports/nfl/predictions/Player-Predictor/scripts/scrape_historical_nfl_props.py
+sports/nfl/predictions/Player-Predictor/scripts/collect_live_nfl_props.py
+sports/nfl/predictions/Player-Predictor/scripts/resolve_nfl_props.py
+```
+
+## 8. Practical modeling targets
+
+For the first NFL version, focus on these markets:
+
+```text
+QB:
+  passing_yards
+  passing_attempts
+  passing_completions
+  passing_tds
+  interceptions
+
+RB:
+  rushing_yards
+  rushing_attempts
+  receiving_yards
+  receptions
+  rushing_receiving_yards
+  anytime_td
+
+WR/TE:
+  receiving_yards
+  receptions
+  anytime_td
+```
+
+Avoid highly noisy quarter/half props at first. BallDontLie exposes those, but they will be much harder to model reliably. ([Balldontlie NFL API][3])
+
+## Final summary
+
+You need:
+
+```text
+nflreadpy/nflverse loaders:
+  load_player_stats
+  load_pbp
+  load_schedules
+  load_rosters / load_rosters_weekly
+  load_snap_counts
+  load_injuries
+  load_depth_charts
+
+live prop endpoints:
+  GET /nfl/v1/games
+  GET /nfl/v1/odds/player_props?game_id=<id>
+
+custom scrapers:
+  scrape_historical_nfl_props.py   # one-time backfill
+  collect_live_nfl_props.py        # season-long snapshots
+```
+
+Since you are not using a database, use **partitioned Parquet files** locally. Treat historical prop scraping as the bootstrap, then let your live snapshot collector become the real production-grade dataset once the NFL season starts.
+
+[1]: https://nflreadpy.nflverse.com/api/load_functions/ "Load Functions - nflreadpy"
+[2]: https://pypi.org/project/nfl-data-py/ "nfl-data-py · PyPI"
+[3]: https://nfl.balldontlie.io/ "BALLDONTLIE NFL API"

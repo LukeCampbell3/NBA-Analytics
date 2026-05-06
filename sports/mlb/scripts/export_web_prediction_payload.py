@@ -31,6 +31,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from sports.parlay_analysis import annotate_parlay_board, evaluate_historical_parlays
+from sports.shared.odds.deep_links import attach_sportsbook_links_to_plays, enrich_parlay_payload_with_sportsbooks
 
 
 MLB_STATS_API_ROOT = "https://statsapi.mlb.com/api/v1"
@@ -482,6 +483,13 @@ def main() -> None:
         market_implied_probability = to_float(row.get("Market_Implied_Probability"), default=float("nan"))
         if not math.isfinite(market_implied_probability):
             market_implied_probability = None
+        market_over_price = to_float(row.get("Market_Over_Price"), default=float("nan"))
+        market_under_price = to_float(row.get("Market_Under_Price"), default=float("nan"))
+        if not math.isfinite(market_over_price):
+            market_over_price = None
+        if not math.isfinite(market_under_price):
+            market_under_price = None
+        market_odds = market_over_price if str(row.get("Direction", "")).strip().upper() == "OVER" else market_under_price
         parlay_leg_quality = build_mlb_parlay_leg_quality(
             graded_hit_rate=estimated_graded_hit_rate,
             precision_score=precision_score,
@@ -507,6 +515,7 @@ def main() -> None:
                 "game_id": row.get("Game_ID", ""),
                 "game_status_code": row.get("Game_Status_Code", ""),
                 "direction": row.get("Direction", ""),
+                "odds_american": int(round(market_odds)) if market_odds is not None else None,
                 "target": row.get("Target", ""),
                 "prediction": to_float(row.get("Prediction")),
                 "market_line": to_float(row.get("Market_Line")),
@@ -537,12 +546,18 @@ def main() -> None:
             }
         )
 
+    plays, sportsbook_link_summary = attach_sportsbook_links_to_plays(
+        plays,
+        sport="mlb",
+        repo_root=REPO_ROOT,
+    )
     parlay_payload = annotate_parlay_board(
         plays,
         sport="mlb",
         probability_field="estimated_graded_hit_rate",
         eligibility_field="parlay_precision_eligible",
     )
+    parlay_payload = enrich_parlay_payload_with_sportsbooks(parlay_payload, sport="mlb")
     plays = parlay_payload["plays"]
 
     payload = {
@@ -553,6 +568,7 @@ def main() -> None:
         "model_run_id": "mlb_high_precision_selector_v1",
         "policy_profile": "core_market_props",
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "sportsbook_links": sportsbook_link_summary,
         "summary": {
             "play_count": total,
             "supported_rows": int(summary.get("rows_supported", 0)),
@@ -569,6 +585,7 @@ def main() -> None:
         "filter_rejections": summary.get("filter_rejections", {}),
         "by_target": build_splits(summary.get("by_target", {}), total),
         "by_direction": build_splits(summary.get("by_direction", {}), total),
+        "parlay_board": parlay_payload.get("parlay_board", {"parlays": [], "diagnostics": {}}),
         "parlay_summary": parlay_payload["summary"],
         "parlay_pairs": parlay_payload["pairs"],
         "parlay_validation": build_mlb_parlay_validation(MLB_MANIFEST_PATH),

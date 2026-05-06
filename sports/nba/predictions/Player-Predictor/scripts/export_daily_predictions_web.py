@@ -31,6 +31,7 @@ if str(WORKSPACE_ROOT) not in sys.path:
     sys.path.insert(0, str(WORKSPACE_ROOT))
 
 from sports.parlay_analysis import annotate_parlay_board, evaluate_historical_parlays
+from sports.shared.odds.deep_links import attach_sportsbook_links_to_plays, enrich_parlay_payload_with_sportsbooks
 
 
 NBA_SELECTOR_FALLBACK_MAX_PLAYS = 4
@@ -938,11 +939,14 @@ def normalize_play_rows(plays: pd.DataFrame, identity_lookup: PlayerIdentityLook
                 "player_display_name": str(player_display_name or row.get("player", "")),
                 "player_id": int(player_id) if player_id is not None else None,
                 "player_headshot_url": player_headshot_url,
+                "market_player_raw": str(row.get("market_player_raw", "")),
                 "target": str(row.get("target", "")),
                 "direction": str(row.get("direction", "")),
                 "team": str(row.get("team", "")),
                 "opponent": str(row.get("opponent", "")),
                 "market_date": str(row.get("market_date", "")) if pd.notna(row.get("market_date")) else None,
+                "market_event_id": str(row.get("market_event_id", "")) if pd.notna(row.get("market_event_id")) else None,
+                "market_commence_time_utc": str(row.get("market_commence_time_utc", "")) if pd.notna(row.get("market_commence_time_utc")) else None,
                 "market_home_team": str(row.get("market_home_team", "")),
                 "market_away_team": str(row.get("market_away_team", "")),
                 "last_history_date": str(row.get("last_history_date", "")) if pd.notna(row.get("last_history_date")) else None,
@@ -1445,6 +1449,11 @@ def main() -> None:
         display_board_source = str(parlay_source or published_board_source)
 
     plays_json = normalize_play_rows(display_plays, identity_lookup)
+    plays_json, sportsbook_link_summary = attach_sportsbook_links_to_plays(
+        plays_json,
+        sport="nba",
+        repo_root=WORKSPACE_ROOT,
+    )
     plays_json, parlay_precision_summary = build_nba_precision_parlay_candidates(plays_json, parlay_validation)
     parlay_payload = annotate_parlay_board(
         plays_json,
@@ -1458,6 +1467,7 @@ def main() -> None:
         min_legs_per_parlay=2,
         max_legs_per_parlay=int(NBA_PARLAY_PRECISION_MAX_LEGS),
     )
+    parlay_payload = enrich_parlay_payload_with_sportsbooks(parlay_payload, sport="nba")
     parlay_payload["summary"].update(parlay_precision_summary)
     parlay_payload, parlay_safety_gate = apply_parlay_safety_gate(parlay_payload, parlay_validation)
 
@@ -1482,9 +1492,11 @@ def main() -> None:
         "policy": final_payload.get("policy", {}),
         "input_validation": final_payload.get("input_validation", {}),
         "summary": build_summary(display_plays),
+        "sportsbook_links": sportsbook_link_summary,
         "accuracy_metrics": accuracy_metrics,
         "parlay_source": parlay_source or published_board_source,
         "parlay_safety_gate": parlay_safety_gate,
+        "parlay_board": parlay_payload.get("parlay_board", {"parlays": [], "diagnostics": {}}),
         "parlay_summary": parlay_payload["summary"],
         "parlay_pairs": parlay_payload["pairs"],
         "parlay_validation": parlay_validation,

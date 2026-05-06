@@ -16,6 +16,7 @@ class DailyPredictionsPage {
             await this.load();
             this.renderParlayTickets();
             this.renderCards();
+            this.wireSportsbookButtons();
         } catch (error) {
             console.error(error);
             this.elements.cards.innerHTML = `<div class="prediction-about-empty">Unable to load MLB predictions: ${this.escapeHtml(error.message)}</div>`;
@@ -77,6 +78,58 @@ class DailyPredictionsPage {
         return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
     }
 
+    getSportsbookTitle(bookmakerKey, fallback = "Sportsbook") {
+        const titles = {
+            betmgm: "BetMGM",
+            caesars: "Caesars",
+            draftkings: "DraftKings",
+            fanduel: "FanDuel",
+        };
+        return titles[String(bookmakerKey || "").toLowerCase()] || fallback;
+    }
+
+    getFallbackSportsbookUrl(bookmakerKey, query = "") {
+        const encoded = encodeURIComponent(String(query || "").trim());
+        const fallbacks = {
+            betmgm: "https://sports.betmgm.com/",
+            caesars: "https://sportsbook.caesars.com/us/",
+            draftkings: "https://sportsbook.draftkings.com/",
+            fanduel: encoded ? `https://sportsbook.fanduel.com/search?q=${encoded}&tab=player-props` : "https://sportsbook.fanduel.com/navigation/mlb",
+        };
+        return fallbacks[String(bookmakerKey || "").toLowerCase()] || fallbacks.fanduel;
+    }
+
+    getSportsbookAction(play) {
+        const displayName = this.getPlayDisplayName(play);
+        const bookmakerKey = String(play.bookmaker || "").toLowerCase();
+        const bookmakerTitle = String(play.bookmaker_title || "").trim() || this.getSportsbookTitle(bookmakerKey, "FanDuel");
+        const href = String(play.betslip_link || play.market_link || play.event_link || "").trim()
+            || this.getFallbackSportsbookUrl(bookmakerKey, displayName);
+        return { href, bookmakerKey, bookmakerTitle };
+    }
+
+    getRecommendedParlayOption(parlay) {
+        const options = Array.isArray(parlay?.sportsbook_options) ? parlay.sportsbook_options : [];
+        const recommended = parlay?.recommended_sportsbook;
+        if (recommended && Array.isArray(recommended.links) && recommended.links.length) return recommended;
+        return options.find((option) => Array.isArray(option?.links) && option.links.length) || null;
+    }
+
+    wireSportsbookButtons() {
+        document.querySelectorAll(".sportsbook-launch").forEach((button) => {
+            button.addEventListener("click", (event) => {
+                const parlayIndex = Number(event.currentTarget?.dataset?.parlayIndex);
+                if (!Number.isFinite(parlayIndex)) return;
+                const parlays = Array.isArray(this.data?.parlay_board?.parlays) ? this.data.parlay_board.parlays : [];
+                const parlay = parlays[parlayIndex];
+                const option = this.getRecommendedParlayOption(parlay);
+                const links = Array.isArray(option?.links) ? [...new Set(option.links.filter(Boolean))] : [];
+                if (!links.length) return;
+                links.forEach((link) => window.open(link, "_blank", "noopener,noreferrer"));
+            });
+        });
+    }
+
     renderParlayTickets() {
         const container = this.elements.parlayTickets;
         if (!container) return;
@@ -85,13 +138,15 @@ class DailyPredictionsPage {
             container.innerHTML = "";
             return;
         }
-        container.innerHTML = parlays.map((parlay) => {
+        container.innerHTML = parlays.map((parlay, idx) => {
             const legs = Array.isArray(parlay.legs) ? parlay.legs : [];
             const n = legs.length;
             const jointPct = this.formatPct(parlay.joint_probability || parlay.adjusted_probability);
             const type = String(parlay.type || "primary").toUpperCase();
             const parlayOdds = parlay.odds_american || `+${Math.round((parlay.odds_decimal - 1) * 100)}`;
             const parlayPayout = parlay.payout_per_dollar ? `$${(parlay.payout_per_dollar * 10).toFixed(0)} on $10` : "";
+            const parlayOption = this.getRecommendedParlayOption(parlay);
+            const parlayBookTitle = String(parlayOption?.bookmaker_title || "").trim() || this.getSportsbookTitle(parlayOption?.bookmaker, "Sportsbook");
             const legsHtml = legs.map((leg, li) => {
                 const name = this.escapeHtml(String(leg.player || ""));
                 const target = this.escapeHtml(this.formatTarget(leg.target));
@@ -99,11 +154,12 @@ class DailyPredictionsPage {
                 const line = this.formatNumber(leg.market_line);
                 const odds = leg.odds_american || "-110";
                 const team = this.escapeHtml(String(leg.team || ""));
+                const action = this.getSportsbookAction(leg);
                 return `<div class="parlay-leg">
                     <span class="parlay-leg-num">${li + 1}</span>
                     <span class="parlay-leg-name">${name} <small>(${team})</small></span>
                     <span class="parlay-leg-prop">${target} ${dir} ${this.escapeHtml(line)}</span>
-                    <span class="parlay-leg-prob"><a class="parlay-leg-link" href="${leg.betslip_link || `https://sportsbook.fanduel.com/search?q=${encodeURIComponent(String(leg.player || ''))}&tab=player-props`}" target="_blank" rel="noopener">${this.escapeHtml(String(odds))}</a></span>
+                    <span class="parlay-leg-prob"><a class="parlay-leg-link" href="${this.escapeAttr(action.href)}" target="_blank" rel="nofollow sponsored noopener noreferrer">${this.escapeHtml(String(odds))}</a></span>
                 </div>`;
             }).join("");
             return `<article class="parlay-ticket">
@@ -119,8 +175,9 @@ class DailyPredictionsPage {
                 <div class="parlay-ticket-legs-list">${legsHtml}</div>
                 <div class="parlay-ticket-actions">
                     <button class="bet-action-btn" onclick="navigator.clipboard.writeText(this.closest('.parlay-ticket').querySelector('.parlay-ticket-legs-list').innerText.trim());this.textContent='Copied!';setTimeout(()=>this.textContent='Copy Slip',2000)">Copy Slip</button>
-                    <a class="bet-action-btn" href="https://sportsbook.fanduel.com/navigation/mlb" target="_blank" rel="noopener">FanDuel</a>
-                    <a class="bet-action-btn" href="https://sportsbook.draftkings.com/mlb-player-props" target="_blank" rel="noopener">DraftKings</a>
+                    ${parlayOption && Array.isArray(parlayOption.links) && parlayOption.links.length
+                        ? `<button class="bet-action-btn sportsbook-launch" data-parlay-index="${idx}">${this.escapeHtml(parlayOption.complete ? `Build on ${parlayBookTitle}` : `Open ${parlayBookTitle}`)}</button>`
+                        : ""}
                 </div>
             </article>`;
         }).join("");
@@ -160,6 +217,7 @@ class DailyPredictionsPage {
         const headshotUrl = this.getPlayHeadshotUrl(play);
         const monogram = this.escapeHtml(this.getMonogram(displayName));
         const odds = play.odds_american || -110;
+        const action = this.getSportsbookAction(play);
 
         return `
             <article class="bounty-card" data-direction="${this.escapeAttr(direction)}">
@@ -178,7 +236,7 @@ class DailyPredictionsPage {
                     <span class="bounty-line">${this.escapeHtml(lineText)}</span>
                 </div>
                 <div class="bounty-meta">${team ? this.escapeHtml(team) + " | " : ""}${this.escapeHtml(gameText)}${hitRate ? " | " + this.escapeHtml(hitRate) + " HIT" : ""}</div>
-                <a class="bet-action-btn bounty-betslip" href="${play.betslip_link ? this.escapeAttr(play.betslip_link) : `https://sportsbook.fanduel.com/search?q=${encodeURIComponent(displayName)}&tab=player-props`}" target="_blank" rel="noopener">Place on FanDuel</a>
+                <a class="bet-action-btn bounty-betslip" href="${this.escapeAttr(action.href)}" target="_blank" rel="nofollow sponsored noopener noreferrer">Bet on ${this.escapeHtml(action.bookmakerTitle)}</a>
             </article>
         `;
     }
