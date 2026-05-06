@@ -117,6 +117,12 @@ class DailyPredictionsPage {
                     <span class="parlay-ticket-prob-value">${this.escapeHtml(jointPct)} hit rate</span>
                 </div>
                 <div class="parlay-ticket-legs-list">${legsHtml}</div>
+                <div class="parlay-ticket-actions">
+                    <a class="parlay-book-link" href="https://sportsbook.draftkings.com/leagues/baseball/mlb" target="_blank" rel="noopener">DraftKings</a>
+                    <a class="parlay-book-link" href="https://sportsbook.fanduel.com/baseball?tab=player-props" target="_blank" rel="noopener">FanDuel</a>
+                    <a class="parlay-book-link" href="https://sports.betmgm.com/en/sports/baseball-23/betting/usa-9/mlb-75" target="_blank" rel="noopener">BetMGM</a>
+                    <a class="parlay-book-link" href="https://www.bet365.com/#/AC/B63/C20604387/D48/E1/F10/" target="_blank" rel="noopener">bet365</a>
+                </div>
             </article>`;
         }).join("");
     }
