@@ -27,8 +27,10 @@ import os
 import re
 import subprocess
 import sys
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
+from urllib.request import urlopen
+from urllib.error import URLError
 from zoneinfo import ZoneInfo
 
 REPO_ROOT = Path(__file__).resolve().parent
@@ -88,6 +90,46 @@ def resolve_run_date(raw: str | None) -> str:
 
 def run_date_stamp(d: str) -> str:
     return d.replace("-", "")
+
+
+# ─────────────────────────────────────────────────────────
+# MLB Schedule Check
+# ─────────────────────────────────────────────────────────
+
+MLB_SCHEDULE_API = "https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={date}"
+
+
+def mlb_games_on_date(target_date: str, timeout: float = 15.0) -> int:
+    """Query the MLB Stats API to count regular-season games on a given date.
+
+    Returns the number of games, or -1 if the API is unreachable (caller should
+    proceed optimistically).
+    """
+    url = MLB_SCHEDULE_API.format(date=target_date)
+    try:
+        with urlopen(url, timeout=timeout) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+        count = 0
+        for date_bucket in payload.get("dates", []):
+            for game in date_bucket.get("games", []):
+                # Only count regular-season games (gameType "R")
+                if game.get("gameType") == "R":
+                    count += 1
+        return count
+    except (URLError, OSError, json.JSONDecodeError, ValueError) as e:
+        print(f"  [info] MLB schedule API check failed ({e}); proceeding anyway.")
+        return -1
+
+
+def find_next_mlb_game_date(start_date: str, max_lookahead: int = 3, timeout: float = 15.0) -> str | None:
+    """Look ahead up to max_lookahead days to find the next date with MLB games."""
+    base = datetime.strptime(start_date, "%Y-%m-%d").date()
+    for offset in range(1, max_lookahead + 1):
+        candidate = (base + timedelta(days=offset)).strftime("%Y-%m-%d")
+        count = mlb_games_on_date(candidate, timeout=timeout)
+        if count > 0:
+            return candidate
+    return None
 
 
 # ─────────────────────────────────────────────────────────
@@ -457,6 +499,20 @@ def run_mlb(run_date: str, args: argparse.Namespace) -> None:
     print(f"\n{'=' * 70}")
     print(f"  MLB PREDICTIONS - {run_date}")
     print(f"{'=' * 70}")
+
+    # Check if there are actually MLB games on the requested date
+    game_count = mlb_games_on_date(run_date)
+    if game_count == 0:
+        print(f"  [info] No MLB games scheduled for {run_date}.")
+        # Try to find the next game date
+        next_date = find_next_mlb_game_date(run_date)
+        if next_date:
+            print(f"  [info] Next MLB game date: {next_date}. Skipping MLB for today.")
+        else:
+            print(f"  [info] No MLB games found in the next 3 days either. Skipping MLB.")
+        return
+    elif game_count > 0:
+        print(f"  {game_count} MLB games scheduled for {run_date}")
 
     pool_csv = None
     selected_csv = None
