@@ -46,12 +46,14 @@ NBA_WEB_JSON = REPO_ROOT / "sports" / "nba" / "web" / "data" / "daily_prediction
 MLB_GENERATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "generate_daily_prediction_pool.py"
 MLB_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_high_precision_predictions.py"
 MLB_PARLAY_BUILDER = REPO_ROOT / "sports" / "mlb" / "scripts" / "build_daily_parlay_board.py"
+MLB_EXPORTER = REPO_ROOT / "sports" / "mlb" / "scripts" / "export_web_prediction_payload.py"
 MLB_DAILY_RUNS = REPO_ROOT / "sports" / "mlb" / "data" / "predictions" / "daily_runs"
 MLB_DATA_DIR = REPO_ROOT / "Player-Predictor" / "Data-Proc-MLB"
 MLB_MANIFEST = MLB_DATA_DIR / "update_manifest_2026.json"
 MLB_DATA_UPDATER = REPO_ROOT / "Player-Predictor" / "scripts" / "update_mlb_processed_data.py"
 MLB_MARKET_FETCHER = REPO_ROOT / "Player-Predictor" / "scripts" / "fetch_mlb_market_props.py"
 MLB_WEB_JSON = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "daily_predictions.json"
+MLB_WEB_DIST_JSON = REPO_ROOT / "dist" / "mlb" / "data" / "daily_predictions.json"
 
 
 def parse_args() -> argparse.Namespace:
@@ -529,12 +531,16 @@ def run_mlb(run_date: str, args: argparse.Namespace) -> None:
         print("  [warning] No MLB high-precision CSV found. Skipping MLB board.")
         return
 
-    # Build MLB parlay board and inject into web JSON — all inline
+    # Build MLB parlay board (console output)
     _build_and_inject_mlb(selected_csv, args.bankroll)
+
+    # Export the full MLB web payload via the dedicated exporter
+    # This ensures run_date, through_date, plays, parlay_pairs, etc. are all correct
+    _export_mlb_web_payload(selected_csv, summary_json)
 
 
 def _build_and_inject_mlb(selected_csv: Path, bankroll: float) -> None:
-    """Build MLB parlay board and update web JSON inline."""
+    """Build MLB parlay board and print to console."""
     try:
         import pandas as pd
         import sys as _sys
@@ -573,51 +579,6 @@ def _build_and_inject_mlb(selected_csv: Path, bankroll: float) -> None:
             line = s.get("Market_Line", s.get("market_line", "?"))
             print(f"  {i}. {player} {target} {direction} {line}")
 
-        # Inject into MLB web JSON
-        if MLB_WEB_JSON.exists():
-            payload = json.loads(MLB_WEB_JSON.read_text(encoding="utf-8"))
-            parlays_out = []
-            for p in board.primary_parlays:
-                legs_out = []
-                for leg in p.get("legs", []):
-                    leg_odds = -110
-                    leg_decimal = round(1.0 + (100.0 / 110.0), 3)
-                    legs_out.append({
-                        "player": str(leg.get("Player", leg.get("player", ""))),
-                        "team": str(leg.get("Team", leg.get("team", ""))),
-                        "opponent": str(leg.get("Opponent", leg.get("opponent", ""))),
-                        "target": str(leg.get("Target", leg.get("target", ""))),
-                        "direction": str(leg.get("Direction", leg.get("direction", ""))),
-                        "market_line": float(leg.get("Market_Line", leg.get("market_line", 0)) or 0),
-                        "hit_probability": float(leg.get("Estimated_Hit_Probability", leg.get("calibrated_hit_probability", 0)) or 0),
-                        "abs_edge": float(leg.get("Abs_Edge", leg.get("abs_edge", 0)) or 0),
-                        "confidence_tier": str(leg.get("Confidence_Tier", leg.get("confidence_tier", ""))),
-                        "odds_american": leg_odds,
-                        "odds_decimal": leg_decimal,
-                    })
-                n_legs = len(legs_out)
-                parlay_decimal = 1.0
-                for leg in legs_out:
-                    parlay_decimal *= leg["odds_decimal"]
-                parlay_decimal = round(parlay_decimal, 2)
-                parlay_american = int(round((parlay_decimal - 1) * 100)) if parlay_decimal >= 2.0 else int(round(-100 / (parlay_decimal - 1)))
-                parlays_out.append({
-                    "type": p.get("type", "primary"),
-                    "leg_count": n_legs,
-                    "joint_probability": float(p.get("joint_prob", 0) or 0),
-                    "adjusted_probability": float(p.get("adjusted_prob", 0) or 0),
-                    "avg_hit_probability": float(p.get("avg_hit_prob", 0) or 0),
-                    "n_games": p.get("n_games", 0),
-                    "n_teams": p.get("n_teams", 0),
-                    "odds_american": f"+{parlay_american}" if parlay_american > 0 else str(parlay_american),
-                    "odds_decimal": parlay_decimal,
-                    "payout_per_dollar": round(parlay_decimal - 1, 2),
-                    "legs": legs_out,
-                })
-            payload["parlay_board"] = {"parlays": parlays_out, "diagnostics": board.diagnostics}
-            MLB_WEB_JSON.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
-            print(f"  MLB Web JSON updated: {MLB_WEB_JSON.name}")
-
         # Clean up
         del _sys.modules[mlb_mod_name]
 
@@ -625,11 +586,24 @@ def _build_and_inject_mlb(selected_csv: Path, bankroll: float) -> None:
         print(f"  [warning] MLB parlay board failed: {e}")
 
 
-# ─────────────────────────────────────────────────────────
-# Main
-        print(f"  Web JSON updated: {MLB_WEB_JSON.name}")
-    except Exception as e:
-        print(f"  [warning] Failed to update MLB web JSON: {e}")
+def _export_mlb_web_payload(selected_csv: Path, summary_json: Path) -> None:
+    """Export the full MLB web prediction payload using the dedicated exporter script.
+
+    This ensures run_date, through_date, plays, parlay_pairs, and all metadata
+    are correctly derived from the selected CSV rather than patching stale JSON.
+    """
+    if not MLB_EXPORTER.exists():
+        print("  [warning] MLB exporter not found, skipping web JSON export.")
+        return
+
+    cmd = [
+        PYTHON, str(MLB_EXPORTER),
+        "--input-csv", str(selected_csv),
+        "--summary-json", str(summary_json),
+        "--output", str(MLB_WEB_JSON),
+        "--output-dist", str(MLB_WEB_DIST_JSON),
+    ]
+    run_step("Export MLB Web Prediction Payload", cmd, allow_fail=True)
 
 
 # ─────────────────────────────────────────────────────────
