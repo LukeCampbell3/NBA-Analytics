@@ -110,10 +110,10 @@ class DailyPredictionsPage {
                 </div>
                 <div class="parlay-ticket-legs-list">${legsHtml}</div>
                 <div class="parlay-ticket-actions">
-                    <a class="parlay-book-link" href="https://sportsbook.draftkings.com/leagues/basketball/nba" target="_blank" rel="noopener">DraftKings</a>
-                    <a class="parlay-book-link" href="https://sportsbook.fanduel.com/basketball?tab=player-props" target="_blank" rel="noopener">FanDuel</a>
-                    <a class="parlay-book-link" href="https://sports.betmgm.com/en/sports/basketball-7/betting/usa-9/nba-6004" target="_blank" rel="noopener">BetMGM</a>
-                    <a class="parlay-book-link" href="https://www.bet365.com/#/AC/B18/C20604387/D48/E1/F10/" target="_blank" rel="noopener">bet365</a>
+                    <button class="bet-action-btn" onclick="navigator.clipboard.writeText(this.closest('.parlay-ticket').querySelector('.parlay-ticket-legs-list').innerText.replace(/\\d+/g,'').trim())">Copy Slip</button>
+                    <a class="bet-action-btn" href="https://sportsbook.draftkings.com/page/nba-player-props" target="_blank" rel="noopener">DraftKings</a>
+                    <a class="bet-action-btn" href="https://sportsbook.fanduel.com/navigation/nba" target="_blank" rel="noopener">FanDuel</a>
+                    <a class="bet-action-btn" href="https://www.bet365.com/#/AS/B18/" target="_blank" rel="noopener">bet365</a>
                 </div>
             </article>`;
         }).join('');
@@ -126,6 +126,20 @@ class DailyPredictionsPage {
         }
         this.elements.empty.style.display = this.plays.length ? 'none' : 'block';
         this.elements.cards.innerHTML = this.plays.map((play) => this.renderWantedCard(play)).join('');
+
+        // Wire up copy button
+        const copyBtn = document.getElementById('copySinglesBtn');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => {
+                const text = this.plays.map(p => {
+                    const name = String(p.player_display_name || p.player || '').replace(/_/g, ' ');
+                    return `${name} ${p.target} ${p.direction} ${p.market_line}`;
+                }).join('\n');
+                navigator.clipboard.writeText(text);
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => { copyBtn.textContent = 'Copy All Picks'; }, 2000);
+            });
+        }
     }
 
     renderWantedCard(play) {

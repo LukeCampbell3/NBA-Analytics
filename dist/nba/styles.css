@@ -779,58 +779,50 @@ body.theme-dark .theme-toggle-radial {
 .singles-book-links {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px 24px 16px;
+    gap: 8px;
+    padding: 14px 24px 18px;
     flex-wrap: wrap;
 }
 
 .singles-book-links {
     justify-content: center;
-    margin-top: 16px;
-    padding: 14px 20px;
-    border-radius: 10px;
-    background: rgba(200, 160, 100, 0.04);
-    border: 1px solid rgba(200, 160, 100, 0.15);
+    margin-top: 20px;
 }
 
-.book-links-label {
+.bet-action-btn {
     font-family: 'Manrope', sans-serif;
-    font-size: 0.75rem;
+    font-size: 0.76rem;
     font-weight: 700;
-    color: rgba(200, 170, 120, 0.6);
-    letter-spacing: 0.06em;
-}
-
-.parlay-book-link {
-    font-family: 'Manrope', sans-serif;
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: #d4b078;
+    color: #e8d5b0;
     text-decoration: none;
-    padding: 6px 14px;
-    border-radius: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
     border: 1px solid rgba(200, 160, 100, 0.3);
-    background: rgba(200, 160, 100, 0.06);
-    transition: background 0.15s, border-color 0.15s;
+    background: rgba(200, 160, 100, 0.08);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
 }
 
-.parlay-book-link:hover {
-    background: rgba(200, 160, 100, 0.14);
+.bet-action-btn:hover {
+    background: rgba(200, 160, 100, 0.18);
     border-color: rgba(200, 160, 100, 0.5);
+    color: #fff;
 }
 
 .parlay-ticket .parlay-ticket-actions {
-    border-top: 1px solid rgba(100, 60, 30, 0.15);
+    border-top: 1px solid rgba(100, 60, 30, 0.12);
 }
 
-.parlay-ticket .parlay-book-link {
-    color: #5a3a1a;
+.parlay-ticket .bet-action-btn {
+    color: #4a2a15;
     border-color: rgba(100, 60, 30, 0.25);
-    background: rgba(100, 60, 30, 0.04);
+    background: rgba(100, 60, 30, 0.05);
 }
 
-.parlay-ticket .parlay-book-link:hover {
-    background: rgba(100, 60, 30, 0.10);
+.parlay-ticket .bet-action-btn:hover {
+    background: rgba(100, 60, 30, 0.12);
+    color: #2a1508;
 }
 
 @media (max-width: 600px) {
