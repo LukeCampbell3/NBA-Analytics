@@ -69,6 +69,21 @@ def build_betslip_url(selection_id: str) -> str:
     return f"https://sportsbook.draftkings.com/?outcomes={encoded}"
 
 
+def build_parlay_betslip_url(selection_ids: list[str]) -> str:
+    """Construct a DraftKings parlay betslip URL from multiple selection IDs.
+
+    DraftKings supports pre-populating a betslip with multiple selections
+    using comma-separated outcome IDs. The sportsbook will automatically
+    offer the parlay option when multiple selections are on the slip.
+    """
+    if not selection_ids:
+        return "https://sportsbook.draftkings.com/"
+    if len(selection_ids) == 1:
+        return build_betslip_url(selection_ids[0])
+    encoded_ids = [urllib.parse.quote(sid, safe="") for sid in selection_ids]
+    return f"https://sportsbook.draftkings.com/?outcomes={','.join(encoded_ids)}"
+
+
 def scrape_player_props(sport: str) -> list[SportsbookSelection]:
     """Scrape all available player prop selections from DraftKings.
 

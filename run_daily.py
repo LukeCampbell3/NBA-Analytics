@@ -407,11 +407,25 @@ def _inject_nba_parlay_json(board, *, run_date: str = "") -> None:
         # Enrich with sportsbook deep links (DraftKings + FanDuel)
         try:
             sys.path.insert(0, str(REPO_ROOT))
-            from sports.shared.sportsbook_links.resolver import enrich_picks_with_deeplinks
+            from sports.shared.sportsbook_links.resolver import (
+                enrich_picks_with_deeplinks,
+                enrich_parlays_with_deeplinks,
+                scrape_all_selections,
+            )
+            # Scrape once, reuse for both singles and parlays
+            from sports.shared.sportsbook_links.models import SportsbookSelection
+            selections = scrape_all_selections("nba", books=("draftkings", "fanduel"))
+
             enriched_plays, link_summary = enrich_picks_with_deeplinks(
                 plays_out, sport="nba", run_date=run_date,
             )
             payload["plays"] = enriched_plays
+
+            # Enrich parlays with combined betslip links
+            enriched_parlays, parlay_link_summary = enrich_parlays_with_deeplinks(
+                parlays_out, sport="nba", selections=selections,
+            )
+            payload["parlay_board"]["parlays"] = enriched_parlays
         except Exception as e:
             print(f"  [info] Deep link enrichment skipped: {e}")
             payload["plays"] = plays_out

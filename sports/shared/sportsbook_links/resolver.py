@@ -270,3 +270,205 @@ def _build_sportsbook_options(
         })
 
     return options
+
+
+def enrich_parlay_with_deeplinks(
+    parlay: dict[str, Any],
+    sport: str,
+    selections: list[SportsbookSelection] | None = None,
+    *,
+    books: tuple[str, ...] = ("draftkings", "fanduel"),
+    preferred_books: tuple[str, ...] = ("draftkings", "fanduel"),
+) -> dict[str, Any]:
+    """Enrich a single parlay with combined betslip deep links.
+
+    For DraftKings: combines all leg selection IDs into one URL that
+    pre-populates the betslip with all legs (user then selects "Parlay").
+
+    For FanDuel: provides individual leg links (FanDuel doesn't support
+    multi-selection prefill in a single URL reliably).
+
+    Args:
+        parlay: A parlay dict with a "legs" list
+        sport: "nba" or "mlb"
+        selections: Pre-scraped selections (if None, will scrape fresh)
+        books: Which sportsbooks to try
+        preferred_books: Priority order
+
+    Returns:
+        Enriched parlay dict with betslip_link and sportsbook_options
+    """
+    parlay_copy = dict(parlay)
+    legs = parlay_copy.get("legs", [])
+
+    if not legs:
+        return parlay_copy
+
+    # Scrape if needed
+    if selections is None:
+        selections = scrape_all_selections(sport, books=books)
+
+    # Match each leg to a DraftKings selection
+    dk_selection_ids: list[str] = []
+    dk_matched_legs: list[dict[str, Any]] = []
+
+    for leg in legs:
+        result = match_pick_to_selections(
+            leg, selections, sport, preferred_books=("draftkings",),
+        )
+        if result and result.book_selection_id and result.bookmaker == "draftkings":
+            dk_selection_ids.append(result.book_selection_id)
+            dk_matched_legs.append({
+                **leg,
+                "betslip_link": result.betslip_link,
+                "bookmaker": "draftkings",
+                "bookmaker_title": "DraftKings",
+                "deeplink_quality": "betslip",
+                "book_selection_id": result.book_selection_id,
+                "odds_american": result.odds_american or leg.get("odds_american"),
+            })
+        else:
+            # Leg didn't match DK — use FanDuel search fallback for this leg
+            player_name = leg.get("player_display_name") or leg.get("player", "")
+            fallback = build_search_fallback(player_name, sport)
+            dk_matched_legs.append({
+                **leg,
+                "betslip_link": fallback.betslip_link,
+                "bookmaker": "fanduel",
+                "bookmaker_title": "FanDuel",
+                "deeplink_quality": "search",
+            })
+
+    # Build combined parlay betslip URL
+    parlay_copy["legs"] = dk_matched_legs
+
+    sportsbook_options: list[dict[str, Any]] = []
+
+    # DraftKings: combined parlay URL (only if ALL legs matched)
+    if len(dk_selection_ids) == len(legs):
+        combined_url = draftkings.build_parlay_betslip_url(dk_selection_ids)
+        parlay_copy["betslip_link"] = combined_url
+        parlay_copy["bookmaker"] = "draftkings"
+        parlay_copy["bookmaker_title"] = "DraftKings"
+        parlay_copy["deeplink_quality"] = "betslip"
+        sportsbook_options.append({
+            "bookmaker": "draftkings",
+            "bookmaker_title": "DraftKings",
+            "betslip_link": combined_url,
+            "deeplink_quality": "betslip",
+            "leg_count": len(dk_selection_ids),
+            "complete": True,
+        })
+    elif dk_selection_ids:
+        # Partial match — build URL with available legs
+        partial_url = draftkings.build_parlay_betslip_url(dk_selection_ids)
+        parlay_copy["betslip_link"] = partial_url
+        parlay_copy["bookmaker"] = "draftkings"
+        parlay_copy["bookmaker_title"] = "DraftKings"
+        parlay_copy["deeplink_quality"] = "betslip"
+        sportsbook_options.append({
+            "bookmaker": "draftkings",
+            "bookmaker_title": "DraftKings",
+            "betslip_link": partial_url,
+            "deeplink_quality": "betslip",
+            "leg_count": len(dk_selection_ids),
+            "complete": False,
+            "note": f"{len(dk_selection_ids)}/{len(legs)} legs matched",
+        })
+    else:
+        # No DK matches — fall back to FanDuel search for first leg
+        player_name = legs[0].get("player_display_name") or legs[0].get("player", "")
+        fallback = build_search_fallback(player_name, sport)
+        parlay_copy["betslip_link"] = fallback.betslip_link
+        parlay_copy["bookmaker"] = "fanduel"
+        parlay_copy["bookmaker_title"] = "FanDuel"
+        parlay_copy["deeplink_quality"] = "search"
+
+    # FanDuel: individual leg links (always available)
+    fd_links = []
+    for leg in legs:
+        player_name = leg.get("player_display_name") or leg.get("player", "")
+        fd_links.append(build_search_fallback(player_name, sport).betslip_link)
+    sportsbook_options.append({
+        "bookmaker": "fanduel",
+        "bookmaker_title": "FanDuel",
+        "betslip_link": fd_links[0] if fd_links else "",
+        "leg_links": fd_links,
+        "deeplink_quality": "search",
+        "complete": True,
+        "note": "Add each leg individually",
+    })
+
+    # bet365: event link
+    from .adapters.bet365 import build_event_link
+    sportsbook_options.append({
+        "bookmaker": "bet365",
+        "bookmaker_title": "bet365",
+        "betslip_link": build_event_link(sport),
+        "deeplink_quality": "event",
+        "complete": False,
+    })
+
+    parlay_copy["sportsbook_options"] = sportsbook_options
+    return parlay_copy
+
+
+def enrich_parlays_with_deeplinks(
+    parlays: list[dict[str, Any]],
+    sport: str,
+    *,
+    books: tuple[str, ...] = ("draftkings", "fanduel"),
+    preferred_books: tuple[str, ...] = ("draftkings", "fanduel"),
+    selections: list[SportsbookSelection] | None = None,
+    run_date: str | None = None,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Enrich a list of parlays with combined betslip deep links.
+
+    Args:
+        parlays: List of parlay dicts, each with a "legs" list
+        sport: "nba" or "mlb"
+        books: Which sportsbooks to scrape
+        preferred_books: Priority order
+        selections: Pre-scraped selections (avoids re-scraping)
+        run_date: Optional run date
+
+    Returns:
+        (enriched_parlays, summary) tuple
+    """
+    # Use existing selections or scrape fresh
+    if selections is None:
+        print(f"  Scraping sportsbook props for parlays ({', '.join(books)})...")
+        selections = scrape_all_selections(sport, books=books)
+
+    enriched = []
+    total_complete = 0
+    total_partial = 0
+
+    for parlay in parlays:
+        enriched_parlay = enrich_parlay_with_deeplinks(
+            parlay, sport, selections,
+            books=books, preferred_books=preferred_books,
+        )
+        enriched.append(enriched_parlay)
+
+        if enriched_parlay.get("deeplink_quality") == "betslip":
+            # Check if all legs matched
+            opts = enriched_parlay.get("sportsbook_options", [])
+            dk_opt = next((o for o in opts if o.get("bookmaker") == "draftkings"), None)
+            if dk_opt and dk_opt.get("complete"):
+                total_complete += 1
+            else:
+                total_partial += 1
+
+    summary = {
+        "total_parlays": len(parlays),
+        "complete_betslip_links": total_complete,
+        "partial_betslip_links": total_partial,
+        "no_betslip_link": len(parlays) - total_complete - total_partial,
+    }
+
+    if enriched:
+        print(f"  Parlay deep links: {total_complete} complete, {total_partial} partial, "
+              f"{summary['no_betslip_link']} fallback")
+
+    return enriched, summary
