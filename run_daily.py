@@ -250,7 +250,7 @@ def run_nba(run_date: str, args: argparse.Namespace, direction_model=None) -> No
                 print(f"  {i}. {s.get('player', '?')} {s.get('target', '?')} {s.get('direction', '?')} {s.get('market_line', '?')}")
 
         # Inject into web JSON
-        _inject_nba_parlay_json(board)
+        _inject_nba_parlay_json(board, run_date=run_date)
 
     except Exception as e:
         print(f"  [warning] NBA parlay builder failed: {e}")
@@ -267,7 +267,7 @@ def _build_fanduel_search_url(player_name: str) -> str:
     return f"https://sportsbook.fanduel.com/search?q={quote_plus(clean)}&tab=player-props"
 
 
-def _inject_nba_parlay_json(board, betslip_links=None) -> None:
+def _inject_nba_parlay_json(board, *, run_date: str = "") -> None:
     """Inject parlay board AND singles into the NBA web JSON."""
     if not NBA_WEB_JSON.exists():
         return
@@ -403,21 +403,18 @@ def _inject_nba_parlay_json(board, betslip_links=None) -> None:
                 "bookmaker": "fanduel",
                 "bookmaker_title": "FanDuel",
             })
-        payload["plays"] = plays_out
 
-        # Enrich with DraftKings deep links where available
+        # Enrich with sportsbook deep links (DraftKings + FanDuel)
         try:
-            sys.path.insert(0, str(REPO_ROOT / "sports"))
-            from shared.odds.deep_links import attach_sportsbook_links_to_plays
-            enriched_plays, link_summary = attach_sportsbook_links_to_plays(
-                plays_out, sport="nba", repo_root=REPO_ROOT,
+            sys.path.insert(0, str(REPO_ROOT))
+            from sports.shared.sportsbook_links.resolver import enrich_picks_with_deeplinks
+            enriched_plays, link_summary = enrich_picks_with_deeplinks(
+                plays_out, sport="nba", run_date=run_date,
             )
             payload["plays"] = enriched_plays
-            dk_count = sum(1 for p in enriched_plays if p.get("bookmaker") == "draftkings")
-            if dk_count:
-                print(f"  Deep links: {dk_count}/{len(enriched_plays)} plays matched to DraftKings")
         except Exception as e:
             print(f"  [info] Deep link enrichment skipped: {e}")
+            payload["plays"] = plays_out
 
         NBA_WEB_JSON.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
         print(f"  Web JSON updated: {NBA_WEB_JSON.name}")

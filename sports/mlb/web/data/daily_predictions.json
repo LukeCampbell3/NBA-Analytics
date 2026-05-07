@@ -5,7 +5,7 @@
   "through_date": "2026-05-06",
   "model_run_id": "mlb_high_precision_selector_v1",
   "policy_profile": "core_market_props",
-  "generated_at_utc": "2026-05-07T19:31:18.275864+00:00",
+  "generated_at_utc": "2026-05-07T19:57:56.778121+00:00",
   "sportsbook_links": {
     "available": true,
     "sport": "mlb",
@@ -15,14 +15,14 @@
       "betmgm",
       "caesars"
     ],
-    "catalog_count": 174,
+    "catalog_count": 140,
     "matched_event_count": 5,
     "requested_market_count": 1,
-    "matched_play_count": 0,
-    "outcome_link_count": 0,
+    "matched_play_count": 1,
+    "outcome_link_count": 1,
     "play_count": 6,
-    "coverage_rate": 0.0,
-    "search_fallback_count": 6
+    "coverage_rate": 0.16666666666666666,
+    "search_fallback_count": 5
   },
   "summary": {
     "play_count": 6,
@@ -231,7 +231,7 @@
             "game_id": "824362",
             "game_status_code": "P",
             "direction": "UNDER",
-            "odds_american": -152,
+            "odds_american": -105,
             "target": "TB",
             "prediction": 0.05482,
             "market_line": 1.5,
@@ -257,17 +257,19 @@
             "market_key": "batter_total_bases",
             "outcome_name": "UNDER",
             "line": 1.5,
-            "bookmaker": "fanduel",
-            "bookmaker_title": "FanDuel",
-            "event_link": null,
+            "bookmaker": "draftkings",
+            "bookmaker_title": "DraftKings",
+            "event_link": "https://sportsbook.draftkings.com/event/34109312",
             "market_link": null,
-            "betslip_link": "https://sportsbook.fanduel.com/search?q=Tyrone+Taylor&tab=player-props",
-            "link_quality": "search",
+            "betslip_link": "https://sportsbook.draftkings.com/?outcomes=0QA332644583%23593054576_13L84240Q1881895548Q20",
+            "link_quality": "outcome",
             "bookmaker_sid": null,
             "market_sid": null,
             "outcome_sid": null,
-            "sportsbook_homepage": "https://sportsbook.fanduel.com/",
-            "odds_decimal": 1.658,
+            "sportsbook_homepage": "https://sportsbook.draftkings.com/",
+            "odds_event_id": "db06eeec096bc60532c3b1aa5d4235a0",
+            "odds_price": -105,
+            "odds_decimal": 1.952,
             "play_key": "2026-05-07|824362|tyrone taylor|tb|under",
             "parlay_tag": "parlay",
             "parlay_candidate": true,
@@ -291,48 +293,59 @@
             "bookmaker": "fanduel",
             "bookmaker_title": "FanDuel",
             "links": [
-              "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props",
-              "https://sportsbook.fanduel.com/search?q=Tyrone+Taylor&tab=player-props"
+              "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props"
             ],
             "leg_indices": [
-              0,
-              1
+              0
             ],
             "leg_keys": [
-              "2026-05-07|823306|xander bogaerts|tb|over",
-              "2026-05-07|824362|tyrone taylor|tb|under"
+              "2026-05-07|823306|xander bogaerts|tb|over"
             ],
             "link_quality": "search",
             "primary_link": "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props",
-            "covered_leg_count": 2,
-            "complete": true
+            "covered_leg_count": 1,
+            "complete": false
+          },
+          {
+            "bookmaker": "draftkings",
+            "bookmaker_title": "DraftKings",
+            "links": [
+              "https://sportsbook.draftkings.com/?outcomes=0QA332644583%23593054576_13L84240Q1881895548Q20"
+            ],
+            "leg_indices": [
+              1
+            ],
+            "leg_keys": [
+              "2026-05-07|824362|tyrone taylor|tb|under"
+            ],
+            "link_quality": "outcome",
+            "primary_link": "https://sportsbook.draftkings.com/?outcomes=0QA332644583%23593054576_13L84240Q1881895548Q20",
+            "covered_leg_count": 1,
+            "complete": false
           }
         ],
         "recommended_sportsbook": {
           "bookmaker": "fanduel",
           "bookmaker_title": "FanDuel",
           "links": [
-            "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props",
-            "https://sportsbook.fanduel.com/search?q=Tyrone+Taylor&tab=player-props"
+            "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props"
           ],
           "leg_indices": [
-            0,
-            1
+            0
           ],
           "leg_keys": [
-            "2026-05-07|823306|xander bogaerts|tb|over",
-            "2026-05-07|824362|tyrone taylor|tb|under"
+            "2026-05-07|823306|xander bogaerts|tb|over"
           ],
           "link_quality": "search",
           "primary_link": "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props",
-          "covered_leg_count": 2,
-          "complete": true
+          "covered_leg_count": 1,
+          "complete": false
         },
         "joint_probability": 0.807760556876,
         "adjusted_probability": 0.807760556876,
-        "odds_decimal": 3.08,
-        "odds_american": "+208",
-        "payout_per_dollar": 2.08,
+        "odds_decimal": 3.63,
+        "odds_american": "+263",
+        "payout_per_dollar": 2.63,
         "avg_win_rate": 0.9004274999999999,
         "n_games": 2
       }
@@ -356,7 +369,7 @@
       "fallback_min_pair_probability": 0.34,
       "fallback_min_legs_per_parlay": 2,
       "fallback_max_legs_per_parlay": 2,
-      "sportsbook_complete_parlay_count": 1
+      "sportsbook_complete_parlay_count": 0
     }
   },
   "parlay_summary": {
@@ -378,7 +391,7 @@
     "fallback_min_pair_probability": 0.34,
     "fallback_min_legs_per_parlay": 2,
     "fallback_max_legs_per_parlay": 2,
-    "sportsbook_complete_parlay_count": 1
+    "sportsbook_complete_parlay_count": 0
   },
   "parlay_pairs": [
     {
@@ -506,7 +519,7 @@
           "game_id": "824362",
           "game_status_code": "P",
           "direction": "UNDER",
-          "odds_american": -152,
+          "odds_american": -105,
           "target": "TB",
           "prediction": 0.05482,
           "market_line": 1.5,
@@ -532,17 +545,19 @@
           "market_key": "batter_total_bases",
           "outcome_name": "UNDER",
           "line": 1.5,
-          "bookmaker": "fanduel",
-          "bookmaker_title": "FanDuel",
-          "event_link": null,
+          "bookmaker": "draftkings",
+          "bookmaker_title": "DraftKings",
+          "event_link": "https://sportsbook.draftkings.com/event/34109312",
           "market_link": null,
-          "betslip_link": "https://sportsbook.fanduel.com/search?q=Tyrone+Taylor&tab=player-props",
-          "link_quality": "search",
+          "betslip_link": "https://sportsbook.draftkings.com/?outcomes=0QA332644583%23593054576_13L84240Q1881895548Q20",
+          "link_quality": "outcome",
           "bookmaker_sid": null,
           "market_sid": null,
           "outcome_sid": null,
-          "sportsbook_homepage": "https://sportsbook.fanduel.com/",
-          "odds_decimal": 1.658,
+          "sportsbook_homepage": "https://sportsbook.draftkings.com/",
+          "odds_event_id": "db06eeec096bc60532c3b1aa5d4235a0",
+          "odds_price": -105,
+          "odds_decimal": 1.952,
           "play_key": "2026-05-07|824362|tyrone taylor|tb|under",
           "parlay_tag": "parlay",
           "parlay_candidate": true,
@@ -566,48 +581,59 @@
           "bookmaker": "fanduel",
           "bookmaker_title": "FanDuel",
           "links": [
-            "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props",
-            "https://sportsbook.fanduel.com/search?q=Tyrone+Taylor&tab=player-props"
+            "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props"
           ],
           "leg_indices": [
-            0,
-            1
+            0
           ],
           "leg_keys": [
-            "2026-05-07|823306|xander bogaerts|tb|over",
-            "2026-05-07|824362|tyrone taylor|tb|under"
+            "2026-05-07|823306|xander bogaerts|tb|over"
           ],
           "link_quality": "search",
           "primary_link": "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props",
-          "covered_leg_count": 2,
-          "complete": true
+          "covered_leg_count": 1,
+          "complete": false
+        },
+        {
+          "bookmaker": "draftkings",
+          "bookmaker_title": "DraftKings",
+          "links": [
+            "https://sportsbook.draftkings.com/?outcomes=0QA332644583%23593054576_13L84240Q1881895548Q20"
+          ],
+          "leg_indices": [
+            1
+          ],
+          "leg_keys": [
+            "2026-05-07|824362|tyrone taylor|tb|under"
+          ],
+          "link_quality": "outcome",
+          "primary_link": "https://sportsbook.draftkings.com/?outcomes=0QA332644583%23593054576_13L84240Q1881895548Q20",
+          "covered_leg_count": 1,
+          "complete": false
         }
       ],
       "recommended_sportsbook": {
         "bookmaker": "fanduel",
         "bookmaker_title": "FanDuel",
         "links": [
-          "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props",
-          "https://sportsbook.fanduel.com/search?q=Tyrone+Taylor&tab=player-props"
+          "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props"
         ],
         "leg_indices": [
-          0,
-          1
+          0
         ],
         "leg_keys": [
-          "2026-05-07|823306|xander bogaerts|tb|over",
-          "2026-05-07|824362|tyrone taylor|tb|under"
+          "2026-05-07|823306|xander bogaerts|tb|over"
         ],
         "link_quality": "search",
         "primary_link": "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props",
-        "covered_leg_count": 2,
-        "complete": true
+        "covered_leg_count": 1,
+        "complete": false
       },
       "joint_probability": 0.807760556876,
       "adjusted_probability": 0.807760556876,
-      "odds_decimal": 3.08,
-      "odds_american": "+208",
-      "payout_per_dollar": 2.08,
+      "odds_decimal": 3.63,
+      "odds_american": "+263",
+      "payout_per_dollar": 2.63,
       "avg_win_rate": 0.9004274999999999,
       "n_games": 2
     }
@@ -839,7 +865,7 @@
       "game_id": "824362",
       "game_status_code": "P",
       "direction": "UNDER",
-      "odds_american": -152,
+      "odds_american": -105,
       "target": "TB",
       "prediction": 0.05482,
       "market_line": 1.5,
@@ -865,17 +891,19 @@
       "market_key": "batter_total_bases",
       "outcome_name": "UNDER",
       "line": 1.5,
-      "bookmaker": "fanduel",
-      "bookmaker_title": "FanDuel",
-      "event_link": null,
+      "bookmaker": "draftkings",
+      "bookmaker_title": "DraftKings",
+      "event_link": "https://sportsbook.draftkings.com/event/34109312",
       "market_link": null,
-      "betslip_link": "https://sportsbook.fanduel.com/search?q=Tyrone+Taylor&tab=player-props",
-      "link_quality": "search",
+      "betslip_link": "https://sportsbook.draftkings.com/?outcomes=0QA332644583%23593054576_13L84240Q1881895548Q20",
+      "link_quality": "outcome",
       "bookmaker_sid": null,
       "market_sid": null,
       "outcome_sid": null,
-      "sportsbook_homepage": "https://sportsbook.fanduel.com/",
-      "odds_decimal": 1.658,
+      "sportsbook_homepage": "https://sportsbook.draftkings.com/",
+      "odds_event_id": "db06eeec096bc60532c3b1aa5d4235a0",
+      "odds_price": -105,
+      "odds_decimal": 1.952,
       "play_key": "2026-05-07|824362|tyrone taylor|tb|under",
       "parlay_tag": "parlay",
       "parlay_candidate": true,
