@@ -5,7 +5,7 @@
   "through_date": "2026-05-06",
   "model_run_id": "mlb_high_precision_selector_v1",
   "policy_profile": "core_market_props",
-  "generated_at_utc": "2026-05-07T14:22:18.871783+00:00",
+  "generated_at_utc": "2026-05-07T19:11:59.869775+00:00",
   "sportsbook_links": {
     "available": true,
     "sport": "mlb",
@@ -15,13 +15,14 @@
       "betmgm",
       "caesars"
     ],
-    "catalog_count": 278,
+    "catalog_count": 192,
     "matched_event_count": 5,
     "requested_market_count": 1,
-    "matched_play_count": 2,
-    "outcome_link_count": 2,
+    "matched_play_count": 1,
+    "outcome_link_count": 1,
     "play_count": 6,
-    "coverage_rate": 0.3333333333333333
+    "coverage_rate": 0.16666666666666666,
+    "search_fallback_count": 5
   },
   "summary": {
     "play_count": 6,
@@ -185,16 +186,16 @@
             "market_key": "batter_total_bases",
             "outcome_name": "OVER",
             "line": 1.5,
-            "bookmaker": null,
-            "bookmaker_title": null,
+            "bookmaker": "fanduel",
+            "bookmaker_title": "FanDuel",
             "event_link": null,
             "market_link": null,
-            "betslip_link": null,
-            "link_quality": null,
+            "betslip_link": "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props",
+            "link_quality": "search",
             "bookmaker_sid": null,
             "market_sid": null,
             "outcome_sid": null,
-            "sportsbook_homepage": null,
+            "sportsbook_homepage": "https://sportsbook.fanduel.com/",
             "odds_decimal": 1.86,
             "play_key": "2026-05-07|823306|xander bogaerts|tb|over",
             "parlay_tag": "parlay",
@@ -230,7 +231,7 @@
             "game_id": "824362",
             "game_status_code": "P",
             "direction": "UNDER",
-            "odds_american": -154,
+            "odds_american": -188,
             "target": "TB",
             "prediction": 0.05482,
             "market_line": 1.5,
@@ -260,15 +261,15 @@
             "bookmaker_title": "DraftKings",
             "event_link": "https://sportsbook.draftkings.com/event/34109312",
             "market_link": null,
-            "betslip_link": "https://sportsbook.draftkings.com/?outcomes=0QA332362247%23591956286_13L84240Q146447124Q20",
+            "betslip_link": "https://sportsbook.draftkings.com/?outcomes=0QA332644583%23593054576_13L84240Q1881895548Q20",
             "link_quality": "outcome",
             "bookmaker_sid": "34109312",
             "market_sid": null,
-            "outcome_sid": "0QA332362247#591956286_13L84240Q146447124Q20",
+            "outcome_sid": "0QA332644583#593054576_13L84240Q1881895548Q20",
             "sportsbook_homepage": "https://sportsbook.draftkings.com/",
             "odds_event_id": "db06eeec096bc60532c3b1aa5d4235a0",
-            "odds_price": -154,
-            "odds_decimal": 1.649,
+            "odds_price": -188,
+            "odds_decimal": 1.532,
             "play_key": "2026-05-07|824362|tyrone taylor|tb|under",
             "parlay_tag": "parlay",
             "parlay_candidate": true,
@@ -289,10 +290,27 @@
         ],
         "sportsbook_options": [
           {
+            "bookmaker": "fanduel",
+            "bookmaker_title": "FanDuel",
+            "links": [
+              "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props"
+            ],
+            "leg_indices": [
+              0
+            ],
+            "leg_keys": [
+              "2026-05-07|823306|xander bogaerts|tb|over"
+            ],
+            "link_quality": "search",
+            "primary_link": "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props",
+            "covered_leg_count": 1,
+            "complete": false
+          },
+          {
             "bookmaker": "draftkings",
             "bookmaker_title": "DraftKings",
             "links": [
-              "https://sportsbook.draftkings.com/?outcomes=0QA332362247%23591956286_13L84240Q146447124Q20"
+              "https://sportsbook.draftkings.com/?outcomes=0QA332644583%23593054576_13L84240Q1881895548Q20"
             ],
             "leg_indices": [
               1
@@ -301,33 +319,33 @@
               "2026-05-07|824362|tyrone taylor|tb|under"
             ],
             "link_quality": "outcome",
-            "primary_link": "https://sportsbook.draftkings.com/?outcomes=0QA332362247%23591956286_13L84240Q146447124Q20",
+            "primary_link": "https://sportsbook.draftkings.com/?outcomes=0QA332644583%23593054576_13L84240Q1881895548Q20",
             "covered_leg_count": 1,
             "complete": false
           }
         ],
         "recommended_sportsbook": {
-          "bookmaker": "draftkings",
-          "bookmaker_title": "DraftKings",
+          "bookmaker": "fanduel",
+          "bookmaker_title": "FanDuel",
           "links": [
-            "https://sportsbook.draftkings.com/?outcomes=0QA332362247%23591956286_13L84240Q146447124Q20"
+            "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props"
           ],
           "leg_indices": [
-            1
+            0
           ],
           "leg_keys": [
-            "2026-05-07|824362|tyrone taylor|tb|under"
+            "2026-05-07|823306|xander bogaerts|tb|over"
           ],
-          "link_quality": "outcome",
-          "primary_link": "https://sportsbook.draftkings.com/?outcomes=0QA332362247%23591956286_13L84240Q146447124Q20",
+          "link_quality": "search",
+          "primary_link": "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props",
           "covered_leg_count": 1,
           "complete": false
         },
         "joint_probability": 0.807760556876,
         "adjusted_probability": 0.807760556876,
-        "odds_decimal": 3.07,
-        "odds_american": "+207",
-        "payout_per_dollar": 2.07,
+        "odds_decimal": 2.85,
+        "odds_american": "+185",
+        "payout_per_dollar": 1.85,
         "avg_win_rate": 0.9004274999999999,
         "n_games": 2
       }
@@ -456,16 +474,16 @@
           "market_key": "batter_total_bases",
           "outcome_name": "OVER",
           "line": 1.5,
-          "bookmaker": null,
-          "bookmaker_title": null,
+          "bookmaker": "fanduel",
+          "bookmaker_title": "FanDuel",
           "event_link": null,
           "market_link": null,
-          "betslip_link": null,
-          "link_quality": null,
+          "betslip_link": "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props",
+          "link_quality": "search",
           "bookmaker_sid": null,
           "market_sid": null,
           "outcome_sid": null,
-          "sportsbook_homepage": null,
+          "sportsbook_homepage": "https://sportsbook.fanduel.com/",
           "odds_decimal": 1.86,
           "play_key": "2026-05-07|823306|xander bogaerts|tb|over",
           "parlay_tag": "parlay",
@@ -501,7 +519,7 @@
           "game_id": "824362",
           "game_status_code": "P",
           "direction": "UNDER",
-          "odds_american": -154,
+          "odds_american": -188,
           "target": "TB",
           "prediction": 0.05482,
           "market_line": 1.5,
@@ -531,15 +549,15 @@
           "bookmaker_title": "DraftKings",
           "event_link": "https://sportsbook.draftkings.com/event/34109312",
           "market_link": null,
-          "betslip_link": "https://sportsbook.draftkings.com/?outcomes=0QA332362247%23591956286_13L84240Q146447124Q20",
+          "betslip_link": "https://sportsbook.draftkings.com/?outcomes=0QA332644583%23593054576_13L84240Q1881895548Q20",
           "link_quality": "outcome",
           "bookmaker_sid": "34109312",
           "market_sid": null,
-          "outcome_sid": "0QA332362247#591956286_13L84240Q146447124Q20",
+          "outcome_sid": "0QA332644583#593054576_13L84240Q1881895548Q20",
           "sportsbook_homepage": "https://sportsbook.draftkings.com/",
           "odds_event_id": "db06eeec096bc60532c3b1aa5d4235a0",
-          "odds_price": -154,
-          "odds_decimal": 1.649,
+          "odds_price": -188,
+          "odds_decimal": 1.532,
           "play_key": "2026-05-07|824362|tyrone taylor|tb|under",
           "parlay_tag": "parlay",
           "parlay_candidate": true,
@@ -560,10 +578,27 @@
       ],
       "sportsbook_options": [
         {
+          "bookmaker": "fanduel",
+          "bookmaker_title": "FanDuel",
+          "links": [
+            "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props"
+          ],
+          "leg_indices": [
+            0
+          ],
+          "leg_keys": [
+            "2026-05-07|823306|xander bogaerts|tb|over"
+          ],
+          "link_quality": "search",
+          "primary_link": "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props",
+          "covered_leg_count": 1,
+          "complete": false
+        },
+        {
           "bookmaker": "draftkings",
           "bookmaker_title": "DraftKings",
           "links": [
-            "https://sportsbook.draftkings.com/?outcomes=0QA332362247%23591956286_13L84240Q146447124Q20"
+            "https://sportsbook.draftkings.com/?outcomes=0QA332644583%23593054576_13L84240Q1881895548Q20"
           ],
           "leg_indices": [
             1
@@ -572,33 +607,33 @@
             "2026-05-07|824362|tyrone taylor|tb|under"
           ],
           "link_quality": "outcome",
-          "primary_link": "https://sportsbook.draftkings.com/?outcomes=0QA332362247%23591956286_13L84240Q146447124Q20",
+          "primary_link": "https://sportsbook.draftkings.com/?outcomes=0QA332644583%23593054576_13L84240Q1881895548Q20",
           "covered_leg_count": 1,
           "complete": false
         }
       ],
       "recommended_sportsbook": {
-        "bookmaker": "draftkings",
-        "bookmaker_title": "DraftKings",
+        "bookmaker": "fanduel",
+        "bookmaker_title": "FanDuel",
         "links": [
-          "https://sportsbook.draftkings.com/?outcomes=0QA332362247%23591956286_13L84240Q146447124Q20"
+          "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props"
         ],
         "leg_indices": [
-          1
+          0
         ],
         "leg_keys": [
-          "2026-05-07|824362|tyrone taylor|tb|under"
+          "2026-05-07|823306|xander bogaerts|tb|over"
         ],
-        "link_quality": "outcome",
-        "primary_link": "https://sportsbook.draftkings.com/?outcomes=0QA332362247%23591956286_13L84240Q146447124Q20",
+        "link_quality": "search",
+        "primary_link": "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props",
         "covered_leg_count": 1,
         "complete": false
       },
       "joint_probability": 0.807760556876,
       "adjusted_probability": 0.807760556876,
-      "odds_decimal": 3.07,
-      "odds_american": "+207",
-      "payout_per_dollar": 2.07,
+      "odds_decimal": 2.85,
+      "odds_american": "+185",
+      "payout_per_dollar": 1.85,
       "avg_win_rate": 0.9004274999999999,
       "n_games": 2
     }
@@ -651,16 +686,16 @@
       "market_key": "batter_total_bases",
       "outcome_name": "UNDER",
       "line": 1.5,
-      "bookmaker": null,
-      "bookmaker_title": null,
+      "bookmaker": "fanduel",
+      "bookmaker_title": "FanDuel",
       "event_link": null,
       "market_link": null,
-      "betslip_link": null,
-      "link_quality": null,
+      "betslip_link": "https://sportsbook.fanduel.com/search?q=Sam+Haggerty&tab=player-props",
+      "link_quality": "search",
       "bookmaker_sid": null,
       "market_sid": null,
       "outcome_sid": null,
-      "sportsbook_homepage": null,
+      "sportsbook_homepage": "https://sportsbook.fanduel.com/",
       "odds_decimal": 1.8,
       "play_key": "2026-05-07|823551|sam haggerty|tb|under",
       "parlay_tag": "",
@@ -718,16 +753,16 @@
       "market_key": "batter_total_bases",
       "outcome_name": "OVER",
       "line": 1.5,
-      "bookmaker": null,
-      "bookmaker_title": null,
+      "bookmaker": "fanduel",
+      "bookmaker_title": "FanDuel",
       "event_link": null,
       "market_link": null,
-      "betslip_link": null,
-      "link_quality": null,
+      "betslip_link": "https://sportsbook.fanduel.com/search?q=Xander+Bogaerts&tab=player-props",
+      "link_quality": "search",
       "bookmaker_sid": null,
       "market_sid": null,
       "outcome_sid": null,
-      "sportsbook_homepage": null,
+      "sportsbook_homepage": "https://sportsbook.fanduel.com/",
       "odds_decimal": 1.86,
       "play_key": "2026-05-07|823306|xander bogaerts|tb|over",
       "parlay_tag": "parlay",
@@ -763,7 +798,7 @@
       "game_id": "824681",
       "game_status_code": "P",
       "direction": "UNDER",
-      "odds_american": -178,
+      "odds_american": -181,
       "target": "TB",
       "prediction": 0.156712,
       "market_line": 1.5,
@@ -789,19 +824,17 @@
       "market_key": "batter_total_bases",
       "outcome_name": "UNDER",
       "line": 1.5,
-      "bookmaker": "draftkings",
-      "bookmaker_title": "DraftKings",
-      "event_link": "https://sportsbook.draftkings.com/event/34109311",
+      "bookmaker": "fanduel",
+      "bookmaker_title": "FanDuel",
+      "event_link": null,
       "market_link": null,
-      "betslip_link": "https://sportsbook.draftkings.com/?outcomes=0QA332386641%23592049966_13L84240Q146447124Q20",
-      "link_quality": "outcome",
-      "bookmaker_sid": "34109311",
+      "betslip_link": "https://sportsbook.fanduel.com/search?q=Dane+Myers&tab=player-props",
+      "link_quality": "search",
+      "bookmaker_sid": null,
       "market_sid": null,
-      "outcome_sid": "0QA332386641#592049966_13L84240Q146447124Q20",
-      "sportsbook_homepage": "https://sportsbook.draftkings.com/",
-      "odds_event_id": "d995ce8d9df4c182c1ecade37bac292d",
-      "odds_price": -178,
-      "odds_decimal": 1.562,
+      "outcome_sid": null,
+      "sportsbook_homepage": "https://sportsbook.fanduel.com/",
+      "odds_decimal": 1.552,
       "play_key": "2026-05-07|824681|dane myers|tb|under",
       "parlay_tag": "",
       "parlay_candidate": false,
@@ -832,7 +865,7 @@
       "game_id": "824362",
       "game_status_code": "P",
       "direction": "UNDER",
-      "odds_american": -154,
+      "odds_american": -188,
       "target": "TB",
       "prediction": 0.05482,
       "market_line": 1.5,
@@ -862,15 +895,15 @@
       "bookmaker_title": "DraftKings",
       "event_link": "https://sportsbook.draftkings.com/event/34109312",
       "market_link": null,
-      "betslip_link": "https://sportsbook.draftkings.com/?outcomes=0QA332362247%23591956286_13L84240Q146447124Q20",
+      "betslip_link": "https://sportsbook.draftkings.com/?outcomes=0QA332644583%23593054576_13L84240Q1881895548Q20",
       "link_quality": "outcome",
       "bookmaker_sid": "34109312",
       "market_sid": null,
-      "outcome_sid": "0QA332362247#591956286_13L84240Q146447124Q20",
+      "outcome_sid": "0QA332644583#593054576_13L84240Q1881895548Q20",
       "sportsbook_homepage": "https://sportsbook.draftkings.com/",
       "odds_event_id": "db06eeec096bc60532c3b1aa5d4235a0",
-      "odds_price": -154,
-      "odds_decimal": 1.649,
+      "odds_price": -188,
+      "odds_decimal": 1.532,
       "play_key": "2026-05-07|824362|tyrone taylor|tb|under",
       "parlay_tag": "parlay",
       "parlay_candidate": true,
@@ -931,16 +964,16 @@
       "market_key": "batter_total_bases",
       "outcome_name": "OVER",
       "line": 1.5,
-      "bookmaker": null,
-      "bookmaker_title": null,
+      "bookmaker": "fanduel",
+      "bookmaker_title": "FanDuel",
       "event_link": null,
       "market_link": null,
-      "betslip_link": null,
-      "link_quality": null,
+      "betslip_link": "https://sportsbook.fanduel.com/search?q=Blaze+Alexander&tab=player-props",
+      "link_quality": "search",
       "bookmaker_sid": null,
       "market_sid": null,
       "outcome_sid": null,
-      "sportsbook_homepage": null,
+      "sportsbook_homepage": "https://sportsbook.fanduel.com/",
       "odds_decimal": 1.83,
       "play_key": "2026-05-07|823870|blaze alexander|tb|over",
       "parlay_tag": "",
@@ -998,16 +1031,16 @@
       "market_key": "batter_total_bases",
       "outcome_name": "UNDER",
       "line": 1.5,
-      "bookmaker": null,
-      "bookmaker_title": null,
+      "bookmaker": "fanduel",
+      "bookmaker_title": "FanDuel",
       "event_link": null,
       "market_link": null,
-      "betslip_link": null,
-      "link_quality": null,
+      "betslip_link": "https://sportsbook.fanduel.com/search?q=Darell+Hernaiz&tab=player-props",
+      "link_quality": "search",
       "bookmaker_sid": null,
       "market_sid": null,
       "outcome_sid": null,
-      "sportsbook_homepage": null,
+      "sportsbook_homepage": "https://sportsbook.fanduel.com/",
       "odds_decimal": 1.952,
       "play_key": "2026-05-07|823467|darell hernaiz|tb|under",
       "parlay_tag": "",

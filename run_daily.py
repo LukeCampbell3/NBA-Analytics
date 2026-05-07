@@ -23,8 +23,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
-import re
 import subprocess
 import sys
 from datetime import date, datetime, timedelta
@@ -251,11 +249,8 @@ def run_nba(run_date: str, args: argparse.Namespace, direction_model=None) -> No
             for i, s in enumerate(board.singles[:6], 1):
                 print(f"  {i}. {s.get('player', '?')} {s.get('target', '?')} {s.get('direction', '?')} {s.get('market_line', '?')}")
 
-        # Fetch bet slip links from The Odds API
-        betslip_links = _fetch_betslip_links("basketball_nba")
-
         # Inject into web JSON
-        _inject_nba_parlay_json(board, betslip_links=betslip_links)
+        _inject_nba_parlay_json(board)
 
     except Exception as e:
         print(f"  [warning] NBA parlay builder failed: {e}")
@@ -263,77 +258,19 @@ def run_nba(run_date: str, args: argparse.Namespace, direction_model=None) -> No
         traceback.print_exc()
 
 
-def _fetch_betslip_links(sport: str) -> list[dict]:
-    """Fetch FanDuel bet slip links. Falls back to constructing search URLs."""
-    links = []
-
-    # Try The Odds API first (requires paid plan for player prop links)
-    try:
-        sys.path.insert(0, str(NBA_PREDICTOR / "scripts"))
-        from fetch_betslip_links import fetch_player_prop_links, NBA_MARKET_MAP, MLB_MARKET_MAP
-
-        api_key = None
-        for env_key in ("THE_ODDS_API_KEY", "ODDS_API_KEY"):
-            api_key = os.environ.get(env_key)
-            if api_key:
-                break
-        if not api_key:
-            config_path = REPO_ROOT / "config.local.yaml"
-            if config_path.exists():
-                text = config_path.read_text(encoding="utf-8")
-                match = re.search(r'api_key:\s*["\']?([a-f0-9]+)["\']?', text)
-                if match:
-                    api_key = match.group(1)
-
-        if api_key:
-            markets = list(NBA_MARKET_MAP.values()) if "nba" in sport else list(MLB_MARKET_MAP.values())
-            try:
-                links = fetch_player_prop_links(sport, markets, api_key)
-                if links:
-                    print(f"  Found {len(links)} FanDuel deep links")
-                    return links
-            except Exception:
-                pass
-    except Exception:
-        pass
-
-    # Fallback: no deep links available, return empty
-    # The frontend will construct FanDuel search URLs client-side
-    return []
+def _build_fanduel_search_url(player_name: str) -> str:
+    """Construct a FanDuel search URL for a player's props page."""
+    from urllib.parse import quote_plus
+    clean = str(player_name or "").replace("_", " ").strip()
+    if not clean:
+        return "https://sportsbook.fanduel.com/navigation/nba"
+    return f"https://sportsbook.fanduel.com/search?q={quote_plus(clean)}&tab=player-props"
 
 
 def _inject_nba_parlay_json(board, betslip_links=None) -> None:
     """Inject parlay board AND singles into the NBA web JSON."""
     if not NBA_WEB_JSON.exists():
         return
-
-    # Build betslip link lookup
-    link_lookup = {}
-    if betslip_links:
-        for item in betslip_links:
-            player_key = str(item.get("player", "")).lower().strip()
-            direction = str(item.get("direction", "")).upper()
-            line = float(item.get("line", 0))
-            market = str(item.get("market_key", ""))
-            link_lookup[(player_key, market, direction, line)] = item
-
-    def _find_link(name, target, direction, line):
-        from fetch_betslip_links import NBA_MARKET_MAP
-        market_key = NBA_MARKET_MAP.get(target, "")
-        if not market_key:
-            return None, None
-        name_lower = name.lower().strip()
-        # Exact match
-        key = (name_lower, market_key, direction, line)
-        if key in link_lookup:
-            item = link_lookup[key]
-            return item.get("link"), item.get("odds_american")
-        # Fuzzy match
-        for lk, lv in link_lookup.items():
-            if lk[1] == market_key and lk[2] == direction and lk[3] == line:
-                if name_lower in lk[0] or lk[0] in name_lower:
-                    return lv.get("link"), lv.get("odds_american")
-        return None, None
 
     try:
         payload = json.loads(NBA_WEB_JSON.read_text(encoding="utf-8"))
@@ -378,16 +315,6 @@ def _inject_nba_parlay_json(board, betslip_links=None) -> None:
 
                 leg_odds = -110
                 leg_decimal = 1.0 + (100.0 / 110.0)  # 1.909
-                # Try to find FanDuel deep link
-                leg_link, leg_real_odds = (None, None)
-                if betslip_links:
-                    try:
-                        leg_link, leg_real_odds = _find_link(full_name, str(leg.get("target", "")), str(leg.get("direction", "")).upper(), float(leg.get("market_line", 0) or 0))
-                    except Exception:
-                        pass
-                if leg_real_odds:
-                    leg_odds = leg_real_odds
-                    leg_decimal = (1.0 + 100.0 / abs(leg_odds)) if leg_odds < 0 else (1.0 + leg_odds / 100.0)
 
                 legs_out.append({
                     "player": full_name,
@@ -400,7 +327,9 @@ def _inject_nba_parlay_json(board, betslip_links=None) -> None:
                     "abs_edge": float(leg.get("abs_edge", 0) or 0),
                     "odds_american": leg_odds,
                     "odds_decimal": round(leg_decimal, 3),
-                    "betslip_link": leg_link,
+                    "betslip_link": _build_fanduel_search_url(full_name),
+                    "bookmaker": "fanduel",
+                    "bookmaker_title": "FanDuel",
                 })
             # Parlay odds = product of decimal odds for each leg
             n_legs = len(legs_out)
@@ -434,16 +363,6 @@ def _inject_nba_parlay_json(board, betslip_links=None) -> None:
         for i, pick in enumerate(board.singles, 1):
             pick_odds = -110
             pick_decimal = round(1.0 + (100.0 / 110.0), 3)
-            # Try to find FanDuel deep link
-            pick_link, pick_real_odds = (None, None)
-            if betslip_links:
-                try:
-                    pick_link, pick_real_odds = _find_link(full_name, str(pick.get("target", "")), str(pick.get("direction", "")).upper(), float(pick.get("market_line", 0) or 0))
-                except Exception:
-                    pass
-            if pick_real_odds:
-                pick_odds = pick_real_odds
-                pick_decimal = round((1.0 + 100.0 / abs(pick_odds)) if pick_odds < 0 else (1.0 + pick_odds / 100.0), 3)
 
             # Get full player name from csv path
             csv_path = str(pick.get("csv", ""))
@@ -480,7 +399,9 @@ def _inject_nba_parlay_json(board, betslip_links=None) -> None:
                 "stake_fraction": float(pick.get("stake_fraction", 0) or 0),
                 "odds_american": pick_odds,
                 "odds_decimal": pick_decimal,
-                "betslip_link": pick_link,
+                "betslip_link": _build_fanduel_search_url(full_name),
+                "bookmaker": "fanduel",
+                "bookmaker_title": "FanDuel",
             })
         payload["plays"] = plays_out
 

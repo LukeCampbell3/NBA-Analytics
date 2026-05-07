@@ -582,6 +582,54 @@ def match_play_to_catalog(
     return dict(best_match) if best_match else None
 
 
+# ─────────────────────────────────────────────────────────
+# FanDuel Search URL Construction (fallback when API unavailable)
+# ─────────────────────────────────────────────────────────
+
+FANDUEL_SEARCH_BASE = "https://sportsbook.fanduel.com/search"
+
+FANDUEL_SPORT_NAV = {
+    "nba": "https://sportsbook.fanduel.com/navigation/nba",
+    "mlb": "https://sportsbook.fanduel.com/navigation/mlb",
+}
+
+
+def build_fanduel_search_url(player_name: str, sport: str = "mlb") -> str:
+    """Construct a FanDuel search URL that lands on the player's prop page.
+
+    This is the most reliable way to link users to a specific player's props
+    without requiring API deep-link access.
+    """
+    clean_name = str(player_name or "").replace("_", " ").strip()
+    if not clean_name:
+        return FANDUEL_SPORT_NAV.get(_canonical_sport(sport), FANDUEL_SEARCH_BASE)
+    encoded = urllib.parse.quote_plus(clean_name)
+    return f"{FANDUEL_SEARCH_BASE}?q={encoded}&tab=player-props"
+
+
+def _apply_fanduel_search_fallback(
+    plays: list[dict[str, Any]],
+    sport: str,
+) -> None:
+    """Populate betslip_link and bookmaker fields using FanDuel search URLs.
+
+    Applied in-place to any play that doesn't already have a betslip_link.
+    """
+    for play in plays:
+        if play.get("betslip_link"):
+            continue
+        player_name = str(
+            play.get("player_display_name")
+            or play.get("player")
+            or ""
+        ).replace("_", " ").strip()
+        play["betslip_link"] = build_fanduel_search_url(player_name, sport)
+        play["bookmaker"] = play.get("bookmaker") or "fanduel"
+        play["bookmaker_title"] = play.get("bookmaker_title") or "FanDuel"
+        play["link_quality"] = play.get("link_quality") or "search"
+        play["sportsbook_homepage"] = play.get("sportsbook_homepage") or BOOKMAKER_HOMEPAGES.get("fanduel")
+
+
 def attach_sportsbook_links_to_plays(
     plays: list[dict[str, Any]],
     *,
@@ -657,6 +705,13 @@ def attach_sportsbook_links_to_plays(
     summary["outcome_link_count"] = outcome_link_count
     summary["play_count"] = len(enriched)
     summary["coverage_rate"] = (matched_count / len(enriched)) if enriched else 0.0
+
+    # Fallback: for any plays that still lack a betslip_link, construct
+    # FanDuel search URLs so users always have a clickable path to bet.
+    _apply_fanduel_search_fallback(enriched, canonical)
+    fallback_count = sum(1 for p in enriched if p.get("link_quality") == "search")
+    summary["search_fallback_count"] = fallback_count
+
     return enriched, summary
 
 
