@@ -476,13 +476,25 @@ def fetch_deep_link_catalog(
             matched_events.append(event)
 
     if not matched_events and event_filters:
+        # Try matching with home/away swapped (different sources may disagree on home/away)
+        swapped_filters = {
+            (event_date, away_code, home_code)
+            for event_date, home_code, away_code in event_filters
+            if home_code or away_code
+        }
+        for event, event_key in event_rows:
+            if event_key in swapped_filters:
+                matched_events.append(event)
+
+    if not matched_events and event_filters:
+        # Try team-only matching (ignore date)
         team_only_filters = {
-            (home_code, away_code)
+            frozenset((home_code, away_code))
             for _event_date, home_code, away_code in event_filters
             if home_code or away_code
         }
         for event, (_event_date, home_code, away_code) in event_rows:
-            if (home_code, away_code) in team_only_filters:
+            if frozenset((home_code, away_code)) in team_only_filters:
                 matched_events.append(event)
 
     if not matched_events:
@@ -506,7 +518,6 @@ def fetch_deep_link_catalog(
                     "markets": ",".join(market_keys),
                     "oddsFormat": "american",
                     "includeLinks": "true",
-                    "includeSids": "true",
                 },
             )
         except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError):

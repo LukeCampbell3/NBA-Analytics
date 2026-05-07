@@ -405,6 +405,20 @@ def _inject_nba_parlay_json(board, betslip_links=None) -> None:
             })
         payload["plays"] = plays_out
 
+        # Enrich with DraftKings deep links where available
+        try:
+            sys.path.insert(0, str(REPO_ROOT / "sports"))
+            from shared.odds.deep_links import attach_sportsbook_links_to_plays
+            enriched_plays, link_summary = attach_sportsbook_links_to_plays(
+                plays_out, sport="nba", repo_root=REPO_ROOT,
+            )
+            payload["plays"] = enriched_plays
+            dk_count = sum(1 for p in enriched_plays if p.get("bookmaker") == "draftkings")
+            if dk_count:
+                print(f"  Deep links: {dk_count}/{len(enriched_plays)} plays matched to DraftKings")
+        except Exception as e:
+            print(f"  [info] Deep link enrichment skipped: {e}")
+
         NBA_WEB_JSON.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
         print(f"  Web JSON updated: {NBA_WEB_JSON.name}")
     except Exception as e:
