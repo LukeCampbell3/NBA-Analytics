@@ -86,6 +86,11 @@ def parse_args() -> argparse.Namespace:
         help="Current normalized market snapshot.",
     )
     parser.add_argument(
+        "--explicit-prelock-run",
+        action="store_true",
+        help="Audit-only assertion that this run was captured pre-lock when event start time is unavailable.",
+    )
+    parser.add_argument(
         "--history-csv",
         type=Path,
         default=REPO_ROOT / "model" / "analysis" / "latest_market_comparison_strict_rows.csv",
@@ -963,6 +968,7 @@ def main() -> None:
         raise RuntimeError(f"No upcoming slate rows built. Skipped={len(slate_skipped)} sample={slate_skipped[:5]}")
 
     slate_df = pd.DataFrame.from_records(slate_records).sort_values(["market_date", "player"]).reset_index(drop=True)
+    slate_df["explicit_prelock_run_flag"] = bool(args.explicit_prelock_run)
     input_validation = validate_pipeline_inputs(market_df, slate_df, slate_skipped)
 
     args.slate_csv_out.parent.mkdir(parents=True, exist_ok=True)

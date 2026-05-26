@@ -29,6 +29,7 @@ def _audit_row(index: int, **overrides: object) -> dict[str, object]:
         "game_date": game_date,
         "market_date": game_date,
         "run_date": game_date,
+        "market_commence_time_utc": f"{game_date}T23:00:00+00:00",
         "actual_matched_date": game_date,
         "source_selected_board_csv": f"window_{index % 2}",
         "source_candidate_pool_csv": f"selector_{index % 2}.csv",

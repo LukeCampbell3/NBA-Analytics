@@ -198,6 +198,11 @@ def _snapshot_long_frame(
         "ARCHIVED_ENTRY" if str(provider or "").strip() else "UNKNOWN"
     ).astype(str)
     snapshot_id_series = working.get("Market_Snapshot_ID", pd.Series(str(snapshot_id or ""), index=working.index)).fillna(str(snapshot_id or "")).astype(str)
+    commence_time_series = working.get("market_commence_time_utc", working.get("Market_Commence_Time_UTC", pd.Series(pd.NaT, index=working.index))).map(normalize_timestamp)
+    event_time_source_series = working.get("event_time_source", pd.Series("MISSING", index=working.index)).fillna("MISSING").astype(str)
+    event_time_confidence_series = working.get("event_time_confidence", pd.Series("missing", index=working.index)).fillna("missing").astype(str)
+    event_time_reason_series = working.get("event_time_resolution_reason", pd.Series("", index=working.index)).fillna("").astype(str)
+    event_time_warning_series = working.get("event_time_resolution_warning", pd.Series("", index=working.index)).fillna("").astype(str)
     frames: list[pd.DataFrame] = []
     for target in ("PTS", "TRB", "AST"):
         target_frame = pd.DataFrame(
@@ -216,6 +221,11 @@ def _snapshot_long_frame(
                 "snapshot_price_source_type": snapshot_source_type_series,
                 "snapshot_id": snapshot_id_series,
                 "book": snapshot_book_series,
+                "market_commence_time_utc": commence_time_series,
+                "event_time_source": event_time_source_series,
+                "event_time_confidence": event_time_confidence_series,
+                "event_time_resolution_reason": event_time_reason_series,
+                "event_time_resolution_warning": event_time_warning_series,
             }
         )
         frames.append(target_frame)
@@ -267,10 +277,35 @@ def manifest_path_for_candidate_source(candidate_source: str) -> Path | None:
     return None
 
 
+def _coalesce_snapshot_suffix_columns(frame: pd.DataFrame) -> pd.DataFrame:
+    out = frame.copy()
+    for base_column in [
+        "odds_snapshot_time",
+        "book",
+        "snapshot_id",
+        "market_commence_time_utc",
+        "event_time_source",
+        "event_time_confidence",
+        "event_time_resolution_reason",
+        "event_time_resolution_warning",
+    ]:
+        suffixed = [column for column in [base_column, f"{base_column}_x", f"{base_column}_y"] if column in out.columns]
+        if not suffixed:
+            continue
+        values = pd.Series(pd.NA, index=out.index, dtype="object")
+        for column in suffixed:
+            candidate = out[column].astype("object")
+            values = values.where(values.notna() & values.astype(str).str.strip().ne(""), candidate)
+        out[base_column] = values
+        drop_columns = [column for column in [f"{base_column}_x", f"{base_column}_y"] if column in out.columns]
+        out = out.drop(columns=drop_columns, errors="ignore")
+    return out
+
+
 def augment_with_snapshot_prices(rows: pd.DataFrame) -> pd.DataFrame:
     if rows.empty:
         return rows.copy()
-    working = candidate_identity_columns(rows)
+    working = _coalesce_snapshot_suffix_columns(candidate_identity_columns(rows))
     if "source_candidate_pool_csv" not in working.columns:
         return working
     cache: dict[str, pd.DataFrame] = {}
@@ -288,10 +323,46 @@ def augment_with_snapshot_prices(rows: pd.DataFrame) -> pd.DataFrame:
             merged_frames.append(group.copy())
             continue
         merge_keys = ["player_key", "market_date", "target"]
-        merged = group.merge(snapshot_rows, on=merge_keys, how="left")
+        merged = _coalesce_snapshot_suffix_columns(group).merge(
+            snapshot_rows,
+            on=merge_keys,
+            how="left",
+            suffixes=("", "_snapshot"),
+        )
         merged_frames.append(merged)
     out = pd.concat(merged_frames, ignore_index=True) if merged_frames else working
-    for base_column in ["odds_snapshot_time", "book", "snapshot_id"]:
+    for base_column in [
+        "odds_snapshot_time",
+        "book",
+        "snapshot_id",
+        "market_commence_time_utc",
+        "event_time_source",
+        "event_time_confidence",
+        "event_time_resolution_reason",
+        "event_time_resolution_warning",
+    ]:
+        snapshot_column = f"{base_column}_snapshot"
+        if snapshot_column in out.columns:
+            if base_column not in out.columns:
+                out[base_column] = out[snapshot_column]
+            else:
+                base_values = out[base_column].astype("object")
+                snapshot_values = out[snapshot_column].astype("object")
+                out[base_column] = base_values.where(
+                    base_values.notna() & base_values.astype(str).str.strip().ne(""),
+                    snapshot_values,
+                )
+            out = out.drop(columns=[snapshot_column], errors="ignore")
+    for base_column in [
+        "odds_snapshot_time",
+        "book",
+        "snapshot_id",
+        "market_commence_time_utc",
+        "event_time_source",
+        "event_time_confidence",
+        "event_time_resolution_reason",
+        "event_time_resolution_warning",
+    ]:
         left_column = f"{base_column}_x"
         right_column = f"{base_column}_y"
         if base_column not in out.columns and (left_column in out.columns or right_column in out.columns):
@@ -508,6 +579,14 @@ def summarize_price_provenance(audit_rows: pd.DataFrame) -> dict[str, Any]:
         "missing_price_count": int(frame["price_validity_status"].astype(str).eq("MISSING_PRICE").sum()),
         "diagnostic_only_count": int(frame["price_validity_status"].astype(str).eq("DIAGNOSTIC_ONLY").sum()),
         "unknown_source_count": int(frame["price_validity_status"].astype(str).eq("PRICE_SOURCE_UNKNOWN").sum()),
+        "timestamp_safety_basis_counts": {
+            str(key): int(value)
+            for key, value in frame.get("timestamp_safety_basis", pd.Series("", index=frame.index)).fillna("").astype(str).value_counts().to_dict().items()
+        },
+        "event_time_source_counts": {
+            str(key): int(value)
+            for key, value in frame.get("event_time_source", pd.Series("", index=frame.index)).fillna("").astype(str).value_counts().to_dict().items()
+        },
         "selected_rows_without_valid_entry_price": int(len(selected_invalid)),
         "rows_where_edge_computed_without_valid_price": int(
             (

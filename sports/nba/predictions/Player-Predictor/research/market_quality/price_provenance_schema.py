@@ -67,9 +67,13 @@ TIMING_FIELDS = [
     "odds_snapshot_time",
     "prediction_snapshot_time",
     "selector_run_time",
+    "market_commence_time_utc",
     "minutes_between_odds_and_prediction",
     "price_staleness_seconds",
     "line_staleness_seconds",
+    "explicit_prelock_run_flag",
+    "timestamp_safety_basis",
+    "timestamp_safety_blocked_reason",
 ]
 
 SOURCE_FIELDS = [
@@ -78,6 +82,10 @@ SOURCE_FIELDS = [
     "price_validity_status",
     "diagnostic_only_flag",
     "timestamp_safe_flag",
+    "event_time_source",
+    "event_time_confidence",
+    "event_time_resolution_reason",
+    "event_time_resolution_warning",
 ]
 
 MOVEMENT_FIELDS = [
@@ -227,6 +235,8 @@ def ensure_price_provenance_columns(frame: pd.DataFrame) -> pd.DataFrame:
             out[column] = False
         elif column.endswith("_time"):
             out[column] = pd.NaT
+        elif column == "market_commence_time_utc":
+            out[column] = pd.NaT
         elif column in {
             "market_side_price",
             "market_side_break_even",
@@ -253,6 +263,8 @@ def ensure_price_provenance_columns(frame: pd.DataFrame) -> pd.DataFrame:
             "player_id",
         }:
             out[column] = np.nan
+        elif column == "explicit_prelock_run_flag":
+            out[column] = False
         else:
             out[column] = ""
     return out
@@ -359,48 +371,95 @@ def annotate_price_provenance_frame(
     odds_moved = _coalesce_numeric(out, ["odds_moved_since_prediction"])
     odds_moved = odds_moved.where(odds_moved.notna(), pd.Series(np.nan, index=out.index, dtype="float64"))
 
-    game_date_ts = _normalize_timestamp_series(_coalesce_text(out, ["game_date", "market_date", "run_date"]))
     commence_time_ts = _normalize_timestamp_series(
         _coalesce_text(out, ["market_commence_time_utc", "Market_Commence_Time_UTC", "market_commence_time"])
     )
-    source_hint = _coalesce_text(out, ["price_source_hint", "snapshot_source", "price_source"], default="")
+    source_hint = _coalesce_text(
+        out,
+        ["price_source_hint", "snapshot_source", "price_source", "price_source_type", "snapshot_price_source_type"],
+        default="",
+    )
     close_only_flag = source_hint.str.contains("close", case=False, na=False)
     synthetic_flag = source_hint.str.contains("synthetic", case=False, na=False)
-    postevent_flag = pd.Series(False, index=out.index, dtype=bool)
     commence_known = commence_time_ts.notna()
-    postevent_flag = postevent_flag.mask(commence_known, odds_snapshot_time.gt(commence_time_ts) & commence_known)
-    postevent_flag = postevent_flag.mask(
-        ~commence_known & game_date_ts.notna(),
-        odds_snapshot_time.notna() & game_date_ts.notna() & (odds_snapshot_time.dt.normalize() > game_date_ts.dt.normalize()),
-    )
-    timestamp_safe_flag = (
-        odds_snapshot_time.notna()
-        & reference_time.notna()
-        & (odds_snapshot_time <= reference_time)
-        & ~close_only_flag
-        & ~postevent_flag
-    )
     invalid_price_flag = market_side_price.map(price_is_invalid).fillna(False)
-    stale_by_age_flag = timestamp_safe_flag & price_age_seconds.notna() & (price_age_seconds > float(stale_seconds_threshold))
-    stale_price_flag = _coalesce_bool(out, ["stale_price_flag"], default=False) | stale_by_age_flag
     price_source = _coalesce_text(out, ["price_source"], default="")
-    price_source = price_source.where(
-        price_source.str.strip().ne(""),
-        np.where(
-            odds_snapshot_time.notna() & ~postevent_flag,
-            "current_market_snapshot_pre_event",
-            np.where(postevent_flag, "current_market_snapshot_postevent", ""),
-        ),
-    )
-    price_source = pd.Series(price_source, index=out.index, dtype="object")
-    source_type = _derive_source_type(
+    explicit_source_type = _coalesce_text(out, ["price_source_type", "snapshot_price_source_type", "market_price_source_type"], default="").str.upper().str.strip()
+    derived_source_type = _derive_source_type(
         price_source=price_source,
         source_hint=source_hint,
         market_side_price=market_side_price,
         odds_snapshot_time=odds_snapshot_time,
     )
+    source_type = explicit_source_type.where(explicit_source_type.isin(PRICE_SOURCE_TYPES), derived_source_type)
+    source_type = source_type.mask(market_side_price.isna(), "MISSING")
     source_type = source_type.mask(synthetic_flag, "SYNTHETIC_DIAGNOSTIC")
-    diagnostic_only_flag = _coalesce_bool(out, ["diagnostic_only_flag"], default=False) | close_only_flag | synthetic_flag | postevent_flag
+    source_type = source_type.mask(close_only_flag, "CLOSE_ONLY_DIAGNOSTIC")
+    diagnostic_only_flag = (
+        _coalesce_bool(out, ["diagnostic_only_flag"], default=False)
+        | close_only_flag
+        | synthetic_flag
+        | source_type.isin({"CLOSE_ONLY_DIAGNOSTIC", "SYNTHETIC_DIAGNOSTIC"})
+    )
+
+    postevent_flag = odds_snapshot_time.notna() & commence_known & odds_snapshot_time.ge(commence_time_ts)
+    allowed_entry_source = source_type.isin({"LIVE_ENTRY", "ARCHIVED_ENTRY"})
+    explicit_prelock_run_flag = _coalesce_bool(out, ["explicit_prelock_run_flag"], default=False)
+    price_prerequisites = (
+        odds_snapshot_time.notna()
+        & market_side_price.notna()
+        & market_side_break_even.notna()
+        & allowed_entry_source
+        & ~diagnostic_only_flag
+        & ~invalid_price_flag
+    )
+    event_start_verified = price_prerequisites & commence_known & odds_snapshot_time.lt(commence_time_ts)
+    prelock_verified = (
+        price_prerequisites
+        & ~event_start_verified
+        & explicit_prelock_run_flag
+        & prediction_snapshot_time.notna()
+        & odds_snapshot_time.lt(prediction_snapshot_time)
+    )
+    timestamp_safe_flag = event_start_verified | prelock_verified
+    timestamp_safety_basis = pd.Series("NOT_VERIFIED", index=out.index, dtype="object")
+    timestamp_safety_basis = timestamp_safety_basis.mask(event_start_verified, "EVENT_START_VERIFIED")
+    timestamp_safety_basis = timestamp_safety_basis.mask(prelock_verified, "PRELOCK_RUN_VERIFIED")
+
+    timestamp_safety_blocked_reason = pd.Series("", index=out.index, dtype="object")
+    timestamp_safety_blocked_reason = timestamp_safety_blocked_reason.mask(odds_snapshot_time.isna(), "missing_odds_snapshot_time")
+    timestamp_safety_blocked_reason = timestamp_safety_blocked_reason.mask(market_side_price.isna(), "missing_market_side_price")
+    timestamp_safety_blocked_reason = timestamp_safety_blocked_reason.mask(market_side_break_even.isna(), "missing_market_side_break_even")
+    timestamp_safety_blocked_reason = timestamp_safety_blocked_reason.mask(~allowed_entry_source, "price_source_not_live_or_archived_entry")
+    timestamp_safety_blocked_reason = timestamp_safety_blocked_reason.mask(diagnostic_only_flag, "diagnostic_only_price_source")
+    timestamp_safety_blocked_reason = timestamp_safety_blocked_reason.mask(invalid_price_flag, "invalid_market_side_price")
+    timestamp_safety_blocked_reason = timestamp_safety_blocked_reason.mask(postevent_flag, "odds_snapshot_not_before_event_start")
+    timestamp_safety_blocked_reason = timestamp_safety_blocked_reason.mask(
+        price_prerequisites & ~commence_known & ~explicit_prelock_run_flag,
+        "missing_event_time_and_no_explicit_prelock_run",
+    )
+    timestamp_safety_blocked_reason = timestamp_safety_blocked_reason.mask(
+        price_prerequisites
+        & explicit_prelock_run_flag
+        & ~event_start_verified
+        & ~prelock_verified
+        & prediction_snapshot_time.notna(),
+        "prediction_snapshot_not_after_odds_snapshot",
+    )
+    timestamp_safety_blocked_reason = timestamp_safety_blocked_reason.mask(timestamp_safe_flag, "")
+
+    stale_by_age_flag = timestamp_safe_flag & price_age_seconds.notna() & (price_age_seconds > float(stale_seconds_threshold))
+    stale_price_flag = _coalesce_bool(out, ["stale_price_flag"], default=False) | stale_by_age_flag
+    price_source = price_source.where(
+        price_source.str.strip().ne(""),
+        np.where(
+            event_start_verified | prelock_verified,
+            "current_market_snapshot_pre_event",
+            np.where(postevent_flag, "current_market_snapshot_postevent", ""),
+        ),
+    )
+    price_source = pd.Series(price_source, index=out.index, dtype="object")
+    diagnostic_only_flag = diagnostic_only_flag | postevent_flag
     validity = _validity_status(
         market_side_price=market_side_price,
         invalid_price_flag=invalid_price_flag,
@@ -470,14 +529,22 @@ def annotate_price_provenance_frame(
     out["odds_snapshot_time"] = odds_snapshot_time
     out["prediction_snapshot_time"] = prediction_snapshot_time
     out["selector_run_time"] = selector_run_time
+    out["market_commence_time_utc"] = commence_time_ts
     out["minutes_between_odds_and_prediction"] = minutes_between
     out["price_staleness_seconds"] = price_age_seconds
     out["line_staleness_seconds"] = price_age_seconds
+    out["explicit_prelock_run_flag"] = explicit_prelock_run_flag.astype(bool)
+    out["timestamp_safety_basis"] = timestamp_safety_basis
+    out["timestamp_safety_blocked_reason"] = timestamp_safety_blocked_reason
     out["price_source"] = price_source
     out["price_source_type"] = source_type
     out["price_validity_status"] = validity
     out["diagnostic_only_flag"] = diagnostic_only_flag.astype(bool)
     out["timestamp_safe_flag"] = timestamp_safe_flag.astype(bool)
+    out["event_time_source"] = _coalesce_text(out, ["event_time_source"], default="MISSING").replace("", "MISSING")
+    out["event_time_confidence"] = _coalesce_text(out, ["event_time_confidence"], default="missing").replace("", "missing")
+    out["event_time_resolution_reason"] = _coalesce_text(out, ["event_time_resolution_reason"], default="")
+    out["event_time_resolution_warning"] = _coalesce_text(out, ["event_time_resolution_warning"], default="")
     out["line_at_prediction"] = line_at_prediction
     out["line_at_odds_snapshot"] = line_at_odds_snapshot
     out["line_moved_since_prediction"] = line_moved

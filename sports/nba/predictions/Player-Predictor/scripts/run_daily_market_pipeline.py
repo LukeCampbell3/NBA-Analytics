@@ -126,7 +126,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--collect-scan-count", type=int, default=800, help="Maximum Covers matchup ids to scan for the nightly collection window.")
     parser.add_argument("--run-date", type=str, default=None, help="Optional YYYY-MM-DD override for local run date.")
     parser.add_argument("--skip-update-data", action="store_true", help="Skip official game-log refresh.")
-    parser.add_argument("--skip-collect-market", action="store_true", help="Skip Covers market collection.")
+    parser.add_argument("--skip-collect-market", action="store_true", help="Skip market odds collection.")
+    parser.add_argument(
+        "--market-provider",
+        type=str,
+        default="covers",
+        choices=["covers", "sportsgameodds"],
+        help="Market snapshot source used when --skip-collect-market is not set.",
+    )
+    parser.add_argument(
+        "--market-bookmakers",
+        type=str,
+        default="draftkings,fanduel",
+        help="Comma-separated bookmakers for SportsGameOdds live snapshot filtering.",
+    )
     parser.add_argument("--skip-align", action="store_true", help="Skip market alignment onto processed files.")
     parser.add_argument("--skip-backtest", action="store_true", help="Skip refreshing the historical inference calibration CSV.")
     parser.add_argument(
@@ -712,7 +725,7 @@ def main() -> None:
             ],
         )
 
-    if not args.skip_collect_market:
+    if not args.skip_collect_market and args.market_provider == "covers":
         run_step(
             f"Collect Covers Props {lookback_start} -> {future_end}",
             [
@@ -724,6 +737,20 @@ def main() -> None:
                 str(future_end),
                 "--scan-count",
                 str(int(args.collect_scan_count)),
+            ],
+        )
+    elif not args.skip_collect_market and args.market_provider == "sportsgameodds":
+        run_step(
+            "Fetch SportsGameOdds Current NBA Props",
+            [
+                args.python,
+                "scripts/fetch_nba_market_props.py",
+                "--provider",
+                "sportsgameodds",
+                "--bookmakers",
+                str(args.market_bookmakers),
+                "--outdir",
+                str(MARKET_ROOT),
             ],
         )
 

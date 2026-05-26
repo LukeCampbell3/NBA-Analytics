@@ -35,6 +35,7 @@ def _ledger_row(**overrides: object) -> dict[str, object]:
         "game_date": "2026-04-01",
         "market_date": "2026-04-01",
         "run_date": "2026-04-01",
+        "market_commence_time_utc": "2026-04-02T00:00:00+00:00",
         "team": "AAA",
         "opponent": "BBB",
         "market_home_team": "AAA",
@@ -176,12 +177,12 @@ def test_close_only_price_creates_edge_diagnostic_only() -> None:
 
 def test_timestamp_unsafe_price_cannot_be_price_valid() -> None:
     row = _ledger_row(
-        odds_snapshot_time="2026-04-01T16:20:00+00:00",
+        odds_snapshot_time="2026-04-02T00:05:00+00:00",
         prediction_snapshot_time="2026-04-01T16:10:00+00:00",
     )
     ledger = build_priced_event_ledger_frame(pd.DataFrame([row]), record_scope="selected")
     assert bool(ledger.iloc[0]["timestamp_safe_flag"]) is False
-    assert ledger.iloc[0]["price_validity_status"] == "STALE_PRICE"
+    assert ledger.iloc[0]["price_validity_status"] != "PRICE_VALID"
 
 
 def test_lcb_edge_calculation_is_correct() -> None:

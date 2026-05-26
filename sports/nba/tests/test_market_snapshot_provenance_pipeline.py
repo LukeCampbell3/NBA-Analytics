@@ -13,6 +13,7 @@ sys.path.insert(0, str(PLAYER_PREDICTOR_ROOT))
 sys.path.insert(0, str(PLAYER_PREDICTOR_ROOT / "scripts"))
 
 from fetch_nba_market_props import normalize_wide_snapshot
+from fetch_nba_market_props import normalize_sportsgameodds_events
 from collect_covers_historical_props import build_wide_from_covers_long
 from research.market_quality.common import augment_with_snapshot_prices
 from research.market_quality.priced_event_ledger import build_priced_event_ledger_frame
@@ -256,3 +257,60 @@ def test_covers_wide_snapshot_populates_price_provenance_fields() -> None:
     assert row["Market_Price_Source"] == "covers_matchup_props"
     assert row["Market_Price_Source_Type"] == "ARCHIVED_ENTRY"
     assert row["Market_Snapshot_ID"] == "covers_historical:2026-05-26T13:39:09+00:00"
+
+
+def test_sportsgameodds_events_normalize_to_live_price_snapshot() -> None:
+    events = [
+        {
+            "eventID": "evt_sgo",
+            "leagueID": "NBA",
+            "status": {"startsAt": "2026-05-27T00:30:00.000Z", "oddsAvailable": True},
+            "teams": {
+                "home": {"names": {"short": "SAS"}},
+                "away": {"names": {"short": "OKC"}},
+            },
+            "players": {
+                "TEST_PLAYER_NBA": {"name": "Test Player"},
+            },
+            "odds": {
+                "points-TEST_PLAYER_NBA-game-ou-over": {
+                    "statID": "points",
+                    "statEntityID": "TEST_PLAYER_NBA",
+                    "periodID": "game",
+                    "betTypeID": "ou",
+                    "sideID": "over",
+                    "playerID": "TEST_PLAYER_NBA",
+                    "bookOverUnder": "12.5",
+                    "bookOdds": "-110",
+                    "byBookmaker": {
+                        "draftkings": {"odds": "-115", "overUnder": "12.5", "available": True},
+                    },
+                },
+                "points-TEST_PLAYER_NBA-game-ou-under": {
+                    "statID": "points",
+                    "statEntityID": "TEST_PLAYER_NBA",
+                    "periodID": "game",
+                    "betTypeID": "ou",
+                    "sideID": "under",
+                    "playerID": "TEST_PLAYER_NBA",
+                    "bookOverUnder": "12.5",
+                    "bookOdds": "-110",
+                    "byBookmaker": {
+                        "draftkings": {"odds": "-105", "overUnder": "12.5", "available": True},
+                    },
+                },
+            },
+        }
+    ]
+
+    long_df, wide_df = normalize_sportsgameodds_events(events, "2026-05-26T15:00:00+00:00")
+    row = wide_df.iloc[0]
+
+    assert len(long_df) == 2
+    assert row["Market_Provider"] == "sportsgameodds"
+    assert row["Market_Price_Source"] == "sportsgameodds_events_v2"
+    assert row["Market_Price_Source_Type"] == "LIVE_ENTRY"
+    assert row["Market_Commence_Time_UTC"] == "2026-05-27T00:30:00.000Z"
+    assert row["Market_PTS"] == 12.5
+    assert row["Market_PTS_over_price"] == -115.0
+    assert row["Market_PTS_under_price"] == -105.0

@@ -767,6 +767,29 @@ def _research_feasible_mask(
     return feasible.astype(bool)
 
 
+def _research_feasible_mask_by_day(
+    pool: pd.DataFrame,
+    *,
+    research_pool_min_agreement: float,
+    research_corr_mode: str,
+    research_corr_threshold: float | None,
+) -> pd.Series:
+    """Build an index-aligned feasibility mask without relying on groupby.apply shape inference."""
+    feasible = pd.Series(False, index=pool.index, dtype=bool)
+    if pool.empty or "run_date" not in pool.columns:
+        return feasible
+
+    for _, group in pool.groupby("run_date", sort=False):
+        group_mask = _research_feasible_mask(
+            group,
+            research_pool_min_agreement=float(research_pool_min_agreement),
+            research_corr_mode=research_corr_mode,
+            research_corr_threshold=research_corr_threshold,
+        )
+        feasible.loc[group.index] = group_mask.reindex(group.index).fillna(False).astype(bool)
+    return feasible
+
+
 def _gate_ablation_recovery_counts(miss_df: pd.DataFrame) -> dict[str, int]:
     if miss_df.empty:
         return {
@@ -955,17 +978,11 @@ def _build_stage2_proposal_tables(
     pool["corr_z_in_pool"] = (
         pool.groupby("run_date")["corr_score"].transform(lambda s: _zscore_within_group(pd.to_numeric(s, errors="coerce").fillna(0.0)))
     )
-    pool["is_research_feasible"] = (
-        pool.groupby("run_date", group_keys=False)
-        .apply(
-            lambda g: _research_feasible_mask(
-                g,
-                research_pool_min_agreement=float(research_pool_min_agreement),
-                research_corr_mode=research_corr_mode,
-                research_corr_threshold=research_corr_threshold,
-            )
-        )
-        .astype(bool)
+    pool["is_research_feasible"] = _research_feasible_mask_by_day(
+        pool,
+        research_pool_min_agreement=float(research_pool_min_agreement),
+        research_corr_mode=research_corr_mode,
+        research_corr_threshold=research_corr_threshold,
     )
 
     daily_context = daily_context_df.copy()

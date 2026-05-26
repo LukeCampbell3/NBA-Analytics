@@ -33,6 +33,7 @@ if str(REPO_ROOT) not in sys.path:
 sys.path.insert(0, str(REPO_ROOT / "inference"))
 
 from structured_stack_inference import StructuredStackInference  # noqa: E402
+from research.market_quality.event_time_resolver import resolve_event_times  # noqa: E402
 from research.market_quality.price_provenance_schema import derive_snapshot_id, load_market_snapshot_manifest  # noqa: E402
 
 
@@ -635,6 +636,7 @@ def load_market_wide(path: Path) -> pd.DataFrame:
     df = df.copy()
     df["Player"] = df["Player"].astype(str).map(normalize_name)
     df["Market_Date"] = pd.to_datetime(df["Market_Date"], errors="coerce")
+    df = resolve_event_times(df)
     return df
 
 
@@ -833,6 +835,10 @@ def build_records(
             "market_player_raw": market_row.get("Market_Player_Raw"),
             "market_event_id": market_row.get("Market_Event_ID"),
             "market_commence_time_utc": market_row.get("Market_Commence_Time_UTC"),
+            "event_time_source": market_row.get("event_time_source"),
+            "event_time_confidence": market_row.get("event_time_confidence"),
+            "event_time_resolution_reason": market_row.get("event_time_resolution_reason"),
+            "event_time_resolution_warning": market_row.get("event_time_resolution_warning"),
             "market_home_team": market_home_team if pd.notna(market_home_team) else None,
             "market_away_team": market_away_team if pd.notna(market_away_team) else None,
             "market_provider": market_row_provider,
