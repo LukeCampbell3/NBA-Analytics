@@ -145,6 +145,8 @@ def _prepare_selector(
         market_regression_ceiling=float(policy_payload.get("market_regression_ceiling", 0.95)),
         line_decision_enabled=bool(line_decision_enabled),
         line_decision_config=line_decision_config,
+        rebound_diagnostics_config=policy_payload.get("rebound_diagnostics"),
+        american_odds=int(policy_payload.get("american_odds", -110)),
     )
     selector_df = apply_live_policy_calibration(selector_df, policy_payload)
     selector_df, _ = maybe_apply_xgb_ltr_reranker(selector_df, history_df, policy_payload)

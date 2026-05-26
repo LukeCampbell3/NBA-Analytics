@@ -1,0 +1,285 @@
+{
+  "player": {
+    "id": "203999",
+    "name": "Nikola Jokić",
+    "team": "DEN",
+    "season": 2026,
+    "age": 31.0,
+    "position": "Big"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 51,
+      "minutes_per_game": 34.7,
+      "points_per_game": 28.7,
+      "rebounds_per_game": 12.7,
+      "assists_per_game": 10.4,
+      "steals_per_game": 1.4,
+      "blocks_per_game": 0.8,
+      "field_goal_pct": 0.573,
+      "three_point_pct": 0.389,
+      "free_throw_pct": 0.837
+    },
+    "advanced": {
+      "usage_rate": 0.325,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": 8.5
+    }
+  },
+  "identity": {
+    "primary_archetype": "playmaking_big",
+    "archetype_confidence": 0.68,
+    "secondary_archetypes": [
+      {
+        "name": "playmaking_big",
+        "probability": 0.68
+      },
+      {
+        "name": "stretch_big",
+        "probability": 0.32
+      }
+    ],
+    "role_description": "Playmaking Big",
+    "usage_band": "high"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.375,
+    "mid_range_frequency": 0.353,
+    "three_point_frequency": 0.273,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 8.0,
+    "pick_and_roll_frequency": 23.4,
+    "drives_per_game": 23.3,
+    "paint_touches_per_game": 20.0,
+    "assisted_rate": 0.77,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.1,
+      "vs_wings": 0.3,
+      "vs_bigs": 0.6
+    },
+    "estimated_metrics": {
+      "defensive_rating": 112.0,
+      "defensive_ppp_allowed": 1.018,
+      "matchup_difficulty": 0.73,
+      "foul_rate": 0.35,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 42.7,
+    "opponent_defense_context": 0.3,
+    "team_context_adjustment": 0.028,
+    "intrinsic_value": 43.9,
+    "context_adjustment": -4.0,
+    "adjusted_value": 39.9,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition",
+    "formula": "intrinsic_value = intrinsic_offense * (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "interpretation_summary": "Intrinsic offense 42.7; adjusted value 39.9 per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 74.0,
+      "level": "medium",
+      "factors": [
+        [
+          "sample_games",
+          "51 games"
+        ],
+        [
+          "minutes",
+          "34.7 MPG"
+        ],
+        [
+          "archetype_confidence",
+          "68%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 21,
+        "minutes": 20,
+        "data_quality": 15,
+        "archetype_confidence": 8,
+        "team_stability": 10
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.08,
+      "confidence_level": "high",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 28.7,
+          "ci_low": 25.8,
+          "ci_high": 31.6,
+          "relative_error": 10.2
+        },
+        "assists": {
+          "mean": 10.4,
+          "ci_low": 9.3,
+          "ci_high": 11.5,
+          "relative_error": 10.2
+        },
+        "rebounds": {
+          "mean": 12.7,
+          "ci_low": 11.4,
+          "ci_high": 14.0,
+          "relative_error": 10.2
+        }
+      },
+      "sample_size_notes": "51 games, 34.7 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "low",
+      "constraints": [
+        "Usage increase limited to +11%",
+        "Minutes increase limited to +6 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Playmaking Big role constraints"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.11,
+        "max_minutes_increase": 6.0,
+        "projected_usage_cap": 0.38,
+        "projected_minutes_cap": 38.0
+      },
+      "constraint_rationale": {
+        "archetype": "playmaking_big",
+        "position": "big",
+        "three_point_frequency": 0.273,
+        "three_point_percentage": 0.389
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "1630552",
+        "name": "Jalen Johnson",
+        "team": "ATL",
+        "similarity_score": 0.18,
+        "archetype": "playmaking_big",
+        "stats": {
+          "points": 23.0,
+          "assists": 8.0,
+          "rebounds": 10.4
+        }
+      },
+      {
+        "id": "1629029",
+        "name": "Luka Dončić",
+        "team": "LAL",
+        "similarity_score": 0.18,
+        "archetype": "primary_playmaker",
+        "stats": {
+          "points": 32.9,
+          "assists": 8.5,
+          "rebounds": 7.9
+        }
+      },
+      {
+        "id": "1630595",
+        "name": "Cade Cunningham",
+        "team": "DET",
+        "similarity_score": 0.18,
+        "archetype": "playmaking_big",
+        "stats": {
+          "points": 24.7,
+          "assists": 10.1,
+          "rebounds": 5.7
+        }
+      },
+      {
+        "id": "1628983",
+        "name": "Shai Gilgeous-Alexander",
+        "team": "OKC",
+        "similarity_score": 0.14,
+        "archetype": "primary_playmaker",
+        "stats": {
+          "points": 31.8,
+          "assists": 6.6,
+          "rebounds": 4.5
+        }
+      },
+      {
+        "id": "203507",
+        "name": "Giannis Antetokounmpo",
+        "team": "MIL",
+        "similarity_score": 0.12,
+        "archetype": "playmaking_big",
+        "stats": {
+          "points": 27.5,
+          "assists": 5.4,
+          "rebounds": 9.7
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "stable"
+  },
+  "metadata": {
+    "generated_at": "2026-03-14T18:12:47.468847",
+    "data_version": "v1.2_refresh",
+    "generation_method": "nba_api_2025_26_refresh",
+    "quality_notes": "Season refresh with inferred mechanism fields",
+    "final_enhanced_at": "2026-03-14T18:12:47.468847"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    }
+  ]
+}

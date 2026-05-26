@@ -1,0 +1,64 @@
+{
+  "scouting_report": {
+    "player": {
+      "name": "Max Strus",
+      "team": "CLE",
+      "position": null,
+      "age": 29.0
+    },
+    "role_summary": "Low-usage stationary_shooter",
+    "strengths": [],
+    "weaknesses": [
+      "Limited three-point shooting",
+      "Limited scoring production"
+    ],
+    "archetype": "stationary_shooter",
+    "usage_band": "low"
+  },
+  "breakout_potential": {
+    "player": {
+      "name": "Max Strus",
+      "team": "CLE",
+      "age": 29.0
+    },
+    "can_breakout": true,
+    "opportunity_score": 62.0,
+    "signal_strength": 73.5,
+    "confidence": 0.833,
+    "factors": {
+      "age_factor": 0.7,
+      "usage_factor": 0.5,
+      "current_usage_band": "low",
+      "current_usage_rate": 0.156
+    }
+  },
+  "defense_portability": {
+    "player": {
+      "name": "Max Strus",
+      "team": "CLE",
+      "position": "Guard"
+    },
+    "defensive_role": "perimeter_guard",
+    "portability": {
+      "score": 0.534,
+      "level": "low",
+      "switch_ability": 0.64
+    },
+    "failure_modes": [
+      "Low defensive event creation"
+    ]
+  },
+  "impact_sanity": {
+    "player": {
+      "name": "Max Strus",
+      "team": "CLE"
+    },
+    "sanity_level": "pass",
+    "flags": [],
+    "impact_summary": {
+      "net": 0.0,
+      "offensive": 0.0,
+      "defensive": 0.0
+    }
+  }
+}

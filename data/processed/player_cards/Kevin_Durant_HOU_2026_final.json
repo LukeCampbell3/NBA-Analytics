@@ -1,0 +1,291 @@
+{
+  "player": {
+    "id": "201142",
+    "name": "Kevin Durant",
+    "team": "HOU",
+    "season": 2026,
+    "age": 37.0,
+    "position": "Big"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 63,
+      "minutes_per_game": 36.5,
+      "points_per_game": 26.0,
+      "rebounds_per_game": 5.5,
+      "assists_per_game": 4.5,
+      "steals_per_game": 0.8,
+      "blocks_per_game": 0.9,
+      "field_goal_pct": 0.515,
+      "three_point_pct": 0.406,
+      "free_throw_pct": 0.886
+    },
+    "advanced": {
+      "usage_rate": 0.288,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": 4.4
+    }
+  },
+  "identity": {
+    "primary_archetype": "rim_runner",
+    "archetype_confidence": 0.62,
+    "secondary_archetypes": [
+      {
+        "name": "rim_runner",
+        "probability": 0.62
+      },
+      {
+        "name": "defensive_anchor",
+        "probability": 0.38
+      }
+    ],
+    "role_description": "Rim Runner",
+    "usage_band": "high"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.248,
+    "mid_range_frequency": 0.432,
+    "three_point_frequency": 0.32,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 19.6,
+    "pick_and_roll_frequency": 20.3,
+    "drives_per_game": 19.5,
+    "paint_touches_per_game": 14.9,
+    "assisted_rate": 0.65,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.1,
+      "vs_wings": 0.3,
+      "vs_bigs": 0.6
+    },
+    "estimated_metrics": {
+      "defensive_rating": 114.3,
+      "defensive_ppp_allowed": 1.039,
+      "matchup_difficulty": 0.73,
+      "foul_rate": 0.234,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 35.0,
+    "opponent_defense_context": 0.362,
+    "team_context_adjustment": 0.042,
+    "intrinsic_value": 36.5,
+    "context_adjustment": -2.8,
+    "adjusted_value": 33.7,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition",
+    "formula": "intrinsic_value = intrinsic_offense * (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "interpretation_summary": "Intrinsic offense 35.0; adjusted value 33.7 per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 78.0,
+      "level": "high",
+      "factors": [
+        [
+          "sample_games",
+          "63 games"
+        ],
+        [
+          "minutes",
+          "36.5 MPG"
+        ],
+        [
+          "archetype_confidence",
+          "62%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 25,
+        "minutes": 20,
+        "data_quality": 15,
+        "archetype_confidence": 8,
+        "team_stability": 10
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.08,
+      "confidence_level": "high",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 26.0,
+          "ci_low": 23.3,
+          "ci_high": 28.7,
+          "relative_error": 10.2
+        },
+        "assists": {
+          "mean": 4.5,
+          "ci_low": 4.0,
+          "ci_high": 5.0,
+          "relative_error": 10.2
+        },
+        "rebounds": {
+          "mean": 5.5,
+          "ci_low": 4.9,
+          "ci_high": 6.1,
+          "relative_error": 10.2
+        }
+      },
+      "sample_size_notes": "63 games, 36.5 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "low",
+      "constraints": [
+        "Usage increase limited to +10%",
+        "Minutes increase limited to +6 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Rim Runner role constraints"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.1,
+        "max_minutes_increase": 6.0,
+        "projected_usage_cap": 0.38,
+        "projected_minutes_cap": 38.0
+      },
+      "constraint_rationale": {
+        "archetype": "rim_runner",
+        "position": "big",
+        "three_point_frequency": 0.32,
+        "three_point_percentage": 0.406
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "1627750",
+        "name": "Jamal Murray",
+        "team": "DEN",
+        "similarity_score": 0.28,
+        "archetype": "primary_playmaker",
+        "stats": {
+          "points": 25.7,
+          "assists": 7.1,
+          "rebounds": 4.3
+        }
+      },
+      {
+        "id": "1627759",
+        "name": "Jaylen Brown",
+        "team": "BOS",
+        "similarity_score": 0.25,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 28.4,
+          "assists": 5.2,
+          "rebounds": 7.1
+        }
+      },
+      {
+        "id": "1627742",
+        "name": "Brandon Ingram",
+        "team": "TOR",
+        "similarity_score": 0.24,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 21.7,
+          "assists": 3.8,
+          "rebounds": 5.7
+        }
+      },
+      {
+        "id": "201935",
+        "name": "James Harden",
+        "team": "CLE",
+        "similarity_score": 0.22,
+        "archetype": "primary_playmaker",
+        "stats": {
+          "points": 24.2,
+          "assists": 8.1,
+          "rebounds": 4.9
+        }
+      },
+      {
+        "id": "203944",
+        "name": "Julius Randle",
+        "team": "MIN",
+        "similarity_score": 0.21,
+        "archetype": "playmaking_big",
+        "stats": {
+          "points": 20.9,
+          "assists": 5.1,
+          "rebounds": 6.9
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "stable"
+  },
+  "metadata": {
+    "generated_at": "2026-03-14T18:12:47.468847",
+    "data_version": "v1.2_refresh",
+    "generation_method": "nba_api_2025_26_refresh",
+    "quality_notes": "Season refresh with inferred mechanism fields",
+    "final_enhanced_at": "2026-03-14T18:12:47.468847"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    },
+    {
+      "type": "trust_data_mismatch",
+      "severity": "low",
+      "description": "High trust score (78.0) despite estimated sources",
+      "recommendation": "Treat trust score mainly as sample-size confidence"
+    }
+  ]
+}

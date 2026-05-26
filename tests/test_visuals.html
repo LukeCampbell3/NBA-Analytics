@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Visual Components Test</h1>
+        
+        <h2>Shot Chart</h2>
+        <canvas id="shotChart" width="300" height="300"></canvas>
+        
+        <h2>Value Drivers</h2>
+        <canvas id="valueDriversChart" width="400" height="300"></canvas>
+    </div>
+
+    <script>
+        // Test data
+        const testPlayer = {
+            player: { name: "Test Player" },
+            shot_profile: {
+                rim_frequency: 0.45,
+                mid_range_frequency: 0.30,
+                three_point_frequency: 0.25
+            },
+            performance: {
+                traditional: {
+                    points_per_game: 18.5,
+                    assists_per_game: 4.2,
+                    rebounds_per_game: 8.1,
+                    blocks_per_game: 1.2
+                },
+                advanced: {
+                    plus_minus: 5.4,
+                    usage_rate: 0.22
+                }
+            },
+            identity: {
+                primary_archetype: "defensive_anchor"
+            }
+        };
+
+        // Draw shot chart
+        function drawShotChart() {
+            const canvas = document.getElementById('shotChart');
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const maxRadius = Math.min(centerX, centerY) - 20;
+
+            const rimFreq = testPlayer.shot_profile.rim_frequency;
+            const midFreq = testPlayer.shot_profile.mid_range_frequency;
+            const threeFreq = testPlayer.shot_profile.three_point_frequency;
+
+            const zones = [
+                { freq: rimFreq, color: '#e74c3c', label: 'Rim', radius: maxRadius * 0.3 },
+                { freq: midFreq, color: '#f39c12', label: 'Mid', radius: maxRadius * 0.65 },
+                { freq: threeFreq, color: '#3498db', label: '3PT', radius: maxRadius }
+            ];
+
+            for (let i = zones.length - 1; i >= 0; i--) {
+                const zone = zones[i];
+                const opacity = 0.3 + (zone.freq * 0.7);
+
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, zone.radius, 0, 2 * Math.PI);
+                ctx.fillStyle = zone.color;
+                ctx.globalAlpha = opacity;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                ctx.strokeStyle = '#2c3e50';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                if (zone.freq > 0.05) {
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 3;
+                    ctx.strokeText(`${(zone.freq * 100).toFixed(0)}%`, centerX, centerY - (i * 40) + 20);
+                    ctx.fillText(`${(zone.freq * 100).toFixed(0)}%`, centerX, centerY - (i * 40) + 20);
+                }
+            }
+
+            ctx.strokeStyle = '#34495e';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+        }
+
+        // Draw value drivers
+        function drawValueDrivers() {
+            const canvas = document.getElementById('valueDriversChart');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 40;
+            const barHeight = 30;
+
+            const drivers = [
+                { label: 'Rim Protection', value: 12, color: '#e74c3c' },
+                { label: 'Rebounding', value: 8.1, color: '#9b59b6' },
+                { label: 'Interior Presence', value: 9, color: '#3498db' },
+                { label: 'Plus/Minus Impact', value: 5.4, color: '#2ecc71' }
+            ];
+
+            const maxValue = Math.max(...drivers.map(d => d.value));
+            const barWidth = width - padding * 2;
+
+            drivers.forEach((driver, index) => {
+                const y = padding + (index * (barHeight + 15));
+                const fillWidth = (driver.value / maxValue) * barWidth;
+
+                ctx.fillStyle = '#ecf0f1';
+                ctx.fillRect(padding, y, barWidth, barHeight);
+
+                const gradient = ctx.createLinearGradient(padding, 0, padding + fillWidth, 0);
+                gradient.addColorStop(0, driver.color);
+                gradient.addColorStop(1, driver.color + 'cc');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(padding, y, fillWidth, barHeight);
+
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(driver.label, padding, y - 5);
+
+                ctx.fillStyle = '#fff';
+                ctx.textAlign = 'right';
+                ctx.fillText(driver.value.toFixed(1), padding + fillWidth - 5, y + barHeight / 2 + 4);
+            });
+        }
+
+        // Draw on load
+        drawShotChart();
+        drawValueDrivers();
+    </script>
+</body>
+</html>

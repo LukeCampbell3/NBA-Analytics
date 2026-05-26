@@ -224,6 +224,40 @@ class StrategyConfig:
     conditional_promoted_min_recommendation: str = "consider"
     conditional_baseline_min_recommendation: str = "consider"
     conditional_failure_memory_path: str = "model/analysis/conditional_failure_memory.json"
+    rebound_diagnostics: dict[str, Any] = field(
+        default_factory=lambda: {
+            "enabled": True,
+            "upper_band": {
+                "enabled": True,
+                "q75_margin_trigger": 0.25,
+                "min_recent_games": 5,
+                "penalty_strength": 0.12,
+            },
+            "low_line_role_volatility": {
+                "enabled": True,
+                "max_minutes_band_width": 8.0,
+                "min_minutes_floor": 18.0,
+                "bench_role_penalty": 0.08,
+                "penalty_strength": 0.10,
+            },
+            "rebound_supply": {
+                "enabled": True,
+                "min_projected_missed_fga_environment": 78.0,
+                "high_efficiency_penalty_threshold": 0.505,
+                "penalty_strength": 0.08,
+            },
+            "rebound_share": {
+                "enabled": True,
+                "max_teammate_competition_score": 0.65,
+                "max_rebound_share_std": 0.08,
+                "penalty_strength": 0.07,
+            },
+            "opposite_side_discovery": {
+                "enabled": True,
+                "evaluate_under_when_over_penalized": True,
+            },
+        }
+    )
     target_thresholds: dict[str, dict[str, float]] = field(
         default_factory=lambda: {target: values.copy() for target, values in DEFAULT_TARGET_THRESHOLDS.items()}
     )

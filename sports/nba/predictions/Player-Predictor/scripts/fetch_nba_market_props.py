@@ -47,6 +47,11 @@ MARKET_WIDE_COLUMNS = [
     "Market_Commence_Time_UTC",
     "Market_Home_Team",
     "Market_Away_Team",
+    "Market_Provider",
+    "Market_Book",
+    "Market_Price_Source",
+    "Market_Price_Source_Type",
+    "Market_Snapshot_ID",
     "Market_PTS",
     "Market_TRB",
     "Market_AST",
@@ -72,6 +77,17 @@ def utc_now_iso() -> str:
 
 def utc_compact_timestamp() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+
+def derive_snapshot_id(*, provider: str, fetched_at_utc: str, fallback_label: str = "") -> str:
+    provider_text = str(provider or "").strip() or "unknown_provider"
+    fetched_text = str(fetched_at_utc or "").strip()
+    if fetched_text:
+        return f"{provider_text}:{fetched_text}"
+    fallback_text = str(fallback_label or "").strip()
+    if fallback_text:
+        return f"{provider_text}:{fallback_text}"
+    return provider_text
 
 
 def normalize_name(value: str) -> str:
@@ -411,6 +427,15 @@ def normalize_event_odds(events: list[dict], event_odds: dict[str, dict], fetche
         }
     )
     wide["Market_Fetched_At_UTC"] = fetched_at_utc
+    wide["Market_Provider"] = "odds_api"
+    wide["Market_Book"] = "aggregate_market_snapshot"
+    wide["Market_Price_Source"] = "odds_api_market_snapshot"
+    wide["Market_Price_Source_Type"] = "LIVE_ENTRY"
+    wide["Market_Snapshot_ID"] = derive_snapshot_id(
+        provider="odds_api",
+        fetched_at_utc=fetched_at_utc,
+        fallback_label="latest_player_props_wide",
+    )
     return long_df, wide
 
 
@@ -443,6 +468,26 @@ def normalize_wide_snapshot(df: pd.DataFrame, fetched_at_utc: str) -> tuple[pd.D
             out[market_col] = pd.NA
     if "Market_Fetched_At_UTC" not in out.columns:
         out["Market_Fetched_At_UTC"] = fetched_at_utc
+    if "Market_Provider" not in out.columns:
+        out["Market_Provider"] = "snapshot"
+    if "Market_Book" not in out.columns:
+        out["Market_Book"] = "aggregate_market_snapshot"
+    if "Market_Price_Source" not in out.columns:
+        out["Market_Price_Source"] = "snapshot_input"
+    if "Market_Price_Source_Type" not in out.columns:
+        out["Market_Price_Source_Type"] = np.where(
+            pd.Series(out["Market_Fetched_At_UTC"], index=out.index).fillna("").astype(str).str.strip().ne(""),
+            "ARCHIVED_ENTRY",
+            "UNKNOWN",
+        )
+    if "Market_Snapshot_ID" not in out.columns:
+        provider_series = out["Market_Provider"].fillna("snapshot").astype(str)
+        fetched_series = out["Market_Fetched_At_UTC"].fillna("").astype(str)
+        event_series = out.get("Market_Event_ID", pd.Series("", index=out.index)).fillna("").astype(str)
+        out["Market_Snapshot_ID"] = [
+            derive_snapshot_id(provider=provider, fetched_at_utc=fetched_at, fallback_label=event_id)
+            for provider, fetched_at, event_id in zip(provider_series, fetched_series, event_series)
+        ]
 
     for col in MARKET_WIDE_COLUMNS:
         if col not in out.columns:
@@ -461,6 +506,11 @@ def normalize_wide_snapshot(df: pd.DataFrame, fetched_at_utc: str) -> tuple[pd.D
             "Market_Home_Team",
             "Market_Away_Team",
             "Market_Fetched_At_UTC",
+            "Market_Provider",
+            "Market_Book",
+            "Market_Price_Source",
+            "Market_Price_Source_Type",
+            "Market_Snapshot_ID",
         }
     ]
     for col in numeric_cols:

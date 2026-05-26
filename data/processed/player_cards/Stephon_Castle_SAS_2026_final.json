@@ -1,0 +1,291 @@
+{
+  "player": {
+    "id": "1642264",
+    "name": "Stephon Castle",
+    "team": "SAS",
+    "season": 2026,
+    "age": 21.0,
+    "position": "Guard"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 56,
+      "minutes_per_game": 29.8,
+      "points_per_game": 16.6,
+      "rebounds_per_game": 5.0,
+      "assists_per_game": 7.0,
+      "steals_per_game": 1.2,
+      "blocks_per_game": 0.3,
+      "field_goal_pct": 0.468,
+      "three_point_pct": 0.312,
+      "free_throw_pct": 0.733
+    },
+    "advanced": {
+      "usage_rate": 0.259,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": 4.9
+    }
+  },
+  "identity": {
+    "primary_archetype": "primary_playmaker",
+    "archetype_confidence": 0.67,
+    "secondary_archetypes": [
+      {
+        "name": "primary_playmaker",
+        "probability": 0.67
+      },
+      {
+        "name": "stationary_shooter",
+        "probability": 0.33
+      }
+    ],
+    "role_description": "Primary Playmaker",
+    "usage_band": "medium"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.325,
+    "mid_range_frequency": 0.377,
+    "three_point_frequency": 0.298,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 8.4,
+    "pick_and_roll_frequency": 29.0,
+    "drives_per_game": 16.1,
+    "paint_touches_per_game": 15.6,
+    "assisted_rate": 0.62,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.7,
+      "vs_wings": 0.2,
+      "vs_bigs": 0.1
+    },
+    "estimated_metrics": {
+      "defensive_rating": 114.9,
+      "defensive_ppp_allowed": 1.044,
+      "matchup_difficulty": 0.53,
+      "foul_rate": 0.498,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 26.8,
+    "opponent_defense_context": 0.347,
+    "team_context_adjustment": 0.145,
+    "intrinsic_value": 30.7,
+    "context_adjustment": -3.1,
+    "adjusted_value": 27.6,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition",
+    "formula": "intrinsic_value = intrinsic_offense * (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "interpretation_summary": "Intrinsic offense 26.8; adjusted value 27.6 per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 76.0,
+      "level": "high",
+      "factors": [
+        [
+          "sample_games",
+          "56 games"
+        ],
+        [
+          "minutes",
+          "29.8 MPG"
+        ],
+        [
+          "archetype_confidence",
+          "67%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 23,
+        "minutes": 20,
+        "data_quality": 15,
+        "archetype_confidence": 8,
+        "team_stability": 10
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.08,
+      "confidence_level": "high",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 16.6,
+          "ci_low": 14.9,
+          "ci_high": 18.3,
+          "relative_error": 10.2
+        },
+        "assists": {
+          "mean": 7.0,
+          "ci_low": 6.3,
+          "ci_high": 7.7,
+          "relative_error": 10.2
+        },
+        "rebounds": {
+          "mean": 5.0,
+          "ci_low": 4.5,
+          "ci_high": 5.5,
+          "relative_error": 10.2
+        }
+      },
+      "sample_size_notes": "56 games, 29.8 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "low",
+      "constraints": [
+        "Usage increase limited to +12%",
+        "Minutes increase limited to +8 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Primary Playmaker role constraints"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.12,
+        "max_minutes_increase": 8.0,
+        "projected_usage_cap": 0.379,
+        "projected_minutes_cap": 37.8
+      },
+      "constraint_rationale": {
+        "archetype": "primary_playmaker",
+        "position": "guard",
+        "three_point_frequency": 0.298,
+        "three_point_percentage": 0.312
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "1631114",
+        "name": "Jalen Williams",
+        "team": "OKC",
+        "similarity_score": 0.45,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 17.5,
+          "assists": 5.4,
+          "rebounds": 4.7
+        }
+      },
+      {
+        "id": "1631170",
+        "name": "Jaime Jaquez Jr.",
+        "team": "MIA",
+        "similarity_score": 0.36,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 15.0,
+          "assists": 4.7,
+          "rebounds": 5.3
+        }
+      },
+      {
+        "id": "1628368",
+        "name": "De'Aaron Fox",
+        "team": "SAS",
+        "similarity_score": 0.35,
+        "archetype": "primary_playmaker",
+        "stats": {
+          "points": 19.1,
+          "assists": 6.4,
+          "rebounds": 3.7
+        }
+      },
+      {
+        "id": "1630559",
+        "name": "Austin Reaves",
+        "team": "LAL",
+        "similarity_score": 0.35,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 23.9,
+          "assists": 5.5,
+          "rebounds": 4.8
+        }
+      },
+      {
+        "id": "1630532",
+        "name": "Franz Wagner",
+        "team": "ORL",
+        "similarity_score": 0.32,
+        "archetype": "rim_runner",
+        "stats": {
+          "points": 21.3,
+          "assists": 3.6,
+          "rebounds": 5.8
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "ascending"
+  },
+  "metadata": {
+    "generated_at": "2026-03-14T18:12:47.468847",
+    "data_version": "v1.2_refresh",
+    "generation_method": "nba_api_2025_26_refresh",
+    "quality_notes": "Season refresh with inferred mechanism fields",
+    "final_enhanced_at": "2026-03-14T18:12:47.468847"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    },
+    {
+      "type": "trust_data_mismatch",
+      "severity": "low",
+      "description": "High trust score (76.0) despite estimated sources",
+      "recommendation": "Treat trust score mainly as sample-size confidence"
+    }
+  ]
+}

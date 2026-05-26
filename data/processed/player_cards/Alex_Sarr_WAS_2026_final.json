@@ -1,0 +1,285 @@
+{
+  "player": {
+    "id": "1642259",
+    "name": "Alex Sarr",
+    "team": "WAS",
+    "season": 2026,
+    "age": 20.0,
+    "position": "Big"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 44,
+      "minutes_per_game": 27.7,
+      "points_per_game": 17.2,
+      "rebounds_per_game": 7.6,
+      "assists_per_game": 2.7,
+      "steals_per_game": 0.8,
+      "blocks_per_game": 2.0,
+      "field_goal_pct": 0.499,
+      "three_point_pct": 0.346,
+      "free_throw_pct": 0.693
+    },
+    "advanced": {
+      "usage_rate": 0.264,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": -7.1
+    }
+  },
+  "identity": {
+    "primary_archetype": "defensive_anchor",
+    "archetype_confidence": 0.63,
+    "secondary_archetypes": [
+      {
+        "name": "defensive_anchor",
+        "probability": 0.63
+      },
+      {
+        "name": "rim_runner",
+        "probability": 0.37
+      }
+    ],
+    "role_description": "Defensive Anchor",
+    "usage_band": "medium"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.315,
+    "mid_range_frequency": 0.469,
+    "three_point_frequency": 0.216,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 6.3,
+    "pick_and_roll_frequency": 27.3,
+    "drives_per_game": 14.9,
+    "paint_touches_per_game": 16.9,
+    "assisted_rate": 0.88,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.1,
+      "vs_wings": 0.3,
+      "vs_bigs": 0.6
+    },
+    "estimated_metrics": {
+      "defensive_rating": 113.7,
+      "defensive_ppp_allowed": 1.034,
+      "matchup_difficulty": 0.65,
+      "foul_rate": 0.325,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 24.4,
+    "opponent_defense_context": 0.7,
+    "team_context_adjustment": -0.195,
+    "intrinsic_value": 19.6,
+    "context_adjustment": 4.0,
+    "adjusted_value": 23.6,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition",
+    "formula": "intrinsic_value = intrinsic_offense * (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "interpretation_summary": "Intrinsic offense 24.4; adjusted value 23.6 per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 69.0,
+      "level": "medium",
+      "factors": [
+        [
+          "sample_games",
+          "44 games"
+        ],
+        [
+          "minutes",
+          "27.7 MPG"
+        ],
+        [
+          "archetype_confidence",
+          "63%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 18,
+        "minutes": 18,
+        "data_quality": 15,
+        "archetype_confidence": 8,
+        "team_stability": 10
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.149,
+      "confidence_level": "high",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 17.2,
+          "ci_low": 15.1,
+          "ci_high": 19.3,
+          "relative_error": 12.2
+        },
+        "assists": {
+          "mean": 2.7,
+          "ci_low": 2.4,
+          "ci_high": 3.0,
+          "relative_error": 12.2
+        },
+        "rebounds": {
+          "mean": 7.6,
+          "ci_low": 6.7,
+          "ci_high": 8.5,
+          "relative_error": 12.2
+        }
+      },
+      "sample_size_notes": "44 games, 27.7 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "medium",
+      "constraints": [
+        "Usage increase limited to +8%",
+        "Minutes increase limited to +10 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Defensive Anchor role constraints"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.08,
+        "max_minutes_increase": 10.0,
+        "projected_usage_cap": 0.344,
+        "projected_minutes_cap": 37.7
+      },
+      "constraint_rationale": {
+        "archetype": "defensive_anchor",
+        "position": "big",
+        "three_point_frequency": 0.216,
+        "three_point_percentage": 0.346
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "1641824",
+        "name": "Matas Buzelis",
+        "team": "CHI",
+        "similarity_score": 0.29,
+        "archetype": "stretch_big",
+        "stats": {
+          "points": 15.9,
+          "assists": 2.1,
+          "rebounds": 5.6
+        }
+      },
+      {
+        "id": "1631099",
+        "name": "Keegan Murray",
+        "team": "SAC",
+        "similarity_score": 0.26,
+        "archetype": "defensive_anchor",
+        "stats": {
+          "points": 14.0,
+          "assists": 1.7,
+          "rebounds": 5.7
+        }
+      },
+      {
+        "id": "1628991",
+        "name": "Jaren Jackson Jr.",
+        "team": "UTA",
+        "similarity_score": 0.26,
+        "archetype": "defensive_anchor",
+        "stats": {
+          "points": 19.4,
+          "assists": 2.0,
+          "rebounds": 5.7
+        }
+      },
+      {
+        "id": "1629023",
+        "name": "P.J. Washington",
+        "team": "DAL",
+        "similarity_score": 0.25,
+        "archetype": "rim_runner",
+        "stats": {
+          "points": 13.8,
+          "assists": 1.9,
+          "rebounds": 6.9
+        }
+      },
+      {
+        "id": "1642843",
+        "name": "Cooper Flagg",
+        "team": "DAL",
+        "similarity_score": 0.23,
+        "archetype": "rim_runner",
+        "stats": {
+          "points": 20.0,
+          "assists": 4.3,
+          "rebounds": 6.6
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "ascending"
+  },
+  "metadata": {
+    "generated_at": "2026-03-14T18:12:47.468847",
+    "data_version": "v1.2_refresh",
+    "generation_method": "nba_api_2025_26_refresh",
+    "quality_notes": "Season refresh with inferred mechanism fields",
+    "final_enhanced_at": "2026-03-14T18:12:47.468847"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    }
+  ]
+}

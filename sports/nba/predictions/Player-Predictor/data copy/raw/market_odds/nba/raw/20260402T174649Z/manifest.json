@@ -1,0 +1,32 @@
+{
+  "provider": "covers_historical",
+  "fetched_at_utc": "2026-04-02T17:46:49.603120+00:00",
+  "date_from": "2026-03-23",
+  "date_to": "2026-04-04",
+  "start_game_id": 363179,
+  "scan_anchor_game_id": 363162,
+  "odds_page_seed_ids": 18,
+  "scan_count": 500,
+  "games_scanned": 517,
+  "games_with_props": 21,
+  "long_rows": 697,
+  "wide_rows": 247,
+  "errors": [
+    {
+      "game_id": 362872,
+      "error": "HTTPSConnectionPool(host='www.covers.com', port=443): Max retries exceeded with url: /sport/basketball/nba/matchup/362872/picks (Caused by SSLError(SSLEOFError(8, 'EOF occurred in violation of protocol (_ssl.c:2427)')))"
+    },
+    {
+      "game_id": 362871,
+      "error": "('Connection aborted.', ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None))"
+    },
+    {
+      "game_id": 362870,
+      "error": "('Connection aborted.', ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None))"
+    },
+    {
+      "game_id": 362869,
+      "error": "('Connection aborted.', ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None))"
+    }
+  ]
+}

@@ -1,0 +1,297 @@
+{
+  "player": {
+    "id": "1628964",
+    "name": "Mo Bamba",
+    "team": "UTA",
+    "season": 2026,
+    "age": 27.0,
+    "position": "Big"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 4,
+      "minutes_per_game": 11.0,
+      "points_per_game": 2.5,
+      "rebounds_per_game": 5.5,
+      "assists_per_game": 0.3,
+      "steals_per_game": 0.0,
+      "blocks_per_game": 0.8,
+      "field_goal_pct": 0.455,
+      "three_point_pct": 0.0,
+      "free_throw_pct": 0.0
+    },
+    "advanced": {
+      "usage_rate": 0.133,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": -3.3
+    }
+  },
+  "identity": {
+    "primary_archetype": "rim_runner",
+    "archetype_confidence": 0.62,
+    "secondary_archetypes": [
+      {
+        "name": "rim_runner",
+        "probability": 0.62
+      },
+      {
+        "name": "defensive_anchor",
+        "probability": 0.38
+      }
+    ],
+    "role_description": "Rim Runner",
+    "usage_band": "low"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.235,
+    "mid_range_frequency": 0.715,
+    "three_point_frequency": 0.05,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 0.0,
+    "pick_and_roll_frequency": 0.0,
+    "drives_per_game": 3.2,
+    "paint_touches_per_game": 5.9,
+    "assisted_rate": 0.86,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.1,
+      "vs_wings": 0.3,
+      "vs_bigs": 0.6
+    },
+    "estimated_metrics": {
+      "defensive_rating": 115.7,
+      "defensive_ppp_allowed": 1.052,
+      "matchup_difficulty": 0.5,
+      "foul_rate": 0.614,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 5.4,
+    "opponent_defense_context": 0.603,
+    "team_context_adjustment": 0.214,
+    "intrinsic_value": 6.6,
+    "context_adjustment": 2.1,
+    "adjusted_value": 8.7,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition",
+    "formula": "intrinsic_value = intrinsic_offense * (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "interpretation_summary": "Intrinsic offense 5.4; adjusted value 8.7 per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 38.0,
+      "level": "low",
+      "factors": [
+        [
+          "sample_games",
+          "4 games"
+        ],
+        [
+          "minutes",
+          "11.0 MPG"
+        ],
+        [
+          "archetype_confidence",
+          "62%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 2,
+        "minutes": 7,
+        "data_quality": 15,
+        "archetype_confidence": 8,
+        "team_stability": 6
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.444,
+      "confidence_level": "low",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 2.5,
+          "ci_low": 2.0,
+          "ci_high": 3.0,
+          "relative_error": 20.4
+        },
+        "assists": {
+          "mean": 0.3,
+          "ci_low": 0.2,
+          "ci_high": 0.4,
+          "relative_error": 20.4
+        },
+        "rebounds": {
+          "mean": 5.5,
+          "ci_low": 4.4,
+          "ci_high": 6.6,
+          "relative_error": 20.4
+        }
+      },
+      "sample_size_notes": "4 games, 11.0 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "high",
+      "constraints": [
+        "Usage increase limited to +10%",
+        "Minutes increase limited to +10 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Rim Runner role constraints"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.1,
+        "max_minutes_increase": 10.0,
+        "projected_usage_cap": 0.233,
+        "projected_minutes_cap": 21.0
+      },
+      "constraint_rationale": {
+        "archetype": "rim_runner",
+        "position": "big",
+        "three_point_frequency": 0.05,
+        "three_point_percentage": 0.0
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "1629646",
+        "name": "Charles Bassey",
+        "team": "PHI",
+        "similarity_score": 0.53,
+        "archetype": "rim_runner",
+        "stats": {
+          "points": 3.0,
+          "assists": 0.7,
+          "rebounds": 5.0
+        }
+      },
+      {
+        "id": "1626172",
+        "name": "Kevon Looney",
+        "team": "NOP",
+        "similarity_score": 0.41,
+        "archetype": "rim_runner",
+        "stats": {
+          "points": 2.9,
+          "assists": 1.4,
+          "rebounds": 5.3
+        }
+      },
+      {
+        "id": "1630164",
+        "name": "James Wiseman",
+        "team": "IND",
+        "similarity_score": 0.38,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 3.3,
+          "assists": 0.8,
+          "rebounds": 2.0
+        }
+      },
+      {
+        "id": "1630192",
+        "name": "Zeke Nnaji",
+        "team": "DEN",
+        "similarity_score": 0.33,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 3.8,
+          "assists": 0.5,
+          "rebounds": 2.7
+        }
+      },
+      {
+        "id": "1641998",
+        "name": "Trey Jemison III",
+        "team": "NYK",
+        "similarity_score": 0.33,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 0.8,
+          "assists": 0.3,
+          "rebounds": 1.5
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "stable"
+  },
+  "metadata": {
+    "generated_at": "2026-03-14T18:12:47.468847",
+    "data_version": "v1.2_refresh",
+    "generation_method": "nba_api_2025_26_refresh",
+    "quality_notes": "Season refresh with inferred mechanism fields",
+    "final_enhanced_at": "2026-03-14T18:12:47.468847"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    },
+    {
+      "type": "low_sample_size",
+      "severity": "high",
+      "description": "Very small sample (4 games)",
+      "recommendation": "Use projections as directional only"
+    },
+    {
+      "type": "high_uncertainty",
+      "severity": "medium",
+      "description": "Elevated uncertainty (0.444)",
+      "recommendation": "Cross-check with independent priors before strong conclusions"
+    }
+  ]
+}

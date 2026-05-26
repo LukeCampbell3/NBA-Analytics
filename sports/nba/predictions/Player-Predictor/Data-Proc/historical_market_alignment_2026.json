@@ -1,0 +1,4785 @@
+{
+  "updated_at_utc": "2026-04-30T03:19:54.064334+00:00",
+  "season": 2026,
+  "history_wide_path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\data copy\\raw\\market_odds\\nba\\history_player_props_wide.parquet",
+  "history_rows": 2072,
+  "market_aliases": {
+    "resolved_aliases": 1139,
+    "ambiguous_aliases": 27,
+    "ambiguous_samples": {
+      "K_Murray": [
+        "Keegan_Murray",
+        "Kris_Murray"
+      ],
+      "A_Williams": [
+        "Alondes_Williams",
+        "Amari_Williams"
+      ],
+      "C_Johnson": [
+        "Cameron_Johnson",
+        "Chaney_Johnson"
+      ],
+      "S_Curry": [
+        "Seth_Curry",
+        "Stephen_Curry"
+      ],
+      "J_Walker": [
+        "Jabari_Walker",
+        "Jarace_Walker"
+      ],
+      "C_Jones": [
+        "Colby_Jones",
+        "Curtis_Jones"
+      ],
+      "T_Mann": [
+        "Terance_Mann",
+        "Tre_Mann"
+      ],
+      "T_Jr": [
+        "Terrence_Shannon_Jr",
+        "Tim_Hardaway_Jr",
+        "TyTy_Washington_Jr"
+      ],
+      "T_Jones": [
+        "Tre_Jones",
+        "Tyus_Jones"
+      ],
+      "J_Williams": [
+        "Jalen_Williams",
+        "Jaylin_Williams"
+      ],
+      "K_Jr": [
+        "Kelly_Oubre_Jr",
+        "Kevin_McCullar_Jr",
+        "Kevin_Porter_Jr"
+      ],
+      "K_Johnson": [
+        "Keldon_Johnson",
+        "Keshad_Johnson"
+      ],
+      "A_Thompson": [
+        "Amen_Thompson",
+        "Ausar_Thompson"
+      ],
+      "J_Jr": [
+        "Jabari_Smith_Jr",
+        "Jaime_Jaquez_Jr",
+        "Jaren_Jackson_Jr"
+      ],
+      "D_Mitchell": [
+        "Davion_Mitchell",
+        "Donovan_Mitchell"
+      ],
+      "T_III": [
+        "Trey_Jemison_III",
+        "Trey_Murphy_III"
+      ],
+      "J_Champagnie": [
+        "Julian_Champagnie",
+        "Justin_Champagnie"
+      ],
+      "A_Wiggins": [
+        "Aaron_Wiggins",
+        "Andrew_Wiggins"
+      ],
+      "T_Smith": [
+        "Tolu_Smith",
+        "Tyler_Smith"
+      ],
+      "C_Martin": [
+        "Caleb_Martin",
+        "Cody_Martin"
+      ],
+      "J_Green": [
+        "Jalen_Green",
+        "Javonte_Green",
+        "Jeff_Green",
+        "Josh_Green"
+      ],
+      "W_Jr": [
+        "Walter_Clayton_Jr",
+        "Wendell_Carter_Jr",
+        "Wendell_Moore_Jr"
+      ],
+      "M_Gueye": [
+        "Mouhamadou_Gueye",
+        "Mouhamed_Gueye"
+      ],
+      "L_Ball": [
+        "LaMelo_Ball",
+        "Lonzo_Ball"
+      ],
+      "K_George": [
+        "Keyonte_George",
+        "Kyshawn_George"
+      ]
+    }
+  },
+  "market_anchor": {
+    "available": false,
+    "path": null,
+    "targets": []
+  },
+  "players_processed": 582,
+  "real_market_rows": 1553,
+  "synthetic_rows_filled": 0,
+  "baseline_rows_filled": 77417,
+  "results": [
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Aaron_Gordon\\2026_processed_processed.csv",
+      "player": "Aaron_Gordon",
+      "rows": 39,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 91
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Aaron_Holiday\\2026_processed_processed.csv",
+      "player": "Aaron_Holiday",
+      "rows": 60,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 180
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Aaron_Nesmith\\2026_processed_processed.csv",
+      "player": "Aaron_Nesmith",
+      "rows": 45,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 129
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Aaron_Wiggins\\2026_processed_processed.csv",
+      "player": "Aaron_Wiggins",
+      "rows": 67,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 201
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ace_Bailey\\2026_processed_processed.csv",
+      "player": "Ace_Bailey",
+      "rows": 72,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 193
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Adama_Bal\\2026_processed_processed.csv",
+      "player": "Adama_Bal",
+      "rows": 8,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 24
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Adem_Bona\\2026_processed_processed.csv",
+      "player": "Adem_Bona",
+      "rows": 75,
+      "real_market_rows": 6,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 209
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Adou_Thiero\\2026_processed_processed.csv",
+      "player": "Adou_Thiero",
+      "rows": 25,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 75
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\AJ_Green\\2026_processed_processed.csv",
+      "player": "AJ_Green",
+      "rows": 78,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 212
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\AJ_Johnson\\2026_processed_processed.csv",
+      "player": "AJ_Johnson",
+      "rows": 48,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 144
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\AJ_Lawson\\2026_processed_processed.csv",
+      "player": "AJ_Lawson",
+      "rows": 28,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 84
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ajay_Mitchell\\2026_processed_processed.csv",
+      "player": "Ajay_Mitchell",
+      "rows": 60,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 152
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Al_Horford\\2026_processed_processed.csv",
+      "player": "Al_Horford",
+      "rows": 45,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 135
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alex_Antetokounmpo\\2026_processed_processed.csv",
+      "player": "Alex_Antetokounmpo",
+      "rows": 6,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 18
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alex_Caruso\\2026_processed_processed.csv",
+      "player": "Alex_Caruso",
+      "rows": 59,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 177
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alex_Morales\\2026_processed_processed.csv",
+      "player": "Alex_Morales",
+      "rows": 4,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 12
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alex_Sarr\\2026_processed_processed.csv",
+      "player": "Alex_Sarr",
+      "rows": 48,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 144
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alijah_Martin\\2026_processed_processed.csv",
+      "player": "Alijah_Martin",
+      "rows": 23,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 69
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alondes_Williams\\2026_processed_processed.csv",
+      "player": "Alondes_Williams",
+      "rows": 4,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 12
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alperen_Sengun\\2026_processed_processed.csv",
+      "player": "Alperen_Sengun",
+      "rows": 75,
+      "real_market_rows": 11,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 192
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Amari_Williams\\2026_processed_processed.csv",
+      "player": "Amari_Williams",
+      "rows": 22,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 66
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Amen_Thompson\\2026_processed_processed.csv",
+      "player": "Amen_Thompson",
+      "rows": 82,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 246
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Amir_Coffey\\2026_processed_processed.csv",
+      "player": "Amir_Coffey",
+      "rows": 49,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 147
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Andersson_Garcia\\2026_processed_processed.csv",
+      "player": "Andersson_Garcia",
+      "rows": 5,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 15
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Andre_Drummond\\2026_processed_processed.csv",
+      "player": "Andre_Drummond",
+      "rows": 67,
+      "real_market_rows": 5,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 188
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Andre_Jackson_Jr\\2026_processed_processed.csv",
+      "player": "Andre_Jackson_Jr",
+      "rows": 48,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 138
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Andrew_Nembhard\\2026_processed_processed.csv",
+      "player": "Andrew_Nembhard",
+      "rows": 57,
+      "real_market_rows": 3,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 162
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Andrew_Wiggins\\2026_processed_processed.csv",
+      "player": "Andrew_Wiggins",
+      "rows": 68,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 204
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Anfernee_Simons\\2026_processed_processed.csv",
+      "player": "Anfernee_Simons",
+      "rows": 55,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 165
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Anthony_Black\\2026_processed_processed.csv",
+      "player": "Anthony_Black",
+      "rows": 67,
+      "real_market_rows": 6,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 186
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Anthony_Davis\\2026_processed_processed.csv",
+      "player": "Anthony_Davis",
+      "rows": 20,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 60
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Anthony_Edwards\\2026_processed_processed.csv",
+      "player": "Anthony_Edwards",
+      "rows": 65,
+      "real_market_rows": 6,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 178
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Anthony_Gill\\2026_processed_processed.csv",
+      "player": "Anthony_Gill",
+      "rows": 55,
+      "real_market_rows": 5,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 151
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Antonio_Reeves\\2026_processed_processed.csv",
+      "player": "Antonio_Reeves",
+      "rows": 10,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 30
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ariel_Hukporti\\2026_processed_processed.csv",
+      "player": "Ariel_Hukporti",
+      "rows": 55,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 160
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Asa_Newell\\2026_processed_processed.csv",
+      "player": "Asa_Newell",
+      "rows": 45,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 135
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ausar_Thompson\\2026_processed_processed.csv",
+      "player": "Ausar_Thompson",
+      "rows": 76,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 228
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Austin_Reaves\\2026_processed_processed.csv",
+      "player": "Austin_Reaves",
+      "rows": 51,
+      "real_market_rows": 5,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 138
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ayo_Dosunmu\\2026_processed_processed.csv",
+      "player": "Ayo_Dosunmu",
+      "rows": 73,
+      "real_market_rows": 7,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 200
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Bam_Adebayo\\2026_processed_processed.csv",
+      "player": "Bam_Adebayo",
+      "rows": 73,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 192
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Baylor_Scheierman\\2026_processed_processed.csv",
+      "player": "Baylor_Scheierman",
+      "rows": 81,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 238
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ben_Saraf\\2026_processed_processed.csv",
+      "player": "Ben_Saraf",
+      "rows": 44,
+      "real_market_rows": 4,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 119
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ben_Sheppard\\2026_processed_processed.csv",
+      "player": "Ben_Sheppard",
+      "rows": 65,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 190
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Bennedict_Mathurin\\2026_processed_processed.csv",
+      "player": "Bennedict_Mathurin",
+      "rows": 54,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 136
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Bez_Mbeng\\2026_processed_processed.csv",
+      "player": "Bez_Mbeng",
+      "rows": 15,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 43
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Bilal_Coulibaly\\2026_processed_processed.csv",
+      "player": "Bilal_Coulibaly",
+      "rows": 56,
+      "real_market_rows": 6,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 150
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Bismack_Biyombo\\2026_processed_processed.csv",
+      "player": "Bismack_Biyombo",
+      "rows": 27,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 81
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Blake_Hinson\\2026_processed_processed.csv",
+      "player": "Blake_Hinson",
+      "rows": 14,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 42
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Blake_Wesley\\2026_processed_processed.csv",
+      "player": "Blake_Wesley",
+      "rows": 34,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 102
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Bobby_Portis\\2026_processed_processed.csv",
+      "player": "Bobby_Portis",
+      "rows": 67,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 201
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Bobi_Klintman\\2026_processed_processed.csv",
+      "player": "Bobi_Klintman",
+      "rows": 12,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 36
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Bogdan_Bogdanovi\u0107\\2026_processed_processed.csv",
+      "player": "Bogdan_Bogdanovi\u0107",
+      "rows": 23,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 69
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Bones_Hyland\\2026_processed_processed.csv",
+      "player": "Bones_Hyland",
+      "rows": 75,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 222
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Bradley_Beal\\2026_processed_processed.csv",
+      "player": "Bradley_Beal",
+      "rows": 6,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 18
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Branden_Carlson\\2026_processed_processed.csv",
+      "player": "Branden_Carlson",
+      "rows": 42,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 126
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Brandin_Podziemski\\2026_processed_processed.csv",
+      "player": "Brandin_Podziemski",
+      "rows": 82,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 221
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Brandon_Clarke\\2026_processed_processed.csv",
+      "player": "Brandon_Clarke",
+      "rows": 2,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 6
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Brandon_Ingram\\2026_processed_processed.csv",
+      "player": "Brandon_Ingram",
+      "rows": 81,
+      "real_market_rows": 12,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 207
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Brandon_Miller\\2026_processed_processed.csv",
+      "player": "Brandon_Miller",
+      "rows": 65,
+      "real_market_rows": 11,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 163
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Brandon_Williams\\2026_processed_processed.csv",
+      "player": "Brandon_Williams",
+      "rows": 66,
+      "real_market_rows": 5,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 183
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Brice_Sensabaugh\\2026_processed_processed.csv",
+      "player": "Brice_Sensabaugh",
+      "rows": 75,
+      "real_market_rows": 7,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 204
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Bronny_James\\2026_processed_processed.csv",
+      "player": "Bronny_James",
+      "rows": 45,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 132
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Brook_Lopez\\2026_processed_processed.csv",
+      "player": "Brook_Lopez",
+      "rows": 75,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 196
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Brooks_Barnhizer\\2026_processed_processed.csv",
+      "player": "Brooks_Barnhizer",
+      "rows": 40,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 120
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Bruce_Brown\\2026_processed_processed.csv",
+      "player": "Bruce_Brown",
+      "rows": 86,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 254
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Bryce_McGowens\\2026_processed_processed.csv",
+      "player": "Bryce_McGowens",
+      "rows": 42,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 126
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Bub_Carrington\\2026_processed_processed.csv",
+      "player": "Bub_Carrington",
+      "rows": 82,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 215
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Buddy_Boeheim\\2026_processed_processed.csv",
+      "player": "Buddy_Boeheim",
+      "rows": 4,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 12
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Buddy_Hield\\2026_processed_processed.csv",
+      "player": "Buddy_Hield",
+      "rows": 51,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 153
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Cade_Cunningham\\2026_processed_processed.csv",
+      "player": "Cade_Cunningham",
+      "rows": 67,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 194
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Caleb_Houstan\\2026_processed_processed.csv",
+      "player": "Caleb_Houstan",
+      "rows": 18,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 54
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Caleb_Love\\2026_processed_processed.csv",
+      "player": "Caleb_Love",
+      "rows": 49,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 147
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Caleb_Martin\\2026_processed_processed.csv",
+      "player": "Caleb_Martin",
+      "rows": 58,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 174
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Cam_Christie\\2026_processed_processed.csv",
+      "player": "Cam_Christie",
+      "rows": 55,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 165
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Cam_Spencer\\2026_processed_processed.csv",
+      "player": "Cam_Spencer",
+      "rows": 72,
+      "real_market_rows": 3,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 207
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Cam_Thomas\\2026_processed_processed.csv",
+      "player": "Cam_Thomas",
+      "rows": 42,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 126
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Cam_Whitmore\\2026_processed_processed.csv",
+      "player": "Cam_Whitmore",
+      "rows": 21,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 63
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Cameron_Johnson\\2026_processed_processed.csv",
+      "player": "Cameron_Johnson",
+      "rows": 58,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 174
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Cameron_Payne\\2026_processed_processed.csv",
+      "player": "Cameron_Payne",
+      "rows": 22,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 64
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Caris_LeVert\\2026_processed_processed.csv",
+      "player": "Caris_LeVert",
+      "rows": 63,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 189
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Carter_Bryant\\2026_processed_processed.csv",
+      "player": "Carter_Bryant",
+      "rows": 75,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 225
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Cason_Wallace\\2026_processed_processed.csv",
+      "player": "Cason_Wallace",
+      "rows": 80,
+      "real_market_rows": 3,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 231
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Cedric_Coward\\2026_processed_processed.csv",
+      "player": "Cedric_Coward",
+      "rows": 62,
+      "real_market_rows": 6,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 166
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Chaney_Johnson\\2026_processed_processed.csv",
+      "player": "Chaney_Johnson",
+      "rows": 17,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 51
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Charles_Bassey\\2026_processed_processed.csv",
+      "player": "Charles_Bassey",
+      "rows": 13,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 39
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Chaz_Lanier\\2026_processed_processed.csv",
+      "player": "Chaz_Lanier",
+      "rows": 34,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 102
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Chet_Holmgren\\2026_processed_processed.csv",
+      "player": "Chet_Holmgren",
+      "rows": 72,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 190
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Chris_Boucher\\2026_processed_processed.csv",
+      "player": "Chris_Boucher",
+      "rows": 9,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 27
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Chris_Livingston\\2026_processed_processed.csv",
+      "player": "Chris_Livingston",
+      "rows": 3,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 9
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Chris_Ma\u00f1on\\2026_processed_processed.csv",
+      "player": "Chris_Ma\u00f1on",
+      "rows": 9,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 27
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Chris_Paul\\2026_processed_processed.csv",
+      "player": "Chris_Paul",
+      "rows": 16,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 48
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Chris_Youngblood\\2026_processed_processed.csv",
+      "player": "Chris_Youngblood",
+      "rows": 34,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 102
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Christian_Braun\\2026_processed_processed.csv",
+      "player": "Christian_Braun",
+      "rows": 48,
+      "real_market_rows": 11,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 111
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Christian_Koloko\\2026_processed_processed.csv",
+      "player": "Christian_Koloko",
+      "rows": 27,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 81
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Chucky_Hepburn\\2026_processed_processed.csv",
+      "player": "Chucky_Hepburn",
+      "rows": 2,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 6
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\CJ_Huntley\\2026_processed_processed.csv",
+      "player": "CJ_Huntley",
+      "rows": 4,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 12
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\CJ_McCollum\\2026_processed_processed.csv",
+      "player": "CJ_McCollum",
+      "rows": 80,
+      "real_market_rows": 12,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 204
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Clint_Capela\\2026_processed_processed.csv",
+      "player": "Clint_Capela",
+      "rows": 78,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 234
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Coby_White\\2026_processed_processed.csv",
+      "player": "Coby_White",
+      "rows": 50,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 121
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Cody_Martin\\2026_processed_processed.csv",
+      "player": "Cody_Martin",
+      "rows": 4,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 12
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Cody_Williams\\2026_processed_processed.csv",
+      "player": "Cody_Williams",
+      "rows": 67,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 177
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Colby_Jones\\2026_processed_processed.csv",
+      "player": "Colby_Jones",
+      "rows": 1,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 3
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Cole_Anthony\\2026_processed_processed.csv",
+      "player": "Cole_Anthony",
+      "rows": 35,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 105
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Colin_Castleton\\2026_processed_processed.csv",
+      "player": "Colin_Castleton",
+      "rows": 4,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 12
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Collin_Gillespie\\2026_processed_processed.csv",
+      "player": "Collin_Gillespie",
+      "rows": 83,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 223
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Collin_Murray-Boyles\\2026_processed_processed.csv",
+      "player": "Collin_Murray-Boyles",
+      "rows": 61,
+      "real_market_rows": 4,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 170
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Collin_Sexton\\2026_processed_processed.csv",
+      "player": "Collin_Sexton",
+      "rows": 68,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 180
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Cooper_Flagg\\2026_processed_processed.csv",
+      "player": "Cooper_Flagg",
+      "rows": 70,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 188
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Corey_Kispert\\2026_processed_processed.csv",
+      "player": "Corey_Kispert",
+      "rows": 61,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 181
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Cormac_Ryan\\2026_processed_processed.csv",
+      "player": "Cormac_Ryan",
+      "rows": 11,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 33
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Craig_Porter_Jr\\2026_processed_processed.csv",
+      "player": "Craig_Porter_Jr",
+      "rows": 66,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 194
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Curtis_Jones\\2026_processed_processed.csv",
+      "player": "Curtis_Jones",
+      "rows": 10,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 30
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Daeqwon_Plowden\\2026_processed_processed.csv",
+      "player": "Daeqwon_Plowden",
+      "rows": 32,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 96
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Dalano_Banton\\2026_processed_processed.csv",
+      "player": "Dalano_Banton",
+      "rows": 7,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 21
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Dalen_Terry\\2026_processed_processed.csv",
+      "player": "Dalen_Terry",
+      "rows": 50,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 150
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Dalton_Knecht\\2026_processed_processed.csv",
+      "player": "Dalton_Knecht",
+      "rows": 54,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 162
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\DAngelo_Russell\\2026_processed_processed.csv",
+      "player": "DAngelo_Russell",
+      "rows": 26,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 78
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Daniel_Gafford\\2026_processed_processed.csv",
+      "player": "Daniel_Gafford",
+      "rows": 55,
+      "real_market_rows": 3,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 157
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Daniss_Jenkins\\2026_processed_processed.csv",
+      "player": "Daniss_Jenkins",
+      "rows": 75,
+      "real_market_rows": 7,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 206
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Danny_Wolf\\2026_processed_processed.csv",
+      "player": "Danny_Wolf",
+      "rows": 57,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 171
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\DaQuan_Jeffries\\2026_processed_processed.csv",
+      "player": "DaQuan_Jeffries",
+      "rows": 3,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 9
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Dario_Saric\\2026_processed_processed.csv",
+      "player": "Dario_Saric",
+      "rows": 5,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 15
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Dariq_Whitehead\\2026_processed_processed.csv",
+      "player": "Dariq_Whitehead",
+      "rows": 6,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 18
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Darius_Brown\\2026_processed_processed.csv",
+      "player": "Darius_Brown",
+      "rows": 1,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 3
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Darius_Garland\\2026_processed_processed.csv",
+      "player": "Darius_Garland",
+      "rows": 45,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 110
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\DaRon_Holmes_II\\2026_processed_processed.csv",
+      "player": "DaRon_Holmes_II",
+      "rows": 27,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 81
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\David_Jones_Garcia\\2026_processed_processed.csv",
+      "player": "David_Jones_Garcia",
+      "rows": 11,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 33
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\David_Roddy\\2026_processed_processed.csv",
+      "player": "David_Roddy",
+      "rows": 5,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 15
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Davion_Mitchell\\2026_processed_processed.csv",
+      "player": "Davion_Mitchell",
+      "rows": 70,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 210
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\DayRon_Sharpe\\2026_processed_processed.csv",
+      "player": "DayRon_Sharpe",
+      "rows": 62,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 186
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\DeAaron_Fox\\2026_processed_processed.csv",
+      "player": "DeAaron_Fox",
+      "rows": 76,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 197
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Dean_Wade\\2026_processed_processed.csv",
+      "player": "Dean_Wade",
+      "rows": 63,
+      "real_market_rows": 6,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 174
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Deandre_Ayton\\2026_processed_processed.csv",
+      "player": "Deandre_Ayton",
+      "rows": 75,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 195
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\DeAndre_Hunter\\2026_processed_processed.csv",
+      "player": "DeAndre_Hunter",
+      "rows": 45,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 135
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\DeAndre_Jordan\\2026_processed_processed.csv",
+      "player": "DeAndre_Jordan",
+      "rows": 12,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 36
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\DeAnthony_Melton\\2026_processed_processed.csv",
+      "player": "DeAnthony_Melton",
+      "rows": 49,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 127
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\DeJon_Jarreau\\2026_processed_processed.csv",
+      "player": "DeJon_Jarreau",
+      "rows": 11,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 33
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Dejounte_Murray\\2026_processed_processed.csv",
+      "player": "Dejounte_Murray",
+      "rows": 14,
+      "real_market_rows": 3,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 32
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\DeMar_DeRozan\\2026_processed_processed.csv",
+      "player": "DeMar_DeRozan",
+      "rows": 77,
+      "real_market_rows": 6,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 213
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Deni_Avdija\\2026_processed_processed.csv",
+      "player": "Deni_Avdija",
+      "rows": 70,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 180
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Dennis_Schr\u00f6der\\2026_processed_processed.csv",
+      "player": "Dennis_Schr\u00f6der",
+      "rows": 74,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 222
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Dereck_Lively_II\\2026_processed_processed.csv",
+      "player": "Dereck_Lively_II",
+      "rows": 7,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 21
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Derik_Queen\\2026_processed_processed.csv",
+      "player": "Derik_Queen",
+      "rows": 81,
+      "real_market_rows": 5,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 227
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Derrick_Jones_Jr\\2026_processed_processed.csv",
+      "player": "Derrick_Jones_Jr",
+      "rows": 50,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 122
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Derrick_White\\2026_processed_processed.csv",
+      "player": "Derrick_White",
+      "rows": 81,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 212
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Desmond_Bane\\2026_processed_processed.csv",
+      "player": "Desmond_Bane",
+      "rows": 85,
+      "real_market_rows": 13,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 216
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Devin_Booker\\2026_processed_processed.csv",
+      "player": "Devin_Booker",
+      "rows": 67,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 171
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Devin_Carter\\2026_processed_processed.csv",
+      "player": "Devin_Carter",
+      "rows": 38,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 88
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Devin_Vassell\\2026_processed_processed.csv",
+      "player": "Devin_Vassell",
+      "rows": 71,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 183
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Dillon_Brooks\\2026_processed_processed.csv",
+      "player": "Dillon_Brooks",
+      "rows": 59,
+      "real_market_rows": 7,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 155
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Dillon_Jones\\2026_processed_processed.csv",
+      "player": "Dillon_Jones",
+      "rows": 7,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 21
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Domantas_Sabonis\\2026_processed_processed.csv",
+      "player": "Domantas_Sabonis",
+      "rows": 19,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 57
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Dominick_Barlow\\2026_processed_processed.csv",
+      "player": "Dominick_Barlow",
+      "rows": 74,
+      "real_market_rows": 6,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 205
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Donovan_Clingan\\2026_processed_processed.csv",
+      "player": "Donovan_Clingan",
+      "rows": 81,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 214
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Donovan_Mitchell\\2026_processed_processed.csv",
+      "player": "Donovan_Mitchell",
+      "rows": 74,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 222
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Donte_DiVincenzo\\2026_processed_processed.csv",
+      "player": "Donte_DiVincenzo",
+      "rows": 86,
+      "real_market_rows": 12,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 225
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Dorian_Finney-Smith\\2026_processed_processed.csv",
+      "player": "Dorian_Finney-Smith",
+      "rows": 38,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 114
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Doug_McDermott\\2026_processed_processed.csv",
+      "player": "Doug_McDermott",
+      "rows": 29,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 86
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Drake_Powell\\2026_processed_processed.csv",
+      "player": "Drake_Powell",
+      "rows": 63,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 189
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Draymond_Green\\2026_processed_processed.csv",
+      "player": "Draymond_Green",
+      "rows": 68,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 179
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Drew_Eubanks\\2026_processed_processed.csv",
+      "player": "Drew_Eubanks",
+      "rows": 42,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 126
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Drew_Peterson\\2026_processed_processed.csv",
+      "player": "Drew_Peterson",
+      "rows": 6,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 18
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Drew_Timme\\2026_processed_processed.csv",
+      "player": "Drew_Timme",
+      "rows": 27,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 81
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Dru_Smith\\2026_processed_processed.csv",
+      "player": "Dru_Smith",
+      "rows": 70,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 210
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Duncan_Robinson\\2026_processed_processed.csv",
+      "player": "Duncan_Robinson",
+      "rows": 80,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 218
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Duop_Reath\\2026_processed_processed.csv",
+      "player": "Duop_Reath",
+      "rows": 32,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 96
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Dwight_Powell\\2026_processed_processed.csv",
+      "player": "Dwight_Powell",
+      "rows": 63,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 189
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Dylan_Cardwell\\2026_processed_processed.csv",
+      "player": "Dylan_Cardwell",
+      "rows": 44,
+      "real_market_rows": 3,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 126
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Dylan_Harper\\2026_processed_processed.csv",
+      "player": "Dylan_Harper",
+      "rows": 73,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 190
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Dyson_Daniels\\2026_processed_processed.csv",
+      "player": "Dyson_Daniels",
+      "rows": 80,
+      "real_market_rows": 11,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 207
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Egor_D\u00ebmin\\2026_processed_processed.csv",
+      "player": "Egor_D\u00ebmin",
+      "rows": 52,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 156
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\EJ_Liddell\\2026_processed_processed.csv",
+      "player": "EJ_Liddell",
+      "rows": 26,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 78
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Elijah_Harkless\\2026_processed_processed.csv",
+      "player": "Elijah_Harkless",
+      "rows": 26,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 78
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Emanuel_Miller\\2026_processed_processed.csv",
+      "player": "Emanuel_Miller",
+      "rows": 5,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 15
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Enrique_Freeman\\2026_processed_processed.csv",
+      "player": "Enrique_Freeman",
+      "rows": 4,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 12
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Eric_Gordon\\2026_processed_processed.csv",
+      "player": "Eric_Gordon",
+      "rows": 6,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 18
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ethan_Thompson\\2026_processed_processed.csv",
+      "player": "Ethan_Thompson",
+      "rows": 32,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 96
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Evan_Mobley\\2026_processed_processed.csv",
+      "player": "Evan_Mobley",
+      "rows": 69,
+      "real_market_rows": 11,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 173
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Franz_Wagner\\2026_processed_processed.csv",
+      "player": "Franz_Wagner",
+      "rows": 37,
+      "real_market_rows": 7,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 89
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Gabe_Vincent\\2026_processed_processed.csv",
+      "player": "Gabe_Vincent",
+      "rows": 57,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 171
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Garrett_Temple\\2026_processed_processed.csv",
+      "player": "Garrett_Temple",
+      "rows": 23,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 69
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Garrison_Mathews\\2026_processed_processed.csv",
+      "player": "Garrison_Mathews",
+      "rows": 15,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 45
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Gary_Harris\\2026_processed_processed.csv",
+      "player": "Gary_Harris",
+      "rows": 48,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 144
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Gary_Payton_II\\2026_processed_processed.csv",
+      "player": "Gary_Payton_II",
+      "rows": 73,
+      "real_market_rows": 5,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 204
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Gary_Trent_Jr\\2026_processed_processed.csv",
+      "player": "Gary_Trent_Jr",
+      "rows": 65,
+      "real_market_rows": 5,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 185
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\GG_Jackson\\2026_processed_processed.csv",
+      "player": "GG_Jackson",
+      "rows": 55,
+      "real_market_rows": 5,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 148
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Giannis_Antetokounmpo\\2026_processed_processed.csv",
+      "player": "Giannis_Antetokounmpo",
+      "rows": 36,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 108
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Goga_Bitadze\\2026_processed_processed.csv",
+      "player": "Goga_Bitadze",
+      "rows": 67,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 200
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Gradey_Dick\\2026_processed_processed.csv",
+      "player": "Gradey_Dick",
+      "rows": 78,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 234
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Grant_Nelson\\2026_processed_processed.csv",
+      "player": "Grant_Nelson",
+      "rows": 4,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 12
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Grant_Williams\\2026_processed_processed.csv",
+      "player": "Grant_Williams",
+      "rows": 36,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 105
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Grayson_Allen\\2026_processed_processed.csv",
+      "player": "Grayson_Allen",
+      "rows": 52,
+      "real_market_rows": 7,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 136
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Guerschon_Yabusele\\2026_processed_processed.csv",
+      "player": "Guerschon_Yabusele",
+      "rows": 67,
+      "real_market_rows": 6,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 188
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Gui_Santos\\2026_processed_processed.csv",
+      "player": "Gui_Santos",
+      "rows": 68,
+      "real_market_rows": 7,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 185
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Harrison_Barnes\\2026_processed_processed.csv",
+      "player": "Harrison_Barnes",
+      "rows": 81,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 240
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Harrison_Ingram\\2026_processed_processed.csv",
+      "player": "Harrison_Ingram",
+      "rows": 7,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 21
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Hayden_Gray\\2026_processed_processed.csv",
+      "player": "Hayden_Gray",
+      "rows": 1,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 3
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Haywood_Highsmith\\2026_processed_processed.csv",
+      "player": "Haywood_Highsmith",
+      "rows": 9,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 27
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Herbert_Jones\\2026_processed_processed.csv",
+      "player": "Herbert_Jones",
+      "rows": 56,
+      "real_market_rows": 5,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 151
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Hugo_Gonz\u00e1lez\\2026_processed_processed.csv",
+      "player": "Hugo_Gonz\u00e1lez",
+      "rows": 76,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 228
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Hunter_Dickinson\\2026_processed_processed.csv",
+      "player": "Hunter_Dickinson",
+      "rows": 5,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 15
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Hunter_Sallis\\2026_processed_processed.csv",
+      "player": "Hunter_Sallis",
+      "rows": 7,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 21
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Hunter_Tyson\\2026_processed_processed.csv",
+      "player": "Hunter_Tyson",
+      "rows": 21,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 63
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Immanuel_Quickley\\2026_processed_processed.csv",
+      "player": "Immanuel_Quickley",
+      "rows": 70,
+      "real_market_rows": 3,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 201
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Isaac_Jones\\2026_processed_processed.csv",
+      "player": "Isaac_Jones",
+      "rows": 7,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 21
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Isaac_Okoro\\2026_processed_processed.csv",
+      "player": "Isaac_Okoro",
+      "rows": 63,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 166
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Isaiah_Collier\\2026_processed_processed.csv",
+      "player": "Isaiah_Collier",
+      "rows": 59,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 177
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Isaiah_Crawford\\2026_processed_processed.csv",
+      "player": "Isaiah_Crawford",
+      "rows": 14,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 42
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Isaiah_Hartenstein\\2026_processed_processed.csv",
+      "player": "Isaiah_Hartenstein",
+      "rows": 50,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 123
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Isaiah_Jackson\\2026_processed_processed.csv",
+      "player": "Isaiah_Jackson",
+      "rows": 55,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 165
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Isaiah_Joe\\2026_processed_processed.csv",
+      "player": "Isaiah_Joe",
+      "rows": 73,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 218
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Isaiah_Livers\\2026_processed_processed.csv",
+      "player": "Isaiah_Livers",
+      "rows": 36,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 108
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Isaiah_Stevens\\2026_processed_processed.csv",
+      "player": "Isaiah_Stevens",
+      "rows": 3,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 9
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Isaiah_Stewart\\2026_processed_processed.csv",
+      "player": "Isaiah_Stewart",
+      "rows": 61,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 177
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ivica_Zubac\\2026_processed_processed.csv",
+      "player": "Ivica_Zubac",
+      "rows": 48,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 144
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ja_Morant\\2026_processed_processed.csv",
+      "player": "Ja_Morant",
+      "rows": 20,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 60
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jabari_Smith_Jr\\2026_processed_processed.csv",
+      "player": "Jabari_Smith_Jr",
+      "rows": 80,
+      "real_market_rows": 11,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 209
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jabari_Walker\\2026_processed_processed.csv",
+      "player": "Jabari_Walker",
+      "rows": 66,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 198
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jacob_Toppin\\2026_processed_processed.csv",
+      "player": "Jacob_Toppin",
+      "rows": 5,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 15
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jaden_Hardy\\2026_processed_processed.csv",
+      "player": "Jaden_Hardy",
+      "rows": 57,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 168
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jaden_Ivey\\2026_processed_processed.csv",
+      "player": "Jaden_Ivey",
+      "rows": 37,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 111
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jaden_McDaniels\\2026_processed_processed.csv",
+      "player": "Jaden_McDaniels",
+      "rows": 77,
+      "real_market_rows": 6,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 216
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\JaeSean_Tate\\2026_processed_processed.csv",
+      "player": "JaeSean_Tate",
+      "rows": 49,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 147
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jahmai_Mashack\\2026_processed_processed.csv",
+      "player": "Jahmai_Mashack",
+      "rows": 31,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 93
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jahmir_Young\\2026_processed_processed.csv",
+      "player": "Jahmir_Young",
+      "rows": 14,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 42
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jahmyl_Telfort\\2026_processed_processed.csv",
+      "player": "Jahmyl_Telfort",
+      "rows": 8,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 24
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jaime_Jaquez_Jr\\2026_processed_processed.csv",
+      "player": "Jaime_Jaquez_Jr",
+      "rows": 75,
+      "real_market_rows": 4,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 214
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jake_LaRavia\\2026_processed_processed.csv",
+      "player": "Jake_LaRavia",
+      "rows": 85,
+      "real_market_rows": 11,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 225
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jakob_Poeltl\\2026_processed_processed.csv",
+      "player": "Jakob_Poeltl",
+      "rows": 50,
+      "real_market_rows": 14,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 111
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\JaKobe_Walter\\2026_processed_processed.csv",
+      "player": "JaKobe_Walter",
+      "rows": 76,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 202
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jalen_Brunson\\2026_processed_processed.csv",
+      "player": "Jalen_Brunson",
+      "rows": 78,
+      "real_market_rows": 11,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 202
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jalen_Duren\\2026_processed_processed.csv",
+      "player": "Jalen_Duren",
+      "rows": 73,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 193
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jalen_Green\\2026_processed_processed.csv",
+      "player": "Jalen_Green",
+      "rows": 35,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 105
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jalen_Johnson\\2026_processed_processed.csv",
+      "player": "Jalen_Johnson",
+      "rows": 76,
+      "real_market_rows": 12,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 192
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jalen_Pickett\\2026_processed_processed.csv",
+      "player": "Jalen_Pickett",
+      "rows": 52,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 156
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jalen_Slawson\\2026_processed_processed.csv",
+      "player": "Jalen_Slawson",
+      "rows": 13,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 39
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jalen_Smith\\2026_processed_processed.csv",
+      "player": "Jalen_Smith",
+      "rows": 53,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 156
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jalen_Suggs\\2026_processed_processed.csv",
+      "player": "Jalen_Suggs",
+      "rows": 60,
+      "real_market_rows": 12,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 144
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jalen_Williams\\2026_processed_processed.csv",
+      "player": "Jalen_Williams",
+      "rows": 35,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 105
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jalen_Wilson\\2026_processed_processed.csv",
+      "player": "Jalen_Wilson",
+      "rows": 54,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 159
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jamal_Cain\\2026_processed_processed.csv",
+      "player": "Jamal_Cain",
+      "rows": 43,
+      "real_market_rows": 3,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 121
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jamal_Murray\\2026_processed_processed.csv",
+      "player": "Jamal_Murray",
+      "rows": 79,
+      "real_market_rows": 11,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 204
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jamal_Shead\\2026_processed_processed.csv",
+      "player": "Jamal_Shead",
+      "rows": 86,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 233
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jamaree_Bouyea\\2026_processed_processed.csv",
+      "player": "Jamaree_Bouyea",
+      "rows": 49,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 147
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\James_Harden\\2026_processed_processed.csv",
+      "player": "James_Harden",
+      "rows": 74,
+      "real_market_rows": 12,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 186
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\James_Wiseman\\2026_processed_processed.csv",
+      "player": "James_Wiseman",
+      "rows": 4,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 12
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jamir_Watkins\\2026_processed_processed.csv",
+      "player": "Jamir_Watkins",
+      "rows": 50,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 145
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jamison_Battle\\2026_processed_processed.csv",
+      "player": "Jamison_Battle",
+      "rows": 64,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 192
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jarace_Walker\\2026_processed_processed.csv",
+      "player": "Jarace_Walker",
+      "rows": 76,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 228
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jared_McCain\\2026_processed_processed.csv",
+      "player": "Jared_McCain",
+      "rows": 70,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 206
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jaren_Jackson_Jr\\2026_processed_processed.csv",
+      "player": "Jaren_Jackson_Jr",
+      "rows": 48,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 144
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jarred_Vanderbilt\\2026_processed_processed.csv",
+      "player": "Jarred_Vanderbilt",
+      "rows": 68,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 201
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jarrett_Allen\\2026_processed_processed.csv",
+      "player": "Jarrett_Allen",
+      "rows": 60,
+      "real_market_rows": 7,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 158
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jase_Richardson\\2026_processed_processed.csv",
+      "player": "Jase_Richardson",
+      "rows": 55,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 165
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Javon_Small\\2026_processed_processed.csv",
+      "player": "Javon_Small",
+      "rows": 41,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 123
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Javonte_Cooke\\2026_processed_processed.csv",
+      "player": "Javonte_Cooke",
+      "rows": 19,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 57
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Javonte_Green\\2026_processed_processed.csv",
+      "player": "Javonte_Green",
+      "rows": 85,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 255
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jaxson_Hayes\\2026_processed_processed.csv",
+      "player": "Jaxson_Hayes",
+      "rows": 69,
+      "real_market_rows": 4,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 195
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jay_Huff\\2026_processed_processed.csv",
+      "player": "Jay_Huff",
+      "rows": 82,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 227
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jaylen_Brown\\2026_processed_processed.csv",
+      "player": "Jaylen_Brown",
+      "rows": 75,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 199
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jaylen_Clark\\2026_processed_processed.csv",
+      "player": "Jaylen_Clark",
+      "rows": 68,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 204
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jaylen_Wells\\2026_processed_processed.csv",
+      "player": "Jaylen_Wells",
+      "rows": 69,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 207
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jaylin_Williams\\2026_processed_processed.csv",
+      "player": "Jaylin_Williams",
+      "rows": 68,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 204
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jaylon_Tyson\\2026_processed_processed.csv",
+      "player": "Jaylon_Tyson",
+      "rows": 70,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 207
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jayson_Kent\\2026_processed_processed.csv",
+      "player": "Jayson_Kent",
+      "rows": 5,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 15
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jayson_Tatum\\2026_processed_processed.csv",
+      "player": "Jayson_Tatum",
+      "rows": 20,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 31
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\JD_Davison\\2026_processed_processed.csv",
+      "player": "JD_Davison",
+      "rows": 28,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 84
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jeff_Green\\2026_processed_processed.csv",
+      "player": "Jeff_Green",
+      "rows": 31,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 93
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jerami_Grant\\2026_processed_processed.csv",
+      "player": "Jerami_Grant",
+      "rows": 61,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 178
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jeremiah_Fears\\2026_processed_processed.csv",
+      "player": "Jeremiah_Fears",
+      "rows": 82,
+      "real_market_rows": 4,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 231
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jeremiah_Robinson-Earl\\2026_processed_processed.csv",
+      "player": "Jeremiah_Robinson-Earl",
+      "rows": 22,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 66
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jeremy_Sochan\\2026_processed_processed.csv",
+      "player": "Jeremy_Sochan",
+      "rows": 44,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 132
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jericho_Sims\\2026_processed_processed.csv",
+      "player": "Jericho_Sims",
+      "rows": 67,
+      "real_market_rows": 7,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 183
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jett_Howard\\2026_processed_processed.csv",
+      "player": "Jett_Howard",
+      "rows": 56,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 168
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jevon_Carter\\2026_processed_processed.csv",
+      "player": "Jevon_Carter",
+      "rows": 54,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 160
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jimmy_Butler_III\\2026_processed_processed.csv",
+      "player": "Jimmy_Butler_III",
+      "rows": 38,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 114
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Joan_Beringer\\2026_processed_processed.csv",
+      "player": "Joan_Beringer",
+      "rows": 41,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 120
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jock_Landale\\2026_processed_processed.csv",
+      "player": "Jock_Landale",
+      "rows": 68,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 201
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Joe_Ingles\\2026_processed_processed.csv",
+      "player": "Joe_Ingles",
+      "rows": 28,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 84
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Joel_Embiid\\2026_processed_processed.csv",
+      "player": "Joel_Embiid",
+      "rows": 39,
+      "real_market_rows": 5,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 102
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\John_Collins\\2026_processed_processed.csv",
+      "player": "John_Collins",
+      "rows": 69,
+      "real_market_rows": 7,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 188
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\John_Konchar\\2026_processed_processed.csv",
+      "player": "John_Konchar",
+      "rows": 56,
+      "real_market_rows": 5,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 153
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\John_Poulakidas\\2026_processed_processed.csv",
+      "player": "John_Poulakidas",
+      "rows": 13,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 39
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\John_Tonje\\2026_processed_processed.csv",
+      "player": "John_Tonje",
+      "rows": 6,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 18
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Johni_Broome\\2026_processed_processed.csv",
+      "player": "Johni_Broome",
+      "rows": 11,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 33
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Johnny_Furphy\\2026_processed_processed.csv",
+      "player": "Johnny_Furphy",
+      "rows": 35,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 105
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Johnny_Juzang\\2026_processed_processed.csv",
+      "player": "Johnny_Juzang",
+      "rows": 21,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 63
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jonas_Valan\u010di\u016bnas\\2026_processed_processed.csv",
+      "player": "Jonas_Valan\u010di\u016bnas",
+      "rows": 67,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 201
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jonathan_Isaac\\2026_processed_processed.csv",
+      "player": "Jonathan_Isaac",
+      "rows": 52,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 156
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jonathan_Kuminga\\2026_processed_processed.csv",
+      "player": "Jonathan_Kuminga",
+      "rows": 40,
+      "real_market_rows": 11,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 88
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jonathan_Mogbo\\2026_processed_processed.csv",
+      "player": "Jonathan_Mogbo",
+      "rows": 42,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 126
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jordan_Clarkson\\2026_processed_processed.csv",
+      "player": "Jordan_Clarkson",
+      "rows": 76,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 228
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jordan_Goodwin\\2026_processed_processed.csv",
+      "player": "Jordan_Goodwin",
+      "rows": 71,
+      "real_market_rows": 4,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 202
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jordan_Hawkins\\2026_processed_processed.csv",
+      "player": "Jordan_Hawkins",
+      "rows": 51,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 153
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jordan_McLaughlin\\2026_processed_processed.csv",
+      "player": "Jordan_McLaughlin",
+      "rows": 45,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 135
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jordan_Miller\\2026_processed_processed.csv",
+      "player": "Jordan_Miller",
+      "rows": 60,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 180
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jordan_Poole\\2026_processed_processed.csv",
+      "player": "Jordan_Poole",
+      "rows": 39,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 115
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jordan_Walsh\\2026_processed_processed.csv",
+      "player": "Jordan_Walsh",
+      "rows": 72,
+      "real_market_rows": 3,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 208
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jose_Alvarado\\2026_processed_processed.csv",
+      "player": "Jose_Alvarado",
+      "rows": 72,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 213
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Josh_Giddey\\2026_processed_processed.csv",
+      "player": "Josh_Giddey",
+      "rows": 54,
+      "real_market_rows": 5,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 147
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Josh_Green\\2026_processed_processed.csv",
+      "player": "Josh_Green",
+      "rows": 58,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 174
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Josh_Hart\\2026_processed_processed.csv",
+      "player": "Josh_Hart",
+      "rows": 70,
+      "real_market_rows": 12,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 174
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Josh_Minott\\2026_processed_processed.csv",
+      "player": "Josh_Minott",
+      "rows": 49,
+      "real_market_rows": 3,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 140
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Josh_Oduro\\2026_processed_processed.csv",
+      "player": "Josh_Oduro",
+      "rows": 3,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 9
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Josh_Okogie\\2026_processed_processed.csv",
+      "player": "Josh_Okogie",
+      "rows": 81,
+      "real_market_rows": 3,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 237
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jrue_Holiday\\2026_processed_processed.csv",
+      "player": "Jrue_Holiday",
+      "rows": 57,
+      "real_market_rows": 11,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 139
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Julian_Champagnie\\2026_processed_processed.csv",
+      "player": "Julian_Champagnie",
+      "rows": 86,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 258
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Julian_Phillips\\2026_processed_processed.csv",
+      "player": "Julian_Phillips",
+      "rows": 49,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 147
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Julian_Reese\\2026_processed_processed.csv",
+      "player": "Julian_Reese",
+      "rows": 13,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 39
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Julian_Strawther\\2026_processed_processed.csv",
+      "player": "Julian_Strawther",
+      "rows": 58,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 171
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Julius_Randle\\2026_processed_processed.csv",
+      "player": "Julius_Randle",
+      "rows": 83,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 219
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Justin_Champagnie\\2026_processed_processed.csv",
+      "player": "Justin_Champagnie",
+      "rows": 69,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 207
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Justin_Edwards\\2026_processed_processed.csv",
+      "player": "Justin_Edwards",
+      "rows": 68,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 204
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Jusuf_Nurki\u0107\\2026_processed_processed.csv",
+      "player": "Jusuf_Nurki\u0107",
+      "rows": 41,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 123
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kadary_Richmond\\2026_processed_processed.csv",
+      "player": "Kadary_Richmond",
+      "rows": 3,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 9
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kam_Jones\\2026_processed_processed.csv",
+      "player": "Kam_Jones",
+      "rows": 37,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 111
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Karl-Anthony_Towns\\2026_processed_processed.csv",
+      "player": "Karl-Anthony_Towns",
+      "rows": 79,
+      "real_market_rows": 11,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 205
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Karlo_Matkovi\u0107\\2026_processed_processed.csv",
+      "player": "Karlo_Matkovi\u0107",
+      "rows": 62,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 186
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kasparas_Jaku\u010dionis\\2026_processed_processed.csv",
+      "player": "Kasparas_Jaku\u010dionis",
+      "rows": 53,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 159
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kawhi_Leonard\\2026_processed_processed.csv",
+      "player": "Kawhi_Leonard",
+      "rows": 65,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 169
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Keaton_Wallace\\2026_processed_processed.csv",
+      "player": "Keaton_Wallace",
+      "rows": 54,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 162
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Keegan_Murray\\2026_processed_processed.csv",
+      "player": "Keegan_Murray",
+      "rows": 23,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 69
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Keldon_Johnson\\2026_processed_processed.csv",
+      "player": "Keldon_Johnson",
+      "rows": 86,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 258
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kelel_Ware\\2026_processed_processed.csv",
+      "player": "Kelel_Ware",
+      "rows": 77,
+      "real_market_rows": 3,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 221
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kelly_Olynyk\\2026_processed_processed.csv",
+      "player": "Kelly_Olynyk",
+      "rows": 43,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 129
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kelly_Oubre_Jr\\2026_processed_processed.csv",
+      "player": "Kelly_Oubre_Jr",
+      "rows": 54,
+      "real_market_rows": 11,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 132
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kennedy_Chandler\\2026_processed_processed.csv",
+      "player": "Kennedy_Chandler",
+      "rows": 11,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 33
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kenrich_Williams\\2026_processed_processed.csv",
+      "player": "Kenrich_Williams",
+      "rows": 58,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 172
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kentavious_Caldwell-Pope\\2026_processed_processed.csv",
+      "player": "Kentavious_Caldwell-Pope",
+      "rows": 51,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 153
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Keon_Ellis\\2026_processed_processed.csv",
+      "player": "Keon_Ellis",
+      "rows": 76,
+      "real_market_rows": 5,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 213
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Keshad_Johnson\\2026_processed_processed.csv",
+      "player": "Keshad_Johnson",
+      "rows": 32,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 96
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Keshon_Gilbert\\2026_processed_processed.csv",
+      "player": "Keshon_Gilbert",
+      "rows": 4,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 12
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kevin_Durant\\2026_processed_processed.csv",
+      "player": "Kevin_Durant",
+      "rows": 79,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 207
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kevin_Huerter\\2026_processed_processed.csv",
+      "player": "Kevin_Huerter",
+      "rows": 72,
+      "real_market_rows": 6,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 199
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kevin_Love\\2026_processed_processed.csv",
+      "player": "Kevin_Love",
+      "rows": 37,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 111
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kevin_McCullar_Jr\\2026_processed_processed.csv",
+      "player": "Kevin_McCullar_Jr",
+      "rows": 21,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 63
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kevin_Porter_Jr\\2026_processed_processed.csv",
+      "player": "Kevin_Porter_Jr",
+      "rows": 38,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 114
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kevon_Looney\\2026_processed_processed.csv",
+      "player": "Kevon_Looney",
+      "rows": 21,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 62
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Keyonte_George\\2026_processed_processed.csv",
+      "player": "Keyonte_George",
+      "rows": 54,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 162
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Khaman_Maluach\\2026_processed_processed.csv",
+      "player": "Khaman_Maluach",
+      "rows": 49,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 147
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Khris_Middleton\\2026_processed_processed.csv",
+      "player": "Khris_Middleton",
+      "rows": 63,
+      "real_market_rows": 4,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 179
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Killian_Hayes\\2026_processed_processed.csv",
+      "player": "Killian_Hayes",
+      "rows": 23,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 69
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\KJ_Simpson\\2026_processed_processed.csv",
+      "player": "KJ_Simpson",
+      "rows": 20,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 60
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Klay_Thompson\\2026_processed_processed.csv",
+      "player": "Klay_Thompson",
+      "rows": 69,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 207
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kobe_Brown\\2026_processed_processed.csv",
+      "player": "Kobe_Brown",
+      "rows": 61,
+      "real_market_rows": 4,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 171
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kobe_Bufkin\\2026_processed_processed.csv",
+      "player": "Kobe_Bufkin",
+      "rows": 16,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 48
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kobe_Sanders\\2026_processed_processed.csv",
+      "player": "Kobe_Sanders",
+      "rows": 68,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 204
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Koby_Brea\\2026_processed_processed.csv",
+      "player": "Koby_Brea",
+      "rows": 12,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 36
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kon_Knueppel\\2026_processed_processed.csv",
+      "player": "Kon_Knueppel",
+      "rows": 81,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 213
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kris_Dunn\\2026_processed_processed.csv",
+      "player": "Kris_Dunn",
+      "rows": 82,
+      "real_market_rows": 5,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 231
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kris_Murray\\2026_processed_processed.csv",
+      "player": "Kris_Murray",
+      "rows": 61,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 183
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kristaps_Porzi\u0146\u0123is\\2026_processed_processed.csv",
+      "player": "Kristaps_Porzi\u0146\u0123is",
+      "rows": 32,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 96
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kyle_Anderson\\2026_processed_processed.csv",
+      "player": "Kyle_Anderson",
+      "rows": 47,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 137
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kyle_Filipowski\\2026_processed_processed.csv",
+      "player": "Kyle_Filipowski",
+      "rows": 77,
+      "real_market_rows": 7,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 211
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kyle_Kuzma\\2026_processed_processed.csv",
+      "player": "Kyle_Kuzma",
+      "rows": 69,
+      "real_market_rows": 3,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 200
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kyle_Lowry\\2026_processed_processed.csv",
+      "player": "Kyle_Lowry",
+      "rows": 14,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 42
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Kyshawn_George\\2026_processed_processed.csv",
+      "player": "Kyshawn_George",
+      "rows": 48,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 144
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Lachlan_Olbrich\\2026_processed_processed.csv",
+      "player": "Lachlan_Olbrich",
+      "rows": 37,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 111
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\LaMelo_Ball\\2026_processed_processed.csv",
+      "player": "LaMelo_Ball",
+      "rows": 72,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 216
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Landry_Shamet\\2026_processed_processed.csv",
+      "player": "Landry_Shamet",
+      "rows": 55,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 161
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Larry_Nance_Jr\\2026_processed_processed.csv",
+      "player": "Larry_Nance_Jr",
+      "rows": 37,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 111
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Lauri_Markkanen\\2026_processed_processed.csv",
+      "player": "Lauri_Markkanen",
+      "rows": 42,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 126
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Lawson_Lovering\\2026_processed_processed.csv",
+      "player": "Lawson_Lovering",
+      "rows": 2,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 6
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Leaky_Black\\2026_processed_processed.csv",
+      "player": "Leaky_Black",
+      "rows": 15,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 45
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\LeBron_James\\2026_processed_processed.csv",
+      "player": "LeBron_James",
+      "rows": 63,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 163
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Leonard_Miller\\2026_processed_processed.csv",
+      "player": "Leonard_Miller",
+      "rows": 46,
+      "real_market_rows": 6,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 121
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Liam_McNeeley\\2026_processed_processed.csv",
+      "player": "Liam_McNeeley",
+      "rows": 31,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 93
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Lindy_Waters_III\\2026_processed_processed.csv",
+      "player": "Lindy_Waters_III",
+      "rows": 42,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 126
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\LJ_Cryer\\2026_processed_processed.csv",
+      "player": "LJ_Cryer",
+      "rows": 18,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 54
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Lonzo_Ball\\2026_processed_processed.csv",
+      "player": "Lonzo_Ball",
+      "rows": 35,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 105
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Lucas_Williamson\\2026_processed_processed.csv",
+      "player": "Lucas_Williamson",
+      "rows": 7,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 21
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Luguentz_Dort\\2026_processed_processed.csv",
+      "player": "Luguentz_Dort",
+      "rows": 72,
+      "real_market_rows": 12,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 188
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Luka_Don\u010di\u0107\\2026_processed_processed.csv",
+      "player": "Luka_Don\u010di\u0107",
+      "rows": 64,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 192
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Luka_Garza\\2026_processed_processed.csv",
+      "player": "Luka_Garza",
+      "rows": 73,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 219
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Luke_Kennard\\2026_processed_processed.csv",
+      "player": "Luke_Kennard",
+      "rows": 81,
+      "real_market_rows": 7,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 225
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Luke_Kornet\\2026_processed_processed.csv",
+      "player": "Luke_Kornet",
+      "rows": 72,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 210
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Luke_Travers\\2026_processed_processed.csv",
+      "player": "Luke_Travers",
+      "rows": 12,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 36
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Mac_McClung\\2026_processed_processed.csv",
+      "player": "Mac_McClung",
+      "rows": 11,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 33
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Malachi_Smith\\2026_processed_processed.csv",
+      "player": "Malachi_Smith",
+      "rows": 15,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 42
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Malaki_Branham\\2026_processed_processed.csv",
+      "player": "Malaki_Branham",
+      "rows": 28,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 84
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Malevy_Leons\\2026_processed_processed.csv",
+      "player": "Malevy_Leons",
+      "rows": 25,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 75
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Malik_Monk\\2026_processed_processed.csv",
+      "player": "Malik_Monk",
+      "rows": 62,
+      "real_market_rows": 4,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 174
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Marcus_Sasser\\2026_processed_processed.csv",
+      "player": "Marcus_Sasser",
+      "rows": 39,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 117
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Marcus_Smart\\2026_processed_processed.csv",
+      "player": "Marcus_Smart",
+      "rows": 65,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 189
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\MarJon_Beauchamp\\2026_processed_processed.csv",
+      "player": "MarJon_Beauchamp",
+      "rows": 14,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 42
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Mark_Sears\\2026_processed_processed.csv",
+      "player": "Mark_Sears",
+      "rows": 7,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 21
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Mark_Williams\\2026_processed_processed.csv",
+      "player": "Mark_Williams",
+      "rows": 60,
+      "real_market_rows": 3,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 173
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Markelle_Fultz\\2026_processed_processed.csv",
+      "player": "Markelle_Fultz",
+      "rows": 5,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 15
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Marvin_Bagley_III\\2026_processed_processed.csv",
+      "player": "Marvin_Bagley_III",
+      "rows": 60,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 176
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Mason_Plumlee\\2026_processed_processed.csv",
+      "player": "Mason_Plumlee",
+      "rows": 21,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 63
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Matas_Buzelis\\2026_processed_processed.csv",
+      "player": "Matas_Buzelis",
+      "rows": 77,
+      "real_market_rows": 7,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 212
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Matisse_Thybulle\\2026_processed_processed.csv",
+      "player": "Matisse_Thybulle",
+      "rows": 33,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 99
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Max_Christie\\2026_processed_processed.csv",
+      "player": "Max_Christie",
+      "rows": 77,
+      "real_market_rows": 7,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 209
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Max_Shulga\\2026_processed_processed.csv",
+      "player": "Max_Shulga",
+      "rows": 13,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 39
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Max_Strus\\2026_processed_processed.csv",
+      "player": "Max_Strus",
+      "rows": 16,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 19
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Maxi_Kleber\\2026_processed_processed.csv",
+      "player": "Maxi_Kleber",
+      "rows": 43,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 129
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Maxime_Raynaud\\2026_processed_processed.csv",
+      "player": "Maxime_Raynaud",
+      "rows": 74,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 196
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Micah_Peavy\\2026_processed_processed.csv",
+      "player": "Micah_Peavy",
+      "rows": 61,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 182
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Micah_Potter\\2026_processed_processed.csv",
+      "player": "Micah_Potter",
+      "rows": 47,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 136
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Michael_Porter_Jr\\2026_processed_processed.csv",
+      "player": "Michael_Porter_Jr",
+      "rows": 52,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 156
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Mikal_Bridges\\2026_processed_processed.csv",
+      "player": "Mikal_Bridges",
+      "rows": 86,
+      "real_market_rows": 13,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 220
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Mike_Conley\\2026_processed_processed.csv",
+      "player": "Mike_Conley",
+      "rows": 58,
+      "real_market_rows": 4,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 162
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Miles_Bridges\\2026_processed_processed.csv",
+      "player": "Miles_Bridges",
+      "rows": 77,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 231
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Miles_Kelly\\2026_processed_processed.csv",
+      "player": "Miles_Kelly",
+      "rows": 14,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 42
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Miles_McBride\\2026_processed_processed.csv",
+      "player": "Miles_McBride",
+      "rows": 45,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 132
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Mitchell_Robinson\\2026_processed_processed.csv",
+      "player": "Mitchell_Robinson",
+      "rows": 64,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 169
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Mo_Bamba\\2026_processed_processed.csv",
+      "player": "Mo_Bamba",
+      "rows": 4,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 12
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Mohamed_Diawara\\2026_processed_processed.csv",
+      "player": "Mohamed_Diawara",
+      "rows": 70,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 210
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Monte_Morris\\2026_processed_processed.csv",
+      "player": "Monte_Morris",
+      "rows": 6,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 18
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Moritz_Wagner\\2026_processed_processed.csv",
+      "player": "Moritz_Wagner",
+      "rows": 37,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 111
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Moses_Moody\\2026_processed_processed.csv",
+      "player": "Moses_Moody",
+      "rows": 60,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 180
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Mouhamadou_Gueye\\2026_processed_processed.csv",
+      "player": "Mouhamadou_Gueye",
+      "rows": 2,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 6
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Mouhamed_Gueye\\2026_processed_processed.csv",
+      "player": "Mouhamed_Gueye",
+      "rows": 81,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 243
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Moussa_Cisse\\2026_processed_processed.csv",
+      "player": "Moussa_Cisse",
+      "rows": 38,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 114
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Moussa_Diabat\u00e9\\2026_processed_processed.csv",
+      "player": "Moussa_Diabat\u00e9",
+      "rows": 73,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 219
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Myles_Turner\\2026_processed_processed.csv",
+      "player": "Myles_Turner",
+      "rows": 71,
+      "real_market_rows": 4,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 204
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Myron_Gardner\\2026_processed_processed.csv",
+      "player": "Myron_Gardner",
+      "rows": 45,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 135
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\NaeQwan_Tomlin\\2026_processed_processed.csv",
+      "player": "NaeQwan_Tomlin",
+      "rows": 66,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 193
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Naji_Marshall\\2026_processed_processed.csv",
+      "player": "Naji_Marshall",
+      "rows": 74,
+      "real_market_rows": 5,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 208
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Nate_Williams\\2026_processed_processed.csv",
+      "player": "Nate_Williams",
+      "rows": 14,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 42
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Naz_Reid\\2026_processed_processed.csv",
+      "player": "Naz_Reid",
+      "rows": 81,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 217
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Neemias_Queta\\2026_processed_processed.csv",
+      "player": "Neemias_Queta",
+      "rows": 80,
+      "real_market_rows": 11,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 208
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\NFaly_Dante\\2026_processed_processed.csv",
+      "player": "NFaly_Dante",
+      "rows": 4,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 12
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Nic_Claxton\\2026_processed_processed.csv",
+      "player": "Nic_Claxton",
+      "rows": 69,
+      "real_market_rows": 4,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 195
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Nick_Richards\\2026_processed_processed.csv",
+      "player": "Nick_Richards",
+      "rows": 48,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 141
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Nick_Smith_Jr\\2026_processed_processed.csv",
+      "player": "Nick_Smith_Jr",
+      "rows": 31,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 93
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Nickeil_Alexander-Walker\\2026_processed_processed.csv",
+      "player": "Nickeil_Alexander-Walker",
+      "rows": 82,
+      "real_market_rows": 12,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 210
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Nicolas_Batum\\2026_processed_processed.csv",
+      "player": "Nicolas_Batum",
+      "rows": 74,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 222
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Nigel_Hayes-Davis\\2026_processed_processed.csv",
+      "player": "Nigel_Hayes-Davis",
+      "rows": 27,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 81
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Nikola_Joki\u0107\\2026_processed_processed.csv",
+      "player": "Nikola_Joki\u0107",
+      "rows": 69,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 207
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Nikola_Jovi\u0107\\2026_processed_processed.csv",
+      "player": "Nikola_Jovi\u0107",
+      "rows": 47,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 141
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Nikola_Topi\u0107\\2026_processed_processed.csv",
+      "player": "Nikola_Topi\u0107",
+      "rows": 12,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 36
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Nikola_Vu\u010devi\u0107\\2026_processed_processed.csv",
+      "player": "Nikola_Vu\u010devi\u0107",
+      "rows": 68,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 204
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Nique_Clifford\\2026_processed_processed.csv",
+      "player": "Nique_Clifford",
+      "rows": 75,
+      "real_market_rows": 6,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 204
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Noa_Essengue\\2026_processed_processed.csv",
+      "player": "Noa_Essengue",
+      "rows": 2,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 6
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Noah_Clowney\\2026_processed_processed.csv",
+      "player": "Noah_Clowney",
+      "rows": 66,
+      "real_market_rows": 3,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 187
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Noah_Penda\\2026_processed_processed.csv",
+      "player": "Noah_Penda",
+      "rows": 60,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 180
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Nolan_Traore\\2026_processed_processed.csv",
+      "player": "Nolan_Traore",
+      "rows": 56,
+      "real_market_rows": 4,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 153
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Norchad_Omier\\2026_processed_processed.csv",
+      "player": "Norchad_Omier",
+      "rows": 6,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 18
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Norman_Powell\\2026_processed_processed.csv",
+      "player": "Norman_Powell",
+      "rows": 58,
+      "real_market_rows": 5,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 159
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Obi_Toppin\\2026_processed_processed.csv",
+      "player": "Obi_Toppin",
+      "rows": 24,
+      "real_market_rows": 4,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 60
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ochai_Agbaji\\2026_processed_processed.csv",
+      "player": "Ochai_Agbaji",
+      "rows": 62,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 186
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\OG_Anunoby\\2026_processed_processed.csv",
+      "player": "OG_Anunoby",
+      "rows": 71,
+      "real_market_rows": 12,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 179
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Olivier-Maxence_Prosper\\2026_processed_processed.csv",
+      "player": "Olivier-Maxence_Prosper",
+      "rows": 53,
+      "real_market_rows": 6,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 146
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Olivier_Sarr\\2026_processed_processed.csv",
+      "player": "Olivier_Sarr",
+      "rows": 4,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 12
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Omer_Yurtseven\\2026_processed_processed.csv",
+      "player": "Omer_Yurtseven",
+      "rows": 9,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 27
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Onyeka_Okongwu\\2026_processed_processed.csv",
+      "player": "Onyeka_Okongwu",
+      "rows": 78,
+      "real_market_rows": 11,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 204
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Orlando_Robinson\\2026_processed_processed.csv",
+      "player": "Orlando_Robinson",
+      "rows": 4,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 12
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Oscar_Tshiebwe\\2026_processed_processed.csv",
+      "player": "Oscar_Tshiebwe",
+      "rows": 27,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 81
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Oso_Ighodaro\\2026_processed_processed.csv",
+      "player": "Oso_Ighodaro",
+      "rows": 85,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 230
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ousmane_Dieng\\2026_processed_processed.csv",
+      "player": "Ousmane_Dieng",
+      "rows": 57,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 153
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Pac\u00f4me_Dadiet\\2026_processed_processed.csv",
+      "player": "Pac\u00f4me_Dadiet",
+      "rows": 29,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 87
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Paolo_Banchero\\2026_processed_processed.csv",
+      "player": "Paolo_Banchero",
+      "rows": 75,
+      "real_market_rows": 13,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 186
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Pascal_Siakam\\2026_processed_processed.csv",
+      "player": "Pascal_Siakam",
+      "rows": 62,
+      "real_market_rows": 5,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 171
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Pat_Connaughton\\2026_processed_processed.csv",
+      "player": "Pat_Connaughton",
+      "rows": 42,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 126
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Pat_Spencer\\2026_processed_processed.csv",
+      "player": "Pat_Spencer",
+      "rows": 66,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 195
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Patrick_Baldwin_Jr\\2026_processed_processed.csv",
+      "player": "Patrick_Baldwin_Jr",
+      "rows": 9,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 27
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Patrick_Williams\\2026_processed_processed.csv",
+      "player": "Patrick_Williams",
+      "rows": 72,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 213
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Paul_George\\2026_processed_processed.csv",
+      "player": "Paul_George",
+      "rows": 41,
+      "real_market_rows": 12,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 89
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Paul_Reed\\2026_processed_processed.csv",
+      "player": "Paul_Reed",
+      "rows": 67,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 197
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Payton_Pritchard\\2026_processed_processed.csv",
+      "player": "Payton_Pritchard",
+      "rows": 83,
+      "real_market_rows": 11,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 214
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Payton_Sandfort\\2026_processed_processed.csv",
+      "player": "Payton_Sandfort",
+      "rows": 4,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 12
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Pelle_Larsson\\2026_processed_processed.csv",
+      "player": "Pelle_Larsson",
+      "rows": 70,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 188
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Pete_Nance\\2026_processed_processed.csv",
+      "player": "Pete_Nance",
+      "rows": 47,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 136
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Peyton_Watson\\2026_processed_processed.csv",
+      "player": "Peyton_Watson",
+      "rows": 54,
+      "real_market_rows": 4,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 150
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\PJ_Hall\\2026_processed_processed.csv",
+      "player": "PJ_Hall",
+      "rows": 19,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 57
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\PJ_Washington\\2026_processed_processed.csv",
+      "player": "PJ_Washington",
+      "rows": 56,
+      "real_market_rows": 3,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 160
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Precious_Achiuwa\\2026_processed_processed.csv",
+      "player": "Precious_Achiuwa",
+      "rows": 73,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 196
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Quentin_Grimes\\2026_processed_processed.csv",
+      "player": "Quentin_Grimes",
+      "rows": 79,
+      "real_market_rows": 7,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 217
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Quenton_Jackson\\2026_processed_processed.csv",
+      "player": "Quenton_Jackson",
+      "rows": 49,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 147
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Quinten_Post\\2026_processed_processed.csv",
+      "player": "Quinten_Post",
+      "rows": 67,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 201
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Rasheer_Fleming\\2026_processed_processed.csv",
+      "player": "Rasheer_Fleming",
+      "rows": 58,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 174
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Rayan_Rupert\\2026_processed_processed.csv",
+      "player": "Rayan_Rupert",
+      "rows": 64,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 192
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\RayJ_Dennis\\2026_processed_processed.csv",
+      "player": "RayJ_Dennis",
+      "rows": 17,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 51
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Reed_Sheppard\\2026_processed_processed.csv",
+      "player": "Reed_Sheppard",
+      "rows": 85,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 225
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Riley_Minix\\2026_processed_processed.csv",
+      "player": "Riley_Minix",
+      "rows": 9,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 27
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\RJ_Barrett\\2026_processed_processed.csv",
+      "player": "RJ_Barrett",
+      "rows": 61,
+      "real_market_rows": 13,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 145
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Rob_Dillingham\\2026_processed_processed.csv",
+      "player": "Rob_Dillingham",
+      "rows": 65,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 189
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Robert_Williams_III\\2026_processed_processed.csv",
+      "player": "Robert_Williams_III",
+      "rows": 63,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 167
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Rocco_Zikarsky\\2026_processed_processed.csv",
+      "player": "Rocco_Zikarsky",
+      "rows": 5,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 15
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ron_Harper_Jr\\2026_processed_processed.csv",
+      "player": "Ron_Harper_Jr",
+      "rows": 32,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 96
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ronald_Holland_II\\2026_processed_processed.csv",
+      "player": "Ronald_Holland_II",
+      "rows": 80,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 240
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Royce_ONeale\\2026_processed_processed.csv",
+      "player": "Royce_ONeale",
+      "rows": 81,
+      "real_market_rows": 7,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 224
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Rudy_Gobert\\2026_processed_processed.csv",
+      "player": "Rudy_Gobert",
+      "rows": 80,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 210
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Rui_Hachimura\\2026_processed_processed.csv",
+      "player": "Rui_Hachimura",
+      "rows": 71,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 188
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Russell_Westbrook\\2026_processed_processed.csv",
+      "player": "Russell_Westbrook",
+      "rows": 64,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 192
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ryan_Dunn\\2026_processed_processed.csv",
+      "player": "Ryan_Dunn",
+      "rows": 73,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 218
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ryan_Kalkbrenner\\2026_processed_processed.csv",
+      "player": "Ryan_Kalkbrenner",
+      "rows": 69,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 205
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ryan_Nembhard\\2026_processed_processed.csv",
+      "player": "Ryan_Nembhard",
+      "rows": 60,
+      "real_market_rows": 4,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 168
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ryan_Rollins\\2026_processed_processed.csv",
+      "player": "Ryan_Rollins",
+      "rows": 74,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 216
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Saddiq_Bey\\2026_processed_processed.csv",
+      "player": "Saddiq_Bey",
+      "rows": 72,
+      "real_market_rows": 6,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 198
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Sam_Hauser\\2026_processed_processed.csv",
+      "player": "Sam_Hauser",
+      "rows": 82,
+      "real_market_rows": 12,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 214
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Sam_Merrill\\2026_processed_processed.csv",
+      "player": "Sam_Merrill",
+      "rows": 56,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 145
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Sandro_Mamukelashvili\\2026_processed_processed.csv",
+      "player": "Sandro_Mamukelashvili",
+      "rows": 84,
+      "real_market_rows": 6,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 237
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Santi_Aldama\\2026_processed_processed.csv",
+      "player": "Santi_Aldama",
+      "rows": 43,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 129
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Scoot_Henderson\\2026_processed_processed.csv",
+      "player": "Scoot_Henderson",
+      "rows": 34,
+      "real_market_rows": 11,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 71
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Scottie_Barnes\\2026_processed_processed.csv",
+      "player": "Scottie_Barnes",
+      "rows": 84,
+      "real_market_rows": 14,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 213
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Scotty_Pippen_Jr\\2026_processed_processed.csv",
+      "player": "Scotty_Pippen_Jr",
+      "rows": 10,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 30
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Sean_Pedulla\\2026_processed_processed.csv",
+      "player": "Sean_Pedulla",
+      "rows": 7,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 21
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Seth_Curry\\2026_processed_processed.csv",
+      "player": "Seth_Curry",
+      "rows": 10,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 30
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Shaedon_Sharpe\\2026_processed_processed.csv",
+      "player": "Shaedon_Sharpe",
+      "rows": 54,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 162
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Shai_Gilgeous-Alexander\\2026_processed_processed.csv",
+      "player": "Shai_Gilgeous-Alexander",
+      "rows": 71,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 185
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Sharife_Cooper\\2026_processed_processed.csv",
+      "player": "Sharife_Cooper",
+      "rows": 41,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 123
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Sidy_Cissoko\\2026_processed_processed.csv",
+      "player": "Sidy_Cissoko",
+      "rows": 78,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 231
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Simone_Fontecchio\\2026_processed_processed.csv",
+      "player": "Simone_Fontecchio",
+      "rows": 70,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 207
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Sion_James\\2026_processed_processed.csv",
+      "player": "Sion_James",
+      "rows": 82,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 246
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Skal_Labissiere\\2026_processed_processed.csv",
+      "player": "Skal_Labissiere",
+      "rows": 3,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 9
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Spencer_Jones\\2026_processed_processed.csv",
+      "player": "Spencer_Jones",
+      "rows": 68,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 202
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Stanley_Umude\\2026_processed_processed.csv",
+      "player": "Stanley_Umude",
+      "rows": 2,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 6
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Stephen_Curry\\2026_processed_processed.csv",
+      "player": "Stephen_Curry",
+      "rows": 43,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 129
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Stephon_Castle\\2026_processed_processed.csv",
+      "player": "Stephon_Castle",
+      "rows": 72,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 189
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Steven_Adams\\2026_processed_processed.csv",
+      "player": "Steven_Adams",
+      "rows": 32,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 96
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Svi_Mykhailiuk\\2026_processed_processed.csv",
+      "player": "Svi_Mykhailiuk",
+      "rows": 50,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 150
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Taelon_Peter\\2026_processed_processed.csv",
+      "player": "Taelon_Peter",
+      "rows": 38,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 114
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Taj_Gibson\\2026_processed_processed.csv",
+      "player": "Taj_Gibson",
+      "rows": 10,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 30
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tari_Eason\\2026_processed_processed.csv",
+      "player": "Tari_Eason",
+      "rows": 63,
+      "real_market_rows": 11,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 155
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Taurean_Prince\\2026_processed_processed.csv",
+      "player": "Taurean_Prince",
+      "rows": 26,
+      "real_market_rows": 4,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 70
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Taylor_Hendricks\\2026_processed_processed.csv",
+      "player": "Taylor_Hendricks",
+      "rows": 59,
+      "real_market_rows": 6,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 161
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Terance_Mann\\2026_processed_processed.csv",
+      "player": "Terance_Mann",
+      "rows": 63,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 189
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Terrence_Shannon_Jr\\2026_processed_processed.csv",
+      "player": "Terrence_Shannon_Jr",
+      "rows": 44,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 131
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Thanasis_Antetokounmpo\\2026_processed_processed.csv",
+      "player": "Thanasis_Antetokounmpo",
+      "rows": 34,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 102
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Thomas_Bryant\\2026_processed_processed.csv",
+      "player": "Thomas_Bryant",
+      "rows": 61,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 180
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tidjane_Sala\u00fcn\\2026_processed_processed.csv",
+      "player": "Tidjane_Sala\u00fcn",
+      "rows": 37,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 111
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tim_Hardaway_Jr\\2026_processed_processed.csv",
+      "player": "Tim_Hardaway_Jr",
+      "rows": 84,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 227
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\TJ_McConnell\\2026_processed_processed.csv",
+      "player": "TJ_McConnell",
+      "rows": 56,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 165
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tobias_Harris\\2026_processed_processed.csv",
+      "player": "Tobias_Harris",
+      "rows": 66,
+      "real_market_rows": 11,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 168
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Toby_Okani\\2026_processed_processed.csv",
+      "player": "Toby_Okani",
+      "rows": 6,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 18
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tolu_Smith\\2026_processed_processed.csv",
+      "player": "Tolu_Smith",
+      "rows": 15,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 45
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tony_Bradley\\2026_processed_processed.csv",
+      "player": "Tony_Bradley",
+      "rows": 43,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 129
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tosan_Evbuomwan\\2026_processed_processed.csv",
+      "player": "Tosan_Evbuomwan",
+      "rows": 5,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 15
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Toumani_Camara\\2026_processed_processed.csv",
+      "player": "Toumani_Camara",
+      "rows": 86,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 229
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Trae_Young\\2026_processed_processed.csv",
+      "player": "Trae_Young",
+      "rows": 15,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 45
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Trayce_Jackson-Davis\\2026_processed_processed.csv",
+      "player": "Trayce_Jackson-Davis",
+      "rows": 55,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 165
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tre_Johnson\\2026_processed_processed.csv",
+      "player": "Tre_Johnson",
+      "rows": 60,
+      "real_market_rows": 3,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 173
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tre_Jones\\2026_processed_processed.csv",
+      "player": "Tre_Jones",
+      "rows": 65,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 195
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tre_Mann\\2026_processed_processed.csv",
+      "player": "Tre_Mann",
+      "rows": 53,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 159
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Trendon_Watford\\2026_processed_processed.csv",
+      "player": "Trendon_Watford",
+      "rows": 55,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 165
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Trentyn_Flowers\\2026_processed_processed.csv",
+      "player": "Trentyn_Flowers",
+      "rows": 2,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 6
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Trevon_Scott\\2026_processed_processed.csv",
+      "player": "Trevon_Scott",
+      "rows": 6,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 18
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Trevor_Keels\\2026_processed_processed.csv",
+      "player": "Trevor_Keels",
+      "rows": 8,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 24
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Trey_Alexander\\2026_processed_processed.csv",
+      "player": "Trey_Alexander",
+      "rows": 9,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 27
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Trey_Jemison_III\\2026_processed_processed.csv",
+      "player": "Trey_Jemison_III",
+      "rows": 13,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 39
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Trey_Murphy_III\\2026_processed_processed.csv",
+      "player": "Trey_Murphy_III",
+      "rows": 66,
+      "real_market_rows": 3,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 189
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tristan_da_Silva\\2026_processed_processed.csv",
+      "player": "Tristan_da_Silva",
+      "rows": 80,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 216
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tristan_Enaruna\\2026_processed_processed.csv",
+      "player": "Tristan_Enaruna",
+      "rows": 9,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 27
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tristan_Vukcevic\\2026_processed_processed.csv",
+      "player": "Tristan_Vukcevic",
+      "rows": 49,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 141
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tristen_Newton\\2026_processed_processed.csv",
+      "player": "Tristen_Newton",
+      "rows": 1,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 3
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ty_Jerome\\2026_processed_processed.csv",
+      "player": "Ty_Jerome",
+      "rows": 15,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 45
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tyler_Burton\\2026_processed_processed.csv",
+      "player": "Tyler_Burton",
+      "rows": 12,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 36
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tyler_Herro\\2026_processed_processed.csv",
+      "player": "Tyler_Herro",
+      "rows": 33,
+      "real_market_rows": 7,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 78
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tyler_Kolek\\2026_processed_processed.csv",
+      "player": "Tyler_Kolek",
+      "rows": 63,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 189
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tyler_Smith\\2026_processed_processed.csv",
+      "player": "Tyler_Smith",
+      "rows": 12,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 36
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tyrese_Martin\\2026_processed_processed.csv",
+      "player": "Tyrese_Martin",
+      "rows": 46,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 138
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tyrese_Maxey\\2026_processed_processed.csv",
+      "player": "Tyrese_Maxey",
+      "rows": 74,
+      "real_market_rows": 10,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 191
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tyrese_Proctor\\2026_processed_processed.csv",
+      "player": "Tyrese_Proctor",
+      "rows": 51,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 153
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tyson_Etienne\\2026_processed_processed.csv",
+      "player": "Tyson_Etienne",
+      "rows": 24,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 72
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\TyTy_Washington_Jr\\2026_processed_processed.csv",
+      "player": "TyTy_Washington_Jr",
+      "rows": 16,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 48
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Tyus_Jones\\2026_processed_processed.csv",
+      "player": "Tyus_Jones",
+      "rows": 68,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 204
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Victor_Wembanyama\\2026_processed_processed.csv",
+      "player": "Victor_Wembanyama",
+      "rows": 67,
+      "real_market_rows": 9,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 174
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Vince_Williams_Jr\\2026_processed_processed.csv",
+      "player": "Vince_Williams_Jr",
+      "rows": 40,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 120
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\VJ_Edgecombe\\2026_processed_processed.csv",
+      "player": "VJ_Edgecombe",
+      "rows": 79,
+      "real_market_rows": 12,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 202
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Vladislav_Goldin\\2026_processed_processed.csv",
+      "player": "Vladislav_Goldin",
+      "rows": 9,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 27
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\V\u00edt_Krej\u010d\u00ed\\2026_processed_processed.csv",
+      "player": "V\u00edt_Krej\u010d\u00ed",
+      "rows": 68,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 204
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Walker_Kessler\\2026_processed_processed.csv",
+      "player": "Walker_Kessler",
+      "rows": 5,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 15
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Walter_Clayton_Jr\\2026_processed_processed.csv",
+      "player": "Walter_Clayton_Jr",
+      "rows": 69,
+      "real_market_rows": 5,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 192
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Wendell_Carter_Jr\\2026_processed_processed.csv",
+      "player": "Wendell_Carter_Jr",
+      "rows": 81,
+      "real_market_rows": 12,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 206
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Wendell_Moore_Jr\\2026_processed_processed.csv",
+      "player": "Wendell_Moore_Jr",
+      "rows": 6,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 18
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Will_Richard\\2026_processed_processed.csv",
+      "player": "Will_Richard",
+      "rows": 69,
+      "real_market_rows": 2,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 201
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Will_Riley\\2026_processed_processed.csv",
+      "player": "Will_Riley",
+      "rows": 74,
+      "real_market_rows": 8,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 196
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Xavier_Tillman\\2026_processed_processed.csv",
+      "player": "Xavier_Tillman",
+      "rows": 30,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 90
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Yang_Hansen\\2026_processed_processed.csv",
+      "player": "Yang_Hansen",
+      "rows": 46,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 138
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Yanic_Konan_Niederh\u00e4user\\2026_processed_processed.csv",
+      "player": "Yanic_Konan_Niederh\u00e4user",
+      "rows": 41,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 123
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Yuki_Kawamura\\2026_processed_processed.csv",
+      "player": "Yuki_Kawamura",
+      "rows": 18,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 54
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Yves_Missi\\2026_processed_processed.csv",
+      "player": "Yves_Missi",
+      "rows": 66,
+      "real_market_rows": 4,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 189
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Zaccharie_Risacher\\2026_processed_processed.csv",
+      "player": "Zaccharie_Risacher",
+      "rows": 69,
+      "real_market_rows": 1,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 205
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Zach_Collins\\2026_processed_processed.csv",
+      "player": "Zach_Collins",
+      "rows": 10,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 30
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Zach_Edey\\2026_processed_processed.csv",
+      "player": "Zach_Edey",
+      "rows": 11,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 33
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Zach_LaVine\\2026_processed_processed.csv",
+      "player": "Zach_LaVine",
+      "rows": 39,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 117
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Zeke_Nnaji\\2026_processed_processed.csv",
+      "player": "Zeke_Nnaji",
+      "rows": 53,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 159
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ziaire_Williams\\2026_processed_processed.csv",
+      "player": "Ziaire_Williams",
+      "rows": 56,
+      "real_market_rows": 4,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 157
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Zion_Williamson\\2026_processed_processed.csv",
+      "player": "Zion_Williamson",
+      "rows": 62,
+      "real_market_rows": 6,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 167
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Zyon_Pullin\\2026_processed_processed.csv",
+      "player": "Zyon_Pullin",
+      "rows": 5,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 15
+    }
+  ]
+}

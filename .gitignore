@@ -1,27 +1,181 @@
-# Ignore everything by default. We explicitly opt in tracked source surfaces.
-*
+# ============================================================
+# Repo policy
+# ============================================================
+# Track source code, scripts, configs, tests, static assets, and data by default.
+# Ignore only model artifacts/metadata, runtime outputs, caches, secrets, and local temp files.
 
-# Repo metadata and root docs/config.
-!.gitignore
-!README.md
-!requirements.txt
-!config.yaml
 
-# Sports workspace (NBA today, MLB/NFL scaffolds ready).
-!sports/
-!sports/**
+# ============================================================
+# Python / tooling caches
+# ============================================================
+__pycache__/
+*.py[cod]
+*$py.class
 
-# Re-ignore large local runtime artifacts under predictor workspace.
-sports/nba/predictions/Player-Predictor/model/**
-sports/nba/predictions/Player-Predictor/data copy/**
-sports/nba/predictions/Player-Predictor/Data-Proc/**
-sports/nba/predictions/Player-Predictor/Data-Proc-NFL/**
-sports/nba/predictions/Player-Predictor/tmp/**
-sports/nba/predictions/Player-Predictor/**/__pycache__/**
-sports/nba/predictions/model_root_legacy/**
-sports/**/__pycache__/**
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
 
-# Re-ignore local-only exploratory scripts not part of the committed framework.
+.ipynb_checkpoints/
+
+
+# ============================================================
+# Virtual environments / local dependency folders
+# ============================================================
+.venv/
+venv/
+env/
+ENV/
+.envrc
+
+
+# ============================================================
+# Secrets / local-only config
+# ============================================================
+.env
+.env.*
+!.env.example
+
+*.key
+*.pem
+*.p12
+*.pfx
+
+secrets/
+private/
+
+
+# ============================================================
+# OS / editor noise
+# ============================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+.idea/
+
+
+# ============================================================
+# Logs / temp / runtime folders
+# ============================================================
+*.log
+logs/
+tmp/
+temp/
+.cache/
+
+sports/**/tmp/
+sports/**/logs/
+Player-Predictor/tmp/
+Player-Predictor/logs/
+
+
+# ============================================================
+# Model artifacts / model metadata
+# ============================================================
+# Explicit known model roots
+sports/nba/predictions/Player-Predictor/model/
+sports/nba/predictions/model_root_legacy/
+Player-Predictor/model/
+Player-Predictor/models/
+
+# Generic model output folders
+**/model/
+**/models/
+**/checkpoints/
+**/checkpoint/
+**/saved_model/
+**/model_artifacts/
+**/model_outputs/
+**/model_metadata/
+**/training_runs/
+
+# Experiment trackers / generated ML metadata
+wandb/
+**/wandb/
+
+mlruns/
+**/mlruns/
+
+runs/
+**/runs/
+
+tensorboard/
+**/tensorboard/
+
+lightning_logs/
+**/lightning_logs/
+
+catboost_info/
+**/catboost_info/
+
+
+# ============================================================
+# Trained model binary formats
+# ============================================================
+*.keras
+*.h5
+*.hdf5
+*.onnx
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.tflite
+*.pb
+*.pbtxt
+
+
+# ============================================================
+# Model/scaler/encoder artifacts
+# ============================================================
+# These are usually generated metadata, not source data.
+*.joblib
+
+# Be careful with global *.pkl ignores because some projects store datasets as pickle.
+# This only ignores pickle files inside model-ish folders.
+**/model/**/*.pkl
+**/models/**/*.pkl
+**/model_artifacts/**/*.pkl
+**/model_outputs/**/*.pkl
+**/checkpoints/**/*.pkl
+**/training_runs/**/*.pkl
+
+**/model/**/*.json
+**/models/**/*.json
+**/model_artifacts/**/*.json
+**/model_outputs/**/*.json
+**/checkpoints/**/*.json
+**/training_runs/**/*.json
+
+
+# ============================================================
+# Generated web/build outputs
+# ============================================================
+# Keep root dist tracked if this is your deployed static bundle.
+# Ignore deprecated/generated nested dist folders.
+sports/nba/dist/
+sports/mlb/dist/
+sports/nfl/dist/
+
+sports/nba/web/art/
+sports/nba/web/images/
+sports/nba/dist/art/
+sports/nba/dist/images/
+
+web/nba-card-display/
+
+
+# ============================================================
+# Local exploratory scripts you explicitly do not want tracked
+# ============================================================
 sports/nba/predictions/Player-Predictor/decision_engine/staking_bucket_model_v2.py
 sports/nba/predictions/Player-Predictor/scripts/analyze_miss_taxonomy.py
 sports/nba/predictions/Player-Predictor/scripts/evaluate_fp_veto_behavior.py
@@ -30,51 +184,12 @@ sports/nba/predictions/Player-Predictor/scripts/evaluate_staking_shadow_rolling.
 sports/nba/predictions/Player-Predictor/scripts/generate_abs_edge_policy_brief.py
 sports/nba/predictions/Player-Predictor/scripts/train_staking_bucket_model_v2.py
 
-# Re-ignore generated/static media folders not currently source-controlled.
-sports/nba/web/art/**
-sports/nba/web/images/**
-sports/nba/dist/art/**
-sports/nba/dist/images/**
 
-# Unified static output lives only at repo-root dist/.
-# Ignore deprecated/legacy site copies outside that bundle.
-sports/nba/dist/**
-sports/mlb/predictions/**
-sports/mlb/prediction-about/**
-web/nba-card-display/**
-
-# Keep conditional promotion framework code/tests.
-!Player-Predictor/
-!Player-Predictor/decision_engine/
-!Player-Predictor/decision_engine/conditional_promotion.py
-!Player-Predictor/scripts/
-!Player-Predictor/scripts/evaluate_cutoff_meta_append.py
-!Player-Predictor/scripts/run_daily_cutoff_meta_monitor.py
-!Player-Predictor/scripts/evaluate_stage1_daily_append_permission.py
-!Player-Predictor/scripts/run_stage1_backfill_protocol.py
-!Player-Predictor/scripts/validate_board_objective_mode.py
-!Player-Predictor/scripts/tune_board_objective_lambdas.py
-!Player-Predictor/scripts/train_selected_board_calibrator.py
-!Player-Predictor/scripts/train_learned_pool_gate.py
-!Player-Predictor/scripts/report_reliability_diagnostics.py
-!Player-Predictor/scripts/run_accepted_pick_gate_research.py
-!Player-Predictor/scripts/fetch_nfl_enrichment.py
-!Player-Predictor/scripts/fetch_nfl_market_props.py
-!Player-Predictor/scripts/fetch_mlb_market_props.py
-!Player-Predictor/scripts/update_nfl_processed_data.py
-!Player-Predictor/NFL_MODEL_REPLICATION_PLAN.md
-!Player-Predictor/decision_engine/selected_board_calibration.py
-!Player-Predictor/decision_engine/learned_pool_gate.py
-!Player-Predictor/decision_engine/accepted_pick_gate.py
-!Player-Predictor/MLB_MODEL_DATA_REQUIREMENTS.md
-!Player-Predictor/Data-Proc-MLB/
-!Player-Predictor/Data-Proc-MLB/**
-!tests/
-!tests/test_conditional_framework.py
-!tests/test_fetch_mlb_market_props.py
-
-!run_daily_predictions.py
-!run_daily_predictions.sh
-
-!dist/
-!dist/**
+# ============================================================
+# Optional: large archive/backups
+# ============================================================
+# Uncomment only if these become too large/noisy.
+# backups/
+# archive/
+# **/backups/
+# **/archive/

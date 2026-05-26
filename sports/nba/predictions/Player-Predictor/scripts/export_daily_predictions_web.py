@@ -29,8 +29,11 @@ DEFAULT_CARDS_JSON = SPORT_ROOT / "web" / "data" / "cards.json"
 
 if str(WORKSPACE_ROOT) not in sys.path:
     sys.path.insert(0, str(WORKSPACE_ROOT))
+if str(PLAYER_PREDICTOR_ROOT) not in sys.path:
+    sys.path.insert(0, str(PLAYER_PREDICTOR_ROOT))
 
 from sports.parlay_analysis import annotate_parlay_board, evaluate_historical_parlays
+from research.market_quality.parlay_price_defense import annotate_parlay_payload
 
 
 NBA_SELECTOR_FALLBACK_MAX_PLAYS = 4
@@ -974,6 +977,28 @@ def normalize_play_rows(plays: pd.DataFrame, identity_lookup: PlayerIdentityLook
                 "market_books": safe_float(row.get("market_books")),
                 "uncertainty_sigma": safe_float(row.get("uncertainty_sigma")),
                 "spike_probability": safe_float(row.get("spike_probability")),
+                "market_side_price": safe_float(row.get("market_side_price")),
+                "market_side_decimal_odds": safe_float(row.get("market_side_decimal_odds")),
+                "market_side_break_even": safe_float(row.get("market_side_break_even")),
+                "price_source": str(row.get("price_source", "")),
+                "price_source_type": str(row.get("price_source_type", "")),
+                "price_validity_status": str(row.get("price_validity_status", "")),
+                "odds_snapshot_time": str(row.get("odds_snapshot_time", "")) if pd.notna(row.get("odds_snapshot_time")) else None,
+                "prediction_snapshot_time": str(row.get("prediction_snapshot_time", "")) if pd.notna(row.get("prediction_snapshot_time")) else None,
+                "selector_run_time": str(row.get("selector_run_time", "")) if pd.notna(row.get("selector_run_time")) else None,
+                "model_probability": safe_float(row.get("model_probability")),
+                "stress_probability": safe_float(row.get("stress_probability")),
+                "lcb_probability": safe_float(row.get("lcb_probability")),
+                "raw_edge": safe_float(row.get("raw_edge")),
+                "stress_edge": safe_float(row.get("stress_edge")),
+                "lcb_edge": safe_float(row.get("lcb_edge")),
+                "edge_defendability_tier": str(row.get("edge_defendability_tier", "")),
+                "edge_defendability_reason": str(row.get("edge_defendability_reason", "")),
+                "minimum_acceptable_odds": safe_float(row.get("minimum_acceptable_odds")),
+                "price_valid_decision": str(row.get("price_valid_decision", "")),
+                "would_fail_price_defense": bool(row.get("would_fail_price_defense")) if pd.notna(row.get("would_fail_price_defense")) else False,
+                "would_be_price_dependent": bool(row.get("would_be_price_dependent")) if pd.notna(row.get("would_be_price_dependent")) else False,
+                "would_be_defendable": bool(row.get("would_be_defendable")) if pd.notna(row.get("would_be_defendable")) else False,
             }
         )
     return rows
@@ -1447,6 +1472,7 @@ def main() -> None:
         min_legs_per_parlay=2,
         max_legs_per_parlay=int(NBA_PARLAY_PRECISION_MAX_LEGS),
     )
+    parlay_payload = annotate_parlay_payload(parlay_payload)
     parlay_payload["summary"].update(parlay_precision_summary)
     parlay_payload, parlay_safety_gate = apply_parlay_safety_gate(parlay_payload, parlay_validation)
 

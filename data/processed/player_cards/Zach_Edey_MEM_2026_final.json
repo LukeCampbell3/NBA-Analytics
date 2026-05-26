@@ -1,0 +1,291 @@
+{
+  "player": {
+    "id": "1641744",
+    "name": "Zach Edey",
+    "team": "MEM",
+    "season": 2026,
+    "age": 23.0,
+    "position": "Big"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 11,
+      "minutes_per_game": 25.8,
+      "points_per_game": 13.6,
+      "rebounds_per_game": 11.1,
+      "assists_per_game": 1.1,
+      "steals_per_game": 0.6,
+      "blocks_per_game": 1.9,
+      "field_goal_pct": 0.633,
+      "three_point_pct": 0.2,
+      "free_throw_pct": 0.781
+    },
+    "advanced": {
+      "usage_rate": 0.203,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": 10.3
+    }
+  },
+  "identity": {
+    "primary_archetype": "defensive_anchor",
+    "archetype_confidence": 0.63,
+    "secondary_archetypes": [
+      {
+        "name": "defensive_anchor",
+        "probability": 0.63
+      },
+      {
+        "name": "rim_runner",
+        "probability": 0.37
+      }
+    ],
+    "role_description": "Defensive Anchor",
+    "usage_band": "low"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.385,
+    "mid_range_frequency": 0.559,
+    "three_point_frequency": 0.056,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 0.0,
+    "pick_and_roll_frequency": 19.1,
+    "drives_per_game": 9.3,
+    "paint_touches_per_game": 16.2,
+    "assisted_rate": 0.88,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.1,
+      "vs_wings": 0.3,
+      "vs_bigs": 0.6
+    },
+    "estimated_metrics": {
+      "defensive_rating": 109.2,
+      "defensive_ppp_allowed": 0.993,
+      "matchup_difficulty": 0.5,
+      "foul_rate": 0.593,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 18.4,
+    "opponent_defense_context": 0.3,
+    "team_context_adjustment": 0.103,
+    "intrinsic_value": 20.3,
+    "context_adjustment": -4.0,
+    "adjusted_value": 16.3,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition",
+    "formula": "intrinsic_value = intrinsic_offense * (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "interpretation_summary": "Intrinsic offense 18.4; adjusted value 16.3 per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 53.0,
+      "level": "low",
+      "factors": [
+        [
+          "sample_games",
+          "11 games"
+        ],
+        [
+          "minutes",
+          "25.8 MPG"
+        ],
+        [
+          "archetype_confidence",
+          "63%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 5,
+        "minutes": 17,
+        "data_quality": 15,
+        "archetype_confidence": 8,
+        "team_stability": 8
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.312,
+      "confidence_level": "low",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 13.6,
+          "ci_low": 11.3,
+          "ci_high": 15.9,
+          "relative_error": 16.7
+        },
+        "assists": {
+          "mean": 1.1,
+          "ci_low": 0.9,
+          "ci_high": 1.3,
+          "relative_error": 16.7
+        },
+        "rebounds": {
+          "mean": 11.1,
+          "ci_low": 9.2,
+          "ci_high": 13.0,
+          "relative_error": 16.7
+        }
+      },
+      "sample_size_notes": "11 games, 25.8 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "medium",
+      "constraints": [
+        "Usage increase limited to +8%",
+        "Minutes increase limited to +10 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Defensive Anchor role constraints"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.08,
+        "max_minutes_increase": 10.0,
+        "projected_usage_cap": 0.283,
+        "projected_minutes_cap": 35.8
+      },
+      "constraint_rationale": {
+        "archetype": "defensive_anchor",
+        "position": "big",
+        "three_point_frequency": 0.056,
+        "three_point_percentage": 0.2
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "1629674",
+        "name": "Neemias Queta",
+        "team": "BOS",
+        "similarity_score": 0.25,
+        "archetype": "defensive_anchor",
+        "stats": {
+          "points": 9.8,
+          "assists": 1.4,
+          "rebounds": 8.4
+        }
+      },
+      {
+        "id": "1631105",
+        "name": "Jalen Duren",
+        "team": "DET",
+        "similarity_score": 0.21,
+        "archetype": "rim_runner",
+        "stats": {
+          "points": 18.7,
+          "assists": 1.7,
+          "rebounds": 10.6
+        }
+      },
+      {
+        "id": "1631096",
+        "name": "Chet Holmgren",
+        "team": "OKC",
+        "similarity_score": 0.2,
+        "archetype": "defensive_anchor",
+        "stats": {
+          "points": 17.2,
+          "assists": 1.7,
+          "rebounds": 9.0
+        }
+      },
+      {
+        "id": "1631117",
+        "name": "Walker Kessler",
+        "team": "UTA",
+        "similarity_score": 0.2,
+        "archetype": "defensive_anchor",
+        "stats": {
+          "points": 14.4,
+          "assists": 3.0,
+          "rebounds": 10.8
+        }
+      },
+      {
+        "id": "1630596",
+        "name": "Evan Mobley",
+        "team": "CLE",
+        "similarity_score": 0.18,
+        "archetype": "defensive_anchor",
+        "stats": {
+          "points": 17.9,
+          "assists": 3.6,
+          "rebounds": 8.7
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "ascending"
+  },
+  "metadata": {
+    "generated_at": "2026-03-14T18:12:47.468847",
+    "data_version": "v1.2_refresh",
+    "generation_method": "nba_api_2025_26_refresh",
+    "quality_notes": "Season refresh with inferred mechanism fields",
+    "final_enhanced_at": "2026-03-14T18:12:47.468847"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    },
+    {
+      "type": "low_sample_size",
+      "severity": "high",
+      "description": "Very small sample (11 games)",
+      "recommendation": "Use projections as directional only"
+    }
+  ]
+}

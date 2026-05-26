@@ -1,0 +1,1533 @@
+{
+  "run_at_utc": "2026-03-14T22:42:05.506115+00:00",
+  "input_path": "data\\processed\\college\\players_season.csv",
+  "output_dir": "data\\valuations\\college",
+  "players_valuated": 5016,
+  "top_surplus_players": [
+    {
+      "player": {
+        "id": "cameron_boozer_2026_2025_26_duke_blue_devils",
+        "name": "Cameron Boozer",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 14.17
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 41.12,
+          "2027": 42.77,
+          "2028": 44.41,
+          "2029": 46.06,
+          "2030": 47.7
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 32.9,
+          "2027": 34.22,
+          "2028": 35.53,
+          "2029": 36.85,
+          "2030": 38.16
+        },
+        "surplus_by_year": {
+          "2026": 8.23,
+          "2027": 8.55,
+          "2028": 8.88,
+          "2029": 9.21,
+          "2030": 9.54
+        },
+        "npv_surplus": 38.09
+      },
+      "trade_value": {
+        "low": 25.46,
+        "base": 38.09,
+        "high": 50.71
+      },
+      "aging": {
+        "current_phase": "pre_growth",
+        "peak_age": 29.0,
+        "multipliers": {
+          "year_0": 0.833,
+          "year_1": 0.867,
+          "year_2": 0.9,
+          "year_3": 0.933,
+          "year_4": 0.967
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Duke Blue Devils",
+        "conference": "",
+        "class_year": "FR",
+        "position": "F",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "yaxel_lendeborg_2026_2025_26_michigan_wolverines",
+        "name": "Yaxel Lendeborg",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 10.15
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 33.15,
+          "2027": 34.34,
+          "2028": 35.52,
+          "2029": 36.7,
+          "2030": 37.89
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 26.52,
+          "2027": 27.47,
+          "2028": 28.42,
+          "2029": 29.36,
+          "2030": 30.31
+        },
+        "surplus_by_year": {
+          "2026": 6.63,
+          "2027": 6.87,
+          "2028": 7.1,
+          "2029": 7.34,
+          "2030": 7.58
+        },
+        "npv_surplus": 30.48
+      },
+      "trade_value": {
+        "low": 20.23,
+        "base": 30.48,
+        "high": 40.73
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 29.0,
+        "multipliers": {
+          "year_0": 0.933,
+          "year_1": 0.967,
+          "year_2": 1.0,
+          "year_3": 1.033,
+          "year_4": 1.067
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Michigan Wolverines",
+        "conference": "",
+        "class_year": "SR",
+        "position": "F",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "bruce_thornton_2026_2025_26_ohio_state_buckeyes",
+        "name": "Bruce Thornton",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 10.07
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 32.72,
+          "2027": 33.72,
+          "2028": 34.73,
+          "2029": 35.74,
+          "2030": 36.74
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 26.17,
+          "2027": 26.98,
+          "2028": 27.79,
+          "2029": 28.59,
+          "2030": 29.4
+        },
+        "surplus_by_year": {
+          "2026": 6.54,
+          "2027": 6.74,
+          "2028": 6.95,
+          "2029": 7.15,
+          "2030": 7.35
+        },
+        "npv_surplus": 29.82
+      },
+      "trade_value": {
+        "low": 19.93,
+        "base": 29.82,
+        "high": 39.71
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 30.0,
+        "multipliers": {
+          "year_0": 0.929,
+          "year_1": 0.957,
+          "year_2": 0.986,
+          "year_3": 1.014,
+          "year_4": 1.043
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Ohio State Buckeyes",
+        "conference": "",
+        "class_year": "SR",
+        "position": "G",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "joshua_jefferson_2026_2025_26_iowa_state_cyclones",
+        "name": "Joshua Jefferson",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 9.1
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 29.73,
+          "2027": 30.8,
+          "2028": 31.86,
+          "2029": 32.92,
+          "2030": 33.98
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 23.79,
+          "2027": 24.64,
+          "2028": 25.49,
+          "2029": 26.34,
+          "2030": 27.18
+        },
+        "surplus_by_year": {
+          "2026": 5.95,
+          "2027": 6.16,
+          "2028": 6.37,
+          "2029": 6.58,
+          "2030": 6.8
+        },
+        "npv_surplus": 27.33
+      },
+      "trade_value": {
+        "low": 18.4,
+        "base": 27.33,
+        "high": 36.27
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 29.0,
+        "multipliers": {
+          "year_0": 0.933,
+          "year_1": 0.967,
+          "year_2": 1.0,
+          "year_3": 1.033,
+          "year_4": 1.067
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Iowa State Cyclones",
+        "conference": "",
+        "class_year": "SR",
+        "position": "F",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "bennett_stirtz_2026_2025_26_iowa_hawkeyes",
+        "name": "Bennett Stirtz",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 8.31
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 28.68,
+          "2027": 29.51,
+          "2028": 30.34,
+          "2029": 31.17,
+          "2030": 32.0
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 22.94,
+          "2027": 23.61,
+          "2028": 24.27,
+          "2029": 24.94,
+          "2030": 25.6
+        },
+        "surplus_by_year": {
+          "2026": 5.74,
+          "2027": 5.9,
+          "2028": 6.07,
+          "2029": 6.23,
+          "2030": 6.4
+        },
+        "npv_surplus": 26.06
+      },
+      "trade_value": {
+        "low": 17.42,
+        "base": 26.06,
+        "high": 34.7
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 28.5,
+        "multipliers": {
+          "year_0": 0.986,
+          "year_1": 1.014,
+          "year_2": 1.043,
+          "year_3": 1.071,
+          "year_4": 1.1
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Iowa Hawkeyes",
+        "conference": "",
+        "class_year": "SR",
+        "position": "G",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "zuby_ejiofor_2026_2025_26_st_john_s_ny_red_storm",
+        "name": "Zuby Ejiofor",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 8.49
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 27.75,
+          "2027": 28.74,
+          "2028": 29.73,
+          "2029": 30.72,
+          "2030": 31.71
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 22.2,
+          "2027": 22.99,
+          "2028": 23.78,
+          "2029": 24.58,
+          "2030": 25.37
+        },
+        "surplus_by_year": {
+          "2026": 5.55,
+          "2027": 5.75,
+          "2028": 5.95,
+          "2029": 6.14,
+          "2030": 6.34
+        },
+        "npv_surplus": 25.51
+      },
+      "trade_value": {
+        "low": 17.01,
+        "base": 25.51,
+        "high": 34.01
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 29.0,
+        "multipliers": {
+          "year_0": 0.933,
+          "year_1": 0.967,
+          "year_2": 1.0,
+          "year_3": 1.033,
+          "year_4": 1.067
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 St. John's (NY) Red Storm",
+        "conference": "",
+        "class_year": "SR",
+        "position": "F",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "kingston_flemings_2026_2025_26_houston_cougars",
+        "name": "Kingston Flemings",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 8.74
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 27.53,
+          "2027": 28.4,
+          "2028": 29.28,
+          "2029": 30.15,
+          "2030": 31.03
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 22.02,
+          "2027": 22.72,
+          "2028": 23.42,
+          "2029": 24.12,
+          "2030": 24.82
+        },
+        "surplus_by_year": {
+          "2026": 5.51,
+          "2027": 5.68,
+          "2028": 5.86,
+          "2029": 6.03,
+          "2030": 6.21
+        },
+        "npv_surplus": 25.13
+      },
+      "trade_value": {
+        "low": 16.8,
+        "base": 25.13,
+        "high": 33.47
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 28.5,
+        "multipliers": {
+          "year_0": 0.9,
+          "year_1": 0.929,
+          "year_2": 0.957,
+          "year_3": 0.986,
+          "year_4": 1.014
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Houston Cougars",
+        "conference": "",
+        "class_year": "FR",
+        "position": "G",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "jeremy_fears_jr_2026_2025_26_michigan_state_spartans",
+        "name": "Jeremy Fears Jr.",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 8.14
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 26.86,
+          "2027": 27.67,
+          "2028": 28.49,
+          "2029": 29.3,
+          "2030": 30.12
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 21.49,
+          "2027": 22.14,
+          "2028": 22.79,
+          "2029": 23.44,
+          "2030": 24.09
+        },
+        "surplus_by_year": {
+          "2026": 5.37,
+          "2027": 5.53,
+          "2028": 5.7,
+          "2029": 5.86,
+          "2030": 6.02
+        },
+        "npv_surplus": 24.46
+      },
+      "trade_value": {
+        "low": 16.24,
+        "base": 24.46,
+        "high": 32.68
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 28.5,
+        "multipliers": {
+          "year_0": 0.943,
+          "year_1": 0.971,
+          "year_2": 1.0,
+          "year_3": 1.029,
+          "year_4": 1.057
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Michigan State Spartans",
+        "conference": "",
+        "class_year": "",
+        "position": "G",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "aj_dybantsa_2026_2025_26_byu_cougars",
+        "name": "AJ Dybantsa",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 8.99
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 26.22,
+          "2027": 27.27,
+          "2028": 28.32,
+          "2029": 29.36,
+          "2030": 30.41
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 20.97,
+          "2027": 21.81,
+          "2028": 22.65,
+          "2029": 23.49,
+          "2030": 24.33
+        },
+        "surplus_by_year": {
+          "2026": 5.24,
+          "2027": 5.45,
+          "2028": 5.66,
+          "2029": 5.87,
+          "2030": 6.08
+        },
+        "npv_surplus": 24.28
+      },
+      "trade_value": {
+        "low": 16.34,
+        "base": 24.28,
+        "high": 32.22
+      },
+      "aging": {
+        "current_phase": "pre_growth",
+        "peak_age": 29.0,
+        "multipliers": {
+          "year_0": 0.833,
+          "year_1": 0.867,
+          "year_2": 0.9,
+          "year_3": 0.933,
+          "year_4": 0.967
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 BYU Cougars",
+        "conference": "",
+        "class_year": "FR",
+        "position": "F",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "tyler_tanner_2026_2025_26_vanderbilt_commodores",
+        "name": "Tyler Tanner",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 8.14
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 26.46,
+          "2027": 27.27,
+          "2028": 28.09,
+          "2029": 28.9,
+          "2030": 29.72
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 21.17,
+          "2027": 21.82,
+          "2028": 22.47,
+          "2029": 23.12,
+          "2030": 23.77
+        },
+        "surplus_by_year": {
+          "2026": 5.29,
+          "2027": 5.45,
+          "2028": 5.62,
+          "2029": 5.78,
+          "2030": 5.94
+        },
+        "npv_surplus": 24.12
+      },
+      "trade_value": {
+        "low": 16.01,
+        "base": 24.12,
+        "high": 32.22
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 28.5,
+        "multipliers": {
+          "year_0": 0.929,
+          "year_1": 0.957,
+          "year_2": 0.986,
+          "year_3": 1.014,
+          "year_4": 1.043
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Vanderbilt Commodores",
+        "conference": "",
+        "class_year": "SO",
+        "position": "G",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "ja_kobi_gillespie_2026_2025_26_tennessee_volunteers",
+        "name": "Ja'Kobi Gillespie",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 7.5
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 25.88,
+          "2027": 26.63,
+          "2028": 27.38,
+          "2029": 28.13,
+          "2030": 28.88
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 20.71,
+          "2027": 21.31,
+          "2028": 21.91,
+          "2029": 22.51,
+          "2030": 23.11
+        },
+        "surplus_by_year": {
+          "2026": 5.18,
+          "2027": 5.33,
+          "2028": 5.48,
+          "2029": 5.63,
+          "2030": 5.78
+        },
+        "npv_surplus": 23.52
+      },
+      "trade_value": {
+        "low": 15.72,
+        "base": 23.52,
+        "high": 31.31
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 28.5,
+        "multipliers": {
+          "year_0": 0.986,
+          "year_1": 1.014,
+          "year_2": 1.043,
+          "year_3": 1.071,
+          "year_4": 1.1
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Tennessee Volunteers",
+        "conference": "",
+        "class_year": "SR",
+        "position": "G",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "keaton_wagler_2026_2025_26_illinois_fighting_illini",
+        "name": "Keaton Wagler",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 8.18
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 25.76,
+          "2027": 26.58,
+          "2028": 27.4,
+          "2029": 28.21,
+          "2030": 29.03
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 20.61,
+          "2027": 21.26,
+          "2028": 21.92,
+          "2029": 22.57,
+          "2030": 23.23
+        },
+        "surplus_by_year": {
+          "2026": 5.15,
+          "2027": 5.32,
+          "2028": 5.48,
+          "2029": 5.64,
+          "2030": 5.81
+        },
+        "npv_surplus": 23.52
+      },
+      "trade_value": {
+        "low": 15.62,
+        "base": 23.52,
+        "high": 31.42
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 28.5,
+        "multipliers": {
+          "year_0": 0.9,
+          "year_1": 0.929,
+          "year_2": 0.957,
+          "year_3": 0.986,
+          "year_4": 1.014
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Illinois Fighting Illini",
+        "conference": "",
+        "class_year": "FR",
+        "position": "G",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "braden_smith_2026_2025_26_purdue_boilermakers",
+        "name": "Braden Smith",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 7.75
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 25.18,
+          "2027": 25.96,
+          "2028": 26.73,
+          "2029": 27.51,
+          "2030": 28.28
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 20.15,
+          "2027": 20.77,
+          "2028": 21.39,
+          "2029": 22.01,
+          "2030": 22.63
+        },
+        "surplus_by_year": {
+          "2026": 5.04,
+          "2027": 5.19,
+          "2028": 5.35,
+          "2029": 5.5,
+          "2030": 5.66
+        },
+        "npv_surplus": 22.95
+      },
+      "trade_value": {
+        "low": 15.34,
+        "base": 22.95,
+        "high": 30.56
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 30.0,
+        "multipliers": {
+          "year_0": 0.929,
+          "year_1": 0.957,
+          "year_2": 0.986,
+          "year_3": 1.014,
+          "year_4": 1.043
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Purdue Boilermakers",
+        "conference": "",
+        "class_year": "SR",
+        "position": "G",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "milan_momcilovic_2026_2025_26_iowa_state_cyclones",
+        "name": "Milan Momcilovic",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 7.75
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 24.42,
+          "2027": 25.33,
+          "2028": 26.23,
+          "2029": 27.14,
+          "2030": 28.04
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 19.54,
+          "2027": 20.26,
+          "2028": 20.99,
+          "2029": 21.71,
+          "2030": 22.43
+        },
+        "surplus_by_year": {
+          "2026": 4.88,
+          "2027": 5.07,
+          "2028": 5.25,
+          "2029": 5.43,
+          "2030": 5.61
+        },
+        "npv_surplus": 22.5
+      },
+      "trade_value": {
+        "low": 15.15,
+        "base": 22.5,
+        "high": 29.86
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 29.0,
+        "multipliers": {
+          "year_0": 0.9,
+          "year_1": 0.933,
+          "year_2": 0.967,
+          "year_3": 1.0,
+          "year_4": 1.033
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Iowa State Cyclones",
+        "conference": "",
+        "class_year": "JR",
+        "position": "F",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "darius_acuff_jr_2026_2025_26_arkansas_razorbacks",
+        "name": "Darius Acuff Jr.",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 7.23
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 23.84,
+          "2027": 24.57,
+          "2028": 25.29,
+          "2029": 26.01,
+          "2030": 26.73
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 19.07,
+          "2027": 19.65,
+          "2028": 20.23,
+          "2029": 20.81,
+          "2030": 21.39
+        },
+        "surplus_by_year": {
+          "2026": 4.77,
+          "2027": 4.91,
+          "2028": 5.06,
+          "2029": 5.2,
+          "2030": 5.35
+        },
+        "npv_surplus": 21.71
+      },
+      "trade_value": {
+        "low": 14.32,
+        "base": 21.71,
+        "high": 29.11
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 28.5,
+        "multipliers": {
+          "year_0": 0.943,
+          "year_1": 0.971,
+          "year_2": 1.0,
+          "year_3": 1.029,
+          "year_4": 1.057
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Arkansas Razorbacks",
+        "conference": "",
+        "class_year": "",
+        "position": "G",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "christian_anderson_2026_2025_26_texas_tech_red_raiders",
+        "name": "Christian Anderson",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 7.28
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 23.66,
+          "2027": 24.39,
+          "2028": 25.12,
+          "2029": 25.85,
+          "2030": 26.58
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 18.93,
+          "2027": 19.51,
+          "2028": 20.1,
+          "2029": 20.68,
+          "2030": 21.26
+        },
+        "surplus_by_year": {
+          "2026": 4.73,
+          "2027": 4.88,
+          "2028": 5.02,
+          "2029": 5.17,
+          "2030": 5.32
+        },
+        "npv_surplus": 21.57
+      },
+      "trade_value": {
+        "low": 14.22,
+        "base": 21.57,
+        "high": 28.91
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 28.5,
+        "multipliers": {
+          "year_0": 0.929,
+          "year_1": 0.957,
+          "year_2": 0.986,
+          "year_3": 1.014,
+          "year_4": 1.043
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Texas Tech Red Raiders",
+        "conference": "",
+        "class_year": "SO",
+        "position": "G",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "pryce_sandfort_2026_2025_26_nebraska_cornhuskers",
+        "name": "Pryce Sandfort",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 7.41
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 23.33,
+          "2027": 24.2,
+          "2028": 25.06,
+          "2029": 25.93,
+          "2030": 26.79
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 18.67,
+          "2027": 19.36,
+          "2028": 20.05,
+          "2029": 20.74,
+          "2030": 21.43
+        },
+        "surplus_by_year": {
+          "2026": 4.67,
+          "2027": 4.84,
+          "2028": 5.01,
+          "2029": 5.19,
+          "2030": 5.36
+        },
+        "npv_surplus": 21.5
+      },
+      "trade_value": {
+        "low": 14.28,
+        "base": 21.5,
+        "high": 28.72
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 29.0,
+        "multipliers": {
+          "year_0": 0.9,
+          "year_1": 0.933,
+          "year_2": 0.967,
+          "year_3": 1.0,
+          "year_4": 1.033
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Nebraska Cornhuskers",
+        "conference": "",
+        "class_year": "JR",
+        "position": "F",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "thomas_haugh_2026_2025_26_florida_gators",
+        "name": "Thomas Haugh",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 7.17
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 22.6,
+          "2027": 23.43,
+          "2028": 24.27,
+          "2029": 25.11,
+          "2030": 25.94
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 18.08,
+          "2027": 18.75,
+          "2028": 19.42,
+          "2029": 20.08,
+          "2030": 20.75
+        },
+        "surplus_by_year": {
+          "2026": 4.52,
+          "2027": 4.69,
+          "2028": 4.85,
+          "2029": 5.02,
+          "2030": 5.19
+        },
+        "npv_surplus": 20.82
+      },
+      "trade_value": {
+        "low": 13.73,
+        "base": 20.82,
+        "high": 27.91
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 29.0,
+        "multipliers": {
+          "year_0": 0.9,
+          "year_1": 0.933,
+          "year_2": 0.967,
+          "year_3": 1.0,
+          "year_4": 1.033
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Florida Gators",
+        "conference": "",
+        "class_year": "JR",
+        "position": "F",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "emanuel_sharp_2026_2025_26_houston_cougars",
+        "name": "Emanuel Sharp",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 6.6
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 22.77,
+          "2027": 23.43,
+          "2028": 24.09,
+          "2029": 24.75,
+          "2030": 25.41
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 18.22,
+          "2027": 18.74,
+          "2028": 19.27,
+          "2029": 19.8,
+          "2030": 20.33
+        },
+        "surplus_by_year": {
+          "2026": 4.55,
+          "2027": 4.69,
+          "2028": 4.82,
+          "2029": 4.95,
+          "2030": 5.08
+        },
+        "npv_surplus": 20.69
+      },
+      "trade_value": {
+        "low": 13.8,
+        "base": 20.69,
+        "high": 27.57
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 28.5,
+        "multipliers": {
+          "year_0": 0.986,
+          "year_1": 1.014,
+          "year_2": 1.043,
+          "year_3": 1.071,
+          "year_4": 1.1
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Houston Cougars",
+        "conference": "",
+        "class_year": "SR",
+        "position": "G",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "dailyn_swain_2026_2025_26_texas_longhorns",
+        "name": "Dailyn Swain",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 7.1
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 22.36,
+          "2027": 23.19,
+          "2028": 24.01,
+          "2029": 24.84,
+          "2030": 25.67
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 17.89,
+          "2027": 18.55,
+          "2028": 19.21,
+          "2029": 19.87,
+          "2030": 20.54
+        },
+        "surplus_by_year": {
+          "2026": 4.47,
+          "2027": 4.64,
+          "2028": 4.8,
+          "2029": 4.97,
+          "2030": 5.13
+        },
+        "npv_surplus": 20.6
+      },
+      "trade_value": {
+        "low": 13.68,
+        "base": 20.6,
+        "high": 27.52
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 29.0,
+        "multipliers": {
+          "year_0": 0.9,
+          "year_1": 0.933,
+          "year_2": 0.967,
+          "year_3": 1.0,
+          "year_4": 1.033
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Texas Longhorns",
+        "conference": "",
+        "class_year": "JR",
+        "position": "F",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "flory_bidunga_2026_2025_26_kansas_jayhawks",
+        "name": "Flory Bidunga",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 7.34
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 22.26,
+          "2027": 23.12,
+          "2028": 23.97,
+          "2029": 24.83,
+          "2030": 25.68
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 17.81,
+          "2027": 18.49,
+          "2028": 19.18,
+          "2029": 19.86,
+          "2030": 20.55
+        },
+        "surplus_by_year": {
+          "2026": 4.45,
+          "2027": 4.62,
+          "2028": 4.79,
+          "2029": 4.97,
+          "2030": 5.14
+        },
+        "npv_surplus": 20.56
+      },
+      "trade_value": {
+        "low": 13.75,
+        "base": 20.56,
+        "high": 27.38
+      },
+      "aging": {
+        "current_phase": "pre_growth",
+        "peak_age": 29.0,
+        "multipliers": {
+          "year_0": 0.867,
+          "year_1": 0.9,
+          "year_2": 0.933,
+          "year_3": 0.967,
+          "year_4": 1.0
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Kansas Jayhawks",
+        "conference": "",
+        "class_year": "SO",
+        "position": "F",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "nick_boyd_2026_2025_26_wisconsin_badgers",
+        "name": "Nick Boyd",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 6.34
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 21.87,
+          "2027": 22.5,
+          "2028": 23.13,
+          "2029": 23.77,
+          "2030": 24.4
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 17.49,
+          "2027": 18.0,
+          "2028": 18.51,
+          "2029": 19.01,
+          "2030": 19.52
+        },
+        "surplus_by_year": {
+          "2026": 4.37,
+          "2027": 4.5,
+          "2028": 4.63,
+          "2029": 4.75,
+          "2030": 4.88
+        },
+        "npv_surplus": 19.87
+      },
+      "trade_value": {
+        "low": 13.28,
+        "base": 19.87,
+        "high": 26.45
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 28.5,
+        "multipliers": {
+          "year_0": 0.986,
+          "year_1": 1.014,
+          "year_2": 1.043,
+          "year_3": 1.071,
+          "year_4": 1.1
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Wisconsin Badgers",
+        "conference": "",
+        "class_year": "SR",
+        "position": "G",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "tamin_lipsey_2026_2025_26_iowa_state_cyclones",
+        "name": "Tamin Lipsey",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 6.7
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 21.79,
+          "2027": 22.46,
+          "2028": 23.13,
+          "2029": 23.8,
+          "2030": 24.47
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 17.43,
+          "2027": 17.97,
+          "2028": 18.5,
+          "2029": 19.04,
+          "2030": 19.58
+        },
+        "surplus_by_year": {
+          "2026": 4.36,
+          "2027": 4.49,
+          "2028": 4.63,
+          "2029": 4.76,
+          "2030": 4.89
+        },
+        "npv_surplus": 19.86
+      },
+      "trade_value": {
+        "low": 13.1,
+        "base": 19.86,
+        "high": 26.62
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 30.0,
+        "multipliers": {
+          "year_0": 0.929,
+          "year_1": 0.957,
+          "year_2": 0.986,
+          "year_3": 1.014,
+          "year_4": 1.043
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Iowa State Cyclones",
+        "conference": "",
+        "class_year": "SR",
+        "position": "G",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "sam_hoiberg_2026_2025_26_nebraska_cornhuskers",
+        "name": "Sam Hoiberg",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 6.62
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 21.52,
+          "2027": 22.18,
+          "2028": 22.84,
+          "2029": 23.51,
+          "2030": 24.17
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 17.22,
+          "2027": 17.74,
+          "2028": 18.27,
+          "2029": 18.8,
+          "2030": 19.33
+        },
+        "surplus_by_year": {
+          "2026": 4.3,
+          "2027": 4.44,
+          "2028": 4.57,
+          "2029": 4.7,
+          "2030": 4.83
+        },
+        "npv_surplus": 19.61
+      },
+      "trade_value": {
+        "low": 13.02,
+        "base": 19.61,
+        "high": 26.2
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 30.0,
+        "multipliers": {
+          "year_0": 0.929,
+          "year_1": 0.957,
+          "year_2": 0.986,
+          "year_3": 1.014,
+          "year_4": 1.043
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Nebraska Cornhuskers",
+        "conference": "",
+        "class_year": "SR",
+        "position": "G",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    },
+    {
+      "player": {
+        "id": "ebuka_okorie_2026_2025_26_stanford_cardinal",
+        "name": "Ebuka Okorie",
+        "season": 2026
+      },
+      "impact": {
+        "wins_added": 6.76
+      },
+      "market_value": {
+        "by_year": {
+          "2026": 21.28,
+          "2027": 21.96,
+          "2028": 22.63,
+          "2029": 23.31,
+          "2030": 23.98
+        }
+      },
+      "contract": {
+        "salary_by_year": {
+          "2026": 17.03,
+          "2027": 17.57,
+          "2028": 18.11,
+          "2029": 18.65,
+          "2030": 19.19
+        },
+        "surplus_by_year": {
+          "2026": 4.26,
+          "2027": 4.39,
+          "2028": 4.53,
+          "2029": 4.66,
+          "2030": 4.8
+        },
+        "npv_surplus": 19.43
+      },
+      "trade_value": {
+        "low": 12.73,
+        "base": 19.43,
+        "high": 26.13
+      },
+      "aging": {
+        "current_phase": "growth",
+        "peak_age": 28.5,
+        "multipliers": {
+          "year_0": 0.9,
+          "year_1": 0.929,
+          "year_2": 0.957,
+          "year_3": 0.986,
+          "year_4": 1.014
+        }
+      },
+      "college_context": {
+        "team_name": "2025-26 Stanford Cardinal",
+        "conference": "",
+        "class_year": "FR",
+        "position": "G",
+        "source_table": "",
+        "source_url": "",
+        "scraped_at_utc": ""
+      }
+    }
+  ]
+}

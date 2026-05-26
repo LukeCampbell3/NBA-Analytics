@@ -1,0 +1,328 @@
+{
+  "player": {
+    "id": "1630549",
+    "name": "Day'Ron Sharpe",
+    "team": "BKN",
+    "season": 2025,
+    "age": 23.0,
+    "position": "Big"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 50,
+      "minutes_per_game": 18.1,
+      "points_per_game": 7.9,
+      "rebounds_per_game": 6.6,
+      "assists_per_game": 1.8,
+      "steals_per_game": 0.8,
+      "blocks_per_game": 0.8,
+      "field_goal_pct": 0.521,
+      "three_point_pct": 0.244,
+      "free_throw_pct": 0.757
+    },
+    "advanced": {
+      "usage_rate": 0.193,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": 1.3
+    }
+  },
+  "identity": {
+    "primary_archetype": "rim_runner",
+    "archetype_confidence": 0.63,
+    "secondary_archetypes": [],
+    "role_description": "Rim Runner",
+    "usage_band": "low",
+    "archetype_assignment_notes": [
+      {
+        "reason": "Traditional interior big",
+        "previous_archetype": "versatile_wing",
+        "corrected_at": "2026-02-24T18:21:53.098396"
+      }
+    ],
+    "archetype_corrected": true
+  },
+  "shot_profile": {
+    "rim_frequency": 0.475,
+    "mid_range_frequency": 0.356,
+    "three_point_frequency": 0.169,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 2.0,
+    "pick_and_roll_frequency": 2.0,
+    "drives_per_game": 5.49,
+    "paint_touches_per_game": 2.52,
+    "assisted_rate": 0.55,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations (limited visibility)",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution given data limitations"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.1,
+      "vs_wings": 0.3,
+      "vs_bigs": 0.6
+    },
+    "estimated_metrics": {
+      "defensive_rating": 107.3,
+      "defensive_ppp_allowed": 0.973,
+      "matchup_difficulty": 0.49,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 15.2,
+    "opponent_defense_context": 0.65,
+    "team_context_adjustment": -0.052,
+    "intrinsic_value": 14.4,
+    "context_adjustment": 3.0,
+    "adjusted_value": 17.4,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition with validated arithmetic",
+    "formula": "intrinsic_value = intrinsic_offense \u00d7 (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "semantic_explanation": {
+      "offense_defense_interpretation": {
+        "intrinsic_offense": {
+          "description": "Player's raw offensive ability independent of context",
+          "interpretation": "15.2 points of offensive value per 100 possessions"
+        },
+        "opponent_defense_context": {
+          "description": "Quality of defenses faced (0.3 = tough, 0.7 = easy)",
+          "interpretation": "0.65 indicates easier than average defenses"
+        },
+        "team_context_adjustment": {
+          "description": "How team context helps/hurts player (+ = helpful, - = harmful)",
+          "interpretation": "-0.052 (harmful team context)"
+        },
+        "context_adjustment": {
+          "description": "Net effect of opponent defense and team context",
+          "interpretation": "+3.0 points adjustment due to context"
+        }
+      },
+      "formula_breakdown": {
+        "step_1": "intrinsic_value = intrinsic_offense \u00d7 (1 + team_context_adjustment) = 15.2 \u00d7 (1 -0.052) = 14.4",
+        "step_2": "context_adjustment = (opponent_defense_context - 0.5) \u00d7 20 = (0.65 - 0.5) \u00d7 20 = +3.0",
+        "step_3": "adjusted_value = intrinsic_value + context_adjustment = 14.4 +3.0 = 17.4"
+      },
+      "interpretation_guide": {
+        "good_offense_bad_defense": "High intrinsic_offense + low opponent_defense_context (<0.5) = player produces offense against tough defenses",
+        "bad_offense_good_defense": "Low intrinsic_offense + high opponent_defense_context (>0.5) = player's stats inflated by facing weak defenses",
+        "team_effect": "Positive team_context_adjustment = player benefits from good teammates/system",
+        "net_value": "adjusted_value represents player's expected contribution in average context"
+      }
+    },
+    "interpretation_summary": "Player shows solid offensive ability (15.2 intrinsic points). Context: faced significantly easier than average defenses, which overstates true offensive value. Hindered by negative team context (-0.052 adjustment). Net context adjustment: +3.0 points. Final adjusted value: 17.4 points per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 70.0,
+      "level": "medium",
+      "factors": [
+        [
+          "medium_sample_games",
+          "50 games"
+        ],
+        [
+          "low_minutes",
+          "18.1 MPG"
+        ],
+        [
+          "high_archetype_confidence",
+          "90%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 20,
+        "minutes": 10,
+        "data_quality": 15,
+        "archetype_confidence": 15,
+        "team_stability": 10
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.34,
+      "confidence_level": "low",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 7.9,
+          "ci_low": 5.2,
+          "ci_high": 10.6,
+          "relative_error": 34.3
+        },
+        "assists": {
+          "mean": 1.8,
+          "ci_low": 1.2,
+          "ci_high": 2.4,
+          "relative_error": 32.9
+        },
+        "rebounds": {
+          "mean": 6.6,
+          "ci_low": 4.4,
+          "ci_high": 8.8,
+          "relative_error": 32.8
+        }
+      },
+      "sample_size_notes": "50 games, 18.1 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "medium",
+      "constraints": [
+        "Usage increase limited to +10%",
+        "Minutes increase limited to +8 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Rim-running specialist",
+        "Rim frequency: 70-95% of shots",
+        "Pick-and-roll finisher",
+        "Limited perimeter creation"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.12,
+        "max_minutes_increase": 10.0,
+        "projected_usage_cap": 0.30000000000000004,
+        "projected_minutes_cap": 26.1
+      },
+      "constraint_rationale": {
+        "archetype": "rim_runner",
+        "position": "big",
+        "three_point_frequency": 0.169,
+        "three_point_percentage": 0.244
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "1629048",
+        "name": "Goga Bitadze",
+        "team": "ORL",
+        "similarity_score": 0.97,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 7.2,
+          "assists": 2.0,
+          "rebounds": 6.6
+        }
+      },
+      {
+        "id": "201143",
+        "name": "Al Horford",
+        "team": "BOS",
+        "similarity_score": 0.95,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 9.0,
+          "assists": 2.1,
+          "rebounds": 6.2
+        }
+      },
+      {
+        "id": "1628976",
+        "name": "Wendell Carter Jr.",
+        "team": "ORL",
+        "similarity_score": 0.94,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 9.1,
+          "assists": 2.0,
+          "rebounds": 7.2
+        }
+      },
+      {
+        "id": "1642271",
+        "name": "Kyle Filipowski",
+        "team": "UTA",
+        "similarity_score": 0.93,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 9.6,
+          "assists": 1.9,
+          "rebounds": 6.1
+        }
+      },
+      {
+        "id": "1626158",
+        "name": "Richaun Holmes",
+        "team": "WAS",
+        "similarity_score": 0.93,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 7.4,
+          "assists": 1.4,
+          "rebounds": 5.7
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "stable"
+  },
+  "metadata": {
+    "generated_at": "2026-02-23T13:42:56.992022",
+    "data_version": "v1.1_final",
+    "generation_method": "improved_with_fixes",
+    "quality_notes": "Fixed: archetype contradictions, shot frequency normalization, decomposition consistency",
+    "fixed_at": "2026-02-23T21:17:28.026866",
+    "fixes_applied": [
+      "archetype_position_alignment",
+      "shot_frequency_normalization",
+      "possession_decomposition_consistency",
+      "template_overuse_reduction",
+      "big_archetype_correction",
+      "constraint_leakage_fix",
+      "decomposition_semantics_clarification",
+      "quality_flagging"
+    ],
+    "final_enhanced_at": "2026-02-24T18:21:53.098396"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    }
+  ]
+}
