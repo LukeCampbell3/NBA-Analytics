@@ -1,0 +1,16 @@
+{
+  "latest_safe_state_run_dir": "sports\\nba\\validation\\production_shadow\\safe_state\\20260527",
+  "safe_state_card_count": 47,
+  "simulation_card_count": 582,
+  "simulation_backtest_status": "PUBLISH_RESEARCH_ONLY",
+  "simulation_frontend_label": "research projection / uncalibrated",
+  "production_behavior_changed": false,
+  "promotion_ready": false,
+  "shadow_only": true,
+  "site_validation_passed": true,
+  "unresolved_blockers": [
+    "BACKTEST_REQUIRED",
+    "no_preseason_simulation_rows_available"
+  ],
+  "next_required_action": "backfill_pre_cutoff_player_state_logs_for_frozen_preseason_sample"
+}

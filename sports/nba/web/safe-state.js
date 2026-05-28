@@ -74,15 +74,18 @@ class SafeStateCard {
 }
 
 class PlayerSimulationCard {
-    static render(card) {
+    static render(card, credibility) {
         const risks = Array.isArray(card.main_risk_factors) ? card.main_risk_factors : [];
         const warnings = Array.isArray(card.missing_data_warnings) ? card.missing_data_warnings : [];
+        const label = credibility?.labels?.frontend_label || 'research projection / uncalibrated';
+        const gateStatus = credibility?.status || 'BACKTEST_REQUIRED';
         return `
             <article class="simulation-card">
                 <div class="safe-state-card-top">
                     ${ConfidenceBadge.render(card.confidence_tier)}
                     <span class="settlement-pill">Cutoff ${SafeStatePage.escapeHtml(card.data_cutoff_date || 'n/a')}</span>
                 </div>
+                <div class="simulation-credibility ${SafeStatePage.escapeAttr(gateStatus.toLowerCase())}">${SafeStatePage.escapeHtml(label)}</div>
                 <h3>${SafeStatePage.escapeHtml(card.player || 'Unknown Player')}</h3>
                 <div class="simulation-subtitle">${SafeStatePage.escapeHtml(card.team || '')} ${SafeStatePage.escapeHtml(card.archetype || '')}</div>
                 <div class="simulation-score-row">
@@ -116,10 +119,11 @@ class SafeStatePage {
     }
 
     async init() {
-        const [safeState, simulations, manifest] = await Promise.all([
+        const [safeState, simulations, manifest, credibility] = await Promise.all([
             this.fetchJson('data/safe_state_latest.json', { cards: [] }),
             this.fetchJson('data/player_simulation_cards.json', []),
             this.fetchJson('data/site_manifest.json', {}),
+            this.fetchJson('data/simulation_credibility_gate.json', { status: 'BACKTEST_REQUIRED', labels: { frontend_label: 'research projection / uncalibrated' } }),
         ]);
         const safeCards = Array.isArray(safeState.cards) ? safeState.cards : [];
         const simCards = Array.isArray(simulations) ? simulations : [];
@@ -127,7 +131,7 @@ class SafeStatePage {
         this.elements.safeEmpty.style.display = safeCards.length ? 'none' : 'block';
         this.elements.simEmpty.style.display = simCards.length ? 'none' : 'block';
         this.elements.safeCards.innerHTML = safeCards.map(SafeStateCard.render).join('');
-        this.elements.simCards.innerHTML = simCards.slice(0, 60).map(PlayerSimulationCard.render).join('');
+        this.elements.simCards.innerHTML = simCards.slice(0, 60).map(card => PlayerSimulationCard.render(card, credibility)).join('');
     }
 
     async fetchJson(path, fallback) {

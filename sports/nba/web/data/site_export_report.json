@@ -1,0 +1,236 @@
+{
+  "site_manifest": {
+    "run_id": "site_exports_20260527_190130Z",
+    "run_date": "2026-05-27",
+    "created_at": "2026-05-28T19:01:30.690031+00:00",
+    "data_cutoff_date": "2026-05-27",
+    "provider": "sportsgameodds",
+    "safe_state_run_dir": "sports\\nba\\validation\\production_shadow\\safe_state\\20260527",
+    "site_output_dir": "sports\\nba\\web\\data",
+    "safe_state_report_status": "existing_run_used",
+    "simulation_enabled": true,
+    "simulation_manifest": {
+      "run_id": "player_sim_20260528T190130Z",
+      "created_at": "2026-05-28T19:01:30.626848+00:00",
+      "data_cutoff_date": "2026-05-27",
+      "simulation_count": 10000,
+      "seed": 17,
+      "input_manifest": {
+        "data_proc_dir": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc",
+        "cutoff_date": "2026-05-27",
+        "player_log_files_used": 582,
+        "used_paths_sample": [
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Aaron_Gordon\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Aaron_Holiday\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Aaron_Nesmith\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Aaron_Wiggins\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ace_Bailey\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Adama_Bal\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Adem_Bona\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Adou_Thiero\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\AJ_Green\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\AJ_Johnson\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\AJ_Lawson\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ajay_Mitchell\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Al_Horford\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alex_Antetokounmpo\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alex_Caruso\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alex_Morales\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alex_Sarr\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alijah_Martin\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alondes_Williams\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alperen_Sengun\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Amari_Williams\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Amen_Thompson\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Amir_Coffey\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Andersson_Garcia\\2026_processed_processed.csv",
+          "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Andre_Drummond\\2026_processed_processed.csv"
+        ],
+        "future_rows_removed": 0
+      },
+      "all_logs_manifest": {},
+      "frozen_sample_mode": false,
+      "actual_outcomes_path": "",
+      "output_paths": {
+        "parquet": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\player_simulation\\next_season_player_simulations.parquet",
+        "csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\player_simulation\\next_season_player_simulations.csv",
+        "cards_json": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\player_simulation\\player_simulation_cards.json",
+        "validation_report": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\player_simulation\\player_simulation_validation_report.json"
+      },
+      "backtest": {},
+      "production_behavior_changed": false,
+      "promotion_ready": false,
+      "shadow_only": true
+    },
+    "production_behavior_changed": false,
+    "promotion_ready": false,
+    "shadow_only": true,
+    "staking_enabled": false,
+    "auto_bet_enabled": false
+  },
+  "safe_state_export": {
+    "output_paths": {
+      "safe_state_latest_json": "sports\\nba\\web\\data\\safe_state_latest.json",
+      "safe_state_latest_csv": "sports\\nba\\web\\data\\safe_state_latest.csv",
+      "safe_state_cards_json": "sports\\nba\\web\\data\\safe_state_cards.json",
+      "safe_state_site_validation_report": "sports\\nba\\web\\data\\safe_state_site_validation_report.json"
+    },
+    "card_count": 47,
+    "validation": {
+      "card_count": 47,
+      "safe_state_cards_include_shadow_status": true,
+      "price_dependent_rows_not_labeled_safe": true,
+      "production_behavior_changed": false,
+      "promotion_claim": false,
+      "promotion_ready": false,
+      "staking_field_enabled": false,
+      "validation_passed": true,
+      "issues": {
+        "missing_shadow_status_candidate_ids": [],
+        "unsafe_safe_badge_candidate_ids": []
+      }
+    },
+    "production_behavior_changed": false,
+    "promotion_ready": false,
+    "shadow_only": true
+  },
+  "simulation_manifest": {
+    "run_id": "player_sim_20260528T190130Z",
+    "created_at": "2026-05-28T19:01:30.626848+00:00",
+    "data_cutoff_date": "2026-05-27",
+    "simulation_count": 10000,
+    "seed": 17,
+    "input_manifest": {
+      "data_proc_dir": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc",
+      "cutoff_date": "2026-05-27",
+      "player_log_files_used": 582,
+      "used_paths_sample": [
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Aaron_Gordon\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Aaron_Holiday\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Aaron_Nesmith\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Aaron_Wiggins\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ace_Bailey\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Adama_Bal\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Adem_Bona\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Adou_Thiero\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\AJ_Green\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\AJ_Johnson\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\AJ_Lawson\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Ajay_Mitchell\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Al_Horford\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alex_Antetokounmpo\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alex_Caruso\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alex_Morales\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alex_Sarr\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alijah_Martin\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alondes_Williams\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Alperen_Sengun\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Amari_Williams\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Amen_Thompson\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Amir_Coffey\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Andersson_Garcia\\2026_processed_processed.csv",
+        "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Andre_Drummond\\2026_processed_processed.csv"
+      ],
+      "future_rows_removed": 0
+    },
+    "all_logs_manifest": {},
+    "frozen_sample_mode": false,
+    "actual_outcomes_path": "",
+    "output_paths": {
+      "parquet": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\player_simulation\\next_season_player_simulations.parquet",
+      "csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\player_simulation\\next_season_player_simulations.csv",
+      "cards_json": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\player_simulation\\player_simulation_cards.json",
+      "validation_report": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\player_simulation\\player_simulation_validation_report.json"
+    },
+    "backtest": {},
+    "production_behavior_changed": false,
+    "promotion_ready": false,
+    "shadow_only": true
+  },
+  "validation": {
+    "missing_required_files": [],
+    "safe_state_cards_include_shadow_status": true,
+    "player_cards_include_uncertainty": true,
+    "production_behavior_changed": false,
+    "promotion_claim": false,
+    "staking_field_enabled": false,
+    "validation_passed": true,
+    "site_card_validation_passed": true,
+    "simulation_credibility_status": "PUBLISH_RESEARCH_ONLY"
+  },
+  "site_card_validation": {
+    "safe_state_card_count": 47,
+    "simulation_card_count": 582,
+    "safe_state_cards_valid": true,
+    "simulation_cards_valid": true,
+    "all_cards_shadow_or_research_only": true,
+    "staking_or_autobet_visible": false,
+    "validation_passed": true,
+    "issues": {
+      "safe_state": [],
+      "simulation": []
+    }
+  },
+  "simulation_credibility_gate": {
+    "status": "PUBLISH_RESEARCH_ONLY",
+    "labels": {
+      "pipeline": "SIMULATION_PIPELINE_READY",
+      "credibility": "PUBLISH_RESEARCH_ONLY",
+      "frontend_label": "research projection / uncalibrated"
+    },
+    "publish_as_calibrated": false,
+    "blocked_reasons": [
+      "BACKTEST_REQUIRED",
+      "no_preseason_simulation_rows_available"
+    ],
+    "backtest_report_path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\player_simulation\\backtests\\2025_preseason\\simulation_backtest_2025_preseason_report.json",
+    "minimum_requirements": {
+      "frozen_preseason_backtest_exists": true,
+      "min_p10_p90_coverage": 0.72,
+      "min_joined_rows": 100,
+      "confidence_tiers_reliable": true,
+      "leakage_audit_passes": true
+    },
+    "current_evidence": {
+      "backtest_status": "BACKTEST_REQUIRED",
+      "leakage_status": "LEAKAGE_AUDIT_PASSED",
+      "actual_within_p10_p90_rate": null,
+      "actual_within_p25_p75_rate": null,
+      "joined_rows": 0
+    },
+    "production_behavior_changed": false,
+    "promotion_ready": false
+  },
+  "site_production_status": {
+    "latest_safe_state_run_dir": "sports\\nba\\validation\\production_shadow\\safe_state\\20260527",
+    "safe_state_card_count": 47,
+    "simulation_card_count": 582,
+    "simulation_backtest_status": "PUBLISH_RESEARCH_ONLY",
+    "simulation_frontend_label": "research projection / uncalibrated",
+    "production_behavior_changed": false,
+    "promotion_ready": false,
+    "shadow_only": true,
+    "site_validation_passed": true,
+    "unresolved_blockers": [
+      "BACKTEST_REQUIRED",
+      "no_preseason_simulation_rows_available"
+    ],
+    "next_required_action": "backfill_pre_cutoff_player_state_logs_for_frozen_preseason_sample"
+  },
+  "copied_to_web_data": [
+    "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\web\\data\\safe_state_latest.json",
+    "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\web\\data\\safe_state_latest.csv",
+    "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\web\\data\\safe_state_cards.json",
+    "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\web\\data\\player_simulation_cards.json",
+    "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\web\\data\\player_simulation_summary.csv",
+    "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\web\\data\\player_simulation_validation_report.json",
+    "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\web\\data\\safe_state_site_validation_report.json",
+    "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\web\\data\\site_card_validation_report.json",
+    "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\web\\data\\simulation_credibility_gate.json",
+    "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\web\\data\\site_production_status.json",
+    "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\web\\data\\site_manifest.json"
+  ],
+  "production_behavior_changed": false,
+  "promotion_ready": false,
+  "shadow_only": true
+}

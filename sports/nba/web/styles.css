@@ -160,6 +160,24 @@ body.theme-dark .simulation-card {
     margin: 12px 0 2px;
 }
 
+.simulation-credibility {
+    display: inline-flex;
+    margin-top: 12px;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-radius: 999px;
+    background: rgba(245, 158, 11, 0.12);
+    color: #92400e;
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+body.theme-dark .simulation-credibility {
+    color: #fde68a;
+}
+
 .safe-state-market,
 .simulation-subtitle,
 .safe-state-blocker,

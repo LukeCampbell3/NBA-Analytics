@@ -15,6 +15,11 @@ from research.player_simulation.simulate_next_season_player_states import (
     load_player_logs,
     simulate_next_season_player_states,
 )
+from research.player_simulation.audit_frozen_sample_leakage import audit_frozen_sample_leakage
+from research.player_simulation.build_frozen_preseason_backtest_sample import build_frozen_preseason_backtest_sample
+from research.player_simulation.backfill_pre_cutoff_player_state_logs import backfill_pre_cutoff_player_state_logs
+from research.player_simulation.discover_pre_cutoff_player_logs import discover_pre_cutoff_player_logs
+from research.player_simulation.simulation_credibility_gate import evaluate_simulation_credibility
 from research.run_site_production_exports import run_site_production_exports
 from research.site_export.export_safe_state_site_cards import export_safe_state_site_cards
 
@@ -144,6 +149,49 @@ def _write_logs(tmp_path: Path, *, sparse: bool = False) -> Path:
     return data_proc
 
 
+def _write_historical_logs(tmp_path: Path) -> Path:
+    data_proc = tmp_path / "Historical-Data-Proc"
+    player_dir = data_proc / "Sample_Player"
+    player_dir.mkdir(parents=True)
+    rows = []
+    for idx in range(14):
+        rows.append(
+            {
+                "Date": f"2025-03-{idx + 1:02d}",
+                "Player": "Sample Player",
+                "Player_ID": "p1",
+                "Team": "AAA",
+                "MP": 24 + (idx % 4),
+                "PTS": 10 + (idx % 6),
+                "TRB": 4 + (idx % 3),
+                "AST": 3 + (idx % 2),
+                "STL": 1,
+                "BLK": 0,
+                "FG3M": 1,
+                "FGA": 8 + (idx % 4),
+            }
+        )
+    for idx in range(12):
+        rows.append(
+            {
+                "Date": f"2025-11-{idx + 1:02d}",
+                "Player": "Sample Player",
+                "Player_ID": "p1",
+                "Team": "AAA",
+                "MP": 26 + (idx % 4),
+                "PTS": 12 + (idx % 5),
+                "TRB": 5 + (idx % 2),
+                "AST": 4 + (idx % 2),
+                "STL": 1,
+                "BLK": 0,
+                "FG3M": 2,
+                "FGA": 9 + (idx % 3),
+            }
+        )
+    pd.DataFrame(rows).to_csv(player_dir / "historical_processed.csv", index=False)
+    return data_proc
+
+
 def test_safe_state_site_cards_include_shadow_labels_and_badges(tmp_path: Path) -> None:
     run_dir = _write_safe_state_run(tmp_path)
     report = export_safe_state_site_cards(safe_state_run_dir=run_dir, output_dir=tmp_path / "site", run_date="2026-05-27")
@@ -226,3 +274,146 @@ def test_frontend_safe_state_page_contains_range_and_confidence_components() -> 
     assert "ConfidenceBadge" in js
     assert "p10/p50/p90" in js
     assert "SHADOW" in js
+    assert "simulation_credibility_gate.json" in js
+    assert "research projection / uncalibrated" in js
+
+
+def test_frozen_sample_builder_and_audit_use_pre_cutoff_inputs(tmp_path: Path) -> None:
+    data_proc = _write_historical_logs(tmp_path)
+    sample_dir = tmp_path / "frozen"
+    report = build_frozen_preseason_backtest_sample(
+        data_proc_dir=data_proc,
+        output_dir=sample_dir,
+        evaluated_season=2025,
+        cutoff_date="2025-10-01",
+    )
+    state = pd.read_csv(sample_dir / "frozen_preseason_player_state_rows.csv")
+    actuals = pd.read_csv(sample_dir / "frozen_preseason_actual_outcomes.csv")
+
+    assert report["manifest"]["eligible_input_rows"] == 1
+    assert pd.to_datetime(state["max_source_date"]).max() < pd.Timestamp("2025-10-01")
+    assert "actual_pts" not in state.columns
+    assert "actual_pts" in actuals.columns
+
+    audit = audit_frozen_sample_leakage(
+        frozen_sample_path=sample_dir / "frozen_preseason_player_state_rows.csv",
+        actual_outcomes_path=sample_dir / "frozen_preseason_actual_outcomes.csv",
+        output_dir=sample_dir,
+        cutoff_date="2025-10-01",
+    )
+    assert audit["status"] == "LEAKAGE_AUDIT_PASSED"
+
+
+def test_discovery_finds_pre_cutoff_logs_and_backfill_excludes_post_cutoff(tmp_path: Path) -> None:
+    data_proc = _write_historical_logs(tmp_path)
+    actuals = tmp_path / "actuals.csv"
+    pd.DataFrame([{"player": "Sample Player", "player_id": "p1", "actual_pts": 14}]).to_csv(actuals, index=False)
+    discovery = discover_pre_cutoff_player_logs(
+        output_dir=tmp_path / "discovery",
+        cutoff_date="2025-10-01",
+        search_root=[data_proc],
+    )
+    assert discovery["report"]["usable_source_count"] >= 1
+
+    manifest = backfill_pre_cutoff_player_state_logs(
+        output_dir=tmp_path / "frozen",
+        discovery_csv=Path(discovery["sources_csv"]),
+        actual_outcomes=actuals,
+        cutoff_date="2025-10-01",
+        min_games=10,
+    )
+    state = pd.read_csv(tmp_path / "frozen" / "frozen_preseason_player_state_rows.csv")
+
+    assert manifest["eligible_frozen_input_rows"] == 1
+    assert pd.to_datetime(state["max_input_game_date"]).max() < pd.Timestamp("2025-10-01")
+    assert "actual_pts" not in state.columns
+
+
+def test_backfill_marks_insufficient_history_ineligible(tmp_path: Path) -> None:
+    data_proc = _write_historical_logs(tmp_path)
+    actuals = tmp_path / "actuals.csv"
+    pd.DataFrame(
+        [
+            {"player": "Sample Player", "player_id": "p1", "actual_pts": 14},
+            {"player": "Missing Player", "player_id": "p2", "actual_pts": 5},
+        ]
+    ).to_csv(actuals, index=False)
+    discovery = discover_pre_cutoff_player_logs(output_dir=tmp_path / "discovery", cutoff_date="2025-10-01", search_root=[data_proc])
+    manifest = backfill_pre_cutoff_player_state_logs(
+        output_dir=tmp_path / "frozen",
+        discovery_csv=Path(discovery["sources_csv"]),
+        actual_outcomes=actuals,
+        cutoff_date="2025-10-01",
+        min_games=20,
+    )
+    ineligible = pd.read_csv(tmp_path / "frozen" / "frozen_preseason_ineligible_players.csv")
+
+    assert manifest["eligible_frozen_input_rows"] == 0
+    assert set(ineligible["player"]) == {"Sample Player", "Missing Player"}
+
+
+def test_leakage_audit_fails_on_post_cutoff_input(tmp_path: Path) -> None:
+    state = pd.DataFrame(
+        [{"player": "Leaky Player", "max_source_date": "2025-10-02", "games_available_before_cutoff": 1}]
+    )
+    actuals = pd.DataFrame([{"player": "Leaky Player", "actual_pts": 10}])
+    state_path = tmp_path / "state.csv"
+    actual_path = tmp_path / "actual.csv"
+    state.to_csv(state_path, index=False)
+    actuals.to_csv(actual_path, index=False)
+
+    try:
+        audit_frozen_sample_leakage(
+            frozen_sample_path=state_path,
+            actual_outcomes_path=actual_path,
+            output_dir=tmp_path,
+            cutoff_date="2025-10-01",
+        )
+    except SystemExit as exc:
+        assert "BACKTEST_FAILED_LEAKAGE" in str(exc)
+    else:
+        raise AssertionError("Expected leakage audit to fail")
+
+
+def test_simulation_runs_from_frozen_sample_and_reports_calibration(tmp_path: Path) -> None:
+    data_proc = _write_historical_logs(tmp_path)
+    sample_dir = tmp_path / "frozen"
+    build_frozen_preseason_backtest_sample(
+        data_proc_dir=data_proc,
+        output_dir=sample_dir,
+        evaluated_season=2025,
+        cutoff_date="2025-10-01",
+    )
+    report = simulate_next_season_player_states(
+        data_proc_dir=data_proc,
+        output_dir=tmp_path / "sim",
+        cutoff_date="2025-10-01",
+        cutoff_mode="preseason",
+        input_frozen_sample=sample_dir / "frozen_preseason_player_state_rows.csv",
+        actual_outcomes=sample_dir / "frozen_preseason_actual_outcomes.csv",
+        backtest_season=2025,
+        simulation_count=300,
+        seed=7,
+    )
+
+    assert report["frozen_sample_mode"] is True
+    assert report["backtest"]["joined_rows"] > 0
+    assert "actual_within_p10_p90_rate" in report["backtest"]
+    assert (tmp_path / "sim" / "simulation_backtest_2025_preseason_rows.csv").exists()
+
+
+def test_credibility_gate_blocks_missing_leakage_and_undercoverage(tmp_path: Path) -> None:
+    missing_gate = evaluate_simulation_credibility(backtest_report_path=None, output_dir=tmp_path / "missing")
+    assert missing_gate["status"] == "BACKTEST_REQUIRED"
+
+    leakage = tmp_path / "leakage.json"
+    leakage.write_text('{"status":"BACKTEST_FAILED_LEAKAGE","failures":["input_Date_on_or_after_cutoff"]}', encoding="utf-8")
+    backtest = tmp_path / "backtest.json"
+    backtest.write_text('{"status":"BACKTEST_EVALUATED","joined_rows":200,"actual_within_p10_p90_rate":0.90,"confidence_tier_reliability":{"LOW_CONFIDENCE":{"p10_p90_coverage":0.8},"MEDIUM_CONFIDENCE":{"p10_p90_coverage":0.9}}}', encoding="utf-8")
+    leak_gate = evaluate_simulation_credibility(backtest_report_path=backtest, leakage_audit_path=leakage, output_dir=tmp_path / "leak_gate")
+    assert leak_gate["status"] == "BACKTEST_FAILED_LEAKAGE"
+
+    weak = tmp_path / "weak.json"
+    weak.write_text('{"status":"BACKTEST_EVALUATED","joined_rows":200,"actual_within_p10_p90_rate":0.50,"confidence_tier_reliability":{"LOW_CONFIDENCE":{"p10_p90_coverage":0.5},"MEDIUM_CONFIDENCE":{"p10_p90_coverage":0.6}}}', encoding="utf-8")
+    weak_gate = evaluate_simulation_credibility(backtest_report_path=weak, output_dir=tmp_path / "weak_gate")
+    assert weak_gate["status"] == "BACKTEST_FAILED_CALIBRATION"

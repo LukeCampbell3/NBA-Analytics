@@ -154,6 +154,25 @@ def _explanation(row: pd.Series, badges: list[str]) -> str:
     return f"{player} is classified as {safe} with {edge}; primary blocker: {blocker}. Badges: {badge_text}. Shadow-only evidence."
 
 
+def _recommended_action(row: pd.Series, badges: list[str]) -> str:
+    explicit = _text(row, "recommended_action", "recommended_next_action", "recommended_repair")
+    if explicit:
+        return explicit
+    safe_tier = _text(row, "safe_state_tier").upper()
+    edge_tier = _text(row, "edge_defendability_tier").upper()
+    if "TRUE_UNSTABLE_REJECTED" in badges:
+        return "KEEP_UNSAFE_TRUE_VOLATILITY"
+    if "NEEDS_MORE_SAMPLE" in badges:
+        return "NEEDS_MORE_SAMPLE"
+    if safe_tier in {"SAFE_STATE_CORE", "SAFE_STATE_NEAR_CORE"}:
+        return "WATCH_SHADOW_ONLY"
+    if edge_tier == "EDGE_PRICE_DEPENDENT":
+        return "PRICE_DEPENDENT_RESEARCH_ONLY"
+    if edge_tier == "EDGE_UNTRUSTED_PRICE":
+        return "PRICE_UNTRUSTED_RESEARCH_ONLY"
+    return "SHADOW_MONITOR_ONLY"
+
+
 def _card_from_row(row: pd.Series, *, true_unstable_ids: set[str], needs_sample_ids: set[str]) -> dict[str, Any]:
     badges = _badges(row, true_unstable_ids=true_unstable_ids, needs_sample_ids=needs_sample_ids)
     return {
@@ -177,7 +196,7 @@ def _card_from_row(row: pd.Series, *, true_unstable_ids: set[str], needs_sample_
         "safe_state_tier": _text(row, "safe_state_tier"),
         "primary_blocker": _text(row, "primary_blocker", "forecastability_gap_primary"),
         "root_cause": _text(row, "root_cause_primary", "root_cause"),
-        "recommended_action": _text(row, "recommended_action", "recommended_next_action", "recommended_repair"),
+        "recommended_action": _recommended_action(row, badges),
         "settlement_status": _text(row, "settlement_status", default="PENDING"),
         "explanation": _explanation(row, badges),
         "warning_badges": badges,
