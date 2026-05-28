@@ -1,0 +1,101 @@
+{
+  "total_candidate_rows": 47,
+  "total_selected_rows": 1,
+  "percent_with_valid_timestamp_safe_market_side_price": 0.9166666666666666,
+  "percent_with_market_side_break_even": 1.0,
+  "percent_with_odds_snapshot_time": 1.0,
+  "percent_with_price_source": 1.0,
+  "stale_price_count": 0,
+  "missing_price_count": 0,
+  "diagnostic_only_count": 0,
+  "unknown_source_count": 0,
+  "timestamp_safety_basis_counts": {
+    "EVENT_START_VERIFIED": 44,
+    "NOT_VERIFIED": 4
+  },
+  "event_time_source_counts": {
+    "MISSING": 48
+  },
+  "selected_rows_without_valid_entry_price": 0,
+  "rows_where_edge_computed_without_valid_price": 4,
+  "availability_by_date": [
+    {
+      "game_date": "2026-05-28",
+      "total_rows": 48,
+      "valid_entry_rows": 44,
+      "missing_price_rows": 0
+    }
+  ],
+  "availability_by_book": [
+    {
+      "book": "aggregate_market_snapshot",
+      "total_rows": 48,
+      "valid_entry_rows": 44,
+      "diagnostic_only_rows": 0
+    }
+  ],
+  "availability_by_market_type": [
+    {
+      "market_type": "AST_OVER",
+      "total_rows": 10,
+      "valid_entry_rows": 9,
+      "stale_price_rows": 0
+    },
+    {
+      "market_type": "AST_UNDER",
+      "total_rows": 5,
+      "valid_entry_rows": 5,
+      "stale_price_rows": 0
+    },
+    {
+      "market_type": "PTS_OVER",
+      "total_rows": 1,
+      "valid_entry_rows": 1,
+      "stale_price_rows": 0
+    },
+    {
+      "market_type": "PTS_UNDER",
+      "total_rows": 15,
+      "valid_entry_rows": 15,
+      "stale_price_rows": 0
+    },
+    {
+      "market_type": "TRB_OVER",
+      "total_rows": 3,
+      "valid_entry_rows": 3,
+      "stale_price_rows": 0
+    },
+    {
+      "market_type": "TRB_UNDER",
+      "total_rows": 14,
+      "valid_entry_rows": 11,
+      "stale_price_rows": 0
+    }
+  ],
+  "availability_by_selector_profile": [
+    {
+      "selector_profile": "production",
+      "total_rows": 48,
+      "valid_entry_rows": 44,
+      "missing_price_rows": 0
+    }
+  ],
+  "rows_where_edge_cannot_be_validated": 4,
+  "rows_that_would_be_edge_defendable": 18,
+  "rows_that_would_be_edge_price_dependent": 26,
+  "rows_that_would_fail_price": 0,
+  "input_paths": {
+    "selected_board_csvs": [
+      "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\production_board_as_is.csv"
+    ],
+    "candidate_pool_csvs": [
+      "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\candidate_pool.csv"
+    ],
+    "daily_runs_dirs": []
+  },
+  "output_paths": {
+    "price_provenance_audit_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\price_provenance_audit.csv",
+    "price_provenance_audit_summary_json": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\price_provenance_audit_summary.json",
+    "selected_rows_price_untrusted_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\selected_rows_price_untrusted.csv"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "input_paths": {
+    "needs_more_sample_queue_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\needs_more_sample_queue.csv",
+    "annotated_candidates_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_annotated_candidates.csv",
+    "data_proc_dir": ""
+  },
+  "output_paths": {
+    "rows_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\comparable_state_expansion_rows.csv",
+    "summary_json": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\comparable_state_expansion_summary.json",
+    "markdown": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\comparable_state_expansion_report.md"
+  },
+  "queued_candidates": 2,
+  "expansion_rows": 12,
+  "expansion_status_counts": {
+    "INSUFFICIENT_SAMPLE": 6,
+    "NOT_AVAILABLE": 6
+  },
+  "production_behavior_changed": false,
+  "promotion_claim": false,
+  "shadow_only": true
+}

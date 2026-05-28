@@ -1,0 +1,34 @@
+feature_or_signal,blocked_candidate_count,blocked_edge_defendable_count,blocker_subtype,fixability,affected_markets,likely_pipeline_fix,priority
+usage_proxy,2,2,USAGE_SAMPLE_INSUFFICIENT,NEEDS_MORE_SAMPLE,PTS_UNDER,Add pre-event usage/FGA/touch proxy history for player-state stability.,HIGH
+teammate_availability,2,2,USAGE_SAMPLE_INSUFFICIENT,NEEDS_MORE_SAMPLE,PTS_UNDER,Persist teammate in/out and return-risk context before slate selection.,HIGH
+opponent_context,2,2,USAGE_SAMPLE_INSUFFICIENT,NEEDS_MORE_SAMPLE,PTS_UNDER,Add opponent scheme/pace/defensive-class context to comparable-state features.,HIGH
+distribution_quantiles,2,2,USAGE_SAMPLE_INSUFFICIENT,NEEDS_MORE_SAMPLE,PTS_UNDER,Export conservative stat distribution quantiles and line percentile for every candidate.,HIGH
+similar_state_sample,2,2,USAGE_SAMPLE_INSUFFICIENT,NEEDS_MORE_SAMPLE,PTS_UNDER,Build a larger pre-event comparable-state store by player/archetype/target/line zone.,HIGH
+structural_pathway,2,2,USAGE_SAMPLE_INSUFFICIENT,NEEDS_MORE_SAMPLE,PTS_UNDER,"Persist target-specific basketball pathway diagnostics for points, assists, rebounds, and combos.",HIGH
+usage_proxy,29,0,USAGE_PROXY_MISSING,price_pipeline_blocked,AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER,Add pre-event usage/FGA/touch proxy history for player-state stability.,HIGH
+teammate_availability,29,0,TEAMMATE_AVAILABILITY_MISSING,price_pipeline_blocked,AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER,Persist teammate in/out and return-risk context before slate selection.,HIGH
+opponent_context,29,0,OPPONENT_CONTEXT_MISSING,price_pipeline_blocked,AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER,Add opponent scheme/pace/defensive-class context to comparable-state features.,HIGH
+distribution_quantiles,29,0,DISTRIBUTION_QUANTILES_MISSING,price_pipeline_blocked,AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER,Export conservative stat distribution quantiles and line percentile for every candidate.,HIGH
+similar_state_sample,29,0,SIMILAR_STATE_SAMPLE_MISSING,price_pipeline_blocked,AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER,Build a larger pre-event comparable-state store by player/archetype/target/line zone.,HIGH
+structural_pathway,29,0,STRUCTURAL_PATHWAY_MISSING,price_pipeline_blocked,AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER,"Persist target-specific basketball pathway diagnostics for points, assists, rebounds, and combos.",HIGH
+minutes_state,16,0,MINUTES_STATE_MISSING,price_pipeline_blocked,AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER,Backfill expected minutes bands and recent minutes floor/p25 from refreshed player logs.,HIGH
+minutes_state,6,6,MINUTES_LOW_FLOOR,TRUE_UNSTABLE_STATE,PTS_OVER;PTS_UNDER;TRB_UNDER,"No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",REJECT_UNSAFE
+usage_proxy,6,6,MINUTES_LOW_FLOOR,TRUE_UNSTABLE_STATE,PTS_OVER;PTS_UNDER;TRB_UNDER,"No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",REJECT_UNSAFE
+usage_proxy,6,6,USAGE_PROXY_MISSING,TRUE_UNSTABLE_STATE,PTS_UNDER;TRB_UNDER,"No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",REJECT_UNSAFE
+teammate_availability,6,6,MINUTES_LOW_FLOOR,TRUE_UNSTABLE_STATE,PTS_OVER;PTS_UNDER;TRB_UNDER,"No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",REJECT_UNSAFE
+teammate_availability,6,6,TEAMMATE_AVAILABILITY_MISSING,TRUE_UNSTABLE_STATE,PTS_UNDER;TRB_UNDER,"No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",REJECT_UNSAFE
+opponent_context,6,6,MINUTES_LOW_FLOOR,TRUE_UNSTABLE_STATE,PTS_OVER;PTS_UNDER;TRB_UNDER,"No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",REJECT_UNSAFE
+opponent_context,6,6,OPPONENT_CONTEXT_MISSING,TRUE_UNSTABLE_STATE,PTS_UNDER;TRB_UNDER,"No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",REJECT_UNSAFE
+distribution_quantiles,6,6,DISTRIBUTION_QUANTILES_MISSING,TRUE_UNSTABLE_STATE,PTS_UNDER;TRB_UNDER,"No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",REJECT_UNSAFE
+distribution_quantiles,6,6,MINUTES_LOW_FLOOR,TRUE_UNSTABLE_STATE,PTS_OVER;PTS_UNDER;TRB_UNDER,"No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",REJECT_UNSAFE
+similar_state_sample,6,6,MINUTES_LOW_FLOOR,TRUE_UNSTABLE_STATE,PTS_OVER;PTS_UNDER;TRB_UNDER,"No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",REJECT_UNSAFE
+similar_state_sample,6,6,SIMILAR_STATE_SAMPLE_MISSING,TRUE_UNSTABLE_STATE,PTS_UNDER;TRB_UNDER,"No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",REJECT_UNSAFE
+structural_pathway,6,6,MINUTES_LOW_FLOOR,TRUE_UNSTABLE_STATE,PTS_OVER;PTS_UNDER;TRB_UNDER,"No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",REJECT_UNSAFE
+structural_pathway,6,6,STRUCTURAL_PATHWAY_MISSING,TRUE_UNSTABLE_STATE,PTS_UNDER;TRB_UNDER,"No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",REJECT_UNSAFE
+minutes_state,4,4,MINUTES_ROLE_UNSTABLE,TRUE_UNSTABLE_STATE,PTS_UNDER;TRB_UNDER,"No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",REJECT_UNSAFE
+usage_proxy,4,4,MINUTES_ROLE_UNSTABLE,TRUE_UNSTABLE_STATE,PTS_UNDER;TRB_UNDER,"No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",REJECT_UNSAFE
+teammate_availability,4,4,MINUTES_ROLE_UNSTABLE,TRUE_UNSTABLE_STATE,PTS_UNDER;TRB_UNDER,"No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",REJECT_UNSAFE
+opponent_context,4,4,MINUTES_ROLE_UNSTABLE,TRUE_UNSTABLE_STATE,PTS_UNDER;TRB_UNDER,"No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",REJECT_UNSAFE
+distribution_quantiles,4,4,MINUTES_ROLE_UNSTABLE,TRUE_UNSTABLE_STATE,PTS_UNDER;TRB_UNDER,"No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",REJECT_UNSAFE
+similar_state_sample,4,4,MINUTES_ROLE_UNSTABLE,TRUE_UNSTABLE_STATE,PTS_UNDER;TRB_UNDER,"No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",REJECT_UNSAFE
+structural_pathway,4,4,MINUTES_ROLE_UNSTABLE,TRUE_UNSTABLE_STATE,PTS_UNDER;TRB_UNDER,"No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",REJECT_UNSAFE

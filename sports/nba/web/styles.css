@@ -47,6 +47,215 @@ body {
     line-height: 1.6;
 }
 
+.safe-state-page {
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at top left, rgba(245, 158, 11, 0.14), transparent 32rem),
+        linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+}
+
+.safe-state-hero {
+    padding: 82px 0 28px;
+}
+
+.safe-state-hero h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(2.4rem, 6vw, 5.5rem);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.safe-state-disclaimer {
+    max-width: 780px;
+    margin-top: 12px;
+    color: var(--text-secondary);
+}
+
+.safe-state-grid-section {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    padding-bottom: 60px;
+}
+
+.safe-state-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.safe-state-section-head h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.shadow-pill,
+.settlement-pill,
+.confidence-badge,
+.risk-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 5px 9px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.shadow-pill {
+    background: #111827;
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.5);
+}
+
+.settlement-pill,
+.risk-badge {
+    background: rgba(59, 130, 246, 0.10);
+    color: var(--text-primary);
+    border: 1px solid rgba(59, 130, 246, 0.22);
+}
+
+.safe-state-card-grid,
+.simulation-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+}
+
+.safe-state-card,
+.simulation-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.84);
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.10);
+    padding: 18px;
+}
+
+body.theme-dark .safe-state-card,
+body.theme-dark .simulation-card {
+    background: rgba(15, 23, 42, 0.88);
+}
+
+.safe-state-card-top,
+.safe-state-metrics,
+.simulation-score-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.safe-state-card h3,
+.simulation-card h3 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.8rem;
+    margin: 12px 0 2px;
+}
+
+.safe-state-market,
+.simulation-subtitle,
+.safe-state-blocker,
+.safe-state-explanation,
+.simulation-summary,
+.scenario-summary {
+    color: var(--text-secondary);
+}
+
+.safe-state-metrics,
+.simulation-score-row {
+    margin: 14px 0;
+}
+
+.safe-state-metrics div,
+.simulation-score-row div {
+    min-width: 82px;
+}
+
+.safe-state-metrics span,
+.simulation-score-row span {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.safe-state-tier-stack,
+.safe-state-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 12px;
+}
+
+.confidence-high_confidence {
+    background: rgba(16, 185, 129, 0.16);
+    color: #047857;
+}
+
+.confidence-medium_confidence {
+    background: rgba(245, 158, 11, 0.16);
+    color: #92400e;
+}
+
+.confidence-low_confidence,
+.confidence-insufficient_data {
+    background: rgba(239, 68, 68, 0.14);
+    color: #991b1b;
+}
+
+.dist-row {
+    margin: 12px 0;
+}
+
+.dist-label,
+.dist-values {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    font-weight: 700;
+}
+
+.dist-track {
+    position: relative;
+    height: 9px;
+    margin: 6px 0;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.22);
+}
+
+.dist-band {
+    position: absolute;
+    top: 2px;
+    height: 5px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #60a5fa, #f59e0b);
+}
+
+.dist-dot {
+    position: absolute;
+    top: -3px;
+    width: 15px;
+    height: 15px;
+    margin-left: -7px;
+    border-radius: 999px;
+    background: #111827;
+    border: 2px solid #fbbf24;
+}
+
+@media (min-width: 1080px) {
+    .safe-state-grid-section {
+        grid-template-columns: 0.95fr 1.25fr;
+    }
+}
+
 body.nav-open {
     overflow: hidden;
 }

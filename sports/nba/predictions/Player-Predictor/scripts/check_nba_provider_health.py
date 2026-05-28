@@ -136,6 +136,7 @@ def main() -> None:
 
     try:
         api_key = resolve_api_key(args.api_key)
+        api_key_visible = bool(api_key and str(api_key).strip())
         events, _headers = fetch_sportsgameodds_events(api_key, event_limit=args.event_limit)
         events_returned = len(events)
         starts_at_available_count = _count_starts_at(events)

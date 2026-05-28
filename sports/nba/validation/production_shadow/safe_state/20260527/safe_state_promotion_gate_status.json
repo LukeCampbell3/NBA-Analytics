@@ -1,0 +1,35 @@
+{
+  "promotion_ready": false,
+  "promotion_status": "NOT_PROMOTION_ELIGIBLE",
+  "blocked_reasons": [
+    "broader_walk_forward_required",
+    "min_resolved_safe_state_rows_not_met",
+    "min_settled_slates_not_met",
+    "ring_3_enforcement_not_enabled",
+    "trained_bundle_validation_required"
+  ],
+  "minimum_evidence_requirements": {
+    "min_settled_slates": 20,
+    "min_resolved_safe_state_rows": 50,
+    "trained_bundle_validation": true,
+    "broader_walk_forward_validation": true,
+    "loss_removal_gt_win_removal": true,
+    "brier_ece_roi_not_worse": true,
+    "no_coverage_collapse": true
+  },
+  "current_evidence_summary": {
+    "settled_slates": 0,
+    "resolved_safe_state_rows": 0,
+    "aggregate_metrics_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_shadow_settlement_metrics.csv"
+  },
+  "next_required_steps": [
+    "continue_ring_1_production_shadow_collection",
+    "wait_for_settlement_and_update_outcomes",
+    "accumulate_multi_slate_evidence",
+    "run_trained_bundle_validation",
+    "run_broader_walk_forward_validation"
+  ],
+  "rollback_plan": "Keep safe-state enforcement disabled; remove shadow runner schedule if evidence quality regresses.",
+  "production_behavior_changed": false,
+  "promotion_claim": false
+}

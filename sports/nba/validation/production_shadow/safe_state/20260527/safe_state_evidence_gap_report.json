@@ -1,0 +1,810 @@
+{
+  "input_paths": {
+    "candidate_pool_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\candidate_pool.csv",
+    "production_board_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\production_board_as_is.csv",
+    "safe_state_dir": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527",
+    "annotated_candidates_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_annotated_candidates.csv"
+  },
+  "output_paths": {
+    "json": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_evidence_gap_report.json",
+    "markdown": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_evidence_gap_report.md",
+    "candidate_blockers_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_candidate_blockers.csv",
+    "feature_gap_rankings_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_feature_gap_rankings.csv",
+    "actionable_evidence_gaps_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_actionable_evidence_gaps.csv",
+    "non_actionable_instability_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_non_actionable_instability.csv",
+    "threshold_sensitivity_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_threshold_sensitivity.csv"
+  },
+  "total_candidates": 47,
+  "production_rows": 1,
+  "safe_state_core_count": 0,
+  "price_defense_candidate_count": 18,
+  "price_defense_only_board_rows": 1,
+  "price_defense_only_board_primary_blocker_counts": {
+    "FORECASTABILITY_GAP_MINUTES_STATE": 1
+  },
+  "near_core_count": 0,
+  "near_core_candidates": [],
+  "primary_blocker_counts": {
+    "PRICE_GAP": 29,
+    "FORECASTABILITY_GAP_MINUTES_STATE": 10,
+    "FORECASTABILITY_GAP_ROLE_STATE": 6,
+    "FORECASTABILITY_GAP_USAGE_STATE": 2
+  },
+  "edge_defendable_primary_blocker_counts": {
+    "FORECASTABILITY_GAP_MINUTES_STATE": 10,
+    "FORECASTABILITY_GAP_ROLE_STATE": 6,
+    "FORECASTABILITY_GAP_USAGE_STATE": 2
+  },
+  "threshold_sensitivity": [
+    {
+      "variant": "strict_current",
+      "board_size": 0,
+      "SAFE_STATE_CORE_count": 0,
+      "SAFE_STATE_NEAR_CORE_count": 0,
+      "avg_lcb_edge": null,
+      "avg_forecastability": null,
+      "avg_structural_mispricing": null,
+      "avg_similar_state_tightness": null,
+      "overlap_with_production": 0,
+      "missing_evidence_warnings": ""
+    },
+    {
+      "variant": "similar_state_relaxed_only",
+      "board_size": 0,
+      "SAFE_STATE_CORE_count": 0,
+      "SAFE_STATE_NEAR_CORE_count": 0,
+      "avg_lcb_edge": null,
+      "avg_forecastability": null,
+      "avg_structural_mispricing": null,
+      "avg_similar_state_tightness": null,
+      "overlap_with_production": 0,
+      "missing_evidence_warnings": ""
+    },
+    {
+      "variant": "forecastability_relaxed_only",
+      "board_size": 0,
+      "SAFE_STATE_CORE_count": 0,
+      "SAFE_STATE_NEAR_CORE_count": 0,
+      "avg_lcb_edge": null,
+      "avg_forecastability": null,
+      "avg_structural_mispricing": null,
+      "avg_similar_state_tightness": null,
+      "overlap_with_production": 0,
+      "missing_evidence_warnings": ""
+    },
+    {
+      "variant": "structural_relaxed_only",
+      "board_size": 0,
+      "SAFE_STATE_CORE_count": 0,
+      "SAFE_STATE_NEAR_CORE_count": 0,
+      "avg_lcb_edge": null,
+      "avg_forecastability": null,
+      "avg_structural_mispricing": null,
+      "avg_similar_state_tightness": null,
+      "overlap_with_production": 0,
+      "missing_evidence_warnings": ""
+    },
+    {
+      "variant": "near_core_allowed",
+      "board_size": 0,
+      "SAFE_STATE_CORE_count": 0,
+      "SAFE_STATE_NEAR_CORE_count": 0,
+      "avg_lcb_edge": null,
+      "avg_forecastability": null,
+      "avg_structural_mispricing": null,
+      "avg_similar_state_tightness": null,
+      "overlap_with_production": 0,
+      "missing_evidence_warnings": ""
+    }
+  ],
+  "feature_gap_rankings": [
+    {
+      "feature_or_signal": "usage_proxy",
+      "blocked_candidate_count": 2,
+      "blocked_edge_defendable_count": 2,
+      "blocker_subtype": "USAGE_SAMPLE_INSUFFICIENT",
+      "fixability": "NEEDS_MORE_SAMPLE",
+      "affected_markets": "PTS_UNDER",
+      "likely_pipeline_fix": "Add pre-event usage/FGA/touch proxy history for player-state stability.",
+      "priority": "HIGH"
+    },
+    {
+      "feature_or_signal": "teammate_availability",
+      "blocked_candidate_count": 2,
+      "blocked_edge_defendable_count": 2,
+      "blocker_subtype": "USAGE_SAMPLE_INSUFFICIENT",
+      "fixability": "NEEDS_MORE_SAMPLE",
+      "affected_markets": "PTS_UNDER",
+      "likely_pipeline_fix": "Persist teammate in/out and return-risk context before slate selection.",
+      "priority": "HIGH"
+    },
+    {
+      "feature_or_signal": "opponent_context",
+      "blocked_candidate_count": 2,
+      "blocked_edge_defendable_count": 2,
+      "blocker_subtype": "USAGE_SAMPLE_INSUFFICIENT",
+      "fixability": "NEEDS_MORE_SAMPLE",
+      "affected_markets": "PTS_UNDER",
+      "likely_pipeline_fix": "Add opponent scheme/pace/defensive-class context to comparable-state features.",
+      "priority": "HIGH"
+    },
+    {
+      "feature_or_signal": "distribution_quantiles",
+      "blocked_candidate_count": 2,
+      "blocked_edge_defendable_count": 2,
+      "blocker_subtype": "USAGE_SAMPLE_INSUFFICIENT",
+      "fixability": "NEEDS_MORE_SAMPLE",
+      "affected_markets": "PTS_UNDER",
+      "likely_pipeline_fix": "Export conservative stat distribution quantiles and line percentile for every candidate.",
+      "priority": "HIGH"
+    },
+    {
+      "feature_or_signal": "similar_state_sample",
+      "blocked_candidate_count": 2,
+      "blocked_edge_defendable_count": 2,
+      "blocker_subtype": "USAGE_SAMPLE_INSUFFICIENT",
+      "fixability": "NEEDS_MORE_SAMPLE",
+      "affected_markets": "PTS_UNDER",
+      "likely_pipeline_fix": "Build a larger pre-event comparable-state store by player/archetype/target/line zone.",
+      "priority": "HIGH"
+    },
+    {
+      "feature_or_signal": "structural_pathway",
+      "blocked_candidate_count": 2,
+      "blocked_edge_defendable_count": 2,
+      "blocker_subtype": "USAGE_SAMPLE_INSUFFICIENT",
+      "fixability": "NEEDS_MORE_SAMPLE",
+      "affected_markets": "PTS_UNDER",
+      "likely_pipeline_fix": "Persist target-specific basketball pathway diagnostics for points, assists, rebounds, and combos.",
+      "priority": "HIGH"
+    },
+    {
+      "feature_or_signal": "usage_proxy",
+      "blocked_candidate_count": 29,
+      "blocked_edge_defendable_count": 0,
+      "blocker_subtype": "USAGE_PROXY_MISSING",
+      "fixability": "price_pipeline_blocked",
+      "affected_markets": "AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER",
+      "likely_pipeline_fix": "Add pre-event usage/FGA/touch proxy history for player-state stability.",
+      "priority": "HIGH"
+    },
+    {
+      "feature_or_signal": "teammate_availability",
+      "blocked_candidate_count": 29,
+      "blocked_edge_defendable_count": 0,
+      "blocker_subtype": "TEAMMATE_AVAILABILITY_MISSING",
+      "fixability": "price_pipeline_blocked",
+      "affected_markets": "AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER",
+      "likely_pipeline_fix": "Persist teammate in/out and return-risk context before slate selection.",
+      "priority": "HIGH"
+    },
+    {
+      "feature_or_signal": "opponent_context",
+      "blocked_candidate_count": 29,
+      "blocked_edge_defendable_count": 0,
+      "blocker_subtype": "OPPONENT_CONTEXT_MISSING",
+      "fixability": "price_pipeline_blocked",
+      "affected_markets": "AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER",
+      "likely_pipeline_fix": "Add opponent scheme/pace/defensive-class context to comparable-state features.",
+      "priority": "HIGH"
+    },
+    {
+      "feature_or_signal": "distribution_quantiles",
+      "blocked_candidate_count": 29,
+      "blocked_edge_defendable_count": 0,
+      "blocker_subtype": "DISTRIBUTION_QUANTILES_MISSING",
+      "fixability": "price_pipeline_blocked",
+      "affected_markets": "AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER",
+      "likely_pipeline_fix": "Export conservative stat distribution quantiles and line percentile for every candidate.",
+      "priority": "HIGH"
+    },
+    {
+      "feature_or_signal": "similar_state_sample",
+      "blocked_candidate_count": 29,
+      "blocked_edge_defendable_count": 0,
+      "blocker_subtype": "SIMILAR_STATE_SAMPLE_MISSING",
+      "fixability": "price_pipeline_blocked",
+      "affected_markets": "AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER",
+      "likely_pipeline_fix": "Build a larger pre-event comparable-state store by player/archetype/target/line zone.",
+      "priority": "HIGH"
+    },
+    {
+      "feature_or_signal": "structural_pathway",
+      "blocked_candidate_count": 29,
+      "blocked_edge_defendable_count": 0,
+      "blocker_subtype": "STRUCTURAL_PATHWAY_MISSING",
+      "fixability": "price_pipeline_blocked",
+      "affected_markets": "AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER",
+      "likely_pipeline_fix": "Persist target-specific basketball pathway diagnostics for points, assists, rebounds, and combos.",
+      "priority": "HIGH"
+    },
+    {
+      "feature_or_signal": "minutes_state",
+      "blocked_candidate_count": 16,
+      "blocked_edge_defendable_count": 0,
+      "blocker_subtype": "MINUTES_STATE_MISSING",
+      "fixability": "price_pipeline_blocked",
+      "affected_markets": "AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER",
+      "likely_pipeline_fix": "Backfill expected minutes bands and recent minutes floor/p25 from refreshed player logs.",
+      "priority": "HIGH"
+    },
+    {
+      "feature_or_signal": "minutes_state",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "MINUTES_LOW_FLOOR",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_OVER;PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE"
+    },
+    {
+      "feature_or_signal": "usage_proxy",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "MINUTES_LOW_FLOOR",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_OVER;PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE"
+    },
+    {
+      "feature_or_signal": "usage_proxy",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "USAGE_PROXY_MISSING",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE"
+    },
+    {
+      "feature_or_signal": "teammate_availability",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "MINUTES_LOW_FLOOR",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_OVER;PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE"
+    },
+    {
+      "feature_or_signal": "teammate_availability",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "TEAMMATE_AVAILABILITY_MISSING",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE"
+    },
+    {
+      "feature_or_signal": "opponent_context",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "MINUTES_LOW_FLOOR",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_OVER;PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE"
+    },
+    {
+      "feature_or_signal": "opponent_context",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "OPPONENT_CONTEXT_MISSING",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE"
+    },
+    {
+      "feature_or_signal": "distribution_quantiles",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "DISTRIBUTION_QUANTILES_MISSING",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE"
+    },
+    {
+      "feature_or_signal": "distribution_quantiles",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "MINUTES_LOW_FLOOR",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_OVER;PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE"
+    },
+    {
+      "feature_or_signal": "similar_state_sample",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "MINUTES_LOW_FLOOR",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_OVER;PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE"
+    },
+    {
+      "feature_or_signal": "similar_state_sample",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "SIMILAR_STATE_SAMPLE_MISSING",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE"
+    },
+    {
+      "feature_or_signal": "structural_pathway",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "MINUTES_LOW_FLOOR",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_OVER;PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE"
+    },
+    {
+      "feature_or_signal": "structural_pathway",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "STRUCTURAL_PATHWAY_MISSING",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE"
+    },
+    {
+      "feature_or_signal": "minutes_state",
+      "blocked_candidate_count": 4,
+      "blocked_edge_defendable_count": 4,
+      "blocker_subtype": "MINUTES_ROLE_UNSTABLE",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE"
+    },
+    {
+      "feature_or_signal": "usage_proxy",
+      "blocked_candidate_count": 4,
+      "blocked_edge_defendable_count": 4,
+      "blocker_subtype": "MINUTES_ROLE_UNSTABLE",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE"
+    },
+    {
+      "feature_or_signal": "teammate_availability",
+      "blocked_candidate_count": 4,
+      "blocked_edge_defendable_count": 4,
+      "blocker_subtype": "MINUTES_ROLE_UNSTABLE",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE"
+    },
+    {
+      "feature_or_signal": "opponent_context",
+      "blocked_candidate_count": 4,
+      "blocked_edge_defendable_count": 4,
+      "blocker_subtype": "MINUTES_ROLE_UNSTABLE",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE"
+    },
+    {
+      "feature_or_signal": "distribution_quantiles",
+      "blocked_candidate_count": 4,
+      "blocked_edge_defendable_count": 4,
+      "blocker_subtype": "MINUTES_ROLE_UNSTABLE",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE"
+    },
+    {
+      "feature_or_signal": "similar_state_sample",
+      "blocked_candidate_count": 4,
+      "blocked_edge_defendable_count": 4,
+      "blocker_subtype": "MINUTES_ROLE_UNSTABLE",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE"
+    },
+    {
+      "feature_or_signal": "structural_pathway",
+      "blocked_candidate_count": 4,
+      "blocked_edge_defendable_count": 4,
+      "blocker_subtype": "MINUTES_ROLE_UNSTABLE",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE"
+    }
+  ],
+  "actionable_evidence_gaps": [
+    {
+      "feature_or_signal": "usage_proxy",
+      "blocked_candidate_count": 2,
+      "blocked_edge_defendable_count": 2,
+      "blocker_subtype": "USAGE_SAMPLE_INSUFFICIENT",
+      "fixability": "NEEDS_MORE_SAMPLE",
+      "affected_markets": "PTS_UNDER",
+      "likely_pipeline_fix": "Add pre-event usage/FGA/touch proxy history for player-state stability.",
+      "priority": "HIGH",
+      "recommended_action": "BUILD_SAMPLE_AND_RECHECK"
+    },
+    {
+      "feature_or_signal": "teammate_availability",
+      "blocked_candidate_count": 2,
+      "blocked_edge_defendable_count": 2,
+      "blocker_subtype": "USAGE_SAMPLE_INSUFFICIENT",
+      "fixability": "NEEDS_MORE_SAMPLE",
+      "affected_markets": "PTS_UNDER",
+      "likely_pipeline_fix": "Persist teammate in/out and return-risk context before slate selection.",
+      "priority": "HIGH",
+      "recommended_action": "BUILD_SAMPLE_AND_RECHECK"
+    },
+    {
+      "feature_or_signal": "opponent_context",
+      "blocked_candidate_count": 2,
+      "blocked_edge_defendable_count": 2,
+      "blocker_subtype": "USAGE_SAMPLE_INSUFFICIENT",
+      "fixability": "NEEDS_MORE_SAMPLE",
+      "affected_markets": "PTS_UNDER",
+      "likely_pipeline_fix": "Add opponent scheme/pace/defensive-class context to comparable-state features.",
+      "priority": "HIGH",
+      "recommended_action": "BUILD_SAMPLE_AND_RECHECK"
+    },
+    {
+      "feature_or_signal": "distribution_quantiles",
+      "blocked_candidate_count": 2,
+      "blocked_edge_defendable_count": 2,
+      "blocker_subtype": "USAGE_SAMPLE_INSUFFICIENT",
+      "fixability": "NEEDS_MORE_SAMPLE",
+      "affected_markets": "PTS_UNDER",
+      "likely_pipeline_fix": "Export conservative stat distribution quantiles and line percentile for every candidate.",
+      "priority": "HIGH",
+      "recommended_action": "BUILD_SAMPLE_AND_RECHECK"
+    },
+    {
+      "feature_or_signal": "similar_state_sample",
+      "blocked_candidate_count": 2,
+      "blocked_edge_defendable_count": 2,
+      "blocker_subtype": "USAGE_SAMPLE_INSUFFICIENT",
+      "fixability": "NEEDS_MORE_SAMPLE",
+      "affected_markets": "PTS_UNDER",
+      "likely_pipeline_fix": "Build a larger pre-event comparable-state store by player/archetype/target/line zone.",
+      "priority": "HIGH",
+      "recommended_action": "BUILD_SAMPLE_AND_RECHECK"
+    },
+    {
+      "feature_or_signal": "structural_pathway",
+      "blocked_candidate_count": 2,
+      "blocked_edge_defendable_count": 2,
+      "blocker_subtype": "USAGE_SAMPLE_INSUFFICIENT",
+      "fixability": "NEEDS_MORE_SAMPLE",
+      "affected_markets": "PTS_UNDER",
+      "likely_pipeline_fix": "Persist target-specific basketball pathway diagnostics for points, assists, rebounds, and combos.",
+      "priority": "HIGH",
+      "recommended_action": "BUILD_SAMPLE_AND_RECHECK"
+    },
+    {
+      "feature_or_signal": "usage_proxy",
+      "blocked_candidate_count": 29,
+      "blocked_edge_defendable_count": 0,
+      "blocker_subtype": "USAGE_PROXY_MISSING",
+      "fixability": "price_pipeline_blocked",
+      "affected_markets": "AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER",
+      "likely_pipeline_fix": "Add pre-event usage/FGA/touch proxy history for player-state stability.",
+      "priority": "HIGH",
+      "recommended_action": "WATCH"
+    },
+    {
+      "feature_or_signal": "teammate_availability",
+      "blocked_candidate_count": 29,
+      "blocked_edge_defendable_count": 0,
+      "blocker_subtype": "TEAMMATE_AVAILABILITY_MISSING",
+      "fixability": "price_pipeline_blocked",
+      "affected_markets": "AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER",
+      "likely_pipeline_fix": "Persist teammate in/out and return-risk context before slate selection.",
+      "priority": "HIGH",
+      "recommended_action": "WATCH"
+    },
+    {
+      "feature_or_signal": "opponent_context",
+      "blocked_candidate_count": 29,
+      "blocked_edge_defendable_count": 0,
+      "blocker_subtype": "OPPONENT_CONTEXT_MISSING",
+      "fixability": "price_pipeline_blocked",
+      "affected_markets": "AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER",
+      "likely_pipeline_fix": "Add opponent scheme/pace/defensive-class context to comparable-state features.",
+      "priority": "HIGH",
+      "recommended_action": "WATCH"
+    },
+    {
+      "feature_or_signal": "distribution_quantiles",
+      "blocked_candidate_count": 29,
+      "blocked_edge_defendable_count": 0,
+      "blocker_subtype": "DISTRIBUTION_QUANTILES_MISSING",
+      "fixability": "price_pipeline_blocked",
+      "affected_markets": "AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER",
+      "likely_pipeline_fix": "Export conservative stat distribution quantiles and line percentile for every candidate.",
+      "priority": "HIGH",
+      "recommended_action": "WATCH"
+    },
+    {
+      "feature_or_signal": "similar_state_sample",
+      "blocked_candidate_count": 29,
+      "blocked_edge_defendable_count": 0,
+      "blocker_subtype": "SIMILAR_STATE_SAMPLE_MISSING",
+      "fixability": "price_pipeline_blocked",
+      "affected_markets": "AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER",
+      "likely_pipeline_fix": "Build a larger pre-event comparable-state store by player/archetype/target/line zone.",
+      "priority": "HIGH",
+      "recommended_action": "WATCH"
+    },
+    {
+      "feature_or_signal": "structural_pathway",
+      "blocked_candidate_count": 29,
+      "blocked_edge_defendable_count": 0,
+      "blocker_subtype": "STRUCTURAL_PATHWAY_MISSING",
+      "fixability": "price_pipeline_blocked",
+      "affected_markets": "AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER",
+      "likely_pipeline_fix": "Persist target-specific basketball pathway diagnostics for points, assists, rebounds, and combos.",
+      "priority": "HIGH",
+      "recommended_action": "WATCH"
+    },
+    {
+      "feature_or_signal": "minutes_state",
+      "blocked_candidate_count": 16,
+      "blocked_edge_defendable_count": 0,
+      "blocker_subtype": "MINUTES_STATE_MISSING",
+      "fixability": "price_pipeline_blocked",
+      "affected_markets": "AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER",
+      "likely_pipeline_fix": "Backfill expected minutes bands and recent minutes floor/p25 from refreshed player logs.",
+      "priority": "HIGH",
+      "recommended_action": "WATCH"
+    }
+  ],
+  "non_actionable_true_instability": [
+    {
+      "feature_or_signal": "minutes_state",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "MINUTES_LOW_FLOOR",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_OVER;PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE",
+      "recommended_action": "KEEP_UNSAFE_TRUE_VOLATILITY"
+    },
+    {
+      "feature_or_signal": "usage_proxy",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "MINUTES_LOW_FLOOR",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_OVER;PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE",
+      "recommended_action": "KEEP_UNSAFE_TRUE_VOLATILITY"
+    },
+    {
+      "feature_or_signal": "usage_proxy",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "USAGE_PROXY_MISSING",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE",
+      "recommended_action": "KEEP_UNSAFE_TRUE_VOLATILITY"
+    },
+    {
+      "feature_or_signal": "teammate_availability",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "MINUTES_LOW_FLOOR",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_OVER;PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE",
+      "recommended_action": "KEEP_UNSAFE_TRUE_VOLATILITY"
+    },
+    {
+      "feature_or_signal": "teammate_availability",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "TEAMMATE_AVAILABILITY_MISSING",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE",
+      "recommended_action": "KEEP_UNSAFE_TRUE_VOLATILITY"
+    },
+    {
+      "feature_or_signal": "opponent_context",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "MINUTES_LOW_FLOOR",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_OVER;PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE",
+      "recommended_action": "KEEP_UNSAFE_TRUE_VOLATILITY"
+    },
+    {
+      "feature_or_signal": "opponent_context",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "OPPONENT_CONTEXT_MISSING",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE",
+      "recommended_action": "KEEP_UNSAFE_TRUE_VOLATILITY"
+    },
+    {
+      "feature_or_signal": "distribution_quantiles",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "DISTRIBUTION_QUANTILES_MISSING",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE",
+      "recommended_action": "KEEP_UNSAFE_TRUE_VOLATILITY"
+    },
+    {
+      "feature_or_signal": "distribution_quantiles",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "MINUTES_LOW_FLOOR",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_OVER;PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE",
+      "recommended_action": "KEEP_UNSAFE_TRUE_VOLATILITY"
+    },
+    {
+      "feature_or_signal": "similar_state_sample",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "MINUTES_LOW_FLOOR",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_OVER;PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE",
+      "recommended_action": "KEEP_UNSAFE_TRUE_VOLATILITY"
+    },
+    {
+      "feature_or_signal": "similar_state_sample",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "SIMILAR_STATE_SAMPLE_MISSING",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE",
+      "recommended_action": "KEEP_UNSAFE_TRUE_VOLATILITY"
+    },
+    {
+      "feature_or_signal": "structural_pathway",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "MINUTES_LOW_FLOOR",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_OVER;PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE",
+      "recommended_action": "KEEP_UNSAFE_TRUE_VOLATILITY"
+    },
+    {
+      "feature_or_signal": "structural_pathway",
+      "blocked_candidate_count": 6,
+      "blocked_edge_defendable_count": 6,
+      "blocker_subtype": "STRUCTURAL_PATHWAY_MISSING",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE",
+      "recommended_action": "KEEP_UNSAFE_TRUE_VOLATILITY"
+    },
+    {
+      "feature_or_signal": "minutes_state",
+      "blocked_candidate_count": 4,
+      "blocked_edge_defendable_count": 4,
+      "blocker_subtype": "MINUTES_ROLE_UNSTABLE",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE",
+      "recommended_action": "KEEP_UNSAFE_TRUE_VOLATILITY"
+    },
+    {
+      "feature_or_signal": "usage_proxy",
+      "blocked_candidate_count": 4,
+      "blocked_edge_defendable_count": 4,
+      "blocker_subtype": "MINUTES_ROLE_UNSTABLE",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE",
+      "recommended_action": "KEEP_UNSAFE_TRUE_VOLATILITY"
+    },
+    {
+      "feature_or_signal": "teammate_availability",
+      "blocked_candidate_count": 4,
+      "blocked_edge_defendable_count": 4,
+      "blocker_subtype": "MINUTES_ROLE_UNSTABLE",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE",
+      "recommended_action": "KEEP_UNSAFE_TRUE_VOLATILITY"
+    },
+    {
+      "feature_or_signal": "opponent_context",
+      "blocked_candidate_count": 4,
+      "blocked_edge_defendable_count": 4,
+      "blocker_subtype": "MINUTES_ROLE_UNSTABLE",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE",
+      "recommended_action": "KEEP_UNSAFE_TRUE_VOLATILITY"
+    },
+    {
+      "feature_or_signal": "distribution_quantiles",
+      "blocked_candidate_count": 4,
+      "blocked_edge_defendable_count": 4,
+      "blocker_subtype": "MINUTES_ROLE_UNSTABLE",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE",
+      "recommended_action": "KEEP_UNSAFE_TRUE_VOLATILITY"
+    },
+    {
+      "feature_or_signal": "similar_state_sample",
+      "blocked_candidate_count": 4,
+      "blocked_edge_defendable_count": 4,
+      "blocker_subtype": "MINUTES_ROLE_UNSTABLE",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE",
+      "recommended_action": "KEEP_UNSAFE_TRUE_VOLATILITY"
+    },
+    {
+      "feature_or_signal": "structural_pathway",
+      "blocked_candidate_count": 4,
+      "blocked_edge_defendable_count": 4,
+      "blocker_subtype": "MINUTES_ROLE_UNSTABLE",
+      "fixability": "TRUE_UNSTABLE_STATE",
+      "affected_markets": "PTS_UNDER;TRB_UNDER",
+      "likely_pipeline_fix": "No pipeline fix recommended. More data may confirm instability, but current state remains unsafe.",
+      "priority": "REJECT_UNSAFE",
+      "recommended_action": "KEEP_UNSAFE_TRUE_VOLATILITY"
+    }
+  ],
+  "settlement_join_fields": [
+    "game_id",
+    "market_date",
+    "player",
+    "target",
+    "side",
+    "line"
+  ],
+  "production_behavior_changed": false,
+  "promotion_claim": false,
+  "shadow_only": true
+}

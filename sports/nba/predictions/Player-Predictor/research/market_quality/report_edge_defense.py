@@ -117,8 +117,8 @@ def build_edge_defense_report(
     recency = _read_json(recency_diagnosis_json)
     selected_validity = selected.get("price_validity_status", pd.Series("", index=selected.index)).fillna("").astype(str)
     selected_tier = selected.get("edge_defendability_tier", pd.Series("", index=selected.index)).fillna("").astype(str)
-    selected_lcb_edge = pd.to_numeric(selected.get("lcb_edge"), errors="coerce")
-    selected_stress_edge = pd.to_numeric(selected.get("stress_edge"), errors="coerce")
+    selected_lcb_edge = pd.to_numeric(selected.get("lcb_edge", pd.Series(pd.NA, index=selected.index)), errors="coerce")
+    selected_stress_edge = pd.to_numeric(selected.get("stress_edge", pd.Series(pd.NA, index=selected.index)), errors="coerce")
     selected_blocked_reason = selected.get("timestamp_safety_blocked_reason", pd.Series("", index=selected.index)).fillna("").astype(str)
     selected_event_time_blocks = selected_blocked_reason.str.contains("missing_event_time|event_start|explicit_prelock", case=False, na=False)
 

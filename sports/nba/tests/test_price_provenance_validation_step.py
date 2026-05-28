@@ -170,6 +170,24 @@ def test_prelock_run_verified_does_not_equal_event_start_verified() -> None:
     assert event_start.iloc[0]["timestamp_safety_basis"] == "EVENT_START_VERIFIED"
 
 
+def test_event_start_verified_requires_odds_snapshot_before_commence() -> None:
+    ledger = build_priced_event_ledger_frame(
+        pd.DataFrame(
+            [
+                _base_price_row(
+                    market_commence_time_utc="2026-05-27T00:30:00+00:00",
+                    odds_snapshot_time="2026-05-27T00:30:00+00:00",
+                    price_source_type="LIVE_ENTRY",
+                )
+            ]
+        ),
+        record_scope="candidate",
+    )
+    assert bool(ledger.iloc[0]["timestamp_safe_flag"]) is False
+    assert ledger.iloc[0]["timestamp_safety_basis"] == "NOT_VERIFIED"
+    assert ledger.iloc[0]["timestamp_safety_blocked_reason"] == "odds_snapshot_not_before_event_start"
+
+
 def test_recency_diagnosis_detects_stale_history_root_cause(tmp_path: Path) -> None:
     selector_csv = tmp_path / "selector.csv"
     final_json = tmp_path / "final.json"
