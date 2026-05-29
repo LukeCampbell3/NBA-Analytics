@@ -136,6 +136,119 @@ def print_metrics(metrics: BacktestMetrics) -> None:
     print(f"Sharpe-like: {metrics.sharpe:.3f}")
 
 
+def build_daily_profit(rows: pd.DataFrame, time_col: str = "prediction_time") -> pd.DataFrame:
+    if time_col not in rows.columns:
+        return pd.DataFrame(columns=["profit_date", "daily_pnl", "cum_pnl"])
+
+    rows = rows.copy()
+    rows[time_col] = pd.to_datetime(rows[time_col], errors="coerce")
+    rows["profit_date"] = rows[time_col].dt.date
+    daily = (
+        rows.groupby("profit_date", dropna=False, observed=True)
+        .agg(
+            daily_plays=("event_id", "size"),
+            daily_pnl=("pnl", "sum"),
+            daily_units_wagered=("units_wagered", "sum"),
+            daily_units_won=("units_won", "sum"),
+        )
+        .reset_index()
+        .sort_values("profit_date")
+    )
+    daily["cum_pnl"] = daily["daily_pnl"].cumsum()
+    return daily
+
+
+def write_html_report(rows: pd.DataFrame, metrics: BacktestMetrics, html_path: Path, time_col: str = "prediction_time") -> None:
+    daily = build_daily_profit(rows, time_col)
+    labels = [d.isoformat() for d in daily["profit_date"].tolist()]
+    daily_pnl = [float(x) for x in daily["daily_pnl"].tolist()]
+    cum_pnl = [float(x) for x in daily["cum_pnl"].tolist()]
+
+    summary_html = f"""
+    <ul>
+      <li>Total plays: {metrics.total_plays}</li>
+      <li>Winning plays: {metrics.winning_plays}</li>
+      <li>Hit rate: {metrics.hit_rate:.2%}</li>
+      <li>Total units wagered: {metrics.total_units_wagered:.2f}</li>
+      <li>Total units won: {metrics.total_units_won:.2f}</li>
+      <li>ROI: {metrics.roi:.2%}</li>
+      <li>Max drawdown: {metrics.max_drawdown:.2f}</li>
+      <li>Sharpe-like: {metrics.sharpe:.3f}</li>
+    </ul>
+    """
+
+    html = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <title>Profit Backtest Report</title>
+      <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+      <style>
+        body {{ font-family: Arial, sans-serif; margin: 24px; }}
+        h1 {{ margin-bottom: 0.25rem; }}
+        .summary {{ margin-bottom: 1.5rem; }}
+        .chart-container {{ width: 100%; max-width: 960px; margin: auto; }}
+      </style>
+    </head>
+    <body>
+      <h1>Profit Backtest Report</h1>
+      <div class="summary">
+        <h2>Summary</h2>
+        {summary_html}
+      </div>
+      <div class="chart-container">
+        <canvas id="profitChart" width="960" height="420"></canvas>
+      </div>
+      <script>
+        const labels = {labels!r};
+        const dailyData = {daily_pnl!r};
+        const cumulativeData = {cum_pnl!r};
+        const ctx = document.getElementById('profitChart');
+        new Chart(ctx, {{
+          type: 'line',
+          data: {{
+            labels,
+            datasets: [
+              {{
+                label: 'Daily PnL',
+                data: dailyData,
+                borderColor: 'rgb(54, 162, 235)',
+                backgroundColor: 'rgba(54, 162, 235, 0.15)',
+                tension: 0.25,
+                fill: true,
+              }},
+              {{
+                label: 'Cumulative PnL',
+                data: cumulativeData,
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.12)',
+                tension: 0.25,
+                fill: false,
+              }},
+            ],
+          }},
+          options: {{
+            responsive: true,
+            interaction: {{ mode: 'index', intersect: false }},
+            plugins: {{
+              title: {{ display: true, text: 'Profit per Day / Cumulative Profit' }},
+              legend: {{ position: 'top' }},
+            }},
+            scales: {{
+              x: {{ title: {{ display: true, text: 'Date' }} }},
+              y: {{ title: {{ display: true, text: 'Units' }}, beginAtZero: false }},
+            }},
+          }},
+        }});
+      </script>
+    </body>
+    </html>
+    """
+
+    html_path.write_text(html, encoding="utf-8")
+
+
 def _cli() -> None:
     parser = argparse.ArgumentParser(description="Profit backtest for predictions vs settled outcomes")
     parser.add_argument("--predictions", type=Path, required=True, help="CSV with predictions (event_id,american_odds,...)" )
@@ -143,6 +256,7 @@ def _cli() -> None:
     parser.add_argument("--stake", type=float, default=1.0, help="Units wagered per play (flat)")
     parser.add_argument("--stake-col", type=str, default=None, help="Optional column in predictions providing per-row stake")
     parser.add_argument("--out-csv", type=Path, default=None, help="Write per-row PnL CSV")
+    parser.add_argument("--out-html", type=Path, default=None, help="Write an HTML report with profit-per-day chart")
     args = parser.parse_args()
 
     preds = pd.read_csv(args.predictions)
@@ -154,6 +268,8 @@ def _cli() -> None:
 
     if args.out_csv:
         rows.to_csv(args.out_csv, index=False)
+    if args.out_html:
+        write_html_report(rows, metrics, args.out_html)
 
 
 if __name__ == "__main__":
