@@ -24,6 +24,7 @@ SPORTS_ROOT = SITE_ROOT.parent
 REPO_ROOT = SPORTS_ROOT.parent
 DEFAULT_SOURCE_DIR = SITE_ROOT / "web"
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "dist"
+VAULT_SOURCE_DIR = SPORTS_ROOT / "shared" / "web" / "vault"
 
 
 def nonempty_html_files(directory: Path) -> Iterable[Path]:
@@ -165,6 +166,20 @@ def discover_pages(slug: str, source_dir: Path, metadata: Dict[str, object]) -> 
     return pages
 
 
+def sync_vault_assets(target_dirs: Iterable[Path]) -> None:
+    """Copy shared Card Vault assets into hub and sport output directories."""
+    if not VAULT_SOURCE_DIR.is_dir():
+        print(f"[warn] vault source missing, skipping: {VAULT_SOURCE_DIR}")
+        return
+
+    for target in target_dirs:
+        vault_out = target / "vault"
+        if vault_out.exists():
+            shutil.rmtree(vault_out)
+        shutil.copytree(VAULT_SOURCE_DIR, vault_out)
+        print(f"[vault] {VAULT_SOURCE_DIR} -> {vault_out}")
+
+
 def discover_sports() -> List[Dict[str, object]]:
     sports: List[Dict[str, object]] = []
 
@@ -217,6 +232,7 @@ def build_static_site(
     shutil.copytree(landing_source_dir, output_dir)
     print(f"[copy] landing {landing_source_dir} -> {output_dir}")
 
+    vault_targets: List[Path] = [output_dir]
     manifest: List[Dict[str, object]] = []
     for sport in sports:
         slug = str(sport["slug"])
@@ -225,6 +241,7 @@ def build_static_site(
         shutil.copytree(source_dir, sport_output)
         trim_college_payload(sport_output / "data", college_card_limit)
         create_clean_routes(sport_output)
+        vault_targets.append(sport_output)
         print(f"[copy] sport {slug}: {source_dir} -> {sport_output}")
 
         manifest.append(
@@ -245,6 +262,7 @@ def build_static_site(
     data_dir = output_dir / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
     write_json(data_dir / "sports.json", manifest)
+    sync_vault_assets(vault_targets)
     create_clean_routes(output_dir)
 
     print("\n[SUCCESS] Multi-sport static site build complete.")

@@ -10,13 +10,50 @@ class DailyPredictionsPage {
         this.init();
     }
 
-    async init() {
+    init() {
+        this.mountShell();
+        if (window.CardVault && this.elements.cards) {
+            this.elements.cards.innerHTML = window.CardVault.renderSkeletonCard(6);
+        }
+        this.loadAndRender();
+    }
+
+    mountShell() {
+        if (!window.CardVaultShell) return;
+
+        window.CardVaultShell.mount({
+            brandTitle: 'NBA Analytics',
+            brandHref: '/',
+            workspaceLabel: 'NBA',
+            workspaceHref: '/nba/',
+            sportSlug: 'nba',
+            sportAccent: '#f59e0b',
+            breadcrumbs: [{ label: 'Prediction Board', href: 'predictions.html' }],
+            navLinks: [
+                { label: 'Dashboard', href: 'index.html', active: false },
+                { label: 'Board', href: 'predictions.html', active: true },
+                { label: 'Safe-State', href: 'safe-state.html', active: false },
+                { label: 'Method', href: 'prediction-about.html', active: false },
+                { label: 'College', href: 'college.html', active: false },
+                { label: 'Metrics', href: 'about.html', active: false },
+            ],
+            showDisclaimer: true,
+        });
+    }
+
+    async loadAndRender() {
         try {
             await this.load();
             this.renderCards();
         } catch (error) {
             console.error(error);
-            this.elements.cards.innerHTML = `<div class="prediction-about-empty">Unable to load daily predictions: ${this.escapeHtml(error.message)}</div>`;
+            if (window.CardVault && this.elements.cards) {
+                this.elements.cards.innerHTML = window.CardVault.renderEmptyState(
+                    'Board unavailable',
+                    `Unable to load daily predictions: ${error.message}`,
+                    'Check that data/daily_predictions.json exists for this build.'
+                );
+            }
         }
     }
 
@@ -41,100 +78,46 @@ class DailyPredictionsPage {
         const policy = this.data?.policy_profile || 'n/a';
         const publicationStatus = String(this.data?.publication_status || 'ready').toLowerCase();
         const publicationLabel = publicationStatus === 'ready' ? 'Published' : 'Withheld';
-        this.elements.runMeta.textContent = `Run ${runDate} | Data through ${throughDate} | Policy ${policy} | ${publicationLabel}`;
-    }
+        const stale = publicationStatus !== 'ready';
 
-    getPlayDisplayName(play) {
-        const fromPayload = String(play.player_display_name || '').trim();
-        if (fromPayload) return fromPayload;
-        const fromPlayer = String(play.player || '').replaceAll('_', ' ').trim();
-        return fromPlayer || 'Unknown Player';
-    }
-
-    getPlayHeadshotUrl(play) {
-        const explicitUrl = String(play.player_headshot_url || '').trim();
-        if (explicitUrl) return explicitUrl;
-        const id = Number(play.player_id);
-        if (Number.isFinite(id) && id > 0) {
-            return `https://cdn.nba.com/headshots/nba/latest/1040x760/${id}.png`;
+        if (this.elements.runMeta && window.CardVault) {
+            this.elements.runMeta.innerHTML = [
+                window.CardVault.renderDataFreshness(`Run ${runDate} · Data through ${throughDate}`, stale),
+                ` · Policy ${this.escapeHtml(policy)} · `,
+                window.CardVault.renderStatusPill(publicationStatus === 'ready' ? 'active' : 'withheld', publicationLabel),
+                ` · ${this.plays.length} board card${this.plays.length === 1 ? '' : 's'}`,
+            ].join('');
+        } else if (this.elements.runMeta) {
+            this.elements.runMeta.textContent = `Run ${runDate} | Data through ${throughDate} | Policy ${policy} | ${publicationLabel}`;
         }
-        return '';
-    }
-
-    getMonogram(name) {
-        const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
-        if (!parts.length) return 'NA';
-        if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-        return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
     }
 
     renderCards() {
-        if (!this.plays.length) {
-            const message = String(this.data?.publication_message || 'No prediction bounties available right now.').trim();
-            this.elements.empty.innerHTML = `<p>${this.escapeHtml(message || 'No prediction bounties available right now.')}</p>`;
+        const cv = window.CardVault;
+        if (!cv) {
+            console.error('CardVault not loaded');
+            return;
         }
-        this.elements.empty.style.display = this.plays.length ? 'none' : 'block';
-        this.elements.cards.innerHTML = this.plays.map((play) => this.renderWantedCard(play)).join('');
-    }
 
-    renderWantedCard(play) {
-        const tierRaw = String(play.recommendation || 'consider').toLowerCase();
-        const tier = play.parlay_candidate ? 'parlay' : (['elite', 'strong', 'consider', 'pass'].includes(tierRaw) ? tierRaw : 'consider');
-        const directionRaw = String(play.direction || '').toUpperCase();
-        const direction = directionRaw === 'UNDER' ? 'UNDER' : 'OVER';
-        const displayName = this.getPlayDisplayName(play);
-        const escapedName = this.escapeHtml(displayName);
-        const headshotUrl = this.getPlayHeadshotUrl(play);
-        const monogram = this.escapeHtml(this.getMonogram(displayName));
-        const lineText = this.formatNumber(play.market_line);
-        const predictionText = this.formatNumber(play.prediction);
-        const gameText = [play.market_away_team, play.market_home_team].filter(Boolean).join(' @ ');
-        const footerParts = [play.target || '', play.market_date || '', gameText].filter(Boolean);
-        const parlayPartner = String(play.parlay_partner_name || '').trim();
-        const parlayRate = this.formatPct(play.parlay_projected_hit_rate);
-        return `
-            <article class="prediction-card wanted-card wanted-card-${tier}" data-direction="${this.escapeAttr(direction)}">
-                <div class="wanted-rank">#${this.escapeHtml(String(play.rank || '-'))}</div>
-                <div class="wanted-title">WANTED</div>
-                <div class="wanted-photo-frame ${headshotUrl ? '' : 'is-fallback-visible'}">
-                    ${headshotUrl ? `
-                        <img
-                            class="wanted-photo"
-                            src="${this.escapeAttr(headshotUrl)}"
-                            alt="${this.escapeAttr(displayName)} headshot"
-                            loading="lazy"
-                            onerror="this.remove(); this.parentElement.classList.add('is-fallback-visible');"
-                        />
-                    ` : ''}
-                    <div class="wanted-photo-fallback">${monogram}</div>
-                </div>
-                ${play.parlay_candidate ? `
-                    <div class="wanted-tag-row">
-                        <span class="wanted-tag wanted-tag-parlay">PARLAY</span>
-                        <span class="wanted-tag wanted-tag-support">PAIR ${this.escapeHtml(parlayRate)}</span>
-                    </div>
-                ` : ''}
-                <div class="wanted-reward-label">REWARD</div>
-                <div class="wanted-reward-value">${this.escapeHtml(this.formatReward(play.ev))}</div>
-                <div class="wanted-name">${escapedName}</div>
-                <div class="wanted-direction">${this.escapeHtml(direction)}</div>
-                <div class="wanted-prop-line">LINE ${this.escapeHtml(lineText)} | PRED ${this.escapeHtml(predictionText)}</div>
-                ${play.parlay_candidate ? `<div class="wanted-parlay-note">Best paired with ${this.escapeHtml(parlayPartner || 'another tagged leg')}</div>` : ''}
-                <div class="wanted-footer">${this.escapeHtml(footerParts.join(' | '))}</div>
-            </article>
-        `;
-    }
+        if (!this.plays.length) {
+            const message = String(this.data?.publication_message || 'No analytical signals are available for this run.').trim();
+            const emptyEl = this.elements.empty;
+            if (emptyEl) {
+                emptyEl.style.display = 'block';
+                const msgP = emptyEl.querySelector('p');
+                if (msgP) msgP.textContent = message || 'No analytical signals are available for this run.';
+            }
+            this.elements.cards.innerHTML = '';
+            return;
+        }
 
-    formatNumber(value) {
-        return Number.isFinite(Number(value)) ? Number(value).toFixed(2) : 'n/a';
-    }
+        if (this.elements.empty) {
+            this.elements.empty.style.display = 'none';
+        }
 
-    formatReward(value) {
-        return Number.isFinite(Number(value)) ? `${Number(value) >= 0 ? '+' : ''}${(Number(value) * 100).toFixed(1)}% EV` : 'n/a EV';
-    }
-
-    formatPct(value) {
-        return Number.isFinite(Number(value)) ? `${(Number(value) * 100).toFixed(1)}%` : 'n/a';
+        this.elements.cards.innerHTML = this.plays
+            .map((play, index) => cv.renderPredictionCard(play, index))
+            .join('');
     }
 
     escapeHtml(value) {
@@ -144,10 +127,6 @@ class DailyPredictionsPage {
             .replaceAll('>', '&gt;')
             .replaceAll('"', '&quot;')
             .replaceAll("'", '&#39;');
-    }
-
-    escapeAttr(value) {
-        return this.escapeHtml(value).replaceAll('`', '&#96;');
     }
 }
 

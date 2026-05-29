@@ -1,0 +1,676 @@
+/**
+ * The Card Vault System — components
+ */
+
+/* ─── App shell ─── */
+.vault-shell {
+  position: relative;
+  z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: var(--vault-space-4) var(--vault-space-5) var(--vault-space-12);
+}
+
+.vault-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--vault-space-3) var(--vault-space-4);
+  padding: var(--vault-space-3) var(--vault-space-4);
+  margin-bottom: var(--vault-space-6);
+  background: var(--vault-panel);
+  border: 1px solid var(--vault-line);
+  border-radius: var(--vault-radius-lg);
+  box-shadow: var(--vault-shadow-inset);
+}
+
+.vault-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-decoration: none;
+  color: inherit;
+  min-height: 44px;
+  justify-content: center;
+}
+
+.vault-brand-kicker {
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--vault-sport-accent);
+  font-weight: 600;
+}
+
+.vault-brand-title {
+  font-family: var(--vault-font-display);
+  font-size: 1.35rem;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  margin: 0;
+}
+
+.vault-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--vault-space-2);
+  font-size: 0.8rem;
+  color: var(--vault-text-muted);
+  flex: 1;
+  min-width: 160px;
+}
+
+.vault-breadcrumb a {
+  color: var(--vault-text-muted);
+  text-decoration: none;
+}
+
+.vault-breadcrumb a:hover,
+.vault-breadcrumb a:focus-visible {
+  color: var(--vault-text);
+  text-decoration: underline;
+}
+
+.vault-breadcrumb [aria-current="page"] {
+  color: var(--vault-text);
+}
+
+.vault-breadcrumb-sep {
+  opacity: 0.5;
+}
+
+.vault-sport-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--vault-space-2);
+}
+
+.vault-sport-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 var(--vault-space-3);
+  border-radius: var(--vault-radius-sm);
+  border: 1px solid var(--vault-line);
+  background: var(--vault-bg-2);
+  color: var(--vault-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  transition: border-color var(--vault-duration-fast), color var(--vault-duration-fast);
+}
+
+.vault-sport-pill:hover,
+.vault-sport-pill:focus-visible {
+  border-color: var(--vault-line-strong);
+  color: var(--vault-text);
+  outline: 2px solid var(--vault-sport-accent);
+  outline-offset: 2px;
+}
+
+.vault-sport-pill.is-active {
+  border-color: var(--vault-sport-accent);
+  color: var(--vault-text);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--vault-sport-accent) 40%, transparent);
+}
+
+.vault-menu-btn {
+  display: none;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--vault-line);
+  border-radius: var(--vault-radius-sm);
+  background: var(--vault-bg-2);
+  color: var(--vault-text);
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .vault-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .vault-nav-drawer-links {
+    display: none;
+  }
+  .vault-nav-drawer-links.is-open {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: var(--vault-space-2);
+    padding: var(--vault-space-3);
+    background: var(--vault-panel-raised);
+    border: 1px solid var(--vault-line);
+    border-radius: var(--vault-radius-md);
+    z-index: 20;
+  }
+}
+
+/* ─── Workspace vault door cards ─── */
+.vault-door-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--vault-space-5);
+}
+
+.vault-door {
+  position: relative;
+  padding: var(--vault-space-6);
+  border-radius: var(--vault-radius-lg);
+  background: linear-gradient(165deg, var(--vault-panel) 0%, var(--vault-bg-2) 100%);
+  border: 1px solid var(--vault-line);
+  box-shadow: var(--vault-shadow-card);
+  overflow: hidden;
+}
+
+.vault-door::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--sport-accent, var(--vault-sport-accent));
+}
+
+.vault-door-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--vault-space-4);
+}
+
+.vault-door h3 {
+  font-family: var(--vault-font-display);
+  font-size: 1.75rem;
+  letter-spacing: 0.03em;
+  margin: 0 0 var(--vault-space-2);
+}
+
+.vault-door-tagline {
+  color: var(--vault-text-muted);
+  font-size: 0.9rem;
+  margin: 0 0 var(--vault-space-4);
+}
+
+.vault-door-cta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--vault-space-5);
+  border-radius: var(--vault-radius-sm);
+  background: color-mix(in srgb, var(--sport-accent, var(--vault-sport-accent)) 22%, var(--vault-panel));
+  border: 1px solid color-mix(in srgb, var(--sport-accent, var(--vault-sport-accent)) 50%, transparent);
+  color: var(--vault-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.vault-door-cta:hover,
+.vault-door-cta:focus-visible {
+  filter: brightness(1.08);
+  outline: 2px solid var(--sport-accent, var(--vault-sport-accent));
+  outline-offset: 2px;
+}
+
+/* ─── Living player card base ─── */
+.player-card {
+  --card-accent: var(--vault-variant-chrome);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+  border-radius: var(--vault-radius-card);
+  background: linear-gradient(160deg, var(--vault-card-face) 0%, var(--vault-card-inner) 100%);
+  border: 1px solid var(--vault-line);
+  box-shadow: var(--vault-shadow-card);
+  overflow: hidden;
+  transition: transform var(--vault-duration) var(--vault-ease), box-shadow var(--vault-duration);
+}
+
+.player-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.player-card__edge {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--card-accent);
+  z-index: 2;
+}
+
+.player-card__foil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    color-mix(in srgb, var(--card-accent) 25%, transparent) 48%,
+    transparent 56%
+  );
+}
+
+.player-card__strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--vault-space-2);
+  padding: var(--vault-space-2) var(--vault-space-3);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--vault-text-muted);
+  border-bottom: 1px solid var(--vault-line);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.player-card__classification {
+  color: var(--card-accent);
+}
+
+.player-card__body {
+  position: relative;
+  z-index: 1;
+  padding: var(--vault-space-4);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--vault-space-3);
+}
+
+.player-card__identity {
+  display: flex;
+  gap: var(--vault-space-3);
+  align-items: flex-start;
+}
+
+.player-card__avatar {
+  width: 52px;
+  height: 68px;
+  border-radius: var(--vault-radius-sm);
+  object-fit: cover;
+  background: var(--vault-bg-2);
+  border: 1px solid var(--vault-line);
+  flex-shrink: 0;
+}
+
+.player-card__avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--vault-font-display);
+  font-size: 1.25rem;
+  color: var(--vault-text-muted);
+}
+
+.player-card__name {
+  font-family: var(--vault-font-display);
+  font-size: 1.5rem;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.player-card__meta {
+  font-size: 0.78rem;
+  color: var(--vault-text-muted);
+  margin: 2px 0 0;
+}
+
+.player-card__signal {
+  font-size: 0.85rem;
+  color: var(--vault-text);
+}
+
+.player-card__why {
+  font-size: 0.8rem;
+  color: var(--vault-text-dim);
+  line-height: 1.45;
+}
+
+.player-card__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--vault-space-2);
+  margin-top: auto;
+}
+
+.player-card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--vault-space-2);
+  padding: var(--vault-space-3);
+  border-top: 1px solid var(--vault-line);
+  font-size: 0.75rem;
+  color: var(--vault-text-muted);
+}
+
+/* Density modifiers */
+.player-card--compact {
+  min-height: 160px;
+}
+.player-card--compact .player-card__name {
+  font-size: 1.2rem;
+}
+.player-card--compact .player-card__avatar {
+  width: 40px;
+  height: 52px;
+}
+
+.player-card--dossier {
+  min-height: auto;
+}
+
+.player-card--interactive {
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .player-card--interactive:hover {
+    transform: perspective(800px) rotateX(1deg) rotateY(-1.5deg);
+    box-shadow: var(--vault-shadow-lift);
+  }
+  .player-card--premium:hover .player-card__foil {
+    opacity: 1;
+    animation: vault-shimmer 1.2s var(--vault-ease);
+  }
+}
+
+@keyframes vault-shimmer {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+
+.player-card:focus-visible {
+  outline: 2px solid var(--vault-sport-accent);
+  outline-offset: 3px;
+}
+
+/* Classification variants */
+.player-card--chrome { --card-accent: var(--vault-variant-chrome); }
+.player-card--refractor { --card-accent: var(--vault-variant-refractor); }
+.player-card--retro { --card-accent: var(--vault-variant-retro); }
+.player-card--blue-ice { --card-accent: var(--vault-variant-blue-ice); }
+.player-card--zebra-ice { --card-accent: var(--vault-variant-zebra-ice); }
+.player-card--tiger-ice { --card-accent: var(--vault-variant-tiger-ice); }
+.player-card--rookie { --card-accent: var(--vault-variant-rookie); }
+.player-card--manga { --card-accent: var(--vault-variant-manga); }
+.player-card--auto { --card-accent: var(--vault-variant-auto); }
+.player-card--patch,
+.player-card--auto-patch { --card-accent: var(--vault-variant-patch); }
+
+.player-card--refractor .player-card__foil,
+.player-card--blue-ice .player-card__foil,
+.player-card--manga .player-card__foil,
+.player-card--auto .player-card__foil,
+.player-card--patch .player-card__foil {
+  opacity: 0.35;
+}
+
+.player-card--premium {
+  border-color: color-mix(in srgb, var(--card-accent) 45%, var(--vault-line));
+}
+
+.player-card--locked {
+  filter: saturate(0.5);
+}
+.player-card--locked .player-card__lock {
+  display: flex;
+}
+
+.player-card__lock {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 14, 20, 0.72);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Skeleton */
+.player-card--skeleton .player-card__shimmer {
+  display: block;
+  height: 12px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--vault-bg-2) 0%, var(--vault-panel-raised) 50%, var(--vault-bg-2) 100%);
+  background-size: 200% 100%;
+  animation: vault-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes vault-pulse {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* ─── Metric chip ─── */
+.vault-metric-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  background: var(--vault-bg-2);
+  border: 1px solid var(--vault-line);
+  color: var(--vault-text);
+}
+
+.vault-metric-chip__label {
+  color: var(--vault-text-dim);
+  font-weight: 500;
+}
+
+.vault-metric-chip--positive { border-color: color-mix(in srgb, var(--vault-signal-positive) 40%, transparent); }
+.vault-metric-chip--negative { border-color: color-mix(in srgb, var(--vault-signal-negative) 40%, transparent); }
+
+/* ─── Confidence band ─── */
+.vault-confidence {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.vault-confidence__bar {
+  width: 48px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--vault-bg-0);
+  overflow: hidden;
+}
+
+.vault-confidence__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--vault-conf-a);
+}
+
+.vault-confidence--b .vault-confidence__fill { background: var(--vault-conf-b); width: 75%; }
+.vault-confidence--c .vault-confidence__fill { background: var(--vault-conf-c); width: 55%; }
+.vault-confidence--d .vault-confidence__fill { background: var(--vault-conf-d); width: 35%; }
+.vault-confidence--a .vault-confidence__fill { width: 92%; }
+
+/* ─── Status pill ─── */
+.vault-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--vault-line);
+}
+
+.vault-status-pill--active { color: var(--vault-status-active); border-color: color-mix(in srgb, var(--vault-status-active) 35%, transparent); }
+.vault-status-pill--stale { color: var(--vault-status-stale); }
+.vault-status-pill--withheld { color: var(--vault-status-withheld); }
+.vault-status-pill--error { color: var(--vault-status-error); }
+
+/* ─── Evidence badge ─── */
+.vault-evidence {
+  font-size: 0.72rem;
+  color: var(--vault-text-muted);
+}
+.vault-evidence strong {
+  color: var(--vault-text);
+  font-weight: 600;
+}
+
+/* ─── Data freshness ─── */
+.vault-freshness {
+  font-size: 0.72rem;
+  color: var(--vault-text-dim);
+}
+.vault-freshness--stale {
+  color: var(--vault-status-stale);
+}
+
+/* ─── Board grid (prediction desk) ─── */
+.vault-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--vault-space-5);
+}
+
+.vault-board-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--vault-space-3);
+  margin-bottom: var(--vault-space-6);
+  padding: var(--vault-space-4);
+  background: var(--vault-panel);
+  border: 1px solid var(--vault-line);
+  border-radius: var(--vault-radius-md);
+}
+
+.vault-board-toolbar input,
+.vault-board-toolbar select {
+  min-height: 44px;
+  padding: 0 var(--vault-space-3);
+  border-radius: var(--vault-radius-sm);
+  border: 1px solid var(--vault-line);
+  background: var(--vault-bg-2);
+  color: var(--vault-text);
+  font: inherit;
+}
+
+/* ─── Evidence ledger table ─── */
+.vault-ledger {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.vault-ledger thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  text-align: left;
+  padding: var(--vault-space-3);
+  background: var(--vault-panel-raised);
+  border-bottom: 1px solid var(--vault-line-strong);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--vault-text-muted);
+}
+
+.vault-ledger tbody td {
+  padding: var(--vault-space-3);
+  border-bottom: 1px solid var(--vault-line);
+  vertical-align: middle;
+}
+
+.vault-ledger tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.vault-ledger-row--expandable {
+  cursor: pointer;
+}
+
+/* ─── Empty state ─── */
+.vault-empty {
+  text-align: center;
+  padding: var(--vault-space-10) var(--vault-space-6);
+  border: 1px dashed var(--vault-line-strong);
+  border-radius: var(--vault-radius-lg);
+  color: var(--vault-text-muted);
+}
+
+.vault-empty h3 {
+  font-family: var(--vault-font-display);
+  font-size: 1.5rem;
+  color: var(--vault-text);
+  margin: 0 0 var(--vault-space-3);
+}
+
+/* ─── Page sections ─── */
+.vault-page-header {
+  margin-bottom: var(--vault-space-8);
+}
+
+.vault-page-header h1 {
+  font-family: var(--vault-font-display);
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  letter-spacing: 0.03em;
+  margin: 0 0 var(--vault-space-2);
+}
+
+.vault-page-kicker {
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--vault-sport-accent);
+  font-weight: 600;
+  margin: 0 0 var(--vault-space-2);
+}
+
+.vault-page-lead {
+  color: var(--vault-text-muted);
+  max-width: 62ch;
+  margin: 0;
+  line-height: 1.55;
+}
+
+.vault-disclaimer {
+  font-size: 0.75rem;
+  color: var(--vault-text-dim);
+  margin-top: var(--vault-space-6);
+  padding: var(--vault-space-3);
+  border-left: 3px solid var(--vault-line-strong);
+}
