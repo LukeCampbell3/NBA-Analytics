@@ -47,6 +47,7 @@ class StrategyConfig:
     min_confidence: float
     min_edge_to_sigma: float
     sort_columns: tuple[str, ...]
+    max_plays_per_game: int | None = 2
 
 
 STRATEGIES: tuple[StrategyConfig, ...] = (
@@ -66,6 +67,39 @@ STRATEGIES: tuple[StrategyConfig, ...] = (
         min_edge_to_sigma=0.10,
         sort_columns=("robust_pool_score", "estimated_win_rate", "estimated_ev", "selection_confidence"),
     ),
+    StrategyConfig(
+        name="estimated_win_rate_priority",
+        min_prob=0.62,
+        min_ev=0.0,
+        min_confidence=0.45,
+        min_edge_to_sigma=0.0,
+        sort_columns=("estimated_win_rate", "estimated_ev", "selection_confidence"),
+    ),
+    StrategyConfig(
+        name="estimated_ev_priority",
+        min_prob=0.62,
+        min_ev=0.0,
+        min_confidence=0.45,
+        min_edge_to_sigma=0.0,
+        sort_columns=("estimated_ev", "estimated_win_rate", "selection_confidence"),
+    ),
+    StrategyConfig(
+        name="selection_confidence_priority",
+        min_prob=0.55,
+        min_ev=0.0,
+        min_confidence=0.45,
+        min_edge_to_sigma=0.0,
+        sort_columns=("selection_confidence", "estimated_win_rate", "estimated_ev"),
+    ),
+    StrategyConfig(
+        name="high_prob_threshold",
+        min_prob=0.65,
+        min_ev=0.0,
+        min_confidence=0.0,
+        min_edge_to_sigma=0.0,
+        sort_columns=("estimated_win_rate",),
+        max_plays_per_game=None,
+    ),
 )
 
 
@@ -73,7 +107,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Backtest recent NBA pool-selection strategies.")
     parser.add_argument("--start-date", type=str, default=DEFAULT_START_DATE, help="Inclusive start date (YYYY-MM-DD).")
     parser.add_argument("--end-date", type=str, default=DEFAULT_END_DATE, help="Inclusive end date (YYYY-MM-DD).")
-    parser.add_argument("--top-k", type=int, default=DEFAULT_TOP_K, help="Max plays per slate.")
+    parser.add_argument("--top-k", type=int, default=DEFAULT_TOP_K, help="Max plays per slate. Use 0 for no limit.")
     parser.add_argument("--min-history-rows", type=int, default=12, help="Minimum prior rows required before making a prediction.")
     parser.add_argument("--recent-history-rows", type=int, default=18, help="Recent rows passed into inference for each prediction.")
     parser.add_argument(
@@ -297,14 +331,14 @@ def select_daily_pool(candidates: pd.DataFrame, *, strategy: StrategyConfig, top
         game_key = str(row.get("game_key", "")).strip().lower()
         if player and player in seen_players:
             continue
-        if game_key and game_counts.get(game_key, 0) >= 2:
+        if strategy.max_plays_per_game is not None and game_key and game_counts.get(game_key, 0) >= strategy.max_plays_per_game:
             continue
         selected_rows.append(row)
         if player:
             seen_players.add(player)
         if game_key:
             game_counts[game_key] = game_counts.get(game_key, 0) + 1
-        if len(selected_rows) >= int(top_k):
+        if 0 < int(top_k) <= len(selected_rows):
             break
 
     if not selected_rows:

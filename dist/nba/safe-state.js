@@ -45,13 +45,14 @@ class ScenarioSummary {
 }
 
 class SafeStateCard {
-    static render(card) {
+    static render(card, locked = false) {
         const badges = Array.isArray(card.warning_badges) ? card.warning_badges : [];
         return `
-            <article class="safe-state-card">
+            <article class="safe-state-card ${locked ? 'player-card--locked' : ''}">
                 <div class="safe-state-card-top">
                     <span class="shadow-pill">SHADOW</span>
                     <span class="settlement-pill">${SafeStatePage.escapeHtml(card.settlement_status || 'PENDING')}</span>
+                    ${locked ? '<span class="vault-status-pill vault-status-pill--withheld">Preview</span>' : ''}
                 </div>
                 <h3>${SafeStatePage.escapeHtml(card.player || 'Unknown Player')}</h3>
                 <div class="safe-state-market">${SafeStatePage.escapeHtml(card.market_type || '')} ${SafeStatePage.escapeHtml(card.side || '')} ${SafeStatePage.formatNumber(card.line)}</div>
@@ -110,28 +111,97 @@ class SafeStatePage {
     constructor() {
         this.elements = {
             meta: document.getElementById('safeStateMeta'),
+            entitlementMeta: document.getElementById('entitlementMeta'),
             safeCards: document.getElementById('safeStateCards'),
             simCards: document.getElementById('simulationCards'),
             safeEmpty: document.getElementById('safeStateEmpty'),
             simEmpty: document.getElementById('simulationEmpty'),
+            safeLocked: document.getElementById('safeStateLocked'),
         };
         this.init();
     }
 
+    mountShell() {
+        if (!window.CardVaultShell) return;
+        window.CardVaultShell.mount({
+            brandTitle: 'NBA Analytics',
+            brandHref: '/',
+            workspaceLabel: 'NBA',
+            workspaceHref: '/nba/',
+            sportSlug: 'nba',
+            sportAccent: '#f59e0b',
+            breadcrumbs: [{ label: 'Safe-State Lab', href: 'safe-state.html' }],
+            navLinks: [
+                { label: 'Dashboard', href: 'index.html' },
+                { label: 'Board', href: 'predictions.html' },
+                { label: 'Safe-State', href: 'safe-state.html', active: true },
+                { label: 'Pricing', href: 'pricing.html' },
+                { label: 'Account', href: 'account.html' },
+                { label: 'API', href: 'api.html' },
+            ],
+            showDisclaimer: true,
+        });
+    }
+
     async init() {
-        const [safeState, simulations, manifest, credibility] = await Promise.all([
+        this.mountShell();
+        const [safeState, simulations, manifest, credibility, entitlements] = await Promise.all([
             this.fetchJson('data/safe_state_latest.json', { cards: [] }),
             this.fetchJson('data/player_simulation_cards.json', []),
             this.fetchJson('data/site_manifest.json', {}),
             this.fetchJson('data/simulation_credibility_gate.json', { status: 'BACKTEST_REQUIRED', labels: { frontend_label: 'research projection / uncalibrated' } }),
+            this.loadEntitlements(),
         ]);
-        const safeCards = Array.isArray(safeState.cards) ? safeState.cards : [];
-        const simCards = Array.isArray(simulations) ? simulations : [];
+
+        let safeCards = Array.isArray(safeState.cards) ? safeState.cards : [];
+        let simCards = Array.isArray(simulations) ? simulations : [];
+        let lockedCount = 0;
+
+        if (window.NbaAuthClient?.getToken?.()) {
+            try {
+                const paid = await window.NbaAuthClient.apiFetch('/api/safe-state/cards');
+                if (Array.isArray(paid.cards) && paid.cards.length) {
+                    lockedCount = Math.max(0, Number(paid.total_available || 0) - paid.cards.length);
+                    safeCards = paid.cards;
+                }
+                const simPaid = await window.NbaAuthClient.apiFetch('/api/players/simulations');
+                if (Array.isArray(simPaid.cards) && simPaid.cards.length) {
+                    simCards = simPaid.cards;
+                }
+            } catch (error) {
+                console.warn('Paid safe-state fetch failed, using public preview', error);
+            }
+        }
+
+        const caps = entitlements?.capabilities || {};
+        const previewLimit = caps.can_view_full_safe_state ? safeCards.length : (caps.max_cards_per_day || 3);
+        if (!caps.can_view_full_safe_state && safeCards.length > previewLimit) {
+            lockedCount = safeCards.length - previewLimit;
+            safeCards = safeCards.slice(0, previewLimit);
+        }
+        if (!caps.can_view_simulation_filters) {
+            simCards = simCards.slice(0, 3);
+        }
+
         this.elements.meta.textContent = `Run ${safeState.run_date || manifest.run_date || 'n/a'} | Cutoff ${safeState.data_cutoff_date || manifest.data_cutoff_date || 'n/a'} | Shadow-only evidence`;
+        this.elements.entitlementMeta.textContent = caps.can_view_full_safe_state
+            ? 'Full safe-state board unlocked for your plan.'
+            : `Free preview: ${previewLimit} safe-state cards with ${caps.settlement_delay_hours || 24}h settlement delay. Upgrade for full analytics depth.`;
+
         this.elements.safeEmpty.style.display = safeCards.length ? 'none' : 'block';
         this.elements.simEmpty.style.display = simCards.length ? 'none' : 'block';
-        this.elements.safeCards.innerHTML = safeCards.map(SafeStateCard.render).join('');
-        this.elements.simCards.innerHTML = simCards.slice(0, 60).map(card => PlayerSimulationCard.render(card, credibility)).join('');
+        this.elements.safeLocked.style.display = lockedCount > 0 ? 'block' : 'none';
+        this.elements.safeCards.innerHTML = safeCards.map((card) => SafeStateCard.render(card, !caps.can_view_full_safe_state)).join('');
+        this.elements.simCards.innerHTML = simCards.slice(0, 60).map((card) => PlayerSimulationCard.render(card, credibility)).join('');
+    }
+
+    async loadEntitlements() {
+        if (!window.NbaAuthClient) return { capabilities: { max_cards_per_day: 3, can_view_full_safe_state: false, settlement_delay_hours: 24 } };
+        try {
+            return await window.NbaAuthClient.fetchEntitlements();
+        } catch (_error) {
+            return { capabilities: { max_cards_per_day: 3, can_view_full_safe_state: false, settlement_delay_hours: 24 } };
+        }
     }
 
     async fetchJson(path, fallback) {
