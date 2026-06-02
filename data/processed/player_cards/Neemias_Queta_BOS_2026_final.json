@@ -1,0 +1,291 @@
+{
+  "player": {
+    "id": "1629674",
+    "name": "Neemias Queta",
+    "team": "BOS",
+    "season": 2026,
+    "age": 26.0,
+    "position": "Big"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 62,
+      "minutes_per_game": 24.9,
+      "points_per_game": 9.8,
+      "rebounds_per_game": 8.4,
+      "assists_per_game": 1.4,
+      "steals_per_game": 0.8,
+      "blocks_per_game": 1.3,
+      "field_goal_pct": 0.633,
+      "three_point_pct": 0.0,
+      "free_throw_pct": 0.69
+    },
+    "advanced": {
+      "usage_rate": 0.146,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": 5.3
+    }
+  },
+  "identity": {
+    "primary_archetype": "defensive_anchor",
+    "archetype_confidence": 0.63,
+    "secondary_archetypes": [
+      {
+        "name": "defensive_anchor",
+        "probability": 0.63
+      },
+      {
+        "name": "rim_runner",
+        "probability": 0.37
+      }
+    ],
+    "role_description": "Defensive Anchor",
+    "usage_band": "low"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.43,
+    "mid_range_frequency": 0.52,
+    "three_point_frequency": 0.05,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 0.0,
+    "pick_and_roll_frequency": 31.2,
+    "drives_per_game": 7.2,
+    "paint_touches_per_game": 13.0,
+    "assisted_rate": 0.9,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.1,
+      "vs_wings": 0.3,
+      "vs_bigs": 0.6
+    },
+    "estimated_metrics": {
+      "defensive_rating": 111.7,
+      "defensive_ppp_allowed": 1.016,
+      "matchup_difficulty": 0.5,
+      "foul_rate": 0.506,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 13.7,
+    "opponent_defense_context": 0.334,
+    "team_context_adjustment": 0.135,
+    "intrinsic_value": 15.5,
+    "context_adjustment": -3.3,
+    "adjusted_value": 12.2,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition",
+    "formula": "intrinsic_value = intrinsic_offense * (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "interpretation_summary": "Intrinsic offense 13.7; adjusted value 12.2 per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 75.0,
+      "level": "high",
+      "factors": [
+        [
+          "sample_games",
+          "62 games"
+        ],
+        [
+          "minutes",
+          "24.9 MPG"
+        ],
+        [
+          "archetype_confidence",
+          "63%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 25,
+        "minutes": 17,
+        "data_quality": 15,
+        "archetype_confidence": 8,
+        "team_stability": 10
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.086,
+      "confidence_level": "high",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 9.8,
+          "ci_low": 8.8,
+          "ci_high": 10.8,
+          "relative_error": 10.4
+        },
+        "assists": {
+          "mean": 1.4,
+          "ci_low": 1.3,
+          "ci_high": 1.5,
+          "relative_error": 10.4
+        },
+        "rebounds": {
+          "mean": 8.4,
+          "ci_low": 7.5,
+          "ci_high": 9.3,
+          "relative_error": 10.4
+        }
+      },
+      "sample_size_notes": "62 games, 24.9 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "medium",
+      "constraints": [
+        "Usage increase limited to +8%",
+        "Minutes increase limited to +10 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Defensive Anchor role constraints"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.08,
+        "max_minutes_increase": 10.0,
+        "projected_usage_cap": 0.226,
+        "projected_minutes_cap": 34.9
+      },
+      "constraint_rationale": {
+        "archetype": "defensive_anchor",
+        "position": "big",
+        "three_point_frequency": 0.05,
+        "three_point_percentage": 0.0
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "1629011",
+        "name": "Mitchell Robinson",
+        "team": "NYK",
+        "similarity_score": 0.5,
+        "archetype": "rim_runner",
+        "stats": {
+          "points": 5.3,
+          "assists": 0.9,
+          "rebounds": 8.9
+        }
+      },
+      {
+        "id": "1628386",
+        "name": "Jarrett Allen",
+        "team": "CLE",
+        "similarity_score": 0.43,
+        "archetype": "rim_runner",
+        "stats": {
+          "points": 15.3,
+          "assists": 1.9,
+          "rebounds": 8.5
+        }
+      },
+      {
+        "id": "1628392",
+        "name": "Isaiah Hartenstein",
+        "team": "OKC",
+        "similarity_score": 0.41,
+        "archetype": "rim_runner",
+        "stats": {
+          "points": 10.2,
+          "assists": 3.5,
+          "rebounds": 9.2
+        }
+      },
+      {
+        "id": "1641750",
+        "name": "Ryan Kalkbrenner",
+        "team": "CHA",
+        "similarity_score": 0.37,
+        "archetype": "defensive_anchor",
+        "stats": {
+          "points": 8.0,
+          "assists": 0.8,
+          "rebounds": 5.9
+        }
+      },
+      {
+        "id": "1629028",
+        "name": "Deandre Ayton",
+        "team": "LAL",
+        "similarity_score": 0.36,
+        "archetype": "rim_runner",
+        "stats": {
+          "points": 12.6,
+          "assists": 0.9,
+          "rebounds": 8.3
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "stable"
+  },
+  "metadata": {
+    "generated_at": "2026-03-14T18:12:47.468847",
+    "data_version": "v1.2_refresh",
+    "generation_method": "nba_api_2025_26_refresh",
+    "quality_notes": "Season refresh with inferred mechanism fields",
+    "final_enhanced_at": "2026-03-14T18:12:47.468847"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    },
+    {
+      "type": "trust_data_mismatch",
+      "severity": "low",
+      "description": "High trust score (75.0) despite estimated sources",
+      "recommendation": "Treat trust score mainly as sample-size confidence"
+    }
+  ]
+}

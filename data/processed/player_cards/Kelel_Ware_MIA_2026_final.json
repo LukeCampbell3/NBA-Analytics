@@ -1,0 +1,285 @@
+{
+  "player": {
+    "id": "1642276",
+    "name": "Kel'el Ware",
+    "team": "MIA",
+    "season": 2026,
+    "age": 21.0,
+    "position": "Big"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 62,
+      "minutes_per_game": 22.6,
+      "points_per_game": 11.3,
+      "rebounds_per_game": 9.4,
+      "assists_per_game": 0.5,
+      "steals_per_game": 0.9,
+      "blocks_per_game": 1.1,
+      "field_goal_pct": 0.53,
+      "three_point_pct": 0.387,
+      "free_throw_pct": 0.759
+    },
+    "advanced": {
+      "usage_rate": 0.179,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": -0.1
+    }
+  },
+  "identity": {
+    "primary_archetype": "rim_runner",
+    "archetype_confidence": 0.62,
+    "secondary_archetypes": [
+      {
+        "name": "rim_runner",
+        "probability": 0.62
+      },
+      {
+        "name": "defensive_anchor",
+        "probability": 0.38
+      }
+    ],
+    "role_description": "Rim Runner",
+    "usage_band": "low"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.277,
+    "mid_range_frequency": 0.386,
+    "three_point_frequency": 0.337,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 0.0,
+    "pick_and_roll_frequency": 7.1,
+    "drives_per_game": 8.5,
+    "paint_touches_per_game": 11.8,
+    "assisted_rate": 0.95,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.1,
+      "vs_wings": 0.3,
+      "vs_bigs": 0.6
+    },
+    "estimated_metrics": {
+      "defensive_rating": 112.6,
+      "defensive_ppp_allowed": 1.023,
+      "matchup_difficulty": 0.5,
+      "foul_rate": 0.319,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 15.2,
+    "opponent_defense_context": 0.503,
+    "team_context_adjustment": 0.052,
+    "intrinsic_value": 16.0,
+    "context_adjustment": 0.1,
+    "adjusted_value": 16.1,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition",
+    "formula": "intrinsic_value = intrinsic_offense * (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "interpretation_summary": "Intrinsic offense 15.2; adjusted value 16.1 per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 73.0,
+      "level": "medium",
+      "factors": [
+        [
+          "sample_games",
+          "62 games"
+        ],
+        [
+          "minutes",
+          "22.6 MPG"
+        ],
+        [
+          "archetype_confidence",
+          "62%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 25,
+        "minutes": 15,
+        "data_quality": 15,
+        "archetype_confidence": 8,
+        "team_stability": 10
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.104,
+      "confidence_level": "high",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 11.3,
+          "ci_low": 10.1,
+          "ci_high": 12.5,
+          "relative_error": 10.9
+        },
+        "assists": {
+          "mean": 0.5,
+          "ci_low": 0.4,
+          "ci_high": 0.6,
+          "relative_error": 10.9
+        },
+        "rebounds": {
+          "mean": 9.4,
+          "ci_low": 8.4,
+          "ci_high": 10.4,
+          "relative_error": 10.9
+        }
+      },
+      "sample_size_notes": "62 games, 22.6 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "medium",
+      "constraints": [
+        "Usage increase limited to +10%",
+        "Minutes increase limited to +10 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Rim Runner role constraints"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.1,
+        "max_minutes_increase": 10.0,
+        "projected_usage_cap": 0.279,
+        "projected_minutes_cap": 32.6
+      },
+      "constraint_rationale": {
+        "archetype": "rim_runner",
+        "position": "big",
+        "three_point_frequency": 0.337,
+        "three_point_percentage": 0.387
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "1631095",
+        "name": "Jabari Smith Jr.",
+        "team": "HOU",
+        "similarity_score": 0.39,
+        "archetype": "stretch_big",
+        "stats": {
+          "points": 15.4,
+          "assists": 1.8,
+          "rebounds": 6.8
+        }
+      },
+      {
+        "id": "1642270",
+        "name": "Donovan Clingan",
+        "team": "POR",
+        "similarity_score": 0.38,
+        "archetype": "defensive_anchor",
+        "stats": {
+          "points": 12.0,
+          "assists": 2.1,
+          "rebounds": 11.6
+        }
+      },
+      {
+        "id": "1628976",
+        "name": "Wendell Carter Jr.",
+        "team": "ORL",
+        "similarity_score": 0.38,
+        "archetype": "rim_runner",
+        "stats": {
+          "points": 11.6,
+          "assists": 2.1,
+          "rebounds": 7.6
+        }
+      },
+      {
+        "id": "1630168",
+        "name": "Onyeka Okongwu",
+        "team": "ATL",
+        "similarity_score": 0.34,
+        "archetype": "stretch_big",
+        "stats": {
+          "points": 15.8,
+          "assists": 3.2,
+          "rebounds": 7.8
+        }
+      },
+      {
+        "id": "1630188",
+        "name": "Jalen Smith",
+        "team": "CHI",
+        "similarity_score": 0.33,
+        "archetype": "stretch_big",
+        "stats": {
+          "points": 10.3,
+          "assists": 1.3,
+          "rebounds": 6.9
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "stable"
+  },
+  "metadata": {
+    "generated_at": "2026-03-14T18:12:47.468847",
+    "data_version": "v1.2_refresh",
+    "generation_method": "nba_api_2025_26_refresh",
+    "quality_notes": "Season refresh with inferred mechanism fields",
+    "final_enhanced_at": "2026-03-14T18:12:47.468847"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    }
+  ]
+}

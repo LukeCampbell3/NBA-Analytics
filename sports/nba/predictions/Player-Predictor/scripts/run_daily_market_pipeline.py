@@ -126,7 +126,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--collect-scan-count", type=int, default=800, help="Maximum Covers matchup ids to scan for the nightly collection window.")
     parser.add_argument("--run-date", type=str, default=None, help="Optional YYYY-MM-DD override for local run date.")
     parser.add_argument("--skip-update-data", action="store_true", help="Skip official game-log refresh.")
-    parser.add_argument("--skip-collect-market", action="store_true", help="Skip Covers market collection.")
+    parser.add_argument("--skip-collect-market", action="store_true", help="Skip market odds collection.")
+    parser.add_argument(
+        "--market-provider",
+        type=str,
+        default="covers",
+        choices=["covers", "sportsgameodds"],
+        help="Market snapshot source used when --skip-collect-market is not set.",
+    )
+    parser.add_argument(
+        "--market-bookmakers",
+        type=str,
+        default="draftkings,fanduel",
+        help="Comma-separated bookmakers for SportsGameOdds live snapshot filtering.",
+    )
     parser.add_argument("--skip-align", action="store_true", help="Skip market alignment onto processed files.")
     parser.add_argument("--skip-backtest", action="store_true", help="Skip refreshing the historical inference calibration CSV.")
     parser.add_argument(
@@ -314,6 +327,96 @@ def _normalize_player_name(value: str) -> str:
     return out
 
 
+def derive_market_snapshot_id(*, provider: str, fetched_at_utc: object, fallback_label: object = "") -> str:
+    provider_text = str(provider or "").strip() or "unknown_provider"
+    fetched_text = str(fetched_at_utc or "").strip()
+    if fetched_text:
+        return f"{provider_text}:{fetched_text}"
+    fallback_text = str(fallback_label or "").strip()
+    if fallback_text:
+        return f"{provider_text}:{fallback_text}"
+    return provider_text
+
+
+def load_market_snapshot_manifest(snapshot_path: Path) -> dict:
+    candidates = [
+        snapshot_path.parent / "latest_manifest.json",
+        snapshot_path.parent.parent / "latest_manifest.json",
+    ]
+    for candidate in candidates:
+        if not candidate.exists():
+            continue
+        try:
+            return json.loads(candidate.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+    return {}
+
+
+def annotate_market_snapshot_provenance(frame: pd.DataFrame, source_manifest: dict | None = None) -> pd.DataFrame:
+    out = frame.copy()
+    manifest = dict(source_manifest or {})
+    provider_default = str(manifest.get("provider", "snapshot")).strip() or "snapshot"
+    source_default = str(manifest.get("input_path") or manifest.get("provider") or "current_market_snapshot").strip()
+    if "Market_Provider" not in out.columns:
+        out["Market_Provider"] = provider_default
+    else:
+        out["Market_Provider"] = out["Market_Provider"].fillna("").astype(str).replace("", provider_default)
+    if "Market_Book" not in out.columns:
+        out["Market_Book"] = "aggregate_market_snapshot"
+    else:
+        out["Market_Book"] = out["Market_Book"].fillna("").astype(str).replace("", "aggregate_market_snapshot")
+    if "Market_Price_Source" not in out.columns:
+        out["Market_Price_Source"] = source_default
+    else:
+        out["Market_Price_Source"] = out["Market_Price_Source"].fillna("").astype(str).replace("", source_default)
+    fetched_series = out.get("Market_Fetched_At_UTC", pd.Series("", index=out.index)).fillna("").astype(str)
+    source_type_default = fetched_series.str.strip().ne("").map(lambda has_time: "ARCHIVED_ENTRY" if has_time else "UNKNOWN")
+    if "Market_Price_Source_Type" not in out.columns:
+        out["Market_Price_Source_Type"] = source_type_default
+    else:
+        existing_source_type = out["Market_Price_Source_Type"].fillna("").astype(str)
+        out["Market_Price_Source_Type"] = existing_source_type.where(existing_source_type.str.strip().ne(""), source_type_default)
+    if "Market_Snapshot_ID" not in out.columns:
+        out["Market_Snapshot_ID"] = ""
+    provider_series = out["Market_Provider"].fillna(provider_default).astype(str)
+    event_series = out.get("Market_Event_ID", pd.Series("", index=out.index)).fillna("").astype(str)
+    snapshot_ids = [
+        derive_market_snapshot_id(provider=provider, fetched_at_utc=fetched_at, fallback_label=event_id)
+        for provider, fetched_at, event_id in zip(provider_series, fetched_series, event_series)
+    ]
+    existing_snapshot_ids = out["Market_Snapshot_ID"].fillna("").astype(str)
+    out["Market_Snapshot_ID"] = existing_snapshot_ids.where(existing_snapshot_ids.str.strip().ne(""), snapshot_ids)
+    return out
+
+
+def persist_market_snapshot_manifest(
+    *,
+    source_snapshot_path: Path,
+    output_snapshot_path: Path,
+    run_stamp: str,
+    snapshot_meta: dict,
+) -> dict:
+    source_manifest = load_market_snapshot_manifest(source_snapshot_path)
+    payload = dict(source_manifest)
+    payload.setdefault("provider", "snapshot")
+    payload["source_snapshot_path"] = str(source_snapshot_path.resolve())
+    payload["output_snapshot_path"] = str(output_snapshot_path.resolve())
+    payload["snapshot_selection_meta"] = dict(snapshot_meta)
+    latest_manifest_path = output_snapshot_path.parent / "latest_manifest.json"
+    stamped_manifest_path = output_snapshot_path.parent / f"current_market_snapshot_manifest_{run_stamp}.json"
+    required_manifest_path = output_snapshot_path.parent / f"current_market_snapshot_{run_stamp}_manifest.json"
+    latest_manifest_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    stamped_manifest_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    required_manifest_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return {
+        "latest_manifest_path": str(latest_manifest_path),
+        "stamped_manifest_path": str(stamped_manifest_path),
+        "required_manifest_path": str(required_manifest_path),
+        "provider": str(payload.get("provider", "snapshot")),
+    }
+
+
 def build_historical_market_snapshot(
     out_path: Path,
     run_date: pd.Timestamp,
@@ -325,6 +428,11 @@ def build_historical_market_snapshot(
     use_cols = {
         "Date",
         "Player",
+        "Market_Provider",
+        "Market_Book",
+        "Market_Price_Source",
+        "Market_Price_Source_Type",
+        "Market_Snapshot_ID",
         "Market_PTS",
         "Market_TRB",
         "Market_AST",
@@ -403,6 +511,11 @@ def build_historical_market_snapshot(
                 "Market_Date": market_date,
             }
             for column in [
+                "Market_Provider",
+                "Market_Book",
+                "Market_Price_Source",
+                "Market_Price_Source_Type",
+                "Market_Snapshot_ID",
                 "Market_PTS",
                 "Market_TRB",
                 "Market_AST",
@@ -443,6 +556,7 @@ def build_historical_market_snapshot(
             "selected_row_count": 0,
         }
 
+    frame = annotate_market_snapshot_provenance(frame)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     if out_path.suffix.lower() == ".parquet":
         frame.to_parquet(out_path, index=False)
@@ -470,6 +584,7 @@ def filter_current_market_snapshot(
 ) -> tuple[int, dict]:
     if not source_path.exists():
         raise FileNotFoundError(f"Market snapshot not found: {source_path}")
+    source_manifest = load_market_snapshot_manifest(source_path)
     if source_path.suffix.lower() == ".parquet":
         df = pd.read_parquet(source_path)
     else:
@@ -525,6 +640,7 @@ def filter_current_market_snapshot(
             "selected_row_count": int(len(filtered)),
         }
 
+    filtered = annotate_market_snapshot_provenance(filtered, source_manifest=source_manifest)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     if out_path.suffix.lower() == ".parquet":
         filtered.to_parquet(out_path, index=False)
@@ -609,7 +725,7 @@ def main() -> None:
             ],
         )
 
-    if not args.skip_collect_market:
+    if not args.skip_collect_market and args.market_provider == "covers":
         run_step(
             f"Collect Covers Props {lookback_start} -> {future_end}",
             [
@@ -621,6 +737,20 @@ def main() -> None:
                 str(future_end),
                 "--scan-count",
                 str(int(args.collect_scan_count)),
+            ],
+        )
+    elif not args.skip_collect_market and args.market_provider == "sportsgameodds":
+        run_step(
+            "Fetch SportsGameOdds Current NBA Props",
+            [
+                args.python,
+                "scripts/fetch_nba_market_props.py",
+                "--provider",
+                "sportsgameodds",
+                "--bookmakers",
+                str(args.market_bookmakers),
+                "--outdir",
+                str(MARKET_ROOT),
             ],
         )
 
@@ -707,6 +837,12 @@ def main() -> None:
         season,
         allow_historical_backfill=allow_fallbacks,
         allow_stale_fallback=allow_fallbacks,
+    )
+    snapshot_manifest_meta = persist_market_snapshot_manifest(
+        source_snapshot_path=latest_market_path,
+        output_snapshot_path=current_snapshot_path,
+        run_stamp=run_stamp,
+        snapshot_meta=snapshot_meta,
     )
 
     final_csv = run_dir / f"final_market_plays_{run_stamp}.csv"
@@ -873,6 +1009,7 @@ def main() -> None:
         "current_market_snapshot": str(current_snapshot_path),
         "current_market_rows": int(current_rows),
         "current_market_snapshot_meta": snapshot_meta,
+        "current_market_snapshot_manifest": snapshot_manifest_meta,
         "final_csv": str(final_csv),
         "final_json": str(final_json),
         "slate_csv": str(slate_csv),

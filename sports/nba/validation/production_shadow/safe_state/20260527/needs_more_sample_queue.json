@@ -1,0 +1,25 @@
+{
+  "input_paths": {
+    "blocker_resolution_rows_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\forecastability_blocker_resolution_rows.csv",
+    "root_cause_rows_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\forecastability_root_cause_rows.csv",
+    "annotated_candidates_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_annotated_candidates.csv"
+  },
+  "output_paths": {
+    "csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\needs_more_sample_queue.csv",
+    "json": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\needs_more_sample_queue.json",
+    "markdown": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\needs_more_sample_queue.md"
+  },
+  "needs_more_sample_count": 2,
+  "queue_status_counts": {
+    "NEEDS_MORE_SAMPLE": 2
+  },
+  "rules": [
+    "not_safe",
+    "not_production_candidate",
+    "evidence_building_only",
+    "future_recheck_required"
+  ],
+  "production_behavior_changed": false,
+  "promotion_claim": false,
+  "shadow_only": true
+}

@@ -1,0 +1,285 @@
+{
+  "player": {
+    "id": "1629004",
+    "name": "Svi Mykhailiuk",
+    "team": "UTA",
+    "season": 2026,
+    "age": 28.0,
+    "position": "Wing"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 48,
+      "minutes_per_game": 23.4,
+      "points_per_game": 9.1,
+      "rebounds_per_game": 2.5,
+      "assists_per_game": 1.9,
+      "steals_per_game": 0.5,
+      "blocks_per_game": 0.1,
+      "field_goal_pct": 0.478,
+      "three_point_pct": 0.403,
+      "free_throw_pct": 0.893
+    },
+    "advanced": {
+      "usage_rate": 0.155,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": -1.8
+    }
+  },
+  "identity": {
+    "primary_archetype": "stationary_shooter",
+    "archetype_confidence": 0.59,
+    "secondary_archetypes": [
+      {
+        "name": "stationary_shooter",
+        "probability": 0.59
+      },
+      {
+        "name": "movement_shooter",
+        "probability": 0.41
+      }
+    ],
+    "role_description": "Stationary Shooter",
+    "usage_band": "low"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.113,
+    "mid_range_frequency": 0.239,
+    "three_point_frequency": 0.648,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 3.7,
+    "pick_and_roll_frequency": 6.8,
+    "drives_per_game": 8.0,
+    "paint_touches_per_game": 4.0,
+    "assisted_rate": 0.88,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.3,
+      "vs_wings": 0.6,
+      "vs_bigs": 0.1
+    },
+    "estimated_metrics": {
+      "defensive_rating": 118.2,
+      "defensive_ppp_allowed": 1.075,
+      "matchup_difficulty": 0.56,
+      "foul_rate": 0.25,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 13.6,
+    "opponent_defense_context": 0.556,
+    "team_context_adjustment": -0.116,
+    "intrinsic_value": 12.0,
+    "context_adjustment": 1.1,
+    "adjusted_value": 13.1,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition",
+    "formula": "intrinsic_value = intrinsic_offense * (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "interpretation_summary": "Intrinsic offense 13.6; adjusted value 13.1 per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 68.0,
+      "level": "medium",
+      "factors": [
+        [
+          "sample_games",
+          "48 games"
+        ],
+        [
+          "minutes",
+          "23.4 MPG"
+        ],
+        [
+          "archetype_confidence",
+          "59%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 20,
+        "minutes": 16,
+        "data_quality": 15,
+        "archetype_confidence": 7,
+        "team_stability": 10
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.168,
+      "confidence_level": "medium",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 9.1,
+          "ci_low": 7.9,
+          "ci_high": 10.3,
+          "relative_error": 12.7
+        },
+        "assists": {
+          "mean": 1.9,
+          "ci_low": 1.7,
+          "ci_high": 2.1,
+          "relative_error": 12.7
+        },
+        "rebounds": {
+          "mean": 2.5,
+          "ci_low": 2.2,
+          "ci_high": 2.8,
+          "relative_error": 12.7
+        }
+      },
+      "sample_size_notes": "48 games, 23.4 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "medium",
+      "constraints": [
+        "Usage increase limited to +15%",
+        "Minutes increase limited to +10 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Stationary Shooter role constraints"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.15,
+        "max_minutes_increase": 10.0,
+        "projected_usage_cap": 0.305,
+        "projected_minutes_cap": 33.4
+      },
+      "constraint_rationale": {
+        "archetype": "stationary_shooter",
+        "position": "wing",
+        "three_point_frequency": 0.648,
+        "three_point_percentage": 0.403
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "1630557",
+        "name": "Corey Kispert",
+        "team": "ATL",
+        "similarity_score": 0.59,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 9.7,
+          "assists": 1.7,
+          "rebounds": 2.5
+        }
+      },
+      {
+        "id": "1630249",
+        "name": "Vít Krejčí",
+        "team": "POR",
+        "similarity_score": 0.58,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 8.6,
+          "assists": 1.6,
+          "rebounds": 2.3
+        }
+      },
+      {
+        "id": "1629618",
+        "name": "Jalen Pickett",
+        "team": "DEN",
+        "similarity_score": 0.57,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 5.3,
+          "assists": 2.4,
+          "rebounds": 2.5
+        }
+      },
+      {
+        "id": "1630811",
+        "name": "Keaton Wallace",
+        "team": "ATL",
+        "similarity_score": 0.54,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 3.5,
+          "assists": 1.8,
+          "rebounds": 1.1
+        }
+      },
+      {
+        "id": "1628975",
+        "name": "Jevon Carter",
+        "team": "ORL",
+        "similarity_score": 0.52,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 5.9,
+          "assists": 1.5,
+          "rebounds": 1.5
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "stable"
+  },
+  "metadata": {
+    "generated_at": "2026-03-14T18:12:47.468847",
+    "data_version": "v1.2_refresh",
+    "generation_method": "nba_api_2025_26_refresh",
+    "quality_notes": "Season refresh with inferred mechanism fields",
+    "final_enhanced_at": "2026-03-14T18:12:47.468847"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    }
+  ]
+}

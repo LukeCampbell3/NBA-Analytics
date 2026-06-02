@@ -1,0 +1,14 @@
+feature_or_signal,blocked_candidate_count,blocked_edge_defendable_count,blocker_subtype,fixability,affected_markets,likely_pipeline_fix,priority,recommended_action
+usage_proxy,2,2,USAGE_SAMPLE_INSUFFICIENT,NEEDS_MORE_SAMPLE,PTS_UNDER,Add pre-event usage/FGA/touch proxy history for player-state stability.,HIGH,BUILD_SAMPLE_AND_RECHECK
+teammate_availability,2,2,USAGE_SAMPLE_INSUFFICIENT,NEEDS_MORE_SAMPLE,PTS_UNDER,Persist teammate in/out and return-risk context before slate selection.,HIGH,BUILD_SAMPLE_AND_RECHECK
+opponent_context,2,2,USAGE_SAMPLE_INSUFFICIENT,NEEDS_MORE_SAMPLE,PTS_UNDER,Add opponent scheme/pace/defensive-class context to comparable-state features.,HIGH,BUILD_SAMPLE_AND_RECHECK
+distribution_quantiles,2,2,USAGE_SAMPLE_INSUFFICIENT,NEEDS_MORE_SAMPLE,PTS_UNDER,Export conservative stat distribution quantiles and line percentile for every candidate.,HIGH,BUILD_SAMPLE_AND_RECHECK
+similar_state_sample,2,2,USAGE_SAMPLE_INSUFFICIENT,NEEDS_MORE_SAMPLE,PTS_UNDER,Build a larger pre-event comparable-state store by player/archetype/target/line zone.,HIGH,BUILD_SAMPLE_AND_RECHECK
+structural_pathway,2,2,USAGE_SAMPLE_INSUFFICIENT,NEEDS_MORE_SAMPLE,PTS_UNDER,"Persist target-specific basketball pathway diagnostics for points, assists, rebounds, and combos.",HIGH,BUILD_SAMPLE_AND_RECHECK
+usage_proxy,29,0,USAGE_PROXY_MISSING,price_pipeline_blocked,AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER,Add pre-event usage/FGA/touch proxy history for player-state stability.,HIGH,WATCH
+teammate_availability,29,0,TEAMMATE_AVAILABILITY_MISSING,price_pipeline_blocked,AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER,Persist teammate in/out and return-risk context before slate selection.,HIGH,WATCH
+opponent_context,29,0,OPPONENT_CONTEXT_MISSING,price_pipeline_blocked,AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER,Add opponent scheme/pace/defensive-class context to comparable-state features.,HIGH,WATCH
+distribution_quantiles,29,0,DISTRIBUTION_QUANTILES_MISSING,price_pipeline_blocked,AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER,Export conservative stat distribution quantiles and line percentile for every candidate.,HIGH,WATCH
+similar_state_sample,29,0,SIMILAR_STATE_SAMPLE_MISSING,price_pipeline_blocked,AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER,Build a larger pre-event comparable-state store by player/archetype/target/line zone.,HIGH,WATCH
+structural_pathway,29,0,STRUCTURAL_PATHWAY_MISSING,price_pipeline_blocked,AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER,"Persist target-specific basketball pathway diagnostics for points, assists, rebounds, and combos.",HIGH,WATCH
+minutes_state,16,0,MINUTES_STATE_MISSING,price_pipeline_blocked,AST_OVER;AST_UNDER;PTS_UNDER;TRB_OVER;TRB_UNDER,Backfill expected minutes bands and recent minutes floor/p25 from refreshed player logs.,HIGH,WATCH

@@ -1,0 +1,120 @@
+# NBA Parlay Subsystem Policy Configuration
+# ============================================
+# All operations run in SHADOW MODE by default
+# No production selections, staking, or promotion changes
+
+mode:
+  shadow_only: true
+  max_legs_default: 2
+  allow_three_leg_if_all_pairs_pass: false
+  allow_four_plus_legs: false
+  allow_same_game_parlays: true
+  require_book_quoted_price_for_sgp: false
+
+single_leg_thresholds:
+  # SEED_PLAYABLE tier: very high conviction
+  min_lcb_edge_seed: 0.025
+  min_robust_edge_seed: 0.050
+  
+  # BALANCED_PLAYABLE tier: acceptable edge
+  min_lcb_edge_balanced: 0.010
+  min_robust_edge_balanced: 0.025
+  
+  # All accepted legs must exceed break-even by this margin
+  min_stress_edge: 0.015
+  
+  # Forecasting quality gates
+  min_forecastability_seed: 0.78
+  min_forecastability_balanced: 0.70
+  min_plan_reliability: 0.70
+  min_scenario_agreement: 0.68
+  
+  # Volatility and instability gates
+  max_chaos_score: 0.35
+  max_management_volatility: 0.35
+  max_market_instability: 0.35
+  max_edge_fragility: 0.06
+
+price:
+  require_valid_current_price: true
+  allow_price_dependent_watchlist: true
+  max_stale_minutes: 20
+  min_price_quality_score: 0.60
+  # If line moved >8% since last snapshot, flag as stale
+  max_line_movement_pct: 0.08
+
+parlay_thresholds:
+  # Joint state gates
+  min_joint_lcb_edge: 0.010
+  min_joint_robust_edge: 0.020
+  min_joint_stress_ev: 0.000
+  
+  # Risk gates
+  max_shared_failure_risk: 0.40
+  max_shared_event_supply_penalty: 0.35
+  max_dependency_penalty: 0.32
+  max_edge_fragility: 0.08
+  
+  # Quality gates
+  min_compatible_state_score: 0.62
+  require_all_two_leg_subsets_pass: true
+  reject_perfect_script_dependency: true
+  
+  # Payout gate for same-game parlays
+  min_sgp_payout_ratio: 0.75  # reject if payout is <75% of synthetic
+
+generation:
+  use_anchor_companion: true
+  max_candidates_per_day: 250
+  max_parlays_output: 25
+  top_n_anchor_legs: 20
+  top_n_companions_per_anchor: 8
+  max_legs_same_game: 2
+  min_legs_per_parlay: 2
+
+stress:
+  # Downshift in plan holds probability under stress
+  plan_holds_downshift: 0.10
+  
+  # Upshift risk factors
+  blowout_upshift: 0.05
+  foul_trouble_upshift: 0.03
+  minutes_loss_upshift: 0.05
+  role_shift_upshift: 0.04
+  team_offense_collapse_upshift: 0.05
+  poor_shooting_upshift: 0.04
+  rebound_supply_collapse_upshift: 0.04
+  
+  # Uncertainty penalties
+  calibration_penalty: 0.01
+  dependency_uncertainty_penalty: 0.02
+  shared_event_supply_penalty: 0.02
+
+# Output configuration
+output:
+  include_rejection_audit: true
+  include_stress_scenarios: true
+  include_correlation_analysis: true
+  include_shared_state_analysis: true
+  detailed_probability_breakdown: true
+  
+# Validation configuration
+validation:
+  compare_vs_naive_stacking: true
+  compare_vs_single_leg_only: true
+  require_historical_backtesting: true
+  enabled_by_default: true
+  
+# Timing checkpoints
+checkpoints:
+  CHECKPOINT_OPEN: "07:00"
+  CHECKPOINT_MIDDAY: "12:00"
+  CHECKPOINT_INJURY_REPORT: "13:00"
+  CHECKPOINT_LINEUP_CONFIRMED: "17:00"
+  CHECKPOINT_FINAL_ODDS: "19:00"
+
+logging:
+  level: "INFO"
+  log_all_rejections: true
+  log_all_acceptances: true
+  audit_trail: true

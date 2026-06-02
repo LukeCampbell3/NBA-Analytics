@@ -1,0 +1,330 @@
+schema_version: 1
+failure_modes:
+  - failure_mode_id: REBOUND_UPPER_BAND_SUPPLY_RISK
+    market_families: [TRB, RA, PRA, PARLAY]
+    candidate_symptoms: [TRB_OVER, line_above_recent_q75, high_supply_dependency]
+    required_pre_event_features: [trb_q75_recent, trb_q90_recent, projected_missed_fga_total, rebound_supply_score]
+    postgame_attribution_signals: [actual_trb_below_line, efficient_shooting_environment, weak_rebound_event_volume]
+    likely_causal_pathway: "Upper-band rebound overs require both missed-shot supply and stable rebound concentration."
+    candidate_interventions:
+      - intervention_type: price_dependent_tier
+        description: "Downgrade upper-band rebound overs unless supply and share both support the line."
+      - intervention_type: opposite_side_discovery
+        description: "Evaluate the rebound under when the over is heavily penalized."
+    allowed_penalties_gates: [soft_downgrade, price_dependent_tier, board_objective_penalty_term]
+    opposite_side_discovery_rules: [require_valid_price, require_break_even_win, require_positive_lcb]
+    validation_segments: [TRB_OVER_UPPER_BAND]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [single_player_lines, median_band_confusion, over_penalizing_low_lines]
+  - failure_mode_id: REBOUND_LOW_LINE_ROLE_VOLATILITY
+    market_families: [TRB, RA, PRA]
+    candidate_symptoms: [TRB_OVER, low_line, unstable_minutes_band, bench_role]
+    required_pre_event_features: [minutes_floor_recent, expected_minutes_band_width, bench_role_flag, rotation_volatility_score]
+    postgame_attribution_signals: [actual_minutes_below_band, rotation_instability, did_not_reach_rebound_volume]
+    likely_causal_pathway: "Low rebound lines still fail when minutes and role are structurally unstable."
+    candidate_interventions:
+      - intervention_type: soft_downgrade
+        description: "Reduce confidence for low-line rebound overs when role volatility is elevated."
+      - intervention_type: hard_gate
+        description: "Block structurally unsafe minutes-floor cases."
+    allowed_penalties_gates: [soft_downgrade, hard_gate, forecastability_penalty]
+    opposite_side_discovery_rules: [require_valid_price, require_break_even_win]
+    validation_segments: [TRB_OVER_LOW_LINE_ROLE_VOLATILE]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [bench_noise, reacting_to_small_sample_minutes, injury_news_leakage]
+  - failure_mode_id: REBOUND_SHARE_COMPETITION
+    market_families: [TRB, RA, PRA, PARLAY]
+    candidate_symptoms: [TRB_OVER, teammate_rebound_competition, wing_leakage]
+    required_pre_event_features: [teammate_rebound_competition_score, player_rebound_share_std, wing_rebound_leakage_score]
+    postgame_attribution_signals: [teammate_rebounds_distributed, weak_player_rebound_share, broad_frontcourt_split]
+    likely_causal_pathway: "Available rebounds are spread across teammates instead of concentrating through the selected player."
+    candidate_interventions:
+      - intervention_type: soft_downgrade
+        description: "Apply share-competition penalty before board selection."
+      - intervention_type: board_objective_penalty_term
+        description: "Penalize rebound-share instability in the board objective."
+    allowed_penalties_gates: [soft_downgrade, board_objective_penalty_term, price_dependent_tier]
+    opposite_side_discovery_rules: [require_valid_price, require_positive_lcb]
+    validation_segments: [TRB_OVER_SHARE_COMPETITION]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [teammate_box_score_noise, lineup_context_shift, double_counting_supply]
+  - failure_mode_id: REBOUND_SUPPLY_COLLAPSE
+    market_families: [TRB, RA, PRA, PARLAY]
+    candidate_symptoms: [TRB_OVER, low_missed_shot_environment, high_team_efficiency]
+    required_pre_event_features: [projected_missed_fga_total, projected_team_fg_pct, projected_opponent_fg_pct, pace_rebound_environment]
+    postgame_attribution_signals: [few_missed_shots, efficient_shooting_environment, low_available_rebounds]
+    likely_causal_pathway: "Rebound-event supply collapses because both teams shoot too efficiently."
+    candidate_interventions:
+      - intervention_type: scenario_stress_increase
+        description: "Increase stress probability for rebound overs in weak missed-shot environments."
+      - intervention_type: opposite_side_discovery
+        description: "Consider the rebound under when supply is clearly hostile."
+    allowed_penalties_gates: [scenario_stress_increase, soft_downgrade, price_dependent_tier]
+    opposite_side_discovery_rules: [require_valid_price, require_break_even_win, require_positive_lcb]
+    validation_segments: [TRB_OVER_SUPPLY_DEPENDENT]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [team_efficiency_noise, pace_double_counting, opponent_shooting_regression]
+  - failure_mode_id: TEAM_OFFENSE_COLLAPSE
+    market_families: [AST, PTS, PRA, PARLAY]
+    candidate_symptoms: [same_team_over_stack, low_team_total, weak_creation_environment]
+    required_pre_event_features: [team_total, pace_proxy, offensive_rating_proxy, teammate_return_risk]
+    postgame_attribution_signals: [team_points_below_expectation, low_assist_total, low_conversion]
+    likely_causal_pathway: "The team offense underperforms broadly, dragging multiple overs down together."
+    candidate_interventions:
+      - intervention_type: parlay_shared_failure_veto
+        description: "Penalize same-team overs that all require a healthy team offense."
+      - intervention_type: scenario_stress_increase
+        description: "Increase downside stress for team-dependent overs."
+    allowed_penalties_gates: [soft_downgrade, parlay_shared_failure_veto, scenario_stress_increase]
+    opposite_side_discovery_rules: [require_valid_price]
+    validation_segments: [TEAM_OFFENSE_COLLAPSE]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [single_game_outliers, double_counting_team_total, opponent_noise]
+  - failure_mode_id: LOW_TEAM_ASSIST_ENVIRONMENT
+    market_families: [AST, PRA, PARLAY]
+    candidate_symptoms: [AST_OVER, low_conversion_support, weak_team_creation]
+    required_pre_event_features: [team_total, projected_assist_conversion_proxy, teammate_shooting_support]
+    postgame_attribution_signals: [low_team_assists, poor_shot_conversion]
+    likely_causal_pathway: "The player may create chances, but the environment does not convert them into assists."
+    candidate_interventions:
+      - intervention_type: scenario_stress_increase
+        description: "Increase assist-over stress when team conversion support is weak."
+      - intervention_type: price_dependent_tier
+        description: "Move borderline assist overs into price-dependent territory."
+    allowed_penalties_gates: [scenario_stress_increase, price_dependent_tier]
+    opposite_side_discovery_rules: [require_valid_price]
+    validation_segments: [LOW_TEAM_ASSIST_ENVIRONMENT]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [assist_box_score_variance, hot_shooting_fallback, opponent_scheme_noise]
+  - failure_mode_id: POOR_SHOOTING_ENVIRONMENT
+    market_families: [AST, PTS, PRA, PARLAY]
+    candidate_symptoms: [over_candidate, weak_efficiency_support, poor_conversion_dependency]
+    required_pre_event_features: [projected_team_fg_pct, projected_opponent_fg_pct, long_rebound_profile]
+    postgame_attribution_signals: [low_fg_pct, poor_conversion]
+    likely_causal_pathway: "The market requires efficient scoring or conversion that the environment does not support."
+    candidate_interventions:
+      - intervention_type: scenario_stress_increase
+        description: "Stress overs that depend on shooting efficiency in weak environments."
+    allowed_penalties_gates: [scenario_stress_increase, soft_downgrade]
+    opposite_side_discovery_rules: [require_valid_price]
+    validation_segments: [POOR_SHOOTING_ENVIRONMENT]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [small_efficiency_edges, late_lineup_change]
+  - failure_mode_id: USAGE_SUPPRESSION
+    market_families: [PTS, PRA, PARLAY]
+    candidate_symptoms: [points_over, teammate_return, low_usage_projection]
+    required_pre_event_features: [usage_proxy, teammate_return_risk, role_pathway_shift_score]
+    postgame_attribution_signals: [fga_shortfall, touches_shortfall, scorer_to_connector_shift]
+    likely_causal_pathway: "The player sees fewer possessions or fewer high-value shots than required."
+    candidate_interventions:
+      - intervention_type: soft_downgrade
+        description: "Lower confidence for overs that depend on peak usage holding."
+      - intervention_type: alternate_line_discovery
+        description: "Search for safer alt lines when usage is fragile."
+    allowed_penalties_gates: [soft_downgrade, alternate_line_discovery, forecastability_penalty]
+    opposite_side_discovery_rules: [require_valid_price]
+    validation_segments: [USAGE_SUPPRESSION]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [star_noise, teammate_news_dependency]
+  - failure_mode_id: ROLE_SHIFT_LOW_USAGE
+    market_families: [PTS, AST, PRA, TRB]
+    candidate_symptoms: [connector_role, scorer_to_facilitator_shift, low_usage_band]
+    required_pre_event_features: [role_pathway_shift_score, pred_AST, baseline_AST, usage_proxy]
+    postgame_attribution_signals: [assist_spike, shot_volume_drop, rebound_to_connector_shift]
+    likely_causal_pathway: "The player still contributes, but through a different pathway than the selected market needs."
+    candidate_interventions:
+      - intervention_type: soft_downgrade
+        description: "Downgrade the current side when role pathway drift is elevated."
+      - intervention_type: alternate_line_discovery
+        description: "Search for a better market aligned with the shifted role."
+    allowed_penalties_gates: [soft_downgrade, alternate_line_discovery, candidate_pool_reranking]
+    opposite_side_discovery_rules: [require_valid_price]
+    validation_segments: [ROLE_SHIFT_LOW_USAGE]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [box_score_role_inference, tiny_assist_changes]
+  - failure_mode_id: MINUTES_BAND_FAILURE
+    market_families: [PTS, TRB, AST, PRA]
+    candidate_symptoms: [narrow_margin_over, low_minutes_floor, wide_minutes_band]
+    required_pre_event_features: [expected_minutes_band_low, expected_minutes_band_high, minutes_floor_recent, rotation_volatility_score]
+    postgame_attribution_signals: [actual_minutes_below_band, minutes_shortfall, low_rotation_trust]
+    likely_causal_pathway: "The projection requires minutes the player never receives."
+    candidate_interventions:
+      - intervention_type: hard_gate
+        description: "Reject structurally unsafe minutes bands."
+      - intervention_type: forecastability_penalty
+        description: "Penalize uncertain minutes distributions."
+    allowed_penalties_gates: [hard_gate, forecastability_penalty, soft_downgrade]
+    opposite_side_discovery_rules: [require_valid_price]
+    validation_segments: [MINUTES_BAND_FAILURE]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [bench_role_noise, late_news_dependency]
+  - failure_mode_id: BLOWOUT_PULL_RISK
+    market_families: [PTS, TRB, AST, PRA, PARLAY]
+    candidate_symptoms: [starter_over, fragile_game_spread, high_blowout_sensitivity]
+    required_pre_event_features: [blowout_minutes_sensitivity, spread_proxy, bench_depth_proxy]
+    postgame_attribution_signals: [fourth_quarter_minutes_loss, game_not_competitive]
+    likely_causal_pathway: "The player loses fourth-quarter exposure in a non-competitive game."
+    candidate_interventions:
+      - intervention_type: scenario_stress_increase
+        description: "Increase downside stress for minutes-sensitive starter overs."
+    allowed_penalties_gates: [scenario_stress_increase, soft_downgrade]
+    opposite_side_discovery_rules: [require_valid_price]
+    validation_segments: [BLOWOUT_PULL_RISK]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [spread_noise, late_garbage_time_variance]
+  - failure_mode_id: FOUL_TROUBLE_RISK
+    market_families: [PTS, TRB, AST, PRA]
+    candidate_symptoms: [starter_over, elevated_foul_rate_risk]
+    required_pre_event_features: [foul_rate_minutes_loss_risk, matchup_foul_proxy]
+    postgame_attribution_signals: [actual_minutes_below_band, foul_count_spike]
+    likely_causal_pathway: "Early fouls reduce minutes and suppress volume."
+    candidate_interventions:
+      - intervention_type: forecastability_penalty
+        description: "Increase uncertainty when foul-risk context is elevated."
+    allowed_penalties_gates: [forecastability_penalty, soft_downgrade]
+    opposite_side_discovery_rules: [require_valid_price]
+    validation_segments: [FOUL_TROUBLE_RISK]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [rare-event_variance, matchup_proxy_noise]
+  - failure_mode_id: MARKET_PRICE_MISPLACEMENT
+    market_families: [PTS, TRB, AST, PRA, PARLAY]
+    candidate_symptoms: [weak_price_vs_model, break_even_above_stress_prob]
+    required_pre_event_features: [market_side_price, market_side_break_even, expected_win_rate]
+    postgame_attribution_signals: [negative_ev_realized, market_was_too_expensive]
+    likely_causal_pathway: "The side may be directionally correct but mispriced."
+    candidate_interventions:
+      - intervention_type: price_dependent_tier
+        description: "Downgrade or reject when price erases the edge."
+    allowed_penalties_gates: [price_dependent_tier, hard_gate]
+    opposite_side_discovery_rules: [require_valid_price]
+    validation_segments: [MARKET_PRICE_MISPLACEMENT]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [odds_feed_quality, stale_line_artifacts]
+  - failure_mode_id: MARKET_DISAGREEMENT
+    market_families: [PTS, TRB, AST, PRA, PARLAY]
+    candidate_symptoms: [book_disagreement, unstable_line, low_consensus]
+    required_pre_event_features: [market_books, price_dispersion_proxy]
+    postgame_attribution_signals: [line_moved_sharply, outcome_near_consensus_gap]
+    likely_causal_pathway: "The market itself is unresolved or unstable."
+    candidate_interventions:
+      - intervention_type: market_disagreement_penalty
+        description: "Penalize unstable, low-consensus markets."
+    allowed_penalties_gates: [market_disagreement_penalty, soft_downgrade]
+    opposite_side_discovery_rules: [require_valid_price]
+    validation_segments: [MARKET_DISAGREEMENT]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [book_count_noise, stale_data]
+  - failure_mode_id: ALT_LINE_MISFRAMING
+    market_families: [PTS, TRB, AST, PRA]
+    candidate_symptoms: [thin_main_line, high_push_risk, alternative_line_better_framed]
+    required_pre_event_features: [market_line, expected_push_rate, alt_line_proxy]
+    postgame_attribution_signals: [miss_by_hook, safer_alt_line_would_win]
+    likely_causal_pathway: "The edge exists, but the selected line is a poor framing of it."
+    candidate_interventions:
+      - intervention_type: alternate_line_discovery
+        description: "Search for a better alt line instead of forcing the posted line."
+    allowed_penalties_gates: [alternate_line_discovery, soft_downgrade]
+    opposite_side_discovery_rules: [require_valid_price]
+    validation_segments: [ALT_LINE_MISFRAMING]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [post_hoc_alt_line_fitting, hook_chasing]
+  - failure_mode_id: OPPOSITE_SIDE_SIGNAL
+    market_families: [PTS, TRB, AST, PRA]
+    candidate_symptoms: [over_penalized, under_has_edge, opposite_probability_gap]
+    required_pre_event_features: [opposite_side_candidate_flag, opposite_side_break_even, opposite_side_lcb_edge]
+    postgame_attribution_signals: [opposite_side_would_win, selected_side_loss]
+    likely_causal_pathway: "The stronger signal is on the opposite side, not the selected side."
+    candidate_interventions:
+      - intervention_type: opposite_side_discovery
+        description: "Promote the opposite side only when price and forecastability both clear the bar."
+    allowed_penalties_gates: [opposite_side_discovery, candidate_pool_reranking]
+    opposite_side_discovery_rules: [require_valid_price, require_break_even_win, require_positive_lcb]
+    validation_segments: [TRB_UNDER_FROM_OPPOSITE_SIDE_DISCOVERY, OPPOSITE_SIDE_SIGNAL]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [silently_flipping_sides, price_unavailability]
+  - failure_mode_id: SAME_EVENT_SUPPLY_CONFLICT
+    market_families: [TRB, AST, PTS, PRA, PARLAY]
+    candidate_symptoms: [same_game_over_stack, shared_supply_dependency]
+    required_pre_event_features: [game_key, same_team_cluster_proxy, supply_dependency_score]
+    postgame_attribution_signals: [multiple_same_game_legs_fail_together]
+    likely_causal_pathway: "Several legs rely on the same underlying event supply that does not materialize."
+    candidate_interventions:
+      - intervention_type: parlay_shared_failure_veto
+        description: "Reduce shared event-supply concentration inside the board."
+    allowed_penalties_gates: [parlay_shared_failure_veto, board_objective_penalty_term]
+    opposite_side_discovery_rules: [require_valid_price]
+    validation_segments: [SAME_EVENT_SUPPLY_CONFLICT]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [same_game_bias, correlation_underestimation]
+  - failure_mode_id: PARLAY_SHARED_FAILURE_CLUSTER
+    market_families: [PARLAY]
+    candidate_symptoms: [correlated_stack, same_team_overs, same_script_cluster]
+    required_pre_event_features: [game_key, script_cluster_id, board_shadow_score_v2]
+    postgame_attribution_signals: [multi_leg_parlay_collapse]
+    likely_causal_pathway: "Several board legs fail together because they share the same script requirement."
+    candidate_interventions:
+      - intervention_type: parlay_shared_failure_veto
+        description: "Add shared-failure burden to parlay construction."
+    allowed_penalties_gates: [parlay_shared_failure_veto, board_objective_penalty_term]
+    opposite_side_discovery_rules: [require_valid_price]
+    validation_segments: [PARLAY_SHARED_FAILURE_CLUSTER]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [cluster_over-pruning, false_correlation]
+  - failure_mode_id: PLAYER_STATE_UNFORECASTABLE
+    market_families: [PTS, TRB, AST, PRA]
+    candidate_symptoms: [low_coach_trust, unstable_rotation, thin_history]
+    required_pre_event_features: [coach_trust_score, rotation_volatility_score, history_rows]
+    postgame_attribution_signals: [unexpected_role_state, noisy_minutes_distribution]
+    likely_causal_pathway: "The player state is too unstable for the model to forecast confidently."
+    candidate_interventions:
+      - intervention_type: forecastability_penalty
+        description: "Reduce confidence or block when player state becomes unforecastable."
+    allowed_penalties_gates: [forecastability_penalty, hard_gate, soft_downgrade]
+    opposite_side_discovery_rules: [require_valid_price]
+    validation_segments: [PLAYER_STATE_UNFORECASTABLE]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [small_sample_instability, late_news_dependency]
+  - failure_mode_id: OPPONENT_SCHEME_DISRUPTION
+    market_families: [PTS, AST, PRA]
+    candidate_symptoms: [trap_blitz_risk, scheme-sensitive_star]
+    required_pre_event_features: [opponent_scheme_proxy, role_pathway_shift_score]
+    postgame_attribution_signals: [shot_profile_disruption, assist_pathway_removed]
+    likely_causal_pathway: "The opponent scheme pushes the player into a different role or removes the needed pathway."
+    candidate_interventions:
+      - intervention_type: scenario_stress_increase
+        description: "Stress overs that rely on a scheme-sensitive pathway."
+    allowed_penalties_gates: [scenario_stress_increase, soft_downgrade]
+    opposite_side_discovery_rules: [require_valid_price]
+    validation_segments: [OPPONENT_SCHEME_DISRUPTION]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [scheme_proxy_uncertainty, matchup_storytelling]
+  - failure_mode_id: GAME_SCRIPT_DEPENDENCY
+    market_families: [PTS, TRB, AST, PRA, PARLAY]
+    candidate_symptoms: [requires_perfect_script, narrow_pathway]
+    required_pre_event_features: [script_cluster_id, volatility_score, expected_push_rate]
+    postgame_attribution_signals: [script_never_occurs, miss_by_volume_shortfall]
+    likely_causal_pathway: "The market only wins in a narrow script that does not materialize."
+    candidate_interventions:
+      - intervention_type: board_objective_penalty_term
+        description: "Penalize perfect-script dependency during final board selection."
+    allowed_penalties_gates: [board_objective_penalty_term, soft_downgrade, candidate_pool_reranking]
+    opposite_side_discovery_rules: [require_valid_price]
+    validation_segments: [GAME_SCRIPT_DEPENDENCY]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [script_label_noise, over-conservative_pruning]
+  - failure_mode_id: CALIBRATION_OVERCONFIDENCE
+    market_families: [PTS, TRB, AST, PRA, PARLAY]
+    candidate_symptoms: [high_predicted_prob, poor_realized_hit_rate, weak_calibration]
+    required_pre_event_features: [expected_win_rate, board_play_win_prob, posterior_variance]
+    postgame_attribution_signals: [high_confidence_losses, poor_brier, poor_ece]
+    likely_causal_pathway: "The selector is too confident in a region that does not calibrate well."
+    candidate_interventions:
+      - intervention_type: calibration_shrink
+        description: "Shrink overconfident probabilities in the weak region."
+      - intervention_type: candidate_pool_reranking
+        description: "Demote overconfident weakly calibrated candidates."
+    allowed_penalties_gates: [calibration_shrink, candidate_pool_reranking, board_objective_penalty_term]
+    opposite_side_discovery_rules: [require_valid_price]
+    validation_segments: [CALIBRATION_OVERCONFIDENCE]
+    promotion_requirements: [trained_bundle_replay_required, broader_walk_forward_required, no_op_narrowness_required, active_window_improvement_required]
+    known_risks_overfit_traps: [small_bucket_calibration, chasing_noise]

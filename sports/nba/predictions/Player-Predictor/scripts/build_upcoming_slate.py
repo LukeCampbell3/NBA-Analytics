@@ -28,9 +28,13 @@ import pandas as pd
 import sys
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "inference"))
 
 from structured_stack_inference import StructuredStackInference  # noqa: E402
+from research.market_quality.event_time_resolver import resolve_event_times  # noqa: E402
+from research.market_quality.price_provenance_schema import derive_snapshot_id, load_market_snapshot_manifest  # noqa: E402
 
 
 DATA_DIR = REPO_ROOT / "Data-Proc"
@@ -38,6 +42,20 @@ MODEL_DIR = REPO_ROOT / "model"
 DEFAULT_MARKET_WIDE = REPO_ROOT / "data copy" / "raw" / "market_odds" / "nba" / "latest_player_props_wide.parquet"
 DEFAULT_TARGET_PREDICTION_CALIBRATOR = REPO_ROOT / "model" / "analysis" / "calibration" / "short_term_target_prediction_calibrator.json"
 TARGETS = ["PTS", "TRB", "AST"]
+REBOUND_ENV_COLUMNS = [
+    "Date",
+    "TRB",
+    "AST",
+    "MP",
+    "FGA",
+    "FG%",
+    "FTA",
+    "FT%",
+    "Did_Not_Play",
+    "MATCHUP",
+    "Opponent",
+]
+REBOUND_RECENT_WINDOW = 12
 
 # Covers feed uses first-initial names (e.g., J_Brunson); these disambiguate
 # rare collisions where multiple players share the same initial + last name.
@@ -150,6 +168,452 @@ def team_abbr_from_matchup(value: str | None) -> str | None:
     return match.group(1) if match else None
 
 
+def latest_player_id(history_df: pd.DataFrame) -> float:
+    for column in ["Player_ID", "PLAYER_ID", "player_id"]:
+        if column not in history_df.columns:
+            continue
+        numeric = pd.to_numeric(history_df[column], errors="coerce").dropna()
+        if not numeric.empty:
+            return float(numeric.iloc[-1])
+    return np.nan
+
+
+def _coerce_rate(series: pd.Series) -> pd.Series:
+    out = pd.to_numeric(series, errors="coerce")
+    if not out.dropna().empty and float((out.dropna() > 1.0).mean()) >= 0.50:
+        out = out / 100.0
+    return out.clip(lower=0.0, upper=1.0)
+
+
+def _weighted_recent_mean(values: pd.Series, window: int = REBOUND_RECENT_WINDOW) -> float:
+    cleaned = pd.to_numeric(values, errors="coerce").dropna()
+    if cleaned.empty:
+        return np.nan
+    tail = cleaned.tail(min(int(window), len(cleaned)))
+    weights = np.linspace(1.0, 2.0, len(tail), dtype="float64")
+    return float(np.average(tail.to_numpy(dtype="float64"), weights=weights))
+
+
+def _score_from_scale(value: float, lower: float, upper: float, default: float = 0.50) -> float:
+    if not np.isfinite(value) or not np.isfinite(lower) or not np.isfinite(upper):
+        return float(default)
+    span = float(upper) - float(lower)
+    if span <= 1e-9:
+        return float(default)
+    return float(np.clip((float(value) - float(lower)) / span, 0.0, 1.0))
+
+
+@lru_cache(maxsize=4)
+def load_rebound_environment_context(season: int) -> dict[str, Any]:
+    frames: list[pd.DataFrame] = []
+    for player_dir in DATA_DIR.iterdir():
+        if not player_dir.is_dir():
+            continue
+        csv_path = player_dir / f"{season}_processed_processed.csv"
+        if not csv_path.exists():
+            continue
+        try:
+            frame = pd.read_csv(csv_path, usecols=lambda name: name in REBOUND_ENV_COLUMNS)
+        except ValueError:
+            frame = pd.read_csv(csv_path)
+            keep = [name for name in REBOUND_ENV_COLUMNS if name in frame.columns]
+            if not keep:
+                continue
+            frame = frame[keep].copy()
+        if frame.empty or "Date" not in frame.columns or "MATCHUP" not in frame.columns:
+            continue
+        frame["source_player"] = player_dir.name
+        frames.append(frame)
+
+    if not frames:
+        return {
+            "team_games": pd.DataFrame(),
+            "team_recent_lookup": {},
+            "missed_fga_scale": (np.nan, np.nan),
+            "rebound_event_scale": (np.nan, np.nan),
+            "team_leakage_default": 0.50,
+        }
+
+    env = pd.concat(frames, ignore_index=True, sort=False)
+    env["Date"] = pd.to_datetime(env["Date"], errors="coerce")
+    env["team_abbr"] = env.get("MATCHUP", pd.Series("", index=env.index)).map(team_abbr_from_matchup)
+    env["opponent_abbr"] = (
+        env.get("Opponent", pd.Series("", index=env.index))
+        .fillna("")
+        .astype(str)
+        .str.upper()
+        .str.strip()
+    )
+    did_not_play = pd.to_numeric(env.get("Did_Not_Play"), errors="coerce").fillna(0.0)
+    env = env.loc[env["Date"].notna() & env["team_abbr"].notna() & (did_not_play < 0.5)].copy()
+    if env.empty:
+        return {
+            "team_games": pd.DataFrame(),
+            "team_recent_lookup": {},
+            "missed_fga_scale": (np.nan, np.nan),
+            "rebound_event_scale": (np.nan, np.nan),
+            "team_leakage_default": 0.50,
+        }
+
+    env["TRB"] = pd.to_numeric(env.get("TRB"), errors="coerce").fillna(0.0).clip(lower=0.0)
+    env["AST"] = pd.to_numeric(env.get("AST"), errors="coerce").fillna(0.0).clip(lower=0.0)
+    env["FGA"] = pd.to_numeric(env.get("FGA"), errors="coerce").fillna(0.0).clip(lower=0.0)
+    env["FTA"] = pd.to_numeric(env.get("FTA"), errors="coerce").fillna(0.0).clip(lower=0.0)
+    env["FG%"] = _coerce_rate(env.get("FG%", pd.Series(np.nan, index=env.index)))
+    env["FT%"] = _coerce_rate(env.get("FT%", pd.Series(np.nan, index=env.index)))
+    env["MP"] = pd.to_numeric(env.get("MP"), errors="coerce").fillna(0.0).clip(lower=0.0)
+    env["missed_fga"] = (env["FGA"] * (1.0 - env["FG%"])).clip(lower=0.0)
+    env["missed_fta"] = (env["FTA"] * (1.0 - env["FT%"])).clip(lower=0.0)
+    env["rebound_events_proxy"] = (env["missed_fga"] + 0.44 * env["missed_fta"]).clip(lower=0.0)
+
+    team_games = (
+        env.groupby(["Date", "team_abbr"], as_index=False)
+        .agg(
+            team_total_trb=("TRB", "sum"),
+            team_total_ast=("AST", "sum"),
+            team_total_minutes=("MP", "sum"),
+            team_total_missed_fga=("missed_fga", "sum"),
+            team_total_missed_fta=("missed_fta", "sum"),
+            team_total_rebound_events=("rebound_events_proxy", "sum"),
+            team_fg_pct=("FG%", "mean"),
+        )
+        .sort_values(["team_abbr", "Date"])
+        .reset_index(drop=True)
+    )
+    opponent_map = (
+        env.groupby(["Date", "team_abbr"])["opponent_abbr"]
+        .agg(lambda values: next((str(item) for item in values if str(item).strip()), ""))
+        .reset_index(name="opponent_abbr")
+    )
+    team_games = team_games.merge(opponent_map, on=["Date", "team_abbr"], how="left")
+
+    player_team_games = env[["Date", "team_abbr", "source_player", "TRB"]].copy()
+    player_team_games = player_team_games.merge(
+        team_games[["Date", "team_abbr", "team_total_trb"]],
+        on=["Date", "team_abbr"],
+        how="left",
+    )
+    player_team_games["rebound_share"] = np.where(
+        player_team_games["team_total_trb"] > 0.0,
+        player_team_games["TRB"] / player_team_games["team_total_trb"],
+        np.nan,
+    )
+
+    leakage_rows: list[dict[str, Any]] = []
+    for (date_value, team_abbr), group in player_team_games.groupby(["Date", "team_abbr"], sort=False):
+        shares = pd.to_numeric(group["rebound_share"], errors="coerce").fillna(0.0).to_numpy(dtype="float64")
+        shares = np.sort(shares)[::-1]
+        top_two_share = float(shares[:2].sum()) if shares.size else 0.0
+        leakage_rows.append(
+            {
+                "Date": date_value,
+                "team_abbr": team_abbr,
+                "wing_rebound_leakage_score": float(np.clip(1.0 - top_two_share, 0.0, 1.0)),
+            }
+        )
+    leakage_df = pd.DataFrame.from_records(leakage_rows)
+    if not leakage_df.empty:
+        team_games = team_games.merge(leakage_df, on=["Date", "team_abbr"], how="left")
+    else:
+        team_games["wing_rebound_leakage_score"] = 0.50
+    team_games["wing_rebound_leakage_score"] = pd.to_numeric(
+        team_games.get("wing_rebound_leakage_score"),
+        errors="coerce",
+    ).fillna(0.50)
+
+    recent_rows: list[dict[str, Any]] = []
+    for team_abbr, group in team_games.groupby("team_abbr", sort=False):
+        ordered = group.sort_values("Date")
+        recent_rows.append(
+            {
+                "team_abbr": team_abbr,
+                "projected_missed_fga": _weighted_recent_mean(ordered["team_total_missed_fga"]),
+                "projected_missed_fta": _weighted_recent_mean(ordered["team_total_missed_fta"]),
+                "projected_rebound_events": _weighted_recent_mean(ordered["team_total_rebound_events"]),
+                "projected_wing_rebound_leakage": _weighted_recent_mean(ordered["wing_rebound_leakage_score"]),
+                "projected_fg_pct": _weighted_recent_mean(ordered["team_fg_pct"]),
+            }
+        )
+    recent_df = pd.DataFrame.from_records(recent_rows)
+    if recent_df.empty:
+        return {
+            "team_games": team_games,
+            "team_recent_lookup": {},
+            "missed_fga_scale": (np.nan, np.nan),
+            "rebound_event_scale": (np.nan, np.nan),
+            "team_leakage_default": 0.50,
+        }
+
+    missed_low = float(recent_df["projected_missed_fga"].quantile(0.15))
+    missed_high = float(recent_df["projected_missed_fga"].quantile(0.85))
+    rebound_low = float(recent_df["projected_rebound_events"].quantile(0.15))
+    rebound_high = float(recent_df["projected_rebound_events"].quantile(0.85))
+    leakage_default = float(
+        pd.to_numeric(recent_df.get("projected_wing_rebound_leakage"), errors="coerce").fillna(0.50).median()
+    )
+    return {
+        "team_games": team_games,
+        "team_recent_lookup": recent_df.set_index("team_abbr").to_dict(orient="index"),
+        "missed_fga_scale": (missed_low, missed_high),
+        "rebound_event_scale": (rebound_low, rebound_high),
+        "team_leakage_default": leakage_default,
+    }
+
+
+def build_rebound_diagnostics(
+    history_df: pd.DataFrame,
+    env_context: dict[str, Any],
+    market_home_team: str | None,
+    market_away_team: str | None,
+) -> dict[str, Any]:
+    default = {
+        "projected_team_missed_fga": np.nan,
+        "projected_opponent_missed_fga": np.nan,
+        "projected_team_missed_fta": np.nan,
+        "projected_opponent_missed_fta": np.nan,
+        "projected_missed_fga_total": np.nan,
+        "projected_missed_fta_total": np.nan,
+        "projected_available_rebound_events": np.nan,
+        "expected_rebound_chances": np.nan,
+        "team_rebound_pool_size": np.nan,
+        "pace_rebound_environment": 0.50,
+        "long_rebound_profile": 0.50,
+        "free_throw_rebound_suppression": 0.0,
+        "rebound_supply_score": 0.50,
+        "rebound_share_estimate": np.nan,
+        "rebound_share_stability": 0.50,
+        "rebound_share_stability_score": 0.50,
+        "player_team_rebound_share_recent": np.nan,
+        "player_rebound_share_std": np.nan,
+        "teammate_rebound_competition": 0.50,
+        "teammate_rebound_competition_score": 0.50,
+        "center_rebound_share_pressure": 0.50,
+        "frontcourt_rebound_overlap_score": 0.50,
+        "team_shooting_efficiency_stress": 0.50,
+        "opponent_shooting_efficiency_stress": 0.50,
+        "projected_team_fg_pct": np.nan,
+        "projected_opponent_fg_pct": np.nan,
+        "wing_rebound_leakage_score": float(env_context.get("team_leakage_default", 0.50)),
+        "recent_games_count": 0,
+        "trb_median_recent": np.nan,
+        "trb_q75_recent": np.nan,
+        "trb_q90_recent": np.nan,
+        "minutes_floor_recent": np.nan,
+        "minutes_p25_recent": np.nan,
+        "minutes_median_recent": np.nan,
+        "minutes_range_recent": np.nan,
+        "expected_minutes_band_low": np.nan,
+        "expected_minutes_band_high": np.nan,
+        "expected_minutes_band_width": np.nan,
+        "bench_role_flag": False,
+        "starter_status_recent": np.nan,
+        "starter_status_change_count": 0,
+        "rotation_volatility_score": 0.50,
+        "blowout_minutes_sensitivity": 0.50,
+        "foul_rate_minutes_loss_risk": np.nan,
+        "coach_trust_score": np.nan,
+    }
+
+    if history_df.empty:
+        return default
+
+    active = history_df.copy()
+    if "Date" in active.columns:
+        active["Date"] = pd.to_datetime(active["Date"], errors="coerce")
+        active = active.loc[active["Date"].notna()].copy()
+    if "Did_Not_Play" in active.columns:
+        active = active.loc[pd.to_numeric(active["Did_Not_Play"], errors="coerce").fillna(0.0) < 0.5].copy()
+    if active.empty:
+        return default
+
+    active["team_abbr"] = active.get("MATCHUP", pd.Series("", index=active.index)).map(team_abbr_from_matchup)
+    active["TRB"] = pd.to_numeric(active.get("TRB"), errors="coerce")
+    active = active.loc[active["team_abbr"].notna()].copy()
+    if active.empty:
+        return default
+
+    latest_row = active.sort_values("Date").iloc[-1]
+    player_team = latest_row.get("team_abbr")
+    opponent_team = str(latest_row.get("Opponent", "")).upper().strip() if pd.notna(latest_row.get("Opponent")) else ""
+    if not player_team:
+        market_teams = [str(team).upper().strip() for team in [market_home_team, market_away_team] if team]
+        if len(market_teams) == 2 and opponent_team in market_teams:
+            player_team = market_teams[0] if market_teams[1] == opponent_team else market_teams[1]
+    if not opponent_team:
+        market_teams = [str(team).upper().strip() for team in [market_home_team, market_away_team] if team]
+        if len(market_teams) == 2 and player_team in market_teams:
+            opponent_team = market_teams[0] if market_teams[1] == player_team else market_teams[1]
+
+    trb_values = pd.to_numeric(active["TRB"], errors="coerce").dropna()
+    if not trb_values.empty:
+        recent_trb = trb_values.tail(min(REBOUND_RECENT_WINDOW, len(trb_values)))
+        default["recent_games_count"] = int(len(recent_trb))
+        default["trb_median_recent"] = float(recent_trb.quantile(0.50))
+        default["trb_q75_recent"] = float(recent_trb.quantile(0.75))
+        default["trb_q90_recent"] = float(recent_trb.quantile(0.90))
+
+    minutes_values = pd.to_numeric(active.get("MP"), errors="coerce").dropna()
+    if not minutes_values.empty:
+        recent_minutes = minutes_values.tail(min(REBOUND_RECENT_WINDOW, len(minutes_values)))
+        minutes_floor = float(recent_minutes.min())
+        minutes_p25 = float(recent_minutes.quantile(0.25))
+        minutes_median = float(recent_minutes.quantile(0.50))
+        minutes_p75 = float(recent_minutes.quantile(0.75))
+        minutes_range = float(recent_minutes.max() - recent_minutes.min())
+        starter_like = (recent_minutes >= 24.0).astype(int)
+        starter_changes = int((starter_like.diff().fillna(0).abs() > 0).sum())
+        starter_recent = float(starter_like.tail(min(5, len(starter_like))).mean()) if len(starter_like) else np.nan
+        change_rate = float(starter_changes / max(len(recent_minutes) - 1, 1))
+        rotation_volatility = float(
+            np.clip(
+                0.40 * (max(0.0, minutes_p75 - minutes_p25) / 10.0)
+                + 0.35 * (minutes_range / 18.0)
+                + 0.25 * change_rate,
+                0.0,
+                1.0,
+            )
+        )
+        blowout_sensitivity = float(np.clip(max(0.0, minutes_median - minutes_floor) / max(10.0, minutes_median), 0.0, 1.0))
+        low_minutes_share = float((recent_minutes <= max(16.0, minutes_median - 8.0)).mean())
+        coach_trust = float(np.clip((minutes_median / 34.0) * (1.0 - 0.45 * rotation_volatility), 0.0, 1.0))
+        default.update(
+            {
+                "minutes_floor_recent": minutes_floor,
+                "minutes_p25_recent": minutes_p25,
+                "minutes_median_recent": minutes_median,
+                "minutes_range_recent": minutes_range,
+                "expected_minutes_band_low": minutes_p25,
+                "expected_minutes_band_high": minutes_p75,
+                "expected_minutes_band_width": float(max(0.0, minutes_p75 - minutes_p25)),
+                "bench_role_flag": bool(minutes_median < 24.0 or minutes_p75 < 26.0),
+                "starter_status_recent": starter_recent,
+                "starter_status_change_count": starter_changes,
+                "rotation_volatility_score": rotation_volatility,
+                "blowout_minutes_sensitivity": blowout_sensitivity,
+                "foul_rate_minutes_loss_risk": float(np.clip(0.60 * low_minutes_share + 0.40 * rotation_volatility, 0.0, 1.0)),
+                "coach_trust_score": coach_trust,
+            }
+        )
+
+    team_games = env_context.get("team_games")
+    if isinstance(team_games, pd.DataFrame) and not team_games.empty:
+        merged = active.merge(
+            team_games[["Date", "team_abbr", "team_total_trb"]],
+            on=["Date", "team_abbr"],
+            how="left",
+        )
+        merged["rebound_share"] = np.where(
+            pd.to_numeric(merged["team_total_trb"], errors="coerce").fillna(0.0) > 0.0,
+            pd.to_numeric(merged["TRB"], errors="coerce").fillna(0.0) / pd.to_numeric(merged["team_total_trb"], errors="coerce").fillna(np.nan),
+            np.nan,
+        )
+        rebound_share = pd.to_numeric(merged.get("rebound_share"), errors="coerce").dropna()
+        if not rebound_share.empty:
+            share_recent = rebound_share.tail(min(REBOUND_RECENT_WINDOW, len(rebound_share)))
+            share_estimate = _weighted_recent_mean(share_recent)
+            share_std = float(share_recent.std(ddof=0)) if len(share_recent) > 1 else 0.0
+            default["rebound_share_estimate"] = share_estimate
+            default["rebound_share_stability"] = float(np.clip(1.0 - (share_std / 0.12), 0.0, 1.0))
+            default["rebound_share_stability_score"] = default["rebound_share_stability"]
+            default["player_team_rebound_share_recent"] = share_estimate
+            default["player_rebound_share_std"] = share_std
+            if np.isfinite(share_estimate):
+                default["teammate_rebound_competition"] = float(np.clip(1.0 - share_estimate, 0.0, 1.0))
+                default["teammate_rebound_competition_score"] = default["teammate_rebound_competition"]
+
+    team_recent_lookup = env_context.get("team_recent_lookup", {})
+    team_projection = team_recent_lookup.get(player_team, {}) if isinstance(team_recent_lookup, dict) else {}
+    opponent_projection = team_recent_lookup.get(opponent_team, {}) if isinstance(team_recent_lookup, dict) else {}
+
+    projected_team_missed = float(team_projection.get("projected_missed_fga", np.nan))
+    projected_opp_missed = float(opponent_projection.get("projected_missed_fga", np.nan))
+    projected_team_missed_fta = float(team_projection.get("projected_missed_fta", np.nan))
+    projected_opp_missed_fta = float(opponent_projection.get("projected_missed_fta", np.nan))
+    projected_team_events = float(team_projection.get("projected_rebound_events", np.nan))
+    projected_opp_events = float(opponent_projection.get("projected_rebound_events", np.nan))
+    if np.isfinite(projected_team_events) and np.isfinite(projected_opp_events):
+        default["projected_available_rebound_events"] = float(projected_team_events + projected_opp_events)
+    elif np.isfinite(projected_team_events):
+        default["projected_available_rebound_events"] = projected_team_events
+    elif np.isfinite(projected_opp_events):
+        default["projected_available_rebound_events"] = projected_opp_events
+
+    default["projected_team_missed_fga"] = projected_team_missed
+    default["projected_opponent_missed_fga"] = projected_opp_missed
+    default["projected_team_missed_fta"] = projected_team_missed_fta
+    default["projected_opponent_missed_fta"] = projected_opp_missed_fta
+    default["projected_team_fg_pct"] = float(team_projection.get("projected_fg_pct", np.nan))
+    default["projected_opponent_fg_pct"] = float(opponent_projection.get("projected_fg_pct", np.nan))
+
+    if np.isfinite(projected_team_missed) or np.isfinite(projected_opp_missed):
+        default["projected_missed_fga_total"] = float(
+            np.nansum([projected_team_missed if np.isfinite(projected_team_missed) else np.nan, projected_opp_missed if np.isfinite(projected_opp_missed) else np.nan])
+        )
+    if np.isfinite(projected_team_missed_fta) or np.isfinite(projected_opp_missed_fta):
+        default["projected_missed_fta_total"] = float(
+            np.nansum(
+                [
+                    projected_team_missed_fta if np.isfinite(projected_team_missed_fta) else np.nan,
+                    projected_opp_missed_fta if np.isfinite(projected_opp_missed_fta) else np.nan,
+                ]
+            )
+        )
+
+    missed_low, missed_high = env_context.get("missed_fga_scale", (np.nan, np.nan))
+    rebound_low, rebound_high = env_context.get("rebound_event_scale", (np.nan, np.nan))
+    team_miss_score = _score_from_scale(projected_team_missed, missed_low, missed_high)
+    opp_miss_score = _score_from_scale(projected_opp_missed, missed_low, missed_high)
+    default["team_shooting_efficiency_stress"] = float(np.clip(1.0 - team_miss_score, 0.0, 1.0))
+    default["opponent_shooting_efficiency_stress"] = float(np.clip(1.0 - opp_miss_score, 0.0, 1.0))
+
+    if np.isfinite(default["projected_available_rebound_events"]):
+        default["rebound_supply_score"] = _score_from_scale(
+            float(default["projected_available_rebound_events"]) / 2.0,
+            rebound_low,
+            rebound_high,
+        )
+    else:
+        default["rebound_supply_score"] = float(np.clip(0.50 * team_miss_score + 0.50 * opp_miss_score, 0.0, 1.0))
+    default["expected_rebound_chances"] = default["projected_available_rebound_events"]
+    default["pace_rebound_environment"] = default["rebound_supply_score"]
+
+    leakage_default = float(env_context.get("team_leakage_default", 0.50))
+    default["wing_rebound_leakage_score"] = float(
+        pd.to_numeric(pd.Series([team_projection.get("projected_wing_rebound_leakage", leakage_default)]), errors="coerce")
+        .fillna(leakage_default)
+        .iloc[0]
+    )
+    opponent_leakage = float(
+        pd.to_numeric(pd.Series([opponent_projection.get("projected_wing_rebound_leakage", leakage_default)]), errors="coerce")
+        .fillna(leakage_default)
+        .iloc[0]
+    )
+    default["long_rebound_profile"] = float(np.clip(0.55 * default["wing_rebound_leakage_score"] + 0.45 * opponent_leakage, 0.0, 1.0))
+    default["center_rebound_share_pressure"] = float(
+        np.clip(default["teammate_rebound_competition"] * (1.0 - default["wing_rebound_leakage_score"]), 0.0, 1.0)
+    )
+    default["frontcourt_rebound_overlap_score"] = float(
+        np.clip(0.55 * default["teammate_rebound_competition"] + 0.45 * default["center_rebound_share_pressure"], 0.0, 1.0)
+    )
+    if np.isfinite(projected_opp_events) or np.isfinite(projected_team_events):
+        defensive_pool = projected_opp_events if np.isfinite(projected_opp_events) else 0.0
+        offensive_pool = 0.35 * projected_team_events if np.isfinite(projected_team_events) else 0.0
+        default["team_rebound_pool_size"] = float(defensive_pool + offensive_pool)
+    total_miss_proxy = float(
+        np.nansum(
+            [
+                default["projected_missed_fga_total"] if np.isfinite(default["projected_missed_fga_total"]) else np.nan,
+                default["projected_missed_fta_total"] if np.isfinite(default["projected_missed_fta_total"]) else np.nan,
+            ]
+        )
+    )
+    if np.isfinite(total_miss_proxy) and total_miss_proxy > 0.0 and np.isfinite(default["projected_available_rebound_events"]):
+        default["free_throw_rebound_suppression"] = float(
+            np.clip(1.0 - (float(default["projected_available_rebound_events"]) / total_miss_proxy), 0.0, 1.0)
+        )
+    return default
+
+
 def resolve_manifest_path(run_id: str | None, latest: bool) -> Path:
     if run_id:
         return MODEL_DIR / "runs" / run_id / "lstm_v7_metadata.json"
@@ -172,6 +636,7 @@ def load_market_wide(path: Path) -> pd.DataFrame:
     df = df.copy()
     df["Player"] = df["Player"].astype(str).map(normalize_name)
     df["Market_Date"] = pd.to_datetime(df["Market_Date"], errors="coerce")
+    df = resolve_event_times(df)
     return df
 
 
@@ -289,11 +754,15 @@ def build_records(
     market_df: pd.DataFrame,
     season: int,
     target_prediction_calibrator_path: Path | None = None,
+    market_provenance_manifest: dict[str, Any] | None = None,
 ) -> tuple[list[dict], list[dict]]:
     records: list[dict] = []
     skipped: list[dict] = []
     player_csv_index = build_player_csv_index(season)
     target_prediction_calibrator = load_target_prediction_calibrator(target_prediction_calibrator_path)
+    rebound_env_context = load_rebound_environment_context(season)
+    market_manifest = dict(market_provenance_manifest or {})
+    market_provider = str(market_manifest.get("provider", "snapshot")).strip() or "snapshot"
 
     for _, market_row in market_df.iterrows():
         player = str(market_row["Player"])
@@ -345,14 +814,40 @@ def build_records(
                 }
             )
             continue
+        market_fetched_at_utc = market_row.get("Market_Fetched_At_UTC")
+        market_row_provider = str(market_row.get("Market_Provider", "")).strip() or market_provider
+        market_row_book = str(market_row.get("Market_Book", "")).strip() or "aggregate_market_snapshot"
+        market_price_source = str(market_row.get("Market_Price_Source", "")).strip() or "normalized_market_snapshot"
+        market_price_source_type = str(market_row.get("Market_Price_Source_Type", "")).strip() or (
+            "ARCHIVED_ENTRY" if pd.notna(market_fetched_at_utc) else "UNKNOWN"
+        )
+        market_snapshot_id = str(market_row.get("Market_Snapshot_ID", "")).strip() or derive_snapshot_id(
+            provider=market_row_provider,
+            odds_snapshot_time=market_fetched_at_utc,
+            fallback_label=str(market_row.get("Market_Event_ID", "")),
+        )
         record = {
             "player": player,
+            "player_id": latest_player_id(history_df),
+            "team": player_team,
+            "opponent": str(latest_row.get("Opponent", "")).strip() or None,
             "market_date": str(market_row["Market_Date"].date()) if pd.notna(market_row["Market_Date"]) else None,
             "market_player_raw": market_row.get("Market_Player_Raw"),
             "market_event_id": market_row.get("Market_Event_ID"),
             "market_commence_time_utc": market_row.get("Market_Commence_Time_UTC"),
+            "event_time_source": market_row.get("event_time_source"),
+            "event_time_confidence": market_row.get("event_time_confidence"),
+            "event_time_resolution_reason": market_row.get("event_time_resolution_reason"),
+            "event_time_resolution_warning": market_row.get("event_time_resolution_warning"),
             "market_home_team": market_home_team if pd.notna(market_home_team) else None,
             "market_away_team": market_away_team if pd.notna(market_away_team) else None,
+            "market_provider": market_row_provider,
+            "market_book": market_row_book,
+            "market_price_source": market_price_source,
+            "market_price_source_type": market_price_source_type,
+            "market_price_source_hint": market_price_source_type,
+            "market_snapshot_id": market_snapshot_id,
+            "market_fetched_at_utc": market_fetched_at_utc,
             "history_rows": int(len(history_df)),
             "last_history_date": str(pd.to_datetime(latest_row["Date"]).date()) if "Date" in latest_row.index and pd.notna(latest_row["Date"]) else None,
             "csv": str(csv_path),
@@ -364,6 +859,14 @@ def build_records(
             "fallback_blend": float(explanation.get("data_quality", {}).get("fallback_blend", 0.0)),
             "fallback_reasons": ",".join(explanation.get("data_quality", {}).get("fallback_reasons", [])),
         }
+        record.update(
+            build_rebound_diagnostics(
+                history_df,
+                rebound_env_context,
+                market_home_team if pd.notna(market_home_team) else None,
+                market_away_team if pd.notna(market_away_team) else None,
+            )
+        )
         for target in TARGETS:
             raw_pred_value = float(explanation["predicted"][target])
             baseline_value = float(explanation["baseline"][target])
@@ -394,6 +897,9 @@ def build_records(
             record[f"{target}_uncertainty_sigma"] = float(explanation["target_factors"][target].get("uncertainty_sigma", 0.0))
             record[f"{target}_spike_probability"] = float(explanation["target_factors"][target].get("spike_probability", 0.0))
             record[f"market_books_{target}"] = float(market_row.get(f"Market_{target}_books", np.nan)) if pd.notna(market_row.get(f"Market_{target}_books", np.nan)) else np.nan
+            record[f"market_over_price_{target}"] = float(market_row.get(f"Market_{target}_over_price", np.nan)) if pd.notna(market_row.get(f"Market_{target}_over_price", np.nan)) else np.nan
+            record[f"market_under_price_{target}"] = float(market_row.get(f"Market_{target}_under_price", np.nan)) if pd.notna(market_row.get(f"Market_{target}_under_price", np.nan)) else np.nan
+            record[f"market_line_std_{target}"] = float(market_row.get(f"Market_{target}_line_std", np.nan)) if pd.notna(market_row.get(f"Market_{target}_line_std", np.nan)) else np.nan
             record[f"prediction_calibration_applied_{target}"] = bool(calibration_meta["applied"])
             record[f"prediction_calibration_source_{target}"] = str(calibration_meta["source"])
             record[f"prediction_calibration_multiplier_{target}"] = float(calibration_meta["edge_multiplier"])
@@ -448,12 +954,14 @@ def main() -> None:
             ) from exc
         print(f"Warning: model inference unavailable, using heuristic fallback only ({predictor_error})")
     market_df = load_market_wide(args.market_wide_path)
+    market_provenance_manifest = load_market_snapshot_manifest(args.market_wide_path.resolve())
     calibrator_path = None if args.disable_target_prediction_calibration else args.target_prediction_calibrator_json
     records, skipped = build_records(
         predictor,
         market_df,
         args.season,
         target_prediction_calibrator_path=calibrator_path,
+        market_provenance_manifest=market_provenance_manifest,
     )
 
     if not records:
@@ -468,6 +976,7 @@ def main() -> None:
         "run_id": predictor.metadata.get("run_id") if predictor is not None else None,
         "predictor_error": predictor_error,
         "market_snapshot": str(args.market_wide_path),
+        "market_snapshot_provider": str(market_provenance_manifest.get("provider", "")),
         "season": args.season,
         "rows": int(len(results_df)),
         "skipped": skipped,

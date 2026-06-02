@@ -1,0 +1,46 @@
+safe_state_production_test:
+  enabled: true
+  ring: RING_1_PRODUCTION_SHADOW
+
+  live_provider:
+    provider: sportsgameodds
+    require_api_key: true
+    require_event_start_time: true
+    require_side_specific_price: true
+    snapshot_policy: live_only
+
+  production_behavior:
+    change_selector: false
+    enforce_safe_state: false
+    materialize_sidecar: false
+    allow_staking: false
+    allow_auto_bets: false
+
+  evidence:
+    write_ledgers: true
+    append_only: true
+    require_timestamp_safe_price: true
+    require_settlement_before_metrics: true
+    unresolved_status: PENDING
+
+  board_variants:
+    production_board_as_is: true
+    price_defense_only_board: true
+    forecastable_price_board: true
+    structural_misprice_board: true
+    safe_state_core_board: true
+    safe_state_near_core_board: true
+    true_unstable_shadow_rejections: true
+    needs_more_sample_queue: true
+
+  promotion:
+    promotion_ready: false
+    min_settled_slates: 20
+    min_resolved_safe_state_rows: 50
+    require_trained_bundle_validation: true
+    require_broader_walk_forward: true
+    require_loss_removal_gt_win_removal: true
+    require_brier_not_worse: true
+    require_ece_not_worse: true
+    require_roi_not_worse: true
+    require_no_coverage_collapse: true

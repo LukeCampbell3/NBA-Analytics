@@ -1,0 +1,285 @@
+{
+  "player": {
+    "id": "1642353",
+    "name": "Cam Christie",
+    "team": "LAC",
+    "season": 2026,
+    "age": 20.0,
+    "position": "Wing"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 44,
+      "minutes_per_game": 9.3,
+      "points_per_game": 3.1,
+      "rebounds_per_game": 1.5,
+      "assists_per_game": 0.6,
+      "steals_per_game": 0.3,
+      "blocks_per_game": 0.1,
+      "field_goal_pct": 0.381,
+      "three_point_pct": 0.261,
+      "free_throw_pct": 0.75
+    },
+    "advanced": {
+      "usage_rate": 0.171,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": -0.5
+    }
+  },
+  "identity": {
+    "primary_archetype": "versatile_wing",
+    "archetype_confidence": 0.62,
+    "secondary_archetypes": [
+      {
+        "name": "versatile_wing",
+        "probability": 0.62
+      },
+      {
+        "name": "connector",
+        "probability": 0.38
+      }
+    ],
+    "role_description": "Versatile Wing",
+    "usage_band": "low"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.227,
+    "mid_range_frequency": 0.402,
+    "three_point_frequency": 0.37,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 0.0,
+    "pick_and_roll_frequency": 0.0,
+    "drives_per_game": 3.5,
+    "paint_touches_per_game": 2.4,
+    "assisted_rate": 0.86,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.3,
+      "vs_wings": 0.6,
+      "vs_bigs": 0.1
+    },
+    "estimated_metrics": {
+      "defensive_rating": 116.2,
+      "defensive_ppp_allowed": 1.056,
+      "matchup_difficulty": 0.56,
+      "foul_rate": 0.194,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 6.9,
+    "opponent_defense_context": 0.516,
+    "team_context_adjustment": 0.022,
+    "intrinsic_value": 7.1,
+    "context_adjustment": 0.3,
+    "adjusted_value": 7.4,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition",
+    "formula": "intrinsic_value = intrinsic_offense * (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "interpretation_summary": "Intrinsic offense 6.9; adjusted value 7.4 per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 57.0,
+      "level": "low",
+      "factors": [
+        [
+          "sample_games",
+          "44 games"
+        ],
+        [
+          "minutes",
+          "9.3 MPG"
+        ],
+        [
+          "archetype_confidence",
+          "62%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 18,
+        "minutes": 6,
+        "data_quality": 15,
+        "archetype_confidence": 8,
+        "team_stability": 10
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.274,
+      "confidence_level": "medium",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 3.1,
+          "ci_low": 2.6,
+          "ci_high": 3.6,
+          "relative_error": 15.7
+        },
+        "assists": {
+          "mean": 0.6,
+          "ci_low": 0.5,
+          "ci_high": 0.7,
+          "relative_error": 15.7
+        },
+        "rebounds": {
+          "mean": 1.5,
+          "ci_low": 1.3,
+          "ci_high": 1.7,
+          "relative_error": 15.7
+        }
+      },
+      "sample_size_notes": "44 games, 9.3 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "medium",
+      "constraints": [
+        "Usage increase limited to +14%",
+        "Minutes increase limited to +10 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Versatile Wing role constraints"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.14,
+        "max_minutes_increase": 10.0,
+        "projected_usage_cap": 0.311,
+        "projected_minutes_cap": 19.3
+      },
+      "constraint_rationale": {
+        "archetype": "versatile_wing",
+        "position": "wing",
+        "three_point_frequency": 0.37,
+        "three_point_percentage": 0.261
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "1631110",
+        "name": "Jeremy Sochan",
+        "team": "NYK",
+        "similarity_score": 0.65,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 3.3,
+          "assists": 0.9,
+          "rebounds": 2.2
+        }
+      },
+      {
+        "id": "1642859",
+        "name": "Jase Richardson",
+        "team": "ORL",
+        "similarity_score": 0.63,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 4.6,
+          "assists": 1.2,
+          "rebounds": 1.2
+        }
+      },
+      {
+        "id": "1631103",
+        "name": "Malaki Branham",
+        "team": "WAS",
+        "similarity_score": 0.62,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 4.6,
+          "assists": 0.8,
+          "rebounds": 1.6
+        }
+      },
+      {
+        "id": "1631159",
+        "name": "Leonard Miller",
+        "team": "CHI",
+        "similarity_score": 0.6,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 4.6,
+          "assists": 0.5,
+          "rebounds": 2.5
+        }
+      },
+      {
+        "id": "1642358",
+        "name": "AJ Johnson",
+        "team": "DAL",
+        "similarity_score": 0.58,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 2.8,
+          "assists": 0.9,
+          "rebounds": 1.2
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "stable"
+  },
+  "metadata": {
+    "generated_at": "2026-03-14T18:12:47.468847",
+    "data_version": "v1.2_refresh",
+    "generation_method": "nba_api_2025_26_refresh",
+    "quality_notes": "Season refresh with inferred mechanism fields",
+    "final_enhanced_at": "2026-03-14T18:12:47.468847"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    }
+  ]
+}

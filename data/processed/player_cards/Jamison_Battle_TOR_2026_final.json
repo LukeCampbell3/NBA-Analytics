@@ -1,0 +1,285 @@
+{
+  "player": {
+    "id": "1642419",
+    "name": "Jamison Battle",
+    "team": "TOR",
+    "season": 2026,
+    "age": 24.0,
+    "position": "Wing"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 49,
+      "minutes_per_game": 8.5,
+      "points_per_game": 2.9,
+      "rebounds_per_game": 1.5,
+      "assists_per_game": 0.4,
+      "steals_per_game": 0.1,
+      "blocks_per_game": 0.0,
+      "field_goal_pct": 0.505,
+      "three_point_pct": 0.415,
+      "free_throw_pct": 0.667
+    },
+    "advanced": {
+      "usage_rate": 0.133,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": 2.1
+    }
+  },
+  "identity": {
+    "primary_archetype": "stationary_shooter",
+    "archetype_confidence": 0.59,
+    "secondary_archetypes": [
+      {
+        "name": "stationary_shooter",
+        "probability": 0.59
+      },
+      {
+        "name": "movement_shooter",
+        "probability": 0.41
+      }
+    ],
+    "role_description": "Stationary Shooter",
+    "usage_band": "low"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.093,
+    "mid_range_frequency": 0.317,
+    "three_point_frequency": 0.591,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 0.0,
+    "pick_and_roll_frequency": 0.0,
+    "drives_per_game": 2.8,
+    "paint_touches_per_game": 1.2,
+    "assisted_rate": 0.86,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.3,
+      "vs_wings": 0.6,
+      "vs_bigs": 0.1
+    },
+    "estimated_metrics": {
+      "defensive_rating": 118.5,
+      "defensive_ppp_allowed": 1.077,
+      "matchup_difficulty": 0.56,
+      "foul_rate": 0.371,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 5.8,
+    "opponent_defense_context": 0.434,
+    "team_context_adjustment": 0.089,
+    "intrinsic_value": 6.3,
+    "context_adjustment": -1.3,
+    "adjusted_value": 5.0,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition",
+    "formula": "intrinsic_value = intrinsic_offense * (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "interpretation_summary": "Intrinsic offense 5.8; adjusted value 5.0 per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 58.0,
+      "level": "low",
+      "factors": [
+        [
+          "sample_games",
+          "49 games"
+        ],
+        [
+          "minutes",
+          "8.5 MPG"
+        ],
+        [
+          "archetype_confidence",
+          "59%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 20,
+        "minutes": 6,
+        "data_quality": 15,
+        "archetype_confidence": 7,
+        "team_stability": 10
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.263,
+      "confidence_level": "medium",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 2.9,
+          "ci_low": 2.5,
+          "ci_high": 3.3,
+          "relative_error": 15.4
+        },
+        "assists": {
+          "mean": 0.4,
+          "ci_low": 0.3,
+          "ci_high": 0.5,
+          "relative_error": 15.4
+        },
+        "rebounds": {
+          "mean": 1.5,
+          "ci_low": 1.3,
+          "ci_high": 1.7,
+          "relative_error": 15.4
+        }
+      },
+      "sample_size_notes": "49 games, 8.5 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "high",
+      "constraints": [
+        "Usage increase limited to +15%",
+        "Minutes increase limited to +10 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Stationary Shooter role constraints"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.15,
+        "max_minutes_increase": 10.0,
+        "projected_usage_cap": 0.283,
+        "projected_minutes_cap": 18.5
+      },
+      "constraint_rationale": {
+        "archetype": "stationary_shooter",
+        "position": "wing",
+        "three_point_frequency": 0.591,
+        "three_point_percentage": 0.415
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "1641810",
+        "name": "Antonio Reeves",
+        "team": "CHA",
+        "similarity_score": 0.73,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 3.0,
+          "assists": 0.2,
+          "rebounds": 0.9
+        }
+      },
+      {
+        "id": "1631250",
+        "name": "Pete Nance",
+        "team": "MIL",
+        "similarity_score": 0.59,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 4.5,
+          "assists": 0.6,
+          "rebounds": 2.0
+        }
+      },
+      {
+        "id": "1631216",
+        "name": "Caleb Houstan",
+        "team": "ATL",
+        "similarity_score": 0.57,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 1.8,
+          "assists": 0.2,
+          "rebounds": 0.5
+        }
+      },
+      {
+        "id": "1631166",
+        "name": "Drew Timme",
+        "team": "LAL",
+        "similarity_score": 0.55,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 3.4,
+          "assists": 0.8,
+          "rebounds": 1.3
+        }
+      },
+      {
+        "id": "1630604",
+        "name": "E.J. Liddell",
+        "team": "BKN",
+        "similarity_score": 0.55,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 2.7,
+          "assists": 0.4,
+          "rebounds": 1.6
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "stable"
+  },
+  "metadata": {
+    "generated_at": "2026-03-14T18:12:47.468847",
+    "data_version": "v1.2_refresh",
+    "generation_method": "nba_api_2025_26_refresh",
+    "quality_notes": "Season refresh with inferred mechanism fields",
+    "final_enhanced_at": "2026-03-14T18:12:47.468847"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    }
+  ]
+}

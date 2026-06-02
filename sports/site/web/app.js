@@ -6,15 +6,6 @@ async function loadSportsManifest() {
     return response.json();
 }
 
-function escapeHtml(value) {
-    return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#39;");
-}
-
 function renderSummary(sports) {
     const sportCount = document.getElementById("sportCount");
     const activeCount = document.getElementById("activeCount");
@@ -32,40 +23,50 @@ function renderSportsGrid(sports) {
     const grid = document.getElementById("sportsGrid");
     if (!grid) return;
 
-    if (!Array.isArray(sports) || sports.length === 0) {
-        grid.innerHTML = `
-            <article class="sport-card sport-card-empty">
-                <p>No sport workspaces were discovered in the current build.</p>
-            </article>
-        `;
+    const cv = window.CardVault;
+    if (!cv) {
+        console.error("CardVault not loaded");
         return;
     }
 
-    grid.innerHTML = sports.map((sport) => {
-        const pages = Array.isArray(sport.pages) ? sport.pages : [];
-        const pageLinks = pages.slice(0, 5).map((page) => `
-            <a class="page-chip" href="${escapeHtml(page.href)}">${escapeHtml(page.label)}</a>
-        `).join("");
+    if (!Array.isArray(sports) || sports.length === 0) {
+        grid.innerHTML = cv.renderEmptyState(
+            "No vault doors found",
+            "No sport workspaces were discovered in the current build.",
+            "Add sports/<slug>/web with an index.html to register a new workspace."
+        );
+        return;
+    }
 
-        return `
-            <article class="sport-card" style="--sport-accent:${escapeHtml(sport.accent)}; --sport-surface:${escapeHtml(sport.surface)};">
-                <div class="sport-card-top">
-                    <span class="sport-status">${escapeHtml(sport.status_label)}</span>
-                    <span class="sport-slug">/${escapeHtml(sport.slug)}</span>
-                </div>
-                <h3>${escapeHtml(sport.title)}</h3>
-                <p class="sport-tagline">${escapeHtml(sport.tagline)}</p>
-                <p class="sport-summary">${escapeHtml(sport.summary)}</p>
-                <div class="page-chip-row">
-                    ${pageLinks || '<span class="page-chip page-chip-muted">No published pages yet</span>'}
-                </div>
-                <a class="sport-cta" href="${escapeHtml(sport.entry_href)}">Open ${escapeHtml(sport.title)}</a>
-            </article>
-        `;
-    }).join("");
+    grid.innerHTML = sports.map((sport) => cv.renderSportWorkspaceCard(sport)).join("");
+}
+
+function mountHubShell() {
+    if (!window.CardVaultShell) return;
+
+    window.CardVaultShell.mount({
+        brandTitle: "Analytics Vault Hub",
+        brandHref: "/",
+        workspaceLabel: "",
+        sportSlug: "",
+        sportAccent: "#38bdf8",
+        breadcrumbs: [{ label: "Vault Hub", href: "/" }],
+        navLinks: [],
+        showDisclaimer: true,
+    });
+}
+
+function showLoadingGrid() {
+    const grid = document.getElementById("sportsGrid");
+    if (grid && window.CardVault) {
+        grid.innerHTML = window.CardVault.renderSkeletonCard(3);
+    }
 }
 
 async function init() {
+    mountHubShell();
+    showLoadingGrid();
+
     try {
         const sports = await loadSportsManifest();
         renderSummary(sports);
@@ -73,12 +74,12 @@ async function init() {
     } catch (error) {
         console.error(error);
         const grid = document.getElementById("sportsGrid");
-        if (grid) {
-            grid.innerHTML = `
-                <article class="sport-card sport-card-empty">
-                    <p>${escapeHtml(error.message)}</p>
-                </article>
-            `;
+        if (grid && window.CardVault) {
+            grid.innerHTML = window.CardVault.renderEmptyState(
+                "Unable to load vault manifest",
+                error.message,
+                "Rebuild the static site to regenerate data/sports.json."
+            );
         }
     }
 }

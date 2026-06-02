@@ -36,6 +36,7 @@ from build_upcoming_slate import (
 from decision_engine.conditional_promotion import apply_conditional_promotion
 from decision_engine.policy_tuning import build_default_shadow_strategies
 from post_process_market_plays import compute_final_board
+from research.market_quality.price_provenance_schema import load_market_snapshot_manifest
 from select_market_plays import build_history_lookup, build_play_rows
 from structured_stack_inference import StructuredStackInference
 
@@ -83,6 +84,11 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=REPO_ROOT / "data copy" / "raw" / "market_odds" / "nba" / "latest_player_props_wide.parquet",
         help="Current normalized market snapshot.",
+    )
+    parser.add_argument(
+        "--explicit-prelock-run",
+        action="store_true",
+        help="Audit-only assertion that this run was captured pre-lock when event start time is unavailable.",
     )
     parser.add_argument(
         "--history-csv",
@@ -949,17 +955,20 @@ def main() -> None:
         print(f"Warning: model inference unavailable, using heuristic fallback only ({predictor_error})")
 
     market_df = load_market_wide(args.market_wide_path)
+    market_provenance_manifest = load_market_snapshot_manifest(args.market_wide_path.resolve())
     calibrator_path = None if args.disable_target_prediction_calibration else args.target_prediction_calibrator_json
     slate_records, slate_skipped = build_records(
         predictor,
         market_df,
         args.season,
         target_prediction_calibrator_path=calibrator_path,
+        market_provenance_manifest=market_provenance_manifest,
     )
     if not slate_records:
         raise RuntimeError(f"No upcoming slate rows built. Skipped={len(slate_skipped)} sample={slate_skipped[:5]}")
 
     slate_df = pd.DataFrame.from_records(slate_records).sort_values(["market_date", "player"]).reset_index(drop=True)
+    slate_df["explicit_prelock_run_flag"] = bool(args.explicit_prelock_run)
     input_validation = validate_pipeline_inputs(market_df, slate_df, slate_skipped)
 
     args.slate_csv_out.parent.mkdir(parents=True, exist_ok=True)
@@ -986,6 +995,7 @@ def main() -> None:
         print(f"Warning: history CSV not found ({history_path}); using heuristic edge calibration.")
         policy_payload = apply_heuristic_policy_overrides(policy_payload)
     policy_payload = apply_weak_play_capacity_overrides(policy_payload)
+    selector_run_time = pd.Timestamp.utcnow().isoformat()
     selector_df = build_play_rows(
         slate_df,
         history_lookup,
@@ -993,6 +1003,9 @@ def main() -> None:
         belief_uncertainty_upper=float(policy_payload.get("belief_uncertainty_upper", 1.15)),
         market_regression_floor=float(policy_payload.get("market_regression_floor", 0.25)),
         market_regression_ceiling=float(policy_payload.get("market_regression_ceiling", 0.95)),
+        rebound_diagnostics_config=policy_payload.get("rebound_diagnostics"),
+        american_odds=int(policy_payload.get("american_odds", -110)),
+        selector_run_time=selector_run_time,
     )
     selector_df = apply_live_policy_calibration(selector_df, policy_payload)
     selector_df, xgb_ltr_summary = maybe_apply_xgb_ltr_reranker(selector_df, history_df, policy_payload)

@@ -1,0 +1,285 @@
+{
+  "player": {
+    "id": "1630194",
+    "name": "Paul Reed",
+    "team": "DET",
+    "season": 2026,
+    "age": 26.0,
+    "position": "Big"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 49,
+      "minutes_per_game": 12.9,
+      "points_per_game": 6.7,
+      "rebounds_per_game": 4.4,
+      "assists_per_game": 1.1,
+      "steals_per_game": 0.9,
+      "blocks_per_game": 0.8,
+      "field_goal_pct": 0.598,
+      "three_point_pct": 0.367,
+      "free_throw_pct": 0.643
+    },
+    "advanced": {
+      "usage_rate": 0.21,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": 2.2
+    }
+  },
+  "identity": {
+    "primary_archetype": "rim_runner",
+    "archetype_confidence": 0.62,
+    "secondary_archetypes": [
+      {
+        "name": "rim_runner",
+        "probability": 0.62
+      },
+      {
+        "name": "defensive_anchor",
+        "probability": 0.38
+      }
+    ],
+    "role_description": "Rim Runner",
+    "usage_band": "low"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.358,
+    "mid_range_frequency": 0.514,
+    "three_point_frequency": 0.128,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 0.0,
+    "pick_and_roll_frequency": 21.7,
+    "drives_per_game": 5.8,
+    "paint_touches_per_game": 8.3,
+    "assisted_rate": 0.92,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.1,
+      "vs_wings": 0.3,
+      "vs_bigs": 0.6
+    },
+    "estimated_metrics": {
+      "defensive_rating": 109.2,
+      "defensive_ppp_allowed": 0.993,
+      "matchup_difficulty": 0.5,
+      "foul_rate": 0.593,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 11.7,
+    "opponent_defense_context": 0.431,
+    "team_context_adjustment": 0.154,
+    "intrinsic_value": 13.5,
+    "context_adjustment": -1.4,
+    "adjusted_value": 12.1,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition",
+    "formula": "intrinsic_value = intrinsic_offense * (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "interpretation_summary": "Intrinsic offense 11.7; adjusted value 12.1 per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 62.0,
+      "level": "medium",
+      "factors": [
+        [
+          "sample_games",
+          "49 games"
+        ],
+        [
+          "minutes",
+          "12.9 MPG"
+        ],
+        [
+          "archetype_confidence",
+          "62%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 20,
+        "minutes": 9,
+        "data_quality": 15,
+        "archetype_confidence": 8,
+        "team_stability": 10
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.227,
+      "confidence_level": "medium",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 6.7,
+          "ci_low": 5.7,
+          "ci_high": 7.7,
+          "relative_error": 14.4
+        },
+        "assists": {
+          "mean": 1.1,
+          "ci_low": 0.9,
+          "ci_high": 1.3,
+          "relative_error": 14.4
+        },
+        "rebounds": {
+          "mean": 4.4,
+          "ci_low": 3.8,
+          "ci_high": 5.0,
+          "relative_error": 14.4
+        }
+      },
+      "sample_size_notes": "49 games, 12.9 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "medium",
+      "constraints": [
+        "Usage increase limited to +10%",
+        "Minutes increase limited to +10 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Rim Runner role constraints"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.1,
+        "max_minutes_increase": 10.0,
+        "projected_usage_cap": 0.31,
+        "projected_minutes_cap": 22.9
+      },
+      "constraint_rationale": {
+        "archetype": "rim_runner",
+        "position": "big",
+        "three_point_frequency": 0.128,
+        "three_point_percentage": 0.367
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "1629048",
+        "name": "Goga Bitadze",
+        "team": "ORL",
+        "similarity_score": 0.41,
+        "archetype": "rim_runner",
+        "stats": {
+          "points": 5.8,
+          "assists": 1.2,
+          "rebounds": 4.9
+        }
+      },
+      {
+        "id": "1631230",
+        "name": "Dominick Barlow",
+        "team": "PHI",
+        "similarity_score": 0.41,
+        "archetype": "rim_runner",
+        "stats": {
+          "points": 8.2,
+          "assists": 1.1,
+          "rebounds": 4.7
+        }
+      },
+      {
+        "id": "1642867",
+        "name": "Collin Murray-Boyles",
+        "team": "TOR",
+        "similarity_score": 0.4,
+        "archetype": "rim_runner",
+        "stats": {
+          "points": 7.8,
+          "assists": 2.0,
+          "rebounds": 5.0
+        }
+      },
+      {
+        "id": "1628963",
+        "name": "Marvin Bagley III",
+        "team": "DAL",
+        "similarity_score": 0.39,
+        "archetype": "rim_runner",
+        "stats": {
+          "points": 10.2,
+          "assists": 1.4,
+          "rebounds": 6.2
+        }
+      },
+      {
+        "id": "1630568",
+        "name": "Luka Garza",
+        "team": "BOS",
+        "similarity_score": 0.38,
+        "archetype": "stretch_big",
+        "stats": {
+          "points": 7.2,
+          "assists": 0.9,
+          "rebounds": 3.9
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "stable"
+  },
+  "metadata": {
+    "generated_at": "2026-03-14T18:12:47.468847",
+    "data_version": "v1.2_refresh",
+    "generation_method": "nba_api_2025_26_refresh",
+    "quality_notes": "Season refresh with inferred mechanism fields",
+    "final_enhanced_at": "2026-03-14T18:12:47.468847"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    }
+  ]
+}

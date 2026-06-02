@@ -1,0 +1,59 @@
+{
+  "run_id": "player_sim_20260528T190035Z",
+  "created_at": "2026-05-28T19:00:35.411303+00:00",
+  "data_cutoff_date": "2025-10-01",
+  "simulation_count": 10000,
+  "seed": 17,
+  "input_manifest": {
+    "input_frozen_sample": "sports\\nba\\validation\\production_shadow\\player_simulation\\backtests\\2025_preseason\\frozen_sample\\frozen_preseason_player_state_rows.parquet",
+    "cutoff_date": "2025-10-01",
+    "frozen_sample_rows": 0,
+    "eligible_frozen_sample_rows": 0
+  },
+  "all_logs_manifest": {},
+  "frozen_sample_mode": true,
+  "actual_outcomes_path": "sports\\nba\\validation\\production_shadow\\player_simulation\\backtests\\2025_preseason\\frozen_sample\\frozen_preseason_actual_outcomes.csv",
+  "output_paths": {
+    "parquet": "sports\\nba\\validation\\production_shadow\\player_simulation\\backtests\\2025_preseason\\next_season_player_simulations.parquet",
+    "csv": "sports\\nba\\validation\\production_shadow\\player_simulation\\backtests\\2025_preseason\\next_season_player_simulations.csv",
+    "cards_json": "sports\\nba\\validation\\production_shadow\\player_simulation\\backtests\\2025_preseason\\player_simulation_cards.json",
+    "validation_report": "sports\\nba\\validation\\production_shadow\\player_simulation\\backtests\\2025_preseason\\player_simulation_validation_report.json"
+  },
+  "backtest": {
+    "status": "BACKTEST_REQUIRED",
+    "season": 2025,
+    "cutoff_mode": "preseason",
+    "cutoff_date": "2025-10-01",
+    "simulation_count": 10000,
+    "projection_rows": 0,
+    "actual_rows_available": 582,
+    "joined_rows": 0,
+    "actual_within_p10_p90_rate": null,
+    "actual_within_p25_p75_rate": null,
+    "median_absolute_error_by_stat": {},
+    "mean_absolute_error_by_stat": {},
+    "rmse_by_stat": {},
+    "calibration_by_stat": {},
+    "undercoverage_rate": null,
+    "overconfidence_rate": null,
+    "confidence_tier_reliability": {},
+    "volatility_tier_reliability": {},
+    "player_archetype_error": {},
+    "missing_data_impact": {
+      "blockers": [
+        "no_preseason_simulation_rows_available"
+      ],
+      "note": "Frozen preseason calibration requires pre-cutoff player-state rows and settled in-season actuals."
+    },
+    "worst_miss_examples": [],
+    "credible_calibration_claim_allowed": false,
+    "output_paths": {
+      "report_json": "sports\\nba\\validation\\production_shadow\\player_simulation\\backtests\\2025_preseason\\simulation_backtest_2025_preseason_report.json",
+      "report_md": "sports\\nba\\validation\\production_shadow\\player_simulation\\backtests\\2025_preseason\\simulation_backtest_2025_preseason_report.md",
+      "rows_csv": "sports\\nba\\validation\\production_shadow\\player_simulation\\backtests\\2025_preseason\\simulation_backtest_2025_preseason_rows.csv"
+    }
+  },
+  "production_behavior_changed": false,
+  "promotion_ready": false,
+  "shadow_only": true
+}

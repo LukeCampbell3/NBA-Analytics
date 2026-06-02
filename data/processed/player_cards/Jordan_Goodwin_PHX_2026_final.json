@@ -1,0 +1,285 @@
+{
+  "player": {
+    "id": "1630692",
+    "name": "Jordan Goodwin",
+    "team": "PHX",
+    "season": 2026,
+    "age": 27.0,
+    "position": "Big"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 57,
+      "minutes_per_game": 22.0,
+      "points_per_game": 8.8,
+      "rebounds_per_game": 4.6,
+      "assists_per_game": 2.2,
+      "steals_per_game": 1.4,
+      "blocks_per_game": 0.2,
+      "field_goal_pct": 0.413,
+      "three_point_pct": 0.359,
+      "free_throw_pct": 0.727
+    },
+    "advanced": {
+      "usage_rate": 0.18,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": 1.6
+    }
+  },
+  "identity": {
+    "primary_archetype": "stretch_big",
+    "archetype_confidence": 0.64,
+    "secondary_archetypes": [
+      {
+        "name": "stretch_big",
+        "probability": 0.64
+      },
+      {
+        "name": "versatile_wing",
+        "probability": 0.36
+      }
+    ],
+    "role_description": "Stretch Big",
+    "usage_band": "low"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.17,
+    "mid_range_frequency": 0.299,
+    "three_point_frequency": 0.531,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 2.7,
+    "pick_and_roll_frequency": 18.8,
+    "drives_per_game": 9.2,
+    "paint_touches_per_game": 7.7,
+    "assisted_rate": 0.82,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.1,
+      "vs_wings": 0.3,
+      "vs_bigs": 0.6
+    },
+    "estimated_metrics": {
+      "defensive_rating": 113.8,
+      "defensive_ppp_allowed": 1.035,
+      "matchup_difficulty": 0.5,
+      "foul_rate": 0.389,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 14.0,
+    "opponent_defense_context": 0.45,
+    "team_context_adjustment": 0.085,
+    "intrinsic_value": 15.2,
+    "context_adjustment": -1.0,
+    "adjusted_value": 14.2,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition",
+    "formula": "intrinsic_value = intrinsic_offense * (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "interpretation_summary": "Intrinsic offense 14.0; adjusted value 14.2 per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 72.0,
+      "level": "medium",
+      "factors": [
+        [
+          "sample_games",
+          "57 games"
+        ],
+        [
+          "minutes",
+          "22.0 MPG"
+        ],
+        [
+          "archetype_confidence",
+          "64%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 24,
+        "minutes": 15,
+        "data_quality": 15,
+        "archetype_confidence": 8,
+        "team_stability": 10
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.126,
+      "confidence_level": "high",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 8.8,
+          "ci_low": 7.8,
+          "ci_high": 9.8,
+          "relative_error": 11.5
+        },
+        "assists": {
+          "mean": 2.2,
+          "ci_low": 1.9,
+          "ci_high": 2.5,
+          "relative_error": 11.5
+        },
+        "rebounds": {
+          "mean": 4.6,
+          "ci_low": 4.1,
+          "ci_high": 5.1,
+          "relative_error": 11.5
+        }
+      },
+      "sample_size_notes": "57 games, 22.0 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "medium",
+      "constraints": [
+        "Usage increase limited to +12%",
+        "Minutes increase limited to +10 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Stretch Big role constraints"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.12,
+        "max_minutes_increase": 10.0,
+        "projected_usage_cap": 0.3,
+        "projected_minutes_cap": 32.0
+      },
+      "constraint_rationale": {
+        "archetype": "stretch_big",
+        "position": "big",
+        "three_point_frequency": 0.531,
+        "three_point_percentage": 0.359
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "1630529",
+        "name": "Herbert Jones",
+        "team": "NOP",
+        "similarity_score": 0.53,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 9.0,
+          "assists": 2.8,
+          "rebounds": 3.6
+        }
+      },
+      {
+        "id": "1631106",
+        "name": "Tari Eason",
+        "team": "HOU",
+        "similarity_score": 0.52,
+        "archetype": "stretch_big",
+        "stats": {
+          "points": 10.7,
+          "assists": 1.6,
+          "rebounds": 6.3
+        }
+      },
+      {
+        "id": "1630598",
+        "name": "Aaron Wiggins",
+        "team": "OKC",
+        "similarity_score": 0.5,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 10.2,
+          "assists": 1.8,
+          "rebounds": 3.3
+        }
+      },
+      {
+        "id": "1631222",
+        "name": "Jake LaRavia",
+        "team": "LAL",
+        "similarity_score": 0.49,
+        "archetype": "rim_runner",
+        "stats": {
+          "points": 8.8,
+          "assists": 1.9,
+          "rebounds": 3.9
+        }
+      },
+      {
+        "id": "1641739",
+        "name": "Toumani Camara",
+        "team": "POR",
+        "similarity_score": 0.47,
+        "archetype": "stretch_big",
+        "stats": {
+          "points": 12.7,
+          "assists": 2.6,
+          "rebounds": 5.4
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "stable"
+  },
+  "metadata": {
+    "generated_at": "2026-03-14T18:12:47.468847",
+    "data_version": "v1.2_refresh",
+    "generation_method": "nba_api_2025_26_refresh",
+    "quality_notes": "Season refresh with inferred mechanism fields",
+    "final_enhanced_at": "2026-03-14T18:12:47.468847"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    }
+  ]
+}

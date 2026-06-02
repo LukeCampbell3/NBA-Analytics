@@ -1,0 +1,291 @@
+{
+  "player": {
+    "id": "1630217",
+    "name": "Desmond Bane",
+    "team": "ORL",
+    "season": 2026,
+    "age": 27.0,
+    "position": "Wing"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 65,
+      "minutes_per_game": 34.3,
+      "points_per_game": 20.6,
+      "rebounds_per_game": 4.2,
+      "assists_per_game": 4.2,
+      "steals_per_game": 1.0,
+      "blocks_per_game": 0.4,
+      "field_goal_pct": 0.49,
+      "three_point_pct": 0.389,
+      "free_throw_pct": 0.922
+    },
+    "advanced": {
+      "usage_rate": 0.229,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": 2.2
+    }
+  },
+  "identity": {
+    "primary_archetype": "versatile_wing",
+    "archetype_confidence": 0.62,
+    "secondary_archetypes": [
+      {
+        "name": "versatile_wing",
+        "probability": 0.62
+      },
+      {
+        "name": "connector",
+        "probability": 0.38
+      }
+    ],
+    "role_description": "Versatile Wing",
+    "usage_band": "medium"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.241,
+    "mid_range_frequency": 0.415,
+    "three_point_frequency": 0.344,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 7.8,
+    "pick_and_roll_frequency": 27.7,
+    "drives_per_game": 16.7,
+    "paint_touches_per_game": 13.6,
+    "assisted_rate": 0.63,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.3,
+      "vs_wings": 0.6,
+      "vs_bigs": 0.1
+    },
+    "estimated_metrics": {
+      "defensive_rating": 116.2,
+      "defensive_ppp_allowed": 1.056,
+      "matchup_difficulty": 0.64,
+      "foul_rate": 0.407,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 28.2,
+    "opponent_defense_context": 0.431,
+    "team_context_adjustment": 0.044,
+    "intrinsic_value": 29.4,
+    "context_adjustment": -1.4,
+    "adjusted_value": 28.0,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition",
+    "formula": "intrinsic_value = intrinsic_offense * (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "interpretation_summary": "Intrinsic offense 28.2; adjusted value 28.0 per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 78.0,
+      "level": "high",
+      "factors": [
+        [
+          "sample_games",
+          "65 games"
+        ],
+        [
+          "minutes",
+          "34.3 MPG"
+        ],
+        [
+          "archetype_confidence",
+          "62%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 25,
+        "minutes": 20,
+        "data_quality": 15,
+        "archetype_confidence": 8,
+        "team_stability": 10
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.08,
+      "confidence_level": "high",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 20.6,
+          "ci_low": 18.5,
+          "ci_high": 22.7,
+          "relative_error": 10.2
+        },
+        "assists": {
+          "mean": 4.2,
+          "ci_low": 3.8,
+          "ci_high": 4.6,
+          "relative_error": 10.2
+        },
+        "rebounds": {
+          "mean": 4.2,
+          "ci_low": 3.8,
+          "ci_high": 4.6,
+          "relative_error": 10.2
+        }
+      },
+      "sample_size_notes": "65 games, 34.3 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "low",
+      "constraints": [
+        "Usage increase limited to +14%",
+        "Minutes increase limited to +6 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Versatile Wing role constraints"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.14,
+        "max_minutes_increase": 6.0,
+        "projected_usage_cap": 0.369,
+        "projected_minutes_cap": 38.0
+      },
+      "constraint_rationale": {
+        "archetype": "versatile_wing",
+        "position": "wing",
+        "three_point_frequency": 0.344,
+        "three_point_percentage": 0.389
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "1629638",
+        "name": "Nickeil Alexander-Walker",
+        "team": "ATL",
+        "similarity_score": 0.52,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 20.0,
+          "assists": 3.7,
+          "rebounds": 3.4
+        }
+      },
+      {
+        "id": "1627742",
+        "name": "Brandon Ingram",
+        "team": "TOR",
+        "similarity_score": 0.49,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 21.7,
+          "assists": 3.8,
+          "rebounds": 5.7
+        }
+      },
+      {
+        "id": "1630559",
+        "name": "Austin Reaves",
+        "team": "LAL",
+        "similarity_score": 0.47,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 23.9,
+          "assists": 5.5,
+          "rebounds": 4.8
+        }
+      },
+      {
+        "id": "1628368",
+        "name": "De'Aaron Fox",
+        "team": "SAS",
+        "similarity_score": 0.44,
+        "archetype": "primary_playmaker",
+        "stats": {
+          "points": 19.1,
+          "assists": 6.4,
+          "rebounds": 3.7
+        }
+      },
+      {
+        "id": "1630193",
+        "name": "Immanuel Quickley",
+        "team": "TOR",
+        "similarity_score": 0.41,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 17.3,
+          "assists": 6.0,
+          "rebounds": 4.2
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "stable"
+  },
+  "metadata": {
+    "generated_at": "2026-03-14T18:12:47.468847",
+    "data_version": "v1.2_refresh",
+    "generation_method": "nba_api_2025_26_refresh",
+    "quality_notes": "Season refresh with inferred mechanism fields",
+    "final_enhanced_at": "2026-03-14T18:12:47.468847"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    },
+    {
+      "type": "trust_data_mismatch",
+      "severity": "low",
+      "description": "High trust score (78.0) despite estimated sources",
+      "recommendation": "Treat trust score mainly as sample-size confidence"
+    }
+  ]
+}

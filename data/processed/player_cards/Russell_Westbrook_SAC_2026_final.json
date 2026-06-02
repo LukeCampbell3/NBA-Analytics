@@ -1,0 +1,291 @@
+{
+  "player": {
+    "id": "201566",
+    "name": "Russell Westbrook",
+    "team": "SAC",
+    "season": 2026,
+    "age": 37.0,
+    "position": "Guard"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 61,
+      "minutes_per_game": 28.9,
+      "points_per_game": 15.5,
+      "rebounds_per_game": 5.4,
+      "assists_per_game": 6.5,
+      "steals_per_game": 1.3,
+      "blocks_per_game": 0.2,
+      "field_goal_pct": 0.431,
+      "three_point_pct": 0.343,
+      "free_throw_pct": 0.711
+    },
+    "advanced": {
+      "usage_rate": 0.272,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": -6.9
+    }
+  },
+  "identity": {
+    "primary_archetype": "primary_playmaker",
+    "archetype_confidence": 0.67,
+    "secondary_archetypes": [
+      {
+        "name": "primary_playmaker",
+        "probability": 0.67
+      },
+      {
+        "name": "stationary_shooter",
+        "probability": 0.33
+      }
+    ],
+    "role_description": "Primary Playmaker",
+    "usage_band": "medium"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.201,
+    "mid_range_frequency": 0.352,
+    "three_point_frequency": 0.447,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 14.0,
+    "pick_and_roll_frequency": 26.1,
+    "drives_per_game": 16.8,
+    "paint_touches_per_game": 11.8,
+    "assisted_rate": 0.61,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.7,
+      "vs_wings": 0.2,
+      "vs_bigs": 0.1
+    },
+    "estimated_metrics": {
+      "defensive_rating": 118.2,
+      "defensive_ppp_allowed": 1.075,
+      "matchup_difficulty": 0.53,
+      "foul_rate": 0.374,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 25.6,
+    "opponent_defense_context": 0.7,
+    "team_context_adjustment": -0.201,
+    "intrinsic_value": 20.5,
+    "context_adjustment": 4.0,
+    "adjusted_value": 24.5,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition",
+    "formula": "intrinsic_value = intrinsic_offense * (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "interpretation_summary": "Intrinsic offense 25.6; adjusted value 24.5 per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 77.0,
+      "level": "high",
+      "factors": [
+        [
+          "sample_games",
+          "61 games"
+        ],
+        [
+          "minutes",
+          "28.9 MPG"
+        ],
+        [
+          "archetype_confidence",
+          "67%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 25,
+        "minutes": 19,
+        "data_quality": 15,
+        "archetype_confidence": 8,
+        "team_stability": 10
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.08,
+      "confidence_level": "high",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 15.5,
+          "ci_low": 13.9,
+          "ci_high": 17.1,
+          "relative_error": 10.2
+        },
+        "assists": {
+          "mean": 6.5,
+          "ci_low": 5.8,
+          "ci_high": 7.2,
+          "relative_error": 10.2
+        },
+        "rebounds": {
+          "mean": 5.4,
+          "ci_low": 4.8,
+          "ci_high": 6.0,
+          "relative_error": 10.2
+        }
+      },
+      "sample_size_notes": "61 games, 28.9 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "low",
+      "constraints": [
+        "Usage increase limited to +12%",
+        "Minutes increase limited to +8 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Primary Playmaker role constraints"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.12,
+        "max_minutes_increase": 8.0,
+        "projected_usage_cap": 0.38,
+        "projected_minutes_cap": 36.9
+      },
+      "constraint_rationale": {
+        "archetype": "primary_playmaker",
+        "position": "guard",
+        "three_point_frequency": 0.447,
+        "three_point_percentage": 0.343
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "203471",
+        "name": "Dennis Schröder",
+        "team": "CLE",
+        "similarity_score": 0.31,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 11.7,
+          "assists": 5.0,
+          "rebounds": 2.8
+        }
+      },
+      {
+        "id": "201950",
+        "name": "Jrue Holiday",
+        "team": "POR",
+        "similarity_score": 0.3,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 16.7,
+          "assists": 6.3,
+          "rebounds": 4.4
+        }
+      },
+      {
+        "id": "201942",
+        "name": "DeMar DeRozan",
+        "team": "SAC",
+        "similarity_score": 0.29,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 18.4,
+          "assists": 3.9,
+          "rebounds": 3.0
+        }
+      },
+      {
+        "id": "203114",
+        "name": "Khris Middleton",
+        "team": "DAL",
+        "similarity_score": 0.26,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 11.2,
+          "assists": 3.1,
+          "rebounds": 3.8
+        }
+      },
+      {
+        "id": "203468",
+        "name": "CJ McCollum",
+        "team": "ATL",
+        "similarity_score": 0.25,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 18.7,
+          "assists": 3.6,
+          "rebounds": 3.5
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "stable"
+  },
+  "metadata": {
+    "generated_at": "2026-03-14T18:12:47.468847",
+    "data_version": "v1.2_refresh",
+    "generation_method": "nba_api_2025_26_refresh",
+    "quality_notes": "Season refresh with inferred mechanism fields",
+    "final_enhanced_at": "2026-03-14T18:12:47.468847"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    },
+    {
+      "type": "trust_data_mismatch",
+      "severity": "low",
+      "description": "High trust score (77.0) despite estimated sources",
+      "recommendation": "Treat trust score mainly as sample-size confidence"
+    }
+  ]
+}

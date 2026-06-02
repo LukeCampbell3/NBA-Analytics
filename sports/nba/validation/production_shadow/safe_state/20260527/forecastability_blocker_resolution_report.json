@@ -1,0 +1,38 @@
+{
+  "input_paths": {
+    "annotated_candidates_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_annotated_candidates.csv",
+    "candidate_blockers_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_candidate_blockers.csv",
+    "minutes_gap_csv": "",
+    "usage_gap_csv": ""
+  },
+  "output_paths": {
+    "json": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\forecastability_blocker_resolution_report.json",
+    "markdown": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\forecastability_blocker_resolution_report.md",
+    "rows_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\forecastability_blocker_resolution_rows.csv"
+  },
+  "total_edge_defendable_candidates": 18,
+  "minutes_gap_count": 10,
+  "usage_gap_count": 8,
+  "true_unstable_count": 11,
+  "fixable_with_existing_logs_count": 0,
+  "fixable_with_new_pipeline_data_count": 5,
+  "needs_more_sample_count": 2,
+  "feature_missing_count": 0,
+  "near_core_candidates_after_decomposition": 0,
+  "candidates_permanently_unsafe": 11,
+  "candidates_that_could_become_near_core_after_data_fix": 7,
+  "gap_subtype_counts": {
+    "USAGE_ROLE_SHIFT": 6,
+    "MINUTES_LOW_FLOOR": 6,
+    "MINUTES_ROLE_UNSTABLE": 4,
+    "USAGE_SAMPLE_INSUFFICIENT": 2
+  },
+  "recommended_action_counts": {
+    "KEEP_UNSAFE_TRUE_VOLATILITY": 11,
+    "ADD_NEW_PIPELINE_DATA": 5,
+    "NEEDS_MORE_SAMPLE": 2
+  },
+  "production_behavior_changed": false,
+  "promotion_claim": false,
+  "shadow_only": true
+}

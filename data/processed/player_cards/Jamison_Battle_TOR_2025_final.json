@@ -1,0 +1,320 @@
+{
+  "player": {
+    "id": "1642419",
+    "name": "Jamison Battle",
+    "team": "TOR",
+    "season": 2025,
+    "age": 24.0,
+    "position": "Wing"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 59,
+      "minutes_per_game": 17.7,
+      "points_per_game": 7.1,
+      "rebounds_per_game": 2.7,
+      "assists_per_game": 0.9,
+      "steals_per_game": 0.3,
+      "blocks_per_game": 0.2,
+      "field_goal_pct": 0.429,
+      "three_point_pct": 0.405,
+      "free_throw_pct": 0.889
+    },
+    "advanced": {
+      "usage_rate": 0.148,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": -3.1
+    }
+  },
+  "identity": {
+    "primary_archetype": "versatile_wing",
+    "archetype_confidence": 0.9,
+    "secondary_archetypes": [],
+    "role_description": "Versatile Wing",
+    "usage_band": "low"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.277,
+    "mid_range_frequency": 0.208,
+    "three_point_frequency": 0.516,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 3.0,
+    "pick_and_roll_frequency": 4.0,
+    "drives_per_game": 3.5700000000000003,
+    "paint_touches_per_game": 2.3600000000000003,
+    "assisted_rate": 0.36,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations (limited visibility)",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution given data limitations"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.3,
+      "vs_wings": 0.5,
+      "vs_bigs": 0.2
+    },
+    "estimated_metrics": {
+      "defensive_rating": 108.7,
+      "defensive_ppp_allowed": 0.987,
+      "matchup_difficulty": 0.49,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 14.8,
+    "opponent_defense_context": 0.38,
+    "team_context_adjustment": -0.052,
+    "intrinsic_value": 14.0,
+    "context_adjustment": -2.4,
+    "adjusted_value": 11.6,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition with validated arithmetic",
+    "formula": "intrinsic_value = intrinsic_offense \u00d7 (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "semantic_explanation": {
+      "offense_defense_interpretation": {
+        "intrinsic_offense": {
+          "description": "Player's raw offensive ability independent of context",
+          "interpretation": "14.8 points of offensive value per 100 possessions"
+        },
+        "opponent_defense_context": {
+          "description": "Quality of defenses faced (0.3 = tough, 0.7 = easy)",
+          "interpretation": "0.38 indicates tougher than average defenses"
+        },
+        "team_context_adjustment": {
+          "description": "How team context helps/hurts player (+ = helpful, - = harmful)",
+          "interpretation": "-0.052 (harmful team context)"
+        },
+        "context_adjustment": {
+          "description": "Net effect of opponent defense and team context",
+          "interpretation": "-2.4 points adjustment due to context"
+        }
+      },
+      "formula_breakdown": {
+        "step_1": "intrinsic_value = intrinsic_offense \u00d7 (1 + team_context_adjustment) = 14.8 \u00d7 (1 -0.052) = 14.0",
+        "step_2": "context_adjustment = (opponent_defense_context - 0.5) \u00d7 20 = (0.38 - 0.5) \u00d7 20 = -2.4",
+        "step_3": "adjusted_value = intrinsic_value + context_adjustment = 14.0 -2.4 = 11.6"
+      },
+      "interpretation_guide": {
+        "good_offense_bad_defense": "High intrinsic_offense + low opponent_defense_context (<0.5) = player produces offense against tough defenses",
+        "bad_offense_good_defense": "Low intrinsic_offense + high opponent_defense_context (>0.5) = player's stats inflated by facing weak defenses",
+        "team_effect": "Positive team_context_adjustment = player benefits from good teammates/system",
+        "net_value": "adjusted_value represents player's expected contribution in average context"
+      }
+    },
+    "interpretation_summary": "Player shows moderate offensive ability (14.8 intrinsic points). Context: faced significantly tougher than average defenses, which understates true offensive value. Hindered by negative team context (-0.052 adjustment). Net context adjustment: -2.4 points. Final adjusted value: 11.6 points per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 70.0,
+      "level": "medium",
+      "factors": [
+        [
+          "medium_sample_games",
+          "59 games"
+        ],
+        [
+          "low_minutes",
+          "17.7 MPG"
+        ],
+        [
+          "high_archetype_confidence",
+          "90%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 20,
+        "minutes": 10,
+        "data_quality": 15,
+        "archetype_confidence": 15,
+        "team_stability": 10
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.295,
+      "confidence_level": "low",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 7.1,
+          "ci_low": 5.1,
+          "ci_high": 9.1,
+          "relative_error": 28.2
+        },
+        "assists": {
+          "mean": 0.9,
+          "ci_low": 0.6,
+          "ci_high": 1.2,
+          "relative_error": 30.0
+        },
+        "rebounds": {
+          "mean": 2.7,
+          "ci_low": 1.9,
+          "ci_high": 3.5,
+          "relative_error": 29.4
+        }
+      },
+      "sample_size_notes": "59 games, 17.7 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "medium",
+      "constraints": [
+        "Usage increase limited to +10%",
+        "Minutes increase limited to +8 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Versatile two-way role",
+        "Balanced shot profile: 25-50% 3PA",
+        "Multi-position capability",
+        "Switchable defender"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.113,
+        "max_minutes_increase": 9.3,
+        "projected_usage_cap": 0.30000000000000004,
+        "projected_minutes_cap": 25.7
+      },
+      "constraint_rationale": {
+        "archetype": "versatile_wing",
+        "position": "wing",
+        "three_point_frequency": 0.516,
+        "three_point_percentage": 0.405
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "1629006",
+        "name": "Josh Okogie",
+        "team": "CHA",
+        "similarity_score": 0.99,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 7.1,
+          "assists": 0.8,
+          "rebounds": 2.8
+        }
+      },
+      {
+        "id": "202692",
+        "name": "Alec Burks",
+        "team": "MIA",
+        "similarity_score": 0.98,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 7.3,
+          "assists": 1.1,
+          "rebounds": 2.5
+        }
+      },
+      {
+        "id": "1641842",
+        "name": "Ronald Holland II",
+        "team": "DET",
+        "similarity_score": 0.97,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 6.4,
+          "assists": 1.0,
+          "rebounds": 2.7
+        }
+      },
+      {
+        "id": "1629610",
+        "name": "DaQuan Jeffries",
+        "team": "CHA",
+        "similarity_score": 0.97,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 6.7,
+          "assists": 1.1,
+          "rebounds": 2.9
+        }
+      },
+      {
+        "id": "1630231",
+        "name": "KJ Martin",
+        "team": "UTA",
+        "similarity_score": 0.97,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 6.4,
+          "assists": 1.1,
+          "rebounds": 2.9
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "stable"
+  },
+  "metadata": {
+    "generated_at": "2026-02-23T13:43:00.181673",
+    "data_version": "v1.1_final",
+    "generation_method": "improved_with_fixes",
+    "quality_notes": "Fixed: archetype contradictions, shot frequency normalization, decomposition consistency",
+    "fixed_at": "2026-02-23T21:17:31.386847",
+    "fixes_applied": [
+      "archetype_position_alignment",
+      "shot_frequency_normalization",
+      "possession_decomposition_consistency",
+      "template_overuse_reduction",
+      "big_archetype_correction",
+      "constraint_leakage_fix",
+      "decomposition_semantics_clarification",
+      "quality_flagging"
+    ],
+    "final_enhanced_at": "2026-02-24T18:21:56.450975"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    }
+  ]
+}

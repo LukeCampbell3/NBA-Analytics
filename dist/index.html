@@ -3,27 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sports Analytics Workspace</title>
+    <title>In The Cards Analytics | Vault Hub</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=1">
+    <link rel="stylesheet" href="vault/vault-tokens.css?v=1">
+    <link rel="stylesheet" href="vault/vault-components.css?v=1">
+    <link rel="stylesheet" href="vault-hub.css?v=1">
+    <link rel="stylesheet" href="styles.css?v=2">
 </head>
-<body>
-    <div class="site-shell">
+<body class="vault-theme">
+    <div id="vaultShellRoot"></div>
+
+    <div class="vault-shell site-shell">
         <header class="hero">
             <div class="hero-copy">
-                <p class="eyebrow">Sports Analytics Workspace</p>
-                <h1>Choose a sport, then live inside that sport’s pages.</h1>
+                <p class="eyebrow">The Card Vault System</p>
+                <h1>Open a sport vault. Sort cards. Validate signals.</h1>
                 <p class="hero-text">
-                    The site now treats each sport as its own workspace instead of forcing everything through one league-specific homepage.
-                    Pick a sport below, then navigate its own prediction pages, dashboards, and docs from there.
+                    In The Cards Analytics treats each league as its own workspace — player cards, prediction boards,
+                    validation labs, and methodology docs live under the same collectible, analytical language.
                 </p>
             </div>
             <div class="hero-panel">
-                <p class="hero-panel-label">What this hub does</p>
+                <p class="hero-panel-label">How the hub works</p>
                 <ul class="hero-points">
-                    <li>Surfaces every tracked sport workspace from one root route.</li>
-                    <li>Keeps each sport mounted on its own clean URL namespace.</li>
-                    <li>Makes room for sport-specific dashboards, predictions, and docs.</li>
+                    <li>Every sport owns a namespace: NBA, MLB, NFL, and future vaults.</li>
+                    <li>Player identity persists from board cards to dossiers to evidence rows.</li>
+                    <li>Signals show confidence, context, and validation — not automatic decisions.</li>
                 </ul>
             </div>
         </header>
@@ -31,7 +36,7 @@
         <section class="summary-strip" aria-label="Workspace summary">
             <article class="summary-card">
                 <span id="sportCount" class="summary-value">0</span>
-                <span class="summary-label">Sport Sites</span>
+                <span class="summary-label">Sport Vaults</span>
             </article>
             <article class="summary-card">
                 <span id="activeCount" class="summary-value">0</span>
@@ -45,45 +50,41 @@
 
         <main>
             <section class="section-head">
-                <p class="section-kicker">Choose A Sport</p>
-                <h2>Available workspaces</h2>
+                <p class="section-kicker">Vault Doors</p>
+                <h2>Choose a sport workspace</h2>
                 <p class="section-copy">
-                    The cards below are generated from the repo structure, so adding another `sports/<slug>/web` site gives the landing page something real to point at.
+                    Cards below are generated from the repo structure. Add <code>sports/&lt;slug&gt;/web</code> to register a new vault door.
                 </p>
             </section>
 
-            <section id="sportsGrid" class="sports-grid" aria-live="polite">
+            <section id="sportsGrid" class="vault-door-grid" aria-live="polite">
                 <article class="sport-card sport-card-loading">
-                    <p>Loading workspaces...</p>
+                    <p>Loading vault doors...</p>
                 </article>
             </section>
 
             <section class="notes-grid">
                 <article class="note-card">
                     <p class="note-label">Routing</p>
-                    <h3>Each sport owns its own path</h3>
-                    <p>
-                        NBA lives under `/nba/`, MLB under `/mlb/`, NFL under `/nfl/`, and future sports can follow the same pattern.
-                    </p>
+                    <h3>Each sport owns its path</h3>
+                    <p>NBA at <code>/nba/</code>, MLB at <code>/mlb/</code>, NFL at <code>/nfl/</code> — future sports follow the same pattern.</p>
                 </article>
                 <article class="note-card">
-                    <p class="note-label">Frontend</p>
-                    <h3>The landing page is now a hub, not a product page</h3>
-                    <p>
-                        The old assumption that the home page had to be the NBA card view is gone, which keeps the frontend honest as the repo expands.
-                    </p>
+                    <p class="note-label">Continuity</p>
+                    <h3>One card system across pages</h3>
+                    <p>Board cards, dossiers, matchup views, and validation rows share classification, metrics, and confidence bands.</p>
                 </article>
                 <article class="note-card">
                     <p class="note-label">Scalability</p>
-                    <h3>New sports can start small</h3>
-                    <p>
-                        A scaffold sport can ship a placeholder page now and grow into its own dashboard later without breaking the main navigation model.
-                    </p>
+                    <h3>Start small, grow the vault</h3>
+                    <p>Scaffold sports ship placeholder doors now and expand into full dashboards without breaking navigation.</p>
                 </article>
             </section>
         </main>
     </div>
 
-    <script src="app.js?v=1"></script>
+    <script src="vault/vault-components.js?v=1"></script>
+    <script src="vault/vault-shell.js?v=1"></script>
+    <script src="app.js?v=2"></script>
 </body>
 </html>

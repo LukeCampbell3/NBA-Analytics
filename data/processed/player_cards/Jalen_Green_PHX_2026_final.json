@@ -1,0 +1,285 @@
+{
+  "player": {
+    "id": "1630224",
+    "name": "Jalen Green",
+    "team": "PHX",
+    "season": 2026,
+    "age": 24.0,
+    "position": "Guard"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 19,
+      "minutes_per_game": 24.6,
+      "points_per_game": 17.4,
+      "rebounds_per_game": 3.3,
+      "assists_per_game": 2.5,
+      "steals_per_game": 1.3,
+      "blocks_per_game": 0.1,
+      "field_goal_pct": 0.408,
+      "three_point_pct": 0.309,
+      "free_throw_pct": 0.755
+    },
+    "advanced": {
+      "usage_rate": 0.335,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": 2.1
+    }
+  },
+  "identity": {
+    "primary_archetype": "stationary_shooter",
+    "archetype_confidence": 0.62,
+    "secondary_archetypes": [
+      {
+        "name": "stationary_shooter",
+        "probability": 0.62
+      },
+      {
+        "name": "movement_shooter",
+        "probability": 0.38
+      }
+    ],
+    "role_description": "Stationary Shooter",
+    "usage_band": "high"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.146,
+    "mid_range_frequency": 0.366,
+    "three_point_frequency": 0.487,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 16.5,
+    "pick_and_roll_frequency": 40.3,
+    "drives_per_game": 16.9,
+    "paint_touches_per_game": 8.1,
+    "assisted_rate": 0.45,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.7,
+      "vs_wings": 0.2,
+      "vs_bigs": 0.1
+    },
+    "estimated_metrics": {
+      "defensive_rating": 114.3,
+      "defensive_ppp_allowed": 1.039,
+      "matchup_difficulty": 0.53,
+      "foul_rate": 0.201,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 25.9,
+    "opponent_defense_context": 0.434,
+    "team_context_adjustment": 0.041,
+    "intrinsic_value": 27.0,
+    "context_adjustment": -1.3,
+    "adjusted_value": 25.7,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition",
+    "formula": "intrinsic_value = intrinsic_offense * (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "interpretation_summary": "Intrinsic offense 25.9; adjusted value 25.7 per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 55.0,
+      "level": "low",
+      "factors": [
+        [
+          "sample_games",
+          "19 games"
+        ],
+        [
+          "minutes",
+          "24.6 MPG"
+        ],
+        [
+          "archetype_confidence",
+          "62%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 8,
+        "minutes": 16,
+        "data_quality": 15,
+        "archetype_confidence": 8,
+        "team_stability": 8
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.286,
+      "confidence_level": "medium",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 17.4,
+          "ci_low": 14.6,
+          "ci_high": 20.2,
+          "relative_error": 16.0
+        },
+        "assists": {
+          "mean": 2.5,
+          "ci_low": 2.1,
+          "ci_high": 2.9,
+          "relative_error": 16.0
+        },
+        "rebounds": {
+          "mean": 3.3,
+          "ci_low": 2.8,
+          "ci_high": 3.8,
+          "relative_error": 16.0
+        }
+      },
+      "sample_size_notes": "19 games, 24.6 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "medium",
+      "constraints": [
+        "Usage increase limited to +15%",
+        "Minutes increase limited to +10 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Stationary Shooter role constraints"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.15,
+        "max_minutes_increase": 10.0,
+        "projected_usage_cap": 0.38,
+        "projected_minutes_cap": 34.6
+      },
+      "constraint_rationale": {
+        "archetype": "stationary_shooter",
+        "position": "guard",
+        "three_point_frequency": 0.487,
+        "three_point_percentage": 0.309
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "1631101",
+        "name": "Shaedon Sharpe",
+        "team": "POR",
+        "similarity_score": 0.4,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 21.4,
+          "assists": 2.6,
+          "rebounds": 4.4
+        }
+      },
+      {
+        "id": "1629001",
+        "name": "De'Anthony Melton",
+        "team": "GSW",
+        "similarity_score": 0.36,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 13.0,
+          "assists": 2.4,
+          "rebounds": 3.0
+        }
+      },
+      {
+        "id": "1628369",
+        "name": "Jayson Tatum",
+        "team": "BOS",
+        "similarity_score": 0.36,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 19.7,
+          "assists": 3.7,
+          "rebounds": 6.7
+        }
+      },
+      {
+        "id": "1628415",
+        "name": "Dillon Brooks",
+        "team": "PHX",
+        "similarity_score": 0.34,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 20.9,
+          "assists": 1.8,
+          "rebounds": 3.7
+        }
+      },
+      {
+        "id": "1629632",
+        "name": "Coby White",
+        "team": "CHA",
+        "similarity_score": 0.34,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 17.3,
+          "assists": 4.5,
+          "rebounds": 3.4
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "ascending"
+  },
+  "metadata": {
+    "generated_at": "2026-03-14T18:12:47.468847",
+    "data_version": "v1.2_refresh",
+    "generation_method": "nba_api_2025_26_refresh",
+    "quality_notes": "Season refresh with inferred mechanism fields",
+    "final_enhanced_at": "2026-03-14T18:12:47.468847"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "input_paths": {
+    "price_audit_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\price_provenance_audit.csv",
+    "selected_board_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\production_board_as_is.csv",
+    "candidate_pool_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\candidate_pool.csv",
+    "recency_diagnosis_json": ""
+  },
+  "output_paths": {
+    "edge_defense_report_json": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\edge_defense_report.json",
+    "edge_defense_report_md": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\edge_defense_report.md",
+    "edge_defense_selected_rows_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\edge_defense_selected_rows.csv"
+  },
+  "total_candidate_rows": 47,
+  "total_selected_rows": 1,
+  "selected_rows_with_PRICE_VALID": 1,
+  "selected_rows_with_EDGE_DEFENDABLE": 0,
+  "selected_rows_with_EDGE_PRICE_DEPENDENT": 1,
+  "selected_rows_with_EDGE_UNTRUSTED_PRICE": 0,
+  "selected_rows_with_EDGE_DIAGNOSTIC_ONLY": 0,
+  "selected_rows_where_lcb_edge_gt_0": 0,
+  "selected_rows_where_stress_edge_gt_0": 1,
+  "selected_rows_where_price_blocks_validation": 0,
+  "selected_rows_where_event_time_blocks_validation": 0,
+  "selected_rows_where_recency_blocks_production_selection": 0,
+  "candidate_rows_by_edge_defendability_tier": {
+    "EDGE_PRICE_DEPENDENT": 25,
+    "EDGE_DEFENDABLE": 18,
+    "EDGE_UNTRUSTED_PRICE": 4
+  },
+  "selected_rows_by_edge_defendability_tier": {
+    "EDGE_PRICE_DEPENDENT": 1
+  },
+  "recency_blocks_production_selection": false,
+  "recency_root_cause": "",
+  "recency_recommended_repair": "",
+  "production_behavior_changed": false,
+  "promotion_claim": false
+}

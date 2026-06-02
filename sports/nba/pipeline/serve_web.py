@@ -247,6 +247,10 @@ def preload_web_payloads(web_dir: Path, college_card_limit: int | None):
     nba_cards_path = data_dir / "cards.json"
     nba_vals_path = data_dir / "valuations.json"
     daily_predictions_path = data_dir / "daily_predictions.json"
+    safe_state_latest_path = data_dir / "safe_state_latest.json"
+    safe_state_cards_path = data_dir / "safe_state_cards.json"
+    player_simulation_cards_path = data_dir / "player_simulation_cards.json"
+    site_manifest_path = data_dir / "site_manifest.json"
     college_cards_path = data_dir / "college_cards.json"
     college_vals_path = data_dir / "college_valuations.json"
 
@@ -262,6 +266,16 @@ def preload_web_payloads(web_dir: Path, college_card_limit: int | None):
         daily_predictions = read_binary_payload(daily_predictions_path, "daily predictions")
         if daily_predictions is not None:
             payloads["data/daily_predictions.json"] = daily_predictions
+    for payload_path, label, cache_key in [
+        (safe_state_latest_path, "safe-state latest", "data/safe_state_latest.json"),
+        (safe_state_cards_path, "safe-state cards", "data/safe_state_cards.json"),
+        (player_simulation_cards_path, "player simulation cards", "data/player_simulation_cards.json"),
+        (site_manifest_path, "site manifest", "data/site_manifest.json"),
+    ]:
+        if payload_path.exists():
+            payload = read_binary_payload(payload_path, label)
+            if payload is not None:
+                payloads[cache_key] = payload
 
     if college_cards_path.exists():
         # Fast path: preload raw bytes when no trimming is requested.

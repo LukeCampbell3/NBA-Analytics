@@ -1,0 +1,285 @@
+{
+  "player": {
+    "id": "203507",
+    "name": "Giannis Antetokounmpo",
+    "team": "MIL",
+    "season": 2026,
+    "age": 31.0,
+    "position": "Big"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 35,
+      "minutes_per_game": 29.0,
+      "points_per_game": 27.5,
+      "rebounds_per_game": 9.7,
+      "assists_per_game": 5.4,
+      "steals_per_game": 1.0,
+      "blocks_per_game": 0.7,
+      "field_goal_pct": 0.628,
+      "three_point_pct": 0.333,
+      "free_throw_pct": 0.648
+    },
+    "advanced": {
+      "usage_rate": 0.356,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": 2.3
+    }
+  },
+  "identity": {
+    "primary_archetype": "playmaking_big",
+    "archetype_confidence": 0.68,
+    "secondary_archetypes": [
+      {
+        "name": "playmaking_big",
+        "probability": 0.68
+      },
+      {
+        "name": "stretch_big",
+        "probability": 0.32
+      }
+    ],
+    "role_description": "Playmaking Big",
+    "usage_band": "high"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.453,
+    "mid_range_frequency": 0.469,
+    "three_point_frequency": 0.079,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 12.8,
+    "pick_and_roll_frequency": 15.5,
+    "drives_per_game": 19.3,
+    "paint_touches_per_game": 20.0,
+    "assisted_rate": 0.74,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.1,
+      "vs_wings": 0.3,
+      "vs_bigs": 0.6
+    },
+    "estimated_metrics": {
+      "defensive_rating": 114.5,
+      "defensive_ppp_allowed": 1.041,
+      "matchup_difficulty": 0.65,
+      "foul_rate": 0.372,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 38.5,
+    "opponent_defense_context": 0.428,
+    "team_context_adjustment": -0.091,
+    "intrinsic_value": 35.0,
+    "context_adjustment": -1.4,
+    "adjusted_value": 33.6,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition",
+    "formula": "intrinsic_value = intrinsic_offense * (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "interpretation_summary": "Intrinsic offense 38.5; adjusted value 33.6 per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 67.0,
+      "level": "medium",
+      "factors": [
+        [
+          "sample_games",
+          "35 games"
+        ],
+        [
+          "minutes",
+          "29.0 MPG"
+        ],
+        [
+          "archetype_confidence",
+          "68%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 15,
+        "minutes": 19,
+        "data_quality": 15,
+        "archetype_confidence": 8,
+        "team_stability": 10
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.172,
+      "confidence_level": "medium",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 27.5,
+          "ci_low": 24.0,
+          "ci_high": 31.0,
+          "relative_error": 12.8
+        },
+        "assists": {
+          "mean": 5.4,
+          "ci_low": 4.7,
+          "ci_high": 6.1,
+          "relative_error": 12.8
+        },
+        "rebounds": {
+          "mean": 9.7,
+          "ci_low": 8.5,
+          "ci_high": 10.9,
+          "relative_error": 12.8
+        }
+      },
+      "sample_size_notes": "35 games, 29.0 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "low",
+      "constraints": [
+        "Usage increase limited to +11%",
+        "Minutes increase limited to +8 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Playmaking Big role constraints"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.11,
+        "max_minutes_increase": 8.0,
+        "projected_usage_cap": 0.38,
+        "projected_minutes_cap": 37.0
+      },
+      "constraint_rationale": {
+        "archetype": "playmaking_big",
+        "position": "big",
+        "three_point_frequency": 0.079,
+        "three_point_percentage": 0.333
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "203954",
+        "name": "Joel Embiid",
+        "team": "PHI",
+        "similarity_score": 0.36,
+        "archetype": "rim_runner",
+        "stats": {
+          "points": 26.6,
+          "assists": 3.9,
+          "rebounds": 7.5
+        }
+      },
+      {
+        "id": "1627759",
+        "name": "Jaylen Brown",
+        "team": "BOS",
+        "similarity_score": 0.28,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 28.4,
+          "assists": 5.2,
+          "rebounds": 7.1
+        }
+      },
+      {
+        "id": "1630578",
+        "name": "Alperen Sengun",
+        "team": "HOU",
+        "similarity_score": 0.25,
+        "archetype": "playmaking_big",
+        "stats": {
+          "points": 20.2,
+          "assists": 6.1,
+          "rebounds": 8.9
+        }
+      },
+      {
+        "id": "203944",
+        "name": "Julius Randle",
+        "team": "MIN",
+        "similarity_score": 0.24,
+        "archetype": "playmaking_big",
+        "stats": {
+          "points": 20.9,
+          "assists": 5.1,
+          "rebounds": 6.9
+        }
+      },
+      {
+        "id": "1626157",
+        "name": "Karl-Anthony Towns",
+        "team": "NYK",
+        "similarity_score": 0.23,
+        "archetype": "defensive_anchor",
+        "stats": {
+          "points": 20.0,
+          "assists": 2.9,
+          "rebounds": 11.9
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "stable"
+  },
+  "metadata": {
+    "generated_at": "2026-03-14T18:12:47.468847",
+    "data_version": "v1.2_refresh",
+    "generation_method": "nba_api_2025_26_refresh",
+    "quality_notes": "Season refresh with inferred mechanism fields",
+    "final_enhanced_at": "2026-03-14T18:12:47.468847"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    }
+  ]
+}

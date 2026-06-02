@@ -15,6 +15,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import sys
 
 import numpy as np
 import pandas as pd
@@ -123,6 +124,31 @@ except Exception:  # pragma: no cover - fallback when accepted-pick gate module 
         return out, {"enabled": False, "enforced": False, "reason": "module_missing"}
 
 try:
+    from research.interventions.failure_mode_adjustments import apply_failure_mode_adjustments as apply_failure_mode_adjustments_fn
+except Exception:  # pragma: no cover - fallback when root package path is missing during standalone execution
+    _PLAYER_PREDICTOR_ROOT = Path(__file__).resolve().parent.parent
+    if str(_PLAYER_PREDICTOR_ROOT) not in sys.path:
+        sys.path.insert(0, str(_PLAYER_PREDICTOR_ROOT))
+    try:
+        from research.interventions.failure_mode_adjustments import apply_failure_mode_adjustments as apply_failure_mode_adjustments_fn
+    except Exception:  # pragma: no cover - final fallback when research module is unavailable
+        def apply_failure_mode_adjustments_fn(
+            frame: pd.DataFrame,
+            adjustments: pd.DataFrame | Path | str | None,
+        ) -> pd.DataFrame:
+            out = frame.copy()
+            out["failure_mode_total_penalty"] = 0.0
+            out["failure_mode_adjustment_count"] = 0
+            out["failure_mode_ids"] = ""
+            out["failure_mode_explanation"] = ""
+            out["failure_mode_downgrade_tier"] = ""
+            out["failure_mode_veto_flag"] = False
+            out["failure_mode_veto_reason"] = ""
+            out["failure_mode_opposite_side_candidate_flag"] = False
+            out["failure_mode_alt_line_candidate_flag"] = False
+            return out
+
+try:
     from decision_engine.uncertainty import (
         BELIEF_UNCERTAINTY_LOWER,
         BELIEF_UNCERTAINTY_UPPER,
@@ -152,6 +178,40 @@ except Exception:  # pragma: no cover - fallback for standalone execution
             return (1.0 - normalized).clip(lower=0.0, upper=1.0)
         return float(np.clip(1.0 - float(normalized), 0.0, 1.0))
 
+try:
+    from research.market_quality.priced_event_ledger import build_priced_event_ledger_frame as build_priced_event_ledger_frame_fn
+except Exception:  # pragma: no cover - fallback for standalone execution
+    def build_priced_event_ledger_frame_fn(
+        frame: pd.DataFrame,
+        *,
+        record_scope: str | None = None,
+    ) -> pd.DataFrame:
+        return frame.copy()
+
+try:
+    from decision_engine.board_readiness import annotate_board_readiness as annotate_board_readiness_fn
+except Exception:  # pragma: no cover - fallback for standalone execution
+    def annotate_board_readiness_fn(
+        frame: pd.DataFrame,
+        *,
+        belief_uncertainty_lower: float = BELIEF_UNCERTAINTY_LOWER,
+        belief_uncertainty_upper: float = BELIEF_UNCERTAINTY_UPPER,
+    ) -> tuple[pd.DataFrame, dict]:
+        out = frame.copy()
+        out["board_readiness_risk_score"] = 0.0
+        out["board_readiness_status"] = "STABLE"
+        out["board_readiness_reasons"] = ""
+        out["board_readiness_warning_count"] = 0
+        out["board_readiness_review_required"] = False
+        return out, {
+            "row_count": int(len(out)),
+            "board_readiness_score": 0.0,
+            "board_readiness_status": "STABLE",
+            "production_readiness_clear": True,
+            "blocked_reasons": [],
+            "recommended_action": "auditable",
+        }
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Post-process selected market plays into a final board.")
@@ -172,6 +232,12 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=Path("model/analysis/final_market_plays.json"),
         help="Output JSON summary path.",
+    )
+    parser.add_argument(
+        "--failure-mode-adjustments-csv",
+        type=Path,
+        default=None,
+        help="Optional generic failure-mode adjustment sidecar CSV.",
     )
     parser.add_argument(
         "--american-odds",
@@ -4071,6 +4137,7 @@ def compute_final_board(
     accepted_pick_gate_min_rows: int = 0,
     selector_pool_append_max_rows: int = 0,
     selector_pool_append_rank_window: int = 24,
+    failure_mode_adjustments: pd.DataFrame | Path | str | None = None,
 ) -> pd.DataFrame:
     out = plays.copy()
     stage_counts: dict[str, int] = {
@@ -4085,6 +4152,12 @@ def compute_final_board(
         result = frame.copy()
         if getattr(frame, "attrs", None):
             result.attrs.update(frame.attrs)
+        result = build_priced_event_ledger_frame_fn(result, record_scope="selected")
+        result, board_readiness_summary = annotate_board_readiness_fn(
+            result,
+            belief_uncertainty_lower=float(belief_uncertainty_lower),
+            belief_uncertainty_upper=float(belief_uncertainty_upper),
+        )
         merged_stage_counts = dict(stage_counts)
         for key, value in selection_stage_counts.items():
             merged_stage_counts[str(key)] = int(value)
@@ -4094,10 +4167,12 @@ def compute_final_board(
         merged_stage_counts.setdefault("after_min_ev", int(merged_stage_counts["after_confidence"]))
         merged_stage_counts.setdefault("after_learned_gate", int(merged_stage_counts["after_min_ev"]))
         merged_stage_counts.setdefault("candidate_universe", int(merged_stage_counts["after_learned_gate"]))
+        merged_stage_counts.setdefault("after_failure_mode_adjustments", int(merged_stage_counts["candidate_universe"]))
         merged_stage_counts.setdefault("after_accepted_pick_gate", int(len(result)))
         merged_stage_counts.setdefault("after_selector_pool_append", int(merged_stage_counts["after_accepted_pick_gate"]))
         merged_stage_counts["final_board_rows"] = int(len(result))
         result.attrs["stage_counts"] = merged_stage_counts
+        result.attrs["board_readiness_summary"] = board_readiness_summary
         return result
 
     if out.empty:
@@ -4502,6 +4577,15 @@ def compute_final_board(
             out["final_pool_gate_rows_after"] = int(len(out))
             out["final_pool_gate_dropped_rows"] = int(max(0, quality_rows_before - len(out)))
     _record_stage("candidate_universe", out)
+    out = apply_failure_mode_adjustments_fn(out, failure_mode_adjustments)
+    if "failure_mode_veto_flag" in out.columns:
+        out = out.loc[~pd.to_numeric(out["failure_mode_veto_flag"], errors="coerce").fillna(0).astype(bool)].copy()
+    if "recommendation" in out.columns:
+        out["recommendation_rank"] = out["recommendation"].map(recommendation_rank).fillna(3)
+        out = out.loc[out["recommendation_rank"] <= minimum_recommendation_rank(min_recommendation)].copy()
+    _record_stage("after_failure_mode_adjustments", out)
+    if out.empty:
+        return _finalize(out)
 
     effective_mode = str(selection_mode or ranking_mode)
     rank_columns = ["ev_adjusted", "expected_win_rate", "final_confidence", "abs_edge"]
@@ -5301,6 +5385,7 @@ def main() -> None:
         accepted_pick_gate_enabled=args.enable_accepted_pick_gate,
         accepted_pick_gate_live=args.accepted_pick_gate_live,
         accepted_pick_gate_min_rows=args.accepted_pick_gate_min_rows,
+        failure_mode_adjustments=args.failure_mode_adjustments_csv,
     )
 
     args.csv_out.parent.mkdir(parents=True, exist_ok=True)
@@ -5316,6 +5401,7 @@ def main() -> None:
         "rows_in": int(len(plays)),
         "rows_out": int(len(final_board)),
         "stage_counts": stage_counts,
+        "board_readiness": getattr(final_board, "attrs", {}).get("board_readiness_summary", {}),
         "american_odds": int(args.american_odds),
         "min_ev": float(args.min_ev),
         "min_final_confidence": float(args.min_final_confidence),
@@ -5439,6 +5525,14 @@ def main() -> None:
     print(f"JSON:         {args.json_out}")
     if stage_counts:
         print(f"Stage counts: {stage_counts}")
+    board_readiness_summary = getattr(final_board, "attrs", {}).get("board_readiness_summary", {})
+    if board_readiness_summary:
+        print(
+            "Board readiness: "
+            f"{board_readiness_summary.get('board_readiness_status', '')} "
+            f"(score={float(board_readiness_summary.get('board_readiness_score', 0.0)):.3f}, "
+            f"blocked={board_readiness_summary.get('blocked_reasons', [])})"
+        )
     if args.enable_learned_gate:
         print(f"Learned gate: {learned_gate_summary}")
     if args.enable_accepted_pick_gate:

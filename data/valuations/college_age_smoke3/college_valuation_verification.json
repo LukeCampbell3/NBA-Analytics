@@ -1,0 +1,52 @@
+{
+  "run_at_utc": "2026-03-12T22:10:47.174776+00:00",
+  "overall_status": "fail",
+  "critical_failures": 1,
+  "warning_failures": 0,
+  "checks": [
+    {
+      "name": "core_columns_present",
+      "passed": true,
+      "severity": "critical",
+      "critical": true,
+      "detail": "Missing core columns: none"
+    },
+    {
+      "name": "provenance_columns_present",
+      "passed": false,
+      "severity": "critical",
+      "critical": true,
+      "detail": "Missing provenance columns: ['source_table', 'source_url', 'scraped_at_utc']"
+    },
+    {
+      "name": "player_key_uniqueness",
+      "passed": true,
+      "severity": "critical",
+      "critical": true,
+      "detail": "Duplicate player_key rows: 0"
+    },
+    {
+      "name": "robots_enforcement_enabled",
+      "passed": true,
+      "severity": "critical",
+      "critical": true,
+      "detail": "strict_robots=True"
+    },
+    {
+      "name": "user_agent_provided",
+      "passed": true,
+      "severity": "warning",
+      "critical": false,
+      "detail": "user_agent='NBAAnalyticsCollegePipeline/1.0 (+local research use)'"
+    },
+    {
+      "name": "ingestion_errors",
+      "passed": true,
+      "severity": "warning",
+      "critical": false,
+      "detail": "Source ingestion errors: 0"
+    }
+  ],
+  "invalid_report_count": 0,
+  "invalid_reports": []
+}

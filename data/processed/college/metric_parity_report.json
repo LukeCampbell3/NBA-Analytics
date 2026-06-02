@@ -1,0 +1,122 @@
+{
+  "run_at_utc": "2026-03-11T18:14:06.939391+00:00",
+  "input_path": "data\\processed\\college\\players_season.csv",
+  "rows_evaluated": 5118,
+  "overall_status": "fail",
+  "blocking_issues": [],
+  "build_summary_checks": [
+    {
+      "name": "robots_enforced",
+      "passed": true,
+      "severity": "critical",
+      "detail": "strict_robots=True"
+    },
+    {
+      "name": "user_agent_set",
+      "passed": true,
+      "severity": "warning",
+      "detail": "user_agent='NBAAnalyticsCollegePipeline/1.0 (+local research use)'"
+    },
+    {
+      "name": "source_ingestion_errors",
+      "passed": true,
+      "severity": "warning",
+      "detail": "errors=0"
+    }
+  ],
+  "pillars": {
+    "valuation_pillars": {
+      "coverage_threshold": 0.95,
+      "passed": true,
+      "metrics": {
+        "wins_added": {
+          "valid_count": 5118,
+          "total_count": 5118,
+          "coverage_rate": 1.0
+        },
+        "market_value_curve": {
+          "valid_count": 5118,
+          "total_count": 5118,
+          "coverage_rate": 1.0
+        },
+        "npv_surplus": {
+          "valid_count": 5118,
+          "total_count": 5118,
+          "coverage_rate": 1.0
+        },
+        "trade_value_base": {
+          "valid_count": 5118,
+          "total_count": 5118,
+          "coverage_rate": 1.0
+        },
+        "aging_phase": {
+          "valid_count": 5118,
+          "total_count": 5118,
+          "coverage_rate": 1.0
+        }
+      }
+    },
+    "breakout_pillars": {
+      "coverage_threshold": 0.95,
+      "passed": true,
+      "metrics": {
+        "breakout_opportunity_score": {
+          "valid_count": 5118,
+          "total_count": 5118,
+          "coverage_rate": 1.0
+        },
+        "breakout_signal_strength": {
+          "valid_count": 5118,
+          "total_count": 5118,
+          "coverage_rate": 1.0
+        },
+        "breakout_confidence": {
+          "valid_count": 5118,
+          "total_count": 5118,
+          "coverage_rate": 1.0
+        },
+        "defense_portability_score": {
+          "valid_count": 5118,
+          "total_count": 5118,
+          "coverage_rate": 1.0
+        },
+        "impact_sanity_level": {
+          "valid_count": 5118,
+          "total_count": 5118,
+          "coverage_rate": 1.0
+        }
+      }
+    },
+    "isolation_pillars": {
+      "coverage_threshold": 0.95,
+      "passed": false,
+      "metrics": {
+        "trust_score": {
+          "valid_count": 5118,
+          "total_count": 5118,
+          "coverage_rate": 1.0
+        },
+        "uncertainty_score": {
+          "valid_count": 5118,
+          "total_count": 5118,
+          "coverage_rate": 1.0
+        },
+        "usage_rate_input": {
+          "valid_count": 5118,
+          "total_count": 5118,
+          "coverage_rate": 1.0
+        },
+        "plus_minus_input": {
+          "valid_count": 5118,
+          "total_count": 5118,
+          "coverage_rate": 1.0
+        },
+        "source_url_provenance": {
+          "valid_count": 0,
+          "total_count": 5118,
+          "coverage_rate": 0.0
+        }
+      }
+    }
+  }
+}

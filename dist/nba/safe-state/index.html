@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="../">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Analytics | Safe-State Lab</title>
+    <meta name="nba-api-base" content="">
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="vault/vault-tokens.css?v=1">
+    <link rel="stylesheet" href="vault/vault-components.css?v=1">
+    <link rel="stylesheet" href="styles.css?v=25">
+</head>
+<body class="vault-theme">
+    <div id="vaultShellRoot"></div>
+
+    <main class="vault-shell safe-state-page">
+        <section class="safe-state-hero">
+            <div class="container">
+                <p class="vault-page-kicker">Production Shadow</p>
+                <h1>Safe-State Lab</h1>
+                <p id="safeStateMeta" class="vault-freshness">Loading shadow evidence...</p>
+                <p id="entitlementMeta" class="vault-page-lead"></p>
+                <p class="vault-disclaimer">Display-only research. No staking, no auto-betting, no promotion claim. Ranges are uncertainty bands, not guarantees.</p>
+            </div>
+        </section>
+        <section class="container safe-state-grid-section">
+            <div>
+                <div class="safe-state-section-head">
+                    <h2>Safe-State Evidence</h2>
+                    <span class="shadow-pill">SHADOW ONLY</span>
+                </div>
+                <div id="safeStateCards" class="safe-state-card-grid"></div>
+                <div id="safeStateLocked" class="vault-empty" style="display:none;">
+                    <h3>Additional cards locked</h3>
+                    <p>Upgrade for the full safe-state board, candidate blockers, and settlement tracking.</p>
+                    <a class="vault-door-cta" href="pricing.html">View plans</a>
+                </div>
+                <div id="safeStateEmpty" class="vault-empty" style="display:none;">No safe-state cards available yet.</div>
+            </div>
+            <div>
+                <div class="safe-state-section-head">
+                    <h2>Player Simulations</h2>
+                    <span class="shadow-pill">RANGE FIRST</span>
+                </div>
+                <div id="simulationCards" class="simulation-card-grid"></div>
+                <div id="simulationEmpty" class="vault-empty" style="display:none;">No player simulation cards available yet.</div>
+            </div>
+        </section>
+    </main>
+
+    <script src="vault/vault-components.js?v=1"></script>
+    <script src="vault/vault-shell.js?v=1"></script>
+    <script src="auth-client.js?v=1"></script>
+    <script src="safe-state.js?v=2"></script>
+</body>
+</html>

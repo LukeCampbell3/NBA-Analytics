@@ -10,6 +10,7 @@ This script is intentionally standalone and optional:
 Current providers:
 - snapshot: ingest an already-fetched CSV/parquet snapshot and normalize it
 - odds_api: optional legacy fallback, disabled unless explicitly allowed
+- sportsgameodds: live SportsGameOdds v2 events snapshot
 
 This keeps the rest of the pipeline provider-agnostic while you evaluate or
 swap market sources.
@@ -47,6 +48,11 @@ MARKET_WIDE_COLUMNS = [
     "Market_Commence_Time_UTC",
     "Market_Home_Team",
     "Market_Away_Team",
+    "Market_Provider",
+    "Market_Book",
+    "Market_Price_Source",
+    "Market_Price_Source_Type",
+    "Market_Snapshot_ID",
     "Market_PTS",
     "Market_TRB",
     "Market_AST",
@@ -74,6 +80,17 @@ def utc_compact_timestamp() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
+def derive_snapshot_id(*, provider: str, fetched_at_utc: str, fallback_label: str = "") -> str:
+    provider_text = str(provider or "").strip() or "unknown_provider"
+    fetched_text = str(fetched_at_utc or "").strip()
+    if fetched_text:
+        return f"{provider_text}:{fetched_text}"
+    fallback_text = str(fallback_label or "").strip()
+    if fallback_text:
+        return f"{provider_text}:{fallback_text}"
+    return provider_text
+
+
 def normalize_name(value: str) -> str:
     out = str(value)
     for old, new in [
@@ -95,7 +112,7 @@ def parse_args() -> argparse.Namespace:
         "--provider",
         type=str,
         default="snapshot",
-        choices=["odds_api", "snapshot"],
+        choices=["odds_api", "snapshot", "sportsgameodds"],
         help="Market data provider. NBA should normally stay on snapshot/local lines.",
     )
     parser.add_argument(
@@ -103,7 +120,12 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Explicitly allow live Odds API access for NBA. Default behavior keeps NBA off the API.",
     )
-    parser.add_argument("--api-key", type=str, default=None, help="Odds API key. Defaults to THE_ODDS_API_KEY / ODDS_API_KEY.")
+    parser.add_argument(
+        "--api-key",
+        type=str,
+        default=None,
+        help="Odds API key. Defaults to SPORTSGAMEODDS_API_KEY / THE_ODDS_API_KEY / ODDS_API_KEY.",
+    )
     parser.add_argument("--input-path", type=Path, default=None, help="Input CSV/parquet for --provider snapshot.")
     parser.add_argument("--regions", type=str, default="us", help="API regions parameter.")
     parser.add_argument("--markets", type=str, default=",".join(DEFAULT_MARKETS), help="Comma-separated market keys.")
@@ -136,12 +158,17 @@ def _load_api_key_from_yaml(path: Path) -> str | None:
     odds_api = payload.get("odds_api")
     secrets = payload.get("secrets")
     return _first_non_empty(
+        payload.get("SPORTSGAMEODDS_API_KEY"),
         payload.get("ODDS_API_KEY"),
         payload.get("THE_ODDS_API_KEY"),
+        odds_api.get("sportsgameodds_api_key") if isinstance(odds_api, dict) else None,
+        odds_api.get("sportsgameodds_key") if isinstance(odds_api, dict) else None,
         odds_api.get("api_key") if isinstance(odds_api, dict) else None,
         odds_api.get("odds_api_key") if isinstance(odds_api, dict) else None,
+        secrets.get("SPORTSGAMEODDS_API_KEY") if isinstance(secrets, dict) else None,
         secrets.get("ODDS_API_KEY") if isinstance(secrets, dict) else None,
         secrets.get("THE_ODDS_API_KEY") if isinstance(secrets, dict) else None,
+        secrets.get("sportsgameodds_api_key") if isinstance(secrets, dict) else None,
         secrets.get("odds_api_key") if isinstance(secrets, dict) else None,
     )
 
@@ -156,7 +183,7 @@ def _load_api_key_from_dotenv(path: Path) -> str | None:
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
-        if key.strip() not in {"ODDS_API_KEY", "THE_ODDS_API_KEY"}:
+        if key.strip() not in {"SPORTSGAMEODDS_API_KEY", "ODDS_API_KEY", "THE_ODDS_API_KEY"}:
             continue
         cleaned = value.strip().strip('"').strip("'")
         if cleaned:
@@ -185,14 +212,14 @@ def _load_api_key_from_local_files(start_path: Path) -> str | None:
 def resolve_api_key(explicit_key: str | None) -> str:
     if explicit_key:
         return explicit_key
-    for key in ("THE_ODDS_API_KEY", "ODDS_API_KEY"):
+    for key in ("SPORTSGAMEODDS_API_KEY", "THE_ODDS_API_KEY", "ODDS_API_KEY"):
         value = os.getenv(key)
         if value:
             return value
     local_value = _load_api_key_from_local_files(Path(__file__).resolve().parent)
     if local_value:
         return local_value
-    raise RuntimeError("Missing Odds API key. Set THE_ODDS_API_KEY, create config.local.yaml, or pass --api-key.")
+    raise RuntimeError("Missing Odds API key. Set SPORTSGAMEODDS_API_KEY, THE_ODDS_API_KEY, create config.local.yaml, or pass --api-key.")
 
 
 def request_json(base_url: str, params: dict[str, object]) -> tuple[object, dict[str, str]]:
@@ -288,26 +315,16 @@ def _collapse_market_outcomes(
     return list(grouped.values())
 
 
-def normalize_event_odds(events: list[dict], event_odds: dict[str, dict], fetched_at_utc: str) -> tuple[pd.DataFrame, pd.DataFrame]:
-    rows: list[dict] = []
-    event_by_id = {str(event.get("id")): event for event in events}
-    for event_id, payload in event_odds.items():
-        event = event_by_id.get(str(event_id), payload)
-        bookmakers = payload.get("bookmakers", [])
-        for bookmaker in bookmakers:
-            for market in bookmaker.get("markets", []):
-                rows.extend(
-                    _collapse_market_outcomes(
-                        event=event,
-                        bookmaker=bookmaker,
-                        market=market,
-                        fetched_at_utc=fetched_at_utc,
-                    )
-                )
-
-    long_df = pd.DataFrame(rows)
+def _wide_from_long_props(
+    long_df: pd.DataFrame,
+    fetched_at_utc: str,
+    *,
+    provider: str,
+    price_source: str,
+    market_book: str = "aggregate_market_snapshot",
+) -> pd.DataFrame:
     if long_df.empty:
-        return long_df, pd.DataFrame()
+        return pd.DataFrame()
 
     for col in ["line", "over_price", "under_price"]:
         long_df[col] = pd.to_numeric(long_df[col], errors="coerce")
@@ -411,6 +428,42 @@ def normalize_event_odds(events: list[dict], event_odds: dict[str, dict], fetche
         }
     )
     wide["Market_Fetched_At_UTC"] = fetched_at_utc
+    wide["Market_Provider"] = provider
+    wide["Market_Book"] = market_book
+    wide["Market_Price_Source"] = price_source
+    wide["Market_Price_Source_Type"] = "LIVE_ENTRY"
+    wide["Market_Snapshot_ID"] = derive_snapshot_id(
+        provider=provider,
+        fetched_at_utc=fetched_at_utc,
+        fallback_label="latest_player_props_wide",
+    )
+    return wide
+
+
+def normalize_event_odds(events: list[dict], event_odds: dict[str, dict], fetched_at_utc: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+    rows: list[dict] = []
+    event_by_id = {str(event.get("id")): event for event in events}
+    for event_id, payload in event_odds.items():
+        event = event_by_id.get(str(event_id), payload)
+        bookmakers = payload.get("bookmakers", [])
+        for bookmaker in bookmakers:
+            for market in bookmaker.get("markets", []):
+                rows.extend(
+                    _collapse_market_outcomes(
+                        event=event,
+                        bookmaker=bookmaker,
+                        market=market,
+                        fetched_at_utc=fetched_at_utc,
+                    )
+                )
+
+    long_df = pd.DataFrame(rows)
+    wide = _wide_from_long_props(
+        long_df,
+        fetched_at_utc,
+        provider="odds_api",
+        price_source="odds_api_market_snapshot",
+    )
     return long_df, wide
 
 
@@ -443,6 +496,26 @@ def normalize_wide_snapshot(df: pd.DataFrame, fetched_at_utc: str) -> tuple[pd.D
             out[market_col] = pd.NA
     if "Market_Fetched_At_UTC" not in out.columns:
         out["Market_Fetched_At_UTC"] = fetched_at_utc
+    if "Market_Provider" not in out.columns:
+        out["Market_Provider"] = "snapshot"
+    if "Market_Book" not in out.columns:
+        out["Market_Book"] = "aggregate_market_snapshot"
+    if "Market_Price_Source" not in out.columns:
+        out["Market_Price_Source"] = "snapshot_input"
+    if "Market_Price_Source_Type" not in out.columns:
+        out["Market_Price_Source_Type"] = np.where(
+            pd.Series(out["Market_Fetched_At_UTC"], index=out.index).fillna("").astype(str).str.strip().ne(""),
+            "ARCHIVED_ENTRY",
+            "UNKNOWN",
+        )
+    if "Market_Snapshot_ID" not in out.columns:
+        provider_series = out["Market_Provider"].fillna("snapshot").astype(str)
+        fetched_series = out["Market_Fetched_At_UTC"].fillna("").astype(str)
+        event_series = out.get("Market_Event_ID", pd.Series("", index=out.index)).fillna("").astype(str)
+        out["Market_Snapshot_ID"] = [
+            derive_snapshot_id(provider=provider, fetched_at_utc=fetched_at, fallback_label=event_id)
+            for provider, fetched_at, event_id in zip(provider_series, fetched_series, event_series)
+        ]
 
     for col in MARKET_WIDE_COLUMNS:
         if col not in out.columns:
@@ -461,6 +534,11 @@ def normalize_wide_snapshot(df: pd.DataFrame, fetched_at_utc: str) -> tuple[pd.D
             "Market_Home_Team",
             "Market_Away_Team",
             "Market_Fetched_At_UTC",
+            "Market_Provider",
+            "Market_Book",
+            "Market_Price_Source",
+            "Market_Price_Source_Type",
+            "Market_Snapshot_ID",
         }
     ]
     for col in numeric_cols:
@@ -499,6 +577,217 @@ def normalize_wide_snapshot(df: pd.DataFrame, fetched_at_utc: str) -> tuple[pd.D
             )
     long_df = pd.DataFrame(long_rows)
     return long_df, wide_df
+
+
+SGO_MARKET_MAP = {
+    "points": "player_points",
+    "rebounds": "player_rebounds",
+    "assists": "player_assists",
+}
+
+
+def _sgo_team_abbr(event: dict, side: str) -> str | None:
+    teams = event.get("teams") if isinstance(event.get("teams"), dict) else {}
+    team = teams.get(side) if isinstance(teams, dict) else None
+    if not isinstance(team, dict):
+        return None
+    names = team.get("names") if isinstance(team.get("names"), dict) else {}
+    for key in ("short", "medium", "long"):
+        value = names.get(key)
+        if value:
+            return str(value)
+    return str(team.get("teamID")) if team.get("teamID") else None
+
+
+def _sgo_event_start(event: dict) -> str | None:
+    status = event.get("status") if isinstance(event.get("status"), dict) else {}
+    for value in [
+        status.get("startsAt") if isinstance(status, dict) else None,
+        event.get("startsAt"),
+        event.get("startTime"),
+        event.get("commence_time"),
+    ]:
+        text = str(value or "").strip()
+        if text:
+            return text
+    return None
+
+
+def _sgo_event_date_et(event: dict) -> str | None:
+    starts_at = _sgo_event_start(event)
+    return _event_date_et(starts_at or "")
+
+
+def _sgo_player_name(event: dict, odd: dict) -> str | None:
+    player_id = str(odd.get("playerID") or odd.get("statEntityID") or "").strip()
+    players = event.get("players") if isinstance(event.get("players"), dict) else {}
+    player = players.get(player_id) if isinstance(players, dict) else None
+    if isinstance(player, dict):
+        for key in ("name", "fullName", "displayName"):
+            if player.get(key):
+                return str(player[key])
+        first = str(player.get("firstName") or "").strip()
+        last = str(player.get("lastName") or "").strip()
+        if first or last:
+            return f"{first} {last}".strip()
+    market_name = str(odd.get("marketName") or "").strip()
+    stat = str(odd.get("statID") or "").strip().lower()
+    if market_name and stat:
+        marker = f" {stat.replace('_', ' ').title()} "
+        if marker in market_name:
+            return market_name.split(marker, 1)[0].strip()
+    return player_id or None
+
+
+def _sgo_float(value: object) -> float:
+    text = str(value or "").strip().replace("+", "")
+    if not text:
+        return np.nan
+    return float(pd.to_numeric(pd.Series([text]), errors="coerce").iloc[0])
+
+
+def _sgo_book_rows(event: dict, odd: dict, fetched_at_utc: str) -> list[dict]:
+    stat_id = str(odd.get("statID") or "").strip().lower()
+    market_key = SGO_MARKET_MAP.get(stat_id)
+    if market_key is None:
+        return []
+    if str(odd.get("periodID") or "").strip().lower() != "game":
+        return []
+    if str(odd.get("betTypeID") or "").strip().lower() != "ou":
+        return []
+    side = str(odd.get("sideID") or "").strip().lower()
+    if side not in {"over", "under"}:
+        return []
+    player_name = _sgo_player_name(event, odd)
+    if not player_name:
+        return []
+    base = {
+        "fetched_at_utc": fetched_at_utc,
+        "event_id": event.get("eventID") or event.get("id"),
+        "commence_time_utc": _sgo_event_start(event),
+        "event_date_et": _sgo_event_date_et(event),
+        "home_team": _sgo_team_abbr(event, "home"),
+        "away_team": _sgo_team_abbr(event, "away"),
+        "market_key": market_key,
+        "player_name_raw": player_name,
+        "player_name_norm": normalize_name(player_name),
+        "line": _sgo_float(odd.get("bookOverUnder") or odd.get("fairOverUnder")),
+        "over_price": np.nan,
+        "under_price": np.nan,
+    }
+
+    rows: list[dict] = []
+    by_book = odd.get("byBookmaker") if isinstance(odd.get("byBookmaker"), dict) else {}
+    for bookmaker_key, book_odd in by_book.items():
+        if not isinstance(book_odd, dict):
+            continue
+        if book_odd.get("available") is False:
+            continue
+        row = dict(base)
+        row["bookmaker_key"] = str(bookmaker_key)
+        row["bookmaker_title"] = str(bookmaker_key)
+        row["line"] = _sgo_float(book_odd.get("overUnder") or base["line"])
+        price = _sgo_float(book_odd.get("odds"))
+        if side == "over":
+            row["over_price"] = price
+        else:
+            row["under_price"] = price
+        rows.append(row)
+
+    if not rows:
+        row = dict(base)
+        row["bookmaker_key"] = "sportsgameodds_consensus"
+        row["bookmaker_title"] = "SportsGameOdds Consensus"
+        price = _sgo_float(odd.get("bookOdds") or odd.get("fairOdds"))
+        if side == "over":
+            row["over_price"] = price
+        else:
+            row["under_price"] = price
+        rows.append(row)
+    return rows
+
+
+def normalize_sportsgameodds_events(events: list[dict], fetched_at_utc: str, bookmaker_filter: set[str] | None = None) -> tuple[pd.DataFrame, pd.DataFrame]:
+    rows: list[dict] = []
+    for event in events:
+        odds = event.get("odds") if isinstance(event.get("odds"), dict) else {}
+        for odd in odds.values():
+            if not isinstance(odd, dict):
+                continue
+            for row in _sgo_book_rows(event, odd, fetched_at_utc):
+                if bookmaker_filter and str(row.get("bookmaker_key", "")).lower() not in bookmaker_filter:
+                    continue
+                rows.append(row)
+    long_df = pd.DataFrame(rows)
+    if long_df.empty:
+        return long_df, pd.DataFrame()
+    wide_df = _wide_from_long_props(
+        long_df,
+        fetched_at_utc,
+        provider="sportsgameodds",
+        price_source="sportsgameodds_events_v2",
+    )
+    return long_df, wide_df
+
+
+def fetch_from_sportsgameodds(args: argparse.Namespace, fetched_at_utc: str) -> tuple[list[dict], dict[str, dict], pd.DataFrame, pd.DataFrame, dict]:
+    api_key = resolve_api_key(args.api_key)
+    base_url = "https://api.sportsgameodds.com/v2/events"
+    events: list[dict] = []
+    cursor: str | None = None
+    errors: list[dict[str, str]] = []
+    page_count = 0
+    while True:
+        params: dict[str, object] = {
+            "leagueID": "NBA",
+            "oddsAvailable": "true",
+            "limit": 50,
+        }
+        if cursor:
+            params["cursor"] = cursor
+        try:
+            payload, _headers = request_json(base_url, params | {"apiKey": api_key})
+        except Exception as exc:
+            errors.append({"event_id": "events", "error": str(exc)})
+            break
+        page_count += 1
+        if not isinstance(payload, dict) or payload.get("success") is False:
+            errors.append({"event_id": "events", "error": str(payload)})
+            break
+        data = payload.get("data", [])
+        if not isinstance(data, list):
+            errors.append({"event_id": "events", "error": f"unexpected data payload: {type(data)!r}"})
+            break
+        events.extend([event for event in data if isinstance(event, dict)])
+        if args.event_limit is not None and len(events) >= int(args.event_limit):
+            events = events[: int(args.event_limit)]
+            break
+        cursor = payload.get("nextCursor")
+        if not cursor:
+            break
+        if page_count >= 10:
+            errors.append({"event_id": "events", "error": "pagination stopped at safety limit 10"})
+            break
+        if args.sleep_seconds > 0:
+            time.sleep(args.sleep_seconds)
+
+    bookmaker_filter = {item.strip().lower() for item in args.bookmakers.split(",") if item.strip()}
+    long_df, wide_df = normalize_sportsgameodds_events(events, fetched_at_utc, bookmaker_filter=bookmaker_filter or None)
+    manifest = {
+        "provider": "sportsgameodds",
+        "fetched_at_utc": fetched_at_utc,
+        "sport": SPORT_KEY,
+        "league_id": "NBA",
+        "markets": ["player_points", "player_rebounds", "player_assists"],
+        "bookmakers": sorted(bookmaker_filter),
+        "event_count_requested": int(len(events)),
+        "event_count_fetched": int(len(events)),
+        "long_rows": int(len(long_df)),
+        "wide_rows": int(len(wide_df)),
+        "pages_fetched": int(page_count),
+        "errors": errors,
+    }
+    return events, {}, long_df, wide_df, manifest
 
 
 def fetch_from_odds_api(args: argparse.Namespace, fetched_at_utc: str) -> tuple[list[dict], dict[str, dict], pd.DataFrame, pd.DataFrame, dict]:
@@ -663,6 +952,8 @@ def main() -> None:
                 "Use local snapshot inputs, or pass both --provider odds_api and --allow-odds-api to override."
             )
         events, event_payloads, long_df, wide_df, manifest = fetch_from_odds_api(args, fetched_at_utc)
+    elif args.provider == "sportsgameodds":
+        events, event_payloads, long_df, wide_df, manifest = fetch_from_sportsgameodds(args, fetched_at_utc)
     elif args.provider == "snapshot":
         if args.input_path is None:
             raise RuntimeError(

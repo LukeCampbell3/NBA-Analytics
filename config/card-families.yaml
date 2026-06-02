@@ -1,0 +1,185 @@
+# Card Families Configuration
+# Defines card families, materials, and their visual properties
+
+families:
+  standard:
+    label: "Standard"
+    materials:
+      chrome:
+        label: "Chrome"
+        description: "Metallic chrome finish"
+        color_schemes:
+          - ["#2C3E50", "#ECF0F1"]  # Dark blue / Light gray
+          - ["#34495E", "#BDC3C7"]  # Slate blue / Silver
+        texture: "textures/chrome.png"
+        foil_opacity: 0.8
+        grain_opacity: 0.1
+        
+      refractor:
+        label: "Refractor"
+        description: "Holographic prism effect"
+        color_schemes:
+          - ["#1A237E", "#00BCD4"]  # Indigo / Cyan
+          - ["#311B92", "#7C4DFF"]  # Deep purple / Light purple
+        texture: "textures/refractor.png"
+        foil_opacity: 0.9
+        grain_opacity: 0.05
+
+  fit:
+    label: "Fit"
+    materials:
+      blue-ice:
+        label: "Blue Ice"
+        description: "High fit score variant"
+        color_schemes:
+          - ["#0D47A1", "#29B6F6"]  # Dark blue / Light blue
+          - ["#01579B", "#4FC3F7"]  # Blue / Sky blue
+        texture: "textures/blue-ice.png"
+        foil_opacity: 0.7
+        grain_opacity: 0.2
+        
+      zebra-ice:
+        label: "Zebra Ice"
+        description: "Medium-high fit score"
+        color_schemes:
+          - ["#212121", "#E0E0E0"]  # Black / Light gray
+          - ["#37474F", "#CFD8DC"]  # Blue gray / Light blue gray
+        texture: "textures/zebra-ice.png"
+        foil_opacity: 0.6
+        grain_opacity: 0.3
+        
+      tiger-ice:
+        label: "Tiger Ice"
+        description: "Medium fit score"
+        color_schemes:
+          - ["#BF360C", "#FFAB91"]  # Deep orange / Light orange
+          - ["#DD2C00", "#FF9E80"]  # Orange / Peach
+        texture: "textures/tiger-ice.png"
+        foil_opacity: 0.5
+        grain_opacity: 0.4
+        
+      black-ice:
+        label: "Black Ice"
+        description: "Low fit score"
+        color_schemes:
+          - ["#000000", "#616161"]  # Black / Gray
+          - ["#263238", "#78909C"]  # Dark blue gray / Blue gray
+        texture: "textures/black-ice.png"
+        foil_opacity: 0.4
+        grain_opacity: 0.5
+
+  value:
+    label: "Value"
+    materials:
+      auto:
+        label: "Auto"
+        description: "Autograph style"
+        color_schemes:
+          - ["#1B5E20", "#C8E6C9"]  # Dark green / Light green
+          - ["#33691E", "#AED581"]  # Green / Light green
+        texture: "textures/auto.png"
+        foil_opacity: 0.3
+        grain_opacity: 0.6
+        
+      patch:
+        label: "Patch"
+        description: "Jersey patch window"
+        color_schemes:
+          - ["#B71C1C", "#FFCDD2"]  # Dark red / Light red
+          - ["#C62828", "#EF9A9A"]  # Red / Pink
+        texture: "textures/patch.png"
+        foil_opacity: 0.4
+        grain_opacity: 0.5
+        
+      manga:
+        label: "Manga"
+        description: "Comic book style"
+        color_schemes:
+          - ["#4A148C", "#E1BEE7"]  # Purple / Light purple
+          - ["#6A1B9A", "#CE93D8"]  # Deep purple / Light purple
+        texture: "textures/manga.png"
+        foil_opacity: 0.5
+        grain_opacity: 0.4
+        
+      auto-patch:
+        label: "Auto-Patch"
+        description: "Combined auto + patch"
+        color_schemes:
+          - ["#004D40", "#B2DFDB"]  # Dark teal / Light teal
+          - ["#00695C", "#80CBC4"]  # Teal / Light teal
+        texture: "textures/auto-patch.png"
+        foil_opacity: 0.6
+        grain_opacity: 0.3
+
+# Team color mappings
+team_colors:
+  LAL: ["#552583", "#FDB927"]  # Lakers: Purple & Gold
+  BOS: ["#007A33", "#BA9653"]  # Celtics: Green & Gold
+  GSW: ["#1D428A", "#FFC72C"]  # Warriors: Blue & Gold
+  CHI: ["#CE1141", "#000000"]  # Bulls: Red & Black
+  MIA: ["#98002E", "#F9A01B"]  # Heat: Red & Orange
+  NYK: ["#006BB6", "#F58426"]  # Knicks: Blue & Orange
+  PHI: ["#006BB6", "#ED174C"]  # 76ers: Blue & Red
+  LAC: ["#C8102E", "#1D428A"]  # Clippers: Red & Blue
+  DEN: ["#0E2240", "#FEC524"]  # Nuggets: Blue & Gold
+  MIL: ["#00471B", "#EEE1C6"]  # Bucks: Green & Cream
+  PHX: ["#1D1160", "#E56020"]  # Suns: Purple & Orange
+  DAL: ["#00538C", "#002B5E"]  # Mavericks: Blue & Navy
+  HOU: ["#CE1141", "#C4CED4"]  # Rockets: Red & Silver
+  SAS: ["#C4CED4", "#000000"]  # Spurs: Silver & Black
+  OKC: ["#007AC1", "#EF3B24"]  # Thunder: Blue & Orange
+  POR: ["#E03A3E", "#000000"]  # Blazers: Red & Black
+  UTA: ["#002B5C", "#00471B"]  # Jazz: Navy & Green
+  SAC: ["#5A2D81", "#63727A"]  # Kings: Purple & Gray
+  ORL: ["#0077C0", "#C4CED4"]  # Magic: Blue & Silver
+  WAS: ["#002B5C", "#E31837"]  # Wizards: Navy & Red
+  CLE: ["#860038", "#FDBB30"]  # Cavaliers: Wine & Gold
+  DET: ["#C8102E", "#1D42BA"]  # Pistons: Red & Blue
+  CHA: ["#1D1160", "#00788C"]  # Hornets: Purple & Teal
+  ATL: ["#E03A3E", "#C1D32F"]  # Hawks: Red & Volt
+  MEM: ["#5D76A9", "#12173F"]  # Grizzlies: Blue & Navy
+  NOP: ["#0C2340", "#C8102E"]  # Pelicans: Navy & Red
+  MIN: ["#0C2340", "#236192"]  # Timberwolves: Blue & Blue
+  TOR: ["#CE1141", "#000000"]  # Raptors: Red & Black
+  IND: ["#002D62", "#FDBB30"]  # Pacers: Navy & Gold
+  BRK: ["#000000", "#FFFFFF"]  # Nets: Black & White
+  default: ["#1E3A8A", "#DC2626"]  # Default: Blue & Red
+
+# Assignment rules
+assignment_rules:
+  # Value score thresholds
+  value_score:
+    high: 75
+    medium: 60
+    low: 45
+  
+  # Fit score thresholds  
+  fit_score:
+    high: 80
+    medium: 65
+    low: 50
+  
+  # Age thresholds
+  age:
+    rookie_max: 22
+    veteran_min: 30
+  
+  # Card family assignment logic
+  family_assignment:
+    - condition: "value_score >= high"
+      family: "value"
+      priority: 1
+      
+    - condition: "fit_score >= high"
+      family: "fit"
+      priority: 2
+      
+    - condition: "age <= rookie_max"
+      family: "standard"
+      material: "chrome"
+      priority: 3
+      
+    - condition: "default"
+      family: "standard"
+      material: "refractor"
+      priority: 4

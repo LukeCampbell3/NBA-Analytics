@@ -1,0 +1,17 @@
+{
+  "name": "nba-analytics-card-generator",
+  "version": "1.0.0",
+  "description": "Generate NBA player card images",
+  "main": "generate-cards.js",
+  "scripts": {
+    "generate": "node generate-cards.js",
+    "test": "node test-generation.js"
+  },
+  "dependencies": {
+    "canvas": "^3.0.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

@@ -1,0 +1,297 @@
+{
+  "player": {
+    "id": "201569",
+    "name": "Eric Gordon",
+    "team": "PHI",
+    "season": 2026,
+    "age": 37.0,
+    "position": "Wing"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 6,
+      "minutes_per_game": 12.3,
+      "points_per_game": 5.5,
+      "rebounds_per_game": 0.3,
+      "assists_per_game": 0.5,
+      "steals_per_game": 0.7,
+      "blocks_per_game": 0.2,
+      "field_goal_pct": 0.571,
+      "three_point_pct": 0.571,
+      "free_throw_pct": 0.5
+    },
+    "advanced": {
+      "usage_rate": 0.145,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": -5.2
+    }
+  },
+  "identity": {
+    "primary_archetype": "stationary_shooter",
+    "archetype_confidence": 0.59,
+    "secondary_archetypes": [
+      {
+        "name": "stationary_shooter",
+        "probability": 0.59
+      },
+      {
+        "name": "movement_shooter",
+        "probability": 0.41
+      }
+    ],
+    "role_description": "Stationary Shooter",
+    "usage_band": "low"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.08,
+    "mid_range_frequency": 0.263,
+    "three_point_frequency": 0.657,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 0.0,
+    "pick_and_roll_frequency": 0.0,
+    "drives_per_game": 4.0,
+    "paint_touches_per_game": 1.3,
+    "assisted_rate": 0.95,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.3,
+      "vs_wings": 0.6,
+      "vs_bigs": 0.1
+    },
+    "estimated_metrics": {
+      "defensive_rating": 115.2,
+      "defensive_ppp_allowed": 1.048,
+      "matchup_difficulty": 0.56,
+      "foul_rate": 0.183,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 8.8,
+    "opponent_defense_context": 0.662,
+    "team_context_adjustment": 0.034,
+    "intrinsic_value": 9.1,
+    "context_adjustment": 3.2,
+    "adjusted_value": 12.3,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition",
+    "formula": "intrinsic_value = intrinsic_offense * (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "interpretation_summary": "Intrinsic offense 8.8; adjusted value 12.3 per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 38.0,
+      "level": "low",
+      "factors": [
+        [
+          "sample_games",
+          "6 games"
+        ],
+        [
+          "minutes",
+          "12.3 MPG"
+        ],
+        [
+          "archetype_confidence",
+          "59%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 2,
+        "minutes": 8,
+        "data_quality": 15,
+        "archetype_confidence": 7,
+        "team_stability": 6
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.433,
+      "confidence_level": "low",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 5.5,
+          "ci_low": 4.4,
+          "ci_high": 6.6,
+          "relative_error": 20.1
+        },
+        "assists": {
+          "mean": 0.5,
+          "ci_low": 0.4,
+          "ci_high": 0.6,
+          "relative_error": 20.1
+        },
+        "rebounds": {
+          "mean": 0.3,
+          "ci_low": 0.2,
+          "ci_high": 0.4,
+          "relative_error": 20.1
+        }
+      },
+      "sample_size_notes": "6 games, 12.3 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "high",
+      "constraints": [
+        "Usage increase limited to +15%",
+        "Minutes increase limited to +10 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Stationary Shooter role constraints"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.15,
+        "max_minutes_increase": 10.0,
+        "projected_usage_cap": 0.295,
+        "projected_minutes_cap": 22.3
+      },
+      "constraint_rationale": {
+        "archetype": "stationary_shooter",
+        "position": "wing",
+        "three_point_frequency": 0.657,
+        "three_point_percentage": 0.571
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "1627741",
+        "name": "Buddy Hield",
+        "team": "ATL",
+        "similarity_score": 0.37,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 7.9,
+          "assists": 1.5,
+          "rebounds": 2.4
+        }
+      },
+      {
+        "id": "1626192",
+        "name": "Pat Connaughton",
+        "team": "CHA",
+        "similarity_score": 0.35,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 3.0,
+          "assists": 0.5,
+          "rebounds": 1.6
+        }
+      },
+      {
+        "id": "201587",
+        "name": "Nicolas Batum",
+        "team": "LAC",
+        "similarity_score": 0.34,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 4.1,
+          "assists": 0.9,
+          "rebounds": 2.5
+        }
+      },
+      {
+        "id": "203914",
+        "name": "Gary Harris",
+        "team": "MIL",
+        "similarity_score": 0.34,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 2.4,
+          "assists": 1.0,
+          "rebounds": 1.3
+        }
+      },
+      {
+        "id": "1627752",
+        "name": "Taurean Prince",
+        "team": "MIL",
+        "similarity_score": 0.33,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 5.2,
+          "assists": 0.8,
+          "rebounds": 1.7
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "declining"
+  },
+  "metadata": {
+    "generated_at": "2026-03-14T18:12:47.468847",
+    "data_version": "v1.2_refresh",
+    "generation_method": "nba_api_2025_26_refresh",
+    "quality_notes": "Season refresh with inferred mechanism fields",
+    "final_enhanced_at": "2026-03-14T18:12:47.468847"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    },
+    {
+      "type": "low_sample_size",
+      "severity": "high",
+      "description": "Very small sample (6 games)",
+      "recommendation": "Use projections as directional only"
+    },
+    {
+      "type": "high_uncertainty",
+      "severity": "medium",
+      "description": "Elevated uncertainty (0.433)",
+      "recommendation": "Cross-check with independent priors before strong conclusions"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "status": "LEAKAGE_AUDIT_PASSED",
+  "cutoff_date": "2025-10-01",
+  "frozen_sample_path": "sports\\nba\\validation\\production_shadow\\player_simulation\\backtests\\2025_preseason\\frozen_sample\\frozen_preseason_player_state_rows.parquet",
+  "actual_outcomes_path": "sports\\nba\\validation\\production_shadow\\player_simulation\\backtests\\2025_preseason\\frozen_sample\\frozen_preseason_actual_outcomes.csv",
+  "input_rows": 0,
+  "actual_outcome_rows": 582,
+  "max_input_source_date": null,
+  "actual_outcomes_isolated": true,
+  "failures": [
+    "frozen_input_rows_empty"
+  ],
+  "production_behavior_changed": false,
+  "promotion_ready": false
+}

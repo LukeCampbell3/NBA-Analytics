@@ -1,0 +1,144 @@
+{
+  "run_id": "safe_state_prod_shadow_20260527_165018Z",
+  "created_at": "2026-05-27T16:53:31.033252+00:00",
+  "input_paths": {
+    "annotated_candidates_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_annotated_candidates.csv",
+    "blocker_resolution_rows_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\forecastability_blocker_resolution_rows.csv",
+    "root_cause_rows_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\forecastability_root_cause_rows.csv",
+    "candidate_blockers_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_candidate_blockers.csv",
+    "data_proc_dir": ""
+  },
+  "output_paths": {
+    "json": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_lifecycle_report.json",
+    "markdown": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_lifecycle_report.md",
+    "ledger": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_evidence_ledger.jsonl",
+    "needs_more_sample_queue": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\needs_more_sample_queue.csv",
+    "true_unstable_shadow_rejections": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\true_unstable_shadow_rejections.csv",
+    "safe_state_shadow_boards": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_shadow_boards.csv",
+    "safe_state_settlement_evaluation": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_settlement_rows.csv"
+  },
+  "status_labels": [
+    "TRUE_UNSTABLE_REJECTIONS_TRACKED",
+    "NEEDS_MORE_SAMPLE_TRACKING",
+    "SETTLEMENT_PENDING",
+    "MULTI_SLATE_EVIDENCE_ACCUMULATING"
+  ],
+  "true_unstable": {
+    "input_paths": {
+      "annotated_candidates_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_annotated_candidates.csv",
+      "blocker_resolution_rows_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\forecastability_blocker_resolution_rows.csv",
+      "root_cause_rows_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\forecastability_root_cause_rows.csv",
+      "candidate_blockers_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_candidate_blockers.csv"
+    },
+    "output_paths": {
+      "csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\true_unstable_shadow_rejections.csv",
+      "json": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\true_unstable_shadow_rejections.json",
+      "markdown": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\true_unstable_shadow_rejections.md"
+    },
+    "locked_true_unstable_count": 11,
+    "root_cause_counts": {
+      "REAL_MINUTES_VOLATILITY": 10,
+      "REAL_USAGE_VOLATILITY": 1
+    },
+    "rules": [
+      "shadow_rejected_only",
+      "unsafe_despite_price_edge",
+      "not_a_production_veto",
+      "settlement_tracked_later"
+    ],
+    "production_behavior_changed": false,
+    "promotion_claim": false,
+    "shadow_only": true
+  },
+  "needs_more_sample_queue": {
+    "input_paths": {
+      "blocker_resolution_rows_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\forecastability_blocker_resolution_rows.csv",
+      "root_cause_rows_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\forecastability_root_cause_rows.csv",
+      "annotated_candidates_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_annotated_candidates.csv"
+    },
+    "output_paths": {
+      "csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\needs_more_sample_queue.csv",
+      "json": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\needs_more_sample_queue.json",
+      "markdown": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\needs_more_sample_queue.md"
+    },
+    "needs_more_sample_count": 2,
+    "queue_status_counts": {
+      "NEEDS_MORE_SAMPLE": 2
+    },
+    "rules": [
+      "not_safe",
+      "not_production_candidate",
+      "evidence_building_only",
+      "future_recheck_required"
+    ],
+    "production_behavior_changed": false,
+    "promotion_claim": false,
+    "shadow_only": true
+  },
+  "comparable_state_expansion": {
+    "input_paths": {
+      "needs_more_sample_queue_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\needs_more_sample_queue.csv",
+      "annotated_candidates_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_annotated_candidates.csv",
+      "data_proc_dir": ""
+    },
+    "output_paths": {
+      "rows_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\comparable_state_expansion_rows.csv",
+      "summary_json": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\comparable_state_expansion_summary.json",
+      "markdown": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\comparable_state_expansion_report.md"
+    },
+    "queued_candidates": 2,
+    "expansion_rows": 12,
+    "expansion_status_counts": {
+      "INSUFFICIENT_SAMPLE": 6,
+      "NOT_AVAILABLE": 6
+    },
+    "production_behavior_changed": false,
+    "promotion_claim": false,
+    "shadow_only": true
+  },
+  "needs_more_sample_recheck": {
+    "input_paths": {
+      "needs_more_sample_queue_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\needs_more_sample_queue.csv",
+      "comparable_state_expansion_rows_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\comparable_state_expansion_rows.csv",
+      "annotated_candidates_csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_annotated_candidates.csv"
+    },
+    "output_paths": {
+      "csv": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\needs_more_sample_recheck.csv",
+      "json": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\needs_more_sample_recheck.json",
+      "markdown": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\needs_more_sample_recheck.md"
+    },
+    "rechecked_candidates": 2,
+    "recheck_status_counts": {
+      "REMAINS_NEEDS_MORE_SAMPLE": 2
+    },
+    "production_behavior_changed": false,
+    "promotion_claim": false,
+    "shadow_only": true
+  },
+  "ledger": {
+    "ledger_path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\safe_state\\20260527\\safe_state_evidence_ledger.jsonl",
+    "run_id": "safe_state_prod_shadow_20260527_165018Z",
+    "entries_appended": 15,
+    "append_only": true,
+    "production_behavior_changed": false,
+    "promotion_claim": false,
+    "shadow_only": true
+  },
+  "settlement": {},
+  "future_promotion_criteria": [
+    "multiple_settled_slates",
+    "enough_safe_core_or_near_core_rows",
+    "true_unstable_rejections_remove_more_losses_than_wins",
+    "needs_more_sample_candidates_mature_or_reject",
+    "paired_comparison_improves_roi_brier_ece",
+    "no_coverage_collapse",
+    "no_hidden_player_team_date_overfit",
+    "trained_bundle_validation_passes",
+    "broader_walk_forward_validation_passes",
+    "rollback_rule_exists"
+  ],
+  "promotion_status": "NOT_PROMOTION_ELIGIBLE",
+  "production_behavior_changed": false,
+  "promotion_claim": false,
+  "shadow_only": true
+}

@@ -1,0 +1,79 @@
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <title>Profit Backtest Report</title>
+      <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 24px; }
+        h1 { margin-bottom: 0.25rem; }
+        .summary { margin-bottom: 1.5rem; }
+        .chart-container { width: 100%; max-width: 960px; margin: auto; }
+      </style>
+    </head>
+    <body>
+      <h1>Profit Backtest Report</h1>
+      <div class="summary">
+        <h2>Summary</h2>
+        
+    <ul>
+      <li>Total plays: 576</li>
+      <li>Winning plays: 355</li>
+      <li>Hit rate: 61.63%</li>
+      <li>Total units wagered: 576.00</li>
+      <li>Total units won: 1121.69</li>
+      <li>ROI: 94.74%</li>
+      <li>Max drawdown: 655.16</li>
+      <li>Sharpe-like: 0.032</li>
+    </ul>
+    
+      </div>
+      <div class="chart-container">
+        <canvas id="profitChart" width="960" height="420"></canvas>
+      </div>
+      <script>
+        const labels = ['2026-04-27', '2026-04-28', '2026-04-29'];
+        const dailyData = [-53.200200658226244, 624.1400726104623, -24.25178714586177];
+        const cumulativeData = [-53.200200658226244, 570.9398719522361, 546.6880848063744];
+        const ctx = document.getElementById('profitChart');
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: 'Daily PnL',
+                data: dailyData,
+                borderColor: 'rgb(54, 162, 235)',
+                backgroundColor: 'rgba(54, 162, 235, 0.15)',
+                tension: 0.25,
+                fill: true,
+              },
+              {
+                label: 'Cumulative PnL',
+                data: cumulativeData,
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.12)',
+                tension: 0.25,
+                fill: false,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              title: { display: true, text: 'Profit per Day / Cumulative Profit' },
+              legend: { position: 'top' },
+            },
+            scales: {
+              x: { title: { display: true, text: 'Date' } },
+              y: { title: { display: true, text: 'Units' }, beginAtZero: false },
+            },
+          },
+        });
+      </script>
+    </body>
+    </html>
+    

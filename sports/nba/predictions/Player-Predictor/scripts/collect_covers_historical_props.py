@@ -597,6 +597,19 @@ def build_wide_from_covers_long(long_df: pd.DataFrame) -> pd.DataFrame:
     )
     if "Market_Fetched_At_UTC" not in wide.columns:
         wide["Market_Fetched_At_UTC"] = utc_now_iso()
+    wide["Market_Provider"] = "covers_historical"
+    wide["Market_Book"] = "covers_consensus"
+    wide["Market_Price_Source"] = "covers_matchup_props"
+    wide["Market_Price_Source_Type"] = wide["Market_Fetched_At_UTC"].fillna("").astype(str).str.strip().ne("").map(
+        lambda has_time: "ARCHIVED_ENTRY" if has_time else "UNKNOWN"
+    )
+    wide["Market_Snapshot_ID"] = [
+        f"covers_historical:{fetched_at}" if str(fetched_at).strip() else f"covers_historical:{event_id}"
+        for fetched_at, event_id in zip(
+            wide["Market_Fetched_At_UTC"].fillna("").astype(str),
+            wide.get("Market_Event_ID", pd.Series("", index=wide.index)).fillna("").astype(str),
+        )
+    ]
     for col in MARKET_WIDE_COLUMNS:
         if col not in wide.columns:
             wide[col] = pd.NA

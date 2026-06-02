@@ -1,0 +1,33 @@
+schema_version: 1
+required_fields:
+  - failure_mode_id
+  - market_families
+  - candidate_symptoms
+  - required_pre_event_features
+  - postgame_attribution_signals
+  - likely_causal_pathway
+  - candidate_interventions
+  - allowed_penalties_gates
+  - opposite_side_discovery_rules
+  - validation_segments
+  - promotion_requirements
+  - known_risks_overfit_traps
+allowed_intervention_types:
+  - penalty
+  - hard_gate
+  - soft_downgrade
+  - price_dependent_tier
+  - opposite_side_discovery
+  - alternate_line_discovery
+  - scenario_stress_increase
+  - forecastability_penalty
+  - market_disagreement_penalty
+  - parlay_shared_failure_veto
+  - calibration_shrink
+  - candidate_pool_reranking
+  - board_objective_penalty_term
+required_promotion_requirements:
+  - trained_bundle_replay_required
+  - broader_walk_forward_required
+  - no_op_narrowness_required
+  - active_window_improvement_required

@@ -1,0 +1,8 @@
+variant,board_size,overlap_with_production,shadow_only_rows,production_only_rows,edge_defendable_count,forecastability_tier_counts,structural_mispricing_tier_counts,similar_state_reliability_tier_counts,safe_state_tier_counts,avg_stress_edge,avg_lcb_edge,avg_forecastability,avg_structural_mispricing,avg_similar_state_tightness,avg_board_readiness_risk,known_failure_mode_exposure
+production_board_as_is,1,1,0,0,0,{},{},{},{},0.0539727799187644,-0.0254411698869705,,,,0.2487301348575341,{}
+price_defense_only_board,1,0,1,1,1,{'UNFORECASTABLE': 1},{'PRICE_ONLY_EDGE': 1},{'INSUFFICIENT_SAMPLE': 1},{'SAFE_STATE_INSUFFICIENT_EVIDENCE': 1},0.173409990965452,0.106385572109263,0.21478032979526807,0.12754434753830585,0.0,,"{'MINUTES_BAND_FAILURE': 1, 'ROLE_SHIFT_LOW_USAGE': 1}"
+forecastable_price_board,0,0,0,1,0,{},{},{},{},,,,,,,{}
+structural_misprice_board,0,0,0,1,0,{},{},{},{},,,,,,,{}
+safe_state_core_board,0,0,0,1,0,{},{},{},{},,,,,,,{}
+safe_state_near_core_board,0,0,0,1,0,{},{},{},{},,,,,,,{}
+safe_state_expanded_board,0,0,0,1,0,{},{},{},{},,,,,,,{}

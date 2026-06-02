@@ -1,0 +1,320 @@
+{
+  "player": {
+    "id": "1631098",
+    "name": "Johnny Davis",
+    "team": "WAS",
+    "season": 2025,
+    "age": 23.0,
+    "position": "Wing"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 34,
+      "minutes_per_game": 7.1,
+      "points_per_game": 2.4,
+      "rebounds_per_game": 1.1,
+      "assists_per_game": 0.3,
+      "steals_per_game": 0.4,
+      "blocks_per_game": 0.2,
+      "field_goal_pct": 0.41,
+      "three_point_pct": 0.241,
+      "free_throw_pct": 0.6
+    },
+    "advanced": {
+      "usage_rate": 0.165,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": -0.8
+    }
+  },
+  "identity": {
+    "primary_archetype": "versatile_wing",
+    "archetype_confidence": 0.9,
+    "secondary_archetypes": [],
+    "role_description": "Versatile Wing",
+    "usage_band": "low"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.367,
+    "mid_range_frequency": 0.275,
+    "three_point_frequency": 0.359,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 3.0,
+    "pick_and_roll_frequency": 4.0,
+    "drives_per_game": 1.29,
+    "paint_touches_per_game": 0.92,
+    "assisted_rate": 0.33,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations (limited visibility)",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution given data limitations"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.3,
+      "vs_wings": 0.5,
+      "vs_bigs": 0.2
+    },
+    "estimated_metrics": {
+      "defensive_rating": 107.9,
+      "defensive_ppp_allowed": 0.979,
+      "matchup_difficulty": 0.49,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 12.8,
+    "opponent_defense_context": 0.37,
+    "team_context_adjustment": -0.049,
+    "intrinsic_value": 12.2,
+    "context_adjustment": -2.6,
+    "adjusted_value": 9.6,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition with validated arithmetic",
+    "formula": "intrinsic_value = intrinsic_offense \u00d7 (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "semantic_explanation": {
+      "offense_defense_interpretation": {
+        "intrinsic_offense": {
+          "description": "Player's raw offensive ability independent of context",
+          "interpretation": "12.8 points of offensive value per 100 possessions"
+        },
+        "opponent_defense_context": {
+          "description": "Quality of defenses faced (0.3 = tough, 0.7 = easy)",
+          "interpretation": "0.37 indicates tougher than average defenses"
+        },
+        "team_context_adjustment": {
+          "description": "How team context helps/hurts player (+ = helpful, - = harmful)",
+          "interpretation": "-0.049 (harmful team context)"
+        },
+        "context_adjustment": {
+          "description": "Net effect of opponent defense and team context",
+          "interpretation": "-2.6 points adjustment due to context"
+        }
+      },
+      "formula_breakdown": {
+        "step_1": "intrinsic_value = intrinsic_offense \u00d7 (1 + team_context_adjustment) = 12.8 \u00d7 (1 -0.049) = 12.2",
+        "step_2": "context_adjustment = (opponent_defense_context - 0.5) \u00d7 20 = (0.37 - 0.5) \u00d7 20 = -2.6",
+        "step_3": "adjusted_value = intrinsic_value + context_adjustment = 12.2 -2.6 = 9.6"
+      },
+      "interpretation_guide": {
+        "good_offense_bad_defense": "High intrinsic_offense + low opponent_defense_context (<0.5) = player produces offense against tough defenses",
+        "bad_offense_good_defense": "Low intrinsic_offense + high opponent_defense_context (>0.5) = player's stats inflated by facing weak defenses",
+        "team_effect": "Positive team_context_adjustment = player benefits from good teammates/system",
+        "net_value": "adjusted_value represents player's expected contribution in average context"
+      }
+    },
+    "interpretation_summary": "Player shows moderate offensive ability (12.8 intrinsic points). Context: faced significantly tougher than average defenses, which understates true offensive value. Net context adjustment: -2.6 points. Final adjusted value: 9.6 points per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 60.0,
+      "level": "medium",
+      "factors": [
+        [
+          "low_sample_games",
+          "34 games"
+        ],
+        [
+          "very_low_minutes",
+          "7.1 MPG"
+        ],
+        [
+          "high_archetype_confidence",
+          "90%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 15,
+        "minutes": 5,
+        "data_quality": 15,
+        "archetype_confidence": 15,
+        "team_stability": 10
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.383,
+      "confidence_level": "low",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 2.4,
+          "ci_low": 1.5,
+          "ci_high": 3.3,
+          "relative_error": 36.8
+        },
+        "assists": {
+          "mean": 0.3,
+          "ci_low": 0.2,
+          "ci_high": 0.4,
+          "relative_error": 35.6
+        },
+        "rebounds": {
+          "mean": 1.1,
+          "ci_low": 0.7,
+          "ci_high": 1.5,
+          "relative_error": 38.2
+        }
+      },
+      "sample_size_notes": "34 games, 7.1 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "medium",
+      "constraints": [
+        "Usage increase limited to +10%",
+        "Minutes increase limited to +8 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Versatile two-way role",
+        "Balanced shot profile: 25-50% 3PA",
+        "Multi-position capability",
+        "Switchable defender"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.084,
+        "max_minutes_increase": 6.4,
+        "projected_usage_cap": 0.30000000000000004,
+        "projected_minutes_cap": 15.1
+      },
+      "constraint_rationale": {
+        "archetype": "versatile_wing",
+        "position": "wing",
+        "three_point_frequency": 0.359,
+        "three_point_percentage": 0.241
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "1630264",
+        "name": "Anthony Gill",
+        "team": "WAS",
+        "similarity_score": 0.99,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 2.5,
+          "assists": 0.3,
+          "rebounds": 1.3
+        }
+      },
+      {
+        "id": "1630699",
+        "name": "MarJon Beauchamp",
+        "team": "NYK",
+        "similarity_score": 0.99,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 2.3,
+          "assists": 0.3,
+          "rebounds": 1.3
+        }
+      },
+      {
+        "id": "1631169",
+        "name": "Josh Minott",
+        "team": "MIN",
+        "similarity_score": 0.99,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 2.6,
+          "assists": 0.4,
+          "rebounds": 1.0
+        }
+      },
+      {
+        "id": "1641890",
+        "name": "Tyler Smith",
+        "team": "MIL",
+        "similarity_score": 0.98,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 2.9,
+          "assists": 0.2,
+          "rebounds": 1.1
+        }
+      },
+      {
+        "id": "1631116",
+        "name": "Patrick Baldwin Jr.",
+        "team": "LAC",
+        "similarity_score": 0.98,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 2.2,
+          "assists": 0.1,
+          "rebounds": 1.0
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "stable"
+  },
+  "metadata": {
+    "generated_at": "2026-02-23T13:43:01.910373",
+    "data_version": "v1.1_final",
+    "generation_method": "improved_with_fixes",
+    "quality_notes": "Fixed: archetype contradictions, shot frequency normalization, decomposition consistency",
+    "fixed_at": "2026-02-23T21:17:32.450817",
+    "fixes_applied": [
+      "archetype_position_alignment",
+      "shot_frequency_normalization",
+      "possession_decomposition_consistency",
+      "template_overuse_reduction",
+      "big_archetype_correction",
+      "constraint_leakage_fix",
+      "decomposition_semantics_clarification",
+      "quality_flagging"
+    ],
+    "final_enhanced_at": "2026-02-24T18:21:57.487168"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    }
+  ]
+}

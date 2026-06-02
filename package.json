@@ -1,0 +1,32 @@
+{
+  "name": "nba-analytics-asset-pipeline",
+  "version": "1.0.0",
+  "description": "Asset pipeline for generating NBA player card images",
+  "main": "src/asset-pipeline/generate-cards.ts",
+  "scripts": {
+    "build-cards": "ts-node src/asset-pipeline/generate-cards.ts",
+    "render-test": "ts-node src/asset-pipeline/satori-renderer.ts",
+    "test-pipeline": "ts-node src/asset-pipeline/test-pipeline.ts",
+    "dev": "nodemon --exec ts-node src/asset-pipeline/generate-cards.ts",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "satori": "^0.1.0",
+    "sharp": "^0.33.0",
+    "yaml": "^2.3.0",
+    "chalk": "^4.1.2",
+    "ora": "^6.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/sharp": "^0.33.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0",
+    "nodemon": "^3.0.0",
+    "@types/react": "^18.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

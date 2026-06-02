@@ -1,0 +1,297 @@
+{
+  "player": {
+    "id": "1642955",
+    "name": "Kadary Richmond",
+    "team": "WAS",
+    "season": 2026,
+    "age": 24.0,
+    "position": "Wing"
+  },
+  "performance": {
+    "traditional": {
+      "games_played": 3,
+      "minutes_per_game": 22.3,
+      "points_per_game": 8.3,
+      "rebounds_per_game": 3.3,
+      "assists_per_game": 2.7,
+      "steals_per_game": 2.7,
+      "blocks_per_game": 0.3,
+      "field_goal_pct": 0.625,
+      "three_point_pct": 0.5,
+      "free_throw_pct": 1.0
+    },
+    "advanced": {
+      "usage_rate": 0.124,
+      "true_shooting": null,
+      "player_efficiency_rating": null,
+      "plus_minus": 1.7
+    }
+  },
+  "identity": {
+    "primary_archetype": "versatile_wing",
+    "archetype_confidence": 0.62,
+    "secondary_archetypes": [
+      {
+        "name": "versatile_wing",
+        "probability": 0.62
+      },
+      {
+        "name": "connector",
+        "probability": 0.38
+      }
+    ],
+    "role_description": "Versatile Wing",
+    "usage_band": "low"
+  },
+  "shot_profile": {
+    "rim_frequency": 0.188,
+    "mid_range_frequency": 0.567,
+    "three_point_frequency": 0.245,
+    "data_source": "estimated",
+    "shot_quality": "estimated",
+    "normalization_note": "Frequencies normalized to sum to 1.0"
+  },
+  "creation_profile": {
+    "isolation_frequency": 0.0,
+    "pick_and_roll_frequency": 0.0,
+    "drives_per_game": 6.9,
+    "paint_touches_per_game": 4.2,
+    "assisted_rate": 0.86,
+    "assisted_rate_source": "computed"
+  },
+  "defense_assessment": {
+    "visibility": {
+      "observability_score": 30,
+      "observability_level": "very_low",
+      "description": "Minimal defensive observability, heavily estimated",
+      "factors": [
+        "tracking_data_estimated",
+        "matchup_data_estimated",
+        "play_by_play_available"
+      ],
+      "data_sources_captured": [
+        "Box score events (steals, blocks, rebounds)"
+      ],
+      "limitations": [
+        "Help defense rotations",
+        "Communication and defensive IQ",
+        "Screen navigation quality",
+        "Rim deterrence beyond blocks"
+      ],
+      "recommendation": "Interpret defensive metrics with appropriate caution"
+    },
+    "matchup_profile": {
+      "vs_guards": 0.3,
+      "vs_wings": 0.6,
+      "vs_bigs": 0.1
+    },
+    "estimated_metrics": {
+      "defensive_rating": 108.0,
+      "defensive_ppp_allowed": 0.982,
+      "matchup_difficulty": 0.56,
+      "foul_rate": 0.141,
+      "data_source": "computed_from_stats"
+    }
+  },
+  "possession_decomposition": {
+    "intrinsic_offense": 12.7,
+    "opponent_defense_context": 0.447,
+    "team_context_adjustment": 0.16,
+    "intrinsic_value": 14.7,
+    "context_adjustment": -1.1,
+    "adjusted_value": 13.6,
+    "decomposition_method": "consistent_v1",
+    "notes": "Consistent possession decomposition",
+    "formula": "intrinsic_value = intrinsic_offense * (1 + team_context_adjustment); adjusted_value = intrinsic_value + context_adjustment",
+    "interpretation_summary": "Intrinsic offense 12.7; adjusted value 13.6 per 100 possessions."
+  },
+  "v1_1_enhancements": {
+    "trust_assessment": {
+      "score": 45.0,
+      "level": "low",
+      "factors": [
+        [
+          "sample_games",
+          "3 games"
+        ],
+        [
+          "minutes",
+          "22.3 MPG"
+        ],
+        [
+          "archetype_confidence",
+          "62%"
+        ],
+        [
+          "team_stability",
+          "assumed_stable"
+        ]
+      ],
+      "data_sources": [
+        "estimated_shot_data",
+        "estimated_defense_data",
+        "estimated_impact_data"
+      ],
+      "subscores": {
+        "sample_size": 1,
+        "minutes": 15,
+        "data_quality": 15,
+        "archetype_confidence": 8,
+        "team_stability": 6
+      }
+    },
+    "uncertainty_estimates": {
+      "overall_uncertainty": 0.374,
+      "confidence_level": "low",
+      "metric_uncertainties": {
+        "points": {
+          "mean": 8.3,
+          "ci_low": 6.8,
+          "ci_high": 9.8,
+          "relative_error": 18.5
+        },
+        "assists": {
+          "mean": 2.7,
+          "ci_low": 2.2,
+          "ci_high": 3.2,
+          "relative_error": 18.5
+        },
+        "rebounds": {
+          "mean": 3.3,
+          "ci_low": 2.7,
+          "ci_high": 3.9,
+          "relative_error": 18.5
+        }
+      },
+      "sample_size_notes": "3 games, 22.3 MPG",
+      "data_quality_notes": [
+        "Shot data: estimated",
+        "Defense data: estimated",
+        "Impact data: estimated"
+      ]
+    },
+    "scenario_constraints": {
+      "applicable": true,
+      "extrapolation_level": "medium",
+      "constraints": [
+        "Usage increase limited to +14%",
+        "Minutes increase limited to +10 MPG"
+      ],
+      "shot_diet_constraints": [
+        "Versatile Wing role constraints"
+      ],
+      "feasible_changes": {
+        "max_usage_increase": 0.14,
+        "max_minutes_increase": 10.0,
+        "projected_usage_cap": 0.264,
+        "projected_minutes_cap": 32.3
+      },
+      "constraint_rationale": {
+        "archetype": "versatile_wing",
+        "position": "wing",
+        "three_point_frequency": 0.245,
+        "three_point_percentage": 0.5
+      }
+    },
+    "data_quality_summary": {
+      "shot_data": "estimated",
+      "defense_data": "estimated",
+      "impact_data": "estimated",
+      "tracking_data": "estimated",
+      "matchup_data": "estimated"
+    }
+  },
+  "comparables": {
+    "similar_players": [
+      {
+        "id": "1641717",
+        "name": "Cason Wallace",
+        "team": "OKC",
+        "similarity_score": 0.24,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 8.7,
+          "assists": 2.7,
+          "rebounds": 3.1
+        }
+      },
+      {
+        "id": "1629680",
+        "name": "Matisse Thybulle",
+        "team": "POR",
+        "similarity_score": 0.2,
+        "archetype": "stationary_shooter",
+        "stats": {
+          "points": 4.6,
+          "assists": 0.8,
+          "rebounds": 1.5
+        }
+      },
+      {
+        "id": "1630529",
+        "name": "Herbert Jones",
+        "team": "NOP",
+        "similarity_score": 0.2,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 9.0,
+          "assists": 2.8,
+          "rebounds": 3.6
+        }
+      },
+      {
+        "id": "1630696",
+        "name": "Dru Smith",
+        "team": "MIA",
+        "similarity_score": 0.18,
+        "archetype": "versatile_wing",
+        "stats": {
+          "points": 5.9,
+          "assists": 2.7,
+          "rebounds": 2.6
+        }
+      },
+      {
+        "id": "1630700",
+        "name": "Dyson Daniels",
+        "team": "ATL",
+        "similarity_score": 0.16,
+        "archetype": "playmaking_big",
+        "stats": {
+          "points": 11.5,
+          "assists": 6.1,
+          "rebounds": 6.6
+        }
+      }
+    ],
+    "archetype_comparisons": [],
+    "development_trajectory": "stable"
+  },
+  "metadata": {
+    "generated_at": "2026-03-14T18:12:47.468847",
+    "data_version": "v1.2_refresh",
+    "generation_method": "nba_api_2025_26_refresh",
+    "quality_notes": "Season refresh with inferred mechanism fields",
+    "final_enhanced_at": "2026-03-14T18:12:47.468847"
+  },
+  "quality_flags": [
+    {
+      "type": "high_estimated_data",
+      "severity": "medium",
+      "description": "5/5 data sources marked as estimated",
+      "recommendation": "Interpret with caution; prioritize box score metrics"
+    },
+    {
+      "type": "low_sample_size",
+      "severity": "high",
+      "description": "Very small sample (3 games)",
+      "recommendation": "Use projections as directional only"
+    },
+    {
+      "type": "high_uncertainty",
+      "severity": "medium",
+      "description": "Elevated uncertainty (0.374)",
+      "recommendation": "Cross-check with independent priors before strong conclusions"
+    }
+  ]
+}
