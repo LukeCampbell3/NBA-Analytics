@@ -7,7 +7,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
 
-from core_utils import LegStatus
+from core_utils import LegStatus, NewsStatus, ParlayDecision
 
 
 class MarketFamily(str, Enum):
@@ -262,12 +262,14 @@ class SingleLegEvaluation:
     accepted_into_single_leg_pool: bool
     game_id: str = ""
     team: str = ""
+    break_even_prob: float = 0.0
     p_side_stress: float = 0.0
     p_side_lcb: float = 0.0
     
     # Edges
     lcb_edge: float = 0.0
     robust_edge: float = 0.0
+    min_acceptable_odds: Optional[float] = None
     
     # Reasons
     rejection_reasons: List[str] = field(default_factory=list)

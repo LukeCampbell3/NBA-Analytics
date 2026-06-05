@@ -38,7 +38,6 @@ from decision_engine.policy_tuning import build_default_shadow_strategies
 from post_process_market_plays import compute_final_board
 from research.market_quality.price_provenance_schema import load_market_snapshot_manifest
 from select_market_plays import build_history_lookup, build_play_rows
-from structured_stack_inference import StructuredStackInference
 
 try:
     from decision_engine.xgb_ltr_reranker import score_selector_with_xgb_ltr
@@ -65,6 +64,12 @@ except Exception:
 POLICY_PROFILES = {config.name: config for config in build_default_shadow_strategies()}
 DEFAULT_POLICY = POLICY_PROFILES["production_board_objective_b12"]
 TARGETS = ["PTS", "TRB", "AST"]
+
+
+def _make_structured_stack_inference(*, model_dir: str, manifest_path: Path):
+    from structured_stack_inference import StructuredStackInference
+
+    return StructuredStackInference(model_dir=model_dir, manifest_path=manifest_path)
 
 
 def parse_args() -> argparse.Namespace:
@@ -940,10 +945,10 @@ def main() -> None:
     policy_payload = resolve_policy(args)
 
     manifest_path = resolve_manifest_path(args.run_id, args.latest)
-    predictor: StructuredStackInference | None = None
+    predictor = None
     predictor_error = None
     try:
-        predictor = StructuredStackInference(model_dir=str(MODEL_DIR), manifest_path=manifest_path)
+        predictor = _make_structured_stack_inference(model_dir=str(MODEL_DIR), manifest_path=manifest_path)
     except Exception as exc:
         predictor_error = f"{type(exc).__name__}: {exc}"
         if not args.allow_heuristic_fallback:

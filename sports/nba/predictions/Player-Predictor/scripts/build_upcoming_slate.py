@@ -32,7 +32,6 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "inference"))
 
-from structured_stack_inference import StructuredStackInference  # noqa: E402
 from research.market_quality.event_time_resolver import resolve_event_times  # noqa: E402
 from research.market_quality.price_provenance_schema import derive_snapshot_id, load_market_snapshot_manifest  # noqa: E402
 
@@ -62,6 +61,12 @@ REBOUND_RECENT_WINDOW = 12
 AMBIGUOUS_PLAYER_OVERRIDES = {
     "M_Bridges": "Mikal_Bridges",
 }
+
+
+def _make_structured_stack_inference(*, model_dir: str, manifest_path: Path):
+    from structured_stack_inference import StructuredStackInference
+
+    return StructuredStackInference(model_dir=model_dir, manifest_path=manifest_path)
 
 
 def build_heuristic_explanation(history_df: pd.DataFrame, failure_reason: str | None = None) -> dict:
@@ -943,7 +948,7 @@ def main() -> None:
     predictor: StructuredStackInference | None = None
     predictor_error = None
     try:
-        predictor = StructuredStackInference(model_dir=str(MODEL_DIR), manifest_path=manifest_path)
+        predictor = _make_structured_stack_inference(model_dir=str(MODEL_DIR), manifest_path=manifest_path)
     except Exception as exc:
         predictor_error = f"{type(exc).__name__}: {exc}"
         if not args.allow_heuristic_fallback:

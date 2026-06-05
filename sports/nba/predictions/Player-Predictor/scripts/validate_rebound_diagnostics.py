@@ -26,12 +26,6 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 from backtest_line_decision_sidecar import _compute_board, _load_daily_policy, _prepare_selector
 from decision_engine.line_decision import LineDecisionConfig, build_line_decision_lookup
 from post_process_market_plays import american_profit_per_unit
-from run_market_pipeline import (
-    load_accepted_pick_gate,
-    load_learned_pool_gate,
-    load_selected_board_calibrator,
-    load_staking_bucket_model,
-)
 from select_market_plays import DEFAULT_REBOUND_DIAGNOSTICS_CONFIG, build_history_lookup
 from validate_board_objective_mode import (
     _build_actual_lookup,
@@ -72,6 +66,22 @@ DEFAULT_MIN_RESOLVED_PICKS = 8
 DEFAULT_NO_OP_BOARD_CHANGE_TOLERANCE = 0
 DEFAULT_WIN_PRESERVATION_FLOOR = 0.67
 DEFAULT_RESULT_TOLERANCE = 1e-9
+
+
+def _load_market_pipeline_artifact_loaders():
+    from run_market_pipeline import (
+        load_accepted_pick_gate,
+        load_learned_pool_gate,
+        load_selected_board_calibrator,
+        load_staking_bucket_model,
+    )
+
+    return (
+        load_accepted_pick_gate,
+        load_learned_pool_gate,
+        load_selected_board_calibrator,
+        load_staking_bucket_model,
+    )
 
 
 def parse_args() -> argparse.Namespace:
@@ -983,6 +993,12 @@ def _status_label(
 
 def main() -> None:
     args = parse_args()
+    (
+        load_accepted_pick_gate,
+        load_learned_pool_gate,
+        load_selected_board_calibrator,
+        load_staking_bucket_model,
+    ) = _load_market_pipeline_artifact_loaders()
     daily_run_dirs = [path.resolve() for path in args.daily_runs_dir] if args.daily_runs_dir else [REPO_ROOT / "model" / "analysis" / "daily_runs"]
     history_csv = args.history_csv.resolve()
     history_df = pd.read_csv(history_csv)

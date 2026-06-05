@@ -2234,8 +2234,23 @@ class PlayerCardsApp {
             return;
         }
 
+        // Deduplicate: one card per player, merge alternate roles
+        const playerMap = new Map();
+        for (const player of this.filteredPlayers) {
+            const name = player.player?.name || 'Unknown';
+            if (!playerMap.has(name)) {
+                playerMap.set(name, { primary: player, alternates: [] });
+            } else {
+                playerMap.get(name).alternates.push(player);
+            }
+        }
+        const deduped = Array.from(playerMap.values()).map(entry => {
+            entry.primary._alternateRoles = entry.alternates;
+            return entry.primary;
+        });
+
         noResults.style.display = 'none';
-        container.innerHTML = this.filteredPlayers.map(player => this.createPlayerCard(player)).join('');
+        container.innerHTML = deduped.map(player => this.createPlayerCard(player)).join('');
 
         // Add click listeners
         document.querySelectorAll('.player-card').forEach((card, index) => {
@@ -2490,32 +2505,20 @@ class PlayerCardsApp {
             ...options
         };
         const playerValue = this.getPlayerValue(player);
-        const playerTrust = Math.round(this.getPlayerTrustScore(player));
-        const fitPercentile = Math.round(this.getTeamFitPercentile(player));
-        const impactClass = playerValue >= 60 ? 'positive' : (playerValue <= 40 ? 'negative' : '');
         const evalOut = opts.evalOut || this.evaluateBreakoutScenario(player);
         const mechanism = evalOut.mechanism || this.computeMechanismMetrics(player, evalOut);
         const typeCardProfile = this.getBasketballTypeProfile(player);
         const typeCardHeadshotUrl = this.getPlayerHeadshotUrl(player);
-        const typeCardTeamLogoUrl = this.getTeamLogoUrl(player.player?.team);
-        const breakoutDisplayTier = this.getBreakoutDisplayTier(player, evalOut);
-        const breakoutStyle = this.getBreakoutTierStyle(breakoutDisplayTier.className, evalOut.likelihoodPct);
         const cardFamily = this.getCardFamilyProfile(player, evalOut, mechanism);
         const cardSerial = this.getCardSerial(player, cardFamily);
-        const isRookie = this.isLikelyRookie(player);
-        const rookieBadgeLabel = this.isCollegeDeck ? 'FRESHMAN' : 'ROOKIE';
-        const typeCardMonogram = this.getPlayerMonogram(player.player?.name || 'NA');
         const teamRibbonLabel = this.formatTeamRibbonLabel(player.player?.team);
-        const draftContext = evalOut.fitScenario?.draft_context || {};
-        const cardBandText = (this.isCollegeDeck && evalOut.fitScenario?.team && evalOut.fitScenario.team !== 'No Clear Team Edge')
-            ? `Draft Fit ${evalOut.fitScenario.team} - Need ${Math.round(100 * (draftContext.team_need_score ?? evalOut.fitScenario.fit_score ?? 0))}%`
-            : typeCardProfile.subtitle;
-        const breakoutPct = Math.round(evalOut.likelihoodPct || evalOut.breakoutScore || 0);
         const playerName = this.escapeHtml(player.player?.name || 'Unknown Player');
+        const position = this.escapeHtml(player.player?.position || '');
+        const team = this.escapeHtml(player.player?.team || '');
+        const alternateCount = (player._alternateRoles || []).length;
 
         const cardClasses = [
             'player-card',
-            'type-card',
             'trading-card',
             `family-${cardFamily.key}`,
             opts.context === 'detail' ? 'trading-card-detail' : 'trading-card-grid',
@@ -2523,57 +2526,23 @@ class PlayerCardsApp {
         ];
 
         return `
-            <article class="${cardClasses.join(' ')}" data-player="${this.escapeAttr(player.player?.name || '')}" data-player-key="${this.escapeAttr(this.getPlayerKey(player))}" data-card-family="${cardFamily.key}" style="--type-primary:${typeCardProfile.primaryColor};--type-secondary:${typeCardProfile.secondaryColor};--type-glow:${typeCardProfile.glowColor};--breakout-bg:${breakoutStyle.bg};--breakout-fg:${breakoutStyle.fg};--breakout-glow:${breakoutStyle.glow};--family-primary:${cardFamily.primary};--family-secondary:${cardFamily.secondary};--family-tertiary:${cardFamily.tertiary};--family-glow:${cardFamily.glow};--foil-opacity:${cardFamily.foilOpacity};--grain-opacity:${cardFamily.grainOpacity};--pointer-x:50%;--pointer-y:50%;--rotate-x:0deg;--rotate-y:0deg;">
+            <article class="${cardClasses.join(' ')}" data-player="${this.escapeAttr(player.player?.name || '')}" data-player-key="${this.escapeAttr(this.getPlayerKey(player))}" data-card-family="${cardFamily.key}" style="--family-primary:${cardFamily.primary};--family-secondary:${cardFamily.secondary};--family-tertiary:${cardFamily.tertiary};--family-glow:${cardFamily.glow};--foil-opacity:${cardFamily.foilOpacity};--pointer-x:50%;--pointer-y:50%;--rotate-x:0deg;--rotate-y:0deg;">
                 <div class="trading-surface"></div>
                 <div class="trading-prism"></div>
-                <div class="trading-gloss"></div>
-                <div class="type-card-hero trading-hero">
-                    ${typeCardTeamLogoUrl ? `<div class="type-card-team-logo" style="background-image:url('${this.escapeAttr(typeCardTeamLogoUrl)}');"></div>` : ''}
-                    <img
-                        class="type-card-headshot"
-                        src="${this.escapeAttr(typeCardHeadshotUrl)}"
-                        alt="${this.escapeAttr(player.player?.name || 'Player')} headshot"
-                        loading="lazy"
-                        onerror="this.style.display='none'; this.closest('.type-card-hero').classList.add('no-headshot');"
-                    />
-                    <div class="type-card-monogram">${this.escapeHtml(typeCardMonogram)}</div>
-                    <div class="trading-topline">
-                        <div class="trading-name">${playerName}</div>
+                <div class="tc-inner">
+                    <div class="tc-photo-area">
+                        <img class="tc-headshot" src="${this.escapeAttr(typeCardHeadshotUrl)}" alt="${this.escapeAttr(player.player?.name || '')}" loading="lazy" onerror="this.style.display='none';" />
+                        <div class="tc-frame-border"></div>
                     </div>
-                    <div class="trading-series-badge">${this.escapeHtml(cardFamily.label)} SERIES</div>
-                    <div class="trading-card-number">${this.escapeHtml(cardSerial)}</div>
-                    <div class="trading-position-ribbon">${this.escapeHtml(player.player?.position || 'N/A')}</div>
-                    <div class="trading-breakout-strip">${this.escapeHtml(breakoutStyle.label)} BREAKOUT &bull; ${breakoutPct}%</div>
-                    ${isRookie ? `<div class="trading-rookie-badge">${this.escapeHtml(rookieBadgeLabel)}</div>` : ''}
-                    <div class="trading-team-ribbon">${this.escapeHtml(teamRibbonLabel)}</div>
-                    <div class="trading-card-badge ${impactClass}">Value ${playerValue.toFixed(1)}</div>
-                    <div class="trading-subtype">${this.escapeHtml(typeCardProfile.typeLabel)}</div>
-                    <div class="trading-photo-vignette"></div>
-                    <div class="trading-photo-grain"></div>
-                    <div class="trading-photo-frame"></div>
-                    <div class="trading-photo-corner"></div>
-                    <div class="trading-photo-corner bottom"></div>
-                    <div class="trading-photo-border"></div>
-                    <div class="trading-photo-shadow"></div>
-                    <div class="trading-photo-light"></div>
-                    <div class="trading-photo-band">
-                        <div class="trading-photo-band-text">${this.escapeHtml(cardBandText)}</div>
+                    <div class="tc-nameplate">
+                        <span class="tc-player-name">${playerName}</span>
+                        <span class="tc-position">${position}</span>
                     </div>
-                    <div class="trading-metric-row">
-                        <div class="trading-mini-metric">
-                            <span>Fit</span>
-                            <strong>p${fitPercentile}</strong>
-                        </div>
-                        <div class="trading-mini-metric">
-                            <span>Trust</span>
-                            <strong>${playerTrust}</strong>
-                        </div>
-                        <div class="trading-mini-metric">
-                            <span>Breakout</span>
-                            <strong>${Math.round(evalOut.breakoutScore || 0)}</strong>
-                        </div>
+                    <div class="tc-team-bar">
+                        <span class="tc-team-name">${teamRibbonLabel}</span>
+                        <span class="tc-card-number">#${this.escapeHtml(cardSerial)}</span>
                     </div>
-                    ${opts.showClickHint ? '<div class="trading-click-hint">Click for full scouting inspection</div>' : ''}
+                    ${alternateCount > 0 ? `<div class="tc-alt-badge">${alternateCount + 1} roles</div>` : ''}
                 </div>
             </article>
         `;

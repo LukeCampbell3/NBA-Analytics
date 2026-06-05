@@ -6,9 +6,14 @@ import argparse
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+import sys
 
 import numpy as np
 import pandas as pd
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
 from market_odds_quality import add_american_odds_quality, odds_quality_report
 

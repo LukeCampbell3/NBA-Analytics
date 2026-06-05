@@ -75,7 +75,7 @@ class TestOddsConversions(unittest.TestCase):
     def test_parlay_synthetic_odds(self):
         """Test 2x -110 parlay odds."""
         parlay_american = parlay_synthetic_odds([-110, -110])
-        self.assertLess(parlay_american, -200)  # Should be worse than -110
+        self.assertGreater(parlay_american, 200)  # 2x -110 pays about +264
     
     def test_parlay_break_even(self):
         """Test parlay break-even probability."""
@@ -254,7 +254,7 @@ class TestParlayPriceEngine(unittest.TestCase):
         
         self.assertIsNotNone(result)
         self.assertAlmostEqual(result["combined_decimal_odds"], 3.64, places=1)
-        self.assertLess(result["combined_american_odds"], -200)
+        self.assertGreater(result["combined_american_odds"], 200)
         self.assertGreater(result["parlay_break_even_prob"], 0.27)
         self.assertEqual(result["price_source"], "SYNTHETIC")
     
