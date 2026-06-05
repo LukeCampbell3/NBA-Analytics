@@ -19,6 +19,7 @@ import subprocess
 import sys
 from datetime import date, datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 
 SCRIPT_PATH = Path(__file__).resolve()
@@ -133,10 +134,16 @@ def validate_schedule_args(hour: int, minute: int) -> tuple[int, int]:
     return int(hour), int(minute)
 
 
-def resolve_effective_run_date(run_date: str | None) -> date:
+EASTERN_TZ = ZoneInfo("America/New_York")
+
+
+def resolve_effective_run_date(run_date: str | None, now: datetime | None = None) -> date:
     if run_date:
         return datetime.fromisoformat(str(run_date)).date()
-    return datetime.now().astimezone().date()
+    resolved_now = now if now is not None else datetime.now(EASTERN_TZ)
+    if resolved_now.tzinfo is None:
+        resolved_now = resolved_now.replace(tzinfo=EASTERN_TZ)
+    return resolved_now.astimezone(EASTERN_TZ).date()
 
 
 def load_payload_run_date(payload_path: Path) -> str | None:

@@ -97,8 +97,17 @@ def _derive_current_close(rows: pd.DataFrame) -> pd.DataFrame:
     if rows.empty:
         return rows.copy()
     rows = rows.sort_values(KEYS + ["snapshot_ts"]).copy()
-    # Entry = first snapshot per group (the "open" price you'd have entered at)
-    current = rows.groupby(KEYS, dropna=False).head(1)
+    # Current = latest pre-lock snapshot when game start is known; otherwise fall back to open.
+    if "game_start_ts" in rows.columns and rows["game_start_ts"].notna().any():
+        prelock_rows = rows[rows["snapshot_ts"] < rows["game_start_ts"]].copy()
+        current = prelock_rows.groupby(KEYS, dropna=False).tail(1)
+        open_rows = rows.groupby(KEYS, dropna=False).head(1)
+        current_keys = current[KEYS].drop_duplicates()
+        missing_open = open_rows.merge(current_keys, on=KEYS, how="left", indicator=True)
+        missing_open = missing_open[missing_open["_merge"].eq("left_only")].drop(columns=["_merge"])
+        current = pd.concat([current, missing_open], ignore_index=False).sort_values(KEYS + ["snapshot_ts"])
+    else:
+        current = rows.groupby(KEYS, dropna=False).head(1)
     # Close = last snapshot per group (the price the market converged to)
     close = rows.groupby(KEYS, dropna=False).tail(1)
     counts = rows.groupby(KEYS, dropna=False).size().reset_index(name="_snapshot_count")

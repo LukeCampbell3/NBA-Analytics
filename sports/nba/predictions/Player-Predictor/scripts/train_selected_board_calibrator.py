@@ -144,7 +144,11 @@ def discover_rows_csv(analysis_dir: Path, args: argparse.Namespace) -> Path:
 
     best: tuple[tuple[int, int, int, int, str], Path] | None = None
     search_roots = [analysis_dir]
-    if SHARED_VALIDATION_ROOT.exists() and SHARED_VALIDATION_ROOT.resolve() != analysis_dir.resolve():
+    if (
+        analysis_dir.resolve() == ANALYSIS_ROOT.resolve()
+        and SHARED_VALIDATION_ROOT.exists()
+        and SHARED_VALIDATION_ROOT.resolve() != analysis_dir.resolve()
+    ):
         search_roots.append(SHARED_VALIDATION_ROOT.resolve())
 
     seen_paths: set[Path] = set()

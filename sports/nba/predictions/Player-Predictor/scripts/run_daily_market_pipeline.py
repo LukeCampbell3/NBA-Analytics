@@ -22,6 +22,7 @@ import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 
@@ -33,6 +34,16 @@ UNIFIED_SITE_PIPELINE_ROOT = WORKSPACE_ROOT / "sports" / "site" / "pipeline"
 MARKET_ROOT = REPO_ROOT / "data copy" / "raw" / "market_odds" / "nba"
 ANALYSIS_ROOT = REPO_ROOT / "model" / "analysis" / "daily_runs"
 DATA_PROC_ROOT = REPO_ROOT / "Data-Proc"
+EASTERN_TZ = ZoneInfo("America/New_York")
+
+
+def resolve_run_timestamp(run_date: str | None, now: datetime | None = None) -> pd.Timestamp:
+    if run_date:
+        return pd.Timestamp(run_date).normalize()
+    resolved_now = now if now is not None else datetime.now(EASTERN_TZ)
+    if resolved_now.tzinfo is None:
+        resolved_now = resolved_now.replace(tzinfo=EASTERN_TZ)
+    return pd.Timestamp(resolved_now.astimezone(EASTERN_TZ)).normalize().tz_localize(None)
 
 
 def parse_args() -> argparse.Namespace:
@@ -651,7 +662,7 @@ def filter_current_market_snapshot(
 
 def main() -> None:
     args = parse_args()
-    local_date = pd.Timestamp(args.run_date).normalize() if args.run_date else pd.Timestamp.now().normalize()
+    local_date = resolve_run_timestamp(args.run_date)
     season = args.season or infer_season(local_date)
     selected_board_calibration_month = str(args.selected_board_calibration_month or local_date.strftime("%Y-%m"))
     selected_board_calibrator_path = args.selected_board_calibrator_json.resolve()
