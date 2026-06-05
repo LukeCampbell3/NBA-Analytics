@@ -19,6 +19,7 @@ from sparse_loop_moe.models.pvr_ec import (  # noqa: E402
     OwnershipMapVersionManager,
     OwnershipRoutingConfig,
     compute_top1_oracle_gap,
+    forward_ownership_top1_fast,
     generate_balanced_assignment_targets,
     minimum_sample_protection,
     non_uniform_target_owner_share,
@@ -129,6 +130,63 @@ def test_shadow_update_records_without_changing_route() -> None:
     result = route_ownership_top1(router_logits, prototype_bias, compatible_mask, proto_ids, ownership_map, cfg)
     baseline = router_logits.masked_fill(~compatible_mask, torch.finfo(router_logits.dtype).min).argmax(dim=-1)
     assert torch.equal(result.owner, baseline)
+
+
+def test_fast_deployment_forward_is_single_owner_and_pure() -> None:
+    router_logits, prototype_bias, compatible_mask, proto_ids = _route_inputs()
+    ownership_map = ExpertOwnershipMap.zeros(4, 4, map_mode="shadow_update")
+    result = forward_ownership_top1_fast(
+        router_logits,
+        prototype_bias,
+        compatible_mask,
+        proto_ids,
+        ownership_map,
+        OwnershipRoutingConfig(ownership_map_mode="shadow_update"),
+    )
+    expected = (router_logits + prototype_bias).masked_fill(~compatible_mask, torch.finfo(router_logits.dtype).min).argmax(dim=-1)
+    assert result.owner.shape == (router_logits.shape[0],)
+    assert torch.equal(result.owner, expected)
+    counters = result.counters.to_dict()
+    assert counters["num_replay_calls_during_forward"] == 0
+    assert counters["num_file_writes_during_forward"] == 0
+    assert counters["num_cpu_transfers"] == 0
+    assert counters["num_cuda_synchronizations"] == 0
+    assert counters["num_top2_executions"] == 0
+    assert counters["num_top4_executions"] == 0
+
+
+def test_fast_deployment_forward_uses_vectorized_same_device_lookup() -> None:
+    router_logits, prototype_bias, compatible_mask, proto_ids = _route_inputs()
+    reliability = torch.zeros(4, 4)
+    reliability[0, 1] = 10.0
+    ownership_map = ExpertOwnershipMap(4, 4, ownership_reliability_bias=reliability, map_mode="canary")
+    result = forward_ownership_top1_fast(
+        router_logits,
+        prototype_bias,
+        compatible_mask,
+        proto_ids,
+        ownership_map,
+        OwnershipRoutingConfig(ownership_weight=1.0, ownership_bias_cap=5.0, ownership_map_mode="canary"),
+    )
+    assert result.owner[0].item() == 1
+    assert result.effective_score.device == router_logits.device
+
+
+def test_fast_shadow_update_does_not_mutate_map() -> None:
+    router_logits, prototype_bias, compatible_mask, proto_ids = _route_inputs()
+    ownership_map = ExpertOwnershipMap(4, 4, ownership_reliability_bias=torch.full((4, 4), 10.0), map_mode="shadow_update")
+    before = ownership_map.export_bias_tensors()
+    forward_ownership_top1_fast(
+        router_logits,
+        prototype_bias,
+        compatible_mask,
+        proto_ids,
+        ownership_map,
+        OwnershipRoutingConfig(ownership_weight=1.0, ownership_map_mode="shadow_update"),
+    )
+    after = ownership_map.export_bias_tensors()
+    for key, value in before.items():
+        assert torch.equal(value, after[key])
 
 
 def test_frozen_mode_does_not_mutate_map_or_balance_bias() -> None:
@@ -313,15 +371,17 @@ def test_benchmark_cli_writes_ownership_artifacts(tmp_path: Path) -> None:
         "--run-ownership-replay",
         "--ownership-probe-sample-limit",
         "8",
+        "--profile-ownership-hot-path",
         "--output-dir",
         str(tmp_path),
     ]
     completed = subprocess.run(cmd, cwd=ROOT, check=True, capture_output=True, text=True)
-    assert "PVR_EC_OWNERSHIP_MAP_SHADOW_READY" in completed.stdout
+    assert "PVR_EC_OWNERSHIP" in completed.stdout
     report = json.loads((tmp_path / "pvr_ec_ownership_benchmark_report.json").read_text(encoding="utf-8"))
     assert report["pvr_ec_ownership_top1"]["single_owner"] is True
     assert report["pvr_ec_ownership_top1"]["top2_executed"] is False
     assert report["pvr_ec_ownership_top1"]["top4_executed"] is False
+    assert report["pvr_ec_ownership_top1"]["replay_in_forward"] is False
     comparison = json.loads((tmp_path / "pvr_ec_model_comparison_metrics.json").read_text(encoding="utf-8"))
     comparison_models = {row["model"] for row in comparison}
     assert {
@@ -331,6 +391,17 @@ def test_benchmark_cli_writes_ownership_artifacts(tmp_path: Path) -> None:
     }.issubset(comparison_models)
     assert (tmp_path / "pvr_ec_model_comparison_metrics.csv").exists()
     assert (tmp_path / "pvr_ec_ownership_benchmark_report.md").read_text(encoding="utf-8").count("|") > 0
+    hot_path = json.loads((tmp_path / "ownership_hot_path_diff_report.json").read_text(encoding="utf-8"))
+    assert hot_path["promotion_status"] == "PVR_EC_DO_NOT_PROMOTE"
+    assert hot_path["rows"]
+    for row in hot_path["rows"]:
+        assert row["num_replay_calls_during_forward"] == 0
+        assert row["num_file_writes_during_forward"] == 0
+        assert row["num_top2_executions"] == 0
+        assert row["num_top4_executions"] == 0
+    purity = json.loads((tmp_path / "ownership_forward_purity_report.json").read_text(encoding="utf-8"))
+    assert purity["checks"]["num_cuda_synchronizations"] == 0
+    assert (tmp_path / "ownership_regression_fix_report.md").exists()
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA is not available")

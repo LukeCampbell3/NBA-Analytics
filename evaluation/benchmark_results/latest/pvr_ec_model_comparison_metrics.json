@@ -1,0 +1,47 @@
+[
+  {
+    "model": "fixed_moe_vectorized",
+    "loss": 1.148112177848816,
+    "mae": 0.862779974937439,
+    "accuracy": 0.625,
+    "latency_ms": 0.6047599999874365,
+    "quality_per_ms": 1.4402325374215525,
+    "top1_oracle_gap": null,
+    "expert_owner_entropy": null,
+    "owner_count": 0
+  },
+  {
+    "model": "pvr_ec_deploy_top1",
+    "loss": 1.9834513664245605,
+    "mae": 0.9945382475852966,
+    "accuracy": 0.62109375,
+    "latency_ms": 0.19368399989616591,
+    "quality_per_ms": 2.603063115354201,
+    "top1_oracle_gap": 1.9748278856277466,
+    "expert_owner_entropy": 2.075629234313965,
+    "owner_count": 512
+  },
+  {
+    "model": "pvr_ec_ownership_top1",
+    "loss": 1.9834513664245605,
+    "mae": 0.9945382475852966,
+    "accuracy": 0.62109375,
+    "latency_ms": 0.38336099987645866,
+    "quality_per_ms": 1.3151355415038306,
+    "top1_oracle_gap": 1.9748278856277466,
+    "expert_owner_entropy": 2.075629234313965,
+    "owner_count": 512
+  },
+  {
+    "model": "pvr_ec_ownership_top1_candidate_canary",
+    "loss": 1.933416485786438,
+    "mae": 0.9736560583114624,
+    "accuracy": 0.625,
+    "latency_ms": 7.205198000519886,
+    "quality_per_ms": 0.07178416661627,
+    "top1_oracle_gap": 1.9247863292694092,
+    "expert_owner_entropy": 2.075198173522949,
+    "owner_count": 512,
+    "owner_churn_vs_deploy_top1": 0.015625
+  }
+]

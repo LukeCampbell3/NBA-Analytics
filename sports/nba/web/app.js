@@ -2536,7 +2536,9 @@ class PlayerCardsApp {
         const parallel = parallelConfig[cardFamily.key] || parallelConfig.auto;
 
         // Card art style — deterministic per player for variety
-        const artStyles = ['art-headshot', 'art-action', 'art-illustrated'];
+        // These create different FRAME DESIGNS (like Prizm vs Select vs Mosaic)
+        // using the same headshot, because no free action-shot API exists
+        const artStyles = ['art-prizm', 'art-select', 'art-mosaic'];
         const nameHash = (player.player?.name || '').split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0);
         const artStyle = artStyles[Math.abs(nameHash) % artStyles.length];
 

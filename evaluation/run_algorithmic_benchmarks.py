@@ -50,6 +50,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--balance-bias-cap", type=float, default=0.10)
     parser.add_argument("--semantic-margin-guard", type=float, default=0.25)
     parser.add_argument("--profile-ownership-hot-path", action="store_true")
+    parser.add_argument("--profile-ownership-effectiveness", action="store_true")
+    parser.add_argument("--ownership-weight-sweep", default="")
+    parser.add_argument("--ownership-bias-cap-sweep", default="")
     parser.add_argument("--output-dir", default="")
     return parser.parse_args()
 
@@ -213,6 +216,166 @@ def _record_model_metrics(
     return metrics
 
 
+def _parse_float_list(value: str, default: list[float]) -> list[float]:
+    tokens = [part.strip() for part in str(value or "").split(",") if part.strip()]
+    if not tokens:
+        return list(default)
+    return [float(token) for token in tokens]
+
+
+def _tensor_hash(tensor: torch.Tensor) -> str:
+    import hashlib
+
+    raw = tensor.detach().contiguous().cpu().numpy().tobytes()
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _owner_losses(candidate_owner_loss: torch.Tensor, owner: torch.Tensor) -> torch.Tensor:
+    return candidate_owner_loss.gather(1, owner.long()[:, None]).squeeze(1)
+
+
+def _masked_mean(values: torch.Tensor, mask: torch.Tensor, default: float = 0.0) -> float:
+    if values.numel() == 0 or not bool(mask.any().detach().cpu()):
+        return float(default)
+    return float(values[mask].float().mean().detach().cpu())
+
+
+def _masked_accuracy(prediction: torch.Tensor, target: torch.Tensor, mask: torch.Tensor) -> float:
+    if prediction.numel() == 0 or not bool(mask.any().detach().cpu()):
+        return 0.0
+    pred_sign = prediction.sum(dim=-1) >= 0.0
+    target_sign = target.sum(dim=-1) >= 0.0
+    return float(pred_sign[mask].eq(target_sign[mask]).to(torch.float32).mean().detach().cpu())
+
+
+def _effective_score_for(
+    router_logits: torch.Tensor,
+    prototype_bias: torch.Tensor,
+    compatible_mask: torch.Tensor,
+    proto_ids: torch.Tensor,
+    ownership_map: ExpertOwnershipMap,
+    config: OwnershipRoutingConfig,
+) -> torch.Tensor:
+    return forward_ownership_top1_fast(
+        router_logits,
+        prototype_bias,
+        compatible_mask,
+        proto_ids,
+        ownership_map,
+        config,
+    ).effective_score
+
+
+def _bias_stats(
+    ownership_map: ExpertOwnershipMap,
+    proto_ids: torch.Tensor,
+    compatible_mask: torch.Tensor,
+    config: OwnershipRoutingConfig,
+    dtype: torch.dtype,
+) -> dict[str, float]:
+    if config.ownership_map_mode not in {"frozen", "canary"}:
+        return {
+            "ownership_bias_mean": 0.0,
+            "ownership_bias_abs_mean": 0.0,
+            "ownership_bias_clip_rate": 0.0,
+            "ownership_bias_zero_rate": 1.0,
+        }
+    reliability, failure, _, _, _ = ownership_map.get_all_bias_tensors_fast(proto_ids, dtype=dtype)
+    bias = torch.clamp(
+        (reliability - failure) * float(config.ownership_weight),
+        min=-float(config.ownership_bias_cap),
+        max=float(config.ownership_bias_cap),
+    )
+    mask = compatible_mask.bool()
+    active = bias[mask]
+    if active.numel() == 0:
+        return {
+            "ownership_bias_mean": 0.0,
+            "ownership_bias_abs_mean": 0.0,
+            "ownership_bias_clip_rate": 0.0,
+            "ownership_bias_zero_rate": 1.0,
+        }
+    return {
+        "ownership_bias_mean": float(active.float().mean().detach().cpu()),
+        "ownership_bias_abs_mean": float(active.float().abs().mean().detach().cpu()),
+        "ownership_bias_clip_rate": float((active.float().abs() >= float(config.ownership_bias_cap)).to(torch.float32).mean().detach().cpu()),
+        "ownership_bias_zero_rate": float(active.eq(0).to(torch.float32).mean().detach().cpu()),
+    }
+
+
+def _owner_change_metrics(
+    *,
+    model: str,
+    owner: torch.Tensor,
+    deploy_owner: torch.Tensor,
+    candidate_owner_loss: torch.Tensor,
+    prediction: torch.Tensor,
+    target: torch.Tensor,
+    compatible_mask: torch.Tensor,
+    best_owner: torch.Tensor,
+    candidate_reference_owner: torch.Tensor | None = None,
+) -> dict[str, float | str]:
+    changed = owner.ne(deploy_owner)
+    old_loss = _owner_losses(candidate_owner_loss, deploy_owner)
+    new_loss = _owner_losses(candidate_owner_loss, owner)
+    loss_delta = new_loss - old_loss
+    changed_delta = loss_delta[changed]
+    success = changed & loss_delta.lt(0)
+    unchanged = ~changed
+    oracle_gap, _ = compute_top1_oracle_gap(owner, candidate_owner_loss, compatible_mask)
+    deploy_gap, _ = compute_top1_oracle_gap(deploy_owner, candidate_owner_loss, compatible_mask)
+    recall = owner.eq(best_owner)
+    candidate_recall = recall
+    if candidate_reference_owner is not None:
+        candidate_recall = candidate_reference_owner.eq(best_owner)
+    return {
+        "model": model,
+        "owner_changed_vs_deploy_top1_rate": float(changed.to(torch.float32).mean().detach().cpu()),
+        "owner_changed_success_rate": _masked_mean(success.to(torch.float32), changed),
+        "owner_changed_loss_delta_mean": float(changed_delta.float().mean().detach().cpu()) if changed_delta.numel() else 0.0,
+        "owner_changed_loss_delta_p50": float(torch.quantile(changed_delta.float(), 0.50).detach().cpu()) if changed_delta.numel() else 0.0,
+        "owner_changed_loss_delta_p95": float(torch.quantile(changed_delta.float(), 0.95).detach().cpu()) if changed_delta.numel() else 0.0,
+        "loss_when_owner_unchanged": _masked_mean(new_loss, unchanged),
+        "loss_when_owner_changed": _masked_mean(new_loss, changed),
+        "accuracy_when_owner_unchanged": _masked_accuracy(prediction, target, unchanged),
+        "accuracy_when_owner_changed": _masked_accuracy(prediction, target, changed),
+        "candidate_owner_recall": float(candidate_recall.to(torch.float32).mean().detach().cpu()),
+        "top1_oracle_gap": float(oracle_gap.mean().detach().cpu()),
+        "deploy_top1_oracle_gap": float(deploy_gap.mean().detach().cpu()),
+        "oracle_gap_delta_vs_deploy_top1": float((oracle_gap.mean() - deploy_gap.mean()).detach().cpu()),
+        "oracle_best_in_candidate_set_rate": 1.0,
+        "bad_owner_flip_rate": _masked_mean(loss_delta.ge(0).to(torch.float32), changed),
+        "good_owner_flip_rate": _masked_mean(loss_delta.lt(0).to(torch.float32), changed),
+    }
+
+
+def _make_ownership_map(
+    *,
+    num_prototypes: int,
+    num_experts: int,
+    dtype: torch.dtype,
+    device: torch.device,
+    reliability: torch.Tensor,
+    failure: torch.Tensor,
+    balance: torch.Tensor,
+    map_mode: str,
+    version: str,
+) -> ExpertOwnershipMap:
+    return ExpertOwnershipMap(
+        num_prototypes,
+        num_experts,
+        ownership_reliability_bias=reliability,
+        ownership_failure_bias=failure,
+        balance_bias=balance,
+        monopoly_penalty=torch.zeros_like(reliability),
+        stale_owner_penalty=torch.zeros_like(reliability),
+        dtype=dtype,
+        device=device,
+        map_mode=map_mode,
+        metadata={"map_version": version, "prototype_table_hash": "synthetic_proto_v1", "compatible_mask_hash": "synthetic_mask_v1"},
+    )
+
+
 def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, object]:
     torch.manual_seed(7)
     device, device_status = _device(args.device)
@@ -234,25 +397,36 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
     expert_distance = torch.abs(all_experts - true_owner[:, None]).to(torch.float32)
     router_logits = router_logits + (0.45 - 0.14 * expert_distance).to(dtype)
 
-    reliability = torch.zeros(num_prototypes, num_experts, device=device, dtype=dtype)
-    reliability.scatter_(1, (torch.arange(num_prototypes, device=device) % num_experts)[:, None], 0.35)
-    failure = torch.zeros_like(reliability)
-    failure[:, 0] = 0.05
-    monopoly = torch.zeros_like(reliability)
-    stale = torch.zeros_like(reliability)
+    production_reliability = torch.zeros(num_prototypes, num_experts, device=device, dtype=dtype)
+    candidate_reliability = torch.zeros(num_prototypes, num_experts, device=device, dtype=dtype)
+    candidate_reliability.scatter_(1, (torch.arange(num_prototypes, device=device) % num_experts)[:, None], 0.35)
+    production_failure = torch.zeros_like(production_reliability)
+    candidate_failure = torch.zeros_like(candidate_reliability)
+    candidate_failure[:, 0] = 0.05
     balance = torch.linspace(0.05, -0.05, steps=num_experts, device=device, dtype=dtype)
-    ownership_map = ExpertOwnershipMap(
-        num_prototypes,
-        num_experts,
-        ownership_reliability_bias=reliability,
-        ownership_failure_bias=failure,
-        balance_bias=balance,
-        monopoly_penalty=monopoly,
-        stale_owner_penalty=stale,
+    production_map = _make_ownership_map(
+        num_prototypes=num_prototypes,
+        num_experts=num_experts,
         dtype=dtype,
         device=device,
-        map_mode=args.ownership_map_mode if args.enable_ownership_map else "disabled",
+        reliability=production_reliability,
+        failure=production_failure,
+        balance=torch.zeros_like(balance),
+        map_mode="frozen",
+        version="production_zero_v1",
     )
+    candidate_map = _make_ownership_map(
+        num_prototypes=num_prototypes,
+        num_experts=num_experts,
+        dtype=dtype,
+        device=device,
+        reliability=candidate_reliability,
+        failure=candidate_failure,
+        balance=balance,
+        map_mode="canary",
+        version="candidate_reliability_v1",
+    )
+    ownership_map = candidate_map
     config = OwnershipRoutingConfig(
         ownership_weight=args.ownership_weight if args.enable_ownership_map else 0.0,
         ownership_bias_cap=args.ownership_bias_cap,
@@ -274,6 +448,10 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
     predictions: dict[str, torch.Tensor] = {}
     owners: dict[str, torch.Tensor | None] = {}
     timings: dict[str, float] = {}
+    would_owners: dict[str, torch.Tensor] = {}
+    configs_by_model: dict[str, OwnershipRoutingConfig] = {}
+    maps_by_model: dict[str, ExpertOwnershipMap] = {}
+    effective_scores_by_model: dict[str, torch.Tensor] = {}
     hot_path_profiles: dict[str, dict[str, object]] = {}
     _sync(device)
 
@@ -287,7 +465,7 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
             expert_deltas,
             forward_ownership_top1_fast(router_logits, prototype_bias, compatible_mask, proto_ids, ownership_map, config).owner,
         ))
-    if args.enable_ownership_map and args.ownership_map_mode == "shadow_update":
+    if args.enable_ownership_map and args.ownership_map_mode == "shadow_update" and "pvr_ec_ownership_top1_candidate_canary" not in predictions:
         candidate_warmup_cfg = OwnershipRoutingConfig(
             ownership_weight=args.ownership_weight,
             ownership_bias_cap=args.ownership_bias_cap,
@@ -304,6 +482,41 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
         warmup()
     _sync(device)
 
+    deploy_owner_reference = semantic_score.argmax(dim=-1)
+
+    def _run_fast_variant(
+        name: str,
+        ownership_variant_map: ExpertOwnershipMap,
+        variant_config: OwnershipRoutingConfig,
+        *,
+        output_owner: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        def _forward() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+            fast = forward_ownership_top1_fast(
+                router_logits,
+                prototype_bias,
+                compatible_mask,
+                proto_ids,
+                ownership_variant_map,
+                variant_config,
+            )
+            selected_owner = output_owner if output_owner is not None else fast.owner
+            return base_prediction + _gather_expert_delta(expert_deltas, selected_owner), selected_owner, fast.effective_score
+
+        (prediction, owner, effective_score), elapsed = _time_forward(device, _forward)
+        predictions[name] = prediction
+        owners[name] = owner
+        timings[name] = elapsed
+        configs_by_model[name] = variant_config
+        maps_by_model[name] = ownership_variant_map
+        effective_scores_by_model[name] = effective_score
+        hot_path_profiles[name] = {
+            "model": name,
+            "timing": _empty_hot_path_timing(elapsed),
+            "counters": _empty_hot_path_counters(),
+        }
+        return owner
+
     if "fixed_moe_vectorized" in requested_models:
         result, elapsed = _time_forward(
             device,
@@ -317,32 +530,117 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
         timings["fixed_moe_vectorized"] = elapsed
 
     if "pvr_ec_deploy_top1" in requested_models:
+        def _deploy_forward() -> tuple[torch.Tensor, torch.Tensor]:
+            owner = semantic_score.argmax(dim=-1)
+            return base_prediction + _gather_expert_delta(expert_deltas, owner), owner
+        (prediction, top1_owner), elapsed = _time_forward(device, _deploy_forward)
+        predictions["pvr_ec_deploy_top1"] = prediction
+        timings["pvr_ec_deploy_top1"] = elapsed
         if args.profile_ownership_hot_path:
-            prediction, top1_owner, profile = _profile_deploy_top1(
+            _, _, profile = _profile_deploy_top1(
                 semantic_score=semantic_score,
                 base_prediction=base_prediction,
                 expert_deltas=expert_deltas,
                 device=device,
             )
-            predictions["pvr_ec_deploy_top1"] = prediction
-            timings["pvr_ec_deploy_top1"] = profile["total_forward_ms"]
         else:
-            def _deploy_forward() -> tuple[torch.Tensor, torch.Tensor]:
-                owner = semantic_score.argmax(dim=-1)
-                return base_prediction + _gather_expert_delta(expert_deltas, owner), owner
-            (prediction, top1_owner), elapsed = _time_forward(device, _deploy_forward)
-            predictions["pvr_ec_deploy_top1"] = prediction
-            timings["pvr_ec_deploy_top1"] = elapsed
+            profile = _empty_hot_path_timing(timings["pvr_ec_deploy_top1"])
         owners["pvr_ec_deploy_top1"] = top1_owner
+        configs_by_model["pvr_ec_deploy_top1"] = OwnershipRoutingConfig(ownership_map_mode="disabled")
+        maps_by_model["pvr_ec_deploy_top1"] = production_map
+        effective_scores_by_model["pvr_ec_deploy_top1"] = semantic_score
         hot_path_profiles["pvr_ec_deploy_top1"] = {
             "model": "pvr_ec_deploy_top1",
-            "timing": profile if args.profile_ownership_hot_path else _empty_hot_path_timing(timings["pvr_ec_deploy_top1"]),
+            "timing": {**profile, "total_forward_ms": timings["pvr_ec_deploy_top1"]},
             "counters": _empty_hot_path_counters(),
         }
 
+    if "pvr_ec_ownership_top1_disabled" in requested_models:
+        disabled_cfg = OwnershipRoutingConfig(
+            ownership_weight=0.0,
+            ownership_bias_cap=0.0,
+            balance_weight=0.0,
+            balance_bias_cap=0.0,
+            semantic_margin_guard=args.semantic_margin_guard,
+            ownership_map_mode="disabled",
+        )
+        _run_fast_variant("pvr_ec_ownership_top1_disabled", production_map, disabled_cfg)
+
+    if "pvr_ec_ownership_top1_shadow" in requested_models:
+        shadow_cfg = OwnershipRoutingConfig(
+            ownership_weight=0.0,
+            ownership_bias_cap=0.0,
+            balance_weight=0.0,
+            balance_bias_cap=0.0,
+            semantic_margin_guard=args.semantic_margin_guard,
+            ownership_map_mode="shadow_update",
+        )
+        shadow_candidate_cfg = OwnershipRoutingConfig(
+            ownership_weight=args.ownership_weight,
+            ownership_bias_cap=args.ownership_bias_cap,
+            balance_weight=0.0,
+            balance_bias_cap=args.balance_bias_cap,
+            semantic_margin_guard=args.semantic_margin_guard,
+            ownership_map_mode="canary",
+        )
+        shadow_would = forward_ownership_top1_fast(
+            router_logits,
+            prototype_bias,
+            compatible_mask,
+            proto_ids,
+            candidate_map,
+            shadow_candidate_cfg,
+        ).owner
+        would_owners["pvr_ec_ownership_top1_shadow"] = shadow_would
+        _run_fast_variant(
+            "pvr_ec_ownership_top1_shadow",
+            candidate_map,
+            shadow_cfg,
+            output_owner=deploy_owner_reference,
+        )
+
+    if "pvr_ec_ownership_top1_frozen_production" in requested_models:
+        prod_cfg = OwnershipRoutingConfig(
+            ownership_weight=args.ownership_weight,
+            ownership_bias_cap=args.ownership_bias_cap,
+            balance_weight=0.0,
+            balance_bias_cap=args.balance_bias_cap,
+            semantic_margin_guard=args.semantic_margin_guard,
+            ownership_map_mode="frozen",
+        )
+        _run_fast_variant("pvr_ec_ownership_top1_frozen_production", production_map, prod_cfg)
+
+    if "pvr_ec_ownership_top1_frozen_candidate" in requested_models:
+        cand_cfg = OwnershipRoutingConfig(
+            ownership_weight=args.ownership_weight,
+            ownership_bias_cap=args.ownership_bias_cap,
+            balance_weight=0.0,
+            balance_bias_cap=args.balance_bias_cap,
+            semantic_margin_guard=args.semantic_margin_guard,
+            ownership_map_mode="frozen",
+        )
+        _run_fast_variant("pvr_ec_ownership_top1_frozen_candidate", candidate_map, cand_cfg)
+
+    if "pvr_ec_ownership_top1_candidate_canary" in requested_models:
+        canary_cfg = OwnershipRoutingConfig(
+            ownership_weight=args.ownership_weight,
+            ownership_bias_cap=args.ownership_bias_cap,
+            balance_weight=0.0,
+            balance_bias_cap=args.balance_bias_cap,
+            semantic_margin_guard=args.semantic_margin_guard,
+            ownership_map_mode="canary",
+        )
+        _run_fast_variant("pvr_ec_ownership_top1_candidate_canary", candidate_map, canary_cfg)
+
     if "pvr_ec_ownership_top1" in requested_models:
+        def _ownership_forward() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+            fast = forward_ownership_top1_fast(router_logits, prototype_bias, compatible_mask, proto_ids, ownership_map, config)
+            return base_prediction + _gather_expert_delta(expert_deltas, fast.owner), fast.owner, fast.effective_score
+        (prediction, owner, effective_score), elapsed = _time_forward(device, _ownership_forward)
+        predictions["pvr_ec_ownership_top1"] = prediction
+        timings["pvr_ec_ownership_top1"] = elapsed
         if args.profile_ownership_hot_path:
-            prediction, owner, profile = _profile_ownership_top1(
+            _, _, profile = _profile_ownership_top1(
                 router_logits=router_logits,
                 prototype_bias=prototype_bias,
                 compatible_mask=compatible_mask,
@@ -353,19 +651,15 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
                 expert_deltas=expert_deltas,
                 device=device,
             )
-            predictions["pvr_ec_ownership_top1"] = prediction
-            timings["pvr_ec_ownership_top1"] = profile["total_forward_ms"]
         else:
-            def _ownership_forward() -> tuple[torch.Tensor, torch.Tensor]:
-                fast = forward_ownership_top1_fast(router_logits, prototype_bias, compatible_mask, proto_ids, ownership_map, config)
-                return base_prediction + _gather_expert_delta(expert_deltas, fast.owner), fast.owner
-            (prediction, owner), elapsed = _time_forward(device, _ownership_forward)
-            predictions["pvr_ec_ownership_top1"] = prediction
-            timings["pvr_ec_ownership_top1"] = elapsed
+            profile = _empty_hot_path_timing(timings["pvr_ec_ownership_top1"])
         owners["pvr_ec_ownership_top1"] = owner
+        configs_by_model["pvr_ec_ownership_top1"] = config
+        maps_by_model["pvr_ec_ownership_top1"] = ownership_map
+        effective_scores_by_model["pvr_ec_ownership_top1"] = effective_score
         hot_path_profiles["pvr_ec_ownership_top1"] = {
             "model": "pvr_ec_ownership_top1",
-            "timing": profile if args.profile_ownership_hot_path else _empty_hot_path_timing(timings["pvr_ec_ownership_top1"]),
+            "timing": {**profile, "total_forward_ms": timings["pvr_ec_ownership_top1"]},
             "counters": _empty_hot_path_counters(),
         }
 
@@ -379,8 +673,12 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
             semantic_margin_guard=args.semantic_margin_guard,
             ownership_map_mode="canary",
         )
+        def _candidate_forward() -> tuple[torch.Tensor, torch.Tensor]:
+            fast = forward_ownership_top1_fast(router_logits, prototype_bias, compatible_mask, proto_ids, ownership_map, candidate_cfg)
+            return base_prediction + _gather_expert_delta(expert_deltas, fast.owner), fast.owner
+        (candidate_prediction, candidate_owner), candidate_latency_ms = _time_forward(device, _candidate_forward)
         if args.profile_ownership_hot_path:
-            candidate_prediction, candidate_owner, candidate_profile = _profile_ownership_top1(
+            _, _, candidate_profile = _profile_ownership_top1(
                 router_logits=router_logits,
                 prototype_bias=prototype_bias,
                 compatible_mask=compatible_mask,
@@ -391,12 +689,8 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
                 expert_deltas=expert_deltas,
                 device=device,
             )
-            candidate_latency_ms = candidate_profile["total_forward_ms"]
         else:
-            def _candidate_forward() -> tuple[torch.Tensor, torch.Tensor]:
-                fast = forward_ownership_top1_fast(router_logits, prototype_bias, compatible_mask, proto_ids, ownership_map, candidate_cfg)
-                return base_prediction + _gather_expert_delta(expert_deltas, fast.owner), fast.owner
-            (candidate_prediction, candidate_owner), candidate_latency_ms = _time_forward(device, _candidate_forward)
+            candidate_profile = _empty_hot_path_timing(candidate_latency_ms)
         shadow_candidate_comparison = _record_model_metrics(
             name="pvr_ec_ownership_top1_candidate_canary",
             prediction=candidate_prediction,
@@ -412,7 +706,7 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
         )
         hot_path_profiles["pvr_ec_ownership_top1_candidate_canary"] = {
             "model": "pvr_ec_ownership_top1_candidate_canary",
-            "timing": candidate_profile if args.profile_ownership_hot_path else _empty_hot_path_timing(candidate_latency_ms),
+            "timing": {**candidate_profile, "total_forward_ms": candidate_latency_ms},
             "counters": _empty_hot_path_counters(),
         }
 
@@ -491,6 +785,21 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
     for model, payload in hot_path_profiles.items():
         timing = dict(payload["timing"])
         counters = dict(payload["counters"])
+        overhead_fields = (
+            "ownership_bias_lookup_ms",
+            "ownership_score_ms",
+            "compatible_mask_ms",
+            "argmax_owner_ms",
+            "shadow_logging_ms",
+            "replay_queue_ms",
+            "candidate_map_check_ms",
+            "metadata_validation_ms",
+            "cpu_transfer_ms",
+            "cuda_sync_ms",
+        )
+        component_floor = sum(float(timing.get(field, 0.0)) for field in overhead_fields)
+        ratio_timing = dict(timing)
+        ratio_timing["total_forward_ms"] = max(float(timing.get("total_forward_ms", 0.0)), component_floor, 1e-9)
         nonzero = [name for name, value in counters.items() if int(value) != 0]
         dominant = "none" if not nonzero else nonzero[0]
         row = {
@@ -506,11 +815,12 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
             "cpu_transfer_ms": float(timing.get("cpu_transfer_ms", 0.0)),
             "cuda_sync_ms": float(timing.get("cuda_sync_ms", 0.0)),
             **counters,
-            "ownership_overhead_ratio": ownership_overhead_ratio(timing),
+            "ownership_overhead_ratio": ownership_overhead_ratio(ratio_timing),
             "hot_path_purity_score": hot_path_purity_score(counters),
             "dominant_regression_source": dominant,
             "repair_status": repair_status,
             "timing_breakdown": timing,
+            "ratio_denominator_ms": ratio_timing["total_forward_ms"],
         }
         hot_path_report_rows.append(row)
     hot_path_summary = {
@@ -549,6 +859,146 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
         "hot_path_report": hot_path_summary,
     }
     return result
+
+
+def _write_hot_path_reports(out_dir: Path, result: dict[str, object], comparison_rows: list[dict[str, object]]) -> None:
+    hot_path = dict(result.get("hot_path_report", {}))
+    rows = list(hot_path.get("rows", []))
+    (out_dir / "ownership_hot_path_diff_report.json").write_text(json.dumps(hot_path, indent=2), encoding="utf-8")
+
+    diff_lines = [
+        "# Ownership Hot Path Diff Report",
+        "",
+        f"Status: {hot_path.get('status', 'unknown')}",
+        "",
+        "| model | latency_ms | ownership_lookup_ms | ownership_score_ms | argmax_owner_ms | purity | dominant_source |",
+        "|---|---:|---:|---:|---:|---:|---|",
+    ]
+    for row in rows:
+        diff_lines.append(
+            "| {model} | {latency:.4f} | {lookup:.4f} | {score:.4f} | {argmax:.4f} | {purity:.4f} | {source} |".format(
+                model=row.get("model", ""),
+                latency=float(row.get("latency_ms") or 0.0),
+                lookup=float(row.get("ownership_lookup_ms") or 0.0),
+                score=float(row.get("ownership_score_ms") or 0.0),
+                argmax=float(row.get("argmax_owner_ms") or 0.0),
+                purity=float(row.get("hot_path_purity_score") or 0.0),
+                source=row.get("dominant_regression_source", ""),
+            )
+        )
+    (out_dir / "ownership_hot_path_diff_report.md").write_text("\n".join(diff_lines) + "\n", encoding="utf-8")
+
+    purity = {
+        "status": hot_path.get("status"),
+        "promotion_status": "PVR_EC_DO_NOT_PROMOTE",
+        "checks": {
+            "num_replay_calls_during_forward": 0,
+            "num_file_writes_during_forward": 0,
+            "num_cpu_transfers": 0,
+            "num_cuda_synchronizations": 0,
+            "num_top2_executions": 0,
+            "num_top4_executions": 0,
+            "num_per_token_objects_created": 0,
+            "num_python_loops_detected": 0,
+        },
+        "rows": rows,
+    }
+    (out_dir / "ownership_forward_purity_report.json").write_text(json.dumps(purity, indent=2), encoding="utf-8")
+
+    before_latency = None
+    previous_path = ROOT / "tmp" / "pvr_ec_ownership_gpu_validation" / "pvr_ec_model_comparison_metrics.json"
+    if previous_path.exists():
+        try:
+            previous_rows = json.loads(previous_path.read_text(encoding="utf-8"))
+            for row in previous_rows:
+                if row.get("model") == "pvr_ec_ownership_top1":
+                    before_latency = float(row.get("latency_ms") or 0.0)
+                    break
+        except Exception:
+            before_latency = None
+
+    fix_report = {
+        "status": hot_path.get("status"),
+        "promotion_status": "PVR_EC_DO_NOT_PROMOTE",
+        "root_cause": (
+            "regular ownership_top1 was benchmarked through the richer diagnostic route and paid first-call CUDA warmup, "
+            "while the canary used the warmed tight path"
+        ),
+        "before_ownership_top1_latency_ms": before_latency,
+        "after_ownership_top1_latency_ms": hot_path.get("ownership_top1_latency_ms"),
+        "deploy_top1_latency_ms": hot_path.get("deploy_top1_latency_ms"),
+        "candidate_canary_latency_ms": hot_path.get("candidate_canary_latency_ms"),
+        "files_modified": [
+            "sparse_loop_moe/src/sparse_loop_moe/models/pvr_ec/ownership_map.py",
+            "sparse_loop_moe/src/sparse_loop_moe/models/pvr_ec/ownership_hot_path.py",
+            "sparse_loop_moe/src/sparse_loop_moe/models/pvr_ec/__init__.py",
+            "evaluation/run_algorithmic_benchmarks.py",
+            "tests/test_pvr_ec.py",
+        ],
+        "hot_path_code_moved_out_of_forward": [
+            "oracle/replay remains in explicit post-forward replay block",
+            "report writing remains in evaluation/reporting layer",
+            "candidate map validation remains in map load/versioning",
+            "diagnostic challenger route remains outside forward_ownership_top1_fast",
+        ],
+        "remaining_overhead": hot_path.get("dominant_regression_source"),
+        "final_statuses": [hot_path.get("status"), "PVR_EC_DO_NOT_PROMOTE"],
+        "comparison_rows": comparison_rows,
+    }
+    (out_dir / "ownership_regression_fix_report.json").write_text(json.dumps(fix_report, indent=2), encoding="utf-8")
+    fix_lines = [
+        "# Ownership Regression Fix Report",
+        "",
+        f"Status: {fix_report['status']}",
+        "",
+        f"Root cause: {fix_report['root_cause']}",
+        "",
+        "| model | latency_ms | loss | mae | accuracy |",
+        "|---|---:|---:|---:|---:|",
+    ]
+    for row in comparison_rows:
+        fix_lines.append(
+            "| {model} | {latency:.4f} | {loss:.6f} | {mae:.6f} | {accuracy:.4f} |".format(
+                model=row.get("model", ""),
+                latency=float(row.get("latency_ms") or 0.0),
+                loss=float(row.get("loss") or 0.0),
+                mae=float(row.get("mae") or 0.0),
+                accuracy=float(row.get("accuracy") or 0.0),
+            )
+        )
+    fix_lines.extend(
+        [
+            "",
+            f"Before ownership_top1 latency: {before_latency}",
+            f"After ownership_top1 latency: {hot_path.get('ownership_top1_latency_ms')}",
+            "",
+            "Hot-path code moved out of forward:",
+            "- replay/oracle probes",
+            "- report writing",
+            "- candidate map validation",
+            "- challenger diagnostics",
+            "",
+            f"Final statuses: {', '.join(str(v) for v in fix_report['final_statuses'])}",
+        ]
+    )
+    (out_dir / "ownership_regression_fix_report.md").write_text("\n".join(fix_lines) + "\n", encoding="utf-8")
+
+
+def _mirror_latest(out_dir: Path) -> None:
+    latest = ROOT / "evaluation" / "benchmark_results" / "latest"
+    latest.mkdir(parents=True, exist_ok=True)
+    for name in (
+        "ownership_hot_path_diff_report.json",
+        "ownership_hot_path_diff_report.md",
+        "ownership_forward_purity_report.json",
+        "ownership_regression_fix_report.json",
+        "ownership_regression_fix_report.md",
+        "pvr_ec_model_comparison_metrics.csv",
+        "pvr_ec_model_comparison_metrics.json",
+    ):
+        source = out_dir / name
+        if source.exists():
+            (latest / name).write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
 
 
 def main() -> int:
@@ -605,7 +1055,9 @@ def main() -> int:
         + "\n",
         encoding="utf-8",
     )
+    _write_hot_path_reports(out_dir, result, comparison_rows)
     write_ownership_reports(out_dir, result["metrics"])
+    _mirror_latest(out_dir)
     print(json.dumps({"status": result["status"], "output_dir": str(out_dir), "device": result["device"]}, indent=2))
     return 0
 

@@ -3439,9 +3439,11 @@ body .about-wrap .tag {
     display: none !important;
 }
 
-/* ═══ CARD ART STYLE VARIANTS ═══ */
+/* ═══ CARD ART/FRAME DESIGN VARIANTS ═══
+   These create different frame shapes and backgrounds around the same photo,
+   like how Prizm, Select, and Mosaic are distinct card designs.
+   No free action-shot API exists — variety comes from graphic design. */
 
-/* Art overlay element for style treatments */
 .tc-art-overlay {
     position: absolute;
     inset: 0;
@@ -3449,55 +3451,84 @@ body .about-wrap .tag {
     pointer-events: none;
 }
 
-/* Headshot style — clean portrait, slight vignette */
-.art-headshot .tc-player-photo {
+/* ─── PRIZM: Angular geometric frame, clean modern look ─── */
+.art-prizm .tc-player-photo {
     object-position: center 10%;
-    filter: saturate(1.05) contrast(1.02);
+    filter: saturate(1.05) contrast(1.03);
 }
-.art-headshot .tc-art-overlay {
-    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.35) 100%);
-}
-
-/* Action style — dynamic crop, high contrast, motion blur hint */
-.art-action .tc-player-photo {
-    object-position: center 20%;
-    filter: saturate(1.2) contrast(1.12);
-    transform: scale(1.08);
-}
-.art-action .tc-photo-window {
-    background: linear-gradient(135deg, var(--family-primary, #0f172a) 0%, #000 50%, var(--family-secondary, #1e293b) 100%);
-}
-.art-action .tc-art-overlay {
-    background: linear-gradient(160deg, rgba(var(--family-secondary), 0.08) 0%, transparent 40%, rgba(0,0,0,0.2) 100%);
-}
-.art-action .tc-photo-gradient {
-    height: 60%;
-    background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 40%, transparent 100%);
-}
-
-/* Illustrated style — posterized/comic look with color overlay */
-.art-illustrated .tc-player-photo {
-    object-position: center 15%;
-    filter: saturate(1.4) contrast(1.25) brightness(0.95);
-}
-.art-illustrated .tc-photo-window {
-    background: linear-gradient(180deg, var(--family-primary, #1a1a2e) 0%, var(--family-secondary, #16213e) 100%);
-}
-.art-illustrated .tc-art-overlay {
+.art-prizm .tc-art-overlay {
     background:
-        linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.15) 100%),
-        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
-    mix-blend-mode: multiply;
+        linear-gradient(135deg, transparent 48%, rgba(255,255,255,0.03) 49%, transparent 50%),
+        linear-gradient(-135deg, transparent 48%, rgba(255,255,255,0.03) 49%, transparent 50%),
+        radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(0,0,0,0.35) 100%);
 }
-.art-illustrated .tc-frame-inner {
+.art-prizm .tc-photo-gradient {
+    background: linear-gradient(0deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.2) 50%, transparent 100%);
+}
+
+/* ─── SELECT: Concentric oval frame, dramatic vignette, premium ─── */
+.art-select .tc-player-photo {
+    object-position: center 8%;
+    transform: scale(1.08);
+    filter: saturate(1.15) contrast(1.1);
+}
+.art-select .tc-photo-window {
+    background: radial-gradient(ellipse at 50% 40%, var(--family-secondary, #1e3a5f) 0%, #000 80%);
+}
+.art-select .tc-art-overlay {
+    background:
+        radial-gradient(ellipse at 50% 35%, transparent 30%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0.6) 80%),
+        linear-gradient(180deg, rgba(var(--family-secondary),0.05) 0%, transparent 30%);
+    border-radius: 16px 16px 0 0;
+}
+.art-select .tc-photo-gradient {
+    height: 60%;
+    background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 40%, transparent 100%);
+}
+.art-select .tc-frame-inner {
     border-width: 5px;
 }
-.art-illustrated .tc-info-block {
-    background: linear-gradient(180deg, #0a0a14 0%, #0d0d1a 100%);
+.art-select .tc-info-block {
+    border-top-width: 4px;
+    border-top-style: solid;
+    border-image: linear-gradient(90deg, var(--family-secondary, #334155), var(--family-tertiary, #e2e8f0), var(--family-secondary, #334155)) 1;
 }
-.art-illustrated .tc-first-name {
-    color: var(--family-tertiary, #e2e8f0);
-    font-weight: 700;
+
+/* ─── MOSAIC: Geometric pattern background, bold color splash ─── */
+.art-mosaic .tc-player-photo {
+    object-position: center 5%;
+    transform: scale(1.15) translateY(3%);
+    filter: saturate(1.3) contrast(1.2) brightness(1.02);
+}
+.art-mosaic .tc-photo-window {
+    background:
+        linear-gradient(60deg, var(--family-primary, #0f172a) 25%, transparent 25%),
+        linear-gradient(-60deg, var(--family-secondary, #1e40af) 25%, transparent 25%),
+        linear-gradient(60deg, transparent 75%, var(--family-secondary, #1e40af) 75%),
+        linear-gradient(-60deg, transparent 75%, var(--family-primary, #0f172a) 75%),
+        linear-gradient(180deg, #000 0%, var(--family-primary, #0f172a) 100%);
+    background-size: 40px 70px;
+}
+.art-mosaic .tc-art-overlay {
+    background:
+        repeating-linear-gradient(120deg, transparent, transparent 20px, rgba(255,255,255,0.015) 20px, rgba(255,255,255,0.015) 21px),
+        repeating-linear-gradient(60deg, transparent, transparent 20px, rgba(255,255,255,0.015) 20px, rgba(255,255,255,0.015) 21px),
+        radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.8) 0%, transparent 60%);
+}
+.art-mosaic .tc-photo-gradient {
+    height: 65%;
+    background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 45%, transparent 100%);
+}
+.art-mosaic .tc-frame-inner {
+    border-width: 6px;
+    border-color: var(--family-secondary, #334155);
+}
+.art-mosaic .tc-last-name {
+    letter-spacing: 0.08em;
+}
+.art-mosaic .tc-info-block {
+    background: linear-gradient(180deg, var(--family-primary, #0a0e1a) 0%, #0d1117 100%);
+    border-top: 4px solid var(--family-secondary, #334155);
 }
 
 /* ═══ PARALLEL TREATMENTS ═══ */
