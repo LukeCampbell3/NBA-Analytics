@@ -2523,7 +2523,6 @@ class PlayerCardsApp {
         const rpg = Number(trad.rebounds_per_game || 0).toFixed(1);
         const apg = Number(trad.assists_per_game || 0).toFixed(1);
         const jersey = player.player?.jersey || '';
-        const age = player.player?.age || '';
 
         // Parallel type based on card family
         const parallelConfig = {
@@ -2536,16 +2535,25 @@ class PlayerCardsApp {
         };
         const parallel = parallelConfig[cardFamily.key] || parallelConfig.auto;
 
+        // Card art style — deterministic per player for variety
+        const artStyles = ['art-headshot', 'art-action', 'art-illustrated'];
+        const nameHash = (player.player?.name || '').split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0);
+        const artStyle = artStyles[Math.abs(nameHash) % artStyles.length];
+
         const cardClasses = [
             'player-card',
             'trading-card',
             'tc-prizm',
             parallel.frameClass,
+            artStyle,
             `family-${cardFamily.key}`,
             opts.context === 'detail' ? 'trading-card-detail' : 'trading-card-grid',
             opts.interactive ? 'trading-card-interactive' : 'card-static',
             parallel.shimmer ? 'tc-shimmer' : '',
         ].filter(Boolean);
+
+        // Alternate roles label for footer
+        const rolesLabel = alternateCount > 0 ? `${alternateCount + 1} ROLES` : '';
 
         return `
             <article class="${cardClasses.join(' ')}" data-player="${this.escapeAttr(player.player?.name || '')}" data-player-key="${this.escapeAttr(this.getPlayerKey(player))}" data-card-family="${cardFamily.key}" style="--family-primary:${cardFamily.primary};--family-secondary:${cardFamily.secondary};--family-tertiary:${cardFamily.tertiary};--family-glow:${cardFamily.glow};--foil-opacity:${cardFamily.foilOpacity};--pointer-x:50%;--pointer-y:50%;--rotate-x:0deg;--rotate-y:0deg;">
@@ -2556,6 +2564,7 @@ class PlayerCardsApp {
                         <div class="tc-photo-window">
                             <img class="tc-player-photo" src="${this.escapeAttr(typeCardHeadshotUrl)}" alt="${this.escapeAttr(player.player?.name || '')}" loading="lazy" onerror="this.style.display='none';" />
                             <div class="tc-photo-gradient"></div>
+                            <div class="tc-art-overlay"></div>
                             ${jersey ? `<div class="tc-jersey-num">${this.escapeHtml(String(jersey))}</div>` : ''}
                         </div>
                         <div class="tc-info-block">
@@ -2575,11 +2584,11 @@ class PlayerCardsApp {
                         </div>
                         <div class="tc-footer">
                             <span class="tc-parallel-label">${this.escapeHtml(parallel.name)}</span>
+                            ${rolesLabel ? `<span class="tc-roles-badge">${rolesLabel}</span>` : ''}
                             <span class="tc-serial">${this.escapeHtml(cardSerial)}</span>
                         </div>
                     </div>
                 </div>
-                ${alternateCount > 0 ? `<div class="tc-alt-indicator">${alternateCount + 1} roles</div>` : ''}
             </article>
         `;
     }

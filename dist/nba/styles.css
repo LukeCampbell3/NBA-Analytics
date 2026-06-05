@@ -3395,7 +3395,7 @@ body .about-wrap .tag {
     text-transform: uppercase;
 }
 
-/* ─── Footer (parallel label + serial) ─── */
+/* ─── Footer (parallel label + roles + serial) ─── */
 .tc-footer {
     display: flex;
     align-items: center;
@@ -3403,6 +3403,7 @@ body .about-wrap .tag {
     padding: 0.3rem 0.9rem;
     background: #080b12;
     border-top: 1px solid rgba(255,255,255,0.06);
+    gap: 0.4rem;
 }
 
 .tc-parallel-label {
@@ -3413,29 +3414,90 @@ body .about-wrap .tag {
     color: var(--family-secondary, #64748b);
 }
 
+.tc-roles-badge {
+    font-size: 0.45rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    padding: 0.1rem 0.35rem;
+    border: 1px solid rgba(148,163,184,0.3);
+    border-radius: 3px;
+    background: rgba(148,163,184,0.08);
+}
+
 .tc-serial {
     font-size: 0.45rem;
     font-weight: 500;
     color: #475569;
     letter-spacing: 0.05em;
+    margin-left: auto;
 }
 
-/* ─── Alt Indicator ─── */
+/* ─── Alt Indicator (removed — now in footer) ─── */
 .tc-alt-indicator {
+    display: none !important;
+}
+
+/* ═══ CARD ART STYLE VARIANTS ═══ */
+
+/* Art overlay element for style treatments */
+.tc-art-overlay {
     position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    z-index: 20;
-    padding: 0.15rem 0.45rem;
-    font-size: 0.5rem;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+}
+
+/* Headshot style — clean portrait, slight vignette */
+.art-headshot .tc-player-photo {
+    object-position: center 10%;
+    filter: saturate(1.05) contrast(1.02);
+}
+.art-headshot .tc-art-overlay {
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.35) 100%);
+}
+
+/* Action style — dynamic crop, high contrast, motion blur hint */
+.art-action .tc-player-photo {
+    object-position: center 20%;
+    filter: saturate(1.2) contrast(1.12);
+    transform: scale(1.08);
+}
+.art-action .tc-photo-window {
+    background: linear-gradient(135deg, var(--family-primary, #0f172a) 0%, #000 50%, var(--family-secondary, #1e293b) 100%);
+}
+.art-action .tc-art-overlay {
+    background: linear-gradient(160deg, rgba(var(--family-secondary), 0.08) 0%, transparent 40%, rgba(0,0,0,0.2) 100%);
+}
+.art-action .tc-photo-gradient {
+    height: 60%;
+    background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 40%, transparent 100%);
+}
+
+/* Illustrated style — posterized/comic look with color overlay */
+.art-illustrated .tc-player-photo {
+    object-position: center 15%;
+    filter: saturate(1.4) contrast(1.25) brightness(0.95);
+}
+.art-illustrated .tc-photo-window {
+    background: linear-gradient(180deg, var(--family-primary, #1a1a2e) 0%, var(--family-secondary, #16213e) 100%);
+}
+.art-illustrated .tc-art-overlay {
+    background:
+        linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.15) 100%),
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    mix-blend-mode: multiply;
+}
+.art-illustrated .tc-frame-inner {
+    border-width: 5px;
+}
+.art-illustrated .tc-info-block {
+    background: linear-gradient(180deg, #0a0a14 0%, #0d0d1a 100%);
+}
+.art-illustrated .tc-first-name {
+    color: var(--family-tertiary, #e2e8f0);
     font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: #f8fafc;
-    background: rgba(0,0,0,0.6);
-    border-radius: 4px;
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(255,255,255,0.1);
 }
 
 /* ═══ PARALLEL TREATMENTS ═══ */
