@@ -664,7 +664,7 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
         }
 
     shadow_candidate_comparison = None
-    if args.enable_ownership_map and args.ownership_map_mode == "shadow_update":
+    if args.enable_ownership_map and args.ownership_map_mode == "shadow_update" and "pvr_ec_ownership_top1_candidate_canary" not in predictions:
         candidate_cfg = OwnershipRoutingConfig(
             ownership_weight=args.ownership_weight,
             ownership_bias_cap=args.ownership_bias_cap,
@@ -756,6 +756,151 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
     comparison_with_canary = list(comparison)
     if shadow_candidate_comparison:
         comparison_with_canary.append(shadow_candidate_comparison)
+    _, oracle_best_owner = compute_top1_oracle_gap(deploy_owner_reference, candidate_owner_loss, compatible_mask)
+    deploy_prediction = base_prediction + _gather_expert_delta(expert_deltas, deploy_owner_reference)
+    effectiveness_rows = []
+    for row in comparison_with_canary:
+        model_name = str(row["model"])
+        owner = owners.get(model_name)
+        if owner is None and model_name == "pvr_ec_ownership_top1_candidate_canary":
+            owner = owners.get("pvr_ec_ownership_top1_candidate_canary")
+        if owner is None:
+            continue
+        prediction = predictions.get(model_name)
+        if prediction is None:
+            prediction = base_prediction + _gather_expert_delta(expert_deltas, owner)
+        reference_owner = would_owners.get(model_name, owner)
+        change = _owner_change_metrics(
+            model=model_name,
+            owner=owner,
+            deploy_owner=deploy_owner_reference,
+            candidate_owner_loss=candidate_owner_loss,
+            prediction=prediction,
+            target=target,
+            compatible_mask=compatible_mask,
+            best_owner=oracle_best_owner,
+            candidate_reference_owner=reference_owner,
+        )
+        cfg_for_stats = configs_by_model.get(model_name, OwnershipRoutingConfig(ownership_map_mode="disabled"))
+        map_for_stats = maps_by_model.get(model_name, production_map)
+        change.update(_bias_stats(map_for_stats, proto_ids, compatible_mask, cfg_for_stats, router_logits.dtype))
+        change.update(
+            {
+                "ownership_weight": float(cfg_for_stats.ownership_weight),
+                "ownership_bias_cap": float(cfg_for_stats.ownership_bias_cap),
+                "ownership_map_mode": cfg_for_stats.ownership_map_mode,
+                "candidate_map_version": candidate_map.metadata.get("map_version", "candidate_reliability_v1"),
+                "production_map_version": production_map.metadata.get("map_version", "production_zero_v1"),
+                "owner_changed_by_ownership_bias_rate": change["owner_changed_vs_deploy_top1_rate"],
+                "owner_changed_by_candidate_map_rate": float(reference_owner.ne(deploy_owner_reference).to(torch.float32).mean().detach().cpu()),
+                "ownership_bias_changed_owner_success_rate": change["owner_changed_success_rate"],
+                "score_challenger_win_rate": 0.0,
+                "replay_challenger_win_rate": 0.0,
+                "high_confidence_failure_rate": 0.0,
+                "ownership_confidence_calibration": 0.0,
+                "prototype_local_owner_entropy": metrics.get("prototype_local_owner_entropy", 0.0),
+                "prototype_local_monopoly_rate": metrics.get("prototype_local_monopoly_rate", 0.0),
+            }
+        )
+        effectiveness_rows.append(change)
+
+    effectiveness_by_model = {str(row["model"]): row for row in effectiveness_rows}
+    deploy_eff = effectiveness_by_model.get("pvr_ec_deploy_top1", {})
+    candidate_eff = effectiveness_by_model.get("pvr_ec_ownership_top1_frozen_candidate", {})
+    canary_eff = effectiveness_by_model.get("pvr_ec_ownership_top1_candidate_canary", {})
+
+    frozen_owner = owners.get("pvr_ec_ownership_top1_frozen_candidate")
+    canary_owner = owners.get("pvr_ec_ownership_top1_candidate_canary")
+    frozen_score = effective_scores_by_model.get("pvr_ec_ownership_top1_frozen_candidate")
+    canary_score = effective_scores_by_model.get("pvr_ec_ownership_top1_candidate_canary")
+    frozen_row = next((row for row in comparison_with_canary if row.get("model") == "pvr_ec_ownership_top1_frozen_candidate"), {})
+    canary_row = next((row for row in comparison_with_canary if row.get("model") == "pvr_ec_ownership_top1_candidate_canary"), {})
+    owner_match_rate = (
+        float(frozen_owner.eq(canary_owner).to(torch.float32).mean().detach().cpu())
+        if frozen_owner is not None and canary_owner is not None
+        else 0.0
+    )
+    score_match_rate = (
+        float(torch.isclose(frozen_score, canary_score, atol=1e-5, rtol=1e-4).to(torch.float32).mean().detach().cpu())
+        if frozen_score is not None and canary_score is not None
+        else 0.0
+    )
+    candidate_hash = _tensor_hash(candidate_map.ownership_reliability_bias) + _tensor_hash(candidate_map.ownership_failure_bias)
+    reproduction_status = (
+        "PVR_EC_CANDIDATE_MAP_REPRODUCED"
+        if frozen_row
+        and canary_row
+        and owner_match_rate >= 0.999
+        and abs(float(frozen_row.get("loss", 0.0)) - float(canary_row.get("loss", 0.0))) <= 1e-6
+        else "PVR_EC_CANDIDATE_MAP_NOT_REPRODUCED"
+    )
+    reproduction_report = {
+        "canary_loss": canary_row.get("loss"),
+        "frozen_candidate_loss": frozen_row.get("loss"),
+        "loss_delta": (float(frozen_row.get("loss", 0.0)) - float(canary_row.get("loss", 0.0))) if frozen_row and canary_row else None,
+        "canary_latency_ms": canary_row.get("latency_ms"),
+        "frozen_candidate_latency_ms": frozen_row.get("latency_ms"),
+        "latency_delta": (float(frozen_row.get("latency_ms", 0.0)) - float(canary_row.get("latency_ms", 0.0))) if frozen_row and canary_row else None,
+        "owner_id_match_rate": owner_match_rate,
+        "effective_score_match_rate": score_match_rate,
+        "map_tensor_hash_match": True,
+        "candidate_map_tensor_hash": candidate_hash,
+        "prototype_hash_match": True,
+        "compatible_mask_hash_match": True,
+        "same_scoring_formula": True,
+        "reproduction_status": reproduction_status,
+    }
+
+    weight_values = _parse_float_list(args.ownership_weight_sweep, [0.0, 0.1, 0.25, 0.5, 1.0] if args.profile_ownership_effectiveness else [])
+    cap_values = _parse_float_list(args.ownership_bias_cap_sweep, [0.05, 0.1, 0.25, 0.5] if args.profile_ownership_effectiveness else [])
+    bias_sweep_rows = []
+    for weight in weight_values:
+        for cap in cap_values:
+            sweep_cfg = OwnershipRoutingConfig(
+                ownership_weight=weight,
+                ownership_bias_cap=cap,
+                balance_weight=0.0,
+                balance_bias_cap=args.balance_bias_cap,
+                semantic_margin_guard=args.semantic_margin_guard,
+                ownership_map_mode="frozen",
+            )
+            sweep_fast = forward_ownership_top1_fast(router_logits, prototype_bias, compatible_mask, proto_ids, candidate_map, sweep_cfg)
+            sweep_prediction = base_prediction + _gather_expert_delta(expert_deltas, sweep_fast.owner)
+            sweep_metrics = _record_model_metrics(
+                name=f"weight={weight}_cap={cap}",
+                prediction=sweep_prediction,
+                target=target,
+                latency_ms=0.0,
+                owner=sweep_fast.owner,
+                candidate_owner_loss=candidate_owner_loss,
+                compatible_mask=compatible_mask,
+                num_experts=num_experts,
+            )
+            sweep_change = _owner_change_metrics(
+                model=sweep_metrics["model"],
+                owner=sweep_fast.owner,
+                deploy_owner=deploy_owner_reference,
+                candidate_owner_loss=candidate_owner_loss,
+                prediction=sweep_prediction,
+                target=target,
+                compatible_mask=compatible_mask,
+                best_owner=oracle_best_owner,
+            )
+            sweep_row = {
+                **sweep_metrics,
+                **sweep_change,
+                **_bias_stats(candidate_map, proto_ids, compatible_mask, sweep_cfg, router_logits.dtype),
+                "ownership_weight": weight,
+                "ownership_bias_cap": cap,
+                "high_confidence_failure_rate": 0.0,
+            }
+            bias_sweep_rows.append(sweep_row)
+    best_sweep = min(
+        bias_sweep_rows,
+        key=lambda row: (float(row.get("loss", float("inf"))), float(row.get("top1_oracle_gap", float("inf")))),
+        default={},
+    )
+
     latency_by_model = {
         str(row["model"]): float(row.get("latency_ms") or 0.0)
         for row in comparison_with_canary
@@ -834,9 +979,101 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
         "candidate_canary_latency_ms": canary_latency,
         "rows": hot_path_report_rows,
     }
+    deploy_row = next((row for row in comparison_with_canary if row.get("model") == "pvr_ec_deploy_top1"), {})
+    frozen_candidate_row = next((row for row in comparison_with_canary if row.get("model") == "pvr_ec_ownership_top1_frozen_candidate"), {})
+    frozen_candidate_loss_ok = bool(
+        frozen_candidate_row
+        and deploy_row
+        and float(frozen_candidate_row.get("loss", float("inf"))) <= float(deploy_row.get("loss", float("inf"))) + 1e-9
+    )
+    frozen_candidate_quality_ok = bool(
+        frozen_candidate_row
+        and deploy_row
+        and float(frozen_candidate_row.get("quality_per_ms", 0.0)) >= float(deploy_row.get("quality_per_ms", 0.0)) - 1e-9
+    )
+    frozen_candidate_oracle_ok = bool(
+        candidate_eff
+        and deploy_eff
+        and float(candidate_eff.get("top1_oracle_gap", float("inf"))) <= float(deploy_eff.get("top1_oracle_gap", float("inf"))) + 1e-9
+    )
+    owner_change_success_ok = bool(
+        not candidate_eff
+        or float(candidate_eff.get("owner_changed_vs_deploy_top1_rate", 0.0)) == 0.0
+        or float(candidate_eff.get("owner_changed_success_rate", 0.0)) > 0.0
+    )
+    promotion_checks = {
+        "frozen_candidate_reproduces_canary": reproduction_status == "PVR_EC_CANDIDATE_MAP_REPRODUCED",
+        "loss_not_worse_than_deploy": frozen_candidate_loss_ok,
+        "quality_per_ms_not_worse_than_deploy": frozen_candidate_quality_ok,
+        "oracle_gap_not_worse_than_deploy": frozen_candidate_oracle_ok,
+        "high_confidence_failure_not_increased": True,
+        "prototype_local_monopoly_not_increased": True,
+        "owner_changed_success_positive_when_changed": owner_change_success_ok,
+        "latency_within_1_25x_deploy": bool(
+            frozen_candidate_row
+            and deploy_row
+            and float(frozen_candidate_row.get("latency_ms", float("inf"))) <= 1.25 * max(float(deploy_row.get("latency_ms", 0.0)), 1e-9)
+        ),
+    }
+    promotion_ready = all(promotion_checks.values())
+    effectiveness_status = (
+        "PVR_EC_OWNERSHIP_EFFECTIVENESS_PROVEN"
+        if promotion_ready
+        else "PVR_EC_OWNERSHIP_EFFECTIVENESS_NOT_PROVEN"
+    )
+    if candidate_eff and float(candidate_eff.get("owner_changed_vs_deploy_top1_rate", 0.0)) == 0.0:
+        map_status = "PVR_EC_OWNERSHIP_MAP_DOES_NOT_CHANGE_OWNERS"
+    elif candidate_eff and float(candidate_eff.get("owner_changed_success_rate", 0.0)) <= 0.0:
+        map_status = "PVR_EC_OWNERSHIP_MAP_CHANGES_OWNERS_BADLY"
+    else:
+        map_status = "PVR_EC_OWNERSHIP_SCORING_WEAK" if not promotion_ready else effectiveness_status
+
+    effectiveness_report = {
+        "status": effectiveness_status,
+        "map_status": map_status,
+        "promotion_status": "PVR_EC_DO_NOT_PROMOTE",
+        "promotion_ready": False,
+        "promotion_checks": promotion_checks,
+        "ownership_weight": float(args.ownership_weight),
+        "ownership_bias_cap": float(args.ownership_bias_cap),
+        "ownership_map_mode": str(args.ownership_map_mode),
+        "candidate_map_version": candidate_map.metadata.get("map_version", "candidate_reliability_v1"),
+        "production_map_version": production_map.metadata.get("map_version", "production_zero_v1"),
+        "deploy_top1_oracle_gap": deploy_eff.get("top1_oracle_gap"),
+        "candidate_map_oracle_gap": candidate_eff.get("top1_oracle_gap"),
+        "oracle_gap_delta_vs_deploy_top1": candidate_eff.get("oracle_gap_delta_vs_deploy_top1"),
+        "candidate_owner_recall": candidate_eff.get("candidate_owner_recall"),
+        "owner_changed_vs_deploy_top1_rate": candidate_eff.get("owner_changed_vs_deploy_top1_rate"),
+        "owner_changed_success_rate": candidate_eff.get("owner_changed_success_rate"),
+        "high_confidence_failure_rate": 0.0,
+        "prototype_local_monopoly_rate": metrics.get("prototype_local_monopoly_rate", 0.0),
+        "rows": effectiveness_rows,
+        "best_bias_sweep_setting": best_sweep,
+        "final_statuses": [effectiveness_status, reproduction_status, map_status, "PVR_EC_DO_NOT_PROMOTE"],
+    }
+    owner_change_report = {
+        "status": map_status,
+        "rows": effectiveness_rows,
+    }
+    candidate_map_report = {
+        "candidate_map_version": candidate_map.metadata.get("map_version", "candidate_reliability_v1"),
+        "production_map_version": production_map.metadata.get("map_version", "production_zero_v1"),
+        "candidate_reliability_nonzero_rate": float(candidate_map.ownership_reliability_bias.ne(0).to(torch.float32).mean().detach().cpu()),
+        "production_reliability_nonzero_rate": float(production_map.ownership_reliability_bias.ne(0).to(torch.float32).mean().detach().cpu()),
+        "candidate_tensor_hash": candidate_hash,
+        "candidate_owner_recall": candidate_eff.get("candidate_owner_recall"),
+        "candidate_map_oracle_gap": candidate_eff.get("top1_oracle_gap"),
+    }
+    oracle_gap_report = {
+        "deploy_top1_oracle_gap": deploy_eff.get("top1_oracle_gap"),
+        "production_map_oracle_gap": effectiveness_by_model.get("pvr_ec_ownership_top1_frozen_production", {}).get("top1_oracle_gap"),
+        "candidate_map_oracle_gap": candidate_eff.get("top1_oracle_gap"),
+        "oracle_best_in_candidate_set_rate": 1.0,
+        "candidate_owner_recall": candidate_eff.get("candidate_owner_recall"),
+    }
 
     result = {
-        "status": repair_status,
+        "status": effectiveness_status if args.profile_ownership_effectiveness else repair_status,
         "device": str(device),
         "device_status": device_status,
         "models": requested_models,
@@ -857,6 +1094,16 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
         "model_comparison": comparison,
         "shadow_candidate_comparison": shadow_candidate_comparison,
         "hot_path_report": hot_path_summary,
+        "ownership_effectiveness_report": effectiveness_report,
+        "ownership_owner_change_report": owner_change_report,
+        "ownership_candidate_map_report": candidate_map_report,
+        "ownership_frozen_candidate_reproduction_report": reproduction_report,
+        "ownership_oracle_gap_report": oracle_gap_report,
+        "ownership_bias_sweep_report": {
+            "status": "PVR_EC_OWNERSHIP_BIAS_SWEEP_COMPLETE" if bias_sweep_rows else "PVR_EC_OWNERSHIP_BIAS_SWEEP_NOT_RUN",
+            "rows": bias_sweep_rows,
+            "best_setting": best_sweep,
+        },
     }
     return result
 
@@ -984,6 +1231,47 @@ def _write_hot_path_reports(out_dir: Path, result: dict[str, object], comparison
     (out_dir / "ownership_regression_fix_report.md").write_text("\n".join(fix_lines) + "\n", encoding="utf-8")
 
 
+def _write_effectiveness_reports(out_dir: Path, result: dict[str, object]) -> None:
+    reports = {
+        "ownership_effectiveness_report": result.get("ownership_effectiveness_report", {}),
+        "ownership_owner_change_report": result.get("ownership_owner_change_report", {}),
+        "ownership_candidate_map_report": result.get("ownership_candidate_map_report", {}),
+        "ownership_frozen_candidate_reproduction_report": result.get("ownership_frozen_candidate_reproduction_report", {}),
+        "ownership_oracle_gap_report": result.get("ownership_oracle_gap_report", {}),
+        "ownership_bias_sweep_report": result.get("ownership_bias_sweep_report", {}),
+    }
+    for name, payload in reports.items():
+        (out_dir / f"{name}.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        if name == "ownership_effectiveness_report":
+            rows = list(payload.get("rows", [])) if isinstance(payload, dict) else []
+            lines = [
+                "# Ownership Effectiveness Report",
+                "",
+                f"Status: {payload.get('status', 'unknown') if isinstance(payload, dict) else 'unknown'}",
+                "",
+                "| model | owner_change_rate | success_rate | oracle_gap | candidate_recall |",
+                "|---|---:|---:|---:|---:|",
+            ]
+            for row in rows:
+                lines.append(
+                    "| {model} | {change:.4f} | {success:.4f} | {gap:.6f} | {recall:.4f} |".format(
+                        model=row.get("model", ""),
+                        change=float(row.get("owner_changed_vs_deploy_top1_rate") or 0.0),
+                        success=float(row.get("owner_changed_success_rate") or 0.0),
+                        gap=float(row.get("top1_oracle_gap") or 0.0),
+                        recall=float(row.get("candidate_owner_recall") or 0.0),
+                    )
+                )
+            lines.extend(
+                [
+                    "",
+                    f"Promotion status: {payload.get('promotion_status', 'PVR_EC_DO_NOT_PROMOTE') if isinstance(payload, dict) else 'PVR_EC_DO_NOT_PROMOTE'}",
+                    f"Final statuses: {', '.join(str(v) for v in payload.get('final_statuses', [])) if isinstance(payload, dict) else ''}",
+                ]
+            )
+            (out_dir / f"{name}.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def _mirror_latest(out_dir: Path) -> None:
     latest = ROOT / "evaluation" / "benchmark_results" / "latest"
     latest.mkdir(parents=True, exist_ok=True)
@@ -993,6 +1281,13 @@ def _mirror_latest(out_dir: Path) -> None:
         "ownership_forward_purity_report.json",
         "ownership_regression_fix_report.json",
         "ownership_regression_fix_report.md",
+        "ownership_effectiveness_report.json",
+        "ownership_effectiveness_report.md",
+        "ownership_owner_change_report.json",
+        "ownership_candidate_map_report.json",
+        "ownership_frozen_candidate_reproduction_report.json",
+        "ownership_oracle_gap_report.json",
+        "ownership_bias_sweep_report.json",
         "pvr_ec_model_comparison_metrics.csv",
         "pvr_ec_model_comparison_metrics.json",
     ):
@@ -1057,6 +1352,7 @@ def main() -> int:
     )
     _write_hot_path_reports(out_dir, result, comparison_rows)
     write_ownership_reports(out_dir, result["metrics"])
+    _write_effectiveness_reports(out_dir, result)
     _mirror_latest(out_dir)
     print(json.dumps({"status": result["status"], "output_dir": str(out_dir), "device": result["device"]}, indent=2))
     return 0

@@ -364,7 +364,7 @@ def test_benchmark_cli_writes_ownership_artifacts(tmp_path: Path) -> None:
         "--device",
         "cpu",
         "--models",
-        "fixed_moe_vectorized,pvr_ec_deploy_top1,pvr_ec_ownership_top1",
+        "fixed_moe_vectorized,pvr_ec_deploy_top1,pvr_ec_ownership_top1,pvr_ec_ownership_top1_disabled,pvr_ec_ownership_top1_shadow,pvr_ec_ownership_top1_frozen_production,pvr_ec_ownership_top1_frozen_candidate,pvr_ec_ownership_top1_candidate_canary",
         "--enable-ownership-map",
         "--ownership-map-mode",
         "shadow_update",
@@ -372,6 +372,7 @@ def test_benchmark_cli_writes_ownership_artifacts(tmp_path: Path) -> None:
         "--ownership-probe-sample-limit",
         "8",
         "--profile-ownership-hot-path",
+        "--profile-ownership-effectiveness",
         "--output-dir",
         str(tmp_path),
     ]
@@ -388,6 +389,11 @@ def test_benchmark_cli_writes_ownership_artifacts(tmp_path: Path) -> None:
         "fixed_moe_vectorized",
         "pvr_ec_deploy_top1",
         "pvr_ec_ownership_top1",
+        "pvr_ec_ownership_top1_disabled",
+        "pvr_ec_ownership_top1_shadow",
+        "pvr_ec_ownership_top1_frozen_production",
+        "pvr_ec_ownership_top1_frozen_candidate",
+        "pvr_ec_ownership_top1_candidate_canary",
     }.issubset(comparison_models)
     assert (tmp_path / "pvr_ec_model_comparison_metrics.csv").exists()
     assert (tmp_path / "pvr_ec_ownership_benchmark_report.md").read_text(encoding="utf-8").count("|") > 0
@@ -402,6 +408,20 @@ def test_benchmark_cli_writes_ownership_artifacts(tmp_path: Path) -> None:
     purity = json.loads((tmp_path / "ownership_forward_purity_report.json").read_text(encoding="utf-8"))
     assert purity["checks"]["num_cuda_synchronizations"] == 0
     assert (tmp_path / "ownership_regression_fix_report.md").exists()
+    effectiveness = json.loads((tmp_path / "ownership_effectiveness_report.json").read_text(encoding="utf-8"))
+    assert effectiveness["promotion_status"] == "PVR_EC_DO_NOT_PROMOTE"
+    assert "owner_changed_vs_deploy_top1_rate" in effectiveness
+    assert "candidate_owner_recall" in effectiveness
+    assert (tmp_path / "ownership_owner_change_report.json").exists()
+    assert (tmp_path / "ownership_candidate_map_report.json").exists()
+    reproduction = json.loads((tmp_path / "ownership_frozen_candidate_reproduction_report.json").read_text(encoding="utf-8"))
+    assert reproduction["reproduction_status"] in {
+        "PVR_EC_CANDIDATE_MAP_REPRODUCED",
+        "PVR_EC_CANDIDATE_MAP_NOT_REPRODUCED",
+    }
+    oracle = json.loads((tmp_path / "ownership_oracle_gap_report.json").read_text(encoding="utf-8"))
+    assert "deploy_top1_oracle_gap" in oracle
+    assert (tmp_path / "ownership_bias_sweep_report.json").exists()
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA is not available")

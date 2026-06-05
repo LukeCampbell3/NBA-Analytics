@@ -3440,9 +3440,10 @@ body .about-wrap .tag {
 }
 
 /* ═══ CARD ART/FRAME DESIGN VARIANTS ═══
-   These create different frame shapes and backgrounds around the same photo,
-   like how Prizm, Select, and Mosaic are distinct card designs.
-   No free action-shot API exists — variety comes from graphic design. */
+   Three distinct card product designs using aggressive visual treatments.
+   The headshot is the ONLY freely available image per player ID.
+   Variety is created through crop, zoom, rotation, color, and overlays —
+   the same approach real card companies use for base set vs inserts. */
 
 .tc-art-overlay {
     position: absolute;
@@ -3451,39 +3452,36 @@ body .about-wrap .tag {
     pointer-events: none;
 }
 
-/* ─── PRIZM: Angular geometric frame, clean modern look ─── */
+/* ─── PRIZM: Standard upright portrait, angular light accents ─── */
 .art-prizm .tc-player-photo {
     object-position: center 10%;
-    filter: saturate(1.05) contrast(1.03);
+    filter: saturate(1.05) contrast(1.05);
 }
 .art-prizm .tc-art-overlay {
     background:
-        linear-gradient(135deg, transparent 48%, rgba(255,255,255,0.03) 49%, transparent 50%),
-        linear-gradient(-135deg, transparent 48%, rgba(255,255,255,0.03) 49%, transparent 50%),
-        radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(0,0,0,0.35) 100%);
+        linear-gradient(145deg, rgba(255,255,255,0.06) 0%, transparent 30%),
+        linear-gradient(-30deg, transparent 60%, rgba(255,255,255,0.03) 61%, transparent 62%),
+        radial-gradient(ellipse at 50% 30%, transparent 35%, rgba(0,0,0,0.5) 100%);
 }
 .art-prizm .tc-photo-gradient {
-    background: linear-gradient(0deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.2) 50%, transparent 100%);
+    background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.15) 55%, transparent 100%);
 }
 
-/* ─── SELECT: Concentric oval frame, dramatic vignette, premium ─── */
+/* ─── SELECT: Extreme close-up face crop, dramatic oval spotlight ─── */
 .art-select .tc-player-photo {
-    object-position: center 8%;
-    transform: scale(1.08);
-    filter: saturate(1.15) contrast(1.1);
+    object-position: center top;
+    transform: scale(1.6) translateY(12%);
+    filter: saturate(1.2) contrast(1.15) brightness(1.02);
 }
 .art-select .tc-photo-window {
-    background: radial-gradient(ellipse at 50% 40%, var(--family-secondary, #1e3a5f) 0%, #000 80%);
+    background: radial-gradient(ellipse at 50% 35%, var(--family-secondary, #1e3a5f) 0%, #000 70%);
 }
 .art-select .tc-art-overlay {
-    background:
-        radial-gradient(ellipse at 50% 35%, transparent 30%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0.6) 80%),
-        linear-gradient(180deg, rgba(var(--family-secondary),0.05) 0%, transparent 30%);
-    border-radius: 16px 16px 0 0;
+    background: radial-gradient(ellipse 60% 50% at 50% 30%, transparent 25%, rgba(0,0,0,0.7) 70%, rgba(0,0,0,0.9) 100%);
 }
 .art-select .tc-photo-gradient {
-    height: 60%;
-    background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 40%, transparent 100%);
+    height: 55%;
+    background: linear-gradient(0deg, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.6) 35%, transparent 100%);
 }
 .art-select .tc-frame-inner {
     border-width: 5px;
@@ -3491,43 +3489,38 @@ body .about-wrap .tag {
 .art-select .tc-info-block {
     border-top-width: 4px;
     border-top-style: solid;
-    border-image: linear-gradient(90deg, var(--family-secondary, #334155), var(--family-tertiary, #e2e8f0), var(--family-secondary, #334155)) 1;
+    border-image: linear-gradient(90deg, transparent, var(--family-secondary, #64748b), var(--family-tertiary, #e2e8f0), var(--family-secondary, #64748b), transparent) 1;
 }
 
-/* ─── MOSAIC: Geometric pattern background, bold color splash ─── */
+/* ─── MOSAIC: Zoomed + rotated crop, geometric tile background, high energy ─── */
 .art-mosaic .tc-player-photo {
     object-position: center 5%;
-    transform: scale(1.15) translateY(3%);
-    filter: saturate(1.3) contrast(1.2) brightness(1.02);
+    transform: scale(1.35) rotate(-2deg) translateY(5%);
+    filter: saturate(1.35) contrast(1.25) brightness(1.0);
 }
 .art-mosaic .tc-photo-window {
+    overflow: hidden;
     background:
-        linear-gradient(60deg, var(--family-primary, #0f172a) 25%, transparent 25%),
-        linear-gradient(-60deg, var(--family-secondary, #1e40af) 25%, transparent 25%),
-        linear-gradient(60deg, transparent 75%, var(--family-secondary, #1e40af) 75%),
-        linear-gradient(-60deg, transparent 75%, var(--family-primary, #0f172a) 75%),
-        linear-gradient(180deg, #000 0%, var(--family-primary, #0f172a) 100%);
-    background-size: 40px 70px;
+        conic-gradient(from 45deg at 30% 70%, var(--family-primary, #0f172a) 0deg, var(--family-secondary, #1e40af) 90deg, #000 180deg, var(--family-primary, #0f172a) 360deg);
 }
 .art-mosaic .tc-art-overlay {
     background:
-        repeating-linear-gradient(120deg, transparent, transparent 20px, rgba(255,255,255,0.015) 20px, rgba(255,255,255,0.015) 21px),
-        repeating-linear-gradient(60deg, transparent, transparent 20px, rgba(255,255,255,0.015) 20px, rgba(255,255,255,0.015) 21px),
-        radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.8) 0%, transparent 60%);
+        repeating-linear-gradient(60deg, transparent 0px, transparent 30px, rgba(255,255,255,0.02) 30px, rgba(255,255,255,0.02) 31px),
+        repeating-linear-gradient(-60deg, transparent 0px, transparent 30px, rgba(255,255,255,0.02) 30px, rgba(255,255,255,0.02) 31px),
+        linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.6) 100%);
 }
 .art-mosaic .tc-photo-gradient {
     height: 65%;
-    background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 45%, transparent 100%);
+    background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
 }
 .art-mosaic .tc-frame-inner {
     border-width: 6px;
-    border-color: var(--family-secondary, #334155);
 }
 .art-mosaic .tc-last-name {
     letter-spacing: 0.08em;
 }
 .art-mosaic .tc-info-block {
-    background: linear-gradient(180deg, var(--family-primary, #0a0e1a) 0%, #0d1117 100%);
+    background: linear-gradient(180deg, var(--family-primary, #080b12) 0%, #0d1117 100%);
     border-top: 4px solid var(--family-secondary, #334155);
 }
 
