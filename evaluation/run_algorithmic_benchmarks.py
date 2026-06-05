@@ -220,13 +220,19 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
             semantic_margin_guard=args.semantic_margin_guard,
             ownership_map_mode="canary",
         )
+        if device.type == "cuda":
+            torch.cuda.synchronize()
+        start = time.perf_counter()
         candidate_route = route_ownership_top1(router_logits, prototype_bias, compatible_mask, proto_ids, ownership_map, candidate_cfg)
         candidate_prediction = base_prediction + _gather_expert_delta(expert_deltas, candidate_route.owner)
+        if device.type == "cuda":
+            torch.cuda.synchronize()
+        candidate_latency_ms = (time.perf_counter() - start) * 1000.0
         shadow_candidate_comparison = _record_model_metrics(
             name="pvr_ec_ownership_top1_candidate_canary",
             prediction=candidate_prediction,
             target=target,
-            latency_ms=0.0,
+            latency_ms=candidate_latency_ms,
             owner=candidate_route.owner,
             candidate_owner_loss=candidate_owner_loss,
             compatible_mask=compatible_mask,

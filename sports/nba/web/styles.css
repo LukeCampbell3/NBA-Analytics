@@ -3119,123 +3119,16 @@ body .about-wrap .tag {
 
 
 /* ═══════════════════════════════════════════════════════════
-   TRADING CARD REDESIGN v2 — Clean Topps/Panini Aesthetic
-   Player photo dominant, minimal text, no set badges
+   TRADING CARD REDESIGN v3 — Panini Prizm / Donruss Inspired
+   Real parallel treatments: Base, Silver, Chrome, Ice, Gold, Rated Rookie
    ═══════════════════════════════════════════════════════════ */
 
-.trading-card .tc-inner {
-    position: relative;
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    border-radius: 24px;
-    overflow: hidden;
-}
-
-.trading-card .tc-photo-area {
-    position: relative;
-    flex: 1;
-    min-height: 320px;
-    overflow: hidden;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    background: linear-gradient(180deg, var(--family-primary, #0f172a) 0%, var(--family-secondary, #1e293b) 100%);
-}
-
-.trading-card .tc-headshot {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center top;
-    z-index: 1;
-}
-
-.trading-card .tc-frame-border {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    border-radius: 24px 24px 0 0;
-    border: 3px solid var(--family-secondary, #334155);
-    border-bottom: none;
-    pointer-events: none;
-}
-
-.trading-card .tc-nameplate {
-    position: relative;
-    z-index: 4;
-    display: flex;
-    align-items: baseline;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem 0.35rem;
-    background: var(--family-primary, #0f172a);
-    border-top: 3px solid var(--family-secondary, #475569);
-}
-
-.trading-card .tc-player-name {
-    font-family: system-ui, -apple-system, sans-serif;
-    font-size: 1.15rem;
-    font-weight: 800;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    color: var(--family-tertiary, #f8fafc);
-    line-height: 1.1;
-}
-
-.trading-card .tc-position {
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--family-secondary, #94a3b8);
-    opacity: 0.8;
-}
-
-.trading-card .tc-team-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.35rem 1rem 0.75rem;
-    background: var(--family-primary, #0f172a);
-    border-radius: 0 0 24px 24px;
-}
-
-.trading-card .tc-team-name {
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--family-secondary, #64748b);
-}
-
-.trading-card .tc-card-number {
-    font-size: 0.65rem;
-    font-weight: 500;
-    letter-spacing: 0.05em;
-    color: var(--family-secondary, #64748b);
-    opacity: 0.6;
-}
-
-.trading-card .tc-alt-badge {
-    position: absolute;
-    top: 0.6rem;
-    right: 0.6rem;
-    z-index: 10;
-    padding: 0.2rem 0.5rem;
-    font-size: 0.55rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: #f8fafc;
-    background: rgba(15, 23, 42, 0.7);
-    border-radius: 4px;
-    backdrop-filter: blur(4px);
-}
-
-/* Hide old cluttered elements */
+/* Hide ALL legacy card internals */
+.trading-card .trading-surface,
+.trading-card .trading-prism,
+.trading-card .trading-gloss,
+.trading-card .trading-hero,
+.trading-card .type-card-hero,
 .trading-card .trading-series-badge,
 .trading-card .trading-breakout-strip,
 .trading-card .trading-rookie-badge,
@@ -3252,42 +3145,393 @@ body .about-wrap .tag {
 .trading-card .trading-photo-band,
 .trading-card .trading-metric-row,
 .trading-card .trading-click-hint,
-.trading-card .trading-gloss,
 .trading-card .trading-topline,
 .trading-card .trading-name,
 .trading-card .trading-position-ribbon,
 .trading-card .type-card-monogram,
 .trading-card .type-card-team-logo,
 .trading-card .type-card-headshot,
-.trading-card .type-card-hero {
+.trading-card .trading-card-number,
+.trading-card .tc-inner,
+.trading-card .tc-photo-area,
+.trading-card .tc-headshot,
+.trading-card .tc-nameplate,
+.trading-card .tc-team-bar,
+.trading-card .tc-alt-badge {
     display: none !important;
 }
 
-/* Grid sizing */
-.trading-card-grid {
-    min-height: 400px !important;
-    max-width: 280px;
+/* ─── Card Container ─── */
+.trading-card.tc-prizm {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: none;
+    background: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+.trading-card-grid.tc-prizm {
+    min-height: 420px;
+    max-width: 300px;
     aspect-ratio: 2.5 / 3.5;
 }
 
 .cards-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 280px));
+    grid-template-columns: repeat(auto-fill, minmax(250px, 300px));
     gap: 1.5rem;
     justify-content: center;
 }
 
-/* Hover effect — subtle lift like picking up a card */
-.trading-card-grid:hover {
-    transform: translateY(-4px) scale(1.01);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25) !important;
+.trading-card.tc-prizm:hover {
+    transform: translateY(-6px) scale(1.02) !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.45), 0 0 30px var(--family-glow, rgba(100,100,255,0.2)) !important;
     filter: none !important;
 }
 
-/* Family color accents via subtle top border */
-.trading-card.family-refractor .tc-frame-border { border-color: #6366f1; }
-.trading-card.family-chrome .tc-frame-border { border-color: #94a3b8; }
-.trading-card.family-ice .tc-frame-border { border-color: #38bdf8; }
-.trading-card.family-patch .tc-frame-border { border-color: #f59e0b; }
-.trading-card.family-manga .tc-frame-border { border-color: #ec4899; }
-.trading-card.family-auto .tc-frame-border { border-color: #475569; }
+/* ─── Frame Structure (the colored border that defines the card) ─── */
+.tc-frame {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.tc-frame-foil {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    background: linear-gradient(
+        135deg,
+        transparent 20%,
+        rgba(255,255,255,0.08) 30%,
+        rgba(255,255,255,0.15) 50%,
+        rgba(255,255,255,0.08) 70%,
+        transparent 80%
+    );
+    mix-blend-mode: overlay;
+}
+
+.tc-shimmer .tc-frame-foil { opacity: 1; }
+.tc-prizm:hover .tc-frame-foil { opacity: 1; }
+
+.tc-frame-refract {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0;
+    background: conic-gradient(
+        from 0deg,
+        rgba(255,0,0,0.06),
+        rgba(255,127,0,0.06),
+        rgba(255,255,0,0.06),
+        rgba(0,255,0,0.06),
+        rgba(0,0,255,0.06),
+        rgba(75,0,130,0.06),
+        rgba(143,0,255,0.06),
+        rgba(255,0,0,0.06)
+    );
+    mix-blend-mode: color-dodge;
+}
+
+.tc-shimmer .tc-frame-refract { opacity: 1; }
+.tc-prizm:hover .tc-frame-refract { opacity: 1; }
+
+.tc-frame-inner {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border-radius: 16px;
+    border: 4px solid var(--family-secondary, #334155);
+    overflow: hidden;
+    background: linear-gradient(180deg, #0a0e1a 0%, #111827 100%);
+}
+
+/* ─── Photo Window (top 65% of card) ─── */
+.tc-photo-window {
+    position: relative;
+    flex: 1;
+    min-height: 240px;
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--family-primary, #0f172a) 0%, #000 100%);
+}
+
+.tc-player-photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 15%;
+    z-index: 1;
+}
+
+.tc-photo-gradient {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    z-index: 2;
+    background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, transparent 100%);
+    pointer-events: none;
+}
+
+.tc-jersey-num {
+    position: absolute;
+    top: 0.6rem;
+    left: 0.8rem;
+    z-index: 3;
+    font-size: 2rem;
+    font-weight: 900;
+    color: rgba(255,255,255,0.12);
+    font-family: 'Impact', 'Arial Black', sans-serif;
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+/* ─── Info Block (bottom portion — name, team, stats) ─── */
+.tc-info-block {
+    position: relative;
+    z-index: 4;
+    padding: 0.7rem 0.9rem 0.5rem;
+    background: linear-gradient(180deg, #0d1117 0%, #161b22 100%);
+    border-top: 3px solid var(--family-secondary, #334155);
+}
+
+.tc-name-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 0.25rem;
+}
+
+.tc-first-name {
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--family-secondary, #94a3b8);
+    line-height: 1.2;
+}
+
+.tc-last-name {
+    font-size: 1.1rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #f8fafc;
+    line-height: 1.1;
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.tc-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.tc-pos-badge {
+    font-size: 0.55rem;
+    font-weight: 700;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    background: var(--family-secondary, #334155);
+    color: var(--family-tertiary, #e2e8f0);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.tc-team-label {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: #64748b;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* ─── Stats Row (Prizm-style stat boxes) ─── */
+.tc-stats-row {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.tc-stat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.3rem 0.2rem;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.tc-stat-val {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #f1f5f9;
+    line-height: 1.1;
+}
+
+.tc-stat-label {
+    font-size: 0.45rem;
+    font-weight: 600;
+    color: #64748b;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+/* ─── Footer (parallel label + serial) ─── */
+.tc-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.3rem 0.9rem;
+    background: #080b12;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.tc-parallel-label {
+    font-size: 0.5rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--family-secondary, #64748b);
+}
+
+.tc-serial {
+    font-size: 0.45rem;
+    font-weight: 500;
+    color: #475569;
+    letter-spacing: 0.05em;
+}
+
+/* ─── Alt Indicator ─── */
+.tc-alt-indicator {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 20;
+    padding: 0.15rem 0.45rem;
+    font-size: 0.5rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #f8fafc;
+    background: rgba(0,0,0,0.6);
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ═══ PARALLEL TREATMENTS ═══ */
+
+/* Base — clean dark, no shimmer */
+.parallel-base .tc-frame-inner {
+    border-color: #334155;
+}
+.parallel-base .tc-info-block {
+    border-top-color: #334155;
+}
+
+/* Prizm Silver — holographic silver border + refraction */
+.parallel-prizm-silver .tc-frame-inner {
+    border-color: #c0c0c0;
+    border-width: 5px;
+}
+.parallel-prizm-silver .tc-info-block {
+    border-top-color: #c0c0c0;
+}
+.parallel-prizm-silver .tc-parallel-label { color: #e2e8f0; }
+.parallel-prizm-silver .tc-frame-refract { opacity: 0.8; }
+.parallel-prizm-silver .tc-frame-foil {
+    opacity: 1;
+    background: linear-gradient(
+        135deg,
+        transparent 10%,
+        rgba(192,192,192,0.3) 25%,
+        rgba(255,255,255,0.4) 50%,
+        rgba(192,192,192,0.3) 75%,
+        transparent 90%
+    );
+}
+
+/* Chrome — metallic gunmetal finish */
+.parallel-chrome .tc-frame-inner {
+    border-color: #6b7280;
+    border-width: 5px;
+    background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
+}
+.parallel-chrome .tc-info-block {
+    border-top-color: #6b7280;
+    background: linear-gradient(180deg, #111 0%, #0a0a0a 100%);
+}
+.parallel-chrome .tc-frame-foil {
+    opacity: 0.7;
+    background: linear-gradient(160deg, transparent 30%, rgba(150,150,170,0.25) 50%, transparent 70%);
+}
+.parallel-chrome .tc-parallel-label { color: #9ca3af; }
+
+/* Ice — blue/teal iridescent */
+.parallel-ice .tc-frame-inner {
+    border-color: #38bdf8;
+    border-width: 5px;
+}
+.parallel-ice .tc-info-block {
+    border-top-color: #38bdf8;
+}
+.parallel-ice .tc-frame-foil {
+    opacity: 1;
+    background: linear-gradient(135deg, rgba(56,189,248,0.15) 0%, rgba(96,165,250,0.2) 50%, rgba(56,189,248,0.15) 100%);
+}
+.parallel-ice .tc-frame-refract {
+    opacity: 0.6;
+    background: conic-gradient(from 180deg, rgba(56,189,248,0.1), rgba(147,197,253,0.12), rgba(56,189,248,0.1));
+}
+.parallel-ice .tc-parallel-label { color: #7dd3fc; }
+
+/* Gold — premium gold frame */
+.parallel-gold .tc-frame-inner {
+    border-color: #d97706;
+    border-width: 6px;
+}
+.parallel-gold .tc-info-block {
+    border-top-color: #d97706;
+}
+.parallel-gold .tc-frame-foil {
+    opacity: 1;
+    background: linear-gradient(135deg, rgba(217,119,6,0.2) 0%, rgba(252,211,77,0.3) 50%, rgba(217,119,6,0.2) 100%);
+}
+.parallel-gold .tc-parallel-label { color: #fbbf24; }
+.parallel-gold .tc-first-name { color: #fbbf24; }
+
+/* Rated Rookie — Donruss-style with bold frame */
+.parallel-rated-rookie .tc-frame-inner {
+    border-color: #dc2626;
+    border-width: 5px;
+    background: linear-gradient(180deg, #1a0000 0%, #0d0d1a 100%);
+}
+.parallel-rated-rookie .tc-info-block {
+    border-top-color: #dc2626;
+}
+.parallel-rated-rookie .tc-parallel-label {
+    color: #fca5a5;
+    font-size: 0.55rem;
+}
+.parallel-rated-rookie .tc-first-name { color: #fca5a5; }
+.parallel-rated-rookie .tc-last-name { color: #fef2f2; }
+

@@ -322,6 +322,15 @@ def test_benchmark_cli_writes_ownership_artifacts(tmp_path: Path) -> None:
     assert report["pvr_ec_ownership_top1"]["single_owner"] is True
     assert report["pvr_ec_ownership_top1"]["top2_executed"] is False
     assert report["pvr_ec_ownership_top1"]["top4_executed"] is False
+    comparison = json.loads((tmp_path / "pvr_ec_model_comparison_metrics.json").read_text(encoding="utf-8"))
+    comparison_models = {row["model"] for row in comparison}
+    assert {
+        "fixed_moe_vectorized",
+        "pvr_ec_deploy_top1",
+        "pvr_ec_ownership_top1",
+    }.issubset(comparison_models)
+    assert (tmp_path / "pvr_ec_model_comparison_metrics.csv").exists()
+    assert (tmp_path / "pvr_ec_ownership_benchmark_report.md").read_text(encoding="utf-8").count("|") > 0
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA is not available")

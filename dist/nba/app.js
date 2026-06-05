@@ -2517,33 +2517,69 @@ class PlayerCardsApp {
         const team = this.escapeHtml(player.player?.team || '');
         const alternateCount = (player._alternateRoles || []).length;
 
+        // Stats for card face
+        const trad = player.performance?.traditional || {};
+        const ppg = Number(trad.points_per_game || 0).toFixed(1);
+        const rpg = Number(trad.rebounds_per_game || 0).toFixed(1);
+        const apg = Number(trad.assists_per_game || 0).toFixed(1);
+        const jersey = player.player?.jersey || '';
+        const age = player.player?.age || '';
+
+        // Parallel type based on card family
+        const parallelConfig = {
+            refractor: { name: 'PRIZM SILVER', frameClass: 'parallel-prizm-silver', shimmer: true },
+            chrome: { name: 'CHROME', frameClass: 'parallel-chrome', shimmer: true },
+            ice: { name: 'ICE', frameClass: 'parallel-ice', shimmer: true },
+            patch: { name: 'GOLD', frameClass: 'parallel-gold', shimmer: true },
+            manga: { name: 'RATED ROOKIE', frameClass: 'parallel-rated-rookie', shimmer: false },
+            auto: { name: 'BASE', frameClass: 'parallel-base', shimmer: false },
+        };
+        const parallel = parallelConfig[cardFamily.key] || parallelConfig.auto;
+
         const cardClasses = [
             'player-card',
             'trading-card',
+            'tc-prizm',
+            parallel.frameClass,
             `family-${cardFamily.key}`,
             opts.context === 'detail' ? 'trading-card-detail' : 'trading-card-grid',
-            opts.interactive ? 'trading-card-interactive' : 'card-static'
-        ];
+            opts.interactive ? 'trading-card-interactive' : 'card-static',
+            parallel.shimmer ? 'tc-shimmer' : '',
+        ].filter(Boolean);
 
         return `
             <article class="${cardClasses.join(' ')}" data-player="${this.escapeAttr(player.player?.name || '')}" data-player-key="${this.escapeAttr(this.getPlayerKey(player))}" data-card-family="${cardFamily.key}" style="--family-primary:${cardFamily.primary};--family-secondary:${cardFamily.secondary};--family-tertiary:${cardFamily.tertiary};--family-glow:${cardFamily.glow};--foil-opacity:${cardFamily.foilOpacity};--pointer-x:50%;--pointer-y:50%;--rotate-x:0deg;--rotate-y:0deg;">
-                <div class="trading-surface"></div>
-                <div class="trading-prism"></div>
-                <div class="tc-inner">
-                    <div class="tc-photo-area">
-                        <img class="tc-headshot" src="${this.escapeAttr(typeCardHeadshotUrl)}" alt="${this.escapeAttr(player.player?.name || '')}" loading="lazy" onerror="this.style.display='none';" />
-                        <div class="tc-frame-border"></div>
+                <div class="tc-frame">
+                    <div class="tc-frame-foil"></div>
+                    <div class="tc-frame-refract"></div>
+                    <div class="tc-frame-inner">
+                        <div class="tc-photo-window">
+                            <img class="tc-player-photo" src="${this.escapeAttr(typeCardHeadshotUrl)}" alt="${this.escapeAttr(player.player?.name || '')}" loading="lazy" onerror="this.style.display='none';" />
+                            <div class="tc-photo-gradient"></div>
+                            ${jersey ? `<div class="tc-jersey-num">${this.escapeHtml(String(jersey))}</div>` : ''}
+                        </div>
+                        <div class="tc-info-block">
+                            <div class="tc-name-row">
+                                <span class="tc-first-name">${this.escapeHtml((player.player?.name || '').split(' ')[0] || '')}</span>
+                                <span class="tc-last-name">${this.escapeHtml((player.player?.name || '').split(' ').slice(1).join(' ') || '')}</span>
+                            </div>
+                            <div class="tc-meta-row">
+                                <span class="tc-pos-badge">${position}</span>
+                                <span class="tc-team-label">${teamRibbonLabel}</span>
+                            </div>
+                            <div class="tc-stats-row">
+                                <div class="tc-stat"><span class="tc-stat-val">${ppg}</span><span class="tc-stat-label">PTS</span></div>
+                                <div class="tc-stat"><span class="tc-stat-val">${rpg}</span><span class="tc-stat-label">REB</span></div>
+                                <div class="tc-stat"><span class="tc-stat-val">${apg}</span><span class="tc-stat-label">AST</span></div>
+                            </div>
+                        </div>
+                        <div class="tc-footer">
+                            <span class="tc-parallel-label">${this.escapeHtml(parallel.name)}</span>
+                            <span class="tc-serial">${this.escapeHtml(cardSerial)}</span>
+                        </div>
                     </div>
-                    <div class="tc-nameplate">
-                        <span class="tc-player-name">${playerName}</span>
-                        <span class="tc-position">${position}</span>
-                    </div>
-                    <div class="tc-team-bar">
-                        <span class="tc-team-name">${teamRibbonLabel}</span>
-                        <span class="tc-card-number">#${this.escapeHtml(cardSerial)}</span>
-                    </div>
-                    ${alternateCount > 0 ? `<div class="tc-alt-badge">${alternateCount + 1} roles</div>` : ''}
                 </div>
+                ${alternateCount > 0 ? `<div class="tc-alt-indicator">${alternateCount + 1} roles</div>` : ''}
             </article>
         `;
     }
