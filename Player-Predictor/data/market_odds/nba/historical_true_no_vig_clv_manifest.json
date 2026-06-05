@@ -1,0 +1,57 @@
+{
+  "status": "built_true_no_vig_same_day_clv_proxy",
+  "complete_same_day_rows": 28,
+  "odds_quality": {
+    "rows": 28,
+    "rows_with_valid_american_odds": 28,
+    "rows_with_invalid_american_odds": 0,
+    "valid_american_odds_rate": 1.0,
+    "rows_repaired": 0,
+    "rows_dropped": 0,
+    "min_over_odds": -147.16666666666666,
+    "max_over_odds": -133.83333333333334,
+    "min_under_odds": -134.5,
+    "max_under_odds": -118.2
+  },
+  "snapshot_rows": 2,
+  "players": 2,
+  "markets": [
+    "AST",
+    "TRB"
+  ],
+  "date_min": "2026-03-25",
+  "date_max": "2026-03-25",
+  "clv_limit": "close fields use latest same-day snapshot because exact commence_time_utc is missing in source rows",
+  "close_status_counts": {
+    "archived_historical_market_not_clv": 2
+  },
+  "created_at": "2026-05-09T14:55:21.728800+00:00",
+  "output": "/workspace/Player-Predictor/data/market_odds/nba/historical_true_no_vig_clv_snapshots_v9_5.csv",
+  "raw_rows": 12774,
+  "normalized_complete_rows": 28,
+  "source_odds_quality_before_filter": {
+    "rows": 123,
+    "rows_with_valid_american_odds": 28,
+    "rows_with_invalid_american_odds": 95,
+    "valid_american_odds_rate": 0.22764227642276422,
+    "rows_repaired": 0,
+    "rows_dropped": 95,
+    "min_over_odds": -147.16666666666666,
+    "max_over_odds": 105.8,
+    "min_under_odds": -141.5,
+    "max_under_odds": 65.66666666666667
+  },
+  "source_odds_quality_after_filter": {
+    "rows": 28,
+    "rows_with_valid_american_odds": 28,
+    "rows_with_invalid_american_odds": 0,
+    "valid_american_odds_rate": 1.0,
+    "rows_repaired": 0,
+    "rows_dropped": 0,
+    "min_over_odds": -147.16666666666666,
+    "max_over_odds": -133.83333333333334,
+    "min_under_odds": -134.5,
+    "max_under_odds": -118.2
+  },
+  "name_map_size": 554
+}

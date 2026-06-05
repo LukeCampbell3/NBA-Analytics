@@ -1,0 +1,31 @@
+{
+  "sport": "NBA",
+  "system": "production_shadow_v10",
+  "updated_at": "2026-06-05T00:00:00Z",
+  "model_version": "distribution_v9_cdf",
+  "validated_metrics": {
+    "walk_forward_brier": 0.2013,
+    "gated_bss": 0.1946,
+    "gated_hit_rate": 0.718,
+    "markets": ["PTS", "TRB", "AST"],
+    "books": ["DraftKings", "FanDuel", "BetMGM", "Caesars", "BetRivers", "Fanatics"],
+    "provider": "sportsgameodds"
+  },
+  "pipeline_status": {
+    "staking_enabled": false,
+    "live_action_enabled": false,
+    "production_ready": false,
+    "system_mode": "production_shadow",
+    "evidence_stage": "production_shadow_accumulating"
+  },
+  "evidence_summary": {
+    "settled_live_class_a_rows": 33,
+    "unique_live_slates": 1,
+    "gold_real_clv_rows": 50,
+    "policy_version": "production_shadow_v1.0"
+  },
+  "next_season": "2026-27",
+  "simulation_status": "research_projection",
+  "simulation_players": 573,
+  "simulation_method": "monte_carlo_10000_runs"
+}

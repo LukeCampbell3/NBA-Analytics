@@ -1,0 +1,3264 @@
+{
+  "status": "built_official_historical_prelock_availability",
+  "created_at": "2026-05-09T14:34:02.513483+00:00",
+  "start": "2026-01-01",
+  "end": "2026-03-31",
+  "output": "Player-Predictor/data/availability/nba/historical_prelock_availability_snapshots_2026_01_01_to_2026_03_31.csv",
+  "rows": 9606,
+  "players": 517,
+  "teams": 30,
+  "attempts": 540,
+  "successful_attempts": 510,
+  "failed_attempts": 30,
+  "status_counts": {
+    "out": 7161,
+    "available": 1097,
+    "questionable": 877,
+    "probable": 293,
+    "doubtful": 178
+  },
+  "team_repairs_from_game_logs": 1696,
+  "source": "official NBA static injury-report PDFs",
+  "attempt_log": [
+    {
+      "timestamp_et": "2026-01-01T11:30:00-05:00",
+      "status": "ok",
+      "rows": 60,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-01_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-01T13:30:00-05:00",
+      "status": "ok",
+      "rows": 62,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-01_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-01T15:30:00-05:00",
+      "status": "ok",
+      "rows": 72,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-01_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-01T17:30:00-05:00",
+      "status": "ok",
+      "rows": 116,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-01_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-01T18:30:00-05:00",
+      "status": "ok",
+      "rows": 124,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-01_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-01T19:30:00-05:00",
+      "status": "ok",
+      "rows": 128,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-01_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-02T11:30:00-05:00",
+      "status": "ok",
+      "rows": 95,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-02_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-02T13:30:00-05:00",
+      "status": "ok",
+      "rows": 101,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-02_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-02T15:30:00-05:00",
+      "status": "ok",
+      "rows": 116,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-02_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-02T17:30:00-05:00",
+      "status": "ok",
+      "rows": 130,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-02_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-02T18:30:00-05:00",
+      "status": "ok",
+      "rows": 133,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-02_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-02T19:30:00-05:00",
+      "status": "ok",
+      "rows": 136,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-02_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-03T11:30:00-05:00",
+      "status": "ok",
+      "rows": 43,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-03_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-03T13:30:00-05:00",
+      "status": "ok",
+      "rows": 61,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-03_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-03T15:30:00-05:00",
+      "status": "ok",
+      "rows": 75,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-03_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-03T17:30:00-05:00",
+      "status": "ok",
+      "rows": 118,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-03_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-03T18:30:00-05:00",
+      "status": "ok",
+      "rows": 118,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-03_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-03T19:30:00-05:00",
+      "status": "ok",
+      "rows": 134,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-03_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-04T11:30:00-05:00",
+      "status": "ok",
+      "rows": 74,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-04_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-04T13:30:00-05:00",
+      "status": "ok",
+      "rows": 85,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-04_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-04T15:30:00-05:00",
+      "status": "ok",
+      "rows": 94,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-04_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-04T17:30:00-05:00",
+      "status": "ok",
+      "rows": 119,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-04_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-04T18:30:00-05:00",
+      "status": "ok",
+      "rows": 123,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-04_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-04T19:30:00-05:00",
+      "status": "ok",
+      "rows": 126,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-04_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-05T11:30:00-05:00",
+      "status": "ok",
+      "rows": 57,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-05_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-05T13:30:00-05:00",
+      "status": "ok",
+      "rows": 71,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-05_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-05T15:30:00-05:00",
+      "status": "ok",
+      "rows": 89,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-05_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-05T17:30:00-05:00",
+      "status": "ok",
+      "rows": 115,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-05_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-05T18:30:00-05:00",
+      "status": "ok",
+      "rows": 129,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-05_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-05T19:30:00-05:00",
+      "status": "ok",
+      "rows": 138,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-05_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-06T11:30:00-05:00",
+      "status": "ok",
+      "rows": 60,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-06_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-06T13:30:00-05:00",
+      "status": "ok",
+      "rows": 60,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-06_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-06T15:30:00-05:00",
+      "status": "ok",
+      "rows": 68,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-06_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-06T17:30:00-05:00",
+      "status": "ok",
+      "rows": 121,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-06_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-06T18:30:00-05:00",
+      "status": "ok",
+      "rows": 135,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-06_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-06T19:30:00-05:00",
+      "status": "ok",
+      "rows": 143,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-06_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-07T11:30:00-05:00",
+      "status": "ok",
+      "rows": 94,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-07_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-07T13:30:00-05:00",
+      "status": "ok",
+      "rows": 106,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-07_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-07T15:30:00-05:00",
+      "status": "ok",
+      "rows": 122,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-07_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-07T17:30:00-05:00",
+      "status": "ok",
+      "rows": 130,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-07_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-07T18:30:00-05:00",
+      "status": "ok",
+      "rows": 149,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-07_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-07T19:30:00-05:00",
+      "status": "ok",
+      "rows": 155,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-07_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-08T11:30:00-05:00",
+      "status": "ok",
+      "rows": 29,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-08_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-08T13:30:00-05:00",
+      "status": "ok",
+      "rows": 44,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-08_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-08T15:30:00-05:00",
+      "status": "ok",
+      "rows": 57,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-08_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-08T17:30:00-05:00",
+      "status": "ok",
+      "rows": 93,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-08_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-08T18:30:00-05:00",
+      "status": "ok",
+      "rows": 117,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-08_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-08T19:30:00-05:00",
+      "status": "ok",
+      "rows": 128,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-08_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-09T11:30:00-05:00",
+      "status": "ok",
+      "rows": 89,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-09_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-09T13:30:00-05:00",
+      "status": "ok",
+      "rows": 89,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-09_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-09T15:30:00-05:00",
+      "status": "ok",
+      "rows": 92,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-09_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-09T17:30:00-05:00",
+      "status": "ok",
+      "rows": 132,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-09_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-09T18:30:00-05:00",
+      "status": "ok",
+      "rows": 140,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-09_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-09T19:30:00-05:00",
+      "status": "ok",
+      "rows": 157,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-09_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-10T11:30:00-05:00",
+      "status": "ok",
+      "rows": 61,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-10_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-10T13:30:00-05:00",
+      "status": "ok",
+      "rows": 68,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-10_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-10T15:30:00-05:00",
+      "status": "ok",
+      "rows": 78,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-10_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-10T17:30:00-05:00",
+      "status": "ok",
+      "rows": 106,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-10_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-10T18:30:00-05:00",
+      "status": "ok",
+      "rows": 132,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-10_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-10T19:30:00-05:00",
+      "status": "ok",
+      "rows": 142,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-10_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-11T11:30:00-05:00",
+      "status": "ok",
+      "rows": 81,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-11_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-11T13:30:00-05:00",
+      "status": "ok",
+      "rows": 84,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-11_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-11T15:30:00-05:00",
+      "status": "ok",
+      "rows": 94,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-11_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-11T17:30:00-05:00",
+      "status": "ok",
+      "rows": 117,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-11_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-11T18:30:00-05:00",
+      "status": "ok",
+      "rows": 124,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-11_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-11T19:30:00-05:00",
+      "status": "ok",
+      "rows": 124,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-11_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-12T11:30:00-05:00",
+      "status": "ok",
+      "rows": 45,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-12_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-12T13:30:00-05:00",
+      "status": "ok",
+      "rows": 57,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-12_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-12T15:30:00-05:00",
+      "status": "ok",
+      "rows": 61,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-12_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-12T17:30:00-05:00",
+      "status": "ok",
+      "rows": 100,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-12_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-12T18:30:00-05:00",
+      "status": "ok",
+      "rows": 106,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-12_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-12T19:30:00-05:00",
+      "status": "ok",
+      "rows": 110,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-12_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-13T11:30:00-05:00",
+      "status": "ok",
+      "rows": 63,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-13_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-13T13:30:00-05:00",
+      "status": "ok",
+      "rows": 63,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-13_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-13T15:30:00-05:00",
+      "status": "ok",
+      "rows": 65,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-13_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-13T17:30:00-05:00",
+      "status": "ok",
+      "rows": 96,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-13_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-13T18:30:00-05:00",
+      "status": "ok",
+      "rows": 106,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-13_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-13T19:30:00-05:00",
+      "status": "ok",
+      "rows": 106,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-13_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-14T11:30:00-05:00",
+      "status": "ok",
+      "rows": 59,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-14_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-14T13:30:00-05:00",
+      "status": "ok",
+      "rows": 66,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-14_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-14T15:30:00-05:00",
+      "status": "ok",
+      "rows": 78,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-14_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-14T17:30:00-05:00",
+      "status": "ok",
+      "rows": 105,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-14_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-14T18:30:00-05:00",
+      "status": "ok",
+      "rows": 116,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-14_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-14T19:30:00-05:00",
+      "status": "ok",
+      "rows": 118,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-14_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-15T11:30:00-05:00",
+      "status": "ok",
+      "rows": 68,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-15_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-15T13:30:00-05:00",
+      "status": "ok",
+      "rows": 75,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-15_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-15T15:30:00-05:00",
+      "status": "ok",
+      "rows": 96,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-15_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-15T17:30:00-05:00",
+      "status": "ok",
+      "rows": 135,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-15_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-15T18:30:00-05:00",
+      "status": "ok",
+      "rows": 141,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-15_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-15T19:30:00-05:00",
+      "status": "ok",
+      "rows": 141,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-15_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-16T11:30:00-05:00",
+      "status": "ok",
+      "rows": 57,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-16_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-16T13:30:00-05:00",
+      "status": "ok",
+      "rows": 61,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-16_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-16T15:30:00-05:00",
+      "status": "ok",
+      "rows": 64,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-16_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-16T17:30:00-05:00",
+      "status": "ok",
+      "rows": 103,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-16_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-16T18:30:00-05:00",
+      "status": "ok",
+      "rows": 121,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-16_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-16T19:30:00-05:00",
+      "status": "ok",
+      "rows": 126,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-16_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-17T11:30:00-05:00",
+      "status": "ok",
+      "rows": 83,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-17_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-17T13:30:00-05:00",
+      "status": "ok",
+      "rows": 96,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-17_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-17T15:30:00-05:00",
+      "status": "ok",
+      "rows": 110,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-17_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-17T17:30:00-05:00",
+      "status": "ok",
+      "rows": 127,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-17_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-17T18:30:00-05:00",
+      "status": "ok",
+      "rows": 131,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-17_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-17T19:30:00-05:00",
+      "status": "ok",
+      "rows": 134,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-17_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-18T11:30:00-05:00",
+      "status": "ok",
+      "rows": 42,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-18_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-18T13:30:00-05:00",
+      "status": "ok",
+      "rows": 43,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-18_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-18T15:30:00-05:00",
+      "status": "ok",
+      "rows": 70,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-18_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-18T17:30:00-05:00",
+      "status": "ok",
+      "rows": 130,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-18_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-18T18:30:00-05:00",
+      "status": "ok",
+      "rows": 147,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-18_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-18T19:30:00-05:00",
+      "status": "ok",
+      "rows": 147,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-18_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-19T11:30:00-05:00",
+      "status": "ok",
+      "rows": 89,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-19_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-19T13:30:00-05:00",
+      "status": "ok",
+      "rows": 97,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-19_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-19T15:30:00-05:00",
+      "status": "ok",
+      "rows": 97,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-19_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-19T17:30:00-05:00",
+      "status": "ok",
+      "rows": 106,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-19_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-19T18:30:00-05:00",
+      "status": "ok",
+      "rows": 117,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-19_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-19T19:30:00-05:00",
+      "status": "ok",
+      "rows": 119,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-19_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-20T11:30:00-05:00",
+      "status": "ok",
+      "rows": 30,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-20_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-20T13:30:00-05:00",
+      "status": "ok",
+      "rows": 37,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-20_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-20T15:30:00-05:00",
+      "status": "ok",
+      "rows": 53,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-20_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-20T17:30:00-05:00",
+      "status": "ok",
+      "rows": 96,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-20_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-20T18:30:00-05:00",
+      "status": "ok",
+      "rows": 121,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-20_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-20T19:30:00-05:00",
+      "status": "ok",
+      "rows": 121,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-20_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-21T11:30:00-05:00",
+      "status": "ok",
+      "rows": 57,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-21_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-21T13:30:00-05:00",
+      "status": "ok",
+      "rows": 60,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-21_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-21T15:30:00-05:00",
+      "status": "ok",
+      "rows": 73,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-21_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-21T17:30:00-05:00",
+      "status": "ok",
+      "rows": 105,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-21_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-21T18:30:00-05:00",
+      "status": "ok",
+      "rows": 119,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-21_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-21T19:30:00-05:00",
+      "status": "ok",
+      "rows": 142,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-21_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-22T11:30:00-05:00",
+      "status": "ok",
+      "rows": 77,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-22_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-22T13:30:00-05:00",
+      "status": "ok",
+      "rows": 86,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-22_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-22T15:30:00-05:00",
+      "status": "ok",
+      "rows": 99,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-22_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-22T17:30:00-05:00",
+      "status": "ok",
+      "rows": 128,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-22_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-22T18:30:00-05:00",
+      "status": "ok",
+      "rows": 147,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-22_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-22T19:30:00-05:00",
+      "status": "ok",
+      "rows": 152,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-22_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-23T11:30:00-05:00",
+      "status": "ok",
+      "rows": 63,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-23_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-23T13:30:00-05:00",
+      "status": "ok",
+      "rows": 68,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-23_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-23T15:30:00-05:00",
+      "status": "ok",
+      "rows": 77,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-23_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-23T17:30:00-05:00",
+      "status": "ok",
+      "rows": 115,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-23_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-23T18:30:00-05:00",
+      "status": "ok",
+      "rows": 137,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-23_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-23T19:30:00-05:00",
+      "status": "ok",
+      "rows": 153,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-23_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-24T11:30:00-05:00",
+      "status": "ok",
+      "rows": 66,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-24_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-24T13:30:00-05:00",
+      "status": "ok",
+      "rows": 70,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-24_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-24T15:30:00-05:00",
+      "status": "ok",
+      "rows": 77,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-24_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-24T17:30:00-05:00",
+      "status": "ok",
+      "rows": 104,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-24_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-24T18:30:00-05:00",
+      "status": "ok",
+      "rows": 122,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-24_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-24T19:30:00-05:00",
+      "status": "ok",
+      "rows": 126,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-24_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-25T11:30:00-05:00",
+      "status": "ok",
+      "rows": 65,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-25_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-25T13:30:00-05:00",
+      "status": "ok",
+      "rows": 62,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-25_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-25T15:30:00-05:00",
+      "status": "ok",
+      "rows": 74,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-25_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-25T17:30:00-05:00",
+      "status": "ok",
+      "rows": 100,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-25_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-25T18:30:00-05:00",
+      "status": "ok",
+      "rows": 108,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-25_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-25T19:30:00-05:00",
+      "status": "ok",
+      "rows": 108,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-25_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-26T11:30:00-05:00",
+      "status": "ok",
+      "rows": 53,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-26_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-26T13:30:00-05:00",
+      "status": "ok",
+      "rows": 53,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-26_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-26T15:30:00-05:00",
+      "status": "ok",
+      "rows": 70,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-26_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-26T17:30:00-05:00",
+      "status": "ok",
+      "rows": 98,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-26_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-26T18:30:00-05:00",
+      "status": "ok",
+      "rows": 106,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-26_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-26T19:30:00-05:00",
+      "status": "ok",
+      "rows": 132,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-26_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-27T11:30:00-05:00",
+      "status": "ok",
+      "rows": 58,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-27_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-27T13:30:00-05:00",
+      "status": "ok",
+      "rows": 73,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-27_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-27T15:30:00-05:00",
+      "status": "ok",
+      "rows": 80,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-27_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-27T17:30:00-05:00",
+      "status": "ok",
+      "rows": 121,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-27_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-27T18:30:00-05:00",
+      "status": "ok",
+      "rows": 141,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-27_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-27T19:30:00-05:00",
+      "status": "ok",
+      "rows": 147,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-27_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-28T11:30:00-05:00",
+      "status": "ok",
+      "rows": 88,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-28_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-28T13:30:00-05:00",
+      "status": "ok",
+      "rows": 95,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-28_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-28T15:30:00-05:00",
+      "status": "ok",
+      "rows": 102,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-28_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-28T17:30:00-05:00",
+      "status": "ok",
+      "rows": 123,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-28_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-28T18:30:00-05:00",
+      "status": "ok",
+      "rows": 136,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-28_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-28T19:30:00-05:00",
+      "status": "ok",
+      "rows": 152,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-28_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-29T11:30:00-05:00",
+      "status": "ok",
+      "rows": 62,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-29_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-29T13:30:00-05:00",
+      "status": "ok",
+      "rows": 59,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-29_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-29T15:30:00-05:00",
+      "status": "ok",
+      "rows": 93,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-29_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-29T17:30:00-05:00",
+      "status": "ok",
+      "rows": 126,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-29_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-29T18:30:00-05:00",
+      "status": "ok",
+      "rows": 132,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-29_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-29T19:30:00-05:00",
+      "status": "ok",
+      "rows": 150,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-29_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-30T11:30:00-05:00",
+      "status": "ok",
+      "rows": 56,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-30_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-30T13:30:00-05:00",
+      "status": "ok",
+      "rows": 64,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-30_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-30T15:30:00-05:00",
+      "status": "ok",
+      "rows": 86,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-30_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-30T17:30:00-05:00",
+      "status": "ok",
+      "rows": 132,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-30_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-30T18:30:00-05:00",
+      "status": "ok",
+      "rows": 134,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-30_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-30T19:30:00-05:00",
+      "status": "ok",
+      "rows": 137,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-30_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-31T11:30:00-05:00",
+      "status": "ok",
+      "rows": 52,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-31_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-31T13:30:00-05:00",
+      "status": "ok",
+      "rows": 58,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-31_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-31T15:30:00-05:00",
+      "status": "ok",
+      "rows": 71,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-31_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-31T17:30:00-05:00",
+      "status": "ok",
+      "rows": 107,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-31_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-31T18:30:00-05:00",
+      "status": "ok",
+      "rows": 114,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-31_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-01-31T19:30:00-05:00",
+      "status": "ok",
+      "rows": 125,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-01-31_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-01T11:30:00-05:00",
+      "status": "ok",
+      "rows": 71,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-01_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-01T13:30:00-05:00",
+      "status": "ok",
+      "rows": 92,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-01_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-01T15:30:00-05:00",
+      "status": "ok",
+      "rows": 95,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-01_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-01T17:30:00-05:00",
+      "status": "ok",
+      "rows": 118,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-01_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-01T18:30:00-05:00",
+      "status": "ok",
+      "rows": 128,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-01_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-01T19:30:00-05:00",
+      "status": "ok",
+      "rows": 129,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-01_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-02T11:30:00-05:00",
+      "status": "ok",
+      "rows": 33,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-02_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-02T13:30:00-05:00",
+      "status": "ok",
+      "rows": 33,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-02_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-02T15:30:00-05:00",
+      "status": "ok",
+      "rows": 33,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-02_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-02T17:30:00-05:00",
+      "status": "ok",
+      "rows": 112,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-02_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-02T18:30:00-05:00",
+      "status": "ok",
+      "rows": 121,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-02_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-02T19:30:00-05:00",
+      "status": "ok",
+      "rows": 123,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-02_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-03T11:30:00-05:00",
+      "status": "ok",
+      "rows": 94,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-03_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-03T13:30:00-05:00",
+      "status": "ok",
+      "rows": 104,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-03_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-03T15:30:00-05:00",
+      "status": "ok",
+      "rows": 109,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-03_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-03T17:30:00-05:00",
+      "status": "ok",
+      "rows": 127,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-03_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-03T18:30:00-05:00",
+      "status": "ok",
+      "rows": 133,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-03_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-03T19:30:00-05:00",
+      "status": "ok",
+      "rows": 133,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-03_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-04T11:30:00-05:00",
+      "status": "ok",
+      "rows": 39,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-04_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-04T13:30:00-05:00",
+      "status": "ok",
+      "rows": 55,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-04_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-04T15:30:00-05:00",
+      "status": "ok",
+      "rows": 75,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-04_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-04T17:30:00-05:00",
+      "status": "ok",
+      "rows": 112,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-04_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-04T18:30:00-05:00",
+      "status": "ok",
+      "rows": 128,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-04_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-04T19:30:00-05:00",
+      "status": "ok",
+      "rows": 135,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-04_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-05T11:30:00-05:00",
+      "status": "ok",
+      "rows": 72,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-05_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-05T13:30:00-05:00",
+      "status": "ok",
+      "rows": 83,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-05_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-05T15:30:00-05:00",
+      "status": "ok",
+      "rows": 94,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-05_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-05T17:30:00-05:00",
+      "status": "ok",
+      "rows": 119,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-05_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-05T18:30:00-05:00",
+      "status": "ok",
+      "rows": 137,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-05_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-05T19:30:00-05:00",
+      "status": "ok",
+      "rows": 137,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-05_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-06T11:30:00-05:00",
+      "status": "ok",
+      "rows": 57,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-06_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-06T13:30:00-05:00",
+      "status": "ok",
+      "rows": 59,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-06_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-06T15:30:00-05:00",
+      "status": "ok",
+      "rows": 62,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-06_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-06T17:30:00-05:00",
+      "status": "ok",
+      "rows": 118,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-06_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-06T18:30:00-05:00",
+      "status": "ok",
+      "rows": 127,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-06_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-06T19:30:00-05:00",
+      "status": "ok",
+      "rows": 133,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-06_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-07T11:30:00-05:00",
+      "status": "ok",
+      "rows": 82,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-07_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-07T13:30:00-05:00",
+      "status": "ok",
+      "rows": 87,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-07_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-07T15:30:00-05:00",
+      "status": "ok",
+      "rows": 101,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-07_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-07T17:30:00-05:00",
+      "status": "ok",
+      "rows": 132,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-07_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-07T18:30:00-05:00",
+      "status": "ok",
+      "rows": 139,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-07_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-07T19:30:00-05:00",
+      "status": "ok",
+      "rows": 139,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-07_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-08T11:30:00-05:00",
+      "status": "ok",
+      "rows": 49,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-08_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-08T13:30:00-05:00",
+      "status": "ok",
+      "rows": 49,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-08_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-08T15:30:00-05:00",
+      "status": "ok",
+      "rows": 56,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-08_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-08T17:30:00-05:00",
+      "status": "ok",
+      "rows": 86,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-08_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-08T18:30:00-05:00",
+      "status": "ok",
+      "rows": 104,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-08_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-08T19:30:00-05:00",
+      "status": "ok",
+      "rows": 104,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-08_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-09T11:30:00-05:00",
+      "status": "ok",
+      "rows": 80,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-09_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-09T13:30:00-05:00",
+      "status": "ok",
+      "rows": 91,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-09_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-09T15:30:00-05:00",
+      "status": "ok",
+      "rows": 97,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-09_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-09T17:30:00-05:00",
+      "status": "ok",
+      "rows": 114,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-09_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-09T18:30:00-05:00",
+      "status": "ok",
+      "rows": 122,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-09_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-09T19:30:00-05:00",
+      "status": "ok",
+      "rows": 127,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-09_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-10T11:30:00-05:00",
+      "status": "ok",
+      "rows": 31,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-10_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-10T13:30:00-05:00",
+      "status": "ok",
+      "rows": 30,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-10_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-10T15:30:00-05:00",
+      "status": "ok",
+      "rows": 37,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-10_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-10T17:30:00-05:00",
+      "status": "ok",
+      "rows": 105,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-10_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-10T18:30:00-05:00",
+      "status": "ok",
+      "rows": 115,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-10_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-10T19:30:00-05:00",
+      "status": "ok",
+      "rows": 139,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-10_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-11T11:30:00-05:00",
+      "status": "ok",
+      "rows": 111,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-11_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-11T13:30:00-05:00",
+      "status": "ok",
+      "rows": 128,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-11_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-11T15:30:00-05:00",
+      "status": "ok",
+      "rows": 141,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-11_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-11T17:30:00-05:00",
+      "status": "ok",
+      "rows": 146,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-11_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-11T18:30:00-05:00",
+      "status": "ok",
+      "rows": 146,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-11_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-11T19:30:00-05:00",
+      "status": "ok",
+      "rows": 146,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-11_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-12T11:30:00-05:00",
+      "status": "ok",
+      "rows": 10,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-12_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-12T13:30:00-05:00",
+      "status": "ok",
+      "rows": 10,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-12_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-12T15:30:00-05:00",
+      "status": "ok",
+      "rows": 28,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-12_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-12T17:30:00-05:00",
+      "status": "ok",
+      "rows": 28,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-12_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-12T18:30:00-05:00",
+      "status": "ok",
+      "rows": 28,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-12_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-12T19:30:00-05:00",
+      "status": "ok",
+      "rows": 29,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-12_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-13T11:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-13_11_30AM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-13_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-13T13:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-13_01_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-13_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-13T15:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-13_03_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-13_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-13T17:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-13_05_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-13_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-13T18:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-13_06_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-13_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-13T19:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-13_07_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-13_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-14T11:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-14_11_30AM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-14_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-14T13:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-14_01_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-14_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-14T15:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-14_03_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-14_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-14T17:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-14_05_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-14_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-14T18:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-14_06_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-14_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-14T19:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-14_07_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-14_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-15T11:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-15_11_30AM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-15_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-15T13:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-15_01_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-15_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-15T15:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-15_03_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-15_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-15T17:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-15_05_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-15_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-15T18:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-15_06_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-15_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-15T19:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-15_07_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-15_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-16T11:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-16_11_30AM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-16_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-16T13:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-16_01_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-16_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-16T15:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-16_03_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-16_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-16T17:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-16_05_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-16_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-16T18:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-16_06_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-16_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-16T19:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-16_07_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-16_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-17T11:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-17_11_30AM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-17_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-17T13:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-17_01_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-17_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-17T15:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-17_03_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-17_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-17T17:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-17_05_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-17_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-17T18:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-17_06_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-17_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-17T19:30:00-05:00",
+      "status": "failed",
+      "error": "403 Client Error: Forbidden for url: https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-17_07_30PM.pdf",
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-17_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-18T11:30:00-05:00",
+      "status": "ok",
+      "rows": 0,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-18_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-18T13:30:00-05:00",
+      "status": "ok",
+      "rows": 0,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-18_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-18T15:30:00-05:00",
+      "status": "ok",
+      "rows": 9,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-18_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-18T17:30:00-05:00",
+      "status": "ok",
+      "rows": 55,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-18_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-18T18:30:00-05:00",
+      "status": "ok",
+      "rows": 66,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-18_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-18T19:30:00-05:00",
+      "status": "ok",
+      "rows": 66,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-18_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-19T11:30:00-05:00",
+      "status": "ok",
+      "rows": 82,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-19_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-19T13:30:00-05:00",
+      "status": "ok",
+      "rows": 85,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-19_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-19T15:30:00-05:00",
+      "status": "ok",
+      "rows": 86,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-19_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-19T17:30:00-05:00",
+      "status": "ok",
+      "rows": 103,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-19_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-19T18:30:00-05:00",
+      "status": "ok",
+      "rows": 129,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-19_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-19T19:30:00-05:00",
+      "status": "ok",
+      "rows": 126,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-19_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-20T11:30:00-05:00",
+      "status": "ok",
+      "rows": 48,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-20_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-20T13:30:00-05:00",
+      "status": "ok",
+      "rows": 76,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-20_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-20T15:30:00-05:00",
+      "status": "ok",
+      "rows": 83,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-20_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-20T17:30:00-05:00",
+      "status": "ok",
+      "rows": 109,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-20_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-20T18:30:00-05:00",
+      "status": "ok",
+      "rows": 127,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-20_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-20T19:30:00-05:00",
+      "status": "ok",
+      "rows": 132,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-20_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-21T11:30:00-05:00",
+      "status": "ok",
+      "rows": 39,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-21_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-21T13:30:00-05:00",
+      "status": "ok",
+      "rows": 63,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-21_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-21T15:30:00-05:00",
+      "status": "ok",
+      "rows": 65,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-21_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-21T17:30:00-05:00",
+      "status": "ok",
+      "rows": 123,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-21_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-21T18:30:00-05:00",
+      "status": "ok",
+      "rows": 127,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-21_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-21T19:30:00-05:00",
+      "status": "ok",
+      "rows": 140,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-21_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-22T11:30:00-05:00",
+      "status": "ok",
+      "rows": 86,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-22_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-22T13:30:00-05:00",
+      "status": "ok",
+      "rows": 86,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-22_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-22T15:30:00-05:00",
+      "status": "ok",
+      "rows": 111,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-22_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-22T17:30:00-05:00",
+      "status": "ok",
+      "rows": 124,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-22_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-22T18:30:00-05:00",
+      "status": "ok",
+      "rows": 134,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-22_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-22T19:30:00-05:00",
+      "status": "ok",
+      "rows": 134,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-22_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-23T11:30:00-05:00",
+      "status": "ok",
+      "rows": 27,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-23_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-23T13:30:00-05:00",
+      "status": "ok",
+      "rows": 32,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-23_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-23T15:30:00-05:00",
+      "status": "ok",
+      "rows": 34,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-23_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-23T17:30:00-05:00",
+      "status": "ok",
+      "rows": 109,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-23_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-23T18:30:00-05:00",
+      "status": "ok",
+      "rows": 115,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-23_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-23T19:30:00-05:00",
+      "status": "ok",
+      "rows": 132,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-23_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-24T11:30:00-05:00",
+      "status": "ok",
+      "rows": 114,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-24_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-24T13:30:00-05:00",
+      "status": "ok",
+      "rows": 114,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-24_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-24T15:30:00-05:00",
+      "status": "ok",
+      "rows": 119,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-24_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-24T17:30:00-05:00",
+      "status": "ok",
+      "rows": 130,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-24_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-24T18:30:00-05:00",
+      "status": "ok",
+      "rows": 139,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-24_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-24T19:30:00-05:00",
+      "status": "ok",
+      "rows": 146,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-24_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-25T11:30:00-05:00",
+      "status": "ok",
+      "rows": 30,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-25_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-25T13:30:00-05:00",
+      "status": "ok",
+      "rows": 45,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-25_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-25T15:30:00-05:00",
+      "status": "ok",
+      "rows": 67,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-25_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-25T17:30:00-05:00",
+      "status": "ok",
+      "rows": 110,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-25_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-25T18:30:00-05:00",
+      "status": "ok",
+      "rows": 127,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-25_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-25T19:30:00-05:00",
+      "status": "ok",
+      "rows": 142,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-25_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-26T11:30:00-05:00",
+      "status": "ok",
+      "rows": 89,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-26_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-26T13:30:00-05:00",
+      "status": "ok",
+      "rows": 95,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-26_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-26T15:30:00-05:00",
+      "status": "ok",
+      "rows": 105,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-26_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-26T17:30:00-05:00",
+      "status": "ok",
+      "rows": 118,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-26_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-26T18:30:00-05:00",
+      "status": "ok",
+      "rows": 144,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-26_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-26T19:30:00-05:00",
+      "status": "ok",
+      "rows": 144,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-26_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-27T11:30:00-05:00",
+      "status": "ok",
+      "rows": 38,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-27_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-27T13:30:00-05:00",
+      "status": "ok",
+      "rows": 50,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-27_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-27T15:30:00-05:00",
+      "status": "ok",
+      "rows": 50,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-27_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-27T17:30:00-05:00",
+      "status": "ok",
+      "rows": 84,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-27_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-27T18:30:00-05:00",
+      "status": "ok",
+      "rows": 89,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-27_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-27T19:30:00-05:00",
+      "status": "ok",
+      "rows": 99,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-27_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-28T11:30:00-05:00",
+      "status": "ok",
+      "rows": 53,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-28_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-28T13:30:00-05:00",
+      "status": "ok",
+      "rows": 53,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-28_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-28T15:30:00-05:00",
+      "status": "ok",
+      "rows": 59,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-28_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-28T17:30:00-05:00",
+      "status": "ok",
+      "rows": 124,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-28_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-28T18:30:00-05:00",
+      "status": "ok",
+      "rows": 143,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-28_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-02-28T19:30:00-05:00",
+      "status": "ok",
+      "rows": 143,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-02-28_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-01T11:30:00-05:00",
+      "status": "ok",
+      "rows": 94,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-01_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-01T13:30:00-05:00",
+      "status": "ok",
+      "rows": 101,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-01_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-01T15:30:00-05:00",
+      "status": "ok",
+      "rows": 107,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-01_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-01T17:30:00-05:00",
+      "status": "ok",
+      "rows": 121,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-01_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-01T18:30:00-05:00",
+      "status": "ok",
+      "rows": 121,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-01_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-01T19:30:00-05:00",
+      "status": "ok",
+      "rows": 127,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-01_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-02T11:30:00-05:00",
+      "status": "ok",
+      "rows": 26,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-02_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-02T13:30:00-05:00",
+      "status": "ok",
+      "rows": 28,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-02_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-02T15:30:00-05:00",
+      "status": "ok",
+      "rows": 40,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-02_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-02T17:30:00-05:00",
+      "status": "ok",
+      "rows": 93,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-02_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-02T18:30:00-05:00",
+      "status": "ok",
+      "rows": 116,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-02_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-02T19:30:00-05:00",
+      "status": "ok",
+      "rows": 117,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-02_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-03T11:30:00-05:00",
+      "status": "ok",
+      "rows": 89,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-03_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-03T13:30:00-05:00",
+      "status": "ok",
+      "rows": 99,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-03_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-03T15:30:00-05:00",
+      "status": "ok",
+      "rows": 99,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-03_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-03T17:30:00-05:00",
+      "status": "ok",
+      "rows": 107,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-03_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-03T18:30:00-05:00",
+      "status": "ok",
+      "rows": 118,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-03_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-03T19:30:00-05:00",
+      "status": "ok",
+      "rows": 121,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-03_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-04T11:30:00-05:00",
+      "status": "ok",
+      "rows": 27,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-04_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-04T13:30:00-05:00",
+      "status": "ok",
+      "rows": 46,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-04_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-04T15:30:00-05:00",
+      "status": "ok",
+      "rows": 72,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-04_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-04T17:30:00-05:00",
+      "status": "ok",
+      "rows": 116,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-04_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-04T18:30:00-05:00",
+      "status": "ok",
+      "rows": 127,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-04_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-04T19:30:00-05:00",
+      "status": "ok",
+      "rows": 136,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-04_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-05T11:30:00-05:00",
+      "status": "ok",
+      "rows": 88,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-05_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-05T13:30:00-05:00",
+      "status": "ok",
+      "rows": 98,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-05_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-05T15:30:00-05:00",
+      "status": "ok",
+      "rows": 99,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-05_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-05T17:30:00-05:00",
+      "status": "ok",
+      "rows": 107,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-05_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-05T18:30:00-05:00",
+      "status": "ok",
+      "rows": 116,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-05_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-05T19:30:00-05:00",
+      "status": "ok",
+      "rows": 116,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-05_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-06T11:30:00-05:00",
+      "status": "ok",
+      "rows": 28,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-06_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-06T13:30:00-05:00",
+      "status": "ok",
+      "rows": 53,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-06_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-06T15:30:00-05:00",
+      "status": "ok",
+      "rows": 78,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-06_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-06T17:30:00-05:00",
+      "status": "ok",
+      "rows": 106,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-06_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-06T18:30:00-05:00",
+      "status": "ok",
+      "rows": 123,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-06_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-06T19:30:00-05:00",
+      "status": "ok",
+      "rows": 123,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-06_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-07T11:30:00-05:00",
+      "status": "ok",
+      "rows": 54,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-07_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-07T13:30:00-05:00",
+      "status": "ok",
+      "rows": 54,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-07_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-07T15:30:00-05:00",
+      "status": "ok",
+      "rows": 70,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-07_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-07T17:30:00-05:00",
+      "status": "ok",
+      "rows": 97,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-07_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-07T18:30:00-05:00",
+      "status": "ok",
+      "rows": 105,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-07_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-07T19:30:00-05:00",
+      "status": "ok",
+      "rows": 121,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-07_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-08T11:30:00-04:00",
+      "status": "ok",
+      "rows": 90,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-08_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-08T13:30:00-04:00",
+      "status": "ok",
+      "rows": 105,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-08_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-08T15:30:00-04:00",
+      "status": "ok",
+      "rows": 105,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-08_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-08T17:30:00-04:00",
+      "status": "ok",
+      "rows": 123,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-08_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-08T18:30:00-04:00",
+      "status": "ok",
+      "rows": 134,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-08_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-08T19:30:00-04:00",
+      "status": "ok",
+      "rows": 144,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-08_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-09T11:30:00-04:00",
+      "status": "ok",
+      "rows": 43,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-09_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-09T13:30:00-04:00",
+      "status": "ok",
+      "rows": 50,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-09_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-09T15:30:00-04:00",
+      "status": "ok",
+      "rows": 53,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-09_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-09T17:30:00-04:00",
+      "status": "ok",
+      "rows": 99,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-09_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-09T18:30:00-04:00",
+      "status": "ok",
+      "rows": 103,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-09_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-09T19:30:00-04:00",
+      "status": "ok",
+      "rows": 107,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-09_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-10T11:30:00-04:00",
+      "status": "ok",
+      "rows": 88,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-10_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-10T13:30:00-04:00",
+      "status": "ok",
+      "rows": 109,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-10_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-10T15:30:00-04:00",
+      "status": "ok",
+      "rows": 113,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-10_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-10T17:30:00-04:00",
+      "status": "ok",
+      "rows": 127,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-10_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-10T18:30:00-04:00",
+      "status": "ok",
+      "rows": 135,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-10_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-10T19:30:00-04:00",
+      "status": "ok",
+      "rows": 141,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-10_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-11T11:30:00-04:00",
+      "status": "ok",
+      "rows": 29,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-11_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-11T13:30:00-04:00",
+      "status": "ok",
+      "rows": 29,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-11_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-11T15:30:00-04:00",
+      "status": "ok",
+      "rows": 40,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-11_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-11T17:30:00-04:00",
+      "status": "ok",
+      "rows": 116,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-11_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-11T18:30:00-04:00",
+      "status": "ok",
+      "rows": 136,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-11_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-11T19:30:00-04:00",
+      "status": "ok",
+      "rows": 147,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-11_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-12T11:30:00-04:00",
+      "status": "ok",
+      "rows": 99,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-12_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-12T13:30:00-04:00",
+      "status": "ok",
+      "rows": 100,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-12_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-12T15:30:00-04:00",
+      "status": "ok",
+      "rows": 107,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-12_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-12T17:30:00-04:00",
+      "status": "ok",
+      "rows": 110,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-12_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-12T18:30:00-04:00",
+      "status": "ok",
+      "rows": 131,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-12_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-12T19:30:00-04:00",
+      "status": "ok",
+      "rows": 131,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-12_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-13T11:30:00-04:00",
+      "status": "ok",
+      "rows": 44,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-13_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-13T13:30:00-04:00",
+      "status": "ok",
+      "rows": 76,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-13_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-13T15:30:00-04:00",
+      "status": "ok",
+      "rows": 92,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-13_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-13T17:30:00-04:00",
+      "status": "ok",
+      "rows": 136,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-13_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-13T18:30:00-04:00",
+      "status": "ok",
+      "rows": 145,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-13_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-13T19:30:00-04:00",
+      "status": "ok",
+      "rows": 146,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-13_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-14T11:30:00-04:00",
+      "status": "ok",
+      "rows": 66,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-14_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-14T13:30:00-04:00",
+      "status": "ok",
+      "rows": 66,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-14_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-14T15:30:00-04:00",
+      "status": "ok",
+      "rows": 74,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-14_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-14T17:30:00-04:00",
+      "status": "ok",
+      "rows": 115,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-14_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-14T18:30:00-04:00",
+      "status": "ok",
+      "rows": 136,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-14_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-14T19:30:00-04:00",
+      "status": "ok",
+      "rows": 140,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-14_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-15T11:30:00-04:00",
+      "status": "ok",
+      "rows": 81,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-15_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-15T13:30:00-04:00",
+      "status": "ok",
+      "rows": 88,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-15_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-15T15:30:00-04:00",
+      "status": "ok",
+      "rows": 94,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-15_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-15T17:30:00-04:00",
+      "status": "ok",
+      "rows": 127,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-15_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-15T18:30:00-04:00",
+      "status": "ok",
+      "rows": 145,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-15_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-15T19:30:00-04:00",
+      "status": "ok",
+      "rows": 150,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-15_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-16T11:30:00-04:00",
+      "status": "ok",
+      "rows": 57,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-16_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-16T13:30:00-04:00",
+      "status": "ok",
+      "rows": 77,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-16_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-16T15:30:00-04:00",
+      "status": "ok",
+      "rows": 77,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-16_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-16T17:30:00-04:00",
+      "status": "ok",
+      "rows": 112,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-16_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-16T18:30:00-04:00",
+      "status": "ok",
+      "rows": 129,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-16_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-16T19:30:00-04:00",
+      "status": "ok",
+      "rows": 145,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-16_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-17T11:30:00-04:00",
+      "status": "ok",
+      "rows": 71,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-17_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-17T13:30:00-04:00",
+      "status": "ok",
+      "rows": 82,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-17_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-17T15:30:00-04:00",
+      "status": "ok",
+      "rows": 100,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-17_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-17T17:30:00-04:00",
+      "status": "ok",
+      "rows": 135,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-17_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-17T18:30:00-04:00",
+      "status": "ok",
+      "rows": 161,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-17_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-17T19:30:00-04:00",
+      "status": "ok",
+      "rows": 161,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-17_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-18T11:30:00-04:00",
+      "status": "ok",
+      "rows": 68,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-18_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-18T13:30:00-04:00",
+      "status": "ok",
+      "rows": 88,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-18_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-18T15:30:00-04:00",
+      "status": "ok",
+      "rows": 98,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-18_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-18T17:30:00-04:00",
+      "status": "ok",
+      "rows": 125,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-18_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-18T18:30:00-04:00",
+      "status": "ok",
+      "rows": 140,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-18_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-18T19:30:00-04:00",
+      "status": "ok",
+      "rows": 143,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-18_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-19T11:30:00-04:00",
+      "status": "ok",
+      "rows": 55,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-19_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-19T13:30:00-04:00",
+      "status": "ok",
+      "rows": 70,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-19_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-19T15:30:00-04:00",
+      "status": "ok",
+      "rows": 86,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-19_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-19T17:30:00-04:00",
+      "status": "ok",
+      "rows": 110,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-19_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-19T18:30:00-04:00",
+      "status": "ok",
+      "rows": 138,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-19_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-19T19:30:00-04:00",
+      "status": "ok",
+      "rows": 138,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-19_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-20T11:30:00-04:00",
+      "status": "ok",
+      "rows": 54,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-20_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-20T13:30:00-04:00",
+      "status": "ok",
+      "rows": 61,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-20_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-20T15:30:00-04:00",
+      "status": "ok",
+      "rows": 61,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-20_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-20T17:30:00-04:00",
+      "status": "ok",
+      "rows": 103,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-20_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-20T18:30:00-04:00",
+      "status": "ok",
+      "rows": 130,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-20_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-20T19:30:00-04:00",
+      "status": "ok",
+      "rows": 143,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-20_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-21T11:30:00-04:00",
+      "status": "ok",
+      "rows": 89,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-21_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-21T13:30:00-04:00",
+      "status": "ok",
+      "rows": 114,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-21_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-21T15:30:00-04:00",
+      "status": "ok",
+      "rows": 122,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-21_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-21T17:30:00-04:00",
+      "status": "ok",
+      "rows": 139,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-21_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-21T18:30:00-04:00",
+      "status": "ok",
+      "rows": 144,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-21_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-21T19:30:00-04:00",
+      "status": "ok",
+      "rows": 150,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-21_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-22T11:30:00-04:00",
+      "status": "ok",
+      "rows": 43,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-22_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-22T13:30:00-04:00",
+      "status": "ok",
+      "rows": 50,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-22_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-22T15:30:00-04:00",
+      "status": "ok",
+      "rows": 58,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-22_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-22T17:30:00-04:00",
+      "status": "ok",
+      "rows": 132,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-22_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-22T18:30:00-04:00",
+      "status": "ok",
+      "rows": 133,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-22_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-22T19:30:00-04:00",
+      "status": "ok",
+      "rows": 140,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-22_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-23T11:30:00-04:00",
+      "status": "ok",
+      "rows": 97,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-23_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-23T13:30:00-04:00",
+      "status": "ok",
+      "rows": 98,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-23_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-23T15:30:00-04:00",
+      "status": "ok",
+      "rows": 103,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-23_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-23T17:30:00-04:00",
+      "status": "ok",
+      "rows": 143,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-23_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-23T18:30:00-04:00",
+      "status": "ok",
+      "rows": 143,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-23_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-23T19:30:00-04:00",
+      "status": "ok",
+      "rows": 144,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-23_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-24T11:30:00-04:00",
+      "status": "ok",
+      "rows": 39,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-24_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-24T13:30:00-04:00",
+      "status": "ok",
+      "rows": 39,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-24_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-24T15:30:00-04:00",
+      "status": "ok",
+      "rows": 42,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-24_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-24T17:30:00-04:00",
+      "status": "ok",
+      "rows": 98,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-24_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-24T18:30:00-04:00",
+      "status": "ok",
+      "rows": 124,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-24_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-24T19:30:00-04:00",
+      "status": "ok",
+      "rows": 143,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-24_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-25T11:30:00-04:00",
+      "status": "ok",
+      "rows": 125,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-25_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-25T13:30:00-04:00",
+      "status": "ok",
+      "rows": 131,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-25_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-25T15:30:00-04:00",
+      "status": "ok",
+      "rows": 135,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-25_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-25T17:30:00-04:00",
+      "status": "ok",
+      "rows": 161,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-25_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-25T18:30:00-04:00",
+      "status": "ok",
+      "rows": 161,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-25_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-25T19:30:00-04:00",
+      "status": "ok",
+      "rows": 162,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-25_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-26T11:30:00-04:00",
+      "status": "ok",
+      "rows": 27,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-26_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-26T13:30:00-04:00",
+      "status": "ok",
+      "rows": 38,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-26_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-26T15:30:00-04:00",
+      "status": "ok",
+      "rows": 38,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-26_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-26T17:30:00-04:00",
+      "status": "ok",
+      "rows": 86,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-26_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-26T18:30:00-04:00",
+      "status": "ok",
+      "rows": 99,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-26_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-26T19:30:00-04:00",
+      "status": "ok",
+      "rows": 107,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-26_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-27T11:30:00-04:00",
+      "status": "ok",
+      "rows": 98,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-27_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-27T13:30:00-04:00",
+      "status": "ok",
+      "rows": 103,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-27_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-27T15:30:00-04:00",
+      "status": "ok",
+      "rows": 103,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-27_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-27T17:30:00-04:00",
+      "status": "ok",
+      "rows": 133,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-27_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-27T18:30:00-04:00",
+      "status": "ok",
+      "rows": 147,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-27_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-27T19:30:00-04:00",
+      "status": "ok",
+      "rows": 149,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-27_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-28T11:30:00-04:00",
+      "status": "ok",
+      "rows": 42,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-28_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-28T13:30:00-04:00",
+      "status": "ok",
+      "rows": 51,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-28_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-28T15:30:00-04:00",
+      "status": "ok",
+      "rows": 76,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-28_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-28T17:30:00-04:00",
+      "status": "ok",
+      "rows": 122,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-28_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-28T18:30:00-04:00",
+      "status": "ok",
+      "rows": 136,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-28_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-28T19:30:00-04:00",
+      "status": "ok",
+      "rows": 136,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-28_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-29T11:30:00-04:00",
+      "status": "ok",
+      "rows": 79,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-29_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-29T13:30:00-04:00",
+      "status": "ok",
+      "rows": 91,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-29_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-29T15:30:00-04:00",
+      "status": "ok",
+      "rows": 96,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-29_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-29T17:30:00-04:00",
+      "status": "ok",
+      "rows": 131,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-29_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-29T18:30:00-04:00",
+      "status": "ok",
+      "rows": 148,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-29_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-29T19:30:00-04:00",
+      "status": "ok",
+      "rows": 160,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-29_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-30T11:30:00-04:00",
+      "status": "ok",
+      "rows": 68,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-30_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-30T13:30:00-04:00",
+      "status": "ok",
+      "rows": 80,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-30_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-30T15:30:00-04:00",
+      "status": "ok",
+      "rows": 90,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-30_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-30T17:30:00-04:00",
+      "status": "ok",
+      "rows": 114,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-30_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-30T18:30:00-04:00",
+      "status": "ok",
+      "rows": 124,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-30_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-30T19:30:00-04:00",
+      "status": "ok",
+      "rows": 126,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-30_07_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-31T11:30:00-04:00",
+      "status": "ok",
+      "rows": 40,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-31_11_30AM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-31T13:30:00-04:00",
+      "status": "ok",
+      "rows": 66,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-31_01_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-31T15:30:00-04:00",
+      "status": "ok",
+      "rows": 74,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-31_03_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-31T17:30:00-04:00",
+      "status": "ok",
+      "rows": 106,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-31_05_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-31T18:30:00-04:00",
+      "status": "ok",
+      "rows": 125,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-31_06_30PM.pdf"
+    },
+    {
+      "timestamp_et": "2026-03-31T19:30:00-04:00",
+      "status": "ok",
+      "rows": 138,
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-03-31_07_30PM.pdf"
+    }
+  ]
+}

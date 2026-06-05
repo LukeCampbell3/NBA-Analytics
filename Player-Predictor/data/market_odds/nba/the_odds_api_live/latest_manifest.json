@@ -1,0 +1,69 @@
+{
+  "provider": "the_odds_api_live",
+  "endpoint": "current_odds_free",
+  "snapshot_stamp": "20260510T201733Z",
+  "created_at": "2026-05-10T20:17:33.722548+00:00",
+  "sport": "basketball_nba",
+  "snapshot_type": "prelock",
+  "markets": [
+    "player_points",
+    "player_rebounds",
+    "player_assists",
+    "player_threes",
+    "player_steals",
+    "player_blocks",
+    "player_turnovers",
+    "player_points_rebounds_assists",
+    "player_points_rebounds",
+    "player_points_assists",
+    "player_rebounds_assists"
+  ],
+  "bookmakers": [
+    "draftkings",
+    "fanduel",
+    "betmgm",
+    "caesars",
+    "betrivers",
+    "fanatics"
+  ],
+  "rows": 0,
+  "odds_quality": {
+    "rows": 0,
+    "rows_with_valid_american_odds": 0,
+    "rows_with_invalid_american_odds": 0,
+    "valid_american_odds_rate": 0.0
+  },
+  "collection_meta": {
+    "mode": "per_event",
+    "collection_time": "2026-05-10T20:17:32.364067+00:00",
+    "events_queried": 4,
+    "events_with_rows": 0,
+    "rows_collected": 0,
+    "api_requests_remaining": "unknown",
+    "api_requests_used": "unknown",
+    "event_reports": [
+      {
+        "event_id": "878243c543236baba132ad43ae333aae",
+        "error": "The Odds API request failed [401] https://api.the-odds-api.com/v4/sports/basketball_nba/events/878243c543236baba132ad43ae333aae/odds?apiKey=a1726f0c5a1d71082592737faa044edc&regions=us&markets=player_points%2Cplayer_rebounds%2Cplayer_assists%2Cplayer_threes%2Cplayer_steals%2Cplayer_blocks%2Cplayer_turnovers%2Cplayer_points_rebounds_assists%2Cplayer_points_rebounds%2Cplayer_points_assists%2Cplayer_rebounds_assists&oddsFormat=american&dateFormat=iso&bookmakers=draftkings%2Cfanduel%2Cbetmgm%2Ccaesars%2Cbetrivers%2Cfanatics\n{\"message\":\"Usage quota has been reached. See usage plans at https://the-odds-api.com\",\"error_code\":\"OUT_OF_USAGE_CREDITS\",\"details_url\":\"https://the-odds-api.com/liveapi/guides/v4/api-error-codes.html#out-of-usage-credits\"}\n"
+      },
+      {
+        "event_id": "77e60e525f42e8337027f550bcd2f1cc",
+        "error": "The Odds API request failed [401] https://api.the-odds-api.com/v4/sports/basketball_nba/events/77e60e525f42e8337027f550bcd2f1cc/odds?apiKey=a1726f0c5a1d71082592737faa044edc&regions=us&markets=player_points%2Cplayer_rebounds%2Cplayer_assists%2Cplayer_threes%2Cplayer_steals%2Cplayer_blocks%2Cplayer_turnovers%2Cplayer_points_rebounds_assists%2Cplayer_points_rebounds%2Cplayer_points_assists%2Cplayer_rebounds_assists&oddsFormat=american&dateFormat=iso&bookmakers=draftkings%2Cfanduel%2Cbetmgm%2Ccaesars%2Cbetrivers%2Cfanatics\n{\"message\":\"Usage quota has been reached. See usage plans at https://the-odds-api.com\",\"error_code\":\"OUT_OF_USAGE_CREDITS\",\"details_url\":\"https://the-odds-api.com/liveapi/guides/v4/api-error-codes.html#out-of-usage-credits\"}\n"
+      },
+      {
+        "event_id": "b537062ee0483d20ae932052628b663d",
+        "error": "The Odds API request failed [401] https://api.the-odds-api.com/v4/sports/basketball_nba/events/b537062ee0483d20ae932052628b663d/odds?apiKey=a1726f0c5a1d71082592737faa044edc&regions=us&markets=player_points%2Cplayer_rebounds%2Cplayer_assists%2Cplayer_threes%2Cplayer_steals%2Cplayer_blocks%2Cplayer_turnovers%2Cplayer_points_rebounds_assists%2Cplayer_points_rebounds%2Cplayer_points_assists%2Cplayer_rebounds_assists&oddsFormat=american&dateFormat=iso&bookmakers=draftkings%2Cfanduel%2Cbetmgm%2Ccaesars%2Cbetrivers%2Cfanatics\n{\"message\":\"Usage quota has been reached. See usage plans at https://the-odds-api.com\",\"error_code\":\"OUT_OF_USAGE_CREDITS\",\"details_url\":\"https://the-odds-api.com/liveapi/guides/v4/api-error-codes.html#out-of-usage-credits\"}\n"
+      },
+      {
+        "event_id": "0db68bfa022e22873f48b8539addd5ae",
+        "error": "The Odds API request failed [401] https://api.the-odds-api.com/v4/sports/basketball_nba/events/0db68bfa022e22873f48b8539addd5ae/odds?apiKey=a1726f0c5a1d71082592737faa044edc&regions=us&markets=player_points%2Cplayer_rebounds%2Cplayer_assists%2Cplayer_threes%2Cplayer_steals%2Cplayer_blocks%2Cplayer_turnovers%2Cplayer_points_rebounds_assists%2Cplayer_points_rebounds%2Cplayer_points_assists%2Cplayer_rebounds_assists&oddsFormat=american&dateFormat=iso&bookmakers=draftkings%2Cfanduel%2Cbetmgm%2Ccaesars%2Cbetrivers%2Cfanatics\n{\"message\":\"Usage quota has been reached. See usage plans at https://the-odds-api.com\",\"error_code\":\"OUT_OF_USAGE_CREDITS\",\"details_url\":\"https://the-odds-api.com/liveapi/guides/v4/api-error-codes.html#out-of-usage-credits\"}\n"
+      }
+    ]
+  },
+  "clv_ready": false,
+  "notes": [
+    "This snapshot was collected from the FREE /v4/sports/{sport}/odds endpoint.",
+    "CLV requires both prelock and close snapshots for the same events.",
+    "Run this script on a schedule to build CLV dataset forward."
+  ]
+}

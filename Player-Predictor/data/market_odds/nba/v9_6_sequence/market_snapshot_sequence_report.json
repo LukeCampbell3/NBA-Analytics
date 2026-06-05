@@ -1,0 +1,53 @@
+{
+  "status": "built_v9_6_market_snapshot_sequence",
+  "created_at": "2026-05-10T20:09:11.562407+00:00",
+  "input_rows": 12005,
+  "valid_rows": 12005,
+  "sequence_rows": 12005,
+  "attachable_rows": 1546,
+  "true_clv_rows": 1525,
+  "snapshot_type_counts": {
+    "intraday": 8825,
+    "open": 1546,
+    "prelock": 1524,
+    "close": 110
+  },
+  "close_status_counts": {
+    "true_sequence_close": 1525,
+    "sequence_close_game_start_missing": 21
+  },
+  "odds_quality": {
+    "rows": 12005,
+    "rows_with_valid_american_odds": 12005,
+    "rows_with_invalid_american_odds": 0,
+    "valid_american_odds_rate": 1.0,
+    "rows_repaired": 0,
+    "rows_dropped": 0,
+    "min_over_odds": -243.0,
+    "max_over_odds": 400.0,
+    "min_under_odds": -670.0,
+    "max_under_odds": 179.0
+  },
+  "quality_gate_pass": true,
+  "promotion_gate_checks": {
+    "valid_american_odds_rate": true,
+    "true_market_rows_min": true,
+    "true_clv_rows_min": true,
+    "multiple_snapshot_types": true,
+    "prelock_snapshot_present": true,
+    "close_snapshot_present": true,
+    "game_start_time_present_for_clv": true
+  },
+  "promotion_status": "eligible_for_market_review",
+  "promotion_blockers": {
+    "require_true_market_rows_min": 1000,
+    "require_gated_true_market_rows_min": 150,
+    "require_true_clv_rows_min": 500,
+    "require_valid_american_odds_rate_min": 0.98,
+    "require_multiple_snapshot_types": true,
+    "require_prelock_snapshot": true,
+    "require_close_snapshot": true,
+    "require_model_bss_vs_market_positive": true,
+    "require_clv_correlation_positive": true
+  }
+}

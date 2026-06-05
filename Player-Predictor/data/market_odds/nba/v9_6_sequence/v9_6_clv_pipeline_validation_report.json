@@ -1,0 +1,100 @@
+{
+  "validated_at": "2026-05-10T03:01:32.136094+00:00",
+  "pipeline_version": "v9.6",
+  "collection": {
+    "schema_complete": true,
+    "missing_columns": [],
+    "total_rows": 12005,
+    "rows_with_game_start_time": 11963,
+    "game_start_time_coverage": 0.9965014577259476,
+    "valid_american_odds_rate": 1.0,
+    "valid_american_odds_pass": true,
+    "sources": [
+      "rotowire_current_board",
+      "the_odds_api_live"
+    ],
+    "books": [
+      "BetMGM",
+      "BetRivers",
+      "Caesars",
+      "DraftKings",
+      "FanDuel",
+      "Fanatics",
+      "Hard Rock",
+      "theScore"
+    ],
+    "markets": [
+      "3PM",
+      "AST",
+      "BLK",
+      "PA",
+      "PR",
+      "PRA",
+      "PTS",
+      "RA",
+      "STL",
+      "TRB"
+    ],
+    "dates": [
+      "2026-05-09",
+      "2026-05-10"
+    ],
+    "snapshot_types": {
+      "intraday": 4849,
+      "prelock": 3591,
+      "close": 1801,
+      "injury_sensitive": 529
+    },
+    "pass": true
+  },
+  "sequence": {
+    "total_rows": 12005,
+    "snapshot_type_counts": {
+      "intraday": 8825,
+      "open": 1546,
+      "prelock": 1524,
+      "close": 110
+    },
+    "has_open": true,
+    "has_prelock": true,
+    "has_close": true,
+    "multiple_types": true,
+    "temporal_ordering_valid": true,
+    "pass": true
+  },
+  "attachable": {
+    "total_rows": 1546,
+    "close_status_counts": {
+      "true_sequence_close": 1525,
+      "sequence_close_game_start_missing": 21
+    },
+    "true_clv_rows": 1525,
+    "no_vig_computed_rows": 1546,
+    "no_vig_sum_to_one": true,
+    "no_vig_over_range_valid": true,
+    "close_odds_valid_rate": 1.0,
+    "mean_over_clv": -0.002476265317151634,
+    "positive_clv_rate": 0.27278688524590167,
+    "clv_std": 0.03482910047453693,
+    "clv_computable": true,
+    "pass": true
+  },
+  "promotion_gates": {
+    "all_gates_pass": true,
+    "gate_results": {
+      "valid_american_odds_rate": true,
+      "true_market_rows_min": true,
+      "true_clv_rows_min": true,
+      "multiple_snapshot_types": true,
+      "prelock_snapshot_present": true,
+      "close_snapshot_present": true,
+      "game_start_time_present_for_clv": true
+    },
+    "promotion_status": "eligible_for_market_review",
+    "true_clv_rows": 1525,
+    "attachable_rows": 1546,
+    "pass": true
+  },
+  "overall_pass": true,
+  "overall_status": "v9_6_clv_pipeline_validated"
+}

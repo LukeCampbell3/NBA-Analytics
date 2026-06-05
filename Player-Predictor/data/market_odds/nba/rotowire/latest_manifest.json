@@ -1,0 +1,37 @@
+{
+  "provider": "rotowire",
+  "source_url": "https://www.rotowire.com/betting/nba/player-props.php?prop=pts",
+  "snapshot_stamp": "20260509T151032Z",
+  "fetched_at_utc": "2026-05-09T15:10:32.201011+00:00",
+  "market_date": "2026-05-09",
+  "book_rows": 618,
+  "canonical_rows": 91,
+  "books": [
+    "BetMGM",
+    "BetRivers",
+    "Caesars",
+    "DraftKings",
+    "FanDuel",
+    "Fanatics",
+    "Hard Rock",
+    "theScore"
+  ],
+  "odds_quality": {
+    "rows": 618,
+    "rows_with_valid_american_odds": 618,
+    "rows_with_invalid_american_odds": 0,
+    "valid_american_odds_rate": 1.0,
+    "rows_repaired": 0,
+    "rows_dropped": 0,
+    "min_over_odds": -226.0,
+    "max_over_odds": 175.0,
+    "min_under_odds": -275.0,
+    "max_under_odds": 169.0
+  },
+  "close_status": "provisional_current_snapshot_not_closing",
+  "clv_ready": false,
+  "notes": [
+    "Current RotoWire snapshots are valid decision-time price observations when fetched before lock.",
+    "RotoWire does not expose game_start_time here, so repeated rows are not CLV-promotion-safe until enriched."
+  ]
+}

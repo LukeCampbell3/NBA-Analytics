@@ -1,0 +1,97 @@
+{
+  "status": "collected_v9_6_market_snapshot",
+  "created_at": "2026-05-09T15:10:32.759700+00:00",
+  "fetched_rows": 618,
+  "appended_rows": 618,
+  "collected_rows": 1235,
+  "game_start_time_available": false,
+  "fetch_manifest": {
+    "provider": "rotowire",
+    "source_url": "https://www.rotowire.com/betting/nba/player-props.php?prop=pts",
+    "snapshot_stamp": "20260509T151032Z",
+    "fetched_at_utc": "2026-05-09T15:10:32.201011+00:00",
+    "market_date": "2026-05-09",
+    "book_rows": 618,
+    "canonical_rows": 91,
+    "books": [
+      "BetMGM",
+      "BetRivers",
+      "Caesars",
+      "DraftKings",
+      "FanDuel",
+      "Fanatics",
+      "Hard Rock",
+      "theScore"
+    ],
+    "odds_quality": {
+      "rows": 618,
+      "rows_with_valid_american_odds": 618,
+      "rows_with_invalid_american_odds": 0,
+      "valid_american_odds_rate": 1.0,
+      "rows_repaired": 0,
+      "rows_dropped": 0,
+      "min_over_odds": -226.0,
+      "max_over_odds": 175.0,
+      "min_under_odds": -275.0,
+      "max_under_odds": 169.0
+    },
+    "close_status": "provisional_current_snapshot_not_closing",
+    "clv_ready": false,
+    "notes": [
+      "Current RotoWire snapshots are valid decision-time price observations when fetched before lock.",
+      "RotoWire does not expose game_start_time here, so repeated rows are not CLV-promotion-safe until enriched."
+    ]
+  },
+  "sequence_report": {
+    "status": "built_v9_6_market_snapshot_sequence",
+    "created_at": "2026-05-09T15:10:32.759700+00:00",
+    "input_rows": 1237,
+    "valid_rows": 1237,
+    "sequence_rows": 1237,
+    "attachable_rows": 620,
+    "true_clv_rows": 0,
+    "snapshot_type_counts": {
+      "open": 617,
+      "close": 617,
+      "single_snapshot": 3
+    },
+    "close_status_counts": {
+      "sequence_close_game_start_missing": 617,
+      "provisional_single_snapshot_not_clv": 3
+    },
+    "odds_quality": {
+      "rows": 1237,
+      "rows_with_valid_american_odds": 1237,
+      "rows_with_invalid_american_odds": 0,
+      "valid_american_odds_rate": 1.0,
+      "rows_repaired": 0,
+      "rows_dropped": 0,
+      "min_over_odds": -226.0,
+      "max_over_odds": 175.0,
+      "min_under_odds": -275.0,
+      "max_under_odds": 169.0
+    },
+    "quality_gate_pass": true,
+    "promotion_gate_checks": {
+      "valid_american_odds_rate": true,
+      "true_market_rows_min": false,
+      "true_clv_rows_min": false,
+      "multiple_snapshot_types": true,
+      "prelock_snapshot_present": false,
+      "close_snapshot_present": true,
+      "game_start_time_present_for_clv": false
+    },
+    "promotion_status": "blocked_market_snapshot_coverage",
+    "promotion_blockers": {
+      "require_true_market_rows_min": 1000,
+      "require_gated_true_market_rows_min": 150,
+      "require_true_clv_rows_min": 500,
+      "require_valid_american_odds_rate_min": 0.98,
+      "require_multiple_snapshot_types": true,
+      "require_prelock_snapshot": true,
+      "require_close_snapshot": true,
+      "require_model_bss_vs_market_positive": true,
+      "require_clv_correlation_positive": true
+    }
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "evaluated_at": "2026-05-09T20:54:45.186412+00:00",
+  "market_sequence_gates": {
+    "status": "pass",
+    "gates": {
+      "valid_american_odds_rate": true,
+      "sufficient_clv_rows": true,
+      "sufficient_price_movement": true,
+      "distinct_snapshot_times": true,
+      "entry_close_not_same_row": true
+    },
+    "details": {
+      "total_rows": 1541,
+      "true_clv_rows": 1520,
+      "rows_with_both_valid": 1520,
+      "rows_with_price_movement": 536,
+      "distinct_snapshot_times": 6,
+      "valid_odds_rate": 1.0
+    }
+  },
+  "market_movement_proxy": {
+    "status": "computed",
+    "total_rows": 1520,
+    "rows_with_odds_movement": 536,
+    "pct_with_odds_movement": 0.3526315789473684,
+    "mean_abs_odds_movement": 12.39671052631579,
+    "mean_abs_no_vig_movement": 0.0071605492871365875,
+    "rows_with_no_vig_movement": 569,
+    "mean_clv_over": 7.212327411455225e-05,
+    "mean_clv_under": -7.212327411455339e-05,
+    "clv_over_std": 0.0218088769077973,
+    "note": "This is market-only open-to-close movement, NOT model CLV."
+  },
+  "model_promotion_gates": {
+    "status": "partial",
+    "model_version": "prop_engine_v9_6_side_calibrated_shrinkage",
+    "matched_rows": 1520,
+    "moved_rows": 569,
+    "metrics": {
+      "mean_model_side_clv": -0.00016965795739589735,
+      "positive_clv_rate": 0.4200351493848858,
+      "edge_clv_correlation": -0.010264279074724287,
+      "model_brier_vs_close": 0.00283524457962218,
+      "entry_brier_vs_close": 0.0004753194011724525,
+      "model_beats_entry_market": false
+    },
+    "gates": {
+      "model_predictions_attached": true,
+      "model_selected_side_clv_positive": false,
+      "model_positive_clv_rate_above_50": false,
+      "model_edge_clv_correlation_positive": false,
+      "model_bss_vs_true_market_positive": false
+    }
+  },
+  "overall_status": "INFRASTRUCTURE PASS \u2014 MODEL PROMOTION BLOCKED"
+}

@@ -1,0 +1,50 @@
+{
+  "version": "v9.6_market_snapshot_collector",
+  "timezone": "America/New_York",
+  "source": "rotowire_current_board",
+  "required_snapshot_phases": [
+    {
+      "phase": "open_like",
+      "target_offset_before_game_start": "24h",
+      "purpose": "Capture early available market price when board first appears."
+    },
+    {
+      "phase": "intraday",
+      "target_offset_before_game_start": "6h",
+      "purpose": "Capture post-news but pre-lineup market drift."
+    },
+    {
+      "phase": "injury_sensitive",
+      "target_offset_before_game_start": "90m",
+      "purpose": "Capture injury report and availability repricing."
+    },
+    {
+      "phase": "prelock",
+      "target_offset_before_game_start": "15m",
+      "purpose": "Decision-time price for model-vs-market Brier and ROI."
+    },
+    {
+      "phase": "close",
+      "target_offset_before_game_start": "0m",
+      "purpose": "Closing price proxy for side-aware CLV."
+    }
+  ],
+  "hard_gates": {
+    "valid_american_odds_rate_min": 0.98,
+    "true_market_rows_min": 1000,
+    "gated_true_market_rows_min": 150,
+    "true_clv_rows_min": 500,
+    "require_multiple_snapshot_types": true,
+    "require_prelock_snapshot": true,
+    "require_close_snapshot": true,
+    "require_game_start_time_for_clv": true
+  },
+  "collector_command": "python Player-Predictor/scripts/collect_market_snapshots_v9_6.py --include-inputs Player-Predictor/data/market_odds/nba/historical_true_no_vig_clv_snapshots_v9_5.csv",
+  "live_odds_collector_command": "python Player-Predictor/scripts/collect_nba_live_odds_snapshot.py --snapshot-type prelock --append-collection --rebuild-sequence",
+  "live_odds_collector_notes": [
+    "Uses FREE /v4/sports/{sport}/odds endpoint (no paid plan required).",
+    "Run at each phase offset before game start to build CLV forward.",
+    "Example schedule: T-6h=intraday, T-90m=injury_sensitive, T-15m=prelock, T-2m=close"
+  ],
+  "docker_command": "docker run --gpus all --rm -v \"${PWD}:/workspace\" -w /workspace sparse-loop-moe:latest sh -lc \"python Player-Predictor/scripts/collect_market_snapshots_v9_6.py --include-inputs Player-Predictor/data/market_odds/nba/historical_true_no_vig_clv_snapshots_v9_5.csv\""
+}

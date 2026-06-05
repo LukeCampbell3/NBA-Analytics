@@ -1,0 +1,46 @@
+{
+  "schema_version": "availability_snapshot_schema_v1",
+  "description": "Pregame NBA player availability snapshots for v9.5 lineup-state features.",
+  "required_fields": [
+    "snapshot_time",
+    "game_start_time",
+    "date",
+    "team",
+    "player",
+    "status",
+    "out_probability",
+    "availability_confidence",
+    "source"
+  ],
+  "optional_fields": [
+    "player_id",
+    "game_id",
+    "opponent",
+    "is_starter_expected",
+    "starter_probability",
+    "news_url",
+    "note"
+  ],
+  "status_probability_defaults": {
+    "out": 1.0,
+    "doubtful": 0.8,
+    "questionable": 0.45,
+    "probable": 0.15,
+    "available": 0.0,
+    "active": 0.0
+  },
+  "confidence_defaults": {
+    "confirmed_out": 1.0,
+    "official_injury_report": 0.85,
+    "beat_report": 0.7,
+    "projected": 0.55,
+    "unknown": 0.35
+  },
+  "safety_rules": {
+    "snapshot_time_must_be_before_game_start": true,
+    "forbid_same_game_actual_absence": true,
+    "forbid_oracle_lineup_fields": true,
+    "out_probability_range": [0.0, 1.0],
+    "availability_confidence_range": [0.0, 1.0]
+  }
+}

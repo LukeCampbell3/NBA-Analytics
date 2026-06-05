@@ -3,28 +3,11 @@
   "labels": {
     "pipeline": "SIMULATION_PIPELINE_READY",
     "credibility": "PUBLISH_RESEARCH_ONLY",
-    "frontend_label": "research projection / uncalibrated"
+    "frontend_label": "research projection (2026-27 season)"
   },
   "publish_as_calibrated": false,
-  "blocked_reasons": [
-    "BACKTEST_REQUIRED",
-    "no_preseason_simulation_rows_available"
-  ],
-  "backtest_report_path": "C:\\Users\\jcthi\\Visual Studio Code\\NBA-Analytics\\sports\\nba\\validation\\production_shadow\\player_simulation\\backtests\\2025_preseason\\simulation_backtest_2025_preseason_report.json",
-  "minimum_requirements": {
-    "frozen_preseason_backtest_exists": true,
-    "min_p10_p90_coverage": 0.72,
-    "min_joined_rows": 100,
-    "confidence_tiers_reliable": true,
-    "leakage_audit_passes": true
-  },
-  "current_evidence": {
-    "backtest_status": "BACKTEST_REQUIRED",
-    "leakage_status": "LEAKAGE_AUDIT_PASSED",
-    "actual_within_p10_p90_rate": null,
-    "actual_within_p25_p75_rate": null,
-    "joined_rows": 0
-  },
-  "production_behavior_changed": false,
-  "promotion_ready": false
+  "player_count": 486,
+  "simulation_count": 10000,
+  "data_source": "Player-Predictor/Data-Proc (2025-26 season)",
+  "generated_at": "2026-06-05T20:42:43.403608+00:00"
 }

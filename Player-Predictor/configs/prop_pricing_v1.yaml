@@ -1,0 +1,312 @@
+# ===================================================================
+# NBA Player Prop Engine - Production Configuration
+# Version: v9.9 (market weakness residual)
+# Status: shadow_research_operational
+# ===================================================================
+
+# --- Active System ------------------------------------------------
+system:
+  version: v10.1_probability_quality_layer
+  model_edge_status: validated
+  market_weakness_status: pending_live_multibook_validation
+  production_status: blocked_pending_within_edge_bucket_proof
+  architecture_frozen: true
+
+# ─── Model ────────────────────────────────────────────────────────
+model:
+  version: prop_engine_v9_5_pregame_lineup_distribution
+  inference: full_distribution_pipeline
+  method: rolling_weighted_mean_sigma_normal_cdf
+  n_sims: 20000
+  markets:
+    - PTS
+    - TRB
+    - AST
+  proven_metrics:
+    historical_roi_at_110: 0.272
+    walk_forward_top_beats_bottom: 1.0
+    hit_rate_wls_25: 0.667
+    deduped_rows_tested: 53957
+
+# ─── Two-Stage Gate ───────────────────────────────────────────────
+# Stage 1: Does the player distribution justify a side?
+# Stage 2: Is this specific book/line/price weak enough to act on?
+gate:
+  stage_1_model_edge:
+    min_edge: 0.06
+    method: p_model_over - consensus_no_vig_over
+    source: full_distribution_pipeline
+    forbid_calibrator_only: true
+    forbid_market_only_side_selection: true
+
+  stage_2_market_weakness:
+    strong_threshold: 0.50
+    components:
+      execution_edge: 0.45        # book vs consensus price advantage
+      velocity_alignment: 0.25    # market moving toward model side
+      stale_line: 0.15            # book hasn't moved while consensus has
+      book_coverage: 0.15         # more books = more reliable consensus
+    requires_multibook_data: true
+
+  tier_assignment:
+    shadow: "model_edge >= 0.06 AND market_weakness >= 0.50"
+    model_edge_monitor: "model_edge >= 0.18 (strong edge, weakness unproven)"
+    monitor: "model_edge >= 0.06 (stage 1 only)"
+    no_action: "model_edge < 0.06"
+
+  regime_adaptive:
+    detect_market_drift: true
+    drift_threshold: 0.003
+    drift_penalty_max: 0.08
+    penalize_side_fighting_drift: true
+
+# ─── Calibration ─────────────────────────────────────────────────
+calibration:
+  method: side_specific_isotonic
+  segments:
+    - market
+    - direction
+  fallback: global
+  min_segment_samples: 50
+  uncertainty_shrinkage:
+    enabled: true
+    base_shrink: 0.0
+    uncertainty_shrink_rate: 0.12
+    max_shrink: 0.25
+    rationale: "Shrink toward market when model is uncertain. Prevents overconfident predictions in high-uncertainty regimes."
+
+probability_quality_v10_1:
+  enabled: true
+  status: shadow_only
+  segment_posterior_calibration:
+    alpha: 50
+    k: 100
+    fallback_hierarchy:
+      - market_side_edge_bucket
+      - market_side
+      - side
+      - global
+    output_columns:
+      - p_model_raw
+      - p_segment
+      - p_final
+      - calibration_source
+      - calibration_delta
+  empirical_residual_cdf:
+    enabled: true
+    beta: 0.50
+    min_rows: 30
+    fallback_hierarchy:
+      - market_side_line_edge
+      - market_side_line
+      - market_side
+      - market
+      - global
+  predicted_brier_risk:
+    enabled: true
+    production_use_requires_monotonic_validation: true
+    class_a_max: 0.245
+    buckets:
+      low: "< 0.220"
+      medium: "0.220 to 0.245"
+      high: ">= 0.245"
+  edge_anomaly_guard:
+    threshold: 0.20
+    required_checks:
+      - same_line_consensus_confirmed
+      - exact_player_match
+      - exact_market_match
+      - no_alt_line_mismatch
+      - sigma_floor_pass
+      - projection_line_gap_sanity_pass
+      - segment_bss_positive
+      - segment_roi_nonnegative
+      - p_final_close_to_segment
+  market_specific_rules:
+    pts_over_class_a: quarantined_until_approved_segment_evidence
+    broad_over_class_a: monitor_until_approved_segment_evidence
+    ast_under: monitor_until_segment_proof
+    trb_under: monitor_until_segment_proof
+
+production_readiness_v10_2:
+  enabled: true
+  status: shadow_active_production_blocked
+  scheduler:
+    mode: per_game
+    phases:
+      predecision:
+        - t_minus_6h
+        - t_minus_3h
+      refresh_props: t_minus_60m
+      close_prelock: t_minus_15m
+      emergency_close: t_minus_5m
+      settle_after_final: true
+      next_morning_rebuild_evidence: true
+    requirements:
+      close_snapshot_join_rate_min: 0.80
+      settlement_join_rate_min: 0.90
+      executable_odds_age_minutes_max: 5
+  shadow_candidate_invariants:
+    cannot_receive_stake: true
+    cannot_publish_as_live_play: true
+    cannot_count_as_class_a: true
+    evidence_only_after_settlement: true
+  segment_approval:
+    key: market_side_edge_bucket_brier_risk_bucket
+    min_resolved_rows: 100
+    min_unique_slates: 10
+    min_bss: 0.05
+    max_ece: 0.03
+    require_roi_positive: true
+    require_roi_lcb_positive: true
+    require_clv_lcb_nonnegative: true
+    require_brier_ucb_below_market_brier: true
+  kill_switches:
+    max_odds_age_minutes: 10
+    min_valid_odds_rate: 0.98
+    min_clv_join_rate: 0.80
+    min_settlement_join_rate: 0.90
+    max_single_game_share: 0.25
+    max_single_book_share: 0.35
+    max_single_player_share: 0.10
+    disable_if_class_a_evidence_missing: true
+    disable_if_overall_success_false: true
+
+# ─── Selection Constraints ────────────────────────────────────────
+selection:
+  max_plays_per_game: 3
+  max_plays_per_team: 2
+  max_plays_per_player: 1
+  max_board_size: 12
+  max_side_share: 0.80
+  max_single_book_share: 0.35
+  max_single_player_share: 0.10
+  max_single_slate_share: 0.25
+
+# ─── Risk ─────────────────────────────────────────────────────────
+risk:
+  stale_line_minutes: 20
+  max_book_disagreement: 1.5
+  high_uncertainty_limit_cut: 0.5
+  suspend_if_injury_uncertainty_above: 0.85
+
+# ─── Odds Validation ─────────────────────────────────────────────
+odds_validation:
+  require_valid_american_odds: true
+  valid_range: "odds <= -100 or odds >= 100"
+  exclude_pushes: true
+  require_two_sided: true
+  min_valid_rate: 0.98
+
+# ─── Data Collection ─────────────────────────────────────────────
+collection:
+  live_odds_script: collect_nba_live_odds_snapshot.py
+  shadow_runner: run_v98_shadow_daily.py
+  schedule:
+    - phase: predecision
+      timing: "T-6h to T-15m before game start"
+      snapshot_type: intraday
+    - phase: close
+      timing: "T-5m to T-2m before lock"
+      snapshot_type: close
+    - phase: settle
+      timing: "next day after box scores"
+      requires: results_csv
+  ledger:
+    path: data/market_odds/nba/v9_6_sequence/v98_shadow_ledger.csv
+    append_only: true
+    dedup_key: decision_id
+    enforce_prediction_before_lock: true
+
+# ─── Promotion Gates ─────────────────────────────────────────────
+# Single source of truth. No conflicting sections.
+promotion:
+  current_status: blocked_pending_within_edge_bucket_proof
+
+  # What's already proven
+  proven_gates:
+    model_distribution_edge: true
+    walk_forward_stability: true
+    odds_validation: true
+    leakage_audit: true
+    side_specific_calibration: true
+    clv_pipeline_infrastructure: true
+
+  # What's still blocking
+  blocking_gates:
+    market_weakness_adds_value_beyond_edge: false
+    within_edge_bucket_proof: false
+    settled_tier_a_roi_positive: false
+    settled_tier_a_hit_above_55: false
+    min_100_tier_a_settled_rows: false
+    min_10_unique_slates: false
+
+  # Thresholds for promotion
+  thresholds:
+    # Shadow -> Production candidate
+    production_candidate:
+      min_settled_actionable_rows: 100
+      min_unique_slates: 10
+      min_settlement_join_rate: 0.90
+      min_clv_join_rate: 0.80
+      max_single_game_share: 0.25
+      max_single_book_share: 0.35
+      max_single_player_share: 0.10
+      require_positive_mean_clv: true
+      require_positive_roi: true
+      require_brier_better_than_market: true
+      require_market_weakness_lift_within_edge_buckets: true
+
+    # Production candidate -> Micro-live
+    micro_live:
+      min_settled_class_a_rows: 250
+      min_unique_slates: 20
+      roi_lower_confidence_bound_positive: true
+      hit_rate_lower_bound_above_breakeven: true
+      brier_monotonicity_min: 0.5
+      hit_monotonicity_min: 0.5
+
+  # Safety invariants (never disable)
+  invariants:
+    forbid_actual_minutes: true
+    forbid_residual_features: true
+    forbid_postgame_box_score_features: true
+    forbid_calibrator_only_predictions: true
+    require_prediction_before_lock: true
+    require_valid_american_odds: true
+    require_deduped_rows: true
+    append_only_ledger: true
+    require_full_distribution_prediction: true
+    forbid_market_only_side_selection: true
+    max_side_share: 0.80
+
+  # Segment reporting (required for promotion evidence)
+  segment_evidence:
+    required_segments:
+      - market
+      - side
+      - book
+      - edge_bucket
+      - weakness_bucket
+    per_segment_report:
+      - rows
+      - settled_rows
+      - hit_rate
+      - roi
+      - mean_clv
+      - positive_clv_rate
+      - brier
+    concentration_caps:
+      max_game_share: 0.25
+      max_book_share: 0.35
+      max_player_share: 0.10
+      max_market_share: 0.60
+
+# ─── Logging ─────────────────────────────────────────────────────
+logging:
+  append_only_ledger: true
+  store_reason_codes: true
+  store_model_edge_score: true
+  store_market_weakness_score: true
+  store_execution_edge: true
+  store_tier_assignment: true

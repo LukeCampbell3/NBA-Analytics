@@ -1,0 +1,49 @@
+{
+  "schema_version": "market_odds_snapshot_v1",
+  "required_fields": [
+    "snapshot_time",
+    "book",
+    "market",
+    "player",
+    "line",
+    "over_odds",
+    "under_odds",
+    "no_vig_over",
+    "no_vig_under",
+    "open_line",
+    "current_line",
+    "close_line",
+    "close_over_odds",
+    "close_under_odds"
+  ],
+  "optional_fields": [
+    "date",
+    "game_id",
+    "player_id",
+    "open_over_odds",
+    "open_under_odds",
+    "current_over_odds",
+    "current_under_odds",
+    "source",
+    "ingested_at",
+    "game_start_time",
+    "snapshot_type",
+    "is_two_sided",
+    "is_valid_american_odds",
+    "valid_american_odds_rate",
+    "close_status"
+  ],
+  "join_preference": [
+    ["game_id", "player_id", "market"],
+    ["game_id", "player", "market"],
+    ["date", "player_id", "market"],
+    ["date", "player", "market"]
+  ],
+  "notes": [
+    "Use one canonical snapshot row per player-market validation row, usually the latest available pre-lock snapshot.",
+    "current_line should match the playable line for over_odds/under_odds. If absent in source, set current_line = line.",
+    "close_* fields must be closing prices and must not be used as model features."
+    ,
+    "Valid American odds are <= -100 or >= +100. Rows outside that range must be repaired with source-specific logic or dropped before no-vig conversion."
+  ]
+}

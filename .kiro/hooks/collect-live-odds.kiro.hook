@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Collect Live NBA Odds",
+  "description": "Manually triggered hook to collect live NBA player prop odds from The Odds API free endpoints. Run at T-6h, T-90m, T-15m, and T-2m before game start to build CLV dataset forward. Uses per-event endpoint with expanded markets (PTS, TRB, AST, 3PM, STL, BLK, TOV, PRA, PR, PA, RA).",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "python Player-Predictor/scripts/collect_nba_live_odds_snapshot.py --snapshot-type prelock --append-collection --rebuild-sequence"
+  }
+}
