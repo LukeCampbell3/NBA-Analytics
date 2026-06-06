@@ -1,0 +1,30 @@
+{
+  "mode": "manual",
+  "started_at": "2026-06-06T19:00:48.178156+00:00",
+  "steps": [
+    {
+      "name": "check_freshness",
+      "status": "complete",
+      "stale_sources": 0
+    },
+    {
+      "name": "build_vectors",
+      "status": "complete",
+      "players_processed": 438
+    },
+    {
+      "name": "position_percentiles",
+      "status": "complete",
+      "players": 438
+    },
+    {
+      "name": "pairwise_fit",
+      "status": "complete",
+      "pairs_computed": 3675
+    }
+  ],
+  "errors": [],
+  "completed": true,
+  "elapsed_seconds": 10.4,
+  "completed_at": "2026-06-06T19:00:58.604778+00:00"
+}
