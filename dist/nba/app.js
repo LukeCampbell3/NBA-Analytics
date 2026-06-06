@@ -4506,14 +4506,16 @@ class PlayerCardsApp {
 
 
 
-        // Add click listeners
+        // Add click listeners - use data-player-key to find correct player after dedup
 
-        document.querySelectorAll('.player-card').forEach((card, index) => {
+        document.querySelectorAll('.player-card').forEach((card) => {
 
             card.addEventListener('click', () => {
-
-                this.showPlayerDetail(this.filteredPlayers[index], card);
-
+                const playerKey = card.getAttribute('data-player-key');
+                const player = this.filteredPlayers.find(p => this.getPlayerKey(p) === playerKey);
+                if (player) {
+                    this.showPlayerDetail(player, card);
+                }
             });
 
         });
