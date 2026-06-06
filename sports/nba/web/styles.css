@@ -3256,27 +3256,31 @@ body .about-wrap .tag {
     border-radius: 16px;
     border: 4px solid var(--family-secondary, #334155);
     overflow: hidden;
-    background: linear-gradient(180deg, #0a0e1a 0%, #111827 100%);
+    background: #0c1220;
 }
 
-/* ─── Photo Window (top 65% of card) ─── */
+/* ─── Photo Window ─── */
 .tc-photo-window {
     position: relative;
     flex: 1;
-    min-height: 240px;
+    min-height: 260px;
     overflow: hidden;
-    background: linear-gradient(180deg, #1a2744 0%, #0d1b2a 100%);
+    /* Gradient that fades from team/parallel color at top to dark at bottom */
+    background: linear-gradient(170deg, var(--family-secondary, #1e3a5f) 0%, #141e30 40%, #0c1220 100%);
 }
 
 .tc-player-photo {
     position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 85%;
+    height: 95%;
     object-fit: contain;
-    object-position: center top;
-    z-index: 1;
-    filter: brightness(1.1);
+    object-position: center bottom;
+    z-index: 2;
+    /* Bright, clean, high quality look */
+    filter: drop-shadow(0 4px 20px rgba(0,0,0,0.5)) brightness(1.08) saturate(1.05);
 }
 
 .tc-photo-gradient {
@@ -3284,20 +3288,20 @@ body .about-wrap .tag {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 30%;
-    z-index: 2;
-    background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+    height: 35%;
+    z-index: 3;
+    background: linear-gradient(0deg, #0c1220 0%, rgba(12,18,32,0.6) 50%, transparent 100%);
     pointer-events: none;
 }
 
 .tc-jersey-num {
     position: absolute;
-    top: 0.6rem;
-    left: 0.8rem;
-    z-index: 3;
-    font-size: 2rem;
+    top: 0.5rem;
+    right: 0.7rem;
+    z-index: 4;
+    font-size: 2.2rem;
     font-weight: 900;
-    color: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.08);
     font-family: 'Impact', 'Arial Black', sans-serif;
     letter-spacing: -0.02em;
     line-height: 1;
@@ -3441,85 +3445,46 @@ body .about-wrap .tag {
 }
 
 /* ═══ CARD ART/FRAME DESIGN VARIANTS ═══
-   NBA CDN only serves transparent-background bust headshots.
-   Make them VISIBLE — no dark crushing vignettes.
-   Player should be clearly lit and prominent like a real Prizm card. */
+   Subtle background/atmosphere differences. Player is always bright and clear. */
 
 .tc-art-overlay {
     position: absolute;
     inset: 0;
-    z-index: 3;
+    z-index: 1;
     pointer-events: none;
 }
 
-/* ─── PRIZM: Clean, bright, player fully visible ─── */
+/* ─── PRIZM: Clean diagonal light streak ─── */
 .art-prizm .tc-photo-window {
-    background: linear-gradient(180deg, #1a2744 0%, #0d1b2a 60%, #000 100%);
-}
-.art-prizm .tc-player-photo {
-    object-position: center top;
-    object-fit: contain;
-    filter: brightness(1.1) saturate(1.1);
+    background: linear-gradient(160deg, var(--family-secondary, #1e3a5f) 0%, #141e30 35%, #0c1220 100%);
 }
 .art-prizm .tc-art-overlay {
-    background: none;
-}
-.art-prizm .tc-photo-gradient {
-    height: 30%;
-    background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+    background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 40%);
 }
 
-/* ─── SELECT: Brighter gradient background, centered subject ─── */
+/* ─── SELECT: Spotlight glow behind player ─── */
 .art-select .tc-photo-window {
-    background: radial-gradient(ellipse at 50% 50%, #1e3a5f 0%, #0f1f35 50%, #050d18 100%);
-}
-.art-select .tc-player-photo {
-    object-position: center top;
-    object-fit: contain;
-    transform: scale(1.05);
-    filter: brightness(1.15) saturate(1.15) contrast(1.05);
+    background: radial-gradient(ellipse at 50% 60%, var(--family-secondary, #1e3a5f) 0%, #0f1926 45%, #0c1220 100%);
 }
 .art-select .tc-art-overlay {
-    background: none;
-}
-.art-select .tc-photo-gradient {
-    height: 25%;
-    background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, transparent 100%);
+    background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.03) 0%, transparent 50%);
 }
 .art-select .tc-frame-inner {
     border-width: 5px;
 }
-.art-select .tc-info-block {
-    border-top-width: 4px;
-    border-top-style: solid;
-    border-image: linear-gradient(90deg, transparent, var(--family-secondary, #64748b), var(--family-tertiary, #e2e8f0), var(--family-secondary, #64748b), transparent) 1;
-}
 
-/* ─── MOSAIC: Team-color splash background, bold and energetic ─── */
+/* ─── MOSAIC: Color accent glow at corners ─── */
 .art-mosaic .tc-photo-window {
     background:
-        radial-gradient(ellipse at 50% 60%, var(--family-secondary, #1e40af) 0%, transparent 50%),
-        linear-gradient(180deg, var(--family-primary, #0f172a) 0%, #000 100%);
-}
-.art-mosaic .tc-player-photo {
-    object-position: center top;
-    object-fit: contain;
-    transform: scale(1.08);
-    filter: brightness(1.1) saturate(1.2) contrast(1.05);
+        radial-gradient(circle at 15% 15%, var(--family-secondary, #1e40af) 0%, transparent 30%),
+        radial-gradient(circle at 85% 85%, var(--family-secondary, #1e40af) 0%, transparent 30%),
+        linear-gradient(180deg, #141e30 0%, #0c1220 100%);
 }
 .art-mosaic .tc-art-overlay {
     background: none;
 }
-.art-mosaic .tc-photo-gradient {
-    height: 30%;
-    background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, transparent 100%);
-}
 .art-mosaic .tc-frame-inner {
-    border-width: 6px;
-}
-.art-mosaic .tc-info-block {
-    background: linear-gradient(180deg, var(--family-primary, #080b12) 0%, #0d1117 100%);
-    border-top: 4px solid var(--family-secondary, #334155);
+    border-width: 5px;
 }
 
 /* ═══ PARALLEL TREATMENTS ═══ */
