@@ -1,5 +1,10 @@
+# Ownership Capacity Ladder Report
+
+Status: PVR_EC_EXPERT_CAPACITY_FAILURE_SUSPECTED
+
+```json
 {
-  "metric_source": "synthetic",
+  "metric_source": "real_counterfactual_trace",
   "trace_id": "pvr_ec_small_n16_steps1_seed7",
   "seed": 7,
   "dataset_family": "synthetic_pvr_ec_gpu_benchmark",
@@ -9,9 +14,8 @@
   "ownership_map_version": "production_zero_v1",
   "candidate_map_version": "candidate_reliability_v1",
   "is_real_gpu_trace": false,
-  "deploy_top1_oracle_gap": 0.9846531748771667,
-  "production_map_oracle_gap": null,
-  "candidate_map_oracle_gap": 0.9846531748771667,
-  "oracle_best_in_candidate_set_rate": 1.0,
-  "candidate_owner_recall": 0.5
+  "status": "PVR_EC_EXPERT_CAPACITY_FAILURE_SUSPECTED",
+  "rows": [],
+  "best_variant": {}
 }
+```

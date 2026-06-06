@@ -1,9 +1,18 @@
 {
+  "metric_source": "synthetic",
+  "trace_id": "pvr_ec_small_n16_steps1_seed7",
+  "seed": 7,
+  "dataset_family": "synthetic_pvr_ec_gpu_benchmark",
+  "sample_limit": 16,
+  "train_steps": 1,
+  "model_checkpoint": "synthetic_benchmark_generated",
+  "ownership_map_version": "production_zero_v1",
   "candidate_map_version": "candidate_reliability_v1",
+  "is_real_gpu_trace": false,
   "production_map_version": "production_zero_v1",
   "candidate_reliability_nonzero_rate": 0.125,
   "production_reliability_nonzero_rate": 0.0,
   "candidate_tensor_hash": "af993f684aa29f09c0cee97336359f69b6966fd50f1eff3ea2d15d8789cefb33401923688c2731d2a4efbaac22f1f48f371bd8b69f316586e5b4a9e224f6027d",
-  "candidate_owner_recall": 0.3125,
-  "candidate_map_oracle_gap": 1.1796753406524658
+  "candidate_owner_recall": 0.5,
+  "candidate_map_oracle_gap": 0.9846531748771667
 }

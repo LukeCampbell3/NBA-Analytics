@@ -1,0 +1,34 @@
+{
+  "metric_source": "real_forward_trace",
+  "trace_id": "pvr_ec_small_n16_steps1_seed7",
+  "seed": 7,
+  "dataset_family": "synthetic_pvr_ec_gpu_benchmark",
+  "sample_limit": 16,
+  "train_steps": 1,
+  "model_checkpoint": "synthetic_benchmark_generated",
+  "ownership_map_version": "production_zero_v1",
+  "candidate_map_version": "candidate_reliability_v1",
+  "is_real_gpu_trace": false,
+  "promotion_status": "PVR_EC_DO_NOT_PROMOTE",
+  "promotion_ready": false,
+  "status": "PVR_EC_REAL_TRACE_PROMOTION_GATE_NOT_CLEAN",
+  "checks": {
+    "frozen_candidate_reproduces_canary": false,
+    "loss_not_worse_than_deploy": true,
+    "quality_per_ms_not_worse_than_deploy": false,
+    "oracle_gap_not_worse_than_deploy": true,
+    "high_confidence_failure_not_increased": true,
+    "prototype_local_monopoly_not_increased": true,
+    "owner_changed_success_positive_when_changed": true,
+    "latency_within_1_25x_deploy": false
+  },
+  "blocked_reasons": [
+    "NO_REAL_TRACE_METRICS",
+    "OWNER_CHANGE_COUNT_ZERO",
+    "OWNER_CHANGED_LOSS_NOT_IMPROVED",
+    "QUALITY_PER_MS_REGRESSION",
+    "LATENCY_REGRESSION",
+    "FROZEN_CANDIDATE_NOT_ACTING",
+    "SEED_REPEATABILITY_FAILED"
+  ]
+}

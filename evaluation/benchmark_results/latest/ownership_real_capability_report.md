@@ -1,0 +1,30 @@
+# Ownership Real Capability Report
+
+Status: PVR_EC_REAL_CAPABILITY_IMPROVEMENT_NOT_PROVEN
+
+```json
+{
+  "metric_source": "mixed",
+  "trace_id": "pvr_ec_small_n16_steps1_seed7",
+  "seed": 7,
+  "dataset_family": "synthetic_pvr_ec_gpu_benchmark",
+  "sample_limit": 16,
+  "train_steps": 1,
+  "model_checkpoint": "synthetic_benchmark_generated",
+  "ownership_map_version": "production_zero_v1",
+  "candidate_map_version": "candidate_reliability_v1",
+  "is_real_gpu_trace": false,
+  "status": "PVR_EC_REAL_CAPABILITY_IMPROVEMENT_NOT_PROVEN",
+  "seed_count": 1,
+  "loss_mean": 0.9924142360687256,
+  "accuracy_mean": 0.75,
+  "oracle_gap_mean": 0.9846531748771667,
+  "owner_change_rate_mean": 0.0,
+  "owner_changed_success_rate_mean": null,
+  "quality_per_ms_mean": 8.093524175112288,
+  "best_capacity_loss": null,
+  "best_capacity_accuracy": null,
+  "best_capacity_quality_per_ms": null,
+  "promotion_gate_pass_rate": 0.0
+}
+```

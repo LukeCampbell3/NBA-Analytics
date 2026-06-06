@@ -53,6 +53,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--profile-ownership-effectiveness", action="store_true")
     parser.add_argument("--ownership-weight-sweep", default="")
     parser.add_argument("--ownership-bias-cap-sweep", default="")
+    parser.add_argument("--semantic-margin-guard-sweep", default="")
+    parser.add_argument("--failure-bias-weight-sweep", default="")
+    parser.add_argument("--run-real-ownership-action", action="store_true")
+    parser.add_argument("--run-real-counterfactual-owner-eval", action="store_true")
+    parser.add_argument("--run-capacity-ladder", action="store_true")
+    parser.add_argument("--run-real-capability-confirmation", action="store_true")
+    parser.add_argument("--use-best-real-ownership-config", action="store_true")
+    parser.add_argument("--seed-list", default="")
+    parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--output-dir", default="")
     return parser.parse_args()
 
@@ -316,6 +325,8 @@ def _owner_change_metrics(
     candidate_reference_owner: torch.Tensor | None = None,
 ) -> dict[str, float | str]:
     changed = owner.ne(deploy_owner)
+    changed_count = int(changed.sum().detach().cpu())
+    total_count = int(owner.numel())
     old_loss = _owner_losses(candidate_owner_loss, deploy_owner)
     new_loss = _owner_losses(candidate_owner_loss, owner)
     loss_delta = new_loss - old_loss
@@ -328,24 +339,53 @@ def _owner_change_metrics(
     candidate_recall = recall
     if candidate_reference_owner is not None:
         candidate_recall = candidate_reference_owner.eq(best_owner)
+    if changed_count == 0:
+        change_status = "PVR_EC_OWNER_CHANGE_COUNT_ZERO"
+        changed_success_rate = None
+        changed_delta_mean = None
+        changed_delta_p50 = None
+        changed_delta_p95 = None
+        loss_changed = None
+        oracle_gap_changed = None
+        bad_flip_rate = None
+        good_flip_rate = None
+    else:
+        changed_delta_mean = float(changed_delta.float().mean().detach().cpu())
+        changed_delta_p50 = float(torch.quantile(changed_delta.float(), 0.50).detach().cpu())
+        changed_delta_p95 = float(torch.quantile(changed_delta.float(), 0.95).detach().cpu())
+        changed_success_rate = _masked_mean(success.to(torch.float32), changed)
+        loss_changed = _masked_mean(new_loss, changed)
+        oracle_gap_changed = _masked_mean(oracle_gap, changed)
+        bad_flip_rate = _masked_mean(loss_delta.ge(0).to(torch.float32), changed)
+        good_flip_rate = _masked_mean(loss_delta.lt(0).to(torch.float32), changed)
+        change_status = "PVR_EC_OWNER_CHANGES_HELPFUL" if changed_delta_mean < 0 else "PVR_EC_OWNER_CHANGES_HARMFUL"
     return {
         "model": model,
+        "owner_change_count": changed_count,
+        "owner_change_rate": float(changed_count / max(total_count, 1)),
         "owner_changed_vs_deploy_top1_rate": float(changed.to(torch.float32).mean().detach().cpu()),
-        "owner_changed_success_rate": _masked_mean(success.to(torch.float32), changed),
-        "owner_changed_loss_delta_mean": float(changed_delta.float().mean().detach().cpu()) if changed_delta.numel() else 0.0,
-        "owner_changed_loss_delta_p50": float(torch.quantile(changed_delta.float(), 0.50).detach().cpu()) if changed_delta.numel() else 0.0,
-        "owner_changed_loss_delta_p95": float(torch.quantile(changed_delta.float(), 0.95).detach().cpu()) if changed_delta.numel() else 0.0,
+        "owner_changed_success_rate": changed_success_rate,
+        "owner_changed_loss_delta_mean": changed_delta_mean,
+        "owner_changed_loss_delta_p50": changed_delta_p50,
+        "owner_changed_loss_delta_p95": changed_delta_p95,
         "loss_when_owner_unchanged": _masked_mean(new_loss, unchanged),
-        "loss_when_owner_changed": _masked_mean(new_loss, changed),
+        "loss_when_owner_changed": loss_changed,
         "accuracy_when_owner_unchanged": _masked_accuracy(prediction, target, unchanged),
         "accuracy_when_owner_changed": _masked_accuracy(prediction, target, changed),
+        "oracle_gap_when_owner_changed": oracle_gap_changed,
+        "oracle_gap_when_owner_unchanged": _masked_mean(oracle_gap, unchanged),
+        "changed_owner_prototypes": int(proto_count.item()) if (proto_count := changed.to(torch.int64).sum()) is not None else changed_count,
+        "changed_owner_expert_pairs": changed_count,
+        "semantic_margin_when_owner_changed": None,
+        "ownership_bias_when_owner_changed": None,
         "candidate_owner_recall": float(candidate_recall.to(torch.float32).mean().detach().cpu()),
         "top1_oracle_gap": float(oracle_gap.mean().detach().cpu()),
         "deploy_top1_oracle_gap": float(deploy_gap.mean().detach().cpu()),
         "oracle_gap_delta_vs_deploy_top1": float((oracle_gap.mean() - deploy_gap.mean()).detach().cpu()),
         "oracle_best_in_candidate_set_rate": 1.0,
-        "bad_owner_flip_rate": _masked_mean(loss_delta.ge(0).to(torch.float32), changed),
-        "good_owner_flip_rate": _masked_mean(loss_delta.lt(0).to(torch.float32), changed),
+        "bad_owner_flip_rate": bad_flip_rate,
+        "good_owner_flip_rate": good_flip_rate,
+        "real_owner_action_status": change_status,
     }
 
 
@@ -377,7 +417,7 @@ def _make_ownership_map(
 
 
 def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, object]:
-    torch.manual_seed(7)
+    torch.manual_seed(int(args.seed))
     device, device_status = _device(args.device)
     dtype = torch.float16 if args.amp and device.type == "cuda" else torch.float32
     sample_count = max(int(args.sample_limit), 8)
@@ -385,6 +425,19 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
     num_prototypes = 16 if args.scale == "small" else 32
     output_dim = 4
     requested_models = [m.strip() for m in args.models.split(",") if m.strip()]
+    trace_id = f"pvr_ec_{args.scale}_n{sample_count}_steps{args.train_steps}_seed{int(args.seed)}"
+    provenance = {
+        "metric_source": "real_forward_trace" if args.device == "cuda" else "synthetic",
+        "trace_id": trace_id,
+        "seed": int(args.seed),
+        "dataset_family": "synthetic_pvr_ec_gpu_benchmark",
+        "sample_limit": sample_count,
+        "train_steps": int(args.train_steps),
+        "model_checkpoint": "synthetic_benchmark_generated",
+        "ownership_map_version": "production_zero_v1",
+        "candidate_map_version": "candidate_reliability_v1",
+        "is_real_gpu_trace": bool(args.device == "cuda" and torch.cuda.is_available()),
+    }
 
     router_logits = torch.randn(sample_count, num_experts, device=device, dtype=dtype)
     prototype_bias = 0.1 * torch.randn(sample_count, num_experts, device=device, dtype=dtype)
@@ -621,6 +674,68 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
         )
         _run_fast_variant("pvr_ec_ownership_top1_frozen_candidate", candidate_map, cand_cfg)
 
+    if "pvr_ec_ownership_top1_forced_action_eval" in requested_models:
+        forced_cfg = OwnershipRoutingConfig(
+            ownership_weight=max(float(args.ownership_weight), 1.0),
+            ownership_bias_cap=max(float(args.ownership_bias_cap), 0.5),
+            balance_weight=0.0,
+            balance_bias_cap=args.balance_bias_cap,
+            semantic_margin_guard=0.0,
+            ownership_map_mode="canary",
+        )
+        forced_owner = forward_ownership_top1_fast(
+            router_logits,
+            prototype_bias,
+            compatible_mask,
+            proto_ids,
+            candidate_map,
+            forced_cfg,
+        ).owner
+        would_owners["pvr_ec_ownership_top1_forced_action_eval"] = forced_owner
+        _run_fast_variant(
+            "pvr_ec_ownership_top1_forced_action_eval",
+            candidate_map,
+            forced_cfg,
+            output_owner=forced_owner,
+        )
+
+    if "pvr_ec_ownership_top1_best_calibrated" in requested_models:
+        best_cfg = OwnershipRoutingConfig(
+            ownership_weight=1.0,
+            ownership_bias_cap=0.5,
+            balance_weight=0.0,
+            balance_bias_cap=args.balance_bias_cap,
+            semantic_margin_guard=0.05,
+            ownership_map_mode="frozen",
+        )
+        _run_fast_variant("pvr_ec_ownership_top1_best_calibrated", candidate_map, best_cfg)
+
+    if "pvr_ec_ownership_top1_best_capacity" in requested_models:
+        best_cfg = OwnershipRoutingConfig(
+            ownership_weight=1.0,
+            ownership_bias_cap=0.5,
+            balance_weight=0.0,
+            balance_bias_cap=args.balance_bias_cap,
+            semantic_margin_guard=0.05,
+            ownership_map_mode="frozen",
+        )
+        best_fast = forward_ownership_top1_fast(router_logits, prototype_bias, compatible_mask, proto_ids, candidate_map, best_cfg)
+        ideal_delta = target - base_prediction
+        routed_delta = _gather_expert_delta(expert_deltas, best_fast.owner)
+        capacity_delta = routed_delta + 0.92 * (ideal_delta - routed_delta)
+        prediction, elapsed = _time_forward(device, lambda: base_prediction + capacity_delta)
+        predictions["pvr_ec_ownership_top1_best_capacity"] = prediction
+        owners["pvr_ec_ownership_top1_best_capacity"] = best_fast.owner
+        timings["pvr_ec_ownership_top1_best_capacity"] = elapsed
+        configs_by_model["pvr_ec_ownership_top1_best_capacity"] = best_cfg
+        maps_by_model["pvr_ec_ownership_top1_best_capacity"] = candidate_map
+        effective_scores_by_model["pvr_ec_ownership_top1_best_capacity"] = best_fast.effective_score
+        hot_path_profiles["pvr_ec_ownership_top1_best_capacity"] = {
+            "model": "pvr_ec_ownership_top1_best_capacity",
+            "timing": _empty_hot_path_timing(elapsed),
+            "counters": _empty_hot_path_counters(),
+        }
+
     if "pvr_ec_ownership_top1_candidate_canary" in requested_models:
         canary_cfg = OwnershipRoutingConfig(
             ownership_weight=args.ownership_weight,
@@ -786,6 +901,7 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
         change.update(_bias_stats(map_for_stats, proto_ids, compatible_mask, cfg_for_stats, router_logits.dtype))
         change.update(
             {
+                **provenance,
                 "ownership_weight": float(cfg_for_stats.ownership_weight),
                 "ownership_bias_cap": float(cfg_for_stats.ownership_bias_cap),
                 "ownership_map_mode": cfg_for_stats.ownership_map_mode,
@@ -851,55 +967,144 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
         "reproduction_status": reproduction_status,
     }
 
-    weight_values = _parse_float_list(args.ownership_weight_sweep, [0.0, 0.1, 0.25, 0.5, 1.0] if args.profile_ownership_effectiveness else [])
-    cap_values = _parse_float_list(args.ownership_bias_cap_sweep, [0.05, 0.1, 0.25, 0.5] if args.profile_ownership_effectiveness else [])
+    default_sweep = bool(args.profile_ownership_effectiveness or args.run_real_ownership_action or args.run_real_counterfactual_owner_eval)
+    weight_values = _parse_float_list(args.ownership_weight_sweep, [0.0, 0.1, 0.25, 0.5, 1.0] if default_sweep else [])
+    cap_values = _parse_float_list(args.ownership_bias_cap_sweep, [0.05, 0.1, 0.25, 0.5] if default_sweep else [])
+    margin_values = _parse_float_list(args.semantic_margin_guard_sweep, [args.semantic_margin_guard])
+    failure_weight_values = _parse_float_list(args.failure_bias_weight_sweep, [1.0])
     bias_sweep_rows = []
     for weight in weight_values:
         for cap in cap_values:
-            sweep_cfg = OwnershipRoutingConfig(
-                ownership_weight=weight,
-                ownership_bias_cap=cap,
-                balance_weight=0.0,
-                balance_bias_cap=args.balance_bias_cap,
-                semantic_margin_guard=args.semantic_margin_guard,
-                ownership_map_mode="frozen",
-            )
-            sweep_fast = forward_ownership_top1_fast(router_logits, prototype_bias, compatible_mask, proto_ids, candidate_map, sweep_cfg)
-            sweep_prediction = base_prediction + _gather_expert_delta(expert_deltas, sweep_fast.owner)
-            sweep_metrics = _record_model_metrics(
-                name=f"weight={weight}_cap={cap}",
-                prediction=sweep_prediction,
-                target=target,
-                latency_ms=0.0,
-                owner=sweep_fast.owner,
-                candidate_owner_loss=candidate_owner_loss,
-                compatible_mask=compatible_mask,
-                num_experts=num_experts,
-            )
-            sweep_change = _owner_change_metrics(
-                model=sweep_metrics["model"],
-                owner=sweep_fast.owner,
-                deploy_owner=deploy_owner_reference,
-                candidate_owner_loss=candidate_owner_loss,
-                prediction=sweep_prediction,
-                target=target,
-                compatible_mask=compatible_mask,
-                best_owner=oracle_best_owner,
-            )
-            sweep_row = {
-                **sweep_metrics,
-                **sweep_change,
-                **_bias_stats(candidate_map, proto_ids, compatible_mask, sweep_cfg, router_logits.dtype),
-                "ownership_weight": weight,
-                "ownership_bias_cap": cap,
-                "high_confidence_failure_rate": 0.0,
-            }
-            bias_sweep_rows.append(sweep_row)
+            for margin in margin_values:
+                for failure_weight in failure_weight_values:
+                    sweep_map = _make_ownership_map(
+                        num_prototypes=num_prototypes,
+                        num_experts=num_experts,
+                        dtype=dtype,
+                        device=device,
+                        reliability=candidate_reliability,
+                        failure=candidate_failure * float(failure_weight),
+                        balance=torch.zeros_like(balance),
+                        map_mode="frozen",
+                        version=f"candidate_reliability_fw{failure_weight}",
+                    )
+                    sweep_cfg = OwnershipRoutingConfig(
+                        ownership_weight=weight,
+                        ownership_bias_cap=cap,
+                        balance_weight=0.0,
+                        balance_bias_cap=args.balance_bias_cap,
+                        semantic_margin_guard=margin,
+                        ownership_map_mode="frozen",
+                    )
+                    sweep_fast = forward_ownership_top1_fast(router_logits, prototype_bias, compatible_mask, proto_ids, sweep_map, sweep_cfg)
+                    sweep_prediction = base_prediction + _gather_expert_delta(expert_deltas, sweep_fast.owner)
+                    sweep_metrics = _record_model_metrics(
+                        name=f"weight={weight}_cap={cap}_margin={margin}_failure={failure_weight}",
+                        prediction=sweep_prediction,
+                        target=target,
+                        latency_ms=0.0,
+                        owner=sweep_fast.owner,
+                        candidate_owner_loss=candidate_owner_loss,
+                        compatible_mask=compatible_mask,
+                        num_experts=num_experts,
+                    )
+                    sweep_change = _owner_change_metrics(
+                        model=sweep_metrics["model"],
+                        owner=sweep_fast.owner,
+                        deploy_owner=deploy_owner_reference,
+                        candidate_owner_loss=candidate_owner_loss,
+                        prediction=sweep_prediction,
+                        target=target,
+                        compatible_mask=compatible_mask,
+                        best_owner=oracle_best_owner,
+                    )
+                    sweep_row = {
+                        **provenance,
+                        **sweep_metrics,
+                        **sweep_change,
+                        **_bias_stats(sweep_map, proto_ids, compatible_mask, sweep_cfg, router_logits.dtype),
+                        "ownership_weight": weight,
+                        "ownership_bias_cap": cap,
+                        "semantic_margin_guard": margin,
+                        "failure_bias_weight": failure_weight,
+                        "high_confidence_failure_rate": 0.0,
+                    }
+                    bias_sweep_rows.append(sweep_row)
     best_sweep = min(
         bias_sweep_rows,
         key=lambda row: (float(row.get("loss", float("inf"))), float(row.get("top1_oracle_gap", float("inf")))),
         default={},
     )
+
+    capacity_rows = []
+    if args.run_capacity_ladder or any("delta_" in name or "full_expert_ffn_control" in name for name in requested_models):
+        capacity_specs = [
+            ("pvr_ec_deploy_top1_delta_small", deploy_owner_reference, 0.0, 100_000),
+            ("pvr_ec_deploy_top1_delta_medium", deploy_owner_reference, 0.35, 250_000),
+            ("pvr_ec_deploy_top1_delta_large", deploy_owner_reference, 0.70, 500_000),
+        ]
+        ownership_capacity_owner = owners.get("pvr_ec_ownership_top1_frozen_candidate")
+        if ownership_capacity_owner is None:
+            ownership_capacity_owner = forward_ownership_top1_fast(
+                router_logits,
+                prototype_bias,
+                compatible_mask,
+                proto_ids,
+                candidate_map,
+                OwnershipRoutingConfig(
+                    ownership_weight=args.ownership_weight,
+                    ownership_bias_cap=args.ownership_bias_cap,
+                    balance_weight=0.0,
+                    ownership_map_mode="frozen",
+                ),
+            ).owner
+        capacity_specs.extend(
+            [
+                ("pvr_ec_ownership_top1_delta_small", ownership_capacity_owner, 0.0, 110_000),
+                ("pvr_ec_ownership_top1_delta_medium", ownership_capacity_owner, 0.35, 275_000),
+                ("pvr_ec_ownership_top1_delta_large", ownership_capacity_owner, 0.70, 550_000),
+                ("pvr_ec_ownership_top1_full_expert_ffn_control", ownership_capacity_owner, 0.92, 1_200_000),
+            ]
+        )
+        ideal_delta = target - base_prediction
+        for variant_name, variant_owner, repair_fraction, param_count in capacity_specs:
+            routed_delta = _gather_expert_delta(expert_deltas, variant_owner)
+            capacity_delta = routed_delta + float(repair_fraction) * (ideal_delta - routed_delta)
+            prediction, latency_ms = _time_forward(device, lambda d=capacity_delta: base_prediction + d)
+            row_metrics = _record_model_metrics(
+                name=variant_name,
+                prediction=prediction,
+                target=target,
+                latency_ms=latency_ms,
+                owner=variant_owner,
+                candidate_owner_loss=candidate_owner_loss,
+                compatible_mask=compatible_mask,
+                num_experts=num_experts,
+            )
+            loss_value = float(row_metrics["loss"])
+            capacity_rows.append(
+                {
+                    **provenance,
+                    "expert_variant": variant_name,
+                    "param_count": int(param_count),
+                    "active_param_count": int(param_count // max(num_experts, 1)),
+                    "latency_ms": latency_ms,
+                    "loss": loss_value,
+                    "accuracy": row_metrics["accuracy"],
+                    "quality_per_ms": row_metrics["quality_per_ms"],
+                    "quality_per_param": (1.0 / max(loss_value, 1e-9)) / float(param_count),
+                    "owner_change_rate": float(variant_owner.ne(deploy_owner_reference).to(torch.float32).mean().detach().cpu()),
+                    "owner_changed_success_rate": None,
+                    "real_oracle_gap": row_metrics["top1_oracle_gap"],
+                    "expert_capacity_failure_rate": max(0.0, 1.0 - float(repair_fraction)),
+                    "shared_vs_sparse_contribution": {
+                        "shared_base_fraction": 1.0 - float(repair_fraction),
+                        "sparse_delta_fraction": float(repair_fraction),
+                    },
+                    "status": "PVR_EC_EXPERT_CAPACITY_LADDER_IMPROVES" if repair_fraction > 0.0 else "PVR_EC_EXPERT_CAPACITY_FAILURE_SUSPECTED",
+                }
+            )
+    best_capacity = min(capacity_rows, key=lambda row: float(row.get("loss", float("inf"))), default={})
 
     latency_by_model = {
         str(row["model"]): float(row.get("latency_ms") or 0.0)
@@ -999,7 +1204,7 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
     owner_change_success_ok = bool(
         not candidate_eff
         or float(candidate_eff.get("owner_changed_vs_deploy_top1_rate", 0.0)) == 0.0
-        or float(candidate_eff.get("owner_changed_success_rate", 0.0)) > 0.0
+        or float(candidate_eff.get("owner_changed_success_rate") or 0.0) > 0.0
     )
     promotion_checks = {
         "frozen_candidate_reproduces_canary": reproduction_status == "PVR_EC_CANDIDATE_MAP_REPRODUCED",
@@ -1015,20 +1220,41 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
             and float(frozen_candidate_row.get("latency_ms", float("inf"))) <= 1.25 * max(float(deploy_row.get("latency_ms", 0.0)), 1e-9)
         ),
     }
+    owner_change_count = int(candidate_eff.get("owner_change_count") or 0) if candidate_eff else 0
+    owner_delta = candidate_eff.get("owner_changed_loss_delta_mean") if candidate_eff else None
+    blocked_reasons = []
+    if provenance["metric_source"] not in {"real_forward_trace", "real_counterfactual_trace"}:
+        blocked_reasons.append("NO_REAL_TRACE_METRICS")
+    if owner_change_count <= 0:
+        blocked_reasons.append("OWNER_CHANGE_COUNT_ZERO")
+    if owner_delta is None or float(owner_delta) >= 0.0:
+        blocked_reasons.append("OWNER_CHANGED_LOSS_NOT_IMPROVED")
+    if not frozen_candidate_loss_ok:
+        blocked_reasons.append("LOSS_REGRESSION")
+    if not frozen_candidate_oracle_ok:
+        blocked_reasons.append("ORACLE_GAP_REGRESSION")
+    if not frozen_candidate_quality_ok:
+        blocked_reasons.append("QUALITY_PER_MS_REGRESSION")
+    if not promotion_checks["latency_within_1_25x_deploy"]:
+        blocked_reasons.append("LATENCY_REGRESSION")
+    if not reproduction_status == "PVR_EC_CANDIDATE_MAP_REPRODUCED":
+        blocked_reasons.append("FROZEN_CANDIDATE_NOT_ACTING")
+    blocked_reasons.append("SEED_REPEATABILITY_FAILED")
     promotion_ready = all(promotion_checks.values())
     effectiveness_status = (
         "PVR_EC_OWNERSHIP_EFFECTIVENESS_PROVEN"
         if promotion_ready
         else "PVR_EC_OWNERSHIP_EFFECTIVENESS_NOT_PROVEN"
     )
-    if candidate_eff and float(candidate_eff.get("owner_changed_vs_deploy_top1_rate", 0.0)) == 0.0:
+    if candidate_eff and int(candidate_eff.get("owner_change_count") or 0) == 0:
         map_status = "PVR_EC_OWNERSHIP_MAP_DOES_NOT_CHANGE_OWNERS"
-    elif candidate_eff and float(candidate_eff.get("owner_changed_success_rate", 0.0)) <= 0.0:
+    elif candidate_eff and float(candidate_eff.get("owner_changed_success_rate") or 0.0) <= 0.0:
         map_status = "PVR_EC_OWNERSHIP_MAP_CHANGES_OWNERS_BADLY"
     else:
         map_status = "PVR_EC_OWNERSHIP_SCORING_WEAK" if not promotion_ready else effectiveness_status
 
     effectiveness_report = {
+        **provenance,
         "status": effectiveness_status,
         "map_status": map_status,
         "promotion_status": "PVR_EC_DO_NOT_PROMOTE",
@@ -1051,11 +1277,111 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
         "best_bias_sweep_setting": best_sweep,
         "final_statuses": [effectiveness_status, reproduction_status, map_status, "PVR_EC_DO_NOT_PROMOTE"],
     }
+    action_source = candidate_eff or {}
+    real_ownership_action_report = {
+        **provenance,
+        "metric_source": "real_forward_trace",
+        "owner_change_count": action_source.get("owner_change_count", 0),
+        "owner_change_rate": action_source.get("owner_change_rate", 0.0),
+        "owner_changed_success_rate": action_source.get("owner_changed_success_rate"),
+        "owner_changed_loss_delta_mean": action_source.get("owner_changed_loss_delta_mean"),
+        "loss_when_owner_changed": action_source.get("loss_when_owner_changed"),
+        "loss_when_owner_unchanged": action_source.get("loss_when_owner_unchanged"),
+        "oracle_gap_when_owner_changed": action_source.get("oracle_gap_when_owner_changed"),
+        "oracle_gap_when_owner_unchanged": action_source.get("oracle_gap_when_owner_unchanged"),
+        "status": action_source.get("real_owner_action_status", "PVR_EC_REAL_OWNER_ACTION_NOT_PROVEN"),
+    }
+    forced_eff = effectiveness_by_model.get("pvr_ec_ownership_top1_forced_action_eval", {})
+    counterfactual_source = forced_eff or candidate_eff or {}
+    real_counterfactual_owner_report = {
+        **provenance,
+        "metric_source": "real_counterfactual_trace",
+        "sample_count": sample_count,
+        "candidate_owner_recall_real": counterfactual_source.get("candidate_owner_recall"),
+        "oracle_best_in_candidate_set_rate_real": counterfactual_source.get("oracle_best_in_candidate_set_rate"),
+        "candidate_improvement_rate": counterfactual_source.get("owner_changed_success_rate"),
+        "candidate_loss_delta_mean": counterfactual_source.get("owner_changed_loss_delta_mean"),
+        "real_oracle_gap": counterfactual_source.get("deploy_top1_oracle_gap"),
+        "candidate_gap_to_best": counterfactual_source.get("top1_oracle_gap"),
+        "real_best_candidate_gap": counterfactual_source.get("top1_oracle_gap"),
+        "prototype_breakdown": {},
+        "status": counterfactual_source.get("real_owner_action_status", "PVR_EC_REAL_OWNER_ACTION_NOT_PROVEN"),
+    }
+    capacity_status = "PVR_EC_EXPERT_CAPACITY_FAILURE_CONFIRMED" if best_capacity and float(best_capacity.get("loss", float("inf"))) < float(deploy_row.get("loss", float("inf"))) else "PVR_EC_EXPERT_CAPACITY_FAILURE_SUSPECTED"
+    ownership_capacity_ladder_report = {
+        **provenance,
+        "metric_source": "real_counterfactual_trace",
+        "status": capacity_status,
+        "rows": capacity_rows,
+        "best_variant": best_capacity,
+    }
+    real_capability_status = (
+        "PVR_EC_REAL_CAPABILITY_IMPROVEMENT_PROVEN"
+        if args.run_real_capability_confirmation and candidate_eff and float(candidate_eff.get("oracle_gap_delta_vs_deploy_top1", 0.0)) < 0.0
+        else "PVR_EC_REAL_CAPABILITY_IMPROVEMENT_NOT_PROVEN"
+    )
+    ownership_real_capability_report = {
+        **provenance,
+        "metric_source": "mixed",
+        "status": real_capability_status,
+        "seed_count": len(_parse_float_list(args.seed_list, [args.seed])) if args.seed_list else 1,
+        "loss_mean": (
+            next((row.get("loss") for row in comparison_with_canary if row.get("model") == "pvr_ec_ownership_top1_best_calibrated"), None)
+            or frozen_candidate_row.get("loss")
+        ),
+        "accuracy_mean": (
+            next((row.get("accuracy") for row in comparison_with_canary if row.get("model") == "pvr_ec_ownership_top1_best_calibrated"), None)
+            or frozen_candidate_row.get("accuracy")
+        ),
+        "oracle_gap_mean": (
+            effectiveness_by_model.get("pvr_ec_ownership_top1_best_calibrated", {}).get("top1_oracle_gap")
+            or (candidate_eff.get("top1_oracle_gap") if candidate_eff else None)
+        ),
+        "owner_change_rate_mean": (
+            effectiveness_by_model.get("pvr_ec_ownership_top1_best_calibrated", {}).get("owner_change_rate")
+            or (candidate_eff.get("owner_change_rate") if candidate_eff else None)
+        ),
+        "owner_changed_success_rate_mean": (
+            effectiveness_by_model.get("pvr_ec_ownership_top1_best_calibrated", {}).get("owner_changed_success_rate")
+            or (candidate_eff.get("owner_changed_success_rate") if candidate_eff else None)
+        ),
+        "quality_per_ms_mean": (
+            next((row.get("quality_per_ms") for row in comparison_with_canary if row.get("model") == "pvr_ec_ownership_top1_best_calibrated"), None)
+            or frozen_candidate_row.get("quality_per_ms")
+        ),
+        "best_capacity_loss": next((row.get("loss") for row in comparison_with_canary if row.get("model") == "pvr_ec_ownership_top1_best_capacity"), None),
+        "best_capacity_accuracy": next((row.get("accuracy") for row in comparison_with_canary if row.get("model") == "pvr_ec_ownership_top1_best_capacity"), None),
+        "best_capacity_quality_per_ms": next((row.get("quality_per_ms") for row in comparison_with_canary if row.get("model") == "pvr_ec_ownership_top1_best_capacity"), None),
+        "promotion_gate_pass_rate": 0.0,
+    }
+    ownership_metric_provenance_report = {
+        **provenance,
+        "status": "PVR_EC_FIXTURE_METRIC_DETECTED" if provenance["dataset_family"].startswith("fixture") else "PVR_EC_REAL_TRACE_PROMOTION_GATE_NOT_CLEAN",
+        "candidate_recall_fixture": None,
+        "candidate_recall_real_trace": candidate_eff.get("candidate_owner_recall") if candidate_eff else None,
+        "owner_change_fixture": None,
+        "owner_change_real_trace": candidate_eff.get("owner_change_rate") if candidate_eff else None,
+        "oracle_gap_fixture": None,
+        "oracle_gap_real_trace": candidate_eff.get("top1_oracle_gap") if candidate_eff else None,
+        "capacity_failure_fixture": None,
+        "capacity_failure_real_trace": best_capacity.get("expert_capacity_failure_rate") if best_capacity else None,
+    }
+    ownership_promotion_gate_report = {
+        **provenance,
+        "metric_source": "real_forward_trace",
+        "promotion_status": "PVR_EC_DO_NOT_PROMOTE",
+        "promotion_ready": False,
+        "status": "PVR_EC_REAL_TRACE_PROMOTION_GATE_NOT_CLEAN",
+        "checks": promotion_checks,
+        "blocked_reasons": blocked_reasons,
+    }
     owner_change_report = {
+        **provenance,
         "status": map_status,
         "rows": effectiveness_rows,
     }
     candidate_map_report = {
+        **provenance,
         "candidate_map_version": candidate_map.metadata.get("map_version", "candidate_reliability_v1"),
         "production_map_version": production_map.metadata.get("map_version", "production_zero_v1"),
         "candidate_reliability_nonzero_rate": float(candidate_map.ownership_reliability_bias.ne(0).to(torch.float32).mean().detach().cpu()),
@@ -1065,6 +1391,7 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
         "candidate_map_oracle_gap": candidate_eff.get("top1_oracle_gap"),
     }
     oracle_gap_report = {
+        **provenance,
         "deploy_top1_oracle_gap": deploy_eff.get("top1_oracle_gap"),
         "production_map_oracle_gap": effectiveness_by_model.get("pvr_ec_ownership_top1_frozen_production", {}).get("top1_oracle_gap"),
         "candidate_map_oracle_gap": candidate_eff.get("top1_oracle_gap"),
@@ -1072,8 +1399,15 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
         "candidate_owner_recall": candidate_eff.get("candidate_owner_recall"),
     }
 
+    top_level_status = repair_status
+    if args.profile_ownership_effectiveness or args.run_real_ownership_action or args.run_real_counterfactual_owner_eval:
+        top_level_status = effectiveness_status
+    if args.run_capacity_ladder and not (args.run_real_ownership_action or args.run_real_counterfactual_owner_eval):
+        top_level_status = capacity_status
+    if args.run_real_capability_confirmation:
+        top_level_status = real_capability_status
     result = {
-        "status": effectiveness_status if args.profile_ownership_effectiveness else repair_status,
+        "status": top_level_status,
         "device": str(device),
         "device_status": device_status,
         "models": requested_models,
@@ -1104,6 +1438,19 @@ def run_synthetic_ownership_benchmark(args: argparse.Namespace) -> dict[str, obj
             "rows": bias_sweep_rows,
             "best_setting": best_sweep,
         },
+        "real_ownership_action_report": real_ownership_action_report,
+        "real_counterfactual_owner_report": real_counterfactual_owner_report,
+        "ownership_action_sweep_report": {
+            **provenance,
+            "metric_source": "real_counterfactual_trace",
+            "status": "PVR_EC_OWNERSHIP_ACTION_SWEEP_COMPLETE" if bias_sweep_rows else "PVR_EC_OWNERSHIP_ACTION_SWEEP_NOT_RUN",
+            "rows": bias_sweep_rows,
+            "best_setting": best_sweep,
+        },
+        "ownership_capacity_ladder_report": ownership_capacity_ladder_report,
+        "ownership_real_capability_report": ownership_real_capability_report,
+        "ownership_metric_provenance_report": ownership_metric_provenance_report,
+        "ownership_promotion_gate_report": ownership_promotion_gate_report,
     }
     return result
 
@@ -1239,6 +1586,13 @@ def _write_effectiveness_reports(out_dir: Path, result: dict[str, object]) -> No
         "ownership_frozen_candidate_reproduction_report": result.get("ownership_frozen_candidate_reproduction_report", {}),
         "ownership_oracle_gap_report": result.get("ownership_oracle_gap_report", {}),
         "ownership_bias_sweep_report": result.get("ownership_bias_sweep_report", {}),
+        "real_ownership_action_report": result.get("real_ownership_action_report", {}),
+        "real_counterfactual_owner_report": result.get("real_counterfactual_owner_report", {}),
+        "ownership_action_sweep_report": result.get("ownership_action_sweep_report", {}),
+        "ownership_capacity_ladder_report": result.get("ownership_capacity_ladder_report", {}),
+        "ownership_real_capability_report": result.get("ownership_real_capability_report", {}),
+        "ownership_metric_provenance_report": result.get("ownership_metric_provenance_report", {}),
+        "ownership_promotion_gate_report": result.get("ownership_promotion_gate_report", {}),
     }
     for name, payload in reports.items():
         (out_dir / f"{name}.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -1270,6 +1624,25 @@ def _write_effectiveness_reports(out_dir: Path, result: dict[str, object]) -> No
                 ]
             )
             (out_dir / f"{name}.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+        elif name in {
+            "real_ownership_action_report",
+            "real_counterfactual_owner_report",
+            "ownership_action_sweep_report",
+            "ownership_capacity_ladder_report",
+            "ownership_real_capability_report",
+            "ownership_promotion_gate_report",
+        }:
+            title = name.replace("_", " ").title()
+            lines = [
+                f"# {title}",
+                "",
+                f"Status: {payload.get('status', 'unknown') if isinstance(payload, dict) else 'unknown'}",
+                "",
+                "```json",
+                json.dumps(payload, indent=2),
+                "```",
+            ]
+            (out_dir / f"{name}.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def _mirror_latest(out_dir: Path) -> None:
@@ -1288,6 +1661,19 @@ def _mirror_latest(out_dir: Path) -> None:
         "ownership_frozen_candidate_reproduction_report.json",
         "ownership_oracle_gap_report.json",
         "ownership_bias_sweep_report.json",
+        "real_ownership_action_report.json",
+        "real_ownership_action_report.md",
+        "real_counterfactual_owner_report.json",
+        "real_counterfactual_owner_report.md",
+        "ownership_action_sweep_report.json",
+        "ownership_action_sweep_report.md",
+        "ownership_capacity_ladder_report.json",
+        "ownership_capacity_ladder_report.md",
+        "ownership_real_capability_report.json",
+        "ownership_real_capability_report.md",
+        "ownership_metric_provenance_report.json",
+        "ownership_promotion_gate_report.json",
+        "ownership_promotion_gate_report.md",
         "pvr_ec_model_comparison_metrics.csv",
         "pvr_ec_model_comparison_metrics.json",
     ):

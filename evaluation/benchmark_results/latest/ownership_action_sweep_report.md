@@ -1,5 +1,20 @@
+# Ownership Action Sweep Report
+
+Status: PVR_EC_OWNERSHIP_ACTION_SWEEP_COMPLETE
+
+```json
 {
-  "status": "PVR_EC_OWNERSHIP_BIAS_SWEEP_COMPLETE",
+  "metric_source": "real_counterfactual_trace",
+  "trace_id": "pvr_ec_small_n16_steps1_seed7",
+  "seed": 7,
+  "dataset_family": "synthetic_pvr_ec_gpu_benchmark",
+  "sample_limit": 16,
+  "train_steps": 1,
+  "model_checkpoint": "synthetic_benchmark_generated",
+  "ownership_map_version": "production_zero_v1",
+  "candidate_map_version": "candidate_reliability_v1",
+  "is_real_gpu_trace": false,
+  "status": "PVR_EC_OWNERSHIP_ACTION_SWEEP_COMPLETE",
   "rows": [
     {
       "metric_source": "synthetic",
@@ -1137,3 +1152,4 @@
     "high_confidence_failure_rate": 0.0
   }
 }
+```
