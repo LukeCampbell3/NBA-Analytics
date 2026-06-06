@@ -5072,7 +5072,7 @@ class PlayerCardsApp {
 
 
 
-        // Card art style � deterministic per player for variety
+        // Card art style * deterministic per player for variety
 
         // These create different FRAME DESIGNS (like Prizm vs Select vs Mosaic)
 
@@ -5850,13 +5850,13 @@ class PlayerCardsApp {
 
                                     </div>
 
-                                    <div class="comparable-meta">${comp.team} â€¢ ${this.formatArchetype(comp.archetype)}</div>
+                                    <div class="comparable-meta">${comp.team} *** ${this.formatArchetype(comp.archetype)}</div>
 
                                     <div class="comparable-stats">
 
-                                        ${comp.stats.points.toFixed(1)} PPG â€¢ 
+                                        ${comp.stats.points.toFixed(1)} PPG *** 
 
-                                        ${comp.stats.assists.toFixed(1)} APG â€¢ 
+                                        ${comp.stats.assists.toFixed(1)} APG *** 
 
                                         ${comp.stats.rebounds.toFixed(1)} RPG
 
@@ -6280,7 +6280,7 @@ class PlayerCardsApp {
 
                         <div class="constraint-item">
 
-                            <span class="constraint-icon">•</span>
+                            <span class="constraint-icon">*</span>
 
                             <span class="constraint-text"><strong>${c.clamp}</strong> (${(100 * (c.severity || 0)).toFixed(0)}%): ${c.message} Unlock path: ${c.unlock}</span>
 
@@ -6290,7 +6290,7 @@ class PlayerCardsApp {
 
                         <div class="constraint-item">
 
-                            <span class="constraint-icon">•</span>
+                            <span class="constraint-icon">*</span>
 
                             <span class="constraint-text">No explicit clamp fire events were triggered for this scenario.</span>
 
@@ -7008,7 +7008,7 @@ class PlayerCardsApp {
 
         if (!label) return 'TEAM';
 
-        return label.replace(/^\d{4}\s*[-â€“]\s*\d{2,4}\s+/u, '').trim();
+        return label.replace(/^\d{4}\s*[-**"]\s*\d{2,4}\s+/u, '').trim();
 
     }
 
@@ -8856,19 +8856,19 @@ class PlayerCardsApp {
 
                 if ((trad.blocks_per_game || 0) > 1.5) {
 
-                    insights.push({ icon: '•', text: `Elite rim protector with ${trad.blocks_per_game.toFixed(1)} BPG` });
+                    insights.push({ icon: '*', text: `Elite rim protector with ${trad.blocks_per_game.toFixed(1)} BPG` });
 
                 }
 
                 if ((trad.rebounds_per_game || 0) > 10) {
 
-                    insights.push({ icon: '•', text: `Dominant rebounder at ${trad.rebounds_per_game.toFixed(1)} RPG` });
+                    insights.push({ icon: '*', text: `Dominant rebounder at ${trad.rebounds_per_game.toFixed(1)} RPG` });
 
                 }
 
                 if ((shot.rim_frequency || 0) > 0.6) {
 
-                    insights.push({ icon: '•', text: `${((shot.rim_frequency || 0) * 100).toFixed(0)}% of shots at the rim` });
+                    insights.push({ icon: '*', text: `${((shot.rim_frequency || 0) * 100).toFixed(0)}% of shots at the rim` });
 
                 }
 
@@ -8880,19 +8880,19 @@ class PlayerCardsApp {
 
                 if ((trad.field_goal_pct || 0) > 0.55) {
 
-                    insights.push({ icon: '•', text: `Efficient finisher at ${((trad.field_goal_pct || 0) * 100).toFixed(1)}% FG` });
+                    insights.push({ icon: '*', text: `Efficient finisher at ${((trad.field_goal_pct || 0) * 100).toFixed(1)}% FG` });
 
                 }
 
                 if ((creation.paint_touches_per_game || 0) > 8) {
 
-                    insights.push({ icon: '•', text: `High paint activity: ${creation.paint_touches_per_game.toFixed(1)} touches/game` });
+                    insights.push({ icon: '*', text: `High paint activity: ${creation.paint_touches_per_game.toFixed(1)} touches/game` });
 
                 }
 
                 if ((creation.assisted_rate || 0) > 0.7) {
 
-                    insights.push({ icon: '•', text: `Team-oriented: ${((creation.assisted_rate || 0) * 100).toFixed(0)}% assisted` });
+                    insights.push({ icon: '*', text: `Team-oriented: ${((creation.assisted_rate || 0) * 100).toFixed(0)}% assisted` });
 
                 }
 
@@ -8904,19 +8904,19 @@ class PlayerCardsApp {
 
                 if ((trad.three_point_pct || 0) > 0.35) {
 
-                    insights.push({ icon: '•', text: `Reliable shooter at ${((trad.three_point_pct || 0) * 100).toFixed(1)}% from three` });
+                    insights.push({ icon: '*', text: `Reliable shooter at ${((trad.three_point_pct || 0) * 100).toFixed(1)}% from three` });
 
                 }
 
                 if ((shot.three_point_frequency || 0) > 0.3) {
 
-                    insights.push({ icon: '•', text: `Modern big: ${((shot.three_point_frequency || 0) * 100).toFixed(0)}% of shots from three` });
+                    insights.push({ icon: '*', text: `Modern big: ${((shot.three_point_frequency || 0) * 100).toFixed(0)}% of shots from three` });
 
                 }
 
                 if ((trad.rebounds_per_game || 0) > 8) {
 
-                    insights.push({ icon: '•', text: `Two-way value with ${trad.rebounds_per_game.toFixed(1)} RPG` });
+                    insights.push({ icon: '*', text: `Two-way value with ${trad.rebounds_per_game.toFixed(1)} RPG` });
 
                 }
 
@@ -8928,19 +8928,19 @@ class PlayerCardsApp {
 
                 if ((trad.points_per_game || 0) > 15 && (trad.assists_per_game || 0) > 3) {
 
-                    insights.push({ icon: '•', text: `Dual threat: ${trad.points_per_game.toFixed(1)} PPG, ${trad.assists_per_game.toFixed(1)} APG` });
+                    insights.push({ icon: '*', text: `Dual threat: ${trad.points_per_game.toFixed(1)} PPG, ${trad.assists_per_game.toFixed(1)} APG` });
 
                 }
 
                 if ((trad.steals_per_game || 0) > 1.0) {
 
-                    insights.push({ icon: '•', text: `Defensive playmaker with ${trad.steals_per_game.toFixed(1)} SPG` });
+                    insights.push({ icon: '*', text: `Defensive playmaker with ${trad.steals_per_game.toFixed(1)} SPG` });
 
                 }
 
                 if ((adv.usage_rate ?? 0) > 0.25) {
 
-                    insights.push({ icon: '•', text: `High usage player at ${((adv.usage_rate ?? 0) * 100).toFixed(1)}%` });
+                    insights.push({ icon: '*', text: `High usage player at ${((adv.usage_rate ?? 0) * 100).toFixed(1)}%` });
 
                 }
 
@@ -8980,11 +8980,11 @@ class PlayerCardsApp {
 
         if (trustScore >= 80) {
 
-            insights.push({ icon: '•', text: `High data reliability (${trustScore.toFixed(0)} trust score)` });
+            insights.push({ icon: '*', text: `High data reliability (${trustScore.toFixed(0)} trust score)` });
 
         } else if (trustScore < 60) {
 
-            insights.push({ icon: '•', text: `Limited data (${trustScore.toFixed(0)} trust score)` });
+            insights.push({ icon: '*', text: `Limited data (${trustScore.toFixed(0)} trust score)` });
 
         }
 
@@ -9010,7 +9010,7 @@ class PlayerCardsApp {
 
             const topComp = player.comparables.similar_players[0];
 
-            insights.push({ icon: '•', text: `Most similar to ${topComp.name} (${(topComp.similarity_score * 100).toFixed(0)}%)` });
+            insights.push({ icon: '*', text: `Most similar to ${topComp.name} (${(topComp.similarity_score * 100).toFixed(0)}%)` });
 
         }
 
@@ -9018,7 +9018,7 @@ class PlayerCardsApp {
 
         if (insights.length === 0) {
 
-            insights.push({ icon: '•', text: 'Standard archetype profile' });
+            insights.push({ icon: '*', text: 'Standard archetype profile' });
 
         }
 
@@ -9198,7 +9198,7 @@ class PlayerCardsApp {
 
                         <div class="constraint-item">
 
-                            <span class="constraint-icon">•</span>
+                            <span class="constraint-icon">*</span>
 
                             <span class="constraint-text">${r}</span>
 
@@ -9222,7 +9222,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text"><strong>Status:</strong> ${String(minutesGovernance.visible_status || 'watch').toUpperCase()} (${(minutesGovernance.mpg || 0).toFixed(1)} MPG, ${(minutesGovernance.games_played || 0).toFixed(0)} GP).</span>
 
@@ -9230,7 +9230,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text"><strong>Evidence penalty:</strong> ${((minutesGovernance.evidence_penalty || 0) * 100).toFixed(1)}%, <strong>feasibility penalty:</strong> ${((minutesGovernance.feasibility_penalty || 0) * 100).toFixed(1)}%.</span>
 
@@ -9238,7 +9238,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text">${minutesGovernance.reason || 'Minutes gate reason unavailable.'}</span>
 
@@ -9258,7 +9258,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text">${fitScenario.signal_strength === 'weak'
 
@@ -9278,7 +9278,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text">Signal strength: <strong>${(fitScenario.signal_strength || 'weak').toUpperCase()}</strong> (edge over next option ${(100 * (fitScenario.fit_gap || 0)).toFixed(1)}%)</span>
 
@@ -9286,7 +9286,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text"><strong>Projected role:</strong> ${draftContext.projected_role || this.inferProjectedRole(player)}. Team role need ${(100 * (draftContext.role_need_score || 0)).toFixed(0)}%, skill match ${(100 * (draftContext.skill_match_score || 0)).toFixed(0)}%.</span>
 
@@ -9294,7 +9294,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text"><strong>Growth path:</strong> ${(100 * (draftContext.growth_fit_score || 0)).toFixed(0)}% runway (${String(draftContext.growth_outlook || 'moderate').toUpperCase()}) from minutes opportunity + development environment.</span>
 
@@ -9304,7 +9304,7 @@ class PlayerCardsApp {
 
                         <div class="constraint-item">
 
-                            <span class="constraint-icon">•</span>
+                            <span class="constraint-icon">*</span>
 
                             <span class="constraint-text">${reason}</span>
 
@@ -9314,7 +9314,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text">Scheme complementarity ${(100 * (fitScenario.score_breakdown?.scheme_complementarity || 0)).toFixed(0)}% (creation, spacing, off-ball, and defensive role alignment)</span>
 
@@ -9324,7 +9324,7 @@ class PlayerCardsApp {
 
                         <div class="constraint-item">
 
-                            <span class="constraint-icon">•</span>
+                            <span class="constraint-icon">*</span>
 
                             <span class="constraint-text">Next best fits: ${fitScenario.alternatives.slice(1).map(a => `${a.team} (${(a.fit_score * 100).toFixed(0)}%)`).join(', ')}</span>
 
@@ -9364,7 +9364,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text">Composite contribution strength: <strong>${(contributionStrength * 100).toFixed(0)}%</strong> for ${fitScenario.team === 'No Clear Team Edge' ? 'exploratory context' : fitScenario.team}.</span>
 
@@ -9372,7 +9372,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text">Portability ${(mechanism.portability_score * 100).toFixed(0)}% and clamp pressure ${(mechanism.clamp_severity * 100).toFixed(0)}% shape whether this value translates in-game.</span>
 
@@ -9434,7 +9434,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text">Base vector ${(100 * (valueDecomposition.base_score || 0)).toFixed(0)}% vs team-weighted ${(100 * (valueDecomposition.team_weighted_score || 0)).toFixed(0)}%.</span>
 
@@ -9444,7 +9444,7 @@ class PlayerCardsApp {
 
                         <div class="constraint-item">
 
-                            <span class="constraint-icon">•</span>
+                            <span class="constraint-icon">*</span>
 
                             <span class="constraint-text"><strong>${b.label}</strong>: ${(100 * (b.value || 0)).toFixed(0)}% with team weight ${(100 * (b.team_weight || 0)).toFixed(0)}%.</span>
 
@@ -9538,7 +9538,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text"><strong>Verdict:</strong> ${String(impactAudit.verdict || 'insufficient_data').replace('_', ' ').toUpperCase()} (prior disagreement ${(100 * (impactAudit.disagreement ?? mechanism.impact_prior_disagreement ?? 0)).toFixed(0)}%).</span>
 
@@ -9546,7 +9546,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text"><strong>Consensus prior:</strong> ${impactAudit.consensus === null || impactAudit.consensus === undefined ? 'N/A' : impactAudit.consensus.toFixed(2)} from available EPM/LEBRON anchors.</span>
 
@@ -9556,7 +9556,7 @@ class PlayerCardsApp {
 
                         <div class="constraint-item">
 
-                            <span class="constraint-icon">•</span>
+                            <span class="constraint-icon">*</span>
 
                             <span class="constraint-text">${j}</span>
 
@@ -9566,7 +9566,7 @@ class PlayerCardsApp {
 
                         <div class="constraint-item">
 
-                            <span class="constraint-icon">•</span>
+                            <span class="constraint-icon">*</span>
 
                             <span class="constraint-text>No mandatory contradiction justification triggered.</span>
 
@@ -9588,7 +9588,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text"><strong>${defenseRole.primary_role || 'Unknown'}</strong> profile with targeting risk ${(100 * (defenseRole.targeting_risk || 0)).toFixed(0)}% (G ${(100 * (defenseRole.role_mix?.guards || 0)).toFixed(0)} / W ${(100 * (defenseRole.role_mix?.wings || 0)).toFixed(0)} / B ${(100 * (defenseRole.role_mix?.bigs || 0)).toFixed(0)}).</span>
 
@@ -9598,7 +9598,7 @@ class PlayerCardsApp {
 
                         <div class="constraint-item">
 
-                            <span class="constraint-icon">•</span>
+                            <span class="constraint-icon">*</span>
 
                             <span class="constraint-text">${w}</span>
 
@@ -9620,7 +9620,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text">Evidence coverage ${(100 * (evidence.coverage_effective || evidence.coverage || 0)).toFixed(0)}% (${String(evidence.grade || 'moderate').toUpperCase()}); confidence penalty ${(100 * (evidence.penalty_total || evidence.penalty || 0)).toFixed(1)}%.</span>
 
@@ -9628,7 +9628,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text">${evidence.missing && evidence.missing.length ? `Missing inputs: ${evidence.missing.slice(0, 6).join(', ')}` : 'No major required fields missing for mechanism audit.'}</span>
 
@@ -9648,7 +9648,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text"><strong>${ecosystemValidated ? 'Validated ecosystem breakout path.' : 'Ecosystem path not validated.'}</strong> Hidden skill ${(100 * (hiddenSkillSignal || 0)).toFixed(0)}%, utilization uplift ${(100 * (utilizationUplift || 0)).toFixed(0)}%.</span>
 
@@ -9670,7 +9670,7 @@ class PlayerCardsApp {
 
                         <div class="constraint-item">
 
-                            <span class="constraint-icon">•</span>
+                            <span class="constraint-icon">*</span>
 
                             <span class="constraint-text"><strong>${c.clamp}</strong> (${(100 * (c.severity || 0)).toFixed(0)}%): ${c.message} Unlock path: ${c.unlock}</span>
 
@@ -9680,7 +9680,7 @@ class PlayerCardsApp {
 
                         <div class="constraint-item">
 
-                            <span class="constraint-icon">•</span>
+                            <span class="constraint-icon">*</span>
 
                             <span class="constraint-text">No explicit clamp events fired in this scenario.</span>
 
@@ -9702,7 +9702,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text"><strong>Skill signal:</strong> spacing gravity ${(mechanism.spacing_gravity_skill * 100).toFixed(0)}% + portability ${(mechanism.portability_score * 100).toFixed(0)}% create scalable role fit.</span>
 
@@ -9710,7 +9710,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text"><strong>Context translation:</strong> suppression relief ${(mechanism.suppression_relief * 100).toFixed(0)}% implies this team can convert hidden skills into usable possessions.</span>
 
@@ -9718,7 +9718,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text"><strong>Feasibility check:</strong> clamp pressure ${(mechanism.clamp_severity * 100).toFixed(0)}% limits upside if role/minutes/usage caps are tight.</span>
 
@@ -9726,7 +9726,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text"><strong>Claim strength:</strong> prior disagreement ${(mechanism.impact_prior_disagreement * 100).toFixed(0)}% and confidence ${(mechanism.confidence * 100).toFixed(0)}% determine reliability of this scenario.</span>
 
@@ -9752,7 +9752,7 @@ class PlayerCardsApp {
 
                             <span class="current-value">${currentPPG.toFixed(1)}</span>
 
-                            <span class="projection-arrow">â†’</span>
+                            <span class="projection-arrow">**'</span>
 
                             <span class="projected-value">${projectedPPG.toFixed(1)}</span>
 
@@ -9772,7 +9772,7 @@ class PlayerCardsApp {
 
                             <span class="current-value">${currentAPG.toFixed(1)}</span>
 
-                            <span class="projection-arrow">â†’</span>
+                            <span class="projection-arrow">**'</span>
 
                             <span class="projected-value">${projectedAPG.toFixed(1)}</span>
 
@@ -9792,7 +9792,7 @@ class PlayerCardsApp {
 
                             <span class="current-value">${currentRPG.toFixed(1)}</span>
 
-                            <span class="projection-arrow">â†’</span>
+                            <span class="projection-arrow">**'</span>
 
                             <span class="projected-value">${projectedRPG.toFixed(1)}</span>
 
@@ -9812,7 +9812,7 @@ class PlayerCardsApp {
 
                             <span class="current-value">${(currentUsage * 100).toFixed(1)}%</span>
 
-                            <span class="projection-arrow">â†’</span>
+                            <span class="projection-arrow">**'</span>
 
                             <span class="projected-value">${(projectedUsage * 100).toFixed(1)}%</span>
 
@@ -9832,7 +9832,7 @@ class PlayerCardsApp {
 
                             <span class="current-value">${currentMinutes.toFixed(1)}</span>
 
-                            <span class="projection-arrow">â†’</span>
+                            <span class="projection-arrow">**'</span>
 
                             <span class="projected-value">${projectedMinutes.toFixed(1)}</span>
 
@@ -9860,7 +9860,7 @@ class PlayerCardsApp {
 
                         <div class="constraint-item">
 
-                            <span class="constraint-icon">•</span>
+                            <span class="constraint-icon">*</span>
 
                             <span class="constraint-text">${constraint}</span>
 
@@ -9888,7 +9888,7 @@ class PlayerCardsApp {
 
                         <div class="constraint-item">
 
-                            <span class="constraint-icon">•</span>
+                            <span class="constraint-icon">*</span>
 
                             <span class="constraint-text">${constraint}</span>
 
@@ -9912,7 +9912,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text">PPG rises by ${((projectedPPG - currentPPG)).toFixed(1)} from combined usage/minutes lift (impact mix ${ppgBoostPct.toFixed(0)}%).</span>
 
@@ -9920,7 +9920,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text">APG increases by ${((projectedAPG - currentAPG)).toFixed(1)} because this team fit creates more on-ball possessions (${(usageDelta * 100).toFixed(1)}% usage gain).</span>
 
@@ -9928,7 +9928,7 @@ class PlayerCardsApp {
 
                     <div class="constraint-item">
 
-                        <span class="constraint-icon">•</span>
+                        <span class="constraint-icon">*</span>
 
                         <span class="constraint-text">RPG improves by ${((projectedRPG - currentRPG)).toFixed(1)} mainly from court-time increase (+${minutesDelta.toFixed(1)} MPG).</span>
 
@@ -10000,7 +10000,7 @@ class PlayerCardsApp {
 
                         <div class="factor-value">${(fitScenario.fit_score * 100).toFixed(0)}% (p${fitPercentile})</div>
 
-                        <div class="factor-assessment">${fitScenario.fit_score >= 0.09 ? 'Amazing fit path' : fitScenario.fit_score >= 0.06 ? 'Good fit path' : 'Weak fit path'} â€¢ relative league rank p${fitPercentile}</div>
+                        <div class="factor-assessment">${fitScenario.fit_score >= 0.09 ? 'Amazing fit path' : fitScenario.fit_score >= 0.06 ? 'Good fit path' : 'Weak fit path'} *** relative league rank p${fitPercentile}</div>
 
                     </div>
 
