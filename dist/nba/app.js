@@ -5500,9 +5500,6 @@ class PlayerCardsApp {
 
                     <div class="inspection-family-pill">${this.escapeHtml(cardFamily.label)} Family</div>
 
-                    <h3>Inspection Summary</h3>
-
-                    <p>${this.escapeHtml(scenarioSummary)}</p>
 
                     <div class="inspection-kpi-row">
 
