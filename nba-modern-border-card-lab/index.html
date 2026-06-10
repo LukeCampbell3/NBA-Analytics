@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Modern Border-Led Refractor Card Lab</title>
+  <link rel="stylesheet" href="styles/card-lab.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <div class="kicker">headshot-only trading card frontend</div>
+    <h1>Border-Led Refractor Card Lab</h1>
+    <p class="lede">A modern sports-card frontend skeleton: the player field stays clean, most parallels affect the border shell, chrome/ice/black finite can affect the full surface, and mojo uses its own interlocking lens geometry instead of generic dots.</p>
+
+    <section class="controls" aria-label="Card controls">
+      <label>Variant
+        <select id="variant"></select>
+      </label>
+      <label>Player
+        <input id="playerName" value="MARCUS REED" />
+      </label>
+      <label>Team
+        <input id="teamName" value="NASHVILLE STARS" />
+      </label>
+      <label>Number
+        <input id="jerseyNumber" value="23" />
+      </label>
+      <label>Headshot URL/path
+        <input id="headshot" value="__demo_vector__" />
+      </label>
+      <button id="renderBtn">Render</button>
+    </section>
+
+    <section class="preview-grid">
+      <div class="panel">
+        <div id="singleCard"></div>
+        <p class="hint">Swap <code>headshot</code> with a transparent PNG/SVG headshot path or data URI. The portrait is not boxed; it is layered into the shell like a modern card cutout.</p>
+      </div>
+      <div class="panel">
+        <div id="board"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="src/modern-border-card-builder.js"></script>
+  <script>
+    const B = window.ModernBorderCardBuilder;
+    const variantSelect = document.querySelector('#variant');
+    Object.entries(B.VARIANTS).forEach(([key, v]) => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = v.label;
+      variantSelect.appendChild(opt);
+    });
+    variantSelect.value = 'prism-edge';
+
+    function values() {
+      return {
+        variant: variantSelect.value,
+        playerName: document.querySelector('#playerName').value,
+        teamName: document.querySelector('#teamName').value,
+        jerseyNumber: document.querySelector('#jerseyNumber').value,
+        headshot: document.querySelector('#headshot').value
+      };
+    }
+    function render() {
+      B.mountCard('#singleCard', values());
+      B.mountBoard('#board', values());
+    }
+    document.querySelector('#renderBtn').addEventListener('click', render);
+    render();
+  </script>
+</body>
+</html>

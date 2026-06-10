@@ -4997,202 +4997,57 @@ class PlayerCardsApp {
 
 
     createPlayerCard(player, options = {}) {
-
-        const opts = {
-
-            context: 'grid',
-
-            interactive: true,
-
-            showClickHint: true,
-
-            evalOut: null,
-
-            ...options
-
-        };
-
-        const playerValue = this.getPlayerValue(player);
-
+        const opts = { context: 'grid', interactive: true, showClickHint: true, evalOut: null, ...options };
         const evalOut = opts.evalOut || this.evaluateBreakoutScenario(player);
-
         const mechanism = evalOut.mechanism || this.computeMechanismMetrics(player, evalOut);
-
-        const typeCardProfile = this.getBasketballTypeProfile(player);
-
-        const typeCardHeadshotUrl = this.getPlayerHeadshotUrl(player);
-
         const cardFamily = this.getCardFamilyProfile(player, evalOut, mechanism);
-
-        const cardSerial = this.getCardSerial(player, cardFamily);
-
+        const typeCardHeadshotUrl = this.getPlayerHeadshotUrl(player);
         const teamRibbonLabel = this.formatTeamRibbonLabel(player.player?.team);
-
-        const playerName = this.escapeHtml(player.player?.name || 'Unknown Player');
-
-        const position = this.escapeHtml(player.player?.position || '');
-
-        const team = this.escapeHtml(player.player?.team || '');
-
         const alternateCount = (player._alternateRoles || []).length;
 
-
-
-        // Stats for card face
-
+        // Stats
         const trad = player.performance?.traditional || {};
-
         const ppg = Number(trad.points_per_game || 0).toFixed(1);
-
         const rpg = Number(trad.rebounds_per_game || 0).toFixed(1);
-
         const apg = Number(trad.assists_per_game || 0).toFixed(1);
-
         const jersey = player.player?.jersey || '';
+        const playerValue = this.getPlayerValue(player);
+        const valStr = playerValue >= 0 ? `+${playerValue.toFixed(1)}` : playerValue.toFixed(1);
 
-
-
-        // Parallel type based on card family
-
-        const parallelConfig = {
-
-            refractor: { name: 'PRIZM SILVER', frameClass: 'parallel-prizm-silver', shimmer: true },
-
-            chrome: { name: 'CHROME', frameClass: 'parallel-chrome', shimmer: true },
-
-            ice: { name: 'ICE', frameClass: 'parallel-ice', shimmer: true },
-
-            patch: { name: 'GOLD', frameClass: 'parallel-gold', shimmer: true },
-
-            manga: { name: 'RATED ROOKIE', frameClass: 'parallel-rated-rookie', shimmer: false },
-
-            auto: { name: 'BASE', frameClass: 'parallel-base', shimmer: false },
-
+        // Map card family to modern-border-card variant
+        const variantMap = {
+            refractor: 'chrome-full',
+            chrome: 'prism-edge',
+            ice: 'blue-prism-edge',
+            patch: 'gold-wave-edge',
+            manga: 'wave-border-r',
+            auto: 'base-paper',
         };
+        const variant = variantMap[cardFamily.key] || 'base-paper';
 
-        const parallel = parallelConfig[cardFamily.key] || parallelConfig.auto;
-
-
-
-        // Card art style * deterministic per player for variety
-
-        // These create different FRAME DESIGNS (like Prizm vs Select vs Mosaic)
-
-        // using the same headshot, because no free action-shot API exists
-
-        const artStyles = ['art-prizm', 'art-select', 'art-mosaic'];
-
-        const nameHash = (player.player?.name || '').split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0);
-
-        const artStyle = artStyles[Math.abs(nameHash) % artStyles.length];
-
-
-
-        const cardClasses = [
-
-            'player-card',
-
-            'trading-card',
-
-            'tc-prizm',
-
-            parallel.frameClass,
-
-            artStyle,
-
-            `family-${cardFamily.key}`,
-
-            opts.context === 'detail' ? 'trading-card-detail' : 'trading-card-grid',
-
-            opts.interactive ? 'trading-card-interactive' : 'card-static',
-
-            parallel.shimmer ? 'tc-shimmer' : '',
-
-        ].filter(Boolean);
-
-
-
-        // Alternate roles label for footer
-
-        const rolesLabel = alternateCount > 0 ? `${alternateCount + 1} ROLES` : '';
-
-
+        // Use the Modern Border Card Builder SVG renderer
+        const cardSvg = (typeof window !== 'undefined' && window.ModernBorderCardBuilder)
+            ? window.ModernBorderCardBuilder.renderCardSvg({
+                playerName: (player.player?.name || 'Unknown').toUpperCase(),
+                teamName: (teamRibbonLabel || 'TEAM').toUpperCase(),
+                jerseyNumber: String(jersey || ''),
+                headshot: typeCardHeadshotUrl,
+                variant: variant,
+                stats: [
+                    { value: ppg, label: 'PTS' },
+                    { value: rpg, label: 'REB' },
+                    { value: apg, label: 'AST' },
+                    { value: valStr, label: 'VAL' },
+                ],
+            }, Math.abs((player.player?.name || '').split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0)))
+            : '';
 
         return `
-
-            <article class="${cardClasses.join(' ')}" data-player="${this.escapeAttr(player.player?.name || '')}" data-player-key="${this.escapeAttr(this.getPlayerKey(player))}" data-card-family="${cardFamily.key}" style="--family-primary:${cardFamily.primary};--family-secondary:${cardFamily.secondary};--family-tertiary:${cardFamily.tertiary};--family-glow:${cardFamily.glow};--foil-opacity:${cardFamily.foilOpacity};--pointer-x:50%;--pointer-y:50%;--rotate-x:0deg;--rotate-y:0deg;">
-
-                <div class="tc-frame">
-
-                    <div class="tc-frame-foil"></div>
-
-                    <div class="tc-frame-refract"></div>
-
-                    <div class="tc-frame-inner">
-
-                        <div class="tc-photo-window">
-
-                            <img class="tc-player-photo" src="${this.escapeAttr(typeCardHeadshotUrl)}" alt="${this.escapeAttr(player.player?.name || '')}" loading="lazy" onerror="this.style.display='none';" />
-
-                            <div class="tc-photo-gradient"></div>
-
-                            <div class="tc-art-overlay"></div>
-
-                            ${jersey ? `<div class="tc-jersey-num">${this.escapeHtml(String(jersey))}</div>` : ''}
-
-                        </div>
-
-                        <div class="tc-info-block">
-
-                            <div class="tc-name-row">
-
-                                <span class="tc-first-name">${this.escapeHtml((player.player?.name || '').split(' ')[0] || '')}</span>
-
-                                <span class="tc-last-name">${this.escapeHtml((player.player?.name || '').split(' ').slice(1).join(' ') || '')}</span>
-
-                            </div>
-
-                            <div class="tc-meta-row">
-
-                                <span class="tc-pos-badge">${position}</span>
-
-                                <span class="tc-team-label">${teamRibbonLabel}</span>
-
-                            </div>
-
-                            <div class="tc-stats-row">
-
-                                <div class="tc-stat"><span class="tc-stat-val">${ppg}</span><span class="tc-stat-label">PTS</span></div>
-
-                                <div class="tc-stat"><span class="tc-stat-val">${rpg}</span><span class="tc-stat-label">REB</span></div>
-
-                                <div class="tc-stat"><span class="tc-stat-val">${apg}</span><span class="tc-stat-label">AST</span></div>
-
-                            </div>
-
-                        </div>
-
-                        <div class="tc-footer">
-
-                            <span class="tc-parallel-label">${this.escapeHtml(parallel.name)}</span>
-
-                            ${rolesLabel ? `<span class="tc-roles-badge">${rolesLabel}</span>` : ''}
-
-                            <span class="tc-serial">${this.escapeHtml(cardSerial)}</span>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
+            <article class="player-card modern-border-card-wrap" data-player="${this.escapeAttr(player.player?.name || '')}" data-player-key="${this.escapeAttr(this.getPlayerKey(player))}" data-card-family="${cardFamily.key}">
+                ${cardSvg}
             </article>
-
         `;
-
     }
-
-
 
     createPercentileIndicator(value, min, max) {
 

@@ -1,0 +1,106 @@
+<svg class="modern-border-card" width="360" height="504" viewBox="0 0 360 504" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MARCUS REED MOJO CIRCUIT EDGE card">
+    <title>MARCUS REED MOJO CIRCUIT EDGE</title>
+    
+  <defs>
+    <clipPath id="card_5_mojoborder-cardClip"><rect x="0" y="0" width="360" height="504" rx="26"/></clipPath>
+    <clipPath id="card_5_mojoborder-portraitSafe"><path d="M30 48 H330 V352 C292 344 244 340 180 340 C116 340 68 344 30 352 Z"/></clipPath>
+    <filter id="card_5_mojoborder-shadow" x="-35%" y="-35%" width="170%" height="175%"><feDropShadow dx="0" dy="20" stdDeviation="18" flood-color="#000" flood-opacity=".72"/></filter>
+    <filter id="card_5_mojoborder-cardGrain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".74" numOctaves="3" seed="12" result="noise"/><feColorMatrix in="noise" type="saturate" values="0" result="gray"/><feComponentTransfer><feFuncA type="table" tableValues="0 .05"/></feComponentTransfer></filter>
+    <filter id="card_5_mojoborder-iceBump" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".028 .05" numOctaves="4" seed="18" result="noise"/><feSpecularLighting in="noise" result="spec" surfaceScale="6" specularConstant=".95" specularExponent="18" lighting-color="#ffffff"><feDistantLight azimuth="235" elevation="55"/></feSpecularLighting><feComposite in="spec" in2="SourceAlpha" operator="in" result="specOut"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="specOut"/></feMerge></filter>
+    <linearGradient id="card_5_mojoborder-paper" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f9f7ef"/><stop offset=".52" stop-color="#e8e5dc"/><stop offset="1" stop-color="#f5f7fb"/></linearGradient>
+    <radialGradient id="card_5_mojoborder-field" cx="50%" cy="38%" r="70%"><stop offset="0" stop-color="#ffffff"/><stop offset=".38" stop-color="#eef2f4"/><stop offset="1" stop-color="#cfd6dc"/></radialGradient>
+    <linearGradient id="card_5_mojoborder-darkField" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#050505"/><stop offset=".44" stop-color="#0c0c0a"/><stop offset="1" stop-color="#000000"/></linearGradient>
+    <radialGradient id="card_5_mojoborder-blackGlow" cx="50%" cy="36%" r="72%"><stop offset="0" stop-color="#2a2a2a"/><stop offset=".46" stop-color="#070707"/><stop offset="1" stop-color="#000000"/></radialGradient>
+    <linearGradient id="card_5_mojoborder-borderFoil" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10f0c5"/><stop offset=".12" stop-color="#fff"/><stop offset=".22" stop-color="#b45cff"/><stop offset=".37" stop-color="#ffd45d"/><stop offset=".51" stop-color="#fff"/><stop offset=".69" stop-color="#10f0c5"/><stop offset=".84" stop-color="#b45cff"/><stop offset="1" stop-color="#fff"/></linearGradient>
+    <linearGradient id="card_5_mojoborder-metalSweep" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f7f7f7"/><stop offset=".18" stop-color="#7b8791"/><stop offset=".33" stop-color="#ffffff"/><stop offset=".51" stop-color="#10f0c5"/><stop offset=".66" stop-color="#b45cff"/><stop offset=".82" stop-color="#fff7aa"/><stop offset="1" stop-color="#dce7ef"/></linearGradient>
+    <linearGradient id="card_5_mojoborder-goldSweep" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5e3a07"/><stop offset=".24" stop-color="#ffdf82"/><stop offset=".44" stop-color="#b87b15"/><stop offset=".58" stop-color="#fff3b8"/><stop offset=".76" stop-color="#d5a342"/><stop offset="1" stop-color="#5a3605"/></linearGradient>
+    <linearGradient id="card_5_mojoborder-namePlate" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f9f9f5"/><stop offset="1" stop-color="#dde3e8"/></linearGradient>
+    <pattern id="card_5_mojoborder-mojoTile" width="46" height="46" patternUnits="userSpaceOnUse">
+      <rect width="46" height="46" fill="#02070c" opacity=".25"/>
+      <path d="M5 5 H19 L23 9 L27 5 H41 V19 L37 23 L41 27 V41 H27 L23 37 L19 41 H5 V27 L9 23 L5 19 Z" fill="none" stroke="#10f0c5" stroke-width="2.2" stroke-opacity=".74"/>
+      <path d="M13 13 H33 V33 H13 Z" fill="none" stroke="#ffd45d" stroke-width="1.45" stroke-opacity=".62"/>
+      <path d="M5 23 H15 M31 23 H41 M23 5 V15 M23 31 V41" stroke="#b45cff" stroke-width="2" stroke-opacity=".70" stroke-linecap="round"/>
+      <circle cx="23" cy="23" r="5.5" fill="#ffd45d" opacity=".22" stroke="#fff" stroke-width=".8" stroke-opacity=".45"/>
+      <circle cx="9" cy="9" r="1.8" fill="#fff" opacity=".46"/><circle cx="37" cy="37" r="1.8" fill="#fff" opacity=".36"/>
+    </pattern>
+    <pattern id="card_5_mojoborder-checker" width="34" height="34" patternUnits="userSpaceOnUse">
+      <rect width="17" height="17" fill="#10f0c5" opacity=".50"/><rect x="17" y="0" width="17" height="17" fill="#b45cff" opacity=".42"/>
+      <rect x="0" y="17" width="17" height="17" fill="#ffd45d" opacity=".44"/><rect x="17" y="17" width="17" height="17" fill="#ffffff" opacity=".28"/>
+      <path d="M0 34 L34 0 M-8 26 L26 -8 M8 42 L42 8" stroke="#ffd45d" stroke-width="1.0" opacity=".20"/>
+      <path d="M0 0 H34 V34 H0 Z" fill="none" stroke="#fff" stroke-width=".7" stroke-opacity=".20"/>
+    </pattern>
+    <pattern id="card_5_mojoborder-finiteTile" width="28" height="28" patternUnits="userSpaceOnUse">
+      <rect width="28" height="28" fill="#010101"/>
+      <path d="M0 28 L28 0 M-7 21 L21 -7 M7 35 L35 7" stroke="#242424" stroke-width="1.15" opacity=".72"/>
+      <path d="M0 0 H28 V28 H0 Z" fill="none" stroke="#0f0f0f" stroke-width="1"/>
+      <path d="M0 14 H28 M14 0 V28" stroke="#151515" stroke-width=".75" opacity=".58"/>
+      <circle cx="14" cy="14" r="1.4" fill="#2f2f2f" opacity=".65"/>
+    </pattern>
+    <pattern id="card_5_mojoborder-microLines" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(25)"><path d="M0 0 H8" stroke="#fff" stroke-width=".55" opacity=".12"/></pattern>
+    <clipPath id="card_5_mojoborder-borderClip" clipPathUnits="userSpaceOnUse"><path d="M0 0 H360 V78 H282 L256 52 H216 L202 68 H158 L144 52 H104 L78 78 H0 Z"/><path d="M0 0 H70 V78 L50 104 V266 L70 302 V504 H0 Z"/><path d="M360 0 H290 V78 L310 104 V266 L290 302 V504 H360 Z"/><path d="M0 302 H360 V504 H0 Z"/></clipPath>
+    <clipPath id="card_5_mojoborder-edgeClip" clipPathUnits="userSpaceOnUse"><rect x="0" y="0" width="360" height="22"/><rect x="0" y="482" width="360" height="22"/><rect x="0" y="0" width="22" height="504"/><rect x="338" y="0" width="22" height="504"/></clipPath>
+    <mask id="card_5_mojoborder-iceAvoidPortrait" maskUnits="userSpaceOnUse"><rect x="0" y="0" width="360" height="504" fill="#fff"/><ellipse cx="180" cy="166" rx="112" ry="143" fill="#000"/><path d="M70 256 C110 228 250 228 290 256 L318 346 C272 334 226 329 180 329 C134 329 88 334 42 346 Z" fill="#000"/></mask>
+  </defs>
+    <g filter="url(#card_5_mojoborder-shadow)">
+      <rect width="360" height="504" rx="26" fill="url(#card_5_mojoborder-paper)"/>
+      <g clip-path="url(#card_5_mojoborder-cardClip)"><ellipse cx="180" cy="178" rx="118" ry="132" fill="#ffffff" opacity="0.2"/><ellipse cx="180" cy="308" rx="132" ry="42" fill="#d9e1e7" opacity="0.2"/><path d="M38 326 C120 304 240 304 322 326" fill="none" stroke="#07111b" stroke-opacity="0.07" stroke-width="12"/><path d="M56 76 C110 52 250 52 304 76" fill="none" stroke="#07111b" stroke-opacity="0.055" stroke-width="8"/></g>
+      
+    <g clip-path="url(#card_5_mojoborder-cardClip)"><g clip-path="url(#card_5_mojoborder-borderClip)">
+    <rect width="360" height="504" fill="#020810" opacity=".72"/>
+    <rect width="360" height="504" fill="url(#card_5_mojoborder-mojoTile)" opacity=".94"/>
+    <rect width="360" height="504" fill="url(#card_5_mojoborder-borderFoil)" opacity=".18"/>
+    <path d="M10 72 C72 58 120 76 176 50 C236 22 282 46 350 26" stroke="#fff" stroke-width="5" stroke-opacity=".16" fill="none"/>
+    <path d="M0 424 C78 398 132 422 190 392 C248 364 300 382 360 348" stroke="#fff" stroke-width="6" stroke-opacity=".12" fill="none"/>
+  </g></g>
+    <g clip-path="url(#card_5_mojoborder-cardClip)">
+      <rect x="7" y="7" width="346" height="490" rx="24" fill="none" stroke="url(#card_5_mojoborder-metalSweep)" stroke-width="2.7" stroke-opacity=".85"/>
+      <rect x="16" y="16" width="328" height="472" rx="19" fill="none" stroke="#fff" stroke-width=".9" stroke-opacity=".40"/>
+      <rect x="24" y="24" width="312" height="456" rx="16" fill="none" stroke="url(#card_5_mojoborder-metalSweep)" stroke-width="1.2" stroke-opacity=".56"/>
+      <path d="M21 89 L66 43 H132 L146 58 H214 L228 43 H294 L339 89" fill="none" stroke="url(#card_5_mojoborder-metalSweep)" stroke-width="2" stroke-opacity=".72"/>
+      <path d="M21 415 L66 462 H132 L146 447 H214 L228 462 H294 L339 415" fill="none" stroke="url(#card_5_mojoborder-metalSweep)" stroke-width="2" stroke-opacity=".72"/>
+      <path d="M43 100 L43 300 L72 332 M317 100 L317 300 L288 332" fill="none" stroke="url(#card_5_mojoborder-metalSweep)" stroke-width="2.4" stroke-opacity=".46"/>
+      <path d="M32 121 L64 92 V244 L44 286 L32 278 Z M328 121 L296 92 V244 L316 286 L328 278 Z" fill="#05080e" opacity=".20" stroke="url(#card_5_mojoborder-metalSweep)" stroke-opacity=".34"/>
+    </g>
+      <g clip-path="url(#card_5_mojoborder-cardClip)">
+    <ellipse cx="180" cy="335" rx="102" ry="24" fill="#000" opacity=".23" filter="url(#card_5_mojoborder-shadow)"/>
+    <g transform="translate(23 44) scale(.35)" filter="url(#demoShadow)">
+    <defs>
+      <radialGradient id="demoSkin" cx="50%" cy="32%" r="58%"><stop offset="0" stop-color="#d99a68"/><stop offset=".52" stop-color="#b66e3f"/><stop offset="1" stop-color="#74401f"/></radialGradient>
+      <linearGradient id="demoJersey" x1="290" y1="760" x2="625" y2="1060" gradientUnits="userSpaceOnUse"><stop stop-color="#10243c"/><stop offset="1" stop-color="#050910"/></linearGradient>
+      <filter id="demoShadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="22" stdDeviation="24" flood-color="#000" flood-opacity="0.34"/></filter>
+    </defs>
+    <path d="M188 1115c17-180 112-300 262-300s245 120 262 300H188Z" fill="url(#demoJersey)"/>
+    <path d="M362 790c3 58 30 102 88 102s85-44 88-102H362Z" fill="#9d5b31"/>
+    <path d="M292 904c55 75 111 110 158 110s103-35 158-110l34 211H258l34-211Z" fill="#e9edf4"/>
+    <path d="M325 905c45 60 87 88 125 88s80-28 125-88l24 210H301l24-210Z" fill="url(#demoJersey)"/>
+    <ellipse cx="246" cy="506" rx="58" ry="90" fill="#a46137"/>
+    <ellipse cx="654" cy="506" rx="58" ry="90" fill="#a46137"/>
+    <path d="M287 404c0-142 66-240 163-240s163 98 163 240v145c0 131-74 247-163 247S287 680 287 549V404Z" fill="url(#demoSkin)"/>
+    <path d="M290 394c26-78 95-126 161-126 70 0 136 50 161 126-16-112-75-192-162-192-86 0-145 80-160 192Z" fill="#0b0d0f"/>
+    <path d="M269 385c7-120 71-226 181-226s174 106 181 226c-54-41-87-78-181-78s-127 37-181 78Z" fill="#111316"/>
+    <circle cx="311" cy="244" r="58" fill="#0d0f12"/><circle cx="375" cy="198" r="70" fill="#111316"/><circle cx="454" cy="185" r="82" fill="#0e1013"/><circle cx="535" cy="201" r="70" fill="#111316"/><circle cx="592" cy="254" r="55" fill="#0e1013"/>
+    <ellipse cx="390" cy="514" rx="22" ry="15" fill="#171717" opacity=".84"/>
+    <ellipse cx="515" cy="514" rx="22" ry="15" fill="#171717" opacity=".84"/>
+    <path d="M455 520c-11 44-8 68 18 76" stroke="#7e4322" stroke-width="14" stroke-linecap="round" opacity=".7"/>
+    <path d="M375 646c46 35 106 35 151 0" stroke="#31180d" stroke-width="18" stroke-linecap="round"/>
+    <path d="M397 660c34 15 71 15 105 0" stroke="#f2d4c0" stroke-width="8" stroke-linecap="round" opacity=".95"/>
+    <path d="M322 448c43-39 97-42 139-19" stroke="#0b0d0f" stroke-width="18" stroke-linecap="round"/>
+    <path d="M451 428c43-22 96-19 138 20" stroke="#0b0d0f" stroke-width="18" stroke-linecap="round"/>
+    <path d="M294 404c50-35 86-78 128-126 54 53 110 70 190 117-12-122-80-213-166-213-94 0-152 86-152 222Z" fill="#0c0e11" opacity=".96"/>
+  </g>
+    <path d="M0 300 C75 282 128 287 180 294 C231 301 282 286 360 304 V352 H0 Z" fill="#fff" opacity=".04"/>
+  </g>
+      
+      <g><circle cx="43" cy="45" r="23" fill="#050912" stroke="url(#card_5_mojoborder-borderFoil)" stroke-width="2"/><circle cx="43" cy="45" r="28" fill="none" stroke="#fff" stroke-opacity=".20"/><text x="43" y="51" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="17" font-weight="900" fill="#fff">#23</text><polygon points="323.0,31.0 326.8,41.7 338.2,42.1 329.2,49.0 332.4,59.9 323.0,53.5 313.6,59.9 316.8,49.0 307.8,42.1 319.2,41.7" fill="url(#card_5_mojoborder-goldSweep)" stroke="#fff" stroke-opacity=".4"/></g>
+      <g>
+    <path d="M41 318 H319 L307 341 H53 Z" fill="#142338" opacity=".96" stroke="url(#card_5_mojoborder-borderFoil)" stroke-opacity=".50"/>
+    <text x="180" y="334" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="10.2" font-weight="900" letter-spacing="3.5" fill="#102038">NASHVILLE STARS</text>
+    <path d="M37 344 H323 L311 399 H49 Z" fill="url(#card_5_mojoborder-namePlate)" opacity=".96" stroke="url(#card_5_mojoborder-borderFoil)" stroke-opacity=".58"/>
+    <path d="M55 344 L82 399 M305 344 L278 399" stroke="url(#card_5_mojoborder-borderFoil)" stroke-opacity=".25"/>
+    <text x="180" y="384" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="34" letter-spacing=".6" fill="#111923" stroke="#fff" stroke-opacity=".18" stroke-width="1">MARCUS REED</text>
+  </g>
+      <g><g transform="translate(36 418)"><path d="M0 0 H64 L58 54 H6 Z" fill="#08111c" opacity=".95" stroke="url(#card_5_mojoborder-borderFoil)" stroke-opacity=".58"/><path d="M7 8 H57 M7 47 H57" stroke="#fff" stroke-opacity=".10"/><text x="32" y="24" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="900" fill="#f8fbff">21.4</text><text x="32" y="42" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="9.5" font-weight="900" letter-spacing="1" fill="#dce5ef">PTS</text></g><g transform="translate(108 418)"><path d="M0 0 H64 L58 54 H6 Z" fill="#08111c" opacity=".95" stroke="url(#card_5_mojoborder-borderFoil)" stroke-opacity=".58"/><path d="M7 8 H57 M7 47 H57" stroke="#fff" stroke-opacity=".10"/><text x="32" y="24" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="900" fill="#f8fbff">5.8</text><text x="32" y="42" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="9.5" font-weight="900" letter-spacing="1" fill="#dce5ef">REB</text></g><g transform="translate(180 418)"><path d="M0 0 H64 L58 54 H6 Z" fill="#08111c" opacity=".95" stroke="url(#card_5_mojoborder-borderFoil)" stroke-opacity=".58"/><path d="M7 8 H57 M7 47 H57" stroke="#fff" stroke-opacity=".10"/><text x="32" y="24" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="900" fill="#f8fbff">6.9</text><text x="32" y="42" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="9.5" font-weight="900" letter-spacing="1" fill="#dce5ef">AST</text></g><g transform="translate(252 418)"><path d="M0 0 H64 L58 54 H6 Z" fill="#08111c" opacity=".95" stroke="url(#card_5_mojoborder-borderFoil)" stroke-opacity=".58"/><path d="M7 8 H57 M7 47 H57" stroke="#fff" stroke-opacity=".10"/><text x="32" y="24" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="900" fill="#f8fbff">+4.1</text><text x="32" y="42" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="9.5" font-weight="900" letter-spacing="1" fill="#dce5ef">VAR</text></g></g>
+      <rect x="0" y="0" width="360" height="504" rx="26" fill="none" stroke="#fff" stroke-opacity=".24"/>
+      <rect width="360" height="504" rx="26" filter="url(#card_5_mojoborder-cardGrain)" opacity=".55"/>
+    </g>
+  </svg>

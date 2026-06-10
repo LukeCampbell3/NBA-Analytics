@@ -1,0 +1,33 @@
+:root {
+  color-scheme: dark;
+  --gold: #d6aa48;
+  --panel: rgba(8, 10, 14, .78);
+  --line: rgba(214, 170, 72, .30);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: #f5f7fb;
+  background:
+    radial-gradient(circle at 15% 8%, rgba(214,170,72,.16), transparent 30%),
+    radial-gradient(circle at 80% 0%, rgba(64,210,255,.10), transparent 36%),
+    linear-gradient(135deg, #050507, #0b1018 60%, #030405);
+}
+.app-shell { width: min(1500px, calc(100vw - 48px)); margin: 0 auto; padding: 34px 0 52px; }
+.kicker { color: var(--gold); letter-spacing: .32em; font-size: 12px; font-weight: 900; text-transform: uppercase; }
+h1 { margin: 10px 0 8px; font: 700 clamp(42px, 6vw, 76px)/.92 Georgia, 'Times New Roman', serif; letter-spacing: -0.04em; }
+.lede { max-width: 1000px; color: #c3c9d2; margin: 0 0 26px; font-size: 16px; }
+.controls { display: grid; grid-template-columns: repeat(6, minmax(120px, 1fr)); gap: 10px; padding: 14px; margin: 20px 0 28px; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); backdrop-filter: blur(16px); }
+.controls label { display: grid; gap: 6px; font-size: 10px; color: #d8bc72; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
+.controls input, .controls select { width: 100%; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; color: #fff; background: #070b11; padding: 9px 10px; }
+.controls button { border: 1px solid rgba(214,170,72,.55); background: linear-gradient(135deg, #5c3a07, #d6aa48); color: #070707; font-weight: 900; border-radius: 12px; letter-spacing: .08em; cursor: pointer; }
+.preview-grid { display: grid; grid-template-columns: 390px minmax(0, 1fr); gap: 24px; align-items: start; }
+.panel { border: 1px solid var(--line); border-radius: 22px; background: rgba(5,7,11,.62); box-shadow: 0 18px 60px rgba(0,0,0,.45); padding: 18px; }
+#singleCard { display: grid; place-items: center; min-height: 548px; }
+#board { overflow: auto; }
+#board svg { width: 100%; height: auto; min-width: 1100px; display: block; }
+.modern-border-card { display: block; max-width: 100%; height: auto; }
+.hint { color: #9ca5b2; font-size: 13px; line-height: 1.45; }
+@media (max-width: 1050px) { .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); } .preview-grid { grid-template-columns: 1fr; } }

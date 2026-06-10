@@ -3584,3 +3584,40 @@ body .about-wrap .tag {
 .parallel-rated-rookie .tc-first-name { color: #fca5a5; }
 .parallel-rated-rookie .tc-last-name { color: #fef2f2; }
 
+
+
+/* ═══ Modern Border Card Integration ═══ */
+.modern-border-card-wrap {
+    cursor: pointer;
+    transition: transform 0.2s ease, filter 0.2s ease;
+    border: none !important;
+    background: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    min-height: auto !important;
+    max-width: none !important;
+    aspect-ratio: auto !important;
+}
+.modern-border-card-wrap:hover {
+    transform: translateY(-6px) scale(1.02) !important;
+    filter: brightness(1.05) !important;
+}
+.modern-border-card-wrap .modern-border-card {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+.cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 260px));
+    gap: 1.5rem;
+    justify-content: center;
+}
+/* Hide all old tc-* elements since we now use SVG cards */
+.tc-frame, .tc-frame-foil, .tc-frame-refract, .tc-frame-inner,
+.tc-photo-window, .tc-player-photo, .tc-photo-gradient, .tc-art-overlay,
+.tc-jersey-num, .tc-info-block, .tc-name-row, .tc-first-name, .tc-last-name,
+.tc-meta-row, .tc-pos-badge, .tc-team-label, .tc-stats-row, .tc-stat,
+.tc-stat-val, .tc-stat-label, .tc-footer, .tc-parallel-label, .tc-roles-badge, .tc-serial {
+    display: none !important;
+}
