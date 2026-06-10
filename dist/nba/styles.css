@@ -3591,17 +3591,18 @@ body .about-wrap .tag {
     cursor: pointer;
     transition: transform 0.2s ease, filter 0.2s ease;
     border: none !important;
-    background: #e5e7eb !important;
-    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.09) !important;
-    border-radius: 1rem !important;
+    background: #d1d5db !important;
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.15) !important;
+    border-radius: 1.5rem !important;
     min-height: auto !important;
     max-width: none !important;
     aspect-ratio: auto !important;
     position: relative;
-    padding: 1rem !important;
+    padding: 1.5rem !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    overflow: hidden !important;
 }
 .modern-border-card-wrap:hover {
     transform: translateY(-6px) scale(1.02) !important;

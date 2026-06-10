@@ -168,7 +168,7 @@ function baseSurface(id, key, variant) {
   if (ice) {
     return `<rect width="360" height="504" rx="26" fill="#f4fdff"/><rect width="360" height="504" rx="26" fill="url(#${id}-field)" opacity=".65"/>`;
   }
-  return `<rect width="360" height="504" rx="26" fill="url(#${id}-paper)"/>`;
+  return `<rect width="360" height="504" rx="26" fill="#d1d5db"/><rect width="360" height="504" rx="26" fill="url(#${id}-paper)" opacity=".56"/>`;
 }
 
 function polygonCell(points, fill, opacity, stroke = '#fff', so = .45, sw = .9) {
