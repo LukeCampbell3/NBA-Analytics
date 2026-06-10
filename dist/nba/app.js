@@ -4502,7 +4502,7 @@ class PlayerCardsApp {
 
         noResults.style.display = 'none';
 
-        container.innerHTML = deduped.map(player => this.createPlayerCard(player)).join('');
+        container.innerHTML = deduped.map((player, index) => this.createPlayerCard(player, { index })).join('');
 
 
 
@@ -4997,7 +4997,7 @@ class PlayerCardsApp {
 
 
     createPlayerCard(player, options = {}) {
-        const opts = { context: 'grid', interactive: true, showClickHint: true, evalOut: null, ...options };
+        const opts = { context: 'grid', interactive: true, showClickHint: true, evalOut: null, index: null, inspectionSummary: null, ...options };
         const evalOut = opts.evalOut || this.evaluateBreakoutScenario(player);
         const mechanism = evalOut.mechanism || this.computeMechanismMetrics(player, evalOut);
         const cardFamily = this.getCardFamilyProfile(player, evalOut, mechanism);
@@ -5044,7 +5044,16 @@ class PlayerCardsApp {
 
         return `
             <article class="player-card modern-border-card-wrap" data-player="${this.escapeAttr(player.player?.name || '')}" data-player-key="${this.escapeAttr(this.getPlayerKey(player))}" data-card-family="${cardFamily.key}">
-                ${cardSvg}
+                ${opts.index !== null ? `<div class="card-number">#${this.escapeHtml(String(opts.index + 1))}</div>` : ''}
+                <div class="modern-border-card-frame">
+                    ${cardSvg}
+                    ${opts.inspectionSummary ? `
+                        <div class="card-back-panel">
+                            <div class="card-back-label">Inspection Summary</div>
+                            <p>${this.escapeHtml(opts.inspectionSummary)}</p>
+                        </div>
+                    ` : ''}
+                </div>
             </article>
         `;
     }
@@ -5483,7 +5492,7 @@ class PlayerCardsApp {
 
                 <div id="detailCardSlot" class="inspection-card-slot">
 
-                    ${this.createPlayerCard(player, { context: 'detail', interactive: false, showClickHint: false, evalOut })}
+                    ${this.createPlayerCard(player, { context: 'detail', interactive: false, showClickHint: false, evalOut, inspectionSummary: scenarioSummary })}
 
                 </div>
 

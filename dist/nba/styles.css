@@ -3591,21 +3591,70 @@ body .about-wrap .tag {
     cursor: pointer;
     transition: transform 0.2s ease, filter 0.2s ease;
     border: none !important;
-    background: none !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
+    background: #e5e7eb !important;
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.09) !important;
+    border-radius: 1rem !important;
     min-height: auto !important;
     max-width: none !important;
     aspect-ratio: auto !important;
+    position: relative;
+    padding: 1rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 .modern-border-card-wrap:hover {
     transform: translateY(-6px) scale(1.02) !important;
-    filter: brightness(1.05) !important;
+    filter: brightness(1.03) !important;
+}
+.modern-border-card-wrap .modern-border-card-frame {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
 }
 .modern-border-card-wrap .modern-border-card {
-    width: 100%;
-    height: auto;
+    width: auto;
+    max-width: 100%;
     display: block;
+    margin: 0 auto;
+}
+.card-number {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 2;
+    background: rgba(15, 23, 42, 0.88);
+    color: #f8fafc;
+    font-size: 0.78rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+}
+.card-back-panel {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 1rem;
+    background: rgba(15, 23, 42, 0.96);
+    color: #f8fafc;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    text-align: left;
+}
+.card-back-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.55rem;
+    color: #bfdbfe;
+}
+.card-back-panel p {
+    margin: 0;
+    color: rgba(248, 250, 252, 0.92);
+    line-height: 1.55;
 }
 .cards-container {
     display: grid;
