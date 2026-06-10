@@ -231,9 +231,9 @@ async function main() {
   console.log(chalk.blue('=== NBA Player Cards Asset Pipeline ===\n'));
   
   const config: CardGenerationConfig = {
-    inputData: path.join(__dirname, '../../web/data/cards.json'),
-    outputDir: path.join(__dirname, '../../web/images'),
-    assetDir: path.join(__dirname, '../../assets'),
+    inputData: path.join(__dirname, '../../sports/nba/web/data/cards.json'),
+    outputDir: path.join(__dirname, '../../sports/nba/web/images'),
+    assetDir: path.join(__dirname, '../../sports/nba/web/assets'),
     formats: ['webp'],
     sizes: {
       thumbnail: { width: 300, height: 420 },
