@@ -303,7 +303,7 @@ function borderShell(id, key, variant) {
       <path d="M28 110 L88 48 H272 L332 110 V396 L276 456 H84 L28 396 Z" fill="none" stroke="url(#${id}-goldSweep)" stroke-opacity=".70" stroke-width="2.4"/>
       <path d="M38 98 L108 62 H252 L322 98 M38 406 L108 442 H252 L322 406" stroke="url(#${id}-goldSweep)" stroke-opacity=".72" stroke-width="1.9" fill="none"/>
       <path d="M56 126 H304 M56 388 H304" stroke="#ffffff" stroke-opacity=".13" stroke-width="1"/>
-      <text x="318" y="307" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="22" fill="url(#${id}-goldSweep)" opacity=".92">1/1</text>
+      <text x="318" y="307" text-anchor="middle" font-family="Manrope,Arial,sans-serif" font-size="22" font-weight="900" fill="url(#${id}-goldSweep)" opacity=".92">1/1</text>
     </g>`;
   const rails = `
     ${effect}
@@ -366,8 +366,8 @@ function portrait(id, headshot) {
 function badges(id, variant, jerseyNumber) {
   const p = variant.palette;
   const rookie = variant.rookie;
-  const rBadge = rookie ? `<rect x="312" y="36" width="24" height="24" rx="6" fill="#080b10" stroke="url(#${id}-borderFoil)" stroke-width="1.4"/><text x="324" y="54" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="17" fill="${p[4]}">R</text>` : `<polygon points="${starPath(323,47,16,6.5)}" fill="url(#${id}-goldSweep)" stroke="#fff" stroke-opacity=".4"/>`;
-  return `<g><circle cx="43" cy="45" r="23" fill="#050912" stroke="url(#${id}-borderFoil)" stroke-width="2"/><circle cx="43" cy="45" r="28" fill="none" stroke="#fff" stroke-opacity=".20"/><text x="43" y="51" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="17" font-weight="900" fill="#fff">#${esc(jerseyNumber)}</text>${rBadge}</g>`;
+  const rBadge = rookie ? `<rect x="312" y="36" width="24" height="24" rx="6" fill="#080b10" stroke="url(#${id}-borderFoil)" stroke-width="1.4"/><text x="324" y="54" text-anchor="middle" font-family="Manrope,Arial,sans-serif" font-size="17" font-weight="900" fill="${p[4]}">R</text>` : `<polygon points="${starPath(323,47,16,6.5)}" fill="url(#${id}-goldSweep)" stroke="#fff" stroke-opacity=".4"/>`;
+  return `<g><circle cx="43" cy="45" r="23" fill="#050912" stroke="url(#${id}-borderFoil)" stroke-width="2"/><circle cx="43" cy="45" r="28" fill="none" stroke="#fff" stroke-opacity=".20"/><text x="43" y="51" text-anchor="middle" font-family="Manrope,Arial,sans-serif" font-size="17" font-weight="900" fill="#fff">#${esc(jerseyNumber)}</text>${rBadge}</g>`;
 }
 
 function identity(id, key, playerName, teamName) {
@@ -378,10 +378,10 @@ function identity(id, key, playerName, teamName) {
   const teamFill = gold ? '#f5cd71' : (dark ? '#f4f8ff' : '#102038');
   return `<g>
     <path d="M41 318 H319 L307 341 H53 Z" fill="${dark ? '#07101a' : '#142338'}" opacity=".96" stroke="url(#${id}-borderFoil)" stroke-opacity=".50"/>
-    <text x="180" y="334" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="10.2" font-weight="900" letter-spacing="3.5" fill="${teamFill}">${esc(teamName)}</text>
+    <text x="180" y="334" text-anchor="middle" font-family="Manrope,Arial,sans-serif" font-size="10.2" font-weight="900" letter-spacing="2" fill="${teamFill}">${esc(teamName)}</text>
     <path d="M37 344 H323 L311 399 H49 Z" fill="${plateFill}" opacity=".96" stroke="${gold ? `url(#${id}-goldSweep)` : `url(#${id}-borderFoil)`}" stroke-opacity="${gold ? '.74' : '.58'}"/>
     <path d="M55 344 L82 399 M305 344 L278 399" stroke="url(#${id}-borderFoil)" stroke-opacity=".25"/>
-    <text x="180" y="384" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="34" letter-spacing=".6" fill="${nameFill}" stroke="${dark ? '#000' : '#fff'}" stroke-opacity=".18" stroke-width="1">${esc(playerName)}</text>
+    <text x="180" y="384" text-anchor="middle" font-family="Manrope,Arial,sans-serif" font-size="31" font-weight="900" letter-spacing="0" fill="${nameFill}" stroke="${dark ? '#000' : '#fff'}" stroke-opacity=".18" stroke-width="1">${esc(playerName)}</text>
   </g>`;
 }
 
@@ -390,7 +390,7 @@ function stats(id, key, stats) {
   const gold = key === 'black-gold-edge';
   return `<g>${stats.slice(0,4).map((s,i) => {
     const x = 36 + i*72;
-    return `<g transform="translate(${x} 418)"><path d="M0 0 H64 L58 54 H6 Z" fill="${dark ? '#020304' : '#08111c'}" opacity=".95" stroke="url(#${id}-borderFoil)" stroke-opacity=".58"/><path d="M7 8 H57 M7 47 H57" stroke="#fff" stroke-opacity=".10"/><text x="32" y="24" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="900" fill="${gold ? '#f1cd74' : '#f8fbff'}">${esc(s.value)}</text><text x="32" y="42" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="9.5" font-weight="900" letter-spacing="1" fill="${gold ? '#dcb760' : '#dce5ef'}">${esc(s.label)}</text></g>`;
+    return `<g transform="translate(${x} 418)"><path d="M0 0 H64 L58 54 H6 Z" fill="${dark ? '#020304' : '#08111c'}" opacity=".95" stroke="url(#${id}-borderFoil)" stroke-opacity=".58"/><path d="M7 8 H57 M7 47 H57" stroke="#fff" stroke-opacity=".10"/><text x="32" y="24" text-anchor="middle" font-family="Manrope,Arial,sans-serif" font-size="16" font-weight="900" fill="${gold ? '#f1cd74' : '#f8fbff'}">${esc(s.value)}</text><text x="32" y="42" text-anchor="middle" font-family="Manrope,Arial,sans-serif" font-size="9.5" font-weight="900" letter-spacing=".5" fill="${gold ? '#dcb760' : '#dce5ef'}">${esc(s.label)}</text></g>`;
   }).join('')}</g>`;
 }
 
@@ -436,16 +436,16 @@ function renderBoardSvg(input = {}) {
     const x = startX + col*gapX, y = startY + row*gapY;
     const v = VARIANTS[key];
     const inner = renderCardSvg({ ...player, variant: key, rookie: v.rookie }, i).replace(/<svg[^>]*>|<\/svg>/g, '');
-    return `<g transform="translate(${x} ${y}) scale(${cardScale})">${inner}<g transform="translate(0 532)"><circle cx="16" cy="14" r="12" fill="url(#card_${i}_${key.replace(/[^a-z0-9]/g, '')}-borderFoil)"/><text x="42" y="17" font-family="Inter,Arial,sans-serif" font-size="15" font-weight="900" letter-spacing="2.6" fill="#fff">${esc(v.label)}</text><text x="42" y="42" font-family="Inter,Arial,sans-serif" font-size="13" fill="#b9c0ca">${esc(v.note)}</text></g></g>`;
+    return `<g transform="translate(${x} ${y}) scale(${cardScale})">${inner}<g transform="translate(0 532)"><circle cx="16" cy="14" r="12" fill="url(#card_${i}_${key.replace(/[^a-z0-9]/g, '')}-borderFoil)"/><text x="42" y="17" font-family="Manrope,Arial,sans-serif" font-size="15" font-weight="900" letter-spacing="1.4" fill="#fff">${esc(v.label)}</text><text x="42" y="42" font-family="Manrope,Arial,sans-serif" font-size="13" fill="#b9c0ca">${esc(v.note)}</text></g></g>`;
   }).join('');
   return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
     <defs><linearGradient id="boardBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#050507"/><stop offset=".6" stop-color="#0b1018"/><stop offset="1" stop-color="#030405"/></linearGradient><pattern id="boardGrid" width="88" height="88" patternUnits="userSpaceOnUse"><path d="M88 0H0V88" fill="none" stroke="#fff" stroke-opacity=".04"/></pattern></defs>
     <rect width="${W}" height="${H}" fill="url(#boardBg)"/><rect width="${W}" height="${H}" fill="url(#boardGrid)"/>
-    <text x="54" y="66" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="900" letter-spacing="4" fill="#d6aa48">MODERN SPORTS-CARD FRONTEND LAB</text>
-    <text x="54" y="136" font-family="Georgia,Times New Roman,serif" font-size="68" font-weight="700" fill="#fbf8ef">Border-Led Refractor System</text>
-    <text x="54" y="178" font-family="Inter,Arial,sans-serif" font-size="17" fill="#c5cbd4">Modern direction: quiet player field, no headshot box, border-led parallels. Chrome, ice, and black finite use full-card material; checker/wave/mojo keep the effect mostly on the border shell.</text>
+    <text x="54" y="66" font-family="Manrope,Arial,sans-serif" font-size="14" font-weight="900" letter-spacing="2" fill="#d6aa48">MODERN SPORTS-CARD FRONTEND LAB</text>
+    <text x="54" y="136" font-family="Manrope,Arial,sans-serif" font-size="62" font-weight="900" fill="#fbf8ef">Border-Led Refractor System</text>
+    <text x="54" y="178" font-family="Manrope,Arial,sans-serif" font-size="17" fill="#c5cbd4">Modern direction: quiet player field, no headshot box, border-led parallels. Chrome, ice, and black finite use full-card material; checker/wave/mojo keep the effect mostly on the border shell.</text>
     ${cards}
-    <g transform="translate(54 ${H-95})"><rect width="2052" height="66" rx="18" fill="#05070b" stroke="#d6aa48" stroke-opacity=".32"/><text x="24" y="28" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="900" letter-spacing="3" fill="#d6aa48">FRONTEND STACK</text><text x="24" y="52" font-family="Inter,Arial,sans-serif" font-size="14" fill="#d9dde5">SVG shell + masks for border-only treatments, full-card material modules for chrome/ice/black, headshot cutout layer, typography plates, stat rails, CSS/SVG gradients, patterns, turbulence, and specular lighting.</text></g>
+    <g transform="translate(54 ${H-95})"><rect width="2052" height="66" rx="18" fill="#05070b" stroke="#d6aa48" stroke-opacity=".32"/><text x="24" y="28" font-family="Manrope,Arial,sans-serif" font-size="14" font-weight="900" letter-spacing="1.5" fill="#d6aa48">FRONTEND STACK</text><text x="24" y="52" font-family="Manrope,Arial,sans-serif" font-size="14" fill="#d9dde5">SVG shell + masks for border-only treatments, full-card material modules for chrome/ice/black, headshot cutout layer, typography plates, stat rails, CSS/SVG gradients, patterns, turbulence, and specular lighting.</text></g>
   </svg>`;
 }
 
