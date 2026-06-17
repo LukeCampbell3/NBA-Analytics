@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NBA Analytics | Dashboard</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=28">
+    <link rel="stylesheet" href="styles.css?v=29">
 </head>
-<body>
+<body class="sports-card-app">
     <button id="siteMenuButton" class="site-menu-button" aria-label="Open site navigation" aria-controls="siteNavDrawer" aria-expanded="false">
         <span class="site-menu-icon">&#9776;</span>
     </button>
@@ -54,12 +54,12 @@
         </header>
 
         <!-- Filters -->
-        <section class="filters" aria-label="Player filters">
+        <section class="filters" aria-label="Player card filters">
             <div class="container filter-shell">
                 <div class="filter-toolbar">
                     <div class="filter-toolbar-copy">
-                        <span class="filter-toolbar-kicker">Vault Controls</span>
-                        <strong id="filterSummary">All players</strong>
+                        <span class="filter-toolbar-kicker">Card Vault</span>
+                        <strong id="filterSummary">Loading cards</strong>
                     </div>
                     <button id="filterToggle" class="filter-toggle" type="button" aria-expanded="false" aria-controls="filterControls">
                         <span class="filter-toggle-icon" aria-hidden="true"></span>
@@ -72,14 +72,14 @@
                     </div>
 
                     <div class="filter-group">
-                        <label>Archetype:</label>
+                        <label>Archetype</label>
                         <select id="archetypeFilter" class="filter-select">
                             <option value="">All Archetypes</option>
                         </select>
                     </div>
 
                     <div class="filter-group">
-                        <label>Usage:</label>
+                        <label>Usage</label>
                         <select id="usageFilter" class="filter-select">
                             <option value="">All Usage</option>
                             <option value="high">High</option>
@@ -89,14 +89,14 @@
                     </div>
 
                     <div class="filter-group">
-                        <label>Team:</label>
+                        <label>Team</label>
                         <select id="teamFilter" class="filter-select">
                             <option value="">All Teams</option>
                         </select>
                     </div>
 
                     <div class="filter-group">
-                        <label>Sort By:</label>
+                        <label>Sort By</label>
                         <select id="sortBy" class="filter-select">
                             <option value="name" selected>Name</option>
                             <option value="best_available">Best Available (Validated)</option>
@@ -140,7 +140,7 @@
 
     <script src="modern-border-card-builder.js"></script>
     <script src="nav.js?v=7"></script>
-    <script src="app.js?v=54"></script>
+    <script src="app.js?v=55"></script>
 </body>
 </html>
 

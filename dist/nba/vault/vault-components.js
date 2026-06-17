@@ -318,6 +318,30 @@
       metrics.push({ label: "Value", value: CardVault.formatNumber(play.value_score) });
     }
 
+    const photoHtml = resolvedHeadshot
+      ? `<img src="${CardVault.escapeAttr(resolvedHeadshot)}" alt="" loading="lazy" onerror="this.replaceWith(this.nextElementSibling)" /><span class="bounty-card__fallback">${CardVault.escapeHtml(monogram)}</span>`
+      : `<span class="bounty-card__fallback">${CardVault.escapeHtml(monogram)}</span>`;
+    const parlayTag = play.parlay_candidate ? '<span class="bounty-card__tag bounty-card__tag--parlay">Parlay tag</span>' : "";
+    const statusTag = play.publication_status === "withheld"
+      ? '<span class="bounty-card__tag">Withheld</span>'
+      : '<span class="bounty-card__tag">Published</span>';
+    const supportTag = `<span class="bounty-card__tag">${CardVault.escapeHtml(tier)}</span>`;
+
+    return `
+      <article class="bounty-card bounty-card--${CardVault.escapeAttr(tier)}" data-direction="${CardVault.escapeAttr(direction)}">
+        <span class="bounty-card__rank">Board #${CardVault.escapeHtml(play.rank || index + 1)}</span>
+        <h2 class="bounty-card__title">Wanted</h2>
+        <div class="bounty-card__photo">${photoHtml}</div>
+        <div class="bounty-card__tags">${parlayTag}${supportTag}${statusTag}</div>
+        <div class="bounty-card__reward">${CardVault.escapeHtml(evText)} Signal</div>
+        <div class="bounty-card__name">${CardVault.escapeHtml(displayName)}</div>
+        <div class="bounty-card__direction">${CardVault.escapeHtml(direction)} ${CardVault.escapeHtml(targetLabel)}</div>
+        <div class="bounty-card__line">Line ${CardVault.escapeHtml(lineText)} | Projection ${CardVault.escapeHtml(predText)} | Edge ${CardVault.escapeHtml(edgeText)}</div>
+        <p class="bounty-card__note">${CardVault.escapeHtml(why)}</p>
+        ${footer ? `<div class="bounty-card__footer">${CardVault.escapeHtml(footer)}</div>` : ""}
+      </article>
+    `;
+
     return CardVault.renderPlayerCard({
       variant: variantMap[tier] || "chrome",
       density: "compact",

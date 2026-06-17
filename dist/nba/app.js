@@ -3992,19 +3992,7 @@ class PlayerCardsApp {
 
         };
 
-        const syncForViewport = () => {
-
-            if (mobileQuery.matches) {
-
-                setExpanded(false);
-
-            } else {
-
-                setExpanded(true);
-
-            }
-
-        };
+        const syncForViewport = () => setExpanded(!mobileQuery.matches);
 
         toggle.addEventListener('click', () => {
 
