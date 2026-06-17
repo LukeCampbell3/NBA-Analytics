@@ -3992,19 +3992,7 @@ class PlayerCardsApp {
 
         };
 
-        const syncForViewport = () => {
-
-            if (mobileQuery.matches) {
-
-                setExpanded(false);
-
-            } else {
-
-                setExpanded(true);
-
-            }
-
-        };
+        const syncForViewport = () => setExpanded(!mobileQuery.matches);
 
         toggle.addEventListener('click', () => {
 
@@ -5972,9 +5960,9 @@ class PlayerCardsApp {
 
                                     <div class="comparable-stats">
 
-                                        ${comp.stats.points.toFixed(1)} PPG *** 
+                                        ${comp.stats.points.toFixed(1)} PPG ***
 
-                                        ${comp.stats.assists.toFixed(1)} APG *** 
+                                        ${comp.stats.assists.toFixed(1)} APG ***
 
                                         ${comp.stats.rebounds.toFixed(1)} RPG
 
@@ -10405,6 +10393,4 @@ document.addEventListener('DOMContentLoaded', () => {
     new PlayerCardsApp();
 
 });
-
-
 
