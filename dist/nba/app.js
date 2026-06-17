@@ -88,6 +88,12 @@ class PlayerCardsApp {
 
         this.valuationsDataPath = bodyDataset.valuationsSrc || 'data/valuations.json';
 
+        this.simulationDataPath = bodyDataset.simulationSrc || 'data/player_simulation_cards.json';
+
+        this.simulationCards = [];
+
+        this.simulationIndex = { byId: new Map(), byName: new Map(), byNameTeam: new Map() };
+
         this.pageLabel = bodyDataset.pageLabel || '';
 
         this.isCollegeDeck = /college/i.test(this.cardsDataPath) || /college/i.test(this.pageLabel);
@@ -208,6 +214,8 @@ class PlayerCardsApp {
 
             }
 
+            await this.loadSimulationData(cacheBust);
+
 
 
             // Merge valuation data into players and compute normalized value scores.
@@ -316,11 +324,133 @@ class PlayerCardsApp {
 
                 ...player,
 
-                valuation
+                valuation,
+
+                simulation: this.getSimulationForPlayer(player)
 
             };
 
         });
+
+    }
+
+
+
+    async loadSimulationData(cacheBust = '') {
+
+        try {
+
+            const suffix = cacheBust ? `?${cacheBust}` : '';
+
+            const response = await fetch(`${this.simulationDataPath}${suffix}`);
+
+            if (!response.ok) {
+
+                throw new Error(`status ${response.status}`);
+
+            }
+
+            const payload = await response.json();
+
+            this.simulationCards = Array.isArray(payload)
+
+                ? payload
+
+                : (Array.isArray(payload?.players) ? payload.players : []);
+
+            this.buildSimulationIndex(this.simulationCards);
+
+            console.log('Simulation cards loaded:', this.simulationCards.length);
+
+        } catch (e) {
+
+            console.warn('Simulation cards not available:', e);
+
+            this.simulationCards = [];
+
+            this.simulationIndex = { byId: new Map(), byName: new Map(), byNameTeam: new Map() };
+
+        }
+
+    }
+
+
+
+    buildSimulationIndex(rows) {
+
+        const byId = new Map();
+
+        const byName = new Map();
+
+        const byNameTeam = new Map();
+
+        for (const row of rows || []) {
+
+            const id = String(row?.player_id || row?.id || '').trim();
+
+            const nameKey = this.normalizeSimulationLookup(row?.player || row?.player_name || row?.name);
+
+            const teamKey = String(row?.team || row?.team_id || row?.team_abbreviation || '').trim().toLowerCase();
+
+            if (id && !byId.has(id)) byId.set(id, row);
+
+            if (nameKey && !byName.has(nameKey)) byName.set(nameKey, row);
+
+            if (nameKey && teamKey) {
+
+                const composite = `${nameKey}|${teamKey}`;
+
+                if (!byNameTeam.has(composite)) byNameTeam.set(composite, row);
+
+            }
+
+        }
+
+        this.simulationIndex = { byId, byName, byNameTeam };
+
+    }
+
+
+
+    normalizeSimulationLookup(value) {
+
+        return String(value || '')
+
+            .replace(/_/g, ' ')
+
+            .replace(/[^a-zA-Z0-9 ]+/g, ' ')
+
+            .replace(/\s+/g, ' ')
+
+            .trim()
+
+            .toLowerCase();
+
+    }
+
+
+
+    getSimulationForPlayer(player) {
+
+        const index = this.simulationIndex || {};
+
+        const id = String(player?.player?.id || player?.player_id || '').trim();
+
+        if (id && index.byId?.has(id)) return index.byId.get(id);
+
+        const nameKey = this.normalizeSimulationLookup(player?.player?.name || player?.name);
+
+        const teamKey = String(player?.player?.team || player?.team || '').trim().toLowerCase();
+
+        if (nameKey && teamKey && index.byNameTeam?.has(`${nameKey}|${teamKey}`)) {
+
+            return index.byNameTeam.get(`${nameKey}|${teamKey}`);
+
+        }
+
+        if (nameKey && index.byName?.has(nameKey)) return index.byName.get(nameKey);
+
+        return null;
 
     }
 
@@ -4510,11 +4640,20 @@ class PlayerCardsApp {
 
         document.querySelectorAll('.player-card').forEach((card) => {
 
-            card.addEventListener('click', () => {
+            const openCard = () => {
                 const playerKey = card.getAttribute('data-player-key');
                 const player = this.filteredPlayers.find(p => this.getPlayerKey(p) === playerKey);
                 if (player) {
                     this.showPlayerDetail(player, card);
+                }
+            };
+
+            card.addEventListener('click', openCard);
+
+            card.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    openCard();
                 }
             });
 
@@ -5043,7 +5182,7 @@ class PlayerCardsApp {
             : '';
 
         return `
-            <article class="player-card modern-border-card-wrap" data-player="${this.escapeAttr(player.player?.name || '')}" data-player-key="${this.escapeAttr(this.getPlayerKey(player))}" data-card-family="${cardFamily.key}">
+            <article class="player-card modern-border-card-wrap" ${opts.interactive ? 'role="button" tabindex="0"' : ''} data-player="${this.escapeAttr(player.player?.name || '')}" data-player-key="${this.escapeAttr(this.getPlayerKey(player))}" data-card-family="${cardFamily.key}">
                 ${opts.index !== null ? `<div class="card-number">#${this.escapeHtml(String(opts.index + 1))}</div>` : ''}
                 <div class="modern-border-card-frame">
                     ${cardSvg}
@@ -5466,6 +5605,8 @@ class PlayerCardsApp {
 
         const constraints = player.v1_1_enhancements?.scenario_constraints || {};
 
+        const simulation = player.simulation || this.getSimulationForPlayer(player);
+
 
 
         return `
@@ -5537,6 +5678,8 @@ class PlayerCardsApp {
 
                     </div>
 
+                    ${this.renderSimulationSnapshot(simulation)}
+
                 </div>
 
             </div>
@@ -5548,6 +5691,8 @@ class PlayerCardsApp {
             <div class="tab-navigation">
 
                 <button class="tab-button active" data-tab="visuals">Visuals</button>
+
+                <button class="tab-button" data-tab="simulation">Next Season Simulation</button>
 
                 <button class="tab-button" data-tab="metrics">Metrics</button>
 
@@ -5612,6 +5757,16 @@ class PlayerCardsApp {
                         </div>
 
                     </div>
+
+                </div>
+
+
+
+                <!-- Next Season Simulation Tab -->
+
+                <div class="tab-content" id="tab-simulation">
+
+                    ${this.renderSimulationTab(player, simulation)}
 
                 </div>
 
@@ -5744,6 +5899,258 @@ class PlayerCardsApp {
                 <div class="tab-content" id="tab-breakout">
 
                     ${this.generateBreakoutScenario(player, constraints, trad, adv)}
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+
+    formatSimulationStat(stat, fallback = 'N/A') {
+
+        const value = this.toFiniteNumber(stat?.mean ?? stat?.median ?? stat?.p50);
+
+        return value === null ? fallback : value.toFixed(1);
+
+    }
+
+
+
+    formatSimulationRange(stat, fallback = 'N/A') {
+
+        const low = this.toFiniteNumber(stat?.p10 ?? stat?.floor);
+
+        const high = this.toFiniteNumber(stat?.p90 ?? stat?.ceiling);
+
+        if (low === null || high === null) return fallback;
+
+        return `${low.toFixed(1)}-${high.toFixed(1)}`;
+
+    }
+
+
+
+    formatSimulationPercent(value) {
+
+        const n = this.toFiniteNumber(value);
+
+        return n === null ? 'N/A' : `${Math.round(this.clampNum(n, 0, 1) * 100)}%`;
+
+    }
+
+
+
+    formatSimulationMeterWidth(value) {
+
+        const n = this.toFiniteNumber(value);
+
+        return n === null ? '0%' : `${Math.round(this.clampNum(n, 0, 1) * 100)}%`;
+
+    }
+
+
+
+    renderSimulationSnapshot(simulation) {
+
+        if (!simulation) {
+
+            return `
+
+                <div class="simulation-snapshot-panel simulation-snapshot-empty">
+
+                    <div class="simulation-snapshot-label">Next Season Simulation</div>
+
+                    <div class="simulation-snapshot-title">No simulation record matched this player.</div>
+
+                    <div class="simulation-snapshot-note">Player identity loaded, but the backend simulation artifact does not contain a matching id or normalized name.</div>
+
+                </div>
+
+            `;
+
+        }
+
+        const confidence = String(simulation.confidence_tier || 'UNRATED').replace(/_/g, ' ');
+
+        return `
+
+            <div class="simulation-snapshot-panel">
+
+                <div class="simulation-snapshot-head">
+
+                    <div>
+
+                        <div class="simulation-snapshot-label">2026-27 Simulation</div>
+
+                        <div class="simulation-snapshot-title">${this.escapeHtml(simulation.best_projection_summary || 'Projected next-season profile available.')}</div>
+
+                    </div>
+
+                    <span class="simulation-confidence-pill">${this.escapeHtml(confidence)}</span>
+
+                </div>
+
+                <div class="simulation-snapshot-grid">
+
+                    <div><span>PTS</span><strong>${this.formatSimulationStat(simulation.pts)}</strong></div>
+
+                    <div><span>REB</span><strong>${this.formatSimulationStat(simulation.reb)}</strong></div>
+
+                    <div><span>AST</span><strong>${this.formatSimulationStat(simulation.ast)}</strong></div>
+
+                    <div><span>MPG</span><strong>${this.formatSimulationStat({ mean: simulation.projected_minutes_per_game })}</strong></div>
+
+                </div>
+
+                <div class="simulation-snapshot-note">${this.escapeHtml(simulation.credibility_notes || `Based on ${simulation.simulation_count || 'available'} simulations.`)}</div>
+
+            </div>
+
+        `;
+
+    }
+
+
+
+    renderSimulationTab(player, simulation) {
+
+        if (!simulation) {
+
+            return `
+
+                <div class="detail-section">
+
+                    <h3>Next Season Simulation</h3>
+
+                    <div class="simulation-empty-state">
+
+                        <strong>No simulation matched ${this.escapeHtml(player?.player?.name || 'this player')}.</strong>
+
+                        <p>The card can still be inspected, but the simulation artifact has no matching player id or normalized name for this record.</p>
+
+                    </div>
+
+                </div>
+
+            `;
+
+        }
+
+        const stats = [
+
+            { key: 'pts', label: 'Points', stat: simulation.pts },
+
+            { key: 'reb', label: 'Rebounds', stat: simulation.reb },
+
+            { key: 'ast', label: 'Assists', stat: simulation.ast },
+
+            { key: 'pra', label: 'PRA', stat: simulation.pra }
+
+        ];
+
+        const warnings = Array.isArray(simulation.missing_data_warnings) ? simulation.missing_data_warnings : [];
+
+        const riskText = simulation.main_risk_factors || simulation.uncertainty_summary || 'Simulation uncertainty is captured in the floor and ceiling bands.';
+
+        return `
+
+            <div class="detail-section simulation-detail-section">
+
+                <div class="simulation-detail-header">
+
+                    <div>
+
+                        <h3>2026-27 Player Simulation</h3>
+
+                        <p>${this.escapeHtml(simulation.best_projection_summary || 'Projected next-season stat profile.')}</p>
+
+                    </div>
+
+                    <div class="simulation-run-badge">
+
+                        <span>${this.escapeHtml(String(simulation.simulation_count || 'N/A'))}</span>
+
+                        <strong>Runs</strong>
+
+                    </div>
+
+                </div>
+
+                <div class="simulation-band-grid">
+
+                    ${stats.map(item => `
+
+                        <div class="simulation-band-panel">
+
+                            <div class="simulation-band-top">
+
+                                <span>${this.escapeHtml(item.label)}</span>
+
+                                <strong>${this.formatSimulationStat(item.stat)}</strong>
+
+                            </div>
+
+                            <div class="simulation-band-range">${this.formatSimulationRange(item.stat)} p10-p90</div>
+
+                            <div class="simulation-band-meter">
+
+                                <span style="width: ${this.formatSimulationMeterWidth(item.stat?.probability_above_last_season_avg)}"></span>
+
+                            </div>
+
+                            <div class="simulation-band-foot">${this.formatSimulationPercent(item.stat?.probability_above_last_season_avg)} above last season avg</div>
+
+                        </div>
+
+                    `).join('')}
+
+                </div>
+
+                <div class="simulation-context-grid">
+
+                    <div class="simulation-context-panel">
+
+                        <span>Confidence</span>
+
+                        <strong>${this.escapeHtml(String(simulation.confidence_tier || 'UNRATED').replace(/_/g, ' '))}</strong>
+
+                        <p>Forecastability ${this.formatSimulationPercent(simulation.forecastability_score)}; role stability ${this.formatSimulationPercent(simulation.role_stability_score)}.</p>
+
+                    </div>
+
+                    <div class="simulation-context-panel">
+
+                        <span>Upside Path</span>
+
+                        <strong>${this.escapeHtml(simulation.primary_upside_path || 'Upside path unavailable')}</strong>
+
+                        <p>${this.escapeHtml(simulation.primary_downside_path || 'Downside path unavailable')}</p>
+
+                    </div>
+
+                    <div class="simulation-context-panel">
+
+                        <span>Risk</span>
+
+                        <strong>${this.escapeHtml(riskText)}</strong>
+
+                        <p>${this.escapeHtml(simulation.uncertainty_summary || 'Floor and ceiling bands should be reviewed before interpreting the mean projection.')}</p>
+
+                    </div>
+
+                </div>
+
+                <div class="simulation-meta-row">
+
+                    <span>Data cutoff: ${this.escapeHtml(simulation.data_cutoff_date || 'unknown')}</span>
+
+                    <span>Projected games: ${this.escapeHtml(String(simulation.projected_games_played || 'N/A'))}</span>
+
+                    ${warnings.length ? `<span>${this.escapeHtml(warnings.length)} data warning${warnings.length === 1 ? '' : 's'}</span>` : '<span>No simulation data warnings</span>'}
 
                 </div>
 
