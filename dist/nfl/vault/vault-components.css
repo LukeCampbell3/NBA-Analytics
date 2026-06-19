@@ -12,6 +12,7 @@
 }
 
 .vault-topbar {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -561,8 +562,272 @@
 /* ─── Board grid (prediction desk) ─── */
 .vault-board {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--vault-space-5);
+}
+
+.bounty-paper {
+  position: relative;
+  min-height: 620px;
+  padding: 18px 16px 16px;
+  border: 3px solid #4d301c;
+  border-radius: 4px;
+  background:
+    radial-gradient(circle at 26% 12%, rgba(255, 255, 255, 0.32), transparent 30%),
+    radial-gradient(circle at 76% 82%, rgba(99, 55, 28, 0.16), transparent 34%),
+    linear-gradient(180deg, #f2dfae 0%, #e5c88f 48%, #d2ad74 100%);
+  color: #3d2618;
+  box-shadow: 0 18px 34px rgba(25, 15, 8, 0.32);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.bounty-paper::before,
+.bounty-paper::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.bounty-paper::before {
+  inset: 8px;
+  border: 2px solid rgba(70, 42, 24, 0.76);
+  box-shadow: inset 0 0 0 1px rgba(255, 244, 214, 0.5);
+  z-index: -1;
+}
+
+.bounty-paper::after {
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(73, 43, 24, 0.12), transparent 12%, transparent 88%, rgba(73, 43, 24, 0.12)),
+    radial-gradient(rgba(87, 48, 26, 0.22) 0.75px, transparent 0.75px) 0 0 / 9px 9px;
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+  z-index: -2;
+}
+
+.bounty-paper__grain {
+  position: absolute;
+  inset: 0;
+  z-index: -3;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(75, 45, 27, 0.12), transparent 16%),
+    radial-gradient(circle at 86% 24%, rgba(75, 45, 27, 0.10), transparent 14%),
+    radial-gradient(circle at 24% 86%, rgba(75, 45, 27, 0.11), transparent 18%);
+}
+
+.bounty-paper__header {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+}
+
+.bounty-paper__rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 1px solid rgba(62, 36, 20, 0.48);
+  border-radius: 999px;
+  background: rgba(255, 246, 220, 0.58);
+  color: #4f321f;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bounty-paper__wanted {
+  margin: 8px 0 0;
+  font-family: var(--vault-font-display);
+  font-size: clamp(2.6rem, 5vw, 3.35rem);
+  line-height: 0.88;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #4e2b16;
+  text-shadow: 0 2px 0 rgba(255, 248, 226, 0.44);
+}
+
+.bounty-paper__subhead,
+.bounty-paper__reward-label {
+  margin: 4px 0 10px;
+  color: #6a4427;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.bounty-paper__photo {
+  width: 100%;
+  max-width: 245px;
+  aspect-ratio: 0.88 / 1;
+  margin: 2px auto 12px;
+  border: 2px solid rgba(56, 33, 20, 0.86);
+  background:
+    linear-gradient(180deg, rgba(250, 238, 205, 0.88), rgba(222, 194, 143, 0.88)),
+    repeating-linear-gradient(45deg, rgba(76, 45, 25, 0.05) 0 4px, transparent 4px 8px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.bounty-paper__photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 18%;
+  filter: sepia(0.32) contrast(1.08) saturate(0.82);
+}
+
+.bounty-paper__fallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: rgba(71, 46, 27, 0.68);
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  background: linear-gradient(180deg, rgba(246, 235, 207, 0.78), rgba(229, 207, 165, 0.95));
+}
+
+.bounty-paper__tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.bounty-paper__tag {
+  border: 1px solid rgba(79, 47, 30, 0.22);
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: rgba(79, 47, 30, 0.08);
+  color: #553721;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.bounty-paper__tag--parlay,
+.bounty-paper--parlay .bounty-paper__tag {
+  border-color: rgba(34, 99, 66, 0.38);
+  color: #24543e;
+}
+
+.bounty-paper__reward {
+  margin: 0;
+  font-family: var(--vault-font-display);
+  font-size: clamp(1.55rem, 4vw, 2.05rem);
+  line-height: 1;
+  color: #3e2316;
+}
+
+.bounty-paper__name {
+  width: 100%;
+  margin: 10px 0 8px;
+  padding: 8px 8px 6px;
+  border-top: 2px solid rgba(67, 40, 23, 0.78);
+  border-bottom: 2px solid rgba(67, 40, 23, 0.78);
+  font-family: var(--vault-font-display);
+  font-size: clamp(1.12rem, 3vw, 1.45rem);
+  line-height: 1.12;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #452716;
+}
+
+.bounty-paper__direction {
+  margin: 0 0 10px;
+  font-family: var(--vault-font-display);
+  font-size: clamp(1.35rem, 4vw, 1.8rem);
+  line-height: 1.02;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.bounty-paper[data-direction="OVER"] .bounty-paper__direction {
+  color: #1f5132;
+}
+
+.bounty-paper[data-direction="UNDER"] .bounty-paper__direction {
+  color: #7a2419;
+}
+
+.bounty-paper__ledger {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0 0 10px;
+}
+
+.bounty-paper__ledger div {
+  min-width: 0;
+  border: 1px solid rgba(77, 48, 28, 0.24);
+  background: rgba(255, 246, 220, 0.34);
+  padding: 6px 4px;
+}
+
+.bounty-paper__ledger dt,
+.bounty-paper__ledger dd {
+  margin: 0;
+}
+
+.bounty-paper__ledger dt {
+  color: rgba(58, 36, 24, 0.72);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bounty-paper__ledger dd {
+  margin-top: 2px;
+  color: #3e2517;
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.bounty-paper__note,
+.bounty-paper__footer {
+  color: rgba(58, 36, 24, 0.82);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.bounty-paper__note {
+  margin: 0;
+}
+
+.bounty-paper__footer {
+  margin-top: auto;
+  padding-top: 10px;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 560px) {
+  .vault-board {
+    grid-template-columns: 1fr;
+  }
+
+  .bounty-paper {
+    min-height: 0;
+  }
+
+  .bounty-paper__ledger {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .vault-board-toolbar {

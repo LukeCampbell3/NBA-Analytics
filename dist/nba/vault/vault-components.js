@@ -283,8 +283,6 @@
     const parts = displayName.split(/\s+/).filter(Boolean);
     const monogram = parts.length >= 2 ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase() : (parts[0] || "NA").slice(0, 2).toUpperCase();
 
-    const confidenceMap = { elite: 0.82, strong: 0.68, consider: 0.52, pass: 0.35, parlay: 0.7 };
-    const variantMap = { elite: "blue-ice", strong: "refractor", consider: "chrome", pass: "retro", parlay: "zebra-ice" };
     const tier = play.parlay_candidate ? "parlay" : (["elite", "strong", "consider", "pass"].includes(tierRaw) ? tierRaw : "consider");
 
     const lineText = CardVault.formatNumber(play.market_line);
@@ -303,65 +301,41 @@
       ? `Model lean pairs with ${String(play.parlay_partner_name || "another tagged leg").trim()} (${CardVault.formatPct(play.parlay_projected_hit_rate)} projected alignment).`
       : `Context-supported edge on ${targetLabel}. Review evidence before acting.`;
 
-    const metrics = [
-      { label: "Edge", value: edgeText, tone: Number(edgeValue) >= 0 ? "positive" : "negative" },
-      { label: "Dir", value: direction },
-    ];
-
-    if (play.ev != null) {
-      metrics.splice(1, 0, { label: "Signal", value: evText, tone: Number(play.ev) >= 0 ? "positive" : "negative" });
-    }
-    if (play.estimated_graded_hit_rate != null) {
-      metrics.push({ label: "Hit est.", value: CardVault.formatPct(play.estimated_graded_hit_rate) });
-    }
-    if (play.value_score != null) {
-      metrics.push({ label: "Value", value: CardVault.formatNumber(play.value_score) });
-    }
-
     const photoHtml = resolvedHeadshot
-      ? `<img src="${CardVault.escapeAttr(resolvedHeadshot)}" alt="" loading="lazy" onerror="this.replaceWith(this.nextElementSibling)" /><span class="bounty-card__fallback">${CardVault.escapeHtml(monogram)}</span>`
-      : `<span class="bounty-card__fallback">${CardVault.escapeHtml(monogram)}</span>`;
-    const parlayTag = play.parlay_candidate ? '<span class="bounty-card__tag bounty-card__tag--parlay">Parlay tag</span>' : "";
+      ? `<img class="bounty-paper__photo-img" src="${CardVault.escapeAttr(resolvedHeadshot)}" alt="" loading="lazy" onerror="this.replaceWith(this.nextElementSibling)" /><span class="bounty-paper__fallback">${CardVault.escapeHtml(monogram)}</span>`
+      : `<span class="bounty-paper__fallback">${CardVault.escapeHtml(monogram)}</span>`;
+    const parlayTag = play.parlay_candidate ? '<span class="bounty-paper__tag bounty-paper__tag--parlay">Parlay Tag</span>' : "";
     const statusTag = play.publication_status === "withheld"
-      ? '<span class="bounty-card__tag">Withheld</span>'
-      : '<span class="bounty-card__tag">Published</span>';
-    const supportTag = `<span class="bounty-card__tag">${CardVault.escapeHtml(tier)}</span>`;
+      ? '<span class="bounty-paper__tag">Withheld</span>'
+      : '<span class="bounty-paper__tag">Published</span>';
+    const hitRate = play.estimated_graded_hit_rate != null ? CardVault.formatPct(play.estimated_graded_hit_rate) : "n/a";
+    const valueScore = play.value_score != null ? CardVault.formatNumber(play.value_score) : "n/a";
 
     return `
-      <article class="bounty-card bounty-card--${CardVault.escapeAttr(tier)}" data-direction="${CardVault.escapeAttr(direction)}">
-        <span class="bounty-card__rank">Board #${CardVault.escapeHtml(play.rank || index + 1)}</span>
-        <h2 class="bounty-card__title">Wanted</h2>
-        <div class="bounty-card__photo">${photoHtml}</div>
-        <div class="bounty-card__tags">${parlayTag}${supportTag}${statusTag}</div>
-        <div class="bounty-card__reward">${CardVault.escapeHtml(evText)} Signal</div>
-        <div class="bounty-card__name">${CardVault.escapeHtml(displayName)}</div>
-        <div class="bounty-card__direction">${CardVault.escapeHtml(direction)} ${CardVault.escapeHtml(targetLabel)}</div>
-        <div class="bounty-card__line">Line ${CardVault.escapeHtml(lineText)} | Projection ${CardVault.escapeHtml(predText)} | Edge ${CardVault.escapeHtml(edgeText)}</div>
-        <p class="bounty-card__note">${CardVault.escapeHtml(why)}</p>
-        ${footer ? `<div class="bounty-card__footer">${CardVault.escapeHtml(footer)}</div>` : ""}
+      <article class="bounty-paper bounty-paper--${CardVault.escapeAttr(tier)}" data-direction="${CardVault.escapeAttr(direction)}" aria-label="Wanted poster for ${CardVault.escapeAttr(displayName)} ${CardVault.escapeAttr(direction)} ${CardVault.escapeAttr(targetLabel)}">
+        <div class="bounty-paper__grain" aria-hidden="true"></div>
+        <header class="bounty-paper__header">
+          <span class="bounty-paper__rank">Board #${CardVault.escapeHtml(play.rank || index + 1)}</span>
+          <h2 class="bounty-paper__wanted">Wanted</h2>
+          <p class="bounty-paper__subhead">For model-backed action</p>
+        </header>
+        <div class="bounty-paper__photo">${photoHtml}</div>
+        <div class="bounty-paper__tags">${parlayTag}<span class="bounty-paper__tag">${CardVault.escapeHtml(tier)}</span>${statusTag}</div>
+        <p class="bounty-paper__reward-label">Reward Signal</p>
+        <p class="bounty-paper__reward">${CardVault.escapeHtml(evText)}</p>
+        <h3 class="bounty-paper__name">${CardVault.escapeHtml(displayName)}</h3>
+        <p class="bounty-paper__direction">${CardVault.escapeHtml(direction)} ${CardVault.escapeHtml(targetLabel)}</p>
+        <dl class="bounty-paper__ledger">
+          <div><dt>Line</dt><dd>${CardVault.escapeHtml(lineText)}</dd></div>
+          <div><dt>Projection</dt><dd>${CardVault.escapeHtml(predText)}</dd></div>
+          <div><dt>Edge</dt><dd>${CardVault.escapeHtml(edgeText)}</dd></div>
+          <div><dt>Hit Est.</dt><dd>${CardVault.escapeHtml(hitRate)}</dd></div>
+          <div><dt>Value</dt><dd>${CardVault.escapeHtml(valueScore)}</dd></div>
+        </dl>
+        <p class="bounty-paper__note">${CardVault.escapeHtml(why)}</p>
+        ${footer ? `<footer class="bounty-paper__footer">${CardVault.escapeHtml(footer)}</footer>` : ""}
       </article>
     `;
-
-    return CardVault.renderPlayerCard({
-      variant: variantMap[tier] || "chrome",
-      density: "compact",
-      context: "prediction",
-      playerName: displayName,
-      team: play.team || "",
-      opponent: gameText,
-      headshotUrl: resolvedHeadshot,
-      monogram,
-      signal: `Model lean: ${direction} · ${targetLabel} · Line ${lineText} · Projection ${predText}`,
-      why,
-      analyticalTag: `Board #${play.rank || index + 1}`,
-      confidence: confidenceMap[tier] ?? 0.5,
-      confidenceLabel: "Evidence strength",
-      metrics,
-      footer,
-      statusPill: play.publication_status === "withheld"
-        ? { status: "withheld", label: "Withheld" }
-        : { status: "active", label: "Published" },
-    });
   };
 
   CardVault.formatSignedNumber = function formatSignedNumber(value) {
