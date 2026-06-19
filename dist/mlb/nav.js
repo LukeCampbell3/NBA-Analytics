@@ -67,60 +67,33 @@
         if (e.key === 'Escape' && isOpen()) closeNav();
     });
 
-    // Highlight active page by filename. Supports:
-    // /index.html, /about.html, /about/, /about/index.html
-    const getCurrentPage = () => {
-        const segments = window.location.pathname
-            .split('/')
-            .filter(Boolean)
-            .map((part) => part.toLowerCase());
-
-        if (!segments.length) return { page: 'index.html', atSiteRoot: true };
-
-        const last = segments[segments.length - 1];
-        if (last.endsWith('.html')) {
-            if (last === 'index.html' && segments.length > 1) {
-                return { page: `${segments[segments.length - 2]}.html`, atSiteRoot: false };
-            }
-            return { page: last, atSiteRoot: false };
-        }
-
-        return { page: `${last}.html`, atSiteRoot: false };
+    const normalizePath = (value) => {
+        const url = new URL(value || '/', window.location.origin);
+        let path = url.pathname.toLowerCase().replace(/\/index\.html$/, '/');
+        path = path.replace(/\/+$/, '/');
+        return path || '/';
     };
 
-    const canonicalNavHref = (href) => {
-        const normalized = String(href || '').trim().toLowerCase();
-        if (!normalized || normalized === '/' || normalized === '/index.html') {
-            return 'site-root';
-        }
+    const currentPath = normalizePath(window.location.pathname);
+    const links = Array.from(document.querySelectorAll('.site-nav-link'));
+    let bestActiveLink = null;
+    let bestActiveLength = -1;
 
-        const withoutLeadingSlash = normalized.startsWith('/') ? normalized.slice(1) : normalized;
-        if (withoutLeadingSlash.endsWith('.html')) {
-            const parts = withoutLeadingSlash.split('/').filter(Boolean);
-            return parts[parts.length - 1] || 'index.html';
-        }
+    links.forEach((link) => {
+        const href = normalizePath(link.getAttribute('href') || '/');
+        const isActive = href === '/'
+            ? currentPath === '/'
+            : currentPath === href || currentPath.startsWith(href);
 
-        const trimmed = withoutLeadingSlash.replace(/\/+$/, '');
-        if (!trimmed) return 'site-root';
-
-        const parts = trimmed.split('/').filter(Boolean);
-        if (!parts.length) return 'site-root';
-        if (parts.length === 1) return 'index.html';
-        return `${parts[parts.length - 1]}.html`;
-    };
-
-    const current = getCurrentPage();
-    document.querySelectorAll('.site-nav-link').forEach((link) => {
-        const hrefRaw = link.getAttribute('href') || '';
-        const href = canonicalNavHref(hrefRaw);
-        const isActive = href === 'site-root'
-            ? current.atSiteRoot
-            : (!current.atSiteRoot && href === current.page);
-
-        if (isActive) {
-            link.classList.add('active');
-            link.setAttribute('aria-current', 'page');
+        if (isActive && href.length > bestActiveLength) {
+            bestActiveLink = link;
+            bestActiveLength = href.length;
         }
         link.addEventListener('click', closeNav);
     });
+
+    if (bestActiveLink) {
+        bestActiveLink.classList.add('active');
+        bestActiveLink.setAttribute('aria-current', 'page');
+    }
 })();
