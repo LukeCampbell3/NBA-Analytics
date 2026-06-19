@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NBA Analytics | Metrics Guide</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=30">
     <style>
         .about-wrap {
             max-width: 1100px;
@@ -125,21 +125,10 @@
         </nav>
 
         <section class="about-card">
-            <h2>What This System Is Doing</h2>
-            <p>
-                This engine is a <strong>mechanism-first NBA analysis system</strong>. Instead of ranking players only by
-                single-number leaderboards, it tries to answer:
-                <strong>what value the player creates</strong>, <strong>why it exists</strong>, and <strong>how well it transfers</strong>
-                to another team environment.
-            </p>
-            <p>
-                The core idea is to place each player in a <strong>context bubble</strong>: we separate what appears to be
-                <strong>intrinsic skill</strong> from what is caused by <strong>deployment, teammates, schedule strength, and scheme</strong>.
-                Then we run constrained counterfactuals (e.g., “Best team fit”) that are forced to remain realistic.
-            </p>
-            <p class="muted">
-                You should think of this as: <strong>explain → isolate → translate → constrain → sanity-check → grade confidence</strong>.
-            </p>
+            <div class="minimal-heading">
+                <h1>Metrics</h1>
+                <button class="info-trigger" type="button" aria-label="About NBA metrics" data-info="Mechanism-first NBA analysis: value, context, translation, constraints, and confidence.">i</button>
+            </div>
         </section>
 
         <section class="about-card">

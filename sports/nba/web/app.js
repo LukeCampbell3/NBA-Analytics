@@ -3966,7 +3966,91 @@ class PlayerCardsApp {
 
 
 
+    setupFilterDisclosure() {
+
+        const filterSection = document.querySelector('.filters');
+
+        const toggle = document.getElementById('filterToggle');
+
+        const controls = document.getElementById('filterControls');
+
+        const summary = document.getElementById('filterSummary');
+
+        if (!filterSection || !toggle || !controls) return;
+
+        const mobileQuery = window.matchMedia('(max-width: 768px)');
+
+        const setExpanded = (expanded) => {
+
+            filterSection.classList.toggle('is-collapsed', !expanded);
+
+            filterSection.classList.toggle('is-expanded', expanded);
+
+            toggle.setAttribute('aria-expanded', String(expanded));
+
+            controls.setAttribute('aria-hidden', String(!expanded && mobileQuery.matches));
+
+        };
+
+        const syncForViewport = () => setExpanded(!mobileQuery.matches);
+
+        toggle.addEventListener('click', () => {
+
+            if (!mobileQuery.matches) return;
+
+            setExpanded(filterSection.classList.contains('is-collapsed'));
+
+        });
+
+        if (typeof mobileQuery.addEventListener === 'function') {
+
+            mobileQuery.addEventListener('change', syncForViewport);
+
+        } else if (typeof mobileQuery.addListener === 'function') {
+
+            mobileQuery.addListener(syncForViewport);
+
+        }
+
+        filterSection.classList.add('filters-ready');
+
+        syncForViewport();
+
+        if (summary) summary.textContent = `${this.filteredPlayers.length || this.players.length || 0} cards`;
+
+    }
+
+
+
+    updateFilterSummary() {
+
+        const summary = document.getElementById('filterSummary');
+
+        if (!summary) return;
+
+        const active = [
+
+            document.getElementById('searchInput')?.value,
+
+            document.getElementById('archetypeFilter')?.value,
+
+            document.getElementById('usageFilter')?.value,
+
+            document.getElementById('teamFilter')?.value
+
+        ].filter(Boolean).length;
+
+        const count = new Set(this.filteredPlayers.map((player) => player.player?.name || this.getPlayerKey(player))).size;
+
+        summary.textContent = active ? `${count} cards | ${active} active` : `${count} cards`;
+
+    }
+
+
+
     setupEventListeners() {
+
+        this.setupFilterDisclosure();
 
         // Search
 
@@ -4237,6 +4321,8 @@ class PlayerCardsApp {
         this.renderPlayers();
 
         this.updateStats();
+
+        this.updateFilterSummary();
 
     }
 
@@ -4664,6 +4750,8 @@ class PlayerCardsApp {
 
 
         this.drawValueDistributionChart();
+
+        this.updateFilterSummary();
 
     }
 
@@ -5872,9 +5960,9 @@ class PlayerCardsApp {
 
                                     <div class="comparable-stats">
 
-                                        ${comp.stats.points.toFixed(1)} PPG *** 
+                                        ${comp.stats.points.toFixed(1)} PPG ***
 
-                                        ${comp.stats.assists.toFixed(1)} APG *** 
+                                        ${comp.stats.assists.toFixed(1)} APG ***
 
                                         ${comp.stats.rebounds.toFixed(1)} RPG
 
@@ -10305,6 +10393,4 @@ document.addEventListener('DOMContentLoaded', () => {
     new PlayerCardsApp();
 
 });
-
-
 

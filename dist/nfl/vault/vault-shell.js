@@ -10,8 +10,24 @@
     { slug: "nfl", label: "NFL", href: "/nfl/" },
   ];
 
+  const DEFAULT_SITE_NAV_LINKS = [
+    { label: "Sports Hub", href: "/" },
+    { label: "NBA Dashboard", href: "/nba/" },
+    { label: "NBA Predictions", href: "/nba/predictions.html" },
+    { label: "MLB Home", href: "/mlb/" },
+    { label: "MLB Predictions", href: "/mlb/predictions.html" },
+  ];
+
   CardVaultShell.escapeHtml = function escapeHtml(value) {
     return global.CardVault ? global.CardVault.escapeHtml(value) : String(value ?? "");
+  };
+
+  CardVaultShell.normalizePath = function normalizePath(value) {
+    const base = global.location?.href || "http://localhost/";
+    const url = new URL(value || "/", base);
+    let path = url.pathname.toLowerCase().replace(/\/index\.html$/, "/");
+    path = path.replace(/\/+$/, "/");
+    return path || "/";
   };
 
   CardVaultShell.mount = function mount(config = {}) {
@@ -27,6 +43,7 @@
       sportAccent = "#f59e0b",
       breadcrumbs = [],
       navLinks = [],
+      siteNavLinks = DEFAULT_SITE_NAV_LINKS,
       sports = DEFAULT_SPORTS,
       showDisclaimer = true,
     } = config;
@@ -57,8 +74,29 @@
       return `<a href="${CardVaultShell.escapeHtml(item.href)}">${CardVaultShell.escapeHtml(item.label)}</a>`;
     }).join('<span class="vault-breadcrumb-sep" aria-hidden="true">/</span>');
 
-    const navHtml = navLinks.map((link) => `
-      <a class="vault-sport-pill${link.active ? " is-active" : ""}" href="${CardVaultShell.escapeHtml(link.href)}">${CardVaultShell.escapeHtml(link.label)}</a>
+    const currentPath = CardVaultShell.normalizePath(global.location?.pathname || "/");
+    const menuLinksByPath = new Map();
+    [...siteNavLinks, ...navLinks].forEach((link) => {
+      const href = link?.href || "#";
+      const normalized = CardVaultShell.normalizePath(href);
+      if (!menuLinksByPath.has(normalized)) {
+        menuLinksByPath.set(normalized, { ...link, href, normalized });
+      }
+    });
+
+    let bestActivePath = "";
+    menuLinksByPath.forEach((link, path) => {
+      const pathMatches = path === "/"
+        ? currentPath === "/"
+        : currentPath === path || currentPath.startsWith(path);
+      if ((link.active || pathMatches) && path.length > bestActivePath.length) {
+        bestActivePath = path;
+      }
+    });
+
+    const menuLinks = [...menuLinksByPath.values()];
+    const navHtml = menuLinks.map((link) => `
+      <a class="vault-sport-pill${link.normalized === bestActivePath ? " is-active" : ""}" href="${CardVaultShell.escapeHtml(link.href)}">${CardVaultShell.escapeHtml(link.label)}</a>
     `).join("");
 
     root.innerHTML = `
@@ -69,10 +107,10 @@
         </a>
         <nav class="vault-breadcrumb" aria-label="Breadcrumb">${crumbHtml}</nav>
         <div class="vault-sport-switcher" aria-label="Sport workspaces">${sportPills}</div>
+        ${showDisclaimer ? `<button type="button" class="vault-info-trigger" aria-label="About research signals" data-info="Analysis support only. Model leans, confidence bands, and validation status are research signals, not automatic decisions.">i</button>` : ""}
         <button type="button" class="vault-menu-btn" id="vaultNavToggle" aria-expanded="false" aria-controls="vaultNavLinks">Menu</button>
-        ${navLinks.length ? `<nav id="vaultNavLinks" class="vault-nav-drawer-links vault-sport-switcher" aria-label="Workspace pages">${navHtml}</nav>` : ""}
+        ${menuLinks.length ? `<nav id="vaultNavLinks" class="vault-nav-drawer-links vault-sport-switcher" aria-label="Site navigation">${navHtml}</nav>` : ""}
       </header>
-      ${showDisclaimer ? `<p class="vault-disclaimer">Analysis support only — model leans, confidence bands, and validation status are research signals, not automatic decisions.</p>` : ""}
     `;
 
     const toggle = document.getElementById("vaultNavToggle");

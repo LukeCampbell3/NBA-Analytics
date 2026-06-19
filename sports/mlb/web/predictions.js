@@ -74,14 +74,18 @@ class DailyPredictionsPage {
         const throughDate = this.data?.through_date || "n/a";
         const policy = this.data?.policy_profile || "n/a";
         const publicationStatus = String(this.data?.publication_status || "ready").toLowerCase();
-        const publicationLabel = publicationStatus === "ready" ? "Published" : "Withheld";
+        const publicationLabel = publicationStatus === "ready" ? "Published" : publicationStatus === "review" ? "Review" : "Withheld";
+        const publicationTone = publicationStatus === "ready" ? "active" : publicationStatus === "review" ? "stale" : "withheld";
         const stale = publicationStatus !== "ready";
+        const quality = this.data?.data_quality || {};
+        const lagText = Number.isFinite(Number(quality.lag_days)) ? `Lag ${Number(quality.lag_days)}d / ` : "";
 
         if (this.elements.runMeta && window.CardVault) {
             this.elements.runMeta.innerHTML = [
                 window.CardVault.renderDataFreshness(`Run ${runDate} · Data through ${throughDate}`, stale),
                 ` · Policy ${this.escapeHtml(policy)} · `,
-                window.CardVault.renderStatusPill(publicationStatus === "ready" ? "active" : "withheld", publicationLabel),
+                this.escapeHtml(lagText),
+                window.CardVault.renderStatusPill(publicationTone, publicationLabel),
                 ` · ${this.plays.length} board card${this.plays.length === 1 ? "" : "s"}`,
             ].join("");
         } else if (this.elements.runMeta) {

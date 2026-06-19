@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MLB Analytics | Home</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=3">
+    <link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body class="mlb-home-page">
     <button id="siteMenuButton" class="site-menu-button" aria-label="Open site navigation" aria-controls="siteNavDrawer" aria-expanded="false">
@@ -35,23 +35,22 @@
             <div class="container mlb-hero-grid">
                 <div class="mlb-hero-copy">
                     <p class="mlb-kicker">MLB Workspace</p>
-                    <h1>Choose your baseball page and keep the bounty board front and center.</h1>
-                    <p class="mlb-lede">
-                        This MLB home page now acts as the sport landing page inside the shared site. From here,
-                        users can jump into the daily prediction board, read how the board is built, or switch sports from the hub.
-                    </p>
+                    <div class="minimal-heading">
+                        <h1>MLB</h1>
+                        <button class="info-trigger" type="button" aria-label="About MLB workspace" data-info="Jump into the MLB bounty board, review the method, or switch sports from the hub.">i</button>
+                    </div>
                     <div class="mlb-hero-actions">
                         <a class="mlb-primary-link" href="predictions.html">Open MLB Predictions</a>
-                        <a class="mlb-secondary-link" href="prediction-about.html">How This Board Works</a>
+                        <a class="mlb-secondary-link" href="prediction-about.html">Method</a>
                     </div>
                 </div>
                 <div class="mlb-hero-panel">
-                    <p class="mlb-panel-kicker">Current Experience</p>
-                    <ul class="mlb-panel-list">
-                        <li>Shared landing page lets users pick a sport first.</li>
-                        <li>MLB has its own home page and navigation drawer.</li>
-                        <li>Prediction pages keep the wanted-poster bounty feel.</li>
-                    </ul>
+                    <p class="mlb-panel-kicker">Switch Sport</p>
+                    <div class="sport-selector-mini">
+                        <a class="sport-selector-pill" href="/mlb/">MLB</a>
+                        <a class="sport-selector-pill" href="/nba/">NBA</a>
+                        <a class="sport-selector-pill" href="/">Hub</a>
+                    </div>
                 </div>
             </div>
         </section>
@@ -60,38 +59,21 @@
             <div class="container">
                 <div class="mlb-section-head">
                     <p class="mlb-kicker">MLB Pages</p>
-                    <h2>Start with a page, then stay inside the sport.</h2>
+                    <h2>Pages</h2>
                 </div>
                 <div class="mlb-link-grid">
                     <a class="mlb-link-card" href="predictions.html">
                         <span class="mlb-link-tag">Daily Board</span>
-                        <h3>Prediction Bounties</h3>
-                        <p>Open the current high-precision MLB board and scan the wanted posters for today’s best plays.</p>
+                        <span class="minimal-heading"><h3>Prediction Bounties</h3><span class="info-trigger" data-info="Current MLB props rendered as Wild West bounty papers.">i</span></span>
                     </a>
                     <a class="mlb-link-card" href="prediction-about.html">
                         <span class="mlb-link-tag">Method</span>
-                        <h3>Prediction About</h3>
-                        <p>See how the MLB board is filtered, ranked, and trimmed down for a tighter hit-focused pool.</p>
+                        <span class="minimal-heading"><h3>Method</h3><span class="info-trigger" data-info="Board filters, ranking rules, and metric definitions.">i</span></span>
                     </a>
                     <a class="mlb-link-card" href="/">
                         <span class="mlb-link-tag">Sport Select</span>
-                        <h3>Back To Sports Hub</h3>
-                        <p>Return to the main landing page to switch between MLB, NBA, and the other sport workspaces.</p>
+                        <span class="minimal-heading"><h3>Sports Hub</h3><span class="info-trigger" data-info="Return to the top-level sport navigation.">i</span></span>
                     </a>
-                </div>
-            </div>
-        </section>
-
-        <section class="mlb-page-section mlb-page-section-alt">
-            <div class="container">
-                <div class="mlb-section-head">
-                    <p class="mlb-kicker">Sport Switcher</p>
-                    <h2>Select another sport when you need to branch out.</h2>
-                </div>
-                <div class="sport-selector-mini">
-                    <a class="sport-selector-pill" href="/mlb/">MLB</a>
-                    <a class="sport-selector-pill" href="/nba/">NBA</a>
-                    <a class="sport-selector-pill" href="/nfl/">NFL</a>
                 </div>
             </div>
         </section>

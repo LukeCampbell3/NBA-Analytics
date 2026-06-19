@@ -6,7 +6,7 @@
     <title>In The Cards Analytics | Vault Hub</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="vault/vault-tokens.css?v=1">
-    <link rel="stylesheet" href="vault/vault-components.css?v=1">
+    <link rel="stylesheet" href="vault/vault-components.css?v=3">
     <link rel="stylesheet" href="vault-hub.css?v=1">
     <link rel="stylesheet" href="styles.css?v=2">
 </head>
@@ -16,20 +16,15 @@
     <div class="vault-shell site-shell">
         <header class="hero">
             <div class="hero-copy">
-                <p class="eyebrow">The Card Vault System</p>
-                <h1>Open a sport vault. Sort cards. Validate signals.</h1>
-                <p class="hero-text">
-                    In The Cards Analytics treats each league as its own workspace — player cards, prediction boards,
-                    validation labs, and methodology docs live under the same collectible, analytical language.
-                </p>
+                <p class="eyebrow">In The Cards</p>
+                <div class="vault-heading-row">
+                    <h1>Choose a sport.</h1>
+                    <button class="vault-info-trigger" type="button" aria-label="About the hub" data-info="Each sport has its own workspace for cards, prediction boards, validation labs, and methods.">i</button>
+                </div>
             </div>
             <div class="hero-panel">
-                <p class="hero-panel-label">How the hub works</p>
-                <ul class="hero-points">
-                    <li>Every sport owns a namespace: NBA, MLB, NFL, and future vaults.</li>
-                    <li>Player identity persists from board cards to dossiers to evidence rows.</li>
-                    <li>Signals show confidence, context, and validation — not automatic decisions.</li>
-                </ul>
+                <p class="hero-panel-label">Navigation</p>
+                <button class="vault-info-trigger" type="button" aria-label="How navigation works" data-info="Use the vault doors below or the top navigation to move between NBA, MLB, and other workspaces.">i</button>
             </div>
         </header>
 
@@ -51,10 +46,10 @@
         <main>
             <section class="section-head">
                 <p class="section-kicker">Vault Doors</p>
-                <h2>Choose a sport workspace</h2>
-                <p class="section-copy">
-                    Cards below are generated from the repo structure. Add <code>sports/&lt;slug&gt;/web</code> to register a new vault door.
-                </p>
+                <div class="vault-heading-row">
+                    <h2>Sports</h2>
+                    <button class="vault-info-trigger" type="button" aria-label="About sport vaults" data-info="Vault doors are generated from the repo structure and link to each sport workspace.">i</button>
+                </div>
             </section>
 
             <section id="sportsGrid" class="vault-door-grid" aria-live="polite">
@@ -62,29 +57,11 @@
                     <p>Loading vault doors...</p>
                 </article>
             </section>
-
-            <section class="notes-grid">
-                <article class="note-card">
-                    <p class="note-label">Routing</p>
-                    <h3>Each sport owns its path</h3>
-                    <p>NBA at <code>/nba/</code>, MLB at <code>/mlb/</code>, NFL at <code>/nfl/</code> — future sports follow the same pattern.</p>
-                </article>
-                <article class="note-card">
-                    <p class="note-label">Continuity</p>
-                    <h3>One card system across pages</h3>
-                    <p>Board cards, dossiers, matchup views, and validation rows share classification, metrics, and confidence bands.</p>
-                </article>
-                <article class="note-card">
-                    <p class="note-label">Scalability</p>
-                    <h3>Start small, grow the vault</h3>
-                    <p>Scaffold sports ship placeholder doors now and expand into full dashboards without breaking navigation.</p>
-                </article>
-            </section>
         </main>
     </div>
 
-    <script src="vault/vault-components.js?v=1"></script>
-    <script src="vault/vault-shell.js?v=1"></script>
+    <script src="vault/vault-components.js?v=3"></script>
+    <script src="vault/vault-shell.js?v=3"></script>
     <script src="app.js?v=2"></script>
 </body>
 </html>

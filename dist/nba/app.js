@@ -4322,6 +4322,8 @@ class PlayerCardsApp {
 
         this.updateStats();
 
+        this.updateFilterSummary();
+
     }
 
 
@@ -4675,8 +4677,6 @@ class PlayerCardsApp {
             container.innerHTML = '';
 
             noResults.style.display = 'block';
-
-            this.updateFilterSummary();
 
             this.drawValueDistributionChart();
 

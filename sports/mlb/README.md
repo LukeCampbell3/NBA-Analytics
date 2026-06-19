@@ -42,6 +42,16 @@ By default the selector:
 - filters out weak edge / stale history / high-push plays
 - limits concentration by player, game, team, and exact market bucket so one prop shape cannot dominate the board
 
+## Leakage-Aware Backtesting
+
+Run the expanding-window MLB evaluation with:
+
+```bash
+python sports/mlb/scripts/backtest_prediction_method.py
+```
+
+The evaluator rebuilds priors using only dates before each slate, re-grades the selected direction, and separates real-market evidence from synthetic-line research. Reports are written under `sports/mlb/data/predictions/backtests/`. The current evidence verdict is shadow-only; synthetic replay rates must not be presented as executable ROI.
+
 ## Web Payload Export
 
 The predictions pages read from `sports/mlb/web/data/daily_predictions.json`.

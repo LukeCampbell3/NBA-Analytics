@@ -1554,8 +1554,20 @@ def select_top_candidates(candidates: list[Candidate], args: argparse.Namespace)
     by_game: Counter[str] = Counter()
     by_team: Counter[str] = Counter()
     by_market_bucket: Counter[str] = Counter()
+    selected_prop_keys: set[tuple[str, ...]] = set()
 
     for candidate in ordered:
+        prop_key = (
+            str(candidate.player_id or candidate.player).strip().lower(),
+            str(candidate.team).strip().upper(),
+            str(candidate.raw.get("Opponent", "")).strip().upper(),
+            str(candidate.raw.get("Game_Date", "")).strip(),
+            str(candidate.target).strip().upper(),
+            str(candidate.direction).strip().upper(),
+            f"{float(candidate.market_line):.3f}",
+        )
+        if prop_key in selected_prop_keys:
+            continue
         if by_player[candidate.player_id or candidate.player] >= int(args.max_per_player):
             continue
         if by_game[candidate.game_id] >= int(args.max_per_game):
@@ -1566,6 +1578,7 @@ def select_top_candidates(candidates: list[Candidate], args: argparse.Namespace)
             continue
 
         selected.append(candidate)
+        selected_prop_keys.add(prop_key)
         by_player[candidate.player_id or candidate.player] += 1
         by_game[candidate.game_id] += 1
         by_team[candidate.team] += 1

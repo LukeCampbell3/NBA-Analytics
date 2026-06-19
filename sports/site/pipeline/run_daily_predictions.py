@@ -484,6 +484,7 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
         label: str = "Select MLB High-Precision Prediction Board",
         suffix: str | None = None,
         extra_args: list[str] | None = None,
+        refresh_history: bool = False,
     ) -> tuple[Path, Path]:
         active_selected_csv, active_summary_json = derive_mlb_selector_outputs(active_pool_csv, suffix=suffix)
         command = [
@@ -500,13 +501,15 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
         ]
         if extra_args:
             command.extend(extra_args)
+        if refresh_history:
+            command.extend(["--refresh-history-cache", "--refresh-bet-profile-cache"])
         run_step(
             label,
             command,
         )
         return active_selected_csv, active_summary_json
 
-    selected_csv, summary_json = run_selector_for(pool_csv)
+    selected_csv, summary_json = run_selector_for(pool_csv, refresh_history=used_generated_pool)
     standard_selected_csv, standard_summary_json = derive_mlb_selector_outputs(pool_csv)
     market_profile = load_mlb_market_profile(pool_csv) if used_generated_pool and pool_csv.exists() else {
         "rows": 0,
@@ -599,24 +602,17 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
                 publication_strategy = best_strategy
                 annotate_mlb_summary(summary_json, publication_strategy=publication_strategy, market_profile=market_profile)
             else:
-                annotate_mlb_summary(summary_json, publication_strategy=best_strategy, market_profile=market_profile)
-                try:
-                    fallback_pool_csv = find_latest_mlb_pool_csv(
-                        MLB_DAILY_RUNS_ROOT,
-                        preferred_run_stamp,
-                        exclude_paths={pool_csv},
-                    )
-                except FileNotFoundError:
-                    fallback_pool_csv = None
-                if fallback_pool_csv is not None:
-                    print(
-                        "[warning] Generated MLB board was too small for publication "
-                        f"({best_rows} plays < {min_publish_plays}); "
-                        "falling back to the latest richer existing MLB pool."
-                    )
-                    pool_csv = fallback_pool_csv
-                    selected_csv, summary_json = run_selector_for(pool_csv)
-                    publication_strategy = "latest_existing_pool"
+                publication_strategy = "withheld_current_pool"
+                annotate_mlb_summary(
+                    summary_json,
+                    publication_strategy=publication_strategy,
+                    market_profile=market_profile,
+                )
+                print(
+                    "[warning] Generated MLB board was too small for publication "
+                    f"({best_rows} plays < {min_publish_plays}); publishing the current-date "
+                    "withheld state instead of regressing to an older slate."
+                )
         else:
             annotate_mlb_summary(summary_json, publication_strategy=publication_strategy, market_profile=market_profile)
 

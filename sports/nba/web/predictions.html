@@ -6,7 +6,7 @@
     <title>NBA Analytics | Prediction Board</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="vault/vault-tokens.css?v=1">
-    <link rel="stylesheet" href="vault/vault-components.css?v=3">
+    <link rel="stylesheet" href="vault/vault-components.css?v=4">
     <link rel="stylesheet" href="styles.css?v=24">
 </head>
 <body class="vault-theme">
@@ -14,12 +14,11 @@
 
     <main class="vault-shell predictions-page">
         <header class="vault-page-header">
-            <p class="vault-page-kicker">NBA · Research Desk</p>
-            <h1>Daily Prediction Board</h1>
-            <p class="vault-page-lead">
-                Sorted analytical cards from the model run. Each pick shows market line, projection, evidence strength,
-                and confidence band — review context before acting.
-            </p>
+            <p class="vault-page-kicker">NBA</p>
+            <div class="vault-heading-row">
+                <h1>Prediction Board</h1>
+                <button class="vault-info-trigger" type="button" aria-label="About prediction board" data-info="Sorted model cards. Each bounty paper shows market line, projection, model estimate, push exposure, and review status.">i</button>
+            </div>
             <p id="predictionRunMeta" class="vault-freshness">Loading board details...</p>
         </header>
 
@@ -30,8 +29,8 @@
         </div>
     </main>
 
-    <script src="vault/vault-components.js?v=3"></script>
-    <script src="vault/vault-shell.js?v=2"></script>
-    <script src="predictions.js?v=5"></script>
+    <script src="vault/vault-components.js?v=4"></script>
+    <script src="vault/vault-shell.js?v=3"></script>
+    <script src="predictions.js?v=6"></script>
 </body>
 </html>

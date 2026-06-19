@@ -130,6 +130,56 @@
   cursor: pointer;
 }
 
+.vault-info-trigger,
+.info-trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid var(--vault-line-strong);
+  background: var(--vault-bg-2);
+  color: var(--vault-text);
+  font: 800 0.78rem/1 var(--vault-font-body);
+  cursor: help;
+  flex: 0 0 auto;
+}
+
+.vault-info-trigger::after,
+.info-trigger::after {
+  content: attr(data-info);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  z-index: 80;
+  width: min(280px, 82vw);
+  padding: 10px 12px;
+  border: 1px solid var(--vault-line-strong);
+  border-radius: var(--vault-radius-sm);
+  background: var(--vault-panel-raised);
+  color: var(--vault-text);
+  box-shadow: var(--vault-shadow-card);
+  transform: translateX(-50%) translateY(4px);
+  opacity: 0;
+  pointer-events: none;
+  text-align: left;
+  white-space: normal;
+  font: 600 0.78rem/1.35 var(--vault-font-body);
+  letter-spacing: 0;
+  text-transform: none;
+  transition: opacity var(--vault-duration-fast), transform var(--vault-duration-fast);
+}
+
+.vault-info-trigger:hover::after,
+.vault-info-trigger:focus-visible::after,
+.info-trigger:hover::after,
+.info-trigger:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 @media (max-width: 720px) {
   .vault-menu-btn {
     display: inline-flex;
@@ -724,6 +774,13 @@
   color: #24543e;
 }
 
+.bounty-paper__tag--risk,
+.bounty-paper--review .bounty-paper__tag {
+  border-color: rgba(126, 54, 31, 0.40);
+  background: rgba(126, 54, 31, 0.10);
+  color: #7a2f1d;
+}
+
 .bounty-paper__reward {
   margin: 0;
   font-family: var(--vault-font-display);
@@ -766,7 +823,7 @@
 .bounty-paper__ledger {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
   margin: 0 0 10px;
 }
@@ -907,6 +964,13 @@
 /* ─── Page sections ─── */
 .vault-page-header {
   margin-bottom: var(--vault-space-8);
+}
+
+.vault-heading-row {
+  display: flex;
+  align-items: center;
+  gap: var(--vault-space-2);
+  flex-wrap: wrap;
 }
 
 .vault-page-header h1 {

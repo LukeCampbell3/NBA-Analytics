@@ -107,10 +107,10 @@
         </a>
         <nav class="vault-breadcrumb" aria-label="Breadcrumb">${crumbHtml}</nav>
         <div class="vault-sport-switcher" aria-label="Sport workspaces">${sportPills}</div>
+        ${showDisclaimer ? `<button type="button" class="vault-info-trigger" aria-label="About research signals" data-info="Analysis support only. Model leans, confidence bands, and validation status are research signals, not automatic decisions.">i</button>` : ""}
         <button type="button" class="vault-menu-btn" id="vaultNavToggle" aria-expanded="false" aria-controls="vaultNavLinks">Menu</button>
         ${menuLinks.length ? `<nav id="vaultNavLinks" class="vault-nav-drawer-links vault-sport-switcher" aria-label="Site navigation">${navHtml}</nav>` : ""}
       </header>
-      ${showDisclaimer ? `<p class="vault-disclaimer">Analysis support only — model leans, confidence bands, and validation status are research signals, not automatic decisions.</p>` : ""}
     `;
 
     const toggle = document.getElementById("vaultNavToggle");

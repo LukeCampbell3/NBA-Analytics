@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NBA Analytics | Dashboard</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=29">
+    <link rel="stylesheet" href="styles.css?v=30">
 </head>
 <body class="sports-card-app">
     <button id="siteMenuButton" class="site-menu-button" aria-label="Open site navigation" aria-controls="siteNavDrawer" aria-expanded="false">
@@ -35,15 +35,17 @@
             <div class="container">
                 <div class="header-layout">
                     <div class="header-copy">
-                        <h1 class="logo">NBA Analytics Dashboard</h1>
-                        <p class="tagline">Player archetypes, context, valuation, and prediction-adjacent research</p>
+                        <div class="minimal-heading">
+                            <h1 class="logo">NBA</h1>
+                            <button class="info-trigger" type="button" aria-label="About NBA dashboard" data-info="Browse player cards, filter by team or archetype, and open prediction or college views from navigation.">i</button>
+                        </div>
                     </div>
                     <div class="header-distribution-panel">
                         <div class="distribution-title-row">
                             <h3>Player Value Distribution</h3>
                             <span class="distribution-metric-wrap">
                                 <span id="distributionMetricLabel" class="distribution-metric-label">Showing: Player Value</span>
-                                <a class="distribution-info-link" href="about.html" title="Learn about these metrics" aria-label="Learn about these metrics">i</a>
+                                <button class="distribution-info-link info-trigger" type="button" aria-label="About distribution metrics" data-info="Distribution changes with the selected metric. Use filters below to narrow the card set.">i</button>
                             </span>
                             <span id="distributionCount" class="distribution-count">0 players</span>
                         </div>
@@ -59,8 +61,8 @@
             <div class="container filter-shell">
                 <div class="filter-toolbar">
                     <div class="filter-toolbar-copy">
-                        <span class="filter-toolbar-kicker">Card Vault</span>
-                        <strong id="filterSummary">Loading cards</strong>
+                        <span class="filter-toolbar-kicker">Cards</span>
+                        <strong id="filterSummary">Loading</strong>
                     </div>
                     <button id="filterToggle" class="filter-toggle" type="button" aria-expanded="false" aria-controls="filterControls">
                         <span class="filter-toggle-icon" aria-hidden="true"></span>
@@ -141,7 +143,7 @@
 
     <script src="modern-border-card-builder.js"></script>
     <script src="nav.js?v=8"></script>
-    <script src="app.js?v=55"></script>
+    <script src="app.js?v=56"></script>
 </body>
 </html>
 

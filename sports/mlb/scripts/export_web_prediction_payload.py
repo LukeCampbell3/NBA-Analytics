@@ -34,12 +34,15 @@ from sports.parlay_analysis import annotate_parlay_board, evaluate_historical_pa
 
 
 MLB_STATS_API_ROOT = "https://statsapi.mlb.com/api/v1"
+MLB_LIVE_FEED_ROOT = "https://statsapi.mlb.com/api/v1.1/game"
 MLB_HEADSHOT_BASE_URL = "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/{person_id}/headshot/67/current"
 MLB_HEADSHOT_FALLBACK_URL = "https://midfield.mlbstatic.com/v1/people/{person_id}/headshot/67/current"
 MLB_API_TIMEOUT_SECONDS = 5
 ENABLE_PLAYER_SEARCH_FALLBACK = False
 MLB_PARLAY_VALIDATION_CACHE = REPO_ROOT / "sports" / "mlb" / "data" / "predictions" / "calibration" / "mlb_parlay_validation.json"
 ENABLE_PARLAY_VALIDATION_REBUILD = False
+STALE_DATA_REVIEW_DAYS = 14
+STALE_DATA_WITHHOLD_DAYS = 60
 
 
 def parse_args() -> argparse.Namespace:
@@ -59,13 +62,25 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_OUT_DIST,
         help="Optional destination for the published dist payload JSON.",
     )
+    parser.add_argument(
+        "--allow-date-regression",
+        action="store_true",
+        help="Allow an older run_date to overwrite a newer published payload.",
+    )
     return parser.parse_args()
 
 
 def find_latest_selected_csv(daily_runs_root: Path) -> Path:
+    def sort_key(path: Path) -> tuple[int, float]:
+        for source in (path.stem, path.parent.name):
+            digits = "".join(char for char in source if char.isdigit())
+            if len(digits) >= 8:
+                return int(digits[:8]), path.stat().st_mtime
+        return 0, path.stat().st_mtime
+
     candidates = sorted(
         daily_runs_root.glob("**/daily_prediction_pool_*_high_precision_predictions.csv"),
-        key=lambda path: path.stat().st_mtime,
+        key=sort_key,
         reverse=True,
     )
     if not candidates:
@@ -98,6 +113,47 @@ def infer_run_date(selected_csv: Path, summary: dict[str, object], rows: list[di
     return history_season
 
 
+def infer_through_date(summary: dict[str, object], rows: list[dict[str, str]]) -> str:
+    through_date = max((str(row.get("Last_History_Date", "")).strip() for row in rows), default="")
+    if through_date:
+        return through_date
+
+    pool_csv = Path(str(summary.get("pool_csv", "")).strip())
+    if not pool_csv.exists():
+        return ""
+    try:
+        pool_rows = load_rows(pool_csv)
+    except (OSError, csv.Error):
+        return ""
+    return max((str(row.get("Last_History_Date", "")).strip() for row in pool_rows), default="")
+
+
+def read_payload_run_date(path: Path) -> str:
+    if not path.exists():
+        return ""
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError):
+        return ""
+    return str(payload.get("run_date", "")).strip()
+
+
+def assert_no_date_regression(run_date: str, output_paths: list[Path], allow_regression: bool) -> None:
+    if allow_regression or not run_date:
+        return
+    incoming = parse_date(run_date)
+    if not incoming:
+        return
+    for path in output_paths:
+        existing_text = read_payload_run_date(path)
+        existing = parse_date(existing_text)
+        if existing and existing.date() > incoming.date():
+            raise RuntimeError(
+                f"Refusing to overwrite newer payload {path} ({existing_text}) "
+                f"with older run {run_date}. Pass --allow-date-regression to override."
+            )
+
+
 def load_rows(path: Path) -> list[dict[str, str]]:
     with open(path, "r", encoding="utf-8-sig", newline="") as handle:
         return list(csv.DictReader(handle))
@@ -115,6 +171,144 @@ def to_int(value: str, default: int = 0) -> int:
         return int(float(value))
     except (TypeError, ValueError):
         return default
+
+
+def parse_date(value: object) -> datetime | None:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        return datetime.fromisoformat(text[:10])
+    except ValueError:
+        return None
+
+
+def days_between(start_value: object, end_value: object) -> int | None:
+    start = parse_date(start_value)
+    end = parse_date(end_value)
+    if not start or not end:
+        return None
+    return max(0, (end.date() - start.date()).days)
+
+
+def row_float(row: dict[str, str], key: str, default: float = 0.0) -> float:
+    return to_float(row.get(key), default=default)
+
+
+def prop_identity_key(row: dict[str, str]) -> tuple[str, ...]:
+    """User-facing betting identity; intentionally excludes Game_ID for suspended-game slates."""
+    return (
+        normalize_player_name(str(row.get("Player", ""))),
+        str(row.get("Team", "")).strip().upper(),
+        str(row.get("Opponent", "")).strip().upper(),
+        str(row.get("Game_Date", "")).strip(),
+        str(row.get("Target", "")).strip().upper(),
+        str(row.get("Direction", "")).strip().upper(),
+        f"{row_float(row, 'Market_Line'):.3f}",
+    )
+
+
+def row_context_score(
+    row: dict[str, str],
+    game_context_lookup: dict[str, dict[str, object]] | None = None,
+) -> tuple[float, float]:
+    if not game_context_lookup:
+        return 0.0, 0.0
+    context = game_context_lookup.get(str(row.get("Game_ID", "")).strip(), {}) or {}
+    official_date = str(context.get("official_date", "")).strip()
+    market_date = str(row.get("Game_Date", "")).strip()
+    date_match = 1.0 if official_date and official_date == market_date else 0.0
+    players = context.get("players", {}) if isinstance(context.get("players"), dict) else {}
+    participant = players.get(normalize_player_name(str(row.get("Player", ""))), {}) or {}
+    team_match = 1.0 if participant and str(participant.get("team", "")).strip().upper() == str(row.get("Team", "")).strip().upper() else 0.0
+    return date_match, team_match
+
+
+def row_selection_score(
+    row: dict[str, str],
+    game_context_lookup: dict[str, dict[str, object]] | None = None,
+) -> tuple[float, float, float, float, float, float]:
+    date_match, team_match = row_context_score(row, game_context_lookup)
+    return (
+        date_match,
+        team_match,
+        row_float(row, "Selection_Score"),
+        row_float(row, "Expected_Value_Per_Unit", default=-999.0),
+        row_float(row, "Precision_Score"),
+        row_float(row, "Abs_Edge"),
+    )
+
+
+def suppress_duplicate_props(
+    rows: list[dict[str, str]],
+    game_context_lookup: dict[str, dict[str, object]] | None = None,
+) -> tuple[list[dict[str, str]], list[dict[str, object]]]:
+    kept: dict[tuple[str, ...], dict[str, str]] = {}
+    suppressed: list[dict[str, object]] = []
+    for row in rows:
+        key = prop_identity_key(row)
+        existing = kept.get(key)
+        if existing is None:
+            kept[key] = row
+            continue
+        incumbent_score = row_selection_score(existing, game_context_lookup)
+        challenger_score = row_selection_score(row, game_context_lookup)
+        keep_new = challenger_score > incumbent_score
+        removed = existing if keep_new else row
+        if keep_new:
+            kept[key] = row
+        suppressed.append(
+            {
+                "player": str(removed.get("Player", "")).strip(),
+                "team": str(removed.get("Team", "")).strip(),
+                "opponent": str(removed.get("Opponent", "")).strip(),
+                "market_date": str(removed.get("Game_Date", "")).strip(),
+                "target": str(removed.get("Target", "")).strip(),
+                "direction": str(removed.get("Direction", "")).strip(),
+                "market_line": row_float(removed, "Market_Line"),
+                "game_id": str(removed.get("Game_ID", "")).strip(),
+                "reason": "duplicate prop identity on same slate",
+            }
+        )
+    deduped = list(kept.values())
+    deduped.sort(key=lambda row: to_int(row.get("Rank"), default=999999))
+    return deduped, suppressed
+
+
+def build_data_quality(
+    run_date: str,
+    through_date: str,
+    duplicate_count: int,
+    play_count: int | None = None,
+) -> dict[str, object]:
+    lag_days = days_between(through_date, run_date)
+    status = "ready"
+    reasons: list[str] = []
+    if lag_days is not None and lag_days > STALE_DATA_WITHHOLD_DAYS:
+        status = "withheld"
+        reasons.append(f"data history is {lag_days} days behind run date")
+    elif lag_days is not None and lag_days > STALE_DATA_REVIEW_DAYS:
+        status = "review"
+        reasons.append(f"data history is {lag_days} days behind run date")
+    if duplicate_count:
+        if status == "ready":
+            status = "review"
+        reasons.append(f"{duplicate_count} duplicate prop card{'s' if duplicate_count != 1 else ''} suppressed")
+    if play_count == 0:
+        status = "withheld"
+        reasons.append("no plays passed publication filters")
+    return {
+        "status": status,
+        "lag_days": lag_days,
+        "review_threshold_days": STALE_DATA_REVIEW_DAYS,
+        "withhold_threshold_days": STALE_DATA_WITHHOLD_DAYS,
+        "reasons": reasons,
+    }
+
+
+def is_whole_number_line(value: float) -> bool:
+    rounded = round(float(value))
+    return abs(float(value) - rounded) < 1e-9
 
 
 def build_splits(source: dict[str, int], total: int) -> dict[str, dict[str, float | int]]:
@@ -340,6 +534,63 @@ def fetch_json(url: str) -> dict:
         return json.load(response)
 
 
+def build_game_context_lookup(rows: list[dict[str, str]]) -> dict[str, dict[str, object]]:
+    lookup: dict[str, dict[str, object]] = {}
+    game_ids = sorted({
+        str(row.get("Game_ID", "")).strip()
+        for row in rows
+        if str(row.get("Game_ID", "")).strip()
+    })
+    for game_id in game_ids:
+        try:
+            payload = fetch_json(f"{MLB_LIVE_FEED_ROOT}/{game_id}/feed/live")
+        except (HTTPError, URLError, TimeoutError, json.JSONDecodeError):
+            continue
+
+        game_data = payload.get("gameData") or {}
+        live_data = payload.get("liveData") or {}
+        boxscore = live_data.get("boxscore") or {}
+        boxscore_teams = boxscore.get("teams") or {}
+        game_teams = game_data.get("teams") or {}
+        players: dict[str, dict[str, object]] = {}
+        team_abbreviations: dict[str, str] = {}
+
+        for side in ("away", "home"):
+            team = game_teams.get(side) or {}
+            team_abbr = str(team.get("abbreviation", "")).strip().upper()
+            team_abbreviations[side] = team_abbr
+            team_boxscore = boxscore_teams.get(side) or {}
+            for player in (team_boxscore.get("players") or {}).values():
+                batting_order = str(player.get("battingOrder", "")).strip()
+                if not batting_order:
+                    continue
+                person = player.get("person") or {}
+                full_name = str(person.get("fullName", "")).strip()
+                if not full_name:
+                    continue
+                try:
+                    person_id = int(person.get("id"))
+                except (TypeError, ValueError):
+                    person_id = None
+                players[normalize_player_name(full_name)] = {
+                    "player": full_name,
+                    "player_mlbam_id": person_id,
+                    "team": team_abbr,
+                    "batting_order": batting_order,
+                }
+
+        game_datetime = game_data.get("datetime") or {}
+        game_status = game_data.get("status") or {}
+        lookup[game_id] = {
+            "official_date": str(game_datetime.get("officialDate", "")).strip(),
+            "status": str(game_status.get("detailedState", "")).strip(),
+            "teams": team_abbreviations,
+            "players": players,
+            "lineup_available": bool(players),
+        }
+    return lookup
+
+
 def fetch_team_id_lookup(season: int) -> dict[str, int]:
     url = f"{MLB_STATS_API_ROOT}/teams?{urlencode({'sportId': 1, 'season': season})}"
     payload = fetch_json(url)
@@ -458,13 +709,36 @@ def main() -> None:
     summary_json = args.summary_json.resolve() if args.summary_json else infer_summary_path(selected_csv)
     rows = load_rows(selected_csv)
     summary = json.loads(summary_json.read_text(encoding="utf-8-sig"))
-    total = len(rows)
-
-    through_date = max((row.get("Last_History_Date", "") for row in rows), default="")
+    through_date = infer_through_date(summary, rows)
     run_date = infer_run_date(selected_csv, summary, rows)
+    output_paths = [args.output]
+    if args.output_dist:
+        output_paths.append(args.output_dist)
+    assert_no_date_regression(run_date, output_paths, args.allow_date_regression)
+    original_rows = rows
+    game_context_lookup = build_game_context_lookup(original_rows)
+    rows, suppressed_duplicates = suppress_duplicate_props(rows, game_context_lookup)
+    total = len(rows)
+    data_quality = build_data_quality(run_date, through_date, len(suppressed_duplicates), play_count=total)
+    publication_status = str(data_quality.get("status") or "ready")
+    multi_game_slate_keys: set[tuple[str, str, str]] = set()
+    game_ids_by_slate: dict[tuple[str, str, str], set[str]] = {}
+    for row in original_rows:
+        teams = sorted([
+            str(row.get("Team", "")).strip().upper(),
+            str(row.get("Opponent", "")).strip().upper(),
+        ])
+        if len(teams) != 2 or not teams[0] or not teams[1]:
+            continue
+        slate_key = (str(row.get("Game_Date", "")).strip(), teams[0], teams[1])
+        game_ids_by_slate.setdefault(slate_key, set()).add(str(row.get("Game_ID", "")).strip())
+    for slate_key, game_ids in game_ids_by_slate.items():
+        if len({game_id for game_id in game_ids if game_id}) > 1:
+            multi_game_slate_keys.add(slate_key)
+
     headshot_lookup = build_player_headshot_lookup(rows, run_date)
     plays = []
-    for row in rows:
+    for display_rank, row in enumerate(rows, start=1):
         is_home = to_int(row.get("Is_Home", "0"))
         team = str(row.get("Team", "")).strip()
         opponent = str(row.get("Opponent", "")).strip()
@@ -472,6 +746,23 @@ def main() -> None:
         home_team = team if is_home else opponent
         away_team = opponent if is_home else team
         player_lookup = headshot_lookup.get((team.upper(), player_name), {}) or {}
+        game_id = str(row.get("Game_ID", "")).strip()
+        game_context = game_context_lookup.get(game_id, {}) or {}
+        game_players = game_context.get("players", {}) if isinstance(game_context.get("players"), dict) else {}
+        participant = game_players.get(normalize_player_name(player_name), {}) or {}
+        participant_id = participant.get("player_mlbam_id")
+        resolved_player_id = participant_id or player_lookup.get("player_mlbam_id")
+        lineup_available = bool(game_context.get("lineup_available"))
+        participant_team = str(participant.get("team", "")).strip().upper()
+        official_game_date = str(game_context.get("official_date", "")).strip()
+        market_date = str(row.get("Game_Date", "")).strip()
+        lineup_status = (
+            "confirmed"
+            if participant
+            else "not_in_posted_lineup"
+            if lineup_available
+            else "unconfirmed"
+        )
         estimated_graded_hit_rate = to_float(row.get("Estimated_Graded_Hit_Rate"))
         precision_score = to_float(row.get("Precision_Score"))
         historical_bucket_support = to_float(row.get("Historical_Bucket_Support"))
@@ -482,6 +773,28 @@ def main() -> None:
         market_implied_probability = to_float(row.get("Market_Implied_Probability"), default=float("nan"))
         if not math.isfinite(market_implied_probability):
             market_implied_probability = None
+        push_probability = to_float(row.get("Estimated_Push_Probability"), default=0.0)
+        market_line = to_float(row.get("Market_Line"))
+        slate_teams = sorted([team.upper(), opponent.upper()])
+        multi_game_slate = (
+            len(slate_teams) == 2
+            and (str(row.get("Game_Date", "")).strip(), slate_teams[0], slate_teams[1]) in multi_game_slate_keys
+        )
+        risk_flags: list[str] = []
+        if data_quality.get("lag_days") is not None and int(data_quality["lag_days"]) > STALE_DATA_REVIEW_DAYS:
+            risk_flags.append("stale_history")
+        if lineup_status != "confirmed":
+            risk_flags.append("lineup_unconfirmed")
+        if participant_team and participant_team != team.upper():
+            risk_flags.append("team_mismatch")
+        if official_game_date and market_date and official_game_date != market_date:
+            risk_flags.append("game_date_mismatch")
+        if not resolved_player_id:
+            risk_flags.append("roster_unverified")
+        if push_probability >= 0.05 or is_whole_number_line(market_line):
+            risk_flags.append("push_exposure")
+        if multi_game_slate:
+            risk_flags.append("multi_game_slate_review")
         parlay_leg_quality = build_mlb_parlay_leg_quality(
             graded_hit_rate=estimated_graded_hit_rate,
             precision_score=precision_score,
@@ -489,32 +802,48 @@ def main() -> None:
             historical_bucket_win_rate=historical_bucket_win_rate,
             expected_value_per_unit=expected_value_per_unit,
         )
+        parlay_eligible = (
+            publication_status == "ready"
+            and not risk_flags
+            and is_mlb_parlay_leg_eligible(
+                graded_hit_rate=estimated_graded_hit_rate,
+                leg_quality=parlay_leg_quality,
+                historical_bucket_support=historical_bucket_support,
+                expected_value_per_unit=expected_value_per_unit,
+            )
+        )
+        raw_confidence_tier = row.get("Confidence_Tier", "consider")
         plays.append(
             {
-                "rank": to_int(row.get("Rank")),
+                "rank": display_rank,
+                "source_rank": to_int(row.get("Rank")),
                 "player": player_name,
                 "player_display_name": player_name,
                 "player_id": row.get("Player_ID", ""),
-                "player_mlbam_id": player_lookup.get("player_mlbam_id"),
-                "player_headshot_url": player_lookup.get("player_headshot_url"),
-                "player_headshot_fallback_url": player_lookup.get("player_headshot_fallback_url"),
+                "player_mlbam_id": resolved_player_id,
+                "player_headshot_url": build_headshot_url(resolved_player_id),
+                "player_headshot_fallback_url": build_headshot_fallback_url(resolved_player_id),
                 "team": team,
                 "opponent": opponent,
                 "market_home_team": home_team,
                 "market_away_team": away_team,
-                "market_date": row.get("Game_Date", ""),
+                "market_date": market_date,
+                "official_game_date": official_game_date,
                 "commence_time_utc": row.get("Commence_Time_UTC", ""),
-                "game_id": row.get("Game_ID", ""),
+                "game_id": game_id,
                 "game_status_code": row.get("Game_Status_Code", ""),
+                "official_game_status": game_context.get("status", ""),
                 "direction": row.get("Direction", ""),
                 "target": row.get("Target", ""),
                 "prediction": to_float(row.get("Prediction")),
-                "market_line": to_float(row.get("Market_Line")),
+                "market_line": market_line,
                 "market_source": row.get("Market_Source", "synthetic"),
                 "edge": to_float(row.get("Edge")),
                 "abs_edge": to_float(row.get("Abs_Edge")),
                 "estimated_hit_probability": to_float(row.get("Estimated_Hit_Probability")),
+                "estimated_push_probability": push_probability,
                 "estimated_graded_hit_rate": estimated_graded_hit_rate,
+                "model_estimate_status": "review" if risk_flags or publication_status != "ready" else "calibrated",
                 "precision_score": precision_score,
                 "value_score": precision_score * to_float(row.get("Abs_Edge")),
                 "historical_bucket_key": row.get("Historical_Bucket_Key", ""),
@@ -527,13 +856,15 @@ def main() -> None:
                 "market_implied_probability": market_implied_probability,
                 "expected_value_per_unit": expected_value_per_unit,
                 "final_pool_quality_score": parlay_leg_quality,
-                "parlay_precision_eligible": is_mlb_parlay_leg_eligible(
-                    graded_hit_rate=estimated_graded_hit_rate,
-                    leg_quality=parlay_leg_quality,
-                    historical_bucket_support=historical_bucket_support,
-                    expected_value_per_unit=expected_value_per_unit,
-                ),
-                "confidence_tier": row.get("Confidence_Tier", "consider"),
+                "parlay_precision_eligible": parlay_eligible,
+                "model_confidence_tier": raw_confidence_tier,
+                "confidence_tier": "review" if risk_flags or publication_status != "ready" else raw_confidence_tier,
+                "publication_status": publication_status,
+                "action_status": "review" if risk_flags or publication_status != "ready" else "ready",
+                "lineup_status": lineup_status,
+                "confirmed_team": participant_team,
+                "batting_order": participant.get("batting_order", ""),
+                "risk_flags": risk_flags,
             }
         )
 
@@ -552,9 +883,14 @@ def main() -> None:
         "through_date": through_date,
         "model_run_id": "mlb_high_precision_selector_v1",
         "policy_profile": "core_market_props",
+        "publication_status": publication_status,
+        "publication_message": "; ".join(data_quality.get("reasons", [])) or "Board passed publication checks.",
+        "data_quality": data_quality,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "summary": {
             "play_count": total,
+            "source_play_count": len(original_rows),
+            "duplicate_cards_suppressed": len(suppressed_duplicates),
             "supported_rows": int(summary.get("rows_supported", 0)),
             "rows_after_filters": int(summary.get("rows_after_filters", 0)),
             "rejected_rows": max(0, int(summary.get("rows_supported", 0)) - int(summary.get("rows_after_filters", 0))),
@@ -572,6 +908,7 @@ def main() -> None:
         "parlay_summary": parlay_payload["summary"],
         "parlay_pairs": parlay_payload["pairs"],
         "parlay_validation": build_mlb_parlay_validation(MLB_MANIFEST_PATH),
+        "suppressed_duplicates": suppressed_duplicates,
         "plays": plays,
     }
     payload["summary"]["parlay_tagged_plays"] = int(payload["parlay_summary"].get("tagged_play_count", 0))

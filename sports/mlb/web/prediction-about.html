@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MLB Analytics | Prediction Method</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=3">
+    <link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
     <button id="siteMenuButton" class="site-menu-button" aria-label="Open site navigation" aria-controls="siteNavDrawer" aria-expanded="false">
@@ -34,10 +34,13 @@
         <section class="prediction-about-stage">
             <div class="container prediction-about-container">
                 <header class="prediction-about-sign">
-                    <p class="prediction-about-kicker">MLB Prediction System Notes</p>
-                    <h1>How The MLB Board Works</h1>
+                    <p class="prediction-about-kicker">MLB Method</p>
+                    <div class="minimal-heading">
+                        <h1>Method</h1>
+                        <button class="info-trigger" type="button" aria-label="About method" data-info="How the board is filtered, ranked, and translated into visible prediction cards.">i</button>
+                    </div>
                     <p id="aboutRunFacts" class="prediction-about-run-facts">Loading run details...</p>
-                    <a class="prediction-about-back-link" href="predictions.html">Back to prediction bounties</a>
+                    <a class="prediction-about-back-link" href="predictions.html">Back to board</a>
                 </header>
 
                 <section class="prediction-about-panel">
@@ -86,8 +89,8 @@
                 <section class="prediction-about-panel">
                     <h2>What The Metrics Mean</h2>
                     <ul class="prediction-about-list">
-                        <li><strong>Estimated Hit Rate:</strong> directional win probability from the current model mean versus line.</li>
-                        <li><strong>Graded Hit Rate:</strong> hit rate after removing push probability from the denominator.</li>
+                        <li><strong>Model Estimate:</strong> directional model output versus the line; not a guaranteed or calibrated confidence level.</li>
+                        <li><strong>Push Exposure:</strong> whole-number lines can settle as pushes and must be excluded from binary W/L grading.</li>
                         <li><strong>Abs Edge:</strong> absolute difference between prediction and market line.</li>
                         <li><strong>Precision Score:</strong> a composite ranking score used to tighten the board.</li>
                         <li><strong>Supported Rows:</strong> candidate rows with a non-baseline modeled signal the selector can trust.</li>

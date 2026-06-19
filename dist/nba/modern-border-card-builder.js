@@ -401,72 +401,20 @@ function renderCardSvg(input = {}, index = 0) {
   const id = `card_${index}_${key.replace(/[^a-z0-9]/g, '')}`;
   const headshot = p.headshotData || p.headshot || DEFAULT_PLAYER.headshot;
   const statsList = p.stats && p.stats.length ? p.stats : DEFAULT_STATS;
-  const palette = variant.palette || VARIANTS['prism-edge'].palette;
-  const gold = key === 'gold-wave-edge' || key === 'base-paper' || key === 'black-gold-edge';
-  const dark = key === 'black-gold-edge' || key === 'wave-border-r';
-  const playerName = String(p.playerName || 'UNKNOWN PLAYER').toUpperCase();
-  const teamName = String(p.teamName || 'TEAM').toUpperCase();
-  const nameFont = playerName.length > 24 ? 22 : playerName.length > 18 ? 25 : 29;
-  const teamFont = teamName.length > 26 ? 9 : 10.5;
-  const jerseyLabel = p.jerseyNumber ? `#${esc(p.jerseyNumber)}` : 'ITC';
-  const photoLayer = headshot === '__demo_vector__'
-    ? demoVectorHeadshot()
-    : `<image href="${esc(headshot)}" x="45" y="82" width="270" height="252" preserveAspectRatio="xMidYMid meet"/>`;
-  const statCards = statsList.slice(0, 4).map((s, i) => {
-    const x = 37 + i * 72;
-    return `<g transform="translate(${x} 418)">
-      <rect width="62" height="52" rx="6" fill="${dark ? '#07101a' : '#101b2c'}" stroke="url(#${id}-edge)" stroke-opacity=".62"/>
-      <text x="31" y="23" text-anchor="middle" font-family="Manrope,Arial,sans-serif" font-size="15" font-weight="900" fill="${gold ? '#f4cf7a' : '#f8fbff'}">${esc(s.value)}</text>
-      <text x="31" y="40" text-anchor="middle" font-family="Manrope,Arial,sans-serif" font-size="8.5" font-weight="900" fill="${gold ? '#e7c16d' : '#b9c7d8'}">${esc(s.label)}</text>
-    </g>`;
-  }).join('');
-
-  return `<svg class="modern-border-card" width="${CARD_W}" height="${CARD_H}" viewBox="0 0 ${CARD_W} ${CARD_H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(playerName)} ${esc(variant.label)} card">
-    <title>${esc(playerName)} ${esc(variant.label)}</title>
+  return `<svg class="modern-border-card" width="${CARD_W}" height="${CARD_H}" viewBox="0 0 ${CARD_W} ${CARD_H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(p.playerName)} ${esc(variant.label)} card">
+    <title>${esc(p.playerName)} ${esc(variant.label)}</title>
     ${defs(id, variant)}
-    <defs>
-      <clipPath id="${id}-photoClip"><rect x="34" y="72" width="292" height="258" rx="12"/></clipPath>
-      <linearGradient id="${id}-stock" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="${dark ? '#07090f' : '#f7f3e8'}"/>
-        <stop offset=".48" stop-color="${dark ? '#101827' : '#d9e2ec'}"/>
-        <stop offset="1" stop-color="${dark ? '#030407' : '#f8fafc'}"/>
-      </linearGradient>
-      <linearGradient id="${id}-edge" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="${palette[2]}"/>
-        <stop offset=".24" stop-color="#ffffff"/>
-        <stop offset=".52" stop-color="${palette[3]}"/>
-        <stop offset=".78" stop-color="${palette[4]}"/>
-        <stop offset="1" stop-color="${palette[2]}"/>
-      </linearGradient>
-      <linearGradient id="${id}-plate" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" stop-color="${dark ? '#080f1c' : '#f9fafb'}"/>
-        <stop offset=".5" stop-color="${dark ? '#111d31' : '#e5ecf4'}"/>
-        <stop offset="1" stop-color="${dark ? '#080f1c' : '#f9fafb'}"/>
-      </linearGradient>
-    </defs>
     <g filter="url(#${id}-shadow)">
-      <rect width="360" height="504" rx="20" fill="url(#${id}-stock)"/>
-      <rect x="10" y="10" width="340" height="484" rx="17" fill="none" stroke="url(#${id}-edge)" stroke-width="5" stroke-opacity=".88"/>
-      <rect x="22" y="22" width="316" height="460" rx="13" fill="none" stroke="${dark ? '#f8fafc' : '#0f172a'}" stroke-width="1" stroke-opacity="${dark ? '.18' : '.16'}"/>
-      <path d="M24 48 H336 M24 401 H336" stroke="url(#${id}-edge)" stroke-width="1.5" stroke-opacity=".52"/>
-      <text x="36" y="45" font-family="Manrope,Arial,sans-serif" font-size="9" font-weight="900" fill="${dark ? '#e5edf8' : '#172033'}">IN THE CARDS</text>
-      <text x="324" y="45" text-anchor="end" font-family="Manrope,Arial,sans-serif" font-size="9" font-weight="900" fill="${dark ? '#e5edf8' : '#172033'}">${esc(variant.label)}</text>
-      <rect x="34" y="72" width="292" height="258" rx="12" fill="${dark ? '#0a1322' : '#eef3f8'}" stroke="url(#${id}-edge)" stroke-width="2"/>
-      <g clip-path="url(#${id}-photoClip)">
-        <rect x="34" y="72" width="292" height="258" fill="${dark ? '#111827' : '#e6edf5'}"/>
-        <path d="M34 282 C96 260 141 270 180 279 C222 289 271 264 326 283 V330 H34 Z" fill="${palette[2]}" opacity=".18"/>
-        ${photoLayer}
-        <path d="M34 72 H326 V330 H34 Z" fill="url(#${id}-edge)" opacity=".055"/>
-      </g>
-      <circle cx="57" cy="91" r="23" fill="${dark ? '#050912' : '#111827'}" stroke="url(#${id}-edge)" stroke-width="2"/>
-      <text x="57" y="97" text-anchor="middle" font-family="Manrope,Arial,sans-serif" font-size="${p.jerseyNumber ? 15 : 11}" font-weight="900" fill="#f8fafc">${jerseyLabel}</text>
-      <path d="M41 342 H319 L307 397 H53 Z" fill="url(#${id}-plate)" stroke="url(#${id}-edge)" stroke-width="2" stroke-opacity=".72"/>
-      <text x="180" y="363" text-anchor="middle" font-family="Manrope,Arial,sans-serif" font-size="${teamFont}" font-weight="900" fill="${dark ? '#dce7f3' : '#26364f'}">${esc(teamName)}</text>
-      <text x="180" y="389" text-anchor="middle" font-family="Manrope,Arial,sans-serif" font-size="${nameFont}" font-weight="900" fill="${gold ? '#b8862d' : dark ? '#f8fafc' : '#101827'}">${esc(playerName)}</text>
-      ${statCards}
-      <rect width="360" height="504" rx="20" fill="url(#${id}-edge)" opacity=".055"/>
-      <path d="M-12 104 L372 22 M-20 462 L380 372" stroke="#fff" stroke-width="18" stroke-opacity=".08"/>
-      <rect width="360" height="504" rx="20" filter="url(#${id}-cardGrain)" opacity=".42"/>
+      ${baseSurface(id, key, variant)}
+      ${stage(id, key)}
+      ${borderShell(id, key, variant)}
+      ${portrait(id, headshot)}
+      ${key === 'chrome-full' ? `<g clip-path="url(#${id}-cardClip)" opacity=".18">${prismFacets(id, 'edgeMask', 71, 24)}</g>` : ''}
+      ${badges(id, variant, p.jerseyNumber)}
+      ${identity(id, key, p.playerName, p.teamName)}
+      ${stats(id, key, statsList)}
+      <rect x="0" y="0" width="360" height="504" rx="26" fill="none" stroke="#fff" stroke-opacity=".24"/>
+      <rect width="360" height="504" rx="26" filter="url(#${id}-cardGrain)" opacity=".55"/>
     </g>
   </svg>`;
 }

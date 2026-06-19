@@ -7,21 +7,22 @@
     <meta name="nba-api-base" content="">
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="vault/vault-tokens.css?v=1">
-    <link rel="stylesheet" href="vault/vault-components.css?v=2">
+    <link rel="stylesheet" href="vault/vault-components.css?v=3">
     <link rel="stylesheet" href="styles.css?v=25">
 </head>
 <body class="vault-theme">
     <div id="vaultShellRoot"></div>
     <main class="vault-shell">
         <header class="vault-page-header">
-            <p class="vault-page-kicker">Access Plans</p>
-            <h1>Analytics depth, not automatic decisions</h1>
-            <p class="vault-page-lead">Free research previews stay useful. Paid plans unlock full safe-state boards, simulation filters, CSV export, and API access. All content remains shadow/research labeled.</p>
+            <p class="vault-page-kicker">Plans</p>
+            <div class="vault-heading-row">
+                <h1>Access</h1>
+                <button class="vault-info-trigger" type="button" aria-label="About Access" data-info="Plans unlock deeper boards, simulation filters, CSV export, and API access. All content remains research labeled.">i</button>
+            </div>
         </header>
         <section id="pricingGrid" class="vault-door-grid" aria-live="polite"></section>
-        <p class="vault-disclaimer">Analytics and research only. No guaranteed outcomes. Betting involves risk. No auto-betting. Shadow labels are not production promotion.</p>
     </main>
-    <script src="vault/vault-shell.js?v=2"></script>
+    <script src="vault/vault-shell.js?v=3"></script>
     <script src="auth-client.js?v=1"></script>
     <script src="pricing.js?v=1"></script>
 </body>

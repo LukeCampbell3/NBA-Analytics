@@ -813,6 +813,61 @@ body.theme-dark .theme-toggle-radial {
     background: rgba(255, 255, 255, 0.16);
 }
 
+.info-trigger {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.42);
+    background: rgba(17, 24, 39, 0.22);
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 900;
+    line-height: 1;
+    cursor: help;
+    text-decoration: none;
+}
+
+.info-trigger::after {
+    content: attr(data-info);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 10px);
+    z-index: 1300;
+    width: min(280px, 82vw);
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    background: rgba(17, 24, 39, 0.96);
+    color: #f9fafb;
+    box-shadow: 0 14px 30px rgba(2, 8, 22, 0.28);
+    transform: translateX(-50%) translateY(4px);
+    opacity: 0;
+    pointer-events: none;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.35;
+    text-align: left;
+    white-space: normal;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.info-trigger:hover::after,
+.info-trigger:focus-visible::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.minimal-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
 .distribution-tooltip {
     position: absolute;
     pointer-events: none;

@@ -7,7 +7,7 @@
     <meta name="nba-api-base" content="">
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="vault/vault-tokens.css?v=1">
-    <link rel="stylesheet" href="vault/vault-components.css?v=2">
+    <link rel="stylesheet" href="vault/vault-components.css?v=3">
     <link rel="stylesheet" href="styles.css?v=25">
 </head>
 <body class="vault-theme">
@@ -16,11 +16,13 @@
     <main class="vault-shell safe-state-page">
         <section class="safe-state-hero">
             <div class="container">
-                <p class="vault-page-kicker">Production Shadow</p>
-                <h1>Safe-State Lab</h1>
+                <p class="vault-page-kicker">Shadow</p>
+                <div class="vault-heading-row">
+                    <h1>Safe-State</h1>
+                    <button class="vault-info-trigger" type="button" aria-label="About safe-state lab" data-info="Display-only research. Ranges are uncertainty bands, not guarantees or promotion claims.">i</button>
+                </div>
                 <p id="safeStateMeta" class="vault-freshness">Loading shadow evidence...</p>
                 <p id="entitlementMeta" class="vault-page-lead"></p>
-                <p class="vault-disclaimer">Display-only research. No staking, no auto-betting, no promotion claim. Ranges are uncertainty bands, not guarantees.</p>
             </div>
         </section>
         <section class="container safe-state-grid-section">
@@ -48,8 +50,8 @@
         </section>
     </main>
 
-    <script src="vault/vault-components.js?v=1"></script>
-    <script src="vault/vault-shell.js?v=2"></script>
+    <script src="vault/vault-components.js?v=3"></script>
+    <script src="vault/vault-shell.js?v=3"></script>
     <script src="auth-client.js?v=1"></script>
     <script src="safe-state.js?v=2"></script>
 </body>

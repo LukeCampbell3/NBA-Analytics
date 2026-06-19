@@ -283,7 +283,12 @@
     const parts = displayName.split(/\s+/).filter(Boolean);
     const monogram = parts.length >= 2 ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase() : (parts[0] || "NA").slice(0, 2).toUpperCase();
 
-    const tier = play.parlay_candidate ? "parlay" : (["elite", "strong", "consider", "pass"].includes(tierRaw) ? tierRaw : "consider");
+    const riskFlags = Array.isArray(play.risk_flags) ? play.risk_flags.map((flag) => String(flag || "").trim()).filter(Boolean) : [];
+    const actionStatus = String(play.action_status || play.publication_status || "").toLowerCase();
+    const needsReview = actionStatus === "review" || riskFlags.length > 0 || play.model_estimate_status === "review";
+    const tier = needsReview
+      ? "review"
+      : (play.parlay_candidate ? "parlay" : (["elite", "strong", "consider", "pass"].includes(tierRaw) ? tierRaw : "consider"));
 
     const lineText = CardVault.formatNumber(play.market_line);
     const predText = CardVault.formatNumber(play.prediction);
@@ -297,18 +302,37 @@
     const footerParts = [play.market_date, gameText, sourceText].filter(Boolean);
     const footer = footerParts.join(" · ");
 
-    const why = play.parlay_candidate
+    const riskLabels = {
+      stale_history: "Stale data",
+      lineup_unconfirmed: "Lineup",
+      roster_unverified: "Roster",
+      team_mismatch: "Team check",
+      game_date_mismatch: "Date check",
+      push_exposure: "Push risk",
+      multi_game_slate_review: "Slate check",
+    };
+
+    const why = needsReview
+      ? "Review before action: stale data, lineup status, push exposure, or slate context may affect settlement."
+      : play.parlay_candidate
       ? `Model lean pairs with ${String(play.parlay_partner_name || "another tagged leg").trim()} (${CardVault.formatPct(play.parlay_projected_hit_rate)} projected alignment).`
       : `Context-supported edge on ${targetLabel}. Review evidence before acting.`;
 
     const photoHtml = resolvedHeadshot
       ? `<img class="bounty-paper__photo-img" src="${CardVault.escapeAttr(resolvedHeadshot)}" alt="" loading="lazy" onerror="this.replaceWith(this.nextElementSibling)" /><span class="bounty-paper__fallback">${CardVault.escapeHtml(monogram)}</span>`
       : `<span class="bounty-paper__fallback">${CardVault.escapeHtml(monogram)}</span>`;
-    const parlayTag = play.parlay_candidate ? '<span class="bounty-paper__tag bounty-paper__tag--parlay">Parlay Tag</span>' : "";
-    const statusTag = play.publication_status === "withheld"
-      ? '<span class="bounty-paper__tag">Withheld</span>'
-      : '<span class="bounty-paper__tag">Published</span>';
+    const parlayTag = play.parlay_candidate && !needsReview ? '<span class="bounty-paper__tag bounty-paper__tag--parlay">Parlay Tag</span>' : "";
+    const statusTag = needsReview
+      ? '<span class="bounty-paper__tag bounty-paper__tag--risk">Review</span>'
+      : play.publication_status === "withheld"
+        ? '<span class="bounty-paper__tag bounty-paper__tag--risk">Withheld</span>'
+        : '<span class="bounty-paper__tag">Published</span>';
+    const riskTags = riskFlags
+      .slice(0, 3)
+      .map((flag) => `<span class="bounty-paper__tag bounty-paper__tag--risk">${CardVault.escapeHtml(riskLabels[flag] || flag.replaceAll("_", " "))}</span>`)
+      .join("");
     const hitRate = play.estimated_graded_hit_rate != null ? CardVault.formatPct(play.estimated_graded_hit_rate) : "n/a";
+    const pushText = play.estimated_push_probability != null ? CardVault.formatPct(play.estimated_push_probability) : "n/a";
     const valueScore = play.value_score != null ? CardVault.formatNumber(play.value_score) : "n/a";
 
     return `
@@ -320,7 +344,7 @@
           <p class="bounty-paper__subhead">For model-backed action</p>
         </header>
         <div class="bounty-paper__photo">${photoHtml}</div>
-        <div class="bounty-paper__tags">${parlayTag}<span class="bounty-paper__tag">${CardVault.escapeHtml(tier)}</span>${statusTag}</div>
+        <div class="bounty-paper__tags">${parlayTag}<span class="bounty-paper__tag">${CardVault.escapeHtml(tier)}</span>${statusTag}${riskTags}</div>
         <p class="bounty-paper__reward-label">Reward Signal</p>
         <p class="bounty-paper__reward">${CardVault.escapeHtml(evText)}</p>
         <h3 class="bounty-paper__name">${CardVault.escapeHtml(displayName)}</h3>
@@ -329,7 +353,8 @@
           <div><dt>Line</dt><dd>${CardVault.escapeHtml(lineText)}</dd></div>
           <div><dt>Projection</dt><dd>${CardVault.escapeHtml(predText)}</dd></div>
           <div><dt>Edge</dt><dd>${CardVault.escapeHtml(edgeText)}</dd></div>
-          <div><dt>Hit Est.</dt><dd>${CardVault.escapeHtml(hitRate)}</dd></div>
+          <div><dt>Model Est.</dt><dd>${CardVault.escapeHtml(hitRate)}</dd></div>
+          <div><dt>Push</dt><dd>${CardVault.escapeHtml(pushText)}</dd></div>
           <div><dt>Value</dt><dd>${CardVault.escapeHtml(valueScore)}</dd></div>
         </dl>
         <p class="bounty-paper__note">${CardVault.escapeHtml(why)}</p>

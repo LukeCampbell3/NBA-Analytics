@@ -260,6 +260,62 @@ def test_select_top_candidates_respects_market_bucket_cap() -> None:
     assert bucket_counts["TB|UNDER|1.5"] == 2
 
 
+def test_select_top_candidates_suppresses_duplicate_prop_across_game_ids() -> None:
+    calibration = {
+        "target_direction": {
+            "TB|UNDER": {"graded_rows": 2900, "win_rate": 0.888},
+        },
+        "line_buckets": {
+            "TB|UNDER|1.0": {"graded_rows": 1800, "win_rate": 0.86},
+        },
+    }
+    rows = [
+        _row(
+            player="Duplicate Player",
+            team="ATL",
+            game_id="resumed_game",
+            target="TB",
+            prediction=0.25,
+            line=1.0,
+            edge=-0.75,
+        ),
+        _row(
+            player="Duplicate Player",
+            team="ATL",
+            game_id="nightcap",
+            target="TB",
+            prediction=0.30,
+            line=1.0,
+            edge=-0.70,
+        ),
+    ]
+    candidates = [
+        selector.build_candidate(
+            row,
+            calibration=calibration,
+            min_history_bucket_rows=50,
+            max_history_prior_weight=0.35,
+            history_prior_strength=400.0,
+        )
+        for row in rows
+    ]
+    args = selector.argparse.Namespace(
+        top_n=2,
+        max_per_player=2,
+        max_per_game=2,
+        max_per_team=3,
+        max_per_market_bucket=4,
+    )
+
+    selected = selector.select_top_candidates(
+        [candidate for candidate in candidates if candidate is not None],
+        args,
+    )
+
+    assert len(selected) == 1
+    assert selected[0].player == "Duplicate Player"
+
+
 def test_lookup_historical_bet_profile_prior_prefers_line_probability_bucket() -> None:
     priors = {
         "bet_profiles_target_probability": {
