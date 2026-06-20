@@ -46,6 +46,7 @@ from fetch_nba_market_props import (  # noqa: E402
 
 DATA_DIR = REPO_ROOT / "Data-Proc"
 COVERS_ODDS_URL = "https://www.covers.com/sport/basketball/nba/odds"
+COVERS_MATCHUPS_URL = "https://www.covers.com/sports/nba/matchups"
 COVERS_MATCHUP_URL = "https://www.covers.com/sport/basketball/nba/matchup/{game_id}/picks#props"
 TARGET_MAP = {
     "POINTS SCORED": ("PTS", "player_points"),
@@ -328,13 +329,27 @@ def derive_local_date_range(player_limit: int | None = None) -> tuple[pd.Timesta
     return pd.Timestamp(min_date).normalize(), pd.Timestamp(max_date).normalize()
 
 
+def _extract_covers_game_ids(html: str) -> list[int]:
+    ids: list[int] = []
+    ids.extend(int(match) for match in re.findall(r"/sport/basketball/nba/matchup/(\d+)", html))
+    ids.extend(int(match) for match in re.findall(r"/sport/betgraph/(\d+)", html))
+    ids.extend(int(match) for match in re.findall(r'data-game\s*=\s*["\'](\d+)["\']', html))
+    return sorted(set(ids), reverse=True)
+
+
 def infer_odds_page_game_ids(session: requests.Session) -> list[int]:
     response = session.get(COVERS_ODDS_URL, timeout=30)
     response.raise_for_status()
-    ids = [int(match) for match in re.findall(r"/sport/basketball/nba/matchup/(\d+)", response.text)]
+    ids = _extract_covers_game_ids(response.text)
+
     if not ids:
-        raise RuntimeError("Unable to infer Covers matchup ids from current odds page.")
-    return sorted(set(ids), reverse=True)
+        response = session.get(COVERS_MATCHUPS_URL, timeout=30)
+        response.raise_for_status()
+        ids = _extract_covers_game_ids(response.text)
+
+    if not ids:
+        raise RuntimeError("Unable to infer Covers matchup ids from current odds page or matchups page.")
+    return ids
 
 
 def infer_start_game_id(session: requests.Session) -> int:

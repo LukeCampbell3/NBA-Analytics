@@ -259,6 +259,19 @@ def test_covers_wide_snapshot_populates_price_provenance_fields() -> None:
     assert row["Market_Snapshot_ID"] == "covers_historical:2026-05-26T13:39:09+00:00"
 
 
+def test_extract_covers_game_ids_from_matchups_page() -> None:
+    from collect_covers_historical_props import _extract_covers_game_ids
+
+    html = '''
+    <a class="btn btn-primary d-inline-block rounded matchup-btn-link" href="/sport/basketball/nba/matchup/380822">Boxscore</a>
+    <button hx-get="/sport/betgraph/380822?customSpread=-5.5">Odds</button>
+    '''
+
+    ids = _extract_covers_game_ids(html)
+
+    assert ids == [380822]
+
+
 def test_sportsgameodds_events_normalize_to_live_price_snapshot() -> None:
     events = [
         {
