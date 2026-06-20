@@ -49,6 +49,8 @@ MARKET_WIDE_COLUMNS = [
     "Market_Commence_Time_UTC",
     "Market_Home_Team",
     "Market_Away_Team",
+    "Market_Player_Team",
+    "Market_Player_Opponent",
     "Market_H",
     "Market_TB",
     "Market_R",
@@ -335,6 +337,12 @@ def _derive_matchup(row: dict[str, object]) -> tuple[str | None, str | None]:
     return team, opp or None
 
 
+def _derive_player_matchup(row: dict[str, object]) -> tuple[str | None, str | None]:
+    team = str(row.get("team") or "").strip().upper()
+    opponent = str(row.get("opp") or "").strip().upper().removeprefix("@")
+    return team or None, opponent or None
+
+
 def _book_keys_for_moneyline(row: dict[str, object], prop_key: str) -> list[str]:
     suffix = f"_{prop_key}"
     books: set[str] = set()
@@ -375,6 +383,7 @@ def _long_row(
         return None
 
     home_team, away_team = _derive_matchup(row)
+    player_team, player_opponent = _derive_player_matchup(row)
     return {
         "fetched_at_utc": fetched_at_utc,
         "event_id": str(row.get("gameID") or ""),
@@ -382,6 +391,8 @@ def _long_row(
         "event_date_et": market_date,
         "home_team": home_team,
         "away_team": away_team,
+        "player_team": player_team,
+        "player_opponent": player_opponent,
         "bookmaker_key": bookmaker_key,
         "bookmaker_title": BOOK_TITLES.get(bookmaker_key, bookmaker_key.title()),
         "market_key": market_key,
@@ -391,6 +402,30 @@ def _long_row(
         "over_price": over_price,
         "under_price": under_price,
     }
+
+
+def american_implied_probability(price: object) -> float | None:
+    value = to_float(price)
+    if value is None or abs(value) < 100.0:
+        return None
+    if value > 0:
+        return 100.0 / (value + 100.0)
+    return abs(value) / (abs(value) + 100.0)
+
+
+def probability_to_american(probability: float) -> float:
+    bounded = min(1.0 - 1e-9, max(1e-9, float(probability)))
+    if bounded >= 0.5:
+        return round(-100.0 * bounded / (1.0 - bounded), 6)
+    return round(100.0 * (1.0 - bounded) / bounded, 6)
+
+
+def consensus_american_price(values: pd.Series) -> float:
+    probabilities = [american_implied_probability(value) for value in values]
+    valid = [value for value in probabilities if value is not None]
+    if not valid:
+        return float("nan")
+    return probability_to_american(float(np.mean(valid)))
 
 
 def build_rotowire_frames(
@@ -449,13 +484,15 @@ def build_rotowire_frames(
         .agg(
             market_line=("line", "median"),
             market_line_std=("line", "std"),
-            over_price_avg=("over_price", "mean"),
-            under_price_avg=("under_price", "mean"),
+            over_price_avg=("over_price", consensus_american_price),
+            under_price_avg=("under_price", consensus_american_price),
             book_count=("bookmaker_key", "nunique"),
             first_event_id=("event_id", "first"),
             first_commence_time_utc=("commence_time_utc", "first"),
             first_home_team=("home_team", "first"),
             first_away_team=("away_team", "first"),
+            first_player_team=("player_team", "first"),
+            first_player_opponent=("player_opponent", "first"),
         )
         .reset_index()
     )
@@ -484,6 +521,8 @@ def build_rotowire_frames(
             "first_commence_time_utc",
             "first_home_team",
             "first_away_team",
+            "first_player_team",
+            "first_player_opponent",
         ]
     ].drop_duplicates(subset=["event_date_et", "player_name_norm", "player_name_raw"], keep="last")
 
@@ -513,6 +552,8 @@ def build_rotowire_frames(
             "first_commence_time_utc": "Market_Commence_Time_UTC",
             "first_home_team": "Market_Home_Team",
             "first_away_team": "Market_Away_Team",
+            "first_player_team": "Market_Player_Team",
+            "first_player_opponent": "Market_Player_Opponent",
         }
     )
 
@@ -539,6 +580,8 @@ def build_rotowire_frames(
             "Market_Commence_Time_UTC",
             "Market_Home_Team",
             "Market_Away_Team",
+            "Market_Player_Team",
+            "Market_Player_Opponent",
             "Market_Source_H",
             "Market_Source_TB",
             "Market_Source_R",
@@ -606,6 +649,8 @@ def normalize_wide_snapshot(df: pd.DataFrame, fetched_at_utc: str) -> tuple[pd.D
                     "event_date_et": row.get("Market_Date"),
                     "home_team": row.get("Market_Home_Team", np.nan),
                     "away_team": row.get("Market_Away_Team", np.nan),
+                    "player_team": row.get("Market_Player_Team", np.nan),
+                    "player_opponent": row.get("Market_Player_Opponent", np.nan),
                     "bookmaker_key": np.nan,
                     "bookmaker_title": row.get(short_source, np.nan),
                     "market_key": market_key,

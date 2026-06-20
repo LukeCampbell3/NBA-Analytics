@@ -175,6 +175,29 @@ def market_player_key(player_name: object) -> str:
     return str(player_name or "").strip().replace(" ", "_")
 
 
+def resolve_scheduled_player_team(
+    market_row: pd.Series,
+    latest_row: pd.Series | None,
+    *,
+    home_team: str,
+    home_team_id: str,
+    away_team: str,
+    away_team_id: str,
+) -> str:
+    market_team = str(market_row.get("Market_Player_Team", "") or "").strip().upper()
+    if market_team in {home_team, away_team}:
+        return market_team
+    if latest_row is None:
+        return ""
+    latest_team_id = to_int_string(latest_row.get("Team_ID"))
+    if latest_team_id == home_team_id:
+        return home_team
+    if latest_team_id == away_team_id:
+        return away_team
+    latest_team = str(latest_row.get("Team", "") or "").strip().upper()
+    return latest_team if latest_team in {home_team, away_team} else ""
+
+
 def load_manifest_paths(manifest_path: Path, season: int) -> list[Path]:
     if not manifest_path.exists():
         return []
@@ -563,7 +586,9 @@ def project_from_latest_row(
     spec: TargetSpec,
     *,
     opponent_context: dict[str, float],
+    player_context: dict[str, float] | None = None,
 ) -> tuple[float, float]:
+    player_context = player_context or {}
     baseline = to_float(latest_row.get(spec.rolling_col))
     if baseline is None:
         baseline = to_float(latest_row.get(spec.lag1_col))
@@ -571,18 +596,30 @@ def project_from_latest_row(
         baseline = to_float(latest_row.get(spec.actual_col), 0.0)
 
     baseline = max(0.0, float(baseline))
-    latest_pa_share = to_float(latest_row.get("Team_PA_share")) if to_float(latest_row.get("Team_PA_share")) is not None else 0.1
+    long_run_mean = to_float(player_context.get("target_mean"))
+    recent_mean = to_float(player_context.get("target_recent_mean"))
+    if long_run_mean is not None:
+        baseline = (0.70 * max(0.0, long_run_mean)) + (0.30 * max(0.0, recent_mean if recent_mean is not None else long_run_mean))
+    latest_pa_share = to_float(player_context.get("pa_share_mean"))
+    if latest_pa_share is None:
+        latest_pa_share = to_float(latest_row.get("Team_PA_share")) if to_float(latest_row.get("Team_PA_share")) is not None else 0.1
     park_factor = to_float(latest_row.get("Park_Factor")) if to_float(latest_row.get("Park_Factor")) is not None else 1.0
     temp_f = to_float(latest_row.get("Temp_F")) if to_float(latest_row.get("Temp_F")) is not None else 70.0
-    woba = to_float(latest_row.get("wOBA")) if to_float(latest_row.get("wOBA")) is not None else 0.315
-    iso = to_float(latest_row.get("ISO")) if to_float(latest_row.get("ISO")) is not None else 0.14
-    barrel_pct = to_float(latest_row.get("Barrel%")) if to_float(latest_row.get("Barrel%")) is not None else 7.0
+    woba = to_float(player_context.get("woba_mean"))
+    if woba is None:
+        woba = to_float(latest_row.get("wOBA")) if to_float(latest_row.get("wOBA")) is not None else 0.315
+    iso = to_float(player_context.get("iso_mean"))
+    if iso is None:
+        iso = to_float(latest_row.get("ISO")) if to_float(latest_row.get("ISO")) is not None else 0.14
+    barrel_pct = to_float(player_context.get("barrel_mean"))
+    if barrel_pct is None:
+        barrel_pct = to_float(latest_row.get("Barrel%")) if to_float(latest_row.get("Barrel%")) is not None else 7.0
     opp_pitcher_k9 = float(opponent_context.get("opp_pitcher_k9", to_float(latest_row.get("Opp_Pitcher_K9_3")) if to_float(latest_row.get("Opp_Pitcher_K9_3")) is not None else 8.2))
     opp_pitcher_era = float(opponent_context.get("opp_pitcher_era", to_float(latest_row.get("Opp_Pitcher_ERA_3")) if to_float(latest_row.get("Opp_Pitcher_ERA_3")) is not None else 4.1))
     opp_bullpen_era = float(opponent_context.get("opp_bullpen_era", to_float(latest_row.get("Opp_Bullpen_ERA_7")) if to_float(latest_row.get("Opp_Bullpen_ERA_7")) is not None else 4.0))
     opp_lineup_woba = float(opponent_context.get("opp_lineup_woba", to_float(latest_row.get("Opp_Lineup_wOBA_3")) if to_float(latest_row.get("Opp_Lineup_wOBA_3")) is not None else 0.315))
     opp_lineup_k_rate = float(opponent_context.get("opp_lineup_k_rate", to_float(latest_row.get("Opp_Lineup_K_rate_3")) if to_float(latest_row.get("Opp_Lineup_K_rate_3")) is not None else 0.225))
-    lag_value = to_float(latest_row.get(spec.lag1_col)) if to_float(latest_row.get(spec.lag1_col)) is not None else baseline
+    lag_value = recent_mean if recent_mean is not None else baseline
 
     if spec.role == "hitter":
         if spec.target == "H":
@@ -605,7 +642,9 @@ def project_from_latest_row(
                 + (0.12 * (park_factor - 1.0) * 4.0)
             )
         elif spec.target == "R":
-            batting_order = to_float(latest_row.get("Batting_Order")) if to_float(latest_row.get("Batting_Order")) is not None else 9.0
+            batting_order = to_float(player_context.get("batting_order_median"))
+            if batting_order is None:
+                batting_order = to_float(latest_row.get("Batting_Order")) if to_float(latest_row.get("Batting_Order")) is not None else 9.0
             lineup_slot_boost = 1.0 - ((batting_order - 1.0) / 8.0)
             prediction = (
                 (0.64 * baseline)
@@ -669,6 +708,34 @@ def project_from_latest_row(
     return prediction, float(market_line)
 
 
+def build_player_projection_context(history_frame: pd.DataFrame, spec: TargetSpec) -> dict[str, float]:
+    recent = history_frame.tail(30)
+
+    def mean_value(frame: pd.DataFrame, column: str) -> float | None:
+        if column not in frame.columns:
+            return None
+        values = pd.to_numeric(frame[column], errors="coerce").dropna()
+        return float(values.mean()) if not values.empty else None
+
+    context: dict[str, float] = {}
+    for key, frame, column in [
+        ("target_mean", history_frame, spec.actual_col),
+        ("target_recent_mean", recent, spec.actual_col),
+        ("pa_share_mean", recent, "Team_PA_share"),
+        ("woba_mean", recent, "wOBA"),
+        ("iso_mean", recent, "ISO"),
+        ("barrel_mean", recent, "Barrel%"),
+    ]:
+        value = mean_value(frame, column)
+        if value is not None:
+            context[key] = value
+    if "Batting_Order" in recent.columns:
+        batting_orders = pd.to_numeric(recent["Batting_Order"], errors="coerce").dropna()
+        if not batting_orders.empty:
+            context["batting_order_median"] = float(batting_orders.median())
+    return context
+
+
 def build_upcoming_schedule_pool_rows(
     *,
     frames: list[pd.DataFrame],
@@ -709,6 +776,8 @@ def build_upcoming_schedule_pool_rows(
         away_meta = (((game.get("teams") or {}).get("away") or {}).get("team") or {})
         home_team = str(home_meta.get("abbreviation") or "").upper()
         away_team = str(away_meta.get("abbreviation") or "").upper()
+        home_team_id = to_int_string(home_meta.get("id"))
+        away_team_id = to_int_string(away_meta.get("id"))
         probable_home = normalize_player_id((((game.get("teams") or {}).get("home") or {}).get("probablePitcher") or {}).get("fullName", ""))
         probable_away = normalize_player_id((((game.get("teams") or {}).get("away") or {}).get("probablePitcher") or {}).get("fullName", ""))
 
@@ -719,7 +788,14 @@ def build_upcoming_schedule_pool_rows(
             market_team_players = [
                 player_name
                 for player_name, row in market_by_player.items()
-                if str(row.get("Market_Home_Team", "")).upper() == team or str(row.get("Market_Away_Team", "")).upper() == team
+                if resolve_scheduled_player_team(
+                    row,
+                    latest_player_rows.get(player_name),
+                    home_team=home_team,
+                    home_team_id=home_team_id,
+                    away_team=away_team,
+                    away_team_id=away_team_id,
+                ) == team
             ]
             hitters = [
                 player_name
@@ -794,6 +870,7 @@ def build_upcoming_schedule_pool_rows(
                         latest_row,
                         spec,
                         opponent_context=opponent_context,
+                        player_context=build_player_projection_context(history_frame, spec),
                     )
                     market_line = fallback_market_line
                     market_source = "synthetic"
@@ -821,9 +898,9 @@ def build_upcoming_schedule_pool_rows(
                             "Player_ID": normalize_player_id(str(latest_row.get("Player", ""))),
                             "Player_Type": player_type,
                             "Team": team,
-                            "Team_ID": to_int_string(latest_row.get("Team_ID")),
+                            "Team_ID": home_team_id if is_home else away_team_id,
                             "Opponent": opponent,
-                            "Opponent_ID": to_int_string(latest_row.get("Opponent_ID")),
+                            "Opponent_ID": away_team_id if is_home else home_team_id,
                             "Is_Home": str(int(is_home)),
                             "Target": spec.target,
                             "Prediction": float(prediction),

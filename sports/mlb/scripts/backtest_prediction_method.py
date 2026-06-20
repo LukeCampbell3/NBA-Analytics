@@ -43,6 +43,7 @@ DEFAULT_UNIVERSE = SPORT_ROOT / "data" / "predictions" / "calibration" / "histor
 DEFAULT_OUTPUT_ROOT = SPORT_ROOT / "data" / "predictions" / "backtests"
 DEFAULT_ARCHIVED_VALIDATION = REPO_ROOT / "sports" / "validation" / "mlb_historical_final_pool_validation.json"
 DEFAULT_EXTERNAL_AUDIT = DEFAULT_OUTPUT_ROOT / "mlb_20260617_external_audit.json"
+DEFAULT_RAW_POOL_AUDIT = DEFAULT_OUTPUT_ROOT / "mlb_20260619_raw_pool_partial_audit.json"
 SUPPORTED_TARGETS = ["H", "K", "R", "TB"]
 
 
@@ -63,6 +64,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--short-window-days", type=int, default=7)
     parser.add_argument("--archived-validation-json", type=Path, default=DEFAULT_ARCHIVED_VALIDATION)
     parser.add_argument("--external-audit-json", type=Path, default=DEFAULT_EXTERNAL_AUDIT)
+    parser.add_argument("--raw-pool-audit-json", type=Path, default=DEFAULT_RAW_POOL_AUDIT)
     return parser.parse_args()
 
 
@@ -71,6 +73,7 @@ def selector_args(**overrides: Any) -> SimpleNamespace:
         "top_n": 50,
         "min_abs_edge": 0.10,
         "min_history_rows": 11,
+        "min_prediction": 0.0,
         "min_hit_probability": 0.53,
         "min_graded_hit_rate": 0.53,
         "max_push_probability": 0.18,
@@ -104,6 +107,31 @@ def selector_args(**overrides: Any) -> SimpleNamespace:
 
 def policies() -> list[Policy]:
     return [
+        Policy(
+            name="production_action_board",
+            description="Current publish policy with market-depth, history, role, and concentration gates.",
+            args=selector_args(
+                top_n=10,
+                min_abs_edge=0.60,
+                min_history_rows=30,
+                min_prediction=0.10,
+                min_hit_probability=0.60,
+                min_graded_hit_rate=0.72,
+                max_push_probability=0.12,
+                max_days_since_history=4,
+                max_per_player=1,
+                max_per_game=2,
+                max_per_team=3,
+                max_per_market_bucket=2,
+                min_market_books=5,
+                require_real_market_source=True,
+                min_historical_bet_profile_support=12,
+                min_historical_bet_profile_win_rate=0.55,
+                min_historical_market_availability_support=20,
+                min_historical_market_availability_rate=0.45,
+            ),
+            require_confirmed_price=True,
+        ),
         Policy(
             name="published_real_market",
             description="Current published thresholds on rows backed by at least one sportsbook.",
@@ -148,7 +176,7 @@ def grade(actual: float, line: float, direction: str) -> str:
 
 
 def american_profit(price: float | None) -> float | None:
-    if price is None or not math.isfinite(price) or abs(price) < 1e-9:
+    if price is None or not math.isfinite(price) or abs(price) < 100.0:
         return None
     return price / 100.0 if price > 0 else 100.0 / abs(price)
 
@@ -319,14 +347,30 @@ def evaluate_policy(
                     "policy": policy.name,
                     "date": evaluation_date.strftime("%Y-%m-%d"),
                     "player": candidate.player,
+                    "player_id": candidate.player_id,
                     "team": candidate.team,
+                    "opponent": str(candidate.raw.get("Opponent", "")),
+                    "game_id": candidate.game_id,
                     "target": candidate.target,
                     "direction": candidate.direction,
                     "line": candidate.market_line,
                     "actual": actual,
                     "result": outcome,
+                    "model_hit_probability": candidate.model_hit_probability,
+                    "hit_probability": candidate.calibrated_hit_probability,
                     "probability": candidate.calibrated_graded_hit_rate,
                     "push_probability": candidate.push_probability,
+                    "abs_edge": candidate.abs_edge,
+                    "history_rows": candidate.history_rows,
+                    "days_since_history": candidate.days_since_history,
+                    "selection_score": candidate.selection_score,
+                    "market_bucket": candidate.market_bucket,
+                    "price_confirmed": candidate.price_confirmed,
+                    "expected_value_per_unit": candidate.expected_value_per_unit,
+                    "historical_bet_profile_win_rate": candidate.historical_bet_profile_win_rate,
+                    "historical_bet_profile_support": candidate.historical_bet_profile_support,
+                    "historical_market_availability_rate": candidate.historical_market_availability_rate,
+                    "historical_market_availability_support": candidate.historical_market_availability_support,
                     "market_source": candidate.market_source,
                     "books": candidate.market_books,
                     "side_price": candidate.selected_side_price,
@@ -434,6 +478,10 @@ def markdown_report(report: dict[str, Any]) -> str:
             f"{report['observed_evidence']['june_17_deduplicated']['losses']} "
             f"({report['observed_evidence']['june_17_deduplicated']['hit_rate']:.1%}) on "
             f"{report['observed_evidence']['june_17_deduplicated']['graded']} graded picks.",
+            f"- June 19 raw top-edge partial audit: {report['observed_evidence']['june_19_raw_pool_partial']['wins']}-"
+            f"{report['observed_evidence']['june_19_raw_pool_partial']['losses']} on "
+            f"{report['observed_evidence']['june_19_raw_pool_partial']['graded']} completed-game rows; "
+            "this is a raw-pool diagnostic, not a finalized-board result.",
             f"- Combined observed direction: {report['observed_evidence']['combined']['wins']}-"
             f"{report['observed_evidence']['combined']['losses']} "
             f"({report['observed_evidence']['combined']['hit_rate']:.1%}); 95% interval "
@@ -493,9 +541,10 @@ def raw_calibration_audit(universe: pd.DataFrame) -> dict[str, Any]:
     }
 
 
-def observed_evidence(archived_path: Path, audit_path: Path) -> dict[str, Any]:
+def observed_evidence(archived_path: Path, audit_path: Path, raw_pool_audit_path: Path) -> dict[str, Any]:
     archived_payload = json.loads(archived_path.read_text(encoding="utf-8"))
     audit_payload = json.loads(audit_path.read_text(encoding="utf-8"))
+    raw_pool_audit = json.loads(raw_pool_audit_path.read_text(encoding="utf-8"))
     archived_overall = archived_payload["overall"]
     archived_graded = int(archived_overall["graded_play_count"])
     archived_wins = int(round(float(archived_overall["hit_rate"]) * archived_graded))
@@ -517,6 +566,10 @@ def observed_evidence(archived_path: Path, audit_path: Path) -> dict[str, Any]:
     return {
         "archived_boards": archived,
         "june_17_deduplicated": june,
+        "june_19_raw_pool_partial": {
+            **raw_pool_audit["completed_top_edge_sample"],
+            "source": str(raw_pool_audit_path.resolve()),
+        },
         "combined": {
             "wins": wins,
             "losses": losses,
@@ -537,6 +590,10 @@ def main() -> None:
         universe[column] = pd.to_numeric(universe[column], errors="coerce")
     universe = universe.dropna(subset=["Prediction", "Market_Line", "Edge", "Actual"])
     dates = sorted(pd.Timestamp(value) for value in universe["_date"].unique())
+    priced_dates = sorted(
+        pd.Timestamp(value)
+        for value in universe.loc[universe["Market_Books"].fillna(0).gt(0), "_date"].unique()
+    )
     evaluation_dates = dates[max(0, int(args.min_training_days)) :]
     short_dates = set(evaluation_dates[-max(1, int(args.short_window_days)) :])
 
@@ -556,10 +613,13 @@ def main() -> None:
             "by_direction": {str(key): summarize(part) for key, part in frame.groupby("direction")} if not frame.empty else {},
         }
 
+    production = report_policies["production_action_board"]["long_window"]
     published = report_policies["published_real_market"]["long_window"]
     proxy = report_policies["directional_model_replay"]["long_window"]
     guardrail = report_policies["guardrailed_short_board"]["long_window"]
     interpretation = [
+        f"The production action policy contains {production['graded']} graded historical picks across "
+        f"{production.get('dates_with_picks', 0)} dates; it remains shadow-only until the priced sample is materially larger.",
         f"The placeable real-market sample contains {published['graded']} graded picks across "
         f"{published.get('dates_with_picks', 0)} dates; it is too small to support a long-term claim.",
         f"The long-window directional replay hit {proxy.get('hit_rate'):.1%} on {proxy['graded']} graded picks; "
@@ -569,7 +629,9 @@ def main() -> None:
         f"{guardrail.get('hit_rate_wilson_95_high'):.1%}.",
     ]
     limitations = [
-        "The historical universe ends on 2026-04-29 and real sportsbook coverage exists only on 2026-04-27 through 2026-04-29.",
+        f"The historical universe ends on {dates[-1].strftime('%Y-%m-%d')}; real sportsbook rows cover "
+        f"{priced_dates[0].strftime('%Y-%m-%d')} through {priced_dates[-1].strftime('%Y-%m-%d')} across "
+        f"{len(priced_dates)} dates." if priced_dates else "The historical universe contains no real sportsbook rows.",
         "Synthetic-line rows test model ranking and grading logic but cannot establish executable ROI or closing-line value.",
         "The replay covers H, K, R, and TB; the current published board also includes HR and ER, which lack this backtest universe.",
         "Lineup confirmation, roster validation, duplicate suppression, and stale-data withholding reduce publishing risk but do not create predictive edge.",
@@ -593,7 +655,9 @@ def main() -> None:
         "policies": report_policies,
         "calibration_audit": raw_calibration_audit(universe),
         "observed_evidence": observed_evidence(
-            args.archived_validation_json.resolve(), args.external_audit_json.resolve()
+            args.archived_validation_json.resolve(),
+            args.external_audit_json.resolve(),
+            args.raw_pool_audit_json.resolve(),
         ),
         "promotion_verdict": "shadow_only_not_validated",
         "interpretation": interpretation,

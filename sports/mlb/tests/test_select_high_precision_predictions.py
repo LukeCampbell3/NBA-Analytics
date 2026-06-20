@@ -12,6 +12,12 @@ sys.path.insert(0, str(MLB_SCRIPTS_ROOT))
 import select_high_precision_predictions as selector
 
 
+def test_american_price_helpers_reject_invalid_consensus_prices() -> None:
+    assert selector.american_implied_probability(-1.67) is None
+    assert selector.american_profit_per_unit(-0.5) is None
+    assert selector.american_implied_probability(-110.0) is not None
+
+
 def _row(
     *,
     player: str,
@@ -193,6 +199,8 @@ def test_build_candidate_computes_price_aware_expected_value() -> None:
     assert candidate.market_books == 4
     assert candidate.market_implied_probability is not None
     assert candidate.expected_value_per_unit is not None
+    assert candidate.calibrated_hit_probability <= selector.MAX_CALIBRATED_PROBABILITY
+    assert candidate.calibrated_graded_hit_rate <= selector.MAX_CALIBRATED_PROBABILITY
 
 
 def test_select_top_candidates_respects_market_bucket_cap() -> None:
@@ -443,11 +451,13 @@ def test_filter_candidates_can_require_historical_market_availability() -> None:
         allow_synthetic_unders=False,
         min_abs_edge=0.45,
         min_history_rows=11,
+        min_prediction=0.0,
         min_market_books=0,
         max_market_line_std=0.0,
         min_hit_probability=0.58,
         min_graded_hit_rate=0.68,
         min_expected_value=-1.0,
+        allow_unpriced_side=True,
         max_push_probability=0.24,
         max_days_since_history=4,
         min_historical_bet_profile_support=0,
@@ -460,3 +470,49 @@ def test_filter_candidates_can_require_historical_market_availability() -> None:
 
     assert kept == []
     assert rejected["historical_market_availability_rate_too_low"] == 1
+
+
+def test_filter_candidates_rejects_zero_role_projection() -> None:
+    row = _row(
+        player="Role Risk",
+        team="AAA",
+        game_id="role_1",
+        target="TB",
+        prediction=0.0,
+        line=1.5,
+        edge=-1.5,
+    )
+    candidate = selector.build_candidate(
+        row,
+        calibration=None,
+        min_history_bucket_rows=50,
+        max_history_prior_weight=0.35,
+        history_prior_strength=400.0,
+    )
+    assert candidate is not None
+    args = selector.argparse.Namespace(
+        targets=["TB"],
+        allow_baseline=False,
+        require_real_market_source=True,
+        allow_synthetic_unders=False,
+        min_abs_edge=0.45,
+        min_history_rows=30,
+        min_prediction=0.05,
+        min_market_books=0,
+        max_market_line_std=0.0,
+        min_hit_probability=0.0,
+        min_graded_hit_rate=0.0,
+        min_expected_value=-1.0,
+        allow_unpriced_side=True,
+        max_push_probability=1.0,
+        max_days_since_history=4,
+        min_historical_bet_profile_support=0,
+        min_historical_bet_profile_win_rate=0.0,
+        min_historical_market_availability_support=0,
+        min_historical_market_availability_rate=0.0,
+    )
+
+    kept, rejected = selector.filter_candidates([candidate], args)
+
+    assert kept == []
+    assert rejected["prediction_too_low"] == 1

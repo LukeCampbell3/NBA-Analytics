@@ -3,6 +3,8 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
+import pandas as pd
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPO_ROOT / "Player-Predictor" / "scripts" / "fetch_mlb_market_props.py"
@@ -81,6 +83,8 @@ def test_extract_rotowire_page_payload_and_build_frames() -> None:
     assert judge_row["Market_RBI_over_price"] == 150.0
     assert judge_row["Market_Home_Team"] == "TEX"
     assert judge_row["Market_Away_Team"] == "NYY"
+    assert judge_row["Market_Player_Team"] == "NYY"
+    assert judge_row["Market_Player_Opponent"] == "TEX"
 
     degrom_row = wide_df.loc[wide_df["Player"] == "Jacob_deGrom"].iloc[0]
     assert degrom_row["Market_K"] == 6.5
@@ -88,3 +92,12 @@ def test_extract_rotowire_page_payload_and_build_frames() -> None:
     assert degrom_row["Market_K_under_price"] == 120.0
     assert degrom_row["Market_Home_Team"] == "TEX"
     assert degrom_row["Market_Away_Team"] == "NYY"
+    assert degrom_row["Market_Player_Team"] == "TEX"
+    assert degrom_row["Market_Player_Opponent"] == "NYY"
+
+
+def test_consensus_american_price_averages_implied_probability() -> None:
+    price = MODULE.consensus_american_price(pd.Series([-110, 110]))
+
+    assert abs(price) >= 100.0
+    assert abs(price) == 100.0

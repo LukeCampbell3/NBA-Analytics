@@ -1,0 +1,25 @@
+{
+  "source": "user-supplied partial completed-game audit",
+  "run_date": "2026-06-19",
+  "artifact_type": "raw_prediction_pool",
+  "completed_top_edge_sample": {
+    "wins": 5,
+    "losses": 10,
+    "pushes": 0,
+    "no_action": 0,
+    "graded": 15,
+    "hit_rate": 0.333333
+  },
+  "structural_findings": {
+    "rows": 1564,
+    "real_market_rows": 766,
+    "synthetic_rows": 798,
+    "team_label_id_matches": 978,
+    "opponent_label_id_matches": 104
+  },
+  "notes": [
+    "The sample covered only completed games at audit time and must not be combined with finalized-board performance.",
+    "The raw pool contained a player-to-team assignment bug and stale opponent IDs; both were repaired before publication selection.",
+    "The raw research pool is not a publishable action board."
+  ]
+}

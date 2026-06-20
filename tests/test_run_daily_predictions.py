@@ -59,7 +59,7 @@ def _default_args(**overrides) -> Namespace:
         "mlb_market_provider": "rotowire",
         "mlb_market_input_path": None,
         "mlb_fallback_policy": "exact_or_latest",
-        "mlb_min_publish_plays": 6,
+        "mlb_min_publish_plays": 4,
         "mlb_top_n": 10,
     }
     values.update(overrides)

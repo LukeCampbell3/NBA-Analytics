@@ -43,6 +43,22 @@ MLB_GENERATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "generate_daily_predi
 MLB_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_high_precision_predictions.py"
 MLB_EXPORTER = REPO_ROOT / "sports" / "mlb" / "scripts" / "export_web_prediction_payload.py"
 MLB_WEB_JSON = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "daily_predictions.json"
+MLB_PRIMARY_POLICY_PROFILE = "walk_forward_balanced_v1"
+MLB_PRIMARY_POLICY_ARGS = [
+    "--require-real-market-source",
+    "--min-market-books", "5",
+    "--min-history-rows", "30",
+    "--min-prediction", "0.10",
+    "--min-hit-probability", "0.60",
+    "--min-graded-hit-rate", "0.72",
+    "--max-push-probability", "0.12",
+    "--min-abs-edge", "0.60",
+    "--max-per-market-bucket", "2",
+    "--min-historical-bet-profile-support", "12",
+    "--min-historical-bet-profile-win-rate", "0.55",
+    "--min-historical-market-availability-support", "20",
+    "--min-historical-market-availability-rate", "0.45",
+]
 
 BUILD_STATIC_SITE = REPO_ROOT / "sports" / "site" / "pipeline" / "build_static_site.py"
 
@@ -105,7 +121,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--mlb-min-publish-plays",
         type=int,
-        default=6,
+        default=4,
         help="Minimum selected MLB plays required before publishing a generated pool; otherwise fall back to the latest richer existing pool when available.",
     )
     parser.add_argument(
@@ -509,7 +525,11 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
         )
         return active_selected_csv, active_summary_json
 
-    selected_csv, summary_json = run_selector_for(pool_csv, refresh_history=used_generated_pool)
+    selected_csv, summary_json = run_selector_for(
+        pool_csv,
+        extra_args=MLB_PRIMARY_POLICY_ARGS,
+        refresh_history=used_generated_pool,
+    )
     standard_selected_csv, standard_summary_json = derive_mlb_selector_outputs(pool_csv)
     market_profile = load_mlb_market_profile(pool_csv) if used_generated_pool and pool_csv.exists() else {
         "rows": 0,
@@ -517,7 +537,7 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
         "synthetic_rows": 0,
         "price_confirmed_rows": 0,
     }
-    publication_strategy = "primary"
+    publication_strategy = MLB_PRIMARY_POLICY_PROFILE
 
     if used_generated_pool and summary_json.exists():
         selected_rows = selected_row_count(summary_json)
@@ -527,67 +547,7 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
             best_selected_csv = selected_csv
             best_summary_json = summary_json
             best_rows = selected_rows
-            best_strategy = "primary"
-
-            if market_profile.get("real_market_rows", 0) > 0:
-                rescue_selected_csv, rescue_summary_json = run_selector_for(
-                    pool_csv,
-                    label="Rescue MLB Board With Relaxed Real-Market Filters",
-                    suffix="real_market_rescue",
-                    extra_args=[
-                        "--min-market-books",
-                        "1",
-                        "--min-hit-probability",
-                        "0.60",
-                        "--min-graded-hit-rate",
-                        "0.72",
-                        "--min-abs-edge",
-                        "0.40",
-                    ],
-                )
-                rescue_rows = selected_row_count(rescue_summary_json)
-                if rescue_rows > best_rows:
-                    best_selected_csv = rescue_selected_csv
-                    best_summary_json = rescue_summary_json
-                    best_rows = rescue_rows
-                    best_strategy = "real_market_rescue"
-
-            if best_rows < min_rescue_plays:
-                synthetic_top_n = max(min_rescue_plays, min(int(args.mlb_top_n), 4))
-                rescue_selected_csv, rescue_summary_json = run_selector_for(
-                    pool_csv,
-                    label="Rescue MLB Board With Historically Validated Synthetic Fallback",
-                    suffix="synthetic_rescue",
-                    extra_args=[
-                        "--top-n",
-                        str(int(synthetic_top_n)),
-                        "--min-market-books",
-                        "0",
-                        "--min-hit-probability",
-                        "0.64",
-                        "--min-graded-hit-rate",
-                        "0.78",
-                        "--min-abs-edge",
-                        "0.55",
-                        "--max-per-market-bucket",
-                        "2",
-                        "--prefer-confident-side",
-                        "--min-historical-bet-profile-support",
-                        "12",
-                        "--min-historical-bet-profile-win-rate",
-                        "0.55",
-                        "--min-historical-market-availability-support",
-                        "20",
-                        "--min-historical-market-availability-rate",
-                        "0.45",
-                    ],
-                )
-                rescue_rows = selected_row_count(rescue_summary_json)
-                if rescue_rows > best_rows:
-                    best_selected_csv = rescue_selected_csv
-                    best_summary_json = rescue_summary_json
-                    best_rows = rescue_rows
-                    best_strategy = "synthetic_rescue"
+            best_strategy = MLB_PRIMARY_POLICY_PROFILE
 
             if best_rows >= min_rescue_plays:
                 if best_selected_csv != standard_selected_csv or best_summary_json != standard_summary_json:

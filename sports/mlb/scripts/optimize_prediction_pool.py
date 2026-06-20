@@ -173,7 +173,7 @@ def american_profit_per_unit(price: float | None) -> float | None:
     if price is None:
         return None
     value = float(price)
-    if not pd.notna(value) or abs(value) < 1e-9:
+    if not pd.notna(value) or abs(value) < 100.0:
         return None
     if value > 0:
         return value / 100.0
@@ -198,6 +198,7 @@ def selector_args(**overrides: Any) -> SimpleNamespace:
         "top_n": 10,
         "min_abs_edge": 0.45,
         "min_history_rows": 11,
+        "min_prediction": 0.0,
         "min_hit_probability": 0.58,
         "min_graded_hit_rate": 0.60,
         "max_push_probability": 0.24,
@@ -209,8 +210,10 @@ def selector_args(**overrides: Any) -> SimpleNamespace:
         "min_market_books": 0,
         "max_market_line_std": 0.0,
         "min_expected_value": -1.0,
+        "allow_unpriced_side": False,
         "allow_baseline": False,
         "require_real_market_source": False,
+        "allow_synthetic_unders": False,
         "targets": sorted(SUPPORTED_COUNT_TARGETS),
         "history_season": 2026,
         "min_history_bucket_rows": 50,
@@ -222,6 +225,10 @@ def selector_args(**overrides: Any) -> SimpleNamespace:
         "bet_profile_prior_strength": 80.0,
         "min_market_availability_rows": 12,
         "disable_historical_bet_profiles": False,
+        "min_historical_bet_profile_support": 0,
+        "min_historical_bet_profile_win_rate": 0.0,
+        "min_historical_market_availability_support": 0,
+        "min_historical_market_availability_rate": 0.0,
     }
     defaults.update(overrides)
     return SimpleNamespace(**defaults)

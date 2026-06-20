@@ -33,6 +33,7 @@ DEFAULT_HISTORY_DIR = REPO_ROOT / "Player-Predictor" / "Data-Proc-MLB"
 DEFAULT_CALIBRATION_ROOT = SPORT_ROOT / "data" / "predictions" / "calibration"
 
 SUPPORTED_COUNT_TARGETS = {"H", "TB", "R", "K"}
+MAX_CALIBRATED_PROBABILITY = 0.80
 FINAL_STATUS_CODES = {"F", "C", "D", "X"}
 UPCOMING_STATUS_CODES = {"", "P", "S", "NS"}
 RECENT_FORM_LOOKBACK_DAYS = 14
@@ -125,6 +126,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--top-n", type=int, default=6, help="Maximum number of plays to keep.")
     parser.add_argument("--min-abs-edge", type=float, default=0.45, help="Minimum absolute edge required.")
     parser.add_argument("--min-history-rows", type=int, default=11, help="Minimum history rows required.")
+    parser.add_argument(
+        "--min-prediction",
+        type=float,
+        default=0.0,
+        help="Minimum model projection required; use a positive threshold to reject DNP or role-risk rows.",
+    )
     parser.add_argument("--min-hit-probability", type=float, default=0.58, help="Minimum calibrated win probability.")
     parser.add_argument("--min-graded-hit-rate", type=float, default=0.68, help="Minimum calibrated win rate on graded outcomes.")
     parser.add_argument("--max-push-probability", type=float, default=0.24, help="Maximum push probability.")
@@ -155,6 +162,11 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=-1.0,
         help="Optional minimum expected profit per unit for priced real-market rows. Set below -0.99 to disable.",
+    )
+    parser.add_argument(
+        "--allow-unpriced-side",
+        action="store_true",
+        help="Allow real-market rows without a valid selected-side American price.",
     )
     parser.add_argument(
         "--allow-baseline",
@@ -458,7 +470,7 @@ def american_implied_probability(price: float | None) -> float | None:
     if price is None:
         return None
     value = float(price)
-    if not math.isfinite(value) or abs(value) < 1e-9:
+    if not math.isfinite(value) or abs(value) < 100.0:
         return None
     if value > 0:
         return 100.0 / (value + 100.0)
@@ -469,7 +481,7 @@ def american_profit_per_unit(price: float | None) -> float | None:
     if price is None:
         return None
     value = float(price)
-    if not math.isfinite(value) or abs(value) < 1e-9:
+    if not math.isfinite(value) or abs(value) < 100.0:
         return None
     if value > 0:
         return value / 100.0
@@ -922,7 +934,7 @@ def build_historical_bet_profile_priors(history_dir: Path, season: int) -> dict:
                 selected_side_price = float(row["over_price"]) if direction == "OVER" and pd.notna(row["over_price"]) else None
                 if direction == "UNDER" and pd.notna(row["under_price"]):
                     selected_side_price = float(row["under_price"])
-                side_price_confirmed = selected_side_price is not None and math.isfinite(selected_side_price) and abs(selected_side_price) > 1e-9
+                side_price_confirmed = american_implied_probability(selected_side_price) is not None
 
                 _update_availability_bucket(
                     availability_target_direction[td_key],
@@ -1163,7 +1175,7 @@ def build_candidate_for_direction(
         market_under_price = None
     selected_side_price = market_over_price if direction == "OVER" else market_under_price
     opposite_side_price = market_under_price if direction == "OVER" else market_over_price
-    price_confirmed = selected_side_price is not None and math.isfinite(selected_side_price) and abs(selected_side_price) > 1e-9
+    price_confirmed = american_implied_probability(selected_side_price) is not None
     market_implied_probability = no_vig_side_probability(selected_side_price, opposite_side_price)
 
     (
@@ -1190,6 +1202,8 @@ def build_candidate_for_direction(
         max_weight=max_bet_profile_prior_weight,
         strength=bet_profile_prior_strength,
     )
+    calibrated_hit_probability = min(MAX_CALIBRATED_PROBABILITY, calibrated_hit_probability)
+    validated_graded_hit_rate = min(MAX_CALIBRATED_PROBABILITY, validated_graded_hit_rate)
     (
         historical_market_availability_key,
         historical_market_availability_rate,
@@ -1459,6 +1473,9 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
         if candidate.history_rows < int(args.min_history_rows):
             rejected["history_too_short"] += 1
             continue
+        if candidate.prediction < float(args.min_prediction):
+            rejected["prediction_too_low"] += 1
+            continue
         if args.require_real_market_source and candidate.market_source != "real":
             rejected["synthetic_market_source"] += 1
             continue
@@ -1473,6 +1490,9 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
             continue
         if candidate.market_source == "real" and int(args.min_market_books) > 0 and candidate.market_books < int(args.min_market_books):
             rejected["market_books_too_low"] += 1
+            continue
+        if candidate.market_source == "real" and not candidate.price_confirmed and not bool(getattr(args, "allow_unpriced_side", False)):
+            rejected["side_price_unconfirmed"] += 1
             continue
         if (
             candidate.market_source == "real"
@@ -1751,6 +1771,7 @@ def write_summary_json(
             "top_n": int(args.top_n),
             "min_abs_edge": float(args.min_abs_edge),
             "min_history_rows": int(args.min_history_rows),
+            "min_prediction": float(args.min_prediction),
             "min_hit_probability": float(args.min_hit_probability),
             "min_graded_hit_rate": float(args.min_graded_hit_rate),
             "max_push_probability": float(args.max_push_probability),
@@ -1762,6 +1783,7 @@ def write_summary_json(
             "min_market_books": int(args.min_market_books),
             "max_market_line_std": float(args.max_market_line_std),
             "min_expected_value": float(args.min_expected_value),
+            "allow_unpriced_side": bool(args.allow_unpriced_side),
             "allow_baseline": bool(args.allow_baseline),
             "require_real_market_source": bool(args.require_real_market_source),
             "targets": [str(value).strip().upper() for value in args.targets],
