@@ -1,0 +1,119 @@
+{
+  "run_date": "2026-06-20",
+  "compiled_at_utc": "2026-06-21T19:19:15.910230+00:00",
+  "config": {
+    "require_event_verification": true,
+    "min_market_books": 5,
+    "max_market_line_std": 1.0,
+    "require_real_market_source": true,
+    "min_history_rows_overs": 30,
+    "min_history_rows_unders": 20,
+    "max_days_since_history": 4,
+    "min_calibrated_hit_prob": 0.62,
+    "min_edge": 0.35,
+    "max_push_probability": 0.24,
+    "require_confirmed_starter_overs": true,
+    "min_projected_pa_overs": 3.5,
+    "max_projected_pa_unders": 4.4,
+    "min_publish_score": 0.65,
+    "wanted_publish_score": 0.75,
+    "w_calibrated_prob": 0.4,
+    "w_market_quality": 0.2,
+    "w_lineup_certainty": 0.05,
+    "w_matchup_fit": 0.12,
+    "w_role_stability": 0.1,
+    "w_clv_signal": 0.03,
+    "w_event_mapping_risk": -0.25,
+    "w_stale_data_risk": -0.15,
+    "w_push_risk": -0.1,
+    "max_board_size": 6,
+    "max_per_player": 1,
+    "max_per_game": 2,
+    "max_per_team": 3
+  },
+  "summary": {
+    "input_rows": 3,
+    "published": 1,
+    "killed": 2,
+    "kill_reason_counts": {
+      "BELOW_PUBLISH_SCORE": 2
+    },
+    "event_verified_count": 3,
+    "event_unverified_count": 0
+  },
+  "board": [
+    {
+      "player": "Pete Alonso",
+      "player_id": "pete_alonso",
+      "team": "BAL",
+      "target": "TB",
+      "direction": "OVER",
+      "market_line": 0.5,
+      "prediction": 1.899,
+      "edge": 1.399,
+      "market_source": "real",
+      "market_books": 7,
+      "market_line_std": 0.5345,
+      "history_rows": 91,
+      "last_history_date": "2026-06-19",
+      "days_since_history": 1,
+      "calibrated_hit_prob": 0.7564,
+      "calibrated_graded_hit_rate": 0.7242,
+      "push_probability": 0.0,
+      "confirmed_starter": false,
+      "batting_order": null,
+      "projected_pa": null,
+      "event_identity": {
+        "game_id": "823937",
+        "sportsbook_event_id": "",
+        "official_game_date": "2026-06-20",
+        "display_date": "2026-06-20",
+        "commence_time_utc": "2026-06-21T02:10:00Z",
+        "home_team_id": "119",
+        "away_team_id": "110",
+        "home_team": "LAD",
+        "away_team": "BAL",
+        "player_team_id": "",
+        "player_team": "BAL",
+        "venue_timezone": "",
+        "event_verified": true,
+        "mismatch_details": []
+      },
+      "settlement": {
+        "book_settlement_result": "PENDING",
+        "model_audit_result": "PENDING",
+        "settlement_notes": "",
+        "event_mapping_valid": true
+      },
+      "publish_score": {
+        "calibrated_prob": 0.756421,
+        "market_quality": 0.78145865,
+        "lineup_certainty": 0.3,
+        "matchup_fit": 0.932894,
+        "role_stability": 1.0,
+        "clv_signal": 0.5,
+        "event_mapping_risk": 0.0,
+        "stale_data_risk": 0.0,
+        "push_risk": 0.0,
+        "composite": 0.7008
+      },
+      "published": true,
+      "confidence_label": "strong",
+      "kill_reasons": [],
+      "tb_distribution": {
+        "p_0_tb": 0.1497,
+        "p_1_tb": 0.2843,
+        "p_2_tb": 0.27,
+        "p_3_tb": 0.1709,
+        "p_4_plus_tb": 0.1252
+      },
+      "tb_line_grades": {
+        "over_0.5": 0.8503,
+        "under_1.5": 0.434,
+        "over_1.5": 0.566,
+        "under_2.5": 0.704,
+        "over_2.5": 0.296
+      }
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "run_date": "2026-04-05",
+  "compiled_at_utc": "2026-06-21T19:19:14.702099+00:00",
+  "killed_picks": [
+    {
+      "player": "Mookie Betts",
+      "player_id": "mookie_betts",
+      "team": "LAD",
+      "target": "RBI",
+      "direction": "UNDER",
+      "market_line": 0.5,
+      "prediction": 0.0,
+      "edge": -0.5,
+      "market_source": "",
+      "market_books": 0,
+      "market_line_std": 0.0,
+      "history_rows": 11,
+      "last_history_date": "2026-04-04",
+      "days_since_history": 1,
+      "calibrated_hit_prob": 1.0,
+      "calibrated_graded_hit_rate": 1.0,
+      "push_probability": 0.0,
+      "confirmed_starter": false,
+      "batting_order": null,
+      "projected_pa": null,
+      "event_identity": {
+        "game_id": "20260405_LAD_STL",
+        "sportsbook_event_id": "",
+        "official_game_date": "2026-04-05",
+        "display_date": "2026-04-05",
+        "commence_time_utc": "nan",
+        "home_team_id": "120",
+        "away_team_id": "119",
+        "home_team": "WSH",
+        "away_team": "LAD",
+        "player_team_id": "",
+        "player_team": "LAD",
+        "venue_timezone": "",
+        "event_verified": false,
+        "mismatch_details": [
+          "GAME_ID_MISMATCH_ROW_20260405_LAD_STL_VS_SCHEDULE_822756"
+        ]
+      },
+      "settlement": {
+        "book_settlement_result": "PENDING",
+        "model_audit_result": "PENDING",
+        "settlement_notes": "",
+        "event_mapping_valid": true
+      },
+      "publish_score": {
+        "calibrated_prob": 1.0,
+        "market_quality": 0.0,
+        "lineup_certainty": 0.3,
+        "matchup_fit": 0.3333333333333333,
+        "role_stability": 0.22,
+        "clv_signal": 0.5,
+        "event_mapping_risk": 0.5,
+        "stale_data_risk": 0.0,
+        "push_risk": 0.0,
+        "composite": 0.367
+      },
+      "published": false,
+      "confidence_label": "pass",
+      "kill_reasons": [
+        "SYNTHETIC_LINE",
+        "LOW_MARKET_BOOK_COUNT",
+        "LOW_HISTORY_ROWS"
+      ]
+    }
+  ]
+}

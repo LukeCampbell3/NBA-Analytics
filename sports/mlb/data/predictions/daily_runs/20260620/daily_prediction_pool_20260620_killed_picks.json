@@ -1,0 +1,156 @@
+{
+  "run_date": "2026-06-20",
+  "compiled_at_utc": "2026-06-21T19:19:15.910230+00:00",
+  "killed_picks": [
+    {
+      "player": "Blake Perkins",
+      "player_id": "blake_perkins",
+      "team": "MIL",
+      "target": "TB",
+      "direction": "UNDER",
+      "market_line": 1.5,
+      "prediction": 0.394,
+      "edge": -1.106,
+      "market_source": "real",
+      "market_books": 5,
+      "market_line_std": 0.5477,
+      "history_rows": 53,
+      "last_history_date": "2026-06-19",
+      "days_since_history": 1,
+      "calibrated_hit_prob": 0.8,
+      "calibrated_graded_hit_rate": 0.8,
+      "push_probability": 0.0,
+      "confirmed_starter": false,
+      "batting_order": null,
+      "projected_pa": null,
+      "event_identity": {
+        "game_id": "824909",
+        "sportsbook_event_id": "",
+        "official_game_date": "2026-06-20",
+        "display_date": "2026-06-20",
+        "commence_time_utc": "2026-06-20T20:10:00Z",
+        "home_team_id": "144",
+        "away_team_id": "158",
+        "home_team": "ATL",
+        "away_team": "MIL",
+        "player_team_id": "",
+        "player_team": "MIL",
+        "venue_timezone": "",
+        "event_verified": true,
+        "mismatch_details": []
+      },
+      "settlement": {
+        "book_settlement_result": "PENDING",
+        "model_audit_result": "PENDING",
+        "settlement_notes": "",
+        "event_mapping_valid": true
+      },
+      "publish_score": {
+        "calibrated_prob": 0.8,
+        "market_quality": 0.5565346250000001,
+        "lineup_certainty": 0.3,
+        "matchup_fit": 0.7375600000000001,
+        "role_stability": 1.0,
+        "clv_signal": 0.5,
+        "event_mapping_risk": 0.0,
+        "stale_data_risk": 0.0,
+        "push_risk": 0.0,
+        "composite": 0.6498
+      },
+      "published": false,
+      "confidence_label": "pass",
+      "kill_reasons": [
+        "BELOW_PUBLISH_SCORE"
+      ],
+      "tb_distribution": {
+        "p_0_tb": 0.7852,
+        "p_1_tb": 0.1753,
+        "p_2_tb": 0.0345,
+        "p_3_tb": 0.0045,
+        "p_4_plus_tb": 0.0005
+      },
+      "tb_line_grades": {
+        "over_0.5": 0.2148,
+        "under_1.5": 0.9605,
+        "over_1.5": 0.0395,
+        "under_2.5": 0.995,
+        "over_2.5": 0.005
+      }
+    },
+    {
+      "player": "Rob Refsnyder",
+      "player_id": "rob_refsnyder",
+      "team": "SEA",
+      "target": "TB",
+      "direction": "UNDER",
+      "market_line": 1.5,
+      "prediction": 0.645,
+      "edge": -0.855,
+      "market_source": "real",
+      "market_books": 5,
+      "market_line_std": 0.5477,
+      "history_rows": 57,
+      "last_history_date": "2026-06-19",
+      "days_since_history": 1,
+      "calibrated_hit_prob": 0.8,
+      "calibrated_graded_hit_rate": 0.8,
+      "push_probability": 0.0,
+      "confirmed_starter": false,
+      "batting_order": null,
+      "projected_pa": null,
+      "event_identity": {
+        "game_id": "823126",
+        "sportsbook_event_id": "",
+        "official_game_date": "2026-06-20",
+        "display_date": "2026-06-20",
+        "commence_time_utc": "2026-06-21T02:10:00Z",
+        "home_team_id": "136",
+        "away_team_id": "111",
+        "home_team": "SEA",
+        "away_team": "BOS",
+        "player_team_id": "",
+        "player_team": "SEA",
+        "venue_timezone": "",
+        "event_verified": true,
+        "mismatch_details": []
+      },
+      "settlement": {
+        "book_settlement_result": "PENDING",
+        "model_audit_result": "PENDING",
+        "settlement_notes": "",
+        "event_mapping_valid": true
+      },
+      "publish_score": {
+        "calibrated_prob": 0.8,
+        "market_quality": 0.5565346250000001,
+        "lineup_certainty": 0.3,
+        "matchup_fit": 0.5701586666666667,
+        "role_stability": 1.0,
+        "clv_signal": 0.5,
+        "event_mapping_risk": 0.0,
+        "stale_data_risk": 0.0,
+        "push_risk": 0.0,
+        "composite": 0.6297
+      },
+      "published": false,
+      "confidence_label": "pass",
+      "kill_reasons": [
+        "BELOW_PUBLISH_SCORE"
+      ],
+      "tb_distribution": {
+        "p_0_tb": 0.6103,
+        "p_1_tb": 0.2775,
+        "p_2_tb": 0.0895,
+        "p_3_tb": 0.0192,
+        "p_4_plus_tb": 0.0035
+      },
+      "tb_line_grades": {
+        "over_0.5": 0.3897,
+        "under_1.5": 0.8878,
+        "over_1.5": 0.1122,
+        "under_2.5": 0.9773,
+        "over_2.5": 0.0227
+      }
+    }
+  ]
+}

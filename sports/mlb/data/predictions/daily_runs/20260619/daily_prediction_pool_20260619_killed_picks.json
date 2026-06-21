@@ -1,0 +1,81 @@
+{
+  "run_date": "2026-06-19",
+  "compiled_at_utc": "2026-06-21T19:19:15.763273+00:00",
+  "killed_picks": [
+    {
+      "player": "Tyler Tolbert",
+      "player_id": "tyler_tolbert",
+      "team": "KC",
+      "target": "TB",
+      "direction": "UNDER",
+      "market_line": 1.5,
+      "prediction": 0.453,
+      "edge": -1.047,
+      "market_source": "real",
+      "market_books": 5,
+      "market_line_std": 0.5477,
+      "history_rows": 30,
+      "last_history_date": "2026-06-18",
+      "days_since_history": 1,
+      "calibrated_hit_prob": 0.8,
+      "calibrated_graded_hit_rate": 0.8,
+      "push_probability": 0.0,
+      "confirmed_starter": false,
+      "batting_order": null,
+      "projected_pa": null,
+      "event_identity": {
+        "game_id": "824097",
+        "sportsbook_event_id": "",
+        "official_game_date": "2026-06-19",
+        "display_date": "2026-06-19",
+        "commence_time_utc": "2026-06-20T00:15:00Z",
+        "home_team_id": "118",
+        "away_team_id": "138",
+        "home_team": "KC",
+        "away_team": "STL",
+        "player_team_id": "",
+        "player_team": "KC",
+        "venue_timezone": "",
+        "event_verified": true,
+        "mismatch_details": []
+      },
+      "settlement": {
+        "book_settlement_result": "PENDING",
+        "model_audit_result": "PENDING",
+        "settlement_notes": "",
+        "event_mapping_valid": true
+      },
+      "publish_score": {
+        "calibrated_prob": 0.8,
+        "market_quality": 0.5565346250000001,
+        "lineup_certainty": 0.3,
+        "matchup_fit": 0.6979966666666666,
+        "role_stability": 0.6,
+        "clv_signal": 0.5,
+        "event_mapping_risk": 0.0,
+        "stale_data_risk": 0.0,
+        "push_risk": 0.0,
+        "composite": 0.6051
+      },
+      "published": false,
+      "confidence_label": "pass",
+      "kill_reasons": [
+        "BELOW_PUBLISH_SCORE"
+      ],
+      "tb_distribution": {
+        "p_0_tb": 0.7404,
+        "p_1_tb": 0.2052,
+        "p_2_tb": 0.0465,
+        "p_3_tb": 0.007,
+        "p_4_plus_tb": 0.0009
+      },
+      "tb_line_grades": {
+        "over_0.5": 0.2596,
+        "under_1.5": 0.9456,
+        "over_1.5": 0.0544,
+        "under_2.5": 0.9921,
+        "over_2.5": 0.0079
+      }
+    }
+  ]
+}
