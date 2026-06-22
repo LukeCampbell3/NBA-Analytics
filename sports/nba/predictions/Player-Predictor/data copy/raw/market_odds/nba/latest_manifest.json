@@ -1,23 +1,418 @@
 {
-  "provider": "sportsgameodds",
-  "fetched_at_utc": "2026-05-27T16:51:27.047927+00:00",
-  "sport": "basketball_nba",
-  "league_id": "NBA",
-  "markets": [
-    "player_points",
-    "player_rebounds",
-    "player_assists"
+  "provider": "covers_historical",
+  "fetched_at_utc": "2026-06-22T02:22:19.040199+00:00",
+  "date_from": "2026-06-11",
+  "date_to": "2026-06-23",
+  "start_game_id": 380822,
+  "scan_anchor_game_id": 380822,
+  "odds_page_seed_ids": 1,
+  "scan_count": 800,
+  "games_scanned": 800,
+  "games_with_props": 0,
+  "long_rows": 0,
+  "wide_rows": 0,
+  "errors": [
+    {
+      "game_id": 380817,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380817/picks#props"
+    },
+    {
+      "game_id": 380816,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380816/picks#props"
+    },
+    {
+      "game_id": 380815,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380815/picks#props"
+    },
+    {
+      "game_id": 380814,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380814/picks#props"
+    },
+    {
+      "game_id": 380813,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380813/picks#props"
+    },
+    {
+      "game_id": 380812,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380812/picks#props"
+    },
+    {
+      "game_id": 380811,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380811/picks#props"
+    },
+    {
+      "game_id": 380810,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380810/picks#props"
+    },
+    {
+      "game_id": 380809,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380809/picks#props"
+    },
+    {
+      "game_id": 380808,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380808/picks#props"
+    },
+    {
+      "game_id": 380807,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380807/picks#props"
+    },
+    {
+      "game_id": 380806,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380806/picks#props"
+    },
+    {
+      "game_id": 380805,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380805/picks#props"
+    },
+    {
+      "game_id": 380804,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380804/picks#props"
+    },
+    {
+      "game_id": 380803,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380803/picks#props"
+    },
+    {
+      "game_id": 380802,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380802/picks#props"
+    },
+    {
+      "game_id": 380801,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380801/picks#props"
+    },
+    {
+      "game_id": 380800,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380800/picks#props"
+    },
+    {
+      "game_id": 380799,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380799/picks#props"
+    },
+    {
+      "game_id": 380798,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380798/picks#props"
+    },
+    {
+      "game_id": 380797,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380797/picks#props"
+    },
+    {
+      "game_id": 380796,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380796/picks#props"
+    },
+    {
+      "game_id": 380795,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380795/picks#props"
+    },
+    {
+      "game_id": 380794,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380794/picks#props"
+    },
+    {
+      "game_id": 380793,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380793/picks#props"
+    },
+    {
+      "game_id": 380792,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380792/picks#props"
+    },
+    {
+      "game_id": 380791,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380791/picks#props"
+    },
+    {
+      "game_id": 380790,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380790/picks#props"
+    },
+    {
+      "game_id": 380789,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380789/picks#props"
+    },
+    {
+      "game_id": 380788,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380788/picks#props"
+    },
+    {
+      "game_id": 380787,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380787/picks#props"
+    },
+    {
+      "game_id": 380786,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380786/picks#props"
+    },
+    {
+      "game_id": 380785,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380785/picks#props"
+    },
+    {
+      "game_id": 380784,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380784/picks#props"
+    },
+    {
+      "game_id": 380783,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380783/picks#props"
+    },
+    {
+      "game_id": 380782,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380782/picks#props"
+    },
+    {
+      "game_id": 380781,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380781/picks#props"
+    },
+    {
+      "game_id": 380780,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380780/picks#props"
+    },
+    {
+      "game_id": 380779,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380779/picks#props"
+    },
+    {
+      "game_id": 380778,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380778/picks#props"
+    },
+    {
+      "game_id": 380777,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380777/picks#props"
+    },
+    {
+      "game_id": 380776,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380776/picks#props"
+    },
+    {
+      "game_id": 380775,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380775/picks#props"
+    },
+    {
+      "game_id": 380774,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380774/picks#props"
+    },
+    {
+      "game_id": 380773,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380773/picks#props"
+    },
+    {
+      "game_id": 380772,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380772/picks#props"
+    },
+    {
+      "game_id": 380771,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380771/picks#props"
+    },
+    {
+      "game_id": 380770,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380770/picks#props"
+    },
+    {
+      "game_id": 380769,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380769/picks#props"
+    },
+    {
+      "game_id": 380768,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380768/picks#props"
+    },
+    {
+      "game_id": 380767,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380767/picks#props"
+    },
+    {
+      "game_id": 380766,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380766/picks#props"
+    },
+    {
+      "game_id": 380765,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380765/picks#props"
+    },
+    {
+      "game_id": 380764,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380764/picks#props"
+    },
+    {
+      "game_id": 380763,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380763/picks#props"
+    },
+    {
+      "game_id": 380762,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380762/picks#props"
+    },
+    {
+      "game_id": 380761,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380761/picks#props"
+    },
+    {
+      "game_id": 380760,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380760/picks#props"
+    },
+    {
+      "game_id": 380759,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380759/picks#props"
+    },
+    {
+      "game_id": 380758,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380758/picks#props"
+    },
+    {
+      "game_id": 380757,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380757/picks#props"
+    },
+    {
+      "game_id": 380756,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380756/picks#props"
+    },
+    {
+      "game_id": 380755,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380755/picks#props"
+    },
+    {
+      "game_id": 380754,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380754/picks#props"
+    },
+    {
+      "game_id": 380753,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380753/picks#props"
+    },
+    {
+      "game_id": 380752,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380752/picks#props"
+    },
+    {
+      "game_id": 380751,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380751/picks#props"
+    },
+    {
+      "game_id": 380750,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380750/picks#props"
+    },
+    {
+      "game_id": 380749,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380749/picks#props"
+    },
+    {
+      "game_id": 380748,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380748/picks#props"
+    },
+    {
+      "game_id": 380747,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380747/picks#props"
+    },
+    {
+      "game_id": 380746,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380746/picks#props"
+    },
+    {
+      "game_id": 380745,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380745/picks#props"
+    },
+    {
+      "game_id": 380744,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380744/picks#props"
+    },
+    {
+      "game_id": 380743,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380743/picks#props"
+    },
+    {
+      "game_id": 380742,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380742/picks#props"
+    },
+    {
+      "game_id": 380741,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380741/picks#props"
+    },
+    {
+      "game_id": 380740,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380740/picks#props"
+    },
+    {
+      "game_id": 380739,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380739/picks#props"
+    },
+    {
+      "game_id": 380738,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380738/picks#props"
+    },
+    {
+      "game_id": 380737,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380737/picks#props"
+    },
+    {
+      "game_id": 380736,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380736/picks#props"
+    },
+    {
+      "game_id": 380735,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380735/picks#props"
+    },
+    {
+      "game_id": 380734,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380734/picks#props"
+    },
+    {
+      "game_id": 380733,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380733/picks#props"
+    },
+    {
+      "game_id": 380732,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380732/picks#props"
+    },
+    {
+      "game_id": 380731,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380731/picks#props"
+    },
+    {
+      "game_id": 380730,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380730/picks#props"
+    },
+    {
+      "game_id": 380729,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380729/picks#props"
+    },
+    {
+      "game_id": 380728,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380728/picks#props"
+    },
+    {
+      "game_id": 380727,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380727/picks#props"
+    },
+    {
+      "game_id": 380726,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380726/picks#props"
+    },
+    {
+      "game_id": 380725,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380725/picks#props"
+    },
+    {
+      "game_id": 380724,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380724/picks#props"
+    },
+    {
+      "game_id": 380723,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380723/picks#props"
+    },
+    {
+      "game_id": 380722,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380722/picks#props"
+    },
+    {
+      "game_id": 380721,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380721/picks#props"
+    },
+    {
+      "game_id": 380720,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380720/picks#props"
+    },
+    {
+      "game_id": 380719,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380719/picks#props"
+    },
+    {
+      "game_id": 380718,
+      "error": "404 Client Error: Not Found for url: https://www.covers.com/sport/basketball/nba/matchup/380718/picks#props"
+    }
   ],
-  "bookmakers": [
-    "draftkings",
-    "fanduel"
-  ],
-  "event_count_requested": 1,
-  "event_count_fetched": 1,
-  "long_rows": 194,
-  "wide_rows": 19,
-  "pages_fetched": 1,
-  "errors": [],
-  "history_long_rows": 28097,
-  "history_wide_rows": 10293
+  "history_long_rows": 0,
+  "history_wide_rows": 0
 }
