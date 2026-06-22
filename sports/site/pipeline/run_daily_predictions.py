@@ -41,6 +41,7 @@ MLB_MARKET_FETCHER = REPO_ROOT / "Player-Predictor" / "scripts" / "fetch_mlb_mar
 MLB_DATA_UPDATER = REPO_ROOT / "Player-Predictor" / "scripts" / "update_mlb_processed_data.py"
 MLB_GENERATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "generate_daily_prediction_pool.py"
 MLB_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_high_precision_predictions.py"
+MLB_MAX_WINRATE_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_max_winrate_board.py"
 MLB_EXPORTER = REPO_ROOT / "sports" / "mlb" / "scripts" / "export_web_prediction_payload.py"
 MLB_WEB_JSON = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "daily_predictions.json"
 MLB_PRIMARY_POLICY_PROFILE = "walk_forward_balanced_v1"
@@ -592,6 +593,61 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
             str(mlb_dist_json),
         ],
     )
+
+    # Run max-winrate selector on the raw pool for the tightest possible board
+    max_wr_csv = pool_csv.with_name(pool_csv.stem + "_max_winrate.csv")
+    max_wr_summary = pool_csv.with_name(pool_csv.stem + "_max_winrate_summary.json")
+    max_wr_json = pool_csv.with_name(pool_csv.stem + "_max_winrate_board.json")
+    run_step(
+        "Select MLB Max Win-Rate Board",
+        [
+            args.python,
+            str(MLB_MAX_WINRATE_SELECTOR),
+            "--pool-csv",
+            str(pool_csv),
+            "--out-csv",
+            str(max_wr_csv),
+            "--summary-json",
+            str(max_wr_summary),
+            "--out-json",
+            str(max_wr_json),
+            "--min-model-prob", "0.92",
+            "--min-bucket-win-rate", "0.86",
+            "--min-bucket-samples", "500",
+            "--min-history-rows", "40",
+            "--min-market-books", "5",
+            "--max-days-since-history", "3",
+            "--min-edge", "0.35",
+            "--max-board-size", "7",
+        ],
+    )
+
+    # If max-winrate board has >= 5 picks, use it as the published board
+    max_wr_rows = 0
+    if max_wr_summary.exists():
+        try:
+            max_wr_rows = selected_row_count(max_wr_summary)
+        except Exception:
+            pass
+
+    if max_wr_rows >= 5:
+        selected_csv = max_wr_csv
+        summary_json = max_wr_summary
+        run_step(
+            "Export MLB Max Win-Rate Payload",
+            [
+                args.python,
+                str(MLB_EXPORTER),
+                "--input-csv",
+                str(max_wr_csv),
+                "--summary-json",
+                str(max_wr_summary),
+                "--output",
+                str(MLB_WEB_JSON),
+                "--output-dist",
+                str(mlb_dist_json),
+            ],
+        )
 
     return pool_csv, selected_csv, summary_json
 

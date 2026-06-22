@@ -298,19 +298,118 @@ def select_max_winrate_board(
     return board
 
 
+def write_exporter_csv(path: Path, board: list[MaxWRCandidate]) -> None:
+    """Write a CSV in the format expected by export_web_prediction_payload.py."""
+    import csv as csv_mod
+
+    fieldnames = [
+        "Rank", "Prediction_Run_Date", "Game_Date", "Commence_Time_UTC",
+        "Game_ID", "Game_Status_Code", "Player", "Player_ID", "Player_Type",
+        "Team", "Opponent", "Is_Home", "Target", "Direction", "Prediction",
+        "Market_Line", "Market_Source", "Original_Direction", "Direction_Flip_Applied",
+        "Market_Books", "Market_Line_Std", "Market_Over_Price", "Market_Under_Price",
+        "Edge", "Abs_Edge", "History_Rows", "Last_History_Date", "Days_Since_History",
+        "Model_Selected", "Model_Members", "Model_Val_MAE", "Model_Val_RMSE",
+        "Model_Hit_Probability", "Estimated_Hit_Probability", "Estimated_Push_Probability",
+        "Model_Graded_Hit_Rate", "Estimated_Graded_Hit_Rate",
+        "Historical_Bucket_Key", "Historical_Prior_Source",
+        "Historical_Bucket_Win_Rate", "Historical_Bucket_Support",
+        "Historical_Prior_Weight", "Market_Implied_Probability",
+        "Expected_Value_Per_Unit", "Price_Confirmed",
+        "Historical_Bet_Profile_Key", "Historical_Bet_Profile_Source",
+        "Historical_Bet_Profile_Win_Rate", "Historical_Bet_Profile_Support",
+        "Historical_Bet_Profile_ROI", "Historical_Bet_Profile_Prior_Weight",
+        "Historical_Market_Availability_Key", "Historical_Market_Availability_Source",
+        "Historical_Market_Availability_Rate", "Historical_Market_Availability_Support",
+        "Historical_Market_Avg_Books", "Edge_Over_MAE",
+        "Precision_Score", "Selection_Score", "Confidence_Tier", "Market_Bucket",
+    ]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        writer = csv_mod.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for idx, c in enumerate(board, 1):
+            raw = c.raw
+            writer.writerow({
+                "Rank": idx,
+                "Prediction_Run_Date": raw.get("Prediction_Run_Date", ""),
+                "Game_Date": raw.get("Game_Date", ""),
+                "Commence_Time_UTC": raw.get("Commence_Time_UTC", ""),
+                "Game_ID": c.game_id,
+                "Game_Status_Code": raw.get("Game_Status_Code", ""),
+                "Player": c.player,
+                "Player_ID": raw.get("Player_ID", ""),
+                "Player_Type": raw.get("Player_Type", ""),
+                "Team": c.team,
+                "Opponent": c.opponent,
+                "Is_Home": raw.get("Is_Home", ""),
+                "Target": c.target,
+                "Direction": c.direction,
+                "Prediction": f"{c.prediction:.6f}",
+                "Market_Line": f"{c.market_line:.6f}",
+                "Market_Source": c.market_source,
+                "Original_Direction": c.direction,
+                "Direction_Flip_Applied": 0,
+                "Market_Books": c.market_books,
+                "Market_Line_Std": f"{c.market_line_std:.6f}",
+                "Market_Over_Price": raw.get("Market_Over_Price", ""),
+                "Market_Under_Price": raw.get("Market_Under_Price", ""),
+                "Edge": f"{c.edge:.6f}",
+                "Abs_Edge": f"{abs(c.edge):.6f}",
+                "History_Rows": c.history_rows,
+                "Last_History_Date": raw.get("Last_History_Date", ""),
+                "Days_Since_History": c.days_since_history,
+                "Model_Selected": raw.get("Model_Selected", ""),
+                "Model_Members": raw.get("Model_Members", ""),
+                "Model_Val_MAE": raw.get("Model_Val_MAE", ""),
+                "Model_Val_RMSE": raw.get("Model_Val_RMSE", ""),
+                "Model_Hit_Probability": f"{c.model_probability:.6f}",
+                "Estimated_Hit_Probability": f"{c.composite_confidence:.6f}",
+                "Estimated_Push_Probability": "0.000000",
+                "Model_Graded_Hit_Rate": f"{c.model_probability:.6f}",
+                "Estimated_Graded_Hit_Rate": f"{c.bucket_win_rate:.6f}",
+                "Historical_Bucket_Key": c.bucket_key,
+                "Historical_Prior_Source": "line_bucket",
+                "Historical_Bucket_Win_Rate": f"{c.bucket_win_rate:.6f}",
+                "Historical_Bucket_Support": c.bucket_samples,
+                "Historical_Prior_Weight": "0.350000",
+                "Market_Implied_Probability": "",
+                "Expected_Value_Per_Unit": "",
+                "Price_Confirmed": 1 if c.market_source == "real" else 0,
+                "Historical_Bet_Profile_Key": "",
+                "Historical_Bet_Profile_Source": "",
+                "Historical_Bet_Profile_Win_Rate": f"{c.bucket_win_rate:.6f}",
+                "Historical_Bet_Profile_Support": c.bucket_samples,
+                "Historical_Bet_Profile_ROI": "",
+                "Historical_Bet_Profile_Prior_Weight": "0.000000",
+                "Historical_Market_Availability_Key": "",
+                "Historical_Market_Availability_Source": "",
+                "Historical_Market_Availability_Rate": "0.500000",
+                "Historical_Market_Availability_Support": 0,
+                "Historical_Market_Avg_Books": f"{c.market_books:.6f}",
+                "Edge_Over_MAE": f"{abs(c.edge) / 0.8:.6f}",
+                "Precision_Score": f"{c.composite_confidence:.6f}",
+                "Selection_Score": f"{c.composite_confidence:.6f}",
+                "Confidence_Tier": "elite" if c.composite_confidence >= 0.94 else "strong",
+                "Market_Bucket": c.bucket_key,
+            })
+
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="Maximum win-rate MLB board selector.")
     parser.add_argument("--pool-csv", type=Path, required=True)
-    parser.add_argument("--min-model-prob", type=float, default=0.88)
-    parser.add_argument("--min-bucket-win-rate", type=float, default=0.83)
+    parser.add_argument("--out-csv", type=Path, default=None, help="Output CSV compatible with the web exporter.")
+    parser.add_argument("--out-json", type=Path, default=None, help="Output JSON with detailed board stats.")
+    parser.add_argument("--summary-json", type=Path, default=None, help="Summary JSON compatible with pipeline.")
+    parser.add_argument("--min-model-prob", type=float, default=0.92)
+    parser.add_argument("--min-bucket-win-rate", type=float, default=0.86)
     parser.add_argument("--min-bucket-samples", type=int, default=500)
-    parser.add_argument("--min-history-rows", type=int, default=35)
+    parser.add_argument("--min-history-rows", type=int, default=40)
     parser.add_argument("--min-market-books", type=int, default=5)
     parser.add_argument("--max-days-since-history", type=int, default=3)
-    parser.add_argument("--min-edge", type=float, default=0.50)
+    parser.add_argument("--min-edge", type=float, default=0.35)
     parser.add_argument("--max-board-size", type=int, default=7)
-    parser.add_argument("--out-json", type=Path, default=None)
     args = parser.parse_args()
 
     board = select_max_winrate_board(
@@ -337,10 +436,11 @@ def main():
         print(f"   Market: {c.market_source} ({c.market_books} books, std={c.market_line_std:.3f})")
         print(f"   History: {c.history_rows} rows, {c.days_since_history}d stale")
 
+    avg_conf = sum(c.composite_confidence for c in board) / len(board) if board else 0
+    avg_bucket = sum(c.bucket_win_rate for c in board) / len(board) if board else 0
+    avg_model = sum(c.model_probability for c in board) / len(board) if board else 0
+
     if board:
-        avg_conf = sum(c.composite_confidence for c in board) / len(board)
-        avg_bucket = sum(c.bucket_win_rate for c in board) / len(board)
-        avg_model = sum(c.model_probability for c in board) / len(board)
         print(f"\n{'='*70}")
         print(f"BOARD STATS:")
         print(f"  Picks: {len(board)}")
@@ -349,6 +449,46 @@ def main():
         print(f"  Avg Model Probability: {avg_model:.1%}")
         print(f"  Expected misses (1 - avg_bucket_wr): {(1-avg_bucket)*len(board):.2f}")
         print(f"  Target: <= 1 miss per {len(board)}-pick board")
+
+    # Write exporter-compatible CSV
+    if args.out_csv:
+        write_exporter_csv(args.out_csv, board)
+        print(f"\n  Output CSV: {args.out_csv}")
+
+    # Write summary JSON (compatible with pipeline)
+    if args.summary_json:
+        summary = {
+            "pool_csv": str(args.pool_csv.resolve()),
+            "out_csv": str(args.out_csv.resolve()) if args.out_csv else "",
+            "rows_supported": 0,
+            "rows_after_filters": len(board),
+            "rows_selected": len(board),
+            "selection": {
+                "policy": "max_winrate_v1",
+                "min_model_prob": args.min_model_prob,
+                "min_bucket_win_rate": args.min_bucket_win_rate,
+                "min_bucket_samples": args.min_bucket_samples,
+                "min_history_rows": args.min_history_rows,
+                "min_market_books": args.min_market_books,
+                "max_days_since_history": args.max_days_since_history,
+                "min_edge": args.min_edge,
+                "max_board_size": args.max_board_size,
+            },
+            "avg_abs_edge": round(sum(abs(c.edge) for c in board) / len(board), 4) if board else 0,
+            "avg_hit_probability": round(avg_conf, 4),
+            "avg_graded_hit_rate": round(avg_bucket, 4),
+            "avg_precision_score": round(avg_conf, 4),
+            "avg_historical_bucket_win_rate": round(avg_bucket, 4),
+            "by_target": {},
+            "by_direction": {},
+            "publication_strategy": "max_winrate_v1",
+        }
+        from collections import Counter
+        summary["by_target"] = dict(Counter(c.target for c in board))
+        summary["by_direction"] = dict(Counter(c.direction for c in board))
+        args.summary_json.parent.mkdir(parents=True, exist_ok=True)
+        args.summary_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        print(f"  Summary JSON: {args.summary_json}")
 
     if args.out_json:
         output = {
@@ -383,7 +523,7 @@ def main():
         }
         args.out_json.parent.mkdir(parents=True, exist_ok=True)
         args.out_json.write_text(json.dumps(output, indent=2), encoding="utf-8")
-        print(f"\n  Output JSON: {args.out_json}")
+        print(f"  Output JSON: {args.out_json}")
 
 
 if __name__ == "__main__":
