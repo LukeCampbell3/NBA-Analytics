@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from argparse import Namespace
 from datetime import datetime
@@ -60,6 +61,7 @@ def _default_args(**overrides) -> Namespace:
         "mlb_market_input_path": None,
         "mlb_fallback_policy": "exact_or_latest",
         "mlb_min_publish_plays": 4,
+        "mlb_min_rescue_plays": 3,
         "mlb_top_n": 10,
     }
     values.update(overrides)
@@ -124,3 +126,50 @@ def test_run_nba_exports_expected_same_day_manifest(tmp_path, monkeypatch) -> No
     assert export_command[:2] == ["python", str(tmp_path / "export_daily_predictions_web.py")]
     assert "--manifest" in export_command
     assert str(manifest_path) in export_command
+
+
+def test_main_continues_mlb_and_build_when_nba_fails(monkeypatch, tmp_path, capsys) -> None:
+    args = _default_args(skip_mlb=False, force_run=True, output_dir=tmp_path / "dist")
+    calls: list[str] = []
+
+    def fail_nba(_args: Namespace, _output_dir: Path) -> None:
+        calls.append("nba")
+        raise subprocess.CalledProcessError(1, ["python", "nba_runner.py"])
+
+    def fake_run_mlb(_args: Namespace, _output_dir: Path) -> tuple[Path, Path, Path]:
+        calls.append("mlb")
+        return (tmp_path / "pool.csv", tmp_path / "selected.csv", tmp_path / "summary.json")
+
+    def fake_build_site(_args: Namespace, _output_dir: Path) -> None:
+        calls.append("build")
+
+    monkeypatch.setattr(shared_daily_predictions, "parse_args", lambda: args)
+    monkeypatch.setattr(shared_daily_predictions, "check_schedule_gate", lambda _args: (True, "forced test run"))
+    monkeypatch.setattr(shared_daily_predictions, "run_nba", fail_nba)
+    monkeypatch.setattr(shared_daily_predictions, "run_mlb", fake_run_mlb)
+    monkeypatch.setattr(shared_daily_predictions, "build_site", fake_build_site)
+
+    shared_daily_predictions.main()
+
+    assert calls == ["nba", "mlb", "build"]
+    output = capsys.readouterr().out
+    assert "NBA Prediction Refresh Failed Safely" in output
+    assert "SHARED DAILY PREDICTION REFRESH COMPLETE" in output
+
+
+def test_main_raises_nba_failure_for_nba_only_runs(monkeypatch, tmp_path) -> None:
+    args = _default_args(skip_mlb=True, force_run=True, output_dir=tmp_path / "dist")
+
+    def fail_nba(_args: Namespace, _output_dir: Path) -> None:
+        raise subprocess.CalledProcessError(1, ["python", "nba_runner.py"])
+
+    monkeypatch.setattr(shared_daily_predictions, "parse_args", lambda: args)
+    monkeypatch.setattr(shared_daily_predictions, "check_schedule_gate", lambda _args: (True, "forced test run"))
+    monkeypatch.setattr(shared_daily_predictions, "run_nba", fail_nba)
+
+    try:
+        shared_daily_predictions.main()
+    except subprocess.CalledProcessError:
+        pass
+    else:
+        raise AssertionError("Expected NBA-only run to propagate the NBA failure")

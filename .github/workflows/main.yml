@@ -1,10 +1,17 @@
 name: Daily Predictions Pipeline
 
 on:
+  push:
+    branches:
+      - main
+      - static-deployment
   schedule:
     # Runs at 2:00 AM UTC (adjust below for your timezone)
     - cron: "0 6 * * *" # # 2 AM EST/EDT depending on DST
   workflow_dispatch:  # allows manual trigger
+
+permissions:
+  contents: write
 
 jobs:
   run-pipeline:
@@ -26,7 +33,7 @@ jobs:
 
       - name: Run prediction pipeline
         run: |
-          python run_daily_predictions.py
+          python run_daily_predictions.py --nba-skip-cutoff-meta-monitor
 
       - name: Commit & push results
         run: |

@@ -144,6 +144,13 @@ def run_step(label: str, command: list[str], cwd: Path = REPO_ROOT) -> None:
     subprocess.run(command, cwd=cwd, check=True)
 
 
+def format_step_failure(exc: Exception) -> str:
+    if isinstance(exc, subprocess.CalledProcessError):
+        command = " ".join(str(part) for part in exc.cmd) if exc.cmd else "<unknown command>"
+        return f"{type(exc).__name__}: exit code {exc.returncode} from {command}"
+    return f"{type(exc).__name__}: {exc}"
+
+
 def validate_schedule_args(hour: int, minute: int) -> tuple[int, int]:
     if not 0 <= int(hour) <= 23:
         raise SystemExit(f"--scheduled-hour must be between 0 and 23, received {hour!r}")
@@ -682,9 +689,23 @@ def main() -> None:
     mlb_pool_csv: Path | None = None
     mlb_selected_csv: Path | None = None
     mlb_summary_json: Path | None = None
+    nba_failure: Exception | None = None
 
     if not args.skip_nba:
-        run_nba(args, output_dir)
+        try:
+            run_nba(args, output_dir)
+        except Exception as exc:
+            if args.skip_mlb:
+                raise
+            nba_failure = exc
+            print("\n" + "=" * 88)
+            print("NBA Prediction Refresh Failed Safely")
+            print("=" * 88)
+            print(format_step_failure(exc))
+            print(
+                "Continuing with MLB refresh and static-site rebuild so other sports can still publish. "
+                "The previous NBA payload will remain in place until the NBA pipeline succeeds again."
+            )
 
     if not args.skip_mlb:
         mlb_pool_csv, mlb_selected_csv, mlb_summary_json = run_mlb(args, output_dir)
@@ -697,6 +718,8 @@ def main() -> None:
     print("=" * 88)
     print(f"Output directory: {output_dir}")
     if not args.skip_nba:
+        if nba_failure is not None:
+            print(f"NBA status:       failed safely ({format_step_failure(nba_failure)})")
         print(f"NBA web payload:  {NBA_WEB_JSON}")
         print(f"NBA dist payload: {output_dir / 'nba' / 'data' / 'daily_predictions.json'}")
     if not args.skip_mlb:
