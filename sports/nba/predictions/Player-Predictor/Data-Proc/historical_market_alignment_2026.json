@@ -1,117 +1,117 @@
 {
-  "updated_at_utc": "2026-06-22T02:22:19.827659+00:00",
+  "updated_at_utc": "2026-06-27T00:40:26.509848+00:00",
   "season": 2026,
   "history_wide_path": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\data copy\\raw\\market_odds\\nba\\history_player_props_wide.parquet",
   "history_rows": 2111,
   "market_aliases": {
-    "resolved_aliases": 1139,
+    "resolved_aliases": 1141,
     "ambiguous_aliases": 27,
     "ambiguous_samples": {
-      "J_Green": [
-        "Jalen_Green",
-        "Javonte_Green",
-        "Jeff_Green",
-        "Josh_Green"
+      "T_Jones": [
+        "Tre_Jones",
+        "Tyus_Jones"
+      ],
+      "S_Curry": [
+        "Seth_Curry",
+        "Stephen_Curry"
       ],
       "J_Jr": [
         "Jabari_Smith_Jr",
         "Jaime_Jaquez_Jr",
         "Jaren_Jackson_Jr"
       ],
-      "A_Williams": [
-        "Alondes_Williams",
-        "Amari_Williams"
+      "C_Jones": [
+        "Colby_Jones",
+        "Curtis_Jones"
       ],
-      "T_Jr": [
-        "Terrence_Shannon_Jr",
-        "Tim_Hardaway_Jr",
-        "TyTy_Washington_Jr"
+      "A_Thompson": [
+        "Amen_Thompson",
+        "Ausar_Thompson"
       ],
-      "D_II": [
-        "DaRon_Holmes_II",
-        "Dereck_Lively_II"
+      "A_Wiggins": [
+        "Aaron_Wiggins",
+        "Andrew_Wiggins"
       ],
-      "D_Mitchell": [
-        "Davion_Mitchell",
-        "Donovan_Mitchell"
+      "K_Johnson": [
+        "Keldon_Johnson",
+        "Keshad_Johnson"
       ],
       "K_Jr": [
         "Kelly_Oubre_Jr",
         "Kevin_McCullar_Jr",
         "Kevin_Porter_Jr"
       ],
-      "K_George": [
-        "Keyonte_George",
-        "Kyshawn_George"
+      "A_Williams": [
+        "Alondes_Williams",
+        "Amari_Williams"
+      ],
+      "J_Williams": [
+        "Jalen_Williams",
+        "Jaylin_Williams"
+      ],
+      "J_Green": [
+        "Jalen_Green",
+        "Javonte_Green",
+        "Jeff_Green",
+        "Josh_Green"
+      ],
+      "C_Martin": [
+        "Caleb_Martin",
+        "Cody_Martin"
+      ],
+      "D_II": [
+        "DaRon_Holmes_II",
+        "Dereck_Lively_II"
       ],
       "T_III": [
         "Trey_Jemison_III",
         "Trey_Murphy_III"
       ],
-      "T_Jones": [
-        "Tre_Jones",
-        "Tyus_Jones"
+      "J_Walker": [
+        "Jabari_Walker",
+        "Jarace_Walker"
+      ],
+      "D_Mitchell": [
+        "Davion_Mitchell",
+        "Donovan_Mitchell"
+      ],
+      "K_Murray": [
+        "Keegan_Murray",
+        "Kris_Murray"
+      ],
+      "C_Johnson": [
+        "Cameron_Johnson",
+        "Chaney_Johnson"
+      ],
+      "K_George": [
+        "Keyonte_George",
+        "Kyshawn_George"
+      ],
+      "T_Jr": [
+        "Terrence_Shannon_Jr",
+        "Tim_Hardaway_Jr",
+        "TyTy_Washington_Jr"
+      ],
+      "T_Mann": [
+        "Terance_Mann",
+        "Tre_Mann"
+      ],
+      "M_Gueye": [
+        "Mouhamadou_Gueye",
+        "Mouhamed_Gueye"
+      ],
+      "D_Powell": [
+        "Drake_Powell",
+        "Dwight_Powell"
       ],
       "W_Jr": [
         "Walter_Clayton_Jr",
         "Wendell_Carter_Jr",
         "Wendell_Moore_Jr"
       ],
-      "J_Walker": [
-        "Jabari_Walker",
-        "Jarace_Walker"
-      ],
-      "K_Murray": [
-        "Keegan_Murray",
-        "Kris_Murray"
-      ],
-      "D_Powell": [
-        "Drake_Powell",
-        "Dwight_Powell"
-      ],
-      "C_Johnson": [
-        "Cameron_Johnson",
-        "Chaney_Johnson"
-      ],
       "T_Smith": [
         "Tolu_Smith",
         "Tyler_Smith"
-      ],
-      "C_Jones": [
-        "Colby_Jones",
-        "Curtis_Jones"
-      ],
-      "T_Mann": [
-        "Terance_Mann",
-        "Tre_Mann"
-      ],
-      "J_Champagnie": [
-        "Julian_Champagnie",
-        "Justin_Champagnie"
-      ],
-      "C_Martin": [
-        "Caleb_Martin",
-        "Cody_Martin"
-      ],
-      "J_Williams": [
-        "Jalen_Williams",
-        "Jaylin_Williams"
-      ],
-      "A_Thompson": [
-        "Amen_Thompson",
-        "Ausar_Thompson"
-      ],
-      "K_Johnson": [
-        "Keldon_Johnson",
-        "Keshad_Johnson"
-      ],
-      "M_Gueye": [
-        "Mouhamadou_Gueye",
-        "Mouhamed_Gueye"
-      ],
-      "A_Wiggins": [
-        "Aaron_Wiggins",
-        "Andrew_Wiggins"
       ]
     }
   },
@@ -120,10 +120,10 @@
     "path": null,
     "targets": []
   },
-  "players_processed": 582,
+  "players_processed": 583,
   "real_market_rows": 1697,
   "synthetic_rows_filled": 0,
-  "baseline_rows_filled": 80809,
+  "baseline_rows_filled": 80878,
   "results": [
     {
       "path": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Aaron_Gordon\\2026_processed_processed.csv",
@@ -532,6 +532,14 @@
       "real_market_rows": 0,
       "synthetic_rows_filled": 0,
       "baseline_rows_filled": 36
+    },
+    {
+      "path": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Bogdan_Bogdanovic\\2026_processed_processed.csv",
+      "player": "Bogdan_Bogdanovic",
+      "rows": 23,
+      "real_market_rows": 0,
+      "synthetic_rows_filled": 0,
+      "baseline_rows_filled": 69
     },
     {
       "path": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nba\\predictions\\Player-Predictor\\Data-Proc\\Bogdan_Bogdanovi\u0107\\2026_processed_processed.csv",
