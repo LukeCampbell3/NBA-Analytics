@@ -2,8 +2,8 @@
   "pool_csv": "/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260627/daily_prediction_pool_20260627.csv",
   "out_csv": "/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260627/daily_prediction_pool_20260627_high_precision_predictions.csv",
   "rows_supported": 988,
-  "rows_after_filters": 2,
-  "rows_selected": 2,
+  "rows_after_filters": 1,
+  "rows_selected": 1,
   "selection": {
     "top_n": 10,
     "min_abs_edge": 0.35,
@@ -51,84 +51,58 @@
     "history_dir": "/NBA-Analytics/Player-Predictor/Data-Proc-MLB",
     "season": 2026,
     "source_file_count": 1112,
-    "updated_at_utc": "2026-06-28T03:14:37.720495+00:00"
+    "updated_at_utc": "2026-06-28T03:27:07.225345+00:00"
   },
   "historical_bet_profiles": {
     "cache_json": "/NBA-Analytics/sports/mlb/data/predictions/calibration/historical_bet_profile_priors_2026.json",
     "history_dir": "/NBA-Analytics/Player-Predictor/Data-Proc-MLB",
     "season": 2026,
     "source_file_count": 1112,
-    "updated_at_utc": "2026-06-28T03:14:59.023523+00:00"
+    "updated_at_utc": "2026-06-28T03:27:28.366724+00:00"
   },
   "filter_rejections": {
     "synthetic_market_source": 158,
-    "edge_too_small": 507,
-    "side_price_unconfirmed": 169,
-    "history_too_short": 113,
+    "edge_too_small": 505,
+    "side_price_unconfirmed": 179,
+    "history_too_short": 115,
     "prediction_too_low": 3,
     "market_books_too_low": 7,
-    "historical_market_availability_rate_too_low": 11,
-    "graded_hit_rate_too_low": 9,
+    "historical_market_availability_rate_too_low": 10,
     "push_probability_too_high": 1,
-    "hit_probability_too_low": 8
+    "graded_hit_rate_too_low": 5,
+    "hit_probability_too_low": 4
   },
-  "avg_abs_edge": 3.57262,
-  "avg_model_hit_probability": 0.869115,
-  "avg_hit_probability": 0.796912,
-  "avg_model_graded_hit_rate": 0.869115,
-  "avg_graded_hit_rate": 0.789147,
-  "avg_precision_score": 0.94106,
-  "avg_historical_bucket_win_rate": 0.853912,
+  "avg_abs_edge": 0.705749,
+  "avg_model_hit_probability": 0.810857,
+  "avg_hit_probability": 0.8,
+  "avg_model_graded_hit_rate": 0.810857,
+  "avg_graded_hit_rate": 0.8,
+  "avg_precision_score": 0.840742,
+  "avg_historical_bucket_win_rate": 0.864869,
   "avg_historical_prior_weight": 0.35,
-  "avg_historical_bet_profile_win_rate": 0.816673,
+  "avg_historical_bet_profile_win_rate": 0.72093,
   "avg_historical_bet_profile_prior_weight": 0.25,
-  "avg_historical_market_availability_rate": 0.556131,
+  "avg_historical_market_availability_rate": 0.579251,
   "avg_market_books": 8.0,
-  "price_confirmed_count": 2,
-  "avg_expected_value_per_unit": -0.149234,
+  "price_confirmed_count": 1,
+  "avg_expected_value_per_unit": -0.125709,
   "by_target": {
-    "TB": 2
+    "TB": 1
   },
   "by_direction": {
-    "UNDER": 2
+    "UNDER": 1
   },
   "by_team": {
-    "SF": 1,
-    "ATL": 1
+    "ATH": 1
   },
   "by_market_bucket": {
-    "TB|UNDER|8.5": 1,
     "TB|UNDER|1.5": 1
   },
   "selected_preview": [
     {
       "rank": 1,
-      "player": "Rafael Devers",
-      "team": "SF",
-      "target": "TB",
-      "direction": "UNDER",
-      "original_direction": "UNDER",
-      "direction_flip_applied": false,
-      "market_line": 8.5,
-      "market_bucket": "TB|UNDER|8.5",
-      "market_source": "real",
-      "prediction": 1.8619,
-      "model_hit_probability": 0.9999,
-      "estimated_hit_probability": 0.8,
-      "historical_bucket_win_rate": 0.843,
-      "historical_bucket_support": 17337,
-      "market_books": 8,
-      "price_confirmed": true,
-      "historical_bet_profile_win_rate": 0.9016,
-      "historical_bet_profile_support": 68,
-      "historical_market_availability_rate": 0.5212,
-      "expected_value_per_unit": -0.12,
-      "precision_score": 1.0285
-    },
-    {
-      "rank": 2,
-      "player": "Dominic Smith",
-      "team": "ATL",
+      "player": "Colby Thomas",
+      "team": "ATH",
       "target": "TB",
       "direction": "UNDER",
       "original_direction": "UNDER",
@@ -136,25 +110,25 @@
       "market_line": 1.5,
       "market_bucket": "TB|UNDER|1.5",
       "market_source": "real",
-      "prediction": 0.9929,
-      "model_hit_probability": 0.7384,
-      "estimated_hit_probability": 0.7938,
-      "historical_bucket_win_rate": 0.8648,
-      "historical_bucket_support": 7006,
+      "prediction": 0.7943,
+      "model_hit_probability": 0.8109,
+      "estimated_hit_probability": 0.8,
+      "historical_bucket_win_rate": 0.8649,
+      "historical_bucket_support": 7008,
       "market_books": 8,
       "price_confirmed": true,
-      "historical_bet_profile_win_rate": 0.7317,
-      "historical_bet_profile_support": 41,
-      "historical_market_availability_rate": 0.591,
-      "expected_value_per_unit": -0.1785,
-      "precision_score": 0.8536
+      "historical_bet_profile_win_rate": 0.7209,
+      "historical_bet_profile_support": 43,
+      "historical_market_availability_rate": 0.5793,
+      "expected_value_per_unit": -0.1257,
+      "precision_score": 0.8407
     }
   ],
   "publication_strategy": "withheld_current_pool",
   "pool_market_profile": {
     "rows": 1800,
-    "real_market_rows": 650,
-    "synthetic_rows": 1150,
-    "price_confirmed_rows": 75
+    "real_market_rows": 637,
+    "synthetic_rows": 1163,
+    "price_confirmed_rows": 47
   }
 }
