@@ -1,0 +1,322 @@
+{
+  "negative_turnover_value": {
+    "atom_par_rate": {
+      "n": 2025,
+      "ols_intercept": -1.863063,
+      "ols_slope": 0.767134,
+      "pearson": 0.712284,
+      "spearman": 0.709474
+    },
+    "between_player_variance": 1416.768642,
+    "minute_strata": {
+      "1000-1499": {
+        "n": 526,
+        "rate": {
+          "n": 526,
+          "pearson": 0.660004,
+          "spearman": 0.648223
+        },
+        "raw_par": {
+          "n": 526,
+          "pearson": 0.692586,
+          "spearman": 0.661741
+        }
+      },
+      "1500-1999": {
+        "n": 512,
+        "rate": {
+          "n": 512,
+          "pearson": 0.773965,
+          "spearman": 0.76589
+        },
+        "raw_par": {
+          "n": 512,
+          "pearson": 0.761904,
+          "spearman": 0.740393
+        }
+      },
+      "2000+": {
+        "n": 482,
+        "rate": {
+          "n": 482,
+          "pearson": 0.813608,
+          "spearman": 0.808642
+        },
+        "raw_par": {
+          "n": 482,
+          "pearson": 0.790495,
+          "spearman": 0.787408
+        }
+      },
+      "500-999": {
+        "n": 505,
+        "rate": {
+          "n": 505,
+          "pearson": 0.533717,
+          "spearman": 0.582258
+        },
+        "raw_par": {
+          "n": 505,
+          "pearson": 0.592115,
+          "spearman": 0.587135
+        }
+      }
+    },
+    "n": 2025,
+    "opportunity_rate": {
+      "reason": "atom-specific opportunities unavailable",
+      "status": "blocked"
+    },
+    "raw_atom_par": {
+      "mae": 22.321215,
+      "n": 2025,
+      "ols_intercept": -2.601588,
+      "ols_slope": 0.753498,
+      "pearson": 0.78047,
+      "rmse": 30.878067,
+      "spearman": 0.716836
+    },
+    "within_player_variance": 496.217226,
+    "year_to_year_variance": 951.793774
+  },
+  "passing_creation": {
+    "atom_par_rate": {
+      "n": 2025,
+      "ols_intercept": 19.786325,
+      "ols_slope": 0.876639,
+      "pearson": 0.85849,
+      "spearman": 0.848782
+    },
+    "between_player_variance": 32190.63684,
+    "minute_strata": {
+      "1000-1499": {
+        "n": 526,
+        "rate": {
+          "n": 526,
+          "pearson": 0.817009,
+          "spearman": 0.780471
+        },
+        "raw_par": {
+          "n": 526,
+          "pearson": 0.662355,
+          "spearman": 0.652004
+        }
+      },
+      "1500-1999": {
+        "n": 512,
+        "rate": {
+          "n": 512,
+          "pearson": 0.879251,
+          "spearman": 0.864406
+        },
+        "raw_par": {
+          "n": 512,
+          "pearson": 0.75458,
+          "spearman": 0.755224
+        }
+      },
+      "2000+": {
+        "n": 482,
+        "rate": {
+          "n": 482,
+          "pearson": 0.879085,
+          "spearman": 0.904008
+        },
+        "raw_par": {
+          "n": 482,
+          "pearson": 0.789018,
+          "spearman": 0.820246
+        }
+      },
+      "500-999": {
+        "n": 505,
+        "rate": {
+          "n": 505,
+          "pearson": 0.774887,
+          "spearman": 0.768726
+        },
+        "raw_par": {
+          "n": 505,
+          "pearson": 0.593889,
+          "spearman": 0.603758
+        }
+      }
+    },
+    "n": 2025,
+    "opportunity_rate": {
+      "reason": "atom-specific opportunities unavailable",
+      "status": "blocked"
+    },
+    "raw_atom_par": {
+      "mae": 91.184513,
+      "n": 2025,
+      "ols_intercept": 30.886348,
+      "ols_slope": 0.825122,
+      "pearson": 0.808327,
+      "rmse": 138.553467,
+      "spearman": 0.787591
+    },
+    "within_player_variance": 9462.025569,
+    "year_to_year_variance": 19176.431249
+  },
+  "scoring_volume_above_replacement": {
+    "atom_par_rate": {
+      "n": 2025,
+      "ols_intercept": 11.80531,
+      "ols_slope": 0.851284,
+      "pearson": 0.799733,
+      "spearman": 0.771596
+    },
+    "between_player_variance": 40887.160535,
+    "minute_strata": {
+      "1000-1499": {
+        "n": 526,
+        "rate": {
+          "n": 526,
+          "pearson": 0.738031,
+          "spearman": 0.715942
+        },
+        "raw_par": {
+          "n": 526,
+          "pearson": 0.685012,
+          "spearman": 0.694143
+        }
+      },
+      "1500-1999": {
+        "n": 512,
+        "rate": {
+          "n": 512,
+          "pearson": 0.810836,
+          "spearman": 0.784665
+        },
+        "raw_par": {
+          "n": 512,
+          "pearson": 0.75996,
+          "spearman": 0.737539
+        }
+      },
+      "2000+": {
+        "n": 482,
+        "rate": {
+          "n": 482,
+          "pearson": 0.84865,
+          "spearman": 0.794204
+        },
+        "raw_par": {
+          "n": 482,
+          "pearson": 0.792756,
+          "spearman": 0.75079
+        }
+      },
+      "500-999": {
+        "n": 505,
+        "rate": {
+          "n": 505,
+          "pearson": 0.670122,
+          "spearman": 0.673164
+        },
+        "raw_par": {
+          "n": 505,
+          "pearson": 0.649648,
+          "spearman": 0.654205
+        }
+      }
+    },
+    "n": 2025,
+    "opportunity_rate": {
+      "reason": "atom-specific opportunities unavailable",
+      "status": "blocked"
+    },
+    "raw_atom_par": {
+      "mae": 112.929005,
+      "n": 2025,
+      "ols_intercept": 29.005979,
+      "ols_slope": 0.811852,
+      "pearson": 0.807863,
+      "rmse": 160.859198,
+      "spearman": 0.786251
+    },
+    "within_player_variance": 14011.485158,
+    "year_to_year_variance": 25865.281707
+  },
+  "steals": {
+    "atom_par_rate": {
+      "n": 2025,
+      "ols_intercept": 9.273593,
+      "ols_slope": 0.779187,
+      "pearson": 0.563278,
+      "spearman": 0.661393
+    },
+    "between_player_variance": 985.220103,
+    "minute_strata": {
+      "1000-1499": {
+        "n": 526,
+        "rate": {
+          "n": 526,
+          "pearson": 0.720743,
+          "spearman": 0.686042
+        },
+        "raw_par": {
+          "n": 526,
+          "pearson": 0.595683,
+          "spearman": 0.562342
+        }
+      },
+      "1500-1999": {
+        "n": 512,
+        "rate": {
+          "n": 512,
+          "pearson": 0.720821,
+          "spearman": 0.706225
+        },
+        "raw_par": {
+          "n": 512,
+          "pearson": 0.604532,
+          "spearman": 0.576126
+        }
+      },
+      "2000+": {
+        "n": 482,
+        "rate": {
+          "n": 482,
+          "pearson": 0.70961,
+          "spearman": 0.685277
+        },
+        "raw_par": {
+          "n": 482,
+          "pearson": 0.653156,
+          "spearman": 0.627859
+        }
+      },
+      "500-999": {
+        "n": 505,
+        "rate": {
+          "n": 505,
+          "pearson": 0.400388,
+          "spearman": 0.586952
+        },
+        "raw_par": {
+          "n": 505,
+          "pearson": 0.488887,
+          "spearman": 0.466341
+        }
+      }
+    },
+    "n": 2025,
+    "opportunity_rate": {
+      "reason": "atom-specific opportunities unavailable",
+      "status": "blocked"
+    },
+    "raw_atom_par": {
+      "mae": 24.750877,
+      "n": 2025,
+      "ols_intercept": 13.953773,
+      "ols_slope": 0.672202,
+      "pearson": 0.6409,
+      "rmse": 33.694994,
+      "spearman": 0.627025
+    },
+    "within_player_variance": 618.178794,
+    "year_to_year_variance": 1131.341136
+  }
+}

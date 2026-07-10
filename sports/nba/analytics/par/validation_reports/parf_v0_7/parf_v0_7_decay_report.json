@@ -1,0 +1,150 @@
+{
+  "negative_turnover_value": [
+    {
+      "decay_factor": null,
+      "decay_type": "current_season_only",
+      "fold_predict_season": "2021-22",
+      "shrinkage_k_minutes": 500,
+      "training_rate_mae": 14.530192
+    },
+    {
+      "decay_factor": 0.5,
+      "decay_type": "exponential_decay_season_0_50",
+      "fold_predict_season": "2022-23",
+      "shrinkage_k_minutes": 500,
+      "training_rate_mae": 14.093558
+    },
+    {
+      "decay_factor": 0.5,
+      "decay_type": "exponential_decay_season_0_50",
+      "fold_predict_season": "2023-24",
+      "shrinkage_k_minutes": 500,
+      "training_rate_mae": 13.956521
+    },
+    {
+      "decay_factor": 0.5,
+      "decay_type": "exponential_decay_season_0_50",
+      "fold_predict_season": "2024-25",
+      "shrinkage_k_minutes": 500,
+      "training_rate_mae": 13.705415
+    },
+    {
+      "decay_factor": 0.5,
+      "decay_type": "exponential_decay_season_0_50",
+      "fold_predict_season": "2025-26",
+      "shrinkage_k_minutes": 500,
+      "training_rate_mae": 13.826862
+    }
+  ],
+  "passing_creation": [
+    {
+      "decay_factor": 0.7,
+      "decay_type": "sample_weighted_exponential_0_70",
+      "fold_predict_season": "2021-22",
+      "shrinkage_k_minutes": 500,
+      "training_rate_mae": 41.115087
+    },
+    {
+      "decay_factor": null,
+      "decay_type": "current_season_only",
+      "fold_predict_season": "2022-23",
+      "shrinkage_k_minutes": 500,
+      "training_rate_mae": 40.343908
+    },
+    {
+      "decay_factor": 0.5,
+      "decay_type": "exponential_decay_season_0_50",
+      "fold_predict_season": "2023-24",
+      "shrinkage_k_minutes": 500,
+      "training_rate_mae": 39.288171
+    },
+    {
+      "decay_factor": 0.5,
+      "decay_type": "exponential_decay_season_0_50",
+      "fold_predict_season": "2024-25",
+      "shrinkage_k_minutes": 500,
+      "training_rate_mae": 39.290532
+    },
+    {
+      "decay_factor": 0.5,
+      "decay_type": "exponential_decay_season_0_50",
+      "fold_predict_season": "2025-26",
+      "shrinkage_k_minutes": 500,
+      "training_rate_mae": 39.273461
+    }
+  ],
+  "scoring_volume_above_replacement": [
+    {
+      "decay_factor": null,
+      "decay_type": "current_season_only",
+      "fold_predict_season": "2021-22",
+      "shrinkage_k_minutes": 500,
+      "training_rate_mae": 63.553977
+    },
+    {
+      "decay_factor": 0.5,
+      "decay_type": "exponential_decay_season_0_50",
+      "fold_predict_season": "2022-23",
+      "shrinkage_k_minutes": 500,
+      "training_rate_mae": 63.232578
+    },
+    {
+      "decay_factor": 0.5,
+      "decay_type": "exponential_decay_season_0_50",
+      "fold_predict_season": "2023-24",
+      "shrinkage_k_minutes": 500,
+      "training_rate_mae": 62.620405
+    },
+    {
+      "decay_factor": 0.5,
+      "decay_type": "exponential_decay_season_0_50",
+      "fold_predict_season": "2024-25",
+      "shrinkage_k_minutes": 500,
+      "training_rate_mae": 62.550999
+    },
+    {
+      "decay_factor": 0.5,
+      "decay_type": "exponential_decay_season_0_50",
+      "fold_predict_season": "2025-26",
+      "shrinkage_k_minutes": 500,
+      "training_rate_mae": 62.341236
+    }
+  ],
+  "steals": [
+    {
+      "decay_factor": null,
+      "decay_type": "current_season_only",
+      "fold_predict_season": "2021-22",
+      "shrinkage_k_minutes": 500,
+      "training_rate_mae": 13.739363
+    },
+    {
+      "decay_factor": null,
+      "decay_type": "2_season_equal_weight",
+      "fold_predict_season": "2022-23",
+      "shrinkage_k_minutes": 500,
+      "training_rate_mae": 13.660052
+    },
+    {
+      "decay_factor": 0.7,
+      "decay_type": "sample_weighted_exponential_0_70",
+      "fold_predict_season": "2023-24",
+      "shrinkage_k_minutes": 500,
+      "training_rate_mae": 13.266441
+    },
+    {
+      "decay_factor": 0.7,
+      "decay_type": "sample_weighted_exponential_0_70",
+      "fold_predict_season": "2024-25",
+      "shrinkage_k_minutes": 500,
+      "training_rate_mae": 13.683583
+    },
+    {
+      "decay_factor": 0.7,
+      "decay_type": "sample_weighted_exponential_0_70",
+      "fold_predict_season": "2025-26",
+      "shrinkage_k_minutes": 500,
+      "training_rate_mae": 13.902878
+    }
+  ]
+}
