@@ -192,8 +192,8 @@ function renderPlayer(playerId) {
                 ${metric('PAR/1000', fmt(player.par_1000))}
                 ${metric('PVG Score', Number(player.pvg_score || 0).toFixed(1))}
                 ${metric('WAR Equivalent', fmt(player.war_equivalent, 2))}
-                ${metric('PAR-F Experimental', fmt(forecast.projected_par))}
-                ${metric('PAR-F Exp. CI', `${fmt(forecast.confidence_interval_low)} to ${fmt(forecast.confidence_interval_high)}`)}
+                ${metric('Projected PAR-F', fmt(forecast.projected_par))}
+                ${metric('PAR-F CI', `${fmt(forecast.confidence_interval_low)} to ${fmt(forecast.confidence_interval_high)}`)}
                 ${metric('Continuation', pct(forecast.continuation_score))}
                 ${metric('Role Portability', pct(forecast.role_portability_score))}
             </div>
@@ -209,7 +209,7 @@ function renderPlayer(playerId) {
             <h3>Next-Season Value Outlook</h3>
             <div class="par-outlook-grid">
                 ${metric('Current PAR', fmt(forecast.current_par))}
-                ${metric('PAR-F Experimental', fmt(forecast.projected_par))}
+                ${metric('Projected PAR-F', fmt(forecast.projected_par))}
                 ${metric('Confidence Interval', `${fmt(forecast.confidence_interval_low)} to ${fmt(forecast.confidence_interval_high)}`)}
                 ${metric('Stable PAR Share', pct(forecast.stable_par_share))}
                 ${metric('Volatile PAR Share', pct(forecast.volatile_par_share))}
@@ -274,7 +274,7 @@ function forecastBridge(bridge) {
         ['Health adjustment', bridge.health_adjustment],
         ['Age curve', bridge.age_curve],
         ['Fit lift', bridge.fit_lift],
-        ['PAR-F Experimental', bridge.projected_par_f],
+        ['Projected PAR-F', bridge.projected_par_f],
     ];
     return `<div class="par-bridge">${rows.map(([label, value]) => `<div><span>${label}</span><strong class="${signedClass(value)}">${fmt(value)}</strong></div>`).join('')}</div>`;
 }
@@ -286,7 +286,7 @@ function categoryForecastTable(player, forecast, atoms) {
         const persistence = state.model.persistence_values && persistenceKey ? state.model.persistence_values[persistenceKey] : 0;
         byCategory[atom.category] = (byCategory[atom.category] || 0) + Number(atom.par_value || 0) * persistence * Number(atom.reliability_weight || 0);
     });
-    return `<table class="par-forecast-table"><thead><tr><th>Category</th><th>Current</th><th>PAR-F Exp.</th></tr></thead><tbody>
+    return `<table class="par-forecast-table"><thead><tr><th>Category</th><th>Current</th><th>PAR-F</th></tr></thead><tbody>
         ${categoryOrder.map(([category, field, label]) => `<tr><td>${label}</td><td class="${signedClass(player[field])}">${fmt(player[field])}</td><td class="${signedClass(byCategory[category])}">${fmt(byCategory[category] || null)}</td></tr>`).join('')}
     </tbody></table>`;
 }

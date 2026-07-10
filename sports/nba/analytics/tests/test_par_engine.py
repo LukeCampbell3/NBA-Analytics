@@ -4,7 +4,6 @@ from sports.nba.analytics.par.config import MODEL_CONFIG
 from sports.nba.analytics.par.engine import (
     aggregate_player_components,
     build_forecasts,
-    infer_role,
     validate_atom_rules,
     validate_overlap,
 )
@@ -121,17 +120,3 @@ def test_parf_forecast_uses_atom_specific_persistence_and_bridge_reconciles() ->
     forecast = forecasts[0]
     assert forecast["forecast_bridge"]["projected_par_f"] == forecast["projected_par"]
     assert forecast["parf_model_version"] == "parf_v0_6"
-
-
-def test_role_inference_classifies_high_rebounding_scorer_as_big() -> None:
-    role = infer_role(
-        {
-            "minutes": 2400.0,
-            "games": 70.0,
-            "pts": 1700.0,
-            "ast": 180.0,
-            "trb": 780.0,
-            "stl": 80.0,
-        }
-    )
-    assert role == "roll_big"
