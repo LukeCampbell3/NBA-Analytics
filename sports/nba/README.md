@@ -34,6 +34,16 @@ Run conditional framework tests:
 pytest sports/nba/tests/test_conditional_framework.py
 ```
 
+Build PAR/PAR-F player metrics:
+
+```bash
+python -m nba_cv_normalizer.cli.main build-player-metrics --season 2025-26 --forecast-season 2026-27 --out out/player_metrics --copy-to-web
+python -m nba_cv_normalizer.cli.main prove-par-product --metrics-dir out/player_metrics
+```
+
+The PAR product docs are in `docs/par_product.md`, and the static leaderboard is
+served from `/nba/par.html`.
+
 Run daily market pipeline:
 
 ```bash

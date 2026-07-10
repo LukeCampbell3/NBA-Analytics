@@ -10,6 +10,7 @@ function mountShell() {
     breadcrumbs: [{ label: "API Docs", href: "api.html" }],
     navLinks: [
       { label: "Dashboard", href: "index.html" },
+      { label: "PAR Records", href: "par.html" },
       { label: "Board", href: "predictions.html" },
       { label: "Safe-State", href: "safe-state.html" },
       { label: "Pricing", href: "pricing.html" },

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Analytics | PAR Records</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="vault/vault-tokens.css?v=1">
+    <link rel="stylesheet" href="vault/vault-components.css?v=4">
+    <link rel="stylesheet" href="styles.css?v=32">
+</head>
+<body class="vault-theme par-page">
+    <div id="vaultShellRoot"></div>
+
+    <main class="vault-shell par-shell">
+        <section class="vault-page-header par-topbar">
+            <div>
+                <p class="vault-page-kicker">NBA Analytics</p>
+                <div class="vault-heading-row">
+                    <h1>PAR Records</h1>
+                    <button class="vault-info-trigger" type="button" aria-label="About PAR records" data-info="Player PAR records aggregate disjoint value atoms, replacement baselines, reliability, overlap proof, and next-season PAR-F projections.">i</button>
+                </div>
+                <p id="parModelMeta" class="vault-freshness">Loading model metadata</p>
+            </div>
+            <div id="parProofBadge" class="par-proof-badge">Proof pending</div>
+        </section>
+
+        <section id="leaderboardView" class="par-view">
+            <div class="par-controls">
+                <input id="parSearch" type="search" placeholder="Search players" aria-label="Search players">
+                <select id="parSeasonFilter" aria-label="Filter by season"></select>
+                <select id="parTeamFilter" aria-label="Filter by team"></select>
+                <select id="parRoleFilter" aria-label="Filter by role"></select>
+                <label class="par-minutes-filter">Min minutes <input id="parMinMinutes" type="number" min="0" step="100" value="0"></label>
+                <select id="parSort" aria-label="Sort leaderboard">
+                    <option value="par">PAR</option>
+                    <option value="par_1000">PAR/1000</option>
+                    <option value="pvg_score">PVG Score</option>
+                    <option value="projected_parf">Projected PAR-F</option>
+                    <option value="continuation_score">Continuation</option>
+                    <option value="role_portability_score">Role Portability</option>
+                    <option value="wins_per_million">Wins/Million</option>
+                </select>
+            </div>
+            <div class="par-table-wrap">
+                <table class="par-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Player</th>
+                            <th>Team</th>
+                            <th>Role</th>
+                            <th>Minutes</th>
+                            <th>PAR</th>
+                            <th>PAR/1000</th>
+                            <th>PVG Score</th>
+                            <th>PAR-F</th>
+                            <th>Continuation</th>
+                        </tr>
+                    </thead>
+                    <tbody id="parLeaderboardBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="playerView" class="par-view" hidden>
+            <button id="parBackButton" class="par-back-button" type="button">Back to leaderboard</button>
+            <div id="playerDetail"></div>
+        </section>
+    </main>
+
+    <script src="vault/vault-components.js?v=4"></script>
+    <script src="vault/vault-shell.js?v=4"></script>
+    <script src="par.js?v=2"></script>
+</body>
+</html>

@@ -106,6 +106,9 @@ class MultiPageRequestHandler(http.server.SimpleHTTPRequestHandler):
         if path == "/":
             return "/index.html"
 
+        if path.startswith("/par/player/"):
+            return "/par.html"
+
         # Let normal static file requests pass through.
         if "." in PurePosixPath(path).name:
             return path

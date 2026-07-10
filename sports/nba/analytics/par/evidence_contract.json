@@ -1,0 +1,37 @@
+{
+  "contract_version": "par_evidence_readiness_v1",
+  "par_model_version": "par_pvg_v0_5",
+  "parf_model_version": "parf_v0_6",
+  "sources": {
+    "box_score_direct_v0_5": {
+      "production_ready": true,
+      "source_tier": "TIER_A_DIRECT",
+      "supported_atom_types": [
+        "scoring_volume_above_replacement",
+        "passing_creation",
+        "negative_turnover_value",
+        "steals"
+      ],
+      "notes": "Game-log direct visible atoms only. Does not infer hidden role, spacing, rim deterrence, or contest value."
+    },
+    "tracking_evidence_v0_5": {
+      "production_ready": false,
+      "source_tier": "TIER_B_TRACKING_BACKED",
+      "supported_atom_types": [
+        "contest_suppression_tracking",
+        "rim_deterrence_tracking",
+        "shot_quality_suppression"
+      ],
+      "notes": "No upstream court-space, identity, and event evidence readiness declaration is present."
+    },
+    "shrunk_proxy_v0_5": {
+      "production_ready": false,
+      "source_tier": "TIER_D_SHRUNK_PROXY",
+      "supported_atom_types": [
+        "contest_suppression_proxy",
+        "rim_deterrence_proxy"
+      ],
+      "notes": "Proxy atoms are allowed only with explicit shrinkage and are not emitted by the current build."
+    }
+  }
+}

@@ -31,10 +31,10 @@ class DailyPredictionsPage {
             breadcrumbs: [{ label: 'Prediction Board', href: 'predictions.html' }],
             navLinks: [
                 { label: 'Dashboard', href: 'index.html', active: false },
+                { label: 'PAR Records', href: 'par.html', active: false },
                 { label: 'Board', href: 'predictions.html', active: true },
                 { label: 'Safe-State', href: 'safe-state.html', active: false },
                 { label: 'Method', href: 'prediction-about.html', active: false },
-                { label: 'College', href: 'college.html', active: false },
                 { label: 'Metrics', href: 'about.html', active: false },
             ],
             showDisclaimer: true,

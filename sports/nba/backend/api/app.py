@@ -370,6 +370,90 @@ def _data_access_guard(ctx: AuthContext | None, response: Response, endpoint: st
     return caps
 
 
+def _sort_rows(rows: list[dict[str, Any]], sort_key: str, reverse: bool) -> list[dict[str, Any]]:
+    def key(row: dict[str, Any]) -> Any:
+        value = row.get(sort_key)
+        if value is None and sort_key == "projected_parf":
+            value = row.get("projected_par")
+        if isinstance(value, (int, float)):
+            return value
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return str(value or "")
+
+    return sorted(rows, key=key, reverse=reverse)
+
+
+@app.get("/api/par/model")
+def par_model(response: Response, ctx: AuthContext | None = Depends(_require_user)) -> dict[str, Any]:
+    _data_access_guard(ctx, response, "/api/par/model")
+    return {
+        **artifacts.response_meta(),
+        "model": artifacts.load_par_model(),
+        "manifest": artifacts.load_par_manifest(),
+        "validation": artifacts.load_par_validation(),
+    }
+
+
+@app.get("/api/par/players")
+def par_players(response: Response, ctx: AuthContext | None = Depends(_require_user)) -> dict[str, Any]:
+    _data_access_guard(ctx, response, "/api/par/players")
+    return {**artifacts.response_meta(), "players": artifacts.load_par_players()}
+
+
+@app.get("/api/par/leaderboard")
+def par_leaderboard(
+    response: Response,
+    season: str | None = None,
+    team: str | None = None,
+    role: str | None = None,
+    min_minutes: float = 0,
+    sort: str = "par",
+    order: str = "desc",
+    limit: int = 100,
+    offset: int = 0,
+    ctx: AuthContext | None = Depends(_require_user),
+) -> dict[str, Any]:
+    _data_access_guard(ctx, response, "/api/par/leaderboard")
+    rows = artifacts.load_par_leaderboard()
+    if season:
+        rows = [row for row in rows if str(row.get("season")) == season]
+    if team:
+        rows = [row for row in rows if str(row.get("team", "")).lower() == team.lower()]
+    if role:
+        rows = [row for row in rows if str(row.get("role", "")).lower() == role.lower()]
+    rows = [row for row in rows if float(row.get("minutes") or 0) >= min_minutes]
+    rows = _sort_rows(rows, sort, order.lower() != "asc")
+    return {**artifacts.response_meta(), "total": len(rows), "rows": rows[max(0, offset): max(0, offset) + max(1, min(limit, 500))]}
+
+
+@app.get("/api/par/players/{player_id}")
+def par_player_detail(player_id: str, response: Response, ctx: AuthContext | None = Depends(_require_user)) -> dict[str, Any]:
+    _data_access_guard(ctx, response, f"/api/par/players/{player_id}")
+    player = next((row for row in artifacts.load_par_players() if str(row.get("player_id")) == player_id), None)
+    if not player:
+        raise HTTPException(status_code=404, detail="PAR player not found")
+    forecast = next((row for row in artifacts.load_par_forecasts() if str(row.get("player_id")) == player_id), None)
+    return {**artifacts.response_meta(), "player": player, "forecast": forecast}
+
+
+@app.get("/api/par/players/{player_id}/atoms")
+def par_player_atoms(player_id: str, response: Response, ctx: AuthContext | None = Depends(_require_user)) -> dict[str, Any]:
+    _data_access_guard(ctx, response, f"/api/par/players/{player_id}/atoms")
+    atoms = [row for row in artifacts.load_par_atoms() if str(row.get("player_id")) == player_id]
+    return {**artifacts.response_meta(), "player_id": player_id, "atoms": atoms}
+
+
+@app.get("/api/par/players/{player_id}/forecast")
+def par_player_forecast(player_id: str, response: Response, ctx: AuthContext | None = Depends(_require_user)) -> dict[str, Any]:
+    _data_access_guard(ctx, response, f"/api/par/players/{player_id}/forecast")
+    forecast = next((row for row in artifacts.load_par_forecasts() if str(row.get("player_id")) == player_id), None)
+    if not forecast:
+        raise HTTPException(status_code=404, detail="PAR-F forecast not found")
+    return {**artifacts.response_meta(), "forecast": forecast}
+
+
 @app.get("/api/safe-state/latest")
 def safe_state_latest(
     response: Response,

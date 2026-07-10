@@ -13,6 +13,7 @@
   const DEFAULT_SITE_NAV_LINKS = [
     { label: "Sports Hub", href: "/" },
     { label: "NBA Dashboard", href: "/nba/" },
+    { label: "NBA PAR", href: "/nba/par.html" },
     { label: "NBA Predictions", href: "/nba/predictions.html" },
     { label: "MLB Home", href: "/mlb/" },
     { label: "MLB Predictions", href: "/mlb/predictions.html" },

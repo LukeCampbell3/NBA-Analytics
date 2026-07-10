@@ -41,6 +41,7 @@ function mountShell() {
     breadcrumbs: [{ label: "Pricing", href: "pricing.html" }],
     navLinks: [
       { label: "Dashboard", href: "index.html" },
+      { label: "PAR Records", href: "par.html" },
       { label: "Board", href: "predictions.html" },
       { label: "Safe-State", href: "safe-state.html" },
       { label: "Pricing", href: "pricing.html", active: true },

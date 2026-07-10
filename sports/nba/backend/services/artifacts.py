@@ -76,6 +76,56 @@ def load_model_status() -> dict[str, Any]:
     }
 
 
+def load_par_model() -> dict[str, Any]:
+    payload = read_json("par_model.json", {})
+    return payload if isinstance(payload, dict) else {}
+
+
+def load_par_players() -> list[dict[str, Any]]:
+    payload = read_json("player_par_components.json", [])
+    return [row for row in payload if isinstance(row, dict)] if isinstance(payload, list) else []
+
+
+def load_par_atoms() -> list[dict[str, Any]]:
+    summary = read_json("player_par_atom_summary.json", [])
+    if isinstance(summary, list) and summary:
+        return [row for row in summary if isinstance(row, dict)]
+    path = get_artifact_data_dir() / "player_par_atoms.jsonl"
+    if not path.exists():
+        return []
+    rows: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            value = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, dict):
+            rows.append(value)
+    return rows
+
+
+def load_par_forecasts() -> list[dict[str, Any]]:
+    payload = read_json("player_par_forecasts.json", [])
+    return [row for row in payload if isinstance(row, dict)] if isinstance(payload, list) else []
+
+
+def load_par_leaderboard() -> list[dict[str, Any]]:
+    payload = read_json("par_leaderboard.json", [])
+    return [row for row in payload if isinstance(row, dict)] if isinstance(payload, list) else []
+
+
+def load_par_validation() -> dict[str, Any]:
+    payload = read_json("par_validation.json", {})
+    return payload if isinstance(payload, dict) else {}
+
+
+def load_par_manifest() -> dict[str, Any]:
+    payload = read_json("par_build_manifest.json", {})
+    return payload if isinstance(payload, dict) else {}
+
+
 def response_meta() -> dict[str, Any]:
     latest = load_safe_state_latest()
     manifest = load_site_manifest()
