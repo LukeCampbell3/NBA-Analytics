@@ -116,16 +116,16 @@ def infer_role(stats: dict[str, float]) -> str:
     ast36 = stats["ast"] / max(1.0, stats["minutes"]) * 36.0
     trb36 = stats["trb"] / max(1.0, stats["minutes"]) * 36.0
     stl36 = stats["stl"] / max(1.0, stats["minutes"]) * 36.0
+    if trb36 >= 10.0 and pts36 < 16.0:
+        return "rim_protector"
+    if trb36 >= 8.0 and pts36 >= 16.0:
+        return "roll_big"
     if ast36 >= 7.0 and pts36 >= 18.0:
         return "primary_creator"
     if ast36 >= 5.0:
         return "secondary_creator"
     if pts36 >= 20.0 and ast36 < 5.0:
         return "scoring_guard"
-    if trb36 >= 10.0 and pts36 < 16.0:
-        return "rim_protector"
-    if trb36 >= 8.0 and pts36 >= 16.0:
-        return "roll_big"
     if stl36 >= 1.8 and pts36 < 16.0:
         return "three_and_d_wing"
     if mpg < 20 and ast36 >= 3.0:

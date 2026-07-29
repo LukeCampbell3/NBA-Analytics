@@ -1,0 +1,46 @@
+{
+  "blockers": [],
+  "par_model_version": "par_pvg_v0_5",
+  "parf_model_version": "parf_v0_6",
+  "production_publish_allowed": true,
+  "proofs": {
+    "atom_ledger": {
+      "atom_count": 114224,
+      "valid": true
+    },
+    "atom_rules": {
+      "baseline_key_count": 50,
+      "failure_count": 0,
+      "failures": [],
+      "production_atom_count": 114224,
+      "status": "pass"
+    },
+    "frontend": {
+      "valid": true
+    },
+    "overlap": {
+      "overlap_groups_clean": 114224,
+      "overlap_groups_failed": 0,
+      "overlap_groups_total": 114224,
+      "potential_duplicate_value": 0.0,
+      "removed_overlap_value": 0.0,
+      "status": "pass",
+      "unresolved_overlap_value": 0.0
+    },
+    "par": {
+      "maximum_delta": 1e-09,
+      "valid": true
+    },
+    "parf": {
+      "maximum_forecast_bridge_delta": 0.0,
+      "status": "pass"
+    },
+    "sources": {
+      "source_datasets": [
+        "sports\\nba\\predictions\\Player-Predictor\\Data-Proc"
+      ],
+      "valid": true
+    }
+  },
+  "valid": true
+}

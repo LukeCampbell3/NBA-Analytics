@@ -1,0 +1,149 @@
+{
+  "balanced": {
+    "CURRENT_PAR_BASELINE": {
+      "mae": 175.512089,
+      "n": 605,
+      "pearson": 0.81716,
+      "rmse": 257.483981,
+      "spearman": 0.764474,
+      "tier_accuracy": 0.639669
+    },
+    "PARF_V0_6": {
+      "mae": 209.938325,
+      "n": 605,
+      "pearson": 0.802902,
+      "rmse": 302.754669,
+      "spearman": 0.75004,
+      "tier_accuracy": 0.641322
+    },
+    "PARF_V0_7": {
+      "mae": 181.50606,
+      "n": 605,
+      "pearson": 0.815041,
+      "rmse": 259.131473,
+      "spearman": 0.759129,
+      "tier_accuracy": 0.639669
+    }
+  },
+  "ball_security_dominant": {
+    "CURRENT_PAR_BASELINE": {
+      "mae": 137.25,
+      "n": 1,
+      "pearson": null,
+      "rmse": 137.25,
+      "spearman": null,
+      "tier_accuracy": null
+    },
+    "PARF_V0_6": {
+      "mae": 155.808155,
+      "n": 1,
+      "pearson": null,
+      "rmse": 155.808155,
+      "spearman": null,
+      "tier_accuracy": null
+    },
+    "PARF_V0_7": {
+      "mae": 79.827679,
+      "n": 1,
+      "pearson": null,
+      "rmse": 79.827679,
+      "spearman": null,
+      "tier_accuracy": null
+    }
+  },
+  "creation_dominant": {
+    "CURRENT_PAR_BASELINE": {
+      "mae": 197.880305,
+      "n": 510,
+      "pearson": 0.733861,
+      "rmse": 273.64808,
+      "spearman": 0.683704,
+      "tier_accuracy": 0.588235
+    },
+    "PARF_V0_6": {
+      "mae": 213.673762,
+      "n": 510,
+      "pearson": 0.73228,
+      "rmse": 300.995674,
+      "spearman": 0.686203,
+      "tier_accuracy": 0.601961
+    },
+    "PARF_V0_7": {
+      "mae": 192.874364,
+      "n": 510,
+      "pearson": 0.742793,
+      "rmse": 263.755909,
+      "spearman": 0.672763,
+      "tier_accuracy": 0.588235
+    }
+  },
+  "defense_dominant": {
+    "CURRENT_PAR_BASELINE": {
+      "mae": 112.583929,
+      "n": 14,
+      "pearson": -0.099653,
+      "rmse": 167.061414,
+      "spearman": 0.01978,
+      "tier_accuracy": 0.5
+    },
+    "PARF_V0_6": {
+      "mae": 93.678959,
+      "n": 14,
+      "pearson": -0.084218,
+      "rmse": 155.411509,
+      "spearman": 0.01978,
+      "tier_accuracy": 0.5
+    },
+    "PARF_V0_7": {
+      "mae": 102.847224,
+      "n": 14,
+      "pearson": 0.086428,
+      "rmse": 139.279188,
+      "spearman": 0.221978,
+      "tier_accuracy": 0.5
+    }
+  },
+  "matched_composition_test": {
+    "current": 566,
+    "current_only_rate": 0.153804,
+    "n": 3680,
+    "ties": 2407,
+    "v07": 707,
+    "v07_only_rate": 0.19212
+  },
+  "proxy_heavy": {
+    "status": "not_observed_in_direct_atom_validation"
+  },
+  "rebounding_dominant": {
+    "status": "not_observed_in_direct_atom_validation"
+  },
+  "residual_heavy": {
+    "status": "not_observed_in_direct_atom_validation"
+  },
+  "scoring_dominant": {
+    "CURRENT_PAR_BASELINE": {
+      "mae": 184.70085,
+      "n": 575,
+      "pearson": 0.820193,
+      "rmse": 256.425215,
+      "spearman": 0.7522,
+      "tier_accuracy": 0.613913
+    },
+    "PARF_V0_6": {
+      "mae": 202.272067,
+      "n": 575,
+      "pearson": 0.809155,
+      "rmse": 290.102351,
+      "spearman": 0.750438,
+      "tier_accuracy": 0.606957
+    },
+    "PARF_V0_7": {
+      "mae": 177.093941,
+      "n": 575,
+      "pearson": 0.814547,
+      "rmse": 250.461271,
+      "spearman": 0.750452,
+      "tier_accuracy": 0.638261
+    }
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "acceptance_rule": "PAR-F v0.7 must beat current PAR on Spearman and MAE out of sample.",
+  "models": {
+    "CURRENT_PAR_BASELINE": {
+      "delta_vs_champion": "baseline",
+      "mae": 184.762571,
+      "n": 1705,
+      "pearson": 0.797262,
+      "rmse": 261.418213,
+      "spearman": 0.743996,
+      "tier_accuracy": 0.619941
+    },
+    "PARF_V0_6": {
+      "delta_vs_champion": {
+        "mae": -22.721333,
+        "pearson": -0.009914,
+        "rmse": -35.598994,
+        "spearman": -0.005979,
+        "tier_accuracy": -0.005865
+      },
+      "mae": 207.483904,
+      "n": 1705,
+      "pearson": 0.787348,
+      "rmse": 297.017207,
+      "spearman": 0.738017,
+      "tier_accuracy": 0.614076
+    },
+    "PARF_V0_7": {
+      "delta_vs_champion": {
+        "mae": 2.049493,
+        "pearson": -0.001338,
+        "rmse": 4.601847,
+        "spearman": -0.004555,
+        "tier_accuracy": 0.002346
+      },
+      "mae": 182.713078,
+      "n": 1705,
+      "pearson": 0.795924,
+      "rmse": 256.816366,
+      "spearman": 0.739441,
+      "tier_accuracy": 0.622287
+    }
+  },
+  "paired_bootstrap": {
+    "PARF_V0_6": {
+      "challenger": "parf_v06",
+      "mae_improvement_ci": [
+        -30.821671,
+        -22.654991,
+        -14.271625
+      ],
+      "spearman_delta_ci": [
+        -0.011385,
+        -0.006034,
+        -0.000355
+      ],
+      "statistically_distinguishable_from_zero": false
+    },
+    "PARF_V0_7": {
+      "challenger": "parf_v07",
+      "mae_improvement_ci": [
+        -3.572881,
+        2.043004,
+        7.463235
+      ],
+      "spearman_delta_ci": [
+        -0.011799,
+        -0.004573,
+        0.002489
+      ],
+      "statistically_distinguishable_from_zero": false
+    }
+  },
+  "parf_v0_7_point_gate_passed": false,
+  "parf_v0_7_product_promoted": false
+}

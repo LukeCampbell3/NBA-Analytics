@@ -2,9 +2,9 @@
   "status": "PVR_EC_OWNERSHIP_HOT_PATH_REGRESSION",
   "promotion_status": "PVR_EC_DO_NOT_PROMOTE",
   "root_cause": "regular ownership_top1 was benchmarked through the richer diagnostic route and paid first-call CUDA warmup, while the canary used the warmed tight path",
-  "before_ownership_top1_latency_ms": 204.79148699996585,
+  "before_ownership_top1_latency_ms": null,
   "after_ownership_top1_latency_ms": null,
-  "deploy_top1_latency_ms": 0.014299999747890979,
+  "deploy_top1_latency_ms": 0.015200002962956205,
   "candidate_canary_latency_ms": null,
   "files_modified": [
     "sparse_loop_moe/src/sparse_loop_moe/models/pvr_ec/ownership_map.py",
@@ -30,8 +30,8 @@
       "loss": 0.9924142360687256,
       "mae": 0.6137805581092834,
       "accuracy": 0.75,
-      "latency_ms": 0.014299999747890979,
-      "quality_per_ms": 70.4645989762832,
+      "latency_ms": 0.015200002962956205,
+      "quality_per_ms": 66.29233889307841,
       "top1_oracle_gap": 0.9846531748771667,
       "expert_owner_entropy": 1.8946890830993652,
       "owner_count": 16
@@ -41,8 +41,8 @@
       "loss": 0.9924142360687256,
       "mae": 0.6137805581092834,
       "accuracy": 0.75,
-      "latency_ms": 0.12449999849195592,
-      "quality_per_ms": 8.093524175112288,
+      "latency_ms": 0.43619999996735714,
+      "quality_per_ms": 2.31004985711026,
       "top1_oracle_gap": 0.9846531748771667,
       "expert_owner_entropy": 1.8946890830993652,
       "owner_count": 16

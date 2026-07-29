@@ -1,0 +1,363 @@
+{
+  "accounting_tolerance": 1e-06,
+  "atom_registry": {
+    "advantage_creation": {
+      "category": "CREATION",
+      "label": "Advantage creation",
+      "persistence_key": "creation_passing"
+    },
+    "blocks": {
+      "category": "RIM_DEFENSE",
+      "label": "Blocks",
+      "persistence_key": "blocks"
+    },
+    "connective_passing": {
+      "category": "CREATION",
+      "label": "Connective passing",
+      "persistence_key": "creation_passing"
+    },
+    "contest_suppression_proxy": {
+      "category": "CONTEST_DEFENSE",
+      "label": "Proxy-backed contest suppression",
+      "persistence_key": "contest_defense_proxy"
+    },
+    "contest_suppression_tracking": {
+      "category": "CONTEST_DEFENSE",
+      "label": "Tracking-backed contest suppression",
+      "persistence_key": "contest_defense_tracking"
+    },
+    "contested_shotmaking": {
+      "category": "SCORING",
+      "label": "Contested shotmaking",
+      "persistence_key": "contested_shotmaking"
+    },
+    "creation_reads": {
+      "category": "CREATION",
+      "label": "Creation reads",
+      "persistence_key": "creation_passing"
+    },
+    "defensive_rebounding": {
+      "category": "REBOUNDING",
+      "label": "Defensive rebounding",
+      "persistence_key": "defensive_rebounding"
+    },
+    "deflections": {
+      "category": "PERIMETER_DISRUPTION",
+      "label": "Deflections",
+      "persistence_key": "deflections_hustle"
+    },
+    "gravity_displacement": {
+      "category": "SPACING",
+      "label": "Gravity/displacement",
+      "persistence_key": "spacing_volume"
+    },
+    "loose_ball_possession_creation": {
+      "category": "HUSTLE",
+      "label": "Loose-ball possession creation",
+      "persistence_key": "deflections_hustle"
+    },
+    "negative_turnover_value": {
+      "category": "BALL_SECURITY",
+      "label": "Negative turnover value",
+      "persistence_key": "turnover_control",
+      "value_family": "box_visible"
+    },
+    "offensive_rebounding": {
+      "category": "REBOUNDING",
+      "label": "Offensive rebounding",
+      "persistence_key": "oreb"
+    },
+    "passing_creation": {
+      "category": "CREATION",
+      "label": "Passing creation",
+      "persistence_key": "creation_passing",
+      "value_family": "box_visible"
+    },
+    "plus_minus_residual": {
+      "category": "RESIDUAL",
+      "label": "Plus-minus residual",
+      "persistence_key": "plus_minus_residual"
+    },
+    "pnr_ball_handler": {
+      "category": "PLAYTYPE_PNR",
+      "label": "PnR ball-handler value",
+      "persistence_key": "pnr_ball_handler"
+    },
+    "pnr_roll_man": {
+      "category": "PLAYTYPE_PNR",
+      "label": "PnR roll-man value",
+      "persistence_key": "pnr_roll_man"
+    },
+    "possession_extension": {
+      "category": "REBOUNDING",
+      "label": "Possession extension",
+      "persistence_key": "oreb"
+    },
+    "possession_preservation": {
+      "category": "BALL_SECURITY",
+      "label": "Possession preservation",
+      "persistence_key": "turnover_control"
+    },
+    "recoveries": {
+      "category": "HUSTLE",
+      "label": "Recoveries",
+      "persistence_key": "deflections_hustle"
+    },
+    "rim_deterrence_proxy": {
+      "category": "RIM_DEFENSE",
+      "label": "Rim deterrence proxy",
+      "persistence_key": "rim_deterrence_proxy"
+    },
+    "rim_deterrence_tracking": {
+      "category": "RIM_DEFENSE",
+      "label": "Rim deterrence",
+      "persistence_key": "rim_deterrence_tracking"
+    },
+    "rim_protection": {
+      "category": "RIM_DEFENSE",
+      "label": "Rim protection",
+      "persistence_key": "blocks"
+    },
+    "scoring_efficiency_above_replacement": {
+      "category": "SCORING",
+      "label": "Scoring efficiency above replacement",
+      "persistence_key": "scoring_efficiency",
+      "value_family": "box_visible"
+    },
+    "scoring_volume_above_replacement": {
+      "category": "SCORING",
+      "label": "Scoring volume above replacement",
+      "persistence_key": "scoring_volume",
+      "value_family": "box_visible"
+    },
+    "screen_derived_value": {
+      "category": "PLAYTYPE_PNR",
+      "label": "Screen-derived value",
+      "persistence_key": "pnr_roll_man"
+    },
+    "shot_quality_suppression": {
+      "category": "CONTEST_DEFENSE",
+      "label": "Shot-quality suppression",
+      "persistence_key": "contest_defense_tracking"
+    },
+    "spacing_efficiency": {
+      "category": "SPACING",
+      "label": "Spacing efficiency",
+      "persistence_key": "spacing_efficiency"
+    },
+    "spacing_volume": {
+      "category": "SPACING",
+      "label": "Spacing volume",
+      "persistence_key": "spacing_volume"
+    },
+    "stable_shot_skill": {
+      "category": "SCORING",
+      "label": "Stable shot skill",
+      "persistence_key": "stable_shot_skill"
+    },
+    "steal_pressure": {
+      "category": "PERIMETER_DISRUPTION",
+      "label": "Steal pressure",
+      "persistence_key": "steals"
+    },
+    "steals": {
+      "category": "PERIMETER_DISRUPTION",
+      "label": "Steals",
+      "persistence_key": "steals",
+      "value_family": "box_visible"
+    },
+    "turnover_control": {
+      "category": "BALL_SECURITY",
+      "label": "Turnover control",
+      "persistence_key": "turnover_control"
+    }
+  },
+  "categories": {
+    "BALL_SECURITY": {
+      "field": "ball_security_par",
+      "label": "Ball Security"
+    },
+    "CONTEST_DEFENSE": {
+      "field": "contest_defense_par",
+      "label": "Contest Defense"
+    },
+    "CREATION": {
+      "field": "creation_par",
+      "label": "Creation"
+    },
+    "HUSTLE": {
+      "field": "hustle_par",
+      "label": "Hustle"
+    },
+    "PERIMETER_DISRUPTION": {
+      "field": "perimeter_disruption_par",
+      "label": "Perimeter Disruption"
+    },
+    "PLAYTYPE_PNR": {
+      "field": "playtype_pnr_par",
+      "label": "Pick & Roll"
+    },
+    "REBOUNDING": {
+      "field": "rebounding_par",
+      "label": "Rebounding"
+    },
+    "RESIDUAL": {
+      "field": "residual_par",
+      "label": "Residual"
+    },
+    "RIM_DEFENSE": {
+      "field": "rim_defense_par",
+      "label": "Rim Defense"
+    },
+    "SCORING": {
+      "field": "scoring_par",
+      "label": "Scoring"
+    },
+    "SPACING": {
+      "field": "spacing_par",
+      "label": "Spacing"
+    }
+  },
+  "identity": {
+    "par": "BoxVisiblePAR + ConfirmedHiddenRolePAR + ShrunkProxyPAR - OverlapLeakage",
+    "par_1000": "(PAR / Minutes) * 1000",
+    "pvg_score": "50 + 45 * tanh(PAR_1000 / 210)",
+    "war_equivalent": "PAR / 30.4"
+  },
+  "par_model_version": "par_pvg_v0_5",
+  "parf_model_version": "parf_v0_6",
+  "persistence_values": {
+    "blocks": 0.65,
+    "contest_defense_proxy": 0.45,
+    "contest_defense_tracking": 0.7,
+    "contested_shotmaking": 0.45,
+    "creation_passing": 0.75,
+    "defensive_rebounding": 0.7,
+    "deflections_hustle": 0.5,
+    "oreb": 0.8,
+    "plus_minus_residual": 0.35,
+    "pnr_ball_handler": 0.65,
+    "pnr_roll_man": 0.7,
+    "rim_deterrence_proxy": 0.4,
+    "rim_deterrence_tracking": 0.65,
+    "scoring_efficiency": 0.55,
+    "scoring_volume": 0.7,
+    "spacing_efficiency": 0.55,
+    "spacing_volume": 0.8,
+    "stable_shot_skill": 0.65,
+    "steals": 0.6,
+    "turnover_control": 0.75
+  },
+  "points_per_win": 30.4,
+  "replacement_baselines": {
+    "combo_forward": {
+      "negative_turnover_value": -2.2,
+      "passing_creation": 3.2,
+      "scoring_efficiency_above_replacement": 0.0,
+      "scoring_volume_above_replacement": 12.0,
+      "steals": 1.1
+    },
+    "connector": {
+      "negative_turnover_value": -2.2,
+      "passing_creation": 3.2,
+      "scoring_efficiency_above_replacement": 0.0,
+      "scoring_volume_above_replacement": 12.0,
+      "steals": 1.1
+    },
+    "movement_shooter": {
+      "negative_turnover_value": -2.2,
+      "passing_creation": 2.4,
+      "scoring_efficiency_above_replacement": 0.0,
+      "scoring_volume_above_replacement": 11.5,
+      "steals": 1.1
+    },
+    "primary_creator": {
+      "negative_turnover_value": -3.7,
+      "passing_creation": 7.0,
+      "scoring_efficiency_above_replacement": 0.0,
+      "scoring_volume_above_replacement": 18.0,
+      "steals": 1.1
+    },
+    "rim_protector": {
+      "negative_turnover_value": -2.2,
+      "passing_creation": 2.0,
+      "scoring_efficiency_above_replacement": 0.0,
+      "scoring_volume_above_replacement": 9.0,
+      "steals": 1.1
+    },
+    "roll_big": {
+      "negative_turnover_value": -2.2,
+      "passing_creation": 2.0,
+      "scoring_efficiency_above_replacement": 0.0,
+      "scoring_volume_above_replacement": 10.0,
+      "steals": 1.1
+    },
+    "scoring_guard": {
+      "negative_turnover_value": -2.2,
+      "passing_creation": 3.8,
+      "scoring_efficiency_above_replacement": 0.0,
+      "scoring_volume_above_replacement": 17.0,
+      "steals": 1.1
+    },
+    "secondary_creator": {
+      "negative_turnover_value": -3.0,
+      "passing_creation": 5.0,
+      "scoring_efficiency_above_replacement": 0.0,
+      "scoring_volume_above_replacement": 15.5,
+      "steals": 1.1
+    },
+    "stretch_big": {
+      "negative_turnover_value": -2.2,
+      "passing_creation": 3.2,
+      "scoring_efficiency_above_replacement": 0.0,
+      "scoring_volume_above_replacement": 12.0,
+      "steals": 1.1
+    },
+    "three_and_d_wing": {
+      "negative_turnover_value": -2.2,
+      "passing_creation": 3.2,
+      "scoring_efficiency_above_replacement": 0.0,
+      "scoring_volume_above_replacement": 12.0,
+      "steals": 1.1
+    }
+  },
+  "role_profiles": [
+    "primary_creator",
+    "secondary_creator",
+    "scoring_guard",
+    "movement_shooter",
+    "three_and_d_wing",
+    "connector",
+    "combo_forward",
+    "roll_big",
+    "stretch_big",
+    "rim_protector"
+  ],
+  "source_tiers": {
+    "TIER_A_DIRECT": {
+      "confidence_tier": "high",
+      "label": "Direct observed event",
+      "reliability_weight": 1.0
+    },
+    "TIER_B_TRACKING_BACKED": {
+      "confidence_tier": "high",
+      "label": "Validated tracking-derived evidence",
+      "reliability_weight": 0.9
+    },
+    "TIER_C_CONFIRMED_HIDDEN_ROLE": {
+      "confidence_tier": "medium",
+      "label": "Confirmed hidden-role inference",
+      "reliability_weight": 0.75
+    },
+    "TIER_D_SHRUNK_PROXY": {
+      "confidence_tier": "low",
+      "label": "Shrunk proxy",
+      "reliability_weight": 0.55
+    },
+    "TIER_E_UNSUPPORTED": {
+      "confidence_tier": "unsupported",
+      "label": "Unsupported",
+      "reliability_weight": 0.0
+    }
+  }
+}
