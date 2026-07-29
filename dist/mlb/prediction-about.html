@@ -5,38 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MLB Analytics | Prediction Method</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=4">
+    <link rel="stylesheet" href="vault/vault-tokens.css?v=2">
+    <link rel="stylesheet" href="vault/vault-components.css?v=5">
+    <link rel="stylesheet" href="styles.css?v=5">
 </head>
-<body>
-    <button id="siteMenuButton" class="site-menu-button" aria-label="Open site navigation" aria-controls="siteNavDrawer" aria-expanded="false">
-        <span class="site-menu-icon">&#9776;</span>
-    </button>
-    <div id="siteNavOverlay" class="site-nav-overlay"></div>
-    <aside id="siteNavDrawer" class="site-nav-drawer" aria-label="Site navigation">
-        <div class="site-nav-head">
-            <div class="site-nav-title">Navigate</div>
-            <button id="siteNavClose" class="site-nav-close" aria-label="Close site navigation">&times;</button>
-        </div>
-        <nav class="site-nav-links">
-            <a class="site-nav-link" href="/">Sports Hub</a>
-            <a class="site-nav-link" href="/nba/">NBA Dashboard</a>
-            <a class="site-nav-link" href="/nba/predictions.html">NBA Predictions</a>
-            <a class="site-nav-link" href="/mlb/">MLB Home</a>
-            <a class="site-nav-link" href="/mlb/predictions.html">MLB Predictions</a>
-            <a class="site-nav-link" href="/mlb/prediction-about.html">MLB Method</a>
-        </nav>
-        <div class="site-nav-footer">
-            <button id="themeToggleButton" class="theme-toggle-radial" aria-label="Toggle dark mode" title="Toggle dark/light mode">&#9680;</button>
-        </div>
-    </aside>
+<body class="vault-theme">
+    <div id="vaultShellRoot"></div>
 
-    <main class="prediction-about-page">
+    <main class="vault-shell prediction-about-page">
         <section class="prediction-about-stage">
-            <div class="container prediction-about-container">
+            <div class="prediction-about-container">
                 <header class="prediction-about-sign">
                     <p class="prediction-about-kicker">MLB Method</p>
                     <div class="minimal-heading">
-                        <h1>Method</h1>
+                        <h1>Prediction Method</h1>
                         <button class="info-trigger" type="button" aria-label="About method" data-info="How the board is filtered, ranked, and translated into visible prediction cards.">i</button>
                     </div>
                     <p id="aboutRunFacts" class="prediction-about-run-facts">Loading run details...</p>
@@ -46,7 +28,7 @@
                 <section class="prediction-about-panel">
                     <h2>Board Snapshot</h2>
                     <p>
-                        This page summarizes the current MLB high-precision board. Instead of a wide “maybe playable” pool,
+                        This page summarizes the current MLB high-precision board. Instead of a wide maybe-playable pool,
                         the selector trims down to rows with stronger edge, fresher history, and better estimated hit probability.
                     </p>
                     <div id="accuracyOverview" class="prediction-about-metric-grid"></div>
@@ -101,7 +83,8 @@
         </section>
     </main>
 
-    <script src="nav.js?v=2"></script>
-    <script src="prediction-about.js?v=2"></script>
+    <script src="vault/vault-components.js?v=5"></script>
+    <script src="vault/vault-shell.js?v=4"></script>
+    <script src="prediction-about.js?v=3"></script>
 </body>
 </html>

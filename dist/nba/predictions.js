@@ -25,17 +25,13 @@ class DailyPredictionsPage {
             brandTitle: 'NBA Analytics',
             brandHref: '/',
             workspaceLabel: 'NBA',
-            workspaceHref: '/nba/',
+            workspaceHref: '/nba/predictions.html',
             sportSlug: 'nba',
-            sportAccent: '#f59e0b',
+            sportAccent: '#a16207',
             breadcrumbs: [{ label: 'Prediction Board', href: 'predictions.html' }],
             navLinks: [
-                { label: 'Dashboard', href: 'index.html', active: false },
-                { label: 'PAR Records', href: 'par.html', active: false },
                 { label: 'Board', href: 'predictions.html', active: true },
-                { label: 'Safe-State', href: 'safe-state.html', active: false },
                 { label: 'Method', href: 'prediction-about.html', active: false },
-                { label: 'Metrics', href: 'about.html', active: false },
             ],
             showDisclaimer: true,
         });
@@ -85,11 +81,11 @@ class DailyPredictionsPage {
 
         if (this.elements.runMeta && window.CardVault) {
             this.elements.runMeta.innerHTML = [
-                window.CardVault.renderDataFreshness(`Run ${runDate} · Data through ${throughDate}`, stale),
-                ` · Policy ${this.escapeHtml(policy)} · `,
+                window.CardVault.renderDataFreshness(`Run ${runDate} - Data through ${throughDate}`, stale),
+                ` - Policy ${this.escapeHtml(policy)} - `,
                 this.escapeHtml(lagText),
                 window.CardVault.renderStatusPill(publicationTone, publicationLabel),
-                ` · ${this.plays.length} board card${this.plays.length === 1 ? '' : 's'}`,
+                ` - ${this.plays.length} prediction${this.plays.length === 1 ? '' : 's'}`,
             ].join('');
         } else if (this.elements.runMeta) {
             this.elements.runMeta.textContent = `Run ${runDate} | Data through ${throughDate} | Policy ${policy} | ${publicationLabel}`;

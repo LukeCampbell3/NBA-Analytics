@@ -5,17 +5,16 @@
   const CardVaultShell = {};
 
   const DEFAULT_SPORTS = [
-    { slug: "nba", label: "NBA", href: "/nba/" },
-    { slug: "mlb", label: "MLB", href: "/mlb/" },
-    { slug: "nfl", label: "NFL", href: "/nfl/" },
+    { slug: "nba", label: "NBA", href: "/nba/predictions.html" },
+    { slug: "mlb", label: "MLB", href: "/mlb/predictions.html" },
   ];
 
   const DEFAULT_SITE_NAV_LINKS = [
-    { label: "Sports Hub", href: "/" },
-    { label: "NBA Dashboard", href: "/nba/" },
+    { label: "Prediction Desk", href: "/" },
     { label: "NBA Predictions", href: "/nba/predictions.html" },
-    { label: "MLB Home", href: "/mlb/" },
+    { label: "NBA Method", href: "/nba/prediction-about.html" },
     { label: "MLB Predictions", href: "/mlb/predictions.html" },
+    { label: "MLB Method", href: "/mlb/prediction-about.html" },
   ];
 
   CardVaultShell.escapeHtml = function escapeHtml(value) {
@@ -35,12 +34,12 @@
     if (!root) return;
 
     const {
-      brandTitle = "In The Cards Analytics",
+      brandTitle = "Prediction Analytics",
       brandHref = "/",
-      workspaceLabel = "Workspace Hub",
+      workspaceLabel = "Predictions",
       workspaceHref = "/",
       sportSlug = "",
-      sportAccent = "#f59e0b",
+      sportAccent = "#2563eb",
       breadcrumbs = [],
       navLinks = [],
       siteNavLinks = DEFAULT_SITE_NAV_LINKS,
@@ -59,7 +58,7 @@
     }).join("");
 
     const crumbItems = [
-      { label: "Vault Hub", href: brandHref },
+      { label: "Desk", href: brandHref },
       ...(workspaceLabel ? [{ label: workspaceLabel, href: workspaceHref }] : []),
       ...breadcrumbs,
     ];
@@ -102,7 +101,7 @@
     root.innerHTML = `
       <header class="vault-topbar" role="banner">
         <a class="vault-brand" href="${CardVaultShell.escapeHtml(brandHref)}">
-          <span class="vault-brand-kicker">In The Cards</span>
+          <span class="vault-brand-kicker">Prediction Desk</span>
           <span class="vault-brand-title">${CardVaultShell.escapeHtml(brandTitle)}</span>
         </a>
         <nav class="vault-breadcrumb" aria-label="Breadcrumb">${crumbHtml}</nav>

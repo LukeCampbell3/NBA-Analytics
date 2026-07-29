@@ -12,6 +12,7 @@ class PredictionAboutPage {
     }
 
     async init() {
+        this.mountShell();
         try {
             const response = await fetch(`data/daily_predictions.json?v=${Date.now()}`);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -26,6 +27,25 @@ class PredictionAboutPage {
             this.elements.byTarget.innerHTML = '<div class="prediction-about-empty">No target metrics available.</div>';
             this.elements.byDirection.innerHTML = '<div class="prediction-about-empty">No direction metrics available.</div>';
         }
+    }
+
+    mountShell() {
+        if (!window.CardVaultShell) return;
+
+        window.CardVaultShell.mount({
+            brandTitle: 'NBA Analytics',
+            brandHref: '/',
+            workspaceLabel: 'NBA',
+            workspaceHref: '/nba/predictions.html',
+            sportSlug: 'nba',
+            sportAccent: '#a16207',
+            breadcrumbs: [{ label: 'Prediction Method', href: 'prediction-about.html' }],
+            navLinks: [
+                { label: 'Board', href: 'predictions.html', active: false },
+                { label: 'Method', href: 'prediction-about.html', active: true },
+            ],
+            showDisclaimer: true,
+        });
     }
 
     renderRunFacts() {

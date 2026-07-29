@@ -25,6 +25,15 @@ REPO_ROOT = SPORTS_ROOT.parent
 DEFAULT_SOURCE_DIR = SITE_ROOT / "web"
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "dist"
 VAULT_SOURCE_DIR = SPORTS_ROOT / "shared" / "web" / "vault"
+PREDICTION_PAGE_STEMS = {"predictions", "prediction-about"}
+PREDICTION_TOP_LEVEL_FILES = {
+    "predictions.html",
+    "prediction-about.html",
+    "predictions.js",
+    "prediction-about.js",
+    "styles.css",
+}
+PREDICTION_DATA_FILES = {"daily_predictions.json"}
 
 
 def nonempty_html_files(directory: Path) -> Iterable[Path]:
@@ -155,6 +164,8 @@ def discover_pages(slug: str, source_dir: Path, metadata: Dict[str, object]) -> 
 
     for html_file in html_files:
         stem = html_file.stem.lower()
+        if stem not in PREDICTION_PAGE_STEMS:
+            continue
         label = str(route_labels.get(stem) or ("Overview" if stem == "index" else titleize_stem(stem)))
         href = f"/{slug}/" if stem == "index" else f"/{slug}/{stem}/"
         pages.append({
@@ -180,6 +191,20 @@ def sync_vault_assets(target_dirs: Iterable[Path]) -> None:
         print(f"[vault] {VAULT_SOURCE_DIR} -> {vault_out}")
 
 
+def prune_non_prediction_assets(sport_output: Path) -> None:
+    for child in sorted(sport_output.iterdir()):
+        if child.is_file() and child.name not in PREDICTION_TOP_LEVEL_FILES:
+            child.unlink()
+            print(f"[prune] removed non-prediction asset {child.relative_to(sport_output)}")
+
+    data_dir = sport_output / "data"
+    if data_dir.is_dir():
+        for data_file in sorted(data_dir.rglob("*")):
+            if data_file.is_file() and data_file.name not in PREDICTION_DATA_FILES:
+                data_file.unlink()
+                print(f"[prune] removed non-prediction data {data_file.relative_to(sport_output)}")
+
+
 def discover_sports() -> List[Dict[str, object]]:
     sports: List[Dict[str, object]] = []
 
@@ -195,6 +220,8 @@ def discover_sports() -> List[Dict[str, object]]:
         slug = sport_dir.name.lower()
         metadata = load_site_metadata(sport_dir)
         pages = discover_pages(slug, source_dir, metadata)
+        if not any(page.get("slug") == "predictions" for page in pages):
+            continue
         sports.append(
             {
                 "slug": slug,
@@ -239,6 +266,7 @@ def build_static_site(
         source_dir = Path(sport["source_dir"])
         sport_output = output_dir / slug
         shutil.copytree(source_dir, sport_output)
+        prune_non_prediction_assets(sport_output)
         trim_college_payload(sport_output / "data", college_card_limit)
         create_clean_routes(sport_output)
         vault_targets.append(sport_output)
@@ -255,7 +283,10 @@ def build_static_site(
                 "accent": sport["accent"],
                 "surface": sport["surface"],
                 "pages": sport["pages"],
-                "entry_href": f"/{slug}/",
+                "entry_href": next(
+                    (page["href"] for page in sport["pages"] if page.get("slug") == "predictions"),
+                    f"/{slug}/predictions/",
+                ),
             }
         )
 

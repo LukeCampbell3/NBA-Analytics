@@ -1,22 +1,29 @@
 async function loadSportsManifest() {
     const response = await fetch(`data/sports.json?v=${Date.now()}`);
     if (!response.ok) {
-        throw new Error(`Failed to load sports manifest (HTTP ${response.status})`);
+        throw new Error(`Failed to load prediction manifest (HTTP ${response.status})`);
     }
     return response.json();
 }
 
+function predictionPages(sport) {
+    return (sport.pages || []).filter((page) => page.slug === "predictions" || page.slug === "prediction-about");
+}
+
 function renderSummary(sports) {
     const sportCount = document.getElementById("sportCount");
-    const activeCount = document.getElementById("activeCount");
-    const pageCount = document.getElementById("pageCount");
+    const boardCount = document.getElementById("boardCount");
+    const methodCount = document.getElementById("methodCount");
+    const surfaceCount = document.getElementById("predictionSurfaceCount");
 
-    const active = sports.filter((sport) => sport.status === "active").length;
-    const pages = sports.reduce((sum, sport) => sum + (Array.isArray(sport.pages) ? sport.pages.length : 0), 0);
+    const pages = sports.flatMap(predictionPages);
+    const boards = pages.filter((page) => page.slug === "predictions").length;
+    const methods = pages.filter((page) => page.slug === "prediction-about").length;
 
     if (sportCount) sportCount.textContent = String(sports.length);
-    if (activeCount) activeCount.textContent = String(active);
-    if (pageCount) pageCount.textContent = String(pages);
+    if (boardCount) boardCount.textContent = String(boards);
+    if (methodCount) methodCount.textContent = String(methods);
+    if (surfaceCount) surfaceCount.textContent = String(pages.length);
 }
 
 function renderSportsGrid(sports) {
@@ -29,28 +36,35 @@ function renderSportsGrid(sports) {
         return;
     }
 
-    if (!Array.isArray(sports) || sports.length === 0) {
+    const predictionSports = (sports || [])
+        .map((sport) => ({ ...sport, pages: predictionPages(sport) }))
+        .filter((sport) => sport.pages.some((page) => page.slug === "predictions"));
+
+    if (!predictionSports.length) {
         grid.innerHTML = cv.renderEmptyState(
-            "No vault doors found",
-            "No sport workspaces were discovered in the current build.",
-            "Add sports/<slug>/web with an index.html to register a new workspace."
+            "No prediction pages found",
+            "No sport prediction boards were discovered in the current build.",
+            "Add a predictions.html page under sports/<slug>/web to publish a board."
         );
         return;
     }
 
-    grid.innerHTML = sports.map((sport) => cv.renderSportWorkspaceCard(sport)).join("");
+    grid.innerHTML = predictionSports.map((sport) => cv.renderSportWorkspaceCard({
+        ...sport,
+        entry_href: sport.pages.find((page) => page.slug === "predictions")?.href || sport.entry_href,
+    })).join("");
 }
 
 function mountHubShell() {
     if (!window.CardVaultShell) return;
 
     window.CardVaultShell.mount({
-        brandTitle: "Analytics Vault Hub",
+        brandTitle: "Prediction Analytics",
         brandHref: "/",
         workspaceLabel: "",
         sportSlug: "",
-        sportAccent: "#38bdf8",
-        breadcrumbs: [{ label: "Vault Hub", href: "/" }],
+        sportAccent: "#2563eb",
+        breadcrumbs: [{ label: "Prediction Desk", href: "/" }],
         navLinks: [],
         showDisclaimer: true,
     });
@@ -59,7 +73,7 @@ function mountHubShell() {
 function showLoadingGrid() {
     const grid = document.getElementById("sportsGrid");
     if (grid && window.CardVault) {
-        grid.innerHTML = window.CardVault.renderSkeletonCard(3);
+        grid.innerHTML = window.CardVault.renderSkeletonCard(2);
     }
 }
 
@@ -76,7 +90,7 @@ async function init() {
         const grid = document.getElementById("sportsGrid");
         if (grid && window.CardVault) {
             grid.innerHTML = window.CardVault.renderEmptyState(
-                "Unable to load vault manifest",
+                "Unable to load prediction manifest",
                 error.message,
                 "Rebuild the static site to regenerate data/sports.json."
             );

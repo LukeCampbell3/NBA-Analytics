@@ -3,65 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>In The Cards Analytics | Vault Hub</title>
+    <title>Prediction Analytics | Desk</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="vault/vault-tokens.css?v=1">
-    <link rel="stylesheet" href="vault/vault-components.css?v=3">
-    <link rel="stylesheet" href="vault-hub.css?v=1">
-    <link rel="stylesheet" href="styles.css?v=2">
+    <link rel="stylesheet" href="vault/vault-tokens.css?v=2">
+    <link rel="stylesheet" href="vault/vault-components.css?v=5">
+    <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body class="vault-theme">
     <div id="vaultShellRoot"></div>
 
-    <div class="vault-shell site-shell">
-        <header class="hero">
+    <main class="vault-shell site-shell">
+        <header class="hero prediction-hero">
             <div class="hero-copy">
-                <p class="eyebrow">In The Cards</p>
+                <p class="eyebrow">Prediction Desk</p>
                 <div class="vault-heading-row">
-                    <h1>Choose a sport.</h1>
-                    <button class="vault-info-trigger" type="button" aria-label="About the hub" data-info="Each sport has its own workspace for cards, prediction boards, validation labs, and methods.">i</button>
+                    <h1>Daily model boards.</h1>
+                    <button class="vault-info-trigger" type="button" aria-label="About the prediction desk" data-info="The static frontend now exposes prediction boards and their method pages only.">i</button>
                 </div>
+                <p class="hero-text">A focused front door for NBA and MLB prediction pages, with consistent board styling, neutral surfaces, and method context one click away.</p>
             </div>
             <div class="hero-panel">
-                <p class="hero-panel-label">Navigation</p>
-                <button class="vault-info-trigger" type="button" aria-label="How navigation works" data-info="Use the vault doors below or the top navigation to move between NBA, MLB, and other workspaces.">i</button>
+                <p class="hero-panel-label">Published Surface</p>
+                <strong id="predictionSurfaceCount">0</strong>
+                <span>prediction pages</span>
             </div>
         </header>
 
-        <section class="summary-strip" aria-label="Workspace summary">
+        <section class="summary-strip" aria-label="Prediction summary">
             <article class="summary-card">
                 <span id="sportCount" class="summary-value">0</span>
-                <span class="summary-label">Sport Vaults</span>
+                <span class="summary-label">Sports</span>
             </article>
             <article class="summary-card">
-                <span id="activeCount" class="summary-value">0</span>
-                <span class="summary-label">Active Workspaces</span>
+                <span id="boardCount" class="summary-value">0</span>
+                <span class="summary-label">Boards</span>
             </article>
             <article class="summary-card">
-                <span id="pageCount" class="summary-value">0</span>
-                <span class="summary-label">Published Pages</span>
+                <span id="methodCount" class="summary-value">0</span>
+                <span class="summary-label">Method Pages</span>
             </article>
         </section>
 
-        <main>
-            <section class="section-head">
-                <p class="section-kicker">Vault Doors</p>
-                <div class="vault-heading-row">
-                    <h2>Sports</h2>
-                    <button class="vault-info-trigger" type="button" aria-label="About sport vaults" data-info="Vault doors are generated from the repo structure and link to each sport workspace.">i</button>
-                </div>
-            </section>
+        <section class="section-head">
+            <p class="section-kicker">Boards</p>
+            <div class="vault-heading-row">
+                <h2>Prediction Pages</h2>
+                <button class="vault-info-trigger" type="button" aria-label="About prediction pages" data-info="Each card links to a sport prediction board and, when available, the method page behind it.">i</button>
+            </div>
+        </section>
 
-            <section id="sportsGrid" class="vault-door-grid" aria-live="polite">
-                <article class="sport-card sport-card-loading">
-                    <p>Loading vault doors...</p>
-                </article>
-            </section>
-        </main>
-    </div>
+        <section id="sportsGrid" class="vault-door-grid prediction-link-grid" aria-live="polite">
+            <article class="sport-card sport-card-loading">
+                <p>Loading prediction pages...</p>
+            </article>
+        </section>
+    </main>
 
-    <script src="vault/vault-components.js?v=3"></script>
-    <script src="vault/vault-shell.js?v=3"></script>
-    <script src="app.js?v=2"></script>
+    <script src="vault/vault-components.js?v=5"></script>
+    <script src="vault/vault-shell.js?v=4"></script>
+    <script src="app.js?v=3"></script>
 </body>
 </html>

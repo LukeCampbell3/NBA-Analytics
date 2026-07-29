@@ -426,26 +426,7 @@ body.theme-dark .theme-toggle-radial {
 .predictions-page,
 .prediction-about-page {
     min-height: 100vh;
-    background-color: #6f4526;
-    background-image:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(50, 29, 14, 0.28)),
-        repeating-linear-gradient(
-            90deg,
-            #8b5b33 0,
-            #8b5b33 72px,
-            #7a4e2a 72px,
-            #7a4e2a 148px,
-            #9a673b 148px,
-            #9a673b 226px
-        ),
-        repeating-linear-gradient(
-            180deg,
-            rgba(48, 29, 15, 0.28) 0,
-            rgba(48, 29, 15, 0.28) 2px,
-            rgba(255, 255, 255, 0.02) 2px,
-            rgba(255, 255, 255, 0.02) 18px
-        );
-    background-blend-mode: multiply, normal, overlay;
+    background: transparent;
 }
 
 .prediction-stage,
@@ -4063,7 +4044,341 @@ body.theme-dark .simulation-snapshot-grid div {
     }
 }
 
-/* NBA dashboard system. Prediction pages keep their saloon/bounty theme. */
+/* Prediction desk overrides */
+
+body.vault-theme .prediction-about-page,
+body.vault-theme .predictions-page {
+    background: transparent;
+}
+
+body.vault-theme .prediction-about-stage {
+    padding: 0 0 54px;
+}
+
+body.vault-theme .prediction-about-container {
+    max-width: 1080px;
+    margin: 0 auto;
+}
+
+body.vault-theme .prediction-about-sign,
+body.vault-theme .prediction-about-panel,
+body.vault-theme .prediction-about-callout,
+body.vault-theme .prediction-about-metric-card,
+body.vault-theme .prediction-about-table-wrap {
+    border: 1px solid var(--vault-line);
+    border-radius: var(--vault-radius-lg);
+    background: var(--vault-panel);
+    color: var(--vault-text);
+    box-shadow: var(--vault-shadow-card);
+}
+
+body.vault-theme .prediction-about-sign {
+    padding: 24px;
+    margin-bottom: 18px;
+}
+
+body.vault-theme .prediction-about-panel {
+    padding: 24px;
+}
+
+body.vault-theme .prediction-about-kicker,
+body.vault-theme .prediction-about-back-link {
+    color: var(--vault-sport-accent);
+}
+
+body.vault-theme .prediction-about-back-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid color-mix(in srgb, var(--vault-sport-accent) 34%, var(--vault-line));
+    border-radius: var(--vault-radius-sm);
+    background: var(--vault-panel-raised);
+    box-shadow: none;
+    color: var(--vault-text);
+    font-weight: 800;
+    text-decoration: none;
+}
+
+body.vault-theme .prediction-about-back-link:hover,
+body.vault-theme .prediction-about-back-link:focus-visible {
+    border-color: var(--vault-sport-accent);
+    outline: 2px solid color-mix(in srgb, var(--vault-sport-accent) 32%, transparent);
+    outline-offset: 2px;
+}
+
+body.vault-theme .prediction-about-sign h1,
+body.vault-theme .prediction-about-panel h2,
+body.vault-theme .prediction-about-panel h3 {
+    color: var(--vault-text);
+    font-family: var(--vault-font-display);
+    letter-spacing: 0;
+}
+
+body.vault-theme .prediction-about-sign h1 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+}
+
+body.vault-theme .prediction-about-run-facts,
+body.vault-theme .prediction-about-panel p,
+body.vault-theme .prediction-about-list,
+body.vault-theme .prediction-about-table,
+body.vault-theme .prediction-about-empty {
+    color: var(--vault-text-muted);
+}
+
+body.vault-theme .prediction-about-table th,
+body.vault-theme .prediction-about-table td {
+    border-color: var(--vault-line);
+}
+
+body.vault-theme .prediction-about-table th {
+    color: var(--vault-text);
+    background: var(--vault-panel-raised);
+}
+
+body.vault-theme .prediction-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--vault-space-4);
+    min-height: 0;
+    padding: var(--vault-space-5);
+    border: 1px solid var(--vault-line);
+    border-radius: var(--vault-radius-card);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--vault-sport-accent) 4%, transparent), transparent 44%),
+        var(--vault-card-face);
+    color: var(--vault-text);
+    box-shadow: var(--vault-shadow-card);
+    overflow: hidden;
+    isolation: auto;
+    text-align: left;
+}
+
+body.vault-theme .prediction-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: var(--vault-sport-accent);
+    border: 0;
+    box-shadow: none;
+    z-index: 0;
+}
+
+body.vault-theme .prediction-card::after {
+    display: none;
+}
+
+body.vault-theme .prediction-card[data-direction="OVER"] {
+    --direction-color: var(--vault-signal-positive);
+}
+
+body.vault-theme .prediction-card[data-direction="UNDER"] {
+    --direction-color: var(--vault-signal-negative);
+}
+
+body.vault-theme .prediction-card__header,
+body.vault-theme .prediction-card__identity,
+body.vault-theme .prediction-card__signal,
+body.vault-theme .prediction-card__metrics,
+body.vault-theme .prediction-card__note {
+    position: relative;
+    z-index: 1;
+}
+
+body.vault-theme .prediction-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--vault-space-3);
+}
+
+body.vault-theme .prediction-card__rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    min-height: 30px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: var(--vault-radius-sm);
+    background: var(--vault-bg-2);
+    color: var(--vault-text);
+    font: 800 0.78rem/1 var(--vault-font-body);
+    letter-spacing: 0;
+}
+
+body.vault-theme .prediction-card__tags {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+body.vault-theme .prediction-card__tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 0 8px;
+    border: 1px solid var(--vault-line);
+    border-radius: 999px;
+    background: var(--vault-panel-raised);
+    color: var(--vault-text-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+body.vault-theme .prediction-card__identity {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: var(--vault-space-4);
+    align-items: center;
+}
+
+body.vault-theme .prediction-card__photo {
+    width: 72px;
+    height: 72px;
+    max-width: none;
+    margin: 0;
+    border: 1px solid var(--vault-line);
+    border-radius: var(--vault-radius-sm);
+    background: var(--vault-bg-2);
+    box-shadow: none;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+}
+
+body.vault-theme .prediction-card__photo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    filter: none;
+}
+
+body.vault-theme .prediction-card__fallback {
+    color: var(--vault-text-muted);
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    background: linear-gradient(180deg, var(--vault-panel-raised), var(--vault-bg-2));
+}
+
+body.vault-theme .prediction-card__name {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    color: var(--vault-text);
+    font: 800 1.1rem/1.18 var(--vault-font-display);
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+body.vault-theme .prediction-card__market {
+    margin: 6px 0 0;
+    color: var(--direction-color, var(--vault-sport-accent));
+    font: 800 0.85rem/1.2 var(--vault-font-body);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+body.vault-theme .prediction-card__context {
+    margin: 5px 0 0;
+    color: var(--vault-text-dim);
+    font-size: 0.76rem;
+    line-height: 1.35;
+}
+
+body.vault-theme .prediction-card__signal {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--vault-space-3);
+    padding: var(--vault-space-3);
+    border: 1px solid color-mix(in srgb, var(--direction-color, var(--vault-sport-accent)) 28%, var(--vault-line));
+    border-radius: var(--vault-radius-sm);
+    background: color-mix(in srgb, var(--direction-color, var(--vault-sport-accent)) 7%, var(--vault-panel));
+}
+
+body.vault-theme .prediction-card__signal-label {
+    color: var(--vault-text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+body.vault-theme .prediction-card__signal strong {
+    color: var(--direction-color, var(--vault-sport-accent));
+    font-size: 1.45rem;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+body.vault-theme .prediction-card__metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+}
+
+body.vault-theme .prediction-card__metrics div {
+    min-width: 0;
+    padding: 9px 8px;
+    border: 1px solid var(--vault-line);
+    border-radius: var(--vault-radius-sm);
+    background: var(--vault-panel-raised);
+}
+
+body.vault-theme .prediction-card__metrics dt,
+body.vault-theme .prediction-card__metrics dd {
+    margin: 0;
+}
+
+body.vault-theme .prediction-card__metrics dt {
+    color: var(--vault-text-dim);
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+body.vault-theme .prediction-card__metrics dd {
+    margin-top: 4px;
+    color: var(--vault-text);
+    font-size: 0.86rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+body.vault-theme .prediction-card__note {
+    margin: 0;
+    color: var(--vault-text-muted);
+    font-size: 0.8rem;
+    line-height: 1.45;
+    text-align: left;
+}
+
+@media (max-width: 560px) {
+    body.vault-theme .prediction-card__identity {
+        grid-template-columns: 58px minmax(0, 1fr);
+    }
+
+    body.vault-theme .prediction-card__photo {
+        width: 58px;
+        height: 58px;
+    }
+
+    body.vault-theme .prediction-card__metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
 :root {
     --itc-font: 'Manrope', 'Segoe UI', system-ui, sans-serif;
     --itc-ink: #182235;

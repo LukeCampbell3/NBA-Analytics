@@ -160,7 +160,7 @@
         <div class="player-card__metrics" style="margin: var(--vault-space-4) 0;">
           ${chips || CardVault.renderMetricChip("Pages", "0 published")}
         </div>
-        <a class="vault-door-cta" href="${CardVault.escapeAttr(sport.entry_href)}">Enter ${CardVault.escapeHtml(sport.title)} vault</a>
+        <a class="vault-door-cta" href="${CardVault.escapeAttr(sport.entry_href)}">Open ${CardVault.escapeHtml(sport.title)} predictions</a>
       </article>
     `;
   };
@@ -319,46 +319,49 @@
       : `Context-supported edge on ${targetLabel}. Review evidence before acting.`;
 
     const photoHtml = resolvedHeadshot
-      ? `<img class="bounty-paper__photo-img" src="${CardVault.escapeAttr(resolvedHeadshot)}" alt="" loading="lazy" onerror="this.replaceWith(this.nextElementSibling)" /><span class="bounty-paper__fallback">${CardVault.escapeHtml(monogram)}</span>`
-      : `<span class="bounty-paper__fallback">${CardVault.escapeHtml(monogram)}</span>`;
-    const parlayTag = play.parlay_candidate && !needsReview ? '<span class="bounty-paper__tag bounty-paper__tag--parlay">Parlay Tag</span>' : "";
+      ? `<img class="prediction-card__photo-img" src="${CardVault.escapeAttr(resolvedHeadshot)}" alt="" loading="lazy" onerror="this.replaceWith(this.nextElementSibling)" /><span class="prediction-card__fallback">${CardVault.escapeHtml(monogram)}</span>`
+      : `<span class="prediction-card__fallback">${CardVault.escapeHtml(monogram)}</span>`;
+    const parlayTag = play.parlay_candidate && !needsReview ? '<span class="prediction-card__tag prediction-card__tag--parlay">Parlay</span>' : "";
     const statusTag = needsReview
-      ? '<span class="bounty-paper__tag bounty-paper__tag--risk">Review</span>'
+      ? '<span class="prediction-card__tag prediction-card__tag--risk">Review</span>'
       : play.publication_status === "withheld"
-        ? '<span class="bounty-paper__tag bounty-paper__tag--risk">Withheld</span>'
-        : '<span class="bounty-paper__tag">Published</span>';
+        ? '<span class="prediction-card__tag prediction-card__tag--risk">Withheld</span>'
+        : '<span class="prediction-card__tag">Published</span>';
     const riskTags = riskFlags
       .slice(0, 3)
-      .map((flag) => `<span class="bounty-paper__tag bounty-paper__tag--risk">${CardVault.escapeHtml(riskLabels[flag] || flag.replaceAll("_", " "))}</span>`)
+      .map((flag) => `<span class="prediction-card__tag prediction-card__tag--risk">${CardVault.escapeHtml(riskLabels[flag] || flag.replaceAll("_", " "))}</span>`)
       .join("");
     const hitRate = play.estimated_graded_hit_rate != null ? CardVault.formatPct(play.estimated_graded_hit_rate) : "n/a";
     const pushText = play.estimated_push_probability != null ? CardVault.formatPct(play.estimated_push_probability) : "n/a";
     const valueScore = play.value_score != null ? CardVault.formatNumber(play.value_score) : "n/a";
 
     return `
-      <article class="bounty-paper bounty-paper--${CardVault.escapeAttr(tier)}" data-direction="${CardVault.escapeAttr(direction)}" aria-label="Wanted poster for ${CardVault.escapeAttr(displayName)} ${CardVault.escapeAttr(direction)} ${CardVault.escapeAttr(targetLabel)}">
-        <div class="bounty-paper__grain" aria-hidden="true"></div>
-        <header class="bounty-paper__header">
-          <span class="bounty-paper__rank">Board #${CardVault.escapeHtml(play.rank || index + 1)}</span>
-          <h2 class="bounty-paper__wanted">Wanted</h2>
-          <p class="bounty-paper__subhead">For model-backed action</p>
+      <article class="prediction-card prediction-card--${CardVault.escapeAttr(tier)}" data-direction="${CardVault.escapeAttr(direction)}" aria-label="Prediction card for ${CardVault.escapeAttr(displayName)} ${CardVault.escapeAttr(direction)} ${CardVault.escapeAttr(targetLabel)}">
+        <header class="prediction-card__header">
+          <span class="prediction-card__rank">#${CardVault.escapeHtml(play.rank || index + 1)}</span>
+          <div class="prediction-card__tags">${parlayTag}<span class="prediction-card__tag">${CardVault.escapeHtml(tier)}</span>${statusTag}${riskTags}</div>
         </header>
-        <div class="bounty-paper__photo">${photoHtml}</div>
-        <div class="bounty-paper__tags">${parlayTag}<span class="bounty-paper__tag">${CardVault.escapeHtml(tier)}</span>${statusTag}${riskTags}</div>
-        <p class="bounty-paper__reward-label">Reward Signal</p>
-        <p class="bounty-paper__reward">${CardVault.escapeHtml(evText)}</p>
-        <h3 class="bounty-paper__name">${CardVault.escapeHtml(displayName)}</h3>
-        <p class="bounty-paper__direction">${CardVault.escapeHtml(direction)} ${CardVault.escapeHtml(targetLabel)}</p>
-        <dl class="bounty-paper__ledger">
+        <div class="prediction-card__identity">
+          <div class="prediction-card__photo">${photoHtml}</div>
+          <div class="prediction-card__identity-copy">
+            <h3 class="prediction-card__name">${CardVault.escapeHtml(displayName)}</h3>
+            <p class="prediction-card__market">${CardVault.escapeHtml(direction)} ${CardVault.escapeHtml(targetLabel)}</p>
+            ${footer ? `<p class="prediction-card__context">${CardVault.escapeHtml(footer)}</p>` : ""}
+          </div>
+        </div>
+        <div class="prediction-card__signal">
+          <span class="prediction-card__signal-label">Signal</span>
+          <strong>${CardVault.escapeHtml(evText)}</strong>
+        </div>
+        <dl class="prediction-card__metrics">
           <div><dt>Line</dt><dd>${CardVault.escapeHtml(lineText)}</dd></div>
           <div><dt>Projection</dt><dd>${CardVault.escapeHtml(predText)}</dd></div>
           <div><dt>Edge</dt><dd>${CardVault.escapeHtml(edgeText)}</dd></div>
-          <div><dt>Model Est.</dt><dd>${CardVault.escapeHtml(hitRate)}</dd></div>
+          <div><dt>Model</dt><dd>${CardVault.escapeHtml(hitRate)}</dd></div>
           <div><dt>Push</dt><dd>${CardVault.escapeHtml(pushText)}</dd></div>
           <div><dt>Value</dt><dd>${CardVault.escapeHtml(valueScore)}</dd></div>
         </dl>
-        <p class="bounty-paper__note">${CardVault.escapeHtml(why)}</p>
-        ${footer ? `<footer class="bounty-paper__footer">${CardVault.escapeHtml(footer)}</footer>` : ""}
+        <p class="prediction-card__note">${CardVault.escapeHtml(why)}</p>
       </article>
     `;
   };

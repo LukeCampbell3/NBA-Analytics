@@ -25,12 +25,11 @@ class DailyPredictionsPage {
             brandTitle: "MLB Analytics",
             brandHref: "/",
             workspaceLabel: "MLB",
-            workspaceHref: "/mlb/",
+            workspaceHref: "/mlb/predictions.html",
             sportSlug: "mlb",
             sportAccent: "#0f766e",
             breadcrumbs: [{ label: "Prediction Board", href: "predictions.html" }],
             navLinks: [
-                { label: "Home", href: "index.html", active: false },
                 { label: "Board", href: "predictions.html", active: true },
                 { label: "Method", href: "prediction-about.html", active: false },
             ],
@@ -82,11 +81,11 @@ class DailyPredictionsPage {
 
         if (this.elements.runMeta && window.CardVault) {
             this.elements.runMeta.innerHTML = [
-                window.CardVault.renderDataFreshness(`Run ${runDate} · Data through ${throughDate}`, stale),
-                ` · Policy ${this.escapeHtml(policy)} · `,
+                window.CardVault.renderDataFreshness(`Run ${runDate} - Data through ${throughDate}`, stale),
+                ` - Policy ${this.escapeHtml(policy)} - `,
                 this.escapeHtml(lagText),
                 window.CardVault.renderStatusPill(publicationTone, publicationLabel),
-                ` · ${this.plays.length} board card${this.plays.length === 1 ? "" : "s"}`,
+                ` - ${this.plays.length} prediction${this.plays.length === 1 ? "" : "s"}`,
             ].join("");
         } else if (this.elements.runMeta) {
             this.elements.runMeta.textContent = `Run ${runDate} | Data through ${throughDate} | Policy ${policy} | ${publicationLabel}`;
