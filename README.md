@@ -50,23 +50,23 @@ python sports/site/pipeline/serve_web.py
 This gives you a landing page at `/` and sport workspaces like `/nba/`, `/mlb/`, and `/nfl/`.
 The combined static output is written to `dist/` at the repo root.
 
-## Odds API Key
+## Market Data
 
-For local market fetches, you can store your Odds API key in a repo-local `config.local.yaml` file instead of setting a shell environment variable each time:
+NBA and MLB production runs scrape their public RotoWire player-props pages.
+The fetchers enforce the requested board date, normalize multi-book lines and
+prices into the existing market snapshot contract, and require no API key.
 
-```yaml
-odds_api:
-  api_key: "paste-your-key-here"
-```
+## Automated Daily Publication
 
-The fetchers check in this order:
+`.github/workflows/main.yml` runs at 10:17 AM America/New_York and can also be
+started manually with a date and sport selection. GitHub requires scheduled
+workflow definitions to exist on the repository's default branch (`main`), so
+the workflow starts there and explicitly checks out, builds, validates, and
+updates the deployable `static-deployment` branch.
 
-1. `--api-key`
-2. `THE_ODDS_API_KEY` or `ODDS_API_KEY`
-3. `config.local.yaml`
-4. `.env.local` or `.env`
-
-For MLB, the market fetch now pulls live player prop tables from RotoWire's MLB props page and writes them into the same normalized snapshot contract the prediction pipeline already consumes.
+The job rejects stale payloads before committing. It publishes only `dist/`,
+same-day prediction payloads and pools, and MLB calibration summaries; raw
+refresh caches and processed history are not committed by the automation.
 
 ## NBA Quick Start
 

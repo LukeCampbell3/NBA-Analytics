@@ -92,6 +92,26 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Optional NBA shadow policy profiles forwarded to the NBA daily runner.",
     )
+    parser.add_argument(
+        "--nba-market-provider",
+        type=str,
+        default="rotowire",
+        choices=["rotowire", "covers", "sportsgameodds"],
+        help="NBA live market provider forwarded to the NBA daily runner.",
+    )
+    parser.add_argument(
+        "--nba-market-bookmakers",
+        type=str,
+        default="draftkings,fanduel",
+        help="Comma-separated NBA bookmakers forwarded to the NBA daily runner.",
+    )
+    parser.add_argument(
+        "--nba-snapshot-policy",
+        type=str,
+        default="auto",
+        choices=["auto", "live_only"],
+        help="NBA market snapshot freshness policy forwarded to the NBA daily runner.",
+    )
     parser.add_argument("--nba-allow-heuristic-fallback", action="store_true", help="Allow NBA heuristic fallback if model loading fails.")
     parser.add_argument("--nba-skip-update-data", action="store_true", help="Skip the NBA official-data refresh step.")
     parser.add_argument("--nba-skip-collect-market", action="store_true", help="Skip the NBA market collection step.")
@@ -383,6 +403,12 @@ def run_nba(args: argparse.Namespace, output_dir: Path) -> None:
         "--web-cards-json",
         str(NBA_CARDS_JSON),
         "--skip-build-site",
+        "--market-provider",
+        str(args.nba_market_provider),
+        "--market-bookmakers",
+        str(args.nba_market_bookmakers),
+        "--snapshot-policy",
+        str(args.nba_snapshot_policy),
     ]
     if args.run_date:
         command.extend(["--run-date", str(args.run_date)])

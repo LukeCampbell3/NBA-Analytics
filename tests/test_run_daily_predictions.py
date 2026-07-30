@@ -45,6 +45,9 @@ def _default_args(**overrides) -> Namespace:
         "nba_latest": False,
         "nba_policy_profile": "production_board_objective_b12",
         "nba_shadow_policy_profiles": None,
+        "nba_market_provider": "rotowire",
+        "nba_market_bookmakers": "draftkings,fanduel",
+        "nba_snapshot_policy": "auto",
         "nba_allow_heuristic_fallback": False,
         "nba_skip_update_data": False,
         "nba_skip_collect_market": False,
@@ -126,6 +129,39 @@ def test_run_nba_exports_expected_same_day_manifest(tmp_path, monkeypatch) -> No
     assert export_command[:2] == ["python", str(tmp_path / "export_daily_predictions_web.py")]
     assert "--manifest" in export_command
     assert str(manifest_path) in export_command
+
+
+def test_run_nba_forwards_scraped_live_market_configuration(tmp_path, monkeypatch) -> None:
+    predictor_root = tmp_path / "Player-Predictor"
+    manifest_path = predictor_root / "model" / "analysis" / "daily_runs" / "20260428" / "daily_market_pipeline_manifest_20260428.json"
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_text("{}", encoding="utf-8")
+
+    commands: list[tuple[str, list[str]]] = []
+
+    def fake_run_step(label: str, command: list[str], cwd: Path = shared_daily_predictions.REPO_ROOT) -> None:
+        commands.append((label, command))
+
+    monkeypatch.setattr(shared_daily_predictions, "datetime", FrozenDateTime)
+    monkeypatch.setattr(shared_daily_predictions, "run_step", fake_run_step)
+    monkeypatch.setattr(shared_daily_predictions, "NBA_PREDICTOR_ROOT", predictor_root)
+    monkeypatch.setattr(shared_daily_predictions, "NBA_RUNNER", tmp_path / "run_daily_market_pipeline.py")
+    monkeypatch.setattr(shared_daily_predictions, "NBA_EXPORTER", tmp_path / "export_daily_predictions_web.py")
+    monkeypatch.setattr(shared_daily_predictions, "NBA_WEB_JSON", tmp_path / "sports" / "nba" / "web" / "data" / "daily_predictions.json")
+    monkeypatch.setattr(shared_daily_predictions, "NBA_CARDS_JSON", tmp_path / "sports" / "nba" / "web" / "data" / "cards.json")
+
+    args = _default_args(
+        run_date="2026-04-28",
+        nba_market_provider="rotowire",
+        nba_market_bookmakers="draftkings,fanduel",
+        nba_snapshot_policy="live_only",
+    )
+    shared_daily_predictions.run_nba(args, tmp_path / "dist")
+
+    runner_command = commands[0][1]
+    assert runner_command[runner_command.index("--market-provider") + 1] == "rotowire"
+    assert runner_command[runner_command.index("--market-bookmakers") + 1] == "draftkings,fanduel"
+    assert runner_command[runner_command.index("--snapshot-policy") + 1] == "live_only"
 
 
 def test_main_continues_mlb_and_build_when_nba_fails(monkeypatch, tmp_path, capsys) -> None:

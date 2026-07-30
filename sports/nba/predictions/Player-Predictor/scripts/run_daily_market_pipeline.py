@@ -141,8 +141,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--market-provider",
         type=str,
-        default="covers",
-        choices=["covers", "sportsgameodds"],
+        default="rotowire",
+        choices=["rotowire", "covers", "sportsgameodds"],
         help="Market snapshot source used when --skip-collect-market is not set.",
     )
     parser.add_argument(
@@ -736,7 +736,21 @@ def main() -> None:
             ],
         )
 
-    if not args.skip_collect_market and args.market_provider == "covers":
+    if not args.skip_collect_market and args.market_provider == "rotowire":
+        run_step(
+            "Scrape RotoWire Current NBA Props",
+            [
+                args.python,
+                "scripts/fetch_nba_market_props.py",
+                "--provider",
+                "rotowire",
+                "--event-date",
+                str(local_date.date()),
+                "--outdir",
+                str(MARKET_ROOT),
+            ],
+        )
+    elif not args.skip_collect_market and args.market_provider == "covers":
         run_step(
             f"Collect Covers Props {lookback_start} -> {future_end}",
             [

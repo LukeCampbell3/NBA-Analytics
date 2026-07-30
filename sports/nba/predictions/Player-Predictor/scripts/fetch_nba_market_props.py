@@ -8,6 +8,7 @@ This script is intentionally standalone and optional:
 - it writes normalized long + wide snapshots that other scripts can consume
 
 Current providers:
+- rotowire: scrape the public same-day RotoWire multi-book props board
 - snapshot: ingest an already-fetched CSV/parquet snapshot and normalize it
 - odds_api: optional legacy fallback, disabled unless explicitly allowed
 - sportsgameodds: live SportsGameOdds v2 events snapshot
@@ -21,6 +22,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -31,7 +33,10 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import requests
 import yaml
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -40,6 +45,22 @@ SPORT_KEY = "basketball_nba"
 DEFAULT_MARKETS = ["player_points", "player_rebounds", "player_assists"]
 DEFAULT_BOOKMAKERS = ["draftkings", "fanduel"]
 EASTERN_TZ = "America/New_York"
+ROTOWIRE_URL = "https://www.rotowire.com/betting/nba/player-props.php"
+ROTOWIRE_PROP_MAP = {
+    "pts": "player_points",
+    "reb": "player_rebounds",
+    "ast": "player_assists",
+}
+ROTOWIRE_BOOK_TITLES = {
+    "betrivers": "BetRivers",
+    "caesars": "Caesars",
+    "draftkings": "DraftKings",
+    "fanatics": "Fanatics",
+    "fanduel": "FanDuel",
+    "hardrock": "Hard Rock",
+    "mgm": "BetMGM",
+    "thescore": "theScore",
+}
 MARKET_WIDE_COLUMNS = [
     "Market_Date",
     "Player",
@@ -111,9 +132,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--provider",
         type=str,
-        default="snapshot",
-        choices=["odds_api", "snapshot", "sportsgameodds"],
-        help="Market data provider. NBA should normally stay on snapshot/local lines.",
+        default="rotowire",
+        choices=["rotowire", "odds_api", "snapshot", "sportsgameodds"],
+        help="Market data provider. RotoWire scrapes the public same-day multi-book board without an API key.",
     )
     parser.add_argument(
         "--allow-odds-api",
@@ -135,6 +156,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--outdir", type=Path, default=DEFAULT_OUTDIR, help="Output directory for raw + normalized snapshots.")
     parser.add_argument("--event-limit", type=int, default=None, help="Optional limit for smoke tests.")
     parser.add_argument("--sleep-seconds", type=float, default=0.2, help="Cooldown between event calls.")
+    parser.add_argument("--event-date", type=str, default=None, help="Required RotoWire board date in YYYY-MM-DD format.")
+    parser.add_argument("--page-url", type=str, default=ROTOWIRE_URL, help="RotoWire NBA player props page URL.")
+    parser.add_argument("--timeout-seconds", type=float, default=30.0, help="RotoWire page request timeout.")
     return parser.parse_args()
 
 
@@ -438,6 +462,226 @@ def _wide_from_long_props(
         fallback_label="latest_player_props_wide",
     )
     return wide
+
+
+def _extract_data_array_literal(script_text: str) -> str:
+    data_idx = script_text.find("data:")
+    if data_idx < 0:
+        raise ValueError("settings.data array not found in script block")
+    start = script_text.find("[", data_idx)
+    if start < 0:
+        raise ValueError("settings.data opening '[' not found")
+
+    depth = 0
+    in_string = False
+    string_char = ""
+    escaped = False
+    for pos in range(start, len(script_text)):
+        char = script_text[pos]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == string_char:
+                in_string = False
+            continue
+        if char in {'"', "'"}:
+            in_string = True
+            string_char = char
+        elif char == "[":
+            depth += 1
+        elif char == "]":
+            depth -= 1
+            if depth == 0:
+                return script_text[start : pos + 1]
+    raise ValueError("Unterminated settings.data array in RotoWire script block")
+
+
+def extract_rotowire_page_payload(html: str) -> tuple[str, dict[str, list[dict[str, object]]]]:
+    date_match = re.search(r'const dayNBA\s*=\s*"([0-9]{4}-[0-9]{2}-[0-9]{2})"', html)
+    if not date_match:
+        raise RuntimeError("Unable to locate the RotoWire NBA board date. The page may not have an active slate.")
+    page_date = str(date_match.group(1))
+
+    bundles: dict[str, list[dict[str, object]]] = {}
+    scripts = re.findall(r"<script[^>]*>(.*?)</script>", html, flags=re.IGNORECASE | re.DOTALL)
+    for script_text in scripts:
+        if "const settings" not in script_text or "data:" not in script_text:
+            continue
+        prop_match = re.search(r'const prop\s*=\s*"([a-z]+)"', script_text)
+        if not prop_match:
+            continue
+        prop = str(prop_match.group(1)).strip().lower()
+        if prop not in ROTOWIRE_PROP_MAP:
+            continue
+        rows = json.loads(_extract_data_array_literal(script_text))
+        if isinstance(rows, list) and rows:
+            bundles[prop] = [row for row in rows if isinstance(row, dict)]
+
+    if not bundles:
+        raise RuntimeError("No supported NBA prop bundles were found on the RotoWire page.")
+    return page_date, bundles
+
+
+def _rotowire_book_keys(row: dict[str, object], prop: str) -> list[str]:
+    suffixes = (f"_{prop}", f"_{prop}Over", f"_{prop}Under")
+    books: set[str] = set()
+    for key in row:
+        for suffix in suffixes:
+            if key.endswith(suffix):
+                books.add(key[: -len(suffix)])
+                break
+    return sorted(books)
+
+
+def _rotowire_matchup(row: dict[str, object]) -> tuple[str | None, str | None]:
+    team = str(row.get("team") or "").strip().upper()
+    opponent = str(row.get("opp") or "").strip().upper()
+    if not team:
+        return None, opponent.removeprefix("@") or None
+    if opponent.startswith("@"):
+        return opponent[1:] or None, team
+    return team, opponent or None
+
+
+def _numeric_value(value: object) -> float:
+    text = str(value or "").strip().replace("+", "")
+    if not text:
+        return float("nan")
+    parsed = pd.to_numeric(pd.Series([text]), errors="coerce").iloc[0]
+    return float(parsed) if pd.notna(parsed) else float("nan")
+
+
+def build_rotowire_frames(
+    *,
+    market_date: str,
+    bundles: dict[str, list[dict[str, object]]],
+    fetched_at_utc: str,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    long_rows: list[dict[str, object]] = []
+    for prop, market_key in ROTOWIRE_PROP_MAP.items():
+        for row in bundles.get(prop, []):
+            player_raw = str(row.get("name") or "").strip()
+            player_norm = normalize_name(player_raw)
+            if not player_raw or not player_norm:
+                continue
+            home_team, away_team = _rotowire_matchup(row)
+            for bookmaker_key in _rotowire_book_keys(row, prop):
+                line = _numeric_value(row.get(f"{bookmaker_key}_{prop}"))
+                if not np.isfinite(line):
+                    continue
+                long_rows.append(
+                    {
+                        "fetched_at_utc": fetched_at_utc,
+                        "event_id": str(row.get("gameID") or ""),
+                        "commence_time_utc": pd.NaT,
+                        "event_date_et": market_date,
+                        "home_team": home_team,
+                        "away_team": away_team,
+                        "bookmaker_key": bookmaker_key,
+                        "bookmaker_title": ROTOWIRE_BOOK_TITLES.get(bookmaker_key, bookmaker_key.title()),
+                        "market_key": market_key,
+                        "player_name_raw": player_raw,
+                        "player_name_norm": player_norm,
+                        "line": line,
+                        "over_price": _numeric_value(row.get(f"{bookmaker_key}_{prop}Over")),
+                        "under_price": _numeric_value(row.get(f"{bookmaker_key}_{prop}Under")),
+                    }
+                )
+
+    long_df = pd.DataFrame(long_rows)
+    if long_df.empty:
+        return long_df, pd.DataFrame(columns=MARKET_WIDE_COLUMNS)
+    wide_df = _wide_from_long_props(
+        long_df,
+        fetched_at_utc,
+        provider="rotowire",
+        price_source="rotowire_embedded_multi_book",
+        market_book="rotowire_consensus",
+    )
+    for column in MARKET_WIDE_COLUMNS:
+        if column not in wide_df.columns:
+            wide_df[column] = pd.NA
+    return long_df, wide_df[MARKET_WIDE_COLUMNS].copy()
+
+
+def _rotowire_session() -> requests.Session:
+    retry = Retry(
+        total=3,
+        connect=3,
+        read=3,
+        status=3,
+        backoff_factor=0.75,
+        status_forcelist=(429, 500, 502, 503, 504),
+        allowed_methods=frozenset({"GET"}),
+        raise_on_status=False,
+    )
+    session = requests.Session()
+    session.mount("https://", HTTPAdapter(max_retries=retry))
+    session.headers.update(
+        {
+            "Accept": "text/html,application/xhtml+xml",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Cache-Control": "no-cache",
+            "User-Agent": (
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/134.0 Safari/537.36"
+            ),
+        }
+    )
+    return session
+
+
+def fetch_from_rotowire(
+    args: argparse.Namespace,
+    fetched_at_utc: str,
+) -> tuple[list[dict], dict[str, dict], pd.DataFrame, pd.DataFrame, dict]:
+    requested_date = str(args.event_date or "").strip() or None
+    if requested_date:
+        datetime.fromisoformat(requested_date)
+
+    with _rotowire_session() as session:
+        response = session.get(args.page_url, timeout=float(args.timeout_seconds))
+        response.raise_for_status()
+        html = response.text
+
+    page_date, bundles = extract_rotowire_page_payload(html)
+    if requested_date and page_date != requested_date:
+        raise RuntimeError(
+            f"RotoWire NBA board date mismatch: requested {requested_date}, page contains {page_date}."
+        )
+    long_df, wide_df = build_rotowire_frames(
+        market_date=page_date,
+        bundles=bundles,
+        fetched_at_utc=fetched_at_utc,
+    )
+    if long_df.empty or wide_df.empty:
+        raise RuntimeError(f"RotoWire NBA board for {page_date} did not contain usable PTS/TRB/AST lines.")
+
+    events = [
+        {
+            "event_id": str(event_id),
+            "market_date": page_date,
+        }
+        for event_id in sorted(long_df["event_id"].dropna().astype(str).unique())
+    ]
+    manifest = {
+        "provider": "rotowire",
+        "fetched_at_utc": fetched_at_utc,
+        "source_url": str(args.page_url),
+        "page_date": page_date,
+        "event_date_requested": requested_date,
+        "bundle_kinds": sorted(bundles),
+        "bundle_rows": {prop: int(len(rows)) for prop, rows in bundles.items()},
+        "bookmakers": sorted(long_df["bookmaker_key"].dropna().astype(str).unique()),
+        "event_count_requested": int(len(events)),
+        "event_count_fetched": int(len(events)),
+        "long_rows": int(len(long_df)),
+        "wide_rows": int(len(wide_df)),
+        "errors": [],
+    }
+    return events, bundles, long_df, wide_df, manifest
 
 
 def normalize_event_odds(events: list[dict], event_odds: dict[str, dict], fetched_at_utc: str) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -945,7 +1189,9 @@ def main() -> None:
     stamp = utc_compact_timestamp()
     fetched_at_utc = utc_now_iso()
 
-    if args.provider == "odds_api":
+    if args.provider == "rotowire":
+        events, event_payloads, long_df, wide_df, manifest = fetch_from_rotowire(args, fetched_at_utc)
+    elif args.provider == "odds_api":
         if not args.allow_odds_api:
             raise RuntimeError(
                 "NBA Odds API access is disabled by default. "
