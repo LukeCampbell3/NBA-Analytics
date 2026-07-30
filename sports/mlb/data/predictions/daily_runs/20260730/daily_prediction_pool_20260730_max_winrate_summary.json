@@ -1,0 +1,26 @@
+{
+  "pool_csv": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260730/daily_prediction_pool_20260730.csv",
+  "out_csv": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260730/daily_prediction_pool_20260730_max_winrate.csv",
+  "rows_supported": 0,
+  "rows_after_filters": 0,
+  "rows_selected": 0,
+  "selection": {
+    "policy": "max_winrate_v1",
+    "min_model_prob": 0.92,
+    "min_bucket_win_rate": 0.86,
+    "min_bucket_samples": 500,
+    "min_history_rows": 40,
+    "min_market_books": 5,
+    "max_days_since_history": 3,
+    "min_edge": 0.35,
+    "max_board_size": 7
+  },
+  "avg_abs_edge": 0,
+  "avg_hit_probability": 0,
+  "avg_graded_hit_rate": 0,
+  "avg_precision_score": 0,
+  "avg_historical_bucket_win_rate": 0,
+  "by_target": {},
+  "by_direction": {},
+  "publication_strategy": "max_winrate_v1"
+}
