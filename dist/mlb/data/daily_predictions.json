@@ -4,33 +4,35 @@
   "run_date": "2026-07-29",
   "through_date": "2026-07-28",
   "model_run_id": "mlb_high_precision_selector_v2",
-  "policy_profile": "core_market_props",
-  "publication_status": "ready",
-  "publication_message": "Board passed publication checks.",
+  "policy_profile": "walk_forward_balanced_v1",
+  "publication_status": "withheld",
+  "publication_message": "no plays passed publication filters",
   "data_quality": {
-    "status": "ready",
+    "status": "withheld",
     "lag_days": 1,
     "review_threshold_days": 14,
     "withhold_threshold_days": 60,
-    "reasons": []
+    "reasons": [
+      "no plays passed publication filters"
+    ]
   },
-  "generated_at_utc": "2026-07-30T00:38:27.409266+00:00",
+  "generated_at_utc": "2026-07-30T02:39:54.242200+00:00",
   "summary": {
-    "play_count": 2,
-    "source_play_count": 4,
-    "closed_game_cards_suppressed": 2,
+    "play_count": 0,
+    "source_play_count": 3,
+    "closed_game_cards_suppressed": 3,
     "duplicate_cards_suppressed": 0,
     "supported_rows": 1077,
-    "rows_after_filters": 10,
-    "rejected_rows": 1067,
-    "avg_expected_hit_rate": 0.8,
-    "avg_graded_hit_rate": 0.8,
-    "avg_edge": -0.650505,
-    "avg_abs_edge": 0.650505,
-    "avg_value_score": 0.618461558082,
-    "avg_precision_score": 0.949346,
-    "parlay_tagged_plays": 2,
-    "parlay_pairs": 1
+    "rows_after_filters": 3,
+    "rejected_rows": 1074,
+    "avg_expected_hit_rate": 0.0,
+    "avg_graded_hit_rate": 0.0,
+    "avg_edge": 0.0,
+    "avg_abs_edge": 0.0,
+    "avg_value_score": 0.0,
+    "avg_precision_score": 0.0,
+    "parlay_tagged_plays": 0,
+    "parlay_pairs": 0
   },
   "selection": {
     "top_n": 10,
@@ -75,44 +77,30 @@
     "min_historical_market_availability_rate": 0.45
   },
   "filter_rejections": {
-    "edge_too_small": 621,
-    "history_too_short": 83,
-    "side_price_unconfirmed": 104,
-    "synthetic_market_source": 202,
-    "market_books_too_low": 10,
+    "edge_too_small": 598,
+    "history_too_short": 84,
+    "side_price_unconfirmed": 159,
+    "synthetic_market_source": 201,
+    "market_books_too_low": 12,
     "prediction_too_low": 4,
-    "graded_hit_rate_too_low": 18,
-    "hit_probability_too_low": 17,
-    "historical_market_availability_rate_too_low": 7,
+    "hit_probability_too_low": 4,
+    "graded_hit_rate_too_low": 5,
+    "historical_market_availability_rate_too_low": 6,
     "push_probability_too_high": 1
   },
-  "by_target": {
-    "TB": {
-      "count": 1,
-      "share": 0.5
-    },
-    "R": {
-      "count": 1,
-      "share": 0.5
-    }
-  },
-  "by_direction": {
-    "UNDER": {
-      "count": 2,
-      "share": 1.0
-    }
-  },
+  "by_target": {},
+  "by_direction": {},
   "parlay_summary": {
     "selection_mode": "strict",
-    "candidate_pair_count": 1,
-    "selected_pair_count": 1,
-    "candidate_parlay_count": 1,
-    "selected_parlay_count": 1,
-    "tagged_play_count": 2,
-    "avg_projected_pair_hit_rate": 0.6400000000000001,
-    "best_projected_pair_hit_rate": 0.6400000000000001,
-    "avg_projected_parlay_hit_rate": 0.6400000000000001,
-    "best_projected_parlay_hit_rate": 0.6400000000000001,
+    "candidate_pair_count": 0,
+    "selected_pair_count": 0,
+    "candidate_parlay_count": 0,
+    "selected_parlay_count": 0,
+    "tagged_play_count": 0,
+    "avg_projected_pair_hit_rate": null,
+    "best_projected_pair_hit_rate": null,
+    "avg_projected_parlay_hit_rate": null,
+    "best_projected_parlay_hit_rate": null,
     "min_leg_probability": 0.6,
     "min_pair_probability": 0.38,
     "min_legs_per_parlay": 2,
@@ -122,226 +110,49 @@
     "fallback_min_legs_per_parlay": 2,
     "fallback_max_legs_per_parlay": 2
   },
-  "parlay_pairs": [
-    {
-      "leg_indices": [
-        0,
-        1
-      ],
-      "leg_keys": [
-        "2026-07-29|824973|jahmai jones|tb|under",
-        "2026-07-29|824973|colby thomas|r|under"
-      ],
-      "leg_names": [
-        "Jahmai Jones",
-        "Colby Thomas"
-      ],
-      "leg_targets": [
-        "TB",
-        "R"
-      ],
-      "leg_directions": [
-        "UNDER",
-        "UNDER"
-      ],
-      "leg_count": 2,
-      "projected_probability": 0.6400000000000001,
-      "independent_probability": 0.6400000000000001,
-      "pairwise_adjustment_factor": 1.007855,
-      "parlay_score": 0.6925872844410436,
-      "avg_leg_quality": 0.8475089521739132,
-      "same_player": false,
-      "same_game": true,
-      "same_team": false,
-      "same_target": false,
-      "same_market_bucket": false,
-      "mixed_direction": false,
-      "pair_rank": 1,
-      "ticket_rank": 1,
-      "pair_score": 0.6925872844410436,
-      "legs": [
-        {
-          "play_key": "2026-07-29|824973|jahmai jones|tb|under",
-          "player": "Jahmai Jones",
-          "target": "TB",
-          "direction": "UNDER"
-        },
-        {
-          "play_key": "2026-07-29|824973|colby thomas|r|under",
-          "player": "Colby Thomas",
-          "target": "R",
-          "direction": "UNDER"
-        }
-      ]
-    }
-  ],
+  "parlay_pairs": [],
   "parlay_validation": {
     "available": false,
     "reason": "parlay validation rebuild disabled for fast web export"
   },
   "suppressed_closed_games": [
     {
-      "player": "Edwin Arroyo",
-      "team": "CIN",
-      "opponent": "CLE",
+      "player": "Wade Meckler",
+      "team": "LAA",
+      "opponent": "HOU",
       "market_date": "2026-07-29",
       "target": "TB",
       "direction": "UNDER",
       "market_line": 1.5,
-      "game_id": "824487",
+      "game_id": "824002",
       "official_game_status": "In Progress",
       "reason": "game is no longer open for pregame predictions"
     },
     {
-      "player": "Drew Romo",
-      "team": "CWS",
-      "opponent": "NYY",
+      "player": "Colby Thomas",
+      "team": "ATH",
+      "opponent": "BOS",
       "market_date": "2026-07-29",
       "target": "R",
       "direction": "UNDER",
       "market_line": 0.5,
-      "game_id": "824567",
+      "game_id": "824973",
       "official_game_status": "In Progress",
+      "reason": "game is no longer open for pregame predictions"
+    },
+    {
+      "player": "Masyn Winn",
+      "team": "STL",
+      "opponent": "CHC",
+      "market_date": "2026-07-29",
+      "target": "TB",
+      "direction": "UNDER",
+      "market_line": 1.5,
+      "game_id": "823022",
+      "official_game_status": "Game Over",
       "reason": "game is no longer open for pregame predictions"
     }
   ],
   "suppressed_duplicates": [],
-  "plays": [
-    {
-      "rank": 1,
-      "source_rank": 1,
-      "player": "Jahmai Jones",
-      "player_display_name": "Jahmai Jones",
-      "player_id": "jahmai_jones",
-      "player_mlbam_id": 663330,
-      "player_headshot_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/663330/headshot/67/current",
-      "player_headshot_fallback_url": "https://midfield.mlbstatic.com/v1/people/663330/headshot/67/current",
-      "team": "BOS",
-      "opponent": "ATH",
-      "market_home_team": "ATH",
-      "market_away_team": "BOS",
-      "market_date": "2026-07-29",
-      "official_game_date": "2026-07-29",
-      "commence_time_utc": "2026-07-30T01:40:00Z",
-      "game_id": "824973",
-      "game_status_code": "P",
-      "official_game_status": "Pre-Game",
-      "direction": "UNDER",
-      "target": "TB",
-      "prediction": 0.595793,
-      "market_line": 1.5,
-      "market_source": "real",
-      "edge": -0.904207,
-      "abs_edge": 0.904207,
-      "estimated_hit_probability": 0.8,
-      "estimated_push_probability": 0.0,
-      "estimated_graded_hit_rate": 0.8,
-      "model_estimate_status": "calibrated",
-      "precision_score": 0.952922,
-      "value_score": 0.861638742854,
-      "historical_bucket_key": "TB|UNDER|1.5",
-      "historical_prior_source": "line_bucket",
-      "historical_bucket_win_rate": 0.863303,
-      "historical_bucket_support": 8859.0,
-      "market_bucket": "TB|UNDER|1.5",
-      "market_books": 8,
-      "market_line_std": 0.0,
-      "market_implied_probability": 0.581516,
-      "expected_value_per_unit": 0.274252,
-      "final_pool_quality_score": 0.8520558652173914,
-      "parlay_precision_eligible": true,
-      "model_confidence_tier": "strong",
-      "confidence_tier": "strong",
-      "publication_status": "ready",
-      "action_status": "ready",
-      "lineup_status": "confirmed",
-      "confirmed_team": "BOS",
-      "batting_order": "100",
-      "risk_flags": [],
-      "play_key": "2026-07-29|824973|jahmai jones|tb|under",
-      "parlay_tag": "parlay",
-      "parlay_candidate": true,
-      "parlay_ticket_rank": 1,
-      "parlay_pair_rank": 1,
-      "parlay_score": 0.6925872844410436,
-      "parlay_projected_hit_rate": 0.6400000000000001,
-      "parlay_leg_count": 2,
-      "parlay_partner_key": "2026-07-29|824973|colby thomas|r|under",
-      "parlay_partner_name": "Colby Thomas",
-      "parlay_partner_keys": [
-        "2026-07-29|824973|colby thomas|r|under"
-      ],
-      "parlay_partner_names": [
-        "Colby Thomas"
-      ]
-    },
-    {
-      "rank": 2,
-      "source_rank": 2,
-      "player": "Colby Thomas",
-      "player_display_name": "Colby Thomas",
-      "player_id": "colby_thomas",
-      "player_mlbam_id": 687515,
-      "player_headshot_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/687515/headshot/67/current",
-      "player_headshot_fallback_url": "https://midfield.mlbstatic.com/v1/people/687515/headshot/67/current",
-      "team": "ATH",
-      "opponent": "BOS",
-      "market_home_team": "ATH",
-      "market_away_team": "BOS",
-      "market_date": "2026-07-29",
-      "official_game_date": "2026-07-29",
-      "commence_time_utc": "2026-07-30T01:40:00Z",
-      "game_id": "824973",
-      "game_status_code": "P",
-      "official_game_status": "Pre-Game",
-      "direction": "UNDER",
-      "target": "R",
-      "prediction": 0.103197,
-      "market_line": 0.5,
-      "market_source": "real",
-      "edge": -0.396803,
-      "abs_edge": 0.396803,
-      "estimated_hit_probability": 0.8,
-      "estimated_push_probability": 0.0,
-      "estimated_graded_hit_rate": 0.8,
-      "model_estimate_status": "calibrated",
-      "precision_score": 0.94577,
-      "value_score": 0.37528437331000003,
-      "historical_bucket_key": "R|UNDER|0.5",
-      "historical_prior_source": "line_bucket",
-      "historical_bucket_win_rate": 0.784803,
-      "historical_bucket_support": 22347.0,
-      "market_bucket": "R|UNDER|0.5",
-      "market_books": 6,
-      "market_line_std": 0.0,
-      "market_implied_probability": 0.608988,
-      "expected_value_per_unit": 0.223041,
-      "final_pool_quality_score": 0.8429620391304349,
-      "parlay_precision_eligible": true,
-      "model_confidence_tier": "strong",
-      "confidence_tier": "strong",
-      "publication_status": "ready",
-      "action_status": "ready",
-      "lineup_status": "confirmed",
-      "confirmed_team": "ATH",
-      "batting_order": "600",
-      "risk_flags": [],
-      "play_key": "2026-07-29|824973|colby thomas|r|under",
-      "parlay_tag": "parlay",
-      "parlay_candidate": true,
-      "parlay_ticket_rank": 1,
-      "parlay_pair_rank": 1,
-      "parlay_score": 0.6925872844410436,
-      "parlay_projected_hit_rate": 0.6400000000000001,
-      "parlay_leg_count": 2,
-      "parlay_partner_key": "2026-07-29|824973|jahmai jones|tb|under",
-      "parlay_partner_name": "Jahmai Jones",
-      "parlay_partner_keys": [
-        "2026-07-29|824973|jahmai jones|tb|under"
-      ],
-      "parlay_partner_names": [
-        "Jahmai Jones"
-      ]
-    }
-  ]
+  "plays": []
 }

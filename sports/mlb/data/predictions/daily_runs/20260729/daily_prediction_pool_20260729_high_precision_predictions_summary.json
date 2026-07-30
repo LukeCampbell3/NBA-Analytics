@@ -1,9 +1,9 @@
 {
-  "pool_csv": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260729\\daily_prediction_pool_20260729.csv",
-  "out_csv": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260729\\daily_prediction_pool_20260729_high_precision_predictions.csv",
+  "pool_csv": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260729/daily_prediction_pool_20260729.csv",
+  "out_csv": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260729/daily_prediction_pool_20260729_high_precision_predictions.csv",
   "rows_supported": 1077,
-  "rows_after_filters": 10,
-  "rows_selected": 4,
+  "rows_after_filters": 3,
+  "rows_selected": 3,
   "selection": {
     "top_n": 10,
     "min_abs_edge": 0.35,
@@ -47,67 +47,66 @@
     "min_historical_market_availability_rate": 0.45
   },
   "historical_calibration": {
-    "cache_json": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\calibration\\historical_bucket_priors_2026.json",
-    "history_dir": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\Player-Predictor\\Data-Proc-MLB",
+    "cache_json": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/calibration/historical_bucket_priors_2026.json",
+    "history_dir": "/home/runner/work/NBA-Analytics/NBA-Analytics/Player-Predictor/Data-Proc-MLB",
     "season": 2026,
-    "source_file_count": 1190,
-    "updated_at_utc": "2026-07-30T00:32:47.319208+00:00"
+    "source_file_count": 1189,
+    "updated_at_utc": "2026-07-30T02:39:38.082169+00:00"
   },
   "historical_bet_profiles": {
-    "cache_json": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\calibration\\historical_bet_profile_priors_2026.json",
-    "history_dir": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\Player-Predictor\\Data-Proc-MLB",
+    "cache_json": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/calibration/historical_bet_profile_priors_2026.json",
+    "history_dir": "/home/runner/work/NBA-Analytics/NBA-Analytics/Player-Predictor/Data-Proc-MLB",
     "season": 2026,
-    "source_file_count": 1190,
-    "updated_at_utc": "2026-07-30T00:32:55.103482+00:00"
+    "source_file_count": 1189,
+    "updated_at_utc": "2026-07-30T02:39:53.605090+00:00"
   },
   "filter_rejections": {
-    "edge_too_small": 621,
-    "history_too_short": 83,
-    "side_price_unconfirmed": 104,
-    "synthetic_market_source": 202,
-    "market_books_too_low": 10,
+    "edge_too_small": 598,
+    "history_too_short": 84,
+    "side_price_unconfirmed": 159,
+    "synthetic_market_source": 201,
+    "market_books_too_low": 12,
     "prediction_too_low": 4,
-    "graded_hit_rate_too_low": 18,
-    "hit_probability_too_low": 17,
-    "historical_market_availability_rate_too_low": 7,
+    "hit_probability_too_low": 4,
+    "graded_hit_rate_too_low": 5,
+    "historical_market_availability_rate_too_low": 6,
     "push_probability_too_high": 1
   },
-  "avg_abs_edge": 0.58425,
-  "avg_model_hit_probability": 0.866636,
+  "avg_abs_edge": 0.531271,
+  "avg_model_hit_probability": 0.81523,
   "avg_hit_probability": 0.8,
-  "avg_model_graded_hit_rate": 0.866636,
-  "avg_graded_hit_rate": 0.798875,
-  "avg_precision_score": 0.938235,
-  "avg_historical_bucket_win_rate": 0.824053,
+  "avg_model_graded_hit_rate": 0.81523,
+  "avg_graded_hit_rate": 0.792706,
+  "avg_precision_score": 0.909283,
+  "avg_historical_bucket_win_rate": 0.837239,
   "avg_historical_prior_weight": 0.35,
-  "avg_historical_bet_profile_win_rate": 0.725143,
+  "avg_historical_bet_profile_win_rate": 0.709566,
   "avg_historical_bet_profile_prior_weight": 0.25,
-  "avg_historical_market_availability_rate": 0.704013,
-  "avg_market_books": 7.25,
-  "price_confirmed_count": 4,
-  "avg_expected_value_per_unit": 0.199501,
+  "avg_historical_market_availability_rate": 0.663184,
+  "avg_market_books": 7.333333,
+  "price_confirmed_count": 3,
+  "avg_expected_value_per_unit": 0.213321,
   "by_target": {
     "TB": 2,
-    "R": 2
+    "R": 1
   },
   "by_direction": {
-    "UNDER": 4
+    "UNDER": 3
   },
   "by_team": {
-    "BOS": 1,
+    "LAA": 1,
     "ATH": 1,
-    "CIN": 1,
-    "CWS": 1
+    "STL": 1
   },
   "by_market_bucket": {
     "TB|UNDER|1.5": 2,
-    "R|UNDER|0.5": 2
+    "R|UNDER|0.5": 1
   },
   "selected_preview": [
     {
       "rank": 1,
-      "player": "Jahmai Jones",
-      "team": "BOS",
+      "player": "Wade Meckler",
+      "team": "LAA",
       "target": "TB",
       "direction": "UNDER",
       "original_direction": "UNDER",
@@ -115,18 +114,18 @@
       "market_line": 1.5,
       "market_bucket": "TB|UNDER|1.5",
       "market_source": "real",
-      "prediction": 0.5958,
-      "model_hit_probability": 0.8795,
+      "prediction": 0.8445,
+      "model_hit_probability": 0.7927,
       "estimated_hit_probability": 0.8,
       "historical_bucket_win_rate": 0.8633,
-      "historical_bucket_support": 8859,
+      "historical_bucket_support": 8885,
       "market_books": 8,
       "price_confirmed": true,
-      "historical_bet_profile_win_rate": 0.7941,
-      "historical_bet_profile_support": 34,
-      "historical_market_availability_rate": 0.6648,
-      "expected_value_per_unit": 0.2743,
-      "precision_score": 0.9529
+      "historical_bet_profile_win_rate": 0.717,
+      "historical_bet_profile_support": 53,
+      "historical_market_availability_rate": 0.6367,
+      "expected_value_per_unit": 0.455,
+      "precision_score": 0.9308
     },
     {
       "rank": 2,
@@ -142,20 +141,20 @@
       "prediction": 0.1032,
       "model_hit_probability": 0.9019,
       "estimated_hit_probability": 0.8,
-      "historical_bucket_win_rate": 0.7848,
-      "historical_bucket_support": 22347,
+      "historical_bucket_win_rate": 0.7852,
+      "historical_bucket_support": 22394,
       "market_books": 6,
       "price_confirmed": true,
       "historical_bet_profile_win_rate": 0.6947,
       "historical_bet_profile_support": 95,
-      "historical_market_availability_rate": 0.7432,
-      "expected_value_per_unit": 0.223,
-      "precision_score": 0.9458
+      "historical_market_availability_rate": 0.7161,
+      "expected_value_per_unit": 0.22,
+      "precision_score": 0.9306
     },
     {
       "rank": 3,
-      "player": "Edwin Arroyo",
-      "team": "CIN",
+      "player": "Masyn Winn",
+      "team": "STL",
       "target": "TB",
       "direction": "UNDER",
       "original_direction": "UNDER",
@@ -163,42 +162,25 @@
       "market_line": 1.5,
       "market_bucket": "TB|UNDER|1.5",
       "market_source": "real",
-      "prediction": 0.854,
-      "model_hit_probability": 0.7892,
+      "prediction": 0.9585,
+      "model_hit_probability": 0.751,
       "estimated_hit_probability": 0.8,
       "historical_bucket_win_rate": 0.8633,
-      "historical_bucket_support": 8859,
+      "historical_bucket_support": 8885,
       "market_books": 8,
       "price_confirmed": true,
       "historical_bet_profile_win_rate": 0.717,
       "historical_bet_profile_support": 53,
-      "historical_market_availability_rate": 0.6648,
-      "expected_value_per_unit": 0.3177,
-      "precision_score": 0.9346
-    },
-    {
-      "rank": 4,
-      "player": "Drew Romo",
-      "team": "CWS",
-      "target": "R",
-      "direction": "UNDER",
-      "original_direction": "UNDER",
-      "direction_flip_applied": false,
-      "market_line": 0.5,
-      "market_bucket": "R|UNDER|0.5",
-      "market_source": "real",
-      "prediction": 0.11,
-      "model_hit_probability": 0.8959,
-      "estimated_hit_probability": 0.8,
-      "historical_bucket_win_rate": 0.7848,
-      "historical_bucket_support": 22347,
-      "market_books": 7,
-      "price_confirmed": true,
-      "historical_bet_profile_win_rate": 0.6947,
-      "historical_bet_profile_support": 95,
-      "historical_market_availability_rate": 0.7432,
-      "expected_value_per_unit": -0.017,
-      "precision_score": 0.9196
+      "historical_market_availability_rate": 0.6367,
+      "expected_value_per_unit": -0.0351,
+      "precision_score": 0.8665
     }
-  ]
+  ],
+  "publication_strategy": "walk_forward_balanced_v1",
+  "pool_market_profile": {
+    "rows": 1963,
+    "real_market_rows": 734,
+    "synthetic_rows": 1229,
+    "price_confirmed_rows": 116
+  }
 }

@@ -1,8 +1,8 @@
 {
   "season": 2026,
-  "history_dir": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\Player-Predictor\\Data-Proc-MLB",
-  "updated_at_utc": "2026-07-30T00:32:55.103482+00:00",
-  "source_file_count": 1190,
+  "history_dir": "/home/runner/work/NBA-Analytics/NBA-Analytics/Player-Predictor/Data-Proc-MLB",
+  "updated_at_utc": "2026-07-30T02:39:53.605090+00:00",
+  "source_file_count": 1189,
   "availability_target_direction": {
     "H|OVER": {
       "rows": 53,
@@ -17,40 +17,40 @@
       "avg_books": 1.0
     },
     "K|OVER": {
-      "rows": 57,
+      "rows": 58,
       "side_price_rows": 39,
-      "availability_rate": 0.6842105263157895,
-      "avg_books": 7.947368421052632
+      "availability_rate": 0.6724137931034483,
+      "avg_books": 7.9655172413793105
     },
     "K|UNDER": {
-      "rows": 186,
+      "rows": 191,
       "side_price_rows": 105,
-      "availability_rate": 0.5645161290322581,
-      "avg_books": 8.274193548387096
+      "availability_rate": 0.5497382198952879,
+      "avg_books": 8.287958115183246
     },
     "R|OVER": {
-      "rows": 1043,
-      "side_price_rows": 833,
-      "availability_rate": 0.7986577181208053,
-      "avg_books": 6.439117929050815
+      "rows": 1068,
+      "side_price_rows": 827,
+      "availability_rate": 0.7743445692883895,
+      "avg_books": 6.447565543071161
     },
     "R|UNDER": {
-      "rows": 1233,
-      "side_price_rows": 853,
-      "availability_rate": 0.6918085969180859,
-      "avg_books": 6.222222222222222
+      "rows": 1280,
+      "side_price_rows": 852,
+      "availability_rate": 0.665625,
+      "avg_books": 6.2390625
     },
     "TB|OVER": {
-      "rows": 1088,
+      "rows": 1108,
       "side_price_rows": 713,
-      "availability_rate": 0.6553308823529411,
-      "avg_books": 7.4338235294117645
+      "availability_rate": 0.6435018050541517,
+      "avg_books": 7.4359205776173285
     },
     "TB|UNDER": {
-      "rows": 1213,
-      "side_price_rows": 726,
-      "availability_rate": 0.5985160758450123,
-      "avg_books": 7.361088211046991
+      "rows": 1265,
+      "side_price_rows": 720,
+      "availability_rate": 0.5691699604743083,
+      "avg_books": 7.377865612648221
     }
   },
   "availability_line_buckets": {
@@ -97,10 +97,10 @@
       "avg_books": 2.0
     },
     "K|OVER|4.5": {
-      "rows": 21,
+      "rows": 22,
       "side_price_rows": 15,
-      "availability_rate": 0.7142857142857143,
-      "avg_books": 8.238095238095237
+      "availability_rate": 0.6818181818181818,
+      "avg_books": 8.272727272727273
     },
     "K|OVER|5.0": {
       "rows": 1,
@@ -169,34 +169,34 @@
       "avg_books": 8.0
     },
     "K|UNDER|6.5": {
-      "rows": 38,
+      "rows": 40,
       "side_price_rows": 19,
-      "availability_rate": 0.5,
-      "avg_books": 8.473684210526315
+      "availability_rate": 0.475,
+      "avg_books": 8.5
     },
     "K|UNDER|7.5": {
-      "rows": 12,
+      "rows": 13,
       "side_price_rows": 5,
-      "availability_rate": 0.4166666666666667,
-      "avg_books": 8.666666666666666
+      "availability_rate": 0.38461538461538464,
+      "avg_books": 8.692307692307692
     },
     "K|UNDER|8.5": {
-      "rows": 4,
+      "rows": 5,
       "side_price_rows": 1,
-      "availability_rate": 0.25,
+      "availability_rate": 0.2,
       "avg_books": 9.0
     },
     "K|UNDER|9.5": {
-      "rows": 2,
+      "rows": 3,
       "side_price_rows": 0,
       "availability_rate": 0.0,
-      "avg_books": 9.0
+      "avg_books": 8.666666666666666
     },
     "R|OVER|0.5": {
-      "rows": 1041,
-      "side_price_rows": 831,
-      "availability_rate": 0.7982708933717579,
-      "avg_books": 6.439000960614793
+      "rows": 1066,
+      "side_price_rows": 825,
+      "availability_rate": 0.773921200750469,
+      "avg_books": 6.447467166979362
     },
     "R|OVER|1.5": {
       "rows": 2,
@@ -205,16 +205,22 @@
       "avg_books": 6.5
     },
     "R|UNDER|0.5": {
-      "rows": 1067,
-      "side_price_rows": 793,
-      "availability_rate": 0.7432052483598875,
-      "avg_books": 6.104967197750703
+      "rows": 1106,
+      "side_price_rows": 792,
+      "availability_rate": 0.7160940325497287,
+      "avg_books": 6.123869801084991
+    },
+    "R|UNDER|1.0": {
+      "rows": 2,
+      "side_price_rows": 0,
+      "availability_rate": 0.0,
+      "avg_books": 6.0
     },
     "R|UNDER|1.5": {
-      "rows": 148,
+      "rows": 153,
       "side_price_rows": 53,
-      "availability_rate": 0.3581081081081081,
-      "avg_books": 6.97972972972973
+      "availability_rate": 0.3464052287581699,
+      "avg_books": 6.9869281045751634
     },
     "R|UNDER|2.0": {
       "rows": 2,
@@ -223,33 +229,33 @@
       "avg_books": 7.0
     },
     "R|UNDER|2.5": {
-      "rows": 16,
+      "rows": 17,
       "side_price_rows": 6,
-      "availability_rate": 0.375,
-      "avg_books": 6.9375
+      "availability_rate": 0.35294117647058826,
+      "avg_books": 6.9411764705882355
     },
     "TB|OVER|0.5": {
-      "rows": 236,
-      "side_price_rows": 172,
-      "availability_rate": 0.7288135593220338,
-      "avg_books": 6.728813559322034
+      "rows": 242,
+      "side_price_rows": 175,
+      "availability_rate": 0.7231404958677686,
+      "avg_books": 6.7272727272727275
     },
     "TB|OVER|1.0": {
-      "rows": 297,
-      "side_price_rows": 162,
-      "availability_rate": 0.5454545454545454,
-      "avg_books": 7.818181818181818
+      "rows": 300,
+      "side_price_rows": 160,
+      "availability_rate": 0.5333333333333333,
+      "avg_books": 7.82
     },
     "TB|OVER|1.5": {
-      "rows": 543,
-      "side_price_rows": 372,
-      "availability_rate": 0.6850828729281768,
-      "avg_books": 7.515653775322283
+      "rows": 553,
+      "side_price_rows": 371,
+      "availability_rate": 0.6708860759493671,
+      "avg_books": 7.522603978300181
     },
     "TB|OVER|2.0": {
-      "rows": 1,
+      "rows": 2,
       "side_price_rows": 1,
-      "availability_rate": 1.0,
+      "availability_rate": 0.5,
       "avg_books": 8.0
     },
     "TB|OVER|2.5": {
@@ -265,34 +271,34 @@
       "avg_books": 8.0
     },
     "TB|UNDER|0.5": {
-      "rows": 70,
+      "rows": 71,
       "side_price_rows": 50,
-      "availability_rate": 0.7142857142857143,
-      "avg_books": 6.542857142857143
+      "availability_rate": 0.704225352112676,
+      "avg_books": 6.549295774647887
     },
     "TB|UNDER|1.0": {
-      "rows": 266,
-      "side_price_rows": 132,
-      "availability_rate": 0.49624060150375937,
-      "avg_books": 7.526315789473684
+      "rows": 278,
+      "side_price_rows": 131,
+      "availability_rate": 0.4712230215827338,
+      "avg_books": 7.539568345323741
     },
     "TB|UNDER|1.5": {
-      "rows": 722,
-      "side_price_rows": 480,
-      "availability_rate": 0.6648199445983379,
-      "avg_books": 7.259002770083103
+      "rows": 746,
+      "side_price_rows": 475,
+      "availability_rate": 0.6367292225201072,
+      "avg_books": 7.272117962466488
     },
     "TB|UNDER|2.0": {
-      "rows": 9,
+      "rows": 10,
       "side_price_rows": 1,
-      "availability_rate": 0.1111111111111111,
+      "availability_rate": 0.1,
       "avg_books": 8.0
     },
     "TB|UNDER|2.5": {
-      "rows": 68,
+      "rows": 78,
       "side_price_rows": 28,
-      "availability_rate": 0.4117647058823529,
-      "avg_books": 7.852941176470588
+      "availability_rate": 0.358974358974359,
+      "avg_books": 7.858974358974359
     },
     "TB|UNDER|3.0": {
       "rows": 5,
@@ -301,10 +307,10 @@
       "avg_books": 7.6
     },
     "TB|UNDER|3.5": {
-      "rows": 16,
+      "rows": 17,
       "side_price_rows": 7,
-      "availability_rate": 0.4375,
-      "avg_books": 8.0625
+      "availability_rate": 0.4117647058823529,
+      "avg_books": 8.0
     },
     "TB|UNDER|4.0": {
       "rows": 1,
@@ -313,10 +319,10 @@
       "avg_books": 8.0
     },
     "TB|UNDER|4.5": {
-      "rows": 48,
+      "rows": 51,
       "side_price_rows": 21,
-      "availability_rate": 0.4375,
-      "avg_books": 7.979166666666667
+      "availability_rate": 0.4117647058823529,
+      "avg_books": 8.0
     },
     "TB|UNDER|5.5": {
       "rows": 5,
@@ -650,9 +656,9 @@
       "wins": 8,
       "losses": 8,
       "pushes": 0,
-      "units_sum": -1.3996695054918404,
+      "units_sum": -1.3996695054918409,
       "win_rate": 0.5,
-      "roi_per_bet": -0.08747934409324003
+      "roi_per_bet": -0.08747934409324006
     },
     "K|UNDER|0.75-0.80": {
       "rows": 11,
@@ -705,34 +711,34 @@
       "roi_per_bet": 0.9468967282058067
     },
     "R|OVER|0.35-0.40": {
-      "rows": 19,
-      "graded_rows": 19,
-      "wins": 8,
-      "losses": 11,
+      "rows": 17,
+      "graded_rows": 17,
+      "wins": 7,
+      "losses": 10,
       "pushes": 0,
-      "units_sum": 3.1974000223809522,
-      "win_rate": 0.42105263157894735,
-      "roi_per_bet": 0.16828421170426064
+      "units_sum": 1.9115479523809524,
+      "win_rate": 0.4117647058823529,
+      "roi_per_bet": 0.11244399719887956
     },
     "R|OVER|0.40-0.45": {
-      "rows": 147,
-      "graded_rows": 147,
-      "wins": 53,
-      "losses": 94,
+      "rows": 150,
+      "graded_rows": 150,
+      "wins": 55,
+      "losses": 95,
       "pushes": 0,
-      "units_sum": -14.322859927817422,
-      "win_rate": 0.36054421768707484,
-      "roi_per_bet": -0.09743442127766953
+      "units_sum": -5.941224957817417,
+      "win_rate": 0.36666666666666664,
+      "roi_per_bet": -0.03960816638544945
     },
     "R|OVER|0.45-0.50": {
       "rows": 156,
       "graded_rows": 156,
-      "wins": 66,
-      "losses": 90,
+      "wins": 65,
+      "losses": 91,
       "pushes": 0,
-      "units_sum": 18.092304318071804,
-      "win_rate": 0.4230769230769231,
-      "roi_per_bet": 0.11597630973122951
+      "units_sum": 9.165581718071806,
+      "win_rate": 0.4166666666666667,
+      "roi_per_bet": 0.05875372896199876
     },
     "R|OVER|0.50-0.55": {
       "rows": 163,
@@ -740,29 +746,29 @@
       "wins": 70,
       "losses": 93,
       "pushes": 0,
-      "units_sum": 3.5172376662256495,
+      "units_sum": 3.1112799062256533,
       "win_rate": 0.4294478527607362,
-      "roi_per_bet": 0.021578145191568403
+      "roi_per_bet": 0.01908760678666045
     },
     "R|OVER|0.55-0.60": {
-      "rows": 122,
-      "graded_rows": 122,
-      "wins": 60,
-      "losses": 62,
+      "rows": 121,
+      "graded_rows": 121,
+      "wins": 58,
+      "losses": 63,
       "pushes": 0,
-      "units_sum": 16.11412912016983,
-      "win_rate": 0.4918032786885246,
-      "roi_per_bet": 0.13208302557516255
+      "units_sum": 11.746554200169829,
+      "win_rate": 0.4793388429752066,
+      "roi_per_bet": 0.09707896033198206
     },
     "R|OVER|0.60-0.65": {
-      "rows": 85,
-      "graded_rows": 85,
+      "rows": 81,
+      "graded_rows": 81,
       "wins": 39,
-      "losses": 46,
+      "losses": 42,
       "pushes": 0,
-      "units_sum": 6.724261243921553,
-      "win_rate": 0.4588235294117647,
-      "roi_per_bet": 0.0791089558108418
+      "units_sum": 10.724261243921557,
+      "win_rate": 0.48148148148148145,
+      "roi_per_bet": 0.13239828696199454
     },
     "R|OVER|0.65-0.70": {
       "rows": 62,
@@ -775,24 +781,24 @@
       "roi_per_bet": 0.23061862466000402
     },
     "R|OVER|0.70-0.75": {
-      "rows": 55,
-      "graded_rows": 55,
+      "rows": 54,
+      "graded_rows": 54,
       "wins": 32,
-      "losses": 23,
+      "losses": 22,
       "pushes": 0,
-      "units_sum": 15.657140120802582,
-      "win_rate": 0.5818181818181818,
-      "roi_per_bet": 0.28467527492368333
+      "units_sum": 16.657140120802584,
+      "win_rate": 0.5925925925925926,
+      "roi_per_bet": 0.30846555779264045
     },
     "R|OVER|0.75-0.80": {
-      "rows": 21,
-      "graded_rows": 21,
-      "wins": 15,
+      "rows": 20,
+      "graded_rows": 20,
+      "wins": 14,
       "losses": 6,
       "pushes": 0,
-      "units_sum": 17.803450167441543,
-      "win_rate": 0.7142857142857143,
-      "roi_per_bet": 0.8477833413067402
+      "units_sum": 14.85458235744154,
+      "win_rate": 0.7,
+      "roi_per_bet": 0.742729117872077
     },
     "R|OVER|0.80-0.85": {
       "rows": 3,
@@ -805,34 +811,34 @@
       "roi_per_bet": -0.4091670144006346
     },
     "R|UNDER|0.60-0.65": {
-      "rows": 115,
-      "graded_rows": 115,
-      "wins": 72,
+      "rows": 116,
+      "graded_rows": 116,
+      "wins": 73,
       "losses": 43,
       "pushes": 0,
-      "units_sum": -8.833880062703855,
-      "win_rate": 0.6260869565217392,
-      "roi_per_bet": -0.07681634837133787
+      "units_sum": -7.9637281889192435,
+      "win_rate": 0.6293103448275862,
+      "roi_per_bet": -0.06865282921482106
     },
     "R|UNDER|0.65-0.70": {
       "rows": 135,
       "graded_rows": 135,
-      "wins": 99,
-      "losses": 36,
+      "wins": 98,
+      "losses": 37,
       "pushes": 0,
-      "units_sum": 13.06172408464853,
-      "win_rate": 0.7333333333333333,
-      "roi_per_bet": 0.09675351173813726
+      "units_sum": 11.912777997224977,
+      "win_rate": 0.725925925925926,
+      "roi_per_bet": 0.08824279997944427
     },
     "R|UNDER|0.70-0.75": {
-      "rows": 140,
-      "graded_rows": 140,
+      "rows": 139,
+      "graded_rows": 139,
       "wins": 96,
-      "losses": 44,
+      "losses": 43,
       "pushes": 0,
-      "units_sum": 1.4111560157356275,
-      "win_rate": 0.6857142857142857,
-      "roi_per_bet": 0.010079685826683053
+      "units_sum": 2.411156015735629,
+      "win_rate": 0.6906474820143885,
+      "roi_per_bet": 0.01734644615637143
     },
     "R|UNDER|0.75-0.80": {
       "rows": 120,
@@ -860,9 +866,9 @@
       "wins": 71,
       "losses": 15,
       "pushes": 0,
-      "units_sum": 13.764565293058672,
+      "units_sum": 14.08400973750312,
       "win_rate": 0.8255813953488372,
-      "roi_per_bet": 0.1600530848030078
+      "roi_per_bet": 0.16376755508724558
     },
     "R|UNDER|0.90-0.95": {
       "rows": 45,
@@ -870,29 +876,29 @@
       "wins": 38,
       "losses": 7,
       "pushes": 0,
-      "units_sum": 7.052806144921779,
+      "units_sum": 6.77780614492178,
       "win_rate": 0.8444444444444444,
-      "roi_per_bet": 0.1567290254427062
+      "roi_per_bet": 0.15061791433159513
     },
     "R|UNDER|0.95-1.00": {
-      "rows": 46,
-      "graded_rows": 45,
-      "wins": 38,
+      "rows": 47,
+      "graded_rows": 46,
+      "wins": 39,
       "losses": 7,
       "pushes": 1,
-      "units_sum": 7.4329547342778985,
-      "win_rate": 0.8444444444444444,
-      "roi_per_bet": 0.16158597248430215
+      "units_sum": 7.832954734277899,
+      "win_rate": 0.8478260869565217,
+      "roi_per_bet": 0.16665861136761487
     },
     "R|UNDER|1.00-1.00": {
-      "rows": 62,
-      "graded_rows": 62,
-      "wins": 60,
+      "rows": 60,
+      "graded_rows": 60,
+      "wins": 58,
       "losses": 2,
       "pushes": 0,
-      "units_sum": 22.299053168243596,
-      "win_rate": 0.967741935483871,
-      "roi_per_bet": 0.3596621478748967
+      "units_sum": 21.80865658760208,
+      "win_rate": 0.9666666666666667,
+      "roi_per_bet": 0.363477609793368
     },
     "TB|OVER|0.35-0.40": {
       "rows": 2,
@@ -917,52 +923,52 @@
     "TB|OVER|0.45-0.50": {
       "rows": 90,
       "graded_rows": 88,
-      "wins": 37,
-      "losses": 51,
+      "wins": 36,
+      "losses": 52,
       "pushes": 2,
-      "units_sum": 15.491234927051867,
-      "win_rate": 0.42045454545454547,
-      "roi_per_bet": 0.17212483252279853
+      "units_sum": 10.807554897051869,
+      "win_rate": 0.4090909090909091,
+      "roi_per_bet": 0.12008394330057633
     },
     "TB|OVER|0.50-0.55": {
-      "rows": 77,
-      "graded_rows": 75,
+      "rows": 76,
+      "graded_rows": 74,
       "wins": 29,
-      "losses": 46,
+      "losses": 45,
       "pushes": 2,
-      "units_sum": 14.01761495743451,
-      "win_rate": 0.38666666666666666,
-      "roi_per_bet": 0.1820469474991495
+      "units_sum": 15.01761495743451,
+      "win_rate": 0.3918918918918919,
+      "roi_per_bet": 0.1976001968083488
     },
     "TB|OVER|0.55-0.60": {
-      "rows": 74,
-      "graded_rows": 70,
-      "wins": 36,
-      "losses": 34,
+      "rows": 77,
+      "graded_rows": 73,
+      "wins": 37,
+      "losses": 36,
       "pushes": 4,
-      "units_sum": 10.361143828312873,
-      "win_rate": 0.5142857142857142,
-      "roi_per_bet": 0.14001545713936314
+      "units_sum": 41.21544364831288,
+      "win_rate": 0.5068493150684932,
+      "roi_per_bet": 0.5352655019261413
     },
     "TB|OVER|0.60-0.65": {
-      "rows": 90,
-      "graded_rows": 85,
+      "rows": 91,
+      "graded_rows": 86,
       "wins": 43,
-      "losses": 42,
+      "losses": 43,
       "pushes": 5,
-      "units_sum": 19.051350162256604,
-      "win_rate": 0.5058823529411764,
-      "roi_per_bet": 0.21168166846951783
+      "units_sum": 17.013162512256606,
+      "win_rate": 0.5,
+      "roi_per_bet": 0.18695782980501766
     },
     "TB|OVER|0.65-0.70": {
-      "rows": 99,
-      "graded_rows": 91,
-      "wins": 47,
+      "rows": 98,
+      "graded_rows": 90,
+      "wins": 46,
       "losses": 44,
       "pushes": 8,
-      "units_sum": 21.85037765564184,
-      "win_rate": 0.5164835164835165,
-      "roi_per_bet": 0.22071088541052364
+      "units_sum": 20.79993755564184,
+      "win_rate": 0.5111111111111111,
+      "roi_per_bet": 0.21224426077185551
     },
     "TB|OVER|0.70-0.75": {
       "rows": 60,
@@ -975,44 +981,44 @@
       "roi_per_bet": 0.6115718714182284
     },
     "TB|OVER|0.75-0.80": {
-      "rows": 58,
-      "graded_rows": 54,
-      "wins": 29,
+      "rows": 59,
+      "graded_rows": 55,
+      "wins": 30,
       "losses": 25,
       "pushes": 4,
-      "units_sum": 9.160514579795004,
-      "win_rate": 0.5370370370370371,
-      "roi_per_bet": 0.15793990654818973
+      "units_sum": 10.192091299795003,
+      "win_rate": 0.5454545454545454,
+      "roi_per_bet": 0.172747310166017
     },
     "TB|OVER|0.80-0.85": {
-      "rows": 61,
-      "graded_rows": 58,
-      "wins": 39,
-      "losses": 19,
+      "rows": 59,
+      "graded_rows": 56,
+      "wins": 38,
+      "losses": 18,
       "pushes": 3,
-      "units_sum": 32.477548156052244,
-      "win_rate": 0.6724137931034483,
-      "roi_per_bet": 0.5324188222303646
+      "units_sum": 32.41292585605225,
+      "win_rate": 0.6785714285714286,
+      "roi_per_bet": 0.5493716246788517
     },
     "TB|OVER|0.85-0.90": {
-      "rows": 38,
-      "graded_rows": 38,
-      "wins": 31,
+      "rows": 39,
+      "graded_rows": 39,
+      "wins": 32,
       "losses": 7,
       "pushes": 0,
-      "units_sum": 29.5118503011682,
-      "win_rate": 0.8157894736842105,
-      "roi_per_bet": 0.7766276395044263
+      "units_sum": 30.5764726011682,
+      "win_rate": 0.8205128205128205,
+      "roi_per_bet": 0.7840121179786718
     },
     "TB|OVER|0.90-0.95": {
-      "rows": 32,
-      "graded_rows": 31,
+      "rows": 30,
+      "graded_rows": 29,
       "wins": 25,
-      "losses": 6,
+      "losses": 4,
       "pushes": 1,
-      "units_sum": 23.620652546894856,
-      "win_rate": 0.8064516129032258,
-      "roi_per_bet": 0.7381453920904643
+      "units_sum": 25.620652546894856,
+      "win_rate": 0.8620689655172413,
+      "roi_per_bet": 0.8540217515631618
     },
     "TB|OVER|0.95-1.00": {
       "rows": 14,
@@ -1025,14 +1031,14 @@
       "roi_per_bet": 0.7092324420449846
     },
     "TB|UNDER|0.55-0.60": {
-      "rows": 75,
-      "graded_rows": 73,
-      "wins": 48,
-      "losses": 25,
+      "rows": 73,
+      "graded_rows": 71,
+      "wins": 45,
+      "losses": 26,
       "pushes": 2,
-      "units_sum": 6.482105361059927,
-      "win_rate": 0.6575342465753424,
-      "roi_per_bet": 0.08642807148079902
+      "units_sum": 3.6442474749852543,
+      "win_rate": 0.6338028169014085,
+      "roi_per_bet": 0.049921198287469236
     },
     "TB|UNDER|0.60-0.65": {
       "rows": 91,
@@ -1040,19 +1046,19 @@
       "wins": 64,
       "losses": 24,
       "pushes": 3,
-      "units_sum": 18.686184037019988,
+      "units_sum": 18.901146303770933,
       "win_rate": 0.7272727272727273,
-      "roi_per_bet": 0.20534268172549439
+      "roi_per_bet": 0.2077049044370432
     },
     "TB|UNDER|0.65-0.70": {
-      "rows": 85,
-      "graded_rows": 82,
-      "wins": 61,
-      "losses": 21,
+      "rows": 82,
+      "graded_rows": 79,
+      "wins": 60,
+      "losses": 19,
       "pushes": 3,
-      "units_sum": 19.473383026532183,
-      "win_rate": 0.7439024390243902,
-      "roi_per_bet": 0.2290986238415551
+      "units_sum": 20.591750133091054,
+      "win_rate": 0.759493670886076,
+      "roi_per_bet": 0.25111890406208603
     },
     "TB|UNDER|0.70-0.75": {
       "rows": 84,
@@ -1065,14 +1071,14 @@
       "roi_per_bet": 0.21834976854325433
     },
     "TB|UNDER|0.75-0.80": {
-      "rows": 78,
-      "graded_rows": 75,
-      "wins": 55,
+      "rows": 77,
+      "graded_rows": 74,
+      "wins": 54,
       "losses": 20,
       "pushes": 3,
-      "units_sum": 19.053218950267215,
-      "win_rate": 0.7333333333333333,
-      "roi_per_bet": 0.24427203782393866
+      "units_sum": 18.52690316079353,
+      "win_rate": 0.7297297297297297,
+      "roi_per_bet": 0.24060913195835754
     },
     "TB|UNDER|0.80-0.85": {
       "rows": 85,
@@ -1110,9 +1116,9 @@
       "wins": 60,
       "losses": 7,
       "pushes": 8,
-      "units_sum": 33.24987393667061,
+      "units_sum": 33.2498739366706,
       "win_rate": 0.8955223880597015,
-      "roi_per_bet": 0.44333165248894146
+      "roi_per_bet": 0.44333165248894135
     },
     "TB|UNDER|1.00-1.00": {
       "rows": 10,
@@ -1967,34 +1973,34 @@
       "roi_per_bet": 1.15
     },
     "R|OVER|0.5|0.35-0.40": {
-      "rows": 19,
-      "graded_rows": 19,
-      "wins": 8,
-      "losses": 11,
+      "rows": 17,
+      "graded_rows": 17,
+      "wins": 7,
+      "losses": 10,
       "pushes": 0,
-      "units_sum": 3.1974000223809522,
-      "win_rate": 0.42105263157894735,
-      "roi_per_bet": 0.16828421170426064
+      "units_sum": 1.9115479523809524,
+      "win_rate": 0.4117647058823529,
+      "roi_per_bet": 0.11244399719887956
     },
     "R|OVER|0.5|0.40-0.45": {
-      "rows": 147,
-      "graded_rows": 147,
-      "wins": 53,
-      "losses": 94,
+      "rows": 150,
+      "graded_rows": 150,
+      "wins": 55,
+      "losses": 95,
       "pushes": 0,
-      "units_sum": -14.322859927817422,
-      "win_rate": 0.36054421768707484,
-      "roi_per_bet": -0.09743442127766953
+      "units_sum": -5.941224957817417,
+      "win_rate": 0.36666666666666664,
+      "roi_per_bet": -0.03960816638544945
     },
     "R|OVER|0.5|0.45-0.50": {
       "rows": 154,
       "graded_rows": 154,
-      "wins": 65,
-      "losses": 89,
+      "wins": 64,
+      "losses": 90,
       "pushes": 0,
-      "units_sum": 17.181953108071802,
-      "win_rate": 0.42207792207792205,
-      "roi_per_bet": 0.11157112407838833
+      "units_sum": 8.255230508071808,
+      "win_rate": 0.4155844155844156,
+      "roi_per_bet": 0.053605392909557195
     },
     "R|OVER|0.5|0.50-0.55": {
       "rows": 163,
@@ -2002,29 +2008,29 @@
       "wins": 70,
       "losses": 93,
       "pushes": 0,
-      "units_sum": 3.5172376662256495,
+      "units_sum": 3.1112799062256533,
       "win_rate": 0.4294478527607362,
-      "roi_per_bet": 0.021578145191568403
+      "roi_per_bet": 0.01908760678666045
     },
     "R|OVER|0.5|0.55-0.60": {
-      "rows": 122,
-      "graded_rows": 122,
-      "wins": 60,
-      "losses": 62,
+      "rows": 121,
+      "graded_rows": 121,
+      "wins": 58,
+      "losses": 63,
       "pushes": 0,
-      "units_sum": 16.11412912016983,
-      "win_rate": 0.4918032786885246,
-      "roi_per_bet": 0.13208302557516255
+      "units_sum": 11.746554200169829,
+      "win_rate": 0.4793388429752066,
+      "roi_per_bet": 0.09707896033198206
     },
     "R|OVER|0.5|0.60-0.65": {
-      "rows": 85,
-      "graded_rows": 85,
+      "rows": 81,
+      "graded_rows": 81,
       "wins": 39,
-      "losses": 46,
+      "losses": 42,
       "pushes": 0,
-      "units_sum": 6.724261243921553,
-      "win_rate": 0.4588235294117647,
-      "roi_per_bet": 0.0791089558108418
+      "units_sum": 10.724261243921557,
+      "win_rate": 0.48148148148148145,
+      "roi_per_bet": 0.13239828696199454
     },
     "R|OVER|0.5|0.65-0.70": {
       "rows": 62,
@@ -2037,24 +2043,24 @@
       "roi_per_bet": 0.23061862466000402
     },
     "R|OVER|0.5|0.70-0.75": {
-      "rows": 55,
-      "graded_rows": 55,
+      "rows": 54,
+      "graded_rows": 54,
       "wins": 32,
-      "losses": 23,
+      "losses": 22,
       "pushes": 0,
-      "units_sum": 15.657140120802582,
-      "win_rate": 0.5818181818181818,
-      "roi_per_bet": 0.28467527492368333
+      "units_sum": 16.657140120802584,
+      "win_rate": 0.5925925925925926,
+      "roi_per_bet": 0.30846555779264045
     },
     "R|OVER|0.5|0.75-0.80": {
-      "rows": 21,
-      "graded_rows": 21,
-      "wins": 15,
+      "rows": 20,
+      "graded_rows": 20,
+      "wins": 14,
       "losses": 6,
       "pushes": 0,
-      "units_sum": 17.803450167441543,
-      "win_rate": 0.7142857142857143,
-      "roi_per_bet": 0.8477833413067402
+      "units_sum": 14.85458235744154,
+      "win_rate": 0.7,
+      "roi_per_bet": 0.742729117872077
     },
     "R|OVER|0.5|0.80-0.85": {
       "rows": 3,
@@ -2077,34 +2083,34 @@
       "roi_per_bet": 0.455175605
     },
     "R|UNDER|0.5|0.60-0.65": {
-      "rows": 115,
-      "graded_rows": 115,
-      "wins": 72,
+      "rows": 116,
+      "graded_rows": 116,
+      "wins": 73,
       "losses": 43,
       "pushes": 0,
-      "units_sum": -8.833880062703855,
-      "win_rate": 0.6260869565217392,
-      "roi_per_bet": -0.07681634837133787
+      "units_sum": -7.9637281889192435,
+      "win_rate": 0.6293103448275862,
+      "roi_per_bet": -0.06865282921482106
     },
     "R|UNDER|0.5|0.65-0.70": {
       "rows": 133,
       "graded_rows": 133,
-      "wins": 99,
-      "losses": 34,
+      "wins": 98,
+      "losses": 35,
       "pushes": 0,
-      "units_sum": 15.06172408464853,
-      "win_rate": 0.7443609022556391,
-      "roi_per_bet": 0.11324604574923706
+      "units_sum": 13.91277799722498,
+      "win_rate": 0.7368421052631579,
+      "roi_per_bet": 0.10460735336259383
     },
     "R|UNDER|0.5|0.70-0.75": {
-      "rows": 133,
-      "graded_rows": 133,
+      "rows": 132,
+      "graded_rows": 132,
       "wins": 90,
-      "losses": 43,
+      "losses": 42,
       "pushes": 0,
-      "units_sum": 0.7268751715369949,
-      "win_rate": 0.6766917293233082,
-      "roi_per_bet": 0.0054652268536616155
+      "units_sum": 1.726875171536995,
+      "win_rate": 0.6818181818181818,
+      "roi_per_bet": 0.013082387663159053
     },
     "R|UNDER|0.5|0.75-0.80": {
       "rows": 112,
@@ -2132,9 +2138,9 @@
       "wins": 60,
       "losses": 11,
       "pushes": 0,
-      "units_sum": 15.561288853315252,
+      "units_sum": 15.880733297759699,
       "win_rate": 0.8450704225352113,
-      "roi_per_bet": 0.2191730824410599
+      "roi_per_bet": 0.22367229996844645
     },
     "R|UNDER|0.5|0.90-0.95": {
       "rows": 36,
@@ -2142,29 +2148,29 @@
       "wins": 31,
       "losses": 5,
       "pushes": 0,
-      "units_sum": 7.263111107081327,
+      "units_sum": 6.988111107081327,
       "win_rate": 0.8611111111111112,
-      "roi_per_bet": 0.20175308630781463
+      "roi_per_bet": 0.19411419741892574
     },
     "R|UNDER|0.5|0.95-1.00": {
-      "rows": 36,
-      "graded_rows": 36,
-      "wins": 31,
+      "rows": 37,
+      "graded_rows": 37,
+      "wins": 32,
       "losses": 5,
       "pushes": 0,
-      "units_sum": 7.622808498702065,
-      "win_rate": 0.8611111111111112,
-      "roi_per_bet": 0.2117446805195018
+      "units_sum": 8.022808498702062,
+      "win_rate": 0.8648648648648649,
+      "roi_per_bet": 0.21683266212708277
     },
     "R|UNDER|0.5|1.00-1.00": {
-      "rows": 62,
-      "graded_rows": 62,
-      "wins": 60,
+      "rows": 60,
+      "graded_rows": 60,
+      "wins": 58,
       "losses": 2,
       "pushes": 0,
-      "units_sum": 22.299053168243596,
-      "win_rate": 0.967741935483871,
-      "roi_per_bet": 0.3596621478748967
+      "units_sum": 21.80865658760208,
+      "win_rate": 0.9666666666666667,
+      "roi_per_bet": 0.363477609793368
     },
     "R|UNDER|1.5|0.65-0.70": {
       "rows": 2,
@@ -2262,9 +2268,9 @@
       "wins": 4,
       "losses": 1,
       "pushes": 0,
-      "units_sum": 0.1585590009154096,
+      "units_sum": 0.15855900091540953,
       "win_rate": 0.8,
-      "roi_per_bet": 0.031711800183081916
+      "roi_per_bet": 0.03171180018308191
     },
     "TB|OVER|0.5|0.35-0.40": {
       "rows": 2,
@@ -2307,24 +2313,24 @@
       "roi_per_bet": 0.6903812701288515
     },
     "TB|OVER|0.5|0.55-0.60": {
-      "rows": 19,
-      "graded_rows": 19,
-      "wins": 8,
+      "rows": 20,
+      "graded_rows": 20,
+      "wins": 9,
       "losses": 11,
       "pushes": 0,
-      "units_sum": -0.6160774263753563,
-      "win_rate": 0.42105263157894735,
-      "roi_per_bet": -0.032425127703966126
+      "units_sum": 32.38392257362464,
+      "win_rate": 0.45,
+      "roi_per_bet": 1.619196128681232
     },
     "TB|OVER|0.5|0.60-0.65": {
-      "rows": 22,
-      "graded_rows": 22,
+      "rows": 23,
+      "graded_rows": 23,
       "wins": 10,
-      "losses": 12,
+      "losses": 13,
       "pushes": 0,
-      "units_sum": 1.9796138775815866,
-      "win_rate": 0.45454545454545453,
-      "roi_per_bet": 0.0899824489809812
+      "units_sum": 0.9796138775815868,
+      "win_rate": 0.43478260869565216,
+      "roi_per_bet": 0.04259190772093856
     },
     "TB|OVER|0.5|0.65-0.70": {
       "rows": 23,
@@ -2347,14 +2353,14 @@
       "roi_per_bet": 0.5927036054416166
     },
     "TB|OVER|0.5|0.75-0.80": {
-      "rows": 16,
-      "graded_rows": 16,
-      "wins": 7,
+      "rows": 17,
+      "graded_rows": 17,
+      "wins": 8,
       "losses": 9,
       "pushes": 0,
-      "units_sum": -1.3118401867561973,
-      "win_rate": 0.4375,
-      "roi_per_bet": -0.08199001167226233
+      "units_sum": -0.2802634667561972,
+      "win_rate": 0.47058823529411764,
+      "roi_per_bet": -0.016486086279776303
     },
     "TB|OVER|0.5|0.80-0.85": {
       "rows": 14,
@@ -2477,34 +2483,34 @@
       "roi_per_bet": -0.12139339163359215
     },
     "TB|OVER|1.0|0.80-0.85": {
-      "rows": 16,
-      "graded_rows": 13,
-      "wins": 10,
+      "rows": 15,
+      "graded_rows": 12,
+      "wins": 9,
       "losses": 3,
       "pushes": 3,
-      "units_sum": 7.6633185973731655,
-      "win_rate": 0.7692307692307693,
-      "roi_per_bet": 0.47895741233582284
+      "units_sum": 6.5986962973731655,
+      "win_rate": 0.75,
+      "roi_per_bet": 0.43991308649154437
     },
     "TB|OVER|1.0|0.85-0.90": {
-      "rows": 13,
-      "graded_rows": 13,
-      "wins": 10,
+      "rows": 14,
+      "graded_rows": 14,
+      "wins": 11,
       "losses": 3,
       "pushes": 0,
-      "units_sum": 8.860627709684564,
-      "win_rate": 0.7692307692307693,
-      "roi_per_bet": 0.6815867468988126
+      "units_sum": 9.925250009684564,
+      "win_rate": 0.7857142857142857,
+      "roi_per_bet": 0.7089464292631832
     },
     "TB|OVER|1.0|0.90-0.95": {
-      "rows": 14,
-      "graded_rows": 13,
+      "rows": 12,
+      "graded_rows": 11,
       "wins": 8,
-      "losses": 5,
+      "losses": 3,
       "pushes": 1,
-      "units_sum": 3.287999780222364,
-      "win_rate": 0.6153846153846154,
-      "roi_per_bet": 0.2348571271587403
+      "units_sum": 5.287999780222364,
+      "win_rate": 0.7272727272727273,
+      "roi_per_bet": 0.4406666483518637
     },
     "TB|OVER|1.0|0.95-1.00": {
       "rows": 8,
@@ -2529,32 +2535,32 @@
     "TB|OVER|1.5|0.45-0.50": {
       "rows": 60,
       "graded_rows": 60,
-      "wins": 27,
-      "losses": 33,
+      "wins": 26,
+      "losses": 34,
       "pushes": 0,
-      "units_sum": 1.9691007900355566,
-      "win_rate": 0.45,
-      "roi_per_bet": 0.03281834650059261
+      "units_sum": -2.714579239964444,
+      "win_rate": 0.43333333333333335,
+      "roi_per_bet": -0.04524298733274073
     },
     "TB|OVER|1.5|0.50-0.55": {
-      "rows": 44,
-      "graded_rows": 44,
-      "wins": 16,
-      "losses": 28,
-      "pushes": 0,
-      "units_sum": -3.57127138847585,
-      "win_rate": 0.36363636363636365,
-      "roi_per_bet": -0.0811652588289966
-    },
-    "TB|OVER|1.5|0.55-0.60": {
       "rows": 43,
       "graded_rows": 43,
-      "wins": 24,
-      "losses": 19,
+      "wins": 16,
+      "losses": 27,
       "pushes": 0,
-      "units_sum": 10.664561434688228,
-      "win_rate": 0.5581395348837209,
-      "roi_per_bet": 0.24801305662065645
+      "units_sum": -2.571271388475852,
+      "win_rate": 0.37209302325581395,
+      "roi_per_bet": -0.059797009034322134
+    },
+    "TB|OVER|1.5|0.55-0.60": {
+      "rows": 45,
+      "graded_rows": 45,
+      "wins": 24,
+      "losses": 21,
+      "pushes": 0,
+      "units_sum": 8.518861254688229,
+      "win_rate": 0.5333333333333333,
+      "roi_per_bet": 0.18930802788196063
     },
     "TB|OVER|1.5|0.60-0.65": {
       "rows": 50,
@@ -2562,19 +2568,19 @@
       "wins": 26,
       "losses": 24,
       "pushes": 0,
-      "units_sum": 15.34037602439247,
+      "units_sum": 14.302188374392468,
       "win_rate": 0.52,
-      "roi_per_bet": 0.3068075204878494
+      "roi_per_bet": 0.2860437674878494
     },
     "TB|OVER|1.5|0.65-0.70": {
-      "rows": 55,
-      "graded_rows": 55,
-      "wins": 28,
+      "rows": 54,
+      "graded_rows": 54,
+      "wins": 27,
       "losses": 27,
       "pushes": 0,
-      "units_sum": 8.538310755318838,
-      "win_rate": 0.509090909090909,
-      "roi_per_bet": 0.15524201373306978
+      "units_sum": 7.487870655318836,
+      "win_rate": 0.5,
+      "roi_per_bet": 0.13866427139479326
     },
     "TB|OVER|1.5|0.70-0.75": {
       "rows": 25,
@@ -2597,14 +2603,14 @@
       "roi_per_bet": 0.43470936605076754
     },
     "TB|OVER|1.5|0.80-0.85": {
-      "rows": 30,
-      "graded_rows": 30,
+      "rows": 29,
+      "graded_rows": 29,
       "wins": 22,
-      "losses": 8,
+      "losses": 7,
       "pushes": 0,
-      "units_sum": 21.75003018267444,
-      "win_rate": 0.7333333333333333,
-      "roi_per_bet": 0.725001006089148
+      "units_sum": 22.75003018267444,
+      "win_rate": 0.7586206896551724,
+      "roi_per_bet": 0.7844837994025669
     },
     "TB|OVER|1.5|0.85-0.90": {
       "rows": 16,
@@ -2817,14 +2823,14 @@
       "roi_per_bet": 0.6120827397211518
     },
     "TB|UNDER|1.0|0.75-0.80": {
-      "rows": 13,
-      "graded_rows": 10,
-      "wins": 7,
+      "rows": 12,
+      "graded_rows": 9,
+      "wins": 6,
       "losses": 3,
       "pushes": 3,
-      "units_sum": 3.6606910876589893,
-      "win_rate": 0.7,
-      "roi_per_bet": 0.28159162212761457
+      "units_sum": 3.1343752981853057,
+      "win_rate": 0.6666666666666666,
+      "roi_per_bet": 0.2611979415154421
     },
     "TB|UNDER|1.0|0.80-0.85": {
       "rows": 19,
@@ -2877,14 +2883,14 @@
       "roi_per_bet": 0.9270966976938539
     },
     "TB|UNDER|1.5|0.55-0.60": {
-      "rows": 65,
-      "graded_rows": 65,
-      "wins": 42,
-      "losses": 23,
+      "rows": 63,
+      "graded_rows": 63,
+      "wins": 39,
+      "losses": 24,
       "pushes": 0,
-      "units_sum": 3.512242938628252,
-      "win_rate": 0.6461538461538462,
-      "roi_per_bet": 0.05403450674812695
+      "units_sum": 0.6743850525535788,
+      "win_rate": 0.6190476190476191,
+      "roi_per_bet": 0.010704524643707601
     },
     "TB|UNDER|1.5|0.60-0.65": {
       "rows": 69,
@@ -2892,19 +2898,19 @@
       "wins": 48,
       "losses": 21,
       "pushes": 0,
-      "units_sum": 9.155059665987933,
+      "units_sum": 9.370021932738872,
       "win_rate": 0.6956521739130435,
-      "roi_per_bet": 0.13268202414475266
+      "roi_per_bet": 0.13579741931505612
     },
     "TB|UNDER|1.5|0.65-0.70": {
-      "rows": 69,
-      "graded_rows": 69,
-      "wins": 54,
-      "losses": 15,
+      "rows": 66,
+      "graded_rows": 66,
+      "wins": 53,
+      "losses": 13,
       "pushes": 0,
-      "units_sum": 20.747087045397304,
-      "win_rate": 0.782608695652174,
-      "roi_per_bet": 0.300682420947787
+      "units_sum": 21.86545415195617,
+      "win_rate": 0.803030303030303,
+      "roi_per_bet": 0.33129475987812373
     },
     "TB|UNDER|1.5|0.70-0.75": {
       "rows": 58,
