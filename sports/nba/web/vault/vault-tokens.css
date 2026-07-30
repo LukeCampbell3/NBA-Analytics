@@ -1,26 +1,30 @@
 /**
- * Prediction Desk design tokens.
+ * Prediction Bounties design tokens.
  * Canonical source: sports/shared/web/vault/
  */
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Rye&family=Roboto+Slab:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap");
 
 :root {
-  --vault-bg-0: #f3f5f7;
-  --vault-bg-1: #f8f9fb;
-  --vault-bg-2: #eef1f5;
-  --vault-panel: #ffffff;
-  --vault-panel-raised: #f8f9fb;
-  --vault-card-face: #ffffff;
-  --vault-card-inner: #f8f9fb;
-  --vault-line: #dce1e8;
-  --vault-line-strong: #c8d0da;
+  --vault-bg-0: #d9dcd8;
+  --vault-bg-1: #ece9e0;
+  --vault-bg-2: #d5d0c4;
+  --vault-panel: #f8f3e8;
+  --vault-panel-raised: #fffaf0;
+  --vault-card-face: #f5ead3;
+  --vault-card-inner: #ead9b9;
+  --vault-line: #c9b99e;
+  --vault-line-strong: #8e7b60;
 
-  --vault-font-display: "Inter", "Segoe UI", system-ui, sans-serif;
-  --vault-font-body: "Inter", "Segoe UI", system-ui, sans-serif;
-  --vault-text: #172131;
-  --vault-text-muted: #5d6b7e;
-  --vault-text-dim: #7a8798;
+  --vault-font-display: "Roboto Slab", Georgia, serif;
+  --vault-font-western: "Rye", "Roboto Slab", Georgia, serif;
+  --vault-font-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --vault-text: #2d2923;
+  --vault-text-muted: #655d52;
+  --vault-text-dim: #817666;
+  --vault-ink: #27241f;
+  --vault-brass: #9a681f;
+  --vault-oxblood: #7e302b;
 
   --vault-space-1: 0.25rem;
   --vault-space-2: 0.5rem;
@@ -37,30 +41,30 @@
   --vault-radius-lg: 8px;
   --vault-radius-card: 8px;
 
-  --vault-shadow-card: 0 1px 2px rgba(23, 33, 49, 0.04), 0 8px 20px rgba(23, 33, 49, 0.05);
-  --vault-shadow-lift: 0 2px 4px rgba(23, 33, 49, 0.06), 0 14px 28px rgba(23, 33, 49, 0.08);
-  --vault-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.88);
+  --vault-shadow-card: 0 2px 2px rgba(55, 43, 28, 0.05), 0 12px 24px rgba(55, 43, 28, 0.09);
+  --vault-shadow-lift: 0 3px 4px rgba(55, 43, 28, 0.08), 0 18px 34px rgba(55, 43, 28, 0.13);
+  --vault-shadow-inset: inset 0 1px 0 rgba(255, 252, 244, 0.78);
 
-  --vault-sport-accent: #2563eb;
-  --vault-sport-surface: #172131;
+  --vault-sport-accent: #8a5820;
+  --vault-sport-surface: #2d2923;
 
-  --vault-status-active: #087f5b;
-  --vault-status-planned: #68778a;
-  --vault-status-stale: #b05d00;
-  --vault-status-error: #c02c3a;
-  --vault-status-withheld: #7c3fb0;
+  --vault-status-active: #33664f;
+  --vault-status-planned: #6f6659;
+  --vault-status-stale: #9a681f;
+  --vault-status-error: #8f302b;
+  --vault-status-withheld: #75516e;
 
-  --vault-signal-positive: #087f5b;
-  --vault-signal-negative: #c02c3a;
-  --vault-signal-neutral: #68778a;
+  --vault-signal-positive: #33664f;
+  --vault-signal-negative: #8f302b;
+  --vault-signal-neutral: #6f6659;
 
   --vault-conf-a: #087f5b;
-  --vault-conf-b: #2563eb;
+  --vault-conf-b: #53705d;
   --vault-conf-c: #68778a;
   --vault-conf-d: #96a1af;
 
   --vault-variant-chrome: #68778a;
-  --vault-variant-refractor: #2563eb;
+  --vault-variant-refractor: #9a681f;
   --vault-variant-retro: #b05d00;
   --vault-variant-blue-ice: #087fb2;
   --vault-variant-zebra-ice: #526174;
@@ -86,7 +90,11 @@ body.theme-dark.vault-theme,
   margin: 0;
   color: var(--vault-text);
   font-family: var(--vault-font-body);
-  background: var(--vault-bg-0);
+  background-color: var(--vault-bg-0);
+  background-image:
+    linear-gradient(rgba(74, 61, 43, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74, 61, 43, 0.025) 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 
 body.vault-theme::before {

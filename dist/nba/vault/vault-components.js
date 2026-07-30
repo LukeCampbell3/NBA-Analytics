@@ -352,10 +352,15 @@
       .join("");
     const signalLabel = play.ev != null ? "Expected value" : "Edge";
 
+    const rank = String(play.rank || index + 1).padStart(2, "0");
+
     return `
       <article class="prediction-card prediction-card--${CardVault.escapeAttr(tier)}" data-direction="${CardVault.escapeAttr(direction)}" aria-label="Prediction card for ${CardVault.escapeAttr(displayName)} ${CardVault.escapeAttr(direction)} ${CardVault.escapeAttr(targetLabel)}">
         <header class="prediction-card__header">
-          <span class="prediction-card__rank">#${CardVault.escapeHtml(play.rank || index + 1)}</span>
+          <div class="prediction-card__bounty-heading">
+            <span class="prediction-card__rank">Bounty ${CardVault.escapeHtml(rank)}</span>
+            <span class="prediction-card__wanted">Wanted</span>
+          </div>
           <div class="prediction-card__tags">${parlayTag}${tierTag}${statusTag}${riskTags}</div>
         </header>
         <div class="prediction-card__identity">
@@ -367,7 +372,7 @@
           </div>
         </div>
         <div class="prediction-card__signal">
-          <span class="prediction-card__signal-label">${CardVault.escapeHtml(signalLabel)}</span>
+          <span class="prediction-card__signal-label">Reward signal · ${CardVault.escapeHtml(signalLabel)}</span>
           <strong>${CardVault.escapeHtml(evText)}</strong>
         </div>
         <dl class="prediction-card__metrics">${metricHtml}</dl>

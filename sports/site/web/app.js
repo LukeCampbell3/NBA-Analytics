@@ -53,6 +53,22 @@ function renderBoardCard(sport, data) {
     const boardHref = pageHref(sport, "predictions");
     const methodHref = pageHref(sport, "prediction-about");
     const actionLabel = state.label === "Published" ? "Open board" : "Review board";
+    const plays = Array.isArray(data?.plays) ? data.plays : [];
+    const lead = plays.slice().sort((a, b) => {
+        const ev = (Number(b.ev) || 0) - (Number(a.ev) || 0);
+        if (Math.abs(ev) > 1e-9) return ev;
+        return (Number(b.abs_edge) || Number(b.edge) || 0) - (Number(a.abs_edge) || Number(a.edge) || 0);
+    })[0] || {};
+    const playerName = String(lead.player_display_name || lead.player || "No active bounty").replaceAll("_", " ");
+    const playerId = Number(lead.player_id);
+    const portrait = String(lead.player_headshot_url || "").trim() || (Number.isFinite(playerId) && playerId > 0
+        ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${playerId}.png`
+        : "");
+    const initials = playerName.split(/\s+/).filter(Boolean).map((part) => part[0]).slice(0, 2).join("").toUpperCase() || sport.slug.toUpperCase();
+    const pick = [lead.direction, lead.target, Number.isFinite(Number(lead.market_line)) ? Number(lead.market_line).toFixed(1) : ""].filter(Boolean).join(" ");
+    const portraitHtml = portrait
+        ? `<img src="${cv.escapeAttr(portrait)}" alt="" loading="lazy" onerror="this.closest('.desk-board-card__portrait').classList.add('is-fallback')"><span class="desk-board-card__fallback">${cv.escapeHtml(initials)}</span>`
+        : `<span class="desk-board-card__fallback is-visible">${cv.escapeHtml(initials)}</span>`;
 
     return `
         <article class="desk-board-card" style="--sport-accent:${cv.escapeAttr(sport.accent)};">
@@ -60,8 +76,17 @@ function renderBoardCard(sport, data) {
                 ${cv.renderStatusPill(state.tone, state.label)}
                 <span class="desk-board-card__run">Run ${cv.escapeHtml(runDate)}</span>
             </div>
-            <h3>${cv.escapeHtml(sport.title)}</h3>
-            <p class="desk-board-card__tagline">${cv.escapeHtml(sport.tagline)}</p>
+            <div class="desk-board-card__feature">
+                <div>
+                    <p class="desk-board-card__eyebrow">${cv.escapeHtml(sport.slug)} bounty board</p>
+                    <h3>${cv.escapeHtml(sport.title)}</h3>
+                    <p class="desk-board-card__tagline">${cv.escapeHtml(sport.tagline)}</p>
+                </div>
+                <figure class="desk-board-card__portrait">
+                    ${portraitHtml}
+                    <figcaption><strong>${cv.escapeHtml(playerName)}</strong><span>${cv.escapeHtml(pick || "Board pending")}</span></figcaption>
+                </figure>
+            </div>
             <div class="desk-board-card__metrics">
                 <div class="desk-board-card__metric">
                     <span>Board size</span>
@@ -87,10 +112,10 @@ function renderBoardCard(sport, data) {
 function mountShell() {
     if (!window.CardVaultShell) return;
     window.CardVaultShell.mount({
-        brandTitle: "Prediction Desk",
         brandHref: "/",
         sportSlug: "",
-        sportAccent: "#2563eb",
+        brandTitle: "Prediction Bounties",
+        sportAccent: "#8a5820",
         navLinks: [],
         showDisclaimer: true,
     });

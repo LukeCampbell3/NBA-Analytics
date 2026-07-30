@@ -33,7 +33,7 @@ class PredictionAboutPage {
         if (!window.CardVaultShell) return;
 
         window.CardVaultShell.mount({
-            brandTitle: "Prediction Desk",
+            brandTitle: "Prediction Bounties",
             brandHref: "/",
             sportSlug: "mlb",
             sportAccent: "#087f5b",

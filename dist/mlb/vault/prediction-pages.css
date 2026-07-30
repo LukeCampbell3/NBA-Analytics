@@ -1,5 +1,5 @@
 /**
- * Shared presentation for the Prediction Desk, prediction boards, and methods.
+ * Shared presentation for Prediction Bounties, prediction boards, and methods.
  */
 
 * {
@@ -912,5 +912,390 @@ body.vault-theme .prediction-card__note {
   .prediction-about-metric-card:nth-child(3n),
   .prediction-about-metric-card:nth-child(5n) {
     border-right: 0;
+  }
+}
+
+/* Bounty ledger theme */
+.vault-topbar {
+  border-bottom-color: #161512;
+  background: rgba(39, 36, 31, 0.98);
+  color: #f7efde;
+  box-shadow: 0 2px 0 rgba(154, 104, 31, 0.72);
+}
+
+.vault-brand {
+  color: #fff8e8;
+}
+
+.vault-brand-mark {
+  border: 1px solid #c59750;
+  border-radius: 50%;
+  background: #f3e5c9;
+  color: var(--vault-ink);
+  font-family: var(--vault-font-western);
+  font-weight: 400;
+  box-shadow: inset 0 0 0 3px #2d2923;
+}
+
+.vault-brand-kicker {
+  color: #cdbb9b;
+  letter-spacing: 0.13em;
+}
+
+.vault-brand-title {
+  color: #fff8e8;
+  font-family: var(--vault-font-display);
+}
+
+.vault-context-nav {
+  border-left-color: #5c5448;
+}
+
+.vault-nav-link,
+.vault-context-link {
+  color: #d8cdb9;
+}
+
+.vault-nav-link:hover,
+.vault-context-link:hover {
+  color: #fff8e8;
+  background: rgba(255, 248, 232, 0.08);
+}
+
+.vault-nav-link.is-active,
+.vault-context-link.is-active {
+  color: #fff8e8;
+  background: rgba(197, 151, 80, 0.13);
+}
+
+.vault-nav-link.is-active::after,
+.vault-context-link.is-active::after {
+  background: #c59750;
+}
+
+.vault-shell-info,
+.vault-menu-btn {
+  border-color: #6c6254;
+  background: #34302a;
+  color: #fff8e8;
+}
+
+.vault-info-trigger,
+.info-trigger {
+  border-color: var(--vault-line-strong);
+  background: var(--vault-panel);
+  color: var(--vault-text);
+}
+
+.vault-info-trigger::after,
+.info-trigger::after {
+  border-color: var(--vault-line-strong);
+  background: var(--vault-ink);
+  color: #fff8e8;
+}
+
+.vault-page-header,
+.prediction-about-sign {
+  margin-bottom: 30px;
+  padding: 0 0 25px;
+  border-bottom: 3px double var(--vault-line-strong);
+}
+
+.vault-page-kicker,
+.prediction-about-kicker,
+.desk-kicker,
+.desk-section-kicker {
+  color: var(--vault-sport-accent);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.vault-page-header h1,
+.prediction-about-sign h1,
+.desk-header h1 {
+  font-family: var(--vault-font-western);
+  font-weight: 400;
+}
+
+.vault-page-header h1,
+.prediction-about-sign h1 {
+  font-size: 3.35rem;
+  line-height: 1.02;
+}
+
+.prediction-page-lead,
+.desk-header p {
+  color: var(--vault-text-muted);
+}
+
+.prediction-run-meta__item,
+.prediction-run-meta .vault-status-pill,
+.prediction-about-run-facts span {
+  min-height: 29px;
+  border-color: var(--vault-line);
+  border-radius: 2px;
+  background: rgba(255, 250, 240, 0.62);
+}
+
+.vault-status-pill {
+  border-radius: 2px;
+  background: rgba(255, 250, 240, 0.55);
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.vault-board {
+  gap: 19px;
+}
+
+.prediction-card,
+body.vault-theme .prediction-card {
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--vault-line-strong);
+  border-top: 5px solid var(--vault-sport-accent);
+  border-radius: 4px;
+  background-color: var(--vault-card-face);
+  background-image:
+    linear-gradient(rgba(82, 62, 37, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(82, 62, 37, 0.025) 1px, transparent 1px);
+  background-size: 17px 17px;
+  box-shadow: var(--vault-shadow-card);
+}
+
+.prediction-card::before,
+body.vault-theme .prediction-card::before {
+  display: block;
+  position: absolute;
+  inset: 7px;
+  width: auto;
+  border: 1px solid rgba(91, 70, 42, 0.18);
+  background: transparent;
+  pointer-events: none;
+}
+
+.prediction-card::after,
+body.vault-theme .prediction-card::after {
+  display: none;
+}
+
+.prediction-card__header,
+body.vault-theme .prediction-card__header {
+  align-items: flex-start;
+  min-height: 45px;
+}
+
+.prediction-card__bounty-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.prediction-card__rank,
+body.vault-theme .prediction-card__rank {
+  min-height: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--vault-text-dim);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.prediction-card__wanted {
+  color: var(--vault-text);
+  font-family: var(--vault-font-western);
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.prediction-card__tag,
+body.vault-theme .prediction-card__tag {
+  min-height: 24px;
+  padding: 0 7px;
+  border-color: var(--vault-line-strong);
+  border-radius: 2px;
+  background: rgba(255, 250, 240, 0.42);
+  color: var(--vault-text-muted);
+  font-size: 0.61rem;
+  letter-spacing: 0.07em;
+}
+
+.prediction-card__tag:last-child {
+  border-color: color-mix(in srgb, var(--vault-status-active) 52%, var(--vault-line));
+  color: var(--vault-status-active);
+}
+
+.prediction-card__identity,
+body.vault-theme .prediction-card__identity {
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 15px;
+}
+
+.prediction-card__photo,
+body.vault-theme .prediction-card__photo {
+  width: 78px;
+  height: 86px;
+  border-color: var(--vault-line-strong);
+  border-radius: 1px;
+  background: var(--vault-bg-1);
+  box-shadow: 3px 3px 0 rgba(72, 54, 32, 0.12);
+}
+
+.prediction-card__photo-img,
+body.vault-theme .prediction-card__photo-img {
+  filter: saturate(0.82) sepia(0.12) contrast(1.04);
+}
+
+.prediction-card__fallback,
+body.vault-theme .prediction-card__fallback {
+  background: var(--vault-bg-2);
+  color: var(--vault-text-muted);
+  font-family: var(--vault-font-display);
+}
+
+.prediction-card__name,
+body.vault-theme .prediction-card__name {
+  font-family: var(--vault-font-display);
+  font-size: 1.08rem;
+}
+
+.prediction-card__market,
+body.vault-theme .prediction-card__market {
+  margin-top: 6px;
+  font-size: 0.73rem;
+  letter-spacing: 0.07em;
+}
+
+.prediction-card__context,
+body.vault-theme .prediction-card__context {
+  color: var(--vault-text-dim);
+}
+
+.prediction-card__signal,
+body.vault-theme .prediction-card__signal {
+  padding: 12px 0;
+  border-top: 3px double var(--vault-line-strong);
+  border-bottom-color: var(--vault-line);
+}
+
+.prediction-card__signal-label,
+body.vault-theme .prediction-card__signal-label {
+  max-width: 52%;
+  color: var(--vault-text-muted);
+  letter-spacing: 0.07em;
+}
+
+.prediction-card__signal strong,
+body.vault-theme .prediction-card__signal strong {
+  font-family: var(--vault-font-display);
+  font-size: 1.4rem;
+}
+
+.prediction-card__metrics div,
+body.vault-theme .prediction-card__metrics div {
+  border-left-color: var(--vault-line);
+}
+
+.prediction-card__metrics dd,
+body.vault-theme .prediction-card__metrics dd {
+  font-family: var(--vault-font-display);
+}
+
+.prediction-card__note,
+body.vault-theme .prediction-card__note {
+  padding-top: 12px;
+  border-top: 1px solid var(--vault-line);
+  color: var(--vault-text-muted);
+}
+
+.prediction-about-panel {
+  padding: 32px 0;
+  border-bottom: 1px solid var(--vault-line-strong);
+}
+
+.prediction-about-panel h2,
+.prediction-about-panel h3 {
+  font-family: var(--vault-font-display);
+}
+
+.prediction-about-panel h2 {
+  font-size: 1.45rem;
+}
+
+.prediction-about-metric-grid,
+.prediction-about-table-wrap {
+  border-color: var(--vault-line-strong);
+  border-radius: 4px;
+  background: rgba(248, 243, 232, 0.78);
+}
+
+.prediction-about-metric-card,
+.prediction-about-table th,
+.prediction-about-table td {
+  border-color: var(--vault-line);
+}
+
+.prediction-about-metric-card strong {
+  font-family: var(--vault-font-display);
+}
+
+.prediction-about-table th {
+  background: var(--vault-bg-2);
+}
+
+.prediction-about-callout {
+  border-color: var(--vault-line-strong);
+  border-left-color: var(--vault-sport-accent);
+  border-radius: 3px;
+  background: rgba(248, 243, 232, 0.82);
+}
+
+.vault-empty {
+  border-color: var(--vault-line-strong);
+  border-radius: 4px;
+  background: rgba(248, 243, 232, 0.52);
+}
+
+@media (max-width: 760px) {
+  .vault-navigation {
+    border-bottom-color: #161512;
+    background: var(--vault-ink);
+  }
+
+  .vault-context-nav {
+    border-top-color: #5c5448;
+  }
+
+  .vault-page-header h1,
+  .prediction-about-sign h1,
+  .desk-header h1 {
+    font-size: 2.35rem;
+  }
+}
+
+@media (max-width: 430px) {
+  .prediction-card,
+  body.vault-theme .prediction-card {
+    padding: 15px;
+  }
+
+  .prediction-card__identity,
+  body.vault-theme .prediction-card__identity {
+    grid-template-columns: 62px minmax(0, 1fr);
+  }
+
+  .prediction-card__photo,
+  body.vault-theme .prediction-card__photo {
+    width: 62px;
+    height: 70px;
+  }
+
+  .prediction-card__wanted {
+    font-size: 1.12rem;
   }
 }
