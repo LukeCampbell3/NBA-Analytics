@@ -1,8 +1,8 @@
 ﻿/**
- * The Card Vault System â€” components
+ * Prediction Desk shared components.
  */
 
-/* â”€â”€â”€ App shell â”€â”€â”€ */
+/* App shell */
 .vault-shell {
   position: relative;
   z-index: 1;
@@ -205,7 +205,7 @@
   }
 }
 
-/* â”€â”€â”€ Workspace vault door cards â”€â”€â”€ */
+/* Workspace cards */
 .vault-door-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -270,7 +270,7 @@
   outline-offset: 2px;
 }
 
-/* â”€â”€â”€ Living player card base â”€â”€â”€ */
+/* Player card base */
 .player-card {
   --card-accent: var(--vault-variant-chrome);
   position: relative;
@@ -518,7 +518,7 @@
   100% { background-position: -100% 0; }
 }
 
-/* â”€â”€â”€ Metric chip â”€â”€â”€ */
+/* Metric chip */
 .vault-metric-chip {
   display: inline-flex;
   align-items: center;
@@ -541,7 +541,7 @@
 .vault-metric-chip--positive { border-color: color-mix(in srgb, var(--vault-signal-positive) 40%, transparent); }
 .vault-metric-chip--negative { border-color: color-mix(in srgb, var(--vault-signal-negative) 40%, transparent); }
 
-/* â”€â”€â”€ Confidence band â”€â”€â”€ */
+/* Confidence band */
 .vault-confidence {
   display: inline-flex;
   align-items: center;
@@ -571,7 +571,7 @@
 .vault-confidence--d .vault-confidence__fill { background: var(--vault-conf-d); width: 35%; }
 .vault-confidence--a .vault-confidence__fill { width: 92%; }
 
-/* â”€â”€â”€ Status pill â”€â”€â”€ */
+/* Status pill */
 .vault-status-pill {
   display: inline-flex;
   align-items: center;
@@ -590,7 +590,7 @@
 .vault-status-pill--withheld { color: var(--vault-status-withheld); }
 .vault-status-pill--error { color: var(--vault-status-error); }
 
-/* â”€â”€â”€ Evidence badge â”€â”€â”€ */
+/* Evidence badge */
 .vault-evidence {
   font-size: 0.72rem;
   color: var(--vault-text-muted);
@@ -600,7 +600,7 @@
   font-weight: 600;
 }
 
-/* â”€â”€â”€ Data freshness â”€â”€â”€ */
+/* Data freshness */
 .vault-freshness {
   font-size: 0.72rem;
   color: var(--vault-text-dim);
@@ -609,7 +609,7 @@
   color: var(--vault-status-stale);
 }
 
-/* â”€â”€â”€ Board grid (prediction desk) â”€â”€â”€ */
+/* Board grid */
 .vault-board {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -638,7 +638,7 @@
   font: inherit;
 }
 
-/* â”€â”€â”€ Evidence ledger table â”€â”€â”€ */
+/* Evidence ledger table */
 .vault-ledger {
   width: 100%;
   border-collapse: collapse;
@@ -674,7 +674,7 @@
   cursor: pointer;
 }
 
-/* â”€â”€â”€ Empty state â”€â”€â”€ */
+/* Empty state */
 .vault-empty {
   text-align: center;
   padding: var(--vault-space-10) var(--vault-space-6);
@@ -690,7 +690,7 @@
   margin: 0 0 var(--vault-space-3);
 }
 
-/* â”€â”€â”€ Page sections â”€â”€â”€ */
+/* Page sections */
 .vault-page-header {
   margin-bottom: var(--vault-space-8);
 }

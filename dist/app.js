@@ -1,7 +1,7 @@
-async function loadSportsManifest() {
-    const response = await fetch(`data/sports.json?v=${Date.now()}`);
+async function fetchJson(path) {
+    const response = await fetch(`${path}?v=${Date.now()}`);
     if (!response.ok) {
-        throw new Error(`Failed to load prediction manifest (HTTP ${response.status})`);
+        throw new Error(`HTTP ${response.status}`);
     }
     return response.json();
 }
@@ -10,91 +10,123 @@ function predictionPages(sport) {
     return (sport.pages || []).filter((page) => page.slug === "predictions" || page.slug === "prediction-about");
 }
 
-function renderSummary(sports) {
-    const sportCount = document.getElementById("sportCount");
-    const boardCount = document.getElementById("boardCount");
-    const methodCount = document.getElementById("methodCount");
-    const surfaceCount = document.getElementById("predictionSurfaceCount");
-
-    const pages = sports.flatMap(predictionPages);
-    const boards = pages.filter((page) => page.slug === "predictions").length;
-    const methods = pages.filter((page) => page.slug === "prediction-about").length;
-
-    if (sportCount) sportCount.textContent = String(sports.length);
-    if (boardCount) boardCount.textContent = String(boards);
-    if (methodCount) methodCount.textContent = String(methods);
-    if (surfaceCount) surfaceCount.textContent = String(pages.length);
+function pageHref(sport, slug) {
+    return predictionPages(sport).find((page) => page.slug === slug)?.href || `/${sport.slug}/${slug}/`;
 }
 
-function renderSportsGrid(sports) {
-    const grid = document.getElementById("sportsGrid");
-    if (!grid) return;
+function publicationState(data) {
+    const raw = String(data?.publication_status || "ready").toLowerCase();
+    if (raw === "ready" || raw === "published") {
+        return { tone: "active", label: "Published" };
+    }
+    if (raw === "review") {
+        return { tone: "stale", label: "Review" };
+    }
+    return { tone: "withheld", label: "Withheld" };
+}
 
+function topSignal(data) {
+    const plays = Array.isArray(data?.plays) ? data.plays : [];
+    if (!plays.length) return "n/a";
+    const sorted = plays.slice().sort((a, b) => {
+        const ev = (Number(b.ev) || 0) - (Number(a.ev) || 0);
+        if (Math.abs(ev) > 1e-9) return ev;
+        return (Number(b.abs_edge) || Number(b.edge) || 0) - (Number(a.abs_edge) || Number(a.edge) || 0);
+    });
+    const play = sorted[0];
+    const value = play.ev != null ? Number(play.ev) * 100 : Number(play.abs_edge ?? play.edge);
+    if (!Number.isFinite(value)) return "n/a";
+    return play.ev != null ? `${value >= 0 ? "+" : ""}${value.toFixed(1)}%` : `${value >= 0 ? "+" : ""}${value.toFixed(2)}`;
+}
+
+function boardSize(data) {
+    const plays = Array.isArray(data?.plays) ? data.plays.length : 0;
+    const summaryCount = Number(data?.summary?.play_count);
+    return String(plays || (Number.isFinite(summaryCount) ? summaryCount : 0));
+}
+
+function renderBoardCard(sport, data) {
     const cv = window.CardVault;
-    if (!cv) {
-        console.error("CardVault not loaded");
-        return;
-    }
+    const state = publicationState(data);
+    const throughDate = data?.through_date || "n/a";
+    const runDate = data?.run_date || "n/a";
+    const boardHref = pageHref(sport, "predictions");
+    const methodHref = pageHref(sport, "prediction-about");
+    const actionLabel = state.label === "Published" ? "Open board" : "Review board";
 
-    const predictionSports = (sports || [])
-        .map((sport) => ({ ...sport, pages: predictionPages(sport) }))
-        .filter((sport) => sport.pages.some((page) => page.slug === "predictions"));
-
-    if (!predictionSports.length) {
-        grid.innerHTML = cv.renderEmptyState(
-            "No prediction pages found",
-            "No sport prediction boards were discovered in the current build.",
-            "Add a predictions.html page under sports/<slug>/web to publish a board."
-        );
-        return;
-    }
-
-    grid.innerHTML = predictionSports.map((sport) => cv.renderSportWorkspaceCard({
-        ...sport,
-        entry_href: sport.pages.find((page) => page.slug === "predictions")?.href || sport.entry_href,
-    })).join("");
+    return `
+        <article class="desk-board-card" style="--sport-accent:${cv.escapeAttr(sport.accent)};">
+            <div class="desk-board-card__topline">
+                ${cv.renderStatusPill(state.tone, state.label)}
+                <span class="desk-board-card__run">Run ${cv.escapeHtml(runDate)}</span>
+            </div>
+            <h3>${cv.escapeHtml(sport.title)}</h3>
+            <p class="desk-board-card__tagline">${cv.escapeHtml(sport.tagline)}</p>
+            <div class="desk-board-card__metrics">
+                <div class="desk-board-card__metric">
+                    <span>Board size</span>
+                    <strong>${cv.escapeHtml(boardSize(data))}</strong>
+                </div>
+                <div class="desk-board-card__metric">
+                    <span>Data through</span>
+                    <strong>${cv.escapeHtml(throughDate)}</strong>
+                </div>
+                <div class="desk-board-card__metric">
+                    <span>Top signal</span>
+                    <strong>${cv.escapeHtml(topSignal(data))}</strong>
+                </div>
+            </div>
+            <div class="desk-board-card__actions">
+                <a class="desk-board-card__primary" href="${cv.escapeAttr(boardHref)}">${cv.escapeHtml(actionLabel)}</a>
+                <a class="desk-board-card__secondary" href="${cv.escapeAttr(methodHref)}">Methodology</a>
+            </div>
+        </article>
+    `;
 }
 
-function mountHubShell() {
+function mountShell() {
     if (!window.CardVaultShell) return;
-
     window.CardVaultShell.mount({
-        brandTitle: "Prediction Analytics",
+        brandTitle: "Prediction Desk",
         brandHref: "/",
-        workspaceLabel: "",
         sportSlug: "",
         sportAccent: "#2563eb",
-        breadcrumbs: [{ label: "Prediction Desk", href: "/" }],
         navLinks: [],
         showDisclaimer: true,
     });
 }
 
-function showLoadingGrid() {
-    const grid = document.getElementById("sportsGrid");
-    if (grid && window.CardVault) {
-        grid.innerHTML = window.CardVault.renderSkeletonCard(2);
-    }
-}
-
 async function init() {
-    mountHubShell();
-    showLoadingGrid();
+    mountShell();
+    const grid = document.getElementById("sportsGrid");
+    const summary = document.getElementById("deskSummary");
 
     try {
-        const sports = await loadSportsManifest();
-        renderSummary(sports);
-        renderSportsGrid(sports);
+        const manifest = await fetchJson("data/sports.json");
+        const sports = (manifest || [])
+            .map((sport) => ({ ...sport, pages: predictionPages(sport) }))
+            .filter((sport) => sport.pages.some((page) => page.slug === "predictions"));
+        const results = await Promise.all(sports.map(async (sport) => {
+            try {
+                return { sport, data: await fetchJson(`${sport.slug}/data/daily_predictions.json`) };
+            } catch (error) {
+                return { sport, data: null, error };
+            }
+        }));
+
+        grid.innerHTML = results.map(({ sport, data, error }) => {
+            if (error || !data) {
+                return `<article class="desk-board-error">${window.CardVault.escapeHtml(sport.title)} board data is unavailable.</article>`;
+            }
+            return renderBoardCard(sport, data);
+        }).join("");
+
+        const publishedCount = results.filter(({ data }) => publicationState(data).label === "Published").length;
+        summary.textContent = `${publishedCount} published / ${sports.length} total boards`;
     } catch (error) {
         console.error(error);
-        const grid = document.getElementById("sportsGrid");
-        if (grid && window.CardVault) {
-            grid.innerHTML = window.CardVault.renderEmptyState(
-                "Unable to load prediction manifest",
-                error.message,
-                "Rebuild the static site to regenerate data/sports.json."
-            );
-        }
+        grid.innerHTML = `<div class="desk-board-error">Unable to load prediction workspaces: ${window.CardVault.escapeHtml(error.message)}</div>`;
+        summary.textContent = "Board status unavailable";
     }
 }
 

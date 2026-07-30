@@ -33,16 +33,13 @@ class PredictionAboutPage {
         if (!window.CardVaultShell) return;
 
         window.CardVaultShell.mount({
-            brandTitle: "MLB Analytics",
+            brandTitle: "Prediction Desk",
             brandHref: "/",
-            workspaceLabel: "MLB",
-            workspaceHref: "/mlb/predictions.html",
             sportSlug: "mlb",
-            sportAccent: "#0f766e",
-            breadcrumbs: [{ label: "Prediction Method", href: "prediction-about.html" }],
+            sportAccent: "#087f5b",
             navLinks: [
-                { label: "Board", href: "predictions.html", active: false },
-                { label: "Method", href: "prediction-about.html", active: true },
+                { label: "Board", href: "/mlb/predictions/", active: false },
+                { label: "Method", href: "/mlb/prediction-about/", active: true },
             ],
             showDisclaimer: true,
         });
@@ -53,7 +50,12 @@ class PredictionAboutPage {
         const throughDate = this.data?.through_date || "n/a";
         const modelRun = this.data?.model_run_id || "n/a";
         const policy = this.data?.policy_profile || "n/a";
-        this.elements.runFacts.textContent = `Run ${runDate} | Data through ${throughDate} | Model ${modelRun} | Policy ${policy}`;
+        this.elements.runFacts.innerHTML = `
+            <span>Run ${this.escapeHtml(runDate)}</span>
+            <span>Data through ${this.escapeHtml(throughDate)}</span>
+            <span>Model ${this.escapeHtml(modelRun)}</span>
+            <span>Policy ${this.escapeHtml(policy)}</span>
+        `;
     }
 
     renderOverview() {
@@ -122,7 +124,7 @@ class PredictionAboutPage {
             .sort((a, b) => Number(b[1]) - Number(a[1]))
             .slice(0, 4)
             .map(([label, count]) => `${label.replaceAll("_", " ")}: ${count}`)
-            .join(" | ");
+            .join(", ");
 
         this.elements.boardSummary.innerHTML = `
             <p>

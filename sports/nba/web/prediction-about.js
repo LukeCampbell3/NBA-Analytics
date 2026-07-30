@@ -33,16 +33,13 @@ class PredictionAboutPage {
         if (!window.CardVaultShell) return;
 
         window.CardVaultShell.mount({
-            brandTitle: 'NBA Analytics',
+            brandTitle: 'Prediction Desk',
             brandHref: '/',
-            workspaceLabel: 'NBA',
-            workspaceHref: '/nba/predictions.html',
             sportSlug: 'nba',
-            sportAccent: '#a16207',
-            breadcrumbs: [{ label: 'Prediction Method', href: 'prediction-about.html' }],
+            sportAccent: '#c02c3a',
             navLinks: [
-                { label: 'Board', href: 'predictions.html', active: false },
-                { label: 'Method', href: 'prediction-about.html', active: true },
+                { label: 'Board', href: '/nba/predictions/', active: false },
+                { label: 'Method', href: '/nba/prediction-about/', active: true },
             ],
             showDisclaimer: true,
         });
@@ -53,7 +50,12 @@ class PredictionAboutPage {
         const throughDate = this.data?.through_date || 'n/a';
         const modelRun = this.data?.model_run_id || 'n/a';
         const policy = this.data?.policy_profile || 'n/a';
-        this.elements.runFacts.textContent = `Run ${runDate} | Data through ${throughDate} | Model ${modelRun} | Policy ${policy}`;
+        this.elements.runFacts.innerHTML = `
+            <span>Run ${this.escapeHtml(runDate)}</span>
+            <span>Data through ${this.escapeHtml(throughDate)}</span>
+            <span>Model ${this.escapeHtml(modelRun)}</span>
+            <span>Policy ${this.escapeHtml(policy)}</span>
+        `;
     }
 
     renderAccuracy() {
@@ -137,7 +139,7 @@ class PredictionAboutPage {
         const parlayValidation = this.data?.parlay_validation || {};
         this.elements.boardSummary.innerHTML = `
             <p>
-                <strong>Current board profile:</strong> ${this.formatInt(summary.play_count)} published plays,
+                <strong>Current board profile:</strong> ${this.formatInt(summary.play_count)} selected plays,
                 average expected win rate ${this.formatPct(summary.avg_expected_win_rate)},
                 average EV ${this.formatSignedPct(summary.avg_ev)},
                 and average edge ${this.formatNum(summary.avg_edge)}.

@@ -31,7 +31,6 @@ PREDICTION_TOP_LEVEL_FILES = {
     "prediction-about.html",
     "predictions.js",
     "prediction-about.js",
-    "styles.css",
 }
 PREDICTION_DATA_FILES = {"daily_predictions.json"}
 

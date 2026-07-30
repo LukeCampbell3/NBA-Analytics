@@ -3,24 +3,24 @@
  * Canonical source: sports/shared/web/vault/
  */
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 :root {
-  --vault-bg-0: #eef1f4;
-  --vault-bg-1: #f7f8fa;
-  --vault-bg-2: #edf1f5;
+  --vault-bg-0: #f3f5f7;
+  --vault-bg-1: #f8f9fb;
+  --vault-bg-2: #eef1f5;
   --vault-panel: #ffffff;
-  --vault-panel-raised: #f9fafb;
+  --vault-panel-raised: #f8f9fb;
   --vault-card-face: #ffffff;
-  --vault-card-inner: #f7f9fb;
-  --vault-line: rgba(31, 41, 55, 0.10);
-  --vault-line-strong: rgba(31, 41, 55, 0.18);
+  --vault-card-inner: #f8f9fb;
+  --vault-line: #dce1e8;
+  --vault-line-strong: #c8d0da;
 
   --vault-font-display: "Inter", "Segoe UI", system-ui, sans-serif;
   --vault-font-body: "Inter", "Segoe UI", system-ui, sans-serif;
-  --vault-text: #17202a;
-  --vault-text-muted: #5d6978;
-  --vault-text-dim: #7b8794;
+  --vault-text: #172131;
+  --vault-text-muted: #5d6b7e;
+  --vault-text-dim: #7a8798;
 
   --vault-space-1: 0.25rem;
   --vault-space-2: 0.5rem;
@@ -32,70 +32,65 @@
   --vault-space-10: 2.5rem;
   --vault-space-12: 3rem;
 
-  --vault-radius-sm: 6px;
-  --vault-radius-md: 8px;
+  --vault-radius-sm: 5px;
+  --vault-radius-md: 7px;
   --vault-radius-lg: 8px;
   --vault-radius-card: 8px;
 
-  --vault-shadow-card: 0 12px 28px rgba(17, 24, 39, 0.08), 0 1px 2px rgba(17, 24, 39, 0.04);
-  --vault-shadow-lift: 0 18px 38px rgba(17, 24, 39, 0.12);
-  --vault-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  --vault-shadow-card: 0 1px 2px rgba(23, 33, 49, 0.04), 0 8px 20px rgba(23, 33, 49, 0.05);
+  --vault-shadow-lift: 0 2px 4px rgba(23, 33, 49, 0.06), 0 14px 28px rgba(23, 33, 49, 0.08);
+  --vault-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.88);
 
   --vault-sport-accent: #2563eb;
-  --vault-sport-surface: #111827;
+  --vault-sport-surface: #172131;
 
-  --vault-status-active: #047857;
-  --vault-status-planned: #64748b;
-  --vault-status-stale: #b45309;
-  --vault-status-error: #b91c1c;
-  --vault-status-withheld: #6d28d9;
+  --vault-status-active: #087f5b;
+  --vault-status-planned: #68778a;
+  --vault-status-stale: #b05d00;
+  --vault-status-error: #c02c3a;
+  --vault-status-withheld: #7c3fb0;
 
-  --vault-signal-positive: #047857;
-  --vault-signal-negative: #b91c1c;
-  --vault-signal-neutral: #64748b;
+  --vault-signal-positive: #087f5b;
+  --vault-signal-negative: #c02c3a;
+  --vault-signal-neutral: #68778a;
 
-  --vault-conf-a: #0f766e;
+  --vault-conf-a: #087f5b;
   --vault-conf-b: #2563eb;
-  --vault-conf-c: #64748b;
-  --vault-conf-d: #94a3b8;
+  --vault-conf-c: #68778a;
+  --vault-conf-d: #96a1af;
 
-  --vault-variant-chrome: #64748b;
+  --vault-variant-chrome: #68778a;
   --vault-variant-refractor: #2563eb;
-  --vault-variant-retro: #a16207;
-  --vault-variant-blue-ice: #0284c7;
-  --vault-variant-zebra-ice: #475569;
-  --vault-variant-tiger-ice: #c2410c;
-  --vault-variant-rookie: #15803d;
-  --vault-variant-manga: #be185d;
-  --vault-variant-auto: #047857;
-  --vault-variant-patch: #b45309;
+  --vault-variant-retro: #b05d00;
+  --vault-variant-blue-ice: #087fb2;
+  --vault-variant-zebra-ice: #526174;
+  --vault-variant-tiger-ice: #bd4f13;
+  --vault-variant-rookie: #17804c;
+  --vault-variant-manga: #b62b74;
+  --vault-variant-auto: #087f5b;
+  --vault-variant-patch: #b05d00;
 
   --vault-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --vault-duration-fast: 140ms;
   --vault-duration: 220ms;
 }
 
+html {
+  background: var(--vault-bg-0);
+}
+
 body.vault-theme,
 body.theme-dark.vault-theme,
 .vault-app {
+  min-height: 100vh;
+  margin: 0;
   color: var(--vault-text);
   font-family: var(--vault-font-body);
-  background:
-    linear-gradient(rgba(31, 41, 55, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(31, 41, 55, 0.03) 1px, transparent 1px),
-    radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--vault-sport-accent) 10%, transparent), transparent 30rem),
-    linear-gradient(180deg, var(--vault-bg-1) 0%, var(--vault-bg-0) 100%);
-  background-size: 28px 28px, 28px 28px, auto, auto;
-  min-height: 100vh;
+  background: var(--vault-bg-0);
 }
 
 body.vault-theme::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0));
-  z-index: 0;
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

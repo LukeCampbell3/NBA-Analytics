@@ -22,16 +22,13 @@ class DailyPredictionsPage {
         if (!window.CardVaultShell) return;
 
         window.CardVaultShell.mount({
-            brandTitle: "MLB Analytics",
+            brandTitle: "Prediction Desk",
             brandHref: "/",
-            workspaceLabel: "MLB",
-            workspaceHref: "/mlb/predictions.html",
             sportSlug: "mlb",
-            sportAccent: "#0f766e",
-            breadcrumbs: [{ label: "Prediction Board", href: "predictions.html" }],
+            sportAccent: "#087f5b",
             navLinks: [
-                { label: "Board", href: "predictions.html", active: true },
-                { label: "Method", href: "prediction-about.html", active: false },
+                { label: "Board", href: "/mlb/predictions/", active: true },
+                { label: "Method", href: "/mlb/prediction-about/", active: false },
             ],
             showDisclaimer: true,
         });
@@ -57,7 +54,10 @@ class DailyPredictionsPage {
         const response = await fetch(`data/daily_predictions.json?v=${Date.now()}`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         this.data = await response.json();
-        this.plays = Array.isArray(this.data.plays) ? this.data.plays.slice() : [];
+        const publicationStatus = String(this.data?.publication_status || "ready").toLowerCase();
+        this.plays = Array.isArray(this.data.plays)
+            ? this.data.plays.map((play) => ({ ...play, board_publication_status: publicationStatus }))
+            : [];
         this.plays.sort((a, b) => {
             const parlayDiff = Number(Boolean(b.parlay_candidate)) - Number(Boolean(a.parlay_candidate));
             if (parlayDiff !== 0) return parlayDiff;
@@ -77,16 +77,17 @@ class DailyPredictionsPage {
         const publicationTone = publicationStatus === "ready" ? "active" : publicationStatus === "review" ? "stale" : "withheld";
         const stale = publicationStatus !== "ready";
         const quality = this.data?.data_quality || {};
-        const lagText = Number.isFinite(Number(quality.lag_days)) ? `Lag ${Number(quality.lag_days)}d / ` : "";
+        const lagText = Number.isFinite(Number(quality.lag_days)) ? `${Number(quality.lag_days)}d` : "n/a";
 
         if (this.elements.runMeta && window.CardVault) {
-            this.elements.runMeta.innerHTML = [
-                window.CardVault.renderDataFreshness(`Run ${runDate} - Data through ${throughDate}`, stale),
-                ` - Policy ${this.escapeHtml(policy)} - `,
-                this.escapeHtml(lagText),
-                window.CardVault.renderStatusPill(publicationTone, publicationLabel),
-                ` - ${this.plays.length} prediction${this.plays.length === 1 ? "" : "s"}`,
-            ].join("");
+            this.elements.runMeta.innerHTML = `
+                ${window.CardVault.renderStatusPill(publicationTone, publicationLabel)}
+                <span class="prediction-run-meta__item">Run <strong>${this.escapeHtml(runDate)}</strong></span>
+                <span class="prediction-run-meta__item">Data through <strong>${this.escapeHtml(throughDate)}</strong></span>
+                <span class="prediction-run-meta__item">Lag <strong>${this.escapeHtml(lagText)}</strong></span>
+                <span class="prediction-run-meta__item">Signals <strong>${this.plays.length}</strong></span>
+                <span class="prediction-run-meta__item">Policy <strong>${this.escapeHtml(policy)}</strong></span>
+            `;
         } else if (this.elements.runMeta) {
             this.elements.runMeta.textContent = `Run ${runDate} | Data through ${throughDate} | Policy ${policy} | ${publicationLabel}`;
         }
