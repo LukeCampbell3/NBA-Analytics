@@ -68,6 +68,13 @@ def _safe_int(value: Any, default: int = 0) -> int:
         return default
 
 
+def _valid_american_price(value: Any) -> float | None:
+    price = _safe_float(value, default=float("nan"))
+    if not math.isfinite(price) or abs(price) < 100.0:
+        return None
+    return price
+
+
 def poisson_cdf(k: int, lam: float) -> float:
     if k < 0:
         return 0.0
@@ -126,6 +133,9 @@ class MaxWRCandidate:
     market_source: str
     market_books: int
     market_line_std: float
+    market_over_price: float | None
+    market_under_price: float | None
+    selected_side_price: float
     history_rows: int
     days_since_history: int
     # Composite confidence = blend of model prob and bucket historical rate
@@ -202,6 +212,12 @@ def select_max_winrate_board(
         else:
             continue
 
+        market_over_price = _valid_american_price(row.get("Market_Over_Price"))
+        market_under_price = _valid_american_price(row.get("Market_Under_Price"))
+        selected_side_price = market_over_price if direction == "OVER" else market_under_price
+        if selected_side_price is None:
+            continue
+
         if abs(edge) < min_edge:
             continue
 
@@ -259,6 +275,9 @@ def select_max_winrate_board(
             market_source=market_source,
             market_books=market_books,
             market_line_std=_safe_float(row.get("Market_Line_Std")),
+            market_over_price=market_over_price,
+            market_under_price=market_under_price,
+            selected_side_price=selected_side_price,
             history_rows=history_rows,
             days_since_history=days_since,
             composite_confidence=composite,
@@ -352,8 +371,8 @@ def write_exporter_csv(path: Path, board: list[MaxWRCandidate]) -> None:
                 "Direction_Flip_Applied": 0,
                 "Market_Books": c.market_books,
                 "Market_Line_Std": f"{c.market_line_std:.6f}",
-                "Market_Over_Price": raw.get("Market_Over_Price", ""),
-                "Market_Under_Price": raw.get("Market_Under_Price", ""),
+                "Market_Over_Price": "" if c.market_over_price is None else f"{c.market_over_price:.6f}",
+                "Market_Under_Price": "" if c.market_under_price is None else f"{c.market_under_price:.6f}",
                 "Edge": f"{c.edge:.6f}",
                 "Abs_Edge": f"{abs(c.edge):.6f}",
                 "History_Rows": c.history_rows,
@@ -375,7 +394,7 @@ def write_exporter_csv(path: Path, board: list[MaxWRCandidate]) -> None:
                 "Historical_Prior_Weight": "0.350000",
                 "Market_Implied_Probability": "",
                 "Expected_Value_Per_Unit": "",
-                "Price_Confirmed": 1 if c.market_source == "real" else 0,
+                "Price_Confirmed": 1,
                 "Historical_Bet_Profile_Key": "",
                 "Historical_Bet_Profile_Source": "",
                 "Historical_Bet_Profile_Win_Rate": f"{c.bucket_win_rate:.6f}",

@@ -275,6 +275,40 @@ def suppress_duplicate_props(
     return deduped, suppressed
 
 
+def suppress_closed_games(
+    rows: list[dict[str, str]],
+    game_context_lookup: dict[str, dict[str, object]] | None = None,
+) -> tuple[list[dict[str, str]], list[dict[str, object]]]:
+    if not game_context_lookup:
+        return rows, []
+
+    kept: list[dict[str, str]] = []
+    suppressed: list[dict[str, object]] = []
+    for row in rows:
+        game_id = str(row.get("Game_ID", "")).strip()
+        context = game_context_lookup.get(game_id, {}) or {}
+        abstract_state = str(context.get("abstract_state", "")).strip().lower()
+        detailed_status = str(context.get("status", "")).strip()
+        if abstract_state not in {"live", "final"}:
+            kept.append(row)
+            continue
+        suppressed.append(
+            {
+                "player": str(row.get("Player", "")).strip(),
+                "team": str(row.get("Team", "")).strip(),
+                "opponent": str(row.get("Opponent", "")).strip(),
+                "market_date": str(row.get("Game_Date", "")).strip(),
+                "target": str(row.get("Target", "")).strip(),
+                "direction": str(row.get("Direction", "")).strip(),
+                "market_line": row_float(row, "Market_Line"),
+                "game_id": game_id,
+                "official_game_status": detailed_status,
+                "reason": "game is no longer open for pregame predictions",
+            }
+        )
+    return kept, suppressed
+
+
 def build_data_quality(
     run_date: str,
     through_date: str,
@@ -584,6 +618,7 @@ def build_game_context_lookup(rows: list[dict[str, str]]) -> dict[str, dict[str,
         lookup[game_id] = {
             "official_date": str(game_datetime.get("officialDate", "")).strip(),
             "status": str(game_status.get("detailedState", "")).strip(),
+            "abstract_state": str(game_status.get("abstractGameState", "")).strip(),
             "teams": team_abbreviations,
             "players": players,
             "lineup_available": bool(players),
@@ -717,6 +752,7 @@ def main() -> None:
     assert_no_date_regression(run_date, output_paths, args.allow_date_regression)
     original_rows = rows
     game_context_lookup = build_game_context_lookup(original_rows)
+    rows, suppressed_closed_games = suppress_closed_games(rows, game_context_lookup)
     rows, suppressed_duplicates = suppress_duplicate_props(rows, game_context_lookup)
     total = len(rows)
     data_quality = build_data_quality(run_date, through_date, len(suppressed_duplicates), play_count=total)
@@ -875,6 +911,13 @@ def main() -> None:
         eligibility_field="parlay_precision_eligible",
     )
     plays = parlay_payload["plays"]
+    target_counts: dict[str, int] = {}
+    direction_counts: dict[str, int] = {}
+    for row in rows:
+        target = str(row.get("Target", "")).strip()
+        direction = str(row.get("Direction", "")).strip()
+        target_counts[target] = target_counts.get(target, 0) + 1
+        direction_counts[direction] = direction_counts.get(direction, 0) + 1
 
     payload = {
         "sport": "MLB",
@@ -890,24 +933,26 @@ def main() -> None:
         "summary": {
             "play_count": total,
             "source_play_count": len(original_rows),
+            "closed_game_cards_suppressed": len(suppressed_closed_games),
             "duplicate_cards_suppressed": len(suppressed_duplicates),
             "supported_rows": int(summary.get("rows_supported", 0)),
             "rows_after_filters": int(summary.get("rows_after_filters", 0)),
             "rejected_rows": max(0, int(summary.get("rows_supported", 0)) - int(summary.get("rows_after_filters", 0))),
-            "avg_expected_hit_rate": float(summary.get("avg_hit_probability", 0.0)),
-            "avg_graded_hit_rate": float(summary.get("avg_graded_hit_rate", 0.0)),
+            "avg_expected_hit_rate": (sum(to_float(row.get("Estimated_Hit_Probability")) for row in rows) / total) if total else 0.0,
+            "avg_graded_hit_rate": (sum(to_float(row.get("Estimated_Graded_Hit_Rate")) for row in rows) / total) if total else 0.0,
             "avg_edge": (sum(to_float(row.get("Edge")) for row in rows) / total) if total else 0.0,
-            "avg_abs_edge": float(summary.get("avg_abs_edge", 0.0)),
+            "avg_abs_edge": (sum(to_float(row.get("Abs_Edge")) for row in rows) / total) if total else 0.0,
             "avg_value_score": (sum(to_float(row.get("Precision_Score")) * to_float(row.get("Abs_Edge")) for row in rows) / total) if total else 0.0,
-            "avg_precision_score": float(summary.get("avg_precision_score", 0.0)),
+            "avg_precision_score": (sum(to_float(row.get("Precision_Score")) for row in rows) / total) if total else 0.0,
         },
         "selection": summary.get("selection", {}),
         "filter_rejections": summary.get("filter_rejections", {}),
-        "by_target": build_splits(summary.get("by_target", {}), total),
-        "by_direction": build_splits(summary.get("by_direction", {}), total),
+        "by_target": build_splits(target_counts, total),
+        "by_direction": build_splits(direction_counts, total),
         "parlay_summary": parlay_payload["summary"],
         "parlay_pairs": parlay_payload["pairs"],
         "parlay_validation": build_mlb_parlay_validation(MLB_MANIFEST_PATH),
+        "suppressed_closed_games": suppressed_closed_games,
         "suppressed_duplicates": suppressed_duplicates,
         "plays": plays,
     }

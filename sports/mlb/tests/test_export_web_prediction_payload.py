@@ -71,6 +71,35 @@ def test_suppress_duplicate_props_prefers_matching_official_game_context() -> No
     assert deduped[0]["Game_ID"] == "nightcap"
 
 
+def test_suppress_closed_games_uses_live_official_state() -> None:
+    scheduled = _row(rank=1, game_id="scheduled_game", selection_score=0.9)
+    started = _row(rank=2, game_id="started_game", selection_score=0.8)
+    final = _row(rank=3, game_id="final_game", selection_score=0.7)
+    game_context = {
+        "scheduled_game": {"abstract_state": "Preview", "status": "Pre-Game"},
+        "started_game": {"abstract_state": "Live", "status": "In Progress"},
+        "final_game": {"abstract_state": "Final", "status": "Final"},
+    }
+
+    kept, suppressed = exporter.suppress_closed_games(
+        [scheduled, started, final],
+        game_context,
+    )
+
+    assert [row["Game_ID"] for row in kept] == ["scheduled_game"]
+    assert [row["game_id"] for row in suppressed] == ["started_game", "final_game"]
+    assert all(item["reason"] == "game is no longer open for pregame predictions" for item in suppressed)
+
+
+def test_suppress_closed_games_retains_rows_without_live_context() -> None:
+    row = _row(rank=1, game_id="unknown_game", selection_score=0.9)
+
+    kept, suppressed = exporter.suppress_closed_games([row], {})
+
+    assert kept == [row]
+    assert suppressed == []
+
+
 def test_build_data_quality_marks_stale_board_for_review() -> None:
     quality = exporter.build_data_quality("2026-06-17", "2026-05-01", 2)
 
