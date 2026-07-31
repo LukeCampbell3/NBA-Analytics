@@ -127,6 +127,24 @@ python sports/nfl/scripts/train_nfl_market_selector.py \
   --final-market-rows sports/nfl/tmp/2022/market_rows_edge0.csv
 ```
 
+The run also writes auditable week-by-week exports:
+
+- `data/evaluation/market_selector_pool_2021.csv`: expanding-fold development
+  picks from weeks 11-18; weeks 1-10 are reserved for calibration
+- `data/evaluation/market_selector_pool_2022.csv`: every eligible later-season
+  test pick from weeks 1-18
+- `data/evaluation/market_selector_validated_pool_2021.csv` and
+  `market_selector_validated_pool_2022.csv`: passing-only pools after applying
+  the target-level validation gate
+- `data/evaluation/market_selector_weekly_validation.csv`: overall and
+  per-target wins, losses, hit rate, ROI, and target validation status for every
+  week
+
+Each detailed row retains the projected side probability, no-vig probability,
+posted line and price, actual yards, settled result, `pass`/`fail` validation,
+selected architecture, and final target-level gate. Candidate picks from failed
+targets remain visible for diagnosis but are not deployment-eligible.
+
 At the fixed 0.56 side-probability floor, only passing yards passes the
 target-level holdout gate: 188-127 (59.68%), +11.67% flat-stake ROI over 315
 2022 decisions. The regularized raw-feature classifier beat the latent and

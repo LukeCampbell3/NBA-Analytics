@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-07-31T14:49:54.436696+00:00",
+  "generated_at_utc": "2026-07-31T16:01:02.038359+00:00",
   "status": "partially_validated",
   "design": {
     "development_season": 2021,
@@ -524,6 +524,29 @@
     "distinct_weeks": 18,
     "over_bets": 29,
     "under_bets": 286
+  },
+  "prediction_pool_exports": {
+    "development_pool": "sports\\nfl\\data\\evaluation\\market_selector_pool_2021.csv",
+    "development_pool_rows": 1019,
+    "development_unscored_warmup_weeks": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "validated_development_pool": "sports\\nfl\\data\\evaluation\\market_selector_validated_pool_2021.csv",
+    "validated_development_pool_rows": 187,
+    "final_pool": "sports\\nfl\\data\\evaluation\\market_selector_pool_2022.csv",
+    "final_pool_rows": 1755,
+    "validated_final_pool": "sports\\nfl\\data\\evaluation\\market_selector_validated_pool_2022.csv",
+    "validated_final_pool_rows": 315,
+    "weekly_validation": "sports\\nfl\\data\\evaluation\\market_selector_weekly_validation.csv"
   },
   "source_provenance_gate": {
     "status": "failed",

@@ -21,6 +21,8 @@ if str(REPO_ROOT) not in sys.path:
 from sports.nfl.predictions.market_selector import (  # noqa: E402
     build_frozen_latent_features,
     build_learning_frames,
+    build_prediction_pool,
+    build_weekly_validation,
     candidate_feature_sets,
     expanding_oof_probabilities,
     fit_selected_model,
@@ -58,6 +60,24 @@ def parse_args() -> argparse.Namespace:
         default=NFL_ROOT / "model" / "nfl_market_selector.joblib",
     )
     parser.add_argument("--rows", type=Path, default=None)
+    parser.add_argument(
+        "--development-pool",
+        type=Path,
+        default=None,
+        help="Eligible leakage-safe development picks; defaults beside the report.",
+    )
+    parser.add_argument(
+        "--final-pool",
+        type=Path,
+        default=None,
+        help="Eligible final-season picks; defaults beside the report.",
+    )
+    parser.add_argument(
+        "--weekly-validation",
+        type=Path,
+        default=None,
+        help="Week/target validation table; defaults beside the report.",
+    )
     return parser.parse_args()
 
 
@@ -96,6 +116,7 @@ def main() -> int:
 
     target_reports: list[dict] = []
     fitted_models: dict[str, dict] = {}
+    development_parts: list[pd.DataFrame] = []
     final_parts: list[pd.DataFrame] = []
     validated_parts: list[pd.DataFrame] = []
     for target, combined in frames.items():
@@ -141,6 +162,7 @@ def main() -> int:
             minimum_side_probability=args.minimum_side_probability,
             minimum_no_vig_advantage=args.minimum_no_vig_advantage,
         )
+        development_parts.append(selected_oof)
         model = fit_selected_model(
             development,
             selected_features,
@@ -185,6 +207,7 @@ def main() -> int:
         )
 
     final_rows = pd.concat(final_parts, ignore_index=True)
+    development_rows = pd.concat(development_parts, ignore_index=True)
     validated_rows = (
         pd.concat(validated_parts, ignore_index=True)
         if validated_parts
@@ -196,6 +219,57 @@ def main() -> int:
         for item in target_reports
         if item["promotion_gate"]["status"] == "passed"
     ]
+    architecture_by_target = {
+        item["target"]: item["selected_architecture"] for item in target_reports
+    }
+    promotion_by_target = {
+        item["target"]: item["promotion_gate"]["status"] for item in target_reports
+    }
+    development_pool = build_prediction_pool(
+        development_rows,
+        evaluation_split="development_walk_forward",
+        architecture_by_target=architecture_by_target,
+        promotion_by_target=promotion_by_target,
+    )
+    final_pool = build_prediction_pool(
+        final_rows,
+        evaluation_split="final_test",
+        architecture_by_target=architecture_by_target,
+        promotion_by_target=promotion_by_target,
+    )
+    season_weeks = {
+        development_season: sorted(
+            int(value) for value in development_market["week"].dropna().unique()
+        ),
+        final_season: sorted(int(value) for value in final_market["week"].dropna().unique()),
+    }
+    weekly_validation = build_weekly_validation(
+        [development_pool, final_pool],
+        season_weeks=season_weeks,
+        promotion_by_target=promotion_by_target,
+        development_season=development_season,
+    )
+    development_pool_path = args.development_pool or args.report.with_name(
+        f"market_selector_pool_{development_season}.csv"
+    )
+    final_pool_path = args.final_pool or args.report.with_name(
+        f"market_selector_pool_{final_season}.csv"
+    )
+    weekly_validation_path = args.weekly_validation or args.report.with_name(
+        "market_selector_weekly_validation.csv"
+    )
+    validated_development_pool = development_pool.loc[
+        development_pool["target_final_validation_status"].eq("passed")
+    ].copy()
+    validated_final_pool = final_pool.loc[
+        final_pool["target_final_validation_status"].eq("passed")
+    ].copy()
+    validated_development_pool_path = args.report.with_name(
+        f"market_selector_validated_pool_{development_season}.csv"
+    )
+    validated_final_pool_path = args.report.with_name(
+        f"market_selector_validated_pool_{final_season}.csv"
+    )
     report = {
         "schema_version": 1,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -218,6 +292,18 @@ def main() -> int:
         "targets": target_reports,
         "validated_targets": validated_targets,
         "validated_board_final_test": validated_summary,
+        "prediction_pool_exports": {
+            "development_pool": str(development_pool_path),
+            "development_pool_rows": int(len(development_pool)),
+            "development_unscored_warmup_weeks": list(range(1, 11)),
+            "validated_development_pool": str(validated_development_pool_path),
+            "validated_development_pool_rows": int(len(validated_development_pool)),
+            "final_pool": str(final_pool_path),
+            "final_pool_rows": int(len(final_pool)),
+            "validated_final_pool": str(validated_final_pool_path),
+            "validated_final_pool_rows": int(len(validated_final_pool)),
+            "weekly_validation": str(weekly_validation_path),
+        },
         "source_provenance_gate": {
             "status": "failed",
             "reason": (
@@ -245,6 +331,14 @@ def main() -> int:
     args.report.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     args.artifact.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(artifact, args.artifact)
+    development_pool_path.parent.mkdir(parents=True, exist_ok=True)
+    final_pool_path.parent.mkdir(parents=True, exist_ok=True)
+    weekly_validation_path.parent.mkdir(parents=True, exist_ok=True)
+    development_pool.to_csv(development_pool_path, index=False)
+    final_pool.to_csv(final_pool_path, index=False)
+    weekly_validation.to_csv(weekly_validation_path, index=False)
+    validated_development_pool.to_csv(validated_development_pool_path, index=False)
+    validated_final_pool.to_csv(validated_final_pool_path, index=False)
     if args.rows is not None:
         args.rows.parent.mkdir(parents=True, exist_ok=True)
         final_rows.to_csv(args.rows, index=False)

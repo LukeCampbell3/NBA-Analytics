@@ -186,6 +186,125 @@ def target_promotion_gate(summary: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def build_prediction_pool(
+    rows: pd.DataFrame,
+    *,
+    evaluation_split: str,
+    architecture_by_target: dict[str, str],
+    promotion_by_target: dict[str, str],
+) -> pd.DataFrame:
+    """Return only policy-eligible picks with transparent settled validation."""
+
+    pool = rows.loc[rows["eligible"]].copy()
+    pool["evaluation_split"] = evaluation_split
+    pool["selected_architecture"] = pool["target"].map(architecture_by_target)
+    pool["target_final_validation_status"] = pool["target"].map(promotion_by_target)
+    pool["pick_validation"] = pool["result"].map(
+        {"win": "pass", "loss": "fail", "push": "push"}
+    )
+    preferred = [
+        "season",
+        "week",
+        "evaluation_split",
+        "player_id",
+        "player_display_name",
+        "position",
+        "recent_team",
+        "opponent_team",
+        "target",
+        "side",
+        "line",
+        "selected_price",
+        "estimated_side_probability",
+        "no_vig_side_probability",
+        "probability_advantage",
+        "actual",
+        "result",
+        "pick_validation",
+        "profit_units",
+        "selected_architecture",
+        "target_final_validation_status",
+        "bookmaker",
+        "source",
+        "line_phase",
+        "snapshot_time_utc",
+        "commence_time_utc",
+    ]
+    columns = [column for column in preferred if column in pool.columns]
+    sort_columns = [
+        column
+        for column in ["season", "week", "target", "player_display_name", "player_id"]
+        if column in columns
+    ]
+    return pool[columns].sort_values(sort_columns, na_position="last").reset_index(drop=True)
+
+
+def build_weekly_validation(
+    pools: list[pd.DataFrame],
+    *,
+    season_weeks: dict[int, list[int]],
+    promotion_by_target: dict[str, str],
+    development_season: int,
+    development_warmup_through_week: int = 10,
+) -> pd.DataFrame:
+    """Build week/target validation, retaining empty warm-up weeks explicitly."""
+
+    combined = pd.concat(pools, ignore_index=True) if pools else pd.DataFrame()
+    targets = sorted(promotion_by_target)
+    output: list[dict[str, Any]] = []
+    for season, weeks in sorted(season_weeks.items()):
+        season_split = (
+            "development_walk_forward" if season == development_season else "final_test"
+        )
+        for week in sorted(set(int(value) for value in weeks)):
+            for target in ["overall", *targets]:
+                if combined.empty:
+                    part = combined
+                else:
+                    mask = combined["season"].eq(season) & combined["week"].eq(week)
+                    if target != "overall":
+                        mask &= combined["target"].eq(target)
+                    part = combined.loc[mask]
+                wins = int(part["result"].eq("win").sum()) if not part.empty else 0
+                losses = int(part["result"].eq("loss").sum()) if not part.empty else 0
+                pushes = int(part["result"].eq("push").sum()) if not part.empty else 0
+                decisions = wins + losses
+                if season == development_season and week <= development_warmup_through_week:
+                    pool_status = "calibration_warmup"
+                elif part.empty:
+                    pool_status = "no_eligible_picks"
+                else:
+                    pool_status = "scored"
+                output.append(
+                    {
+                        "season": season,
+                        "week": week,
+                        "evaluation_split": season_split,
+                        "target": target,
+                        "pool_status": pool_status,
+                        "target_final_validation_status": (
+                            "mixed" if target == "overall" else promotion_by_target[target]
+                        ),
+                        "picks": int(len(part)),
+                        "wins": wins,
+                        "losses": losses,
+                        "pushes": pushes,
+                        "hit_rate": round(wins / decisions, 4) if decisions else None,
+                        "roi": (
+                            round(float(part["profit_units"].mean()), 4)
+                            if not part.empty
+                            else None
+                        ),
+                        "profit_units": (
+                            round(float(part["profit_units"].sum()), 4)
+                            if not part.empty
+                            else None
+                        ),
+                    }
+                )
+    return pd.DataFrame(output)
+
+
 def build_learning_frames(
     stats: pd.DataFrame,
     market_rows: pd.DataFrame,
@@ -237,7 +356,17 @@ def build_learning_frames(
         ]
         identity_optional = [
             column
-            for column in ["player_display_name", "position", "recent_team", "opponent_team"]
+            for column in [
+                "player_display_name",
+                "position",
+                "recent_team",
+                "opponent_team",
+                "bookmaker",
+                "source",
+                "line_phase",
+                "snapshot_time_utc",
+                "commence_time_utc",
+            ]
             if column in selected_market.columns
         ]
         joined = selected_market[market_columns + identity_optional].merge(
