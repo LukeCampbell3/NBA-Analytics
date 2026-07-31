@@ -19,6 +19,30 @@ import run_daily_predictions as shared_daily_predictions
 EASTERN = ZoneInfo("America/New_York")
 
 
+def test_mlb_primary_policy_allows_four_plays_per_market_bucket() -> None:
+    index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--max-per-market-bucket")
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[index + 1] == "4"
+    ev_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--min-expected-value")
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[ev_index + 1] == "0.0"
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_PROFILE == "walk_forward_balanced_v2"
+
+
+def test_annotate_mlb_summary_keeps_policy_identity_separate_from_publication_state(tmp_path: Path) -> None:
+    summary_path = tmp_path / "summary.json"
+    summary_path.write_text("{}", encoding="utf-8")
+
+    shared_daily_predictions.annotate_mlb_summary(
+        summary_path,
+        publication_strategy=shared_daily_predictions.MLB_PRIMARY_POLICY_PROFILE,
+        publication_state="withheld_current_pool",
+        market_profile={"rows": 2},
+    )
+
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    assert summary["publication_strategy"] == "walk_forward_balanced_v2"
+    assert summary["publication_state"] == "withheld_current_pool"
+
+
 class FrozenDateTime(datetime):
     current = datetime(2026, 4, 28, 15, 0, tzinfo=EASTERN)
 

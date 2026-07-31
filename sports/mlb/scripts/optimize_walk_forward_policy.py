@@ -28,6 +28,7 @@ from sports.mlb.scripts.backtest_prediction_method import (
     selector_args,
     wilson_interval,
 )
+from sports.mlb.scripts.select_high_precision_predictions import SUPPORTED_COUNT_TARGETS
 
 
 DEFAULT_UNIVERSE = SPORT_ROOT / "data" / "predictions" / "calibration" / "historical_pool_universe_2026.csv"
@@ -49,7 +50,7 @@ def parse_args() -> argparse.Namespace:
 def load_universe(path: Path) -> pd.DataFrame:
     frame = pd.read_csv(path)
     frame["_date"] = pd.to_datetime(frame["Game_Date"], errors="coerce").dt.normalize()
-    frame = frame.loc[frame["_date"].notna() & frame["Target"].isin(["H", "K", "R", "TB"])].copy()
+    frame = frame.loc[frame["_date"].notna() & frame["Target"].isin(SUPPORTED_COUNT_TARGETS)].copy()
     for column in ["Prediction", "Market_Line", "Edge", "Actual", "Market_Books", "Market_Over_Price", "Market_Under_Price"]:
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
     return frame.dropna(subset=["Prediction", "Market_Line", "Edge", "Actual"])

@@ -26,6 +26,14 @@ SPORT_ROOT = SCRIPT_PATH.parents[1]
 REPO_ROOT = SCRIPT_PATH.parents[3]
 CALIBRATION_ROOT = SPORT_ROOT / "data" / "predictions" / "calibration"
 
+
+def report_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return str(resolved)
+
 # Proven high-win-rate buckets from historical calibration data
 # Only include buckets with >85% historical win rate AND >500 graded samples
 ELITE_BUCKETS = {
@@ -477,8 +485,8 @@ def main():
     # Write summary JSON (compatible with pipeline)
     if args.summary_json:
         summary = {
-            "pool_csv": str(args.pool_csv.resolve()),
-            "out_csv": str(args.out_csv.resolve()) if args.out_csv else "",
+            "pool_csv": report_path(args.pool_csv),
+            "out_csv": report_path(args.out_csv) if args.out_csv else "",
             "rows_supported": 0,
             "rows_after_filters": len(board),
             "rows_selected": len(board),
@@ -512,7 +520,7 @@ def main():
     if args.out_json:
         output = {
             "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-            "pool_csv": str(args.pool_csv),
+            "pool_csv": report_path(args.pool_csv),
             "board_size": len(board),
             "avg_composite_confidence": round(avg_conf, 4) if board else 0,
             "avg_bucket_win_rate": round(avg_bucket, 4) if board else 0,

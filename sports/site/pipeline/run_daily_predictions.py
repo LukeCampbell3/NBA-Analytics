@@ -44,7 +44,7 @@ MLB_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_high_precision
 MLB_MAX_WINRATE_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_max_winrate_board.py"
 MLB_EXPORTER = REPO_ROOT / "sports" / "mlb" / "scripts" / "export_web_prediction_payload.py"
 MLB_WEB_JSON = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "daily_predictions.json"
-MLB_PRIMARY_POLICY_PROFILE = "walk_forward_balanced_v1"
+MLB_PRIMARY_POLICY_PROFILE = "walk_forward_balanced_v2"
 MLB_PRIMARY_POLICY_ARGS = [
     "--require-real-market-source",
     "--min-market-books", "5",
@@ -54,7 +54,8 @@ MLB_PRIMARY_POLICY_ARGS = [
     "--min-graded-hit-rate", "0.75",
     "--max-push-probability", "0.10",
     "--min-abs-edge", "0.35",
-    "--max-per-market-bucket", "2",
+    "--min-expected-value", "0.0",
+    "--max-per-market-bucket", "4",
     "--max-per-team", "2",
     "--min-historical-bet-profile-support", "12",
     "--min-historical-bet-profile-win-rate", "0.60",
@@ -355,7 +356,13 @@ def promote_mlb_selector_outputs(source_csv: Path, source_summary_json: Path, ta
     shutil.copyfile(source_summary_json, target_summary_json)
 
 
-def annotate_mlb_summary(summary_json: Path, *, publication_strategy: str, market_profile: dict[str, int]) -> None:
+def annotate_mlb_summary(
+    summary_json: Path,
+    *,
+    publication_strategy: str,
+    market_profile: dict[str, int],
+    publication_state: str = "published_current_pool",
+) -> None:
     if not summary_json.exists():
         return
     try:
@@ -363,6 +370,7 @@ def annotate_mlb_summary(summary_json: Path, *, publication_strategy: str, marke
     except Exception:
         return
     payload["publication_strategy"] = str(publication_strategy)
+    payload["publication_state"] = str(publication_state)
     payload["pool_market_profile"] = {key: int(value) for key, value in market_profile.items()}
     summary_json.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
@@ -566,7 +574,7 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
         refresh_history=used_generated_pool,
     )
     standard_selected_csv, standard_summary_json = derive_mlb_selector_outputs(pool_csv)
-    market_profile = load_mlb_market_profile(pool_csv) if used_generated_pool and pool_csv.exists() else {
+    market_profile = load_mlb_market_profile(pool_csv) if pool_csv.exists() else {
         "rows": 0,
         "real_market_rows": 0,
         "synthetic_rows": 0,
@@ -597,11 +605,11 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
                 publication_strategy = best_strategy
                 annotate_mlb_summary(summary_json, publication_strategy=publication_strategy, market_profile=market_profile)
             else:
-                publication_strategy = "withheld_current_pool"
                 annotate_mlb_summary(
                     summary_json,
                     publication_strategy=publication_strategy,
                     market_profile=market_profile,
+                    publication_state="withheld_current_pool",
                 )
                 print(
                     "[warning] Generated MLB board was too small for publication "
@@ -610,6 +618,8 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
                 )
         else:
             annotate_mlb_summary(summary_json, publication_strategy=publication_strategy, market_profile=market_profile)
+    elif summary_json.exists():
+        annotate_mlb_summary(summary_json, publication_strategy=publication_strategy, market_profile=market_profile)
 
     run_step(
         "Export MLB Prediction Payload",

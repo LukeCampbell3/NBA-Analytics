@@ -32,7 +32,7 @@ REPO_ROOT = SCRIPT_PATH.parents[3]
 DEFAULT_HISTORY_DIR = REPO_ROOT / "Player-Predictor" / "Data-Proc-MLB"
 DEFAULT_CALIBRATION_ROOT = SPORT_ROOT / "data" / "predictions" / "calibration"
 
-SUPPORTED_COUNT_TARGETS = {"H", "TB", "R", "K"}
+SUPPORTED_COUNT_TARGETS = {"H", "TB", "R", "HR", "RBI", "K", "ER"}
 MAX_CALIBRATED_PROBABILITY = 0.80
 FINAL_STATUS_CODES = {"F", "C", "D", "X"}
 UPCOMING_STATUS_CODES = {"", "P", "S", "NS"}
@@ -44,14 +44,28 @@ HISTORICAL_TARGET_SPECS: dict[str, tuple[str, str, str]] = {
     "H": ("H", "Market_H", "H_market_gap"),
     "TB": ("TB", "Market_TB", "TB_market_gap"),
     "R": ("R", "Market_R", "R_market_gap"),
+    "HR": ("HR", "Market_HR", "HR_market_gap"),
+    "RBI": ("RBI", "Market_RBI", "RBI_market_gap"),
     "K": ("K", "Market_K", "K_market_gap"),
+    "ER": ("ER", "Market_ER", "ER_market_gap"),
 }
 HISTORICAL_BET_TARGET_SPECS: dict[str, tuple[str, str, str, str, str, str, str]] = {
     "H": ("H", "Market_H", "H_market_gap", "Market_Source_H", "Market_H_books", "Market_H_over_price", "Market_H_under_price"),
     "TB": ("TB", "Market_TB", "TB_market_gap", "Market_Source_TB", "Market_TB_books", "Market_TB_over_price", "Market_TB_under_price"),
     "R": ("R", "Market_R", "R_market_gap", "Market_Source_R", "Market_R_books", "Market_R_over_price", "Market_R_under_price"),
+    "HR": ("HR", "Market_HR", "HR_market_gap", "Market_Source_HR", "Market_HR_books", "Market_HR_over_price", "Market_HR_under_price"),
+    "RBI": ("RBI", "Market_RBI", "RBI_market_gap", "Market_Source_RBI", "Market_RBI_books", "Market_RBI_over_price", "Market_RBI_under_price"),
     "K": ("K", "Market_K", "K_market_gap", "Market_Source_K", "Market_K_books", "Market_K_over_price", "Market_K_under_price"),
+    "ER": ("ER", "Market_ER", "ER_market_gap", "Market_Source_ER", "Market_ER_books", "Market_ER_over_price", "Market_ER_under_price"),
 }
+
+
+def report_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return str(resolved)
 
 
 @dataclass
@@ -658,7 +672,7 @@ def build_historical_bucket_priors(history_dir: Path, season: int) -> dict:
 
     return {
         "season": int(season),
-        "history_dir": str(history_dir.resolve()),
+        "history_dir": report_path(history_dir),
         "updated_at_utc": datetime.now(timezone.utc).isoformat(),
         "source_file_count": int(len(files)),
         "recent_form_lookback_days": int(RECENT_FORM_LOOKBACK_DAYS),
@@ -964,7 +978,7 @@ def build_historical_bet_profile_priors(history_dir: Path, season: int) -> dict:
 
     return {
         "season": int(season),
-        "history_dir": str(history_dir.resolve()),
+        "history_dir": report_path(history_dir),
         "updated_at_utc": datetime.now(timezone.utc).isoformat(),
         "source_file_count": int(len(files)),
         "availability_target_direction": {
@@ -1635,6 +1649,8 @@ def write_selected_csv(path: Path, selected: list[Candidate]) -> None:
         "Market_Line_Std",
         "Market_Over_Price",
         "Market_Under_Price",
+        "Selected_Side_Price",
+        "Opposite_Side_Price",
         "Edge",
         "Abs_Edge",
         "History_Rows",
@@ -1676,7 +1692,7 @@ def write_selected_csv(path: Path, selected: list[Candidate]) -> None:
     ]
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         for idx, candidate in enumerate(selected, start=1):
             writer.writerow(
@@ -1704,6 +1720,8 @@ def write_selected_csv(path: Path, selected: list[Candidate]) -> None:
                     "Market_Line_Std": f"{candidate.market_line_std:.6f}",
                     "Market_Over_Price": "" if candidate.market_over_price is None else f"{candidate.market_over_price:.6f}",
                     "Market_Under_Price": "" if candidate.market_under_price is None else f"{candidate.market_under_price:.6f}",
+                    "Selected_Side_Price": "" if candidate.selected_side_price is None else f"{candidate.selected_side_price:.6f}",
+                    "Opposite_Side_Price": "" if candidate.opposite_side_price is None else f"{candidate.opposite_side_price:.6f}",
                     "Edge": f"{candidate.edge:.6f}",
                     "Abs_Edge": f"{candidate.abs_edge:.6f}",
                     "History_Rows": candidate.history_rows,
@@ -1762,8 +1780,8 @@ def write_summary_json(
     by_team = Counter(candidate.team for candidate in selected)
     by_market_bucket = Counter(candidate.market_bucket for candidate in selected)
     summary = {
-        "pool_csv": str(pool_csv.resolve()),
-        "out_csv": str((args.out_csv or default_output_paths(pool_csv)[0]).resolve()),
+        "pool_csv": report_path(pool_csv),
+        "out_csv": report_path(args.out_csv or default_output_paths(pool_csv)[0]),
         "rows_supported": total_candidates,
         "rows_after_filters": len(eligible_candidates),
         "rows_selected": len(selected),
@@ -1805,15 +1823,15 @@ def write_summary_json(
             "min_historical_market_availability_rate": float(args.min_historical_market_availability_rate),
         },
         "historical_calibration": {
-            "cache_json": str(args.history_cache_json.resolve()) if args.history_cache_json else "",
-            "history_dir": str(args.history_dir.resolve()),
+            "cache_json": report_path(args.history_cache_json) if args.history_cache_json else "",
+            "history_dir": report_path(args.history_dir),
             "season": int(args.history_season),
             "source_file_count": int((calibration or {}).get("source_file_count", 0)),
             "updated_at_utc": (calibration or {}).get("updated_at_utc"),
         },
         "historical_bet_profiles": {
-            "cache_json": str(args.bet_profile_cache_json.resolve()) if args.bet_profile_cache_json else "",
-            "history_dir": str(args.history_dir.resolve()),
+            "cache_json": report_path(args.bet_profile_cache_json) if args.bet_profile_cache_json else "",
+            "history_dir": report_path(args.history_dir),
             "season": int(args.history_season),
             "source_file_count": int((bet_profile_priors or {}).get("source_file_count", 0)),
             "updated_at_utc": (bet_profile_priors or {}).get("updated_at_utc"),

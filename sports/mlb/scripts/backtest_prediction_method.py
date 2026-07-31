@@ -26,6 +26,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from sports.mlb.scripts.select_high_precision_predictions import (
+    SUPPORTED_COUNT_TARGETS,
     build_candidate,
     estimate_count_hit_probabilities,
     filter_candidates,
@@ -44,7 +45,15 @@ DEFAULT_OUTPUT_ROOT = SPORT_ROOT / "data" / "predictions" / "backtests"
 DEFAULT_ARCHIVED_VALIDATION = REPO_ROOT / "sports" / "validation" / "mlb_historical_final_pool_validation.json"
 DEFAULT_EXTERNAL_AUDIT = DEFAULT_OUTPUT_ROOT / "mlb_20260617_external_audit.json"
 DEFAULT_RAW_POOL_AUDIT = DEFAULT_OUTPUT_ROOT / "mlb_20260619_raw_pool_partial_audit.json"
-SUPPORTED_TARGETS = ["H", "K", "R", "TB"]
+SUPPORTED_TARGETS = sorted(SUPPORTED_COUNT_TARGETS)
+
+
+def report_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return str(resolved)
 
 
 @dataclass(frozen=True)
@@ -112,21 +121,22 @@ def policies() -> list[Policy]:
             description="Current publish policy with market-depth, history, role, and concentration gates.",
             args=selector_args(
                 top_n=10,
-                min_abs_edge=0.60,
-                min_history_rows=30,
+                min_abs_edge=0.35,
+                min_history_rows=35,
                 min_prediction=0.10,
                 min_hit_probability=0.60,
-                min_graded_hit_rate=0.72,
-                max_push_probability=0.12,
+                min_graded_hit_rate=0.75,
+                max_push_probability=0.10,
                 max_days_since_history=4,
                 max_per_player=1,
                 max_per_game=2,
-                max_per_team=3,
-                max_per_market_bucket=2,
+                max_per_team=2,
+                max_per_market_bucket=4,
                 min_market_books=5,
+                min_expected_value=0.0,
                 require_real_market_source=True,
                 min_historical_bet_profile_support=12,
-                min_historical_bet_profile_win_rate=0.55,
+                min_historical_bet_profile_win_rate=0.60,
                 min_historical_market_availability_support=20,
                 min_historical_market_availability_rate=0.45,
             ),
@@ -549,7 +559,7 @@ def observed_evidence(archived_path: Path, audit_path: Path, raw_pool_audit_path
     archived_graded = int(archived_overall["graded_play_count"])
     archived_wins = int(round(float(archived_overall["hit_rate"]) * archived_graded))
     archived = {
-        "source": str(archived_path.resolve()),
+        "source": report_path(archived_path),
         "graded": archived_graded,
         "wins": archived_wins,
         "losses": archived_graded - archived_wins,
@@ -559,7 +569,7 @@ def observed_evidence(archived_path: Path, audit_path: Path, raw_pool_audit_path
         "priced_roi": archived_overall["priced_roi"],
     }
     june = dict(audit_payload["post_duplicate_suppression"])
-    june["source"] = str(audit_path.resolve())
+    june["source"] = report_path(audit_path)
     wins = archived["wins"] + int(june["wins"])
     losses = archived["losses"] + int(june["losses"])
     low, high = wilson_interval(wins, losses)
@@ -568,7 +578,7 @@ def observed_evidence(archived_path: Path, audit_path: Path, raw_pool_audit_path
         "june_17_deduplicated": june,
         "june_19_raw_pool_partial": {
             **raw_pool_audit["completed_top_edge_sample"],
-            "source": str(raw_pool_audit_path.resolve()),
+            "source": report_path(raw_pool_audit_path),
         },
         "combined": {
             "wins": wins,
@@ -633,13 +643,13 @@ def main() -> None:
         f"{priced_dates[0].strftime('%Y-%m-%d')} through {priced_dates[-1].strftime('%Y-%m-%d')} across "
         f"{len(priced_dates)} dates." if priced_dates else "The historical universe contains no real sportsbook rows.",
         "Synthetic-line rows test model ranking and grading logic but cannot establish executable ROI or closing-line value.",
-        "The replay covers H, K, R, and TB; the current published board also includes HR and ER, which lack this backtest universe.",
+        f"The replay covers every configured count target: {', '.join(SUPPORTED_TARGETS)}.",
         "Lineup confirmation, roster validation, duplicate suppression, and stale-data withholding reduce publishing risk but do not create predictive edge.",
         "No backtest can guarantee short-term or long-term wins; promotion requires prospective, timestamped shadow results.",
     ]
     report = {
         "generated_at_utc": pd.Timestamp.now(tz="UTC").isoformat(),
-        "universe_csv": str(args.universe_csv.resolve()),
+        "universe_csv": report_path(args.universe_csv),
         "universe_rows": int(len(universe)),
         "universe_start": dates[0].strftime("%Y-%m-%d"),
         "universe_end": dates[-1].strftime("%Y-%m-%d"),

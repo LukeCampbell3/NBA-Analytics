@@ -1,101 +1,308 @@
 {
   "season": 2026,
-  "history_dir": "/home/runner/work/NBA-Analytics/NBA-Analytics/Player-Predictor/Data-Proc-MLB",
-  "updated_at_utc": "2026-07-31T16:34:48.062889+00:00",
-  "source_file_count": 1192,
+  "history_dir": "Player-Predictor/Data-Proc-MLB",
+  "updated_at_utc": "2026-07-31T20:10:36.993834+00:00",
+  "source_file_count": 1190,
   "recent_form_lookback_days": 14,
-  "recent_form_cutoff_date": "2026-07-17",
+  "recent_form_cutoff_date": "2026-07-16",
   "target_direction": {
-    "H|OVER": {
-      "rows": 24140,
-      "graded_rows": 24140,
-      "wins": 12756,
-      "losses": 11384,
+    "ER|OVER": {
+      "rows": 5137,
+      "graded_rows": 5137,
+      "wins": 1885,
+      "losses": 3252,
       "pushes": 0,
-      "win_rate": 0.528417564208782,
+      "win_rate": 0.36694568814483164,
+      "push_rate": 0.0
+    },
+    "ER|UNDER": {
+      "rows": 9727,
+      "graded_rows": 9727,
+      "wins": 6948,
+      "losses": 2779,
+      "pushes": 0,
+      "win_rate": 0.7143004009458209,
+      "push_rate": 0.0
+    },
+    "HR|OVER": {
+      "rows": 2278,
+      "graded_rows": 2278,
+      "wins": 1286,
+      "losses": 992,
+      "pushes": 0,
+      "win_rate": 0.5645302897278315,
+      "push_rate": 0.0
+    },
+    "HR|UNDER": {
+      "rows": 38746,
+      "graded_rows": 38746,
+      "wins": 35896,
+      "losses": 2850,
+      "pushes": 0,
+      "win_rate": 0.9264440200278738,
+      "push_rate": 0.0
+    },
+    "H|OVER": {
+      "rows": 23915,
+      "graded_rows": 23915,
+      "wins": 12640,
+      "losses": 11275,
+      "pushes": 0,
+      "win_rate": 0.5285385741166632,
       "push_rate": 0.0
     },
     "H|UNDER": {
-      "rows": 17294,
-      "graded_rows": 17294,
-      "wins": 11161,
-      "losses": 6133,
+      "rows": 17109,
+      "graded_rows": 17109,
+      "wins": 11033,
+      "losses": 6076,
       "pushes": 0,
-      "win_rate": 0.6453683358390193,
+      "win_rate": 0.6448652755859489,
       "push_rate": 0.0
     },
     "K|OVER": {
-      "rows": 1313,
-      "graded_rows": 1312,
-      "wins": 711,
-      "losses": 601,
+      "rows": 1298,
+      "graded_rows": 1297,
+      "wins": 708,
+      "losses": 589,
       "pushes": 1,
-      "win_rate": 0.541920731707317,
-      "push_rate": 0.0007616146230007616
+      "win_rate": 0.5458750963762529,
+      "push_rate": 0.0007704160246533128
     },
     "K|UNDER": {
-      "rows": 13745,
-      "graded_rows": 13743,
-      "wins": 11595,
-      "losses": 2148,
+      "rows": 13566,
+      "graded_rows": 13564,
+      "wins": 11448,
+      "losses": 2116,
       "pushes": 2,
-      "win_rate": 0.8437022484173761,
-      "push_rate": 0.00014550745725718444
+      "win_rate": 0.8439988204069596,
+      "push_rate": 0.00014742739200943535
+    },
+    "RBI|OVER": {
+      "rows": 14068,
+      "graded_rows": 14068,
+      "wins": 4945,
+      "losses": 9123,
+      "pushes": 0,
+      "win_rate": 0.3515069661643446,
+      "push_rate": 0.0
+    },
+    "RBI|UNDER": {
+      "rows": 26956,
+      "graded_rows": 26956,
+      "wins": 21628,
+      "losses": 5328,
+      "pushes": 0,
+      "win_rate": 0.8023445615076421,
+      "push_rate": 0.0
     },
     "R|OVER": {
-      "rows": 17809,
-      "graded_rows": 17809,
-      "wins": 8594,
-      "losses": 9215,
+      "rows": 17647,
+      "graded_rows": 17647,
+      "wins": 8531,
+      "losses": 9116,
       "pushes": 0,
-      "win_rate": 0.48256499522713237,
+      "win_rate": 0.48342494474981584,
       "push_rate": 0.0
     },
     "R|UNDER": {
-      "rows": 23625,
-      "graded_rows": 23623,
-      "wins": 18679,
-      "losses": 4944,
+      "rows": 23377,
+      "graded_rows": 23375,
+      "wins": 18469,
+      "losses": 4906,
       "pushes": 2,
-      "win_rate": 0.790712441264869,
-      "push_rate": 8.465608465608466e-05
+      "win_rate": 0.7901176470588235,
+      "push_rate": 8.555417718270094e-05
     },
     "TB|OVER": {
-      "rows": 19487,
-      "graded_rows": 19419,
-      "wins": 12514,
-      "losses": 6905,
-      "pushes": 68,
-      "win_rate": 0.6444204129975797,
-      "push_rate": 0.003489505824395751
+      "rows": 19308,
+      "graded_rows": 19243,
+      "wins": 12409,
+      "losses": 6834,
+      "pushes": 65,
+      "win_rate": 0.6448578703944291,
+      "push_rate": 0.0033664802154547337
     },
     "TB|UNDER": {
-      "rows": 21947,
-      "graded_rows": 21866,
-      "wins": 18436,
-      "losses": 3430,
-      "pushes": 81,
-      "win_rate": 0.8431354614469954,
-      "push_rate": 0.0036907094363694353
+      "rows": 21716,
+      "graded_rows": 21641,
+      "wins": 18249,
+      "losses": 3392,
+      "pushes": 75,
+      "win_rate": 0.8432604777967746,
+      "push_rate": 0.0034536747098913244
     }
   },
   "line_buckets": {
-    "H|OVER|0.5": {
-      "rows": 21595,
-      "graded_rows": 21595,
-      "wins": 12114,
-      "losses": 9481,
+    "ER|OVER|0.5": {
+      "rows": 3652,
+      "graded_rows": 3652,
+      "wins": 1228,
+      "losses": 2424,
       "pushes": 0,
-      "win_rate": 0.5609631859226673,
+      "win_rate": 0.3362541073384447,
+      "push_rate": 0.0
+    },
+    "ER|OVER|1.5": {
+      "rows": 873,
+      "graded_rows": 873,
+      "wins": 408,
+      "losses": 465,
+      "pushes": 0,
+      "win_rate": 0.46735395189003437,
+      "push_rate": 0.0
+    },
+    "ER|OVER|2.5": {
+      "rows": 435,
+      "graded_rows": 435,
+      "wins": 196,
+      "losses": 239,
+      "pushes": 0,
+      "win_rate": 0.45057471264367815,
+      "push_rate": 0.0
+    },
+    "ER|OVER|3.5": {
+      "rows": 141,
+      "graded_rows": 141,
+      "wins": 46,
+      "losses": 95,
+      "pushes": 0,
+      "win_rate": 0.3262411347517731,
+      "push_rate": 0.0
+    },
+    "ER|OVER|4.5": {
+      "rows": 29,
+      "graded_rows": 29,
+      "wins": 5,
+      "losses": 24,
+      "pushes": 0,
+      "win_rate": 0.1724137931034483,
+      "push_rate": 0.0
+    },
+    "ER|OVER|5.5": {
+      "rows": 6,
+      "graded_rows": 6,
+      "wins": 2,
+      "losses": 4,
+      "pushes": 0,
+      "win_rate": 0.3333333333333333,
+      "push_rate": 0.0
+    },
+    "ER|OVER|6.5": {
+      "rows": 1,
+      "graded_rows": 1,
+      "wins": 0,
+      "losses": 1,
+      "pushes": 0,
+      "win_rate": 0.0,
+      "push_rate": 0.0
+    },
+    "ER|UNDER|0.5": {
+      "rows": 7226,
+      "graded_rows": 7226,
+      "wins": 5295,
+      "losses": 1931,
+      "pushes": 0,
+      "win_rate": 0.7327705507888181,
+      "push_rate": 0.0
+    },
+    "ER|UNDER|1.5": {
+      "rows": 1187,
+      "graded_rows": 1187,
+      "wins": 758,
+      "losses": 429,
+      "pushes": 0,
+      "win_rate": 0.6385846672283066,
+      "push_rate": 0.0
+    },
+    "ER|UNDER|2.5": {
+      "rows": 828,
+      "graded_rows": 828,
+      "wins": 534,
+      "losses": 294,
+      "pushes": 0,
+      "win_rate": 0.644927536231884,
+      "push_rate": 0.0
+    },
+    "ER|UNDER|3.5": {
+      "rows": 363,
+      "graded_rows": 363,
+      "wins": 271,
+      "losses": 92,
+      "pushes": 0,
+      "win_rate": 0.7465564738292011,
+      "push_rate": 0.0
+    },
+    "ER|UNDER|4.5": {
+      "rows": 100,
+      "graded_rows": 100,
+      "wins": 75,
+      "losses": 25,
+      "pushes": 0,
+      "win_rate": 0.75,
+      "push_rate": 0.0
+    },
+    "ER|UNDER|5.5": {
+      "rows": 19,
+      "graded_rows": 19,
+      "wins": 12,
+      "losses": 7,
+      "pushes": 0,
+      "win_rate": 0.631578947368421,
+      "push_rate": 0.0
+    },
+    "ER|UNDER|6.5": {
+      "rows": 3,
+      "graded_rows": 3,
+      "wins": 2,
+      "losses": 1,
+      "pushes": 0,
+      "win_rate": 0.6666666666666666,
+      "push_rate": 0.0
+    },
+    "ER|UNDER|7.5": {
+      "rows": 1,
+      "graded_rows": 1,
+      "wins": 1,
+      "losses": 0,
+      "pushes": 0,
+      "win_rate": 1.0,
+      "push_rate": 0.0
+    },
+    "HR|OVER|0.5": {
+      "rows": 2278,
+      "graded_rows": 2278,
+      "wins": 1286,
+      "losses": 992,
+      "pushes": 0,
+      "win_rate": 0.5645302897278315,
+      "push_rate": 0.0
+    },
+    "HR|UNDER|0.5": {
+      "rows": 38746,
+      "graded_rows": 38746,
+      "wins": 35896,
+      "losses": 2850,
+      "pushes": 0,
+      "win_rate": 0.9264440200278738,
+      "push_rate": 0.0
+    },
+    "H|OVER|0.5": {
+      "rows": 21394,
+      "graded_rows": 21394,
+      "wins": 12001,
+      "losses": 9393,
+      "pushes": 0,
+      "win_rate": 0.5609516686921566,
       "push_rate": 0.0
     },
     "H|OVER|1.5": {
-      "rows": 2522,
-      "graded_rows": 2522,
-      "wins": 636,
-      "losses": 1886,
+      "rows": 2498,
+      "graded_rows": 2498,
+      "wins": 633,
+      "losses": 1865,
       "pushes": 0,
-      "win_rate": 0.2521808088818398,
+      "win_rate": 0.2534027221777422,
       "push_rate": 0.0
     },
     "H|OVER|2.5": {
@@ -117,30 +324,30 @@
       "push_rate": 0.0
     },
     "H|UNDER|0.5": {
-      "rows": 11488,
-      "graded_rows": 11488,
-      "wins": 6586,
-      "losses": 4902,
+      "rows": 11374,
+      "graded_rows": 11374,
+      "wins": 6516,
+      "losses": 4858,
       "pushes": 0,
-      "win_rate": 0.5732938718662952,
+      "win_rate": 0.5728855283981009,
       "push_rate": 0.0
     },
     "H|UNDER|1.5": {
-      "rows": 5718,
-      "graded_rows": 5718,
-      "wins": 4494,
-      "losses": 1224,
+      "rows": 5649,
+      "graded_rows": 5649,
+      "wins": 4438,
+      "losses": 1211,
       "pushes": 0,
-      "win_rate": 0.7859391395592865,
+      "win_rate": 0.7856257744733581,
       "push_rate": 0.0
     },
     "H|UNDER|2.5": {
-      "rows": 87,
-      "graded_rows": 87,
-      "wins": 80,
+      "rows": 85,
+      "graded_rows": 85,
+      "wins": 78,
       "losses": 7,
       "pushes": 0,
-      "win_rate": 0.9195402298850575,
+      "win_rate": 0.9176470588235294,
       "push_rate": 0.0
     },
     "H|UNDER|3.5": {
@@ -153,12 +360,12 @@
       "push_rate": 0.0
     },
     "K|OVER|2.5": {
-      "rows": 557,
-      "graded_rows": 557,
-      "wins": 261,
-      "losses": 296,
+      "rows": 550,
+      "graded_rows": 550,
+      "wins": 260,
+      "losses": 290,
       "pushes": 0,
-      "win_rate": 0.46858168761220825,
+      "win_rate": 0.4727272727272727,
       "push_rate": 0.0
     },
     "K|OVER|3.0": {
@@ -171,12 +378,12 @@
       "push_rate": 1.0
     },
     "K|OVER|3.5": {
-      "rows": 339,
-      "graded_rows": 339,
-      "wins": 230,
-      "losses": 109,
+      "rows": 335,
+      "graded_rows": 335,
+      "wins": 229,
+      "losses": 106,
       "pushes": 0,
-      "win_rate": 0.6784660766961652,
+      "win_rate": 0.6835820895522388,
       "push_rate": 0.0
     },
     "K|OVER|4.0": {
@@ -189,12 +396,12 @@
       "push_rate": 0.0
     },
     "K|OVER|4.5": {
-      "rows": 252,
-      "graded_rows": 252,
-      "wins": 142,
-      "losses": 110,
+      "rows": 249,
+      "graded_rows": 249,
+      "wins": 141,
+      "losses": 108,
       "pushes": 0,
-      "win_rate": 0.5634920634920635,
+      "win_rate": 0.5662650602409639,
       "push_rate": 0.0
     },
     "K|OVER|5.0": {
@@ -216,12 +423,12 @@
       "push_rate": 0.0
     },
     "K|OVER|6.5": {
-      "rows": 37,
-      "graded_rows": 37,
+      "rows": 36,
+      "graded_rows": 36,
       "wins": 18,
-      "losses": 19,
+      "losses": 18,
       "pushes": 0,
-      "win_rate": 0.4864864864864865,
+      "win_rate": 0.5,
       "push_rate": 0.0
     },
     "K|OVER|7.5": {
@@ -252,30 +459,30 @@
       "push_rate": 0.0
     },
     "K|UNDER|2.5": {
-      "rows": 11533,
-      "graded_rows": 11533,
-      "wins": 10401,
-      "losses": 1132,
+      "rows": 11378,
+      "graded_rows": 11378,
+      "wins": 10265,
+      "losses": 1113,
       "pushes": 0,
-      "win_rate": 0.9018468741871153,
+      "win_rate": 0.90217964492881,
       "push_rate": 0.0
     },
     "K|UNDER|3.5": {
-      "rows": 513,
-      "graded_rows": 513,
-      "wins": 234,
-      "losses": 279,
+      "rows": 510,
+      "graded_rows": 510,
+      "wins": 232,
+      "losses": 278,
       "pushes": 0,
-      "win_rate": 0.45614035087719296,
+      "win_rate": 0.4549019607843137,
       "push_rate": 0.0
     },
     "K|UNDER|4.5": {
-      "rows": 672,
-      "graded_rows": 672,
-      "wins": 335,
-      "losses": 337,
+      "rows": 664,
+      "graded_rows": 664,
+      "wins": 334,
+      "losses": 330,
       "pushes": 0,
-      "win_rate": 0.49851190476190477,
+      "win_rate": 0.5030120481927711,
       "push_rate": 0.0
     },
     "K|UNDER|5.0": {
@@ -288,12 +495,12 @@
       "push_rate": 1.0
     },
     "K|UNDER|5.5": {
-      "rows": 512,
-      "graded_rows": 512,
-      "wins": 294,
-      "losses": 218,
+      "rows": 508,
+      "graded_rows": 508,
+      "wins": 291,
+      "losses": 217,
       "pushes": 0,
-      "win_rate": 0.57421875,
+      "win_rate": 0.5728346456692913,
       "push_rate": 0.0
     },
     "K|UNDER|6.0": {
@@ -306,30 +513,30 @@
       "push_rate": 1.0
     },
     "K|UNDER|6.5": {
-      "rows": 322,
-      "graded_rows": 322,
-      "wins": 197,
-      "losses": 125,
+      "rows": 319,
+      "graded_rows": 319,
+      "wins": 195,
+      "losses": 124,
       "pushes": 0,
-      "win_rate": 0.6118012422360248,
+      "win_rate": 0.6112852664576802,
       "push_rate": 0.0
     },
     "K|UNDER|7.5": {
-      "rows": 135,
-      "graded_rows": 135,
-      "wins": 98,
-      "losses": 37,
+      "rows": 132,
+      "graded_rows": 132,
+      "wins": 97,
+      "losses": 35,
       "pushes": 0,
-      "win_rate": 0.725925925925926,
+      "win_rate": 0.7348484848484849,
       "push_rate": 0.0
     },
     "K|UNDER|8.5": {
-      "rows": 39,
-      "graded_rows": 39,
-      "wins": 24,
-      "losses": 15,
+      "rows": 36,
+      "graded_rows": 36,
+      "wins": 22,
+      "losses": 14,
       "pushes": 0,
-      "win_rate": 0.6153846153846154,
+      "win_rate": 0.6111111111111112,
       "push_rate": 0.0
     },
     "K|UNDER|9.5": {
@@ -341,22 +548,121 @@
       "win_rate": 0.6875,
       "push_rate": 0.0
     },
-    "R|OVER|0.5": {
-      "rows": 17571,
-      "graded_rows": 17571,
-      "wins": 8515,
-      "losses": 9056,
+    "RBI|OVER|0.5": {
+      "rows": 13414,
+      "graded_rows": 13414,
+      "wins": 4814,
+      "losses": 8600,
       "pushes": 0,
-      "win_rate": 0.4846053155768027,
+      "win_rate": 0.358878783360668,
+      "push_rate": 0.0
+    },
+    "RBI|OVER|1.5": {
+      "rows": 619,
+      "graded_rows": 619,
+      "wins": 117,
+      "losses": 502,
+      "pushes": 0,
+      "win_rate": 0.1890145395799677,
+      "push_rate": 0.0
+    },
+    "RBI|OVER|2.5": {
+      "rows": 29,
+      "graded_rows": 29,
+      "wins": 10,
+      "losses": 19,
+      "pushes": 0,
+      "win_rate": 0.3448275862068966,
+      "push_rate": 0.0
+    },
+    "RBI|OVER|3.5": {
+      "rows": 4,
+      "graded_rows": 4,
+      "wins": 3,
+      "losses": 1,
+      "pushes": 0,
+      "win_rate": 0.75,
+      "push_rate": 0.0
+    },
+    "RBI|OVER|4.5": {
+      "rows": 2,
+      "graded_rows": 2,
+      "wins": 1,
+      "losses": 1,
+      "pushes": 0,
+      "win_rate": 0.5,
+      "push_rate": 0.0
+    },
+    "RBI|UNDER|0.5": {
+      "rows": 25345,
+      "graded_rows": 25345,
+      "wins": 20185,
+      "losses": 5160,
+      "pushes": 0,
+      "win_rate": 0.7964095482343657,
+      "push_rate": 0.0
+    },
+    "RBI|UNDER|1.5": {
+      "rows": 1545,
+      "graded_rows": 1545,
+      "wins": 1382,
+      "losses": 163,
+      "pushes": 0,
+      "win_rate": 0.8944983818770227,
+      "push_rate": 0.0
+    },
+    "RBI|UNDER|2.5": {
+      "rows": 57,
+      "graded_rows": 57,
+      "wins": 54,
+      "losses": 3,
+      "pushes": 0,
+      "win_rate": 0.9473684210526315,
+      "push_rate": 0.0
+    },
+    "RBI|UNDER|3.5": {
+      "rows": 5,
+      "graded_rows": 5,
+      "wins": 5,
+      "losses": 0,
+      "pushes": 0,
+      "win_rate": 1.0,
+      "push_rate": 0.0
+    },
+    "RBI|UNDER|4.5": {
+      "rows": 2,
+      "graded_rows": 2,
+      "wins": 1,
+      "losses": 1,
+      "pushes": 0,
+      "win_rate": 0.5,
+      "push_rate": 0.0
+    },
+    "RBI|UNDER|5.5": {
+      "rows": 2,
+      "graded_rows": 2,
+      "wins": 1,
+      "losses": 1,
+      "pushes": 0,
+      "win_rate": 0.5,
+      "push_rate": 0.0
+    },
+    "R|OVER|0.5": {
+      "rows": 17407,
+      "graded_rows": 17407,
+      "wins": 8451,
+      "losses": 8956,
+      "pushes": 0,
+      "win_rate": 0.4854943413569254,
       "push_rate": 0.0
     },
     "R|OVER|1.5": {
-      "rows": 234,
-      "graded_rows": 234,
-      "wins": 75,
-      "losses": 159,
+      "rows": 236,
+      "graded_rows": 236,
+      "wins": 76,
+      "losses": 160,
       "pushes": 0,
-      "win_rate": 0.32051282051282054,
+      "win_rate": 0.3220338983050847,
       "push_rate": 0.0
     },
     "R|OVER|2.5": {
@@ -369,21 +675,21 @@
       "push_rate": 0.0
     },
     "R|UNDER|0.5": {
-      "rows": 22587,
-      "graded_rows": 22587,
-      "wins": 17740,
-      "losses": 4847,
+      "rows": 22347,
+      "graded_rows": 22347,
+      "wins": 17538,
+      "losses": 4809,
       "pushes": 0,
-      "win_rate": 0.7854075353079205,
+      "win_rate": 0.7848033293059471,
       "push_rate": 0.0
     },
     "R|UNDER|1.5": {
-      "rows": 1015,
-      "graded_rows": 1015,
-      "wins": 925,
+      "rows": 1007,
+      "graded_rows": 1007,
+      "wins": 917,
       "losses": 90,
       "pushes": 0,
-      "win_rate": 0.9113300492610837,
+      "win_rate": 0.9106256206554121,
       "push_rate": 0.0
     },
     "R|UNDER|2.0": {
@@ -405,30 +711,30 @@
       "push_rate": 0.0
     },
     "TB|OVER|0.5": {
-      "rows": 11656,
-      "graded_rows": 11656,
-      "wins": 7605,
-      "losses": 4051,
+      "rows": 11562,
+      "graded_rows": 11562,
+      "wins": 7547,
+      "losses": 4015,
       "pushes": 0,
-      "win_rate": 0.6524536719286205,
+      "win_rate": 0.6527417401833593,
       "push_rate": 0.0
     },
     "TB|OVER|1.0": {
-      "rows": 309,
-      "graded_rows": 241,
-      "wins": 131,
-      "losses": 110,
-      "pushes": 68,
-      "win_rate": 0.5435684647302904,
-      "push_rate": 0.22006472491909385
+      "rows": 297,
+      "graded_rows": 232,
+      "wins": 126,
+      "losses": 106,
+      "pushes": 65,
+      "win_rate": 0.5431034482758621,
+      "push_rate": 0.21885521885521886
     },
     "TB|OVER|1.5": {
-      "rows": 5960,
-      "graded_rows": 5960,
-      "wins": 3795,
-      "losses": 2165,
+      "rows": 5893,
+      "graded_rows": 5893,
+      "wins": 3757,
+      "losses": 2136,
       "pushes": 0,
-      "win_rate": 0.636744966442953,
+      "win_rate": 0.6375360597318853,
       "push_rate": 0.0
     },
     "TB|OVER|2.0": {
@@ -441,21 +747,21 @@
       "push_rate": 0.0
     },
     "TB|OVER|2.5": {
-      "rows": 1261,
-      "graded_rows": 1261,
-      "wins": 779,
-      "losses": 482,
+      "rows": 1254,
+      "graded_rows": 1254,
+      "wins": 774,
+      "losses": 480,
       "pushes": 0,
-      "win_rate": 0.6177636796193497,
+      "win_rate": 0.6172248803827751,
       "push_rate": 0.0
     },
     "TB|OVER|3.5": {
-      "rows": 229,
-      "graded_rows": 229,
-      "wins": 159,
+      "rows": 230,
+      "graded_rows": 230,
+      "wins": 160,
       "losses": 70,
       "pushes": 0,
-      "win_rate": 0.6943231441048034,
+      "win_rate": 0.6956521739130435,
       "push_rate": 0.0
     },
     "TB|OVER|4.5": {
@@ -495,30 +801,30 @@
       "push_rate": 0.0
     },
     "TB|UNDER|0.5": {
-      "rows": 8239,
-      "graded_rows": 8239,
-      "wins": 6366,
-      "losses": 1873,
+      "rows": 8176,
+      "graded_rows": 8176,
+      "wins": 6316,
+      "losses": 1860,
       "pushes": 0,
-      "win_rate": 0.7726665857506979,
+      "win_rate": 0.7725048923679061,
       "push_rate": 0.0
     },
     "TB|UNDER|1.0": {
-      "rows": 289,
-      "graded_rows": 217,
-      "wins": 193,
-      "losses": 24,
-      "pushes": 72,
-      "win_rate": 0.8894009216589862,
-      "push_rate": 0.2491349480968858
+      "rows": 266,
+      "graded_rows": 200,
+      "wins": 178,
+      "losses": 22,
+      "pushes": 66,
+      "win_rate": 0.89,
+      "push_rate": 0.24812030075187969
     },
     "TB|UNDER|1.5": {
-      "rows": 8970,
-      "graded_rows": 8970,
-      "wins": 7741,
-      "losses": 1229,
+      "rows": 8859,
+      "graded_rows": 8859,
+      "wins": 7648,
+      "losses": 1211,
       "pushes": 0,
-      "win_rate": 0.8629877369007803,
+      "win_rate": 0.8633028558528051,
       "push_rate": 0.0
     },
     "TB|UNDER|2.0": {
@@ -531,12 +837,12 @@
       "push_rate": 0.6666666666666666
     },
     "TB|UNDER|2.5": {
-      "rows": 3415,
-      "graded_rows": 3415,
-      "wins": 3184,
-      "losses": 231,
+      "rows": 3389,
+      "graded_rows": 3389,
+      "wins": 3160,
+      "losses": 229,
       "pushes": 0,
-      "win_rate": 0.9323572474377745,
+      "win_rate": 0.9324284449690174,
       "push_rate": 0.0
     },
     "TB|UNDER|3.0": {
@@ -549,12 +855,12 @@
       "push_rate": 0.4
     },
     "TB|UNDER|3.5": {
-      "rows": 795,
-      "graded_rows": 795,
-      "wins": 750,
-      "losses": 45,
+      "rows": 789,
+      "graded_rows": 789,
+      "wins": 746,
+      "losses": 43,
       "pushes": 0,
-      "win_rate": 0.9433962264150944,
+      "win_rate": 0.9455006337135615,
       "push_rate": 0.0
     },
     "TB|UNDER|4.0": {
@@ -567,12 +873,12 @@
       "push_rate": 1.0
     },
     "TB|UNDER|4.5": {
-      "rows": 192,
-      "graded_rows": 192,
-      "wins": 171,
-      "losses": 21,
+      "rows": 190,
+      "graded_rows": 190,
+      "wins": 170,
+      "losses": 20,
       "pushes": 0,
-      "win_rate": 0.890625,
+      "win_rate": 0.8947368421052632,
       "push_rate": 0.0
     },
     "TB|UNDER|5.5": {
@@ -613,96 +919,267 @@
     }
   },
   "recent_target_direction": {
-    "H|OVER": {
-      "rows": 2408,
-      "graded_rows": 2408,
-      "wins": 1299,
-      "losses": 1109,
+    "ER|OVER": {
+      "rows": 437,
+      "graded_rows": 437,
+      "wins": 154,
+      "losses": 283,
       "pushes": 0,
-      "win_rate": 0.5394518272425249,
+      "win_rate": 0.3524027459954233,
+      "push_rate": 0.0
+    },
+    "ER|UNDER": {
+      "rows": 916,
+      "graded_rows": 916,
+      "wins": 656,
+      "losses": 260,
+      "pushes": 0,
+      "win_rate": 0.7161572052401747,
+      "push_rate": 0.0
+    },
+    "HR|OVER": {
+      "rows": 206,
+      "graded_rows": 206,
+      "wins": 107,
+      "losses": 99,
+      "pushes": 0,
+      "win_rate": 0.5194174757281553,
+      "push_rate": 0.0
+    },
+    "HR|UNDER": {
+      "rows": 3457,
+      "graded_rows": 3457,
+      "wins": 3207,
+      "losses": 250,
+      "pushes": 0,
+      "win_rate": 0.9276829621058721,
+      "push_rate": 0.0
+    },
+    "H|OVER": {
+      "rows": 2201,
+      "graded_rows": 2201,
+      "wins": 1198,
+      "losses": 1003,
+      "pushes": 0,
+      "win_rate": 0.5442980463425715,
       "push_rate": 0.0
     },
     "H|UNDER": {
-      "rows": 1646,
-      "graded_rows": 1646,
-      "wins": 1068,
-      "losses": 578,
+      "rows": 1462,
+      "graded_rows": 1462,
+      "wins": 945,
+      "losses": 517,
       "pushes": 0,
-      "win_rate": 0.6488456865127582,
+      "win_rate": 0.646374829001368,
       "push_rate": 0.0
     },
     "K|OVER": {
-      "rows": 115,
-      "graded_rows": 115,
-      "wins": 60,
-      "losses": 55,
+      "rows": 101,
+      "graded_rows": 101,
+      "wins": 58,
+      "losses": 43,
       "pushes": 0,
-      "win_rate": 0.5217391304347826,
+      "win_rate": 0.5742574257425742,
       "push_rate": 0.0
     },
     "K|UNDER": {
-      "rows": 1393,
-      "graded_rows": 1393,
-      "wins": 1190,
-      "losses": 203,
+      "rows": 1252,
+      "graded_rows": 1252,
+      "wins": 1075,
+      "losses": 177,
       "pushes": 0,
-      "win_rate": 0.8542713567839196,
+      "win_rate": 0.8586261980830671,
+      "push_rate": 0.0
+    },
+    "RBI|OVER": {
+      "rows": 1248,
+      "graded_rows": 1248,
+      "wins": 442,
+      "losses": 806,
+      "pushes": 0,
+      "win_rate": 0.3541666666666667,
+      "push_rate": 0.0
+    },
+    "RBI|UNDER": {
+      "rows": 2415,
+      "graded_rows": 2415,
+      "wins": 1917,
+      "losses": 498,
+      "pushes": 0,
+      "win_rate": 0.7937888198757764,
       "push_rate": 0.0
     },
     "R|OVER": {
-      "rows": 1736,
-      "graded_rows": 1736,
-      "wins": 808,
-      "losses": 928,
+      "rows": 1580,
+      "graded_rows": 1580,
+      "wins": 748,
+      "losses": 832,
       "pushes": 0,
-      "win_rate": 0.46543778801843316,
+      "win_rate": 0.47341772151898737,
       "push_rate": 0.0
     },
     "R|UNDER": {
-      "rows": 2318,
-      "graded_rows": 2318,
-      "wins": 1809,
-      "losses": 509,
+      "rows": 2083,
+      "graded_rows": 2083,
+      "wins": 1611,
+      "losses": 472,
       "pushes": 0,
-      "win_rate": 0.780414150129422,
+      "win_rate": 0.7734037445991359,
       "push_rate": 0.0
     },
     "TB|OVER": {
-      "rows": 1871,
-      "graded_rows": 1868,
-      "wins": 1208,
-      "losses": 660,
-      "pushes": 3,
-      "win_rate": 0.6466809421841542,
-      "push_rate": 0.0016034206306787815
+      "rows": 1703,
+      "graded_rows": 1703,
+      "wins": 1110,
+      "losses": 593,
+      "pushes": 0,
+      "win_rate": 0.6517909571344686,
+      "push_rate": 0.0
     },
     "TB|UNDER": {
-      "rows": 2183,
-      "graded_rows": 2172,
-      "wins": 1809,
-      "losses": 363,
-      "pushes": 11,
-      "win_rate": 0.8328729281767956,
-      "push_rate": 0.005038937242327073
+      "rows": 1960,
+      "graded_rows": 1955,
+      "wins": 1628,
+      "losses": 327,
+      "pushes": 5,
+      "win_rate": 0.8327365728900256,
+      "push_rate": 0.002551020408163265
     }
   },
   "recent_line_buckets": {
-    "H|OVER|0.5": {
-      "rows": 2162,
-      "graded_rows": 2162,
-      "wins": 1250,
-      "losses": 912,
+    "ER|OVER|0.5": {
+      "rows": 327,
+      "graded_rows": 327,
+      "wins": 108,
+      "losses": 219,
       "pushes": 0,
-      "win_rate": 0.5781683626271971,
+      "win_rate": 0.3302752293577982,
+      "push_rate": 0.0
+    },
+    "ER|OVER|1.5": {
+      "rows": 61,
+      "graded_rows": 61,
+      "wins": 29,
+      "losses": 32,
+      "pushes": 0,
+      "win_rate": 0.47540983606557374,
+      "push_rate": 0.0
+    },
+    "ER|OVER|2.5": {
+      "rows": 35,
+      "graded_rows": 35,
+      "wins": 12,
+      "losses": 23,
+      "pushes": 0,
+      "win_rate": 0.34285714285714286,
+      "push_rate": 0.0
+    },
+    "ER|OVER|3.5": {
+      "rows": 13,
+      "graded_rows": 13,
+      "wins": 5,
+      "losses": 8,
+      "pushes": 0,
+      "win_rate": 0.38461538461538464,
+      "push_rate": 0.0
+    },
+    "ER|OVER|4.5": {
+      "rows": 1,
+      "graded_rows": 1,
+      "wins": 0,
+      "losses": 1,
+      "pushes": 0,
+      "win_rate": 0.0,
+      "push_rate": 0.0
+    },
+    "ER|UNDER|0.5": {
+      "rows": 648,
+      "graded_rows": 648,
+      "wins": 478,
+      "losses": 170,
+      "pushes": 0,
+      "win_rate": 0.7376543209876543,
+      "push_rate": 0.0
+    },
+    "ER|UNDER|1.5": {
+      "rows": 114,
+      "graded_rows": 114,
+      "wins": 67,
+      "losses": 47,
+      "pushes": 0,
+      "win_rate": 0.5877192982456141,
+      "push_rate": 0.0
+    },
+    "ER|UNDER|2.5": {
+      "rows": 91,
+      "graded_rows": 91,
+      "wins": 59,
+      "losses": 32,
+      "pushes": 0,
+      "win_rate": 0.6483516483516484,
+      "push_rate": 0.0
+    },
+    "ER|UNDER|3.5": {
+      "rows": 49,
+      "graded_rows": 49,
+      "wins": 40,
+      "losses": 9,
+      "pushes": 0,
+      "win_rate": 0.8163265306122449,
+      "push_rate": 0.0
+    },
+    "ER|UNDER|4.5": {
+      "rows": 12,
+      "graded_rows": 12,
+      "wins": 10,
+      "losses": 2,
+      "pushes": 0,
+      "win_rate": 0.8333333333333334,
+      "push_rate": 0.0
+    },
+    "ER|UNDER|5.5": {
+      "rows": 2,
+      "graded_rows": 2,
+      "wins": 2,
+      "losses": 0,
+      "pushes": 0,
+      "win_rate": 1.0,
+      "push_rate": 0.0
+    },
+    "HR|OVER|0.5": {
+      "rows": 206,
+      "graded_rows": 206,
+      "wins": 107,
+      "losses": 99,
+      "pushes": 0,
+      "win_rate": 0.5194174757281553,
+      "push_rate": 0.0
+    },
+    "HR|UNDER|0.5": {
+      "rows": 3457,
+      "graded_rows": 3457,
+      "wins": 3207,
+      "losses": 250,
+      "pushes": 0,
+      "win_rate": 0.9276829621058721,
+      "push_rate": 0.0
+    },
+    "H|OVER|0.5": {
+      "rows": 1972,
+      "graded_rows": 1972,
+      "wins": 1149,
+      "losses": 823,
+      "pushes": 0,
+      "win_rate": 0.5826572008113591,
       "push_rate": 0.0
     },
     "H|OVER|1.5": {
-      "rows": 243,
-      "graded_rows": 243,
+      "rows": 226,
+      "graded_rows": 226,
       "wins": 49,
-      "losses": 194,
+      "losses": 177,
       "pushes": 0,
-      "win_rate": 0.20164609053497942,
+      "win_rate": 0.2168141592920354,
       "push_rate": 0.0
     },
     "H|OVER|2.5": {
@@ -715,57 +1192,57 @@
       "push_rate": 0.0
     },
     "H|UNDER|0.5": {
-      "rows": 1024,
-      "graded_rows": 1024,
-      "wins": 600,
-      "losses": 424,
+      "rows": 910,
+      "graded_rows": 910,
+      "wins": 534,
+      "losses": 376,
       "pushes": 0,
-      "win_rate": 0.5859375,
+      "win_rate": 0.5868131868131868,
       "push_rate": 0.0
     },
     "H|UNDER|1.5": {
-      "rows": 607,
-      "graded_rows": 607,
-      "wins": 455,
-      "losses": 152,
+      "rows": 539,
+      "graded_rows": 539,
+      "wins": 400,
+      "losses": 139,
       "pushes": 0,
-      "win_rate": 0.7495881383855024,
+      "win_rate": 0.7421150278293135,
       "push_rate": 0.0
     },
     "H|UNDER|2.5": {
-      "rows": 15,
-      "graded_rows": 15,
-      "wins": 13,
+      "rows": 13,
+      "graded_rows": 13,
+      "wins": 11,
       "losses": 2,
       "pushes": 0,
-      "win_rate": 0.8666666666666667,
+      "win_rate": 0.8461538461538461,
       "push_rate": 0.0
     },
     "K|OVER|2.5": {
-      "rows": 43,
-      "graded_rows": 43,
-      "wins": 18,
-      "losses": 25,
+      "rows": 36,
+      "graded_rows": 36,
+      "wins": 17,
+      "losses": 19,
       "pushes": 0,
-      "win_rate": 0.4186046511627907,
+      "win_rate": 0.4722222222222222,
       "push_rate": 0.0
     },
     "K|OVER|3.5": {
-      "rows": 31,
-      "graded_rows": 31,
+      "rows": 28,
+      "graded_rows": 28,
       "wins": 20,
-      "losses": 11,
+      "losses": 8,
       "pushes": 0,
-      "win_rate": 0.6451612903225806,
+      "win_rate": 0.7142857142857143,
       "push_rate": 0.0
     },
     "K|OVER|4.5": {
-      "rows": 21,
-      "graded_rows": 21,
-      "wins": 14,
-      "losses": 7,
+      "rows": 18,
+      "graded_rows": 18,
+      "wins": 13,
+      "losses": 5,
       "pushes": 0,
-      "win_rate": 0.6666666666666666,
+      "win_rate": 0.7222222222222222,
       "push_rate": 0.0
     },
     "K|OVER|5.5": {
@@ -778,12 +1255,12 @@
       "push_rate": 0.0
     },
     "K|OVER|6.5": {
-      "rows": 4,
-      "graded_rows": 4,
+      "rows": 3,
+      "graded_rows": 3,
       "wins": 1,
-      "losses": 3,
+      "losses": 2,
       "pushes": 0,
-      "win_rate": 0.25,
+      "win_rate": 0.3333333333333333,
       "push_rate": 0.0
     },
     "K|OVER|8.5": {
@@ -805,66 +1282,66 @@
       "push_rate": 0.0
     },
     "K|UNDER|2.5": {
-      "rows": 1151,
-      "graded_rows": 1151,
-      "wins": 1051,
-      "losses": 100,
+      "rows": 1031,
+      "graded_rows": 1031,
+      "wins": 945,
+      "losses": 86,
       "pushes": 0,
-      "win_rate": 0.9131190269331017,
+      "win_rate": 0.9165858389912707,
       "push_rate": 0.0
     },
     "K|UNDER|3.5": {
-      "rows": 49,
-      "graded_rows": 49,
-      "wins": 26,
-      "losses": 23,
+      "rows": 47,
+      "graded_rows": 47,
+      "wins": 25,
+      "losses": 22,
       "pushes": 0,
-      "win_rate": 0.5306122448979592,
+      "win_rate": 0.5319148936170213,
       "push_rate": 0.0
     },
     "K|UNDER|4.5": {
-      "rows": 55,
-      "graded_rows": 55,
-      "wins": 32,
-      "losses": 23,
+      "rows": 47,
+      "graded_rows": 47,
+      "wins": 31,
+      "losses": 16,
       "pushes": 0,
-      "win_rate": 0.5818181818181818,
+      "win_rate": 0.6595744680851063,
       "push_rate": 0.0
     },
     "K|UNDER|5.5": {
-      "rows": 60,
-      "graded_rows": 60,
-      "wins": 33,
+      "rows": 57,
+      "graded_rows": 57,
+      "wins": 30,
       "losses": 27,
       "pushes": 0,
-      "win_rate": 0.55,
+      "win_rate": 0.5263157894736842,
       "push_rate": 0.0
     },
     "K|UNDER|6.5": {
-      "rows": 35,
-      "graded_rows": 35,
-      "wins": 20,
-      "losses": 15,
+      "rows": 33,
+      "graded_rows": 33,
+      "wins": 19,
+      "losses": 14,
       "pushes": 0,
-      "win_rate": 0.5714285714285714,
+      "win_rate": 0.5757575757575758,
       "push_rate": 0.0
     },
     "K|UNDER|7.5": {
-      "rows": 29,
-      "graded_rows": 29,
-      "wins": 18,
-      "losses": 11,
+      "rows": 26,
+      "graded_rows": 26,
+      "wins": 17,
+      "losses": 9,
       "pushes": 0,
-      "win_rate": 0.6206896551724138,
+      "win_rate": 0.6538461538461539,
       "push_rate": 0.0
     },
     "K|UNDER|8.5": {
-      "rows": 11,
-      "graded_rows": 11,
-      "wins": 7,
-      "losses": 4,
+      "rows": 8,
+      "graded_rows": 8,
+      "wins": 5,
+      "losses": 3,
       "pushes": 0,
-      "win_rate": 0.6363636363636364,
+      "win_rate": 0.625,
       "push_rate": 0.0
     },
     "K|UNDER|9.5": {
@@ -876,13 +1353,58 @@
       "win_rate": 1.0,
       "push_rate": 0.0
     },
-    "R|OVER|0.5": {
-      "rows": 1729,
-      "graded_rows": 1729,
-      "wins": 805,
-      "losses": 924,
+    "RBI|OVER|0.5": {
+      "rows": 1196,
+      "graded_rows": 1196,
+      "wins": 436,
+      "losses": 760,
       "pushes": 0,
-      "win_rate": 0.46558704453441296,
+      "win_rate": 0.36454849498327757,
+      "push_rate": 0.0
+    },
+    "RBI|OVER|1.5": {
+      "rows": 52,
+      "graded_rows": 52,
+      "wins": 6,
+      "losses": 46,
+      "pushes": 0,
+      "win_rate": 0.11538461538461539,
+      "push_rate": 0.0
+    },
+    "RBI|UNDER|0.5": {
+      "rows": 2271,
+      "graded_rows": 2271,
+      "wins": 1791,
+      "losses": 480,
+      "pushes": 0,
+      "win_rate": 0.7886393659180978,
+      "push_rate": 0.0
+    },
+    "RBI|UNDER|1.5": {
+      "rows": 138,
+      "graded_rows": 138,
+      "wins": 120,
+      "losses": 18,
+      "pushes": 0,
+      "win_rate": 0.8695652173913043,
+      "push_rate": 0.0
+    },
+    "RBI|UNDER|2.5": {
+      "rows": 6,
+      "graded_rows": 6,
+      "wins": 6,
+      "losses": 0,
+      "pushes": 0,
+      "win_rate": 1.0,
+      "push_rate": 0.0
+    },
+    "R|OVER|0.5": {
+      "rows": 1573,
+      "graded_rows": 1573,
+      "wins": 745,
+      "losses": 828,
+      "pushes": 0,
+      "win_rate": 0.47361729179911,
       "push_rate": 0.0
     },
     "R|OVER|1.5": {
@@ -895,21 +1417,21 @@
       "push_rate": 0.0
     },
     "R|UNDER|0.5": {
-      "rows": 2219,
-      "graded_rows": 2219,
-      "wins": 1718,
-      "losses": 501,
+      "rows": 1992,
+      "graded_rows": 1992,
+      "wins": 1528,
+      "losses": 464,
       "pushes": 0,
-      "win_rate": 0.7742226228030644,
+      "win_rate": 0.7670682730923695,
       "push_rate": 0.0
     },
     "R|UNDER|1.5": {
-      "rows": 97,
-      "graded_rows": 97,
-      "wins": 90,
+      "rows": 89,
+      "graded_rows": 89,
+      "wins": 82,
       "losses": 7,
       "pushes": 0,
-      "win_rate": 0.9278350515463918,
+      "win_rate": 0.9213483146067416,
       "push_rate": 0.0
     },
     "R|UNDER|2.5": {
@@ -922,39 +1444,39 @@
       "push_rate": 0.0
     },
     "TB|OVER|0.5": {
-      "rows": 1074,
-      "graded_rows": 1074,
-      "wins": 709,
-      "losses": 365,
+      "rows": 989,
+      "graded_rows": 989,
+      "wins": 659,
+      "losses": 330,
       "pushes": 0,
-      "win_rate": 0.660148975791434,
+      "win_rate": 0.6663296258847321,
       "push_rate": 0.0
     },
     "TB|OVER|1.0": {
-      "rows": 18,
-      "graded_rows": 15,
-      "wins": 6,
-      "losses": 9,
-      "pushes": 3,
-      "win_rate": 0.4,
-      "push_rate": 0.16666666666666666
+      "rows": 6,
+      "graded_rows": 6,
+      "wins": 1,
+      "losses": 5,
+      "pushes": 0,
+      "win_rate": 0.16666666666666666,
+      "push_rate": 0.0
     },
     "TB|OVER|1.5": {
-      "rows": 618,
-      "graded_rows": 618,
-      "wins": 398,
-      "losses": 220,
+      "rows": 554,
+      "graded_rows": 554,
+      "wins": 360,
+      "losses": 194,
       "pushes": 0,
-      "win_rate": 0.6440129449838188,
+      "win_rate": 0.6498194945848376,
       "push_rate": 0.0
     },
     "TB|OVER|2.5": {
-      "rows": 137,
-      "graded_rows": 137,
-      "wins": 83,
-      "losses": 54,
+      "rows": 130,
+      "graded_rows": 130,
+      "wins": 78,
+      "losses": 52,
       "pushes": 0,
-      "win_rate": 0.6058394160583942,
+      "win_rate": 0.6,
       "push_rate": 0.0
     },
     "TB|OVER|3.5": {
@@ -985,30 +1507,30 @@
       "push_rate": 0.0
     },
     "TB|UNDER|0.5": {
-      "rows": 712,
-      "graded_rows": 712,
-      "wins": 541,
-      "losses": 171,
+      "rows": 657,
+      "graded_rows": 657,
+      "wins": 497,
+      "losses": 160,
       "pushes": 0,
-      "win_rate": 0.7598314606741573,
+      "win_rate": 0.756468797564688,
       "push_rate": 0.0
     },
     "TB|UNDER|1.0": {
-      "rows": 38,
-      "graded_rows": 31,
-      "wins": 28,
-      "losses": 3,
-      "pushes": 7,
-      "win_rate": 0.9032258064516129,
-      "push_rate": 0.18421052631578946
+      "rows": 15,
+      "graded_rows": 14,
+      "wins": 13,
+      "losses": 1,
+      "pushes": 1,
+      "win_rate": 0.9285714285714286,
+      "push_rate": 0.06666666666666667
     },
     "TB|UNDER|1.5": {
-      "rows": 976,
-      "graded_rows": 976,
-      "wins": 824,
-      "losses": 152,
+      "rows": 863,
+      "graded_rows": 863,
+      "wins": 729,
+      "losses": 134,
       "pushes": 0,
-      "win_rate": 0.8442622950819673,
+      "win_rate": 0.8447276940903824,
       "push_rate": 0.0
     },
     "TB|UNDER|2.0": {
@@ -1021,12 +1543,12 @@
       "push_rate": 0.75
     },
     "TB|UNDER|2.5": {
-      "rows": 353,
-      "graded_rows": 353,
-      "wins": 327,
-      "losses": 26,
+      "rows": 329,
+      "graded_rows": 329,
+      "wins": 305,
+      "losses": 24,
       "pushes": 0,
-      "win_rate": 0.9263456090651558,
+      "win_rate": 0.9270516717325228,
       "push_rate": 0.0
     },
     "TB|UNDER|3.0": {
@@ -1039,21 +1561,21 @@
       "push_rate": 1.0
     },
     "TB|UNDER|3.5": {
-      "rows": 80,
-      "graded_rows": 80,
-      "wins": 73,
-      "losses": 7,
+      "rows": 74,
+      "graded_rows": 74,
+      "wins": 69,
+      "losses": 5,
       "pushes": 0,
-      "win_rate": 0.9125,
+      "win_rate": 0.9324324324324325,
       "push_rate": 0.0
     },
     "TB|UNDER|4.5": {
-      "rows": 17,
-      "graded_rows": 17,
-      "wins": 14,
-      "losses": 3,
+      "rows": 15,
+      "graded_rows": 15,
+      "wins": 13,
+      "losses": 2,
       "pushes": 0,
-      "win_rate": 0.8235294117647058,
+      "win_rate": 0.8666666666666667,
       "push_rate": 0.0
     },
     "TB|UNDER|5.5": {

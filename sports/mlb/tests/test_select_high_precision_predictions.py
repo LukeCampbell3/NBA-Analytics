@@ -12,6 +12,16 @@ sys.path.insert(0, str(MLB_SCRIPTS_ROOT))
 import select_high_precision_predictions as selector
 
 
+def test_supported_count_targets_cover_all_playable_count_props() -> None:
+    assert selector.SUPPORTED_COUNT_TARGETS == {"H", "TB", "R", "HR", "RBI", "K", "ER"}
+    assert set(selector.HISTORICAL_TARGET_SPECS) == selector.SUPPORTED_COUNT_TARGETS
+    assert set(selector.HISTORICAL_BET_TARGET_SPECS) == selector.SUPPORTED_COUNT_TARGETS
+
+
+def test_report_path_is_repository_relative() -> None:
+    assert selector.report_path(selector.REPO_ROOT / "sports" / "mlb") == "sports/mlb"
+
+
 def test_american_price_helpers_reject_invalid_consensus_prices() -> None:
     assert selector.american_implied_probability(-1.67) is None
     assert selector.american_profit_per_unit(-0.5) is None

@@ -173,6 +173,13 @@ def to_int(value: str, default: int = 0) -> int:
         return default
 
 
+def valid_american_price(value: object) -> float | None:
+    price = to_float(value, default=float("nan"))
+    if not math.isfinite(price) or (-100.0 < price < 100.0):
+        return None
+    return price
+
+
 def parse_date(value: object) -> datetime | None:
     text = str(value or "").strip()
     if not text:
@@ -809,6 +816,12 @@ def main() -> None:
         market_implied_probability = to_float(row.get("Market_Implied_Probability"), default=float("nan"))
         if not math.isfinite(market_implied_probability):
             market_implied_probability = None
+        market_over_price = valid_american_price(row.get("Market_Over_Price"))
+        market_under_price = valid_american_price(row.get("Market_Under_Price"))
+        direction = str(row.get("Direction", "")).strip().upper()
+        selected_side_price = market_over_price if direction == "OVER" else market_under_price
+        opposite_side_price = market_under_price if direction == "OVER" else market_over_price
+        price_confirmed = bool(selected_side_price is not None and to_int(row.get("Price_Confirmed")) == 1)
         push_probability = to_float(row.get("Estimated_Push_Probability"), default=0.0)
         market_line = to_float(row.get("Market_Line"))
         slate_teams = sorted([team.upper(), opponent.upper()])
@@ -827,6 +840,8 @@ def main() -> None:
             risk_flags.append("game_date_mismatch")
         if not resolved_player_id:
             risk_flags.append("roster_unverified")
+        if not price_confirmed:
+            risk_flags.append("odds_unconfirmed")
         if push_probability >= 0.05 or is_whole_number_line(market_line):
             risk_flags.append("push_exposure")
         if multi_game_slate:
@@ -889,6 +904,11 @@ def main() -> None:
                 "market_bucket": row.get("Market_Bucket", ""),
                 "market_books": to_int(row.get("Market_Books", "0")),
                 "market_line_std": to_float(row.get("Market_Line_Std")),
+                "market_over_price": market_over_price,
+                "market_under_price": market_under_price,
+                "selected_side_price": selected_side_price,
+                "opposite_side_price": opposite_side_price,
+                "price_confirmed": price_confirmed,
                 "market_implied_probability": market_implied_probability,
                 "expected_value_per_unit": expected_value_per_unit,
                 "final_pool_quality_score": parlay_leg_quality,
@@ -926,6 +946,7 @@ def main() -> None:
         "through_date": through_date,
         "model_run_id": "mlb_high_precision_selector_v2",
         "policy_profile": str(summary.get("publication_strategy") or "core_market_props"),
+        "publication_state": str(summary.get("publication_state") or "published_current_pool"),
         "publication_status": publication_status,
         "publication_message": "; ".join(data_quality.get("reasons", [])) or "Board passed publication checks.",
         "data_quality": data_quality,

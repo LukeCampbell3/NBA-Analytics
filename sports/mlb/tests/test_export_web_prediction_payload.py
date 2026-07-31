@@ -12,6 +12,13 @@ sys.path.insert(0, str(MLB_SCRIPTS_ROOT))
 import export_web_prediction_payload as exporter
 
 
+def test_valid_american_price_rejects_non_american_consensus_values() -> None:
+    assert exporter.valid_american_price(-110.0) == -110.0
+    assert exporter.valid_american_price(125.0) == 125.0
+    assert exporter.valid_american_price(-1.67) is None
+    assert exporter.valid_american_price(99.0) is None
+
+
 def _row(*, rank: int, game_id: str, selection_score: float) -> dict[str, str]:
     return {
         "Rank": str(rank),
