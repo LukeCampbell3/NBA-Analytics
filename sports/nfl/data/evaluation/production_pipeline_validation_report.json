@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-07-31T16:47:39.246663+00:00",
+  "status": "passed_research_source_blocked",
+  "checks": {
+    "selector_completed": true,
+    "passing_is_only_validated_target": true,
+    "weekly_cap_locked_at_12": true,
+    "selector_artifact_written": true,
+    "replay_completed": true,
+    "replay_contract_passed": true,
+    "replay_operational_gate_passed": true,
+    "replay_effectiveness_passed": true,
+    "replay_stability_passed": true,
+    "expected_final_decisions": true,
+    "expected_final_wins": true,
+    "source_provenance_correctly_blocks_deployment": true
+  },
+  "selector_run": {
+    "command": [
+      "C:\\Users\\jcthi\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\\python.exe",
+      "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nfl\\scripts\\train_nfl_market_selector.py",
+      "--stats",
+      "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nfl\\data\\raw\\player_stats.parquet",
+      "--development-market-rows",
+      "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nfl\\tmp\\2021\\market_rows_edge0.csv",
+      "--final-market-rows",
+      "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nfl\\tmp\\2022\\market_rows_edge0.csv",
+      "--report",
+      "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nfl\\tmp\\production_pipeline_validation\\market_selector_report.json",
+      "--artifact",
+      "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nfl\\tmp\\production_pipeline_validation\\nfl_market_selector.joblib",
+      "--development-pool",
+      "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nfl\\tmp\\production_pipeline_validation\\candidate_pool_2021.csv",
+      "--final-pool",
+      "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nfl\\tmp\\production_pipeline_validation\\candidate_pool_2022.csv",
+      "--rows",
+      "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nfl\\tmp\\production_pipeline_validation\\final_audit_rows.csv"
+    ],
+    "returncode": 0,
+    "stdout_tail": "{\n  \"validated_targets\": [\n    \"passing\"\n  ],\n  \"uncapped_final\": {\n    \"bets\": 315,\n    \"graded_decisions\": 315,\n    \"wins\": 188,\n    \"losses\": 127,\n    \"pushes\": 0,\n    \"hit_rate\": 0.5968,\n    \"hit_rate_wilson_95\": [\n      0.5418,\n      0.6495\n    ],\n    \"roi\": 0.1167,\n    \"profit_units\": 36.7491,\n    \"distinct_weeks\": 18,\n    \"over_bets\": 29,\n    \"under_bets\": 286\n  },\n  \"weekly_top_n\": 12,\n  \"pruned_final\": {\n    \"bets\": 210,\n    \"graded_decisions\": 210,\n    \"wins\": 127,\n    \"losses\": 83,\n    \"pushes\": 0,\n    \"hit_rate\": 0.6048,\n    \"hit_rate_wilson_95\": [\n      0.5373,\n      0.6684\n    ],\n    \"roi\": 0.13,\n    \"profit_units\": 27.2981,\n    \"distinct_weeks\": 18,\n    \"over_bets\": 27,\n    \"under_bets\": 183\n  }\n}\nReport: C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nfl\\tmp\\production_pipeline_validation\\market_selector_report.json\n",
+    "stderr_tail": ""
+  },
+  "replay_run": {
+    "command": [
+      "C:\\Users\\jcthi\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\\python.exe",
+      "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nfl\\scripts\\run_nfl_production_replay.py",
+      "--pool",
+      "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nfl\\tmp\\production_pipeline_validation\\market_selector_validated_pool_2022.csv",
+      "--policy-report",
+      "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nfl\\tmp\\production_pipeline_validation\\market_selector_report.json",
+      "--bootstrap-samples",
+      "10000",
+      "--report",
+      "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nfl\\tmp\\production_pipeline_validation\\production_replay_report.json",
+      "--picks",
+      "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nfl\\tmp\\production_pipeline_validation\\production_replay_picks.csv",
+      "--weekly-ledger",
+      "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nfl\\tmp\\production_pipeline_validation\\production_replay_weekly.csv"
+    ],
+    "returncode": 0,
+    "stdout_tail": "{\n  \"status\": \"effectiveness_proven_source_blocked\",\n  \"deployment\": {\n    \"status\": \"blocked\",\n    \"reason\": \"Effectiveness is proven, but source timestamps remain unauthenticated.\"\n  }\n}\nReport: C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nfl\\tmp\\production_pipeline_validation\\production_replay_report.json\n",
+    "stderr_tail": ""
+  },
+  "selector_summary": {
+    "validated_targets": [
+      "passing"
+    ],
+    "weekly_top_n": 12,
+    "final_test": {
+      "bets": 210,
+      "graded_decisions": 210,
+      "wins": 127,
+      "losses": 83,
+      "pushes": 0,
+      "hit_rate": 0.6048,
+      "hit_rate_wilson_95": [
+        0.5373,
+        0.6684
+      ],
+      "roi": 0.13,
+      "profit_units": 27.2981,
+      "distinct_weeks": 18,
+      "over_bets": 27,
+      "under_bets": 183
+    }
+  },
+  "replay_summary": {
+    "status": "passed",
+    "result": {
+      "bets": 210,
+      "graded_decisions": 210,
+      "wins": 127,
+      "losses": 83,
+      "pushes": 0,
+      "hit_rate": 0.6048,
+      "hit_rate_wilson_95": [
+        0.5373,
+        0.6684
+      ],
+      "roi": 0.13,
+      "profit_units": 27.2981,
+      "distinct_weeks": 18,
+      "over_bets": 27,
+      "under_bets": 183
+    },
+    "one_sided_exact_p_value_vs_50_percent": 0.001457,
+    "week_cluster_bootstrap": {
+      "method": "resample whole season-weeks with replacement",
+      "samples": 10000,
+      "random_state": 42,
+      "hit_rate_95": [
+        0.5407,
+        0.6635
+      ],
+      "roi_95": [
+        0.0099,
+        0.2402
+      ],
+      "probability_hit_rate_above_50_percent": 0.9994,
+      "probability_roi_above_zero": 0.9832
+    }
+  },
+  "deployment_gate": {
+    "status": "blocked",
+    "reason": "Effectiveness is proven, but source timestamps remain unauthenticated."
+  },
+  "work_dir": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\nfl\\tmp\\production_pipeline_validation"
+}

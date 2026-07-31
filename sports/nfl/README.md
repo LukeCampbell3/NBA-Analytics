@@ -158,6 +158,52 @@ The pruned exports are:
 - `data/evaluation/market_selector_pruned_pool_2022.csv`
 - `data/evaluation/market_selector_pruned_weekly_validation.csv`
 
+## Production-style effectiveness replay
+
+The locked policy can be replayed without retraining or trusting stored result
+labels:
+
+```bash
+python sports/nfl/scripts/run_nfl_production_replay.py
+```
+
+The replay fails closed on schema drift, duplicate props, unvalidated targets,
+invalid prices, threshold violations, probability arithmetic mismatches, wrong
+architectures, grading mismatches, nondeterministic ranking, outcome-dependent
+selection, or more than 12 weekly picks. It independently regrades every play
+from actual yards and the posted line, resamples complete weeks for clustered
+confidence intervals, and compares against always-under and point-projection
+baselines.
+
+The locked 2022 replay passes its operational, statistical, and stability gates:
+
+- 127-83 (60.48%), +13.00% ROI, +27.30 units
+- exact one-sided hit-rate p-value versus 50%: 0.001457
+- week-clustered 95% hit-rate interval: 54.07%-66.35%
+- week-clustered 95% ROI interval: +0.99%-24.02%
+- first-half and second-half hit rates: 60.78% and 60.19%
+- top-8, top-10, and top-12 sensitivity boards all remain profitable
+- maximum weekly-sequence drawdown: 7.23 units
+
+The selector is statistically superior to the original point-projection side on
+the matched cohort (paired one-sided p=0.0361). It is directionally better than
+always-under (60.48% versus 57.14%), but that incremental paired comparison is
+not yet significant (p=0.1239). The system therefore proves market-relative
+historical effectiveness and price-confirmed profitability, while prospective
+data is still required to prove that the learned side selection beats the
+archive's broad under bias.
+
+Run the complete selector-training and replay pipeline together with:
+
+```bash
+python sports/nfl/scripts/validate_nfl_production_pipeline.py
+```
+
+This regenerates the model artifact and pools in an isolated work directory,
+runs the locked replay, and checks the expected 210 decisions and 127 wins. Its
+research pipeline passes; deployment remains correctly blocked because the free
+archive has no capture timestamps.
+
 At the fixed 0.56 side-probability floor, only passing yards passes the
 target-level holdout gate: 188-127 (59.68%), +11.67% flat-stake ROI over 315
 2022 decisions. The regularized raw-feature classifier beat the latent and
