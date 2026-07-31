@@ -32,7 +32,7 @@ PREDICTION_TOP_LEVEL_FILES = {
     "predictions.js",
     "prediction-about.js",
 }
-PREDICTION_DATA_FILES = {"daily_predictions.json"}
+PREDICTION_DATA_FILES = {"daily_predictions.json", "market_validation_summary.json"}
 
 
 def nonempty_html_files(directory: Path) -> Iterable[Path]:
