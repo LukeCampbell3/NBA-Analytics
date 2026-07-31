@@ -2,8 +2,8 @@ name: Daily Predictions and Frontend
 
 on:
   schedule:
-    # Same-day markets are normally available by mid-morning, with time left before early games.
-    - cron: "17 10 * * *"
+    # Run early enough to absorb scheduler delays while retaining time before early games.
+    - cron: "17 8 * * *"
       timezone: "America/New_York"
   workflow_dispatch:
     inputs:

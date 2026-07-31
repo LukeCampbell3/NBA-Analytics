@@ -58,7 +58,7 @@ prices into the existing market snapshot contract, and require no API key.
 
 ## Automated Daily Publication
 
-`.github/workflows/main.yml` runs at 10:17 AM America/New_York and can also be
+`.github/workflows/main.yml` runs at 8:17 AM America/New_York and can also be
 started manually with a date and sport selection. GitHub requires scheduled
 workflow definitions to exist on the repository's default branch (`main`), so
 the workflow starts there and explicitly checks out, builds, validates, and
