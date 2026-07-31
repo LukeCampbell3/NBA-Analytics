@@ -1,0 +1,536 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-07-31T14:49:54.436696+00:00",
+  "status": "partially_validated",
+  "design": {
+    "development_season": 2021,
+    "final_test_season": 2022,
+    "development_method": "expanding two-week folds; weeks 11-18 scored only from prior weeks",
+    "architecture_selection_metric": "Brier score, then log loss, then fewer features",
+    "minimum_side_probability": 0.56,
+    "minimum_no_vig_advantage": 0.025,
+    "line_contract": "one earliest available posted pregame line per player/stat/book",
+    "line_movement_used": false,
+    "closing_line_used": false,
+    "final_season_used_for_architecture_or_threshold_selection": false,
+    "target_markets_promoted_independently": true,
+    "artifact_refit_through_final_season_after_evaluation": true
+  },
+  "latent_encoder": {
+    "training_seasons": [
+      2018,
+      2019,
+      2020
+    ],
+    "training_rows": 12753,
+    "latent_dimensions": 16,
+    "pretraining_validation_score": 0.420733
+  },
+  "targets": [
+    {
+      "target": "passing",
+      "selected_architecture": "regularized_logistic_raw",
+      "architecture_selection_metric": "lowest expanding-2021 Brier score",
+      "development_walk_forward": {
+        "bets": 187,
+        "graded_decisions": 187,
+        "wins": 113,
+        "losses": 74,
+        "pushes": 0,
+        "hit_rate": 0.6043,
+        "hit_rate_wilson_95": [
+          0.5328,
+          0.6716
+        ],
+        "roi": 0.1254,
+        "profit_units": 23.4456,
+        "distinct_weeks": 8,
+        "over_bets": 0,
+        "under_bets": 187
+      },
+      "final_test": {
+        "bets": 315,
+        "graded_decisions": 315,
+        "wins": 188,
+        "losses": 127,
+        "pushes": 0,
+        "hit_rate": 0.5968,
+        "hit_rate_wilson_95": [
+          0.5418,
+          0.6495
+        ],
+        "roi": 0.1167,
+        "profit_units": 36.7491,
+        "distinct_weeks": 18,
+        "over_bets": 29,
+        "under_bets": 286
+      },
+      "promotion_gate": {
+        "status": "passed",
+        "criteria": {
+          "minimum_graded_decisions": 150,
+          "minimum_distinct_weeks": 8,
+          "minimum_hit_rate": 0.58,
+          "wilson_95_lower_bound_above": 0.5,
+          "positive_roi": true
+        }
+      },
+      "candidates": [
+        {
+          "architecture": "regularized_logistic_raw",
+          "features": 30,
+          "probability_metrics": {
+            "rows": 202,
+            "brier_score": 0.248227,
+            "log_loss": 0.692266,
+            "roc_auc": 0.457137
+          },
+          "selective_market_metrics": {
+            "bets": 187,
+            "graded_decisions": 187,
+            "wins": 113,
+            "losses": 74,
+            "pushes": 0,
+            "hit_rate": 0.6043,
+            "hit_rate_wilson_95": [
+              0.5328,
+              0.6716
+            ],
+            "roi": 0.1254,
+            "profit_units": 23.4456,
+            "distinct_weeks": 8,
+            "over_bets": 0,
+            "under_bets": 187
+          }
+        },
+        {
+          "architecture": "catboost_raw_latent",
+          "features": 46,
+          "probability_metrics": {
+            "rows": 202,
+            "brier_score": 0.248432,
+            "log_loss": 0.693592,
+            "roc_auc": 0.502624
+          },
+          "selective_market_metrics": {
+            "bets": 146,
+            "graded_decisions": 146,
+            "wins": 90,
+            "losses": 56,
+            "pushes": 0,
+            "hit_rate": 0.6164,
+            "hit_rate_wilson_95": [
+              0.5355,
+              0.6914
+            ],
+            "roi": 0.148,
+            "profit_units": 21.6123,
+            "distinct_weeks": 8,
+            "over_bets": 13,
+            "under_bets": 133
+          }
+        },
+        {
+          "architecture": "catboost_raw",
+          "features": 30,
+          "probability_metrics": {
+            "rows": 202,
+            "brier_score": 0.25147,
+            "log_loss": 0.698934,
+            "roc_auc": 0.486158
+          },
+          "selective_market_metrics": {
+            "bets": 154,
+            "graded_decisions": 154,
+            "wins": 89,
+            "losses": 65,
+            "pushes": 0,
+            "hit_rate": 0.5779,
+            "hit_rate_wilson_95": [
+              0.499,
+              0.6531
+            ],
+            "roi": 0.0776,
+            "profit_units": 11.9434,
+            "distinct_weeks": 8,
+            "over_bets": 6,
+            "under_bets": 148
+          }
+        },
+        {
+          "architecture": "regularized_logistic_raw_latent",
+          "features": 46,
+          "probability_metrics": {
+            "rows": 202,
+            "brier_score": 0.252942,
+            "log_loss": 0.703602,
+            "roc_auc": 0.43923
+          },
+          "selective_market_metrics": {
+            "bets": 186,
+            "graded_decisions": 186,
+            "wins": 114,
+            "losses": 72,
+            "pushes": 0,
+            "hit_rate": 0.6129,
+            "hit_rate_wilson_95": [
+              0.5413,
+              0.6799
+            ],
+            "roi": 0.1415,
+            "profit_units": 26.3152,
+            "distinct_weeks": 8,
+            "over_bets": 1,
+            "under_bets": 185
+          }
+        }
+      ]
+    },
+    {
+      "target": "rushing",
+      "selected_architecture": "regularized_logistic_raw",
+      "architecture_selection_metric": "lowest expanding-2021 Brier score",
+      "development_walk_forward": {
+        "bets": 175,
+        "graded_decisions": 175,
+        "wins": 89,
+        "losses": 86,
+        "pushes": 0,
+        "hit_rate": 0.5086,
+        "hit_rate_wilson_95": [
+          0.4351,
+          0.5817
+        ],
+        "roi": -0.0436,
+        "profit_units": -7.6226,
+        "distinct_weeks": 8,
+        "over_bets": 29,
+        "under_bets": 146
+      },
+      "final_test": {
+        "bets": 429,
+        "graded_decisions": 429,
+        "wins": 235,
+        "losses": 194,
+        "pushes": 0,
+        "hit_rate": 0.5478,
+        "hit_rate_wilson_95": [
+          0.5005,
+          0.5943
+        ],
+        "roi": 0.0249,
+        "profit_units": 10.6723,
+        "distinct_weeks": 18,
+        "over_bets": 36,
+        "under_bets": 393
+      },
+      "promotion_gate": {
+        "status": "failed",
+        "criteria": {
+          "minimum_graded_decisions": 150,
+          "minimum_distinct_weeks": 8,
+          "minimum_hit_rate": 0.58,
+          "wilson_95_lower_bound_above": 0.5,
+          "positive_roi": true
+        }
+      },
+      "candidates": [
+        {
+          "architecture": "regularized_logistic_raw",
+          "features": 26,
+          "probability_metrics": {
+            "rows": 309,
+            "brier_score": 0.259264,
+            "log_loss": 0.712886,
+            "roc_auc": 0.469487
+          },
+          "selective_market_metrics": {
+            "bets": 175,
+            "graded_decisions": 175,
+            "wins": 89,
+            "losses": 86,
+            "pushes": 0,
+            "hit_rate": 0.5086,
+            "hit_rate_wilson_95": [
+              0.4351,
+              0.5817
+            ],
+            "roi": -0.0436,
+            "profit_units": -7.6226,
+            "distinct_weeks": 8,
+            "over_bets": 29,
+            "under_bets": 146
+          }
+        },
+        {
+          "architecture": "catboost_raw_latent",
+          "features": 42,
+          "probability_metrics": {
+            "rows": 309,
+            "brier_score": 0.261674,
+            "log_loss": 0.718101,
+            "roc_auc": 0.470034
+          },
+          "selective_market_metrics": {
+            "bets": 191,
+            "graded_decisions": 191,
+            "wins": 98,
+            "losses": 93,
+            "pushes": 0,
+            "hit_rate": 0.5131,
+            "hit_rate_wilson_95": [
+              0.4426,
+              0.583
+            ],
+            "roi": -0.0391,
+            "profit_units": -7.466,
+            "distinct_weeks": 8,
+            "over_bets": 38,
+            "under_bets": 153
+          }
+        },
+        {
+          "architecture": "regularized_logistic_raw_latent",
+          "features": 42,
+          "probability_metrics": {
+            "rows": 309,
+            "brier_score": 0.262709,
+            "log_loss": 0.721984,
+            "roc_auc": 0.477567
+          },
+          "selective_market_metrics": {
+            "bets": 177,
+            "graded_decisions": 177,
+            "wins": 90,
+            "losses": 87,
+            "pushes": 0,
+            "hit_rate": 0.5085,
+            "hit_rate_wilson_95": [
+              0.4354,
+              0.5812
+            ],
+            "roi": -0.0444,
+            "profit_units": -7.856,
+            "distinct_weeks": 8,
+            "over_bets": 36,
+            "under_bets": 141
+          }
+        },
+        {
+          "architecture": "catboost_raw",
+          "features": 26,
+          "probability_metrics": {
+            "rows": 309,
+            "brier_score": 0.271799,
+            "log_loss": 0.739941,
+            "roc_auc": 0.451389
+          },
+          "selective_market_metrics": {
+            "bets": 205,
+            "graded_decisions": 205,
+            "wins": 95,
+            "losses": 110,
+            "pushes": 0,
+            "hit_rate": 0.4634,
+            "hit_rate_wilson_95": [
+              0.3965,
+              0.5317
+            ],
+            "roi": -0.1322,
+            "profit_units": -27.1105,
+            "distinct_weeks": 8,
+            "over_bets": 42,
+            "under_bets": 163
+          }
+        }
+      ]
+    },
+    {
+      "target": "receiving",
+      "selected_architecture": "regularized_logistic_raw",
+      "architecture_selection_metric": "lowest expanding-2021 Brier score",
+      "development_walk_forward": {
+        "bets": 657,
+        "graded_decisions": 657,
+        "wins": 377,
+        "losses": 280,
+        "pushes": 0,
+        "hit_rate": 0.5738,
+        "hit_rate_wilson_95": [
+          0.5357,
+          0.6111
+        ],
+        "roi": 0.0752,
+        "profit_units": 49.3925,
+        "distinct_weeks": 8,
+        "over_bets": 0,
+        "under_bets": 657
+      },
+      "final_test": {
+        "bets": 1011,
+        "graded_decisions": 1011,
+        "wins": 515,
+        "losses": 496,
+        "pushes": 0,
+        "hit_rate": 0.5094,
+        "hit_rate_wilson_95": [
+          0.4786,
+          0.5401
+        ],
+        "roi": -0.0447,
+        "profit_units": -45.1905,
+        "distinct_weeks": 18,
+        "over_bets": 3,
+        "under_bets": 1008
+      },
+      "promotion_gate": {
+        "status": "failed",
+        "criteria": {
+          "minimum_graded_decisions": 150,
+          "minimum_distinct_weeks": 8,
+          "minimum_hit_rate": 0.58,
+          "wilson_95_lower_bound_above": 0.5,
+          "positive_roi": true
+        }
+      },
+      "candidates": [
+        {
+          "architecture": "regularized_logistic_raw",
+          "features": 34,
+          "probability_metrics": {
+            "rows": 840,
+            "brier_score": 0.248743,
+            "log_loss": 0.691462,
+            "roc_auc": 0.457965
+          },
+          "selective_market_metrics": {
+            "bets": 657,
+            "graded_decisions": 657,
+            "wins": 377,
+            "losses": 280,
+            "pushes": 0,
+            "hit_rate": 0.5738,
+            "hit_rate_wilson_95": [
+              0.5357,
+              0.6111
+            ],
+            "roi": 0.0752,
+            "profit_units": 49.3925,
+            "distinct_weeks": 8,
+            "over_bets": 0,
+            "under_bets": 657
+          }
+        },
+        {
+          "architecture": "catboost_raw",
+          "features": 34,
+          "probability_metrics": {
+            "rows": 840,
+            "brier_score": 0.250143,
+            "log_loss": 0.694744,
+            "roc_auc": 0.492146
+          },
+          "selective_market_metrics": {
+            "bets": 551,
+            "graded_decisions": 551,
+            "wins": 321,
+            "losses": 230,
+            "pushes": 0,
+            "hit_rate": 0.5826,
+            "hit_rate_wilson_95": [
+              0.541,
+              0.623
+            ],
+            "roi": 0.0899,
+            "profit_units": 49.55,
+            "distinct_weeks": 8,
+            "over_bets": 44,
+            "under_bets": 507
+          }
+        },
+        {
+          "architecture": "catboost_raw_latent",
+          "features": 50,
+          "probability_metrics": {
+            "rows": 840,
+            "brier_score": 0.250929,
+            "log_loss": 0.696243,
+            "roc_auc": 0.480064
+          },
+          "selective_market_metrics": {
+            "bets": 552,
+            "graded_decisions": 552,
+            "wins": 314,
+            "losses": 238,
+            "pushes": 0,
+            "hit_rate": 0.5688,
+            "hit_rate_wilson_95": [
+              0.5272,
+              0.6095
+            ],
+            "roi": 0.0634,
+            "profit_units": 35.008,
+            "distinct_weeks": 8,
+            "over_bets": 31,
+            "under_bets": 521
+          }
+        },
+        {
+          "architecture": "regularized_logistic_raw_latent",
+          "features": 50,
+          "probability_metrics": {
+            "rows": 840,
+            "brier_score": 0.252729,
+            "log_loss": 0.701491,
+            "roc_auc": 0.448082
+          },
+          "selective_market_metrics": {
+            "bets": 669,
+            "graded_decisions": 669,
+            "wins": 376,
+            "losses": 293,
+            "pushes": 0,
+            "hit_rate": 0.562,
+            "hit_rate_wilson_95": [
+              0.5242,
+              0.5992
+            ],
+            "roi": 0.0525,
+            "profit_units": 35.1292,
+            "distinct_weeks": 8,
+            "over_bets": 13,
+            "under_bets": 656
+          }
+        }
+      ]
+    }
+  ],
+  "validated_targets": [
+    "passing"
+  ],
+  "validated_board_final_test": {
+    "bets": 315,
+    "graded_decisions": 315,
+    "wins": 188,
+    "losses": 127,
+    "pushes": 0,
+    "hit_rate": 0.5968,
+    "hit_rate_wilson_95": [
+      0.5418,
+      0.6495
+    ],
+    "roi": 0.1167,
+    "profit_units": 36.7491,
+    "distinct_weeks": 18,
+    "over_bets": 29,
+    "under_bets": 286
+  },
+  "source_provenance_gate": {
+    "status": "failed",
+    "reason": "The free Bovada archive identifies authentic posted lines but has no capture timestamps, so performance can be measured but opening/pregame timing cannot be independently authenticated."
+  },
+  "static_deployment_gate": {
+    "status": "blocked",
+    "reason": "Source provenance is not sufficient for static betting-board promotion."
+  }
+}

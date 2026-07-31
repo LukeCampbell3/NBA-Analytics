@@ -180,8 +180,8 @@ def normalize_market_archive(markets: pd.DataFrame) -> tuple[pd.DataFrame, dict[
         & accepted["commence_time_utc"].notna()
         & (accepted["snapshot_time_utc"] < accepted["commence_time_utc"])
     ) | explicit_provider_close.loc[accepted.index]
-    accepted = accepted.sort_values("snapshot_time_utc", na_position="first").drop_duplicates(
-        ["season", "week", "player_key", "target", "bookmaker"], keep="last"
+    accepted = accepted.sort_values("snapshot_time_utc", na_position="last").drop_duplicates(
+        ["season", "week", "player_key", "target", "bookmaker"], keep="first"
     )
     audit = {
         "input_rows": int(len(frame)),
@@ -192,6 +192,8 @@ def normalize_market_archive(markets: pd.DataFrame) -> tuple[pd.DataFrame, dict[
         "rejected_missing_contract_rows": int((missing_required & ~synthetic & ~after_start).sum()),
         "timestamp_verified_rows": int(accepted["timestamp_verified"].sum()),
         "provider_closing_verified_rows": int(explicit_provider_close.loc[accepted.index].sum()),
+        "snapshot_policy": "earliest_available_pregame_observation",
+        "line_movement_retained": False,
         "source_rows": {
             str(key): int(value)
             for key, value in accepted["source"].value_counts().sort_index().items()

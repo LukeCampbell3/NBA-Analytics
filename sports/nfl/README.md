@@ -64,7 +64,7 @@ python sports/nfl/scripts/fetch_xsportsbook_bovada_props.py
 The importer discards the source result fields and retains only authentic
 posted lines/prices. The archive is large enough for a development-season
 threshold (2021) and an untouched final market test (2022). It does not contain
-capture timestamps or an explicit closing-line guarantee, so it is eligible for
+capture timestamps or an explicit opening-line guarantee, so it is eligible for
 the report's performance gate but not the stricter static-deployment provenance
 gate.
 
@@ -107,6 +107,34 @@ two-sided prices. The adapter never substitutes current/live values for missing
 closing fields. See [MARKET_BACKTEST_DATA.md](MARKET_BACKTEST_DATA.md) for the
 source comparison and acquisition protocol.
 
+The market evaluator retains only the earliest available valid pregame
+observation for each player/stat/book. Later movement and closing lines are not
+used by the selective pipeline. The free archive contains one unstamped posted
+observation rather than a time series, so no line-movement data is required or
+manufactured.
+
+## Train the selective betting layer
+
+The point-projection model and betting selector solve different objectives. The
+selector trains directly on whether a player cleared the posted line, compares
+regularized raw-feature and latent-feature classifiers in expanding 2021 folds,
+and tests the selected architecture once on 2022. Run it after generating
+edge-zero market rows for both seasons:
+
+```bash
+python sports/nfl/scripts/train_nfl_market_selector.py \
+  --development-market-rows sports/nfl/tmp/2021/market_rows_edge0.csv \
+  --final-market-rows sports/nfl/tmp/2022/market_rows_edge0.csv
+```
+
+At the fixed 0.56 side-probability floor, only passing yards passes the
+target-level holdout gate: 188-127 (59.68%), +11.67% flat-stake ROI over 315
+2022 decisions. The regularized raw-feature classifier beat the latent and
+CatBoost candidates on development Brier score. Rushing and receiving are
+suppressed because they did not generalize. This is a partial statistical
+validation, not permission to publish the static betting board: the free source
+lacks timestamps proving that its observations were available before kickoff.
+
 ## Grade true betting hit rate
 
 ```bash
@@ -115,8 +143,9 @@ python sports/nfl/scripts/backtest_nfl_markets.py \
 ```
 
 The evaluator rejects synthetic/result-derived rows and odds captured at or
-after kickoff. Explicit provider closing fields are accepted without inventing
-a timestamp. It grades win/loss/push, hit rate with a Wilson 95% interval,
+after kickoff. When multiple timestamped observations exist, it keeps the first
+valid pregame observation and discards later movement. It grades win/loss/push,
+hit rate with a Wilson 95% interval,
 American-price ROI, and stat/position breakdowns. Only players with a genuinely
 posted line enter the betting denominator, which removes non-marketed backups
 from sportsbook accuracy without using the outcome to filter them. The

@@ -115,3 +115,24 @@ def test_unrecognized_source_cannot_self_assert_closing_line_verification() -> N
     assert len(accepted) == 1
     assert not bool(accepted.iloc[0]["timestamp_verified"])
     assert audit["provider_closing_verified_rows"] == 0
+
+
+def test_earliest_available_pregame_line_is_retained() -> None:
+    markets = pd.DataFrame(
+        {
+            "player": ["A J Runner", "A J Runner"],
+            "season": [2024, 2024],
+            "week": [1, 1],
+            "market": ["player_rush_yds", "player_rush_yds"],
+            "line": [64.5, 67.5],
+            "bookmaker": ["draftkings", "draftkings"],
+            "source": ["the_odds_api", "the_odds_api"],
+            "snapshot_time_utc": ["2024-09-08T14:00:00Z", "2024-09-08T16:00:00Z"],
+            "commence_time_utc": ["2024-09-08T17:00:00Z", "2024-09-08T17:00:00Z"],
+        }
+    )
+    accepted, audit = normalize_market_archive(markets)
+    assert len(accepted) == 1
+    assert accepted.iloc[0]["line"] == 64.5
+    assert audit["snapshot_policy"] == "earliest_available_pregame_observation"
+    assert not audit["line_movement_retained"]
