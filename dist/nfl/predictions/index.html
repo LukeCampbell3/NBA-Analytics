@@ -23,7 +23,7 @@
                         <h1>Player Yardage Model Report</h1>
                         <button class="info-trigger" type="button" aria-label="About this report" data-info="Out-of-sample player yardage results from a season the model never saw during fitting.">i</button>
                     </div>
-                    <p class="prediction-page-lead">A true chronological holdout for passing, rushing, and receiving yardage. These are projection metrics—not sportsbook win-rate claims.</p>
+                    <p class="prediction-page-lead">Chronological yardage holdouts plus a separately locked passing-prop replay. Historical market evidence remains research-only until line timing is authenticated.</p>
                     <p id="runFacts" class="prediction-about-run-facts">Loading model report...</p>
                 </header>
 
@@ -40,6 +40,24 @@
                 </section>
 
                 <section class="prediction-about-panel">
+                    <h2>Locked Market Replay</h2>
+                    <div id="marketReplayStatus" class="prediction-about-callout"></div>
+                    <div id="marketReplayMetrics" class="prediction-about-metric-grid"></div>
+                </section>
+
+                <section class="prediction-about-panel">
+                    <h2>Baseline Comparison</h2>
+                    <p>The selector is evaluated on the identical prop cohort as simple always-under and point-projection-side policies.</p>
+                    <div id="marketBaselines" class="prediction-about-table-wrap"></div>
+                </section>
+
+                <section class="prediction-about-panel">
+                    <h2>2022 Weekly Replay</h2>
+                    <p>The weekly cap was frozen using 2021 only. Each row is independently regraded from the posted line and actual yards.</p>
+                    <div id="marketWeekly" class="prediction-about-table-wrap"></div>
+                </section>
+
+                <section class="prediction-about-panel">
                     <h2>Auditable Holdout Examples</h2>
                     <p>An alphabetical sample by target from the latest holdout week. They are historical checks, not current wagers.</p>
                     <div id="holdoutRows" class="prediction-about-table-wrap"></div>
@@ -50,6 +68,6 @@
 
     <script src="vault/vault-components.js?v=7"></script>
     <script src="vault/vault-shell.js?v=7"></script>
-    <script src="predictions.js?v=1"></script>
+    <script src="predictions.js?v=2"></script>
 </body>
 </html>

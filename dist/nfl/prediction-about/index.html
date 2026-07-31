@@ -17,16 +17,17 @@
         <section class="prediction-about-stage"><div class="prediction-about-container">
             <header class="prediction-about-sign">
                 <p class="prediction-about-kicker">Inside the NFL Model</p>
-                <div class="minimal-heading"><h1>How the Yardage Stack Works</h1></div>
-                <p class="prediction-page-lead">A compact weekly ensemble designed around the NBA repository’s sequence, boosted-tree, stacking, and uncertainty-aware evaluation patterns.</p>
+                <div class="minimal-heading"><h1>How the NFL Prediction System Works</h1></div>
+                <p class="prediction-page-lead">A latent yardage model and a separately calibrated market selector, both evaluated with forward-only data and fail-closed replay gates.</p>
                 <p id="methodFacts" class="prediction-about-run-facts">Loading methodology...</p>
             </header>
             <section class="prediction-about-panel">
                 <h2>Architecture</h2>
                 <ol class="prediction-about-list">
                     <li>Player form, volume, volatility, and opponent allowances are summarized over lagged three- and five-game windows.</li>
-                    <li>A regularized Ridge model captures stable linear relationships while a Huber-loss gradient booster captures interactions.</li>
-                    <li>A positive Ridge meta-learner combines those estimates with a five-game rolling baseline.</li>
+                    <li>A 16-dimensional encoder predicts the next statistical state from each player’s previous eight games.</li>
+                    <li>Ridge, Extra Trees, XGBoost, CatBoost, and histogram-boosting candidates learn from raw pregame features.</li>
+                    <li>The validated hybrid averages the former per-stat champion with a raw-plus-latent boosted model.</li>
                     <li>After the untouched holdout is scored, the deployable base models are refit through the validated season.</li>
                 </ol>
             </section>
@@ -44,10 +45,37 @@
                     <li><strong>Baseline improvement:</strong> MAE reduction against a player’s trailing five-game average.</li>
                 </ul>
             </section>
+            <section class="prediction-about-panel">
+                <h2>Market Selection Layer</h2>
+                <ol class="prediction-about-list">
+                    <li>The market model estimates the probability of finishing over a single posted line; it does not infer betting accuracy from projection MAE.</li>
+                    <li>Regularized raw, raw-plus-latent, CatBoost, and latent CatBoost classifiers are compared by expanding 2021 Brier score.</li>
+                    <li>Passing selected the compact regularized raw-feature classifier. Rushing and receiving failed their independent gates and are suppressed.</li>
+                    <li>A pick needs at least 56% estimated side probability and 2.5 percentage points of no-vig advantage.</li>
+                    <li>An MLB-style ranker keeps at most 12 passing picks per week, with the cap selected only from 2021.</li>
+                </ol>
+                <div id="marketMethodFacts" class="prediction-about-callout"></div>
+            </section>
+            <section class="prediction-about-panel">
+                <h2>Production Replay Protocol</h2>
+                <ul class="prediction-about-list">
+                    <li>Every pick is regraded from actual yards, posted line, selected side, and real price.</li>
+                    <li>Selection must be deterministic and unchanged when outcome fields are mutated.</li>
+                    <li>The pipeline fails closed on schema drift, duplicates, invalid prices, threshold mismatches, wrong architectures, or excess weekly volume.</li>
+                    <li>Confidence intervals resample complete NFL weeks to preserve within-week dependence.</li>
+                    <li>Half-season, third-season, cap-sensitivity, baseline, and drawdown checks must remain stable.</li>
+                </ul>
+                <div id="marketGateFacts" class="prediction-about-callout"></div>
+            </section>
+            <section class="prediction-about-panel">
+                <h2>Evidence Boundary</h2>
+                <ul id="marketLimitations" class="prediction-about-list"></ul>
+                <p>The complete repository methodology is retained in <code>sports/nfl/NFL_PREDICTOR_METHODOLOGY.md</code>.</p>
+            </section>
         </div></section>
     </main>
     <script src="vault/vault-components.js?v=7"></script>
     <script src="vault/vault-shell.js?v=7"></script>
-    <script src="prediction-about.js?v=1"></script>
+    <script src="prediction-about.js?v=2"></script>
 </body>
 </html>
