@@ -145,6 +145,19 @@ posted line and price, actual yards, settled result, `pass`/`fail` validation,
 selected architecture, and final target-level gate. Candidate picks from failed
 targets remain visible for diagnosis but are not deployment-eligible.
 
+An MLB-style board cap is selected using only the 2021 walk-forward pool. Caps
+of 6, 8, 10, and 12 picks per week are compared; candidates need at least 60
+development decisions, eight weeks, a Wilson lower bound above 50%, and positive
+ROI. The highest Wilson lower bound selects top 12 per week. This reduces the
+2022 validated board from 315 to 210 passing picks and improves it to 127-83
+(60.48%) with +13.00% ROI. The final season is not used to choose the cap.
+
+The pruned exports are:
+
+- `data/evaluation/market_selector_pruned_pool_2021.csv`
+- `data/evaluation/market_selector_pruned_pool_2022.csv`
+- `data/evaluation/market_selector_pruned_weekly_validation.csv`
+
 At the fixed 0.56 side-probability floor, only passing yards passes the
 target-level holdout gate: 188-127 (59.68%), +11.67% flat-stake ROI over 315
 2022 decisions. The regularized raw-feature classifier beat the latent and

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-07-31T16:01:02.038359+00:00",
+  "generated_at_utc": "2026-07-31T16:08:19.527723+00:00",
   "status": "partially_validated",
   "design": {
     "development_season": 2021,
@@ -48,6 +48,16 @@
         "over_bets": 0,
         "under_bets": 187
       },
+      "development_eligibility_gate": {
+        "status": "passed",
+        "criteria": {
+          "minimum_graded_decisions": 150,
+          "minimum_distinct_weeks": 8,
+          "minimum_hit_rate": 0.58,
+          "wilson_95_lower_bound_above": 0.5,
+          "positive_roi": true
+        }
+      },
       "final_test": {
         "bets": 315,
         "graded_decisions": 315,
@@ -65,7 +75,7 @@
         "over_bets": 29,
         "under_bets": 286
       },
-      "promotion_gate": {
+      "final_test_gate": {
         "status": "passed",
         "criteria": {
           "minimum_graded_decisions": 150,
@@ -74,6 +84,10 @@
           "wilson_95_lower_bound_above": 0.5,
           "positive_roi": true
         }
+      },
+      "promotion_gate": {
+        "status": "passed",
+        "reason": "Development eligibility and final target gates passed."
       },
       "candidates": [
         {
@@ -207,6 +221,16 @@
         "over_bets": 29,
         "under_bets": 146
       },
+      "development_eligibility_gate": {
+        "status": "failed",
+        "criteria": {
+          "minimum_graded_decisions": 150,
+          "minimum_distinct_weeks": 8,
+          "minimum_hit_rate": 0.58,
+          "wilson_95_lower_bound_above": 0.5,
+          "positive_roi": true
+        }
+      },
       "final_test": {
         "bets": 429,
         "graded_decisions": 429,
@@ -224,7 +248,7 @@
         "over_bets": 36,
         "under_bets": 393
       },
-      "promotion_gate": {
+      "final_test_gate": {
         "status": "failed",
         "criteria": {
           "minimum_graded_decisions": 150,
@@ -233,6 +257,10 @@
           "wilson_95_lower_bound_above": 0.5,
           "positive_roi": true
         }
+      },
+      "promotion_gate": {
+        "status": "failed",
+        "reason": "Development eligibility or final target gate failed."
       },
       "candidates": [
         {
@@ -366,6 +394,16 @@
         "over_bets": 0,
         "under_bets": 657
       },
+      "development_eligibility_gate": {
+        "status": "failed",
+        "criteria": {
+          "minimum_graded_decisions": 150,
+          "minimum_distinct_weeks": 8,
+          "minimum_hit_rate": 0.58,
+          "wilson_95_lower_bound_above": 0.5,
+          "positive_roi": true
+        }
+      },
       "final_test": {
         "bets": 1011,
         "graded_decisions": 1011,
@@ -383,7 +421,7 @@
         "over_bets": 3,
         "under_bets": 1008
       },
-      "promotion_gate": {
+      "final_test_gate": {
         "status": "failed",
         "criteria": {
           "minimum_graded_decisions": 150,
@@ -392,6 +430,10 @@
           "wilson_95_lower_bound_above": 0.5,
           "positive_roi": true
         }
+      },
+      "promotion_gate": {
+        "status": "failed",
+        "reason": "Development eligibility or final target gate failed."
       },
       "candidates": [
         {
@@ -508,6 +550,9 @@
   "validated_targets": [
     "passing"
   ],
+  "development_qualified_targets": [
+    "passing"
+  ],
   "validated_board_final_test": {
     "bets": 315,
     "graded_decisions": 315,
@@ -524,6 +569,132 @@
     "distinct_weeks": 18,
     "over_bets": 29,
     "under_bets": 286
+  },
+  "weekly_cap_policy": {
+    "selection_season": 2021,
+    "candidate_top_n": [
+      6,
+      8,
+      10,
+      12
+    ],
+    "minimum_development_decisions": 60,
+    "minimum_development_weeks": 8,
+    "selection_metric": "highest development Wilson 95% lower bound, then hit rate, ROI, and smaller board",
+    "selected_top_n": 12,
+    "leaderboard": [
+      {
+        "top_n": 6,
+        "eligible": false,
+        "bets": 48,
+        "graded_decisions": 48,
+        "wins": 31,
+        "losses": 17,
+        "pushes": 0,
+        "hit_rate": 0.6458,
+        "hit_rate_wilson_95": [
+          0.5044,
+          0.7657
+        ],
+        "roi": 0.2014,
+        "profit_units": 9.6695,
+        "distinct_weeks": 8,
+        "over_bets": 0,
+        "under_bets": 48
+      },
+      {
+        "top_n": 8,
+        "eligible": true,
+        "bets": 64,
+        "graded_decisions": 64,
+        "wins": 41,
+        "losses": 23,
+        "pushes": 0,
+        "hit_rate": 0.6406,
+        "hit_rate_wilson_95": [
+          0.5182,
+          0.7471
+        ],
+        "roi": 0.1916,
+        "profit_units": 12.2648,
+        "distinct_weeks": 8,
+        "over_bets": 0,
+        "under_bets": 64
+      },
+      {
+        "top_n": 10,
+        "eligible": true,
+        "bets": 80,
+        "graded_decisions": 80,
+        "wins": 50,
+        "losses": 30,
+        "pushes": 0,
+        "hit_rate": 0.625,
+        "hit_rate_wilson_95": [
+          0.5155,
+          0.7231
+        ],
+        "roi": 0.1628,
+        "profit_units": 13.0213,
+        "distinct_weeks": 8,
+        "over_bets": 0,
+        "under_bets": 80
+      },
+      {
+        "top_n": 12,
+        "eligible": true,
+        "bets": 95,
+        "graded_decisions": 95,
+        "wins": 59,
+        "losses": 36,
+        "pushes": 0,
+        "hit_rate": 0.6211,
+        "hit_rate_wilson_95": [
+          0.5206,
+          0.7121
+        ],
+        "roi": 0.1572,
+        "profit_units": 14.9302,
+        "distinct_weeks": 8,
+        "over_bets": 0,
+        "under_bets": 95
+      }
+    ],
+    "development_result": {
+      "bets": 95,
+      "graded_decisions": 95,
+      "wins": 59,
+      "losses": 36,
+      "pushes": 0,
+      "hit_rate": 0.6211,
+      "hit_rate_wilson_95": [
+        0.5206,
+        0.7121
+      ],
+      "roi": 0.1572,
+      "profit_units": 14.9302,
+      "distinct_weeks": 8,
+      "over_bets": 0,
+      "under_bets": 95
+    },
+    "final_test_result": {
+      "bets": 210,
+      "graded_decisions": 210,
+      "wins": 127,
+      "losses": 83,
+      "pushes": 0,
+      "hit_rate": 0.6048,
+      "hit_rate_wilson_95": [
+        0.5373,
+        0.6684
+      ],
+      "roi": 0.13,
+      "profit_units": 27.2981,
+      "distinct_weeks": 18,
+      "over_bets": 27,
+      "under_bets": 183
+    },
+    "final_season_used_for_cap_selection": false
   },
   "prediction_pool_exports": {
     "development_pool": "sports\\nfl\\data\\evaluation\\market_selector_pool_2021.csv",
@@ -546,7 +717,10 @@
     "final_pool_rows": 1755,
     "validated_final_pool": "sports\\nfl\\data\\evaluation\\market_selector_validated_pool_2022.csv",
     "validated_final_pool_rows": 315,
-    "weekly_validation": "sports\\nfl\\data\\evaluation\\market_selector_weekly_validation.csv"
+    "weekly_validation": "sports\\nfl\\data\\evaluation\\market_selector_weekly_validation.csv",
+    "pruned_development_pool": "sports\\nfl\\data\\evaluation\\market_selector_pruned_pool_2021.csv",
+    "pruned_final_pool": "sports\\nfl\\data\\evaluation\\market_selector_pruned_pool_2022.csv",
+    "pruned_weekly_validation": "sports\\nfl\\data\\evaluation\\market_selector_pruned_weekly_validation.csv"
   },
   "source_provenance_gate": {
     "status": "failed",

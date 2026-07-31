@@ -141,7 +141,7 @@ def score_probabilities(
 
 
 def summarize_market_rows(rows: pd.DataFrame) -> dict[str, Any]:
-    eligible = rows.loc[rows["eligible"]].copy()
+    eligible = rows.loc[rows["eligible"]].copy() if "eligible" in rows else rows.copy()
     wins = int(eligible["result"].eq("win").sum())
     losses = int(eligible["result"].eq("loss").sum())
     pushes = int(eligible["result"].eq("push").sum())
@@ -160,6 +160,68 @@ def summarize_market_rows(rows: pd.DataFrame) -> dict[str, Any]:
         "over_bets": int(eligible["side"].eq("over").sum()),
         "under_bets": int(eligible["side"].eq("under").sum()),
     }
+
+
+def prune_weekly_pool(pool: pd.DataFrame, *, top_n: int) -> pd.DataFrame:
+    """Keep the highest-confidence fixed-size board within each season/week."""
+
+    if top_n <= 0:
+        raise ValueError("top_n must be positive.")
+    if pool.empty:
+        return pool.copy()
+    ranked = pool.sort_values(
+        [
+            "season",
+            "week",
+            "estimated_side_probability",
+            "probability_advantage",
+            "player_display_name",
+        ],
+        ascending=[True, True, False, False, True],
+    )
+    return (
+        ranked.groupby(["season", "week"], group_keys=False, sort=True)
+        .head(int(top_n))
+        .reset_index(drop=True)
+    )
+
+
+def select_weekly_cap(
+    development_pool: pd.DataFrame,
+    *,
+    candidates: tuple[int, ...] = (6, 8, 10, 12),
+    minimum_decisions: int = 60,
+    minimum_weeks: int = 8,
+) -> tuple[int, list[dict[str, Any]]]:
+    """Select one cap on development evidence without reading final outcomes."""
+
+    leaderboard: list[dict[str, Any]] = []
+    for top_n in sorted(set(int(value) for value in candidates)):
+        pruned = prune_weekly_pool(development_pool, top_n=top_n)
+        summary = summarize_market_rows(pruned)
+        interval = summary.get("hit_rate_wilson_95")
+        eligible = bool(
+            summary["graded_decisions"] >= int(minimum_decisions)
+            and summary["distinct_weeks"] >= int(minimum_weeks)
+            and interval
+            and interval[0] > 0.5
+            and summary.get("roi") is not None
+            and summary["roi"] > 0.0
+        )
+        leaderboard.append({"top_n": top_n, "eligible": eligible, **summary})
+    eligible_rows = [row for row in leaderboard if row["eligible"]]
+    if not eligible_rows:
+        raise ValueError("No weekly-cap candidate passed the development evidence gate.")
+    selected = max(
+        eligible_rows,
+        key=lambda row: (
+            row["hit_rate_wilson_95"][0],
+            row["hit_rate"],
+            row["roi"],
+            -row["top_n"],
+        ),
+    )
+    return int(selected["top_n"]), leaderboard
 
 
 def target_promotion_gate(summary: dict[str, Any]) -> dict[str, Any]:

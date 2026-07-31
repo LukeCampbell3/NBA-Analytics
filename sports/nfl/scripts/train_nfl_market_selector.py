@@ -27,7 +27,9 @@ from sports.nfl.predictions.market_selector import (  # noqa: E402
     expanding_oof_probabilities,
     fit_selected_model,
     probability_metrics,
+    prune_weekly_pool,
     score_probabilities,
+    select_weekly_cap,
     summarize_market_rows,
     target_promotion_gate,
 )
@@ -163,6 +165,8 @@ def main() -> int:
             minimum_no_vig_advantage=args.minimum_no_vig_advantage,
         )
         development_parts.append(selected_oof)
+        development_summary = summarize_market_rows(selected_oof)
+        development_gate = target_promotion_gate(development_summary)
         model = fit_selected_model(
             development,
             selected_features,
@@ -177,7 +181,18 @@ def main() -> int:
             minimum_no_vig_advantage=args.minimum_no_vig_advantage,
         )
         final_summary = summarize_market_rows(final_scored)
-        promotion_gate = target_promotion_gate(final_summary)
+        final_gate = target_promotion_gate(final_summary)
+        promotion_passed = bool(
+            development_gate["status"] == "passed" and final_gate["status"] == "passed"
+        )
+        promotion_gate = {
+            "status": "passed" if promotion_passed else "failed",
+            "reason": (
+                "Development eligibility and final target gates passed."
+                if promotion_passed
+                else "Development eligibility or final target gate failed."
+            ),
+        }
         final_scored["target_promotion_status"] = promotion_gate["status"]
         final_parts.append(final_scored)
         if promotion_gate["status"] == "passed":
@@ -199,8 +214,10 @@ def main() -> int:
                 "target": target,
                 "selected_architecture": selected_architecture,
                 "architecture_selection_metric": "lowest expanding-2021 Brier score",
-                "development_walk_forward": summarize_market_rows(selected_oof),
+                "development_walk_forward": development_summary,
+                "development_eligibility_gate": development_gate,
                 "final_test": final_summary,
+                "final_test_gate": final_gate,
                 "promotion_gate": promotion_gate,
                 "candidates": candidate_reports,
             }
@@ -218,6 +235,11 @@ def main() -> int:
         item["target"]
         for item in target_reports
         if item["promotion_gate"]["status"] == "passed"
+    ]
+    development_qualified_targets = [
+        item["target"]
+        for item in target_reports
+        if item["development_eligibility_gate"]["status"] == "passed"
     ]
     architecture_by_target = {
         item["target"]: item["selected_architecture"] for item in target_reports
@@ -259,7 +281,7 @@ def main() -> int:
         "market_selector_weekly_validation.csv"
     )
     validated_development_pool = development_pool.loc[
-        development_pool["target_final_validation_status"].eq("passed")
+        development_pool["target"].isin(development_qualified_targets)
     ].copy()
     validated_final_pool = final_pool.loc[
         final_pool["target_final_validation_status"].eq("passed")
@@ -269,6 +291,33 @@ def main() -> int:
     )
     validated_final_pool_path = args.report.with_name(
         f"market_selector_validated_pool_{final_season}.csv"
+    )
+    selected_weekly_top_n, weekly_cap_leaderboard = select_weekly_cap(
+        validated_development_pool,
+        candidates=(6, 8, 10, 12),
+        minimum_decisions=60,
+        minimum_weeks=8,
+    )
+    pruned_development_pool = prune_weekly_pool(
+        validated_development_pool, top_n=selected_weekly_top_n
+    )
+    pruned_final_pool = prune_weekly_pool(
+        validated_final_pool, top_n=selected_weekly_top_n
+    )
+    pruned_weekly_validation = build_weekly_validation(
+        [pruned_development_pool, pruned_final_pool],
+        season_weeks=season_weeks,
+        promotion_by_target=promotion_by_target,
+        development_season=development_season,
+    )
+    pruned_development_pool_path = args.report.with_name(
+        f"market_selector_pruned_pool_{development_season}.csv"
+    )
+    pruned_final_pool_path = args.report.with_name(
+        f"market_selector_pruned_pool_{final_season}.csv"
+    )
+    pruned_weekly_validation_path = args.report.with_name(
+        "market_selector_pruned_weekly_validation.csv"
     )
     report = {
         "schema_version": 1,
@@ -291,7 +340,23 @@ def main() -> int:
         "latent_encoder": latent_audit,
         "targets": target_reports,
         "validated_targets": validated_targets,
+        "development_qualified_targets": development_qualified_targets,
         "validated_board_final_test": validated_summary,
+        "weekly_cap_policy": {
+            "selection_season": development_season,
+            "candidate_top_n": [6, 8, 10, 12],
+            "minimum_development_decisions": 60,
+            "minimum_development_weeks": 8,
+            "selection_metric": (
+                "highest development Wilson 95% lower bound, then hit rate, ROI, "
+                "and smaller board"
+            ),
+            "selected_top_n": selected_weekly_top_n,
+            "leaderboard": weekly_cap_leaderboard,
+            "development_result": summarize_market_rows(pruned_development_pool),
+            "final_test_result": summarize_market_rows(pruned_final_pool),
+            "final_season_used_for_cap_selection": False,
+        },
         "prediction_pool_exports": {
             "development_pool": str(development_pool_path),
             "development_pool_rows": int(len(development_pool)),
@@ -303,6 +368,9 @@ def main() -> int:
             "validated_final_pool": str(validated_final_pool_path),
             "validated_final_pool_rows": int(len(validated_final_pool)),
             "weekly_validation": str(weekly_validation_path),
+            "pruned_development_pool": str(pruned_development_pool_path),
+            "pruned_final_pool": str(pruned_final_pool_path),
+            "pruned_weekly_validation": str(pruned_weekly_validation_path),
         },
         "source_provenance_gate": {
             "status": "failed",
@@ -323,6 +391,7 @@ def main() -> int:
         "development_season": development_season,
         "minimum_side_probability": args.minimum_side_probability,
         "minimum_no_vig_advantage": args.minimum_no_vig_advantage,
+        "weekly_top_n": selected_weekly_top_n,
         "validated_targets": validated_targets,
         "latent_encoder": latent_encoder,
         "models": fitted_models,
@@ -339,10 +408,23 @@ def main() -> int:
     weekly_validation.to_csv(weekly_validation_path, index=False)
     validated_development_pool.to_csv(validated_development_pool_path, index=False)
     validated_final_pool.to_csv(validated_final_pool_path, index=False)
+    pruned_development_pool.to_csv(pruned_development_pool_path, index=False)
+    pruned_final_pool.to_csv(pruned_final_pool_path, index=False)
+    pruned_weekly_validation.to_csv(pruned_weekly_validation_path, index=False)
     if args.rows is not None:
         args.rows.parent.mkdir(parents=True, exist_ok=True)
         final_rows.to_csv(args.rows, index=False)
-    print(json.dumps({"validated_targets": validated_targets, "final": validated_summary}, indent=2))
+    print(
+        json.dumps(
+            {
+                "validated_targets": validated_targets,
+                "uncapped_final": validated_summary,
+                "weekly_top_n": selected_weekly_top_n,
+                "pruned_final": summarize_market_rows(pruned_final_pool),
+            },
+            indent=2,
+        )
+    )
     print(f"Report: {args.report}")
     return 0 if validated_targets else 2
 

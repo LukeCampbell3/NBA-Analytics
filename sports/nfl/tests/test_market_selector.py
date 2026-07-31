@@ -6,7 +6,9 @@ import pandas as pd
 from sports.nfl.predictions.market_selector import (
     build_prediction_pool,
     build_weekly_validation,
+    prune_weekly_pool,
     score_probabilities,
+    select_weekly_cap,
     summarize_market_rows,
     target_promotion_gate,
 )
@@ -84,3 +86,33 @@ def test_prediction_pool_and_weekly_validation_show_pass_fail_and_warmup() -> No
     assert overall.loc[11, "picks"] == 2
     assert overall.loc[11, "wins"] == 1
     assert overall.loc[11, "losses"] == 1
+
+
+def test_weekly_cap_is_selected_on_evidence_and_applied_per_week() -> None:
+    rows = []
+    for week in range(1, 9):
+        for rank in range(12):
+            result = "win" if rank < 8 else "loss"
+            rows.append(
+                {
+                    "season": 2021,
+                    "week": week,
+                    "player_display_name": f"Player {rank:02d}",
+                    "estimated_side_probability": 0.75 - rank * 0.01,
+                    "probability_advantage": 0.20 - rank * 0.01,
+                    "result": result,
+                    "profit_units": 100 / 110 if result == "win" else -1.0,
+                    "side": "under",
+                }
+            )
+    pool = pd.DataFrame(rows)
+    pruned = prune_weekly_pool(pool, top_n=8)
+    assert len(pruned) == 64
+    assert pruned.groupby("week").size().eq(8).all()
+    selected, leaderboard = select_weekly_cap(
+        pool,
+        candidates=(6, 8, 10, 12),
+        minimum_decisions=60,
+    )
+    assert selected == 8
+    assert next(row for row in leaderboard if row["top_n"] == 6)["eligible"] is False
