@@ -16,16 +16,17 @@
         <section class="prediction-about-stage"><div class="prediction-about-container">
             <header class="prediction-about-sign">
                 <p class="prediction-about-kicker">Inside the NFL Model</p>
-                <div class="minimal-heading"><h1>How the Yardage Stack Works</h1></div>
-                <p class="prediction-page-lead">A compact weekly ensemble designed around the NBA repository’s sequence, boosted-tree, stacking, and uncertainty-aware evaluation patterns.</p>
+                <div class="minimal-heading"><h1>How the Yardage Hybrid Works</h1></div>
+                <p class="prediction-page-lead">A predictive player-state encoder blended with compact boosted-tree and regularized tabular models, selected with forward-only NFL seasons.</p>
                 <p id="methodFacts" class="prediction-about-run-facts">Loading methodology...</p>
             </header>
             <section class="prediction-about-panel">
                 <h2>Architecture</h2>
                 <ol class="prediction-about-list">
                     <li>Player form, volume, volatility, and opponent allowances are summarized over lagged three- and five-game windows.</li>
-                    <li>A regularized Ridge model captures stable linear relationships while a Huber-loss gradient booster captures interactions.</li>
-                    <li>A positive Ridge meta-learner combines those estimates with a five-game rolling baseline.</li>
+                    <li>A 16-dimensional encoder predicts the next statistical state from each player’s previous eight games.</li>
+                    <li>Ridge, Extra Trees, XGBoost, CatBoost, and histogram-boosting candidates learn from raw pregame features.</li>
+                    <li>The validated hybrid averages the former per-stat champion with a raw-plus-latent boosted model.</li>
                     <li>After the untouched holdout is scored, the deployable base models are refit through the validated season.</li>
                 </ol>
             </section>

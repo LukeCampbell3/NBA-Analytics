@@ -315,7 +315,7 @@ def _fit_components(
     component_names: Iterable[str] | None = None,
 ) -> dict[str, Any]:
     candidates = _candidate_estimators(random_state)
-    selected = set(component_names or candidates)
+    selected = set(candidates if component_names is None else component_names)
     x_train = _clean_matrix(train, features)
     y_train = train[target].astype(float)
     fitted: dict[str, Any] = {}

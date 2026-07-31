@@ -49,6 +49,7 @@ class NflModelReport {
             <span>${this.escape(this.formatInt(overall.rows))} holdout rows</span>
             <span>Generated ${this.escape(this.data.run_date || "n/a")}</span>
             <span>Mode ${this.escape(this.data.mode || "n/a")}</span>
+            <span>Architecture ${this.escape(this.data.architecture?.name || "n/a")}</span>
             <span>Market validation ${this.escape(market.status || "not evaluated")}</span>
         `;
         const passed = gate.status === "passed";

@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-07-31T13:28:07.731671+00:00",
+  "decision": "replace_current",
+  "holdout_season": 2025,
+  "selection_seasons": [
+    2021,
+    2022,
+    2023,
+    2024
+  ],
+  "latent_architecture": {
+    "type": "predictive multi-output MLP bottleneck",
+    "sequence_length": 8,
+    "latent_dimensions": 16,
+    "pretraining_targets": [
+      "passing_yards",
+      "rushing_yards",
+      "receiving_yards",
+      "attempts",
+      "completions",
+      "carries",
+      "targets",
+      "receptions",
+      "passing_tds",
+      "rushing_tds",
+      "receiving_tds",
+      "interceptions",
+      "passing_epa",
+      "rushing_epa",
+      "receiving_epa",
+      "target_share",
+      "air_yards_share",
+      "wopr"
+    ],
+    "downstream_models": [
+      "xgboost",
+      "catboost"
+    ]
+  },
+  "leakage_controls": [
+    "Every latent input contains only prior player games.",
+    "The encoder is refit using only seasons earlier than each validation fold.",
+    "Downstream models are refit using only seasons earlier than the scored season.",
+    "The 2025 holdout is not used for architecture or latent-state selection."
+  ],
+  "encoder_folds": [
+    {
+      "validation_season": 2021,
+      "training_rows": 12753,
+      "iterations": 32,
+      "pretraining_validation_score": 0.460178
+    },
+    {
+      "validation_season": 2022,
+      "training_rows": 17801,
+      "iterations": 30,
+      "pretraining_validation_score": 0.446816
+    },
+    {
+      "validation_season": 2023,
+      "training_rows": 22841,
+      "iterations": 28,
+      "pretraining_validation_score": 0.451205
+    },
+    {
+      "validation_season": 2024,
+      "training_rows": 27903,
+      "iterations": 27,
+      "pretraining_validation_score": 0.457885
+    }
+  ],
+  "selections": {
+    "passing": {
+      "current": "ridge_extra_trees_blend",
+      "challenger": "current_plus_raw_latent_xgboost",
+      "selection_rows": 2280,
+      "candidate_mae": {
+        "current_plus_raw_latent_xgboost": 66.2945,
+        "current_plus_raw_latent_boost_blend": 66.3315,
+        "current_plus_latent_context_boost_blend": 66.3573,
+        "current_plus_latent_context_xgboost": 66.3634,
+        "current_plus_raw_latent_catboost": 66.4229,
+        "current_plus_latent_context_catboost": 66.4367,
+        "raw_latent_boost_blend": 66.72,
+        "raw_latent_xgboost": 66.7813,
+        "raw_latent_catboost": 66.8964,
+        "ridge_extra_trees_blend": 66.9004,
+        "extra_trees": 67.0437,
+        "latent_context_boost_blend": 67.4072,
+        "ridge": 67.469,
+        "latent_context_xgboost": 67.4708,
+        "xgboost_catboost_blend": 67.5741,
+        "xgboost": 67.5937,
+        "latent_context_catboost": 67.6115,
+        "catboost": 67.8327,
+        "hist_catboost_blend": 68.0944,
+        "hist_gradient_boosting": 68.8042,
+        "rolling_baseline": 70.944
+      }
+    },
+    "rushing": {
+      "current": "xgboost_catboost_blend",
+      "challenger": "current_plus_raw_latent_boost_blend",
+      "selection_rows": 6589,
+      "candidate_mae": {
+        "current_plus_raw_latent_boost_blend": 19.4767,
+        "current_plus_raw_latent_xgboost": 19.4816,
+        "current_plus_raw_latent_catboost": 19.4826,
+        "xgboost_catboost_blend": 19.5457,
+        "catboost": 19.5468,
+        "current_plus_latent_context_catboost": 19.5764,
+        "current_plus_latent_context_boost_blend": 19.5775,
+        "xgboost": 19.5823,
+        "current_plus_latent_context_xgboost": 19.5895,
+        "hist_catboost_blend": 19.5905,
+        "raw_latent_boost_blend": 19.5917,
+        "raw_latent_catboost": 19.5993,
+        "raw_latent_xgboost": 19.6208,
+        "hist_gradient_boosting": 19.7295,
+        "latent_context_boost_blend": 20.0601,
+        "latent_context_xgboost": 20.0819,
+        "latent_context_catboost": 20.0867,
+        "ridge_extra_trees_blend": 20.195,
+        "ridge": 20.2596,
+        "extra_trees": 20.2706,
+        "rolling_baseline": 20.9833
+      }
+    },
+    "receiving": {
+      "current": "hist_catboost_blend",
+      "challenger": "current_plus_raw_latent_boost_blend",
+      "selection_rows": 13020,
+      "candidate_mae": {
+        "current_plus_raw_latent_boost_blend": 20.4906,
+        "current_plus_raw_latent_catboost": 20.4917,
+        "current_plus_raw_latent_xgboost": 20.4965,
+        "current_plus_latent_context_boost_blend": 20.5108,
+        "current_plus_latent_context_xgboost": 20.5116,
+        "current_plus_latent_context_catboost": 20.5153,
+        "hist_catboost_blend": 20.5339,
+        "xgboost_catboost_blend": 20.5406,
+        "catboost": 20.5408,
+        "xgboost": 20.5719,
+        "hist_gradient_boosting": 20.5925,
+        "raw_latent_boost_blend": 20.6193,
+        "raw_latent_catboost": 20.6215,
+        "raw_latent_xgboost": 20.6462,
+        "latent_context_boost_blend": 20.762,
+        "latent_context_xgboost": 20.772,
+        "latent_context_catboost": 20.7736,
+        "ridge": 21.1645,
+        "ridge_extra_trees_blend": 21.1835,
+        "extra_trees": 21.3002,
+        "rolling_baseline": 22.0967
+      }
+    }
+  },
+  "holdout": {
+    "rows": 5328,
+    "current_weighted_mae": 25.1256,
+    "challenger_weighted_mae": 24.8836,
+    "challenger_improvement": 0.0096,
+    "paired_week_bootstrap_mae_delta_95": [
+      -0.3928,
+      -0.0994
+    ],
+    "targets": [
+      {
+        "target": "passing",
+        "rows": 578,
+        "current_architecture": "ridge_extra_trees_blend",
+        "challenger_architecture": "current_plus_raw_latent_xgboost",
+        "current_mae": 68.5917,
+        "challenger_mae": 66.8646,
+        "challenger_improvement": 0.0252
+      },
+      {
+        "target": "rushing",
+        "rows": 1605,
+        "current_architecture": "xgboost_catboost_blend",
+        "challenger_architecture": "current_plus_raw_latent_boost_blend",
+        "current_mae": 19.5426,
+        "challenger_mae": 19.4757,
+        "challenger_improvement": 0.0034
+      },
+      {
+        "target": "receiving",
+        "rows": 3145,
+        "current_architecture": "hist_catboost_blend",
+        "challenger_architecture": "current_plus_raw_latent_boost_blend",
+        "current_mae": 19.9865,
+        "challenger_mae": 19.928,
+        "challenger_improvement": 0.0029
+      }
+    ]
+  },
+  "promotion_rule": {
+    "challenger_wins_pre_holdout_selection_for_every_target": true,
+    "minimum_holdout_weighted_mae_improvement": 0.005,
+    "no_target_regression_beyond": -0.01,
+    "paired_week_bootstrap_upper_bound_below_zero": true,
+    "passed": true
+  }
+}

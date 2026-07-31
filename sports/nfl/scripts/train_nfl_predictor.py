@@ -8,6 +8,8 @@ import json
 import sys
 from pathlib import Path
 
+import pandas as pd
+
 
 SCRIPT_PATH = Path(__file__).resolve()
 REPO_ROOT = SCRIPT_PATH.parents[3]
@@ -17,9 +19,10 @@ if str(REPO_ROOT) not in sys.path:
 from sports.nfl.predictions.pipeline import (  # noqa: E402
     NFLVERSE_PLAYER_STATS_URL,
     load_weekly_stats,
-    train_and_backtest,
     write_training_outputs,
 )
+from sports.nfl.predictions.latent_pipeline import train_and_backtest_latent  # noqa: E402
+from sports.nfl.predictions.pbp_stats import load_aggregated_season  # noqa: E402
 from sports.nfl.predictions.market_backtest import (  # noqa: E402
     evaluate_market_backtest,
     load_market_archive,
@@ -34,11 +37,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--source", default=NFLVERSE_PLAYER_STATS_URL)
     parser.add_argument("--cache", type=Path, default=NFL_ROOT / "data" / "raw" / "player_stats.parquet")
     parser.add_argument("--start-season", type=int, default=2018)
-    parser.add_argument("--holdout-season", type=int, default=2024)
+    parser.add_argument("--holdout-season", type=int, default=2025)
     parser.add_argument("--random-state", type=int, default=42)
     parser.add_argument("--report", type=Path, default=NFL_ROOT / "data" / "evaluation" / "backtest_report.json")
     parser.add_argument("--rows", type=Path, default=NFL_ROOT / "data" / "evaluation" / "backtest_rows.csv")
-    parser.add_argument("--artifact", type=Path, default=NFL_ROOT / "model" / "nfl_yardage_stack.joblib")
+    parser.add_argument("--artifact", type=Path, default=NFL_ROOT / "model" / "nfl_yardage_latent_hybrid.joblib")
     parser.add_argument(
         "--web-payload",
         type=Path,
@@ -111,13 +114,25 @@ def build_web_payload(report: dict, rows) -> dict:
 
 def main() -> int:
     args = parse_args()
+    historical_end = min(args.holdout_season, 2024)
     stats = load_weekly_stats(
         args.source,
         cache_path=args.cache,
         start_season=args.start_season,
-        end_season=args.holdout_season,
+        end_season=historical_end,
     )
-    report, artifact, rows = train_and_backtest(
+    if args.holdout_season > historical_end:
+        supplements = [
+            load_aggregated_season(
+                season,
+                cache_path=NFL_ROOT / "data" / "raw" / f"player_stats_{season}_pbp.parquet",
+            )
+            for season in range(historical_end + 1, args.holdout_season + 1)
+        ]
+        stats = pd.concat([stats, *supplements], ignore_index=True).sort_values(
+            ["season", "week", "player_id"]
+        )
+    report, artifact, rows = train_and_backtest_latent(
         stats,
         holdout_season=args.holdout_season,
         random_state=args.random_state,
