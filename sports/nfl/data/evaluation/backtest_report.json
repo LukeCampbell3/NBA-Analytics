@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-07-31T11:38:38.180755+00:00",
+  "generated_at_utc": "2026-07-31T12:24:01.467784+00:00",
   "evaluation_design": {
     "type": "chronological_season_holdout",
     "source_seasons": [
@@ -12,7 +12,9 @@
       2023,
       2024
     ],
-    "meta_seasons": [
+    "architecture_selection_seasons": [
+      2020,
+      2021,
       2022,
       2023
     ],
@@ -20,19 +22,31 @@
     "leakage_controls": [
       "All player and opponent features are shifted by at least one game.",
       "Base estimators for a scored season are trained only on earlier seasons.",
-      "The stacking model is fit on chronological pre-holdout folds.",
-      "The final holdout season is never used for fitting or threshold selection."
+      "Architectures are ranked only on expanding chronological pre-holdout folds.",
+      "The final holdout season is never used for architecture or threshold selection."
     ],
     "scope_note": "Accuracy describes player yardage projections for eligible active-player rows. It is not sportsbook win rate because archived market lines are not present."
   },
   "architecture": {
-    "name": "lagged sequence stack",
-    "base_models": [
-      "five-game rolling baseline",
-      "Ridge regression",
-      "GradientBoostingRegressor"
+    "name": "per-target chronological champion",
+    "selection_metric": "pooled expanding-window MAE",
+    "candidate_architectures": [
+      "rolling_baseline",
+      "ridge",
+      "hist_gradient_boosting",
+      "extra_trees",
+      "xgboost",
+      "catboost",
+      "ridge_extra_trees_blend",
+      "xgboost_catboost_blend",
+      "hist_catboost_blend"
     ],
-    "meta_model": "positive Ridge regression"
+    "selected_by_target": {
+      "passing": "ridge_extra_trees_blend",
+      "rushing": "xgboost_catboost_blend",
+      "receiving": "xgboost_catboost_blend"
+    },
+    "design_reason": "The sample is medium-sized tabular weekly data, so regularized linear and tree-boosting families are tested directly instead of assuming a deep network."
   },
   "data_audit": {
     "provider": "nflverse",
@@ -42,72 +56,377 @@
   },
   "overall": {
     "rows": 5424,
-    "weighted_mae": 25.6543,
+    "weighted_mae": 25.3487,
     "weighted_baseline_mae": 27.0404,
-    "weighted_within_tolerance_accuracy": 0.4569,
-    "weighted_mae_improvement_vs_rolling_baseline": 0.0513
+    "weighted_within_tolerance_accuracy": 0.4873,
+    "weighted_mae_improvement_vs_rolling_baseline": 0.0626
   },
   "targets": [
     {
       "target": "passing",
       "label": "Passing yards",
       "train_rows": 3121,
-      "meta_rows": 1124,
+      "selection_rows": 2230,
       "holdout_season": 2024,
       "metrics": {
         "rows": 585,
-        "mae": 67.6715,
-        "rmse": 85.1199,
-        "r2": 0.1982,
-        "median_absolute_error": 55.8803,
-        "within_tolerance_accuracy": 0.2632,
+        "mae": 67.6727,
+        "rmse": 84.9931,
+        "r2": 0.2006,
+        "median_absolute_error": 56.5884,
+        "within_tolerance_accuracy": 0.2598,
         "tolerance_yards": 30.0,
-        "residual_direction_accuracy": 0.5917,
+        "residual_direction_accuracy": 0.59,
         "baseline_mae": 71.9409,
         "mae_improvement_vs_rolling_baseline": 0.0593
+      },
+      "position_metrics": [
+        {
+          "position": "QB",
+          "rows": 585,
+          "mae": 67.6727,
+          "zero_actual_rate": 0.0342
+        }
+      ],
+      "model_selection": {
+        "selected_architecture": "ridge_extra_trees_blend",
+        "selection_metric": "pooled expanding-window MAE",
+        "candidate_mae": {
+          "ridge_extra_trees_blend": 67.8735,
+          "extra_trees": 67.9056,
+          "xgboost_catboost_blend": 68.6025,
+          "xgboost": 68.743,
+          "catboost": 68.7634,
+          "ridge": 68.8356,
+          "hist_catboost_blend": 69.0831,
+          "hist_gradient_boosting": 69.8928,
+          "rolling_baseline": 71.774
+        },
+        "folds": [
+          {
+            "season": 2020,
+            "train_rows": 891,
+            "validation_rows": 535,
+            "candidate_mae": {
+              "rolling_baseline": 75.494,
+              "ridge": 73.7971,
+              "hist_gradient_boosting": 73.35,
+              "extra_trees": 71.6227,
+              "xgboost": 72.5023,
+              "catboost": 72.5278,
+              "ridge_extra_trees_blend": 71.785,
+              "xgboost_catboost_blend": 72.3703,
+              "hist_catboost_blend": 72.7086
+            }
+          },
+          {
+            "season": 2021,
+            "train_rows": 1426,
+            "validation_rows": 571,
+            "candidate_mae": {
+              "rolling_baseline": 72.305,
+              "ridge": 69.9223,
+              "hist_gradient_boosting": 71.8273,
+              "extra_trees": 68.737,
+              "xgboost": 70.0976,
+              "catboost": 69.9042,
+              "ridge_extra_trees_blend": 68.76,
+              "xgboost_catboost_blend": 69.7291,
+              "hist_catboost_blend": 70.482
+            }
+          },
+          {
+            "season": 2022,
+            "train_rows": 1997,
+            "validation_rows": 558,
+            "candidate_mae": {
+              "rolling_baseline": 67.6023,
+              "ridge": 62.286,
+              "hist_gradient_boosting": 63.5902,
+              "extra_trees": 62.1489,
+              "xgboost": 62.8105,
+              "catboost": 62.9018,
+              "ridge_extra_trees_blend": 61.977,
+              "xgboost_catboost_blend": 62.7473,
+              "hist_catboost_blend": 63.0535
+            }
+          },
+          {
+            "season": 2023,
+            "train_rows": 2555,
+            "validation_rows": 566,
+            "candidate_mae": {
+              "rolling_baseline": 71.835,
+              "ridge": 69.5067,
+              "hist_gradient_boosting": 70.8867,
+              "extra_trees": 69.2288,
+              "xgboost": 69.6718,
+              "catboost": 69.8331,
+              "ridge_extra_trees_blend": 69.095,
+              "xgboost_catboost_blend": 69.677,
+              "hist_catboost_blend": 70.1891
+            }
+          }
+        ]
       }
     },
     {
       "target": "rushing",
       "label": "Rushing yards",
       "train_rows": 9040,
-      "meta_rows": 3320,
+      "selection_rows": 6492,
       "holdout_season": 2024,
       "metrics": {
         "rows": 1654,
-        "mae": 20.2269,
-        "rmse": 27.5793,
-        "r2": 0.4078,
-        "median_absolute_error": 14.9289,
-        "within_tolerance_accuracy": 0.5018,
+        "mae": 19.7106,
+        "rmse": 28.234,
+        "r2": 0.3793,
+        "median_absolute_error": 13.2802,
+        "within_tolerance_accuracy": 0.5405,
         "tolerance_yards": 15.0,
-        "residual_direction_accuracy": 0.5702,
+        "residual_direction_accuracy": 0.607,
         "baseline_mae": 20.9418,
-        "mae_improvement_vs_rolling_baseline": 0.0341
+        "mae_improvement_vs_rolling_baseline": 0.0588
+      },
+      "position_metrics": [
+        {
+          "position": "QB",
+          "rows": 470,
+          "mae": 13.3031,
+          "zero_actual_rate": 0.1213
+        },
+        {
+          "position": "RB",
+          "rows": 1152,
+          "mae": 22.5632,
+          "zero_actual_rate": 0.0356
+        },
+        {
+          "position": "TE",
+          "rows": 8,
+          "mae": 22.0314,
+          "zero_actual_rate": 0.0
+        },
+        {
+          "position": "WR",
+          "rows": 24,
+          "mae": 7.4887,
+          "zero_actual_rate": 0.2083
+        }
+      ],
+      "model_selection": {
+        "selected_architecture": "xgboost_catboost_blend",
+        "selection_metric": "pooled expanding-window MAE",
+        "candidate_mae": {
+          "xgboost_catboost_blend": 19.672,
+          "catboost": 19.6941,
+          "xgboost": 19.6975,
+          "hist_catboost_blend": 19.7176,
+          "hist_gradient_boosting": 19.8476,
+          "ridge_extra_trees_blend": 20.3326,
+          "ridge": 20.3744,
+          "extra_trees": 20.4254,
+          "rolling_baseline": 21.0476
+        },
+        "folds": [
+          {
+            "season": 2020,
+            "train_rows": 2548,
+            "validation_rows": 1557,
+            "candidate_mae": {
+              "rolling_baseline": 21.2033,
+              "ridge": 20.9134,
+              "hist_gradient_boosting": 20.4248,
+              "extra_trees": 21.0193,
+              "xgboost": 20.2984,
+              "catboost": 20.3018,
+              "ridge_extra_trees_blend": 20.9104,
+              "xgboost_catboost_blend": 20.2678,
+              "hist_catboost_blend": 20.3055
+            }
+          },
+          {
+            "season": 2021,
+            "train_rows": 4105,
+            "validation_rows": 1615,
+            "candidate_mae": {
+              "rolling_baseline": 21.1384,
+              "ridge": 20.2815,
+              "hist_gradient_boosting": 20.1021,
+              "extra_trees": 20.5272,
+              "xgboost": 19.8804,
+              "catboost": 19.8632,
+              "ridge_extra_trees_blend": 20.3381,
+              "xgboost_catboost_blend": 19.8388,
+              "hist_catboost_blend": 19.9201
+            }
+          },
+          {
+            "season": 2022,
+            "train_rows": 5720,
+            "validation_rows": 1646,
+            "candidate_mae": {
+              "rolling_baseline": 22.1271,
+              "ridge": 21.1737,
+              "hist_gradient_boosting": 20.409,
+              "extra_trees": 21.1013,
+              "xgboost": 20.3256,
+              "catboost": 20.364,
+              "ridge_extra_trees_blend": 21.0689,
+              "xgboost_catboost_blend": 20.3234,
+              "hist_catboost_blend": 20.343
+            }
+          },
+          {
+            "season": 2023,
+            "train_rows": 7366,
+            "validation_rows": 1674,
+            "candidate_mae": {
+              "rolling_baseline": 19.7539,
+              "ridge": 19.1768,
+              "hist_gradient_boosting": 18.5133,
+              "extra_trees": 19.1102,
+              "xgboost": 18.3446,
+              "catboost": 18.3069,
+              "ridge_extra_trees_blend": 19.0657,
+              "xgboost_catboost_blend": 18.3162,
+              "hist_catboost_blend": 18.3605
+            }
+          }
+        ]
       }
     },
     {
       "target": "receiving",
       "label": "Receiving yards",
       "train_rows": 18397,
-      "meta_rows": 6471,
+      "selection_rows": 12955,
       "holdout_season": 2024,
       "metrics": {
         "rows": 3185,
-        "mae": 20.7554,
-        "rmse": 27.8011,
-        "r2": 0.291,
-        "median_absolute_error": 16.124,
-        "within_tolerance_accuracy": 0.4691,
+        "mae": 20.5028,
+        "rmse": 28.4414,
+        "r2": 0.2579,
+        "median_absolute_error": 14.9278,
+        "within_tolerance_accuracy": 0.5014,
         "tolerance_yards": 15.0,
-        "residual_direction_accuracy": 0.6058,
+        "residual_direction_accuracy": 0.613,
         "baseline_mae": 21.9605,
-        "mae_improvement_vs_rolling_baseline": 0.0549
+        "mae_improvement_vs_rolling_baseline": 0.0664
+      },
+      "position_metrics": [
+        {
+          "position": "FB",
+          "rows": 14,
+          "mae": 10.3475,
+          "zero_actual_rate": 0.2143
+        },
+        {
+          "position": "RB",
+          "rows": 666,
+          "mae": 13.4467,
+          "zero_actual_rate": 0.1652
+        },
+        {
+          "position": "TE",
+          "rows": 761,
+          "mae": 18.2644,
+          "zero_actual_rate": 0.0867
+        },
+        {
+          "position": "WR",
+          "rows": 1744,
+          "mae": 24.2556,
+          "zero_actual_rate": 0.0826
+        }
+      ],
+      "model_selection": {
+        "selected_architecture": "xgboost_catboost_blend",
+        "selection_metric": "pooled expanding-window MAE",
+        "candidate_mae": {
+          "xgboost_catboost_blend": 20.7,
+          "hist_catboost_blend": 20.7056,
+          "catboost": 20.7122,
+          "xgboost": 20.7255,
+          "hist_gradient_boosting": 20.7699,
+          "ridge": 21.4014,
+          "ridge_extra_trees_blend": 21.4101,
+          "extra_trees": 21.5191,
+          "rolling_baseline": 22.276
+        },
+        "folds": [
+          {
+            "season": 2020,
+            "train_rows": 5442,
+            "validation_rows": 3120,
+            "candidate_mae": {
+              "rolling_baseline": 22.702,
+              "ridge": 21.825,
+              "hist_gradient_boosting": 21.1918,
+              "extra_trees": 21.903,
+              "xgboost": 21.138,
+              "catboost": 21.2006,
+              "ridge_extra_trees_blend": 21.8113,
+              "xgboost_catboost_blend": 21.1473,
+              "hist_catboost_blend": 21.163
+            }
+          },
+          {
+            "season": 2021,
+            "train_rows": 8562,
+            "validation_rows": 3364,
+            "candidate_mae": {
+              "rolling_baseline": 22.1743,
+              "ridge": 21.6435,
+              "hist_gradient_boosting": 20.7514,
+              "extra_trees": 21.5853,
+              "xgboost": 20.6627,
+              "catboost": 20.6136,
+              "ridge_extra_trees_blend": 21.5618,
+              "xgboost_catboost_blend": 20.6222,
+              "hist_catboost_blend": 20.6396
+            }
+          },
+          {
+            "season": 2022,
+            "train_rows": 11926,
+            "validation_rows": 3244,
+            "candidate_mae": {
+              "rolling_baseline": 22.0124,
+              "ridge": 20.9922,
+              "hist_gradient_boosting": 20.5148,
+              "extra_trees": 21.2243,
+              "xgboost": 20.4699,
+              "catboost": 20.456,
+              "ridge_extra_trees_blend": 21.0589,
+              "xgboost_catboost_blend": 20.4486,
+              "hist_catboost_blend": 20.4524
+            }
+          },
+          {
+            "season": 2023,
+            "train_rows": 15170,
+            "validation_rows": 3227,
+            "candidate_mae": {
+              "rolling_baseline": 22.235,
+              "ridge": 21.1507,
+              "hist_gradient_boosting": 20.6376,
+              "extra_trees": 21.3751,
+              "xgboost": 20.6489,
+              "catboost": 20.6003,
+              "ridge_extra_trees_blend": 21.2173,
+              "xgboost_catboost_blend": 20.6011,
+              "hist_catboost_blend": 20.5869
+            }
+          }
+        ]
       }
     }
   ],
   "promotion_gate": {
-    "status": "passed",
+    "status": "failed",
+    "projection_status": "passed",
+    "reason": "Authentic historical player-prop hit rate has not been evaluated.",
     "criteria": {
       "minimum_rows_per_target": 500,
       "minimum_r2_per_target": 0.15,
@@ -128,5 +447,10 @@
         "passed": true
       }
     ]
+  },
+  "market_validation": {
+    "status": "not_evaluated",
+    "reason": "No authentic timestamped historical player-prop archive was supplied.",
+    "required_for_static_promotion": true
   }
 }

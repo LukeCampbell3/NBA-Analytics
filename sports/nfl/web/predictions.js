@@ -43,16 +43,18 @@ class NflModelReport {
         const design = this.data.methodology || {};
         const overall = this.data.overall || {};
         const gate = this.data.promotion_gate || {};
+        const market = this.data.market_validation || {};
         this.elements.runFacts.innerHTML = `
             <span>Evaluated ${this.escape(design.holdout_season ?? "n/a")}</span>
             <span>${this.escape(this.formatInt(overall.rows))} holdout rows</span>
             <span>Generated ${this.escape(this.data.run_date || "n/a")}</span>
             <span>Mode ${this.escape(this.data.mode || "n/a")}</span>
+            <span>Market validation ${this.escape(market.status || "not evaluated")}</span>
         `;
         const passed = gate.status === "passed";
-        this.elements.gate.innerHTML = `<p><strong>${passed ? "Passed" : "Not passed"}:</strong> ${passed
+        this.elements.gate.innerHTML = `<p><strong>${passed ? "Passed" : "Research only"}:</strong> ${this.escape(gate.reason || (passed
             ? "every target cleared the repository-defined sample, R², baseline-improvement, and residual-direction checks."
-            : "at least one target missed a required validation threshold; the model should remain in research."}</p>`;
+            : "at least one target missed a required validation threshold; the model should remain in research."))}</p>`;
         const cards = [
             ["Holdout Rows", this.formatInt(overall.rows)],
             ["Weighted MAE", `${this.formatNum(overall.weighted_mae, 1)} yd`],

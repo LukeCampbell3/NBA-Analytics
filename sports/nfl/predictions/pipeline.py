@@ -1,11 +1,8 @@
 """Leakage-aware NFL player yardage prediction pipeline.
 
-The implementation adapts the repository's stacked NBA approach to the much
-smaller weekly NFL sample: lagged sequence summaries feed a gradient-boosted
-tree and a regularized linear model, then a Ridge meta-learner combines those
-estimates with the rolling baseline.  Every feature is available before the
-game being predicted and every reported score is from a later season than the
-rows used to fit the underlying estimators.
+Lagged sequence summaries feed a compact set of regularized tabular learners.
+Each yardage target selects its architecture on expanding pre-holdout seasons;
+the final season is scored once and is never used for architecture selection.
 """
 
 from __future__ import annotations
@@ -21,12 +18,14 @@ from typing import Any, Iterable
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import GradientBoostingRegressor
+from catboost import CatBoostRegressor
+from sklearn.ensemble import ExtraTreesRegressor, HistGradientBoostingRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from xgboost import XGBRegressor
 
 
 NFLVERSE_PLAYER_STATS_URL = (
@@ -174,6 +173,7 @@ def build_features(stats: pd.DataFrame, spec: TargetSpec) -> tuple[pd.DataFrame,
     position = frame["position"].fillna("UNK").astype(str).str.upper()
     for value in ("QB", "RB", "FB", "WR", "TE"):
         frame[f"position_{value}"] = position.eq(value).astype(float)
+    frame["position_OTHER"] = (~position.isin({"QB", "RB", "FB", "WR", "TE"})).astype(float)
     frame["season_progress"] = frame["week"].clip(upper=18) / 18.0
     frame["early_season"] = frame["week"].le(4).astype(float)
 
@@ -198,6 +198,7 @@ def build_features(stats: pd.DataFrame, spec: TargetSpec) -> tuple[pd.DataFrame,
         "position_FB",
         "position_WR",
         "position_TE",
+        "position_OTHER",
     ]
     context_candidates = {
         "passing": ["completions", "passing_tds", "interceptions", "passing_epa"],
@@ -214,56 +215,153 @@ def build_features(stats: pd.DataFrame, spec: TargetSpec) -> tuple[pd.DataFrame,
     return frame.sort_values(["season", "week", "player_id"]).reset_index(drop=True), features
 
 
-def _base_estimators(random_state: int) -> tuple[Pipeline, GradientBoostingRegressor]:
-    linear = Pipeline(
-        [
-            ("imputer", SimpleImputer(strategy="median")),
-            ("scale", StandardScaler()),
-            ("ridge", Ridge(alpha=12.0)),
-        ]
-    )
-    boosted = GradientBoostingRegressor(
-        n_estimators=180,
-        learning_rate=0.035,
-        max_depth=2,
-        min_samples_leaf=18,
-        loss="huber",
-        random_state=random_state,
-    )
-    return linear, boosted
+ARCHITECTURES: dict[str, tuple[tuple[str, float], ...]] = {
+    "rolling_baseline": (),
+    "ridge": (("ridge", 1.0),),
+    "hist_gradient_boosting": (("hist_gradient_boosting", 1.0),),
+    "extra_trees": (("extra_trees", 1.0),),
+    "xgboost": (("xgboost", 1.0),),
+    "catboost": (("catboost", 1.0),),
+    "ridge_extra_trees_blend": (("ridge", 0.5), ("extra_trees", 0.5)),
+    "xgboost_catboost_blend": (("xgboost", 0.5), ("catboost", 0.5)),
+    "hist_catboost_blend": (("hist_gradient_boosting", 0.5), ("catboost", 0.5)),
+}
+
+
+def _candidate_estimators(random_state: int) -> dict[str, Any]:
+    """Return fixed, small-tabular candidates for chronological selection.
+
+    Hyperparameters are intentionally regularized and shared across targets.
+    The model family, not a target-specific holdout tweak, is selected using
+    expanding pre-holdout folds.
+    """
+
+    return {
+        "ridge": Pipeline(
+            [
+                ("imputer", SimpleImputer(strategy="median")),
+                ("scale", StandardScaler()),
+                ("model", Ridge(alpha=12.0)),
+            ]
+        ),
+        "hist_gradient_boosting": Pipeline(
+            [
+                ("imputer", SimpleImputer(strategy="median")),
+                (
+                    "model",
+                    HistGradientBoostingRegressor(
+                        loss="absolute_error",
+                        learning_rate=0.055,
+                        max_iter=220,
+                        max_leaf_nodes=15,
+                        min_samples_leaf=25,
+                        l2_regularization=2.0,
+                        random_state=random_state,
+                    ),
+                ),
+            ]
+        ),
+        "extra_trees": Pipeline(
+            [
+                ("imputer", SimpleImputer(strategy="median")),
+                (
+                    "model",
+                    ExtraTreesRegressor(
+                        n_estimators=300,
+                        min_samples_leaf=8,
+                        max_features=0.8,
+                        n_jobs=-1,
+                        random_state=random_state,
+                    ),
+                ),
+            ]
+        ),
+        "xgboost": XGBRegressor(
+            n_estimators=350,
+            learning_rate=0.025,
+            max_depth=3,
+            min_child_weight=12,
+            subsample=0.85,
+            colsample_bytree=0.85,
+            reg_lambda=8.0,
+            reg_alpha=0.5,
+            objective="reg:absoluteerror",
+            n_jobs=-1,
+            random_state=random_state,
+        ),
+        "catboost": CatBoostRegressor(
+            iterations=350,
+            learning_rate=0.035,
+            depth=5,
+            l2_leaf_reg=8.0,
+            loss_function="MAE",
+            verbose=False,
+            allow_writing_files=False,
+            random_seed=random_state,
+            thread_count=-1,
+        ),
+    }
 
 
 def _clean_matrix(frame: pd.DataFrame, features: list[str]) -> pd.DataFrame:
     return frame[features].replace([np.inf, -np.inf], np.nan)
 
 
-def _fit_base(
+def _fit_components(
     train: pd.DataFrame,
     features: list[str],
     target: str,
     random_state: int,
-) -> tuple[Pipeline, Pipeline]:
-    linear, boosted_model = _base_estimators(random_state)
-    boosted = Pipeline(
-        [("imputer", SimpleImputer(strategy="median")), ("gbm", boosted_model)]
-    )
+    component_names: Iterable[str] | None = None,
+) -> dict[str, Any]:
+    candidates = _candidate_estimators(random_state)
+    selected = set(component_names or candidates)
     x_train = _clean_matrix(train, features)
     y_train = train[target].astype(float)
-    linear.fit(x_train, y_train)
-    boosted.fit(x_train, y_train)
-    return linear, boosted
+    fitted: dict[str, Any] = {}
+    for name, model in candidates.items():
+        if name in selected:
+            model.fit(x_train, y_train)
+            fitted[name] = model
+    return fitted
 
 
-def _base_predictions(models: tuple[Pipeline, Pipeline], frame: pd.DataFrame, features: list[str]) -> np.ndarray:
+def _component_predictions(
+    models: dict[str, Any], frame: pd.DataFrame, features: list[str]
+) -> dict[str, np.ndarray]:
     x_value = _clean_matrix(frame, features)
-    linear, boosted = models
-    return np.column_stack(
-        [
-            frame["baseline_prediction"].astype(float).to_numpy(),
-            linear.predict(x_value),
-            boosted.predict(x_value),
-        ]
-    )
+    return {
+        name: np.maximum(0.0, np.asarray(model.predict(x_value), dtype=float))
+        for name, model in models.items()
+    }
+
+
+def _architecture_prediction(
+    architecture: str,
+    frame: pd.DataFrame,
+    component_predictions: dict[str, np.ndarray],
+) -> np.ndarray:
+    if architecture == "rolling_baseline":
+        return np.maximum(0.0, frame["baseline_prediction"].astype(float).to_numpy())
+    weighted = ARCHITECTURES[architecture]
+    prediction = np.zeros(len(frame), dtype=float)
+    for component, weight in weighted:
+        prediction += weight * component_predictions[component]
+    return np.maximum(0.0, prediction)
+
+
+def _position_metrics(scored: pd.DataFrame) -> list[dict[str, Any]]:
+    output: list[dict[str, Any]] = []
+    for position, group in scored.groupby("position", dropna=False):
+        output.append(
+            {
+                "position": str(position or "UNK"),
+                "rows": int(len(group)),
+                "mae": round(float(mean_absolute_error(group["actual"], group["prediction"])), 4),
+                "zero_actual_rate": round(float(group["actual"].eq(0).mean()), 4),
+            }
+        )
+    return output
 
 
 def _metrics(actual: np.ndarray, predicted: np.ndarray, baseline: np.ndarray, tolerance: float) -> dict[str, Any]:
@@ -298,35 +396,63 @@ def train_target(
     meta_seasons: Iterable[int],
     random_state: int = 42,
 ) -> tuple[dict[str, Any], dict[str, Any], pd.DataFrame]:
-    """Train one stacked target model and score a never-seen holdout season."""
+    """Select one target architecture and score a never-seen holdout season."""
 
     frame, features = build_features(stats, spec)
     holdout = frame.loc[frame["season"].eq(holdout_season)].copy()
     if holdout.empty:
         raise ValueError(f"No eligible {spec.key} rows found for holdout season {holdout_season}.")
 
-    meta_parts: list[pd.DataFrame] = []
+    validation_parts: list[pd.DataFrame] = []
+    fold_metrics: list[dict[str, Any]] = []
     for season in sorted(set(int(value) for value in meta_seasons)):
-        base_train = frame.loc[frame["season"].lt(season)]
-        meta_fold = frame.loc[frame["season"].eq(season)].copy()
-        if len(base_train) < 100 or meta_fold.empty:
+        fold_train = frame.loc[frame["season"].lt(season)]
+        validation_fold = frame.loc[frame["season"].eq(season)].copy()
+        if len(fold_train) < 100 or validation_fold.empty:
             continue
-        models = _fit_base(base_train, features, spec.target, random_state + season)
-        stack_values = _base_predictions(models, meta_fold, features)
-        part = pd.DataFrame(stack_values, columns=["baseline", "ridge", "gbm"], index=meta_fold.index)
-        part["actual"] = meta_fold[spec.target].astype(float)
-        meta_parts.append(part)
+        models = _fit_components(fold_train, features, spec.target, random_state + season)
+        component_values = _component_predictions(models, validation_fold, features)
+        part = pd.DataFrame(index=validation_fold.index)
+        part["actual"] = validation_fold[spec.target].astype(float)
+        for architecture in ARCHITECTURES:
+            part[architecture] = _architecture_prediction(
+                architecture, validation_fold, component_values
+            )
+        validation_parts.append(part)
+        fold_metrics.append(
+            {
+                "season": season,
+                "train_rows": int(len(fold_train)),
+                "validation_rows": int(len(validation_fold)),
+                "candidate_mae": {
+                    architecture: round(
+                        float(mean_absolute_error(part["actual"], part[architecture])), 4
+                    )
+                    for architecture in ARCHITECTURES
+                },
+            }
+        )
 
-    if not meta_parts:
-        raise ValueError(f"No chronological meta-training folds were available for {spec.key}.")
-    meta_train = pd.concat(meta_parts).sort_index()
-    meta_model = Pipeline([("scale", StandardScaler()), ("ridge", Ridge(alpha=4.0, positive=True))])
-    meta_model.fit(meta_train[["baseline", "ridge", "gbm"]].to_numpy(), meta_train["actual"])
+    if not validation_parts:
+        raise ValueError(f"No chronological selection folds were available for {spec.key}.")
+    validation = pd.concat(validation_parts).sort_index()
+    candidate_mae = {
+        architecture: float(mean_absolute_error(validation["actual"], validation[architecture]))
+        for architecture in ARCHITECTURES
+    }
+    selected_architecture = min(candidate_mae, key=candidate_mae.get)
+    selected_components = [name for name, _ in ARCHITECTURES[selected_architecture]]
 
     final_train = frame.loc[frame["season"].lt(holdout_season)]
-    base_models = _fit_base(final_train, features, spec.target, random_state)
-    holdout_stack = _base_predictions(base_models, holdout, features)
-    predictions = np.maximum(0.0, meta_model.predict(holdout_stack))
+    final_models = _fit_components(
+        final_train,
+        features,
+        spec.target,
+        random_state,
+        selected_components,
+    )
+    component_values = _component_predictions(final_models, holdout, features)
+    predictions = _architecture_prediction(selected_architecture, holdout, component_values)
     actual = holdout[spec.target].astype(float).to_numpy()
     baseline = holdout["baseline_prediction"].astype(float).to_numpy()
 
@@ -340,23 +466,34 @@ def train_target(
         "target": spec.key,
         "label": spec.label,
         "train_rows": int(len(final_train)),
-        "meta_rows": int(len(meta_train)),
+        "selection_rows": int(len(validation)),
         "holdout_season": holdout_season,
         "metrics": _metrics(actual, predictions, baseline, spec.tolerance_yards),
+        "position_metrics": _position_metrics(scored),
+        "model_selection": {
+            "selected_architecture": selected_architecture,
+            "selection_metric": "pooled expanding-window MAE",
+            "candidate_mae": {
+                name: round(value, 4)
+                for name, value in sorted(candidate_mae.items(), key=lambda item: item[1])
+            },
+            "folds": fold_metrics,
+        },
     }
     # The holdout result above is immutable evidence.  Only after scoring it do
     # we refit the deployable base estimators through the validated season.
-    deployment_models = _fit_base(
+    deployment_models = _fit_components(
         frame.loc[frame["season"].le(holdout_season)],
         features,
         spec.target,
         random_state,
+        selected_components,
     )
     artifact = {
         "spec": spec,
         "features": features,
-        "base_models": deployment_models,
-        "meta_model": meta_model,
+        "architecture": selected_architecture,
+        "component_models": deployment_models,
         "trained_through_season": holdout_season,
     }
     return report, artifact, scored
@@ -400,8 +537,13 @@ def _promotion_gate(target_reports: list[dict[str, Any]]) -> dict[str, Any]:
             >= criteria["minimum_residual_direction_accuracy"]
         )
         checks.append({"target": target["target"], "passed": passed})
+    projection_passed = all(item["passed"] for item in checks)
     return {
-        "status": "passed" if all(item["passed"] for item in checks) else "failed",
+        # Static promotion additionally requires authentic historical market
+        # validation, which the training stats alone cannot provide.
+        "status": "failed",
+        "projection_status": "passed" if projection_passed else "failed",
+        "reason": "Authentic historical player-prop hit rate has not been evaluated.",
         "criteria": criteria,
         "target_checks": checks,
     }
@@ -428,8 +570,12 @@ def predict_week(
         current = frame.loc[frame["season"].eq(season) & frame["week"].eq(week)].copy()
         if current.empty:
             continue
-        stack = _base_predictions(artifact["base_models"], current, artifact["features"])
-        current["prediction"] = np.maximum(0.0, artifact["meta_model"].predict(stack))
+        component_values = _component_predictions(
+            artifact["component_models"], current, artifact["features"]
+        )
+        current["prediction"] = _architecture_prediction(
+            artifact["architecture"], current, component_values
+        )
         current["target"] = key
         parts.append(current[IDENTITY_COLUMNS + ["target", "prediction"]])
     return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
@@ -444,7 +590,7 @@ def train_and_backtest(
 ) -> tuple[dict[str, Any], dict[str, Any], pd.DataFrame]:
     """Train all yardage models and return report, artifact bundle and rows."""
 
-    meta_values = tuple(meta_seasons or (holdout_season - 2, holdout_season - 1))
+    meta_values = tuple(meta_seasons or range(holdout_season - 4, holdout_season))
     reports: list[dict[str, Any]] = []
     artifacts: dict[str, Any] = {}
     scored_parts: list[pd.DataFrame] = []
@@ -472,13 +618,13 @@ def train_and_backtest(
         "evaluation_design": {
             "type": "chronological_season_holdout",
             "source_seasons": source_seasons,
-            "meta_seasons": list(meta_values),
+            "architecture_selection_seasons": list(meta_values),
             "holdout_season": holdout_season,
             "leakage_controls": [
                 "All player and opponent features are shifted by at least one game.",
                 "Base estimators for a scored season are trained only on earlier seasons.",
-                "The stacking model is fit on chronological pre-holdout folds.",
-                "The final holdout season is never used for fitting or threshold selection.",
+                "Architectures are ranked only on expanding chronological pre-holdout folds.",
+                "The final holdout season is never used for architecture or threshold selection.",
             ],
             "scope_note": (
                 "Accuracy describes player yardage projections for eligible active-player rows. "
@@ -486,9 +632,17 @@ def train_and_backtest(
             ),
         },
         "architecture": {
-            "name": "lagged sequence stack",
-            "base_models": ["five-game rolling baseline", "Ridge regression", "GradientBoostingRegressor"],
-            "meta_model": "positive Ridge regression",
+            "name": "per-target chronological champion",
+            "selection_metric": "pooled expanding-window MAE",
+            "candidate_architectures": list(ARCHITECTURES),
+            "selected_by_target": {
+                item["target"]: item["model_selection"]["selected_architecture"]
+                for item in reports
+            },
+            "design_reason": (
+                "The sample is medium-sized tabular weekly data, so regularized linear and "
+                "tree-boosting families are tested directly instead of assuming a deep network."
+            ),
         },
         "data_audit": {
             "provider": "nflverse",
@@ -500,6 +654,11 @@ def train_and_backtest(
         "targets": reports,
     }
     report_bundle["promotion_gate"] = _promotion_gate(reports)
+    report_bundle["market_validation"] = {
+        "status": "not_evaluated",
+        "reason": "No authentic timestamped historical player-prop archive was supplied.",
+        "required_for_static_promotion": True,
+    }
     artifact_bundle = {
         "schema_version": 1,
         "trained_at_utc": report_bundle["generated_at_utc"],

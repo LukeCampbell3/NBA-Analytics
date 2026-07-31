@@ -61,6 +61,24 @@ def test_features_are_shifted_before_current_game() -> None:
     pd.testing.assert_frame_equal(original_week, modified_week)
 
 
+def test_passing_population_excludes_players_without_prior_pass_volume() -> None:
+    quarterback = make_stats(seasons=[2024], players=1, weeks=6)
+    running_back = quarterback.copy()
+    running_back["player_id"] = "rb-0"
+    running_back["player_display_name"] = "Running Back"
+    running_back["position"] = "RB"
+    running_back["attempts"] = 0.0
+    running_back["completions"] = 0.0
+    running_back["passing_yards"] = 0.0
+    running_back["carries"] = 12.0
+    stats = pd.concat([quarterback, running_back], ignore_index=True)
+
+    passing, _ = build_features(stats, TARGET_SPECS[0])
+
+    assert not passing.empty
+    assert set(passing["position"]) == {"QB"}
+
+
 def test_holdout_training_uses_only_prior_seasons() -> None:
     stats = make_stats()
     report, artifact, scored = train_target(

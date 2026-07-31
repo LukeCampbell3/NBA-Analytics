@@ -20,6 +20,10 @@ from sports.nfl.predictions.pipeline import (  # noqa: E402
     train_and_backtest,
     write_training_outputs,
 )
+from sports.nfl.predictions.market_backtest import (  # noqa: E402
+    evaluate_market_backtest,
+    load_market_archive,
+)
 
 
 NFL_ROOT = REPO_ROOT / "sports" / "nfl"
@@ -40,6 +44,23 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=NFL_ROOT / "web" / "data" / "daily_predictions.json",
         help="Static-site backtest payload (historical holdout rows, not live picks).",
+    )
+    parser.add_argument(
+        "--market-lines",
+        type=Path,
+        default=None,
+        help="Optional authentic historical NFL prop CSV/parquet for hit-rate validation.",
+    )
+    parser.add_argument("--market-minimum-edge", type=float, default=0.0)
+    parser.add_argument(
+        "--market-report",
+        type=Path,
+        default=NFL_ROOT / "data" / "evaluation" / "market_backtest_report.json",
+    )
+    parser.add_argument(
+        "--market-rows",
+        type=Path,
+        default=NFL_ROOT / "data" / "evaluation" / "market_backtest_rows.csv",
     )
     return parser.parse_args()
 
@@ -71,13 +92,18 @@ def build_web_payload(report: dict, rows) -> dict:
     return {
         "schema_version": 1,
         "run_date": report["generated_at_utc"][:10],
-        "publication_status": "validated_backtest",
+        "publication_status": (
+            "validated_backtest"
+            if report.get("promotion_gate", {}).get("status") == "passed"
+            else "research_only"
+        ),
         "mode": "historical_holdout",
         "holdout_season": report["evaluation_design"]["holdout_season"],
         "architecture": report["architecture"],
         "overall": report["overall"],
         "targets": report["targets"],
         "promotion_gate": report["promotion_gate"],
+        "market_validation": report.get("market_validation", {}),
         "methodology": report["evaluation_design"],
         "plays": records,
     }
@@ -96,6 +122,29 @@ def main() -> int:
         holdout_season=args.holdout_season,
         random_state=args.random_state,
     )
+    if args.market_lines is not None:
+        market_report, market_rows = evaluate_market_backtest(
+            rows,
+            load_market_archive(args.market_lines),
+            minimum_edge_yards=args.market_minimum_edge,
+        )
+        report["market_validation"] = market_report
+        projection_passed = report["promotion_gate"].get("projection_status") == "passed"
+        market_passed = market_report["promotion_gate"]["status"] == "passed"
+        report["promotion_gate"]["status"] = (
+            "passed" if projection_passed and market_passed else "failed"
+        )
+        report["promotion_gate"]["reason"] = (
+            "Projection and authentic historical-market gates passed."
+            if report["promotion_gate"]["status"] == "passed"
+            else "Projection or authentic historical-market gate did not pass."
+        )
+        args.market_report.parent.mkdir(parents=True, exist_ok=True)
+        args.market_rows.parent.mkdir(parents=True, exist_ok=True)
+        args.market_report.write_text(
+            json.dumps(market_report, indent=2) + "\n", encoding="utf-8"
+        )
+        market_rows.to_csv(args.market_rows, index=False)
     write_training_outputs(
         report,
         artifact,
