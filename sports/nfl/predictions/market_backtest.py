@@ -185,12 +185,21 @@ def normalize_market_archive(markets: pd.DataFrame) -> tuple[pd.DataFrame, dict[
     )
     audit = {
         "input_rows": int(len(frame)),
+        "accepted_market_rows": int(len(accepted)),
         "accepted_pregame_rows": int(len(accepted)),
         "rejected_synthetic_rows": int(synthetic.sum()),
         "rejected_at_or_after_start_rows": int((after_start & ~synthetic).sum()),
         "rejected_missing_contract_rows": int((missing_required & ~synthetic & ~after_start).sum()),
         "timestamp_verified_rows": int(accepted["timestamp_verified"].sum()),
         "provider_closing_verified_rows": int(explicit_provider_close.loc[accepted.index].sum()),
+        "source_rows": {
+            str(key): int(value)
+            for key, value in accepted["source"].value_counts().sort_index().items()
+        },
+        "bookmaker_rows": {
+            str(key): int(value)
+            for key, value in accepted["bookmaker"].value_counts().sort_index().items()
+        },
     }
     return accepted.reset_index(drop=True), audit
 
@@ -273,7 +282,7 @@ def evaluate_market_backtest(
     ]
     target_decisions = [item["graded_decisions"] for item in by_target]
     distinct_weeks = int(joined[["season", "week"]].drop_duplicates().shape[0])
-    market_gate_passed = bool(
+    performance_gate_passed = bool(
         overall["graded_decisions"] >= 200
         and len(by_target) == 3
         and min(target_decisions, default=0) >= 50
@@ -283,6 +292,9 @@ def evaluate_market_backtest(
         and overall["roi"] is not None
         and overall["roi"] > 0
         and overall["priced_bets"] == overall["bets"]
+    )
+    market_gate_passed = bool(
+        performance_gate_passed
         and audit["accepted_pregame_rows"] == audit["timestamp_verified_rows"]
     )
     report = {
@@ -294,6 +306,21 @@ def evaluate_market_backtest(
         "overall": overall,
         "by_target": by_target,
         "by_position": by_position,
+        "performance_gate": {
+            "status": "passed" if performance_gate_passed else "failed",
+            "purpose": (
+                "Measures whether the model beat the available historical lines; "
+                "it does not waive source-timing requirements for deployment."
+            ),
+            "criteria": {
+                "minimum_overall_graded_decisions": 200,
+                "minimum_graded_decisions_per_target": 50,
+                "minimum_distinct_season_weeks": 8,
+                "overall_hit_rate_wilson_95_lower_bound_above": 0.5,
+                "positive_real_price_roi": True,
+                "all_graded_rows_have_real_prices": True,
+            },
+        },
         "promotion_gate": {
             "status": "passed" if market_gate_passed else "failed",
             "criteria": {

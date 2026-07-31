@@ -53,6 +53,31 @@ season is used to train its latent space before that season is scored.
 
 ## Acquire historical sportsbook lines
 
+The free starting point is XSportsbook's intentionally downloadable Bovada
+archive: 12,598 regular-season player-prop rows for 2021 and 12,913 for 2022,
+including two-sided prices. Download and normalize both seasons with:
+
+```bash
+python sports/nfl/scripts/fetch_xsportsbook_bovada_props.py
+```
+
+The importer discards the source result fields and retains only authentic
+posted lines/prices. The archive is large enough for a development-season
+threshold (2021) and an untouched final market test (2022). It does not contain
+capture timestamps or an explicit closing-line guarantee, so it is eligible for
+the report's performance gate but not the stricter static-deployment provenance
+gate.
+
+After producing leakage-free prediction rows for each season, freeze the edge
+on 2021 and test 2022 once:
+
+```bash
+python sports/nfl/scripts/validate_nfl_market_holdouts.py \
+  --lines sports/nfl/data/raw/xsportsbook_bovada_player_props.csv \
+  --development-predictions sports/nfl/tmp/2021/backtest_rows.csv \
+  --final-predictions sports/nfl/tmp/2022/backtest_rows.csv
+```
+
 The Odds API is the primary source because it offers paid, timestamped
 event-level player-prop snapshots from May 2023 onward. Its current 20,000-credit
 plan is enough for two regular seasons of the three target markets at one region
@@ -94,9 +119,10 @@ after kickoff. Explicit provider closing fields are accepted without inventing
 a timestamp. It grades win/loss/push, hit rate with a Wilson 95% interval,
 American-price ROI, and stat/position breakdowns. Only players with a genuinely
 posted line enter the betting denominator, which removes non-marketed backups
-from sportsbook accuracy without using the outcome to filter them. Promotion
-also requires real prices on every wager and coverage across at least eight
-season-weeks.
+from sportsbook accuracy without using the outcome to filter them. The
+performance gate answers whether the model beat the available lines. Promotion
+additionally requires verified pregame timing, real prices on every wager, and
+coverage across at least eight season-weeks.
 
 Training can attach the same archive directly:
 

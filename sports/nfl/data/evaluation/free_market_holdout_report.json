@@ -1,0 +1,1064 @@
+{
+  "status": "failed",
+  "design": {
+    "development_season": 2021,
+    "final_untouched_season": 2022,
+    "selection_rule": "Choose the smallest fixed edge candidate whose development performance gate passes; apply it once to the later season.",
+    "edge_candidates_yards": [
+      0.0,
+      2.5,
+      5.0,
+      7.5,
+      10.0,
+      12.5,
+      15.0,
+      20.0,
+      25.0,
+      30.0,
+      40.0,
+      50.0
+    ],
+    "selected_edge_yards": 2.5,
+    "diagnostic_final_edge_yards": 2.5,
+    "final_season_was_not_used_for_threshold_selection": true
+  },
+  "development_grid": [
+    {
+      "minimum_edge_yards": 0.0,
+      "overall": {
+        "bets": 3347,
+        "graded_decisions": 3347,
+        "wins": 1777,
+        "losses": 1570,
+        "pushes": 0,
+        "hit_rate": 0.5309,
+        "hit_rate_wilson_95": [
+          0.514,
+          0.5478
+        ],
+        "priced_bets": 3347,
+        "roi": -0.0043,
+        "profit_units": -14.4981
+      },
+      "by_target": [
+        {
+          "target": "passing",
+          "bets": 464,
+          "graded_decisions": 464,
+          "wins": 246,
+          "losses": 218,
+          "pushes": 0,
+          "hit_rate": 0.5302,
+          "hit_rate_wilson_95": [
+            0.4847,
+            0.5752
+          ],
+          "priced_bets": 464,
+          "roi": -0.0075,
+          "profit_units": -3.4779
+        },
+        {
+          "target": "receiving",
+          "bets": 2049,
+          "graded_decisions": 2049,
+          "wins": 1096,
+          "losses": 953,
+          "pushes": 0,
+          "hit_rate": 0.5349,
+          "hit_rate_wilson_95": [
+            0.5133,
+            0.5564
+          ],
+          "priced_bets": 2049,
+          "roi": 0.0026,
+          "profit_units": 5.2683
+        },
+        {
+          "target": "rushing",
+          "bets": 834,
+          "graded_decisions": 834,
+          "wins": 435,
+          "losses": 399,
+          "pushes": 0,
+          "hit_rate": 0.5216,
+          "hit_rate_wilson_95": [
+            0.4877,
+            0.5553
+          ],
+          "priced_bets": 834,
+          "roi": -0.0195,
+          "profit_units": -16.2885
+        }
+      ],
+      "distinct_season_weeks": 18,
+      "performance_gate": "failed"
+    },
+    {
+      "minimum_edge_yards": 2.5,
+      "overall": {
+        "bets": 2678,
+        "graded_decisions": 2678,
+        "wins": 1463,
+        "losses": 1215,
+        "pushes": 0,
+        "hit_rate": 0.5463,
+        "hit_rate_wilson_95": [
+          0.5274,
+          0.5651
+        ],
+        "priced_bets": 2678,
+        "roi": 0.0248,
+        "profit_units": 66.2845
+      },
+      "by_target": [
+        {
+          "target": "passing",
+          "bets": 419,
+          "graded_decisions": 419,
+          "wins": 225,
+          "losses": 194,
+          "pushes": 0,
+          "hit_rate": 0.537,
+          "hit_rate_wilson_95": [
+            0.4891,
+            0.5842
+          ],
+          "priced_bets": 419,
+          "roi": 0.0054,
+          "profit_units": 2.258
+        },
+        {
+          "target": "receiving",
+          "bets": 1581,
+          "graded_decisions": 1581,
+          "wins": 873,
+          "losses": 708,
+          "pushes": 0,
+          "hit_rate": 0.5522,
+          "hit_rate_wilson_95": [
+            0.5276,
+            0.5765
+          ],
+          "priced_bets": 1581,
+          "roi": 0.035,
+          "profit_units": 55.3824
+        },
+        {
+          "target": "rushing",
+          "bets": 678,
+          "graded_decisions": 678,
+          "wins": 365,
+          "losses": 313,
+          "pushes": 0,
+          "hit_rate": 0.5383,
+          "hit_rate_wilson_95": [
+            0.5007,
+            0.5756
+          ],
+          "priced_bets": 678,
+          "roi": 0.0127,
+          "profit_units": 8.6442
+        }
+      ],
+      "distinct_season_weeks": 18,
+      "performance_gate": "passed"
+    },
+    {
+      "minimum_edge_yards": 5.0,
+      "overall": {
+        "bets": 2058,
+        "graded_decisions": 2058,
+        "wins": 1137,
+        "losses": 921,
+        "pushes": 0,
+        "hit_rate": 0.5525,
+        "hit_rate_wilson_95": [
+          0.5309,
+          0.5738
+        ],
+        "priced_bets": 2058,
+        "roi": 0.0362,
+        "profit_units": 74.5127
+      },
+      "by_target": [
+        {
+          "target": "passing",
+          "bets": 396,
+          "graded_decisions": 396,
+          "wins": 216,
+          "losses": 180,
+          "pushes": 0,
+          "hit_rate": 0.5455,
+          "hit_rate_wilson_95": [
+            0.4962,
+            0.5938
+          ],
+          "priced_bets": 396,
+          "roi": 0.0205,
+          "profit_units": 8.1358
+        },
+        {
+          "target": "receiving",
+          "bets": 1138,
+          "graded_decisions": 1138,
+          "wins": 648,
+          "losses": 490,
+          "pushes": 0,
+          "hit_rate": 0.5694,
+          "hit_rate_wilson_95": [
+            0.5405,
+            0.5979
+          ],
+          "priced_bets": 1138,
+          "roi": 0.0674,
+          "profit_units": 76.7474
+        },
+        {
+          "target": "rushing",
+          "bets": 524,
+          "graded_decisions": 524,
+          "wins": 273,
+          "losses": 251,
+          "pushes": 0,
+          "hit_rate": 0.521,
+          "hit_rate_wilson_95": [
+            0.4782,
+            0.5635
+          ],
+          "priced_bets": 524,
+          "roi": -0.0198,
+          "profit_units": -10.3705
+        }
+      ],
+      "distinct_season_weeks": 18,
+      "performance_gate": "passed"
+    },
+    {
+      "minimum_edge_yards": 7.5,
+      "overall": {
+        "bets": 1559,
+        "graded_decisions": 1559,
+        "wins": 858,
+        "losses": 701,
+        "pushes": 0,
+        "hit_rate": 0.5504,
+        "hit_rate_wilson_95": [
+          0.5256,
+          0.5749
+        ],
+        "priced_bets": 1559,
+        "roi": 0.0336,
+        "profit_units": 52.3615
+      },
+      "by_target": [
+        {
+          "target": "passing",
+          "bets": 366,
+          "graded_decisions": 366,
+          "wins": 200,
+          "losses": 166,
+          "pushes": 0,
+          "hit_rate": 0.5464,
+          "hit_rate_wilson_95": [
+            0.4952,
+            0.5967
+          ],
+          "priced_bets": 366,
+          "roi": 0.0232,
+          "profit_units": 8.5023
+        },
+        {
+          "target": "receiving",
+          "bets": 789,
+          "graded_decisions": 789,
+          "wins": 448,
+          "losses": 341,
+          "pushes": 0,
+          "hit_rate": 0.5678,
+          "hit_rate_wilson_95": [
+            0.533,
+            0.602
+          ],
+          "priced_bets": 789,
+          "roi": 0.0661,
+          "profit_units": 52.13
+        },
+        {
+          "target": "rushing",
+          "bets": 404,
+          "graded_decisions": 404,
+          "wins": 210,
+          "losses": 194,
+          "pushes": 0,
+          "hit_rate": 0.5198,
+          "hit_rate_wilson_95": [
+            0.4711,
+            0.5681
+          ],
+          "priced_bets": 404,
+          "roi": -0.0205,
+          "profit_units": -8.2708
+        }
+      ],
+      "distinct_season_weeks": 18,
+      "performance_gate": "passed"
+    },
+    {
+      "minimum_edge_yards": 10.0,
+      "overall": {
+        "bets": 1160,
+        "graded_decisions": 1160,
+        "wins": 656,
+        "losses": 504,
+        "pushes": 0,
+        "hit_rate": 0.5655,
+        "hit_rate_wilson_95": [
+          0.5368,
+          0.5938
+        ],
+        "priced_bets": 1160,
+        "roi": 0.0615,
+        "profit_units": 71.3911
+      },
+      "by_target": [
+        {
+          "target": "passing",
+          "bets": 323,
+          "graded_decisions": 323,
+          "wins": 184,
+          "losses": 139,
+          "pushes": 0,
+          "hit_rate": 0.5697,
+          "hit_rate_wilson_95": [
+            0.5152,
+            0.6225
+          ],
+          "priced_bets": 323,
+          "roi": 0.0668,
+          "profit_units": 21.5892
+        },
+        {
+          "target": "receiving",
+          "bets": 517,
+          "graded_decisions": 517,
+          "wins": 301,
+          "losses": 216,
+          "pushes": 0,
+          "hit_rate": 0.5822,
+          "hit_rate_wilson_95": [
+            0.5392,
+            0.624
+          ],
+          "priced_bets": 517,
+          "roi": 0.0923,
+          "profit_units": 47.7017
+        },
+        {
+          "target": "rushing",
+          "bets": 320,
+          "graded_decisions": 320,
+          "wins": 171,
+          "losses": 149,
+          "pushes": 0,
+          "hit_rate": 0.5344,
+          "hit_rate_wilson_95": [
+            0.4796,
+            0.5883
+          ],
+          "priced_bets": 320,
+          "roi": 0.0066,
+          "profit_units": 2.1001
+        }
+      ],
+      "distinct_season_weeks": 18,
+      "performance_gate": "passed"
+    },
+    {
+      "minimum_edge_yards": 12.5,
+      "overall": {
+        "bets": 860,
+        "graded_decisions": 860,
+        "wins": 495,
+        "losses": 365,
+        "pushes": 0,
+        "hit_rate": 0.5756,
+        "hit_rate_wilson_95": [
+          0.5423,
+          0.6082
+        ],
+        "priced_bets": 860,
+        "roi": 0.0808,
+        "profit_units": 69.5086
+      },
+      "by_target": [
+        {
+          "target": "passing",
+          "bets": 294,
+          "graded_decisions": 294,
+          "wins": 167,
+          "losses": 127,
+          "pushes": 0,
+          "hit_rate": 0.568,
+          "hit_rate_wilson_95": [
+            0.5109,
+            0.6234
+          ],
+          "priced_bets": 294,
+          "roi": 0.0633,
+          "profit_units": 18.613
+        },
+        {
+          "target": "receiving",
+          "bets": 339,
+          "graded_decisions": 339,
+          "wins": 200,
+          "losses": 139,
+          "pushes": 0,
+          "hit_rate": 0.59,
+          "hit_rate_wilson_95": [
+            0.5369,
+            0.641
+          ],
+          "priced_bets": 339,
+          "roi": 0.1082,
+          "profit_units": 36.6637
+        },
+        {
+          "target": "rushing",
+          "bets": 227,
+          "graded_decisions": 227,
+          "wins": 128,
+          "losses": 99,
+          "pushes": 0,
+          "hit_rate": 0.5639,
+          "hit_rate_wilson_95": [
+            0.4988,
+            0.6268
+          ],
+          "priced_bets": 227,
+          "roi": 0.0627,
+          "profit_units": 14.2319
+        }
+      ],
+      "distinct_season_weeks": 18,
+      "performance_gate": "passed"
+    },
+    {
+      "minimum_edge_yards": 15.0,
+      "overall": {
+        "bets": 628,
+        "graded_decisions": 628,
+        "wins": 359,
+        "losses": 269,
+        "pushes": 0,
+        "hit_rate": 0.5717,
+        "hit_rate_wilson_95": [
+          0.5326,
+          0.6098
+        ],
+        "priced_bets": 628,
+        "roi": 0.0745,
+        "profit_units": 46.7929
+      },
+      "by_target": [
+        {
+          "target": "passing",
+          "bets": 265,
+          "graded_decisions": 265,
+          "wins": 152,
+          "losses": 113,
+          "pushes": 0,
+          "hit_rate": 0.5736,
+          "hit_rate_wilson_95": [
+            0.5134,
+            0.6317
+          ],
+          "priced_bets": 265,
+          "roi": 0.0738,
+          "profit_units": 19.5695
+        },
+        {
+          "target": "receiving",
+          "bets": 207,
+          "graded_decisions": 207,
+          "wins": 126,
+          "losses": 81,
+          "pushes": 0,
+          "hit_rate": 0.6087,
+          "hit_rate_wilson_95": [
+            0.5408,
+            0.6726
+          ],
+          "priced_bets": 207,
+          "roi": 0.1453,
+          "profit_units": 30.0812
+        },
+        {
+          "target": "rushing",
+          "bets": 156,
+          "graded_decisions": 156,
+          "wins": 81,
+          "losses": 75,
+          "pushes": 0,
+          "hit_rate": 0.5192,
+          "hit_rate_wilson_95": [
+            0.4413,
+            0.5962
+          ],
+          "priced_bets": 156,
+          "roi": -0.0183,
+          "profit_units": -2.8577
+        }
+      ],
+      "distinct_season_weeks": 18,
+      "performance_gate": "passed"
+    },
+    {
+      "minimum_edge_yards": 20.0,
+      "overall": {
+        "bets": 362,
+        "graded_decisions": 362,
+        "wins": 199,
+        "losses": 163,
+        "pushes": 0,
+        "hit_rate": 0.5497,
+        "hit_rate_wilson_95": [
+          0.4982,
+          0.6002
+        ],
+        "priced_bets": 362,
+        "roi": 0.0314,
+        "profit_units": 11.3822
+      },
+      "by_target": [
+        {
+          "target": "passing",
+          "bets": 198,
+          "graded_decisions": 198,
+          "wins": 110,
+          "losses": 88,
+          "pushes": 0,
+          "hit_rate": 0.5556,
+          "hit_rate_wilson_95": [
+            0.4859,
+            0.6231
+          ],
+          "priced_bets": 198,
+          "roi": 0.042,
+          "profit_units": 8.3085
+        },
+        {
+          "target": "receiving",
+          "bets": 85,
+          "graded_decisions": 85,
+          "wins": 49,
+          "losses": 36,
+          "pushes": 0,
+          "hit_rate": 0.5765,
+          "hit_rate_wilson_95": [
+            0.4704,
+            0.676
+          ],
+          "priced_bets": 85,
+          "roi": 0.0856,
+          "profit_units": 7.2788
+        },
+        {
+          "target": "rushing",
+          "bets": 79,
+          "graded_decisions": 79,
+          "wins": 40,
+          "losses": 39,
+          "pushes": 0,
+          "hit_rate": 0.5063,
+          "hit_rate_wilson_95": [
+            0.3984,
+            0.6137
+          ],
+          "priced_bets": 79,
+          "roi": -0.0532,
+          "profit_units": -4.2051
+        }
+      ],
+      "distinct_season_weeks": 18,
+      "performance_gate": "failed"
+    },
+    {
+      "minimum_edge_yards": 25.0,
+      "overall": {
+        "bets": 225,
+        "graded_decisions": 225,
+        "wins": 123,
+        "losses": 102,
+        "pushes": 0,
+        "hit_rate": 0.5467,
+        "hit_rate_wilson_95": [
+          0.4814,
+          0.6104
+        ],
+        "priced_bets": 225,
+        "roi": 0.0272,
+        "profit_units": 6.1163
+      },
+      "by_target": [
+        {
+          "target": "passing",
+          "bets": 149,
+          "graded_decisions": 149,
+          "wins": 79,
+          "losses": 70,
+          "pushes": 0,
+          "hit_rate": 0.5302,
+          "hit_rate_wilson_95": [
+            0.4503,
+            0.6086
+          ],
+          "priced_bets": 149,
+          "roi": -0.0032,
+          "profit_units": -0.4772
+        },
+        {
+          "target": "receiving",
+          "bets": 31,
+          "graded_decisions": 31,
+          "wins": 21,
+          "losses": 10,
+          "pushes": 0,
+          "hit_rate": 0.6774,
+          "hit_rate_wilson_95": [
+            0.5014,
+            0.8143
+          ],
+          "priced_bets": 31,
+          "roi": 0.2775,
+          "profit_units": 8.6032
+        },
+        {
+          "target": "rushing",
+          "bets": 45,
+          "graded_decisions": 45,
+          "wins": 23,
+          "losses": 22,
+          "pushes": 0,
+          "hit_rate": 0.5111,
+          "hit_rate_wilson_95": [
+            0.37,
+            0.6504
+          ],
+          "priced_bets": 45,
+          "roi": -0.0447,
+          "profit_units": -2.0097
+        }
+      ],
+      "distinct_season_weeks": 18,
+      "performance_gate": "failed"
+    },
+    {
+      "minimum_edge_yards": 30.0,
+      "overall": {
+        "bets": 156,
+        "graded_decisions": 156,
+        "wins": 84,
+        "losses": 72,
+        "pushes": 0,
+        "hit_rate": 0.5385,
+        "hit_rate_wilson_95": [
+          0.4602,
+          0.6148
+        ],
+        "priced_bets": 156,
+        "roi": 0.0116,
+        "profit_units": 1.8098
+      },
+      "by_target": [
+        {
+          "target": "passing",
+          "bets": 120,
+          "graded_decisions": 120,
+          "wins": 65,
+          "losses": 55,
+          "pushes": 0,
+          "hit_rate": 0.5417,
+          "hit_rate_wilson_95": [
+            0.4526,
+            0.6281
+          ],
+          "priced_bets": 120,
+          "roi": 0.0184,
+          "profit_units": 2.2052
+        },
+        {
+          "target": "receiving",
+          "bets": 8,
+          "graded_decisions": 8,
+          "wins": 6,
+          "losses": 2,
+          "pushes": 0,
+          "hit_rate": 0.75,
+          "hit_rate_wilson_95": [
+            0.4093,
+            0.9285
+          ],
+          "priced_bets": 8,
+          "roi": 0.4022,
+          "profit_units": 3.2174
+        },
+        {
+          "target": "rushing",
+          "bets": 28,
+          "graded_decisions": 28,
+          "wins": 13,
+          "losses": 15,
+          "pushes": 0,
+          "hit_rate": 0.4643,
+          "hit_rate_wilson_95": [
+            0.2953,
+            0.6419
+          ],
+          "priced_bets": 28,
+          "roi": -0.129,
+          "profit_units": -3.6128
+        }
+      ],
+      "distinct_season_weeks": 18,
+      "performance_gate": "failed"
+    },
+    {
+      "minimum_edge_yards": 40.0,
+      "overall": {
+        "bets": 76,
+        "graded_decisions": 76,
+        "wins": 36,
+        "losses": 40,
+        "pushes": 0,
+        "hit_rate": 0.4737,
+        "hit_rate_wilson_95": [
+          0.3654,
+          0.5845
+        ],
+        "priced_bets": 76,
+        "roi": -0.113,
+        "profit_units": -8.5914
+      },
+      "by_target": [
+        {
+          "target": "passing",
+          "bets": 68,
+          "graded_decisions": 68,
+          "wins": 33,
+          "losses": 35,
+          "pushes": 0,
+          "hit_rate": 0.4853,
+          "hit_rate_wilson_95": [
+            0.3705,
+            0.6017
+          ],
+          "priced_bets": 68,
+          "roi": -0.0912,
+          "profit_units": -6.2001
+        },
+        {
+          "target": "receiving",
+          "bets": 1,
+          "graded_decisions": 1,
+          "wins": 1,
+          "losses": 0,
+          "pushes": 0,
+          "hit_rate": 1.0,
+          "hit_rate_wilson_95": [
+            0.2065,
+            1.0
+          ],
+          "priced_bets": 1,
+          "roi": 0.8696,
+          "profit_units": 0.8696
+        },
+        {
+          "target": "rushing",
+          "bets": 7,
+          "graded_decisions": 7,
+          "wins": 2,
+          "losses": 5,
+          "pushes": 0,
+          "hit_rate": 0.2857,
+          "hit_rate_wilson_95": [
+            0.0822,
+            0.6411
+          ],
+          "priced_bets": 7,
+          "roi": -0.4658,
+          "profit_units": -3.2609
+        }
+      ],
+      "distinct_season_weeks": 18,
+      "performance_gate": "failed"
+    },
+    {
+      "minimum_edge_yards": 50.0,
+      "overall": {
+        "bets": 43,
+        "graded_decisions": 43,
+        "wins": 25,
+        "losses": 18,
+        "pushes": 0,
+        "hit_rate": 0.5814,
+        "hit_rate_wilson_95": [
+          0.4333,
+          0.7162
+        ],
+        "priced_bets": 43,
+        "roi": 0.0926,
+        "profit_units": 3.9799
+      },
+      "by_target": [
+        {
+          "target": "passing",
+          "bets": 39,
+          "graded_decisions": 39,
+          "wins": 24,
+          "losses": 15,
+          "pushes": 0,
+          "hit_rate": 0.6154,
+          "hit_rate_wilson_95": [
+            0.459,
+            0.7511
+          ],
+          "priced_bets": 39,
+          "roi": 0.1567,
+          "profit_units": 6.1104
+        },
+        {
+          "target": "receiving",
+          "bets": 1,
+          "graded_decisions": 1,
+          "wins": 1,
+          "losses": 0,
+          "pushes": 0,
+          "hit_rate": 1.0,
+          "hit_rate_wilson_95": [
+            0.2065,
+            1.0
+          ],
+          "priced_bets": 1,
+          "roi": 0.8696,
+          "profit_units": 0.8696
+        },
+        {
+          "target": "rushing",
+          "bets": 3,
+          "graded_decisions": 3,
+          "wins": 0,
+          "losses": 3,
+          "pushes": 0,
+          "hit_rate": 0.0,
+          "hit_rate_wilson_95": [
+            0.0,
+            0.5615
+          ],
+          "priced_bets": 3,
+          "roi": -1.0,
+          "profit_units": -3.0
+        }
+      ],
+      "distinct_season_weeks": 18,
+      "performance_gate": "failed"
+    }
+  ],
+  "final_test": {
+    "status": "insufficient_or_failed",
+    "minimum_edge_yards": 2.5,
+    "line_audit": {
+      "input_rows": 8242,
+      "accepted_market_rows": 8242,
+      "accepted_pregame_rows": 8242,
+      "rejected_synthetic_rows": 0,
+      "rejected_at_or_after_start_rows": 0,
+      "rejected_missing_contract_rows": 0,
+      "timestamp_verified_rows": 0,
+      "provider_closing_verified_rows": 0,
+      "source_rows": {
+        "xsportsbook_bovada_archive": 8242
+      },
+      "bookmaker_rows": {
+        "bovada": 8242
+      }
+    },
+    "matched_market_rows": 2606,
+    "distinct_season_weeks": 18,
+    "overall": {
+      "bets": 2606,
+      "graded_decisions": 2606,
+      "wins": 1329,
+      "losses": 1277,
+      "pushes": 0,
+      "hit_rate": 0.51,
+      "hit_rate_wilson_95": [
+        0.4908,
+        0.5291
+      ],
+      "priced_bets": 2606,
+      "roi": -0.0451,
+      "profit_units": -117.5181
+    },
+    "by_target": [
+      {
+        "target": "passing",
+        "bets": 422,
+        "graded_decisions": 422,
+        "wins": 227,
+        "losses": 195,
+        "pushes": 0,
+        "hit_rate": 0.5379,
+        "hit_rate_wilson_95": [
+          0.4902,
+          0.5849
+        ],
+        "priced_bets": 422,
+        "roi": 0.0048,
+        "profit_units": 2.0399
+      },
+      {
+        "target": "receiving",
+        "bets": 1462,
+        "graded_decisions": 1462,
+        "wins": 741,
+        "losses": 721,
+        "pushes": 0,
+        "hit_rate": 0.5068,
+        "hit_rate_wilson_95": [
+          0.4812,
+          0.5324
+        ],
+        "priced_bets": 1462,
+        "roi": -0.0496,
+        "profit_units": -72.5881
+      },
+      {
+        "target": "rushing",
+        "bets": 722,
+        "graded_decisions": 722,
+        "wins": 361,
+        "losses": 361,
+        "pushes": 0,
+        "hit_rate": 0.5,
+        "hit_rate_wilson_95": [
+          0.4636,
+          0.5364
+        ],
+        "priced_bets": 722,
+        "roi": -0.0651,
+        "profit_units": -46.9699
+      }
+    ],
+    "by_position": [
+      {
+        "position": "FB",
+        "bets": 1,
+        "graded_decisions": 1,
+        "wins": 0,
+        "losses": 1,
+        "pushes": 0,
+        "hit_rate": 0.0,
+        "hit_rate_wilson_95": [
+          0.0,
+          0.7935
+        ],
+        "priced_bets": 1,
+        "roi": -1.0,
+        "profit_units": -1.0
+      },
+      {
+        "position": "QB",
+        "bets": 606,
+        "graded_decisions": 606,
+        "wins": 323,
+        "losses": 283,
+        "pushes": 0,
+        "hit_rate": 0.533,
+        "hit_rate_wilson_95": [
+          0.4932,
+          0.5724
+        ],
+        "priced_bets": 606,
+        "roi": -0.006,
+        "profit_units": -3.6468
+      },
+      {
+        "position": "RB",
+        "bets": 797,
+        "graded_decisions": 797,
+        "wins": 401,
+        "losses": 396,
+        "pushes": 0,
+        "hit_rate": 0.5031,
+        "hit_rate_wilson_95": [
+          0.4685,
+          0.5378
+        ],
+        "priced_bets": 797,
+        "roi": -0.0559,
+        "profit_units": -44.5868
+      },
+      {
+        "position": "TE",
+        "bets": 319,
+        "graded_decisions": 319,
+        "wins": 179,
+        "losses": 140,
+        "pushes": 0,
+        "hit_rate": 0.5611,
+        "hit_rate_wilson_95": [
+          0.5063,
+          0.6145
+        ],
+        "priced_bets": 319,
+        "roi": 0.0466,
+        "profit_units": 14.8628
+      },
+      {
+        "position": "WR",
+        "bets": 883,
+        "graded_decisions": 883,
+        "wins": 426,
+        "losses": 457,
+        "pushes": 0,
+        "hit_rate": 0.4824,
+        "hit_rate_wilson_95": [
+          0.4496,
+          0.5154
+        ],
+        "priced_bets": 883,
+        "roi": -0.0942,
+        "profit_units": -83.1474
+      }
+    ],
+    "performance_gate": {
+      "status": "failed",
+      "purpose": "Measures whether the model beat the available historical lines; it does not waive source-timing requirements for deployment.",
+      "criteria": {
+        "minimum_overall_graded_decisions": 200,
+        "minimum_graded_decisions_per_target": 50,
+        "minimum_distinct_season_weeks": 8,
+        "overall_hit_rate_wilson_95_lower_bound_above": 0.5,
+        "positive_real_price_roi": true,
+        "all_graded_rows_have_real_prices": true
+      }
+    },
+    "promotion_gate": {
+      "status": "failed",
+      "criteria": {
+        "minimum_overall_graded_decisions": 200,
+        "minimum_graded_decisions_per_target": 50,
+        "minimum_distinct_season_weeks": 8,
+        "overall_hit_rate_wilson_95_lower_bound_above": 0.5,
+        "positive_real_price_roi": true,
+        "all_graded_rows_have_real_prices": true,
+        "all_rows_verified_pregame_or_provider_close": true
+      }
+    }
+  },
+  "promotion_gate": {
+    "status": "failed",
+    "reason": "Development selection, final performance, or strict source provenance failed."
+  }
+}

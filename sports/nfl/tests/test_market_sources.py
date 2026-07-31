@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import pandas as pd
 
-from sports.nfl.predictions.market_sources import flatten_sportsgameodds_closing_lines
+from sports.nfl.predictions.market_sources import (
+    flatten_sportsgameodds_closing_lines,
+    flatten_xsportsbook_bovada_archive,
+)
 
 
 def _payload() -> dict:
@@ -83,3 +86,42 @@ def test_sportsgameodds_adapter_does_not_fall_back_to_current_live_values() -> N
     assert rows.empty
     assert audit["book_sides_without_close"] == 1
     assert audit["dropped_one_sided_rows"] == 1
+
+
+def test_xsportsbook_adapter_keeps_lines_prices_and_discards_results() -> None:
+    raw = pd.DataFrame(
+        {
+            "Game_Id": [10, 10, 10, 10],
+            "Player": ["Quarter Back\u00a0", "Running Back", "Wide Receiver", "Wide Receiver"],
+            "Player.id": [1, 2, 3, 3],
+            "Betting Event": [
+                " Passing Yards ", "Rushing Yards", "Receiving Yards", "Receiving Yards"
+            ],
+            "Team": ["LAR"] * 4,
+            "Opp": ["BUF"] * 4,
+            "Hteam": ["LAR"] * 4,
+            "Ateam": ["BUF"] * 4,
+            "Week": ["22W01"] * 4,
+            "O-Line": [250.5, 55.5, 65.5, 66.5],
+            "O-Odds": [-110, 105, -115, -115],
+            "U-Line": [250.5, 55.5, 65.5, 66.5],
+            "U-Odds": [-120, -135, -115, -115],
+            "O-Result": [300, 40, 80, 80],
+        }
+    )
+    schedule = pd.DataFrame(
+        {
+            "week": [1],
+            "home_team": ["LA"],
+            "away_team": ["BUF"],
+            "commence_time_utc": [pd.Timestamp("2022-09-09T00:20:00Z")],
+        }
+    )
+    rows, audit = flatten_xsportsbook_bovada_archive(raw, season=2022, schedule=schedule)
+    assert len(rows) == 2  # conflicting receiving lines are conservatively removed
+    assert set(rows["market"]) == {"player_pass_yds", "player_rush_yds"}
+    assert rows["commence_time_utc"].notna().all()
+    assert rows["over_price"].tolist() == [-110, 105]
+    assert not rows["pregame_verified"].any()
+    assert "O-Result" not in rows.columns
+    assert audit["ambiguous_duplicate_rows"] == 2

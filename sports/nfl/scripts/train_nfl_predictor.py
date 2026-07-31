@@ -38,6 +38,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cache", type=Path, default=NFL_ROOT / "data" / "raw" / "player_stats.parquet")
     parser.add_argument("--start-season", type=int, default=2018)
     parser.add_argument("--holdout-season", type=int, default=2025)
+    parser.add_argument(
+        "--selection-seasons",
+        default=None,
+        help="Optional comma-separated pre-holdout architecture-selection seasons.",
+    )
     parser.add_argument("--random-state", type=int, default=42)
     parser.add_argument("--report", type=Path, default=NFL_ROOT / "data" / "evaluation" / "backtest_report.json")
     parser.add_argument("--rows", type=Path, default=NFL_ROOT / "data" / "evaluation" / "backtest_rows.csv")
@@ -132,9 +137,15 @@ def main() -> int:
         stats = pd.concat([stats, *supplements], ignore_index=True).sort_values(
             ["season", "week", "player_id"]
         )
+    selection_seasons = (
+        tuple(int(value.strip()) for value in args.selection_seasons.split(",") if value.strip())
+        if args.selection_seasons
+        else None
+    )
     report, artifact, rows = train_and_backtest_latent(
         stats,
         holdout_season=args.holdout_season,
+        selection_seasons=selection_seasons,
         random_state=args.random_state,
     )
     if args.market_lines is not None:

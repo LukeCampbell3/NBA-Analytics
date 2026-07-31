@@ -16,6 +16,18 @@ SPORTSGAMEODDS_STAT_MARKETS = {
     "receiving_yards": "player_reception_yds",
 }
 
+XSPORTSBOOK_STAT_MARKETS = {
+    "passing yards": "player_pass_yds",
+    "rushing yards": "player_rush_yds",
+    "receiving yards": "player_reception_yds",
+}
+
+XSPORTSBOOK_TEAM_ALIASES = {
+    "JAC": "JAX",
+    "LAR": "LA",
+    "LVS": "LV",
+}
+
 
 def _events(payload: Mapping[str, Any] | Iterable[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
     if isinstance(payload, Mapping):
@@ -171,3 +183,144 @@ def flatten_sportsgameodds_closing_lines(
     audit["normalized_rows"] = int(len(frame))
     audit["two_sided_price_rows"] = int(len(frame))
     return frame, audit
+
+
+def _xsportsbook_team(value: Any) -> str:
+    team = str(value or "").strip().upper()
+    return XSPORTSBOOK_TEAM_ALIASES.get(team, team)
+
+
+def _schedule_kickoff_lookup(schedule: pd.DataFrame) -> dict[tuple[int, str, str], Any]:
+    if schedule.empty:
+        return {}
+    frame = schedule.copy()
+    if "commence_time_utc" not in frame.columns:
+        if not {"gameday", "gametime"}.issubset(frame.columns):
+            return {}
+        local = pd.to_datetime(
+            frame["gameday"].astype(str) + " " + frame["gametime"].astype(str),
+            errors="coerce",
+        )
+        frame["commence_time_utc"] = local.dt.tz_localize(
+            "America/New_York", ambiguous="NaT", nonexistent="shift_forward"
+        ).dt.tz_convert("UTC")
+    lookup: dict[tuple[int, str, str], Any] = {}
+    for row in frame.itertuples(index=False):
+        week = int(getattr(row, "week"))
+        home = _xsportsbook_team(getattr(row, "home_team"))
+        away = _xsportsbook_team(getattr(row, "away_team"))
+        kickoff = getattr(row, "commence_time_utc")
+        lookup[(week, home, away)] = kickoff
+        lookup[(week, away, home)] = kickoff
+    return lookup
+
+
+def flatten_xsportsbook_bovada_archive(
+    raw: pd.DataFrame,
+    *,
+    season: int,
+    schedule: pd.DataFrame | None = None,
+) -> tuple[pd.DataFrame, dict[str, int]]:
+    """Normalize XSportsbook's intentionally downloadable Bovada prop archive.
+
+    The publisher identifies the rows as historical Bovada prop bets and
+    provides both side prices, but it does not publish capture timestamps or
+    explicitly call the observations closing lines.  Rows are therefore useful
+    for hit-rate/ROI research but deliberately remain unverified for the strict
+    deployment gate.
+    """
+
+    required = {
+        "Game_Id", "Player", "Betting Event", "Team", "Opp", "Week",
+        "O-Line", "O-Odds", "U-Line", "U-Odds",
+    }
+    missing = required.difference(raw.columns)
+    if missing:
+        raise ValueError(f"XSportsbook archive is missing columns: {sorted(missing)}")
+
+    frame = raw.copy()
+    frame["market"] = (
+        frame["Betting Event"].astype(str).str.replace("\u00a0", " ").str.strip().str.lower()
+        .map(XSPORTSBOOK_STAT_MARKETS)
+    )
+    audit = {
+        "input_rows": int(len(frame)),
+        "non_target_market_rows": int(frame["market"].isna().sum()),
+    }
+    frame = frame.loc[frame["market"].notna()].copy()
+    frame["player"] = (
+        frame["Player"].astype(str).str.replace("\u00a0", " ").str.strip()
+    )
+    frame["week"] = pd.to_numeric(
+        frame["Week"].astype(str).str.extract(r"W(\d{1,2})", expand=False),
+        errors="coerce",
+    )
+    for column in ("O-Line", "O-Odds", "U-Line", "U-Odds"):
+        frame[column] = pd.to_numeric(frame[column], errors="coerce")
+    line_mismatch = frame["O-Line"].notna() & frame["U-Line"].notna() & ~frame[
+        "O-Line"
+    ].eq(frame["U-Line"])
+    invalid = (
+        frame["player"].eq("")
+        | frame["week"].isna()
+        | ~frame["week"].between(1, 18)
+        | frame[["O-Line", "O-Odds", "U-Line", "U-Odds"]].isna().any(axis=1)
+        | frame["O-Odds"].eq(0)
+        | frame["U-Odds"].eq(0)
+        | line_mismatch
+    )
+    audit["line_mismatch_rows"] = int(line_mismatch.sum())
+    audit["invalid_contract_rows"] = int(invalid.sum())
+    frame = frame.loc[~invalid].copy()
+    frame["week"] = frame["week"].astype(int)
+    frame["event_id"] = frame["Game_Id"].astype(str)
+    frame["team_key"] = frame["Team"].map(_xsportsbook_team)
+    frame["opponent_key"] = frame["Opp"].map(_xsportsbook_team)
+
+    identity = ["event_id", "player", "market"]
+    signature = ["O-Line", "O-Odds", "U-Line", "U-Odds"]
+    signature_counts = frame.groupby(identity, dropna=False)[signature].apply(
+        lambda group: len(group.drop_duplicates())
+    )
+    ambiguous_keys = set(signature_counts.loc[signature_counts.gt(1)].index)
+    ambiguous = frame.set_index(identity).index.isin(ambiguous_keys)
+    audit["ambiguous_duplicate_rows"] = int(ambiguous.sum())
+    frame = frame.loc[~ambiguous].drop_duplicates(identity, keep="first").copy()
+
+    kickoff_lookup = _schedule_kickoff_lookup(
+        schedule if schedule is not None else pd.DataFrame()
+    )
+    frame["commence_time_utc"] = [
+        kickoff_lookup.get((week, team, opponent), pd.NA)
+        for week, team, opponent in zip(
+            frame["week"], frame["team_key"], frame["opponent_key"]
+        )
+    ]
+    output = pd.DataFrame(
+        {
+            "season": int(season),
+            "week": frame["week"],
+            "player": frame["player"],
+            "player_id": frame.get("Player.id", pd.Series(pd.NA, index=frame.index)),
+            "market": frame["market"],
+            "line": frame["O-Line"],
+            "over_price": frame["O-Odds"],
+            "under_price": frame["U-Odds"],
+            "bookmaker": "bovada",
+            "source": "xsportsbook_bovada_archive",
+            "event_id": frame["event_id"],
+            "home_team": frame.get("Hteam", pd.Series(pd.NA, index=frame.index)),
+            "away_team": frame.get("Ateam", pd.Series(pd.NA, index=frame.index)),
+            "snapshot_time_utc": pd.NA,
+            "commence_time_utc": frame["commence_time_utc"],
+            "line_phase": "historical_posted_unstamped",
+            "pregame_verified": False,
+            "verification_method": "publisher_identified_bovada_prop_archive_no_timestamp",
+        }
+    ).reset_index(drop=True)
+    audit["schedule_matched_rows"] = int(output["commence_time_utc"].notna().sum())
+    audit["normalized_rows"] = int(len(output))
+    audit["passing_rows"] = int(output["market"].eq("player_pass_yds").sum())
+    audit["rushing_rows"] = int(output["market"].eq("player_rush_yds").sum())
+    audit["receiving_rows"] = int(output["market"].eq("player_reception_yds").sum())
+    return output, audit
