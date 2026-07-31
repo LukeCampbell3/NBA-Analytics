@@ -53,8 +53,11 @@ season is used to train its latent space before that season is scored.
 
 ## Acquire historical sportsbook lines
 
-The Odds API offers paid historical event-level player props from May 2023
-onward. Estimate quota before making any paid calls:
+The Odds API is the primary source because it offers paid, timestamped
+event-level player-prop snapshots from May 2023 onward. Its current 20,000-credit
+plan is enough for two regular seasons of the three target markets at one region
+(maximum event-odds estimate: 16,320 credits). Estimate quota before making any
+paid calls:
 
 ```bash
 python sports/nfl/scripts/fetch_historical_nfl_props.py --season 2024
@@ -65,6 +68,20 @@ estimate. The collector queries each game shortly before kickoff, retains the
 actual snapshot timestamp, and writes book-specific lines and prices. Raw
 historical lines are gitignored.
 
+SportsGameOdds is integrated as a bulk closing-line source and cross-check. It
+returns explicit per-book open/close fields in one paginated event feed:
+
+```bash
+python sports/nfl/scripts/fetch_sportsgameodds_historical_props.py \
+  --season 2025 --weeks 1
+```
+
+After setting `SPORTSGAMEODDS_API_KEY`, add `--execute`. Historical access is a
+Pro-or-higher feature, so first verify one week has all three target markets and
+two-sided prices. The adapter never substitutes current/live values for missing
+closing fields. See [MARKET_BACKTEST_DATA.md](MARKET_BACKTEST_DATA.md) for the
+source comparison and acquisition protocol.
+
 ## Grade true betting hit rate
 
 ```bash
@@ -73,10 +90,13 @@ python sports/nfl/scripts/backtest_nfl_markets.py \
 ```
 
 The evaluator rejects synthetic/result-derived rows and odds captured at or
-after kickoff. It grades win/loss/push, hit rate with a Wilson 95% interval,
+after kickoff. Explicit provider closing fields are accepted without inventing
+a timestamp. It grades win/loss/push, hit rate with a Wilson 95% interval,
 American-price ROI, and stat/position breakdowns. Only players with a genuinely
 posted line enter the betting denominator, which removes non-marketed backups
-from sportsbook accuracy without using the outcome to filter them.
+from sportsbook accuracy without using the outcome to filter them. Promotion
+also requires real prices on every wager and coverage across at least eight
+season-weeks.
 
 Training can attach the same archive directly:
 

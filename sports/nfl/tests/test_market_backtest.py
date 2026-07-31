@@ -69,3 +69,49 @@ def test_market_backtest_grades_hit_rate_pushes_and_real_prices() -> None:
     assert report["overall"]["priced_bets"] == 2
     assert set(rows["side"]) == {"over", "under"}
     assert report["promotion_gate"]["status"] == "failed"  # sample is intentionally tiny
+
+
+def test_explicit_provider_closing_line_is_verified_without_fabricated_timestamp() -> None:
+    markets = pd.DataFrame(
+        {
+            "player": ["A J Runner"],
+            "season": [2024],
+            "week": [1],
+            "market": ["player_rush_yds"],
+            "line": [65.5],
+            "over_price": [-110],
+            "under_price": [-110],
+            "bookmaker": ["draftkings"],
+            "source": ["sportsgameodds_historical_close"],
+            "commence_time_utc": ["2024-09-08T17:00:00Z"],
+            "line_phase": ["closing_pregame"],
+            "pregame_verified": [True],
+            "verification_method": ["provider_explicit_close_fields"],
+        }
+    )
+    accepted, audit = normalize_market_archive(markets)
+    assert len(accepted) == 1
+    assert bool(accepted.iloc[0]["timestamp_verified"])
+    assert audit["provider_closing_verified_rows"] == 1
+
+
+def test_unrecognized_source_cannot_self_assert_closing_line_verification() -> None:
+    markets = pd.DataFrame(
+        {
+            "player": ["A J Runner"],
+            "season": [2024],
+            "week": [1],
+            "market": ["player_rush_yds"],
+            "line": [65.5],
+            "bookmaker": ["draftkings"],
+            "source": ["untrusted_scrape"],
+            "commence_time_utc": ["2024-09-08T17:00:00Z"],
+            "line_phase": ["closing_pregame"],
+            "pregame_verified": [True],
+            "verification_method": ["provider_explicit_close_fields"],
+        }
+    )
+    accepted, audit = normalize_market_archive(markets)
+    assert len(accepted) == 1
+    assert not bool(accepted.iloc[0]["timestamp_verified"])
+    assert audit["provider_closing_verified_rows"] == 0

@@ -45,6 +45,8 @@ SYNTHETIC_MARKERS = (
     "test_fixture",
 )
 
+PROVIDER_CLOSING_SOURCES = {"sportsgameodds_historical_close"}
+
 
 def _first_column(frame: pd.DataFrame, names: tuple[str, ...]) -> pd.Series:
     for name in names:
@@ -71,6 +73,14 @@ def normalize_player_name(value: object) -> str:
     if initials:
         collapsed.append("".join(initials))
     return " ".join(collapsed)
+
+
+def _truthy(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None or pd.isna(value):
+        return False
+    return str(value).strip().lower() in {"1", "true", "yes", "y"}
 
 
 def load_market_archive(path: str | Path) -> pd.DataFrame:
@@ -120,6 +130,15 @@ def normalize_market_archive(markets: pd.DataFrame) -> tuple[pd.DataFrame, dict[
         utc=True,
         errors="coerce",
     )
+    normalized["line_phase"] = _first_column(
+        frame, ("line_phase", "market_phase", "odds_phase")
+    ).fillna("")
+    normalized["pregame_verified"] = _first_column(
+        frame, ("pregame_verified", "is_pregame_verified")
+    ).map(_truthy)
+    normalized["verification_method"] = _first_column(
+        frame, ("verification_method", "pregame_evidence")
+    ).fillna("")
     normalized["player_key"] = normalized["player"].map(normalize_player_name)
     normalized["target"] = (
         normalized["target_raw"].astype(str).str.strip().str.lower().map(MARKET_ALIASES)
@@ -134,6 +153,15 @@ def normalize_market_archive(markets: pd.DataFrame) -> tuple[pd.DataFrame, dict[
         normalized["snapshot_time_utc"].notna()
         & normalized["commence_time_utc"].notna()
         & (normalized["snapshot_time_utc"] >= normalized["commence_time_utc"])
+    )
+    explicit_provider_close = (
+        normalized["source"].astype(str).str.lower().isin(PROVIDER_CLOSING_SOURCES)
+        & normalized["line_phase"].astype(str).str.lower().eq("closing_pregame")
+        & normalized["pregame_verified"]
+        & normalized["verification_method"].astype(str).str.lower().eq(
+            "provider_explicit_close_fields"
+        )
+        & normalized["commence_time_utc"].notna()
     )
     missing_required = (
         normalized["player_key"].eq("")
@@ -151,7 +179,7 @@ def normalize_market_archive(markets: pd.DataFrame) -> tuple[pd.DataFrame, dict[
         accepted["snapshot_time_utc"].notna()
         & accepted["commence_time_utc"].notna()
         & (accepted["snapshot_time_utc"] < accepted["commence_time_utc"])
-    )
+    ) | explicit_provider_close.loc[accepted.index]
     accepted = accepted.sort_values("snapshot_time_utc", na_position="first").drop_duplicates(
         ["season", "week", "player_key", "target", "bookmaker"], keep="last"
     )
@@ -162,6 +190,7 @@ def normalize_market_archive(markets: pd.DataFrame) -> tuple[pd.DataFrame, dict[
         "rejected_at_or_after_start_rows": int((after_start & ~synthetic).sum()),
         "rejected_missing_contract_rows": int((missing_required & ~synthetic & ~after_start).sum()),
         "timestamp_verified_rows": int(accepted["timestamp_verified"].sum()),
+        "provider_closing_verified_rows": int(explicit_provider_close.loc[accepted.index].sum()),
     }
     return accepted.reset_index(drop=True), audit
 
@@ -243,14 +272,17 @@ def evaluate_market_backtest(
         for position, group in joined.groupby("position", sort=True)
     ]
     target_decisions = [item["graded_decisions"] for item in by_target]
+    distinct_weeks = int(joined[["season", "week"]].drop_duplicates().shape[0])
     market_gate_passed = bool(
         overall["graded_decisions"] >= 200
         and len(by_target) == 3
         and min(target_decisions, default=0) >= 50
+        and distinct_weeks >= 8
         and overall["hit_rate_wilson_95"]
         and overall["hit_rate_wilson_95"][0] > 0.5
         and overall["roi"] is not None
         and overall["roi"] > 0
+        and overall["priced_bets"] == overall["bets"]
         and audit["accepted_pregame_rows"] == audit["timestamp_verified_rows"]
     )
     report = {
@@ -258,6 +290,7 @@ def evaluate_market_backtest(
         "minimum_edge_yards": float(minimum_edge_yards),
         "line_audit": audit,
         "matched_market_rows": int(len(joined)),
+        "distinct_season_weeks": distinct_weeks,
         "overall": overall,
         "by_target": by_target,
         "by_position": by_position,
@@ -266,9 +299,11 @@ def evaluate_market_backtest(
             "criteria": {
                 "minimum_overall_graded_decisions": 200,
                 "minimum_graded_decisions_per_target": 50,
+                "minimum_distinct_season_weeks": 8,
                 "overall_hit_rate_wilson_95_lower_bound_above": 0.5,
                 "positive_real_price_roi": True,
-                "all_rows_timestamp_verified_pregame": True,
+                "all_graded_rows_have_real_prices": True,
+                "all_rows_verified_pregame_or_provider_close": True,
             },
         },
     }

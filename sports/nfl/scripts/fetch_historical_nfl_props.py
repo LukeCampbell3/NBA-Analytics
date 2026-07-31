@@ -35,6 +35,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--api-key", default=None)
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--sleep-seconds", type=float, default=0.2)
+    parser.add_argument("--max-retries", type=int, default=4)
     parser.add_argument(
         "--output",
         type=Path,
@@ -67,16 +68,28 @@ def load_schedule(season: int, weeks: set[int] | None) -> pd.DataFrame:
     return schedule.dropna(subset=["commence_time_utc"])
 
 
-def _request(session: requests.Session, path: str, params: dict[str, Any]) -> tuple[Any, dict[str, str]]:
-    response = session.get(f"https://api.the-odds-api.com{path}", params=params, timeout=45)
-    if not response.ok:
-        error_code = "unknown"
-        try:
-            error_code = str(response.json().get("error_code") or response.json().get("message") or "unknown")
-        except Exception:
-            pass
-        raise RuntimeError(f"The Odds API returned HTTP {response.status_code} ({error_code}).")
-    return response.json(), {key.lower(): value for key, value in response.headers.items()}
+def _request(
+    session: requests.Session,
+    path: str,
+    params: dict[str, Any],
+    *,
+    max_retries: int = 4,
+) -> tuple[Any, dict[str, str]]:
+    for attempt in range(max_retries + 1):
+        response = session.get(f"https://api.the-odds-api.com{path}", params=params, timeout=45)
+        if response.ok:
+            return response.json(), {key.lower(): value for key, value in response.headers.items()}
+        if response.status_code not in {429, 500, 502, 503, 504} or attempt == max_retries:
+            error_code = "unknown"
+            try:
+                error_code = str(response.json().get("error_code") or response.json().get("message") or "unknown")
+            except Exception:
+                pass
+            raise RuntimeError(f"The Odds API returned HTTP {response.status_code} ({error_code}).")
+        retry_after = response.headers.get("Retry-After")
+        delay = float(retry_after) if retry_after and retry_after.replace(".", "", 1).isdigit() else 2**attempt
+        time.sleep(min(delay, 30.0))
+    raise AssertionError("unreachable")
 
 
 def _flatten_event(
@@ -127,9 +140,15 @@ def main() -> int:
     weeks = {int(value) for value in args.weeks.split(",")} if args.weeks else None
     schedule = load_schedule(args.season, weeks)
     games = schedule[["season", "week", "commence_time_utc"]].drop_duplicates()
-    maximum_credits = int(len(schedule) * len(MARKETS) * 10)
+    maximum_event_odds_credits = int(len(schedule) * len(MARKETS) * 10)
+    maximum_discovery_credits = int(len(games))
+    maximum_credits = maximum_event_odds_credits + maximum_discovery_credits
     print(f"Games: {len(schedule)}; kickoff slots: {len(games)}")
-    print(f"Maximum event-odds quota estimate: {maximum_credits} credits")
+    print(
+        "Maximum quota estimate: "
+        f"{maximum_credits} credits ({maximum_event_odds_credits} event odds + "
+        f"{maximum_discovery_credits} event discovery)"
+    )
     if not args.execute:
         print("Dry run only. Re-run with --execute after confirming plan access and quota.")
         return 0
@@ -150,6 +169,7 @@ def main() -> int:
             session,
             f"/v4/historical/sports/{SPORT}/events",
             {"apiKey": api_key, "date": requested_iso, "dateFormat": "iso"},
+            max_retries=args.max_retries,
         )
         events = events_payload.get("data", []) if isinstance(events_payload, dict) else []
         for event in events:
@@ -171,6 +191,7 @@ def main() -> int:
                     "oddsFormat": "american",
                     "dateFormat": "iso",
                 },
+                max_retries=args.max_retries,
             )
             actual_snapshot = str(odds_payload.get("timestamp") or requested_iso)
             event_payload = odds_payload.get("data", odds_payload)
