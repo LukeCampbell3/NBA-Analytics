@@ -1,0 +1,395 @@
+{
+  "schema_version": 1,
+  "run_date": "2026-07-31",
+  "publication_status": "validated_backtest",
+  "mode": "historical_holdout",
+  "holdout_season": 2024,
+  "architecture": {
+    "name": "lagged sequence stack",
+    "base_models": [
+      "five-game rolling baseline",
+      "Ridge regression",
+      "GradientBoostingRegressor"
+    ],
+    "meta_model": "positive Ridge regression"
+  },
+  "overall": {
+    "rows": 5424,
+    "weighted_mae": 25.6543,
+    "weighted_baseline_mae": 27.0404,
+    "weighted_within_tolerance_accuracy": 0.4569,
+    "weighted_mae_improvement_vs_rolling_baseline": 0.0513
+  },
+  "targets": [
+    {
+      "target": "passing",
+      "label": "Passing yards",
+      "train_rows": 3121,
+      "meta_rows": 1124,
+      "holdout_season": 2024,
+      "metrics": {
+        "rows": 585,
+        "mae": 67.6715,
+        "rmse": 85.1199,
+        "r2": 0.1982,
+        "median_absolute_error": 55.8803,
+        "within_tolerance_accuracy": 0.2632,
+        "tolerance_yards": 30.0,
+        "residual_direction_accuracy": 0.5917,
+        "baseline_mae": 71.9409,
+        "mae_improvement_vs_rolling_baseline": 0.0593
+      }
+    },
+    {
+      "target": "rushing",
+      "label": "Rushing yards",
+      "train_rows": 9040,
+      "meta_rows": 3320,
+      "holdout_season": 2024,
+      "metrics": {
+        "rows": 1654,
+        "mae": 20.2269,
+        "rmse": 27.5793,
+        "r2": 0.4078,
+        "median_absolute_error": 14.9289,
+        "within_tolerance_accuracy": 0.5018,
+        "tolerance_yards": 15.0,
+        "residual_direction_accuracy": 0.5702,
+        "baseline_mae": 20.9418,
+        "mae_improvement_vs_rolling_baseline": 0.0341
+      }
+    },
+    {
+      "target": "receiving",
+      "label": "Receiving yards",
+      "train_rows": 18397,
+      "meta_rows": 6471,
+      "holdout_season": 2024,
+      "metrics": {
+        "rows": 3185,
+        "mae": 20.7554,
+        "rmse": 27.8011,
+        "r2": 0.291,
+        "median_absolute_error": 16.124,
+        "within_tolerance_accuracy": 0.4691,
+        "tolerance_yards": 15.0,
+        "residual_direction_accuracy": 0.6058,
+        "baseline_mae": 21.9605,
+        "mae_improvement_vs_rolling_baseline": 0.0549
+      }
+    }
+  ],
+  "promotion_gate": {
+    "status": "passed",
+    "criteria": {
+      "minimum_rows_per_target": 500,
+      "minimum_r2_per_target": 0.15,
+      "minimum_mae_improvement_vs_baseline": 0.02,
+      "minimum_residual_direction_accuracy": 0.53
+    },
+    "target_checks": [
+      {
+        "target": "passing",
+        "passed": true
+      },
+      {
+        "target": "rushing",
+        "passed": true
+      },
+      {
+        "target": "receiving",
+        "passed": true
+      }
+    ]
+  },
+  "methodology": {
+    "type": "chronological_season_holdout",
+    "source_seasons": [
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "meta_seasons": [
+      2022,
+      2023
+    ],
+    "holdout_season": 2024,
+    "leakage_controls": [
+      "All player and opponent features are shifted by at least one game.",
+      "Base estimators for a scored season are trained only on earlier seasons.",
+      "The stacking model is fit on chronological pre-holdout folds.",
+      "The final holdout season is never used for fitting or threshold selection."
+    ],
+    "scope_note": "Accuracy describes player yardage projections for eligible active-player rows. It is not sportsbook win rate because archived market lines are not present."
+  },
+  "plays": [
+    {
+      "player": "Aaron Rodgers",
+      "team": "NYJ",
+      "opponent": "MIA",
+      "season": 2024,
+      "week": 18,
+      "target": "passing",
+      "prediction": 225.0,
+      "actual": 274.0,
+      "absolute_error": 49.0
+    },
+    {
+      "player": "Aidan O'Connell",
+      "team": "LV",
+      "opponent": "LAC",
+      "season": 2024,
+      "week": 18,
+      "target": "passing",
+      "prediction": 188.3,
+      "actual": 214.0,
+      "absolute_error": 25.7
+    },
+    {
+      "player": "Bailey Zappe",
+      "team": "CLE",
+      "opponent": "BAL",
+      "season": 2024,
+      "week": 18,
+      "target": "passing",
+      "prediction": 162.6,
+      "actual": 170.0,
+      "absolute_error": 7.4
+    },
+    {
+      "player": "Baker Mayfield",
+      "team": "TB",
+      "opponent": "NO",
+      "season": 2024,
+      "week": 18,
+      "target": "passing",
+      "prediction": 263.7,
+      "actual": 221.0,
+      "absolute_error": 42.7
+    },
+    {
+      "player": "Bo Nix",
+      "team": "DEN",
+      "opponent": "KC",
+      "season": 2024,
+      "week": 18,
+      "target": "passing",
+      "prediction": 226.7,
+      "actual": 321.0,
+      "absolute_error": 94.3
+    },
+    {
+      "player": "Bryce Young",
+      "team": "CAR",
+      "opponent": "ATL",
+      "season": 2024,
+      "week": 18,
+      "target": "passing",
+      "prediction": 199.0,
+      "actual": 251.0,
+      "absolute_error": 52.0
+    },
+    {
+      "player": "C.J. Stroud",
+      "team": "HOU",
+      "opponent": "TEN",
+      "season": 2024,
+      "week": 18,
+      "target": "passing",
+      "prediction": 200.4,
+      "actual": 50.0,
+      "absolute_error": 150.4
+    },
+    {
+      "player": "Caleb Williams",
+      "team": "CHI",
+      "opponent": "GB",
+      "season": 2024,
+      "week": 18,
+      "target": "passing",
+      "prediction": 204.7,
+      "actual": 148.0,
+      "absolute_error": 56.7
+    },
+    {
+      "player": "A.J. Barner",
+      "team": "SEA",
+      "opponent": "LA",
+      "season": 2024,
+      "week": 18,
+      "target": "receiving",
+      "prediction": 17.0,
+      "actual": 34.0,
+      "absolute_error": 17.0
+    },
+    {
+      "player": "Aaron Jones",
+      "team": "MIN",
+      "opponent": "DET",
+      "season": 2024,
+      "week": 18,
+      "target": "receiving",
+      "prediction": 20.6,
+      "actual": 30.0,
+      "absolute_error": 9.4
+    },
+    {
+      "player": "Adam Thielen",
+      "team": "CAR",
+      "opponent": "ATL",
+      "season": 2024,
+      "week": 18,
+      "target": "receiving",
+      "prediction": 61.8,
+      "actual": 44.0,
+      "absolute_error": 17.8
+    },
+    {
+      "player": "Adonai Mitchell",
+      "team": "IND",
+      "opponent": "JAX",
+      "season": 2024,
+      "week": 18,
+      "target": "receiving",
+      "prediction": 23.5,
+      "actual": 0.0,
+      "absolute_error": 23.5
+    },
+    {
+      "player": "Alec Pierce",
+      "team": "IND",
+      "opponent": "JAX",
+      "season": 2024,
+      "week": 18,
+      "target": "receiving",
+      "prediction": 43.3,
+      "actual": 57.0,
+      "absolute_error": 13.7
+    },
+    {
+      "player": "Alexander Mattison",
+      "team": "LV",
+      "opponent": "LAC",
+      "season": 2024,
+      "week": 18,
+      "target": "receiving",
+      "prediction": 12.3,
+      "actual": 11.0,
+      "absolute_error": 1.3
+    },
+    {
+      "player": "Allen Lazard",
+      "team": "NYJ",
+      "opponent": "MIA",
+      "season": 2024,
+      "week": 18,
+      "target": "receiving",
+      "prediction": 28.2,
+      "actual": 71.0,
+      "absolute_error": 42.8
+    },
+    {
+      "player": "Amon-Ra St. Brown",
+      "team": "DET",
+      "opponent": "MIN",
+      "season": 2024,
+      "week": 18,
+      "target": "receiving",
+      "prediction": 74.9,
+      "actual": 77.0,
+      "absolute_error": 2.1
+    },
+    {
+      "player": "Aaron Jones",
+      "team": "MIN",
+      "opponent": "DET",
+      "season": 2024,
+      "week": 18,
+      "target": "rushing",
+      "prediction": 55.6,
+      "actual": 45.0,
+      "absolute_error": 10.6
+    },
+    {
+      "player": "Aaron Rodgers",
+      "team": "NYJ",
+      "opponent": "MIA",
+      "season": 2024,
+      "week": 18,
+      "target": "rushing",
+      "prediction": 7.5,
+      "actual": 0.0,
+      "absolute_error": 7.5
+    },
+    {
+      "player": "Aidan O'Connell",
+      "team": "LV",
+      "opponent": "LAC",
+      "season": 2024,
+      "week": 18,
+      "target": "rushing",
+      "prediction": 11.7,
+      "actual": 13.0,
+      "absolute_error": 1.3
+    },
+    {
+      "player": "Alexander Mattison",
+      "team": "LV",
+      "opponent": "LAC",
+      "season": 2024,
+      "week": 18,
+      "target": "rushing",
+      "prediction": 32.1,
+      "actual": 20.0,
+      "absolute_error": 12.1
+    },
+    {
+      "player": "Antonio Gibson",
+      "team": "NE",
+      "opponent": "BUF",
+      "season": 2024,
+      "week": 18,
+      "target": "rushing",
+      "prediction": 39.8,
+      "actual": 41.0,
+      "absolute_error": 1.2
+    },
+    {
+      "player": "Audric Estime",
+      "team": "DEN",
+      "opponent": "KC",
+      "season": 2024,
+      "week": 18,
+      "target": "rushing",
+      "prediction": 25.9,
+      "actual": 34.0,
+      "absolute_error": 8.1
+    },
+    {
+      "player": "Austin Ekeler",
+      "team": "WAS",
+      "opponent": "DAL",
+      "season": 2024,
+      "week": 18,
+      "target": "rushing",
+      "prediction": 34.6,
+      "actual": 12.0,
+      "absolute_error": 22.6
+    },
+    {
+      "player": "Bailey Zappe",
+      "team": "CLE",
+      "opponent": "BAL",
+      "season": 2024,
+      "week": 18,
+      "target": "rushing",
+      "prediction": 10.1,
+      "actual": 2.0,
+      "absolute_error": 8.1
+    }
+  ]
+}

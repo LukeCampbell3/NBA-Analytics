@@ -98,3 +98,16 @@ python sports/nba/predictions/Player-Predictor/scripts/run_daily_market_pipeline
 For the shared published site, prefer `python sports/site/pipeline/run_daily_predictions.py` so both NBA and MLB payloads refresh together and `dist/` stays in sync.
 
 See `sports/nba/README.md` for full NBA pipeline details.
+
+## NFL Quick Start
+
+Train the leakage-aware player-yardage stack and reproduce its chronological
+holdout report:
+
+```bash
+python sports/nfl/scripts/train_nfl_predictor.py
+```
+
+The static model report is included automatically by the shared site builder at
+`/nfl/predictions/`. See `sports/nfl/README.md` for data, model, and evaluation
+details.

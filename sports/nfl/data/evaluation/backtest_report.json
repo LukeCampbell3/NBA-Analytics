@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-07-31T11:38:38.180755+00:00",
+  "evaluation_design": {
+    "type": "chronological_season_holdout",
+    "source_seasons": [
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "meta_seasons": [
+      2022,
+      2023
+    ],
+    "holdout_season": 2024,
+    "leakage_controls": [
+      "All player and opponent features are shifted by at least one game.",
+      "Base estimators for a scored season are trained only on earlier seasons.",
+      "The stacking model is fit on chronological pre-holdout folds.",
+      "The final holdout season is never used for fitting or threshold selection."
+    ],
+    "scope_note": "Accuracy describes player yardage projections for eligible active-player rows. It is not sportsbook win rate because archived market lines are not present."
+  },
+  "architecture": {
+    "name": "lagged sequence stack",
+    "base_models": [
+      "five-game rolling baseline",
+      "Ridge regression",
+      "GradientBoostingRegressor"
+    ],
+    "meta_model": "positive Ridge regression"
+  },
+  "data_audit": {
+    "provider": "nflverse",
+    "source_url": "https://github.com/nflverse/nflverse-data/releases/download/player_stats/player_stats.parquet",
+    "rows_loaded": 36902,
+    "feature_target_sha256": "257514823f0ca9c800c38a32cbe1c6b64d49d371ff0e176a3af011d4d476e4fa"
+  },
+  "overall": {
+    "rows": 5424,
+    "weighted_mae": 25.6543,
+    "weighted_baseline_mae": 27.0404,
+    "weighted_within_tolerance_accuracy": 0.4569,
+    "weighted_mae_improvement_vs_rolling_baseline": 0.0513
+  },
+  "targets": [
+    {
+      "target": "passing",
+      "label": "Passing yards",
+      "train_rows": 3121,
+      "meta_rows": 1124,
+      "holdout_season": 2024,
+      "metrics": {
+        "rows": 585,
+        "mae": 67.6715,
+        "rmse": 85.1199,
+        "r2": 0.1982,
+        "median_absolute_error": 55.8803,
+        "within_tolerance_accuracy": 0.2632,
+        "tolerance_yards": 30.0,
+        "residual_direction_accuracy": 0.5917,
+        "baseline_mae": 71.9409,
+        "mae_improvement_vs_rolling_baseline": 0.0593
+      }
+    },
+    {
+      "target": "rushing",
+      "label": "Rushing yards",
+      "train_rows": 9040,
+      "meta_rows": 3320,
+      "holdout_season": 2024,
+      "metrics": {
+        "rows": 1654,
+        "mae": 20.2269,
+        "rmse": 27.5793,
+        "r2": 0.4078,
+        "median_absolute_error": 14.9289,
+        "within_tolerance_accuracy": 0.5018,
+        "tolerance_yards": 15.0,
+        "residual_direction_accuracy": 0.5702,
+        "baseline_mae": 20.9418,
+        "mae_improvement_vs_rolling_baseline": 0.0341
+      }
+    },
+    {
+      "target": "receiving",
+      "label": "Receiving yards",
+      "train_rows": 18397,
+      "meta_rows": 6471,
+      "holdout_season": 2024,
+      "metrics": {
+        "rows": 3185,
+        "mae": 20.7554,
+        "rmse": 27.8011,
+        "r2": 0.291,
+        "median_absolute_error": 16.124,
+        "within_tolerance_accuracy": 0.4691,
+        "tolerance_yards": 15.0,
+        "residual_direction_accuracy": 0.6058,
+        "baseline_mae": 21.9605,
+        "mae_improvement_vs_rolling_baseline": 0.0549
+      }
+    }
+  ],
+  "promotion_gate": {
+    "status": "passed",
+    "criteria": {
+      "minimum_rows_per_target": 500,
+      "minimum_r2_per_target": 0.15,
+      "minimum_mae_improvement_vs_baseline": 0.02,
+      "minimum_residual_direction_accuracy": 0.53
+    },
+    "target_checks": [
+      {
+        "target": "passing",
+        "passed": true
+      },
+      {
+        "target": "rushing",
+        "passed": true
+      },
+      {
+        "target": "receiving",
+        "passed": true
+      }
+    ]
+  }
+}

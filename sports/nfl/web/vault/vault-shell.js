@@ -1,5 +1,5 @@
 /**
- * Prediction Desk application shell.
+ * Prediction Bounties application shell.
  */
 (function initPredictionDeskShell(global) {
   const CardVaultShell = {};
@@ -7,6 +7,7 @@
   const DEFAULT_SPORTS = [
     { slug: "nba", label: "NBA", href: "/nba/predictions/" },
     { slug: "mlb", label: "MLB", href: "/mlb/predictions/" },
+    { slug: "nfl", label: "NFL", href: "/nfl/predictions/" },
   ];
 
   CardVaultShell.escapeHtml = function escapeHtml(value) {
@@ -26,10 +27,10 @@
     if (!root) return;
 
     const {
-      brandTitle = "Prediction Desk",
+      brandTitle = "Prediction Bounties",
       brandHref = "/",
       sportSlug = "",
-      sportAccent = "#2563eb",
+      sportAccent = "#8a5820",
       navLinks = [],
       sports = DEFAULT_SPORTS,
       showDisclaimer = true,
@@ -65,10 +66,10 @@
     root.innerHTML = `
       <header class="vault-topbar" role="banner">
         <div class="vault-topbar__inner">
-          <a class="vault-brand" href="${CardVaultShell.escapeHtml(brandHref)}" aria-label="Prediction Desk overview">
-            <span class="vault-brand-mark" aria-hidden="true">P</span>
+          <a class="vault-brand" href="${CardVaultShell.escapeHtml(brandHref)}" aria-label="Prediction Bounties overview">
+            <span class="vault-brand-mark" aria-hidden="true">B</span>
             <span>
-              <span class="vault-brand-kicker">Analytics</span>
+              <span class="vault-brand-kicker">Model Ledger</span>
               <span class="vault-brand-title">${CardVaultShell.escapeHtml(brandTitle)}</span>
             </span>
           </a>

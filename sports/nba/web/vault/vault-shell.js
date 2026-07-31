@@ -7,6 +7,7 @@
   const DEFAULT_SPORTS = [
     { slug: "nba", label: "NBA", href: "/nba/predictions/" },
     { slug: "mlb", label: "MLB", href: "/mlb/predictions/" },
+    { slug: "nfl", label: "NFL", href: "/nfl/predictions/" },
   ];
 
   CardVaultShell.escapeHtml = function escapeHtml(value) {

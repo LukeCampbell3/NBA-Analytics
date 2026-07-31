@@ -91,6 +91,8 @@ Player-Predictor/models/
 **/models/
 !sparse_loop_moe/src/sparse_loop_moe/models/
 !sparse_loop_moe/src/sparse_loop_moe/models/**
+sparse_loop_moe/src/sparse_loop_moe/models/**/__pycache__/
+sparse_loop_moe/src/sparse_loop_moe/models/**/*.pyc
 **/checkpoints/
 **/checkpoint/
 **/saved_model/
@@ -166,6 +168,7 @@ catboost_info/
 sports/nba/dist/
 sports/mlb/dist/
 sports/nfl/dist/
+sports/nfl/data/raw/
 
 sports/nba/web/art/
 sports/nba/web/images/

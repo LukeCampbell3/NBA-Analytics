@@ -1,12 +1,14 @@
 {
   "title": "NFL Analytics",
-  "tagline": "Football workspace scaffold for model, data, and frontend expansion",
-  "summary": "The NFL area now has a dedicated frontend entry point so football pages can ship under their own namespace as they come online.",
-  "status": "scaffold",
-  "status_label": "Scaffold",
+  "tagline": "Leakage-aware player yardage projections with chronological backtesting",
+  "summary": "Passing, rushing, and receiving yardage models with an auditable season holdout and explicit promotion gate.",
+  "status": "validated",
+  "status_label": "Backtested",
   "accent": "#7c3aed",
   "surface": "#2f1f5f",
   "route_labels": {
-    "index": "NFL Overview"
+    "index": "NFL Overview",
+    "predictions": "Model Report",
+    "prediction-about": "Method"
   }
 }

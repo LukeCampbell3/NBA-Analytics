@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="../">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Architecture and leakage controls for the NFL player yardage predictor.">
+    <title>NFL Predictor Method | Prediction Bounties</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="vault/vault-tokens.css?v=4">
+    <link rel="stylesheet" href="vault/vault-components.css?v=7">
+    <link rel="stylesheet" href="vault/prediction-pages.css?v=2">
+</head>
+<body class="vault-theme">
+    <div id="vaultShellRoot"></div>
+    <main class="vault-shell prediction-about-page">
+        <section class="prediction-about-stage"><div class="prediction-about-container">
+            <header class="prediction-about-sign">
+                <p class="prediction-about-kicker">Inside the NFL Model</p>
+                <div class="minimal-heading"><h1>How the Yardage Stack Works</h1></div>
+                <p class="prediction-page-lead">A compact weekly ensemble designed around the NBA repository’s sequence, boosted-tree, stacking, and uncertainty-aware evaluation patterns.</p>
+                <p id="methodFacts" class="prediction-about-run-facts">Loading methodology...</p>
+            </header>
+            <section class="prediction-about-panel">
+                <h2>Architecture</h2>
+                <ol class="prediction-about-list">
+                    <li>Player form, volume, volatility, and opponent allowances are summarized over lagged three- and five-game windows.</li>
+                    <li>A regularized Ridge model captures stable linear relationships while a Huber-loss gradient booster captures interactions.</li>
+                    <li>A positive Ridge meta-learner combines those estimates with a five-game rolling baseline.</li>
+                    <li>After the untouched holdout is scored, the deployable base models are refit through the validated season.</li>
+                </ol>
+            </section>
+            <section class="prediction-about-panel">
+                <h2>Backtest Integrity</h2>
+                <ul id="leakageControls" class="prediction-about-list"></ul>
+                <div id="scopeNote" class="prediction-about-callout"></div>
+            </section>
+            <section class="prediction-about-panel">
+                <h2>What “Accuracy” Means</h2>
+                <ul class="prediction-about-list">
+                    <li><strong>MAE:</strong> average absolute difference between predicted and actual yards.</li>
+                    <li><strong>R²:</strong> share of holdout variance explained by the projection.</li>
+                    <li><strong>Within tolerance:</strong> the share within 30 passing yards or 15 rushing/receiving yards.</li>
+                    <li><strong>Baseline improvement:</strong> MAE reduction against a player’s trailing five-game average.</li>
+                </ul>
+            </section>
+        </div></section>
+    </main>
+    <script src="vault/vault-components.js?v=7"></script>
+    <script src="vault/vault-shell.js?v=7"></script>
+    <script src="prediction-about.js?v=1"></script>
+</body>
+</html>

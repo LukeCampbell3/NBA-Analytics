@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+"""Train and backtest the NFL player yardage stack."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+
+SCRIPT_PATH = Path(__file__).resolve()
+REPO_ROOT = SCRIPT_PATH.parents[3]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from sports.nfl.predictions.pipeline import (  # noqa: E402
+    NFLVERSE_PLAYER_STATS_URL,
+    load_weekly_stats,
+    train_and_backtest,
+    write_training_outputs,
+)
+
+
+NFL_ROOT = REPO_ROOT / "sports" / "nfl"
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--source", default=NFLVERSE_PLAYER_STATS_URL)
+    parser.add_argument("--cache", type=Path, default=NFL_ROOT / "data" / "raw" / "player_stats.parquet")
+    parser.add_argument("--start-season", type=int, default=2018)
+    parser.add_argument("--holdout-season", type=int, default=2024)
+    parser.add_argument("--random-state", type=int, default=42)
+    parser.add_argument("--report", type=Path, default=NFL_ROOT / "data" / "evaluation" / "backtest_report.json")
+    parser.add_argument("--rows", type=Path, default=NFL_ROOT / "data" / "evaluation" / "backtest_rows.csv")
+    parser.add_argument("--artifact", type=Path, default=NFL_ROOT / "model" / "nfl_yardage_stack.joblib")
+    parser.add_argument(
+        "--web-payload",
+        type=Path,
+        default=NFL_ROOT / "web" / "data" / "daily_predictions.json",
+        help="Static-site backtest payload (historical holdout rows, not live picks).",
+    )
+    return parser.parse_args()
+
+
+def build_web_payload(report: dict, rows) -> dict:
+    latest_season = int(rows["season"].max())
+    latest_week = int(rows.loc[rows["season"].eq(latest_season), "week"].max())
+    showcase = (
+        rows.loc[rows["season"].eq(latest_season) & rows["week"].eq(latest_week)]
+        .sort_values(["target", "player_display_name"])
+        .groupby("target", group_keys=False)
+        .head(8)
+    )
+    records = []
+    for row in showcase.to_dict(orient="records"):
+        records.append(
+            {
+                "player": row["player_display_name"],
+                "team": row["recent_team"],
+                "opponent": row["opponent_team"],
+                "season": int(row["season"]),
+                "week": int(row["week"]),
+                "target": row["target"],
+                "prediction": round(float(row["prediction"]), 1),
+                "actual": round(float(row["actual"]), 1),
+                "absolute_error": round(float(row["absolute_error"]), 1),
+            }
+        )
+    return {
+        "schema_version": 1,
+        "run_date": report["generated_at_utc"][:10],
+        "publication_status": "validated_backtest",
+        "mode": "historical_holdout",
+        "holdout_season": report["evaluation_design"]["holdout_season"],
+        "architecture": report["architecture"],
+        "overall": report["overall"],
+        "targets": report["targets"],
+        "promotion_gate": report["promotion_gate"],
+        "methodology": report["evaluation_design"],
+        "plays": records,
+    }
+
+
+def main() -> int:
+    args = parse_args()
+    stats = load_weekly_stats(
+        args.source,
+        cache_path=args.cache,
+        start_season=args.start_season,
+        end_season=args.holdout_season,
+    )
+    report, artifact, rows = train_and_backtest(
+        stats,
+        holdout_season=args.holdout_season,
+        random_state=args.random_state,
+    )
+    write_training_outputs(
+        report,
+        artifact,
+        rows,
+        report_path=args.report,
+        artifact_path=args.artifact,
+        rows_path=args.rows,
+    )
+    web_payload = build_web_payload(report, rows)
+    args.web_payload.parent.mkdir(parents=True, exist_ok=True)
+    args.web_payload.write_text(json.dumps(web_payload, indent=2) + "\n", encoding="utf-8")
+
+    print(json.dumps(report["overall"], indent=2))
+    for target in report["targets"]:
+        metrics = target["metrics"]
+        print(
+            f"{target['label']}: n={metrics['rows']}, MAE={metrics['mae']:.2f}, "
+            f"within {metrics['tolerance_yards']:.0f} yd={metrics['within_tolerance_accuracy']:.1%}, "
+            f"vs baseline={metrics['mae_improvement_vs_rolling_baseline']:.1%}"
+        )
+    print(f"Report: {args.report}")
+    print(f"Model artifact: {args.artifact}")
+    print(f"Static payload: {args.web_payload}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
