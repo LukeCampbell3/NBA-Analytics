@@ -50,10 +50,12 @@ TARGET_TO_ACTUAL_COL = {
 PROFILE_PROMOTION_MIN_GRADED_PLAYS = 50
 PROFILE_PROMOTION_BREAK_EVEN_RATE = 0.5238
 OPTIMIZED_OVER_SELECTION_PROFILE = "r_tb_over_moderate_edge_v1"
-PREMIUM_PRODUCTION_PROFILE = "premium_price_defended_v1"
+PREMIUM_PRODUCTION_PROFILE = "premium_adaptive_volume_v2"
 DEFAULT_OVER_MIN_HISTORY_ROWS = 55
 DEFAULT_OVER_HOLDOUT_START_DATE = "2026-06-01"
 DEFAULT_CORE_MAX_AMERICAN_PRICE = -200
+DEFAULT_DAILY_PICK_SOFT_CAP = 6
+DEFAULT_POST_CAP_MIN_SELECTION_SCORE = 0.80
 
 
 def parse_args() -> argparse.Namespace:
@@ -299,6 +301,75 @@ def summarize_over_maturity_route(
     }
 
 
+def summarize_daily_volume_route(
+    rows: list[dict[str, Any]],
+    *,
+    soft_cap: int = DEFAULT_DAILY_PICK_SOFT_CAP,
+    post_cap_min_selection_score: float = DEFAULT_POST_CAP_MIN_SELECTION_SCORE,
+) -> dict[str, Any]:
+    cap = max(0, int(soft_cap))
+    score_floor = max(0.0, float(post_cap_min_selection_score))
+
+    def is_routed(row: dict[str, Any]) -> bool:
+        return bool(
+            cap <= 0
+            or int(row.get("rank", 0) or 0) <= cap
+            or float(row.get("selection_score", 0.0) or 0.0) >= score_floor
+        )
+
+    routed = [row for row in rows if is_routed(row)]
+    removed = [row for row in rows if not is_routed(row)]
+
+    ranks = sorted({int(row.get("rank", 0) or 0) for row in rows if int(row.get("rank", 0) or 0) > 0})
+    by_rank = {
+        str(rank): summarize_rows([row for row in rows if int(row.get("rank", 0) or 0) == rank])
+        for rank in ranks
+    }
+    cumulative_by_rank = {
+        str(rank): summarize_rows(
+            [row for row in rows if 0 < int(row.get("rank", 0) or 0) <= rank]
+        )
+        for rank in ranks
+    }
+    recommended_soft_cap = None
+    if ranks:
+        recommended_soft_cap = max(
+            ranks,
+            key=lambda rank: (
+                float(cumulative_by_rank[str(rank)].get("hit_rate_wilson_95_low") or -1.0),
+                float(cumulative_by_rank[str(rank)].get("priced_roi") or -999.0),
+                int(cumulative_by_rank[str(rank)].get("graded_play_count") or 0),
+            ),
+        )
+
+    dates = sorted({str(row.get("run_date", "")) for row in rows if str(row.get("run_date", ""))})
+    baseline_counts = {
+        run_date: sum(str(row.get("run_date", "")) == run_date for row in rows)
+        for run_date in dates
+    }
+    routed_counts = {
+        run_date: sum(str(row.get("run_date", "")) == run_date for row in routed)
+        for run_date in dates
+    }
+    return {
+        "soft_cap": cap,
+        "post_cap_min_selection_score": score_floor,
+        "baseline": summarize_rows(rows),
+        "adaptive_policy": summarize_rows(routed),
+        "removed_tail": summarize_rows(removed),
+        "baseline_daily_pick_counts": baseline_counts,
+        "adaptive_daily_pick_counts": routed_counts,
+        "by_rank": by_rank,
+        "cumulative_by_rank": cumulative_by_rank,
+        "cap_optimization": {
+            "objective": "maximize the 95% Wilson hit-rate lower bound, then confirmed-price ROI and graded sample",
+            "recommended_soft_cap": recommended_soft_cap,
+            "configured_soft_cap": cap,
+            "configured_cap_matches_recommendation": recommended_soft_cap == cap,
+        },
+    }
+
+
 def main() -> None:
     args = parse_args()
     actual_lookup = build_actual_lookup(args.processed_root.resolve())
@@ -345,11 +416,13 @@ def main() -> None:
 
             record = {
                 "run_date": run_date,
+                "rank": int(to_float(row.get("Rank")) or 0),
                 "player": str(row.get("Player", "")),
                 "target": target,
                 "direction": direction,
                 "selection_profile": str(row.get("Selection_Profile", "")).strip() or "unlabeled",
                 "history_rows": int(to_float(row.get("History_Rows")) or 0),
+                "selection_score": float(to_float(row.get("Selection_Score")) or 0.0),
                 "selected_side_price": selected_side_price,
                 "market_line": float(market_line),
                 "actual": None if actual is None else float(actual),
@@ -407,6 +480,7 @@ def main() -> None:
         "by_selection_profile": by_selection_profile,
         "profile_promotion_assessments": profile_promotion_assessments,
         "over_maturity_route": summarize_over_maturity_route(rows),
+        "daily_volume_route": summarize_daily_volume_route(rows),
         "by_date": by_date,
     }
     args.report_json.parent.mkdir(parents=True, exist_ok=True)

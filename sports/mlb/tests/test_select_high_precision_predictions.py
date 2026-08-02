@@ -422,6 +422,54 @@ def test_select_top_candidates_suppresses_duplicate_prop_across_game_ids() -> No
     assert selected[0].player == "Duplicate Player"
 
 
+def test_select_top_candidates_soft_cap_allows_only_elite_expansion() -> None:
+    candidates = []
+    for idx, score in enumerate([0.95, 0.92, 0.90, 0.88, 0.86, 0.84, 0.82, 0.79]):
+        candidate = selector.build_candidate(
+            _row(
+                player=f"Volume Player {idx}",
+                team=f"V{idx}",
+                game_id=f"volume_{idx}",
+                target="TB",
+                prediction=0.20,
+                line=1.5,
+                edge=-1.30,
+            ),
+            calibration=None,
+            min_history_bucket_rows=50,
+            max_history_prior_weight=0.35,
+            history_prior_strength=400.0,
+        )
+        assert candidate is not None
+        candidate.selection_score = score
+        candidates.append(candidate)
+
+    args = selector.argparse.Namespace(
+        top_n=10,
+        daily_pick_soft_cap=6,
+        post_cap_min_selection_score=0.80,
+        min_over_picks=0,
+        max_over_picks=0,
+        max_per_player=1,
+        max_per_game=2,
+        max_per_team=3,
+        max_per_market_bucket=10,
+    )
+
+    selected = selector.select_top_candidates(candidates, args)
+
+    assert len(selected) == 7
+    assert [candidate.selection_score for candidate in selected] == [
+        0.95,
+        0.92,
+        0.90,
+        0.88,
+        0.86,
+        0.84,
+        0.82,
+    ]
+
+
 def test_filter_candidates_uses_validated_over_profile_instead_of_general_probability_floor() -> None:
     row = _row(
         player="Moderate Over",

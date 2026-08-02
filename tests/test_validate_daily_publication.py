@@ -53,8 +53,10 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
                     "over_max_model_hit_probability": 0.55,
                     "over_min_expected_value": 0.10,
                     "over_max_american_price": 125.0,
-                    "min_over_picks": 3,
+                    "min_over_picks": 0,
                     "max_over_picks": 3,
+                    "daily_pick_soft_cap": 6,
+                    "post_cap_min_selection_score": 0.80,
                 },
             }
         )
@@ -139,7 +141,7 @@ def test_validate_publication_rejects_legacy_mlb_pool_policy(tmp_path: Path) -> 
     route.parent.mkdir(parents=True, exist_ok=True)
     route.write_text("ok", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="expected premium_price_defended_v1"):
+    with pytest.raises(ValueError, match="expected premium_adaptive_volume_v2"):
         validate_publication(
             repo_root=tmp_path,
             output_dir=Path("dist"),
@@ -155,6 +157,16 @@ def test_validate_mlb_payload_rejects_over_profile_threshold_drift(tmp_path: Pat
     payload["selection"]["over_max_american_price"] = 150
 
     with pytest.raises(ValueError, match="changed validated OVER threshold over_max_american_price"):
+        validate_mlb_payload(payload, label="test")
+
+
+def test_validate_mlb_payload_rejects_adaptive_volume_drift(tmp_path: Path) -> None:
+    payload_path = tmp_path / "payload.json"
+    write_payload(payload_path, run_date="2026-04-28", sport="mlb")
+    payload = json.loads(payload_path.read_text(encoding="utf-8"))
+    payload["selection"]["daily_pick_soft_cap"] = 7
+
+    with pytest.raises(ValueError, match="changed the adaptive daily pick soft cap"):
         validate_mlb_payload(payload, label="test")
 
 

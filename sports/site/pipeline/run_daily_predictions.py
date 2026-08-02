@@ -44,7 +44,7 @@ MLB_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_high_precision
 MLB_MAX_WINRATE_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_max_winrate_board.py"
 MLB_EXPORTER = REPO_ROOT / "sports" / "mlb" / "scripts" / "export_web_prediction_payload.py"
 MLB_WEB_JSON = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "daily_predictions.json"
-MLB_PRIMARY_POLICY_PROFILE = "premium_price_defended_v1"
+MLB_PRIMARY_POLICY_PROFILE = "premium_adaptive_volume_v2"
 MLB_PRIMARY_POLICY_ARGS = [
     "--require-real-market-source",
     "--min-market-books", "5",
@@ -65,8 +65,10 @@ MLB_PRIMARY_POLICY_ARGS = [
     "--over-max-american-price", "125",
     "--over-min-history-rows", "55",
     "--core-max-american-price", "-200",
-    "--min-over-picks", "3",
+    "--min-over-picks", "0",
     "--max-over-picks", "3",
+    "--daily-pick-soft-cap", "6",
+    "--post-cap-min-selection-score", "0.80",
     "--max-per-market-bucket", "4",
     "--max-per-team", "2",
     "--min-historical-bet-profile-support", "0",

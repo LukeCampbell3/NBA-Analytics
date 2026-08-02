@@ -124,3 +124,44 @@ def test_over_maturity_route_keeps_core_and_only_mature_over_rows() -> None:
     assert route["combined_maturity_gated_policy"]["play_count"] == 2
     assert route["combined_maturity_gated_policy"]["hit_rate"] == 1.0
     assert route["premium_price_defended_policy"]["play_count"] == 2
+
+
+def test_daily_volume_route_uses_soft_cap_with_elite_expansion() -> None:
+    rows = []
+    for rank, (result, score) in enumerate(
+        [
+            ("win", 0.95),
+            ("win", 0.92),
+            ("loss", 0.90),
+            ("win", 0.88),
+            ("win", 0.86),
+            ("win", 0.84),
+            ("win", 0.82),
+            ("loss", 0.79),
+        ],
+        start=1,
+    ):
+        rows.append(
+            {
+                "run_date": "2026-07-01",
+                "rank": rank,
+                "selection_score": score,
+                "result": result,
+                "units": 1.0 if result == "win" else -1.0,
+                "line_placeable": True,
+                "price_confirmed": True,
+            }
+        )
+
+    route = validator.summarize_daily_volume_route(
+        rows,
+        soft_cap=6,
+        post_cap_min_selection_score=0.80,
+    )
+
+    assert route["baseline"]["play_count"] == 8
+    assert route["adaptive_policy"]["play_count"] == 7
+    assert route["removed_tail"]["play_count"] == 1
+    assert route["adaptive_daily_pick_counts"] == {"2026-07-01": 7}
+    assert route["cumulative_by_rank"]["6"]["graded_play_count"] == 6
+    assert route["cap_optimization"]["recommended_soft_cap"] == 7

@@ -16,7 +16,7 @@ SPORT_PAYLOADS = {
     "nba": Path("sports/nba/web/data/daily_predictions.json"),
     "mlb": Path("sports/mlb/web/data/daily_predictions.json"),
 }
-MLB_POLICY_PROFILE = "premium_price_defended_v1"
+MLB_POLICY_PROFILE = "premium_adaptive_volume_v2"
 MLB_REQUIRED_TARGETS = {"ER", "H", "HR", "K", "R", "RBI", "TB"}
 MLB_MIN_BOOKS = 5
 MLB_MIN_COMMON_BOOKS = 2
@@ -27,6 +27,8 @@ MLB_CORE_SELECTION_PROFILE = "core_market_v1"
 MLB_OPTIMIZED_OVER_PROFILE = "r_tb_over_moderate_edge_v1"
 MLB_OPTIMIZED_OVER_TARGETS = {"R", "TB"}
 MLB_OPTIMIZED_OVER_PROFILE_STATUS = "probation"
+MLB_DAILY_PICK_SOFT_CAP = 6
+MLB_POST_CAP_MIN_SELECTION_SCORE = 0.80
 
 
 def parse_args() -> argparse.Namespace:
@@ -122,8 +124,12 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
     for key, expected in exact_over_policy.items():
         if as_float(selection.get(key)) != expected:
             raise ValueError(f"MLB {label} payload changed validated OVER threshold {key}.")
-    if int(selection.get("min_over_picks", 0)) != 3 or int(selection.get("max_over_picks", 0)) != 3:
-        raise ValueError(f"MLB {label} payload must reserve and cap the validated OVER profile at three picks.")
+    if int(selection.get("min_over_picks", 0)) != 0 or int(selection.get("max_over_picks", 0)) != 3:
+        raise ValueError(f"MLB {label} payload must rank OVER picks normally and cap them at three picks.")
+    if int(selection.get("daily_pick_soft_cap", 0)) != MLB_DAILY_PICK_SOFT_CAP:
+        raise ValueError(f"MLB {label} payload changed the adaptive daily pick soft cap.")
+    if as_float(selection.get("post_cap_min_selection_score")) != MLB_POST_CAP_MIN_SELECTION_SCORE:
+        raise ValueError(f"MLB {label} payload changed the post-cap elite selection-score floor.")
 
     optimized_over_count = 0
     for index, play in enumerate(payload.get("plays", []), start=1):

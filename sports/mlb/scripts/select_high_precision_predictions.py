@@ -147,6 +147,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--out-csv", type=Path, default=None, help="Output CSV for the selected board.")
     parser.add_argument("--summary-json", type=Path, default=None, help="Summary JSON path.")
     parser.add_argument("--top-n", type=int, default=6, help="Maximum number of plays to keep.")
+    parser.add_argument(
+        "--daily-pick-soft-cap",
+        type=int,
+        default=0,
+        help="Normal daily board size. Picks above this count must clear the post-cap score floor; 0 disables.",
+    )
+    parser.add_argument(
+        "--post-cap-min-selection-score",
+        type=float,
+        default=0.0,
+        help="Minimum selection score required after the daily soft cap has been reached.",
+    )
     parser.add_argument("--min-abs-edge", type=float, default=0.45, help="Minimum absolute edge required.")
     parser.add_argument("--min-history-rows", type=int, default=11, help="Minimum history rows required.")
     parser.add_argument(
@@ -1819,6 +1831,17 @@ def select_top_candidates(candidates: list[Candidate], args: argparse.Namespace)
     def try_add(candidate: Candidate) -> bool:
         if len(selected) >= int(args.top_n):
             return False
+        daily_pick_soft_cap = max(0, int(getattr(args, "daily_pick_soft_cap", 0)))
+        post_cap_min_selection_score = max(
+            0.0,
+            float(getattr(args, "post_cap_min_selection_score", 0.0)),
+        )
+        if (
+            daily_pick_soft_cap > 0
+            and len(selected) >= daily_pick_soft_cap
+            and candidate.selection_score < post_cap_min_selection_score
+        ):
+            return False
         prop_key = (
             str(candidate.player_id or candidate.player).strip().lower(),
             str(candidate.team).strip().upper(),
@@ -2053,6 +2076,10 @@ def write_summary_json(
         "rows_selected": len(selected),
         "selection": {
             "top_n": int(args.top_n),
+            "daily_pick_soft_cap": int(getattr(args, "daily_pick_soft_cap", 0)),
+            "post_cap_min_selection_score": float(
+                getattr(args, "post_cap_min_selection_score", 0.0)
+            ),
             "min_abs_edge": float(args.min_abs_edge),
             "min_history_rows": int(args.min_history_rows),
             "min_prediction": float(args.min_prediction),
