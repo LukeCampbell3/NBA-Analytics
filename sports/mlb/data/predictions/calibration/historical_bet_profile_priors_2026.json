@@ -1,21 +1,21 @@
 {
   "season": 2026,
   "history_dir": "Player-Predictor/Data-Proc-MLB",
-  "updated_at_utc": "2026-08-02T03:41:19.643445+00:00",
+  "updated_at_utc": "2026-08-02T14:08:50.890012+00:00",
   "source_file_count": 1194,
   "history_before_date": "",
   "availability_target_direction": {
     "ER|OVER": {
-      "rows": 108,
+      "rows": 99,
       "side_price_rows": 8,
-      "availability_rate": 0.07407407407407407,
-      "avg_books": 4.796296296296297
+      "availability_rate": 0.08080808080808081,
+      "avg_books": 4.808080808080808
     },
     "ER|UNDER": {
-      "rows": 166,
+      "rows": 156,
       "side_price_rows": 20,
-      "availability_rate": 0.12048192771084337,
-      "avg_books": 4.740963855421687
+      "availability_rate": 0.1282051282051282,
+      "avg_books": 4.737179487179487
     },
     "HR|OVER": {
       "rows": 116,
@@ -24,10 +24,10 @@
       "avg_books": 7.439655172413793
     },
     "HR|UNDER": {
-      "rows": 1852,
+      "rows": 1850,
       "side_price_rows": 0,
       "availability_rate": 0.0,
-      "avg_books": 6.960043196544277
+      "avg_books": 6.964324324324324
     },
     "H|OVER": {
       "rows": 53,
@@ -42,40 +42,40 @@
       "avg_books": 1.0
     },
     "K|OVER": {
-      "rows": 59,
+      "rows": 58,
       "side_price_rows": 2,
-      "availability_rate": 0.03389830508474576,
-      "avg_books": 7.983050847457627
+      "availability_rate": 0.034482758620689655,
+      "avg_books": 7.9655172413793105
     },
     "K|UNDER": {
-      "rows": 215,
+      "rows": 199,
       "side_price_rows": 15,
-      "availability_rate": 0.06976744186046512,
-      "avg_books": 8.367441860465116
+      "availability_rate": 0.07537688442211055,
+      "avg_books": 8.316582914572864
     },
     "R|OVER": {
-      "rows": 1181,
-      "side_price_rows": 101,
-      "availability_rate": 0.0855207451312447,
-      "avg_books": 6.492802709568163
+      "rows": 1113,
+      "side_price_rows": 100,
+      "availability_rate": 0.08984725965858041,
+      "avg_books": 6.46900269541779
     },
     "R|UNDER": {
-      "rows": 1458,
+      "rows": 1323,
       "side_price_rows": 242,
-      "availability_rate": 0.16598079561042525,
-      "avg_books": 6.3079561042524
+      "availability_rate": 0.18291761148904007,
+      "avg_books": 6.254724111866969
     },
     "TB|OVER": {
-      "rows": 1209,
+      "rows": 1156,
       "side_price_rows": 73,
-      "availability_rate": 0.060380479735318446,
-      "avg_books": 7.47808105872622
+      "availability_rate": 0.06314878892733564,
+      "avg_books": 7.454152249134948
     },
     "TB|UNDER": {
-      "rows": 1454,
+      "rows": 1305,
       "side_price_rows": 128,
-      "availability_rate": 0.08803301237964237,
-      "avg_books": 7.433975240715268
+      "availability_rate": 0.09808429118773947,
+      "avg_books": 7.3869731800766285
     }
   },
   "availability_line_buckets": {
@@ -86,28 +86,28 @@
       "avg_books": 3.5
     },
     "ER|OVER|1.5": {
-      "rows": 35,
+      "rows": 30,
       "side_price_rows": 2,
-      "availability_rate": 0.05714285714285714,
-      "avg_books": 4.885714285714286
+      "availability_rate": 0.06666666666666667,
+      "avg_books": 4.9
     },
     "ER|OVER|2.5": {
-      "rows": 69,
+      "rows": 66,
       "side_price_rows": 5,
-      "availability_rate": 0.07246376811594203,
-      "avg_books": 4.782608695652174
+      "availability_rate": 0.07575757575757576,
+      "avg_books": 4.803030303030303
     },
     "ER|OVER|3.5": {
-      "rows": 2,
+      "rows": 1,
       "side_price_rows": 0,
       "availability_rate": 0.0,
       "avg_books": 5.0
     },
     "ER|UNDER|0.5": {
-      "rows": 9,
+      "rows": 8,
       "side_price_rows": 2,
-      "availability_rate": 0.2222222222222222,
-      "avg_books": 3.3333333333333335
+      "availability_rate": 0.25,
+      "avg_books": 3.375
     },
     "ER|UNDER|1.5": {
       "rows": 25,
@@ -116,16 +116,16 @@
       "avg_books": 4.76
     },
     "ER|UNDER|2.5": {
-      "rows": 119,
+      "rows": 111,
       "side_price_rows": 15,
-      "availability_rate": 0.12605042016806722,
-      "avg_books": 4.840336134453781
+      "availability_rate": 0.13513513513513514,
+      "avg_books": 4.828828828828829
     },
     "ER|UNDER|3.5": {
-      "rows": 13,
+      "rows": 12,
       "side_price_rows": 0,
       "availability_rate": 0.0,
-      "avg_books": 4.769230769230769
+      "avg_books": 4.75
     },
     "HR|OVER|0.5": {
       "rows": 116,
@@ -134,10 +134,10 @@
       "avg_books": 7.439655172413793
     },
     "HR|UNDER|0.5": {
-      "rows": 1852,
+      "rows": 1850,
       "side_price_rows": 0,
       "availability_rate": 0.0,
-      "avg_books": 6.960043196544277
+      "avg_books": 6.964324324324324
     },
     "H|OVER|0.5": {
       "rows": 53,
@@ -194,10 +194,10 @@
       "avg_books": 2.0
     },
     "K|OVER|5.5": {
-      "rows": 18,
+      "rows": 17,
       "side_price_rows": 0,
       "availability_rate": 0.0,
-      "avg_books": 8.38888888888889
+      "avg_books": 8.352941176470589
     },
     "K|OVER|6.5": {
       "rows": 3,
@@ -218,22 +218,22 @@
       "avg_books": 9.0
     },
     "K|UNDER|2.5": {
-      "rows": 3,
+      "rows": 2,
       "side_price_rows": 0,
       "availability_rate": 0.0,
-      "avg_books": 7.666666666666667
+      "avg_books": 7.0
     },
     "K|UNDER|3.5": {
-      "rows": 28,
+      "rows": 27,
       "side_price_rows": 0,
       "availability_rate": 0.0,
-      "avg_books": 8.535714285714286
+      "avg_books": 8.518518518518519
     },
     "K|UNDER|4.5": {
-      "rows": 59,
+      "rows": 57,
       "side_price_rows": 5,
-      "availability_rate": 0.0847457627118644,
-      "avg_books": 8.203389830508474
+      "availability_rate": 0.08771929824561403,
+      "avg_books": 8.175438596491228
     },
     "K|UNDER|5.0": {
       "rows": 1,
@@ -242,10 +242,10 @@
       "avg_books": 8.0
     },
     "K|UNDER|5.5": {
-      "rows": 51,
+      "rows": 49,
       "side_price_rows": 7,
-      "availability_rate": 0.13725490196078433,
-      "avg_books": 8.117647058823529
+      "availability_rate": 0.14285714285714285,
+      "avg_books": 8.081632653061224
     },
     "K|UNDER|6.0": {
       "rows": 1,
@@ -254,21 +254,21 @@
       "avg_books": 8.0
     },
     "K|UNDER|6.5": {
-      "rows": 46,
+      "rows": 40,
       "side_price_rows": 1,
-      "availability_rate": 0.021739130434782608,
-      "avg_books": 8.565217391304348
+      "availability_rate": 0.025,
+      "avg_books": 8.5
     },
     "K|UNDER|7.5": {
-      "rows": 17,
+      "rows": 14,
       "side_price_rows": 1,
-      "availability_rate": 0.058823529411764705,
-      "avg_books": 8.705882352941176
+      "availability_rate": 0.07142857142857142,
+      "avg_books": 8.642857142857142
     },
     "K|UNDER|8.5": {
-      "rows": 7,
+      "rows": 6,
       "side_price_rows": 1,
-      "availability_rate": 0.14285714285714285,
+      "availability_rate": 0.16666666666666666,
       "avg_books": 9.0
     },
     "K|UNDER|9.5": {
@@ -278,10 +278,10 @@
       "avg_books": 9.0
     },
     "R|OVER|0.5": {
-      "rows": 1179,
-      "side_price_rows": 100,
-      "availability_rate": 0.08481764206955046,
-      "avg_books": 6.492790500424088
+      "rows": 1111,
+      "side_price_rows": 99,
+      "availability_rate": 0.0891089108910891,
+      "avg_books": 6.468946894689469
     },
     "R|OVER|1.5": {
       "rows": 2,
@@ -290,16 +290,16 @@
       "avg_books": 6.5
     },
     "R|UNDER|0.5": {
-      "rows": 1244,
+      "rows": 1152,
       "side_price_rows": 223,
-      "availability_rate": 0.17926045016077172,
-      "avg_books": 6.193729903536977
+      "availability_rate": 0.1935763888888889,
+      "avg_books": 6.147569444444445
     },
     "R|UNDER|1.5": {
-      "rows": 191,
+      "rows": 153,
       "side_price_rows": 18,
-      "availability_rate": 0.09424083769633508,
-      "avg_books": 6.973821989528796
+      "availability_rate": 0.11764705882352941,
+      "avg_books": 6.980392156862745
     },
     "R|UNDER|2.0": {
       "rows": 2,
@@ -308,28 +308,28 @@
       "avg_books": 7.0
     },
     "R|UNDER|2.5": {
-      "rows": 21,
+      "rows": 16,
       "side_price_rows": 1,
-      "availability_rate": 0.047619047619047616,
-      "avg_books": 6.9523809523809526
+      "availability_rate": 0.0625,
+      "avg_books": 6.9375
     },
     "TB|OVER|0.5": {
-      "rows": 256,
+      "rows": 252,
       "side_price_rows": 30,
-      "availability_rate": 0.1171875,
-      "avg_books": 6.7734375
+      "availability_rate": 0.11904761904761904,
+      "avg_books": 6.757936507936508
     },
     "TB|OVER|1.0": {
-      "rows": 318,
+      "rows": 310,
       "side_price_rows": 13,
-      "availability_rate": 0.040880503144654086,
-      "avg_books": 7.823899371069182
+      "availability_rate": 0.041935483870967745,
+      "avg_books": 7.819354838709677
     },
     "TB|OVER|1.5": {
-      "rows": 622,
+      "rows": 582,
       "side_price_rows": 30,
-      "availability_rate": 0.04823151125401929,
-      "avg_books": 7.580385852090032
+      "availability_rate": 0.05154639175257732,
+      "avg_books": 7.548109965635739
     },
     "TB|OVER|2.0": {
       "rows": 1,
@@ -343,12 +343,6 @@
       "availability_rate": 0.0,
       "avg_books": 8.1
     },
-    "TB|OVER|3.5": {
-      "rows": 1,
-      "side_price_rows": 0,
-      "availability_rate": 0.0,
-      "avg_books": 7.0
-    },
     "TB|OVER|4.5": {
       "rows": 1,
       "side_price_rows": 0,
@@ -356,67 +350,61 @@
       "avg_books": 8.0
     },
     "TB|UNDER|0.5": {
-      "rows": 80,
+      "rows": 77,
       "side_price_rows": 16,
-      "availability_rate": 0.2,
-      "avg_books": 6.5125
+      "availability_rate": 0.2077922077922078,
+      "avg_books": 6.545454545454546
     },
     "TB|UNDER|1.0": {
-      "rows": 320,
+      "rows": 289,
       "side_price_rows": 18,
-      "availability_rate": 0.05625,
-      "avg_books": 7.59375
+      "availability_rate": 0.06228373702422145,
+      "avg_books": 7.557093425605537
     },
     "TB|UNDER|1.5": {
-      "rows": 847,
+      "rows": 778,
       "side_price_rows": 76,
-      "availability_rate": 0.089728453364817,
-      "avg_books": 7.336481700118064
+      "availability_rate": 0.09768637532133675,
+      "avg_books": 7.295629820051414
     },
     "TB|UNDER|2.0": {
-      "rows": 11,
+      "rows": 9,
       "side_price_rows": 0,
       "availability_rate": 0.0,
       "avg_books": 8.0
     },
     "TB|UNDER|2.5": {
-      "rows": 94,
+      "rows": 72,
       "side_price_rows": 6,
-      "availability_rate": 0.06382978723404255,
-      "avg_books": 7.882978723404255
+      "availability_rate": 0.08333333333333333,
+      "avg_books": 7.861111111111111
     },
     "TB|UNDER|3.0": {
-      "rows": 7,
+      "rows": 5,
       "side_price_rows": 1,
-      "availability_rate": 0.14285714285714285,
-      "avg_books": 7.714285714285714
+      "availability_rate": 0.2,
+      "avg_books": 7.6
     },
     "TB|UNDER|3.5": {
-      "rows": 19,
+      "rows": 16,
       "side_price_rows": 4,
-      "availability_rate": 0.21052631578947367,
-      "avg_books": 8.052631578947368
+      "availability_rate": 0.25,
+      "avg_books": 8.0625
     },
     "TB|UNDER|4.0": {
-      "rows": 2,
+      "rows": 1,
       "side_price_rows": 0,
       "availability_rate": 0.0,
       "avg_books": 8.0
     },
     "TB|UNDER|4.5": {
-      "rows": 61,
+      "rows": 50,
       "side_price_rows": 7,
-      "availability_rate": 0.11475409836065574,
-      "avg_books": 8.0
-    },
-    "TB|UNDER|5.0": {
-      "rows": 2,
-      "side_price_rows": 0,
-      "availability_rate": 0.0,
-      "avg_books": 8.0
+      "availability_rate": 0.14,
+      "avg_books": 7.98
     },
     "TB|UNDER|5.5": {
-      "rows": 7,
+      "rows": 5,
       "side_price_rows": 0,
       "availability_rate": 0.0,
       "avg_books": 8.0
@@ -434,7 +422,7 @@
       "avg_books": 8.0
     },
     "TB|UNDER|8.5": {
-      "rows": 2,
+      "rows": 1,
       "side_price_rows": 0,
       "availability_rate": 0.0,
       "avg_books": 8.0
@@ -912,14 +900,14 @@
       "roi_per_bet": -1.0
     },
     "R|OVER|0.40-0.45": {
-      "rows": 29,
-      "graded_rows": 29,
+      "rows": 28,
+      "graded_rows": 28,
       "wins": 4,
-      "losses": 25,
+      "losses": 24,
       "pushes": 0,
-      "units_sum": -18.700000000000003,
-      "win_rate": 0.13793103448275862,
-      "roi_per_bet": -0.6448275862068966
+      "units_sum": -17.700000000000003,
+      "win_rate": 0.14285714285714285,
+      "roi_per_bet": -0.6321428571428572
     },
     "R|OVER|0.45-0.50": {
       "rows": 21,
@@ -1914,14 +1902,14 @@
       "roi_per_bet": -1.0
     },
     "R|OVER|0.5|0.40-0.45": {
-      "rows": 29,
-      "graded_rows": 29,
+      "rows": 28,
+      "graded_rows": 28,
       "wins": 4,
-      "losses": 25,
+      "losses": 24,
       "pushes": 0,
-      "units_sum": -18.700000000000003,
-      "win_rate": 0.13793103448275862,
-      "roi_per_bet": -0.6448275862068966
+      "units_sum": -17.700000000000003,
+      "win_rate": 0.14285714285714285,
+      "roi_per_bet": -0.6321428571428572
     },
     "R|OVER|0.5|0.45-0.50": {
       "rows": 20,
