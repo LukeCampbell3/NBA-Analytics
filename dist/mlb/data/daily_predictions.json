@@ -17,15 +17,15 @@
       "no plays passed publication filters"
     ]
   },
-  "generated_at_utc": "2026-08-02T03:22:10.420081+00:00",
+  "generated_at_utc": "2026-08-02T03:41:20.427683+00:00",
   "summary": {
     "play_count": 0,
-    "source_play_count": 1,
-    "closed_game_cards_suppressed": 1,
+    "source_play_count": 2,
+    "closed_game_cards_suppressed": 2,
     "duplicate_cards_suppressed": 0,
     "supported_rows": 1730,
-    "rows_after_filters": 1,
-    "rejected_rows": 1729,
+    "rows_after_filters": 2,
+    "rejected_rows": 1728,
     "avg_expected_hit_rate": 0.0,
     "avg_graded_hit_rate": 0.0,
     "avg_edge": 0.0,
@@ -99,17 +99,16 @@
     "min_historical_market_availability_rate": 0.0
   },
   "filter_rejections": {
-    "synthetic_market_source": 275,
-    "common_market_books_too_low": 68,
-    "edge_too_small": 930,
+    "synthetic_market_source": 283,
+    "common_market_books_too_low": 71,
+    "edge_too_small": 931,
     "prediction_too_low": 56,
-    "nonstandard_market_line": 197,
+    "nonstandard_market_line": 192,
     "history_too_short": 144,
     "optimized_over_edge_too_large": 28,
-    "market_books_too_low": 23,
+    "market_books_too_low": 15,
     "optimized_over_history_too_short": 1,
-    "side_price_unconfirmed": 5,
-    "core_price_too_long": 2
+    "side_price_unconfirmed": 7
   },
   "by_target": {},
   "by_direction": {},
@@ -146,6 +145,18 @@
       "market_date": "2026-08-01",
       "target": "TB",
       "direction": "OVER",
+      "market_line": 1.5,
+      "game_id": "824972",
+      "official_game_status": "In Progress",
+      "reason": "game is no longer open for pregame predictions"
+    },
+    {
+      "player": "Alika Williams",
+      "team": "ATH",
+      "opponent": "DET",
+      "market_date": "2026-08-01",
+      "target": "TB",
+      "direction": "UNDER",
       "market_line": 1.5,
       "game_id": "824972",
       "official_game_status": "In Progress",
