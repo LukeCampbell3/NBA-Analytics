@@ -24,7 +24,26 @@ def test_mlb_primary_policy_allows_four_plays_per_market_bucket() -> None:
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[index + 1] == "4"
     ev_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--min-expected-value")
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[ev_index + 1] == "0.0"
-    assert shared_daily_predictions.MLB_PRIMARY_POLICY_PROFILE == "walk_forward_balanced_v2"
+    common_books_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--min-common-market-books")
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[common_books_index + 1] == "2"
+    availability_rate_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index(
+        "--min-historical-market-availability-rate"
+    )
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[availability_rate_index + 1] == "0"
+    optimized_over_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--optimized-over-targets")
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[optimized_over_index + 1 : optimized_over_index + 3] == [
+        "R",
+        "TB",
+    ]
+    min_over_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--min-over-picks")
+    max_over_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--max-over-picks")
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[min_over_index + 1] == "3"
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[max_over_index + 1] == "3"
+    over_history_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--over-min-history-rows")
+    core_price_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--core-max-american-price")
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[over_history_index + 1] == "55"
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[core_price_index + 1] == "-200"
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_PROFILE == "premium_price_defended_v1"
 
 
 def test_annotate_mlb_summary_keeps_policy_identity_separate_from_publication_state(tmp_path: Path) -> None:
@@ -39,7 +58,7 @@ def test_annotate_mlb_summary_keeps_policy_identity_separate_from_publication_st
     )
 
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
-    assert summary["publication_strategy"] == "walk_forward_balanced_v2"
+    assert summary["publication_strategy"] == "premium_price_defended_v1"
     assert summary["publication_state"] == "withheld_current_pool"
 
 
@@ -87,8 +106,8 @@ def _default_args(**overrides) -> Namespace:
         "mlb_market_provider": "rotowire",
         "mlb_market_input_path": None,
         "mlb_fallback_policy": "exact_or_latest",
-        "mlb_min_publish_plays": 4,
-        "mlb_min_rescue_plays": 3,
+        "mlb_min_publish_plays": 1,
+        "mlb_min_rescue_plays": 1,
         "mlb_top_n": 10,
     }
     values.update(overrides)

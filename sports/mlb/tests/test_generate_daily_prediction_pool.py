@@ -79,3 +79,125 @@ def test_projection_context_regresses_short_term_total_base_spike() -> None:
     )
 
     assert prediction < 3.0
+
+
+def test_market_snapshot_prefers_major_book_standard_line_and_best_price(tmp_path: Path) -> None:
+    pd.DataFrame(
+        [
+            {
+                "Market_Date": "2026-07-29",
+                "Player": "Example_Player",
+                "Market_R": 1.5,
+                "Market_R_books": 3,
+                "Market_R_over_price": 136.418,
+                "Market_R_under_price": -181.779,
+                "Market_Source_R": "real",
+            }
+        ]
+    ).to_csv(tmp_path / "latest_player_props_wide.csv", index=False)
+    rows = [
+        {
+            "event_date_et": "2026-07-29",
+            "player_name_norm": "Example_Player",
+            "market_key": "batter_runs_scored",
+            "bookmaker_key": "draftkings",
+            "line": 0.5,
+            "over_price": 125,
+            "under_price": -155,
+        },
+        {
+            "event_date_et": "2026-07-29",
+            "player_name_norm": "Example_Player",
+            "market_key": "batter_runs_scored",
+            "bookmaker_key": "fanduel",
+            "line": 0.5,
+            "over_price": 130,
+            "under_price": -160,
+        },
+        {
+            "event_date_et": "2026-07-29",
+            "player_name_norm": "Example_Player",
+            "market_key": "batter_runs_scored",
+            "bookmaker_key": "fanduel",
+            "line": 1.5,
+            "over_price": 450,
+            "under_price": -700,
+        },
+    ]
+    pd.DataFrame(rows).to_csv(tmp_path / "latest_player_props_long.csv", index=False)
+
+    snapshot = generator.load_market_snapshot(tmp_path, pd.Timestamp("2026-07-29"))
+    market = snapshot.iloc[0]
+
+    assert market["Market_R"] == 0.5
+    assert market["Market_R_over_price"] != 136.418
+    assert market["Market_R_common_books"] == 2
+    assert market["Market_R_over_price"] == 130
+    assert market["Market_R_over_book_key"] == "fanduel"
+    assert market["Market_R_under_price"] == -155
+    assert market["Market_R_under_book_key"] == "draftkings"
+
+
+def test_market_snapshot_uses_requested_history_date_and_latest_capture(tmp_path: Path) -> None:
+    pd.DataFrame(
+        [
+            {
+                "event_date_et": "2026-07-30",
+                "player_name_norm": "Newer_Player",
+                "market_key": "batter_total_bases",
+                "bookmaker_key": "draftkings",
+                "line": 1.5,
+                "over_price": -110,
+                "under_price": -110,
+            }
+        ]
+    ).to_csv(tmp_path / "latest_player_props_long.csv", index=False)
+    pd.DataFrame(
+        [
+            {
+                "fetched_at_utc": "2026-07-29T12:00:00Z",
+                "event_date_et": "2026-07-29",
+                "player_name_norm": "History_Player",
+                "market_key": "batter_total_bases",
+                "bookmaker_key": "draftkings",
+                "line": 2.5,
+                "over_price": 140,
+                "under_price": -170,
+            },
+            {
+                "fetched_at_utc": "2026-07-29T13:00:00Z",
+                "event_date_et": "2026-07-29",
+                "player_name_norm": "History_Player",
+                "market_key": "batter_total_bases",
+                "bookmaker_key": "draftkings",
+                "line": 1.5,
+                "over_price": 115,
+                "under_price": -135,
+            },
+        ]
+    ).to_csv(tmp_path / "history_player_props_long.csv", index=False)
+
+    snapshot = generator.load_market_snapshot(tmp_path, pd.Timestamp("2026-07-29"))
+
+    assert snapshot.iloc[0]["Player"] == "History_Player"
+    assert snapshot.iloc[0]["Market_TB"] == 1.5
+
+
+def test_standard_hitter_market_is_omitted_when_only_alternate_line_is_offered(tmp_path: Path) -> None:
+    pd.DataFrame(
+        [
+            {
+                "event_date_et": "2026-07-29",
+                "player_name_norm": "Alternate_Only",
+                "market_key": "batter_runs_scored",
+                "bookmaker_key": "fanduel",
+                "line": 1.5,
+                "over_price": 350,
+                "under_price": -500,
+            }
+        ]
+    ).to_csv(tmp_path / "latest_player_props_long.csv", index=False)
+
+    snapshot = generator.load_market_snapshot(tmp_path, pd.Timestamp("2026-07-29"))
+
+    assert "Market_R" not in snapshot.columns

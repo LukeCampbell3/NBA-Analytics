@@ -358,3 +358,32 @@ def test_mlb_parlays_avoid_same_market_bucket_stacking() -> None:
     assert len(payload["pairs"]) == 1
     assert payload["pairs"][0]["same_market_bucket"] is False
     assert {leg["player"] for leg in payload["pairs"][0]["legs"]} == {"Alpha Bat", "Gamma Runner"}
+
+
+def test_mlb_parlays_require_different_players_and_games() -> None:
+    common = {
+        "team": "A",
+        "direction": "UNDER",
+        "estimated_graded_hit_rate": 0.80,
+        "parlay_precision_eligible": True,
+        "final_pool_quality_score": 0.90,
+    }
+    plays = [
+        {**common, "player": "Alpha", "target": "TB", "game_id": "game-1", "market_bucket": "TB|UNDER|1.5"},
+        {**common, "player": "Beta", "target": "R", "game_id": "game-1", "market_bucket": "R|UNDER|0.5"},
+        {**common, "player": "Alpha", "target": "H", "game_id": "game-2", "market_bucket": "H|UNDER|0.5"},
+    ]
+
+    tickets = score_candidate_parlays(
+        plays,
+        sport="mlb",
+        probability_field="estimated_graded_hit_rate",
+        eligibility_field="parlay_precision_eligible",
+        min_leg_probability=0.75,
+        min_pair_probability=0.60,
+    )
+
+    assert len(tickets) == 1
+    assert tickets[0]["same_player"] is False
+    assert tickets[0]["same_game"] is False
+    assert set(tickets[0]["leg_indices"]) == {1, 2}

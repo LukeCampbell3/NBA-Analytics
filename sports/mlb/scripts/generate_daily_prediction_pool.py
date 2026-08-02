@@ -35,6 +35,30 @@ DEFAULT_MANIFEST = DEFAULT_DATA_DIR / "update_manifest_2026.json"
 DEFAULT_DAILY_RUNS_ROOT = REPO_ROOT / "sports" / "mlb" / "data" / "predictions" / "daily_runs"
 DEFAULT_MARKET_ROOT = REPO_ROOT / "sports" / "mlb" / "data" / "raw" / "market_odds" / "mlb" / "odds_api_io"
 
+PREFERRED_BOOKMAKER_KEYS: tuple[str, ...] = (
+    "fanduel",
+    "draftkings",
+    "bet365",
+    "mgm",
+    "caesars",
+    "fanatics",
+)
+BOOKMAKER_TITLES = {
+    "fanduel": "FanDuel",
+    "draftkings": "DraftKings",
+    "bet365": "bet365",
+    "mgm": "BetMGM",
+    "caesars": "Caesars",
+    "fanatics": "Fanatics",
+}
+STANDARD_MARKET_LINES = {
+    "H": 0.5,
+    "TB": 1.5,
+    "R": 0.5,
+    "HR": 0.5,
+    "RBI": 0.5,
+}
+
 
 @dataclass(frozen=True)
 class TargetSpec:
@@ -145,6 +169,59 @@ def to_float(value: object) -> float | None:
     except (TypeError, ValueError):
         return None
     return out if math.isfinite(out) else None
+
+
+def valid_american_price(value: object) -> float | None:
+    price = to_float(value)
+    if price is None or (-100.0 < price < 100.0) or abs(price - round(price)) > 1e-6:
+        return None
+    return price
+
+
+def _best_book_price(rows: pd.DataFrame, price_column: str) -> tuple[float | None, str, str]:
+    offers: list[tuple[float, int, str]] = []
+    preference = {key: index for index, key in enumerate(PREFERRED_BOOKMAKER_KEYS)}
+    for _, offer in rows.iterrows():
+        book_key = str(offer.get("bookmaker_key", "")).strip().lower()
+        price = valid_american_price(offer.get(price_column))
+        if book_key not in preference or price is None:
+            continue
+        offers.append((price, -preference[book_key], book_key))
+    if not offers:
+        return None, "", ""
+    price, _, book_key = max(offers)
+    return price, book_key, BOOKMAKER_TITLES.get(book_key, book_key)
+
+
+def select_bettable_market_line(market_part: pd.DataFrame, target: str) -> tuple[float, pd.DataFrame]:
+    priced = market_part.loc[
+        market_part["line_num"].notna()
+        & market_part[["over_price_num", "under_price_num"]].notna().any(axis=1)
+    ].copy()
+    if priced.empty:
+        raise ValueError("market has no priced lines")
+
+    priced["bookmaker_key"] = priced.get("bookmaker_key", "").astype(str).str.strip().str.lower()
+    preferred = priced.loc[priced["bookmaker_key"].isin(PREFERRED_BOOKMAKER_KEYS)].copy()
+    line_candidates = preferred if not preferred.empty else priced
+    standard_line = STANDARD_MARKET_LINES.get(target)
+    if standard_line is not None:
+        line_candidates = preferred.loc[(preferred["line_num"] - standard_line).abs() < 1e-9].copy()
+        if line_candidates.empty:
+            raise ValueError(f"no major sportsbook offers the standard {target} line")
+
+    ranked: list[tuple[tuple[int, int, int, int, float], float]] = []
+    for line, line_rows in line_candidates.groupby("line_num"):
+        line_value = float(line)
+        unique_books = int(line_rows["bookmaker_key"].nunique())
+        side_offers = int(line_rows[["over_price_num", "under_price_num"]].notna().sum().sum())
+        all_line_rows = priced.loc[priced["line_num"] == line_value]
+        standard_match = int(standard_line is not None and abs(line_value - standard_line) < 1e-9)
+        standard_distance = abs(line_value - standard_line) if standard_line is not None else 0.0
+        ranked.append(((unique_books, standard_match, side_offers, len(all_line_rows), -standard_distance), line_value))
+
+    _, selected_line = max(ranked)
+    return selected_line, priced.loc[priced["line_num"] == selected_line].copy()
 
 
 def to_int_string(value: object) -> str:
@@ -360,22 +437,24 @@ def load_market_snapshot(market_root: Path, requested_run_date: pd.Timestamp) ->
         market_root / "history_player_props_wide.parquet",
         market_root / "history_player_props_wide.csv",
     ]
-    wide_selected = next((path for path in wide_candidates if path.exists()), None)
-    if wide_selected is None:
-        wide_df = pd.DataFrame()
-    else:
-        if wide_selected.suffix.lower() == ".parquet":
-            wide_df = pd.read_parquet(wide_selected)
-        else:
-            wide_df = pd.read_csv(wide_selected)
-
-    if not wide_df.empty:
-        wide_df = wide_df.copy()
-        wide_df["Player"] = wide_df["Player"].astype(str)
-        wide_df["Market_Date"] = pd.to_datetime(wide_df["Market_Date"], errors="coerce").dt.normalize()
-        wide_df = wide_df.loc[wide_df["Market_Date"] == requested_run_date].copy()
-        if not wide_df.empty:
-            wide_df = wide_df.drop_duplicates(subset=["Market_Date", "Player"], keep="last").reset_index(drop=True)
+    wide_df = pd.DataFrame()
+    for wide_selected in wide_candidates:
+        if not wide_selected.exists():
+            continue
+        candidate = (
+            pd.read_parquet(wide_selected)
+            if wide_selected.suffix.lower() == ".parquet"
+            else pd.read_csv(wide_selected)
+        )
+        if candidate.empty or "Market_Date" not in candidate.columns:
+            continue
+        candidate = candidate.copy()
+        candidate["Player"] = candidate["Player"].astype(str)
+        candidate["Market_Date"] = pd.to_datetime(candidate["Market_Date"], errors="coerce").dt.normalize()
+        candidate = candidate.loc[candidate["Market_Date"] == requested_run_date].copy()
+        if not candidate.empty:
+            wide_df = candidate.drop_duplicates(subset=["Market_Date", "Player"], keep="last").reset_index(drop=True)
+            break
 
     long_candidates = [
         market_root / "latest_player_props_long.parquet",
@@ -383,22 +462,34 @@ def load_market_snapshot(market_root: Path, requested_run_date: pd.Timestamp) ->
         market_root / "history_player_props_long.parquet",
         market_root / "history_player_props_long.csv",
     ]
-    long_selected = next((path for path in long_candidates if path.exists()), None)
-    if long_selected is None:
-        long_df = pd.DataFrame()
-    elif long_selected.suffix.lower() == ".parquet":
-        long_df = pd.read_parquet(long_selected)
-    else:
-        long_df = pd.read_csv(long_selected)
+    long_df = pd.DataFrame()
+    for long_selected in long_candidates:
+        if not long_selected.exists():
+            continue
+        candidate = (
+            pd.read_parquet(long_selected)
+            if long_selected.suffix.lower() == ".parquet"
+            else pd.read_csv(long_selected)
+        )
+        if candidate.empty or "player_name_norm" not in candidate.columns or "event_date_et" not in candidate.columns:
+            continue
+        candidate = candidate.copy()
+        candidate["Market_Date"] = pd.to_datetime(candidate["event_date_et"], errors="coerce").dt.normalize()
+        candidate = candidate.loc[candidate["Market_Date"] == requested_run_date].copy()
+        if not candidate.empty:
+            long_df = candidate
+            break
 
-    if long_df.empty or "player_name_norm" not in long_df.columns or "event_date_et" not in long_df.columns:
-        return wide_df
-
-    long_df = long_df.copy()
-    long_df["Market_Date"] = pd.to_datetime(long_df["event_date_et"], errors="coerce").dt.normalize()
-    long_df = long_df.loc[long_df["Market_Date"] == requested_run_date].copy()
     if long_df.empty:
         return wide_df
+    per_offer_closing = (
+        "snapshot_mode" in long_df.columns
+        and long_df["snapshot_mode"].astype(str).eq("per_offer_closing").all()
+    )
+    if "fetched_at_utc" in long_df.columns and not per_offer_closing:
+        fetched = pd.to_datetime(long_df["fetched_at_utc"], errors="coerce", utc=True)
+        if fetched.notna().any():
+            long_df = long_df.loc[fetched == fetched.max()].copy()
 
     long_df["Player"] = long_df["player_name_norm"].astype(str)
     long_df["line_num"] = pd.to_numeric(long_df.get("line"), errors="coerce")
@@ -412,27 +503,34 @@ def load_market_snapshot(market_root: Path, requested_run_date: pd.Timestamp) ->
             market_part = part.loc[part["market_key"].astype(str) == market_key].copy()
             if market_part.empty:
                 continue
-            line_counts = market_part.loc[market_part["line_num"].notna(), "line_num"].value_counts()
-            if line_counts.empty:
+            try:
+                consensus_line, consensus_rows = select_bettable_market_line(market_part, target)
+            except ValueError:
                 continue
-            consensus_line = float(line_counts.index[0])
-            consensus_rows = market_part.loc[market_part["line_num"] == consensus_line].copy()
-            if consensus_rows.empty:
-                consensus_rows = market_part
+            common_rows = consensus_rows.loc[
+                consensus_rows["bookmaker_key"].astype(str).str.lower().isin(PREFERRED_BOOKMAKER_KEYS)
+            ].copy()
+            over_price, over_book_key, over_book = _best_book_price(common_rows, "over_price_num")
+            under_price, under_book_key, under_book = _best_book_price(common_rows, "under_price_num")
+            exact_book_keys = sorted(
+                {
+                    str(value).strip().lower()
+                    for value in consensus_rows["bookmaker_key"].dropna()
+                    if str(value).strip()
+                }
+            )
+            common_book_keys = [key for key in PREFERRED_BOOKMAKER_KEYS if key in set(exact_book_keys)]
             row[f"Market_{target}"] = consensus_line
-            row[f"Market_{target}_books"] = int(
-                consensus_rows[["over_price_num", "under_price_num"]].notna().any(axis=1).sum()
-            )
-            row[f"Market_{target}_over_price"] = (
-                float(consensus_rows["over_price_num"].median())
-                if consensus_rows["over_price_num"].notna().any()
-                else float("nan")
-            )
-            row[f"Market_{target}_under_price"] = (
-                float(consensus_rows["under_price_num"].median())
-                if consensus_rows["under_price_num"].notna().any()
-                else float("nan")
-            )
+            row[f"Market_{target}_books"] = len(exact_book_keys)
+            row[f"Market_{target}_book_keys"] = "|".join(exact_book_keys)
+            row[f"Market_{target}_common_books"] = len(common_book_keys)
+            row[f"Market_{target}_common_book_keys"] = "|".join(common_book_keys)
+            row[f"Market_{target}_over_price"] = over_price if over_price is not None else float("nan")
+            row[f"Market_{target}_under_price"] = under_price if under_price is not None else float("nan")
+            row[f"Market_{target}_over_book_key"] = over_book_key
+            row[f"Market_{target}_over_book"] = over_book
+            row[f"Market_{target}_under_book_key"] = under_book_key
+            row[f"Market_{target}_under_book"] = under_book
             line_std = pd.to_numeric(market_part["line_num"], errors="coerce").std(ddof=0)
             row[f"Market_{target}_line_std"] = float(line_std) if pd.notna(line_std) else 0.0
             row[f"Market_Source_{target}"] = "real"
@@ -450,8 +548,15 @@ def load_market_snapshot(market_root: Path, requested_run_date: pd.Timestamp) ->
         for column in [
             f"Market_{target}",
             f"Market_{target}_books",
+            f"Market_{target}_book_keys",
+            f"Market_{target}_common_books",
+            f"Market_{target}_common_book_keys",
             f"Market_{target}_over_price",
             f"Market_{target}_under_price",
+            f"Market_{target}_over_book_key",
+            f"Market_{target}_over_book",
+            f"Market_{target}_under_book_key",
+            f"Market_{target}_under_book",
             f"Market_{target}_line_std",
             f"Market_Source_{target}",
         ]:
@@ -461,7 +566,7 @@ def load_market_snapshot(market_root: Path, requested_run_date: pd.Timestamp) ->
             if column not in merged.columns:
                 merged[column] = merged[supp_column]
             else:
-                merged[column] = merged[column].where(merged[column].notna(), merged[supp_column])
+                merged[column] = merged[supp_column].where(merged[supp_column].notna(), merged[column])
             merged = merged.drop(columns=[supp_column])
     return merged.reset_index(drop=True)
 
@@ -908,9 +1013,16 @@ def build_upcoming_schedule_pool_rows(
                             "Market_Line": float(market_line),
                             "Market_Source": market_source,
                             "Market_Books": int(to_float(market_row.get(f"Market_{spec.target}_books")) or 0.0) if market_row is not None else 0,
+                            "Market_Book_Keys": str(market_row.get(f"Market_{spec.target}_book_keys", "") or "") if market_row is not None else "",
+                            "Market_Common_Books": int(to_float(market_row.get(f"Market_{spec.target}_common_books")) or 0.0) if market_row is not None else 0,
+                            "Market_Common_Book_Keys": str(market_row.get(f"Market_{spec.target}_common_book_keys", "") or "") if market_row is not None else "",
                             "Market_Line_Std": float(to_float(market_row.get(f"Market_{spec.target}_line_std")) or 0.0) if market_row is not None else 0.0,
                             "Market_Over_Price": to_float(market_row.get(f"Market_{spec.target}_over_price")) if market_row is not None else None,
                             "Market_Under_Price": to_float(market_row.get(f"Market_{spec.target}_under_price")) if market_row is not None else None,
+                            "Market_Over_Book_Key": str(market_row.get(f"Market_{spec.target}_over_book_key", "") or "") if market_row is not None else "",
+                            "Market_Over_Book": str(market_row.get(f"Market_{spec.target}_over_book", "") or "") if market_row is not None else "",
+                            "Market_Under_Book_Key": str(market_row.get(f"Market_{spec.target}_under_book_key", "") or "") if market_row is not None else "",
+                            "Market_Under_Book": str(market_row.get(f"Market_{spec.target}_under_book", "") or "") if market_row is not None else "",
                             "Edge": edge,
                             "History_Rows": history_rows,
                             "Last_History_Date": last_history_date.strftime("%Y-%m-%d") if not pd.isna(last_history_date) else "",
@@ -971,9 +1083,16 @@ def build_pool_rows(
             last_history_date = history_frame["_game_date"].max() if not history_frame.empty else pd.NaT
 
             for spec in specs:
-                market_line = to_float(current.get(spec.market_col))
-                if market_line is None:
+                processed_market_line = to_float(current.get(spec.market_col))
+                if processed_market_line is None:
                     continue
+                market_line = processed_market_line
+                market_source = str(current.get(spec.market_source_col, "synthetic") or "synthetic")
+                if market_row is not None:
+                    selected_market_line = to_float(market_row.get(f"Market_{spec.target}"))
+                    if selected_market_line is not None:
+                        market_line = selected_market_line
+                        market_source = str(market_row.get(f"Market_Source_{spec.target}", "real") or "real")
 
                 history_values = pd.to_numeric(history_frame.get(spec.actual_col), errors="coerce").dropna()
                 history_rows = int(len(history_values))
@@ -993,7 +1112,7 @@ def build_pool_rows(
                     gap = 0.0
 
                 is_modeled = abs(float(gap)) > 1e-9 and history_rows >= int(min_modeled_history_rows)
-                prediction = float(market_line + gap) if is_modeled else float(baseline)
+                prediction = float(processed_market_line + gap) if is_modeled else float(baseline)
                 prediction = max(0.0, prediction)
                 edge = float(prediction - market_line)
                 model_selected = "et" if is_modeled else "baseline"
@@ -1021,11 +1140,18 @@ def build_pool_rows(
                         "Prediction": prediction,
                         "Baseline": float(baseline),
                         "Market_Line": float(market_line),
-                        "Market_Source": str(current.get(spec.market_source_col, "synthetic") or "synthetic"),
+                        "Market_Source": market_source,
                         "Market_Books": int(to_float(market_row.get(f"Market_{spec.target}_books")) or 0.0) if market_row is not None else 0,
+                        "Market_Book_Keys": str(market_row.get(f"Market_{spec.target}_book_keys", "") or "") if market_row is not None else "",
+                        "Market_Common_Books": int(to_float(market_row.get(f"Market_{spec.target}_common_books")) or 0.0) if market_row is not None else 0,
+                        "Market_Common_Book_Keys": str(market_row.get(f"Market_{spec.target}_common_book_keys", "") or "") if market_row is not None else "",
                         "Market_Line_Std": float(to_float(market_row.get(f"Market_{spec.target}_line_std")) or 0.0) if market_row is not None else 0.0,
                         "Market_Over_Price": to_float(market_row.get(f"Market_{spec.target}_over_price")) if market_row is not None else None,
                         "Market_Under_Price": to_float(market_row.get(f"Market_{spec.target}_under_price")) if market_row is not None else None,
+                        "Market_Over_Book_Key": str(market_row.get(f"Market_{spec.target}_over_book_key", "") or "") if market_row is not None else "",
+                        "Market_Over_Book": str(market_row.get(f"Market_{spec.target}_over_book", "") or "") if market_row is not None else "",
+                        "Market_Under_Book_Key": str(market_row.get(f"Market_{spec.target}_under_book_key", "") or "") if market_row is not None else "",
+                        "Market_Under_Book": str(market_row.get(f"Market_{spec.target}_under_book", "") or "") if market_row is not None else "",
                         "Edge": edge,
                         "History_Rows": history_rows,
                         "Last_History_Date": (
@@ -1070,9 +1196,16 @@ def write_pool_csv(path: Path, rows: list[dict[str, object]]) -> None:
         "Market_Line",
         "Market_Source",
         "Market_Books",
+        "Market_Book_Keys",
+        "Market_Common_Books",
+        "Market_Common_Book_Keys",
         "Market_Line_Std",
         "Market_Over_Price",
         "Market_Under_Price",
+        "Market_Over_Book_Key",
+        "Market_Over_Book",
+        "Market_Under_Book_Key",
+        "Market_Under_Book",
         "Edge",
         "History_Rows",
         "Last_History_Date",

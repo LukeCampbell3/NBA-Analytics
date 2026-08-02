@@ -175,7 +175,7 @@ def to_int(value: str, default: int = 0) -> int:
 
 def valid_american_price(value: object) -> float | None:
     price = to_float(value, default=float("nan"))
-    if not math.isfinite(price) or (-100.0 < price < 100.0):
+    if not math.isfinite(price) or (-100.0 < price < 100.0) or abs(price - round(price)) > 1e-6:
         return None
     return price
 
@@ -821,7 +821,14 @@ def main() -> None:
         direction = str(row.get("Direction", "")).strip().upper()
         selected_side_price = market_over_price if direction == "OVER" else market_under_price
         opposite_side_price = market_under_price if direction == "OVER" else market_over_price
-        price_confirmed = bool(selected_side_price is not None and to_int(row.get("Price_Confirmed")) == 1)
+        selected_sportsbook_key = str(row.get("Selected_Sportsbook_Key", "")).strip().lower()
+        selected_sportsbook = str(row.get("Selected_Sportsbook", "")).strip()
+        price_confirmed = bool(
+            selected_side_price is not None
+            and selected_sportsbook_key
+            and selected_sportsbook
+            and to_int(row.get("Price_Confirmed")) == 1
+        )
         push_probability = to_float(row.get("Estimated_Push_Probability"), default=0.0)
         market_line = to_float(row.get("Market_Line"))
         slate_teams = sorted([team.upper(), opponent.upper()])
@@ -868,6 +875,7 @@ def main() -> None:
             {
                 "rank": display_rank,
                 "source_rank": to_int(row.get("Rank")),
+                "selection_profile": str(row.get("Selection_Profile", "core_market_v1")).strip() or "core_market_v1",
                 "player": player_name,
                 "player_display_name": player_name,
                 "player_id": row.get("Player_ID", ""),
@@ -891,6 +899,7 @@ def main() -> None:
                 "market_source": row.get("Market_Source", "synthetic"),
                 "edge": to_float(row.get("Edge")),
                 "abs_edge": to_float(row.get("Abs_Edge")),
+                "model_hit_probability": to_float(row.get("Model_Hit_Probability")),
                 "estimated_hit_probability": to_float(row.get("Estimated_Hit_Probability")),
                 "estimated_push_probability": push_probability,
                 "estimated_graded_hit_rate": estimated_graded_hit_rate,
@@ -903,11 +912,20 @@ def main() -> None:
                 "historical_bucket_support": historical_bucket_support,
                 "market_bucket": row.get("Market_Bucket", ""),
                 "market_books": to_int(row.get("Market_Books", "0")),
+                "market_book_keys": [
+                    value for value in str(row.get("Market_Book_Keys", "")).split("|") if value
+                ],
+                "market_common_books": to_int(row.get("Market_Common_Books", "0")),
+                "market_common_book_keys": [
+                    value for value in str(row.get("Market_Common_Book_Keys", "")).split("|") if value
+                ],
                 "market_line_std": to_float(row.get("Market_Line_Std")),
                 "market_over_price": market_over_price,
                 "market_under_price": market_under_price,
                 "selected_side_price": selected_side_price,
                 "opposite_side_price": opposite_side_price,
+                "selected_sportsbook_key": selected_sportsbook_key,
+                "selected_sportsbook": selected_sportsbook,
                 "price_confirmed": price_confirmed,
                 "market_implied_probability": market_implied_probability,
                 "expected_value_per_unit": expected_value_per_unit,

@@ -44,10 +44,11 @@ MLB_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_high_precision
 MLB_MAX_WINRATE_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_max_winrate_board.py"
 MLB_EXPORTER = REPO_ROOT / "sports" / "mlb" / "scripts" / "export_web_prediction_payload.py"
 MLB_WEB_JSON = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "daily_predictions.json"
-MLB_PRIMARY_POLICY_PROFILE = "walk_forward_balanced_v2"
+MLB_PRIMARY_POLICY_PROFILE = "premium_price_defended_v1"
 MLB_PRIMARY_POLICY_ARGS = [
     "--require-real-market-source",
     "--min-market-books", "5",
+    "--min-common-market-books", "2",
     "--min-history-rows", "35",
     "--min-prediction", "0.10",
     "--min-hit-probability", "0.60",
@@ -55,12 +56,23 @@ MLB_PRIMARY_POLICY_ARGS = [
     "--max-push-probability", "0.10",
     "--min-abs-edge", "0.35",
     "--min-expected-value", "0.0",
+    "--optimized-over-targets", "R", "TB",
+    "--over-min-abs-edge", "0.15",
+    "--over-max-abs-edge", "0.35",
+    "--over-min-model-hit-probability", "0.45",
+    "--over-max-model-hit-probability", "0.55",
+    "--over-min-expected-value", "0.10",
+    "--over-max-american-price", "125",
+    "--over-min-history-rows", "55",
+    "--core-max-american-price", "-200",
+    "--min-over-picks", "3",
+    "--max-over-picks", "3",
     "--max-per-market-bucket", "4",
     "--max-per-team", "2",
-    "--min-historical-bet-profile-support", "12",
-    "--min-historical-bet-profile-win-rate", "0.60",
-    "--min-historical-market-availability-support", "20",
-    "--min-historical-market-availability-rate", "0.45",
+    "--min-historical-bet-profile-support", "0",
+    "--min-historical-bet-profile-win-rate", "0",
+    "--min-historical-market-availability-support", "0",
+    "--min-historical-market-availability-rate", "0",
 ]
 
 BUILD_STATIC_SITE = REPO_ROOT / "sports" / "site" / "pipeline" / "build_static_site.py"
@@ -144,14 +156,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--mlb-min-publish-plays",
         type=int,
-        default=4,
-        help="Minimum selected MLB plays required before publishing a generated pool; otherwise fall back to the latest richer existing pool when available.",
+        default=1,
+        help="Minimum selected MLB plays required before publishing a generated premium pool.",
     )
     parser.add_argument(
         "--mlb-min-rescue-plays",
         type=int,
-        default=3,
-        help="Minimum same-day MLB plays required for an empty-board rescue strategy to publish instead of falling back to an older pool.",
+        default=1,
+        help="Minimum same-day MLB plays required for publication; zero-play boards remain withheld.",
     )
     parser.add_argument("--mlb-top-n", type=int, default=10, help="Maximum number of MLB plays to keep.")
     return parser.parse_args()
@@ -659,39 +671,15 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
             "--min-bucket-samples", "500",
             "--min-history-rows", "40",
             "--min-market-books", "5",
+            "--min-common-market-books", "2",
             "--max-days-since-history", "3",
             "--min-edge", "0.35",
             "--max-board-size", "7",
         ],
     )
 
-    # If max-winrate board has >= 5 picks, use it as the published board
-    max_wr_rows = 0
-    if max_wr_summary.exists():
-        try:
-            max_wr_rows = selected_row_count(max_wr_summary)
-        except Exception:
-            pass
-
-    if max_wr_rows >= 5:
-        selected_csv = max_wr_csv
-        summary_json = max_wr_summary
-        run_step(
-            "Export MLB Max Win-Rate Payload",
-            [
-                args.python,
-                str(MLB_EXPORTER),
-                "--input-csv",
-                str(max_wr_csv),
-                "--summary-json",
-                str(max_wr_summary),
-                "--output",
-                str(MLB_WEB_JSON),
-                "--output-dist",
-                str(mlb_dist_json),
-            ],
-        )
-
+    # The max-win-rate board remains a shadow diagnostic. Publication stays on
+    # the fully calibrated selector, which also enforces EV and book identity.
     return pool_csv, selected_csv, summary_json
 
 

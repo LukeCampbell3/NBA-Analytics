@@ -55,6 +55,8 @@ SPORT_CONFIG: dict[str, dict[str, float | int]] = {
         "different_team_bonus": 1.03,
         "same_script_cluster_factor": 0.96,
         "same_market_bucket_factor": 0.90,
+        "forbid_same_player_parlay": 1,
+        "forbid_same_game_parlay": 1,
         "forbid_same_market_bucket_parlay": 1,
         "avoid_reused_market_buckets_across_tickets": 1,
         "cap_projected_probability_to_independent": 1,
@@ -301,6 +303,10 @@ def score_candidate_parlays(
                     direction_tokens.add(direction)
 
             if same_market_bucket and int(config.get("forbid_same_market_bucket_parlay", 0)):
+                continue
+            if same_player and int(config.get("forbid_same_player_parlay", 0)):
+                continue
+            if same_game and int(config.get("forbid_same_game_parlay", 0)):
                 continue
 
             factor = math.prod(pair_factors) ** (1.0 / len(pair_factors)) if pair_factors else 1.0

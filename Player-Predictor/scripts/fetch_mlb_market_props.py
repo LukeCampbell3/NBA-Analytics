@@ -30,6 +30,7 @@ DEFAULT_OUTDIR = REPO_ROOT / "sports" / "mlb" / "data" / "raw" / "market_odds" /
 ROTOWIRE_URL = "https://www.rotowire.com/betting/mlb/player-props.php"
 
 BOOK_TITLES = {
+    "bet365": "bet365",
     "betrivers": "BetRivers",
     "caesars": "Caesars",
     "circasports": "Circa Sports",
