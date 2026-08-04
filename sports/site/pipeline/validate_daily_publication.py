@@ -16,18 +16,18 @@ SPORT_PAYLOADS = {
     "nba": Path("sports/nba/web/data/daily_predictions.json"),
     "mlb": Path("sports/mlb/web/data/daily_predictions.json"),
 }
-MLB_POLICY_PROFILE = "premium_adaptive_volume_v2"
+MLB_POLICY_PROFILE = "premium_portfolio_v3"
 MLB_REQUIRED_TARGETS = {"ER", "H", "HR", "K", "R", "RBI", "TB"}
 MLB_MIN_BOOKS = 5
 MLB_MIN_COMMON_BOOKS = 2
 MLB_ALLOWED_SPORTSBOOKS = {"bet365", "caesars", "draftkings", "fanduel", "fanatics", "mgm"}
-MLB_MARKET_BUCKET_CAP = 4
+MLB_MARKET_BUCKET_CAP = 2
 MLB_PUBLICATION_STATES = {"published_current_pool", "withheld_current_pool"}
 MLB_CORE_SELECTION_PROFILE = "core_market_v1"
 MLB_OPTIMIZED_OVER_PROFILE = "r_tb_over_moderate_edge_v1"
 MLB_OPTIMIZED_OVER_TARGETS = {"R", "TB"}
 MLB_OPTIMIZED_OVER_PROFILE_STATUS = "probation"
-MLB_DAILY_PICK_SOFT_CAP = 6
+MLB_DAILY_PICK_SOFT_CAP = 3
 MLB_POST_CAP_MIN_SELECTION_SCORE = 0.80
 
 
@@ -94,7 +94,7 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
             f"expected {sorted(MLB_REQUIRED_TARGETS)}, found {sorted(targets)}."
         )
     if int(selection.get("max_per_market_bucket", 0)) != MLB_MARKET_BUCKET_CAP:
-        raise ValueError(f"MLB {label} payload is not using the four-play market-bucket cap.")
+        raise ValueError(f"MLB {label} payload is not using the two-play market-bucket cap.")
     if as_float(selection.get("min_expected_value")) != 0.0:
         raise ValueError(f"MLB {label} payload must require nonnegative expected value.")
     if int(selection.get("min_market_books", 0)) < MLB_MIN_BOOKS:
@@ -173,6 +173,17 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
                 raise ValueError(f"MLB {label} play {index} exceeds the validated OVER price ceiling.")
     if optimized_over_count > 3:
         raise ValueError(f"MLB {label} payload exceeds the three-pick validated OVER cap.")
+
+    for index, parlay in enumerate(payload.get("parlay_pairs", []), start=1):
+        if not isinstance(parlay, dict):
+            raise ValueError(f"MLB {label} parlay {index} must be an object.")
+        if not bool(parlay.get("same_sportsbook_confirmed")):
+            raise ValueError(f"MLB {label} parlay {index} is not executable at one confirmed sportsbook.")
+        if not str(parlay.get("sportsbook_key") or "").strip():
+            raise ValueError(f"MLB {label} parlay {index} is missing its sportsbook identity.")
+        expected_return = as_float(parlay.get("expected_return_per_unit"))
+        if expected_return is None or expected_return < 0.02:
+            raise ValueError(f"MLB {label} parlay {index} does not clear the expected-return floor.")
 
 
 def validate_publication(

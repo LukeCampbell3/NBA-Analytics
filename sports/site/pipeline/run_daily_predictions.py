@@ -41,10 +41,11 @@ MLB_MARKET_FETCHER = REPO_ROOT / "Player-Predictor" / "scripts" / "fetch_mlb_mar
 MLB_DATA_UPDATER = REPO_ROOT / "Player-Predictor" / "scripts" / "update_mlb_processed_data.py"
 MLB_GENERATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "generate_daily_prediction_pool.py"
 MLB_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_high_precision_predictions.py"
+MLB_CONFIDENCE_CALIBRATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "live_board_confidence.py"
 MLB_MAX_WINRATE_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_max_winrate_board.py"
 MLB_EXPORTER = REPO_ROOT / "sports" / "mlb" / "scripts" / "export_web_prediction_payload.py"
 MLB_WEB_JSON = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "daily_predictions.json"
-MLB_PRIMARY_POLICY_PROFILE = "premium_adaptive_volume_v2"
+MLB_PRIMARY_POLICY_PROFILE = "premium_portfolio_v3"
 MLB_PRIMARY_POLICY_ARGS = [
     "--require-real-market-source",
     "--min-market-books", "5",
@@ -67,9 +68,9 @@ MLB_PRIMARY_POLICY_ARGS = [
     "--core-max-american-price", "-200",
     "--min-over-picks", "0",
     "--max-over-picks", "3",
-    "--daily-pick-soft-cap", "6",
+    "--daily-pick-soft-cap", "3",
     "--post-cap-min-selection-score", "0.80",
-    "--max-per-market-bucket", "4",
+    "--max-per-market-bucket", "2",
     "--max-per-team", "2",
     "--min-historical-bet-profile-support", "0",
     "--min-historical-bet-profile-win-rate", "0",
@@ -143,9 +144,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--mlb-market-provider",
         type=str,
-        default="rotowire",
-        choices=["rotowire", "odds_api", "snapshot"],
-        help="Provider used by the MLB market fetcher. 'odds_api' is preserved as a backward-compatible alias.",
+        default="provider_chain",
+        choices=[
+            "provider_chain", "scrape", "the_odds_api", "sportsgameodds",
+            "existing_provider", "rotowire", "odds_api", "snapshot",
+        ],
+        help="Provider used by the MLB market fetcher. Use provider_chain for configured priority and fallback.",
     )
     parser.add_argument("--mlb-market-input-path", type=Path, default=None, help="Optional snapshot input for the MLB market fetcher.")
     parser.add_argument(
@@ -550,6 +554,22 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
             pool_csv = find_latest_mlb_pool_csv(MLB_DAILY_RUNS_ROOT, preferred_run_stamp)
 
     mlb_dist_json = output_dir / "mlb" / "data" / "daily_predictions.json"
+
+    pool_digits = "".join(char for char in pool_csv.stem if char.isdigit())
+    if len(pool_digits) >= 8 and MLB_CONFIDENCE_CALIBRATOR.exists():
+        pool_date = datetime.strptime(pool_digits[:8], "%Y%m%d").date()
+        run_step(
+            "Calibrate MLB Published Confidence",
+            [
+                args.python,
+                str(MLB_CONFIDENCE_CALIBRATOR),
+                "--season",
+                str(pool_date.year),
+                "--before-date",
+                pool_date.isoformat(),
+                "--official-api-fallback",
+            ],
+        )
 
     def run_selector_for(
         active_pool_csv: Path,

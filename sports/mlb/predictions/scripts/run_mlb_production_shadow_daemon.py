@@ -134,7 +134,7 @@ class MlbProviderCooldown:
             except (json.JSONDecodeError, OSError):
                 pass
         return {
-            "provider": "sportsgameodds",
+            "provider": "provider_chain",
             "sport": "MLB",
             "last_attempt_at": None,
             "last_success_at": None,
@@ -218,7 +218,7 @@ class MlbDaemonState:
             "last_status_at": None,
             "last_evidence_rebuild_at": None,
             "last_phase_result": None,
-            "active_provider": "sportsgameodds",
+            "active_provider": "provider_chain",
             "provider_status": None,
             "pending_close_rows": 0,
             "pending_settle_rows": 0,
@@ -242,7 +242,7 @@ class MlbDaemonState:
 
 
 def run_phase(phase: str, prediction_mode: str = "real", dry_run: bool = False,
-              provider: str = "sportsgameodds",
+              provider: str = "provider_chain",
               logger: Optional[logging.Logger] = None) -> Dict[str, Any]:
     """Run a single phase via subprocess."""
     cmd = [sys.executable, str(RUNNER_SCRIPT), "--phase", phase, "--provider", provider]
@@ -549,7 +549,7 @@ def _append_slate_history(loop_start: datetime, args, status: Dict[str, Any]):
 def main():
     parser = argparse.ArgumentParser(description="MLB Production-Shadow Daemon")
     parser.add_argument("--poll-minutes", type=int, default=5)
-    parser.add_argument("--provider", default="sportsgameodds")
+    parser.add_argument("--provider", default="provider_chain")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--once", action="store_true")
     parser.add_argument("--max-runtime-hours", type=float, default=0)

@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "season": 2026,
+  "generated_at_utc": "2026-08-04T22:42:48.859263+00:00",
+  "history_before_date": "2026-08-04",
+  "method": "empirical_bayes_target_direction_residual",
+  "profile_compatibility": "requires_selection_profile_column",
+  "priced_rows_only": true,
+  "prior_strength": 20.0,
+  "max_abs_adjustment": 0.05,
+  "min_segment_rows": 3,
+  "source_file_count": 4,
+  "skipped_legacy_file_count": 14,
+  "graded_rows": 8,
+  "brier_score_before": 0.200331445807375,
+  "brier_score_after": 0.19979296095372745,
+  "walk_forward_validation": {
+    "rows": 8,
+    "adjusted_rows": 2,
+    "brier_score_before": 0.200331445807375,
+    "brier_score_after": 0.20021066778548613
+  },
+  "segments": {
+    "TB|OVER": {
+      "graded_rows": 6,
+      "wins": 3,
+      "losses": 3,
+      "mean_probability": 0.5419348333333333,
+      "actual_win_rate": 0.5,
+      "credibility_weight": 0.23076923076923078,
+      "adjustment": -0.009677269230769213,
+      "active": true
+    },
+    "TB|UNDER": {
+      "graded_rows": 2,
+      "wins": 2,
+      "losses": 0,
+      "mean_probability": 0.779064,
+      "actual_win_rate": 1.0,
+      "credibility_weight": 0.09090909090909091,
+      "adjustment": 0.0,
+      "active": false
+    }
+  },
+  "daily_runs_root": "sports/mlb/data/predictions/daily_runs",
+  "processed_root": "Player-Predictor/Data-Proc-MLB"
+}

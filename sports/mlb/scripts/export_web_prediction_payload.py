@@ -396,12 +396,29 @@ def is_mlb_parlay_leg_eligible(
     leg_quality: float,
     historical_bucket_support: float,
     expected_value_per_unit: float | None = None,
+    selection_profile: str = "core_market_v1",
+    price_confirmed: bool = False,
+    selected_side_price: float | None = None,
+    selected_sportsbook_key: str = "",
+    live_confidence_calibration_support: int = 0,
 ) -> bool:
-    if graded_hit_rate < 0.68 or leg_quality < 0.82:
+    if not price_confirmed or not str(selected_sportsbook_key).strip():
         return False
     if historical_bucket_support > 0 and historical_bucket_support < 250:
         return False
-    if expected_value_per_unit is not None and expected_value_per_unit < -0.02:
+    optimized_over = str(selection_profile).strip() == "r_tb_over_moderate_edge_v1"
+    if optimized_over:
+        if graded_hit_rate < 0.52 or leg_quality < 0.64:
+            return False
+        if live_confidence_calibration_support < 3:
+            return False
+        if expected_value_per_unit is None or expected_value_per_unit < 0.10:
+            return False
+        if selected_side_price is None or selected_side_price < 100.0 or selected_side_price > 125.0:
+            return False
+    elif graded_hit_rate < 0.68 or leg_quality < 0.80:
+        return False
+    if not optimized_over and expected_value_per_unit is not None and expected_value_per_unit < -0.02:
         return False
     return True
 
@@ -860,6 +877,8 @@ def main() -> None:
             historical_bucket_win_rate=historical_bucket_win_rate,
             expected_value_per_unit=expected_value_per_unit,
         )
+        selection_profile = str(row.get("Selection_Profile", "core_market_v1")).strip() or "core_market_v1"
+        live_confidence_calibration_support = to_int(row.get("Live_Confidence_Calibration_Support"))
         parlay_eligible = (
             publication_status == "ready"
             and not risk_flags
@@ -868,6 +887,11 @@ def main() -> None:
                 leg_quality=parlay_leg_quality,
                 historical_bucket_support=historical_bucket_support,
                 expected_value_per_unit=expected_value_per_unit,
+                selection_profile=selection_profile,
+                price_confirmed=price_confirmed,
+                selected_side_price=selected_side_price,
+                selected_sportsbook_key=selected_sportsbook_key,
+                live_confidence_calibration_support=live_confidence_calibration_support,
             )
         )
         raw_confidence_tier = row.get("Confidence_Tier", "consider")
@@ -875,7 +899,7 @@ def main() -> None:
             {
                 "rank": display_rank,
                 "source_rank": to_int(row.get("Rank")),
-                "selection_profile": str(row.get("Selection_Profile", "core_market_v1")).strip() or "core_market_v1",
+                "selection_profile": selection_profile,
                 "player": player_name,
                 "player_display_name": player_name,
                 "player_id": row.get("Player_ID", ""),
@@ -929,6 +953,9 @@ def main() -> None:
                 "price_confirmed": price_confirmed,
                 "market_implied_probability": market_implied_probability,
                 "expected_value_per_unit": expected_value_per_unit,
+                "live_confidence_calibration_key": row.get("Live_Confidence_Calibration_Key", ""),
+                "live_confidence_calibration_support": live_confidence_calibration_support,
+                "live_confidence_calibration_adjustment": to_float(row.get("Live_Confidence_Calibration_Adjustment")),
                 "final_pool_quality_score": parlay_leg_quality,
                 "parlay_precision_eligible": parlay_eligible,
                 "model_confidence_tier": raw_confidence_tier,

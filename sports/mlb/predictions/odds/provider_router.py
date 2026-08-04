@@ -1,20 +1,5 @@
 #!/usr/bin/env python3
-"""
-MLB Provider Router
-
-Resilient provider flow:
-  primary_provider -> fallback_provider -> stale_cache_readonly -> no_play
-
-Requirements:
-  - Primary provider tried first.
-  - Fallback providers through common interface.
-  - If no live provider works, read fresh-enough cache in readonly mode.
-  - If no cache is valid, emit explicit no-play status.
-  - Never silently return empty evidence.
-  - Every provider result includes standardized fields.
-
-Does NOT require The Odds API.
-"""
+"""Provider-neutral MLB odds acquisition, validation, and reconciliation."""
 from __future__ import annotations
 
 import json
@@ -22,73 +7,68 @@ import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
-import numpy as np
 import pandas as pd
+
 
 WORKSPACE = Path(__file__).resolve().parents[4]
 MLB_SHADOW_DIR = WORKSPACE / "sports" / "mlb" / "validation" / "production_shadow"
 ODDS_STATUS_PATH = MLB_SHADOW_DIR / "odds_source_status.json"
 SNAPSHOT_DIR = WORKSPACE / "sports" / "mlb" / "data" / "market_odds" / "production_shadow" / "snapshots"
 PROVIDER_CONFIG_PATH = MLB_SHADOW_DIR / "mlb_provider_config.json"
+SOURCE_QUALITY_PATH = MLB_SHADOW_DIR / "odds_source_quality_history.jsonl"
 
+sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).parent / "providers"))
 
-PROVIDERS_AVAILABLE: Dict[str, Any] = {}
+from odds_contract import ensure_contract, reconcile_observations, validate_contract
 
+
+PROVIDERS_AVAILABLE: dict[str, Any] = {}
+
+try:
+    from permitted_scrape_mlb_provider import PermittedScrapeMlbProvider
+    PROVIDERS_AVAILABLE["scrape"] = PermittedScrapeMlbProvider
+except ImportError:
+    pass
+try:
+    from the_odds_api_mlb_provider import TheOddsApiMlbProvider
+    PROVIDERS_AVAILABLE["the_odds_api"] = TheOddsApiMlbProvider
+except ImportError:
+    pass
 try:
     from sportsgameodds_mlb_provider import SportsGameOddsMlbProvider
     PROVIDERS_AVAILABLE["sportsgameodds"] = SportsGameOddsMlbProvider
 except ImportError:
     pass
+try:
+    from existing_mlb_odds_provider import ExistingMlbOddsProvider
+    PROVIDERS_AVAILABLE["existing_provider"] = ExistingMlbOddsProvider
+except ImportError:
+    pass
 
 
-def validate_normalized_odds(df: pd.DataFrame) -> Dict[str, Any]:
-    """Validate a normalized MLB odds DataFrame."""
-    if df.empty:
-        return {
-            "rows": 0, "valid_rows": 0, "invalid_rows": 0,
-            "valid_odds_rate": 0.0, "missing_required_fields": [],
-            "invalid_odds_count": 0, "markets": [], "books": [],
-            "players": 0, "events": 0,
+def validate_normalized_odds(
+    df: pd.DataFrame,
+    *,
+    max_age_seconds: int = 3600,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Compatibility wrapper around the provider-neutral contract validator."""
+    valid, report = validate_contract(df, max_age_seconds=max_age_seconds, now=now)
+    report.update(
+        {
+            "valid_odds_rate": report.get("valid_record_rate", 0.0),
+            "missing_required_fields": [],
+            "invalid_odds_count": report.get("rejection_reasons", {}).get("INVALID_AMERICAN_PRICE", 0),
+            "markets": sorted(valid["market_type"].dropna().astype(str).unique().tolist()) if not valid.empty else [],
+            "books": sorted(valid["sportsbook"].dropna().astype(str).unique().tolist()) if not valid.empty else [],
+            "players": int(valid["player_name"].nunique()) if not valid.empty else 0,
+            "events": int(valid["event_id"].nunique()) if not valid.empty else 0,
         }
-
-    n = len(df)
-    required_fields = ["provider_name", "player", "market_canonical", "line", "book", "side", "odds", "snapshot_time_utc"]
-    missing = [f for f in required_fields if f not in df.columns]
-
-    invalid_mask = pd.Series([False] * n, index=df.index)
-    for field in required_fields:
-        if field in df.columns:
-            invalid_mask |= df[field].isna()
-
-    if "odds" in df.columns:
-        odds_invalid = ~((df["odds"] <= -100) | (df["odds"] >= 100))
-        invalid_mask |= odds_invalid
-        invalid_odds_count = int(odds_invalid.sum())
-    else:
-        invalid_odds_count = n
-
-    if "line" in df.columns:
-        invalid_mask |= pd.to_numeric(df["line"], errors="coerce").isna()
-
-    valid_rows = int((~invalid_mask).sum())
-    invalid_rows = int(invalid_mask.sum())
-    valid_odds_rate = valid_rows / n if n > 0 else 0.0
-
-    return {
-        "rows": n,
-        "valid_rows": valid_rows,
-        "invalid_rows": invalid_rows,
-        "valid_odds_rate": float(valid_odds_rate),
-        "missing_required_fields": missing,
-        "invalid_odds_count": invalid_odds_count,
-        "markets": df["market_canonical"].unique().tolist() if "market_canonical" in df.columns else [],
-        "books": df["book"].unique().tolist() if "book" in df.columns else [],
-        "players": int(df["player"].nunique()) if "player" in df.columns else 0,
-        "events": int(df["game_id"].nunique()) if "game_id" in df.columns else 0,
-    }
+    )
+    return report
 
 
 def build_provider_result(
@@ -101,10 +81,10 @@ def build_provider_result(
     failure_reason: str = "",
     rows_collected: int = 0,
     valid_rows: int = 0,
-    markets_covered: List[str] | None = None,
+    markets_covered: list[str] | None = None,
     retry_after: str | None = None,
-) -> Dict[str, Any]:
-    """Build a standardized provider result dict. Never silently empty."""
+    validation: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     result = {
         "provider_name": provider_name,
         "provider_status": status,
@@ -116,6 +96,7 @@ def build_provider_result(
         "rows_collected": rows_collected,
         "valid_rows": valid_rows,
         "markets_covered": markets_covered or [],
+        "validation": validation or {},
     }
     if retry_after is not None:
         result["retry_after"] = retry_after
@@ -123,115 +104,132 @@ def build_provider_result(
 
 
 class MlbProviderRouter:
-    """Router for MLB odds providers with priority system.
+    """Query configured adapters, preserve observations, and fail closed."""
 
-    Flow: primary -> fallback -> stale_cache_readonly -> no_play
-    """
-
-    def __init__(self, max_cache_age_seconds: int = 3600):
+    def __init__(
+        self,
+        max_cache_age_seconds: int = 3600,
+        *,
+        provider_priority: list[str] | None = None,
+        provider_classes: dict[str, Any] | None = None,
+        now: datetime | None = None,
+    ):
         self.config = self._load_config()
-        self.max_cache_age = self.config.get("freshness_limit_seconds", max_cache_age_seconds)
-        self.min_valid_odds_rate = self.config.get("min_valid_odds_rate", 0.70)
-        self.fallback_order = self.config.get("fallback_order", [
-            "sportsgameodds", "propline", "odds_api_io", "oddspapi", "fresh_cache"
-        ])
-        self.attempts: List[Dict[str, Any]] = []
-        self.provider_results: List[Dict[str, Any]] = []
+        env_age = os.environ.get("MLB_ODDS_MAX_AGE_SECONDS")
+        self.max_cache_age = int(env_age or self.config.get("freshness_limit_seconds", max_cache_age_seconds))
+        self.min_valid_odds_rate = float(self.config.get("min_valid_odds_rate", 0.70))
+        env_priority = [item.strip() for item in os.environ.get("MLB_ODDS_PROVIDER_PRIORITY", "").split(",") if item.strip()]
+        configured = self.config.get("provider_priority") or self.config.get("fallback_order") or []
+        default = ["scrape", "the_odds_api", "sportsgameodds", "existing_provider", "fresh_cache"]
+        self.provider_priority = provider_priority or env_priority or configured or default
+        self.provider_priority = ["the_odds_api" if value == "odds_api_io" else value for value in self.provider_priority]
+        if "fresh_cache" not in self.provider_priority:
+            self.provider_priority.append("fresh_cache")
+        self.provider_classes = dict(PROVIDERS_AVAILABLE if provider_classes is None else provider_classes)
+        self.now = now
+        self.attempts: list[dict[str, Any]] = []
+        self.provider_results: list[dict[str, Any]] = []
 
-    def _load_config(self) -> Dict[str, Any]:
+    @staticmethod
+    def _load_config() -> dict[str, Any]:
         if PROVIDER_CONFIG_PATH.exists():
             try:
                 return json.loads(PROVIDER_CONFIG_PATH.read_text(encoding="utf-8"))
             except (json.JSONDecodeError, OSError):
                 pass
         return {
-            "fallback_order": ["sportsgameodds", "propline", "odds_api_io", "oddspapi", "fresh_cache"],
+            "provider_priority": ["scrape", "the_odds_api", "sportsgameodds", "existing_provider", "fresh_cache"],
             "freshness_limit_seconds": 3600,
             "min_valid_odds_rate": 0.70,
         }
 
-    def get_fresh_odds(self) -> Tuple[Optional[pd.DataFrame], Dict[str, Any]]:
-        """Get fresh MLB odds using priority system.
-
-        Returns (dataframe_or_None, info_dict).
-        info_dict always contains provider_results with explicit status for each attempt.
-        Never silently returns empty — always emits no_play status on total failure.
-        """
+    def get_fresh_odds(self) -> tuple[pd.DataFrame | None, dict[str, Any]]:
         self.attempts = []
         self.provider_results = []
-        full_info: Dict[str, Any] = {
+        info: dict[str, Any] = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "sport": "MLB",
-            "fallback_order": self.fallback_order,
+            "provider_priority": self.provider_priority,
+            "fallback_order": self.provider_priority,
             "providers_tried": [],
             "provider_results": [],
             "successful_provider": None,
+            "successful_providers": [],
             "rows_obtained": 0,
             "no_fresh_odds_available": False,
-            "snapshot_age_seconds": 0,
             "valid_odds_rate": 0.0,
             "terminal_status": "",
+            "source_state": "",
         }
-        rate_limited = False
+        live_frames: list[pd.DataFrame] = []
+        first_live_index: int | None = None
 
-        for provider_name in self.fallback_order:
-            if rate_limited and provider_name != "fresh_cache":
+        for index, provider_name in enumerate(self.provider_priority):
+            if provider_name == "fresh_cache" and live_frames:
                 continue
             attempt = self._try_provider(provider_name)
             self.attempts.append(attempt)
-            full_info["providers_tried"].append({k: v for k, v in attempt.items() if k != "_dataframe"})
-
-            # Build standardized provider result
-            pr = build_provider_result(
-                provider_name=provider_name,
-                status=attempt["status"],
-                is_live=(attempt["status"] == "success" and provider_name != "fresh_cache" and not rate_limited),
-                is_cache=(provider_name == "fresh_cache" and attempt["status"] == "success"),
+            info["providers_tried"].append({k: v for k, v in attempt.items() if not k.startswith("_")})
+            provider_result = build_provider_result(
+                provider_name,
+                attempt["status"],
+                is_live=attempt["status"] == "success" and provider_name != "fresh_cache",
+                is_cache=attempt["status"] == "success" and provider_name == "fresh_cache",
                 cache_age_minutes=attempt.get("snapshot_age_seconds", 0) / 60.0,
                 failure_reason=attempt.get("error", ""),
                 rows_collected=attempt.get("rows_raw", 0),
                 valid_rows=attempt.get("rows_normalized", 0),
                 markets_covered=attempt.get("_markets", []),
                 retry_after=attempt.get("retry_after"),
+                validation=attempt.get("validation", {}),
             )
-            self.provider_results.append(pr)
-            full_info["provider_results"].append(pr)
-
-            if attempt["status"] == "success":
-                full_info["successful_provider"] = provider_name
-                full_info["rows_obtained"] = attempt["rows_normalized"]
-                full_info["snapshot_age_seconds"] = attempt.get("snapshot_age_seconds", 0)
-                full_info["valid_odds_rate"] = attempt.get("valid_odds_rate", 1.0)
-                full_info["terminal_status"] = "MLB_BLOCKED_PROVIDER_RATE_LIMIT" if rate_limited else "MLB_ENTRY_COLLECTION_ACTIVE"
-
-                df = attempt.get("_dataframe")
-                if df is not None and not df.empty:
-                    df = df.copy()
-                    df["provider_status"] = attempt["status"]
-                    df["is_cache"] = provider_name == "fresh_cache"
-                    df["is_live"] = provider_name != "fresh_cache" and not rate_limited
-                    self._write_snapshot(df, provider_name)
-                    self._save_status(full_info)
-                    return df, full_info
-            if attempt["status"] == "rate_limited":
-                rate_limited = True
-                full_info["no_fresh_odds_available"] = True
-                full_info["terminal_status"] = "MLB_BLOCKED_PROVIDER_RATE_LIMIT"
-                full_info["retry_after"] = attempt.get("retry_after")
-                full_info["error"] = attempt.get("error", "Provider rate limited")
+            self.provider_results.append(provider_result)
+            info["provider_results"].append(provider_result)
+            if attempt["status"] != "success":
                 continue
+            frame = attempt.get("_dataframe")
+            if frame is None or frame.empty:
+                continue
+            if first_live_index is None:
+                first_live_index = index
+            live_frames.append(frame)
+            info["successful_providers"].append(provider_name)
 
-        # All providers failed — explicit no-play
-        full_info["no_fresh_odds_available"] = True
-        full_info["terminal_status"] = "MLB_BLOCKED_PROVIDER_RATE_LIMIT" if rate_limited else "MLB_BLOCKED_PROVIDER_FAILURE"
-        full_info["error"] = "All MLB providers failed — no_play status"
-        if rate_limited:
-            full_info["error"] = "Provider rate limited"
-        self._save_status(full_info)
-        return None, full_info
+        if live_frames:
+            reconciled = reconcile_observations(pd.concat(live_frames, ignore_index=True))
+            info["successful_provider"] = info["successful_providers"][0]
+            info["rows_obtained"] = int(len(reconciled))
+            info["valid_odds_rate"] = float(sum(len(frame) for frame in live_frames) / max(1, sum(a.get("rows_raw", 0) for a in self.attempts)))
+            info["terminal_status"] = "MLB_FRESH_ODDS_AVAILABLE"
+            info["source_state"] = "MLB_ODDS_PRIMARY_HEALTHY" if first_live_index == 0 else "MLB_ODDS_FALLBACK_ACTIVE"
+            reconciled["provider_status"] = "success"
+            cache_only = info["successful_providers"] == ["fresh_cache"]
+            reconciled["is_cache"] = cache_only
+            reconciled["is_live"] = ~reconciled["is_cache"]
+            if not reconciled["is_cache"].all():
+                self._write_snapshot(reconciled, info["successful_provider"])
+            info["source_quality"] = self._build_source_quality(reconciled)
+            self._append_source_quality(info["source_quality"])
+            self._save_status(info)
+            return reconciled, info
 
-    def _try_provider(self, provider_name: str) -> Dict[str, Any]:
-        attempt: Dict[str, Any] = {
+        info["no_fresh_odds_available"] = True
+        statuses = {attempt["status"] for attempt in self.attempts}
+        if "schema_drift" in statuses:
+            info["terminal_status"] = "MLB_ODDS_SOURCE_SCHEMA_DRIFT"
+        elif "source_blocked" in statuses:
+            info["terminal_status"] = "MLB_ODDS_SOURCE_BLOCKED"
+        else:
+            info["terminal_status"] = "MLB_WAITING_FOR_FRESH_PROPS"
+        info["source_state"] = info["terminal_status"]
+        info["error"] = "No configured provider produced fresh, valid, supported MLB prop markets"
+        info["source_quality"] = self._build_source_quality(pd.DataFrame())
+        self._append_source_quality(info["source_quality"])
+        self._save_status(info)
+        return None, info
+
+    def _try_provider(self, provider_name: str) -> dict[str, Any]:
+        attempt: dict[str, Any] = {
             "provider": provider_name,
             "status": "failed",
             "rows_raw": 0,
@@ -241,19 +239,13 @@ class MlbProviderRouter:
             "error": "",
             "retry_after": None,
             "timestamp": datetime.now(timezone.utc).isoformat(),
+            "validation": {},
             "_dataframe": None,
             "_markets": [],
         }
-
         if provider_name == "fresh_cache":
             return self._try_fresh_cache(attempt)
-
-        if provider_name in ("propline", "odds_api_io", "oddspapi"):
-            attempt["status"] = "not_installed"
-            attempt["error"] = f"MLB adapter for {provider_name} not yet implemented"
-            return attempt
-
-        provider_class = PROVIDERS_AVAILABLE.get(provider_name)
+        provider_class = self.provider_classes.get(provider_name)
         if provider_class is None:
             attempt["status"] = "not_installed"
             attempt["error"] = f"Provider module not available: {provider_name}"
@@ -261,123 +253,135 @@ class MlbProviderRouter:
 
         try:
             provider = provider_class()
-            config_result = provider.validate_config()
-            if config_result.get("status") in ("missing_credentials", "missing_api_key"):
-                attempt["status"] = "missing_credentials"
-                attempt["error"] = config_result.get("message", f"Missing API key for {provider_name}")
+            config = provider.validate_config()
+            if config.get("status") != "ok":
+                attempt["status"] = config.get("status", "invalid_config")
+                attempt["error"] = config.get("message", "Provider configuration is invalid")
                 return attempt
-
             result = provider.collect_player_props()
-
-            if result.get("status") == "missing_credentials":
-                attempt["status"] = "missing_credentials"
-                attempt["error"] = result.get("message", "Missing credentials")
-                return attempt
-            if result.get("status") == "api_error":
-                attempt["status"] = "api_error"
-                attempt["error"] = f"API error: {result.get('message', '')[:100]}"
-                return attempt
-            if result.get("status") == "rate_limited":
-                attempt["status"] = "rate_limited"
-                attempt["error"] = "Provider rate limited (HTTP 429)"
-                attempt["retry_after"] = result.get("retry_after")
-                return attempt
-            if result.get("status") == "live_api_disabled_for_tests":
-                attempt["status"] = "live_api_disabled_for_tests"
-                attempt["error"] = result.get("message", "Live API disabled during pytest")
-                return attempt
-            if result.get("status") == "no_props":
-                attempt["status"] = "no_props"
-                attempt["error"] = "No MLB player props available from this provider"
-                return attempt
             if result.get("status") != "success":
-                attempt["status"] = "unexpected"
-                attempt["error"] = f"Unexpected: {result.get('status')}"
+                attempt["status"] = result.get("status", "unexpected")
+                attempt["error"] = result.get("message", "Provider acquisition failed")
+                attempt["retry_after"] = result.get("retry_after")
+                attempt["evidence"] = result.get("evidence", {})
                 return attempt
-
             raw_odds = result.get("odds", [])
             attempt["rows_raw"] = len(raw_odds)
             if not raw_odds:
                 attempt["status"] = "no_props"
-                attempt["error"] = "Empty odds response"
+                attempt["error"] = "Provider returned an empty successful response"
                 return attempt
-
-            df = provider.normalize(raw_odds)
-            if df.empty:
-                attempt["status"] = "normalization_failed"
-                attempt["error"] = "Normalization produced 0 rows"
+            normalized = provider.normalize(raw_odds)
+            valid, validation = validate_contract(
+                normalized,
+                max_age_seconds=self.max_cache_age,
+                now=self.now,
+                reject_started=True,
+            )
+            attempt["validation"] = validation
+            attempt["rows_normalized"] = len(valid)
+            attempt["valid_odds_rate"] = validation.get("valid_record_rate", 0.0)
+            attempt["_markets"] = sorted(valid["market_type"].unique().tolist()) if not valid.empty else []
+            if valid.empty:
+                reasons = validation.get("rejection_reasons", {})
+                if "STALE_ODDS" in reasons:
+                    attempt["status"] = "stale_odds"
+                elif "UNSUPPORTED_MARKET" in reasons:
+                    attempt["status"] = "no_supported_markets"
+                else:
+                    attempt["status"] = "source_invalid_data"
+                attempt["error"] = f"No valid observations after validation: {reasons}"
                 return attempt
-
-            validation = validate_normalized_odds(df)
-            attempt["rows_normalized"] = validation["valid_rows"]
-            attempt["valid_odds_rate"] = validation["valid_odds_rate"]
-            attempt["_markets"] = validation.get("markets", [])
-
-            if validation["valid_odds_rate"] < self.min_valid_odds_rate:
+            if attempt["valid_odds_rate"] < self.min_valid_odds_rate:
                 attempt["status"] = "below_valid_odds_threshold"
-                attempt["error"] = f"Valid odds rate {validation['valid_odds_rate']:.3f} < {self.min_valid_odds_rate}"
+                attempt["error"] = f"Valid record rate {attempt['valid_odds_rate']:.3f} < {self.min_valid_odds_rate:.3f}"
                 return attempt
-
-            if validation["invalid_rows"] > 0:
-                valid_mask = (df["odds"] <= -100) | (df["odds"] >= 100)
-                df = df[valid_mask].copy()
-
             attempt["status"] = "success"
-            attempt["_dataframe"] = df
-            attempt["snapshot_age_seconds"] = 0
+            attempt["_dataframe"] = valid
+            attempt["evidence"] = result.get("evidence", {})
             return attempt
-
-        except Exception as e:
+        except Exception as exc:
             attempt["status"] = "exception"
-            attempt["error"] = str(e)[:200]
+            attempt["error"] = str(exc)[:200]
             return attempt
 
-    def _try_fresh_cache(self, attempt: Dict[str, Any]) -> Dict[str, Any]:
-        cache_files = sorted(SNAPSHOT_DIR.glob("*.csv")) if SNAPSHOT_DIR.exists() else []
-        if not cache_files:
+    def _try_fresh_cache(self, attempt: dict[str, Any]) -> dict[str, Any]:
+        files = sorted(SNAPSHOT_DIR.glob("*.csv"), key=lambda path: path.stat().st_mtime) if SNAPSHOT_DIR.exists() else []
+        if not files:
             attempt["status"] = "no_cache"
-            attempt["error"] = "No MLB cache files found"
+            attempt["error"] = "No MLB provider-neutral cache files found"
             return attempt
-
-        latest = cache_files[-1]
+        latest = files[-1]
         try:
-            df = pd.read_csv(latest)
-            if df.empty:
-                attempt["status"] = "empty_cache"
-                attempt["error"] = "Cache file is empty"
+            frame = ensure_contract(pd.read_csv(latest), source="fresh_cache", acquisition_method="cache", source_endpoint=str(latest))
+            valid, validation = validate_contract(frame, max_age_seconds=self.max_cache_age, now=self.now, reject_started=True)
+            attempt["rows_raw"] = len(frame)
+            attempt["rows_normalized"] = len(valid)
+            attempt["validation"] = validation
+            attempt["valid_odds_rate"] = validation.get("valid_record_rate", 0.0)
+            if valid.empty:
+                attempt["status"] = "stale_cache"
+                attempt["error"] = f"No fresh cache observations: {validation.get('rejection_reasons', {})}"
                 return attempt
-
-            if "snapshot_time_utc" in df.columns:
-                ts = pd.to_datetime(df["snapshot_time_utc"], utc=True, errors="coerce")
-                latest_ts = ts.max()
-                if pd.notna(latest_ts):
-                    age = (datetime.now(timezone.utc) - latest_ts).total_seconds()
-                    attempt["snapshot_age_seconds"] = int(age)
-                    if age > self.max_cache_age:
-                        attempt["status"] = "stale_cache"
-                        attempt["error"] = f"Cache stale: age {age:.0f}s > limit {self.max_cache_age}s"
-                        return attempt
-
-            attempt["rows_raw"] = len(df)
-            attempt["rows_normalized"] = len(df)
-            attempt["valid_odds_rate"] = 1.0
+            observed = pd.to_datetime(valid["observed_at_utc"], utc=True, errors="coerce").max()
+            current = pd.Timestamp(self.now or datetime.now(timezone.utc))
+            attempt["snapshot_age_seconds"] = int(max(0.0, (current - observed).total_seconds())) if pd.notna(observed) else 0
+            attempt["_markets"] = sorted(valid["market_type"].unique().tolist())
             attempt["status"] = "success"
-            attempt["_dataframe"] = df
+            attempt["_dataframe"] = valid
             return attempt
-        except Exception as e:
+        except Exception as exc:
             attempt["status"] = "exception"
-            attempt["error"] = str(e)[:200]
+            attempt["error"] = str(exc)[:200]
             return attempt
 
-    def _write_snapshot(self, df: pd.DataFrame, provider_name: str):
+    @staticmethod
+    def _write_snapshot(df: pd.DataFrame, provider_name: str) -> None:
+        if os.environ.get("PYTEST_CURRENT_TEST"):
+            return
         SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        path = SNAPSHOT_DIR / f"{provider_name}_mlb_props_{stamp}.csv"
-        df.to_csv(path, index=False)
+        df.to_csv(SNAPSHOT_DIR / f"{provider_name}_mlb_props_{stamp}.csv", index=False)
 
-    def _save_status(self, full_info: Dict[str, Any]):
-        if os.environ.get("PYTEST_CURRENT_TEST") and ODDS_STATUS_PATH == MLB_SHADOW_DIR / "odds_source_status.json":
+    def _build_source_quality(self, reconciled: pd.DataFrame) -> list[dict[str, Any]]:
+        quality: list[dict[str, Any]] = []
+        for attempt in self.attempts:
+            provider = attempt["provider"]
+            validation = attempt.get("validation", {})
+            rows = int(validation.get("rows", attempt.get("rows_raw", 0)))
+            stale = int(validation.get("rejection_reasons", {}).get("STALE_ODDS", 0))
+            provider_rows = reconciled.loc[reconciled["source"].eq(provider)] if not reconciled.empty else pd.DataFrame()
+            evidence = attempt.get("evidence", {})
+            quality.append(
+                {
+                    "observed_at_utc": datetime.now(timezone.utc).isoformat(),
+                    "source": provider,
+                    "request_success_rate": 1.0 if attempt["status"] == "success" else 0.0,
+                    "parse_success_rate": 0.0 if attempt["status"] in {"schema_drift", "normalization_failed"} else 1.0,
+                    "valid_record_rate": float(validation.get("valid_record_rate", 0.0)),
+                    "event_match_rate": float(provider_rows["event_id"].astype(str).str.strip().ne("").mean()) if not provider_rows.empty else 0.0,
+                    "player_match_rate": float(provider_rows["player_id"].astype(str).str.strip().ne("").mean()) if not provider_rows.empty else 0.0,
+                    "stale_record_rate": float(stale / rows) if rows else 0.0,
+                    "cross_source_agreement": float(provider_rows["source_count"].gt(1).mean()) if not provider_rows.empty else 0.0,
+                    "schema_drift_count": 1 if attempt["status"] == "schema_drift" else 0,
+                    "average_latency": evidence.get("latency_seconds"),
+                    "availability": 1.0 if attempt["status"] == "success" else 0.0,
+                }
+            )
+        return quality
+
+    @staticmethod
+    def _append_source_quality(rows: list[dict[str, Any]]) -> None:
+        if os.environ.get("PYTEST_CURRENT_TEST") or not rows:
+            return
+        SOURCE_QUALITY_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with SOURCE_QUALITY_PATH.open("a", encoding="utf-8") as handle:
+            for row in rows:
+                handle.write(json.dumps(row, separators=(",", ":")) + "\n")
+
+    @staticmethod
+    def _save_status(info: dict[str, Any]) -> None:
+        if os.environ.get("PYTEST_CURRENT_TEST"):
             return
         ODDS_STATUS_PATH.parent.mkdir(parents=True, exist_ok=True)
-        status = {k: v for k, v in full_info.items() if k != "_dataframe"}
-        ODDS_STATUS_PATH.write_text(json.dumps(status, indent=2), encoding="utf-8")
+        ODDS_STATUS_PATH.write_text(json.dumps(info, indent=2), encoding="utf-8")

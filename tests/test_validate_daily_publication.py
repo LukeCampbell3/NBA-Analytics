@@ -38,7 +38,7 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
                 "publication_state": "published_current_pool",
                 "selection": {
                     "targets": sorted(MLB_REQUIRED_TARGETS),
-                    "max_per_market_bucket": 4,
+                    "max_per_market_bucket": 2,
                     "min_expected_value": 0.0,
                     "min_market_books": 5,
                     "min_common_market_books": 2,
@@ -55,7 +55,7 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
                     "over_max_american_price": 125.0,
                     "min_over_picks": 0,
                     "max_over_picks": 3,
-                    "daily_pick_soft_cap": 6,
+                    "daily_pick_soft_cap": 3,
                     "post_cap_min_selection_score": 0.80,
                 },
             }
@@ -141,7 +141,7 @@ def test_validate_publication_rejects_legacy_mlb_pool_policy(tmp_path: Path) -> 
     route.parent.mkdir(parents=True, exist_ok=True)
     route.write_text("ok", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="expected premium_adaptive_volume_v2"):
+    with pytest.raises(ValueError, match="expected premium_portfolio_v3"):
         validate_publication(
             repo_root=tmp_path,
             output_dir=Path("dist"),
@@ -164,9 +164,25 @@ def test_validate_mlb_payload_rejects_adaptive_volume_drift(tmp_path: Path) -> N
     payload_path = tmp_path / "payload.json"
     write_payload(payload_path, run_date="2026-04-28", sport="mlb")
     payload = json.loads(payload_path.read_text(encoding="utf-8"))
-    payload["selection"]["daily_pick_soft_cap"] = 7
+    payload["selection"]["daily_pick_soft_cap"] = 4
 
     with pytest.raises(ValueError, match="changed the adaptive daily pick soft cap"):
+        validate_mlb_payload(payload, label="test")
+
+
+def test_validate_mlb_payload_rejects_nonexecutable_parlay(tmp_path: Path) -> None:
+    payload_path = tmp_path / "payload.json"
+    write_payload(payload_path, run_date="2026-04-28", sport="mlb")
+    payload = json.loads(payload_path.read_text(encoding="utf-8"))
+    payload["parlay_pairs"] = [
+        {
+            "same_sportsbook_confirmed": False,
+            "sportsbook_key": "",
+            "expected_return_per_unit": 0.25,
+        }
+    ]
+
+    with pytest.raises(ValueError, match="not executable at one confirmed sportsbook"):
         validate_mlb_payload(payload, label="test")
 
 

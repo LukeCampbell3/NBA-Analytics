@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Fetch and normalize MLB player prop markets from RotoWire into a stable contract.
+Fetch and normalize MLB player-prop markets into a stable contract.
 
-The public MLB player-props page embeds the current tables directly in inline
-JavaScript. This fetcher parses those tables and publishes the same normalized
-artifacts the rest of the MLB pipeline already expects:
+Provider-neutral adapters publish the same normalized artifacts the rest of
+the MLB pipeline already expects. The legacy RotoWire parser remains available
+only as an explicit compatibility mode:
 
 - raw page HTML + extracted bundle payloads
 - normalized long + wide tables
@@ -15,7 +15,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -28,6 +30,7 @@ SCRIPT_PATH = Path(__file__).resolve()
 REPO_ROOT = SCRIPT_PATH.parents[2]
 DEFAULT_OUTDIR = REPO_ROOT / "sports" / "mlb" / "data" / "raw" / "market_odds" / "mlb" / "odds_api_io"
 ROTOWIRE_URL = "https://www.rotowire.com/betting/mlb/player-props.php"
+MLB_ODDS_DIR = REPO_ROOT / "sports" / "mlb" / "predictions" / "odds"
 
 BOOK_TITLES = {
     "bet365": "bet365",
@@ -231,19 +234,22 @@ def to_float(value: object) -> float | None:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Fetch normalized MLB player prop lines from RotoWire.")
+    parser = argparse.ArgumentParser(description="Fetch fresh normalized MLB player-prop lines.")
     parser.add_argument(
         "--provider",
         type=str,
-        default="rotowire",
-        choices=["rotowire", "odds_api", "snapshot"],
-        help="Market data provider. 'odds_api' is kept as a backward-compatible alias for the RotoWire parser.",
+        default="provider_chain",
+        choices=[
+            "provider_chain", "scrape", "the_odds_api", "sportsgameodds",
+            "existing_provider", "rotowire", "odds_api", "snapshot",
+        ],
+        help="Market data adapter. 'odds_api' remains a legacy alias for the RotoWire parser; use 'the_odds_api' for the API.",
     )
     parser.add_argument(
         "--event-date",
         type=str,
         default=None,
-        help="Requested action date (YYYY-MM-DD). The RotoWire page only exposes the current board date.",
+        help="Requested action date (YYYY-MM-DD). Provider observations are restricted to this Eastern date.",
     )
     parser.add_argument("--input-path", type=Path, default=None, help="Input CSV/parquet for --provider snapshot.")
     parser.add_argument("--page-url", type=str, default=ROTOWIRE_URL, help="RotoWire MLB player props page URL.")
@@ -601,6 +607,138 @@ def build_rotowire_frames(
     return long_df, wide_df
 
 
+def build_wide_from_long(long_df: pd.DataFrame, fetched_at_utc: str) -> pd.DataFrame:
+    """Derive the selector's existing wide input from provider-neutral observations."""
+    if long_df.empty:
+        return pd.DataFrame(columns=MARKET_WIDE_COLUMNS)
+    compatible = long_df[long_df["market_key"].isin(VALUE_MAP)].copy()
+    if compatible.empty:
+        return pd.DataFrame(columns=MARKET_WIDE_COLUMNS)
+    for column in ["line", "over_price", "under_price"]:
+        compatible[column] = pd.to_numeric(compatible[column], errors="coerce")
+    keys = ["event_date_et", "player_name_norm", "player_name_raw"]
+    market_keys = keys + ["market_key"]
+    compatible["market_line_std"] = compatible.groupby(market_keys, dropna=False)["line"].transform("std").fillna(0.0)
+    compatible["market_line_median"] = compatible.groupby(market_keys, dropna=False)["line"].transform("median")
+    consensus = (
+        compatible.groupby(market_keys + ["line"], dropna=False)
+        .agg(
+            market_line_std=("market_line_std", "first"),
+            market_line_median=("market_line_median", "first"),
+            over_price_avg=("over_price", consensus_american_price),
+            under_price_avg=("under_price", consensus_american_price),
+            book_count=("bookmaker_key", "nunique"),
+            first_event_id=("event_id", "first"),
+            first_commence_time_utc=("commence_time_utc", "first"),
+            first_home_team=("home_team", "first"),
+            first_away_team=("away_team", "first"),
+            first_player_team=("player_team", "first"),
+            first_player_opponent=("player_opponent", "first"),
+        )
+        .reset_index()
+    )
+    consensus["line_distance"] = (consensus["line"] - consensus["market_line_median"]).abs()
+    consensus = (
+        consensus.sort_values(
+            market_keys + ["book_count", "line_distance", "line"],
+            ascending=[True, True, True, True, False, True, True],
+            kind="stable",
+        )
+        .drop_duplicates(subset=market_keys, keep="first")
+        .rename(columns={"line": "market_line"})
+    )
+
+    def _pivot(metric_col: str, rename_map: dict[str, str]) -> pd.DataFrame:
+        frame = consensus.pivot_table(index=keys, columns="market_key", values=metric_col, aggfunc="first")
+        frame = frame.rename(columns=rename_map).reset_index()
+        frame.columns.name = None
+        return frame
+
+    metadata = consensus[
+        keys + [
+            "first_event_id", "first_commence_time_utc", "first_home_team", "first_away_team",
+            "first_player_team", "first_player_opponent",
+        ]
+    ].drop_duplicates(subset=keys, keep="last")
+    wide_df = metadata.merge(_pivot("market_line", VALUE_MAP), how="left", on=keys)
+    for metric_col, rename_map in [
+        ("book_count", BOOKS_MAP),
+        ("over_price_avg", OVER_MAP),
+        ("under_price_avg", UNDER_MAP),
+        ("market_line_std", STD_MAP),
+    ]:
+        wide_df = wide_df.merge(_pivot(metric_col, rename_map), how="left", on=keys)
+    wide_df = wide_df.rename(
+        columns={
+            "event_date_et": "Market_Date",
+            "player_name_norm": "Player",
+            "player_name_raw": "Market_Player_Raw",
+            "first_event_id": "Market_Event_ID",
+            "first_commence_time_utc": "Market_Commence_Time_UTC",
+            "first_home_team": "Market_Home_Team",
+            "first_away_team": "Market_Away_Team",
+            "first_player_team": "Market_Player_Team",
+            "first_player_opponent": "Market_Player_Opponent",
+        }
+    )
+    for market_key, value_col in VALUE_MAP.items():
+        if value_col not in wide_df.columns:
+            wide_df[value_col] = np.nan
+        wide_df[SOURCE_MAP[market_key]] = np.where(wide_df[value_col].notna(), "real", "missing")
+    wide_df["Market_Fetched_At_UTC"] = fetched_at_utc
+    for column in MARKET_WIDE_COLUMNS:
+        if column not in wide_df.columns:
+            wide_df[column] = np.nan
+    return wide_df[MARKET_WIDE_COLUMNS].drop_duplicates(subset=["Market_Date", "Player"], keep="last").copy()
+
+
+def build_frames_from_contract(contract_df: pd.DataFrame, fetched_at_utc: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Convert canonical side observations into the legacy long/wide market artifacts."""
+    if contract_df.empty:
+        return pd.DataFrame(), pd.DataFrame(columns=MARKET_WIDE_COLUMNS)
+    selected_mask = (
+        contract_df["canonical_selected"].astype(bool)
+        if "canonical_selected" in contract_df.columns
+        else pd.Series(True, index=contract_df.index)
+    )
+    selected = contract_df.loc[selected_mask].copy()
+    selected["game_start_utc"] = pd.to_datetime(selected["game_start_utc"], utc=True, errors="coerce")
+    selected["event_date_et"] = selected["game_start_utc"].dt.tz_convert("America/New_York").dt.date.astype(str)
+    selected["player_name_norm"] = selected["player_name"].map(normalize_player_name)
+    index_columns = [
+        "source", "event_id", "game_start_utc", "event_date_et", "home_team", "away_team",
+        "sportsbook", "market_type", "player_name", "player_name_norm", "line",
+    ]
+    prices = selected.pivot_table(index=index_columns, columns="side", values="price_american", aggfunc="first").reset_index()
+    prices.columns.name = None
+    prices = prices.rename(columns={"over": "over_price", "under": "under_price"})
+    for column in ["over_price", "under_price"]:
+        if column not in prices.columns:
+            prices[column] = np.nan
+    long_df = pd.DataFrame(
+        {
+            "fetched_at_utc": fetched_at_utc,
+            "event_id": prices["event_id"],
+            "commence_time_utc": prices["game_start_utc"].astype(str),
+            "event_date_et": prices["event_date_et"],
+            "home_team": prices["home_team"],
+            "away_team": prices["away_team"],
+            "player_team": np.nan,
+            "player_opponent": np.nan,
+            "bookmaker_key": prices["sportsbook"],
+            "bookmaker_title": prices["sportsbook"],
+            "market_key": prices["market_type"],
+            "player_name_raw": prices["player_name"],
+            "player_name_norm": prices["player_name_norm"],
+            "line": prices["line"],
+            "over_price": prices["over_price"],
+            "under_price": prices["under_price"],
+            "source": prices["source"],
+        }
+    )
+    return long_df, build_wide_from_long(long_df, fetched_at_utc)
+
+
 def normalize_wide_snapshot(df: pd.DataFrame, fetched_at_utc: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     if df.empty:
         return pd.DataFrame(), pd.DataFrame(columns=MARKET_WIDE_COLUMNS)
@@ -671,6 +809,11 @@ def fetch_from_rotowire(
     args: argparse.Namespace,
     fetched_at_utc: str,
 ) -> tuple[str, dict[str, list[dict[str, object]]], pd.DataFrame, pd.DataFrame, dict[str, object]]:
+    if os.environ.get("MLB_ODDS_LEGACY_ROTOWIRE_AUTHORIZED") != "1":
+        raise RuntimeError(
+            "Legacy RotoWire retrieval is disabled because automated-use authorization is not configured. "
+            "Use --provider provider_chain with a permitted source."
+        )
     response = requests.get(
         args.page_url,
         timeout=float(args.timeout_seconds),
@@ -729,6 +872,54 @@ def fetch_from_snapshot(
     return "", {}, long_df, wide_df, manifest
 
 
+def fetch_from_provider_chain(
+    args: argparse.Namespace,
+    fetched_at_utc: str,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, dict[str, object]]:
+    """Acquire fresh observations through the shared provider-neutral router."""
+    sys.path.insert(0, str(MLB_ODDS_DIR))
+    from provider_router import MlbProviderRouter
+
+    if args.provider == "provider_chain":
+        priority = None
+    else:
+        priority = [args.provider, "fresh_cache"]
+    router = MlbProviderRouter(provider_priority=priority)
+    contract_df, status = router.get_fresh_odds()
+    if contract_df is None or contract_df.empty:
+        raise RuntimeError(status.get("error", "No configured provider produced fresh MLB player props"))
+    long_df, wide_df = build_frames_from_contract(contract_df, fetched_at_utc)
+    requested_date = str(args.event_date).strip() if args.event_date else None
+    if requested_date:
+        contract_dates = pd.to_datetime(contract_df["game_start_utc"], utc=True, errors="coerce").dt.tz_convert(
+            "America/New_York"
+        ).dt.date.astype(str)
+        date_mask = contract_dates.eq(requested_date)
+        contract_df = contract_df.loc[date_mask].copy()
+        long_df = long_df.loc[long_df["event_date_et"].eq(requested_date)].copy()
+        wide_df = wide_df.loc[wide_df["Market_Date"].eq(requested_date)].copy()
+        if contract_df.empty:
+            raise RuntimeError(f"Fresh provider observations did not contain requested MLB date {requested_date}")
+    if wide_df.empty:
+        raise RuntimeError("Fresh odds contained no selector-supported MLB player-prop markets")
+    manifest = {
+        "provider": args.provider,
+        "acquisition_mode": "provider_chain",
+        "successful_providers": status.get("successful_providers", []),
+        "provider_state": status.get("source_state"),
+        "terminal_status": status.get("terminal_status"),
+        "fetched_at_utc": fetched_at_utc,
+        "event_date_requested": requested_date,
+        "canonical_rows": int(len(contract_df)),
+        "canonical_selected_rows": int(contract_df["canonical_selected"].sum()),
+        "long_rows": int(len(long_df)),
+        "wide_rows": int(len(wide_df)),
+        "provider_results": status.get("provider_results", []),
+        "errors": [],
+    }
+    return contract_df, long_df, wide_df, manifest
+
+
 def write_snapshot(
     outdir: Path,
     stamp: str,
@@ -737,6 +928,7 @@ def write_snapshot(
     long_df: pd.DataFrame,
     wide_df: pd.DataFrame,
     manifest: dict[str, object],
+    canonical_df: pd.DataFrame | None = None,
 ) -> None:
     raw_dir = outdir / "raw" / stamp
     norm_dir = outdir / "normalized"
@@ -747,6 +939,12 @@ def write_snapshot(
         (raw_dir / "page.html").write_text(raw_html, encoding="utf-8")
     safe_write_json(raw_dir / "bundles.json", bundles)
     safe_write_json(raw_dir / "manifest.json", manifest)
+
+    if canonical_df is not None and not canonical_df.empty:
+        canonical_df.to_parquet(norm_dir / f"provider_observations_{stamp}.parquet", index=False)
+        canonical_df.to_csv(norm_dir / f"provider_observations_{stamp}.csv", index=False)
+        canonical_df.to_parquet(outdir / "latest_provider_observations.parquet", index=False)
+        canonical_df.to_csv(outdir / "latest_provider_observations.csv", index=False)
 
     if not long_df.empty:
         long_df.to_parquet(norm_dir / f"player_props_long_{stamp}.parquet", index=False)
@@ -815,15 +1013,19 @@ def main() -> None:
     stamp = utc_compact_timestamp()
     fetched_at_utc = utc_now_iso()
 
+    canonical_df: pd.DataFrame | None = None
     provider = "rotowire" if args.provider in {"rotowire", "odds_api"} else args.provider
     if provider == "rotowire":
         raw_html, bundles, long_df, wide_df, manifest = fetch_from_rotowire(args, fetched_at_utc)
     elif provider == "snapshot":
         raw_html, bundles, long_df, wide_df, manifest = fetch_from_snapshot(args, fetched_at_utc)
+    elif provider in {"provider_chain", "scrape", "the_odds_api", "sportsgameodds", "existing_provider"}:
+        canonical_df, long_df, wide_df, manifest = fetch_from_provider_chain(args, fetched_at_utc)
+        raw_html, bundles = "", {}
     else:
         raise RuntimeError(f"Unsupported provider: {args.provider}")
 
-    write_snapshot(args.outdir, stamp, raw_html, bundles, long_df, wide_df, manifest)
+    write_snapshot(args.outdir, stamp, raw_html, bundles, long_df, wide_df, manifest, canonical_df)
     history_summary = append_history(args.outdir, long_df, wide_df)
     manifest.update(history_summary)
     safe_write_json(args.outdir / "latest_manifest.json", manifest)

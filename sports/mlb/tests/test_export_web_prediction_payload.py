@@ -20,6 +20,40 @@ def test_valid_american_price_rejects_non_american_consensus_values() -> None:
     assert exporter.valid_american_price(99.0) is None
 
 
+def test_parlay_leg_profiles_require_price_value_and_calibration_support() -> None:
+    assert exporter.is_mlb_parlay_leg_eligible(
+        graded_hit_rate=0.76,
+        leg_quality=0.81,
+        historical_bucket_support=9000,
+        expected_value_per_unit=0.10,
+        price_confirmed=True,
+        selected_side_price=-205,
+        selected_sportsbook_key="caesars",
+    )
+    assert exporter.is_mlb_parlay_leg_eligible(
+        graded_hit_rate=0.535,
+        leg_quality=0.65,
+        historical_bucket_support=6000,
+        expected_value_per_unit=0.15,
+        selection_profile="r_tb_over_moderate_edge_v1",
+        price_confirmed=True,
+        selected_side_price=117,
+        selected_sportsbook_key="caesars",
+        live_confidence_calibration_support=6,
+    )
+    assert not exporter.is_mlb_parlay_leg_eligible(
+        graded_hit_rate=0.535,
+        leg_quality=0.65,
+        historical_bucket_support=6000,
+        expected_value_per_unit=0.15,
+        selection_profile="r_tb_over_moderate_edge_v1",
+        price_confirmed=True,
+        selected_side_price=117,
+        selected_sportsbook_key="caesars",
+        live_confidence_calibration_support=0,
+    )
+
+
 def _row(*, rank: int, game_id: str, selection_score: float) -> dict[str, str]:
     return {
         "Rank": str(rank),

@@ -183,6 +183,39 @@ def test_build_candidate_blends_model_probability_with_historical_prior() -> Non
     assert candidate.historical_prior_weight > 0.0
 
 
+def test_build_candidate_applies_live_confidence_to_final_probability() -> None:
+    row = _row(
+        player="Calibrated Over",
+        team="AAA",
+        game_id="game_calibrated",
+        target="H",
+        prediction=1.2,
+        line=0.5,
+        edge=0.7,
+    )
+    live_calibration = {
+        "segments": {
+            "H|OVER": {"active": True, "graded_rows": 8, "adjustment": -0.04},
+        }
+    }
+
+    candidate = selector.build_candidate(
+        row,
+        calibration=None,
+        live_confidence_calibration=live_calibration,
+        min_history_bucket_rows=50,
+        max_history_prior_weight=0.35,
+        history_prior_strength=400.0,
+    )
+
+    assert candidate is not None
+    assert candidate.live_confidence_calibration_key == "H|OVER"
+    assert candidate.live_confidence_calibration_support == 8
+    assert candidate.live_confidence_calibration_adjustment == -0.04
+    assert candidate.calibrated_graded_hit_rate == candidate.model_graded_hit_rate - 0.04
+    assert candidate.calibrated_hit_probability == candidate.calibrated_graded_hit_rate
+
+
 def test_build_candidate_recent_form_prior_can_raise_short_term_over_score() -> None:
     base_calibration = {
         "target_direction": {

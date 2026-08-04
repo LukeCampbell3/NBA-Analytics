@@ -35,12 +35,12 @@ SPORT_CONFIG: dict[str, dict[str, float | int]] = {
         "cap_projected_probability_to_independent": 1,
     },
     "mlb": {
-        "min_leg_probability": 0.60,
+        "min_leg_probability": 0.52,
         "min_pair_probability": 0.38,
-        "max_pairs": 2,
+        "max_pairs": 1,
         "min_legs_per_parlay": 2,
         "max_legs_per_parlay": 2,
-        "fallback_min_leg_probability": 0.58,
+        "fallback_min_leg_probability": 0.50,
         "fallback_min_pair_probability": 0.34,
         "fallback_max_pairs": 1,
         "fallback_min_legs_per_parlay": 2,
@@ -60,6 +60,8 @@ SPORT_CONFIG: dict[str, dict[str, float | int]] = {
         "forbid_same_market_bucket_parlay": 1,
         "avoid_reused_market_buckets_across_tickets": 1,
         "cap_projected_probability_to_independent": 1,
+        "require_same_sportsbook": 1,
+        "min_expected_return_per_unit": 0.02,
     },
 }
 
@@ -102,6 +104,13 @@ def _normalized_market_bucket(value: Any) -> str:
     return token
 
 
+def _play_expected_value(play: dict[str, Any]) -> float:
+    expected_value = _safe_float(play.get("expected_value_per_unit"))
+    if expected_value is not None:
+        return expected_value
+    return _safe_float(play.get("ev")) or 0.0
+
+
 def _leg_quality(play: dict[str, Any], probability_field: str) -> float:
     for key in ("parlay_leg_quality_score", "final_pool_quality_score"):
         quality = _safe_float(play.get(key))
@@ -109,9 +118,22 @@ def _leg_quality(play: dict[str, Any], probability_field: str) -> float:
             return max(0.0, min(1.0, quality))
     probability = _safe_float(play.get(probability_field))
     confidence = _safe_float(play.get("final_confidence")) or 0.0
-    ev = _safe_float(play.get("ev")) or 0.0
+    ev = _play_expected_value(play)
     derived = 0.75 * (probability if probability is not None else 0.5) + 0.20 * max(0.0, min(1.0, confidence)) + 0.05 * max(0.0, min(1.0, 0.5 + (4.0 * ev)))
     return max(0.0, min(1.0, derived))
+
+
+def _american_to_decimal(value: Any) -> float | None:
+    price = _safe_float(value)
+    if price is None or abs(price) < 100.0:
+        return None
+    return 1.0 + (price / 100.0 if price > 0 else 100.0 / abs(price))
+
+
+def _decimal_to_american(value: float | None) -> float | None:
+    if value is None or not math.isfinite(value) or value <= 1.0:
+        return None
+    return (value - 1.0) * 100.0 if value >= 2.0 else -100.0 / (value - 1.0)
 
 
 def _play_key(play: dict[str, Any], fallback_index: int) -> str:
@@ -309,12 +331,34 @@ def score_candidate_parlays(
             if same_game and int(config.get("forbid_same_game_parlay", 0)):
                 continue
 
+            sportsbook_keys = [
+                _normalized_text(play.get("selected_sportsbook_key")) for play in combo_plays
+            ]
+            same_sportsbook = bool(
+                sportsbook_keys
+                and all(sportsbook_keys)
+                and len(set(sportsbook_keys)) == 1
+            )
+            if int(config.get("require_same_sportsbook", 0)) and not same_sportsbook:
+                continue
+
+            decimal_prices = [_american_to_decimal(play.get("selected_side_price")) for play in combo_plays]
+            combined_decimal_price = math.prod(decimal_prices) if all(price is not None for price in decimal_prices) else None
+
             factor = math.prod(pair_factors) ** (1.0 / len(pair_factors)) if pair_factors else 1.0
             projected_probability = max(0.0, min(1.0, independent_probability * factor))
             if int(config.get("cap_projected_probability_to_independent", 0)):
                 projected_probability = min(projected_probability, independent_probability)
             projected_probability = min(projected_probability, min(probabilities))
             if projected_probability < min_ticket:
+                continue
+            expected_return_per_unit = (
+                (projected_probability * combined_decimal_price) - 1.0
+                if combined_decimal_price is not None
+                else None
+            )
+            min_expected_return = float(config.get("min_expected_return_per_unit", -1.0))
+            if expected_return_per_unit is not None and expected_return_per_unit < min_expected_return:
                 continue
 
             distinct_games = len({_normalized_text(play.get("game_id") or play.get("game_key")) for play in combo_plays if _normalized_text(play.get("game_id") or play.get("game_key"))})
@@ -331,7 +375,10 @@ def score_candidate_parlays(
 
             avg_leg_quality = sum(qualities) / len(qualities)
             quality_factor = 0.85 + (0.30 * avg_leg_quality)
-            parlay_score = projected_probability * max(0.75, diversity_bonus) * quality_factor
+            return_factor = 1.0
+            if expected_return_per_unit is not None:
+                return_factor += 0.15 * max(0.0, min(1.0, expected_return_per_unit / 0.25))
+            parlay_score = projected_probability * max(0.75, diversity_bonus) * quality_factor * return_factor
             tickets.append(
                 {
                     "leg_indices": indices,
@@ -344,6 +391,12 @@ def score_candidate_parlays(
                     "independent_probability": independent_probability,
                     "pairwise_adjustment_factor": factor,
                     "parlay_score": parlay_score,
+                    "combined_decimal_price": combined_decimal_price,
+                    "combined_american_price": _decimal_to_american(combined_decimal_price),
+                    "expected_return_per_unit": expected_return_per_unit,
+                    "same_sportsbook_confirmed": same_sportsbook,
+                    "sportsbook_key": sportsbook_keys[0] if same_sportsbook else "",
+                    "sportsbook": combo_plays[0].get("selected_sportsbook") if same_sportsbook else "",
                     "avg_leg_quality": avg_leg_quality,
                     "same_player": same_player,
                     "same_game": same_game,
@@ -411,6 +464,12 @@ def score_candidate_pairs(
                 "same_target": parlay["same_target"],
                 "same_market_bucket": parlay["same_market_bucket"],
                 "same_direction": not parlay["mixed_direction"],
+                "combined_decimal_price": parlay["combined_decimal_price"],
+                "combined_american_price": parlay["combined_american_price"],
+                "expected_return_per_unit": parlay["expected_return_per_unit"],
+                "same_sportsbook_confirmed": parlay["same_sportsbook_confirmed"],
+                "sportsbook_key": parlay["sportsbook_key"],
+                "sportsbook": parlay["sportsbook"],
             }
         )
     return pairs
@@ -483,7 +542,7 @@ def annotate_parlay_board(
             non_negative_ev_parlays = [
                 parlay
                 for parlay in candidate_parlays
-                if all((_safe_float(prepared[int(index)].get("ev")) or 0.0) >= 0.0 for index in parlay["leg_indices"])
+                if all(_play_expected_value(prepared[int(index)]) >= 0.0 for index in parlay["leg_indices"])
             ]
             if non_negative_ev_parlays:
                 candidate_parlays = non_negative_ev_parlays
@@ -525,6 +584,9 @@ def annotate_parlay_board(
                 "player": leg.get("player_display_name") or leg.get("player"),
                 "target": leg.get("target"),
                 "direction": leg.get("direction"),
+                "selected_side_price": leg.get("selected_side_price"),
+                "selected_sportsbook_key": leg.get("selected_sportsbook_key"),
+                "selected_sportsbook": leg.get("selected_sportsbook"),
             }
             for leg in leg_rows
         ]
@@ -556,6 +618,11 @@ def annotate_parlay_board(
         for parlay in selected_parlays
         if _safe_float(parlay.get("projected_probability")) is not None
     ]
+    tagged_return = [
+        float(parlay["expected_return_per_unit"])
+        for parlay in selected_parlays
+        if _safe_float(parlay.get("expected_return_per_unit")) is not None
+    ]
 
     summary = {
         "selection_mode": selection_mode,
@@ -568,6 +635,9 @@ def annotate_parlay_board(
         "best_projected_pair_hit_rate": max(tagged_probability) if tagged_probability else None,
         "avg_projected_parlay_hit_rate": _safe_mean(tagged_probability),
         "best_projected_parlay_hit_rate": max(tagged_probability) if tagged_probability else None,
+        "avg_expected_return_per_unit": _safe_mean(tagged_return),
+        "best_expected_return_per_unit": max(tagged_return) if tagged_return else None,
+        "same_sportsbook_required": bool(config.get("require_same_sportsbook", 0)),
         "min_leg_probability": float(config["min_leg_probability"]),
         "min_pair_probability": float(config["min_pair_probability"]),
         "min_legs_per_parlay": int(config.get("min_legs_per_parlay", 2)),

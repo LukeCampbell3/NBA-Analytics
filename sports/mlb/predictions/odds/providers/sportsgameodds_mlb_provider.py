@@ -18,11 +18,16 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 import numpy as np
 import pandas as pd
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from odds_contract import ensure_contract
 
 try:
     import requests
@@ -395,7 +400,13 @@ class SportsGameOddsMlbProvider:
         df["valid_american_odds"] = True
         df["schema_valid"] = True
         self._accounting["normalized_book_rows"] = len(df)
-        return df
+        return ensure_contract(
+            df,
+            source="sportsgameodds",
+            acquisition_method="api",
+            source_endpoint=f"{self.base_url}/events",
+            parser_version="sportsgameodds-v2-parser-v1",
+        )
 
     def _build_row(self, entry: Dict[str, Any], book: str, side: str,
                    odds_value: Any, snapshot_time: str) -> Dict[str, Any]:

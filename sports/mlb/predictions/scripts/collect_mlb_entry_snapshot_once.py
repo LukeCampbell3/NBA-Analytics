@@ -45,9 +45,11 @@ STATUS_PATH = MLB_SHADOW_DIR / "production_status.json"
 CACHE_DIR = WORKSPACE / "sports" / "mlb" / "data" / "market_odds" / "production_shadow" / "cache"
 
 SUPPORTED_MARKET_TYPES = {
-    "batter_hits", "batter_total_bases", "batter_rbis", "batter_runs",
-    "batter_strikeouts", "pitcher_strikeouts", "pitcher_hits_allowed",
-    "pitcher_earned_runs",
+    "batter_hits", "batter_total_bases", "batter_rbis", "batter_runs_scored",
+    "batter_home_runs", "batter_strikeouts", "batter_stolen_bases", "batter_walks",
+    "batter_singles", "batter_doubles", "batter_triples", "batter_hits_runs_rbis",
+    "pitcher_strikeouts", "pitcher_hits_allowed", "pitcher_walks",
+    "pitcher_earned_runs", "pitcher_outs",
 }
 
 

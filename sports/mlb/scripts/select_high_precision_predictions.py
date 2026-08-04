@@ -25,6 +25,11 @@ from typing import Iterable
 
 import pandas as pd
 
+try:
+    from .live_board_confidence import apply_live_board_calibration
+except ImportError:
+    from live_board_confidence import apply_live_board_calibration
+
 
 SCRIPT_PATH = Path(__file__).resolve()
 SPORT_ROOT = SCRIPT_PATH.parents[1]
@@ -106,6 +111,9 @@ class Candidate:
     historical_prior_weight: float
     calibrated_hit_probability: float
     calibrated_graded_hit_rate: float
+    live_confidence_calibration_key: str
+    live_confidence_calibration_support: int
+    live_confidence_calibration_adjustment: float
     market_books: int
     market_book_keys: str
     market_common_books: int
@@ -374,6 +382,17 @@ def parse_args() -> argparse.Namespace:
         help="Disable settled real-market bet-profile and placeability priors.",
     )
     parser.add_argument(
+        "--live-confidence-cache-json",
+        type=Path,
+        default=None,
+        help="Current-profile calibration learned from settled, price-confirmed published boards.",
+    )
+    parser.add_argument(
+        "--disable-live-confidence-calibration",
+        action="store_true",
+        help="Disable current-profile target/direction confidence corrections.",
+    )
+    parser.add_argument(
         "--allow-synthetic-unders",
         action="store_true",
         help="Allow synthetic under positions. Default behavior keeps synthetic fallback boards over-only.",
@@ -432,12 +451,39 @@ def infer_history_season(pool_csv: Path, requested: int | None) -> int:
     return int(datetime.now(timezone.utc).year)
 
 
+def infer_pool_run_date(pool_csv: Path) -> date | None:
+    digits = "".join(char for char in pool_csv.stem if char.isdigit())
+    if len(digits) < 8:
+        return None
+    try:
+        return datetime.strptime(digits[:8], "%Y%m%d").date()
+    except ValueError:
+        return None
+
+
 def default_history_cache_path(season: int) -> Path:
     return DEFAULT_CALIBRATION_ROOT / f"historical_bucket_priors_{int(season)}.json"
 
 
 def default_bet_profile_cache_path(season: int) -> Path:
     return DEFAULT_CALIBRATION_ROOT / f"historical_bet_profile_priors_{int(season)}.json"
+
+
+def default_live_confidence_cache_path(season: int) -> Path:
+    return DEFAULT_CALIBRATION_ROOT / f"live_board_confidence_calibration_{int(season)}.json"
+
+
+def load_live_confidence_calibration(path: Path | None, run_date: date | None) -> dict | None:
+    if path is None or not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    cutoff = parse_date(payload.get("history_before_date"))
+    if run_date is not None and cutoff is not None and cutoff > run_date:
+        return None
+    return payload
 
 
 def parse_date(value: str) -> date | None:
@@ -1245,6 +1291,7 @@ def build_candidate_for_direction(
     direction: str,
     calibration: dict | None,
     bet_profile_priors: dict | None = None,
+    live_confidence_calibration: dict | None = None,
     min_history_bucket_rows: int,
     max_history_prior_weight: float,
     history_prior_strength: float,
@@ -1369,8 +1416,22 @@ def build_candidate_for_direction(
         max_weight=max_bet_profile_prior_weight,
         strength=bet_profile_prior_strength,
     )
-    calibrated_hit_probability = min(MAX_CALIBRATED_PROBABILITY, calibrated_hit_probability)
+    (
+        validated_graded_hit_rate,
+        live_confidence_calibration_key,
+        live_confidence_calibration_support,
+        live_confidence_calibration_adjustment,
+    ) = apply_live_board_calibration(
+        validated_graded_hit_rate,
+        live_confidence_calibration,
+        target=target,
+        direction=direction,
+    )
     validated_graded_hit_rate = min(MAX_CALIBRATED_PROBABILITY, validated_graded_hit_rate)
+    calibrated_hit_probability = min(
+        MAX_CALIBRATED_PROBABILITY,
+        validated_graded_hit_rate * max(0.0, 1.0 - push_probability),
+    )
     (
         historical_market_availability_key,
         historical_market_availability_rate,
@@ -1471,6 +1532,9 @@ def build_candidate_for_direction(
         historical_prior_weight=historical_prior_weight,
         calibrated_hit_probability=calibrated_hit_probability,
         calibrated_graded_hit_rate=validated_graded_hit_rate,
+        live_confidence_calibration_key=live_confidence_calibration_key,
+        live_confidence_calibration_support=live_confidence_calibration_support,
+        live_confidence_calibration_adjustment=live_confidence_calibration_adjustment,
         market_books=market_books,
         market_book_keys=market_book_keys,
         market_common_books=market_common_books,
@@ -1512,6 +1576,7 @@ def build_candidate(
     *,
     calibration: dict | None,
     bet_profile_priors: dict | None = None,
+    live_confidence_calibration: dict | None = None,
     min_history_bucket_rows: int,
     max_history_prior_weight: float,
     history_prior_strength: float,
@@ -1531,6 +1596,7 @@ def build_candidate(
         direction=primary_direction,
         calibration=calibration,
         bet_profile_priors=bet_profile_priors,
+        live_confidence_calibration=live_confidence_calibration,
         min_history_bucket_rows=min_history_bucket_rows,
         max_history_prior_weight=max_history_prior_weight,
         history_prior_strength=history_prior_strength,
@@ -1551,6 +1617,7 @@ def build_candidate(
         direction=alternate_direction,
         calibration=calibration,
         bet_profile_priors=bet_profile_priors,
+        live_confidence_calibration=live_confidence_calibration,
         min_history_bucket_rows=min_history_bucket_rows,
         max_history_prior_weight=max_history_prior_weight,
         history_prior_strength=history_prior_strength,
@@ -1594,6 +1661,7 @@ def load_candidates(
     *,
     calibration: dict | None,
     bet_profile_priors: dict | None = None,
+    live_confidence_calibration: dict | None = None,
     min_history_bucket_rows: int,
     max_history_prior_weight: float,
     history_prior_strength: float,
@@ -1611,6 +1679,7 @@ def load_candidates(
                 row,
                 calibration=calibration,
                 bet_profile_priors=bet_profile_priors,
+                live_confidence_calibration=live_confidence_calibration,
                 min_history_bucket_rows=min_history_bucket_rows,
                 max_history_prior_weight=max_history_prior_weight,
                 history_prior_strength=history_prior_strength,
@@ -1953,6 +2022,9 @@ def write_selected_csv(path: Path, selected: list[Candidate], args: argparse.Nam
         "Historical_Bucket_Win_Rate",
         "Historical_Bucket_Support",
         "Historical_Prior_Weight",
+        "Live_Confidence_Calibration_Key",
+        "Live_Confidence_Calibration_Support",
+        "Live_Confidence_Calibration_Adjustment",
         "Market_Implied_Probability",
         "Expected_Value_Per_Unit",
         "Price_Confirmed",
@@ -2030,6 +2102,9 @@ def write_selected_csv(path: Path, selected: list[Candidate], args: argparse.Nam
                     "Historical_Bucket_Win_Rate": f"{candidate.historical_bucket_win_rate:.6f}",
                     "Historical_Bucket_Support": candidate.historical_bucket_support,
                     "Historical_Prior_Weight": f"{candidate.historical_prior_weight:.6f}",
+                    "Live_Confidence_Calibration_Key": candidate.live_confidence_calibration_key,
+                    "Live_Confidence_Calibration_Support": candidate.live_confidence_calibration_support,
+                    "Live_Confidence_Calibration_Adjustment": f"{candidate.live_confidence_calibration_adjustment:.6f}",
                     "Market_Implied_Probability": "" if candidate.market_implied_probability is None else f"{candidate.market_implied_probability:.6f}",
                     "Expected_Value_Per_Unit": "" if candidate.expected_value_per_unit is None else f"{candidate.expected_value_per_unit:.6f}",
                     "Price_Confirmed": int(candidate.price_confirmed),
@@ -2063,6 +2138,7 @@ def write_summary_json(
     rejected: Counter,
     calibration: dict | None,
     bet_profile_priors: dict | None,
+    live_confidence_calibration: dict | None,
 ) -> None:
     by_target = Counter(candidate.target for candidate in selected)
     by_direction = Counter(candidate.direction for candidate in selected)
@@ -2123,6 +2199,7 @@ def write_summary_json(
             "bet_profile_prior_strength": float(args.bet_profile_prior_strength),
             "min_market_availability_rows": int(args.min_market_availability_rows),
             "historical_bet_profiles_enabled": not bool(args.disable_historical_bet_profiles),
+            "live_confidence_calibration_enabled": not bool(args.disable_live_confidence_calibration),
             "allow_synthetic_unders": bool(args.allow_synthetic_unders),
             "prefer_confident_side": bool(args.prefer_confident_side),
             "min_historical_bet_profile_support": int(args.min_historical_bet_profile_support),
@@ -2144,6 +2221,14 @@ def write_summary_json(
             "source_file_count": int((bet_profile_priors or {}).get("source_file_count", 0)),
             "updated_at_utc": (bet_profile_priors or {}).get("updated_at_utc"),
         },
+        "live_confidence_calibration": {
+            "cache_json": report_path(args.live_confidence_cache_json) if args.live_confidence_cache_json else "",
+            "history_before_date": (live_confidence_calibration or {}).get("history_before_date"),
+            "graded_rows": int((live_confidence_calibration or {}).get("graded_rows", 0)),
+            "brier_score_before": (live_confidence_calibration or {}).get("brier_score_before"),
+            "brier_score_after": (live_confidence_calibration or {}).get("brier_score_after"),
+            "walk_forward_validation": (live_confidence_calibration or {}).get("walk_forward_validation", {}),
+        },
         "filter_rejections": dict(rejected),
         "avg_abs_edge": round(sum(candidate.abs_edge for candidate in selected) / len(selected), 6) if selected else 0.0,
         "avg_model_hit_probability": round(sum(candidate.model_hit_probability for candidate in selected) / len(selected), 6) if selected else 0.0,
@@ -2155,6 +2240,9 @@ def write_summary_json(
         "avg_historical_prior_weight": round(sum(candidate.historical_prior_weight for candidate in selected) / len(selected), 6) if selected else 0.0,
         "avg_historical_bet_profile_win_rate": round(sum(candidate.historical_bet_profile_win_rate for candidate in selected) / len(selected), 6) if selected else 0.0,
         "avg_historical_bet_profile_prior_weight": round(sum(candidate.historical_bet_profile_prior_weight for candidate in selected) / len(selected), 6) if selected else 0.0,
+        "avg_live_confidence_calibration_adjustment": round(
+            sum(candidate.live_confidence_calibration_adjustment for candidate in selected) / len(selected), 6
+        ) if selected else 0.0,
         "avg_historical_market_availability_rate": round(sum(candidate.historical_market_availability_rate for candidate in selected) / len(selected), 6) if selected else 0.0,
         "avg_market_books": round(sum(candidate.market_books for candidate in selected) / len(selected), 6) if selected else 0.0,
         "price_confirmed_count": int(sum(candidate.price_confirmed for candidate in selected)),
@@ -2192,6 +2280,9 @@ def write_summary_json(
                 "price_confirmed": bool(candidate.price_confirmed),
                 "historical_bet_profile_win_rate": round(candidate.historical_bet_profile_win_rate, 4),
                 "historical_bet_profile_support": int(candidate.historical_bet_profile_support),
+                "live_confidence_calibration_key": candidate.live_confidence_calibration_key,
+                "live_confidence_calibration_support": int(candidate.live_confidence_calibration_support),
+                "live_confidence_calibration_adjustment": round(candidate.live_confidence_calibration_adjustment, 4),
                 "historical_market_availability_rate": round(candidate.historical_market_availability_rate, 4),
                 "expected_value_per_unit": None if candidate.expected_value_per_unit is None else round(candidate.expected_value_per_unit, 4),
                 "precision_score": round(candidate.precision_score, 4),
@@ -2215,6 +2306,8 @@ def main() -> None:
         args.history_cache_json = default_history_cache_path(args.history_season)
     if args.bet_profile_cache_json is None and history_before_date is None:
         args.bet_profile_cache_json = default_bet_profile_cache_path(args.history_season)
+    if args.live_confidence_cache_json is None and history_before_date is None:
+        args.live_confidence_cache_json = default_live_confidence_cache_path(args.history_season)
 
     default_csv, default_summary = default_output_paths(args.pool_csv)
     if args.out_csv is None:
@@ -2240,11 +2333,19 @@ def main() -> None:
             refresh=bool(args.refresh_bet_profile_cache),
             history_before_date=history_before_date,
         )
+    live_confidence_calibration = None
+    if not args.disable_live_confidence_calibration:
+        pool_run_date = infer_pool_run_date(args.pool_csv)
+        live_confidence_calibration = load_live_confidence_calibration(
+            args.live_confidence_cache_json.resolve() if args.live_confidence_cache_json else None,
+            pool_run_date,
+        )
 
     candidates = load_candidates(
         args.pool_csv,
         calibration=calibration,
         bet_profile_priors=bet_profile_priors,
+        live_confidence_calibration=live_confidence_calibration,
         min_history_bucket_rows=int(args.min_history_bucket_rows),
         max_history_prior_weight=float(args.max_history_prior_weight),
         history_prior_strength=float(args.history_prior_strength),
@@ -2268,6 +2369,7 @@ def main() -> None:
         rejected,
         calibration,
         bet_profile_priors,
+        live_confidence_calibration,
     )
 
     print("\n" + "=" * 88)

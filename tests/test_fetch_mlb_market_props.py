@@ -101,3 +101,64 @@ def test_consensus_american_price_averages_implied_probability() -> None:
 
     assert abs(price) >= 100.0
     assert abs(price) == 100.0
+
+
+def test_provider_contract_derives_existing_selector_schema() -> None:
+    base = {
+        "source": "the_odds_api",
+        "event_id": "event-1",
+        "game_start_utc": "2026-08-04T23:05:00Z",
+        "home_team": "New York Yankees",
+        "away_team": "Texas Rangers",
+        "sportsbook": "fanduel",
+        "market_type": "batter_total_bases",
+        "player_name": "Aaron Judge",
+        "line": 1.5,
+        "canonical_selected": True,
+    }
+    contract = pd.DataFrame(
+        [
+            {**base, "side": "over", "price_american": -115},
+            {**base, "side": "under", "price_american": -105},
+        ]
+    )
+
+    long_df, wide_df = MODULE.build_frames_from_contract(contract, "2026-08-04T15:00:00Z")
+
+    assert len(long_df) == 1
+    assert long_df.iloc[0]["over_price"] == -115
+    assert long_df.iloc[0]["under_price"] == -105
+    assert list(wide_df.columns) == MODULE.MARKET_WIDE_COLUMNS
+    assert wide_df.iloc[0]["Market_TB"] == 1.5
+
+
+def test_provider_contract_never_blends_prices_across_unlike_lines() -> None:
+    rows = []
+    for book, line, over_price in [
+        ("fanduel", 1.5, -110),
+        ("draftkings", 1.5, -120),
+        ("bet365", 2.5, 250),
+    ]:
+        rows.append(
+            {
+                "source": "the_odds_api",
+                "event_id": "event-1",
+                "game_start_utc": "2026-08-04T23:05:00Z",
+                "home_team": "New York Yankees",
+                "away_team": "Texas Rangers",
+                "sportsbook": book,
+                "market_type": "batter_total_bases",
+                "player_name": "Aaron Judge",
+                "line": line,
+                "side": "over",
+                "price_american": over_price,
+                "canonical_selected": True,
+            }
+        )
+
+    _, wide_df = MODULE.build_frames_from_contract(pd.DataFrame(rows), "2026-08-04T15:00:00Z")
+
+    expected_price = MODULE.consensus_american_price(pd.Series([-110, -120]))
+    assert wide_df.iloc[0]["Market_TB"] == 1.5
+    assert wide_df.iloc[0]["Market_TB_books"] == 2
+    assert wide_df.iloc[0]["Market_TB_over_price"] == expected_price

@@ -87,7 +87,8 @@ class MlbProductionShadowRunner:
         print("=" * 60)
 
         from provider_router import MlbProviderRouter
-        router = MlbProviderRouter()
+        priority = None if self.provider_override in {None, "", "auto", "provider_chain"} else [self.provider_override]
+        router = MlbProviderRouter(provider_priority=priority)
         df_odds, info = router.get_fresh_odds()
 
         if df_odds is None or df_odds.empty:
@@ -95,7 +96,7 @@ class MlbProductionShadowRunner:
             return {
                 "status": "no_fresh_odds",
                 "appended_rows": 0,
-                "terminal_state": "EXTERNAL_RESOURCE_BLOCKER",
+                "terminal_state": info.get("terminal_status", "MLB_WAITING_FOR_FRESH_PROPS"),
             }
 
         print(f"Fresh odds obtained: {len(df_odds)} rows from {info.get('successful_provider')}")
@@ -256,7 +257,8 @@ class MlbProductionShadowRunner:
 
         # Get close odds
         from provider_router import MlbProviderRouter
-        router = MlbProviderRouter()
+        priority = None if self.provider_override in {None, "", "auto", "provider_chain"} else [self.provider_override]
+        router = MlbProviderRouter(provider_priority=priority)
         df_close, info = router.get_fresh_odds()
 
         if df_close is None or df_close.empty:
@@ -452,7 +454,7 @@ def main():
     parser = argparse.ArgumentParser(description="MLB Production-Shadow Daily Runner")
     parser.add_argument("--phase", default="full-cycle",
                         choices=["predecision", "close", "settle", "status", "full-cycle"])
-    parser.add_argument("--provider", default="sportsgameodds")
+    parser.add_argument("--provider", default="provider_chain")
     parser.add_argument("--prediction-mode", default="real", choices=["real", "simulated_for_pipeline_test"])
     args = parser.parse_args()
 

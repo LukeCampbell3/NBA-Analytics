@@ -22,6 +22,11 @@ from typing import Any
 
 import pandas as pd
 
+try:
+    from .live_board_confidence import iter_main_board_paths
+except ImportError:
+    from live_board_confidence import iter_main_board_paths
+
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DAILY_RUNS_ROOT = REPO_ROOT / "sports" / "mlb" / "data" / "predictions" / "daily_runs"
@@ -50,11 +55,11 @@ TARGET_TO_ACTUAL_COL = {
 PROFILE_PROMOTION_MIN_GRADED_PLAYS = 50
 PROFILE_PROMOTION_BREAK_EVEN_RATE = 0.5238
 OPTIMIZED_OVER_SELECTION_PROFILE = "r_tb_over_moderate_edge_v1"
-PREMIUM_PRODUCTION_PROFILE = "premium_adaptive_volume_v2"
+PREMIUM_PRODUCTION_PROFILE = "premium_portfolio_v3"
 DEFAULT_OVER_MIN_HISTORY_ROWS = 55
 DEFAULT_OVER_HOLDOUT_START_DATE = "2026-06-01"
 DEFAULT_CORE_MAX_AMERICAN_PRICE = -200
-DEFAULT_DAILY_PICK_SOFT_CAP = 6
+DEFAULT_DAILY_PICK_SOFT_CAP = 3
 DEFAULT_POST_CAP_MIN_SELECTION_SCORE = 0.80
 
 
@@ -205,6 +210,9 @@ def summarize_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
             "priced_hit_rate": None,
             "priced_roi": None,
             "avg_units_per_priced_pool": None,
+            "avg_estimated_graded_hit_rate": None,
+            "calibration_gap": None,
+            "brier_score": None,
         }
 
     graded = frame.loc[frame["result"].isin(["win", "loss"])].copy()
@@ -214,6 +222,14 @@ def summarize_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
     losses = int((graded["result"] == "loss").sum())
     wilson_low, wilson_high = wilson_interval(wins, losses)
     pool_units = priced.groupby("run_date", dropna=False)["units"].sum() if not priced.empty else pd.Series(dtype="float64")
+    probabilities = (
+        pd.to_numeric(graded["estimated_graded_hit_rate"], errors="coerce")
+        if "estimated_graded_hit_rate" in graded.columns
+        else pd.Series(index=graded.index, dtype="float64")
+    )
+    valid_probability = probabilities.notna()
+    probability_actuals = graded.loc[valid_probability, "result"].eq("win").astype(float)
+    probabilities = probabilities.loc[valid_probability].astype(float)
     return {
         "play_count": int(len(frame)),
         "date_count": int(frame["run_date"].nunique()),
@@ -228,6 +244,9 @@ def summarize_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "priced_hit_rate": float((priced_graded["result"] == "win").mean()) if not priced_graded.empty else None,
         "priced_roi": float(priced["units"].mean()) if not priced.empty else None,
         "avg_units_per_priced_pool": float(pool_units.mean()) if not pool_units.empty else None,
+        "avg_estimated_graded_hit_rate": float(probabilities.mean()) if not probabilities.empty else None,
+        "calibration_gap": float(probabilities.mean() - probability_actuals.mean()) if not probabilities.empty else None,
+        "brier_score": float(((probabilities - probability_actuals) ** 2).mean()) if not probabilities.empty else None,
     }
 
 
@@ -376,7 +395,7 @@ def main() -> None:
     rows: list[dict[str, Any]] = []
     by_date: list[dict[str, Any]] = []
 
-    selected_paths = sorted(args.daily_runs_root.glob("*/daily_prediction_pool_*_high_precision_predictions.csv"))
+    selected_paths = iter_main_board_paths(args.daily_runs_root)
     for path in selected_paths:
         try:
             frame = pd.read_csv(path)
@@ -413,6 +432,7 @@ def main() -> None:
                 and str(row.get("Selected_Sportsbook", "")).strip()
             )
             units = settled_units(result, selected_side_price) if result and price_confirmed else None
+            estimated_graded_hit_rate = to_float(row.get("Estimated_Graded_Hit_Rate"))
 
             record = {
                 "run_date": run_date,
@@ -430,6 +450,7 @@ def main() -> None:
                 "line_placeable": line_placeable,
                 "price_confirmed": price_confirmed,
                 "units": units,
+                "estimated_graded_hit_rate": estimated_graded_hit_rate,
                 "source_file": str(path),
             }
             rows.append(record)
