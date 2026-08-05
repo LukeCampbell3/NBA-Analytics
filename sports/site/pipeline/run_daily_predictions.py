@@ -45,8 +45,9 @@ MLB_CONFIDENCE_CALIBRATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "live_boa
 MLB_MAX_WINRATE_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_max_winrate_board.py"
 MLB_EXPORTER = REPO_ROOT / "sports" / "mlb" / "scripts" / "export_web_prediction_payload.py"
 MLB_WEB_JSON = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "daily_predictions.json"
-MLB_PRIMARY_POLICY_PROFILE = "premium_portfolio_v3"
+MLB_PRIMARY_POLICY_PROFILE = "premium_over_first_v4"
 MLB_PRIMARY_POLICY_ARGS = [
+    "--top-n", "3",
     "--require-real-market-source",
     "--min-market-books", "5",
     "--min-common-market-books", "2",
@@ -65,12 +66,15 @@ MLB_PRIMARY_POLICY_ARGS = [
     "--over-min-expected-value", "0.10",
     "--over-max-american-price", "125",
     "--over-min-history-rows", "55",
+    "--core-min-american-price", "-250",
     "--core-max-american-price", "-200",
-    "--min-over-picks", "0",
+    "--min-over-picks", "3",
     "--max-over-picks", "3",
+    "--max-under-picks", "1",
     "--daily-pick-soft-cap", "3",
     "--post-cap-min-selection-score", "0.80",
     "--max-per-market-bucket", "2",
+    "--optimized-over-max-per-market-bucket", "3",
     "--max-per-team", "2",
     "--min-historical-bet-profile-support", "0",
     "--min-historical-bet-profile-win-rate", "0",

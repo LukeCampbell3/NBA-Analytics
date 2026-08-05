@@ -37,8 +37,10 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
                 "policy_profile": MLB_POLICY_PROFILE,
                 "publication_state": "published_current_pool",
                 "selection": {
+                    "top_n": 3,
                     "targets": sorted(MLB_REQUIRED_TARGETS),
                     "max_per_market_bucket": 2,
+                    "optimized_over_max_per_market_bucket": 3,
                     "min_expected_value": 0.0,
                     "min_market_books": 5,
                     "min_common_market_books": 2,
@@ -53,8 +55,11 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
                     "over_max_model_hit_probability": 0.55,
                     "over_min_expected_value": 0.10,
                     "over_max_american_price": 125.0,
-                    "min_over_picks": 0,
+                    "core_min_american_price": -250.0,
+                    "core_max_american_price": -200.0,
+                    "min_over_picks": 3,
                     "max_over_picks": 3,
+                    "max_under_picks": 1,
                     "daily_pick_soft_cap": 3,
                     "post_cap_min_selection_score": 0.80,
                 },
@@ -141,7 +146,7 @@ def test_validate_publication_rejects_legacy_mlb_pool_policy(tmp_path: Path) -> 
     route.parent.mkdir(parents=True, exist_ok=True)
     route.write_text("ok", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="expected premium_portfolio_v3"):
+    with pytest.raises(ValueError, match="expected premium_over_first_v4"):
         validate_publication(
             repo_root=tmp_path,
             output_dir=Path("dist"),

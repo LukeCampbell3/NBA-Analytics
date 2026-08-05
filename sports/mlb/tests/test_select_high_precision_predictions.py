@@ -620,6 +620,42 @@ def test_core_price_defense_rejects_expensive_non_optimized_pick() -> None:
     assert rejected["core_price_too_long"] == 1
 
 
+def test_core_price_defense_rejects_heavily_juiced_non_optimized_pick() -> None:
+    row = _row(
+        player="Core Juice Test",
+        team="SEA",
+        game_id="core_juice",
+        target="TB",
+        prediction=0.2,
+        line=1.5,
+        edge=-1.3,
+    )
+    row.update({"History_Rows": "70", "Market_Under_Price": "-300", "Market_Over_Price": "220"})
+    candidate = selector.build_candidate(
+        row,
+        calibration={"target_direction": {"TB|UNDER": {"graded_rows": 1000, "win_rate": 0.9}}},
+        min_history_bucket_rows=50,
+        max_history_prior_weight=0.35,
+        history_prior_strength=400.0,
+    )
+    assert candidate is not None
+    args = selector.argparse.Namespace(
+        targets=["TB"], optimized_over_targets=["R", "TB"], allow_baseline=False,
+        require_real_market_source=True, allow_synthetic_unders=False, min_abs_edge=0.35,
+        min_history_rows=35, min_prediction=0.0, min_market_books=2, min_common_market_books=1,
+        max_market_line_std=0.0, min_hit_probability=0.0, min_graded_hit_rate=0.0,
+        min_expected_value=-1.0, allow_unpriced_side=False, max_push_probability=1.0,
+        max_days_since_history=4, core_min_american_price=-250, core_max_american_price=-200,
+        min_historical_bet_profile_support=0, min_historical_bet_profile_win_rate=0.0,
+        min_historical_market_availability_support=0, min_historical_market_availability_rate=0.0,
+    )
+
+    kept, rejected = selector.filter_candidates([candidate], args)
+
+    assert kept == []
+    assert rejected["core_price_too_heavily_juiced"] == 1
+
+
 def test_select_top_candidates_reserves_and_caps_over_positions() -> None:
     candidates = []
     for idx in range(3):
@@ -665,6 +701,7 @@ def test_select_top_candidates_reserves_and_caps_over_positions() -> None:
             top_n=4,
             min_over_picks=2,
             max_over_picks=2,
+            optimized_over_targets=["R", "TB"],
             max_per_player=1,
             max_per_game=2,
             max_per_team=3,
@@ -674,6 +711,67 @@ def test_select_top_candidates_reserves_and_caps_over_positions() -> None:
 
     assert len(selected) == 4
     assert Counter(candidate.direction for candidate in selected) == {"OVER": 2, "UNDER": 2}
+
+
+def test_select_top_candidates_caps_under_fallback_positions() -> None:
+    candidates = []
+    for idx in range(3):
+        candidate = selector.build_candidate(
+            _row(
+                player=f"Reserved Over {idx}",
+                team=f"O{idx}",
+                game_id=f"over_fallback_{idx}",
+                target="R",
+                prediction=0.75,
+                line=0.5,
+                edge=0.25,
+            ),
+            calibration=None,
+            min_history_bucket_rows=50,
+            max_history_prior_weight=0.35,
+            history_prior_strength=400.0,
+        )
+        assert candidate is not None
+        candidate.selection_score = 0.70 - (idx * 0.01)
+        candidates.append(candidate)
+    for idx in range(4):
+        candidate = selector.build_candidate(
+            _row(
+                player=f"Higher Ranked Under {idx}",
+                team=f"U{idx}",
+                game_id=f"under_fallback_{idx}",
+                target="TB",
+                prediction=0.20,
+                line=1.5,
+                edge=-1.30,
+            ),
+            calibration=None,
+            min_history_bucket_rows=50,
+            max_history_prior_weight=0.35,
+            history_prior_strength=400.0,
+        )
+        assert candidate is not None
+        candidate.selection_score = 0.95 - (idx * 0.01)
+        candidates.append(candidate)
+
+    selected = selector.select_top_candidates(
+        candidates,
+        selector.argparse.Namespace(
+            top_n=4,
+            min_over_picks=3,
+            max_over_picks=3,
+            max_under_picks=1,
+            optimized_over_targets=["R", "TB"],
+            optimized_over_max_per_market_bucket=3,
+            max_per_player=1,
+            max_per_game=2,
+            max_per_team=3,
+            max_per_market_bucket=4,
+        ),
+    )
+
+    assert len(selected) == 4
+    assert Counter(candidate.direction for candidate in selected) == {"OVER": 3, "UNDER": 1}
 
 
 def test_lookup_historical_bet_profile_prior_prefers_line_probability_bucket() -> None:

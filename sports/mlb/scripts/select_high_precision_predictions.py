@@ -216,6 +216,12 @@ def parse_args() -> argparse.Namespace:
         help="Optional longest acceptable American price for non-optimized core selections.",
     )
     parser.add_argument(
+        "--core-min-american-price",
+        type=float,
+        default=None,
+        help="Optional most heavily juiced acceptable American price for non-optimized core selections.",
+    )
+    parser.add_argument(
         "--over-min-history-rows",
         type=int,
         default=None,
@@ -233,6 +239,12 @@ def parse_args() -> argparse.Namespace:
         default=0,
         help="Maximum OVER picks on the board. Set 0 to disable the cap.",
     )
+    parser.add_argument(
+        "--max-under-picks",
+        type=int,
+        default=0,
+        help="Maximum UNDER picks on the board. Set 0 to disable the cap.",
+    )
     parser.add_argument("--max-push-probability", type=float, default=0.24, help="Maximum push probability.")
     parser.add_argument("--max-days-since-history", type=int, default=4, help="Maximum staleness of last history row.")
     parser.add_argument("--max-per-player", type=int, default=1, help="Maximum selected rows per player.")
@@ -243,6 +255,12 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=4,
         help="Maximum selected rows from one exact target/direction/line market bucket.",
+    )
+    parser.add_argument(
+        "--optimized-over-max-per-market-bucket",
+        type=int,
+        default=None,
+        help="Optional market-bucket cap applied only to validated optimized OVER targets.",
     )
     parser.add_argument(
         "--min-market-books",
@@ -1785,6 +1803,14 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
             rejected["core_price_too_long"] += 1
             continue
         if (
+            not use_optimized_over_profile
+            and getattr(args, "core_min_american_price", None) is not None
+            and candidate.selected_side_price is not None
+            and candidate.selected_side_price < float(args.core_min_american_price)
+        ):
+            rejected["core_price_too_heavily_juiced"] += 1
+            continue
+        if (
             candidate.market_source == "real"
             and float(args.max_market_line_std) > 0.0
             and candidate.market_books > 1
@@ -1869,6 +1895,11 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
 
 
 def select_top_candidates(candidates: list[Candidate], args: argparse.Namespace) -> list[Candidate]:
+    optimized_over_targets = {
+        str(value).strip().upper()
+        for value in getattr(args, "optimized_over_targets", [])
+        if str(value).strip()
+    }
     ordered = sorted(
         candidates,
         key=lambda row: (
@@ -1928,10 +1959,20 @@ def select_top_candidates(candidates: list[Candidate], args: argparse.Namespace)
             return False
         if by_team[candidate.team] >= int(args.max_per_team):
             return False
-        if int(args.max_per_market_bucket) > 0 and by_market_bucket[candidate.market_bucket] >= int(args.max_per_market_bucket):
+        market_bucket_cap = int(args.max_per_market_bucket)
+        if (
+            candidate.direction == "OVER"
+            and candidate.target in optimized_over_targets
+            and getattr(args, "optimized_over_max_per_market_bucket", None) is not None
+        ):
+            market_bucket_cap = int(args.optimized_over_max_per_market_bucket)
+        if market_bucket_cap > 0 and by_market_bucket[candidate.market_bucket] >= market_bucket_cap:
             return False
         max_over_picks = max(0, int(getattr(args, "max_over_picks", 0)))
         if candidate.direction == "OVER" and max_over_picks > 0 and by_direction["OVER"] >= max_over_picks:
+            return False
+        max_under_picks = max(0, int(getattr(args, "max_under_picks", 0)))
+        if candidate.direction == "UNDER" and max_under_picks > 0 and by_direction["UNDER"] >= max_under_picks:
             return False
 
         selected.append(candidate)
@@ -2171,16 +2212,19 @@ def write_summary_json(
             "over_max_model_hit_probability": args.over_max_model_hit_probability,
             "over_min_expected_value": args.over_min_expected_value,
             "over_min_history_rows": args.over_min_history_rows,
+            "core_min_american_price": args.core_min_american_price,
             "core_max_american_price": args.core_max_american_price,
             "over_max_american_price": args.over_max_american_price,
             "min_over_picks": int(args.min_over_picks),
             "max_over_picks": int(args.max_over_picks),
+            "max_under_picks": int(args.max_under_picks),
             "max_push_probability": float(args.max_push_probability),
             "max_days_since_history": int(args.max_days_since_history),
             "max_per_player": int(args.max_per_player),
             "max_per_game": int(args.max_per_game),
             "max_per_team": int(args.max_per_team),
             "max_per_market_bucket": int(args.max_per_market_bucket),
+            "optimized_over_max_per_market_bucket": args.optimized_over_max_per_market_bucket,
             "min_market_books": int(args.min_market_books),
             "min_common_market_books": int(args.min_common_market_books),
             "max_market_line_std": float(args.max_market_line_std),
