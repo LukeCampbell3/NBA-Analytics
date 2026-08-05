@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "season": 2026,
-  "generated_at_utc": "2026-08-04T22:42:48.859263+00:00",
-  "history_before_date": "2026-08-04",
+  "generated_at_utc": "2026-08-05T17:30:37.263046+00:00",
+  "history_before_date": "2026-08-05",
   "method": "empirical_bayes_target_direction_residual",
   "profile_compatibility": "requires_selection_profile_column",
   "priced_rows_only": true,
@@ -11,35 +11,35 @@
   "min_segment_rows": 3,
   "source_file_count": 4,
   "skipped_legacy_file_count": 14,
-  "graded_rows": 8,
-  "brier_score_before": 0.200331445807375,
-  "brier_score_after": 0.19979296095372745,
+  "graded_rows": 12,
+  "brier_score_before": 0.23476485763699997,
+  "brier_score_after": 0.2279506004896087,
   "walk_forward_validation": {
-    "rows": 8,
-    "adjusted_rows": 2,
-    "brier_score_before": 0.200331445807375,
-    "brier_score_after": 0.20021066778548613
+    "rows": 12,
+    "adjusted_rows": 5,
+    "brier_score_before": 0.23476485763699997,
+    "brier_score_after": 0.2369219815073229
   },
   "segments": {
     "TB|OVER": {
-      "graded_rows": 6,
-      "wins": 3,
+      "graded_rows": 9,
+      "wins": 6,
       "losses": 3,
-      "mean_probability": 0.5419348333333333,
-      "actual_win_rate": 0.5,
-      "credibility_weight": 0.23076923076923078,
-      "adjustment": -0.009677269230769213,
+      "mean_probability": 0.5420849999999998,
+      "actual_win_rate": 0.6666666666666666,
+      "credibility_weight": 0.3103448275862069,
+      "adjustment": 0.03866327586206901,
       "active": true
     },
     "TB|UNDER": {
-      "graded_rows": 2,
+      "graded_rows": 3,
       "wins": 2,
-      "losses": 0,
-      "mean_probability": 0.779064,
-      "actual_win_rate": 1.0,
-      "credibility_weight": 0.09090909090909091,
-      "adjustment": 0.0,
-      "active": false
+      "losses": 1,
+      "mean_probability": 0.7746063333333333,
+      "actual_win_rate": 0.6666666666666666,
+      "credibility_weight": 0.13043478260869565,
+      "adjustment": -0.014079086956521738,
+      "active": true
     }
   },
   "daily_runs_root": "sports/mlb/data/predictions/daily_runs",
