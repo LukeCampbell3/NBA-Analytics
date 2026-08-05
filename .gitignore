@@ -180,6 +180,14 @@ web/nba-card-display/
 # Rebuildable official MLB StatsAPI response cache.
 Player-Predictor/data copy/raw/mlb_enrichment/
 
+# Rebuildable MLB feature rows and local odds capture/recovery artifacts.
+# Existing tracked history remains tracked; new runtime snapshots stay local.
+/Player-Predictor/Data-Proc-MLB/*/*_processed_processed.csv
+/sports/mlb/data/raw/market_odds/mlb/historical_recovered/
+/sports/mlb/data/raw/market_odds/mlb/odds_api_io/raw/*/
+/sports/mlb/data/raw/market_odds/mlb/odds_api_io/normalized/player_props_*_20*T*Z.csv
+/sports/mlb/data/raw/market_odds/mlb/odds_api_io/normalized/player_props_*_20*T*Z.parquet
+
 
 # ============================================================
 # Local exploratory scripts you explicitly do not want tracked
