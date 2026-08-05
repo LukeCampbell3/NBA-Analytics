@@ -2,7 +2,7 @@
   "pool_csv": "sports/mlb/data/predictions/daily_runs/20260805/daily_prediction_pool_20260805.csv",
   "out_csv": "sports/mlb/data/predictions/daily_runs/20260805/daily_prediction_pool_20260805_high_precision_predictions.csv",
   "rows_supported": 1627,
-  "rows_after_filters": 16,
+  "rows_after_filters": 15,
   "rows_selected": 3,
   "selection": {
     "top_n": 3,
@@ -78,14 +78,14 @@
     "history_dir": "Player-Predictor/Data-Proc-MLB",
     "season": 2026,
     "source_file_count": 1200,
-    "updated_at_utc": "2026-08-05T17:31:18.002904+00:00"
+    "updated_at_utc": "2026-08-05T18:11:11.455889+00:00"
   },
   "historical_bet_profiles": {
     "cache_json": "sports/mlb/data/predictions/calibration/historical_bet_profile_priors_2026.json",
     "history_dir": "Player-Predictor/Data-Proc-MLB",
     "season": 2026,
     "source_file_count": 1200,
-    "updated_at_utc": "2026-08-05T17:31:45.534025+00:00"
+    "updated_at_utc": "2026-08-05T18:11:38.683394+00:00"
   },
   "live_confidence_calibration": {
     "cache_json": "sports/mlb/data/predictions/calibration/live_board_confidence_calibration_2026.json",
@@ -102,19 +102,19 @@
   },
   "filter_rejections": {
     "prediction_too_low": 61,
-    "nonstandard_market_line": 139,
-    "edge_too_small": 868,
+    "nonstandard_market_line": 136,
+    "edge_too_small": 869,
     "market_books_too_low": 38,
-    "core_price_too_long": 94,
+    "core_price_too_long": 96,
     "optimized_over_edge_too_large": 43,
     "optimized_over_hit_probability_too_high": 6,
     "history_too_short": 118,
-    "expected_value_too_low": 36,
-    "synthetic_market_source": 65,
-    "side_price_unconfirmed": 56,
-    "core_price_too_heavily_juiced": 7,
+    "expected_value_too_low": 34,
+    "synthetic_market_source": 66,
+    "side_price_unconfirmed": 58,
+    "core_price_too_heavily_juiced": 6,
     "hit_probability_too_low": 13,
-    "optimized_over_price_too_long": 17,
+    "optimized_over_price_too_long": 18,
     "graded_hit_rate_too_low": 47,
     "optimized_over_history_too_short": 3
   },
@@ -123,7 +123,7 @@
   "avg_hit_probability": 0.585268,
   "avg_model_graded_hit_rate": 0.542285,
   "avg_graded_hit_rate": 0.585268,
-  "avg_precision_score": 0.726457,
+  "avg_precision_score": 0.727303,
   "avg_historical_bucket_win_rate": 0.636202,
   "avg_historical_prior_weight": 0.35,
   "avg_historical_bet_profile_win_rate": 0.307692,
@@ -132,7 +132,7 @@
   "avg_historical_market_availability_rate": 0.051546,
   "avg_market_books": 6.0,
   "price_confirmed_count": 3,
-  "avg_expected_value_per_unit": 0.201107,
+  "avg_expected_value_per_unit": 0.20736,
   "by_target": {
     "TB": 3
   },
@@ -206,8 +206,8 @@
       "live_confidence_calibration_support": 9,
       "live_confidence_calibration_adjustment": 0.0387,
       "historical_market_availability_rate": 0.0515,
-      "expected_value_per_unit": 0.104,
-      "precision_score": 0.726
+      "expected_value_per_unit": 0.1227,
+      "precision_score": 0.7286
     },
     {
       "rank": 3,
@@ -245,8 +245,8 @@
   "publication_state": "published_current_pool",
   "pool_market_profile": {
     "rows": 1738,
-    "real_market_rows": 1303,
-    "synthetic_rows": 435,
-    "price_confirmed_rows": 1291
+    "real_market_rows": 1300,
+    "synthetic_rows": 438,
+    "price_confirmed_rows": 1292
   }
 }
