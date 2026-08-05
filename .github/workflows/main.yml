@@ -33,6 +33,13 @@ env:
   PUBLISH_BRANCH: static-deployment
   PYTHONUNBUFFERED: "1"
   TZ: America/New_York
+  MLB_ODDS_PROVIDER_PRIORITY: ${{ vars.MLB_ODDS_PROVIDER_PRIORITY || 'scrape,the_odds_api,sportsgameodds,fresh_cache' }}
+  MLB_ODDS_MAX_AGE_SECONDS: ${{ vars.MLB_ODDS_MAX_AGE_SECONDS || '3600' }}
+  MLB_ODDS_SCRAPE_ENABLED: ${{ vars.MLB_ODDS_SCRAPE_ENABLED || '0' }}
+  MLB_ODDS_SCRAPE_AUTHORIZED: ${{ vars.MLB_ODDS_SCRAPE_AUTHORIZED || '0' }}
+  MLB_ODDS_SCRAPE_SOURCE: ${{ vars.MLB_ODDS_SCRAPE_SOURCE }}
+  THE_ODDS_API_KEY: ${{ secrets.THE_ODDS_API_KEY }}
+  SPORTSGAMEODDS_API_KEY: ${{ secrets.SPORTSGAMEODDS_API_KEY }}
 
 jobs:
   run-build-publish:
@@ -118,6 +125,7 @@ jobs:
             --nba-skip-cutoff-meta-monitor
             --nba-market-provider rotowire
             --nba-snapshot-policy live_only
+            --mlb-market-provider provider_chain
             --mlb-fallback-policy exact_only
           )
 
