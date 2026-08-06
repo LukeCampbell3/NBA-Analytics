@@ -48,7 +48,11 @@ Train separate models by player role.
   - `PA`, `AB`, `BB`, `SO`, `Batting_Order`, `Team_PA_share`
   - `wOBA`, `xwOBA`, `ISO`, `Barrel%`, `HardHit%`
 - Opponent/context:
+  - `Player_MLBAM_ID`, `Opp_Starter_ID`, `Opp_Starter_Player`
   - `Opp_Pitcher_ERA_3`, `Opp_Pitcher_K9_3`, `Opp_Bullpen_ERA_7`
+  - `Batter_Profile_{target}_Strength`, `Pitcher_Profile_{target}_Vulnerability`
+  - `Pitcher_Profile_Uncertainty`, `Batter_Vs_Starter_Games`
+  - `Batter_Vs_Starter_{target}_Lift`, `Matchup_Network_{target}_Adjustment`
   - `Park_Factor`, `Wind_Out_MPH`, `Temp_F`
 - Market:
   - `Market_H`, `Market_HR`, `Market_RBI`
@@ -67,6 +71,7 @@ Train separate models by player role.
   - `K_rolling_avg`, `ER_rolling_avg`, `ERA_rolling_avg`
   - `K_lag1`, `ER_lag1`, `ERA_lag1`
 - Workload/skill:
+  - `Player_MLBAM_ID`, `Was_Starter`
   - `IP`, `BF`, `Pitches`, `BB_allowed`, `H_allowed`, `HR_allowed`
   - `FIP`, `xFIP`, `CSW%`, `Whiff%`
 - Opponent/context:
@@ -89,6 +94,8 @@ Train separate models by player role.
 - `Did_Not_Play` must be `0/1`.
 - Required numeric columns must be finite.
 - Market line std values must be non-negative.
+- Matchup-network features must be computed from rows strictly before the predicted game.
+- Missing pitcher history must not create a positive batter adjustment by itself.
 
 ## Included Assets
 

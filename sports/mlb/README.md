@@ -42,7 +42,13 @@ By default the selector:
 - filters out weak edge / stale history / high-push plays
 - limits concentration by player, game, team, and exact market bucket so one prop shape cannot dominate the board
 
-The production action profile is stricter than the research defaults. It requires a real market from at least five books, 30 prior target observations, a projection of at least `0.10`, a `0.60` minimum absolute edge, a valid selected-side price, and current matchup identity. Scheduled-slate projections regress recent form toward longer-run player rates and aggregate rate statistics over prior games instead of treating one-game `wOBA`, `ISO`, or barrel rate as a forecast. Published calibrated probability is capped at 80% until prospective calibration supports a higher ceiling.
+The production action profile is stricter than the research defaults. It requires a real market from at least five books, at least 35 prior target observations, a projection of at least `0.10`, a valid selected-side price, and current matchup identity. Core plays require at least `0.35` absolute edge; the separately validated R/TB OVER profile uses a bounded `0.15` to `0.35` edge corridor. Scheduled-slate projections regress recent form toward longer-run player rates and aggregate rate statistics over prior games instead of treating one-game `wOBA`, `ISO`, or barrel rate as a forecast. Published calibrated probability is capped at 80% until prospective calibration supports a higher ceiling.
+
+## Batter/Pitcher Matchup Network
+
+`sports/mlb/decision_engine/matchup_network.py` links each hitter to the listed probable starter. The network combines target-specific batter skill, starter vulnerability, pitcher-profile uncertainty, and heavily shrunk prior batter-versus-starter game results. It is a residual adjustment on top of the existing projection, so general hitter form is not counted twice. Pitcher uncertainty suppresses profile assumptions; it only increases the relative value of direct matchup history, and missing pitcher data alone produces no edge.
+
+The adjustment is capped separately for H, TB, R, HR, and RBI and receives no independent confidence or parlay bonus. The chronological ablation is stored in `sports/validation/mlb_matchup_network_ablation.json`.
 
 ## Leakage-Aware Backtesting
 

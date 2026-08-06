@@ -30,6 +30,8 @@ MLB_OPTIMIZED_OVER_TARGETS = {"R", "TB"}
 MLB_OPTIMIZED_OVER_PROFILE_STATUS = "probation"
 MLB_PITCHER_K_OVER_PROFILE = "pitcher_k_over_workload_v1"
 MLB_PITCHER_K_OVER_PROFILE_STATUS = "probation"
+MLB_MATCHUP_NETWORK_VERSION = "batter_pitcher_profile_network_v1"
+MLB_MATCHUP_ADJUSTMENT_CAPS = {"H": 0.10, "TB": 0.16, "R": 0.05, "HR": 0.025, "RBI": 0.06}
 MLB_MAX_PITCHER_K_PICKS = 1
 MLB_DAILY_PICK_SOFT_CAP = 3
 MLB_DAILY_PICK_HARD_CAP = 3
@@ -97,6 +99,11 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
     selection = payload.get("selection")
     if not isinstance(selection, dict):
         raise ValueError(f"MLB {label} payload is missing selection policy metadata.")
+    if (
+        not bool(selection.get("matchup_network_enabled"))
+        or str(selection.get("matchup_network_version") or "") != MLB_MATCHUP_NETWORK_VERSION
+    ):
+        raise ValueError(f"MLB {label} payload is not using the required batter/pitcher matchup network.")
     targets = {str(value).strip().upper() for value in selection.get("targets", [])}
     if targets != MLB_REQUIRED_TARGETS:
         raise ValueError(
@@ -212,6 +219,25 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
         if direction == "UNDER":
             under_count += 1
         target = str(play.get("target") or "").strip().upper()
+        if str(play.get("player_type") or "").strip().lower() == "hitter":
+            if str(play.get("matchup_network_version") or "") != MLB_MATCHUP_NETWORK_VERSION:
+                raise ValueError(f"MLB {label} hitter play {index} is missing the current matchup network version.")
+            if not str(play.get("opposing_pitcher") or "").strip():
+                raise ValueError(f"MLB {label} hitter play {index} is not linked to an opposing probable starter.")
+            pitcher_uncertainty = as_float(play.get("pitcher_profile_uncertainty"))
+            network_confidence = as_float(play.get("matchup_network_confidence"))
+            network_adjustment = as_float(play.get("matchup_network_adjustment"))
+            adjustment_cap = MLB_MATCHUP_ADJUSTMENT_CAPS.get(target)
+            if (
+                adjustment_cap is None
+                or pitcher_uncertainty is None
+                or not 0.0 <= pitcher_uncertainty <= 1.0
+                or network_confidence is None
+                or not 0.0 <= network_confidence <= 1.0
+                or network_adjustment is None
+                or abs(network_adjustment) > adjustment_cap + 1e-9
+            ):
+                raise ValueError(f"MLB {label} hitter play {index} has invalid matchup network values.")
         uses_optimized_over_profile = selection_profile == MLB_OPTIMIZED_OVER_PROFILE
         uses_pitcher_k_profile = selection_profile == MLB_PITCHER_K_OVER_PROFILE
         if direction == "OVER" and target in MLB_OPTIMIZED_OVER_TARGETS and not uses_optimized_over_profile:

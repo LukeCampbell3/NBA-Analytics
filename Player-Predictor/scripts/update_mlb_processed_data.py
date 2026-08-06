@@ -18,6 +18,7 @@ import json
 import math
 import re
 import shutil
+import sys
 import time
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -26,6 +27,17 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import requests
+
+
+WORKSPACE_ROOT = Path(__file__).resolve().parents[2]
+if str(WORKSPACE_ROOT) not in sys.path:
+    sys.path.insert(0, str(WORKSPACE_ROOT))
+
+from sports.mlb.decision_engine.matchup_network import (  # noqa: E402
+    HITTER_TARGETS as NETWORK_HITTER_TARGETS,
+    NETWORK_VERSION as MATCHUP_NETWORK_VERSION,
+    build_matchup_network_signal,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -396,6 +408,7 @@ def build_game_rows(game_feed: dict, team_id_map: dict[int, str]) -> list[dict[s
                     {
                         "Date": game_date,
                         "Player": player_name,
+                        "Player_MLBAM_ID": player_id,
                         "Player_Type": "hitter",
                         "Team": team_abbr,
                         "Opponent": opp_abbr,
@@ -450,6 +463,7 @@ def build_game_rows(game_feed: dict, team_id_map: dict[int, str]) -> list[dict[s
                     {
                         "Date": game_date,
                         "Player": player_name,
+                        "Player_MLBAM_ID": player_id,
                         "Player_Type": "pitcher",
                         "Team": team_abbr,
                         "Opponent": opp_abbr,
@@ -491,6 +505,84 @@ def add_time_features(df: pd.DataFrame) -> pd.DataFrame:
     out["DayOfWeek_sin"] = np.sin(2.0 * math.pi * dow / 7.0)
     out["DayOfWeek_cos"] = np.cos(2.0 * math.pi * dow / 7.0)
     return out
+
+
+def attach_walk_forward_matchup_network(df: pd.DataFrame) -> pd.DataFrame:
+    """Attach strictly pregame batter/pitcher network features to hitter rows."""
+
+    out = df.copy()
+    hitter_mask = out["Player_Type"].eq("hitter")
+    network_float_columns = [
+        "Matchup_Network_Batter_Support",
+        "Matchup_Network_Pitcher_Support",
+        "Pitcher_Profile_Uncertainty",
+        "Batter_Vs_Starter_Games",
+        "Matchup_Network_Confidence",
+    ]
+    for target in NETWORK_HITTER_TARGETS:
+        network_float_columns.extend(
+            [
+                f"Batter_Profile_{target}_Strength",
+                f"Pitcher_Profile_{target}_Vulnerability",
+                f"Batter_Vs_Starter_{target}_Lift",
+                f"Matchup_Network_{target}_Score",
+                f"Matchup_Network_{target}_Adjustment",
+            ]
+        )
+    for column in network_float_columns:
+        out[column] = 0.0
+    out["Pitcher_Profile_Uncertainty"] = 1.0
+    out["Matchup_Network_Version"] = ""
+
+    pitcher_rows = out.loc[out["Player_Type"].eq("pitcher")].copy()
+    pitcher_by_id: dict[int, pd.DataFrame] = {}
+    if "Player_MLBAM_ID" in pitcher_rows.columns:
+        pitcher_rows["_player_id"] = pd.to_numeric(
+            pitcher_rows["Player_MLBAM_ID"], errors="coerce"
+        ).fillna(0).astype(int)
+        pitcher_by_id = {
+            int(player_id): part.sort_values(["Date", "Game_Index"]).copy()
+            for player_id, part in pitcher_rows.loc[pitcher_rows["_player_id"].gt(0)].groupby("_player_id")
+        }
+
+    batter_ids = (
+        pd.to_numeric(out["Player_MLBAM_ID"], errors="coerce").fillna(0).astype(int)
+        if "Player_MLBAM_ID" in out.columns
+        else pd.Series(0, index=out.index, dtype=int)
+    )
+    out["_matchup_batter_key"] = [
+        f"id:{player_id}" if player_id > 0 else f"name:{player_name}"
+        for player_id, player_name in zip(batter_ids, out["Player"].astype(str))
+    ]
+    for _, batter_rows in out.loc[hitter_mask].groupby("_matchup_batter_key", sort=False):
+        ordered = batter_rows.sort_values(["Date", "Game_Index"])
+        for position, (row_index, row) in enumerate(ordered.iterrows()):
+            batter_history = ordered.iloc[:position].copy()
+            if batter_history.empty:
+                continue
+            pitcher_id = int(coerce_float(row.get("Opp_Starter_ID"), default=0.0))
+            pitcher_history = pitcher_by_id.get(pitcher_id, pd.DataFrame())
+            if not pitcher_history.empty:
+                pitcher_history = pitcher_history.loc[pitcher_history["Date"] < row["Date"]].copy()
+            signal = build_matchup_network_signal(
+                batter_history,
+                pitcher_history,
+                opposing_pitcher_id=pitcher_id,
+                opposing_pitcher_name=row.get("Opp_Starter_Player", ""),
+            )
+            out.at[row_index, "Matchup_Network_Version"] = MATCHUP_NETWORK_VERSION
+            out.at[row_index, "Matchup_Network_Batter_Support"] = signal.batter_support
+            out.at[row_index, "Matchup_Network_Pitcher_Support"] = signal.pitcher_support
+            out.at[row_index, "Pitcher_Profile_Uncertainty"] = signal.pitcher_uncertainty
+            out.at[row_index, "Batter_Vs_Starter_Games"] = signal.direct_matchup_games
+            out.at[row_index, "Matchup_Network_Confidence"] = signal.confidence
+            for target in NETWORK_HITTER_TARGETS:
+                out.at[row_index, f"Batter_Profile_{target}_Strength"] = signal.batter_strength[target]
+                out.at[row_index, f"Pitcher_Profile_{target}_Vulnerability"] = signal.pitcher_vulnerability[target]
+                out.at[row_index, f"Batter_Vs_Starter_{target}_Lift"] = signal.direct_matchup_lift[target]
+                out.at[row_index, f"Matchup_Network_{target}_Score"] = signal.network_score[target]
+                out.at[row_index, f"Matchup_Network_{target}_Adjustment"] = signal.adjustment[target]
+    return out.drop(columns=["_matchup_batter_key"])
 
 
 def load_market_history() -> pd.DataFrame:
@@ -585,30 +677,15 @@ def build_processed_frames(
         bullpen_context = pd.DataFrame(columns=["Team", "Date", "Opp_Bullpen_ERA_7"])
 
     if hitter_mask.any():
-        id_to_pitcher = {}
-        for _, row in df.loc[pitcher_mask, ["Player", "Date"]].drop_duplicates().iterrows():
-            id_to_pitcher[str(row["Player"])] = str(row["Player"])
-        df.loc[hitter_mask, "Opp_Starter_Player"] = df.loc[hitter_mask, "Opp_Starter_ID"].map(lambda _value: "")
-        if pitcher_mask.any():
-            pitcher_id_lookup = (
-                pd.DataFrame(raw_rows)
-                .loc[lambda frame: frame.get("Player_Type", pd.Series([], dtype="object")) == "pitcher", ["Player"]]
-            )
-        player_by_pitcher_id = {}
-        for row in raw_rows:
-            if row.get("Player_Type") == "pitcher":
-                # Raw rows do not currently carry player id back out, so starter lookup falls back below.
-                continue
-        starter_name_lookup: dict[tuple[int, str], str] = {}
-        for row in raw_rows:
-            if row.get("Player_Type") == "pitcher":
-                player_name = str(row.get("Player", ""))
-                team = str(row.get("Team", ""))
-                date_key = str(row.get("Date", ""))
-                starter_name_lookup[(int(row.get("Team_ID", 0)), date_key)] = starter_name_lookup.get((int(row.get("Team_ID", 0)), date_key), player_name)
-        df.loc[hitter_mask, "Opp_Starter_Player"] = df.loc[hitter_mask].apply(
-            lambda row: starter_name_lookup.get((int(row["Opponent_ID"]), str(row["Date"].date())), ""),
-            axis=1,
+        pitcher_name_by_id = {
+            int(row["Player_MLBAM_ID"]): str(row["Player"])
+            for _, row in df.loc[
+                pitcher_mask & pd.to_numeric(df["Player_MLBAM_ID"], errors="coerce").fillna(0).gt(0),
+                ["Player_MLBAM_ID", "Player"],
+            ].drop_duplicates(subset=["Player_MLBAM_ID"], keep="last").iterrows()
+        }
+        df.loc[hitter_mask, "Opp_Starter_Player"] = df.loc[hitter_mask, "Opp_Starter_ID"].map(
+            lambda value: pitcher_name_by_id.get(int(coerce_float(value, default=0.0)), "")
         )
         df = df.merge(starter_context, how="left", on=["Opp_Starter_Player", "Date"])
         df = df.merge(
@@ -636,6 +713,8 @@ def build_processed_frames(
     # Context merges can expand and reindex rows, so masks created before them are no longer safe.
     hitter_mask = df["Player_Type"].eq("hitter")
     pitcher_mask = df["Player_Type"].eq("pitcher")
+
+    df = attach_walk_forward_matchup_network(df)
 
     rolling_specs = {
         "hitter": ["H", "TB", "R", "HR", "RBI"],
@@ -692,6 +771,13 @@ def build_processed_frames(
             + (0.30 * (pd.to_numeric(df.loc[hitter_mask, "wOBA"], errors="coerce").fillna(0.0) - 0.31))
             + (0.05 * (pd.to_numeric(df.loc[hitter_mask, "Opp_Bullpen_ERA_7"], errors="coerce").fillna(4.0) - 4.0))
         ).clip(lower=0.0)
+        for target in NETWORK_HITTER_TARGETS:
+            adjustment_column = f"Matchup_Network_{target}_Adjustment"
+            projection_column = f"{target}_proj"
+            df.loc[hitter_mask, projection_column] = (
+                pd.to_numeric(df.loc[hitter_mask, projection_column], errors="coerce").fillna(0.0)
+                + pd.to_numeric(df.loc[hitter_mask, adjustment_column], errors="coerce").fillna(0.0)
+            ).clip(lower=0.0)
 
     if pitcher_mask.any():
         df.loc[pitcher_mask, "K_proj"] = (
@@ -784,8 +870,8 @@ def build_processed_frames(
             df[col] = 0.0
 
     hitter_keep = [
-        "Date", "Player", "Player_Type", "Team", "Opponent", "Season", "Game_ID", "Game_Index", "Team_ID", "Opponent_ID",
-        "Is_Home", "H", "TB", "R", "HR", "RBI", "PA", "AB", "BB", "SO", "Batting_Order", "Team_PA_share", "wOBA", "xwOBA", "ISO",
+        "Date", "Player", "Player_MLBAM_ID", "Player_Type", "Team", "Opponent", "Season", "Game_ID", "Game_Index", "Team_ID", "Opponent_ID",
+        "Is_Home", "Opp_Starter_ID", "Opp_Starter_Player", "H", "TB", "R", "HR", "RBI", "PA", "AB", "BB", "SO", "Batting_Order", "Team_PA_share", "wOBA", "xwOBA", "ISO",
         "Barrel%", "HardHit%", "Opp_Pitcher_ERA_3", "Opp_Pitcher_K9_3", "Opp_Bullpen_ERA_7", "Park_Factor", "Wind_Out_MPH",
         "Temp_F", "Did_Not_Play", "Rest_Days", "Month_sin", "Month_cos", "DayOfWeek_sin", "DayOfWeek_cos", "Market_H",
         "Market_TB", "Market_R", "Market_HR", "Market_RBI", "Synthetic_Market_H", "Synthetic_Market_TB", "Synthetic_Market_R",
@@ -798,8 +884,28 @@ def build_processed_frames(
         "RBI_market_gap", "H_rolling_avg", "TB_rolling_avg", "R_rolling_avg", "HR_rolling_avg", "RBI_rolling_avg",
         "H_lag1", "TB_lag1", "R_lag1", "HR_lag1", "RBI_lag1",
     ]
+    hitter_keep.extend(
+        [
+            "Matchup_Network_Version",
+            "Matchup_Network_Batter_Support",
+            "Matchup_Network_Pitcher_Support",
+            "Pitcher_Profile_Uncertainty",
+            "Batter_Vs_Starter_Games",
+            "Matchup_Network_Confidence",
+        ]
+    )
+    for target in NETWORK_HITTER_TARGETS:
+        hitter_keep.extend(
+            [
+                f"Batter_Profile_{target}_Strength",
+                f"Pitcher_Profile_{target}_Vulnerability",
+                f"Batter_Vs_Starter_{target}_Lift",
+                f"Matchup_Network_{target}_Score",
+                f"Matchup_Network_{target}_Adjustment",
+            ]
+        )
     pitcher_keep = [
-        "Date", "Player", "Player_Type", "Team", "Opponent", "Season", "Game_ID", "Game_Index", "Team_ID", "Opponent_ID",
+        "Date", "Player", "Player_MLBAM_ID", "Player_Type", "Team", "Opponent", "Season", "Game_ID", "Game_Index", "Team_ID", "Opponent_ID",
         "Is_Home", "Was_Starter", "K", "ER", "ERA", "IP", "BF", "Pitches", "BB_allowed", "H_allowed", "HR_allowed", "FIP", "xFIP",
         "CSW%", "Whiff%", "Opp_Lineup_wOBA_3", "Opp_Lineup_K_rate_3", "Park_Factor", "Wind_Out_MPH", "Temp_F", "Did_Not_Play",
         "Rest_Days", "Month_sin", "Month_cos", "DayOfWeek_sin", "DayOfWeek_cos", "Market_K", "Market_ER", "Market_ERA",
@@ -838,6 +944,8 @@ def build_processed_frames(
                 "Market_Source_ER",
                 "Market_Source_ERA",
                 "Market_Fetched_At_UTC",
+                "Opp_Starter_Player",
+                "Matchup_Network_Version",
             }
         ]
         for col in numeric_cols:
@@ -857,6 +965,13 @@ def build_processed_frames(
         "market_props_rows_matched": int(market_match_count),
         "market_rows_filled": int(market_rows_filled),
         "players_skipped_short_history": int(skipped_short_history),
+        "matchup_network_version": MATCHUP_NETWORK_VERSION,
+        "matchup_network_rows": int(
+            df.get("Matchup_Network_Version", pd.Series("", index=df.index)).astype(str).eq(MATCHUP_NETWORK_VERSION).sum()
+        ),
+        "matchup_network_direct_history_rows": int(
+            pd.to_numeric(df.get("Batter_Vs_Starter_Games"), errors="coerce").fillna(0).gt(0).sum()
+        ),
     }
     return player_frames, summary
 

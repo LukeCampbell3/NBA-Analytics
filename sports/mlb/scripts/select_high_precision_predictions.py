@@ -17,6 +17,7 @@ import argparse
 import csv
 import json
 import math
+import sys
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
@@ -24,6 +25,11 @@ from pathlib import Path
 from typing import Iterable
 
 import pandas as pd
+
+if str(Path(__file__).resolve().parents[3]) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+
+from sports.mlb.decision_engine.matchup_network import NETWORK_VERSION  # noqa: E402
 
 try:
     from .live_board_confidence import apply_live_board_calibration
@@ -2123,6 +2129,17 @@ def write_selected_csv(path: Path, selected: list[Candidate], args: argparse.Nam
         "Player",
         "Player_ID",
         "Player_Type",
+        "Opposing_Pitcher_ID",
+        "Opposing_Pitcher",
+        "Matchup_Network_Version",
+        "Batter_Profile_Strength",
+        "Pitcher_Profile_Vulnerability",
+        "Pitcher_Profile_Uncertainty",
+        "Batter_Vs_Starter_Games",
+        "Batter_Vs_Starter_Lift",
+        "Matchup_Network_Score",
+        "Matchup_Network_Confidence",
+        "Matchup_Network_Adjustment",
         "Starter_Confirmed",
         "Starter_History_Rows",
         "Projected_IP",
@@ -2207,6 +2224,17 @@ def write_selected_csv(path: Path, selected: list[Candidate], args: argparse.Nam
                     "Player": candidate.player,
                     "Player_ID": candidate.player_id,
                     "Player_Type": candidate.raw.get("Player_Type", ""),
+                    "Opposing_Pitcher_ID": candidate.raw.get("Opposing_Pitcher_ID", ""),
+                    "Opposing_Pitcher": candidate.raw.get("Opposing_Pitcher", ""),
+                    "Matchup_Network_Version": candidate.raw.get("Matchup_Network_Version", ""),
+                    "Batter_Profile_Strength": candidate.raw.get("Batter_Profile_Strength", ""),
+                    "Pitcher_Profile_Vulnerability": candidate.raw.get("Pitcher_Profile_Vulnerability", ""),
+                    "Pitcher_Profile_Uncertainty": candidate.raw.get("Pitcher_Profile_Uncertainty", ""),
+                    "Batter_Vs_Starter_Games": candidate.raw.get("Batter_Vs_Starter_Games", ""),
+                    "Batter_Vs_Starter_Lift": candidate.raw.get("Batter_Vs_Starter_Lift", ""),
+                    "Matchup_Network_Score": candidate.raw.get("Matchup_Network_Score", ""),
+                    "Matchup_Network_Confidence": candidate.raw.get("Matchup_Network_Confidence", ""),
+                    "Matchup_Network_Adjustment": candidate.raw.get("Matchup_Network_Adjustment", ""),
                     "Starter_Confirmed": candidate.raw.get("Starter_Confirmed", ""),
                     "Starter_History_Rows": candidate.raw.get("Starter_History_Rows", ""),
                     "Projected_IP": candidate.raw.get("Projected_IP", ""),
@@ -2300,6 +2328,8 @@ def write_summary_json(
         "rows_after_filters": len(eligible_candidates),
         "rows_selected": len(selected),
         "selection": {
+            "matchup_network_enabled": True,
+            "matchup_network_version": NETWORK_VERSION,
             "top_n": int(args.top_n),
             "daily_pick_soft_cap": int(getattr(args, "daily_pick_soft_cap", 0)),
             "post_cap_min_selection_score": float(
@@ -2435,6 +2465,14 @@ def write_summary_json(
                 "market_line": candidate.market_line,
                 "market_bucket": candidate.market_bucket,
                 "market_source": candidate.market_source,
+                "opposing_pitcher": str(candidate.raw.get("Opposing_Pitcher", "")),
+                "batter_profile_strength": to_float(candidate.raw.get("Batter_Profile_Strength"), 0.0),
+                "pitcher_profile_vulnerability": to_float(candidate.raw.get("Pitcher_Profile_Vulnerability"), 0.0),
+                "pitcher_profile_uncertainty": to_float(candidate.raw.get("Pitcher_Profile_Uncertainty"), 0.0),
+                "batter_vs_starter_games": int(to_float(candidate.raw.get("Batter_Vs_Starter_Games"), 0.0)),
+                "matchup_network_score": to_float(candidate.raw.get("Matchup_Network_Score"), 0.0),
+                "matchup_network_confidence": to_float(candidate.raw.get("Matchup_Network_Confidence"), 0.0),
+                "matchup_network_adjustment": to_float(candidate.raw.get("Matchup_Network_Adjustment"), 0.0),
                 "starter_confirmed": str(candidate.raw.get("Starter_Confirmed", "")).strip().lower() in {"1", "true", "yes"},
                 "starter_history_rows": int(to_float(candidate.raw.get("Starter_History_Rows"), 0.0)),
                 "projected_ip": to_float(candidate.raw.get("Projected_IP"), 0.0),

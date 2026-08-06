@@ -104,6 +104,29 @@ def test_projection_context_regresses_short_term_total_base_spike() -> None:
     assert prediction < 3.0
 
 
+def test_hitter_projection_applies_bounded_matchup_network_adjustment() -> None:
+    spec = next(item for item in generator.TARGET_SPECS if item.target == "TB")
+    latest = pd.Series(
+        {
+            "TB_rolling_avg": 1.5,
+            "TB_lag1": 1.5,
+            "Team_PA_share": 0.1,
+            "wOBA": 0.330,
+            "ISO": 0.180,
+            "Park_Factor": 1.0,
+        }
+    )
+    baseline, _ = generator.project_from_latest_row(latest, spec, opponent_context={})
+    adjusted, _ = generator.project_from_latest_row(
+        latest,
+        spec,
+        opponent_context={},
+        player_context={"matchup_network_adjustment": 0.08},
+    )
+
+    assert adjusted == baseline + 0.08
+
+
 def test_pitcher_projection_uses_recent_starter_workload() -> None:
     history = pd.DataFrame(
         {

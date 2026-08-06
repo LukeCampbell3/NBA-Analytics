@@ -12,6 +12,7 @@ PIPELINE_ROOT = REPO_ROOT / "sports" / "site" / "pipeline"
 sys.path.insert(0, str(PIPELINE_ROOT))
 
 from validate_daily_publication import (
+    MLB_MATCHUP_NETWORK_VERSION,
     MLB_POLICY_PROFILE,
     MLB_REQUIRED_TARGETS,
     as_float,
@@ -37,6 +38,8 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
                 "policy_profile": MLB_POLICY_PROFILE,
                 "publication_state": "published_current_pool",
                 "selection": {
+                    "matchup_network_enabled": True,
+                    "matchup_network_version": MLB_MATCHUP_NETWORK_VERSION,
                     "top_n": 3,
                     "targets": sorted(MLB_REQUIRED_TARGETS),
                     "max_per_market_bucket": 2,
@@ -266,4 +269,39 @@ def test_validate_mlb_payload_checks_pitcher_workload_and_recency(tmp_path: Path
 
     payload["plays"][0]["days_since_history"] = 15
     with pytest.raises(ValueError, match="exceeds the pitcher K recency ceiling"):
+        validate_mlb_payload(payload, label="test")
+
+
+def test_validate_mlb_payload_requires_networked_hitter_play(tmp_path: Path) -> None:
+    payload_path = tmp_path / "payload.json"
+    write_payload(payload_path, run_date="2026-04-28", sport="mlb")
+    payload = json.loads(payload_path.read_text(encoding="utf-8"))
+    payload["plays"] = [
+        {
+            "selection_profile": "r_tb_over_moderate_edge_v1",
+            "market_source": "real",
+            "market_books": 5,
+            "market_common_books": 2,
+            "price_confirmed": True,
+            "selected_side_price": 120,
+            "selected_sportsbook_key": "fanduel",
+            "selected_sportsbook": "FanDuel",
+            "expected_value_per_unit": 0.12,
+            "direction": "OVER",
+            "target": "R",
+            "abs_edge": 0.25,
+            "model_hit_probability": 0.52,
+            "player_type": "hitter",
+            "opposing_pitcher": "Test Starter",
+            "matchup_network_version": MLB_MATCHUP_NETWORK_VERSION,
+            "pitcher_profile_uncertainty": 0.35,
+            "matchup_network_confidence": 0.70,
+            "matchup_network_adjustment": 0.02,
+        }
+    ]
+
+    validate_mlb_payload(payload, label="test")
+
+    payload["plays"][0]["matchup_network_version"] = ""
+    with pytest.raises(ValueError, match="missing the current matchup network version"):
         validate_mlb_payload(payload, label="test")

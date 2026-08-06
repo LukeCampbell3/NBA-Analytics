@@ -19,6 +19,7 @@ import argparse
 import csv
 import json
 import math
+import sys
 from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -27,6 +28,15 @@ from typing import Iterable
 
 import pandas as pd
 import requests
+
+
+if str(Path(__file__).resolve().parents[3]) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+
+from sports.mlb.decision_engine.matchup_network import (  # noqa: E402
+    MatchupNetworkSignal,
+    build_matchup_network_signal,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -812,6 +822,8 @@ def project_from_latest_row(
             )
             prediction = (max(0.0, er_projection) * 9.0) / ip
 
+    if spec.role == "hitter":
+        prediction += float(to_float(player_context.get("matchup_network_adjustment")) or 0.0)
     prediction = max(0.0, float(prediction))
     if spec.target == "HR":
         market_line = 0.5
@@ -996,6 +1008,17 @@ def build_upcoming_schedule_pool_rows(
                 "opp_lineup_woba": float(team_context.get(opponent, {}).get("lineup_woba", 0.315)),
                 "opp_lineup_k_rate": float(team_context.get(opponent, {}).get("lineup_k_rate", 0.225)),
             }
+            opposing_pitcher_frame = frame_by_player.get(opp_probable_name)
+            opposing_pitcher_id = 0
+            opposing_pitcher_history = pd.DataFrame()
+            if opposing_pitcher_frame is not None and not opposing_pitcher_frame.empty:
+                opposing_pitcher_history = opposing_pitcher_frame.loc[
+                    opposing_pitcher_frame["_game_date"] < requested_run_date
+                ].copy()
+                if not opposing_pitcher_history.empty:
+                    opposing_pitcher_id = int(
+                        to_float(opposing_pitcher_history.iloc[-1].get("Player_MLBAM_ID")) or 0.0
+                    )
 
             for player_name in hitters + pitchers:
                 latest_row = latest_player_rows.get(player_name)
@@ -1009,6 +1032,14 @@ def build_upcoming_schedule_pool_rows(
                 history_frame = frame.loc[frame["_game_date"] < requested_run_date].copy()
                 if history_frame.empty:
                     continue
+                matchup_signal = MatchupNetworkSignal.neutral()
+                if player_type == "hitter" and opp_probable_name:
+                    matchup_signal = build_matchup_network_signal(
+                        history_frame,
+                        opposing_pitcher_history,
+                        opposing_pitcher_id=opposing_pitcher_id,
+                        opposing_pitcher_name=opp_probable_name,
+                    )
                 history_rows_by_target = {
                     spec.target: int(pd.to_numeric(history_frame.get(spec.actual_col), errors="coerce").dropna().shape[0])
                     for spec in specs
@@ -1021,6 +1052,8 @@ def build_upcoming_schedule_pool_rows(
                         continue
 
                     player_context = build_player_projection_context(history_frame, spec)
+                    if player_type == "hitter":
+                        player_context["matchup_network_adjustment"] = matchup_signal.adjustment[spec.target]
                     prediction, fallback_market_line = project_from_latest_row(
                         latest_row,
                         spec,
@@ -1052,6 +1085,17 @@ def build_upcoming_schedule_pool_rows(
                             "Player": str(latest_row.get("Player", "")).replace("_", " "),
                             "Player_ID": normalize_player_id(str(latest_row.get("Player", ""))),
                             "Player_Type": player_type,
+                            "Opposing_Pitcher_ID": opposing_pitcher_id if player_type == "hitter" else 0,
+                            "Opposing_Pitcher": opp_probable_name.replace("_", " ") if player_type == "hitter" else "",
+                            "Matchup_Network_Version": matchup_signal.version if player_type == "hitter" else "",
+                            "Batter_Profile_Strength": matchup_signal.batter_strength.get(spec.target, 0.0),
+                            "Pitcher_Profile_Vulnerability": matchup_signal.pitcher_vulnerability.get(spec.target, 0.0),
+                            "Pitcher_Profile_Uncertainty": matchup_signal.pitcher_uncertainty if player_type == "hitter" else 0.0,
+                            "Batter_Vs_Starter_Games": matchup_signal.direct_matchup_games if player_type == "hitter" else 0,
+                            "Batter_Vs_Starter_Lift": matchup_signal.direct_matchup_lift.get(spec.target, 0.0),
+                            "Matchup_Network_Score": matchup_signal.network_score.get(spec.target, 0.0),
+                            "Matchup_Network_Confidence": matchup_signal.confidence if player_type == "hitter" else 0.0,
+                            "Matchup_Network_Adjustment": matchup_signal.adjustment.get(spec.target, 0.0),
                             "Starter_Confirmed": int(
                                 player_type == "pitcher" and player_name == probable_pitcher_name
                             ),
@@ -1192,6 +1236,17 @@ def build_pool_rows(
                         "Player": player_name,
                         "Player_ID": player_id,
                         "Player_Type": player_type,
+                        "Opposing_Pitcher_ID": int(to_float(current.get("Opp_Starter_ID")) or 0.0),
+                        "Opposing_Pitcher": str(current.get("Opp_Starter_Player", "") or "").replace("_", " "),
+                        "Matchup_Network_Version": str(current.get("Matchup_Network_Version", "") or ""),
+                        "Batter_Profile_Strength": to_float(current.get(f"Batter_Profile_{spec.target}_Strength")) or 0.0,
+                        "Pitcher_Profile_Vulnerability": to_float(current.get(f"Pitcher_Profile_{spec.target}_Vulnerability")) or 0.0,
+                        "Pitcher_Profile_Uncertainty": to_float(current.get("Pitcher_Profile_Uncertainty")) or 0.0,
+                        "Batter_Vs_Starter_Games": int(to_float(current.get("Batter_Vs_Starter_Games")) or 0.0),
+                        "Batter_Vs_Starter_Lift": to_float(current.get(f"Batter_Vs_Starter_{spec.target}_Lift")) or 0.0,
+                        "Matchup_Network_Score": to_float(current.get(f"Matchup_Network_{spec.target}_Score")) or 0.0,
+                        "Matchup_Network_Confidence": to_float(current.get("Matchup_Network_Confidence")) or 0.0,
+                        "Matchup_Network_Adjustment": to_float(current.get(f"Matchup_Network_{spec.target}_Adjustment")) or 0.0,
                         "Starter_Confirmed": 0,
                         "Starter_History_Rows": int(player_context.get("starter_history_rows", 0.0)),
                         "Projected_IP": player_context.get("projected_ip"),
@@ -1250,6 +1305,17 @@ def write_pool_csv(path: Path, rows: list[dict[str, object]]) -> None:
         "Player",
         "Player_ID",
         "Player_Type",
+        "Opposing_Pitcher_ID",
+        "Opposing_Pitcher",
+        "Matchup_Network_Version",
+        "Batter_Profile_Strength",
+        "Pitcher_Profile_Vulnerability",
+        "Pitcher_Profile_Uncertainty",
+        "Batter_Vs_Starter_Games",
+        "Batter_Vs_Starter_Lift",
+        "Matchup_Network_Score",
+        "Matchup_Network_Confidence",
+        "Matchup_Network_Adjustment",
         "Starter_Confirmed",
         "Starter_History_Rows",
         "Projected_IP",
@@ -1308,6 +1374,9 @@ def build_summary(
     row_counter_by_target = Counter(str(row.get("Target", "")) for row in rows)
     players = {str(row.get("Player_ID") or row.get("Player", "")) for row in rows}
     games = {str(row.get("Game_ID", "")) for row in rows if str(row.get("Game_ID", "")).strip()}
+    network_rows = [
+        row for row in rows if str(row.get("Matchup_Network_Version", "")).strip()
+    ]
 
     role_status: dict[str, dict[str, object]] = {}
     for role in sorted(row_counter_by_role):
@@ -1337,6 +1406,24 @@ def build_summary(
         "rows_by_role": dict(row_counter_by_role),
         "rows_by_target": dict(row_counter_by_target),
         "role_status": role_status,
+        "matchup_network": {
+            "version": str(network_rows[0].get("Matchup_Network_Version", "")) if network_rows else "",
+            "rows": int(len(network_rows)),
+            "linked_pitcher_rows": int(
+                sum(1 for row in network_rows if str(row.get("Opposing_Pitcher", "")).strip())
+            ),
+            "direct_history_rows": int(
+                sum(1 for row in network_rows if int(to_float(row.get("Batter_Vs_Starter_Games")) or 0.0) > 0)
+            ),
+            "avg_abs_adjustment": (
+                float(
+                    sum(abs(float(to_float(row.get("Matchup_Network_Adjustment")) or 0.0)) for row in network_rows)
+                    / len(network_rows)
+                )
+                if network_rows
+                else 0.0
+            ),
+        },
         "updated_at_utc": datetime.now(timezone.utc).isoformat(),
     }
 

@@ -1,0 +1,108 @@
+{
+  "generated_at_utc": "2026-08-06T03:20:00+00:00",
+  "network_version": "batter_pitcher_profile_network_v1",
+  "status": "bounded_production_feature",
+  "validation_method": "chronological projection ablation with identical pregame baselines and official settled MLB outcomes",
+  "synthetic_events_used": false,
+  "data": {
+    "source": "cached MLB StatsAPI game feeds",
+    "first_date": "2026-03-01",
+    "last_date": "2026-08-01",
+    "processed_rows": 57332,
+    "network_hitter_rows": 41388,
+    "players": 1195
+  },
+  "design": {
+    "nodes": [
+      "target-specific batter skill profile",
+      "target-specific probable-starter vulnerability profile"
+    ],
+    "edges": [
+      "reliability-weighted batter/pitcher archetype compatibility",
+      "shrunk prior batter-versus-starter game performance"
+    ],
+    "uncertainty_behavior": "Pitcher uncertainty suppresses profile compatibility and increases the relative weight of direct batter-versus-starter evidence. Missing pitcher data alone creates zero adjustment.",
+    "direct_history_caveat": "A batter-versus-starter row is game-level evidence and can include later plate appearances against relievers, so it is shrunk by n/(n+8).",
+    "target_adjustment_caps": {
+      "H": 0.1,
+      "TB": 0.16,
+      "R": 0.05,
+      "HR": 0.025,
+      "RBI": 0.06
+    }
+  },
+  "validation_window": {
+    "first_date": "2026-06-16",
+    "last_date": "2026-07-15",
+    "rows": 7745,
+    "normalized_mae_objective_baseline": 0.986615,
+    "normalized_mae_objective_network": 0.985598,
+    "objective_delta": -0.001017
+  },
+  "untouched_holdout": {
+    "first_date": "2026-07-16",
+    "last_date": "2026-08-01",
+    "rows": 4705,
+    "normalized_mae_objective_baseline": 0.937673,
+    "normalized_mae_objective_network": 0.936762,
+    "objective_delta": -0.000912,
+    "by_target": {
+      "H": {
+        "baseline_mae": 0.723735,
+        "network_mae": 0.723525,
+        "mae_delta": -0.00021
+      },
+      "TB": {
+        "baseline_mae": 1.018414,
+        "network_mae": 1.017615,
+        "mae_delta": -0.000799
+      },
+      "R": {
+        "baseline_mae": 0.479672,
+        "network_mae": 0.479397,
+        "mae_delta": -0.000276
+      },
+      "HR": {
+        "baseline_mae": 0.180268,
+        "network_mae": 0.179912,
+        "mae_delta": -0.000356
+      },
+      "RBI": {
+        "baseline_mae": 0.562279,
+        "network_mae": 0.561833,
+        "mae_delta": -0.000446
+      }
+    }
+  },
+  "direct_matchup_holdout": {
+    "rows": 1134,
+    "normalized_mae_objective_baseline": 0.997436,
+    "normalized_mae_objective_network": 0.995056,
+    "objective_delta": -0.00238
+  },
+  "uncertain_pitcher_with_direct_history_holdout": {
+    "rows": 60,
+    "minimum_pitcher_uncertainty": 0.65,
+    "normalized_mae_objective_baseline": 1.102195,
+    "normalized_mae_objective_network": 1.100048,
+    "objective_delta": -0.002147
+  },
+  "executable_over_replay": {
+    "criteria": "real line, at least five books, selected-side price from -130 to +130, edge from 0.15 to 1.0",
+    "TB": {
+      "baseline": {"picks": 19, "wins": 10, "hit_rate": 0.526316, "roi": 0.104059},
+      "network": {"picks": 19, "wins": 10, "hit_rate": 0.526316, "roi": 0.104059}
+    },
+    "R": {
+      "baseline": {"picks": 13, "wins": 10, "hit_rate": 0.769231, "roi": 0.569472},
+      "network": {"picks": 13, "wins": 10, "hit_rate": 0.769231, "roi": 0.569472}
+    },
+    "other_targets": "No qualifying holdout overs under the stated executable criteria."
+  },
+  "decision": {
+    "enabled": true,
+    "independent_confidence_boost": false,
+    "parlay_promotion": false,
+    "reason": "The bounded residual adjustment improved holdout MAE for every hitter target and improved more in direct-matchup subsets, but it did not change the small executable holdout pick set or ROI. It may alter projection edge, but receives no separate confidence or parlay bonus until prospective evidence accumulates."
+  }
+}
