@@ -6,6 +6,8 @@ class DailyPredictionsPage {
             cards: document.getElementById("predictionCards"),
             empty: document.getElementById("predictionEmpty"),
             runMeta: document.getElementById("predictionRunMeta"),
+            parlaySection: document.getElementById("dailyParlaySection"),
+            parlayContent: document.getElementById("dailyParlayContent"),
         };
         this.init();
     }
@@ -37,6 +39,7 @@ class DailyPredictionsPage {
     async loadAndRender() {
         try {
             await this.load();
+            this.renderDailyParlay();
             this.renderCards();
         } catch (error) {
             console.error(error);
@@ -119,6 +122,96 @@ class DailyPredictionsPage {
         this.elements.cards.innerHTML = this.plays
             .map((play, index) => cv.renderPredictionCard(play, index))
             .join("");
+    }
+
+    renderDailyParlay() {
+        const section = this.elements.parlaySection;
+        const content = this.elements.parlayContent;
+        if (!section || !content) return;
+
+        const parlay = this.data?.daily_parlay || {};
+        const ticket = parlay?.selected_ticket || null;
+        const status = String(parlay?.status || "withheld").toLowerCase();
+        const statusLabel = status === "ready" ? "Ready" : status === "review" ? "Lineup review" : "Withheld";
+        const statusTone = status === "ready" ? "active" : status === "review" ? "stale" : "withheld";
+
+        if (!ticket || !Array.isArray(ticket.legs) || !ticket.legs.length) {
+            content.innerHTML = `
+                <div class="daily-parlay__header">
+                    <div>
+                        <p class="vault-page-kicker">Adaptive ticket</p>
+                        <h2 id="dailyParlayTitle">Daily Parlay</h2>
+                    </div>
+                    ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, statusLabel) : ""}
+                </div>
+                <p class="daily-parlay__empty">${this.escapeHtml(parlay?.reason || "No ticket cleared today's consistency gates.")}</p>
+            `;
+            return;
+        }
+
+        const legs = ticket.legs.map((leg, index) => {
+            const player = leg.player_display_name || leg.player || "Unknown Player";
+            const target = window.CardVault ? window.CardVault.formatTargetLabel(leg.target) : String(leg.target || "");
+            const line = this.formatNumber(leg.market_line, 1);
+            const price = this.formatAmerican(leg.selected_side_price);
+            const probability = this.formatPct(leg.estimated_graded_hit_rate);
+            const lineup = String(leg.lineup_status || "unconfirmed");
+            const lineupLabel = lineup === "confirmed" ? "Confirmed" : lineup === "not_in_posted_lineup" ? "Out" : "Pending";
+            return `
+                <div class="daily-parlay__leg">
+                    <span class="daily-parlay__leg-number">${String(index + 1).padStart(2, "0")}</span>
+                    <div class="daily-parlay__leg-copy">
+                        <strong>${this.escapeHtml(player)}</strong>
+                        <span>${this.escapeHtml(`OVER ${line} ${target}`)}</span>
+                    </div>
+                    <div class="daily-parlay__leg-market">
+                        <strong>${this.escapeHtml(price)}</strong>
+                        <span>${this.escapeHtml(probability)} · ${this.escapeHtml(lineupLabel)}</span>
+                    </div>
+                </div>
+            `;
+        }).join("");
+
+        content.innerHTML = `
+            <div class="daily-parlay__header">
+                <div>
+                    <p class="vault-page-kicker">Adaptive ${this.escapeHtml(ticket.leg_count)}-leg ticket</p>
+                    <h2 id="dailyParlayTitle">Daily Parlay</h2>
+                </div>
+                ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, statusLabel) : ""}
+            </div>
+            <div class="daily-parlay__metrics">
+                <div><span>Projected hit</span><strong>${this.escapeHtml(this.formatPct(ticket.projected_probability))}</strong></div>
+                <div><span>Combined price</span><strong>${this.escapeHtml(this.formatAmerican(ticket.combined_american_price))}</strong></div>
+                <div><span>Expected return</span><strong>${this.escapeHtml(this.formatSignedPct(ticket.expected_return_per_unit))}</strong></div>
+                <div><span>Sportsbook</span><strong>${this.escapeHtml(ticket.sportsbook || "n/a")}</strong></div>
+            </div>
+            <div class="daily-parlay__legs">${legs}</div>
+            <p class="daily-parlay__state">${this.escapeHtml(parlay.reason || "")}</p>
+        `;
+    }
+
+    formatNumber(value, digits = 2) {
+        const number = Number(value);
+        return Number.isFinite(number) ? number.toFixed(digits) : "n/a";
+    }
+
+    formatPct(value) {
+        const number = Number(value);
+        return Number.isFinite(number) ? `${(number * 100).toFixed(1)}%` : "n/a";
+    }
+
+    formatSignedPct(value) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return "n/a";
+        return `${number >= 0 ? "+" : ""}${(number * 100).toFixed(1)}%`;
+    }
+
+    formatAmerican(value) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return "n/a";
+        const rounded = Math.round(number);
+        return `${rounded > 0 ? "+" : ""}${rounded}`;
     }
 
     escapeHtml(value) {

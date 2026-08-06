@@ -60,7 +60,8 @@ class PredictionAboutPage {
 
     renderOverview() {
         const summary = this.data?.summary || {};
-        const parlaySummary = this.data?.parlay_summary || {};
+        const dailyParlay = this.data?.daily_parlay || {};
+        const ticket = dailyParlay?.selected_ticket || {};
         const overviewItems = [
             ["Board Size", this.formatInt(summary.play_count)],
             ["Avg Hit Rate", this.formatPct(summary.avg_expected_hit_rate)],
@@ -69,8 +70,8 @@ class PredictionAboutPage {
             ["Avg Abs Edge", this.formatNum(summary.avg_abs_edge)],
             ["Avg Value Score", this.formatNum(summary.avg_value_score)],
             ["Avg Precision Score", this.formatNum(summary.avg_precision_score)],
-            ["Parlay Tagged Plays", this.formatInt(parlaySummary.tagged_play_count)],
-            ["Parlay Pairs", this.formatInt(parlaySummary.selected_pair_count)],
+            ["Daily Parlay Legs", this.formatInt(ticket.leg_count)],
+            ["Parlay Hit Rate", this.formatPct(ticket.projected_probability)],
             ["Supported Rows", this.formatInt(summary.supported_rows)],
             ["Rows After Filters", this.formatInt(summary.rows_after_filters)],
             ["Rejected Rows", this.formatInt(summary.rejected_rows)],
@@ -118,8 +119,10 @@ class PredictionAboutPage {
     renderBoardSummary() {
         const selection = this.data?.selection || {};
         const rejected = this.data?.filter_rejections || {};
-        const parlaySummary = this.data?.parlay_summary || {};
-        const parlayValidation = this.data?.parlay_validation || {};
+        const dailyParlay = this.data?.daily_parlay || {};
+        const ticket = dailyParlay?.selected_ticket || {};
+        const legValidation = dailyParlay?.validation?.by_leg_count || [];
+        const selectedValidation = legValidation.find((row) => Number(row?.leg_count) === Number(ticket?.leg_count));
         const rejectionText = Object.entries(rejected)
             .sort((a, b) => Number(b[1]) - Number(a[1]))
             .slice(0, 4)
@@ -141,14 +144,15 @@ class PredictionAboutPage {
                 <strong>Main filter rejections:</strong> ${this.escapeHtml(rejectionText || "n/a")}.
             </p>
             <p>
-                <strong>Parlay screen:</strong> ${this.formatInt(parlaySummary.tagged_play_count)} plays are tagged for pairing across
-                ${this.formatInt(parlaySummary.selected_pair_count)} suggested 2-leg combos, with average projected pair hit rate
-                ${this.formatPct(parlaySummary.avg_projected_pair_hit_rate)}.
+                <strong>Daily parlay:</strong> ${this.formatInt(ticket.leg_count)} OVER-only legs at
+                ${this.escapeHtml(ticket.sportsbook || "n/a")}, with projected ticket hit rate
+                ${this.formatPct(ticket.projected_probability)} and expected return
+                ${this.formatPct(ticket.expected_return_per_unit)}.
             </p>
             <p>
-                <strong>Historical pair validation:</strong> ${parlayValidation.available
-                    ? `${this.formatPct(parlayValidation.selected?.pair_hit_rate)} hit rate across ${this.formatInt(parlayValidation.selected?.graded_pair_count)} graded tagged pairs`
-                    : this.escapeHtml(parlayValidation.reason || "not available for this export")}.
+                <strong>Synthetic event holdout:</strong> ${selectedValidation
+                    ? `${this.formatPct(selectedValidation.fixed_recent_holdout?.hit_rate)} hit rate across ${this.formatInt(selectedValidation.fixed_recent_holdout?.tickets)} recent graded dates; historical book-level prices were unavailable, so this does not claim ROI`
+                    : "not available for the selected leg count"}.
             </p>
         `;
     }

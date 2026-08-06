@@ -1,0 +1,138 @@
+.daily-parlay {
+    margin: 0 0 var(--vault-space-7);
+    padding: var(--vault-space-6) 0;
+    border-top: 1px solid color-mix(in srgb, var(--vault-accent) 42%, var(--vault-line));
+    border-bottom: 1px solid var(--vault-line);
+}
+
+.daily-parlay__header,
+.daily-parlay__leg {
+    display: flex;
+    align-items: center;
+}
+
+.daily-parlay__header {
+    justify-content: space-between;
+    gap: var(--vault-space-4);
+    margin-bottom: var(--vault-space-5);
+}
+
+.daily-parlay__header h2,
+.prediction-section-heading h2 {
+    margin: 0;
+    font-size: clamp(1.35rem, 2vw, 1.8rem);
+    letter-spacing: 0;
+}
+
+.daily-parlay__metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border: 1px solid var(--vault-line);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.daily-parlay__metrics > div {
+    min-width: 0;
+    padding: var(--vault-space-4);
+    border-right: 1px solid var(--vault-line);
+}
+
+.daily-parlay__metrics > div:last-child {
+    border-right: 0;
+}
+
+.daily-parlay__metrics span,
+.daily-parlay__leg span,
+.daily-parlay__state,
+.daily-parlay__empty {
+    color: var(--vault-text-muted);
+}
+
+.daily-parlay__metrics span,
+.daily-parlay__metrics strong {
+    display: block;
+}
+
+.daily-parlay__metrics span {
+    margin-bottom: 4px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.daily-parlay__metrics strong {
+    overflow-wrap: anywhere;
+    font-size: 1.05rem;
+}
+
+.daily-parlay__legs {
+    margin-top: var(--vault-space-3);
+    border-top: 1px solid var(--vault-line);
+}
+
+.daily-parlay__leg {
+    min-height: 68px;
+    gap: var(--vault-space-4);
+    border-bottom: 1px solid var(--vault-line);
+}
+
+.daily-parlay__leg-number {
+    width: 34px;
+    flex: 0 0 34px;
+    font-variant-numeric: tabular-nums;
+}
+
+.daily-parlay__leg-copy {
+    min-width: 0;
+    flex: 1;
+}
+
+.daily-parlay__leg-copy strong,
+.daily-parlay__leg-copy span,
+.daily-parlay__leg-market strong,
+.daily-parlay__leg-market span {
+    display: block;
+}
+
+.daily-parlay__leg-copy strong,
+.daily-parlay__leg-market strong {
+    color: var(--vault-text);
+}
+
+.daily-parlay__leg-market {
+    min-width: 130px;
+    text-align: right;
+}
+
+.daily-parlay__state,
+.daily-parlay__empty {
+    margin: var(--vault-space-4) 0 0;
+    font-size: 0.86rem;
+}
+
+.prediction-section-heading {
+    margin-bottom: var(--vault-space-4);
+}
+
+@media (max-width: 700px) {
+    .daily-parlay__metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .daily-parlay__metrics > div:nth-child(2) {
+        border-right: 0;
+    }
+
+    .daily-parlay__metrics > div:nth-child(-n+2) {
+        border-bottom: 1px solid var(--vault-line);
+    }
+
+    .daily-parlay__leg {
+        align-items: flex-start;
+        padding: var(--vault-space-3) 0;
+    }
+
+    .daily-parlay__leg-market {
+        min-width: 82px;
+    }
+}

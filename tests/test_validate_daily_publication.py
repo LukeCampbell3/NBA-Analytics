@@ -37,6 +37,12 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
             {
                 "policy_profile": MLB_POLICY_PROFILE,
                 "publication_state": "published_current_pool",
+                "daily_parlay": {
+                    "status": "withheld",
+                    "available": False,
+                    "selected_ticket": None,
+                    "reason": "no ticket cleared",
+                },
                 "selection": {
                     "matchup_network_enabled": True,
                     "matchup_network_version": MLB_MATCHUP_NETWORK_VERSION,
@@ -207,6 +213,55 @@ def test_validate_mlb_payload_rejects_nonexecutable_parlay(tmp_path: Path) -> No
 
     with pytest.raises(ValueError, match="not executable at one confirmed sportsbook"):
         validate_mlb_payload(payload, label="test")
+
+
+def test_validate_mlb_payload_accepts_adaptive_over_parlay(tmp_path: Path) -> None:
+    payload_path = tmp_path / "payload.json"
+    write_payload(payload_path, run_date="2026-04-28", sport="mlb")
+    payload = json.loads(payload_path.read_text(encoding="utf-8"))
+    payload["daily_parlay"] = {
+        "status": "review",
+        "available": True,
+        "selected_ticket": {
+            "leg_count": 2,
+            "sportsbook_key": "draftkings",
+            "same_sportsbook_confirmed": True,
+            "projected_probability": 0.44,
+            "combined_decimal_price": 2.25,
+            "expected_return_per_unit": 0.01,
+            "risk_flags": ["lineup_unconfirmed"],
+            "legs": [
+                {
+                    "player": "First",
+                    "player_id": "first",
+                    "game_id": "g1",
+                    "direction": "OVER",
+                    "market_source": "real",
+                    "price_confirmed": True,
+                    "selected_side_price": -180,
+                    "selected_sportsbook_key": "draftkings",
+                    "market_books": 6,
+                    "market_common_books": 3,
+                    "estimated_graded_hit_rate": 0.67,
+                },
+                {
+                    "player": "Second",
+                    "player_id": "second",
+                    "game_id": "g2",
+                    "direction": "OVER",
+                    "market_source": "real",
+                    "price_confirmed": True,
+                    "selected_side_price": -170,
+                    "selected_sportsbook_key": "draftkings",
+                    "market_books": 6,
+                    "market_common_books": 3,
+                    "estimated_graded_hit_rate": 0.66,
+                },
+            ],
+        },
+    }
+
+    validate_mlb_payload(payload, label="test")
 
 
 def test_validate_mlb_payload_checks_each_profiled_over_pick(tmp_path: Path) -> None:

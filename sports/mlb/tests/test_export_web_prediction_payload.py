@@ -176,6 +176,106 @@ def test_build_data_quality_withholds_empty_board() -> None:
     assert "no plays passed publication filters" in quality["reasons"]
 
 
+def test_daily_parlay_uses_team_specific_lineup_state(tmp_path: Path) -> None:
+    path = tmp_path / "daily_parlay.json"
+    path.write_text(
+        json.dumps(
+            {
+                "run_date": "2026-08-06",
+                "status": "ready",
+                "selected_ticket": {
+                    "leg_count": 2,
+                    "legs": [
+                        {"player": "Confirmed Player", "team": "SEA", "game_id": "g1", "price_confirmed": True},
+                        {"player": "Pending Player", "team": "WSH", "game_id": "g2", "price_confirmed": True},
+                    ],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    contexts = {
+        "g1": {
+            "players": {"confirmed player": {"batting_order": "100"}},
+            "lineup_available_by_team": {"SEA": True},
+            "abstract_state": "Preview",
+        },
+        "g2": {
+            "players": {},
+            "lineup_available_by_team": {"WSH": False},
+            "abstract_state": "Preview",
+        },
+    }
+
+    payload = exporter.load_daily_parlay(
+        path,
+        run_date="2026-08-06",
+        publication_status="ready",
+        game_context_lookup=contexts,
+    )
+
+    assert payload["status"] == "review"
+    assert payload["selected_ticket"]["legs"][0]["lineup_status"] == "confirmed"
+    assert payload["selected_ticket"]["legs"][1]["lineup_status"] == "unconfirmed"
+
+
+def test_daily_parlay_withholds_player_missing_from_posted_team_lineup(tmp_path: Path) -> None:
+    path = tmp_path / "daily_parlay.json"
+    path.write_text(
+        json.dumps(
+            {
+                "run_date": "2026-08-06",
+                "status": "ready",
+                "selected_ticket": {
+                    "leg_count": 2,
+                    "legs": [
+                        {"player": "Missing Player", "team": "SEA", "game_id": "g1", "price_confirmed": True},
+                        {"player": "Other Player", "team": "WSH", "game_id": "g2", "price_confirmed": True},
+                    ],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    contexts = {
+        "g1": {
+            "players": {"someone else": {"batting_order": "100"}},
+            "lineup_available_by_team": {"SEA": True},
+            "abstract_state": "Preview",
+        },
+        "g2": {
+            "players": {},
+            "lineup_available_by_team": {"WSH": False},
+            "abstract_state": "Preview",
+        },
+    }
+
+    payload = exporter.load_daily_parlay(
+        path,
+        run_date="2026-08-06",
+        publication_status="ready",
+        game_context_lookup=contexts,
+    )
+
+    assert payload["status"] == "withheld"
+    assert "not_in_posted_lineup" in payload["selected_ticket"]["risk_flags"]
+
+
+def test_daily_parlay_withholds_non_object_artifact(tmp_path: Path) -> None:
+    path = tmp_path / "daily_parlay.json"
+    path.write_text("[]", encoding="utf-8")
+
+    payload = exporter.load_daily_parlay(
+        path,
+        run_date="2026-08-06",
+        publication_status="ready",
+        game_context_lookup={},
+    )
+
+    assert payload["status"] == "withheld"
+    assert payload["selected_ticket"] is None
+
+
 def test_infer_through_date_reads_raw_pool_for_empty_selection(tmp_path: Path) -> None:
     pool_csv = tmp_path / "daily_prediction_pool_20260619.csv"
     pool_csv.write_text("Last_History_Date\n2026-04-30\n2026-05-01\n", encoding="utf-8")

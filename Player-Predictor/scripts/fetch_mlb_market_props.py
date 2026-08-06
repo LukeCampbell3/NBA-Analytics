@@ -216,10 +216,15 @@ def load_table(path: Path) -> pd.DataFrame:
 
 def write_table(df: pd.DataFrame, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    if path.suffix.lower() == ".parquet":
-        df.to_parquet(path, index=False)
-    else:
-        df.to_csv(path, index=False)
+    temporary_path = path.with_name(f".{path.stem}.{os.getpid()}.tmp{path.suffix}")
+    try:
+        if path.suffix.lower() == ".parquet":
+            df.to_parquet(temporary_path, index=False)
+        else:
+            df.to_csv(temporary_path, index=False)
+        os.replace(temporary_path, path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
 
 
 def to_float(value: object) -> float | None:
@@ -941,22 +946,22 @@ def write_snapshot(
     safe_write_json(raw_dir / "manifest.json", manifest)
 
     if canonical_df is not None and not canonical_df.empty:
-        canonical_df.to_parquet(norm_dir / f"provider_observations_{stamp}.parquet", index=False)
-        canonical_df.to_csv(norm_dir / f"provider_observations_{stamp}.csv", index=False)
-        canonical_df.to_parquet(outdir / "latest_provider_observations.parquet", index=False)
-        canonical_df.to_csv(outdir / "latest_provider_observations.csv", index=False)
+        write_table(canonical_df, norm_dir / f"provider_observations_{stamp}.parquet")
+        write_table(canonical_df, norm_dir / f"provider_observations_{stamp}.csv")
+        write_table(canonical_df, outdir / "latest_provider_observations.parquet")
+        write_table(canonical_df, outdir / "latest_provider_observations.csv")
 
     if not long_df.empty:
-        long_df.to_parquet(norm_dir / f"player_props_long_{stamp}.parquet", index=False)
-        long_df.to_csv(norm_dir / f"player_props_long_{stamp}.csv", index=False)
-        long_df.to_parquet(outdir / "latest_player_props_long.parquet", index=False)
-        long_df.to_csv(outdir / "latest_player_props_long.csv", index=False)
+        write_table(long_df, norm_dir / f"player_props_long_{stamp}.parquet")
+        write_table(long_df, norm_dir / f"player_props_long_{stamp}.csv")
+        write_table(long_df, outdir / "latest_player_props_long.parquet")
+        write_table(long_df, outdir / "latest_player_props_long.csv")
 
     if not wide_df.empty:
-        wide_df.to_parquet(norm_dir / f"player_props_wide_{stamp}.parquet", index=False)
-        wide_df.to_csv(norm_dir / f"player_props_wide_{stamp}.csv", index=False)
-        wide_df.to_parquet(outdir / "latest_player_props_wide.parquet", index=False)
-        wide_df.to_csv(outdir / "latest_player_props_wide.csv", index=False)
+        write_table(wide_df, norm_dir / f"player_props_wide_{stamp}.parquet")
+        write_table(wide_df, norm_dir / f"player_props_wide_{stamp}.csv")
+        write_table(wide_df, outdir / "latest_player_props_wide.parquet")
+        write_table(wide_df, outdir / "latest_player_props_wide.csv")
 
     safe_write_json(outdir / "latest_manifest.json", manifest)
 

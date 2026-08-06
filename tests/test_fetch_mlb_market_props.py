@@ -162,3 +162,15 @@ def test_provider_contract_never_blends_prices_across_unlike_lines() -> None:
     assert wide_df.iloc[0]["Market_TB"] == 1.5
     assert wide_df.iloc[0]["Market_TB_books"] == 2
     assert wide_df.iloc[0]["Market_TB_over_price"] == expected_price
+
+
+def test_write_table_atomically_replaces_existing_parquet(tmp_path: Path) -> None:
+    output = tmp_path / "latest.parquet"
+    MODULE.write_table(pd.DataFrame({"value": [1]}), output)
+
+    previously_published = pd.read_parquet(output)
+    MODULE.write_table(pd.DataFrame({"value": [2]}), output)
+
+    assert previously_published["value"].tolist() == [1]
+    assert pd.read_parquet(output)["value"].tolist() == [2]
+    assert not list(tmp_path.glob("*.tmp.parquet"))

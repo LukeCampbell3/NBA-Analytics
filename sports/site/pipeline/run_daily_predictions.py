@@ -41,6 +41,7 @@ MLB_MARKET_FETCHER = REPO_ROOT / "Player-Predictor" / "scripts" / "fetch_mlb_mar
 MLB_DATA_UPDATER = REPO_ROOT / "Player-Predictor" / "scripts" / "update_mlb_processed_data.py"
 MLB_GENERATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "generate_daily_prediction_pool.py"
 MLB_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_high_precision_predictions.py"
+MLB_PARLAY_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_daily_parlay.py"
 MLB_CONFIDENCE_CALIBRATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "live_board_confidence.py"
 MLB_PICK_SURVIVAL_MODEL = REPO_ROOT / "sports" / "mlb" / "scripts" / "pick_survival_model.py"
 MLB_MAX_WINRATE_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_max_winrate_board.py"
@@ -688,6 +689,19 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
     elif summary_json.exists():
         annotate_mlb_summary(summary_json, publication_strategy=publication_strategy, market_profile=market_profile)
 
+    parlay_json = pool_csv.with_name(f"{pool_csv.stem}_daily_parlay.json")
+    run_step(
+        "Select MLB Daily Consistency Parlay",
+        [
+            args.python,
+            str(MLB_PARLAY_SELECTOR),
+            "--pool-csv",
+            str(pool_csv),
+            "--out-json",
+            str(parlay_json),
+        ],
+    )
+
     run_step(
         "Export MLB Prediction Payload",
         [
@@ -697,6 +711,8 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
             str(selected_csv),
             "--summary-json",
             str(summary_json),
+            "--parlay-json",
+            str(parlay_json),
             "--output",
             str(MLB_WEB_JSON),
             "--output-dist",

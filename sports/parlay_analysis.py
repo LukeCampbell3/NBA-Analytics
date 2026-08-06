@@ -180,6 +180,8 @@ def _resolve_sport_config(
     max_pairs: int | None = None,
     min_legs_per_parlay: int | None = None,
     max_legs_per_parlay: int | None = None,
+    forbid_same_market_bucket_parlay: bool | None = None,
+    min_expected_return_per_unit: float | None = None,
 ) -> dict[str, float | int]:
     config = dict(SPORT_CONFIG.get(str(sport or "").strip().lower(), SPORT_CONFIG["nba"]))
     if min_leg_probability is not None:
@@ -192,6 +194,10 @@ def _resolve_sport_config(
         config["min_legs_per_parlay"] = int(min_legs_per_parlay)
     if max_legs_per_parlay is not None:
         config["max_legs_per_parlay"] = int(max_legs_per_parlay)
+    if forbid_same_market_bucket_parlay is not None:
+        config["forbid_same_market_bucket_parlay"] = int(forbid_same_market_bucket_parlay)
+    if min_expected_return_per_unit is not None:
+        config["min_expected_return_per_unit"] = float(min_expected_return_per_unit)
     return config
 
 
@@ -265,6 +271,8 @@ def score_candidate_parlays(
     min_pair_probability: float | None = None,
     min_legs_per_parlay: int | None = None,
     max_legs_per_parlay: int | None = None,
+    forbid_same_market_bucket_parlay: bool | None = None,
+    min_expected_return_per_unit: float | None = None,
 ) -> list[dict[str, Any]]:
     config = _resolve_sport_config(
         sport,
@@ -272,6 +280,8 @@ def score_candidate_parlays(
         min_pair_probability=min_pair_probability,
         min_legs_per_parlay=min_legs_per_parlay,
         max_legs_per_parlay=max_legs_per_parlay,
+        forbid_same_market_bucket_parlay=forbid_same_market_bucket_parlay,
+        min_expected_return_per_unit=min_expected_return_per_unit,
     )
     min_leg = float(config["min_leg_probability"])
     min_ticket = float(config["min_pair_probability"])

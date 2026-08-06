@@ -31,6 +31,7 @@ PREDICTION_TOP_LEVEL_FILES = {
     "prediction-about.html",
     "predictions.js",
     "prediction-about.js",
+    "parlay-board.css",
 }
 PREDICTION_DATA_FILES = {"daily_predictions.json", "market_validation_summary.json"}
 

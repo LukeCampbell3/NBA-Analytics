@@ -314,6 +314,66 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
         if expected_return is None or expected_return < 0.02:
             raise ValueError(f"MLB {label} parlay {index} does not clear the expected-return floor.")
 
+    daily_parlay = payload.get("daily_parlay")
+    if not isinstance(daily_parlay, dict):
+        raise ValueError(f"MLB {label} payload is missing the adaptive daily parlay artifact.")
+    daily_status = str(daily_parlay.get("status") or "").strip().lower()
+    if daily_status not in {"ready", "review", "withheld"}:
+        raise ValueError(f"MLB {label} daily parlay has an invalid status.")
+    ticket = daily_parlay.get("selected_ticket")
+    if ticket is None:
+        if daily_status != "withheld":
+            raise ValueError(f"MLB {label} daily parlay omitted its ticket without withholding it.")
+    elif not isinstance(ticket, dict):
+        raise ValueError(f"MLB {label} daily parlay ticket must be an object.")
+    else:
+        legs = ticket.get("legs")
+        if not isinstance(legs, list) or not 2 <= len(legs) <= 4:
+            raise ValueError(f"MLB {label} daily parlay must contain two to four legs.")
+        if int(ticket.get("leg_count") or 0) != len(legs):
+            raise ValueError(f"MLB {label} daily parlay leg count does not match its legs.")
+        sportsbook_key = str(ticket.get("sportsbook_key") or "").strip().lower()
+        if sportsbook_key not in MLB_ALLOWED_SPORTSBOOKS or not bool(ticket.get("same_sportsbook_confirmed")):
+            raise ValueError(f"MLB {label} daily parlay is not executable at one supported sportsbook.")
+        game_ids: set[str] = set()
+        players: set[str] = set()
+        for leg_index, leg in enumerate(legs, start=1):
+            if not isinstance(leg, dict):
+                raise ValueError(f"MLB {label} daily parlay leg {leg_index} must be an object.")
+            if str(leg.get("direction") or "").strip().upper() != "OVER":
+                raise ValueError(f"MLB {label} daily parlay leg {leg_index} is not an OVER.")
+            if str(leg.get("market_source") or "").strip().lower() != "real":
+                raise ValueError(f"MLB {label} daily parlay leg {leg_index} lacks a real market.")
+            if not bool(leg.get("price_confirmed")) or not is_valid_american_price(leg.get("selected_side_price")):
+                raise ValueError(f"MLB {label} daily parlay leg {leg_index} lacks confirmed odds.")
+            if str(leg.get("selected_sportsbook_key") or "").strip().lower() != sportsbook_key:
+                raise ValueError(f"MLB {label} daily parlay legs do not share one sportsbook.")
+            if int(leg.get("market_books") or 0) < MLB_MIN_BOOKS or int(leg.get("market_common_books") or 0) < MLB_MIN_COMMON_BOOKS:
+                raise ValueError(f"MLB {label} daily parlay leg {leg_index} lacks book coverage.")
+            leg_probability = as_float(leg.get("estimated_graded_hit_rate"))
+            if leg_probability is None or leg_probability < 0.62:
+                raise ValueError(f"MLB {label} daily parlay leg {leg_index} misses the consistency floor.")
+            game_id = str(leg.get("game_id") or "").strip()
+            player = str(leg.get("player_id") or leg.get("player") or "").strip().lower()
+            if not game_id or game_id in game_ids or not player or player in players:
+                raise ValueError(f"MLB {label} daily parlay repeats a player or game.")
+            game_ids.add(game_id)
+            players.add(player)
+        ticket_probability = as_float(ticket.get("projected_probability"))
+        combined_decimal = as_float(ticket.get("combined_decimal_price"))
+        expected_return = as_float(ticket.get("expected_return_per_unit"))
+        if ticket_probability is None or ticket_probability < 0.40:
+            raise ValueError(f"MLB {label} daily parlay misses the ticket consistency floor.")
+        if combined_decimal is None or combined_decimal < 2.0:
+            raise ValueError(f"MLB {label} daily parlay does not reach even-money combined odds.")
+        if expected_return is None or expected_return < 0.0:
+            raise ValueError(f"MLB {label} daily parlay has negative expected return.")
+        risk_flags = {str(value) for value in ticket.get("risk_flags", [])}
+        if daily_status == "ready" and risk_flags:
+            raise ValueError(f"MLB {label} daily parlay is marked ready despite risk flags.")
+        if daily_status == "review" and risk_flags - {"lineup_unconfirmed"}:
+            raise ValueError(f"MLB {label} daily parlay review contains a blocking risk flag.")
+
 
 def validate_publication(
     *,

@@ -64,6 +64,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--input-csv", type=Path, default=None, help="High-precision selection CSV.")
     parser.add_argument("--summary-json", type=Path, default=None, help="High-precision selection summary JSON.")
+    parser.add_argument("--parlay-json", type=Path, default=None, help="Adaptive daily parlay JSON.")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUT, help="Destination web payload JSON.")
     parser.add_argument(
         "--output-dist",
@@ -166,6 +167,16 @@ def assert_no_date_regression(run_date: str, output_paths: list[Path], allow_reg
 def load_rows(path: Path) -> list[dict[str, str]]:
     with open(path, "r", encoding="utf-8-sig", newline="") as handle:
         return list(csv.DictReader(handle))
+
+
+def _load_json_file(path: Path | None) -> dict[str, object] | None:
+    if path is None or not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
 
 
 def to_float(value: str, default: float = 0.0) -> float:
@@ -623,16 +634,19 @@ def build_game_context_lookup(rows: list[dict[str, str]]) -> dict[str, dict[str,
         game_teams = game_data.get("teams") or {}
         players: dict[str, dict[str, object]] = {}
         team_abbreviations: dict[str, str] = {}
+        lineup_available_by_team: dict[str, bool] = {}
 
         for side in ("away", "home"):
             team = game_teams.get(side) or {}
             team_abbr = str(team.get("abbreviation", "")).strip().upper()
             team_abbreviations[side] = team_abbr
             team_boxscore = boxscore_teams.get(side) or {}
+            lineup_available_by_team[team_abbr] = False
             for player in (team_boxscore.get("players") or {}).values():
                 batting_order = str(player.get("battingOrder", "")).strip()
                 if not batting_order:
                     continue
+                lineup_available_by_team[team_abbr] = True
                 person = player.get("person") or {}
                 full_name = str(person.get("fullName", "")).strip()
                 if not full_name:
@@ -657,8 +671,110 @@ def build_game_context_lookup(rows: list[dict[str, str]]) -> dict[str, dict[str,
             "teams": team_abbreviations,
             "players": players,
             "lineup_available": bool(players),
+            "lineup_available_by_team": lineup_available_by_team,
         }
     return lookup
+
+
+def load_daily_parlay(
+    path: Path | None,
+    *,
+    run_date: str,
+    publication_status: str,
+    game_context_lookup: dict[str, dict[str, object]],
+) -> dict[str, object]:
+    if path is None or not path.exists():
+        return {
+            "available": False,
+            "status": "withheld",
+            "reason": "daily parlay artifact unavailable",
+            "selected_ticket": None,
+        }
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return {
+            "available": False,
+            "status": "withheld",
+            "reason": f"failed reading daily parlay artifact: {exc}",
+            "selected_ticket": None,
+        }
+    if not isinstance(payload, dict):
+        return {
+            "available": False,
+            "status": "withheld",
+            "reason": "daily parlay artifact must be a JSON object",
+            "selected_ticket": None,
+        }
+    if str(payload.get("run_date", "")).strip() != str(run_date).strip():
+        return {
+            "available": False,
+            "status": "withheld",
+            "reason": "daily parlay run date does not match the singles board",
+            "selected_ticket": None,
+        }
+    ticket = payload.get("selected_ticket")
+    if not isinstance(ticket, dict):
+        payload["available"] = False
+        payload["status"] = "withheld"
+        payload["reason"] = "no executable OVER-only ticket cleared the consistency gates"
+        return payload
+
+    enriched_legs: list[dict[str, object]] = []
+    ticket_risk_flags: set[str] = set()
+    for source_leg in ticket.get("legs", []):
+        leg = dict(source_leg)
+        game_id = str(leg.get("game_id", "")).strip()
+        context = game_context_lookup.get(game_id, {}) or {}
+        players = context.get("players", {}) if isinstance(context.get("players"), dict) else {}
+        participant = players.get(normalize_player_name(str(leg.get("player", ""))), {}) or {}
+        lineup_available_by_team = context.get("lineup_available_by_team", {})
+        lineup_available = bool(
+            lineup_available_by_team.get(str(leg.get("team", "")).strip().upper(), False)
+            if isinstance(lineup_available_by_team, dict)
+            else context.get("lineup_available")
+        )
+        lineup_status = "confirmed" if participant else "not_in_posted_lineup" if lineup_available else "unconfirmed"
+        abstract_state = str(context.get("abstract_state", "")).strip().lower()
+        risk_flags: list[str] = []
+        if lineup_status == "not_in_posted_lineup":
+            risk_flags.append("not_in_posted_lineup")
+        elif lineup_status != "confirmed":
+            risk_flags.append("lineup_unconfirmed")
+        if abstract_state in {"live", "final"}:
+            risk_flags.append("game_closed")
+        if not bool(leg.get("price_confirmed")):
+            risk_flags.append("odds_unconfirmed")
+        leg["lineup_status"] = lineup_status
+        leg["batting_order"] = participant.get("batting_order", "")
+        leg["official_game_status"] = context.get("status", "")
+        leg["risk_flags"] = risk_flags
+        ticket_risk_flags.update(risk_flags)
+        enriched_legs.append(leg)
+
+    status = "ready"
+    if (
+        publication_status != "ready"
+        or "game_closed" in ticket_risk_flags
+        or "odds_unconfirmed" in ticket_risk_flags
+        or "not_in_posted_lineup" in ticket_risk_flags
+    ):
+        status = "withheld"
+    elif ticket_risk_flags:
+        status = "review"
+    ticket["legs"] = enriched_legs
+    ticket["status"] = status
+    ticket["action_status"] = status
+    ticket["risk_flags"] = sorted(ticket_risk_flags)
+    payload["available"] = status != "withheld"
+    payload["status"] = status
+    payload["selected_ticket"] = ticket
+    payload["reason"] = (
+        "lineups are not yet confirmed" if status == "review" else
+        "ticket is no longer executable" if status == "withheld" else
+        "all execution gates passed"
+    )
+    return payload
 
 
 def fetch_team_id_lookup(season: int) -> dict[str, int]:
@@ -786,7 +902,14 @@ def main() -> None:
         output_paths.append(args.output_dist)
     assert_no_date_regression(run_date, output_paths, args.allow_date_regression)
     original_rows = rows
-    game_context_lookup = build_game_context_lookup(original_rows)
+    raw_daily_parlay = _load_json_file(args.parlay_json) if args.parlay_json else None
+    parlay_context_rows: list[dict[str, str]] = []
+    if isinstance(raw_daily_parlay, dict):
+        raw_ticket = raw_daily_parlay.get("selected_ticket") or {}
+        for leg in raw_ticket.get("legs", []) if isinstance(raw_ticket, dict) else []:
+            if isinstance(leg, dict):
+                parlay_context_rows.append({"Game_ID": str(leg.get("game_id", ""))})
+    game_context_lookup = build_game_context_lookup(original_rows + parlay_context_rows)
     rows, suppressed_closed_games = suppress_closed_games(rows, game_context_lookup)
     rows, suppressed_duplicates = suppress_duplicate_props(rows, game_context_lookup)
     total = len(rows)
@@ -823,7 +946,12 @@ def main() -> None:
         participant = game_players.get(normalize_player_name(player_name), {}) or {}
         participant_id = participant.get("player_mlbam_id")
         resolved_player_id = participant_id or player_lookup.get("player_mlbam_id")
-        lineup_available = bool(game_context.get("lineup_available"))
+        lineup_available_by_team = game_context.get("lineup_available_by_team", {})
+        lineup_available = bool(
+            lineup_available_by_team.get(team.upper(), False)
+            if isinstance(lineup_available_by_team, dict)
+            else game_context.get("lineup_available")
+        )
         participant_team = str(participant.get("team", "")).strip().upper()
         official_game_date = str(game_context.get("official_date", "")).strip()
         market_date = str(row.get("Game_Date", "")).strip()
@@ -1012,6 +1140,12 @@ def main() -> None:
         eligibility_field="parlay_precision_eligible",
     )
     plays = parlay_payload["plays"]
+    daily_parlay = load_daily_parlay(
+        args.parlay_json,
+        run_date=run_date,
+        publication_status=publication_status,
+        game_context_lookup=game_context_lookup,
+    )
     target_counts: dict[str, int] = {}
     direction_counts: dict[str, int] = {}
     for row in rows:
@@ -1054,6 +1188,7 @@ def main() -> None:
         "parlay_summary": parlay_payload["summary"],
         "parlay_pairs": parlay_payload["pairs"],
         "parlay_validation": build_mlb_parlay_validation(MLB_MANIFEST_PATH),
+        "daily_parlay": daily_parlay,
         "suppressed_closed_games": suppressed_closed_games,
         "suppressed_duplicates": suppressed_duplicates,
         "plays": plays,

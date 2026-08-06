@@ -21,6 +21,7 @@ EASTERN = ZoneInfo("America/New_York")
 
 def test_mlb_primary_policy_uses_validated_portfolio_limits() -> None:
     assert shared_daily_predictions.MLB_PICK_SURVIVAL_TOP_K == 3
+    assert shared_daily_predictions.MLB_PARLAY_SELECTOR.name == "select_daily_parlay.py"
     top_n_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--top-n")
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[top_n_index + 1] == "3"
     index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--max-per-market-bucket")
