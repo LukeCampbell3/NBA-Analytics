@@ -276,6 +276,33 @@ def test_daily_parlay_withholds_non_object_artifact(tmp_path: Path) -> None:
     assert payload["selected_ticket"] is None
 
 
+def test_policy_governance_defaults_to_uncertified_shadow() -> None:
+    payload = exporter.load_policy_governance(None, run_date="2026-08-06")
+
+    assert payload["candidate_authorization_enabled"] is False
+    assert payload["staking_enabled"] is False
+    assert payload["publication_mode"] == "SHADOW_RESEARCH_ONLY"
+
+
+def test_policy_governance_rejects_mismatched_run_date(tmp_path: Path) -> None:
+    path = tmp_path / "governance.json"
+    path.write_text(
+        json.dumps(
+            {
+                "run_date": "2026-08-05",
+                "candidate_authorization_enabled": True,
+                "staking_enabled": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    payload = exporter.load_policy_governance(path, run_date="2026-08-06")
+
+    assert payload["candidate_authorization_enabled"] is False
+    assert payload["staking_enabled"] is False
+
+
 def test_infer_through_date_reads_raw_pool_for_empty_selection(tmp_path: Path) -> None:
     pool_csv = tmp_path / "daily_prediction_pool_20260619.csv"
     pool_csv.write_text("Last_History_Date\n2026-04-30\n2026-05-01\n", encoding="utf-8")

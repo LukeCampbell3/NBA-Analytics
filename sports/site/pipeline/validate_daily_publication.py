@@ -314,6 +314,18 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
         if expected_return is None or expected_return < 0.02:
             raise ValueError(f"MLB {label} parlay {index} does not clear the expected-return floor.")
 
+    governance = payload.get("policy_governance")
+    if not isinstance(governance, dict):
+        raise ValueError(f"MLB {label} payload is missing policy-governance status.")
+    if bool(governance.get("staking_enabled", False)):
+        raise ValueError(f"MLB {label} policy governance cannot enable staking.")
+    authorization_enabled = bool(governance.get("candidate_authorization_enabled", False))
+    if not authorization_enabled:
+        if str(governance.get("publication_mode")) != "SHADOW_RESEARCH_ONLY":
+            raise ValueError(f"MLB {label} uncertified governance must be shadow-only.")
+        if any(bool(play.get("candidate_authorized", False)) for play in payload.get("plays") or []):
+            raise ValueError(f"MLB {label} contains an authorized play without an active certificate.")
+
     daily_parlay = payload.get("daily_parlay")
     if not isinstance(daily_parlay, dict):
         raise ValueError(f"MLB {label} payload is missing the adaptive daily parlay artifact.")
@@ -327,6 +339,8 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
     elif not isinstance(ticket, dict):
         raise ValueError(f"MLB {label} daily parlay ticket must be an object.")
     else:
+        if not authorization_enabled and bool(ticket.get("candidate_authorized", False)):
+            raise ValueError(f"MLB {label} contains an authorized parlay without an active certificate.")
         legs = ticket.get("legs")
         if not isinstance(legs, list) or not 2 <= len(legs) <= 4:
             raise ValueError(f"MLB {label} daily parlay must contain two to four legs.")
@@ -423,8 +437,12 @@ def validate_publication(
         if sport == "mlb":
             validate_mlb_payload(source_payload, label="source")
             validate_mlb_payload(dist_payload, label="dist")
+        governance_suffix = ""
+        if sport == "mlb":
+            governance = source_payload.get("policy_governance") or {}
+            governance_suffix = f", mode={governance.get('publication_mode', 'UNKNOWN')}"
         summaries.append(
-            f"{sport.upper()}: {expected_date}, status={source_status}, plays={len(plays)}"
+            f"{sport.upper()}: {expected_date}, status={source_status}, plays={len(plays)}{governance_suffix}"
         )
 
     return summaries

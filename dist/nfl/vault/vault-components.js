@@ -284,6 +284,7 @@
     const monogram = parts.length >= 2 ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase() : (parts[0] || "NA").slice(0, 2).toUpperCase();
 
     const riskFlags = Array.isArray(play.risk_flags) ? play.risk_flags.map((flag) => String(flag || "").trim()).filter(Boolean) : [];
+    if (play.candidate_authorized === false && !riskFlags.includes("policy_uncertified")) riskFlags.push("policy_uncertified");
     const actionStatus = String(play.action_status || play.publication_status || "").toLowerCase();
     const needsReview = actionStatus === "review" || riskFlags.length > 0 || play.model_estimate_status === "review";
     const tier = needsReview
@@ -309,6 +310,7 @@
       team_mismatch: "Team check",
       game_date_mismatch: "Date check",
       push_exposure: "Push risk",
+      policy_uncertified: "Shadow only",
       multi_game_slate_review: "Slate check",
     };
 

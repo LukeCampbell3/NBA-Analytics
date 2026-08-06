@@ -1,0 +1,179 @@
+{
+  "schema_version": "MLB_POLICY_REGISTRY_V1",
+  "family_status": "BOUNDED_DEVELOPMENT_FAMILY",
+  "policies": [
+    {
+      "policy_version": "MLB_SINGLES_OVER_POLICY_V1",
+      "policy_stage": "POLICY_DEVELOPMENT",
+      "policy_kind": "SINGLE_WAGER_BOARD",
+      "staking_enabled": false,
+      "implementation": {
+        "entrypoint": "sports/mlb/scripts/select_high_precision_predictions.py",
+        "versioned_components": [
+          "model weights and architecture",
+          "input features",
+          "score transformations",
+          "selector thresholds",
+          "market and odds scope",
+          "odds source and parser",
+          "support and shift rules",
+          "settlement semantics",
+          "exposure controls"
+        ],
+        "bugfix_equivalence_required": "EXACT_DECISION_AND_RETURN_REPLAY"
+      },
+      "scope": {
+        "league": "MLB",
+        "markets": ["H", "TB", "R", "RBI", "K"],
+        "sides": ["OVER"],
+        "lines": [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5],
+        "minimum_decimal_odds": 1.4,
+        "maximum_decimal_odds": 3.25,
+        "books": ["bet365", "betmgm", "betrivers", "caesars", "draftkings", "espnbet", "fanduel"]
+      },
+      "decision_rule": {
+        "family_is_frozen": false,
+        "direction_policy": "OVER_ONLY",
+        "minimum_market_books": 5,
+        "minimum_common_books": 2,
+        "minimum_history_rows": 35,
+        "maximum_daily_selections": 3,
+        "ranking": ["policy_score_desc", "executable_price_desc"],
+        "abstention_allowed": true
+      },
+      "support_rule": {
+        "method_version": "MLB_SUPPORT_V1",
+        "minimum_stratum_count": 35,
+        "nearest_neighbor_limit": 0.25,
+        "weighted": false,
+        "unsupported_action": "ABSTAIN"
+      },
+      "shift_rule": {
+        "detector_version": "MLB_SHIFT_V1",
+        "features": ["model_score", "line", "price_decimal", "history_rows", "market_books"],
+        "warning_threshold": 0.1,
+        "blocking_threshold": 0.2,
+        "blocking_action": "ABSTAIN"
+      },
+      "exposure_controls": {
+        "maximum_daily_risk_units": 3.0,
+        "maximum_per_game": 1,
+        "maximum_per_player": 1,
+        "maximum_per_market_bucket": 2,
+        "stake_rule": "FIXED_ONE_UNIT_SHADOW"
+      },
+      "settlement_policy": {
+        "version": "MLB_SETTLEMENT_V1",
+        "win_return": "decimal_odds_minus_one",
+        "loss_return": -1.0,
+        "push_or_void_return": 0.0,
+        "evaluation_unit": "DAILY_SLATE"
+      },
+      "evidence": {
+        "development_period": {"start": "2026-03-25", "end": "2026-08-05"},
+        "locked_validation_period": {"start": null, "end": null},
+        "prospective_period": {"start": null, "end": null},
+        "development_evidence_label": "SELECTED_ONLY_HISTORY",
+        "locked_method": "LEARN_THEN_TEST_BOUNDED_FAMILY",
+        "prospective_method": "BOUNDED_RETURN_CONFIDENCE_SEQUENCE"
+      },
+      "certificate_requirements": {
+        "primary_return_estimand": "CALENDAR_SLATE_RETURN",
+        "delta": 0.05,
+        "deployment_margin": 0.01,
+        "minimum_eligible_slates": 160,
+        "minimum_resolved_action_slates": 100,
+        "minimum_resolved_selections": 400,
+        "minimum_slate_coverage": 0.25,
+        "minimum_candidate_coverage": 0.01,
+        "maximum_losing_action_slate_rate": 0.6,
+        "dependence_stress_required": true
+      }
+    },
+    {
+      "policy_version": "MLB_ADAPTIVE_OVER_PARLAY_POLICY_V1",
+      "policy_stage": "POLICY_DEVELOPMENT",
+      "policy_kind": "DAILY_PARLAY",
+      "staking_enabled": false,
+      "implementation": {
+        "entrypoint": "sports/mlb/scripts/select_daily_parlay.py",
+        "versioned_components": [
+          "single-leg input policy",
+          "parlay constructor",
+          "leg count",
+          "correlation adjustments",
+          "combined odds scope",
+          "stake and exposure controls",
+          "settlement semantics"
+        ],
+        "bugfix_equivalence_required": "EXACT_DECISION_AND_RETURN_REPLAY"
+      },
+      "scope": {
+        "league": "MLB",
+        "markets": ["H", "TB", "R", "RBI", "K"],
+        "sides": ["OVER"],
+        "lines": [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5],
+        "minimum_decimal_odds": 1.8,
+        "maximum_decimal_odds": 6.0,
+        "books": ["bet365", "betmgm", "betrivers", "caesars", "draftkings", "espnbet", "fanduel"]
+      },
+      "decision_rule": {
+        "family_is_frozen": false,
+        "allowed_leg_counts": [2, 3, 4],
+        "direction_policy": "OVER_ONLY",
+        "one_sportsbook_required": true,
+        "distinct_games_required": true,
+        "ticket_ranking": ["projected_ticket_probability_desc", "expected_return_desc"],
+        "abstention_allowed": true
+      },
+      "support_rule": {
+        "method_version": "MLB_PARLAY_SUPPORT_V1",
+        "minimum_leg_stratum_count": 35,
+        "minimum_constructor_stratum_count": 50,
+        "weighted": false,
+        "unsupported_action": "ABSTAIN"
+      },
+      "shift_rule": {
+        "detector_version": "MLB_PARLAY_SHIFT_V1",
+        "features": ["leg_probability", "leg_price_decimal", "combined_price_decimal", "leg_count"],
+        "warning_threshold": 0.1,
+        "blocking_threshold": 0.2,
+        "blocking_action": "ABSTAIN"
+      },
+      "exposure_controls": {
+        "maximum_daily_parlay_risk_units": 1.0,
+        "maximum_daily_parlays": 1,
+        "stake_rule": "FIXED_ONE_UNIT_SHADOW"
+      },
+      "settlement_policy": {
+        "version": "MLB_PARLAY_SETTLEMENT_V1",
+        "win_return": "combined_decimal_odds_minus_one",
+        "loss_return": -1.0,
+        "push_or_void_return": 0.0,
+        "evaluation_unit": "DAILY_SLATE"
+      },
+      "evidence": {
+        "development_period": {"start": "2026-03-25", "end": "2026-08-05"},
+        "locked_validation_period": {"start": null, "end": null},
+        "prospective_period": {"start": null, "end": null},
+        "development_evidence_label": "SELECTED_ONLY_HISTORY",
+        "locked_method": "LEARN_THEN_TEST_BOUNDED_FAMILY",
+        "prospective_method": "BOUNDED_RETURN_CONFIDENCE_SEQUENCE_WITH_DOWNSIDE_GATES"
+      },
+      "certificate_requirements": {
+        "primary_return_estimand": "CALENDAR_SLATE_RETURN",
+        "delta": 0.05,
+        "deployment_margin": 0.01,
+        "minimum_eligible_slates": 160,
+        "minimum_resolved_action_slates": 100,
+        "minimum_resolved_selections": 100,
+        "minimum_slate_coverage": 0.25,
+        "minimum_candidate_coverage": 0.001,
+        "maximum_losing_action_slate_rate": 0.7,
+        "maximum_daily_parlay_risk_units": 1.0,
+        "dependence_stress_required": true,
+        "cvar_certificate_status": "BLOCKING_UNTIL_VALIDATED_METHOD_IS_FROZEN"
+      }
+    }
+  ]
+}

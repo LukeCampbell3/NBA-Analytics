@@ -65,6 +65,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input-csv", type=Path, default=None, help="High-precision selection CSV.")
     parser.add_argument("--summary-json", type=Path, default=None, help="High-precision selection summary JSON.")
     parser.add_argument("--parlay-json", type=Path, default=None, help="Adaptive daily parlay JSON.")
+    parser.add_argument("--governance-json", type=Path, default=None, help="Policy-governance status JSON.")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUT, help="Destination web payload JSON.")
     parser.add_argument(
         "--output-dist",
@@ -177,6 +178,23 @@ def _load_json_file(path: Path | None) -> dict[str, object] | None:
     except (OSError, json.JSONDecodeError):
         return None
     return payload if isinstance(payload, dict) else None
+
+
+def load_policy_governance(path: Path | None, *, run_date: str) -> dict[str, object]:
+    payload = _load_json_file(path)
+    if payload is None or str(payload.get("run_date") or "") != run_date:
+        return {
+            "schema_version": "MLB_POLICY_GOVERNANCE_STATUS_V1",
+            "run_date": run_date,
+            "candidate_authorization_enabled": False,
+            "staking_enabled": False,
+            "publication_mode": "SHADOW_RESEARCH_ONLY",
+            "certificate_status": "NO_ACTIVE_PROSPECTIVE_CERTIFICATE",
+            "authorization_reason": "A matching complete-slate governance artifact is unavailable.",
+        }
+    payload["candidate_authorization_enabled"] = bool(payload.get("candidate_authorization_enabled", False))
+    payload["staking_enabled"] = False
+    return payload
 
 
 def to_float(value: str, default: float = 0.0) -> float:
@@ -1140,12 +1158,27 @@ def main() -> None:
         eligibility_field="parlay_precision_eligible",
     )
     plays = parlay_payload["plays"]
+    policy_governance = load_policy_governance(args.governance_json, run_date=run_date)
+    authorization_enabled = bool(policy_governance.get("candidate_authorization_enabled", False))
+    for play in plays:
+        play["candidate_authorized"] = bool(authorization_enabled and play.get("candidate_authorized", False))
+        play["staking_enabled"] = False
+        play["authorization_status"] = "AUTHORIZED" if play["candidate_authorized"] else "SHADOW_ONLY"
     daily_parlay = load_daily_parlay(
         args.parlay_json,
         run_date=run_date,
         publication_status=publication_status,
         game_context_lookup=game_context_lookup,
     )
+    daily_ticket = daily_parlay.get("selected_ticket") if isinstance(daily_parlay, dict) else None
+    if isinstance(daily_ticket, dict):
+        daily_ticket["candidate_authorized"] = bool(
+            authorization_enabled and daily_ticket.get("candidate_authorized", False)
+        )
+        daily_ticket["staking_enabled"] = False
+        daily_ticket["authorization_status"] = (
+            "AUTHORIZED" if daily_ticket["candidate_authorized"] else "SHADOW_ONLY"
+        )
     target_counts: dict[str, int] = {}
     direction_counts: dict[str, int] = {}
     for row in rows:
@@ -1189,6 +1222,7 @@ def main() -> None:
         "parlay_pairs": parlay_payload["pairs"],
         "parlay_validation": build_mlb_parlay_validation(MLB_MANIFEST_PATH),
         "daily_parlay": daily_parlay,
+        "policy_governance": policy_governance,
         "suppressed_closed_games": suppressed_closed_games,
         "suppressed_duplicates": suppressed_duplicates,
         "plays": plays,

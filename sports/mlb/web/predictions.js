@@ -8,6 +8,7 @@ class DailyPredictionsPage {
             runMeta: document.getElementById("predictionRunMeta"),
             parlaySection: document.getElementById("dailyParlaySection"),
             parlayContent: document.getElementById("dailyParlayContent"),
+            poolTitle: document.getElementById("predictionPoolTitle"),
         };
         this.init();
     }
@@ -69,6 +70,10 @@ class DailyPredictionsPage {
             return (Number(b.abs_edge) || Number(b.edge) || 0) - (Number(a.abs_edge) || Number(a.edge) || 0);
         });
         this.renderRunMeta();
+        const authorizationEnabled = Boolean(this.data?.policy_governance?.candidate_authorization_enabled);
+        if (this.elements.poolTitle) {
+            this.elements.poolTitle.textContent = authorizationEnabled ? "Authorized Pool" : "Shadow Candidate Pool";
+        }
     }
 
     renderRunMeta() {
@@ -76,8 +81,9 @@ class DailyPredictionsPage {
         const throughDate = this.data?.through_date || "n/a";
         const policy = this.data?.policy_profile || "n/a";
         const publicationStatus = String(this.data?.publication_status || "ready").toLowerCase();
-        const publicationLabel = publicationStatus === "ready" ? "Published" : publicationStatus === "review" ? "Review" : "Withheld";
-        const publicationTone = publicationStatus === "ready" ? "active" : publicationStatus === "review" ? "stale" : "withheld";
+        const authorizationEnabled = Boolean(this.data?.policy_governance?.candidate_authorization_enabled);
+        const publicationLabel = !authorizationEnabled ? "Shadow only" : publicationStatus === "ready" ? "Published" : publicationStatus === "review" ? "Review" : "Withheld";
+        const publicationTone = !authorizationEnabled ? "stale" : publicationStatus === "ready" ? "active" : publicationStatus === "review" ? "stale" : "withheld";
         const stale = publicationStatus !== "ready";
         const quality = this.data?.data_quality || {};
         const lagText = Number.isFinite(Number(quality.lag_days)) ? `${Number(quality.lag_days)}d` : "n/a";
@@ -132,8 +138,9 @@ class DailyPredictionsPage {
         const parlay = this.data?.daily_parlay || {};
         const ticket = parlay?.selected_ticket || null;
         const status = String(parlay?.status || "withheld").toLowerCase();
-        const statusLabel = status === "ready" ? "Ready" : status === "review" ? "Lineup review" : "Withheld";
-        const statusTone = status === "ready" ? "active" : status === "review" ? "stale" : "withheld";
+        const candidateAuthorized = Boolean(ticket?.candidate_authorized);
+        const statusLabel = !candidateAuthorized && ticket ? "Shadow only" : status === "ready" ? "Ready" : status === "review" ? "Lineup review" : "Withheld";
+        const statusTone = !candidateAuthorized && ticket ? "stale" : status === "ready" ? "active" : status === "review" ? "stale" : "withheld";
 
         if (!ticket || !Array.isArray(ticket.legs) || !ticket.legs.length) {
             content.innerHTML = `

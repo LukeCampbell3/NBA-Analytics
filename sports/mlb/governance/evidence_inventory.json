@@ -1,0 +1,33 @@
+{
+  "schema_version": "MLB_EVIDENCE_INVENTORY_V1",
+  "sources": [
+    {
+      "path": "sports/mlb/data/predictions/mlb_historical_backtest_settled.csv",
+      "evidence_label": "SELECTED_ONLY_HISTORY",
+      "full_policy_replay_status": "FULL_POLICY_REPLAY_UNAVAILABLE",
+      "permitted_use": [
+        "development_research",
+        "diagnostic_settlement_checks"
+      ],
+      "prohibited_use": [
+        "locked_validation_for_materially_different_policy",
+        "prospective_certificate",
+        "production_authorization"
+      ]
+    },
+    {
+      "path": "sports/mlb/data/predictions/mlb_historical_calibration_backtest_settled.csv",
+      "evidence_label": "SELECTED_ONLY_HISTORY",
+      "full_policy_replay_status": "FULL_POLICY_REPLAY_UNAVAILABLE",
+      "permitted_use": [
+        "development_research",
+        "model_calibration_diagnostics"
+      ],
+      "prohibited_use": [
+        "locked_validation_for_materially_different_policy",
+        "prospective_certificate",
+        "production_authorization"
+      ]
+    }
+  ]
+}

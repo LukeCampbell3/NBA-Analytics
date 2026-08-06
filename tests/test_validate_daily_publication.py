@@ -43,6 +43,12 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
                     "selected_ticket": None,
                     "reason": "no ticket cleared",
                 },
+                "policy_governance": {
+                    "candidate_authorization_enabled": False,
+                    "staking_enabled": False,
+                    "publication_mode": "SHADOW_RESEARCH_ONLY",
+                    "certificate_status": "NO_ACTIVE_PROSPECTIVE_CERTIFICATE"
+                },
                 "selection": {
                     "matchup_network_enabled": True,
                     "matchup_network_version": MLB_MATCHUP_NETWORK_VERSION,
@@ -126,7 +132,7 @@ def test_validate_publication_accepts_current_payloads(tmp_path: Path) -> None:
 
     assert summaries == [
         "NBA: 2026-04-28, status=ready, plays=0",
-        "MLB: 2026-04-28, status=ready, plays=0",
+        "MLB: 2026-04-28, status=ready, plays=0, mode=SHADOW_RESEARCH_ONLY",
     ]
 
 

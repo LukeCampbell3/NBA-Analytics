@@ -1,0 +1,98 @@
+{
+  "schema_version": "MLB_COMPLETE_SLATE_V1",
+  "capture_label": "FULL_SLATE_SNAPSHOT",
+  "full_policy_replay_available": true,
+  "immutable": true,
+  "slate_id": "MLB_20260806",
+  "snapshot_id": "mlb_20260806_205441Z_990ed5c4f7b4",
+  "observed_at_utc": "2026-08-06T20:54:41.681412+00:00",
+  "run_date": "2026-08-06",
+  "candidate_universe_rows": 8294,
+  "all_available_provider_rows_retained": true,
+  "eligible_input_rows": 3970,
+  "events": 5,
+  "books": 7,
+  "markets": [
+    "ER",
+    "H",
+    "HR",
+    "K",
+    "R",
+    "RBI",
+    "TB",
+    "batter_doubles",
+    "batter_hits_runs_rbis",
+    "batter_singles",
+    "batter_stolen_bases",
+    "batter_strikeouts",
+    "batter_triples",
+    "batter_walks",
+    "pitcher_hits_allowed",
+    "pitcher_outs",
+    "pitcher_pitches_thrown",
+    "pitcher_walks"
+  ],
+  "sides": [
+    "OVER",
+    "UNDER"
+  ],
+  "providers": [
+    "sportsgameodds"
+  ],
+  "live_provider_rows": 8294,
+  "cached_provider_rows": 0,
+  "candidate_universe_sha256": "819a74245e72a37e667439ec69f3c3fceeceb002b1ec4d6dccfc192647ce6aca",
+  "feature_pool_sha256": "1f5ebf149461b86555937ec5ad7c6d32d7c3e90ca604ad90d145fcd2276eb260",
+  "raw_provider_file_sha256": "0bc0265862bef4e1cce219b6b9c5a16368db16baa5923543749269e49e0a4e73",
+  "raw_pool_file_sha256": "2f3b6d0e0c97ab562c2d1d4cd4bcae784b0f0a453cc7038e658873ef74f5db9d",
+  "feature_snapshot_id": "mlb_feature_2f3b6d0e0c97ab56",
+  "provider_source": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\raw\\market_odds\\mlb\\odds_api_io\\latest_provider_observations.csv",
+  "pool_source": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260806\\daily_prediction_pool_20260806.csv",
+  "policy_registry": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\governance\\policies\\mlb_policy_family_v1.json",
+  "registered_policies": [
+    {
+      "policy_version": "MLB_SINGLES_OVER_POLICY_V1",
+      "policy_stage": "POLICY_DEVELOPMENT",
+      "policy_digest": "9fba82ab0f431dde6d02e0305d6498d2fbfa69b63ef34ee4f49b42b3bd7b87c4"
+    },
+    {
+      "policy_version": "MLB_ADAPTIVE_OVER_PARLAY_POLICY_V1",
+      "policy_stage": "POLICY_DEVELOPMENT",
+      "policy_digest": "76ee66628ffc2159292bd7316db7cc642f208a02f91c17a7f14a85a17e53b814"
+    }
+  ],
+  "historical_evidence": {
+    "schema_version": "MLB_EVIDENCE_INVENTORY_V1",
+    "sources": [
+      {
+        "path": "sports/mlb/data/predictions/mlb_historical_backtest_settled.csv",
+        "evidence_label": "SELECTED_ONLY_HISTORY",
+        "full_policy_replay_status": "FULL_POLICY_REPLAY_UNAVAILABLE",
+        "permitted_use": [
+          "development_research",
+          "diagnostic_settlement_checks"
+        ],
+        "prohibited_use": [
+          "locked_validation_for_materially_different_policy",
+          "prospective_certificate",
+          "production_authorization"
+        ]
+      },
+      {
+        "path": "sports/mlb/data/predictions/mlb_historical_calibration_backtest_settled.csv",
+        "evidence_label": "SELECTED_ONLY_HISTORY",
+        "full_policy_replay_status": "FULL_POLICY_REPLAY_UNAVAILABLE",
+        "permitted_use": [
+          "development_research",
+          "model_calibration_diagnostics"
+        ],
+        "prohibited_use": [
+          "locked_validation_for_materially_different_policy",
+          "prospective_certificate",
+          "production_authorization"
+        ]
+      }
+    ]
+  },
+  "settlement_status": "UNRESOLVED"
+}

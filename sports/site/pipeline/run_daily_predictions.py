@@ -40,6 +40,8 @@ MLB_MANIFEST = MLB_DATA_DIR / "update_manifest_2026.json"
 MLB_MARKET_FETCHER = REPO_ROOT / "Player-Predictor" / "scripts" / "fetch_mlb_market_props.py"
 MLB_DATA_UPDATER = REPO_ROOT / "Player-Predictor" / "scripts" / "update_mlb_processed_data.py"
 MLB_GENERATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "generate_daily_prediction_pool.py"
+MLB_GOVERNANCE_CAPTURE = REPO_ROOT / "sports" / "mlb" / "governance" / "capture_complete_slate.py"
+MLB_PROVIDER_OBSERVATIONS = REPO_ROOT / "sports" / "mlb" / "data" / "raw" / "market_odds" / "mlb" / "odds_api_io" / "latest_provider_observations.csv"
 MLB_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_high_precision_predictions.py"
 MLB_PARLAY_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_daily_parlay.py"
 MLB_CONFIDENCE_CALIBRATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "live_board_confidence.py"
@@ -576,8 +578,25 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
     mlb_dist_json = output_dir / "mlb" / "data" / "daily_predictions.json"
 
     pool_digits = "".join(char for char in pool_csv.stem if char.isdigit())
-    if len(pool_digits) >= 8 and MLB_CONFIDENCE_CALIBRATOR.exists():
+    governance_status_json = pool_csv.parent / "governance" / "governance_status.json"
+    if len(pool_digits) >= 8:
         pool_date = datetime.strptime(pool_digits[:8], "%Y%m%d").date()
+        run_step(
+            "Capture Immutable MLB Complete Slate",
+            [
+                args.python,
+                str(MLB_GOVERNANCE_CAPTURE),
+                "--provider-csv",
+                str(MLB_PROVIDER_OBSERVATIONS),
+                "--pool-csv",
+                str(pool_csv),
+                "--run-dir",
+                str(pool_csv.parent),
+                "--run-date",
+                pool_date.isoformat(),
+            ],
+        )
+    if len(pool_digits) >= 8 and MLB_CONFIDENCE_CALIBRATOR.exists():
         run_step(
             "Calibrate MLB Published Confidence",
             [
@@ -713,6 +732,8 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
             str(summary_json),
             "--parlay-json",
             str(parlay_json),
+            "--governance-json",
+            str(governance_status_json),
             "--output",
             str(MLB_WEB_JSON),
             "--output-dist",
