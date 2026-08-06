@@ -1,0 +1,97 @@
+{
+  "generated_at_utc": "2026-08-06T11:30:23.8549786Z",
+  "network_version": "batter_pitcher_profile_network_v2",
+  "comparison_version": "batter_pitcher_profile_network_v1",
+  "status": "bounded_production_feature",
+  "validation_method": "chronological implementation-level ablation using identical pregame projection baselines and official settled MLB outcomes",
+  "synthetic_events_used": false,
+  "data": {
+    "source": "cached MLB StatsAPI game feeds",
+    "first_date": "2026-03-01",
+    "last_date": "2026-08-01",
+    "processed_rows": 57332,
+    "hitter_rows": 42069,
+    "network_attachment_seconds": 251.1
+  },
+  "design": {
+    "new_edge": "same-batter prior outcomes against statistically similar starter-vulnerability profiles",
+    "lookback_games": 60,
+    "baseline_games": 30,
+    "similarity_bandwidth": 0.75,
+    "minimum_neighbor_games": 5,
+    "minimum_historical_pitcher_support": 0.15,
+    "effective_support_shrinkage": 12.0,
+    "exact_starter_rows_excluded": true,
+    "target_coefficients": {
+      "H": 0.0,
+      "TB": 1.5,
+      "R": 1.0,
+      "HR": 1.0,
+      "RBI": 0.75
+    }
+  },
+  "rejected_routes": {
+    "batter_side_by_starter_hand": {
+      "feed_coverage": 1.0,
+      "minimum_test_coefficient": 0.15,
+      "validation_objective_v1": 0.985794,
+      "validation_objective_candidate": 0.985799,
+      "holdout_objective_v1": 0.936869,
+      "holdout_objective_candidate": 0.936871,
+      "decision": "rejected because both chronological windows worsened"
+    }
+  },
+  "validation_window": {
+    "first_date": "2026-06-16",
+    "last_date": "2026-07-15",
+    "rows": 7745,
+    "normalized_mae_objective_v1": 0.985794,
+    "normalized_mae_objective_v2": 0.984853,
+    "objective_delta": -0.00094,
+    "by_target": {
+      "H": {"v1_mae": 0.724342, "v2_mae": 0.723747, "mae_delta": -0.000595},
+      "TB": {"v1_mae": 1.064666, "v2_mae": 1.062276, "mae_delta": -0.00239},
+      "R": {"v1_mae": 0.502825, "v2_mae": 0.50224, "mae_delta": -0.000585},
+      "HR": {"v1_mae": 0.193906, "v2_mae": 0.193903, "mae_delta": -0.000003},
+      "RBI": {"v1_mae": 0.598246, "v2_mae": 0.597585, "mae_delta": -0.000661}
+    }
+  },
+  "untouched_holdout": {
+    "first_date": "2026-07-16",
+    "last_date": "2026-08-01",
+    "rows": 4705,
+    "normalized_mae_objective_v1": 0.936869,
+    "normalized_mae_objective_v2": 0.935922,
+    "objective_delta": -0.000947,
+    "by_target": {
+      "H": {"v1_mae": 0.723761, "v2_mae": 0.723474, "mae_delta": -0.000287},
+      "TB": {"v1_mae": 1.018188, "v2_mae": 1.016705, "mae_delta": -0.001483},
+      "R": {"v1_mae": 0.479652, "v2_mae": 0.47892, "mae_delta": -0.000733},
+      "HR": {"v1_mae": 0.179782, "v2_mae": 0.179708, "mae_delta": -0.000074},
+      "RBI": {"v1_mae": 0.56197, "v2_mae": 0.56122, "mae_delta": -0.00075}
+    }
+  },
+  "holdout_segments": {
+    "direct_matchup": {"rows": 1132, "v1_objective": 0.99649, "v2_objective": 0.993547, "objective_delta": -0.002943},
+    "archetype_supported": {"rows": 4644, "v1_objective": 0.935908, "v2_objective": 0.935033, "objective_delta": -0.000876},
+    "uncertain_pitcher_archetype_supported": {"rows": 1041, "minimum_pitcher_uncertainty": 0.65, "v1_objective": 0.954131, "v2_objective": 0.953153, "objective_delta": -0.000977}
+  },
+  "executable_over_replay": {
+    "criteria": "real line, at least five books, selected-side price from -130 to +130, projection edge from 0.15 to 1.0",
+    "TB": {
+      "v1": {"picks": 44, "wins": 17, "losses": 26, "graded_hit_rate": 0.395349, "roi": -0.349369},
+      "v2": {"picks": 45, "wins": 18, "losses": 26, "graded_hit_rate": 0.409091, "roi": -0.314659}
+    },
+    "R": {
+      "v1": {"picks": 40, "wins": 17, "losses": 23, "graded_hit_rate": 0.425, "roi": -0.346544},
+      "v2": {"picks": 40, "wins": 18, "losses": 22, "graded_hit_rate": 0.45, "roi": -0.289922}
+    },
+    "other_targets": "No qualifying holdout overs under the stated executable criteria."
+  },
+  "decision": {
+    "enabled": true,
+    "independent_confidence_boost": false,
+    "parlay_promotion": false,
+    "reason": "V2 improves implementation-level projection error overall, for every target, and in direct, archetype-supported, and uncertain-pitcher segments. The executable replay remains negative ROI, so the feature can alter projection edge but cannot independently promote confidence, selection, or parlays."
+  }
+}

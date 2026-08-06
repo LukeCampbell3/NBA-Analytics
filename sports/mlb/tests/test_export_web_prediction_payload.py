@@ -12,6 +12,13 @@ sys.path.insert(0, str(MLB_SCRIPTS_ROOT))
 import export_web_prediction_payload as exporter
 
 
+def test_infer_run_date_ignores_unrelated_version_digits(tmp_path: Path) -> None:
+    selected = tmp_path / "network_v2" / "daily_prediction_pool_20260806_selected.csv"
+    summary = {"pool_csv": str(selected.with_name("daily_prediction_pool_20260806.csv"))}
+
+    assert exporter.infer_run_date(selected, summary, []) == "2026-08-06"
+
+
 def test_valid_american_price_rejects_non_american_consensus_values() -> None:
     assert exporter.valid_american_price(-110.0) == -110.0
     assert exporter.valid_american_price(125.0) == 125.0

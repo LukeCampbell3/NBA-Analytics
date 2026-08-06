@@ -113,3 +113,47 @@ def test_explicit_starter_flag_excludes_long_relief_outings() -> None:
     signal = build_matchup_network_signal(hitter_history(), history)
 
     assert signal.pitcher_support == 0.25
+
+
+def test_archetype_neighbors_borrow_shrunk_batter_results() -> None:
+    history = hitter_history(strong=True)
+    pitcher = pitcher_history(vulnerable=True)
+    current = build_matchup_network_signal(history, pitcher)
+    for target in ("H", "TB", "R", "HR", "RBI"):
+        column = f"Pitcher_Profile_{target}_Vulnerability"
+        history[column] = current.pitcher_vulnerability[target] - 1.5
+        history.loc[:9, column] = current.pitcher_vulnerability[target]
+    history["Matchup_Network_Pitcher_Support"] = 1.0
+    history["Pitcher_Profile_Uncertainty"] = 0.2
+    history.loc[:9, "TB"] = 4.0
+    history.loc[10:, "TB"] = 0.5
+
+    signal = build_matchup_network_signal(
+        history,
+        pitcher,
+        opposing_pitcher_id=999,
+    )
+
+    assert signal.archetype_neighbor_games["TB"] == 30
+    assert signal.archetype_neighbor_support["TB"] > 0.0
+    assert signal.archetype_neighbor_lift["TB"] > 0.0
+
+
+def test_archetype_neighbors_exclude_exact_starter_history() -> None:
+    history = hitter_history(strong=True, opposing_pitcher_id=42)
+    current = build_matchup_network_signal(history, pitcher_history(vulnerable=True))
+    for target in ("H", "TB", "R", "HR", "RBI"):
+        history[f"Pitcher_Profile_{target}_Vulnerability"] = current.pitcher_vulnerability[target]
+    history["Matchup_Network_Pitcher_Support"] = 1.0
+    history["Pitcher_Profile_Uncertainty"] = 0.2
+    history["Opp_Starter_ID"] = 42
+
+    signal = build_matchup_network_signal(
+        history,
+        pitcher_history(vulnerable=True),
+        opposing_pitcher_id=42,
+    )
+
+    assert signal.direct_matchup_games == 30
+    assert signal.archetype_neighbor_games["TB"] == 0
+    assert signal.archetype_neighbor_lift["TB"] == 0.0

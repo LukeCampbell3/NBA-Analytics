@@ -30,7 +30,7 @@ MLB_OPTIMIZED_OVER_TARGETS = {"R", "TB"}
 MLB_OPTIMIZED_OVER_PROFILE_STATUS = "probation"
 MLB_PITCHER_K_OVER_PROFILE = "pitcher_k_over_workload_v1"
 MLB_PITCHER_K_OVER_PROFILE_STATUS = "probation"
-MLB_MATCHUP_NETWORK_VERSION = "batter_pitcher_profile_network_v1"
+MLB_MATCHUP_NETWORK_VERSION = "batter_pitcher_profile_network_v2"
 MLB_MATCHUP_ADJUSTMENT_CAPS = {"H": 0.10, "TB": 0.16, "R": 0.05, "HR": 0.025, "RBI": 0.06}
 MLB_MAX_PITCHER_K_PICKS = 1
 MLB_DAILY_PICK_SOFT_CAP = 3
@@ -227,6 +227,9 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
             pitcher_uncertainty = as_float(play.get("pitcher_profile_uncertainty"))
             network_confidence = as_float(play.get("matchup_network_confidence"))
             network_adjustment = as_float(play.get("matchup_network_adjustment"))
+            archetype_games = as_float(play.get("archetype_neighbor_games"))
+            archetype_support = as_float(play.get("archetype_neighbor_effective_support"))
+            archetype_lift = as_float(play.get("archetype_neighbor_lift"))
             adjustment_cap = MLB_MATCHUP_ADJUSTMENT_CAPS.get(target)
             if (
                 adjustment_cap is None
@@ -236,6 +239,13 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
                 or not 0.0 <= network_confidence <= 1.0
                 or network_adjustment is None
                 or abs(network_adjustment) > adjustment_cap + 1e-9
+                or archetype_games is None
+                or archetype_games < 0.0
+                or abs(archetype_games - round(archetype_games)) > 1e-9
+                or archetype_support is None
+                or archetype_support < 0.0
+                or archetype_lift is None
+                or not -1.0 <= archetype_lift <= 1.0
             ):
                 raise ValueError(f"MLB {label} hitter play {index} has invalid matchup network values.")
         uses_optimized_over_profile = selection_profile == MLB_OPTIMIZED_OVER_PROFILE

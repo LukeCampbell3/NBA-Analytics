@@ -1093,6 +1093,9 @@ def build_upcoming_schedule_pool_rows(
                             "Pitcher_Profile_Uncertainty": matchup_signal.pitcher_uncertainty if player_type == "hitter" else 0.0,
                             "Batter_Vs_Starter_Games": matchup_signal.direct_matchup_games if player_type == "hitter" else 0,
                             "Batter_Vs_Starter_Lift": matchup_signal.direct_matchup_lift.get(spec.target, 0.0),
+                            "Archetype_Neighbor_Games": matchup_signal.archetype_neighbor_games.get(spec.target, 0),
+                            "Archetype_Neighbor_Effective_Support": matchup_signal.archetype_neighbor_support.get(spec.target, 0.0),
+                            "Archetype_Neighbor_Lift": matchup_signal.archetype_neighbor_lift.get(spec.target, 0.0),
                             "Matchup_Network_Score": matchup_signal.network_score.get(spec.target, 0.0),
                             "Matchup_Network_Confidence": matchup_signal.confidence if player_type == "hitter" else 0.0,
                             "Matchup_Network_Adjustment": matchup_signal.adjustment.get(spec.target, 0.0),
@@ -1244,6 +1247,9 @@ def build_pool_rows(
                         "Pitcher_Profile_Uncertainty": to_float(current.get("Pitcher_Profile_Uncertainty")) or 0.0,
                         "Batter_Vs_Starter_Games": int(to_float(current.get("Batter_Vs_Starter_Games")) or 0.0),
                         "Batter_Vs_Starter_Lift": to_float(current.get(f"Batter_Vs_Starter_{spec.target}_Lift")) or 0.0,
+                        "Archetype_Neighbor_Games": int(to_float(current.get(f"Archetype_Neighbor_{spec.target}_Games")) or 0.0),
+                        "Archetype_Neighbor_Effective_Support": to_float(current.get(f"Archetype_Neighbor_{spec.target}_Effective_Support")) or 0.0,
+                        "Archetype_Neighbor_Lift": to_float(current.get(f"Archetype_Neighbor_{spec.target}_Lift")) or 0.0,
                         "Matchup_Network_Score": to_float(current.get(f"Matchup_Network_{spec.target}_Score")) or 0.0,
                         "Matchup_Network_Confidence": to_float(current.get("Matchup_Network_Confidence")) or 0.0,
                         "Matchup_Network_Adjustment": to_float(current.get(f"Matchup_Network_{spec.target}_Adjustment")) or 0.0,
@@ -1313,6 +1319,9 @@ def write_pool_csv(path: Path, rows: list[dict[str, object]]) -> None:
         "Pitcher_Profile_Uncertainty",
         "Batter_Vs_Starter_Games",
         "Batter_Vs_Starter_Lift",
+        "Archetype_Neighbor_Games",
+        "Archetype_Neighbor_Effective_Support",
+        "Archetype_Neighbor_Lift",
         "Matchup_Network_Score",
         "Matchup_Network_Confidence",
         "Matchup_Network_Adjustment",
@@ -1414,6 +1423,9 @@ def build_summary(
             ),
             "direct_history_rows": int(
                 sum(1 for row in network_rows if int(to_float(row.get("Batter_Vs_Starter_Games")) or 0.0) > 0)
+            ),
+            "archetype_neighbor_rows": int(
+                sum(1 for row in network_rows if float(to_float(row.get("Archetype_Neighbor_Effective_Support")) or 0.0) > 0.0)
             ),
             "avg_abs_adjustment": (
                 float(

@@ -7,10 +7,11 @@ import unicodedata
 from dataclasses import dataclass
 from typing import Mapping
 
+import numpy as np
 import pandas as pd
 
 
-NETWORK_VERSION = "batter_pitcher_profile_network_v1"
+NETWORK_VERSION = "batter_pitcher_profile_network_v2"
 HITTER_TARGETS = ("H", "TB", "R", "HR", "RBI")
 TARGET_ADJUSTMENT_CAPS: Mapping[str, float] = {
     "H": 0.10,
@@ -26,6 +27,19 @@ TARGET_BASELINES: Mapping[str, float] = {
     "HR": 0.15,
     "RBI": 0.5,
 }
+ARCHETYPE_NEIGHBOR_COEFFICIENTS: Mapping[str, float] = {
+    "H": 0.0,
+    "TB": 1.5,
+    "R": 1.0,
+    "HR": 1.0,
+    "RBI": 0.75,
+}
+ARCHETYPE_LOOKBACK_GAMES = 60
+ARCHETYPE_BASELINE_GAMES = 30
+ARCHETYPE_BANDWIDTH = 0.75
+ARCHETYPE_MIN_GAMES = 5
+ARCHETYPE_MIN_PITCHER_SUPPORT = 0.15
+ARCHETYPE_SHRINKAGE = 12.0
 
 
 def clamp(value: float, low: float = -1.0, high: float = 1.0) -> float:
@@ -221,6 +235,90 @@ def _direct_matchup_rows(
     return batter_history.iloc[0:0].copy()
 
 
+def _archetype_neighbor_signals(
+    batter_history: pd.DataFrame,
+    *,
+    current_vulnerability: Mapping[str, float],
+    opposing_pitcher_id: object = None,
+) -> tuple[dict[str, int], dict[str, float], dict[str, float]]:
+    """Return a shrunk residual from this batter's games against similar starters."""
+
+    zero_games = {target: 0 for target in HITTER_TARGETS}
+    zeros = {target: 0.0 for target in HITTER_TARGETS}
+    required_columns = {
+        "Matchup_Network_Pitcher_Support",
+        "Pitcher_Profile_Uncertainty",
+    }
+    required_columns.update(HITTER_TARGETS)
+    required_columns.update(
+        f"Pitcher_Profile_{target}_Vulnerability" for target in HITTER_TARGETS
+    )
+    if batter_history.empty or not required_columns.issubset(batter_history.columns):
+        return zero_games, dict(zeros), dict(zeros)
+
+    recent = batter_history.tail(ARCHETYPE_LOOKBACK_GAMES)
+    pitcher_support = pd.to_numeric(
+        recent["Matchup_Network_Pitcher_Support"], errors="coerce"
+    ).to_numpy(dtype=float)
+    uncertainty = pd.to_numeric(
+        recent["Pitcher_Profile_Uncertainty"], errors="coerce"
+    ).to_numpy(dtype=float)
+    base_valid = (
+        np.isfinite(pitcher_support)
+        & (pitcher_support > ARCHETYPE_MIN_PITCHER_SUPPORT)
+        & np.isfinite(uncertainty)
+    )
+
+    pitcher_id = int(finite_float(opposing_pitcher_id, 0.0))
+    if pitcher_id > 0 and "Opp_Starter_ID" in recent.columns:
+        historical_ids = pd.to_numeric(
+            recent["Opp_Starter_ID"], errors="coerce"
+        ).fillna(0).to_numpy(dtype=int)
+        base_valid &= historical_ids != pitcher_id
+
+    neighbor_games: dict[str, int] = {}
+    neighbor_support: dict[str, float] = {}
+    neighbor_lift: dict[str, float] = {}
+    reliability = pitcher_support * (1.0 - (0.5 * np.clip(uncertainty, 0.0, 1.0)))
+    for target in HITTER_TARGETS:
+        vulnerabilities = pd.to_numeric(
+            recent[f"Pitcher_Profile_{target}_Vulnerability"], errors="coerce"
+        ).to_numpy(dtype=float)
+        outcomes = pd.to_numeric(recent[target], errors="coerce").to_numpy(dtype=float)
+        valid = base_valid & np.isfinite(vulnerabilities) & np.isfinite(outcomes)
+        count = int(valid.sum())
+        neighbor_games[target] = count
+        if count < ARCHETYPE_MIN_GAMES:
+            neighbor_support[target] = 0.0
+            neighbor_lift[target] = 0.0
+            continue
+
+        distances = (
+            vulnerabilities[valid] - float(current_vulnerability[target])
+        ) / ARCHETYPE_BANDWIDTH
+        weights = np.exp(-0.5 * np.square(distances)) * reliability[valid]
+        effective_support = float(weights.sum())
+        neighbor_support[target] = effective_support
+        if effective_support <= 0.0:
+            neighbor_lift[target] = 0.0
+            continue
+
+        neighbor_mean = float(np.dot(outcomes[valid], weights) / effective_support)
+        batter_baseline = recent_mean(
+            batter_history,
+            target,
+            ARCHETYPE_BASELINE_GAMES,
+            TARGET_BASELINES[target],
+        )
+        raw_lift = clamp(
+            (neighbor_mean - batter_baseline) / max(TARGET_BASELINES[target], 0.15)
+        )
+        neighbor_lift[target] = raw_lift * (
+            effective_support / (effective_support + ARCHETYPE_SHRINKAGE)
+        )
+    return neighbor_games, neighbor_support, neighbor_lift
+
+
 @dataclass(frozen=True)
 class MatchupNetworkSignal:
     version: str
@@ -232,6 +330,9 @@ class MatchupNetworkSignal:
     batter_strength: dict[str, float]
     pitcher_vulnerability: dict[str, float]
     direct_matchup_lift: dict[str, float]
+    archetype_neighbor_games: dict[str, int]
+    archetype_neighbor_support: dict[str, float]
+    archetype_neighbor_lift: dict[str, float]
     network_score: dict[str, float]
     adjustment: dict[str, float]
 
@@ -248,6 +349,9 @@ class MatchupNetworkSignal:
             batter_strength=dict(zeros),
             pitcher_vulnerability=dict(zeros),
             direct_matchup_lift=dict(zeros),
+            archetype_neighbor_games={target: 0 for target in HITTER_TARGETS},
+            archetype_neighbor_support=dict(zeros),
+            archetype_neighbor_lift=dict(zeros),
             network_score=dict(zeros),
             adjustment=dict(zeros),
         )
@@ -290,6 +394,11 @@ def build_matchup_network_signal(
         0.0,
         1.0,
     )
+    archetype_games, archetype_support, archetype_lift = _archetype_neighbor_signals(
+        batter_history,
+        current_vulnerability=pitcher_vulnerability,
+        opposing_pitcher_id=opposing_pitcher_id,
+    )
 
     for target in HITTER_TARGETS:
         baseline = recent_mean(batter_history, target, 30, TARGET_BASELINES[target])
@@ -307,6 +416,7 @@ def build_matchup_network_signal(
         score = (
             (batter_support * (1.0 - pitcher_uncertainty) * profile_synergy)
             + ((0.50 + (0.50 * pitcher_uncertainty)) * direct_lift[target])
+            + (ARCHETYPE_NEIGHBOR_COEFFICIENTS[target] * archetype_lift[target])
         )
         score = clamp(score)
         scores[target] = score
@@ -322,6 +432,9 @@ def build_matchup_network_signal(
         batter_strength=batter_strength,
         pitcher_vulnerability=pitcher_vulnerability,
         direct_matchup_lift=direct_lift,
+        archetype_neighbor_games=archetype_games,
+        archetype_neighbor_support=archetype_support,
+        archetype_neighbor_lift=archetype_lift,
         network_score=scores,
         adjustment=adjustments,
     )

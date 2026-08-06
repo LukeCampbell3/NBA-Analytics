@@ -10,6 +10,7 @@ import argparse
 import csv
 import json
 import math
+import re
 import sys
 import unicodedata
 from datetime import datetime, timezone
@@ -31,6 +32,14 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from sports.parlay_analysis import annotate_parlay_board, evaluate_historical_parlays
+
+
+RUN_STAMP_PATTERN = re.compile(r"(?<!\d)((?:19|20)\d{6})(?!\d)")
+
+
+def extract_run_stamp(value: object) -> str:
+    match = RUN_STAMP_PATTERN.search(str(value or ""))
+    return match.group(1) if match else ""
 
 
 MLB_STATS_API_ROOT = "https://statsapi.mlb.com/api/v1"
@@ -73,9 +82,9 @@ def parse_args() -> argparse.Namespace:
 def find_latest_selected_csv(daily_runs_root: Path) -> Path:
     def sort_key(path: Path) -> tuple[int, float]:
         for source in (path.stem, path.parent.name):
-            digits = "".join(char for char in source if char.isdigit())
-            if len(digits) >= 8:
-                return int(digits[:8]), path.stat().st_mtime
+            run_stamp = extract_run_stamp(source)
+            if run_stamp:
+                return int(run_stamp), path.stat().st_mtime
         return 0, path.stat().st_mtime
 
     candidates = sorted(
@@ -106,9 +115,9 @@ def infer_run_date(selected_csv: Path, summary: dict[str, object], rows: list[di
 
     pool_csv = str(summary.get("pool_csv", "")).strip()
     for source in [pool_csv, selected_csv.name]:
-        digits = "".join(char for char in source if char.isdigit())
-        if len(digits) >= 8:
-            return f"{digits[:4]}-{digits[4:6]}-{digits[6:8]}"
+        run_stamp = extract_run_stamp(source)
+        if run_stamp:
+            return f"{run_stamp[:4]}-{run_stamp[4:6]}-{run_stamp[6:8]}"
 
     return history_season
 
@@ -924,6 +933,9 @@ def main() -> None:
                 "pitcher_profile_uncertainty": to_float(row.get("Pitcher_Profile_Uncertainty")),
                 "batter_vs_starter_games": to_int(row.get("Batter_Vs_Starter_Games")),
                 "batter_vs_starter_lift": to_float(row.get("Batter_Vs_Starter_Lift")),
+                "archetype_neighbor_games": to_int(row.get("Archetype_Neighbor_Games")),
+                "archetype_neighbor_effective_support": to_float(row.get("Archetype_Neighbor_Effective_Support")),
+                "archetype_neighbor_lift": to_float(row.get("Archetype_Neighbor_Lift")),
                 "matchup_network_score": to_float(row.get("Matchup_Network_Score")),
                 "matchup_network_confidence": to_float(row.get("Matchup_Network_Confidence")),
                 "matchup_network_adjustment": to_float(row.get("Matchup_Network_Adjustment")),

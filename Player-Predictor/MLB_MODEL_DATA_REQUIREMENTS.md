@@ -53,6 +53,8 @@ Train separate models by player role.
   - `Batter_Profile_{target}_Strength`, `Pitcher_Profile_{target}_Vulnerability`
   - `Pitcher_Profile_Uncertainty`, `Batter_Vs_Starter_Games`
   - `Batter_Vs_Starter_{target}_Lift`, `Matchup_Network_{target}_Adjustment`
+  - `Archetype_Neighbor_{target}_Games`, `Archetype_Neighbor_{target}_Effective_Support`
+  - `Archetype_Neighbor_{target}_Lift`
   - `Park_Factor`, `Wind_Out_MPH`, `Temp_F`
 - Market:
   - `Market_H`, `Market_HR`, `Market_RBI`
@@ -96,6 +98,8 @@ Train separate models by player role.
 - Market line std values must be non-negative.
 - Matchup-network features must be computed from rows strictly before the predicted game.
 - Missing pitcher history must not create a positive batter adjustment by itself.
+- Exact batter-versus-starter rows must be excluded from archetype-neighbor evidence.
+- Archetype-neighbor lifts must be reliability weighted, sample shrunk, and capped inside the network adjustment.
 
 ## Included Assets
 

@@ -525,6 +525,9 @@ def attach_walk_forward_matchup_network(df: pd.DataFrame) -> pd.DataFrame:
                 f"Batter_Profile_{target}_Strength",
                 f"Pitcher_Profile_{target}_Vulnerability",
                 f"Batter_Vs_Starter_{target}_Lift",
+                f"Archetype_Neighbor_{target}_Games",
+                f"Archetype_Neighbor_{target}_Effective_Support",
+                f"Archetype_Neighbor_{target}_Lift",
                 f"Matchup_Network_{target}_Score",
                 f"Matchup_Network_{target}_Adjustment",
             ]
@@ -533,6 +536,7 @@ def attach_walk_forward_matchup_network(df: pd.DataFrame) -> pd.DataFrame:
         out[column] = 0.0
     out["Pitcher_Profile_Uncertainty"] = 1.0
     out["Matchup_Network_Version"] = ""
+    synchronized_columns = ["Matchup_Network_Version", *network_float_columns]
 
     pitcher_rows = out.loc[out["Player_Type"].eq("pitcher")].copy()
     pitcher_by_id: dict[int, pd.DataFrame] = {}
@@ -556,8 +560,10 @@ def attach_walk_forward_matchup_network(df: pd.DataFrame) -> pd.DataFrame:
     ]
     for _, batter_rows in out.loc[hitter_mask].groupby("_matchup_batter_key", sort=False):
         ordered = batter_rows.sort_values(["Date", "Game_Index"])
-        for position, (row_index, row) in enumerate(ordered.iterrows()):
-            batter_history = ordered.iloc[:position].copy()
+        ordered_indices = list(ordered.index)
+        for position, row_index in enumerate(ordered_indices):
+            row = ordered.loc[row_index]
+            batter_history = ordered.iloc[:position]
             if batter_history.empty:
                 continue
             pitcher_id = int(coerce_float(row.get("Opp_Starter_ID"), default=0.0))
@@ -580,8 +586,12 @@ def attach_walk_forward_matchup_network(df: pd.DataFrame) -> pd.DataFrame:
                 out.at[row_index, f"Batter_Profile_{target}_Strength"] = signal.batter_strength[target]
                 out.at[row_index, f"Pitcher_Profile_{target}_Vulnerability"] = signal.pitcher_vulnerability[target]
                 out.at[row_index, f"Batter_Vs_Starter_{target}_Lift"] = signal.direct_matchup_lift[target]
+                out.at[row_index, f"Archetype_Neighbor_{target}_Games"] = signal.archetype_neighbor_games[target]
+                out.at[row_index, f"Archetype_Neighbor_{target}_Effective_Support"] = signal.archetype_neighbor_support[target]
+                out.at[row_index, f"Archetype_Neighbor_{target}_Lift"] = signal.archetype_neighbor_lift[target]
                 out.at[row_index, f"Matchup_Network_{target}_Score"] = signal.network_score[target]
                 out.at[row_index, f"Matchup_Network_{target}_Adjustment"] = signal.adjustment[target]
+            ordered.loc[row_index, synchronized_columns] = out.loc[row_index, synchronized_columns].to_numpy()
     return out.drop(columns=["_matchup_batter_key"])
 
 
@@ -900,6 +910,9 @@ def build_processed_frames(
                 f"Batter_Profile_{target}_Strength",
                 f"Pitcher_Profile_{target}_Vulnerability",
                 f"Batter_Vs_Starter_{target}_Lift",
+                f"Archetype_Neighbor_{target}_Games",
+                f"Archetype_Neighbor_{target}_Effective_Support",
+                f"Archetype_Neighbor_{target}_Lift",
                 f"Matchup_Network_{target}_Score",
                 f"Matchup_Network_{target}_Adjustment",
             ]

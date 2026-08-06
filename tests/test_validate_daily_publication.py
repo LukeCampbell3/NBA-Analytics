@@ -297,6 +297,9 @@ def test_validate_mlb_payload_requires_networked_hitter_play(tmp_path: Path) -> 
             "pitcher_profile_uncertainty": 0.35,
             "matchup_network_confidence": 0.70,
             "matchup_network_adjustment": 0.02,
+            "archetype_neighbor_games": 18,
+            "archetype_neighbor_effective_support": 7.5,
+            "archetype_neighbor_lift": 0.08,
         }
     ]
 

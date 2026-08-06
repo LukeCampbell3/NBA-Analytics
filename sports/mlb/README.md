@@ -46,9 +46,9 @@ The production action profile is stricter than the research defaults. It require
 
 ## Batter/Pitcher Matchup Network
 
-`sports/mlb/decision_engine/matchup_network.py` links each hitter to the listed probable starter. The network combines target-specific batter skill, starter vulnerability, pitcher-profile uncertainty, and heavily shrunk prior batter-versus-starter game results. It is a residual adjustment on top of the existing projection, so general hitter form is not counted twice. Pitcher uncertainty suppresses profile assumptions; it only increases the relative value of direct matchup history, and missing pitcher data alone produces no edge.
+`sports/mlb/decision_engine/matchup_network.py` links each hitter to the listed probable starter. The network combines target-specific batter skill, starter vulnerability, pitcher-profile uncertainty, heavily shrunk prior batter-versus-starter results, and the batter's prior performance against statistically similar starter profiles. Similar-starter evidence is reliability weighted, limited to the previous 60 games, and shrunk by effective support. Exact BvP rows are excluded from that neighborhood so they cannot be counted twice. It is a residual adjustment on top of the existing projection, so general hitter form is not counted twice. Pitcher uncertainty suppresses profile assumptions; it only increases the relative value of direct matchup history, and missing pitcher data alone produces no edge.
 
-The adjustment is capped separately for H, TB, R, HR, and RBI and receives no independent confidence or parlay bonus. The chronological ablation is stored in `sports/validation/mlb_matchup_network_ablation.json`.
+The adjustment is capped separately for H, TB, R, HR, and RBI and receives no independent confidence or parlay bonus. The v1 and v2 chronological ablations are stored in `sports/validation/mlb_matchup_network_ablation.json` and `sports/validation/mlb_matchup_network_v2_ablation.json`.
 
 ## Leakage-Aware Backtesting
 
