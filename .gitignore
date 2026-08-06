@@ -19,6 +19,12 @@ __pycache__/
 coverage.xml
 htmlcov/
 
+# Generated test/benchmark payloads. Keep executable test modules and fixtures tracked.
+/tests/test_analysis/
+/tests/test_valuations/
+/tests/test_cards/
+/evaluation/benchmark_results/latest/
+
 .ipynb_checkpoints/
 
 

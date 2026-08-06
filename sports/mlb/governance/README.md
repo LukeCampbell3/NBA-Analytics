@@ -62,3 +62,20 @@ Production authorization remains blocked until all of the following exist for an
 8. For parlays, a validated downside/CVaR method in addition to bounded payout and losing-slate gates.
 
 Showing a row in the shadow candidate pool is not candidate authorization.
+
+## Retrospective thesis audit
+
+Run the exact-line, exact-book chronological audit with:
+
+```powershell
+python -m sports.mlb.governance.backtest_policy_thesis
+```
+
+The audit reconstructs the latest valid pregame acquisition snapshot on each usable historical date, retains
+the positive-edge candidate universe before policy filters, and grades singles and same-book two-leg parlays
+at captured prices. Its evidence label is `RETROSPECTIVE_FULL_CANDIDATE_RECONSTRUCTION`; it is not locked
+validation or prospective evidence and cannot activate a certificate.
+
+The current checked-in result rejects the current singles profile on the three-date retrospective holdout.
+Positive point estimates for the broader OVER baseline and parlay constructor remain unproven because their
+bounded return lower confidence limits do not clear the deployment margin.

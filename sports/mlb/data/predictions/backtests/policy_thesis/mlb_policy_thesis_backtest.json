@@ -1,0 +1,232 @@
+{
+  "schema_version": "MLB_POLICY_THESIS_BACKTEST_V1",
+  "generated_at_utc": "2026-08-06T21:51:59.029680+00:00",
+  "evidence": {
+    "label": "RETROSPECTIVE_FULL_CANDIDATE_RECONSTRUCTION",
+    "certificate_permitted": false,
+    "locked_validation": false,
+    "full_candidate_rows_with_exact_quotes": 1235,
+    "universe_sha256": "4af604523613070eb3731d216cf39c5f3a5397ed67841fdb0bd9ca8aaa12ea6f",
+    "lines_sha256": "5a925410ec3d5cfad2aa45a25c0345c34792a70a416bea291a82249a0a82d0e3",
+    "daily_run_schedule_sha256": "e67427bbd9d1523b4d71a4a3f774126b64863ef37119bfefed885b73e934b3f6",
+    "limitations": [
+      "historical sportsbook captures exist on only 11 irregular dates",
+      "the retrospective holdout was not hidden before prior policy development",
+      "historical pitcher workload gates and RBI quote coverage are incomplete",
+      "book availability and prices are historical snapshots, not guaranteed fills"
+    ]
+  },
+  "policy_family": {
+    "singles_policy_version": "MLB_OVER_POLICY_THESIS_AUDIT_V1",
+    "parlay_policy_version": "MLB_TWO_LEG_OVER_PARLAY_THESIS_AUDIT_V1",
+    "bounded_family_size": 2,
+    "singles_family_alpha": 0.025,
+    "selection_cap": 3,
+    "direction": "OVER_ONLY",
+    "parlay_leg_count": 2,
+    "staking_enabled": false
+  },
+  "quote_diagnostics": {
+    "raw_rows": 89792,
+    "latest_valid_supported_pregame_quotes": 9083,
+    "single_acquisition_snapshots": 8,
+    "exact_candidate_quote_groups": 2799,
+    "ambiguous_doubleheader_quote_rows_rejected": 54,
+    "captured_dates": [
+      "2026-04-27",
+      "2026-05-01",
+      "2026-06-19",
+      "2026-06-20",
+      "2026-06-21",
+      "2026-06-26",
+      "2026-06-27",
+      "2026-07-29"
+    ],
+    "schedule_source_files": 45,
+    "schedule_events": 258,
+    "ambiguous_schedule_matchups_rejected": 2,
+    "ambiguous_model_event_rows_rejected": 2466,
+    "model_player_market_rows": 144194,
+    "exact_model_quote_groups": 2375,
+    "positive_edge_candidates": 1235,
+    "reconstructed_candidate_dates": [
+      "2026-04-27",
+      "2026-05-01",
+      "2026-06-19",
+      "2026-06-20",
+      "2026-06-21",
+      "2026-06-26",
+      "2026-06-27"
+    ]
+  },
+  "filter_counts": {
+    "positive_edge_exact_quote_candidates": 1235,
+    "base_playable_candidates": 340,
+    "current_profile_candidates": 11,
+    "playable_over_baseline_candidates": 264,
+    "parlay_anchor_candidates": 107
+  },
+  "splits": {
+    "development": [
+      "2026-04-27",
+      "2026-05-01",
+      "2026-06-19",
+      "2026-06-20"
+    ],
+    "holdout": [
+      "2026-06-21",
+      "2026-06-26",
+      "2026-06-27"
+    ]
+  },
+  "results": {
+    "development": {
+      "current_profile_singles": {
+        "eligible_slates": 4,
+        "action_slates": 2,
+        "slate_coverage": 0.5,
+        "eligible_candidates": 2,
+        "selected_candidates": 2,
+        "candidate_coverage": 1.0,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "hit_rate": 0.0,
+        "hit_rate_wilson_95_low": 0.0,
+        "hit_rate_wilson_95_high": 0.6576280471103807,
+        "selection_return": -1.0,
+        "calendar_slate_return": -0.5,
+        "action_day_return": -1.0,
+        "fixed_holdout_return_lcb": -1.0,
+        "losing_action_slate_rate": 1.0,
+        "net_selection_units": -2.0
+      },
+      "playable_over_baseline": {
+        "eligible_slates": 4,
+        "action_slates": 3,
+        "slate_coverage": 0.75,
+        "eligible_candidates": 128,
+        "selected_candidates": 9,
+        "candidate_coverage": 0.0703125,
+        "wins": 8,
+        "losses": 1,
+        "pushes": 0,
+        "hit_rate": 0.8888888888888888,
+        "hit_rate_wilson_95_low": 0.5649937852319399,
+        "hit_rate_wilson_95_high": 0.9801096286728695,
+        "selection_return": 1.0121647851059616,
+        "calendar_slate_return": 0.7591235888294712,
+        "action_day_return": 1.0121647851059616,
+        "fixed_holdout_return_lcb": -1.0,
+        "losing_action_slate_rate": 0.0,
+        "net_selection_units": 9.109483065953654
+      },
+      "two_leg_parlay": {
+        "eligible_slates": 4,
+        "action_slates": 3,
+        "slate_coverage": 0.75,
+        "wins": 2,
+        "losses": 1,
+        "pushes": 0,
+        "hit_rate": 0.6666666666666666,
+        "hit_rate_wilson_95_low": 0.2076549551264879,
+        "hit_rate_wilson_95_high": 0.9385096847238394,
+        "calendar_slate_return": 1.9694500000000004,
+        "action_day_return": 2.6259333333333337,
+        "fixed_holdout_return_lcb": -1.0,
+        "losing_action_slate_rate": 0.3333333333333333,
+        "net_units": 7.8778000000000015
+      }
+    },
+    "holdout": {
+      "current_profile_singles": {
+        "eligible_slates": 3,
+        "action_slates": 3,
+        "slate_coverage": 1.0,
+        "eligible_candidates": 9,
+        "selected_candidates": 6,
+        "candidate_coverage": 0.6666666666666666,
+        "wins": 2,
+        "losses": 4,
+        "pushes": 0,
+        "hit_rate": 0.3333333333333333,
+        "hit_rate_wilson_95_low": 0.09676933255921683,
+        "hit_rate_wilson_95_high": 0.7000116786584712,
+        "selection_return": -0.2816666666666667,
+        "calendar_slate_return": -0.40444444444444444,
+        "action_day_return": -0.40444444444444444,
+        "fixed_holdout_return_lcb": -1.0,
+        "losing_action_slate_rate": 0.6666666666666666,
+        "net_selection_units": -1.69
+      },
+      "playable_over_baseline": {
+        "eligible_slates": 3,
+        "action_slates": 3,
+        "slate_coverage": 1.0,
+        "eligible_candidates": 136,
+        "selected_candidates": 9,
+        "candidate_coverage": 0.0661764705882353,
+        "wins": 5,
+        "losses": 4,
+        "pushes": 0,
+        "hit_rate": 0.5555555555555556,
+        "hit_rate_wilson_95_low": 0.2666473457440297,
+        "hit_rate_wilson_95_high": 0.811224570528086,
+        "selection_return": 0.27888888888888885,
+        "calendar_slate_return": 0.27888888888888885,
+        "action_day_return": 0.27888888888888885,
+        "fixed_holdout_return_lcb": -1.0,
+        "losing_action_slate_rate": 0.3333333333333333,
+        "net_selection_units": 2.51
+      },
+      "two_leg_parlay": {
+        "eligible_slates": 3,
+        "action_slates": 3,
+        "slate_coverage": 1.0,
+        "wins": 2,
+        "losses": 1,
+        "pushes": 0,
+        "hit_rate": 0.6666666666666666,
+        "hit_rate_wilson_95_low": 0.2076549551264879,
+        "hit_rate_wilson_95_high": 0.9385096847238394,
+        "calendar_slate_return": 2.414166666666666,
+        "action_day_return": 2.414166666666666,
+        "fixed_holdout_return_lcb": -1.0,
+        "losing_action_slate_rate": 0.3333333333333333,
+        "net_units": 7.242499999999999
+      }
+    }
+  },
+  "hypotheses": {
+    "current_profile_calendar_return_exceeds_margin": {
+      "margin": 0.01,
+      "lcb": -1.0,
+      "status": "REJECTED"
+    },
+    "playable_over_baseline_calendar_return_exceeds_margin": {
+      "margin": 0.01,
+      "lcb": -1.0,
+      "status": "NOT_ESTABLISHED"
+    },
+    "two_leg_parlay_calendar_return_exceeds_margin": {
+      "margin": 0.01,
+      "lcb": -1.0,
+      "status": "NOT_ESTABLISHED"
+    }
+  },
+  "verdict": {
+    "status": "CURRENT_PROFILE_REJECTED_BROADER_THEORY_UNPROVEN",
+    "reasons": [
+      "Current-profile singles did not produce a positive holdout calendar return.",
+      "The multiplicity-adjusted bounded return LCB did not clear the 1% deployment margin.",
+      "Captured date and action-day volume is far below certificate requirements.",
+      "The parlay return LCB did not clear the deployment margin.",
+      "The current profile did not outperform the broader playable-OVER baseline on calendar return."
+    ]
+  },
+  "authorization": {
+    "candidate_authorization_enabled": false,
+    "staking_enabled": false,
+    "certificate_status": "NO_ACTIVE_PROSPECTIVE_CERTIFICATE"
+  }
+}
