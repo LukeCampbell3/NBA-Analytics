@@ -42,10 +42,12 @@ MLB_DATA_UPDATER = REPO_ROOT / "Player-Predictor" / "scripts" / "update_mlb_proc
 MLB_GENERATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "generate_daily_prediction_pool.py"
 MLB_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_high_precision_predictions.py"
 MLB_CONFIDENCE_CALIBRATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "live_board_confidence.py"
+MLB_PICK_SURVIVAL_MODEL = REPO_ROOT / "sports" / "mlb" / "scripts" / "pick_survival_model.py"
 MLB_MAX_WINRATE_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_max_winrate_board.py"
 MLB_EXPORTER = REPO_ROOT / "sports" / "mlb" / "scripts" / "export_web_prediction_payload.py"
 MLB_WEB_JSON = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "daily_predictions.json"
 MLB_PRIMARY_POLICY_PROFILE = "premium_over_pitcher_v5"
+MLB_PICK_SURVIVAL_TOP_K = 3
 MLB_PRIMARY_POLICY_ARGS = [
     "--top-n", "3",
     "--require-real-market-source",
@@ -587,6 +589,20 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
                 "--official-api-fallback",
             ],
         )
+        if MLB_PICK_SURVIVAL_MODEL.exists():
+            run_step(
+                "Train MLB Pick-Survival Shadow Model",
+                [
+                    args.python,
+                    str(MLB_PICK_SURVIVAL_MODEL),
+                    "--season",
+                    str(pool_date.year),
+                    "--before-date",
+                    pool_date.isoformat(),
+                    "--top-k",
+                    str(MLB_PICK_SURVIVAL_TOP_K),
+                ],
+            )
 
     def run_selector_for(
         active_pool_csv: Path,

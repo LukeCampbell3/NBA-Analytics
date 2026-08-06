@@ -1,0 +1,489 @@
+{
+  "schema_version": 1,
+  "model_version": "mlb_pick_survival_logit_v2",
+  "status": "shadow",
+  "shadow_only": true,
+  "objective": "expanding_window_daily_top_k_win_rate_with_bounded_roi_and_brier_tiebreak",
+  "calibration_method": "regularized_logistic_direct_probability",
+  "candidate_sides": "both_confirmed_sides",
+  "research_basis": {
+    "time_ordered_validation": "https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html",
+    "out_of_sample_calibration": "https://scikit-learn.org/stable/modules/calibration.html",
+    "beta_calibration_considered": "https://proceedings.mlr.press/v54/kull17a.html",
+    "selective_abstention": "https://proceedings.mlr.press/v130/gangrade21a.html"
+  },
+  "priced_rows_only": true,
+  "real_market_rows_only": true,
+  "strict_history_cutoff": true,
+  "training_rows": 577,
+  "training_dates": 11,
+  "training_start_date": "2026-04-27",
+  "training_end_date": "2026-07-29",
+  "minimum_segment_rows": 10,
+  "segment_support": {
+    "ER|OVER": 14,
+    "ER|UNDER": 19,
+    "HR|OVER": 1,
+    "K|OVER": 10,
+    "K|UNDER": 14,
+    "R|OVER": 125,
+    "R|UNDER": 291,
+    "TB|OVER": 32,
+    "TB|UNDER": 71
+  },
+  "split": {
+    "initial_training_end_date": "2026-05-01",
+    "expanding_validation_start_date": "2026-05-02",
+    "expanding_validation_end_date": "2026-06-21",
+    "expanding_validation_dates": 4,
+    "holdout_start_date": "2026-06-26",
+    "holdout_end_date": "2026-07-29"
+  },
+  "selected_hyperparameters": {
+    "c": 0.1,
+    "roi_weight": 0.2,
+    "top_k": 3
+  },
+  "expanding_oof_validation": {
+    "probability_metrics": {
+      "rows": 266,
+      "dates": 4,
+      "wins": 154,
+      "win_rate": 0.5789473684210527,
+      "mean_probability": 0.5011820124706335,
+      "brier_score": 0.21358542875993436,
+      "log_loss": 0.6186136274967102
+    },
+    "survival_top_k": {
+      "rows": 12,
+      "days": 4,
+      "wins": 11,
+      "win_rate": 0.9166666666666666,
+      "win_rate_wilson_95_low": 0.6461140782014047,
+      "win_rate_wilson_95_high": 0.9851352905492264,
+      "roi": 0.4965128179131148,
+      "roi_day_bootstrap_95_low": 0.14808886204235042,
+      "roi_day_bootstrap_95_high": 0.7378419452887538,
+      "parlay_days": 4,
+      "parlay_roi": 2.4540452876798793,
+      "diversified_parlay_constraint": "maximum_one_leg_per_game",
+      "diversified_parlay_days": 4,
+      "diversified_parlay_roi": 2.4540452876798793
+    },
+    "baseline_top_k": {
+      "rows": 12,
+      "days": 4,
+      "wins": 10,
+      "win_rate": 0.8333333333333334,
+      "win_rate_wilson_95_low": 0.5519636426153274,
+      "win_rate_wilson_95_high": 0.9530358523851776,
+      "roi": 0.2567260945015724,
+      "roi_day_bootstrap_95_low": -0.26030132252584465,
+      "roi_day_bootstrap_95_high": 0.5932501688011246,
+      "parlay_days": 4,
+      "parlay_roi": 1.6616410478754153,
+      "diversified_parlay_constraint": "maximum_one_leg_per_game",
+      "diversified_parlay_days": 4,
+      "diversified_parlay_roi": 0.5929954078012035
+    }
+  },
+  "rolling_origin_validation": {
+    "probability_metrics": {
+      "rows": 319,
+      "dates": 7,
+      "wins": 187,
+      "win_rate": 0.5862068965517241,
+      "mean_probability": 0.5119452180236456,
+      "brier_score": 0.20917986091476318,
+      "log_loss": 0.6086260921658371
+    },
+    "baseline_probability_metrics": {
+      "rows": 319,
+      "dates": 7,
+      "wins": 187,
+      "win_rate": 0.5862068965517241,
+      "mean_probability": 0.5734184727536028,
+      "brier_score": 0.1990857203929494,
+      "log_loss": 0.5797655683711942
+    },
+    "survival_top_k": {
+      "rows": 19,
+      "days": 7,
+      "wins": 18,
+      "win_rate": 0.9473684210526315,
+      "win_rate_wilson_95_low": 0.7536078466345479,
+      "win_rate_wilson_95_high": 0.99064824750947,
+      "roi": 0.5520430226588432,
+      "roi_day_bootstrap_95_low": 0.3297513570131516,
+      "roi_day_bootstrap_95_high": 0.7044614188960887,
+      "parlay_days": 6,
+      "parlay_roi": 2.8060640192664383,
+      "diversified_parlay_constraint": "maximum_one_leg_per_game",
+      "diversified_parlay_days": 6,
+      "diversified_parlay_roi": 2.8060640192664383
+    },
+    "baseline_top_k": {
+      "rows": 19,
+      "days": 7,
+      "wins": 17,
+      "win_rate": 0.8947368421052632,
+      "win_rate_wilson_95_low": 0.686054495051583,
+      "win_rate_wilson_95_high": 0.9706420586049034,
+      "roi": 0.35653798943508763,
+      "roi_day_bootstrap_95_low": 0.006393861892583112,
+      "roi_day_bootstrap_95_high": 0.5881302950122722,
+      "parlay_days": 6,
+      "parlay_roi": 1.9820228416075676,
+      "diversified_parlay_constraint": "maximum_one_leg_per_game",
+      "diversified_parlay_days": 6,
+      "diversified_parlay_roi": 1.292779753868239
+    }
+  },
+  "validation_trials": [
+    {
+      "c": 0.003,
+      "roi_weight": 0.0,
+      "objective": 0.9632189486633698,
+      "brier_score": 0.23267860863061135,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.38790808285489137
+    },
+    {
+      "c": 0.003,
+      "roi_weight": 0.025,
+      "objective": 0.9664657019101229,
+      "brier_score": 0.23267860863061135,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.40955310449991306
+    },
+    {
+      "c": 0.003,
+      "roi_weight": 0.05,
+      "objective": 0.9762980681254679,
+      "brier_score": 0.23267860863061135,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.4751022126022126
+    },
+    {
+      "c": 0.003,
+      "roi_weight": 0.1,
+      "objective": 0.8764088837283048,
+      "brier_score": 0.23267860863061135,
+      "top_k_win_rate": 0.8333333333333334,
+      "top_k_roi": 0.3647298721766807
+    },
+    {
+      "c": 0.003,
+      "roi_weight": 0.2,
+      "objective": 0.8966994029018027,
+      "brier_score": 0.23267860863061135,
+      "top_k_win_rate": 0.8333333333333334,
+      "top_k_roi": 0.5209203483671568
+    },
+    {
+      "c": 0.01,
+      "roi_weight": 0.0,
+      "objective": 0.9638289662769562,
+      "brier_score": 0.220478256358882,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.38790808285489137
+    },
+    {
+      "c": 0.01,
+      "roi_weight": 0.025,
+      "objective": 0.9670757195237094,
+      "brier_score": 0.220478256358882,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.409553104499913
+    },
+    {
+      "c": 0.01,
+      "roi_weight": 0.05,
+      "objective": 0.9703224727704627,
+      "brier_score": 0.220478256358882,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.43119812614493463
+    },
+    {
+      "c": 0.01,
+      "roi_weight": 0.1,
+      "objective": 0.9780605680085579,
+      "brier_score": 0.220478256358882,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.48278542773223626
+    },
+    {
+      "c": 0.01,
+      "roi_weight": 0.2,
+      "objective": 0.8770189013418913,
+      "brier_score": 0.220478256358882,
+      "top_k_win_rate": 0.8333333333333334,
+      "top_k_roi": 0.3647298721766807
+    },
+    {
+      "c": 0.03,
+      "roi_weight": 0.0,
+      "objective": 0.9673593361194609,
+      "brier_score": 0.2148059244438519,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.40955310449991295
+    },
+    {
+      "c": 0.03,
+      "roi_weight": 0.025,
+      "objective": 0.9673593361194609,
+      "brier_score": 0.2148059244438519,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.40955310449991295
+    },
+    {
+      "c": 0.03,
+      "roi_weight": 0.05,
+      "objective": 0.9673593361194609,
+      "brier_score": 0.2148059244438519,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.40955310449991295
+    },
+    {
+      "c": 0.03,
+      "roi_weight": 0.1,
+      "objective": 0.9783441846043094,
+      "brier_score": 0.2148059244438519,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.48278542773223626
+    },
+    {
+      "c": 0.03,
+      "roi_weight": 0.2,
+      "objective": 0.8773025179376428,
+      "brier_score": 0.2148059244438519,
+      "top_k_win_rate": 0.8333333333333334,
+      "top_k_roi": 0.3647298721766807
+    },
+    {
+      "c": 0.1,
+      "roi_weight": 0.0,
+      "objective": 0.9625335864651808,
+      "brier_score": 0.21358542875993436,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.37697460824340623
+    },
+    {
+      "c": 0.1,
+      "roi_weight": 0.025,
+      "objective": 0.9687565301881246,
+      "brier_score": 0.21358542875993436,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.4184608997296977
+    },
+    {
+      "c": 0.1,
+      "roi_weight": 0.05,
+      "objective": 0.9687565301881246,
+      "brier_score": 0.21358542875993436,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.4184608997296977
+    },
+    {
+      "c": 0.1,
+      "roi_weight": 0.1,
+      "objective": 0.9709946209459401,
+      "brier_score": 0.21358542875993436,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.43338150478180154
+    },
+    {
+      "c": 0.1,
+      "roi_weight": 0.2,
+      "objective": 0.9804643179156372,
+      "brier_score": 0.21358542875993436,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.4965128179131148
+    },
+    {
+      "c": 0.3,
+      "roi_weight": 0.0,
+      "objective": 0.9603130706164452,
+      "brier_score": 0.21395064355000926,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.36229290751519394
+    },
+    {
+      "c": 0.3,
+      "roi_weight": 0.025,
+      "objective": 0.966536014339389,
+      "brier_score": 0.21395064355000926,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.4037791990014854
+    },
+    {
+      "c": 0.3,
+      "roi_weight": 0.05,
+      "objective": 0.9680511658545405,
+      "brier_score": 0.21395064355000926,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.4138802091024955
+    },
+    {
+      "c": 0.3,
+      "roi_weight": 0.1,
+      "objective": 0.9703780056813803,
+      "brier_score": 0.21395064355000926,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.429392474614761
+    },
+    {
+      "c": 0.3,
+      "roi_weight": 0.2,
+      "objective": 0.9709763602064364,
+      "brier_score": 0.21395064355000926,
+      "top_k_win_rate": 0.9166666666666666,
+      "top_k_roi": 0.43338150478180154
+    }
+  ],
+  "holdout": {
+    "probability_metrics": {
+      "rows": 53,
+      "dates": 3,
+      "wins": 33,
+      "win_rate": 0.6226415094339622,
+      "mean_probability": 0.5639067297644582,
+      "brier_score": 0.18757475582895738,
+      "log_loss": 0.5598905844947667
+    },
+    "baseline_probability_metrics": {
+      "rows": 53,
+      "dates": 3,
+      "wins": 33,
+      "win_rate": 0.6226415094339622,
+      "mean_probability": 0.5984570973631542,
+      "brier_score": 0.18952675030426616,
+      "log_loss": 0.552226725955849
+    },
+    "survival_top_k": {
+      "rows": 7,
+      "days": 3,
+      "wins": 7,
+      "win_rate": 1.0,
+      "win_rate_wilson_95_low": 0.6456611570247934,
+      "win_rate_wilson_95_high": 1.0,
+      "roi": 0.5378970000251464,
+      "roi_day_bootstrap_95_low": 0.43478260869565216,
+      "roi_day_bootstrap_95_high": 0.6731884057971015,
+      "parlay_days": 2,
+      "parlay_roi": 2.6923484460023106,
+      "diversified_parlay_constraint": "maximum_one_leg_per_game",
+      "diversified_parlay_days": 2,
+      "diversified_parlay_roi": 2.6923484460023106
+    },
+    "baseline_top_k": {
+      "rows": 7,
+      "days": 3,
+      "wins": 7,
+      "win_rate": 1.0,
+      "win_rate_wilson_95_low": 0.6456611570247934,
+      "win_rate_wilson_95_high": 1.0,
+      "roi": 0.5276440950353993,
+      "roi_day_bootstrap_95_low": 0.4130536130536131,
+      "roi_day_bootstrap_95_high": 0.6731884057971015,
+      "parlay_days": 2,
+      "parlay_roi": 2.6227864290718728,
+      "diversified_parlay_constraint": "maximum_one_leg_per_game",
+      "diversified_parlay_days": 2,
+      "diversified_parlay_roi": 2.6923484460023106
+    }
+  },
+  "promotion_gate": {
+    "decision": "remain_shadow",
+    "checks": {
+      "minimum_30_holdout_plays": false,
+      "minimum_10_holdout_dates": false,
+      "win_rate_not_below_baseline": true,
+      "roi_not_below_baseline": true,
+      "brier_not_above_baseline": true
+    }
+  },
+  "deployment_gate": {
+    "authority": "rank_tiebreaker",
+    "probability_authority": "shadow_only",
+    "affects_eligibility": false,
+    "selection_score_band": 0.01,
+    "checks": {
+      "minimum_18_rolling_picks": true,
+      "minimum_7_rolling_dates": true,
+      "rolling_win_rate_not_below_baseline": true,
+      "rolling_roi_not_below_baseline": true,
+      "rolling_roi_lower_bound_positive": true,
+      "fixed_holdout_win_rate_not_below_baseline": true,
+      "fixed_holdout_roi_not_below_baseline": true
+    }
+  },
+  "feature_contract": {
+    "numeric_features": [
+      "directional_edge",
+      "model_hit_probability",
+      "history_rows",
+      "market_books",
+      "market_line_std",
+      "market_implied_probability"
+    ],
+    "categorical_features": [
+      "target=H",
+      "target=TB",
+      "target=R",
+      "target=HR",
+      "target=RBI",
+      "target=K",
+      "target=ER",
+      "direction=OVER",
+      "direction=UNDER",
+      "player_type=hitter",
+      "player_type=pitcher"
+    ],
+    "means": {
+      "directional_edge": 0.027021428571428474,
+      "model_hit_probability": 0.5442244738308197,
+      "history_rows": 39.0,
+      "market_books": 7.0,
+      "market_line_std": 0.0,
+      "market_implied_probability": 0.5662144272772995
+    },
+    "scales": {
+      "directional_edge": 0.6126375824773896,
+      "model_hit_probability": 0.2334752130988135,
+      "history_rows": 23.300041328420946,
+      "market_books": 1.7995594450921197,
+      "market_line_std": 0.23216254969387695,
+      "market_implied_probability": 0.11193083025985494
+    },
+    "coefficients": {
+      "directional_edge": 0.11288692605735892,
+      "model_hit_probability": 0.694329242845576,
+      "history_rows": 0.025152012987005437,
+      "market_books": -0.10815884739676271,
+      "market_line_std": -0.08958265774955457,
+      "market_implied_probability": 0.10068123783636576,
+      "target=H": 0.0,
+      "target=TB": 0.07860210700106808,
+      "target=R": -0.03278664115443399,
+      "target=HR": -0.014872889215753264,
+      "target=RBI": 0.0,
+      "target=K": -0.08930421177457594,
+      "target=ER": 0.05777961300254914,
+      "direction=OVER": -0.061381971468468154,
+      "direction=UNDER": 0.060799949327322085,
+      "player_type=hitter": 0.030942576630880927,
+      "player_type=pitcher": -0.03152459877202676
+    },
+    "intercept": 0.10199874864165423
+  },
+  "generated_at_utc": "2026-08-06T17:25:44.530217+00:00",
+  "history_before_date": "2026-08-06",
+  "processed_root": "Player-Predictor/Data-Proc-MLB",
+  "market_guardrails": {
+    "minimum_books": 2,
+    "minimum_american_price": -300.0,
+    "maximum_american_price": 250.0,
+    "standard_lines_only": true
+  }
+}

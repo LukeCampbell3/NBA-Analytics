@@ -36,6 +36,11 @@ try:
 except ImportError:
     from live_board_confidence import apply_live_board_calibration
 
+try:
+    from .pick_survival_model import apply_pick_survival_model
+except ImportError:
+    from pick_survival_model import apply_pick_survival_model
+
 
 SCRIPT_PATH = Path(__file__).resolve()
 SPORT_ROOT = SCRIPT_PATH.parents[1]
@@ -155,6 +160,11 @@ class Candidate:
     selection_score: float
     confidence_tier: str
     market_bucket: str
+    survival_probability: float | None = None
+    survival_expected_value: float | None = None
+    survival_model_status: str = "disabled"
+    survival_model_support: int = 0
+    survival_rank_active: bool = False
 
 
 def parse_args() -> argparse.Namespace:
@@ -441,6 +451,17 @@ def parse_args() -> argparse.Namespace:
         help="Disable current-profile target/direction confidence corrections.",
     )
     parser.add_argument(
+        "--pick-survival-cache-json",
+        type=Path,
+        default=None,
+        help="Shadow-only pick-survival model; annotations never change selection ordering or eligibility.",
+    )
+    parser.add_argument(
+        "--disable-pick-survival-shadow",
+        action="store_true",
+        help="Disable shadow pick-survival annotations.",
+    )
+    parser.add_argument(
         "--allow-synthetic-unders",
         action="store_true",
         help="Allow synthetic under positions. Default behavior keeps synthetic fallback boards over-only.",
@@ -521,7 +542,24 @@ def default_live_confidence_cache_path(season: int) -> Path:
     return DEFAULT_CALIBRATION_ROOT / f"live_board_confidence_calibration_{int(season)}.json"
 
 
+def default_pick_survival_cache_path(season: int) -> Path:
+    return DEFAULT_CALIBRATION_ROOT / f"pick_survival_model_{int(season)}.json"
+
+
 def load_live_confidence_calibration(path: Path | None, run_date: date | None) -> dict | None:
+    if path is None or not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    cutoff = parse_date(payload.get("history_before_date"))
+    if run_date is not None and cutoff is not None and cutoff > run_date:
+        return None
+    return payload
+
+
+def load_pick_survival_model(path: Path | None, run_date: date | None) -> dict | None:
     if path is None or not path.exists():
         return None
     try:
@@ -1718,6 +1756,7 @@ def load_candidates(
     bet_profile_prior_strength: float = 80.0,
     min_market_availability_rows: int = 12,
     prefer_confident_side: bool = False,
+    pick_survival_model: dict | None = None,
 ) -> list[Candidate]:
     candidates: list[Candidate] = []
     with open(pool_csv, "r", encoding="utf-8", newline="") as handle:
@@ -1738,6 +1777,13 @@ def load_candidates(
                 prefer_confident_side=prefer_confident_side,
             )
             if candidate is not None:
+                (
+                    candidate.survival_probability,
+                    candidate.survival_expected_value,
+                    candidate.survival_model_status,
+                    candidate.survival_model_support,
+                    candidate.survival_rank_active,
+                ) = apply_pick_survival_model(candidate, pick_survival_model)
                 candidates.append(candidate)
     return candidates
 
@@ -1992,6 +2038,12 @@ def select_top_candidates(candidates: list[Candidate], args: argparse.Namespace)
     ordered = sorted(
         candidates,
         key=lambda row: (
+            round(row.selection_score, 2) if row.survival_rank_active else row.selection_score,
+            (
+                row.survival_probability
+                if row.survival_rank_active and row.survival_probability is not None
+                else row.selection_score
+            ),
             row.selection_score,
             (row.expected_value_per_unit if row.expected_value_per_unit is not None else -999.0),
             1.0 if row.price_confirmed else 0.0,
@@ -2190,6 +2242,11 @@ def write_selected_csv(path: Path, selected: list[Candidate], args: argparse.Nam
         "Live_Confidence_Calibration_Key",
         "Live_Confidence_Calibration_Support",
         "Live_Confidence_Calibration_Adjustment",
+        "Pick_Survival_Probability_Shadow",
+        "Pick_Survival_EV_Shadow",
+        "Pick_Survival_Model_Status",
+        "Pick_Survival_Model_Support",
+        "Pick_Survival_Rank_Active",
         "Market_Implied_Probability",
         "Expected_Value_Per_Unit",
         "Price_Confirmed",
@@ -2288,6 +2345,11 @@ def write_selected_csv(path: Path, selected: list[Candidate], args: argparse.Nam
                     "Live_Confidence_Calibration_Key": candidate.live_confidence_calibration_key,
                     "Live_Confidence_Calibration_Support": candidate.live_confidence_calibration_support,
                     "Live_Confidence_Calibration_Adjustment": f"{candidate.live_confidence_calibration_adjustment:.6f}",
+                    "Pick_Survival_Probability_Shadow": "" if candidate.survival_probability is None else f"{candidate.survival_probability:.6f}",
+                    "Pick_Survival_EV_Shadow": "" if candidate.survival_expected_value is None else f"{candidate.survival_expected_value:.6f}",
+                    "Pick_Survival_Model_Status": candidate.survival_model_status,
+                    "Pick_Survival_Model_Support": candidate.survival_model_support,
+                    "Pick_Survival_Rank_Active": int(candidate.survival_rank_active),
                     "Market_Implied_Probability": "" if candidate.market_implied_probability is None else f"{candidate.market_implied_probability:.6f}",
                     "Expected_Value_Per_Unit": "" if candidate.expected_value_per_unit is None else f"{candidate.expected_value_per_unit:.6f}",
                     "Price_Confirmed": int(candidate.price_confirmed),
@@ -2322,6 +2384,7 @@ def write_summary_json(
     calibration: dict | None,
     bet_profile_priors: dict | None,
     live_confidence_calibration: dict | None,
+    pick_survival_model: dict | None,
 ) -> None:
     by_target = Counter(candidate.target for candidate in selected)
     by_direction = Counter(candidate.direction for candidate in selected)
@@ -2403,6 +2466,7 @@ def write_summary_json(
             "min_market_availability_rows": int(args.min_market_availability_rows),
             "historical_bet_profiles_enabled": not bool(args.disable_historical_bet_profiles),
             "live_confidence_calibration_enabled": not bool(args.disable_live_confidence_calibration),
+            "pick_survival_shadow_enabled": not bool(args.disable_pick_survival_shadow),
             "allow_synthetic_unders": bool(args.allow_synthetic_unders),
             "prefer_confident_side": bool(args.prefer_confident_side),
             "min_historical_bet_profile_support": int(args.min_historical_bet_profile_support),
@@ -2431,6 +2495,22 @@ def write_summary_json(
             "brier_score_before": (live_confidence_calibration or {}).get("brier_score_before"),
             "brier_score_after": (live_confidence_calibration or {}).get("brier_score_after"),
             "walk_forward_validation": (live_confidence_calibration or {}).get("walk_forward_validation", {}),
+        },
+        "pick_survival_shadow": {
+            "cache_json": report_path(args.pick_survival_cache_json) if args.pick_survival_cache_json else "",
+            "model_version": (pick_survival_model or {}).get("model_version"),
+            "status": (pick_survival_model or {}).get("status", "disabled"),
+            "shadow_only": bool((pick_survival_model or {}).get("shadow_only", True)),
+            "history_before_date": (pick_survival_model or {}).get("history_before_date"),
+            "training_rows": int((pick_survival_model or {}).get("training_rows", 0)),
+            "training_dates": int((pick_survival_model or {}).get("training_dates", 0)),
+            "expanding_oof_validation": (pick_survival_model or {}).get("expanding_oof_validation", {}),
+            "rolling_origin_validation": (pick_survival_model or {}).get("rolling_origin_validation", {}),
+            "holdout": (pick_survival_model or {}).get("holdout", {}),
+            "promotion_gate": (pick_survival_model or {}).get("promotion_gate", {}),
+            "deployment_gate": (pick_survival_model or {}).get("deployment_gate", {}),
+            "affects_selection": (pick_survival_model or {}).get("deployment_gate", {}).get("authority")
+            == "rank_tiebreaker",
         },
         "filter_rejections": dict(rejected),
         "avg_abs_edge": round(sum(candidate.abs_edge for candidate in selected) / len(selected), 6) if selected else 0.0,
@@ -2501,6 +2581,11 @@ def write_summary_json(
                 "live_confidence_calibration_key": candidate.live_confidence_calibration_key,
                 "live_confidence_calibration_support": int(candidate.live_confidence_calibration_support),
                 "live_confidence_calibration_adjustment": round(candidate.live_confidence_calibration_adjustment, 4),
+                "pick_survival_probability_shadow": None if candidate.survival_probability is None else round(candidate.survival_probability, 4),
+                "pick_survival_ev_shadow": None if candidate.survival_expected_value is None else round(candidate.survival_expected_value, 4),
+                "pick_survival_model_status": candidate.survival_model_status,
+                "pick_survival_model_support": int(candidate.survival_model_support),
+                "pick_survival_rank_active": bool(candidate.survival_rank_active),
                 "historical_market_availability_rate": round(candidate.historical_market_availability_rate, 4),
                 "expected_value_per_unit": None if candidate.expected_value_per_unit is None else round(candidate.expected_value_per_unit, 4),
                 "precision_score": round(candidate.precision_score, 4),
@@ -2526,6 +2611,8 @@ def main() -> None:
         args.bet_profile_cache_json = default_bet_profile_cache_path(args.history_season)
     if args.live_confidence_cache_json is None and history_before_date is None:
         args.live_confidence_cache_json = default_live_confidence_cache_path(args.history_season)
+    if args.pick_survival_cache_json is None and history_before_date is None:
+        args.pick_survival_cache_json = default_pick_survival_cache_path(args.history_season)
 
     default_csv, default_summary = default_output_paths(args.pool_csv)
     if args.out_csv is None:
@@ -2558,6 +2645,13 @@ def main() -> None:
             args.live_confidence_cache_json.resolve() if args.live_confidence_cache_json else None,
             pool_run_date,
         )
+    pick_survival_model = None
+    if not args.disable_pick_survival_shadow:
+        pool_run_date = infer_pool_run_date(args.pool_csv)
+        pick_survival_model = load_pick_survival_model(
+            args.pick_survival_cache_json.resolve() if args.pick_survival_cache_json else None,
+            pool_run_date,
+        )
 
     candidates = load_candidates(
         args.pool_csv,
@@ -2572,6 +2666,7 @@ def main() -> None:
         bet_profile_prior_strength=float(args.bet_profile_prior_strength),
         min_market_availability_rows=int(args.min_market_availability_rows),
         prefer_confident_side=bool(args.prefer_confident_side),
+        pick_survival_model=pick_survival_model,
     )
     eligible, rejected = filter_candidates(candidates, args)
     selected = select_top_candidates(eligible, args)
@@ -2588,6 +2683,7 @@ def main() -> None:
         calibration,
         bet_profile_priors,
         live_confidence_calibration,
+        pick_survival_model,
     )
 
     print("\n" + "=" * 88)

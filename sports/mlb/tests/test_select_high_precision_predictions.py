@@ -503,6 +503,45 @@ def test_select_top_candidates_soft_cap_allows_only_elite_expansion() -> None:
     ]
 
 
+def test_survival_model_only_breaks_ties_inside_selection_score_band() -> None:
+    candidates = []
+    for idx, (score, survival_probability) in enumerate(
+        ((0.704, 0.55), (0.701, 0.70), (0.714, 0.40))
+    ):
+        candidate = selector.build_candidate(
+            _row(
+                player=f"Tie Player {idx}",
+                team=f"T{idx}",
+                game_id=f"tie_{idx}",
+                target="TB",
+                prediction=1.9,
+                line=1.5,
+                edge=0.4,
+            ),
+            calibration=None,
+            min_history_bucket_rows=50,
+            max_history_prior_weight=0.35,
+            history_prior_strength=400.0,
+        )
+        assert candidate is not None
+        candidate.selection_score = score
+        candidate.survival_probability = survival_probability
+        candidate.survival_rank_active = True
+        candidates.append(candidate)
+
+    args = selector.argparse.Namespace(
+        top_n=2,
+        max_per_player=1,
+        max_per_game=2,
+        max_per_team=3,
+        max_per_market_bucket=4,
+    )
+
+    selected = selector.select_top_candidates(candidates, args)
+
+    assert [candidate.player for candidate in selected] == ["Tie Player 2", "Tie Player 1"]
+
+
 def test_filter_candidates_uses_validated_over_profile_instead_of_general_probability_floor() -> None:
     row = _row(
         player="Moderate Over",
