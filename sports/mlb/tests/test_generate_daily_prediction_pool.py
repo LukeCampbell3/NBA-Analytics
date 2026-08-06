@@ -13,6 +13,29 @@ sys.path.insert(0, str(MLB_SCRIPTS_ROOT))
 import generate_daily_prediction_pool as generator
 
 
+def test_team_context_keys_use_canonical_player_ids() -> None:
+    frame = pd.DataFrame(
+        {
+            "Date": ["2026-08-04"],
+            "_game_date": [pd.Timestamp("2026-08-04")],
+            "Game_Index": [1],
+            "Player": ["Hunter_Brown"],
+            "Player_Type": ["pitcher"],
+            "Team": ["HOU"],
+            "Was_Starter": [1],
+            "IP": [6.0],
+        }
+    )
+
+    _, _, recent_pitchers, latest_rows = generator.build_team_contexts(
+        [frame],
+        pd.Timestamp("2026-08-05"),
+    )
+
+    assert "hunter_brown" in latest_rows
+    assert recent_pitchers["HOU"] == ["hunter_brown"]
+
+
 def test_resolve_scheduled_player_team_prefers_market_identity() -> None:
     market_row = pd.Series({"Market_Player_Team": "CWS"})
     stale_history = pd.Series({"Team": "NYY", "Team_ID": 147})
@@ -79,6 +102,39 @@ def test_projection_context_regresses_short_term_total_base_spike() -> None:
     )
 
     assert prediction < 3.0
+
+
+def test_pitcher_projection_uses_recent_starter_workload() -> None:
+    history = pd.DataFrame(
+        {
+            "K": [2.0, 6.0, 7.0, 5.0, 8.0, 6.0],
+            "IP": [1.0, 5.2, 6.0, 5.1, 6.1, 5.2],
+            "Pitches": [24.0, 84.0, 96.0, 88.0, 101.0, 92.0],
+            "Was_Starter": [0, 1, 1, 1, 1, 1],
+        }
+    )
+    spec = next(item for item in generator.TARGET_SPECS if item.target == "K")
+    context = generator.build_player_projection_context(history, spec)
+    latest = pd.Series(
+        {
+            "K_rolling_avg": 3.0,
+            "K_lag1": 3.0,
+            "Park_Factor": 1.0,
+            "Opp_Lineup_K_rate_3": 0.225,
+        }
+    )
+
+    prediction, _ = generator.project_from_latest_row(
+        latest,
+        spec,
+        opponent_context={"opp_lineup_k_rate": 0.225},
+        player_context=context,
+    )
+
+    assert context["starter_history_rows"] == 5
+    assert context["projected_ip"] >= 5.0
+    assert context["projected_pitches"] >= 85.0
+    assert prediction > 4.0
 
 
 def test_market_snapshot_prefers_major_book_standard_line_and_best_price(tmp_path: Path) -> None:

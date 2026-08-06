@@ -1,0 +1,117 @@
+{
+  "generated_at_utc": "2026-08-06T02:31:41+00:00",
+  "selection_profile": "pitcher_k_over_workload_v1",
+  "status": "probation",
+  "synthetic_events_used": false,
+  "parlay_eligible": false,
+  "policy": {
+    "direction": "OVER",
+    "minimum_starter_history": 15,
+    "minimum_projected_ip": 5.25,
+    "minimum_projected_pitches": 75.0,
+    "maximum_days_since_history": 14,
+    "minimum_edge": 0.15,
+    "maximum_edge": 1.0,
+    "minimum_model_probability": 0.5,
+    "maximum_model_probability": 0.65,
+    "minimum_books": 5,
+    "minimum_common_books": 2,
+    "minimum_american_price": -130.0,
+    "maximum_american_price": 130.0,
+    "maximum_daily_picks": 1
+  },
+  "projection": {
+    "starter_like_definition": "Was_Starter or at least 3 IP or at least 45 pitches",
+    "workload_window_starts": 5,
+    "projected_workload_weight_recent_3": 0.6,
+    "projected_workload_weight_recent_5": 0.4,
+    "strikeout_projection_weight_workload": 0.65,
+    "strikeout_projection_weight_legacy_model": 0.35
+  },
+  "walk_forward_recovered_market": {
+    "method": "strict prior-outing workload projection against recovered real market lines and archived prices",
+    "starter_confirmation": "retrospective starter-like proxy because probable-starter identity was not archived",
+    "graded_picks": 4,
+    "wins": 2,
+    "losses": 2,
+    "hit_rate": 0.5,
+    "roi_per_unit": -0.084605,
+    "average_model_probability": 0.581072,
+    "brier_score": 0.255594,
+    "wilson_95_low": 0.150039,
+    "wilson_95_high": 0.849961,
+    "first_event_date": "2026-06-19",
+    "last_event_date": "2026-06-26"
+  },
+  "untouched_archived_holdout": {
+    "method": "one highest-ranked qualifying pick per day from archived Aug. 2-4 pools, exact named-book prices, MLB probable starters, and MLB official outcomes",
+    "graded_picks": 3,
+    "wins": 3,
+    "losses": 0,
+    "hit_rate": 1.0,
+    "roi_per_unit": 0.919697,
+    "average_model_probability": 0.574067,
+    "wilson_95_low": 0.438503,
+    "wilson_95_high": 1.0,
+    "first_event_date": "2026-08-02",
+    "last_event_date": "2026-08-04",
+    "picks": [
+      {
+        "date": "2026-08-02",
+        "player": "Kumar Rocker",
+        "line": 4.5,
+        "actual_strikeouts": 5,
+        "american_price": -125.0,
+        "result": "win"
+      },
+      {
+        "date": "2026-08-03",
+        "player": "Michael King",
+        "line": 4.5,
+        "actual_strikeouts": 5,
+        "american_price": 105.0,
+        "result": "win"
+      },
+      {
+        "date": "2026-08-04",
+        "player": "Brady Singer",
+        "line": 4.5,
+        "actual_strikeouts": 6,
+        "american_price": -110.0,
+        "result": "win"
+      }
+    ]
+  },
+  "combined_evidence": {
+    "graded_picks": 7,
+    "wins": 5,
+    "losses": 2,
+    "hit_rate": 0.714286,
+    "roi_per_unit": 0.34581,
+    "wilson_95_low": 0.358934,
+    "wilson_95_high": 0.917781
+  },
+  "confidence_calibration": {
+    "mode": "shadow_only",
+    "minimum_graded_picks_before_empirical_adjustment": 20,
+    "current_graded_picks": 7,
+    "empirical_adjustment_active": false,
+    "reason": "The profile sample is too small and its recovered-market and untouched-holdout results disagree. Production keeps the bounded model probability and existing K-market calibration until forward support matures."
+  },
+  "promotion_gate": {
+    "minimum_graded_picks": 50,
+    "minimum_wilson_95_low": 0.5238,
+    "eligible_for_review": false,
+    "reasons": [
+      "fewer than 50 graded picks",
+      "combined 95% hit-rate lower bound does not clear the -110 break-even rate",
+      "recovered-market walk-forward subset has negative ROI"
+    ]
+  },
+  "sources": {
+    "processed_history": "Player-Predictor/Data-Proc-MLB",
+    "archived_daily_pools": "sports/mlb/data/predictions/daily_runs/20260802 through 20260804",
+    "probable_starters_and_outcomes": "MLB StatsAPI",
+    "odds": "archived exact named-book daily pool fields"
+  }
+}

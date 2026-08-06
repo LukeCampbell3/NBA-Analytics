@@ -45,7 +45,7 @@ MLB_CONFIDENCE_CALIBRATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "live_boa
 MLB_MAX_WINRATE_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_max_winrate_board.py"
 MLB_EXPORTER = REPO_ROOT / "sports" / "mlb" / "scripts" / "export_web_prediction_payload.py"
 MLB_WEB_JSON = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "daily_predictions.json"
-MLB_PRIMARY_POLICY_PROFILE = "premium_over_first_v4"
+MLB_PRIMARY_POLICY_PROFILE = "premium_over_pitcher_v5"
 MLB_PRIMARY_POLICY_ARGS = [
     "--top-n", "3",
     "--require-real-market-source",
@@ -66,6 +66,19 @@ MLB_PRIMARY_POLICY_ARGS = [
     "--over-min-expected-value", "0.10",
     "--over-max-american-price", "125",
     "--over-min-history-rows", "55",
+    "--enable-pitcher-k-over-profile",
+    "--pitcher-k-min-starter-history", "15",
+    "--pitcher-k-min-projected-ip", "5.25",
+    "--pitcher-k-min-projected-pitches", "75",
+    "--pitcher-k-max-days-since-history", "14",
+    "--pitcher-k-min-abs-edge", "0.15",
+    "--pitcher-k-max-abs-edge", "1.0",
+    "--pitcher-k-min-model-hit-probability", "0.50",
+    "--pitcher-k-max-model-hit-probability", "0.65",
+    "--pitcher-k-min-expected-value", "0.0",
+    "--pitcher-k-min-american-price", "-130",
+    "--pitcher-k-max-american-price", "130",
+    "--max-pitcher-k-picks", "1",
     "--core-min-american-price", "-250",
     "--core-max-american-price", "-200",
     "--min-over-picks", "3",

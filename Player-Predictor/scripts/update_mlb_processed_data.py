@@ -800,7 +800,7 @@ def build_processed_frames(
     ]
     pitcher_keep = [
         "Date", "Player", "Player_Type", "Team", "Opponent", "Season", "Game_ID", "Game_Index", "Team_ID", "Opponent_ID",
-        "Is_Home", "K", "ER", "ERA", "IP", "BF", "Pitches", "BB_allowed", "H_allowed", "HR_allowed", "FIP", "xFIP",
+        "Is_Home", "Was_Starter", "K", "ER", "ERA", "IP", "BF", "Pitches", "BB_allowed", "H_allowed", "HR_allowed", "FIP", "xFIP",
         "CSW%", "Whiff%", "Opp_Lineup_wOBA_3", "Opp_Lineup_K_rate_3", "Park_Factor", "Wind_Out_MPH", "Temp_F", "Did_Not_Play",
         "Rest_Days", "Month_sin", "Month_cos", "DayOfWeek_sin", "DayOfWeek_cos", "Market_K", "Market_ER", "Market_ERA",
         "Synthetic_Market_K", "Synthetic_Market_ER", "Synthetic_Market_ERA", "Market_Source_K", "Market_Source_ER",

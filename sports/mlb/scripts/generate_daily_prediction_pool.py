@@ -58,6 +58,9 @@ STANDARD_MARKET_LINES = {
     "HR": 0.5,
     "RBI": 0.5,
 }
+STARTER_LIKE_MIN_IP = 3.0
+STARTER_LIKE_MIN_PITCHES = 45.0
+PITCHER_WORKLOAD_RECENT_STARTS = 5
 
 
 @dataclass(frozen=True)
@@ -604,7 +607,9 @@ def build_team_contexts(
         if history.empty:
             continue
         latest = history.sort_values(["_game_date", "Game_Index"]).iloc[-1]
-        latest_player_rows[str(latest.get("Player", ""))] = latest
+        player_key = normalize_player_id(str(latest.get("Player", "")))
+        if player_key:
+            latest_player_rows[player_key] = latest
 
     hitter_rows = combined.loc[combined.get("Player_Type", "").astype(str).str.lower() == "hitter"].copy()
     if not hitter_rows.empty:
@@ -648,7 +653,7 @@ def build_team_contexts(
             ordered = []
             seen: set[str] = set()
             for _, row in group.iterrows():
-                player = str(row.get("Player", "")).strip()
+                player = normalize_player_id(str(row.get("Player", "")))
                 if not player or player in seen:
                     continue
                 ordered.append(player)
@@ -672,7 +677,7 @@ def build_team_contexts(
             ordered = []
             seen: set[str] = set()
             for _, row in group.iterrows():
-                player = str(row.get("Player", "")).strip()
+                player = normalize_player_id(str(row.get("Player", "")))
                 if not player or player in seen:
                     continue
                 ordered.append(player)
@@ -777,11 +782,17 @@ def project_from_latest_row(
             )
     else:
         if spec.target == "K":
-            prediction = (
+            legacy_prediction = (
                 (0.72 * baseline)
                 + (0.14 * lag_value)
                 + (8.0 * (opp_lineup_k_rate - 0.20))
                 + (0.10 * (park_factor - 1.0) * -4.0)
+            )
+            workload_prediction = to_float(player_context.get("workload_k_projection"))
+            prediction = (
+                (0.65 * workload_prediction) + (0.35 * legacy_prediction)
+                if workload_prediction is not None
+                else legacy_prediction
             )
         elif spec.target == "ER":
             prediction = (
@@ -838,6 +849,44 @@ def build_player_projection_context(history_frame: pd.DataFrame, spec: TargetSpe
         batting_orders = pd.to_numeric(recent["Batting_Order"], errors="coerce").dropna()
         if not batting_orders.empty:
             context["batting_order_median"] = float(batting_orders.median())
+    if spec.role == "pitcher":
+        pitcher_history = history_frame.copy()
+        innings = pd.to_numeric(pitcher_history.get("IP"), errors="coerce")
+        pitches = pd.to_numeric(pitcher_history.get("Pitches"), errors="coerce")
+        if "Was_Starter" in pitcher_history.columns:
+            starter_flag = pd.to_numeric(pitcher_history["Was_Starter"], errors="coerce").fillna(0.0)
+            starter_like = pitcher_history.loc[starter_flag.gt(0.0)].copy()
+        else:
+            starter_like = pitcher_history.loc[
+                innings.ge(STARTER_LIKE_MIN_IP) | pitches.ge(STARTER_LIKE_MIN_PITCHES)
+            ].copy()
+        recent_starts = starter_like.tail(PITCHER_WORKLOAD_RECENT_STARTS)
+        if not recent_starts.empty:
+            recent_three = recent_starts.tail(3)
+            recent_ip = pd.to_numeric(recent_starts.get("IP"), errors="coerce").dropna()
+            recent_three_ip = pd.to_numeric(recent_three.get("IP"), errors="coerce").dropna()
+            recent_pitches = pd.to_numeric(recent_starts.get("Pitches"), errors="coerce").dropna()
+            recent_three_pitches = pd.to_numeric(recent_three.get("Pitches"), errors="coerce").dropna()
+            recent_k = pd.to_numeric(recent_starts.get("K"), errors="coerce")
+            projected_ip = (
+                (0.60 * float(recent_three_ip.mean())) + (0.40 * float(recent_ip.mean()))
+                if not recent_three_ip.empty and not recent_ip.empty
+                else None
+            )
+            projected_pitches = (
+                (0.60 * float(recent_three_pitches.mean())) + (0.40 * float(recent_pitches.mean()))
+                if not recent_three_pitches.empty and not recent_pitches.empty
+                else None
+            )
+            innings_sum = float(recent_ip.sum()) if not recent_ip.empty else 0.0
+            strikeouts_sum = float(recent_k.fillna(0.0).sum())
+            if projected_ip is not None:
+                context["projected_ip"] = max(0.0, projected_ip)
+            if projected_pitches is not None:
+                context["projected_pitches"] = max(0.0, projected_pitches)
+            if projected_ip is not None and innings_sum > 0.0:
+                context["workload_k_projection"] = max(0.0, (strikeouts_sum / innings_sum) * projected_ip)
+        context["starter_history_rows"] = float(len(starter_like))
     return context
 
 
@@ -855,7 +904,7 @@ def build_upcoming_schedule_pool_rows(
 
     market_snapshot = load_market_snapshot(market_root, requested_run_date)
     market_by_player = {
-        str(row.get("Player", "")).strip(): row
+        normalize_player_id(str(row.get("Player", ""))): row
         for _, row in market_snapshot.iterrows()
         if str(row.get("Player", "")).strip()
     }
@@ -867,7 +916,7 @@ def build_upcoming_schedule_pool_rows(
     for frame in frames:
         if frame.empty:
             continue
-        player_name = str(frame.iloc[0].get("Player", "")).strip()
+        player_name = normalize_player_id(str(frame.iloc[0].get("Player", "")))
         if player_name:
             frame_by_player[player_name] = frame
 
@@ -971,11 +1020,12 @@ def build_upcoming_schedule_pool_rows(
                     if dedupe_key in used_players:
                         continue
 
+                    player_context = build_player_projection_context(history_frame, spec)
                     prediction, fallback_market_line = project_from_latest_row(
                         latest_row,
                         spec,
                         opponent_context=opponent_context,
-                        player_context=build_player_projection_context(history_frame, spec),
+                        player_context=player_context,
                     )
                     market_line = fallback_market_line
                     market_source = "synthetic"
@@ -1002,6 +1052,12 @@ def build_upcoming_schedule_pool_rows(
                             "Player": str(latest_row.get("Player", "")).replace("_", " "),
                             "Player_ID": normalize_player_id(str(latest_row.get("Player", ""))),
                             "Player_Type": player_type,
+                            "Starter_Confirmed": int(
+                                player_type == "pitcher" and player_name == probable_pitcher_name
+                            ),
+                            "Starter_History_Rows": int(player_context.get("starter_history_rows", 0.0)),
+                            "Projected_IP": player_context.get("projected_ip"),
+                            "Projected_Pitches": player_context.get("projected_pitches"),
                             "Team": team,
                             "Team_ID": home_team_id if is_home else away_team_id,
                             "Opponent": opponent,
@@ -1083,6 +1139,7 @@ def build_pool_rows(
             last_history_date = history_frame["_game_date"].max() if not history_frame.empty else pd.NaT
 
             for spec in specs:
+                player_context = build_player_projection_context(history_frame, spec)
                 processed_market_line = to_float(current.get(spec.market_col))
                 if processed_market_line is None:
                     continue
@@ -1113,6 +1170,10 @@ def build_pool_rows(
 
                 is_modeled = abs(float(gap)) > 1e-9 and history_rows >= int(min_modeled_history_rows)
                 prediction = float(processed_market_line + gap) if is_modeled else float(baseline)
+                if spec.target == "K" and is_modeled:
+                    workload_prediction = to_float(player_context.get("workload_k_projection"))
+                    if workload_prediction is not None:
+                        prediction = (0.65 * workload_prediction) + (0.35 * prediction)
                 prediction = max(0.0, prediction)
                 edge = float(prediction - market_line)
                 model_selected = "et" if is_modeled else "baseline"
@@ -1131,6 +1192,10 @@ def build_pool_rows(
                         "Player": player_name,
                         "Player_ID": player_id,
                         "Player_Type": player_type,
+                        "Starter_Confirmed": 0,
+                        "Starter_History_Rows": int(player_context.get("starter_history_rows", 0.0)),
+                        "Projected_IP": player_context.get("projected_ip"),
+                        "Projected_Pitches": player_context.get("projected_pitches"),
                         "Team": str(current.get("Team", "") or ""),
                         "Team_ID": to_int_string(current.get("Team_ID")),
                         "Opponent": str(current.get("Opponent", "") or ""),
@@ -1185,6 +1250,10 @@ def write_pool_csv(path: Path, rows: list[dict[str, object]]) -> None:
         "Player",
         "Player_ID",
         "Player_Type",
+        "Starter_Confirmed",
+        "Starter_History_Rows",
+        "Projected_IP",
+        "Projected_Pitches",
         "Team",
         "Team_ID",
         "Opponent",

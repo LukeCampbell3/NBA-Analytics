@@ -407,6 +407,8 @@ def is_mlb_parlay_leg_eligible(
     if historical_bucket_support > 0 and historical_bucket_support < 250:
         return False
     optimized_over = str(selection_profile).strip() == "r_tb_over_moderate_edge_v1"
+    if str(selection_profile).strip() == "pitcher_k_over_workload_v1":
+        return False
     if optimized_over:
         if graded_hit_rate < 0.52 or leg_quality < 0.64:
             return False
@@ -836,6 +838,7 @@ def main() -> None:
         market_over_price = valid_american_price(row.get("Market_Over_Price"))
         market_under_price = valid_american_price(row.get("Market_Under_Price"))
         direction = str(row.get("Direction", "")).strip().upper()
+        selection_profile = str(row.get("Selection_Profile", "core_market_v1")).strip() or "core_market_v1"
         selected_side_price = market_over_price if direction == "OVER" else market_under_price
         opposite_side_price = market_under_price if direction == "OVER" else market_over_price
         selected_sportsbook_key = str(row.get("Selected_Sportsbook_Key", "")).strip().lower()
@@ -870,6 +873,11 @@ def main() -> None:
             risk_flags.append("push_exposure")
         if multi_game_slate:
             risk_flags.append("multi_game_slate_review")
+        if (
+            selection_profile == "pitcher_k_over_workload_v1"
+            and to_int(row.get("Starter_Confirmed")) != 1
+        ):
+            risk_flags.append("starter_unconfirmed")
         parlay_leg_quality = build_mlb_parlay_leg_quality(
             graded_hit_rate=estimated_graded_hit_rate,
             precision_score=precision_score,
@@ -877,7 +885,6 @@ def main() -> None:
             historical_bucket_win_rate=historical_bucket_win_rate,
             expected_value_per_unit=expected_value_per_unit,
         )
-        selection_profile = str(row.get("Selection_Profile", "core_market_v1")).strip() or "core_market_v1"
         live_confidence_calibration_support = to_int(row.get("Live_Confidence_Calibration_Support"))
         parlay_eligible = (
             publication_status == "ready"
@@ -903,6 +910,12 @@ def main() -> None:
                 "player": player_name,
                 "player_display_name": player_name,
                 "player_id": row.get("Player_ID", ""),
+                "player_type": row.get("Player_Type", ""),
+                "starter_confirmed": to_int(row.get("Starter_Confirmed")) == 1,
+                "starter_history_rows": to_int(row.get("Starter_History_Rows")),
+                "projected_ip": to_float(row.get("Projected_IP")),
+                "projected_pitches": to_float(row.get("Projected_Pitches")),
+                "days_since_history": to_int(row.get("Days_Since_History")),
                 "player_mlbam_id": resolved_player_id,
                 "player_headshot_url": build_headshot_url(resolved_player_id),
                 "player_headshot_fallback_url": build_headshot_fallback_url(resolved_player_id),

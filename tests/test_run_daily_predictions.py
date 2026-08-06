@@ -57,9 +57,24 @@ def test_mlb_primary_policy_uses_validated_portfolio_limits() -> None:
     core_min_price_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--core-min-american-price")
     core_price_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--core-max-american-price")
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[over_history_index + 1] == "55"
+    assert "--enable-pitcher-k-over-profile" in shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS
+    pitcher_history_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index(
+        "--pitcher-k-min-starter-history"
+    )
+    pitcher_ip_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index(
+        "--pitcher-k-min-projected-ip"
+    )
+    pitcher_recency_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index(
+        "--pitcher-k-max-days-since-history"
+    )
+    pitcher_cap_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--max-pitcher-k-picks")
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[pitcher_history_index + 1] == "15"
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[pitcher_ip_index + 1] == "5.25"
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[pitcher_recency_index + 1] == "14"
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[pitcher_cap_index + 1] == "1"
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[core_min_price_index + 1] == "-250"
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[core_price_index + 1] == "-200"
-    assert shared_daily_predictions.MLB_PRIMARY_POLICY_PROFILE == "premium_over_first_v4"
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_PROFILE == "premium_over_pitcher_v5"
 
 
 def test_annotate_mlb_summary_keeps_policy_identity_separate_from_publication_state(tmp_path: Path) -> None:
@@ -74,7 +89,7 @@ def test_annotate_mlb_summary_keeps_policy_identity_separate_from_publication_st
     )
 
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
-    assert summary["publication_strategy"] == "premium_over_first_v4"
+    assert summary["publication_strategy"] == "premium_over_pitcher_v5"
     assert summary["publication_state"] == "withheld_current_pool"
 
 

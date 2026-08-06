@@ -55,6 +55,21 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
                     "over_max_model_hit_probability": 0.55,
                     "over_min_expected_value": 0.10,
                     "over_max_american_price": 125.0,
+                    "pitcher_k_over_profile_enabled": True,
+                    "pitcher_k_over_profile": "pitcher_k_over_workload_v1",
+                    "pitcher_k_over_profile_status": "probation",
+                    "pitcher_k_min_starter_history": 15,
+                    "pitcher_k_min_projected_ip": 5.25,
+                    "pitcher_k_min_projected_pitches": 75.0,
+                    "pitcher_k_max_days_since_history": 14,
+                    "pitcher_k_min_abs_edge": 0.15,
+                    "pitcher_k_max_abs_edge": 1.0,
+                    "pitcher_k_min_model_hit_probability": 0.50,
+                    "pitcher_k_max_model_hit_probability": 0.65,
+                    "pitcher_k_min_expected_value": 0.0,
+                    "pitcher_k_min_american_price": -130.0,
+                    "pitcher_k_max_american_price": 130.0,
+                    "max_pitcher_k_picks": 1,
                     "core_min_american_price": -250.0,
                     "core_max_american_price": -200.0,
                     "min_over_picks": 3,
@@ -146,7 +161,7 @@ def test_validate_publication_rejects_legacy_mlb_pool_policy(tmp_path: Path) -> 
     route.parent.mkdir(parents=True, exist_ok=True)
     route.write_text("ok", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="expected premium_over_first_v4"):
+    with pytest.raises(ValueError, match="expected premium_over_pitcher_v5"):
         validate_publication(
             repo_root=tmp_path,
             output_dir=Path("dist"),
@@ -217,4 +232,38 @@ def test_validate_mlb_payload_checks_each_profiled_over_pick(tmp_path: Path) -> 
 
     payload["plays"][0]["model_hit_probability"] = 0.60
     with pytest.raises(ValueError, match="outside the validated OVER probability corridor"):
+        validate_mlb_payload(payload, label="test")
+
+
+def test_validate_mlb_payload_checks_pitcher_workload_and_recency(tmp_path: Path) -> None:
+    payload_path = tmp_path / "payload.json"
+    write_payload(payload_path, run_date="2026-04-28", sport="mlb")
+    payload = json.loads(payload_path.read_text(encoding="utf-8"))
+    payload["plays"] = [
+        {
+            "selection_profile": "pitcher_k_over_workload_v1",
+            "market_source": "real",
+            "market_books": 6,
+            "market_common_books": 3,
+            "price_confirmed": True,
+            "selected_side_price": 105,
+            "selected_sportsbook_key": "fanduel",
+            "selected_sportsbook": "FanDuel",
+            "expected_value_per_unit": 0.08,
+            "direction": "OVER",
+            "target": "K",
+            "starter_confirmed": True,
+            "starter_history_rows": 18,
+            "projected_ip": 5.6,
+            "projected_pitches": 88,
+            "days_since_history": 6,
+            "abs_edge": 0.6,
+            "model_hit_probability": 0.58,
+        }
+    ]
+
+    validate_mlb_payload(payload, label="test")
+
+    payload["plays"][0]["days_since_history"] = 15
+    with pytest.raises(ValueError, match="exceeds the pitcher K recency ceiling"):
         validate_mlb_payload(payload, label="test")

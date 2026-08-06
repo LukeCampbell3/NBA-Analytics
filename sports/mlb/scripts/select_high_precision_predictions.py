@@ -49,6 +49,8 @@ RECENT_FORM_STRENGTH = 45.0
 CORE_SELECTION_PROFILE = "core_market_v1"
 OPTIMIZED_OVER_SELECTION_PROFILE = "r_tb_over_moderate_edge_v1"
 OPTIMIZED_OVER_PROFILE_STATUS = "probation"
+PITCHER_K_OVER_SELECTION_PROFILE = "pitcher_k_over_workload_v1"
+PITCHER_K_OVER_PROFILE_STATUS = "probation"
 HISTORICAL_TARGET_SPECS: dict[str, tuple[str, str, str]] = {
     "H": ("H", "Market_H", "H_market_gap"),
     "TB": ("TB", "Market_TB", "TB_market_gap"),
@@ -226,6 +228,28 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=None,
         help="Optional minimum player-history depth for the probationary optimized OVER profile.",
+    )
+    parser.add_argument(
+        "--enable-pitcher-k-over-profile",
+        action="store_true",
+        help="Enable the workload-gated, probable-starter K OVER profile.",
+    )
+    parser.add_argument("--pitcher-k-min-starter-history", type=int, default=15)
+    parser.add_argument("--pitcher-k-min-projected-ip", type=float, default=5.25)
+    parser.add_argument("--pitcher-k-min-projected-pitches", type=float, default=75.0)
+    parser.add_argument("--pitcher-k-max-days-since-history", type=int, default=14)
+    parser.add_argument("--pitcher-k-min-abs-edge", type=float, default=0.15)
+    parser.add_argument("--pitcher-k-max-abs-edge", type=float, default=1.0)
+    parser.add_argument("--pitcher-k-min-model-hit-probability", type=float, default=0.50)
+    parser.add_argument("--pitcher-k-max-model-hit-probability", type=float, default=0.65)
+    parser.add_argument("--pitcher-k-min-expected-value", type=float, default=0.0)
+    parser.add_argument("--pitcher-k-min-american-price", type=float, default=-130.0)
+    parser.add_argument("--pitcher-k-max-american-price", type=float, default=130.0)
+    parser.add_argument(
+        "--max-pitcher-k-picks",
+        type=int,
+        default=1,
+        help="Maximum workload-profile pitcher strikeout picks on the board.",
     )
     parser.add_argument(
         "--min-over-picks",
@@ -1723,6 +1747,11 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
     for candidate in candidates:
         row = candidate.raw
         use_optimized_over_profile = candidate.direction == "OVER" and candidate.target in optimized_over_targets
+        use_pitcher_k_over_profile = bool(getattr(args, "enable_pitcher_k_over_profile", False)) and bool(
+            candidate.direction == "OVER"
+            and candidate.target == "K"
+            and str(row.get("Player_Type", "")).strip().lower() == "pitcher"
+        )
         if candidate.target not in allowed_targets:
             rejected["unsupported_target"] += 1
             continue
@@ -1738,6 +1767,8 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
         min_abs_edge = float(args.min_abs_edge)
         if use_optimized_over_profile and getattr(args, "over_min_abs_edge", None) is not None:
             min_abs_edge = float(args.over_min_abs_edge)
+        if use_pitcher_k_over_profile:
+            min_abs_edge = float(args.pitcher_k_min_abs_edge)
         if candidate.abs_edge < min_abs_edge:
             rejected["edge_too_small"] += 1
             continue
@@ -1748,7 +1779,15 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
         ):
             rejected["optimized_over_edge_too_large"] += 1
             continue
-        if candidate.history_rows < int(args.min_history_rows):
+        if use_pitcher_k_over_profile and candidate.abs_edge > float(args.pitcher_k_max_abs_edge):
+            rejected["pitcher_k_edge_too_large"] += 1
+            continue
+        min_history_rows = (
+            int(args.pitcher_k_min_starter_history)
+            if use_pitcher_k_over_profile
+            else int(args.min_history_rows)
+        )
+        if candidate.history_rows < min_history_rows:
             rejected["history_too_short"] += 1
             continue
         if (
@@ -1758,6 +1797,19 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
         ):
             rejected["optimized_over_history_too_short"] += 1
             continue
+        if use_pitcher_k_over_profile:
+            if str(row.get("Starter_Confirmed", "")).strip().lower() not in {"1", "true", "yes"}:
+                rejected["pitcher_starter_unconfirmed"] += 1
+                continue
+            if int(to_float(row.get("Starter_History_Rows"), 0.0) or 0) < int(args.pitcher_k_min_starter_history):
+                rejected["pitcher_starter_history_too_short"] += 1
+                continue
+            if float(to_float(row.get("Projected_IP"), 0.0) or 0.0) < float(args.pitcher_k_min_projected_ip):
+                rejected["pitcher_projected_ip_too_low"] += 1
+                continue
+            if float(to_float(row.get("Projected_Pitches"), 0.0) or 0.0) < float(args.pitcher_k_min_projected_pitches):
+                rejected["pitcher_projected_pitches_too_low"] += 1
+                continue
         if candidate.prediction < float(args.min_prediction):
             rejected["prediction_too_low"] += 1
             continue
@@ -1796,6 +1848,7 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
             continue
         if (
             not use_optimized_over_profile
+            and not use_pitcher_k_over_profile
             and getattr(args, "core_max_american_price", None) is not None
             and candidate.selected_side_price is not None
             and candidate.selected_side_price > float(args.core_max_american_price)
@@ -1804,12 +1857,20 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
             continue
         if (
             not use_optimized_over_profile
+            and not use_pitcher_k_over_profile
             and getattr(args, "core_min_american_price", None) is not None
             and candidate.selected_side_price is not None
             and candidate.selected_side_price < float(args.core_min_american_price)
         ):
             rejected["core_price_too_heavily_juiced"] += 1
             continue
+        if use_pitcher_k_over_profile and candidate.selected_side_price is not None:
+            if candidate.selected_side_price < float(args.pitcher_k_min_american_price):
+                rejected["pitcher_k_price_too_heavily_juiced"] += 1
+                continue
+            if candidate.selected_side_price > float(args.pitcher_k_max_american_price):
+                rejected["pitcher_k_price_too_long"] += 1
+                continue
         if (
             candidate.market_source == "real"
             and float(args.max_market_line_std) > 0.0
@@ -1824,6 +1885,9 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
             hit_probability = candidate.model_hit_probability
             if getattr(args, "over_min_model_hit_probability", None) is not None:
                 min_hit_probability = float(args.over_min_model_hit_probability)
+        elif use_pitcher_k_over_profile:
+            hit_probability = candidate.model_hit_probability
+            min_hit_probability = float(args.pitcher_k_min_model_hit_probability)
         if hit_probability < min_hit_probability:
             rejected["hit_probability_too_low"] += 1
             continue
@@ -1834,10 +1898,19 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
         ):
             rejected["optimized_over_hit_probability_too_high"] += 1
             continue
-        graded_hit_rate = candidate.model_graded_hit_rate if use_optimized_over_profile else candidate.calibrated_graded_hit_rate
+        if use_pitcher_k_over_profile and hit_probability > float(args.pitcher_k_max_model_hit_probability):
+            rejected["pitcher_k_hit_probability_too_high"] += 1
+            continue
+        graded_hit_rate = (
+            candidate.model_graded_hit_rate
+            if use_optimized_over_profile or use_pitcher_k_over_profile
+            else candidate.calibrated_graded_hit_rate
+        )
         min_graded_hit_rate = (
             float(getattr(args, "over_min_model_hit_probability"))
             if use_optimized_over_profile and getattr(args, "over_min_model_hit_probability", None) is not None
+            else float(args.pitcher_k_min_model_hit_probability)
+            if use_pitcher_k_over_profile
             else float(args.min_graded_hit_rate)
         )
         if graded_hit_rate < min_graded_hit_rate:
@@ -1850,9 +1923,14 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
         ):
             rejected["optimized_over_graded_hit_rate_too_high"] += 1
             continue
+        if use_pitcher_k_over_profile and graded_hit_rate > float(args.pitcher_k_max_model_hit_probability):
+            rejected["pitcher_k_graded_hit_rate_too_high"] += 1
+            continue
         min_expected_value = float(args.min_expected_value)
         if use_optimized_over_profile and getattr(args, "over_min_expected_value", None) is not None:
             min_expected_value = float(args.over_min_expected_value)
+        elif use_pitcher_k_over_profile:
+            min_expected_value = float(args.pitcher_k_min_expected_value)
         if (
             candidate.market_source == "real"
             and min_expected_value > -0.99
@@ -1864,7 +1942,12 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
         if candidate.push_probability > float(args.max_push_probability):
             rejected["push_probability_too_high"] += 1
             continue
-        if candidate.days_since_history is None or candidate.days_since_history > int(args.max_days_since_history):
+        max_days_since_history = (
+            int(args.pitcher_k_max_days_since_history)
+            if use_pitcher_k_over_profile
+            else int(args.max_days_since_history)
+        )
+        if candidate.days_since_history is None or candidate.days_since_history > max_days_since_history:
             rejected["history_too_stale"] += 1
             continue
         if (
@@ -1926,6 +2009,7 @@ def select_top_candidates(candidates: list[Candidate], args: argparse.Namespace)
     by_team: Counter[str] = Counter()
     by_market_bucket: Counter[str] = Counter()
     by_direction: Counter[str] = Counter()
+    by_selection_profile: Counter[str] = Counter()
     selected_prop_keys: set[tuple[str, ...]] = set()
 
     def try_add(candidate: Candidate) -> bool:
@@ -1974,6 +2058,14 @@ def select_top_candidates(candidates: list[Candidate], args: argparse.Namespace)
         max_under_picks = max(0, int(getattr(args, "max_under_picks", 0)))
         if candidate.direction == "UNDER" and max_under_picks > 0 and by_direction["UNDER"] >= max_under_picks:
             return False
+        profile = candidate_selection_profile(candidate, args)
+        max_pitcher_k_picks = max(0, int(getattr(args, "max_pitcher_k_picks", 0)))
+        if (
+            profile == PITCHER_K_OVER_SELECTION_PROFILE
+            and max_pitcher_k_picks > 0
+            and by_selection_profile[profile] >= max_pitcher_k_picks
+        ):
+            return False
 
         selected.append(candidate)
         selected_prop_keys.add(prop_key)
@@ -1982,6 +2074,7 @@ def select_top_candidates(candidates: list[Candidate], args: argparse.Namespace)
         by_team[candidate.team] += 1
         by_market_bucket[candidate.market_bucket] += 1
         by_direction[candidate.direction] += 1
+        by_selection_profile[profile] += 1
         return True
 
     min_over_picks = min(max(0, int(getattr(args, "min_over_picks", 0))), int(args.top_n))
@@ -2003,6 +2096,13 @@ def select_top_candidates(candidates: list[Candidate], args: argparse.Namespace)
 
 
 def candidate_selection_profile(candidate: Candidate, args: argparse.Namespace) -> str:
+    if (
+        bool(getattr(args, "enable_pitcher_k_over_profile", False))
+        and candidate.direction == "OVER"
+        and candidate.target == "K"
+        and str(candidate.raw.get("Player_Type", "")).strip().lower() == "pitcher"
+    ):
+        return PITCHER_K_OVER_SELECTION_PROFILE
     optimized_targets = {
         str(value).strip().upper() for value in getattr(args, "optimized_over_targets", []) if str(value).strip()
     }
@@ -2023,6 +2123,10 @@ def write_selected_csv(path: Path, selected: list[Candidate], args: argparse.Nam
         "Player",
         "Player_ID",
         "Player_Type",
+        "Starter_Confirmed",
+        "Starter_History_Rows",
+        "Projected_IP",
+        "Projected_Pitches",
         "Team",
         "Opponent",
         "Is_Home",
@@ -2103,6 +2207,10 @@ def write_selected_csv(path: Path, selected: list[Candidate], args: argparse.Nam
                     "Player": candidate.player,
                     "Player_ID": candidate.player_id,
                     "Player_Type": candidate.raw.get("Player_Type", ""),
+                    "Starter_Confirmed": candidate.raw.get("Starter_Confirmed", ""),
+                    "Starter_History_Rows": candidate.raw.get("Starter_History_Rows", ""),
+                    "Projected_IP": candidate.raw.get("Projected_IP", ""),
+                    "Projected_Pitches": candidate.raw.get("Projected_Pitches", ""),
                     "Team": candidate.team,
                     "Opponent": candidate.raw.get("Opponent", ""),
                     "Is_Home": candidate.raw.get("Is_Home", ""),
@@ -2204,6 +2312,8 @@ def write_summary_json(
             "min_graded_hit_rate": float(args.min_graded_hit_rate),
             "optimized_over_profile": OPTIMIZED_OVER_SELECTION_PROFILE,
             "optimized_over_profile_status": OPTIMIZED_OVER_PROFILE_STATUS,
+            "pitcher_k_over_profile": PITCHER_K_OVER_SELECTION_PROFILE,
+            "pitcher_k_over_profile_status": PITCHER_K_OVER_PROFILE_STATUS,
             "history_before_date": args.history_before_date or "",
             "optimized_over_targets": [str(value).strip().upper() for value in args.optimized_over_targets],
             "over_min_abs_edge": args.over_min_abs_edge,
@@ -2212,6 +2322,19 @@ def write_summary_json(
             "over_max_model_hit_probability": args.over_max_model_hit_probability,
             "over_min_expected_value": args.over_min_expected_value,
             "over_min_history_rows": args.over_min_history_rows,
+            "pitcher_k_over_profile_enabled": bool(args.enable_pitcher_k_over_profile),
+            "pitcher_k_min_starter_history": int(args.pitcher_k_min_starter_history),
+            "pitcher_k_min_projected_ip": float(args.pitcher_k_min_projected_ip),
+            "pitcher_k_min_projected_pitches": float(args.pitcher_k_min_projected_pitches),
+            "pitcher_k_max_days_since_history": int(args.pitcher_k_max_days_since_history),
+            "pitcher_k_min_abs_edge": float(args.pitcher_k_min_abs_edge),
+            "pitcher_k_max_abs_edge": float(args.pitcher_k_max_abs_edge),
+            "pitcher_k_min_model_hit_probability": float(args.pitcher_k_min_model_hit_probability),
+            "pitcher_k_max_model_hit_probability": float(args.pitcher_k_max_model_hit_probability),
+            "pitcher_k_min_expected_value": float(args.pitcher_k_min_expected_value),
+            "pitcher_k_min_american_price": float(args.pitcher_k_min_american_price),
+            "pitcher_k_max_american_price": float(args.pitcher_k_max_american_price),
+            "max_pitcher_k_picks": int(args.max_pitcher_k_picks),
             "core_min_american_price": args.core_min_american_price,
             "core_max_american_price": args.core_max_american_price,
             "over_max_american_price": args.over_max_american_price,
@@ -2312,6 +2435,10 @@ def write_summary_json(
                 "market_line": candidate.market_line,
                 "market_bucket": candidate.market_bucket,
                 "market_source": candidate.market_source,
+                "starter_confirmed": str(candidate.raw.get("Starter_Confirmed", "")).strip().lower() in {"1", "true", "yes"},
+                "starter_history_rows": int(to_float(candidate.raw.get("Starter_History_Rows"), 0.0)),
+                "projected_ip": to_float(candidate.raw.get("Projected_IP"), 0.0),
+                "projected_pitches": to_float(candidate.raw.get("Projected_Pitches"), 0.0),
                 "prediction": round(candidate.prediction, 4),
                 "model_hit_probability": round(candidate.model_hit_probability, 4),
                 "estimated_hit_probability": round(candidate.calibrated_hit_probability, 4),

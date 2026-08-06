@@ -584,6 +584,75 @@ def test_filter_candidates_uses_validated_over_profile_instead_of_general_probab
     assert rejected["optimized_over_history_too_short"] == 1
 
 
+def test_filter_candidates_uses_probable_starter_pitcher_k_profile() -> None:
+    row = _row(
+        player="Workload Starter",
+        team="SEA",
+        game_id="pitcher_k_profile",
+        target="K",
+        prediction=5.1,
+        line=4.5,
+        edge=0.6,
+    )
+    row.update(
+        {
+            "Player_Type": "pitcher",
+            "History_Rows": "20",
+            "Starter_Confirmed": "1",
+            "Starter_History_Rows": "18",
+            "Projected_IP": "5.6",
+            "Projected_Pitches": "88",
+            "Last_History_Date": "2026-07-25",
+            "Market_Over_Price": "110",
+            "Market_Under_Price": "-130",
+        }
+    )
+    candidate = selector.build_candidate(
+        row,
+        calibration=None,
+        min_history_bucket_rows=50,
+        max_history_prior_weight=0.35,
+        history_prior_strength=400.0,
+    )
+    assert candidate is not None
+    args = selector.argparse.Namespace(
+        targets=["K"], optimized_over_targets=["R", "TB"], enable_pitcher_k_over_profile=True,
+        pitcher_k_min_starter_history=15, pitcher_k_min_projected_ip=5.25,
+        pitcher_k_min_projected_pitches=75.0, pitcher_k_max_days_since_history=14,
+        pitcher_k_min_abs_edge=0.15,
+        pitcher_k_max_abs_edge=1.0, pitcher_k_min_model_hit_probability=0.50,
+        pitcher_k_max_model_hit_probability=0.65, pitcher_k_min_expected_value=0.0,
+        pitcher_k_min_american_price=-130, pitcher_k_max_american_price=130,
+        allow_baseline=False, require_real_market_source=True, allow_synthetic_unders=False,
+        min_abs_edge=0.35, min_history_rows=35, min_prediction=0.10,
+        min_market_books=5, min_common_market_books=2, max_market_line_std=0.0,
+        min_hit_probability=0.60, min_graded_hit_rate=0.75, min_expected_value=0.0,
+        allow_unpriced_side=False, max_push_probability=0.10, max_days_since_history=4,
+        core_min_american_price=-250, core_max_american_price=-200,
+        min_historical_bet_profile_support=0, min_historical_bet_profile_win_rate=0.0,
+        min_historical_market_availability_support=0, min_historical_market_availability_rate=0.0,
+    )
+
+    kept, rejected = selector.filter_candidates([candidate], args)
+
+    assert kept == [candidate]
+    assert rejected == Counter()
+    assert selector.candidate_selection_profile(candidate, args) == selector.PITCHER_K_OVER_SELECTION_PROFILE
+
+    candidate.raw["Starter_Confirmed"] = "0"
+    kept, rejected = selector.filter_candidates([candidate], args)
+
+    assert kept == []
+    assert rejected["pitcher_starter_unconfirmed"] == 1
+
+    candidate.raw["Starter_Confirmed"] = "1"
+    candidate.days_since_history = 15
+    kept, rejected = selector.filter_candidates([candidate], args)
+
+    assert kept == []
+    assert rejected["history_too_stale"] == 1
+
+
 def test_core_price_defense_rejects_expensive_non_optimized_pick() -> None:
     row = _row(
         player="Core Price Test",
