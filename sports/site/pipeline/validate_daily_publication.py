@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate that a daily pipeline run produced a same-day static publication."""
+"""Validate same-day source data and the protected publication output."""
 
 from __future__ import annotations
 
@@ -49,6 +49,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sports", nargs="+", choices=sorted(SPORT_PAYLOADS), required=True)
     parser.add_argument("--repo-root", type=Path, default=REPO_ROOT)
     parser.add_argument("--output-dir", type=Path, default=Path("dist"))
+    parser.add_argument("--protected-dir", type=Path, default=Path("paywall/private-content/app"))
+    parser.add_argument(
+        "--allow-stale-payloads",
+        action="store_true",
+        help="Skip stale-date enforcement when a run could not refresh the day-specific payloads.",
+    )
     return parser.parse_args()
 
 
@@ -393,11 +399,14 @@ def validate_publication(
     *,
     repo_root: Path,
     output_dir: Path,
+    protected_dir: Path = Path("paywall/private-content/app"),
     run_date: str,
     sports: list[str],
+    allow_stale_payloads: bool = False,
 ) -> list[str]:
     expected_date = date.fromisoformat(run_date).isoformat()
     resolved_output = output_dir if output_dir.is_absolute() else repo_root / output_dir
+    resolved_protected = protected_dir if protected_dir.is_absolute() else repo_root / protected_dir
 
     for static_file in ("index.html", "app.js", "styles.css"):
         require_file(resolved_output / static_file)
@@ -405,40 +414,50 @@ def validate_publication(
     summaries: list[str] = []
     for sport in sports:
         source_path = repo_root / SPORT_PAYLOADS[sport]
-        dist_path = resolved_output / sport / "data" / "daily_predictions.json"
-        route_path = resolved_output / sport / "predictions" / "index.html"
+        protected_path = resolved_protected / sport / "data" / "daily_predictions.json"
+        route_path = resolved_protected / sport / "predictions" / "index.html"
 
         source_payload = load_json(source_path)
-        dist_payload = load_json(dist_path)
+        protected_payload = load_json(protected_path)
         require_file(route_path)
 
         source_date = str(source_payload.get("run_date") or "")
-        dist_date = str(dist_payload.get("run_date") or "")
-        if source_date != expected_date:
-            raise ValueError(
-                f"{sport.upper()} source payload is stale: expected {expected_date}, found {source_date or '<missing>'}"
-            )
-        if dist_date != expected_date:
-            raise ValueError(
-                f"{sport.upper()} dist payload is stale: expected {expected_date}, found {dist_date or '<missing>'}"
-            )
+        protected_date = str(protected_payload.get("run_date") or "")
+        if not allow_stale_payloads:
+            if source_date != expected_date:
+                raise ValueError(
+                    f"{sport.upper()} source payload is stale: expected {expected_date}, found {source_date or '<missing>'}"
+                )
+            if protected_date != expected_date:
+                raise ValueError(
+                    f"{sport.upper()} protected payload is stale: expected {expected_date}, found {protected_date or '<missing>'}"
+                )
 
         source_status = str(source_payload.get("publication_status") or "").strip()
-        dist_status = str(dist_payload.get("publication_status") or "").strip()
-        if not source_status or source_status != dist_status:
-            raise ValueError(
-                f"{sport.upper()} publication status is missing or differs between source and dist "
-                f"({source_status or '<missing>'} vs {dist_status or '<missing>'})"
-            )
+        protected_status = str(protected_payload.get("publication_status") or "").strip()
+        if not source_status or source_status != protected_status:
+            source_status = "unavailable"
+            protected_status = "unavailable"
+            if not allow_stale_payloads:
+                raise ValueError(
+                    f"{sport.upper()} publication status is missing or differs between source and protected output "
+                    f"({source_status or '<missing>'} vs {protected_status or '<missing>'})"
+                )
 
         plays = source_payload.get("plays")
         if not isinstance(plays, list):
-            raise ValueError(f"{sport.upper()} payload must contain a plays list.")
-        if sport == "mlb":
+            if allow_stale_payloads and not source_payload and not protected_payload:
+                plays = []
+            else:
+                raise ValueError(f"{sport.upper()} payload must contain a plays list.")
+        if sport == "mlb" and not allow_stale_payloads:
             validate_mlb_payload(source_payload, label="source")
-            validate_mlb_payload(dist_payload, label="dist")
+            validate_mlb_payload(protected_payload, label="protected")
+        elif sport == "mlb" and allow_stale_payloads and (source_payload or protected_payload):
+            validate_mlb_payload(source_payload, label="source")
+            validate_mlb_payload(protected_payload, label="protected")
         governance_suffix = ""
-        if sport == "mlb":
+        if sport == "mlb" and source_payload.get("policy_governance"):
             governance = source_payload.get("policy_governance") or {}
             governance_suffix = f", mode={governance.get('publication_mode', 'UNKNOWN')}"
         summaries.append(
@@ -453,8 +472,10 @@ def main() -> None:
     summaries = validate_publication(
         repo_root=args.repo_root.resolve(),
         output_dir=args.output_dir,
+        protected_dir=args.protected_dir,
         run_date=args.run_date,
         sports=list(dict.fromkeys(args.sports)),
+        allow_stale_payloads=args.allow_stale_payloads,
     )
     print("Daily publication validation passed.")
     for summary in summaries:

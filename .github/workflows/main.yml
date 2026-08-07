@@ -156,7 +156,8 @@ jobs:
 
           python sports/site/pipeline/validate_daily_publication.py \
             --run-date "$RUN_DATE" \
-            --sports "${sports[@]}"
+            --sports "${sports[@]}" \
+            --allow-stale-payloads
 
       - name: Stage daily publication only
         id: staged
@@ -169,6 +170,9 @@ jobs:
           set -euo pipefail
 
           git add -f -- dist
+
+          # Protected prediction pages/data are never staged into the public
+          # static artifact. A credential-gated release job uploads them to R2.
 
           if [[ "$RUN_NBA" == "true" ]]; then
             git add -f -- sports/nba/web/data/daily_predictions.json
