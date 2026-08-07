@@ -15,7 +15,7 @@
   "priced_rows_only": true,
   "real_market_rows_only": true,
   "strict_history_cutoff": true,
-  "training_rows": 592,
+  "training_rows": 593,
   "training_dates": 11,
   "training_start_date": "2026-04-27",
   "training_end_date": "2026-07-29",
@@ -27,7 +27,7 @@
     "K|OVER": 11,
     "K|UNDER": 14,
     "R|OVER": 125,
-    "R|UNDER": 291,
+    "R|UNDER": 292,
     "TB|OVER": 33,
     "TB|UNDER": 79
   },
@@ -46,13 +46,13 @@
   },
   "expanding_oof_validation": {
     "probability_metrics": {
-      "rows": 266,
+      "rows": 267,
       "dates": 4,
-      "wins": 154,
-      "win_rate": 0.5789473684210527,
-      "mean_probability": 0.5011886380187792,
-      "brier_score": 0.2137243071743513,
-      "log_loss": 0.6189565336816714
+      "wins": 155,
+      "win_rate": 0.5805243445692884,
+      "mean_probability": 0.5022738674226286,
+      "brier_score": 0.21323193316318467,
+      "log_loss": 0.6178462714445754
     },
     "survival_top_k": {
       "rows": 12,
@@ -89,22 +89,22 @@
   },
   "rolling_origin_validation": {
     "probability_metrics": {
-      "rows": 334,
+      "rows": 335,
       "dates": 7,
-      "wins": 196,
-      "win_rate": 0.5868263473053892,
-      "mean_probability": 0.5111631063191479,
-      "brier_score": 0.2113549590668789,
-      "log_loss": 0.6132596874257564
+      "wins": 197,
+      "win_rate": 0.5880597014925373,
+      "mean_probability": 0.51150264530153,
+      "brier_score": 0.21079664992416605,
+      "log_loss": 0.6119606397741265
     },
     "baseline_probability_metrics": {
-      "rows": 334,
+      "rows": 335,
       "dates": 7,
-      "wins": 196,
-      "win_rate": 0.5868263473053892,
-      "mean_probability": 0.571120323055525,
-      "brier_score": 0.20066152006572238,
-      "log_loss": 0.583127943676768
+      "wins": 197,
+      "win_rate": 0.5880597014925373,
+      "mean_probability": 0.5718398221951537,
+      "brier_score": 0.19985457336939813,
+      "log_loss": 0.5811027490674558
     },
     "survival_top_k": {
       "rows": 21,
@@ -143,200 +143,200 @@
     {
       "c": 0.003,
       "roi_weight": 0.0,
-      "objective": 0.963217001506551,
-      "brier_score": 0.232717551766987,
+      "objective": 0.9632280487456909,
+      "brier_score": 0.2324966069841901,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.38790808285489137
     },
     {
       "c": 0.003,
       "roi_weight": 0.025,
-      "objective": 0.9664637547533041,
-      "brier_score": 0.232717551766987,
+      "objective": 0.9664748019924441,
+      "brier_score": 0.2324966069841901,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.40955310449991306
     },
     {
       "c": 0.003,
       "roi_weight": 0.05,
-      "objective": 0.9762961209686492,
-      "brier_score": 0.232717551766987,
+      "objective": 0.9763071682077891,
+      "brier_score": 0.2324966069841901,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.4751022126022126
     },
     {
       "c": 0.003,
       "roi_weight": 0.1,
-      "objective": 0.876406936571486,
-      "brier_score": 0.232717551766987,
+      "objective": 0.876417983810626,
+      "brier_score": 0.2324966069841901,
       "top_k_win_rate": 0.8333333333333334,
       "top_k_roi": 0.3647298721766807
     },
     {
       "c": 0.003,
       "roi_weight": 0.2,
-      "objective": 0.8966974557449839,
-      "brier_score": 0.232717551766987,
+      "objective": 0.8967085029841239,
+      "brier_score": 0.2324966069841901,
       "top_k_win_rate": 0.8333333333333334,
       "top_k_roi": 0.5209203483671568
     },
     {
       "c": 0.01,
       "roi_weight": 0.0,
-      "objective": 0.963824968187242,
-      "brier_score": 0.22055821815316823,
+      "objective": 0.9638429553518557,
+      "brier_score": 0.2201984748608921,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.38790808285489137
     },
     {
       "c": 0.01,
       "roi_weight": 0.025,
-      "objective": 0.9670717214339951,
-      "brier_score": 0.22055821815316823,
+      "objective": 0.9670897085986089,
+      "brier_score": 0.2201984748608921,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.409553104499913
     },
     {
       "c": 0.01,
       "roi_weight": 0.05,
-      "objective": 0.9703184746807484,
-      "brier_score": 0.22055821815316823,
+      "objective": 0.9703364618453622,
+      "brier_score": 0.2201984748608921,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.43119812614493463
     },
     {
       "c": 0.01,
       "roi_weight": 0.1,
-      "objective": 0.9780565699188436,
-      "brier_score": 0.22055821815316823,
+      "objective": 0.9780745570834574,
+      "brier_score": 0.2201984748608921,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.48278542773223626
     },
     {
       "c": 0.01,
       "roi_weight": 0.2,
-      "objective": 0.877014903252177,
-      "brier_score": 0.22055821815316823,
+      "objective": 0.8770328904167908,
+      "brier_score": 0.2201984748608921,
       "top_k_win_rate": 0.8333333333333334,
       "top_k_roi": 0.3647298721766807
     },
     {
       "c": 0.03,
       "roi_weight": 0.0,
-      "objective": 0.967353311414185,
-      "brier_score": 0.21492641854936995,
+      "objective": 0.967375241451989,
+      "brier_score": 0.21448781779328918,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.40955310449991295
     },
     {
       "c": 0.03,
       "roi_weight": 0.025,
-      "objective": 0.967353311414185,
-      "brier_score": 0.21492641854936995,
+      "objective": 0.967375241451989,
+      "brier_score": 0.21448781779328918,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.40955310449991295
     },
     {
       "c": 0.03,
       "roi_weight": 0.05,
-      "objective": 0.967353311414185,
-      "brier_score": 0.21492641854936995,
+      "objective": 0.967375241451989,
+      "brier_score": 0.21448781779328918,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.40955310449991295
     },
     {
       "c": 0.03,
       "roi_weight": 0.1,
-      "objective": 0.9783381598990335,
-      "brier_score": 0.21492641854936995,
+      "objective": 0.9783600899368375,
+      "brier_score": 0.21448781779328918,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.48278542773223626
     },
     {
       "c": 0.03,
       "roi_weight": 0.2,
-      "objective": 0.8772964932323669,
-      "brier_score": 0.21492641854936995,
+      "objective": 0.877318423270171,
+      "brier_score": 0.21448781779328918,
       "top_k_win_rate": 0.8333333333333334,
       "top_k_roi": 0.3647298721766807
     },
     {
       "c": 0.1,
       "roi_weight": 0.0,
-      "objective": 0.96252664254446,
-      "brier_score": 0.2137243071743513,
+      "objective": 0.9625512612450183,
+      "brier_score": 0.21323193316318467,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.37697460824340623
     },
     {
       "c": 0.1,
       "roi_weight": 0.025,
-      "objective": 0.9687495862674037,
-      "brier_score": 0.2137243071743513,
+      "objective": 0.9687742049679621,
+      "brier_score": 0.21323193316318467,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.4184608997296977
     },
     {
       "c": 0.1,
       "roi_weight": 0.05,
-      "objective": 0.9687495862674037,
-      "brier_score": 0.2137243071743513,
+      "objective": 0.9687742049679621,
+      "brier_score": 0.21323193316318467,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.4184608997296977
     },
     {
       "c": 0.1,
       "roi_weight": 0.1,
-      "objective": 0.9694725255100677,
-      "brier_score": 0.2137243071743513,
+      "objective": 0.969497144210626,
+      "brier_score": 0.21323193316318467,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.4232804946807915
     },
     {
       "c": 0.1,
       "roi_weight": 0.2,
-      "objective": 0.9804573739949163,
-      "brier_score": 0.2137243071743513,
+      "objective": 0.9804819926954746,
+      "brier_score": 0.21323193316318467,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.49651281791311486
     },
     {
       "c": 0.3,
       "roi_weight": 0.0,
-      "objective": 0.9603043187432928,
-      "brier_score": 0.21412568101305696,
+      "objective": 0.9603303818092292,
+      "brier_score": 0.2136044196943278,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.36229290751519394
     },
     {
       "c": 0.3,
       "roi_weight": 0.025,
-      "objective": 0.9665272624662365,
-      "brier_score": 0.21412568101305696,
+      "objective": 0.966553325532173,
+      "brier_score": 0.2136044196943278,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.4037791990014854
     },
     {
       "c": 0.3,
       "roi_weight": 0.05,
-      "objective": 0.9688541022930763,
-      "brier_score": 0.21412568101305696,
+      "objective": 0.9688801653590128,
+      "brier_score": 0.2136044196943278,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.41929146451375093
     },
     {
       "c": 0.3,
       "roi_weight": 0.1,
-      "objective": 0.9703692538082279,
-      "brier_score": 0.21412568101305696,
+      "objective": 0.9703953168741644,
+      "brier_score": 0.2136044196943278,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.429392474614761
     },
     {
       "c": 0.3,
       "roi_weight": 0.2,
-      "objective": 0.970967608333284,
-      "brier_score": 0.21412568101305696,
+      "objective": 0.9709936713992204,
+      "brier_score": 0.2136044196943278,
       "top_k_win_rate": 0.9166666666666666,
       "top_k_roi": 0.43338150478180154
     }
@@ -347,18 +347,18 @@
       "dates": 3,
       "wins": 42,
       "win_rate": 0.6176470588235294,
-      "mean_probability": 0.5425097943402413,
-      "brier_score": 0.2036187773054965,
-      "log_loss": 0.5943352689310063
+      "mean_probability": 0.5409555323070454,
+      "brier_score": 0.20234339989477088,
+      "log_loss": 0.5911458136519212
     },
     "baseline_probability_metrics": {
       "rows": 68,
       "dates": 3,
       "wins": 42,
       "win_rate": 0.6176470588235294,
-      "mean_probability": 0.5793615773913461,
-      "brier_score": 0.19875453269086346,
-      "log_loss": 0.5725149515613343
+      "mean_probability": 0.5774130585998046,
+      "brier_score": 0.19693121057695848,
+      "log_loss": 0.5681619512384333
     },
     "survival_top_k": {
       "rows": 9,
@@ -441,44 +441,44 @@
       "player_type=pitcher"
     ],
     "means": {
-      "directional_edge": 0.017899250551520612,
-      "model_hit_probability": 0.5431798239690034,
+      "directional_edge": 0.018071294914509317,
+      "model_hit_probability": 0.5441322117940378,
       "history_rows": 39.0,
       "market_books": 7.0,
       "market_line_std": 0.0,
-      "market_implied_probability": 0.5662899239640165
+      "market_implied_probability": 0.5663476021573296
     },
     "scales": {
-      "directional_edge": 0.6114263491930574,
-      "model_hit_probability": 0.23240592346388161,
-      "history_rows": 24.049627354213875,
-      "market_books": 1.8000377590695056,
-      "market_line_std": 0.23428301959579112,
-      "market_implied_probability": 0.11275431044243127
+      "directional_edge": 0.6113504181963342,
+      "model_hit_probability": 0.23266454576210224,
+      "history_rows": 23.973198262499924,
+      "market_books": 1.7989247749377055,
+      "market_line_std": 0.23411332580762775,
+      "market_implied_probability": 0.1127407310191166
     },
     "coefficients": {
-      "directional_edge": 0.08585842904797414,
-      "model_hit_probability": 0.7009379188205399,
-      "history_rows": 0.04029094384900983,
-      "market_books": -0.09159749510390178,
-      "market_line_std": -0.051684968884791016,
-      "market_implied_probability": 0.12330628858564358,
+      "directional_edge": 0.08224798993448876,
+      "model_hit_probability": 0.7083025419147765,
+      "history_rows": 0.026960196343262726,
+      "market_books": -0.0941214866680376,
+      "market_line_std": -0.05075052173587285,
+      "market_implied_probability": 0.12441222465451822,
       "target=H": 0.0,
-      "target=TB": 0.053574152125338455,
-      "target=R": -0.037810117799383015,
-      "target=HR": -0.015004976607417321,
+      "target=TB": 0.0551130934886881,
+      "target=R": -0.034280371866793766,
+      "target=HR": -0.014662941869748963,
       "target=RBI": 0.0,
-      "target=K": -0.053349173677602446,
-      "target=ER": 0.05293370425191697,
-      "direction=OVER": -0.043279413685701706,
-      "direction=UNDER": 0.043623001978554454,
-      "player_type=hitter": 0.0007590577185377933,
-      "player_type=pitcher": -0.00041546942568543386
+      "target=K": -0.05552959581728666,
+      "target=ER": 0.04950127165143694,
+      "direction=OVER": -0.04366865665678169,
+      "direction=UNDER": 0.043810112243077445,
+      "player_type=hitter": 0.0061697797521456195,
+      "player_type=pitcher": -0.006028324165849743
     },
-    "intercept": 0.14301992194000743
+    "intercept": 0.14237298453168662
   },
-  "generated_at_utc": "2026-08-07T03:32:51.165529+00:00",
-  "history_before_date": "2026-08-06",
+  "generated_at_utc": "2026-08-07T14:14:56.681843+00:00",
+  "history_before_date": "2026-08-07",
   "processed_root": "Player-Predictor/Data-Proc-MLB",
   "market_guardrails": {
     "minimum_books": 2,
