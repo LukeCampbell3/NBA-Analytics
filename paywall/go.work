@@ -1,0 +1,8 @@
+go 1.25.0
+
+use (
+	./lib
+	./packages/paywall/gateway
+	./packages/paywall/payment-webhook
+	./tools
+)

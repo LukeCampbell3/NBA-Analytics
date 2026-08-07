@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="../">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Current NBA model predictions with market line, projection, edge, and publication status.">
+    <title>NBA Bounty Board | Prediction Bounties</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="/vault/vault-tokens.css?v=4">
+    <link rel="stylesheet" href="/vault/vault-components.css?v=7">
+    <link rel="stylesheet" href="/vault/prediction-pages.css?v=2">
+</head>
+<body class="vault-theme">
+    <div id="vaultShellRoot"></div>
+
+    <main class="vault-shell predictions-page">
+        <header class="vault-page-header">
+            <p class="vault-page-kicker">NBA Bounty Ledger</p>
+            <div class="vault-heading-row">
+                <h1>NBA Bounty Board</h1>
+                <button class="vault-info-trigger" type="button" aria-label="About prediction board" data-info="Sorted model signals with market line, projection, model estimate, push exposure, and review status.">i</button>
+            </div>
+            <p class="prediction-page-lead">Current player-stat bounties ranked by model value, with market context and publication controls visible on every notice.</p>
+            <div id="predictionRunMeta" class="prediction-run-meta" aria-live="polite">Loading board details...</div>
+        </header>
+
+        <div id="predictionCards" class="vault-board" aria-live="polite"></div>
+        <div id="predictionEmpty" class="vault-empty" style="display:none;" role="status">
+            <h3>No predictions published</h3>
+            <p>No analytical signals are available for this run.</p>
+        </div>
+    </main>
+
+    <script src="/vault/vault-components.js?v=7"></script>
+    <script src="/vault/vault-shell.js?v=7"></script>
+    <script src="predictions.js?v=8"></script>
+</body>
+</html>

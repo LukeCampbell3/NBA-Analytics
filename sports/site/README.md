@@ -4,7 +4,7 @@ This folder contains the shared landing page and build/serve scripts for the mul
 
 ## Commands
 
-Build the combined site:
+Build the public shell and protected release source:
 
 ```bash
 python sports/site/pipeline/build_static_site.py
@@ -16,7 +16,7 @@ Run the shared daily predictor refresh for the published site:
 python sports/site/pipeline/run_daily_predictions.py
 ```
 
-That command now checks local time and runs once `2:00 AM` local time has passed whenever the current-day payloads are stale or missing. When the schedule gate passes, it refreshes the NBA board, generates and then tightens the MLB board when processed MLB data is available, exports the published payloads, and rebuilds the unified static bundle.
+That command checks local time and runs once `2:00 AM` local time has passed whenever the current-day payloads are stale or missing. It refreshes the prediction boards and rebuilds both outputs without placing prediction data in the public directory.
 
 For a manual refresh outside the scheduled window:
 
@@ -32,19 +32,23 @@ python sports/site/pipeline/serve_web.py
 
 ## How It Works
 
-- `web/`: landing page source for `/`
-- `pipeline/build_static_site.py`: copies the landing page and mounts each `sports/*/web/` site under its own route
-- `pipeline/run_daily_predictions.py`: shared daily predictor entrypoint for NBA + MLB + dist rebuild
+- `web/`: explicitly public landing, pricing, login, payment-return, legal, and presentation assets
+- `pipeline/build_static_site.py`: creates the public shell and a separate protected release source
+- `pipeline/run_daily_predictions.py`: shared daily predictor entrypoint plus public/private rebuild
 - `pipeline/serve_web.py`: serves the built site from the repo-root `dist/`
 
 Each sport can publish its own `site.json` metadata file so the landing page can describe it without hardcoding every card.
 
 ## Output Directory
 
-The unified deployable static bundle now defaults to:
+The outputs are:
 
 ```text
-dist/
+dist/                           # public DigitalOcean static artifact
+paywall/private-content/app/   # private R2 release source
 ```
 
-That folder contains the landing page plus every published sport page and asset, so it can be deployed directly as a static site.
+Only `dist/` is deployed to the public static component. All sport prediction
+pages, scripts, and data live in the protected output and must be uploaded with
+the content-deploy tool to private R2. A plain local static server cannot preview
+the authenticated member flow.

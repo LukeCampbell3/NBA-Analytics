@@ -96,6 +96,67 @@ def test_annotate_mlb_summary_keeps_policy_identity_separate_from_publication_st
     assert summary["publication_state"] == "withheld_current_pool"
 
 
+def test_run_mlb_continues_when_market_fetch_fails(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    pool_dir = tmp_path / "daily_runs" / "20260428"
+    pool_dir.mkdir(parents=True, exist_ok=True)
+    pool_csv = pool_dir / "daily_prediction_pool_20260428.csv"
+    pool_csv.write_text("dummy", encoding="utf-8")
+    summary_json = pool_dir / "daily_prediction_pool_20260428.json"
+    summary_json.write_text("{}", encoding="utf-8")
+
+    monkeypatch.setattr(shared_daily_predictions, "MLB_DAILY_RUNS_ROOT", tmp_path / "daily_runs")
+    monkeypatch.setattr(shared_daily_predictions, "MLB_DATA_DIR", tmp_path / "data")
+    monkeypatch.setattr(shared_daily_predictions, "MLB_MANIFEST", tmp_path / "update_manifest.json")
+    monkeypatch.setattr(shared_daily_predictions, "MLB_MARKET_FETCHER", tmp_path / "fetch_mlb_market_props.py")
+    monkeypatch.setattr(shared_daily_predictions, "MLB_DATA_UPDATER", tmp_path / "update_mlb_processed_data.py")
+    monkeypatch.setattr(shared_daily_predictions, "MLB_GENERATOR", tmp_path / "generate_daily_prediction_pool.py")
+    monkeypatch.setattr(shared_daily_predictions, "MLB_GOVERNANCE_CAPTURE", tmp_path / "capture_complete_slate.py")
+    monkeypatch.setattr(shared_daily_predictions, "MLB_PROVIDER_OBSERVATIONS", tmp_path / "latest_provider_observations.csv")
+    monkeypatch.setattr(shared_daily_predictions, "MLB_SELECTOR", tmp_path / "select_high_precision_predictions.py")
+    monkeypatch.setattr(shared_daily_predictions, "MLB_PARLAY_SELECTOR", tmp_path / "select_daily_parlay.py")
+    monkeypatch.setattr(shared_daily_predictions, "MLB_CONFIDENCE_CALIBRATOR", tmp_path / "live_board_confidence.py")
+    monkeypatch.setattr(shared_daily_predictions, "MLB_PICK_SURVIVAL_MODEL", tmp_path / "pick_survival_model.py")
+    monkeypatch.setattr(shared_daily_predictions, "MLB_MAX_WINRATE_SELECTOR", tmp_path / "select_max_winrate_board.py")
+    monkeypatch.setattr(shared_daily_predictions, "MLB_EXPORTER", tmp_path / "export_web_prediction_payload.py")
+
+    def fake_run_step(label: str, command: list[str], cwd: Path = shared_daily_predictions.REPO_ROOT) -> None:
+        if label == "Fetch MLB Market Props":
+            raise subprocess.CalledProcessError(1, command)
+        if label == "Select MLB High-Precision Prediction Board":
+            selected_csv = Path(command[command.index("--out-csv") + 1])
+            summary_json_path = Path(command[command.index("--summary-json") + 1])
+            selected_csv.write_text("dummy", encoding="utf-8")
+            summary_json_path.write_text("{}", encoding="utf-8")
+            return
+        if label == "Select MLB Daily Consistency Parlay":
+            parlay_json = Path(command[command.index("--out-json") + 1])
+            parlay_json.write_text("{}", encoding="utf-8")
+            return
+        if label == "Export MLB Prediction Payload":
+            output = Path(command[command.index("--output") + 1])
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text("{}", encoding="utf-8")
+            output_dist = Path(command[command.index("--output-dist") + 1])
+            output_dist.parent.mkdir(parents=True, exist_ok=True)
+            output_dist.write_text("{}", encoding="utf-8")
+            return
+        if label == "Select MLB Max Win-Rate Board":
+            max_wr_csv = Path(command[command.index("--out-csv") + 1])
+            max_wr_summ = Path(command[command.index("--summary-json") + 1])
+            max_wr_csv.write_text("dummy", encoding="utf-8")
+            max_wr_summ.write_text("{}", encoding="utf-8")
+            return
+
+    monkeypatch.setattr(shared_daily_predictions, "run_step", fake_run_step)
+
+    args = _default_args(run_date="2026-04-28", skip_nba=True, skip_mlb=False, mlb_skip_fetch_market=False, mlb_skip_update_data=True, mlb_skip_generate=True, output_dir=tmp_path / "dist")
+    pool_csv_out, selected_csv_out, summary_json_out = shared_daily_predictions.run_mlb(args, tmp_path / "dist")
+
+    assert pool_csv_out == pool_csv
+    assert selected_csv_out.exists()
+    assert summary_json_out.exists()
+
+
 class FrozenDateTime(datetime):
     current = datetime(2026, 4, 28, 15, 0, tzinfo=EASTERN)
 

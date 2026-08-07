@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title>Member desk | Prediction Bounties</title>
+    <link rel="stylesheet" href="/vault/vault-tokens.css">
+    <link rel="stylesheet" href="/vault/vault-components.css">
+    <link rel="stylesheet" href="/vault/prediction-pages.css">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="vault-theme">
+    <main class="vault-shell site-shell">
+        <header class="desk-header">
+            <p class="desk-kicker">Private member gateway</p>
+            <h1 id="memberTitle">Checking your membership…</h1>
+            <p id="memberStatus" aria-live="polite">Validating your signed session and current entitlement.</p>
+            <div class="desk-board-card__actions">
+                <button id="checkoutButton" class="desk-board-card__primary" type="button" hidden>Start secure checkout</button>
+                <button id="billingButton" class="desk-board-card__secondary" type="button" hidden>Manage billing</button>
+                <button id="logoutButton" class="desk-board-card__secondary" type="button">Sign out</button>
+            </div>
+        </header>
+        <section id="memberDesks" class="desk-board-section" hidden>
+            <div class="desk-section-heading"><div><p class="desk-section-kicker">Current access</p><h2>Model desks</h2></div></div>
+            <div id="sportsGrid" class="desk-board-grid"></div>
+        </section>
+    </main>
+    <script src="/vault/vault-components.js"></script>
+    <script src="/paywall-config.js"></script>
+    <script src="member.js"></script>
+</body>
+</html>

@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "policy_version": "mlb_over_consistency_parlay_v1",
-  "generated_at_utc": "2026-08-06T21:02:00.213344+00:00",
+  "generated_at_utc": "2026-08-07T03:33:29.994744+00:00",
   "run_date": "2026-08-06",
-  "status": "ready",
+  "status": "withheld",
   "objective": "ticket_hit_probability_then_expected_return",
   "direction_policy": "OVER_ONLY",
   "allowed_leg_counts": [
@@ -21,155 +21,15 @@
     "same_sportsbook_required": true,
     "distinct_games_required": true
   },
-  "pool_candidate_count": 1174,
-  "eligible_anchor_count": 9,
-  "considered_anchor_count": 9,
+  "pool_candidate_count": 1122,
+  "eligible_anchor_count": 0,
+  "considered_anchor_count": 0,
   "filter_rejections": {
-    "history_too_short": 11,
-    "insufficient_book_coverage": 23,
-    "leg_probability_too_low": 88,
-    "leg_value_too_low": 15,
-    "not_over": 642,
-    "price_outside_playable_range": 67,
-    "unconfirmed_market_price": 300,
+    "not_over": 630,
+    "unconfirmed_market_price": 473,
     "unsupported_anchor_target": 19
   },
-  "selected_ticket": {
-    "leg_indices": [
-      0,
-      2
-    ],
-    "leg_keys": [
-      "2026-08-06|824885|Javier Sanoja|H|OVER",
-      "2026-08-06|823430|CJ Abrams|H|OVER"
-    ],
-    "leg_names": [
-      "Javier Sanoja",
-      "CJ Abrams"
-    ],
-    "leg_targets": [
-      "H",
-      "H"
-    ],
-    "leg_directions": [
-      "OVER",
-      "OVER"
-    ],
-    "leg_count": 2,
-    "projected_probability": 0.43822336372093373,
-    "independent_probability": 0.43822336372093373,
-    "pairwise_adjustment_factor": 1.001977614,
-    "parlay_score": 0.4954761297639925,
-    "combined_decimal_price": 2.409085446460762,
-    "combined_american_price": 140.9085446460762,
-    "expected_return_per_unit": 0.05571752783918238,
-    "same_sportsbook_confirmed": true,
-    "sportsbook_key": "draftkings",
-    "sportsbook": "DraftKings",
-    "avg_leg_quality": 0.8504109702479234,
-    "same_player": false,
-    "same_game": false,
-    "same_team": false,
-    "same_target": true,
-    "same_market_bucket": true,
-    "mixed_direction": false,
-    "legs": [
-      {
-        "play_key": "2026-08-06|824885|Javier Sanoja|H|OVER",
-        "player": "Javier Sanoja",
-        "player_display_name": "Javier Sanoja",
-        "player_id": "javier_sanoja",
-        "player_type": "hitter",
-        "team": "MIA",
-        "opponent": "ATL",
-        "game_id": "824885",
-        "market_date": "2026-08-06",
-        "commence_time_utc": "2026-08-06T23:15:00Z",
-        "game_status_code": "P",
-        "target": "H",
-        "direction": "OVER",
-        "prediction": 1.3055487505926808,
-        "market_line": 0.5,
-        "market_source": "real",
-        "market_bucket": "H|OVER|0.5",
-        "historical_bucket_key": "H|OVER|0.5",
-        "estimated_graded_hit_rate": 0.6631994941520839,
-        "model_hit_probability": 0.7289762302224776,
-        "final_pool_quality_score": 0.8399533948515698,
-        "expected_value_per_unit": -0.023970555776178404,
-        "selected_side_price": -212.0,
-        "selected_sportsbook_key": "draftkings",
-        "selected_sportsbook": "DraftKings",
-        "price_confirmed": true,
-        "market_books": 6,
-        "market_common_books": 3,
-        "market_book_keys": [
-          "betmgm",
-          "bovada",
-          "caesars",
-          "draftkings",
-          "espnbet",
-          "fanduel"
-        ],
-        "market_common_book_keys": [
-          "fanduel",
-          "draftkings",
-          "caesars"
-        ],
-        "history_rows": 98,
-        "days_since_history": 1,
-        "selection_score": 0.8399533948515698,
-        "parlay_precision_eligible": true
-      },
-      {
-        "play_key": "2026-08-06|823430|CJ Abrams|H|OVER",
-        "player": "CJ Abrams",
-        "player_display_name": "CJ Abrams",
-        "player_id": "cj_abrams",
-        "player_type": "hitter",
-        "team": "WSH",
-        "opponent": "PHI",
-        "game_id": "823430",
-        "market_date": "2026-08-06",
-        "commence_time_utc": "2026-08-06T22:05:00Z",
-        "game_status_code": "P",
-        "target": "H",
-        "direction": "OVER",
-        "prediction": 1.2856491288118839,
-        "market_line": 0.5,
-        "market_source": "real",
-        "market_bucket": "H|OVER|0.5",
-        "historical_bucket_key": "H|OVER|0.5",
-        "estimated_graded_hit_rate": 0.6607715590634046,
-        "model_hit_probability": 0.723528939959415,
-        "final_pool_quality_score": 0.8608685456442772,
-        "expected_value_per_unit": 0.08164516356238832,
-        "selected_side_price": -157.0,
-        "selected_sportsbook_key": "draftkings",
-        "selected_sportsbook": "DraftKings",
-        "price_confirmed": true,
-        "market_books": 6,
-        "market_common_books": 3,
-        "market_book_keys": [
-          "betmgm",
-          "bovada",
-          "caesars",
-          "draftkings",
-          "espnbet",
-          "fanduel"
-        ],
-        "market_common_book_keys": [
-          "fanduel",
-          "draftkings",
-          "caesars"
-        ],
-        "history_rows": 126,
-        "days_since_history": 1,
-        "selection_score": 0.8608685456442772,
-        "parlay_precision_eligible": true
-      }
-    ]
-  },
+  "selected_ticket": null,
   "validation": {
     "method": "stored_pre_event_projection_synthetic_line_grading",
     "price_validation": "unavailable_historically; no ROI claim",

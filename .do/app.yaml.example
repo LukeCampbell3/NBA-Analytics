@@ -1,0 +1,63 @@
+# Non-deployable template. Copy it outside the repository, replace every
+# REPLACE_* value, and validate it with `doctl apps spec validate`.
+name: prediction-bounties
+region: nyc
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+ingress:
+  rules:
+    - match:
+        path:
+          prefix: /functions
+      component:
+        name: paywall-functions
+    - match:
+        path:
+          prefix: /
+      component:
+        name: public-site
+functions:
+  - name: paywall-functions
+    github:
+      repo: LukeCampbell3/NBA-Analytics
+      branch: static-deployment
+      deploy_on_push: false
+    source_dir: paywall
+    envs:
+      - { key: PUBLIC_ORIGIN, value: REPLACE_HTTPS_ORIGIN, type: GENERAL, scope: RUN_TIME }
+      - { key: GATEWAY_PUBLIC_PATH_PREFIX, value: /functions/paywall/gateway, type: GENERAL, scope: RUN_TIME }
+      - { key: DISCORD_CLIENT_ID, value: REPLACE_SECRET, type: SECRET, scope: RUN_TIME }
+      - { key: DISCORD_CLIENT_SECRET, value: REPLACE_SECRET, type: SECRET, scope: RUN_TIME }
+      - { key: DISCORD_REDIRECT_URI, value: REPLACE_HTTPS_ORIGIN/functions/paywall/gateway/auth/discord/callback, type: GENERAL, scope: RUN_TIME }
+      - { key: PAYMENT_SECRET_KEY, value: REPLACE_SECRET, type: SECRET, scope: RUN_TIME }
+      - { key: PAYMENT_WEBHOOK_SECRET, value: REPLACE_SECRET, type: SECRET, scope: RUN_TIME }
+      - { key: PAYMENT_PRICE_ID, value: REPLACE_SECRET, type: SECRET, scope: RUN_TIME }
+      - { key: R2_STATE_ENDPOINT, value: REPLACE_SECRET, type: SECRET, scope: RUN_TIME }
+      - { key: R2_STATE_ACCESS_KEY_ID, value: REPLACE_SECRET, type: SECRET, scope: RUN_TIME }
+      - { key: R2_STATE_SECRET_ACCESS_KEY, value: REPLACE_SECRET, type: SECRET, scope: RUN_TIME }
+      - { key: R2_STATE_BUCKET, value: paywall-state-production, type: GENERAL, scope: RUN_TIME }
+      - { key: R2_CONTENT_ENDPOINT, value: REPLACE_SECRET, type: SECRET, scope: RUN_TIME }
+      - { key: R2_CONTENT_ACCESS_KEY_ID, value: REPLACE_SECRET, type: SECRET, scope: RUN_TIME }
+      - { key: R2_CONTENT_SECRET_ACCESS_KEY, value: REPLACE_SECRET, type: SECRET, scope: RUN_TIME }
+      - { key: R2_CONTENT_BUCKET, value: paywall-content-production, type: GENERAL, scope: RUN_TIME }
+      - { key: DISCORD_INDEX_KEY_CURRENT, value: REPLACE_BASE64_SECRET, type: SECRET, scope: RUN_TIME }
+      - { key: SESSION_KEY_CURRENT_ID, value: session-2026-08, type: GENERAL, scope: RUN_TIME }
+      - { key: SESSION_KEY_CURRENT, value: REPLACE_BASE64_SECRET, type: SECRET, scope: RUN_TIME }
+      - { key: SESSION_ISSUER, value: REPLACE_HOSTNAME, type: GENERAL, scope: RUN_TIME }
+      - { key: SESSION_AUDIENCE, value: paid-site, type: GENERAL, scope: RUN_TIME }
+      - { key: PII_ENCRYPTION_KEY_CURRENT_ID, value: pii-2026-08, type: GENERAL, scope: RUN_TIME }
+      - { key: PII_ENCRYPTION_KEY_CURRENT, value: REPLACE_BASE64_SECRET, type: SECRET, scope: RUN_TIME }
+      - { key: CSRF_SIGNING_KEY, value: REPLACE_BASE64_SECRET, type: SECRET, scope: RUN_TIME }
+      - { key: ALLOWED_LOGIN_REDIRECTS, value: /app/,/payment/return, type: GENERAL, scope: RUN_TIME }
+static_sites:
+  - name: public-site
+    github:
+      repo: LukeCampbell3/NBA-Analytics
+      branch: static-deployment
+      deploy_on_push: false
+    source_dir: /
+    build_command: python sports/site/pipeline/build_static_site.py
+    output_dir: dist
+    index_document: index.html
+    error_document: 404.html

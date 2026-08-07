@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>Confirming payment | Prediction Bounties</title>
+    <link rel="stylesheet" href="/vault/vault-tokens.css">
+    <link rel="stylesheet" href="/vault/vault-components.css">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="vault-theme">
+    <main class="vault-shell site-shell">
+        <header class="desk-header">
+            <p class="desk-kicker">Secure checkout</p>
+            <h1>Confirming your membership&hellip;</h1>
+            <p id="paymentStatus" aria-live="polite">
+                Waiting for verified payment confirmation. This page cannot activate access by itself.
+            </p>
+            <div class="desk-board-card__actions">
+                <a class="desk-board-card__secondary" href="/functions/paywall/gateway/app/">Check member area</a>
+            </div>
+        </header>
+    </main>
+    <script src="/paywall-config.js"></script>
+    <script src="/payment/return/payment-return.js"></script>
+</body>
+</html>

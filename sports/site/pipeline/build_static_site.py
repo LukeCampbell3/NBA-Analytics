@@ -2,11 +2,11 @@
 """
 Build the multi-sport static site bundle.
 
-This builder creates a site root with:
-1. A shared landing page from `sports/site/web/`.
-2. One subdirectory per sport discovered under `sports/*/web/`.
-3. Clean-route folders for every copied HTML page.
-4. A generated `data/sports.json` manifest used by the landing page.
+This builder creates two deliberately separate outputs:
+1. A public marketing/login/legal shell in `dist/`.
+2. Protected sport pages and data in `paywall/private-content/app/`.
+3. Clean-route folders for copied HTML pages.
+4. Public and protected sport manifests containing metadata but no credentials.
 """
 
 from __future__ import annotations
@@ -24,6 +24,8 @@ SPORTS_ROOT = SITE_ROOT.parent
 REPO_ROOT = SPORTS_ROOT.parent
 DEFAULT_SOURCE_DIR = SITE_ROOT / "web"
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "dist"
+DEFAULT_PRIVATE_SOURCE_DIR = REPO_ROOT / "paywall" / "private-app"
+DEFAULT_PRIVATE_OUTPUT_DIR = REPO_ROOT / "paywall" / "private-content" / "app"
 VAULT_SOURCE_DIR = SPORTS_ROOT / "shared" / "web" / "vault"
 PREDICTION_PAGE_STEMS = {"predictions", "prediction-about"}
 PREDICTION_TOP_LEVEL_FILES = {
@@ -205,6 +207,17 @@ def prune_non_prediction_assets(sport_output: Path) -> None:
                 print(f"[prune] removed non-prediction data {data_file.relative_to(sport_output)}")
 
 
+def use_public_shared_assets(sport_output: Path) -> None:
+    """Point protected HTML at explicitly public, non-entitlement-bearing UI assets."""
+    for html_file in sorted(sport_output.glob("*.html")):
+        text = html_file.read_text(encoding="utf-8")
+        text = text.replace('href="vault/', 'href="/vault/').replace('src="vault/', 'src="/vault/')
+        html_file.write_text(text, encoding="utf-8")
+    bundled_vault = sport_output / "vault"
+    if bundled_vault.exists():
+        shutil.rmtree(bundled_vault)
+
+
 def discover_sports() -> List[Dict[str, object]]:
     sports: List[Dict[str, object]] = []
 
@@ -244,9 +257,14 @@ def build_static_site(
     landing_source_dir: Path,
     output_dir: Path,
     college_card_limit: Optional[int],
+    private_source_dir: Path = DEFAULT_PRIVATE_SOURCE_DIR,
+    private_output_dir: Path = DEFAULT_PRIVATE_OUTPUT_DIR,
 ) -> int:
     if not landing_source_dir.exists():
         print(f"Error: landing source directory not found: {landing_source_dir}")
+        return 1
+    if not private_source_dir.exists():
+        print(f"Error: private app source directory not found: {private_source_dir}")
         return 1
 
     sports = discover_sports()
@@ -257,20 +275,30 @@ def build_static_site(
     if output_dir.exists():
         shutil.rmtree(output_dir)
     shutil.copytree(landing_source_dir, output_dir)
-    print(f"[copy] landing {landing_source_dir} -> {output_dir}")
+    print(f"[copy] public shell {landing_source_dir} -> {output_dir}")
+
+    if private_output_dir.exists():
+        shutil.rmtree(private_output_dir)
+    shutil.copytree(private_source_dir, private_output_dir)
+    print(f"[copy] protected shell {private_source_dir} -> {private_output_dir}")
 
     vault_targets: List[Path] = [output_dir]
     manifest: List[Dict[str, object]] = []
     for sport in sports:
         slug = str(sport["slug"])
         source_dir = Path(sport["source_dir"])
-        sport_output = output_dir / slug
+        sport_output = private_output_dir / slug
         shutil.copytree(source_dir, sport_output)
         prune_non_prediction_assets(sport_output)
+        use_public_shared_assets(sport_output)
         trim_college_payload(sport_output / "data", college_card_limit)
         create_clean_routes(sport_output)
-        vault_targets.append(sport_output)
-        print(f"[copy] sport {slug}: {source_dir} -> {sport_output}")
+        print(f"[copy] protected sport {slug}: {source_dir} -> {sport_output}")
+
+        protected_pages = [
+            {**page, "href": f"/app/{slug}/" if page["slug"] == "index" else f"/app/{slug}/{page['slug']}/"}
+            for page in sport["pages"]
+        ]
 
         manifest.append(
             {
@@ -282,10 +310,10 @@ def build_static_site(
                 "status_label": sport["status_label"],
                 "accent": sport["accent"],
                 "surface": sport["surface"],
-                "pages": sport["pages"],
+                "pages": protected_pages,
                 "entry_href": next(
-                    (page["href"] for page in sport["pages"] if page.get("slug") == "predictions"),
-                    f"/{slug}/predictions/",
+                    (page["href"] for page in protected_pages if page.get("slug") == "predictions"),
+                    f"/app/{slug}/predictions/",
                 ),
             }
         )
@@ -295,9 +323,11 @@ def build_static_site(
     write_json(data_dir / "sports.json", manifest)
     sync_vault_assets(vault_targets)
     create_clean_routes(output_dir)
+    create_clean_routes(private_output_dir)
 
-    print("\n[SUCCESS] Multi-sport static site build complete.")
-    print(f"Output directory: {output_dir}")
+    print("\n[SUCCESS] Public/private site build complete.")
+    print(f"Public output directory: {output_dir}")
+    print(f"Protected release source: {private_output_dir}")
     print("Included sports:", ", ".join(item["slug"] for item in manifest))
     print("\nQuick local preview:")
     print(f"  python -m http.server 8000 --directory \"{output_dir}\"")
@@ -310,6 +340,16 @@ def main() -> int:
         "--source",
         default=str(DEFAULT_SOURCE_DIR),
         help=f"Landing source web directory (default: {DEFAULT_SOURCE_DIR})",
+    )
+    parser.add_argument(
+        "--private-source",
+        default=str(DEFAULT_PRIVATE_SOURCE_DIR),
+        help=f"Protected app shell source (default: {DEFAULT_PRIVATE_SOURCE_DIR})",
+    )
+    parser.add_argument(
+        "--private-output",
+        default=str(DEFAULT_PRIVATE_OUTPUT_DIR),
+        help=f"Protected release source output (default: {DEFAULT_PRIVATE_OUTPUT_DIR})",
     )
     parser.add_argument(
         "--output",
@@ -332,6 +372,8 @@ def main() -> int:
         landing_source_dir=Path(args.source).resolve(),
         output_dir=Path(args.output).resolve(),
         college_card_limit=effective_limit,
+        private_source_dir=Path(args.private_source).resolve(),
+        private_output_dir=Path(args.private_output).resolve(),
     )
 
 

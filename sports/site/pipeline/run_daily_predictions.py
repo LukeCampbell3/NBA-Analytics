@@ -27,6 +27,7 @@ SITE_ROOT = SCRIPT_PATH.parents[1]
 SPORTS_ROOT = SITE_ROOT.parent
 REPO_ROOT = SPORTS_ROOT.parent
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "dist"
+DEFAULT_PRIVATE_OUTPUT_DIR = REPO_ROOT / "paywall" / "private-content" / "app"
 
 NBA_PREDICTOR_ROOT = REPO_ROOT / "sports" / "nba" / "predictions" / "Player-Predictor"
 NBA_RUNNER = NBA_PREDICTOR_ROOT / "scripts" / "run_daily_market_pipeline.py"
@@ -108,6 +109,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--python", default=sys.executable, help="Python executable used for child steps.")
     parser.add_argument("--run-date", type=str, default=None, help="Optional YYYY-MM-DD run date.")
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help="Published static output directory.")
+    parser.add_argument("--private-output-dir", type=Path, default=DEFAULT_PRIVATE_OUTPUT_DIR, help="Protected release-source output directory.")
     parser.add_argument("--scheduled-hour", type=int, default=2, help="Local hour when the shared refresh is allowed to run.")
     parser.add_argument("--scheduled-minute", type=int, default=0, help="Local minute when the shared refresh is allowed to run.")
     parser.add_argument("--force-run", action="store_true", help="Bypass the local schedule gate and run immediately.")
@@ -426,7 +428,7 @@ def derive_generated_mlb_pool_outputs(run_date: str | None) -> tuple[Path, Path]
 
 
 def run_nba(args: argparse.Namespace, output_dir: Path) -> None:
-    nba_dist_json = output_dir / "nba" / "data" / "daily_predictions.json"
+    nba_dist_json = Path(getattr(args, "private_output_dir", DEFAULT_PRIVATE_OUTPUT_DIR)).resolve() / "nba" / "data" / "daily_predictions.json"
     if args.nba_manifest:
         command = [
             args.python,
@@ -509,6 +511,7 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
     generated_pool_csv: Path | None = None
     generated_summary_json: Path | None = None
     used_generated_pool = False
+    market_fetch_failed = False
 
     if args.mlb_pool_csv:
         pool_csv = args.mlb_pool_csv.resolve()
@@ -524,7 +527,13 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
                 fetch_command.extend(["--event-date", str(args.run_date)])
             if args.mlb_market_input_path:
                 fetch_command.extend(["--input-path", str(args.mlb_market_input_path.resolve())])
-            run_step("Fetch MLB Market Props", fetch_command)
+            try:
+                run_step("Fetch MLB Market Props", fetch_command)
+            except Exception as exc:
+                market_fetch_failed = True
+                print(
+                    f"[warning] MLB market fetch failed; continuing with the latest available pool and publication artifacts. {format_step_failure(exc)}"
+                )
 
         if not args.mlb_skip_update_data:
             update_command = [
@@ -534,7 +543,12 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
             if args.run_date:
                 update_command.extend(["--through-date", str(args.run_date)])
             if MLB_DATA_UPDATER.exists():
-                run_step("Update MLB Processed Data", update_command)
+                try:
+                    run_step("Update MLB Processed Data", update_command)
+                except Exception as exc:
+                    print(
+                        f"[warning] MLB processed-data update failed; continuing with the latest checked-in processed data. {format_step_failure(exc)}"
+                    )
             else:
                 print(
                     f"[warning] MLB processed-data updater was not found at {MLB_DATA_UPDATER}; "
@@ -557,7 +571,12 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
             ]
             if args.run_date:
                 command.extend(["--run-date", str(args.run_date)])
-            run_step("Generate MLB Raw Prediction Pool", command)
+            try:
+                run_step("Generate MLB Raw Prediction Pool", command)
+            except Exception as exc:
+                print(
+                    f"[warning] MLB raw pool generation failed; falling back to the latest available run directory. {format_step_failure(exc)}"
+                )
             if generated_pool_csv and generated_pool_csv.exists() and generated_summary_json.exists():
                 try:
                     summary = json.loads(generated_summary_json.read_text(encoding="utf-8"))
@@ -575,7 +594,7 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
         else:
             pool_csv = find_latest_mlb_pool_csv(MLB_DAILY_RUNS_ROOT, preferred_run_stamp)
 
-    mlb_dist_json = output_dir / "mlb" / "data" / "daily_predictions.json"
+    mlb_dist_json = Path(getattr(args, "private_output_dir", DEFAULT_PRIVATE_OUTPUT_DIR)).resolve() / "mlb" / "data" / "daily_predictions.json"
 
     pool_digits = "".join(char for char in pool_csv.stem if char.isdigit())
     governance_status_json = pool_csv.parent / "governance" / "governance_status.json"
@@ -783,6 +802,8 @@ def build_site(args: argparse.Namespace, output_dir: Path) -> None:
             str(BUILD_STATIC_SITE),
             "--output",
             str(output_dir),
+            "--private-output",
+            str(Path(getattr(args, "private_output_dir", DEFAULT_PRIVATE_OUTPUT_DIR)).resolve()),
         ],
     )
 
@@ -837,13 +858,13 @@ def main() -> None:
         if nba_failure is not None:
             print(f"NBA status:       failed safely ({format_step_failure(nba_failure)})")
         print(f"NBA web payload:  {NBA_WEB_JSON}")
-        print(f"NBA dist payload: {output_dir / 'nba' / 'data' / 'daily_predictions.json'}")
+        print(f"NBA protected payload: {Path(getattr(args, 'private_output_dir', DEFAULT_PRIVATE_OUTPUT_DIR)).resolve() / 'nba' / 'data' / 'daily_predictions.json'}")
     if not args.skip_mlb:
         print(f"MLB pool CSV:     {mlb_pool_csv}")
         print(f"MLB selected CSV: {mlb_selected_csv}")
         print(f"MLB summary JSON: {mlb_summary_json}")
         print(f"MLB web payload:  {MLB_WEB_JSON}")
-        print(f"MLB dist payload: {output_dir / 'mlb' / 'data' / 'daily_predictions.json'}")
+        print(f"MLB protected payload: {Path(getattr(args, 'private_output_dir', DEFAULT_PRIVATE_OUTPUT_DIR)).resolve() / 'mlb' / 'data' / 'daily_predictions.json'}")
 
 
 if __name__ == "__main__":

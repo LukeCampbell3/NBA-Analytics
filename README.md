@@ -27,7 +27,7 @@ sports/
 python sports/site/pipeline/run_daily_predictions.py
 ```
 
-This command now checks local time and runs once the local clock has passed `2:00 AM` by default whenever the current-day payloads are stale or missing. At that point it refreshes NBA predictions, generates a fresh MLB raw pool when processed MLB data is available, tightens the MLB board for publication, and rebuilds the unified static site into `dist/`.
+This command checks local time and runs once the local clock has passed `2:00 AM` by default whenever the current-day payloads are stale or missing. It refreshes prediction data and rebuilds two separate outputs: the public shell in `dist/` and protected release source in `paywall/private-content/app/`.
 
 For a manual run outside the 2:00 AM window:
 
@@ -47,8 +47,7 @@ python sports/site/pipeline/build_static_site.py
 python sports/site/pipeline/serve_web.py
 ```
 
-This gives you a landing page at `/` and sport workspaces like `/nba/`, `/mlb/`, and `/nfl/`.
-The combined static output is written to `dist/` at the repo root.
+This previews only the public shell at `/`. Sport boards and their prediction payloads are deliberately absent from `dist/`; they are delivered through the authenticated Go gateway from private R2.
 
 ## Market Data
 
@@ -64,9 +63,11 @@ workflow definitions to exist on the repository's default branch (`main`), so
 the workflow starts there and explicitly checks out, builds, validates, and
 updates the deployable `static-deployment` branch.
 
-The job rejects stale payloads before committing. It publishes only `dist/`,
-same-day prediction payloads and pools, and MLB calibration summaries; raw
-refresh caches and processed history are not committed by the automation.
+The job rejects stale payloads before committing. `dist/` contains only the
+public landing, pricing, login, payment-return, legal, catalog metadata, and
+shared presentation assets. Prediction payload sources remain available to the
+controlled publication workflow but are never copied into the public static
+artifact.
 
 ## NBA Quick Start
 
@@ -95,7 +96,7 @@ python sports/nba/pipeline/serve_web.py
 python sports/nba/predictions/Player-Predictor/scripts/run_daily_market_pipeline.py
 ```
 
-For the shared published site, prefer `python sports/site/pipeline/run_daily_predictions.py` so both NBA and MLB payloads refresh together and `dist/` stays in sync.
+For the shared published site, prefer `python sports/site/pipeline/run_daily_predictions.py` so both NBA and MLB payloads refresh together and both public/private outputs stay in sync.
 
 See `sports/nba/README.md` for full NBA pipeline details.
 
@@ -108,6 +109,6 @@ holdout report:
 python sports/nfl/scripts/train_nfl_predictor.py
 ```
 
-The static model report is included automatically by the shared site builder at
-`/nfl/predictions/`. See `sports/nfl/README.md` for data, model, and evaluation
-details.
+The static model report is included in the protected release at
+`/app/nfl/predictions/` and is not copied to `dist/`. See `sports/nfl/README.md`
+for data, model, and evaluation details.
