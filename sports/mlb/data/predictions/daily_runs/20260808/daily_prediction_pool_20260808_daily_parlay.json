@@ -1,0 +1,281 @@
+{
+  "schema_version": 1,
+  "policy_version": "mlb_over_consistency_parlay_v1",
+  "generated_at_utc": "2026-08-08T13:46:31.924098+00:00",
+  "run_date": "2026-08-08",
+  "status": "ready",
+  "objective": "ticket_hit_probability_then_expected_return",
+  "direction_policy": "OVER_ONLY",
+  "allowed_leg_counts": [
+    2,
+    3,
+    4
+  ],
+  "gates": {
+    "min_leg_probability": 0.62,
+    "min_ticket_probability": 0.4,
+    "min_combined_decimal_price": 2.0,
+    "min_expected_return_per_unit": 0.0,
+    "min_market_books": 5,
+    "min_common_market_books": 2,
+    "same_sportsbook_required": true,
+    "distinct_games_required": true
+  },
+  "pool_candidate_count": 1565,
+  "eligible_anchor_count": 10,
+  "considered_anchor_count": 10,
+  "filter_rejections": {
+    "history_too_short": 24,
+    "insufficient_book_coverage": 35,
+    "leg_probability_too_low": 257,
+    "leg_value_too_low": 34,
+    "not_over": 786,
+    "price_outside_playable_range": 224,
+    "unconfirmed_market_price": 170,
+    "unsupported_anchor_target": 25
+  },
+  "selected_ticket": {
+    "leg_indices": [
+      2,
+      6
+    ],
+    "leg_keys": [
+      "2026-08-08|824565|Chase DeLauter|H|OVER",
+      "2026-08-08|824079|Miguel Amaya|H|OVER"
+    ],
+    "leg_names": [
+      "Chase DeLauter",
+      "Miguel Amaya"
+    ],
+    "leg_targets": [
+      "H",
+      "H"
+    ],
+    "leg_directions": [
+      "OVER",
+      "OVER"
+    ],
+    "leg_count": 2,
+    "projected_probability": 0.41858993378751524,
+    "independent_probability": 0.41858993378751524,
+    "pairwise_adjustment_factor": 1.001977614,
+    "parlay_score": 0.4732351004574599,
+    "combined_decimal_price": 2.546463245492372,
+    "combined_american_price": 154.6463245492372,
+    "expected_return_per_unit": 0.0659238813229932,
+    "same_sportsbook_confirmed": true,
+    "sportsbook_key": "draftkings",
+    "sportsbook": "DraftKings",
+    "avg_leg_quality": 0.8283815777962565,
+    "same_player": false,
+    "same_game": false,
+    "same_team": false,
+    "same_target": true,
+    "same_market_bucket": true,
+    "mixed_direction": false,
+    "legs": [
+      {
+        "play_key": "2026-08-08|824565|Chase DeLauter|H|OVER",
+        "player": "Chase DeLauter",
+        "player_display_name": "Chase DeLauter",
+        "player_id": "chase_delauter",
+        "player_type": "hitter",
+        "team": "CLE",
+        "opponent": "CWS",
+        "game_id": "824565",
+        "market_date": "2026-08-08",
+        "commence_time_utc": "2026-08-08T23:15:00Z",
+        "game_status_code": "P",
+        "target": "H",
+        "direction": "OVER",
+        "prediction": 1.2808376930800789,
+        "market_line": 0.5,
+        "market_source": "real",
+        "market_bucket": "H|OVER|0.5",
+        "historical_bucket_key": "H|OVER|0.5",
+        "estimated_graded_hit_rate": 0.6616330011432682,
+        "model_hit_probability": 0.7221955119431184,
+        "final_pool_quality_score": 0.842183373216408,
+        "expected_value_per_unit": -0.017185930340582245,
+        "selected_side_price": -206.0,
+        "selected_sportsbook_key": "draftkings",
+        "selected_sportsbook": "DraftKings",
+        "price_confirmed": true,
+        "market_books": 6,
+        "market_common_books": 3,
+        "market_book_keys": [
+          "betmgm",
+          "bovada",
+          "caesars",
+          "draftkings",
+          "espnbet",
+          "fanduel"
+        ],
+        "market_common_book_keys": [
+          "fanduel",
+          "draftkings",
+          "caesars"
+        ],
+        "history_rows": 110,
+        "days_since_history": 1,
+        "selection_score": 0.842183373216408,
+        "parlay_precision_eligible": true
+      },
+      {
+        "play_key": "2026-08-08|824079|Miguel Amaya|H|OVER",
+        "player": "Miguel Amaya",
+        "player_display_name": "Miguel Amaya",
+        "player_id": "miguel_amaya",
+        "player_type": "hitter",
+        "team": "CHC",
+        "opponent": "KC",
+        "game_id": "824079",
+        "market_date": "2026-08-08",
+        "commence_time_utc": "2026-08-08T23:10:00Z",
+        "game_status_code": "P",
+        "target": "H",
+        "direction": "OVER",
+        "prediction": 1.070596571017327,
+        "market_line": 0.5,
+        "market_source": "real",
+        "market_bucket": "H|OVER|0.5",
+        "historical_bucket_key": "H|OVER|0.5",
+        "estimated_graded_hit_rate": 0.63266181261245,
+        "model_hit_probability": 0.6571960504957701,
+        "final_pool_quality_score": 0.8145797823761051,
+        "expected_value_per_unit": 0.0845631073356286,
+        "selected_side_price": -140.0,
+        "selected_sportsbook_key": "draftkings",
+        "selected_sportsbook": "DraftKings",
+        "price_confirmed": true,
+        "market_books": 6,
+        "market_common_books": 3,
+        "market_book_keys": [
+          "betmgm",
+          "bovada",
+          "caesars",
+          "draftkings",
+          "espnbet",
+          "fanduel"
+        ],
+        "market_common_book_keys": [
+          "fanduel",
+          "draftkings",
+          "caesars"
+        ],
+        "history_rows": 71,
+        "days_since_history": 2,
+        "selection_score": 0.8145797823761051,
+        "parlay_precision_eligible": true
+      }
+    ]
+  },
+  "validation": {
+    "method": "stored_pre_event_projection_synthetic_line_grading",
+    "price_validation": "unavailable_historically; no ROI claim",
+    "history_before_date": "2026-08-08",
+    "event_rows": 8720,
+    "dates": 117,
+    "by_leg_count": [
+      {
+        "leg_count": 2,
+        "all_dates": {
+          "tickets": 109,
+          "dates": 109,
+          "hits": 97,
+          "hit_rate": 0.8899082568807339,
+          "win_rate_wilson_95_low": 0.8173757042606518,
+          "win_rate_wilson_95_high": 0.9358925939556089,
+          "mean_projected_probability": 0.7360456254474516,
+          "brier_score": 0.11071212879669864
+        },
+        "development": {
+          "tickets": 89,
+          "dates": 89,
+          "hits": 80,
+          "hit_rate": 0.898876404494382,
+          "win_rate_wilson_95_low": 0.8188613249575372,
+          "win_rate_wilson_95_high": 0.9458820659362002,
+          "mean_projected_probability": 0.7372823160172663,
+          "brier_score": 0.10527527716114578
+        },
+        "fixed_recent_holdout": {
+          "tickets": 20,
+          "dates": 20,
+          "hits": 17,
+          "hit_rate": 0.85,
+          "win_rate_wilson_95_low": 0.6395767041130426,
+          "win_rate_wilson_95_high": 0.9476322080405041,
+          "mean_projected_probability": 0.7305423524117753,
+          "brier_score": 0.13490611857490886
+        }
+      },
+      {
+        "leg_count": 3,
+        "all_dates": {
+          "tickets": 108,
+          "dates": 108,
+          "hits": 82,
+          "hit_rate": 0.7592592592592593,
+          "win_rate_wilson_95_low": 0.670618917901196,
+          "win_rate_wilson_95_high": 0.830089226474421,
+          "mean_projected_probability": 0.5951031336545092,
+          "brier_score": 0.19346248870290148
+        },
+        "development": {
+          "tickets": 88,
+          "dates": 88,
+          "hits": 69,
+          "hit_rate": 0.7840909090909091,
+          "win_rate_wilson_95_low": 0.6872227423488249,
+          "win_rate_wilson_95_high": 0.8571928601668108,
+          "mean_projected_probability": 0.5956445970717575,
+          "brier_score": 0.18367385271942205
+        },
+        "fixed_recent_holdout": {
+          "tickets": 20,
+          "dates": 20,
+          "hits": 13,
+          "hit_rate": 0.65,
+          "win_rate_wilson_95_low": 0.43285051021946463,
+          "win_rate_wilson_95_high": 0.8188104521320554,
+          "mean_projected_probability": 0.592720694618616,
+          "brier_score": 0.236532487030211
+        }
+      },
+      {
+        "leg_count": 4,
+        "all_dates": {
+          "tickets": 108,
+          "dates": 108,
+          "hits": 67,
+          "hit_rate": 0.6203703703703703,
+          "win_rate_wilson_95_low": 0.5261993725148564,
+          "win_rate_wilson_95_high": 0.7062722659452514,
+          "mean_projected_probability": 0.4676317941051579,
+          "brier_score": 0.2477160221787224
+        },
+        "development": {
+          "tickets": 88,
+          "dates": 88,
+          "hits": 58,
+          "hit_rate": 0.6590909090909091,
+          "win_rate_wilson_95_low": 0.5552626020736617,
+          "win_rate_wilson_95_high": 0.7496101353350941,
+          "mean_projected_probability": 0.46697631226543507,
+          "brier_score": 0.24362848962166372
+        },
+        "fixed_recent_holdout": {
+          "tickets": 20,
+          "dates": 20,
+          "hits": 9,
+          "hit_rate": 0.45,
+          "win_rate_wilson_95_low": 0.25819502085709295,
+          "win_rate_wilson_95_high": 0.6579179916924003,
+          "mean_projected_probability": 0.47051591419993866,
+          "brier_score": 0.2657011654297805
+        }
+      }
+    ]
+  }
+}
