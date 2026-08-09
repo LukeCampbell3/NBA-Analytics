@@ -2,11 +2,11 @@
 """
 Build the multi-sport static site bundle.
 
-This builder creates two deliberately separate outputs:
-1. A public marketing/login/legal shell in `dist/`.
-2. Protected sport pages and data in `paywall/private-content/app/`.
+This builder creates:
+1. A public site in `dist/`, including sport prediction routes and payloads.
+2. A compatibility copy in `paywall/private-content/app/` for legacy release tooling.
 3. Clean-route folders for copied HTML pages.
-4. Public and protected sport manifests containing metadata but no credentials.
+4. A public sport manifest containing metadata but no credentials.
 """
 
 from __future__ import annotations
@@ -208,7 +208,7 @@ def prune_non_prediction_assets(sport_output: Path) -> None:
 
 
 def use_public_shared_assets(sport_output: Path) -> None:
-    """Point protected HTML at explicitly public, non-entitlement-bearing UI assets."""
+    """Point sport HTML at shared public UI assets."""
     for html_file in sorted(sport_output.glob("*.html")):
         text = html_file.read_text(encoding="utf-8")
         text = text.replace('href="vault/', 'href="/vault/').replace('src="vault/', 'src="/vault/')
@@ -216,6 +216,20 @@ def use_public_shared_assets(sport_output: Path) -> None:
     bundled_vault = sport_output / "vault"
     if bundled_vault.exists():
         shutil.rmtree(bundled_vault)
+
+
+def copy_prediction_sport(
+    source_dir: Path,
+    sport_output: Path,
+    college_card_limit: Optional[int],
+) -> None:
+    if sport_output.exists():
+        shutil.rmtree(sport_output)
+    shutil.copytree(source_dir, sport_output)
+    prune_non_prediction_assets(sport_output)
+    use_public_shared_assets(sport_output)
+    trim_college_payload(sport_output / "data", college_card_limit)
+    create_clean_routes(sport_output)
 
 
 def discover_sports() -> List[Dict[str, object]]:
@@ -287,18 +301,14 @@ def build_static_site(
     for sport in sports:
         slug = str(sport["slug"])
         source_dir = Path(sport["source_dir"])
-        sport_output = private_output_dir / slug
-        shutil.copytree(source_dir, sport_output)
-        prune_non_prediction_assets(sport_output)
-        use_public_shared_assets(sport_output)
-        trim_college_payload(sport_output / "data", college_card_limit)
-        create_clean_routes(sport_output)
-        print(f"[copy] protected sport {slug}: {source_dir} -> {sport_output}")
+        public_sport_output = output_dir / slug
+        private_sport_output = private_output_dir / slug
+        copy_prediction_sport(source_dir, public_sport_output, college_card_limit)
+        copy_prediction_sport(source_dir, private_sport_output, college_card_limit)
+        print(f"[copy] public sport {slug}: {source_dir} -> {public_sport_output}")
+        print(f"[copy] compatibility sport {slug}: {source_dir} -> {private_sport_output}")
 
-        protected_pages = [
-            {**page, "href": f"/app/{slug}/" if page["slug"] == "index" else f"/app/{slug}/{page['slug']}/"}
-            for page in sport["pages"]
-        ]
+        public_pages = list(sport["pages"])
 
         manifest.append(
             {
@@ -310,10 +320,10 @@ def build_static_site(
                 "status_label": sport["status_label"],
                 "accent": sport["accent"],
                 "surface": sport["surface"],
-                "pages": protected_pages,
+                "pages": public_pages,
                 "entry_href": next(
-                    (page["href"] for page in protected_pages if page.get("slug") == "predictions"),
-                    f"/app/{slug}/predictions/",
+                    (page["href"] for page in public_pages if page.get("slug") == "predictions"),
+                    f"/{slug}/predictions/",
                 ),
             }
         )
@@ -325,7 +335,7 @@ def build_static_site(
     create_clean_routes(output_dir)
     create_clean_routes(private_output_dir)
 
-    print("\n[SUCCESS] Public/private site build complete.")
+    print("\n[SUCCESS] Public site build complete.")
     print(f"Public output directory: {output_dir}")
     print(f"Protected release source: {private_output_dir}")
     print("Included sports:", ", ".join(item["slug"] for item in manifest))

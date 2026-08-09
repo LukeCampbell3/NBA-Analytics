@@ -95,6 +95,11 @@ class MultiPageRequestHandler(http.server.SimpleHTTPRequestHandler):
             return path
 
         slug = path.rstrip("/")
+        directory_index = f"{slug.lstrip('/')}/index.html"
+        if path.endswith("/") and self._is_safe_relative_path(directory_index):
+            if (Path(self.directory) / directory_index).is_file():
+                return f"/{directory_index}"
+
         candidate = f"{slug.lstrip('/')}.html"
         if self._is_safe_relative_path(candidate) and (Path(self.directory) / candidate).is_file():
             return f"/{candidate}"

@@ -414,48 +414,48 @@ def validate_publication(
     summaries: list[str] = []
     for sport in sports:
         source_path = repo_root / SPORT_PAYLOADS[sport]
-        protected_path = resolved_protected / sport / "data" / "daily_predictions.json"
-        route_path = resolved_protected / sport / "predictions" / "index.html"
+        public_path = resolved_output / sport / "data" / "daily_predictions.json"
+        route_path = resolved_output / sport / "predictions" / "index.html"
 
         source_payload = load_json(source_path)
-        protected_payload = load_json(protected_path)
+        public_payload = load_json(public_path)
         require_file(route_path)
 
         source_date = str(source_payload.get("run_date") or "")
-        protected_date = str(protected_payload.get("run_date") or "")
+        public_date = str(public_payload.get("run_date") or "")
         if not allow_stale_payloads:
             if source_date != expected_date:
                 raise ValueError(
                     f"{sport.upper()} source payload is stale: expected {expected_date}, found {source_date or '<missing>'}"
                 )
-            if protected_date != expected_date:
+            if public_date != expected_date:
                 raise ValueError(
-                    f"{sport.upper()} protected payload is stale: expected {expected_date}, found {protected_date or '<missing>'}"
+                    f"{sport.upper()} public payload is stale: expected {expected_date}, found {public_date or '<missing>'}"
                 )
 
         source_status = str(source_payload.get("publication_status") or "").strip()
-        protected_status = str(protected_payload.get("publication_status") or "").strip()
-        if not source_status or source_status != protected_status:
+        public_status = str(public_payload.get("publication_status") or "").strip()
+        if not source_status or source_status != public_status:
             source_status = "unavailable"
-            protected_status = "unavailable"
+            public_status = "unavailable"
             if not allow_stale_payloads:
                 raise ValueError(
-                    f"{sport.upper()} publication status is missing or differs between source and protected output "
-                    f"({source_status or '<missing>'} vs {protected_status or '<missing>'})"
+                    f"{sport.upper()} publication status is missing or differs between source and public output "
+                    f"({source_status or '<missing>'} vs {public_status or '<missing>'})"
                 )
 
         plays = source_payload.get("plays")
         if not isinstance(plays, list):
-            if allow_stale_payloads and not source_payload and not protected_payload:
+            if allow_stale_payloads and not source_payload and not public_payload:
                 plays = []
             else:
                 raise ValueError(f"{sport.upper()} payload must contain a plays list.")
         if sport == "mlb" and not allow_stale_payloads:
             validate_mlb_payload(source_payload, label="source")
-            validate_mlb_payload(protected_payload, label="protected")
-        elif sport == "mlb" and allow_stale_payloads and (source_payload or protected_payload):
+            validate_mlb_payload(public_payload, label="public")
+        elif sport == "mlb" and allow_stale_payloads and (source_payload or public_payload):
             validate_mlb_payload(source_payload, label="source")
-            validate_mlb_payload(protected_payload, label="protected")
+            validate_mlb_payload(public_payload, label="public")
         governance_suffix = ""
         if sport == "mlb" and source_payload.get("policy_governance"):
             governance = source_payload.get("policy_governance") or {}

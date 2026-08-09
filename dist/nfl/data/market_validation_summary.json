@@ -1,0 +1,457 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-07-31T16:39:07.788752+00:00",
+  "publication_status": "research_only_source_blocked",
+  "status": "effectiveness_proven_source_blocked",
+  "validated_targets": [
+    "passing"
+  ],
+  "locked_policy": {
+    "season": 2022,
+    "targets": [
+      "passing"
+    ],
+    "minimum_side_probability": 0.56,
+    "minimum_no_vig_advantage": 0.025,
+    "weekly_top_n": 12,
+    "selection_fingerprint_sha256": "c9aac1eb07c651766eeeda3a3f58a21f0071c510e63fa31a5e7120412b8fa70f"
+  },
+  "development": {
+    "bets": 95,
+    "graded_decisions": 95,
+    "wins": 59,
+    "losses": 36,
+    "pushes": 0,
+    "hit_rate": 0.6211,
+    "hit_rate_wilson_95": [
+      0.5206,
+      0.7121
+    ],
+    "roi": 0.1572,
+    "profit_units": 14.9302,
+    "distinct_weeks": 8,
+    "over_bets": 0,
+    "under_bets": 95
+  },
+  "final_test": {
+    "bets": 210,
+    "graded_decisions": 210,
+    "wins": 127,
+    "losses": 83,
+    "pushes": 0,
+    "hit_rate": 0.6048,
+    "hit_rate_wilson_95": [
+      0.5373,
+      0.6684
+    ],
+    "roi": 0.13,
+    "profit_units": 27.2981,
+    "distinct_weeks": 18,
+    "over_bets": 27,
+    "under_bets": 183
+  },
+  "statistical_evidence": {
+    "wilson_hit_rate_95": [
+      0.5373,
+      0.6684
+    ],
+    "week_cluster_hit_rate_95": [
+      0.5407,
+      0.6635
+    ],
+    "week_cluster_roi_95": [
+      0.0099,
+      0.2402
+    ],
+    "one_sided_exact_p_value_vs_50_percent": 0.001457
+  },
+  "baselines": {
+    "always_under": {
+      "bets": 210,
+      "graded_decisions": 210,
+      "wins": 120,
+      "losses": 90,
+      "pushes": 0,
+      "hit_rate": 0.5714,
+      "hit_rate_wilson_95": [
+        0.5038,
+        0.6365
+      ],
+      "roi": 0.0662,
+      "profit_units": 13.8971,
+      "distinct_weeks": 18,
+      "over_bets": 0,
+      "under_bets": 210
+    },
+    "point_projection_side": {
+      "bets": 210,
+      "graded_decisions": 210,
+      "wins": 111,
+      "losses": 99,
+      "pushes": 0,
+      "hit_rate": 0.5286,
+      "hit_rate_wilson_95": [
+        0.4611,
+        0.595
+      ],
+      "roi": -0.0111,
+      "profit_units": -2.3248,
+      "distinct_weeks": 18,
+      "over_bets": 65,
+      "under_bets": 145
+    },
+    "model_vs_always_under": {
+      "model_only_wins": 17,
+      "baseline_only_wins": 10,
+      "discordant_decisions": 27,
+      "one_sided_exact_p_value": 0.123894,
+      "status": "directionally_better_not_proven"
+    },
+    "model_vs_point_projection": {
+      "model_only_wins": 43,
+      "baseline_only_wins": 27,
+      "discordant_decisions": 70,
+      "one_sided_exact_p_value": 0.036119,
+      "status": "statistically_superior"
+    }
+  },
+  "gates": {
+    "contract": {
+      "status": "passed",
+      "errors": [],
+      "rows": 315,
+      "season": 2022,
+      "validated_targets": [
+        "passing"
+      ],
+      "duplicate_props": 0
+    },
+    "operational": {
+      "status": "passed",
+      "deterministic_under_input_shuffle": true,
+      "selection_independent_of_outcomes": true,
+      "stored_grading_matches_recomputed_grading": true,
+      "maximum_weekly_picks": 12
+    },
+    "effectiveness": {
+      "status": "passed"
+    },
+    "stability": {
+      "status": "passed"
+    },
+    "source_provenance": {
+      "status": "failed",
+      "all_snapshots_verified_before_kickoff": false
+    },
+    "deployment": {
+      "status": "blocked",
+      "reason": "Effectiveness is proven, but source timestamps remain unauthenticated."
+    }
+  },
+  "stability": {
+    "halves": [
+      {
+        "weeks": [
+          1,
+          9
+        ],
+        "bets": 102,
+        "graded_decisions": 102,
+        "wins": 62,
+        "losses": 40,
+        "pushes": 0,
+        "hit_rate": 0.6078,
+        "hit_rate_wilson_95": [
+          0.5108,
+          0.697
+        ],
+        "roi": 0.1378,
+        "profit_units": 14.052,
+        "distinct_weeks": 9,
+        "over_bets": 27,
+        "under_bets": 75
+      },
+      {
+        "weeks": [
+          10,
+          18
+        ],
+        "bets": 108,
+        "graded_decisions": 108,
+        "wins": 65,
+        "losses": 43,
+        "pushes": 0,
+        "hit_rate": 0.6019,
+        "hit_rate_wilson_95": [
+          0.5076,
+          0.6891
+        ],
+        "roi": 0.1226,
+        "profit_units": 13.2461,
+        "distinct_weeks": 9,
+        "over_bets": 0,
+        "under_bets": 108
+      }
+    ],
+    "drawdown": {
+      "final_profit_units": 27.2981,
+      "maximum_drawdown_units": -7.2329
+    },
+    "weekly_cap_sensitivity": [
+      {
+        "top_n": 8,
+        "bets": 144,
+        "graded_decisions": 144,
+        "wins": 86,
+        "losses": 58,
+        "pushes": 0,
+        "hit_rate": 0.5972,
+        "hit_rate_wilson_95": [
+          0.5156,
+          0.6738
+        ],
+        "roi": 0.1159,
+        "profit_units": 16.6899,
+        "distinct_weeks": 18,
+        "over_bets": 20,
+        "under_bets": 124
+      },
+      {
+        "top_n": 10,
+        "bets": 179,
+        "graded_decisions": 179,
+        "wins": 107,
+        "losses": 72,
+        "pushes": 0,
+        "hit_rate": 0.5978,
+        "hit_rate_wilson_95": [
+          0.5246,
+          0.6668
+        ],
+        "roi": 0.1165,
+        "profit_units": 20.8586,
+        "distinct_weeks": 18,
+        "over_bets": 25,
+        "under_bets": 154
+      },
+      {
+        "top_n": 12,
+        "bets": 210,
+        "graded_decisions": 210,
+        "wins": 127,
+        "losses": 83,
+        "pushes": 0,
+        "hit_rate": 0.6048,
+        "hit_rate_wilson_95": [
+          0.5373,
+          0.6684
+        ],
+        "roi": 0.13,
+        "profit_units": 27.2981,
+        "distinct_weeks": 18,
+        "over_bets": 27,
+        "under_bets": 183
+      }
+    ]
+  },
+  "weekly": [
+    {
+      "season": 2022,
+      "week": 1,
+      "picks": 11,
+      "wins": 7,
+      "losses": 4,
+      "hit_rate": 0.6364,
+      "roi": 0.1834,
+      "profit_units": 2.0174
+    },
+    {
+      "season": 2022,
+      "week": 2,
+      "picks": 10,
+      "wins": 7,
+      "losses": 3,
+      "hit_rate": 0.7,
+      "roi": 0.2987,
+      "profit_units": 2.9874
+    },
+    {
+      "season": 2022,
+      "week": 3,
+      "picks": 12,
+      "wins": 7,
+      "losses": 5,
+      "hit_rate": 0.5833,
+      "roi": 0.1109,
+      "profit_units": 1.3306
+    },
+    {
+      "season": 2022,
+      "week": 4,
+      "picks": 9,
+      "wins": 6,
+      "losses": 3,
+      "hit_rate": 0.6667,
+      "roi": 0.2454,
+      "profit_units": 2.2087
+    },
+    {
+      "season": 2022,
+      "week": 5,
+      "picks": 12,
+      "wins": 6,
+      "losses": 6,
+      "hit_rate": 0.5,
+      "roi": -0.056,
+      "profit_units": -0.6717
+    },
+    {
+      "season": 2022,
+      "week": 6,
+      "picks": 12,
+      "wins": 8,
+      "losses": 4,
+      "hit_rate": 0.6667,
+      "roi": 0.2601,
+      "profit_units": 3.121
+    },
+    {
+      "season": 2022,
+      "week": 7,
+      "picks": 12,
+      "wins": 5,
+      "losses": 7,
+      "hit_rate": 0.4167,
+      "roi": -0.2401,
+      "profit_units": -2.8813
+    },
+    {
+      "season": 2022,
+      "week": 8,
+      "picks": 12,
+      "wins": 9,
+      "losses": 3,
+      "hit_rate": 0.75,
+      "roi": 0.4044,
+      "profit_units": 4.8529
+    },
+    {
+      "season": 2022,
+      "week": 9,
+      "picks": 12,
+      "wins": 7,
+      "losses": 5,
+      "hit_rate": 0.5833,
+      "roi": 0.0906,
+      "profit_units": 1.087
+    },
+    {
+      "season": 2022,
+      "week": 10,
+      "picks": 12,
+      "wins": 8,
+      "losses": 4,
+      "hit_rate": 0.6667,
+      "roi": 0.2464,
+      "profit_units": 2.9565
+    },
+    {
+      "season": 2022,
+      "week": 11,
+      "picks": 12,
+      "wins": 8,
+      "losses": 4,
+      "hit_rate": 0.6667,
+      "roi": 0.2483,
+      "profit_units": 2.9798
+    },
+    {
+      "season": 2022,
+      "week": 12,
+      "picks": 12,
+      "wins": 5,
+      "losses": 7,
+      "hit_rate": 0.4167,
+      "roi": -0.221,
+      "profit_units": -2.6522
+    },
+    {
+      "season": 2022,
+      "week": 13,
+      "picks": 12,
+      "wins": 9,
+      "losses": 3,
+      "hit_rate": 0.75,
+      "roi": 0.4022,
+      "profit_units": 4.8261
+    },
+    {
+      "season": 2022,
+      "week": 14,
+      "picks": 12,
+      "wins": 8,
+      "losses": 4,
+      "hit_rate": 0.6667,
+      "roi": 0.2439,
+      "profit_units": 2.9265
+    },
+    {
+      "season": 2022,
+      "week": 15,
+      "picks": 12,
+      "wins": 5,
+      "losses": 7,
+      "hit_rate": 0.4167,
+      "roi": -0.2229,
+      "profit_units": -2.6749
+    },
+    {
+      "season": 2022,
+      "week": 16,
+      "picks": 12,
+      "wins": 4,
+      "losses": 8,
+      "hit_rate": 0.3333,
+      "roi": -0.3798,
+      "profit_units": -4.558
+    },
+    {
+      "season": 2022,
+      "week": 17,
+      "picks": 12,
+      "wins": 9,
+      "losses": 3,
+      "hit_rate": 0.75,
+      "roi": 0.3964,
+      "profit_units": 4.7565
+    },
+    {
+      "season": 2022,
+      "week": 18,
+      "picks": 12,
+      "wins": 9,
+      "losses": 3,
+      "hit_rate": 0.75,
+      "roi": 0.3905,
+      "profit_units": 4.6857
+    }
+  ],
+  "methodology": {
+    "development_season": 2021,
+    "final_test_season": 2022,
+    "architecture_selection": "Brier score, then log loss, then fewer features",
+    "selected_architecture": "regularized_logistic_raw",
+    "minimum_side_probability": 0.56,
+    "minimum_no_vig_advantage": 0.025,
+    "weekly_top_n": 12,
+    "line_contract": "one earliest available posted pregame line per player/stat/book",
+    "line_movement_used": false,
+    "closing_line_used": false
+  },
+  "limitations": [
+    "Only passing yards cleared both development and final target gates.",
+    "The free Bovada archive has no capture timestamps, so line timing cannot be independently authenticated.",
+    "The selector is directionally better than always-under on the matched cohort, but that paired uplift is not statistically significant.",
+    "The board remains research-only until a prospective or timestamp-authenticated replay passes."
+  ]
+}

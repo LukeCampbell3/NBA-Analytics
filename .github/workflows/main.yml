@@ -21,6 +21,11 @@ on:
           - both
           - nba
           - mlb
+      build_only:
+        description: "Rebuild and validate the existing publication without fetching new markets"
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: daily-predictions-static-deployment
@@ -117,8 +122,14 @@ jobs:
           RUN_DATE: ${{ steps.run-config.outputs.run_date }}
           RUN_NBA: ${{ steps.run-config.outputs.run_nba }}
           RUN_MLB: ${{ steps.run-config.outputs.run_mlb }}
+          BUILD_ONLY: ${{ inputs.build_only || 'false' }}
         run: |
           set -euo pipefail
+
+          if [[ "$BUILD_ONLY" == "true" ]]; then
+            python sports/site/pipeline/build_static_site.py
+            exit 0
+          fi
 
           args=(
             --run-date "$RUN_DATE"
@@ -171,8 +182,8 @@ jobs:
 
           git add -f -- dist
 
-          # Protected prediction pages/data are never staged into the public
-          # static artifact. A credential-gated release job uploads them to R2.
+          # The static bundle includes the public sport routes and their
+          # prediction payloads; validation above fails if either is missing.
 
           if [[ "$RUN_NBA" == "true" ]]; then
             git add -f -- sports/nba/web/data/daily_predictions.json

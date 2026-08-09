@@ -115,11 +115,11 @@ def test_validate_publication_accepts_current_payloads(tmp_path: Path) -> None:
             sport=sport,
         )
         write_payload(
-            tmp_path / f"paywall/private-content/app/{sport}/data/daily_predictions.json",
+            tmp_path / f"dist/{sport}/data/daily_predictions.json",
             run_date="2026-04-28",
             sport=sport,
         )
-        route = tmp_path / f"paywall/private-content/app/{sport}/predictions/index.html"
+        route = tmp_path / f"dist/{sport}/predictions/index.html"
         route.parent.mkdir(parents=True, exist_ok=True)
         route.write_text("ok", encoding="utf-8")
 
@@ -144,11 +144,11 @@ def test_validate_publication_rejects_stale_payload(tmp_path: Path) -> None:
         sport="mlb",
     )
     write_payload(
-        tmp_path / "paywall/private-content/app/mlb/data/daily_predictions.json",
+        tmp_path / "dist/mlb/data/daily_predictions.json",
         run_date="2026-04-27",
         sport="mlb",
     )
-    route = tmp_path / "paywall/private-content/app/mlb/predictions/index.html"
+    route = tmp_path / "dist/mlb/predictions/index.html"
     route.parent.mkdir(parents=True, exist_ok=True)
     route.write_text("ok", encoding="utf-8")
 
@@ -169,11 +169,11 @@ def test_validate_publication_allows_stale_payloads_when_requested(tmp_path: Pat
         sport="mlb",
     )
     write_payload(
-        tmp_path / "paywall/private-content/app/mlb/data/daily_predictions.json",
+        tmp_path / "dist/mlb/data/daily_predictions.json",
         run_date="2026-04-27",
         sport="mlb",
     )
-    route = tmp_path / "paywall/private-content/app/mlb/predictions/index.html"
+    route = tmp_path / "dist/mlb/predictions/index.html"
     route.parent.mkdir(parents=True, exist_ok=True)
     route.write_text("ok", encoding="utf-8")
 
@@ -192,12 +192,12 @@ def test_validate_publication_allows_empty_payloads_when_requested(tmp_path: Pat
     build_static_shell(tmp_path)
     for relative_path in (
         "sports/mlb/web/data/daily_predictions.json",
-        "paywall/private-content/app/mlb/data/daily_predictions.json",
+        "dist/mlb/data/daily_predictions.json",
     ):
         path = tmp_path / relative_path
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("{}", encoding="utf-8")
-    route = tmp_path / "paywall/private-content/app/mlb/predictions/index.html"
+    route = tmp_path / "dist/mlb/predictions/index.html"
     route.parent.mkdir(parents=True, exist_ok=True)
     route.write_text("ok", encoding="utf-8")
 
@@ -216,14 +216,14 @@ def test_validate_publication_rejects_legacy_mlb_pool_policy(tmp_path: Path) -> 
     build_static_shell(tmp_path)
     for relative_path in (
         "sports/mlb/web/data/daily_predictions.json",
-        "paywall/private-content/app/mlb/data/daily_predictions.json",
+        "dist/mlb/data/daily_predictions.json",
     ):
         write_payload(tmp_path / relative_path, run_date="2026-04-28", sport="mlb")
     source_path = tmp_path / "sports/mlb/web/data/daily_predictions.json"
     source_payload = json.loads(source_path.read_text(encoding="utf-8"))
     source_payload["policy_profile"] = "walk_forward_balanced_v1"
     source_path.write_text(json.dumps(source_payload), encoding="utf-8")
-    route = tmp_path / "paywall/private-content/app/mlb/predictions/index.html"
+    route = tmp_path / "dist/mlb/predictions/index.html"
     route.parent.mkdir(parents=True, exist_ok=True)
     route.write_text("ok", encoding="utf-8")
 
