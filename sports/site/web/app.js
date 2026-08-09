@@ -11,21 +11,19 @@ function mountShell() {
         sportSlug: "",
         brandTitle: "Prediction Bounties",
         sportAccent: "#8a5820",
-        navLinks: [
-            { href: "/pricing/", label: "Pricing" },
-            { href: "/login/", label: "Sign in" },
-        ],
+        navLinks: [],
         showDisclaimer: true,
     });
 }
 
 function renderSport(sport) {
     const cv = window.CardVault;
+    const href = `/${sport.slug}/predictions/`;
     return `
         <article class="desk-board-card" style="--sport-accent:${cv.escapeAttr(sport.accent)};">
             <div class="desk-board-card__topline">
                 ${cv.renderStatusPill("active", cv.escapeHtml(sport.status_label || "Available"))}
-                <span class="desk-board-card__run">Members only</span>
+                <span class="desk-board-card__run">Open access</span>
             </div>
             <div class="desk-board-card__feature">
                 <div>
@@ -36,8 +34,7 @@ function renderSport(sport) {
             </div>
             <p>${cv.escapeHtml(sport.summary)}</p>
             <div class="desk-board-card__actions">
-                <a class="desk-board-card__primary" href="/login/">Sign in to view</a>
-                <a class="desk-board-card__secondary" href="/pricing/">View membership</a>
+                <a class="desk-board-card__primary" href="${cv.escapeAttr(href)}">View predictions</a>
             </div>
         </article>`;
 }
@@ -49,9 +46,9 @@ async function init() {
     try {
         const sports = await fetchSports();
         grid.innerHTML = sports.map(renderSport).join("");
-        summary.textContent = `${sports.length} protected model desks`;
+        summary.textContent = `${sports.length} model desks available`;
     } catch (error) {
-        grid.innerHTML = '<div class="desk-board-error">Membership catalog is temporarily unavailable.</div>';
+        grid.innerHTML = '<div class="desk-board-error">Model catalog is temporarily unavailable.</div>';
         summary.textContent = "Catalog unavailable";
     }
 }
