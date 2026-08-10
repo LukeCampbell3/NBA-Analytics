@@ -1,0 +1,32 @@
+{
+  "schema_version": "MLB_POLICY_GOVERNANCE_STATUS_V1",
+  "generated_at_utc": "2026-08-10T14:19:38.595979+00:00",
+  "run_date": "2026-08-10",
+  "slate_id": "MLB_20260810",
+  "snapshot_id": "mlb_20260810_134459Z_5eb5781fd55e",
+  "capture_label": "FULL_SLATE_SNAPSHOT",
+  "complete_slate_capture_passed": true,
+  "candidate_authorization_enabled": false,
+  "staking_enabled": false,
+  "publication_mode": "SHADOW_RESEARCH_ONLY",
+  "certificate_status": "NO_ACTIVE_PROSPECTIVE_CERTIFICATE",
+  "authorization_reason": "Registered MLB policies remain in development and have no prospective certificate.",
+  "registered_policies": [
+    {
+      "policy_version": "MLB_SINGLES_OVER_POLICY_V1",
+      "policy_stage": "POLICY_DEVELOPMENT",
+      "policy_digest": "9fba82ab0f431dde6d02e0305d6498d2fbfa69b63ef34ee4f49b42b3bd7b87c4"
+    },
+    {
+      "policy_version": "MLB_ADAPTIVE_OVER_PARLAY_POLICY_V1",
+      "policy_stage": "POLICY_DEVELOPMENT",
+      "policy_digest": "76ee66628ffc2159292bd7316db7cc642f208a02f91c17a7f14a85a17e53b814"
+    }
+  ],
+  "historical_evidence_labels": [
+    "SELECTED_ONLY_HISTORY",
+    "SELECTED_ONLY_HISTORY"
+  ],
+  "full_policy_replay_available_for_snapshot": true,
+  "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260810/governance/slates/MLB_20260810/mlb_20260810_134459Z_5eb5781fd55e/manifest.json"
+}
