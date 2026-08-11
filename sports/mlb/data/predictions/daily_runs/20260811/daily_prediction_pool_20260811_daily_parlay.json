@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "policy_version": "mlb_over_consistency_parlay_v1",
-  "generated_at_utc": "2026-08-11T21:29:24.564204+00:00",
+  "generated_at_utc": "2026-08-11T22:15:32.485490+00:00",
   "run_date": "2026-08-11",
   "status": "ready",
   "objective": "ticket_hit_probability_then_expected_return",
@@ -22,30 +22,32 @@
     "distinct_games_required": true
   },
   "pool_candidate_count": 1585,
-  "eligible_anchor_count": 23,
-  "considered_anchor_count": 23,
+  "eligible_anchor_count": 13,
+  "considered_anchor_count": 13,
   "filter_rejections": {
-    "history_too_short": 17,
-    "insufficient_book_coverage": 44,
+    "history_too_short": 16,
+    "insufficient_book_coverage": 45,
     "leg_probability_too_low": 255,
-    "leg_value_too_low": 31,
-    "not_over": 807,
-    "price_outside_playable_range": 208,
-    "unconfirmed_market_price": 171,
-    "unsupported_anchor_target": 29
+    "leg_value_too_low": 32,
+    "not_in_posted_lineup": 1,
+    "not_over": 809,
+    "official_game_closed": 9,
+    "price_outside_playable_range": 203,
+    "unconfirmed_market_price": 174,
+    "unsupported_anchor_target": 28
   },
   "selected_ticket": {
     "leg_indices": [
-      12,
-      16
+      6,
+      12
     ],
     "leg_keys": [
-      "2026-08-11|824970|Tyler Soderstrom|H|OVER",
-      "2026-08-11|824240|Brayan Rocchio|H|OVER"
+      "2026-08-11|824970|Jonah Heim|H|OVER",
+      "2026-08-11|823264|Jake Bauers|H|OVER"
     ],
     "leg_names": [
-      "Tyler Soderstrom",
-      "Brayan Rocchio"
+      "Jonah Heim",
+      "Jake Bauers"
     ],
     "leg_targets": [
       "H",
@@ -56,17 +58,17 @@
       "OVER"
     ],
     "leg_count": 2,
-    "projected_probability": 0.4355224006281347,
-    "independent_probability": 0.4355224006281347,
+    "projected_probability": 0.41534954159092863,
+    "independent_probability": 0.41534954159092863,
     "pairwise_adjustment_factor": 1.001977614,
-    "parlay_score": 0.49408570543938757,
-    "combined_decimal_price": 2.437719352256634,
-    "combined_american_price": 143.7719352256634,
-    "expected_return_per_unit": 0.061681384352470836,
+    "parlay_score": 0.458125116902073,
+    "combined_decimal_price": 2.4630199061336784,
+    "combined_american_price": 146.30199061336785,
+    "expected_return_per_unit": 0.023014188941955283,
     "same_sportsbook_confirmed": true,
     "sportsbook_key": "draftkings",
     "sportsbook": "DraftKings",
-    "avg_leg_quality": 0.850100628287921,
+    "avg_leg_quality": 0.8298443450940547,
     "same_player": false,
     "same_game": false,
     "same_team": false,
@@ -75,10 +77,10 @@
     "mixed_direction": false,
     "legs": [
       {
-        "play_key": "2026-08-11|824970|Tyler Soderstrom|H|OVER",
-        "player": "Tyler Soderstrom",
-        "player_display_name": "Tyler Soderstrom",
-        "player_id": "tyler_soderstrom",
+        "play_key": "2026-08-11|824970|Jonah Heim|H|OVER",
+        "player": "Jonah Heim",
+        "player_display_name": "Jonah Heim",
+        "player_id": "jonah_heim",
         "player_type": "hitter",
         "team": "ATH",
         "opponent": "TB",
@@ -88,16 +90,16 @@
         "game_status_code": "P",
         "target": "H",
         "direction": "OVER",
-        "prediction": 1.3416646466493742,
+        "prediction": 1.258669839584297,
         "market_line": 0.5,
         "market_source": "real",
         "market_bucket": "H|OVER|0.5",
         "historical_bucket_key": "H|OVER|0.5",
-        "estimated_graded_hit_rate": 0.6679876051304383,
-        "model_hit_probability": 0.738589849342234,
-        "final_pool_quality_score": 0.8608794658848021,
-        "expected_value_per_unit": -0.02559606224092026,
-        "selected_side_price": -218.0,
+        "estimated_graded_hit_rate": 0.6579573429265948,
+        "model_hit_probability": 0.7159684170927993,
+        "final_pool_quality_score": 0.8516457945151246,
+        "expected_value_per_unit": 0.013609960724754178,
+        "selected_side_price": -185.0,
         "selected_sportsbook_key": "draftkings",
         "selected_sportsbook": "DraftKings",
         "price_confirmed": true,
@@ -116,35 +118,35 @@
           "draftkings",
           "caesars"
         ],
-        "history_rows": 121,
+        "history_rows": 79,
         "days_since_history": 1,
-        "selection_score": 0.8608794658848021,
+        "selection_score": 0.8516457945151246,
         "parlay_precision_eligible": true
       },
       {
-        "play_key": "2026-08-11|824240|Brayan Rocchio|H|OVER",
-        "player": "Brayan Rocchio",
-        "player_display_name": "Brayan Rocchio",
-        "player_id": "brayan_rocchio",
+        "play_key": "2026-08-11|823264|Jake Bauers|H|OVER",
+        "player": "Jake Bauers",
+        "player_display_name": "Jake Bauers",
+        "player_id": "jake_bauers",
         "player_type": "hitter",
-        "team": "CLE",
-        "opponent": "DET",
-        "game_id": "824240",
+        "team": "MIL",
+        "opponent": "SD",
+        "game_id": "823264",
         "market_date": "2026-08-11",
-        "commence_time_utc": "2026-08-11T22:40:00Z",
+        "commence_time_utc": "2026-08-12T01:40:00Z",
         "game_status_code": "P",
         "target": "H",
         "direction": "OVER",
-        "prediction": 1.2130192309859726,
+        "prediction": 1.067391943228326,
         "market_line": 0.5,
         "market_source": "real",
         "market_bucket": "H|OVER|0.5",
         "historical_bucket_key": "H|OVER|0.5",
-        "estimated_graded_hit_rate": 0.6519917394920673,
-        "model_hit_probability": 0.7027016892561457,
-        "final_pool_quality_score": 0.8393217906910398,
-        "expected_value_per_unit": 0.08957008814446155,
-        "selected_side_price": -149.0,
+        "estimated_graded_hit_rate": 0.6312712306598077,
+        "model_hit_probability": 0.6560957293147511,
+        "final_pool_quality_score": 0.8080428956729847,
+        "expected_value_per_unit": 0.009277955605800359,
+        "selected_side_price": -167.0,
         "selected_sportsbook_key": "draftkings",
         "selected_sportsbook": "DraftKings",
         "price_confirmed": true,
@@ -163,9 +165,9 @@
           "draftkings",
           "caesars"
         ],
-        "history_rows": 128,
-        "days_since_history": 2,
-        "selection_score": 0.8393217906910398,
+        "history_rows": 119,
+        "days_since_history": 1,
+        "selection_score": 0.8080428956729847,
         "parlay_precision_eligible": true
       }
     ]
@@ -174,7 +176,7 @@
     "method": "stored_pre_event_projection_synthetic_line_grading",
     "price_validation": "unavailable_historically; no ROI claim",
     "history_before_date": "2026-08-11",
-    "event_rows": 8974,
+    "event_rows": 8991,
     "dates": 120,
     "by_leg_count": [
       {
@@ -186,8 +188,8 @@
           "hit_rate": 0.8928571428571429,
           "win_rate_wilson_95_low": 0.8220175231763385,
           "win_rate_wilson_95_high": 0.9376404925969244,
-          "mean_projected_probability": 0.7343444935968442,
-          "brier_score": 0.11068052932904313
+          "mean_projected_probability": 0.7346925472153958,
+          "brier_score": 0.11052399739815481
         },
         "development": {
           "tickets": 92,
@@ -196,8 +198,8 @@
           "hit_rate": 0.8913043478260869,
           "win_rate_wilson_95_low": 0.8113604211480862,
           "win_rate_wilson_95_high": 0.9398791241015757,
-          "mean_projected_probability": 0.7385049970039613,
-          "brier_score": 0.10857036185294291
+          "mean_projected_probability": 0.7385050509410973,
+          "brier_score": 0.10857092662939458
         },
         "fixed_recent_holdout": {
           "tickets": 20,
@@ -206,8 +208,8 @@
           "hit_rate": 0.9,
           "win_rate_wilson_95_low": 0.6989617935882066,
           "win_rate_wilson_95_high": 0.9721341060158468,
-          "mean_projected_probability": 0.715206177924105,
-          "brier_score": 0.12038729971910407
+          "mean_projected_probability": 0.7171550300771691,
+          "brier_score": 0.11950812293445183
         }
       },
       {
@@ -215,12 +217,12 @@
         "all_dates": {
           "tickets": 111,
           "dates": 111,
-          "hits": 84,
-          "hit_rate": 0.7567567567567568,
-          "win_rate_wilson_95_low": 0.6692290274171749,
-          "win_rate_wilson_95_high": 0.8271067951418979,
-          "mean_projected_probability": 0.593200398748165,
-          "brier_score": 0.194641906255269
+          "hits": 85,
+          "hit_rate": 0.7657657657657657,
+          "win_rate_wilson_95_low": 0.6789066790684753,
+          "win_rate_wilson_95_high": 0.8348444355102139,
+          "mean_projected_probability": 0.5936490947509834,
+          "brier_score": 0.194027804435055
         },
         "development": {
           "tickets": 91,
@@ -229,18 +231,18 @@
           "hit_rate": 0.7802197802197802,
           "win_rate_wilson_95_low": 0.6847588519917921,
           "win_rate_wilson_95_high": 0.8529798618215557,
-          "mean_projected_probability": 0.5974158914687016,
-          "brier_score": 0.18365853108387475
+          "mean_projected_probability": 0.5974159778744281,
+          "brier_score": 0.1836591153688434
         },
         "fixed_recent_holdout": {
           "tickets": 20,
           "dates": 20,
-          "hits": 13,
-          "hit_rate": 0.65,
-          "win_rate_wilson_95_low": 0.43285051021946463,
-          "win_rate_wilson_95_high": 0.8188104521320554,
-          "mean_projected_probability": 0.5740199068697236,
-          "brier_score": 0.24461626328511268
+          "hits": 14,
+          "hit_rate": 0.7,
+          "win_rate_wilson_95_low": 0.4810232237710206,
+          "win_rate_wilson_95_high": 0.854524726031006,
+          "mean_projected_probability": 0.5765097765393093,
+          "brier_score": 0.24120533968631785
         }
       },
       {
@@ -252,8 +254,8 @@
           "hit_rate": 0.6216216216216216,
           "win_rate_wilson_95_low": 0.528758121912598,
           "win_rate_wilson_95_high": 0.706348320352226,
-          "mean_projected_probability": 0.465959059382196,
-          "brier_score": 0.24784720190496842
+          "mean_projected_probability": 0.46635507530906734,
+          "brier_score": 0.24813696657438347
         },
         "development": {
           "tickets": 91,
@@ -262,8 +264,8 @@
           "hit_rate": 0.6373626373626373,
           "win_rate_wilson_95_low": 0.5348810130309676,
           "win_rate_wilson_95_high": 0.7287163957010656,
-          "mean_projected_probability": 0.46878412885976517,
-          "brier_score": 0.24484474335776446
+          "mean_projected_probability": 0.4687659638363542,
+          "brier_score": 0.24481358500652226
         },
         "fixed_recent_holdout": {
           "tickets": 20,
@@ -272,8 +274,8 @@
           "hit_rate": 0.55,
           "win_rate_wilson_95_low": 0.3420820083075997,
           "win_rate_wilson_95_high": 0.7418049791429071,
-          "mean_projected_probability": 0.4531049932592567,
-          "brier_score": 0.26150838829474654
+          "mean_projected_probability": 0.4553855325099117,
+          "brier_score": 0.2632583527081517
         }
       }
     ]

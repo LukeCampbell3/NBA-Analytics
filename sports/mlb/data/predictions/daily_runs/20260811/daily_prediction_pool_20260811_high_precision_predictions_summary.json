@@ -2,7 +2,7 @@
   "pool_csv": "sports/mlb/data/predictions/daily_runs/20260811/daily_prediction_pool_20260811.csv",
   "out_csv": "sports/mlb/data/predictions/daily_runs/20260811/daily_prediction_pool_20260811_high_precision_predictions.csv",
   "rows_supported": 1585,
-  "rows_after_filters": 5,
+  "rows_after_filters": 4,
   "rows_selected": 2,
   "selection": {
     "matchup_network_enabled": true,
@@ -92,15 +92,15 @@
     "cache_json": "sports/mlb/data/predictions/calibration/historical_bucket_priors_2026.json",
     "history_dir": "Player-Predictor/Data-Proc-MLB",
     "season": 2026,
-    "source_file_count": 1220,
-    "updated_at_utc": "2026-08-11T21:29:01.401259+00:00"
+    "source_file_count": 1219,
+    "updated_at_utc": "2026-08-11T22:14:44.872172+00:00"
   },
   "historical_bet_profiles": {
     "cache_json": "sports/mlb/data/predictions/calibration/historical_bet_profile_priors_2026.json",
     "history_dir": "Player-Predictor/Data-Proc-MLB",
     "season": 2026,
-    "source_file_count": 1220,
-    "updated_at_utc": "2026-08-11T21:29:15.813076+00:00"
+    "source_file_count": 1219,
+    "updated_at_utc": "2026-08-11T22:15:17.956815+00:00"
   },
   "live_confidence_calibration": {
     "cache_json": "sports/mlb/data/predictions/calibration/live_board_confidence_calibration_2026.json",
@@ -121,17 +121,17 @@
     "status": "shadow",
     "shadow_only": true,
     "history_before_date": "2026-08-11",
-    "training_rows": 592,
+    "training_rows": 593,
     "training_dates": 11,
     "expanding_oof_validation": {
       "probability_metrics": {
-        "rows": 266,
+        "rows": 267,
         "dates": 4,
-        "wins": 154,
-        "win_rate": 0.5789473684210527,
-        "mean_probability": 0.5014199330503039,
-        "brier_score": 0.2136566816805864,
-        "log_loss": 0.6188157254061285
+        "wins": 155,
+        "win_rate": 0.5805243445692884,
+        "mean_probability": 0.5025043698584715,
+        "brier_score": 0.2131647175435527,
+        "log_loss": 0.6177062550231298
       },
       "survival_top_k": {
         "rows": 12,
@@ -168,22 +168,22 @@
     },
     "rolling_origin_validation": {
       "probability_metrics": {
-        "rows": 334,
+        "rows": 335,
         "dates": 7,
-        "wins": 196,
-        "win_rate": 0.5868263473053892,
-        "mean_probability": 0.5113687158795299,
-        "brier_score": 0.21129762076955383,
-        "log_loss": 0.613137643744249
+        "wins": 197,
+        "win_rate": 0.5880597014925373,
+        "mean_probability": 0.5117081749271891,
+        "brier_score": 0.21074015219929706,
+        "log_loss": 0.6118408221456186
       },
       "baseline_probability_metrics": {
-        "rows": 334,
+        "rows": 335,
         "dates": 7,
-        "wins": 196,
-        "win_rate": 0.5868263473053892,
-        "mean_probability": 0.571120323055525,
-        "brier_score": 0.20066152006572238,
-        "log_loss": 0.583127943676768
+        "wins": 197,
+        "win_rate": 0.5880597014925373,
+        "mean_probability": 0.5718398221951537,
+        "brier_score": 0.19985457336939813,
+        "log_loss": 0.5811027490674558
       },
       "survival_top_k": {
         "rows": 21,
@@ -224,18 +224,18 @@
         "dates": 3,
         "wins": 42,
         "win_rate": 0.6176470588235294,
-        "mean_probability": 0.5426342465097088,
-        "brier_score": 0.20358995528582063,
-        "log_loss": 0.5942608455700122
+        "mean_probability": 0.541082757242934,
+        "brier_score": 0.20231862217177565,
+        "log_loss": 0.5910832737536098
       },
       "baseline_probability_metrics": {
         "rows": 68,
         "dates": 3,
         "wins": 42,
         "win_rate": 0.6176470588235294,
-        "mean_probability": 0.5793615773913461,
-        "brier_score": 0.19875453269086346,
-        "log_loss": 0.5725149515613343
+        "mean_probability": 0.5774130585998046,
+        "brier_score": 0.19693121057695848,
+        "log_loss": 0.5681619512384333
       },
       "survival_top_k": {
         "rows": 9,
@@ -300,36 +300,36 @@
   },
   "filter_rejections": {
     "graded_hit_rate_too_low": 16,
-    "edge_too_small": 988,
+    "edge_too_small": 987,
     "core_price_too_heavily_juiced": 95,
     "hit_probability_too_low": 50,
     "core_price_too_long": 10,
-    "nonstandard_market_line": 150,
-    "side_price_unconfirmed": 53,
+    "nonstandard_market_line": 152,
+    "side_price_unconfirmed": 54,
     "synthetic_market_source": 33,
-    "market_books_too_low": 24,
-    "history_too_short": 87,
-    "prediction_too_low": 55,
+    "market_books_too_low": 22,
+    "history_too_short": 86,
+    "prediction_too_low": 56,
     "pitcher_k_edge_too_large": 8,
     "pitcher_projected_ip_too_low": 1,
     "pitcher_starter_unconfirmed": 9,
-    "pitcher_k_price_too_heavily_juiced": 1
+    "pitcher_k_price_too_heavily_juiced": 2
   },
-  "avg_abs_edge": 0.774104,
-  "avg_model_hit_probability": 0.697177,
-  "avg_hit_probability": 0.676702,
-  "avg_model_graded_hit_rate": 0.697177,
-  "avg_graded_hit_rate": 0.676702,
-  "avg_precision_score": 0.779889,
-  "avg_historical_bucket_win_rate": 0.701683,
+  "avg_abs_edge": 0.513631,
+  "avg_model_hit_probability": 0.667335,
+  "avg_hit_probability": 0.690014,
+  "avg_model_graded_hit_rate": 0.667335,
+  "avg_graded_hit_rate": 0.690014,
+  "avg_precision_score": 0.760651,
+  "avg_historical_bucket_win_rate": 0.768458,
   "avg_historical_prior_weight": 0.35,
   "avg_historical_bet_profile_win_rate": 0.71875,
   "avg_historical_bet_profile_prior_weight": 0.087629,
   "avg_live_confidence_calibration_adjustment": -0.022714,
-  "avg_historical_market_availability_rate": 0.066986,
+  "avg_historical_market_availability_rate": 0.067177,
   "avg_market_books": 6.0,
   "price_confirmed_count": 2,
-  "avg_expected_value_per_unit": 0.230632,
+  "avg_expected_value_per_unit": 0.193491,
   "by_target": {
     "TB": 1,
     "K": 1
@@ -340,11 +340,11 @@
   },
   "by_team": {
     "ATH": 1,
-    "TOR": 1
+    "STL": 1
   },
   "by_market_bucket": {
     "TB|UNDER|1.5": 1,
-    "K|OVER|7.5": 1
+    "K|OVER|3.5": 1
   },
   "selected_preview": [
     {
@@ -365,20 +365,20 @@
       "pitcher_profile_uncertainty": 0.3143287016560114,
       "batter_vs_starter_games": 0,
       "archetype_neighbor_games": 49,
-      "archetype_neighbor_effective_support": 20.57606889079202,
-      "archetype_neighbor_lift": 0.11228582445180664,
-      "matchup_network_score": 0.16842873667770997,
+      "archetype_neighbor_effective_support": 20.570024389448353,
+      "archetype_neighbor_lift": 0.11238914512538566,
+      "matchup_network_score": 0.16858371768807848,
       "matchup_network_confidence": 0.8114947340471386,
-      "matchup_network_adjustment": 0.026948597868433594,
+      "matchup_network_adjustment": 0.02697339483009256,
       "starter_confirmed": false,
       "starter_history_rows": 0,
       "projected_ip": 0.0,
       "projected_pitches": 0.0,
       "prediction": 0.8391,
       "model_hit_probability": 0.7947,
-      "estimated_hit_probability": 0.7995,
-      "historical_bucket_win_rate": 0.8626,
-      "historical_bucket_support": 9723,
+      "estimated_hit_probability": 0.8,
+      "historical_bucket_win_rate": 0.8628,
+      "historical_bucket_support": 9710,
       "market_books": 6,
       "market_common_books": 3,
       "selected_sportsbook_key": "caesars",
@@ -389,26 +389,26 @@
       "live_confidence_calibration_key": "TB|UNDER",
       "live_confidence_calibration_support": 4,
       "live_confidence_calibration_adjustment": -0.0454,
-      "pick_survival_probability_shadow": 0.7788,
-      "pick_survival_ev_shadow": 0.2212,
+      "pick_survival_probability_shadow": 0.7759,
+      "pick_survival_ev_shadow": 0.2167,
       "pick_survival_model_status": "mlb_pick_survival_logit_v2",
       "pick_survival_model_support": 79,
       "pick_survival_rank_active": false,
-      "historical_market_availability_rate": 0.0995,
-      "expected_value_per_unit": 0.2538,
-      "precision_score": 0.9265
+      "historical_market_availability_rate": 0.0999,
+      "expected_value_per_unit": 0.2545,
+      "precision_score": 0.9272
     },
     {
       "rank": 2,
       "selection_profile": "pitcher_k_over_workload_v1",
-      "player": "Dylan Cease",
-      "team": "TOR",
+      "player": "Andre Pallante",
+      "team": "STL",
       "target": "K",
       "direction": "OVER",
       "original_direction": "OVER",
       "direction_flip_applied": false,
-      "market_line": 7.5,
-      "market_bucket": "K|OVER|7.5",
+      "market_line": 3.5,
+      "market_bucket": "K|OVER|3.5",
       "market_source": "real",
       "opposing_pitcher": "",
       "batter_profile_strength": 0.0,
@@ -422,14 +422,14 @@
       "matchup_network_confidence": 0.0,
       "matchup_network_adjustment": 0.0,
       "starter_confirmed": true,
-      "starter_history_rows": 24,
-      "projected_ip": 6.719999999999999,
-      "projected_pitches": 99.68,
-      "prediction": 8.3873,
-      "model_hit_probability": 0.5997,
-      "estimated_hit_probability": 0.5539,
-      "historical_bucket_win_rate": 0.5408,
-      "historical_bucket_support": 1398,
+      "starter_history_rows": 23,
+      "projected_ip": 6.053333333333333,
+      "projected_pitches": 94.03999999999999,
+      "prediction": 3.8664,
+      "model_hit_probability": 0.54,
+      "estimated_hit_probability": 0.58,
+      "historical_bucket_win_rate": 0.6741,
+      "historical_bucket_support": 359,
       "market_books": 6,
       "market_common_books": 3,
       "selected_sportsbook_key": "draftkings",
@@ -440,22 +440,22 @@
       "live_confidence_calibration_key": "insufficient_support",
       "live_confidence_calibration_support": 2,
       "live_confidence_calibration_adjustment": 0.0,
-      "pick_survival_probability_shadow": 0.5718,
-      "pick_survival_ev_shadow": 0.2466,
+      "pick_survival_probability_shadow": 0.5038,
+      "pick_survival_ev_shadow": -0.0163,
       "pick_survival_model_status": "mlb_pick_survival_logit_v2",
       "pick_survival_model_support": 11,
       "pick_survival_rank_active": false,
       "historical_market_availability_rate": 0.0345,
-      "expected_value_per_unit": 0.2075,
-      "precision_score": 0.6332
+      "expected_value_per_unit": 0.1324,
+      "precision_score": 0.5941
     }
   ],
   "publication_strategy": "premium_evidence_gated_v6",
   "publication_state": "published_current_pool",
   "pool_market_profile": {
     "rows": 1675,
-    "real_market_rows": 1357,
-    "synthetic_rows": 318,
+    "real_market_rows": 1356,
+    "synthetic_rows": 319,
     "price_confirmed_rows": 1350
   }
 }
