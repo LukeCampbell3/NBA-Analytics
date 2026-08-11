@@ -1,0 +1,137 @@
+name: NBA Predictions and Frontend
+
+on:
+  schedule:
+    - cron: "27 8 * 1-6,10-12 *"
+      timezone: "America/New_York"
+  workflow_dispatch:
+    inputs:
+      run_date:
+        description: "Optional Eastern run date (YYYY-MM-DD)"
+        required: false
+        type: string
+      build_only:
+        description: "Rebuild and validate the existing NBA publication"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: nba-predictions-static-deployment
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  PUBLISH_BRANCH: static-deployment
+  PYTHONUNBUFFERED: "1"
+  TZ: America/New_York
+
+jobs:
+  nba-predictions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout prediction frontend branch
+        uses: actions/checkout@v4
+        with:
+          ref: static-deployment
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Resolve NBA run date
+        id: run-config
+        env:
+          INPUT_RUN_DATE: ${{ inputs.run_date }}
+        run: |
+          set -euo pipefail
+          run_date="${INPUT_RUN_DATE:-$(date +%F)}"
+          RUN_DATE_CANDIDATE="$run_date" python -c \
+            'import os; from datetime import date; date.fromisoformat(os.environ["RUN_DATE_CANDIDATE"])'
+          echo "run_date=$run_date" >> "$GITHUB_OUTPUT"
+          echo "run_stamp=${run_date//-/}" >> "$GITHUB_OUTPUT"
+          {
+            echo "### NBA prediction run"
+            echo "- Date: $run_date (America/New_York)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run NBA production pipeline
+        env:
+          RUN_DATE: ${{ steps.run-config.outputs.run_date }}
+          BUILD_ONLY: ${{ inputs.build_only || 'false' }}
+        run: |
+          set -euo pipefail
+          if [[ "$BUILD_ONLY" == "true" ]]; then
+            python sports/site/pipeline/build_static_site.py
+            exit 0
+          fi
+          python run_daily_predictions.py \
+            --run-date "$RUN_DATE" \
+            --skip-mlb \
+            --nba-skip-cutoff-meta-monitor \
+            --nba-market-provider rotowire \
+            --nba-snapshot-policy live_only
+
+      - name: Validate NBA publication
+        env:
+          RUN_DATE: ${{ steps.run-config.outputs.run_date }}
+          BUILD_ONLY: ${{ inputs.build_only || 'false' }}
+        run: |
+          set -euo pipefail
+          args=(--run-date "$RUN_DATE" --sports nba)
+          if [[ "$BUILD_ONLY" == "true" ]]; then
+            args+=(--allow-stale-payloads)
+          fi
+          python sports/site/pipeline/validate_daily_publication.py "${args[@]}"
+
+      - name: Stage NBA publication only
+        id: staged
+        run: |
+          set -euo pipefail
+          git add -f -- \
+            sports/nba/web/data/daily_predictions.json \
+            dist/nba/data/daily_predictions.json
+          if git diff --cached --quiet; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            git diff --cached --stat
+          fi
+
+      - name: Commit and push NBA publication
+        if: steps.staged.outputs.has_changes == 'true'
+        env:
+          RUN_DATE: ${{ steps.run-config.outputs.run_date }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "NBA predictions $RUN_DATE [skip ci]"
+          if ! git push origin "HEAD:$PUBLISH_BRANCH"; then
+            git pull --rebase --autostash origin "$PUBLISH_BRANCH"
+            git push origin "HEAD:$PUBLISH_BRANCH"
+          fi
+
+      - name: Upload NBA frontend payload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nba-frontend-${{ steps.run-config.outputs.run_stamp || github.run_id }}
+          path: |
+            dist/nba/data/daily_predictions.json
+            sports/nba/web/data/daily_predictions.json
+          if-no-files-found: warn
+          retention-days: 14

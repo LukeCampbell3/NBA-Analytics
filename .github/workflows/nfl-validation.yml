@@ -1,0 +1,89 @@
+name: NFL Validation and Frontend
+
+on:
+  schedule:
+    - cron: "37 8 * 1-2,8-12 1"
+      timezone: "America/New_York"
+  workflow_dispatch:
+
+concurrency:
+  group: nfl-validation-static-deployment
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  PUBLISH_BRANCH: static-deployment
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  nfl-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout prediction frontend branch
+        uses: actions/checkout@v4
+        with:
+          ref: static-deployment
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install NFL validation dependencies
+        run: python -m pip install pandas pytest
+
+      - name: Test and export NFL validation evidence
+        run: |
+          set -euo pipefail
+          python -m pytest sports/nfl/tests tests/test_validate_nfl_publication.py -q
+          python sports/nfl/scripts/export_nfl_validation_web.py
+          python sports/site/pipeline/build_static_site.py
+          python sports/site/pipeline/validate_nfl_publication.py
+
+      - name: Stage NFL publication only
+        id: staged
+        run: |
+          set -euo pipefail
+          git add -f -- \
+            sports/nfl/web/data/daily_predictions.json \
+            sports/nfl/web/data/market_validation_summary.json \
+            dist/nfl/data/daily_predictions.json \
+            dist/nfl/data/market_validation_summary.json
+          if git diff --cached --quiet; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            git diff --cached --stat
+          fi
+
+      - name: Commit and push NFL publication
+        if: steps.staged.outputs.has_changes == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "NFL validation evidence [skip ci]"
+          if ! git push origin "HEAD:$PUBLISH_BRANCH"; then
+            git pull --rebase --autostash origin "$PUBLISH_BRANCH"
+            git push origin "HEAD:$PUBLISH_BRANCH"
+          fi
+
+      - name: Upload NFL frontend payload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nfl-validation-${{ github.run_id }}
+          path: |
+            dist/nfl/data/daily_predictions.json
+            dist/nfl/data/market_validation_summary.json
+            sports/nfl/web/data/daily_predictions.json
+            sports/nfl/web/data/market_validation_summary.json
+          if-no-files-found: warn
+          retention-days: 14
