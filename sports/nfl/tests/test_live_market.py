@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import importlib.util
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -16,6 +18,14 @@ from sports.nfl.predictions.live_market import (
     write_complete_slate,
 )
 from sports.nfl.predictions.live_scoring import add_market_placeholders
+
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+RUNNER_PATH = REPO_ROOT / "sports/nfl/scripts/run_nfl_daily_predictions.py"
+RUNNER_SPEC = importlib.util.spec_from_file_location("run_nfl_daily_predictions", RUNNER_PATH)
+assert RUNNER_SPEC and RUNNER_SPEC.loader
+RUNNER = importlib.util.module_from_spec(RUNNER_SPEC)
+RUNNER_SPEC.loader.exec_module(RUNNER)
 
 
 def event_payload() -> dict:
@@ -175,3 +185,17 @@ def test_complete_snapshot_can_be_replayed_without_refetch(tmp_path) -> None:
     assert replayed == rows
     assert audit["provider"] == "the_odds_api"
     assert audit["replayed_from_snapshot"] is True
+
+
+def test_missing_odds_credentials_produce_explicit_withheld_payload() -> None:
+    payload = RUNNER.withheld_payload(
+        run_date="2026-08-11",
+        generated_at="2026-08-11T14:00:00Z",
+        reason="THE_ODDS_API_KEY is unavailable; no sportsbook odds were validated.",
+        audit={"provider": "the_odds_api", "status": "missing_credentials"},
+        observations=0,
+    )
+
+    assert payload["publication_status"] == "withheld_current_pool"
+    assert payload["plays"] == []
+    assert payload["data_quality"]["provider_audit"]["status"] == "missing_credentials"

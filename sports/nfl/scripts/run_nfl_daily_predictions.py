@@ -191,13 +191,27 @@ def main() -> int:
     else:
         api_key = args.api_key or os.getenv("THE_ODDS_API_KEY") or os.getenv("ODDS_API_KEY")
         if not api_key:
-            raise RuntimeError("Set THE_ODDS_API_KEY or pass --market-input.")
-        observations, provider_audit = fetch_live_slate(
-            api_key=api_key,
-            commence_from_utc=_iso(start),
-            commence_to_utc=_iso(end),
-            regions=args.regions,
-        )
+            observations = []
+            provider_audit = {
+                "provider": "the_odds_api",
+                "status": "missing_credentials",
+                "sport_key": "americanfootball_nfl",
+                "fetched_at_utc": _iso(as_of),
+                "events_discovered": 0,
+                "events_with_odds": 0,
+                "complete_two_sided_rows": 0,
+                "markets": [],
+                "regions": args.regions,
+                "raw_source_sha256": None,
+                "quota": {},
+            }
+        else:
+            observations, provider_audit = fetch_live_slate(
+                api_key=api_key,
+                commence_from_utc=_iso(start),
+                commence_to_utc=_iso(end),
+                regions=args.regions,
+            )
 
     snapshot_path = args.snapshot_output or (
         NFL_ROOT / f"data/production/snapshots/{run_day.isoformat()}.json"
@@ -221,10 +235,15 @@ def main() -> int:
         return 0
     generated_at = _iso(as_of)
     if not observations:
+        no_market_reason = (
+            "THE_ODDS_API_KEY is unavailable; no sportsbook odds were validated."
+            if provider_audit.get("status") == "missing_credentials"
+            else "No complete two-sided regular-season NFL player-prop markets were available."
+        )
         payload = withheld_payload(
             run_date=run_day.isoformat(),
             generated_at=generated_at,
-            reason="No complete two-sided regular-season NFL player-prop markets were available.",
+            reason=no_market_reason,
             audit=provider_audit,
             observations=0,
         )
