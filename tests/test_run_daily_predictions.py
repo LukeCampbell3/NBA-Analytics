@@ -87,6 +87,35 @@ def test_annotate_mlb_summary_keeps_policy_identity_separate_from_publication_st
     assert summary["publication_state"] == "withheld_current_pool"
 
 
+def test_archive_previous_prediction_payload_is_immutable_and_indexed(tmp_path: Path) -> None:
+    payload_path = tmp_path / "web" / "data" / "daily_predictions.json"
+    payload_path.parent.mkdir(parents=True)
+    payload_path.write_text(
+        json.dumps({"sport": "MLB", "run_date": "2026-08-09", "plays": [{"player": "Example"}]}),
+        encoding="utf-8",
+    )
+
+    archive_path = shared_daily_predictions.archive_previous_prediction_payload(payload_path, "2026-08-10")
+
+    assert archive_path == payload_path.parent / "history" / "2026-08-09.json"
+    assert json.loads(archive_path.read_text(encoding="utf-8"))["run_date"] == "2026-08-09"
+    index = json.loads((archive_path.parent / "index.json").read_text(encoding="utf-8"))
+    assert index["dates"] == ["2026-08-09"]
+
+    original_archive = archive_path.read_text(encoding="utf-8")
+    payload_path.write_text('{"run_date":"2026-08-09","plays":[]}', encoding="utf-8")
+    shared_daily_predictions.archive_previous_prediction_payload(payload_path, "2026-08-10")
+    assert archive_path.read_text(encoding="utf-8") == original_archive
+
+
+def test_archive_previous_prediction_payload_skips_current_board(tmp_path: Path) -> None:
+    payload_path = tmp_path / "daily_predictions.json"
+    payload_path.write_text('{"run_date":"2026-08-10"}', encoding="utf-8")
+
+    assert shared_daily_predictions.archive_previous_prediction_payload(payload_path, "2026-08-10") is None
+    assert not (tmp_path / "history").exists()
+
+
 def test_run_mlb_continues_when_market_fetch_fails(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     pool_dir = tmp_path / "daily_runs" / "20260428"
     pool_dir.mkdir(parents=True, exist_ok=True)

@@ -25,13 +25,29 @@ def test_prune_keeps_daily_parlay_stylesheet(tmp_path: Path) -> None:
     assert not (sport_output / "unrelated.txt").exists()
 
 
+def test_prune_keeps_only_prediction_history_json(tmp_path: Path) -> None:
+    history = tmp_path / "mlb" / "data" / "history"
+    history.mkdir(parents=True)
+    (history / "index.json").write_text('{"dates":[]}', encoding="utf-8")
+    (history / "2026-08-09.json").write_text('{"run_date":"2026-08-09"}', encoding="utf-8")
+    (history / "notes.json").write_text("{}", encoding="utf-8")
+    (history / "debug.txt").write_text("debug", encoding="utf-8")
+
+    build_static_site.prune_non_prediction_assets(tmp_path / "mlb")
+
+    assert (history / "index.json").exists()
+    assert (history / "2026-08-09.json").exists()
+    assert not (history / "notes.json").exists()
+    assert not (history / "debug.txt").exists()
+
+
 def test_build_publishes_sport_routes_and_keeps_compatibility_copy(tmp_path: Path, monkeypatch) -> None:
     public_source = tmp_path / "public-source"
     private_source = tmp_path / "private-source"
     sport_source = tmp_path / "sport-source"
     public_source.mkdir()
     private_source.mkdir()
-    (sport_source / "data").mkdir(parents=True)
+    (sport_source / "data" / "history").mkdir(parents=True)
     (public_source / "index.html").write_text("public landing", encoding="utf-8")
     (public_source / "app.js").write_text("public catalog", encoding="utf-8")
     (private_source / "index.html").write_text("member shell", encoding="utf-8")
@@ -39,6 +55,8 @@ def test_build_publishes_sport_routes_and_keeps_compatibility_copy(tmp_path: Pat
     (sport_source / "prediction-about.html").write_text("<head></head>prediction method", encoding="utf-8")
     (sport_source / "predictions.js").write_text("prediction script", encoding="utf-8")
     (sport_source / "data" / "daily_predictions.json").write_text('{"published":true}', encoding="utf-8")
+    (sport_source / "data" / "history" / "index.json").write_text('{"dates":["2026-08-09"]}', encoding="utf-8")
+    (sport_source / "data" / "history" / "2026-08-09.json").write_text('{"run_date":"2026-08-09"}', encoding="utf-8")
     monkeypatch.setattr(build_static_site, "VAULT_SOURCE_DIR", tmp_path / "missing-vault")
     monkeypatch.setattr(build_static_site, "discover_sports", lambda: [{
         "slug": "nba", "source_dir": sport_source, "title": "NBA Analytics",
@@ -58,7 +76,9 @@ def test_build_publishes_sport_routes_and_keeps_compatibility_copy(tmp_path: Pat
     assert (public_output / "index.html").read_text(encoding="utf-8") == "public landing"
     assert (public_output / "nba" / "predictions" / "index.html").exists()
     assert (public_output / "nba" / "data" / "daily_predictions.json").exists()
+    assert (public_output / "nba" / "data" / "history" / "2026-08-09.json").exists()
     assert (private_output / "nba" / "data" / "daily_predictions.json").exists()
+    assert (private_output / "nba" / "data" / "history" / "index.json").exists()
     assert (private_output / "nba" / "predictions" / "index.html").exists()
     manifest = json.loads((public_output / "data" / "sports.json").read_text(encoding="utf-8"))
     assert manifest[0]["entry_href"] == "/nba/predictions/"

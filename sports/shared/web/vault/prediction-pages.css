@@ -307,6 +307,52 @@ button {
   background: #ffffff;
 }
 
+.date-nav {
+  margin-top: 14px;
+  overflow: hidden;
+}
+
+.date-nav:empty {
+  display: none;
+}
+
+.date-nav__scroll {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 2px 8px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+.date-nav__btn {
+  flex: 0 0 auto;
+  min-width: 64px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--vault-line);
+  border-radius: 5px;
+  background: #ffffff;
+  color: var(--vault-text-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+.date-nav__btn:hover {
+  border-color: var(--vault-line-strong);
+  color: var(--vault-text);
+}
+
+.date-nav__btn.is-active {
+  border-color: var(--vault-sport-accent);
+  background: color-mix(in srgb, var(--vault-sport-accent) 9%, #ffffff);
+  color: var(--vault-text);
+}
+
 .vault-board {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

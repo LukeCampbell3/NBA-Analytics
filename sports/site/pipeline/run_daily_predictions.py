@@ -17,7 +17,7 @@ import json
 import shutil
 import subprocess
 import sys
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -235,6 +235,56 @@ def load_payload_run_date(payload_path: Path) -> str | None:
     value = payload.get("run_date")
     token = str(value).strip() if value is not None else ""
     return token or None
+
+
+def archive_previous_prediction_payload(payload_path: Path, target_run_date: str) -> Path | None:
+    """Preserve the prior public board before a new run replaces it."""
+    if not payload_path.exists():
+        return None
+    try:
+        payload = json.loads(payload_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+    archived_date = str(payload.get("run_date") or "").strip()
+    try:
+        date.fromisoformat(archived_date)
+        date.fromisoformat(str(target_run_date))
+    except ValueError:
+        return None
+    if archived_date == str(target_run_date):
+        return None
+
+    history_dir = payload_path.parent / "history"
+    history_dir.mkdir(parents=True, exist_ok=True)
+    archive_path = history_dir / f"{archived_date}.json"
+    if archive_path.exists():
+        if archive_path.read_bytes() != payload_path.read_bytes():
+            print(f"[warning] Preserving immutable history snapshot despite changed source: {archive_path}")
+    else:
+        shutil.copyfile(payload_path, archive_path)
+
+    archived_dates = sorted(
+        (
+            path.stem
+            for path in history_dir.glob("????-??-??.json")
+            if _is_iso_date(path.stem)
+        ),
+        reverse=True,
+    )
+    index_payload = {
+        "dates": archived_dates,
+        "updated_at_utc": datetime.now(timezone.utc).isoformat(),
+    }
+    (history_dir / "index.json").write_text(json.dumps(index_payload, indent=2), encoding="utf-8")
+    return archive_path
+
+
+def _is_iso_date(value: str) -> bool:
+    try:
+        return date.fromisoformat(value).isoformat() == value
+    except ValueError:
+        return False
 
 
 def stale_payload_sports(args: argparse.Namespace, target_run_date: str) -> list[str]:
@@ -813,6 +863,12 @@ def main() -> None:
     print(schedule_message)
     if not should_run:
         return
+
+    target_run_date = str(resolve_effective_run_date(args.run_date))
+    if not args.skip_nba:
+        archive_previous_prediction_payload(NBA_WEB_JSON, target_run_date)
+    if not args.skip_mlb:
+        archive_previous_prediction_payload(MLB_WEB_JSON, target_run_date)
 
     mlb_pool_csv: Path | None = None
     mlb_selected_csv: Path | None = None

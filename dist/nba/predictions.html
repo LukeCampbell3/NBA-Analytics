@@ -8,7 +8,7 @@
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="/vault/vault-tokens.css?v=4">
     <link rel="stylesheet" href="/vault/vault-components.css?v=7">
-    <link rel="stylesheet" href="/vault/prediction-pages.css?v=2">
+    <link rel="stylesheet" href="/vault/prediction-pages.css?v=3">
 </head>
 <body class="vault-theme">
     <div id="vaultShellRoot"></div>
@@ -22,6 +22,7 @@
             </div>
             <p class="prediction-page-lead">Current player-stat bounties ranked by model value, with market context and publication controls visible on every notice.</p>
             <div id="predictionRunMeta" class="prediction-run-meta" aria-live="polite">Loading board details...</div>
+            <nav id="predictionDateNav" class="date-nav" aria-label="Prediction board date"></nav>
         </header>
 
         <div id="predictionCards" class="vault-board" aria-live="polite"></div>
@@ -33,6 +34,6 @@
 
     <script src="/vault/vault-components.js?v=7"></script>
     <script src="/vault/vault-shell.js?v=7"></script>
-    <script src="predictions.js?v=8"></script>
+    <script src="predictions.js?v=9"></script>
 </body>
 </html>

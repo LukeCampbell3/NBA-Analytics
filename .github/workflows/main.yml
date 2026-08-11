@@ -187,6 +187,9 @@ jobs:
 
           if [[ "$RUN_NBA" == "true" ]]; then
             git add -f -- sports/nba/web/data/daily_predictions.json
+            if [[ -d sports/nba/web/data/history ]]; then
+              git add -f -- sports/nba/web/data/history
+            fi
             nba_run="sports/nba/predictions/Player-Predictor/model/analysis/daily_runs/$RUN_STAMP"
             if [[ -d "$nba_run" ]]; then
               git add -f -- "$nba_run"
@@ -195,6 +198,9 @@ jobs:
 
           if [[ "$RUN_MLB" == "true" ]]; then
             git add -f -- sports/mlb/web/data/daily_predictions.json
+            if [[ -d sports/mlb/web/data/history ]]; then
+              git add -f -- sports/mlb/web/data/history
+            fi
             mlb_run="sports/mlb/data/predictions/daily_runs/$RUN_STAMP"
             if [[ -d "$mlb_run" ]]; then
               git add -f -- "$mlb_run"

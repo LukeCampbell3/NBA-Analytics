@@ -170,6 +170,8 @@ catboost_info/
 # Generated web/build outputs
 # ============================================================
 /paywall/.tmp/
+# The compatibility build regenerates these from the canonical sport archives.
+/paywall/private-content/app/*/data/history/
 
 # Keep root dist tracked if this is your deployed static bundle.
 # Ignore deprecated/generated nested dist folders.

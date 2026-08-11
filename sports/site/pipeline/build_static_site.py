@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
@@ -36,6 +37,7 @@ PREDICTION_TOP_LEVEL_FILES = {
     "parlay-board.css",
 }
 PREDICTION_DATA_FILES = {"daily_predictions.json", "market_validation_summary.json"}
+HISTORY_DATA_FILE = re.compile(r"^\d{4}-\d{2}-\d{2}\.json$")
 
 
 def nonempty_html_files(directory: Path) -> Iterable[Path]:
@@ -202,7 +204,15 @@ def prune_non_prediction_assets(sport_output: Path) -> None:
     data_dir = sport_output / "data"
     if data_dir.is_dir():
         for data_file in sorted(data_dir.rglob("*")):
-            if data_file.is_file() and data_file.name not in PREDICTION_DATA_FILES:
+            if not data_file.is_file():
+                continue
+            relative = data_file.relative_to(data_dir)
+            is_history_payload = (
+                len(relative.parts) == 2
+                and relative.parts[0] == "history"
+                and (relative.name == "index.json" or bool(HISTORY_DATA_FILE.fullmatch(relative.name)))
+            )
+            if data_file.name not in PREDICTION_DATA_FILES and not is_history_payload:
                 data_file.unlink()
                 print(f"[prune] removed non-prediction data {data_file.relative_to(sport_output)}")
 

@@ -2,6 +2,9 @@ class DailyPredictionsPage {
     constructor() {
         this.data = null;
         this.plays = [];
+        this.availableDates = [];
+        this.activeDate = null;
+        this.currentDate = null;
         this.elements = {
             cards: document.getElementById("predictionCards"),
             empty: document.getElementById("predictionEmpty"),
@@ -9,6 +12,7 @@ class DailyPredictionsPage {
             parlaySection: document.getElementById("dailyParlaySection"),
             parlayContent: document.getElementById("dailyParlayContent"),
             poolTitle: document.getElementById("predictionPoolTitle"),
+            dateNav: document.getElementById("predictionDateNav"),
         };
         this.init();
     }
@@ -18,7 +22,7 @@ class DailyPredictionsPage {
         if (window.CardVault && this.elements.cards) {
             this.elements.cards.innerHTML = window.CardVault.renderSkeletonCard(6);
         }
-        this.loadAndRender();
+        this.loadDatesAndRender();
     }
 
     mountShell() {
@@ -37,11 +41,36 @@ class DailyPredictionsPage {
         });
     }
 
-    async loadAndRender() {
+    async loadDatesAndRender() {
+        await this.loadDateIndex();
+        const currentLoaded = await this.loadAndRender(null);
+        if (!currentLoaded && this.availableDates.length) {
+            await this.loadAndRender(this.availableDates[0]);
+        }
+        this.renderDateNav();
+    }
+
+    async loadDateIndex() {
         try {
-            await this.load();
+            const response = await fetch(`data/history/index.json?v=${Date.now()}`);
+            if (!response.ok) return;
+            const index = await response.json();
+            this.availableDates = Array.isArray(index.dates)
+                ? index.dates
+                    .map((date) => String(date))
+                    .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date))
+                    .sort()
+                    .reverse()
+                : [];
+        } catch (_) { /* history is optional */ }
+    }
+
+    async loadAndRender(date) {
+        try {
+            await this.load(date);
             this.renderDailyParlay();
             this.renderCards();
+            return true;
         } catch (error) {
             console.error(error);
             if (window.CardVault && this.elements.cards) {
@@ -51,13 +80,19 @@ class DailyPredictionsPage {
                     "Check that data/daily_predictions.json exists for this build."
                 );
             }
+            return false;
         }
     }
 
-    async load() {
-        const response = await fetch(`data/daily_predictions.json?v=${Date.now()}`);
+    async load(date) {
+        const url = date
+            ? `data/history/${date}.json?v=${Date.now()}`
+            : `data/daily_predictions.json?v=${Date.now()}`;
+        const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         this.data = await response.json();
+        this.activeDate = this.data?.run_date || date || null;
+        if (!date) this.currentDate = this.activeDate;
         const publicationStatus = String(this.data?.publication_status || "ready").toLowerCase();
         this.plays = Array.isArray(this.data.plays)
             ? this.data.plays.map((play) => ({ ...play, board_publication_status: publicationStatus }))
@@ -73,6 +108,49 @@ class DailyPredictionsPage {
         const authorizationEnabled = Boolean(this.data?.policy_governance?.candidate_authorization_enabled);
         if (this.elements.poolTitle) {
             this.elements.poolTitle.textContent = authorizationEnabled ? "Authorized Pool" : "Shadow Candidate Pool";
+        }
+    }
+
+    renderDateNav() {
+        const nav = this.elements.dateNav;
+        if (!nav) return;
+
+        const dates = [this.currentDate, ...this.availableDates]
+            .filter((date, index, values) => date && values.indexOf(date) === index);
+        if (dates.length < 2) {
+            nav.innerHTML = "";
+            return;
+        }
+
+        const buttons = dates.map((date) => {
+            const isActive = date === this.activeDate;
+            return `<button type="button" class="date-nav__btn${isActive ? " is-active" : ""}" data-date="${this.escapeHtml(date)}" aria-pressed="${isActive}">${this.escapeHtml(this.formatDateLabel(date))}</button>`;
+        }).join("");
+        nav.innerHTML = `<div class="date-nav__scroll">${buttons}</div>`;
+
+        nav.querySelectorAll(".date-nav__btn").forEach((button) => {
+            button.addEventListener("click", async () => {
+                const date = button.dataset.date;
+                if (date === this.activeDate) return;
+                if (this.elements.cards) {
+                    this.elements.cards.innerHTML = window.CardVault
+                        ? window.CardVault.renderSkeletonCard(4)
+                        : "";
+                }
+                await this.loadAndRender(date === this.currentDate ? null : date);
+                this.renderDateNav();
+            });
+        });
+    }
+
+    formatDateLabel(dateValue) {
+        try {
+            const displayDate = new Date(`${dateValue}T12:00:00`);
+            const today = new Date().toISOString().slice(0, 10);
+            if (dateValue === this.currentDate) return dateValue === today ? "Today" : "Current";
+            return displayDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        } catch (_) {
+            return dateValue;
         }
     }
 
