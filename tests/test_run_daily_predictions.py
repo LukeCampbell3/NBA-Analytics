@@ -138,6 +138,7 @@ def test_run_mlb_continues_when_market_fetch_fails(monkeypatch: pytest.MonkeyPat
     monkeypatch.setattr(shared_daily_predictions, "MLB_PICK_SURVIVAL_MODEL", tmp_path / "pick_survival_model.py")
     monkeypatch.setattr(shared_daily_predictions, "MLB_MAX_WINRATE_SELECTOR", tmp_path / "select_max_winrate_board.py")
     monkeypatch.setattr(shared_daily_predictions, "MLB_EXPORTER", tmp_path / "export_web_prediction_payload.py")
+    monkeypatch.setattr(shared_daily_predictions, "MLB_WEB_JSON", tmp_path / "web" / "data" / "daily_predictions.json")
 
     def fake_run_step(label: str, command: list[str], cwd: Path = shared_daily_predictions.REPO_ROOT) -> None:
         if label == "Fetch MLB Market Props":
@@ -169,7 +170,16 @@ def test_run_mlb_continues_when_market_fetch_fails(monkeypatch: pytest.MonkeyPat
 
     monkeypatch.setattr(shared_daily_predictions, "run_step", fake_run_step)
 
-    args = _default_args(run_date="2026-04-28", skip_nba=True, skip_mlb=False, mlb_skip_fetch_market=False, mlb_skip_update_data=True, mlb_skip_generate=True, output_dir=tmp_path / "dist")
+    args = _default_args(
+        run_date="2026-04-28",
+        skip_nba=True,
+        skip_mlb=False,
+        mlb_skip_fetch_market=False,
+        mlb_skip_update_data=True,
+        mlb_skip_generate=True,
+        output_dir=tmp_path / "dist",
+        private_output_dir=tmp_path / "private",
+    )
     pool_csv_out, selected_csv_out, summary_json_out = shared_daily_predictions.run_mlb(args, tmp_path / "dist")
 
     assert pool_csv_out == pool_csv

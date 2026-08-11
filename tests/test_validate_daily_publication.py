@@ -55,7 +55,7 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
                     "top_n": 3,
                     "targets": sorted(MLB_REQUIRED_TARGETS),
                     "max_per_market_bucket": 2,
-                    "optimized_over_max_per_market_bucket": 3,
+                    "optimized_over_max_per_market_bucket": None,
                     "min_expected_value": 0.0,
                     "min_market_books": 5,
                     "min_common_market_books": 2,
@@ -63,13 +63,14 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
                     "allow_unpriced_side": False,
                     "optimized_over_profile": "r_tb_over_moderate_edge_v1",
                     "optimized_over_profile_status": "probation",
-                    "optimized_over_targets": ["R", "TB"],
-                    "over_min_abs_edge": 0.15,
-                    "over_max_abs_edge": 0.35,
-                    "over_min_model_hit_probability": 0.45,
-                    "over_max_model_hit_probability": 0.55,
-                    "over_min_expected_value": 0.10,
-                    "over_max_american_price": 125.0,
+                    "optimized_over_targets": [],
+                    "over_min_abs_edge": None,
+                    "over_max_abs_edge": None,
+                    "over_min_model_hit_probability": None,
+                    "over_max_model_hit_probability": None,
+                    "over_min_expected_value": None,
+                    "over_min_history_rows": None,
+                    "over_max_american_price": None,
                     "pitcher_k_over_profile_enabled": True,
                     "pitcher_k_over_profile": "pitcher_k_over_workload_v1",
                     "pitcher_k_over_profile_status": "probation",
@@ -85,9 +86,9 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
                     "pitcher_k_min_american_price": -130.0,
                     "pitcher_k_max_american_price": 130.0,
                     "max_pitcher_k_picks": 1,
-                    "core_min_american_price": -250.0,
-                    "core_max_american_price": -200.0,
-                    "min_over_picks": 3,
+                    "core_min_american_price": -180.0,
+                    "core_max_american_price": 125.0,
+                    "min_over_picks": 0,
                     "max_over_picks": 3,
                     "max_under_picks": 1,
                     "daily_pick_soft_cap": 3,
@@ -236,13 +237,13 @@ def test_validate_publication_rejects_legacy_mlb_pool_policy(tmp_path: Path) -> 
         )
 
 
-def test_validate_mlb_payload_rejects_over_profile_threshold_drift(tmp_path: Path) -> None:
+def test_validate_mlb_payload_rejects_probationary_over_profile_enablement(tmp_path: Path) -> None:
     payload_path = tmp_path / "payload.json"
     write_payload(payload_path, run_date="2026-04-28", sport="mlb")
     payload = json.loads(payload_path.read_text(encoding="utf-8"))
-    payload["selection"]["over_max_american_price"] = 150
+    payload["selection"]["optimized_over_targets"] = ["R", "TB"]
 
-    with pytest.raises(ValueError, match="changed validated OVER threshold over_max_american_price"):
+    with pytest.raises(ValueError, match="enabled the probationary R/TB OVER target set"):
         validate_mlb_payload(payload, label="test")
 
 
@@ -321,7 +322,7 @@ def test_validate_mlb_payload_accepts_adaptive_over_parlay(tmp_path: Path) -> No
     validate_mlb_payload(payload, label="test")
 
 
-def test_validate_mlb_payload_checks_each_profiled_over_pick(tmp_path: Path) -> None:
+def test_validate_mlb_payload_rejects_probationary_over_pick(tmp_path: Path) -> None:
     payload_path = tmp_path / "payload.json"
     write_payload(payload_path, run_date="2026-04-28", sport="mlb")
     payload = json.loads(payload_path.read_text(encoding="utf-8"))
@@ -343,10 +344,7 @@ def test_validate_mlb_payload_checks_each_profiled_over_pick(tmp_path: Path) -> 
         }
     ]
 
-    validate_mlb_payload(payload, label="test")
-
-    payload["plays"][0]["model_hit_probability"] = 0.60
-    with pytest.raises(ValueError, match="outside the validated OVER probability corridor"):
+    with pytest.raises(ValueError, match="used the disabled probationary OVER profile"):
         validate_mlb_payload(payload, label="test")
 
 
@@ -390,7 +388,7 @@ def test_validate_mlb_payload_requires_networked_hitter_play(tmp_path: Path) -> 
     payload = json.loads(payload_path.read_text(encoding="utf-8"))
     payload["plays"] = [
         {
-            "selection_profile": "r_tb_over_moderate_edge_v1",
+            "selection_profile": "core_market_v1",
             "market_source": "real",
             "market_books": 5,
             "market_common_books": 2,

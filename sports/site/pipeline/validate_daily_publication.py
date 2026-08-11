@@ -22,11 +22,9 @@ MLB_MIN_BOOKS = 5
 MLB_MIN_COMMON_BOOKS = 2
 MLB_ALLOWED_SPORTSBOOKS = {"bet365", "caesars", "draftkings", "fanduel", "fanatics", "mgm"}
 MLB_MARKET_BUCKET_CAP = 2
-MLB_OPTIMIZED_OVER_MARKET_BUCKET_CAP = 3
 MLB_PUBLICATION_STATES = {"published_current_pool", "withheld_current_pool"}
 MLB_CORE_SELECTION_PROFILE = "core_market_v1"
 MLB_OPTIMIZED_OVER_PROFILE = "r_tb_over_moderate_edge_v1"
-MLB_OPTIMIZED_OVER_TARGETS = {"R", "TB"}
 MLB_OPTIMIZED_OVER_PROFILE_STATUS = "probation"
 MLB_PITCHER_K_OVER_PROFILE = "pitcher_k_over_workload_v1"
 MLB_PITCHER_K_OVER_PROFILE_STATUS = "probation"
@@ -36,9 +34,9 @@ MLB_MAX_PITCHER_K_PICKS = 1
 MLB_DAILY_PICK_SOFT_CAP = 3
 MLB_DAILY_PICK_HARD_CAP = 3
 MLB_POST_CAP_MIN_SELECTION_SCORE = 0.80
-MLB_CORE_MIN_AMERICAN_PRICE = -250.0
-MLB_CORE_MAX_AMERICAN_PRICE = -200.0
-MLB_MIN_OVER_PICKS = 3
+MLB_CORE_MIN_AMERICAN_PRICE = -180.0
+MLB_CORE_MAX_AMERICAN_PRICE = 125.0
+MLB_MIN_OVER_PICKS = 0
 MLB_MAX_OVER_PICKS = 3
 MLB_MAX_UNDER_PICKS = 1
 
@@ -118,11 +116,8 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
         )
     if int(selection.get("max_per_market_bucket", 0)) != MLB_MARKET_BUCKET_CAP:
         raise ValueError(f"MLB {label} payload is not using the two-play market-bucket cap.")
-    if (
-        int(selection.get("optimized_over_max_per_market_bucket", 0))
-        != MLB_OPTIMIZED_OVER_MARKET_BUCKET_CAP
-    ):
-        raise ValueError(f"MLB {label} payload changed the validated OVER market-bucket cap.")
+    if selection.get("optimized_over_max_per_market_bucket") is not None:
+        raise ValueError(f"MLB {label} payload enabled the probationary OVER market-bucket cap.")
     if as_float(selection.get("min_expected_value")) != 0.0:
         raise ValueError(f"MLB {label} payload must require nonnegative expected value.")
     if int(selection.get("min_market_books", 0)) < MLB_MIN_BOOKS:
@@ -135,23 +130,26 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
     optimized_over_targets = {
         str(value).strip().upper() for value in selection.get("optimized_over_targets", [])
     }
-    if optimized_over_targets != MLB_OPTIMIZED_OVER_TARGETS:
-        raise ValueError(f"MLB {label} payload is not using the validated R/TB OVER target set.")
+    if optimized_over_targets:
+        raise ValueError(f"MLB {label} payload enabled the probationary R/TB OVER target set.")
     if str(selection.get("optimized_over_profile") or "") != MLB_OPTIMIZED_OVER_PROFILE:
         raise ValueError(f"MLB {label} payload is missing the validated OVER profile identity.")
     if str(selection.get("optimized_over_profile_status") or "") != MLB_OPTIMIZED_OVER_PROFILE_STATUS:
         raise ValueError(f"MLB {label} payload must keep the validated OVER profile in probation status.")
-    exact_over_policy = {
-        "over_min_abs_edge": 0.15,
-        "over_max_abs_edge": 0.35,
-        "over_min_model_hit_probability": 0.45,
-        "over_max_model_hit_probability": 0.55,
-        "over_min_expected_value": 0.10,
-        "over_max_american_price": 125.0,
+    probationary_over_fields = {
+        "over_min_abs_edge",
+        "over_max_abs_edge",
+        "over_min_model_hit_probability",
+        "over_max_model_hit_probability",
+        "over_min_expected_value",
+        "over_min_history_rows",
+        "over_max_american_price",
     }
-    for key, expected in exact_over_policy.items():
-        if as_float(selection.get(key)) != expected:
-            raise ValueError(f"MLB {label} payload changed validated OVER threshold {key}.")
+    enabled_over_fields = sorted(key for key in probationary_over_fields if selection.get(key) is not None)
+    if enabled_over_fields:
+        raise ValueError(
+            f"MLB {label} payload enabled probationary OVER thresholds: {', '.join(enabled_over_fields)}."
+        )
     if not bool(selection.get("pitcher_k_over_profile_enabled")):
         raise ValueError(f"MLB {label} payload disabled the workload-gated pitcher K profile.")
     if str(selection.get("pitcher_k_over_profile") or "") != MLB_PITCHER_K_OVER_PROFILE:
@@ -194,7 +192,6 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
     if as_float(selection.get("post_cap_min_selection_score")) != MLB_POST_CAP_MIN_SELECTION_SCORE:
         raise ValueError(f"MLB {label} payload changed the post-cap elite selection-score floor.")
 
-    optimized_over_count = 0
     pitcher_k_count = 0
     under_count = 0
     for index, play in enumerate(payload.get("plays", []), start=1):
@@ -256,22 +253,8 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
                 raise ValueError(f"MLB {label} hitter play {index} has invalid matchup network values.")
         uses_optimized_over_profile = selection_profile == MLB_OPTIMIZED_OVER_PROFILE
         uses_pitcher_k_profile = selection_profile == MLB_PITCHER_K_OVER_PROFILE
-        if direction == "OVER" and target in MLB_OPTIMIZED_OVER_TARGETS and not uses_optimized_over_profile:
-            raise ValueError(f"MLB {label} play {index} bypassed the validated R/TB OVER profile.")
         if uses_optimized_over_profile:
-            optimized_over_count += 1
-            if direction != "OVER" or target not in MLB_OPTIMIZED_OVER_TARGETS:
-                raise ValueError(f"MLB {label} play {index} misused the validated OVER profile identity.")
-            abs_edge = as_float(play.get("abs_edge"))
-            model_hit_probability = as_float(play.get("model_hit_probability"))
-            if abs_edge is None or not 0.15 <= abs_edge <= 0.35:
-                raise ValueError(f"MLB {label} play {index} falls outside the validated OVER edge corridor.")
-            if model_hit_probability is None or not 0.45 <= model_hit_probability <= 0.55:
-                raise ValueError(f"MLB {label} play {index} falls outside the validated OVER probability corridor.")
-            if expected_value < 0.10:
-                raise ValueError(f"MLB {label} play {index} falls below the validated OVER EV floor.")
-            if float(play.get("selected_side_price")) > 125.0:
-                raise ValueError(f"MLB {label} play {index} exceeds the validated OVER price ceiling.")
+            raise ValueError(f"MLB {label} play {index} used the disabled probationary OVER profile.")
         elif uses_pitcher_k_profile:
             pitcher_k_count += 1
             if direction != "OVER" or target != "K":
@@ -302,8 +285,6 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
             side_price = float(play.get("selected_side_price"))
             if not MLB_CORE_MIN_AMERICAN_PRICE <= side_price <= MLB_CORE_MAX_AMERICAN_PRICE:
                 raise ValueError(f"MLB {label} play {index} falls outside the executable core price corridor.")
-    if optimized_over_count > 3:
-        raise ValueError(f"MLB {label} payload exceeds the three-pick validated OVER cap.")
     if pitcher_k_count > MLB_MAX_PITCHER_K_PICKS:
         raise ValueError(f"MLB {label} payload exceeds the one-pick pitcher K cap.")
     if under_count > MLB_MAX_UNDER_PICKS:
