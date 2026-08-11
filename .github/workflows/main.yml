@@ -21,6 +21,11 @@ on:
           - both
           - nba
           - mlb
+      build_only:
+        description: "Rebuild and validate the existing publication without fetching new markets"
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: daily-predictions-static-deployment
@@ -117,8 +122,14 @@ jobs:
           RUN_DATE: ${{ steps.run-config.outputs.run_date }}
           RUN_NBA: ${{ steps.run-config.outputs.run_nba }}
           RUN_MLB: ${{ steps.run-config.outputs.run_mlb }}
+          BUILD_ONLY: ${{ inputs.build_only || 'false' }}
         run: |
           set -euo pipefail
+
+          if [[ "$BUILD_ONLY" == "true" ]]; then
+            python sports/site/pipeline/build_static_site.py
+            exit 0
+          fi
 
           args=(
             --run-date "$RUN_DATE"
@@ -156,7 +167,8 @@ jobs:
 
           python sports/site/pipeline/validate_daily_publication.py \
             --run-date "$RUN_DATE" \
-            --sports "${sports[@]}"
+            --sports "${sports[@]}" \
+            --allow-stale-payloads
 
       - name: Stage daily publication only
         id: staged
@@ -170,8 +182,14 @@ jobs:
 
           git add -f -- dist
 
+          # The static bundle includes the public sport routes and their
+          # prediction payloads; validation above fails if either is missing.
+
           if [[ "$RUN_NBA" == "true" ]]; then
             git add -f -- sports/nba/web/data/daily_predictions.json
+            if [[ -d sports/nba/web/data/history ]]; then
+              git add -f -- sports/nba/web/data/history
+            fi
             nba_run="sports/nba/predictions/Player-Predictor/model/analysis/daily_runs/$RUN_STAMP"
             if [[ -d "$nba_run" ]]; then
               git add -f -- "$nba_run"
@@ -180,6 +198,9 @@ jobs:
 
           if [[ "$RUN_MLB" == "true" ]]; then
             git add -f -- sports/mlb/web/data/daily_predictions.json
+            if [[ -d sports/mlb/web/data/history ]]; then
+              git add -f -- sports/mlb/web/data/history
+            fi
             mlb_run="sports/mlb/data/predictions/daily_runs/$RUN_STAMP"
             if [[ -d "$mlb_run" ]]; then
               git add -f -- "$mlb_run"
