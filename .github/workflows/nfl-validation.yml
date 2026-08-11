@@ -42,7 +42,10 @@ jobs:
       - name: Test and export NFL validation evidence
         run: |
           set -euo pipefail
-          python -m pytest sports/nfl/tests tests/test_validate_nfl_publication.py -q
+          python -m pytest \
+            sports/nfl/tests/test_validation_web_export.py \
+            tests/test_validate_nfl_publication.py \
+            -q
           python sports/nfl/scripts/export_nfl_validation_web.py
           python sports/site/pipeline/build_static_site.py
           python sports/site/pipeline/validate_nfl_publication.py
