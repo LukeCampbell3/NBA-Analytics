@@ -6,6 +6,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import sports.nfl.predictions.live_market as live_market
 
 from sports.nfl.predictions.daily_policy import (
     build_shadow_parlay,
@@ -13,7 +14,9 @@ from sports.nfl.predictions.daily_policy import (
     select_live_board,
 )
 from sports.nfl.predictions.live_market import (
+    fetch_available_live_slate,
     flatten_event_odds,
+    flatten_sportsgameodds_event,
     load_fixture_slate,
     write_complete_slate,
 )
@@ -67,6 +70,51 @@ def event_payload() -> dict:
     }
 
 
+def sportsgameodds_event_payload() -> dict:
+    player_id = "JALEN_HURTS_1_NFL"
+    return {
+        "eventID": "sgo-game-1",
+        "status": {"startsAt": "2026-09-10T00:20:00Z", "started": False, "live": False},
+        "teams": {
+            "home": {"names": {"long": "Philadelphia Eagles"}},
+            "away": {"names": {"long": "Dallas Cowboys"}},
+        },
+        "players": {player_id: {"name": "Jalen Hurts"}},
+        "odds": {
+            f"passing_yards-{player_id}-game-ou-over": {
+                "statID": "passing_yards",
+                "playerID": player_id,
+                "periodID": "game",
+                "betTypeID": "ou",
+                "sideID": "over",
+                "byBookmaker": {
+                    "draftkings": {
+                        "overUnder": "249.5",
+                        "odds": "-105",
+                        "available": True,
+                        "lastUpdatedAt": "2026-09-09T14:01:00Z",
+                    }
+                },
+            },
+            f"passing_yards-{player_id}-game-ou-under": {
+                "statID": "passing_yards",
+                "playerID": player_id,
+                "periodID": "game",
+                "betTypeID": "ou",
+                "sideID": "under",
+                "byBookmaker": {
+                    "draftkings": {
+                        "overUnder": "249.5",
+                        "odds": "-115",
+                        "available": True,
+                        "lastUpdatedAt": "2026-09-09T14:00:00Z",
+                    }
+                },
+            },
+        },
+    }
+
+
 def test_live_market_retains_complete_two_sided_rows() -> None:
     rows = flatten_event_odds(event_payload(), fetched_at_utc="2026-09-09T14:02:00Z")
 
@@ -74,6 +122,63 @@ def test_live_market_retains_complete_two_sided_rows() -> None:
     assert {row["bookmaker"] for row in rows} == {"fanduel", "draftkings"}
     assert all(row["target"] == "passing" for row in rows)
     assert all(row["over_price"] is not None and row["under_price"] is not None for row in rows)
+
+
+def test_sportsgameodds_live_market_requires_same_book_line_pair() -> None:
+    rows = flatten_sportsgameodds_event(
+        sportsgameodds_event_payload(), fetched_at_utc="2026-09-09T14:02:00Z"
+    )
+
+    assert len(rows) == 1
+    assert rows[0]["source"] == "sportsgameodds_live"
+    assert rows[0]["bookmaker"] == "draftkings"
+    assert rows[0]["line"] == 249.5
+    assert rows[0]["over_price"] == -105.0
+    assert rows[0]["under_price"] == -115.0
+    assert rows[0]["snapshot_time_utc"] == "2026-09-09T14:00:00+00:00"
+
+
+def test_provider_chain_fails_closed_without_credentials() -> None:
+    rows, audit = fetch_available_live_slate(
+        sportsgameodds_api_key=None,
+        the_odds_api_key=None,
+        commence_from_utc="2026-09-09T00:00:00Z",
+        commence_to_utc="2026-09-16T00:00:00Z",
+    )
+
+    assert rows == []
+    assert audit["status"] == "missing_credentials"
+    assert [item["provider"] for item in audit["provider_attempts"]] == [
+        "sportsgameodds",
+        "the_odds_api",
+    ]
+
+
+def test_provider_chain_falls_back_to_the_odds_api(monkeypatch) -> None:
+    monkeypatch.setattr(
+        live_market,
+        "fetch_sportsgameodds_live_slate",
+        lambda **_: ([], {"provider": "sportsgameodds", "status": "no_props"}),
+    )
+    monkeypatch.setattr(
+        live_market,
+        "fetch_live_slate",
+        lambda **_: ([{"source": "the_odds_api_live"}], {"provider": "the_odds_api"}),
+    )
+
+    rows, audit = fetch_available_live_slate(
+        sportsgameodds_api_key="sgo-key",
+        the_odds_api_key="odds-key",
+        commence_from_utc="2026-09-09T00:00:00Z",
+        commence_to_utc="2026-09-16T00:00:00Z",
+    )
+
+    assert rows == [{"source": "the_odds_api_live"}]
+    assert audit["provider"] == "the_odds_api"
+    assert [item["status"] for item in audit["provider_attempts"]] == [
+        "no_props",
+        "success",
+    ]
 
 
 def test_live_board_requires_fresh_multibook_executable_market() -> None:

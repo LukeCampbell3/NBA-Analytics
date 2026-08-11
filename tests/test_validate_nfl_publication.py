@@ -146,3 +146,41 @@ def test_validate_nfl_publication_rejects_authorized_live_pick(tmp_path: Path) -
 
     with pytest.raises(ValueError, match="cannot be authorized"):
         validate_nfl_publication(repo_root=repo_root, output_dir=output)
+
+
+def test_validate_nfl_publication_accepts_sportsgameodds_source(tmp_path: Path) -> None:
+    repo_root, output = make_publication(tmp_path)
+    payload = {
+        "schema_version": 2,
+        "run_date": "2026-08-11",
+        "publication_status": "shadow_current_pool",
+        "mode": "live_shadow",
+        "policy_profile": "nfl_passing_market_policy_v1",
+        "plays": [
+            {
+                "target": "passing",
+                "market_source": "sportsgameodds_live",
+                "price_confirmed": True,
+                "selected_side_price": -110,
+                "market_books": 2,
+                "market_common_books": 2,
+                "candidate_authorized": False,
+            }
+        ],
+        "daily_parlay": {
+            "status": "withheld",
+            "validation_status": "failed_locked_holdout",
+            "candidate_authorized": False,
+        },
+        "policy_governance": {
+            "publication_mode": "SHADOW_RESEARCH_ONLY",
+            "candidate_authorization_enabled": False,
+            "staking_enabled": False,
+        },
+    }
+    write_payload(repo_root / "sports/nfl/web/data/daily_predictions.json", payload)
+    write_payload(output / "nfl/data/daily_predictions.json", payload)
+
+    summary = validate_nfl_publication(repo_root=repo_root, output_dir=output)
+
+    assert "plays=1" in summary

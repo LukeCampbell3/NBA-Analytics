@@ -13,6 +13,7 @@ import requests
 
 
 SPORT_KEY = "americanfootball_nfl"
+SPORTSGAMEODDS_API_URL = "https://api.sportsgameodds.com/v2/events"
 MARKET_KEYS = (
     "player_pass_yds",
     "player_rush_yds",
@@ -23,6 +24,22 @@ TARGET_BY_MARKET = {
     "player_rush_yds": "rushing",
     "player_reception_yds": "receiving",
 }
+SPORTSGAMEODDS_MARKETS = {
+    "passing_yards": "player_pass_yds",
+    "rushing_yards": "player_rush_yds",
+    "receiving_yards": "player_reception_yds",
+}
+SPORTSGAMEODDS_ODD_IDS = tuple(
+    f"{stat}-PLAYER_ID-game-ou-over" for stat in SPORTSGAMEODDS_MARKETS
+)
+SPORTSGAMEODDS_BOOKMAKERS = (
+    "bet365",
+    "betmgm",
+    "caesars",
+    "draftkings",
+    "fanduel",
+    "fanatics",
+)
 
 
 def _request_json(
@@ -31,10 +48,11 @@ def _request_json(
     params: dict[str, Any],
     *,
     max_retries: int = 4,
+    base_url: str = "https://api.the-odds-api.com",
 ) -> tuple[Any, dict[str, str]]:
     for attempt in range(max_retries + 1):
         response = session.get(
-            f"https://api.the-odds-api.com{path}", params=params, timeout=45
+            f"{base_url}{path}", params=params, timeout=45
         )
         if response.ok:
             return response.json(), {
@@ -43,11 +61,16 @@ def _request_json(
         if response.status_code not in {429, 500, 502, 503, 504} or attempt == max_retries:
             try:
                 body = response.json()
-                reason = body.get("error_code") or body.get("message") or "unknown"
+                reason = (
+                    body.get("error_code")
+                    or body.get("error")
+                    or body.get("message")
+                    or "unknown"
+                )
             except Exception:
                 reason = "unknown"
             raise RuntimeError(
-                f"The Odds API returned HTTP {response.status_code} ({reason})."
+                f"Odds provider returned HTTP {response.status_code} ({reason})."
             )
         retry_after = response.headers.get("Retry-After")
         delay = (
@@ -188,6 +211,247 @@ def fetch_live_slate(
         },
     }
     return rows, audit
+
+
+def flatten_sportsgameodds_event(
+    event: dict[str, Any], *, fetched_at_utc: str
+) -> list[dict[str, Any]]:
+    """Normalize complete current two-sided SportsGameOdds book/line pairs."""
+
+    status = event.get("status") if isinstance(event.get("status"), dict) else {}
+    if bool(status.get("live")) or bool(status.get("started")):
+        return []
+    commence = status.get("startsAt") or event.get("startsAt")
+    players = event.get("players") if isinstance(event.get("players"), dict) else {}
+    teams = event.get("teams") if isinstance(event.get("teams"), dict) else {}
+
+    def team_name(side: str) -> str | None:
+        team = teams.get(side) if isinstance(teams.get(side), dict) else {}
+        names = team.get("names") if isinstance(team.get("names"), dict) else {}
+        return names.get("long") or names.get("medium") or names.get("short") or team.get("name")
+
+    grouped: dict[tuple[str, str, str, float], dict[str, Any]] = {}
+    updates: dict[tuple[str, str, str, float], list[str]] = {}
+    odds = event.get("odds") if isinstance(event.get("odds"), dict) else {}
+    for odd in odds.values():
+        if not isinstance(odd, dict):
+            continue
+        stat_id = str(odd.get("statID") or "")
+        target_market = SPORTSGAMEODDS_MARKETS.get(stat_id)
+        side = str(odd.get("sideID") or "").lower()
+        if (
+            target_market is None
+            or str(odd.get("periodID") or "") != "game"
+            or str(odd.get("betTypeID") or "") != "ou"
+            or side not in {"over", "under"}
+            or bool(odd.get("started"))
+        ):
+            continue
+        player_id = str(odd.get("playerID") or odd.get("statEntityID") or "")
+        player = players.get(player_id) if isinstance(players.get(player_id), dict) else {}
+        player_name = player.get("name") or player.get("display")
+        if not player_name:
+            continue
+        by_book = odd.get("byBookmaker") if isinstance(odd.get("byBookmaker"), dict) else {}
+        for bookmaker, offer in by_book.items():
+            if not isinstance(offer, dict) or offer.get("available") is False:
+                continue
+            try:
+                line = float(offer.get("overUnder"))
+                price = float(offer.get("odds"))
+            except (TypeError, ValueError):
+                continue
+            if price == 0:
+                continue
+            book = str(bookmaker).strip().lower()
+            key = (player_id, target_market, book, line)
+            row = grouped.setdefault(
+                key,
+                {
+                    "event_id": str(event.get("eventID") or ""),
+                    "commence_time_utc": commence,
+                    "home_team": team_name("home"),
+                    "away_team": team_name("away"),
+                    "player": str(player_name).strip(),
+                    "provider_player_id": player_id,
+                    "market": target_market,
+                    "target": TARGET_BY_MARKET[target_market],
+                    "line": line,
+                    "bookmaker": book,
+                    "bookmaker_title": book,
+                    "over_price": None,
+                    "under_price": None,
+                    "snapshot_time_utc": fetched_at_utc,
+                    "fetched_at_utc": fetched_at_utc,
+                    "source": "sportsgameodds_live",
+                },
+            )
+            row[f"{side}_price"] = price
+            updated = offer.get("lastUpdatedAt")
+            if updated:
+                updates.setdefault(key, []).append(str(updated))
+
+    rows: list[dict[str, Any]] = []
+    for key, row in grouped.items():
+        if row["over_price"] is None or row["under_price"] is None:
+            continue
+        if updates.get(key):
+            parsed = [
+                value
+                for value in (
+                    datetime.fromisoformat(item.replace("Z", "+00:00"))
+                    for item in updates[key]
+                )
+                if value.tzinfo is not None
+            ]
+            if parsed:
+                row["snapshot_time_utc"] = min(parsed).astimezone(timezone.utc).isoformat()
+        rows.append(row)
+    return rows
+
+
+def fetch_sportsgameodds_live_slate(
+    *,
+    api_key: str,
+    commence_from_utc: str,
+    commence_to_utc: str,
+    bookmakers: tuple[str, ...] | None = None,
+    session: requests.Session | None = None,
+    max_retries: int = 4,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    if not api_key.strip():
+        raise ValueError("A non-empty SportsGameOdds API key is required.")
+    active_session = session or requests.Session()
+    active_session.headers.update(
+        {
+            "Accept": "application/json",
+            "User-Agent": "NFL-Predictor/2.0",
+            "x-api-key": api_key.strip(),
+        }
+    )
+    base_params: dict[str, Any] = {
+        "leagueID": "NFL",
+        "oddsAvailable": "true",
+        "started": "false",
+        "live": "false",
+        "startsAfter": commence_from_utc,
+        "startsBefore": commence_to_utc,
+        "oddID": ",".join(SPORTSGAMEODDS_ODD_IDS),
+        "includeOpposingOdds": "true",
+        "includeAltLines": "false",
+        "limit": 50,
+    }
+    if bookmakers:
+        base_params["bookmakerID"] = ",".join(bookmakers)
+    payloads: list[dict[str, Any]] = []
+    headers: dict[str, str] = {}
+    cursor: str | None = None
+    while True:
+        params = dict(base_params)
+        if cursor:
+            params["cursor"] = cursor
+        payload, headers = _request_json(
+            active_session,
+            "/v2/events",
+            params,
+            max_retries=max_retries,
+            base_url="https://api.sportsgameodds.com",
+        )
+        if not isinstance(payload, dict) or payload.get("success") is False:
+            raise RuntimeError("SportsGameOdds returned an unsuccessful payload.")
+        payloads.append(payload)
+        cursor_value = payload.get("nextCursor")
+        cursor = str(cursor_value) if cursor_value else None
+        if not cursor:
+            break
+
+    fetched_at = datetime.now(timezone.utc).isoformat()
+    events = [event for payload in payloads for event in payload.get("data", [])]
+    rows = [
+        row
+        for event in events
+        for row in flatten_sportsgameodds_event(event, fetched_at_utc=fetched_at)
+    ]
+    raw_hash = hashlib.sha256(
+        json.dumps(events, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    return rows, {
+        "provider": "sportsgameodds",
+        "status": "success" if rows else "no_props",
+        "sport_key": "NFL",
+        "fetched_at_utc": fetched_at,
+        "pages_fetched": len(payloads),
+        "events_discovered": len(events),
+        "events_with_odds": sum(bool(event.get("odds")) for event in events),
+        "complete_two_sided_rows": len(rows),
+        "markets": list(SPORTSGAMEODDS_ODD_IDS),
+        "bookmakers": list(bookmakers or []),
+        "raw_source_sha256": raw_hash,
+        "rate_limit_remaining": headers.get("x-ratelimit-remaining"),
+    }
+
+
+def fetch_available_live_slate(
+    *,
+    sportsgameodds_api_key: str | None,
+    the_odds_api_key: str | None,
+    commence_from_utc: str,
+    commence_to_utc: str,
+    regions: str = "us",
+    provider_priority: tuple[str, ...] = ("sportsgameodds", "the_odds_api"),
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    attempts: list[dict[str, Any]] = []
+    for provider in provider_priority:
+        try:
+            if provider == "sportsgameodds":
+                if not sportsgameodds_api_key:
+                    attempts.append({"provider": provider, "status": "missing_credentials"})
+                    continue
+                rows, audit = fetch_sportsgameodds_live_slate(
+                    api_key=sportsgameodds_api_key,
+                    commence_from_utc=commence_from_utc,
+                    commence_to_utc=commence_to_utc,
+                )
+            elif provider == "the_odds_api":
+                if not the_odds_api_key:
+                    attempts.append({"provider": provider, "status": "missing_credentials"})
+                    continue
+                rows, audit = fetch_live_slate(
+                    api_key=the_odds_api_key,
+                    commence_from_utc=commence_from_utc,
+                    commence_to_utc=commence_to_utc,
+                    regions=regions,
+                )
+                audit["status"] = "success" if rows else "no_props"
+            else:
+                attempts.append({"provider": provider, "status": "unsupported"})
+                continue
+        except Exception as error:
+            attempts.append(
+                {"provider": provider, "status": "api_error", "message": str(error)[:300]}
+            )
+            continue
+        attempts.append(
+            {
+                "provider": provider,
+                "status": audit.get("status", "success"),
+                "complete_two_sided_rows": len(rows),
+                "events_discovered": audit.get("events_discovered"),
+                "events_with_odds": audit.get("events_with_odds"),
+            }
+        )
+        if rows:
+            return rows, {**audit, "provider_attempts": attempts}
+
+    statuses = {str(item.get("status")) for item in attempts}
+    return [], {
+        "provider": "provider_chain",
+        "status": "missing_credentials" if statuses == {"missing_credentials"} else "no_props",
+        "fetched_at_utc": datetime.now(timezone.utc).isoformat(),
+        "complete_two_sided_rows": 0,
+        "provider_attempts": attempts,
+        "raw_source_sha256": None,
+    }
 
 
 def load_fixture_slate(path: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]:

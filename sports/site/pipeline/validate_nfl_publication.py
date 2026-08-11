@@ -59,7 +59,10 @@ def _validate_live_payload(payload: dict[str, Any], *, run_date: str | None) -> 
     for index, play in enumerate(plays, start=1):
         if play.get("target") != "passing":
             raise ValueError(f"NFL live play {index} uses an unvalidated target.")
-        if play.get("market_source") != "the_odds_api_live":
+        if play.get("market_source") not in {
+            "the_odds_api_live",
+            "sportsgameodds_live",
+        }:
             raise ValueError(f"NFL live play {index} lacks a true live market source.")
         if not bool(play.get("price_confirmed")):
             raise ValueError(f"NFL live play {index} lacks confirmed odds.")

@@ -13,6 +13,7 @@ from zoneinfo import ZoneInfo
 
 import joblib
 import pandas as pd
+from dotenv import load_dotenv
 
 
 SCRIPT_PATH = Path(__file__).resolve()
@@ -35,7 +36,7 @@ from sports.nfl.predictions.daily_policy import (  # noqa: E402
     select_live_board,
 )
 from sports.nfl.predictions.live_market import (  # noqa: E402
-    fetch_live_slate,
+    fetch_available_live_slate,
     load_fixture_slate,
     write_complete_slate,
 )
@@ -175,6 +176,7 @@ def write_payload(path: Path, payload: dict) -> None:
 
 def main() -> int:
     args = parse_args()
+    load_dotenv(REPO_ROOT / ".env", override=False)
     run_day = date.fromisoformat(args.run_date) if args.run_date else datetime.now(EASTERN).date()
     as_of = (
         datetime.fromisoformat(args.as_of_utc.replace("Z", "+00:00"))
@@ -189,32 +191,30 @@ def main() -> int:
     if args.market_input:
         observations, provider_audit = load_fixture_slate(args.market_input.resolve())
     else:
-        api_key = args.api_key or os.getenv("THE_ODDS_API_KEY") or os.getenv("ODDS_API_KEY")
-        if not api_key:
-            observations = []
-            provider_audit = {
-                "provider": "the_odds_api",
-                "status": "missing_credentials",
-                "sport_key": "americanfootball_nfl",
-                "fetched_at_utc": _iso(as_of),
-                "events_discovered": 0,
-                "events_with_odds": 0,
-                "complete_two_sided_rows": 0,
-                "markets": [],
-                "regions": args.regions,
-                "raw_source_sha256": None,
-                "quota": {},
-            }
-        else:
-            observations, provider_audit = fetch_live_slate(
-                api_key=api_key,
-                commence_from_utc=_iso(start),
-                commence_to_utc=_iso(end),
-                regions=args.regions,
-            )
+        provider_priority = tuple(
+            value.strip()
+            for value in os.getenv(
+                "NFL_ODDS_PROVIDER_PRIORITY", "sportsgameodds,the_odds_api"
+            ).split(",")
+            if value.strip()
+        )
+        observations, provider_audit = fetch_available_live_slate(
+            sportsgameodds_api_key=os.getenv("SPORTSGAMEODDS_API_KEY"),
+            the_odds_api_key=(
+                args.api_key
+                or os.getenv("THE_ODDS_API_KEY")
+                or os.getenv("ODDS_API_KEY")
+            ),
+            commence_from_utc=_iso(start),
+            commence_to_utc=_iso(end),
+            regions=args.regions,
+            provider_priority=provider_priority,
+        )
 
+    snapshot_id = as_of.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     snapshot_path = args.snapshot_output or (
-        NFL_ROOT / f"data/production/snapshots/{run_day.isoformat()}.json"
+        NFL_ROOT
+        / f"data/production/snapshots/{run_day.isoformat()}/{snapshot_id}.json"
     )
     replaying_same_snapshot = (
         args.market_input is not None
@@ -236,7 +236,7 @@ def main() -> int:
     generated_at = _iso(as_of)
     if not observations:
         no_market_reason = (
-            "THE_ODDS_API_KEY is unavailable; no sportsbook odds were validated."
+            "No configured NFL odds provider is available; no sportsbook odds were validated."
             if provider_audit.get("status") == "missing_credentials"
             else "No complete two-sided regular-season NFL player-prop markets were available."
         )

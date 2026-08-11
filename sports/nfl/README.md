@@ -21,7 +21,13 @@ python sports/nfl/scripts/refresh_nfl_yardage_artifact.py
 python sports/nfl/scripts/run_nfl_daily_predictions.py --run-date YYYY-MM-DD
 ```
 
-Set `THE_ODDS_API_KEY` for the live run. Current snapshots are immutable JSON
+Set `SPORTSGAMEODDS_API_KEY` or `THE_ODDS_API_KEY` for the live run. The default
+provider order is SportsGameOdds followed by The Odds API and can be changed
+with `NFL_ODDS_PROVIDER_PRIORITY`. SportsGameOdds filtering is performed
+client-side so lower subscription tiers are not rejected for requesting locked
+bookmaker filters. Only same-book, same-line, currently available over/under
+pairs with provider timestamps enter the complete slate; consensus-only lines
+remain diagnostic and cannot become picks. Current snapshots are immutable JSON
 ledgers under `data/production/snapshots/`. The model artifact is refit only
 after a newly completed regular-season week appears; policy thresholds and
 market scope remain frozen. The current board is shadow-only until prospective
