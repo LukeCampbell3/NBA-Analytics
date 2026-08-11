@@ -225,6 +225,8 @@ def _default_args(**overrides) -> Namespace:
         "mlb_pool_csv": None,
         "mlb_skip_fetch_market": False,
         "mlb_skip_update_data": False,
+        "mlb_incremental_update": False,
+        "mlb_refresh_history_caches": False,
         "mlb_skip_generate": False,
         "mlb_data_dir": REPO_ROOT / "Player-Predictor" / "Data-Proc-MLB",
         "mlb_manifest": REPO_ROOT / "Player-Predictor" / "Data-Proc-MLB" / "update_manifest_2026.json",

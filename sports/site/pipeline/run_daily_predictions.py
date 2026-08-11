@@ -17,6 +17,7 @@ import json
 import shutil
 import subprocess
 import sys
+import time
 from datetime import date, datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -153,6 +154,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--mlb-pool-csv", type=Path, default=None, help="Explicit raw MLB daily prediction pool CSV.")
     parser.add_argument("--mlb-skip-fetch-market", action="store_true", help="Skip fetching same-day MLB market props.")
     parser.add_argument("--mlb-skip-update-data", action="store_true", help="Skip rebuilding MLB processed player files from source data.")
+    parser.add_argument(
+        "--mlb-incremental-update",
+        action="store_true",
+        help="Update MLB processed data from only newly completed games.",
+    )
+    parser.add_argument(
+        "--mlb-refresh-history-caches",
+        action="store_true",
+        help="Refresh slower MLB selector history caches during this run.",
+    )
     parser.add_argument("--mlb-skip-generate", action="store_true", help="Skip generating a fresh MLB raw prediction pool from processed MLB data.")
     parser.add_argument("--mlb-data-dir", type=Path, default=MLB_DATA_DIR, help="MLB processed-data root used by the raw pool generator.")
     parser.add_argument("--mlb-manifest", type=Path, default=MLB_MANIFEST, help="Optional MLB processed-data manifest used by the raw pool generator.")
@@ -195,7 +206,11 @@ def run_step(label: str, command: list[str], cwd: Path = REPO_ROOT) -> None:
     print(label)
     print("=" * 88)
     print("Command:", " ".join(command))
-    subprocess.run(command, cwd=cwd, check=True)
+    started = time.perf_counter()
+    try:
+        subprocess.run(command, cwd=cwd, check=True)
+    finally:
+        print(f"[timing] {label}: {time.perf_counter() - started:.2f}s")
 
 
 def format_step_failure(exc: Exception) -> str:
@@ -583,6 +598,8 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
             ]
             if args.run_date:
                 update_command.extend(["--through-date", str(args.run_date)])
+            if args.mlb_incremental_update:
+                update_command.append("--incremental")
             if MLB_DATA_UPDATER.exists():
                 try:
                     run_step("Update MLB Processed Data", update_command)
@@ -718,7 +735,7 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
     selected_csv, summary_json = run_selector_for(
         pool_csv,
         extra_args=MLB_PRIMARY_POLICY_ARGS,
-        refresh_history=used_generated_pool,
+        refresh_history=bool(args.mlb_refresh_history_caches),
     )
     standard_selected_csv, standard_summary_json = derive_mlb_selector_outputs(pool_csv)
     market_profile = load_mlb_market_profile(pool_csv) if pool_csv.exists() else {

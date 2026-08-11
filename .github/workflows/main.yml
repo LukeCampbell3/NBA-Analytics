@@ -110,6 +110,12 @@ jobs:
           echo "run_stamp=${run_date//-/}" >> "$GITHUB_OUTPUT"
           echo "run_nba=$run_nba" >> "$GITHUB_OUTPUT"
           echo "run_mlb=$run_mlb" >> "$GITHUB_OUTPUT"
+          weekday="$(date -d "$run_date" +%u)"
+          refresh_mlb_history=false
+          if [[ "$run_mlb" == "true" && "$weekday" == "1" ]]; then
+            refresh_mlb_history=true
+          fi
+          echo "refresh_mlb_history=$refresh_mlb_history" >> "$GITHUB_OUTPUT"
 
           {
             echo "### Daily prediction run"
@@ -117,11 +123,23 @@ jobs:
             echo "- Sports: $sports"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Restore incremental MLB state
+        if: steps.run-config.outputs.run_mlb == 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            Player-Predictor/Data-Proc-MLB
+            sports/mlb/data/predictions/calibration/*.json
+          key: mlb-daily-v2-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/decision_engine/matchup_network.py') }}-${{ steps.run-config.outputs.run_stamp }}
+          restore-keys: |
+            mlb-daily-v2-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/decision_engine/matchup_network.py') }}-
+
       - name: Run production prediction pipeline
         env:
           RUN_DATE: ${{ steps.run-config.outputs.run_date }}
           RUN_NBA: ${{ steps.run-config.outputs.run_nba }}
           RUN_MLB: ${{ steps.run-config.outputs.run_mlb }}
+          REFRESH_MLB_HISTORY: ${{ steps.run-config.outputs.refresh_mlb_history }}
           BUILD_ONLY: ${{ inputs.build_only || 'false' }}
         run: |
           set -euo pipefail
@@ -138,7 +156,12 @@ jobs:
             --nba-snapshot-policy live_only
             --mlb-market-provider provider_chain
             --mlb-fallback-policy exact_only
+            --mlb-incremental-update
           )
+
+          if [[ "$REFRESH_MLB_HISTORY" == "true" ]]; then
+            args+=(--mlb-refresh-history-caches)
+          fi
 
           if [[ "$RUN_NBA" != "true" ]]; then
             args+=(--skip-nba)
@@ -180,32 +203,16 @@ jobs:
         run: |
           set -euo pipefail
 
-          git add -f -- dist
-
-          # The static bundle includes the public sport routes and their
-          # prediction payloads; validation above fails if either is missing.
-
           if [[ "$RUN_NBA" == "true" ]]; then
-            git add -f -- sports/nba/web/data/daily_predictions.json
-            if [[ -d sports/nba/web/data/history ]]; then
-              git add -f -- sports/nba/web/data/history
-            fi
-            nba_run="sports/nba/predictions/Player-Predictor/model/analysis/daily_runs/$RUN_STAMP"
-            if [[ -d "$nba_run" ]]; then
-              git add -f -- "$nba_run"
-            fi
+            git add -f -- \
+              sports/nba/web/data/daily_predictions.json \
+              dist/nba/data/daily_predictions.json
           fi
 
           if [[ "$RUN_MLB" == "true" ]]; then
-            git add -f -- sports/mlb/web/data/daily_predictions.json
-            if [[ -d sports/mlb/web/data/history ]]; then
-              git add -f -- sports/mlb/web/data/history
-            fi
-            mlb_run="sports/mlb/data/predictions/daily_runs/$RUN_STAMP"
-            if [[ -d "$mlb_run" ]]; then
-              git add -f -- "$mlb_run"
-            fi
-            git add -f -- sports/mlb/data/predictions/calibration/*.json
+            git add -f -- \
+              sports/mlb/web/data/daily_predictions.json \
+              dist/mlb/data/daily_predictions.json
           fi
 
           if git diff --cached --quiet; then
@@ -232,14 +239,24 @@ jobs:
             git push origin "HEAD:$PUBLISH_BRANCH"
           fi
 
-      - name: Upload prediction publication
-        if: always()
+      - name: Upload MLB frontend payload
+        if: always() && steps.run-config.outputs.run_mlb == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: daily-predictions-${{ steps.run-config.outputs.run_stamp || github.run_id }}
+          name: mlb-frontend-${{ steps.run-config.outputs.run_stamp || github.run_id }}
           path: |
-            dist/
-            sports/nba/web/data/daily_predictions.json
+            dist/mlb/data/daily_predictions.json
             sports/mlb/web/data/daily_predictions.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload NBA frontend payload
+        if: always() && steps.run-config.outputs.run_nba == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nba-frontend-${{ steps.run-config.outputs.run_stamp || github.run_id }}
+          path: |
+            dist/nba/data/daily_predictions.json
+            sports/nba/web/data/daily_predictions.json
           if-no-files-found: warn
           retention-days: 14

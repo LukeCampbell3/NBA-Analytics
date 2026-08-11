@@ -8,7 +8,7 @@ Outputs are written to:
 The updater is cache-aware:
 - completed game feeds are stored locally per game
 - future runs reuse cached feeds unless --refresh-source is passed
-- processed files are rebuilt from the cached season corpus each run
+- --incremental reuses the processed corpus and computes only newly completed games
 """
 
 from __future__ import annotations
@@ -46,6 +46,15 @@ MARKET_ROOT = REPO_ROOT.parent / "sports" / "mlb" / "data" / "raw" / "market_odd
 PROC_ROOT = REPO_ROOT / "Data-Proc-MLB"
 TARGETS_HITTER = ["H", "TB", "R", "HR", "RBI"]
 TARGETS_PITCHER = ["K", "ER", "ERA"]
+RAW_ROW_COLUMNS = [
+    "Date", "Player", "Player_MLBAM_ID", "Player_Type", "Team", "Opponent",
+    "Season", "Game_ID", "Team_ID", "Opponent_ID", "Is_Home", "Park_Factor",
+    "Wind_Out_MPH", "Temp_F", "Did_Not_Play", "Opp_Starter_ID", "H", "TB",
+    "R", "HR", "RBI", "PA", "AB", "BB", "SO", "Batting_Order",
+    "Team_PA_share", "wOBA", "xwOBA", "ISO", "Barrel%", "HardHit%",
+    "Was_Starter", "K", "ER", "ERA", "IP", "BF", "Pitches", "BB_allowed",
+    "H_allowed", "HR_allowed", "FIP", "xFIP", "CSW%", "Whiff%",
+]
 
 
 def utc_now_iso() -> str:
@@ -85,6 +94,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--start-date", type=str, default=None, help="Optional YYYY-MM-DD start date. Defaults to March 1 of season.")
     parser.add_argument("--through-date", type=str, default=None, help="Optional inclusive YYYY-MM-DD cutoff. Defaults to today.")
     parser.add_argument("--refresh-source", action="store_true", help="Overwrite cached schedule/game feeds before processing.")
+    parser.add_argument(
+        "--incremental",
+        action="store_true",
+        help="Reuse existing processed rows and fetch only games after their latest date.",
+    )
     parser.add_argument("--sleep-seconds", type=float, default=0.1, help="Remote fetch delay between uncached game calls.")
     parser.add_argument("--retries", type=int, default=3, help="Remote fetch retry count.")
     parser.add_argument("--timeout-seconds", type=float, default=30.0, help="HTTP timeout per request.")
@@ -507,12 +521,8 @@ def add_time_features(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def attach_walk_forward_matchup_network(df: pd.DataFrame) -> pd.DataFrame:
-    """Attach strictly pregame batter/pitcher network features to hitter rows."""
-
-    out = df.copy()
-    hitter_mask = out["Player_Type"].eq("hitter")
-    network_float_columns = [
+def matchup_network_columns() -> list[str]:
+    columns = [
         "Matchup_Network_Batter_Support",
         "Matchup_Network_Pitcher_Support",
         "Pitcher_Profile_Uncertainty",
@@ -520,7 +530,7 @@ def attach_walk_forward_matchup_network(df: pd.DataFrame) -> pd.DataFrame:
         "Matchup_Network_Confidence",
     ]
     for target in NETWORK_HITTER_TARGETS:
-        network_float_columns.extend(
+        columns.extend(
             [
                 f"Batter_Profile_{target}_Strength",
                 f"Pitcher_Profile_{target}_Vulnerability",
@@ -532,11 +542,41 @@ def attach_walk_forward_matchup_network(df: pd.DataFrame) -> pd.DataFrame:
                 f"Matchup_Network_{target}_Adjustment",
             ]
         )
+    return columns
+
+
+def attach_walk_forward_matchup_network(
+    df: pd.DataFrame,
+    network_cache: pd.DataFrame | None = None,
+) -> pd.DataFrame:
+    """Attach strictly pregame batter/pitcher network features to hitter rows."""
+
+    out = df.copy()
+    hitter_mask = out["Player_Type"].eq("hitter")
+    network_float_columns = matchup_network_columns()
     for column in network_float_columns:
         out[column] = 0.0
     out["Pitcher_Profile_Uncertainty"] = 1.0
     out["Matchup_Network_Version"] = ""
     synchronized_columns = ["Matchup_Network_Version", *network_float_columns]
+
+    cache_keys = ["Player", "Player_Type", "Game_ID"]
+    if network_cache is not None and not network_cache.empty:
+        available = [column for column in synchronized_columns if column in network_cache.columns]
+        if "Matchup_Network_Version" in available and all(key in network_cache.columns for key in cache_keys):
+            cached = network_cache.loc[
+                network_cache["Matchup_Network_Version"].astype(str).eq(MATCHUP_NETWORK_VERSION),
+                [*cache_keys, *available],
+            ].copy()
+            cached = cached.drop_duplicates(subset=cache_keys, keep="last")
+            cached = cached.rename(columns={column: f"{column}__cached" for column in available})
+            out = out.merge(cached, how="left", on=cache_keys)
+            cached_version = out.get("Matchup_Network_Version__cached", pd.Series("", index=out.index)).fillna("")
+            cached_mask = cached_version.astype(str).eq(MATCHUP_NETWORK_VERSION)
+            for column in available:
+                cached_column = f"{column}__cached"
+                out.loc[cached_mask, column] = out.loc[cached_mask, cached_column].to_numpy()
+                out = out.drop(columns=[cached_column])
 
     pitcher_rows = out.loc[out["Player_Type"].eq("pitcher")].copy()
     pitcher_by_id: dict[int, pd.DataFrame] = {}
@@ -562,6 +602,8 @@ def attach_walk_forward_matchup_network(df: pd.DataFrame) -> pd.DataFrame:
         ordered = batter_rows.sort_values(["Date", "Game_Index"])
         ordered_indices = list(ordered.index)
         for position, row_index in enumerate(ordered_indices):
+            if str(out.at[row_index, "Matchup_Network_Version"]) == MATCHUP_NETWORK_VERSION:
+                continue
             row = ordered.loc[row_index]
             batter_history = ordered.iloc[:position]
             if batter_history.empty:
@@ -620,16 +662,21 @@ def load_market_history() -> pd.DataFrame:
 
 
 def build_processed_frames(
-    raw_rows: list[dict[str, object]],
+    raw_rows: list[dict[str, object]] | pd.DataFrame,
     fetched_at_utc: str,
     market_history: pd.DataFrame,
     *,
     min_rows: int,
+    network_cache: pd.DataFrame | None = None,
 ) -> tuple[dict[str, pd.DataFrame], dict]:
-    if not raw_rows:
+    if isinstance(raw_rows, pd.DataFrame):
+        if raw_rows.empty:
+            return {}, {"players": 0, "rows": 0, "min_date": None, "max_date": None, "market_props_rows_matched": 0, "market_rows_filled": 0}
+        df = raw_rows.copy()
+    elif not raw_rows:
         return {}, {"players": 0, "rows": 0, "min_date": None, "max_date": None, "market_props_rows_matched": 0, "market_rows_filled": 0}
-
-    df = pd.DataFrame(raw_rows)
+    else:
+        df = pd.DataFrame(raw_rows)
     df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
     df = df.loc[df["Date"].notna()].copy()
     df = deduplicate_player_games(df)
@@ -724,7 +771,7 @@ def build_processed_frames(
     hitter_mask = df["Player_Type"].eq("hitter")
     pitcher_mask = df["Player_Type"].eq("pitcher")
 
-    df = attach_walk_forward_matchup_network(df)
+    df = attach_walk_forward_matchup_network(df, network_cache=network_cache)
 
     rolling_specs = {
         "hitter": ["H", "TB", "R", "HR", "RBI"],
@@ -1022,6 +1069,56 @@ def prune_stale_player_dirs(active_players: set[str]) -> int:
     return removed
 
 
+def load_existing_processed_corpus(season: int) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Load the persisted season corpus once for an incremental refresh."""
+
+    frames: list[pd.DataFrame] = []
+    for path in sorted(PROC_ROOT.glob(f"*/{int(season)}_processed_processed.csv")):
+        try:
+            frame = pd.read_csv(path, low_memory=False)
+        except (OSError, pd.errors.ParserError):
+            continue
+        if frame.empty or not {"Date", "Player", "Player_Type", "Game_ID"}.issubset(frame.columns):
+            continue
+        frames.append(frame)
+
+    if not frames:
+        return pd.DataFrame(), pd.DataFrame()
+
+    combined = pd.concat(frames, ignore_index=True, sort=False)
+    combined["Game_ID"] = combined["Game_ID"].astype(str)
+    combined = deduplicate_player_games(combined)
+    base_columns = [column for column in RAW_ROW_COLUMNS if column in combined.columns]
+    cache_columns = [
+        column
+        for column in [
+            "Player", "Player_Type", "Game_ID", "Matchup_Network_Version",
+            *matchup_network_columns(),
+        ]
+        if column in combined.columns
+    ]
+    return combined[base_columns].copy(), combined[cache_columns].copy()
+
+
+def load_existing_manifest(season: int) -> dict:
+    path = PROC_ROOT / f"update_manifest_{int(season)}.json"
+    payload = load_json_cache(path)
+    return payload if isinstance(payload, dict) else {}
+
+
+def summarize_existing_corpus(frame: pd.DataFrame) -> dict:
+    dates = pd.to_datetime(frame.get("Date"), errors="coerce")
+    return {
+        "players": int(frame["Player"].nunique()) if "Player" in frame.columns else 0,
+        "rows": int(len(frame)),
+        "min_date": str(dates.min().date()) if dates.notna().any() else None,
+        "max_date": str(dates.max().date()) if dates.notna().any() else None,
+        "market_props_rows_matched": 0,
+        "market_rows_filled": 0,
+        "incremental_noop": True,
+    }
+
+
 def main() -> None:
     args = parse_args()
     through_date = str((pd.Timestamp(args.through_date).date() if args.through_date else pd.Timestamp.now().date()))
@@ -1031,20 +1128,45 @@ def main() -> None:
     RAW_ROOT.mkdir(parents=True, exist_ok=True)
     PROC_ROOT.mkdir(parents=True, exist_ok=True)
 
-    games = fetch_schedule(
-        season=season,
-        start_date=start_date,
-        through_date=through_date,
-        refresh_source=bool(args.refresh_source),
-        timeout_seconds=float(args.timeout_seconds),
-        retries=int(args.retries),
-    )
-    teams = fetch_teams(
-        season=season,
-        refresh_source=bool(args.refresh_source),
-        timeout_seconds=float(args.timeout_seconds),
-        retries=int(args.retries),
-    )
+    existing_raw = pd.DataFrame()
+    network_cache = pd.DataFrame()
+    incremental_base_max_date: str | None = None
+    if args.incremental:
+        existing_raw, network_cache = load_existing_processed_corpus(season)
+        existing_dates = pd.to_datetime(existing_raw.get("Date"), errors="coerce")
+        if not existing_raw.empty and existing_dates.notna().any():
+            existing_manifest = load_existing_manifest(season)
+            manifest_max_date = (
+                existing_manifest.get("processed_summary", {}).get("max_date")
+                if isinstance(existing_manifest.get("processed_summary"), dict)
+                else None
+            )
+            latest_existing = (
+                pd.Timestamp(manifest_max_date).normalize()
+                if manifest_max_date
+                else existing_dates.max().normalize()
+            )
+            incremental_base_max_date = latest_existing.date().isoformat()
+            requested_start = pd.Timestamp(start_date).normalize()
+            start_date = max(requested_start, latest_existing + pd.Timedelta(days=1)).date().isoformat()
+            print(
+                f"Incremental base: {len(existing_raw)} rows through {incremental_base_max_date}; "
+                f"fetching completed games from {start_date} through {through_date}."
+            )
+        else:
+            print("[warning] Incremental mode found no processed corpus; running a full season refresh.")
+
+    if pd.Timestamp(start_date) <= pd.Timestamp(through_date):
+        games = fetch_schedule(
+            season=season,
+            start_date=start_date,
+            through_date=through_date,
+            refresh_source=bool(args.refresh_source),
+            timeout_seconds=float(args.timeout_seconds),
+            retries=int(args.retries),
+        )
+    else:
+        games = []
 
     completed_games = []
     for game in games:
@@ -1056,47 +1178,94 @@ def main() -> None:
 
     raw_rows: list[dict[str, object]] = []
     uncached_fetches = 0
-    for idx, game in enumerate(completed_games, start=1):
-        game_pk = int(game.get("gamePk"))
-        cache_path = RAW_ROOT / f"season={int(season)}" / "games" / f"{int(game_pk)}.json"
-        was_cached = cache_path.exists() and not bool(args.refresh_source)
-        feed = fetch_game_feed(
+    if completed_games:
+        teams = fetch_teams(
             season=season,
-            game_pk=game_pk,
             refresh_source=bool(args.refresh_source),
             timeout_seconds=float(args.timeout_seconds),
             retries=int(args.retries),
         )
-        raw_rows.extend(build_game_rows(feed, teams))
-        if not was_cached:
-            uncached_fetches += 1
-            if idx < len(completed_games) and float(args.sleep_seconds) > 0:
-                time.sleep(float(args.sleep_seconds))
+        for idx, game in enumerate(completed_games, start=1):
+            game_pk = int(game.get("gamePk"))
+            cache_path = RAW_ROOT / f"season={int(season)}" / "games" / f"{int(game_pk)}.json"
+            was_cached = cache_path.exists() and not bool(args.refresh_source)
+            feed = fetch_game_feed(
+                season=season,
+                game_pk=game_pk,
+                refresh_source=bool(args.refresh_source),
+                timeout_seconds=float(args.timeout_seconds),
+                retries=int(args.retries),
+            )
+            raw_rows.extend(build_game_rows(feed, teams))
+            if not was_cached:
+                uncached_fetches += 1
+                if idx < len(completed_games) and float(args.sleep_seconds) > 0:
+                    time.sleep(float(args.sleep_seconds))
 
     fetched_at_utc = utc_now_iso()
-    market_history = load_market_history()
-    player_frames, summary = build_processed_frames(
-        raw_rows,
-        fetched_at_utc,
-        market_history,
-        min_rows=int(args.min_rows),
-    )
-    written = write_processed_files(player_frames, season, args.player_limit)
-    removed_dirs = prune_stale_player_dirs(set(written.keys()))
+    if args.incremental and not existing_raw.empty and not raw_rows:
+        existing_manifest = load_existing_manifest(season)
+        summary = existing_manifest.get("processed_summary") or summarize_existing_corpus(existing_raw)
+        written = existing_manifest.get("written") if isinstance(existing_manifest.get("written"), dict) else {}
+        removed_dirs = 0
+        player_frames: dict[str, pd.DataFrame] = {}
+        print("No newly completed games were found; retained the processed corpus unchanged.")
+    else:
+        raw_frame = pd.DataFrame(raw_rows)
+        if not raw_frame.empty:
+            raw_frame["Game_ID"] = raw_frame["Game_ID"].astype(str)
+        if args.incremental and not existing_raw.empty:
+            raw_input: list[dict[str, object]] | pd.DataFrame = pd.concat(
+                [existing_raw, raw_frame], ignore_index=True, sort=False
+            )
+        else:
+            raw_input = raw_rows
+        market_history = load_market_history()
+        player_frames, summary = build_processed_frames(
+            raw_input,
+            fetched_at_utc,
+            market_history,
+            min_rows=int(args.min_rows),
+            network_cache=network_cache if args.incremental else None,
+        )
+        written = write_processed_files(player_frames, season, args.player_limit)
+        removed_dirs = prune_stale_player_dirs(set(written.keys()))
 
+    total_completed_games = (
+        int(pd.to_numeric(existing_raw.get("Game_ID"), errors="coerce").nunique())
+        if args.incremental and not existing_raw.empty
+        else 0
+    )
+    if raw_rows:
+        total_completed_games = int(
+            pd.concat(
+                [existing_raw.get("Game_ID", pd.Series(dtype="object")), pd.DataFrame(raw_rows)["Game_ID"]],
+                ignore_index=True,
+            ).astype(str).nunique()
+        )
+
+    market_history_rows = (
+        int(len(market_history))
+        if "market_history" in locals()
+        else int(load_existing_manifest(season).get("market_history_rows", 0) or 0)
+    )
     manifest = {
         "season": int(season),
         "start_date_requested": start_date,
         "through_date_requested": through_date,
         "source_refresh": bool(args.refresh_source),
         "schedule_games": int(len(games)),
-        "completed_games": int(len(completed_games)),
+        "completed_games": int(total_completed_games or len(completed_games)),
+        "schedule_games_this_run": int(len(games)),
+        "completed_games_this_run": int(len(completed_games)),
         "uncached_game_fetches": int(uncached_fetches),
+        "incremental": bool(args.incremental and not existing_raw.empty),
+        "incremental_base_max_date": incremental_base_max_date,
         "processed_summary": summary,
         "players_written": int(len(written)),
         "player_dirs_removed": int(removed_dirs),
         "written": written,
-        "market_history_rows": int(len(market_history)),
+        "market_history_rows": market_history_rows,
         "updated_at_utc": fetched_at_utc,
     }
     manifest_path = PROC_ROOT / f"update_manifest_{int(season)}.json"
@@ -1106,10 +1275,10 @@ def main() -> None:
     print("MLB DATA UPDATE COMPLETE")
     print("=" * 80)
     print(f"Season: {season}")
-    print(f"Completed games processed: {len(completed_games)}")
+    print(f"Completed games processed this run: {len(completed_games)}")
     print(f"Players written:          {len(written)}")
     print(f"Processed max date:       {summary['max_date']}")
-    print(f"Market history rows:      {len(market_history)}")
+    print(f"Market history rows:      {market_history_rows}")
     print(f"Manifest:                 {manifest_path}")
 
 
