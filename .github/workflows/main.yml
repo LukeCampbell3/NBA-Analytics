@@ -124,7 +124,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Restore incremental MLB state
-        if: steps.run-config.outputs.run_mlb == 'true'
+        if: steps.run-config.outputs.run_mlb == 'true' && inputs.build_only != true
         uses: actions/cache@v4
         with:
           path: |
