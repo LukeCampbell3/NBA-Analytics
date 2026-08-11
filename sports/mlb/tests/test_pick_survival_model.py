@@ -121,7 +121,12 @@ def test_application_fails_closed_on_cutoff_and_low_segment_support() -> None:
     assert expected_value is not None
     assert status == survival.MODEL_VERSION
     assert support == payload["segment_support"]["R|OVER"]
-    assert rank_active == (payload["deployment_gate"]["authority"] == "rank_tiebreaker")
+    assert rank_active is False
+
+    payload["status"] = "active"
+    payload["shadow_only"] = False
+    payload["deployment_gate"]["authority"] = "rank_tiebreaker"
+    assert survival.apply_pick_survival_model(candidate, payload)[4] is True
 
     candidate.run_date = date(2026, 4, 12)
     assert survival.apply_pick_survival_model(candidate, payload)[2] == "cutoff_violation"

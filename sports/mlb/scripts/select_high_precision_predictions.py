@@ -199,7 +199,12 @@ def parse_args() -> argparse.Namespace:
         "--optimized-over-targets",
         nargs="*",
         default=[],
-        help="Targets that use the separately validated OVER selection profile.",
+        help="Targets eligible for the probationary OVER research profile.",
+    )
+    parser.add_argument(
+        "--enable-probationary-over-profile",
+        action="store_true",
+        help="Explicitly enable the relaxed OVER research gates; disabled for production by default.",
     )
     parser.add_argument("--over-min-abs-edge", type=float, default=None, help="Optional minimum edge for optimized OVER targets.")
     parser.add_argument("--over-max-abs-edge", type=float, default=None, help="Optional maximum edge for optimized OVER targets.")
@@ -1790,9 +1795,15 @@ def load_candidates(
 
 def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace) -> tuple[list[Candidate], Counter]:
     allowed_targets = {str(value).strip().upper() for value in args.targets}
-    optimized_over_targets = {
-        str(value).strip().upper() for value in getattr(args, "optimized_over_targets", []) if str(value).strip()
-    }
+    optimized_over_targets = (
+        {
+            str(value).strip().upper()
+            for value in getattr(args, "optimized_over_targets", [])
+            if str(value).strip()
+        }
+        if bool(getattr(args, "enable_probationary_over_profile", False))
+        else set()
+    )
     rejected = Counter()
     kept: list[Candidate] = []
 
@@ -2030,11 +2041,15 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
 
 
 def select_top_candidates(candidates: list[Candidate], args: argparse.Namespace) -> list[Candidate]:
-    optimized_over_targets = {
-        str(value).strip().upper()
-        for value in getattr(args, "optimized_over_targets", [])
-        if str(value).strip()
-    }
+    optimized_over_targets = (
+        {
+            str(value).strip().upper()
+            for value in getattr(args, "optimized_over_targets", [])
+            if str(value).strip()
+        }
+        if bool(getattr(args, "enable_probationary_over_profile", False))
+        else set()
+    )
     ordered = sorted(
         candidates,
         key=lambda row: (
@@ -2161,9 +2176,15 @@ def candidate_selection_profile(candidate: Candidate, args: argparse.Namespace) 
         and str(candidate.raw.get("Player_Type", "")).strip().lower() == "pitcher"
     ):
         return PITCHER_K_OVER_SELECTION_PROFILE
-    optimized_targets = {
-        str(value).strip().upper() for value in getattr(args, "optimized_over_targets", []) if str(value).strip()
-    }
+    optimized_targets = (
+        {
+            str(value).strip().upper()
+            for value in getattr(args, "optimized_over_targets", [])
+            if str(value).strip()
+        }
+        if bool(getattr(args, "enable_probationary_over_profile", False))
+        else set()
+    )
     if candidate.direction == "OVER" and candidate.target in optimized_targets:
         return OPTIMIZED_OVER_SELECTION_PROFILE
     return CORE_SELECTION_PROFILE
@@ -2509,8 +2530,12 @@ def write_summary_json(
             "holdout": (pick_survival_model or {}).get("holdout", {}),
             "promotion_gate": (pick_survival_model or {}).get("promotion_gate", {}),
             "deployment_gate": (pick_survival_model or {}).get("deployment_gate", {}),
-            "affects_selection": (pick_survival_model or {}).get("deployment_gate", {}).get("authority")
-            == "rank_tiebreaker",
+            "affects_selection": bool(
+                (pick_survival_model or {}).get("status") == "active"
+                and not bool((pick_survival_model or {}).get("shadow_only", True))
+                and (pick_survival_model or {}).get("deployment_gate", {}).get("authority")
+                == "rank_tiebreaker"
+            ),
         },
         "filter_rejections": dict(rejected),
         "avg_abs_edge": round(sum(candidate.abs_edge for candidate in selected) / len(selected), 6) if selected else 0.0,

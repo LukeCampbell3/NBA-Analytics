@@ -542,7 +542,7 @@ def test_survival_model_only_breaks_ties_inside_selection_score_band() -> None:
     assert [candidate.player for candidate in selected] == ["Tie Player 2", "Tie Player 1"]
 
 
-def test_filter_candidates_uses_validated_over_profile_instead_of_general_probability_floor() -> None:
+def test_filter_candidates_requires_explicit_probationary_over_profile_opt_in() -> None:
     row = _row(
         player="Moderate Over",
         team="ATL",
@@ -574,6 +574,7 @@ def test_filter_candidates_uses_validated_over_profile_instead_of_general_probab
     args = selector.argparse.Namespace(
         targets=["R"],
         optimized_over_targets=["R", "TB"],
+        enable_probationary_over_profile=False,
         over_min_abs_edge=0.15,
         over_max_abs_edge=0.35,
         over_min_model_hit_probability=0.45,
@@ -603,6 +604,13 @@ def test_filter_candidates_uses_validated_over_profile_instead_of_general_probab
         min_historical_market_availability_rate=0.0,
     )
 
+    kept, rejected = selector.filter_candidates([candidate], args)
+
+    assert kept == []
+    assert rejected["edge_too_small"] == 1
+    assert selector.candidate_selection_profile(candidate, args) == selector.CORE_SELECTION_PROFILE
+
+    args.enable_probationary_over_profile = True
     kept, rejected = selector.filter_candidates([candidate], args)
 
     assert kept == [candidate]

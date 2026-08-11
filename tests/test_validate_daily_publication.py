@@ -227,7 +227,7 @@ def test_validate_publication_rejects_legacy_mlb_pool_policy(tmp_path: Path) -> 
     route.parent.mkdir(parents=True, exist_ok=True)
     route.write_text("ok", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="expected premium_over_pitcher_v5"):
+    with pytest.raises(ValueError, match="expected premium_evidence_gated_v6"):
         validate_publication(
             repo_root=tmp_path,
             output_dir=Path("dist"),

@@ -50,7 +50,7 @@ MLB_PICK_SURVIVAL_MODEL = REPO_ROOT / "sports" / "mlb" / "scripts" / "pick_survi
 MLB_MAX_WINRATE_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_max_winrate_board.py"
 MLB_EXPORTER = REPO_ROOT / "sports" / "mlb" / "scripts" / "export_web_prediction_payload.py"
 MLB_WEB_JSON = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "daily_predictions.json"
-MLB_PRIMARY_POLICY_PROFILE = "premium_over_pitcher_v5"
+MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v6"
 MLB_PICK_SURVIVAL_TOP_K = 3
 MLB_PRIMARY_POLICY_ARGS = [
     "--top-n", "3",
@@ -64,14 +64,6 @@ MLB_PRIMARY_POLICY_ARGS = [
     "--max-push-probability", "0.10",
     "--min-abs-edge", "0.35",
     "--min-expected-value", "0.0",
-    "--optimized-over-targets", "R", "TB",
-    "--over-min-abs-edge", "0.15",
-    "--over-max-abs-edge", "0.35",
-    "--over-min-model-hit-probability", "0.45",
-    "--over-max-model-hit-probability", "0.55",
-    "--over-min-expected-value", "0.10",
-    "--over-max-american-price", "125",
-    "--over-min-history-rows", "55",
     "--enable-pitcher-k-over-profile",
     "--pitcher-k-min-starter-history", "15",
     "--pitcher-k-min-projected-ip", "5.25",
@@ -85,15 +77,14 @@ MLB_PRIMARY_POLICY_ARGS = [
     "--pitcher-k-min-american-price", "-130",
     "--pitcher-k-max-american-price", "130",
     "--max-pitcher-k-picks", "1",
-    "--core-min-american-price", "-250",
-    "--core-max-american-price", "-200",
-    "--min-over-picks", "3",
+    "--core-min-american-price", "-180",
+    "--core-max-american-price", "125",
+    "--min-over-picks", "0",
     "--max-over-picks", "3",
     "--max-under-picks", "1",
     "--daily-pick-soft-cap", "3",
     "--post-cap-min-selection-score", "0.80",
     "--max-per-market-bucket", "2",
-    "--optimized-over-max-per-market-bucket", "3",
     "--max-per-team", "2",
     "--min-historical-bet-profile-support", "0",
     "--min-historical-bet-profile-win-rate", "0",

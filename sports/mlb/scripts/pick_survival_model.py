@@ -586,7 +586,8 @@ def train_survival_model(rows: pd.DataFrame, *, top_k: int = 3) -> dict[str, Any
             "checks": promotion_checks,
         },
         "deployment_gate": {
-            "authority": "rank_tiebreaker" if all(deployment_checks.values()) else "shadow_only",
+            "authority": "shadow_only",
+            "research_recommendation": "rank_tiebreaker" if all(deployment_checks.values()) else "remain_shadow",
             "probability_authority": "shadow_only",
             "affects_eligibility": False,
             "selection_score_band": 0.01,
@@ -622,7 +623,7 @@ def candidate_features(candidate: Any) -> dict[str, float | str]:
 
 
 def apply_pick_survival_model(candidate: Any, payload: dict[str, Any] | None) -> tuple[float | None, float | None, str, int, bool]:
-    if not isinstance(payload, dict) or payload.get("status") != "shadow":
+    if not isinstance(payload, dict) or payload.get("status") not in {"shadow", "active"}:
         return None, None, "disabled", 0, False
     run_date = getattr(candidate, "run_date", None)
     training_end = payload.get("training_end_date")
@@ -647,7 +648,11 @@ def apply_pick_survival_model(candidate: Any, payload: dict[str, Any] | None) ->
     probability = 1.0 / (1.0 + math.exp(-max(-30.0, min(30.0, logit))))
     profit = american_profit_per_unit(to_float(getattr(candidate, "selected_side_price", None)))
     expected_roi = None if profit is None else probability * profit - (1.0 - probability)
-    rank_active = payload.get("deployment_gate", {}).get("authority") == "rank_tiebreaker"
+    rank_active = bool(
+        payload.get("status") == "active"
+        and not bool(payload.get("shadow_only", True))
+        and payload.get("deployment_gate", {}).get("authority") == "rank_tiebreaker"
+    )
     return probability, expected_roi, MODEL_VERSION, segment_support, bool(rank_active)
 
 
