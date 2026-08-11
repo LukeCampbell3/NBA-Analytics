@@ -48,12 +48,12 @@
   {
     "slug": "nfl",
     "title": "NFL Analytics",
-    "tagline": "Leakage-aware player yardage projections with chronological backtesting",
-    "summary": "Passing, rushing, and receiving yardage models with an auditable season holdout and explicit promotion gate.",
-    "status": "validated",
-    "status_label": "Backtested",
-    "accent": "#7c3aed",
-    "surface": "#2f1f5f",
+    "tagline": "Current NFL passing-yard props with locked policy evidence",
+    "summary": "Live multi-book passing-yard candidates backed by a frozen selector, complete-slate capture, and an auditable holdout.",
+    "status": "shadow",
+    "status_label": "Live Shadow",
+    "accent": "#b42318",
+    "surface": "#2b2523",
     "pages": [
       {
         "slug": "prediction-about",
@@ -62,7 +62,7 @@
       },
       {
         "slug": "predictions",
-        "label": "Model Report",
+        "label": "Picks",
         "href": "/nfl/predictions/"
       }
     ],

@@ -37,6 +37,10 @@ def make_publication(tmp_path: Path) -> tuple[Path, Path]:
         tmp_path / "sports/nfl/web/data/market_validation_summary.json", validation
     )
     write_payload(output / "nfl/data/market_validation_summary.json", validation)
+    write_payload(
+        tmp_path / "sports/nfl/data/evaluation/daily_policy_backtest.json",
+        {"gates": {"singles": {"status": "passed"}, "parlay": {"status": "failed"}}},
+    )
     route = output / "nfl/predictions/index.html"
     route.parent.mkdir(parents=True, exist_ok=True)
     route.write_text("<!doctype html>", encoding="utf-8")
@@ -48,7 +52,10 @@ def test_validate_nfl_publication_accepts_research_only_payload(tmp_path: Path) 
 
     summary = validate_nfl_publication(repo_root=repo_root, output_dir=output)
 
-    assert summary == "NFL: research_only, holdout=2026-07-31, validated_targets=passing"
+    assert summary == (
+        "NFL: status=research_only, date=2026-07-31, plays=0, "
+        "validated_targets=passing"
+    )
 
 
 def test_validate_nfl_publication_rejects_live_claim(tmp_path: Path) -> None:
@@ -59,7 +66,7 @@ def test_validate_nfl_publication_rejects_live_claim(tmp_path: Path) -> None:
     write_payload(daily_path, daily)
     write_payload(output / "nfl/data/daily_predictions.json", daily)
 
-    with pytest.raises(ValueError, match="must remain research_only"):
+    with pytest.raises(ValueError, match="legacy payload must remain research_only"):
         validate_nfl_publication(repo_root=repo_root, output_dir=output)
 
 
@@ -71,4 +78,71 @@ def test_validate_nfl_publication_rejects_output_drift(tmp_path: Path) -> None:
     write_payload(public_path, public_payload)
 
     with pytest.raises(ValueError, match="validation source and public payloads differ"):
+        validate_nfl_publication(repo_root=repo_root, output_dir=output)
+
+
+def test_validate_nfl_publication_accepts_withheld_live_shadow(tmp_path: Path) -> None:
+    repo_root, output = make_publication(tmp_path)
+    payload = {
+        "schema_version": 2,
+        "run_date": "2026-08-11",
+        "publication_status": "withheld_current_pool",
+        "mode": "live_shadow",
+        "policy_profile": "nfl_passing_market_policy_v1",
+        "plays": [],
+        "daily_parlay": {
+            "status": "withheld",
+            "validation_status": "failed_locked_holdout",
+            "candidate_authorized": False,
+        },
+        "policy_governance": {
+            "publication_mode": "SHADOW_RESEARCH_ONLY",
+            "candidate_authorization_enabled": False,
+            "staking_enabled": False,
+        },
+    }
+    write_payload(repo_root / "sports/nfl/web/data/daily_predictions.json", payload)
+    write_payload(output / "nfl/data/daily_predictions.json", payload)
+
+    summary = validate_nfl_publication(
+        repo_root=repo_root, output_dir=output, run_date="2026-08-11"
+    )
+
+    assert "status=withheld_current_pool" in summary
+
+
+def test_validate_nfl_publication_rejects_authorized_live_pick(tmp_path: Path) -> None:
+    repo_root, output = make_publication(tmp_path)
+    payload = {
+        "schema_version": 2,
+        "run_date": "2026-08-11",
+        "publication_status": "shadow_current_pool",
+        "mode": "live_shadow",
+        "policy_profile": "nfl_passing_market_policy_v1",
+        "plays": [
+            {
+                "target": "passing",
+                "market_source": "the_odds_api_live",
+                "price_confirmed": True,
+                "selected_side_price": -110,
+                "market_books": 2,
+                "market_common_books": 1,
+                "candidate_authorized": True,
+            }
+        ],
+        "daily_parlay": {
+            "status": "withheld",
+            "validation_status": "failed_locked_holdout",
+            "candidate_authorized": False,
+        },
+        "policy_governance": {
+            "publication_mode": "SHADOW_RESEARCH_ONLY",
+            "candidate_authorization_enabled": False,
+            "staking_enabled": False,
+        },
+    }
+    write_payload(repo_root / "sports/nfl/web/data/daily_predictions.json", payload)
+    write_payload(output / "nfl/data/daily_predictions.json", payload)
+
+    with pytest.raises(ValueError, match="cannot be authorized"):
         validate_nfl_publication(repo_root=repo_root, output_dir=output)

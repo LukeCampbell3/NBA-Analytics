@@ -6,6 +6,35 @@ learns from each player's previous eight games and augments the regularized
 tabular models. The untouched 2025 season is used once for the reported
 replacement test.
 
+## Daily live-shadow board
+
+The production-shaped NFL path is independent of NBA and MLB. It captures the
+complete two-sided NFL player-prop slate from The Odds API, joins offered players
+to lagged nflverse form and opponent features, scores the frozen market selector,
+and publishes only executable passing-yard candidates with at least two books
+and one common US sportsbook:
+
+```bash
+python sports/nfl/scripts/backtest_nfl_daily_policy.py
+python sports/nfl/scripts/bootstrap_nfl_artifacts.py
+python sports/nfl/scripts/refresh_nfl_yardage_artifact.py
+python sports/nfl/scripts/run_nfl_daily_predictions.py --run-date YYYY-MM-DD
+```
+
+Set `THE_ODDS_API_KEY` for the live run. Current snapshots are immutable JSON
+ledgers under `data/production/snapshots/`. The model artifact is refit only
+after a newly completed regular-season week appears; policy thresholds and
+market scope remain frozen. The current board is shadow-only until prospective
+certificate evidence exists, and every candidate is explicitly marked
+unauthorized for staking.
+
+The exact locked 2022 singles replay is 127-83 (60.48%) with +13.00% ROI across
+210 selections. The deterministic distinct-game two-leg parlay failed its
+locked replay at 2-16 and -61.89% ROI, so the pipeline may construct that ticket
+for observation but always withholds it from recommendation. Rushing and
+receiving props remain captured in the complete slate but are not selected
+because they failed the target-level holdout gate.
+
 ## Train and test projections
 
 ```bash

@@ -191,8 +191,9 @@ def load_aggregated_season(
     season: int,
     *,
     cache_path: Path | None = None,
+    refresh: bool = False,
 ) -> pd.DataFrame:
-    if cache_path is not None and cache_path.is_file():
+    if cache_path is not None and cache_path.is_file() and not refresh:
         return pd.read_parquet(cache_path)
     pbp = pd.read_parquet(PBP_URL.format(season=season))
     roster = pd.read_parquet(ROSTER_URL.format(season=season))

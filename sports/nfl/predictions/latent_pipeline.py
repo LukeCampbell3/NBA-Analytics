@@ -583,3 +583,133 @@ def predict_week_latent(
         current["target"] = key
         parts.append(current[IDENTITY_COLUMNS + ["target", "prediction"]])
     return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
+
+
+def predict_week_components_latent(
+    stats: pd.DataFrame,
+    artifact_bundle: dict[str, Any],
+    *,
+    season: int,
+    week: int,
+) -> pd.DataFrame:
+    """Return the projection components consumed by the frozen market selector."""
+
+    sequence_table, _, _ = build_sequence_table(stats)
+    latent = artifact_bundle["latent_encoder"].transform_frame(sequence_table)
+    parts: list[pd.DataFrame] = []
+    for key, artifact in artifact_bundle["models"].items():
+        spec: TargetSpec = artifact["spec"]
+        frame, _ = build_features(stats, spec)
+        augmented, _ = _augment(frame, latent)
+        current = augmented.loc[
+            augmented["season"].eq(season) & augmented["week"].eq(week)
+        ].copy()
+        if current.empty:
+            continue
+        current_components = _component_predictions(
+            artifact["current_models"], current, artifact["raw_features"]
+        )
+        current_prediction = _architecture_prediction(
+            artifact["current_architecture"], current, current_components
+        )
+        latent_prediction = _selected_latent_prediction(
+            artifact["base_latent_architecture"],
+            artifact["latent_models"],
+            current,
+            artifact["latent_model_features"],
+        )
+        challenger_prediction = _combine_challenger(
+            artifact["challenger_architecture"],
+            current_prediction,
+            latent_prediction,
+        )
+        current["target"] = key
+        current["current_prediction"] = current_prediction
+        current["challenger_prediction"] = challenger_prediction
+        current["prediction"] = (
+            challenger_prediction if artifact["use_latent"] else current_prediction
+        )
+        current["baseline"] = current["baseline_prediction"]
+        parts.append(
+            current[
+                IDENTITY_COLUMNS
+                + [
+                    "target",
+                    "prediction",
+                    "current_prediction",
+                    "challenger_prediction",
+                    "baseline",
+                ]
+            ]
+        )
+    return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
+
+
+def refit_deployment_artifact(
+    stats: pd.DataFrame,
+    artifact_bundle: dict[str, Any],
+    *,
+    random_state: int = 42,
+) -> dict[str, Any]:
+    """Refit validated architectures on all newly completed regular-season games."""
+
+    sequence_table, sequence_features, sequence_targets = build_sequence_table(stats)
+    previous_encoder = artifact_bundle["latent_encoder"]
+    encoder = PredictiveLatentEncoder(
+        sequence_length=previous_encoder.sequence_length,
+        latent_dimensions=previous_encoder.latent_dimensions,
+        random_state=random_state,
+    ).fit(sequence_table, sequence_features, sequence_targets)
+    latent = encoder.transform_frame(sequence_table)
+    models: dict[str, dict[str, Any]] = {}
+    for key, previous in artifact_bundle["models"].items():
+        spec: TargetSpec = previous["spec"]
+        frame, raw_features = build_features(stats, spec)
+        augmented, latent_features = _augment(frame, latent)
+        current_components = [
+            name for name, _ in ARCHITECTURES[previous["current_architecture"]]
+        ]
+        current_models = _fit_components(
+            augmented,
+            raw_features,
+            spec.target,
+            random_state,
+            current_components,
+        )
+        base_latent_architecture, latent_model_features, latent_components = (
+            _selected_latent_configuration(
+                previous["challenger_architecture"],
+                raw_features,
+                latent_features,
+                augmented,
+            )
+        )
+        if base_latent_architecture != previous["base_latent_architecture"]:
+            raise ValueError("NFL latent refit changed the frozen architecture.")
+        latent_models = _fit_components(
+            augmented,
+            latent_model_features,
+            spec.target,
+            random_state,
+            latent_components,
+        )
+        models[key] = {
+            **previous,
+            "raw_features": raw_features,
+            "current_models": current_models,
+            "latent_model_features": latent_model_features,
+            "latent_models": latent_models,
+        }
+    latest = stats.sort_values(["season", "week"]).iloc[-1]
+    return {
+        **artifact_bundle,
+        "trained_at_utc": datetime.now(timezone.utc).isoformat(),
+        "sequence_features": sequence_features,
+        "sequence_targets": sequence_targets,
+        "latent_encoder": encoder,
+        "models": models,
+        "refit_through": {
+            "season": int(latest["season"]),
+            "week": int(latest["week"]),
+        },
+    }

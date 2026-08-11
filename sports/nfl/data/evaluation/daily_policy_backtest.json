@@ -1,0 +1,242 @@
+{
+  "schema_version": 1,
+  "policy_version": "nfl_passing_market_policy_v1",
+  "parlay_policy_version": "nfl_distinct_game_parlay_v1",
+  "design": {
+    "development_season": 2021,
+    "locked_holdout_season": 2022,
+    "validated_targets": [
+      "passing"
+    ],
+    "minimum_side_probability": 0.56,
+    "minimum_no_vig_advantage": 0.025,
+    "american_price_range": [
+      -150.0,
+      130.0
+    ],
+    "maximum_weekly_picks": 12,
+    "parlay_rule": "two highest-ranked legs from distinct games at one book"
+  },
+  "development": {
+    "singles": {
+      "bets": 95,
+      "graded_decisions": 95,
+      "wins": 59,
+      "losses": 36,
+      "pushes": 0,
+      "hit_rate": 0.6211,
+      "hit_rate_wilson_95": [
+        0.5206,
+        0.7121
+      ],
+      "roi": 0.1572,
+      "profit_units": 14.9302,
+      "distinct_weeks": 8,
+      "over_bets": 0,
+      "under_bets": 95
+    },
+    "parlay": {
+      "slates": 8,
+      "wins": 5,
+      "losses": 3,
+      "hit_rate": 0.625,
+      "roi": 1.2039,
+      "weekly": [
+        {
+          "season": 2021,
+          "week": 11,
+          "won": true,
+          "return_units": 2.4952741020793945
+        },
+        {
+          "season": 2021,
+          "week": 12,
+          "won": false,
+          "return_units": -1.0
+        },
+        {
+          "season": 2021,
+          "week": 13,
+          "won": true,
+          "return_units": 2.6501035196687366
+        },
+        {
+          "season": 2021,
+          "week": 14,
+          "won": false,
+          "return_units": -1.0
+        },
+        {
+          "season": 2021,
+          "week": 15,
+          "won": true,
+          "return_units": 2.4952741020793945
+        },
+        {
+          "season": 2021,
+          "week": 16,
+          "won": true,
+          "return_units": 2.4952741020793945
+        },
+        {
+          "season": 2021,
+          "week": 17,
+          "won": false,
+          "return_units": -1.0
+        },
+        {
+          "season": 2021,
+          "week": 18,
+          "won": true,
+          "return_units": 2.4952741020793945
+        }
+      ]
+    }
+  },
+  "locked_holdout": {
+    "singles": {
+      "bets": 210,
+      "graded_decisions": 210,
+      "wins": 127,
+      "losses": 83,
+      "pushes": 0,
+      "hit_rate": 0.6048,
+      "hit_rate_wilson_95": [
+        0.5373,
+        0.6684
+      ],
+      "roi": 0.13,
+      "profit_units": 27.2981,
+      "distinct_weeks": 18,
+      "over_bets": 27,
+      "under_bets": 183
+    },
+    "parlay": {
+      "slates": 18,
+      "wins": 2,
+      "losses": 16,
+      "hit_rate": 0.1111,
+      "roi": -0.6189,
+      "weekly": [
+        {
+          "season": 2022,
+          "week": 1,
+          "won": true,
+          "return_units": 2.3652173913043475
+        },
+        {
+          "season": 2022,
+          "week": 2,
+          "won": false,
+          "return_units": -1.0
+        },
+        {
+          "season": 2022,
+          "week": 3,
+          "won": false,
+          "return_units": -1.0
+        },
+        {
+          "season": 2022,
+          "week": 4,
+          "won": false,
+          "return_units": -1.0
+        },
+        {
+          "season": 2022,
+          "week": 5,
+          "won": false,
+          "return_units": -1.0
+        },
+        {
+          "season": 2022,
+          "week": 6,
+          "won": false,
+          "return_units": -1.0
+        },
+        {
+          "season": 2022,
+          "week": 7,
+          "won": false,
+          "return_units": -1.0
+        },
+        {
+          "season": 2022,
+          "week": 8,
+          "won": false,
+          "return_units": -1.0
+        },
+        {
+          "season": 2022,
+          "week": 9,
+          "won": false,
+          "return_units": -1.0
+        },
+        {
+          "season": 2022,
+          "week": 10,
+          "won": true,
+          "return_units": 2.4952741020793945
+        },
+        {
+          "season": 2022,
+          "week": 11,
+          "won": false,
+          "return_units": -1.0
+        },
+        {
+          "season": 2022,
+          "week": 12,
+          "won": false,
+          "return_units": -1.0
+        },
+        {
+          "season": 2022,
+          "week": 13,
+          "won": false,
+          "return_units": -1.0
+        },
+        {
+          "season": 2022,
+          "week": 14,
+          "won": false,
+          "return_units": -1.0
+        },
+        {
+          "season": 2022,
+          "week": 15,
+          "won": false,
+          "return_units": -1.0
+        },
+        {
+          "season": 2022,
+          "week": 16,
+          "won": false,
+          "return_units": -1.0
+        },
+        {
+          "season": 2022,
+          "week": 17,
+          "won": false,
+          "return_units": -1.0
+        },
+        {
+          "season": 2022,
+          "week": 18,
+          "won": false,
+          "return_units": -1.0
+        }
+      ]
+    }
+  },
+  "gates": {
+    "singles": {
+      "status": "passed",
+      "production_scope": "historically_effective_prospective_shadow_required"
+    },
+    "parlay": {
+      "status": "failed",
+      "production_scope": "withheld"
+    }
+  }
+}

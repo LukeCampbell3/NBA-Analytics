@@ -40,6 +40,7 @@ def test_committed_validation_payload_matches_locked_replay() -> None:
 
 
 def test_frontend_exposes_validation_sections_and_payload() -> None:
+    index_html = (NFL_ROOT / "web" / "index.html").read_text(encoding="utf-8")
     predictions_html = (NFL_ROOT / "web" / "predictions.html").read_text(
         encoding="utf-8"
     )
@@ -50,8 +51,12 @@ def test_frontend_exposes_validation_sections_and_payload() -> None:
         encoding="utf-8"
     )
 
+    assert 'url=predictions/' in index_html
+    assert 'id="currentBoard"' in predictions_html
+    assert 'id="dailyParlay"' in predictions_html
     assert 'id="marketReplayMetrics"' in predictions_html
     assert 'id="marketWeekly"' in predictions_html
     assert "data/market_validation_summary.json" in predictions_js
+    assert "data/daily_predictions.json" in predictions_js
     assert 'id="marketMethodFacts"' in about_html
     assert 'id="marketLimitations"' in about_html
