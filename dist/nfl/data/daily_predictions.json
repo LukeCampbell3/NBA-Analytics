@@ -2,7 +2,7 @@
   "schema_version": 2,
   "league": "NFL",
   "run_date": "2026-08-11",
-  "generated_at_utc": "2026-08-11T23:49:43.877789Z",
+  "generated_at_utc": "2026-08-12T00:05:30.921790Z",
   "publication_status": "withheld_current_pool",
   "publication_state": "withheld_current_pool",
   "mode": "live_shadow",
@@ -33,22 +33,29 @@
   },
   "data_quality": {
     "status": "withheld",
-    "reason": "THE_ODDS_API_KEY is unavailable; no sportsbook odds were validated.",
+    "reason": "No complete two-sided regular-season NFL player-prop markets were available.",
     "complete_market_observations": 0,
     "provider_audit": {
-      "provider": "the_odds_api",
-      "status": "missing_credentials",
-      "sport_key": "americanfootball_nfl",
-      "fetched_at_utc": "2026-08-11T23:49:42.127427Z",
-      "events_discovered": 0,
-      "events_with_odds": 0,
+      "provider": "provider_chain",
+      "status": "no_props",
+      "fetched_at_utc": "2026-08-12T00:05:29.284540+00:00",
       "complete_two_sided_rows": 0,
-      "markets": [],
-      "regions": "us",
+      "provider_attempts": [
+        {
+          "provider": "sportsgameodds",
+          "status": "no_props",
+          "complete_two_sided_rows": 0,
+          "events_discovered": 0,
+          "events_with_odds": 0
+        },
+        {
+          "provider": "the_odds_api",
+          "status": "missing_credentials"
+        }
+      ],
       "raw_source_sha256": null,
-      "quota": {},
       "replayed_from_snapshot": true,
-      "snapshot_sha256": "b381864886f6dcb22a7909433078e0e9136db485e7f556bdd06db770af5dc2fd"
+      "snapshot_sha256": "712b4f20433fff1b0e6e0630a8ac4dc64ae05f8367360d9aee1d4e48547050c8"
     }
   },
   "policy_governance": {
