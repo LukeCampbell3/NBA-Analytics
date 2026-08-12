@@ -92,12 +92,17 @@ jobs:
             python sports/site/pipeline/build_static_site.py
             exit 0
           fi
+          nba_args=()
+          case "${RUN_DATE:5:2}" in
+            07|08|09) nba_args+=(--nba-skip-update-data) ;;
+          esac
           python run_daily_predictions.py \
             --run-date "$RUN_DATE" \
             --skip-mlb \
             --nba-skip-cutoff-meta-monitor \
             --nba-market-provider rotowire \
-            --nba-snapshot-policy live_only
+            --nba-snapshot-policy live_only \
+            "${nba_args[@]}"
 
       - name: Validate NBA publication
         env:
