@@ -149,11 +149,8 @@ def _candidate_name_score(path: Path) -> int:
 
 
 def discover_rows_csv(analysis_dir: Path, args: argparse.Namespace) -> Path:
-    if not analysis_dir.exists():
-        raise FileNotFoundError(f"Analysis directory not found for auto-discovery: {analysis_dir}")
-
     best: tuple[tuple[int, int, int, int, str], Path] | None = None
-    search_roots = [analysis_dir]
+    search_roots = [analysis_dir] if analysis_dir.exists() else []
     if (
         analysis_dir.resolve() == ANALYSIS_ROOT.resolve()
         and SHARED_VALIDATION_ROOT.exists()

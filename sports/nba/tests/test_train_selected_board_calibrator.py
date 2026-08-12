@@ -134,6 +134,31 @@ def test_discover_rows_csv_prefers_newer_wider_validation_selector_file(tmp_path
     assert picked.name == "validation_recent_pool_selector_20260423_20260430_rows.csv"
 
 
+def test_discover_rows_csv_uses_shared_ledger_without_ignored_model_dir(
+    tmp_path: Path, monkeypatch
+) -> None:
+    shared = tmp_path / "shared"
+    shared.mkdir()
+    pd.DataFrame(
+        [
+            {
+                "market_date": "2026-04-24",
+                "target": "PTS",
+                "direction": "OVER",
+                "estimated_win_rate": 0.58,
+                "result": "win",
+            }
+        ]
+    ).to_csv(shared / "validation_recent_pool_selector_rows.csv", index=False)
+    missing_analysis = tmp_path / "model" / "analysis"
+    monkeypatch.setattr(trainer, "ANALYSIS_ROOT", missing_analysis)
+    monkeypatch.setattr(trainer, "SHARED_VALIDATION_ROOT", shared)
+
+    picked = trainer.discover_rows_csv(missing_analysis, _args())
+
+    assert picked == shared / "validation_recent_pool_selector_rows.csv"
+
+
 def test_locked_calibration_selects_truthful_segment_policy() -> None:
     rows_path = REPO_ROOT / "sports/validation/validation_recent_pool_selector_20260406_20260430_rows.csv"
     raw = pd.read_csv(rows_path)
