@@ -26,6 +26,8 @@ env:
   PUBLISH_BRANCH: static-deployment
   PYTHONUNBUFFERED: "1"
   THE_ODDS_API_KEY: ${{ secrets.THE_ODDS_API_KEY }}
+  SPORTSGAMEODDS_API_KEY: ${{ secrets.SPORTSGAMEODDS_API_KEY }}
+  NFL_ODDS_PROVIDER_PRIORITY: ${{ vars.NFL_ODDS_PROVIDER_PRIORITY || 'sportsgameodds,the_odds_api' }}
 
 jobs:
   nfl-predictions:
@@ -90,6 +92,8 @@ jobs:
         run: >-
           python sports/nfl/scripts/run_nfl_daily_predictions.py
           --run-date "${{ steps.run_date.outputs.value }}"
+          --snapshot-output
+          "sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}/${{ github.run_id }}.json"
           --capture-only
 
       - name: Inspect NFL market coverage
@@ -97,7 +101,7 @@ jobs:
         id: market_coverage
         run: |
           set -euo pipefail
-          SNAPSHOT="sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}.json"
+          SNAPSHOT="sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}/${{ github.run_id }}.json"
           HAS_MARKETS="$(python -c "import json; print('true' if json.load(open('$SNAPSHOT', encoding='utf-8')).get('observations') else 'false')")"
           echo "has_markets=$HAS_MARKETS" >> "$GITHUB_OUTPUT"
 
@@ -117,7 +121,9 @@ jobs:
           python sports/nfl/scripts/run_nfl_daily_predictions.py
           --run-date "${{ steps.run_date.outputs.value }}"
           --market-input
-          "sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}.json"
+          "sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}/${{ github.run_id }}.json"
+          --snapshot-output
+          "sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}/${{ github.run_id }}.json"
 
       - name: Export and build NFL frontend
         run: |
@@ -141,7 +147,7 @@ jobs:
             sports/nfl/web/data/market_validation_summary.json \
             dist/nfl/data/daily_predictions.json \
             dist/nfl/data/market_validation_summary.json
-          SNAPSHOT="sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}.json"
+          SNAPSHOT="sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}/${{ github.run_id }}.json"
           if [[ "${{ inputs.build_only }}" != "true" && -f "$SNAPSHOT" ]]; then
             git add -f -- "$SNAPSHOT"
           fi
@@ -171,7 +177,7 @@ jobs:
           name: nfl-predictions-${{ github.run_id }}
           path: |
             sports/nfl/data/evaluation/daily_policy_backtest.json
-            sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}.json
+            sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}/${{ github.run_id }}.json
             sports/nfl/web/data/daily_predictions.json
             sports/nfl/web/data/market_validation_summary.json
             dist/nfl/data/daily_predictions.json
