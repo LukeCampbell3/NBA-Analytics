@@ -788,11 +788,23 @@ def load_selected_board_calibrator(path: Path, disabled: bool) -> tuple[dict | N
     try:
         payload = json.loads(resolved.read_text(encoding="utf-8"))
         months = payload.get("months", {}) if isinstance(payload, dict) else {}
+        calibration = payload.get("confidence_calibration", {}) if isinstance(payload, dict) else {}
+        if (
+            calibration.get("status") != "passed"
+            or calibration.get("method") != "segment_monotonic_safety"
+            or not isinstance(calibration.get("historical_support"), dict)
+        ):
+            return None, {
+                "enabled": False,
+                "reason": "uncertified_confidence_calibration",
+                "path": str(resolved),
+            }
         return payload, {
             "enabled": True,
             "path": str(resolved),
             "months": int(len(months)) if isinstance(months, dict) else 0,
             "version": int(payload.get("version", 0)) if isinstance(payload, dict) else 0,
+            "confidence_calibration": calibration,
         }
     except Exception as exc:
         return None, {

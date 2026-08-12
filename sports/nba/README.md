@@ -50,6 +50,18 @@ Run daily market pipeline:
 python sports/nba/predictions/Player-Predictor/scripts/run_daily_market_pipeline.py
 ```
 
+Rebuild and validate the selected-board confidence calibrator:
+
+```bash
+python sports/nba/predictions/Player-Predictor/scripts/train_selected_board_calibrator.py
+```
+
+The trainer uses chronological rolling development followed by five locked slate
+dates. Production accepts the calibrator only when its frozen policy improves
+both Brier score and log loss on that locked period. Raw and calibrated
+probabilities remain separate in the frontend payload, and scores outside the
+historical target/direction support are marked unsupported.
+
 For the shared published site, the preferred entrypoint is:
 
 ```bash

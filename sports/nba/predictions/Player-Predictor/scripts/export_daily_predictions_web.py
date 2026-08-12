@@ -943,6 +943,12 @@ def normalize_play_rows(plays: pd.DataFrame, identity_lookup: PlayerIdentityLook
                 "edge": safe_float(row.get("edge")),
                 "abs_edge": safe_float(row.get("abs_edge")),
                 "expected_win_rate": safe_float(row.get("expected_win_rate")),
+                "raw_model_probability": safe_float(row.get("selected_board_prob_raw"))
+                or safe_float(row.get("raw_expected_win_rate")),
+                "calibrated_hit_probability": safe_float(row.get("expected_win_rate")),
+                "confidence_in_support": bool(row.get("confidence_in_support", True)),
+                "confidence_calibration_source": str(row.get("selected_board_calibration_source", "identity")),
+                "confidence_calibration_month": str(row.get("selected_board_calibration_month", "")),
                 "expected_push_rate": safe_float(row.get("expected_push_rate")),
                 "expected_loss_rate": safe_float(row.get("expected_loss_rate")),
                 "raw_expected_win_rate": safe_float(row.get("raw_expected_win_rate")),
@@ -1495,6 +1501,9 @@ def main() -> None:
         "publication_message": publication_gate.get("message"),
         "publication_gate": publication_gate,
         "policy": final_payload.get("policy", {}),
+        "confidence_calibration": (manifest.get("selected_board_calibrator") or {}).get(
+            "confidence_calibration", {}
+        ),
         "input_validation": final_payload.get("input_validation", {}),
         "summary": build_summary(display_plays),
         "accuracy_metrics": accuracy_metrics,

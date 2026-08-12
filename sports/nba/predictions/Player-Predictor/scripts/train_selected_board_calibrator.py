@@ -16,6 +16,7 @@ lookback window, then can be applied live with a monthly freeze.
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -51,6 +52,13 @@ PREFERRED_ROWS_PATTERNS: tuple[tuple[str, int], ...] = (
     ("validation_current_prod_hitrate_rows", 280),
     ("line_decision_sidecar_backtest_rows_rebuilt", 240),
 )
+CALIBRATION_CANDIDATES = (
+    "identity",
+    "global_monotonic",
+    "segment_monotonic",
+    "segment_monotonic_safety",
+    "full_existing",
+)
 
 
 @dataclass(frozen=True)
@@ -85,6 +93,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--min-rows-global", type=int, default=250)
     parser.add_argument("--min-rows-segment", type=int, default=80)
     parser.add_argument("--n-bins", type=int, default=10)
+    parser.add_argument("--locked-days", type=int, default=5)
+    parser.add_argument("--rolling-min-train-days", type=int, default=7)
     parser.add_argument(
         "--out-json",
         type=Path,
@@ -257,6 +267,174 @@ def _walkforward_apply(
     return out
 
 
+def _freeze_candidate_payload(payload: dict, method: str) -> dict:
+    frozen = copy.deepcopy(payload)
+    for month_payload in (frozen.get("months") or {}).values():
+        if method == "global_monotonic":
+            month_payload["segments"] = {}
+            month_payload["safety_profile"] = None
+        elif method == "segment_monotonic":
+            month_payload["safety_profile"] = None
+        elif method not in {"segment_monotonic_safety", "full_existing"}:
+            raise ValueError(f"Unknown fitted calibration candidate: {method}")
+        if method != "full_existing":
+            month_payload["recent_global"] = None
+            month_payload["recent_segments"] = {}
+    return frozen
+
+
+def _fit_payload(rows: pd.DataFrame, cfg: CalibratorFitConfig) -> dict:
+    fit_df = pd.DataFrame(
+        {
+            "run_date": rows["_run_date"],
+            "target": rows["_target"],
+            "direction": rows["_direction"],
+            "is_win": rows["is_win"],
+            "probability": pd.to_numeric(rows["_prob"], errors="coerce").fillna(0.5),
+        }
+    )
+    return fit_selected_board_calibrator_payload(
+        rows_df=fit_df,
+        run_date_col="run_date",
+        prob_col="probability",
+        label_col="is_win",
+        target_col="target",
+        direction_col="direction",
+        config=cfg,
+    )
+
+
+def _apply_candidate(rows: pd.DataFrame, payload: dict, method: str) -> np.ndarray:
+    if method == "identity":
+        return pd.to_numeric(rows["_prob"], errors="coerce").fillna(0.5).clip(0.01, 0.99).to_numpy()
+    frozen = _freeze_candidate_payload(payload, method)
+    months = sorted((frozen.get("months") or {}).keys())
+    if not months:
+        raise RuntimeError("Fitted calibration candidate has no effective month.")
+    frame = pd.DataFrame(
+        {
+            "target": rows["_target"],
+            "direction": rows["_direction"],
+            "board_play_win_prob": rows["_prob"],
+            "market_date": rows["_run_date"],
+        },
+        index=rows.index,
+    )
+    calibrated, _, _ = apply_selected_board_calibration(
+        frame,
+        payload=frozen,
+        run_date_hint=months[-1],
+        prob_col="board_play_win_prob",
+        target_col="target",
+        direction_col="direction",
+    )
+    return calibrated.to_numpy(dtype="float64")
+
+
+def _rounded_metrics(probs: np.ndarray, labels: np.ndarray) -> dict:
+    metrics = evaluate_calibration(probs=probs, labels=labels)
+    return {
+        key: int(value) if key == "rows" else round(float(value), 6)
+        for key, value in metrics.items()
+    }
+
+
+def _historical_support(rows: pd.DataFrame) -> dict:
+    support: dict[str, list[float]] = {}
+    groups = [("GLOBAL", rows)] + list(rows.groupby(["_target", "_direction"], sort=True))
+    for key, part in groups:
+        label = key if isinstance(key, str) else f"{key[0]}_{key[1]}"
+        probabilities = pd.to_numeric(part["_prob"], errors="coerce").dropna()
+        support[str(label)] = [
+            round(float(probabilities.min()) - 1e-6, 6),
+            round(float(probabilities.max()) + 1e-6, 6),
+        ]
+    return support
+
+
+def locked_calibration_evidence(
+    rows: pd.DataFrame,
+    cfg: CalibratorFitConfig,
+    *,
+    locked_days: int,
+    rolling_min_train_days: int,
+) -> tuple[dict, dict]:
+    dates = sorted(rows["_run_date"].dt.normalize().unique())
+    if len(dates) <= locked_days + rolling_min_train_days:
+        raise RuntimeError("Not enough distinct slate dates for rolling development and locked validation.")
+    development_dates = dates[:-locked_days]
+    locked_dates = dates[-locked_days:]
+    development = rows.loc[rows["_run_date"].dt.normalize().isin(development_dates)].copy()
+    locked = rows.loc[rows["_run_date"].dt.normalize().isin(locked_dates)].copy()
+
+    rolling_probabilities = {name: [] for name in CALIBRATION_CANDIDATES}
+    rolling_labels: list[float] = []
+    for index in range(rolling_min_train_days, len(development_dates)):
+        train_dates = development_dates[:index]
+        validation_date = development_dates[index]
+        train = development.loc[development["_run_date"].dt.normalize().isin(train_dates)]
+        validation = development.loc[development["_run_date"].dt.normalize().eq(validation_date)]
+        payload = _fit_payload(train, cfg)
+        rolling_labels.extend(validation["is_win"].tolist())
+        for name in CALIBRATION_CANDIDATES:
+            rolling_probabilities[name].extend(_apply_candidate(validation, payload, name).tolist())
+
+    labels = np.asarray(rolling_labels, dtype="float64")
+    development_comparison = [
+        {
+            "method": name,
+            **_rounded_metrics(np.asarray(rolling_probabilities[name], dtype="float64"), labels),
+        }
+        for name in CALIBRATION_CANDIDATES
+    ]
+    development_comparison.sort(key=lambda item: (item["brier"], item["log_loss"], item["method"]))
+    selected_method = str(development_comparison[0]["method"])
+
+    locked_fit = _fit_payload(development, cfg)
+    locked_comparison = [
+        {
+            "method": name,
+            **_rounded_metrics(_apply_candidate(locked, locked_fit, name), locked["is_win"].to_numpy()),
+        }
+        for name in CALIBRATION_CANDIDATES
+    ]
+    locked_by_method = {item["method"]: item for item in locked_comparison}
+    identity = locked_by_method["identity"]
+    selected = locked_by_method[selected_method]
+    passed = (
+        selected_method != "identity"
+        and selected["brier"] < identity["brier"]
+        and selected["log_loss"] < identity["log_loss"]
+    )
+    evidence = {
+        "status": "passed" if passed else "failed",
+        "selected_method": selected_method,
+        "selection_rule": "lowest rolling-development Brier score, then log loss",
+        "evidence_scope": "FULL_CANDIDATE_POOL_REPLAY",
+        "development_period": {
+            "start": pd.Timestamp(development_dates[0]).date().isoformat(),
+            "end": pd.Timestamp(development_dates[-1]).date().isoformat(),
+            "slate_days": len(development_dates),
+            "rolling_evaluation_rows": len(labels),
+        },
+        "development_rolling_comparison": development_comparison,
+        "locked_period": {
+            "start": pd.Timestamp(locked_dates[0]).date().isoformat(),
+            "end": pd.Timestamp(locked_dates[-1]).date().isoformat(),
+            "slate_days": len(locked_dates),
+            "rows": len(locked),
+        },
+        "locked_comparison": locked_comparison,
+        "locked_improvement": {
+            "calibration_gap_pp": round(100.0 * (abs(selected["gap"]) - abs(identity["gap"])), 4),
+            "brier": round(selected["brier"] - identity["brier"], 6),
+            "log_loss": round(selected["log_loss"] - identity["log_loss"], 6),
+        },
+        "historical_support": _historical_support(rows),
+    }
+    return evidence, _freeze_candidate_payload(_fit_payload(rows, cfg), selected_method)
+
+
 def _segment_metrics(df: pd.DataFrame, prob_col: str) -> list[dict]:
     rows: list[dict] = []
     for (target, direction), part in df.groupby(["_target", "_direction"], dropna=False):
@@ -295,52 +473,50 @@ def main() -> None:
         min_rows_segment=int(args.min_rows_segment),
         n_bins=int(args.n_bins),
     )
-    fit_df = pd.DataFrame(
-        {
-            "run_date": rows["_run_date"],
-            "target": rows["_target"],
-            "direction": rows["_direction"],
-            "is_win": rows["is_win"],
-            "probability": pd.to_numeric(rows["_prob"], errors="coerce").fillna(0.5),
-        }
+    evidence, payload = locked_calibration_evidence(
+        rows,
+        cfg,
+        locked_days=int(args.locked_days),
+        rolling_min_train_days=int(args.rolling_min_train_days),
     )
-    payload = fit_selected_board_calibrator_payload(
-        rows_df=fit_df,
-        run_date_col="run_date",
-        prob_col="probability",
-        label_col="is_win",
-        target_col="target",
-        direction_col="direction",
-        config=cfg,
-    )
+    selected_method = str(evidence["selected_method"])
+    locked_by_method = {item["method"]: item for item in evidence["locked_comparison"]}
+    raw_metrics = locked_by_method["identity"]
+    cal_metrics = locked_by_method[selected_method]
+    try:
+        rows_csv_label = rows_csv.relative_to(WORKSPACE_ROOT).as_posix()
+    except ValueError:
+        rows_csv_label = str(rows_csv)
 
-    applied = _walkforward_apply(rows, payload=payload, args=args)
-    raw_metrics = evaluate_calibration(
-        probs=applied["p_raw"].to_numpy(dtype="float64"),
-        labels=applied["is_win"].to_numpy(dtype="float64"),
-    )
-    cal_metrics = evaluate_calibration(
-        probs=applied["p_calibrated"].to_numpy(dtype="float64"),
-        labels=applied["is_win"].to_numpy(dtype="float64"),
-    )
+    payload["version"] = 2
+    payload["confidence_calibration"] = {
+        "status": evidence["status"],
+        "method": selected_method,
+        "evidence_scope": evidence["evidence_scope"],
+        "locked_period": evidence["locked_period"],
+        "locked_metrics": cal_metrics,
+        "historical_support": evidence["historical_support"],
+    }
 
     report = {
-        "rows_csv": str(rows_csv),
+        "rows_csv": rows_csv_label,
         "resolved_columns": resolved_columns.__dict__.copy(),
         "rows_resolved": int(len(rows)),
-        "config": cfg.__dict__.copy(),
+        "config": {
+            **cfg.__dict__.copy(),
+            "locked_days": int(args.locked_days),
+            "rolling_min_train_days": int(args.rolling_min_train_days),
+        },
         "months_fitted": sorted((payload.get("months") or {}).keys()),
+        "confidence_calibration": evidence,
         "raw": raw_metrics,
         "calibrated": cal_metrics,
         "delta": {
-            "gap_pp": float((cal_metrics["gap"] - raw_metrics["gap"]) * 100.0),
-            "brier": float(cal_metrics["brier"] - raw_metrics["brier"]),
-            "log_loss": float(cal_metrics["log_loss"] - raw_metrics["log_loss"]),
-            "ece_10": float(cal_metrics["ece_10"] - raw_metrics["ece_10"]),
+            "absolute_gap_pp": round(100.0 * (abs(cal_metrics["gap"]) - abs(raw_metrics["gap"])), 4),
+            "brier": round(cal_metrics["brier"] - raw_metrics["brier"], 6),
+            "log_loss": round(cal_metrics["log_loss"] - raw_metrics["log_loss"], 6),
+            "ece_10": round(cal_metrics["ece_10"] - raw_metrics["ece_10"], 6),
         },
-        "segment_raw": _segment_metrics(applied, "p_raw"),
-        "segment_calibrated": _segment_metrics(applied, "p_calibrated"),
-        "calibration_source_counts": applied["calibration_source"].value_counts(dropna=False).to_dict(),
     }
 
     args.out_json.parent.mkdir(parents=True, exist_ok=True)
@@ -350,9 +526,10 @@ def main() -> None:
 
     print(f"Calibrator JSON: {args.out_json}")
     print(f"Report JSON:     {args.report_json}")
-    print("Raw metrics:")
+    print(f"Selected calibration: {selected_method} ({evidence['status']})")
+    print("Locked raw metrics:")
     print(json.dumps(raw_metrics, indent=2))
-    print("Calibrated metrics:")
+    print("Locked calibrated metrics:")
     print(json.dumps(cal_metrics, indent=2))
     print("Delta (calibrated - raw):")
     print(json.dumps(report["delta"], indent=2))

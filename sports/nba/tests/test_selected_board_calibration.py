@@ -119,6 +119,41 @@ def test_selected_board_calibration_applies_recent_segment_regime_adjustment() -
     assert float(calibrated.iloc[1]) < 0.58
 
 
+def test_selected_board_calibration_abstains_outside_historical_support() -> None:
+    frame = pd.DataFrame(
+        [{"target": "PTS", "direction": "OVER", "board_play_win_prob": 0.95, "market_date": "2026-05-01"}]
+    )
+    payload = {
+        "version": 2,
+        "confidence_calibration": {
+            "status": "passed",
+            "method": "segment_monotonic_safety",
+            "historical_support": {"GLOBAL": [0.50, 0.92], "PTS_OVER": [0.50, 0.92]},
+        },
+        "months": {
+            "2026-05": {
+                "global": None,
+                "segments": {},
+                "recent_global": None,
+                "recent_segments": {},
+                "safety_profile": {"global_shrink_factor": 0.5, "high_prob_buckets": []},
+            }
+        },
+    }
+
+    calibrated, source, _ = apply_selected_board_calibration(
+        frame,
+        payload=payload,
+        run_date_hint="2026-05",
+        prob_col="board_play_win_prob",
+        target_col="target",
+        direction_col="direction",
+    )
+
+    assert float(calibrated.iloc[0]) == 0.95
+    assert source.iloc[0] == "identity_out_of_support"
+
+
 def test_compute_final_board_applies_confidence_haircut_from_selected_board_calibration() -> None:
     plays = pd.DataFrame(
         [

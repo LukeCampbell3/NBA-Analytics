@@ -672,6 +672,16 @@ def main() -> None:
         "enabled": not bool(args.disable_selected_board_calibration),
         "calibration_month": selected_board_calibration_month,
     }
+    if selected_board_calibrator_path.is_file():
+        try:
+            selected_board_payload = json.loads(selected_board_calibrator_path.read_text(encoding="utf-8"))
+            selected_board_calibrator_meta["confidence_calibration"] = (
+                selected_board_payload.get("confidence_calibration", {})
+                if isinstance(selected_board_payload, dict)
+                else {}
+            )
+        except (OSError, json.JSONDecodeError):
+            selected_board_calibrator_meta["confidence_calibration"] = {}
     learned_gate_month = str(args.learned_gate_month or local_date.strftime("%Y-%m"))
     learned_gate_path = args.learned_gate_json.resolve()
     learned_gate_meta = {

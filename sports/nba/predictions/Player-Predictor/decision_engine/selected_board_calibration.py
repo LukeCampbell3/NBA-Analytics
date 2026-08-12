@@ -478,6 +478,28 @@ def _resolve_month_payload(payload: dict[str, Any], month: str) -> tuple[str, di
     return "", None
 
 
+def _confidence_support_mask(
+    base: np.ndarray,
+    seg_keys: pd.Series,
+    payload: dict[str, Any],
+) -> np.ndarray:
+    calibration = payload.get("confidence_calibration") if isinstance(payload, dict) else None
+    support = calibration.get("historical_support") if isinstance(calibration, dict) else None
+    if not isinstance(support, dict):
+        return np.ones(len(base), dtype=bool)
+    global_bounds = support.get("GLOBAL")
+    in_support = np.zeros(len(base), dtype=bool)
+    for index, (probability, segment) in enumerate(zip(base, seg_keys.astype(str), strict=False)):
+        bounds = support.get(segment) or global_bounds
+        if not isinstance(bounds, list) or len(bounds) != 2:
+            continue
+        try:
+            in_support[index] = float(bounds[0]) <= float(probability) <= float(bounds[1])
+        except (TypeError, ValueError):
+            in_support[index] = False
+    return in_support
+
+
 def apply_selected_board_calibration(
     frame: pd.DataFrame,
     payload: dict[str, Any] | None,
@@ -565,6 +587,10 @@ def apply_selected_board_calibration(
             ],
             dtype=object,
         )
+
+    in_support = _confidence_support_mask(base, seg_keys, payload)
+    calibrated[~in_support] = base[~in_support]
+    sources[~in_support] = "identity_out_of_support"
 
     return (
         pd.Series(_clip_prob(calibrated, 0.01, 0.99), index=frame.index, dtype="float64"),

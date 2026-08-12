@@ -132,3 +132,26 @@ def test_discover_rows_csv_prefers_newer_wider_validation_selector_file(tmp_path
     picked = trainer.discover_rows_csv(tmp_path, _args())
 
     assert picked.name == "validation_recent_pool_selector_20260423_20260430_rows.csv"
+
+
+def test_locked_calibration_selects_truthful_segment_policy() -> None:
+    rows_path = REPO_ROOT / "sports/validation/validation_recent_pool_selector_20260406_20260430_rows.csv"
+    raw = pd.read_csv(rows_path)
+    rows = trainer._prepare_rows(raw, trainer.resolve_input_columns(raw, _args()))
+    config = trainer.CalibratorFitConfig()
+
+    evidence, payload = trainer.locked_calibration_evidence(
+        rows,
+        config,
+        locked_days=5,
+        rolling_min_train_days=7,
+    )
+
+    assert evidence["status"] == "passed"
+    assert evidence["selected_method"] == "segment_monotonic_safety"
+    assert evidence["locked_period"]["rows"] == 1067
+    locked = {row["method"]: row for row in evidence["locked_comparison"]}
+    assert abs(locked["segment_monotonic_safety"]["gap"]) < abs(locked["identity"]["gap"])
+    assert locked["segment_monotonic_safety"]["brier"] < locked["identity"]["brier"]
+    assert locked["segment_monotonic_safety"]["log_loss"] < locked["identity"]["log_loss"]
+    assert all(not month["recent_segments"] for month in payload["months"].values())

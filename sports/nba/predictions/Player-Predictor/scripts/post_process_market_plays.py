@@ -921,6 +921,7 @@ def _apply_empirical_board_calibration(
     )
     out["selected_board_calibration_source"] = calibration_source.reindex(out.index).fillna("identity")
     out["selected_board_calibration_month"] = str(calibration_month or "")
+    out["confidence_in_support"] = ~out["selected_board_calibration_source"].eq("identity_out_of_support")
 
     calibrated = pd.to_numeric(calibrated_probs, errors="coerce").fillna(out[raw_prob_col])
     calibrated = calibrated.clip(lower=0.0, upper=1.0 - _numeric_series(out, "expected_push_rate", 0.0))

@@ -39,6 +39,45 @@ MLB_CORE_MAX_AMERICAN_PRICE = 125.0
 MLB_MIN_OVER_PICKS = 0
 MLB_MAX_OVER_PICKS = 3
 MLB_MAX_UNDER_PICKS = 1
+NBA_CALIBRATION_METHOD = "segment_monotonic_safety"
+NBA_CALIBRATION_SCOPE = "FULL_CANDIDATE_POOL_REPLAY"
+NBA_CALIBRATION_SEGMENTS = {
+    "GLOBAL",
+    "PTS_OVER",
+    "PTS_UNDER",
+    "TRB_OVER",
+    "TRB_UNDER",
+    "AST_OVER",
+    "AST_UNDER",
+}
+
+
+def validate_nba_payload(payload: dict[str, Any], *, label: str) -> None:
+    calibration = payload.get("confidence_calibration")
+    if not isinstance(calibration, dict):
+        raise ValueError(f"NBA {label} payload is missing confidence-calibration evidence.")
+    if (
+        calibration.get("status") != "passed"
+        or calibration.get("method") != NBA_CALIBRATION_METHOD
+        or calibration.get("evidence_scope") != NBA_CALIBRATION_SCOPE
+    ):
+        raise ValueError(f"NBA {label} payload is not using the locked selected-board calibration policy.")
+    locked = calibration.get("locked_metrics") or {}
+    if int(locked.get("rows") or 0) < 1000:
+        raise ValueError(f"NBA {label} confidence calibration lacks locked sample support.")
+    support = calibration.get("historical_support") or {}
+    if not isinstance(support, dict) or not NBA_CALIBRATION_SEGMENTS.issubset(support):
+        raise ValueError(f"NBA {label} confidence calibration lacks target/direction support bounds.")
+
+    for index, play in enumerate(payload.get("plays") or [], start=1):
+        if not isinstance(play, dict):
+            raise ValueError(f"NBA {label} play {index} must be an object.")
+        raw = as_float(play.get("raw_model_probability"))
+        calibrated = as_float(play.get("calibrated_hit_probability"))
+        if raw is None or calibrated is None or not (0.0 <= raw <= 1.0 and 0.0 <= calibrated <= 1.0):
+            raise ValueError(f"NBA {label} play {index} is missing confidence provenance.")
+        if not bool(play.get("confidence_in_support")):
+            raise ValueError(f"NBA {label} play {index} falls outside calibration support.")
 
 
 def parse_args() -> argparse.Namespace:
@@ -431,7 +470,10 @@ def validate_publication(
                 plays = []
             else:
                 raise ValueError(f"{sport.upper()} payload must contain a plays list.")
-        if sport == "mlb" and not allow_stale_payloads:
+        if sport == "nba" and (not allow_stale_payloads or source_payload or public_payload):
+            validate_nba_payload(source_payload, label="source")
+            validate_nba_payload(public_payload, label="public")
+        elif sport == "mlb" and not allow_stale_payloads:
             validate_mlb_payload(source_payload, label="source")
             validate_mlb_payload(public_payload, label="public")
         elif sport == "mlb" and allow_stale_payloads and (source_payload or public_payload):

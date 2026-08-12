@@ -16,6 +16,7 @@ from validate_daily_publication import (
     MLB_POLICY_PROFILE,
     MLB_REQUIRED_TARGETS,
     as_float,
+    validate_nba_payload,
     validate_mlb_payload,
     validate_publication,
 )
@@ -32,6 +33,25 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
         "publication_status": status,
         "plays": [],
     }
+    if sport == "nba":
+        payload["confidence_calibration"] = {
+            "status": "passed",
+            "method": "segment_monotonic_safety",
+            "evidence_scope": "FULL_CANDIDATE_POOL_REPLAY",
+            "locked_metrics": {"rows": 1067},
+            "historical_support": {
+                key: [0.49, 0.93]
+                for key in (
+                    "GLOBAL",
+                    "PTS_OVER",
+                    "PTS_UNDER",
+                    "TRB_OVER",
+                    "TRB_UNDER",
+                    "AST_OVER",
+                    "AST_UNDER",
+                )
+            },
+        }
     if sport == "mlb":
         payload.update(
             {
@@ -160,6 +180,20 @@ def test_validate_publication_rejects_stale_payload(tmp_path: Path) -> None:
             run_date="2026-04-28",
             sports=["mlb"],
         )
+
+
+def test_validate_nba_payload_rejects_uncertified_confidence() -> None:
+    payload = {
+        "confidence_calibration": {
+            "status": "failed",
+            "method": "segment_monotonic_safety",
+            "evidence_scope": "FULL_CANDIDATE_POOL_REPLAY",
+        },
+        "plays": [],
+    }
+
+    with pytest.raises(ValueError, match="locked selected-board calibration policy"):
+        validate_nba_payload(payload, label="test")
 
 
 def test_validate_publication_allows_stale_payloads_when_requested(tmp_path: Path) -> None:
