@@ -14,7 +14,15 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 DAILY_PAYLOAD = Path("sports/nfl/web/data/daily_predictions.json")
 VALIDATION_PAYLOAD = Path("sports/nfl/web/data/market_validation_summary.json")
 DAILY_POLICY_EVIDENCE = Path("sports/nfl/data/evaluation/daily_policy_backtest.json")
-LIVE_POLICY_VERSION = "nfl_passing_market_policy_v1"
+META_POLICY_EVIDENCE = Path("sports/nfl/data/evaluation/pick_meta_backtest.json")
+LIVE_POLICY_VERSION = "nfl_passing_loss_aware_meta_policy_v2"
+EXPECTED_META_POLICY = {
+    "minimum_side_probability": 0.58,
+    "minimum_no_vig_advantage": 0.1,
+    "minimum_price": -130,
+    "maximum_price": 130,
+    "weekly_cap": 6,
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -46,6 +54,9 @@ def _validate_live_payload(payload: dict[str, Any], *, run_date: str | None) -> 
         "withheld_current_pool",
     }:
         raise ValueError("NFL live payload has an invalid publication status.")
+    selection = payload.get("selection") or {}
+    if selection.get("loss_aware_meta_policy") != EXPECTED_META_POLICY:
+        raise ValueError("NFL live payload is missing the frozen loss-aware meta-policy.")
     governance = payload.get("policy_governance") or {}
     if (
         governance.get("publication_mode") != "SHADOW_RESEARCH_ONLY"
@@ -54,8 +65,8 @@ def _validate_live_payload(payload: dict[str, Any], *, run_date: str | None) -> 
     ):
         raise ValueError("NFL live governance must remain unauthorized shadow research.")
     plays = payload.get("plays")
-    if not isinstance(plays, list) or len(plays) > 12:
-        raise ValueError("NFL live payload must contain at most 12 plays.")
+    if not isinstance(plays, list) or len(plays) > EXPECTED_META_POLICY["weekly_cap"]:
+        raise ValueError("NFL live payload exceeds the frozen six-play cap.")
     for index, play in enumerate(plays, start=1):
         if play.get("target") != "passing":
             raise ValueError(f"NFL live play {index} uses an unvalidated target.")
@@ -67,8 +78,14 @@ def _validate_live_payload(payload: dict[str, Any], *, run_date: str | None) -> 
         if not bool(play.get("price_confirmed")):
             raise ValueError(f"NFL live play {index} lacks confirmed odds.")
         price = float(play.get("selected_side_price"))
-        if not -150.0 <= price <= 130.0:
+        if not -130.0 <= price <= 130.0:
             raise ValueError(f"NFL live play {index} falls outside the executable price scope.")
+        if float(play.get("model_hit_probability") or 0) < 0.58:
+            raise ValueError(f"NFL live play {index} falls below the meta confidence gate.")
+        if float(play.get("probability_advantage") or 0) < 0.10:
+            raise ValueError(f"NFL live play {index} falls below the meta advantage gate.")
+        if play.get("meta_policy_score") is None:
+            raise ValueError(f"NFL live play {index} is missing its meta-policy score.")
         if int(play.get("market_books") or 0) < 2 or int(play.get("market_common_books") or 0) < 1:
             raise ValueError(f"NFL live play {index} lacks sportsbook coverage.")
         if bool(play.get("candidate_authorized")):
@@ -121,6 +138,13 @@ def validate_nfl_publication(
         raise ValueError("NFL frozen singles policy evidence has not passed.")
     if (evidence.get("gates") or {}).get("parlay", {}).get("status") != "failed":
         raise ValueError("NFL parlay evidence must remain failed and withheld.")
+    meta_evidence = load_json(repo_root / META_POLICY_EVIDENCE)
+    if meta_evidence.get("sport") != "NFL":
+        raise ValueError("NFL meta-policy evidence has the wrong sport contract.")
+    if (meta_evidence.get("locked_recent_validation") or {}).get("status") != "passed":
+        raise ValueError("NFL recent locked meta-policy validation has not passed.")
+    if (meta_evidence.get("deployment") or {}).get("status") != "shadow_only":
+        raise ValueError("NFL meta-policy must remain shadow-only.")
 
     run_date = str(source_daily.get("run_date") or "<missing>")
     targets = ",".join(source_validation.get("validated_targets") or []) or "none"

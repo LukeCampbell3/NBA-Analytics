@@ -41,6 +41,14 @@ def make_publication(tmp_path: Path) -> tuple[Path, Path]:
         tmp_path / "sports/nfl/data/evaluation/daily_policy_backtest.json",
         {"gates": {"singles": {"status": "passed"}, "parlay": {"status": "failed"}}},
     )
+    write_payload(
+        tmp_path / "sports/nfl/data/evaluation/pick_meta_backtest.json",
+        {
+            "sport": "NFL",
+            "locked_recent_validation": {"status": "passed"},
+            "deployment": {"status": "shadow_only"},
+        },
+    )
     route = output / "nfl/predictions/index.html"
     route.parent.mkdir(parents=True, exist_ok=True)
     route.write_text("<!doctype html>", encoding="utf-8")
@@ -88,7 +96,16 @@ def test_validate_nfl_publication_accepts_withheld_live_shadow(tmp_path: Path) -
         "run_date": "2026-08-11",
         "publication_status": "withheld_current_pool",
         "mode": "live_shadow",
-        "policy_profile": "nfl_passing_market_policy_v1",
+        "policy_profile": "nfl_passing_loss_aware_meta_policy_v2",
+        "selection": {
+            "loss_aware_meta_policy": {
+                "minimum_side_probability": 0.58,
+                "minimum_no_vig_advantage": 0.1,
+                "minimum_price": -130,
+                "maximum_price": 130,
+                "weekly_cap": 6,
+            }
+        },
         "plays": [],
         "daily_parlay": {
             "status": "withheld",
@@ -118,13 +135,25 @@ def test_validate_nfl_publication_rejects_authorized_live_pick(tmp_path: Path) -
         "run_date": "2026-08-11",
         "publication_status": "shadow_current_pool",
         "mode": "live_shadow",
-        "policy_profile": "nfl_passing_market_policy_v1",
+        "policy_profile": "nfl_passing_loss_aware_meta_policy_v2",
+        "selection": {
+            "loss_aware_meta_policy": {
+                "minimum_side_probability": 0.58,
+                "minimum_no_vig_advantage": 0.1,
+                "minimum_price": -130,
+                "maximum_price": 130,
+                "weekly_cap": 6,
+            }
+        },
         "plays": [
             {
                 "target": "passing",
                 "market_source": "the_odds_api_live",
                 "price_confirmed": True,
                 "selected_side_price": -110,
+                "model_hit_probability": 0.64,
+                "probability_advantage": 0.12,
+                "meta_policy_score": 0.76,
                 "market_books": 2,
                 "market_common_books": 1,
                 "candidate_authorized": True,
@@ -155,13 +184,25 @@ def test_validate_nfl_publication_accepts_sportsgameodds_source(tmp_path: Path) 
         "run_date": "2026-08-11",
         "publication_status": "shadow_current_pool",
         "mode": "live_shadow",
-        "policy_profile": "nfl_passing_market_policy_v1",
+        "policy_profile": "nfl_passing_loss_aware_meta_policy_v2",
+        "selection": {
+            "loss_aware_meta_policy": {
+                "minimum_side_probability": 0.58,
+                "minimum_no_vig_advantage": 0.1,
+                "minimum_price": -130,
+                "maximum_price": 130,
+                "weekly_cap": 6,
+            }
+        },
         "plays": [
             {
                 "target": "passing",
                 "market_source": "sportsgameodds_live",
                 "price_confirmed": True,
                 "selected_side_price": -110,
+                "model_hit_probability": 0.64,
+                "probability_advantage": 0.12,
+                "meta_policy_score": 0.76,
                 "market_books": 2,
                 "market_common_books": 2,
                 "candidate_authorized": False,
