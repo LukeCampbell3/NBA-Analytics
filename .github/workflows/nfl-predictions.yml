@@ -80,8 +80,10 @@ jobs:
         run: |
           set -euo pipefail
           python sports/nfl/scripts/backtest_nfl_daily_policy.py
+          python sports/nfl/scripts/train_nfl_pick_meta_selector.py
           python -m pytest \
             sports/nfl/tests/test_live_market.py \
+            sports/nfl/tests/test_pick_meta.py \
             sports/nfl/tests/test_daily_policy_backtest.py \
             sports/nfl/tests/test_validation_web_export.py \
             tests/test_validate_nfl_publication.py \
@@ -95,6 +97,15 @@ jobs:
           --snapshot-output
           "sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}/${{ github.run_id }}.json"
           --capture-only
+
+      - name: Refresh current NFL skill roster
+        if: ${{ !inputs.build_only }}
+        run: |
+          set -euo pipefail
+          RUN_DATE="${{ steps.run_date.outputs.value }}"
+          python sports/nfl/scripts/refresh_nfl_current_roster.py \
+            --season "${RUN_DATE%%-*}" \
+            --manifest sports/nfl/tmp/current_skill_roster_manifest.json
 
       - name: Inspect NFL market coverage
         if: ${{ !inputs.build_only }}
@@ -143,6 +154,8 @@ jobs:
           set -euo pipefail
           git add -f -- \
             sports/nfl/data/evaluation/daily_policy_backtest.json \
+            sports/nfl/data/evaluation/pick_meta_backtest.json \
+            sports/nfl/data/reference/current_skill_roster.csv \
             sports/nfl/web/data/daily_predictions.json \
             sports/nfl/web/data/market_validation_summary.json \
             dist/nfl/data/daily_predictions.json \
@@ -177,6 +190,7 @@ jobs:
           name: nfl-predictions-${{ github.run_id }}
           path: |
             sports/nfl/data/evaluation/daily_policy_backtest.json
+            sports/nfl/data/evaluation/pick_meta_backtest.json
             sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}/${{ github.run_id }}.json
             sports/nfl/web/data/daily_predictions.json
             sports/nfl/web/data/market_validation_summary.json
