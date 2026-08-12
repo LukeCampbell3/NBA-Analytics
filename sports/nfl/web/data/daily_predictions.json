@@ -2,11 +2,11 @@
   "schema_version": 2,
   "league": "NFL",
   "run_date": "2026-08-11",
-  "generated_at_utc": "2026-08-12T00:05:30.921790Z",
+  "generated_at_utc": "2026-08-12T00:46:08.846234Z",
   "publication_status": "withheld_current_pool",
   "publication_state": "withheld_current_pool",
   "mode": "live_shadow",
-  "policy_profile": "nfl_passing_market_policy_v1",
+  "policy_profile": "nfl_passing_loss_aware_meta_policy_v2",
   "plays": [],
   "daily_parlay": {
     "policy_version": "nfl_distinct_game_parlay_v1",
@@ -21,7 +21,7 @@
     "validated_targets": [
       "passing"
     ],
-    "maximum_weekly_picks": 12,
+    "maximum_weekly_picks": 6,
     "minimum_side_probability": 0.56,
     "minimum_no_vig_advantage": 0.025,
     "american_price_range": [
@@ -29,7 +29,14 @@
       130.0
     ],
     "minimum_books": 2,
-    "minimum_common_books": 1
+    "minimum_common_books": 1,
+    "loss_aware_meta_policy": {
+      "minimum_side_probability": 0.58,
+      "minimum_no_vig_advantage": 0.1,
+      "minimum_price": -130,
+      "maximum_price": 130,
+      "weekly_cap": 6
+    }
   },
   "data_quality": {
     "status": "withheld",
@@ -38,7 +45,7 @@
     "provider_audit": {
       "provider": "provider_chain",
       "status": "no_props",
-      "fetched_at_utc": "2026-08-12T00:05:29.284540+00:00",
+      "fetched_at_utc": "2026-08-12T00:46:06.485439+00:00",
       "complete_two_sided_rows": 0,
       "provider_attempts": [
         {
@@ -55,11 +62,11 @@
       ],
       "raw_source_sha256": null,
       "replayed_from_snapshot": true,
-      "snapshot_sha256": "712b4f20433fff1b0e6e0630a8ac4dc64ae05f8367360d9aee1d4e48547050c8"
+      "snapshot_sha256": "6507b40f4e8066a41235899d81a553900da166905f96bba4fa6643e8a779163b"
     }
   },
   "policy_governance": {
-    "policy_version": "nfl_passing_market_policy_v1",
+    "policy_version": "nfl_passing_loss_aware_meta_policy_v2",
     "publication_mode": "SHADOW_RESEARCH_ONLY",
     "candidate_authorization_enabled": false,
     "staking_enabled": false,
