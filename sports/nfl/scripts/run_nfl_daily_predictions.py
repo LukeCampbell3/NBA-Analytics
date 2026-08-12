@@ -47,6 +47,7 @@ from sports.nfl.predictions.live_scoring import (  # noqa: E402
 )
 from sports.nfl.predictions.pbp_stats import ROSTER_URL  # noqa: E402
 from sports.nfl.predictions.pipeline import load_weekly_stats  # noqa: E402
+from sports.nfl.predictions.pick_meta import score_with_artifact  # noqa: E402
 from sports.nfl.scripts.fetch_historical_nfl_props import (  # noqa: E402
     SCHEDULE_URL,
     _kickoff_utc,
@@ -84,9 +85,19 @@ def parse_args() -> argparse.Namespace:
         default=NFL_ROOT / "model/nfl_market_selector.joblib",
     )
     parser.add_argument(
+        "--meta-artifact",
+        type=Path,
+        default=NFL_ROOT / "model/nfl_pick_meta_selector.joblib",
+    )
+    parser.add_argument(
         "--evidence",
         type=Path,
         default=NFL_ROOT / "data/evaluation/daily_policy_backtest.json",
+    )
+    parser.add_argument(
+        "--meta-evidence",
+        type=Path,
+        default=NFL_ROOT / "data/evaluation/pick_meta_backtest.json",
     )
     parser.add_argument(
         "--output", type=Path, default=NFL_ROOT / "web/data/daily_predictions.json"
@@ -122,6 +133,9 @@ def load_current_roster(path: Path | None, season: int) -> pd.DataFrame:
     except Exception:
         if cache.is_file():
             return pd.read_parquet(cache)
+        reference = NFL_ROOT / "data/reference/current_skill_roster.csv"
+        if reference.is_file():
+            return pd.read_csv(reference)
         return pd.DataFrame()
 
 
@@ -132,6 +146,7 @@ def withheld_payload(
     reason: str,
     audit: dict,
     observations: int,
+    meta_policy: dict | None = None,
 ) -> dict:
     return {
         "schema_version": 2,
@@ -152,6 +167,7 @@ def withheld_payload(
             "american_price_range": [MINIMUM_AMERICAN_PRICE, MAXIMUM_AMERICAN_PRICE],
             "minimum_books": MINIMUM_BOOKS,
             "minimum_common_books": MINIMUM_COMMON_BOOKS,
+            "loss_aware_meta_policy": meta_policy or {},
         },
         "data_quality": {
             "status": "withheld",
@@ -235,6 +251,10 @@ def main() -> int:
         return 0
     generated_at = _iso(as_of)
     if not observations:
+        meta_policy = {}
+        if args.meta_artifact.is_file():
+            candidate = joblib.load(args.meta_artifact)
+            meta_policy = candidate.get("policy", {}) if isinstance(candidate, dict) else {}
         no_market_reason = (
             "No configured NFL odds provider is available; no sportsbook odds were validated."
             if provider_audit.get("status") == "missing_credentials"
@@ -246,12 +266,18 @@ def main() -> int:
             reason=no_market_reason,
             audit=provider_audit,
             observations=0,
+            meta_policy=meta_policy,
         )
         write_payload(args.output, payload)
         print(json.dumps(payload["data_quality"], indent=2))
         return 0
 
-    required = [args.stats, args.yardage_artifact, args.selector_artifact]
+    required = [
+        args.stats,
+        args.yardage_artifact,
+        args.selector_artifact,
+        args.meta_artifact,
+    ]
     missing = [str(path) for path in required if not path.is_file()]
     if missing:
         payload = withheld_payload(
@@ -275,6 +301,7 @@ def main() -> int:
     )
     yardage_artifact = joblib.load(args.yardage_artifact)
     selector_artifact = joblib.load(args.selector_artifact)
+    meta_artifact = joblib.load(args.meta_artifact)
     live = build_live_scoring_frame(
         stats_with_placeholders,
         matched_markets,
@@ -290,10 +317,17 @@ def main() -> int:
         if not live.empty
         else live
     )
+    if not scored.empty:
+        scored = score_with_artifact(scored, meta_artifact)
     plays, selection_audit = select_live_board(scored)
     evidence = (
         json.loads(args.evidence.read_text(encoding="utf-8"))
         if args.evidence.is_file()
+        else {}
+    )
+    meta_evidence = (
+        json.loads(args.meta_evidence.read_text(encoding="utf-8"))
+        if args.meta_evidence.is_file()
         else {}
     )
     payload = {
@@ -315,6 +349,7 @@ def main() -> int:
             "american_price_range": [MINIMUM_AMERICAN_PRICE, MAXIMUM_AMERICAN_PRICE],
             "minimum_books": MINIMUM_BOOKS,
             "minimum_common_books": MINIMUM_COMMON_BOOKS,
+            "loss_aware_meta_policy": meta_artifact["policy"],
             **selection_audit,
         },
         "data_quality": {
@@ -325,7 +360,11 @@ def main() -> int:
             "identity_audit": identity_audit,
             "snapshot_path": str(snapshot_path),
         },
-        "historical_evidence": evidence.get("locked_holdout", {}).get("singles", {}),
+        "historical_evidence": {
+            "legacy_2022": evidence.get("locked_holdout", {}).get("singles", {}),
+            "locked_recent_2025": meta_evidence.get("locked_recent_validation", {}),
+            "full_recent_2025": meta_evidence.get("full_recent_season", {}),
+        },
         "policy_governance": {
             "policy_version": POLICY_VERSION,
             "publication_mode": "SHADOW_RESEARCH_ONLY",

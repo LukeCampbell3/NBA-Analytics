@@ -10,12 +10,14 @@ replacement test.
 
 The production-shaped NFL path is independent of NBA and MLB. It captures the
 complete two-sided NFL player-prop slate from The Odds API, joins offered players
-to lagged nflverse form and opponent features, scores the frozen market selector,
-and publishes only executable passing-yard candidates with at least two books
+to lagged nflverse form and opponent features, scores the frozen market selector
+and a separate NFL loss-aware meta-policy, and publishes only executable
+passing-yard candidates with at least two books
 and one common US sportsbook:
 
 ```bash
 python sports/nfl/scripts/backtest_nfl_daily_policy.py
+python sports/nfl/scripts/train_nfl_pick_meta_selector.py
 python sports/nfl/scripts/bootstrap_nfl_artifacts.py
 python sports/nfl/scripts/refresh_nfl_yardage_artifact.py
 python sports/nfl/scripts/run_nfl_daily_predictions.py --run-date YYYY-MM-DD
@@ -34,7 +36,21 @@ market scope remain frozen. The current board is shadow-only until prospective
 certificate evidence exists, and every candidate is explicitly marked
 unauthorized for staking.
 
-The exact locked 2022 singles replay is 127-83 (60.48%) with +13.00% ROI across
+The runtime artifacts are NFL-specific and independently typed:
+
+- `model/nfl_yardage_latent_hybrid.joblib`: yardage projections
+- `model/nfl_market_selector.joblib`: line-side scoring
+- `model/nfl_pick_meta_selector.joblib`: loss-aware survivor policy
+
+The meta-policy was selected on settled 2025 weeks 1-12 and frozen for weeks
+13-18, where it retained 36 passing-yard candidates at 26-10 (72.22%) and
+34.86% ROI. It uses a 0.58 side-probability floor, 0.10 no-vig advantage,
+prices from -130 to +130, and a six-pick weekly cap. The 2025 source consists
+of explicit SportsGameOdds provider consensus closes, so this is research
+evidence rather than proof that a named sportsbook offered the same execution.
+The live gate still requires current, named-book, two-sided prices.
+
+The legacy locked 2022 singles replay is 127-83 (60.48%) with +13.00% ROI across
 210 selections. The deterministic distinct-game two-leg parlay failed its
 locked replay at 2-16 and -61.89% ROI, so the pipeline may construct that ticket
 for observation but always withholds it from recommendation. Rushing and

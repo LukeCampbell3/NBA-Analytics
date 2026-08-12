@@ -194,6 +194,10 @@ def test_live_board_requires_fresh_multibook_executable_market() -> None:
         np.array([0.64, 0.64]),
         now_utc=datetime(2026, 9, 9, 15, 0, tzinfo=timezone.utc),
     )
+    scored["meta_eligible"] = True
+    scored["meta_policy_score"] = (
+        scored["estimated_side_probability"] + scored["probability_advantage"]
+    )
 
     plays, audit = select_live_board(scored)
 

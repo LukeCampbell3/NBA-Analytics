@@ -11,14 +11,14 @@ import numpy as np
 import pandas as pd
 
 
-POLICY_VERSION = "nfl_passing_market_policy_v1"
+POLICY_VERSION = "nfl_passing_loss_aware_meta_policy_v2"
 PARLAY_POLICY_VERSION = "nfl_distinct_game_parlay_v1"
 VALIDATED_TARGETS = {"passing"}
 MINIMUM_SIDE_PROBABILITY = 0.56
 MINIMUM_NO_VIG_ADVANTAGE = 0.025
 MINIMUM_AMERICAN_PRICE = -150.0
 MAXIMUM_AMERICAN_PRICE = 130.0
-MAXIMUM_WEEKLY_PICKS = 12
+MAXIMUM_WEEKLY_PICKS = 6
 MINIMUM_BOOKS = 2
 MINIMUM_COMMON_BOOKS = 1
 COMMON_BOOKS = {
@@ -95,7 +95,14 @@ def select_live_board(scored: pd.DataFrame) -> tuple[list[dict[str, Any]], dict[
     group_columns = ["event_id", "player_key", "target", "side", "line"]
     plays: list[dict[str, Any]] = []
     for _, group in frame.groupby(group_columns, sort=False):
-        executable = group.loc[group["model_eligible"] & group["execution_eligible"]].copy()
+        meta_eligible = (
+            group["meta_eligible"].astype(bool)
+            if "meta_eligible" in group
+            else pd.Series(False, index=group.index)
+        )
+        executable = group.loc[
+            group["model_eligible"] & group["execution_eligible"] & meta_eligible
+        ].copy()
         books = sorted(set(group["bookmaker"].astype(str).str.lower()))
         common_books = sorted(set(books).intersection(COMMON_BOOKS))
         if executable.empty or len(books) < MINIMUM_BOOKS or len(common_books) < MINIMUM_COMMON_BOOKS:
@@ -129,6 +136,7 @@ def select_live_board(scored: pd.DataFrame) -> tuple[list[dict[str, Any]], dict[
                 ),
                 "no_vig_probability": round(float(best["no_vig_side_probability"]), 6),
                 "probability_advantage": round(float(best["probability_advantage"]), 6),
+                "meta_policy_score": round(float(best["meta_policy_score"]), 6),
                 "selected_side_price": float(best["selected_price"]),
                 "selected_sportsbook_key": str(best["bookmaker"]).lower(),
                 "market_books": len(books),
@@ -147,6 +155,7 @@ def select_live_board(scored: pd.DataFrame) -> tuple[list[dict[str, Any]], dict[
         )
     plays.sort(
         key=lambda row: (
+            -row["meta_policy_score"],
             -row["model_hit_probability"],
             -row["probability_advantage"],
             row["player"],
@@ -155,7 +164,11 @@ def select_live_board(scored: pd.DataFrame) -> tuple[list[dict[str, Any]], dict[
     selected = plays[:MAXIMUM_WEEKLY_PICKS]
     return selected, {
         "eligible_offers": int(
-            (frame["model_eligible"] & frame["execution_eligible"]).sum()
+            (
+                frame["model_eligible"]
+                & frame["execution_eligible"]
+                & frame.get("meta_eligible", False)
+            ).sum()
         ),
         "consolidated_candidates": len(plays),
         "selected_candidates": len(selected),

@@ -37,6 +37,11 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=NFL_ROOT / "model/nfl_market_selector.joblib",
     )
+    parser.add_argument(
+        "--meta-artifact",
+        type=Path,
+        default=NFL_ROOT / "model/nfl_pick_meta_selector.joblib",
+    )
     return parser.parse_args()
 
 
@@ -116,8 +121,21 @@ def ensure_market_rows(stats: Path, *, force: bool) -> tuple[Path, Path]:
 def main() -> int:
     args = parse_args()
     ensure_stats(args.stats)
-    if not args.force and args.yardage_artifact.is_file() and args.selector_artifact.is_file():
+    base_artifacts_ready = args.yardage_artifact.is_file() and args.selector_artifact.is_file()
+    if not args.force and base_artifacts_ready and args.meta_artifact.is_file():
         print("NFL artifacts restored from cache; bootstrap skipped.")
+        return 0
+
+    if not args.force and base_artifacts_ready:
+        run(
+            [
+                sys.executable,
+                str(NFL_ROOT / "scripts/train_nfl_pick_meta_selector.py"),
+                "--artifact",
+                str(args.meta_artifact),
+            ]
+        )
+        print("NFL projection, market-selector, and meta-policy artifacts are ready.")
         return 0
 
     development_rows, final_rows = ensure_market_rows(args.stats, force=args.force)
@@ -167,7 +185,15 @@ def main() -> int:
     )
     if report.get("validated_targets") != ["passing"]:
         raise RuntimeError("Cold NFL artifact bootstrap did not reproduce passing-only validation.")
-    print("NFL projection and market-selector artifacts are ready.")
+    run(
+        [
+            sys.executable,
+            str(NFL_ROOT / "scripts/train_nfl_pick_meta_selector.py"),
+            "--artifact",
+            str(args.meta_artifact),
+        ]
+    )
+    print("NFL projection, market-selector, and meta-policy artifacts are ready.")
     return 0
 
 

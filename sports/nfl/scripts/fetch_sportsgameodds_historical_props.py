@@ -17,6 +17,7 @@ from typing import Any
 
 import pandas as pd
 import requests
+from dotenv import load_dotenv
 
 
 SCRIPT_PATH = Path(__file__).resolve()
@@ -26,6 +27,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from sports.nfl.predictions.market_sources import (  # noqa: E402
     flatten_sportsgameodds_closing_lines,
+    flatten_sportsgameodds_consensus_closing_lines,
 )
 from sports.nfl.scripts.fetch_historical_nfl_props import load_schedule  # noqa: E402
 
@@ -42,7 +44,12 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--season", type=int, required=True)
     parser.add_argument("--weeks", default=None, help="Comma-separated regular-season weeks; default all.")
-    parser.add_argument("--bookmakers", default="draftkings,fanduel,betmgm,caesars,pinnacle")
+    parser.add_argument("--bookmakers", default="draftkings,fanduel,betmgm,caesars")
+    parser.add_argument(
+        "--allow-consensus-close",
+        action="store_true",
+        help="Use explicit provider consensus closes when named-book closes are unavailable.",
+    )
     parser.add_argument("--api-key", default=None)
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--limit", type=int, default=50)
@@ -97,6 +104,7 @@ def _season_window(schedule: pd.DataFrame) -> tuple[str, str]:
 
 def main() -> int:
     args = parse_args()
+    load_dotenv(REPO_ROOT / ".env", override=False)
     weeks = {int(value) for value in args.weeks.split(",")} if args.weeks else None
     schedule = load_schedule(args.season, weeks)
     starts_after, starts_before = _season_window(schedule)
@@ -157,6 +165,14 @@ def main() -> int:
         season=args.season,
         schedule=schedule,
     )
+    source_scope = "named_book_close"
+    if output.empty and args.allow_consensus_close:
+        output, audit = flatten_sportsgameodds_consensus_closing_lines(
+            events,
+            season=args.season,
+            schedule=schedule,
+        )
+        source_scope = "provider_consensus_close_non_executable_book"
     if weeks and not output.empty:
         output = output.loc[output["week"].isin(weeks)].copy()
     output = output.sort_values(
@@ -187,6 +203,8 @@ def main() -> int:
         "season_weeks_returned": int(output[["season", "week"]].drop_duplicates().shape[0])
         if not output.empty else 0,
         "normalization_audit": audit,
+        "source_scope": source_scope,
+        "executable_book_verified": source_scope == "named_book_close",
         "rate_limit_remaining": headers.get("x-ratelimit-remaining"),
         "output": str(args.output),
     }

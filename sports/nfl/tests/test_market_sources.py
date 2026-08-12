@@ -4,6 +4,7 @@ import pandas as pd
 
 from sports.nfl.predictions.market_sources import (
     flatten_sportsgameodds_closing_lines,
+    flatten_sportsgameodds_consensus_closing_lines,
     flatten_xsportsbook_bovada_archive,
 )
 
@@ -86,6 +87,25 @@ def test_sportsgameodds_adapter_does_not_fall_back_to_current_live_values() -> N
     assert rows.empty
     assert audit["book_sides_without_close"] == 1
     assert audit["dropped_one_sided_rows"] == 1
+
+
+def test_sportsgameodds_consensus_close_is_not_labeled_as_named_book() -> None:
+    payload = _payload()
+    for odd in payload["data"][0]["odds"].values():
+        book = odd["byBookmaker"]["draftkings"]
+        odd["closeBookOverUnder"] = book["closeOverUnder"]
+        odd["closeBookOdds"] = book["closeOdds"]
+        book.pop("closeOverUnder")
+        book.pop("closeOdds")
+
+    rows, audit = flatten_sportsgameodds_consensus_closing_lines(payload, season=2025)
+
+    assert len(rows) == 1
+    assert rows.iloc[0]["bookmaker"] == "sportsgameodds_consensus"
+    assert rows.iloc[0]["source"] == "sportsgameodds_consensus_close"
+    assert bool(rows.iloc[0]["pregame_verified"])
+    assert not bool(rows.iloc[0]["executable_book_verified"])
+    assert audit["two_sided_price_rows"] == 1
 
 
 def test_xsportsbook_adapter_keeps_lines_prices_and_discards_results() -> None:

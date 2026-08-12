@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "source": "https://github.com/nflverse/nflverse-data/releases/download/weekly_rosters/roster_weekly_2026.parquet",
+  "refreshed_at_utc": "2026-08-12T00:28:32.451435Z",
+  "season": 2026,
+  "week": 1,
+  "skill_positions": [
+    "FB",
+    "QB",
+    "RB",
+    "TE",
+    "WR"
+  ],
+  "players": 915,
+  "players_with_model_history": 586,
+  "position_counts": {
+    "WR": 388,
+    "RB": 213,
+    "TE": 195,
+    "QB": 119
+  },
+  "output": "sports/nfl/data/reference/current_skill_roster.csv"
+}

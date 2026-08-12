@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "season": 2025,
+  "line_source": "sportsgameodds_consensus_close",
+  "line_scope": "explicit provider consensus closes; not named-book execution proof",
+  "line_rows": 5834,
+  "matched_market_rows": 4177,
+  "eligible_selector_rows": 1082,
+  "eligible_passing_rows": 264,
+  "season_weeks": 18,
+  "passing_result": {
+    "bets": 264,
+    "graded_decisions": 264,
+    "wins": 140,
+    "losses": 124,
+    "pushes": 0,
+    "hit_rate": 0.5303,
+    "hit_rate_wilson_95": [
+      0.4701,
+      0.5896
+    ],
+    "roi": -0.0047,
+    "profit_units": -1.2301,
+    "distinct_weeks": 18,
+    "over_bets": 46,
+    "under_bets": 218
+  },
+  "market_join": {
+    "bets": 4177,
+    "graded_decisions": 4177,
+    "wins": 2094,
+    "losses": 2083,
+    "pushes": 0,
+    "hit_rate": 0.5013,
+    "hit_rate_wilson_95": [
+      0.4862,
+      0.5165
+    ],
+    "priced_bets": 4177,
+    "roi": -0.0617,
+    "profit_units": -257.7215
+  },
+  "line_file_sha256": "5a73f744fe33bc3a772e962d140c17bd3ee5fca3dcd1338677f8059c36053870",
+  "prediction_file_sha256": "3acfe5c8d78d1ac40d2131151ff1789704877fde680c7e476619533b4c31a7e1",
+  "output_file_sha256": "00641641300af0127f2214ce81724ffa399953c93775bffcab5ec6dc69184bf5"
+}

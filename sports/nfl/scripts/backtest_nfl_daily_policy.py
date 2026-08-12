@@ -20,18 +20,18 @@ if str(REPO_ROOT) not in sys.path:
 
 from sports.nfl.predictions.daily_policy import (  # noqa: E402
     MAXIMUM_AMERICAN_PRICE,
-    MAXIMUM_WEEKLY_PICKS,
     MINIMUM_AMERICAN_PRICE,
     MINIMUM_NO_VIG_ADVANTAGE,
     MINIMUM_SIDE_PROBABILITY,
     PARLAY_POLICY_VERSION,
-    POLICY_VERSION,
     american_to_decimal,
 )
 from sports.nfl.predictions.market_selector import summarize_market_rows  # noqa: E402
 
 
 NFL_ROOT = REPO_ROOT / "sports" / "nfl"
+LEGACY_POLICY_VERSION = "nfl_passing_market_policy_v1"
+LEGACY_MAXIMUM_WEEKLY_PICKS = 12
 
 
 def parse_args() -> argparse.Namespace:
@@ -75,7 +75,7 @@ def apply_singles_policy(frame: pd.DataFrame) -> pd.DataFrame:
             ascending=[True, True, False, False, True],
         )
         .groupby(["season", "week"], group_keys=False)
-        .head(MAXIMUM_WEEKLY_PICKS)
+        .head(LEGACY_MAXIMUM_WEEKLY_PICKS)
         .reset_index(drop=True)
     )
 
@@ -150,7 +150,7 @@ def main() -> int:
     )
     report = {
         "schema_version": 1,
-        "policy_version": POLICY_VERSION,
+        "policy_version": LEGACY_POLICY_VERSION,
         "parlay_policy_version": PARLAY_POLICY_VERSION,
         "design": {
             "development_season": 2021,
@@ -159,7 +159,7 @@ def main() -> int:
             "minimum_side_probability": MINIMUM_SIDE_PROBABILITY,
             "minimum_no_vig_advantage": MINIMUM_NO_VIG_ADVANTAGE,
             "american_price_range": [MINIMUM_AMERICAN_PRICE, MAXIMUM_AMERICAN_PRICE],
-            "maximum_weekly_picks": MAXIMUM_WEEKLY_PICKS,
+            "maximum_weekly_picks": LEGACY_MAXIMUM_WEEKLY_PICKS,
             "parlay_rule": "two highest-ranked legs from distinct games at one book",
         },
         "development": development,
