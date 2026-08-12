@@ -16,6 +16,11 @@ SPEC = importlib.util.spec_from_file_location("train_nfl_pick_meta_selector", SC
 assert SPEC and SPEC.loader
 TRAINER = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(TRAINER)
+ROSTER_SCRIPT = REPO_ROOT / "sports/nfl/scripts/refresh_nfl_current_roster.py"
+ROSTER_SPEC = importlib.util.spec_from_file_location("refresh_nfl_current_roster", ROSTER_SCRIPT)
+assert ROSTER_SPEC and ROSTER_SPEC.loader
+ROSTER = importlib.util.module_from_spec(ROSTER_SPEC)
+ROSTER_SPEC.loader.exec_module(ROSTER)
 
 
 def test_recent_meta_policy_reproduces_locked_weeks() -> None:
@@ -67,3 +72,21 @@ def test_meta_artifact_is_nfl_only_and_applies_frozen_gates() -> None:
                 "policy": artifact["policy"],
             }
         )
+
+
+def test_roster_history_falls_back_when_runner_cache_is_empty(tmp_path) -> None:
+    prior = tmp_path / "current_roster.csv"
+    pd.DataFrame(
+        {
+            "gsis_id": ["known", "unavailable"],
+            "history_available": [True, False],
+        }
+    ).to_csv(prior, index=False)
+
+    result = ROSTER.history_availability(
+        pd.Series(["known", "new"]),
+        history_path=tmp_path / "missing.parquet",
+        prior_roster_path=prior,
+    )
+
+    assert result.tolist() == [True, False]

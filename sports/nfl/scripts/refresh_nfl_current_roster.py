@@ -41,6 +41,21 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def history_availability(
+    player_ids: pd.Series, *, history_path: Path, prior_roster_path: Path
+) -> pd.Series:
+    if history_path.is_file():
+        known_ids = set(
+            pd.read_parquet(history_path, columns=["player_id"])["player_id"].astype(str)
+        )
+        return player_ids.astype(str).isin(known_ids)
+    if prior_roster_path.is_file():
+        prior = pd.read_csv(prior_roster_path, usecols=["gsis_id", "history_available"])
+        availability = prior.set_index(prior["gsis_id"].astype(str))["history_available"]
+        return player_ids.astype(str).map(availability).eq(True)
+    return pd.Series(False, index=player_ids.index, dtype=bool)
+
+
 def main() -> int:
     args = parse_args()
     raw = pd.read_parquet(ROSTER_URL.format(season=args.season))
@@ -50,8 +65,9 @@ def main() -> int:
     ].copy()
     roster = roster.dropna(subset=["gsis_id", "full_name", "team", "position"])
     roster = roster.drop_duplicates("gsis_id", keep="last")
-    history_ids = set(pd.read_parquet(args.history, columns=["player_id"])["player_id"].astype(str))
-    roster["history_available"] = roster["gsis_id"].astype(str).isin(history_ids)
+    roster["history_available"] = history_availability(
+        roster["gsis_id"], history_path=args.history, prior_roster_path=args.output
+    )
     columns = [
         "season",
         "week",
