@@ -68,6 +68,20 @@ jobs:
             echo "- Date: $run_date (America/New_York)"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Verify frozen NBA confidence calibration
+        run: |
+          set -euo pipefail
+          python sports/nba/predictions/Player-Predictor/scripts/train_selected_board_calibrator.py \
+            --report-json "$RUNNER_TEMP/selected_board_calibrator_report.json"
+          cmp \
+            "$RUNNER_TEMP/selected_board_calibrator_report.json" \
+            sports/nba/data/evaluation/confidence_calibration_backtest.json
+          python -m pytest \
+            sports/nba/tests/test_train_selected_board_calibrator.py \
+            sports/nba/tests/test_selected_board_calibration.py \
+            tests/test_validate_daily_publication.py \
+            -q
+
       - name: Run NBA production pipeline
         env:
           RUN_DATE: ${{ steps.run-config.outputs.run_date }}
