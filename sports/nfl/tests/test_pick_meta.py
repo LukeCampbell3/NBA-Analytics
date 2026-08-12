@@ -90,3 +90,11 @@ def test_roster_history_falls_back_when_runner_cache_is_empty(tmp_path) -> None:
     )
 
     assert result.tolist() == [True, False]
+
+
+def test_roster_manifest_creates_runner_cache_directory(tmp_path) -> None:
+    manifest = tmp_path / "missing" / "roster.json"
+
+    ROSTER.write_manifest(manifest, {"status": "ready"})
+
+    assert manifest.is_file()

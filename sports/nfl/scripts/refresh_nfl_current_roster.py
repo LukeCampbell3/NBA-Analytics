@@ -56,6 +56,11 @@ def history_availability(
     return pd.Series(False, index=player_ids.index, dtype=bool)
 
 
+def write_manifest(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
 def main() -> int:
     args = parse_args()
     raw = pd.read_parquet(ROSTER_URL.format(season=args.season))
@@ -100,7 +105,7 @@ def main() -> int:
         },
         "output": args.output.resolve().relative_to(REPO_ROOT).as_posix(),
     }
-    args.manifest.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    write_manifest(args.manifest, manifest)
     print(json.dumps(manifest, indent=2))
     return 0
 
