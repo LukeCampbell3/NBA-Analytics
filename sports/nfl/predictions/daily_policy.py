@@ -131,12 +131,19 @@ def select_live_board(scored: pd.DataFrame) -> tuple[list[dict[str, Any]], dict[
                 "direction": str(best["side"]).upper(),
                 "line": float(best["line"]),
                 "projection": round(float(best["prediction"]), 2),
+                "raw_model_probability": round(
+                    float(best["raw_model_probability"]), 6
+                ),
+                "calibrated_hit_probability": round(
+                    float(best["calibrated_hit_probability"]), 6
+                ),
                 "model_hit_probability": round(
-                    float(best["estimated_side_probability"]), 6
+                    float(best["calibrated_hit_probability"]), 6
                 ),
                 "no_vig_probability": round(float(best["no_vig_side_probability"]), 6),
                 "probability_advantage": round(float(best["probability_advantage"]), 6),
                 "meta_policy_score": round(float(best["meta_policy_score"]), 6),
+                "confidence_in_support": bool(best["confidence_in_support"]),
                 "selected_side_price": float(best["selected_price"]),
                 "selected_sportsbook_key": str(best["bookmaker"]).lower(),
                 "market_books": len(books),

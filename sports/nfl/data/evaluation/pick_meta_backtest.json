@@ -79,6 +79,87 @@
     "over_bets": 19,
     "under_bets": 80
   },
+  "confidence_calibration": {
+    "status": "passed",
+    "selected_method": "identity",
+    "selection_rule": "lowest grouped-development Brier score, then log loss",
+    "development_grouped_comparison": [
+      {
+        "method": "identity",
+        "rows": 63,
+        "mean_confidence": 0.640214,
+        "realized_hit_rate": 0.603175,
+        "calibration_gap": 0.037039,
+        "brier_score": 0.247348,
+        "log_loss": 0.689526
+      },
+      {
+        "method": "shrinkage_25",
+        "rows": 63,
+        "mean_confidence": 0.631146,
+        "realized_hit_rate": 0.603175,
+        "calibration_gap": 0.027972,
+        "brier_score": 0.247672,
+        "log_loss": 0.689948
+      },
+      {
+        "method": "platt",
+        "rows": 63,
+        "mean_confidence": 0.604222,
+        "realized_hit_rate": 0.603175,
+        "calibration_gap": 0.001047,
+        "brier_score": 0.25042,
+        "log_loss": 0.695039
+      },
+      {
+        "method": "beta",
+        "rows": 63,
+        "mean_confidence": 0.604134,
+        "realized_hit_rate": 0.603175,
+        "calibration_gap": 0.000959,
+        "brier_score": 0.250429,
+        "log_loss": 0.695062
+      },
+      {
+        "method": "offset",
+        "rows": 63,
+        "mean_confidence": 0.604072,
+        "realized_hit_rate": 0.603175,
+        "calibration_gap": 0.000897,
+        "brier_score": 0.25805,
+        "log_loss": 0.712311
+      },
+      {
+        "method": "isotonic",
+        "rows": 63,
+        "mean_confidence": 0.614195,
+        "realized_hit_rate": 0.603175,
+        "calibration_gap": 0.011021,
+        "brier_score": 0.279164,
+        "log_loss": 0.800221
+      }
+    ],
+    "locked_identity_evaluation": {
+      "rows": 36,
+      "mean_confidence": 0.690963,
+      "realized_hit_rate": 0.722222,
+      "calibration_gap": -0.03126,
+      "brier_score": 0.19461,
+      "log_loss": 0.575583
+    },
+    "full_recent_identity_evaluation": {
+      "rows": 99,
+      "mean_confidence": 0.658668,
+      "realized_hit_rate": 0.646465,
+      "calibration_gap": 0.012203,
+      "brier_score": 0.228171,
+      "log_loss": 0.648092
+    },
+    "historical_support": [
+      0.585604,
+      0.8068
+    ]
+  },
   "older_stress_periods": {
     "market_selector_pool_2021": {
       "bets": 48,

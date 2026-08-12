@@ -87,6 +87,11 @@ def validate_artifact(artifact: dict[str, Any]) -> None:
     }
     if not required.issubset(artifact.get("policy", {})):
         raise ValueError("NFL pick meta-policy is missing its frozen rule contract.")
+    calibration = artifact.get("confidence_calibration") or {}
+    if calibration.get("method") != "identity" or calibration.get("status") != "passed":
+        raise ValueError("NFL pick meta-policy lacks a validated confidence calibration.")
+    if len(calibration.get("historical_support") or []) != 2:
+        raise ValueError("NFL confidence calibration is missing historical support bounds.")
 
 
 def score_with_artifact(rows: pd.DataFrame, artifact: dict[str, Any]) -> pd.DataFrame:
@@ -94,9 +99,16 @@ def score_with_artifact(rows: pd.DataFrame, artifact: dict[str, Any]) -> pd.Data
 
     validate_artifact(artifact)
     policy = artifact["policy"]
+    calibration = artifact["confidence_calibration"]
     frame = rows.copy()
+    frame["raw_model_probability"] = frame["estimated_side_probability"].astype(float)
+    frame["calibrated_hit_probability"] = frame["raw_model_probability"].clip(0.0, 1.0)
+    support_minimum, support_maximum = calibration["historical_support"]
+    frame["confidence_in_support"] = frame["raw_model_probability"].between(
+        support_minimum, support_maximum, inclusive="both"
+    )
     frame["meta_policy_score"] = (
-        frame["estimated_side_probability"] + frame["probability_advantage"]
+        frame["calibrated_hit_probability"] + frame["probability_advantage"]
     )
     frame["meta_eligible"] = (
         frame["target"].eq("passing")
@@ -105,5 +117,6 @@ def score_with_artifact(rows: pd.DataFrame, artifact: dict[str, Any]) -> pd.Data
         & frame["selected_price"].between(
             policy["minimum_price"], policy["maximum_price"], inclusive="both"
         )
+        & frame["confidence_in_support"]
     )
     return frame

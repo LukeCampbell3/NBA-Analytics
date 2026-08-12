@@ -57,6 +57,9 @@ def _validate_live_payload(payload: dict[str, Any], *, run_date: str | None) -> 
     selection = payload.get("selection") or {}
     if selection.get("loss_aware_meta_policy") != EXPECTED_META_POLICY:
         raise ValueError("NFL live payload is missing the frozen loss-aware meta-policy.")
+    calibration = selection.get("confidence_calibration") or {}
+    if calibration.get("method") != "identity" or calibration.get("status") != "passed":
+        raise ValueError("NFL live payload lacks validated confidence calibration.")
     governance = payload.get("policy_governance") or {}
     if (
         governance.get("publication_mode") != "SHADOW_RESEARCH_ONLY"
@@ -86,6 +89,10 @@ def _validate_live_payload(payload: dict[str, Any], *, run_date: str | None) -> 
             raise ValueError(f"NFL live play {index} falls below the meta advantage gate.")
         if play.get("meta_policy_score") is None:
             raise ValueError(f"NFL live play {index} is missing its meta-policy score.")
+        if play.get("raw_model_probability") is None or play.get("calibrated_hit_probability") is None:
+            raise ValueError(f"NFL live play {index} is missing confidence provenance.")
+        if not bool(play.get("confidence_in_support")):
+            raise ValueError(f"NFL live play {index} falls outside calibration support.")
         if int(play.get("market_books") or 0) < 2 or int(play.get("market_common_books") or 0) < 1:
             raise ValueError(f"NFL live play {index} lacks sportsbook coverage.")
         if bool(play.get("candidate_authorized")):
@@ -143,6 +150,8 @@ def validate_nfl_publication(
         raise ValueError("NFL meta-policy evidence has the wrong sport contract.")
     if (meta_evidence.get("locked_recent_validation") or {}).get("status") != "passed":
         raise ValueError("NFL recent locked meta-policy validation has not passed.")
+    if (meta_evidence.get("confidence_calibration") or {}).get("status") != "passed":
+        raise ValueError("NFL confidence calibration evidence has not passed.")
     if (meta_evidence.get("deployment") or {}).get("status") != "shadow_only":
         raise ValueError("NFL meta-policy must remain shadow-only.")
 

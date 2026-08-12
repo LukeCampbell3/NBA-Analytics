@@ -46,6 +46,7 @@ def make_publication(tmp_path: Path) -> tuple[Path, Path]:
         {
             "sport": "NFL",
             "locked_recent_validation": {"status": "passed"},
+            "confidence_calibration": {"status": "passed"},
             "deployment": {"status": "shadow_only"},
         },
     )
@@ -104,7 +105,12 @@ def test_validate_nfl_publication_accepts_withheld_live_shadow(tmp_path: Path) -
                 "minimum_price": -130,
                 "maximum_price": 130,
                 "weekly_cap": 6,
-            }
+            },
+            "confidence_calibration": {
+                "method": "identity",
+                "status": "passed",
+                "historical_support": [0.585605, 0.806799],
+            },
         },
         "plays": [],
         "daily_parlay": {
@@ -143,7 +149,12 @@ def test_validate_nfl_publication_rejects_authorized_live_pick(tmp_path: Path) -
                 "minimum_price": -130,
                 "maximum_price": 130,
                 "weekly_cap": 6,
-            }
+            },
+            "confidence_calibration": {
+                "method": "identity",
+                "status": "passed",
+                "historical_support": [0.585605, 0.806799],
+            },
         },
         "plays": [
             {
@@ -154,6 +165,9 @@ def test_validate_nfl_publication_rejects_authorized_live_pick(tmp_path: Path) -
                 "model_hit_probability": 0.64,
                 "probability_advantage": 0.12,
                 "meta_policy_score": 0.76,
+                "raw_model_probability": 0.64,
+                "calibrated_hit_probability": 0.64,
+                "confidence_in_support": True,
                 "market_books": 2,
                 "market_common_books": 1,
                 "candidate_authorized": True,
@@ -192,7 +206,12 @@ def test_validate_nfl_publication_accepts_sportsgameodds_source(tmp_path: Path) 
                 "minimum_price": -130,
                 "maximum_price": 130,
                 "weekly_cap": 6,
-            }
+            },
+            "confidence_calibration": {
+                "method": "identity",
+                "status": "passed",
+                "historical_support": [0.585605, 0.806799],
+            },
         },
         "plays": [
             {
@@ -203,6 +222,9 @@ def test_validate_nfl_publication_accepts_sportsgameodds_source(tmp_path: Path) 
                 "model_hit_probability": 0.64,
                 "probability_advantage": 0.12,
                 "meta_policy_score": 0.76,
+                "raw_model_probability": 0.64,
+                "calibrated_hit_probability": 0.64,
+                "confidence_in_support": True,
                 "market_books": 2,
                 "market_common_books": 2,
                 "candidate_authorized": False,

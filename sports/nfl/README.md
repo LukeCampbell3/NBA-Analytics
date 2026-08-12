@@ -50,6 +50,14 @@ of explicit SportsGameOdds provider consensus closes, so this is research
 evidence rather than proof that a named sportsbook offered the same execution.
 The live gate still requires current, named-book, two-sided prices.
 
+Confidence calibration is independently replayed on the surviving policy pool.
+Grouped development tests compare identity, shrinkage, Platt, beta, offset, and
+isotonic transforms by Brier score and log loss. The identity transform remains
+active because it is best on both development and locked recent evidence: over
+the full 2025 profile, average confidence is 65.87% versus a 64.65% realized hit
+rate. Live output retains raw and calibrated fields separately and abstains when
+confidence falls outside the observed 58.56%-80.68% support range.
+
 The legacy locked 2022 singles replay is 127-83 (60.48%) with +13.00% ROI across
 210 selections. The deterministic distinct-game two-leg parlay failed its
 locked replay at 2-16 and -61.89% ROI, so the pipeline may construct that ticket

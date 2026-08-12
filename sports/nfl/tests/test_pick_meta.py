@@ -63,6 +63,8 @@ def test_meta_artifact_is_nfl_only_and_applies_frozen_gates() -> None:
 
     assert artifact["sport"] == "NFL"
     assert scored["meta_eligible"].tolist() == [True, False]
+    assert scored["calibrated_hit_probability"].tolist() == [0.64, 0.57]
+    assert scored["confidence_in_support"].tolist() == [True, False]
     with pytest.raises(ValueError, match="NFL loss-aware artifact"):
         validate_artifact(
             {
@@ -72,6 +74,20 @@ def test_meta_artifact_is_nfl_only_and_applies_frozen_gates() -> None:
                 "policy": artifact["policy"],
             }
         )
+
+
+def test_calibration_support_contains_every_recent_policy_selection() -> None:
+    artifact = joblib.load(
+        REPO_ROOT / "sports/nfl/model/nfl_pick_meta_selector.joblib"
+    )
+    recent = pd.read_csv(
+        REPO_ROOT / "sports/nfl/data/evaluation/recent_selector_pool_2025.csv"
+    )
+    selected = TRAINER.apply_meta_policy(recent, **artifact["policy"])
+    scored = score_with_artifact(selected, artifact)
+
+    assert not scored.empty
+    assert scored["confidence_in_support"].all()
 
 
 def test_roster_history_falls_back_when_runner_cache_is_empty(tmp_path) -> None:

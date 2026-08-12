@@ -195,6 +195,9 @@ def test_live_board_requires_fresh_multibook_executable_market() -> None:
         now_utc=datetime(2026, 9, 9, 15, 0, tzinfo=timezone.utc),
     )
     scored["meta_eligible"] = True
+    scored["raw_model_probability"] = scored["estimated_side_probability"]
+    scored["calibrated_hit_probability"] = scored["estimated_side_probability"]
+    scored["confidence_in_support"] = True
     scored["meta_policy_score"] = (
         scored["estimated_side_probability"] + scored["probability_advantage"]
     )

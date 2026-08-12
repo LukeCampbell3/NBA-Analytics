@@ -147,6 +147,7 @@ def withheld_payload(
     audit: dict,
     observations: int,
     meta_policy: dict | None = None,
+    confidence_calibration: dict | None = None,
 ) -> dict:
     return {
         "schema_version": 2,
@@ -168,6 +169,7 @@ def withheld_payload(
             "minimum_books": MINIMUM_BOOKS,
             "minimum_common_books": MINIMUM_COMMON_BOOKS,
             "loss_aware_meta_policy": meta_policy or {},
+            "confidence_calibration": confidence_calibration or {},
         },
         "data_quality": {
             "status": "withheld",
@@ -252,9 +254,15 @@ def main() -> int:
     generated_at = _iso(as_of)
     if not observations:
         meta_policy = {}
+        confidence_calibration = {}
         if args.meta_artifact.is_file():
             candidate = joblib.load(args.meta_artifact)
             meta_policy = candidate.get("policy", {}) if isinstance(candidate, dict) else {}
+            confidence_calibration = (
+                candidate.get("confidence_calibration", {})
+                if isinstance(candidate, dict)
+                else {}
+            )
         no_market_reason = (
             "No configured NFL odds provider is available; no sportsbook odds were validated."
             if provider_audit.get("status") == "missing_credentials"
@@ -267,6 +275,7 @@ def main() -> int:
             audit=provider_audit,
             observations=0,
             meta_policy=meta_policy,
+            confidence_calibration=confidence_calibration,
         )
         write_payload(args.output, payload)
         print(json.dumps(payload["data_quality"], indent=2))
@@ -350,6 +359,7 @@ def main() -> int:
             "minimum_books": MINIMUM_BOOKS,
             "minimum_common_books": MINIMUM_COMMON_BOOKS,
             "loss_aware_meta_policy": meta_artifact["policy"],
+            "confidence_calibration": meta_artifact["confidence_calibration"],
             **selection_audit,
         },
         "data_quality": {

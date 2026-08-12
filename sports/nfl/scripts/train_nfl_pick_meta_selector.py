@@ -11,7 +11,11 @@ from pathlib import Path
 from typing import Any
 
 import joblib
+import numpy as np
 import pandas as pd
+from sklearn.isotonic import IsotonicRegression
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import brier_score_loss, log_loss
 
 
 SCRIPT_PATH = Path(__file__).resolve()
@@ -112,6 +116,93 @@ def select_policy(development: pd.DataFrame) -> tuple[dict[str, Any], list[dict[
     return {key: selected[key] for key in policy_keys}, leaderboard
 
 
+def _logit(probability: np.ndarray) -> np.ndarray:
+    clipped = np.clip(probability, 1e-5, 1.0 - 1e-5)
+    return np.log(clipped / (1.0 - clipped))
+
+
+def _calibration_metrics(actual: np.ndarray, probability: np.ndarray) -> dict[str, Any]:
+    clipped = np.clip(probability, 1e-5, 1.0 - 1e-5)
+    return {
+        "rows": int(len(actual)),
+        "mean_confidence": round(float(clipped.mean()), 6),
+        "realized_hit_rate": round(float(actual.mean()), 6),
+        "calibration_gap": round(float(clipped.mean() - actual.mean()), 6),
+        "brier_score": round(float(brier_score_loss(actual, clipped)), 6),
+        "log_loss": round(float(log_loss(actual, clipped)), 6),
+    }
+
+
+def confidence_calibration_report(
+    development: pd.DataFrame, locked: pd.DataFrame, policy: dict[str, Any]
+) -> dict[str, Any]:
+    selected_development = apply_meta_policy(development, **policy).copy()
+    selected_locked = apply_meta_policy(locked, **policy).copy()
+    selected_development["won"] = selected_development["result"].eq("win").astype(int)
+    selected_locked["won"] = selected_locked["result"].eq("win").astype(int)
+    raw = selected_development["estimated_side_probability"].to_numpy(dtype=float)
+    actual = selected_development["won"].to_numpy(dtype=int)
+    weeks = selected_development["week"].to_numpy(dtype=int)
+    candidate_names = ("identity", "shrinkage_25", "platt", "beta", "isotonic", "offset")
+    candidate_probabilities = {
+        name: np.zeros(len(selected_development), dtype=float) for name in candidate_names
+    }
+    for week in sorted(set(weeks)):
+        train = weeks != week
+        validation = weeks == week
+        candidate_probabilities["identity"][validation] = raw[validation]
+        candidate_probabilities["shrinkage_25"][validation] = (
+            0.75 * raw[validation] + 0.25 * actual[train].mean()
+        )
+        platt = LogisticRegression(C=0.1, max_iter=2_000, random_state=42).fit(
+            _logit(raw[train]).reshape(-1, 1), actual[train]
+        )
+        candidate_probabilities["platt"][validation] = platt.predict_proba(
+            _logit(raw[validation]).reshape(-1, 1)
+        )[:, 1]
+        beta_features = np.column_stack(
+            [np.log(np.clip(raw, 1e-5, 1.0)), np.log(np.clip(1.0 - raw, 1e-5, 1.0))]
+        )
+        beta = LogisticRegression(C=0.1, max_iter=2_000, random_state=42).fit(
+            beta_features[train], actual[train]
+        )
+        candidate_probabilities["beta"][validation] = beta.predict_proba(
+            beta_features[validation]
+        )[:, 1]
+        isotonic = IsotonicRegression(
+            y_min=0.05, y_max=0.95, out_of_bounds="clip"
+        ).fit(raw[train], actual[train])
+        candidate_probabilities["isotonic"][validation] = isotonic.predict(raw[validation])
+        candidate_probabilities["offset"][validation] = np.clip(
+            raw[validation] + actual[train].mean() - raw[train].mean(), 0.05, 0.95
+        )
+    candidates = [
+        {"method": name, **_calibration_metrics(actual, candidate_probabilities[name])}
+        for name in candidate_names
+    ]
+    candidates.sort(key=lambda row: (row["brier_score"], row["log_loss"]))
+    selected_method = candidates[0]["method"]
+    locked_actual = selected_locked["won"].to_numpy(dtype=int)
+    locked_raw = selected_locked["estimated_side_probability"].to_numpy(dtype=float)
+    full = pd.concat([selected_development, selected_locked], ignore_index=True)
+    support = [
+        round(float(full["estimated_side_probability"].min()) - 1e-6, 6),
+        round(float(full["estimated_side_probability"].max()) + 1e-6, 6),
+    ]
+    return {
+        "status": "passed" if selected_method == "identity" else "failed",
+        "selected_method": selected_method,
+        "selection_rule": "lowest grouped-development Brier score, then log loss",
+        "development_grouped_comparison": candidates,
+        "locked_identity_evaluation": _calibration_metrics(locked_actual, locked_raw),
+        "full_recent_identity_evaluation": _calibration_metrics(
+            full["result"].eq("win").astype(int).to_numpy(),
+            full["estimated_side_probability"].to_numpy(dtype=float),
+        ),
+        "historical_support": support,
+    }
+
+
 def main() -> int:
     args = parse_args()
     if "mlb" in str(args.artifact).lower():
@@ -123,6 +214,7 @@ def main() -> int:
     development_summary = evaluate(development, policy)
     locked_summary = evaluate(locked, policy)
     full_recent_summary = evaluate(recent, policy)
+    calibration = confidence_calibration_report(development, locked, policy)
     stress_results = {
         path.stem: evaluate(pd.read_csv(path, low_memory=False), policy)
         for path in args.stress_pools
@@ -168,6 +260,7 @@ def main() -> int:
             **locked_summary,
         },
         "full_recent_season": full_recent_summary,
+        "confidence_calibration": calibration,
         "older_stress_periods": stress_results,
         "deployment": {
             "status": "shadow_only",
@@ -193,6 +286,11 @@ def main() -> int:
         "trained_at_utc": trained_at,
         "learned_from": "settled 2025 weeks 1-12 passing candidate wins and losses",
         "policy": policy,
+        "confidence_calibration": {
+            "method": calibration["selected_method"],
+            "status": calibration["status"],
+            "historical_support": calibration["historical_support"],
+        },
     }
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
