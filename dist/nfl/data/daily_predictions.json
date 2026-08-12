@@ -2,7 +2,7 @@
   "schema_version": 2,
   "league": "NFL",
   "run_date": "2026-08-11",
-  "generated_at_utc": "2026-08-12T00:46:08.846234Z",
+  "generated_at_utc": "2026-08-12T01:00:08.512911Z",
   "publication_status": "withheld_current_pool",
   "publication_state": "withheld_current_pool",
   "mode": "live_shadow",
@@ -36,6 +36,14 @@
       "minimum_price": -130,
       "maximum_price": 130,
       "weekly_cap": 6
+    },
+    "confidence_calibration": {
+      "method": "identity",
+      "status": "passed",
+      "historical_support": [
+        0.585604,
+        0.8068
+      ]
     }
   },
   "data_quality": {
@@ -45,7 +53,7 @@
     "provider_audit": {
       "provider": "provider_chain",
       "status": "no_props",
-      "fetched_at_utc": "2026-08-12T00:46:06.485439+00:00",
+      "fetched_at_utc": "2026-08-12T01:00:05.982418+00:00",
       "complete_two_sided_rows": 0,
       "provider_attempts": [
         {
@@ -62,7 +70,7 @@
       ],
       "raw_source_sha256": null,
       "replayed_from_snapshot": true,
-      "snapshot_sha256": "6507b40f4e8066a41235899d81a553900da166905f96bba4fa6643e8a779163b"
+      "snapshot_sha256": "287c0357ea56980a560bcee56ea0b3278cc9ff79c3faebfa633eb3c36421db59"
     }
   },
   "policy_governance": {

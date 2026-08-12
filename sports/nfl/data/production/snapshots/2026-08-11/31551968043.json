@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "audit": {
+    "provider": "provider_chain",
+    "status": "no_props",
+    "fetched_at_utc": "2026-08-12T01:00:05.982418+00:00",
+    "complete_two_sided_rows": 0,
+    "provider_attempts": [
+      {
+        "provider": "sportsgameodds",
+        "status": "no_props",
+        "complete_two_sided_rows": 0,
+        "events_discovered": 0,
+        "events_with_odds": 0
+      },
+      {
+        "provider": "the_odds_api",
+        "status": "missing_credentials"
+      }
+    ],
+    "raw_source_sha256": null
+  },
+  "observations": []
+}
