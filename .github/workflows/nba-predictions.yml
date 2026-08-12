@@ -79,6 +79,7 @@ jobs:
           python -m pytest \
             sports/nba/tests/test_train_selected_board_calibrator.py \
             sports/nba/tests/test_selected_board_calibration.py \
+            sports/nba/tests/test_publish_nba_offseason_payload.py \
             tests/test_validate_daily_publication.py \
             -q
 
@@ -92,17 +93,20 @@ jobs:
             python sports/site/pipeline/build_static_site.py
             exit 0
           fi
-          nba_args=()
           case "${RUN_DATE:5:2}" in
-            07|08|09) nba_args+=(--nba-skip-update-data) ;;
+            07|08|09)
+              python sports/nba/predictions/Player-Predictor/scripts/publish_nba_offseason_payload.py \
+                --run-date "$RUN_DATE"
+              python sports/site/pipeline/build_static_site.py
+              exit 0
+              ;;
           esac
           python run_daily_predictions.py \
             --run-date "$RUN_DATE" \
             --skip-mlb \
             --nba-skip-cutoff-meta-monitor \
             --nba-market-provider rotowire \
-            --nba-snapshot-policy live_only \
-            "${nba_args[@]}"
+            --nba-snapshot-policy live_only
 
       - name: Validate NBA publication
         env:
