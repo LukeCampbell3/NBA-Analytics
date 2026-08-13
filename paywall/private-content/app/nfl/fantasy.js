@@ -68,6 +68,9 @@ class NflFantasyDraftBoard {
             this.selectedId = button.dataset.playerId;
             this.renderRankings();
             this.renderDetail();
+            if (window.matchMedia("(max-width: 980px)").matches) {
+                this.elements.detail.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
         });
     }
 
@@ -151,14 +154,73 @@ class NflFantasyDraftBoard {
         const statRows = this.statsFor(player.position).map(([key, label]) => `<tr><td>${this.escape(label)}</td><td>${this.formatNum(perGame[key], this.statPlaces(key))}</td><td>${this.formatNum(total[key], this.statPlaces(key))}</td></tr>`).join("");
         const roleLabel = Number.isFinite(Number(lineup.depth_rank)) ? `${player.position}${this.formatInt(lineup.depth_rank)} on current depth chart` : "Depth role unconfirmed";
         const teamChange = lineup.changed_team ? " / new-team uncertainty applied" : "";
+        const distribution = this.renderDistribution(points);
         this.elements.detail.innerHTML = `
             <div class="fantasy-detail-top"><div><span class="fantasy-detail-rank">#${this.formatInt(player.rank)} overall</span><h3>${this.escape(player.player)}</h3><p>${this.escape(player.team)} · ${this.escape(positionNames[player.position] || player.position)} · ${this.escape(player.position)}${this.formatInt(player.position_rank)}</p></div><span class="fantasy-tier fantasy-tier-large">Tier ${this.formatInt(player.tier)}</span></div>
             <p class="fantasy-assessment">${this.escape(player.assessment)}</p>
+            ${distribution}
             <div class="fantasy-range"><div><span>Floor</span><strong>${this.formatNum(points.season_p10, 1)}</strong></div><div><span>Median</span><strong>${this.formatNum(points.season_median, 1)}</strong></div><div><span>Ceiling</span><strong>${this.formatNum(points.season_p90, 1)}</strong></div></div>
             <div class="fantasy-detail-metrics"><div><span>PPR / game</span><strong>${this.formatNum(points.per_game, 2)}</strong></div><div><span>Season mean</span><strong>${this.formatNum(points.season_mean, 1)}</strong></div><div><span>VORP</span><strong>${this.formatSignedNum(player.value_over_replacement, 1)}</strong></div><div><span>Draft score</span><strong>${this.formatNum(player.draft_score, 1)}</strong></div></div>
             <p class="fantasy-confidence"><strong>${this.escape(roleLabel)}</strong> / ${this.formatNum(player.games, 1)} expected active or start games of ${this.formatInt(player.schedule_games)}${teamChange}</p>
             <table class="fantasy-stat-table"><thead><tr><th>Stat</th><th>Per game</th><th>Season</th></tr></thead><tbody>${statRows}</tbody></table>
             <p class="fantasy-confidence"><strong>${this.escape(player.projection_confidence)}</strong> confidence / ${this.formatInt(player.history_games)} recent games</p>`;
+    }
+
+    renderDistribution(points) {
+        const curve = Array.isArray(points?.distribution)
+            ? points.distribution.filter((point) => Number.isFinite(Number(point.value)) && Number.isFinite(Number(point.density)))
+            : [];
+        if (curve.length < 3) return "";
+        const width = 620;
+        const left = 34;
+        const right = 594;
+        const top = 48;
+        const baseline = 166;
+        const low = Number(curve[0].value);
+        const high = Number(curve[curve.length - 1].value);
+        const span = Math.max(high - low, 1);
+        const x = (value) => left + ((Number(value) - low) / span) * (right - left);
+        const y = (density) => baseline - Math.max(0, Math.min(1, Number(density))) * (baseline - top);
+        const coordinates = curve.map((point) => ({ x: x(point.value), y: y(point.density), density: Number(point.density) }));
+        let curvePath = `M ${coordinates[0].x.toFixed(1)} ${coordinates[0].y.toFixed(1)}`;
+        for (let index = 1; index < coordinates.length - 1; index += 1) {
+            const current = coordinates[index];
+            const next = coordinates[index + 1];
+            const midX = (current.x + next.x) / 2;
+            const midY = (current.y + next.y) / 2;
+            curvePath += ` Q ${current.x.toFixed(1)} ${current.y.toFixed(1)} ${midX.toFixed(1)} ${midY.toFixed(1)}`;
+        }
+        const last = coordinates[coordinates.length - 1];
+        curvePath += ` L ${last.x.toFixed(1)} ${last.y.toFixed(1)}`;
+        const areaPath = `${curvePath} L ${last.x.toFixed(1)} ${baseline} L ${coordinates[0].x.toFixed(1)} ${baseline} Z`;
+        const densityAt = (value) => {
+            const target = Number(value);
+            for (let index = 1; index < curve.length; index += 1) {
+                const previous = curve[index - 1];
+                const current = curve[index];
+                if (target <= Number(current.value)) {
+                    const range = Math.max(Number(current.value) - Number(previous.value), 0.001);
+                    const ratio = Math.max(0, Math.min(1, (target - Number(previous.value)) / range));
+                    return Number(previous.density) + ratio * (Number(current.density) - Number(previous.density));
+                }
+            }
+            return Number(curve[curve.length - 1].density);
+        };
+        const meanX = x(points.season_mean);
+        const medianX = x(points.season_median);
+        const closeMarkers = Math.abs(meanX - medianX) < 74;
+        const marker = (kind, label, value, labelY) => {
+            const markerX = x(value);
+            const markerTop = Math.max(y(densityAt(value)), top);
+            return `<g class="fantasy-distribution-marker is-${kind}"><line x1="${markerX.toFixed(1)}" y1="${markerTop.toFixed(1)}" x2="${markerX.toFixed(1)}" y2="${baseline}"/><text x="${markerX.toFixed(1)}" y="${labelY}" text-anchor="middle">${label} ${this.formatNum(value, 1)}</text></g>`;
+        };
+        const bound = (kind, label, value) => {
+            const markerX = x(value);
+            return `<g class="fantasy-distribution-bound is-${kind}"><line x1="${markerX.toFixed(1)}" y1="${top}" x2="${markerX.toFixed(1)}" y2="${baseline}"/><text x="${markerX.toFixed(1)}" y="190" text-anchor="middle">${label}</text><text x="${markerX.toFixed(1)}" y="207" text-anchor="middle">${this.formatNum(value, 1)}</text></g>`;
+        };
+        const skewDifference = Number(points.season_mean) - Number(points.season_median);
+        const skew = Math.abs(skewDifference) < span * 0.012 ? "balanced" : skewDifference < 0 ? "left-skewed" : "right-skewed";
+        return `<figure class="fantasy-distribution"><div class="fantasy-distribution-heading"><strong>Simulated season distribution</strong><span>${this.escape(skew)}</span></div><svg viewBox="0 0 ${width} 220" role="img" aria-label="Fantasy point distribution. Floor ${this.formatNum(points.season_p10, 1)}, mean ${this.formatNum(points.season_mean, 1)}, median ${this.formatNum(points.season_median, 1)}, and ceiling ${this.formatNum(points.season_p90, 1)}."><path class="fantasy-distribution-area" d="${areaPath}"/><path class="fantasy-distribution-curve" d="${curvePath}"/><line class="fantasy-distribution-axis" x1="${left}" y1="${baseline}" x2="${right}" y2="${baseline}"/>${bound("floor", "P10 FLOOR", points.season_p10)}${bound("ceiling", "P90 CEILING", points.season_p90)}${marker("mean", "MEAN", points.season_mean, closeMarkers ? 22 : 30)}${marker("median", "MEDIAN", points.season_median, closeMarkers ? 40 : 30)}</svg><figcaption>Each curve uses this player's 2,000 simulated season totals.</figcaption></figure>`;
     }
 
     statsFor(position) {
