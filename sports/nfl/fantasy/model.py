@@ -277,6 +277,36 @@ def _round_map(values: np.ndarray, divisor: float = 1.0) -> dict[str, float]:
     }
 
 
+def _distribution_curve(values: np.ndarray, points: int = 33) -> list[dict[str, float]]:
+    """Compress simulated season outcomes into a smooth, frontend-ready KDE."""
+
+    sample = np.asarray(values, dtype=float)
+    sample = sample[np.isfinite(sample)]
+    if sample.size == 0:
+        return []
+    q01, q99 = np.quantile(sample, [0.01, 0.99])
+    mean = float(sample.mean())
+    median = float(np.median(sample))
+    low = float(min(q01, mean, median))
+    high = float(max(q99, mean, median))
+    if high - low < 1.0:
+        low -= 0.5
+        high += 0.5
+    spread = float(np.std(sample, ddof=1)) if sample.size > 1 else 0.0
+    iqr = float(np.subtract(*np.quantile(sample, [0.75, 0.25])))
+    robust_spread = min(spread, iqr / 1.34) if spread > 0 and iqr > 0 else max(spread, iqr / 1.34)
+    bandwidth = max(0.9 * robust_spread * sample.size ** (-0.2), (high - low) / 80.0, 0.5)
+    grid = np.linspace(low, high, points)
+    z = (grid[:, None] - sample[None, :]) / bandwidth
+    density = np.exp(-0.5 * z * z).mean(axis=1) / (bandwidth * np.sqrt(2.0 * np.pi))
+    peak = float(density.max())
+    normalized = density / peak if peak > 0 else np.zeros_like(density)
+    return [
+        {"value": round(float(value), 2), "density": round(float(weight), 4)}
+        for value, weight in zip(grid, normalized)
+    ]
+
+
 def _simulate_player(
     row: Any,
     history: pd.DataFrame,
@@ -380,6 +410,7 @@ def _simulate_player(
             "season_p10": round(float(p10), 1),
             "season_median": round(float(p50), 1),
             "season_p90": round(float(p90), 1),
+            "distribution": _distribution_curve(season_points),
         },
         "projected_stats": {
             "per_game": _round_map(mean_totals, max(expected_games, 1.0)),

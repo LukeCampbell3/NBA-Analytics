@@ -97,6 +97,11 @@ def test_draft_rankings_are_deterministic_and_expose_distributions() -> None:
     assert {row["position"] for row in first["rankings"]} == {"QB", "RB", "WR", "TE"}
     assert all(row["fantasy_points"]["season_p10"] <= row["fantasy_points"]["season_p90"] for row in first["rankings"])
     assert all("per_game" in row["projected_stats"] and "season_total" in row["projected_stats"] for row in first["rankings"])
+    assert all(len(row["fantasy_points"]["distribution"]) == 33 for row in first["rankings"])
+    assert all(
+        max(point["density"] for point in row["fantasy_points"]["distribution"]) == 1.0
+        for row in first["rankings"]
+    )
 
 
 def test_below_replacement_players_keep_negative_vorp() -> None:
