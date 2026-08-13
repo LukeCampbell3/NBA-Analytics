@@ -17,7 +17,7 @@
       "no plays passed publication filters"
     ]
   },
-  "generated_at_utc": "2026-08-13T11:03:14.225053+00:00",
+  "generated_at_utc": "2026-08-13T13:54:20.593109+00:00",
   "summary": {
     "play_count": 0,
     "source_play_count": 0,
@@ -122,16 +122,16 @@
     "min_historical_market_availability_rate": 0.0
   },
   "filter_rejections": {
-    "edge_too_small": 585,
-    "nonstandard_market_line": 82,
-    "history_too_short": 60,
-    "core_price_too_heavily_juiced": 45,
-    "hit_probability_too_low": 38,
-    "side_price_unconfirmed": 35,
-    "synthetic_market_source": 29,
-    "prediction_too_low": 46,
-    "market_books_too_low": 3,
-    "core_price_too_long": 5
+    "edge_too_small": 583,
+    "nonstandard_market_line": 83,
+    "history_too_short": 55,
+    "core_price_too_heavily_juiced": 43,
+    "hit_probability_too_low": 37,
+    "side_price_unconfirmed": 36,
+    "core_price_too_long": 7,
+    "synthetic_market_source": 32,
+    "prediction_too_low": 47,
+    "market_books_too_low": 5
   },
   "by_target": {},
   "by_direction": {},
@@ -166,7 +166,7 @@
   "daily_parlay": {
     "schema_version": 1,
     "policy_version": "mlb_over_consistency_parlay_v1",
-    "generated_at_utc": "2026-08-13T11:03:13.201050+00:00",
+    "generated_at_utc": "2026-08-13T13:54:19.951902+00:00",
     "run_date": "2026-08-13",
     "status": "withheld",
     "objective": "ticket_hit_probability_then_expected_return",
@@ -187,18 +187,18 @@
       "distinct_games_required": true
     },
     "pool_candidate_count": 928,
-    "eligible_anchor_count": 35,
+    "eligible_anchor_count": 37,
     "considered_anchor_count": 22,
     "filter_rejections": {
       "history_too_short": 8,
       "history_too_stale": 4,
-      "insufficient_book_coverage": 13,
-      "leg_probability_too_low": 112,
-      "leg_value_too_low": 16,
-      "not_over": 486,
+      "insufficient_book_coverage": 17,
+      "leg_probability_too_low": 119,
+      "leg_value_too_low": 12,
+      "not_over": 476,
       "price_outside_playable_range": 119,
-      "unconfirmed_market_price": 114,
-      "unsupported_anchor_target": 21
+      "unconfirmed_market_price": 116,
+      "unsupported_anchor_target": 20
     },
     "selected_ticket": {
       "leg_indices": [
@@ -207,11 +207,11 @@
       ],
       "leg_keys": [
         "2026-08-13|824238|Kevin McGonigle|H|OVER",
-        "2026-08-13|822696|CJ Abrams|H|OVER"
+        "2026-08-13|822696|Alex Bregman|H|OVER"
       ],
       "leg_names": [
         "Kevin McGonigle",
-        "CJ Abrams"
+        "Alex Bregman"
       ],
       "leg_targets": [
         "H",
@@ -222,17 +222,17 @@
         "OVER"
       ],
       "leg_count": 2,
-      "projected_probability": 0.5195369221118903,
-      "independent_probability": 0.5195369221118903,
+      "projected_probability": 0.5287319399380809,
+      "independent_probability": 0.5287319399380809,
       "pairwise_adjustment_factor": 1.001977614,
-      "parlay_score": 0.5961478182147786,
-      "combined_decimal_price": 2.125,
-      "combined_american_price": 112.5,
-      "expected_return_per_unit": 0.10401595948776676,
+      "parlay_score": 0.610287616193416,
+      "combined_decimal_price": 2.0999999999999996,
+      "combined_american_price": 109.99999999999997,
+      "expected_return_per_unit": 0.1103370738699696,
       "same_sportsbook_confirmed": true,
       "sportsbook_key": "draftkings",
       "sportsbook": "DraftKings",
-      "avg_leg_quality": 0.8032129219381706,
+      "avg_leg_quality": 0.8117122976564393,
       "same_player": false,
       "same_game": false,
       "same_team": false,
@@ -254,15 +254,15 @@
           "game_status_code": "P",
           "target": "H",
           "direction": "OVER",
-          "prediction": 1.3366679567193205,
+          "prediction": 1.3665900346413984,
           "market_line": 0.5,
           "market_source": "real",
           "market_bucket": "H|OVER|0.5",
           "historical_bucket_key": "H|OVER|0.5",
-          "estimated_graded_hit_rate": 0.7280961875318018,
-          "model_hit_probability": 0.7372803951309104,
-          "final_pool_quality_score": 0.8206200766942401,
-          "expected_value_per_unit": 0.09214428129770275,
+          "estimated_graded_hit_rate": 0.7347240611694581,
+          "model_hit_probability": 0.7450250654765117,
+          "final_pool_quality_score": 0.8302312393687575,
+          "expected_value_per_unit": 0.10208609175418715,
           "selected_side_price": -200.0,
           "selected_sportsbook_key": "draftkings",
           "selected_sportsbook": "DraftKings",
@@ -284,7 +284,7 @@
           ],
           "history_rows": 127,
           "days_since_history": 1,
-          "selection_score": 0.8206200766942401,
+          "selection_score": 0.8302312393687575,
           "parlay_precision_eligible": true,
           "lineup_status": "unconfirmed",
           "batting_order": "",
@@ -294,29 +294,29 @@
           ]
         },
         {
-          "play_key": "2026-08-13|822696|CJ Abrams|H|OVER",
-          "player": "CJ Abrams",
-          "player_display_name": "CJ Abrams",
-          "player_id": "cj_abrams",
+          "play_key": "2026-08-13|822696|Alex Bregman|H|OVER",
+          "player": "Alex Bregman",
+          "player_display_name": "Alex Bregman",
+          "player_id": "alex_bregman",
           "player_type": "hitter",
-          "team": "WSH",
-          "opponent": "CHC",
+          "team": "CHC",
+          "opponent": "WSH",
           "game_id": "822696",
           "market_date": "2026-08-13",
           "commence_time_utc": "2026-08-13T20:05:00Z",
           "game_status_code": "P",
           "target": "H",
           "direction": "OVER",
-          "prediction": 1.273999831550805,
+          "prediction": 1.299718848268631,
           "market_line": 0.5,
           "market_source": "real",
           "market_bucket": "H|OVER|0.5",
           "historical_bucket_key": "H|OVER|0.5",
-          "estimated_graded_hit_rate": 0.713555339265113,
-          "model_hit_probability": 0.7202894139312845,
-          "final_pool_quality_score": 0.7858057671821012,
-          "expected_value_per_unit": 0.010870063958910159,
-          "selected_side_price": -240.0,
+          "estimated_graded_hit_rate": 0.719633353366024,
+          "model_hit_probability": 0.7273915734081988,
+          "final_pool_quality_score": 0.793193355944121,
+          "expected_value_per_unit": 0.0074866947124335725,
+          "selected_side_price": -250.0,
           "selected_sportsbook_key": "draftkings",
           "selected_sportsbook": "DraftKings",
           "price_confirmed": true,
@@ -335,9 +335,9 @@
             "draftkings",
             "caesars"
           ],
-          "history_rows": 132,
+          "history_rows": 124,
           "days_since_history": 1,
-          "selection_score": 0.7858057671821012,
+          "selection_score": 0.793193355944121,
           "parlay_precision_eligible": true,
           "lineup_status": "unconfirmed",
           "batting_order": "",
@@ -360,7 +360,7 @@
       "method": "stored_pre_event_projection_synthetic_line_grading",
       "price_validation": "unavailable_historically; no ROI claim",
       "history_before_date": "2026-08-13",
-      "event_rows": 9388,
+      "event_rows": 9591,
       "dates": 122,
       "by_leg_count": [
         {
@@ -368,32 +368,32 @@
           "all_dates": {
             "tickets": 114,
             "dates": 114,
-            "hits": 102,
-            "hit_rate": 0.8947368421052632,
-            "win_rate_wilson_95_low": 0.8249833564660207,
-            "win_rate_wilson_95_high": 0.9387537278912861,
-            "mean_projected_probability": 0.7368715373374729,
-            "brier_score": 0.10943125251849906
+            "hits": 100,
+            "hit_rate": 0.8771929824561403,
+            "win_rate_wilson_95_low": 0.8043737386135157,
+            "win_rate_wilson_95_high": 0.9254194753279106,
+            "mean_projected_probability": 0.7383670816952965,
+            "brier_score": 0.11912190649455598
           },
           "development": {
             "tickets": 94,
             "dates": 94,
-            "hits": 82,
-            "hit_rate": 0.8723404255319149,
-            "win_rate_wilson_95_low": 0.7899995060049553,
-            "win_rate_wilson_95_high": 0.9254425963318832,
-            "mean_projected_probability": 0.7403830463387072,
-            "brier_score": 0.11525657128105155
+            "hits": 81,
+            "hit_rate": 0.8617021276595744,
+            "win_rate_wilson_95_low": 0.7776378977292479,
+            "win_rate_wilson_95_high": 0.9173630016836808,
+            "mean_projected_probability": 0.7406057817833372,
+            "brier_score": 0.12035573271410681
           },
           "fixed_recent_holdout": {
             "tickets": 20,
             "dates": 20,
-            "hits": 20,
-            "hit_rate": 1.0,
-            "win_rate_wilson_95_low": 0.8388698745050667,
-            "win_rate_wilson_95_high": 1.0,
-            "mean_projected_probability": 0.7203674450316714,
-            "brier_score": 0.08205225433450244
+            "hits": 19,
+            "hit_rate": 0.95,
+            "win_rate_wilson_95_low": 0.7638641064874331,
+            "win_rate_wilson_95_high": 0.9911187805671268,
+            "mean_projected_probability": 0.7278451912815056,
+            "brier_score": 0.11332292326266727
           }
         },
         {
@@ -401,12 +401,12 @@
           "all_dates": {
             "tickets": 113,
             "dates": 113,
-            "hits": 89,
-            "hit_rate": 0.7876106194690266,
-            "win_rate_wilson_95_low": 0.7033922378736531,
-            "win_rate_wilson_95_high": 0.8529164740919483,
-            "mean_projected_probability": 0.596350519905596,
-            "brier_score": 0.18835721251295062
+            "hits": 88,
+            "hit_rate": 0.7787610619469026,
+            "win_rate_wilson_95_low": 0.693775256933706,
+            "win_rate_wilson_95_high": 0.8454162638944921,
+            "mean_projected_probability": 0.5981290205925558,
+            "brier_score": 0.19425987736655853
           },
           "development": {
             "tickets": 93,
@@ -415,18 +415,18 @@
             "hit_rate": 0.8064516129032258,
             "win_rate_wilson_95_low": 0.7146734140699786,
             "win_rate_wilson_95_high": 0.8739166133562513,
-            "mean_projected_probability": 0.5998869098658471,
-            "brier_score": 0.1780558945628123
+            "mean_projected_probability": 0.600240443651533,
+            "brier_score": 0.17963008780141748
           },
           "fixed_recent_holdout": {
             "tickets": 20,
             "dates": 20,
-            "hits": 14,
-            "hit_rate": 0.7,
-            "win_rate_wilson_95_low": 0.4810232237710206,
-            "win_rate_wilson_95_high": 0.854524726031006,
-            "mean_projected_probability": 0.5799063065904282,
-            "brier_score": 0.2362583409810936
+            "hits": 13,
+            "hit_rate": 0.65,
+            "win_rate_wilson_95_low": 0.43285051021946463,
+            "win_rate_wilson_95_high": 0.8188104521320554,
+            "mean_projected_probability": 0.5883109033683126,
+            "brier_score": 0.26228839884446453
           }
         },
         {
@@ -434,12 +434,12 @@
           "all_dates": {
             "tickets": 113,
             "dates": 113,
-            "hits": 75,
-            "hit_rate": 0.6637168141592921,
-            "win_rate_wilson_95_low": 0.5725004846938809,
-            "win_rate_wilson_95_high": 0.7441675513480769,
-            "mean_projected_probability": 0.46920677091097324,
-            "brier_score": 0.2511504740611041
+            "hits": 76,
+            "hit_rate": 0.672566371681416,
+            "win_rate_wilson_95_low": 0.5816120949035489,
+            "win_rate_wilson_95_high": 0.752173132275812,
+            "mean_projected_probability": 0.4711971520632212,
+            "brier_score": 0.25513743093991526
           },
           "development": {
             "tickets": 93,
@@ -448,18 +448,18 @@
             "hit_rate": 0.6774193548387096,
             "win_rate_wilson_95_low": 0.5770106827427646,
             "win_rate_wilson_95_high": 0.7637519647145263,
-            "mean_projected_probability": 0.4712592565597382,
-            "brier_score": 0.24748770842004647
+            "mean_projected_probability": 0.47193295396795654,
+            "brier_score": 0.24817781021424176
           },
           "fixed_recent_holdout": {
             "tickets": 20,
             "dates": 20,
-            "hits": 12,
-            "hit_rate": 0.6,
-            "win_rate_wilson_95_low": 0.3865779423152061,
-            "win_rate_wilson_95_high": 0.7811960325858074,
-            "mean_projected_probability": 0.45966271264421643,
-            "brier_score": 0.26818233429202193
+            "hits": 13,
+            "hit_rate": 0.65,
+            "win_rate_wilson_95_low": 0.43285051021946463,
+            "win_rate_wilson_95_high": 0.8188104521320554,
+            "mean_projected_probability": 0.4677756732062022,
+            "brier_score": 0.2874996673142969
           }
         }
       ]
@@ -469,10 +469,10 @@
   },
   "policy_governance": {
     "schema_version": "MLB_POLICY_GOVERNANCE_STATUS_V1",
-    "generated_at_utc": "2026-08-13T11:02:35.139524+00:00",
+    "generated_at_utc": "2026-08-13T13:53:28.607317+00:00",
     "run_date": "2026-08-13",
     "slate_id": "MLB_20260813",
-    "snapshot_id": "mlb_20260813_110051Z_a7aadc88057b",
+    "snapshot_id": "mlb_20260813_135206Z_c70da19bee13",
     "capture_label": "FULL_SLATE_SNAPSHOT",
     "complete_slate_capture_passed": true,
     "candidate_authorization_enabled": false,
@@ -497,7 +497,7 @@
       "SELECTED_ONLY_HISTORY"
     ],
     "full_policy_replay_available_for_snapshot": true,
-    "snapshot_manifest": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260813\\governance\\slates\\MLB_20260813\\mlb_20260813_110051Z_a7aadc88057b\\manifest.json"
+    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260813/governance/slates/MLB_20260813/mlb_20260813_135206Z_c70da19bee13/manifest.json"
   },
   "suppressed_closed_games": [],
   "suppressed_duplicates": [],
