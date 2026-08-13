@@ -42,6 +42,7 @@ class NflPredictionBoard {
             sportAccent: "#b42318",
             navLinks: [
                 { label: "Picks", href: "/nfl/predictions/", active: true },
+                { label: "Fantasy Draft", href: "/nfl/fantasy/", active: false },
                 { label: "Method", href: "/nfl/prediction-about/", active: false },
             ],
             showDisclaimer: true,

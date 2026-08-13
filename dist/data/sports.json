@@ -48,13 +48,18 @@
   {
     "slug": "nfl",
     "title": "NFL Analytics",
-    "tagline": "Current NFL passing-yard props with locked policy evidence",
-    "summary": "Live multi-book passing-yard candidates backed by a frozen selector, complete-slate capture, and an auditable holdout.",
+    "tagline": "Monte Carlo fantasy draft rankings with calibrated uncertainty",
+    "summary": "Full-PPR player rankings, per-game and season projections, confidence tiers, and auditable seen-versus-unseen validation.",
     "status": "shadow",
     "status_label": "Live Shadow",
     "accent": "#b42318",
     "surface": "#2b2523",
     "pages": [
+      {
+        "slug": "fantasy",
+        "label": "Fantasy Draft",
+        "href": "/nfl/fantasy/"
+      },
       {
         "slug": "prediction-about",
         "label": "Method",
@@ -62,7 +67,7 @@
       },
       {
         "slug": "predictions",
-        "label": "Picks",
+        "label": "Fantasy Draft",
         "href": "/nfl/predictions/"
       }
     ],
