@@ -34,6 +34,7 @@ PREDICTION_TOP_LEVEL_FILES = {
     "prediction-about.html",
     "fantasy.html",
     "predictions.js",
+    "predictions.css",
     "prediction-about.js",
     "fantasy.js",
     "fantasy.css",

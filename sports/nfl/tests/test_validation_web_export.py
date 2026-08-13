@@ -63,6 +63,8 @@ def test_frontend_exposes_validation_sections_and_payload() -> None:
 
     assert 'url=predictions/' in index_html
     assert 'id="weekProjectionPool"' in predictions_html
+    assert 'id="weekPositionFilters"' in predictions_html
+    assert 'id="parlayWatchlists"' in predictions_html
     assert 'id="rankingTable"' in fantasy_html
     assert 'id="confidenceMetrics"' in fantasy_html
     assert "data/fantasy_draft_rankings.json" in fantasy_js
@@ -71,8 +73,23 @@ def test_frontend_exposes_validation_sections_and_payload() -> None:
     assert "data/week_1_pool.json" in predictions_js
     assert week_pool["status"] == "projection_pool_ready"
     assert week_pool["games"] == 16
-    assert len(week_pool["pool"]) == 32
+    assert week_pool["players"] == 205
+    assert week_pool["position_counts"] == {"QB": 32, "RB": 58, "WR": 84, "TE": 31}
+    assert {row["position"] for row in week_pool["pool"]} == {"QB", "RB", "WR", "TE"}
+    assert {row["target"] for row in week_pool["pool"]} == {
+        "passing_yards",
+        "rushing_yards",
+        "receiving_yards",
+    }
     assert all(row["market_status"] == "awaiting_two_sided_lines" for row in week_pool["pool"])
+    assert len(week_pool["parlay_watchlists"]) == 4
+    assert week_pool["parlay_policy"]["candidate_authorized"] is False
+    for ticket in week_pool["parlay_watchlists"]:
+        assert ticket["candidate_authorized"] is False
+        assert ticket["status"] == "awaiting_lines"
+        assert len({leg["game_id"] for leg in ticket["legs"]}) == len(ticket["legs"])
+        assert all(leg["market_line"] is None for leg in ticket["legs"])
+        assert all(leg["direction"] is None for leg in ticket["legs"])
     assert "data/market_validation_summary.json" in predictions_js
     assert "data/daily_predictions.json" in predictions_js
     assert 'id="marketMethodFacts"' in about_html

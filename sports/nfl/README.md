@@ -8,17 +8,19 @@ replacement test.
 
 ## Daily live-shadow board
 
-Build a market-independent weekly QB1 projection pool before player-prop lines
+Build a market-independent weekly skill-player projection pool before player-prop lines
 open. The output remains explicitly separate from executable picks:
 
 ```bash
 python sports/nfl/scripts/build_nfl_week_pool.py --season 2026 --week 1
 ```
 
-The pool uses the latest depth-chart QB1 for each team, the official weekly
-schedule, and the frozen yardage artifact. P10–P90 ranges use residual offsets
-from the untouched 2025 passing-yard holdout. Supplying `--market-snapshot`
-attaches the authentic market-availability audit without manufacturing lines.
+The pool uses the latest depth-chart QB1, RB1-2, WR1-3, and TE1 for each team,
+the official weekly schedule, and the frozen yardage artifact. P10–P90 ranges
+use target-specific residual offsets from the untouched 2025 yardage holdout.
+It also emits distinct-game QB/RB/WR/TE parlay watchlists that contain projections
+only: no direction, line, price, or authorization is manufactured. Supplying
+`--market-snapshot` attaches the authentic market-availability audit.
 
 The production-shaped NFL path is independent of NBA and MLB. It captures the
 complete two-sided NFL player-prop slate from The Odds API, joins offered players

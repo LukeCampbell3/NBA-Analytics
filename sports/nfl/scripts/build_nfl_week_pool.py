@@ -25,6 +25,12 @@ from sports.nfl.scripts.fetch_historical_nfl_props import SCHEDULE_URL, _kickoff
 
 
 NFL_ROOT = REPO_ROOT / "sports" / "nfl"
+ROLE_SPECS = {
+    "QB": {"maximum_depth": 1, "target": "passing", "label": "Passing yards"},
+    "RB": {"maximum_depth": 2, "target": "rushing", "label": "Rushing yards"},
+    "WR": {"maximum_depth": 3, "target": "receiving", "label": "Receiving yards"},
+    "TE": {"maximum_depth": 1, "target": "receiving", "label": "Receiving yards"},
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -43,13 +49,88 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _current_qb1(depth: pd.DataFrame) -> pd.DataFrame:
+def _current_skill_roles(depth: pd.DataFrame) -> pd.DataFrame:
     latest = depth.loc[depth["dt"].astype(str).eq(str(depth["dt"].max()))].copy()
-    return (
-        latest.loc[latest["pos_abb"].eq("QB") & pd.to_numeric(latest["pos_rank"], errors="coerce").eq(1)]
-        .sort_values(["team", "player_name"])
-        .drop_duplicates("team", keep="first")
+    latest["pos_rank"] = pd.to_numeric(latest["pos_rank"], errors="coerce")
+    eligible = pd.concat(
+        [
+            latest.loc[
+                latest["pos_abb"].eq(position)
+                & latest["pos_rank"].le(spec["maximum_depth"])
+            ]
+            for position, spec in ROLE_SPECS.items()
+        ],
+        ignore_index=True,
     )
+    return eligible.sort_values(["team", "pos_abb", "pos_rank", "player_name"]).drop_duplicates(
+        "gsis_id", keep="first"
+    )
+
+
+def _build_parlay_watchlists(pool: list[dict[str, object]]) -> list[dict[str, object]]:
+    """Create distinct-game projection templates; never manufacture prop lines."""
+
+    def choose(positions: list[str]) -> list[dict[str, object]]:
+        legs: list[dict[str, object]] = []
+        used_games: set[str] = set()
+        used_players: set[str] = set()
+        for position in positions:
+            candidates = sorted(
+                (row for row in pool if row["position"] == position),
+                key=lambda row: (-float(row["projection"]), str(row["player"])),
+            )
+            selected = next(
+                (
+                    row
+                    for row in candidates
+                    if str(row["game_id"]) not in used_games
+                    and str(row["player_id"]) not in used_players
+                ),
+                None,
+            )
+            if selected is None:
+                return []
+            used_games.add(str(selected["game_id"]))
+            used_players.add(str(selected["player_id"]))
+            legs.append(
+                {
+                    "player": selected["player"],
+                    "position": selected["position"],
+                    "team": selected["team"],
+                    "opponent": selected["opponent"],
+                    "game_id": selected["game_id"],
+                    "target": selected["target"],
+                    "projection": selected["projection"],
+                    "market_line": None,
+                    "direction": None,
+                    "status": "awaiting_two_sided_line",
+                }
+            )
+        return legs
+
+    definitions = [
+        ("Air Volume", ["QB", "WR"], "Highest distinct-game QB and WR yardage projections."),
+        ("Ground Volume", ["RB", "RB"], "Two highest projected rushers from different games."),
+        ("Mixed Skill", ["RB", "WR", "TE"], "One projected volume leader at each non-QB skill position."),
+        ("Four-Position", ["QB", "RB", "WR", "TE"], "One projected leader from each position, all in different games."),
+    ]
+    tickets = []
+    for name, positions, note in definitions:
+        legs = choose(positions)
+        if not legs:
+            continue
+        tickets.append(
+            {
+                "name": name,
+                "leg_count": len(legs),
+                "status": "awaiting_lines",
+                "candidate_authorized": False,
+                "validation_status": "failed_locked_parlay_holdout",
+                "note": note,
+                "legs": legs,
+            }
+        )
+    return tickets
 
 
 def main() -> int:
@@ -79,12 +160,13 @@ def main() -> int:
     roster = roster.loc[pd.to_numeric(roster.get("season"), errors="coerce").eq(args.season)].copy()
     roster = roster.drop_duplicates("player_id", keep="last")
     roster.index = roster["player_id"].astype(str)
-    starters = _current_qb1(depth)
+    starters = _current_skill_roles(depth)
     placeholders: list[pd.Series] = []
     starter_meta: dict[str, dict[str, object]] = {}
     for starter in starters.itertuples(index=False):
         player_id = str(starter.gsis_id)
         team = str(starter.team)
+        position = str(starter.pos_abb)
         matchup = opponents.get(team)
         if matchup is None or player_id not in latest_history.index:
             continue
@@ -99,31 +181,47 @@ def main() -> int:
         for column in HISTORY_COLUMNS:
             source[column] = 0.0
         placeholders.append(source[stats.columns])
-        starter_meta[player_id] = {"team": team, "player": str(starter.player_name), **matchup}
+        starter_meta[player_id] = {
+            "team": team,
+            "player": str(starter.player_name),
+            "position": position,
+            "depth_rank": int(starter.pos_rank),
+            "target": ROLE_SPECS[position]["target"],
+            **matchup,
+        }
     if not placeholders:
-        raise ValueError("No current QB1 players could be joined to prior NFL history.")
+        raise ValueError("No current skill-position roles could be joined to prior NFL history.")
 
     augmented = pd.concat([stats, pd.DataFrame(placeholders)], ignore_index=True)
     artifact = joblib.load(args.artifact)
     projected = predict_week_components_latent(
         augmented, artifact, season=args.season, week=args.week
     )
+    projected = projected.loc[projected["player_id"].astype(str).isin(starter_meta)].copy()
     projected = projected.loc[
-        projected["target"].eq("passing")
-        & projected["player_id"].astype(str).isin(starter_meta)
+        projected.apply(
+            lambda row: str(row["target"]) == starter_meta[str(row["player_id"])]["target"],
+            axis=1,
+        )
     ].copy()
 
     backtest = pd.read_csv(args.backtest_rows, low_memory=False)
-    residuals = backtest.loc[backtest["target"].eq("passing"), "actual"].to_numpy(dtype=float) - backtest.loc[
-        backtest["target"].eq("passing"), "prediction"
-    ].to_numpy(dtype=float)
-    residual_quantiles = np.quantile(residuals, [0.10, 0.50, 0.90])
+    residual_quantiles = {}
+    for target in {spec["target"] for spec in ROLE_SPECS.values()}:
+        target_rows = backtest.loc[backtest["target"].eq(target)]
+        residuals = target_rows["actual"].to_numpy(dtype=float) - target_rows[
+            "prediction"
+        ].to_numpy(dtype=float)
+        residual_quantiles[target] = np.quantile(residuals, [0.10, 0.50, 0.90])
     report = json.loads(args.backtest_report.read_text(encoding="utf-8"))
-    passing_report = next(row for row in report["targets"] if row["target"] == "passing")
+    target_reports = {row["target"]: row for row in report["targets"]}
     pool: list[dict[str, object]] = []
     for row in projected.itertuples(index=False):
         meta = starter_meta[str(row.player_id)]
         mean = float(row.prediction)
+        target = str(row.target)
+        quantiles = residual_quantiles[target]
+        position = str(meta["position"])
         pool.append(
             {
                 "player_id": str(row.player_id),
@@ -133,19 +231,25 @@ def main() -> int:
                 "venue": str(meta["venue"]),
                 "game_id": str(meta["game_id"]),
                 "kickoff_utc": pd.Timestamp(meta["kickoff_utc"]).isoformat().replace("+00:00", "Z"),
-                "depth_role": "QB1",
-                "target": "passing_yards",
+                "position": position,
+                "depth_rank": int(meta["depth_rank"]),
+                "depth_role": f"{position}{int(meta['depth_rank'])}",
+                "target": f"{target}_yards",
+                "target_label": ROLE_SPECS[position]["label"],
                 "projection": round(mean, 1),
-                "p10": round(max(0.0, mean + float(residual_quantiles[0])), 1),
-                "median": round(max(0.0, mean + float(residual_quantiles[1])), 1),
-                "p90": round(max(0.0, mean + float(residual_quantiles[2])), 1),
+                "p10": round(max(0.0, mean + float(quantiles[0])), 1),
+                "median": round(max(0.0, mean + float(quantiles[1])), 1),
+                "p90": round(max(0.0, mean + float(quantiles[2])), 1),
                 "market_line": None,
                 "market_status": "awaiting_two_sided_lines",
             }
         )
-    pool.sort(key=lambda row: (-float(row["projection"]), str(row["player"])))
-    for rank, row in enumerate(pool, start=1):
-        row["projection_rank"] = rank
+    pool.sort(key=lambda row: (str(row["position"]), -float(row["projection"]), str(row["player"])))
+    position_ranks: dict[str, int] = {}
+    for row in pool:
+        position = str(row["position"])
+        position_ranks[position] = position_ranks.get(position, 0) + 1
+        row["projection_rank"] = position_ranks[position]
 
     market_observations = 0
     market_audit: dict[str, object] = {"status": "not_captured"}
@@ -170,19 +274,35 @@ def main() -> int:
         "market_audit": market_audit,
         "games": int(len(games)),
         "players": len(pool),
-        "scope": "Current depth-chart QB1 passing-yard projections; not sportsbook picks.",
+        "position_counts": {position: int(sum(row["position"] == position for row in pool)) for position in ROLE_SPECS},
+        "scope": "Current depth-chart QB1, RB1-2, WR1-3, and TE1 primary-yardage projections; not sportsbook picks.",
         "validation": {
             "holdout_season": report["evaluation_design"]["holdout_season"],
-            "rows": passing_report["metrics"]["rows"],
-            "mae": passing_report["metrics"]["mae"],
-            "baseline_mae": passing_report["metrics"]["baseline_mae"],
-            "mae_improvement_vs_baseline": passing_report["metrics"]["mae_improvement_vs_rolling_baseline"],
+            "targets": {
+                target: {
+                    "rows": target_reports[target]["metrics"]["rows"],
+                    "mae": target_reports[target]["metrics"]["mae"],
+                    "baseline_mae": target_reports[target]["metrics"]["baseline_mae"],
+                    "mae_improvement_vs_baseline": target_reports[target]["metrics"]["mae_improvement_vs_rolling_baseline"],
+                }
+                for target in target_reports
+            },
         },
         "model": {
             "name": report["architecture"]["name"],
-            "selected_architecture": passing_report["model_selection"]["selected_architecture"],
+            "selected_architectures": {
+                target: values["model_selection"]["selected_architecture"]
+                for target, values in target_reports.items()
+            },
             "source_history_sha256": source_hash,
-            "interval_method": "Untouched 2025 passing residual P10/P50/P90 offsets.",
+            "interval_method": "Position target-specific untouched 2025 residual P10/P50/P90 offsets.",
+        },
+        "parlay_watchlists": _build_parlay_watchlists(pool),
+        "parlay_policy": {
+            "status": "withheld",
+            "candidate_authorized": False,
+            "validation_status": "failed_locked_holdout",
+            "reason": "No real Week 1 lines are available, and the deterministic two-leg parlay rule was 2-16 on its locked 2022 holdout.",
         },
         "pool": pool,
     }
