@@ -4,13 +4,71 @@
     <base href="../">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Monte Carlo NFL fantasy football projections and full-PPR draft rankings.">
-    <meta http-equiv="refresh" content="0; url=/nfl/fantasy/">
-    <title>NFL Fantasy Draft Rankings | Prediction Bounties</title>
-    <link rel="canonical" href="/nfl/fantasy/">
-    <script>window.location.replace("/nfl/fantasy/");</script>
+    <meta name="description" content="2026 NFL Week 1 passing-yard projection pool and market-gated candidates.">
+    <title>NFL Week 1 Pool | Prediction Bounties</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="/vault/vault-tokens.css?v=4">
+    <link rel="stylesheet" href="/vault/vault-components.css?v=7">
+    <link rel="stylesheet" href="/vault/prediction-pages.css?v=2">
 </head>
-<body>
-    <p><a href="/nfl/fantasy/">Open the NFL fantasy draft board</a></p>
+<body class="vault-theme">
+    <div id="vaultShellRoot"></div>
+    <main class="vault-shell prediction-about-page">
+        <section class="prediction-about-stage">
+            <div class="prediction-about-container">
+                <header class="prediction-about-sign">
+                    <p class="prediction-about-kicker">NFL Weekly Model Pool</p>
+                    <div class="minimal-heading">
+                        <h1>2026 Week 1 Pool</h1>
+                        <button class="info-trigger" type="button" aria-label="About this pool" data-info="QB1 passing-yard projections use current teams, Week 1 opponents, and the frozen yardage model. They are not sportsbook picks until authentic two-sided lines pass the execution policy.">i</button>
+                    </div>
+                    <p class="prediction-page-lead">Every current QB1 across the 16-game opening slate, with a model projection and holdout-calibrated range. Market candidates appear separately when executable lines open.</p>
+                    <p id="runFacts" class="prediction-about-run-facts">Loading Week 1 pool...</p>
+                </header>
+
+                <section class="prediction-about-panel">
+                    <h2>Projection Status</h2>
+                    <div id="weekPoolStatus" class="prediction-about-callout"></div>
+                    <div id="weekPoolMetrics" class="prediction-about-metric-grid"></div>
+                </section>
+
+                <section class="prediction-about-panel">
+                    <h2>Week 1 QB1 Projections</h2>
+                    <div id="weekProjectionPool" class="prediction-about-table-wrap"></div>
+                </section>
+
+                <section class="prediction-about-panel">
+                    <h2>Executable Market Board</h2>
+                    <div id="gateSummary" class="prediction-about-callout"></div>
+                    <div id="overallMetrics" class="prediction-about-metric-grid"></div>
+                    <div id="currentBoard" class="prediction-about-table-wrap"></div>
+                </section>
+
+                <section class="prediction-about-panel">
+                    <h2>Parlay Policy</h2>
+                    <div id="dailyParlay" class="prediction-about-callout"></div>
+                </section>
+
+                <section class="prediction-about-panel">
+                    <h2>Locked Singles Backtest</h2>
+                    <div id="marketReplayStatus" class="prediction-about-callout"></div>
+                    <div id="marketReplayMetrics" class="prediction-about-metric-grid"></div>
+                </section>
+
+                <section class="prediction-about-panel">
+                    <h2>Baseline Comparison</h2>
+                    <div id="marketBaselines" class="prediction-about-table-wrap"></div>
+                </section>
+
+                <section class="prediction-about-panel">
+                    <h2>2022 Weekly Replay</h2>
+                    <div id="marketWeekly" class="prediction-about-table-wrap"></div>
+                </section>
+            </div>
+        </section>
+    </main>
+    <script src="/vault/vault-components.js?v=7"></script>
+    <script src="/vault/vault-shell.js?v=7"></script>
+    <script src="predictions.js?v=4"></script>
 </body>
 </html>

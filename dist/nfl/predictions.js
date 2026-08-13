@@ -2,6 +2,7 @@ class NflPredictionBoard {
     constructor() {
         this.data = null;
         this.marketEvidence = null;
+        this.weekPool = null;
         this.elements = {
             runFacts: document.getElementById("runFacts"),
             gate: document.getElementById("gateSummary"),
@@ -12,6 +13,9 @@ class NflPredictionBoard {
             marketMetrics: document.getElementById("marketReplayMetrics"),
             marketBaselines: document.getElementById("marketBaselines"),
             marketWeekly: document.getElementById("marketWeekly"),
+            weekPoolStatus: document.getElementById("weekPoolStatus"),
+            weekPoolMetrics: document.getElementById("weekPoolMetrics"),
+            weekProjectionPool: document.getElementById("weekProjectionPool"),
         };
         this.init();
     }
@@ -19,13 +23,16 @@ class NflPredictionBoard {
     async init() {
         this.mountShell();
         try {
-            const [dailyResponse, marketResponse] = await Promise.all([
+            const [dailyResponse, marketResponse, weekResponse] = await Promise.all([
                 fetch(`data/daily_predictions.json?v=${Date.now()}`),
                 fetch(`data/market_validation_summary.json?v=${Date.now()}`),
+                fetch(`data/week_1_pool.json?v=${Date.now()}`),
             ]);
             if (!dailyResponse.ok) throw new Error(`HTTP ${dailyResponse.status}`);
+            if (!weekResponse.ok) throw new Error(`Week pool HTTP ${weekResponse.status}`);
             this.data = await dailyResponse.json();
             this.marketEvidence = marketResponse.ok ? await marketResponse.json() : null;
+            this.weekPool = await weekResponse.json();
             this.render();
         } catch (error) {
             console.error(error);
@@ -54,13 +61,18 @@ class NflPredictionBoard {
         const quality = this.data.data_quality || {};
         const selection = this.data.selection || {};
         const shadow = this.data.mode === "live_shadow";
+        const week = this.weekPool || {};
         this.elements.runFacts.innerHTML = [
-            `Slate ${this.escape(this.data.run_date || "n/a")}`,
-            `Generated ${this.escape(this.formatTime(this.data.generated_at_utc))}`,
+            `${this.escape(week.season || "NFL")} Week ${this.escape(week.week || "n/a")}`,
+            `Generated ${this.escape(this.formatTime(week.generated_at_utc))}`,
+            `${this.escape(this.formatInt(week.games))} games`,
+            `${this.escape(this.formatInt(week.players))} QB1 projections`,
             `${plays.length} candidate${plays.length === 1 ? "" : "s"}`,
             `${this.escape(this.formatInt(quality.complete_market_observations))} market observations`,
             shadow ? "Shadow mode" : "Historical report",
         ].map((item) => `<span>${item}</span>`).join("");
+
+        this.renderWeekPool();
 
         const withheld = this.data.publication_status !== "shadow_current_pool";
         this.elements.gate.innerHTML = `<p><strong>${withheld ? "No current pick published." : "Current candidates found."}</strong> ${this.escape(quality.reason || "These candidates passed the frozen model and execution gates but are not authorized for staking while prospective certification is inactive.")}</p>`;
@@ -79,6 +91,36 @@ class NflPredictionBoard {
         this.renderBoard(plays);
         this.renderParlay();
         this.renderMarketReplay();
+    }
+
+    renderWeekPool() {
+        const data = this.weekPool || {};
+        const pool = Array.isArray(data.pool) ? data.pool : [];
+        const validation = data.validation || {};
+        const awaiting = data.market_status !== "lines_available";
+        this.elements.weekPoolStatus.innerHTML = `<p><strong>${awaiting ? "Projection pool ready; market lines pending." : "Projection and market pools available."}</strong> ${this.escape(data.scope || "These are performance projections, not sportsbook picks.")}</p>`;
+        const cards = [
+            ["Games", this.formatInt(data.games)],
+            ["QB1s", this.formatInt(data.players)],
+            ["Market Rows", this.formatInt(data.market_observations)],
+            ["Holdout", this.formatInt(validation.holdout_season)],
+            ["Holdout Rows", this.formatInt(validation.rows)],
+            ["Passing MAE", `${this.formatNum(validation.mae, 1)} yd`],
+        ];
+        this.elements.weekPoolMetrics.innerHTML = cards.map(([label, value]) => `<article class="prediction-about-metric-card"><span>${this.escape(label)}</span><strong>${this.escape(value)}</strong></article>`).join("");
+        if (!pool.length) {
+            this.elements.weekProjectionPool.innerHTML = "<p>No Week 1 projections are available.</p>";
+            return;
+        }
+        const rows = pool.map((row) => `<tr>
+            <td>${this.escape(this.formatInt(row.projection_rank))}</td>
+            <td><strong>${this.escape(row.player)}</strong><br><small>${this.escape(`${row.team} ${row.venue === "home" ? "vs" : "at"} ${row.opponent}`)}</small></td>
+            <td>${this.escape(this.formatKickoff(row.kickoff_utc))}</td>
+            <td><strong>${this.escape(this.formatNum(row.projection, 1))}</strong></td>
+            <td>${this.escape(`${this.formatNum(row.p10, 0)}–${this.formatNum(row.p90, 0)}`)}</td>
+            <td>${this.escape(row.market_line == null ? "Awaiting line" : this.formatNum(row.market_line, 1))}</td>
+        </tr>`).join("");
+        this.elements.weekProjectionPool.innerHTML = `<table class="prediction-about-table"><thead><tr><th>RK</th><th>QB / Matchup</th><th>Kickoff</th><th>Pass Yds</th><th>P10–P90</th><th>Market</th></tr></thead><tbody>${rows}</tbody></table>`;
     }
 
     renderBoard(plays) {
@@ -172,6 +214,7 @@ class NflPredictionBoard {
         const parsed = new Date(value);
         return Number.isNaN(parsed.valueOf()) ? String(value) : parsed.toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
     }
+    formatKickoff(value) { const parsed = new Date(value); return Number.isNaN(parsed.valueOf()) ? "n/a" : parsed.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); }
     formatPct(value) { return Number.isFinite(Number(value)) ? `${(Number(value) * 100).toFixed(1)}%` : "n/a"; }
     formatSignedPct(value) { return Number.isFinite(Number(value)) ? `${Number(value) >= 0 ? "+" : ""}${(Number(value) * 100).toFixed(1)}%` : "n/a"; }
     formatSignedNum(value, places = 2) { return Number.isFinite(Number(value)) ? `${Number(value) >= 0 ? "+" : ""}${Number(value).toFixed(places)}` : "n/a"; }
