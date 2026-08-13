@@ -150,8 +150,12 @@ jobs:
           python sports/nfl/scripts/export_nfl_validation_web.py
           python sports/nfl/scripts/build_fantasy_draft_rankings.py \
             --season "${RUN_DATE%%-*}"
+          LIVE_SNAPSHOT="sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}/${{ github.run_id }}.json"
           WEEK_SNAPSHOT="sports/nfl/data/production/snapshots/2026-09-09/week1_pool.json"
-          if [[ -f "$WEEK_SNAPSHOT" ]]; then
+          if [[ "$RUN_DATE" > "2026-09-01" && "$RUN_DATE" < "2026-09-15" && -f "$LIVE_SNAPSHOT" ]]; then
+            python sports/nfl/scripts/build_nfl_week_pool.py \
+              --season 2026 --week 1 --market-snapshot "$LIVE_SNAPSHOT"
+          elif [[ -f "$WEEK_SNAPSHOT" ]]; then
             python sports/nfl/scripts/build_nfl_week_pool.py \
               --season 2026 --week 1 --market-snapshot "$WEEK_SNAPSHOT"
           else
