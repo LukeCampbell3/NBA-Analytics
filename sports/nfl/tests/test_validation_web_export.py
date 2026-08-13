@@ -47,15 +47,26 @@ def test_frontend_exposes_validation_sections_and_payload() -> None:
     predictions_js = (NFL_ROOT / "web" / "predictions.js").read_text(
         encoding="utf-8"
     )
+    fantasy_html = (NFL_ROOT / "web" / "fantasy.html").read_text(encoding="utf-8")
+    fantasy_js = (NFL_ROOT / "web" / "fantasy.js").read_text(encoding="utf-8")
+    fantasy_payload = json.loads(
+        (NFL_ROOT / "web" / "data" / "fantasy_draft_rankings.json").read_text(
+            encoding="utf-8"
+        )
+    )
     about_html = (NFL_ROOT / "web" / "prediction-about.html").read_text(
         encoding="utf-8"
     )
 
     assert 'url=predictions/' in index_html
-    assert 'id="currentBoard"' in predictions_html
-    assert 'id="dailyParlay"' in predictions_html
-    assert 'id="marketReplayMetrics"' in predictions_html
-    assert 'id="marketWeekly"' in predictions_html
+    assert 'url=/nfl/fantasy/' in predictions_html
+    assert 'id="rankingTable"' in fantasy_html
+    assert 'id="confidenceMetrics"' in fantasy_html
+    assert "data/fantasy_draft_rankings.json" in fantasy_js
+    assert fantasy_payload["validation"]["status"] == "passed"
+    assert len(fantasy_payload["rankings"]) == 200
+    # The legacy prop implementation remains available in source for future
+    # routing, but it is no longer the primary /nfl/predictions/ experience.
     assert "data/market_validation_summary.json" in predictions_js
     assert "data/daily_predictions.json" in predictions_js
     assert 'id="marketMethodFacts"' in about_html
