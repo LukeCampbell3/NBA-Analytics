@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             brandTitle: "Prediction Bounties", brandHref: "/", sportSlug: "nfl", sportAccent: "#7c3aed",
             navLinks: [
                 { label: "Model Report", href: "/nfl/predictions/", active: false },
+                { label: "Fantasy Draft", href: "/nfl/fantasy/", active: false },
                 { label: "Method", href: "/nfl/prediction-about/", active: true },
             ],
             showDisclaimer: true,

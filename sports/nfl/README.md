@@ -302,6 +302,21 @@ verified betting backtest.
 
 ## Build the static site
 
+Build the separate full-PPR fantasy draft model before packaging the site:
+
+```bash
+python sports/nfl/scripts/build_fantasy_draft_rankings.py \
+  --season 2026 --simulations 2000 --players 200
+```
+
+The command selects regularized point-model architectures on 2024, reports
+separate fitted/seen and chronological unseen-week results, calibrates confidence
+with out-of-sample conformal residuals, and writes
+`web/data/fantasy_draft_rankings.json` only when every validation gate passes.
+The draft board is available under `/nfl/fantasy/`; it includes per-game and
+season-total stat projections, P10–P90 fantasy-point ranges, position ranks,
+tiers, value over replacement, and a short player assessment.
+
 ```bash
 python sports/site/pipeline/build_static_site.py
 ```

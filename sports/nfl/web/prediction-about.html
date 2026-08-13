@@ -67,6 +67,17 @@
                 <div id="marketGateFacts" class="prediction-about-callout"></div>
             </section>
             <section class="prediction-about-panel">
+                <h2>Fantasy Draft Model</h2>
+                <ol class="prediction-about-list">
+                    <li>Position-specific absolute-error models learn only from lagged role, volume, efficiency, volatility, team, and opponent features.</li>
+                    <li>Model depth and global-versus-position blending are selected on 2024; all 2025 weeks remain locked and unseen.</li>
+                    <li>Normalized split-conformal residuals calibrate the central 80% interval and high, medium, and low confidence tiers.</li>
+                    <li>Monte Carlo trials preserve complete correlated stat lines, then center each matchup on the optimized point forecast.</li>
+                    <li>Full-PPR points are ranked by position-adjusted value over replacement, mean production, and simulated upside.</li>
+                </ol>
+                <div class="prediction-about-callout"><p><strong>Validation:</strong> The model must pass its 2025 walk-forward gates before the draft payload is written. The frontend displays that result and the holdout metrics directly.</p></div>
+            </section>
+            <section class="prediction-about-panel">
                 <h2>Evidence Boundary</h2>
                 <ul id="marketLimitations" class="prediction-about-list"></ul>
                 <p>The complete repository methodology is retained in <code>sports/nfl/NFL_PREDICTOR_METHODOLOGY.md</code>.</p>

@@ -53,8 +53,12 @@ def test_build_publishes_sport_routes_and_keeps_compatibility_copy(tmp_path: Pat
     (private_source / "index.html").write_text("member shell", encoding="utf-8")
     (sport_source / "predictions.html").write_text("<head></head>prediction board", encoding="utf-8")
     (sport_source / "prediction-about.html").write_text("<head></head>prediction method", encoding="utf-8")
+    (sport_source / "fantasy.html").write_text("<head></head>fantasy draft", encoding="utf-8")
     (sport_source / "predictions.js").write_text("prediction script", encoding="utf-8")
+    (sport_source / "fantasy.js").write_text("fantasy script", encoding="utf-8")
+    (sport_source / "fantasy.css").write_text(".fantasy {}", encoding="utf-8")
     (sport_source / "data" / "daily_predictions.json").write_text('{"published":true}', encoding="utf-8")
+    (sport_source / "data" / "fantasy_draft_rankings.json").write_text('{"rankings":[]}', encoding="utf-8")
     (sport_source / "data" / "history" / "index.json").write_text('{"dates":["2026-08-09"]}', encoding="utf-8")
     (sport_source / "data" / "history" / "2026-08-09.json").write_text('{"run_date":"2026-08-09"}', encoding="utf-8")
     monkeypatch.setattr(build_static_site, "VAULT_SOURCE_DIR", tmp_path / "missing-vault")
@@ -64,6 +68,7 @@ def test_build_publishes_sport_routes_and_keeps_compatibility_copy(tmp_path: Pat
         "status_label": "Active", "accent": "#c02c3a", "surface": "#172131",
         "pages": [
             {"slug": "predictions", "label": "Predictions", "href": "/nba/predictions/"},
+            {"slug": "fantasy", "label": "Fantasy Draft", "href": "/nba/fantasy/"},
             {"slug": "prediction-about", "label": "Method", "href": "/nba/prediction-about/"},
         ],
     }])
@@ -75,7 +80,9 @@ def test_build_publishes_sport_routes_and_keeps_compatibility_copy(tmp_path: Pat
     assert result == 0
     assert (public_output / "index.html").read_text(encoding="utf-8") == "public landing"
     assert (public_output / "nba" / "predictions" / "index.html").exists()
+    assert (public_output / "nba" / "fantasy" / "index.html").exists()
     assert (public_output / "nba" / "data" / "daily_predictions.json").exists()
+    assert (public_output / "nba" / "data" / "fantasy_draft_rankings.json").exists()
     assert (public_output / "nba" / "data" / "history" / "2026-08-09.json").exists()
     assert (private_output / "nba" / "data" / "daily_predictions.json").exists()
     assert (private_output / "nba" / "data" / "history" / "index.json").exists()

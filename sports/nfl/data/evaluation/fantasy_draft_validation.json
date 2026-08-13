@@ -1,0 +1,374 @@
+{
+  "schema_version": 2,
+  "generated_at_utc": "2026-08-13T11:50:27.858635Z",
+  "design": "Architectures selected on 2024; final models refit through 2024; all 2025 weeks remain chronologically unseen.",
+  "selection_seasons": [
+    2018,
+    2023
+  ],
+  "validation_season": 2024,
+  "holdout_season": 2025,
+  "selected_architecture_by_position": {
+    "QB": "catboost_mae_depth_5",
+    "RB": "catboost_mae_depth_4",
+    "WR": "catboost_mae_depth_5",
+    "TE": "catboost_mae_depth_6"
+  },
+  "selected_global_architecture": "catboost_mae_depth_5",
+  "blend_selection": {
+    "candidates": [
+      {
+        "global_weight": 0.0,
+        "position_weight": 1.0,
+        "validation_mae": 4.8091
+      },
+      {
+        "global_weight": 0.25,
+        "position_weight": 0.75,
+        "validation_mae": 4.7988
+      },
+      {
+        "global_weight": 0.5,
+        "position_weight": 0.5,
+        "validation_mae": 4.7945
+      },
+      {
+        "global_weight": 0.75,
+        "position_weight": 0.25,
+        "validation_mae": 4.7967
+      },
+      {
+        "global_weight": 1.0,
+        "position_weight": 0.0,
+        "validation_mae": 4.8053
+      }
+    ],
+    "selected": {
+      "global_weight": 0.5,
+      "position_weight": 0.5,
+      "validation_mae": 4.7945
+    }
+  },
+  "candidate_validation": [
+    {
+      "position": "ALL",
+      "architecture": "catboost_mae_depth_5",
+      "validation_season": 2024,
+      "rows": 4856,
+      "mae": 4.8053
+    },
+    {
+      "position": "ALL",
+      "architecture": "catboost_mae_depth_6",
+      "validation_season": 2024,
+      "rows": 4856,
+      "mae": 4.8079
+    },
+    {
+      "position": "ALL",
+      "architecture": "catboost_mae_depth_4",
+      "validation_season": 2024,
+      "rows": 4856,
+      "mae": 4.8084
+    },
+    {
+      "position": "QB",
+      "architecture": "catboost_mae_depth_5",
+      "validation_season": 2024,
+      "rows": 628,
+      "mae": 6.2392
+    },
+    {
+      "position": "QB",
+      "architecture": "catboost_mae_depth_6",
+      "validation_season": 2024,
+      "rows": 628,
+      "mae": 6.2513
+    },
+    {
+      "position": "QB",
+      "architecture": "catboost_mae_depth_4",
+      "validation_season": 2024,
+      "rows": 628,
+      "mae": 6.2791
+    },
+    {
+      "position": "RB",
+      "architecture": "catboost_mae_depth_4",
+      "validation_season": 2024,
+      "rows": 1245,
+      "mae": 4.7787
+    },
+    {
+      "position": "RB",
+      "architecture": "catboost_mae_depth_6",
+      "validation_season": 2024,
+      "rows": 1245,
+      "mae": 4.7827
+    },
+    {
+      "position": "RB",
+      "architecture": "catboost_mae_depth_5",
+      "validation_season": 2024,
+      "rows": 1245,
+      "mae": 4.7925
+    },
+    {
+      "position": "TE",
+      "architecture": "catboost_mae_depth_6",
+      "validation_season": 2024,
+      "rows": 1021,
+      "mae": 3.725
+    },
+    {
+      "position": "TE",
+      "architecture": "catboost_mae_depth_4",
+      "validation_season": 2024,
+      "rows": 1021,
+      "mae": 3.7303
+    },
+    {
+      "position": "TE",
+      "architecture": "catboost_mae_depth_5",
+      "validation_season": 2024,
+      "rows": 1021,
+      "mae": 3.7591
+    },
+    {
+      "position": "WR",
+      "architecture": "catboost_mae_depth_5",
+      "validation_season": 2024,
+      "rows": 1962,
+      "mae": 4.9348
+    },
+    {
+      "position": "WR",
+      "architecture": "catboost_mae_depth_4",
+      "validation_season": 2024,
+      "rows": 1962,
+      "mae": 4.9441
+    },
+    {
+      "position": "WR",
+      "architecture": "catboost_mae_depth_6",
+      "validation_season": 2024,
+      "rows": 1962,
+      "mae": 4.9447
+    }
+  ],
+  "seen_weeks": {
+    "rows": 31246,
+    "mae_fantasy_points": 4.5593,
+    "rmse_fantasy_points": 6.451,
+    "mean_bias": -1.3519,
+    "mean_weekly_spearman": 0.6389
+  },
+  "unseen_weeks": {
+    "rows": 4886,
+    "mae_fantasy_points": 4.6852,
+    "rmse_fantasy_points": 6.5224,
+    "mean_bias": -1.0128,
+    "mean_weekly_spearman": 0.6012,
+    "last_game_mae": 6.1845,
+    "recency_baseline_mae": 4.9244,
+    "mae_improvement_vs_recency": 0.0486,
+    "central_80_interval_coverage": 0.8062
+  },
+  "overfit_gap": 0.0276,
+  "confidence_calibration": {
+    "method": "position-specific normalized split conformal",
+    "target_coverage": 0.8,
+    "tiers": {
+      "high": {
+        "rows": 1629,
+        "mae": 3.2849,
+        "coverage": 0.7587,
+        "mean_interval_half_width": 4.0437
+      },
+      "low": {
+        "rows": 1629,
+        "mae": 5.9148,
+        "coverage": 0.8821,
+        "mean_interval_half_width": 11.9161
+      },
+      "medium": {
+        "rows": 1628,
+        "mae": 4.8561,
+        "coverage": 0.7776,
+        "mean_interval_half_width": 7.0824
+      }
+    }
+  },
+  "weekly_unseen": [
+    {
+      "week": 1,
+      "rows": 258,
+      "mae_fantasy_points": 4.4235,
+      "rmse_fantasy_points": 5.9213,
+      "mean_bias": -0.2502,
+      "mean_weekly_spearman": 0.6527
+    },
+    {
+      "week": 2,
+      "rows": 250,
+      "mae_fantasy_points": 4.967,
+      "rmse_fantasy_points": 6.7674,
+      "mean_bias": -1.4733,
+      "mean_weekly_spearman": 0.598
+    },
+    {
+      "week": 3,
+      "rows": 247,
+      "mae_fantasy_points": 4.5274,
+      "rmse_fantasy_points": 6.2767,
+      "mean_bias": -0.4349,
+      "mean_weekly_spearman": 0.6153
+    },
+    {
+      "week": 4,
+      "rows": 251,
+      "mae_fantasy_points": 4.8225,
+      "rmse_fantasy_points": 6.6421,
+      "mean_bias": -0.8806,
+      "mean_weekly_spearman": 0.6133
+    },
+    {
+      "week": 5,
+      "rows": 248,
+      "mae_fantasy_points": 4.6779,
+      "rmse_fantasy_points": 6.5485,
+      "mean_bias": -2.1763,
+      "mean_weekly_spearman": 0.6836
+    },
+    {
+      "week": 6,
+      "rows": 259,
+      "mae_fantasy_points": 4.8992,
+      "rmse_fantasy_points": 6.5913,
+      "mean_bias": -1.2299,
+      "mean_weekly_spearman": 0.5373
+    },
+    {
+      "week": 7,
+      "rows": 280,
+      "mae_fantasy_points": 5.0504,
+      "rmse_fantasy_points": 6.9484,
+      "mean_bias": -1.1234,
+      "mean_weekly_spearman": 0.5951
+    },
+    {
+      "week": 8,
+      "rows": 247,
+      "mae_fantasy_points": 4.7856,
+      "rmse_fantasy_points": 6.4731,
+      "mean_bias": -1.4634,
+      "mean_weekly_spearman": 0.6057
+    },
+    {
+      "week": 9,
+      "rows": 257,
+      "mae_fantasy_points": 4.6813,
+      "rmse_fantasy_points": 6.7127,
+      "mean_bias": -1.508,
+      "mean_weekly_spearman": 0.6452
+    },
+    {
+      "week": 10,
+      "rows": 266,
+      "mae_fantasy_points": 4.7197,
+      "rmse_fantasy_points": 6.5733,
+      "mean_bias": -0.9634,
+      "mean_weekly_spearman": 0.603
+    },
+    {
+      "week": 11,
+      "rows": 283,
+      "mae_fantasy_points": 4.7329,
+      "rmse_fantasy_points": 6.7945,
+      "mean_bias": -0.7103,
+      "mean_weekly_spearman": 0.5603
+    },
+    {
+      "week": 12,
+      "rows": 263,
+      "mae_fantasy_points": 4.6697,
+      "rmse_fantasy_points": 6.6179,
+      "mean_bias": -0.9271,
+      "mean_weekly_spearman": 0.6049
+    },
+    {
+      "week": 13,
+      "rows": 298,
+      "mae_fantasy_points": 4.3425,
+      "rmse_fantasy_points": 5.8485,
+      "mean_bias": -0.6334,
+      "mean_weekly_spearman": 0.6128
+    },
+    {
+      "week": 14,
+      "rows": 278,
+      "mae_fantasy_points": 4.4278,
+      "rmse_fantasy_points": 6.3476,
+      "mean_bias": -0.4002,
+      "mean_weekly_spearman": 0.5865
+    },
+    {
+      "week": 15,
+      "rows": 293,
+      "mae_fantasy_points": 4.9487,
+      "rmse_fantasy_points": 6.9073,
+      "mean_bias": -1.4096,
+      "mean_weekly_spearman": 0.6417
+    },
+    {
+      "week": 16,
+      "rows": 311,
+      "mae_fantasy_points": 4.8107,
+      "rmse_fantasy_points": 6.5917,
+      "mean_bias": -1.2377,
+      "mean_weekly_spearman": 0.6024
+    },
+    {
+      "week": 17,
+      "rows": 303,
+      "mae_fantasy_points": 4.4176,
+      "rmse_fantasy_points": 6.368,
+      "mean_bias": -0.7733,
+      "mean_weekly_spearman": 0.6067
+    },
+    {
+      "week": 18,
+      "rows": 294,
+      "mae_fantasy_points": 4.4883,
+      "rmse_fantasy_points": 6.3817,
+      "mean_bias": -0.7884,
+      "mean_weekly_spearman": 0.4564
+    }
+  ],
+  "rows": 4886,
+  "metrics": {
+    "rows": 4886,
+    "mae_fantasy_points": 4.6852,
+    "rmse_fantasy_points": 6.5224,
+    "mean_bias": -1.0128,
+    "mean_weekly_spearman": 0.6012,
+    "last_game_mae": 6.1845,
+    "recency_baseline_mae": 4.9244,
+    "mae_improvement_vs_recency": 0.0486,
+    "central_80_interval_coverage": 0.8062
+  },
+  "checks": {
+    "minimum_unseen_rows": true,
+    "beats_recency_baseline": true,
+    "unseen_weekly_rank_correlation": true,
+    "central_80_interval_calibrated": true,
+    "overfit_gap_below_10_percent": true,
+    "confidence_orders_error": true
+  },
+  "status": "passed",
+  "limitations": [
+    "Seen-week error is diagnostic only; model selection uses forward validation and promotion uses unseen weeks.",
+    "The holdout validates players who logged a game, not preseason availability or injury news.",
+    "Rookies and players with fewer than four prior games retain conservative simulation priors."
+  ]
+}

@@ -28,15 +28,22 @@ DEFAULT_OUTPUT_DIR = REPO_ROOT / "dist"
 DEFAULT_PRIVATE_SOURCE_DIR = REPO_ROOT / "paywall" / "private-app"
 DEFAULT_PRIVATE_OUTPUT_DIR = REPO_ROOT / "paywall" / "private-content" / "app"
 VAULT_SOURCE_DIR = SPORTS_ROOT / "shared" / "web" / "vault"
-PREDICTION_PAGE_STEMS = {"predictions", "prediction-about"}
+PREDICTION_PAGE_STEMS = {"predictions", "prediction-about", "fantasy"}
 PREDICTION_TOP_LEVEL_FILES = {
     "predictions.html",
     "prediction-about.html",
+    "fantasy.html",
     "predictions.js",
     "prediction-about.js",
+    "fantasy.js",
+    "fantasy.css",
     "parlay-board.css",
 }
-PREDICTION_DATA_FILES = {"daily_predictions.json", "market_validation_summary.json"}
+PREDICTION_DATA_FILES = {
+    "daily_predictions.json",
+    "market_validation_summary.json",
+    "fantasy_draft_rankings.json",
+}
 HISTORY_DATA_FILE = re.compile(r"^\d{4}-\d{2}-\d{2}\.json$")
 
 
