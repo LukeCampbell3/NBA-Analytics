@@ -176,7 +176,7 @@ def test_build_data_quality_withholds_empty_board() -> None:
     assert "no plays passed publication filters" in quality["reasons"]
 
 
-def test_daily_parlay_uses_team_specific_lineup_state(tmp_path: Path) -> None:
+def test_daily_parlay_uses_own_execution_state_when_singles_are_withheld(tmp_path: Path) -> None:
     path = tmp_path / "daily_parlay.json"
     path.write_text(
         json.dumps(
@@ -210,7 +210,7 @@ def test_daily_parlay_uses_team_specific_lineup_state(tmp_path: Path) -> None:
     payload = exporter.load_daily_parlay(
         path,
         run_date="2026-08-06",
-        publication_status="ready",
+        publication_status="withheld",
         game_context_lookup=contexts,
     )
 

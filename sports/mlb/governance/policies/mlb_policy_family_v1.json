@@ -91,7 +91,7 @@
       }
     },
     {
-      "policy_version": "MLB_FANDUEL_PUBLIC_BETSLIP_PARLAY_POLICY_V3",
+      "policy_version": "MLB_FANDUEL_PUBLIC_BETSLIP_PARLAY_POLICY_V4",
       "policy_stage": "POLICY_DEVELOPMENT",
       "policy_kind": "DAILY_PARLAY",
       "staking_enabled": false,
@@ -125,6 +125,8 @@
         "direction_policy": "OVER_ONLY",
         "one_sportsbook_required": true,
         "sportsbook_key": "fanduel",
+        "minimum_market_books": 1,
+        "single_book_scope": "EXACT_FANDUEL_QUOTE_WITH_PROVIDER_MARKET_AND_SELECTION_IDS",
         "direct_fanduel_public_market_ids_required_for_betslip": true,
         "distinct_games_required": true,
         "ticket_ranking": ["projected_ticket_probability_desc", "expected_return_desc"],

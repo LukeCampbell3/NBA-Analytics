@@ -734,9 +734,10 @@ def enrich_daily_parlay_ticket(
         enriched_legs.append(leg)
 
     status = "ready"
+    # The parlay has its own executable-price and identity gates. A withheld
+    # straight-play board must not invalidate an otherwise current betslip.
     if (
-        publication_status != "ready"
-        or "game_closed" in ticket_risk_flags
+        "game_closed" in ticket_risk_flags
         or "odds_unconfirmed" in ticket_risk_flags
         or "not_in_posted_lineup" in ticket_risk_flags
     ):

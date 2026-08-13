@@ -80,7 +80,8 @@ def test_anchor_filter_is_over_only_and_requires_playable_market_support() -> No
     eligible = _candidate(player="Eligible", game_id="g1", probability=0.68, price=-180)
     under = _candidate(player="Under", game_id="g2", probability=0.75, price=-180, direction="UNDER")
     thin = _candidate(player="Thin", game_id="g3", probability=0.70, price=-180)
-    thin.market_books = 2
+    thin.market_books = 0
+    thin.market_common_books = 0
 
     kept, rejected = parlay_selector.filter_anchor_candidates(
         [eligible, under, thin],

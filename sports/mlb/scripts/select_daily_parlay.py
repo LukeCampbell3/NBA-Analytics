@@ -37,7 +37,7 @@ CALIBRATION_ROOT = SPORT_ROOT / "data" / "predictions" / "calibration"
 DEFAULT_PROVIDER_OBSERVATIONS = (
     SPORT_ROOT / "data" / "raw" / "market_odds" / "mlb" / "odds_api_io" / "latest_provider_observations.csv"
 )
-POLICY_VERSION = "mlb_fanduel_public_betslip_parlay_v5"
+POLICY_VERSION = "mlb_fanduel_public_betslip_parlay_v6"
 ALLOWED_TARGETS = ("H", "TB", "R", "RBI", "K")
 MIN_LEGS = 2
 MAX_LEGS = 4
@@ -505,7 +505,7 @@ def filter_anchor_candidates(candidates: list[selector.Candidate], *, min_leg_pr
         if candidate.market_source != "real" or not candidate.price_confirmed:
             rejected["unconfirmed_market_price"] += 1
             continue
-        if candidate.market_books < 5 or candidate.market_common_books < 2:
+        if candidate.market_books < 1 or candidate.market_common_books < 1:
             rejected["insufficient_book_coverage"] += 1
             continue
         if not selector.is_standard_bettable_line(candidate.target, candidate.market_line):
@@ -902,8 +902,9 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
             },
             "min_combined_decimal_price": float(args.min_combined_decimal_price),
             "min_expected_return_per_unit": float(args.min_expected_return),
-            "min_market_books": 5,
-            "min_common_market_books": 2,
+            "min_market_books": 1,
+            "min_common_market_books": 1,
+            "single_book_scope": "exact_fanduel_quote_with_provider_market_and_selection_ids",
             "same_sportsbook_required": True,
             "linked_sportsbook": "fanduel",
             "direct_fanduel_public_selection_link_required_for_betslip": True,

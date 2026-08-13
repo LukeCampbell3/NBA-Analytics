@@ -139,7 +139,8 @@ jobs:
             sports/mlb/web/data/daily_predictions.json \
             sports/mlb/web/data/history/index.json \
             sports/mlb/web/data/history/*.json \
-            dist/mlb/data/daily_predictions.json
+            dist/mlb \
+            paywall/private-content/app/mlb
           if git diff --cached --quiet; then
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
           else

@@ -99,7 +99,21 @@ def validate_mlb_daily_ticket(
             raise ValueError(f"MLB {label} daily parlay leg {leg_index} lacks confirmed odds.")
         if str(leg.get("selected_sportsbook_key") or "").strip().lower() != sportsbook_key:
             raise ValueError(f"MLB {label} daily parlay legs do not share one sportsbook.")
-        if int(leg.get("market_books") or 0) < MLB_MIN_BOOKS or int(leg.get("market_common_books") or 0) < MLB_MIN_COMMON_BOOKS:
+        market_books = int(leg.get("market_books") or 0)
+        common_books = int(leg.get("market_common_books") or 0)
+        exact_fanduel_quote = bool(
+            sportsbook_key == "fanduel"
+            and market_books >= 1
+            and common_books >= 1
+            and str(leg.get("provider_source_market_id") or "").strip()
+            and str(
+                leg.get("sportsbook_deeplink_observed_at_utc")
+                or leg.get("alternate_line_observed_at_utc")
+                or ""
+            ).strip()
+            and _parse_fanduel_selection_url(leg.get("sportsbook_deeplink")) is not None
+        )
+        if not exact_fanduel_quote and (market_books < MLB_MIN_BOOKS or common_books < MLB_MIN_COMMON_BOOKS):
             raise ValueError(f"MLB {label} daily parlay leg {leg_index} lacks book coverage.")
         leg_probability = as_float(leg.get("estimated_graded_hit_rate"))
         minimum_leg_probability = MLB_PROFIT_BOOST_MIN_LEG_PROBABILITY if is_profit_boost else 0.62

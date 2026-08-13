@@ -281,6 +281,12 @@ class DailyPredictionsPage {
             </div>
         ` : "";
         const ticketTier = String(ticket.ticket_tier || "consistency");
+        const betslipUrl = this.safeFanDuelBetslipUrl(ticket?.betslip?.url || ticket?.betslip_url);
+        const betslipAction = ticket?.betslip?.status === "ready" && betslipUrl ? `
+            <div class="daily-parlay__actions">
+                <a class="daily-parlay__betslip-button" href="${this.escapeHtml(betslipUrl)}" target="_blank" rel="noopener noreferrer">Add to FanDuel</a>
+            </div>
+        ` : "";
         content.innerHTML = `
             <div class="daily-parlay__header">
                 <div>
@@ -297,6 +303,7 @@ class DailyPredictionsPage {
                 <div><span>Sportsbook</span><strong>${this.escapeHtml(ticket.sportsbook || "n/a")}</strong></div>
             </div>
             <div class="daily-parlay__legs">${legs}</div>
+            ${betslipAction}
             <p class="daily-parlay__state">${this.escapeHtml(parlay.reason || "")}</p>
         `;
         content.querySelectorAll("[data-parlay-ticket]").forEach((button) => {
@@ -330,6 +337,18 @@ class DailyPredictionsPage {
         if (!Number.isFinite(number)) return "n/a";
         const rounded = Math.round(number);
         return `${rounded > 0 ? "+" : ""}${rounded}`;
+    }
+
+    safeFanDuelBetslipUrl(value) {
+        try {
+            const url = new URL(String(value || ""));
+            const allowedHosts = new Set(["account.sportsbook.fanduel.com", "sportsbook.fanduel.com"]);
+            if (url.protocol !== "https:" || !allowedHosts.has(url.hostname.toLowerCase())) return "";
+            if (!url.pathname.toLowerCase().endsWith("/addtobetslip")) return "";
+            return url.toString();
+        } catch (_error) {
+            return "";
+        }
     }
 
     escapeHtml(value) {
