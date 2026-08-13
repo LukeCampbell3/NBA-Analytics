@@ -1,0 +1,142 @@
+.opening-pool-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 16px;
+}
+
+.opening-pool-heading h2 {
+    margin: 0;
+}
+
+.opening-target-filters {
+    display: inline-flex;
+    overflow: hidden;
+    border: 1px solid var(--vault-line-strong);
+    border-radius: 4px;
+}
+
+.opening-target-filters button {
+    min-width: 58px;
+    padding: 9px 12px;
+    border: 0;
+    border-right: 1px solid var(--vault-line);
+    background: rgba(248, 243, 232, .7);
+    color: var(--vault-text-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: .74rem;
+    font-weight: 800;
+}
+
+.opening-target-filters button:last-child {
+    border-right: 0;
+}
+
+.opening-target-filters button:hover,
+.opening-target-filters button.is-active {
+    background: var(--vault-ink);
+    color: #fffaf0;
+}
+
+.opening-game-grid,
+.opening-watchlist-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.opening-game-card,
+.opening-watchlist-card {
+    padding: 18px;
+    border: 1px solid var(--vault-line-strong);
+    background: rgba(248, 243, 232, .62);
+}
+
+.opening-game-card p,
+.opening-watchlist-card p {
+    margin: 0;
+}
+
+.opening-game-card__time,
+.opening-watchlist-card__note {
+    color: var(--vault-text-muted);
+    font-size: .74rem;
+    line-height: 1.45;
+}
+
+.opening-game-card__matchup {
+    margin: 7px 0 5px;
+    font-family: var(--vault-font-display);
+    font-size: 1.08rem;
+    font-weight: 800;
+}
+
+.opening-watchlist-card h3 {
+    margin: 0 0 5px;
+    font-family: var(--vault-font-display);
+}
+
+.opening-watchlist-legs {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.opening-watchlist-leg {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--vault-line);
+}
+
+.opening-watchlist-leg strong,
+.opening-watchlist-leg small {
+    display: block;
+}
+
+.opening-watchlist-leg small {
+    margin-top: 2px;
+    color: var(--vault-text-muted);
+    font-size: .68rem;
+}
+
+.opening-watchlist-leg__projection {
+    text-align: right;
+}
+
+.opening-watchlist-leg__projection strong {
+    font-family: var(--vault-font-display);
+    font-size: 1.05rem;
+}
+
+.opening-watchlist-leg__projection small {
+    color: var(--vault-sport-accent);
+    font-weight: 800;
+}
+
+@media (max-width: 860px) {
+    .opening-game-grid,
+    .opening-watchlist-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .opening-pool-heading {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .opening-target-filters {
+        width: 100%;
+    }
+
+    .opening-target-filters button {
+        flex: 1;
+        min-width: 0;
+        padding-inline: 8px;
+    }
+}

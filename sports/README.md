@@ -6,3 +6,4 @@ Each sport has its own isolated area under this directory.
 - `nba/` active NBA pages, predictions, and model stack
 - `mlb/` MLB scaffold with its own frontend route
 - `nfl/` NFL scaffold with its own frontend route
+- `f1/` Formula 1 chronological race model, free market feeds, and frontend route

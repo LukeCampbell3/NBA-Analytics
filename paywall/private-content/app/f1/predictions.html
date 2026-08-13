@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Formula 1 race-winner picks, podium probabilities, and market edges for the next Grand Prix.">
+    <title>Formula 1 Next Race Picks | Prediction Bounties</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="/vault/vault-tokens.css?v=4">
+    <link rel="stylesheet" href="/vault/vault-components.css?v=7">
+    <link rel="stylesheet" href="/vault/prediction-pages.css?v=2">
+    <link rel="stylesheet" href="predictions.css?v=2">
+</head>
+<body class="vault-theme">
+    <div id="vaultShellRoot"></div>
+    <main class="vault-shell prediction-about-page f1-board">
+        <section class="prediction-about-stage">
+            <div class="prediction-about-container">
+                <header class="prediction-about-sign f1-hero">
+                    <div class="f1-hero-topline">
+                        <p class="prediction-about-kicker">Formula 1 &middot; Next Event</p>
+                        <span id="eventCountdown" class="f1-countdown">Loading schedule</span>
+                    </div>
+                    <div class="minimal-heading">
+                        <h1 id="eventTitle">Next Race Board</h1>
+                        <button class="info-trigger" type="button" aria-label="About this board" data-info="Chronological race probabilities compared with available race-winner prices. Research only; staking is disabled.">i</button>
+                    </div>
+                    <p class="prediction-page-lead">Race-winner picks for the next Grand Prix, ranked by the gap between the model and the best available exchange price.</p>
+                    <p id="runFacts" class="prediction-about-run-facts">Loading Formula 1 board...</p>
+                    <div id="eventMeta" class="f1-event-meta"></div>
+                </header>
+
+                <section class="prediction-about-panel f1-picks-panel" aria-labelledby="picksHeading">
+                    <div class="f1-section-heading">
+                        <div><p class="prediction-about-kicker">Model-qualified prices</p><h2 id="picksHeading">Next Race Picks</h2></div>
+                        <p id="picksSummary" class="f1-muted">Loading edge watchlist...</p>
+                    </div>
+                    <div id="plays" class="f1-pick-grid" aria-live="polite"></div>
+                </section>
+
+                <section class="prediction-about-panel">
+                    <div class="f1-section-heading">
+                        <div><p class="prediction-about-kicker">Run controls</p><h2>Board Readiness</h2></div>
+                        <span class="f1-research-pill">Research only</span>
+                    </div>
+                    <div id="status" class="prediction-about-callout"></div>
+                    <div id="metrics" class="prediction-about-metric-grid"></div>
+                </section>
+
+                <section class="prediction-about-panel">
+                    <div class="f1-section-heading">
+                        <div><p class="prediction-about-kicker">Full modeled field</p><h2>Driver Probabilities</h2></div>
+                        <p class="f1-muted">Sorted by model win probability</p>
+                    </div>
+                    <div id="projectionTable" class="prediction-about-table-wrap"></div>
+                </section>
+
+                <section class="prediction-about-panel">
+                    <h2>Chronological Holdout</h2>
+                    <div id="backtest" class="prediction-about-metric-grid"></div>
+                    <p class="f1-footnote">The holdout is the final 20% of historical races in time order. It is model evidence, not a profit claim.</p>
+                </section>
+
+                <section class="prediction-about-panel">
+                    <h2>Prospective Tracker</h2>
+                    <div id="prospective" class="prediction-about-metric-grid"></div>
+                    <p class="f1-footnote">Scheduled boards are archived before each race and graded after official results become available.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+    <script src="/vault/vault-components.js?v=7"></script>
+    <script src="/vault/vault-shell.js?v=8"></script>
+    <script src="predictions.js?v=2"></script>
+</body>
+</html>

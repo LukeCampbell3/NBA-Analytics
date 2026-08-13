@@ -45,6 +45,7 @@ PREDICTION_DATA_FILES = {
     "market_validation_summary.json",
     "fantasy_draft_rankings.json",
     "week_1_pool.json",
+    "opening_night_pool.json",
 }
 HISTORY_DATA_FILE = re.compile(r"^\d{4}-\d{2}-\d{2}\.json$")
 

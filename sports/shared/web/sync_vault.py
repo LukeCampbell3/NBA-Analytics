@@ -15,6 +15,7 @@ TARGETS = [
     SPORTS_ROOT / "nba" / "web" / "vault",
     SPORTS_ROOT / "mlb" / "web" / "vault",
     SPORTS_ROOT / "nfl" / "web" / "vault",
+    SPORTS_ROOT / "f1" / "web" / "vault",
 ]
 
 

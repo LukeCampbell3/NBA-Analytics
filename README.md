@@ -1,6 +1,6 @@
 ﻿# Multi-Sport Analytics Workspace
 
-This repository is organized by sport so NBA, MLB, and NFL can evolve independently without path collisions, while still shipping through one shared landing page.
+This repository is organized by sport so NBA, MLB, NFL, and Formula 1 can evolve independently without path collisions, while still shipping through one shared landing page.
 
 ## Repository Structure
 
@@ -17,6 +17,7 @@ sports/
     tests/
   mlb/                     # MLB scaffold
   nfl/                     # NFL scaffold
+  f1/                      # Formula 1 race model and market board
 ```
 
 ## Multi-Sport Quick Start
@@ -96,6 +97,16 @@ python sports/nba/pipeline/serve_web.py
 python sports/nba/predictions/Player-Predictor/scripts/run_daily_market_pipeline.py
 ```
 
+5. Rebuild the 2026-27 opening-night projection pool:
+
+```bash
+python sports/nba/pipeline/build_opening_night_pool.py
+```
+
+The opening-night payload is a research-only projection watchlist built from
+the existing preseason simulation cards. It does not authorize picks until
+current rosters, availability, and authentic two-sided prop lines are attached.
+
 For the shared published site, prefer `python sports/site/pipeline/run_daily_predictions.py` so both NBA and MLB payloads refresh together and both public/private outputs stay in sync.
 
 See `sports/nba/README.md` for full NBA pipeline details.
@@ -112,3 +123,17 @@ python sports/nfl/scripts/train_nfl_predictor.py
 The static model report is included in the protected release at
 `/app/nfl/predictions/` and is not copied to `dist/`. See `sports/nfl/README.md`
 for data, model, and evaluation details.
+
+## Formula 1 Quick Start
+
+Build the next-race model board from credential-free public data and market
+feeds:
+
+```bash
+python -m pip install -r sports/f1/requirements.txt
+python sports/f1/scripts/run_f1_daily_predictions.py
+python sports/f1/scripts/validate_f1_publication.py
+```
+
+See `sports/f1/README.md` for model features, chronological evaluation, free
+Polymarket/Kalshi market sourcing, and shadow-publication controls.

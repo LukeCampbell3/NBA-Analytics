@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Formula 1 race prediction model, data, validation, odds, and publication controls.">
+    <title>Formula 1 Model Method | Prediction Bounties</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="/vault/vault-tokens.css?v=4">
+    <link rel="stylesheet" href="/vault/vault-components.css?v=7">
+    <link rel="stylesheet" href="/vault/prediction-pages.css?v=2">
+</head>
+<body class="vault-theme">
+    <div id="vaultShellRoot"></div>
+    <main class="vault-shell prediction-about-page">
+        <section class="prediction-about-stage"><div class="prediction-about-container">
+            <header class="prediction-about-sign">
+                <p class="prediction-about-kicker">Inside the Formula 1 ledger</p>
+                <div class="minimal-heading"><h1>How the F1 Board Works</h1></div>
+                <p class="prediction-page-lead">A chronological pre-race model, a consensus outright market, and a deliberately cautious shadow publication policy.</p>
+                <p id="aboutRunFacts" class="prediction-about-run-facts">Loading current model metadata...</p>
+            </header>
+            <section class="prediction-about-panel">
+                <h2>Prediction Target</h2>
+                <p>The system estimates each driver’s probability of winning, finishing on the podium, and finishing in the top six at the next Grand Prix. The market edge board compares only race-winner probabilities with race-winner outright prices, keeping the first version auditable.</p>
+            </section>
+            <section class="prediction-about-panel">
+                <h2>Features Available Before Lights Out</h2>
+                <ul class="prediction-about-list">
+                    <li>Starting-grid position and a separate flag indicating whether the grid is known.</li>
+                    <li>Rolling driver finishes, wins, podiums, starts, and DNF rate.</li>
+                    <li>Rolling constructor average finish, recent form, and win rate.</li>
+                    <li>Driver history at the circuit plus current-season points share and standing.</li>
+                </ul>
+                <p>Historical features are updated only after each race row has been created, preventing the result being predicted from leaking into its inputs.</p>
+            </section>
+            <section class="prediction-about-panel">
+                <h2>Model and Evaluation</h2>
+                <p>Three regularized logistic models estimate win, podium, and top-six outcomes. Field probabilities are normalized to the number of available finishing slots. The final 20% of races are held out chronologically and never shuffled into training; the board reports Brier scores, winner log loss, and top-ranked winner accuracy.</p>
+            </section>
+            <section class="prediction-about-panel">
+                <h2>Odds and Publication Controls</h2>
+                <p>Credential-free Polymarket and Kalshi public APIs supply executable YES asks. The board averages one observation per exchange for consensus and uses the lowest live ask as the best available price.</p>
+                <p>Missing or incomplete markets fail closed: model probabilities may be shown, but no edge is invented. Every play is labeled research-only, and staking remains disabled until enough prospective race snapshots have been graded.</p>
+            </section>
+        </div></section>
+    </main>
+    <script src="/vault/vault-components.js?v=7"></script>
+    <script src="/vault/vault-shell.js?v=7"></script>
+    <script src="prediction-about.js?v=1"></script>
+</body>
+</html>

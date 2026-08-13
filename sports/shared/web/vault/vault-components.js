@@ -264,6 +264,9 @@
       HR: "Home Runs",
       RBI: "RBIs",
       ER: "Earned Runs",
+      PASSING_YARDS: "Passing Yards",
+      RUSHING_YARDS: "Rushing Yards",
+      RECEIVING_YARDS: "Receiving Yards",
     };
     const key = String(target || "").toUpperCase();
     return lookup[key] || key || "Market";
@@ -296,10 +299,27 @@
     const targetLabel = CardVault.formatTargetLabel(play.target);
     const edgeValue = play.abs_edge != null ? play.abs_edge : play.edge;
     const edgeText = CardVault.formatNumber(edgeValue);
-    const evText = play.ev != null ? CardVault.formatSignedPct(play.ev) : CardVault.formatSignedNumber(edgeValue);
+    const modelProbability = play.estimated_graded_hit_rate != null
+      ? play.estimated_graded_hit_rate
+      : play.model_hit_probability;
+    const signalText = play.ev != null
+      ? CardVault.formatSignedPct(play.ev)
+      : edgeValue != null
+        ? CardVault.formatSignedNumber(edgeValue)
+        : CardVault.formatPct(modelProbability);
 
-    const gameText = [play.market_away_team, play.market_home_team].filter(Boolean).join(" @ ");
-    const sourceText = String(play.market_source || "").toLowerCase() === "real" ? "Book line" : play.market_source ? "Benchmark line" : "";
+    const gameText = [play.market_away_team, play.market_home_team].filter(Boolean).join(" @ ")
+      || [play.team, play.opponent].filter(Boolean).join(" vs ");
+    const bookName = String(play.selected_sportsbook_key || "")
+      .split("_")
+      .filter(Boolean)
+      .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+      .join(" ");
+    const sourceText = bookName
+      ? bookName
+      : String(play.market_source || "").toLowerCase() === "real"
+        ? "Book line"
+        : play.market_source ? "Benchmark line" : "";
     const footerParts = [play.market_date, gameText, sourceText].filter(Boolean);
     const footer = footerParts.join(" - ");
 
@@ -317,7 +337,9 @@
     const directionDelta = Number.isFinite(Number(edgeValue))
       ? `${CardVault.formatNumber(Math.abs(Number(edgeValue)))} ${direction === "UNDER" ? "below" : "above"} the market line`
       : `aligned to the ${direction} side of the market`;
-    const why = needsReview
+    const why = riskFlags.includes("policy_uncertified")
+      ? "Shadow notice only: this model candidate is not authorized for staking until prospective certification is active."
+      : needsReview
       ? "Review before action: stale data, lineup status, push exposure, or slate context may affect settlement."
       : play.parlay_candidate
       ? `Model lean pairs with ${String(play.parlay_partner_name || "another tagged leg").trim()} (${CardVault.formatPct(play.parlay_projected_hit_rate)} projected alignment).`
@@ -333,26 +355,28 @@
       ? '<span class="prediction-card__tag prediction-card__tag--risk">Review</span>'
       : publicationStatus !== "ready" && publicationStatus !== "published"
         ? '<span class="prediction-card__tag prediction-card__tag--risk">Withheld</span>'
-        : '<span class="prediction-card__tag">Published</span>';
+        : '<span class="prediction-card__tag prediction-card__tag--status">Published</span>';
     const riskTags = riskFlags
       .slice(0, 3)
       .map((flag) => `<span class="prediction-card__tag prediction-card__tag--risk">${CardVault.escapeHtml(riskLabels[flag] || flag.replaceAll("_", " "))}</span>`)
       .join("");
-    const hitRate = play.estimated_graded_hit_rate != null ? CardVault.formatPct(play.estimated_graded_hit_rate) : "n/a";
+    const hitRate = modelProbability != null ? CardVault.formatPct(modelProbability) : "n/a";
     const pushText = play.estimated_push_probability != null ? CardVault.formatPct(play.estimated_push_probability) : "n/a";
     const valueScore = play.value_score != null ? CardVault.formatNumber(play.value_score) : "n/a";
     const metrics = [
-      ["Line", lineText],
-      ["Projection", predText],
-      ["Edge", edgeText],
+      ...(lineText !== "n/a" ? [["Line", lineText]] : []),
+      ...(predText !== "n/a" ? [["Projection", predText]] : []),
+      ...(edgeText !== "n/a" ? [["Edge", edgeText]] : []),
       ...(hitRate !== "n/a" ? [["Model", hitRate]] : []),
       ...(pushText !== "n/a" ? [["Push", pushText]] : []),
       ...(valueScore !== "n/a" ? [["Value", valueScore]] : []),
+      ...(play.selected_side_price != null ? [["Odds", CardVault.formatSignedNumber(play.selected_side_price).replace(/\.00$/, "")]] : []),
+      ...(play.market_books != null ? [["Books", CardVault.formatNumber(play.market_books, 0)]] : []),
     ];
     const metricHtml = metrics
       .map(([label, value]) => `<div><dt>${CardVault.escapeHtml(label)}</dt><dd>${CardVault.escapeHtml(value)}</dd></div>`)
       .join("");
-    const signalLabel = play.ev != null ? "Expected value" : "Edge";
+    const signalLabel = play.ev != null ? "Expected value" : edgeValue != null ? "Model edge" : "Model confidence";
 
     const rank = String(play.rank || index + 1).padStart(2, "0");
 
@@ -360,8 +384,9 @@
       <article class="prediction-card prediction-card--${CardVault.escapeAttr(tier)}" data-direction="${CardVault.escapeAttr(direction)}" aria-label="Prediction card for ${CardVault.escapeAttr(displayName)} ${CardVault.escapeAttr(direction)} ${CardVault.escapeAttr(targetLabel)}">
         <header class="prediction-card__header">
           <div class="prediction-card__bounty-heading">
-            <span class="prediction-card__rank">Bounty ${CardVault.escapeHtml(rank)}</span>
+            <span class="prediction-card__rank">Notice ${CardVault.escapeHtml(rank)}</span>
             <span class="prediction-card__wanted">Wanted</span>
+            <span class="prediction-card__wanted-for">For model value</span>
           </div>
           <div class="prediction-card__tags">${parlayTag}${tierTag}${statusTag}${riskTags}</div>
         </header>
@@ -374,11 +399,12 @@
           </div>
         </div>
         <div class="prediction-card__signal">
-          <span class="prediction-card__signal-label">Reward signal · ${CardVault.escapeHtml(signalLabel)}</span>
-          <strong>${CardVault.escapeHtml(evText)}</strong>
+          <span class="prediction-card__signal-copy"><span class="prediction-card__reward">Reward</span><span class="prediction-card__signal-label">${CardVault.escapeHtml(signalLabel)}</span></span>
+          <strong>${CardVault.escapeHtml(signalText)}</strong>
         </div>
         <dl class="prediction-card__metrics">${metricHtml}</dl>
-        <p class="prediction-card__note">${CardVault.escapeHtml(why)}</p>
+        <p class="prediction-card__note"><span>Field note</span>${CardVault.escapeHtml(why)}</p>
+        <footer class="prediction-card__seal"><span aria-hidden="true">PB</span><small>Verified model notice</small></footer>
       </article>
     `;
   };

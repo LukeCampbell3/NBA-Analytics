@@ -1,0 +1,153 @@
+name: Formula 1 Predictions and Frontend
+
+on:
+  schedule:
+    # Thursday/Friday baseline, Saturday post-qualifying, Sunday pre-race.
+    # Months 3-12 cover the normal F1 season without quiet off-season polling.
+    - cron: "17 7 * 3-12 4-5"
+      timezone: "America/New_York"
+    - cron: "17 12 * 3-12 6"
+      timezone: "America/New_York"
+    - cron: "17 6 * 3-12 0"
+      timezone: "America/New_York"
+  workflow_dispatch:
+    inputs:
+      run_date:
+        description: "Optional board date (YYYY-MM-DD)"
+        required: false
+        type: string
+      build_only:
+        description: "Rebuild and validate the existing Formula 1 publication"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: f1-predictions-static-deployment
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  PUBLISH_BRANCH: static-deployment
+  PYTHONUNBUFFERED: "1"
+  F1_ODDS_PROVIDER_PRIORITY: polymarket,kalshi
+
+jobs:
+  f1-predictions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout prediction frontend branch
+        uses: actions/checkout@v7
+        with:
+          ref: static-deployment
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: sports/f1/requirements.txt
+
+      - name: Install Formula 1 dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r sports/f1/requirements.txt
+
+      - name: Resolve Formula 1 run date
+        id: run-config
+        env:
+          INPUT_RUN_DATE: ${{ inputs.run_date }}
+        run: |
+          set -euo pipefail
+          run_date="${INPUT_RUN_DATE:-$(TZ=America/New_York date +%F)}"
+          RUN_DATE_CANDIDATE="$run_date" python -c \
+            'import os; from datetime import date; date.fromisoformat(os.environ["RUN_DATE_CANDIDATE"])'
+          echo "run_date=$run_date" >> "$GITHUB_OUTPUT"
+          echo "run_stamp=${run_date//-/}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore immutable Formula 1 history cache
+        uses: actions/cache@v5
+        with:
+          path: sports/f1/data/cache
+          key: f1-jolpica-history-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            f1-jolpica-history-${{ runner.os }}-
+
+      - name: Test Formula 1 pipeline
+        run: python -m pytest sports/f1/tests -q
+
+      - name: Build Formula 1 board
+        if: ${{ !inputs.build_only }}
+        run: >-
+          python sports/f1/scripts/run_f1_daily_predictions.py
+          --run-date "${{ steps.run-config.outputs.run_date }}"
+          --snapshot-output
+          "sports/f1/data/market_snapshots/${{ steps.run-config.outputs.run_date }}/${{ github.run_id }}.json"
+
+      - name: Validate and build frontend
+        env:
+          BUILD_ONLY: ${{ inputs.build_only || 'false' }}
+        run: |
+          set -euo pipefail
+          args=()
+          if [[ "$BUILD_ONLY" != "true" ]]; then
+            args+=(--run-date "${{ steps.run-config.outputs.run_date }}")
+          fi
+          python sports/f1/scripts/validate_f1_publication.py "${args[@]}"
+          python sports/site/pipeline/build_static_site.py
+
+      - name: Stage Formula 1 publication only
+        id: staged
+        run: |
+          set -euo pipefail
+          git add -f -- \
+            sports/f1/web/data/daily_predictions.json \
+            sports/f1/web/data/history/index.json \
+            sports/f1/web/data/history/*.json \
+            dist/f1/data/daily_predictions.json \
+            dist/f1/data/history/index.json \
+            dist/f1/data/history/*.json \
+            paywall/private-content/app/f1/data/daily_predictions.json
+          SNAPSHOT="sports/f1/data/market_snapshots/${{ steps.run-config.outputs.run_date }}/${{ github.run_id }}.json"
+          if [[ "${{ inputs.build_only }}" != "true" && -f "$SNAPSHOT" ]]; then
+            git add -f -- "$SNAPSHOT"
+          fi
+          if git diff --cached --quiet; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            git diff --cached --stat
+          fi
+
+      - name: Commit and push Formula 1 publication
+        if: steps.staged.outputs.has_changes == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "F1 predictions ${{ steps.run-config.outputs.run_date }} [skip ci]"
+          if ! git push origin "HEAD:$PUBLISH_BRANCH"; then
+            git pull --rebase --autostash origin "$PUBLISH_BRANCH"
+            git push origin "HEAD:$PUBLISH_BRANCH"
+          fi
+
+      - name: Upload Formula 1 diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: f1-predictions-${{ steps.run-config.outputs.run_stamp || github.run_id }}
+          path: |
+            sports/f1/web/data/daily_predictions.json
+            sports/f1/web/data/history/index.json
+            sports/f1/web/data/history/*.json
+            sports/f1/data/market_snapshots/${{ steps.run-config.outputs.run_date }}/${{ github.run_id }}.json
+            dist/f1/data/daily_predictions.json
+            dist/f1/data/history/index.json
+            dist/f1/data/history/*.json
+          if-no-files-found: warn
+          retention-days: 30

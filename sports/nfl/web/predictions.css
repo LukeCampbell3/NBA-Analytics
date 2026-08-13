@@ -18,4 +18,6 @@
 .week-parlay-projection { text-align: right; }
 .week-parlay-projection strong { font-family: var(--vault-font-display); }
 .week-parlay-projection small { color: var(--vault-sport-accent); font-weight: 800; text-transform: uppercase; }
+.nfl-bounty-board { margin-top: 18px; }
+.nfl-bounty-board > p { grid-column: 1 / -1; margin: 0; padding: 22px; color: #fff3dc; text-align: center; }
 @media (max-width: 760px) { .week-pool-heading { align-items: stretch; flex-direction: column; } .week-position-filters { width: 100%; } .week-position-filters button { flex: 1; min-width: 0; padding-inline: 8px; } .week-parlay-grid { grid-template-columns: 1fr; } }

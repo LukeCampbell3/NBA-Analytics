@@ -177,19 +177,22 @@ class NflPredictionBoard {
             this.elements.board.innerHTML = "<p>No playable passing-yard candidate survived this slate.</p>";
             return;
         }
-        const rows = plays.map((play) => `<tr>
-            <td>${this.escape(play.player)}</td>
-            <td>${this.escape(`${play.team || "?"} vs ${play.opponent || "?"}`)}</td>
-            <td><strong>${this.escape(`${play.direction} ${this.formatNum(play.line, 1)}`)}</strong></td>
-            <td>${this.escape(this.formatAmerican(play.selected_side_price))}</td>
-            <td>${this.escape(play.selected_sportsbook_key || "n/a")}</td>
-            <td>${this.escape(this.formatPct(play.model_hit_probability))}</td>
-            <td>${this.escape(this.formatInt(play.market_books))}</td>
-        </tr>`).join("");
-        this.elements.board.innerHTML = `<table class="prediction-about-table">
-            <thead><tr><th>Player</th><th>Matchup</th><th>Play</th><th>Odds</th><th>Book</th><th>Model</th><th>Books</th></tr></thead>
-            <tbody>${rows}</tbody>
-        </table>`;
+        const cv = window.CardVault;
+        if (!cv) {
+            this.elements.board.innerHTML = "<p>The bounty notices could not be loaded.</p>";
+            return;
+        }
+        this.elements.board.innerHTML = plays.map((play, index) => cv.renderPredictionCard({
+            ...play,
+            rank: play.rank || index + 1,
+            player_display_name: play.player,
+            target: play.target || "passing_yards",
+            market_line: play.line,
+            model_hit_probability: play.model_hit_probability,
+            candidate_authorized: this.data?.candidate_authorized === true && play.candidate_authorized !== false,
+            action_status: this.data?.candidate_authorized === true ? play.action_status : "review",
+            board_publication_status: this.data?.publication_status,
+        }, index)).join("");
     }
 
     renderParlay() {
