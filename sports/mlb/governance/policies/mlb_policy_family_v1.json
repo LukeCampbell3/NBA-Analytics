@@ -91,7 +91,7 @@
       }
     },
     {
-      "policy_version": "MLB_ADAPTIVE_OVER_PARLAY_POLICY_V1",
+      "policy_version": "MLB_FANDUEL_BETSLIP_PARLAY_POLICY_V2",
       "policy_stage": "POLICY_DEVELOPMENT",
       "policy_kind": "DAILY_PARLAY",
       "staking_enabled": false,
@@ -104,6 +104,7 @@
           "correlation adjustments",
           "combined odds scope",
           "stake and exposure controls",
+          "sportsbook selection deeplink parser",
           "settlement semantics"
         ],
         "bugfix_equivalence_required": "EXACT_DECISION_AND_RETURN_REPLAY"
@@ -115,26 +116,28 @@
         "lines": [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5],
         "minimum_decimal_odds": 1.8,
         "maximum_decimal_odds": 6.0,
-        "books": ["bet365", "betmgm", "betrivers", "caesars", "draftkings", "espnbet", "fanduel"]
+        "books": ["fanduel"]
       },
       "decision_rule": {
         "family_is_frozen": false,
         "allowed_leg_counts": [2, 3, 4],
         "direction_policy": "OVER_ONLY",
         "one_sportsbook_required": true,
+        "sportsbook_key": "fanduel",
+        "provider_issued_selection_ids_required_for_betslip": true,
         "distinct_games_required": true,
         "ticket_ranking": ["projected_ticket_probability_desc", "expected_return_desc"],
         "abstention_allowed": true
       },
       "support_rule": {
-        "method_version": "MLB_PARLAY_SUPPORT_V1",
+        "method_version": "MLB_PARLAY_SUPPORT_V2",
         "minimum_leg_stratum_count": 35,
         "minimum_constructor_stratum_count": 50,
         "weighted": false,
         "unsupported_action": "ABSTAIN"
       },
       "shift_rule": {
-        "detector_version": "MLB_PARLAY_SHIFT_V1",
+        "detector_version": "MLB_PARLAY_SHIFT_V2",
         "features": ["leg_probability", "leg_price_decimal", "combined_price_decimal", "leg_count"],
         "warning_threshold": 0.1,
         "blocking_threshold": 0.2,
@@ -153,7 +156,7 @@
         "evaluation_unit": "DAILY_SLATE"
       },
       "evidence": {
-        "development_period": {"start": "2026-03-25", "end": "2026-08-05"},
+        "development_period": {"start": "2026-08-13", "end": "2026-08-13"},
         "locked_validation_period": {"start": null, "end": null},
         "prospective_period": {"start": null, "end": null},
         "development_evidence_label": "SELECTED_ONLY_HISTORY",

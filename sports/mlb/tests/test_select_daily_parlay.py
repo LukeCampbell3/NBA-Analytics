@@ -134,11 +134,14 @@ def test_profit_boost_uses_only_confirmed_higher_lines_and_recalculates_probabil
                 "side": "over",
                 "line": 1.5,
                 "price_american": 200,
-                "sportsbook": "draftkings",
+                "sportsbook": "fanduel",
+                "sportsbook_deeplink": (
+                    f"https://sportsbook.fanduel.com/addToBetslip?marketId=42.20{index}&selectionId=30{index}"
+                ),
                 "home_team": candidate.team,
                 "away_team": "OPP",
                 "game_start_utc": "2026-08-06T23:00:00Z",
-                "canonical_selected": True,
+                "canonical_selected": False,
                 "validation_status": "VALID",
                 "observed_at_utc": "2026-08-06T14:00:00Z",
             }
@@ -160,3 +163,80 @@ def test_profit_boost_uses_only_confirmed_higher_lines_and_recalculates_probabil
     assert ticket["ticket_tier"] == "profit_boost"
     assert ticket["evidence_status"] == "SHADOW_ALT_LINE_PRICE_CAPTURE"
     assert ticket["combined_decimal_price"] == 9.0
+
+
+def test_fanduel_betslip_uses_only_provider_issued_selection_ids() -> None:
+    legs = [
+        {
+            "selected_sportsbook_key": "fanduel",
+            "sportsbook_deeplink": (
+                "https://sportsbook.fanduel.com/addToBetslip?marketId=42.581005148&selectionId=237471"
+            ),
+        },
+        {
+            "selected_sportsbook_key": "fanduel",
+            "sportsbook_deeplink": (
+                "https://sportsbook.fanduel.com/addToBetslip?marketId=42.581005149&selectionId=237472"
+            ),
+        },
+    ]
+
+    url = parlay_selector.build_fanduel_betslip_url(legs)
+
+    assert url is not None
+    assert url.startswith("https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?")
+    assert "marketId%5B0%5D=42.581005148" in url
+    assert "selectionId%5B1%5D=237472" in url
+    legs[1]["sportsbook_deeplink"] = "https://evil.example/addToBetslip?marketId=42.1&selectionId=2"
+    assert parlay_selector.build_fanduel_betslip_url(legs) is None
+
+
+def test_main_line_plays_are_repriced_to_exact_linked_fanduel_quotes(tmp_path: Path) -> None:
+    candidates = [
+        _candidate(player="First Player", game_id="g1", probability=0.72, price=-180),
+        _candidate(player="Second Player", game_id="g2", probability=0.70, price=-170),
+    ]
+    observations = tmp_path / "provider.csv"
+    pd.DataFrame(
+        [
+            {
+                "source": "sportsgameodds",
+                "source_market_id": f"main-{index}",
+                "player_name": candidate.player,
+                "market_type": "batter_hits",
+                "side": "over",
+                "line": 0.5,
+                "price_american": -160 - index,
+                "sportsbook": "fanduel",
+                "sportsbook_deeplink": (
+                    f"https://sportsbook.fanduel.com/addToBetslip?marketId=42.10{index}&selectionId=20{index}"
+                ),
+                "home_team": candidate.team,
+                "away_team": "OPP",
+                "game_start_utc": "2026-08-06T23:00:00Z",
+                "canonical_selected": False,
+                "validation_status": "VALID",
+                "observed_at_utc": "2026-08-06T14:00:00Z",
+            }
+            for index, candidate in enumerate(candidates, start=1)
+        ]
+    ).to_csv(observations, index=False)
+
+    plays = parlay_selector.build_fanduel_main_line_plays(candidates, observations)
+    ladder, _ = parlay_selector.select_ticket_ladder(
+        candidates,
+        min_legs=2,
+        max_legs=2,
+        min_leg_probability=0.62,
+        base_min_ticket_probability=0.40,
+        min_combined_decimal_price=2.0,
+        min_expected_return=0.0,
+        plays_override=plays,
+    )
+    parlay_selector.attach_fanduel_betslip(ladder[0])
+
+    assert len(plays) == 2
+    assert all(play["selected_sportsbook_key"] == "fanduel" for play in plays)
+    assert all(play["provider_source_market_id"].startswith("main-") for play in plays)
+    assert ladder[0]["betslip"]["status"] == "ready"
+    assert ladder[0]["betslip"]["leg_count"] == 2

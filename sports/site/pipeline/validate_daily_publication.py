@@ -6,9 +6,11 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 from datetime import date
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qs, urlparse
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -48,6 +50,8 @@ MLB_PROFIT_BOOST_MIN_TICKET_PROBABILITY = 0.10
 MLB_PROFIT_BOOST_MIN_DECIMAL_PRICE = 4.0
 MLB_PROFIT_BOOST_MAX_DECIMAL_PRICE = 15.0
 MLB_PROFIT_BOOST_MIN_EXPECTED_RETURN = 0.05
+MLB_FANDUEL_HOSTS = {"account.sportsbook.fanduel.com", "sportsbook.fanduel.com"}
+MLB_FANDUEL_ID_PATTERN = re.compile(r"^[0-9]+(?:\.[0-9]+)?$")
 NBA_CALIBRATION_METHOD = "segment_monotonic_safety"
 NBA_CALIBRATION_SCOPE = "FULL_CANDIDATE_POOL_REPLAY"
 NBA_CALIBRATION_SEGMENTS = {
@@ -123,6 +127,17 @@ def validate_mlb_daily_ticket(
             raise ValueError(f"MLB {label} daily parlay repeats a player or game.")
         game_ids.add(game_id)
         players.add(player)
+    betslip = ticket.get("betslip")
+    if betslip is not None:
+        if not isinstance(betslip, dict):
+            raise ValueError(f"MLB {label} betslip metadata must be an object.")
+        betslip_status = str(betslip.get("status") or "").strip().lower()
+        if betslip_status not in {"ready", "unavailable"}:
+            raise ValueError(f"MLB {label} betslip has an invalid status.")
+        if betslip_status == "ready":
+            validate_fanduel_betslip(ticket, betslip, label=label)
+        elif ticket.get("betslip_url"):
+            raise ValueError(f"MLB {label} exposes a URL for an unavailable betslip.")
     ticket_probability = as_float(ticket.get("projected_probability"))
     combined_decimal = as_float(ticket.get("combined_decimal_price"))
     expected_return = as_float(ticket.get("expected_return_per_unit"))
@@ -223,6 +238,78 @@ def is_valid_american_price(value: object) -> bool:
         and (price <= -100.0 or price >= 100.0)
         and abs(price - round(price)) <= 1e-6
     )
+
+
+def _parse_fanduel_selection_url(value: object) -> tuple[str, str] | None:
+    try:
+        parsed = urlparse(str(value or "").strip())
+    except ValueError:
+        return None
+    if (
+        parsed.scheme.lower() != "https"
+        or (parsed.hostname or "").lower() not in MLB_FANDUEL_HOSTS
+        or not parsed.path.lower().endswith("/addtobetslip")
+    ):
+        return None
+    query = parse_qs(parsed.query, keep_blank_values=True)
+    markets = query.get("marketId") or query.get("marketId[0]") or []
+    selections = query.get("selectionId") or query.get("selectionId[0]") or []
+    if len(markets) != 1 or len(selections) != 1:
+        return None
+    market_id = str(markets[0]).strip()
+    selection_id = str(selections[0]).strip()
+    if not MLB_FANDUEL_ID_PATTERN.fullmatch(market_id) or not MLB_FANDUEL_ID_PATTERN.fullmatch(selection_id):
+        return None
+    return market_id, selection_id
+
+
+def validate_fanduel_betslip(ticket: dict[str, Any], betslip: dict[str, Any], *, label: str) -> None:
+    if str(ticket.get("sportsbook_key") or "").strip().lower() != "fanduel":
+        raise ValueError(f"MLB {label} linked betslip is not priced entirely at FanDuel.")
+    if str(betslip.get("sportsbook_key") or "").strip().lower() != "fanduel":
+        raise ValueError(f"MLB {label} betslip identifies the wrong sportsbook.")
+    if int(betslip.get("leg_count") or 0) != len(ticket.get("legs") or []):
+        raise ValueError(f"MLB {label} betslip leg count does not match its ticket.")
+    url = str(betslip.get("url") or "").strip()
+    if url != str(ticket.get("betslip_url") or "").strip():
+        raise ValueError(f"MLB {label} betslip URL aliases do not match.")
+    try:
+        parsed = urlparse(url)
+    except ValueError as exc:
+        raise ValueError(f"MLB {label} betslip URL is malformed.") from exc
+    if (
+        parsed.scheme.lower() != "https"
+        or (parsed.hostname or "").lower() not in MLB_FANDUEL_HOSTS
+        or not parsed.path.lower().endswith("/addtobetslip")
+    ):
+        raise ValueError(f"MLB {label} betslip URL is not an allowed FanDuel endpoint.")
+    query = parse_qs(parsed.query, keep_blank_values=True)
+    legs = ticket.get("legs") or []
+    expected_pairs: list[tuple[str, str]] = []
+    for leg_index, leg in enumerate(legs):
+        if not str(leg.get("provider_source_market_id") or "").strip():
+            raise ValueError(f"MLB {label} linked leg {leg_index + 1} lacks market provenance.")
+        if not str(leg.get("sportsbook_deeplink_observed_at_utc") or leg.get("alternate_line_observed_at_utc") or "").strip():
+            raise ValueError(f"MLB {label} linked leg {leg_index + 1} lacks link freshness provenance.")
+        selection = _parse_fanduel_selection_url(leg.get("sportsbook_deeplink"))
+        if selection is None:
+            raise ValueError(f"MLB {label} linked leg {leg_index + 1} lacks a valid provider FanDuel selection URL.")
+        expected_pairs.append(selection)
+        if query.get(f"marketId[{leg_index}]") != [selection[0]]:
+            raise ValueError(f"MLB {label} betslip market ID does not match leg {leg_index + 1}.")
+        if query.get(f"selectionId[{leg_index}]") != [selection[1]]:
+            raise ValueError(f"MLB {label} betslip selection ID does not match leg {leg_index + 1}.")
+    selection_keys = {
+        key for key in query
+        if key.startswith("marketId") or key.startswith("selectionId")
+    }
+    expected_keys = {
+        f"{field}[{index}]"
+        for index in range(len(legs))
+        for field in ("marketId", "selectionId")
+    }
+    if selection_keys != expected_keys or len(set(expected_pairs)) != len(expected_pairs):
+        raise ValueError(f"MLB {label} betslip does not contain exactly one unique selection per leg.")
 
 
 def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:

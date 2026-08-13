@@ -81,6 +81,31 @@
     color: var(--vault-text-muted);
 }
 
+.daily-parlay__actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: var(--vault-space-4);
+}
+
+.daily-parlay__betslip-button {
+    display: inline-flex;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 var(--vault-space-5);
+    border: 1px solid color-mix(in srgb, var(--vault-accent) 72%, var(--vault-line));
+    border-radius: 6px;
+    background: var(--vault-accent);
+    color: var(--vault-bg);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.daily-parlay__betslip-button:hover,
+.daily-parlay__betslip-button:focus-visible {
+    filter: brightness(1.08);
+}
+
 .daily-parlay__metrics span,
 .daily-parlay__metrics strong {
     display: block;
@@ -176,5 +201,9 @@
 
     .daily-parlay__leg-market {
         min-width: 82px;
+    }
+
+    .daily-parlay__betslip-button {
+        width: 100%;
     }
 }

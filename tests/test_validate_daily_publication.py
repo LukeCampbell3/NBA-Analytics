@@ -16,6 +16,7 @@ from validate_daily_publication import (
     MLB_POLICY_PROFILE,
     MLB_REQUIRED_TARGETS,
     as_float,
+    validate_mlb_daily_ticket,
     validate_nba_payload,
     validate_mlb_payload,
     validate_publication,
@@ -412,6 +413,61 @@ def test_validate_mlb_payload_accepts_adaptive_over_parlay(tmp_path: Path) -> No
     balanced_ticket["combined_decimal_price"] = 11.0
     with pytest.raises(ValueError, match="outside its declared payout scope"):
         validate_mlb_payload(payload, label="test")
+
+
+def test_validate_mlb_ticket_rejects_betslip_ids_that_do_not_match_provider_links() -> None:
+    ticket = {
+        "leg_count": 2,
+        "sportsbook_key": "fanduel",
+        "same_sportsbook_confirmed": True,
+        "projected_probability": 0.44,
+        "combined_decimal_price": 2.25,
+        "expected_return_per_unit": 0.01,
+        "risk_flags": [],
+        "betslip_url": (
+            "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?"
+            "marketId%5B0%5D=42.100&selectionId%5B0%5D=1001&"
+            "marketId%5B1%5D=42.200&selectionId%5B1%5D=2002"
+        ),
+        "legs": [],
+    }
+    for index, (market_id, selection_id) in enumerate((("42.100", "1001"), ("42.200", "2002")), start=1):
+        ticket["legs"].append(
+            {
+                "player": f"Player {index}",
+                "player_id": f"player-{index}",
+                "game_id": f"g{index}",
+                "direction": "OVER",
+                "market_source": "real",
+                "price_confirmed": True,
+                "selected_side_price": -170,
+                "selected_sportsbook_key": "fanduel",
+                "market_books": 6,
+                "market_common_books": 3,
+                "estimated_graded_hit_rate": 0.67,
+                "provider_source_market_id": f"market-{index}",
+                "sportsbook_deeplink_observed_at_utc": "2026-04-28T14:00:00Z",
+                "sportsbook_deeplink": (
+                    "https://sportsbook.fanduel.com/addToBetslip?"
+                    f"marketId={market_id}&selectionId={selection_id}"
+                ),
+            }
+        )
+    ticket["betslip"] = {
+        "sportsbook_key": "fanduel",
+        "sportsbook": "FanDuel",
+        "status": "ready",
+        "leg_count": 2,
+        "url": ticket["betslip_url"],
+        "source": "provider_issued_selection_ids",
+    }
+
+    validate_mlb_daily_ticket(ticket, label="test", authorization_enabled=False)
+
+    ticket["betslip"]["url"] = ticket["betslip"]["url"].replace("selectionId%5B1%5D=2002", "selectionId%5B1%5D=9999")
+    ticket["betslip_url"] = ticket["betslip"]["url"]
+    with pytest.raises(ValueError, match="selection ID does not match leg 2"):
+        validate_mlb_daily_ticket(ticket, label="test", authorization_enabled=False)
 
 
 def test_validate_mlb_payload_rejects_probationary_over_pick(tmp_path: Path) -> None:

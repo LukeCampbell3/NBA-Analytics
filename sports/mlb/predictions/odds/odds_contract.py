@@ -36,6 +36,7 @@ CONTRACT_COLUMNS = [
     "observed_at_utc",
     "source_updated_at_utc",
     "source_url_or_endpoint",
+    "sportsbook_deeplink",
     "acquisition_method",
     "raw_record_hash",
     "parser_version",
@@ -141,6 +142,7 @@ def ensure_contract(
         ["source_updated_at_utc", "last_update", "observed_at_utc", "snapshot_time_utc", "fetched_at_utc"],
     )
     out["source_url_or_endpoint"] = _series(src, ["source_url_or_endpoint"], source_endpoint or "")
+    out["sportsbook_deeplink"] = _series(src, ["sportsbook_deeplink", "deeplink"])
     out["acquisition_method"] = _series(src, ["acquisition_method"], acquisition_method or "api")
     out["parser_version"] = _series(src, ["parser_version"], parser_version).replace("", parser_version)
     out["normalization_version"] = _series(src, ["normalization_version"], NORMALIZATION_VERSION).replace(

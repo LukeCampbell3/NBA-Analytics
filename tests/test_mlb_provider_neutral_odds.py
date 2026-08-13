@@ -241,8 +241,14 @@ def test_sportsgameodds_requests_and_retains_book_specific_alternate_lines(monke
                         "available": True,
                         "odds": "-210",
                         "overUnder": "0.5",
+                        "deeplink": "https://sportsbook.draftkings.com/leagues/baseball/mlb",
                         "altLines": [
-                            {"available": True, "odds": "+220", "overUnder": "1.5"},
+                            {
+                                "available": True,
+                                "odds": "+220",
+                                "overUnder": "1.5",
+                                "deeplink": "https://sportsbook.draftkings.com/leagues/baseball/mlb",
+                            },
                             {"available": False, "odds": "+500", "overUnder": "2.5"},
                         ],
                     },
@@ -250,7 +256,13 @@ def test_sportsgameodds_requests_and_retains_book_specific_alternate_lines(monke
                         "available": True,
                         "odds": "-195",
                         "overUnder": "0.5",
-                        "altLines": [{"available": True, "odds": "+235", "overUnder": "1.5"}],
+                        "deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=42.100&selectionId=1001",
+                        "altLines": [{
+                            "available": True,
+                            "odds": "+235",
+                            "overUnder": "1.5",
+                            "deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=42.101&selectionId=1002",
+                        }],
                     },
                 },
             },
@@ -284,6 +296,11 @@ def test_sportsgameodds_requests_and_retains_book_specific_alternate_lines(monke
     assert len(normalized) == 4
     assert set(normalized["line"]) == {0.5, 1.5}
     assert set(normalized.loc[normalized["line"].eq(1.5), "price_american"]) == {220.0, 235.0}
+    fanduel = normalized.loc[normalized["sportsbook"].eq("fanduel")].sort_values("line")
+    assert list(fanduel["sportsbook_deeplink"]) == [
+        "https://sportsbook.fanduel.com/addToBetslip?marketId=42.100&selectionId=1001",
+        "https://sportsbook.fanduel.com/addToBetslip?marketId=42.101&selectionId=1002",
+    ]
     assert 2.5 not in set(normalized["line"])
     assert provider.get_accounting()["alternate_book_rows"] == 2
 

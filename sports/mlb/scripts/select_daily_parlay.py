@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 import sys
 import unicodedata
 from collections import Counter
@@ -13,6 +14,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
+from urllib.parse import parse_qs, urlencode, urlparse
 from urllib.request import Request, urlopen
 
 import pandas as pd
@@ -35,7 +37,7 @@ CALIBRATION_ROOT = SPORT_ROOT / "data" / "predictions" / "calibration"
 DEFAULT_PROVIDER_OBSERVATIONS = (
     SPORT_ROOT / "data" / "raw" / "market_odds" / "mlb" / "odds_api_io" / "latest_provider_observations.csv"
 )
-POLICY_VERSION = "mlb_over_parlay_ladder_v3"
+POLICY_VERSION = "mlb_fanduel_betslip_parlay_v4"
 ALLOWED_TARGETS = ("H", "TB", "R", "RBI", "K")
 MIN_LEGS = 2
 MAX_LEGS = 4
@@ -61,6 +63,10 @@ PROFIT_BOOST_MIN_DECIMAL_PRICE = 4.0
 PROFIT_BOOST_MAX_DECIMAL_PRICE = 15.0
 PROFIT_BOOST_MIN_EXPECTED_RETURN = 0.05
 MLB_LIVE_FEED_ROOT = "https://statsapi.mlb.com/api/v1.1/game"
+FANDUEL_SPORTSBOOK_KEY = "fanduel"
+FANDUEL_BETSLIP_ENDPOINT = "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip"
+FANDUEL_DEEPLINK_HOSTS = {"account.sportsbook.fanduel.com", "sportsbook.fanduel.com"}
+FANDUEL_ID_PATTERN = re.compile(r"^[0-9]+(?:\.[0-9]+)?$")
 
 
 def parse_args() -> argparse.Namespace:
@@ -156,23 +162,87 @@ def _american_to_decimal(price: object) -> float | None:
     return 1.0 + (value / 100.0 if value > 0 else 100.0 / abs(value))
 
 
-def build_alternate_line_plays(
-    candidates: list[selector.Candidate],
-    provider_observations: Path,
-) -> list[dict[str, Any]]:
+def parse_fanduel_selection_deeplink(value: object) -> tuple[str, str] | None:
+    """Extract provider-issued FanDuel IDs without accepting arbitrary redirect URLs."""
+    try:
+        parsed = urlparse(str(value or "").strip())
+    except ValueError:
+        return None
+    if (
+        parsed.scheme.lower() != "https"
+        or (parsed.hostname or "").lower() not in FANDUEL_DEEPLINK_HOSTS
+        or not parsed.path.lower().endswith("/addtobetslip")
+    ):
+        return None
+    query = parse_qs(parsed.query, keep_blank_values=True)
+    market_ids = query.get("marketId") or query.get("marketId[0]") or []
+    selection_ids = query.get("selectionId") or query.get("selectionId[0]") or []
+    if len(market_ids) != 1 or len(selection_ids) != 1:
+        return None
+    market_id = str(market_ids[0]).strip()
+    selection_id = str(selection_ids[0]).strip()
+    if not FANDUEL_ID_PATTERN.fullmatch(market_id) or not FANDUEL_ID_PATTERN.fullmatch(selection_id):
+        return None
+    return market_id, selection_id
+
+
+def build_fanduel_betslip_url(legs: list[dict[str, Any]]) -> str | None:
+    selections: list[tuple[str, str]] = []
+    for leg in legs:
+        if str(leg.get("selected_sportsbook_key") or "").strip().lower() != FANDUEL_SPORTSBOOK_KEY:
+            return None
+        selection = parse_fanduel_selection_deeplink(leg.get("sportsbook_deeplink"))
+        if selection is None or selection in selections:
+            return None
+        selections.append(selection)
+    if len(selections) < MIN_LEGS:
+        return None
+    params: list[tuple[str, str]] = []
+    for index, (market_id, selection_id) in enumerate(selections):
+        params.extend(
+            [
+                (f"marketId[{index}]", market_id),
+                (f"selectionId[{index}]", selection_id),
+            ]
+        )
+    return f"{FANDUEL_BETSLIP_ENDPOINT}?{urlencode(params)}"
+
+
+def attach_fanduel_betslip(ticket: dict[str, Any]) -> None:
+    url = build_fanduel_betslip_url(ticket.get("legs") or [])
+    if url is None:
+        ticket["betslip"] = {
+            "sportsbook_key": FANDUEL_SPORTSBOOK_KEY,
+            "sportsbook": "FanDuel",
+            "status": "unavailable",
+            "reason": "complete_provider_selection_links_unavailable",
+        }
+        ticket.pop("betslip_url", None)
+        return
+    ticket["betslip"] = {
+        "sportsbook_key": FANDUEL_SPORTSBOOK_KEY,
+        "sportsbook": "FanDuel",
+        "status": "ready",
+        "leg_count": len(ticket.get("legs") or []),
+        "url": url,
+        "source": "provider_issued_selection_ids",
+    }
+    ticket["betslip_url"] = url
+
+
+def _load_provider_observations(provider_observations: Path) -> pd.DataFrame:
     if not provider_observations.exists():
-        return []
+        return pd.DataFrame()
     try:
         observations = pd.read_csv(provider_observations, low_memory=False)
     except Exception:
-        return []
+        return pd.DataFrame()
     required = {
         "player_name", "market_type", "side", "line", "price_american", "sportsbook",
         "home_team", "away_team", "game_start_utc",
     }
     if observations.empty or not required.issubset(observations.columns):
-        return []
-
+        return pd.DataFrame()
     observations = observations.copy()
     observations["_player"] = observations["player_name"].map(_normalize_name)
     observations["_market"] = observations["market_type"].astype(str).str.strip().str.lower()
@@ -180,17 +250,88 @@ def build_alternate_line_plays(
     observations["_book"] = observations["sportsbook"].astype(str).str.strip().str.lower()
     observations["_line"] = pd.to_numeric(observations["line"], errors="coerce")
     observations["_price"] = pd.to_numeric(observations["price_american"], errors="coerce")
-    starts = pd.to_datetime(observations["game_start_utc"], utc=True, errors="coerce")
-    observations["_market_date"] = starts.dt.tz_convert("America/New_York").dt.date.astype(str)
+    observations["_start"] = pd.to_datetime(observations["game_start_utc"], utc=True, errors="coerce")
+    observations["_market_date"] = observations["_start"].dt.tz_convert("America/New_York").dt.date.astype(str)
     observations["_home"] = observations["home_team"].map(_normalize_name)
     observations["_away"] = observations["away_team"].map(_normalize_name)
-    if "canonical_selected" in observations:
-        selected = observations["canonical_selected"].astype(str).str.strip().str.lower().isin({"true", "1"})
-        observations = observations.loc[selected]
     if "validation_status" in observations:
         observations = observations.loc[
             observations["validation_status"].astype(str).str.strip().str.upper().eq("VALID")
         ]
+    return observations
+
+
+def _candidate_event_mask(observations: pd.DataFrame, candidate: selector.Candidate) -> pd.Series:
+    candidate_date = str(candidate.raw.get("Game_Date") or candidate.run_date.isoformat())
+    mask = observations["_market_date"].eq(candidate_date)
+    candidate_start = pd.to_datetime(candidate.raw.get("Commence_Time_UTC"), utc=True, errors="coerce")
+    if not pd.isna(candidate_start):
+        mask &= observations["_start"].notna() & (
+            (observations["_start"] - candidate_start).abs().dt.total_seconds() <= 5400
+        )
+    return mask
+
+
+def build_fanduel_main_line_plays(
+    candidates: list[selector.Candidate],
+    provider_observations: Path,
+) -> list[dict[str, Any]]:
+    observations = _load_provider_observations(provider_observations)
+    if observations.empty or "sportsbook_deeplink" not in observations:
+        return []
+    plays: list[dict[str, Any]] = []
+    for candidate in candidates:
+        market_type = TARGET_MARKET_TYPES.get(candidate.target)
+        if market_type is None:
+            continue
+        rows = observations.loc[
+            _candidate_event_mask(observations, candidate)
+            & observations["_player"].eq(_normalize_name(candidate.player))
+            & observations["_market"].eq(market_type)
+            & observations["_side"].eq("over")
+            & observations["_book"].eq(FANDUEL_SPORTSBOOK_KEY)
+            & observations["_line"].sub(float(candidate.market_line)).abs().le(1e-9)
+        ].copy()
+        if rows.empty:
+            continue
+        rows["_selection"] = rows["sportsbook_deeplink"].map(parse_fanduel_selection_deeplink)
+        rows = rows.loc[rows["_selection"].notna()]
+        rows = rows.loc[rows["_price"].between(-250.0, 125.0, inclusive="both")]
+        if rows.empty:
+            continue
+        if "observed_at_utc" in rows:
+            rows["_observed"] = pd.to_datetime(rows["observed_at_utc"], utc=True, errors="coerce")
+            rows = rows.sort_values("_observed", ascending=False, kind="stable")
+        row = rows.iloc[0]
+        price = float(row["_price"])
+        decimal_price = _american_to_decimal(price)
+        probability = _candidate_probability(candidate)
+        if decimal_price is None or probability * decimal_price - 1.0 < -0.03:
+            continue
+        play = _candidate_to_play(candidate)
+        play.update(
+            {
+                "selected_side_price": price,
+                "selected_sportsbook_key": FANDUEL_SPORTSBOOK_KEY,
+                "selected_sportsbook": "FanDuel",
+                "expected_value_per_unit": probability * decimal_price - 1.0,
+                "sportsbook_deeplink": str(row["sportsbook_deeplink"]),
+                "provider_source_market_id": str(row.get("source_market_id") or ""),
+                "sportsbook_deeplink_observed_at_utc": str(row.get("observed_at_utc") or ""),
+                "sportsbook_deeplink_source": str(row.get("source") or row.get("provider_name") or "provider"),
+            }
+        )
+        plays.append(play)
+    return plays
+
+
+def build_alternate_line_plays(
+    candidates: list[selector.Candidate],
+    provider_observations: Path,
+) -> list[dict[str, Any]]:
+    observations = _load_provider_observations(provider_observations)
+    if observations.empty or "sportsbook_deeplink" not in observations:
+        return []
 
     plays: list[dict[str, Any]] = []
     seen: set[tuple[str, str, str, float]] = set()
@@ -199,23 +340,18 @@ def build_alternate_line_plays(
         max_increment = ALT_LINE_MAX_INCREMENTS.get(candidate.target)
         if market_type is None or max_increment is None:
             continue
-        candidate_date = str(candidate.raw.get("Game_Date") or candidate.run_date.isoformat())
-        candidate_team = _normalize_name(candidate.team)
-        candidate_opponent = _normalize_name(candidate.raw.get("Opponent", ""))
-        same_event = observations["_market_date"].eq(candidate_date)
-        if candidate_team and candidate_opponent:
-            same_event &= (
-                observations["_home"].isin({candidate_team, candidate_opponent})
-                & observations["_away"].isin({candidate_team, candidate_opponent})
-            )
+        same_event = _candidate_event_mask(observations, candidate)
         rows = observations.loc[
             same_event
             & observations["_player"].eq(_normalize_name(candidate.player))
             & observations["_market"].eq(market_type)
             & observations["_side"].eq("over")
+            & observations["_book"].eq(FANDUEL_SPORTSBOOK_KEY)
             & observations["_line"].gt(float(candidate.market_line) + 1e-9)
             & observations["_line"].le(float(candidate.market_line) + float(max_increment) + 1e-9)
-        ]
+        ].copy()
+        rows["_selection"] = rows["sportsbook_deeplink"].map(parse_fanduel_selection_deeplink)
+        rows = rows.loc[rows["_selection"].notna()]
         for _, row in rows.iterrows():
             line = float(row["_line"])
             price = float(row["_price"])
@@ -260,8 +396,9 @@ def build_alternate_line_plays(
                     "expected_value_per_unit": expected_value,
                     "selected_side_price": price,
                     "selected_sportsbook_key": book,
-                    "selected_sportsbook": str(row.get("sportsbook") or book),
+                    "selected_sportsbook": "FanDuel",
                     "price_confirmed": True,
+                    "sportsbook_deeplink": str(row.get("sportsbook_deeplink") or ""),
                     "alternate_line_price_source": str(row.get("source") or row.get("provider_name") or "provider"),
                     "provider_source_market_id": str(row.get("source_market_id") or ""),
                     "alternate_line_observed_at_utc": str(row.get("observed_at_utc") or ""),
@@ -419,7 +556,10 @@ def select_ticket(
 
 
 def _limited_plays_by_book(candidates: list[selector.Candidate]) -> dict[str, list[dict[str, Any]]]:
-    plays = [_candidate_to_play(candidate) for candidate in candidates]
+    return _limited_plays_by_book_from_plays([_candidate_to_play(candidate) for candidate in candidates])
+
+
+def _limited_plays_by_book_from_plays(plays: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
     by_book: dict[str, list[dict[str, Any]]] = {}
     for play in plays:
         by_book.setdefault(str(play["selected_sportsbook_key"]), []).append(play)
@@ -496,8 +636,13 @@ def select_ticket_ladder(
     base_min_ticket_probability: float,
     min_combined_decimal_price: float,
     min_expected_return: float,
+    plays_override: list[dict[str, Any]] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    by_book = _limited_plays_by_book(candidates)
+    by_book = (
+        _limited_plays_by_book_from_plays(plays_override)
+        if plays_override is not None
+        else _limited_plays_by_book(candidates)
+    )
     limited = [play for book_plays in by_book.values() for play in book_plays]
     ladder: list[dict[str, Any]] = []
     for leg_count in range(min_legs, max_legs + 1):
@@ -704,6 +849,7 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
     anchors = open_anchors
     min_legs = max(MIN_LEGS, int(args.min_legs))
     max_legs = min(MAX_LEGS, max(int(args.min_legs), int(args.max_legs)))
+    fanduel_plays = build_fanduel_main_line_plays(anchors, args.provider_observations.resolve())
     ticket_ladder, considered = select_ticket_ladder(
         anchors,
         min_legs=min_legs,
@@ -712,22 +858,36 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         base_min_ticket_probability=float(args.min_ticket_probability),
         min_combined_decimal_price=float(args.min_combined_decimal_price),
         min_expected_return=float(args.min_expected_return),
+        plays_override=fanduel_plays if len(fanduel_plays) >= MIN_LEGS else None,
     )
-    ticket = ticket_ladder[0] if ticket_ladder else None
     alternate_plays = build_alternate_line_plays(anchors, args.provider_observations.resolve())
     profit_boost_ticket = select_profit_boost_ticket(alternate_plays)
     if profit_boost_ticket is not None:
         profit_boost_ticket["ticket_id"] = "profit_boost_2_leg"
         ticket_ladder.append(profit_boost_ticket)
+    for ladder_ticket in ticket_ladder:
+        attach_fanduel_betslip(ladder_ticket)
+    ticket = ticket_ladder[0] if ticket_ladder else None
     validation = build_validation(args.history_dir.resolve(), season, run_date, float(args.min_leg_probability))
     return {
-        "schema_version": 3,
+        "schema_version": 4,
         "policy_version": POLICY_VERSION,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "run_date": run_date.isoformat(),
         "status": "ready" if ticket is not None else "withheld",
         "objective": "consistency_ladder_plus_shadow_positive_ev_alternate_line_ticket",
         "direction_policy": "OVER_ONLY",
+        "betslip_policy": {
+            "sportsbook_key": FANDUEL_SPORTSBOOK_KEY,
+            "sportsbook": "FanDuel",
+            "status": "ready" if any(
+                (item.get("betslip") or {}).get("status") == "ready" for item in ticket_ladder
+            ) else "unavailable",
+            "construction": "provider_issued_selection_ids_only",
+            "linked_ticket_count": sum(
+                1 for item in ticket_ladder if (item.get("betslip") or {}).get("status") == "ready"
+            ),
+        },
         "allowed_leg_counts": list(range(min_legs, max_legs + 1)),
         "gates": {
             "min_leg_probability": float(args.min_leg_probability),
@@ -745,6 +905,8 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
             "min_market_books": 5,
             "min_common_market_books": 2,
             "same_sportsbook_required": True,
+            "linked_sportsbook": "fanduel",
+            "provider_issued_selection_link_required_for_betslip": True,
             "distinct_games_required": True,
             "profit_boost": {
                 "status": "shadow_only",

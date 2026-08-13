@@ -366,6 +366,7 @@ class SportsGameOddsMlbProvider:
                             "odds": book_data.get("odds", ""),
                             "overUnder": book_data.get("overUnder", entry.get("line")),
                             "available": book_data.get("available", True),
+                            "deeplink": book_data.get("deeplink", ""),
                             "line_type": "main",
                         }
                     ]
@@ -391,6 +392,7 @@ class SportsGameOddsMlbProvider:
                         variant_entry = dict(entry)
                         variant_entry["line"] = line
                         variant_entry["line_type"] = str(variant.get("line_type") or "main")
+                        variant_entry["sportsbook_deeplink"] = str(variant.get("deeplink") or "").strip()
                         variant_entry["odd_id"] = (
                             f"{entry.get('odd_id', '')}|{book_name}|{variant_entry['line_type']}|{line:g}"
                         )
@@ -427,7 +429,7 @@ class SportsGameOddsMlbProvider:
             source="sportsgameodds",
             acquisition_method="api",
             source_endpoint=f"{self.base_url}/events",
-            parser_version="sportsgameodds-v2-parser-v2",
+            parser_version="sportsgameodds-v2-parser-v3",
         )
 
     def _build_row(self, entry: Dict[str, Any], book: str, side: str,
@@ -458,6 +460,7 @@ class SportsGameOddsMlbProvider:
             "line": entry.get("line"),
             "line_type": entry.get("line_type", "main"),
             "odd_id": entry.get("odd_id", ""),
+            "sportsbook_deeplink": entry.get("sportsbook_deeplink", ""),
             "book": book,
             "side": side,
             "odds": odds_value,
