@@ -150,6 +150,13 @@ jobs:
           python sports/nfl/scripts/export_nfl_validation_web.py
           python sports/nfl/scripts/build_fantasy_draft_rankings.py \
             --season "${RUN_DATE%%-*}"
+          WEEK_SNAPSHOT="sports/nfl/data/production/snapshots/2026-09-09/week1_pool.json"
+          if [[ -f "$WEEK_SNAPSHOT" ]]; then
+            python sports/nfl/scripts/build_nfl_week_pool.py \
+              --season 2026 --week 1 --market-snapshot "$WEEK_SNAPSHOT"
+          else
+            python sports/nfl/scripts/build_nfl_week_pool.py --season 2026 --week 1
+          fi
           python sports/site/pipeline/build_static_site.py
           if [[ "${{ inputs.build_only }}" == "true" ]]; then
             python sports/site/pipeline/validate_nfl_publication.py
@@ -171,9 +178,11 @@ jobs:
             sports/nfl/data/reference/current_skill_roster.csv \
             sports/nfl/web/data/daily_predictions.json \
             sports/nfl/web/data/fantasy_draft_rankings.json \
+            sports/nfl/web/data/week_1_pool.json \
             sports/nfl/web/data/market_validation_summary.json \
             dist/nfl/data/daily_predictions.json \
             dist/nfl/data/fantasy_draft_rankings.json \
+            dist/nfl/data/week_1_pool.json \
             dist/nfl/data/market_validation_summary.json
           SNAPSHOT="sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}/${{ github.run_id }}.json"
           if [[ "${{ inputs.build_only }}" != "true" && -f "$SNAPSHOT" ]]; then
@@ -211,6 +220,7 @@ jobs:
             sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}/${{ github.run_id }}.json
             sports/nfl/web/data/daily_predictions.json
             sports/nfl/web/data/fantasy_draft_rankings.json
+            sports/nfl/web/data/week_1_pool.json
             sports/nfl/web/data/market_validation_summary.json
             dist/nfl/data/daily_predictions.json
             dist/nfl/data/market_validation_summary.json
