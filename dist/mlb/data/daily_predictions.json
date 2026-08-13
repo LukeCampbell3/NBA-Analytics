@@ -2,7 +2,7 @@
   "sport": "MLB",
   "board_title": "MLB Prediction Bounties",
   "run_date": "2026-08-13",
-  "through_date": "2026-08-12",
+  "through_date": "",
   "model_run_id": "mlb_high_precision_selector_v2",
   "policy_profile": "premium_evidence_gated_v7",
   "publication_state": "withheld_current_pool",
@@ -10,14 +10,14 @@
   "publication_message": "no plays passed publication filters",
   "data_quality": {
     "status": "withheld",
-    "lag_days": 1,
+    "lag_days": null,
     "review_threshold_days": 14,
     "withhold_threshold_days": 60,
     "reasons": [
       "no plays passed publication filters"
     ]
   },
-  "generated_at_utc": "2026-08-13T13:54:20.593109+00:00",
+  "generated_at_utc": "2026-08-13T15:13:12.839358+00:00",
   "summary": {
     "play_count": 0,
     "source_play_count": 0,
@@ -122,16 +122,16 @@
     "min_historical_market_availability_rate": 0.0
   },
   "filter_rejections": {
-    "edge_too_small": 583,
-    "nonstandard_market_line": 83,
-    "history_too_short": 55,
-    "core_price_too_heavily_juiced": 43,
-    "hit_probability_too_low": 37,
-    "side_price_unconfirmed": 36,
-    "core_price_too_long": 7,
-    "synthetic_market_source": 32,
-    "prediction_too_low": 47,
-    "market_books_too_low": 5
+    "edge_too_small": 585,
+    "nonstandard_market_line": 82,
+    "history_too_short": 60,
+    "core_price_too_heavily_juiced": 45,
+    "hit_probability_too_low": 38,
+    "side_price_unconfirmed": 35,
+    "synthetic_market_source": 29,
+    "prediction_too_low": 46,
+    "market_books_too_low": 3,
+    "core_price_too_long": 5
   },
   "by_target": {},
   "by_direction": {},
@@ -164,12 +164,12 @@
     "reason": "parlay validation rebuild disabled for fast web export"
   },
   "daily_parlay": {
-    "schema_version": 1,
-    "policy_version": "mlb_over_consistency_parlay_v1",
-    "generated_at_utc": "2026-08-13T13:54:19.951902+00:00",
+    "schema_version": 2,
+    "policy_version": "mlb_over_parlay_ladder_v2",
+    "generated_at_utc": "2026-08-13T15:12:32.502746+00:00",
     "run_date": "2026-08-13",
     "status": "withheld",
-    "objective": "ticket_hit_probability_then_expected_return",
+    "objective": "shortest_consistency_ticket_plus_leg_count_specific_alternatives",
     "direction_policy": "OVER_ONLY",
     "allowed_leg_counts": [
       2,
@@ -179,6 +179,16 @@
     "gates": {
       "min_leg_probability": 0.62,
       "min_ticket_probability": 0.4,
+      "ticket_probability_floors": {
+        "2": 0.4,
+        "3": 0.25,
+        "4": 0.18
+      },
+      "ticket_max_decimal_prices": {
+        "2": 6.0,
+        "3": 10.0,
+        "4": 18.0
+      },
       "min_combined_decimal_price": 2.0,
       "min_expected_return_per_unit": 0.0,
       "min_market_books": 5,
@@ -187,31 +197,32 @@
       "distinct_games_required": true
     },
     "pool_candidate_count": 928,
-    "eligible_anchor_count": 37,
-    "considered_anchor_count": 22,
+    "eligible_anchor_count": 13,
+    "considered_anchor_count": 13,
     "filter_rejections": {
       "history_too_short": 8,
       "history_too_stale": 4,
-      "insufficient_book_coverage": 17,
-      "leg_probability_too_low": 119,
-      "leg_value_too_low": 12,
-      "not_over": 476,
+      "insufficient_book_coverage": 13,
+      "leg_probability_too_low": 131,
+      "leg_value_too_low": 17,
+      "not_in_posted_lineup": 2,
+      "not_over": 486,
       "price_outside_playable_range": 119,
-      "unconfirmed_market_price": 116,
-      "unsupported_anchor_target": 20
+      "unconfirmed_market_price": 114,
+      "unsupported_anchor_target": 21
     },
     "selected_ticket": {
       "leg_indices": [
-        10,
-        11
+        0,
+        5
       ],
       "leg_keys": [
         "2026-08-13|824238|Kevin McGonigle|H|OVER",
-        "2026-08-13|822696|Alex Bregman|H|OVER"
+        "2026-08-13|823669|Brooks Lee|H|OVER"
       ],
       "leg_names": [
         "Kevin McGonigle",
-        "Alex Bregman"
+        "Brooks Lee"
       ],
       "leg_targets": [
         "H",
@@ -222,17 +233,17 @@
         "OVER"
       ],
       "leg_count": 2,
-      "projected_probability": 0.5287319399380809,
-      "independent_probability": 0.5287319399380809,
+      "projected_probability": 0.4200867159242627,
+      "independent_probability": 0.4200867159242627,
       "pairwise_adjustment_factor": 1.001977614,
-      "parlay_score": 0.610287616193416,
-      "combined_decimal_price": 2.0999999999999996,
-      "combined_american_price": 109.99999999999997,
-      "expected_return_per_unit": 0.1103370738699696,
+      "parlay_score": 0.4578178594176762,
+      "combined_decimal_price": 2.382352941176471,
+      "combined_american_price": 138.2352941176471,
+      "expected_return_per_unit": 0.0007948232313319537,
       "same_sportsbook_confirmed": true,
       "sportsbook_key": "draftkings",
       "sportsbook": "DraftKings",
-      "avg_leg_quality": 0.8117122976564393,
+      "avg_leg_quality": 0.8343368080863744,
       "same_player": false,
       "same_game": false,
       "same_team": false,
@@ -254,15 +265,15 @@
           "game_status_code": "P",
           "target": "H",
           "direction": "OVER",
-          "prediction": 1.3665900346413984,
+          "prediction": 1.3366679567193205,
           "market_line": 0.5,
           "market_source": "real",
           "market_bucket": "H|OVER|0.5",
           "historical_bucket_key": "H|OVER|0.5",
-          "estimated_graded_hit_rate": 0.7347240611694581,
-          "model_hit_probability": 0.7450250654765117,
-          "final_pool_quality_score": 0.8302312393687575,
-          "expected_value_per_unit": 0.10208609175418715,
+          "estimated_graded_hit_rate": 0.66745639599501,
+          "model_hit_probability": 0.7372803951309104,
+          "final_pool_quality_score": 0.8658440181329166,
+          "expected_value_per_unit": 0.0011845939925150817,
           "selected_side_price": -200.0,
           "selected_sportsbook_key": "draftkings",
           "selected_sportsbook": "DraftKings",
@@ -284,39 +295,37 @@
           ],
           "history_rows": 127,
           "days_since_history": 1,
-          "selection_score": 0.8302312393687575,
+          "selection_score": 0.8658440181329166,
           "parlay_precision_eligible": true,
-          "lineup_status": "unconfirmed",
-          "batting_order": "",
-          "official_game_status": "Scheduled",
-          "risk_flags": [
-            "lineup_unconfirmed"
-          ]
+          "lineup_status": "confirmed",
+          "batting_order": "300",
+          "official_game_status": "Pre-Game",
+          "risk_flags": []
         },
         {
-          "play_key": "2026-08-13|822696|Alex Bregman|H|OVER",
-          "player": "Alex Bregman",
-          "player_display_name": "Alex Bregman",
-          "player_id": "alex_bregman",
+          "play_key": "2026-08-13|823669|Brooks Lee|H|OVER",
+          "player": "Brooks Lee",
+          "player_display_name": "Brooks Lee",
+          "player_id": "brooks_lee",
           "player_type": "hitter",
-          "team": "CHC",
-          "opponent": "WSH",
-          "game_id": "822696",
+          "team": "MIN",
+          "opponent": "PHI",
+          "game_id": "823669",
           "market_date": "2026-08-13",
-          "commence_time_utc": "2026-08-13T20:05:00Z",
+          "commence_time_utc": "2026-08-13T23:30:00Z",
           "game_status_code": "P",
           "target": "H",
           "direction": "OVER",
-          "prediction": 1.299718848268631,
+          "prediction": 1.0551583352154337,
           "market_line": 0.5,
           "market_source": "real",
           "market_bucket": "H|OVER|0.5",
           "historical_bucket_key": "H|OVER|0.5",
-          "estimated_graded_hit_rate": 0.719633353366024,
-          "model_hit_probability": 0.7273915734081988,
-          "final_pool_quality_score": 0.793193355944121,
-          "expected_value_per_unit": 0.0074866947124335725,
-          "selected_side_price": -250.0,
+          "estimated_graded_hit_rate": 0.6293845087783132,
+          "model_hit_probability": 0.6518626994524236,
+          "final_pool_quality_score": 0.8028295980398323,
+          "expected_value_per_unit": -0.00038930958738492283,
+          "selected_side_price": -170.0,
           "selected_sportsbook_key": "draftkings",
           "selected_sportsbook": "DraftKings",
           "price_confirmed": true,
@@ -335,9 +344,9 @@
             "draftkings",
             "caesars"
           ],
-          "history_rows": 124,
+          "history_rows": 129,
           "days_since_history": 1,
-          "selection_score": 0.793193355944121,
+          "selection_score": 0.8028295980398323,
           "parlay_precision_eligible": true,
           "lineup_status": "unconfirmed",
           "batting_order": "",
@@ -347,6 +356,9 @@
           ]
         }
       ],
+      "ticket_tier": "consistency",
+      "probability_floor": 0.4,
+      "maximum_decimal_price": 6.0,
       "status": "withheld",
       "action_status": "withheld",
       "risk_flags": [
@@ -356,110 +368,484 @@
       "staking_enabled": false,
       "authorization_status": "SHADOW_ONLY"
     },
+    "ticket_ladder": [
+      {
+        "leg_indices": [
+          0,
+          5
+        ],
+        "leg_keys": [
+          "2026-08-13|824238|Kevin McGonigle|H|OVER",
+          "2026-08-13|823669|Brooks Lee|H|OVER"
+        ],
+        "leg_names": [
+          "Kevin McGonigle",
+          "Brooks Lee"
+        ],
+        "leg_targets": [
+          "H",
+          "H"
+        ],
+        "leg_directions": [
+          "OVER",
+          "OVER"
+        ],
+        "leg_count": 2,
+        "projected_probability": 0.4200867159242627,
+        "independent_probability": 0.4200867159242627,
+        "pairwise_adjustment_factor": 1.001977614,
+        "parlay_score": 0.4578178594176762,
+        "combined_decimal_price": 2.382352941176471,
+        "combined_american_price": 138.2352941176471,
+        "expected_return_per_unit": 0.0007948232313319537,
+        "same_sportsbook_confirmed": true,
+        "sportsbook_key": "draftkings",
+        "sportsbook": "DraftKings",
+        "avg_leg_quality": 0.8343368080863744,
+        "same_player": false,
+        "same_game": false,
+        "same_team": false,
+        "same_target": true,
+        "same_market_bucket": true,
+        "mixed_direction": false,
+        "legs": [
+          {
+            "play_key": "2026-08-13|824238|Kevin McGonigle|H|OVER",
+            "player": "Kevin McGonigle",
+            "player_display_name": "Kevin McGonigle",
+            "player_id": "kevin_mcgonigle",
+            "player_type": "hitter",
+            "team": "DET",
+            "opponent": "CLE",
+            "game_id": "824238",
+            "market_date": "2026-08-13",
+            "commence_time_utc": "2026-08-13T17:10:00Z",
+            "game_status_code": "P",
+            "target": "H",
+            "direction": "OVER",
+            "prediction": 1.3366679567193205,
+            "market_line": 0.5,
+            "market_source": "real",
+            "market_bucket": "H|OVER|0.5",
+            "historical_bucket_key": "H|OVER|0.5",
+            "estimated_graded_hit_rate": 0.66745639599501,
+            "model_hit_probability": 0.7372803951309104,
+            "final_pool_quality_score": 0.8658440181329166,
+            "expected_value_per_unit": 0.0011845939925150817,
+            "selected_side_price": -200.0,
+            "selected_sportsbook_key": "draftkings",
+            "selected_sportsbook": "DraftKings",
+            "price_confirmed": true,
+            "market_books": 6,
+            "market_common_books": 3,
+            "market_book_keys": [
+              "betmgm",
+              "bovada",
+              "caesars",
+              "draftkings",
+              "espnbet",
+              "fanduel"
+            ],
+            "market_common_book_keys": [
+              "fanduel",
+              "draftkings",
+              "caesars"
+            ],
+            "history_rows": 127,
+            "days_since_history": 1,
+            "selection_score": 0.8658440181329166,
+            "parlay_precision_eligible": true,
+            "lineup_status": "confirmed",
+            "batting_order": "300",
+            "official_game_status": "Pre-Game",
+            "risk_flags": []
+          },
+          {
+            "play_key": "2026-08-13|823669|Brooks Lee|H|OVER",
+            "player": "Brooks Lee",
+            "player_display_name": "Brooks Lee",
+            "player_id": "brooks_lee",
+            "player_type": "hitter",
+            "team": "MIN",
+            "opponent": "PHI",
+            "game_id": "823669",
+            "market_date": "2026-08-13",
+            "commence_time_utc": "2026-08-13T23:30:00Z",
+            "game_status_code": "P",
+            "target": "H",
+            "direction": "OVER",
+            "prediction": 1.0551583352154337,
+            "market_line": 0.5,
+            "market_source": "real",
+            "market_bucket": "H|OVER|0.5",
+            "historical_bucket_key": "H|OVER|0.5",
+            "estimated_graded_hit_rate": 0.6293845087783132,
+            "model_hit_probability": 0.6518626994524236,
+            "final_pool_quality_score": 0.8028295980398323,
+            "expected_value_per_unit": -0.00038930958738492283,
+            "selected_side_price": -170.0,
+            "selected_sportsbook_key": "draftkings",
+            "selected_sportsbook": "DraftKings",
+            "price_confirmed": true,
+            "market_books": 6,
+            "market_common_books": 3,
+            "market_book_keys": [
+              "betmgm",
+              "bovada",
+              "caesars",
+              "draftkings",
+              "espnbet",
+              "fanduel"
+            ],
+            "market_common_book_keys": [
+              "fanduel",
+              "draftkings",
+              "caesars"
+            ],
+            "history_rows": 129,
+            "days_since_history": 1,
+            "selection_score": 0.8028295980398323,
+            "parlay_precision_eligible": true,
+            "lineup_status": "unconfirmed",
+            "batting_order": "",
+            "official_game_status": "Scheduled",
+            "risk_flags": [
+              "lineup_unconfirmed"
+            ]
+          }
+        ],
+        "ticket_tier": "consistency",
+        "probability_floor": 0.4,
+        "maximum_decimal_price": 6.0,
+        "status": "withheld",
+        "action_status": "withheld",
+        "risk_flags": [
+          "lineup_unconfirmed"
+        ],
+        "candidate_authorized": false,
+        "staking_enabled": false,
+        "authorization_status": "SHADOW_ONLY"
+      },
+      {
+        "leg_indices": [
+          0,
+          1,
+          2
+        ],
+        "leg_keys": [
+          "2026-08-13|823508|Josh Naylor|H|OVER",
+          "2026-08-13|824238|Spencer Torkelson|H|OVER",
+          "2026-08-13|824561|Braden Montgomery|H|OVER"
+        ],
+        "leg_names": [
+          "Josh Naylor",
+          "Spencer Torkelson",
+          "Braden Montgomery"
+        ],
+        "leg_targets": [
+          "H",
+          "H",
+          "H"
+        ],
+        "leg_directions": [
+          "OVER",
+          "OVER",
+          "OVER"
+        ],
+        "leg_count": 3,
+        "projected_probability": 0.2648166254719511,
+        "independent_probability": 0.2648166254719511,
+        "pairwise_adjustment_factor": 1.001977614,
+        "parlay_score": 0.3188920169225576,
+        "combined_decimal_price": 4.115646258503401,
+        "combined_american_price": 311.56462585034006,
+        "expected_return_per_unit": 0.08989155381313196,
+        "same_sportsbook_confirmed": true,
+        "sportsbook_key": "fanduel",
+        "sportsbook": "FanDuel",
+        "avg_leg_quality": 0.8287650447115075,
+        "same_player": false,
+        "same_game": false,
+        "same_team": false,
+        "same_target": true,
+        "same_market_bucket": true,
+        "mixed_direction": false,
+        "legs": [
+          {
+            "play_key": "2026-08-13|823508|Josh Naylor|H|OVER",
+            "player": "Josh Naylor",
+            "player_display_name": "Josh Naylor",
+            "player_id": "josh_naylor",
+            "player_type": "hitter",
+            "team": "SEA",
+            "opponent": "NYY",
+            "game_id": "823508",
+            "market_date": "2026-08-13",
+            "commence_time_utc": "2026-08-13T17:35:00Z",
+            "game_status_code": "P",
+            "target": "H",
+            "direction": "OVER",
+            "prediction": 1.1822654320416268,
+            "market_line": 0.5,
+            "market_source": "real",
+            "market_bucket": "H|OVER|0.5",
+            "historical_bucket_key": "H|OVER|0.5",
+            "estimated_graded_hit_rate": 0.647905672576262,
+            "model_hit_probability": 0.6934165925888472,
+            "final_pool_quality_score": 0.8350396344975061,
+            "expected_value_per_unit": 0.018137485476983073,
+            "selected_side_price": -175.0,
+            "selected_sportsbook_key": "fanduel",
+            "selected_sportsbook": "FanDuel",
+            "price_confirmed": true,
+            "market_books": 6,
+            "market_common_books": 3,
+            "market_book_keys": [
+              "betmgm",
+              "bovada",
+              "caesars",
+              "draftkings",
+              "espnbet",
+              "fanduel"
+            ],
+            "market_common_book_keys": [
+              "fanduel",
+              "draftkings",
+              "caesars"
+            ],
+            "history_rows": 118,
+            "days_since_history": 1,
+            "selection_score": 0.8350396344975061,
+            "parlay_precision_eligible": true,
+            "lineup_status": "unconfirmed",
+            "batting_order": "",
+            "official_game_status": "",
+            "risk_flags": [
+              "lineup_unconfirmed"
+            ]
+          },
+          {
+            "play_key": "2026-08-13|824238|Spencer Torkelson|H|OVER",
+            "player": "Spencer Torkelson",
+            "player_display_name": "Spencer Torkelson",
+            "player_id": "spencer_torkelson",
+            "player_type": "hitter",
+            "team": "DET",
+            "opponent": "CLE",
+            "game_id": "824238",
+            "market_date": "2026-08-13",
+            "commence_time_utc": "2026-08-13T17:10:00Z",
+            "game_status_code": "P",
+            "target": "H",
+            "direction": "OVER",
+            "prediction": 1.1504399490537691,
+            "market_line": 0.5,
+            "market_source": "real",
+            "market_bucket": "H|OVER|0.5",
+            "historical_bucket_key": "H|OVER|0.5",
+            "estimated_graded_hit_rate": 0.6434868216753795,
+            "model_hit_probability": 0.6835025040291751,
+            "final_pool_quality_score": 0.8356043609320832,
+            "expected_value_per_unit": 0.07247803612563253,
+            "selected_side_price": -150.0,
+            "selected_sportsbook_key": "fanduel",
+            "selected_sportsbook": "FanDuel",
+            "price_confirmed": true,
+            "market_books": 6,
+            "market_common_books": 3,
+            "market_book_keys": [
+              "betmgm",
+              "bovada",
+              "caesars",
+              "draftkings",
+              "espnbet",
+              "fanduel"
+            ],
+            "market_common_book_keys": [
+              "fanduel",
+              "draftkings",
+              "caesars"
+            ],
+            "history_rows": 128,
+            "days_since_history": 1,
+            "selection_score": 0.8356043609320832,
+            "parlay_precision_eligible": true,
+            "lineup_status": "confirmed",
+            "batting_order": "500",
+            "official_game_status": "Pre-Game",
+            "risk_flags": []
+          },
+          {
+            "play_key": "2026-08-13|824561|Braden Montgomery|H|OVER",
+            "player": "Braden Montgomery",
+            "player_display_name": "Braden Montgomery",
+            "player_id": "braden_montgomery",
+            "player_type": "hitter",
+            "team": "CWS",
+            "opponent": "CIN",
+            "game_id": "824561",
+            "market_date": "2026-08-13",
+            "commence_time_utc": "2026-08-13T18:10:00Z",
+            "game_status_code": "P",
+            "target": "H",
+            "direction": "OVER",
+            "prediction": 1.0931936041176653,
+            "market_line": 0.5,
+            "market_source": "real",
+            "market_bucket": "H|OVER|0.5",
+            "historical_bucket_key": "H|OVER|0.5",
+            "estimated_graded_hit_rate": 0.6351756016135337,
+            "model_hit_probability": 0.6648555359417004,
+            "final_pool_quality_score": 0.8156511387049331,
+            "expected_value_per_unit": -0.0018669117501613486,
+            "selected_side_price": -175.0,
+            "selected_sportsbook_key": "fanduel",
+            "selected_sportsbook": "FanDuel",
+            "price_confirmed": true,
+            "market_books": 6,
+            "market_common_books": 3,
+            "market_book_keys": [
+              "betmgm",
+              "bovada",
+              "caesars",
+              "draftkings",
+              "espnbet",
+              "fanduel"
+            ],
+            "market_common_book_keys": [
+              "fanduel",
+              "draftkings",
+              "caesars"
+            ],
+            "history_rows": 59,
+            "days_since_history": 1,
+            "selection_score": 0.8156511387049331,
+            "parlay_precision_eligible": true,
+            "lineup_status": "unconfirmed",
+            "batting_order": "",
+            "official_game_status": "",
+            "risk_flags": [
+              "lineup_unconfirmed"
+            ]
+          }
+        ],
+        "ticket_tier": "balanced",
+        "probability_floor": 0.25,
+        "maximum_decimal_price": 10.0,
+        "status": "withheld",
+        "action_status": "withheld",
+        "risk_flags": [
+          "lineup_unconfirmed"
+        ],
+        "candidate_authorized": false,
+        "staking_enabled": false,
+        "authorization_status": "SHADOW_ONLY"
+      }
+    ],
     "validation": {
-      "method": "stored_pre_event_projection_synthetic_line_grading",
-      "price_validation": "unavailable_historically; no ROI claim",
+      "method": "stored_pre_event_projection_real_price_confirmed_grading",
+      "price_validation": "real market, at least five books, selected OVER price confirmed; no parlay ROI claim",
       "history_before_date": "2026-08-13",
-      "event_rows": 9591,
-      "dates": 122,
+      "event_rows": 327,
+      "dates": 10,
       "by_leg_count": [
         {
           "leg_count": 2,
           "all_dates": {
-            "tickets": 114,
-            "dates": 114,
-            "hits": 100,
-            "hit_rate": 0.8771929824561403,
-            "win_rate_wilson_95_low": 0.8043737386135157,
-            "win_rate_wilson_95_high": 0.9254194753279106,
-            "mean_projected_probability": 0.7383670816952965,
-            "brier_score": 0.11912190649455598
+            "tickets": 9,
+            "dates": 9,
+            "hits": 8,
+            "hit_rate": 0.8888888888888888,
+            "win_rate_wilson_95_low": 0.5649937852319399,
+            "win_rate_wilson_95_high": 0.9801096286728695,
+            "mean_projected_probability": 0.8044273966557217,
+            "brier_score": 0.10312354211233236
           },
           "development": {
-            "tickets": 94,
-            "dates": 94,
-            "hits": 81,
-            "hit_rate": 0.8617021276595744,
-            "win_rate_wilson_95_low": 0.7776378977292479,
-            "win_rate_wilson_95_high": 0.9173630016836808,
-            "mean_projected_probability": 0.7406057817833372,
-            "brier_score": 0.12035573271410681
+            "tickets": 8,
+            "dates": 8,
+            "hits": 8,
+            "hit_rate": 1.0,
+            "win_rate_wilson_95_low": 0.6755843804891231,
+            "win_rate_wilson_95_high": 1.0,
+            "mean_projected_probability": 0.8094355379231893,
+            "brier_score": 0.04298277556719295
           },
           "fixed_recent_holdout": {
-            "tickets": 20,
-            "dates": 20,
-            "hits": 19,
-            "hit_rate": 0.95,
-            "win_rate_wilson_95_low": 0.7638641064874331,
-            "win_rate_wilson_95_high": 0.9911187805671268,
-            "mean_projected_probability": 0.7278451912815056,
-            "brier_score": 0.11332292326266727
+            "tickets": 1,
+            "dates": 1,
+            "hits": 0,
+            "hit_rate": 0.0,
+            "win_rate_wilson_95_low": 0.0,
+            "win_rate_wilson_95_high": 0.7934567085261071,
+            "mean_projected_probability": 0.764362266515981,
+            "brier_score": 0.5842496744734477
           }
         },
         {
           "leg_count": 3,
           "all_dates": {
-            "tickets": 113,
-            "dates": 113,
-            "hits": 88,
-            "hit_rate": 0.7787610619469026,
-            "win_rate_wilson_95_low": 0.693775256933706,
-            "win_rate_wilson_95_high": 0.8454162638944921,
-            "mean_projected_probability": 0.5981290205925558,
-            "brier_score": 0.19425987736655853
+            "tickets": 9,
+            "dates": 9,
+            "hits": 7,
+            "hit_rate": 0.7777777777777778,
+            "win_rate_wilson_95_low": 0.4525833436728054,
+            "win_rate_wilson_95_high": 0.9367762376877727,
+            "mean_projected_probability": 0.6894689976202412,
+            "brier_score": 0.15198433982017598
           },
           "development": {
-            "tickets": 93,
-            "dates": 93,
-            "hits": 75,
-            "hit_rate": 0.8064516129032258,
-            "win_rate_wilson_95_low": 0.7146734140699786,
-            "win_rate_wilson_95_high": 0.8739166133562513,
-            "mean_projected_probability": 0.600240443651533,
-            "brier_score": 0.17963008780141748
+            "tickets": 8,
+            "dates": 8,
+            "hits": 7,
+            "hit_rate": 0.875,
+            "win_rate_wilson_95_low": 0.5291051942301386,
+            "win_rate_wilson_95_high": 0.9775830911367038,
+            "mean_projected_probability": 0.6954681481243179,
+            "brier_score": 0.11954598307783848
           },
           "fixed_recent_holdout": {
-            "tickets": 20,
-            "dates": 20,
-            "hits": 13,
-            "hit_rate": 0.65,
-            "win_rate_wilson_95_low": 0.43285051021946463,
-            "win_rate_wilson_95_high": 0.8188104521320554,
-            "mean_projected_probability": 0.5883109033683126,
-            "brier_score": 0.26228839884446453
+            "tickets": 1,
+            "dates": 1,
+            "hits": 0,
+            "hit_rate": 0.0,
+            "win_rate_wilson_95_low": 0.0,
+            "win_rate_wilson_95_high": 0.7934567085261071,
+            "mean_projected_probability": 0.6414757935876271,
+            "brier_score": 0.41149119375887594
           }
         },
         {
           "leg_count": 4,
           "all_dates": {
-            "tickets": 113,
-            "dates": 113,
-            "hits": 76,
-            "hit_rate": 0.672566371681416,
-            "win_rate_wilson_95_low": 0.5816120949035489,
-            "win_rate_wilson_95_high": 0.752173132275812,
-            "mean_projected_probability": 0.4711971520632212,
-            "brier_score": 0.25513743093991526
+            "tickets": 9,
+            "dates": 9,
+            "hits": 5,
+            "hit_rate": 0.5555555555555556,
+            "win_rate_wilson_95_low": 0.2666473457440297,
+            "win_rate_wilson_95_high": 0.811224570528086,
+            "mean_projected_probability": 0.5773668620556986,
+            "brier_score": 0.26129967138578275
           },
           "development": {
-            "tickets": 93,
-            "dates": 93,
-            "hits": 63,
-            "hit_rate": 0.6774193548387096,
-            "win_rate_wilson_95_low": 0.5770106827427646,
-            "win_rate_wilson_95_high": 0.7637519647145263,
-            "mean_projected_probability": 0.47193295396795654,
-            "brier_score": 0.24817781021424176
+            "tickets": 8,
+            "dates": 8,
+            "hits": 5,
+            "hit_rate": 0.625,
+            "win_rate_wilson_95_low": 0.30573785458380187,
+            "win_rate_wilson_95_high": 0.863158240538479,
+            "mean_projected_probability": 0.5828202764707231,
+            "brier_score": 0.25835239234032814
           },
           "fixed_recent_holdout": {
-            "tickets": 20,
-            "dates": 20,
-            "hits": 13,
-            "hit_rate": 0.65,
-            "win_rate_wilson_95_low": 0.43285051021946463,
-            "win_rate_wilson_95_high": 0.8188104521320554,
-            "mean_projected_probability": 0.4677756732062022,
-            "brier_score": 0.2874996673142969
+            "tickets": 1,
+            "dates": 1,
+            "hits": 0,
+            "hit_rate": 0.0,
+            "win_rate_wilson_95_low": 0.0,
+            "win_rate_wilson_95_high": 0.7934567085261071,
+            "mean_projected_probability": 0.5337395467355025,
+            "brier_score": 0.2848779037494197
           }
         }
       ]
@@ -469,10 +855,10 @@
   },
   "policy_governance": {
     "schema_version": "MLB_POLICY_GOVERNANCE_STATUS_V1",
-    "generated_at_utc": "2026-08-13T13:53:28.607317+00:00",
+    "generated_at_utc": "2026-08-13T11:02:35.139524+00:00",
     "run_date": "2026-08-13",
     "slate_id": "MLB_20260813",
-    "snapshot_id": "mlb_20260813_135206Z_c70da19bee13",
+    "snapshot_id": "mlb_20260813_110051Z_a7aadc88057b",
     "capture_label": "FULL_SLATE_SNAPSHOT",
     "complete_slate_capture_passed": true,
     "candidate_authorization_enabled": false,
@@ -497,7 +883,7 @@
       "SELECTED_ONLY_HISTORY"
     ],
     "full_policy_replay_available_for_snapshot": true,
-    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260813/governance/slates/MLB_20260813/mlb_20260813_135206Z_c70da19bee13/manifest.json"
+    "snapshot_manifest": "C:\\Users\\jcthi\\Code\\NBA-Analytics\\sports\\mlb\\data\\predictions\\daily_runs\\20260813\\governance\\slates\\MLB_20260813\\mlb_20260813_110051Z_a7aadc88057b\\manifest.json"
   },
   "suppressed_closed_games": [],
   "suppressed_duplicates": [],

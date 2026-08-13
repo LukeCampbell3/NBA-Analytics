@@ -32,6 +32,38 @@
     overflow: hidden;
 }
 
+.daily-parlay__tabs {
+    display: inline-flex;
+    gap: 2px;
+    margin-bottom: var(--vault-space-4);
+    padding: 3px;
+    border: 1px solid var(--vault-line);
+    border-radius: 6px;
+}
+
+.daily-parlay__tab {
+    min-width: 72px;
+    min-height: 36px;
+    padding: 0 var(--vault-space-3);
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--vault-text-muted);
+    font: inherit;
+    cursor: pointer;
+}
+
+.daily-parlay__tab:hover,
+.daily-parlay__tab:focus-visible {
+    color: var(--vault-text);
+    background: color-mix(in srgb, var(--vault-accent) 10%, transparent);
+}
+
+.daily-parlay__tab.is-active {
+    color: var(--vault-text);
+    background: color-mix(in srgb, var(--vault-accent) 18%, transparent);
+}
+
 .daily-parlay__metrics > div {
     min-width: 0;
     padding: var(--vault-space-4);
@@ -115,6 +147,16 @@
 }
 
 @media (max-width: 700px) {
+    .daily-parlay__tabs {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        width: 100%;
+    }
+
+    .daily-parlay__tab {
+        min-width: 0;
+    }
+
     .daily-parlay__metrics {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }

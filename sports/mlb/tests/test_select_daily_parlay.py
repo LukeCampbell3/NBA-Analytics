@@ -88,3 +88,27 @@ def test_anchor_filter_is_over_only_and_requires_playable_market_support() -> No
     assert kept == [eligible]
     assert rejected["not_over"] == 1
     assert rejected["insufficient_book_coverage"] == 1
+
+
+def test_ticket_ladder_keeps_best_two_leg_ticket_and_adds_longer_options() -> None:
+    candidates = [
+        _candidate(player=f"Player {index}", game_id=f"g{index}", probability=0.75, price=-150)
+        for index in range(1, 5)
+    ]
+
+    ladder, considered = parlay_selector.select_ticket_ladder(
+        candidates,
+        min_legs=2,
+        max_legs=4,
+        min_leg_probability=0.62,
+        base_min_ticket_probability=0.40,
+        min_combined_decimal_price=2.0,
+        min_expected_return=0.0,
+    )
+
+    assert len(considered) == 4
+    assert [ticket["leg_count"] for ticket in ladder] == [2, 3, 4]
+    assert [ticket["ticket_tier"] for ticket in ladder] == ["consistency", "balanced", "extended"]
+    assert ladder[0]["projected_probability"] > ladder[1]["projected_probability"] > ladder[2]["projected_probability"]
+    assert all(ticket["same_sportsbook_confirmed"] for ticket in ladder)
+    assert all(not ticket["same_game"] for ticket in ladder)

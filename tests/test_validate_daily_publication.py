@@ -355,8 +355,38 @@ def test_validate_mlb_payload_accepts_adaptive_over_parlay(tmp_path: Path) -> No
             ],
         },
     }
+    selected_ticket = payload["daily_parlay"]["selected_ticket"]
+    balanced_ticket = json.loads(json.dumps(selected_ticket))
+    balanced_ticket.update(
+        {
+            "leg_count": 3,
+            "projected_probability": 0.28,
+            "combined_decimal_price": 4.0,
+            "expected_return_per_unit": 0.12,
+        }
+    )
+    balanced_ticket["legs"].append(
+        {
+            "player": "Third",
+            "player_id": "third",
+            "game_id": "g3",
+            "direction": "OVER",
+            "market_source": "real",
+            "price_confirmed": True,
+            "selected_side_price": -160,
+            "selected_sportsbook_key": "draftkings",
+            "market_books": 6,
+            "market_common_books": 3,
+            "estimated_graded_hit_rate": 0.65,
+        }
+    )
+    payload["daily_parlay"]["ticket_ladder"] = [selected_ticket, balanced_ticket]
 
     validate_mlb_payload(payload, label="test")
+
+    balanced_ticket["combined_decimal_price"] = 11.0
+    with pytest.raises(ValueError, match="outside its declared payout scope"):
+        validate_mlb_payload(payload, label="test")
 
 
 def test_validate_mlb_payload_rejects_probationary_over_pick(tmp_path: Path) -> None:

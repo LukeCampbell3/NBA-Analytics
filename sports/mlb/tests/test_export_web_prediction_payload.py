@@ -276,6 +276,50 @@ def test_daily_parlay_withholds_non_object_artifact(tmp_path: Path) -> None:
     assert payload["selected_ticket"] is None
 
 
+def test_daily_parlay_enriches_each_ticket_in_ladder(tmp_path: Path) -> None:
+    path = tmp_path / "daily_parlay.json"
+    two_leg = {
+        "leg_count": 2,
+        "leg_keys": ["a", "b"],
+        "legs": [
+            {"player": "First", "team": "SEA", "game_id": "g1", "price_confirmed": True},
+            {"player": "Second", "team": "WSH", "game_id": "g2", "price_confirmed": True},
+        ],
+    }
+    three_leg = {
+        "leg_count": 3,
+        "leg_keys": ["a", "b", "c"],
+        "legs": [
+            *two_leg["legs"],
+            {"player": "Third", "team": "CHC", "game_id": "g3", "price_confirmed": True},
+        ],
+    }
+    path.write_text(
+        json.dumps({
+            "run_date": "2026-08-06",
+            "status": "ready",
+            "selected_ticket": two_leg,
+            "ticket_ladder": [two_leg, three_leg],
+        }),
+        encoding="utf-8",
+    )
+
+    payload = exporter.load_daily_parlay(
+        path,
+        run_date="2026-08-06",
+        publication_status="ready",
+        game_context_lookup={},
+    )
+
+    assert [ticket["leg_count"] for ticket in payload["ticket_ladder"]] == [2, 3]
+    assert all(ticket["status"] == "review" for ticket in payload["ticket_ladder"])
+    assert all(
+        leg["lineup_status"] == "unconfirmed"
+        for ticket in payload["ticket_ladder"]
+        for leg in ticket["legs"]
+    )
+
+
 def test_policy_governance_defaults_to_uncertified_shadow() -> None:
     payload = exporter.load_policy_governance(None, run_date="2026-08-06")
 

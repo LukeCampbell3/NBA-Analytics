@@ -32,7 +32,7 @@ SCRIPT_PATH = Path(__file__).resolve()
 SPORT_ROOT = SCRIPT_PATH.parents[1]
 REPO_ROOT = SCRIPT_PATH.parents[3]
 CALIBRATION_ROOT = SPORT_ROOT / "data" / "predictions" / "calibration"
-POLICY_VERSION = "mlb_over_consistency_parlay_v1"
+POLICY_VERSION = "mlb_over_parlay_ladder_v2"
 ALLOWED_TARGETS = ("H", "TB", "R", "RBI", "K")
 MIN_LEGS = 2
 MAX_LEGS = 4
@@ -41,6 +41,9 @@ MIN_TICKET_PROBABILITY = 0.40
 MIN_COMBINED_DECIMAL_PRICE = 2.0
 MIN_EXPECTED_RETURN = 0.0
 MAX_CANDIDATES_PER_BOOK = 12
+TICKET_PROBABILITY_FLOORS = {2: 0.40, 3: 0.25, 4: 0.18}
+TICKET_MAX_DECIMAL_PRICES = {2: 6.0, 3: 10.0, 4: 18.0}
+TICKET_TIERS = {2: "consistency", 3: "balanced", 4: "extended"}
 MLB_LIVE_FEED_ROOT = "https://statsapi.mlb.com/api/v1.1/game"
 
 
@@ -214,12 +217,24 @@ def select_ticket(
     min_combined_decimal_price: float,
     min_expected_return: float,
 ) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
+    ladder, limited = select_ticket_ladder(
+        candidates,
+        min_legs=min_legs,
+        max_legs=max_legs,
+        min_leg_probability=min_leg_probability,
+        base_min_ticket_probability=min_ticket_probability,
+        min_combined_decimal_price=min_combined_decimal_price,
+        min_expected_return=min_expected_return,
+    )
+    return (ladder[0] if ladder else None), limited
+
+
+def _limited_plays_by_book(candidates: list[selector.Candidate]) -> dict[str, list[dict[str, Any]]]:
     plays = [_candidate_to_play(candidate) for candidate in candidates]
-    limited: list[dict[str, Any]] = []
     by_book: dict[str, list[dict[str, Any]]] = {}
     for play in plays:
         by_book.setdefault(str(play["selected_sportsbook_key"]), []).append(play)
-    for book_plays in by_book.values():
+    for book, book_plays in by_book.items():
         book_plays.sort(
             key=lambda row: (
                 float(row["estimated_graded_hit_rate"]),
@@ -228,42 +243,90 @@ def select_ticket(
             ),
             reverse=True,
         )
-        limited.extend(book_plays[:MAX_CANDIDATES_PER_BOOK])
+        by_book[book] = book_plays[:MAX_CANDIDATES_PER_BOOK]
+    return by_book
 
-    tickets = score_candidate_parlays(
-        limited,
-        sport="mlb",
-        probability_field="estimated_graded_hit_rate",
-        eligibility_field="parlay_precision_eligible",
-        min_leg_probability=min_leg_probability,
-        min_pair_probability=min_ticket_probability,
-        min_legs_per_parlay=min_legs,
-        max_legs_per_parlay=max_legs,
-        forbid_same_market_bucket_parlay=False,
-        min_expected_return_per_unit=min_expected_return,
-    )
-    executable = [
-        ticket
-        for ticket in tickets
-        if float(ticket.get("combined_decimal_price") or 0.0) >= float(min_combined_decimal_price)
-        and float(ticket.get("expected_return_per_unit") or -999.0) >= float(min_expected_return)
-        and not bool(ticket.get("same_game"))
-        and not bool(ticket.get("same_player"))
-    ]
+
+def _best_ticket_for_leg_count(
+    by_book: dict[str, list[dict[str, Any]]],
+    *,
+    leg_count: int,
+    min_leg_probability: float,
+    min_ticket_probability: float,
+    min_combined_decimal_price: float,
+    max_combined_decimal_price: float,
+    min_expected_return: float,
+) -> dict[str, Any] | None:
+    executable: list[dict[str, Any]] = []
+    for book_plays in by_book.values():
+        tickets = score_candidate_parlays(
+            book_plays,
+            sport="mlb",
+            probability_field="estimated_graded_hit_rate",
+            eligibility_field="parlay_precision_eligible",
+            min_leg_probability=min_leg_probability,
+            min_pair_probability=min_ticket_probability,
+            min_legs_per_parlay=leg_count,
+            max_legs_per_parlay=leg_count,
+            forbid_same_market_bucket_parlay=False,
+            min_expected_return_per_unit=min_expected_return,
+        )
+        for source in tickets:
+            combined_price = float(source.get("combined_decimal_price") or 0.0)
+            if not min_combined_decimal_price <= combined_price <= max_combined_decimal_price:
+                continue
+            if float(source.get("expected_return_per_unit") or -999.0) < min_expected_return:
+                continue
+            if bool(source.get("same_game")) or bool(source.get("same_player")):
+                continue
+            ticket = dict(source)
+            ticket["legs"] = [book_plays[int(index)] for index in ticket["leg_indices"]]
+            ticket["ticket_tier"] = TICKET_TIERS[leg_count]
+            ticket["probability_floor"] = min_ticket_probability
+            ticket["maximum_decimal_price"] = max_combined_decimal_price
+            executable.append(ticket)
+
     executable.sort(
         key=lambda row: (
             float(row.get("projected_probability") or 0.0),
             float(row.get("expected_return_per_unit") or -999.0),
             float(row.get("avg_leg_quality") or 0.0),
-            -int(row.get("leg_count") or 0),
         ),
         reverse=True,
     )
-    if not executable:
-        return None, limited
-    ticket = dict(executable[0])
-    ticket["legs"] = [limited[int(index)] for index in ticket["leg_indices"]]
-    return ticket, limited
+    return executable[0] if executable else None
+
+
+def select_ticket_ladder(
+    candidates: list[selector.Candidate],
+    *,
+    min_legs: int,
+    max_legs: int,
+    min_leg_probability: float,
+    base_min_ticket_probability: float,
+    min_combined_decimal_price: float,
+    min_expected_return: float,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    by_book = _limited_plays_by_book(candidates)
+    limited = [play for book_plays in by_book.values() for play in book_plays]
+    ladder: list[dict[str, Any]] = []
+    for leg_count in range(min_legs, max_legs + 1):
+        probability_floor = min(
+            float(base_min_ticket_probability),
+            float(TICKET_PROBABILITY_FLOORS[leg_count]),
+        )
+        ticket = _best_ticket_for_leg_count(
+            by_book,
+            leg_count=leg_count,
+            min_leg_probability=min_leg_probability,
+            min_ticket_probability=probability_floor,
+            min_combined_decimal_price=min_combined_decimal_price,
+            max_combined_decimal_price=TICKET_MAX_DECIMAL_PRICES[leg_count],
+            min_expected_return=min_expected_return,
+        )
+        if ticket is not None:
+            ladder.append(ticket)
+    return ladder, limited
 
 
 def _historical_over_events(history_dir: Path, season: int, before_date: date, min_leg_probability: float) -> pd.DataFrame:
@@ -285,7 +348,12 @@ def _historical_over_events(history_dir: Path, season: int, before_date: date, m
                 actual = selector.to_float(row.get(target), default=float("nan"))
                 line = selector.to_float(row.get(f"Market_{target}"), default=float("nan"))
                 gap = selector.to_float(row.get(f"{target}_market_gap"), default=float("nan"))
+                source = str(row.get(f"Market_Source_{target}", "")).strip().lower()
+                books = selector.to_int(row.get(f"Market_{target}_books"), 0)
+                over_price = selector.to_float(row.get(f"Market_{target}_over_price"), default=float("nan"))
                 if not all(math.isfinite(value) for value in (actual, line, gap)) or gap <= 0.0:
+                    continue
+                if source != "real" or books < 5 or not math.isfinite(over_price) or abs(over_price) < 100.0:
                     continue
                 if abs(actual - line) <= 1e-9:
                     continue
@@ -368,8 +436,8 @@ def _grade_leg_count(events: pd.DataFrame, leg_count: int) -> dict[str, Any]:
 def build_validation(history_dir: Path, season: int, before_date: date, min_leg_probability: float) -> dict[str, Any]:
     events = _historical_over_events(history_dir, season, before_date, min_leg_probability)
     return {
-        "method": "stored_pre_event_projection_synthetic_line_grading",
-        "price_validation": "unavailable_historically; no ROI claim",
+        "method": "stored_pre_event_projection_real_price_confirmed_grading",
+        "price_validation": "real market, at least five books, selected OVER price confirmed; no parlay ROI claim",
         "history_before_date": before_date.isoformat(),
         "event_rows": int(len(events)),
         "dates": int(events["date"].nunique()) if not events.empty else 0,
@@ -415,28 +483,39 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
             continue
         open_anchors.append(candidate)
     anchors = open_anchors
-    ticket, considered = select_ticket(
+    min_legs = max(MIN_LEGS, int(args.min_legs))
+    max_legs = min(MAX_LEGS, max(int(args.min_legs), int(args.max_legs)))
+    ticket_ladder, considered = select_ticket_ladder(
         anchors,
-        min_legs=max(MIN_LEGS, int(args.min_legs)),
-        max_legs=min(MAX_LEGS, max(int(args.min_legs), int(args.max_legs))),
+        min_legs=min_legs,
+        max_legs=max_legs,
         min_leg_probability=float(args.min_leg_probability),
-        min_ticket_probability=float(args.min_ticket_probability),
+        base_min_ticket_probability=float(args.min_ticket_probability),
         min_combined_decimal_price=float(args.min_combined_decimal_price),
         min_expected_return=float(args.min_expected_return),
     )
+    ticket = ticket_ladder[0] if ticket_ladder else None
     validation = build_validation(args.history_dir.resolve(), season, run_date, float(args.min_leg_probability))
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "policy_version": POLICY_VERSION,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "run_date": run_date.isoformat(),
         "status": "ready" if ticket is not None else "withheld",
-        "objective": "ticket_hit_probability_then_expected_return",
+        "objective": "shortest_consistency_ticket_plus_leg_count_specific_alternatives",
         "direction_policy": "OVER_ONLY",
-        "allowed_leg_counts": list(range(max(MIN_LEGS, int(args.min_legs)), min(MAX_LEGS, int(args.max_legs)) + 1)),
+        "allowed_leg_counts": list(range(min_legs, max_legs + 1)),
         "gates": {
             "min_leg_probability": float(args.min_leg_probability),
             "min_ticket_probability": float(args.min_ticket_probability),
+            "ticket_probability_floors": {
+                str(leg_count): min(float(args.min_ticket_probability), TICKET_PROBABILITY_FLOORS[leg_count])
+                for leg_count in range(min_legs, max_legs + 1)
+            },
+            "ticket_max_decimal_prices": {
+                str(leg_count): TICKET_MAX_DECIMAL_PRICES[leg_count]
+                for leg_count in range(min_legs, max_legs + 1)
+            },
             "min_combined_decimal_price": float(args.min_combined_decimal_price),
             "min_expected_return_per_unit": float(args.min_expected_return),
             "min_market_books": 5,
@@ -449,6 +528,7 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "considered_anchor_count": int(len(considered)),
         "filter_rejections": dict(sorted(rejected.items())),
         "selected_ticket": ticket,
+        "ticket_ladder": ticket_ladder,
         "validation": validation,
     }
 
@@ -469,6 +549,12 @@ def main() -> None:
             f"p={float(ticket.get('projected_probability') or 0.0):.3f}, "
             f"EV={float(ticket.get('expected_return_per_unit') or 0.0):+.3f} ({names})"
         )
+    if len(payload.get("ticket_ladder", [])) > 1:
+        alternatives = ", ".join(
+            f"{item['leg_count']}-leg {float(item['projected_probability']):.3f}"
+            for item in payload["ticket_ladder"][1:]
+        )
+        print(f"Longer alternatives: {alternatives}")
 
 
 if __name__ == "__main__":

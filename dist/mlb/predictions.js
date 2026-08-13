@@ -5,6 +5,7 @@ class DailyPredictionsPage {
         this.availableDates = [];
         this.activeDate = null;
         this.currentDate = null;
+        this.activeParlayLegCount = null;
         this.elements = {
             cards: document.getElementById("predictionCards"),
             empty: document.getElementById("predictionEmpty"),
@@ -214,8 +215,16 @@ class DailyPredictionsPage {
         if (!section || !content) return;
 
         const parlay = this.data?.daily_parlay || {};
-        const ticket = parlay?.selected_ticket || null;
-        const status = String(parlay?.status || "withheld").toLowerCase();
+        const selectedTicket = parlay?.selected_ticket || null;
+        const ladder = Array.isArray(parlay?.ticket_ladder) && parlay.ticket_ladder.length
+            ? parlay.ticket_ladder.filter((item) => item && Array.isArray(item.legs) && item.legs.length)
+            : selectedTicket ? [selectedTicket] : [];
+        const defaultLegCount = Number(selectedTicket?.leg_count || ladder[0]?.leg_count || 0);
+        if (!ladder.some((item) => Number(item.leg_count) === Number(this.activeParlayLegCount))) {
+            this.activeParlayLegCount = defaultLegCount;
+        }
+        const ticket = ladder.find((item) => Number(item.leg_count) === Number(this.activeParlayLegCount)) || selectedTicket;
+        const status = String(ticket?.status || parlay?.status || "withheld").toLowerCase();
         const candidateAuthorized = Boolean(ticket?.candidate_authorized);
         const statusLabel = !candidateAuthorized && ticket ? "Shadow only" : status === "ready" ? "Ready" : status === "review" ? "Lineup review" : "Withheld";
         const statusTone = !candidateAuthorized && ticket ? "stale" : status === "ready" ? "active" : status === "review" ? "stale" : "withheld";
@@ -224,8 +233,8 @@ class DailyPredictionsPage {
             content.innerHTML = `
                 <div class="daily-parlay__header">
                     <div>
-                        <p class="vault-page-kicker">Adaptive ticket</p>
-                        <h2 id="dailyParlayTitle">Daily Parlay</h2>
+                        <p class="vault-page-kicker">Parlay ladder</p>
+                        <h2 id="dailyParlayTitle">MLB Parlays</h2>
                     </div>
                     ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, statusLabel) : ""}
                 </div>
@@ -251,20 +260,31 @@ class DailyPredictionsPage {
                     </div>
                     <div class="daily-parlay__leg-market">
                         <strong>${this.escapeHtml(price)}</strong>
-                        <span>${this.escapeHtml(probability)} · ${this.escapeHtml(lineupLabel)}</span>
+                        <span>${this.escapeHtml(probability)} / ${this.escapeHtml(lineupLabel)}</span>
                     </div>
                 </div>
             `;
         }).join("");
 
+        const ticketTabs = ladder.length > 1 ? `
+            <div class="daily-parlay__tabs" role="tablist" aria-label="Parlay length">
+                ${ladder.map((item) => {
+                    const legCount = Number(item.leg_count || 0);
+                    const active = legCount === Number(this.activeParlayLegCount);
+                    return `<button type="button" class="daily-parlay__tab${active ? " is-active" : ""}" data-parlay-legs="${legCount}" role="tab" aria-selected="${active}">${legCount} legs</button>`;
+                }).join("")}
+            </div>
+        ` : "";
+        const ticketTier = String(ticket.ticket_tier || "consistency");
         content.innerHTML = `
             <div class="daily-parlay__header">
                 <div>
-                    <p class="vault-page-kicker">Adaptive ${this.escapeHtml(ticket.leg_count)}-leg ticket</p>
-                    <h2 id="dailyParlayTitle">Daily Parlay</h2>
+                    <p class="vault-page-kicker">${this.escapeHtml(ticketTier)} / ${this.escapeHtml(ticket.leg_count)} legs</p>
+                    <h2 id="dailyParlayTitle">MLB Parlays</h2>
                 </div>
                 ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, statusLabel) : ""}
             </div>
+            ${ticketTabs}
             <div class="daily-parlay__metrics">
                 <div><span>Projected hit</span><strong>${this.escapeHtml(this.formatPct(ticket.projected_probability))}</strong></div>
                 <div><span>Combined price</span><strong>${this.escapeHtml(this.formatAmerican(ticket.combined_american_price))}</strong></div>
@@ -274,6 +294,14 @@ class DailyPredictionsPage {
             <div class="daily-parlay__legs">${legs}</div>
             <p class="daily-parlay__state">${this.escapeHtml(parlay.reason || "")}</p>
         `;
+        content.querySelectorAll("[data-parlay-legs]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const legCount = Number(button.dataset.parlayLegs);
+                if (!Number.isFinite(legCount) || legCount === Number(this.activeParlayLegCount)) return;
+                this.activeParlayLegCount = legCount;
+                this.renderDailyParlay();
+            });
+        });
     }
 
     formatNumber(value, digits = 2) {

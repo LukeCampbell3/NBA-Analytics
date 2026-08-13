@@ -694,50 +694,13 @@ def build_game_context_lookup(rows: list[dict[str, str]]) -> dict[str, dict[str,
     return lookup
 
 
-def load_daily_parlay(
-    path: Path | None,
+def enrich_daily_parlay_ticket(
+    source_ticket: dict[str, object],
     *,
-    run_date: str,
     publication_status: str,
     game_context_lookup: dict[str, dict[str, object]],
 ) -> dict[str, object]:
-    if path is None or not path.exists():
-        return {
-            "available": False,
-            "status": "withheld",
-            "reason": "daily parlay artifact unavailable",
-            "selected_ticket": None,
-        }
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        return {
-            "available": False,
-            "status": "withheld",
-            "reason": f"failed reading daily parlay artifact: {exc}",
-            "selected_ticket": None,
-        }
-    if not isinstance(payload, dict):
-        return {
-            "available": False,
-            "status": "withheld",
-            "reason": "daily parlay artifact must be a JSON object",
-            "selected_ticket": None,
-        }
-    if str(payload.get("run_date", "")).strip() != str(run_date).strip():
-        return {
-            "available": False,
-            "status": "withheld",
-            "reason": "daily parlay run date does not match the singles board",
-            "selected_ticket": None,
-        }
-    ticket = payload.get("selected_ticket")
-    if not isinstance(ticket, dict):
-        payload["available"] = False
-        payload["status"] = "withheld"
-        payload["reason"] = "no executable OVER-only ticket cleared the consistency gates"
-        return payload
-
+    ticket = dict(source_ticket)
     enriched_legs: list[dict[str, object]] = []
     ticket_risk_flags: set[str] = set()
     for source_leg in ticket.get("legs", []):
@@ -784,9 +747,84 @@ def load_daily_parlay(
     ticket["status"] = status
     ticket["action_status"] = status
     ticket["risk_flags"] = sorted(ticket_risk_flags)
+    return ticket
+
+
+def load_daily_parlay(
+    path: Path | None,
+    *,
+    run_date: str,
+    publication_status: str,
+    game_context_lookup: dict[str, dict[str, object]],
+) -> dict[str, object]:
+    if path is None or not path.exists():
+        return {
+            "available": False,
+            "status": "withheld",
+            "reason": "daily parlay artifact unavailable",
+            "selected_ticket": None,
+        }
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return {
+            "available": False,
+            "status": "withheld",
+            "reason": f"failed reading daily parlay artifact: {exc}",
+            "selected_ticket": None,
+        }
+    if not isinstance(payload, dict):
+        return {
+            "available": False,
+            "status": "withheld",
+            "reason": "daily parlay artifact must be a JSON object",
+            "selected_ticket": None,
+        }
+    if str(payload.get("run_date", "")).strip() != str(run_date).strip():
+        return {
+            "available": False,
+            "status": "withheld",
+            "reason": "daily parlay run date does not match the singles board",
+            "selected_ticket": None,
+        }
+    ticket = payload.get("selected_ticket")
+    if not isinstance(ticket, dict):
+        payload["available"] = False
+        payload["status"] = "withheld"
+        payload["reason"] = "no executable OVER-only ticket cleared the consistency gates"
+        return payload
+
+    ticket = enrich_daily_parlay_ticket(
+        ticket,
+        publication_status=publication_status,
+        game_context_lookup=game_context_lookup,
+    )
+    ladder = []
+    for source_ladder_ticket in payload.get("ticket_ladder", []):
+        if not isinstance(source_ladder_ticket, dict):
+            continue
+        ladder.append(
+            enrich_daily_parlay_ticket(
+                source_ladder_ticket,
+                publication_status=publication_status,
+                game_context_lookup=game_context_lookup,
+            )
+        )
+    if ladder:
+        selected_leg_count = int(ticket.get("leg_count") or 0)
+        selected_key = tuple(ticket.get("leg_keys") or [])
+        for ladder_ticket in ladder:
+            if (
+                int(ladder_ticket.get("leg_count") or 0) == selected_leg_count
+                and tuple(ladder_ticket.get("leg_keys") or []) == selected_key
+            ):
+                ticket = ladder_ticket
+                break
+    status = str(ticket.get("status") or "withheld")
     payload["available"] = status != "withheld"
     payload["status"] = status
     payload["selected_ticket"] = ticket
+    payload["ticket_ladder"] = ladder
     payload["reason"] = (
         "lineups are not yet confirmed" if status == "review" else
         "ticket is no longer executable" if status == "withheld" else
@@ -1178,6 +1216,16 @@ def main() -> None:
         daily_ticket["staking_enabled"] = False
         daily_ticket["authorization_status"] = (
             "AUTHORIZED" if daily_ticket["candidate_authorized"] else "SHADOW_ONLY"
+        )
+    for ladder_ticket in daily_parlay.get("ticket_ladder", []) if isinstance(daily_parlay, dict) else []:
+        if not isinstance(ladder_ticket, dict):
+            continue
+        ladder_ticket["candidate_authorized"] = bool(
+            authorization_enabled and ladder_ticket.get("candidate_authorized", False)
+        )
+        ladder_ticket["staking_enabled"] = False
+        ladder_ticket["authorization_status"] = (
+            "AUTHORIZED" if ladder_ticket["candidate_authorized"] else "SHADOW_ONLY"
         )
     target_counts: dict[str, int] = {}
     direction_counts: dict[str, int] = {}
