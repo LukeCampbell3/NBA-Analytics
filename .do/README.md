@@ -15,6 +15,11 @@ Before deployment:
 5. Create or update the app only after the R2 integration suite passes.
 6. Delete the temporary plaintext spec after DigitalOcean has encrypted its values.
 
+The `public-site` component tracks `static-deployment` with
+`deploy_on_push: true`, so each push to that branch starts a frontend build. The
+`paywall-functions` component remains manual (`deploy_on_push: false`) so a
+frontend publication does not unnecessarily redeploy the functions.
+
 The webhook URL is:
 
 `https://<domain>/functions/paywall/payment-webhook/api/webhooks/stripe`

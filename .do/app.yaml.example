@@ -55,7 +55,7 @@ static_sites:
     github:
       repo: LukeCampbell3/NBA-Analytics
       branch: static-deployment
-      deploy_on_push: false
+      deploy_on_push: true
     source_dir: /
     build_command: python sports/site/pipeline/build_static_site.py
     output_dir: dist
