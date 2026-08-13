@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="2026 NFL Week 1 passing-yard projection pool and market-gated candidates.">
+    <meta name="description" content="2026 NFL Week 1 QB, RB, WR, and TE yardage projections with parlay watchlists.">
     <title>NFL Week 1 Pool | Prediction Bounties</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="/vault/vault-tokens.css?v=4">
     <link rel="stylesheet" href="/vault/vault-components.css?v=7">
     <link rel="stylesheet" href="/vault/prediction-pages.css?v=2">
+    <link rel="stylesheet" href="predictions.css?v=1">
 </head>
 <body class="vault-theme">
     <div id="vaultShellRoot"></div>
@@ -19,9 +20,9 @@
                     <p class="prediction-about-kicker">NFL Weekly Model Pool</p>
                     <div class="minimal-heading">
                         <h1>2026 Week 1 Pool</h1>
-                        <button class="info-trigger" type="button" aria-label="About this pool" data-info="QB1 passing-yard projections use current teams, Week 1 opponents, and the frozen yardage model. They are not sportsbook picks until authentic two-sided lines pass the execution policy.">i</button>
+                        <button class="info-trigger" type="button" aria-label="About this pool" data-info="Current QB, RB, WR, and TE primary-yardage projections use current teams, Week 1 opponents, depth roles, and the frozen yardage model. They are not sportsbook picks until authentic two-sided lines pass the execution policy.">i</button>
                     </div>
-                    <p class="prediction-page-lead">Every current QB1 across the 16-game opening slate, with a model projection and holdout-calibrated range. Market candidates appear separately when executable lines open.</p>
+                    <p class="prediction-page-lead">Current quarterbacks, running backs, wide receivers, and tight ends across the opening slate, with target-specific projections and holdout-calibrated ranges. Parlay watchlists remain line-free until executable markets open.</p>
                     <p id="runFacts" class="prediction-about-run-facts">Loading Week 1 pool...</p>
                 </header>
 
@@ -32,8 +33,14 @@
                 </section>
 
                 <section class="prediction-about-panel">
-                    <h2>Week 1 QB1 Projections</h2>
+                    <div class="week-pool-heading"><h2>Week 1 Player Projections</h2><div id="weekPositionFilters" class="week-position-filters" role="group" aria-label="Filter projections by position"><button type="button" class="is-active" data-position="ALL">All</button><button type="button" data-position="QB">QB</button><button type="button" data-position="RB">RB</button><button type="button" data-position="WR">WR</button><button type="button" data-position="TE">TE</button></div></div>
                     <div id="weekProjectionPool" class="prediction-about-table-wrap"></div>
+                </section>
+
+                <section class="prediction-about-panel">
+                    <h2>Week 1 Parlay Watchlists</h2>
+                    <div id="parlayWatchlistStatus" class="prediction-about-callout"></div>
+                    <div id="parlayWatchlists" class="week-parlay-grid"></div>
                 </section>
 
                 <section class="prediction-about-panel">
@@ -68,6 +75,6 @@
     </main>
     <script src="/vault/vault-components.js?v=7"></script>
     <script src="/vault/vault-shell.js?v=7"></script>
-    <script src="predictions.js?v=4"></script>
+    <script src="predictions.js?v=5"></script>
 </body>
 </html>

@@ -3,6 +3,7 @@ class NflPredictionBoard {
         this.data = null;
         this.marketEvidence = null;
         this.weekPool = null;
+        this.position = "ALL";
         this.elements = {
             runFacts: document.getElementById("runFacts"),
             gate: document.getElementById("gateSummary"),
@@ -16,8 +17,24 @@ class NflPredictionBoard {
             weekPoolStatus: document.getElementById("weekPoolStatus"),
             weekPoolMetrics: document.getElementById("weekPoolMetrics"),
             weekProjectionPool: document.getElementById("weekProjectionPool"),
+            weekPositionFilters: document.getElementById("weekPositionFilters"),
+            parlayWatchlistStatus: document.getElementById("parlayWatchlistStatus"),
+            parlayWatchlists: document.getElementById("parlayWatchlists"),
         };
+        this.bindControls();
         this.init();
+    }
+
+    bindControls() {
+        this.elements.weekPositionFilters?.addEventListener("click", (event) => {
+            const button = event.target.closest("button[data-position]");
+            if (!button) return;
+            this.position = button.dataset.position || "ALL";
+            this.elements.weekPositionFilters.querySelectorAll("button").forEach((item) => {
+                item.classList.toggle("is-active", item === button);
+            });
+            this.renderWeekPool();
+        });
     }
 
     async init() {
@@ -66,13 +83,14 @@ class NflPredictionBoard {
             `${this.escape(week.season || "NFL")} Week ${this.escape(week.week || "n/a")}`,
             `Generated ${this.escape(this.formatTime(week.generated_at_utc))}`,
             `${this.escape(this.formatInt(week.games))} games`,
-            `${this.escape(this.formatInt(week.players))} QB1 projections`,
+            `${this.escape(this.formatInt(week.players))} player projections`,
             `${plays.length} candidate${plays.length === 1 ? "" : "s"}`,
             `${this.escape(this.formatInt(quality.complete_market_observations))} market observations`,
             shadow ? "Shadow mode" : "Historical report",
         ].map((item) => `<span>${item}</span>`).join("");
 
         this.renderWeekPool();
+        this.renderParlayWatchlists();
 
         const withheld = this.data.publication_status !== "shadow_current_pool";
         this.elements.gate.innerHTML = `<p><strong>${withheld ? "No current pick published." : "Current candidates found."}</strong> ${this.escape(quality.reason || "These candidates passed the frozen model and execution gates but are not authorized for staking while prospective certification is inactive.")}</p>`;
@@ -96,31 +114,62 @@ class NflPredictionBoard {
     renderWeekPool() {
         const data = this.weekPool || {};
         const pool = Array.isArray(data.pool) ? data.pool : [];
+        const visiblePool = this.position === "ALL"
+            ? pool
+            : pool.filter((row) => row.position === this.position);
         const validation = data.validation || {};
+        const targetValidation = validation.targets || {};
+        const counts = data.position_counts || {};
         const awaiting = data.market_status !== "lines_available";
         this.elements.weekPoolStatus.innerHTML = `<p><strong>${awaiting ? "Projection pool ready; market lines pending." : "Projection and market pools available."}</strong> ${this.escape(data.scope || "These are performance projections, not sportsbook picks.")}</p>`;
         const cards = [
             ["Games", this.formatInt(data.games)],
-            ["QB1s", this.formatInt(data.players)],
-            ["Market Rows", this.formatInt(data.market_observations)],
-            ["Holdout", this.formatInt(validation.holdout_season)],
-            ["Holdout Rows", this.formatInt(validation.rows)],
-            ["Passing MAE", `${this.formatNum(validation.mae, 1)} yd`],
+            ["All Players", this.formatInt(data.players)],
+            ["QBs", this.formatInt(counts.QB)],
+            ["RBs", this.formatInt(counts.RB)],
+            ["WRs", this.formatInt(counts.WR)],
+            ["TEs", this.formatInt(counts.TE)],
+            ["Pass MAE", `${this.formatNum(targetValidation.passing?.mae, 1)} yd`],
+            ["Rush MAE", `${this.formatNum(targetValidation.rushing?.mae, 1)} yd`],
+            ["Receive MAE", `${this.formatNum(targetValidation.receiving?.mae, 1)} yd`],
         ];
         this.elements.weekPoolMetrics.innerHTML = cards.map(([label, value]) => `<article class="prediction-about-metric-card"><span>${this.escape(label)}</span><strong>${this.escape(value)}</strong></article>`).join("");
-        if (!pool.length) {
+        if (!visiblePool.length) {
             this.elements.weekProjectionPool.innerHTML = "<p>No Week 1 projections are available.</p>";
             return;
         }
-        const rows = pool.map((row) => `<tr>
+        const rows = visiblePool.map((row) => `<tr>
             <td>${this.escape(this.formatInt(row.projection_rank))}</td>
-            <td><strong>${this.escape(row.player)}</strong><br><small>${this.escape(`${row.team} ${row.venue === "home" ? "vs" : "at"} ${row.opponent}`)}</small></td>
+            <td><strong>${this.escape(row.player)}</strong><br><small>${this.escape(`${row.depth_role || row.position} · ${row.team} ${row.venue === "home" ? "vs" : "at"} ${row.opponent}`)}</small></td>
             <td>${this.escape(this.formatKickoff(row.kickoff_utc))}</td>
+            <td>${this.escape(row.target_label || row.target)}</td>
             <td><strong>${this.escape(this.formatNum(row.projection, 1))}</strong></td>
             <td>${this.escape(`${this.formatNum(row.p10, 0)}–${this.formatNum(row.p90, 0)}`)}</td>
             <td>${this.escape(row.market_line == null ? "Awaiting line" : this.formatNum(row.market_line, 1))}</td>
         </tr>`).join("");
-        this.elements.weekProjectionPool.innerHTML = `<table class="prediction-about-table"><thead><tr><th>RK</th><th>QB / Matchup</th><th>Kickoff</th><th>Pass Yds</th><th>P10–P90</th><th>Market</th></tr></thead><tbody>${rows}</tbody></table>`;
+        this.elements.weekProjectionPool.innerHTML = `<table class="prediction-about-table"><thead><tr><th>RK</th><th>Player / Matchup</th><th>Kickoff</th><th>Target</th><th>Projection</th><th>P10–P90</th><th>Market</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    renderParlayWatchlists() {
+        const data = this.weekPool || {};
+        const policy = data.parlay_policy || {};
+        const watchlists = Array.isArray(data.parlay_watchlists) ? data.parlay_watchlists : [];
+        this.elements.parlayWatchlistStatus.innerHTML = `<p><strong>Projection templates only — not bets.</strong> ${this.escape(policy.reason || "Authentic two-sided lines are required before any leg can be evaluated.")} No line, direction, odds, or staking authorization has been assigned.</p>`;
+        if (!watchlists.length) {
+            this.elements.parlayWatchlists.innerHTML = "<p>No Week 1 parlay watchlists are available.</p>";
+            return;
+        }
+        this.elements.parlayWatchlists.innerHTML = watchlists.map((ticket) => {
+            const legs = (ticket.legs || []).map((leg) => `<div class="week-parlay-leg">
+                <span class="week-parlay-position">${this.escape(leg.position)}</span>
+                <span><strong>${this.escape(leg.player)}</strong><small>${this.escape(`${leg.team} vs ${leg.opponent} · ${String(leg.target || "").replaceAll("_", " ")}`)}</small></span>
+                <span class="week-parlay-projection"><strong>${this.escape(this.formatNum(leg.projection, 1))}</strong><small>projected</small></span>
+            </div>`).join("");
+            return `<article class="week-parlay-card">
+                <header><div><h3>${this.escape(ticket.name)}</h3><p>${this.escape(ticket.note)}</p></div><span class="week-parlay-status">Awaiting lines</span></header>
+                <div class="week-parlay-legs">${legs}</div>
+            </article>`;
+        }).join("");
     }
 
     renderBoard(plays) {
