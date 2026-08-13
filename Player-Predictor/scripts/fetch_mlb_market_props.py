@@ -245,7 +245,7 @@ def parse_args() -> argparse.Namespace:
         type=str,
         default="provider_chain",
         choices=[
-            "provider_chain", "scrape", "the_odds_api", "sportsgameodds",
+            "provider_chain", "fanduel_public", "scrape", "the_odds_api",
             "existing_provider", "rotowire", "odds_api", "snapshot",
         ],
         help="Market data adapter. 'odds_api' remains a legacy alias for the RotoWire parser; use 'the_odds_api' for the API.",
@@ -1024,7 +1024,7 @@ def main() -> None:
         raw_html, bundles, long_df, wide_df, manifest = fetch_from_rotowire(args, fetched_at_utc)
     elif provider == "snapshot":
         raw_html, bundles, long_df, wide_df, manifest = fetch_from_snapshot(args, fetched_at_utc)
-    elif provider in {"provider_chain", "scrape", "the_odds_api", "sportsgameodds", "existing_provider"}:
+    elif provider in {"provider_chain", "fanduel_public", "scrape", "the_odds_api", "existing_provider"}:
         canonical_df, long_df, wide_df, manifest = fetch_from_provider_chain(args, fetched_at_utc)
         raw_html, bundles = "", {}
     else:

@@ -37,7 +37,7 @@ CALIBRATION_ROOT = SPORT_ROOT / "data" / "predictions" / "calibration"
 DEFAULT_PROVIDER_OBSERVATIONS = (
     SPORT_ROOT / "data" / "raw" / "market_odds" / "mlb" / "odds_api_io" / "latest_provider_observations.csv"
 )
-POLICY_VERSION = "mlb_fanduel_betslip_parlay_v4"
+POLICY_VERSION = "mlb_fanduel_public_betslip_parlay_v5"
 ALLOWED_TARGETS = ("H", "TB", "R", "RBI", "K")
 MIN_LEGS = 2
 MAX_LEGS = 4
@@ -225,7 +225,7 @@ def attach_fanduel_betslip(ticket: dict[str, Any]) -> None:
         "status": "ready",
         "leg_count": len(ticket.get("legs") or []),
         "url": url,
-        "source": "provider_issued_selection_ids",
+        "source": "direct_fanduel_public_market_ids",
     }
     ticket["betslip_url"] = url
 
@@ -883,7 +883,7 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
             "status": "ready" if any(
                 (item.get("betslip") or {}).get("status") == "ready" for item in ticket_ladder
             ) else "unavailable",
-            "construction": "provider_issued_selection_ids_only",
+            "construction": "direct_fanduel_public_market_ids_only",
             "linked_ticket_count": sum(
                 1 for item in ticket_ladder if (item.get("betslip") or {}).get("status") == "ready"
             ),
@@ -906,7 +906,7 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
             "min_common_market_books": 2,
             "same_sportsbook_required": True,
             "linked_sportsbook": "fanduel",
-            "provider_issued_selection_link_required_for_betslip": True,
+            "direct_fanduel_public_selection_link_required_for_betslip": True,
             "distinct_games_required": True,
             "profit_boost": {
                 "status": "shadow_only",

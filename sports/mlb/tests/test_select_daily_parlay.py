@@ -127,7 +127,7 @@ def test_profit_boost_uses_only_confirmed_higher_lines_and_recalculates_probabil
     pd.DataFrame(
         [
             {
-                "source": "sportsgameodds",
+                "source": "fanduel_public",
                 "source_market_id": f"alt-{index}",
                 "player_name": candidate.player,
                 "market_type": "batter_hits",
@@ -200,7 +200,7 @@ def test_main_line_plays_are_repriced_to_exact_linked_fanduel_quotes(tmp_path: P
     pd.DataFrame(
         [
             {
-                "source": "sportsgameodds",
+                "source": "fanduel_public",
                 "source_market_id": f"main-{index}",
                 "player_name": candidate.player,
                 "market_type": "batter_hits",

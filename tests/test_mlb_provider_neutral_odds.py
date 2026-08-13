@@ -17,8 +17,8 @@ sys.path.insert(0, str(PROVIDERS_DIR))
 
 import provider_router
 from odds_contract import CONTRACT_COLUMNS, ensure_contract, reconcile_observations, validate_contract
+from fanduel_public_mlb_provider import FanduelPublicMlbProvider
 from permitted_scrape_mlb_provider import PermittedScrapeMlbProvider
-from sportsgameodds_mlb_provider import SportsGameOddsMlbProvider
 from the_odds_api_mlb_provider import TheOddsApiMlbProvider
 
 
@@ -105,7 +105,7 @@ def isolated_router(monkeypatch, tmp_path, priority, classes):
     )
 
 
-def test_missing_sportsgameodds_key_does_not_block_healthy_scraper(monkeypatch, tmp_path) -> None:
+def test_sportsgameodds_cannot_reenter_production_priority(monkeypatch, tmp_path) -> None:
     router = isolated_router(
         monkeypatch,
         tmp_path,
@@ -116,7 +116,16 @@ def test_missing_sportsgameodds_key_does_not_block_healthy_scraper(monkeypatch, 
     assert frame is not None and not frame.empty
     assert info["terminal_status"] == "MLB_FRESH_ODDS_AVAILABLE"
     assert info["source_state"] == "MLB_ODDS_PRIMARY_HEALTHY"
-    assert info["provider_results"][1]["provider_status"] == "missing_credentials"
+    assert "sportsgameodds" not in info["provider_priority"]
+    assert [result["provider_name"] for result in info["provider_results"]] == ["scrape"]
+
+
+def test_legacy_environment_priority_cannot_disable_free_fanduel_provider(monkeypatch) -> None:
+    monkeypatch.setenv("MLB_ODDS_PROVIDER_PRIORITY", "sportsgameodds,fresh_cache")
+
+    router = provider_router.MlbProviderRouter(provider_classes={})
+
+    assert router.provider_priority == ["fanduel_public", "fresh_cache"]
 
 
 def test_missing_scraper_source_does_not_block_healthy_api(monkeypatch, tmp_path) -> None:
@@ -218,91 +227,108 @@ def test_the_odds_api_fixture_uses_same_contract() -> None:
     assert set(normalized.columns) == scrape_columns
 
 
-def test_sportsgameodds_requests_and_retains_book_specific_alternate_lines(monkeypatch) -> None:
+def test_fanduel_public_feed_maps_main_and_alternate_player_props_without_credentials() -> None:
+    event_id = "35932482"
     event = {
-        "eventID": "event-1",
-        "status": {"startsAt": "2026-08-04T23:05:00Z", "live": False},
-        "teams": {
-            "home": {"teamID": "NYY", "names": {"short": "NYY"}},
-            "away": {"teamID": "TEX", "names": {"short": "TEX"}},
-        },
-        "players": {
-            "AARON_JUDGE_1_MLB": {"name": "Aaron Judge", "teamID": "NYY"},
-        },
-        "odds": {
-            "batting_hits-AARON_JUDGE_1_MLB-game-ou-over": {
-                "betTypeID": "ou",
-                "sideID": "over",
-                "statID": "batting_hits",
-                "playerID": "AARON_JUDGE_1_MLB",
-                "bookOverUnder": "0.5",
-                "byBookmaker": {
-                    "draftkings": {
-                        "available": True,
-                        "odds": "-210",
-                        "overUnder": "0.5",
-                        "deeplink": "https://sportsbook.draftkings.com/leagues/baseball/mlb",
-                        "altLines": [
-                            {
-                                "available": True,
-                                "odds": "+220",
-                                "overUnder": "1.5",
-                                "deeplink": "https://sportsbook.draftkings.com/leagues/baseball/mlb",
-                            },
-                            {"available": False, "odds": "+500", "overUnder": "2.5"},
-                        ],
-                    },
-                    "fanduel": {
-                        "available": True,
-                        "odds": "-195",
-                        "overUnder": "0.5",
-                        "deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=42.100&selectionId=1001",
-                        "altLines": [{
-                            "available": True,
-                            "odds": "+235",
-                            "overUnder": "1.5",
-                            "deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=42.101&selectionId=1002",
-                        }],
-                    },
-                },
-            },
-        },
+        "eventId": int(event_id),
+        "eventTypeId": 7511,
+        "name": "Cincinnati Reds (A Abbott) @ Chicago White Sox (D Martin)",
+        "openDate": "2026-08-04T23:05:00.000Z",
     }
-    requested_params = {}
+    content = {"attachments": {"events": {event_id: event}}}
+    event_attachment = {**event, "inPlay": False}
 
-    class Response:
-        status_code = 200
+    def market(
+        market_id: str,
+        market_type: str,
+        market_name: str,
+        runners: list[dict[str, object]],
+    ) -> dict[str, object]:
+        return {
+            "marketId": market_id,
+            "eventId": int(event_id),
+            "marketType": market_type,
+            "marketName": market_name,
+            "marketStatus": "OPEN",
+            "inPlay": False,
+            "runners": runners,
+        }
 
-        def raise_for_status(self) -> None:
-            return None
+    def runner(selection_id: int, name: str, price: int, handicap: float = 0.0) -> dict[str, object]:
+        return {
+            "selectionId": selection_id,
+            "runnerName": name,
+            "runnerStatus": "ACTIVE",
+            "handicap": handicap,
+            "secondaryLogo": "https://assets.sportsbook.fanduel.com/images/team/mlb/cincinnati_reds.png",
+            "winRunnerOdds": {"americanDisplayOdds": {"americanOddsInt": price}},
+        }
 
-        def json(self) -> dict:
-            return {"success": True, "data": [event]}
+    batter_payload = {
+        "attachments": {
+            "events": {event_id: event_attachment},
+            "markets": {
+                "734.100": market(
+                    "734.100",
+                    "PLAYER_TO_RECORD_A_HIT",
+                    "To Record A Hit",
+                    [runner(1001, "Elly De La Cruz", -250)],
+                ),
+                "734.101": market(
+                    "734.101",
+                    "PLAYER_TO_RECORD_2+_HITS",
+                    "To Record 2+ Hits",
+                    [runner(1001, "Elly De La Cruz", 195)],
+                ),
+            },
+        }
+    }
+    pitcher_payload = {
+        "attachments": {
+            "events": {event_id: event_attachment},
+            "markets": {
+                "734.200": market(
+                    "734.200",
+                    "PITCHER_C_TOTAL_STRIKEOUTS",
+                    "Andrew Abbott - Strikeouts",
+                    [
+                        runner(2001, "Andrew Abbott Over", -110, 5.5),
+                        runner(2002, "Andrew Abbott Under", -116, 5.5),
+                    ],
+                ),
+                "734.201": market(
+                    "734.201",
+                    "PITCHER_C_STRIKEOUTS",
+                    "Andrew Abbott - Alt Strikeouts",
+                    [runner(2003, "Andrew Abbott 7+ Strikeouts", 220)],
+                ),
+            },
+        }
+    }
+    provider = FanduelPublicMlbProvider(
+        content_payload=content,
+        event_payloads={
+            (event_id, "batter-props"): batter_payload,
+            (event_id, "pitcher-props"): pitcher_payload,
+        },
+        now=NOW,
+        sleep_fn=lambda _seconds: None,
+    )
 
-    def fake_get(_url, *, headers, params, timeout):
-        assert headers["x-api-key"] == "fixture-key"
-        assert timeout == 30
-        requested_params.update(params)
-        return Response()
-
-    monkeypatch.setattr("sportsgameodds_mlb_provider.requests.get", fake_get)
-    monkeypatch.setenv("MLB_ENABLE_LIVE_API_TESTS", "1")
-    provider = SportsGameOddsMlbProvider(api_key="fixture-key")
     result = provider.collect_player_props()
     normalized = provider.normalize(result["odds"])
 
-    assert requested_params["includeAltLines"] == "true"
-    assert result["diagnostic_odds"] == []
-    assert len(normalized) == 4
-    assert set(normalized["line"]) == {0.5, 1.5}
-    assert set(normalized.loc[normalized["line"].eq(1.5), "price_american"]) == {220.0, 235.0}
-    fanduel = normalized.loc[normalized["sportsbook"].eq("fanduel")].sort_values("line")
-    assert list(fanduel["sportsbook_deeplink"]) == [
-        "https://sportsbook.fanduel.com/addToBetslip?marketId=42.100&selectionId=1001",
-        "https://sportsbook.fanduel.com/addToBetslip?marketId=42.101&selectionId=1002",
-    ]
-    assert 2.5 not in set(normalized["line"])
-    assert provider.get_accounting()["alternate_book_rows"] == 2
+    assert result["status"] == "success"
+    assert result["cost_profile"] == "anonymous_public_read_only_no_subscription"
+    assert len(normalized) == 5
+    assert set(normalized["market_type"]) == {"batter_hits", "pitcher_strikeouts"}
+    assert set(normalized.loc[normalized["player_name"].eq("Elly De La Cruz"), "line"]) == {0.5, 1.5}
+    assert set(normalized.loc[normalized["player_name"].eq("Andrew Abbott"), "line"]) == {5.5, 6.5}
+    assert set(normalized["source"]) == {"fanduel_public"}
+    assert normalized["sportsbook_deeplink"].str.match(
+        r"https://sportsbook\.fanduel\.com/addToBetslip\?marketId=734\.\d+&selectionId=\d+"
+    ).all()
+    assert normalized["source_market_id"].str.match(r"734\.\d+:\d+").all()
 
 
 def test_duplicate_records_are_deduplicated_without_losing_sources() -> None:

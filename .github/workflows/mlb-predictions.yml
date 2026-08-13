@@ -27,13 +27,14 @@ env:
   PUBLISH_BRANCH: static-deployment
   PYTHONUNBUFFERED: "1"
   TZ: America/New_York
-  MLB_ODDS_PROVIDER_PRIORITY: ${{ vars.MLB_ODDS_PROVIDER_PRIORITY || 'scrape,the_odds_api,sportsgameodds,fresh_cache' }}
+  MLB_ODDS_PROVIDER_PRIORITY: ${{ vars.MLB_ODDS_PROVIDER_PRIORITY || 'fanduel_public,the_odds_api,scrape,existing_provider,fresh_cache' }}
   MLB_ODDS_MAX_AGE_SECONDS: ${{ vars.MLB_ODDS_MAX_AGE_SECONDS || '3600' }}
   MLB_ODDS_SCRAPE_ENABLED: ${{ vars.MLB_ODDS_SCRAPE_ENABLED || '0' }}
   MLB_ODDS_SCRAPE_AUTHORIZED: ${{ vars.MLB_ODDS_SCRAPE_AUTHORIZED || '0' }}
   MLB_ODDS_SCRAPE_SOURCE: ${{ vars.MLB_ODDS_SCRAPE_SOURCE }}
   THE_ODDS_API_KEY: ${{ secrets.THE_ODDS_API_KEY }}
-  SPORTSGAMEODDS_API_KEY: ${{ secrets.SPORTSGAMEODDS_API_KEY }}
+  MLB_FANDUEL_REGION: ${{ vars.MLB_FANDUEL_REGION || 'NJ' }}
+  MLB_FANDUEL_RATE_LIMIT_RPS: ${{ vars.MLB_FANDUEL_RATE_LIMIT_RPS || '2' }}
 
 jobs:
   mlb-predictions:

@@ -28,6 +28,11 @@ from odds_contract import ensure_contract, reconcile_observations, validate_cont
 PROVIDERS_AVAILABLE: dict[str, Any] = {}
 
 try:
+    from fanduel_public_mlb_provider import FanduelPublicMlbProvider
+    PROVIDERS_AVAILABLE["fanduel_public"] = FanduelPublicMlbProvider
+except ImportError:
+    pass
+try:
     from permitted_scrape_mlb_provider import PermittedScrapeMlbProvider
     PROVIDERS_AVAILABLE["scrape"] = PermittedScrapeMlbProvider
 except ImportError:
@@ -35,11 +40,6 @@ except ImportError:
 try:
     from the_odds_api_mlb_provider import TheOddsApiMlbProvider
     PROVIDERS_AVAILABLE["the_odds_api"] = TheOddsApiMlbProvider
-except ImportError:
-    pass
-try:
-    from sportsgameodds_mlb_provider import SportsGameOddsMlbProvider
-    PROVIDERS_AVAILABLE["sportsgameodds"] = SportsGameOddsMlbProvider
 except ImportError:
     pass
 try:
@@ -120,9 +120,12 @@ class MlbProviderRouter:
         self.min_valid_odds_rate = float(self.config.get("min_valid_odds_rate", 0.70))
         env_priority = [item.strip() for item in os.environ.get("MLB_ODDS_PROVIDER_PRIORITY", "").split(",") if item.strip()]
         configured = self.config.get("provider_priority") or self.config.get("fallback_order") or []
-        default = ["scrape", "the_odds_api", "sportsgameodds", "existing_provider", "fresh_cache"]
+        default = ["fanduel_public", "the_odds_api", "scrape", "existing_provider", "fresh_cache"]
         self.provider_priority = provider_priority or env_priority or configured or default
         self.provider_priority = ["the_odds_api" if value == "odds_api_io" else value for value in self.provider_priority]
+        self.provider_priority = [value for value in self.provider_priority if value != "sportsgameodds"]
+        if provider_priority is None and "fanduel_public" not in self.provider_priority:
+            self.provider_priority.insert(0, "fanduel_public")
         if "fresh_cache" not in self.provider_priority:
             self.provider_priority.append("fresh_cache")
         self.provider_classes = dict(PROVIDERS_AVAILABLE if provider_classes is None else provider_classes)
@@ -138,7 +141,7 @@ class MlbProviderRouter:
             except (json.JSONDecodeError, OSError):
                 pass
         return {
-            "provider_priority": ["scrape", "the_odds_api", "sportsgameodds", "existing_provider", "fresh_cache"],
+            "provider_priority": ["fanduel_public", "the_odds_api", "scrape", "existing_provider", "fresh_cache"],
             "freshness_limit_seconds": 3600,
             "min_valid_odds_rate": 0.70,
         }
