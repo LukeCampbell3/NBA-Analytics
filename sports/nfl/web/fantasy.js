@@ -146,15 +146,19 @@ class NflFantasyDraftBoard {
         const points = player.fantasy_points || {};
         const perGame = player.projected_stats?.per_game || {};
         const total = player.projected_stats?.season_total || {};
+        const lineup = player.lineup || {};
         const positionNames = { QB: "Quarterback", RB: "Running back", WR: "Wide receiver", TE: "Tight end" };
         const statRows = this.statsFor(player.position).map(([key, label]) => `<tr><td>${this.escape(label)}</td><td>${this.formatNum(perGame[key], this.statPlaces(key))}</td><td>${this.formatNum(total[key], this.statPlaces(key))}</td></tr>`).join("");
+        const roleLabel = Number.isFinite(Number(lineup.depth_rank)) ? `${player.position}${this.formatInt(lineup.depth_rank)} on current depth chart` : "Depth role unconfirmed";
+        const teamChange = lineup.changed_team ? " / new-team uncertainty applied" : "";
         this.elements.detail.innerHTML = `
             <div class="fantasy-detail-top"><div><span class="fantasy-detail-rank">#${this.formatInt(player.rank)} overall</span><h3>${this.escape(player.player)}</h3><p>${this.escape(player.team)} · ${this.escape(positionNames[player.position] || player.position)} · ${this.escape(player.position)}${this.formatInt(player.position_rank)}</p></div><span class="fantasy-tier fantasy-tier-large">Tier ${this.formatInt(player.tier)}</span></div>
             <p class="fantasy-assessment">${this.escape(player.assessment)}</p>
             <div class="fantasy-range"><div><span>Floor</span><strong>${this.formatNum(points.season_p10, 1)}</strong></div><div><span>Median</span><strong>${this.formatNum(points.season_median, 1)}</strong></div><div><span>Ceiling</span><strong>${this.formatNum(points.season_p90, 1)}</strong></div></div>
             <div class="fantasy-detail-metrics"><div><span>PPR / game</span><strong>${this.formatNum(points.per_game, 2)}</strong></div><div><span>Season mean</span><strong>${this.formatNum(points.season_mean, 1)}</strong></div><div><span>VORP</span><strong>${this.formatSignedNum(player.value_over_replacement, 1)}</strong></div><div><span>Draft score</span><strong>${this.formatNum(player.draft_score, 1)}</strong></div></div>
+            <p class="fantasy-confidence"><strong>${this.escape(roleLabel)}</strong> / ${this.formatNum(player.games, 1)} expected active or start games of ${this.formatInt(player.schedule_games)}${teamChange}</p>
             <table class="fantasy-stat-table"><thead><tr><th>Stat</th><th>Per game</th><th>Season</th></tr></thead><tbody>${statRows}</tbody></table>
-            <p class="fantasy-confidence"><strong>${this.escape(player.projection_confidence)}</strong> confidence · ${this.formatInt(player.history_games)} recent games · ${this.formatInt(player.games)} scheduled games</p>`;
+            <p class="fantasy-confidence"><strong>${this.escape(player.projection_confidence)}</strong> confidence / ${this.formatInt(player.history_games)} recent games</p>`;
     }
 
     statsFor(position) {

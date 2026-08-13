@@ -33,6 +33,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--players", type=int, default=200)
     parser.add_argument("--history", type=Path, default=NFL_ROOT / "data/raw/player_stats_deployment.parquet")
     parser.add_argument("--roster", type=Path, default=NFL_ROOT / "data/reference/current_skill_roster.csv")
+    parser.add_argument(
+        "--depth-chart",
+        type=Path,
+        default=NFL_ROOT / "data/reference/current_depth_chart.csv",
+    )
     parser.add_argument("--schedule", default=SCHEDULE_URL)
     parser.add_argument("--output", type=Path, default=NFL_ROOT / "web/data/fantasy_draft_rankings.json")
     parser.add_argument("--validation-output", type=Path, default=NFL_ROOT / "data/evaluation/fantasy_draft_validation.json")
@@ -48,6 +53,7 @@ def main() -> int:
     args = parse_args()
     history = pd.read_parquet(args.history)
     roster = pd.read_csv(args.roster)
+    depth_chart = pd.read_csv(args.depth_chart)
     schedule = pd.read_parquet(args.schedule)
     validation, accuracy_bundle = fit_accuracy_layer(history)
     write_json(args.validation_output, validation)
@@ -65,7 +71,12 @@ def main() -> int:
             published_players=args.players,
         ),
         accuracy_bundle=accuracy_bundle,
+        depth_chart=depth_chart,
     )
+    if payload["lineup_validation"]["status"] != "passed":
+        print(json.dumps(payload["lineup_validation"], indent=2))
+        print("Fantasy rankings were not published because lineup validation failed.")
+        return 3
     payload["validation"] = validation
     write_json(args.output, payload)
     print(

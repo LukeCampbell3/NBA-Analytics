@@ -18,9 +18,11 @@ import numpy as np
 import pandas as pd
 
 from .accuracy import train_accuracy_model, upcoming_accuracy_forecasts
+from .lineup import apply_lineup_context, build_lineup_contexts, merge_roster_with_depth_chart
 
 
 POSITIONS = ("QB", "RB", "WR", "TE")
+DRAFT_DEPTH_CAPS = {"QB": 2, "RB": 5, "WR": 6, "TE": 4}
 MODEL_STATS = (
     "passing_yards",
     "passing_tds",
@@ -193,7 +195,18 @@ def _opponent_factors(frame: pd.DataFrame) -> dict[tuple[str, str, str], float]:
     return factors
 
 
-def _normalize_roster(roster: pd.DataFrame, season: int) -> pd.DataFrame:
+def _normalize_roster(
+    roster: pd.DataFrame,
+    season: int,
+    depth_chart: pd.DataFrame | None = None,
+) -> pd.DataFrame:
+    if depth_chart is not None:
+        frame = merge_roster_with_depth_chart(roster, depth_chart, season=season)
+        required = {"player_id", "player_display_name", "recent_team", "position"}
+        missing = sorted(required.difference(frame.columns))
+        if missing:
+            raise ValueError(f"Fantasy roster is missing required columns: {', '.join(missing)}")
+        return frame.dropna(subset=list(required)).reset_index(drop=True)
     frame = roster.rename(
         columns={
             "gsis_id": "player_id",
@@ -274,6 +287,7 @@ def _simulate_player(
     scoring: ScoringSettings,
     rng: np.random.Generator,
     accuracy_forecasts: dict[tuple[str, int, str], dict[str, float]] | None = None,
+    lineup_context: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     if not games:
         return None
@@ -321,23 +335,43 @@ def _simulate_player(
                 adjustment = np.clip(float(forecast["mean"]) / raw_mean, 0.50, 1.50)
                 simulated[:, game_index, :] *= adjustment
             forecast_widths.append(float(forecast["interval_half_width"]))
+    if lineup_context:
+        simulated = apply_lineup_context(
+            simulated,
+            stat_names=MODEL_STATS,
+            context=lineup_context,
+            rng=rng,
+        )
     points = _stat_points_array(simulated, scoring)
     season_points = points.sum(axis=1)
     season_stats = simulated.sum(axis=1)
     mean_totals = season_stats.mean(axis=0)
     p10, p50, p90 = np.quantile(season_points, [0.10, 0.50, 0.90])
     mean_points = float(season_points.mean())
-    ppg = mean_points / len(games)
+    expected_games = (
+        float(lineup_context.get("expected_games", len(games)))
+        if lineup_context
+        else float(len(games))
+    )
+    ppg = mean_points / max(expected_games, 1.0)
     volatility = float(points.std() / max(points.mean(), 0.1))
     interval_width = float(np.mean(forecast_widths)) if forecast_widths else None
     if interval_width is not None:
         confidence = "high" if interval_width <= 6.0 else "medium" if interval_width <= 9.0 else "low"
+    if lineup_context:
+        role_uncertainty = float(lineup_context.get("role_uncertainty", 0.10))
+        active_probability = float(lineup_context.get("active_probability", 1.0))
+        if lineup_context.get("changed_team") or role_uncertainty >= 0.30 or active_probability < 0.65:
+            confidence = "low"
+        elif role_uncertainty >= 0.22 or active_probability < 0.85:
+            confidence = "medium" if confidence == "high" else confidence
     return {
         "player_id": str(row.player_id),
         "player": str(row.player_display_name),
         "team": str(row.recent_team),
         "position": position,
-        "games": len(games),
+        "games": round(expected_games, 2),
+        "schedule_games": len(games),
         "projection_confidence": confidence,
         "history_games": int(len(player_history)),
         "fantasy_points": {
@@ -348,11 +382,16 @@ def _simulate_player(
             "season_p90": round(float(p90), 1),
         },
         "projected_stats": {
-            "per_game": _round_map(mean_totals, len(games)),
+            "per_game": _round_map(mean_totals, max(expected_games, 1.0)),
             "season_total": _round_map(mean_totals),
         },
         "weekly_volatility": round(volatility, 3),
         "weekly_interval_half_width": round(interval_width, 2) if interval_width is not None else None,
+        "lineup": {
+            key: value
+            for key, value in (lineup_context or {}).items()
+            if key != "multipliers"
+        },
     }
 
 
@@ -405,13 +444,18 @@ def build_draft_rankings(
     config: FantasyConfig | None = None,
     scoring: ScoringSettings | None = None,
     accuracy_bundle: dict[str, Any] | None = None,
+    depth_chart: pd.DataFrame | None = None,
 ) -> dict[str, Any]:
     """Simulate the upcoming season and return a frontend-ready ranking payload."""
 
     cfg = config or FantasyConfig()
     rules = scoring or ScoringSettings()
     clean = _clean_history(history, rules)
-    current = _normalize_roster(roster, cfg.season)
+    current = _normalize_roster(roster, cfg.season, depth_chart)
+    lineup_contexts: dict[str, dict[str, Any]] = {}
+    team_opportunity_audit: list[dict[str, Any]] = []
+    if depth_chart is not None:
+        lineup_contexts, team_opportunity_audit = build_lineup_contexts(clean, current)
     priors = _position_priors(clean)
     factors = _opponent_factors(clean)
     accuracy_forecasts: dict[tuple[str, int, str], dict[str, float]] = {}
@@ -439,6 +483,7 @@ def build_draft_rankings(
             rules,
             rng,
             accuracy_forecasts,
+            lineup_contexts.get(str(row.player_id)),
         )
         if projection is not None:
             players.append(projection)
@@ -455,10 +500,22 @@ def build_draft_rankings(
         item["value_over_replacement"] = round(value, 1)
         item["draft_score"] = round(value + 0.14 * points["season_mean"] + 0.06 * upside, 2)
     simulated_count = len(players)
+    excluded_by_lineup = 0
     draft_pool: list[dict[str, Any]] = []
     for position, cap in dict(cfg.draft_pool_caps).items():
+        eligible_players = []
+        for item in players:
+            if item["position"] != position:
+                continue
+            depth_rank = item.get("lineup", {}).get("depth_rank")
+            if depth_chart is not None and (
+                depth_rank is None or int(depth_rank) > DRAFT_DEPTH_CAPS[position]
+            ):
+                excluded_by_lineup += 1
+                continue
+            eligible_players.append(item)
         position_players = sorted(
-            (item for item in players if item["position"] == position),
+            eligible_players,
             key=lambda item: (item["draft_score"], item["fantasy_points"]["season_mean"]),
             reverse=True,
         )
@@ -481,6 +538,34 @@ def build_draft_rankings(
     source_hash = hashlib.sha256(
         pd.util.hash_pandas_object(audit_frame, index=False).values.tobytes()
     ).hexdigest()
+    allocation_tolerance = 0.002
+    allocation_checks = [
+        abs(float(audit["budgets_per_game"][stat]) - float(audit["allocated_per_game"][stat]))
+        <= allocation_tolerance
+        for audit in team_opportunity_audit
+        for stat in audit["budgets_per_game"]
+    ]
+    depth_coverage = (
+        float(pd.to_numeric(current.get("depth_rank"), errors="coerce").notna().mean())
+        if "depth_rank" in current and len(current)
+        else 0.0
+    )
+    lineup_status = (
+        "passed"
+        if allocation_checks and all(allocation_checks)
+        else "not_applied"
+        if depth_chart is None
+        else "failed"
+    )
+    lineup_validation = {
+        "status": lineup_status,
+        "teams": len(team_opportunity_audit),
+        "depth_chart_player_coverage": round(depth_coverage, 4),
+        "finite_budget_checks": len(allocation_checks),
+        "finite_budget_checks_passed": int(sum(allocation_checks)),
+        "allocation_tolerance_per_game": allocation_tolerance,
+    }
+    depth_dates = current.get("depth_as_of_utc", pd.Series(dtype=object)).dropna().astype(str)
     return {
         "schema_version": 1,
         "league": "NFL",
@@ -495,17 +580,23 @@ def build_draft_rankings(
             "opponent_adjustment_range": [0.82, 1.18],
             "random_seed": cfg.random_seed,
             "accuracy_layer": "position-specific regularized CatBoost MAE" if accuracy_bundle else "recency baseline",
+            "lineup_layer": "depth-chart scenarios with finite team opportunity budgets" if depth_chart is not None else "not applied",
+            "depth_chart_as_of_utc": depth_dates.max() if not depth_dates.empty else None,
             "source_history_sha256": source_hash,
         },
         "scoring": asdict(rules),
         "replacement_levels": {key: round(value, 2) for key, value in replacement.items()},
         "players_simulated": simulated_count,
+        "players_excluded_by_lineup": excluded_by_lineup,
         "draft_pool_players": len(players),
         "players_published": len(published),
         "rankings": published,
+        "lineup_validation": lineup_validation,
+        "team_opportunity_audit": team_opportunity_audit,
         "method_note": (
             "Draft score combines position-adjusted value over replacement, mean season points, "
-            "and simulated upside. Rankings are projections, not guarantees or injury reports."
+            "and simulated upside. Current depth-chart scenarios share each team's finite target, "
+            "carry, pass-attempt, and touchdown budgets; rankings are not guarantees or injury reports."
         ),
     }
 

@@ -107,6 +107,13 @@ jobs:
             --season "${RUN_DATE%%-*}" \
             --manifest sports/nfl/tmp/current_skill_roster_manifest.json
 
+      - name: Refresh current NFL fantasy depth chart
+        run: |
+          set -euo pipefail
+          RUN_DATE="${{ steps.run_date.outputs.value }}"
+          python sports/nfl/scripts/refresh_nfl_depth_chart.py \
+            --season "${RUN_DATE%%-*}"
+
       - name: Inspect NFL market coverage
         if: ${{ !inputs.build_only }}
         id: market_coverage
@@ -139,7 +146,10 @@ jobs:
       - name: Export and build NFL frontend
         run: |
           set -euo pipefail
+          RUN_DATE="${{ steps.run_date.outputs.value }}"
           python sports/nfl/scripts/export_nfl_validation_web.py
+          python sports/nfl/scripts/build_fantasy_draft_rankings.py \
+            --season "${RUN_DATE%%-*}"
           python sports/site/pipeline/build_static_site.py
           if [[ "${{ inputs.build_only }}" == "true" ]]; then
             python sports/site/pipeline/validate_nfl_publication.py
@@ -155,10 +165,15 @@ jobs:
           git add -f -- \
             sports/nfl/data/evaluation/daily_policy_backtest.json \
             sports/nfl/data/evaluation/pick_meta_backtest.json \
+            sports/nfl/data/evaluation/fantasy_draft_validation.json \
+            sports/nfl/data/reference/current_depth_chart.csv \
+            sports/nfl/data/reference/current_depth_chart_manifest.json \
             sports/nfl/data/reference/current_skill_roster.csv \
             sports/nfl/web/data/daily_predictions.json \
+            sports/nfl/web/data/fantasy_draft_rankings.json \
             sports/nfl/web/data/market_validation_summary.json \
             dist/nfl/data/daily_predictions.json \
+            dist/nfl/data/fantasy_draft_rankings.json \
             dist/nfl/data/market_validation_summary.json
           SNAPSHOT="sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}/${{ github.run_id }}.json"
           if [[ "${{ inputs.build_only }}" != "true" && -f "$SNAPSHOT" ]]; then
@@ -191,8 +206,11 @@ jobs:
           path: |
             sports/nfl/data/evaluation/daily_policy_backtest.json
             sports/nfl/data/evaluation/pick_meta_backtest.json
+            sports/nfl/data/evaluation/fantasy_draft_validation.json
+            sports/nfl/data/reference/current_depth_chart_manifest.json
             sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}/${{ github.run_id }}.json
             sports/nfl/web/data/daily_predictions.json
+            sports/nfl/web/data/fantasy_draft_rankings.json
             sports/nfl/web/data/market_validation_summary.json
             dist/nfl/data/daily_predictions.json
             dist/nfl/data/market_validation_summary.json

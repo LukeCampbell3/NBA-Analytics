@@ -8,6 +8,7 @@ from sports.nfl.fantasy.model import (
     fantasy_points,
 )
 from sports.nfl.fantasy.accuracy import build_accuracy_features
+from sports.nfl.fantasy.lineup import build_lineup_contexts, merge_roster_with_depth_chart
 
 
 def test_full_ppr_scoring_contract() -> None:
@@ -143,3 +144,97 @@ def test_accuracy_features_are_shifted_before_current_game() -> None:
         history["player_id"].eq("wr-1") & history["week"].eq(1)
     ].pipe(fantasy_points).iloc[0]
     assert receiver.iloc[4]["history_games"] == 4
+
+
+def test_depth_chart_is_authoritative_for_team_and_adds_missing_players() -> None:
+    roster = pd.DataFrame(
+        [
+            {
+                "season": 2026,
+                "gsis_id": "wr-1",
+                "full_name": "Moved Receiver",
+                "team": "OLD",
+                "position": "WR",
+                "status": "ACT",
+            }
+        ]
+    )
+    depth = pd.DataFrame(
+        [
+            {"dt": "2026-08-13", "team": "NEW", "player_name": "Moved Receiver", "gsis_id": "wr-1", "pos_abb": "WR", "pos_rank": 1},
+            {"dt": "2026-08-13", "team": "NEW", "player_name": "Camp Receiver", "gsis_id": "wr-2", "pos_abb": "WR", "pos_rank": 2},
+        ]
+    )
+
+    merged = merge_roster_with_depth_chart(roster, depth, season=2026).set_index("player_id")
+
+    assert merged.loc["wr-1", "recent_team"] == "NEW"
+    assert merged.loc["wr-1", "depth_rank"] == 1
+    assert merged.loc["wr-2", "player_display_name"] == "Camp Receiver"
+
+
+def test_team_opportunities_are_finite_and_added_receiver_reduces_share() -> None:
+    history = _history()
+    history["attempts"] = history["passing_yards"].gt(0).astype(float) * 30
+    history["targets"] = history["receptions"] * 1.5
+    history["carries"] = history["rushing_yards"].gt(0).astype(float) * 12
+    base = pd.DataFrame(
+        [
+            {"player_id": "qb-1", "player_display_name": "Gamma Quarterback", "recent_team": "AAA", "position": "QB", "years_exp": 4, "depth_rank": 1},
+            {"player_id": "wr-1", "player_display_name": "Alpha Receiver", "recent_team": "AAA", "position": "WR", "years_exp": 4, "depth_rank": 1},
+        ]
+    )
+    expanded = pd.concat(
+        [
+            base,
+            pd.DataFrame(
+                [
+                    {"player_id": "wr-2", "player_display_name": "New Receiver", "recent_team": "AAA", "position": "WR", "years_exp": 4, "depth_rank": 2}
+                ]
+            ),
+        ],
+        ignore_index=True,
+    )
+
+    base_context, _ = build_lineup_contexts(history, base)
+    expanded_context, audits = build_lineup_contexts(history, expanded)
+    audit = next(item for item in audits if item["team"] == "AAA")
+
+    assert expanded_context["wr-1"]["conditional_opportunities"]["targets"] < base_context["wr-1"]["conditional_opportunities"]["targets"]
+    assert audit["allocated_per_game"] == audit["budgets_per_game"]
+    assert abs(sum(item["start_probability"] for item in audit["qb_scenarios"]) - 1.0) < 0.001
+
+
+def test_deep_depth_chart_players_do_not_enter_draft_pool() -> None:
+    history = _history()
+    roster = pd.DataFrame(
+        [
+            {"season": 2026, "gsis_id": "wr-1", "full_name": "Alpha Receiver", "team": "AAA", "position": "WR", "status": "ACT"},
+            {"season": 2026, "gsis_id": "wr-deep", "full_name": "Deep Receiver", "team": "AAA", "position": "WR", "status": "ACT"},
+        ]
+    )
+    deep_history = history.loc[history["player_id"].eq("wr-1")].copy()
+    deep_history["player_id"] = "wr-deep"
+    deep_history["player_display_name"] = "Deep Receiver"
+    history = pd.concat([history, deep_history], ignore_index=True)
+    depth = pd.DataFrame(
+        [
+            {"dt": "2026-08-13", "team": "AAA", "player_name": "Alpha Receiver", "gsis_id": "wr-1", "pos_abb": "WR", "pos_rank": 1},
+            {"dt": "2026-08-13", "team": "AAA", "player_name": "Deep Receiver", "gsis_id": "wr-deep", "pos_abb": "WR", "pos_rank": 14},
+        ]
+    )
+    schedule = pd.DataFrame(
+        [{"season": 2026, "week": 1, "game_type": "REG", "home_team": "AAA", "away_team": "BBB"}]
+    )
+
+    payload = build_draft_rankings(
+        history,
+        roster,
+        schedule,
+        depth_chart=depth,
+        config=FantasyConfig(season=2026, simulations=20, published_players=10),
+    )
+
+    assert "wr-1" in {item["player_id"] for item in payload["rankings"]}
+    assert "wr-deep" not in {item["player_id"] for item in payload["rankings"]}
+    assert payload["players_excluded_by_lineup"] == 1
