@@ -22,7 +22,7 @@ from typing import List, Dict, Optional
 from dataclasses import dataclass, field
 import logging
 
-from data_types import ParlayLeg, MarketFamily, Side
+from .data_types import ParlayLeg, MarketFamily, Side
 
 logger = logging.getLogger(__name__)
 

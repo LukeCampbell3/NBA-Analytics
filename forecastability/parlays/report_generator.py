@@ -20,7 +20,7 @@ import logging
 from typing import List, Dict, Optional
 from datetime import datetime
 
-from data_types import ParlayCandidate, SingleLegEvaluation
+from .data_types import ParlayCandidate, SingleLegEvaluation
 
 logger = logging.getLogger(__name__)
 

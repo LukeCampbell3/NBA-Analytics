@@ -16,8 +16,8 @@ from typing import List, Dict, Optional, Tuple
 import logging
 from dataclasses import dataclass
 
-from data_types import ParlayLeg, MarketFamily, JointState
-from core_utils import CorrelationClass
+from .data_types import ParlayLeg, MarketFamily, JointState
+from .core_utils import CorrelationClass
 
 logger = logging.getLogger(__name__)
 

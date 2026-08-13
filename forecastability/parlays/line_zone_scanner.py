@@ -20,13 +20,13 @@ import numpy as np
 from typing import List, Dict, Optional, Tuple
 import logging
 
-from core_utils import (
+from .core_utils import (
     american_to_break_even_prob,
     edge_from_probability_and_odds,
     lcb_edge,
     robust_edge,
 )
-from data_types import PricedBinaryEvent, Side
+from .data_types import PricedBinaryEvent, Side
 
 logger = logging.getLogger(__name__)
 

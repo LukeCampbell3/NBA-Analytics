@@ -329,6 +329,10 @@ def test_fanduel_public_feed_maps_main_and_alternate_player_props_without_creden
         r"https://sportsbook\.fanduel\.com/addToBetslip\?marketId=734\.\d+&selectionId=\d+"
     ).all()
     assert normalized["source_market_id"].str.match(r"734\.\d+:\d+").all()
+    deeplink_pairs = normalized["sportsbook_deeplink"].str.extract(
+        r"marketId=([0-9.]+)&selectionId=(\d+)"
+    ).agg(":".join, axis=1)
+    assert deeplink_pairs.tolist() == normalized["source_market_id"].tolist()
 
 
 def test_duplicate_records_are_deduplicated_without_losing_sources() -> None:

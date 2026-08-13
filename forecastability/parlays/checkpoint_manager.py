@@ -28,7 +28,7 @@ from typing import List, Dict, Optional
 from datetime import datetime, time
 import logging
 
-from data_types import SingleLegEvaluation, LegStatus
+from .data_types import SingleLegEvaluation, LegStatus
 
 logger = logging.getLogger(__name__)
 

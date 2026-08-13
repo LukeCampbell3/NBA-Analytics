@@ -7,7 +7,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
 
-from core_utils import LegStatus, NewsStatus, ParlayDecision
+from .core_utils import LegStatus, NewsStatus, ParlayDecision
 
 
 class MarketFamily(str, Enum):

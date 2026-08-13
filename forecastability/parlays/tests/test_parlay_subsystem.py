@@ -8,7 +8,7 @@ import unittest
 from unittest.mock import Mock, patch
 from datetime import datetime
 
-from core_utils import (
+from ..core_utils import (
     american_to_decimal,
     decimal_to_american,
     american_to_implied_prob,
@@ -18,7 +18,7 @@ from core_utils import (
     parlay_synthetic_odds,
     parlay_break_even_prob,
 )
-from data_types import (
+from ..data_types import (
     PricedBinaryEvent,
     SingleLegEvaluation,
     ParlayLeg,
@@ -26,8 +26,8 @@ from data_types import (
     MarketFamily,
     LegStatus,
 )
-from single_leg_set_membership import SingleLegSetMembership
-from parlay_price_engine import ParlayPriceEngine
+from ..single_leg_set_membership import SingleLegSetMembership
+from ..parlay_price_engine import ParlayPriceEngine
 
 
 class TestOddsConversions(unittest.TestCase):

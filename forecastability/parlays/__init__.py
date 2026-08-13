@@ -7,7 +7,7 @@ shared failure mode analysis, and stress testing.
 All operations in SHADOW MODE - no production impact.
 """
 
-from core_utils import (
+from .core_utils import (
     PriceStatus,
     LegStatus,
     CorrelationClass,
@@ -24,7 +24,7 @@ from core_utils import (
     robust_edge,
 )
 
-from data_types import (
+from .data_types import (
     MarketFamily,
     Side,
     PricedBinaryEvent,
@@ -34,16 +34,16 @@ from data_types import (
     ParlayCandidate,
 )
 
-from build_priced_event_universe import PricedEventUniverseBuilder
-from line_zone_scanner import LineZoneScanner, LineZoneClassification
-from single_leg_set_membership import SingleLegSetMembership
-from anchor_companion_generator import AnchorCompanionGenerator
-from shared_event_supply_engine import SharedEventSupplyEngine
-from parlay_price_engine import ParlayPriceEngine
-from parlay_probability_engine import ParlayProbabilityEngine
-from parlay_stress_engine import ParlayStressEngine
-from parlay_selector import ParlaySelector
-from orchestrator import ParlaySubsystemOrchestrator
+from .build_priced_event_universe import PricedEventUniverseBuilder
+from .line_zone_scanner import LineZoneScanner, LineZoneClassification
+from .single_leg_set_membership import SingleLegSetMembership
+from .anchor_companion_generator import AnchorCompanionGenerator
+from .shared_event_supply_engine import SharedEventSupplyEngine
+from .parlay_price_engine import ParlayPriceEngine
+from .parlay_probability_engine import ParlayProbabilityEngine
+from .parlay_stress_engine import ParlayStressEngine
+from .parlay_selector import ParlaySelector
+from .orchestrator import ParlaySubsystemOrchestrator
 
 __version__ = "0.1.0"
 __all__ = [

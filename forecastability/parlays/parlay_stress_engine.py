@@ -26,8 +26,8 @@ Stress modes:
 from typing import List, Dict
 import logging
 
-from core_utils import edge_from_probability_and_odds
-from data_types import ParlayLeg
+from .core_utils import edge_from_probability_and_odds
+from .data_types import ParlayLeg
 
 logger = logging.getLogger(__name__)
 

@@ -313,7 +313,7 @@ generation:
 ### Quick Start
 
 ```python
-from orchestrator import ParlaySubsystemOrchestrator
+from forecastability.parlays.orchestrator import ParlaySubsystemOrchestrator
 
 orchestrator = ParlaySubsystemOrchestrator("config/parlay_policy.yaml")
 
@@ -341,13 +341,13 @@ python -m pytest tests/test_parlay_subsystem.py -v
 
 ```python
 # Phase 1 only
-from build_priced_event_universe import PricedEventUniverseBuilder
+from forecastability.parlays.build_priced_event_universe import PricedEventUniverseBuilder
 builder = PricedEventUniverseBuilder(...)
 builder.build_universe()
 builder.export_to_csv("outputs/priced_event_universe.csv")
 
 # Phase 3 only
-from single_leg_set_membership import SingleLegSetMembership
+from forecastability.parlays.single_leg_set_membership import SingleLegSetMembership
 evaluator = SingleLegSetMembership(config)
 evals = evaluator.evaluate(events)
 ```

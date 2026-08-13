@@ -27,7 +27,7 @@ from typing import List, Dict, Optional
 import logging
 import math
 
-from data_types import ParlayLeg, JointState
+from .data_types import ParlayLeg, JointState
 
 logger = logging.getLogger(__name__)
 

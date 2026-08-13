@@ -26,7 +26,7 @@ from typing import Optional, List, Dict, Any
 import logging
 import json
 
-from core_utils import (
+from .core_utils import (
     american_to_decimal,
     american_to_implied_prob,
     american_to_break_even_prob,
@@ -34,7 +34,7 @@ from core_utils import (
     lcb_edge,
     robust_edge,
 )
-from data_types import PricedBinaryEvent, MarketFamily, Side, NewsStatus
+from .data_types import PricedBinaryEvent, MarketFamily, Side, NewsStatus
 
 logger = logging.getLogger(__name__)
 
@@ -369,7 +369,7 @@ class PricedEventUniverseBuilder:
         stress_prob: float
     ) -> str:
         """Determine if price is valid, dependent, or should be passed."""
-        from core_utils import PriceStatus
+        from .core_utils import PriceStatus
         
         if american_odds == 0.0 or not american_odds:
             return PriceStatus.MISSING_PRICE.value

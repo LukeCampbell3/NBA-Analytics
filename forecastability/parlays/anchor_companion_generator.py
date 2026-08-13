@@ -16,8 +16,8 @@ Do not create Cartesian product of all legs.
 from typing import List, Dict, Optional
 import logging
 
-from core_utils import LegStatus
-from data_types import SingleLegEvaluation, ParlayLeg, MarketFamily, Side
+from .core_utils import LegStatus
+from .data_types import SingleLegEvaluation, ParlayLeg, MarketFamily, Side
 
 logger = logging.getLogger(__name__)
 

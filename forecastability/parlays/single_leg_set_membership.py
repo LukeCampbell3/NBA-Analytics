@@ -45,12 +45,12 @@ PASS:
 from typing import List, Dict, Optional
 import logging
 
-from core_utils import (
+from .core_utils import (
     LegStatus,
     min_acceptable_odds_for_edge,
     lcb_edge as calc_lcb_edge,
 )
-from data_types import PricedBinaryEvent, SingleLegEvaluation, NewsStatus, MarketFamily, Side
+from .data_types import PricedBinaryEvent, SingleLegEvaluation, NewsStatus, MarketFamily, Side
 
 logger = logging.getLogger(__name__)
 

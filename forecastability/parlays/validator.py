@@ -31,7 +31,7 @@ import pandas as pd
 import numpy as np
 import logging
 
-from data_types import ParlayCandidate, JointState
+from .data_types import ParlayCandidate, JointState
 
 logger = logging.getLogger(__name__)
 

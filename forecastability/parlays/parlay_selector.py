@@ -38,7 +38,7 @@ Decision labels:
 from typing import List, Dict, Optional
 import logging
 
-from data_types import ParlayCandidate, ParlayLeg, ParlayDecision
+from .data_types import ParlayCandidate, ParlayLeg, ParlayDecision
 
 logger = logging.getLogger(__name__)
 

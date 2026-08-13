@@ -20,7 +20,7 @@ Event-supply pools:
 from typing import List, Tuple, Dict, Set
 import logging
 
-from data_types import ParlayLeg, MarketFamily
+from .data_types import ParlayLeg, MarketFamily
 
 logger = logging.getLogger(__name__)
 

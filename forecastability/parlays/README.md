@@ -206,7 +206,7 @@ See `config/parlay_policy.yaml` for all tunable parameters:
 ### Running the Full Pipeline
 
 ```python
-from orchestrator import ParlaySubsystemOrchestrator
+from forecastability.parlays.orchestrator import ParlaySubsystemOrchestrator
 
 orchestrator = ParlaySubsystemOrchestrator("config/parlay_policy.yaml")
 
@@ -223,20 +223,20 @@ summary = orchestrator.run_pipeline(
 
 ```python
 # Phase 1: Build priced event universe
-from build_priced_event_universe import PricedEventUniverseBuilder
+from forecastability.parlays.build_priced_event_universe import PricedEventUniverseBuilder
 
 builder = PricedEventUniverseBuilder(...)
 events = builder.build_universe()
 builder.export_to_csv("outputs/priced_event_universe_latest.csv")
 
 # Phase 3: Evaluate single legs
-from single_leg_set_membership import SingleLegSetMembership
+from forecastability.parlays.single_leg_set_membership import SingleLegSetMembership
 
 evaluator = SingleLegSetMembership(config)
 evaluations = evaluator.evaluate(events)
 
 # Phase 4: Generate parlays
-from anchor_companion_generator import AnchorCompanionGenerator
+from forecastability.parlays.anchor_companion_generator import AnchorCompanionGenerator
 
 generator = AnchorCompanionGenerator(config)
 parlay_specs = generator.generate_parlay_candidates(evaluations)

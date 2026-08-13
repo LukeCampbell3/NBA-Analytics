@@ -22,12 +22,12 @@ from typing import List, Optional, Dict
 import logging
 import math
 
-from core_utils import (
+from .core_utils import (
     american_to_decimal,
     decimal_to_american,
     american_to_implied_prob,
 )
-from data_types import ParlayLeg, ParlayCandidate
+from .data_types import ParlayLeg, ParlayCandidate
 
 logger = logging.getLogger(__name__)
 
