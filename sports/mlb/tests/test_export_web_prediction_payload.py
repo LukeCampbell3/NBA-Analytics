@@ -294,12 +294,18 @@ def test_daily_parlay_enriches_each_ticket_in_ladder(tmp_path: Path) -> None:
             {"player": "Third", "team": "CHC", "game_id": "g3", "price_confirmed": True},
         ],
     }
+    profit_boost = {
+        **two_leg,
+        "ticket_id": "profit_boost_2_leg",
+        "ticket_tier": "profit_boost",
+        "legs": [dict(leg) for leg in two_leg["legs"]],
+    }
     path.write_text(
         json.dumps({
             "run_date": "2026-08-06",
             "status": "ready",
             "selected_ticket": two_leg,
-            "ticket_ladder": [two_leg, three_leg],
+            "ticket_ladder": [two_leg, three_leg, profit_boost],
         }),
         encoding="utf-8",
     )
@@ -311,7 +317,8 @@ def test_daily_parlay_enriches_each_ticket_in_ladder(tmp_path: Path) -> None:
         game_context_lookup={},
     )
 
-    assert [ticket["leg_count"] for ticket in payload["ticket_ladder"]] == [2, 3]
+    assert [ticket["leg_count"] for ticket in payload["ticket_ladder"]] == [2, 3, 2]
+    assert payload["profit_boost_ticket"]["ticket_id"] == "profit_boost_2_leg"
     assert all(ticket["status"] == "review" for ticket in payload["ticket_ladder"])
     assert all(
         leg["lineup_status"] == "unconfirmed"

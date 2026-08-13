@@ -2,6 +2,10 @@ class DailyPredictionsPage {
     constructor() {
         this.data = null;
         this.plays = [];
+        this.availableDates = [];
+        this.activeDate = null;
+        this.currentDate = null;
+        this.activeParlayTicketId = null;
         this.elements = {
             cards: document.getElementById("predictionCards"),
             empty: document.getElementById("predictionEmpty"),
@@ -9,6 +13,7 @@ class DailyPredictionsPage {
             parlaySection: document.getElementById("dailyParlaySection"),
             parlayContent: document.getElementById("dailyParlayContent"),
             poolTitle: document.getElementById("predictionPoolTitle"),
+            dateNav: document.getElementById("predictionDateNav"),
         };
         this.init();
     }
@@ -18,7 +23,7 @@ class DailyPredictionsPage {
         if (window.CardVault && this.elements.cards) {
             this.elements.cards.innerHTML = window.CardVault.renderSkeletonCard(6);
         }
-        this.loadAndRender();
+        this.loadDatesAndRender();
     }
 
     mountShell() {
@@ -37,11 +42,36 @@ class DailyPredictionsPage {
         });
     }
 
-    async loadAndRender() {
+    async loadDatesAndRender() {
+        await this.loadDateIndex();
+        const currentLoaded = await this.loadAndRender(null);
+        if (!currentLoaded && this.availableDates.length) {
+            await this.loadAndRender(this.availableDates[0]);
+        }
+        this.renderDateNav();
+    }
+
+    async loadDateIndex() {
         try {
-            await this.load();
+            const response = await fetch(`data/history/index.json?v=${Date.now()}`);
+            if (!response.ok) return;
+            const index = await response.json();
+            this.availableDates = Array.isArray(index.dates)
+                ? index.dates
+                    .map((date) => String(date))
+                    .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date))
+                    .sort()
+                    .reverse()
+                : [];
+        } catch (_) { /* history is optional */ }
+    }
+
+    async loadAndRender(date) {
+        try {
+            await this.load(date);
             this.renderDailyParlay();
             this.renderCards();
+            return true;
         } catch (error) {
             console.error(error);
             if (window.CardVault && this.elements.cards) {
@@ -51,13 +81,19 @@ class DailyPredictionsPage {
                     "Check that data/daily_predictions.json exists for this build."
                 );
             }
+            return false;
         }
     }
 
-    async load() {
-        const response = await fetch(`data/daily_predictions.json?v=${Date.now()}`);
+    async load(date) {
+        const url = date
+            ? `data/history/${date}.json?v=${Date.now()}`
+            : `data/daily_predictions.json?v=${Date.now()}`;
+        const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         this.data = await response.json();
+        this.activeDate = this.data?.run_date || date || null;
+        if (!date) this.currentDate = this.activeDate;
         const publicationStatus = String(this.data?.publication_status || "ready").toLowerCase();
         this.plays = Array.isArray(this.data.plays)
             ? this.data.plays.map((play) => ({ ...play, board_publication_status: publicationStatus }))
@@ -73,6 +109,49 @@ class DailyPredictionsPage {
         const authorizationEnabled = Boolean(this.data?.policy_governance?.candidate_authorization_enabled);
         if (this.elements.poolTitle) {
             this.elements.poolTitle.textContent = authorizationEnabled ? "Authorized Pool" : "Shadow Candidate Pool";
+        }
+    }
+
+    renderDateNav() {
+        const nav = this.elements.dateNav;
+        if (!nav) return;
+
+        const dates = [this.currentDate, ...this.availableDates]
+            .filter((date, index, values) => date && values.indexOf(date) === index);
+        if (dates.length < 2) {
+            nav.innerHTML = "";
+            return;
+        }
+
+        const buttons = dates.map((date) => {
+            const isActive = date === this.activeDate;
+            return `<button type="button" class="date-nav__btn${isActive ? " is-active" : ""}" data-date="${this.escapeHtml(date)}" aria-pressed="${isActive}">${this.escapeHtml(this.formatDateLabel(date))}</button>`;
+        }).join("");
+        nav.innerHTML = `<div class="date-nav__scroll">${buttons}</div>`;
+
+        nav.querySelectorAll(".date-nav__btn").forEach((button) => {
+            button.addEventListener("click", async () => {
+                const date = button.dataset.date;
+                if (date === this.activeDate) return;
+                if (this.elements.cards) {
+                    this.elements.cards.innerHTML = window.CardVault
+                        ? window.CardVault.renderSkeletonCard(4)
+                        : "";
+                }
+                await this.loadAndRender(date === this.currentDate ? null : date);
+                this.renderDateNav();
+            });
+        });
+    }
+
+    formatDateLabel(dateValue) {
+        try {
+            const displayDate = new Date(`${dateValue}T12:00:00`);
+            const today = new Date().toISOString().slice(0, 10);
+            if (dateValue === this.currentDate) return dateValue === today ? "Today" : "Current";
+            return displayDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        } catch (_) {
+            return dateValue;
         }
     }
 
@@ -136,8 +215,19 @@ class DailyPredictionsPage {
         if (!section || !content) return;
 
         const parlay = this.data?.daily_parlay || {};
-        const ticket = parlay?.selected_ticket || null;
-        const status = String(parlay?.status || "withheld").toLowerCase();
+        const selectedTicket = parlay?.selected_ticket || null;
+        const ladder = Array.isArray(parlay?.ticket_ladder) && parlay.ticket_ladder.length
+            ? parlay.ticket_ladder.filter((item) => item && Array.isArray(item.legs) && item.legs.length)
+            : selectedTicket ? [selectedTicket] : [];
+        const ticketId = (item, index = 0) => String(
+            item?.ticket_id || `${item?.ticket_tier || "consistency"}_${item?.leg_count || 0}_${index}`
+        );
+        const defaultTicketId = selectedTicket ? ticketId(selectedTicket) : ticketId(ladder[0]);
+        if (!ladder.some((item, index) => ticketId(item, index) === this.activeParlayTicketId)) {
+            this.activeParlayTicketId = defaultTicketId;
+        }
+        const ticket = ladder.find((item, index) => ticketId(item, index) === this.activeParlayTicketId) || selectedTicket;
+        const status = String(ticket?.status || parlay?.status || "withheld").toLowerCase();
         const candidateAuthorized = Boolean(ticket?.candidate_authorized);
         const statusLabel = !candidateAuthorized && ticket ? "Shadow only" : status === "ready" ? "Ready" : status === "review" ? "Lineup review" : "Withheld";
         const statusTone = !candidateAuthorized && ticket ? "stale" : status === "ready" ? "active" : status === "review" ? "stale" : "withheld";
@@ -146,8 +236,8 @@ class DailyPredictionsPage {
             content.innerHTML = `
                 <div class="daily-parlay__header">
                     <div>
-                        <p class="vault-page-kicker">Adaptive ticket</p>
-                        <h2 id="dailyParlayTitle">Daily Parlay</h2>
+                        <p class="vault-page-kicker">Parlay ladder</p>
+                        <h2 id="dailyParlayTitle">MLB Parlays</h2>
                     </div>
                     ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, statusLabel) : ""}
                 </div>
@@ -173,20 +263,33 @@ class DailyPredictionsPage {
                     </div>
                     <div class="daily-parlay__leg-market">
                         <strong>${this.escapeHtml(price)}</strong>
-                        <span>${this.escapeHtml(probability)} · ${this.escapeHtml(lineupLabel)}</span>
+                        <span>${this.escapeHtml(probability)} / ${this.escapeHtml(lineupLabel)}</span>
                     </div>
                 </div>
             `;
         }).join("");
 
+        const ticketTabs = ladder.length > 1 ? `
+            <div class="daily-parlay__tabs" role="tablist" aria-label="Parlay length">
+                ${ladder.map((item) => {
+                    const legCount = Number(item.leg_count || 0);
+                    const itemId = ticketId(item);
+                    const active = itemId === this.activeParlayTicketId;
+                    const label = item.ticket_tier === "profit_boost" ? "Profit boost" : `${legCount} legs`;
+                    return `<button type="button" class="daily-parlay__tab${active ? " is-active" : ""}" data-parlay-ticket="${this.escapeHtml(itemId)}" role="tab" aria-selected="${active}">${this.escapeHtml(label)}</button>`;
+                }).join("")}
+            </div>
+        ` : "";
+        const ticketTier = String(ticket.ticket_tier || "consistency");
         content.innerHTML = `
             <div class="daily-parlay__header">
                 <div>
-                    <p class="vault-page-kicker">Adaptive ${this.escapeHtml(ticket.leg_count)}-leg ticket</p>
-                    <h2 id="dailyParlayTitle">Daily Parlay</h2>
+                    <p class="vault-page-kicker">${this.escapeHtml(ticketTier)} / ${this.escapeHtml(ticket.leg_count)} legs</p>
+                    <h2 id="dailyParlayTitle">MLB Parlays</h2>
                 </div>
                 ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, statusLabel) : ""}
             </div>
+            ${ticketTabs}
             <div class="daily-parlay__metrics">
                 <div><span>Projected hit</span><strong>${this.escapeHtml(this.formatPct(ticket.projected_probability))}</strong></div>
                 <div><span>Combined price</span><strong>${this.escapeHtml(this.formatAmerican(ticket.combined_american_price))}</strong></div>
@@ -196,6 +299,14 @@ class DailyPredictionsPage {
             <div class="daily-parlay__legs">${legs}</div>
             <p class="daily-parlay__state">${this.escapeHtml(parlay.reason || "")}</p>
         `;
+        content.querySelectorAll("[data-parlay-ticket]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const selectedId = String(button.dataset.parlayTicket || "");
+                if (!selectedId || selectedId === this.activeParlayTicketId) return;
+                this.activeParlayTicketId = selectedId;
+                this.renderDailyParlay();
+            });
+        });
     }
 
     formatNumber(value, digits = 2) {

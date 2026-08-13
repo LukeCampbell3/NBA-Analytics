@@ -93,6 +93,7 @@ class SportsGameOddsMlbProvider:
             "ambiguous_market_rows": 0,
             "malformed_rows": 0,
             "unavailable_book_rows": 0,
+            "alternate_book_rows": 0,
         }
 
         try:
@@ -168,6 +169,7 @@ class SportsGameOddsMlbProvider:
         params = {
             "leagueID": "MLB",
             "oddsAvailable": "true",
+            "includeAltLines": "true",
         }
 
         all_events: List[Dict[str, Any]] = []
@@ -359,23 +361,43 @@ class SportsGameOddsMlbProvider:
                 for book_name, book_data in by_bookmaker.items():
                     if not isinstance(book_data, dict):
                         continue
-                    if book_data.get("available") is False:
-                        self._accounting["unavailable_book_rows"] = self._accounting.get("unavailable_book_rows", 0) + 1
-                        continue
+                    variants = [
+                        {
+                            "odds": book_data.get("odds", ""),
+                            "overUnder": book_data.get("overUnder", entry.get("line")),
+                            "available": book_data.get("available", True),
+                            "line_type": "main",
+                        }
+                    ]
+                    for alt_line in book_data.get("altLines", []) or []:
+                        if isinstance(alt_line, dict):
+                            variants.append({**alt_line, "line_type": "alternate"})
 
-                    odds_str = book_data.get("odds", "")
-                    if not odds_str:
-                        self._accounting["malformed_rows"] = self._accounting.get("malformed_rows", 0) + 1
-                        continue
-
-                    try:
-                        odds_val = int(odds_str) if odds_str.lstrip("+-").isdigit() else float(odds_str)
-                    except (ValueError, TypeError):
-                        self._accounting["malformed_rows"] = self._accounting.get("malformed_rows", 0) + 1
-                        continue
-
-                    rows.append(self._build_row(entry, book_name, side, odds_val, snapshot_time))
-                    entry_rows_added += 1
+                    seen_variants: set[tuple[float, float]] = set()
+                    for variant in variants:
+                        if variant.get("available") is False:
+                            self._accounting["unavailable_book_rows"] = self._accounting.get("unavailable_book_rows", 0) + 1
+                            continue
+                        try:
+                            odds_val = float(variant.get("odds"))
+                            line = float(variant.get("overUnder"))
+                        except (TypeError, ValueError):
+                            self._accounting["malformed_rows"] = self._accounting.get("malformed_rows", 0) + 1
+                            continue
+                        variant_key = (line, odds_val)
+                        if variant_key in seen_variants:
+                            continue
+                        seen_variants.add(variant_key)
+                        variant_entry = dict(entry)
+                        variant_entry["line"] = line
+                        variant_entry["line_type"] = str(variant.get("line_type") or "main")
+                        variant_entry["odd_id"] = (
+                            f"{entry.get('odd_id', '')}|{book_name}|{variant_entry['line_type']}|{line:g}"
+                        )
+                        rows.append(self._build_row(variant_entry, book_name, side, odds_val, snapshot_time))
+                        entry_rows_added += 1
+                        if variant_entry["line_type"] == "alternate":
+                            self._accounting["alternate_book_rows"] = self._accounting.get("alternate_book_rows", 0) + 1
 
             elif consensus_odds_str:
                 try:
@@ -405,7 +427,7 @@ class SportsGameOddsMlbProvider:
             source="sportsgameodds",
             acquisition_method="api",
             source_endpoint=f"{self.base_url}/events",
-            parser_version="sportsgameodds-v2-parser-v1",
+            parser_version="sportsgameodds-v2-parser-v2",
         )
 
     def _build_row(self, entry: Dict[str, Any], book: str, side: str,
@@ -434,6 +456,8 @@ class SportsGameOddsMlbProvider:
             "market_mapping_confidence": entry.get("market_mapping_confidence", ""),
             "market_mapping_reason": entry.get("market_mapping_reason", ""),
             "line": entry.get("line"),
+            "line_type": entry.get("line_type", "main"),
+            "odd_id": entry.get("odd_id", ""),
             "book": book,
             "side": side,
             "odds": odds_value,

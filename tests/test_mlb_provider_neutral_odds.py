@@ -18,6 +18,7 @@ sys.path.insert(0, str(PROVIDERS_DIR))
 import provider_router
 from odds_contract import CONTRACT_COLUMNS, ensure_contract, reconcile_observations, validate_contract
 from permitted_scrape_mlb_provider import PermittedScrapeMlbProvider
+from sportsgameodds_mlb_provider import SportsGameOddsMlbProvider
 from the_odds_api_mlb_provider import TheOddsApiMlbProvider
 
 
@@ -215,6 +216,76 @@ def test_the_odds_api_fixture_uses_same_contract() -> None:
         PermittedScrapeMlbProvider(fixture_path=FIXTURE).collect_player_props()["odds"]
     ).columns)
     assert set(normalized.columns) == scrape_columns
+
+
+def test_sportsgameodds_requests_and_retains_book_specific_alternate_lines(monkeypatch) -> None:
+    event = {
+        "eventID": "event-1",
+        "status": {"startsAt": "2026-08-04T23:05:00Z", "live": False},
+        "teams": {
+            "home": {"teamID": "NYY", "names": {"short": "NYY"}},
+            "away": {"teamID": "TEX", "names": {"short": "TEX"}},
+        },
+        "players": {
+            "AARON_JUDGE_1_MLB": {"name": "Aaron Judge", "teamID": "NYY"},
+        },
+        "odds": {
+            "batting_hits-AARON_JUDGE_1_MLB-game-ou-over": {
+                "betTypeID": "ou",
+                "sideID": "over",
+                "statID": "batting_hits",
+                "playerID": "AARON_JUDGE_1_MLB",
+                "bookOverUnder": "0.5",
+                "byBookmaker": {
+                    "draftkings": {
+                        "available": True,
+                        "odds": "-210",
+                        "overUnder": "0.5",
+                        "altLines": [
+                            {"available": True, "odds": "+220", "overUnder": "1.5"},
+                            {"available": False, "odds": "+500", "overUnder": "2.5"},
+                        ],
+                    },
+                    "fanduel": {
+                        "available": True,
+                        "odds": "-195",
+                        "overUnder": "0.5",
+                        "altLines": [{"available": True, "odds": "+235", "overUnder": "1.5"}],
+                    },
+                },
+            },
+        },
+    }
+    requested_params = {}
+
+    class Response:
+        status_code = 200
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return {"success": True, "data": [event]}
+
+    def fake_get(_url, *, headers, params, timeout):
+        assert headers["x-api-key"] == "fixture-key"
+        assert timeout == 30
+        requested_params.update(params)
+        return Response()
+
+    monkeypatch.setattr("sportsgameodds_mlb_provider.requests.get", fake_get)
+    monkeypatch.setenv("MLB_ENABLE_LIVE_API_TESTS", "1")
+    provider = SportsGameOddsMlbProvider(api_key="fixture-key")
+    result = provider.collect_player_props()
+    normalized = provider.normalize(result["odds"])
+
+    assert requested_params["includeAltLines"] == "true"
+    assert result["diagnostic_odds"] == []
+    assert len(normalized) == 4
+    assert set(normalized["line"]) == {0.5, 1.5}
+    assert set(normalized.loc[normalized["line"].eq(1.5), "price_american"]) == {220.0, 235.0}
+    assert 2.5 not in set(normalized["line"])
+    assert provider.get_accounting()["alternate_book_rows"] == 2
 
 
 def test_duplicate_records_are_deduplicated_without_losing_sources() -> None:

@@ -32,7 +32,10 @@ SCRIPT_PATH = Path(__file__).resolve()
 SPORT_ROOT = SCRIPT_PATH.parents[1]
 REPO_ROOT = SCRIPT_PATH.parents[3]
 CALIBRATION_ROOT = SPORT_ROOT / "data" / "predictions" / "calibration"
-POLICY_VERSION = "mlb_over_parlay_ladder_v2"
+DEFAULT_PROVIDER_OBSERVATIONS = (
+    SPORT_ROOT / "data" / "raw" / "market_odds" / "mlb" / "odds_api_io" / "latest_provider_observations.csv"
+)
+POLICY_VERSION = "mlb_over_parlay_ladder_v3"
 ALLOWED_TARGETS = ("H", "TB", "R", "RBI", "K")
 MIN_LEGS = 2
 MAX_LEGS = 4
@@ -44,6 +47,19 @@ MAX_CANDIDATES_PER_BOOK = 12
 TICKET_PROBABILITY_FLOORS = {2: 0.40, 3: 0.25, 4: 0.18}
 TICKET_MAX_DECIMAL_PRICES = {2: 6.0, 3: 10.0, 4: 18.0}
 TICKET_TIERS = {2: "consistency", 3: "balanced", 4: "extended"}
+TARGET_MARKET_TYPES = {
+    "H": "batter_hits",
+    "TB": "batter_total_bases",
+    "R": "batter_runs_scored",
+    "RBI": "batter_rbis",
+    "K": "pitcher_strikeouts",
+}
+ALT_LINE_MAX_INCREMENTS = {"H": 1.0, "TB": 1.0, "R": 1.0, "RBI": 1.0, "K": 2.0}
+PROFIT_BOOST_MIN_LEG_PROBABILITY = 0.18
+PROFIT_BOOST_MIN_TICKET_PROBABILITY = 0.10
+PROFIT_BOOST_MIN_DECIMAL_PRICE = 4.0
+PROFIT_BOOST_MAX_DECIMAL_PRICE = 15.0
+PROFIT_BOOST_MIN_EXPECTED_RETURN = 0.05
 MLB_LIVE_FEED_ROOT = "https://statsapi.mlb.com/api/v1.1/game"
 
 
@@ -52,6 +68,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--pool-csv", type=Path, required=True)
     parser.add_argument("--out-json", type=Path, default=None)
     parser.add_argument("--history-dir", type=Path, default=selector.DEFAULT_HISTORY_DIR)
+    parser.add_argument("--provider-observations", type=Path, default=DEFAULT_PROVIDER_OBSERVATIONS)
     parser.add_argument("--min-legs", type=int, default=MIN_LEGS)
     parser.add_argument("--max-legs", type=int, default=MAX_LEGS)
     parser.add_argument("--min-leg-probability", type=float, default=MIN_LEG_PROBABILITY)
@@ -125,7 +142,179 @@ def _candidate_to_play(candidate: selector.Candidate) -> dict[str, Any]:
         "days_since_history": candidate.days_since_history,
         "selection_score": candidate.selection_score,
         "parlay_precision_eligible": True,
+        "line_variant": "main",
     }
+
+
+def _american_to_decimal(price: object) -> float | None:
+    try:
+        value = float(price)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(value) or abs(value) < 100.0:
+        return None
+    return 1.0 + (value / 100.0 if value > 0 else 100.0 / abs(value))
+
+
+def build_alternate_line_plays(
+    candidates: list[selector.Candidate],
+    provider_observations: Path,
+) -> list[dict[str, Any]]:
+    if not provider_observations.exists():
+        return []
+    try:
+        observations = pd.read_csv(provider_observations, low_memory=False)
+    except Exception:
+        return []
+    required = {
+        "player_name", "market_type", "side", "line", "price_american", "sportsbook",
+        "home_team", "away_team", "game_start_utc",
+    }
+    if observations.empty or not required.issubset(observations.columns):
+        return []
+
+    observations = observations.copy()
+    observations["_player"] = observations["player_name"].map(_normalize_name)
+    observations["_market"] = observations["market_type"].astype(str).str.strip().str.lower()
+    observations["_side"] = observations["side"].astype(str).str.strip().str.lower()
+    observations["_book"] = observations["sportsbook"].astype(str).str.strip().str.lower()
+    observations["_line"] = pd.to_numeric(observations["line"], errors="coerce")
+    observations["_price"] = pd.to_numeric(observations["price_american"], errors="coerce")
+    starts = pd.to_datetime(observations["game_start_utc"], utc=True, errors="coerce")
+    observations["_market_date"] = starts.dt.tz_convert("America/New_York").dt.date.astype(str)
+    observations["_home"] = observations["home_team"].map(_normalize_name)
+    observations["_away"] = observations["away_team"].map(_normalize_name)
+    if "canonical_selected" in observations:
+        selected = observations["canonical_selected"].astype(str).str.strip().str.lower().isin({"true", "1"})
+        observations = observations.loc[selected]
+    if "validation_status" in observations:
+        observations = observations.loc[
+            observations["validation_status"].astype(str).str.strip().str.upper().eq("VALID")
+        ]
+
+    plays: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, str, float]] = set()
+    for candidate in candidates:
+        market_type = TARGET_MARKET_TYPES.get(candidate.target)
+        max_increment = ALT_LINE_MAX_INCREMENTS.get(candidate.target)
+        if market_type is None or max_increment is None:
+            continue
+        candidate_date = str(candidate.raw.get("Game_Date") or candidate.run_date.isoformat())
+        candidate_team = _normalize_name(candidate.team)
+        candidate_opponent = _normalize_name(candidate.raw.get("Opponent", ""))
+        same_event = observations["_market_date"].eq(candidate_date)
+        if candidate_team and candidate_opponent:
+            same_event &= (
+                observations["_home"].isin({candidate_team, candidate_opponent})
+                & observations["_away"].isin({candidate_team, candidate_opponent})
+            )
+        rows = observations.loc[
+            same_event
+            & observations["_player"].eq(_normalize_name(candidate.player))
+            & observations["_market"].eq(market_type)
+            & observations["_side"].eq("over")
+            & observations["_line"].gt(float(candidate.market_line) + 1e-9)
+            & observations["_line"].le(float(candidate.market_line) + float(max_increment) + 1e-9)
+        ]
+        for _, row in rows.iterrows():
+            line = float(row["_line"])
+            price = float(row["_price"])
+            book = str(row["_book"])
+            if not book or not math.isfinite(price) or not (100.0 <= price <= 600.0):
+                continue
+            raw_alt_probability = selector.estimate_count_hit_probabilities(
+                max(0.0, float(candidate.prediction)), line, "OVER"
+            )[2]
+            base_model_probability = max(1e-6, float(candidate.model_hit_probability))
+            calibration_ratio = min(1.0, float(candidate.calibrated_graded_hit_rate) / base_model_probability)
+            probability = min(
+                float(candidate.calibrated_graded_hit_rate),
+                raw_alt_probability * calibration_ratio * 0.90,
+            )
+            decimal_price = _american_to_decimal(price)
+            if probability < PROFIT_BOOST_MIN_LEG_PROBABILITY or decimal_price is None:
+                continue
+            expected_value = probability * decimal_price - 1.0
+            if expected_value < 0.03:
+                continue
+            line_rows = rows.loc[rows["_line"].eq(line)]
+            alternate_books = sorted({str(value) for value in line_rows["_book"] if str(value)})
+            key = (candidate.player_id, candidate.target, book, line)
+            if key in seen:
+                continue
+            seen.add(key)
+            play = _candidate_to_play(candidate)
+            play.update(
+                {
+                    "play_key": "|".join(
+                        (play["market_date"], candidate.game_id, candidate.player, candidate.target, "OVER", f"ALT_{line:g}")
+                    ),
+                    "market_line": line,
+                    "base_market_line": float(candidate.market_line),
+                    "line_increment": line - float(candidate.market_line),
+                    "line_variant": "alternate",
+                    "market_bucket": f"{candidate.target}|OVER|{line:g}|ALT",
+                    "historical_bucket_key": f"{candidate.target}|OVER|{line:g}|ALT",
+                    "estimated_graded_hit_rate": probability,
+                    "model_hit_probability": raw_alt_probability,
+                    "expected_value_per_unit": expected_value,
+                    "selected_side_price": price,
+                    "selected_sportsbook_key": book,
+                    "selected_sportsbook": str(row.get("sportsbook") or book),
+                    "price_confirmed": True,
+                    "alternate_line_price_source": str(row.get("source") or row.get("provider_name") or "provider"),
+                    "provider_source_market_id": str(row.get("source_market_id") or ""),
+                    "alternate_line_observed_at_utc": str(row.get("observed_at_utc") or ""),
+                    "alternate_line_books": len(alternate_books),
+                    "alternate_line_book_keys": alternate_books,
+                    "parlay_precision_eligible": True,
+                }
+            )
+            plays.append(play)
+    return plays
+
+
+def select_profit_boost_ticket(alternate_plays: list[dict[str, Any]]) -> dict[str, Any] | None:
+    tickets = score_candidate_parlays(
+        alternate_plays,
+        sport="mlb",
+        probability_field="estimated_graded_hit_rate",
+        eligibility_field="parlay_precision_eligible",
+        min_leg_probability=PROFIT_BOOST_MIN_LEG_PROBABILITY,
+        min_pair_probability=PROFIT_BOOST_MIN_TICKET_PROBABILITY,
+        min_legs_per_parlay=2,
+        max_legs_per_parlay=2,
+        forbid_same_market_bucket_parlay=False,
+        min_expected_return_per_unit=PROFIT_BOOST_MIN_EXPECTED_RETURN,
+    )
+    executable: list[dict[str, Any]] = []
+    for source in tickets:
+        combined_price = float(source.get("combined_decimal_price") or 0.0)
+        probability = float(source.get("projected_probability") or 0.0)
+        expected_return = float(source.get("expected_return_per_unit") or -999.0)
+        if not PROFIT_BOOST_MIN_DECIMAL_PRICE <= combined_price <= PROFIT_BOOST_MAX_DECIMAL_PRICE:
+            continue
+        if probability < PROFIT_BOOST_MIN_TICKET_PROBABILITY or expected_return < PROFIT_BOOST_MIN_EXPECTED_RETURN:
+            continue
+        if bool(source.get("same_game")) or bool(source.get("same_player")):
+            continue
+        ticket = dict(source)
+        ticket["legs"] = [alternate_plays[int(index)] for index in ticket["leg_indices"]]
+        ticket["ticket_tier"] = "profit_boost"
+        ticket["probability_floor"] = PROFIT_BOOST_MIN_TICKET_PROBABILITY
+        ticket["maximum_decimal_price"] = PROFIT_BOOST_MAX_DECIMAL_PRICE
+        ticket["risk_adjusted_profit_score"] = expected_return * math.sqrt(probability)
+        ticket["evidence_status"] = "SHADOW_ALT_LINE_PRICE_CAPTURE"
+        executable.append(ticket)
+    executable.sort(
+        key=lambda row: (
+            float(row.get("risk_adjusted_profit_score") or -999.0),
+            float(row.get("projected_probability") or 0.0),
+            float(row.get("expected_return_per_unit") or -999.0),
+        ),
+        reverse=True,
+    )
+    return executable[0] if executable else None
 
 
 def _normalize_name(value: object) -> str:
@@ -282,6 +471,7 @@ def _best_ticket_for_leg_count(
             ticket = dict(source)
             ticket["legs"] = [book_plays[int(index)] for index in ticket["leg_indices"]]
             ticket["ticket_tier"] = TICKET_TIERS[leg_count]
+            ticket["ticket_id"] = f"{TICKET_TIERS[leg_count]}_{leg_count}_leg"
             ticket["probability_floor"] = min_ticket_probability
             ticket["maximum_decimal_price"] = max_combined_decimal_price
             executable.append(ticket)
@@ -370,6 +560,10 @@ def _historical_over_events(history_dir: Path, season: int, before_date: date, m
                         "target": target,
                         "probability": probability,
                         "win": int(actual > line),
+                        "line": line,
+                        "actual": actual,
+                        "plus_one_win": int(actual > line + 1.0),
+                        "plus_two_win": int(actual > line + 2.0),
                     }
                 )
     result = pd.DataFrame.from_records(records)
@@ -435,6 +629,19 @@ def _grade_leg_count(events: pd.DataFrame, leg_count: int) -> dict[str, Any]:
 
 def build_validation(history_dir: Path, season: int, before_date: date, min_leg_probability: float) -> dict[str, Any]:
     events = _historical_over_events(history_dir, season, before_date, min_leg_probability)
+    base_winners = events.loc[events["win"].eq(1)] if not events.empty else events
+    by_target = {}
+    if not events.empty:
+        for target, frame in events.groupby("target", sort=True):
+            target_winners = frame.loc[frame["win"].eq(1)]
+            by_target[str(target)] = {
+                "rows": int(len(frame)),
+                "base_hit_rate": float(frame["win"].mean()),
+                "one_unit_higher_hit_rate": float(frame["plus_one_win"].mean()),
+                "winner_margin_retention_one_unit": (
+                    float(target_winners["plus_one_win"].mean()) if not target_winners.empty else None
+                ),
+            }
     return {
         "method": "stored_pre_event_projection_real_price_confirmed_grading",
         "price_validation": "real market, at least five books, selected OVER price confirmed; no parlay ROI claim",
@@ -442,6 +649,18 @@ def build_validation(history_dir: Path, season: int, before_date: date, min_leg_
         "event_rows": int(len(events)),
         "dates": int(events["date"].nunique()) if not events.empty else 0,
         "by_leg_count": [_grade_leg_count(events, leg_count) for leg_count in range(MIN_LEGS, MAX_LEGS + 1)],
+        "alternate_line_margin_audit": {
+            "method": "synthetic_event_grading_without_alternate_price_history",
+            "claim_scope": "hit-rate diagnostic only; does not establish alternate-line ROI",
+            "rows": int(len(events)),
+            "base_hit_rate": float(events["win"].mean()) if not events.empty else None,
+            "one_unit_higher_hit_rate": float(events["plus_one_win"].mean()) if not events.empty else None,
+            "two_units_higher_hit_rate": float(events["plus_two_win"].mean()) if not events.empty else None,
+            "winner_margin_retention_one_unit": (
+                float(base_winners["plus_one_win"].mean()) if not base_winners.empty else None
+            ),
+            "by_target": by_target,
+        },
     }
 
 
@@ -495,14 +714,19 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         min_expected_return=float(args.min_expected_return),
     )
     ticket = ticket_ladder[0] if ticket_ladder else None
+    alternate_plays = build_alternate_line_plays(anchors, args.provider_observations.resolve())
+    profit_boost_ticket = select_profit_boost_ticket(alternate_plays)
+    if profit_boost_ticket is not None:
+        profit_boost_ticket["ticket_id"] = "profit_boost_2_leg"
+        ticket_ladder.append(profit_boost_ticket)
     validation = build_validation(args.history_dir.resolve(), season, run_date, float(args.min_leg_probability))
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "policy_version": POLICY_VERSION,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "run_date": run_date.isoformat(),
         "status": "ready" if ticket is not None else "withheld",
-        "objective": "shortest_consistency_ticket_plus_leg_count_specific_alternatives",
+        "objective": "consistency_ladder_plus_shadow_positive_ev_alternate_line_ticket",
         "direction_policy": "OVER_ONLY",
         "allowed_leg_counts": list(range(min_legs, max_legs + 1)),
         "gates": {
@@ -522,12 +746,23 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
             "min_common_market_books": 2,
             "same_sportsbook_required": True,
             "distinct_games_required": True,
+            "profit_boost": {
+                "status": "shadow_only",
+                "min_leg_probability": PROFIT_BOOST_MIN_LEG_PROBABILITY,
+                "min_ticket_probability": PROFIT_BOOST_MIN_TICKET_PROBABILITY,
+                "min_combined_decimal_price": PROFIT_BOOST_MIN_DECIMAL_PRICE,
+                "max_combined_decimal_price": PROFIT_BOOST_MAX_DECIMAL_PRICE,
+                "min_expected_return_per_unit": PROFIT_BOOST_MIN_EXPECTED_RETURN,
+                "exact_sportsbook_alternate_price_required": True,
+            },
         },
         "pool_candidate_count": int(len(candidates)),
         "eligible_anchor_count": int(len(anchors)),
         "considered_anchor_count": int(len(considered)),
+        "alternate_line_candidate_count": int(len(alternate_plays)),
         "filter_rejections": dict(sorted(rejected.items())),
         "selected_ticket": ticket,
+        "profit_boost_ticket": profit_boost_ticket,
         "ticket_ladder": ticket_ladder,
         "validation": validation,
     }

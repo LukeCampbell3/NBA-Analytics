@@ -43,6 +43,11 @@ MLB_MIN_CORE_HIT_PROBABILITY = 0.825
 MLB_HISTORICAL_EVIDENCE_SCOPE = "real_price_confirmed_markets_only_v1"
 MLB_PARLAY_PROBABILITY_FLOORS = {2: 0.40, 3: 0.25, 4: 0.18}
 MLB_PARLAY_MAX_DECIMAL_PRICES = {2: 6.0, 3: 10.0, 4: 18.0}
+MLB_PROFIT_BOOST_MIN_LEG_PROBABILITY = 0.18
+MLB_PROFIT_BOOST_MIN_TICKET_PROBABILITY = 0.10
+MLB_PROFIT_BOOST_MIN_DECIMAL_PRICE = 4.0
+MLB_PROFIT_BOOST_MAX_DECIMAL_PRICE = 15.0
+MLB_PROFIT_BOOST_MIN_EXPECTED_RETURN = 0.05
 NBA_CALIBRATION_METHOD = "segment_monotonic_safety"
 NBA_CALIBRATION_SCOPE = "FULL_CANDIDATE_POOL_REPLAY"
 NBA_CALIBRATION_SEGMENTS = {
@@ -62,6 +67,10 @@ def validate_mlb_daily_ticket(
     label: str,
     authorization_enabled: bool,
 ) -> None:
+    ticket_tier = str(ticket.get("ticket_tier") or "consistency").strip().lower()
+    is_profit_boost = ticket_tier == "profit_boost"
+    if is_profit_boost and bool(ticket.get("candidate_authorized", False)):
+        raise ValueError(f"MLB {label} profit boost must remain shadow-only.")
     if not authorization_enabled and bool(ticket.get("candidate_authorized", False)):
         raise ValueError(f"MLB {label} contains an authorized parlay without an active certificate.")
     legs = ticket.get("legs")
@@ -89,8 +98,25 @@ def validate_mlb_daily_ticket(
         if int(leg.get("market_books") or 0) < MLB_MIN_BOOKS or int(leg.get("market_common_books") or 0) < MLB_MIN_COMMON_BOOKS:
             raise ValueError(f"MLB {label} daily parlay leg {leg_index} lacks book coverage.")
         leg_probability = as_float(leg.get("estimated_graded_hit_rate"))
-        if leg_probability is None or leg_probability < 0.62:
+        minimum_leg_probability = MLB_PROFIT_BOOST_MIN_LEG_PROBABILITY if is_profit_boost else 0.62
+        if leg_probability is None or leg_probability < minimum_leg_probability:
             raise ValueError(f"MLB {label} daily parlay leg {leg_index} misses the consistency floor.")
+        if is_profit_boost:
+            base_line = as_float(leg.get("base_market_line"))
+            current_line = as_float(leg.get("market_line"))
+            leg_expected_return = as_float(leg.get("expected_value_per_unit"))
+            if str(leg.get("line_variant") or "").strip().lower() != "alternate":
+                raise ValueError(f"MLB {label} profit boost leg {leg_index} is not an alternate line.")
+            if base_line is None or current_line is None or current_line <= base_line:
+                raise ValueError(f"MLB {label} profit boost leg {leg_index} does not raise the main line.")
+            if not str(leg.get("provider_source_market_id") or "").strip():
+                raise ValueError(f"MLB {label} profit boost leg {leg_index} lacks quote provenance.")
+            if not str(leg.get("alternate_line_observed_at_utc") or "").strip():
+                raise ValueError(f"MLB {label} profit boost leg {leg_index} lacks quote freshness provenance.")
+            if int(leg.get("alternate_line_books") or 0) < 1:
+                raise ValueError(f"MLB {label} profit boost leg {leg_index} lacks an executable alternate-line book.")
+            if leg_expected_return is None or leg_expected_return < 0.03:
+                raise ValueError(f"MLB {label} profit boost leg {leg_index} lacks positive alternate-line value.")
         game_id = str(leg.get("game_id") or "").strip()
         player = str(leg.get("player_id") or leg.get("player") or "").strip().lower()
         if not game_id or game_id in game_ids or not player or player in players:
@@ -100,12 +126,20 @@ def validate_mlb_daily_ticket(
     ticket_probability = as_float(ticket.get("projected_probability"))
     combined_decimal = as_float(ticket.get("combined_decimal_price"))
     expected_return = as_float(ticket.get("expected_return_per_unit"))
-    if ticket_probability is None or ticket_probability < MLB_PARLAY_PROBABILITY_FLOORS[leg_count]:
+    probability_floor = (
+        MLB_PROFIT_BOOST_MIN_TICKET_PROBABILITY if is_profit_boost else MLB_PARLAY_PROBABILITY_FLOORS[leg_count]
+    )
+    minimum_decimal = MLB_PROFIT_BOOST_MIN_DECIMAL_PRICE if is_profit_boost else 2.0
+    maximum_decimal = (
+        MLB_PROFIT_BOOST_MAX_DECIMAL_PRICE if is_profit_boost else MLB_PARLAY_MAX_DECIMAL_PRICES[leg_count]
+    )
+    minimum_expected_return = MLB_PROFIT_BOOST_MIN_EXPECTED_RETURN if is_profit_boost else 0.0
+    if ticket_probability is None or ticket_probability < probability_floor:
         raise ValueError(f"MLB {label} daily parlay misses its {leg_count}-leg ticket floor.")
-    if combined_decimal is None or not 2.0 <= combined_decimal <= MLB_PARLAY_MAX_DECIMAL_PRICES[leg_count]:
+    if combined_decimal is None or not minimum_decimal <= combined_decimal <= maximum_decimal:
         raise ValueError(f"MLB {label} daily parlay falls outside its declared payout scope.")
-    if expected_return is None or expected_return < 0.0:
-        raise ValueError(f"MLB {label} daily parlay has negative expected return.")
+    if expected_return is None or expected_return < minimum_expected_return:
+        raise ValueError(f"MLB {label} daily parlay misses its expected-return floor.")
     risk_flags = {str(value) for value in ticket.get("risk_flags", [])}
     ticket_status = str(ticket.get("status") or "").strip().lower()
     if ticket_status == "ready" and risk_flags:
@@ -415,14 +449,15 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
     ladder = daily_parlay.get("ticket_ladder", [])
     if not isinstance(ladder, list):
         raise ValueError(f"MLB {label} daily parlay ladder must be a list.")
-    ladder_leg_counts: set[int] = set()
+    ladder_ticket_ids: set[str] = set()
     for ladder_index, ladder_ticket in enumerate(ladder, start=1):
         if not isinstance(ladder_ticket, dict):
             raise ValueError(f"MLB {label} daily parlay ladder ticket {ladder_index} must be an object.")
         leg_count = int(ladder_ticket.get("leg_count") or 0)
-        if leg_count in ladder_leg_counts:
-            raise ValueError(f"MLB {label} daily parlay ladder repeats a leg count.")
-        ladder_leg_counts.add(leg_count)
+        ticket_id = str(ladder_ticket.get("ticket_id") or f"{ladder_ticket.get('ticket_tier', '')}_{leg_count}")
+        if ticket_id in ladder_ticket_ids:
+            raise ValueError(f"MLB {label} daily parlay ladder repeats a ticket id.")
+        ladder_ticket_ids.add(ticket_id)
         validate_mlb_daily_ticket(
             ladder_ticket,
             label=f"{label} ladder ticket {ladder_index}",

@@ -5,7 +5,7 @@ class DailyPredictionsPage {
         this.availableDates = [];
         this.activeDate = null;
         this.currentDate = null;
-        this.activeParlayLegCount = null;
+        this.activeParlayTicketId = null;
         this.elements = {
             cards: document.getElementById("predictionCards"),
             empty: document.getElementById("predictionEmpty"),
@@ -219,11 +219,14 @@ class DailyPredictionsPage {
         const ladder = Array.isArray(parlay?.ticket_ladder) && parlay.ticket_ladder.length
             ? parlay.ticket_ladder.filter((item) => item && Array.isArray(item.legs) && item.legs.length)
             : selectedTicket ? [selectedTicket] : [];
-        const defaultLegCount = Number(selectedTicket?.leg_count || ladder[0]?.leg_count || 0);
-        if (!ladder.some((item) => Number(item.leg_count) === Number(this.activeParlayLegCount))) {
-            this.activeParlayLegCount = defaultLegCount;
+        const ticketId = (item, index = 0) => String(
+            item?.ticket_id || `${item?.ticket_tier || "consistency"}_${item?.leg_count || 0}_${index}`
+        );
+        const defaultTicketId = selectedTicket ? ticketId(selectedTicket) : ticketId(ladder[0]);
+        if (!ladder.some((item, index) => ticketId(item, index) === this.activeParlayTicketId)) {
+            this.activeParlayTicketId = defaultTicketId;
         }
-        const ticket = ladder.find((item) => Number(item.leg_count) === Number(this.activeParlayLegCount)) || selectedTicket;
+        const ticket = ladder.find((item, index) => ticketId(item, index) === this.activeParlayTicketId) || selectedTicket;
         const status = String(ticket?.status || parlay?.status || "withheld").toLowerCase();
         const candidateAuthorized = Boolean(ticket?.candidate_authorized);
         const statusLabel = !candidateAuthorized && ticket ? "Shadow only" : status === "ready" ? "Ready" : status === "review" ? "Lineup review" : "Withheld";
@@ -270,8 +273,10 @@ class DailyPredictionsPage {
             <div class="daily-parlay__tabs" role="tablist" aria-label="Parlay length">
                 ${ladder.map((item) => {
                     const legCount = Number(item.leg_count || 0);
-                    const active = legCount === Number(this.activeParlayLegCount);
-                    return `<button type="button" class="daily-parlay__tab${active ? " is-active" : ""}" data-parlay-legs="${legCount}" role="tab" aria-selected="${active}">${legCount} legs</button>`;
+                    const itemId = ticketId(item);
+                    const active = itemId === this.activeParlayTicketId;
+                    const label = item.ticket_tier === "profit_boost" ? "Profit boost" : `${legCount} legs`;
+                    return `<button type="button" class="daily-parlay__tab${active ? " is-active" : ""}" data-parlay-ticket="${this.escapeHtml(itemId)}" role="tab" aria-selected="${active}">${this.escapeHtml(label)}</button>`;
                 }).join("")}
             </div>
         ` : "";
@@ -294,11 +299,11 @@ class DailyPredictionsPage {
             <div class="daily-parlay__legs">${legs}</div>
             <p class="daily-parlay__state">${this.escapeHtml(parlay.reason || "")}</p>
         `;
-        content.querySelectorAll("[data-parlay-legs]").forEach((button) => {
+        content.querySelectorAll("[data-parlay-ticket]").forEach((button) => {
             button.addEventListener("click", () => {
-                const legCount = Number(button.dataset.parlayLegs);
-                if (!Number.isFinite(legCount) || legCount === Number(this.activeParlayLegCount)) return;
-                this.activeParlayLegCount = legCount;
+                const selectedId = String(button.dataset.parlayTicket || "");
+                if (!selectedId || selectedId === this.activeParlayTicketId) return;
+                this.activeParlayTicketId = selectedId;
                 this.renderDailyParlay();
             });
         });

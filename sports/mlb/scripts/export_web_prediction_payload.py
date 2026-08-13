@@ -820,6 +820,10 @@ def load_daily_parlay(
             ):
                 ticket = ladder_ticket
                 break
+        payload["profit_boost_ticket"] = next(
+            (item for item in ladder if str(item.get("ticket_tier") or "") == "profit_boost"),
+            None,
+        )
     status = str(ticket.get("status") or "withheld")
     payload["available"] = status != "withheld"
     payload["status"] = status
@@ -961,10 +965,14 @@ def main() -> None:
     raw_daily_parlay = _load_json_file(args.parlay_json) if args.parlay_json else None
     parlay_context_rows: list[dict[str, str]] = []
     if isinstance(raw_daily_parlay, dict):
-        raw_ticket = raw_daily_parlay.get("selected_ticket") or {}
-        for leg in raw_ticket.get("legs", []) if isinstance(raw_ticket, dict) else []:
-            if isinstance(leg, dict):
-                parlay_context_rows.append({"Game_ID": str(leg.get("game_id", ""))})
+        context_tickets = [raw_daily_parlay.get("selected_ticket")]
+        context_tickets.extend(raw_daily_parlay.get("ticket_ladder", []))
+        for raw_ticket in context_tickets:
+            if not isinstance(raw_ticket, dict):
+                continue
+            for leg in raw_ticket.get("legs", []):
+                if isinstance(leg, dict):
+                    parlay_context_rows.append({"Game_ID": str(leg.get("game_id", ""))})
     game_context_lookup = build_game_context_lookup(original_rows + parlay_context_rows)
     rows, suppressed_closed_games = suppress_closed_games(rows, game_context_lookup)
     rows, suppressed_duplicates = suppress_duplicate_props(rows, game_context_lookup)

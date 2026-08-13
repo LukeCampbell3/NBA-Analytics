@@ -380,7 +380,32 @@ def test_validate_mlb_payload_accepts_adaptive_over_parlay(tmp_path: Path) -> No
             "estimated_graded_hit_rate": 0.65,
         }
     )
-    payload["daily_parlay"]["ticket_ladder"] = [selected_ticket, balanced_ticket]
+    profit_ticket = json.loads(json.dumps(selected_ticket))
+    profit_ticket.update(
+        {
+            "ticket_id": "profit_boost_2_leg",
+            "ticket_tier": "profit_boost",
+            "projected_probability": 0.14,
+            "combined_decimal_price": 9.0,
+            "expected_return_per_unit": 0.26,
+            "candidate_authorized": False,
+        }
+    )
+    for index, leg in enumerate(profit_ticket["legs"], start=1):
+        leg.update(
+            {
+                "line_variant": "alternate",
+                "base_market_line": 0.5,
+                "market_line": 1.5,
+                "provider_source_market_id": f"alt-{index}",
+                "alternate_line_observed_at_utc": "2026-04-28T14:00:00Z",
+                "alternate_line_books": 1,
+                "selected_side_price": 200,
+                "estimated_graded_hit_rate": 0.38,
+                "expected_value_per_unit": 0.14,
+            }
+        )
+    payload["daily_parlay"]["ticket_ladder"] = [selected_ticket, balanced_ticket, profit_ticket]
 
     validate_mlb_payload(payload, label="test")
 
