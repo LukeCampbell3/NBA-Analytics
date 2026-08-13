@@ -50,7 +50,8 @@ DEFAULT_CALIBRATION_ROOT = SPORT_ROOT / "data" / "predictions" / "calibration"
 
 SUPPORTED_COUNT_TARGETS = {"H", "TB", "R", "HR", "RBI", "K", "ER"}
 STANDARD_MARKET_LINES = {"H": 0.5, "TB": 1.5, "R": 0.5, "HR": 0.5, "RBI": 0.5}
-MAX_CALIBRATED_PROBABILITY = 0.80
+MAX_CALIBRATED_PROBABILITY = 0.90
+HISTORICAL_BUCKET_EVIDENCE_SCOPE = "real_price_confirmed_markets_only_v1"
 FINAL_STATUS_CODES = {"F", "C", "D", "X"}
 UPCOMING_STATUS_CODES = {"", "P", "S", "NS"}
 RECENT_FORM_LOOKBACK_DAYS = 14
@@ -172,6 +173,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--pool-csv", type=Path, required=True, help="Raw MLB prediction pool CSV.")
     parser.add_argument("--out-csv", type=Path, default=None, help="Output CSV for the selected board.")
     parser.add_argument("--summary-json", type=Path, default=None, help="Summary JSON path.")
+    parser.add_argument(
+        "--policy-version",
+        type=str,
+        default="unversioned",
+        help="Exact selector policy version recorded in outputs and required by live feedback.",
+    )
     parser.add_argument("--top-n", type=int, default=6, help="Maximum number of plays to keep.")
     parser.add_argument(
         "--daily-pick-soft-cap",
@@ -551,7 +558,11 @@ def default_pick_survival_cache_path(season: int) -> Path:
     return DEFAULT_CALIBRATION_ROOT / f"pick_survival_model_{int(season)}.json"
 
 
-def load_live_confidence_calibration(path: Path | None, run_date: date | None) -> dict | None:
+def load_live_confidence_calibration(
+    path: Path | None,
+    run_date: date | None,
+    policy_version: str | None = None,
+) -> dict | None:
     if path is None or not path.exists():
         return None
     try:
@@ -560,6 +571,8 @@ def load_live_confidence_calibration(path: Path | None, run_date: date | None) -
         return None
     cutoff = parse_date(payload.get("history_before_date"))
     if run_date is not None and cutoff is not None and cutoff > run_date:
+        return None
+    if policy_version and str(payload.get("policy_version", "")) != policy_version:
         return None
     return payload
 
@@ -844,8 +857,8 @@ def build_historical_bucket_priors(
     )
 
     required_columns = {"Date"}
-    for actual_col, market_col, gap_col in HISTORICAL_TARGET_SPECS.values():
-        required_columns.update({actual_col, market_col, gap_col})
+    for columns in HISTORICAL_BET_TARGET_SPECS.values():
+        required_columns.update(columns)
 
     for path in files:
         try:
@@ -861,14 +874,29 @@ def build_historical_bucket_priors(
         if frame.empty:
             continue
 
-        for target, (actual_col, market_col, gap_col) in HISTORICAL_TARGET_SPECS.items():
-            if actual_col not in frame.columns or market_col not in frame.columns or gap_col not in frame.columns:
+        for target, columns in HISTORICAL_BET_TARGET_SPECS.items():
+            actual_col, market_col, gap_col, source_col, books_col, over_col, under_col = columns
+            if not set(columns).issubset(frame.columns):
                 continue
 
             actual = pd.to_numeric(frame[actual_col], errors="coerce")
             market_line = pd.to_numeric(frame[market_col], errors="coerce")
             gap = pd.to_numeric(frame[gap_col], errors="coerce")
-            mask = actual.notna() & market_line.notna() & gap.notna() & gap.ne(0)
+            books = pd.to_numeric(frame[books_col], errors="coerce").fillna(0)
+            over_price = pd.to_numeric(frame[over_col], errors="coerce")
+            under_price = pd.to_numeric(frame[under_col], errors="coerce")
+            market_source = frame[source_col].astype(str).str.strip().str.lower()
+            selected_price = under_price.where(gap.lt(0), over_price)
+            valid_price = selected_price.notna() & selected_price.abs().ge(100.0)
+            mask = (
+                actual.notna()
+                & market_line.notna()
+                & gap.notna()
+                & gap.ne(0)
+                & market_source.eq("real")
+                & books.gt(0)
+                & valid_price
+            )
             if not bool(mask.any()):
                 continue
 
@@ -927,6 +955,8 @@ def build_historical_bucket_priors(
                         )
 
     return {
+        "schema_version": 2,
+        "evidence_scope": HISTORICAL_BUCKET_EVIDENCE_SCOPE,
         "season": int(season),
         "history_dir": report_path(history_dir),
         "updated_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -960,6 +990,7 @@ def load_or_build_historical_bucket_priors(
             if (
                 int(payload.get("season", season)) == int(season)
                 and str(payload.get("history_before_date", "")) == expected_cutoff
+                and str(payload.get("evidence_scope", "")) == HISTORICAL_BUCKET_EVIDENCE_SCOPE
             ):
                 return payload
         except Exception:
@@ -2193,6 +2224,7 @@ def candidate_selection_profile(candidate: Candidate, args: argparse.Namespace) 
 def write_selected_csv(path: Path, selected: list[Candidate], args: argparse.Namespace) -> None:
     fieldnames = [
         "Rank",
+        "Policy_Version",
         "Selection_Profile",
         "Prediction_Run_Date",
         "Game_Date",
@@ -2296,6 +2328,7 @@ def write_selected_csv(path: Path, selected: list[Candidate], args: argparse.Nam
             writer.writerow(
                 {
                     "Rank": idx,
+                    "Policy_Version": str(args.policy_version),
                     "Selection_Profile": candidate_selection_profile(candidate, args),
                     "Prediction_Run_Date": candidate.raw.get("Prediction_Run_Date", ""),
                     "Game_Date": candidate.raw.get("Game_Date", ""),
@@ -2412,12 +2445,17 @@ def write_summary_json(
     by_team = Counter(candidate.team for candidate in selected)
     by_market_bucket = Counter(candidate.market_bucket for candidate in selected)
     summary = {
+        "policy_version": str(args.policy_version),
         "pool_csv": report_path(pool_csv),
         "out_csv": report_path(args.out_csv or default_output_paths(pool_csv)[0]),
         "rows_supported": total_candidates,
         "rows_after_filters": len(eligible_candidates),
         "rows_selected": len(selected),
         "selection": {
+            "policy_version": str(args.policy_version),
+            "historical_calibration_evidence_scope": (
+                (calibration or {}).get("evidence_scope", "disabled")
+            ),
             "matchup_network_enabled": True,
             "matchup_network_version": NETWORK_VERSION,
             "top_n": int(args.top_n),
@@ -2669,6 +2707,7 @@ def main() -> None:
         live_confidence_calibration = load_live_confidence_calibration(
             args.live_confidence_cache_json.resolve() if args.live_confidence_cache_json else None,
             pool_run_date,
+            str(args.policy_version),
         )
     pick_survival_model = None
     if not args.disable_pick_survival_shadow:

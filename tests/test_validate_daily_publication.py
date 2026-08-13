@@ -91,7 +91,7 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
                     "over_min_expected_value": None,
                     "over_min_history_rows": None,
                     "over_max_american_price": None,
-                    "pitcher_k_over_profile_enabled": True,
+                    "pitcher_k_over_profile_enabled": False,
                     "pitcher_k_over_profile": "pitcher_k_over_workload_v1",
                     "pitcher_k_over_profile_status": "probation",
                     "pitcher_k_min_starter_history": 15,
@@ -113,6 +113,9 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
                     "max_under_picks": 1,
                     "daily_pick_soft_cap": 3,
                     "post_cap_min_selection_score": 0.80,
+                    "min_hit_probability": 0.825,
+                    "min_graded_hit_rate": 0.825,
+                    "historical_calibration_evidence_scope": "real_price_confirmed_markets_only_v1",
                 },
             }
         )
@@ -262,7 +265,7 @@ def test_validate_publication_rejects_legacy_mlb_pool_policy(tmp_path: Path) -> 
     route.parent.mkdir(parents=True, exist_ok=True)
     route.write_text("ok", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="expected premium_evidence_gated_v6"):
+    with pytest.raises(ValueError, match="expected premium_evidence_gated_v7"):
         validate_publication(
             repo_root=tmp_path,
             output_dir=Path("dist"),
@@ -382,7 +385,7 @@ def test_validate_mlb_payload_rejects_probationary_over_pick(tmp_path: Path) -> 
         validate_mlb_payload(payload, label="test")
 
 
-def test_validate_mlb_payload_checks_pitcher_workload_and_recency(tmp_path: Path) -> None:
+def test_validate_mlb_payload_rejects_uncertified_pitcher_profile(tmp_path: Path) -> None:
     payload_path = tmp_path / "payload.json"
     write_payload(payload_path, run_date="2026-04-28", sport="mlb")
     payload = json.loads(payload_path.read_text(encoding="utf-8"))
@@ -409,10 +412,7 @@ def test_validate_mlb_payload_checks_pitcher_workload_and_recency(tmp_path: Path
         }
     ]
 
-    validate_mlb_payload(payload, label="test")
-
-    payload["plays"][0]["days_since_history"] = 15
-    with pytest.raises(ValueError, match="exceeds the pitcher K recency ceiling"):
+    with pytest.raises(ValueError, match="disabled probationary pitcher K profile"):
         validate_mlb_payload(payload, label="test")
 
 

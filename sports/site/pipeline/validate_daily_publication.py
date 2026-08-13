@@ -16,7 +16,7 @@ SPORT_PAYLOADS = {
     "nba": Path("sports/nba/web/data/daily_predictions.json"),
     "mlb": Path("sports/mlb/web/data/daily_predictions.json"),
 }
-MLB_POLICY_PROFILE = "premium_evidence_gated_v6"
+MLB_POLICY_PROFILE = "premium_evidence_gated_v7"
 MLB_REQUIRED_TARGETS = {"ER", "H", "HR", "K", "R", "RBI", "TB"}
 MLB_MIN_BOOKS = 5
 MLB_MIN_COMMON_BOOKS = 2
@@ -39,6 +39,8 @@ MLB_CORE_MAX_AMERICAN_PRICE = 125.0
 MLB_MIN_OVER_PICKS = 0
 MLB_MAX_OVER_PICKS = 3
 MLB_MAX_UNDER_PICKS = 1
+MLB_MIN_CORE_HIT_PROBABILITY = 0.825
+MLB_HISTORICAL_EVIDENCE_SCOPE = "real_price_confirmed_markets_only_v1"
 NBA_CALIBRATION_METHOD = "segment_monotonic_safety"
 NBA_CALIBRATION_SCOPE = "FULL_CANDIDATE_POOL_REPLAY"
 NBA_CALIBRATION_SEGMENTS = {
@@ -189,8 +191,8 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
         raise ValueError(
             f"MLB {label} payload enabled probationary OVER thresholds: {', '.join(enabled_over_fields)}."
         )
-    if not bool(selection.get("pitcher_k_over_profile_enabled")):
-        raise ValueError(f"MLB {label} payload disabled the workload-gated pitcher K profile.")
+    if bool(selection.get("pitcher_k_over_profile_enabled")):
+        raise ValueError(f"MLB {label} payload enabled the uncertified pitcher K profile.")
     if str(selection.get("pitcher_k_over_profile") or "") != MLB_PITCHER_K_OVER_PROFILE:
         raise ValueError(f"MLB {label} payload is missing the pitcher K profile identity.")
     if str(selection.get("pitcher_k_over_profile_status") or "") != MLB_PITCHER_K_OVER_PROFILE_STATUS:
@@ -213,6 +215,13 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
             raise ValueError(f"MLB {label} payload changed pitcher K threshold {key}.")
     if int(selection.get("max_pitcher_k_picks", 0)) != MLB_MAX_PITCHER_K_PICKS:
         raise ValueError(f"MLB {label} payload changed the one-pick pitcher K cap.")
+    if (
+        as_float(selection.get("min_hit_probability")) != MLB_MIN_CORE_HIT_PROBABILITY
+        or as_float(selection.get("min_graded_hit_rate")) != MLB_MIN_CORE_HIT_PROBABILITY
+    ):
+        raise ValueError(f"MLB {label} payload changed the locked core probability floor.")
+    if str(selection.get("historical_calibration_evidence_scope") or "") != MLB_HISTORICAL_EVIDENCE_SCOPE:
+        raise ValueError(f"MLB {label} payload is not using executable-market calibration evidence.")
     if (
         int(selection.get("min_over_picks", 0)) != MLB_MIN_OVER_PICKS
         or int(selection.get("max_over_picks", 0)) != MLB_MAX_OVER_PICKS
@@ -295,31 +304,7 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
         if uses_optimized_over_profile:
             raise ValueError(f"MLB {label} play {index} used the disabled probationary OVER profile.")
         elif uses_pitcher_k_profile:
-            pitcher_k_count += 1
-            if direction != "OVER" or target != "K":
-                raise ValueError(f"MLB {label} play {index} misused the pitcher K profile identity.")
-            if not bool(play.get("starter_confirmed")):
-                raise ValueError(f"MLB {label} play {index} is not a confirmed probable starter.")
-            if int(play.get("starter_history_rows") or 0) < 15:
-                raise ValueError(f"MLB {label} play {index} lacks 15 prior starter-like outings.")
-            projected_ip = as_float(play.get("projected_ip"))
-            projected_pitches = as_float(play.get("projected_pitches"))
-            if projected_ip is None or projected_ip < 5.25:
-                raise ValueError(f"MLB {label} play {index} has insufficient projected innings.")
-            if projected_pitches is None or projected_pitches < 75.0:
-                raise ValueError(f"MLB {label} play {index} has insufficient projected pitches.")
-            days_since_history = as_float(play.get("days_since_history"))
-            if days_since_history is None or days_since_history > 14:
-                raise ValueError(f"MLB {label} play {index} exceeds the pitcher K recency ceiling.")
-            abs_edge = as_float(play.get("abs_edge"))
-            model_hit_probability = as_float(play.get("model_hit_probability"))
-            if abs_edge is None or not 0.15 <= abs_edge <= 1.0:
-                raise ValueError(f"MLB {label} play {index} falls outside the pitcher K edge corridor.")
-            if model_hit_probability is None or not 0.50 <= model_hit_probability <= 0.65:
-                raise ValueError(f"MLB {label} play {index} falls outside the pitcher K probability corridor.")
-            side_price = float(play.get("selected_side_price"))
-            if not -130.0 <= side_price <= 130.0:
-                raise ValueError(f"MLB {label} play {index} falls outside the pitcher K price corridor.")
+            raise ValueError(f"MLB {label} play {index} used the disabled probationary pitcher K profile.")
         else:
             side_price = float(play.get("selected_side_price"))
             if not MLB_CORE_MIN_AMERICAN_PRICE <= side_price <= MLB_CORE_MAX_AMERICAN_PRICE:

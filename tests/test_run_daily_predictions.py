@@ -29,6 +29,10 @@ def test_mlb_primary_policy_uses_validated_portfolio_limits() -> None:
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[index + 1] == "2"
     ev_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--min-expected-value")
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[ev_index + 1] == "0.0"
+    hit_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--min-hit-probability")
+    graded_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--min-graded-hit-rate")
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[hit_index + 1] == "0.825"
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[graded_index + 1] == "0.825"
     common_books_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--min-common-market-books")
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[common_books_index + 1] == "2"
     availability_rate_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index(
@@ -51,7 +55,7 @@ def test_mlb_primary_policy_uses_validated_portfolio_limits() -> None:
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[expansion_score_index + 1] == "0.80"
     core_min_price_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--core-min-american-price")
     core_price_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--core-max-american-price")
-    assert "--enable-pitcher-k-over-profile" in shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS
+    assert "--enable-pitcher-k-over-profile" not in shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS
     pitcher_history_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index(
         "--pitcher-k-min-starter-history"
     )
@@ -68,7 +72,7 @@ def test_mlb_primary_policy_uses_validated_portfolio_limits() -> None:
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[pitcher_cap_index + 1] == "1"
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[core_min_price_index + 1] == "-180"
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[core_price_index + 1] == "125"
-    assert shared_daily_predictions.MLB_PRIMARY_POLICY_PROFILE == "premium_evidence_gated_v6"
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_PROFILE == "premium_evidence_gated_v7"
 
 
 def test_annotate_mlb_summary_keeps_policy_identity_separate_from_publication_state(tmp_path: Path) -> None:
@@ -83,7 +87,7 @@ def test_annotate_mlb_summary_keeps_policy_identity_separate_from_publication_st
     )
 
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
-    assert summary["publication_strategy"] == "premium_evidence_gated_v6"
+    assert summary["publication_strategy"] == "premium_evidence_gated_v7"
     assert summary["publication_state"] == "withheld_current_pool"
 
 

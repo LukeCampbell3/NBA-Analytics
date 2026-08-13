@@ -1,0 +1,135 @@
+{
+  "method": "strict_date_ordered_walk_forward",
+  "evaluation_universe": "real_price_confirmed_market_rows_only",
+  "prior_training": {
+    "old": "all_market_rows_including_synthetic",
+    "new": "real_price_confirmed_market_rows_only"
+  },
+  "evaluation_dates": 161,
+  "minimum_prior_rows": 50,
+  "authorization_probability": 0.75,
+  "old_mixed_prior": {
+    "selections": 1297,
+    "wins": 1032,
+    "losses": 265,
+    "hit_rate": 0.7956823438704703,
+    "mean_probability": 0.8359619847162004,
+    "calibration_gap": 0.0402796408457301,
+    "brier_score": 0.16082895263404215
+  },
+  "new_real_market_prior": {
+    "selections": 1186,
+    "wins": 952,
+    "losses": 234,
+    "hit_rate": 0.8026981450252951,
+    "mean_probability": 0.8336333989122323,
+    "calibration_gap": 0.030935253886937186,
+    "brier_score": 0.15712858734032467
+  },
+  "threshold_selection": {
+    "method": "first_75_percent_development_last_25_percent_locked_holdout",
+    "development_dates": 120,
+    "holdout_dates": 41,
+    "minimum_development_selections": 525,
+    "development_grid": [
+      {
+        "threshold": 0.75,
+        "selections": 1075,
+        "wins": 859,
+        "losses": 216,
+        "hit_rate": 0.7990697674418604,
+        "mean_probability": 0.8344474333905325,
+        "calibration_gap": 0.03537766594867209,
+        "brier_score": 0.15959920352106147
+      },
+      {
+        "threshold": 0.775,
+        "selections": 869,
+        "wins": 702,
+        "losses": 167,
+        "hit_rate": 0.807825086306099,
+        "mean_probability": 0.8516864891074749,
+        "calibration_gap": 0.04386140280137596,
+        "brier_score": 0.15452932819928134
+      },
+      {
+        "threshold": 0.8,
+        "selections": 682,
+        "wins": 559,
+        "losses": 123,
+        "hit_rate": 0.8196480938416423,
+        "mean_probability": 0.8691504952208924,
+        "calibration_gap": 0.049502401379250105,
+        "brier_score": 0.1474025749348309
+      },
+      {
+        "threshold": 0.825,
+        "selections": 537,
+        "wins": 451,
+        "losses": 86,
+        "hit_rate": 0.839851024208566,
+        "mean_probability": 0.8846910726572979,
+        "calibration_gap": 0.044840048448731795,
+        "brier_score": 0.13458654756115762
+      },
+      {
+        "threshold": 0.85,
+        "selections": 403,
+        "wins": 349,
+        "losses": 54,
+        "hit_rate": 0.8660049627791563,
+        "mean_probability": 0.9005281313451208,
+        "calibration_gap": 0.03452316856596449,
+        "brier_score": 0.11702207078113666
+      },
+      {
+        "threshold": 0.875,
+        "selections": 280,
+        "wins": 248,
+        "losses": 32,
+        "hit_rate": 0.8857142857142857,
+        "mean_probability": 0.917850667041635,
+        "calibration_gap": 0.032136381327349306,
+        "brier_score": 0.10303177389378125
+      },
+      {
+        "threshold": 0.9,
+        "selections": 181,
+        "wins": 162,
+        "losses": 19,
+        "hit_rate": 0.8950276243093923,
+        "mean_probability": 0.934445943509201,
+        "calibration_gap": 0.03941831919980865,
+        "brier_score": 0.09646923783325861
+      }
+    ],
+    "selected_threshold": 0.825,
+    "holdout_old_mixed_prior": {
+      "selections": 59,
+      "wins": 56,
+      "losses": 3,
+      "hit_rate": 0.9491525423728814,
+      "mean_probability": 0.884575355553755,
+      "calibration_gap": -0.06457718681912639,
+      "brier_score": 0.05965186445639876
+    },
+    "holdout_new_real_market_prior": {
+      "selections": 53,
+      "wins": 48,
+      "losses": 5,
+      "hit_rate": 0.9056603773584906,
+      "mean_probability": 0.8720764982646265,
+      "calibration_gap": -0.033583879093864066,
+      "brier_score": 0.08950809665287765
+    }
+  },
+  "schema_version": 1,
+  "season": 2026,
+  "generated_at_utc": "2026-08-13T10:58:46.085612+00:00",
+  "source_rows": 247948,
+  "real_price_confirmed_rows": 3904,
+  "limitations": [
+    "This isolates probability-prior behavior; it is not a replay of every production gate.",
+    "Historical real-market coverage is sparse and results do not certify future return."
+  ]
+}

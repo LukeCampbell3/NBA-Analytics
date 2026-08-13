@@ -150,6 +150,36 @@ def test_historical_priors_exclude_rows_on_or_after_cutoff(tmp_path: Path) -> No
     assert profile["win_rate"] == 1.0
 
 
+def test_historical_priors_exclude_synthetic_and_unpriced_rows(tmp_path: Path) -> None:
+    player_dir = tmp_path / "Example_Player"
+    player_dir.mkdir()
+    pd.DataFrame(
+        [
+            {
+                "Date": "2026-04-01", "H": 2, "Market_H": 0.5, "H_market_gap": 0.5,
+                "Market_Source_H": "real", "Market_H_books": 3,
+                "Market_H_over_price": -110, "Market_H_under_price": -110,
+            },
+            {
+                "Date": "2026-04-02", "H": 0, "Market_H": 0.5, "H_market_gap": 0.5,
+                "Market_Source_H": "synthetic", "Market_H_books": 0,
+                "Market_H_over_price": None, "Market_H_under_price": None,
+            },
+            {
+                "Date": "2026-04-03", "H": 0, "Market_H": 0.5, "H_market_gap": 0.5,
+                "Market_Source_H": "real", "Market_H_books": 3,
+                "Market_H_over_price": None, "Market_H_under_price": -110,
+            },
+        ]
+    ).to_csv(player_dir / "2026_processed_processed.csv", index=False)
+
+    calibration = selector.build_historical_bucket_priors(tmp_path, 2026)
+
+    assert calibration["evidence_scope"] == selector.HISTORICAL_BUCKET_EVIDENCE_SCOPE
+    assert calibration["line_buckets"]["H|OVER|0.5"]["graded_rows"] == 1
+    assert calibration["line_buckets"]["H|OVER|0.5"]["win_rate"] == 1.0
+
+
 def test_build_candidate_blends_model_probability_with_historical_prior() -> None:
     calibration = {
         "target_direction": {

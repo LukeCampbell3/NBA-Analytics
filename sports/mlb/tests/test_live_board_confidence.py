@@ -102,3 +102,60 @@ def test_apply_live_board_calibration_uses_active_segment_only() -> None:
     assert source == "insufficient_support"
     assert support == 2
     assert adjustment == 0.0
+
+
+def test_calibration_uses_only_published_plays_from_exact_policy(tmp_path: Path) -> None:
+    daily_root = tmp_path / "daily"
+    processed_root = tmp_path / "processed"
+    history_root = tmp_path / "history"
+    player_dir = processed_root / "Players"
+    run_dir = daily_root / "20260801"
+    player_dir.mkdir(parents=True)
+    run_dir.mkdir(parents=True)
+    history_root.mkdir()
+    pd.DataFrame(
+        [
+            {"Date": "2026-08-01", "Player": "Published Player", "Game_ID": "1", "TB": 3},
+            {"Date": "2026-08-01", "Player": "Unpublished Player", "Game_ID": "2", "TB": 3},
+        ]
+    ).to_csv(player_dir / "2026_processed_processed.csv", index=False)
+    pd.DataFrame(
+        [
+            {"Selection_Profile": "core", "Game_Date": "2026-08-01", "Game_ID": "1", "Player": "Published Player", "Player_ID": "published_player", "Target": "TB", "Direction": "OVER", "Market_Line": 1.5, "Estimated_Graded_Hit_Rate": 0.7, "Price_Confirmed": 1, "Selected_Side_Price": 110},
+            {"Selection_Profile": "core", "Game_Date": "2026-08-01", "Game_ID": "2", "Player": "Unpublished Player", "Player_ID": "unpublished_player", "Target": "TB", "Direction": "OVER", "Market_Line": 1.5, "Estimated_Graded_Hit_Rate": 0.7, "Price_Confirmed": 1, "Selected_Side_Price": 110},
+        ]
+    ).to_csv(run_dir / "daily_prediction_pool_20260801_high_precision_predictions.csv", index=False)
+    (history_root / "2026-08-01.json").write_text(
+        '{"run_date":"2026-08-01","policy_profile":"policy_v1","plays":[{"game_id":"1","player":"Published Player","player_id":"published_player","target":"TB","direction":"OVER","market_line":1.5,"selected_side_price":110,"estimated_graded_hit_rate":0.7}]}',
+        encoding="utf-8",
+    )
+
+    payload = confidence.build_live_board_calibration(
+        daily_runs_root=daily_root,
+        processed_root=processed_root,
+        season=2026,
+        before_date=date(2026, 8, 2),
+        min_segment_rows=1,
+        published_history_root=history_root,
+        policy_version="policy_v1",
+    )
+
+    assert payload["candidate_universe"] == "published_frontend_plays_only"
+    assert payload["graded_rows"] == 1
+    assert payload["published_play_count"] == 1
+    assert payload["settled_rows"][0]["player"] == "Published Player"
+
+    empty_daily_root = tmp_path / "empty_daily"
+    empty_daily_root.mkdir()
+    direct_payload = confidence.build_live_board_calibration(
+        daily_runs_root=empty_daily_root,
+        processed_root=processed_root,
+        season=2026,
+        before_date=date(2026, 8, 2),
+        min_segment_rows=1,
+        published_history_root=history_root,
+        policy_version="policy_v1",
+    )
+    assert direct_payload["graded_rows"] == 1
+    assert direct_payload["matched_published_play_count"] == 1
+    assert direct_payload["settled_rows"][0]["published_graded_hit_rate"] == 0.7

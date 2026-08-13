@@ -51,7 +51,7 @@ MLB_PICK_SURVIVAL_MODEL = REPO_ROOT / "sports" / "mlb" / "scripts" / "pick_survi
 MLB_MAX_WINRATE_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_max_winrate_board.py"
 MLB_EXPORTER = REPO_ROOT / "sports" / "mlb" / "scripts" / "export_web_prediction_payload.py"
 MLB_WEB_JSON = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "daily_predictions.json"
-MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v6"
+MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v7"
 MLB_PICK_SURVIVAL_TOP_K = 3
 MLB_PRIMARY_POLICY_ARGS = [
     "--top-n", "3",
@@ -60,12 +60,11 @@ MLB_PRIMARY_POLICY_ARGS = [
     "--min-common-market-books", "2",
     "--min-history-rows", "35",
     "--min-prediction", "0.10",
-    "--min-hit-probability", "0.60",
-    "--min-graded-hit-rate", "0.75",
+    "--min-hit-probability", "0.825",
+    "--min-graded-hit-rate", "0.825",
     "--max-push-probability", "0.10",
     "--min-abs-edge", "0.35",
     "--min-expected-value", "0.0",
-    "--enable-pitcher-k-over-profile",
     "--pitcher-k-min-starter-history", "15",
     "--pitcher-k-min-projected-ip", "5.25",
     "--pitcher-k-min-projected-pitches", "75",
@@ -684,6 +683,8 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
                 "--before-date",
                 pool_date.isoformat(),
                 "--official-api-fallback",
+                "--policy-version",
+                MLB_PRIMARY_POLICY_PROFILE,
             ],
         )
         if MLB_PICK_SURVIVAL_MODEL.exists():
@@ -721,6 +722,8 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
             str(active_summary_json),
             "--top-n",
             str(int(args.mlb_top_n)),
+            "--policy-version",
+            MLB_PRIMARY_POLICY_PROFILE,
         ]
         if extra_args:
             command.extend(extra_args)
