@@ -31,6 +31,7 @@ def _candidate(*, player: str, game_id: str, probability: float, price: float, d
         model_hit_probability=probability,
         selection_score=0.85,
         expected_value_per_unit=0.08,
+        market_implied_probability=0.67,
         selected_side_price=price,
         selected_sportsbook_key="draftkings",
         selected_sportsbook="DraftKings",
@@ -241,3 +242,50 @@ def test_main_line_plays_are_repriced_to_exact_linked_fanduel_quotes(tmp_path: P
     assert all(play["provider_source_market_id"].startswith("main-") for play in plays)
     assert ladder[0]["betslip"]["status"] == "ready"
     assert ladder[0]["betslip"]["leg_count"] == 2
+
+
+def test_hit_survival_gate_uses_confirmed_role_and_conservative_consensus() -> None:
+    candidate = _candidate(player="Reliable Hitter", game_id="g1", probability=0.68, price=-180)
+
+    class Bundle:
+        latest_context = {"reliablehitter": {"last_hits": 2.0, "recent_batting_order": 5.0}}
+
+        @staticmethod
+        def predict(features: dict[str, float]) -> tuple[float, float]:
+            assert features["batting_order"] == 2.0
+            return 0.70, 0.69
+
+    kept, rejected = parlay_selector.apply_hit_survival_gate(
+        [candidate],
+        bundle=Bundle(),
+        official_contexts={
+            "g1": {
+                "batting_orders": {candidate.team: {"reliable hitter": 2}},
+            }
+        },
+    )
+
+    assert kept == [candidate]
+    assert not rejected
+    assert candidate.raw["Hit_Survival_Batting_Order_Source"] == "confirmed_lineup"
+    assert candidate.raw["Parlay_Leg_Probability"] >= 0.62
+    assert parlay_selector._candidate_probability(candidate) == candidate.raw["Parlay_Leg_Probability"]
+
+
+def test_latent_set_profile_is_order_invariant_and_penalizes_concentration() -> None:
+    hit = {
+        "target": "H",
+        "parlay_leg_probability": 0.68,
+        "latent_probability_disagreement": 0.04,
+        "hit_survival_batting_order_source": "confirmed_lineup",
+    }
+    other_hit = {**hit, "parlay_leg_probability": 0.66, "hit_survival_batting_order_source": "prior_start_proxy"}
+    total_bases = {**other_hit, "target": "TB"}
+
+    concentrated = parlay_selector._latent_set_profile([hit, other_hit], 0.44)
+    reversed_profile = parlay_selector._latent_set_profile([other_hit, hit], 0.44)
+    diversified = parlay_selector._latent_set_profile([hit, total_bases], 0.44)
+
+    assert concentrated == reversed_profile
+    assert concentrated["representation"] == "permutation_invariant_leg_aggregate_v1"
+    assert concentrated["set_consistency_score"] < diversified["set_consistency_score"]

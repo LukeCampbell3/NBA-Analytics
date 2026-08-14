@@ -26,8 +26,20 @@ from sports.parlay_analysis import score_candidate_parlays
 
 try:
     from . import select_high_precision_predictions as selector
+    from .parlay_hit_survival_model import (
+        EVIDENCE_LABEL as HIT_SURVIVAL_EVIDENCE_LABEL,
+        MODEL_VERSION as HIT_SURVIVAL_MODEL_VERSION,
+        candidate_features as hit_survival_candidate_features,
+        fit_hit_survival_model,
+    )
 except ImportError:
     import select_high_precision_predictions as selector
+    from parlay_hit_survival_model import (
+        EVIDENCE_LABEL as HIT_SURVIVAL_EVIDENCE_LABEL,
+        MODEL_VERSION as HIT_SURVIVAL_MODEL_VERSION,
+        candidate_features as hit_survival_candidate_features,
+        fit_hit_survival_model,
+    )
 
 
 SCRIPT_PATH = Path(__file__).resolve()
@@ -37,7 +49,7 @@ CALIBRATION_ROOT = SPORT_ROOT / "data" / "predictions" / "calibration"
 DEFAULT_PROVIDER_OBSERVATIONS = (
     SPORT_ROOT / "data" / "raw" / "market_odds" / "mlb" / "odds_api_io" / "latest_provider_observations.csv"
 )
-POLICY_VERSION = "mlb_fanduel_public_betslip_parlay_v6"
+POLICY_VERSION = "mlb_fanduel_public_betslip_parlay_v7"
 ALLOWED_TARGETS = ("H", "TB", "R", "RBI", "K")
 MIN_LEGS = 2
 MAX_LEGS = 4
@@ -62,6 +74,9 @@ PROFIT_BOOST_MIN_TICKET_PROBABILITY = 0.10
 PROFIT_BOOST_MIN_DECIMAL_PRICE = 4.0
 PROFIT_BOOST_MAX_DECIMAL_PRICE = 15.0
 PROFIT_BOOST_MIN_EXPECTED_RETURN = 0.05
+HIT_SURVIVAL_MIN_PROBABILITY = 0.58
+HIT_SURVIVAL_MIN_CONSENSUS = 0.62
+HIT_SURVIVAL_MAX_DISAGREEMENT = 0.16
 MLB_LIVE_FEED_ROOT = "https://statsapi.mlb.com/api/v1.1/game"
 FANDUEL_SPORTSBOOK_KEY = "fanduel"
 FANDUEL_BETSLIP_ENDPOINT = "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip"
@@ -105,7 +120,28 @@ def _wilson_interval(wins: int, rows: int, z: float = 1.96) -> tuple[float | Non
 
 
 def _candidate_probability(candidate: selector.Candidate) -> float:
+    latent_probability = _safe_probability(candidate.raw.get("Parlay_Leg_Probability"))
+    if latent_probability is not None:
+        return latent_probability
     return float(candidate.calibrated_graded_hit_rate)
+
+
+def _safe_probability(value: object) -> float | None:
+    try:
+        probability = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(probability) or not 0.0 <= probability <= 1.0:
+        return None
+    return probability
+
+
+def _safe_number(value: object) -> float | None:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) else None
 
 
 def _candidate_to_play(candidate: selector.Candidate) -> dict[str, Any]:
@@ -149,6 +185,16 @@ def _candidate_to_play(candidate: selector.Candidate) -> dict[str, Any]:
         "selection_score": candidate.selection_score,
         "parlay_precision_eligible": True,
         "line_variant": "main",
+        "hit_survival_probability": _safe_probability(candidate.raw.get("Hit_Survival_Probability")),
+        "hit_survival_raw_probability": _safe_probability(candidate.raw.get("Hit_Survival_Raw_Probability")),
+        "hit_survival_model_version": str(candidate.raw.get("Hit_Survival_Model_Version", "")),
+        "hit_survival_evidence_label": str(candidate.raw.get("Hit_Survival_Evidence_Label", "")),
+        "hit_survival_batting_order": _safe_number(candidate.raw.get("Hit_Survival_Batting_Order")),
+        "hit_survival_batting_order_source": str(candidate.raw.get("Hit_Survival_Batting_Order_Source", "")),
+        "latent_probability_disagreement": selector.to_float(
+            candidate.raw.get("Parlay_Probability_Disagreement"), default=0.0
+        ),
+        "parlay_leg_probability": probability,
     }
 
 
@@ -473,20 +519,101 @@ def fetch_official_game_contexts(candidates: list[selector.Candidate]) -> dict[s
         boxscore_teams = ((payload.get("liveData") or {}).get("boxscore") or {}).get("teams") or {}
         game_teams = game_data.get("teams") or {}
         lineups: dict[str, set[str]] = {}
+        batting_orders: dict[str, dict[str, int]] = {}
         for side in ("away", "home"):
             team = str((game_teams.get(side) or {}).get("abbreviation", "")).strip().upper()
-            names = {
-                _normalize_name((player.get("person") or {}).get("fullName", ""))
-                for player in ((boxscore_teams.get(side) or {}).get("players") or {}).values()
-                if str(player.get("battingOrder", "")).strip()
-            }
+            names: set[str] = set()
+            orders: dict[str, int] = {}
+            for player in ((boxscore_teams.get(side) or {}).get("players") or {}).values():
+                raw_order = str(player.get("battingOrder", "")).strip()
+                if not raw_order:
+                    continue
+                player_name = _normalize_name((player.get("person") or {}).get("fullName", ""))
+                if not player_name:
+                    continue
+                names.add(player_name)
+                try:
+                    orders[player_name] = max(1, min(9, int(raw_order) // 100))
+                except ValueError:
+                    continue
             if team and names:
                 lineups[team] = names
+                batting_orders[team] = orders
         contexts[game_id] = {
             "state": str(status.get("abstractGameState", "")).strip().lower(),
             "lineups": lineups,
+            "batting_orders": batting_orders,
         }
     return contexts
+
+
+def apply_hit_survival_gate(
+    candidates: list[selector.Candidate],
+    *,
+    bundle: Any,
+    official_contexts: dict[str, dict[str, Any]],
+) -> tuple[list[selector.Candidate], Counter[str]]:
+    """Apply an independently learned role score to supported H OVER 0.5 legs."""
+    kept: list[selector.Candidate] = []
+    rejected: Counter[str] = Counter()
+    for candidate in candidates:
+        if not (candidate.target == "H" and candidate.direction == "OVER" and abs(candidate.market_line - 0.5) <= 1e-9):
+            kept.append(candidate)
+            continue
+        if bundle is None:
+            rejected["hit_survival_model_unavailable"] += 1
+            continue
+        context = official_contexts.get(candidate.game_id, {})
+        team_orders = (context.get("batting_orders") or {}).get(candidate.team.upper(), {})
+        confirmed_order = team_orders.get(_normalize_name(candidate.player))
+        features, order_source = hit_survival_candidate_features(
+            candidate,
+            bundle,
+            confirmed_batting_order=float(confirmed_order) if confirmed_order is not None else None,
+        )
+        raw_probability, survival_probability = bundle.predict(features)
+        market_probability = candidate.market_implied_probability
+        if market_probability is None:
+            rejected["hit_survival_market_probability_unavailable"] += 1
+            continue
+        component_probabilities = [
+            float(survival_probability),
+            float(market_probability),
+            float(candidate.calibrated_graded_hit_rate),
+        ]
+        disagreement = max(component_probabilities) - min(component_probabilities)
+        consensus = (
+            (0.45 * survival_probability)
+            + (0.35 * market_probability)
+            + (0.20 * candidate.calibrated_graded_hit_rate)
+            - (0.30 * disagreement)
+        )
+        if confirmed_order is None:
+            consensus -= 0.01
+        consensus = max(0.01, min(0.99, float(consensus)))
+        candidate.raw.update(
+            {
+                "Hit_Survival_Probability": survival_probability,
+                "Hit_Survival_Raw_Probability": raw_probability,
+                "Hit_Survival_Model_Version": HIT_SURVIVAL_MODEL_VERSION,
+                "Hit_Survival_Evidence_Label": HIT_SURVIVAL_EVIDENCE_LABEL,
+                "Hit_Survival_Batting_Order": features["batting_order"],
+                "Hit_Survival_Batting_Order_Source": order_source,
+                "Parlay_Probability_Disagreement": disagreement,
+                "Parlay_Leg_Probability": consensus,
+            }
+        )
+        if survival_probability < HIT_SURVIVAL_MIN_PROBABILITY:
+            rejected["hit_survival_probability_too_low"] += 1
+            continue
+        if disagreement > HIT_SURVIVAL_MAX_DISAGREEMENT:
+            rejected["hit_survival_probability_disagreement"] += 1
+            continue
+        if consensus < HIT_SURVIVAL_MIN_CONSENSUS:
+            rejected["hit_survival_consensus_too_low"] += 1
+            continue
+        kept.append(candidate)
+    return kept, rejected
 
 
 def filter_anchor_candidates(candidates: list[selector.Candidate], *, min_leg_probability: float) -> tuple[list[selector.Candidate], Counter[str]]:
@@ -576,6 +703,36 @@ def _limited_plays_by_book_from_plays(plays: list[dict[str, Any]]) -> dict[str, 
     return by_book
 
 
+def _latent_set_profile(legs: list[dict[str, Any]], projected_probability: float) -> dict[str, Any]:
+    probabilities = [float(leg.get("parlay_leg_probability") or leg.get("estimated_graded_hit_rate") or 0.0) for leg in legs]
+    disagreements = [float(leg.get("latent_probability_disagreement") or 0.0) for leg in legs]
+    target_counts = Counter(str(leg.get("target") or "") for leg in legs)
+    largest_target_cluster = max(target_counts.values(), default=0)
+    prior_order_proxies = sum(
+        str(leg.get("hit_survival_batting_order_source") or "") == "prior_start_proxy" for leg in legs
+    )
+    concentration_excess = max(0, largest_target_cluster - 1)
+    maximum_disagreement = max(disagreements, default=0.0)
+    uncertainty_penalty = min(
+        0.20,
+        (0.25 * maximum_disagreement)
+        + (0.02 * concentration_excess)
+        + (0.01 * prior_order_proxies),
+    )
+    consistency_score = float(projected_probability) * (1.0 - uncertainty_penalty)
+    return {
+        "representation": "permutation_invariant_leg_aggregate_v1",
+        "minimum_leg_probability": min(probabilities, default=0.0),
+        "mean_leg_probability": sum(probabilities) / len(probabilities) if probabilities else 0.0,
+        "maximum_probability_disagreement": maximum_disagreement,
+        "distinct_targets": len(target_counts),
+        "largest_target_cluster": largest_target_cluster,
+        "prior_order_proxy_legs": prior_order_proxies,
+        "uncertainty_penalty": uncertainty_penalty,
+        "set_consistency_score": consistency_score,
+    }
+
+
 def _best_ticket_for_leg_count(
     by_book: dict[str, list[dict[str, Any]]],
     *,
@@ -610,6 +767,9 @@ def _best_ticket_for_leg_count(
                 continue
             ticket = dict(source)
             ticket["legs"] = [book_plays[int(index)] for index in ticket["leg_indices"]]
+            latent_set = _latent_set_profile(ticket["legs"], float(ticket["projected_probability"]))
+            ticket["latent_set"] = latent_set
+            ticket["set_consistency_score"] = latent_set["set_consistency_score"]
             ticket["ticket_tier"] = TICKET_TIERS[leg_count]
             ticket["ticket_id"] = f"{TICKET_TIERS[leg_count]}_{leg_count}_leg"
             ticket["probability_floor"] = min_ticket_probability
@@ -618,7 +778,8 @@ def _best_ticket_for_leg_count(
 
     executable.sort(
         key=lambda row: (
-            float(row.get("projected_probability") or 0.0),
+            float(row.get("set_consistency_score") or 0.0),
+            float((row.get("latent_set") or {}).get("minimum_leg_probability") or 0.0),
             float(row.get("expected_return_per_unit") or -999.0),
             float(row.get("avg_leg_quality") or 0.0),
         ),
@@ -847,6 +1008,13 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
             continue
         open_anchors.append(candidate)
     anchors = open_anchors
+    hit_survival_bundle = fit_hit_survival_model(args.history_dir.resolve(), before_date=run_date)
+    anchors, hit_survival_rejected = apply_hit_survival_gate(
+        anchors,
+        bundle=hit_survival_bundle,
+        official_contexts=official_contexts,
+    )
+    rejected.update(hit_survival_rejected)
     min_legs = max(MIN_LEGS, int(args.min_legs))
     max_legs = min(MAX_LEGS, max(int(args.min_legs), int(args.max_legs)))
     fanduel_plays = build_fanduel_main_line_plays(anchors, args.provider_observations.resolve())
@@ -875,7 +1043,7 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "run_date": run_date.isoformat(),
         "status": "ready" if ticket is not None else "withheld",
-        "objective": "consistency_ladder_plus_shadow_positive_ev_alternate_line_ticket",
+        "objective": "exact_set_search_with_role_survival_consensus_and_shadow_positive_ev_alternates",
         "direction_policy": "OVER_ONLY",
         "betslip_policy": {
             "sportsbook_key": FANDUEL_SPORTSBOOK_KEY,
@@ -909,6 +1077,20 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
             "linked_sportsbook": "fanduel",
             "direct_fanduel_public_selection_link_required_for_betslip": True,
             "distinct_games_required": True,
+            "hit_survival": {
+                "model_version": HIT_SURVIVAL_MODEL_VERSION,
+                "status": "development_shadow",
+                "evidence_label": HIT_SURVIVAL_EVIDENCE_LABEL,
+                "minimum_probability": HIT_SURVIVAL_MIN_PROBABILITY,
+                "minimum_consensus_probability": HIT_SURVIVAL_MIN_CONSENSUS,
+                "maximum_probability_disagreement": HIT_SURVIVAL_MAX_DISAGREEMENT,
+                "probability_components": [
+                    "role_survival_model",
+                    "no_vig_market_probability",
+                    "existing_calibrated_probability",
+                ],
+                "roi_claim": False,
+            },
             "profit_boost": {
                 "status": "shadow_only",
                 "min_leg_probability": PROFIT_BOOST_MIN_LEG_PROBABILITY,
@@ -927,6 +1109,15 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "selected_ticket": ticket,
         "profit_boost_ticket": profit_boost_ticket,
         "ticket_ladder": ticket_ladder,
+        "hit_survival_validation": (
+            hit_survival_bundle.report
+            if hit_survival_bundle is not None
+            else {
+                "model_version": HIT_SURVIVAL_MODEL_VERSION,
+                "status": "unavailable",
+                "evidence_label": HIT_SURVIVAL_EVIDENCE_LABEL,
+            }
+        ),
         "validation": validation,
     }
 

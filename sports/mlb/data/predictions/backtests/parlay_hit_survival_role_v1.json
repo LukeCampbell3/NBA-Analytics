@@ -1,0 +1,73 @@
+{
+  "model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+  "status": "development_shadow",
+  "evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+  "claim_scope": "hit-rate ranking and confidence diagnostic only; executable prices are required for ROI",
+  "features": [
+    "projection",
+    "baseline",
+    "last_hits",
+    "batting_order",
+    "history_rows",
+    "is_home"
+  ],
+  "training_rows": 15993,
+  "training_dates": 113,
+  "frozen_training_cutoff_exclusive": "2026-07-30",
+  "partitions": {
+    "development": {
+      "start": "2026-03-30",
+      "end": "2026-06-23"
+    },
+    "calibration": {
+      "start": "2026-06-24",
+      "end": "2026-07-10"
+    },
+    "locked_recent_holdout": {
+      "start": "2026-07-11",
+      "end": "2026-07-29"
+    }
+  },
+  "calibration": {
+    "rows": 3114,
+    "wins": 1714,
+    "hit_rate": 0.550417469492614,
+    "mean_probability": 0.5504867657535282,
+    "brier_score": 0.24225832535241817,
+    "log_loss": 0.677534039307102
+  },
+  "locked_recent_holdout": {
+    "rows": 3190,
+    "wins": 1695,
+    "hit_rate": 0.5313479623824452,
+    "mean_probability": 0.550935051853804,
+    "brier_score": 0.24197226027469812,
+    "log_loss": 0.6769182431007068,
+    "daily_top_two": {
+      "legs": 32,
+      "leg_wins": 24,
+      "slates": 15,
+      "ticket_wins": 10,
+      "leg_hit_rate": 0.75,
+      "leg_hit_rate_wilson_95_low": 0.5789310822975338,
+      "leg_hit_rate_wilson_95_high": 0.8674775601737845,
+      "ticket_hit_rate": 0.6666666666666666,
+      "ticket_hit_rate_wilson_95_low": 0.41713125151212976,
+      "ticket_hit_rate_wilson_95_high": 0.8482389930530876,
+      "mean_probability": 0.6658963804332837
+    },
+    "projection_baseline_daily_top_two": {
+      "legs": 32,
+      "leg_wins": 16,
+      "slates": 15,
+      "ticket_wins": 5,
+      "leg_hit_rate": 0.5,
+      "leg_hit_rate_wilson_95_low": 0.33630614316859386,
+      "leg_hit_rate_wilson_95_high": 0.6636938568314061,
+      "ticket_hit_rate": 0.3333333333333333,
+      "ticket_hit_rate_wilson_95_low": 0.15176100694691236,
+      "ticket_hit_rate_wilson_95_high": 0.5828687484878701,
+      "mean_probability": 0.7646400446366726
+    }
+  }
+}

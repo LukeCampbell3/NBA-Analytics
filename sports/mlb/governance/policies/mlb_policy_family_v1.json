@@ -91,7 +91,7 @@
       }
     },
     {
-      "policy_version": "MLB_FANDUEL_PUBLIC_BETSLIP_PARLAY_POLICY_V4",
+      "policy_version": "MLB_FANDUEL_PUBLIC_BETSLIP_PARLAY_POLICY_V5",
       "policy_stage": "POLICY_DEVELOPMENT",
       "policy_kind": "DAILY_PARLAY",
       "staking_enabled": false,
@@ -100,6 +100,9 @@
         "versioned_components": [
           "single-leg input policy",
           "parlay constructor",
+          "role-aware hit survival model",
+          "model-market probability disagreement gate",
+          "permutation-invariant set representation",
           "leg count",
           "correlation adjustments",
           "combined odds scope",
@@ -129,7 +132,12 @@
         "single_book_scope": "EXACT_FANDUEL_QUOTE_WITH_PROVIDER_MARKET_AND_SELECTION_IDS",
         "direct_fanduel_public_market_ids_required_for_betslip": true,
         "distinct_games_required": true,
-        "ticket_ranking": ["projected_ticket_probability_desc", "expected_return_desc"],
+        "ticket_ranking": ["set_consistency_score_desc", "minimum_leg_probability_desc", "expected_return_desc"],
+        "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+        "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+        "minimum_hit_survival_probability": 0.58,
+        "minimum_hit_consensus_probability": 0.62,
+        "maximum_probability_disagreement": 0.16,
         "abstention_allowed": true
       },
       "support_rule": {
