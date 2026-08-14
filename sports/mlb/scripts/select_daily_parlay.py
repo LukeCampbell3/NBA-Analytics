@@ -32,6 +32,11 @@ try:
         candidate_features as hit_survival_candidate_features,
         fit_hit_survival_model,
     )
+    from .latent_parlay_model import (
+        DEFAULT_ARTIFACT_PATH as LATENT_PARLAY_ARTIFACT_PATH,
+        LatentParlayBundle,
+        candidate_features as latent_candidate_features,
+    )
 except ImportError:
     import select_high_precision_predictions as selector
     from parlay_hit_survival_model import (
@@ -39,6 +44,11 @@ except ImportError:
         MODEL_VERSION as HIT_SURVIVAL_MODEL_VERSION,
         candidate_features as hit_survival_candidate_features,
         fit_hit_survival_model,
+    )
+    from latent_parlay_model import (
+        DEFAULT_ARTIFACT_PATH as LATENT_PARLAY_ARTIFACT_PATH,
+        LatentParlayBundle,
+        candidate_features as latent_candidate_features,
     )
 
 
@@ -195,6 +205,15 @@ def _candidate_to_play(candidate: selector.Candidate) -> dict[str, Any]:
             candidate.raw.get("Parlay_Probability_Disagreement"), default=0.0
         ),
         "parlay_leg_probability": probability,
+        "latent_leg_probability": _safe_probability(candidate.raw.get("Latent_Leg_Probability")),
+        "latent_leg_raw_probability": _safe_probability(candidate.raw.get("Latent_Leg_Raw_Probability")),
+        "latent_leg_ensemble_std": _safe_number(candidate.raw.get("Latent_Leg_Ensemble_Std")),
+        "latent_support_fraction": _safe_number(candidate.raw.get("Latent_Support_Fraction")),
+        "latent_in_support": bool(candidate.raw.get("Latent_In_Support", False)),
+        "latent_model_version": str(candidate.raw.get("Latent_Model_Version", "")),
+        "latent_evidence_label": str(candidate.raw.get("Latent_Evidence_Label", "")),
+        "latent_numeric_features": candidate.raw.get("Latent_Numeric_Features"),
+        "latent_categorical_features": candidate.raw.get("Latent_Categorical_Features"),
     }
 
 
@@ -552,6 +571,7 @@ def apply_hit_survival_gate(
     *,
     bundle: Any,
     official_contexts: dict[str, dict[str, Any]],
+    latent_bundle: LatentParlayBundle | None = None,
 ) -> tuple[list[selector.Candidate], Counter[str]]:
     """Apply an independently learned role score to supported H OVER 0.5 legs."""
     kept: list[selector.Candidate] = []
@@ -572,6 +592,26 @@ def apply_hit_survival_gate(
             confirmed_batting_order=float(confirmed_order) if confirmed_order is not None else None,
         )
         raw_probability, survival_probability = bundle.predict(features)
+        if latent_bundle is not None:
+            latent_numeric, latent_categories = latent_candidate_features(
+                candidate,
+                last_hits=features["last_hits"],
+                batting_order=features["batting_order"],
+            )
+            latent_prediction = latent_bundle.predict_leg(latent_numeric, latent_categories)
+            candidate.raw.update(
+                {
+                    "Latent_Leg_Probability": latent_prediction.probability,
+                    "Latent_Leg_Raw_Probability": latent_prediction.raw_probability,
+                    "Latent_Leg_Ensemble_Std": latent_prediction.ensemble_std,
+                    "Latent_Support_Fraction": latent_prediction.support_fraction,
+                    "Latent_In_Support": latent_prediction.in_support,
+                    "Latent_Model_Version": latent_bundle.model_version,
+                    "Latent_Evidence_Label": latent_bundle.evidence_label,
+                    "Latent_Numeric_Features": latent_numeric,
+                    "Latent_Categorical_Features": latent_categories,
+                }
+            )
         market_probability = candidate.market_implied_probability
         if market_probability is None:
             rejected["hit_survival_market_probability_unavailable"] += 1
@@ -703,7 +743,11 @@ def _limited_plays_by_book_from_plays(plays: list[dict[str, Any]]) -> dict[str, 
     return by_book
 
 
-def _latent_set_profile(legs: list[dict[str, Any]], projected_probability: float) -> dict[str, Any]:
+def _latent_set_profile(
+    legs: list[dict[str, Any]],
+    projected_probability: float,
+    latent_bundle: LatentParlayBundle | None = None,
+) -> dict[str, Any]:
     probabilities = [float(leg.get("parlay_leg_probability") or leg.get("estimated_graded_hit_rate") or 0.0) for leg in legs]
     disagreements = [float(leg.get("latent_probability_disagreement") or 0.0) for leg in legs]
     target_counts = Counter(str(leg.get("target") or "") for leg in legs)
@@ -720,7 +764,7 @@ def _latent_set_profile(legs: list[dict[str, Any]], projected_probability: float
         + (0.01 * prior_order_proxies),
     )
     consistency_score = float(projected_probability) * (1.0 - uncertainty_penalty)
-    return {
+    profile = {
         "representation": "permutation_invariant_leg_aggregate_v1",
         "minimum_leg_probability": min(probabilities, default=0.0),
         "mean_leg_probability": sum(probabilities) / len(probabilities) if probabilities else 0.0,
@@ -731,6 +775,33 @@ def _latent_set_profile(legs: list[dict[str, Any]], projected_probability: float
         "uncertainty_penalty": uncertainty_penalty,
         "set_consistency_score": consistency_score,
     }
+    latent_inputs = [
+        (leg.get("latent_numeric_features"), leg.get("latent_categorical_features"))
+        for leg in legs
+    ]
+    if (
+        latent_bundle is not None
+        and all(isinstance(numeric, dict) and isinstance(categories, dict) for numeric, categories in latent_inputs)
+    ):
+        prediction = latent_bundle.predict_ticket(latent_inputs)
+        independent_leg_product = math.prod(
+            float(leg.get("latent_leg_probability") or 0.0) for leg in legs
+        )
+        profile.update(
+            {
+                "shadow_representation": "gpu_set_attention_ensemble_v1",
+                "shadow_joint_probability": prediction.probability,
+                "shadow_independent_leg_product": independent_leg_product,
+                "shadow_raw_joint_probability": prediction.raw_probability,
+                "shadow_ensemble_std": prediction.ensemble_std,
+                "shadow_support_fraction": prediction.support_fraction,
+                "shadow_in_support": prediction.in_support,
+                "shadow_model_version": latent_bundle.model_version,
+                "shadow_evidence_label": latent_bundle.evidence_label,
+                "shadow_authorization": "diagnostic_only",
+            }
+        )
+    return profile
 
 
 def _best_ticket_for_leg_count(
@@ -742,6 +813,8 @@ def _best_ticket_for_leg_count(
     min_combined_decimal_price: float,
     max_combined_decimal_price: float,
     min_expected_return: float,
+    latent_bundle: LatentParlayBundle | None = None,
+    rank_by_latent_shadow: bool = False,
 ) -> dict[str, Any] | None:
     executable: list[dict[str, Any]] = []
     for book_plays in by_book.values():
@@ -767,7 +840,11 @@ def _best_ticket_for_leg_count(
                 continue
             ticket = dict(source)
             ticket["legs"] = [book_plays[int(index)] for index in ticket["leg_indices"]]
-            latent_set = _latent_set_profile(ticket["legs"], float(ticket["projected_probability"]))
+            latent_set = _latent_set_profile(
+                ticket["legs"],
+                float(ticket["projected_probability"]),
+                latent_bundle,
+            )
             ticket["latent_set"] = latent_set
             ticket["set_consistency_score"] = latent_set["set_consistency_score"]
             ticket["ticket_tier"] = TICKET_TIERS[leg_count]
@@ -776,15 +853,41 @@ def _best_ticket_for_leg_count(
             ticket["maximum_decimal_price"] = max_combined_decimal_price
             executable.append(ticket)
 
-    executable.sort(
-        key=lambda row: (
-            float(row.get("set_consistency_score") or 0.0),
-            float((row.get("latent_set") or {}).get("minimum_leg_probability") or 0.0),
-            float(row.get("expected_return_per_unit") or -999.0),
-            float(row.get("avg_leg_quality") or 0.0),
-        ),
-        reverse=True,
-    )
+    if rank_by_latent_shadow:
+        executable = [
+            row
+            for row in executable
+            if bool((row.get("latent_set") or {}).get("shadow_in_support", False))
+        ]
+        def shadow_rank(row: dict[str, Any]) -> tuple[float, float, float]:
+            profile = row.get("latent_set") or {}
+            joint = float(profile.get("shadow_joint_probability") or 0.0)
+            independent = float(profile.get("shadow_independent_leg_product") or 0.0)
+            ensemble_std = float(profile.get("shadow_ensemble_std") or 1.0)
+            if leg_count == 2:
+                score = independent
+                method = "independent_latent_leg_product"
+            elif leg_count == 3:
+                score = joint
+                method = "bounded_attention_joint_probability"
+            else:
+                score = min(joint, independent)
+                method = "conservative_joint_product_minimum"
+            profile["shadow_ranking_method"] = method
+            profile["shadow_ranking_score"] = score
+            return score, -ensemble_std, float(row.get("set_consistency_score") or 0.0)
+
+        executable.sort(key=shadow_rank, reverse=True)
+    else:
+        executable.sort(
+            key=lambda row: (
+                float(row.get("set_consistency_score") or 0.0),
+                float((row.get("latent_set") or {}).get("minimum_leg_probability") or 0.0),
+                float(row.get("expected_return_per_unit") or -999.0),
+                float(row.get("avg_leg_quality") or 0.0),
+            ),
+            reverse=True,
+        )
     return executable[0] if executable else None
 
 
@@ -798,6 +901,8 @@ def select_ticket_ladder(
     min_combined_decimal_price: float,
     min_expected_return: float,
     plays_override: list[dict[str, Any]] | None = None,
+    latent_bundle: LatentParlayBundle | None = None,
+    rank_by_latent_shadow: bool = False,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     by_book = (
         _limited_plays_by_book_from_plays(plays_override)
@@ -819,6 +924,8 @@ def select_ticket_ladder(
             min_combined_decimal_price=min_combined_decimal_price,
             max_combined_decimal_price=TICKET_MAX_DECIMAL_PRICES[leg_count],
             min_expected_return=min_expected_return,
+            latent_bundle=latent_bundle,
+            rank_by_latent_shadow=rank_by_latent_shadow,
         )
         if ticket is not None:
             ladder.append(ticket)
@@ -1009,10 +1116,12 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         open_anchors.append(candidate)
     anchors = open_anchors
     hit_survival_bundle = fit_hit_survival_model(args.history_dir.resolve(), before_date=run_date)
+    latent_parlay_bundle = LatentParlayBundle.load(LATENT_PARLAY_ARTIFACT_PATH)
     anchors, hit_survival_rejected = apply_hit_survival_gate(
         anchors,
         bundle=hit_survival_bundle,
         official_contexts=official_contexts,
+        latent_bundle=latent_parlay_bundle,
     )
     rejected.update(hit_survival_rejected)
     min_legs = max(MIN_LEGS, int(args.min_legs))
@@ -1027,7 +1136,24 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         min_combined_decimal_price=float(args.min_combined_decimal_price),
         min_expected_return=float(args.min_expected_return),
         plays_override=fanduel_plays if len(fanduel_plays) >= MIN_LEGS else None,
+        latent_bundle=latent_parlay_bundle,
     )
+    latent_shadow_ladder: list[dict[str, Any]] = []
+    if latent_parlay_bundle is not None:
+        latent_shadow_ladder, _ = select_ticket_ladder(
+            anchors,
+            min_legs=min_legs,
+            max_legs=max_legs,
+            min_leg_probability=float(args.min_leg_probability),
+            base_min_ticket_probability=float(args.min_ticket_probability),
+            min_combined_decimal_price=float(args.min_combined_decimal_price),
+            min_expected_return=float(args.min_expected_return),
+            plays_override=fanduel_plays if len(fanduel_plays) >= MIN_LEGS else None,
+            latent_bundle=latent_parlay_bundle,
+            rank_by_latent_shadow=True,
+        )
+        for shadow_ticket in latent_shadow_ladder:
+            shadow_ticket["authorization"] = "shadow_only"
     alternate_plays = build_alternate_line_plays(anchors, args.provider_observations.resolve())
     profit_boost_ticket = select_profit_boost_ticket(alternate_plays)
     if profit_boost_ticket is not None:
@@ -1091,6 +1217,20 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
                 ],
                 "roi_claim": False,
             },
+            "latent_parlay": {
+                "model_version": latent_parlay_bundle.model_version if latent_parlay_bundle is not None else None,
+                "status": "prospective_shadow" if latent_parlay_bundle is not None else "unavailable",
+                "evidence_label": latent_parlay_bundle.evidence_label if latent_parlay_bundle is not None else None,
+                "ranking_effect": "none_on_authorized_ladder",
+                "shadow_ranking_policy": {
+                    "2": "independent_latent_leg_product",
+                    "3": "bounded_attention_joint_probability",
+                    "4": "conservative_joint_product_minimum",
+                },
+                "maximum_legs": 4,
+                "in_support_required": True,
+                "roi_claim": False,
+            },
             "profit_boost": {
                 "status": "shadow_only",
                 "min_leg_probability": PROFIT_BOOST_MIN_LEG_PROBABILITY,
@@ -1109,6 +1249,16 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "selected_ticket": ticket,
         "profit_boost_ticket": profit_boost_ticket,
         "ticket_ladder": ticket_ladder,
+        "latent_shadow_ticket_ladder": latent_shadow_ladder,
+        "latent_parlay_validation": (
+            latent_parlay_bundle.artifact.get("validation")
+            if latent_parlay_bundle is not None
+            else {
+                "model_version": None,
+                "status": "unavailable",
+                "evidence_label": "NO_LATENT_ARTIFACT",
+            }
+        ),
         "hit_survival_validation": (
             hit_survival_bundle.report
             if hit_survival_bundle is not None

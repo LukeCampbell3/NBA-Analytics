@@ -1,0 +1,169 @@
+{
+  "model_version": "mlb_latent_parlay_set_attention_v1",
+  "status": "development_shadow",
+  "evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+  "device": "NVIDIA GeForce RTX 4080 SUPER",
+  "cuda_version": "12.8",
+  "claim_scope": "synthetic H over 0.5 hit-chain ranking only; no executable price or ROI claim",
+  "leakage_exclusions": [
+    "same-game H, PA, AB, Team_PA_share, wOBA, xwOBA, ISO, Barrel%, HardHit%",
+    "historical H_market_gap and projection derived from same-game fields"
+  ],
+  "rows": 23046,
+  "dates": 125,
+  "partitions": {
+    "development": {
+      "start": "2026-03-30",
+      "end": "2026-06-24"
+    },
+    "calibration": {
+      "start": "2026-06-25",
+      "end": "2026-07-16"
+    },
+    "locked_holdout": {
+      "start": "2026-07-17",
+      "end": "2026-08-05"
+    }
+  },
+  "partition_rows": {
+    "development": 13303,
+    "calibration": 4488,
+    "locked_holdout": 5255
+  },
+  "sampled_tickets": {
+    "development": 17520,
+    "calibration": 6480,
+    "locked_holdout": 7200
+  },
+  "calibration": {
+    "legs": {
+      "rows": 4488,
+      "wins": 2528,
+      "hit_rate": 0.5632798573975044,
+      "mean_probability": 0.5655052065849304,
+      "brier_score": 0.24244946070003617,
+      "log_loss": 0.6779342676019402,
+      "roc_auc": 0.5733647434448463
+    },
+    "safe_rolling_baseline": {
+      "rows": 4488,
+      "wins": 2528,
+      "hit_rate": 0.5632798573975044,
+      "mean_probability": 0.563279723770408,
+      "brier_score": 0.24418589658125017,
+      "log_loss": 0.6814756761955088,
+      "roc_auc": 0.5519312273960217
+    },
+    "sampled_tickets": {
+      "rows": 6480,
+      "wins": 1845,
+      "hit_rate": 0.2847222222222222,
+      "mean_probability": 0.28910619020462036,
+      "brier_score": 0.1968008873618445,
+      "log_loss": 0.5810818372471132,
+      "roc_auc": 0.6187171369016817
+    }
+  },
+  "locked_holdout": {
+    "legs": {
+      "rows": 5255,
+      "wins": 2891,
+      "hit_rate": 0.5501427212178878,
+      "mean_probability": 0.5790535807609558,
+      "brier_score": 0.24443165186623447,
+      "log_loss": 0.6818984334644855,
+      "roc_auc": 0.5731471759313723
+    },
+    "safe_rolling_baseline": {
+      "rows": 5255,
+      "wins": 2891,
+      "hit_rate": 0.5501427212178878,
+      "mean_probability": 0.5603725292619948,
+      "brier_score": 0.24441867724361035,
+      "log_loss": 0.6819304818990458,
+      "roc_auc": 0.5713790420237612
+    },
+    "daily_top_two_legs": {
+      "latent": {
+        "legs": 40,
+        "wins": 29,
+        "hit_rate": 0.725,
+        "wilson_95": [
+          0.5716474916687543,
+          0.8389214656685692
+        ]
+      },
+      "safe_rolling_baseline": {
+        "legs": 40,
+        "wins": 23,
+        "hit_rate": 0.575,
+        "wilson_95": [
+          0.42194800436059987,
+          0.7149083147518411
+        ]
+      }
+    },
+    "sampled_tickets": {
+      "rows": 7200,
+      "wins": 1925,
+      "hit_rate": 0.2673611111111111,
+      "mean_probability": 0.2958816587924957,
+      "brier_score": 0.18557872642925025,
+      "log_loss": 0.554545479696403,
+      "roc_auc": 0.6514281775096941
+    },
+    "daily_ranking": {
+      "2": {
+        "slates": 20,
+        "latent_ticket_wins": 10,
+        "latent_ticket_hit_rate": 0.5,
+        "latent_wilson_95": [
+          0.2992949144298199,
+          0.7007050855701801
+        ],
+        "independent_product_wins": 11,
+        "independent_product_hit_rate": 0.55,
+        "independent_wilson_95": [
+          0.3420820083075997,
+          0.7418049791429071
+        ]
+      },
+      "3": {
+        "slates": 20,
+        "latent_ticket_wins": 9,
+        "latent_ticket_hit_rate": 0.45,
+        "latent_wilson_95": [
+          0.25819502085709295,
+          0.6579179916924003
+        ],
+        "independent_product_wins": 8,
+        "independent_product_hit_rate": 0.4,
+        "independent_wilson_95": [
+          0.21880396741419272,
+          0.613422057684794
+        ]
+      },
+      "4": {
+        "slates": 20,
+        "latent_ticket_wins": 5,
+        "latent_ticket_hit_rate": 0.25,
+        "latent_wilson_95": [
+          0.11186005278940309,
+          0.4687050099580636
+        ],
+        "independent_product_wins": 5,
+        "independent_product_hit_rate": 0.25,
+        "independent_wilson_95": [
+          0.11186005278940309,
+          0.4687050099580636
+        ]
+      }
+    }
+  },
+  "export_parity": {
+    "leg_probability_max_abs": 9.075077023190659e-09,
+    "leg_raw_probability_max_abs": 6.506133420902671e-08,
+    "ticket_probability_max_abs": 1.3588712155510052e-08,
+    "ticket_raw_probability_max_abs": 6.870553553861569e-08
+  }
+}
