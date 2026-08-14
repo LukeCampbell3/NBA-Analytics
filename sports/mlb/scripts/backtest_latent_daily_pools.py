@@ -41,7 +41,7 @@ DEFAULT_OUTPUT = SCRIPT_ROOT / "data" / "predictions" / "backtests" / "latent_da
 MAX_CANDIDATES_PER_BOOK = 12
 MIN_DECIMAL_PRICE = 1.40
 MAX_DECIMAL_PRICE = 2.25
-MIN_TICKET_DECIMAL_PRICE = 2.0
+MIN_TICKET_DECIMAL_PRICE = 1.8
 MAX_TICKET_DECIMAL_PRICE = {2: 6.0, 3: 10.0, 4: 18.0}
 STRATEGIES = ("latent_independent", "latent_joint", "market", "hybrid")
 
@@ -472,6 +472,17 @@ def main() -> None:
     if bundle is None:
         raise SystemExit(f"No compatible latent artifact: {args.artifact_json}")
     report = build_report(args.daily_runs_root.resolve(), args.processed_root.resolve(), bundle)
+    if int(report.get("settled_snapshot_count") or 0) == 0 and args.output_json.exists():
+        try:
+            previous = json.loads(args.output_json.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            previous = {}
+        if int(previous.get("settled_snapshot_count") or 0) > 0:
+            print(
+                "No settled snapshots were rebuilt; preserving previous non-empty latent replay report "
+                f"at {args.output_json}"
+            )
+            return
     args.output_json.parent.mkdir(parents=True, exist_ok=True)
     args.output_json.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(f"Settled snapshots: {report['settled_snapshot_count']}")

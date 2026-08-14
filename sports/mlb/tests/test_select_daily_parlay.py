@@ -14,19 +14,27 @@ sys.path.insert(0, str(SCRIPTS_ROOT))
 import select_daily_parlay as parlay_selector
 
 
-def _candidate(*, player: str, game_id: str, probability: float, price: float, direction: str = "OVER") -> SimpleNamespace:
+def _candidate(
+    *,
+    player: str,
+    game_id: str,
+    probability: float,
+    price: float,
+    direction: str = "OVER",
+    target: str = "H",
+) -> SimpleNamespace:
     return SimpleNamespace(
         player=player,
         player_id=player.lower().replace(" ", "_"),
         team=player[:3].upper(),
         game_id=game_id,
-        target="H",
+        target=target,
         direction=direction,
         prediction=1.2,
         market_line=0.5,
         market_source="real",
-        market_bucket="H|OVER|0.5",
-        historical_bucket_key="H|OVER|0.5",
+        market_bucket=f"{target}|OVER|0.5",
+        historical_bucket_key=f"{target}|OVER|0.5",
         calibrated_graded_hit_rate=probability,
         model_hit_probability=probability,
         selection_score=0.85,
@@ -77,6 +85,50 @@ def test_adaptive_ticket_can_use_three_legs_when_two_legs_do_not_reach_even_mone
     assert ticket["projected_probability"] >= 0.40
 
 
+def test_consistency_ticket_can_accept_safer_sub_even_money_two_leg_price() -> None:
+    candidates = [
+        _candidate(player="One", game_id="g1", probability=0.75, price=-250),
+        _candidate(player="Two", game_id="g2", probability=0.75, price=-250, target="TB"),
+    ]
+
+    ticket, _ = parlay_selector.select_ticket(
+        candidates,
+        min_legs=2,
+        max_legs=4,
+        min_leg_probability=0.62,
+        min_ticket_probability=0.40,
+        min_combined_decimal_price=parlay_selector.MIN_COMBINED_DECIMAL_PRICE,
+        min_expected_return=0.0,
+    )
+
+    assert ticket is not None
+    assert ticket["leg_count"] == 2
+    assert ticket["combined_decimal_price"] < 2.0
+    assert ticket["reliability_profile"]["status"] == "pass"
+
+
+def test_longer_tickets_are_withheld_when_sweep_probability_is_not_reliability_grade() -> None:
+    candidates = [
+        _candidate(player="Player 1", game_id="g1", probability=0.65, price=-150, target="H"),
+        _candidate(player="Player 2", game_id="g2", probability=0.65, price=-150, target="TB"),
+        _candidate(player="Player 3", game_id="g3", probability=0.65, price=-150, target="RBI"),
+        _candidate(player="Player 4", game_id="g4", probability=0.65, price=-150, target="H"),
+    ]
+
+    ladder, _ = parlay_selector.select_ticket_ladder(
+        candidates,
+        min_legs=2,
+        max_legs=4,
+        min_leg_probability=0.62,
+        base_min_ticket_probability=0.40,
+        min_combined_decimal_price=parlay_selector.MIN_COMBINED_DECIMAL_PRICE,
+        min_expected_return=0.0,
+    )
+
+    assert [ticket["leg_count"] for ticket in ladder] == [2]
+    assert ladder[0]["reliability_profile"]["status"] == "pass"
+
+
 def test_anchor_filter_is_over_only_and_requires_playable_market_support() -> None:
     eligible = _candidate(player="Eligible", game_id="g1", probability=0.68, price=-180)
     under = _candidate(player="Under", game_id="g2", probability=0.75, price=-180, direction="UNDER")
@@ -96,8 +148,10 @@ def test_anchor_filter_is_over_only_and_requires_playable_market_support() -> No
 
 def test_ticket_ladder_keeps_best_two_leg_ticket_and_adds_longer_options() -> None:
     candidates = [
-        _candidate(player=f"Player {index}", game_id=f"g{index}", probability=0.75, price=-150)
-        for index in range(1, 5)
+        _candidate(player="Player 1", game_id="g1", probability=0.75, price=-150, target="H"),
+        _candidate(player="Player 2", game_id="g2", probability=0.75, price=-150, target="TB"),
+        _candidate(player="Player 3", game_id="g3", probability=0.75, price=-150, target="RBI"),
+        _candidate(player="Player 4", game_id="g4", probability=0.75, price=-150, target="H"),
     ]
 
     ladder, considered = parlay_selector.select_ticket_ladder(

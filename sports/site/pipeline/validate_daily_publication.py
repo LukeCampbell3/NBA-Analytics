@@ -45,7 +45,15 @@ MLB_MAX_UNDER_PICKS = 0
 MLB_MIN_CORE_HIT_PROBABILITY = 0.825
 MLB_HISTORICAL_EVIDENCE_SCOPE = "real_price_confirmed_markets_only_v1"
 MLB_PARLAY_PROBABILITY_FLOORS = {2: 0.40, 3: 0.25, 4: 0.18}
+MLB_PARLAY_RELIABILITY_PROBABILITY_FLOORS = {2: 0.42, 3: 0.40, 4: 0.30}
+MLB_PARLAY_RELIABILITY_MIN_LEG_PROBABILITY = {2: 0.64, 3: 0.66, 4: 0.68}
+MLB_PARLAY_MIN_DECIMAL_PRICE = 1.8
 MLB_PARLAY_MAX_DECIMAL_PRICES = {2: 6.0, 3: 10.0, 4: 18.0}
+MLB_LEGACY_PARLAY_POLICY_VERSIONS = {
+    "mlb_fanduel_public_betslip_parlay_v6",
+    "mlb_fanduel_public_betslip_parlay_v7",
+    "mlb_fanduel_public_betslip_parlay_v8",
+}
 MLB_PROFIT_BOOST_MIN_LEG_PROBABILITY = 0.18
 MLB_PROFIT_BOOST_MIN_TICKET_PROBABILITY = 0.10
 MLB_PROFIT_BOOST_MIN_DECIMAL_PRICE = 4.0
@@ -71,6 +79,7 @@ def validate_mlb_daily_ticket(
     *,
     label: str,
     authorization_enabled: bool,
+    require_reliability_profile: bool = True,
 ) -> None:
     ticket_tier = str(ticket.get("ticket_tier") or "consistency").strip().lower()
     is_profit_boost = ticket_tier == "profit_boost"
@@ -159,7 +168,7 @@ def validate_mlb_daily_ticket(
     probability_floor = (
         MLB_PROFIT_BOOST_MIN_TICKET_PROBABILITY if is_profit_boost else MLB_PARLAY_PROBABILITY_FLOORS[leg_count]
     )
-    minimum_decimal = MLB_PROFIT_BOOST_MIN_DECIMAL_PRICE if is_profit_boost else 2.0
+    minimum_decimal = MLB_PROFIT_BOOST_MIN_DECIMAL_PRICE if is_profit_boost else MLB_PARLAY_MIN_DECIMAL_PRICE
     maximum_decimal = (
         MLB_PROFIT_BOOST_MAX_DECIMAL_PRICE if is_profit_boost else MLB_PARLAY_MAX_DECIMAL_PRICES[leg_count]
     )
@@ -170,6 +179,25 @@ def validate_mlb_daily_ticket(
         raise ValueError(f"MLB {label} daily parlay falls outside its declared payout scope.")
     if expected_return is None or expected_return < minimum_expected_return:
         raise ValueError(f"MLB {label} daily parlay misses its expected-return floor.")
+    if not is_profit_boost and require_reliability_profile:
+        reliability_profile = ticket.get("reliability_profile")
+        if not isinstance(reliability_profile, dict):
+            raise ValueError(f"MLB {label} daily parlay lacks reliability-profile metadata.")
+        if str(reliability_profile.get("status") or "").strip().lower() != "pass":
+            raise ValueError(f"MLB {label} daily parlay did not pass the reliability profile.")
+        reliability_floor = MLB_PARLAY_RELIABILITY_PROBABILITY_FLOORS[leg_count]
+        if ticket_probability < reliability_floor:
+            raise ValueError(f"MLB {label} daily parlay misses its reliability probability floor.")
+        leg_probabilities = [
+            as_float(leg.get("parlay_leg_probability") or leg.get("estimated_graded_hit_rate"))
+            for leg in legs
+        ]
+        minimum_leg_probability = min((value for value in leg_probabilities if value is not None), default=None)
+        if (
+            minimum_leg_probability is None
+            or minimum_leg_probability < MLB_PARLAY_RELIABILITY_MIN_LEG_PROBABILITY[leg_count]
+        ):
+            raise ValueError(f"MLB {label} daily parlay misses its reliability leg floor.")
     risk_flags = {str(value) for value in ticket.get("risk_flags", [])}
     ticket_status = str(ticket.get("status") or "").strip().lower()
     if ticket_status == "ready" and risk_flags:
@@ -548,6 +576,10 @@ def validate_mlb_payload(
     daily_status = str(daily_parlay.get("status") or "").strip().lower()
     if daily_status not in {"ready", "review", "withheld"}:
         raise ValueError(f"MLB {label} daily parlay has an invalid status.")
+    parlay_policy_version = str(daily_parlay.get("policy_version") or "").strip()
+    require_parlay_reliability = not (
+        allow_legacy_policy and parlay_policy_version in MLB_LEGACY_PARLAY_POLICY_VERSIONS
+    )
     ticket = daily_parlay.get("selected_ticket")
     if ticket is None:
         if daily_status != "withheld":
@@ -555,7 +587,12 @@ def validate_mlb_payload(
     elif not isinstance(ticket, dict):
         raise ValueError(f"MLB {label} daily parlay ticket must be an object.")
     else:
-        validate_mlb_daily_ticket(ticket, label=label, authorization_enabled=authorization_enabled)
+        validate_mlb_daily_ticket(
+            ticket,
+            label=label,
+            authorization_enabled=authorization_enabled,
+            require_reliability_profile=require_parlay_reliability,
+        )
 
     ladder = daily_parlay.get("ticket_ladder", [])
     if not isinstance(ladder, list):
@@ -573,6 +610,7 @@ def validate_mlb_payload(
             ladder_ticket,
             label=f"{label} ladder ticket {ladder_index}",
             authorization_enabled=authorization_enabled,
+            require_reliability_profile=require_parlay_reliability,
         )
 
 

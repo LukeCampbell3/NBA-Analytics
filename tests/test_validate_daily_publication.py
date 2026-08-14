@@ -334,6 +334,11 @@ def test_validate_mlb_payload_accepts_adaptive_over_parlay(tmp_path: Path) -> No
             "projected_probability": 0.44,
             "combined_decimal_price": 2.25,
             "expected_return_per_unit": 0.01,
+            "reliability_profile": {
+                "status": "pass",
+                "probability_floor": 0.42,
+                "minimum_leg_probability_floor": 0.64,
+            },
             "risk_flags": ["lineup_unconfirmed"],
             "legs": [
                 {
@@ -370,9 +375,14 @@ def test_validate_mlb_payload_accepts_adaptive_over_parlay(tmp_path: Path) -> No
     balanced_ticket.update(
         {
             "leg_count": 3,
-            "projected_probability": 0.28,
+            "projected_probability": 0.40,
             "combined_decimal_price": 4.0,
             "expected_return_per_unit": 0.12,
+            "reliability_profile": {
+                "status": "pass",
+                "probability_floor": 0.40,
+                "minimum_leg_probability_floor": 0.66,
+            },
         }
     )
     balanced_ticket["legs"].append(
@@ -387,7 +397,7 @@ def test_validate_mlb_payload_accepts_adaptive_over_parlay(tmp_path: Path) -> No
             "selected_sportsbook_key": "draftkings",
             "market_books": 6,
             "market_common_books": 3,
-            "estimated_graded_hit_rate": 0.65,
+            "estimated_graded_hit_rate": 0.66,
         }
     )
     profit_ticket = json.loads(json.dumps(selected_ticket))
@@ -432,6 +442,11 @@ def test_validate_mlb_ticket_rejects_betslip_ids_that_do_not_match_provider_link
         "projected_probability": 0.44,
         "combined_decimal_price": 2.25,
         "expected_return_per_unit": 0.01,
+        "reliability_profile": {
+            "status": "pass",
+            "probability_floor": 0.42,
+            "minimum_leg_probability_floor": 0.64,
+        },
         "risk_flags": [],
         "betslip_url": (
             "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?"

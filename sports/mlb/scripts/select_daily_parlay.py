@@ -61,16 +61,19 @@ CALIBRATION_ROOT = SPORT_ROOT / "data" / "predictions" / "calibration"
 DEFAULT_PROVIDER_OBSERVATIONS = (
     SPORT_ROOT / "data" / "raw" / "market_odds" / "mlb" / "odds_api_io" / "latest_provider_observations.csv"
 )
-POLICY_VERSION = "mlb_fanduel_public_betslip_parlay_v8"
+POLICY_VERSION = "mlb_fanduel_public_betslip_parlay_v9"
 ALLOWED_TARGETS = ("H", "TB", "R", "RBI", "K")
+CONSISTENCY_TARGETS = {"H", "TB", "RBI"}
 MIN_LEGS = 2
 MAX_LEGS = 4
 MIN_LEG_PROBABILITY = 0.62
 MIN_TICKET_PROBABILITY = 0.40
-MIN_COMBINED_DECIMAL_PRICE = 2.0
+MIN_COMBINED_DECIMAL_PRICE = 1.8
 MIN_EXPECTED_RETURN = 0.0
 MAX_CANDIDATES_PER_BOOK = 12
 TICKET_PROBABILITY_FLOORS = {2: 0.40, 3: 0.25, 4: 0.18}
+TICKET_RELIABILITY_PROBABILITY_FLOORS = {2: 0.42, 3: 0.40, 4: 0.30}
+TICKET_RELIABILITY_MIN_LEG_PROBABILITY = {2: 0.64, 3: 0.66, 4: 0.68}
 TICKET_MAX_DECIMAL_PRICES = {2: 6.0, 3: 10.0, 4: 18.0}
 TICKET_TIERS = {2: "consistency", 3: "balanced", 4: "extended"}
 TARGET_MARKET_TYPES = {
@@ -820,6 +823,38 @@ def _latent_set_profile(
     return profile
 
 
+def _ticket_reliability_gate(ticket: dict[str, Any], leg_count: int) -> tuple[bool, dict[str, Any]]:
+    legs = list(ticket.get("legs") or [])
+    leg_probabilities = [
+        float(leg.get("parlay_leg_probability") or leg.get("estimated_graded_hit_rate") or 0.0)
+        for leg in legs
+    ]
+    targets = {str(leg.get("target") or "") for leg in legs}
+    projected_probability = float(ticket.get("projected_probability") or 0.0)
+    minimum_leg_probability = min(leg_probabilities, default=0.0)
+    probability_floor = TICKET_RELIABILITY_PROBABILITY_FLOORS.get(leg_count, 1.0)
+    leg_floor = TICKET_RELIABILITY_MIN_LEG_PROBABILITY.get(leg_count, 1.0)
+    failures: list[str] = []
+    if not targets.issubset(CONSISTENCY_TARGETS):
+        failures.append("target_scope")
+    if minimum_leg_probability < leg_floor:
+        failures.append("minimum_leg_probability")
+    if projected_probability < probability_floor:
+        failures.append("projected_ticket_probability")
+    profile = {
+        "policy": "reliability_first_over_parlay_v1",
+        "allowed_targets": sorted(CONSISTENCY_TARGETS),
+        "probability_floor": probability_floor,
+        "minimum_leg_probability_floor": leg_floor,
+        "projected_probability": projected_probability,
+        "minimum_leg_probability": minimum_leg_probability,
+        "target_scope": sorted(targets),
+        "status": "pass" if not failures else "withheld",
+        "failures": failures,
+    }
+    return not failures, profile
+
+
 def _best_ticket_for_leg_count(
     by_book: dict[str, list[dict[str, Any]]],
     *,
@@ -867,6 +902,10 @@ def _best_ticket_for_leg_count(
             ticket["ticket_id"] = f"{TICKET_TIERS[leg_count]}_{leg_count}_leg"
             ticket["probability_floor"] = min_ticket_probability
             ticket["maximum_decimal_price"] = max_combined_decimal_price
+            passes_reliability, reliability_profile = _ticket_reliability_gate(ticket, leg_count)
+            ticket["reliability_profile"] = reliability_profile
+            if not passes_reliability:
+                continue
             executable.append(ticket)
 
     if rank_by_latent_shadow:
