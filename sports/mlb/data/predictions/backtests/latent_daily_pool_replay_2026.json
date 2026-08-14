@@ -1,0 +1,2342 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-14T11:37:36.682656+00:00",
+  "model_version": "mlb_latent_parlay_set_attention_v3",
+  "artifact_trained_before_date": "2026-08-06",
+  "evidence_label": "FROZEN_COMPLETE_SLATE_POST_TRAINING_REPLAY",
+  "claim_scope": "exact same-book H over 0.5 replay; small-sample research evidence, not certification",
+  "snapshot_count": 6,
+  "settled_snapshot_count": 6,
+  "settled_dates": [
+    "2026-08-06",
+    "2026-08-07",
+    "2026-08-08",
+    "2026-08-09",
+    "2026-08-10",
+    "2026-08-11"
+  ],
+  "candidate_rows": 1039,
+  "executable_quote_rows": 3668,
+  "candidate_support_rate": 0.9980750721847931,
+  "candidate_hit_rate": 0.5794032723772858,
+  "candidate_mean_probability": 0.5333396008776755,
+  "candidate_brier_score": 0.2458943705710637,
+  "candidate_roc_auc": 0.5339410203973026,
+  "candidate_signal_metrics": {
+    "latent_probability": {
+      "mean_probability": 0.5333396008776755,
+      "calibration_gap": -0.046063671499610326,
+      "brier_score": 0.2458943705710637,
+      "roc_auc": 0.5339410203973026
+    },
+    "market_probability": {
+      "mean_probability": 0.5958318326493519,
+      "calibration_gap": 0.016428560272066073,
+      "brier_score": 0.24182752175820194,
+      "roc_auc": 0.5518960444589734
+    },
+    "hybrid_probability": {
+      "mean_probability": 0.5770217836595786,
+      "calibration_gap": -0.0023814887177072697,
+      "brier_score": 0.24156609337393967,
+      "roc_auc": 0.5495449949443882
+    }
+  },
+  "metrics": {
+    "latent_independent": {
+      "2": {
+        "slates": 6,
+        "ticket_hits": 2,
+        "ticket_hit_rate": 0.3333333333333333,
+        "ticket_hit_rate_wilson_95": [
+          0.09676933255921683,
+          0.7000116786584712
+        ],
+        "leg_wins": 5,
+        "legs": 12,
+        "leg_hit_rate": 0.4166666666666667,
+        "mean_estimated_probability": 0.45752635044671336,
+        "calibration_gap": 0.12419301711338004,
+        "brier_score": 0.23374441264557122,
+        "roi": -0.2644030226553608
+      },
+      "3": {
+        "slates": 6,
+        "ticket_hits": 1,
+        "ticket_hit_rate": 0.16666666666666666,
+        "ticket_hit_rate_wilson_95": [
+          0.03005258587173032,
+          0.563509436563646
+        ],
+        "leg_wins": 9,
+        "legs": 18,
+        "leg_hit_rate": 0.5,
+        "mean_estimated_probability": 0.2961310565060739,
+        "calibration_gap": 0.12946438983940725,
+        "brier_score": 0.1515772558124905,
+        "roi": -0.41459763670599226
+      },
+      "4": {
+        "slates": 6,
+        "ticket_hits": 0,
+        "ticket_hit_rate": 0.0,
+        "ticket_hit_rate_wilson_95": [
+          0.0,
+          0.3903430336530645
+        ],
+        "leg_wins": 14,
+        "legs": 24,
+        "leg_hit_rate": 0.5833333333333334,
+        "mean_estimated_probability": 0.1861415371560815,
+        "calibration_gap": 0.1861415371560815,
+        "brier_score": 0.03474744664614948,
+        "roi": -1.0
+      }
+    },
+    "latent_joint": {
+      "2": {
+        "slates": 6,
+        "ticket_hits": 3,
+        "ticket_hit_rate": 0.5,
+        "ticket_hit_rate_wilson_95": [
+          0.18761280689940868,
+          0.8123871931005913
+        ],
+        "leg_wins": 7,
+        "legs": 12,
+        "leg_hit_rate": 0.5833333333333334,
+        "mean_estimated_probability": 0.2919051166853486,
+        "calibration_gap": -0.20809488331465142,
+        "brier_score": 0.2996650655063849,
+        "roi": 0.12020564261368179
+      },
+      "3": {
+        "slates": 6,
+        "ticket_hits": 1,
+        "ticket_hit_rate": 0.16666666666666666,
+        "ticket_hit_rate_wilson_95": [
+          0.03005258587173032,
+          0.563509436563646
+        ],
+        "leg_wins": 9,
+        "legs": 18,
+        "leg_hit_rate": 0.5,
+        "mean_estimated_probability": 0.17520996412337417,
+        "calibration_gap": 0.00854329745670751,
+        "brier_score": 0.13638074645099982,
+        "roi": -0.41459763670599226
+      },
+      "4": {
+        "slates": 6,
+        "ticket_hits": 0,
+        "ticket_hit_rate": 0.0,
+        "ticket_hit_rate_wilson_95": [
+          0.0,
+          0.3903430336530645
+        ],
+        "leg_wins": 14,
+        "legs": 24,
+        "leg_hit_rate": 0.5833333333333334,
+        "mean_estimated_probability": 0.10721529387044083,
+        "calibration_gap": 0.10721529387044083,
+        "brier_score": 0.011533219225098998,
+        "roi": -1.0
+      }
+    },
+    "market": {
+      "2": {
+        "slates": 6,
+        "ticket_hits": 3,
+        "ticket_hit_rate": 0.5,
+        "ticket_hit_rate_wilson_95": [
+          0.18761280689940868,
+          0.8123871931005913
+        ],
+        "leg_wins": 8,
+        "legs": 12,
+        "leg_hit_rate": 0.6666666666666666,
+        "mean_estimated_probability": 0.4452561602618232,
+        "calibration_gap": -0.054743839738176814,
+        "brier_score": 0.2521596221075491,
+        "roi": 0.00556540583136315
+      },
+      "3": {
+        "slates": 6,
+        "ticket_hits": 2,
+        "ticket_hit_rate": 0.3333333333333333,
+        "ticket_hit_rate_wilson_95": [
+          0.09676933255921683,
+          0.7000116786584712
+        ],
+        "leg_wins": 12,
+        "legs": 18,
+        "leg_hit_rate": 0.6666666666666666,
+        "mean_estimated_probability": 0.30675286452765177,
+        "calibration_gap": -0.026580468805681545,
+        "brier_score": 0.222928743544152,
+        "roi": -0.08533333333333355
+      },
+      "4": {
+        "slates": 6,
+        "ticket_hits": 2,
+        "ticket_hit_rate": 0.3333333333333333,
+        "ticket_hit_rate_wilson_95": [
+          0.09676933255921683,
+          0.7000116786584712
+        ],
+        "leg_wins": 16,
+        "legs": 24,
+        "leg_hit_rate": 0.6666666666666666,
+        "mean_estimated_probability": 0.2068798388674861,
+        "calibration_gap": -0.12645349446584722,
+        "brier_score": 0.2382127084848463,
+        "roi": 0.2805333333333329
+      }
+    },
+    "hybrid": {
+      "2": {
+        "slates": 6,
+        "ticket_hits": 3,
+        "ticket_hit_rate": 0.5,
+        "ticket_hit_rate_wilson_95": [
+          0.18761280689940868,
+          0.8123871931005913
+        ],
+        "leg_wins": 9,
+        "legs": 12,
+        "leg_hit_rate": 0.75,
+        "mean_estimated_probability": 0.43241650483621535,
+        "calibration_gap": -0.06758349516378465,
+        "brier_score": 0.2552155363266568,
+        "roi": 0.008375420875420758
+      },
+      "3": {
+        "slates": 6,
+        "ticket_hits": 3,
+        "ticket_hit_rate": 0.5,
+        "ticket_hit_rate_wilson_95": [
+          0.18761280689940868,
+          0.8123871931005913
+        ],
+        "leg_wins": 14,
+        "legs": 18,
+        "leg_hit_rate": 0.7777777777777778,
+        "mean_estimated_probability": 0.2858036912333557,
+        "calibration_gap": -0.2141963087666443,
+        "brier_score": 0.2940610953844371,
+        "roi": 0.395262626262626
+      },
+      "4": {
+        "slates": 6,
+        "ticket_hits": 2,
+        "ticket_hit_rate": 0.3333333333333333,
+        "ticket_hit_rate_wilson_95": [
+          0.09676933255921683,
+          0.7000116786584712
+        ],
+        "leg_wins": 18,
+        "legs": 24,
+        "leg_hit_rate": 0.75,
+        "mean_estimated_probability": 0.18569752061864975,
+        "calibration_gap": -0.14763581271468357,
+        "brier_score": 0.24331599144776753,
+        "roi": 0.3131010101010097
+      }
+    }
+  },
+  "tickets": [
+    {
+      "run_date": "2026-08-06",
+      "snapshot_id": "mlb_20260806_205441Z_990ed5c4f7b4",
+      "strategy": "latent_independent",
+      "leg_count": 2,
+      "book": "draftkings",
+      "players": [
+        "Geraldo Perdomo",
+        "Isaac Collins"
+      ],
+      "games": [
+        "825053",
+        "824080"
+      ],
+      "leg_probabilities": [
+        0.7505452565024561,
+        0.6374827557148159
+      ],
+      "estimated_probability": 0.47845965840386906,
+      "combined_decimal_price": 2.2511260134120707,
+      "expected_return": 0.07707298340120294,
+      "ensemble_uncertainty": 0.020614223137473766,
+      "leg_wins": 0,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-06",
+      "snapshot_id": "mlb_20260806_205441Z_990ed5c4f7b4",
+      "strategy": "latent_independent",
+      "leg_count": 3,
+      "book": "espnbet",
+      "players": [
+        "Geraldo Perdomo",
+        "Isaac Collins",
+        "Daylen Lile"
+      ],
+      "games": [
+        "825053",
+        "824080",
+        "823430"
+      ],
+      "leg_probabilities": [
+        0.7505452565024561,
+        0.6374827557148159,
+        0.6328751984075441
+      ],
+      "estimated_probability": 0.3028052512423544,
+      "combined_decimal_price": 3.6076555023923444,
+      "expected_return": 0.09241703079777608,
+      "ensemble_uncertainty": 0.020614223137473766,
+      "leg_wins": 0,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-06",
+      "snapshot_id": "mlb_20260806_205441Z_990ed5c4f7b4",
+      "strategy": "latent_independent",
+      "leg_count": 4,
+      "book": "espnbet",
+      "players": [
+        "Geraldo Perdomo",
+        "Isaac Collins",
+        "Daylen Lile",
+        "Dominic Smith"
+      ],
+      "games": [
+        "825053",
+        "824080",
+        "823430",
+        "824885"
+      ],
+      "leg_probabilities": [
+        0.7505452565024561,
+        0.6374827557148159,
+        0.6328751984075441,
+        0.6060908779453317
+      ],
+      "estimated_probability": 0.18352750057193531,
+      "combined_decimal_price": 5.506421556283052,
+      "expected_return": 0.01057978532005488,
+      "ensemble_uncertainty": 0.020614223137473766,
+      "leg_wins": 1,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-06",
+      "snapshot_id": "mlb_20260806_205441Z_990ed5c4f7b4",
+      "strategy": "latent_joint",
+      "leg_count": 2,
+      "book": "draftkings",
+      "players": [
+        "Geraldo Perdomo",
+        "Isaac Collins"
+      ],
+      "games": [
+        "825053",
+        "824080"
+      ],
+      "leg_probabilities": [
+        0.7505452565024561,
+        0.6374827557148159
+      ],
+      "estimated_probability": 0.30735125972594707,
+      "combined_decimal_price": 2.2511260134120707,
+      "expected_return": -0.3081135839759508,
+      "ensemble_uncertainty": 0.021968960924699407,
+      "leg_wins": 0,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-06",
+      "snapshot_id": "mlb_20260806_205441Z_990ed5c4f7b4",
+      "strategy": "latent_joint",
+      "leg_count": 3,
+      "book": "espnbet",
+      "players": [
+        "Geraldo Perdomo",
+        "Isaac Collins",
+        "Daylen Lile"
+      ],
+      "games": [
+        "825053",
+        "824080",
+        "823430"
+      ],
+      "leg_probabilities": [
+        0.7505452565024561,
+        0.6374827557148159,
+        0.6328751984075441
+      ],
+      "estimated_probability": 0.1797944468601774,
+      "combined_decimal_price": 3.6076555023923444,
+      "expected_return": -0.351363574485293,
+      "ensemble_uncertainty": 0.021543786508346947,
+      "leg_wins": 0,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-06",
+      "snapshot_id": "mlb_20260806_205441Z_990ed5c4f7b4",
+      "strategy": "latent_joint",
+      "leg_count": 4,
+      "book": "espnbet",
+      "players": [
+        "Geraldo Perdomo",
+        "Isaac Collins",
+        "Daylen Lile",
+        "Dominic Smith"
+      ],
+      "games": [
+        "825053",
+        "824080",
+        "823430",
+        "824885"
+      ],
+      "leg_probabilities": [
+        0.7505452565024561,
+        0.6374827557148159,
+        0.6328751984075441,
+        0.6060908779453317
+      ],
+      "estimated_probability": 0.1060372821309324,
+      "combined_decimal_price": 5.506421556283052,
+      "expected_return": -0.4161140239045661,
+      "ensemble_uncertainty": 0.019916887541216337,
+      "leg_wins": 1,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-06",
+      "snapshot_id": "mlb_20260806_205441Z_990ed5c4f7b4",
+      "strategy": "market",
+      "leg_count": 2,
+      "book": "bovada",
+      "players": [
+        "Kyle Schwarber",
+        "Jarren Duran"
+      ],
+      "games": [
+        "823430",
+        "824729"
+      ],
+      "leg_probabilities": [
+        0.6656176239181747,
+        0.6648264984227129
+      ],
+      "estimated_probability": 0.44252023419796627,
+      "combined_decimal_price": 2.006944444444444,
+      "expected_return": -0.11188647442213728,
+      "ensemble_uncertainty": 0.03605849876515449,
+      "leg_wins": 1,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-06",
+      "snapshot_id": "mlb_20260806_205441Z_990ed5c4f7b4",
+      "strategy": "market",
+      "leg_count": 3,
+      "book": "espnbet",
+      "players": [
+        "Xavier Edwards",
+        "Luke Keaschall",
+        "Gabriel Moreno"
+      ],
+      "games": [
+        "824885",
+        "824080",
+        "825053"
+      ],
+      "leg_probabilities": [
+        0.6744186046511629,
+        0.6744186046511629,
+        0.6744186046511629
+      ],
+      "estimated_probability": 0.30675286452765177,
+      "combined_decimal_price": 2.7439999999999993,
+      "expected_return": -0.1582701397361238,
+      "ensemble_uncertainty": 0.03356262677356454,
+      "leg_wins": 3,
+      "ticket_hit": 1,
+      "realized_unit_return": 1.7439999999999993
+    },
+    {
+      "run_date": "2026-08-06",
+      "snapshot_id": "mlb_20260806_205441Z_990ed5c4f7b4",
+      "strategy": "market",
+      "leg_count": 4,
+      "book": "espnbet",
+      "players": [
+        "Kyle Schwarber",
+        "Xavier Edwards",
+        "Luke Keaschall",
+        "Gabriel Moreno"
+      ],
+      "games": [
+        "823430",
+        "824885",
+        "824080",
+        "825053"
+      ],
+      "leg_probabilities": [
+        0.6744186046511629,
+        0.6744186046511629,
+        0.6744186046511629,
+        0.6744186046511629
+      ],
+      "estimated_probability": 0.2068798388674861,
+      "combined_decimal_price": 3.841599999999999,
+      "expected_return": -0.20525041100666563,
+      "ensemble_uncertainty": 0.03605849876515449,
+      "leg_wins": 4,
+      "ticket_hit": 1,
+      "realized_unit_return": 2.841599999999999
+    },
+    {
+      "run_date": "2026-08-06",
+      "snapshot_id": "mlb_20260806_205441Z_990ed5c4f7b4",
+      "strategy": "hybrid",
+      "leg_count": 2,
+      "book": "espnbet",
+      "players": [
+        "Gabriel Moreno",
+        "Ozzie Albies"
+      ],
+      "games": [
+        "825053",
+        "824885"
+      ],
+      "leg_probabilities": [
+        0.6846069307805696,
+        0.6360480364735653
+      ],
+      "estimated_probability": 0.4354428940791753,
+      "combined_decimal_price": 2.036363636363636,
+      "expected_return": -0.11327992478422488,
+      "ensemble_uncertainty": 0.006759962131234374,
+      "leg_wins": 1,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-06",
+      "snapshot_id": "mlb_20260806_205441Z_990ed5c4f7b4",
+      "strategy": "hybrid",
+      "leg_count": 3,
+      "book": "espnbet",
+      "players": [
+        "Gabriel Moreno",
+        "Xavier Edwards",
+        "Dylan Crews"
+      ],
+      "games": [
+        "825053",
+        "824885",
+        "823430"
+      ],
+      "leg_probabilities": [
+        0.6846069307805696,
+        0.6528551553855024,
+        0.6480990854051581
+      ],
+      "estimated_probability": 0.2896673445229531,
+      "combined_decimal_price": 2.776666666666666,
+      "expected_return": -0.19569034004126706,
+      "ensemble_uncertainty": 0.022000941916287035,
+      "leg_wins": 3,
+      "ticket_hit": 1,
+      "realized_unit_return": 1.776666666666666
+    },
+    {
+      "run_date": "2026-08-06",
+      "snapshot_id": "mlb_20260806_205441Z_990ed5c4f7b4",
+      "strategy": "hybrid",
+      "leg_count": 4,
+      "book": "espnbet",
+      "players": [
+        "Gabriel Moreno",
+        "Xavier Edwards",
+        "Dylan Crews",
+        "Jarren Duran"
+      ],
+      "games": [
+        "825053",
+        "824885",
+        "823430",
+        "824729"
+      ],
+      "leg_probabilities": [
+        0.6846069307805696,
+        0.6528551553855024,
+        0.6480990854051581,
+        0.6393254656507293
+      ],
+      "estimated_probability": 0.18519170992094725,
+      "combined_decimal_price": 3.9336111111111096,
+      "expected_return": -0.27152783216929643,
+      "ensemble_uncertainty": 0.022000941916287035,
+      "leg_wins": 3,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-07",
+      "snapshot_id": "mlb_20260807_134006Z_4b161ec8125c",
+      "strategy": "latent_independent",
+      "leg_count": 2,
+      "book": "bovada",
+      "players": [
+        "Geraldo Perdomo",
+        "Ezequiel Duran"
+      ],
+      "games": [
+        "825051",
+        "822863"
+      ],
+      "leg_probabilities": [
+        0.6542020038115797,
+        0.6388929443209846
+      ],
+      "estimated_probability": 0.4179650443958682,
+      "combined_decimal_price": 2.504700074389667,
+      "expected_return": 0.046877077790611565,
+      "ensemble_uncertainty": 0.04787041168037961,
+      "leg_wins": 1,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-07",
+      "snapshot_id": "mlb_20260807_134006Z_4b161ec8125c",
+      "strategy": "latent_independent",
+      "leg_count": 3,
+      "book": "bovada",
+      "players": [
+        "Geraldo Perdomo",
+        "Ezequiel Duran",
+        "Caleb Durbin"
+      ],
+      "games": [
+        "825051",
+        "822863",
+        "824727"
+      ],
+      "leg_probabilities": [
+        0.6542020038115797,
+        0.6388929443209846,
+        0.638880060268
+      ],
+      "estimated_probability": 0.26702953275354957,
+      "combined_decimal_price": 3.548325105385361,
+      "expected_return": -0.05249240505125752,
+      "ensemble_uncertainty": 0.04787041168037961,
+      "leg_wins": 2,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-07",
+      "snapshot_id": "mlb_20260807_134006Z_4b161ec8125c",
+      "strategy": "latent_independent",
+      "leg_count": 4,
+      "book": "bovada",
+      "players": [
+        "Geraldo Perdomo",
+        "Ezequiel Duran",
+        "Caleb Durbin",
+        "Yordan Alvarez"
+      ],
+      "games": [
+        "825051",
+        "822863",
+        "824727",
+        "823266"
+      ],
+      "leg_probabilities": [
+        0.6542020038115797,
+        0.6388929443209846,
+        0.638880060268,
+        0.6288685862149992
+      ],
+      "estimated_probability": 0.16792648474037652,
+      "combined_decimal_price": 4.967655147539505,
+      "expected_return": -0.16579913367125443,
+      "ensemble_uncertainty": 0.04787041168037961,
+      "leg_wins": 3,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-07",
+      "snapshot_id": "mlb_20260807_134006Z_4b161ec8125c",
+      "strategy": "latent_joint",
+      "leg_count": 2,
+      "book": "bovada",
+      "players": [
+        "Geraldo Perdomo",
+        "Caleb Durbin"
+      ],
+      "games": [
+        "825051",
+        "824727"
+      ],
+      "leg_probabilities": [
+        0.6542020038115797,
+        0.638880060268
+      ],
+      "estimated_probability": 0.259668648764102,
+      "combined_decimal_price": 2.3076519916142555,
+      "expected_return": -0.4007751255197374,
+      "ensemble_uncertainty": 0.014079867905432966,
+      "leg_wins": 2,
+      "ticket_hit": 1,
+      "realized_unit_return": 1.3076519916142555
+    },
+    {
+      "run_date": "2026-08-07",
+      "snapshot_id": "mlb_20260807_134006Z_4b161ec8125c",
+      "strategy": "latent_joint",
+      "leg_count": 3,
+      "book": "bovada",
+      "players": [
+        "Geraldo Perdomo",
+        "Ezequiel Duran",
+        "Caleb Durbin"
+      ],
+      "games": [
+        "825051",
+        "822863",
+        "824727"
+      ],
+      "leg_probabilities": [
+        0.6542020038115797,
+        0.6388929443209846,
+        0.638880060268
+      ],
+      "estimated_probability": 0.15406610121306402,
+      "combined_decimal_price": 3.548325105385361,
+      "expected_return": -0.4533233851768429,
+      "ensemble_uncertainty": 0.017401631596981004,
+      "leg_wins": 2,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-07",
+      "snapshot_id": "mlb_20260807_134006Z_4b161ec8125c",
+      "strategy": "latent_joint",
+      "leg_count": 4,
+      "book": "bovada",
+      "players": [
+        "Geraldo Perdomo",
+        "Ezequiel Duran",
+        "Caleb Durbin",
+        "Yordan Alvarez"
+      ],
+      "games": [
+        "825051",
+        "822863",
+        "824727",
+        "823266"
+      ],
+      "leg_probabilities": [
+        0.6542020038115797,
+        0.6388929443209846,
+        0.638880060268,
+        0.6288685862149992
+      ],
+      "estimated_probability": 0.09544449491431338,
+      "combined_decimal_price": 4.967655147539505,
+      "expected_return": -0.525864663534603,
+      "ensemble_uncertainty": 0.012284981918931305,
+      "leg_wins": 3,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-07",
+      "snapshot_id": "mlb_20260807_134006Z_4b161ec8125c",
+      "strategy": "market",
+      "leg_count": 2,
+      "book": "bovada",
+      "players": [
+        "Elly De La Cruz",
+        "Carson Kelly"
+      ],
+      "games": [
+        "822699",
+        "824081"
+      ],
+      "leg_probabilities": [
+        0.6695178849144635,
+        0.6664050235478808
+      ],
+      "estimated_probability": 0.4461700818621504,
+      "combined_decimal_price": 2.006944444444444,
+      "expected_return": -0.10456143292943432,
+      "ensemble_uncertainty": 0.00855233672172701,
+      "leg_wins": 2,
+      "ticket_hit": 1,
+      "realized_unit_return": 1.0069444444444442
+    },
+    {
+      "run_date": "2026-08-07",
+      "snapshot_id": "mlb_20260807_134006Z_4b161ec8125c",
+      "strategy": "market",
+      "leg_count": 3,
+      "book": "espnbet",
+      "players": [
+        "AJ Ewing",
+        "Caleb Durbin",
+        "Carson Kelly"
+      ],
+      "games": [
+        "823349",
+        "824727",
+        "824081"
+      ],
+      "leg_probabilities": [
+        0.6744186046511629,
+        0.6744186046511629,
+        0.6744186046511629
+      ],
+      "estimated_probability": 0.30675286452765177,
+      "combined_decimal_price": 2.7439999999999993,
+      "expected_return": -0.1582701397361238,
+      "ensemble_uncertainty": 0.009855630620389638,
+      "leg_wins": 3,
+      "ticket_hit": 1,
+      "realized_unit_return": 1.7439999999999993
+    },
+    {
+      "run_date": "2026-08-07",
+      "snapshot_id": "mlb_20260807_134006Z_4b161ec8125c",
+      "strategy": "market",
+      "leg_count": 4,
+      "book": "espnbet",
+      "players": [
+        "AJ Ewing",
+        "Caleb Durbin",
+        "Nolan Schanuel",
+        "Carson Kelly"
+      ],
+      "games": [
+        "823349",
+        "824727",
+        "823836",
+        "824081"
+      ],
+      "leg_probabilities": [
+        0.6744186046511629,
+        0.6744186046511629,
+        0.6744186046511629,
+        0.6744186046511629
+      ],
+      "estimated_probability": 0.2068798388674861,
+      "combined_decimal_price": 3.841599999999999,
+      "expected_return": -0.20525041100666563,
+      "ensemble_uncertainty": 0.02116043080955668,
+      "leg_wins": 4,
+      "ticket_hit": 1,
+      "realized_unit_return": 2.841599999999999
+    },
+    {
+      "run_date": "2026-08-07",
+      "snapshot_id": "mlb_20260807_134006Z_4b161ec8125c",
+      "strategy": "hybrid",
+      "leg_count": 2,
+      "book": "bovada",
+      "players": [
+        "Caleb Durbin",
+        "Elly De La Cruz"
+      ],
+      "games": [
+        "824727",
+        "822699"
+      ],
+      "leg_probabilities": [
+        0.6576023267249359,
+        0.6544441566329785
+      ],
+      "estimated_probability": 0.43036400011338505,
+      "combined_decimal_price": 2.006944444444444,
+      "expected_return": -0.13628336088355375,
+      "ensemble_uncertainty": 0.00559592708540764,
+      "leg_wins": 2,
+      "ticket_hit": 1,
+      "realized_unit_return": 1.0069444444444442
+    },
+    {
+      "run_date": "2026-08-07",
+      "snapshot_id": "mlb_20260807_134006Z_4b161ec8125c",
+      "strategy": "hybrid",
+      "leg_count": 3,
+      "book": "espnbet",
+      "players": [
+        "Caleb Durbin",
+        "Nolan Schanuel",
+        "Yordan Alvarez"
+      ],
+      "games": [
+        "824727",
+        "823836",
+        "823266"
+      ],
+      "leg_probabilities": [
+        0.6659119140031784,
+        0.6590011234853145,
+        0.6578097313688579
+      ],
+      "estimated_probability": 0.2886710513933876,
+      "combined_decimal_price": 2.7439999999999993,
+      "expected_return": -0.20788663497654458,
+      "ensemble_uncertainty": 0.02999547838028922,
+      "leg_wins": 3,
+      "ticket_hit": 1,
+      "realized_unit_return": 1.7439999999999993
+    },
+    {
+      "run_date": "2026-08-07",
+      "snapshot_id": "mlb_20260807_134006Z_4b161ec8125c",
+      "strategy": "hybrid",
+      "leg_count": 4,
+      "book": "espnbet",
+      "players": [
+        "Caleb Durbin",
+        "Nolan Schanuel",
+        "Yordan Alvarez",
+        "Francisco Lindor"
+      ],
+      "games": [
+        "824727",
+        "823836",
+        "823266",
+        "823349"
+      ],
+      "leg_probabilities": [
+        0.6659119140031784,
+        0.6590011234853145,
+        0.6578097313688579,
+        0.6506205879300181
+      ],
+      "estimated_probability": 0.18781532917594232,
+      "combined_decimal_price": 3.887333333333332,
+      "expected_return": -0.26989921038338716,
+      "ensemble_uncertainty": 0.02999547838028922,
+      "leg_wins": 4,
+      "ticket_hit": 1,
+      "realized_unit_return": 2.887333333333332
+    },
+    {
+      "run_date": "2026-08-08",
+      "snapshot_id": "mlb_20260808_131332Z_9efaae6239b7",
+      "strategy": "latent_independent",
+      "leg_count": 2,
+      "book": "espnbet",
+      "players": [
+        "Kyle Schwarber",
+        "Ryan Jeffers"
+      ],
+      "games": [
+        "823426",
+        "823752"
+      ],
+      "leg_probabilities": [
+        0.6721385130688351,
+        0.6719052450706636
+      ],
+      "estimated_probability": 0.4516133923449471,
+      "combined_decimal_price": 2.2894736842105265,
+      "expected_return": 0.03395697721079993,
+      "ensemble_uncertainty": 0.04571070862608033,
+      "leg_wins": 2,
+      "ticket_hit": 1,
+      "realized_unit_return": 1.2894736842105265
+    },
+    {
+      "run_date": "2026-08-08",
+      "snapshot_id": "mlb_20260808_131332Z_9efaae6239b7",
+      "strategy": "latent_independent",
+      "leg_count": 3,
+      "book": "espnbet",
+      "players": [
+        "Kyle Schwarber",
+        "Ryan Jeffers",
+        "Junior Caminero"
+      ],
+      "games": [
+        "823426",
+        "823752",
+        "823102"
+      ],
+      "leg_probabilities": [
+        0.6721385130688351,
+        0.6719052450706636,
+        0.6461986845228748
+      ],
+      "estimated_probability": 0.29183198004621774,
+      "combined_decimal_price": 3.2434210526315788,
+      "expected_return": -0.053466012086938575,
+      "ensemble_uncertainty": 0.04571070862608033,
+      "leg_wins": 2,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-08",
+      "snapshot_id": "mlb_20260808_131332Z_9efaae6239b7",
+      "strategy": "latent_independent",
+      "leg_count": 4,
+      "book": "betmgm",
+      "players": [
+        "Kyle Schwarber",
+        "Ryan Jeffers",
+        "Junior Caminero",
+        "Miguel Vargas"
+      ],
+      "games": [
+        "823426",
+        "823752",
+        "823102",
+        "824565"
+      ],
+      "leg_probabilities": [
+        0.6721385130688351,
+        0.6719052450706636,
+        0.6461986845228748,
+        0.6363085359606778
+      ],
+      "estimated_probability": 0.18569517996971455,
+      "combined_decimal_price": 5.238065613205591,
+      "expected_return": -0.02731646326261461,
+      "ensemble_uncertainty": 0.04571070862608033,
+      "leg_wins": 3,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-08",
+      "snapshot_id": "mlb_20260808_131332Z_9efaae6239b7",
+      "strategy": "latent_joint",
+      "leg_count": 2,
+      "book": "espnbet",
+      "players": [
+        "Kyle Schwarber",
+        "Ryan Jeffers"
+      ],
+      "games": [
+        "823426",
+        "823752"
+      ],
+      "leg_probabilities": [
+        0.6721385130688351,
+        0.6719052450706636
+      ],
+      "estimated_probability": 0.29173115167833885,
+      "combined_decimal_price": 2.2894736842105265,
+      "expected_return": -0.33208920536801356,
+      "ensemble_uncertainty": 0.06074857514058139,
+      "leg_wins": 2,
+      "ticket_hit": 1,
+      "realized_unit_return": 1.2894736842105265
+    },
+    {
+      "run_date": "2026-08-08",
+      "snapshot_id": "mlb_20260808_131332Z_9efaae6239b7",
+      "strategy": "latent_joint",
+      "leg_count": 3,
+      "book": "espnbet",
+      "players": [
+        "Kyle Schwarber",
+        "Ryan Jeffers",
+        "Junior Caminero"
+      ],
+      "games": [
+        "823426",
+        "823752",
+        "823102"
+      ],
+      "leg_probabilities": [
+        0.6721385130688351,
+        0.6719052450706636,
+        0.6461986845228748
+      ],
+      "estimated_probability": 0.17471867960968562,
+      "combined_decimal_price": 3.2434210526315788,
+      "expected_return": -0.4333137562659539,
+      "ensemble_uncertainty": 0.05922448534199899,
+      "leg_wins": 2,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-08",
+      "snapshot_id": "mlb_20260808_131332Z_9efaae6239b7",
+      "strategy": "latent_joint",
+      "leg_count": 4,
+      "book": "betmgm",
+      "players": [
+        "Kyle Schwarber",
+        "Ryan Jeffers",
+        "Junior Caminero",
+        "Miguel Vargas"
+      ],
+      "games": [
+        "823426",
+        "823752",
+        "823102",
+        "824565"
+      ],
+      "leg_probabilities": [
+        0.6721385130688351,
+        0.6719052450706636,
+        0.6461986845228748,
+        0.6363085359606778
+      ],
+      "estimated_probability": 0.10845340834937336,
+      "combined_decimal_price": 5.238065613205591,
+      "expected_return": -0.43191393109020326,
+      "ensemble_uncertainty": 0.05518422534366116,
+      "leg_wins": 3,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-08",
+      "snapshot_id": "mlb_20260808_131332Z_9efaae6239b7",
+      "strategy": "market",
+      "leg_count": 2,
+      "book": "bovada",
+      "players": [
+        "Ernie Clement",
+        "Jac Caglianone"
+      ],
+      "games": [
+        "823426",
+        "824079"
+      ],
+      "leg_probabilities": [
+        0.6777862016679302,
+        0.6632329635499208
+      ],
+      "estimated_probability": 0.44953015118546563,
+      "combined_decimal_price": 2.006944444444444,
+      "expected_return": -0.09781796046805868,
+      "ensemble_uncertainty": 0.03973845485138017,
+      "leg_wins": 2,
+      "ticket_hit": 1,
+      "realized_unit_return": 1.0069444444444442
+    },
+    {
+      "run_date": "2026-08-08",
+      "snapshot_id": "mlb_20260808_131332Z_9efaae6239b7",
+      "strategy": "market",
+      "leg_count": 3,
+      "book": "espnbet",
+      "players": [
+        "Brandon Marsh",
+        "Jeremy Pe\u00f1a",
+        "Chandler Simpson"
+      ],
+      "games": [
+        "823426",
+        "823267",
+        "823102"
+      ],
+      "leg_probabilities": [
+        0.6744186046511629,
+        0.6744186046511629,
+        0.6744186046511629
+      ],
+      "estimated_probability": 0.30675286452765177,
+      "combined_decimal_price": 2.7439999999999993,
+      "expected_return": -0.1582701397361238,
+      "ensemble_uncertainty": 0.017925237957670797,
+      "leg_wins": 1,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-08",
+      "snapshot_id": "mlb_20260808_131332Z_9efaae6239b7",
+      "strategy": "market",
+      "leg_count": 4,
+      "book": "espnbet",
+      "players": [
+        "Brandon Marsh",
+        "Nick Gonzales",
+        "Jeremy Pe\u00f1a",
+        "Chandler Simpson"
+      ],
+      "games": [
+        "823426",
+        "823348",
+        "823267",
+        "823102"
+      ],
+      "leg_probabilities": [
+        0.6744186046511629,
+        0.6744186046511629,
+        0.6744186046511629,
+        0.6744186046511629
+      ],
+      "estimated_probability": 0.2068798388674861,
+      "combined_decimal_price": 3.841599999999999,
+      "expected_return": -0.20525041100666563,
+      "ensemble_uncertainty": 0.01838016407667211,
+      "leg_wins": 2,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-08",
+      "snapshot_id": "mlb_20260808_131332Z_9efaae6239b7",
+      "strategy": "hybrid",
+      "leg_count": 2,
+      "book": "espnbet",
+      "players": [
+        "Junior Caminero",
+        "Nolan Schanuel"
+      ],
+      "games": [
+        "823102",
+        "823834"
+      ],
+      "leg_probabilities": [
+        0.6544497629429241,
+        0.6509162924172816
+      ],
+      "estimated_probability": 0.425992013268177,
+      "combined_decimal_price": 2.006944444444444,
+      "expected_return": -0.14505769559372828,
+      "ensemble_uncertainty": 0.024061081617354683,
+      "leg_wins": 1,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-08",
+      "snapshot_id": "mlb_20260808_131332Z_9efaae6239b7",
+      "strategy": "hybrid",
+      "leg_count": 3,
+      "book": "espnbet",
+      "players": [
+        "Chandler Simpson",
+        "Alec Bohm",
+        "Nolan Schanuel"
+      ],
+      "games": [
+        "823102",
+        "823426",
+        "823834"
+      ],
+      "leg_probabilities": [
+        0.6619169765913063,
+        0.6535253432221524,
+        0.6509162924172816
+      ],
+      "estimated_probability": 0.2815730568858282,
+      "combined_decimal_price": 2.776666666666666,
+      "expected_return": -0.21816547871368397,
+      "ensemble_uncertainty": 0.022793080823139217,
+      "leg_wins": 2,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-08",
+      "snapshot_id": "mlb_20260808_131332Z_9efaae6239b7",
+      "strategy": "hybrid",
+      "leg_count": 4,
+      "book": "espnbet",
+      "players": [
+        "Chandler Simpson",
+        "Alec Bohm",
+        "Nolan Schanuel",
+        "Jeremy Pe\u00f1a"
+      ],
+      "games": [
+        "823102",
+        "823426",
+        "823834",
+        "823267"
+      ],
+      "leg_probabilities": [
+        0.6619169765913063,
+        0.6535253432221524,
+        0.6509162924172816,
+        0.6508005933006928
+      ],
+      "estimated_probability": 0.18324791247878672,
+      "combined_decimal_price": 3.887333333333332,
+      "expected_return": -0.2876542815574633,
+      "ensemble_uncertainty": 0.022793080823139217,
+      "leg_wins": 2,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-09",
+      "snapshot_id": "mlb_20260809_131641Z_3c1f3a043eba",
+      "strategy": "latent_independent",
+      "leg_count": 2,
+      "book": "draftkings",
+      "players": [
+        "Geraldo Perdomo",
+        "CJ Abrams"
+      ],
+      "games": [
+        "825050",
+        "822700"
+      ],
+      "leg_probabilities": [
+        0.7061663819764716,
+        0.674606274850956
+      ],
+      "estimated_probability": 0.4763842723701248,
+      "combined_decimal_price": 2.1241081798573087,
+      "expected_return": 0.011891729696754227,
+      "ensemble_uncertainty": 0.013285174303045908,
+      "leg_wins": 2,
+      "ticket_hit": 1,
+      "realized_unit_return": 1.1241081798573087
+    },
+    {
+      "run_date": "2026-08-09",
+      "snapshot_id": "mlb_20260809_131641Z_3c1f3a043eba",
+      "strategy": "latent_independent",
+      "leg_count": 3,
+      "book": "draftkings",
+      "players": [
+        "Geraldo Perdomo",
+        "CJ Abrams",
+        "Jakob Marsee"
+      ],
+      "games": [
+        "825050",
+        "822700",
+        "823835"
+      ],
+      "leg_probabilities": [
+        0.7061663819764716,
+        0.674606274850956,
+        0.6485008669175442
+      ],
+      "estimated_probability": 0.30893561361790944,
+      "combined_decimal_price": 3.5124141797640465,
+      "expected_return": 0.08510982990565186,
+      "ensemble_uncertainty": 0.03483876984618712,
+      "leg_wins": 3,
+      "ticket_hit": 1,
+      "realized_unit_return": 2.5124141797640465
+    },
+    {
+      "run_date": "2026-08-09",
+      "snapshot_id": "mlb_20260809_131641Z_3c1f3a043eba",
+      "strategy": "latent_independent",
+      "leg_count": 4,
+      "book": "draftkings",
+      "players": [
+        "Geraldo Perdomo",
+        "CJ Abrams",
+        "Jakob Marsee",
+        "TJ Rumfield"
+      ],
+      "games": [
+        "825050",
+        "822700",
+        "823835",
+        "823020"
+      ],
+      "leg_probabilities": [
+        0.7061663819764716,
+        0.674606274850956,
+        0.6485008669175442,
+        0.6477937028528113
+      ],
+      "estimated_probability": 0.20012654508865096,
+      "combined_decimal_price": 5.138531855580735,
+      "expected_return": 0.028356627085347252,
+      "ensemble_uncertainty": 0.03483876984618712,
+      "leg_wins": 3,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-09",
+      "snapshot_id": "mlb_20260809_131641Z_3c1f3a043eba",
+      "strategy": "latent_joint",
+      "leg_count": 2,
+      "book": "draftkings",
+      "players": [
+        "Geraldo Perdomo",
+        "CJ Abrams"
+      ],
+      "games": [
+        "825050",
+        "822700"
+      ],
+      "leg_probabilities": [
+        0.7061663819764716,
+        0.674606274850956
+      ],
+      "estimated_probability": 0.3059855039416479,
+      "combined_decimal_price": 2.1241081798573087,
+      "expected_return": -0.3500536881597849,
+      "ensemble_uncertainty": 0.030239061674315552,
+      "leg_wins": 2,
+      "ticket_hit": 1,
+      "realized_unit_return": 1.1241081798573087
+    },
+    {
+      "run_date": "2026-08-09",
+      "snapshot_id": "mlb_20260809_131641Z_3c1f3a043eba",
+      "strategy": "latent_joint",
+      "leg_count": 3,
+      "book": "draftkings",
+      "players": [
+        "Geraldo Perdomo",
+        "CJ Abrams",
+        "Jakob Marsee"
+      ],
+      "games": [
+        "825050",
+        "822700",
+        "823835"
+      ],
+      "leg_probabilities": [
+        0.7061663819764716,
+        0.674606274850956,
+        0.6485008669175442
+      ],
+      "estimated_probability": 0.18324014851068487,
+      "combined_decimal_price": 3.5124141797640465,
+      "expected_return": -0.3563847040690007,
+      "ensemble_uncertainty": 0.043682894740524184,
+      "leg_wins": 3,
+      "ticket_hit": 1,
+      "realized_unit_return": 2.5124141797640465
+    },
+    {
+      "run_date": "2026-08-09",
+      "snapshot_id": "mlb_20260809_131641Z_3c1f3a043eba",
+      "strategy": "latent_joint",
+      "leg_count": 4,
+      "book": "draftkings",
+      "players": [
+        "Geraldo Perdomo",
+        "CJ Abrams",
+        "Jakob Marsee",
+        "TJ Rumfield"
+      ],
+      "games": [
+        "825050",
+        "822700",
+        "823835",
+        "823020"
+      ],
+      "leg_probabilities": [
+        0.7061663819764716,
+        0.674606274850956,
+        0.6485008669175442,
+        0.6477937028528113
+      ],
+      "estimated_probability": 0.11477948422368305,
+      "combined_decimal_price": 5.138531855580735,
+      "expected_return": -0.4102019639494783,
+      "ensemble_uncertainty": 0.03474199156233167,
+      "leg_wins": 3,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-09",
+      "snapshot_id": "mlb_20260809_131641Z_3c1f3a043eba",
+      "strategy": "market",
+      "leg_count": 2,
+      "book": "bovada",
+      "players": [
+        "Nick Gonzales",
+        "Alec Bohm"
+      ],
+      "games": [
+        "823345",
+        "823425"
+      ],
+      "leg_probabilities": [
+        0.6733282090699463,
+        0.6679687500000001
+      ],
+      "estimated_probability": 0.44976220215219076,
+      "combined_decimal_price": 2.006944444444444,
+      "expected_return": -0.09735224706956169,
+      "ensemble_uncertainty": 0.043005567464273635,
+      "leg_wins": 1,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-09",
+      "snapshot_id": "mlb_20260809_131641Z_3c1f3a043eba",
+      "strategy": "market",
+      "leg_count": 3,
+      "book": "espnbet",
+      "players": [
+        "Vladimir Guerrero Jr",
+        "Mookie Betts",
+        "Fernando Tatis Jr"
+      ],
+      "games": [
+        "823425",
+        "825050",
+        "823268"
+      ],
+      "leg_probabilities": [
+        0.6744186046511629,
+        0.6744186046511629,
+        0.6744186046511629
+      ],
+      "estimated_probability": 0.30675286452765177,
+      "combined_decimal_price": 2.7439999999999993,
+      "expected_return": -0.1582701397361238,
+      "ensemble_uncertainty": 0.015944553131876038,
+      "leg_wins": 2,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-09",
+      "snapshot_id": "mlb_20260809_131641Z_3c1f3a043eba",
+      "strategy": "market",
+      "leg_count": 4,
+      "book": "espnbet",
+      "players": [
+        "Vladimir Guerrero Jr",
+        "Wade Meckler",
+        "Mookie Betts",
+        "Fernando Tatis Jr"
+      ],
+      "games": [
+        "823425",
+        "823835",
+        "825050",
+        "823268"
+      ],
+      "leg_probabilities": [
+        0.6744186046511629,
+        0.6744186046511629,
+        0.6744186046511629,
+        0.6744186046511629
+      ],
+      "estimated_probability": 0.2068798388674861,
+      "combined_decimal_price": 3.841599999999999,
+      "expected_return": -0.20525041100666563,
+      "ensemble_uncertainty": 0.01609494167293981,
+      "leg_wins": 3,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-09",
+      "snapshot_id": "mlb_20260809_131641Z_3c1f3a043eba",
+      "strategy": "hybrid",
+      "leg_count": 2,
+      "book": "espnbet",
+      "players": [
+        "Fernando Tatis Jr",
+        "Geraldo Perdomo"
+      ],
+      "games": [
+        "823268",
+        "825050"
+      ],
+      "leg_probabilities": [
+        0.6622779580350272,
+        0.6578244554672353
+      ],
+      "estimated_probability": 0.4356626371123443,
+      "combined_decimal_price": 2.036363636363636,
+      "expected_return": -0.11283244806213533,
+      "ensemble_uncertainty": 0.013285174303045908,
+      "leg_wins": 2,
+      "ticket_hit": 1,
+      "realized_unit_return": 1.0363636363636362
+    },
+    {
+      "run_date": "2026-08-09",
+      "snapshot_id": "mlb_20260809_131641Z_3c1f3a043eba",
+      "strategy": "hybrid",
+      "leg_count": 3,
+      "book": "espnbet",
+      "players": [
+        "Fernando Tatis Jr",
+        "Geraldo Perdomo",
+        "Cole Carrigg"
+      ],
+      "games": [
+        "823268",
+        "825050",
+        "823020"
+      ],
+      "leg_probabilities": [
+        0.6622779580350272,
+        0.6578244554672353,
+        0.6531591635610001
+      ],
+      "estimated_probability": 0.28455704365107837,
+      "combined_decimal_price": 2.8509090909090906,
+      "expected_return": -0.18875373737292578,
+      "ensemble_uncertainty": 0.017849437094182144,
+      "leg_wins": 3,
+      "ticket_hit": 1,
+      "realized_unit_return": 1.8509090909090906
+    },
+    {
+      "run_date": "2026-08-09",
+      "snapshot_id": "mlb_20260809_131641Z_3c1f3a043eba",
+      "strategy": "hybrid",
+      "leg_count": 4,
+      "book": "espnbet",
+      "players": [
+        "Fernando Tatis Jr",
+        "Geraldo Perdomo",
+        "Cole Carrigg",
+        "Wade Meckler"
+      ],
+      "games": [
+        "823268",
+        "825050",
+        "823020",
+        "823835"
+      ],
+      "leg_probabilities": [
+        0.6622779580350272,
+        0.6578244554672353,
+        0.6531591635610001,
+        0.6525801037542089
+      ],
+      "estimated_probability": 0.18569626506981168,
+      "combined_decimal_price": 3.9912727272727264,
+      "expected_return": -0.25883556167045363,
+      "ensemble_uncertainty": 0.017849437094182144,
+      "leg_wins": 4,
+      "ticket_hit": 1,
+      "realized_unit_return": 2.9912727272727264
+    },
+    {
+      "run_date": "2026-08-10",
+      "snapshot_id": "mlb_20260810_134459Z_5eb5781fd55e",
+      "strategy": "latent_independent",
+      "leg_count": 2,
+      "book": "betmgm",
+      "players": [
+        "Masataka Yoshida",
+        "Carson Benge"
+      ],
+      "games": [
+        "822780",
+        "824887"
+      ],
+      "leg_probabilities": [
+        0.6991493542573115,
+        0.6669064234110291
+      ],
+      "estimated_probability": 0.4662671952778742,
+      "combined_decimal_price": 2.1322751322751325,
+      "expected_return": -0.005790054513315712,
+      "ensemble_uncertainty": 0.03585055182611289,
+      "leg_wins": 0,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-10",
+      "snapshot_id": "mlb_20260810_134459Z_5eb5781fd55e",
+      "strategy": "latent_independent",
+      "leg_count": 3,
+      "book": "betmgm",
+      "players": [
+        "Masataka Yoshida",
+        "Carson Benge",
+        "Jeff McNeil"
+      ],
+      "games": [
+        "822780",
+        "824887",
+        "824969"
+      ],
+      "leg_probabilities": [
+        0.6991493542573115,
+        0.6669064234110291,
+        0.6523665760080753
+      ],
+      "estimated_probability": 0.30417713368831545,
+      "combined_decimal_price": 3.101491101491102,
+      "expected_return": -0.05659732658862038,
+      "ensemble_uncertainty": 0.03585055182611289,
+      "leg_wins": 1,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-10",
+      "snapshot_id": "mlb_20260810_134459Z_5eb5781fd55e",
+      "strategy": "latent_independent",
+      "leg_count": 4,
+      "book": "draftkings",
+      "players": [
+        "Masataka Yoshida",
+        "Carson Benge",
+        "Jeff McNeil",
+        "Luke Keaschall"
+      ],
+      "games": [
+        "822780",
+        "824887",
+        "824969",
+        "823675"
+      ],
+      "leg_probabilities": [
+        0.6991493542573115,
+        0.6669064234110291,
+        0.6523665760080753,
+        0.6108522210313201
+      ],
+      "estimated_probability": 0.18580727770044828,
+      "combined_decimal_price": 4.697517131075469,
+      "expected_return": -0.1271671299236472,
+      "ensemble_uncertainty": 0.03585055182611289,
+      "leg_wins": 2,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-10",
+      "snapshot_id": "mlb_20260810_134459Z_5eb5781fd55e",
+      "strategy": "latent_joint",
+      "leg_count": 2,
+      "book": "betmgm",
+      "players": [
+        "Masataka Yoshida",
+        "Carson Benge"
+      ],
+      "games": [
+        "822780",
+        "824887"
+      ],
+      "leg_probabilities": [
+        0.6991493542573115,
+        0.6669064234110291
+      ],
+      "estimated_probability": 0.29716804358276494,
+      "combined_decimal_price": 2.1322751322751325,
+      "expected_return": -0.3663559705616175,
+      "ensemble_uncertainty": 0.020177122322653656,
+      "leg_wins": 0,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-10",
+      "snapshot_id": "mlb_20260810_134459Z_5eb5781fd55e",
+      "strategy": "latent_joint",
+      "leg_count": 3,
+      "book": "betmgm",
+      "players": [
+        "Masataka Yoshida",
+        "Carson Benge",
+        "Jeff McNeil"
+      ],
+      "games": [
+        "822780",
+        "824887",
+        "824969"
+      ],
+      "leg_probabilities": [
+        0.6991493542573115,
+        0.6669064234110291,
+        0.6523665760080753
+      ],
+      "estimated_probability": 0.1795006777801644,
+      "combined_decimal_price": 3.101491101491102,
+      "expected_return": -0.4432802451531985,
+      "ensemble_uncertainty": 0.023413696351949696,
+      "leg_wins": 1,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-10",
+      "snapshot_id": "mlb_20260810_134459Z_5eb5781fd55e",
+      "strategy": "latent_joint",
+      "leg_count": 4,
+      "book": "draftkings",
+      "players": [
+        "Masataka Yoshida",
+        "Carson Benge",
+        "Jeff McNeil",
+        "Luke Keaschall"
+      ],
+      "games": [
+        "822780",
+        "824887",
+        "824969",
+        "823675"
+      ],
+      "leg_probabilities": [
+        0.6991493542573115,
+        0.6669064234110291,
+        0.6523665760080753,
+        0.6108522210313201
+      ],
+      "estimated_probability": 0.10602405343265928,
+      "combined_decimal_price": 4.697517131075469,
+      "expected_return": -0.5019501926940222,
+      "ensemble_uncertainty": 0.023970931924148876,
+      "leg_wins": 2,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-10",
+      "snapshot_id": "mlb_20260810_134459Z_5eb5781fd55e",
+      "strategy": "market",
+      "leg_count": 2,
+      "book": "bovada",
+      "players": [
+        "Pete Alonso",
+        "Ketel Marte"
+      ],
+      "games": [
+        "823675",
+        "825048"
+      ],
+      "leg_probabilities": [
+        0.6673617317048953,
+        0.6632329635499208
+      ],
+      "estimated_probability": 0.44261629907844485,
+      "combined_decimal_price": 2.0195035460992905,
+      "expected_return": -0.10613481444973649,
+      "ensemble_uncertainty": 0.053370518376456455,
+      "leg_wins": 2,
+      "ticket_hit": 1,
+      "realized_unit_return": 1.0195035460992905
+    },
+    {
+      "run_date": "2026-08-10",
+      "snapshot_id": "mlb_20260810_134459Z_5eb5781fd55e",
+      "strategy": "market",
+      "leg_count": 3,
+      "book": "espnbet",
+      "players": [
+        "Bryce Harper",
+        "Tyler Soderstrom",
+        "Freddie Freeman"
+      ],
+      "games": [
+        "823018",
+        "824969",
+        "823918"
+      ],
+      "leg_probabilities": [
+        0.6744186046511629,
+        0.6744186046511629,
+        0.6744186046511629
+      ],
+      "estimated_probability": 0.30675286452765177,
+      "combined_decimal_price": 2.7439999999999993,
+      "expected_return": -0.1582701397361238,
+      "ensemble_uncertainty": 0.018823049112218035,
+      "leg_wins": 2,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-10",
+      "snapshot_id": "mlb_20260810_134459Z_5eb5781fd55e",
+      "strategy": "market",
+      "leg_count": 4,
+      "book": "espnbet",
+      "players": [
+        "Bryce Harper",
+        "Corbin Carroll",
+        "Tyler Soderstrom",
+        "Freddie Freeman"
+      ],
+      "games": [
+        "823018",
+        "825048",
+        "824969",
+        "823918"
+      ],
+      "leg_probabilities": [
+        0.6744186046511629,
+        0.6744186046511629,
+        0.6744186046511629,
+        0.6744186046511629
+      ],
+      "estimated_probability": 0.2068798388674861,
+      "combined_decimal_price": 3.841599999999999,
+      "expected_return": -0.20525041100666563,
+      "ensemble_uncertainty": 0.022853808977045184,
+      "leg_wins": 3,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-10",
+      "snapshot_id": "mlb_20260810_134459Z_5eb5781fd55e",
+      "strategy": "hybrid",
+      "leg_count": 2,
+      "book": "espnbet",
+      "players": [
+        "Masataka Yoshida",
+        "Jeff McNeil"
+      ],
+      "games": [
+        "822780",
+        "824969"
+      ],
+      "leg_probabilities": [
+        0.6636758545600067,
+        0.6595196680294864
+      ],
+      "estimated_probability": 0.43770727927860126,
+      "combined_decimal_price": 2.006944444444444,
+      "expected_return": -0.12154580755891842,
+      "ensemble_uncertainty": 0.02951725093657336,
+      "leg_wins": 1,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-10",
+      "snapshot_id": "mlb_20260810_134459Z_5eb5781fd55e",
+      "strategy": "hybrid",
+      "leg_count": 3,
+      "book": "espnbet",
+      "players": [
+        "Masataka Yoshida",
+        "Jeff McNeil",
+        "Freddie Freeman"
+      ],
+      "games": [
+        "822780",
+        "824969",
+        "823918"
+      ],
+      "leg_probabilities": [
+        0.6636758545600067,
+        0.6595196680294864,
+        0.6570176456729178
+      ],
+      "estimated_probability": 0.2875814061255249,
+      "combined_decimal_price": 2.809722222222222,
+      "expected_return": -0.19197613251119894,
+      "ensemble_uncertainty": 0.02951725093657336,
+      "leg_wins": 2,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-10",
+      "snapshot_id": "mlb_20260810_134459Z_5eb5781fd55e",
+      "strategy": "hybrid",
+      "leg_count": 4,
+      "book": "espnbet",
+      "players": [
+        "Masataka Yoshida",
+        "Jeff McNeil",
+        "Freddie Freeman",
+        "AJ Ewing"
+      ],
+      "games": [
+        "822780",
+        "824969",
+        "823918",
+        "824887"
+      ],
+      "leg_probabilities": [
+        0.6636758545600067,
+        0.6595196680294864,
+        0.6570176456729178,
+        0.6535106231888549
+      ],
+      "estimated_probability": 0.18793750393461894,
+      "combined_decimal_price": 3.980439814814814,
+      "expected_return": -0.25192607664172706,
+      "ensemble_uncertainty": 0.029769952117021135,
+      "leg_wins": 3,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-11",
+      "snapshot_id": "mlb_20260811_213817Z_c0778860a3d6",
+      "strategy": "latent_independent",
+      "leg_count": 2,
+      "book": "betmgm",
+      "players": [
+        "Cole Young",
+        "Jake Bauers"
+      ],
+      "games": [
+        "823512",
+        "823264"
+      ],
+      "leg_probabilities": [
+        0.6805664814418051,
+        0.6677797868105241
+      ],
+      "estimated_probability": 0.4544685398875971,
+      "combined_decimal_price": 2.5,
+      "expected_return": 0.1361713497189927,
+      "ensemble_uncertainty": 0.026231889552890457,
+      "leg_wins": 0,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-11",
+      "snapshot_id": "mlb_20260811_213817Z_c0778860a3d6",
+      "strategy": "latent_independent",
+      "leg_count": 3,
+      "book": "espnbet",
+      "players": [
+        "Cole Young",
+        "Jake Bauers",
+        "Francisco Lindor"
+      ],
+      "games": [
+        "823512",
+        "823264",
+        "824886"
+      ],
+      "leg_probabilities": [
+        0.6805664814418051,
+        0.6677797868105241,
+        0.6645274670999054
+      ],
+      "estimated_probability": 0.3020068276880972,
+      "combined_decimal_price": 3.5656082354646954,
+      "expected_return": 0.07683803197124672,
+      "ensemble_uncertainty": 0.026231889552890457,
+      "leg_wins": 1,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-11",
+      "snapshot_id": "mlb_20260811_213817Z_c0778860a3d6",
+      "strategy": "latent_independent",
+      "leg_count": 4,
+      "book": "espnbet",
+      "players": [
+        "Cole Young",
+        "Jake Bauers",
+        "Francisco Lindor",
+        "Nolan Arenado"
+      ],
+      "games": [
+        "823512",
+        "823264",
+        "824886",
+        "825046"
+      ],
+      "leg_probabilities": [
+        0.6805664814418051,
+        0.6677797868105241,
+        0.6645274670999054,
+        0.6415955438778325
+      ],
+      "estimated_probability": 0.19376623486536357,
+      "combined_decimal_price": 5.0512783335749845,
+      "expected_return": -0.02123281604618721,
+      "ensemble_uncertainty": 0.03851572904020029,
+      "leg_wins": 2,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-11",
+      "snapshot_id": "mlb_20260811_213817Z_c0778860a3d6",
+      "strategy": "latent_joint",
+      "leg_count": 2,
+      "book": "espnbet",
+      "players": [
+        "Cole Young",
+        "Francisco Lindor"
+      ],
+      "games": [
+        "823512",
+        "824886"
+      ],
+      "leg_probabilities": [
+        0.6805664814418051,
+        0.6645274670999054
+      ],
+      "estimated_probability": 0.2895260924192904,
+      "combined_decimal_price": 2.2200956937799043,
+      "expected_return": -0.3572243689830108,
+      "ensemble_uncertainty": 0.05259212298169223,
+      "leg_wins": 1,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-11",
+      "snapshot_id": "mlb_20260811_213817Z_c0778860a3d6",
+      "strategy": "latent_joint",
+      "leg_count": 3,
+      "book": "espnbet",
+      "players": [
+        "Cole Young",
+        "Jake Bauers",
+        "Francisco Lindor"
+      ],
+      "games": [
+        "823512",
+        "823264",
+        "824886"
+      ],
+      "leg_probabilities": [
+        0.6805664814418051,
+        0.6677797868105241,
+        0.6645274670999054
+      ],
+      "estimated_probability": 0.1799397307664685,
+      "combined_decimal_price": 3.5656082354646954,
+      "expected_return": -0.35840541409177995,
+      "ensemble_uncertainty": 0.04636060365833049,
+      "leg_wins": 1,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-11",
+      "snapshot_id": "mlb_20260811_213817Z_c0778860a3d6",
+      "strategy": "latent_joint",
+      "leg_count": 4,
+      "book": "espnbet",
+      "players": [
+        "Cole Young",
+        "Jake Bauers",
+        "Francisco Lindor",
+        "Nolan Arenado"
+      ],
+      "games": [
+        "823512",
+        "823264",
+        "824886",
+        "825046"
+      ],
+      "leg_probabilities": [
+        0.6805664814418051,
+        0.6677797868105241,
+        0.6645274670999054,
+        0.6415955438778325
+      ],
+      "estimated_probability": 0.11255304017168352,
+      "combined_decimal_price": 5.0512783335749845,
+      "expected_return": -0.43146326680278013,
+      "ensemble_uncertainty": 0.04297910149668454,
+      "leg_wins": 2,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-11",
+      "snapshot_id": "mlb_20260811_213817Z_c0778860a3d6",
+      "strategy": "market",
+      "leg_count": 2,
+      "book": "espnbet",
+      "players": [
+        "Jake Mangum",
+        "Josh Bell"
+      ],
+      "games": [
+        "823832",
+        "823673"
+      ],
+      "leg_probabilities": [
+        0.6640316205533597,
+        0.6640316205533597
+      ],
+      "estimated_probability": 0.44093799309472115,
+      "combined_decimal_price": 2.006944444444444,
+      "expected_return": -0.1150619444140667,
+      "ensemble_uncertainty": 0.025046482545258996,
+      "leg_wins": 0,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-11",
+      "snapshot_id": "mlb_20260811_213817Z_c0778860a3d6",
+      "strategy": "market",
+      "leg_count": 3,
+      "book": "espnbet",
+      "players": [
+        "Michael Harris II",
+        "Corey Seager",
+        "Yainer Diaz"
+      ],
+      "games": [
+        "824886",
+        "823997",
+        "823186"
+      ],
+      "leg_probabilities": [
+        0.6744186046511629,
+        0.6744186046511629,
+        0.6744186046511629
+      ],
+      "estimated_probability": 0.30675286452765177,
+      "combined_decimal_price": 2.7439999999999993,
+      "expected_return": -0.1582701397361238,
+      "ensemble_uncertainty": 0.027474128237557096,
+      "leg_wins": 1,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-11",
+      "snapshot_id": "mlb_20260811_213817Z_c0778860a3d6",
+      "strategy": "market",
+      "leg_count": 4,
+      "book": "espnbet",
+      "players": [
+        "Dillon Dingler",
+        "Drake Baldwin",
+        "Corey Seager",
+        "Yainer Diaz"
+      ],
+      "games": [
+        "824240",
+        "824886",
+        "823997",
+        "823186"
+      ],
+      "leg_probabilities": [
+        0.6744186046511629,
+        0.6744186046511629,
+        0.6744186046511629,
+        0.6744186046511629
+      ],
+      "estimated_probability": 0.2068798388674861,
+      "combined_decimal_price": 3.841599999999999,
+      "expected_return": -0.20525041100666563,
+      "ensemble_uncertainty": 0.030538519461497538,
+      "leg_wins": 0,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-11",
+      "snapshot_id": "mlb_20260811_213817Z_c0778860a3d6",
+      "strategy": "hybrid",
+      "leg_count": 2,
+      "book": "espnbet",
+      "players": [
+        "Brice Turang",
+        "Nolan Arenado"
+      ],
+      "games": [
+        "823264",
+        "825046"
+      ],
+      "leg_probabilities": [
+        0.660593912638266,
+        0.6499154729582042
+      ],
+      "estimated_probability": 0.4293302051656092,
+      "combined_decimal_price": 2.006944444444444,
+      "expected_return": -0.1383581299106872,
+      "ensemble_uncertainty": 0.03851572904020029,
+      "leg_wins": 2,
+      "ticket_hit": 1,
+      "realized_unit_return": 1.0069444444444442
+    },
+    {
+      "run_date": "2026-08-11",
+      "snapshot_id": "mlb_20260811_213817Z_c0778860a3d6",
+      "strategy": "hybrid",
+      "leg_count": 3,
+      "book": "espnbet",
+      "players": [
+        "Brice Turang",
+        "Drake Baldwin",
+        "Corey Seager"
+      ],
+      "games": [
+        "823264",
+        "824886",
+        "823997"
+      ],
+      "leg_probabilities": [
+        0.660593912638266,
+        0.6563184598270797,
+        0.6522102092283729
+      ],
+      "estimated_probability": 0.282772244821362,
+      "combined_decimal_price": 2.776666666666666,
+      "expected_return": -0.21483573354601848,
+      "ensemble_uncertainty": 0.03003326726709294,
+      "leg_wins": 1,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    },
+    {
+      "run_date": "2026-08-11",
+      "snapshot_id": "mlb_20260811_213817Z_c0778860a3d6",
+      "strategy": "hybrid",
+      "leg_count": 4,
+      "book": "espnbet",
+      "players": [
+        "Brice Turang",
+        "Drake Baldwin",
+        "Corey Seager",
+        "Alex Bregman"
+      ],
+      "games": [
+        "823264",
+        "824886",
+        "823997",
+        "822697"
+      ],
+      "leg_probabilities": [
+        0.660593912638266,
+        0.6563184598270797,
+        0.6522102092283729,
+        0.6517485591565703
+      ],
+      "estimated_probability": 0.1842964031317916,
+      "combined_decimal_price": 3.887333333333332,
+      "expected_return": -0.28357844889234907,
+      "ensemble_uncertainty": 0.03948731923160979,
+      "leg_wins": 2,
+      "ticket_hit": 0,
+      "realized_unit_return": -1.0
+    }
+  ],
+  "limitations": [
+    "The archive begins after model training and currently contains only a few settled slates.",
+    "Lineup state was UNKNOWN_AT_CAPTURE for some candidates; prior batting order is used without hindsight.",
+    "Results may authorize continued shadow operation only; they do not establish future expected return."
+  ]
+}

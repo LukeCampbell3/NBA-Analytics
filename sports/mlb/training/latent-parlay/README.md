@@ -1,6 +1,6 @@
 # MLB latent parlay training
 
-This image trains the MLB H-over-0.5 latent leg ensemble and the two-to-four-leg set-attention model on an NVIDIA GPU. Training excludes same-game outcome-derived projection fields and splits complete slate dates into development, calibration, and locked model holdout periods.
+This image trains the MLB H-over-0.5 latent leg ensemble and the two-to-four-leg set-attention model on an NVIDIA GPU. Training excludes same-game outcome-derived projection fields, uses the same normalized player identity contract as production, and splits complete slate dates into development, calibration, and locked model holdout periods.
 
 From the repository root on Windows:
 

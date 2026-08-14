@@ -111,7 +111,7 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
                     "core_max_american_price": 125.0,
                     "min_over_picks": 0,
                     "max_over_picks": 3,
-                    "max_under_picks": 1,
+                    "max_under_picks": 0,
                     "daily_pick_soft_cap": 3,
                     "post_cap_min_selection_score": 0.80,
                     "min_hit_probability": 0.825,
@@ -212,6 +212,15 @@ def test_validate_publication_allows_stale_payloads_when_requested(tmp_path: Pat
         run_date="2026-04-27",
         sport="mlb",
     )
+    for relative_path in (
+        "sports/mlb/web/data/daily_predictions.json",
+        "dist/mlb/data/daily_predictions.json",
+    ):
+        payload_path = tmp_path / relative_path
+        payload = json.loads(payload_path.read_text(encoding="utf-8"))
+        payload["policy_profile"] = "premium_evidence_gated_v7"
+        payload["selection"]["max_under_picks"] = 1
+        payload_path.write_text(json.dumps(payload), encoding="utf-8")
     route = tmp_path / "dist/mlb/predictions/index.html"
     route.parent.mkdir(parents=True, exist_ok=True)
     route.write_text("ok", encoding="utf-8")
@@ -266,7 +275,7 @@ def test_validate_publication_rejects_legacy_mlb_pool_policy(tmp_path: Path) -> 
     route.parent.mkdir(parents=True, exist_ok=True)
     route.write_text("ok", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="expected premium_evidence_gated_v7"):
+    with pytest.raises(ValueError, match="expected premium_evidence_gated_v8"):
         validate_publication(
             repo_root=tmp_path,
             output_dir=Path("dist"),

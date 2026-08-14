@@ -18,7 +18,8 @@ SPORT_PAYLOADS = {
     "nba": Path("sports/nba/web/data/daily_predictions.json"),
     "mlb": Path("sports/mlb/web/data/daily_predictions.json"),
 }
-MLB_POLICY_PROFILE = "premium_evidence_gated_v7"
+MLB_POLICY_PROFILE = "premium_evidence_gated_v8"
+MLB_LEGACY_POLICY_PROFILE = "premium_evidence_gated_v7"
 MLB_REQUIRED_TARGETS = {"ER", "H", "HR", "K", "R", "RBI", "TB"}
 MLB_MIN_BOOKS = 5
 MLB_MIN_COMMON_BOOKS = 2
@@ -40,7 +41,7 @@ MLB_CORE_MIN_AMERICAN_PRICE = -180.0
 MLB_CORE_MAX_AMERICAN_PRICE = 125.0
 MLB_MIN_OVER_PICKS = 0
 MLB_MAX_OVER_PICKS = 3
-MLB_MAX_UNDER_PICKS = 1
+MLB_MAX_UNDER_PICKS = 0
 MLB_MIN_CORE_HIT_PROBABILITY = 0.825
 MLB_HISTORICAL_EVIDENCE_SCOPE = "real_price_confirmed_markets_only_v1"
 MLB_PARLAY_PROBABILITY_FLOORS = {2: 0.40, 3: 0.25, 4: 0.18}
@@ -326,12 +327,21 @@ def validate_fanduel_betslip(ticket: dict[str, Any], betslip: dict[str, Any], *,
         raise ValueError(f"MLB {label} betslip does not contain exactly one unique selection per leg.")
 
 
-def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
+def validate_mlb_payload(
+    payload: dict[str, Any],
+    *,
+    label: str,
+    allow_legacy_policy: bool = False,
+) -> None:
     policy_profile = str(payload.get("policy_profile") or "")
-    if policy_profile != MLB_POLICY_PROFILE:
+    accepted_profiles = {MLB_POLICY_PROFILE}
+    if allow_legacy_policy:
+        accepted_profiles.add(MLB_LEGACY_POLICY_PROFILE)
+    if policy_profile not in accepted_profiles:
         raise ValueError(
             f"MLB {label} payload used policy {policy_profile or '<missing>'}; expected {MLB_POLICY_PROFILE}."
         )
+    maximum_under_picks = 1 if policy_profile == MLB_LEGACY_POLICY_PROFILE else MLB_MAX_UNDER_PICKS
     publication_state = str(payload.get("publication_state") or "")
     if publication_state not in MLB_PUBLICATION_STATES:
         raise ValueError(f"MLB {label} payload has invalid publication state {publication_state or '<missing>'}.")
@@ -420,7 +430,7 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
     if (
         int(selection.get("min_over_picks", 0)) != MLB_MIN_OVER_PICKS
         or int(selection.get("max_over_picks", 0)) != MLB_MAX_OVER_PICKS
-        or int(selection.get("max_under_picks", 0)) != MLB_MAX_UNDER_PICKS
+        or int(selection.get("max_under_picks", 0)) != maximum_under_picks
     ):
         raise ValueError(f"MLB {label} payload is not using the validated over-first portfolio limits.")
     if (
@@ -506,8 +516,8 @@ def validate_mlb_payload(payload: dict[str, Any], *, label: str) -> None:
                 raise ValueError(f"MLB {label} play {index} falls outside the executable core price corridor.")
     if pitcher_k_count > MLB_MAX_PITCHER_K_PICKS:
         raise ValueError(f"MLB {label} payload exceeds the one-pick pitcher K cap.")
-    if under_count > MLB_MAX_UNDER_PICKS:
-        raise ValueError(f"MLB {label} payload exceeds the one-pick UNDER fallback cap.")
+    if under_count > maximum_under_picks:
+        raise ValueError(f"MLB {label} payload exceeds the active UNDER cap of {maximum_under_picks}.")
 
     for index, parlay in enumerate(payload.get("parlay_pairs", []), start=1):
         if not isinstance(parlay, dict):
@@ -628,8 +638,8 @@ def validate_publication(
             validate_mlb_payload(source_payload, label="source")
             validate_mlb_payload(public_payload, label="public")
         elif sport == "mlb" and allow_stale_payloads and (source_payload or public_payload):
-            validate_mlb_payload(source_payload, label="source")
-            validate_mlb_payload(public_payload, label="public")
+            validate_mlb_payload(source_payload, label="source", allow_legacy_policy=True)
+            validate_mlb_payload(public_payload, label="public", allow_legacy_policy=True)
         governance_suffix = ""
         if sport == "mlb" and source_payload.get("policy_governance"):
             governance = source_payload.get("policy_governance") or {}

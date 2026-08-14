@@ -36,6 +36,7 @@ try:
         DEFAULT_ARTIFACT_PATH as LATENT_PARLAY_ARTIFACT_PATH,
         LatentParlayBundle,
         candidate_features as latent_candidate_features,
+        market_residual_probability,
     )
 except ImportError:
     import select_high_precision_predictions as selector
@@ -49,6 +50,7 @@ except ImportError:
         DEFAULT_ARTIFACT_PATH as LATENT_PARLAY_ARTIFACT_PATH,
         LatentParlayBundle,
         candidate_features as latent_candidate_features,
+        market_residual_probability,
     )
 
 
@@ -59,7 +61,7 @@ CALIBRATION_ROOT = SPORT_ROOT / "data" / "predictions" / "calibration"
 DEFAULT_PROVIDER_OBSERVATIONS = (
     SPORT_ROOT / "data" / "raw" / "market_odds" / "mlb" / "odds_api_io" / "latest_provider_observations.csv"
 )
-POLICY_VERSION = "mlb_fanduel_public_betslip_parlay_v7"
+POLICY_VERSION = "mlb_fanduel_public_betslip_parlay_v8"
 ALLOWED_TARGETS = ("H", "TB", "R", "RBI", "K")
 MIN_LEGS = 2
 MAX_LEGS = 4
@@ -180,6 +182,7 @@ def _candidate_to_play(candidate: selector.Candidate) -> dict[str, Any]:
         "historical_bucket_key": candidate.historical_bucket_key,
         "estimated_graded_hit_rate": probability,
         "model_hit_probability": candidate.model_hit_probability,
+        "market_implied_probability": candidate.market_implied_probability,
         "final_pool_quality_score": candidate.selection_score,
         "expected_value_per_unit": candidate.expected_value_per_unit,
         "selected_side_price": candidate.selected_side_price,
@@ -787,11 +790,24 @@ def _latent_set_profile(
         independent_leg_product = math.prod(
             float(leg.get("latent_leg_probability") or 0.0) for leg in legs
         )
+        market_leg_probabilities = [
+            float(leg.get("market_implied_probability") or 0.0) for leg in legs
+        ]
+        hybrid_leg_probabilities = [
+            market_residual_probability(
+                leg.get("latent_leg_probability"),
+                market_probability,
+                leg.get("latent_leg_ensemble_std"),
+            )
+            for leg, market_probability in zip(legs, market_leg_probabilities)
+        ]
         profile.update(
             {
-                "shadow_representation": "gpu_set_attention_ensemble_v1",
+                "shadow_representation": "gpu_set_attention_market_residual_v2",
                 "shadow_joint_probability": prediction.probability,
                 "shadow_independent_leg_product": independent_leg_product,
+                "shadow_market_leg_product": math.prod(market_leg_probabilities),
+                "shadow_hybrid_leg_product": math.prod(hybrid_leg_probabilities),
                 "shadow_raw_joint_probability": prediction.raw_probability,
                 "shadow_ensemble_std": prediction.ensemble_std,
                 "shadow_support_fraction": prediction.support_fraction,
@@ -863,16 +879,14 @@ def _best_ticket_for_leg_count(
             profile = row.get("latent_set") or {}
             joint = float(profile.get("shadow_joint_probability") or 0.0)
             independent = float(profile.get("shadow_independent_leg_product") or 0.0)
+            hybrid = float(profile.get("shadow_hybrid_leg_product") or 0.0)
             ensemble_std = float(profile.get("shadow_ensemble_std") or 1.0)
             if leg_count == 2:
-                score = independent
-                method = "independent_latent_leg_product"
-            elif leg_count == 3:
                 score = joint
                 method = "bounded_attention_joint_probability"
             else:
-                score = min(joint, independent)
-                method = "conservative_joint_product_minimum"
+                score = hybrid
+                method = "market_residual_uncertainty_penalized_product"
             profile["shadow_ranking_method"] = method
             profile["shadow_ranking_score"] = score
             return score, -ensemble_std, float(row.get("set_consistency_score") or 0.0)
@@ -1223,9 +1237,9 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
                 "evidence_label": latent_parlay_bundle.evidence_label if latent_parlay_bundle is not None else None,
                 "ranking_effect": "none_on_authorized_ladder",
                 "shadow_ranking_policy": {
-                    "2": "independent_latent_leg_product",
-                    "3": "bounded_attention_joint_probability",
-                    "4": "conservative_joint_product_minimum",
+                    "2": "bounded_attention_joint_probability",
+                    "3": "market_residual_uncertainty_penalized_product",
+                    "4": "market_residual_uncertainty_penalized_product",
                 },
                 "maximum_legs": 4,
                 "in_support_required": True,

@@ -48,10 +48,12 @@ MLB_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_high_precision
 MLB_PARLAY_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_daily_parlay.py"
 MLB_CONFIDENCE_CALIBRATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "live_board_confidence.py"
 MLB_PICK_SURVIVAL_MODEL = REPO_ROOT / "sports" / "mlb" / "scripts" / "pick_survival_model.py"
+MLB_LATENT_POOL_REPLAY = REPO_ROOT / "sports" / "mlb" / "scripts" / "backtest_latent_daily_pools.py"
+MLB_LATENT_POOL_REPLAY_REPORT = REPO_ROOT / "sports" / "mlb" / "data" / "predictions" / "backtests" / "latent_daily_pool_replay_2026.json"
 MLB_MAX_WINRATE_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_max_winrate_board.py"
 MLB_EXPORTER = REPO_ROOT / "sports" / "mlb" / "scripts" / "export_web_prediction_payload.py"
 MLB_WEB_JSON = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "daily_predictions.json"
-MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v7"
+MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v8"
 MLB_PICK_SURVIVAL_TOP_K = 3
 MLB_PRIMARY_POLICY_ARGS = [
     "--top-n", "3",
@@ -81,7 +83,7 @@ MLB_PRIMARY_POLICY_ARGS = [
     "--core-max-american-price", "125",
     "--min-over-picks", "0",
     "--max-over-picks", "3",
-    "--max-under-picks", "1",
+    "--max-under-picks", "0",
     "--daily-pick-soft-cap", "3",
     "--post-cap-min-selection-score", "0.80",
     "--max-per-market-bucket", "2",
@@ -699,6 +701,20 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
                     pool_date.isoformat(),
                     "--top-k",
                     str(MLB_PICK_SURVIVAL_TOP_K),
+                ],
+            )
+        if MLB_LATENT_POOL_REPLAY.exists():
+            run_step(
+                "Replay MLB Latent Complete-Slate Holdout",
+                [
+                    args.python,
+                    str(MLB_LATENT_POOL_REPLAY),
+                    "--daily-runs-root",
+                    str(MLB_DAILY_RUNS_ROOT),
+                    "--processed-root",
+                    str(args.mlb_data_dir.resolve()),
+                    "--output-json",
+                    str(MLB_LATENT_POOL_REPLAY_REPORT),
                 ],
             )
 

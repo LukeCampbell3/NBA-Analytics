@@ -6,15 +6,16 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
+import unicodedata
 from dataclasses import dataclass
-from datetime import date
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 import numpy as np
 
 
-MODEL_VERSION = "mlb_latent_parlay_set_attention_v1"
+MODEL_VERSION = "mlb_latent_parlay_set_attention_v3"
 EVIDENCE_LABEL = "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM"
 DEFAULT_ARTIFACT_PATH = (
     Path(__file__).resolve().parents[1]
@@ -30,10 +31,6 @@ NUMERIC_FEATURES = (
     "batting_order",
     "log_history_rows",
     "is_home",
-    "month_sin",
-    "month_cos",
-    "weekday_sin",
-    "weekday_cos",
     "batter_strength",
     "pitcher_vulnerability",
     "pitcher_uncertainty",
@@ -47,6 +44,22 @@ NUMERIC_FEATURES = (
     "matchup_network_adjustment",
 )
 CATEGORICAL_FEATURES = ("player", "pitcher", "team", "opponent")
+SUPPORT_FEATURES = (
+    "baseline",
+    "batting_order",
+    "is_home",
+    "batter_strength",
+    "pitcher_vulnerability",
+    "pitcher_uncertainty",
+    "batter_vs_starter_lift",
+    "archetype_neighbor_lift",
+    "matchup_network_score",
+    "matchup_network_confidence",
+    "matchup_network_adjustment",
+)
+MARKET_RESIDUAL_LATENT_WEIGHT = 0.20
+MARKET_RESIDUAL_MARKET_WEIGHT = 0.80
+MARKET_RESIDUAL_UNCERTAINTY_PENALTY = 0.25
 
 
 def _finite(value: Any, default: float = 0.0) -> float:
@@ -57,8 +70,24 @@ def _finite(value: Any, default: float = 0.0) -> float:
     return output if math.isfinite(output) else float(default)
 
 
+def market_residual_probability(
+    latent_probability: Any,
+    market_probability: Any,
+    ensemble_std: Any,
+) -> float:
+    probability = (
+        MARKET_RESIDUAL_LATENT_WEIGHT * _finite(latent_probability, 0.5)
+        + MARKET_RESIDUAL_MARKET_WEIGHT * _finite(market_probability, 0.5)
+        - MARKET_RESIDUAL_UNCERTAINTY_PENALTY * max(0.0, _finite(ensemble_std, 0.0))
+    )
+    return max(0.01, min(0.99, probability))
+
+
 def _hash_bucket(value: Any, buckets: int) -> int:
-    digest = hashlib.blake2b(str(value or "unknown").strip().lower().encode("utf-8"), digest_size=8).digest()
+    text = unicodedata.normalize("NFKD", str(value or "unknown"))
+    text = text.encode("ascii", "ignore").decode("ascii").lower()
+    normalized = re.sub(r"[^a-z0-9]", "", text) or "unknown"
+    digest = hashlib.blake2b(normalized.encode("utf-8"), digest_size=8).digest()
     return int.from_bytes(digest, "little") % int(buckets)
 
 
@@ -90,17 +119,6 @@ def _layer_norm(values: np.ndarray, weight: np.ndarray, bias: np.ndarray, epsilo
     return ((values - mean) / np.sqrt(variance + epsilon)) * weight + bias
 
 
-def calendar_features(value: date) -> dict[str, float]:
-    month_angle = 2.0 * math.pi * (value.month - 1) / 12.0
-    weekday_angle = 2.0 * math.pi * value.weekday() / 7.0
-    return {
-        "month_sin": math.sin(month_angle),
-        "month_cos": math.cos(month_angle),
-        "weekday_sin": math.sin(weekday_angle),
-        "weekday_cos": math.cos(weekday_angle),
-    }
-
-
 def candidate_features(
     candidate: Any,
     *,
@@ -108,19 +126,12 @@ def candidate_features(
     batting_order: float,
 ) -> tuple[dict[str, float], dict[str, str]]:
     raw = getattr(candidate, "raw", {}) or {}
-    run_date = getattr(candidate, "run_date", None)
-    if not isinstance(run_date, date):
-        try:
-            run_date = date.fromisoformat(str(raw.get("Prediction_Run_Date", ""))[:10])
-        except ValueError:
-            run_date = date.today()
     numeric = {
         "baseline": _finite(raw.get("Baseline"), _finite(getattr(candidate, "prediction", 0.0))),
         "last_hits": _finite(last_hits),
         "batting_order": max(1.0, min(9.0, _finite(batting_order, 6.0))),
         "log_history_rows": math.log1p(max(0.0, _finite(getattr(candidate, "history_rows", 0.0)))),
         "is_home": _finite(raw.get("Is_Home")),
-        **calendar_features(run_date),
         "batter_strength": _finite(raw.get("Batter_Profile_Strength")),
         "pitcher_vulnerability": _finite(raw.get("Pitcher_Profile_Vulnerability")),
         "pitcher_uncertainty": _finite(raw.get("Pitcher_Profile_Uncertainty"), 1.0),
@@ -165,6 +176,10 @@ class LatentParlayBundle:
         self.scale = np.asarray(artifact["scaler"]["scale"], dtype=np.float64)
         self.support_low = np.asarray(artifact["support"]["standardized_low"], dtype=np.float64)
         self.support_high = np.asarray(artifact["support"]["standardized_high"], dtype=np.float64)
+        self.clip_low = np.asarray(artifact["support"]["clip_low"], dtype=np.float64)
+        self.clip_high = np.asarray(artifact["support"]["clip_high"], dtype=np.float64)
+        support_names = tuple(artifact["support"]["features"])
+        self.support_indices = np.asarray([self.numeric_features.index(name) for name in support_names], dtype=int)
         self.minimum_support_fraction = float(artifact["support"].get("minimum_fraction", 0.80))
         self.category_buckets = {key: int(value) for key, value in artifact["schema"]["category_buckets"].items()}
         self.models = [self._arrays(model) for model in artifact["ensemble"]]
@@ -186,9 +201,13 @@ class LatentParlayBundle:
 
     def _input(self, numeric: Mapping[str, float], categorical: Mapping[str, str]) -> tuple[np.ndarray, dict[str, int], float]:
         values = np.asarray([_finite(numeric.get(name)) for name in self.numeric_features], dtype=np.float64)
-        standardized = np.clip((values - self.mean) / self.scale, -8.0, 8.0)
-        supported = (standardized >= self.support_low) & (standardized <= self.support_high)
+        raw_standardized = (values - self.mean) / self.scale
+        supported = (
+            (raw_standardized[self.support_indices] >= self.support_low[self.support_indices])
+            & (raw_standardized[self.support_indices] <= self.support_high[self.support_indices])
+        )
         fraction = float(supported.mean())
+        standardized = np.clip(raw_standardized, self.clip_low, self.clip_high)
         categories = {
             name: _hash_bucket(categorical.get(name, "unknown"), self.category_buckets[name])
             for name in CATEGORICAL_FEATURES

@@ -93,6 +93,8 @@ def test_selector_profile_exposes_shadow_score_without_replacing_active_score() 
             "target": "H",
             "parlay_leg_probability": 0.66 + index * 0.01,
             "latent_leg_probability": 0.66 + index * 0.01,
+            "market_implied_probability": 0.68 + index * 0.01,
+            "latent_leg_ensemble_std": 0.02,
             "latent_probability_disagreement": 0.03,
             "latent_numeric_features": numeric,
             "latent_categorical_features": categories,
@@ -105,4 +107,6 @@ def test_selector_profile_exposes_shadow_score_without_replacing_active_score() 
     assert profile["set_consistency_score"] == pytest.approx(0.44 * (1.0 - 0.0275))
     assert 0.0 < profile["shadow_joint_probability"] < 1.0
     assert profile["shadow_independent_leg_product"] == pytest.approx(0.66 * 0.67)
+    assert profile["shadow_market_leg_product"] == pytest.approx(0.68 * 0.69)
+    assert 0.0 < profile["shadow_hybrid_leg_product"] < 1.0
     assert profile["shadow_authorization"] == "diagnostic_only"

@@ -27,8 +27,8 @@ try:
         LatentParlayBundle,
         MODEL_VERSION,
         NUMERIC_FEATURES,
+        SUPPORT_FEATURES,
         _hash_bucket,
-        calendar_features,
     )
 except ImportError:
     from latent_parlay_model import (
@@ -37,8 +37,8 @@ except ImportError:
         LatentParlayBundle,
         MODEL_VERSION,
         NUMERIC_FEATURES,
+        SUPPORT_FEATURES,
         _hash_bucket,
-        calendar_features,
     )
 
 
@@ -119,7 +119,6 @@ def build_rows(processed_root: Path, *, before_date: date) -> pd.DataFrame:
                 "batting_order": batting_order,
                 "log_history_rows": math.log1p(int(row["_history_rows"])),
                 "is_home": finite(row.get("Is_Home")),
-                **calendar_features(row_date),
                 "batter_strength": finite(row.get("Batter_Profile_H_Strength")),
                 "pitcher_vulnerability": finite(row.get("Pitcher_Profile_H_Vulnerability")),
                 "pitcher_uncertainty": finite(row.get("Pitcher_Profile_Uncertainty"), 1.0),
@@ -136,7 +135,7 @@ def build_rows(processed_root: Path, *, before_date: date) -> pd.DataFrame:
                 {
                     "date": row_date.isoformat(),
                     "game_id": str(row.get("Game_ID", "")),
-                    "player": str(row.get("Player_MLBAM_ID") or row.get("Player") or path.parent.name),
+                    "player": str(row.get("Player") or path.parent.name),
                     "pitcher": str(row.get("Opp_Starter_ID") or row.get("Opp_Starter_Player") or "unknown"),
                     "team": str(row.get("Team") or "unknown"),
                     "opponent": str(row.get("Opponent") or "unknown"),
@@ -182,9 +181,15 @@ class PreparedRows:
     frame: pd.DataFrame
 
 
-def prepare_rows(frame: pd.DataFrame, mean: np.ndarray, scale: np.ndarray) -> PreparedRows:
+def prepare_rows(
+    frame: pd.DataFrame,
+    mean: np.ndarray,
+    scale: np.ndarray,
+    clip_low: np.ndarray,
+    clip_high: np.ndarray,
+) -> PreparedRows:
     numeric = frame.loc[:, NUMERIC_FEATURES].to_numpy(dtype=np.float32)
-    numeric = np.clip((numeric - mean) / scale, -8.0, 8.0).astype(np.float32)
+    numeric = np.clip((numeric - mean) / scale, clip_low, clip_high).astype(np.float32)
     categories = np.column_stack(
         [
             frame[name].map(lambda value, key=name: _hash_bucket(value, CATEGORY_BUCKETS[key])).to_numpy(dtype=np.int64)
@@ -197,6 +202,17 @@ def prepare_rows(frame: pd.DataFrame, mean: np.ndarray, scale: np.ndarray) -> Pr
         labels=frame["win"].to_numpy(dtype=np.float32),
         frame=frame.reset_index(drop=True),
     )
+
+
+def fit_preprocessing(frame: pd.DataFrame) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    values = frame.loc[:, NUMERIC_FEATURES].to_numpy(dtype=np.float64)
+    mean = values.mean(axis=0)
+    scale = values.std(axis=0)
+    scale = np.where(scale < 1e-6, 1.0, scale)
+    standardized = (values - mean) / scale
+    clip_low = np.quantile(standardized, 0.005, axis=0)
+    clip_high = np.quantile(standardized, 0.995, axis=0)
+    return mean, scale, clip_low, clip_high
 
 
 def heuristic_score(frame: pd.DataFrame) -> pd.Series:
@@ -666,12 +682,10 @@ def main() -> None:
     device = torch.device("cuda")
     rows = build_rows(args.processed_root.resolve(), before_date=args.before_date)
     development_frame, calibration_frame, holdout_frame, partitions = split_rows(rows)
-    mean = development_frame.loc[:, NUMERIC_FEATURES].to_numpy(dtype=np.float64).mean(axis=0)
-    scale = development_frame.loc[:, NUMERIC_FEATURES].to_numpy(dtype=np.float64).std(axis=0)
-    scale = np.where(scale < 1e-6, 1.0, scale)
-    development = prepare_rows(development_frame, mean, scale)
-    calibration = prepare_rows(calibration_frame, mean, scale)
-    holdout = prepare_rows(holdout_frame, mean, scale)
+    mean, scale, clip_low, clip_high = fit_preprocessing(development_frame)
+    development = prepare_rows(development_frame, mean, scale, clip_low, clip_high)
+    calibration = prepare_rows(calibration_frame, mean, scale, clip_low, clip_high)
+    holdout = prepare_rows(holdout_frame, mean, scale, clip_low, clip_high)
     development_tickets = build_ticket_indices(development.frame, seed=7001, samples_per_date=240)
     calibration_tickets = build_ticket_indices(calibration.frame, seed=7002, samples_per_date=360)
     holdout_tickets = build_ticket_indices(holdout.frame, seed=7003, samples_per_date=360)
@@ -713,9 +727,6 @@ def main() -> None:
     holdout_baseline_probability = calibrated_probability(
         holdout.frame["baseline"].to_numpy(dtype=float), safe_baseline_calibrator
     )
-    standardized_development = development.numeric.astype(np.float64)
-    support_low = np.quantile(standardized_development, 0.005, axis=0)
-    support_high = np.quantile(standardized_development, 0.995, axis=0)
     report = {
         "model_version": MODEL_VERSION,
         "status": "development_shadow",
@@ -727,6 +738,12 @@ def main() -> None:
             "same-game H, PA, AB, Team_PA_share, wOBA, xwOBA, ISO, Barrel%, HardHit%",
             "historical H_market_gap and projection derived from same-game fields",
         ],
+        "identity_contract": {
+            "player": "normalized player name shared by training and production",
+            "pitcher": "MLBAM identifier with normalized-name fallback",
+            "team": "team abbreviation",
+            "opponent": "team abbreviation",
+        },
         "rows": int(len(rows)),
         "dates": int(rows["date"].nunique()),
         "partitions": partitions,
@@ -760,6 +777,86 @@ def main() -> None:
             "daily_ranking": ranking_metrics(holdout, models, leg_calibrator, ticket_calibrator, device),
         },
     }
+
+    deployment_train_frame = pd.concat((development_frame, calibration_frame), ignore_index=True)
+    deployment_mean, deployment_scale, deployment_clip_low, deployment_clip_high = fit_preprocessing(
+        deployment_train_frame
+    )
+    deployment_train = prepare_rows(
+        deployment_train_frame,
+        deployment_mean,
+        deployment_scale,
+        deployment_clip_low,
+        deployment_clip_high,
+    )
+    deployment_calibration = prepare_rows(
+        holdout_frame,
+        deployment_mean,
+        deployment_scale,
+        deployment_clip_low,
+        deployment_clip_high,
+    )
+    deployment_train_tickets = build_ticket_indices(
+        deployment_train.frame, seed=8001, samples_per_date=240
+    )
+    deployment_calibration_tickets = build_ticket_indices(
+        deployment_calibration.frame, seed=8002, samples_per_date=360
+    )
+    deployment_models = [
+        train_model(
+            deployment_train,
+            deployment_calibration,
+            deployment_train_tickets,
+            deployment_calibration_tickets,
+            seed=seed,
+            device=device,
+        )
+        for seed in SEEDS
+    ]
+    deployment_leg_logits = np.mean(
+        [predict_leg_logits(model, deployment_calibration, device) for model in deployment_models], axis=0
+    )
+    deployment_ticket_logits = np.mean(
+        [
+            predict_ticket_logits(
+                model,
+                deployment_calibration,
+                deployment_calibration_tickets[0],
+                deployment_calibration_tickets[1],
+                device,
+            )
+            for model in deployment_models
+        ],
+        axis=0,
+    )
+    deployment_leg_calibrator = fit_calibrator(deployment_leg_logits, deployment_calibration.labels)
+    deployment_ticket_calibrator = fit_calibrator(
+        deployment_ticket_logits, deployment_calibration_tickets[2]
+    )
+    deployment_standardized = (
+        deployment_train_frame.loc[:, NUMERIC_FEATURES].to_numpy(dtype=np.float64) - deployment_mean
+    ) / deployment_scale
+    support_low = np.quantile(deployment_standardized, 0.001, axis=0)
+    support_high = np.quantile(deployment_standardized, 0.999, axis=0)
+    report["deployment_fit"] = {
+        "status": "prospective_shadow_only",
+        "training_period": {
+            "start": partitions["development"]["start"],
+            "end": partitions["calibration"]["end"],
+        },
+        "probability_calibration_period": partitions["locked_holdout"],
+        "training_rows": len(deployment_train.labels),
+        "calibration_rows": len(deployment_calibration.labels),
+        "calibration_legs": metrics(
+            deployment_calibration.labels,
+            calibrated_probability(deployment_leg_logits, deployment_leg_calibrator),
+        ),
+        "calibration_sampled_tickets": metrics(
+            deployment_calibration_tickets[2],
+            calibrated_probability(deployment_ticket_logits, deployment_ticket_calibrator),
+        ),
+        "next_unseen_date": args.before_date.isoformat(),
+    }
     artifact = {
         "model_version": MODEL_VERSION,
         "status": "shadow",
@@ -771,23 +868,26 @@ def main() -> None:
             "category_buckets": CATEGORY_BUCKETS,
             "maximum_legs": MAX_LEGS,
         },
-        "scaler": {"mean": mean.tolist(), "scale": scale.tolist()},
+        "scaler": {"mean": deployment_mean.tolist(), "scale": deployment_scale.tolist()},
         "support": {
             "standardized_low": support_low.tolist(),
             "standardized_high": support_high.tolist(),
+            "clip_low": deployment_clip_low.tolist(),
+            "clip_high": deployment_clip_high.tolist(),
+            "features": list(SUPPORT_FEATURES),
             "minimum_fraction": 0.80,
         },
-        "calibration": {"leg": leg_calibrator, "ticket": ticket_calibrator},
-        "ensemble": [export_model(model, seed) for model, seed in zip(models, SEEDS)],
+        "calibration": {"leg": deployment_leg_calibrator, "ticket": deployment_ticket_calibrator},
+        "ensemble": [export_model(model, seed) for model, seed in zip(deployment_models, SEEDS)],
         "validation": report,
     }
     report["export_parity"] = verify_export_parity(
         artifact,
-        holdout,
-        holdout_tickets,
-        models,
-        leg_calibrator,
-        ticket_calibrator,
+        deployment_calibration,
+        deployment_calibration_tickets,
+        deployment_models,
+        deployment_leg_calibrator,
+        deployment_ticket_calibrator,
         device,
     )
     args.output_json.parent.mkdir(parents=True, exist_ok=True)
