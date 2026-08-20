@@ -1,0 +1,37 @@
+{
+  "evidence_status": "REPEATEDLY_INSPECTED_SYNTHETIC_RESEARCH_EVIDENCE",
+  "experiments": [
+    {
+      "method": "hierarchical_pair_lift_tree",
+      "status": "REJECTED_CROSS_VERSION_INSTABILITY",
+      "historical_holdout": {
+        "two_leg_control": "17/27",
+        "two_leg_method": "12/27",
+        "four_leg_control": "13/27",
+        "four_leg_method": "10/27"
+      },
+      "cross_version_transfer": {
+        "two_leg_control": "9/17",
+        "two_leg_method": "10/17",
+        "four_leg_control": "5/17",
+        "four_leg_method": "7/17"
+      },
+      "reason": "The method improved only the later predictor window and materially regressed the earlier holdout."
+    },
+    {
+      "method": "distinct_game_diversification",
+      "status": "REJECTED_NO_STABLE_IMPROVEMENT",
+      "historical_holdout_four_leg": "12/27",
+      "cross_version_transfer_four_leg": "5/17"
+    },
+    {
+      "method": "generic_game_residual_gaussian_copula",
+      "status": "REJECTED_INSUFFICIENT_DEPENDENCE_SIGNAL",
+      "training_games": 802,
+      "maximum_absolute_pooled_relation_correlation": 0.051,
+      "strongest_relation": "same_team_points_assists",
+      "reason": "Generic relation-level residual dependence was too small to justify changing joint probabilities. Player- and lineup-specific path data remains necessary."
+    }
+  ],
+  "retained_method": "NBA_RECENT_REGIME_SURVIVAL_V1_SHADOW"
+}

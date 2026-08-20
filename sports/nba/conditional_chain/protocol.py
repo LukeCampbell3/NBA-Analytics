@@ -68,6 +68,29 @@ class ParlayAuthorizationProtocol:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class SurvivalBuilderProtocol:
+    version: str = "NBA_RECENT_REGIME_SURVIVAL_V1_SHADOW"
+    lookback_days: int = 30
+    category_prior_strength: float = 20.0
+    jeffreys_alpha: float = 0.5
+    jeffreys_beta: float = 0.5
+    credible_lower_quantile: float = 0.10
+    minimum_warmup_slates: int = 20
+    primary_leg_count: int = 2
+    allowed_leg_counts: tuple[int, ...] = (2, 3)
+    selective_frechet_floor: float = 0.42
+    minimum_research_slate_coverage: float = 0.50
+    minimum_research_action_slates: int = 30
+    one_sided_alpha: float = 0.05
+    score_epsilon: float = 1e-6
+    publication_mode: str = "shadow_only_until_prospective_certificate"
+
+    def as_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
 FROZEN_SELECTOR_PROTOCOL = FrozenSelectorProtocol()
 ALLOCATION_PATH_PROTOCOL = AllocationPathProtocol()
 PARLAY_AUTHORIZATION_PROTOCOL = ParlayAuthorizationProtocol()
+SURVIVAL_BUILDER_PROTOCOL = SurvivalBuilderProtocol()

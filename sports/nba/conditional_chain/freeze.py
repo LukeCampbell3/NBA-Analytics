@@ -10,6 +10,7 @@ from .protocol import (
     ALLOCATION_PATH_PROTOCOL,
     FROZEN_SELECTOR_PROTOCOL,
     PARLAY_AUTHORIZATION_PROTOCOL,
+    SURVIVAL_BUILDER_PROTOCOL,
 )
 
 
@@ -30,6 +31,7 @@ def build_freeze_manifest(package_dir: Path | None = None) -> dict[str, Any]:
         "selector": FROZEN_SELECTOR_PROTOCOL.as_dict(),
         "allocation_path": ALLOCATION_PATH_PROTOCOL.as_dict(),
         "parlay_authorization": PARLAY_AUTHORIZATION_PROTOCOL.as_dict(),
+        "survival_builder": SURVIVAL_BUILDER_PROTOCOL.as_dict(),
     }
     protocol_sha = hashlib.sha256(_canonical_bytes(protocol_payload)).hexdigest()
     source_hashes: dict[str, str] = {}
@@ -46,6 +48,7 @@ def build_freeze_manifest(package_dir: Path | None = None) -> dict[str, Any]:
         "selector_version": FROZEN_SELECTOR_PROTOCOL.version,
         "representation_version": ALLOCATION_PATH_PROTOCOL.version,
         "authorization_version": PARLAY_AUTHORIZATION_PROTOCOL.version,
+        "survival_builder_version": SURVIVAL_BUILDER_PROTOCOL.version,
         "protocol_sha256": protocol_sha,
         "executable_bundle_sha256": bundle.hexdigest(),
         "dependencies": dependencies,

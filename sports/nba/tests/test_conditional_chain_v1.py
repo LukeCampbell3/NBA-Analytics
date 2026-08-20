@@ -39,10 +39,21 @@ from sports.nba.conditional_chain.frozen_selector import (
 from sports.nba.conditional_chain.protocol import (
     ALLOCATION_PATH_PROTOCOL,
     FROZEN_SELECTOR_PROTOCOL,
+    SURVIVAL_BUILDER_PROTOCOL,
 )
 from sports.nba.conditional_chain.research_replay import adapt_master_research_ledger
 from sports.nba.conditional_chain.snapshot_ledger import MarketSnapshotLedger
-from sports.nba.conditional_chain.synthetic_audit import generate_synthetic_settled_paths
+from sports.nba.conditional_chain.survival_backtest import (
+    chronological_survival_replay,
+    combine_survival_replays,
+)
+from sports.nba.conditional_chain.survival_builder import (
+    build_survival_parlays,
+    score_recent_regime_candidates,
+)
+from sports.nba.conditional_chain.synthetic_audit import (
+    generate_synthetic_settled_paths,
+)
 
 
 def _selector_history(players: list[str]) -> pd.DataFrame:
@@ -74,10 +85,15 @@ def _valid_quotes(*, missing_team: bool = False) -> pd.DataFrame:
     base_lines = np.asarray([24.0, 20.0, 16.0, 12.0])
     movements = np.asarray([1.0, -0.5, 0.25, -0.25])
     rows = []
-    for checkpoint_index, offset in enumerate(ALLOCATION_PATH_PROTOCOL.checkpoints_minutes):
+    for checkpoint_index, offset in enumerate(
+        ALLOCATION_PATH_PROTOCOL.checkpoints_minutes
+    ):
         checkpoint = event_start + pd.Timedelta(minutes=offset)
         for player_index, player in enumerate(players):
-            line = base_lines[player_index] + movements[player_index] * checkpoint_index / 4.0
+            line = (
+                base_lines[player_index]
+                + movements[player_index] * checkpoint_index / 4.0
+            )
             for book in ("book_a", "book_b"):
                 rows.append(
                     {
@@ -107,9 +123,7 @@ def _valid_quotes(*, missing_team: bool = False) -> pd.DataFrame:
 
 
 def test_selected_probability_correctly_inverts_unders() -> None:
-    result = selected_probability(
-        pd.Series([0.72, 0.72]), pd.Series(["OVER", "UNDER"])
-    )
+    result = selected_probability(pd.Series([0.72, 0.72]), pd.Series(["OVER", "UNDER"]))
     assert result.tolist() == [0.72, 0.28]
 
 
@@ -145,7 +159,8 @@ def test_frozen_selector_is_date_safe_and_one_prop_per_player() -> None:
             pd.DataFrame(
                 [
                     {
-                        "event_date": pd.Timestamp("2026-01-01") + pd.Timedelta(days=day),
+                        "event_date": pd.Timestamp("2026-01-01")
+                        + pd.Timedelta(days=day),
                         "player": "Alpha",
                         "market": "player_assists",
                         "actual": 8.0,
@@ -175,7 +190,9 @@ def test_allocation_path_uses_only_fresh_past_quotes() -> None:
     assert result.quality_ledger["status"].tolist() == [PathQualityStatus.VALID.value]
     assert len(result.event_features) == 1
     assert len(result.player_features) == 4
-    alpha = result.player_features.loc[result.player_features["player"].eq("Alpha")].iloc[0]
+    alpha = result.player_features.loc[
+        result.player_features["player"].eq("Alpha")
+    ].iloc[0]
     assert float(alpha["close_line"]) < 30.0
     assert float(result.event_features["max_quote_age_minutes"].iloc[0]) == 0.0
     assert int(result.event_features["minimum_engine_count"].iloc[0]) == 2
@@ -221,7 +238,9 @@ def test_missing_actual_invalidates_entire_unit() -> None:
     )
     settled = attach_realized_allocations(paths.player_features, outcomes)
     assert settled.settled_player_features.empty
-    assert settled.quality_ledger["status"].tolist() == [PathQualityStatus.MISSING_ACTUAL.value]
+    assert settled.quality_ledger["status"].tolist() == [
+        PathQualityStatus.MISSING_ACTUAL.value
+    ]
 
 
 def test_practical_effect_gate_requires_more_than_a_tiny_improvement() -> None:
@@ -230,12 +249,8 @@ def test_practical_effect_gate_requires_more_than_a_tiny_improvement() -> None:
         bootstrap_samples=2_000,
         sign_flip_samples=5_000,
     )
-    below = evaluate_improvement_sequence(
-        np.full(20, 0.0049), protocol=fast_protocol
-    )
-    above = evaluate_improvement_sequence(
-        np.full(20, 0.0060), protocol=fast_protocol
-    )
+    below = evaluate_improvement_sequence(np.full(20, 0.0049), protocol=fast_protocol)
+    above = evaluate_improvement_sequence(np.full(20, 0.0060), protocol=fast_protocol)
     assert below["passed"] is False
     assert above["passed"] is True
 
@@ -247,13 +262,17 @@ def test_confirmation_is_same_day_safe_and_clusters_teams_by_game() -> None:
     second_team["unit_id"] = second_team["unit_id"].str.replace(
         "::SYN::", "::SYN_B::", regex=False
     )
-    result = chronological_confirmation(pd.concat([first_team, second_team], ignore_index=True))
+    result = chronological_confirmation(
+        pd.concat([first_team, second_team], ignore_index=True)
+    )
     assert len(result.event_evaluations) == 8
     assert int(result.event_evaluations["training_events"].min()) == 20
     assert result.report["statistical_unit"] == "game_event"
 
 
-def test_chain_is_blocked_without_path_certificate_and_stays_shadow_after_gate() -> None:
+def test_chain_is_blocked_without_path_certificate_and_stays_shadow_after_gate() -> (
+    None
+):
     reservoir = pd.DataFrame(
         [
             {
@@ -321,10 +340,17 @@ def test_conditional_extension_model_uses_only_prefix_surviving_rows() -> None:
     assert model.fitted is True
     assert model.training_rows == 36
 
-    reservoir = pd.DataFrame(rows[:4]).drop(columns=["slate_date", "decision_id", "leg_order", "hit", "path_support", "delta_share"])
-    path = pd.DataFrame(rows[:4])[
-        ["event_id", "team", "player", "delta_share"]
-    ].copy()
+    reservoir = pd.DataFrame(rows[:4]).drop(
+        columns=[
+            "slate_date",
+            "decision_id",
+            "leg_order",
+            "hit",
+            "path_support",
+            "delta_share",
+        ]
+    )
+    path = pd.DataFrame(rows[:4])[["event_id", "team", "player", "delta_share"]].copy()
     path["player_path_efficiency"] = 0.8
     path["direction_reversals"] = 0
     resolved = resolve_conditional_chain(
@@ -384,9 +410,11 @@ def test_quote_evidence_requires_fresh_auditable_book_price() -> None:
     verified = assess_quote_evidence(
         _verified_parlay_quotes(), qualification_time="2026-02-01T19:50:00Z"
     )
-    assert verified["quote_evidence_status"].eq(
-        QuoteEvidenceStatus.VERIFIED_EXECUTABLE_QUOTE.value
-    ).all()
+    assert (
+        verified["quote_evidence_status"]
+        .eq(QuoteEvidenceStatus.VERIFIED_EXECUTABLE_QUOTE.value)
+        .all()
+    )
     assert verified["odds_validated_as_true"].all()
 
     synthetic = _verified_parlay_quotes().drop(
@@ -558,3 +586,136 @@ def test_rank_reliability_core_is_date_safe_and_version_locked() -> None:
     mismatched = today.assign(selector_version="SELECTOR_V2")
     with np.testing.assert_raises(ValueError):
         select_frozen_core(mismatched, policy)
+
+
+def _survival_history() -> pd.DataFrame:
+    rows = []
+    for day in range(1, 22):
+        event_date = pd.Timestamp("2026-01-10") + pd.Timedelta(days=day)
+        rows.extend(
+            [
+                {
+                    "event_date": event_date,
+                    "market": "player_assists",
+                    "side": "UNDER",
+                    "leg_result": 1.0,
+                },
+                {
+                    "event_date": event_date,
+                    "market": "player_points",
+                    "side": "OVER",
+                    "leg_result": float(day % 3 == 0),
+                },
+            ]
+        )
+    return pd.DataFrame(rows)
+
+
+def _survival_reservoir(event_date: str = "2026-02-01") -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            {
+                "event_date": event_date,
+                "player": "Assist A",
+                "market": "player_assists",
+                "side": "UNDER",
+                "robust_score": 0.72,
+                "rank": 1,
+                "leg_result": 1.0,
+                "model_version": "MODEL_A",
+            },
+            {
+                "event_date": event_date,
+                "player": "Assist B",
+                "market": "player_assists",
+                "side": "UNDER",
+                "robust_score": 0.71,
+                "rank": 2,
+                "leg_result": 1.0,
+                "model_version": "MODEL_A",
+            },
+            {
+                "event_date": event_date,
+                "player": "Points A",
+                "market": "player_points",
+                "side": "OVER",
+                "robust_score": 0.74,
+                "rank": 3,
+                "leg_result": 0.0,
+                "model_version": "MODEL_A",
+            },
+            {
+                "event_date": event_date,
+                "player": "Points B",
+                "market": "player_points",
+                "side": "OVER",
+                "robust_score": 0.73,
+                "rank": 4,
+                "leg_result": 0.0,
+                "model_version": "MODEL_A",
+            },
+        ]
+    )
+
+
+def test_survival_scoring_is_date_safe_and_recent_regime_aware() -> None:
+    reservoir = _survival_reservoir()
+    history = _survival_history()
+    scored = score_recent_regime_candidates(reservoir, history)
+    same_day = reservoir[["event_date", "market", "side", "leg_result"]].copy()
+    contaminated = score_recent_regime_candidates(
+        reservoir,
+        pd.concat([history, same_day], ignore_index=True),
+    )
+    np.testing.assert_allclose(
+        scored["survival_probability"], contaminated["survival_probability"]
+    )
+    assist_score = scored.loc[
+        scored["market"].eq("player_assists"), "survival_probability"
+    ].min()
+    points_score = scored.loc[
+        scored["market"].eq("player_points"), "survival_probability"
+    ].max()
+    assert assist_score > points_score
+    assert scored["regime_history_end_exclusive"].eq(pd.Timestamp("2026-02-01")).all()
+
+
+def test_survival_builder_is_model_version_invariant_and_rejects_four_legs() -> None:
+    reservoir = _survival_reservoir()
+    history = _survival_history()
+    first = build_survival_parlays(reservoir, history)
+    second = build_survival_parlays(reservoir.assign(model_version="MODEL_B"), history)
+    assert first.primary_parlay["player"].tolist() == ["Assist A", "Assist B"]
+    assert (
+        first.primary_parlay["player"].tolist()
+        == second.primary_parlay["player"].tolist()
+    )
+    assert set(first.alternatives) == {2, 3}
+    assert 4 not in first.alternatives
+    assert (
+        first.diagnostics["four_leg_status"] == "REJECTED_NO_CROSS_VERSION_IMPROVEMENT"
+    )
+    assert first.publication_authorized is False
+
+
+def test_survival_replay_uses_one_decision_per_slate_after_warmup() -> None:
+    rows = []
+    for day in range(25):
+        event_date = pd.Timestamp("2026-01-01") + pd.Timedelta(days=day)
+        slate = _survival_reservoir(str(event_date.date()))
+        slate["leg_result"] = np.where(slate["market"].eq("player_assists"), 1.0, 0.0)
+        rows.append(slate)
+    replay = chronological_survival_replay(
+        pd.concat(rows, ignore_index=True),
+        block_label="test",
+        warmup_slates=SURVIVAL_BUILDER_PROTOCOL.minimum_warmup_slates,
+    )
+    assert replay.report["evaluation_slates"] == 5
+    assert len(replay.decisions) == 10
+    assert replay.decisions.groupby("leg_count")["event_date"].nunique().to_dict() == {
+        2: 5,
+        3: 5,
+    }
+    assert replay.report["production_authorizable"] is False
+    combined = combine_survival_replays([replay])
+    assert combined.report["research_gate"]["status"] == "RESEARCH_GATE_NOT_PASSED"

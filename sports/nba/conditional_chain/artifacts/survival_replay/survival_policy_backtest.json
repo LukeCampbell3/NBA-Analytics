@@ -1,0 +1,274 @@
+{
+  "allowed_leg_counts": [
+    2,
+    3
+  ],
+  "blocks": [
+    {
+      "block": "historical_expanding",
+      "evaluation_slates": 41,
+      "evidence_status": "REPEATEDLY_INSPECTED_SYNTHETIC_RESEARCH_EVIDENCE",
+      "metrics_by_leg_count": {
+        "2": {
+          "absolute_hit_rate_change": 0.024390243902439025,
+          "action_slates": 41,
+          "control_hit_rate": 0.6585365853658537,
+          "control_only_wins": 4,
+          "control_wins": 27,
+          "legacy_fixed_rank_core": {
+            "action_slates": 41,
+            "hit_rate": 0.7560975609756098,
+            "status": "REJECTED_MODEL_VERSION_COUPLED_BASELINE",
+            "wins": 31
+          },
+          "mean_frechet_lower_reference": 0.42691828711328417,
+          "mean_independence_reference": 0.6109764688856281,
+          "paired_one_sided_p": 0.5,
+          "policy_exact_95_ci": [
+            0.5191336131610758,
+            0.8191506030917162
+          ],
+          "policy_hit_rate": 0.6829268292682927,
+          "policy_only_wins": 5,
+          "policy_wins": 28,
+          "selective_policy": {
+            "abstained_slates": 19,
+            "action_slates": 22,
+            "control_hit_rate_on_action_slates": 0.5909090909090909,
+            "control_only_wins": 0,
+            "control_wins_on_action_slates": 13,
+            "paired_one_sided_p": 0.125,
+            "policy_exact_95_ci": [
+              0.4977787987336511,
+              0.892710751629603
+            ],
+            "policy_hit_rate": 0.7272727272727273,
+            "policy_only_wins": 3,
+            "policy_wins": 16,
+            "slate_coverage": 0.5365853658536586
+          }
+        },
+        "3": {
+          "absolute_hit_rate_change": 0.0975609756097561,
+          "action_slates": 41,
+          "control_hit_rate": 0.5121951219512195,
+          "control_only_wins": 3,
+          "control_wins": 21,
+          "legacy_fixed_rank_core": {
+            "action_slates": 0,
+            "hit_rate": null,
+            "status": "REJECTED_MODEL_VERSION_COUPLED_BASELINE",
+            "wins": 0
+          },
+          "mean_frechet_lower_reference": 0.11057806656665535,
+          "mean_independence_reference": 0.4575018245386183,
+          "paired_one_sided_p": 0.171875,
+          "policy_exact_95_ci": [
+            0.44504782337068916,
+            0.7579890328213116
+          ],
+          "policy_hit_rate": 0.6097560975609756,
+          "policy_only_wins": 7,
+          "policy_wins": 25,
+          "selective_policy": {
+            "abstained_slates": 41,
+            "action_slates": 0,
+            "control_hit_rate_on_action_slates": null,
+            "control_only_wins": 0,
+            "control_wins_on_action_slates": 0,
+            "paired_one_sided_p": 1.0,
+            "policy_exact_95_ci": null,
+            "policy_hit_rate": null,
+            "policy_only_wins": 0,
+            "policy_wins": 0,
+            "slate_coverage": 0.0
+          }
+        }
+      },
+      "production_authorizable": false,
+      "survival_policy_version": "NBA_RECENT_REGIME_SURVIVAL_V1_SHADOW",
+      "warmup_slates": 20
+    },
+    {
+      "block": "cross_version_transfer",
+      "evaluation_slates": 17,
+      "evidence_status": "REPEATEDLY_INSPECTED_SYNTHETIC_RESEARCH_EVIDENCE",
+      "metrics_by_leg_count": {
+        "2": {
+          "absolute_hit_rate_change": 0.17647058823529413,
+          "action_slates": 17,
+          "control_hit_rate": 0.5294117647058824,
+          "control_only_wins": 0,
+          "control_wins": 9,
+          "legacy_fixed_rank_core": {
+            "action_slates": 17,
+            "hit_rate": 0.35294117647058826,
+            "status": "REJECTED_MODEL_VERSION_COUPLED_BASELINE",
+            "wins": 6
+          },
+          "mean_frechet_lower_reference": 0.4306628053131437,
+          "mean_independence_reference": 0.6223547985414327,
+          "paired_one_sided_p": 0.125,
+          "policy_exact_95_ci": [
+            0.4404172812456628,
+            0.8968644856296799
+          ],
+          "policy_hit_rate": 0.7058823529411765,
+          "policy_only_wins": 3,
+          "policy_wins": 12,
+          "selective_policy": {
+            "abstained_slates": 8,
+            "action_slates": 9,
+            "control_hit_rate_on_action_slates": 0.6666666666666666,
+            "control_only_wins": 0,
+            "control_wins_on_action_slates": 6,
+            "paired_one_sided_p": 0.5,
+            "policy_exact_95_ci": [
+              0.39990642628368783,
+              0.9718550265221018
+            ],
+            "policy_hit_rate": 0.7777777777777778,
+            "policy_only_wins": 1,
+            "policy_wins": 7,
+            "slate_coverage": 0.5294117647058824
+          }
+        },
+        "3": {
+          "absolute_hit_rate_change": 0.0,
+          "action_slates": 17,
+          "control_hit_rate": 0.47058823529411764,
+          "control_only_wins": 1,
+          "control_wins": 8,
+          "legacy_fixed_rank_core": {
+            "action_slates": 0,
+            "hit_rate": null,
+            "status": "REJECTED_MODEL_VERSION_COUPLED_BASELINE",
+            "wins": 0
+          },
+          "mean_frechet_lower_reference": 0.11088064614568015,
+          "mean_independence_reference": 0.46589974774788273,
+          "paired_one_sided_p": 0.75,
+          "policy_exact_95_ci": [
+            0.22983268726599035,
+            0.7218816996688935
+          ],
+          "policy_hit_rate": 0.47058823529411764,
+          "policy_only_wins": 1,
+          "policy_wins": 8,
+          "selective_policy": {
+            "abstained_slates": 17,
+            "action_slates": 0,
+            "control_hit_rate_on_action_slates": null,
+            "control_only_wins": 0,
+            "control_wins_on_action_slates": 0,
+            "paired_one_sided_p": 1.0,
+            "policy_exact_95_ci": null,
+            "policy_hit_rate": null,
+            "policy_only_wins": 0,
+            "policy_wins": 0,
+            "slate_coverage": 0.0
+          }
+        }
+      },
+      "production_authorizable": false,
+      "survival_policy_version": "NBA_RECENT_REGIME_SURVIVAL_V1_SHADOW",
+      "warmup_slates": 0
+    }
+  ],
+  "combined_metrics_by_leg_count": {
+    "2": {
+      "absolute_hit_rate_change": 0.06896551724137931,
+      "action_slates": 58,
+      "control_hit_rate": 0.6206896551724138,
+      "control_only_wins": 4,
+      "control_wins": 36,
+      "legacy_fixed_rank_core": {
+        "action_slates": 58,
+        "hit_rate": 0.6379310344827587,
+        "status": "REJECTED_MODEL_VERSION_COUPLED_BASELINE",
+        "wins": 37
+      },
+      "mean_frechet_lower_reference": 0.42801581830979474,
+      "mean_independence_reference": 0.614311496543364,
+      "paired_one_sided_p": 0.19384765625,
+      "policy_exact_95_ci": [
+        0.5545582123163506,
+        0.8046135226178158
+      ],
+      "policy_hit_rate": 0.6896551724137931,
+      "policy_only_wins": 8,
+      "policy_wins": 40,
+      "selective_policy": {
+        "abstained_slates": 27,
+        "action_slates": 31,
+        "control_hit_rate_on_action_slates": 0.6129032258064516,
+        "control_only_wins": 0,
+        "control_wins_on_action_slates": 19,
+        "paired_one_sided_p": 0.0625,
+        "policy_exact_95_ci": [
+          0.5538660656651033,
+          0.8814360041704489
+        ],
+        "policy_hit_rate": 0.7419354838709677,
+        "policy_only_wins": 4,
+        "policy_wins": 23,
+        "slate_coverage": 0.5344827586206896
+      }
+    },
+    "3": {
+      "absolute_hit_rate_change": 0.06896551724137931,
+      "action_slates": 58,
+      "control_hit_rate": 0.5,
+      "control_only_wins": 4,
+      "control_wins": 29,
+      "legacy_fixed_rank_core": {
+        "action_slates": 0,
+        "hit_rate": null,
+        "status": "REJECTED_MODEL_VERSION_COUPLED_BASELINE",
+        "wins": 0
+      },
+      "mean_frechet_lower_reference": 0.11066675368464537,
+      "mean_independence_reference": 0.45996328478960957,
+      "paired_one_sided_p": 0.19384765625,
+      "policy_exact_95_ci": [
+        0.43226981668089776,
+        0.6983754577077999
+      ],
+      "policy_hit_rate": 0.5689655172413793,
+      "policy_only_wins": 8,
+      "policy_wins": 33,
+      "selective_policy": {
+        "abstained_slates": 58,
+        "action_slates": 0,
+        "control_hit_rate_on_action_slates": null,
+        "control_only_wins": 0,
+        "control_wins_on_action_slates": 0,
+        "paired_one_sided_p": 1.0,
+        "policy_exact_95_ci": null,
+        "policy_hit_rate": null,
+        "policy_only_wins": 0,
+        "policy_wins": 0,
+        "slate_coverage": 0.0
+      }
+    }
+  },
+  "evidence_status": "REPEATEDLY_INSPECTED_SYNTHETIC_RESEARCH_EVIDENCE",
+  "four_leg_status": "REJECTED_NO_CROSS_VERSION_IMPROVEMENT",
+  "interpretation": "The policy is a cross-version research improvement, not a prospective return certificate. Primary publication remains disabled.",
+  "minimum_research_action_slates": 30,
+  "minimum_research_slate_coverage": 0.5,
+  "one_sided_alpha": 0.05,
+  "primary_leg_count": 2,
+  "production_authorizable": false,
+  "research_gate": {
+    "checks": {
+      "minimum_action_slates": true,
+      "minimum_slate_coverage": true,
+      "one_sided_significance": false,
+      "positive_paired_direction": true
+    },
+    "status": "RESEARCH_GATE_NOT_PASSED"
+  },
+  "selective_frechet_floor": 0.42,
+  "survival_policy_version": "NBA_RECENT_REGIME_SURVIVAL_V1_SHADOW"
+}

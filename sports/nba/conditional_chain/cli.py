@@ -15,6 +15,11 @@ from .confirmation import chronological_confirmation
 from .dataset import build_frozen_dataset, write_frozen_dataset
 from .freeze import build_freeze_manifest
 from .research_replay import replay_master_research_ledger
+from .survival_backtest import (
+    build_transfer_reservoir,
+    chronological_survival_replay,
+    combine_survival_replays,
+)
 from .synthetic_audit import run_null_power_audit
 
 
@@ -57,13 +62,16 @@ def _json_ready(value: Any) -> Any:
 def _write_json(path: Path, value: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps(_json_ready(value), indent=2, sort_keys=True, allow_nan=False) + "\n",
+        json.dumps(_json_ready(value), indent=2, sort_keys=True, allow_nan=False)
+        + "\n",
         encoding="utf-8",
     )
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="NBA conditional-chain V1.1 research pipeline")
+    parser = argparse.ArgumentParser(
+        description="NBA conditional-chain V1.1 research pipeline"
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     repository = subparsers.add_parser("repository-audit")
@@ -96,6 +104,13 @@ def _build_parser() -> argparse.ArgumentParser:
     master_replay.add_argument("--master-ledger", type=Path, required=True)
     master_replay.add_argument("--holdout-start", default="2026-02-11")
     master_replay.add_argument("--output-dir", type=Path, required=True)
+
+    survival_replay = subparsers.add_parser("backtest-survival")
+    survival_replay.add_argument("--research-reservoir", type=Path, required=True)
+    survival_replay.add_argument("--transfer-candidate-pool", type=Path, required=True)
+    survival_replay.add_argument("--data-proc-dir", type=Path, required=True)
+    survival_replay.add_argument("--warmup-slates", type=int, default=20)
+    survival_replay.add_argument("--output-dir", type=Path, required=True)
     return parser
 
 
@@ -104,43 +119,67 @@ def main() -> int:
     if args.command == "repository-audit":
         result = build_frozen_dataset([args.quotes])
         report = dict(result.manifest)
-        report["quality_rows"] = result.path_result.quality_ledger.to_dict(orient="records")
+        report["quality_rows"] = result.path_result.quality_ledger.to_dict(
+            orient="records"
+        )
         report["freeze"] = build_freeze_manifest()
         _write_json(args.output, report)
-        print(json.dumps(_json_ready(report), indent=2, sort_keys=True, allow_nan=False))
+        print(
+            json.dumps(_json_ready(report), indent=2, sort_keys=True, allow_nan=False)
+        )
         return 0
     if args.command == "build-dataset":
         result = build_frozen_dataset(args.quotes, outcome_path=args.outcomes)
         write_frozen_dataset(result, args.output_dir)
-        print(json.dumps(_json_ready(result.manifest), indent=2, sort_keys=True, allow_nan=False))
+        print(
+            json.dumps(
+                _json_ready(result.manifest), indent=2, sort_keys=True, allow_nan=False
+            )
+        )
         return 0
     if args.command == "confirm":
         features = pd.read_csv(args.settled_features, low_memory=False)
         result = chronological_confirmation(features)
         args.output_dir.mkdir(parents=True, exist_ok=True)
-        result.player_predictions.to_csv(args.output_dir / "path_player_predictions.csv", index=False)
-        result.event_evaluations.to_csv(args.output_dir / "path_event_evaluations.csv", index=False)
+        result.player_predictions.to_csv(
+            args.output_dir / "path_player_predictions.csv", index=False
+        )
+        result.event_evaluations.to_csv(
+            args.output_dir / "path_event_evaluations.csv", index=False
+        )
         _write_json(args.output_dir / "path_confirmation_report.json", result.report)
-        print(json.dumps(_json_ready(result.report), indent=2, sort_keys=True, allow_nan=False))
+        print(
+            json.dumps(
+                _json_ready(result.report), indent=2, sort_keys=True, allow_nan=False
+            )
+        )
         return 0
     if args.command == "freeze":
         manifest = build_freeze_manifest()
         _write_json(args.output, manifest)
-        print(json.dumps(_json_ready(manifest), indent=2, sort_keys=True, allow_nan=False))
+        print(
+            json.dumps(_json_ready(manifest), indent=2, sort_keys=True, allow_nan=False)
+        )
         return 0
     if args.command == "synthetic-audit":
         report = run_null_power_audit(simulations=args.simulations, events=args.events)
         _write_json(args.output, report)
-        print(json.dumps(_json_ready(report), indent=2, sort_keys=True, allow_nan=False))
+        print(
+            json.dumps(_json_ready(report), indent=2, sort_keys=True, allow_nan=False)
+        )
         return 0
     if args.command == "backtest-selector":
         pool = pd.read_csv(args.candidate_pool, low_memory=False)
-        history = load_data_proc_history(args.data_proc_dir) if args.data_proc_dir else None
+        history = (
+            load_data_proc_history(args.data_proc_dir) if args.data_proc_dir else None
+        )
         decisions, report = replay_frozen_selector(pool, historical_actuals=history)
         args.output_dir.mkdir(parents=True, exist_ok=True)
         decisions.to_csv(args.output_dir / "frozen_selector_decisions.csv", index=False)
         _write_json(args.output_dir / "frozen_selector_backtest.json", report)
-        print(json.dumps(_json_ready(report), indent=2, sort_keys=True, allow_nan=False))
+        print(
+            json.dumps(_json_ready(report), indent=2, sort_keys=True, allow_nan=False)
+        )
         return 0
     if args.command == "backtest-master":
         source = pd.read_csv(args.master_ledger, low_memory=False)
@@ -149,7 +188,9 @@ def main() -> int:
             reported_holdout_start=args.holdout_start,
         )
         args.output_dir.mkdir(parents=True, exist_ok=True)
-        result.reservoir.to_csv(args.output_dir / "frozen_reservoir_replay.csv", index=False)
+        result.reservoir.to_csv(
+            args.output_dir / "frozen_reservoir_replay.csv", index=False
+        )
         result.slate_decisions.to_csv(
             args.output_dir / "frozen_slate_decisions.csv", index=False
         )
@@ -160,7 +201,43 @@ def main() -> int:
             "rows": int(len(source)),
         }
         _write_json(args.output_dir / "frozen_research_replay.json", report)
-        print(json.dumps(_json_ready(report), indent=2, sort_keys=True, allow_nan=False))
+        print(
+            json.dumps(_json_ready(report), indent=2, sort_keys=True, allow_nan=False)
+        )
+        return 0
+    if args.command == "backtest-survival":
+        research_reservoir = pd.read_csv(args.research_reservoir, low_memory=False)
+        transfer_pool = pd.read_csv(args.transfer_candidate_pool, low_memory=False)
+        actual_history = load_data_proc_history(args.data_proc_dir)
+        transfer_reservoir = build_transfer_reservoir(transfer_pool, actual_history)
+        research_replay = chronological_survival_replay(
+            research_reservoir,
+            block_label="historical_expanding",
+            warmup_slates=args.warmup_slates,
+        )
+        transfer_replay = chronological_survival_replay(
+            transfer_reservoir,
+            block_label="cross_version_transfer",
+            initial_history=research_reservoir,
+            warmup_slates=0,
+        )
+        combined = combine_survival_replays([research_replay, transfer_replay])
+        args.output_dir.mkdir(parents=True, exist_ok=True)
+        transfer_reservoir.to_csv(
+            args.output_dir / "transfer_reservoir_replay.csv", index=False
+        )
+        combined.decisions.to_csv(
+            args.output_dir / "survival_policy_decisions.csv", index=False
+        )
+        combined.selected_legs.to_csv(
+            args.output_dir / "survival_policy_selected_legs.csv", index=False
+        )
+        _write_json(args.output_dir / "survival_policy_backtest.json", combined.report)
+        print(
+            json.dumps(
+                _json_ready(combined.report), indent=2, sort_keys=True, allow_nan=False
+            )
+        )
         return 0
     raise AssertionError(f"unhandled command {args.command}")
 
