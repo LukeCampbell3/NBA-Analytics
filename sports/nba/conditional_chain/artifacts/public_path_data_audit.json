@@ -1,19 +1,57 @@
 {
   "audit_date": "2026-08-20",
-  "artifact_version": "NBA_PUBLIC_PATH_DATA_AUDIT_V1",
+  "artifact_version": "NBA_PUBLIC_PATH_DATA_AUDIT_V2",
   "candidate_sources": [
     {
       "archive": "gs://nba-scraped-data/odds-api/player-props-history",
       "documentation": "https://github.com/najicham/nba-stats-scraper/blob/main/backfill_jobs/raw/odds_api_props/README.md",
       "documented_coverage": "May 2023 through April 2025; approximately 20-50 files per game",
-      "anonymous_access": "HTTP_403_FORBIDDEN",
+      "documented_fields": [
+        "player_name",
+        "bookmaker",
+        "points_line",
+        "over_price",
+        "under_price",
+        "minutes_before_tipoff",
+        "snapshot_timestamp"
+      ],
+      "anonymous_bucket_listing": "HTTP_401_UNAUTHORIZED",
+      "anonymous_direct_object_read": "HTTP_403_FORBIDDEN",
+      "repository_archive_blob_matches": 0,
+      "public_fork_archive_blob_matches": 0,
+      "reason_rejected": "The documentation and loader reference an access-controlled GCS archive; no committed archive export or public fork mirror was found.",
       "usable": false
     },
     {
-      "archive": "https://huggingface.co/datasets/edushinka/line-movement",
-      "documented_coverage": "Aggregate sport-level line movement",
-      "reason_rejected": "No player, event, book, or reconstructable quote identifiers",
+      "archive": "https://huggingface.co/datasets/SupremeMonkey/NBA_betting_data",
+      "documented_coverage": "NBA game logs and statistical parquet files",
+      "reason_rejected": "No repeated timestamped sportsbook player-prop boards",
       "usable": false
+    },
+    {
+      "archive": "https://huggingface.co/datasets/Karmane/nba-back-to-back-player-trends-prop-research-sample",
+      "documented_coverage": "Player game, rest, and closing game spread/total research sample",
+      "reason_rejected": "No repeated player-prop snapshots; full dataset is separately offered as paid data",
+      "usable": false
+    },
+    {
+      "archive": "https://huggingface.co/datasets/Karmane/polymarket-sports-lines-and-player-props-sample",
+      "documented_coverage": "Polymarket sports market sample",
+      "reason_rejected": "Not a repeated NBA sportsbook player-prop board archive; full dataset is separately offered as paid data",
+      "usable": false
+    },
+    {
+      "archive": "https://huggingface.co/datasets/kennyhyder/sportsbookish-daily-odds",
+      "documented_coverage": "Latest and hourly team event-contract snapshots",
+      "reason_rejected": "No free historical repeated NBA player-prop archive",
+      "usable": false
+    },
+    {
+      "archive": "https://huggingface.co/datasets/SmartStake/mlb-player-props",
+      "documented_coverage": "Minute-level MLB player props with book, timestamp, line, odds, settlement, and outcome fields",
+      "reason_rejected": "Useful only for cross-sport ingestion and proof-trajectory mechanics; it cannot validate an NBA path predictor",
+      "usable_for_nba_confirmation": false,
+      "usable_for_cross_sport_mechanical_validation": true
     },
     {
       "archive": "The Odds API historical player props",
@@ -29,5 +67,20 @@
     "valid_frozen_path_units": 0,
     "status": "INSUFFICIENT_REAL_PATH_HISTORY"
   },
-  "conclusion": "NO_FREE_CONFIRMATION_GRADE_REPEATED_PLAYER_PROP_ARCHIVE_ACQUIRED"
+  "required_confirmation_object": {
+    "sport": "NBA",
+    "market": "player_points_primary",
+    "checkpoints_minutes_before_tip": [
+      -240,
+      -120,
+      -60,
+      -30,
+      -5
+    ],
+    "minimum_independent_engines": 2,
+    "settlement_required": true,
+    "chronological_evaluation_required": true
+  },
+  "next_action": "Continue prospective append-only NBA snapshot capture and mirror discovery. Do not substitute MLB or closing-only data for NBA confirmation.",
+  "conclusion": "NO_FREE_CONFIRMATION_GRADE_REPEATED_NBA_PLAYER_PROP_ARCHIVE_ACQUIRED"
 }

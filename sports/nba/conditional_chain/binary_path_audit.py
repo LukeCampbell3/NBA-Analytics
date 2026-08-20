@@ -16,6 +16,7 @@ from .outcome_worlds import (
     guaranteed_winner_indices,
     search_parlay_proof_frontier,
 )
+from .proof_trajectory import build_proof_trajectory
 from .protocol import BINARY_OUTCOME_SET_PROTOCOL, BinaryOutcomeSetProtocol
 
 
@@ -118,6 +119,14 @@ def run_binary_path_sensitivity_audit(
         ),
         checkpoint_labels=("T-30", "T-5", "REVERSAL"),
     )
+    proof_trajectory = build_proof_trajectory(
+        candidates,
+        reversal_path,
+        aps_thresholds=aps_threshold,
+        calibration_slates=protocol.minimum_calibration_slates,
+        fixed_targets={2: ("candidate_a", "candidate_b")},
+        protocol=protocol,
+    )
 
     distributions = {
         "endpoint_only": prior,
@@ -144,6 +153,18 @@ def run_binary_path_sensitivity_audit(
             reversal_path.distributions[-1].probabilities,
             prior.probabilities,
         )
+        and bool(
+            proof_trajectory.diagnostics.loc[
+                proof_trajectory.diagnostics["checkpoint"].eq("T-30"),
+                "2_leg_fixed_logical_certificate",
+            ].iloc[0]
+        )
+        and not bool(
+            proof_trajectory.diagnostics.loc[
+                proof_trajectory.diagnostics["checkpoint"].eq("REVERSAL"),
+                "2_leg_fixed_logical_certificate",
+            ].iloc[0]
+        )
     )
     return {
         "audit": "binary_joint_path_proof_sensitivity",
@@ -159,6 +180,20 @@ def run_binary_path_sensitivity_audit(
         "reversal_path_diagnostics": reversal_path.diagnostics.to_dict(
             orient="records"
         ),
+        "counterexample_proof_trajectory": {
+            "target_origin": proof_trajectory.target_origin,
+            "threshold_mode": proof_trajectory.threshold_mode,
+            "fixed_targets": {
+                str(leg_count): list(candidate_ids)
+                for leg_count, candidate_ids in proof_trajectory.fixed_targets.items()
+            },
+            "rows": proof_trajectory.diagnostics.to_dict(orient="records"),
+            "interpretation": (
+                "Positive fixed counterexample deltas eliminate worlds for the same "
+                "predeclared parlay; negative deltas restore counterexamples. Adaptive "
+                "frontiers may change candidates and are not the same longitudinal claim."
+            ),
+        },
         "supported_claim": (
             "A shared-state evidence path can produce an n-leg logical intersection "
             "when it excludes every retained counterexample world; exact reversal "

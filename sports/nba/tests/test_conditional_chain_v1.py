@@ -60,6 +60,11 @@ from sports.nba.conditional_chain.outcome_worlds import (
     guaranteed_winner_indices,
     search_parlay_proof_frontier,
 )
+from sports.nba.conditional_chain.proof_trajectory import (
+    build_proof_trajectory,
+    certificate_world_ceiling,
+    minimum_support_contraction_bits,
+)
 from sports.nba.conditional_chain.research_replay import adapt_master_research_ledger
 from sports.nba.conditional_chain.snapshot_ledger import MarketSnapshotLedger
 from sports.nba.conditional_chain.survival_backtest import (
@@ -909,6 +914,55 @@ def test_binary_path_sensitivity_and_intersection_theorem_audits_pass() -> None:
     assert not sensitivity["scenarios"]["fully_reversed_path"]["pair_logically_proven"]
 
 
+def test_certificate_cardinality_bounds_are_exact_for_top_ten() -> None:
+    assert certificate_world_ceiling(10, 2) == 256
+    assert certificate_world_ceiling(10, 3) == 128
+    assert certificate_world_ceiling(10, 4) == 64
+    assert np.isclose(minimum_support_contraction_bits(430.7, 256), 0.7501, atol=1e-3)
+
+
+def test_proof_trajectory_tracks_fixed_counterexample_elimination_and_reversal() -> (
+    None
+):
+    candidates = pd.DataFrame(
+        {
+            "candidate_id": ["a", "b", "c", "d"],
+            "player": ["Alpha", "Beta", "Gamma", "Delta"],
+            "survival_probability": [0.61, 0.57, 0.53, 0.49],
+        }
+    )
+    prior = build_world_distribution(
+        candidates["candidate_id"], candidates["survival_probability"]
+    )
+    shared_pair = prior.outcomes[:, 0].astype(bool) & prior.outcomes[:, 1].astype(bool)
+    evidence = np.where(shared_pair, 5.0, 0.0)
+    path = apply_joint_world_evidence_path(
+        prior,
+        np.vstack([evidence, evidence, -2.0 * evidence]),
+        checkpoint_labels=["T-30", "T-5", "REVERSAL"],
+    )
+    trajectory = build_proof_trajectory(
+        candidates,
+        path,
+        aps_thresholds=0.90,
+        calibration_slates=BINARY_OUTCOME_SET_PROTOCOL.minimum_calibration_slates,
+        fixed_targets={2: ("a", "b")},
+    )
+    rows = trajectory.diagnostics.set_index("checkpoint")
+    assert trajectory.threshold_mode == "FIXED_MECHANISM_THRESHOLD"
+    assert rows.loc["prior", "retained_world_count"] == 13
+    assert rows.loc["T-5", "retained_world_count"] == 3
+    assert rows.loc["T-5", "2_leg_fixed_logical_certificate"]
+    assert rows.loc["T-5", "2_leg_fixed_counterexample_world_count"] == 0
+    assert rows.loc["T-5", "2_leg_minimum_counterexample_world_count"] == 0
+    assert rows.loc["T-5", "2_leg_minimum_counterexample_mass"] == 0.0
+    assert rows.loc["T-30", "2_leg_fixed_counterexamples_eliminated_since_prior"] > 0
+    assert (
+        rows.loc["REVERSAL", "2_leg_fixed_counterexamples_eliminated_since_prior"] < 0
+    )
+    assert not rows.loc["REVERSAL", "2_leg_fixed_logical_certificate"]
+
+
 def test_joint_outcome_replay_waits_for_prior_calibration_slates() -> None:
     rows = []
     for day in range(25):
@@ -922,12 +976,19 @@ def test_joint_outcome_replay_waits_for_prior_calibration_slates() -> None:
     )
     assert int(replay.decisions["evaluated"].sum()) == 5
     assert replay.report["evaluated_slates"] == 5
-    assert replay.report["ex_post_oracle_feasibility_by_leg_count"]["2"][
-        "feasible_slates"
-    ] == 5
-    assert replay.report["ex_post_oracle_feasibility_by_leg_count"]["3"][
-        "feasible_slates"
-    ] == 0
+    assert (
+        replay.report["ex_post_oracle_feasibility_by_leg_count"]["2"]["feasible_slates"]
+        == 5
+    )
+    assert (
+        replay.report["ex_post_oracle_feasibility_by_leg_count"]["3"]["feasible_slates"]
+        == 0
+    )
+    pair_structure = replay.report["structural_certificate_feasibility_by_leg_count"][
+        "2"
+    ]
+    assert pair_structure["world_ceiling_at_maximum_reservoir"] == 256
+    assert pair_structure["necessary_condition"] == "0 < |C| <= 2^(M-n)"
     assert len(replay.calibration_scores) == 25
     threshold = conformal_aps_threshold([0.2] * 20)
     assert np.isclose(threshold, 0.2)

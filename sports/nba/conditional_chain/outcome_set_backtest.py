@@ -17,6 +17,10 @@ from .outcome_worlds import (
     world_id_from_outcomes,
 )
 from .protocol import BINARY_OUTCOME_SET_PROTOCOL, BinaryOutcomeSetProtocol
+from .proof_trajectory import (
+    certificate_world_ceiling,
+    minimum_support_contraction_bits,
+)
 from .survival_builder import score_recent_regime_candidates
 
 
@@ -94,6 +98,24 @@ def _replay_report(
         "mean_retained_worlds": (
             float(evaluated["retained_world_count"].mean()) if len(evaluated) else None
         ),
+        "retained_world_count_summary": {
+            "minimum": (
+                int(evaluated["retained_world_count"].min()) if len(evaluated) else None
+            ),
+            "median": (
+                float(evaluated["retained_world_count"].median())
+                if len(evaluated)
+                else None
+            ),
+            "mean": (
+                float(evaluated["retained_world_count"].mean())
+                if len(evaluated)
+                else None
+            ),
+            "maximum": (
+                int(evaluated["retained_world_count"].max()) if len(evaluated) else None
+            ),
+        },
         "mean_retained_world_fraction": (
             float(evaluated["retained_world_fraction"].mean())
             if len(evaluated)
@@ -108,6 +130,7 @@ def _replay_report(
             int(evaluated["guaranteed_winner_count"].max()) if len(evaluated) else 0
         ),
         "logical_certificates_by_leg_count": {},
+        "structural_certificate_feasibility_by_leg_count": {},
         "ex_post_oracle_feasibility_by_leg_count": {},
         "shadow_proof_frontier_by_leg_count": {},
         "realized_reservoir_winner_count": {
@@ -138,6 +161,65 @@ def _replay_report(
         report["logical_certificates_by_leg_count"][str(leg_count)] = (
             int(evaluated[column].sum()) if len(evaluated) else 0
         )
+        if len(evaluated):
+            ceilings = (
+                evaluated["candidate_count"]
+                .astype(int)
+                .map(
+                    lambda candidate_count: certificate_world_ceiling(
+                        candidate_count, leg_count
+                    )
+                )
+            )
+            retained = evaluated["retained_world_count"].astype(int)
+            nonempty = retained.gt(0)
+            cardinality_feasible = nonempty & retained.le(ceilings)
+            excess = (retained - ceilings).clip(lower=0)
+            contraction_bits = pd.Series(
+                [
+                    minimum_support_contraction_bits(count, ceiling)
+                    for count, ceiling in zip(retained, ceilings)
+                ],
+                index=evaluated.index,
+                dtype=float,
+            )
+            certified = evaluated[column].astype(bool)
+        else:
+            ceilings = pd.Series(dtype=int)
+            cardinality_feasible = pd.Series(dtype=bool)
+            excess = pd.Series(dtype=float)
+            contraction_bits = pd.Series(dtype=float)
+            certified = pd.Series(dtype=bool)
+        report["structural_certificate_feasibility_by_leg_count"][str(leg_count)] = {
+            "necessary_condition": "0 < |C| <= 2^(M-n)",
+            "world_ceiling_at_maximum_reservoir": certificate_world_ceiling(
+                protocol.maximum_candidates, leg_count
+            ),
+            "cardinality_feasible_slates": int(cardinality_feasible.sum()),
+            "evaluated_slates": int(len(evaluated)),
+            "cardinality_feasibility_rate": (
+                float(cardinality_feasible.mean()) if len(evaluated) else None
+            ),
+            "logical_certificates_on_cardinality_feasible_slates": int(
+                (certified & cardinality_feasible).sum()
+            ),
+            "mean_positive_world_excess_above_ceiling": (
+                float(excess.mean()) if len(excess) else None
+            ),
+            "mean_signed_world_gap_to_ceiling": (
+                float((evaluated["retained_world_count"] - ceilings).mean())
+                if len(evaluated)
+                else None
+            ),
+            "mean_minimum_support_cardinality_bits_required": (
+                float(contraction_bits.mean()) if len(contraction_bits) else None
+            ),
+            "interpretation": (
+                "Cardinality feasibility is necessary but not sufficient. Removed worlds "
+                "must also align on the same winner coordinates. The reported bit value is "
+                "a support-cardinality log ratio, not Shannon information gain."
+            ),
+        }
         oracle_feasible = realized_winner_counts >= leg_count
         report["ex_post_oracle_feasibility_by_leg_count"][str(leg_count)] = {
             "feasible_slates": int(oracle_feasible.sum()),

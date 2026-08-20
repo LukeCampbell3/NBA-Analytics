@@ -110,7 +110,28 @@ The chronological replay used 20 prior slates for calibration and then evaluated
 
 The one-win triple difference is repeatedly inspected research evidence, not validation. More importantly, the exhaustive search does not improve pairs or four-leg chains. That falsifies the idea that another static reordering of current marginal information is enough.
 
+There is also a strict structural ceiling. If the same `n` coordinates are wins in every retained world, then the retained set lies on an `(M-n)`-dimensional face of the binary cube:
+
+```text
+|C| <= 2^(M-n)
+```
+
+For `M=10`, a pair requires at most 256 worlds, a triple at most 128, and a four-leg chain at most 64. The replay's retained-world distribution is 182 minimum, 440.5 median, 430.7 mean, and 578 maximum. Three of 58 slates are already below the pair ceiling, but none has a pair certificate; no slate reaches the triple or four-leg ceiling. This is direct evidence that cardinality is necessary but not sufficient: the remaining worlds must agree on the same winner coordinates.
+
+Across the 58 slates, the mean positive excess above the ceiling is 177.0 worlds for pairs, 302.7 for triples, and 366.7 for four-leg chains. The corresponding mean per-slate support-cardinality contraction still required is 0.727, 1.711, and 2.711 bits. These are `log2` support-size ratios, not estimates of Shannon information or conditional mutual information.
+
+The next objective is therefore counterexample elimination. For a fixed proposed parlay `S`:
+
+```text
+B_S(C_t) = {y in C_t : at least one selected coordinate is 0}
+certificate exists exactly when B_S(C_t) is empty
+```
+
+`proof_trajectory.py` records, at every checkpoint, retained support, full-posterior entropy, conditional entropy inside the outcome set, guaranteed coordinates, structural ceilings, and the minimum counterexample count and mass for 2-, 3-, and 4-leg chains. It separately tracks one target frozen before later path evidence. This distinction matters: the adaptive frontier may switch candidates between checkpoints and cannot be interpreted as elimination for one unchanged parlay.
+
 The synthetic mechanism audit then applies shared-state evidence directly to joint worlds. At the replay's final chronological APS threshold, coherent pair evidence reduces the retained set from 13/16 worlds to 3/16 and makes the same two coordinates wins in every retained world. Exact reversal restores the original 13/16 set and removes the certificate. The software also exhaustively verifies the existence theorem across all 255 nonempty outcome sets for three candidates and all three leg counts: 765/765 checks pass. This proves the mechanism and implementation, not NBA accuracy.
+
+The checkpoint diagnostic makes that synthetic result explicit: retained worlds follow `13 -> 3 -> 3 -> 13`, while the same frozen pair's counterexample worlds follow `9 -> 0 -> 0 -> 9`. A fixed threshold is valid for this mechanism audit only. Real confirmation must use thresholds calibrated chronologically for each checkpoint so that path-induced set contraction does not silently discard coverage.
 
 The resulting path is:
 
@@ -125,6 +146,8 @@ frozen candidate reservoir
 ```
 
 Marginal outcome-set coverage is not a promise that a selected parlay wins 90% of the time. Promotion still requires real timestamped paths to show incremental predictive value, followed by a fresh prospective test of the failure rate specifically on action slates. This separation follows the coverage/set construction used in [classification with adaptive coverage](https://proceedings.neurips.cc/paper/2020/hash/244edd7e85dc81602b7615cd705545f5-Abstract.html), recent [multi-label confidence-set enumeration](https://proceedings.mlr.press/v337/ledaguenel26a.html), and [conformal structured prediction](https://arxiv.org/abs/2410.06296).
+
+The public-data audit still finds no free confirmation-grade NBA archive. The `najicham/nba-stats-scraper` documentation describes the correct object, approximately 20-50 player-prop snapshots per game from May 2023 through April 2025, but its backing GCS archive rejects anonymous listing and direct reads, and neither the repository nor its public fork commits the archive objects. Public Hugging Face results found during the audit provide closing game context, game logs, or non-NBA prop samples rather than repeated NBA sportsbook player-prop boards. The SmartStake MLB archive is suitable for cross-sport mechanical validation only; it cannot support an NBA predictive claim. Prospective append-only NBA capture remains required while mirror discovery continues.
 
 ## Commands
 

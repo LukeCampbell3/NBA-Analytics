@@ -46,6 +46,12 @@
         "mean": 7.7560975609756095,
         "minimum": 5
       },
+      "retained_world_count_summary": {
+        "maximum": 578,
+        "mean": 427.0,
+        "median": 440.0,
+        "minimum": 182
+      },
       "shadow_proof_frontier_by_leg_count": {
         "2": {
           "action_slates": 41,
@@ -79,6 +85,44 @@
       "status_counts": {
         "CALIBRATION_WARMUP": 20,
         "JOINT_OUTCOME_SET_EVALUATED": 41
+      },
+      "structural_certificate_feasibility_by_leg_count": {
+        "2": {
+          "cardinality_feasibility_rate": 0.07317073170731707,
+          "cardinality_feasible_slates": 3,
+          "evaluated_slates": 41,
+          "interpretation": "Cardinality feasibility is necessary but not sufficient. Removed worlds must also align on the same winner coordinates. The reported bit value is a support-cardinality log ratio, not Shannon information gain.",
+          "logical_certificates_on_cardinality_feasible_slates": 0,
+          "mean_minimum_support_cardinality_bits_required": 0.7152881402768579,
+          "mean_positive_world_excess_above_ceiling": 174.34146341463415,
+          "mean_signed_world_gap_to_ceiling": 171.0,
+          "necessary_condition": "0 < |C| <= 2^(M-n)",
+          "world_ceiling_at_maximum_reservoir": 256
+        },
+        "3": {
+          "cardinality_feasibility_rate": 0.0,
+          "cardinality_feasible_slates": 0,
+          "evaluated_slates": 41,
+          "interpretation": "Cardinality feasibility is necessary but not sufficient. Removed worlds must also align on the same winner coordinates. The reported bit value is a support-cardinality log ratio, not Shannon information gain.",
+          "logical_certificates_on_cardinality_feasible_slates": 0,
+          "mean_minimum_support_cardinality_bits_required": 1.6936211344729923,
+          "mean_positive_world_excess_above_ceiling": 299.0,
+          "mean_signed_world_gap_to_ceiling": 299.0,
+          "necessary_condition": "0 < |C| <= 2^(M-n)",
+          "world_ceiling_at_maximum_reservoir": 128
+        },
+        "4": {
+          "cardinality_feasibility_rate": 0.0,
+          "cardinality_feasible_slates": 0,
+          "evaluated_slates": 41,
+          "interpretation": "Cardinality feasibility is necessary but not sufficient. Removed worlds must also align on the same winner coordinates. The reported bit value is a support-cardinality log ratio, not Shannon information gain.",
+          "logical_certificates_on_cardinality_feasible_slates": 0,
+          "mean_minimum_support_cardinality_bits_required": 2.693621134472992,
+          "mean_positive_world_excess_above_ceiling": 363.0,
+          "mean_signed_world_gap_to_ceiling": 363.0,
+          "necessary_condition": "0 < |C| <= 2^(M-n)",
+          "world_ceiling_at_maximum_reservoir": 64
+        }
       },
       "target_marginal_coverage": 0.9,
       "target_miscoverage": 0.1,
@@ -129,6 +173,12 @@
         "mean": 7.235294117647059,
         "minimum": 5
       },
+      "retained_world_count_summary": {
+        "maximum": 568,
+        "mean": 439.47058823529414,
+        "median": 463.0,
+        "minimum": 271
+      },
       "shadow_proof_frontier_by_leg_count": {
         "2": {
           "action_slates": 17,
@@ -161,6 +211,44 @@
       "starting_calibration_slates": 61,
       "status_counts": {
         "JOINT_OUTCOME_SET_EVALUATED": 17
+      },
+      "structural_certificate_feasibility_by_leg_count": {
+        "2": {
+          "cardinality_feasibility_rate": 0.0,
+          "cardinality_feasible_slates": 0,
+          "evaluated_slates": 17,
+          "interpretation": "Cardinality feasibility is necessary but not sufficient. Removed worlds must also align on the same winner coordinates. The reported bit value is a support-cardinality log ratio, not Shannon information gain.",
+          "logical_certificates_on_cardinality_feasible_slates": 0,
+          "mean_minimum_support_cardinality_bits_required": 0.7546042542227972,
+          "mean_positive_world_excess_above_ceiling": 183.47058823529412,
+          "mean_signed_world_gap_to_ceiling": 183.47058823529412,
+          "necessary_condition": "0 < |C| <= 2^(M-n)",
+          "world_ceiling_at_maximum_reservoir": 256
+        },
+        "3": {
+          "cardinality_feasibility_rate": 0.0,
+          "cardinality_feasible_slates": 0,
+          "evaluated_slates": 17,
+          "interpretation": "Cardinality feasibility is necessary but not sufficient. Removed worlds must also align on the same winner coordinates. The reported bit value is a support-cardinality log ratio, not Shannon information gain.",
+          "logical_certificates_on_cardinality_feasible_slates": 0,
+          "mean_minimum_support_cardinality_bits_required": 1.7546042542227973,
+          "mean_positive_world_excess_above_ceiling": 311.47058823529414,
+          "mean_signed_world_gap_to_ceiling": 311.47058823529414,
+          "necessary_condition": "0 < |C| <= 2^(M-n)",
+          "world_ceiling_at_maximum_reservoir": 128
+        },
+        "4": {
+          "cardinality_feasibility_rate": 0.0,
+          "cardinality_feasible_slates": 0,
+          "evaluated_slates": 17,
+          "interpretation": "Cardinality feasibility is necessary but not sufficient. Removed worlds must also align on the same winner coordinates. The reported bit value is a support-cardinality log ratio, not Shannon information gain.",
+          "logical_certificates_on_cardinality_feasible_slates": 0,
+          "mean_minimum_support_cardinality_bits_required": 2.754604254222797,
+          "mean_positive_world_excess_above_ceiling": 375.47058823529414,
+          "mean_signed_world_gap_to_ceiling": 375.47058823529414,
+          "necessary_condition": "0 < |C| <= 2^(M-n)",
+          "world_ceiling_at_maximum_reservoir": 64
+        }
       },
       "target_marginal_coverage": 0.9,
       "target_miscoverage": 0.1,
@@ -200,7 +288,7 @@
       "scikit-learn": "1.7.2",
       "scipy": "1.16.0"
     },
-    "executable_bundle_sha256": "eaa51ec88ed410a6d05e75dfc0c227c09149d992932076a1f6c343c56314a6a3",
+    "executable_bundle_sha256": "ad4efa8dbaa9c1587f0700e54a25a4c5c59df359af1454d0fa8fa2e1331a41d2",
     "freeze_version": "NBA_CONDITIONAL_CHAIN_FREEZE_V1",
     "protocol_sha256": "b671228cf52af617a8ac67a45b470f9c0e141fd4290f96021fe251c7f7efa75b",
     "representation_version": "NBA_ALLOCATION_PATH_V1_1_FROZEN",
@@ -210,7 +298,7 @@
       "allocation_path.py": "f16772928d0f6403dad8d60342f887a41582bb4cdb2a241f4c46a344bcd43faf",
       "authorization.py": "c1ee5f01a3981614d1bb1b4e87ca5bd302a6d6fb3c63fdfb87ab097825277a01",
       "backtest.py": "ccf49fb420def77dd6c0d3f25efdf3a74f7e98fb6dd3c35485926635a64bcf4b",
-      "binary_path_audit.py": "78850ddb28da2bc07bf95f3f76ec1fffa90caf00267b825c504fee67476e3a40",
+      "binary_path_audit.py": "c24d85a762570592e967e39319aa8d725195def206e418cdbc100dc09c367443",
       "chain_resolver.py": "0e22eb14b4516027aad43cc9af89980997cc7ac9890f7fc1729bdb29728a29d8",
       "cli.py": "5da5836b54c6ec835fbc01842eda39b4fcc8582624ec03078b99db86ed2a20b0",
       "conditional_extension.py": "1a32784cb70a1b08ddfd53e1fb8fd75492d36e79560fa9f5292bffe38374b37e",
@@ -219,8 +307,9 @@
       "dataset.py": "8a784abd3f45bbf994adb75d404f18a208bbdf7906571862ea2938c7b76ae655",
       "freeze.py": "27adf605a876ba9e37a778bf14b8251089c68108f42d1a4c3713b0c5464590b7",
       "frozen_selector.py": "4d3c6b6dca3a5f03096996f89bbf17bc5d3a7846fc2a91f5a546ae6a0703af45",
-      "outcome_set_backtest.py": "4d7dc78e77786e52b929f573c3b31e286615f7ffcd276c18a38a401f2e8bad62",
+      "outcome_set_backtest.py": "f354fd6645ce6055a47baf49e0f2782606663d10020c8c0bbd74dcc3f60bd7fb",
       "outcome_worlds.py": "48ca98670ad13e96a0fe1c21fb231d7e3cbcc9158c7799b2c650672875efcabe",
+      "proof_trajectory.py": "b78cd958a67565e0adc8ba870cfcf81805d5d07d3eefda214d58c26d530b0fda",
       "protocol.py": "88be2fe2f12e7db4e707564156a556af266ec9a0a6567ecbc478619de2a8c096",
       "research_replay.py": "ec9957ea91bbaf4dc7a1f2dfd665e344598504967705a59ea18e88d3719cc090",
       "snapshot_ledger.py": "aedf1feea7d1ba7475bb09b1dde42de31cd73fbfe4d9f4a25cb675baa097d998",
@@ -251,6 +340,12 @@
     "path_incremental_value_required": true,
     "selective_risk_certificate_required": true,
     "status": "PATH_INFORMATION_REQUIRED"
+  },
+  "retained_world_count_summary": {
+    "maximum": 578,
+    "mean": 430.6551724137931,
+    "median": 440.5,
+    "minimum": 182
   },
   "shadow_proof_frontier_by_leg_count": {
     "2": {
@@ -296,6 +391,44 @@
   "status_counts": {
     "CALIBRATION_WARMUP": 20,
     "JOINT_OUTCOME_SET_EVALUATED": 58
+  },
+  "structural_certificate_feasibility_by_leg_count": {
+    "2": {
+      "cardinality_feasibility_rate": 0.05172413793103448,
+      "cardinality_feasible_slates": 3,
+      "evaluated_slates": 58,
+      "interpretation": "Cardinality feasibility is necessary but not sufficient. Removed worlds must also align on the same winner coordinates. The reported bit value is a support-cardinality log ratio, not Shannon information gain.",
+      "logical_certificates_on_cardinality_feasible_slates": 0,
+      "mean_minimum_support_cardinality_bits_required": 0.7268118288472194,
+      "mean_positive_world_excess_above_ceiling": 177.01724137931035,
+      "mean_signed_world_gap_to_ceiling": 174.6551724137931,
+      "necessary_condition": "0 < |C| <= 2^(M-n)",
+      "world_ceiling_at_maximum_reservoir": 256
+    },
+    "3": {
+      "cardinality_feasibility_rate": 0.0,
+      "cardinality_feasible_slates": 0,
+      "evaluated_slates": 58,
+      "interpretation": "Cardinality feasibility is necessary but not sufficient. Removed worlds must also align on the same winner coordinates. The reported bit value is a support-cardinality log ratio, not Shannon information gain.",
+      "logical_certificates_on_cardinality_feasible_slates": 0,
+      "mean_minimum_support_cardinality_bits_required": 1.7114954971582796,
+      "mean_positive_world_excess_above_ceiling": 302.6551724137931,
+      "mean_signed_world_gap_to_ceiling": 302.6551724137931,
+      "necessary_condition": "0 < |C| <= 2^(M-n)",
+      "world_ceiling_at_maximum_reservoir": 128
+    },
+    "4": {
+      "cardinality_feasibility_rate": 0.0,
+      "cardinality_feasible_slates": 0,
+      "evaluated_slates": 58,
+      "interpretation": "Cardinality feasibility is necessary but not sufficient. Removed worlds must also align on the same winner coordinates. The reported bit value is a support-cardinality log ratio, not Shannon information gain.",
+      "logical_certificates_on_cardinality_feasible_slates": 0,
+      "mean_minimum_support_cardinality_bits_required": 2.71149549715828,
+      "mean_positive_world_excess_above_ceiling": 366.6551724137931,
+      "mean_signed_world_gap_to_ceiling": 366.6551724137931,
+      "necessary_condition": "0 < |C| <= 2^(M-n)",
+      "world_ceiling_at_maximum_reservoir": 64
+    }
   },
   "target_marginal_coverage": 0.9,
   "target_miscoverage": 0.1,
