@@ -17,6 +17,10 @@ from sports.nba.conditional_chain.authorization import (
     assess_quote_evidence,
     authorize_parlay,
 )
+from sports.nba.conditional_chain.binary_path_audit import (
+    exhaustive_intersection_theorem_audit,
+    run_binary_path_sensitivity_audit,
+)
 from sports.nba.conditional_chain.chain_resolver import resolve_conditional_chain
 from sports.nba.conditional_chain.conditional_extension import (
     ConditionalExtensionModel,
@@ -38,8 +42,23 @@ from sports.nba.conditional_chain.frozen_selector import (
 )
 from sports.nba.conditional_chain.protocol import (
     ALLOCATION_PATH_PROTOCOL,
+    BINARY_OUTCOME_SET_PROTOCOL,
     FROZEN_SELECTOR_PROTOCOL,
     SURVIVAL_BUILDER_PROTOCOL,
+)
+from sports.nba.conditional_chain.outcome_set_backtest import (
+    chronological_outcome_set_replay,
+)
+from sports.nba.conditional_chain.outcome_worlds import (
+    apply_candidate_evidence_path,
+    apply_joint_world_evidence_path,
+    build_binary_outcome_set,
+    build_world_distribution,
+    certify_perfect_parlay,
+    conformal_aps_threshold,
+    enumerate_binary_worlds,
+    guaranteed_winner_indices,
+    search_parlay_proof_frontier,
 )
 from sports.nba.conditional_chain.research_replay import adapt_master_research_ledger
 from sports.nba.conditional_chain.snapshot_ledger import MarketSnapshotLedger
@@ -719,3 +738,196 @@ def test_survival_replay_uses_one_decision_per_slate_after_warmup() -> None:
     assert replay.report["production_authorizable"] is False
     combined = combine_survival_replays([replay])
     assert combined.report["research_gate"]["status"] == "RESEARCH_GATE_NOT_PASSED"
+
+
+def test_binary_world_distribution_enumerates_every_joint_state() -> None:
+    outcomes = enumerate_binary_worlds(3)
+    assert outcomes.shape == (8, 3)
+    assert {tuple(row) for row in outcomes} == {
+        (0, 0, 0),
+        (1, 0, 0),
+        (0, 1, 0),
+        (1, 1, 0),
+        (0, 0, 1),
+        (1, 0, 1),
+        (0, 1, 1),
+        (1, 1, 1),
+    }
+    distribution = build_world_distribution(["a", "b", "c"], [0.70, 0.60, 0.80])
+    np.testing.assert_allclose(distribution.probabilities.sum(), 1.0)
+    np.testing.assert_allclose(distribution.marginals, [0.70, 0.60, 0.80])
+
+    full_set = build_binary_outcome_set(
+        distribution,
+        aps_threshold=1.0,
+        calibration_slates=BINARY_OUTCOME_SET_PROTOCOL.minimum_calibration_slates,
+    )
+    assert full_set.world_count == 8
+    assert guaranteed_winner_indices(full_set) == ()
+
+
+def test_perfect_parlay_exists_exactly_when_world_intersection_is_large_enough() -> (
+    None
+):
+    worlds = enumerate_binary_worlds(3)
+    admissible = (worlds[:, 0] == 1) & (worlds[:, 1] == 1)
+    distribution = build_world_distribution(
+        ["a", "b", "c"],
+        [0.70, 0.70, 0.50],
+        admissible_world_mask=admissible,
+    )
+    outcome_set = build_binary_outcome_set(
+        distribution,
+        aps_threshold=1.0,
+        calibration_slates=BINARY_OUTCOME_SET_PROTOCOL.minimum_calibration_slates,
+    )
+    candidates = pd.DataFrame(
+        {
+            "candidate_id": ["a", "b", "c"],
+            "player": ["Alpha", "Beta", "Gamma"],
+            "survival_probability": [0.70, 0.70, 0.50],
+        }
+    )
+    path_certificate = {
+        "status": "PATH_INCREMENTAL_VALUE_SUPPORTED",
+        "path_authorized": True,
+    }
+    pair = certify_perfect_parlay(
+        candidates,
+        outcome_set,
+        requested_leg_count=2,
+        path_certificate=path_certificate,
+    )
+    triple = certify_perfect_parlay(
+        candidates,
+        outcome_set,
+        requested_leg_count=3,
+        path_certificate=path_certificate,
+    )
+    assert guaranteed_winner_indices(outcome_set) == (0, 1)
+    assert pair.logical_implication_proven is True
+    assert pair.selected_candidate_ids == ("a", "b")
+    assert pair.production_authorized is False
+    assert triple.logical_implication_proven is False
+
+
+def test_market_evidence_path_can_shrink_worlds_without_settlement() -> None:
+    prior = build_world_distribution(["a", "b"], [0.50, 0.50])
+    path = apply_candidate_evidence_path(
+        prior,
+        np.asarray([[10.0, 10.0], [10.0, 10.0]]),
+        checkpoint_labels=["T-30", "T-5"],
+    )
+    assert path.distributions[-1].entropy < prior.entropy
+    assert (path.distributions[-1].marginals > 0.99).all()
+    outcome_set = build_binary_outcome_set(
+        path.distributions[-1],
+        aps_threshold=0.99,
+        calibration_slates=BINARY_OUTCOME_SET_PROTOCOL.minimum_calibration_slates,
+    )
+    assert guaranteed_winner_indices(outcome_set) == (0, 1)
+
+
+def test_exact_proof_frontier_exposes_every_remaining_counterexample() -> None:
+    distribution = build_world_distribution(
+        ["a", "b", "c"],
+        [0.80, 0.75, 0.55],
+    )
+    outcome_set = build_binary_outcome_set(
+        distribution,
+        aps_threshold=0.90,
+        calibration_slates=BINARY_OUTCOME_SET_PROTOCOL.minimum_calibration_slates,
+    )
+    candidates = pd.DataFrame(
+        {
+            "candidate_id": ["a", "b", "c"],
+            "player": ["Alpha", "Beta", "Gamma"],
+            "survival_probability": [0.80, 0.75, 0.55],
+        }
+    )
+    frontier = search_parlay_proof_frontier(
+        candidates,
+        outcome_set,
+        requested_leg_count=2,
+    )
+    assert frontier.selected_candidate_ids == ("a", "b")
+    assert frontier.logically_proven is False
+    assert frontier.counterexample_world_count > 0
+    assert 0.0 < frontier.counterexample_mass_within_set < 1.0
+    assert frontier.combinations_evaluated == 3
+
+
+def test_empty_outcome_set_cannot_create_a_vacuous_parlay_proof() -> None:
+    distribution = build_world_distribution(["a", "b"], [0.50, 0.50])
+    outcome_set = build_binary_outcome_set(
+        distribution,
+        aps_threshold=0.90,
+        calibration_slates=BINARY_OUTCOME_SET_PROTOCOL.minimum_calibration_slates,
+    )
+    candidates = pd.DataFrame(
+        {
+            "candidate_id": ["a", "b"],
+            "player": ["Alpha", "Beta"],
+            "survival_probability": [0.50, 0.50],
+        }
+    )
+    certificate = certify_perfect_parlay(
+        candidates,
+        outcome_set,
+        requested_leg_count=2,
+    )
+    assert outcome_set.world_count == 0
+    assert guaranteed_winner_indices(outcome_set) == ()
+    assert certificate.logical_implication_proven is False
+    assert certificate.status == "NO_ROBUST_WINNER_INTERSECTION"
+
+
+def test_joint_world_path_supports_non_factorized_state_evidence() -> None:
+    prior = build_world_distribution(["a", "b", "c"], [0.55, 0.55, 0.49])
+    shared_state = prior.outcomes[:, 0].astype(bool) & prior.outcomes[:, 1].astype(bool)
+    evidence = np.where(shared_state, 5.0, 0.0)
+    path = apply_joint_world_evidence_path(
+        prior,
+        np.vstack([evidence, evidence]),
+        checkpoint_labels=["T-30", "T-5"],
+    )
+    outcome_set = build_binary_outcome_set(
+        path.distributions[-1],
+        aps_threshold=0.90,
+        calibration_slates=BINARY_OUTCOME_SET_PROTOCOL.minimum_calibration_slates,
+    )
+    assert guaranteed_winner_indices(outcome_set) == (0, 1)
+
+
+def test_binary_path_sensitivity_and_intersection_theorem_audits_pass() -> None:
+    theorem = exhaustive_intersection_theorem_audit(candidate_count=3)
+    sensitivity = run_binary_path_sensitivity_audit(aps_threshold=0.90)
+    assert theorem["theorem_checks"] == 765
+    assert theorem["passed"] is True
+    assert sensitivity["mechanism_passed"] is True
+    assert sensitivity["scenarios"]["coherent_joint_path"]["pair_logically_proven"]
+    assert not sensitivity["scenarios"]["fully_reversed_path"]["pair_logically_proven"]
+
+
+def test_joint_outcome_replay_waits_for_prior_calibration_slates() -> None:
+    rows = []
+    for day in range(25):
+        event_date = pd.Timestamp("2026-01-01") + pd.Timedelta(days=day)
+        slate = _survival_reservoir(str(event_date.date()))
+        slate["leg_result"] = np.where(slate["market"].eq("player_assists"), 1.0, 0.0)
+        rows.append(slate)
+    replay = chronological_outcome_set_replay(
+        pd.concat(rows, ignore_index=True),
+        block_label="test",
+    )
+    assert int(replay.decisions["evaluated"].sum()) == 5
+    assert replay.report["evaluated_slates"] == 5
+    assert replay.report["ex_post_oracle_feasibility_by_leg_count"]["2"][
+        "feasible_slates"
+    ] == 5
+    assert replay.report["ex_post_oracle_feasibility_by_leg_count"]["3"][
+        "feasible_slates"
+    ] == 0
+    assert len(replay.calibration_scores) == 25
+    threshold = conformal_aps_threshold([0.2] * 20)
+    assert np.isclose(threshold, 0.2)

@@ -8,6 +8,7 @@ from typing import Any
 
 from .protocol import (
     ALLOCATION_PATH_PROTOCOL,
+    BINARY_OUTCOME_SET_PROTOCOL,
     FROZEN_SELECTOR_PROTOCOL,
     PARLAY_AUTHORIZATION_PROTOCOL,
     SURVIVAL_BUILDER_PROTOCOL,
@@ -32,6 +33,7 @@ def build_freeze_manifest(package_dir: Path | None = None) -> dict[str, Any]:
         "allocation_path": ALLOCATION_PATH_PROTOCOL.as_dict(),
         "parlay_authorization": PARLAY_AUTHORIZATION_PROTOCOL.as_dict(),
         "survival_builder": SURVIVAL_BUILDER_PROTOCOL.as_dict(),
+        "binary_outcome_set": BINARY_OUTCOME_SET_PROTOCOL.as_dict(),
     }
     protocol_sha = hashlib.sha256(_canonical_bytes(protocol_payload)).hexdigest()
     source_hashes: dict[str, str] = {}
@@ -49,6 +51,7 @@ def build_freeze_manifest(package_dir: Path | None = None) -> dict[str, Any]:
         "representation_version": ALLOCATION_PATH_PROTOCOL.version,
         "authorization_version": PARLAY_AUTHORIZATION_PROTOCOL.version,
         "survival_builder_version": SURVIVAL_BUILDER_PROTOCOL.version,
+        "binary_outcome_set_version": BINARY_OUTCOME_SET_PROTOCOL.version,
         "protocol_sha256": protocol_sha,
         "executable_bundle_sha256": bundle.hexdigest(),
         "dependencies": dependencies,

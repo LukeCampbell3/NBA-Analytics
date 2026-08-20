@@ -11,9 +11,14 @@ import numpy as np
 import pandas as pd
 
 from .backtest import load_data_proc_history, replay_frozen_selector
+from .binary_path_audit import run_binary_path_sensitivity_audit
 from .confirmation import chronological_confirmation
 from .dataset import build_frozen_dataset, write_frozen_dataset
 from .freeze import build_freeze_manifest
+from .outcome_set_backtest import (
+    chronological_outcome_set_replay,
+    combine_outcome_set_replays,
+)
 from .research_replay import replay_master_research_ledger
 from .survival_backtest import (
     build_transfer_reservoir,
@@ -111,6 +116,15 @@ def _build_parser() -> argparse.ArgumentParser:
     survival_replay.add_argument("--data-proc-dir", type=Path, required=True)
     survival_replay.add_argument("--warmup-slates", type=int, default=20)
     survival_replay.add_argument("--output-dir", type=Path, required=True)
+
+    outcome_set_replay = subparsers.add_parser("backtest-outcome-set")
+    outcome_set_replay.add_argument("--research-reservoir", type=Path, required=True)
+    outcome_set_replay.add_argument("--transfer-reservoir", type=Path, required=True)
+    outcome_set_replay.add_argument("--output-dir", type=Path, required=True)
+
+    binary_path_audit = subparsers.add_parser("binary-path-audit")
+    binary_path_audit.add_argument("--aps-threshold", type=float, default=0.90)
+    binary_path_audit.add_argument("--output", type=Path, required=True)
     return parser
 
 
@@ -237,6 +251,57 @@ def main() -> int:
             json.dumps(
                 _json_ready(combined.report), indent=2, sort_keys=True, allow_nan=False
             )
+        )
+        return 0
+    if args.command == "backtest-outcome-set":
+        research_reservoir = pd.read_csv(args.research_reservoir, low_memory=False)
+        transfer_reservoir = pd.read_csv(args.transfer_reservoir, low_memory=False)
+        research_replay = chronological_outcome_set_replay(
+            research_reservoir,
+            block_label="historical_expanding",
+        )
+        transfer_replay = chronological_outcome_set_replay(
+            transfer_reservoir,
+            block_label="cross_version_transfer",
+            initial_history=research_reservoir,
+            initial_calibration_scores=research_replay.calibration_scores,
+        )
+        combined = combine_outcome_set_replays([research_replay, transfer_replay])
+        args.output_dir.mkdir(parents=True, exist_ok=True)
+        combined.decisions.to_csv(
+            args.output_dir / "binary_outcome_set_decisions.csv", index=False
+        )
+        report = dict(combined.report)
+        report["source_manifests"] = {
+            "research_reservoir": {
+                "path": _portable_source_path(args.research_reservoir),
+                "sha256": hashlib.sha256(
+                    args.research_reservoir.read_bytes()
+                ).hexdigest(),
+                "rows": int(len(research_reservoir)),
+            },
+            "transfer_reservoir": {
+                "path": _portable_source_path(args.transfer_reservoir),
+                "sha256": hashlib.sha256(
+                    args.transfer_reservoir.read_bytes()
+                ).hexdigest(),
+                "rows": int(len(transfer_reservoir)),
+            },
+        }
+        report["freeze_manifest"] = build_freeze_manifest()
+        _write_json(args.output_dir / "binary_outcome_set_backtest.json", report)
+        print(
+            json.dumps(_json_ready(report), indent=2, sort_keys=True, allow_nan=False)
+        )
+        return 0
+    if args.command == "binary-path-audit":
+        report = run_binary_path_sensitivity_audit(
+            aps_threshold=args.aps_threshold,
+        )
+        report["freeze_manifest"] = build_freeze_manifest()
+        _write_json(args.output, report)
+        print(
+            json.dumps(_json_ready(report), indent=2, sort_keys=True, allow_nan=False)
         )
         return 0
     raise AssertionError(f"unhandled command {args.command}")

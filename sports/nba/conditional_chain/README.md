@@ -8,6 +8,7 @@ This package implements the report's NBA research architecture without changing 
 - Allocation representation: `NBA_ALLOCATION_PATH_V1_1_FROZEN`
 - Chain policy: `NBA_CONDITIONAL_CHAIN_V0_SHADOW`
 - Survival policy: `NBA_RECENT_REGIME_SURVIVAL_V1_SHADOW`
+- Joint outcome set: `NBA_BINARY_OUTCOME_SET_V1_SHADOW`
 - Representation unit: one event/team/market
 - Statistical unit: one game event for path confirmation and one final slate decision for parlay evaluation
 
@@ -72,6 +73,59 @@ Publication now requires all of the following:
 
 This prevents a high synthetic hit rate or a high model score from being presented as a validated betting parlay.
 
+## Exact binary outcome-path layer
+
+The original binary-state theory is preserved, but its claim is made testable. For a reservoir of `M` bets, let the joint settlement world be:
+
+```text
+y in {0, 1}^M
+```
+
+where `1` is a settled full-payout win and `0` is any result that prevents the full parlay payout. Pushes are therefore mapped to `0` for this specific proof target. At checkpoint `t`, `C_t` is the set of joint worlds still retained by the frozen model and path evidence. Define:
+
+```text
+G_t = intersection over y in C_t of {i : y_i = 1}
+```
+
+The exact finite-state theorem is:
+
+```text
+an n-leg perfect parlay exists inside C_t if and only if |G_t| >= n
+```
+
+This is necessary and sufficient, not a greedy approximation. The implementation enumerates all `2^M` worlds for the frozen maximum `M=10`, updates their probabilities with checkpoint-level joint log evidence, constructs a chronological label-powerset APS outcome set, and exhaustively evaluates every requested 2-, 3-, or 4-leg subset. A candidate receives a logical certificate only when no retained world is a counterexample. An empty outcome set forces abstention and can never create a vacuous certificate.
+
+The distinction between existence and identification is essential. If a slate has at least `n` winners, a winning subset exists after settlement. It is identifiable before settlement only if observed information removes every conflicting world. If the same observable endpoint and path can arise under both a parlay-win world and a parlay-loss world, no classifier can perfectly distinguish them; the unresolved conditional entropy is irreducible from those inputs.
+
+The chronological replay used 20 prior slates for calibration and then evaluated 58 slates across the historical and cross-version blocks:
+
+- realized joint-world coverage: 54/58 (93.10%) against a 90% marginal target;
+- ex-post winning 2-, 3-, and 4-leg subsets existed in 58/58 reservoirs, with at least five realized winners in every top-10;
+- logical 2-, 3-, and 4-leg certificates: 0/58 for every length;
+- mean retained set: 430.7 of 1,024 worlds;
+- best exhaustive pair frontier: 39/58 (67.24%), exactly tied with ordinary top two;
+- best exhaustive triple frontier: 32/58 (55.17%) versus 31/58 for ordinary top three;
+- best exhaustive four-leg frontier: 24/58 (41.38%), exactly tied with ordinary top four;
+- mean pair proof gap: 229.8 counterexample worlds carrying 33.05% of retained-set mass.
+
+The one-win triple difference is repeatedly inspected research evidence, not validation. More importantly, the exhaustive search does not improve pairs or four-leg chains. That falsifies the idea that another static reordering of current marginal information is enough.
+
+The synthetic mechanism audit then applies shared-state evidence directly to joint worlds. At the replay's final chronological APS threshold, coherent pair evidence reduces the retained set from 13/16 worlds to 3/16 and makes the same two coordinates wins in every retained world. Exact reversal restores the original 13/16 set and removes the certificate. The software also exhaustively verifies the existence theorem across all 255 nonempty outcome sets for three candidates and all three leg counts: 765/765 checks pass. This proves the mechanism and implementation, not NBA accuracy.
+
+The resulting path is:
+
+```text
+frozen candidate reservoir
+  -> exact joint binary worlds
+  -> shared-state checkpoint evidence
+  -> chronological conformal outcome set
+  -> exhaustive counterexample search
+  -> logical shadow certificate or abstention
+  -> separate prospective action-conditional risk test
+```
+
+Marginal outcome-set coverage is not a promise that a selected parlay wins 90% of the time. Promotion still requires real timestamped paths to show incremental predictive value, followed by a fresh prospective test of the failure rate specifically on action slates. This separation follows the coverage/set construction used in [classification with adaptive coverage](https://proceedings.neurips.cc/paper/2020/hash/244edd7e85dc81602b7615cd705545f5-Abstract.html), recent [multi-label confidence-set enumeration](https://proceedings.mlr.press/v337/ledaguenel26a.html), and [conformal structured prediction](https://arxiv.org/abs/2410.06296).
+
 ## Commands
 
 ```powershell
@@ -106,6 +160,15 @@ python -m sports.nba.conditional_chain.cli backtest-survival `
   --data-proc-dir sports/nba/predictions/Player-Predictor/Data-Proc `
   --warmup-slates 20 `
   --output-dir sports/nba/conditional_chain/artifacts/survival_replay
+
+python -m sports.nba.conditional_chain.cli backtest-outcome-set `
+  --research-reservoir sports/nba/conditional_chain/artifacts/full_replay/frozen_reservoir_replay.csv `
+  --transfer-reservoir sports/nba/conditional_chain/artifacts/survival_replay/transfer_reservoir_replay.csv `
+  --output-dir sports/nba/conditional_chain/artifacts/outcome_set_replay
+
+python -m sports.nba.conditional_chain.cli binary-path-audit `
+  --aps-threshold 0.9007125852032632 `
+  --output sports/nba/conditional_chain/artifacts/outcome_set_replay/binary_path_sensitivity.json
 ```
 
 The documented `gs://nba-scraped-data/odds-api/player-props-history` archive is a supported upstream shape once exported to CSV or Parquet, but it returns HTTP 403 without project credentials. The committed repository sequence is audited honestly and is not promoted to confirmation evidence when fixed-checkpoint, identity, or quote-provenance gates fail.

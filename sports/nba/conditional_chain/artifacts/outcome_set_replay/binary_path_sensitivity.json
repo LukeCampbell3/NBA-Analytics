@@ -1,0 +1,159 @@
+{
+  "aps_threshold": 0.900712585203263,
+  "audit": "binary_joint_path_proof_sensitivity",
+  "coherent_path_diagnostics": [
+    {
+      "checkpoint": "prior",
+      "effective_worlds": 15.430657336277278,
+      "entropy": 2.7363562666521934,
+      "maximum_world_probability": 0.09398331000000003,
+      "step": 0
+    },
+    {
+      "checkpoint": "T-30",
+      "effective_worlds": 4.3272267375215,
+      "entropy": 1.4649268604988406,
+      "maximum_world_probability": 0.26692587664444506,
+      "step": 1
+    },
+    {
+      "checkpoint": "T-5",
+      "effective_worlds": 3.9958993961887055,
+      "entropy": 1.3852686843404305,
+      "maximum_world_probability": 0.2702769799148216,
+      "step": 2
+    }
+  ],
+  "evidence_status": "SYNTHETIC_MECHANISM_AUDIT_NOT_ACCURACY_EVIDENCE",
+  "freeze_manifest": {
+    "authorization_version": "NBA_PARLAY_AUTHORIZATION_V1",
+    "binary_outcome_set_version": "NBA_BINARY_OUTCOME_SET_V1_SHADOW",
+    "dependencies": {
+      "numpy": "1.26.4",
+      "pandas": "2.3.0",
+      "scikit-learn": "1.7.2",
+      "scipy": "1.16.0"
+    },
+    "executable_bundle_sha256": "eaa51ec88ed410a6d05e75dfc0c227c09149d992932076a1f6c343c56314a6a3",
+    "freeze_version": "NBA_CONDITIONAL_CHAIN_FREEZE_V1",
+    "protocol_sha256": "b671228cf52af617a8ac67a45b470f9c0e141fd4290f96021fe251c7f7efa75b",
+    "representation_version": "NBA_ALLOCATION_PATH_V1_1_FROZEN",
+    "selector_version": "ROBUST_STATE_INTERSECTION_Q25_V1",
+    "source_sha256": {
+      "__init__.py": "646883274611a484bc8e8f659b508b667d165721a694d9f1c2e28676298e032a",
+      "allocation_path.py": "f16772928d0f6403dad8d60342f887a41582bb4cdb2a241f4c46a344bcd43faf",
+      "authorization.py": "c1ee5f01a3981614d1bb1b4e87ca5bd302a6d6fb3c63fdfb87ab097825277a01",
+      "backtest.py": "ccf49fb420def77dd6c0d3f25efdf3a74f7e98fb6dd3c35485926635a64bcf4b",
+      "binary_path_audit.py": "78850ddb28da2bc07bf95f3f76ec1fffa90caf00267b825c504fee67476e3a40",
+      "chain_resolver.py": "0e22eb14b4516027aad43cc9af89980997cc7ac9890f7fc1729bdb29728a29d8",
+      "cli.py": "5da5836b54c6ec835fbc01842eda39b4fcc8582624ec03078b99db86ed2a20b0",
+      "conditional_extension.py": "1a32784cb70a1b08ddfd53e1fb8fd75492d36e79560fa9f5292bffe38374b37e",
+      "confirmation.py": "ee3b29449edbf51dab0a9e5c8580e6ed59f8d4b05a2a1dc0b7a29021b26a3cb1",
+      "core_policy.py": "273ec42e37efd97cb5dd4cfed483acda8204313db2c00999ec1cc2eaa5f3eaf4",
+      "dataset.py": "8a784abd3f45bbf994adb75d404f18a208bbdf7906571862ea2938c7b76ae655",
+      "freeze.py": "27adf605a876ba9e37a778bf14b8251089c68108f42d1a4c3713b0c5464590b7",
+      "frozen_selector.py": "4d3c6b6dca3a5f03096996f89bbf17bc5d3a7846fc2a91f5a546ae6a0703af45",
+      "outcome_set_backtest.py": "4d7dc78e77786e52b929f573c3b31e286615f7ffcd276c18a38a401f2e8bad62",
+      "outcome_worlds.py": "48ca98670ad13e96a0fe1c21fb231d7e3cbcc9158c7799b2c650672875efcabe",
+      "protocol.py": "88be2fe2f12e7db4e707564156a556af266ec9a0a6567ecbc478619de2a8c096",
+      "research_replay.py": "ec9957ea91bbaf4dc7a1f2dfd665e344598504967705a59ea18e88d3719cc090",
+      "snapshot_ledger.py": "aedf1feea7d1ba7475bb09b1dde42de31cd73fbfe4d9f4a25cb675baa097d998",
+      "survival_backtest.py": "4d60b0c07696525d33a60a683b509a10441c738a80a78b35a3088089f545da4b",
+      "survival_builder.py": "3018ef87617a839ccc1cb4ab8193019655b8479dbb9ccac9553bd48e62457255",
+      "synthetic_audit.py": "8122ab3f16be76625264a99f7215b3632312d84a332ea399c0b605b7c4fe5df3"
+    },
+    "survival_builder_version": "NBA_RECENT_REGIME_SURVIVAL_V1_SHADOW"
+  },
+  "mechanism_passed": true,
+  "outcome_set_version": "NBA_BINARY_OUTCOME_SET_V1_SHADOW",
+  "reversal_path_diagnostics": [
+    {
+      "checkpoint": "prior",
+      "effective_worlds": 15.430657336277278,
+      "entropy": 2.7363562666521934,
+      "maximum_world_probability": 0.09398331000000003,
+      "step": 0
+    },
+    {
+      "checkpoint": "T-30",
+      "effective_worlds": 4.3272267375215,
+      "entropy": 1.4649268604988406,
+      "maximum_world_probability": 0.26692587664444506,
+      "step": 1
+    },
+    {
+      "checkpoint": "T-5",
+      "effective_worlds": 3.9958993961887055,
+      "entropy": 1.3852686843404305,
+      "maximum_world_probability": 0.2702769799148216,
+      "step": 2
+    },
+    {
+      "checkpoint": "REVERSAL",
+      "effective_worlds": 15.43065733627725,
+      "entropy": 2.7363562666521917,
+      "maximum_world_probability": 0.09398330999999994,
+      "step": 3
+    }
+  ],
+  "scenarios": {
+    "coherent_joint_path": {
+      "effective_worlds": 3.9958993961887055,
+      "entropy": 1.3852686843404305,
+      "guaranteed_candidate_ids": [
+        "candidate_a",
+        "candidate_b"
+      ],
+      "guaranteed_winner_count": 2,
+      "pair_counterexample_mass_within_set": 0.0,
+      "pair_counterexample_worlds": 0,
+      "pair_logically_proven": true,
+      "pair_selected_candidate_ids": [
+        "candidate_a",
+        "candidate_b"
+      ],
+      "retained_world_fraction": 0.1875,
+      "retained_worlds": 3
+    },
+    "endpoint_only": {
+      "effective_worlds": 15.430657336277278,
+      "entropy": 2.7363562666521934,
+      "guaranteed_candidate_ids": [],
+      "guaranteed_winner_count": 0,
+      "pair_counterexample_mass_within_set": 0.6038190657055426,
+      "pair_counterexample_worlds": 9,
+      "pair_logically_proven": false,
+      "pair_selected_candidate_ids": [
+        "candidate_a",
+        "candidate_b"
+      ],
+      "retained_world_fraction": 0.8125,
+      "retained_worlds": 13
+    },
+    "fully_reversed_path": {
+      "effective_worlds": 15.43065733627725,
+      "entropy": 2.7363562666521917,
+      "guaranteed_candidate_ids": [],
+      "guaranteed_winner_count": 0,
+      "pair_counterexample_mass_within_set": 0.6038190657055426,
+      "pair_counterexample_worlds": 9,
+      "pair_logically_proven": false,
+      "pair_selected_candidate_ids": [
+        "candidate_a",
+        "candidate_b"
+      ],
+      "retained_world_fraction": 0.8125,
+      "retained_worlds": 13
+    }
+  },
+  "supported_claim": "A shared-state evidence path can produce an n-leg logical intersection when it excludes every retained counterexample world; exact reversal removes that intersection.",
+  "theorem_audit": {
+    "candidate_count": 3,
+    "failures": 0,
+    "nonempty_outcome_sets": 255,
+    "passed": true,
+    "theorem": "An n-leg perfect parlay exists inside a retained binary outcome set if and only if at least n candidate coordinates equal one in every retained world.",
+    "theorem_checks": 765
+  },
+  "unsupported_claim": "This synthetic audit does not show that observed NBA market paths carry the required evidence or that a future parlay will win."
+}

@@ -90,7 +90,26 @@ class SurvivalBuilderProtocol:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class BinaryOutcomeSetProtocol:
+    version: str = "NBA_BINARY_OUTCOME_SET_V1_SHADOW"
+    maximum_candidates: int = 10
+    target_miscoverage: float = 0.10
+    minimum_calibration_slates: int = 20
+    requested_leg_counts: tuple[int, ...] = (2, 3, 4)
+    calibration_method: str = "label_powerset_aps_deterministic"
+    proof_contract: str = "all_retained_worlds_assign_every_selected_leg_a_win"
+    binary_success_definition: str = "settled_win_vs_not_full_payout_win"
+    require_path_certificate: bool = True
+    score_epsilon: float = 1e-12
+    publication_mode: str = "shadow_only_until_selective_risk_certificate"
+
+    def as_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
 FROZEN_SELECTOR_PROTOCOL = FrozenSelectorProtocol()
 ALLOCATION_PATH_PROTOCOL = AllocationPathProtocol()
 PARLAY_AUTHORIZATION_PROTOCOL = ParlayAuthorizationProtocol()
 SURVIVAL_BUILDER_PROTOCOL = SurvivalBuilderProtocol()
+BINARY_OUTCOME_SET_PROTOCOL = BinaryOutcomeSetProtocol()
