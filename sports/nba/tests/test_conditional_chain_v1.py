@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from pathlib import Path
+import sqlite3
 
 import numpy as np
 import pandas as pd
@@ -11,6 +12,11 @@ from sports.nba.conditional_chain.allocation_path import (
     attach_realized_allocations,
     build_allocation_paths,
 )
+from sports.nba.conditional_chain.authorization import (
+    QuoteEvidenceStatus,
+    assess_quote_evidence,
+    authorize_parlay,
+)
 from sports.nba.conditional_chain.chain_resolver import resolve_conditional_chain
 from sports.nba.conditional_chain.conditional_extension import (
     ConditionalExtensionModel,
@@ -19,6 +25,10 @@ from sports.nba.conditional_chain.conditional_extension import (
 from sports.nba.conditional_chain.confirmation import (
     chronological_confirmation,
     evaluate_improvement_sequence,
+)
+from sports.nba.conditional_chain.core_policy import (
+    fit_rank_reliability_core,
+    select_frozen_core,
 )
 from sports.nba.conditional_chain.freeze import build_freeze_manifest
 from sports.nba.conditional_chain.frozen_selector import (
@@ -30,6 +40,8 @@ from sports.nba.conditional_chain.protocol import (
     ALLOCATION_PATH_PROTOCOL,
     FROZEN_SELECTOR_PROTOCOL,
 )
+from sports.nba.conditional_chain.research_replay import adapt_master_research_ledger
+from sports.nba.conditional_chain.snapshot_ledger import MarketSnapshotLedger
 from sports.nba.conditional_chain.synthetic_audit import generate_synthetic_settled_paths
 
 
@@ -334,3 +346,215 @@ def test_executable_freeze_hash_changes_with_source(tmp_path: Path) -> None:
     second = build_freeze_manifest(tmp_path)
     assert first["protocol_sha256"] == second["protocol_sha256"]
     assert first["executable_bundle_sha256"] != second["executable_bundle_sha256"]
+
+
+def _verified_parlay_quotes() -> pd.DataFrame:
+    rows = []
+    for index, player in enumerate(["Alpha", "Beta", "Gamma", "Delta"]):
+        rows.append(
+            {
+                "event_id": f"event_{index}",
+                "event_start_time_utc": "2026-02-01T20:00:00Z",
+                "snapshot_time_utc": "2026-02-01T19:45:00Z",
+                "player": player,
+                "market": "player_points",
+                "side": "OVER",
+                "line": 10.5 + index,
+                "book": "fanduel",
+                "decimal_odds": 1.91,
+                "source": "provider_a",
+                "raw_source_hash": "a" * 64,
+                "parser_version": "parser_v1",
+                "policy_version": "CHAIN_V1",
+                "model_version": "MODEL_V1",
+                "path_representation_version": "PATH_REP_V1",
+                "feature_cutoff_utc": "2026-02-01T19:40:00Z",
+                "lineup_state": "CONFIRMED",
+                "player_state": "ACTIVE",
+                "identity_status": "MATCHED",
+                "support_status": "IN_SUPPORT",
+                "exposure_status": "PASS",
+                "eligible_by_input_rules": True,
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def test_quote_evidence_requires_fresh_auditable_book_price() -> None:
+    verified = assess_quote_evidence(
+        _verified_parlay_quotes(), qualification_time="2026-02-01T19:50:00Z"
+    )
+    assert verified["quote_evidence_status"].eq(
+        QuoteEvidenceStatus.VERIFIED_EXECUTABLE_QUOTE.value
+    ).all()
+    assert verified["odds_validated_as_true"].all()
+
+    synthetic = _verified_parlay_quotes().drop(
+        columns=["book", "source", "raw_source_hash", "parser_version"]
+    )
+    rejected = assess_quote_evidence(
+        synthetic, qualification_time="2026-02-01T19:50:00Z"
+    )
+    assert not rejected["odds_validated_as_true"].any()
+
+
+def test_parlay_authorization_belongs_to_exact_policy_not_candidate_score() -> None:
+    quotes = _verified_parlay_quotes()
+    active_certificate = {
+        "certificate_id": "CHAIN_V1_PROSPECTIVE_001",
+        "certificate_status": "ACTIVE",
+        "policy_version": "CHAIN_V1",
+        "eligible_for_candidate_authorization": True,
+        "scope": {
+            "league": "NBA",
+            "leg_count": 4,
+            "markets": ["player_points"],
+            "books": ["fanduel"],
+            "minimum_decimal_odds": 1.80,
+            "maximum_decimal_odds": 2.10,
+            "model_version": "MODEL_V1",
+        },
+        "evidence": {
+            "resolved_action_slates": 50,
+            "resolved_selections": 200,
+            "slate_coverage": 0.50,
+        },
+        "evaluation": {
+            "anytime_valid_return_lcb": 0.03,
+            "deployment_margin": 0.01,
+        },
+        "support": {"current_status": "IN_SUPPORT"},
+        "shift": {"current_status": "TOLERABLE"},
+    }
+    path_certificate = {
+        "status": "PATH_INCREMENTAL_VALUE_SUPPORTED",
+        "path_authorized": True,
+        "representation_version": "PATH_REP_V1",
+    }
+    authorized = authorize_parlay(
+        quotes,
+        qualification_time="2026-02-01T19:50:00Z",
+        active_policy_version="CHAIN_V1",
+        policy_certificate=active_certificate,
+        path_certificate=path_certificate,
+    )
+    assert authorized.authorized is True
+    assert authorized.staking_enabled is False
+
+    core_certificate = {
+        **active_certificate,
+        "certificate_id": "CHAIN_V1_CORE_PROSPECTIVE_001",
+        "scope": {**active_certificate["scope"], "leg_count": 2},
+        "evidence": {
+            "resolved_action_slates": 50,
+            "resolved_selections": 100,
+            "slate_coverage": 0.50,
+        },
+    }
+    core_authorized = authorize_parlay(
+        quotes.head(2),
+        qualification_time="2026-02-01T19:50:00Z",
+        active_policy_version="CHAIN_V1",
+        policy_certificate=core_certificate,
+        path_certificate=path_certificate,
+    )
+    assert core_authorized.authorized is True
+
+    blocked = authorize_parlay(
+        quotes,
+        qualification_time="2026-02-01T19:50:00Z",
+        active_policy_version="CHAIN_V1",
+        policy_certificate=active_certificate,
+        path_certificate={"status": "INSUFFICIENT_REAL_PATH_EVENTS"},
+    )
+    assert blocked.authorized is False
+    assert "PATH_INCREMENTAL_VALUE_NOT_CERTIFIED" in blocked.reasons
+
+
+def test_master_research_adapter_rejects_under_probability_mismatch() -> None:
+    row = {
+        "date": "2026-01-01",
+        "player": "Alpha",
+        "target": "PTS",
+        "direction": "UNDER",
+        "market_line": 20.2,
+        "prediction": 0.20,
+        "actual": 18.0,
+        "source": "training_ledger",
+        "edge_kind": "probability",
+        "selected_probability": 0.80,
+    }
+    adapted = adapt_master_research_ledger(pd.DataFrame([row]))
+    assert len(adapted) == 1
+    row["selected_probability"] = 0.20
+    with np.testing.assert_raises(ValueError):
+        adapt_master_research_ledger(pd.DataFrame([row]))
+
+
+def test_market_snapshot_ledger_is_idempotent_and_append_only(tmp_path: Path) -> None:
+    ledger = MarketSnapshotLedger(tmp_path / "quotes.sqlite")
+    row = {
+        "slate_id": "2026-02-01",
+        "event_id": "event_1",
+        "game_id": "game_1",
+        "sport": "NBA",
+        "event_start_time_utc": "2026-02-01T20:00:00Z",
+        "snapshot_time_utc": "2026-02-01T19:45:00Z",
+        "player_id": "player_1",
+        "player_name": "Alpha",
+        "market": "player_points",
+        "line": 20.5,
+        "side": "OVER",
+        "book": "fanduel",
+        "engine": "fanduel",
+        "decimal_odds": 1.91,
+        "source": "provider_a",
+        "raw_source_hash": "b" * 64,
+        "parser_version": "parser_v1",
+    }
+    assert ledger.append([row]) == 1
+    assert ledger.append([row]) == 0
+    assert len(ledger.rows()) == 1
+    with sqlite3.connect(ledger.path) as connection:
+        with np.testing.assert_raises(sqlite3.IntegrityError):
+            connection.execute("UPDATE market_snapshots SET line = 21.5")
+
+
+def test_rank_reliability_core_is_date_safe_and_version_locked() -> None:
+    rows = []
+    for day in range(1, 25):
+        for rank in range(1, 5):
+            hit = int(
+                rank == 1
+                or (rank == 4 and day > 2)
+                or (rank == 2 and day > 6)
+                or (rank == 3 and day > 8)
+            )
+            rows.append(
+                {
+                    "event_date": pd.Timestamp("2026-01-01") + pd.Timedelta(days=day),
+                    "rank": rank,
+                    "leg_result": hit,
+                    "selector_version": "SELECTOR_V1",
+                    "model_version": "MODEL_V1",
+                    "player": f"Player_{rank}",
+                }
+            )
+    reservoir = pd.DataFrame(rows)
+    policy = fit_rank_reliability_core(
+        reservoir,
+        source_policy_version="SELECTOR_V1",
+        source_model_version="MODEL_V1",
+        training_cutoff="2026-02-01",
+    )
+    assert policy.status == "FROZEN_SHADOW"
+    assert policy.ranks == (1, 4)
+
+    today = reservoir.loc[reservoir["event_date"].eq(pd.Timestamp("2026-01-25"))]
+    selected = select_frozen_core(today, policy)
+    assert selected["rank"].tolist() == [1, 4]
+    assert not selected["publication_authorized"].any()
+
+    mismatched = today.assign(selector_version="SELECTOR_V2")
+    with np.testing.assert_raises(ValueError):
+        select_frozen_core(mismatched, policy)

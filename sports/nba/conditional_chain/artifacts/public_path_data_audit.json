@@ -1,0 +1,33 @@
+{
+  "audit_date": "2026-08-20",
+  "artifact_version": "NBA_PUBLIC_PATH_DATA_AUDIT_V1",
+  "candidate_sources": [
+    {
+      "archive": "gs://nba-scraped-data/odds-api/player-props-history",
+      "documentation": "https://github.com/najicham/nba-stats-scraper/blob/main/backfill_jobs/raw/odds_api_props/README.md",
+      "documented_coverage": "May 2023 through April 2025; approximately 20-50 files per game",
+      "anonymous_access": "HTTP_403_FORBIDDEN",
+      "usable": false
+    },
+    {
+      "archive": "https://huggingface.co/datasets/edushinka/line-movement",
+      "documented_coverage": "Aggregate sport-level line movement",
+      "reason_rejected": "No player, event, book, or reconstructable quote identifiers",
+      "usable": false
+    },
+    {
+      "archive": "The Odds API historical player props",
+      "documented_coverage": "Player props at historical snapshots",
+      "reason_rejected": "Paid historical endpoint; not a free production dependency",
+      "usable": false
+    }
+  ],
+  "local_repeated_snapshot_sequence": {
+    "rows": 12005,
+    "calendar_dates": 2,
+    "games": 6,
+    "valid_frozen_path_units": 0,
+    "status": "INSUFFICIENT_REAL_PATH_HISTORY"
+  },
+  "conclusion": "NO_FREE_CONFIRMATION_GRADE_REPEATED_PLAYER_PROP_ARCHIVE_ACQUIRED"
+}

@@ -6,7 +6,11 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .protocol import ALLOCATION_PATH_PROTOCOL, FROZEN_SELECTOR_PROTOCOL
+from .protocol import (
+    ALLOCATION_PATH_PROTOCOL,
+    FROZEN_SELECTOR_PROTOCOL,
+    PARLAY_AUTHORIZATION_PROTOCOL,
+)
 
 
 DEPENDENCIES = ("numpy", "pandas", "scipy", "scikit-learn")
@@ -25,6 +29,7 @@ def build_freeze_manifest(package_dir: Path | None = None) -> dict[str, Any]:
     protocol_payload = {
         "selector": FROZEN_SELECTOR_PROTOCOL.as_dict(),
         "allocation_path": ALLOCATION_PATH_PROTOCOL.as_dict(),
+        "parlay_authorization": PARLAY_AUTHORIZATION_PROTOCOL.as_dict(),
     }
     protocol_sha = hashlib.sha256(_canonical_bytes(protocol_payload)).hexdigest()
     source_hashes: dict[str, str] = {}
@@ -40,6 +45,7 @@ def build_freeze_manifest(package_dir: Path | None = None) -> dict[str, Any]:
         "freeze_version": "NBA_CONDITIONAL_CHAIN_FREEZE_V1",
         "selector_version": FROZEN_SELECTOR_PROTOCOL.version,
         "representation_version": ALLOCATION_PATH_PROTOCOL.version,
+        "authorization_version": PARLAY_AUTHORIZATION_PROTOCOL.version,
         "protocol_sha256": protocol_sha,
         "executable_bundle_sha256": bundle.hexdigest(),
         "dependencies": dependencies,

@@ -47,5 +47,27 @@ class AllocationPathProtocol:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class ParlayAuthorizationProtocol:
+    version: str = "NBA_PARLAY_AUTHORIZATION_V1"
+    league: str = "NBA"
+    parlay_legs: int = 4
+    allowed_leg_counts: tuple[int, ...] = (2, 3, 4)
+    maximum_quote_age_minutes: int = 20
+    minimum_leg_decimal_odds: float = 1.50
+    maximum_leg_decimal_odds: float = 2.50
+    minimum_resolved_action_slates: int = 50
+    minimum_resolved_selections_per_leg: int = 50
+    minimum_slate_coverage: float = 0.25
+    minimum_deployment_margin: float = 0.01
+    require_path_certificate: bool = True
+    allow_synthetic_market_history: bool = False
+    staking_enabled: bool = False
+
+    def as_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
 FROZEN_SELECTOR_PROTOCOL = FrozenSelectorProtocol()
 ALLOCATION_PATH_PROTOCOL = AllocationPathProtocol()
+PARLAY_AUTHORIZATION_PROTOCOL = ParlayAuthorizationProtocol()

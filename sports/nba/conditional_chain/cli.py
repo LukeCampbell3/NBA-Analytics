@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -13,6 +14,7 @@ from .backtest import load_data_proc_history, replay_frozen_selector
 from .confirmation import chronological_confirmation
 from .dataset import build_frozen_dataset, write_frozen_dataset
 from .freeze import build_freeze_manifest
+from .research_replay import replay_master_research_ledger
 from .synthetic_audit import run_null_power_audit
 
 
@@ -26,6 +28,16 @@ DEFAULT_REPOSITORY_QUOTES = (
     / "v9_6_sequence"
     / "market_snapshot_sequence.csv"
 )
+
+
+def _portable_source_path(path: Path) -> str:
+    resolved = path.resolve()
+    for base in (REPO_ROOT, REPO_ROOT.parent):
+        try:
+            return resolved.relative_to(base.resolve()).as_posix()
+        except ValueError:
+            continue
+    return resolved.name
 
 
 def _json_ready(value: Any) -> Any:
@@ -79,6 +91,11 @@ def _build_parser() -> argparse.ArgumentParser:
     replay.add_argument("--candidate-pool", type=Path, required=True)
     replay.add_argument("--data-proc-dir", type=Path)
     replay.add_argument("--output-dir", type=Path, required=True)
+
+    master_replay = subparsers.add_parser("backtest-master")
+    master_replay.add_argument("--master-ledger", type=Path, required=True)
+    master_replay.add_argument("--holdout-start", default="2026-02-11")
+    master_replay.add_argument("--output-dir", type=Path, required=True)
     return parser
 
 
@@ -123,6 +140,26 @@ def main() -> int:
         args.output_dir.mkdir(parents=True, exist_ok=True)
         decisions.to_csv(args.output_dir / "frozen_selector_decisions.csv", index=False)
         _write_json(args.output_dir / "frozen_selector_backtest.json", report)
+        print(json.dumps(_json_ready(report), indent=2, sort_keys=True, allow_nan=False))
+        return 0
+    if args.command == "backtest-master":
+        source = pd.read_csv(args.master_ledger, low_memory=False)
+        result = replay_master_research_ledger(
+            source,
+            reported_holdout_start=args.holdout_start,
+        )
+        args.output_dir.mkdir(parents=True, exist_ok=True)
+        result.reservoir.to_csv(args.output_dir / "frozen_reservoir_replay.csv", index=False)
+        result.slate_decisions.to_csv(
+            args.output_dir / "frozen_slate_decisions.csv", index=False
+        )
+        report = dict(result.report)
+        report["source_manifest"] = {
+            "path": _portable_source_path(args.master_ledger),
+            "sha256": hashlib.sha256(args.master_ledger.read_bytes()).hexdigest(),
+            "rows": int(len(source)),
+        }
+        _write_json(args.output_dir / "frozen_research_replay.json", report)
         print(json.dumps(_json_ready(report), indent=2, sort_keys=True, allow_nan=False))
         return 0
     raise AssertionError(f"unhandled command {args.command}")

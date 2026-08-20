@@ -1,0 +1,38 @@
+{
+  "artifact_version": "NBA_CONDITIONAL_CHAIN_REJECTED_CONTENDERS_V1",
+  "contenders": [
+    {
+      "candidate": "STATIC_ROLE_ALLOCATION_HGB_BLEND_025",
+      "calibration": {
+        "period": "2026-01-10/2026-02-10",
+        "control_wins": 14,
+        "contender_wins": 16,
+        "slates": 25
+      },
+      "reported_block": {
+        "period": "2026-02-11/2026-03-27",
+        "control_wins": 13,
+        "contender_wins": 10,
+        "contender_leg_wr": 0.7962962962962963,
+        "reservoir_auc": 0.4816540477577169,
+        "slates": 27
+      },
+      "status": "REJECTED_HOLDOUT_REGRESSION"
+    },
+    {
+      "candidate": "NBA_RANK_RELIABILITY_CORE_V1_R1_4",
+      "frozen_selector_block": {
+        "parlay_wins": 21,
+        "parlay_wr": 0.7777777777777778,
+        "slates": 27
+      },
+      "different_predictor_april_replay": {
+        "parlay_wins": 6,
+        "parlay_wr": 0.35294117647058826,
+        "slates": 17
+      },
+      "status": "SHADOW_ONLY_POLICY_VERSION_LOCK_REQUIRED"
+    }
+  ],
+  "production_authorizable": false
+}

@@ -43,6 +43,17 @@ def adapt_validation_pool_ledger(frame: pd.DataFrame) -> pd.DataFrame:
         if "game_key" in frame
         else adapted["event_date"].astype(str)
     )
+    for column in (
+        "event_start_time_utc",
+        "snapshot_time_utc",
+        "book",
+        "decimal_odds",
+        "source",
+        "raw_source_hash",
+        "parser_version",
+    ):
+        if column in frame:
+            adapted[column] = frame[column]
     return adapted
 
 
@@ -126,6 +137,8 @@ def replay_frozen_selector(
             "parlay_hit": False,
         }
         if selection.published:
+            board = board.reset_index(drop=True)
+            board["rank"] = np.arange(1, len(board) + 1)
             board["leg_result"] = [
                 _leg_result(float(row["actual"]), float(row["line"]), str(row["side"]))
                 for _, row in board.iterrows()
@@ -141,10 +154,40 @@ def replay_frozen_selector(
     slates = pd.DataFrame(slate_rows)
     published_slates = slates.loc[slates["published"]]
     resolved_legs = decisions.loc[decisions["leg_result"].isin([0.0, 1.0])] if not decisions.empty else decisions
+    core = (
+        decisions.loc[decisions["rank"].isin([1, 4])]
+        if "rank" in decisions
+        else decisions.copy()
+    )
+    core_decisions = (
+        core.groupby("decision_id")["leg_result"].agg(
+            legs="size", parlay_hit=lambda values: bool(values.eq(1.0).all())
+        )
+        if len(core)
+        else pd.DataFrame(columns=["legs", "parlay_hit"])
+    )
+    core_decisions = core_decisions.loc[core_decisions["legs"].eq(2)]
+    line_fraction = np.mod(adapted["line"].to_numpy(dtype=float), 1.0)
+    conventional_line = np.isclose(line_fraction, 0.0) | np.isclose(line_fraction, 0.5)
     report = {
         "selector_version": protocol.version,
-        "evidence_label": "PARTIAL_FULL_POOL_REPLAY",
-        "warning": "This committed ledger has 19 slates, not the reported 130-date/53,957-row research ledger.",
+        "candidate_universe_evidence": "FULL_CANDIDATE_UNIVERSE_FOR_COMMITTED_WINDOW",
+        "market_evidence": "SYNTHETIC_THRESHOLD_HISTORY",
+        "production_authorizable": False,
+        "production_blockers": [
+            "NO_BOOK_QUOTE_PROVENANCE",
+            "NO_OBSERVED_PRICE_PROVENANCE",
+            "NO_QUOTE_TIMESTAMP_OR_RAW_SOURCE_HASH",
+        ],
+        "line_audit": {
+            "conventional_integer_or_half_lines": int(conventional_line.sum()),
+            "conventional_integer_or_half_fraction": float(conventional_line.mean()),
+            "verified_book_quotes": 0,
+        },
+        "warning": (
+            "The committed window contains model-generated thresholds, not verified executable "
+            "sportsbook quotes. Its outcomes are research diagnostics only."
+        ),
         "history_source": history_source,
         "history_rows": int(len(history)),
         "candidate_rows": int(len(adapted)),
@@ -159,6 +202,16 @@ def replay_frozen_selector(
         "four_leg_parlay_wr": (
             float(published_slates["parlay_hit"].mean()) if len(published_slates) else None
         ),
+        "research_core_ranks_1_4": {
+            "decisions": int(len(core_decisions)),
+            "parlay_wins": int(core_decisions["parlay_hit"].sum()),
+            "parlay_wr": (
+                float(core_decisions["parlay_hit"].mean())
+                if len(core_decisions)
+                else None
+            ),
+            "status": "SHADOW_ONLY_DIFFERENT_PREDICTOR_VERSION",
+        },
         "publication_floor": protocol.publication_floor,
         "slates": slates.to_dict(orient="records"),
     }

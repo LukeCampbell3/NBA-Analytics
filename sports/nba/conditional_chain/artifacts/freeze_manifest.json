@@ -1,27 +1,32 @@
 {
+  "authorization_version": "NBA_PARLAY_AUTHORIZATION_V1",
   "dependencies": {
     "numpy": "1.26.4",
     "pandas": "2.3.0",
     "scikit-learn": "1.7.2",
     "scipy": "1.16.0"
   },
-  "executable_bundle_sha256": "f4156cccf61a5c1b674fc21e058e62d27b7e3b5ac2d13b1eb97d6f0594dd7eaf",
+  "executable_bundle_sha256": "26fbbfa822cd065499de73edfa11d6702b18fa389c9da53ceee173a61d728526",
   "freeze_version": "NBA_CONDITIONAL_CHAIN_FREEZE_V1",
-  "protocol_sha256": "ff7f5f89672fafa7e80d301fbd9031b8e95eef51a04a291849d7a7f78ae1c31e",
+  "protocol_sha256": "7be255f35c1267ec1081607b3d5def3d396dd0f5516e5067804549224e7cfe8c",
   "representation_version": "NBA_ALLOCATION_PATH_V1_1_FROZEN",
   "selector_version": "ROBUST_STATE_INTERSECTION_Q25_V1",
   "source_sha256": {
-    "__init__.py": "08b2c085294885eed793b45221e069929505455ad86ca14a5ddb3152a71b04ba",
+    "__init__.py": "7959f464e67cd2feeda74f4f5ed53182c40e291d0327f9506e64955708e2a8cd",
     "allocation_path.py": "f16772928d0f6403dad8d60342f887a41582bb4cdb2a241f4c46a344bcd43faf",
-    "backtest.py": "8ec7e76ce2031f4e9275e838458f6ea8dd53c470f16e3025474b9c3abd563017",
+    "authorization.py": "c1ee5f01a3981614d1bb1b4e87ca5bd302a6d6fb3c63fdfb87ab097825277a01",
+    "backtest.py": "ccf49fb420def77dd6c0d3f25efdf3a74f7e98fb6dd3c35485926635a64bcf4b",
     "chain_resolver.py": "0e22eb14b4516027aad43cc9af89980997cc7ac9890f7fc1729bdb29728a29d8",
-    "cli.py": "9945392e8e55b3008459bf7c6f63547c6ce606ed428f88fc17922c272c13724c",
+    "cli.py": "9ce304cc8a3ba1834802d9b25a9f2453a511a59717122cfe5cdede0f3df5514c",
     "conditional_extension.py": "1a32784cb70a1b08ddfd53e1fb8fd75492d36e79560fa9f5292bffe38374b37e",
     "confirmation.py": "ee3b29449edbf51dab0a9e5c8580e6ed59f8d4b05a2a1dc0b7a29021b26a3cb1",
+    "core_policy.py": "273ec42e37efd97cb5dd4cfed483acda8204313db2c00999ec1cc2eaa5f3eaf4",
     "dataset.py": "8a784abd3f45bbf994adb75d404f18a208bbdf7906571862ea2938c7b76ae655",
-    "freeze.py": "0a72bda05c6186c59d9b65afb87c13677d1690798558f9f3499fa80203df69b6",
+    "freeze.py": "2e1cb2025ab71b79a38120da38e715ab36cfa4bb5a4cb2ab69f830ce815d3410",
     "frozen_selector.py": "4d3c6b6dca3a5f03096996f89bbf17bc5d3a7846fc2a91f5a546ae6a0703af45",
-    "protocol.py": "f4f88ca8fe0000bf100320048c58dea92f507142f3a8fd97d8ea374e0906727e",
+    "protocol.py": "ae9214fb3f1b12b2f3b0879f78e74c423658e807ff55058f47f9b804767b592a",
+    "research_replay.py": "ec9957ea91bbaf4dc7a1f2dfd665e344598504967705a59ea18e88d3719cc090",
+    "snapshot_ledger.py": "aedf1feea7d1ba7475bb09b1dde42de31cd73fbfe4d9f4a25cb675baa097d998",
     "synthetic_audit.py": "8122ab3f16be76625264a99f7215b3632312d84a332ea399c0b605b7c4fe5df3"
   }
 }

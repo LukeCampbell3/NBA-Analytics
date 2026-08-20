@@ -1,14 +1,32 @@
 {
   "candidate_rows": 6096,
+  "candidate_universe_evidence": "FULL_CANDIDATE_UNIVERSE_FOR_COMMITTED_WINDOW",
   "eligible_slates": 19,
-  "evidence_label": "PARTIAL_FULL_POOL_REPLAY",
   "four_leg_parlay_wins": 5,
   "four_leg_parlay_wr": 0.29411764705882354,
   "history_rows": 86196,
   "history_source": "external_date_safe_player_game_history",
   "individual_leg_wr": 0.7777777777777778,
+  "line_audit": {
+    "conventional_integer_or_half_fraction": 0.29773622047244097,
+    "conventional_integer_or_half_lines": 1815,
+    "verified_book_quotes": 0
+  },
+  "market_evidence": "SYNTHETIC_THRESHOLD_HISTORY",
+  "production_authorizable": false,
+  "production_blockers": [
+    "NO_BOOK_QUOTE_PROVENANCE",
+    "NO_OBSERVED_PRICE_PROVENANCE",
+    "NO_QUOTE_TIMESTAMP_OR_RAW_SOURCE_HASH"
+  ],
   "publication_floor": 0.6858420628569935,
   "published_slates": 17,
+  "research_core_ranks_1_4": {
+    "decisions": 17,
+    "parlay_wins": 6,
+    "parlay_wr": 0.35294117647058826,
+    "status": "SHADOW_ONLY_DIFFERENT_PREDICTOR_VERSION"
+  },
   "resolved_legs": 63,
   "selector_version": "ROBUST_STATE_INTERSECTION_Q25_V1",
   "slate_coverage": 0.8947368421052632,
@@ -185,5 +203,5 @@
       "status": "FROZEN_CONTROL_PUBLISHED"
     }
   ],
-  "warning": "This committed ledger has 19 slates, not the reported 130-date/53,957-row research ledger."
+  "warning": "The committed window contains model-generated thresholds, not verified executable sportsbook quotes. Its outcomes are research diagnostics only."
 }
