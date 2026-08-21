@@ -127,10 +127,34 @@ def summarize(all_pairs: pd.DataFrame) -> dict:
     return summary
 
 
-def main() -> None:
+def main(save_full_pairs_csv: bool = False) -> None:
+    """save_full_pairs_csv=True writes the complete pair-level CSV, which is
+    combinatorially large by construction (C(L,2) pairs from ~300-450
+    legs/day -> hundreds of thousands of rows, ~200MB+) and is therefore
+    NOT committed (see .gitignore) -- default False saves only the small,
+    checked-in artifacts: the JSON summary, a per-day x pair-class
+    aggregate, and a reproducible stratified sample for spot-checking."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     all_pairs = run_multi_target_backtest(mode="broad")
-    all_pairs.to_csv(OUTPUT_DIR / "multi_target_broad_pairs.csv", index=False)
+
+    if save_full_pairs_csv:
+        all_pairs.to_csv(OUTPUT_DIR / "multi_target_broad_pairs.csv", index=False)
+
+    priced = all_pairs[all_pairs["evaluated"] & all_pairs["d_s"].notna()].copy()
+    priced["realized_return"] = np.where(priced["both_win"], priced["d_s"] - 1.0, -1.0)
+    day_class_summary = priced.groupby(["date", "pair_class"]).agg(
+        n=("realized_return", "size"),
+        hit_rate=("both_win", "mean"),
+        mean_p_joint=("p_joint", "mean"),
+        mean_d_s=("d_s", "mean"),
+        mean_joint_ev_model=("joint_ev", "mean"),
+        mean_realized_return=("realized_return", "mean"),
+    ).reset_index()
+    day_class_summary.to_csv(OUTPUT_DIR / "multi_target_broad_day_class_summary.csv", index=False)
+
+    sample = priced.groupby("pair_class", group_keys=False).apply(lambda g: g.sample(n=min(200, len(g)), random_state=0))
+    sample.to_csv(OUTPUT_DIR / "multi_target_broad_pairs_sample.csv", index=False)
+
     summary = summarize(all_pairs)
     with open(OUTPUT_DIR / "multi_target_broad_summary.json", "w") as f:
         json.dump(summary, f, indent=2)

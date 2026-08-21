@@ -103,38 +103,51 @@ scoped to use.
 
 MULTI_TARGET_CONCLUSION_REASONING = """
 Full detail in STATE.md; summary here for anyone reading only manifest.py.
+Numbers below are from the full, uncapped-universe backtest
+(reports/multi_target_broad_summary.json, 619,191 evaluated priced pairs,
+11 days) -- a smaller top-25-legs/day exploratory pass done first is
+superseded by this and explicitly not the evidence of record; see STATE.md
+for why the two differ (restricting to the model's highest-probability
+legs concentrates its worst overconfidence -- itself a finding, see below).
 
 Real R/TB/HR (broad, both-direction) price coverage exists in
 DEVELOPMENT_STAMPS (3623 action-eligible rows, 12 days) -- the ACTION
-COVERAGE gap that blocked the H-only pass is closed. Running the real 2-leg
-pair backtest on this data (multi_target_backtest.py) found:
+COVERAGE gap that blocked the H-only pass is closed.
 
-  - The joint-probability mechanism's own confidence (mean p_joint=0.670 for
-    ++ pairs) is ~20.5 points above BOTH the actual both-win rate (0.465)
-    AND the market-implied joint probability from real prices (0.468, i.e.
-    1/D_S -- itself essentially perfectly calibrated against reality here,
-    gap -0.003). This isolates the problem to the MARGINAL MODEL
+  - The joint-probability mechanism's own confidence is overconfident vs.
+    both actual outcomes and the market-implied price, worst in the ++
+    class (mean p_joint=0.391 vs. actual both-win rate 0.284 vs.
+    market-implied 0.277, gap +0.106) and present but smaller overall
+    (+0.046). This isolates the problem to the MARGINAL MODEL
     (probability_score, frozen on narrow H-OVER data) being overconfident
-    when applied to broad-mode R/TB/HR data it was never tuned on -- not to
-    the joint/pair mechanism, which is unmodified and was previously shown
+    on broad-mode R/TB/HR data it was never tuned on -- not to the
+    joint/pair mechanism, which is unmodified and was previously shown
     well-calibrated in narrow H state.
-  - mean_joint_ev (the model's own belief in its edge) is misleadingly
-    high (+0.513 for ++ pairs) precisely because it's computed from that
-    same overconfident p_joint. The REALIZED backtest return for the same
-    pairs is negative (-0.059 for ++, -0.115 overall).
-  - Day-clustered bootstrap 90% CIs (the correct resampling unit, since a
-    day's ~25 legs generate up to 300 non-independent pairs) cross zero for
-    every slice examined, including the one filter that looks promising
-    (pairs where the model disagrees with the market favorably: +0.088
-    mean, CI [-0.041, +0.207], n=10 days) -- and that filter was
-    constructed post-hoc during this exact analysis pass, so it is a
-    hypothesis for a future frozen rule, not confirmed evidence.
+  - mean_joint_ev (the model's own belief in its edge, +0.674 for ++
+    pairs) is a model-confidence figure, not a realized return. The
+    REALIZED backtest return for the same pairs is much smaller and, at
+    11 days, not statistically distinguishable from zero: ++ class +6.1%
+    (day-clustered 90% CI [-0.016, +0.147]), overall -1.0% (CI [-0.051,
+    +0.045]). Only the `--` class (both legs individually -EV) reaches
+    significance, and in the expected negative direction (-13.2%, CI
+    [-0.199, -0.038]) -- a validity check on the pipeline, not a proposed
+    trade.
+  - A "value subset" filter (pairs where model p_joint > market-implied
+    price) shows a promising-looking +4.9% (CI [-0.018, +0.130], still
+    crossing zero) but was constructed post-hoc during this exact analysis
+    pass, so it is a hypothesis for a future frozen rule, not confirmed
+    evidence.
+  - Concrete evidence against a "rank candidates by raw model confidence"
+    selective-action policy (one of the mission's explicitly-flagged
+    assumptions not to make): the model's overconfidence is worse, not
+    better, among its own highest-probability legs -- selecting for raw
+    confidence selects for the bottleneck.
 
 Conclusion: still INSUFFICIENT_EVIDENCE, but the bottleneck has moved from
 "no data" to "the frozen marginal model needs its own recalibration pass
-for the broad multi-target state, and even then there are only 12-16 real
-days available to resolve it against" -- a MARGINAL MODEL + DATA volume
-problem, not a mechanism-correctness problem.
+for the broad multi-target state, and even the best-looking slices don't
+clear a day-clustered significance bar at only 11-16 real days" -- a
+MARGINAL MODEL + DATA volume problem, not a mechanism-correctness problem.
 """.strip()
 
 NEXT_PROSPECTIVE_PROTOCOL = """

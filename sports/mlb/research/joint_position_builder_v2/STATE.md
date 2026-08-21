@@ -76,95 +76,111 @@ tests) still passes after this second fix.
 
 Ran the real 2-leg pair backtest (`multi_target_backtest.py`, broad mode,
 all pair classes, DEVELOPMENT_STAMPS only, same walk-forward
-calibration-warmup discipline as `ablation.run_variant`) — 3580
-evaluated priced pairs across 12 days.
+calibration-warmup discipline as `ablation.run_variant`). Full committed
+run (`reports/multi_target_broad_summary.json`, `reports/
+multi_target_broad_day_class_summary.csv`): **619,191 evaluated priced
+pairs across 11 of 12 action-eligible days** (the 12th day, 20260429, had
+only one game's worth of eligible legs, so every pair that day was
+same-game and got no synthesized price — expected behavior, not a bug;
+see `pairs.py`'s D_S convention).
 
-**Critical distinction this pass makes explicit that the prior pass's raw
-`mean_joint_ev` number did not:** `joint_ev` (`p_joint * D_S - 1`) is a
-**model-confidence** figure — it says what the frozen marginal model
-*believes* its edge is, using its own probability estimate. It is NOT the
-realized backtest return. Reporting it alone, as the raw ablation output
-does, invites exactly the kind of "too good" false positive this session's
-discipline has flagged before (the H_OVER_RANKER_V1 8/8 scare). So this
-pass computes both, side by side:
+An earlier exploratory pass (kept only in this file's git history, not
+committed as code) had restricted each day to its top ~25 legs by model
+probability before pairing, giving a much smaller n=3580. That restriction
+is now understood to have been itself a source of bias — see the
+"effective sample size" note below — so the **full, uncapped universe run
+below supersedes it** as the checkpoint's real evidence; the two are not
+in conflict, they are measuring different (and now-explained) things.
 
-| pair class | n | hit rate (both win) | mean p_joint (model) | mean market-implied p (1/D_S) | **mean_joint_ev (model belief)** | **mean REALIZED return** |
-|---|---|---|---|---|---|---|
-| ++ | 2294 | 0.4648 | 0.6698 | 0.4677 | **+0.5134** | **-0.0595** |
-| +- | 508  | 0.4452 | 0.6252 | (n/a, mixed) | +0.1502 | -0.3023 |
-| -- | 124  | 0.5357 | 0.5371 | (n/a, mixed) | -0.2446 | -0.5986 |
-| **overall** | 3580 | — | — | — | — | **-0.1151** |
+**Critical distinction this pass makes explicit that the prior H-only
+pass's raw `mean_joint_ev` number did not:** `joint_ev` (`p_joint * D_S -
+1`) is a **model-confidence** figure — it says what the frozen marginal
+model *believes* its edge is, using its own probability estimate. It is
+NOT the realized backtest return. Reporting it alone invites exactly the
+kind of "too good" false positive this session's discipline has flagged
+before (the H_OVER_RANKER_V1 8/8 scare). So this pass computes both, side
+by side, on the full universe:
+
+| pair class | n | hit rate (both win) | mean p_joint (model) | mean market-implied p (1/D_S) | overconfidence vs. actual | **mean_joint_ev (model belief)** | **mean REALIZED return** | day-clustered 90% CI |
+|---|---|---|---|---|---|---|---|---|
+| ++ | 233,721 | 0.2842 | 0.3905 | 0.2767 | +0.1063 | +0.6745 | **+0.0610** | [-0.016, +0.147] |
+| +- | 288,530 | 0.2979 | 0.3219 | 0.3067 | +0.0240 | +0.1158 | -0.0259 | [-0.061, +0.019] |
+| -- | 96,940  | 0.3061 | 0.2700 | 0.3427 | **-0.0360** | -0.2056 | **-0.1324** | **[-0.199, -0.038]** |
+| **overall** | 619,191 | 0.2940 | 0.3397 | 0.3010 | +0.0457 | +0.2764 | -0.0098 | [-0.051, +0.045] |
 
 **HYPOTHESIS tested:** "the frozen marginal `probability_score` model,
 calibrated/frozen on H-OVER data, generalizes cleanly to R/TB/HR broad
-(both-direction) data." **RESULT: rejected.** The model's own `p_joint`
-(0.6698 for the ++ class) is ~20.5 percentage points above both the
-**actual** both-win rate (0.4648) *and* the **market-implied** joint
-probability (0.4677, i.e. `1/D_S`, which for cross-game pairs is exactly
-the product of two independently-priced legs' implied probabilities). The
-market's own implied probability is essentially dead-on calibrated against
-reality here (gap -0.0029); the model's is not (gap +0.2051). This
-isolates the bottleneck cleanly: **the marginal model overconfidence
-problem this session diagnosed and partially addressed for H-OVER in
-`h_over_ranker` (Phase-4/5 of the earlier turns) reappears, worse, when
-the same frozen model is applied to targets/directions it was never
-tuned on** — R/TB/HR broad-mode probabilities are not well-calibrated
-under the current frozen model. This is a MARGINAL MODEL bottleneck, not a
-JOINT MODEL or PAIR SEARCH bottleneck: the independence joint-probability
-mechanism itself is unmodified and was previously shown well-calibrated in
-narrow H state (see `manifest.CONCLUSION_REASONING`) — it is the *inputs*
-feeding it here that are miscalibrated, and compounding two overconfident
-marginals into a product makes the joint overconfidence larger, not
-smaller.
+(both-direction) data." **RESULT: partially rejected, more nuanced than
+the smaller-sample pass suggested.** The model IS measurably overconfident
+on broad multi-target data (+4.6pp overall, worse in the ++ class at
++10.6pp) — the direction of the earlier finding holds — but the magnitude
+on the full universe (+4.6 to +10.6pp) is much smaller than the +20.5pp
+seen in the top-25-by-probability exploratory subset. That gap is itself
+informative: **restricting to the highest-model-probability legs
+concentrates the model's worst overconfidence** (a familiar ML pattern —
+predictions nearest 0/1 are typically least well calibrated), so a "select
+the model's most confident legs" policy would be walking directly into the
+bottleneck rather than around it. This matters directly for Phase 9
+(selective action policy) — "rank by raw model confidence" is one of the
+mission's explicitly-flagged assumptions **not** to make, and this is
+concrete evidence for why not.
+
+**Useful negative control:** the `--` class (both legs individually -EV by
+the market) shows a REALIZED return of -13.2%, with a day-clustered 90% CI
+that does **not** cross zero ([-0.199, -0.038]) — the one statistically
+clear result in this pass. This is reassuring for the pipeline's basic
+validity (the class the market itself prices worst does in fact perform
+worst, in the expected direction, with real signal) even though it is not
+by itself evidence for the policy question (nobody is proposing to bet the
+`--` class).
 
 ### Statistical caution: effective sample size and CIs
 
-Each day has a hard MAX_PER_DAY-style cap of ~25 action-eligible legs (an
-existing, unmodified convention inherited from `observation_universe.py`'s
-sibling), producing up to C(25,2)=300 pairs/day that are **not
-independent draws** — they share legs. The only statistically defensible
-resampling unit is the **day** (12 days total here), not the pair. Day-
-clustered bootstrap (resample dates, not rows; 3000 resamples):
+Each action-eligible day has on the order of 300-450 real legs (not ~25 —
+that was an artifact of the smaller exploratory pass's own top-K
+restriction, corrected here), producing tens of thousands of pairs per day
+that are **not independent draws** — they share legs, so C(L,2) pairs from
+L legs carries at most ~L independent bits of information, not C(L,2). The
+only statistically defensible resampling unit is the **day** (11 evaluated
+days), not the pair. All CIs in the table above are day-clustered bootstrap
+(resample dates, not rows; 3000 resamples) for exactly this reason.
 
-| slice | n pairs | n days | realized-return point estimate | 90% CI (day-clustered) |
-|---|---|---|---|---|
-| all evaluated pairs | 3580 | 12 | -0.115 | [-0.301, +0.050] |
-| ++ class only | 2294 | 12 | -0.066 (bootstrap mean) | [-0.240, +0.084] |
-| **value subset** (`p_joint > market_implied_p`, i.e. pairs where the model disagrees with the market in the profitable direction) | 2294 | 10 | +0.088 (bootstrap mean) | [-0.041, +0.207] |
+**Every CI in the table crosses zero except the `--` class.** With only 11
+archived DEVELOPMENT days, there is not enough data to distinguish a real
+edge from noise in either direction for the ++ , +-, or overall slices —
+including the ++ class's positive-leaning point estimate (+6.1%), which is
+plausible but not established.
 
-**Every one of these CIs crosses zero.** With only 12 archived
-DEVELOPMENT days (and effectively ~25 legs/day of independent
-information), there is not enough data to distinguish a real edge from
-noise in either direction, for any of these slices.
-
-**Multiplicity caution on the "value subset" row:** that filter
-(`p_joint > market_implied_p`) was constructed *during this exact
-exploratory pass*, after seeing the raw pair-class results — it was not
-predeclared before looking at DEVELOPMENT outcomes. Per this repo's
-established discipline (reject best-looking-after-search results as the
-frozen choice; see `h_over_ranker`'s C=1.0 rejection), this row is reported
-as a **hypothesis for a future frozen/SELECT-confirmed rule**, not as
-confirmed evidence of edge. Treating its positive-leaning point estimate as
-a finding would repeat the exact mistake this session's own discipline
-exists to avoid.
+**Multiplicity caution on the "value subset" filter** (`p_joint >
+market_implied_p`, i.e. pairs where the model disagrees with the market in
+the profitable direction): n=399,772, realized return +4.9%, day-clustered
+90% CI [-0.018, +0.130] — still crosses zero, and this filter was
+constructed *during* this exact exploratory pass, after seeing the raw
+pair-class results, not predeclared before looking at DEVELOPMENT
+outcomes. Per this repo's established discipline (reject best-looking-
+after-search results as the frozen choice; see `h_over_ranker`'s C=1.0
+rejection), this is reported as a **hypothesis for a future frozen/
+SELECT-confirmed rule**, not as confirmed evidence of edge.
 
 ## Decision at this checkpoint
 
 - Multi-target real price coverage: **confirmed real** (contradicts and
   supersedes the "no real price coverage" half of the prior manifest
-  conclusion — `manifest.py` updated accordingly, see below).
+  conclusion — `manifest.py` updated accordingly).
 - Real, held-out-in-development-window evidence of a positive parlay edge
   under the CURRENT frozen marginal model + independence joint mechanism:
-  **not established** — point estimates lean negative-to-flat, CIs cross
-  zero at 12 days of data, and the one filter that looks promising
-  (market-disagreement subset) is a same-pass hypothesis, not a confirmed
-  result.
+  **not established at 90% confidence for any actionable slice** — the
+  `++` class and the market-disagreement "value subset" both lean positive
+  (+6.1%, +4.9%) but their CIs cross zero at 11 days of data; only the
+  non-actionable `--` class reaches significance, and in the expected
+  (negative) direction, which is a validity check rather than a finding.
 - This is `INSUFFICIENT_EVIDENCE` in the *same* sense as before, but now
   for a different, better-grounded reason: not "no priced markets exist"
-  (false, corrected here) but "the marginal probability model this system
-  is built on is not calibrated outside the narrow H-OVER slice it was
-  frozen against, and even where it disagrees with the market in the
-  hoped-for direction, 12 days is not enough evidence either way."
+  (false, corrected here) but "the marginal probability model is
+  measurably overconfident outside the narrow H-OVER slice it was frozen
+  against (worse for the model's own most-confident legs specifically),
+  and even the most promising-looking slices don't clear a properly
+  day-clustered significance bar at only 11 days of data."
 - **`PRODUCTION_AUTHORIZED` stays `False`.** Not touched.
 - Neither terminal mission state
   (`DAILY_PARLAY_POLICY_PROSPECTIVELY_SUPPORTED` /
@@ -190,7 +206,29 @@ exists to avoid.
    ever touching pair-level joint EV again — mirrors exactly what
    `h_over_ranker` already did for H-OVER, generalized to R/TB/HR broad.
    Not attempted in this checkpoint; flagged as the next hypothesis.
-3. Given only 16 usable multi-target days exist, a 3-way split (as strict
+3. Explicitly do NOT build a "rank by raw model confidence" selective
+   action policy — this checkpoint's own evidence (overconfidence
+   concentrates in the model's highest-probability legs) argues directly
+   against it. Any future selective-risk gate should rank by something
+   that degrades gracefully with model confidence (e.g. joint_ev_lcb,
+   which already shrinks by uncertainty) rather than raw probability.
+4. Given only 16 usable multi-target days exist, a 3-way split (as strict
    as `h_over_ranker`'s 8/8/9) is likely too thin to be trustworthy here;
    this itself is worth reporting as a DATA-category bottleneck if it
    can't be resolved before the next checkpoint.
+
+## Generated artifacts (this checkpoint)
+
+- `reports/multi_target_broad_summary.json` — full-universe summary (the
+  table above), committed.
+- `reports/multi_target_broad_day_class_summary.csv` — per-day x
+  pair-class breakdown (33 rows), committed.
+- `reports/multi_target_broad_pairs_sample.csv` — a reproducible
+  stratified sample (200 pairs/class, seed=0) of the full pair-level
+  output, committed for spot-checking.
+- `reports/multi_target_broad_pairs.csv` — the FULL pair-level output
+  (619,191 rows, ~215MB). **Not committed** (repo-impractical size) — it
+  is combinatorially large by construction (C(L,2) pairs from ~300-450
+  legs/day) and fully reproducible by re-running
+  `python3 -m sports.mlb.research.joint_position_builder_v2.multi_target_backtest`.
+  Excluded via `.gitignore`, not silently dropped.
