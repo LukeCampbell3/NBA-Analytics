@@ -1,6 +1,13 @@
 from __future__ import annotations
 
-"""2x2 chronological ablation: {narrow, broad} state x {++_only, all_classes} pairs.
+"""ARCHIVED/DIAGNOSTIC-ONLY -- uses legacy.risk_gate_v1_ARCHIVED's
+SelectiveRiskCertificate (a single-endpoint empirical-risk bound), not the
+simultaneous coverage/loss/return certificate required going forward. Not
+authoritative for any new certification decision -- see
+sports/mlb/research/parlay_certification_v2/. Kept runnable so historical
+reports/ artifacts stay reproducible; never wired into CI/production.
+
+2x2 chronological ablation: {narrow, broad} state x {++_only, all_classes} pairs.
 
     A: narrow state + ++ pairs only   (closest to CONTROL's own admission rule)
     B: broad  state + ++ pairs only   (isolates: information gained from formerly
@@ -27,7 +34,7 @@ from sports.mlb.research.h_over_ranker.data_windows import DEVELOPMENT_STAMPS, v
 
 from .observation_universe import action_universe, build_observation_universe
 from .pairs import CandidatePair, PairCertificate, enumerate_candidate_pairs
-from .risk_gate import SelectiveRiskCertificate, build_selective_risk_certificate, gate_and_rank_day
+from .legacy.risk_gate_v1_ARCHIVED import SelectiveRiskCertificate, build_selective_risk_certificate, gate_and_rank_day
 
 MIN_CALIBRATION_PAIRS = 20  # matches this repo's existing convention (see h_over_ranker, conditional_chain)
 TARGET_MISCOVERAGE = 0.10

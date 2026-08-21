@@ -1,6 +1,26 @@
 from __future__ import annotations
 
-"""Selective empirical-risk gate and final JOINT POSITION action gating.
+"""ARCHIVED (risk_gate_v1) -- NOT AUTHORITATIVE.
+
+Superseded by sports/mlb/research/parlay_certification_v2/ (world-set
+"logical certificate" here does not enforce the nonvacuous-C / positive-
+retained-mass requirement V2 requires -- see parlay_certification_v2's
+world_certificate.py -- and this module's SelectiveRiskCertificate is a
+single-endpoint empirical-risk bound, not the required simultaneous
+coverage/loss/return anytime certificate). Retained ONLY so that:
+  (a) historical reports/ artifacts already produced by ablation.py remain
+      reproducible and explicable, and
+  (b) the existing regression tests that characterize this module's
+      historical behavior (sports/mlb/tests/test_joint_position_builder_v2.py)
+      continue to document what it actually did.
+Do not call this module to make a new certification/authorization decision.
+Nothing in the live pipeline (CI, run_daily_predictions.py) has ever called
+this module -- it was always a manual/local research script, never wired to
+production or shadow execution.
+
+Original docstring, preserved for context:
+
+Selective empirical-risk gate and final JOINT POSITION action gating.
 
 Statistical method mirrors sports/mlb/conditional_chain/path_conditioned_backtest.py
 's _selective_risk_report (Clopper-Pearson exact one-sided UCB, a

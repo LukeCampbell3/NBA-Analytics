@@ -27,6 +27,15 @@ day-clustered CI either way), not absence of priced markets.
 
 PRODUCTION_AUTHORIZED = False
 
+# SUPERSEDED: the certification/risk-gating machinery this package used
+# (legacy/risk_gate_v1_ARCHIVED.py, formerly risk_gate.py) is archived and
+# no longer authoritative for any new decision -- see
+# sports/mlb/research/parlay_certification_v2/ and its MIGRATION.md. This
+# package's own pair-proposal machinery (pairs.py, observation_universe.py,
+# multi_target_universe.py) remains a valid PREDICTIVE/WORLD-MODEL input to
+# V2's policy layer; it just no longer certifies/authorizes anything itself.
+CERTIFICATION_AUTHORITY_SUPERSEDED_BY = "PARLAY_CERTIFICATION_V2"
+
 VERSION = "JOINT_POSITION_BUILDER_V2"
 
 # See REPORT.md for the full reasoning. Short version: real per-leg H-target

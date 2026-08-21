@@ -16,7 +16,7 @@ from sports.mlb.research.joint_position_builder_v2.pairs import (
     conservative_joint_lower_bound,
     pair_class,
 )
-from sports.mlb.research.joint_position_builder_v2.risk_gate import (
+from sports.mlb.research.joint_position_builder_v2.legacy.risk_gate_v1_ARCHIVED import (
     ActionDecision,
     SelectiveRiskCertificate,
     gate_and_rank_day,

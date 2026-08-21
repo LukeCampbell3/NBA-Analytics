@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-"""Runs the 2x2 real-data ablation (DEVELOPMENT_STAMPS only) and the
+"""ARCHIVED/DIAGNOSTIC-ONLY -- runs ablation.py, itself archived (see its
+docstring). Not authoritative -- see sports/mlb/research/
+parlay_certification_v2/ for the current certification authority. Kept
+runnable so historical reports/ artifacts stay reproducible.
+
+Runs the 2x2 real-data ablation (DEVELOPMENT_STAMPS only) and the
 price-independent joint-probability calibration check, saves results to
 reports/. See REPORT.md for the write-up and manifest.py for the frozen
 conclusion."""
