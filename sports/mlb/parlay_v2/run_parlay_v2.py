@@ -89,6 +89,40 @@ def _pair_in_support(
     return True
 
 
+def _candidate_priced(candidate: PairCandidate) -> bool:
+    return candidate.leg_1.decimal_price is not None and candidate.leg_2.decimal_price is not None
+
+
+def _best_shadow_candidate(candidates: list[PairCandidate]) -> PairCandidate | None:
+    """Best-available, really-priced, cross-game candidate, ranked by
+    joint_probability_estimate -- NOT `joint_score` (retained_probability_mass),
+    which is uninformative while the frozen APS threshold retains every
+    world (aps_threshold=1.0, see FROZEN_APS_THRESHOLD).
+
+    This is a DISPLAY-ONLY ranking, not a certification, and it never
+    influences `action`/`selected_parlay`: the Parlays tab always has
+    something concrete to show on an abstain day, per the product spec
+    ('Do not hide useful candidate diagnostics merely because policy
+    support is not yet proven'). It is never gated on calibration
+    support -- an uncertified shadow pick is exactly what it is
+    regardless of ledger state.
+
+    Known caveat, worth being honest about rather than hiding: ranking by
+    raw joint probability reproduces the exact selection bias this
+    program's own research already found (see joint_position_builder_v2/
+    STATE.md -- restricting to a pool's highest-probability legs
+    concentrates the frozen marginal model's worst overconfidence). That
+    finding is exactly why this value is never used to gate `action` --
+    it is fine as a display convenience for an explicitly uncertified
+    example, but must never be mistaken for a reliability signal, which
+    is also why the frontend surfaces it as a bare 'shadow candidate',
+    with no probability or score shown next to it."""
+    priced = [c for c in candidates if c.leg_1.game_id != c.leg_2.game_id and _candidate_priced(c)]
+    if not priced:
+        return None
+    return max(priced, key=lambda c: c.joint_probability_estimate)
+
+
 def _to_candidate_wager(candidate: PairCandidate) -> CandidateWager:
     leg_i, leg_j = candidate.leg_1, candidate.leg_2
     same_game = leg_i.game_id == leg_j.game_id
@@ -146,6 +180,11 @@ def build_slate_payload(
         "eligibility_reason": eligibility.reason,
         "action": "ABSTAIN",
         "selected_parlay": None,
+        "shadow_candidate": None,
+        "shadow_candidate_note": (
+            "Best available candidate by descriptive joint score -- NOT a certified pick. "
+            "The frozen policy has not authorized action on it; see policy_status."
+        ),
         "evidence_status": {
             "state_machine_status": manifest.STATUS,
             "note": "STATUS reflects the FROZEN POLICY's evidence state, never this slate's own candidates -- see manifest.CONCLUSION_REASONING.",
@@ -163,16 +202,33 @@ def build_slate_payload(
         payload["abstain_reason"] = "NO_REAL_QUOTE"
         return payload
 
+    # Candidates are built unconditionally now (not only when calibration
+    # support might pass) so the Parlays tab always has a real, priced
+    # shadow candidate to show on an abstain day -- see
+    # _best_shadow_candidate. This is diagnostic-only and never gated on
+    # calibration support; it never sets `action`/`selected_parlay`.
+    candidates = build_candidates_for_day(
+        action_rows,
+        slate_id=slate_id,
+        aps_threshold=FROZEN_APS_THRESHOLD,
+        calibration_slates=FROZEN_CALIBRATION_SLATES,
+        predictive_version=predictive_version,
+        state_version=state_version,
+    )
+    shadow_candidate = _best_shadow_candidate(candidates)
+    if shadow_candidate is not None:
+        payload["shadow_candidate"] = shadow_candidate.as_dict()
+
     if calibration_store is None:
         payload["decision_timestamp_utc"] = datetime.now(timezone.utc).isoformat()
         payload["abstain_reason"] = "CERTIFICATION_STREAM_NOT_READY"
         return payload
 
-    # Cheap, honest short-circuit: today, support can NEVER pass for any
-    # candidate regardless of ledger content (joint_support/shift_status
-    # are still UNESTABLISHED -- see calibration/support.py). Skip the
-    # expensive O(n^2) pair enumeration entirely rather than building tens
-    # of thousands of certificates only to discard them all downstream.
+    # Honest early-exit: today, support can NEVER pass for any candidate
+    # regardless of ledger content (joint_support/shift_status are still
+    # UNESTABLISHED -- see calibration/support.py). The shadow candidate
+    # above was already computed and attached; this only short-circuits
+    # the (expensive, and currently always-empty) real support gating.
     if support_is_structurally_unreachable():
         payload["decision_timestamp_utc"] = datetime.now(timezone.utc).isoformat()
         payload["abstain_reason"] = "NO_PAIR_IN_SUPPORT"
@@ -184,14 +240,6 @@ def build_slate_payload(
     calibration_snapshot = build_snapshot(calibration_store, as_of=calibration_as_of)
     calibration_rows = calibration_store.observations_as_of(calibration_as_of)
 
-    candidates = build_candidates_for_day(
-        action_rows,
-        slate_id=slate_id,
-        aps_threshold=FROZEN_APS_THRESHOLD,
-        calibration_slates=FROZEN_CALIBRATION_SLATES,
-        predictive_version=predictive_version,
-        state_version=state_version,
-    )
     # Section 6: prefer cross-game pairs -- same-game pairs carry no real
     # quote by construction (see _to_candidate_wager), so they would never
     # be economically actionable anyway; excluding them here is purely an

@@ -27,19 +27,18 @@
             <nav id="predictionDateNav" class="date-nav" aria-label="Prediction board date"></nav>
         </header>
 
-        <section id="dailyParlaySection" class="daily-parlay" aria-labelledby="dailyParlayTitle" aria-live="polite">
-            <div id="dailyParlayContent"></div>
-        </section>
-
-        <!-- PARLAY_POLICY_V2 -- a separate product path from the legacy
-             parlay section above. Sourced ONLY from payload.parlays;
-             never reads or is read by dailyParlayContent. -->
+        <!-- PARLAY_POLICY_V2 -- the only source of the Parlays product.
+             Sourced ONLY from payload.parlays. The legacy ticket system's
+             legs are folded into Solo Bets below (see renderCards /
+             buildSoloBetsFromLegacyParlay) rather than shown as a
+             separate "parlay" claim -- that system was never V2-certified,
+             so it never gets parlay framing. -->
         <section id="parlayV2Section" class="daily-parlay daily-parlay--v2" aria-labelledby="parlayV2Title" aria-live="polite">
             <div id="parlayV2Content"></div>
         </section>
 
         <div class="prediction-section-heading">
-            <p class="vault-page-kicker">Straight plays</p>
+            <p class="vault-page-kicker">Solo bets</p>
             <h2 id="predictionPoolTitle">Current Pool</h2>
         </div>
         <div id="predictionCards" class="vault-board" aria-live="polite"></div>
@@ -51,6 +50,6 @@
 
     <script src="/vault/vault-components.js?v=8"></script>
     <script src="/vault/vault-shell.js?v=7"></script>
-    <script src="predictions.js?v=14"></script>
+    <script src="predictions.js?v=15"></script>
 </body>
 </html>

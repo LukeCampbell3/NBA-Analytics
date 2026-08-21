@@ -5,13 +5,10 @@ class DailyPredictionsPage {
         this.availableDates = [];
         this.activeDate = null;
         this.currentDate = null;
-        this.activeParlayTicketId = null;
         this.elements = {
             cards: document.getElementById("predictionCards"),
             empty: document.getElementById("predictionEmpty"),
             runMeta: document.getElementById("predictionRunMeta"),
-            parlaySection: document.getElementById("dailyParlaySection"),
-            parlayContent: document.getElementById("dailyParlayContent"),
             parlayV2Section: document.getElementById("parlayV2Section"),
             parlayV2Content: document.getElementById("parlayV2Content"),
             poolTitle: document.getElementById("predictionPoolTitle"),
@@ -71,7 +68,6 @@ class DailyPredictionsPage {
     async loadAndRender(date) {
         try {
             await this.load(date);
-            this.renderDailyParlay();
             this.renderParlayV2();
             this.renderCards();
             return true;
@@ -98,9 +94,10 @@ class DailyPredictionsPage {
         this.activeDate = this.data?.run_date || date || null;
         if (!date) this.currentDate = this.activeDate;
         const publicationStatus = String(this.data?.publication_status || "ready").toLowerCase();
-        this.plays = Array.isArray(this.data.plays)
+        const basePlays = Array.isArray(this.data.plays)
             ? this.data.plays.map((play) => ({ ...play, board_publication_status: publicationStatus }))
             : [];
+        this.plays = this.mergeLegacySoloBets(basePlays);
         this.plays.sort((a, b) => {
             const parlayDiff = Number(Boolean(b.parlay_candidate)) - Number(Boolean(a.parlay_candidate));
             if (parlayDiff !== 0) return parlayDiff;
@@ -113,6 +110,42 @@ class DailyPredictionsPage {
         if (this.elements.poolTitle) {
             this.elements.poolTitle.textContent = authorizationEnabled ? "Authorized Pool" : "Shadow Candidate Pool";
         }
+    }
+
+    /**
+     * The legacy parlay ticket system (daily_parlay) is CONTROL/diagnostic
+     * only -- it has never been V2-certified, so its legs are never shown
+     * bundled as a "parlay" claim. Instead each leg is folded into Solo
+     * Bets as an individual, unauthorized candidate (candidate_authorized
+     * always follows the ticket's own value, so an unauthorized ticket's
+     * legs correctly render with the same "Shadow only" treatment as any
+     * other uncertified single play). Skips a leg already present in the
+     * base singles pool (matched by play_key, falling back to
+     * player+target+market_line) so nothing is shown twice.
+     */
+    mergeLegacySoloBets(basePlays) {
+        const ticket = this.data?.daily_parlay?.selected_ticket;
+        if (!ticket || !Array.isArray(ticket.legs) || !ticket.legs.length) return basePlays;
+
+        const legKey = (item) => String(
+            item?.play_key || `${item?.player || item?.player_display_name || ""}|${item?.target || ""}|${item?.market_line || ""}`
+        );
+        const existingKeys = new Set(basePlays.map(legKey));
+        const candidateAuthorized = Boolean(ticket.candidate_authorized);
+
+        const legacyPlays = ticket.legs
+            .filter((leg) => !existingKeys.has(legKey(leg)))
+            .map((leg) => ({
+                ...leg,
+                candidate_authorized: candidateAuthorized,
+                action_status: leg.action_status || ticket.status,
+                ev: leg.ev != null ? leg.ev : leg.expected_value_per_unit,
+                edge: leg.edge != null ? leg.edge : (Number.isFinite(Number(leg.prediction)) && Number.isFinite(Number(leg.market_line))
+                    ? Number(leg.prediction) - Number(leg.market_line)
+                    : undefined),
+                parlay_candidate: false, // deliberately not tagged "parlay" -- see method docstring
+            }));
+        return [...basePlays, ...legacyPlays];
     }
 
     renderDateNav() {
@@ -212,117 +245,10 @@ class DailyPredictionsPage {
             .join("");
     }
 
-    renderDailyParlay() {
-        const section = this.elements.parlaySection;
-        const content = this.elements.parlayContent;
-        if (!section || !content) return;
-
-        const parlay = this.data?.daily_parlay || {};
-        const selectedTicket = parlay?.selected_ticket || null;
-        const ladder = Array.isArray(parlay?.ticket_ladder) && parlay.ticket_ladder.length
-            ? parlay.ticket_ladder.filter((item) => item && Array.isArray(item.legs) && item.legs.length)
-            : selectedTicket ? [selectedTicket] : [];
-        const ticketId = (item, index = 0) => String(
-            item?.ticket_id || `${item?.ticket_tier || "consistency"}_${item?.leg_count || 0}_${index}`
-        );
-        const defaultTicketId = selectedTicket ? ticketId(selectedTicket) : ticketId(ladder[0]);
-        if (!ladder.some((item, index) => ticketId(item, index) === this.activeParlayTicketId)) {
-            this.activeParlayTicketId = defaultTicketId;
-        }
-        const ticket = ladder.find((item, index) => ticketId(item, index) === this.activeParlayTicketId) || selectedTicket;
-        const status = String(ticket?.status || parlay?.status || "withheld").toLowerCase();
-        const candidateAuthorized = Boolean(ticket?.candidate_authorized);
-        const statusLabel = !candidateAuthorized && ticket ? "Shadow only" : status === "ready" ? "Ready" : status === "review" ? "Lineup review" : "Withheld";
-        const statusTone = !candidateAuthorized && ticket ? "stale" : status === "ready" ? "active" : status === "review" ? "stale" : "withheld";
-
-        if (!ticket || !Array.isArray(ticket.legs) || !ticket.legs.length) {
-            content.innerHTML = `
-                <div class="daily-parlay__header">
-                    <div>
-                        <p class="vault-page-kicker">Parlay ladder</p>
-                        <h2 id="dailyParlayTitle">MLB Parlays</h2>
-                    </div>
-                    ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, statusLabel) : ""}
-                </div>
-                <p class="daily-parlay__empty">${this.escapeHtml(parlay?.reason || "No ticket cleared today's consistency gates.")}</p>
-            `;
-            return;
-        }
-
-        const legs = ticket.legs.map((leg, index) => {
-            const player = leg.player_display_name || leg.player || "Unknown Player";
-            const target = window.CardVault ? window.CardVault.formatTargetLabel(leg.target) : String(leg.target || "");
-            const line = this.formatNumber(leg.market_line, 1);
-            const price = this.formatAmerican(leg.selected_side_price);
-            const probability = this.formatPct(leg.estimated_graded_hit_rate);
-            const lineup = String(leg.lineup_status || "unconfirmed");
-            const lineupLabel = lineup === "confirmed" ? "Confirmed" : lineup === "not_in_posted_lineup" ? "Out" : "Pending";
-            return `
-                <div class="daily-parlay__leg">
-                    <span class="daily-parlay__leg-number">${String(index + 1).padStart(2, "0")}</span>
-                    <div class="daily-parlay__leg-copy">
-                        <strong>${this.escapeHtml(player)}</strong>
-                        <span>${this.escapeHtml(`OVER ${line} ${target}`)}</span>
-                    </div>
-                    <div class="daily-parlay__leg-market">
-                        <strong>${this.escapeHtml(price)}</strong>
-                        <span>${this.escapeHtml(probability)} / ${this.escapeHtml(lineupLabel)}</span>
-                    </div>
-                </div>
-            `;
-        }).join("");
-
-        const ticketTabs = ladder.length > 1 ? `
-            <div class="daily-parlay__tabs" role="tablist" aria-label="Parlay length">
-                ${ladder.map((item) => {
-                    const legCount = Number(item.leg_count || 0);
-                    const itemId = ticketId(item);
-                    const active = itemId === this.activeParlayTicketId;
-                    const label = item.ticket_tier === "profit_boost" ? "Profit boost" : `${legCount} legs`;
-                    return `<button type="button" class="daily-parlay__tab${active ? " is-active" : ""}" data-parlay-ticket="${this.escapeHtml(itemId)}" role="tab" aria-selected="${active}">${this.escapeHtml(label)}</button>`;
-                }).join("")}
-            </div>
-        ` : "";
-        const ticketTier = String(ticket.ticket_tier || "consistency");
-        const betslipUrl = this.safeFanDuelBetslipUrl(ticket?.betslip?.url || ticket?.betslip_url);
-        const betslipAction = ticket?.betslip?.status === "ready" && betslipUrl ? `
-            <div class="daily-parlay__actions">
-                <a class="daily-parlay__betslip-button" href="${this.escapeHtml(betslipUrl)}" target="_blank" rel="noopener noreferrer">Add to FanDuel</a>
-            </div>
-        ` : "";
-        content.innerHTML = `
-            <div class="daily-parlay__header">
-                <div>
-                    <p class="vault-page-kicker">${this.escapeHtml(ticketTier)} / ${this.escapeHtml(ticket.leg_count)} legs</p>
-                    <h2 id="dailyParlayTitle">MLB Parlays</h2>
-                </div>
-                ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, statusLabel) : ""}
-            </div>
-            ${ticketTabs}
-            <div class="daily-parlay__metrics">
-                <div><span>Projected hit</span><strong>${this.escapeHtml(this.formatPct(ticket.projected_probability))}</strong></div>
-                <div><span>Combined price</span><strong>${this.escapeHtml(this.formatAmerican(ticket.combined_american_price))}</strong></div>
-                <div><span>Expected return</span><strong>${this.escapeHtml(this.formatSignedPct(ticket.expected_return_per_unit))}</strong></div>
-                <div><span>Sportsbook</span><strong>${this.escapeHtml(ticket.sportsbook || "n/a")}</strong></div>
-            </div>
-            <div class="daily-parlay__legs">${legs}</div>
-            ${betslipAction}
-            <p class="daily-parlay__state">${this.escapeHtml(parlay.reason || "")}</p>
-        `;
-        content.querySelectorAll("[data-parlay-ticket]").forEach((button) => {
-            button.addEventListener("click", () => {
-                const selectedId = String(button.dataset.parlayTicket || "");
-                if (!selectedId || selectedId === this.activeParlayTicketId) return;
-                this.activeParlayTicketId = selectedId;
-                this.renderDailyParlay();
-            });
-        });
-    }
-
     /**
-     * PARLAY_POLICY_V2 -- a SEPARATE product path from renderDailyParlay()
-     * above (the legacy system). Reads ONLY this.data.parlays; never reads
-     * or writes anything the legacy method touches (daily_parlay). Status
+     * PARLAY_POLICY_V2 -- the only "parlay" product path (the legacy
+     * ticket system's legs are folded into Solo Bets, see
+     * mergeLegacySoloBets). Reads ONLY this.data.parlays. Status
      * language is restricted to the allowed vocabulary (mission section
      * 10) -- never "guaranteed" / "safe bet" / "proven winner" / "lock".
      */
@@ -337,6 +263,11 @@ class DailyPredictionsPage {
 
         if (parlay.action !== "ACT" || !parlay.selected_parlay) {
             const reason = String(parlay.abstain_reason || "").trim();
+            const shadow = parlay.shadow_candidate;
+            const shadowBlock = shadow ? `
+                <p class="daily-parlay__empty">Shadow candidate -- not certified</p>
+                <div class="daily-parlay__legs">${this.renderParlayV2Legs(shadow)}</div>
+            ` : `<p class="daily-parlay__empty">${this.escapeHtml(this.formatParlayV2AbstainReason(reason))}</p>`;
             content.innerHTML = `
                 <div class="daily-parlay__header">
                     <div>
@@ -345,14 +276,36 @@ class DailyPredictionsPage {
                     </div>
                     ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Abstain") : ""}
                 </div>
-                <p class="daily-parlay__empty">${this.escapeHtml(this.formatParlayV2AbstainReason(reason))}</p>
-                <p class="daily-parlay__state">Policy ${this.escapeHtml(parlay.policy_version || "n/a")} / Status: ${this.escapeHtml(statusLabel)}</p>
+                ${shadowBlock}
+                <p class="daily-parlay__state">${this.escapeHtml(this.formatParlayV2AbstainReason(reason))} Policy ${this.escapeHtml(parlay.policy_version || "n/a")} / Status: ${this.escapeHtml(statusLabel)}</p>
             `;
             return;
         }
 
-        const selected = parlay.selected_parlay;
-        const legs = [selected.leg_1, selected.leg_2].filter(Boolean).map((leg, index) => {
+        content.innerHTML = `
+            <div class="daily-parlay__header">
+                <div>
+                    <p class="vault-page-kicker">Theory-grounded 2-leg parlay</p>
+                    <h2 id="parlayV2Title">Parlays (V2)</h2>
+                </div>
+                ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Parlay candidate") : ""}
+            </div>
+            <div class="daily-parlay__legs">${this.renderParlayV2Legs(parlay.selected_parlay)}</div>
+            <p class="daily-parlay__state">Policy ${this.escapeHtml(parlay.policy_version || "n/a")} / Status: ${this.escapeHtml(statusLabel)}</p>
+        `;
+    }
+
+    /**
+     * Deliberately does NOT show a probability/score next to either leg
+     * (for a certified pick or a shadow candidate alike) -- see
+     * run_parlay_v2._best_shadow_candidate's docstring: this program's
+     * own research found that ranking/displaying by raw model
+     * probability concentrates the frozen marginal model's worst
+     * overconfidence, so surfacing that number here would misleadingly
+     * suggest a reliability this system has not established.
+     */
+    renderParlayV2Legs(pair) {
+        return [pair.leg_1, pair.leg_2].filter(Boolean).map((leg, index) => {
             const target = window.CardVault ? window.CardVault.formatTargetLabel(leg.target) : String(leg.target || "");
             return `
                 <div class="daily-parlay__leg">
@@ -364,18 +317,6 @@ class DailyPredictionsPage {
                 </div>
             `;
         }).join("");
-
-        content.innerHTML = `
-            <div class="daily-parlay__header">
-                <div>
-                    <p class="vault-page-kicker">Theory-grounded 2-leg parlay</p>
-                    <h2 id="parlayV2Title">Parlays (V2)</h2>
-                </div>
-                ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Parlay candidate") : ""}
-            </div>
-            <div class="daily-parlay__legs">${legs}</div>
-            <p class="daily-parlay__state">Policy ${this.escapeHtml(parlay.policy_version || "n/a")} / Status: ${this.escapeHtml(statusLabel)}</p>
-        `;
     }
 
     formatParlayV2StatusLabel(policyStatus) {

@@ -292,17 +292,23 @@ def test_frontend_payload_embedding_reads_real_v2_json(tmp_path):
     assert embedded["parlays"]["policy_status"] == "DEVELOPMENT"
 
 
-def test_predictions_html_has_a_separate_parlay_v2_section():
+def test_predictions_html_has_the_parlay_v2_section_and_no_legacy_parlay_section():
     html = (REPO_ROOT / "sports" / "mlb" / "web" / "predictions.html").read_text()
     assert 'id="parlayV2Section"' in html
-    assert 'id="dailyParlaySection"' in html  # legacy section still present, untouched
+    # The legacy ticket system is no longer shown as its own "parlay"
+    # section -- its legs are folded into Solo Bets instead (see
+    # mergeLegacySoloBets), since that system was never V2-certified.
+    assert 'id="dailyParlaySection"' not in html
+    assert "Solo bets" in html
 
 
-def test_predictions_js_renders_parlay_v2_independently_of_legacy():
+def test_predictions_js_renders_parlay_v2_and_folds_legacy_legs_into_solo_bets():
     js = (REPO_ROOT / "sports" / "mlb" / "web" / "predictions.js").read_text()
     assert "renderParlayV2" in js
     assert "this.data?.parlays" in js
-    assert "renderDailyParlay" in js  # legacy renderer still present, untouched
+    assert "renderDailyParlay" not in js  # legacy ticket renderer removed, not just unused
+    assert "mergeLegacySoloBets" in js
+    assert "this.data?.daily_parlay" in js  # legacy data still READ, just no longer given its own "parlay" section
 
 
 # ======================================================================
@@ -367,3 +373,67 @@ def test_comparison_and_legacy_control_never_touch_v2_authority():
     for name in ("comparison.py", "legacy_control.py"):
         imports = _imported_module_roots(PARLAY_V2_PKG / name)
         assert not any("parlay_certification_v2.policy" in m or "parlay_certification_v2.state_machine" in m for m in imports)
+
+
+# ======================================================================
+# Shadow candidate: always shown on an abstain day, never a substitute action
+# ======================================================================
+
+
+def test_shadow_candidate_present_when_no_calibration_ledger_but_action_stays_abstain():
+    pool = pd.DataFrame([
+        _make_row(player="A", player_key="a", game_id="g1", target="R", direction="OVER", line=0.5, over_price=-150, prediction=0.9),
+        _make_row(player="B", player_key="b", game_id="g2", target="R", direction="OVER", line=0.5, over_price=-130, prediction=0.9),
+    ])
+    payload = build_slate_payload(
+        pool_csv=pool, slate_id="20260821",
+        eligibility_inputs=EligibilityInputs("20260821", True, True, True, True),
+        predictive_version="v1", state_version="s1",
+        # no calibration_store -- must not block the shadow candidate
+    )
+    assert payload["action"] == "ABSTAIN"
+    assert payload["selected_parlay"] is None
+    assert payload["shadow_candidate"] is not None
+    legs = {payload["shadow_candidate"]["leg_1"]["player"], payload["shadow_candidate"]["leg_2"]["player"]}
+    assert legs == {"A", "B"}
+
+
+def test_shadow_candidate_excludes_same_game_and_unpriced_pairs():
+    pool = pd.DataFrame([
+        _make_row(player="A", player_key="a", game_id="g1", target="R", direction="OVER", line=0.5, over_price=-150, prediction=0.9),
+        _make_row(player="C", player_key="c", game_id="g1", target="R", direction="OVER", line=0.5, over_price=-140, prediction=0.9),  # same game as A
+        _make_row(player="D", player_key="d", game_id="g2", target="R", direction="OVER", line=0.5, over_price=None, under_price=None, prediction=0.9),  # unpriced
+    ])
+    payload = build_slate_payload(
+        pool_csv=pool, slate_id="20260821",
+        eligibility_inputs=EligibilityInputs("20260821", True, True, True, True),
+        predictive_version="v1", state_version="s1",
+    )
+    # Only A+C (same game) and A+D-priceless exist as pairs -- neither
+    # qualifies as a shadow candidate (same-game or unpriced), so none is shown.
+    assert payload["shadow_candidate"] is None
+
+
+def test_shadow_candidate_never_appears_as_selected_parlay():
+    """Structural guarantee: shadow_candidate and selected_parlay are
+    always mutually exclusive in what they IMPLY -- selected_parlay only
+    appears when action == ACT, and action only becomes ACT through
+    select_action_for_day's real certification, never by promoting the
+    shadow candidate."""
+    pool = pd.DataFrame([
+        _make_row(player="A", player_key="a", game_id="g1", target="R", direction="OVER", line=0.5, over_price=-150, prediction=0.9),
+        _make_row(player="B", player_key="b", game_id="g2", target="R", direction="OVER", line=0.5, over_price=-130, prediction=0.9),
+    ])
+    payload = build_slate_payload(
+        pool_csv=pool, slate_id="20260821",
+        eligibility_inputs=EligibilityInputs("20260821", True, True, True, True),
+        predictive_version="v1", state_version="s1",
+    )
+    assert payload["action"] == "ABSTAIN"
+    assert payload["selected_parlay"] is None
+    assert payload["shadow_candidate"] is not None  # present as a diagnostic
+    # The two are never the same object/claim -- shadow_candidate carries
+    # no certification-implying fields (reuses the same check as PairCandidate).
+    found: set[str] = set()
+    _walk_keys(payload["shadow_candidate"], found)
+    assert found.isdisjoint(FORBIDDEN_AUTHORITATIVE_KEYS)
