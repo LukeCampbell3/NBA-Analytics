@@ -51,6 +51,21 @@ MLB_PARLAY_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_daily_p
 # MLB_PARLAY_SELECTOR above; its output is a distinct JSON consumed only
 # by the new "parlays" payload key, never by the legacy_parlay_control
 # fields the exporter already writes from MLB_PARLAY_SELECTOR's output.
+#
+# Currently frozen prospective policy: PARLAY_POLICY_V2_PROSPECTIVE_003
+# (world_gate_mode=OBSERVE_ONLY -- see manifest.WORLD_GATE_MODE and
+# world_gate_research.py for the DEVELOPMENT research this freeze is
+# based on; PARLAY_POLICY_V2_PROSPECTIVE_002, world_gate_mode=REQUIRED,
+# remains frozen/immutable but is no longer the active policy). This
+# script deliberately does NOT pass --world-gate-mode/--world-risk-
+# threshold below -- run_parlay_v2.py's CLI defaults BOTH to
+# manifest.WORLD_GATE_MODE/WORLD_RISK_THRESHOLD (the CURRENTLY frozen
+# policy's config) precisely so a real production/CI run always follows
+# whichever policy is currently frozen without this orchestrator needing
+# to import MLB research modules itself (it stays a pure subprocess
+# orchestrator by design). To replay/audit PROSPECTIVE_002's exact
+# behavior instead, invoke MLB_PARLAY_V2_RUNNER manually with
+# --world-gate-mode REQUIRED.
 MLB_PARLAY_V2_RUNNER = REPO_ROOT / "sports" / "mlb" / "parlay_v2" / "run_parlay_v2.py"
 # The forward-only calibration ledger (STREAM A) -- one persistent file,
 # appended to only after settlement is final for a given slate (see

@@ -377,6 +377,7 @@ def build_slate_payload(
         "policy_version": decision_record.policy_version,
         "candidate_universe_size": decision_record.candidate_universe_size,
         "action": decision_record.action,
+        "world_gate_mode": decision_record.world_gate_mode,
         "world_certificate_diagnostics": decision_record.world_certificate_diagnostics,
     }
     # Durable persistence (mission section 19/27): the ephemeral per-run

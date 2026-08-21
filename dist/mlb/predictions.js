@@ -261,13 +261,20 @@ class DailyPredictionsPage {
         const statusLabel = this.formatParlayV2StatusLabel(parlay.policy_status);
         const statusTone = this.formatParlayV2StatusTone(parlay.policy_status);
 
-        // Three-way-separated status footer (mission section 21): Policy
-        // (which frozen action rule), Research status (policy_status --
-        // certification progress, never a profitability claim), Execution
-        // (shadow_execution_status -- whether TODAY's decision actually
-        // selected a real frozen wager, regardless of certification).
+        // Status footer: Policy (which frozen action rule), Research
+        // status (policy_status -- certification progress, never a
+        // profitability claim), World gate (world_gate_mode -- whether
+        // world/counterexample diagnostics could have blocked this
+        // decision; OBSERVE_ONLY means they never can, so a selection
+        // here is NEVER a claim that the world certificate "passed" --
+        // see decision_record.world_certificate_diagnostics.certified,
+        // which stays honestly false/irrelevant under OBSERVE_ONLY),
+        // Execution (shadow_execution_status -- whether TODAY's decision
+        // actually selected a real frozen wager).
         const executionLabel = parlay.shadow_execution_status === "EXECUTED_SHADOW" ? "Shadow only (selected)" : "Not executed";
-        const statusFooter = `Policy: ${this.escapeHtml(parlay.policy_version || "n/a")} / Research status: ${this.escapeHtml(statusLabel)} / Execution: ${this.escapeHtml(executionLabel)}`;
+        const worldGateLabels = { REQUIRED: "Required", BOUNDED_RISK: "Bounded risk", OBSERVE_ONLY: "Observe-only" };
+        const worldGateLabel = worldGateLabels[parlay.world_gate_mode] || "n/a";
+        const statusFooter = `Policy: ${this.escapeHtml(parlay.policy_version || "n/a")} / Research status: ${this.escapeHtml(statusLabel)} / World gate: ${this.escapeHtml(worldGateLabel)} / Execution: ${this.escapeHtml(executionLabel)}`;
 
         if (parlay.action !== "ACT" || !parlay.selected_parlay) {
             const reason = String(parlay.abstain_reason || "").trim();
