@@ -1,0 +1,87 @@
+{
+  "n_evaluated_priced_pairs": 619191,
+  "n_days": 11,
+  "overall": {
+    "n": 619191,
+    "n_days": 11,
+    "hit_rate_both_win": 0.29402559145724017,
+    "mean_p_joint_model": 0.3396858603186399,
+    "mean_market_implied_p": 0.301043091854723,
+    "model_overconfidence_vs_actual": 0.04566026886139973,
+    "model_overconfidence_vs_market": 0.0386427684639169,
+    "mean_joint_ev_model_confidence_NOT_realized": 0.2763568726189057,
+    "mean_realized_return_direct": -0.009773890586107115,
+    "day_clustered_bootstrap_mean_realized_return": -0.00844097817612319,
+    "day_clustered_bootstrap_90pct_ci": [
+      -0.050671650609571156,
+      0.04450933711536515
+    ]
+  },
+  "by_pair_class": {
+    "++": {
+      "n": 233721,
+      "n_days": 11,
+      "hit_rate_both_win": 0.28422349724671725,
+      "mean_p_joint_model": 0.390504994676411,
+      "mean_market_implied_p": 0.2767187149044369,
+      "model_overconfidence_vs_actual": 0.10628149742969373,
+      "model_overconfidence_vs_market": 0.11378627977197409,
+      "mean_joint_ev_model_confidence_NOT_realized": 0.6745045585468868,
+      "mean_realized_return_direct": 0.060984525538934145,
+      "day_clustered_bootstrap_mean_realized_return": 0.062032291475856954,
+      "day_clustered_bootstrap_90pct_ci": [
+        -0.01567109917009574,
+        0.14746435223606502
+      ]
+    },
+    "+-": {
+      "n": 288530,
+      "n_days": 11,
+      "hit_rate_both_win": 0.29792049353620076,
+      "mean_p_joint_model": 0.32192270577401355,
+      "mean_market_implied_p": 0.30674572410215784,
+      "model_overconfidence_vs_actual": 0.024002212237812792,
+      "model_overconfidence_vs_market": 0.015176981671855716,
+      "mean_joint_ev_model_confidence_NOT_realized": 0.1157563733975217,
+      "mean_realized_return_direct": -0.02588315095830867,
+      "day_clustered_bootstrap_mean_realized_return": -0.02398960837558196,
+      "day_clustered_bootstrap_90pct_ci": [
+        -0.06100972199895852,
+        0.0193989054121301
+      ]
+    },
+    "--": {
+      "n": 96940,
+      "n_days": 11,
+      "hit_rate_both_win": 0.30606560759232515,
+      "mean_p_joint_model": 0.2700314769838801,
+      "mean_market_implied_p": 0.342715644184468,
+      "model_overconfidence_vs_actual": -0.03603413060844507,
+      "model_overconfidence_vs_market": -0.0726841672005879,
+      "mean_joint_ev_model_confidence_NOT_realized": -0.2055640399293489,
+      "mean_realized_return_direct": -0.1324242194490064,
+      "day_clustered_bootstrap_mean_realized_return": -0.12834671320077234,
+      "day_clustered_bootstrap_90pct_ci": [
+        -0.1989886112413404,
+        -0.03776950326377894
+      ]
+    }
+  },
+  "value_subset_p_joint_gt_market_implied": {
+    "n": 399772,
+    "n_days": 11,
+    "hit_rate_both_win": 0.2895225278408693,
+    "mean_p_joint_model": 0.37011190123037657,
+    "mean_market_implied_p": 0.2824593150982016,
+    "model_overconfidence_vs_actual": 0.08058937338950728,
+    "model_overconfidence_vs_market": 0.08765258613217497,
+    "mean_joint_ev_model_confidence_NOT_realized": 0.5080601844489868,
+    "mean_realized_return_direct": 0.04899217012583326,
+    "day_clustered_bootstrap_mean_realized_return": 0.04945318124684868,
+    "day_clustered_bootstrap_90pct_ci": [
+      -0.01801100311806323,
+      0.12966123984876443
+    ],
+    "caveat": "This filter (p_joint > market-implied price) was constructed POST-HOC during exploratory analysis of this exact DEVELOPMENT-window result, not predeclared before looking. It is a HYPOTHESIS for a future frozen/SELECT-confirmed rule, not itself confirmed evidence -- reporting it without this caveat would violate the mission's multiplicity-control requirement."
+  }
+}

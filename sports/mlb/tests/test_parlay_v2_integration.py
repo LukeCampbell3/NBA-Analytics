@@ -1,0 +1,369 @@
+from __future__ import annotations
+
+import ast
+import json
+from pathlib import Path
+
+import pandas as pd
+import pytest
+
+from sports.mlb.parlay_v2.candidate_adapter import (
+    Leg,
+    PairCandidate,
+    build_candidates_for_day,
+    build_pregame_action_rows,
+    exact_event_key,
+)
+from sports.mlb.parlay_v2.frontend_payload import embed_parlays_v2
+from sports.mlb.parlay_v2.program_alpha import AlphaSpend, ProgramAlphaLedger
+from sports.mlb.parlay_v2.run_parlay_v2 import _to_candidate_wager, build_slate_payload
+from sports.mlb.research.parlay_certification_v2 import manifest
+from sports.mlb.research.parlay_certification_v2.eligibility import EligibilityInputs
+from sports.mlb.research.parlay_certification_v2.policy import select_action_for_day
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+PARLAY_V2_PKG = REPO_ROOT / "sports" / "mlb" / "parlay_v2"
+PARLAY_CERT_V2_PKG = REPO_ROOT / "sports" / "mlb" / "research" / "parlay_certification_v2"
+OLD_SINGLES_PREDICTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_high_precision_predictions.py"
+OLD_PARLAY_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_daily_parlay.py"
+
+
+def _imported_module_roots(py_file: Path) -> set[str]:
+    tree = ast.parse(py_file.read_text())
+    roots: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                roots.add(alias.name.split(".")[0] + ("." + alias.name.split(".")[1] if "." in alias.name else ""))
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            roots.add(node.module)
+    return roots
+
+
+def _make_row(*, player, player_key, game_id, target, direction, line, over_price=-150, under_price=130, prediction=None, rmse=0.4, history_rows=50, market_source="real"):
+    pred = prediction if prediction is not None else (line + 0.3)
+    return {
+        "Player": player, "Player_ID": player_key, "Game_ID": game_id, "Target": target,
+        "Prediction": pred, "Market_Line": line,
+        "Market_Over_Price": over_price, "Market_Under_Price": under_price,
+        "Model_Val_RMSE": rmse, "History_Rows": history_rows, "Market_Source": market_source,
+        "Game_Date": "2026-08-21",
+    }
+
+
+# ======================================================================
+# A. Singles isolation
+# ======================================================================
+
+
+def test_old_singles_predictor_never_imports_v2():
+    imports = _imported_module_roots(OLD_SINGLES_PREDICTOR)
+    assert not any("parlay_v2" in m or "parlay_certification_v2" in m for m in imports), (
+        "the old single-bet predictor must be structurally incapable of being affected by V2 config"
+    )
+
+
+# ======================================================================
+# B. Parlay isolation (V2 does not depend on old ranking/selection code)
+# ======================================================================
+
+
+def test_v2_package_never_imports_old_selection_scripts():
+    for py_file in list(PARLAY_V2_PKG.glob("*.py")) + list(PARLAY_CERT_V2_PKG.glob("*.py")):
+        imports = _imported_module_roots(py_file)
+        assert not any("select_high_precision_predictions" in m or "select_daily_parlay" in m for m in imports), (
+            f"{py_file} must not depend on the old ranking/selection scripts (found in imports: {imports})"
+        )
+
+
+def test_legacy_control_is_read_only_diagnostic_never_an_input_to_policy():
+    # legacy_control.py may be imported by comparison.py (diagnostics) but
+    # never by candidate_adapter.py, run_parlay_v2.py's decision path, or
+    # anything in parlay_certification_v2/.
+    for name in ("candidate_adapter.py",):
+        imports = _imported_module_roots(PARLAY_V2_PKG / name)
+        assert not any("legacy_control" in m for m in imports)
+    for py_file in PARLAY_CERT_V2_PKG.glob("*.py"):
+        imports = _imported_module_roots(py_file)
+        assert not any("legacy_control" in m for m in imports)
+
+
+# ======================================================================
+# C. Authority separation
+# ======================================================================
+
+
+def test_no_old_system_field_can_reach_state_machine_or_manifest():
+    for py_file in PARLAY_CERT_V2_PKG.glob("*.py"):
+        imports = _imported_module_roots(py_file)
+        assert not any(
+            "select_high_precision_predictions" in m or "select_daily_parlay" in m or "parlay_analysis" in m
+            for m in imports
+        ), f"{py_file} must not import any old-system module"
+    assert manifest.PRODUCTION_AUTHORIZED is False
+
+
+# ======================================================================
+# D. Prediction/certification separation
+# ======================================================================
+
+
+FORBIDDEN_AUTHORITATIVE_KEYS = {"certified", "safe", "supported", "production_authorized", "risk_passed"}
+
+
+def _walk_keys(obj, found: set[str]):
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            found.add(str(k).lower())
+            _walk_keys(v, found)
+    elif isinstance(obj, (list, tuple)):
+        for item in obj:
+            _walk_keys(item, found)
+
+
+def test_pair_candidate_cannot_contain_authoritative_fields():
+    leg = Leg("P", "p1", "g1", "H", "OVER", 0.5, "real", 1.5, "2026-08-21", 0.6, True)
+    leg2 = Leg("Q", "q1", "g2", "H", "OVER", 0.5, "real", 1.6, "2026-08-21", 0.55, True)
+    candidate = PairCandidate(
+        slate_id="s", candidate_id="c1", leg_1=leg, leg_2=leg2,
+        joint_probability_estimate=0.3, joint_probability_method="independence_binary_world_model",
+        joint_score=0.9, support={"leg_1_support": True, "leg_2_support": True, "state_support": True, "in_support": True},
+        world_diagnostics={"retained_world_count": 4, "retained_probability_mass": 1.0, "counterexample_count": 0, "counterexample_mass": 0.0, "nonvacuous_world_certificate": True},
+        predictive_version="v1", state_version="s1", adapter_version="a1",
+    )
+    found: set[str] = set()
+    _walk_keys(candidate.as_dict(), found)
+    assert found.isdisjoint(FORBIDDEN_AUTHORITATIVE_KEYS)
+
+
+# ======================================================================
+# E. Alternate-line identity -- MANDATORY regression test (mission 5/14)
+# ======================================================================
+
+
+def test_alternate_lines_never_share_probability_or_price():
+    """Player hits OVER 0.5 at -200 and OVER 1.5 at +300 on the same day:
+    the system MUST NOT copy the -200-implied probability/price to the 1.5
+    event, or vice versa."""
+    pool = pd.DataFrame([
+        _make_row(player="Ohtani", player_key="ohtani", game_id="g1", target="H", direction="OVER", line=0.5, over_price=-200, prediction=0.8),
+        _make_row(player="Ohtani", player_key="ohtani", game_id="g1", target="H", direction="OVER", line=1.5, over_price=300, prediction=1.8),
+    ])
+    rows = build_pregame_action_rows(pool, stamp="20260821", mode="broad", targets=("H",))
+    ohtani_rows = rows[rows["player"] == "Ohtani"].sort_values("market_line")
+    assert len(ohtani_rows) == 2, "both alternate-line events must survive as distinct rows, not be deduped"
+
+    half_line = ohtani_rows.iloc[0]
+    full_line = ohtani_rows.iloc[1]
+    assert half_line["market_line"] == pytest.approx(0.5)
+    assert full_line["market_line"] == pytest.approx(1.5)
+    # Prices must be scoped to their own line, never swapped/shared.
+    assert half_line["decimal_price"] == pytest.approx(1.0 + 100.0 / 200.0)  # -200 -> 1.50
+    assert full_line["decimal_price"] == pytest.approx(1.0 + 300.0 / 100.0)  # +300 -> 4.00
+    assert half_line["decimal_price"] != pytest.approx(full_line["decimal_price"])
+    # Probabilities must differ (different predictions/lines feed the frozen marginal model).
+    assert half_line["marginal_probability"] != pytest.approx(full_line["marginal_probability"])
+
+
+def test_exact_event_key_distinguishes_lines():
+    key_half = exact_event_key("ohtani", "g1", "H", "OVER", 0.5)
+    key_full = exact_event_key("ohtani", "g1", "H", "OVER", 1.5)
+    assert key_half != key_full
+
+
+# ======================================================================
+# F. Missing exact price
+# ======================================================================
+
+
+def test_missing_price_excludes_candidate_from_economic_evaluation():
+    pool = pd.DataFrame([
+        _make_row(player="A", player_key="a", game_id="g1", target="H", direction="OVER", line=0.5, over_price=None, under_price=None),
+    ])
+    rows = build_pregame_action_rows(pool, stamp="20260821", mode="broad", targets=("H",))
+    assert rows.empty, "a row with no real price must never enter the action universe"
+
+
+# ======================================================================
+# G. Cross-game pair / H. Same-game pair
+# ======================================================================
+
+
+def test_cross_game_pair_gets_product_price_same_game_pair_gets_none():
+    pool = pd.DataFrame([
+        _make_row(player="A", player_key="a", game_id="g1", target="H", direction="OVER", line=0.5, over_price=-150, prediction=0.9),
+        _make_row(player="B", player_key="b", game_id="g2", target="H", direction="OVER", line=0.5, over_price=-130, prediction=0.9),
+        _make_row(player="C", player_key="c", game_id="g1", target="H", direction="OVER", line=0.5, over_price=-140, prediction=0.9),
+    ])
+    rows = build_pregame_action_rows(pool, stamp="20260821", mode="broad", targets=("H",))
+    candidates = build_candidates_for_day(rows, slate_id="20260821", aps_threshold=1.0, calibration_slates=25, predictive_version="v1", state_version="s1")
+    cross = next(c for c in candidates if c.leg_1.game_id != c.leg_2.game_id)
+    same = next(c for c in candidates if c.leg_1.game_id == c.leg_2.game_id)
+
+    cross_wager = _to_candidate_wager(cross)
+    same_wager = _to_candidate_wager(same)
+    assert cross_wager.decimal_price == pytest.approx(cross.leg_1.decimal_price * cross.leg_2.decimal_price)
+    assert same_wager.decimal_price is None
+
+
+def test_same_game_pair_without_real_sgp_quote_never_produces_executable_action():
+    pool = pd.DataFrame([
+        _make_row(player="A", player_key="a", game_id="g1", target="H", direction="OVER", line=0.5, over_price=-150, prediction=0.95),
+        _make_row(player="C", player_key="c", game_id="g1", target="H", direction="OVER", line=0.5, over_price=-140, prediction=0.95),
+    ])
+    rows = build_pregame_action_rows(pool, stamp="20260821", mode="broad", targets=("H",))
+    candidates = build_candidates_for_day(rows, slate_id="20260821", aps_threshold=1.0, calibration_slates=25, predictive_version="v1", state_version="s1")
+    assert len(candidates) == 1 and candidates[0].leg_1.game_id == candidates[0].leg_2.game_id
+    wager = _to_candidate_wager(candidates[0])
+    from sports.mlb.research.parlay_certification_v2.eligibility import EligibilityInputs, evaluate_eligibility
+    elig = evaluate_eligibility(EligibilityInputs("20260821", True, True, True, True))
+    selection = select_action_for_day(elig, [wager], r_max=manifest.R_MAX_ACCEPTED)
+    assert selection.action == 0
+
+
+# ======================================================================
+# I. One action per eligible slate
+# ======================================================================
+
+
+def test_at_most_one_action_per_slate():
+    assert manifest.MAX_ACTIONS_PER_ELIGIBLE_SLATE == 1
+    pool = pd.DataFrame([
+        _make_row(player=f"P{i}", player_key=f"p{i}", game_id=f"g{i}", target="H", direction="OVER", line=0.5, over_price=-150, prediction=0.9)
+        for i in range(6)
+    ])
+    payload = build_slate_payload(
+        pool_csv=pool, slate_id="20260821",
+        eligibility_inputs=EligibilityInputs("20260821", True, True, True, True),
+        predictive_version="v1", state_version="s1",
+    )
+    # With FROZEN_CALIBRATION_SLATES=0 this abstains (CERTIFICATION_STREAM_NOT_READY);
+    # the structural guarantee under test is that `selected_parlay` is
+    # never a list/multiple wagers -- at most one candidate object or None.
+    assert payload["selected_parlay"] is None or isinstance(payload["selected_parlay"], dict)
+
+
+# ======================================================================
+# J. Abstention: E=1, A=0 (never E=0)
+# ======================================================================
+
+
+def test_eligible_slate_with_no_qualifying_pair_stays_eligible():
+    pool = pd.DataFrame([_make_row(player="A", player_key="a", game_id="g1", target="H", direction="OVER", line=0.5, over_price=None, under_price=None)])
+    payload = build_slate_payload(
+        pool_csv=pool, slate_id="20260821",
+        eligibility_inputs=EligibilityInputs("20260821", True, True, True, True),
+        predictive_version="v1", state_version="s1",
+    )
+    assert payload["eligible"] is True
+    assert payload["action"] == "ABSTAIN"
+    assert payload["abstain_reason"] != "OPERATIONALLY_INELIGIBLE"
+
+
+def test_operationally_ineligible_slate_is_e0_not_an_abstention():
+    payload = build_slate_payload(
+        pool_csv=pd.DataFrame(), slate_id="20260821",
+        eligibility_inputs=EligibilityInputs("20260821", False, False, True, True),
+        predictive_version="v1", state_version="s1",
+    )
+    assert payload["eligible"] is False
+    assert payload["abstain_reason"] == "OPERATIONALLY_INELIGIBLE"
+
+
+# ======================================================================
+# K. Frontend contract
+# ======================================================================
+
+
+def test_frontend_payload_embedding_never_touches_existing_keys():
+    original = {"plays": ["singles"], "daily_parlay": {"legacy": True}, "summary": {"n": 1}}
+    embedded = embed_parlays_v2(original, None)
+    assert embedded["plays"] == ["singles"]
+    assert embedded["daily_parlay"] == {"legacy": True}
+    assert embedded["summary"] == {"n": 1}
+    assert embedded["parlays"]["system"] == "PARLAY_POLICY_V2"
+    assert "parlays" not in original  # original dict is not mutated
+
+
+def test_frontend_payload_embedding_reads_real_v2_json(tmp_path):
+    v2_path = tmp_path / "parlay_v2.json"
+    v2_path.write_text(json.dumps({"system": "PARLAY_POLICY_V2", "action": "ABSTAIN", "policy_status": "DEVELOPMENT"}))
+    embedded = embed_parlays_v2({"plays": []}, v2_path)
+    assert embedded["parlays"]["policy_status"] == "DEVELOPMENT"
+
+
+def test_predictions_html_has_a_separate_parlay_v2_section():
+    html = (REPO_ROOT / "sports" / "mlb" / "web" / "predictions.html").read_text()
+    assert 'id="parlayV2Section"' in html
+    assert 'id="dailyParlaySection"' in html  # legacy section still present, untouched
+
+
+def test_predictions_js_renders_parlay_v2_independently_of_legacy():
+    js = (REPO_ROOT / "sports" / "mlb" / "web" / "predictions.js").read_text()
+    assert "renderParlayV2" in js
+    assert "this.data?.parlays" in js
+    assert "renderDailyParlay" in js  # legacy renderer still present, untouched
+
+
+# ======================================================================
+# L. Replay does not invoke the old singles predictor
+# ======================================================================
+
+
+def test_evidence_store_never_imports_old_predictor():
+    imports = _imported_module_roots(PARLAY_CERT_V2_PKG / "evidence_store.py")
+    assert not any("select_high_precision_predictions" in m for m in imports)
+
+
+# ======================================================================
+# M. Program alpha never exceeds alpha_program
+# ======================================================================
+
+
+def test_program_alpha_ledger_enforces_budget(tmp_path):
+    ledger = ProgramAlphaLedger(tmp_path / "ledger.json", alpha_program=0.05)
+    ledger.spend(AlphaSpend("POLICY_A", 0.03, "frozen_for_prospective_confirmation", "2026-08-21T00:00:00Z"))
+    ledger.spend(AlphaSpend("POLICY_B", 0.015, "frozen_for_prospective_confirmation", "2026-08-22T00:00:00Z"))
+    assert ledger.total_spent() == pytest.approx(0.045)
+    with pytest.raises(ValueError):
+        ledger.spend(AlphaSpend("POLICY_C", 0.01, "frozen_for_prospective_confirmation", "2026-08-23T00:00:00Z"))
+    # idempotent re-spend for an already-recorded version is a no-op, not an error
+    ledger.spend(AlphaSpend("POLICY_A", 0.03, "frozen_for_prospective_confirmation", "2026-08-21T00:00:00Z"))
+    assert ledger.total_spent() == pytest.approx(0.045)
+
+
+def test_manifest_d_max_derives_r_max():
+    assert manifest.R_MAX_ACCEPTED == pytest.approx(manifest.D_MAX - 1.0)
+
+
+# ======================================================================
+# Comparison artifact (mission section 16) -- diagnostic only, immutable once frozen
+# ======================================================================
+
+
+def test_comparison_record_is_write_once_and_settlement_is_additive(tmp_path):
+    from sports.mlb.parlay_v2.comparison import build_comparison_record, settle_comparison_record, write_comparison_record
+    from sports.mlb.parlay_v2.legacy_control import LegacyParlayControl
+
+    legacy = LegacyParlayControl(True, [{"player": "Kwan", "target": "H", "line": 0.5}], 0.42, {"combined_american_price": 260}, "old_parlay_diagnostic_loaded")
+    record = build_comparison_record(
+        date="20260821", policy_version="TEST_POLICY", legacy=legacy,
+        new_v2_pair=[{"player": "Judge", "target": "H", "line": 0.5}], new_joint_score=0.9,
+        new_quote={"decimal_price": 3.5}, new_action="ACT", new_policy_status="DEVELOPMENT",
+    )
+    assert record.same_pair is False  # different players -- correctly detected as NOT the same pair
+    root = tmp_path / "comparison"
+    assert write_comparison_record(root, record) is True
+    assert write_comparison_record(root, record) is False  # frozen once written
+    assert settle_comparison_record(root, "20260821", "TEST_POLICY", old_settlement={"result": "loss"}, new_settlement={"result": "win"}) is True
+
+    import json
+    saved = json.loads((root / "20260821_TEST_POLICY.json").read_text())
+    assert saved["eventual_new_settlement"] == {"result": "win"}
+    assert saved["new_v2_candidate"] == [{"player": "Judge", "target": "H", "line": 0.5}]  # decision-time field untouched by settlement
+
+
+def test_comparison_and_legacy_control_never_touch_v2_authority():
+    for name in ("comparison.py", "legacy_control.py"):
+        imports = _imported_module_roots(PARLAY_V2_PKG / name)
+        assert not any("parlay_certification_v2.policy" in m or "parlay_certification_v2.state_machine" in m for m in imports)

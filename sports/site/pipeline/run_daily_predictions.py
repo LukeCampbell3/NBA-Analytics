@@ -46,6 +46,18 @@ MLB_GOVERNANCE_CAPTURE = REPO_ROOT / "sports" / "mlb" / "governance" / "capture_
 MLB_PROVIDER_OBSERVATIONS = REPO_ROOT / "sports" / "mlb" / "data" / "raw" / "market_odds" / "mlb" / "odds_api_io" / "latest_provider_observations.csv"
 MLB_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_high_precision_predictions.py"
 MLB_PARLAY_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_daily_parlay.py"
+# PARLAY_POLICY_V2 -- a SEPARATE product path (mission: MLB dual-path
+# integration). Runs additively alongside, never in place of,
+# MLB_PARLAY_SELECTOR above; its output is a distinct JSON consumed only
+# by the new "parlays" payload key, never by the legacy_parlay_control
+# fields the exporter already writes from MLB_PARLAY_SELECTOR's output.
+MLB_PARLAY_V2_RUNNER = REPO_ROOT / "sports" / "mlb" / "parlay_v2" / "run_parlay_v2.py"
+# The forward-only calibration ledger (STREAM A) -- one persistent file,
+# appended to only after settlement is final for a given slate (see
+# sports/mlb/parlay_v2/calibration/store.py). This script does not write
+# to it; a separate settlement-ingestion step (not yet wired into this
+# pipeline -- see MIGRATION notes) is responsible for admissions.
+MLB_PARLAY_V2_CALIBRATION_LEDGER = REPO_ROOT / "sports" / "mlb" / "parlay_v2" / "calibration" / "reports" / "calibration_ledger.jsonl"
 MLB_CONFIDENCE_CALIBRATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "live_board_confidence.py"
 MLB_PICK_SURVIVAL_MODEL = REPO_ROOT / "sports" / "mlb" / "scripts" / "pick_survival_model.py"
 MLB_LATENT_POOL_REPLAY = REPO_ROOT / "sports" / "mlb" / "scripts" / "backtest_latent_daily_pools.py"
@@ -817,6 +829,32 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
         ],
     )
 
+    # PARLAY_POLICY_V2 -- separate product path, additive step. Failure
+    # here must never block the singles/legacy-parlay export above: the
+    # exporter treats a missing/unreadable V2 artifact as a clear
+    # "unavailable" state (see parlay_v2/frontend_payload.py), never as an
+    # export failure.
+    parlay_v2_slate_id = pool_csv.stem.removeprefix("daily_prediction_pool_")
+    parlay_v2_json = pool_csv.with_name(f"{pool_csv.stem}_parlay_v2.json")
+    try:
+        run_step(
+            "Run PARLAY_POLICY_V2 (Parlays Tab)",
+            [
+                args.python,
+                str(MLB_PARLAY_V2_RUNNER),
+                "--pool-csv",
+                str(pool_csv),
+                "--slate-id",
+                parlay_v2_slate_id,
+                "--out-json",
+                str(parlay_v2_json),
+                "--calibration-ledger",
+                str(MLB_PARLAY_V2_CALIBRATION_LEDGER),
+            ],
+        )
+    except Exception as exc:  # noqa: BLE001 -- deliberate: V2 is additive, never blocks singles publication
+        print(f"[warning] PARLAY_POLICY_V2 step failed, Parlays tab will report unavailable: {format_step_failure(exc)}")
+
     run_step(
         "Export MLB Prediction Payload",
         [
@@ -828,6 +866,8 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
             str(summary_json),
             "--parlay-json",
             str(parlay_json),
+            "--parlay-v2-json",
+            str(parlay_v2_json),
             "--governance-json",
             str(governance_status_json),
             "--output",

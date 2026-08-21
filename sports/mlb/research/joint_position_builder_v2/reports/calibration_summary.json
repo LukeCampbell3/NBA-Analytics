@@ -1,0 +1,40 @@
+{
+  "narrow": {
+    "n_pairs": 1470,
+    "n_days": 14,
+    "mean_predicted_p_joint": 0.37984687853596294,
+    "actual_both_win_rate": 0.3761904761904762,
+    "calibration_gap": 0.0036564023454867534
+  },
+  "narrow_same_game_False": {
+    "n_pairs": 1182,
+    "mean_predicted_p_joint": 0.3794338265040031,
+    "actual_both_win_rate": 0.37225042301184436,
+    "calibration_gap": 0.007183403492158735
+  },
+  "narrow_same_game_True": {
+    "n_pairs": 288,
+    "mean_predicted_p_joint": 0.38154211291713136,
+    "actual_both_win_rate": 0.3923611111111111,
+    "calibration_gap": -0.010818998193979745
+  },
+  "broad": {
+    "n_pairs": 1470,
+    "n_days": 14,
+    "mean_predicted_p_joint": 0.5727404533099113,
+    "actual_both_win_rate": 0.42993197278911566,
+    "calibration_gap": 0.14280848052079564
+  },
+  "broad_same_game_False": {
+    "n_pairs": 1203,
+    "mean_predicted_p_joint": 0.5676936791622105,
+    "actual_both_win_rate": 0.4314214463840399,
+    "calibration_gap": 0.13627223277817058
+  },
+  "broad_same_game_True": {
+    "n_pairs": 267,
+    "mean_predicted_p_joint": 0.5954792896383163,
+    "actual_both_win_rate": 0.4232209737827715,
+    "calibration_gap": 0.1722583158555448
+  }
+}
