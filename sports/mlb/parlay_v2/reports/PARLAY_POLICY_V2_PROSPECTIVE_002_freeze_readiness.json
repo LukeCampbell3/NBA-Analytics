@@ -1,0 +1,57 @@
+{
+  "candidate_enumeration": "all cross-game 2-leg pairs from the pregame action-eligible universe (candidate_adapter.build_candidates_for_day)",
+  "checked_at_utc": "2026-08-21T21:42:56.058678+00:00",
+  "code_hash": "c62705f79c371fc34d870edde5f20ef026bd91301c01b4722b73becc537903b4",
+  "config_hash": "1662651c9974b48620c084797c015e1cd28a6e8b0ee62b934f9359ad5e5d1e1a",
+  "freeze_ready": true,
+  "freeze_ready_reason": "clean",
+  "frozen_config": {
+    "alpha_c": 0.016666666666666666,
+    "alpha_l": 0.016666666666666666,
+    "alpha_program": 0.05,
+    "alpha_total": 0.05,
+    "alpha_v": 0.016666666666666666,
+    "c": 0.5,
+    "calibration_version": "CALIBRATION_LEDGER_V1",
+    "candidate_adapter_version": "PARLAY_V2_CANDIDATE_ADAPTER_V1",
+    "d_max": 6.0,
+    "delta": 0.0,
+    "eligibility_version": "ELIGIBILITY_V1",
+    "evidence_store_version": "EVIDENCE_STORE_V1",
+    "max_actions_per_eligible_slate": 1,
+    "max_candidates_per_slate": 500,
+    "policy_version": "PARLAY_POLICY_V2_TWO_LEG_SINGLE_ACTION",
+    "prospective_policy_id": "PARLAY_POLICY_V2_PROSPECTIVE_002",
+    "r": 0.3,
+    "r_max_accepted": 5.0,
+    "reference_monitor_version": "PARLAY_REFERENCE_ANYTIME_CERT_V1",
+    "settlement_version": "SETTLEMENT_V1",
+    "state_machine_version": "PARLAY_CERTIFICATION_STATE_V1",
+    "support_gate_modes": {
+      "joint_support": "OBSERVE_ONLY",
+      "line_support": "REQUIRED",
+      "market_support": "REQUIRED",
+      "shift_status": "OBSERVE_ONLY",
+      "state_support": "REQUIRED"
+    },
+    "support_rule_version": "SUPPORT_RULE_V2_GATE_MODES",
+    "two_leg_parlays_only": true,
+    "world_certificate_version": "NONVACUOUS_WORLD_CERTIFICATE_V1"
+  },
+  "git_clean": true,
+  "leg_count": 2,
+  "max_actions_per_eligible_slate": 1,
+  "observe_only_support_dimensions": [
+    "joint_support",
+    "shift_status"
+  ],
+  "policy_id": "PARLAY_POLICY_V2_PROSPECTIVE_002",
+  "required_support_dimensions": [
+    "market_support",
+    "line_support",
+    "state_support"
+  ],
+  "supported_books": "real market_source rows only (no synthetic/fabricated prices, enforced at ingestion)",
+  "tie_breaker": "highest retained_probability_mass, then lexicographic wager_id (policy.select_action_for_day)",
+  "uncommitted_relevant_changes": []
+}
