@@ -137,6 +137,74 @@ SUPPORT_GATE_MODES = {
     "shift_status": "OBSERVE_ONLY",
 }
 
+# ============================================================
+# CANDIDATE NEXT POLICY (mission: "Resolve the remaining PARLAY_V2 APS /
+# counterexample admission bottleneck"). world_gate_research.py's
+# DEVELOPMENT-only research (DERIVE then SELECT, chronological, day-
+# clustered) found:
+#   - HARD_ZERO (world_gate_mode=REQUIRED, the PROSPECTIVE_002 config):
+#     0.000000 nonvacuous-certificate rate at FROZEN_APS_THRESHOLD=1.0
+#     across every real DEVELOPMENT pair sampled -> operationally
+#     degenerate, confirmed empirically, not merely suspected.
+#   - counterexample_mass at that same frozen threshold is EXACTLY
+#     1 - predicted_joint_probability (proven identity, verified to
+#     float precision on real data) -- the world-set machinery, as
+#     currently implemented (independence-only, no fitted dependence
+#     model), carries NO information beyond the raw joint-probability
+#     baseline. A BOUNDED_RISK gate on it would therefore be gating on
+#     the same baseline under a different name; the DERIVE threshold
+#     sweep's admissible-vs-inadmissible loss-rate split was additionally
+#     noisy/non-monotone across the frozen grid (n days too small: 4
+#     usable DERIVE days), so BOUNDED_RISK is NOT supported by this
+#     research pass.
+#   - The underlying continuous quantity (1 - predicted_joint_probability,
+#     equivalently counterexample_mass at full retention) DOES predict
+#     realized pair loss: Spearman rho=0.111 (DERIVE, 4 days, 95% day-
+#     clustered bootstrap CI (0.028, 0.176)) replicating to rho=0.229
+#     (SELECT, 8 days, CI (0.191, 0.258)) on the SAME predeclared bin
+#     definitions, both chronologically forward, monotone across quintile
+#     bins on both partitions. This justifies keeping it as a RANKING
+#     diagnostic, not a gate.
+# Conclusion: WORLD_GATE_OBSERVE_ONLY_SUPPORTED. See
+# world_gate_research.py and the mission's own required report tables for
+# the full analysis this constant reflects.
+#
+# NOT YET FROZEN FOR REAL PROSPECTIVE CONFIRMATION -- see ALPHA BUDGET
+# AUDIT below. This id/config is fully implemented and tested
+# (policy.select_action_for_day's world_gate_mode parameter,
+# run_parlay_v2.build_slate_payload's world_gate_mode parameter) but
+# freeze_prospective.py has NOT been run with --confirm for it, no
+# program alpha has been spent for it, and it is NOT wired into the
+# actual daily production/CI invocation of run_parlay_v2.py -- a human
+# must resolve the alpha-budget question below before that happens.
+PROSPECTIVE_POLICY_ID_CANDIDATE = "PARLAY_POLICY_V2_PROSPECTIVE_003"
+WORLD_GATE_MODE_CANDIDATE = "OBSERVE_ONLY"
+WORLD_RISK_THRESHOLD_CANDIDATE = None  # OBSERVE_ONLY never gates -- no threshold needed
+
+# ALPHA BUDGET AUDIT (mission section 20), performed before considering
+# PROSPECTIVE_003 for a real freeze -- see program_alpha_ledger.json
+# (checked directly, not assumed): PROSPECTIVE_002 already recorded a
+# 0.05 spend against ALPHA_PROGRAM=0.05, i.e. the ENTIRE program budget,
+# and ProgramAlphaLedger.spend() mechanically REFUSES a second 0.05 spend
+# for PROSPECTIVE_003 (verified directly: raises ValueError, "would bring
+# total spend to 0.1 > alpha_program=0.05"). However, the EvidenceStore
+# for manifest.POLICY_VERSION contains ZERO rows and the
+# DecisionRecordStore contains ZERO rows (both checked directly on disk)
+# -- meaning PROSPECTIVE_002's alpha was spent at freeze time but NO
+# actual G_C/G_L/G_V hypothesis evaluation has ever been performed under
+# it (no real day has been decided since the freeze). Whether that means
+# the spend can be legitimately retired under the frozen multiple-testing
+# rules, or whether ANY frozen spend is permanent regardless of whether
+# it was ever exercised (the conservative reading -- ProgramAlphaLedger's
+# own docstring: "Never resets total_spent() on a demotion/failure"),
+# or whether a program-level correction (raising ALPHA_PROGRAM) is the
+# right fix, is a multiple-testing-methodology decision this pass does
+# NOT make unilaterally -- doing so under mission pressure is exactly the
+# "hidden repeated-testing inflation" section 20 forbids. PROSPECTIVE_003
+# stays un-frozen (STATUS below still describes PROSPECTIVE_002 only)
+# until a human resolves this.
+ALPHA_BUDGET_BLOCKS_PROSPECTIVE_003 = True
+
 # PolicyStatus value. Advanced to FROZEN_PROSPECTIVE_INCONCLUSIVE as a
 # deliberate freeze action for PROSPECTIVE_POLICY_ID above -- see
 # CONCLUSION_REASONING for the three-step freeze this accompanies

@@ -48,6 +48,17 @@ class DecisionRecord:
     delta: float
     r_max: float
     world_certificate_diagnostics: dict[str, Any] | None = None
+    # Additive field (mission: "Resolve the remaining PARLAY_V2 APS /
+    # counterexample admission bottleneck") -- defaults to "REQUIRED" so
+    # every existing/replayed record (including PARLAY_POLICY_V2_
+    # PROSPECTIVE_002's, which never sets this explicitly) is read
+    # correctly as having used the original REQUIRED admission rule.
+    # EvidenceStore still pools by policy_version (the structural shape
+    # identifier, unchanged) -- this field lets a single evidence file
+    # distinguish which admission rule produced each row, since a
+    # materially different world_gate_mode is a different prospective
+    # policy attempt even when the structural policy_version is shared.
+    world_gate_mode: str = "REQUIRED"
 
 
 @dataclass(frozen=True)

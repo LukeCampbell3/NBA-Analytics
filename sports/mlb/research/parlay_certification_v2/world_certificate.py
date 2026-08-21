@@ -41,7 +41,20 @@ class NonvacuousWorldCertificate:
     nonempty: bool
     positive_mass: bool
     zero_loss_counterexamples: bool
-    certified: bool  # ALL THREE of the above, simultaneously
+    certified: bool  # ALL THREE of the above, simultaneously -- UNCHANGED definition
+    # Additive fields (mission: "Resolve the remaining PARLAY_V2 APS /
+    # counterexample admission bottleneck") -- never read by `certified`
+    # above, never change REQUIRED-mode behavior. outside_probability_mass
+    # = 1 - retained_probability_mass. world_risk_rho = counterexample_mass
+    # + outside_probability_mass: the world_gate_research.py-derived
+    # "outside-mass-protected" risk quantity -- provably
+    # world_risk_rho >= counterexample_mass computed at full retention
+    # (APS_THRESHOLD=1.0) always, so shrinking the retained set can never
+    # make a candidate look safer under this quantity than it would look
+    # with no world-set shrinkage at all (see world_gate_research.py's
+    # module docstring for the exact identity and its proof).
+    outside_probability_mass: float = 0.0
+    world_risk_rho: float = 0.0
     version: str = WORLD_CERTIFICATE_VERSION
 
 
@@ -76,6 +89,9 @@ def build_nonvacuous_world_certificate(
     # test_naive_rule_certifies_empty_set_but_v2_refuses.
     certified = bool(nonempty and positive_mass and zero_loss_counterexamples)
 
+    outside_probability_mass = float(1.0 - retained_mass)
+    world_risk_rho = float(counterexample_mass + outside_probability_mass)
+
     return NonvacuousWorldCertificate(
         retained_world_count=retained_count,
         retained_probability_mass=retained_mass,
@@ -85,6 +101,8 @@ def build_nonvacuous_world_certificate(
         positive_mass=positive_mass,
         zero_loss_counterexamples=zero_loss_counterexamples,
         certified=certified,
+        outside_probability_mass=outside_probability_mass,
+        world_risk_rho=world_risk_rho,
     )
 
 

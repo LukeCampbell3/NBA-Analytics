@@ -195,6 +195,8 @@ def build_slate_payload(
     mode: str = "broad",
     calibration_store: CalibrationStore | None = None,
     decision_record_store: DecisionRecordStore | None = None,
+    world_gate_mode: str = "REQUIRED",
+    world_risk_threshold: float | None = None,
 ) -> dict:
     """Enforces the required daily ordering (mission section 2):
     eligibility -> capture immutable pregame candidate universe -> load
@@ -205,7 +207,16 @@ def build_slate_payload(
     never read (this function never touches settlement data at all), and
     cannot enter the calibration ledger until a SEPARATE, later admission
     step runs after settlement is final (see calibration/store.py's
-    forward-only invariant -- enforced there, not here)."""
+    forward-only invariant -- enforced there, not here).
+
+    world_gate_mode/world_risk_threshold default to REQUIRED/None --
+    byte-identical to this function's behavior before the "APS /
+    counterexample admission bottleneck" research pass, and what every
+    REAL production/CI invocation still uses (PARLAY_POLICY_V2_
+    PROSPECTIVE_002's frozen config). OBSERVE_ONLY/BOUNDED_RISK are
+    implemented and tested (see policy.select_action_for_day and
+    world_gate_research.py) but are NOT wired into any real invocation
+    yet -- see manifest.ALPHA_BUDGET_BLOCKS_PROSPECTIVE_003."""
     eligibility = evaluate_eligibility(eligibility_inputs)
     # Captured BEFORE any candidate/support work -- this is the cutoff
     # every support calculation below is pinned to, strictly before
@@ -216,6 +227,7 @@ def build_slate_payload(
         "system": "PARLAY_POLICY_V2",
         "policy_version": manifest.POLICY_VERSION,
         "policy_status": manifest.STATUS,
+        "world_gate_mode": world_gate_mode,
         "eligible": eligibility.eligible,
         "eligibility_reason": eligibility.reason,
         # `action`/`selected_parlay` kept for frontend backward-compat.
@@ -343,7 +355,10 @@ def build_slate_payload(
     wagers = [_to_candidate_wager(c) for c in supported_candidates]
     by_wager_id = {c.candidate_id: c for c in supported_candidates}
 
-    selection = select_action_for_day(eligibility, wagers, r_max=manifest.R_MAX_ACCEPTED)
+    selection = select_action_for_day(
+        eligibility, wagers, r_max=manifest.R_MAX_ACCEPTED,
+        world_gate_mode=world_gate_mode, world_risk_threshold=world_risk_threshold,
+    )
     decision_record = build_decision_record(
         date=slate_id,
         eligibility=eligibility,
@@ -355,6 +370,7 @@ def build_slate_payload(
         r=manifest.R_MAX_LOSS_RISK,
         delta=manifest.DELTA_MIN_RETURN,
         r_max=manifest.R_MAX_ACCEPTED,
+        world_gate_mode=world_gate_mode,
     )
     payload["decision_record"] = {
         "eligible": decision_record.eligible,
