@@ -52,6 +52,12 @@ MLB_PARLAY_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_daily_p
 # by the new "parlays" payload key, never by the legacy_parlay_control
 # fields the exporter already writes from MLB_PARLAY_SELECTOR's output.
 MLB_PARLAY_V2_RUNNER = REPO_ROOT / "sports" / "mlb" / "parlay_v2" / "run_parlay_v2.py"
+# The forward-only calibration ledger (STREAM A) -- one persistent file,
+# appended to only after settlement is final for a given slate (see
+# sports/mlb/parlay_v2/calibration/store.py). This script does not write
+# to it; a separate settlement-ingestion step (not yet wired into this
+# pipeline -- see MIGRATION notes) is responsible for admissions.
+MLB_PARLAY_V2_CALIBRATION_LEDGER = REPO_ROOT / "sports" / "mlb" / "parlay_v2" / "calibration" / "reports" / "calibration_ledger.jsonl"
 MLB_CONFIDENCE_CALIBRATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "live_board_confidence.py"
 MLB_PICK_SURVIVAL_MODEL = REPO_ROOT / "sports" / "mlb" / "scripts" / "pick_survival_model.py"
 MLB_LATENT_POOL_REPLAY = REPO_ROOT / "sports" / "mlb" / "scripts" / "backtest_latent_daily_pools.py"
@@ -842,6 +848,8 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
                 parlay_v2_slate_id,
                 "--out-json",
                 str(parlay_v2_json),
+                "--calibration-ledger",
+                str(MLB_PARLAY_V2_CALIBRATION_LEDGER),
             ],
         )
     except Exception as exc:  # noqa: BLE001 -- deliberate: V2 is additive, never blocks singles publication
