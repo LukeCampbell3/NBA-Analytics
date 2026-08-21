@@ -5,7 +5,6 @@ from __future__ import annotations
 bottleneck"). Section 22 letter groups map directly to the section
 headers below."""
 
-from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -401,19 +400,30 @@ def test_required_mode_is_byte_identical_to_pre_research_behavior():
     assert default_call.reason == explicit_required.reason
 
 
-def test_prospective_002_boundary_and_alpha_artifacts_untouched():
+def test_prospective_002_artifacts_untouched_after_003_freeze():
+    """PROSPECTIVE_002 remains frozen and immutable even though
+    PROSPECTIVE_003 has since been frozen -- its own readiness/boundary
+    artifacts are untouched, and its alpha ledger row (though later
+    offset by an explicit retirement row -- see test below) is never
+    edited or deleted."""
     root = Path(__file__).resolve().parents[3]
     boundary = root / "sports/mlb/research/parlay_certification_v2/reports/prospective_boundary/PARLAY_POLICY_V2_PROSPECTIVE_002_prospective_start.json"
-    assert boundary.exists()  # frozen by an earlier mission pass -- this research must not have deleted or moved it
+    assert boundary.exists()
+    readiness = root / "sports/mlb/parlay_v2/reports/PARLAY_POLICY_V2_PROSPECTIVE_002_freeze_readiness.json"
+    assert readiness.exists()
     ledger_path = root / manifest.PROGRAM_ALPHA_LEDGER_PATH
     ledger = ProgramAlphaLedger(ledger_path, manifest.ALPHA_PROGRAM)
     assert ledger.already_spent_for("PARLAY_POLICY_V2_PROSPECTIVE_002") is True
+    original_spend_rows = [r for r in ledger._read() if r["policy_version"] == "PARLAY_POLICY_V2_PROSPECTIVE_002" and r["alpha_policy"] > 0]
+    assert len(original_spend_rows) == 1
+    assert original_spend_rows[0]["alpha_policy"] == pytest.approx(0.05)
+    assert original_spend_rows[0]["reason"] == "frozen_for_prospective_confirmation"
 
 
-def test_prospective_003_candidate_id_differs_from_frozen_002():
-    assert manifest.PROSPECTIVE_POLICY_ID == "PARLAY_POLICY_V2_PROSPECTIVE_002"  # untouched
-    assert manifest.PROSPECTIVE_POLICY_ID_CANDIDATE == "PARLAY_POLICY_V2_PROSPECTIVE_003"
-    assert manifest.PROSPECTIVE_POLICY_ID_CANDIDATE != manifest.PROSPECTIVE_POLICY_ID
+def test_prospective_003_is_now_the_current_frozen_policy():
+    assert manifest.PROSPECTIVE_POLICY_ID == "PARLAY_POLICY_V2_PROSPECTIVE_003"
+    assert "PARLAY_POLICY_V2_PROSPECTIVE_002" in manifest.PRIOR_PROSPECTIVE_POLICY_IDS
+    assert manifest.PROSPECTIVE_POLICY_ID not in manifest.PRIOR_PROSPECTIVE_POLICY_IDS
 
 
 # ======================================================================
@@ -421,21 +431,47 @@ def test_prospective_003_candidate_id_differs_from_frozen_002():
 # ======================================================================
 
 
-def test_observe_only_config_is_recorded_under_the_candidate_id_not_002():
-    assert manifest.WORLD_GATE_MODE_CANDIDATE == "OBSERVE_ONLY"
+def test_observe_only_config_is_frozen_for_003_not_002():
+    assert manifest.WORLD_GATE_MODE == "OBSERVE_ONLY"
     # PROSPECTIVE_002's own frozen readiness artifact never mentions the
-    # new gate-mode config -- it predates this research entirely.
+    # new gate-mode config -- it predates this research entirely, and its
+    # artifact is never rewritten after the fact.
     readiness = Path(__file__).resolve().parents[3] / "sports/mlb/parlay_v2/reports/PARLAY_POLICY_V2_PROSPECTIVE_002_freeze_readiness.json"
     if readiness.exists():
         import json
         content = json.loads(readiness.read_text())
         assert "world_gate_mode" not in content.get("frozen_config", {})
+    # PROSPECTIVE_003's own artifact DOES record it.
+    readiness_003 = Path(__file__).resolve().parents[3] / "sports/mlb/parlay_v2/reports/PARLAY_POLICY_V2_PROSPECTIVE_003_freeze_readiness.json"
+    if readiness_003.exists():
+        import json
+        content = json.loads(readiness_003.read_text())
+        assert content["frozen_config"]["world_gate_mode"] == "OBSERVE_ONLY"
 
 
-def test_run_parlay_v2_default_call_still_uses_required_mode():
+def test_build_slate_payload_default_still_required_but_cli_uses_frozen_config():
+    """The library function's own default stays REQUIRED (a safe,
+    conservative default for any direct caller) -- only the CLI (main(),
+    which is what real production/CI actually invokes) defaults to
+    whatever manifest.WORLD_GATE_MODE currently freezes, so production
+    automatically follows the currently frozen policy without needing a
+    flag."""
+    import ast
     import inspect
+
     sig = inspect.signature(build_slate_payload)
     assert sig.parameters["world_gate_mode"].default == "REQUIRED"
+
+    from sports.mlb.parlay_v2 import run_parlay_v2
+    source = inspect.getsource(run_parlay_v2.main)
+    tree = ast.parse(source)
+    found = False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and getattr(node.func, "attr", None) == "add_argument":
+            args_str = ast.dump(node)
+            if "--world-gate-mode" in args_str and "manifest.WORLD_GATE_MODE" in source:
+                found = True
+    assert found
 
 
 # ======================================================================
@@ -443,25 +479,52 @@ def test_run_parlay_v2_default_call_still_uses_required_mode():
 # ======================================================================
 
 
-def test_program_alpha_ledger_refuses_to_exceed_budget_for_003():
+def test_program_alpha_ledger_retirement_and_003_spend_are_both_recorded():
+    """The full, real audit trail this mission's human-authorized
+    resolution produced: PROSPECTIVE_002's original spend row (untouched),
+    an explicit retirement row (negative, offsetting, justified by a
+    verified zero-evidence-row precondition), and PROSPECTIVE_003's fresh
+    spend -- nothing edited or deleted, net remaining back to 0."""
     root = Path(__file__).resolve().parents[3]
     ledger = ProgramAlphaLedger(Path(root / manifest.PROGRAM_ALPHA_LEDGER_PATH), manifest.ALPHA_PROGRAM)
-    assert ledger.remaining() == pytest.approx(0.0)  # PROSPECTIVE_002 already consumed the full program budget
-    with pytest.raises(ValueError):
-        ledger.spend(AlphaSpend(
-            policy_version=manifest.PROSPECTIVE_POLICY_ID_CANDIDATE,
-            alpha_policy=manifest.ALPHA_TOTAL,
-            reason="frozen_for_prospective_confirmation",
-            recorded_at_utc=datetime.now(timezone.utc).isoformat(),
-        ))
+    rows = ledger._read()
+
+    spend_002 = [r for r in rows if r["policy_version"] == "PARLAY_POLICY_V2_PROSPECTIVE_002" and r["alpha_policy"] > 0]
+    retirement_002 = [r for r in rows if r["policy_version"] == "PARLAY_POLICY_V2_PROSPECTIVE_002" and r["alpha_policy"] < 0]
+    spend_003 = [r for r in rows if r["policy_version"] == "PARLAY_POLICY_V2_PROSPECTIVE_003" and r["alpha_policy"] > 0]
+
+    assert len(spend_002) == 1 and spend_002[0]["alpha_policy"] == pytest.approx(0.05)
+    assert len(retirement_002) == 1 and retirement_002[0]["alpha_policy"] == pytest.approx(-0.05)
+    assert "retired_zero_evidence_observed" in retirement_002[0]["reason"]
+    assert len(spend_003) == 1 and spend_003[0]["alpha_policy"] == pytest.approx(manifest.ALPHA_TOTAL)
+
+    assert ledger.net_spent_for("PARLAY_POLICY_V2_PROSPECTIVE_002") == pytest.approx(0.0)
+    assert ledger.net_spent_for("PARLAY_POLICY_V2_PROSPECTIVE_003") == pytest.approx(manifest.ALPHA_TOTAL)
+    assert ledger.remaining() == pytest.approx(0.0)  # fully (re-)allocated to PROSPECTIVE_003
 
 
-def test_alpha_budget_block_is_recorded_not_silently_bypassed():
-    assert manifest.ALPHA_BUDGET_BLOCKS_PROSPECTIVE_003 is True
+def test_retire_untested_spend_refuses_when_evidence_rows_exist():
+    """The hard safety check this whole resolution depended on: retirement
+    must be IMPOSSIBLE once any real evidence row exists, regardless of
+    who asks or why."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        ledger = ProgramAlphaLedger(Path(tmp) / "ledger.json", 0.05)
+        ledger.spend(AlphaSpend(policy_version="TEST_POLICY", alpha_policy=0.05, reason="frozen_for_prospective_confirmation", recorded_at_utc="t"))
+        with pytest.raises(ValueError):
+            ledger.retire_untested_spend(
+                AlphaSpend(policy_version="TEST_POLICY", alpha_policy=-0.05, reason="retired_zero_evidence_observed", recorded_at_utc="t"),
+                evidence_row_count=1,  # a real evidence row exists -- must refuse
+            )
+        assert ledger.remaining() == pytest.approx(0.0)  # unchanged -- refusal did not touch the ledger
 
 
-def test_prospective_003_boundary_not_set():
+def test_alpha_budget_no_longer_blocks_prospective_003():
+    assert manifest.ALPHA_BUDGET_BLOCKS_PROSPECTIVE_003 is False
+
+
+def test_prospective_003_boundary_is_set():
     from sports.mlb.research.parlay_certification_v2 import prospective_boundary
     root = Path(__file__).resolve().parents[3] / "sports/mlb/research/parlay_certification_v2/reports/prospective_boundary"
-    result = prospective_boundary.read_prospective_start_timestamp(root, manifest.PROSPECTIVE_POLICY_ID_CANDIDATE)
-    assert result is None  # never frozen -- alpha budget is blocked, see manifest.ALPHA_BUDGET_BLOCKS_PROSPECTIVE_003
+    result = prospective_boundary.read_prospective_start_timestamp(root, manifest.PROSPECTIVE_POLICY_ID)
+    assert result is not None

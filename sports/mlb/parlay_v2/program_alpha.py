@@ -81,3 +81,41 @@ class ProgramAlphaLedger:
             )
         rows.append(asdict(spend))
         self._write(rows)
+
+    def net_spent_for(self, policy_version: str) -> float:
+        return float(sum(row["alpha_policy"] for row in self._read() if row["policy_version"] == policy_version))
+
+    def retire_untested_spend(self, retirement: AlphaSpend, *, evidence_row_count: int) -> None:
+        """The ONE narrow, explicit, auditable exception to "never resets
+        total_spent() on a demotion/failure" above -- and it is NOT that
+        case. A demotion/failure means the policy WAS actually tested
+        (real G_C/G_L/G_V evaluations occurred, consuming real multiple-
+        testing error-rate budget regardless of the result) and its spend
+        must stay permanent forever, no matter how this method is called.
+        This method instead handles a policy version that was frozen
+        (alpha recorded) but structurally could NEVER produce a single
+        real evidence row -- e.g. a world-gate bug that made every real
+        day abstain -- so no actual hypothesis test, and therefore no
+        real error-rate consumption, ever happened under that spend.
+
+        The caller MUST pass the true, freshly-counted row count from the
+        real EvidenceStore for this exact policy_version (never trusted
+        from a comment or prior belief) -- this method raises rather than
+        retiring anything if evidence_row_count is not exactly 0. Writes
+        an append-only, negative-alpha_policy offsetting row (never edits
+        or deletes the original spend row -- the full audit trail,
+        original spend AND retirement, remains on disk permanently)."""
+        if evidence_row_count != 0:
+            raise ValueError(
+                f"refusing to retire alpha spend for {retirement.policy_version!r}: "
+                f"{evidence_row_count} real evidence row(s) exist -- a policy version that was "
+                "actually tested can NEVER have its spend retired, regardless of outcome"
+            )
+        spent = self.net_spent_for(retirement.policy_version)
+        if spent <= 0:
+            raise ValueError(f"no active (net-positive) alpha spend recorded for {retirement.policy_version!r} to retire")
+        if retirement.alpha_policy != -spent:
+            raise ValueError(f"retirement.alpha_policy must exactly offset the net spend: expected {-spent}, got {retirement.alpha_policy}")
+        rows = self._read()
+        rows.append(asdict(retirement))
+        self._write(rows)

@@ -72,6 +72,8 @@ def _config_hash() -> str:
         "prospective_policy_id": manifest.PROSPECTIVE_POLICY_ID,
         "support_gate_modes": manifest.SUPPORT_GATE_MODES,
         "max_candidates_per_slate": manifest.MAX_CANDIDATES_PER_SLATE,
+        "world_gate_mode": manifest.WORLD_GATE_MODE,
+        "world_risk_threshold": manifest.WORLD_RISK_THRESHOLD,
         "settlement_version": SETTLEMENT_VERSION,
         "world_certificate_version": WORLD_CERTIFICATE_VERSION,
         "evidence_store_version": EVIDENCE_STORE_VERSION,
@@ -126,7 +128,12 @@ def build_readiness_artifact(policy_id: str) -> dict:
         "observe_only_support_dimensions": observe_only_support_dimensions,
         "required_support_dimensions": ["market_support", "line_support", "state_support"],
         "candidate_enumeration": "all cross-game 2-leg pairs from the pregame action-eligible universe (candidate_adapter.build_candidates_for_day)",
-        "tie_breaker": "highest retained_probability_mass, then lexicographic wager_id (policy.select_action_for_day)",
+        "world_gate_mode": manifest.WORLD_GATE_MODE,
+        "tie_breaker": (
+            "highest retained_probability_mass, then lexicographic wager_id (policy.select_action_for_day, REQUIRED mode)"
+            if manifest.WORLD_GATE_MODE == "REQUIRED"
+            else "ascending world_risk_rho (DEVELOPMENT-validated ranking diagnostic, see world_gate_research.py), then lexicographic wager_id"
+        ),
         "max_actions_per_eligible_slate": manifest.MAX_ACTIONS_PER_ELIGIBLE_SLATE,
         "leg_count": 2,
         "supported_books": "real market_source rows only (no synthetic/fabricated prices, enforced at ingestion)",

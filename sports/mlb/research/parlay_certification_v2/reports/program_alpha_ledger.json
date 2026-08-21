@@ -4,5 +4,17 @@
     "policy_version": "PARLAY_POLICY_V2_PROSPECTIVE_002",
     "reason": "frozen_for_prospective_confirmation",
     "recorded_at_utc": "2026-08-21T21:43:02.591297+00:00"
+  },
+  {
+    "alpha_policy": -0.05,
+    "policy_version": "PARLAY_POLICY_V2_PROSPECTIVE_002",
+    "reason": "retired_zero_evidence_observed: 0 real EvidenceStore rows exist for POLICY_VERSION under this spend -- the frozen world-gate bug (NONVACUOUS_WORLD_CERTIFICATE at APS_THRESHOLD=1.0) made every real day abstain, so no G_C/G_L/G_V hypothesis evaluation was ever performed; no real multiple-testing error-rate was consumed. User-authorized retirement (explicit choice among 3 options presented). See world_gate_research.py and manifest.ALPHA_BUDGET_BLOCKS_PROSPECTIVE_003 for the full audit.",
+    "recorded_at_utc": "2026-08-21T23:06:35.153826+00:00"
+  },
+  {
+    "alpha_policy": 0.05,
+    "policy_version": "PARLAY_POLICY_V2_PROSPECTIVE_003",
+    "reason": "frozen_for_prospective_confirmation",
+    "recorded_at_utc": "2026-08-21T23:06:35.154247+00:00"
   }
 ]

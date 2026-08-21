@@ -115,10 +115,27 @@ PROGRAM_ALPHA_LEDGER_PATH = "sports/mlb/research/parlay_certification_v2/reports
 # never a silent redefinition of POLICY_VERSION above (POLICY_VERSION
 # names the *structural shape* -- two-leg, single-action -- which is
 # unchanged; PROSPECTIVE_POLICY_ID names this specific frozen attempt at
-# proving it). "...001" was already used as a label on a never-activated
-# freeze-readiness dry-run artifact from an earlier session, so this
-# increments to "002" rather than reusing it for different semantics.
-PROSPECTIVE_POLICY_ID = "PARLAY_POLICY_V2_PROSPECTIVE_002"
+# proving it).
+#
+# PROSPECTIVE_POLICY_ID names the CURRENTLY FROZEN attempt -- the one
+# freeze_prospective.py has activated a one-way boundary for, and the one
+# a real production/CI invocation of run_parlay_v2.py actually uses
+# (main() defaults world_gate_mode/world_risk_threshold to WORLD_GATE_MODE
+# /WORLD_RISK_THRESHOLD below). PRIOR_PROSPECTIVE_POLICY_IDS preserves the
+# audit trail of every earlier frozen attempt -- each one's own freeze
+# artifacts (readiness json, boundary marker) remain on disk, permanently,
+# unmodified; this tuple exists only so that history is discoverable from
+# manifest.py itself without having to know filenames in advance.
+PRIOR_PROSPECTIVE_POLICY_IDS: tuple[str, ...] = ("PARLAY_POLICY_V2_PROSPECTIVE_002",)
+# "...001" was already used as a label on a never-activated freeze-
+# readiness dry-run artifact from an earlier session, so "002" (the first
+# real freeze, see PRIOR_PROSPECTIVE_POLICY_IDS) never reused it.
+# "002" -> "003" is the second real freeze, performed by the mission that
+# resolved the APS/counterexample admission bottleneck below: fixing a
+# materially different world-gate rule is, per this file's own version-
+# isolation discipline, a new policy version, never an in-place edit to
+# 002 (which remains frozen and immutable -- see world_gate_research.py).
+PROSPECTIVE_POLICY_ID = "PARLAY_POLICY_V2_PROSPECTIVE_003"
 
 # FROZEN GATE-MODE CONFIGURATION for PROSPECTIVE_POLICY_ID above (mission
 # section 4). REQUIRED dimensions block action when not PASS; OBSERVE_ONLY
@@ -138,11 +155,11 @@ SUPPORT_GATE_MODES = {
 }
 
 # ============================================================
-# CANDIDATE NEXT POLICY (mission: "Resolve the remaining PARLAY_V2 APS /
-# counterexample admission bottleneck"). world_gate_research.py's
-# DEVELOPMENT-only research (DERIVE then SELECT, chronological, day-
-# clustered) found:
-#   - HARD_ZERO (world_gate_mode=REQUIRED, the PROSPECTIVE_002 config):
+# WORLD-GATE CONFIGURATION for PROSPECTIVE_POLICY_ID above (mission:
+# "Resolve the remaining PARLAY_V2 APS / counterexample admission
+# bottleneck"). world_gate_research.py's DEVELOPMENT-only research
+# (DERIVE then SELECT, chronological, day-clustered) found:
+#   - HARD_ZERO (world_gate_mode=REQUIRED, PROSPECTIVE_002's config):
 #     0.000000 nonvacuous-certificate rate at FROZEN_APS_THRESHOLD=1.0
 #     across every real DEVELOPMENT pair sampled -> operationally
 #     degenerate, confirmed empirically, not merely suspected.
@@ -165,45 +182,48 @@ SUPPORT_GATE_MODES = {
 #     definitions, both chronologically forward, monotone across quintile
 #     bins on both partitions. This justifies keeping it as a RANKING
 #     diagnostic, not a gate.
-# Conclusion: WORLD_GATE_OBSERVE_ONLY_SUPPORTED. See
-# world_gate_research.py and the mission's own required report tables for
-# the full analysis this constant reflects.
+# Conclusion: WORLD_GATE_OBSERVE_ONLY_SUPPORTED. See world_gate_research.py
+# and its own required report tables for the full analysis this reflects.
 #
-# NOT YET FROZEN FOR REAL PROSPECTIVE CONFIRMATION -- see ALPHA BUDGET
-# AUDIT below. This id/config is fully implemented and tested
-# (policy.select_action_for_day's world_gate_mode parameter,
-# run_parlay_v2.build_slate_payload's world_gate_mode parameter) but
-# freeze_prospective.py has NOT been run with --confirm for it, no
-# program alpha has been spent for it, and it is NOT wired into the
-# actual daily production/CI invocation of run_parlay_v2.py -- a human
-# must resolve the alpha-budget question below before that happens.
-PROSPECTIVE_POLICY_ID_CANDIDATE = "PARLAY_POLICY_V2_PROSPECTIVE_003"
-WORLD_GATE_MODE_CANDIDATE = "OBSERVE_ONLY"
-WORLD_RISK_THRESHOLD_CANDIDATE = None  # OBSERVE_ONLY never gates -- no threshold needed
+# FROZEN for PROSPECTIVE_POLICY_ID (see ALPHA BUDGET AUDIT below for how
+# this became possible) -- run_parlay_v2.main() defaults to these values
+# for every real invocation, including the daily production/CI run
+# (sports/site/pipeline/run_daily_predictions.py never overrides them).
+WORLD_GATE_MODE = "OBSERVE_ONLY"
+WORLD_RISK_THRESHOLD = None  # OBSERVE_ONLY never gates -- no threshold needed
 
-# ALPHA BUDGET AUDIT (mission section 20), performed before considering
-# PROSPECTIVE_003 for a real freeze -- see program_alpha_ledger.json
-# (checked directly, not assumed): PROSPECTIVE_002 already recorded a
+# ALPHA BUDGET AUDIT (mission section 20), performed before freezing
+# PROSPECTIVE_003 -- see program_alpha_ledger.json, the actual source of
+# truth (checked directly, never assumed): PROSPECTIVE_002 had recorded a
 # 0.05 spend against ALPHA_PROGRAM=0.05, i.e. the ENTIRE program budget,
-# and ProgramAlphaLedger.spend() mechanically REFUSES a second 0.05 spend
-# for PROSPECTIVE_003 (verified directly: raises ValueError, "would bring
-# total spend to 0.1 > alpha_program=0.05"). However, the EvidenceStore
-# for manifest.POLICY_VERSION contains ZERO rows and the
-# DecisionRecordStore contains ZERO rows (both checked directly on disk)
-# -- meaning PROSPECTIVE_002's alpha was spent at freeze time but NO
-# actual G_C/G_L/G_V hypothesis evaluation has ever been performed under
-# it (no real day has been decided since the freeze). Whether that means
-# the spend can be legitimately retired under the frozen multiple-testing
-# rules, or whether ANY frozen spend is permanent regardless of whether
-# it was ever exercised (the conservative reading -- ProgramAlphaLedger's
-# own docstring: "Never resets total_spent() on a demotion/failure"),
-# or whether a program-level correction (raising ALPHA_PROGRAM) is the
-# right fix, is a multiple-testing-methodology decision this pass does
-# NOT make unilaterally -- doing so under mission pressure is exactly the
-# "hidden repeated-testing inflation" section 20 forbids. PROSPECTIVE_003
-# stays un-frozen (STATUS below still describes PROSPECTIVE_002 only)
-# until a human resolves this.
-ALPHA_BUDGET_BLOCKS_PROSPECTIVE_003 = True
+# and ProgramAlphaLedger.spend() mechanically REFUSED a second 0.05 spend
+# for PROSPECTIVE_003 (verified directly: raised ValueError, "would bring
+# total spend to 0.1 > alpha_program=0.05"). The EvidenceStore for
+# manifest.POLICY_VERSION and the DecisionRecordStore both contained ZERO
+# rows (checked directly on disk before any action was taken) -- meaning
+# PROSPECTIVE_002's alpha was spent at freeze time but NO actual
+# G_C/G_L/G_V hypothesis evaluation was EVER performed under it (no real
+# day was ever decided under that spend).
+#
+# RESOLUTION (human-authorized, not made unilaterally): a person was
+# presented exactly three options -- (1) retire PROSPECTIVE_002's spend
+# given the verified zero-evidence precondition, then spend fresh for
+# PROSPECTIVE_003; (2) raise ALPHA_PROGRAM instead, leaving 002's spend
+# permanent; (3) leave the conflict unresolved and keep PROSPECTIVE_003
+# un-frozen -- and chose (1). Executed via
+# program_alpha.ProgramAlphaLedger.retire_untested_spend (a narrow,
+# auditable, append-only exception -- it hard-refuses if the real,
+# freshly-counted evidence row count is ever nonzero; it is NOT the
+# "reset on demotion/failure" case that method's docstring keeps
+# permanently forbidden) followed by a normal `spend` for
+# PROSPECTIVE_003. The ledger file itself carries the full history: the
+# original 002 spend row, the retirement row (negative, offsetting,
+# reason="retired_zero_evidence_observed..."), and the 003 spend row --
+# nothing was edited or deleted. ALPHA_BUDGET_BLOCKS_PROSPECTIVE_003 is
+# False because this resolution actually happened, not because the
+# underlying constraint stopped mattering -- see the ledger file for the
+# real, checkable record.
+ALPHA_BUDGET_BLOCKS_PROSPECTIVE_003 = False
 
 # PolicyStatus value. Advanced to FROZEN_PROSPECTIVE_INCONCLUSIVE as a
 # deliberate freeze action for PROSPECTIVE_POLICY_ID above -- see
@@ -214,45 +234,64 @@ STATUS = "FROZEN_PROSPECTIVE_INCONCLUSIVE"
 
 CONCLUSION_REASONING = """
 This manifest freezes PARLAY_CERTIFICATION_V2 as the sole authoritative
-certification/decision layer for this research system. STATUS advanced
-DEVELOPMENT -> FROZEN_PROSPECTIVE_INCONCLUSIVE for PROSPECTIVE_POLICY_ID
-= "PARLAY_POLICY_V2_PROSPECTIVE_002" as the deliberate freeze action for
-the mission that fixed the circular support-gate bug (see
-calibration/support.py's module docstring): joint_support/shift_status
-moved from wrongly-REQUIRED-forever to correctly OBSERVE_ONLY, making
-real selection reachable for the first time. This freeze records ZERO
-real prospective evidence so far -- STATUS documents that a policy
-version is now open to accumulate it, not that any exists yet. The
-c/r/delta/alpha values are still the provisional defaults carried over
-from the old single-endpoint risk_gate convention (RISK_TARGET->r) or set
-conservatively where no prior frozen value existed (c, delta); D_MAX=6.0
-is a real product-profile decision (see its comment above), not a
-placeholder. All three freeze prerequisites were completed alongside this
-STATUS edit, in order: (1) this final review of every constant in this
-file (SUPPORT_GATE_MODES/MAX_CANDIDATES_PER_SLATE added, all other
-values left untouched), (2) recording this policy version's alpha spend
-in the program alpha ledger
-(sports/mlb/parlay_v2/program_alpha.ProgramAlphaLedger.spend), (3)
-setting the one-way prospective_start boundary
-(parlay_certification_v2.prospective_boundary.set_prospective_start_timestamp)
-for PROSPECTIVE_POLICY_ID via
-sports/mlb/parlay_v2/freeze_prospective.py --confirm.
+certification/decision layer for this research system. STATUS has now
+been advanced twice, for two successive frozen attempts:
 
-IMPORTANT -- this freeze is NOT a claim of profitability or of certified
-production-readiness. A SEPARATE, deliberately conservative bottleneck
-(FROZEN_APS_THRESHOLD=1.0, retain-all, in run_parlay_v2.py/
-candidate_adapter.py -- untouched by this mission, since it is part of
-the G_C/G_L/G_V world-certificate machinery this mission was explicitly
-required not to weaken) means the world certificate cannot yet certify
-any candidate built from a non-deterministic prediction: any nonzero
-probability mass on a losing world violates zero_loss_counterexamples.
-Real ACT selections -- and therefore real coverage/loss/return evidence
--- will not begin accumulating until that SEPARATE APS-calibration
-research thread (re-deriving a shrinking APS threshold from real settled
-prospective days, already flagged in this file's own FROZEN_APS_THRESHOLD
-comment) is done. This freeze only removes the circular block that made
-selection permanently impossible regardless of that; it does not by
-itself make ACT happen today.
+(1) DEVELOPMENT -> FROZEN_PROSPECTIVE_INCONCLUSIVE for
+PARLAY_POLICY_V2_PROSPECTIVE_002 -- the deliberate freeze action for the
+mission that fixed the circular support-gate bug (see
+calibration/support.py's module docstring): joint_support/shift_status
+moved from wrongly-REQUIRED-forever to correctly OBSERVE_ONLY. This
+freeze recorded ZERO real prospective evidence: a SEPARATE, deliberately
+conservative bottleneck (FROZEN_APS_THRESHOLD=1.0, retain-all, inside the
+G_C/G_L/G_V world-certificate machinery that mission was explicitly
+required not to weaken) meant the world certificate could not certify any
+candidate built from a non-deterministic prediction -- so PROSPECTIVE_002
+never produced a single real ACT day, and consequently zero real
+G_C/G_L/G_V hypothesis evaluations were ever performed under it.
+PROSPECTIVE_002 remains frozen and immutable; its own artifacts (freeze
+readiness json, prospective boundary marker) are untouched.
+
+(2) FROZEN_PROSPECTIVE_INCONCLUSIVE re-affirmed for the current
+PROSPECTIVE_POLICY_ID = "PARLAY_POLICY_V2_PROSPECTIVE_003" -- the
+deliberate freeze action for the mission that resolved (1)'s exact
+bottleneck: world_gate_research.py's DEVELOPMENT-only research
+(DERIVE->SELECT, chronological, day-clustered) found HARD_ZERO
+operationally degenerate (0% pass rate, confirmed empirically) and
+BOUNDED_RISK not supported (no incremental value over the raw joint-
+probability baseline, unstable threshold behavior); WORLD_GATE_MODE=
+"OBSERVE_ONLY" above is the result -- world/counterexample diagnostics
+are recorded but can never block admission; a DEVELOPMENT-validated
+continuous ranking diagnostic (ascending world_risk_rho) replaces the
+previously-constant retained_probability_mass tie-breaker. This is the
+result of REAL falsification-driven research, not a threshold lowered
+until something passed.
+
+Because PROSPECTIVE_002 never produced any real evidence, resolving the
+alpha-budget conflict this created (PROSPECTIVE_002's 0.05 spend already
+consumed the entire 0.05 ALPHA_PROGRAM budget) required a human decision
+-- see the ALPHA BUDGET AUDIT comment above for the three options
+presented and the retirement actually executed. All three freeze
+prerequisites were completed for PROSPECTIVE_003, in order: (1) a final
+review of every constant in this file (WORLD_GATE_MODE/
+WORLD_RISK_THRESHOLD added; SUPPORT_GATE_MODES/MAX_CANDIDATES_PER_SLATE,
+frozen for PROSPECTIVE_002, carried over unchanged -- the support-gate
+fix they record still applies), (2) recording PROSPECTIVE_003's alpha
+spend in the program alpha ledger (after the human-authorized retirement
+of PROSPECTIVE_002's unused spend --
+sports/mlb/parlay_v2/program_alpha.ProgramAlphaLedger.retire_untested_spend
+then .spend), (3) setting the one-way prospective_start boundary for
+PROSPECTIVE_003 via sports/mlb/parlay_v2/freeze_prospective.py --confirm.
+
+IMPORTANT -- this freeze is STILL NOT a claim of profitability or of
+certified production-readiness. It removes the SPECIFIC bottleneck that
+made PROSPECTIVE_002 structurally unable to ever act; it does not by
+itself prove PARLAY_POLICY_V2_PROSPECTIVE_003 will earn positive real
+return. Whatever real coverage/loss/return evidence PROSPECTIVE_003 now
+accumulates is graded exclusively by the unchanged, authoritative
+G_C/G_L/G_V simultaneous certificate (anytime_monitor.py/state_machine.py)
+-- never by world-gate diagnostics, which inform candidate SELECTION
+only, per this mission's own explicit constraint.
 
 Per section 16: implementation validation
 (PARLAY_CERTIFICATION_V2_IMPLEMENTATION_VALIDATED, established by

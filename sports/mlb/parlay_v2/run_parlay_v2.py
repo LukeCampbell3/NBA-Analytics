@@ -422,6 +422,20 @@ def main() -> None:
     parser.add_argument("--state-version", type=str, default="MULTI_TARGET_BROAD_V1")
     parser.add_argument("--calibration-ledger", type=Path, default=None, help="Path to the forward-only calibration ledger JSONL (sports/mlb/parlay_v2/calibration/store.py). Omit to run with no calibration support (always abstains).")
     parser.add_argument("--decision-record-ledger", type=Path, default=None, help="Path to the durable per-day DecisionRecord ledger (decision_record_store.py). Omit to skip persistence (e.g. for local/manual runs).")
+    parser.add_argument(
+        "--world-gate-mode", choices=["REQUIRED", "BOUNDED_RISK", "OBSERVE_ONLY"], default=manifest.WORLD_GATE_MODE,
+        help=(
+            "How world/counterexample information participates in admission (policy.select_action_for_day). "
+            f"Defaults to manifest.WORLD_GATE_MODE ({manifest.WORLD_GATE_MODE!r}) -- the CURRENTLY FROZEN policy's "
+            "config, i.e. what a real production/CI run actually uses with no extra flags. Pass explicitly to "
+            "replay/audit an earlier frozen policy version's exact behavior (e.g. --world-gate-mode REQUIRED for "
+            "PARLAY_POLICY_V2_PROSPECTIVE_002)."
+        ),
+    )
+    parser.add_argument(
+        "--world-risk-threshold", type=float, default=manifest.WORLD_RISK_THRESHOLD,
+        help="Required only for --world-gate-mode BOUNDED_RISK. Defaults to manifest.WORLD_RISK_THRESHOLD.",
+    )
     args = parser.parse_args()
 
     pool_exists = args.pool_csv.exists()
@@ -444,6 +458,8 @@ def main() -> None:
         mode=args.mode,
         calibration_store=calibration_store,
         decision_record_store=decision_record_store,
+        world_gate_mode=args.world_gate_mode,
+        world_risk_threshold=args.world_risk_threshold,
     )
     args.out_json.parent.mkdir(parents=True, exist_ok=True)
     with open(args.out_json, "w") as f:
