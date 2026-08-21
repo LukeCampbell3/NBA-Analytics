@@ -21,7 +21,10 @@ THE FIX: each dimension declares a GateMode.
                     regardless of its status (including UNESTABLISHED).
     DISABLED     -- not evaluated for this policy version at all.
 
-Frozen initial policy (PARLAY_POLICY_V2_PROSPECTIVE_002, see manifest.py):
+Frozen support-gate configuration (SUPPORT_GATE_MODES in manifest.py --
+carried unchanged from PARLAY_POLICY_V2_PROSPECTIVE_002 into
+PARLAY_POLICY_V2_PROSPECTIVE_003; the two differ only in world_gate_mode,
+never in this):
     market_support  REQUIRED   (>= N_MARKET prior settled observations, real, implemented)
     line_support    REQUIRED   (>= N_LINE prior settled observations, real, implemented)
     state_support   REQUIRED   (>= N_STATE independent prior slates, real, implemented --

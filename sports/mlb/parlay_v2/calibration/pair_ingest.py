@@ -58,6 +58,7 @@ from sports.mlb.research.joint_position_builder_v2.multi_target_universe import 
     action_universe,
     build_multi_target_universe,
 )
+from sports.mlb.research.parlay_certification_v2 import manifest
 
 from .pair_schema import build_pair_observation
 from .pair_store import PairObservationStore
@@ -103,8 +104,13 @@ def ingest_settled_pairs(
     calibration_store: CalibrationStore,
     targets: tuple[str, ...] = PRICED_TARGETS,
     mode: str = "broad",
-    policy_version: str = "PARLAY_POLICY_V2_PROSPECTIVE_002",
+    policy_version: str | None = None,
 ) -> dict:
+    # Resolved at CALL time (not a literal default) so this always follows
+    # whichever prospective attempt is currently frozen -- manifest.py's
+    # own "current" pointer, not a stale hardcoded id from whenever this
+    # file was last edited.
+    policy_version = policy_version or manifest.PROSPECTIVE_POLICY_ID
     universe = build_multi_target_universe((stamp,), targets=targets, mode=mode)
     action = action_universe(universe).reset_index(drop=True)
 
