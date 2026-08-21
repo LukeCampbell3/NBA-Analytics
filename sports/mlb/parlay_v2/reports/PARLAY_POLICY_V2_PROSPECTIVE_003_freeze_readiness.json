@@ -1,0 +1,60 @@
+{
+  "candidate_enumeration": "all cross-game 2-leg pairs from the pregame action-eligible universe (candidate_adapter.build_candidates_for_day)",
+  "checked_at_utc": "2026-08-21T23:13:30.646917+00:00",
+  "code_hash": "3309793935c2e6d3de734efae91d982c7efbfa3f4d6bea0af8f8407a4a803590",
+  "config_hash": "ab65ebebda306843ccd07e5c47a916c58dbfcc1f8d9f165fbc192fb1de9d45f5",
+  "freeze_ready": true,
+  "freeze_ready_reason": "clean",
+  "frozen_config": {
+    "alpha_c": 0.016666666666666666,
+    "alpha_l": 0.016666666666666666,
+    "alpha_program": 0.05,
+    "alpha_total": 0.05,
+    "alpha_v": 0.016666666666666666,
+    "c": 0.5,
+    "calibration_version": "CALIBRATION_LEDGER_V1",
+    "candidate_adapter_version": "PARLAY_V2_CANDIDATE_ADAPTER_V1",
+    "d_max": 6.0,
+    "delta": 0.0,
+    "eligibility_version": "ELIGIBILITY_V1",
+    "evidence_store_version": "EVIDENCE_STORE_V1",
+    "max_actions_per_eligible_slate": 1,
+    "max_candidates_per_slate": 500,
+    "policy_version": "PARLAY_POLICY_V2_TWO_LEG_SINGLE_ACTION",
+    "prospective_policy_id": "PARLAY_POLICY_V2_PROSPECTIVE_003",
+    "r": 0.3,
+    "r_max_accepted": 5.0,
+    "reference_monitor_version": "PARLAY_REFERENCE_ANYTIME_CERT_V1",
+    "settlement_version": "SETTLEMENT_V1",
+    "state_machine_version": "PARLAY_CERTIFICATION_STATE_V1",
+    "support_gate_modes": {
+      "joint_support": "OBSERVE_ONLY",
+      "line_support": "REQUIRED",
+      "market_support": "REQUIRED",
+      "shift_status": "OBSERVE_ONLY",
+      "state_support": "REQUIRED"
+    },
+    "support_rule_version": "SUPPORT_RULE_V2_GATE_MODES",
+    "two_leg_parlays_only": true,
+    "world_certificate_version": "NONVACUOUS_WORLD_CERTIFICATE_V1",
+    "world_gate_mode": "OBSERVE_ONLY",
+    "world_risk_threshold": null
+  },
+  "git_clean": true,
+  "leg_count": 2,
+  "max_actions_per_eligible_slate": 1,
+  "observe_only_support_dimensions": [
+    "joint_support",
+    "shift_status"
+  ],
+  "policy_id": "PARLAY_POLICY_V2_PROSPECTIVE_003",
+  "required_support_dimensions": [
+    "market_support",
+    "line_support",
+    "state_support"
+  ],
+  "supported_books": "real market_source rows only (no synthetic/fabricated prices, enforced at ingestion)",
+  "tie_breaker": "ascending world_risk_rho (DEVELOPMENT-validated ranking diagnostic, see world_gate_research.py), then lexicographic wager_id",
+  "uncommitted_relevant_changes": [],
+  "world_gate_mode": "OBSERVE_ONLY"
+}
