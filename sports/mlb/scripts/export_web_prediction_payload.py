@@ -64,7 +64,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--input-csv", type=Path, default=None, help="High-precision selection CSV.")
     parser.add_argument("--summary-json", type=Path, default=None, help="High-precision selection summary JSON.")
-    parser.add_argument("--parlay-json", type=Path, default=None, help="Adaptive daily parlay JSON.")
+    parser.add_argument("--parlay-json", type=Path, default=None, help="Adaptive daily parlay JSON (legacy_parlay_control / old_parlay_diagnostic -- see sports/mlb/parlay_v2/legacy_control.py).")
+    parser.add_argument("--parlay-v2-json", type=Path, default=None, help="PARLAY_POLICY_V2 output JSON (sports/mlb/parlay_v2/run_parlay_v2.py) -- the ONLY source for the new Parlays tab's `parlays` key. Purely additive: never read by the singles/legacy-parlay code above.")
     parser.add_argument("--governance-json", type=Path, default=None, help="Policy-governance status JSON.")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUT, help="Destination web payload JSON.")
     parser.add_argument(
@@ -1286,6 +1287,15 @@ def main() -> None:
     }
     payload["summary"]["parlay_tagged_plays"] = int(payload["parlay_summary"].get("tagged_play_count", 0))
     payload["summary"]["parlay_pairs"] = int(payload["parlay_summary"].get("selected_pair_count", 0))
+
+    # Additive only (mission: MLB dual-path integration) -- adds a new
+    # top-level "parlays" key sourced ENTIRELY from PARLAY_POLICY_V2's own
+    # output. Does not read or modify anything above this line: the
+    # existing single-bet ("plays") and legacy-parlay ("daily_parlay",
+    # "parlay_summary", "parlay_pairs") fields are untouched.
+    from sports.mlb.parlay_v2.frontend_payload import embed_parlays_v2
+
+    payload = embed_parlays_v2(payload, args.parlay_v2_json)
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")

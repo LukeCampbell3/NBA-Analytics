@@ -164,7 +164,15 @@ def build_multi_target_universe(
                         "win": 1 if result == "win" else 0,
                     }
                 )
-    return pd.DataFrame(rows).drop_duplicates(subset=["date", "player_key", "game_id", "target", "direction"]).reset_index(drop=True)
+    # market_line is part of the dedup identity -- two rows differing only
+    # by line are different EVENTS (e.g. H OVER 0.5 vs H OVER 1.5), not
+    # duplicates. Omitting it here would silently drop a real alternate
+    # line. Not observed in this repo's current archived pools (checked:
+    # zero player/target/game/direction groups carry >1 distinct
+    # Market_Line across all 25 archived days), but the schema must not
+    # rely on that absence -- see parlay_v2/candidate_adapter.py's
+    # exact-event-identity guard and its regression test.
+    return pd.DataFrame(rows).drop_duplicates(subset=["date", "player_key", "game_id", "target", "direction", "market_line"]).reset_index(drop=True)
 
 
 def action_universe(universe: pd.DataFrame) -> pd.DataFrame:

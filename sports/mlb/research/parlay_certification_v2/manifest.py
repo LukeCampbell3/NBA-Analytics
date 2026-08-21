@@ -41,12 +41,49 @@ TWO_LEG_PARLAYS_ONLY = True
 C_MIN_COVERAGE = 0.50  # c: minimum fraction of eligible days the policy must act on
 R_MAX_LOSS_RISK = 0.30  # r: maximum acceptable selective loss risk (matches legacy risk_gate.RISK_TARGET)
 DELTA_MIN_RETURN = 0.0  # delta: minimum expected return per action (breakeven -- no positive-edge claim a priori)
-R_MAX_ACCEPTED = 25.0  # R_max: predeclared maximum accepted parlay-price-derived return bound
+
+# ECONOMIC BOUNDS (mission section 12) -- D_max is the actual frozen
+# config; R_MAX_ACCEPTED is ALWAYS derived from it, never configured
+# independently (a free-standing R_max invites picking it just to make
+# the anytime process converge faster, which section 12 explicitly
+# forbids). D_max=6.0 reflects a desired 2-leg parlay PRODUCT profile --
+# generous enough to cover realistic combined prices for two modestly-
+# favored props (each leg commonly in the ~1.4-2.2 decimal range, so
+# combined ~2-5 is typical), tight enough to exclude longshot-stacked
+# combinations this product is not aiming to certify. Not chosen to
+# shrink anytime_monitor's radius (a materially wider D_max, e.g. the
+# previous placeholder R_MAX_ACCEPTED=25.0 this replaces, would have made
+# convergence slower, not faster -- the direction of that old placeholder
+# was actually conservative, not a shortcut, but it was also never tied
+# to an actual product decision, which this D_max is).
+D_MAX = 6.0
+R_MAX_ACCEPTED = D_MAX - 1.0  # derived -- never edit this independently of D_MAX
 
 ALPHA_TOTAL = 0.05
 ALPHA_C = ALPHA_TOTAL / 3.0
 ALPHA_L = ALPHA_TOTAL / 3.0
 ALPHA_V = ALPHA_TOTAL / 3.0
+
+# PROGRAM-LEVEL MULTIPLICITY (mission section 13). ALPHA_TOTAL above is
+# THIS policy version's within-policy budget (alpha_policy_k); it must
+# itself be drawn from a program-level ledger shared across all policy
+# versions ever frozen for prospective confirmation, so that repeatedly
+# freezing new versions after a failure/demotion cannot silently reset to
+# a fresh alpha. See sports/mlb/parlay_v2/program_alpha.py --
+# ProgramAlphaLedger.spend(...) is the only way ALPHA_TOTAL above is
+# actually authorized to be spent; this constant alone does not spend it.
+ALPHA_PROGRAM = 0.05
+PROGRAM_ALPHA_LEDGER_PATH = "sports/mlb/research/parlay_certification_v2/reports/program_alpha_ledger.json"
+
+# CURRENT-DAY FREEZE BOUNDARY (mission section 11). The real boundary
+# timestamp lives in prospective_boundary.py's one-way marker file, NOT
+# as an editable constant in this frozen manifest (editing a source
+# constant to "set" a timestamp would blur the same freeze discipline
+# this section exists to protect). See
+# prospective_boundary.read_prospective_start_timestamp(). Until that
+# marker is set, EVERY evaluated slate -- including any already inspected
+# while building this integration -- counts only as DEVELOPMENT/SHADOW,
+# never as confirmatory prospective evidence.
 
 # PolicyStatus value. DEVELOPMENT until a deliberate freeze action moves it
 # to FROZEN_PROSPECTIVE_INCONCLUSIVE -- see CONCLUSION_REASONING; this file
@@ -57,14 +94,21 @@ CONCLUSION_REASONING = """
 This manifest freezes PARLAY_CERTIFICATION_V2 as the sole authoritative
 certification/decision layer for this research system, but records ZERO
 real prospective evidence so far. STATUS is DEVELOPMENT, not
-FROZEN_PROSPECTIVE_INCONCLUSIVE: the c/r/delta/R_max/alpha values above
-are provisional defaults carried over from the old single-endpoint
-risk_gate convention (RISK_TARGET->r) or set conservatively where no prior
-frozen value existed (c, delta, R_max) -- they have not yet been through a
-deliberate freeze review for a real prospective run. Advancing STATUS to
-FROZEN_PROSPECTIVE_INCONCLUSIVE is a deliberate action (see MIGRATION.md's
-NEXT PROSPECTIVE STEP), not an automatic consequence of this file
-existing or of the implementation being validated.
+FROZEN_PROSPECTIVE_INCONCLUSIVE: the c/r/delta/alpha values above are
+provisional defaults carried over from the old single-endpoint risk_gate
+convention (RISK_TARGET->r) or set conservatively where no prior frozen
+value existed (c, delta); D_MAX=6.0 is a real product-profile decision
+(see its comment above), not a placeholder. None of this has been through
+a deliberate freeze review for a real prospective run. Advancing STATUS to
+FROZEN_PROSPECTIVE_INCONCLUSIVE requires, in order: (1) a final review of
+every constant in this file, (2) recording this policy version's alpha
+spend in the program alpha ledger
+(sports/mlb/parlay_v2/program_alpha.ProgramAlphaLedger.spend), (3) setting
+the one-way prospective_start boundary
+(parlay_certification_v2.prospective_boundary.set_prospective_start_timestamp).
+None of these three are automatic consequences of this file existing or
+of the implementation being validated -- see MIGRATION.md's NEXT
+PROSPECTIVE STEP.
 
 Per section 16: implementation validation
 (PARLAY_CERTIFICATION_V2_IMPLEMENTATION_VALIDATED, established by
