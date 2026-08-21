@@ -141,7 +141,11 @@ jobs:
             sports/mlb/web/data/history/index.json \
             sports/mlb/web/data/history/*.json \
             dist/mlb \
-            paywall/private-content/app/mlb
+            paywall/private-content/app/mlb \
+            sports/mlb/parlay_v2/calibration/reports/calibration_ledger.jsonl \
+            sports/mlb/parlay_v2/calibration/reports/pair_observation_ledger.jsonl \
+            sports/mlb/parlay_v2/reports \
+            sports/mlb/research/parlay_certification_v2/reports
           if git diff --cached --quiet; then
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
           else

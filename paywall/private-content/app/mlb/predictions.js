@@ -261,23 +261,31 @@ class DailyPredictionsPage {
         const statusLabel = this.formatParlayV2StatusLabel(parlay.policy_status);
         const statusTone = this.formatParlayV2StatusTone(parlay.policy_status);
 
+        // Three-way-separated status footer (mission section 21): Policy
+        // (which frozen action rule), Research status (policy_status --
+        // certification progress, never a profitability claim), Execution
+        // (shadow_execution_status -- whether TODAY's decision actually
+        // selected a real frozen wager, regardless of certification).
+        const executionLabel = parlay.shadow_execution_status === "EXECUTED_SHADOW" ? "Shadow only (selected)" : "Not executed";
+        const statusFooter = `Policy: ${this.escapeHtml(parlay.policy_version || "n/a")} / Research status: ${this.escapeHtml(statusLabel)} / Execution: ${this.escapeHtml(executionLabel)}`;
+
         if (parlay.action !== "ACT" || !parlay.selected_parlay) {
             const reason = String(parlay.abstain_reason || "").trim();
             const shadow = parlay.shadow_candidate;
             const shadowBlock = shadow ? `
-                <p class="daily-parlay__empty">Shadow candidate -- not certified</p>
+                <p class="daily-parlay__empty">Today's V2 shadow candidate -- not certified, no stake authorized</p>
                 <div class="daily-parlay__legs">${this.renderParlayV2Legs(shadow)}</div>
             ` : `<p class="daily-parlay__empty">${this.escapeHtml(this.formatParlayV2AbstainReason(reason))}</p>`;
             content.innerHTML = `
                 <div class="daily-parlay__header">
                     <div>
                         <p class="vault-page-kicker">Theory-grounded 2-leg parlay</p>
-                        <h2 id="parlayV2Title">Parlays (V2)</h2>
+                        <h2 id="parlayV2Title">Today's V2 Shadow Candidate</h2>
                     </div>
                     ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Abstain") : ""}
                 </div>
                 ${shadowBlock}
-                <p class="daily-parlay__state">${this.escapeHtml(this.formatParlayV2AbstainReason(reason))} Policy ${this.escapeHtml(parlay.policy_version || "n/a")} / Status: ${this.escapeHtml(statusLabel)}</p>
+                <p class="daily-parlay__state">${this.escapeHtml(this.formatParlayV2AbstainReason(reason))} ${statusFooter}</p>
             `;
             return;
         }
@@ -286,12 +294,12 @@ class DailyPredictionsPage {
             <div class="daily-parlay__header">
                 <div>
                     <p class="vault-page-kicker">Theory-grounded 2-leg parlay</p>
-                    <h2 id="parlayV2Title">Parlays (V2)</h2>
+                    <h2 id="parlayV2Title">Today's V2 Shadow Candidate</h2>
                 </div>
-                ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Parlay candidate") : ""}
+                ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Selected -- shadow only") : ""}
             </div>
             <div class="daily-parlay__legs">${this.renderParlayV2Legs(parlay.selected_parlay)}</div>
-            <p class="daily-parlay__state">Policy ${this.escapeHtml(parlay.policy_version || "n/a")} / Status: ${this.escapeHtml(statusLabel)}</p>
+            <p class="daily-parlay__state">${statusFooter}</p>
         `;
     }
 
@@ -341,6 +349,10 @@ class DailyPredictionsPage {
     formatParlayV2AbstainReason(reason) {
         const messages = {
             NO_REAL_QUOTE: "No real market quote available for today's slate.",
+            NO_CANDIDATES: "No cross-game candidate pairs exist for today's slate.",
+            NO_STATE_SUPPORT: "Not enough independent prior slates have accumulated yet.",
+            NO_LEG_MARKET_SUPPORT: "Not enough prior settled observations for this market type yet.",
+            NO_LEG_LINE_SUPPORT: "Not enough prior settled observations for this exact line yet.",
             NO_PAIR_IN_SUPPORT: "No pair currently meets the frozen support requirements.",
             PRICE_OUT_OF_RANGE: "The best available price fell outside the frozen accepted range.",
             NO_PAIR_PASSES_FROZEN_POLICY: "No pair cleared the frozen certification requirements today.",

@@ -1,68 +1,129 @@
 from __future__ import annotations
 
-"""Multidimensional CandidateSupport (mission section 5). Support is NOT
-reduced to one arbitrary `state_support >= N` number.
+"""Multidimensional CandidateSupport with EXPLICIT GATE MODES (mission:
+"Resolve the PARLAY_V2 perpetual-abstention problem"). Support is not
+reduced to one arbitrary number, and -- the fix this module makes --
+support dimensions with no validated research behind them no longer
+silently block every action forever.
 
-Frozen rule (deliberately simple, per section 5's instruction, using only
-already-validated information):
+THE BUG THIS REPLACES: the previous version required ALL FIVE dimensions
+(including joint_support and shift_status, both permanently
+"UNESTABLISHED" because no validated research established them) to pass
+before ANY candidate could be selected. That made policy selection
+circularly dependent on research that itself depends on having selected
+candidates to observe -- selection could never happen, so evidence could
+never accumulate, so the research could never be done. See
+run_parlay_v2.py's module docstring for the full call-graph writeup.
 
-    market_support  >= N_MARKET   (prior settled observations sharing this candidate's market/target bucket)
-    line_support    >= N_LINE     (prior settled observations sharing this EXACT line bucket)
-    state_support   >= N_STATE    (independent PRIOR SLATES admitted -- reuses the
-                                    already-established MIN_CALIBRATION_SLATES_FOR_STATE_SUPPORT=20
-                                    convention from candidate_adapter.py)
-    joint_support   -- UNESTABLISHED: no validated joint/pair-level calibration
-                        threshold exists in this repo (the prior turn's
-                        multi-target pair backtest specifically found
-                        pair-level APS calibration unreliable at this
-                        data volume -- see joint_position_builder_v2/STATE.md).
-                        Exposed, never silently passed.
-    recent_support  -- UNESTABLISHED: no validated recency-window threshold exists.
-                        The count is exposed as a real diagnostic; it does
-                        not gate in_support on its own.
-    calibration_error -- UNESTABLISHED: no frozen epsilon exists for this
-                        bucket-level metric. The raw value (mean |predicted
-                        probability - realized outcome| in-bucket) is
-                        exposed when computable; it never gates in_support
-                        on its own.
-    shift_status    -- UNESTABLISHED: no distribution-shift detector has
-                        been built or validated in this repo. Always
-                        reports UNESTABLISHED; allowed_states never
-                        contains it, so this dimension can never pass.
+THE FIX: each dimension declares a GateMode.
+    REQUIRED     -- must PASS or the dimension blocks action.
+    OBSERVE_ONLY -- computed and exposed for research, NEVER blocks action,
+                    regardless of its status (including UNESTABLISHED).
+    DISABLED     -- not evaluated for this policy version at all.
 
-in_support = market_support_ok AND line_support_ok AND state_support_ok
-             AND joint_support_established AND shift_status in ALLOWED_SHIFT_STATES
+Frozen initial policy (PARLAY_POLICY_V2_PROSPECTIVE_002, see manifest.py):
+    market_support  REQUIRED   (>= N_MARKET prior settled observations, real, implemented)
+    line_support    REQUIRED   (>= N_LINE prior settled observations, real, implemented)
+    state_support   REQUIRED   (>= N_STATE independent prior slates, real, implemented --
+                                 reuses the already-established
+                                 MIN_CALIBRATION_SLATES_FOR_STATE_SUPPORT=20 convention)
+    joint_support   OBSERVE_ONLY, status=UNESTABLISHED, used_for_action=False
+    shift_status    OBSERVE_ONLY, status=UNESTABLISHED, used_for_action=False
 
-Because joint_support and shift_status are UNESTABLISHED by honest
-necessity (not a placeholder to be quietly loosened later), in_support is
-currently always False. This is deliberate and documented, not a bug --
-see mission section 5: "If current research does not justify one of these
-dimensions: expose the dimension, mark it UNESTABLISHED, let the frozen
-policy abstain. Do not silently collapse missing support into PASS."
+UNESTABLISHED is never reinterpreted as PASS. It is a real status value.
+What changed is that an OBSERVE_ONLY dimension's status -- PASS, FAIL, or
+UNESTABLISHED -- has NO effect on `in_support`, by construction (see
+`blocks_action` below): only `gate_mode == REQUIRED and status != "PASS"`
+blocks. A future policy version may promote joint_support or shift_status
+to REQUIRED only once each has an independently validated, non-arbitrary
+threshold -- see calibration/README or joint_position_builder_v2/STATE.md
+for why no such threshold exists yet. Nothing in this module invents one.
 """
 
 from dataclasses import dataclass
+from enum import Enum
+
+from .versioning import SUPPORT_RULE_VERSION
 
 N_MARKET = 20
 N_LINE = 20
 N_STATE = 20  # matches candidate_adapter.MIN_CALIBRATION_SLATES_FOR_STATE_SUPPORT
 
-ALLOWED_SHIFT_STATES = frozenset({"STABLE"})  # UNESTABLISHED is never a member -- see module docstring
 
-SUPPORT_RULE_VERSION = "SUPPORT_RULE_V1"
+class GateMode(str, Enum):
+    REQUIRED = "REQUIRED"
+    OBSERVE_ONLY = "OBSERVE_ONLY"
+    DISABLED = "DISABLED"
+
+
+class SupportStatus(str, Enum):
+    PASS = "PASS"
+    FAIL = "FAIL"
+    UNESTABLISHED = "UNESTABLISHED"
+
+
+@dataclass(frozen=True)
+class SupportDimension:
+    name: str
+    value: object  # raw count (int) or None for status-only dimensions
+    status: SupportStatus
+    gate_mode: GateMode
+
+    @property
+    def used_for_action(self) -> bool:
+        """Whether this dimension's status is actually consulted when
+        deciding in_support. False for OBSERVE_ONLY/DISABLED dimensions
+        -- their status is exposed for research, never for gating."""
+        return self.gate_mode == GateMode.REQUIRED
+
+    @property
+    def blocks_action(self) -> bool:
+        """The ONLY predicate `in_support` is built from. A dimension
+        blocks iff it is REQUIRED and did not PASS -- an OBSERVE_ONLY or
+        DISABLED dimension can never block, no matter its status."""
+        return self.gate_mode == GateMode.REQUIRED and self.status != SupportStatus.PASS
+
+    def as_dict(self) -> dict:
+        return {
+            "name": self.name,
+            "value": self.value,
+            "status": self.status.value,
+            "gate_mode": self.gate_mode.value,
+            "used_for_action": self.used_for_action,
+        }
 
 
 @dataclass(frozen=True)
 class CandidateSupport:
-    market_support: int
-    line_support: int
-    state_support: int
-    joint_support: str  # "UNESTABLISHED" always, currently -- see module docstring
-    recent_support: int
-    calibration_error: float | None  # None when not computable (insufficient bucket data)
-    shift_status: str  # "UNESTABLISHED" always, currently
+    market_support: SupportDimension
+    line_support: SupportDimension
+    state_support: SupportDimension
+    joint_support: SupportDimension
+    shift_status: SupportDimension
+    recent_support: int  # descriptive only, never gated -- see module docstring
+    calibration_error: float | None  # descriptive only, never gated
     in_support: bool
     support_rule_version: str = SUPPORT_RULE_VERSION
+
+    def as_dict(self) -> dict:
+        return {
+            "market_support": self.market_support.as_dict(),
+            "line_support": self.line_support.as_dict(),
+            "state_support": self.state_support.as_dict(),
+            "joint_support": self.joint_support.as_dict(),
+            "shift_status": self.shift_status.as_dict(),
+            "recent_support": self.recent_support,
+            "calibration_error": self.calibration_error,
+            "in_support": self.in_support,
+            "support_rule_version": self.support_rule_version,
+        }
+
+    @property
+    def blocking_dimensions(self) -> list[str]:
+        """Names of every REQUIRED dimension currently blocking action --
+        empty iff in_support is True. Used to produce a specific,
+        non-generic abstain reason instead of one opaque catch-all."""
+        return [d.name for d in (self.market_support, self.line_support, self.state_support) if d.blocks_action]
 
 
 def _mean_abs_calibration_gap(rows: list[dict]) -> float | None:
@@ -72,17 +133,6 @@ def _mean_abs_calibration_gap(rows: list[dict]) -> float | None:
         if r.get("predictive_probability_if_available") is not None and r.get("actual_outcome") is not None
     ]
     return float(sum(diffs) / len(diffs)) if diffs else None
-
-
-def support_is_structurally_unreachable() -> bool:
-    """True iff evaluate_support can NEVER return in_support=True right
-    now, regardless of ledger content -- because at least one dimension
-    (joint_support, shift_status) is a hard-coded UNESTABLISHED with no
-    passing state reachable. Callers may use this as a cheap, honest
-    short-circuit (skip expensive candidate enumeration, abstain
-    immediately) -- NOT as a way to silently skip computing support
-    per-candidate once these dimensions ARE established."""
-    return True  # both joint_support and shift_status are UNESTABLISHED below -- update this the day either is retired
 
 
 def evaluate_support(
@@ -101,39 +151,43 @@ def evaluate_support(
     market_rows = [r for r in snapshot_rows if r.get("market_bucket") == market_bucket]
     line_rows = [r for r in snapshot_rows if r.get("line_bucket") == line_bucket]
 
-    market_support = len(market_rows)
-    line_support = len(line_rows)
-    state_support = independent_slate_count
+    market_count = len(market_rows)
+    line_count = len(line_rows)
 
-    # recent_support: same-market rows among the most-recently-admitted
-    # `recent_window` observations overall (a real, computable diagnostic;
-    # does not gate in_support -- see module docstring).
+    market_support = SupportDimension(
+        "market_support", market_count,
+        SupportStatus.PASS if market_count >= N_MARKET else SupportStatus.FAIL,
+        GateMode.REQUIRED,
+    )
+    line_support = SupportDimension(
+        "line_support", line_count,
+        SupportStatus.PASS if line_count >= N_LINE else SupportStatus.FAIL,
+        GateMode.REQUIRED,
+    )
+    state_support = SupportDimension(
+        "state_support", independent_slate_count,
+        SupportStatus.PASS if independent_slate_count >= N_STATE else SupportStatus.FAIL,
+        GateMode.REQUIRED,
+    )
+    # OBSERVE_ONLY: never blocks, regardless of status. No arbitrary
+    # threshold is invented here -- see module docstring.
+    joint_support = SupportDimension("joint_support", None, SupportStatus.UNESTABLISHED, GateMode.OBSERVE_ONLY)
+    shift_status = SupportDimension("shift_status", None, SupportStatus.UNESTABLISHED, GateMode.OBSERVE_ONLY)
+
     recent_rows = sorted(snapshot_rows, key=lambda r: str(r.get("calibration_admitted_at", "")))[-recent_window:]
     recent_support = sum(1 for r in recent_rows if r.get("market_bucket") == market_bucket)
-
     calibration_error = _mean_abs_calibration_gap(market_rows)
 
-    market_support_ok = market_support >= N_MARKET
-    line_support_ok = line_support >= N_LINE
-    state_support_ok = state_support >= N_STATE
-    joint_support = "UNESTABLISHED"
-    shift_status = "UNESTABLISHED"
-
-    in_support = bool(
-        market_support_ok
-        and line_support_ok
-        and state_support_ok
-        and joint_support != "UNESTABLISHED"  # currently always blocks -- see module docstring
-        and shift_status in ALLOWED_SHIFT_STATES  # currently always blocks -- see module docstring
-    )
+    dimensions = (market_support, line_support, state_support, joint_support, shift_status)
+    in_support = not any(d.blocks_action for d in dimensions)
 
     return CandidateSupport(
         market_support=market_support,
         line_support=line_support,
         state_support=state_support,
         joint_support=joint_support,
+        shift_status=shift_status,
         recent_support=recent_support,
         calibration_error=calibration_error,
-        shift_status=shift_status,
         in_support=in_support,
     )

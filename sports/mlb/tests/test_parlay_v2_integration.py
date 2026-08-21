@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import json
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -14,6 +15,8 @@ from sports.mlb.parlay_v2.candidate_adapter import (
     build_pregame_action_rows,
     exact_event_key,
 )
+from sports.mlb.parlay_v2.calibration.schema import build_observation
+from sports.mlb.parlay_v2.calibration.store import CalibrationStore
 from sports.mlb.parlay_v2.frontend_payload import embed_parlays_v2
 from sports.mlb.parlay_v2.program_alpha import AlphaSpend, ProgramAlphaLedger
 from sports.mlb.parlay_v2.run_parlay_v2 import _to_candidate_wager, build_slate_payload
@@ -396,6 +399,134 @@ def test_shadow_candidate_present_when_no_calibration_ledger_but_action_stays_ab
     assert payload["shadow_candidate"] is not None
     legs = {payload["shadow_candidate"]["leg_1"]["player"], payload["shadow_candidate"]["leg_2"]["player"]}
     assert legs == {"A", "B"}
+    # manifest.STATUS is now FROZEN_PROSPECTIVE_INCONCLUSIVE (the mission's
+    # own deliberate freeze), so this reaches REAL support evaluation with
+    # zero accumulated ledger data -- an honest, specific reason
+    # (NO_STATE_SUPPORT), never the old generic circular one.
+    assert payload["abstain_reason"] == "NO_STATE_SUPPORT"
+    assert payload["selection_status"] == "ABSTAIN"
+    assert payload["shadow_execution_status"] == "NOT_EXECUTED"
+    assert payload["staking_authorized"] is False
+
+
+def test_policy_not_frozen_guard_blocks_selection_before_status_is_advanced(monkeypatch):
+    """The POLICY_NOT_FROZEN guard itself, isolated from the current
+    default STATUS: with STATUS forced back to DEVELOPMENT, selection
+    must abstain for that reason specifically, before any support
+    evaluation runs -- the shadow candidate display is unaffected."""
+    monkeypatch.setattr(manifest, "STATUS", "DEVELOPMENT")
+    pool = pd.DataFrame([
+        _make_row(player="A", player_key="a", game_id="g1", target="R", direction="OVER", line=0.5, over_price=-150, prediction=0.9),
+        _make_row(player="B", player_key="b", game_id="g2", target="R", direction="OVER", line=0.5, over_price=-130, prediction=0.9),
+    ])
+    payload = build_slate_payload(
+        pool_csv=pool, slate_id="20260821",
+        eligibility_inputs=EligibilityInputs("20260821", True, True, True, True),
+        predictive_version="v1", state_version="s1",
+    )
+    assert payload["abstain_reason"] == "POLICY_NOT_FROZEN"
+    assert payload["shadow_candidate"] is not None
+
+
+def test_no_circular_block_once_policy_is_frozen_and_ledger_is_empty(monkeypatch):
+    """THE FIX this mission makes, exercised end to end: once
+    POLICY_NOT_FROZEN is lifted (a frozen policy_status), an EMPTY or
+    missing calibration ledger must still abstain -- but for an honest,
+    specific REQUIRED-support reason (state_support has zero accumulated
+    slates), never for the old generic circular reason. joint_support/
+    shift_status being permanently UNESTABLISHED must never appear as the
+    reason at all."""
+    monkeypatch.setattr(manifest, "STATUS", "FROZEN_PROSPECTIVE_INCONCLUSIVE")
+    pool = pd.DataFrame([
+        _make_row(player="A", player_key="a", game_id="g1", target="R", direction="OVER", line=0.5, over_price=-150, prediction=0.9),
+        _make_row(player="B", player_key="b", game_id="g2", target="R", direction="OVER", line=0.5, over_price=-130, prediction=0.9),
+    ])
+    payload = build_slate_payload(
+        pool_csv=pool, slate_id="20260821",
+        eligibility_inputs=EligibilityInputs("20260821", True, True, True, True),
+        predictive_version="v1", state_version="s1",
+        # still no calibration_store
+    )
+    assert payload["action"] == "ABSTAIN"
+    assert payload["abstain_reason"] in ("NO_STATE_SUPPORT", "NO_LEG_MARKET_SUPPORT", "NO_LEG_LINE_SUPPORT")
+    assert payload["abstain_reason"] not in ("CERTIFICATION_STREAM_NOT_READY", "NO_PAIR_IN_SUPPORT", "POLICY_NOT_FROZEN")
+    assert payload["shadow_candidate"] is not None  # diagnostic display is unaffected
+
+
+def test_support_no_longer_blocks_once_required_dimensions_accumulate(tmp_path, monkeypatch):
+    """THE core deliverable of this mission, end to end: with the policy
+    frozen and a calibration ledger carrying real accumulated evidence for
+    BOTH legs' market/line/state buckets, the candidate reaches the real
+    certified-policy machinery (select_action_for_day) at all -- something
+    the old all-five-dimensions-required rule made permanently impossible
+    (joint_support/shift_status could never pass, so no candidate ever got
+    this far). It is correctly NOT expected to reach ACT here: the
+    separate, deliberately conservative, UNTOUCHED G_C/G_L/G_V world
+    certificate (FROZEN_APS_THRESHOLD=1.0, retain-all) still requires zero
+    loss-counterexample mass, which no non-deterministic prediction can
+    satisfy -- that is a real, intentional bottleneck this mission must
+    NOT weaken, wholly separate from the circular support bug it does
+    fix. The proof of the fix is exactly that the abstain reason changes
+    from a support-blocking one (or the old circular one) to the
+    certificate's own honest reason."""
+    monkeypatch.setattr(manifest, "STATUS", "FROZEN_PROSPECTIVE_INCONCLUSIVE")
+    predictive_version, state_version = "v1", "s1"
+    state_bucket = f"{predictive_version}|{state_version}"
+
+    # calibration_admitted_at/settled_at must be REAL ISO-with-dashes
+    # timestamps strictly in the past (matching production's
+    # calibration/ingest.py, which always sets both to
+    # datetime.now(timezone.utc).isoformat()) -- a compact "YYYYMMDD..."
+    # string sorts lexically AFTER a dashed ISO "now" cutoff and would be
+    # wrongly filtered out by the forward-only guard.
+    base = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    store = CalibrationStore(tmp_path / "ledger.jsonl")
+    for i in range(25):
+        slate_dt = base + timedelta(days=i)
+        slate_id = slate_dt.strftime("%Y%m%d")
+        settled_at = (slate_dt + timedelta(hours=23)).isoformat()
+        admitted_at = (slate_dt + timedelta(hours=23, minutes=30)).isoformat()
+        for player, line in (("A", 0.5), ("B", 0.5)):
+            obs = build_observation(
+                slate_id=slate_id, game_id=f"g{i}", event_date=slate_id,
+                player_id=f"{player.lower()}{i}", player_name=f"{player}{i}",
+                target="R", side="OVER", line=line, book="real",
+                quote_decimal=1.9, quote_timestamp=f"{slate_id}T12:00:00Z",
+                prediction_value=0.6, predictive_probability_if_available=0.6,
+                state_version=state_version, predictive_version=predictive_version,
+                market_bucket="R", line_bucket=f"R|OVER|{line}", state_bucket=state_bucket,
+                decision_frozen_at=f"{slate_id}T17:00:00Z",
+                settled_at=settled_at, settlement_status="win",
+                actual_outcome=1.0, actual_unit_return=0.9,
+                calibration_admitted_at=admitted_at,
+                source_id=f"src{i}_{player}", source_hash="h",
+            )
+            store.admit(obs)
+
+    pool = pd.DataFrame([
+        _make_row(player="A", player_key="a", game_id="g1", target="R", direction="OVER", line=0.5, over_price=-150, prediction=0.9),
+        _make_row(player="B", player_key="b", game_id="g2", target="R", direction="OVER", line=0.5, over_price=-130, prediction=0.9),
+    ])
+    payload = build_slate_payload(
+        pool_csv=pool, slate_id="20260821",
+        eligibility_inputs=EligibilityInputs("20260821", True, True, True, True),
+        predictive_version=predictive_version, state_version=state_version,
+        calibration_store=store,
+    )
+    # THE FIX: reaches the real certificate machinery -- proven by a
+    # candidate_universe_size > 0 decision record and an abstain reason
+    # that comes from the certificate, not from support or the old
+    # circular block.
+    assert payload["abstain_reason"] == "NO_PAIR_PASSES_FROZEN_POLICY"
+    assert payload["abstain_reason"] not in (
+        "CERTIFICATION_STREAM_NOT_READY", "NO_PAIR_IN_SUPPORT", "POLICY_NOT_FROZEN",
+        "NO_STATE_SUPPORT", "NO_LEG_MARKET_SUPPORT", "NO_LEG_LINE_SUPPORT", "NO_CANDIDATES",
+    )
+    assert payload["decision_record"]["candidate_universe_size"] > 0
+    assert payload["action"] == "ABSTAIN"
+    assert payload["selection_status"] == "ABSTAIN"
+    assert payload["shadow_execution_status"] == "NOT_EXECUTED"
+    assert payload["staking_authorized"] is False
 
 
 def test_shadow_candidate_excludes_same_game_and_unpriced_pairs():

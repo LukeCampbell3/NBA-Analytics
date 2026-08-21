@@ -7,7 +7,7 @@ import pytest
 from sports.mlb.parlay_v2.calibration.schema import build_observation, exact_event_identity
 from sports.mlb.parlay_v2.calibration.snapshot import assert_snapshot_precedes_decision, build_snapshot
 from sports.mlb.parlay_v2.calibration.store import CalibrationStore
-from sports.mlb.parlay_v2.calibration.support import evaluate_support, support_is_structurally_unreachable
+from sports.mlb.parlay_v2.calibration.support import GateMode, SupportStatus, evaluate_support
 from sports.mlb.parlay_v2.calibration.replay import replay_calibration_as_of
 from sports.mlb.parlay_v2.program_alpha import AlphaSpend, ProgramAlphaLedger
 from sports.mlb.research.parlay_certification_v2 import manifest, prospective_boundary
@@ -161,33 +161,55 @@ def test_half_and_full_line_never_share_support_counts(tmp_path):
     rows = store.observations_as_of(cutoff)
     half_support = evaluate_support(rows, market_bucket="H", line_bucket="H|OVER|0.5", state_bucket="v1|s1", independent_slate_count=25)
     full_support = evaluate_support(rows, market_bucket="H", line_bucket="H|OVER|1.5", state_bucket="v1|s1", independent_slate_count=25)
-    assert half_support.line_support == 25
-    assert full_support.line_support == 3
-    assert half_support.line_support != full_support.line_support
+    assert half_support.line_support.value == 25
+    assert full_support.line_support.value == 3
+    assert half_support.line_support.value != full_support.line_support.value
     # market_support pools across lines within the same target (by design,
     # a coarser dimension than line_support) -- but line_support itself
     # never conflates the two.
-    assert half_support.market_support == 28
-    assert full_support.market_support == 28
+    assert half_support.market_support.value == 28
+    assert full_support.market_support.value == 28
 
 
 def test_exact_event_identity_distinguishes_lines():
     assert exact_event_identity("p1", "g1", "H", "OVER", 0.5, "real") != exact_event_identity("p1", "g1", "H", "OVER", 1.5, "real")
 
 
-def test_support_is_structurally_unreachable_documents_honest_gap():
-    # Even with overwhelming market/line/state support, joint_support and
-    # shift_status remain UNESTABLISHED -- in_support must stay False.
+def test_observe_only_dimensions_never_block_once_required_dimensions_pass():
+    # THE FIX this mission makes: joint_support and shift_status remain
+    # UNESTABLISHED forever (no arbitrary threshold is invented for
+    # either), but because they are OBSERVE_ONLY they can never block
+    # action -- only the three REQUIRED, real, implemented dimensions
+    # (market_support/line_support/state_support) can. With overwhelming
+    # REQUIRED support, in_support must now be True, breaking the old
+    # permanent-abstention circularity.
     rows = [
         _obs(player=f"P{i}", admitted_at="2026-08-19T23:00:00Z", source_id=f"s{i}").as_dict()
         for i in range(500)
     ]
     support = evaluate_support(rows, market_bucket="H", line_bucket="H|OVER|0.5", state_bucket="v1|s1", independent_slate_count=500)
-    assert support.market_support >= 20 and support.line_support >= 20 and support.state_support >= 20
-    assert support.joint_support == "UNESTABLISHED"
-    assert support.shift_status == "UNESTABLISHED"
+    assert support.market_support.value >= 20 and support.line_support.value >= 20 and support.state_support.value >= 20
+    assert support.market_support.status == SupportStatus.PASS
+    assert support.line_support.status == SupportStatus.PASS
+    assert support.state_support.status == SupportStatus.PASS
+    assert support.joint_support.status == SupportStatus.UNESTABLISHED
+    assert support.shift_status.status == SupportStatus.UNESTABLISHED
+    assert support.joint_support.gate_mode == GateMode.OBSERVE_ONLY
+    assert support.shift_status.gate_mode == GateMode.OBSERVE_ONLY
+    assert support.joint_support.blocks_action is False
+    assert support.shift_status.blocks_action is False
+    assert support.in_support is True
+    assert support.blocking_dimensions == []
+
+
+def test_required_dimension_still_blocks_when_it_fails():
+    # The fix does NOT weaken REQUIRED gating -- a genuinely thin market
+    # still correctly reports not-in-support, with a specific blocking
+    # dimension named (never a generic catch-all).
+    rows = [_obs(player=f"P{i}", admitted_at="2026-08-19T23:00:00Z", source_id=f"s{i}").as_dict() for i in range(3)]
+    support = evaluate_support(rows, market_bucket="H", line_bucket="H|OVER|0.5", state_bucket="v1|s1", independent_slate_count=3)
     assert support.in_support is False
-    assert support_is_structurally_unreachable() is True
+    assert set(support.blocking_dimensions) == {"market_support", "line_support", "state_support"}
 
 
 # ======================================================================

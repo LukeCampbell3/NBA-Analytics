@@ -38,12 +38,13 @@ import pandas as pd
 
 from sports.mlb.conditional_chain.outcome_worlds import build_binary_outcome_set, build_world_distribution
 from sports.mlb.research.parlay_certification_v2 import manifest
+from sports.mlb.research.parlay_certification_v2.decision_record_store import DecisionRecordStore
 from sports.mlb.research.parlay_certification_v2.eligibility import EligibilityInputs, evaluate_eligibility
 from sports.mlb.research.parlay_certification_v2.policy import CandidateWager, build_decision_record, select_action_for_day
 
 from .calibration.snapshot import assert_snapshot_precedes_decision, build_snapshot
 from .calibration.store import CalibrationStore
-from .calibration.support import evaluate_support, support_is_structurally_unreachable
+from .calibration.support import CandidateSupport, evaluate_support
 from .candidate_adapter import Leg, PairCandidate, build_candidates_for_day, build_pregame_action_rows
 
 # APS threshold for the PAIR world-model diagnostics (unrelated to the
@@ -62,31 +63,69 @@ def _leg_buckets(leg: Leg, *, predictive_version: str, state_version: str) -> tu
     return market_bucket, line_bucket, state_bucket
 
 
-def _pair_in_support(
+# Priority order for turning REQUIRED-dimension blocks into ONE specific
+# abstain reason instead of an opaque catch-all (mission: "specific,
+# non-generic abstain reason"). OBSERVE_ONLY dimensions (joint_support,
+# shift_status) never appear here -- see calibration/support.py, they can
+# never block by construction, so they can never be "the reason" either.
+_BLOCKING_REASON_PRIORITY = (
+    ("state_support", "NO_STATE_SUPPORT"),
+    ("market_support", "NO_LEG_MARKET_SUPPORT"),
+    ("line_support", "NO_LEG_LINE_SUPPORT"),
+)
+
+
+def _pair_support(
     candidate: PairCandidate,
     *,
     snapshot_rows: list[dict],
     independent_slate_count: int,
     predictive_version: str,
     state_version: str,
-) -> bool:
-    """Gates on the REAL forward-only calibration ledger (mission section
-    2/5), replacing the earlier placeholder that hardcoded
+) -> tuple[CandidateSupport, CandidateSupport]:
+    """Evaluates REQUIRED-dimension support on the REAL forward-only
+    calibration ledger for both legs of a candidate (mission section 2/5),
+    replacing the earlier placeholder that hardcoded
     FROZEN_CALIBRATION_SLATES=0. `snapshot_rows`/`independent_slate_count`
     come from a SINGLE snapshot built once per slate (see
-    build_slate_payload) -- not rebuilt per candidate."""
+    build_slate_payload) -- not rebuilt per candidate. Returns both legs'
+    CandidateSupport (never just a bool) so callers can report a specific
+    blocking dimension rather than a generic reason."""
+    results = []
     for leg in (candidate.leg_1, candidate.leg_2):
         market_bucket, line_bucket, state_bucket = _leg_buckets(leg, predictive_version=predictive_version, state_version=state_version)
-        support = evaluate_support(
-            snapshot_rows,
-            market_bucket=market_bucket,
-            line_bucket=line_bucket,
-            state_bucket=state_bucket,
-            independent_slate_count=independent_slate_count,
+        results.append(
+            evaluate_support(
+                snapshot_rows,
+                market_bucket=market_bucket,
+                line_bucket=line_bucket,
+                state_bucket=state_bucket,
+                independent_slate_count=independent_slate_count,
+            )
         )
-        if not support.in_support:
-            return False
-    return True
+    return results[0], results[1]
+
+
+def _pair_in_support(support_pair: tuple[CandidateSupport, CandidateSupport]) -> bool:
+    return support_pair[0].in_support and support_pair[1].in_support
+
+
+def _aggregate_blocking_reason(support_pairs: list[tuple[CandidateSupport, CandidateSupport]]) -> str:
+    """One specific abstain reason for a whole slate, derived honestly from
+    every REQUIRED dimension that blocked at least one candidate leg --
+    never a generic catch-all. Priority order matches
+    _BLOCKING_REASON_PRIORITY (state > market > line): state_support is
+    checked first because it reflects overall ledger maturity (independent
+    slate count), which is the most informative single fact for an
+    operator deciding whether to just wait longer."""
+    blocking: set[str] = set()
+    for support_i, support_j in support_pairs:
+        blocking.update(support_i.blocking_dimensions)
+        blocking.update(support_j.blocking_dimensions)
+    for dim_name, reason in _BLOCKING_REASON_PRIORITY:
+        if dim_name in blocking:
+            return reason
+    return "NO_PAIR_IN_SUPPORT"  # defensive fallback; unreachable if blocking is non-empty
 
 
 def _candidate_priced(candidate: PairCandidate) -> bool:
@@ -155,6 +194,7 @@ def build_slate_payload(
     state_version: str,
     mode: str = "broad",
     calibration_store: CalibrationStore | None = None,
+    decision_record_store: DecisionRecordStore | None = None,
 ) -> dict:
     """Enforces the required daily ordering (mission section 2):
     eligibility -> capture immutable pregame candidate universe -> load
@@ -178,8 +218,19 @@ def build_slate_payload(
         "policy_status": manifest.STATUS,
         "eligible": eligibility.eligible,
         "eligibility_reason": eligibility.reason,
+        # `action`/`selected_parlay` kept for frontend backward-compat.
+        # `selection_status`/`shadow_execution_status`/`staking_authorized`
+        # are the new three-way-separated status fields (mission sections
+        # 14-17): POLICY SELECTION (this function, allowed while unproven)
+        # vs PRODUCTION/STAKING AUTHORIZATION (staking_authorized -- never
+        # settable True here, only ever by the outer certificate reaching
+        # SUPPORTED_CURRENT) vs POLICY CERTIFICATION (policy_status, driven
+        # solely by PARLAY_CERTIFICATION_V2's own state machine).
         "action": "ABSTAIN",
         "selected_parlay": None,
+        "selection_status": "ABSTAIN",
+        "shadow_execution_status": "NOT_EXECUTED",
+        "staking_authorized": False,
         "shadow_candidate": None,
         "shadow_candidate_note": (
             "Best available candidate by descriptive joint score -- NOT a certified pick. "
@@ -202,11 +253,14 @@ def build_slate_payload(
         payload["abstain_reason"] = "NO_REAL_QUOTE"
         return payload
 
-    # Candidates are built unconditionally now (not only when calibration
+    # Candidates are built unconditionally (not only when calibration
     # support might pass) so the Parlays tab always has a real, priced
     # shadow candidate to show on an abstain day -- see
     # _best_shadow_candidate. This is diagnostic-only and never gated on
-    # calibration support; it never sets `action`/`selected_parlay`.
+    # calibration support; it never sets `action`/`selected_parlay`, and
+    # never feeds back into which candidate today's REAL selection below
+    # considers (certification independence -- no feedback from
+    # policy_status into candidate identity).
     candidates = build_candidates_for_day(
         action_rows,
         slate_id=slate_id,
@@ -219,59 +273,75 @@ def build_slate_payload(
     if shadow_candidate is not None:
         payload["shadow_candidate"] = shadow_candidate.as_dict()
 
-    if calibration_store is None:
+    # POLICY_NOT_FROZEN guard: real ACT selection only counts as
+    # confirmatory prospective evidence once this policy_version's
+    # freeze boundary has been deliberately set (prospective_boundary.py)
+    # -- selecting before that point would just be more DEVELOPMENT/SHADOW
+    # noise mistaken for prospective evidence. This is NOT the old
+    # circular block: it depends only on manifest.STATUS (a deliberate,
+    # one-time human freeze action), never on joint_support/shift_status
+    # or any other per-candidate support dimension, and it never applies
+    # to the shadow_candidate display above.
+    if manifest.STATUS == "DEVELOPMENT":
         payload["decision_timestamp_utc"] = datetime.now(timezone.utc).isoformat()
-        payload["abstain_reason"] = "CERTIFICATION_STREAM_NOT_READY"
+        payload["abstain_reason"] = "POLICY_NOT_FROZEN"
         return payload
 
-    # Honest early-exit: today, support can NEVER pass for any candidate
-    # regardless of ledger content (joint_support/shift_status are still
-    # UNESTABLISHED -- see calibration/support.py). The shadow candidate
-    # above was already computed and attached; this only short-circuits
-    # the (expensive, and currently always-empty) real support gating.
-    if support_is_structurally_unreachable():
-        payload["decision_timestamp_utc"] = datetime.now(timezone.utc).isoformat()
-        payload["abstain_reason"] = "NO_PAIR_IN_SUPPORT"
-        return payload
-
-    # ONE snapshot per slate (mission section 4: "Every V2 decision must
-    # reference an immutable calibration snapshot"), built once and reused
-    # for every candidate -- not rebuilt per pair.
-    calibration_snapshot = build_snapshot(calibration_store, as_of=calibration_as_of)
-    calibration_rows = calibration_store.observations_as_of(calibration_as_of)
+    # calibration_store is None (e.g. no --calibration-ledger passed) is
+    # treated as an honest ZERO accumulated observations, not a special
+    # circular early-return: state_support/market_support/line_support
+    # will correctly report FAIL for lack of data, which the aggregation
+    # below surfaces as a real, specific reason -- exactly what would
+    # happen with a real-but-empty ledger. There is no separate code path.
+    calibration_snapshot = build_snapshot(calibration_store, as_of=calibration_as_of) if calibration_store is not None else None
+    calibration_rows = calibration_store.observations_as_of(calibration_as_of) if calibration_store is not None else []
+    independent_slate_count = calibration_snapshot.independent_slate_count if calibration_snapshot is not None else 0
 
     # Section 6: prefer cross-game pairs -- same-game pairs carry no real
     # quote by construction (see _to_candidate_wager), so they would never
     # be economically actionable anyway; excluding them here is purely an
     # efficiency filter, not a separate authority decision.
-    #
-    # Support gating now comes from the REAL forward-only calibration
-    # ledger (calibration_as_of, captured above, before any of this
-    # work) -- not the earlier placeholder. See _pair_in_support /
-    # calibration/support.py: with the joint_support and shift_status
-    # dimensions still UNESTABLISHED (no validated research exists for
-    # either), every candidate correctly reports not-in-support right
-    # now, regardless of ledger size -- this is an honest limitation, not
-    # a bug (see calibration/support.py's module docstring).
-    cross_game_candidates = [
-        c for c in candidates
-        if c.leg_1.game_id != c.leg_2.game_id
-        and _pair_in_support(c, snapshot_rows=calibration_rows, independent_slate_count=calibration_snapshot.independent_slate_count, predictive_version=predictive_version, state_version=state_version)
-    ]
+    cross_game_candidates = [c for c in candidates if c.leg_1.game_id != c.leg_2.game_id]
     decision_frozen_at = datetime.now(timezone.utc).isoformat()
     payload["decision_timestamp_utc"] = decision_frozen_at
-    # Mission section 4, enforced with a strict comparison, not merely
-    # documented: refuse to proceed if the snapshot this decision relied
-    # on doesn't strictly precede the decision itself.
-    assert_snapshot_precedes_decision(calibration_snapshot, decision_frozen_at)
-    payload["calibration_snapshot_id"] = calibration_snapshot.calibration_snapshot_id
-    payload["calibration_snapshot_sha256"] = calibration_snapshot.calibration_snapshot_sha256
+    if calibration_snapshot is not None:
+        # Mission section 4, enforced with a strict comparison, not merely
+        # documented: refuse to proceed if the snapshot this decision
+        # relied on doesn't strictly precede the decision itself.
+        assert_snapshot_precedes_decision(calibration_snapshot, decision_frozen_at)
+        payload["calibration_snapshot_id"] = calibration_snapshot.calibration_snapshot_id
+        payload["calibration_snapshot_sha256"] = calibration_snapshot.calibration_snapshot_sha256
+
     if not cross_game_candidates:
-        payload["abstain_reason"] = "NO_PAIR_IN_SUPPORT"
+        payload["abstain_reason"] = "NO_CANDIDATES"
         return payload
 
-    wagers = [_to_candidate_wager(c) for c in cross_game_candidates]
-    by_wager_id = {c.candidate_id: c for c in cross_game_candidates}
+    # Support gating comes from the REAL forward-only calibration ledger
+    # (calibration_as_of, captured above, before any of this work), using
+    # ONLY the REQUIRED dimensions -- market_support/line_support/
+    # state_support -- via calibration/support.py's GateMode. This is the
+    # fix for the circular dependency this module's docstring describes:
+    # joint_support/shift_status are OBSERVE_ONLY and can never block here,
+    # so selection genuinely becomes possible once real REQUIRED evidence
+    # accumulates, instead of being permanently unreachable.
+    support_pairs = [
+        _pair_support(c, snapshot_rows=calibration_rows, independent_slate_count=independent_slate_count, predictive_version=predictive_version, state_version=state_version)
+        for c in cross_game_candidates
+    ]
+    supported_candidates = [c for c, sp in zip(cross_game_candidates, support_pairs) if _pair_in_support(sp)]
+    if not supported_candidates:
+        payload["abstain_reason"] = _aggregate_blocking_reason(support_pairs)
+        return payload
+
+    # Deterministic, quality-blind truncation -- see
+    # manifest.MAX_CANDIDATES_PER_SLATE's docstring. Sorted by
+    # candidate_id (a structural identity key), never by predicted
+    # probability/price/joint score/etc.
+    if len(supported_candidates) > manifest.MAX_CANDIDATES_PER_SLATE:
+        supported_candidates = sorted(supported_candidates, key=lambda c: c.candidate_id)[: manifest.MAX_CANDIDATES_PER_SLATE]
+
+    wagers = [_to_candidate_wager(c) for c in supported_candidates]
+    by_wager_id = {c.candidate_id: c for c in supported_candidates}
 
     selection = select_action_for_day(eligibility, wagers, r_max=manifest.R_MAX_ACCEPTED)
     decision_record = build_decision_record(
@@ -279,7 +349,7 @@ def build_slate_payload(
         eligibility=eligibility,
         decision_timestamp_utc=decision_frozen_at,
         predictive_model_version=predictive_version,
-        candidate_universe_size=len(cross_game_candidates),
+        candidate_universe_size=len(supported_candidates),
         action_selection=selection,
         c=manifest.C_MIN_COVERAGE,
         r=manifest.R_MAX_LOSS_RISK,
@@ -293,14 +363,36 @@ def build_slate_payload(
         "action": decision_record.action,
         "world_certificate_diagnostics": decision_record.world_certificate_diagnostics,
     }
+    # Durable persistence (mission section 19/27): the ephemeral per-run
+    # JSON this payload becomes does not survive past this CI run (see
+    # decision_record_store.py's module docstring) -- this is the ONLY
+    # place a DecisionRecord is admitted, and it is admitted exactly once
+    # per date, idempotently, regardless of ACT/ABSTAIN outcome, so
+    # settle_evidence.py has something real to grade later. This never
+    # revises an already-frozen decision.
+    if decision_record_store is not None:
+        decision_record_store.admit(decision_record)
 
     if selection.action == 0:
+        # Support-passing candidates existed, but none was certified by
+        # the frozen G_C/G_L/G_V machinery (no real quote, price outside
+        # D_MAX, or a vacuous world certificate -- see policy.py's own
+        # select_action_for_day, untouched by this change).
         payload["abstain_reason"] = "NO_PAIR_PASSES_FROZEN_POLICY"
         return payload
 
     selected_candidate = by_wager_id[selection.selected.wager_id]
     payload["action"] = "ACT"
     payload["selected_parlay"] = selected_candidate.as_dict()
+    payload["selection_status"] = "SELECTED"
+    # Shadow action semantics (mission): A_t=1 means the frozen policy
+    # selected one exact wager at a real frozen quote, regardless of
+    # whether real money is staked. staking_authorized stays False --
+    # selection alone never authorizes production/real-money staking; only
+    # the outer PARLAY_CERTIFICATION_V2 state machine reaching
+    # SUPPORTED_CURRENT may ever change that, and never from this module.
+    payload["shadow_execution_status"] = "EXECUTED_SHADOW"
+    payload["staking_authorized"] = False
     return payload
 
 
@@ -313,6 +405,7 @@ def main() -> None:
     parser.add_argument("--predictive-version", type=str, default="H_OVER_RANKER_V1+MULTI_TARGET")
     parser.add_argument("--state-version", type=str, default="MULTI_TARGET_BROAD_V1")
     parser.add_argument("--calibration-ledger", type=Path, default=None, help="Path to the forward-only calibration ledger JSONL (sports/mlb/parlay_v2/calibration/store.py). Omit to run with no calibration support (always abstains).")
+    parser.add_argument("--decision-record-ledger", type=Path, default=None, help="Path to the durable per-day DecisionRecord ledger (decision_record_store.py). Omit to skip persistence (e.g. for local/manual runs).")
     args = parser.parse_args()
 
     pool_exists = args.pool_csv.exists()
@@ -325,6 +418,7 @@ def main() -> None:
         decision_cutoff_met=True,
     )
     calibration_store = CalibrationStore(args.calibration_ledger) if args.calibration_ledger else None
+    decision_record_store = DecisionRecordStore(args.decision_record_ledger) if args.decision_record_ledger else None
     payload = build_slate_payload(
         pool_csv=pool_csv,
         slate_id=args.slate_id,
@@ -333,6 +427,7 @@ def main() -> None:
         state_version=args.state_version,
         mode=args.mode,
         calibration_store=calibration_store,
+        decision_record_store=decision_record_store,
     )
     args.out_json.parent.mkdir(parents=True, exist_ok=True)
     with open(args.out_json, "w") as f:

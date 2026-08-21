@@ -613,8 +613,16 @@ def test_production_authorized_is_false_and_never_settable_programmatically():
     assert manifest.PRODUCTION_AUTHORIZED is False
 
 
-def test_manifest_status_is_development_not_auto_frozen():
-    assert manifest.STATUS == "DEVELOPMENT"
+def test_manifest_status_reflects_a_deliberate_freeze_never_production():
+    """STATUS was deliberately advanced to FROZEN_PROSPECTIVE_INCONCLUSIVE
+    (the mission that fixed the circular support-gate bug -- see
+    manifest.CONCLUSION_REASONING for the three-step freeze this
+    accompanied). The invariant this test guards has not changed: STATUS
+    must never silently reach a production-authorizing value on its own,
+    and PRODUCTION_AUTHORIZED must stay False regardless of STATUS."""
+    assert manifest.STATUS == "FROZEN_PROSPECTIVE_INCONCLUSIVE"
+    assert manifest.STATUS not in ("SUPPORTED_CURRENT", "PRODUCTION_AUTHORIZED")
+    assert manifest.PRODUCTION_AUTHORIZED is False
 
 
 def test_no_ast_assignment_sets_production_authorized_true():

@@ -69,6 +69,9 @@ def _config_hash() -> str:
     config = {
         "eligibility_version": manifest.ELIGIBILITY_VERSION,
         "policy_version": manifest.POLICY_VERSION,
+        "prospective_policy_id": manifest.PROSPECTIVE_POLICY_ID,
+        "support_gate_modes": manifest.SUPPORT_GATE_MODES,
+        "max_candidates_per_slate": manifest.MAX_CANDIDATES_PER_SLATE,
         "settlement_version": SETTLEMENT_VERSION,
         "world_certificate_version": WORLD_CERTIFICATE_VERSION,
         "evidence_store_version": EVIDENCE_STORE_VERSION,
@@ -100,7 +103,17 @@ def build_readiness_artifact(policy_id: str) -> dict:
     config_hash, config = _config_hash()
     now = datetime.now(timezone.utc).isoformat()
 
-    known_unestablished_support_dimensions = ["joint_support", "shift_status"]
+    # joint_support/shift_status are OBSERVE_ONLY (calibration/support.py's
+    # GateMode) -- they are informational forever, until independently
+    # researched and promoted to REQUIRED in a NEW policy version. Freeze
+    # readiness does NOT wait on them: that was the exact circularity this
+    # mission fixed (see support.py's module docstring). The three
+    # REQUIRED dimensions -- market_support/line_support/state_support --
+    # are real, implemented, and frozen with real thresholds (N_MARKET/
+    # N_LINE/N_STATE) already; whether any given candidate currently PASSES
+    # them is a per-slate ledger-content question, not a freeze-readiness
+    # (code/config) question, so it is correctly not checked here either.
+    observe_only_support_dimensions = ["joint_support", "shift_status"]
 
     readiness = {
         "policy_id": policy_id,
@@ -110,27 +123,22 @@ def build_readiness_artifact(policy_id: str) -> dict:
         "frozen_config": config,
         "uncommitted_relevant_changes": dirty,
         "git_clean": len(dirty) == 0,
-        "known_unestablished_support_dimensions": known_unestablished_support_dimensions,
+        "observe_only_support_dimensions": observe_only_support_dimensions,
+        "required_support_dimensions": ["market_support", "line_support", "state_support"],
         "candidate_enumeration": "all cross-game 2-leg pairs from the pregame action-eligible universe (candidate_adapter.build_candidates_for_day)",
         "tie_breaker": "highest retained_probability_mass, then lexicographic wager_id (policy.select_action_for_day)",
         "max_actions_per_eligible_slate": manifest.MAX_ACTIONS_PER_ELIGIBLE_SLATE,
         "leg_count": 2,
         "supported_books": "real market_source rows only (no synthetic/fabricated prices, enforced at ingestion)",
     }
-    # FREEZE_READY requires: clean git tree AND no known-unestablished
-    # support dimension left blocking. The second condition is
-    # deliberately NOT satisfiable by this implementation today -- see
-    # support.py's module docstring -- so freeze_ready is correctly False
-    # until that research gap is closed, however clean the git tree is.
-    readiness["freeze_ready"] = bool(readiness["git_clean"] and not known_unestablished_support_dimensions)
-    readiness["freeze_ready_reason"] = (
-        "clean" if readiness["freeze_ready"] else (
-            "uncommitted relevant changes" if dirty else
-            f"support dimensions not yet established: {known_unestablished_support_dimensions} "
-            "(evaluate_support will always report in_support=False until these are researched and frozen with real thresholds -- "
-            "see calibration/support.py's module docstring)"
-        )
-    )
+    # FREEZE_READY requires only a clean git tree -- the frozen code/config
+    # this artifact hashes is what's being locked in, not today's ledger
+    # content. This does NOT authorize production/staking (see manifest.py:
+    # PRODUCTION_AUTHORIZED stays False unconditionally, independent of
+    # freeze_ready) -- it only lets real prospective evidence begin
+    # accumulating from real, non-circular selection.
+    readiness["freeze_ready"] = readiness["git_clean"]
+    readiness["freeze_ready_reason"] = "clean" if readiness["freeze_ready"] else "uncommitted relevant changes"
     return readiness
 
 

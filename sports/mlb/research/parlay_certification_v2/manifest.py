@@ -32,6 +32,25 @@ STATE_MACHINE_VERSION = "PARLAY_CERTIFICATION_STATE_V1"
 MAX_ACTIONS_PER_ELIGIBLE_SLATE = 1
 TWO_LEG_PARLAYS_ONLY = True
 
+# CANDIDATE-SET SIZE BOUND (mission: fixing the circular support-gate bug
+# made this a LIVE concern for the first time -- before the fix,
+# support_is_structurally_unreachable() always short-circuited before any
+# candidate ever reached select_action_for_day, so an unbounded C(n,2)
+# candidate set was moot. Once real REQUIRED support accumulates broadly
+# across a mature ledger (observed in testing: 203/420 legs individually
+# support-passing on one real slate -> 27,279 candidate pairs reaching
+# certification), evaluating every one of them daily is a real runtime
+# risk. This bound truncates the SUPPORT-PASSING candidate set
+# deterministically -- sorted by candidate_id, a purely structural key
+# with NO relationship to predicted probability, price, or any other
+# quality signal -- before it reaches select_action_for_day. It never
+# changes WHICH candidate gets selected among those considered (the
+# frozen tie-breaker in policy.py is untouched), only how many are
+# considered; like MAX_ELIGIBLE_LEGS_PER_DAY in
+# calibration/pair_ingest.py, this is a volume bound, never a quality
+# gate, and it does not touch the G_C/G_L/G_V certificate math at all.
+MAX_CANDIDATES_PER_SLATE = 500
+
 # Predeclared targets -- frozen BEFORE any prospective evaluation (section
 # 14). No prior value existed anywhere in this repo for c/delta/R_max (the
 # archived risk_gate had only a single RISK_TARGET=0.30, reused for r
@@ -85,30 +104,87 @@ PROGRAM_ALPHA_LEDGER_PATH = "sports/mlb/research/parlay_certification_v2/reports
 # while building this integration -- counts only as DEVELOPMENT/SHADOW,
 # never as confirmatory prospective evidence.
 
-# PolicyStatus value. DEVELOPMENT until a deliberate freeze action moves it
-# to FROZEN_PROSPECTIVE_INCONCLUSIVE -- see CONCLUSION_REASONING; this file
-# existing does not itself constitute that freeze.
-STATUS = "DEVELOPMENT"
+# PROSPECTIVE POLICY IDENTIFIER (mission: "Resolve the PARLAY_V2
+# perpetual-abstention problem WITHOUT weakening the theorem-grade outer
+# certification system"). The ACTION RULE changed materially -- support
+# evaluation moved from "all five dimensions (including two permanently
+# UNESTABLISHED ones) must PASS" to gate-mode-aware evaluation where only
+# the three REQUIRED, real, implemented dimensions can block (see
+# calibration/support.py). Per this program's own version-isolation
+# discipline, a materially different action rule is a NEW policy version,
+# never a silent redefinition of POLICY_VERSION above (POLICY_VERSION
+# names the *structural shape* -- two-leg, single-action -- which is
+# unchanged; PROSPECTIVE_POLICY_ID names this specific frozen attempt at
+# proving it). "...001" was already used as a label on a never-activated
+# freeze-readiness dry-run artifact from an earlier session, so this
+# increments to "002" rather than reusing it for different semantics.
+PROSPECTIVE_POLICY_ID = "PARLAY_POLICY_V2_PROSPECTIVE_002"
+
+# FROZEN GATE-MODE CONFIGURATION for PROSPECTIVE_POLICY_ID above (mission
+# section 4). REQUIRED dimensions block action when not PASS; OBSERVE_ONLY
+# dimensions are computed and exposed for research but can NEVER block,
+# regardless of status (including UNESTABLISHED) -- see
+# calibration/support.py's GateMode/SupportDimension for the authoritative
+# implementation this dict is the frozen manifest record of. Promoting
+# joint_support or shift_status to REQUIRED requires an independently
+# validated, non-arbitrary threshold AND a new PROSPECTIVE_POLICY_ID --
+# never an edit to this dict in place once frozen.
+SUPPORT_GATE_MODES = {
+    "market_support": "REQUIRED",
+    "line_support": "REQUIRED",
+    "state_support": "REQUIRED",
+    "joint_support": "OBSERVE_ONLY",
+    "shift_status": "OBSERVE_ONLY",
+}
+
+# PolicyStatus value. Advanced to FROZEN_PROSPECTIVE_INCONCLUSIVE as a
+# deliberate freeze action for PROSPECTIVE_POLICY_ID above -- see
+# CONCLUSION_REASONING for the three-step freeze this accompanies
+# (alpha-ledger spend + prospective_start boundary, both performed
+# alongside this edit, never automatically).
+STATUS = "FROZEN_PROSPECTIVE_INCONCLUSIVE"
 
 CONCLUSION_REASONING = """
 This manifest freezes PARLAY_CERTIFICATION_V2 as the sole authoritative
-certification/decision layer for this research system, but records ZERO
-real prospective evidence so far. STATUS is DEVELOPMENT, not
-FROZEN_PROSPECTIVE_INCONCLUSIVE: the c/r/delta/alpha values above are
-provisional defaults carried over from the old single-endpoint risk_gate
-convention (RISK_TARGET->r) or set conservatively where no prior frozen
-value existed (c, delta); D_MAX=6.0 is a real product-profile decision
-(see its comment above), not a placeholder. None of this has been through
-a deliberate freeze review for a real prospective run. Advancing STATUS to
-FROZEN_PROSPECTIVE_INCONCLUSIVE requires, in order: (1) a final review of
-every constant in this file, (2) recording this policy version's alpha
-spend in the program alpha ledger
-(sports/mlb/parlay_v2/program_alpha.ProgramAlphaLedger.spend), (3) setting
-the one-way prospective_start boundary
-(parlay_certification_v2.prospective_boundary.set_prospective_start_timestamp).
-None of these three are automatic consequences of this file existing or
-of the implementation being validated -- see MIGRATION.md's NEXT
-PROSPECTIVE STEP.
+certification/decision layer for this research system. STATUS advanced
+DEVELOPMENT -> FROZEN_PROSPECTIVE_INCONCLUSIVE for PROSPECTIVE_POLICY_ID
+= "PARLAY_POLICY_V2_PROSPECTIVE_002" as the deliberate freeze action for
+the mission that fixed the circular support-gate bug (see
+calibration/support.py's module docstring): joint_support/shift_status
+moved from wrongly-REQUIRED-forever to correctly OBSERVE_ONLY, making
+real selection reachable for the first time. This freeze records ZERO
+real prospective evidence so far -- STATUS documents that a policy
+version is now open to accumulate it, not that any exists yet. The
+c/r/delta/alpha values are still the provisional defaults carried over
+from the old single-endpoint risk_gate convention (RISK_TARGET->r) or set
+conservatively where no prior frozen value existed (c, delta); D_MAX=6.0
+is a real product-profile decision (see its comment above), not a
+placeholder. All three freeze prerequisites were completed alongside this
+STATUS edit, in order: (1) this final review of every constant in this
+file (SUPPORT_GATE_MODES/MAX_CANDIDATES_PER_SLATE added, all other
+values left untouched), (2) recording this policy version's alpha spend
+in the program alpha ledger
+(sports/mlb/parlay_v2/program_alpha.ProgramAlphaLedger.spend), (3)
+setting the one-way prospective_start boundary
+(parlay_certification_v2.prospective_boundary.set_prospective_start_timestamp)
+for PROSPECTIVE_POLICY_ID via
+sports/mlb/parlay_v2/freeze_prospective.py --confirm.
+
+IMPORTANT -- this freeze is NOT a claim of profitability or of certified
+production-readiness. A SEPARATE, deliberately conservative bottleneck
+(FROZEN_APS_THRESHOLD=1.0, retain-all, in run_parlay_v2.py/
+candidate_adapter.py -- untouched by this mission, since it is part of
+the G_C/G_L/G_V world-certificate machinery this mission was explicitly
+required not to weaken) means the world certificate cannot yet certify
+any candidate built from a non-deterministic prediction: any nonzero
+probability mass on a losing world violates zero_loss_counterexamples.
+Real ACT selections -- and therefore real coverage/loss/return evidence
+-- will not begin accumulating until that SEPARATE APS-calibration
+research thread (re-deriving a shrinking APS threshold from real settled
+prospective days, already flagged in this file's own FROZEN_APS_THRESHOLD
+comment) is done. This freeze only removes the circular block that made
+selection permanently impossible regardless of that; it does not by
+itself make ACT happen today.
 
 Per section 16: implementation validation
 (PARLAY_CERTIFICATION_V2_IMPLEMENTATION_VALIDATED, established by

@@ -68,6 +68,26 @@ MLB_PARLAY_V2_INGEST = REPO_ROOT / "sports" / "mlb" / "parlay_v2" / "calibration
 # days each run is a cheap, safe way to catch up a day whose data lagged
 # behind a prior run without needing separate failure tracking.
 MLB_PARLAY_V2_INGEST_LOOKBACK_DAYS = 4
+# Pair-level calibration ledger (SEPARATE research stream -- see
+# calibration/pair_schema.py's module docstring). Every settled,
+# support-passing candidate pair, NOT just the one pair the policy
+# selected -- this never feeds policy action, only future joint-
+# calibration research (joint_support stays OBSERVE_ONLY regardless).
+MLB_PARLAY_V2_PAIR_LEDGER = REPO_ROOT / "sports" / "mlb" / "parlay_v2" / "calibration" / "reports" / "pair_observation_ledger.jsonl"
+MLB_PARLAY_V2_PAIR_INGEST = REPO_ROOT / "sports" / "mlb" / "parlay_v2" / "calibration" / "pair_ingest.py"
+# Durable per-day DecisionRecord ledger (decision_record_store.py) --
+# written by MLB_PARLAY_V2_RUNNER itself at decision time, every run.
+MLB_PARLAY_V2_DECISION_RECORD_LEDGER = REPO_ROOT / "sports" / "mlb" / "research" / "parlay_certification_v2" / "reports" / "decision_record_ledger.jsonl"
+# Settlement -> policy evidence ingestion (settle_evidence.py) -- the only
+# writer of FinalEvidenceRecord rows, one file per policy_version under
+# this root (evidence_store.py). MLB_PARLAY_V2_POLICY_VERSION MUST match
+# sports.mlb.research.parlay_certification_v2.manifest.POLICY_VERSION
+# exactly (the STRUCTURAL policy shape identifier stamped onto every
+# DecisionRecord -- see settle_evidence.py's module docstring for why
+# this is a different identifier than the prospective policy id).
+MLB_PARLAY_V2_SETTLE_EVIDENCE = REPO_ROOT / "sports" / "mlb" / "research" / "parlay_certification_v2" / "settle_evidence.py"
+MLB_PARLAY_V2_EVIDENCE_STORE_ROOT = REPO_ROOT / "sports" / "mlb" / "research" / "parlay_certification_v2" / "reports" / "evidence"
+MLB_PARLAY_V2_POLICY_VERSION = "PARLAY_POLICY_V2_TWO_LEG_SINGLE_ACTION"
 MLB_CONFIDENCE_CALIBRATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "live_board_confidence.py"
 MLB_PICK_SURVIVAL_MODEL = REPO_ROOT / "sports" / "mlb" / "scripts" / "pick_survival_model.py"
 MLB_LATENT_POOL_REPLAY = REPO_ROOT / "sports" / "mlb" / "scripts" / "backtest_latent_daily_pools.py"
@@ -867,6 +887,53 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
         except Exception as exc:  # noqa: BLE001 -- deliberate: ingestion is additive, never blocks the rest of the pipeline
             print(f"[warning] Calibration ingestion for {ingest_stamp} failed, will retry on a later run: {format_step_failure(exc)}")
 
+        # Pair-level ledger (SEPARATE research stream, see
+        # MLB_PARLAY_V2_PAIR_LEDGER above) -- runs for the same settled
+        # day, after the leg-level ledger admission above so it can gate
+        # pairing on that day's just-admitted leg observations too.
+        # Best-effort, same as the leg-level step: never blocks the rest
+        # of the pipeline.
+        try:
+            run_step(
+                f"Ingest MLB Pair Observations ({ingest_stamp})",
+                [
+                    args.python,
+                    str(MLB_PARLAY_V2_PAIR_INGEST),
+                    "--stamp",
+                    ingest_stamp,
+                    "--pair-ledger",
+                    str(MLB_PARLAY_V2_PAIR_LEDGER),
+                    "--calibration-ledger",
+                    str(MLB_PARLAY_V2_CALIBRATION_LEDGER),
+                ],
+            )
+        except Exception as exc:  # noqa: BLE001 -- deliberate: pair ingestion is additive, never blocks the rest of the pipeline
+            print(f"[warning] Pair ingestion for {ingest_stamp} failed, will retry on a later run: {format_step_failure(exc)}")
+
+        # Settlement -> policy evidence (grades that day's ALREADY-FROZEN
+        # decision, never re-selects). No-op if no decision was frozen for
+        # this day, or if it isn't fully gradeable yet -- see
+        # settle_evidence.py's own status codes. Best-effort, same as the
+        # two ingestion steps above.
+        try:
+            run_step(
+                f"Settle MLB Policy Evidence ({ingest_stamp})",
+                [
+                    args.python,
+                    str(MLB_PARLAY_V2_SETTLE_EVIDENCE),
+                    "--date",
+                    ingest_stamp,
+                    "--decision-record-ledger",
+                    str(MLB_PARLAY_V2_DECISION_RECORD_LEDGER),
+                    "--evidence-store-root",
+                    str(MLB_PARLAY_V2_EVIDENCE_STORE_ROOT),
+                    "--policy-version",
+                    MLB_PARLAY_V2_POLICY_VERSION,
+                ],
+            )
+        except Exception as exc:  # noqa: BLE001 -- deliberate: settlement is additive, never blocks the rest of the pipeline
+            print(f"[warning] Evidence settlement for {ingest_stamp} failed, will retry on a later run: {format_step_failure(exc)}")
+
     # PARLAY_POLICY_V2 -- separate product path, additive step. Failure
     # here must never block the singles/legacy-parlay export above: the
     # exporter treats a missing/unreadable V2 artifact as a clear
@@ -888,6 +955,8 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
                 str(parlay_v2_json),
                 "--calibration-ledger",
                 str(MLB_PARLAY_V2_CALIBRATION_LEDGER),
+                "--decision-record-ledger",
+                str(MLB_PARLAY_V2_DECISION_RECORD_LEDGER),
             ],
         )
     except Exception as exc:  # noqa: BLE001 -- deliberate: V2 is additive, never blocks singles publication
