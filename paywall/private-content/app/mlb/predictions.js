@@ -12,6 +12,8 @@ class DailyPredictionsPage {
             runMeta: document.getElementById("predictionRunMeta"),
             parlaySection: document.getElementById("dailyParlaySection"),
             parlayContent: document.getElementById("dailyParlayContent"),
+            parlayV2Section: document.getElementById("parlayV2Section"),
+            parlayV2Content: document.getElementById("parlayV2Content"),
             poolTitle: document.getElementById("predictionPoolTitle"),
             dateNav: document.getElementById("predictionDateNav"),
         };
@@ -70,6 +72,7 @@ class DailyPredictionsPage {
         try {
             await this.load(date);
             this.renderDailyParlay();
+            this.renderParlayV2();
             this.renderCards();
             return true;
         } catch (error) {
@@ -314,6 +317,98 @@ class DailyPredictionsPage {
                 this.renderDailyParlay();
             });
         });
+    }
+
+    /**
+     * PARLAY_POLICY_V2 -- a SEPARATE product path from renderDailyParlay()
+     * above (the legacy system). Reads ONLY this.data.parlays; never reads
+     * or writes anything the legacy method touches (daily_parlay). Status
+     * language is restricted to the allowed vocabulary (mission section
+     * 10) -- never "guaranteed" / "safe bet" / "proven winner" / "lock".
+     */
+    renderParlayV2() {
+        const section = this.elements.parlayV2Section;
+        const content = this.elements.parlayV2Content;
+        if (!section || !content) return;
+
+        const parlay = this.data?.parlays || {};
+        const statusLabel = this.formatParlayV2StatusLabel(parlay.policy_status);
+        const statusTone = this.formatParlayV2StatusTone(parlay.policy_status);
+
+        if (parlay.action !== "ACT" || !parlay.selected_parlay) {
+            const reason = String(parlay.abstain_reason || "").trim();
+            content.innerHTML = `
+                <div class="daily-parlay__header">
+                    <div>
+                        <p class="vault-page-kicker">Theory-grounded 2-leg parlay</p>
+                        <h2 id="parlayV2Title">Parlays (V2)</h2>
+                    </div>
+                    ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Abstain") : ""}
+                </div>
+                <p class="daily-parlay__empty">${this.escapeHtml(this.formatParlayV2AbstainReason(reason))}</p>
+                <p class="daily-parlay__state">Policy ${this.escapeHtml(parlay.policy_version || "n/a")} / Status: ${this.escapeHtml(statusLabel)}</p>
+            `;
+            return;
+        }
+
+        const selected = parlay.selected_parlay;
+        const legs = [selected.leg_1, selected.leg_2].filter(Boolean).map((leg, index) => {
+            const target = window.CardVault ? window.CardVault.formatTargetLabel(leg.target) : String(leg.target || "");
+            return `
+                <div class="daily-parlay__leg">
+                    <span class="daily-parlay__leg-number">${String(index + 1).padStart(2, "0")}</span>
+                    <div class="daily-parlay__leg-copy">
+                        <strong>${this.escapeHtml(leg.player || "Unknown player")}</strong>
+                        <span>${this.escapeHtml(`${leg.side || ""} ${this.formatNumber(leg.line, 1)} ${target}`)}</span>
+                    </div>
+                </div>
+            `;
+        }).join("");
+
+        content.innerHTML = `
+            <div class="daily-parlay__header">
+                <div>
+                    <p class="vault-page-kicker">Theory-grounded 2-leg parlay</p>
+                    <h2 id="parlayV2Title">Parlays (V2)</h2>
+                </div>
+                ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Parlay candidate") : ""}
+            </div>
+            <div class="daily-parlay__legs">${legs}</div>
+            <p class="daily-parlay__state">Policy ${this.escapeHtml(parlay.policy_version || "n/a")} / Status: ${this.escapeHtml(statusLabel)}</p>
+        `;
+    }
+
+    formatParlayV2StatusLabel(policyStatus) {
+        const status = String(policyStatus || "").toUpperCase();
+        const labels = {
+            DEVELOPMENT: "Shadow",
+            FROZEN_PROSPECTIVE_INCONCLUSIVE: "Prospective inconclusive",
+            FROZEN_POLICY_PROSPECTIVELY_SUPPORTED: "Supported current",
+            SUPPORTED_CURRENT: "Supported current",
+            PRODUCTION_DEMOTED: "Production demoted",
+        };
+        return labels[status] || "Prospective inconclusive";
+    }
+
+    formatParlayV2StatusTone(policyStatus) {
+        const status = String(policyStatus || "").toUpperCase();
+        if (status === "SUPPORTED_CURRENT" || status === "FROZEN_POLICY_PROSPECTIVELY_SUPPORTED") return "active";
+        if (status === "PRODUCTION_DEMOTED") return "withheld";
+        return "stale"; // DEVELOPMENT / FROZEN_PROSPECTIVE_INCONCLUSIVE / unknown
+    }
+
+    formatParlayV2AbstainReason(reason) {
+        const messages = {
+            NO_REAL_QUOTE: "No real market quote available for today's slate.",
+            NO_PAIR_IN_SUPPORT: "No pair currently meets the frozen support requirements.",
+            PRICE_OUT_OF_RANGE: "The best available price fell outside the frozen accepted range.",
+            NO_PAIR_PASSES_FROZEN_POLICY: "No pair cleared the frozen certification requirements today.",
+            OPERATIONALLY_INELIGIBLE: "Today's slate is not operationally eligible for a parlay decision.",
+            POLICY_NOT_FROZEN: "The V2 policy has not yet been frozen for prospective use.",
+            CERTIFICATION_STREAM_NOT_READY: "Not enough real prospective history has accumulated yet.",
+            PARLAY_V2_ARTIFACT_UNAVAILABLE: "V2 parlay data is not available for this run.",
+        };
+        return messages[reason] || "No qualifying parlay was selected for this slate.";
     }
 
     formatNumber(value, digits = 2) {
