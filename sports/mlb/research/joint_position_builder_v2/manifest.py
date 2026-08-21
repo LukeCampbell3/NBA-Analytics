@@ -7,6 +7,22 @@ empirical-risk certificate becomes available on real, non-retired data
 (see risk_gate.SelectiveRiskCertificate), the status may advance to
 SHADOW_ONLY -- never further without a separate, explicit decision this
 file does not make for you.
+
+REVISION NOTE (see STATE.md for full detail, not a retroactive rewrite of
+the original evidence below -- the original H-only ablation results and
+their reasoning are left intact because they were correctly derived from
+what was tested; this note narrows the SCOPE of what "no real price
+coverage" was ever true of): the original STATUS string below was accurate
+for the H target specifically (which the original 2x2 ablation A/B/C/D was
+scoped to) but was mistakenly read as "no real price coverage exists in
+DEVELOPMENT_STAMPS at all". It does not -- R (57%), TB (58%), and HR (53%)
+all have substantial real price coverage in the same window. See
+multi_target_universe.py / multi_target_backtest.py / STATE.md for the
+generalized, real-price multi-target pass this produced. That pass's own
+conclusion is ALSO insufficient evidence, but for a different, better-
+grounded reason (marginal-model overconfidence outside the narrow H-OVER
+slice it was frozen on, plus too little data -- 12-16 days -- to resolve a
+day-clustered CI either way), not absence of priced markets.
 """
 
 PRODUCTION_AUTHORIZED = False
@@ -24,7 +40,18 @@ VERSION = "JOINT_POSITION_BUILDER_V2"
 # implemented and mechanically verified (see the theorem tests), but is
 # UNTESTABLE against real settled MLB outcomes with data currently available
 # outside the retired TEST block.
-STATUS = "INSUFFICIENT_EVIDENCE_NO_REAL_PRICE_COVERAGE_IN_DEVELOPMENT_WINDOW"
+#
+# NOTE: this STATUS string described the H-only ablation, not the full
+# picture -- see the REVISION NOTE above and STATE.md. Left as originally
+# written (not rewritten) because it accurately describes what that specific
+# ablation found; MULTI_TARGET_STATUS below is the up-to-date, broader
+# conclusion.
+STATUS = "INSUFFICIENT_EVIDENCE_NO_REAL_H_PRICE_COVERAGE_IN_DEVELOPMENT_WINDOW"
+
+# Up-to-date conclusion after generalizing beyond H (see STATE.md). Also
+# INSUFFICIENT_EVIDENCE, now for a MARGINAL MODEL / DATA reason rather than
+# an ACTION COVERAGE reason.
+MULTI_TARGET_STATUS = "INSUFFICIENT_EVIDENCE_MARGINAL_MODEL_UNCALIBRATED_OUTSIDE_H_OVER_AND_TOO_FEW_DAYS"
 
 CONCLUSION = "INSUFFICIENT_EVIDENCE"
 
@@ -72,6 +99,42 @@ selective-risk gate, one-pair-per-day cap) are implemented and mechanically
 correct. Whether it produces real economic value on real MLB games remains
 untested for lack of real combo-pricing data in the window this task is
 scoped to use.
+""".strip()
+
+MULTI_TARGET_CONCLUSION_REASONING = """
+Full detail in STATE.md; summary here for anyone reading only manifest.py.
+
+Real R/TB/HR (broad, both-direction) price coverage exists in
+DEVELOPMENT_STAMPS (3623 action-eligible rows, 12 days) -- the ACTION
+COVERAGE gap that blocked the H-only pass is closed. Running the real 2-leg
+pair backtest on this data (multi_target_backtest.py) found:
+
+  - The joint-probability mechanism's own confidence (mean p_joint=0.670 for
+    ++ pairs) is ~20.5 points above BOTH the actual both-win rate (0.465)
+    AND the market-implied joint probability from real prices (0.468, i.e.
+    1/D_S -- itself essentially perfectly calibrated against reality here,
+    gap -0.003). This isolates the problem to the MARGINAL MODEL
+    (probability_score, frozen on narrow H-OVER data) being overconfident
+    when applied to broad-mode R/TB/HR data it was never tuned on -- not to
+    the joint/pair mechanism, which is unmodified and was previously shown
+    well-calibrated in narrow H state.
+  - mean_joint_ev (the model's own belief in its edge) is misleadingly
+    high (+0.513 for ++ pairs) precisely because it's computed from that
+    same overconfident p_joint. The REALIZED backtest return for the same
+    pairs is negative (-0.059 for ++, -0.115 overall).
+  - Day-clustered bootstrap 90% CIs (the correct resampling unit, since a
+    day's ~25 legs generate up to 300 non-independent pairs) cross zero for
+    every slice examined, including the one filter that looks promising
+    (pairs where the model disagrees with the market favorably: +0.088
+    mean, CI [-0.041, +0.207], n=10 days) -- and that filter was
+    constructed post-hoc during this exact analysis pass, so it is a
+    hypothesis for a future frozen rule, not confirmed evidence.
+
+Conclusion: still INSUFFICIENT_EVIDENCE, but the bottleneck has moved from
+"no data" to "the frozen marginal model needs its own recalibration pass
+for the broad multi-target state, and even then there are only 12-16 real
+days available to resolve it against" -- a MARGINAL MODEL + DATA volume
+problem, not a mechanism-correctness problem.
 """.strip()
 
 NEXT_PROSPECTIVE_PROTOCOL = """

@@ -153,8 +153,20 @@ def enumerate_candidate_pairs(
     rows = day_action_rows.reset_index(drop=True)
     for idx_i, idx_j in combinations(range(len(rows)), 2):
         row_i, row_j = rows.iloc[idx_i], rows.iloc[idx_j]
-        leg_i = f"{row_i['player']}|{row_i['direction']}|{row_i['market_line']}"
-        leg_j = f"{row_j['player']}|{row_j['direction']}|{row_j['market_line']}"
+        # target is part of the identity: a player can carry the same
+        # direction/market_line under two different targets (e.g. R-OVER-0.5
+        # and TB-OVER-0.5), which collided into one leg id before this
+        # target-aware fix (caught when generalizing beyond H -- see
+        # multi_target_universe.py). game_id is ALSO part of the identity:
+        # on a doubleheader day the same player can carry an identical
+        # target/direction/market_line in two different games (both games'
+        # lines land on the same number), which is a second, distinct
+        # collision found while running the real multi-target backtest --
+        # those are genuinely two different legs, not the same leg twice.
+        target_i = row_i["target"] if "target" in row_i.index else "H"
+        target_j = row_j["target"] if "target" in row_j.index else "H"
+        leg_i = f"{row_i['player']}|{target_i}|{row_i['direction']}|{row_i['market_line']}|{row_i['game_id']}"
+        leg_j = f"{row_j['player']}|{target_j}|{row_j['direction']}|{row_j['market_line']}|{row_j['game_id']}"
         same_game = bool(row_i["game_id"] == row_j["game_id"])
 
         p_i, p_j = float(row_i["marginal_probability"]), float(row_j["marginal_probability"])
