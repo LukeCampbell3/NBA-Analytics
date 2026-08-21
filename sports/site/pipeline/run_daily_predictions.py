@@ -18,7 +18,7 @@ import shutil
 import subprocess
 import sys
 import time
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -54,10 +54,20 @@ MLB_PARLAY_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_daily_p
 MLB_PARLAY_V2_RUNNER = REPO_ROOT / "sports" / "mlb" / "parlay_v2" / "run_parlay_v2.py"
 # The forward-only calibration ledger (STREAM A) -- one persistent file,
 # appended to only after settlement is final for a given slate (see
-# sports/mlb/parlay_v2/calibration/store.py). This script does not write
-# to it; a separate settlement-ingestion step (not yet wired into this
-# pipeline -- see MIGRATION notes) is responsible for admissions.
+# sports/mlb/parlay_v2/calibration/store.py). This script only READS it
+# (never writes); MLB_PARLAY_V2_INGEST below is the only writer.
 MLB_PARLAY_V2_CALIBRATION_LEDGER = REPO_ROOT / "sports" / "mlb" / "parlay_v2" / "calibration" / "reports" / "calibration_ledger.jsonl"
+# Real settlement -> calibration ledger admission (STREAM A's only
+# writer). Runs on already-settled PAST days, never on today's own slate
+# -- see ingest.py's module docstring for why that ordering is what makes
+# this forward-only.
+MLB_PARLAY_V2_INGEST = REPO_ROOT / "sports" / "mlb" / "parlay_v2" / "calibration" / "ingest.py"
+# How many past days to (re-)attempt ingestion for on each run. Ingestion
+# is idempotent and gracefully admits zero rows for a day whose outcomes
+# aren't in Player-Predictor/Data-Proc-MLB yet, so re-attempting recent
+# days each run is a cheap, safe way to catch up a day whose data lagged
+# behind a prior run without needing separate failure tracking.
+MLB_PARLAY_V2_INGEST_LOOKBACK_DAYS = 4
 MLB_CONFIDENCE_CALIBRATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "live_board_confidence.py"
 MLB_PICK_SURVIVAL_MODEL = REPO_ROOT / "sports" / "mlb" / "scripts" / "pick_survival_model.py"
 MLB_LATENT_POOL_REPLAY = REPO_ROOT / "sports" / "mlb" / "scripts" / "backtest_latent_daily_pools.py"
@@ -828,6 +838,34 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
             str(parlay_json),
         ],
     )
+
+    # PARLAY_POLICY_V2 calibration ledger ingestion (STREAM A) -- admits
+    # PAST, already-settled days' real outcomes. Never touches today's own
+    # slate_id, which is what keeps this forward-only: whatever V2 decides
+    # for today, below, can only ever be informed by strictly earlier
+    # calibration_admitted_at rows. Best-effort per day (a day whose
+    # outcomes aren't in Data-Proc-MLB yet just admits zero rows this run
+    # and gets retried on a later run, per MLB_PARLAY_V2_INGEST_LOOKBACK_DAYS).
+    ingest_anchor = resolve_effective_run_date(args.run_date)
+    for lookback in range(1, MLB_PARLAY_V2_INGEST_LOOKBACK_DAYS + 1):
+        ingest_stamp = (ingest_anchor - timedelta(days=lookback)).strftime("%Y%m%d")
+        ingest_pool_csv = MLB_DAILY_RUNS_ROOT / ingest_stamp / f"daily_prediction_pool_{ingest_stamp}.csv"
+        if not ingest_pool_csv.exists():
+            continue
+        try:
+            run_step(
+                f"Ingest MLB Calibration Observations ({ingest_stamp})",
+                [
+                    args.python,
+                    str(MLB_PARLAY_V2_INGEST),
+                    "--stamp",
+                    ingest_stamp,
+                    "--ledger",
+                    str(MLB_PARLAY_V2_CALIBRATION_LEDGER),
+                ],
+            )
+        except Exception as exc:  # noqa: BLE001 -- deliberate: ingestion is additive, never blocks the rest of the pipeline
+            print(f"[warning] Calibration ingestion for {ingest_stamp} failed, will retry on a later run: {format_step_failure(exc)}")
 
     # PARLAY_POLICY_V2 -- separate product path, additive step. Failure
     # here must never block the singles/legacy-parlay export above: the

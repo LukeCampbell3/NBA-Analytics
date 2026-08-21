@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import pytest
 
 from sports.mlb.parlay_v2.calibration.schema import build_observation, exact_event_identity
@@ -308,3 +310,69 @@ def test_program_alpha_matches_manifest_and_stays_within_budget(tmp_path):
     assert ledger.total_spent() <= manifest.ALPHA_PROGRAM + 1e-12
     with pytest.raises(ValueError):
         ledger.spend(AlphaSpend("ANOTHER_POLICY", manifest.ALPHA_PROGRAM, "frozen_for_prospective_confirmation", "2026-08-22T00:00:00Z"))
+
+
+# ======================================================================
+# Real settlement ingestion (sports/mlb/parlay_v2/calibration/ingest.py)
+# ======================================================================
+
+from sports.mlb.parlay_v2.calibration.ingest import ingest_settled_slate  # noqa: E402
+
+REAL_SETTLED_STAMP = "20260802"  # a real archived, fully-settled MLB day
+
+
+def test_ingest_admits_real_settled_observations_and_is_idempotent(tmp_path):
+    ledger_path = tmp_path / "ledger.jsonl"
+    first = ingest_settled_slate(REAL_SETTLED_STAMP, ledger_path=ledger_path)
+    assert first["action_eligible_rows"] > 0
+    assert first["admitted"] == first["action_eligible_rows"]
+    assert first["already_present"] == 0
+
+    second = ingest_settled_slate(REAL_SETTLED_STAMP, ledger_path=ledger_path)
+    assert second["admitted"] == 0
+    assert second["already_present"] == first["action_eligible_rows"]
+
+    store = CalibrationStore(ledger_path)
+    assert len(store.all_observations()) == first["action_eligible_rows"]
+
+
+def test_ingest_never_backdates_calibration_admitted_at(tmp_path):
+    """calibration_admitted_at must reflect when ingestion actually ran,
+    never the settled slate's own date -- this is what the forward-only
+    invariant in store.py relies on."""
+    before = datetime.now(timezone.utc).isoformat()
+    ingest_settled_slate(REAL_SETTLED_STAMP, ledger_path=tmp_path / "ledger.jsonl")
+    after = datetime.now(timezone.utc).isoformat()
+
+    store = CalibrationStore(tmp_path / "ledger.jsonl")
+    rows = store.all_observations()
+    assert rows
+    for row in rows:
+        assert before <= row["calibration_admitted_at"] <= after
+        # the settled stamp (2026-08-02) is nowhere close to "now" (2026-08-21+)
+        assert not row["calibration_admitted_at"].startswith(REAL_SETTLED_STAMP[:4] + "-08-02")
+
+
+def test_ingested_observations_respect_forward_only_visibility(tmp_path):
+    ledger_path = tmp_path / "ledger.jsonl"
+    before_ingest = datetime.now(timezone.utc).isoformat()
+    ingest_settled_slate(REAL_SETTLED_STAMP, ledger_path=ledger_path)
+    after_ingest = datetime.now(timezone.utc).isoformat()
+
+    store = CalibrationStore(ledger_path)
+    assert store.observations_as_of(before_ingest) == []  # not yet admitted at that cutoff
+    assert len(store.observations_as_of(after_ingest)) > 0  # visible once admitted
+
+
+def test_ingested_observations_preserve_exact_event_identity(tmp_path):
+    ledger_path = tmp_path / "ledger.jsonl"
+    ingest_settled_slate(REAL_SETTLED_STAMP, ledger_path=ledger_path)
+    store = CalibrationStore(ledger_path)
+    rows = store.all_observations()
+    # No two observations share an observation_id (would only happen if
+    # two truly-distinct events collided in identity).
+    ids = [r["observation_id"] for r in rows]
+    assert len(ids) == len(set(ids))
+    # line_bucket always encodes the exact line -- never pooled across lines.
+    for row in rows:
+        assert str(row["line"]) in row["line_bucket"]

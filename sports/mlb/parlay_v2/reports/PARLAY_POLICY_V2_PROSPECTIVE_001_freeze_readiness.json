@@ -1,7 +1,7 @@
 {
   "candidate_enumeration": "all cross-game 2-leg pairs from the pregame action-eligible universe (candidate_adapter.build_candidates_for_day)",
-  "checked_at_utc": "2026-08-21T16:32:15.115775+00:00",
-  "code_hash": "0a1b66c3c52b5c179902d7c06cbb201dc831507fa6f7558aaa78863cff4b99c4",
+  "checked_at_utc": "2026-08-21T20:44:54.970836+00:00",
+  "code_hash": "89049d5c909611aaaf201cfbe6d462b76b6ef01f17788160744bfcfea8073dcb",
   "config_hash": "4ad2312316f3519f091a603aed678a72c67941da0f0e656c1cc5027023dbcfa1",
   "freeze_ready": false,
   "freeze_ready_reason": "uncommitted relevant changes",
@@ -40,6 +40,6 @@
   "supported_books": "real market_source rows only (no synthetic/fabricated prices, enforced at ingestion)",
   "tie_breaker": "highest retained_probability_mass, then lexicographic wager_id (policy.select_action_for_day)",
   "uncommitted_relevant_changes": [
-    "?? sports/mlb/parlay_v2/reports/"
+    "?? sports/mlb/parlay_v2/calibration/ingest.py"
   ]
 }
