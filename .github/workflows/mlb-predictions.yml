@@ -174,3 +174,80 @@ jobs:
             sports/mlb/data/predictions/backtests/latent_daily_pool_replay_2026.json
           if-no-files-found: warn
           retention-days: 14
+
+  # Shadow-only research job: measures whether MLB's pregame prop-line path
+  # carries incremental evidence beyond the pool's existing day-of score
+  # (sports/mlb/conditional_chain/, a scoped port of
+  # sports/nba/conditional_chain's newest path-evidence layer). It never
+  # reads or writes anything the mlb-predictions job publishes, never
+  # affects pool selection, and a failure here must never fail this
+  # workflow -- see continue-on-error below and the module's own
+  # production_authorized=False invariant (sports/mlb/conditional_chain/README.md).
+  mlb-path-evidence-shadow:
+    needs: mlb-predictions
+    if: always()
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout prediction frontend branch
+        uses: actions/checkout@v7
+        with:
+          ref: static-deployment
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Build MLB path-conditioned reservoir from settled history
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/mlb_path_evidence_shadow
+          python -m sports.mlb.conditional_chain.build_reservoir_from_history \
+            --out-csv /tmp/mlb_path_evidence_shadow/reservoir.csv \
+            --out-summary-json /tmp/mlb_path_evidence_shadow/reservoir_summary.json
+
+      - name: Build MLB path features from recovered market snapshots
+        run: |
+          set -euo pipefail
+          python -m sports.mlb.conditional_chain.build_path_features_from_market_snapshots \
+            --reservoir-csv /tmp/mlb_path_evidence_shadow/reservoir.csv \
+            --out-csv /tmp/mlb_path_evidence_shadow/path_features.csv
+
+      - name: Run MLB path-conditioned shadow replay
+        run: |
+          set -euo pipefail
+          # No mechanism has passed prospective real-path confirmation yet;
+          # this stays INSUFFICIENT_REAL_PATH_EVENTS/path_authorized=false
+          # until sports/mlb/conditional_chain separately earns one -- it is
+          # never set true by this workflow.
+          cat > /tmp/mlb_path_evidence_shadow/path_certificate.json <<'JSON'
+          {"status": "INSUFFICIENT_REAL_PATH_EVENTS", "path_authorized": false}
+          JSON
+          python -m sports.mlb.conditional_chain.path_conditioned_cli \
+            --reservoir /tmp/mlb_path_evidence_shadow/reservoir.csv \
+            --path-features /tmp/mlb_path_evidence_shadow/path_features.csv \
+            --path-certificate /tmp/mlb_path_evidence_shadow/path_certificate.json \
+            --output-dir /tmp/mlb_path_evidence_shadow/report \
+            --block-label mlb_path_evidence_shadow
+
+      - name: Upload MLB path-evidence shadow report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mlb-path-evidence-shadow-${{ github.run_id }}
+          path: /tmp/mlb_path_evidence_shadow
+          if-no-files-found: warn
+          retention-days: 14
