@@ -1,0 +1,15 @@
+variant,features,n_features,c,n_folds,mean_oof_brier,top1_hit_rate,top2_hit_rate
+single_feature[corrected_edge],corrected_edge,1,1.0,8,0.24435997296840364,0.375,0.4375
+single_feature[rmse],rmse,1,1.0,8,0.24354793491412463,0.75,0.625
+single_feature[q_edge_over_rmse],q_edge_over_rmse,1,1.0,8,0.24485422338403368,0.625,0.5
+single_feature[log1p_history_rows],log1p_history_rows,1,1.0,8,0.24436309379433008,0.5,0.625
+single_feature[is_real_market],is_real_market,1,1.0,8,0.2454481460865055,0.5,0.5625
+full_with_edge_sq[C=1.0],"corrected_edge,rmse,q_edge_over_rmse,log1p_history_rows,is_real_market,corrected_edge_sq",6,1.0,8,0.24295656032500695,1.0,0.8125
+full_with_edge_sq[C=0.3],"corrected_edge,rmse,q_edge_over_rmse,log1p_history_rows,is_real_market,corrected_edge_sq",6,0.3,8,0.24296535391918178,1.0,0.8125
+full_with_edge_sq[C=0.1],"corrected_edge,rmse,q_edge_over_rmse,log1p_history_rows,is_real_market,corrected_edge_sq",6,0.1,8,0.2429785727267663,0.875,0.875
+full_with_edge_sq[C=0.03],"corrected_edge,rmse,q_edge_over_rmse,log1p_history_rows,is_real_market,corrected_edge_sq",6,0.03,8,0.24300272051827954,0.875,0.875
+full_with_edge_sq[C=0.01],"corrected_edge,rmse,q_edge_over_rmse,log1p_history_rows,is_real_market,corrected_edge_sq",6,0.01,8,0.2430833633619692,0.875,0.8125
+full_with_edge_sq[C=0.003],"corrected_edge,rmse,q_edge_over_rmse,log1p_history_rows,is_real_market,corrected_edge_sq",6,0.003,8,0.2433706038770838,0.75,0.75
+full_with_edge_sq[C=0.001],"corrected_edge,rmse,q_edge_over_rmse,log1p_history_rows,is_real_market,corrected_edge_sq",6,0.001,8,0.24393962870082414,0.75,0.8125
+with_edge_sq[C=0.1],"corrected_edge,rmse,q_edge_over_rmse,log1p_history_rows,is_real_market,corrected_edge_sq",6,0.1,8,0.2429785727267663,0.875,0.875
+"frozen_H_OVER_RANKER_V1[C=0.1, no edge_sq]","corrected_edge,rmse,q_edge_over_rmse,log1p_history_rows,is_real_market",5,0.1,8,0.24304282553926615,0.875,0.875
