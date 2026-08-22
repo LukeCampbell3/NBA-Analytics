@@ -89,7 +89,7 @@ jobs:
         with:
           path: |
             Player-Predictor/Data-Proc-MLB
-            sports/mlb/data/predictions/daily_runs/*/governance
+            sports/mlb/data/predictions/daily_runs
             sports/mlb/data/predictions/calibration/*.json
           key: mlb-daily-v4-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/decision_engine/matchup_network.py', 'sports/mlb/scripts/backtest_latent_daily_pools.py') }}-${{ steps.run-config.outputs.run_stamp }}-${{ github.run_id }}
           restore-keys: |

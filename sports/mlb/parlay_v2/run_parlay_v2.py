@@ -44,7 +44,7 @@ from sports.mlb.research.parlay_certification_v2.policy import CandidateWager, b
 
 from .calibration.snapshot import assert_snapshot_precedes_decision, build_snapshot
 from .calibration.store import CalibrationStore
-from .calibration.support import CandidateSupport, evaluate_support
+from .calibration.support import N_STATE, CandidateSupport, evaluate_support
 from .candidate_adapter import Leg, PairCandidate, build_candidates_for_day, build_pregame_action_rows
 
 # APS threshold for the PAIR world-model diagnostics (unrelated to the
@@ -323,6 +323,12 @@ def build_slate_payload(
         assert_snapshot_precedes_decision(calibration_snapshot, decision_frozen_at)
         payload["calibration_snapshot_id"] = calibration_snapshot.calibration_snapshot_id
         payload["calibration_snapshot_sha256"] = calibration_snapshot.calibration_snapshot_sha256
+    # Exposed unconditionally (0 when calibration_store is None) so the
+    # frontend can show real progress toward N_STATE (calibration/
+    # support.py) instead of a bare "not enough yet" -- concrete honest
+    # numbers, never fabricated.
+    payload["independent_slate_count"] = independent_slate_count
+    payload["independent_slate_count_required"] = N_STATE
 
     if not cross_game_candidates:
         payload["abstain_reason"] = "NO_CANDIDATES"

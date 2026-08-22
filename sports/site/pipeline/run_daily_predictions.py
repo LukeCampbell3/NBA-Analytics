@@ -64,19 +64,35 @@ MLB_PARLAY_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_daily_p
 # whichever policy is currently frozen without this orchestrator needing
 # to import MLB research modules itself (it stays a pure subprocess
 # orchestrator by design). To replay/audit PROSPECTIVE_002's exact
-# behavior instead, invoke MLB_PARLAY_V2_RUNNER manually with
+# behavior instead, invoke MLB_PARLAY_V2_RUNNER_MODULE manually with
 # --world-gate-mode REQUIRED.
-MLB_PARLAY_V2_RUNNER = REPO_ROOT / "sports" / "mlb" / "parlay_v2" / "run_parlay_v2.py"
+#
+# Invoked as `python -m <dotted path>`, NEVER as a bare script path
+# (`python /abs/path/to.py`) -- this module (and the three below it) use
+# absolute `sports.*` imports AND relative `from .x import y` imports.
+# Running it as a bare script leaves `sys.path`/`__package__` unset for
+# either kind of import to resolve, which is a real bug this pipeline hit
+# in production: every real CI run silently failed at the first import
+# line (ModuleNotFoundError: No module named 'sports'), the exception was
+# swallowed by this orchestrator's own deliberate best-effort try/except,
+# and the Parlays tab reported PARLAY_V2_ARTIFACT_UNAVAILABLE on every
+# single run -- meaning NONE of PARLAY_V2's pipeline (calibration
+# ingestion, pair ingestion, evidence settlement, or the policy runner
+# itself) had ever actually executed. `-m` is the fix: it puts CWD (here,
+# REPO_ROOT, via run_step's own cwd=REPO_ROOT default) on sys.path AND
+# correctly sets __package__ so both import styles resolve.
+MLB_PARLAY_V2_RUNNER_MODULE = "sports.mlb.parlay_v2.run_parlay_v2"
 # The forward-only calibration ledger (STREAM A) -- one persistent file,
 # appended to only after settlement is final for a given slate (see
 # sports/mlb/parlay_v2/calibration/store.py). This script only READS it
-# (never writes); MLB_PARLAY_V2_INGEST below is the only writer.
+# (never writes); MLB_PARLAY_V2_INGEST_MODULE below is the only writer.
 MLB_PARLAY_V2_CALIBRATION_LEDGER = REPO_ROOT / "sports" / "mlb" / "parlay_v2" / "calibration" / "reports" / "calibration_ledger.jsonl"
 # Real settlement -> calibration ledger admission (STREAM A's only
 # writer). Runs on already-settled PAST days, never on today's own slate
 # -- see ingest.py's module docstring for why that ordering is what makes
-# this forward-only.
-MLB_PARLAY_V2_INGEST = REPO_ROOT / "sports" / "mlb" / "parlay_v2" / "calibration" / "ingest.py"
+# this forward-only. Invoked via `-m`, not a bare script path -- see
+# MLB_PARLAY_V2_RUNNER_MODULE's comment above for why.
+MLB_PARLAY_V2_INGEST_MODULE = "sports.mlb.parlay_v2.calibration.ingest"
 # How many past days to (re-)attempt ingestion for on each run. Ingestion
 # is idempotent and gracefully admits zero rows for a day whose outcomes
 # aren't in Player-Predictor/Data-Proc-MLB yet, so re-attempting recent
@@ -89,9 +105,11 @@ MLB_PARLAY_V2_INGEST_LOOKBACK_DAYS = 4
 # selected -- this never feeds policy action, only future joint-
 # calibration research (joint_support stays OBSERVE_ONLY regardless).
 MLB_PARLAY_V2_PAIR_LEDGER = REPO_ROOT / "sports" / "mlb" / "parlay_v2" / "calibration" / "reports" / "pair_observation_ledger.jsonl"
-MLB_PARLAY_V2_PAIR_INGEST = REPO_ROOT / "sports" / "mlb" / "parlay_v2" / "calibration" / "pair_ingest.py"
+# Invoked via `-m`, not a bare script path -- see
+# MLB_PARLAY_V2_RUNNER_MODULE's comment above for why.
+MLB_PARLAY_V2_PAIR_INGEST_MODULE = "sports.mlb.parlay_v2.calibration.pair_ingest"
 # Durable per-day DecisionRecord ledger (decision_record_store.py) --
-# written by MLB_PARLAY_V2_RUNNER itself at decision time, every run.
+# written by MLB_PARLAY_V2_RUNNER_MODULE itself at decision time, every run.
 MLB_PARLAY_V2_DECISION_RECORD_LEDGER = REPO_ROOT / "sports" / "mlb" / "research" / "parlay_certification_v2" / "reports" / "decision_record_ledger.jsonl"
 # Settlement -> policy evidence ingestion (settle_evidence.py) -- the only
 # writer of FinalEvidenceRecord rows, one file per policy_version under
@@ -99,8 +117,10 @@ MLB_PARLAY_V2_DECISION_RECORD_LEDGER = REPO_ROOT / "sports" / "mlb" / "research"
 # sports.mlb.research.parlay_certification_v2.manifest.POLICY_VERSION
 # exactly (the STRUCTURAL policy shape identifier stamped onto every
 # DecisionRecord -- see settle_evidence.py's module docstring for why
-# this is a different identifier than the prospective policy id).
-MLB_PARLAY_V2_SETTLE_EVIDENCE = REPO_ROOT / "sports" / "mlb" / "research" / "parlay_certification_v2" / "settle_evidence.py"
+# this is a different identifier than the prospective policy id). Invoked
+# via `-m`, not a bare script path -- see MLB_PARLAY_V2_RUNNER_MODULE's
+# comment above for why.
+MLB_PARLAY_V2_SETTLE_EVIDENCE_MODULE = "sports.mlb.research.parlay_certification_v2.settle_evidence"
 MLB_PARLAY_V2_EVIDENCE_STORE_ROOT = REPO_ROOT / "sports" / "mlb" / "research" / "parlay_certification_v2" / "reports" / "evidence"
 MLB_PARLAY_V2_POLICY_VERSION = "PARLAY_POLICY_V2_TWO_LEG_SINGLE_ACTION"
 MLB_CONFIDENCE_CALIBRATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "live_board_confidence.py"
@@ -892,7 +912,8 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
                 f"Ingest MLB Calibration Observations ({ingest_stamp})",
                 [
                     args.python,
-                    str(MLB_PARLAY_V2_INGEST),
+                    "-m",
+                    MLB_PARLAY_V2_INGEST_MODULE,
                     "--stamp",
                     ingest_stamp,
                     "--ledger",
@@ -913,7 +934,8 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
                 f"Ingest MLB Pair Observations ({ingest_stamp})",
                 [
                     args.python,
-                    str(MLB_PARLAY_V2_PAIR_INGEST),
+                    "-m",
+                    MLB_PARLAY_V2_PAIR_INGEST_MODULE,
                     "--stamp",
                     ingest_stamp,
                     "--pair-ledger",
@@ -935,7 +957,8 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
                 f"Settle MLB Policy Evidence ({ingest_stamp})",
                 [
                     args.python,
-                    str(MLB_PARLAY_V2_SETTLE_EVIDENCE),
+                    "-m",
+                    MLB_PARLAY_V2_SETTLE_EVIDENCE_MODULE,
                     "--date",
                     ingest_stamp,
                     "--decision-record-ledger",
@@ -961,7 +984,8 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
             "Run PARLAY_POLICY_V2 (Parlays Tab)",
             [
                 args.python,
-                str(MLB_PARLAY_V2_RUNNER),
+                "-m",
+                MLB_PARLAY_V2_RUNNER_MODULE,
                 "--pool-csv",
                 str(pool_csv),
                 "--slate-id",

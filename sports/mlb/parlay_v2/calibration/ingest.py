@@ -70,9 +70,18 @@ def ingest_settled_slate(
     the calibration ledger. Returns a summary dict; never raises for "not
     yet settled" rows (those are simply absent from `action`), only for
     real errors (e.g. an unreadable pool file, propagated from
-    build_multi_target_universe)."""
+    build_multi_target_universe).
+
+    A day with a pool file but literally zero rows for any requested
+    target (a real off day, or every game rained out/postponed) makes
+    build_multi_target_universe return a columnless empty DataFrame --
+    action_universe would raise a bare KeyError on that (it indexes
+    universe["in_support"], which doesn't exist on an empty frame with no
+    columns). Guarded here the same way world_gate_research.usable_stamps
+    and pair_ingest.ingest_settled_pairs already guard it: an empty
+    universe just means zero rows admitted, not a real error."""
     universe = build_multi_target_universe((stamp,), targets=targets, mode=mode)
-    action = action_universe(universe)
+    action = action_universe(universe) if not universe.empty else universe
 
     store = CalibrationStore(ledger_path)
     now = datetime.now(timezone.utc).isoformat()

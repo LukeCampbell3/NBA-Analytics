@@ -282,7 +282,7 @@ class DailyPredictionsPage {
             const shadowBlock = shadow ? `
                 <p class="daily-parlay__empty">Today's V2 shadow candidate -- not certified, no stake authorized</p>
                 <div class="daily-parlay__legs">${this.renderParlayV2Legs(shadow)}</div>
-            ` : `<p class="daily-parlay__empty">${this.escapeHtml(this.formatParlayV2AbstainReason(reason))}</p>`;
+            ` : `<p class="daily-parlay__empty">${this.escapeHtml(this.formatParlayV2AbstainReason(reason, parlay))}</p>`;
             content.innerHTML = `
                 <div class="daily-parlay__header">
                     <div>
@@ -292,7 +292,7 @@ class DailyPredictionsPage {
                     ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Abstain") : ""}
                 </div>
                 ${shadowBlock}
-                <p class="daily-parlay__state">${this.escapeHtml(this.formatParlayV2AbstainReason(reason))} ${statusFooter}</p>
+                <p class="daily-parlay__state">${this.escapeHtml(this.formatParlayV2AbstainReason(reason, parlay))} ${statusFooter}</p>
             `;
             return;
         }
@@ -353,7 +353,7 @@ class DailyPredictionsPage {
         return "stale"; // DEVELOPMENT / FROZEN_PROSPECTIVE_INCONCLUSIVE / unknown
     }
 
-    formatParlayV2AbstainReason(reason) {
+    formatParlayV2AbstainReason(reason, parlay) {
         const messages = {
             NO_REAL_QUOTE: "No real market quote available for today's slate.",
             NO_CANDIDATES: "No cross-game candidate pairs exist for today's slate.",
@@ -368,7 +368,13 @@ class DailyPredictionsPage {
             CERTIFICATION_STREAM_NOT_READY: "Not enough real prospective history has accumulated yet.",
             PARLAY_V2_ARTIFACT_UNAVAILABLE: "V2 parlay data is not available for this run.",
         };
-        return messages[reason] || "No qualifying parlay was selected for this slate.";
+        let message = messages[reason] || "No qualifying parlay was selected for this slate.";
+        // Real, honest progress numbers -- never fabricated -- straight
+        // from the same ledger the policy itself reads.
+        if (reason === "NO_STATE_SUPPORT" && parlay && Number.isFinite(parlay.independent_slate_count) && Number.isFinite(parlay.independent_slate_count_required)) {
+            message += ` (${parlay.independent_slate_count} of ${parlay.independent_slate_count_required} independent prior slates so far.)`;
+        }
+        return message;
     }
 
     formatNumber(value, digits = 2) {

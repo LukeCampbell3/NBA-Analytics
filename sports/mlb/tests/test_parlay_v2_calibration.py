@@ -358,6 +358,24 @@ def test_ingest_admits_real_settled_observations_and_is_idempotent(tmp_path):
     assert len(store.all_observations()) == first["action_eligible_rows"]
 
 
+def test_ingest_settled_slate_handles_a_real_zero_row_day_without_raising(tmp_path):
+    """A real archived day with a pool file but zero action-eligible rows
+    for any requested target (e.g. an off day, or every game postponed)
+    made build_multi_target_universe return a columnless empty DataFrame,
+    which action_universe raised a bare KeyError on ("in_support") --
+    found while backfilling the calibration ledger against real archived
+    TEST_STAMPS days. Must admit zero rows, never crash."""
+    zero_row_stamp = "20260806"  # real archived day, verified zero action-eligible rows
+    result = ingest_settled_slate(zero_row_stamp, ledger_path=tmp_path / "ledger.jsonl")
+    assert result == {
+        "stamp": zero_row_stamp,
+        "action_eligible_rows": 0,
+        "admitted": 0,
+        "already_present": 0,
+        "ledger_path": str(tmp_path / "ledger.jsonl"),
+    }
+
+
 def test_ingest_never_backdates_calibration_admitted_at(tmp_path):
     """calibration_admitted_at must reflect when ingestion actually ran,
     never the settled slate's own date -- this is what the forward-only

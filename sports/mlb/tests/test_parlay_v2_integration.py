@@ -568,3 +568,66 @@ def test_shadow_candidate_never_appears_as_selected_parlay():
     found: set[str] = set()
     _walk_keys(payload["shadow_candidate"], found)
     assert found.isdisjoint(FORBIDDEN_AUTHORITATIVE_KEYS)
+
+
+# ======================================================================
+# N. CLI entry points are invocable exactly how run_daily_predictions.py
+# invokes them -- regression coverage for a real production bug: every
+# PARLAY_V2 CLI script uses absolute `sports.*` AND relative `from .x`
+# imports, so invoking it as a bare script path (`python /abs/path.py`)
+# leaves sys.path/__package__ unset for either to resolve. That failure
+# (ModuleNotFoundError: No module named 'sports') was silently swallowed
+# by run_daily_predictions.py's own deliberate best-effort try/except on
+# every single real CI run, so the Parlays tab reported
+# PARLAY_V2_ARTIFACT_UNAVAILABLE forever and none of PARLAY_V2's pipeline
+# (calibration ingestion, pair ingestion, evidence settlement, the policy
+# runner itself) had ever actually executed in production.
+# ======================================================================
+
+PARLAY_V2_CLI_MODULES = (
+    "sports.mlb.parlay_v2.run_parlay_v2",
+    "sports.mlb.parlay_v2.calibration.ingest",
+    "sports.mlb.parlay_v2.calibration.pair_ingest",
+    "sports.mlb.research.parlay_certification_v2.settle_evidence",
+)
+
+
+@pytest.mark.parametrize("module", PARLAY_V2_CLI_MODULES)
+def test_parlay_v2_cli_module_is_invocable_via_python_dash_m(module):
+    """Exactly how run_daily_predictions.py invokes these -- `--help`
+    exits 0 with no data needed, so a clean pass here means every import
+    (absolute AND relative) resolved correctly."""
+    import subprocess
+    import sys
+
+    result = subprocess.run(
+        [sys.executable, "-m", module, "--help"],
+        cwd=REPO_ROOT, capture_output=True, text=True, timeout=30,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "ModuleNotFoundError" not in result.stderr
+    assert "ImportError" not in result.stderr
+
+
+def test_run_daily_predictions_never_invokes_parlay_v2_scripts_as_a_bare_path():
+    """Structural guard against reintroducing the bug above for this
+    script or any future PARLAY_V2 CLI added to the daily pipeline: parse
+    run_daily_predictions.py's own source and confirm every subprocess
+    argv list that references a sports.mlb.parlay_v2 /
+    sports.mlb.research.parlay_certification_v2 module uses `-m`, never a
+    bare script path."""
+    source = (REPO_ROOT / "sports" / "site" / "pipeline" / "run_daily_predictions.py").read_text()
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.List):
+            continue
+        elements = [ast.literal_eval(e) if isinstance(e, ast.Constant) else None for e in node.elts]
+        joined = " ".join(str(e) for e in elements if e is not None)
+        if "parlay_v2" not in joined and "parlay_certification_v2" not in joined:
+            continue
+        # A bare-script invocation would embed a "*.py" path string as one
+        # of the argv elements; a correct `-m` invocation never does.
+        assert not any(isinstance(e, str) and e.endswith(".py") and ("parlay_v2" in e or "parlay_certification_v2" in e) for e in elements), (
+            f"found a bare .py script path referencing parlay_v2/parlay_certification_v2 in argv list: {elements}"
+        )
+        assert "-m" in elements, f"expected -m module invocation in argv list: {elements}"
