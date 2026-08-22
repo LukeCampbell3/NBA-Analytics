@@ -141,11 +141,23 @@ jobs:
             sports/mlb/web/data/history/index.json \
             sports/mlb/web/data/history/*.json \
             dist/mlb \
-            paywall/private-content/app/mlb \
+            paywall/private-content/app/mlb
+          # These PARLAY_V2 paths are lazily created (e.g. the pair-
+          # observation ledger only exists once a real pair is first
+          # admitted) -- `git add -f` on a literal nonexistent pathspec
+          # fails hard ("fatal: pathspec ... did not match any files"),
+          # which under `set -e` fails this whole step. Only add each one
+          # if it's actually on disk this run.
+          for optional_path in \
             sports/mlb/parlay_v2/calibration/reports/calibration_ledger.jsonl \
             sports/mlb/parlay_v2/calibration/reports/pair_observation_ledger.jsonl \
             sports/mlb/parlay_v2/reports \
             sports/mlb/research/parlay_certification_v2/reports
+          do
+            if [ -e "$optional_path" ]; then
+              git add -f -- "$optional_path"
+            fi
+          done
           if git diff --cached --quiet; then
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
           else
