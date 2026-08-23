@@ -17,8 +17,9 @@ import pandas as pd
 import pytest
 
 from sports.nfl.parlay_v2 import comparison, frontend_payload, legacy_control, program_alpha, run_parlay_v2
-from sports.nfl.parlay_v2.calibration import ingest, pair_ingest
+from sports.nfl.parlay_v2.calibration import historical_backfill, ingest, pair_ingest
 from sports.nfl.parlay_v2.calibration.settlement_source import grade_play
+from sports.nfl.parlay_v2.calibration.snapshot import build_snapshot
 from sports.nfl.parlay_v2.calibration.store import CalibrationStore
 from sports.nfl.parlay_v2.candidate_adapter import Leg, build_candidates_for_week, build_week_action_plays, exact_event_key
 from sports.nfl.research.parlay_certification_v2 import manifest
@@ -334,6 +335,70 @@ def test_frontend_payload_never_overwrites_existing_keys(tmp_path):
 # ---------------------------------------------------------------------
 # program_alpha: fresh spend, no prior conflict
 # ---------------------------------------------------------------------
+
+# ---------------------------------------------------------------------
+# historical_backfill: REAL historical data only, exact authorized scope
+# ---------------------------------------------------------------------
+
+def test_historical_backfill_sources_are_exactly_the_authorized_scope():
+    """Guards against silent scope creep -- see historical_backfill.py's
+    module docstring for the exact chat-authorized scope (2025 full
+    season, 2022 weeks 1-2 only, 2021 explicitly NOT authorized). A
+    future change to SOURCES needs a fresh explicit check-in, exactly
+    like the original authorization did -- this test is the tripwire."""
+    sources_by_name = {Path(s["path"]).name: s["weeks"] for s in historical_backfill.SOURCES}
+    assert sources_by_name == {
+        "recent_selector_pool_2025.csv": None,
+        "market_selector_pool_2022.csv": (1, 2),
+    }
+    assert "market_selector_pool_2021.csv" not in sources_by_name
+    assert "market_selector_validated_pool_2022.csv" not in sources_by_name  # the actual locked holdout file -- must never be read here
+
+
+def test_historical_backfill_admits_real_rows_and_is_idempotent(tmp_path):
+    fixture = tmp_path / "fixture_pool.csv"
+    fixture.write_text(
+        "season,week,player_id,player_display_name,target,side,line,selected_price,"
+        "estimated_side_probability,current_prediction,result,recent_team,opponent_team,"
+        "bookmaker,snapshot_time_utc,commence_time_utc\n"
+        "2025,1,p1,Player One,passing,over,249.5,-120,0.6,265.0,win,AAA,BBB,draftkings,"
+        "2025-09-07T12:00:00Z,2025-09-07T17:00:00Z\n"
+        "2025,1,p2,Player Two,receiving,under,59.5,-110,0.55,45.0,loss,CCC,DDD,fanduel,"
+        "2025-09-07T12:00:00Z,2025-09-07T17:00:00Z\n"
+    )
+    ledger_path = tmp_path / "ledger.jsonl"
+    sources = ({"path": fixture, "weeks": None},)
+
+    result = historical_backfill.backfill_historical_pool(ledger_path, sources=sources)
+    assert result["admitted"] == 2
+    assert result["independent_weeks_admitted"] == 1
+    assert result["skipped_incomplete"] == 0
+
+    store = CalibrationStore(ledger_path)
+    snapshot = build_snapshot(store, as_of="2099-01-01T00:00:00Z")
+    assert snapshot.market_support_summary.get("passing") == 1
+    assert snapshot.line_support_summary.get("receiving|UNDER|59.5") == 1
+
+    # idempotent re-run
+    result2 = historical_backfill.backfill_historical_pool(ledger_path, sources=sources)
+    assert result2["admitted"] == 0
+    assert result2["already_present"] == 2
+
+
+def test_historical_backfill_skips_incomplete_rows_without_fabricating(tmp_path):
+    fixture = tmp_path / "fixture_incomplete.csv"
+    fixture.write_text(
+        "season,week,player_id,player_display_name,target,side,line,selected_price,"
+        "estimated_side_probability,current_prediction,result,recent_team,opponent_team,"
+        "bookmaker,snapshot_time_utc,commence_time_utc\n"
+        "2025,1,p1,Player One,passing,over,,-120,0.6,265.0,win,AAA,BBB,draftkings,"
+        "2025-09-07T12:00:00Z,2025-09-07T17:00:00Z\n"
+    )
+    ledger_path = tmp_path / "ledger.jsonl"
+    result = historical_backfill.backfill_historical_pool(ledger_path, sources=({"path": fixture, "weeks": None},))
+    assert result["admitted"] == 0
+    assert result["skipped_incomplete"] == 1
+
 
 def test_comparison_record_flags_pair_disagreement():
     legacy = legacy_control.LegacyParlayControl(
