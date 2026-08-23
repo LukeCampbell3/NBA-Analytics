@@ -28,7 +28,7 @@ DEFAULT_OUTPUT_DIR = REPO_ROOT / "dist"
 DEFAULT_PRIVATE_SOURCE_DIR = REPO_ROOT / "paywall" / "private-app"
 DEFAULT_PRIVATE_OUTPUT_DIR = REPO_ROOT / "paywall" / "private-content" / "app"
 VAULT_SOURCE_DIR = SPORTS_ROOT / "shared" / "web" / "vault"
-PREDICTION_PAGE_STEMS = {"predictions", "prediction-about", "fantasy"}
+PREDICTION_PAGE_STEMS = {"predictions", "prediction-about", "fantasy", "advantage-routing"}
 PREDICTION_TOP_LEVEL_FILES = {
     "predictions.html",
     "prediction-about.html",
@@ -39,6 +39,9 @@ PREDICTION_TOP_LEVEL_FILES = {
     "fantasy.js",
     "fantasy.css",
     "parlay-board.css",
+    "advantage-routing.html",
+    "advantage-routing.js",
+    "advantage-routing.css",
 }
 PREDICTION_DATA_FILES = {
     "daily_predictions.json",
@@ -222,7 +225,16 @@ def prune_non_prediction_assets(sport_output: Path) -> None:
                 and relative.parts[0] == "history"
                 and (relative.name == "index.json" or bool(HISTORY_DATA_FILE.fullmatch(relative.name)))
             )
-            if data_file.name not in PREDICTION_DATA_FILES and not is_history_payload:
+            is_advantage_routing_payload = (
+                len(relative.parts) == 2
+                and relative.parts[0] == "advantage-routing"
+                and relative.name.endswith(".json")
+            )
+            if (
+                data_file.name not in PREDICTION_DATA_FILES
+                and not is_history_payload
+                and not is_advantage_routing_payload
+            ):
                 data_file.unlink()
                 print(f"[prune] removed non-prediction data {data_file.relative_to(sport_output)}")
 
