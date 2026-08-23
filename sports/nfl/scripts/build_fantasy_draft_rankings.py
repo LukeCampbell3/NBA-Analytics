@@ -51,6 +51,25 @@ def write_json(path: Path, value: dict) -> None:
 
 def main() -> int:
     args = parse_args()
+    if not args.history.is_file():
+        # The history parquet is gitignored and only ever produced by
+        # refresh_nfl_yardage_artifact.py (which itself only runs once a
+        # week has real market coverage) or restored from the runtime
+        # cache. A cold cache on a week with no markets yet (preseason,
+        # bye weeks, or the very first run on a given branch's cache
+        # scope) leaves it genuinely absent -- this is a real "not ready
+        # yet" state, not an error, and must not crash the whole
+        # publication pipeline (the same withheld/not-yet-ready pattern
+        # already used elsewhere in this workflow, e.g.
+        # run_nfl_daily_predictions.withheld_payload).
+        validation = {
+            "status": "withheld",
+            "reason": f"No player history is available yet at {args.history} (cache not warmed / no market week has completed).",
+        }
+        write_json(args.validation_output, validation)
+        print(json.dumps(validation, indent=2))
+        print("Fantasy rankings were not published because no player history is available yet.")
+        return 0
     history = pd.read_parquet(args.history)
     roster = pd.read_csv(args.roster)
     depth_chart = pd.read_csv(args.depth_chart)
