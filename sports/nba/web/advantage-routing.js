@@ -22,6 +22,7 @@ class AdvantageRoutingPage {
             runFacts: document.getElementById("arRunFacts"),
             playerSelect: document.getElementById("arPlayerSelect"),
             modeTabs: document.getElementById("arModeTabs"),
+            dataUnavailableSection: document.getElementById("arDataUnavailableSection"),
             dataUnavailableNotice: document.getElementById("arDataUnavailableNotice"),
             baselineGrid: document.getElementById("arBaselineGrid"),
             gravityChart: document.getElementById("arGravityChart"),
@@ -204,11 +205,11 @@ class AdvantageRoutingPage {
         if (!node) return;
         const routingVector = node.routing_vector;
         if (routingVector && routingVector.status === "UNAVAILABLE") {
-            this.elements.dataUnavailableNotice.hidden = false;
+            this.elements.dataUnavailableSection.hidden = false;
             this.elements.dataUnavailableNotice.innerHTML =
                 `<strong>Routing-state vector unavailable for this mode.</strong> ${this.escape(routingVector.reason || "")}`;
         } else {
-            this.elements.dataUnavailableNotice.hidden = true;
+            this.elements.dataUnavailableSection.hidden = true;
         }
     }
 

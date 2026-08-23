@@ -31,11 +31,7 @@
 }
 
 .ar-controls-panel {
-    position: sticky;
-    top: 0;
-    z-index: 5;
     background: var(--vault-bg);
-    border-bottom: 1px solid var(--vault-line);
 }
 .ar-controls-row {
     display: flex;
@@ -94,12 +90,16 @@
     font-weight: 700;
 }
 
+.ar-notice-panel {
+    border-left: 3px solid var(--ar-unavailable);
+}
+
 .ar-notice {
-    margin-top: var(--vault-space-3);
     padding: var(--vault-space-3);
     border: 1px solid var(--ar-unavailable);
     border-radius: 6px;
     font-size: 0.85rem;
+    line-height: 1.5;
     color: var(--vault-text-muted);
 }
 
