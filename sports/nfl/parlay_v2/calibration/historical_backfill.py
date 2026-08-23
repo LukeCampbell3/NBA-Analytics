@@ -15,17 +15,16 @@ Nothing here is invented, sampled, or estimated.
 Scope, exactly as authorized (do not widen without a fresh check-in):
   - 2025 season (recent_selector_pool_2025.csv): all 18 real weeks, used
     in full as genuine calibration evidence.
-  - 2022 season (market_selector_pool_2022.csv): ONLY weeks 1-2 (the
-    earliest two weeks, chosen deterministically by week number -- never
-    cherry-picked for outcome quality), admitted ONLY to close the real
-    18-vs-20 state_support gap that 2025 alone leaves (18 real weeks from
-    2025 + 2 real weeks from 2022 = 20, exactly meeting N_STATE). This is
-    a narrow, capped, structural admission, not a broad reuse of the 2022
-    season. Also a DIFFERENT file from
-    market_selector_validated_pool_2022.csv (the actual locked holdout
-    run_nfl_production_replay.py grades sports/nfl/predictions/
-    daily_policy.py's old shadow-parlay logic against) -- this backfill
-    never reads that file and never touches that frozen result.
+  - 2022 season (market_selector_pool_2022.csv): the FULL season (all 18
+    real weeks) -- expanded from an initial weeks-1-2-only cap after the
+    initial backfill left only 2 real line buckets with enough depth
+    (N_LINE=20) to ever pass line_support, an explicitly authorized
+    follow-up once that real, quantified shortfall was disclosed. Still
+    the broader POOL file, never market_selector_validated_pool_2022.csv
+    (the actual locked holdout run_nfl_production_replay.py grades
+    sports/nfl/predictions/daily_policy.py's old shadow-parlay logic
+    against) -- this backfill never reads that file and never touches
+    that frozen result.
   - 2021 was explicitly NOT authorized for this backfill and is not used.
 
 Labeled with its own honest predictive_version/state_version
@@ -73,7 +72,7 @@ NFL_ROOT = REPO_ROOT / "sports" / "nfl"
 # those week numbers.
 SOURCES: tuple[dict[str, Any], ...] = (
     {"path": NFL_ROOT / "data/evaluation/recent_selector_pool_2025.csv", "weeks": None},
-    {"path": NFL_ROOT / "data/evaluation/market_selector_pool_2022.csv", "weeks": (1, 2)},
+    {"path": NFL_ROOT / "data/evaluation/market_selector_pool_2022.csv", "weeks": None},
 )
 
 

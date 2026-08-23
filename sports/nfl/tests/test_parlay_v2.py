@@ -343,13 +343,15 @@ def test_frontend_payload_never_overwrites_existing_keys(tmp_path):
 def test_historical_backfill_sources_are_exactly_the_authorized_scope():
     """Guards against silent scope creep -- see historical_backfill.py's
     module docstring for the exact chat-authorized scope (2025 full
-    season, 2022 weeks 1-2 only, 2021 explicitly NOT authorized). A
-    future change to SOURCES needs a fresh explicit check-in, exactly
-    like the original authorization did -- this test is the tripwire."""
+    season, full 2022 season -- expanded from an initial weeks-1-2-only
+    cap once that left too little real line-level depth -- 2021
+    explicitly NOT authorized). A future change to SOURCES needs a fresh
+    explicit check-in, exactly like these authorizations did -- this test
+    is the tripwire."""
     sources_by_name = {Path(s["path"]).name: s["weeks"] for s in historical_backfill.SOURCES}
     assert sources_by_name == {
         "recent_selector_pool_2025.csv": None,
-        "market_selector_pool_2022.csv": (1, 2),
+        "market_selector_pool_2022.csv": None,
     }
     assert "market_selector_pool_2021.csv" not in sources_by_name
     assert "market_selector_validated_pool_2022.csv" not in sources_by_name  # the actual locked holdout file -- must never be read here
