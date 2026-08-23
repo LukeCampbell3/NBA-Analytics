@@ -134,8 +134,14 @@ def test_build_week_payload_abstains_no_real_quote_when_eligible_but_empty():
     assert payload["abstain_reason"] == "NO_REAL_QUOTE"
 
 
-def test_build_week_payload_shows_shadow_candidate_but_abstains_policy_not_frozen():
-    assert manifest.STATUS == "DEVELOPMENT", "test assumes NFL policy is not yet frozen -- see manifest.py"
+def test_build_week_payload_shows_shadow_candidate_but_abstains_policy_not_frozen(monkeypatch):
+    """Exercises the POLICY_NOT_FROZEN guard directly (via monkeypatch)
+    rather than assuming manifest.STATUS's real current value -- this
+    policy is frozen as of 2026-08-23 (see manifest.py's
+    CONCLUSION_REASONING), so the real STATUS no longer takes this path,
+    but the guard itself must still work correctly whenever a future
+    policy version starts out DEVELOPMENT again."""
+    monkeypatch.setattr(manifest, "STATUS", "DEVELOPMENT")
     plays = [_play("p1", "evt1", target="passing"), _play("p2", "evt2", target="receiving")]
     eligibility_inputs = EligibilityInputs(date="2026-W02", required_feed_available=True, week_has_games=True, required_system_component_available=True, decision_cutoff_met=True)
     payload = run_parlay_v2.build_week_payload(
@@ -146,6 +152,25 @@ def test_build_week_payload_shows_shadow_candidate_but_abstains_policy_not_froze
     assert payload["shadow_candidate"] is not None
     assert payload["action"] == "ABSTAIN"
     assert payload["staking_authorized"] is False
+
+
+def test_build_week_payload_abstains_no_state_support_once_frozen_with_empty_ledger(tmp_path):
+    """Now that the real policy is frozen, an eligible week with real
+    priced candidates but an empty (or missing) calibration ledger must
+    abstain on a REAL support reason -- never ACT, and never a bare
+    generic reason."""
+    assert manifest.STATUS == "FROZEN_PROSPECTIVE_INCONCLUSIVE"
+    plays = [_play("p1", "evt1", target="passing"), _play("p2", "evt2", target="receiving")]
+    eligibility_inputs = EligibilityInputs(date="2026-W02", required_feed_available=True, week_has_games=True, required_system_component_available=True, decision_cutoff_met=True)
+    calibration_store = CalibrationStore(tmp_path / "calibration.jsonl")
+    payload = run_parlay_v2.build_week_payload(
+        plays=plays, week_id="2026-W02", eligibility_inputs=eligibility_inputs,
+        predictive_version="V1", state_version="S1", calibration_store=calibration_store,
+    )
+    assert payload["action"] == "ABSTAIN"
+    assert payload["staking_authorized"] is False
+    assert payload["abstain_reason"] in ("NO_STATE_SUPPORT", "NO_LEG_MARKET_SUPPORT", "NO_LEG_LINE_SUPPORT")
+    assert payload["shadow_candidate"] is not None
 
 
 def test_build_week_payload_never_sets_staking_authorized_true():
@@ -273,8 +298,8 @@ def test_legacy_control_handles_missing_daily_parlay():
 # actually starts DEVELOPMENT)
 # ---------------------------------------------------------------------
 
-def test_manifest_status_starts_development_before_freeze():
-    assert manifest.STATUS in (PolicyStatus.DEVELOPMENT.value, "FROZEN_PROSPECTIVE_INCONCLUSIVE")
+def test_manifest_status_is_a_valid_policy_status():
+    assert manifest.STATUS in {status.value for status in PolicyStatus}
 
 
 def test_manifest_production_authorized_is_always_false():

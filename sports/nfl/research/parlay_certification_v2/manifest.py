@@ -175,14 +175,18 @@ WORLD_RISK_THRESHOLD = None  # OBSERVE_ONLY never gates -- no threshold needed
 # resolve.
 ALPHA_BUDGET_BLOCKS_PROSPECTIVE_001 = False
 
-# PolicyStatus value (state_machine.PolicyStatus). Starts at DEVELOPMENT
-# like every policy before its first deliberate freeze action -- advanced
-# to FROZEN_PROSPECTIVE_INCONCLUSIVE only once (1) the alpha ledger spend
-# and (2) the one-way prospective_start boundary
-# (sports/nfl/parlay_v2/freeze_prospective.py --confirm) have both
-# actually been performed, exactly like MLB's own freeze discipline. See
-# CONCLUSION_REASONING once that freeze has happened.
-STATUS = "DEVELOPMENT"
+# PolicyStatus value (state_machine.PolicyStatus). Advanced to
+# FROZEN_PROSPECTIVE_INCONCLUSIVE as a deliberate freeze action for
+# PROSPECTIVE_POLICY_ID above -- performed, in order: (1) this manifest's
+# constants reviewed and finalized, (2) alpha spend recorded in
+# sports/nfl/research/parlay_certification_v2/reports/program_alpha_ledger.json
+# via program_alpha.ProgramAlphaLedger.spend, (3) the one-way
+# prospective_start boundary activated via
+# sports/nfl/parlay_v2/freeze_prospective.py --confirm (see
+# sports/nfl/research/parlay_certification_v2/reports/prospective_boundary/
+# NFL_PARLAY_POLICY_V2_PROSPECTIVE_001_prospective_start.json for the real,
+# checkable timestamp). See CONCLUSION_REASONING below.
+STATUS = "FROZEN_PROSPECTIVE_INCONCLUSIVE"
 
 CONCLUSION_REASONING = """
 This manifest establishes PARLAY_CERTIFICATION_V2 as the sole
@@ -190,7 +194,8 @@ authoritative certification/decision layer for the NFL parlay research
 system, ported from MLB's own (real, production-verified)
 implementation. Unlike MLB's manifest, this is NFL's first attempt: there
 is no PROSPECTIVE_002-style prior failure to audit, and no alpha-budget
-conflict to resolve.
+conflict to resolve -- NFL_PARLAY_POLICY_V2_PROSPECTIVE_001 spent its own
+fresh 0.05 alpha_program with nothing to retire.
 
 The one deliberate, disclosed choice this manifest makes up front is
 starting world_gate_mode at OBSERVE_ONLY rather than REQUIRED -- see the
@@ -201,13 +206,17 @@ joint model, true regardless of sport), not a claim that NFL-specific
 research has been performed. It is disclosed here precisely so it is
 never mistaken for that.
 
-STATUS remains DEVELOPMENT until this policy version is deliberately
-frozen (alpha ledger spend + prospective_start boundary via
-freeze_prospective.py --confirm) -- see git history for exactly when that
-happened and this comment's replacement once it has.
+STATUS was advanced to FROZEN_PROSPECTIVE_INCONCLUSIVE on 2026-08-23,
+before the 2026 NFL regular season had begun -- deliberately, so that
+real prospective evidence begins accumulating from the season's first
+eligible week rather than losing early weeks to a later freeze. As of
+this freeze, zero real weeks have been evaluated under this policy (the
+season had not started); the frozen boundary and this policy's config are
+locked in now precisely so that changes later, once evidence exists,
+would be visible as exactly that.
 
-IMPORTANT -- once frozen, this is STILL NOT a claim of profitability or
-of certified production-readiness. Whatever real coverage/loss/return
+IMPORTANT -- this freeze is STILL NOT a claim of profitability or of
+certified production-readiness. Whatever real coverage/loss/return
 evidence PROSPECTIVE_POLICY_ID now accumulates is graded exclusively by
 the unchanged, authoritative G_C/G_L/G_V simultaneous certificate
 (anytime_monitor.py/state_machine.py) -- never by world-gate diagnostics,

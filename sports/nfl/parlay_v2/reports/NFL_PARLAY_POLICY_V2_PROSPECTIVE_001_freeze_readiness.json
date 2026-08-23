@@ -1,10 +1,10 @@
 {
   "candidate_enumeration": "all cross-event 2-leg pairs from the weekly action-eligible universe (candidate_adapter.build_candidates_for_week)",
-  "checked_at_utc": "2026-08-23T03:41:39.054442+00:00",
+  "checked_at_utc": "2026-08-23T03:41:56.680452+00:00",
   "code_hash": "eebbc442c5d51ae362ab2be9c0325b175a5317106e35cc857e0c560a3460ba35",
   "config_hash": "eec52b6c3e53d41c811b5e73326ee1760e7c972a68d694210238b62182af8791",
-  "freeze_ready": false,
-  "freeze_ready_reason": "uncommitted relevant changes",
+  "freeze_ready": true,
+  "freeze_ready_reason": "clean",
   "frozen_config": {
     "alpha_c": 0.016666666666666666,
     "alpha_l": 0.016666666666666666,
@@ -40,7 +40,7 @@
     "world_gate_mode": "OBSERVE_ONLY",
     "world_risk_threshold": null
   },
-  "git_clean": false,
+  "git_clean": true,
   "leg_count": 2,
   "max_actions_per_eligible_slate": 1,
   "observe_only_support_dimensions": [
@@ -55,8 +55,6 @@
   ],
   "supported_books": "real market_source rows only (no synthetic/fabricated prices, enforced at ingestion)",
   "tie_breaker": "ascending world_risk_rho (inherited from MLB's DEVELOPMENT-validated ranking diagnostic; see sports/mlb/research/parlay_certification_v2/world_gate_research.py), then lexicographic wager_id",
-  "uncommitted_relevant_changes": [
-    "?? sports/nfl/parlay_v2/reports/"
-  ],
+  "uncommitted_relevant_changes": [],
   "world_gate_mode": "OBSERVE_ONLY"
 }
