@@ -280,18 +280,27 @@ ranking, and a player may carry more than one tag.
   per player, not a full season -- always disclosed in
   `sample_description`.
 - **A pre-existing data-quality issue, out of scope for this project:**
-  `Jamal Murray`'s real `USG%` values in
-  `Player-Predictor/Data-Proc/Jamal_Murray/2026_processed_processed.csv`
-  (11-18% range) are implausibly low for his real, correctly-populated
-  PTS/FGA/MP/AST stat line (25.5 PPG, 18.2 FGA, 35 MP -- all real and
-  matching public Murray stats). This is almost certainly a pre-existing
-  formula bug in `Player-Predictor`'s own USG% calculation (most likely a
-  missing team-pace normalization step), predating and unrelated to this
-  project. It was deliberately **not** fixed here because
-  `Player-Predictor`'s pipeline is used elsewhere in this repo for real
-  predictions and is out of this project's scope -- but it is disclosed
-  here because Jamal Murray's `current_usage_pct` baseline (and therefore
-  every usage-simulation output for him) inherits this understated number.
+  the real `USG%` column in `Player-Predictor`'s per-game box scores runs
+  low in absolute magnitude across the whole dataset, not just for one
+  player -- first noticed on `Jamal Murray` (11-18% range against his
+  real, correctly-populated 25.5 PPG / 18.2 FGA / 35 MP stat line), then
+  confirmed dataset-wide when ranking all 573 available real players by
+  season-mean `USG%` for the top-50-by-usage population (section "Adding
+  another player"): even `Luka Dončić`, the real league leader in usage
+  rate, tops that ranking at only ~17.5%. This is almost certainly a
+  pre-existing formula bug in `Player-Predictor`'s own USG% calculation
+  (most likely a missing team-pace normalization step), predating and
+  unrelated to this project. It was deliberately **not** fixed here
+  because `Player-Predictor`'s pipeline is used elsewhere in this repo
+  for real predictions and is out of this project's scope -- but it is
+  disclosed here because every player's `current_usage_pct` baseline
+  (and therefore every usage-simulation output) inherits this understated
+  number. The *relative ranking* this column produces still appears real
+  and basketball-plausible (elite, known-high-usage players dominate the
+  top of it) and was used for player selection on that basis -- but the
+  absolute `USG%` value shown anywhere in this system should be read as
+  a real, `OBSERVED` number from a column with a known, disclosed scale
+  problem, never as a precise public usage-rate percentile.
 
 ## File layout
 
@@ -353,9 +362,14 @@ python -m pytest sports/nba/tests/test_advantage_routing.py -q
 
 The pipeline generalizes to any player with a real box-score CSV under
 `Player-Predictor/Data-Proc/{Player_Name}/` and a resolvable
-Basketball-Reference slug -- it is **not** hardcoded around the seed
-population (`Derik Queen`, `Collin Murray-Boyles`, `Donovan Clingan`,
-`Yves Missi`, `Jamal Murray`). To add one:
+Basketball-Reference slug -- it is **not** hardcoded around any fixed
+population. `build_all.py::SEED_PLAYERS` has grown from the original
+5-player seed population to 66: the original 5, 18 curated additions
+(low-usage bigs with latent processing interest, established
+elite-passing bigs as a validation/contrast set, primary drive-passers,
+and versatile hybrids), and the 43 additional real players needed to
+cover the top 50 by real season-mean `USG%` (see "Known limitations"
+for the caveat on that column's absolute scale). To add another:
 
 1. Confirm real box-score data exists:
    `sources/boxscore.py::list_available_players(season)`.
