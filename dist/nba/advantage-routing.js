@@ -59,10 +59,15 @@ class AdvantageRoutingPage {
         this.players = [];
         this.playerCache = new Map();
         this.currentPlayer = null;
-        this.mode = "interior_hub";
+        this.mode = this.modeFromQueryString();
         this.compareSlugs = [];
         this.bindControls();
         this.init();
+    }
+
+    modeFromQueryString() {
+        const requested = new URLSearchParams(window.location.search).get("mode");
+        return ["drive", "post", "interior_hub"].includes(requested) ? requested : "interior_hub";
     }
 
     mountShell() {
@@ -74,15 +79,23 @@ class AdvantageRoutingPage {
             sportAccent: "#c02c3a",
             navLinks: [
                 { label: "Board", href: "/nba/predictions/", active: false },
-                { label: "Advantage Routing", href: "/nba/advantage-routing/", active: true },
+                { label: "Drive-Pass", href: "/nba/advantage-routing/?mode=drive", active: this.mode === "drive" },
+                { label: "Post-Pass", href: "/nba/advantage-routing/?mode=post", active: this.mode === "post" },
                 { label: "Method", href: "/nba/prediction-about/", active: false },
             ],
             showDisclaimer: true,
         });
     }
 
+    syncModeTabs() {
+        this.elements.modeTabs.querySelectorAll("button[data-mode]").forEach((b) => {
+            b.classList.toggle("is-active", b.dataset.mode === this.mode);
+        });
+    }
+
     async init() {
         this.mountShell();
+        this.syncModeTabs();
         try {
             const response = await fetch(`${AR_DATA_ROOT}/players.json?v=${Date.now()}`);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
