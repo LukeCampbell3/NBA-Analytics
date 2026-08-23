@@ -135,6 +135,25 @@ def _build_parlay_watchlists(pool: list[dict[str, object]]) -> list[dict[str, ob
 
 def main() -> int:
     args = parse_args()
+    if not args.stats.is_file():
+        # sports/nfl/data/raw/player_stats_deployment.parquet is gitignored
+        # and only ever produced by refresh_nfl_yardage_artifact.py (which
+        # itself only runs once a week has real market coverage) or restored
+        # from the runtime cache. A cold cache on a week with no completed
+        # markets yet (preseason, bye weeks, or the first run on a given
+        # branch's cache scope) leaves it genuinely absent -- this is a real
+        # "not ready yet" state, not an error, and must not crash the whole
+        # publication pipeline. Leave the previously published week_1_pool
+        # payload in place rather than crash -- same withheld/not-ready
+        # idiom already used elsewhere in this pipeline (e.g.
+        # build_fantasy_draft_rankings.py, run_nfl_daily_predictions.py's
+        # withheld_payload/`required` artifact check).
+        print(json.dumps({
+            "status": "withheld",
+            "reason": f"No player history is available yet at {args.stats} (cache not warmed / no market week has completed).",
+        }, indent=2))
+        print(f"Week pool was not regenerated because no player history is available yet; leaving {args.output} unchanged.")
+        return 0
     stats = load_weekly_stats(args.stats, start_season=2018)
     roster = pd.read_csv(args.roster).rename(
         columns={"gsis_id": "player_id", "full_name": "player_display_name", "team": "recent_team"}
