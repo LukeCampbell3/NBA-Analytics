@@ -129,10 +129,15 @@ def build_gravity_profile(
     }
 
     # --- VERTICAL_GRAVITY -------------------------------------------
+    # A zone/shot-type entirely absent from the real shooting table means
+    # a real, verified 0 attempts (confirmed: summed real zone FGA
+    # matches the table's real season_fga exactly for players missing
+    # one or more zones) -- not a missing observation. Only the rate
+    # (fg_pct) stays None when there were 0 attempts to compute it from.
     components[GravityMechanism.VERTICAL_GRAVITY.value] = {
-        "dunk_attempts_season": Metric.observed("dunk_attempts_season", dunk.fga if dunk else None, source="Basketball-Reference season shooting table", season=season),
+        "dunk_attempts_season": Metric.observed("dunk_attempts_season", dunk.fga if dunk else 0, source="Basketball-Reference season shooting table", season=season),
         "dunk_fg_pct": Metric.observed("dunk_fg_pct", dunk.fg_pct if dunk else None, source="Basketball-Reference season shooting table", season=season),
-        "rim_attempts_season": Metric.observed("rim_attempts_season", rim.fga if rim else None, source="Basketball-Reference season shooting table", season=season),
+        "rim_attempts_season": Metric.observed("rim_attempts_season", rim.fga if rim else 0, source="Basketball-Reference season shooting table", season=season),
         "rim_fg_pct": Metric.observed("rim_fg_pct", rim.fg_pct if rim else None, source="Basketball-Reference season shooting table", season=season),
     }
 
@@ -142,12 +147,12 @@ def build_gravity_profile(
     }
 
     # --- POP_GRAVITY --------------------------------------------------
-    three_pa_season = three.fga if three else None
+    three_pa_season = three.fga if three else 0
     components[GravityMechanism.POP_GRAVITY.value] = {
         "three_pa_season": Metric.observed("three_pa_season", three_pa_season, source="Basketball-Reference season shooting table", season=season),
         "three_p_pct": Metric.observed("three_p_pct", three.fg_pct if three else None, source="Basketball-Reference season shooting table", season=season),
         "three_pa_share_of_fga": Metric.derived(
-            "three_pa_share_of_fga", (three.fga / shooting_table.season_fga) if (three and shooting_table.season_fga) else None,
+            "three_pa_share_of_fga", (three_pa_season / shooting_table.season_fga) if shooting_table.season_fga else None,
             method="season 3PA / season total FGA, real zone totals", season=season,
         ),
     }
@@ -162,17 +167,20 @@ def build_gravity_profile(
     }
 
     # --- POST_SCORING_GRAVITY (RECONSTRUCTED, moderate-low confidence)
+    hook_fga = hook.fga if hook else 0  # absent HOOK_SHOT row is a real, verified 0 attempts, not a missing observation
     unassisted_short_paint_rate = (1 - short_paint.fg_assisted_pct) if (short_paint and short_paint.fg_assisted_pct is not None) else None
     post_gravity_score = None
     confidence = 0.45
-    if hook is not None and unassisted_short_paint_rate is not None and hook.fga:
+    if unassisted_short_paint_rate is not None:
         # A simple, transparent, documented combination -- not fit to
         # any target, just an average of two real, directionally
-        # consistent proxies. Never presented as tracking-grade.
-        hook_efficiency_component = hook.fg_pct or 0.0
-        post_gravity_score = 0.5 * (hook.fga / max(1, shooting_table.season_fga)) * 10 + 0.5 * unassisted_short_paint_rate
+        # consistent proxies. Never presented as tracking-grade. A
+        # player with real 0 hook attempts (the common case for most
+        # non-bigs) still gets a real, computable index -- the hook
+        # term simply contributes 0, it does not null the whole metric.
+        post_gravity_score = 0.5 * (hook_fga / max(1, shooting_table.season_fga)) * 10 + 0.5 * unassisted_short_paint_rate
     components[GravityMechanism.POST_SCORING_GRAVITY.value] = {
-        "hook_shot_attempts_season": Metric.observed("hook_shot_attempts_season", hook.fga if hook else None, source="Basketball-Reference season shooting table", season=season),
+        "hook_shot_attempts_season": Metric.observed("hook_shot_attempts_season", hook_fga, source="Basketball-Reference season shooting table", season=season),
         "hook_shot_fg_pct": Metric.observed("hook_shot_fg_pct", hook.fg_pct if hook else None, source="Basketball-Reference season shooting table", season=season),
         "unassisted_short_paint_rate": Metric.derived(
             "unassisted_short_paint_rate", unassisted_short_paint_rate,

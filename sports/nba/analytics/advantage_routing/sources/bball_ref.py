@@ -230,17 +230,35 @@ def fetch_season_shooting_table(player_slug: str, season_end_year: str) -> Optio
 
 def fetch_season_game_ids(player_slug: str, season_end_year: str) -> list[str]:
     """Returns real bball-ref game_ids (e.g. "202510220MEM") for every
-    game in the player's real season game log, in chronological order."""
+    game the player actually APPEARED IN this season, in chronological
+    order.
+
+    Bball-Reference's gamelog page includes one row per team game all
+    season, including games the player was Inactive or Did Not Play for
+    -- those rows still link to that game's real boxscore, so a naive
+    "find every /boxscores/ link on the page" extraction silently pulls
+    in games the player never set foot on the court for. For any player
+    with a real recent injury absence, that corrupts the "most recent N
+    games" sample this whole pipeline relies on (sources/collect.py):
+    the sample can land entirely inside an inactive stretch, producing a
+    real but misleadingly-empty recipient network -- not a fabrication,
+    but a preventable one. Each table row is checked for the
+    Inactive/Did Not Play placeholder cell (data-stat="is_starter" with
+    a colspan, real bball-ref markup for a non-appearance) and skipped
+    before its boxscore link is collected."""
     url = f"{BASE_URL}/players/{player_slug[0]}/{player_slug}/gamelog/{season_end_year}"
     try:
         html = _get(url, cache_key=f"gamelog_{player_slug}_{season_end_year}")
     except BballRefUnavailable:
         return []
-    game_ids = re.findall(r'href="/boxscores/(\d{9}[A-Z]{3})\.html"', html)
     seen: list[str] = []
-    for gid in game_ids:
-        if gid not in seen:
-            seen.append(gid)
+    for row in re.finditer(r"<tr[^>]*>.*?</tr>", html, re.DOTALL):
+        row_html = row.group(0)
+        if "Inactive" in row_html or "Did Not Play" in row_html or "Not With Team" in row_html:
+            continue
+        m = re.search(r'href="/boxscores/(\d{9}[A-Z]{3})\.html"', row_html)
+        if m and m.group(1) not in seen:
+            seen.append(m.group(1))
     return seen
 
 

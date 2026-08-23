@@ -50,6 +50,7 @@ from sports.nba.analytics.advantage_routing.sources.bball_ref import (
 from sports.nba.analytics.advantage_routing.stats.pass_value import build_pass_value_model
 from sports.nba.analytics.advantage_routing.stats.shrinkage import beta_binomial_shrink, dirichlet_shrink
 from sports.nba.analytics.advantage_routing.sources.bball_ref import LeagueShootingBaseline
+from sports.nba.analytics.advantage_routing.sources import bball_ref as bball_ref_module
 
 
 # ---------------------------------------------------------------------
@@ -439,6 +440,61 @@ def test_gravity_profile_with_no_shooting_table_is_all_unavailable() -> None:
         assert all(m.status == EvidenceStatus.UNAVAILABLE.value for m in metrics.values())
 
 
+def _fixture_shooting_table_no_threes_no_hooks() -> SeasonShootingTable:
+    """A real player profile that never shoots 3s and never takes a hook
+    (e.g. a traditional rim-only big) -- confirmed real case: Ivica
+    Zubac's real 2025-26 shooting table has no "3-pt" row at all, and
+    summed real zone FGA matches season_fga exactly."""
+    return SeasonShootingTable(
+        player_slug="rimonly01",
+        season_end_year="2026",
+        zones=[
+            ZoneShootingRow("At Rim", fg=150, fga=222, fg_pct=0.676, fg_assisted=90, fg_assisted_pct=0.6),
+            ZoneShootingRow("3 to <10 ft", fg=90, fga=221, fg_pct=0.407, fg_assisted=140, fg_assisted_pct=0.75),
+            ZoneShootingRow("10 to <16 ft", fg=15, fga=39, fg_pct=0.385, fg_assisted=30, fg_assisted_pct=0.9),
+            # No "16 ft to <3-pt" and no "3-pt" row -- real 0 attempts.
+        ],
+        shot_types=[
+            ShotTypeRow("DUNK", fg=80, fga=94, fg_pct=0.851, fg_assisted=50, fg_assisted_pct=0.5),
+            # No HOOK_SHOT row -- real 0 attempts.
+        ],
+        season_fga=482,  # 222 + 221 + 39, real: zone totals sum exactly to season_fga
+        season_fg_assisted_pct=0.68,
+        url="https://example.invalid/fixture-rim-only",
+    )
+
+
+def test_gravity_profile_missing_zone_is_real_zero_not_null() -> None:
+    """A zone/shot-type entirely absent from the real table (e.g. no
+    real 3-point attempts this season) must report a real 0, not a
+    missing/null value -- the absence itself is the real observation."""
+    profile = build_gravity_profile(
+        "Rim Only Player", "2025-26", shooting_table=_fixture_shooting_table_no_threes_no_hooks(),
+        mean_fga_per_game=10.0, mean_fta_per_game=3.0, games_played=50,
+    )
+    pop = profile.components["POP_GRAVITY"]
+    assert pop["three_pa_season"].value == 0
+    assert pop["three_pa_season"].status == EvidenceStatus.OBSERVED.value
+    assert pop["three_pa_share_of_fga"].value == pytest.approx(0.0)
+    # Real 0 attempts must still count POP_GRAVITY as present -- the
+    # mechanism has a real, computed value, it just happens to be zero.
+    assert "POP_GRAVITY" in profile.mechanisms_present
+
+
+def test_gravity_profile_zero_hook_attempts_still_yields_computable_post_index() -> None:
+    """The most common real case in the league (a player who never
+    takes a hook shot) must not null out the entire post-scoring-gravity
+    index -- the hook term should simply contribute zero."""
+    profile = build_gravity_profile(
+        "Rim Only Player", "2025-26", shooting_table=_fixture_shooting_table_no_threes_no_hooks(),
+        mean_fga_per_game=10.0, mean_fta_per_game=3.0, games_played=50,
+    )
+    post = profile.components["POST_SCORING_GRAVITY"]
+    assert post["hook_shot_attempts_season"].value == 0
+    assert post["post_scoring_gravity_index"].value is not None
+    assert post["post_scoring_gravity_index"].status == EvidenceStatus.RECONSTRUCTED.value
+
+
 # ---------------------------------------------------------------------
 # Expected pass value (spec section 13)
 # ---------------------------------------------------------------------
@@ -515,3 +571,39 @@ def test_validate_all_reports_all_pass() -> None:
     assert reports, "expected at least one generated player artifact to validate"
     for report in reports:
         assert report.all_passed, f"{report.player_name}: {[c for c in report.checks if c.status == 'FAIL']}"
+
+
+# ---------------------------------------------------------------------
+# Season game-list Inactive/Did-Not-Play filtering (real bug: a naive
+# "every /boxscores/ link on the page" extraction silently included
+# games a player never appeared in, corrupting the "most recent N real
+# games" sample for anyone with a real recent injury absence -- e.g.
+# real 2025-26 Domantas Sabonis: 83 raw gamelog rows, but only 22 were
+# real appearances, the rest Inactive/Did Not Play placeholder rows
+# that still link to that game's real boxscore.)
+# ---------------------------------------------------------------------
+
+_FIXTURE_GAMELOG_HTML = """
+<div id="div_player_game_log_reg">
+<table id="player_game_log_reg">
+<tbody>
+<tr class="partial_table"><td data-stat="date"><a href="/boxscores/202510220PHO.html">2025-10-22</a></td>
+<td data-stat="is_starter" colspan="26">Inactive</td></tr>
+<tr id="player_game_log_reg.1"><td data-stat="date"><a href="/boxscores/202510240SAC.html">2025-10-24</a></td>
+<td data-stat="pts">18</td><td data-stat="ast">7</td></tr>
+<tr class="partial_table"><td data-stat="date"><a href="/boxscores/202510260SAC.html">2025-10-26</a></td>
+<td data-stat="is_starter" colspan="26">Did Not Play</td></tr>
+<tr id="player_game_log_reg.2"><td data-stat="date"><a href="/boxscores/202510280OKC.html">2025-10-28</a></td>
+<td data-stat="pts">21</td><td data-stat="ast">9</td></tr>
+</tbody>
+</table>
+</div>
+"""
+
+
+def test_fetch_season_game_ids_excludes_inactive_and_dnp_rows(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(bball_ref_module, "_get", lambda url, *, cache_key: _FIXTURE_GAMELOG_HTML)
+    game_ids = bball_ref_module.fetch_season_game_ids("testpl01", "2026")
+    assert game_ids == ["202510240SAC", "202510280OKC"]
+    assert "202510220PHO" not in game_ids  # Inactive row
+    assert "202510260SAC" not in game_ids  # Did Not Play row
