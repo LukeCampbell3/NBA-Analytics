@@ -1,0 +1,2793 @@
+{
+  "baseline": {
+    "advantage_pass_pct": {
+      "confidence": null,
+      "method": null,
+      "metric": "advantage_pass_pct",
+      "reason": "Requires origin-touch/routing-state classification; unavailable in this data environment -- see routing/states.py.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "ast_per_decision_touch": {
+      "confidence": null,
+      "method": "mean(AST) / decision_touches_per_game",
+      "metric": "ast_per_decision_touch",
+      "reason": null,
+      "sample_size": 66,
+      "season": "2025-26",
+      "source": null,
+      "status": "DERIVED",
+      "value": 0.2820242488139167
+    },
+    "ast_per_game": {
+      "confidence": null,
+      "method": null,
+      "metric": "ast_per_game",
+      "reason": null,
+      "sample_size": 66,
+      "season": "2025-26",
+      "source": "Player-Predictor real box scores",
+      "status": "OBSERVED",
+      "value": 8.106060606060606
+    },
+    "decision_touches_per_game": {
+      "confidence": null,
+      "method": "mean(FGA + AST + TOV) per real game -- a scoring-decision-volume proxy, NOT a real touch count (touches are unreachable; see sources/bball_ref.py)",
+      "metric": "decision_touches_per_game",
+      "reason": null,
+      "sample_size": 66,
+      "season": "2025-26",
+      "source": null,
+      "status": "DERIVED",
+      "value": 28.742424242424242
+    },
+    "games_played": {
+      "confidence": null,
+      "method": null,
+      "metric": "games_played",
+      "reason": null,
+      "sample_size": null,
+      "season": "2025-26",
+      "source": "Player-Predictor real box scores",
+      "status": "OBSERVED",
+      "value": 66
+    },
+    "makes_per_decision_touch": {
+      "confidence": null,
+      "method": "real sampled assists / (sampled games * decision_touches_per_game) -- the simulator's baseline receiver-makes-per-touch rate; undercounts true receiver shot generation since missed/non-assisted passes are invisible to this source",
+      "metric": "makes_per_decision_touch",
+      "reason": null,
+      "sample_size": 25,
+      "season": "2025-26",
+      "source": null,
+      "status": "DERIVED",
+      "value": 0.21014232999472854
+    },
+    "minutes_per_game": {
+      "confidence": null,
+      "method": null,
+      "metric": "minutes_per_game",
+      "reason": null,
+      "sample_size": 66,
+      "season": "2025-26",
+      "source": "Player-Predictor real box scores",
+      "status": "OBSERVED",
+      "value": 35.38333333333333
+    },
+    "recipient_shot_pct": {
+      "confidence": null,
+      "method": null,
+      "metric": "recipient_shot_pct",
+      "reason": "Requires total (not just assisted) recipient FGA after a pass; unavailable -- see routing/recipients.py.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "tov_per_decision_touch": {
+      "confidence": null,
+      "method": "mean(TOV) / decision_touches_per_game",
+      "metric": "tov_per_decision_touch",
+      "reason": null,
+      "sample_size": 66,
+      "season": "2025-26",
+      "source": null,
+      "status": "DERIVED",
+      "value": 0.11755403268318398
+    },
+    "tov_per_game": {
+      "confidence": null,
+      "method": null,
+      "metric": "tov_per_game",
+      "reason": null,
+      "sample_size": 66,
+      "season": "2025-26",
+      "source": "Player-Predictor real box scores",
+      "status": "OBSERVED",
+      "value": 3.378787878787879
+    },
+    "usage_pct": {
+      "confidence": null,
+      "method": null,
+      "metric": "usage_pct",
+      "reason": null,
+      "sample_size": 66,
+      "season": "2025-26",
+      "source": "Player-Predictor real box scores (season mean of real per-game USG%)",
+      "status": "OBSERVED",
+      "value": 12.98936254868742
+    }
+  },
+  "drive": {
+    "advantage_metrics": {
+      "advantage_conversion": {
+        "confidence": null,
+        "method": null,
+        "metric": "drive_advantage_conversion",
+        "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed. (mode=drive)",
+        "sample_size": null,
+        "season": null,
+        "source": null,
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "advantage_creation_rate": {
+        "confidence": null,
+        "method": null,
+        "metric": "drive_advantage_creation_rate",
+        "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed. (mode=drive)",
+        "sample_size": null,
+        "season": null,
+        "source": null,
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "advantage_pass_rate": {
+        "confidence": null,
+        "method": null,
+        "metric": "drive_advantage_pass_rate",
+        "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed. (mode=drive)",
+        "sample_size": null,
+        "season": null,
+        "source": null,
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "high_value_shot_rate": {
+        "confidence": null,
+        "method": null,
+        "metric": "drive_high_value_shot_rate",
+        "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed. (mode=drive)",
+        "sample_size": null,
+        "season": null,
+        "source": null,
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "mode": "drive"
+    },
+    "ast_pct_of_drives": {
+      "confidence": null,
+      "method": null,
+      "metric": "ast_pct_of_drives",
+      "reason": "Drive detection (dribble penetration into the paint/a closeout) requires stats.nba.com PlayerDashPtShotLog/Drives tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "ast_per_drive_pass": {
+      "confidence": null,
+      "method": null,
+      "metric": "ast_per_drive_pass",
+      "reason": "Drive detection (dribble penetration into the paint/a closeout) requires stats.nba.com PlayerDashPtShotLog/Drives tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "drive_assists": {
+      "confidence": null,
+      "method": null,
+      "metric": "drive_assists",
+      "reason": "Drive detection (dribble penetration into the paint/a closeout) requires stats.nba.com PlayerDashPtShotLog/Drives tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "drive_passes": {
+      "confidence": null,
+      "method": null,
+      "metric": "drive_passes",
+      "reason": "Drive detection (dribble penetration into the paint/a closeout) requires stats.nba.com PlayerDashPtShotLog/Drives tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "drive_turnovers": {
+      "confidence": null,
+      "method": null,
+      "metric": "drive_turnovers",
+      "reason": "Drive detection (dribble penetration into the paint/a closeout) requires stats.nba.com PlayerDashPtShotLog/Drives tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "drives": {
+      "confidence": null,
+      "method": null,
+      "metric": "drives",
+      "reason": "Drive detection (dribble penetration into the paint/a closeout) requires stats.nba.com PlayerDashPtShotLog/Drives tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "pass_pct_of_drives": {
+      "confidence": null,
+      "method": null,
+      "metric": "pass_pct_of_drives",
+      "reason": "Drive detection (dribble penetration into the paint/a closeout) requires stats.nba.com PlayerDashPtShotLog/Drives tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "routing_vector": {
+      "mode": "drive",
+      "probabilities": {
+        "ADVANTAGE_CONTINUED": {
+          "confidence": null,
+          "method": null,
+          "metric": "drive_advantage_continued_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "NEUTRAL_RESET": {
+          "confidence": null,
+          "method": null,
+          "metric": "drive_neutral_reset_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "PULLUP_CREATION": {
+          "confidence": null,
+          "method": null,
+          "metric": "drive_pullup_creation_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "RELOCATE_3": {
+          "confidence": null,
+          "method": null,
+          "metric": "drive_relocate_3_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "RIM_FEED": {
+          "confidence": null,
+          "method": null,
+          "metric": "drive_rim_feed_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "SECONDARY_DRIVE": {
+          "confidence": null,
+          "method": null,
+          "metric": "drive_secondary_drive_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "SHORT_ROLL": {
+          "confidence": null,
+          "method": null,
+          "metric": "drive_short_roll_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "SPRAY_3": {
+          "confidence": null,
+          "method": null,
+          "metric": "drive_spray_3_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        }
+      },
+      "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+      "states": [
+        "SPRAY_3",
+        "RELOCATE_3",
+        "SHORT_ROLL",
+        "RIM_FEED",
+        "SECONDARY_DRIVE",
+        "PULLUP_CREATION",
+        "ADVANTAGE_CONTINUED",
+        "NEUTRAL_RESET"
+      ],
+      "status": "UNAVAILABLE"
+    },
+    "tov_per_drive": {
+      "confidence": null,
+      "method": null,
+      "metric": "tov_per_drive",
+      "reason": "Drive detection (dribble penetration into the paint/a closeout) requires stats.nba.com PlayerDashPtShotLog/Drives tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "tov_per_drive_pass": {
+      "confidence": null,
+      "method": null,
+      "metric": "tov_per_drive_pass",
+      "reason": "Drive detection (dribble penetration into the paint/a closeout) requires stats.nba.com PlayerDashPtShotLog/Drives tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    }
+  },
+  "gravity": {
+    "components": {
+      "PAINT_FACEUP_GRAVITY": {
+        "ft_rate_proxy": {
+          "confidence": null,
+          "method": "mean(FTA)/mean(FGA), real box-score per-game rates -- a foul-drawing proxy, not a play-type-specific foul rate",
+          "metric": "ft_rate_proxy",
+          "reason": null,
+          "sample_size": 66,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.31167690956979804
+        },
+        "paint_attempts_season": {
+          "confidence": null,
+          "method": null,
+          "metric": "paint_attempts_season",
+          "reason": null,
+          "sample_size": null,
+          "season": "2025-26",
+          "source": "Basketball-Reference season shooting table",
+          "status": "OBSERVED",
+          "value": 693
+        },
+        "paint_fg_pct": {
+          "confidence": null,
+          "method": "(rim_fg + short_paint_fg) / (rim_fga + short_paint_fga), real zone totals",
+          "metric": "paint_fg_pct",
+          "reason": null,
+          "sample_size": null,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.5772005772005772
+        },
+        "rim_fg_pct_0_3ft": {
+          "confidence": null,
+          "method": null,
+          "metric": "rim_fg_pct_0_3ft",
+          "reason": null,
+          "sample_size": null,
+          "season": "2025-26",
+          "source": "Basketball-Reference season shooting table",
+          "status": "OBSERVED",
+          "value": 0.732
+        }
+      },
+      "PERIMETER_GRAVITY": {
+        "perimeter_attempts_share": {
+          "confidence": null,
+          "method": "(mid + long_mid + three FGA) / season total FGA, real zone totals -- broader than POP_GRAVITY (includes mid-range jump shooting)",
+          "metric": "perimeter_attempts_share",
+          "reason": null,
+          "sample_size": null,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.510586319218241
+        }
+      },
+      "POP_GRAVITY": {
+        "three_p_pct": {
+          "confidence": null,
+          "method": null,
+          "metric": "three_p_pct",
+          "reason": null,
+          "sample_size": null,
+          "season": "2025-26",
+          "source": "Basketball-Reference season shooting table",
+          "status": "OBSERVED",
+          "value": 0.347
+        },
+        "three_pa_season": {
+          "confidence": null,
+          "method": null,
+          "metric": "three_pa_season",
+          "reason": null,
+          "sample_size": null,
+          "season": "2025-26",
+          "source": "Basketball-Reference season shooting table",
+          "status": "OBSERVED",
+          "value": 372
+        },
+        "three_pa_share_of_fga": {
+          "confidence": null,
+          "method": "season 3PA / season total FGA, real zone totals",
+          "metric": "three_pa_share_of_fga",
+          "reason": null,
+          "sample_size": null,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.30293159609120524
+        }
+      },
+      "POST_SCORING_GRAVITY": {
+        "hook_shot_attempts_season": {
+          "confidence": null,
+          "method": null,
+          "metric": "hook_shot_attempts_season",
+          "reason": null,
+          "sample_size": null,
+          "season": "2025-26",
+          "source": "Basketball-Reference season shooting table",
+          "status": "OBSERVED",
+          "value": 9
+        },
+        "hook_shot_fg_pct": {
+          "confidence": null,
+          "method": null,
+          "metric": "hook_shot_fg_pct",
+          "reason": null,
+          "sample_size": null,
+          "season": "2025-26",
+          "source": "Basketball-Reference season shooting table",
+          "status": "OBSERVED",
+          "value": 0.444
+        },
+        "post_scoring_gravity_index": {
+          "confidence": 0.45,
+          "method": "0.5*(hook_shot_FGA / season_FGA)*10 + 0.5*unassisted_short_paint_rate -- a transparent, documented combination of two real proxies (hook-shot volume, unassisted short-paint rate), NOT a tracking-grade post-touch measurement. See module docstring.",
+          "metric": "post_scoring_gravity_index",
+          "reason": null,
+          "sample_size": null,
+          "season": "2025-26",
+          "source": null,
+          "status": "RECONSTRUCTED",
+          "value": 0.3116449511400652
+        },
+        "unassisted_short_paint_rate": {
+          "confidence": null,
+          "method": "1 - (real %Ast'd at 3-10ft zone) -- self-created short-paint makes skew toward post scoring rather than a set play",
+          "metric": "unassisted_short_paint_rate",
+          "reason": null,
+          "sample_size": null,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.55
+        }
+      },
+      "SHORT_ROLL_GRAVITY": {
+        "summary": {
+          "confidence": null,
+          "method": null,
+          "metric": "short_roll_gravity_summary",
+          "reason": "Requires roll-man/ball-screen touch tracking (stats.nba.com SportVU/Synergy). No reachable source publishes this; no proxy is invented.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        }
+      },
+      "VERTICAL_GRAVITY": {
+        "dunk_attempts_season": {
+          "confidence": null,
+          "method": null,
+          "metric": "dunk_attempts_season",
+          "reason": null,
+          "sample_size": null,
+          "season": "2025-26",
+          "source": "Basketball-Reference season shooting table",
+          "status": "OBSERVED",
+          "value": 99
+        },
+        "dunk_fg_pct": {
+          "confidence": null,
+          "method": null,
+          "metric": "dunk_fg_pct",
+          "reason": null,
+          "sample_size": null,
+          "season": "2025-26",
+          "source": "Basketball-Reference season shooting table",
+          "status": "OBSERVED",
+          "value": 0.96
+        },
+        "rim_attempts_season": {
+          "confidence": null,
+          "method": null,
+          "metric": "rim_attempts_season",
+          "reason": null,
+          "sample_size": null,
+          "season": "2025-26",
+          "source": "Basketball-Reference season shooting table",
+          "status": "OBSERVED",
+          "value": 340
+        },
+        "rim_fg_pct": {
+          "confidence": null,
+          "method": null,
+          "metric": "rim_fg_pct",
+          "reason": null,
+          "sample_size": null,
+          "season": "2025-26",
+          "source": "Basketball-Reference season shooting table",
+          "status": "OBSERVED",
+          "value": 0.732
+        }
+      }
+    },
+    "mechanisms_present": [
+      "PAINT_FACEUP_GRAVITY",
+      "VERTICAL_GRAVITY",
+      "POP_GRAVITY",
+      "PERIMETER_GRAVITY",
+      "POST_SCORING_GRAVITY"
+    ],
+    "player_name": "Jalen Johnson",
+    "season": "2025-26"
+  },
+  "interior_hub": {
+    "advantage_metrics": {
+      "advantage_conversion": {
+        "confidence": null,
+        "method": null,
+        "metric": "interior_hub_advantage_conversion",
+        "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed. (mode=interior_hub)",
+        "sample_size": null,
+        "season": null,
+        "source": null,
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "advantage_creation_rate": {
+        "confidence": null,
+        "method": null,
+        "metric": "interior_hub_advantage_creation_rate",
+        "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed. (mode=interior_hub)",
+        "sample_size": null,
+        "season": null,
+        "source": null,
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "advantage_pass_rate": {
+        "confidence": null,
+        "method": null,
+        "metric": "interior_hub_advantage_pass_rate",
+        "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed. (mode=interior_hub)",
+        "sample_size": null,
+        "season": null,
+        "source": null,
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "high_value_shot_rate": {
+        "confidence": null,
+        "method": null,
+        "metric": "interior_hub_high_value_shot_rate",
+        "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed. (mode=interior_hub)",
+        "sample_size": null,
+        "season": null,
+        "source": null,
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "mode": "interior_hub"
+    },
+    "ast_pct_of_post_pass": {
+      "confidence": null,
+      "method": null,
+      "metric": "ast_pct_of_post_pass",
+      "reason": "Post-touch detection (low-post touches for STRICT_POST_HUB; post + elbow + nail/high-post + short-roll + delay + selected DHO touches for INTERIOR_HUB) requires stats.nba.com touch-tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "hub_type": "INTERIOR_HUB",
+    "pass_pct_of_touches": {
+      "confidence": null,
+      "method": null,
+      "metric": "pass_pct_of_touches",
+      "reason": "Post-touch detection (low-post touches for STRICT_POST_HUB; post + elbow + nail/high-post + short-roll + delay + selected DHO touches for INTERIOR_HUB) requires stats.nba.com touch-tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "post_assists": {
+      "confidence": null,
+      "method": null,
+      "metric": "post_assists",
+      "reason": "Post-touch detection (low-post touches for STRICT_POST_HUB; post + elbow + nail/high-post + short-roll + delay + selected DHO touches for INTERIOR_HUB) requires stats.nba.com touch-tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "post_passes": {
+      "confidence": null,
+      "method": null,
+      "metric": "post_passes",
+      "reason": "Post-touch detection (low-post touches for STRICT_POST_HUB; post + elbow + nail/high-post + short-roll + delay + selected DHO touches for INTERIOR_HUB) requires stats.nba.com touch-tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "post_touches": {
+      "confidence": null,
+      "method": null,
+      "metric": "post_touches",
+      "reason": "Post-touch detection (low-post touches for STRICT_POST_HUB; post + elbow + nail/high-post + short-roll + delay + selected DHO touches for INTERIOR_HUB) requires stats.nba.com touch-tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "post_turnovers": {
+      "confidence": null,
+      "method": null,
+      "metric": "post_turnovers",
+      "reason": "Post-touch detection (low-post touches for STRICT_POST_HUB; post + elbow + nail/high-post + short-roll + delay + selected DHO touches for INTERIOR_HUB) requires stats.nba.com touch-tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "routing_vector": {
+      "mode": "interior_hub",
+      "probabilities": {
+        "ADVANTAGE_CONTINUED": {
+          "confidence": null,
+          "method": null,
+          "metric": "interior_hub_advantage_continued_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "CUT_RIM": {
+          "confidence": null,
+          "method": null,
+          "metric": "interior_hub_cut_rim_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "HIGH_LOW": {
+          "confidence": null,
+          "method": null,
+          "metric": "interior_hub_high_low_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "NEUTRAL_RESET": {
+          "confidence": null,
+          "method": null,
+          "metric": "interior_hub_neutral_reset_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "SECONDARY_DRIVE": {
+          "confidence": null,
+          "method": null,
+          "metric": "interior_hub_secondary_drive_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "SPLIT_ACTION": {
+          "confidence": null,
+          "method": null,
+          "metric": "interior_hub_split_action_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "STRONGSIDE_KICK": {
+          "confidence": null,
+          "method": null,
+          "metric": "interior_hub_strongside_kick_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "WEAKSIDE_SKIP": {
+          "confidence": null,
+          "method": null,
+          "metric": "interior_hub_weakside_skip_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        }
+      },
+      "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+      "states": [
+        "CUT_RIM",
+        "HIGH_LOW",
+        "WEAKSIDE_SKIP",
+        "STRONGSIDE_KICK",
+        "SPLIT_ACTION",
+        "SECONDARY_DRIVE",
+        "ADVANTAGE_CONTINUED",
+        "NEUTRAL_RESET"
+      ],
+      "status": "UNAVAILABLE"
+    },
+    "touch_coverage": "post + elbow + nail/high-post + short-roll catches + delay actions + selected DHO initiation states"
+  },
+  "origin_target_states": [],
+  "player": {
+    "bball_ref_slug": "johnsja05",
+    "name": "Jalen Johnson",
+    "season": "2025-26"
+  },
+  "post": {
+    "advantage_metrics": {
+      "advantage_conversion": {
+        "confidence": null,
+        "method": null,
+        "metric": "strict_post_hub_advantage_conversion",
+        "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed. (mode=strict_post_hub)",
+        "sample_size": null,
+        "season": null,
+        "source": null,
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "advantage_creation_rate": {
+        "confidence": null,
+        "method": null,
+        "metric": "strict_post_hub_advantage_creation_rate",
+        "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed. (mode=strict_post_hub)",
+        "sample_size": null,
+        "season": null,
+        "source": null,
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "advantage_pass_rate": {
+        "confidence": null,
+        "method": null,
+        "metric": "strict_post_hub_advantage_pass_rate",
+        "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed. (mode=strict_post_hub)",
+        "sample_size": null,
+        "season": null,
+        "source": null,
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "high_value_shot_rate": {
+        "confidence": null,
+        "method": null,
+        "metric": "strict_post_hub_high_value_shot_rate",
+        "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed. (mode=strict_post_hub)",
+        "sample_size": null,
+        "season": null,
+        "source": null,
+        "status": "UNAVAILABLE",
+        "value": null
+      },
+      "mode": "strict_post_hub"
+    },
+    "ast_pct_of_post_pass": {
+      "confidence": null,
+      "method": null,
+      "metric": "ast_pct_of_post_pass",
+      "reason": "Post-touch detection (low-post touches for STRICT_POST_HUB; post + elbow + nail/high-post + short-roll + delay + selected DHO touches for INTERIOR_HUB) requires stats.nba.com touch-tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "hub_type": "STRICT_POST_HUB",
+    "pass_pct_of_touches": {
+      "confidence": null,
+      "method": null,
+      "metric": "pass_pct_of_touches",
+      "reason": "Post-touch detection (low-post touches for STRICT_POST_HUB; post + elbow + nail/high-post + short-roll + delay + selected DHO touches for INTERIOR_HUB) requires stats.nba.com touch-tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "post_assists": {
+      "confidence": null,
+      "method": null,
+      "metric": "post_assists",
+      "reason": "Post-touch detection (low-post touches for STRICT_POST_HUB; post + elbow + nail/high-post + short-roll + delay + selected DHO touches for INTERIOR_HUB) requires stats.nba.com touch-tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "post_passes": {
+      "confidence": null,
+      "method": null,
+      "metric": "post_passes",
+      "reason": "Post-touch detection (low-post touches for STRICT_POST_HUB; post + elbow + nail/high-post + short-roll + delay + selected DHO touches for INTERIOR_HUB) requires stats.nba.com touch-tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "post_touches": {
+      "confidence": null,
+      "method": null,
+      "metric": "post_touches",
+      "reason": "Post-touch detection (low-post touches for STRICT_POST_HUB; post + elbow + nail/high-post + short-roll + delay + selected DHO touches for INTERIOR_HUB) requires stats.nba.com touch-tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "post_turnovers": {
+      "confidence": null,
+      "method": null,
+      "metric": "post_turnovers",
+      "reason": "Post-touch detection (low-post touches for STRICT_POST_HUB; post + elbow + nail/high-post + short-roll + delay + selected DHO touches for INTERIOR_HUB) requires stats.nba.com touch-tracking data, which is unreachable from this environment. No proxy is invented.",
+      "sample_size": null,
+      "season": null,
+      "source": null,
+      "status": "UNAVAILABLE",
+      "value": null
+    },
+    "routing_vector": {
+      "mode": "strict_post_hub",
+      "probabilities": {
+        "ADVANTAGE_CONTINUED": {
+          "confidence": null,
+          "method": null,
+          "metric": "strict_post_hub_advantage_continued_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "CUT_RIM": {
+          "confidence": null,
+          "method": null,
+          "metric": "strict_post_hub_cut_rim_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "HIGH_LOW": {
+          "confidence": null,
+          "method": null,
+          "metric": "strict_post_hub_high_low_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "NEUTRAL_RESET": {
+          "confidence": null,
+          "method": null,
+          "metric": "strict_post_hub_neutral_reset_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "SECONDARY_DRIVE": {
+          "confidence": null,
+          "method": null,
+          "metric": "strict_post_hub_secondary_drive_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "SPLIT_ACTION": {
+          "confidence": null,
+          "method": null,
+          "metric": "strict_post_hub_split_action_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "STRONGSIDE_KICK": {
+          "confidence": null,
+          "method": null,
+          "metric": "strict_post_hub_strongside_kick_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "WEAKSIDE_SKIP": {
+          "confidence": null,
+          "method": null,
+          "metric": "strict_post_hub_weakside_skip_probability",
+          "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        }
+      },
+      "reason": "Origin-touch classification (drive vs. post touch vs. short roll vs. other) requires possession/touch-level tracking data. stats.nba.com (the only reachable-in-principle source for this) is unreachable from this environment (verified: every live endpoint call times out with zero bytes), and no other real source publishes it. This field is left UNAVAILABLE rather than guessed.",
+      "states": [
+        "CUT_RIM",
+        "HIGH_LOW",
+        "WEAKSIDE_SKIP",
+        "STRONGSIDE_KICK",
+        "SPLIT_ACTION",
+        "SECONDARY_DRIVE",
+        "ADVANTAGE_CONTINUED",
+        "NEUTRAL_RESET"
+      ],
+      "status": "UNAVAILABLE"
+    },
+    "touch_coverage": "legitimate low-post touches only"
+  },
+  "provenance": {
+    "bball_ref_games_available_total": 89,
+    "bball_ref_games_sampled": [
+      "202603070ATL",
+      "202603100ATL",
+      "202603120ATL",
+      "202603140ATL",
+      "202603160ATL",
+      "202603180DAL",
+      "202603200HOU",
+      "202603210ATL",
+      "202603230ATL",
+      "202603250DET",
+      "202603270BOS",
+      "202603280ATL",
+      "202603300ATL",
+      "202604010ORL",
+      "202604030BRK",
+      "202604060ATL",
+      "202604080CLE",
+      "202604100ATL",
+      "202604120MIA",
+      "202604180NYK",
+      "202604200NYK",
+      "202604230ATL",
+      "202604250ATL",
+      "202604280NYK",
+      "202604300ATL"
+    ],
+    "bball_ref_player_slug": "johnsja05",
+    "bball_ref_sampling_method": "most recent N real games from the player's real season game log, chronological order preserved (see sources/collect.py)",
+    "box_score_source": "/home/user/NBA-Analytics/Player-Predictor/Data-Proc/Jalen_Johnson/2026_processed_processed.csv",
+    "generated_at_utc": "2026-08-23T19:34:23.596791+00:00",
+    "league_shooting_baseline_url": "https://www.basketball-reference.com/leagues/NBA_2026_shooting.html",
+    "notes": [],
+    "package_version": "ADVANTAGE_ROUTING_V1",
+    "season": "2025-26",
+    "stats_nba_com_note": "Verified unreachable from this environment (see sources/bball_ref.py module docstring) -- touch/post/drive/passing-network tracking and exact shot coordinates are UNAVAILABLE for this reason, not omitted by oversight.",
+    "stats_nba_com_reachable": false
+  },
+  "recipients": {
+    "games_available_total": 89,
+    "games_sampled": 25,
+    "player_name": "Jalen Johnson",
+    "recipients": [
+      {
+        "assist_share": {
+          "confidence": null,
+          "method": "recipient_assists / player_total_sampled_assists",
+          "metric": "assist_share",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.25165562913907286
+        },
+        "assists": {
+          "confidence": null,
+          "method": null,
+          "metric": "assists",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": "Basketball-Reference play-by-play (sampled)",
+          "status": "OBSERVED",
+          "value": 38
+        },
+        "ast_per_pass": {
+          "confidence": null,
+          "method": null,
+          "metric": "ast_per_pass",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "high_value_assist_rate": {
+          "confidence": null,
+          "method": "high_value assists to recipient / total assists to recipient (rim+three, sampled)",
+          "metric": "high_value_assist_rate",
+          "reason": null,
+          "sample_size": 38,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.9736842105263158
+        },
+        "high_value_share_index": {
+          "confidence": null,
+          "method": "recipient's high_value_assist_rate / player's overall high_value_assist_rate (sampled assists only) -- an honest analog of 'shot leverage' restricted to the assisted-shot sample; NOT the spec's original pass-share-based formula, see module docstring",
+          "metric": "high_value_share_index",
+          "reason": null,
+          "sample_size": 38,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 1.2784897025171624
+        },
+        "most_common_resulting_shot": "ABOVE_BREAK_3",
+        "pass_share": {
+          "confidence": null,
+          "method": null,
+          "metric": "pass_share",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "passes": {
+          "confidence": null,
+          "method": null,
+          "metric": "passes",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "points_generated": {
+          "confidence": null,
+          "method": "sum(3 if three else 2 for each real assisted make)",
+          "metric": "points_generated",
+          "reason": null,
+          "sample_size": 38,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 104.0
+        },
+        "recipient_label": "N. Alexander-Walker",
+        "recipient_leverage": {
+          "confidence": null,
+          "method": null,
+          "metric": "recipient_leverage",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "recipient_slug": "alexani01",
+        "zone_breakdown": {
+          "ABOVE_BREAK_3": 28,
+          "MIDRANGE": 1,
+          "RIM": 9
+        }
+      },
+      {
+        "assist_share": {
+          "confidence": null,
+          "method": "recipient_assists / player_total_sampled_assists",
+          "metric": "assist_share",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.2119205298013245
+        },
+        "assists": {
+          "confidence": null,
+          "method": null,
+          "metric": "assists",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": "Basketball-Reference play-by-play (sampled)",
+          "status": "OBSERVED",
+          "value": 32
+        },
+        "ast_per_pass": {
+          "confidence": null,
+          "method": null,
+          "metric": "ast_per_pass",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "high_value_assist_rate": {
+          "confidence": null,
+          "method": "high_value assists to recipient / total assists to recipient (rim+three, sampled)",
+          "metric": "high_value_assist_rate",
+          "reason": null,
+          "sample_size": 32,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.6875
+        },
+        "high_value_share_index": {
+          "confidence": null,
+          "method": "recipient's high_value_assist_rate / player's overall high_value_assist_rate (sampled assists only) -- an honest analog of 'shot leverage' restricted to the assisted-shot sample; NOT the spec's original pass-share-based formula, see module docstring",
+          "metric": "high_value_share_index",
+          "reason": null,
+          "sample_size": 32,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.9027173913043478
+        },
+        "most_common_resulting_shot": "ABOVE_BREAK_3",
+        "pass_share": {
+          "confidence": null,
+          "method": null,
+          "metric": "pass_share",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "passes": {
+          "confidence": null,
+          "method": null,
+          "metric": "passes",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "points_generated": {
+          "confidence": null,
+          "method": "sum(3 if three else 2 for each real assisted make)",
+          "metric": "points_generated",
+          "reason": null,
+          "sample_size": 32,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 77.0
+        },
+        "recipient_label": "O. Okongwu",
+        "recipient_leverage": {
+          "confidence": null,
+          "method": null,
+          "metric": "recipient_leverage",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "recipient_slug": "okongon01",
+        "zone_breakdown": {
+          "ABOVE_BREAK_3": 13,
+          "MIDRANGE": 1,
+          "RIM": 9,
+          "SHORT_PAINT": 9
+        }
+      },
+      {
+        "assist_share": {
+          "confidence": null,
+          "method": "recipient_assists / player_total_sampled_assists",
+          "metric": "assist_share",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.16556291390728478
+        },
+        "assists": {
+          "confidence": null,
+          "method": null,
+          "metric": "assists",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": "Basketball-Reference play-by-play (sampled)",
+          "status": "OBSERVED",
+          "value": 25
+        },
+        "ast_per_pass": {
+          "confidence": null,
+          "method": null,
+          "metric": "ast_per_pass",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "high_value_assist_rate": {
+          "confidence": null,
+          "method": "high_value assists to recipient / total assists to recipient (rim+three, sampled)",
+          "metric": "high_value_assist_rate",
+          "reason": null,
+          "sample_size": 25,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.64
+        },
+        "high_value_share_index": {
+          "confidence": null,
+          "method": "recipient's high_value_assist_rate / player's overall high_value_assist_rate (sampled assists only) -- an honest analog of 'shot leverage' restricted to the assisted-shot sample; NOT the spec's original pass-share-based formula, see module docstring",
+          "metric": "high_value_share_index",
+          "reason": null,
+          "sample_size": 25,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.8403478260869566
+        },
+        "most_common_resulting_shot": "RIM",
+        "pass_share": {
+          "confidence": null,
+          "method": null,
+          "metric": "pass_share",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "passes": {
+          "confidence": null,
+          "method": null,
+          "metric": "passes",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "points_generated": {
+          "confidence": null,
+          "method": "sum(3 if three else 2 for each real assisted make)",
+          "metric": "points_generated",
+          "reason": null,
+          "sample_size": 25,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 54.0
+        },
+        "recipient_label": "D. Daniels",
+        "recipient_leverage": {
+          "confidence": null,
+          "method": null,
+          "metric": "recipient_leverage",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "recipient_slug": "daniedy01",
+        "zone_breakdown": {
+          "ABOVE_BREAK_3": 4,
+          "MIDRANGE": 3,
+          "RIM": 12,
+          "SHORT_PAINT": 6
+        }
+      },
+      {
+        "assist_share": {
+          "confidence": null,
+          "method": "recipient_assists / player_total_sampled_assists",
+          "metric": "assist_share",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.1390728476821192
+        },
+        "assists": {
+          "confidence": null,
+          "method": null,
+          "metric": "assists",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": "Basketball-Reference play-by-play (sampled)",
+          "status": "OBSERVED",
+          "value": 21
+        },
+        "ast_per_pass": {
+          "confidence": null,
+          "method": null,
+          "metric": "ast_per_pass",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "high_value_assist_rate": {
+          "confidence": null,
+          "method": "high_value assists to recipient / total assists to recipient (rim+three, sampled)",
+          "metric": "high_value_assist_rate",
+          "reason": null,
+          "sample_size": 21,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.5714285714285714
+        },
+        "high_value_share_index": {
+          "confidence": null,
+          "method": "recipient's high_value_assist_rate / player's overall high_value_assist_rate (sampled assists only) -- an honest analog of 'shot leverage' restricted to the assisted-shot sample; NOT the spec's original pass-share-based formula, see module docstring",
+          "metric": "high_value_share_index",
+          "reason": null,
+          "sample_size": 21,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.7503105590062111
+        },
+        "most_common_resulting_shot": "RIM",
+        "pass_share": {
+          "confidence": null,
+          "method": null,
+          "metric": "pass_share",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "passes": {
+          "confidence": null,
+          "method": null,
+          "metric": "passes",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "points_generated": {
+          "confidence": null,
+          "method": "sum(3 if three else 2 for each real assisted make)",
+          "metric": "points_generated",
+          "reason": null,
+          "sample_size": 21,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 47.0
+        },
+        "recipient_label": "C. McCollum",
+        "recipient_leverage": {
+          "confidence": null,
+          "method": null,
+          "metric": "recipient_leverage",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "recipient_slug": "mccolcj01",
+        "zone_breakdown": {
+          "ABOVE_BREAK_3": 5,
+          "MIDRANGE": 6,
+          "RIM": 7,
+          "SHORT_PAINT": 3
+        }
+      },
+      {
+        "assist_share": {
+          "confidence": null,
+          "method": "recipient_assists / player_total_sampled_assists",
+          "metric": "assist_share",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.0728476821192053
+        },
+        "assists": {
+          "confidence": null,
+          "method": null,
+          "metric": "assists",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": "Basketball-Reference play-by-play (sampled)",
+          "status": "OBSERVED",
+          "value": 11
+        },
+        "ast_per_pass": {
+          "confidence": null,
+          "method": null,
+          "metric": "ast_per_pass",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "high_value_assist_rate": {
+          "confidence": null,
+          "method": "high_value assists to recipient / total assists to recipient (rim+three, sampled)",
+          "metric": "high_value_assist_rate",
+          "reason": null,
+          "sample_size": 11,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.8181818181818182
+        },
+        "high_value_share_index": {
+          "confidence": null,
+          "method": "recipient's high_value_assist_rate / player's overall high_value_assist_rate (sampled assists only) -- an honest analog of 'shot leverage' restricted to the assisted-shot sample; NOT the spec's original pass-share-based formula, see module docstring",
+          "metric": "high_value_share_index",
+          "reason": null,
+          "sample_size": 11,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 1.074308300395257
+        },
+        "most_common_resulting_shot": "RIM",
+        "pass_share": {
+          "confidence": null,
+          "method": null,
+          "metric": "pass_share",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "passes": {
+          "confidence": null,
+          "method": null,
+          "metric": "passes",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "points_generated": {
+          "confidence": null,
+          "method": "sum(3 if three else 2 for each real assisted make)",
+          "metric": "points_generated",
+          "reason": null,
+          "sample_size": 11,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 25.0
+        },
+        "recipient_label": "J. Landale",
+        "recipient_leverage": {
+          "confidence": null,
+          "method": null,
+          "metric": "recipient_leverage",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "recipient_slug": "landajo01",
+        "zone_breakdown": {
+          "ABOVE_BREAK_3": 3,
+          "RIM": 6,
+          "SHORT_PAINT": 2
+        }
+      },
+      {
+        "assist_share": {
+          "confidence": null,
+          "method": "recipient_assists / player_total_sampled_assists",
+          "metric": "assist_share",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.052980132450331126
+        },
+        "assists": {
+          "confidence": null,
+          "method": null,
+          "metric": "assists",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": "Basketball-Reference play-by-play (sampled)",
+          "status": "OBSERVED",
+          "value": 8
+        },
+        "ast_per_pass": {
+          "confidence": null,
+          "method": null,
+          "metric": "ast_per_pass",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "high_value_assist_rate": {
+          "confidence": null,
+          "method": "high_value assists to recipient / total assists to recipient (rim+three, sampled)",
+          "metric": "high_value_assist_rate",
+          "reason": null,
+          "sample_size": 8,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.625
+        },
+        "high_value_share_index": {
+          "confidence": null,
+          "method": "recipient's high_value_assist_rate / player's overall high_value_assist_rate (sampled assists only) -- an honest analog of 'shot leverage' restricted to the assisted-shot sample; NOT the spec's original pass-share-based formula, see module docstring",
+          "metric": "high_value_share_index",
+          "reason": null,
+          "sample_size": 8,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.8206521739130435
+        },
+        "most_common_resulting_shot": "RIM",
+        "pass_share": {
+          "confidence": null,
+          "method": null,
+          "metric": "pass_share",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "passes": {
+          "confidence": null,
+          "method": null,
+          "metric": "passes",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "points_generated": {
+          "confidence": null,
+          "method": "sum(3 if three else 2 for each real assisted make)",
+          "metric": "points_generated",
+          "reason": null,
+          "sample_size": 8,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 18.0
+        },
+        "recipient_label": "Z. Risacher",
+        "recipient_leverage": {
+          "confidence": null,
+          "method": null,
+          "metric": "recipient_leverage",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "recipient_slug": "risacza01",
+        "zone_breakdown": {
+          "ABOVE_BREAK_3": 2,
+          "MIDRANGE": 1,
+          "RIM": 3,
+          "SHORT_PAINT": 2
+        }
+      },
+      {
+        "assist_share": {
+          "confidence": null,
+          "method": "recipient_assists / player_total_sampled_assists",
+          "metric": "assist_share",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.033112582781456956
+        },
+        "assists": {
+          "confidence": null,
+          "method": null,
+          "metric": "assists",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": "Basketball-Reference play-by-play (sampled)",
+          "status": "OBSERVED",
+          "value": 5
+        },
+        "ast_per_pass": {
+          "confidence": null,
+          "method": null,
+          "metric": "ast_per_pass",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "high_value_assist_rate": {
+          "confidence": null,
+          "method": "high_value assists to recipient / total assists to recipient (rim+three, sampled)",
+          "metric": "high_value_assist_rate",
+          "reason": null,
+          "sample_size": 5,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 1.0
+        },
+        "high_value_share_index": {
+          "confidence": null,
+          "method": "recipient's high_value_assist_rate / player's overall high_value_assist_rate (sampled assists only) -- an honest analog of 'shot leverage' restricted to the assisted-shot sample; NOT the spec's original pass-share-based formula, see module docstring",
+          "metric": "high_value_share_index",
+          "reason": null,
+          "sample_size": 5,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 1.3130434782608695
+        },
+        "most_common_resulting_shot": "ABOVE_BREAK_3",
+        "pass_share": {
+          "confidence": null,
+          "method": null,
+          "metric": "pass_share",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "passes": {
+          "confidence": null,
+          "method": null,
+          "metric": "passes",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "points_generated": {
+          "confidence": null,
+          "method": "sum(3 if three else 2 for each real assisted make)",
+          "metric": "points_generated",
+          "reason": null,
+          "sample_size": 5,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 15.0
+        },
+        "recipient_label": "G. Vincent",
+        "recipient_leverage": {
+          "confidence": null,
+          "method": null,
+          "metric": "recipient_leverage",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "recipient_slug": "vincega01",
+        "zone_breakdown": {
+          "ABOVE_BREAK_3": 5
+        }
+      },
+      {
+        "assist_share": {
+          "confidence": null,
+          "method": "recipient_assists / player_total_sampled_assists",
+          "metric": "assist_share",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.026490066225165563
+        },
+        "assists": {
+          "confidence": null,
+          "method": null,
+          "metric": "assists",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": "Basketball-Reference play-by-play (sampled)",
+          "status": "OBSERVED",
+          "value": 4
+        },
+        "ast_per_pass": {
+          "confidence": null,
+          "method": null,
+          "metric": "ast_per_pass",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "high_value_assist_rate": {
+          "confidence": null,
+          "method": "high_value assists to recipient / total assists to recipient (rim+three, sampled)",
+          "metric": "high_value_assist_rate",
+          "reason": null,
+          "sample_size": 4,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.75
+        },
+        "high_value_share_index": {
+          "confidence": null,
+          "method": "recipient's high_value_assist_rate / player's overall high_value_assist_rate (sampled assists only) -- an honest analog of 'shot leverage' restricted to the assisted-shot sample; NOT the spec's original pass-share-based formula, see module docstring",
+          "metric": "high_value_share_index",
+          "reason": null,
+          "sample_size": 4,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.9847826086956522
+        },
+        "most_common_resulting_shot": "RIM",
+        "pass_share": {
+          "confidence": null,
+          "method": null,
+          "metric": "pass_share",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "passes": {
+          "confidence": null,
+          "method": null,
+          "metric": "passes",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "points_generated": {
+          "confidence": null,
+          "method": "sum(3 if three else 2 for each real assisted make)",
+          "metric": "points_generated",
+          "reason": null,
+          "sample_size": 4,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 8.0
+        },
+        "recipient_label": "C. Kispert",
+        "recipient_leverage": {
+          "confidence": null,
+          "method": null,
+          "metric": "recipient_leverage",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "recipient_slug": "kispeco01",
+        "zone_breakdown": {
+          "MIDRANGE": 1,
+          "RIM": 3
+        }
+      },
+      {
+        "assist_share": {
+          "confidence": null,
+          "method": "recipient_assists / player_total_sampled_assists",
+          "metric": "assist_share",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.019867549668874173
+        },
+        "assists": {
+          "confidence": null,
+          "method": null,
+          "metric": "assists",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": "Basketball-Reference play-by-play (sampled)",
+          "status": "OBSERVED",
+          "value": 3
+        },
+        "ast_per_pass": {
+          "confidence": null,
+          "method": null,
+          "metric": "ast_per_pass",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "high_value_assist_rate": {
+          "confidence": null,
+          "method": "high_value assists to recipient / total assists to recipient (rim+three, sampled)",
+          "metric": "high_value_assist_rate",
+          "reason": null,
+          "sample_size": 3,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 1.0
+        },
+        "high_value_share_index": {
+          "confidence": null,
+          "method": "recipient's high_value_assist_rate / player's overall high_value_assist_rate (sampled assists only) -- an honest analog of 'shot leverage' restricted to the assisted-shot sample; NOT the spec's original pass-share-based formula, see module docstring",
+          "metric": "high_value_share_index",
+          "reason": null,
+          "sample_size": 3,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 1.3130434782608695
+        },
+        "most_common_resulting_shot": "RIM",
+        "pass_share": {
+          "confidence": null,
+          "method": null,
+          "metric": "pass_share",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "passes": {
+          "confidence": null,
+          "method": null,
+          "metric": "passes",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "points_generated": {
+          "confidence": null,
+          "method": "sum(3 if three else 2 for each real assisted make)",
+          "metric": "points_generated",
+          "reason": null,
+          "sample_size": 3,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 7.0
+        },
+        "recipient_label": "M. Gueye",
+        "recipient_leverage": {
+          "confidence": null,
+          "method": null,
+          "metric": "recipient_leverage",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "recipient_slug": "gueyemo02",
+        "zone_breakdown": {
+          "ABOVE_BREAK_3": 1,
+          "RIM": 2
+        }
+      },
+      {
+        "assist_share": {
+          "confidence": null,
+          "method": "recipient_assists / player_total_sampled_assists",
+          "metric": "assist_share",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.019867549668874173
+        },
+        "assists": {
+          "confidence": null,
+          "method": null,
+          "metric": "assists",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": "Basketball-Reference play-by-play (sampled)",
+          "status": "OBSERVED",
+          "value": 3
+        },
+        "ast_per_pass": {
+          "confidence": null,
+          "method": null,
+          "metric": "ast_per_pass",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "high_value_assist_rate": {
+          "confidence": null,
+          "method": "high_value assists to recipient / total assists to recipient (rim+three, sampled)",
+          "metric": "high_value_assist_rate",
+          "reason": null,
+          "sample_size": 3,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.6666666666666666
+        },
+        "high_value_share_index": {
+          "confidence": null,
+          "method": "recipient's high_value_assist_rate / player's overall high_value_assist_rate (sampled assists only) -- an honest analog of 'shot leverage' restricted to the assisted-shot sample; NOT the spec's original pass-share-based formula, see module docstring",
+          "metric": "high_value_share_index",
+          "reason": null,
+          "sample_size": 3,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.8753623188405797
+        },
+        "most_common_resulting_shot": "ABOVE_BREAK_3",
+        "pass_share": {
+          "confidence": null,
+          "method": null,
+          "metric": "pass_share",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "passes": {
+          "confidence": null,
+          "method": null,
+          "metric": "passes",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "points_generated": {
+          "confidence": null,
+          "method": "sum(3 if three else 2 for each real assisted make)",
+          "metric": "points_generated",
+          "reason": null,
+          "sample_size": 3,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 7.0
+        },
+        "recipient_label": "J. Kuminga",
+        "recipient_leverage": {
+          "confidence": null,
+          "method": null,
+          "metric": "recipient_leverage",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "recipient_slug": "kuminjo01",
+        "zone_breakdown": {
+          "ABOVE_BREAK_3": 1,
+          "RIM": 1,
+          "SHORT_PAINT": 1
+        }
+      },
+      {
+        "assist_share": {
+          "confidence": null,
+          "method": "recipient_assists / player_total_sampled_assists",
+          "metric": "assist_share",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.006622516556291391
+        },
+        "assists": {
+          "confidence": null,
+          "method": null,
+          "metric": "assists",
+          "reason": null,
+          "sample_size": 151,
+          "season": "2025-26",
+          "source": "Basketball-Reference play-by-play (sampled)",
+          "status": "OBSERVED",
+          "value": 1
+        },
+        "ast_per_pass": {
+          "confidence": null,
+          "method": null,
+          "metric": "ast_per_pass",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "high_value_assist_rate": {
+          "confidence": null,
+          "method": "high_value assists to recipient / total assists to recipient (rim+three, sampled)",
+          "metric": "high_value_assist_rate",
+          "reason": null,
+          "sample_size": 1,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 1.0
+        },
+        "high_value_share_index": {
+          "confidence": null,
+          "method": "recipient's high_value_assist_rate / player's overall high_value_assist_rate (sampled assists only) -- an honest analog of 'shot leverage' restricted to the assisted-shot sample; NOT the spec's original pass-share-based formula, see module docstring",
+          "metric": "high_value_share_index",
+          "reason": null,
+          "sample_size": 1,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 1.3130434782608695
+        },
+        "most_common_resulting_shot": "ABOVE_BREAK_3",
+        "pass_share": {
+          "confidence": null,
+          "method": null,
+          "metric": "pass_share",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "passes": {
+          "confidence": null,
+          "method": null,
+          "metric": "passes",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "points_generated": {
+          "confidence": null,
+          "method": "sum(3 if three else 2 for each real assisted make)",
+          "metric": "points_generated",
+          "reason": null,
+          "sample_size": 1,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 3.0
+        },
+        "recipient_label": "B. Hield",
+        "recipient_leverage": {
+          "confidence": null,
+          "method": null,
+          "metric": "recipient_leverage",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "recipient_slug": "hieldbu01",
+        "zone_breakdown": {
+          "ABOVE_BREAK_3": 1
+        }
+      }
+    ],
+    "sample_description": "151 real assisted-shot events across 25 of 89 real season games (most recent games sampled, chronological order preserved -- see sources/collect.py).",
+    "sample_size": 151
+  },
+  "research_summary": {
+    "archetype": [
+      "ADVANTAGE_PROCESSOR",
+      "FINISHER",
+      "VERTICAL_GRAVITY_PROCESSOR"
+    ],
+    "best_recipients": [
+      {
+        "assist_share": 0.25165562913907286,
+        "high_value_share_index": 1.2784897025171624,
+        "label": "N. Alexander-Walker"
+      },
+      {
+        "assist_share": 0.2119205298013245,
+        "high_value_share_index": 0.9027173913043478,
+        "label": "O. Okongwu"
+      },
+      {
+        "assist_share": 0.16556291390728478,
+        "high_value_share_index": 0.8403478260869566,
+        "label": "D. Daniels"
+      }
+    ],
+    "caveats": [],
+    "confidence": 0.75,
+    "primary_gravity": [
+      "PAINT_FACEUP_GRAVITY",
+      "VERTICAL_GRAVITY"
+    ],
+    "role_constraint": "LOW_TOUCH_VOLUME",
+    "simulation_finding": "Under a neutral-scenario role expansion, Jalen Johnson's simulated assist output rises by 1.43 per game relative to baseline. This is a conditional projection under explicit, disclosed assumptions (see simulation_parameters), not a forecast."
+  },
+  "shot_outcomes": {
+    "added_pass_value_by_zone": {
+      "ABOVE_BREAK_3": {
+        "confidence": null,
+        "method": "E[points | zone] - E[points | league-average shot attempt], both from real league shooting data",
+        "metric": "added_pass_value_ABOVE_BREAK_3",
+        "reason": null,
+        "sample_size": null,
+        "season": "2025-26",
+        "source": null,
+        "status": "DERIVED",
+        "value": -0.026589473684210496
+      },
+      "CORNER_3": {
+        "confidence": null,
+        "method": "E[points | zone] - E[points | league-average shot attempt], both from real league shooting data",
+        "metric": "added_pass_value_CORNER_3",
+        "reason": null,
+        "sample_size": null,
+        "season": "2025-26",
+        "source": null,
+        "status": "DERIVED",
+        "value": -0.026589473684210496
+      },
+      "MIDRANGE": {
+        "confidence": null,
+        "method": "E[points | zone] - E[points | league-average shot attempt], both from real league shooting data",
+        "metric": "added_pass_value_MIDRANGE",
+        "reason": null,
+        "sample_size": null,
+        "season": "2025-26",
+        "source": null,
+        "status": "DERIVED",
+        "value": -0.21458947368421055
+      },
+      "PULLUP_3": {
+        "confidence": null,
+        "method": "E[points | zone] - E[points | league-average shot attempt], both from real league shooting data",
+        "metric": "added_pass_value_PULLUP_3",
+        "reason": null,
+        "sample_size": null,
+        "season": "2025-26",
+        "source": null,
+        "status": "DERIVED",
+        "value": -0.026589473684210496
+      },
+      "RIM": {
+        "confidence": null,
+        "method": "E[points | zone] - E[points | league-average shot attempt], both from real league shooting data",
+        "metric": "added_pass_value_RIM",
+        "reason": null,
+        "sample_size": null,
+        "season": "2025-26",
+        "source": null,
+        "status": "DERIVED",
+        "value": 0.29941052631578935
+      },
+      "SHORT_PAINT": {
+        "confidence": null,
+        "method": "E[points | zone] - E[points | league-average shot attempt], both from real league shooting data",
+        "metric": "added_pass_value_SHORT_PAINT",
+        "reason": null,
+        "sample_size": null,
+        "season": "2025-26",
+        "source": null,
+        "status": "DERIVED",
+        "value": -0.18058947368421052
+      }
+    },
+    "baseline_expected_points": {
+      "confidence": null,
+      "method": "sum(real league zone-selection frequency * expected points at zone) / sum(frequency) -- real league-average points per shot attempt",
+      "metric": "baseline_expected_points",
+      "reason": null,
+      "sample_size": null,
+      "season": "2025-26",
+      "source": null,
+      "status": "DERIVED",
+      "value": 1.1065894736842106
+    },
+    "expected_points_by_zone": {
+      "ABOVE_BREAK_3": {
+        "confidence": null,
+        "method": "real league FG% at this zone * shot value (3 pts)",
+        "metric": "expected_points_ABOVE_BREAK_3",
+        "reason": null,
+        "sample_size": null,
+        "season": "2025-26",
+        "source": null,
+        "status": "DERIVED",
+        "value": 1.08
+      },
+      "CORNER_3": {
+        "confidence": null,
+        "method": "real league FG% at this zone * shot value (3 pts)",
+        "metric": "expected_points_CORNER_3",
+        "reason": null,
+        "sample_size": null,
+        "season": "2025-26",
+        "source": null,
+        "status": "DERIVED",
+        "value": 1.08
+      },
+      "MIDRANGE": {
+        "confidence": null,
+        "method": "real league FG% at this zone * shot value (2 pts)",
+        "metric": "expected_points_MIDRANGE",
+        "reason": null,
+        "sample_size": null,
+        "season": "2025-26",
+        "source": null,
+        "status": "DERIVED",
+        "value": 0.892
+      },
+      "PULLUP_3": {
+        "confidence": null,
+        "method": "real league FG% at this zone * shot value (3 pts)",
+        "metric": "expected_points_PULLUP_3",
+        "reason": null,
+        "sample_size": null,
+        "season": "2025-26",
+        "source": null,
+        "status": "DERIVED",
+        "value": 1.08
+      },
+      "RIM": {
+        "confidence": null,
+        "method": "real league FG% at this zone * shot value (2 pts)",
+        "metric": "expected_points_RIM",
+        "reason": null,
+        "sample_size": null,
+        "season": "2025-26",
+        "source": null,
+        "status": "DERIVED",
+        "value": 1.406
+      },
+      "SHORT_PAINT": {
+        "confidence": null,
+        "method": "real league FG% at this zone * shot value (2 pts)",
+        "metric": "expected_points_SHORT_PAINT",
+        "reason": null,
+        "sample_size": null,
+        "season": "2025-26",
+        "source": null,
+        "status": "DERIVED",
+        "value": 0.926
+      }
+    },
+    "season": "2025-26"
+  },
+  "simulation_parameters": {
+    "default_scenario_params": {
+      "efficiency_retention": null,
+      "gravity_growth_pct": 0.0,
+      "pass_tendency_change": 0.1,
+      "saturation_k": 0.55,
+      "target_usage_pct": 16.9,
+      "touch_elasticity": 0.6,
+      "turnover_growth": null
+    },
+    "monte_carlo": {
+      "assists": {
+        "median": 7.129361313192135,
+        "p10": 6.470906762375426,
+        "p25": 6.7894075964486245,
+        "p75": 7.4773896462423295,
+        "p90": 7.793384016341891
+      },
+      "decision_touches": {
+        "median": 33.93442039755336,
+        "p10": 33.93442039755336,
+        "p25": 33.93442039755336,
+        "p75": 33.93442039755336,
+        "p90": 33.93442039755336
+      },
+      "method": "Beta-posterior draws of per-touch rates, propagated through the scenario formula; reproducible via the fixed seed",
+      "n_draws": 4000,
+      "receiver_makes": {
+        "median": 7.087939663954334,
+        "p10": 6.43758180569179,
+        "p25": 6.746083363367469,
+        "p75": 7.442681174071003,
+        "p90": 7.766019856570579
+      },
+      "scenario_name": "NEUTRAL",
+      "seed": 20260823,
+      "status": "SIMULATED",
+      "turnovers": {
+        "median": 3.9486152790060354,
+        "p10": 3.41581869703044,
+        "p25": 3.6601720604311905,
+        "p75": 4.267358326703489,
+        "p90": 4.571562786773424
+      }
+    },
+    "scenarios": {
+      "CONSERVATIVE": {
+        "assumptions_explanation": "Target usage 16.9% vs. current 13.0% (ratio 1.30x, if current usage is positive). With touch elasticity e=0.60, 60% of the proportional role change is assumed to become additional decision touches, giving a touch multiplier H=1.18. Pass tendency is then changed by +10%. Role saturation (k=0.85) retains 80% of baseline efficiency at this touch multiplier, and turnover risk grows by +25% relative to baseline. All of this is SIMULATED -- a conditional projection under these explicit assumptions, never a forecast.",
+        "efficiency_retention_used": {
+          "confidence": null,
+          "method": "exp(-k * max(0, H-1)) unless explicitly overridden",
+          "metric": "efficiency_retention_used",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 0.8
+        },
+        "scenario_name": "CONSERVATIVE",
+        "simulated_assists": {
+          "confidence": null,
+          "method": "simulated_passes * baseline_ast_per_touch * efficiency_retention",
+          "metric": "simulated_assists",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 8.421889890968963
+        },
+        "simulated_decision_touches": {
+          "confidence": null,
+          "method": "baseline_decision_touches * H",
+          "metric": "simulated_decision_touches",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 33.93442039755336
+        },
+        "simulated_passes": {
+          "confidence": null,
+          "method": "simulated_decision_touches * (1 + pass_tendency_change)",
+          "metric": "simulated_passes",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 37.3278624373087
+        },
+        "simulated_receiver_makes": {
+          "confidence": null,
+          "method": "simulated_passes * baseline_makes_per_touch * efficiency_retention",
+          "metric": "simulated_receiver_makes",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 6.275331189039006
+        },
+        "simulated_turnovers": {
+          "confidence": null,
+          "method": "simulated_passes * baseline_tov_per_touch * (1 + turnover_growth)",
+          "metric": "simulated_turnovers",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 5.485050951185979
+        },
+        "touch_multiplier_h": {
+          "confidence": null,
+          "method": "H = 1 + e*((target_usage/current_usage)-1)",
+          "metric": "touch_multiplier_h",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 1.1806387697620042
+        },
+        "turnover_growth_used": {
+          "confidence": null,
+          "method": "1/saturation - 1 unless explicitly overridden",
+          "metric": "turnover_growth_used",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 0.25
+        }
+      },
+      "NEUTRAL": {
+        "assumptions_explanation": "Target usage 16.9% vs. current 13.0% (ratio 1.30x, if current usage is positive). With touch elasticity e=0.60, 60% of the proportional role change is assumed to become additional decision touches, giving a touch multiplier H=1.18. Pass tendency is then changed by +10%. Role saturation (k=0.55) retains 91% of baseline efficiency at this touch multiplier, and turnover risk grows by +10% relative to baseline. All of this is SIMULATED -- a conditional projection under these explicit assumptions, never a forecast.",
+        "efficiency_retention_used": {
+          "confidence": null,
+          "method": "exp(-k * max(0, H-1)) unless explicitly overridden",
+          "metric": "efficiency_retention_used",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 0.9054245553343355
+        },
+        "scenario_name": "NEUTRAL",
+        "simulated_assists": {
+          "confidence": null,
+          "method": "simulated_passes * baseline_ast_per_touch * efficiency_retention",
+          "metric": "simulated_assists",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 9.531732387006636
+        },
+        "simulated_decision_touches": {
+          "confidence": null,
+          "method": "baseline_decision_touches * H",
+          "metric": "simulated_decision_touches",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 33.93442039755336
+        },
+        "simulated_passes": {
+          "confidence": null,
+          "method": "simulated_decision_touches * (1 + pass_tendency_change)",
+          "metric": "simulated_passes",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 37.3278624373087
+        },
+        "simulated_receiver_makes": {
+          "confidence": null,
+          "method": "simulated_passes * baseline_makes_per_touch * efficiency_retention",
+          "metric": "simulated_receiver_makes",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 7.1022986892641615
+        },
+        "simulated_turnovers": {
+          "confidence": null,
+          "method": "simulated_passes * baseline_tov_per_touch * (1 + turnover_growth)",
+          "metric": "simulated_turnovers",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 4.8463902763587665
+        },
+        "touch_multiplier_h": {
+          "confidence": null,
+          "method": "H = 1 + e*((target_usage/current_usage)-1)",
+          "metric": "touch_multiplier_h",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 1.1806387697620042
+        },
+        "turnover_growth_used": {
+          "confidence": null,
+          "method": "1/saturation - 1 unless explicitly overridden",
+          "metric": "turnover_growth_used",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 0.10445425199534353
+        }
+      },
+      "OPTIMISTIC": {
+        "assumptions_explanation": "Target usage 16.9% vs. current 13.0% (ratio 1.30x, if current usage is positive). With touch elasticity e=0.60, 60% of the proportional role change is assumed to become additional decision touches, giving a touch multiplier H=1.18. Pass tendency is then changed by +10%. Role saturation (k=0.35) retains 97% of baseline efficiency at this touch multiplier, and turnover risk grows by +5% relative to baseline. All of this is SIMULATED -- a conditional projection under these explicit assumptions, never a forecast.",
+        "efficiency_retention_used": {
+          "confidence": null,
+          "method": "exp(-k * max(0, H-1)) unless explicitly overridden",
+          "metric": "efficiency_retention_used",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 0.97
+        },
+        "scenario_name": "OPTIMISTIC",
+        "simulated_assists": {
+          "confidence": null,
+          "method": "simulated_passes * baseline_ast_per_touch * efficiency_retention",
+          "metric": "simulated_assists",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 10.211541492799867
+        },
+        "simulated_decision_touches": {
+          "confidence": null,
+          "method": "baseline_decision_touches * H",
+          "metric": "simulated_decision_touches",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 33.93442039755336
+        },
+        "simulated_passes": {
+          "confidence": null,
+          "method": "simulated_decision_touches * (1 + pass_tendency_change)",
+          "metric": "simulated_passes",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 37.3278624373087
+        },
+        "simulated_receiver_makes": {
+          "confidence": null,
+          "method": "simulated_passes * baseline_makes_per_touch * efficiency_retention",
+          "metric": "simulated_receiver_makes",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 7.608839066709795
+        },
+        "simulated_turnovers": {
+          "confidence": null,
+          "method": "simulated_passes * baseline_tov_per_touch * (1 + turnover_growth)",
+          "metric": "simulated_turnovers",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 4.607442798996223
+        },
+        "touch_multiplier_h": {
+          "confidence": null,
+          "method": "H = 1 + e*((target_usage/current_usage)-1)",
+          "metric": "touch_multiplier_h",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 1.1806387697620042
+        },
+        "turnover_growth_used": {
+          "confidence": null,
+          "method": "1/saturation - 1 unless explicitly overridden",
+          "metric": "turnover_growth_used",
+          "reason": null,
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "SIMULATED",
+          "value": 0.05
+        }
+      }
+    }
+  },
+  "updated_at": "2026-08-23T19:34:23.596791+00:00"
+}
