@@ -1,0 +1,62 @@
+{
+  "candidate_enumeration": "all cross-event 2-leg pairs from the weekly action-eligible universe (candidate_adapter.build_candidates_for_week)",
+  "checked_at_utc": "2026-08-23T03:41:39.054442+00:00",
+  "code_hash": "eebbc442c5d51ae362ab2be9c0325b175a5317106e35cc857e0c560a3460ba35",
+  "config_hash": "eec52b6c3e53d41c811b5e73326ee1760e7c972a68d694210238b62182af8791",
+  "freeze_ready": false,
+  "freeze_ready_reason": "uncommitted relevant changes",
+  "frozen_config": {
+    "alpha_c": 0.016666666666666666,
+    "alpha_l": 0.016666666666666666,
+    "alpha_program": 0.05,
+    "alpha_total": 0.05,
+    "alpha_v": 0.016666666666666666,
+    "c": 0.5,
+    "calibration_version": "CALIBRATION_LEDGER_V1",
+    "candidate_adapter_version": "NFL_PARLAY_V2_CANDIDATE_ADAPTER_V1",
+    "d_max": 6.0,
+    "delta": 0.0,
+    "eligibility_version": "ELIGIBILITY_V1",
+    "evidence_store_version": "EVIDENCE_STORE_V1",
+    "max_actions_per_eligible_slate": 1,
+    "max_candidates_per_slate": 500,
+    "policy_version": "NFL_PARLAY_POLICY_V2_TWO_LEG_SINGLE_ACTION",
+    "prospective_policy_id": "NFL_PARLAY_POLICY_V2_PROSPECTIVE_001",
+    "r": 0.3,
+    "r_max_accepted": 5.0,
+    "reference_monitor_version": "PARLAY_REFERENCE_ANYTIME_CERT_V1",
+    "settlement_version": "SETTLEMENT_V1",
+    "state_machine_version": "PARLAY_CERTIFICATION_STATE_V1",
+    "support_gate_modes": {
+      "joint_support": "OBSERVE_ONLY",
+      "line_support": "REQUIRED",
+      "market_support": "REQUIRED",
+      "shift_status": "OBSERVE_ONLY",
+      "state_support": "REQUIRED"
+    },
+    "support_rule_version": "SUPPORT_RULE_V2_GATE_MODES",
+    "two_leg_parlays_only": true,
+    "world_certificate_version": "NONVACUOUS_WORLD_CERTIFICATE_V1",
+    "world_gate_mode": "OBSERVE_ONLY",
+    "world_risk_threshold": null
+  },
+  "git_clean": false,
+  "leg_count": 2,
+  "max_actions_per_eligible_slate": 1,
+  "observe_only_support_dimensions": [
+    "joint_support",
+    "shift_status"
+  ],
+  "policy_id": "NFL_PARLAY_POLICY_V2_PROSPECTIVE_001",
+  "required_support_dimensions": [
+    "market_support",
+    "line_support",
+    "state_support"
+  ],
+  "supported_books": "real market_source rows only (no synthetic/fabricated prices, enforced at ingestion)",
+  "tie_breaker": "ascending world_risk_rho (inherited from MLB's DEVELOPMENT-validated ranking diagnostic; see sports/mlb/research/parlay_certification_v2/world_gate_research.py), then lexicographic wager_id",
+  "uncommitted_relevant_changes": [
+    "?? sports/nfl/parlay_v2/reports/"
+  ],
+  "world_gate_mode": "OBSERVE_ONLY"
+}
