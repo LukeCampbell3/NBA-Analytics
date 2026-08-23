@@ -1,67 +1,26 @@
 {
-  "schema_version": 2,
-  "league": "NFL",
-  "run_date": "2026-08-22",
-  "generated_at_utc": "2026-08-22T14:37:05.793011Z",
-  "publication_status": "withheld_current_pool",
-  "publication_state": "withheld_current_pool",
-  "mode": "live_shadow",
-  "policy_profile": "nfl_passing_loss_aware_meta_policy_v2",
-  "plays": [],
   "daily_parlay": {
-    "policy_version": "nfl_distinct_game_parlay_v1",
-    "status": "withheld",
     "available": false,
-    "selected_ticket": null,
-    "validation_status": "failed_locked_holdout",
     "candidate_authorized": false,
-    "reason": "The deterministic two-leg rule was 2-16 on the locked 2022 holdout; the ticket remains shadow-only."
-  },
-  "selection": {
-    "validated_targets": [
-      "passing"
-    ],
-    "maximum_weekly_picks": 6,
-    "minimum_side_probability": 0.56,
-    "minimum_no_vig_advantage": 0.025,
-    "american_price_range": [
-      -150.0,
-      130.0
-    ],
-    "minimum_books": 2,
-    "minimum_common_books": 1,
-    "loss_aware_meta_policy": {
-      "minimum_side_probability": 0.58,
-      "minimum_no_vig_advantage": 0.1,
-      "minimum_price": -130,
-      "maximum_price": 130,
-      "weekly_cap": 6
-    },
-    "confidence_calibration": {
-      "method": "identity",
-      "status": "passed",
-      "historical_support": [
-        0.585604,
-        0.8068
-      ]
-    }
+    "policy_version": "nfl_distinct_game_parlay_v1",
+    "reason": "The deterministic two-leg rule was 2-16 on the locked 2022 holdout; the ticket remains shadow-only.",
+    "selected_ticket": null,
+    "status": "withheld",
+    "validation_status": "failed_locked_holdout"
   },
   "data_quality": {
-    "status": "withheld",
-    "reason": "No complete two-sided regular-season NFL player-prop markets were available.",
     "complete_market_observations": 0,
     "provider_audit": {
-      "provider": "provider_chain",
-      "status": "no_props",
-      "fetched_at_utc": "2026-08-22T14:37:03.513222+00:00",
       "complete_two_sided_rows": 0,
+      "fetched_at_utc": "2026-08-23T16:46:13.844595+00:00",
+      "provider": "provider_chain",
       "provider_attempts": [
         {
-          "provider": "sportsgameodds",
-          "status": "no_props",
           "complete_two_sided_rows": 0,
-          "events_discovered": 11,
-          "events_with_odds": 11
+          "events_discovered": 1,
+          "events_with_odds": 1,
+          "provider": "sportsgameodds",
+          "status": "no_props"
         },
         {
           "provider": "the_odds_api",
@@ -70,14 +29,77 @@
       ],
       "raw_source_sha256": null,
       "replayed_from_snapshot": true,
-      "snapshot_sha256": "54267f1b729efb0971a311bf42de07059f96dcff10964de07423be515072147b"
-    }
+      "snapshot_sha256": "dc4cb7547c3031e1b14033bf1a58416d7c509cda3742a36eac7ff2781cc6b47e",
+      "status": "no_props"
+    },
+    "reason": "No complete two-sided regular-season NFL player-prop markets were available.",
+    "status": "withheld"
   },
+  "generated_at_utc": "2026-08-23T16:46:16.926696Z",
+  "league": "NFL",
+  "mode": "live_shadow",
+  "parlays": {
+    "abstain_reason": "OPERATIONALLY_INELIGIBLE",
+    "action": "ABSTAIN",
+    "calibration_as_of": "2026-08-23T16:46:18.319508+00:00",
+    "decision_timestamp_utc": "2026-08-23T16:46:18.319526+00:00",
+    "eligibility_reason": "no_games_scheduled",
+    "eligible": false,
+    "evidence_status": {
+      "note": "STATUS reflects the FROZEN POLICY's evidence state, never this week's own candidates -- see manifest.CONCLUSION_REASONING.",
+      "state_machine_status": "FROZEN_PROSPECTIVE_INCONCLUSIVE"
+    },
+    "policy_status": "FROZEN_PROSPECTIVE_INCONCLUSIVE",
+    "policy_version": "NFL_PARLAY_POLICY_V2_TWO_LEG_SINGLE_ACTION",
+    "selected_parlay": null,
+    "selection_status": "ABSTAIN",
+    "shadow_candidate": null,
+    "shadow_candidate_note": "Best available candidate by descriptive joint score -- NOT a certified pick. The frozen policy has not authorized action on it; see policy_status.",
+    "shadow_execution_status": "NOT_EXECUTED",
+    "staking_authorized": false,
+    "system": "PARLAY_POLICY_V2",
+    "world_gate_mode": "OBSERVE_ONLY"
+  },
+  "plays": [],
   "policy_governance": {
+    "candidate_authorization_enabled": false,
+    "certificate_status": "PROSPECTIVE_CERTIFICATE_INACTIVE",
     "policy_version": "nfl_passing_loss_aware_meta_policy_v2",
     "publication_mode": "SHADOW_RESEARCH_ONLY",
-    "candidate_authorization_enabled": false,
-    "staking_enabled": false,
-    "certificate_status": "PROSPECTIVE_CERTIFICATE_INACTIVE"
+    "staking_enabled": false
+  },
+  "policy_profile": "nfl_passing_loss_aware_meta_policy_v2",
+  "publication_state": "withheld_current_pool",
+  "publication_status": "withheld_current_pool",
+  "run_date": "2026-08-23",
+  "schema_version": 2,
+  "selection": {
+    "american_price_range": [
+      -150.0,
+      130.0
+    ],
+    "confidence_calibration": {
+      "historical_support": [
+        0.585604,
+        0.8068
+      ],
+      "method": "identity",
+      "status": "passed"
+    },
+    "loss_aware_meta_policy": {
+      "maximum_price": 130,
+      "minimum_no_vig_advantage": 0.1,
+      "minimum_price": -130,
+      "minimum_side_probability": 0.58,
+      "weekly_cap": 6
+    },
+    "maximum_weekly_picks": 6,
+    "minimum_books": 2,
+    "minimum_common_books": 1,
+    "minimum_no_vig_advantage": 0.025,
+    "minimum_side_probability": 0.56,
+    "validated_targets": [
+      "passing"
+    ]
   }
 }
