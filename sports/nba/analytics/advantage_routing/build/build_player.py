@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import unicodedata
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -48,7 +49,14 @@ def _season_end_year(season: str) -> str:
 
 
 def _slugify(player_name: str) -> str:
-    return player_name.strip().lower().replace(" ", "-").replace(".", "")
+    """ASCII-only, URL/filesystem-safe slug. Strips diacritics (e.g.
+    "Nikola Jokić" -> "nikola-jokic", "Luka Dončić" -> "luka-doncic")
+    rather than keeping them -- a non-ASCII filename is a real, avoidable
+    risk across git, static-site copy steps, CDNs, and URL construction,
+    for no benefit over the plain-ASCII form."""
+    normalized = unicodedata.normalize("NFKD", player_name)
+    ascii_only = normalized.encode("ascii", "ignore").decode("ascii")
+    return ascii_only.strip().lower().replace(" ", "-").replace(".", "")
 
 
 def _flatten_gravity_values(gravity_dict: dict) -> dict[str, float]:

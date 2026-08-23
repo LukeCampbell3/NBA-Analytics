@@ -53,6 +53,58 @@ SEED_PLAYERS = [
     # outside both the "low-usage big" and "primary ball-handler" poles.
     "Victor Wembanyama",
     "Draymond Green",
+
+    # Top 50 real 2025-26 players by real season-mean USG% (>= 15 real
+    # games, computed directly from Player-Predictor's real per-game
+    # USG% column -- see docs/advantage-routing.md "known limitations"
+    # for the disclosed caveat that this column's absolute magnitude is
+    # understated relative to public USG% figures; the RELATIVE ranking
+    # this list is built from is still real and basketball-plausible
+    # (elite, known-high-usage players dominate the top of it).
+    # Players already covered above are not repeated here.
+    "Giannis Antetokounmpo",
+    "Jaylen Brown",
+    "Joel Embiid",
+    "Ty Jerome",
+    "Shai Gilgeous-Alexander",
+    "Stephen Curry",
+    "Donovan Mitchell",
+    "Kawhi Leonard",
+    "Jalen Green",
+    "LaMelo Ball",
+    "Anthony Edwards",
+    "Devin Booker",
+    "Shaedon Sharpe",
+    "Cade Cunningham",
+    "Jalen Brunson",
+    "Deni Avdija",
+    "Tyrese Maxey",
+    "Pascal Siakam",
+    "Michael Porter Jr",
+    "Dillon Brooks",
+    "Brandon Miller",
+    "Lauri Markkanen",
+    "Keyonte George",
+    "Kristaps Porziņģis",
+    "Coby White",
+    "Cam Thomas",
+    "Norman Powell",
+    "Anthony Davis",
+    "James Harden",
+    "Paolo Banchero",
+    "Jalen Johnson",
+    "Kevin Durant",
+    "Scoot Henderson",
+    "Darius Garland",
+    "Jaren Jackson Jr",
+    "Julius Randle",
+    "Brandon Ingram",
+    "Tyler Herro",
+    "DeAnthony Melton",
+    "Zion Williamson",
+    "Bam Adebayo",
+    "Jalen Williams",
+    "Cooper Flagg",
 ]
 
 
