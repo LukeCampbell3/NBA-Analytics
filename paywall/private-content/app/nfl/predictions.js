@@ -20,6 +20,8 @@ class NflPredictionBoard {
             weekPositionFilters: document.getElementById("weekPositionFilters"),
             parlayWatchlistStatus: document.getElementById("parlayWatchlistStatus"),
             parlayWatchlists: document.getElementById("parlayWatchlists"),
+            parlayV2Section: document.getElementById("parlayV2Section"),
+            parlayV2Content: document.getElementById("parlayV2Content"),
         };
         this.bindControls();
         this.init();
@@ -108,6 +110,7 @@ class NflPredictionBoard {
         `).join("");
         this.renderBoard(plays);
         this.renderParlay();
+        this.renderParlayV2();
         this.renderMarketReplay();
     }
 
@@ -204,6 +207,126 @@ class NflPredictionBoard {
         }
         const legs = (ticket.legs || []).map((leg) => `${leg.player} ${leg.direction} ${this.formatNum(leg.line, 1)}`).join(" + ");
         this.elements.parlay.innerHTML = `<p><strong>Shadow ticket only:</strong> ${this.escape(legs)} at ${this.escape(ticket.sportsbook_key)}. ${this.escape(parlay.reason || "The parlay policy is not authorized.")}</p>`;
+    }
+
+    /**
+     * PARLAY_POLICY_V2 -- the new, theory-grounded 2-leg parlay path
+     * (sports/nfl/parlay_v2/, ported from MLB's PARLAY_CERTIFICATION_V2).
+     * Reads ONLY this.data.parlays -- entirely separate from the old
+     * "Parlay Policy" section above (this.data.daily_parlay), which stays
+     * untouched as diagnostic-only CONTROL. Status language is restricted
+     * to the same allowed vocabulary MLB's board uses -- never
+     * "guaranteed" / "safe bet" / "proven winner" / "lock".
+     */
+    renderParlayV2() {
+        const section = this.elements.parlayV2Section;
+        const content = this.elements.parlayV2Content;
+        if (!section || !content) return;
+
+        const parlay = this.data?.parlays || {};
+        const statusLabel = this.formatParlayV2StatusLabel(parlay.policy_status);
+        const statusTone = this.formatParlayV2StatusTone(parlay.policy_status);
+
+        const executionLabel = parlay.shadow_execution_status === "EXECUTED_SHADOW" ? "Shadow only (selected)" : "Not executed";
+        const worldGateLabels = { REQUIRED: "Required", BOUNDED_RISK: "Bounded risk", OBSERVE_ONLY: "Observe-only" };
+        const worldGateLabel = worldGateLabels[parlay.world_gate_mode] || "n/a";
+        const statusFooter = `Policy: ${this.escape(parlay.policy_version || "n/a")} / Research status: ${this.escape(statusLabel)} / World gate: ${this.escape(worldGateLabel)} / Execution: ${this.escape(executionLabel)}`;
+
+        if (parlay.action !== "ACT" || !parlay.selected_parlay) {
+            const reason = String(parlay.abstain_reason || "").trim();
+            const shadow = parlay.shadow_candidate;
+            const shadowBlock = shadow ? `
+                <p class="daily-parlay__empty">This week's V2 shadow candidate -- not certified, no stake authorized</p>
+                <div class="daily-parlay__legs">${this.renderParlayV2Legs(shadow)}</div>
+            ` : `<p class="daily-parlay__empty">${this.escape(this.formatParlayV2AbstainReason(reason, parlay))}</p>`;
+            content.innerHTML = `
+                <div class="daily-parlay__header">
+                    <div>
+                        <p class="vault-page-kicker">Theory-grounded 2-leg parlay</p>
+                        <h2 id="parlayV2Title">This Week's V2 Shadow Candidate</h2>
+                    </div>
+                    ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Abstain") : ""}
+                </div>
+                ${shadowBlock}
+                <p class="daily-parlay__state">${this.escape(this.formatParlayV2AbstainReason(reason, parlay))} ${statusFooter}</p>
+            `;
+            return;
+        }
+
+        content.innerHTML = `
+            <div class="daily-parlay__header">
+                <div>
+                    <p class="vault-page-kicker">Theory-grounded 2-leg parlay</p>
+                    <h2 id="parlayV2Title">This Week's V2 Shadow Candidate</h2>
+                </div>
+                ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Selected -- shadow only") : ""}
+            </div>
+            <div class="daily-parlay__legs">${this.renderParlayV2Legs(parlay.selected_parlay)}</div>
+            <p class="daily-parlay__state">${statusFooter}</p>
+        `;
+    }
+
+    /**
+     * Deliberately does NOT show a probability/score next to either leg
+     * (for a certified pick or a shadow candidate alike) -- matches MLB's
+     * board: this program's own research found that ranking/displaying by
+     * raw model probability concentrates the frozen marginal model's
+     * worst overconfidence, so surfacing that number here would
+     * misleadingly suggest a reliability this system has not established.
+     */
+    renderParlayV2Legs(pair) {
+        return [pair.leg_1, pair.leg_2].filter(Boolean).map((leg, index) => `
+            <div class="daily-parlay__leg">
+                <span class="daily-parlay__leg-number">${String(index + 1).padStart(2, "0")}</span>
+                <div class="daily-parlay__leg-copy">
+                    <strong>${this.escape(leg.player || "Unknown player")}</strong>
+                    <span>${this.escape(`${leg.side || ""} ${this.formatNum(leg.line, 1)} ${String(leg.target || "").replaceAll("_", " ")}`)}</span>
+                </div>
+            </div>
+        `).join("");
+    }
+
+    formatParlayV2StatusLabel(policyStatus) {
+        const status = String(policyStatus || "").toUpperCase();
+        const labels = {
+            DEVELOPMENT: "Shadow",
+            FROZEN_PROSPECTIVE_INCONCLUSIVE: "Prospective inconclusive",
+            FROZEN_POLICY_PROSPECTIVELY_SUPPORTED: "Supported current",
+            SUPPORTED_CURRENT: "Supported current",
+            PRODUCTION_DEMOTED: "Production demoted",
+        };
+        return labels[status] || "Shadow";
+    }
+
+    formatParlayV2StatusTone(policyStatus) {
+        const status = String(policyStatus || "").toUpperCase();
+        if (status === "SUPPORTED_CURRENT" || status === "FROZEN_POLICY_PROSPECTIVELY_SUPPORTED") return "active";
+        if (status === "PRODUCTION_DEMOTED") return "withheld";
+        return "stale"; // DEVELOPMENT / FROZEN_PROSPECTIVE_INCONCLUSIVE / unknown
+    }
+
+    formatParlayV2AbstainReason(reason, parlay) {
+        const messages = {
+            NO_REAL_QUOTE: "No real market quote available for this week's slate.",
+            NO_CANDIDATES: "No cross-event, cross-player candidate pairs exist for this week's slate.",
+            NO_STATE_SUPPORT: "Not enough independent prior weeks have accumulated yet.",
+            NO_LEG_MARKET_SUPPORT: "Not enough prior settled observations for this market type yet.",
+            NO_LEG_LINE_SUPPORT: "Not enough prior settled observations for this exact line yet.",
+            NO_PAIR_IN_SUPPORT: "No pair currently meets the frozen support requirements.",
+            PRICE_OUT_OF_RANGE: "The best available price fell outside the frozen accepted range.",
+            NO_PAIR_PASSES_FROZEN_POLICY: "No pair cleared the frozen certification requirements this week.",
+            OPERATIONALLY_INELIGIBLE: "This week is not operationally eligible for a parlay decision.",
+            POLICY_NOT_FROZEN: "The V2 policy has not yet been frozen for prospective use.",
+            CERTIFICATION_STREAM_NOT_READY: "Not enough real prospective history has accumulated yet.",
+            PARLAY_V2_ARTIFACT_UNAVAILABLE: "V2 parlay data is not available for this run.",
+        };
+        let message = messages[reason] || "No qualifying parlay was selected for this week.";
+        // Real, honest progress numbers -- never fabricated -- straight
+        // from the same ledger the policy itself reads.
+        if (reason === "NO_STATE_SUPPORT" && parlay && Number.isFinite(parlay.independent_slate_count) && Number.isFinite(parlay.independent_slate_count_required)) {
+            message += ` (${parlay.independent_slate_count} of ${parlay.independent_slate_count_required} independent prior weeks so far.)`;
+        }
+        return message;
     }
 
     renderMarketReplay() {

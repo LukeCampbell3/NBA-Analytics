@@ -143,6 +143,12 @@ jobs:
           --snapshot-output
           "sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}/${{ github.run_id }}.json"
 
+      - name: Run PARLAY_POLICY_V2 (Parlays tab)
+        if: ${{ !inputs.build_only }}
+        run: |
+          set -euo pipefail
+          python -m sports.nfl.scripts.stage_parlay_v2 --run-date "${{ steps.run_date.outputs.value }}"
+
       - name: Export and build NFL frontend
         run: |
           set -euo pipefail
@@ -192,6 +198,22 @@ jobs:
           if [[ "${{ inputs.build_only }}" != "true" && -f "$SNAPSHOT" ]]; then
             git add -f -- "$SNAPSHOT"
           fi
+          # These PARLAY_V2 paths are lazily created (e.g. the weekly
+          # plays archive only exists once a week actually has
+          # action-eligible plays) -- `git add -f` on a literal
+          # nonexistent pathspec fails hard under `set -e`, so only add
+          # each one if it's actually on disk this run (same guard MLB's
+          # workflow uses for its own lazily-created PARLAY_V2 paths).
+          for optional_path in \
+            sports/nfl/parlay_v2/calibration/reports/calibration_ledger.jsonl \
+            sports/nfl/parlay_v2/calibration/reports/pair_observation_ledger.jsonl \
+            sports/nfl/parlay_v2/reports \
+            sports/nfl/research/parlay_certification_v2/reports
+          do
+            if [ -e "$optional_path" ]; then
+              git add -f -- "$optional_path"
+            fi
+          done
           if git diff --cached --quiet; then
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
           else
