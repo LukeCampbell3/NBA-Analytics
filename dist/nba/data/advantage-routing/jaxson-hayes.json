@@ -1038,8 +1038,11 @@
     "touch_coverage": "legitimate low-post touches only"
   },
   "provenance": {
-    "bball_ref_games_available_total": 93,
+    "bball_ref_games_available_total": 80,
     "bball_ref_games_sampled": [
+      "202603080LAL",
+      "202603100LAL",
+      "202603140LAL",
       "202603160HOU",
       "202603180HOU",
       "202603190MIA",
@@ -1052,9 +1055,6 @@
       "202604020OKC",
       "202604050DAL",
       "202604070LAL",
-      "202604090GSW",
-      "202604100LAL",
-      "202604120LAL",
       "202604180LAL",
       "202604210LAL",
       "202604240HOU",
@@ -1069,7 +1069,7 @@
     "bball_ref_player_slug": "hayesja02",
     "bball_ref_sampling_method": "most recent N real games from the player's real season game log, chronological order preserved (see sources/collect.py)",
     "box_score_source": "/home/user/NBA-Analytics/Player-Predictor/Data-Proc/Jaxson_Hayes/2026_processed_processed.csv",
-    "generated_at_utc": "2026-08-23T19:16:38.813402+00:00",
+    "generated_at_utc": "2026-08-23T21:09:19.532947+00:00",
     "league_shooting_baseline_url": "https://www.basketball-reference.com/leagues/NBA_2026_shooting.html",
     "notes": [],
     "package_version": "ADVANTAGE_ROUTING_V1",
@@ -1078,7 +1078,7 @@
     "stats_nba_com_reachable": false
   },
   "recipients": {
-    "games_available_total": 93,
+    "games_available_total": 80,
     "games_sampled": 25,
     "player_name": "Jaxson Hayes",
     "recipients": [
@@ -1838,7 +1838,7 @@
         }
       }
     ],
-    "sample_description": "16 real assisted-shot events across 25 of 93 real season games (most recent games sampled, chronological order preserved -- see sources/collect.py).",
+    "sample_description": "16 real assisted-shot events across 25 of 80 real season games (most recent games sampled, chronological order preserved -- see sources/collect.py).",
     "sample_size": 16
   },
   "research_summary": {
@@ -2063,11 +2063,11 @@
       "seed": 20260823,
       "status": "SIMULATED",
       "turnovers": {
-        "median": 0.8849604712382979,
-        "p10": 0.6407220775306379,
-        "p25": 0.7538521863815596,
-        "p75": 1.026793529844373,
-        "p90": 1.166461035130197
+        "median": 0.9394744115388898,
+        "p10": 0.6907630226654593,
+        "p25": 0.8069480615514909,
+        "p75": 1.085286248825274,
+        "p90": 1.2318370841113908
       }
     },
     "scenarios": {
@@ -2349,5 +2349,5 @@
       }
     }
   },
-  "updated_at": "2026-08-23T19:16:38.813402+00:00"
+  "updated_at": "2026-08-23T21:09:19.532947+00:00"
 }

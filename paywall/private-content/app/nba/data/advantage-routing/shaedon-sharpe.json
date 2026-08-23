@@ -1038,12 +1038,15 @@
     "touch_coverage": "legitimate low-post touches only"
   },
   "provenance": {
-    "bball_ref_games_available_total": 88,
+    "bball_ref_games_available_total": 79,
     "bball_ref_games_sampled": [
+      "202602110MIN",
+      "202602120UTA",
+      "202602220PHO",
+      "202602240POR",
       "202603040MEM",
       "202603060HOU",
       "202603080POR",
-      "202603100POR",
       "202603130POR",
       "202603150PHI",
       "202603160BRK",
@@ -1054,9 +1057,6 @@
       "202603250POR",
       "202603270POR",
       "202603290POR",
-      "202603310LAC",
-      "202604020POR",
-      "202604060DEN",
       "202604080SAS",
       "202604100POR",
       "202604120POR",
@@ -1069,7 +1069,7 @@
     "bball_ref_player_slug": "sharpsh01",
     "bball_ref_sampling_method": "most recent N real games from the player's real season game log, chronological order preserved (see sources/collect.py)",
     "box_score_source": "/home/user/NBA-Analytics/Player-Predictor/Data-Proc/Shaedon_Sharpe/2026_processed_processed.csv",
-    "generated_at_utc": "2026-08-23T19:30:10.598608+00:00",
+    "generated_at_utc": "2026-08-23T21:15:21.412672+00:00",
     "league_shooting_baseline_url": "https://www.basketball-reference.com/leagues/NBA_2026_shooting.html",
     "notes": [],
     "package_version": "ADVANTAGE_ROUTING_V1",
@@ -1078,7 +1078,7 @@
     "stats_nba_com_reachable": false
   },
   "recipients": {
-    "games_available_total": 88,
+    "games_available_total": 79,
     "games_sampled": 25,
     "player_name": "Shaedon Sharpe",
     "recipients": [
@@ -1727,7 +1727,7 @@
         }
       }
     ],
-    "sample_description": "9 real assisted-shot events across 25 of 88 real season games (most recent games sampled, chronological order preserved -- see sources/collect.py).",
+    "sample_description": "9 real assisted-shot events across 25 of 79 real season games (most recent games sampled, chronological order preserved -- see sources/collect.py).",
     "sample_size": 9
   },
   "research_summary": {
@@ -2237,5 +2237,5 @@
       }
     }
   },
-  "updated_at": "2026-08-23T19:30:10.598608+00:00"
+  "updated_at": "2026-08-23T21:15:21.412672+00:00"
 }

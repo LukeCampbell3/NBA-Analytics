@@ -64,7 +64,7 @@
       "season": "2025-26",
       "source": null,
       "status": "DERIVED",
-      "value": 0.11228357191547378
+      "value": 0.13758691206543971
     },
     "minutes_per_game": {
       "confidence": null,
@@ -1038,9 +1038,12 @@
     "touch_coverage": "legitimate low-post touches only"
   },
   "provenance": {
-    "bball_ref_games_available_total": 83,
+    "bball_ref_games_available_total": 65,
     "bball_ref_games_sampled": [
-      "202602260LAC",
+      "202602110HOU",
+      "202602190LAC",
+      "202602200LAL",
+      "202602220LAC",
       "202603010LAC",
       "202603020GSW",
       "202603040LAC",
@@ -1050,9 +1053,7 @@
       "202603110LAC",
       "202603130LAC",
       "202603140LAC",
-      "202603160LAC",
       "202603180NOP",
-      "202603190NOP",
       "202603210DAL",
       "202603230LAC",
       "202603250LAC",
@@ -1063,13 +1064,12 @@
       "202604050SAC",
       "202604070LAC",
       "202604080LAC",
-      "202604100POR",
-      "202604120LAC"
+      "202604100POR"
     ],
     "bball_ref_player_slug": "leonaka01",
     "bball_ref_sampling_method": "most recent N real games from the player's real season game log, chronological order preserved (see sources/collect.py)",
     "box_score_source": "/home/user/NBA-Analytics/Player-Predictor/Data-Proc/Kawhi_Leonard/2026_processed_processed.csv",
-    "generated_at_utc": "2026-08-23T19:28:40.329884+00:00",
+    "generated_at_utc": "2026-08-23T21:14:58.242470+00:00",
     "league_shooting_baseline_url": "https://www.basketball-reference.com/leagues/NBA_2026_shooting.html",
     "notes": [],
     "package_version": "ADVANTAGE_ROUTING_V1",
@@ -1078,7 +1078,7 @@
     "stats_nba_com_reachable": false
   },
   "recipients": {
-    "games_available_total": 83,
+    "games_available_total": 65,
     "games_sampled": 25,
     "player_name": "Kawhi Leonard",
     "recipients": [
@@ -1088,22 +1088,22 @@
           "method": "recipient_assists / player_total_sampled_assists",
           "metric": "assist_share",
           "reason": null,
-          "sample_size": 71,
+          "sample_size": 87,
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 0.29577464788732394
+          "value": 0.28735632183908044
         },
         "assists": {
           "confidence": null,
           "method": null,
           "metric": "assists",
           "reason": null,
-          "sample_size": 71,
+          "sample_size": 87,
           "season": "2025-26",
           "source": "Basketball-Reference play-by-play (sampled)",
           "status": "OBSERVED",
-          "value": 21
+          "value": 25
         },
         "ast_per_pass": {
           "confidence": null,
@@ -1121,22 +1121,22 @@
           "method": "high_value assists to recipient / total assists to recipient (rim+three, sampled)",
           "metric": "high_value_assist_rate",
           "reason": null,
-          "sample_size": 21,
+          "sample_size": 25,
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 0.8571428571428571
+          "value": 0.84
         },
         "high_value_share_index": {
           "confidence": null,
           "method": "recipient's high_value_assist_rate / player's overall high_value_assist_rate (sampled assists only) -- an honest analog of 'shot leverage' restricted to the assisted-shot sample; NOT the spec's original pass-share-based formula, see module docstring",
           "metric": "high_value_share_index",
           "reason": null,
-          "sample_size": 21,
+          "sample_size": 25,
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 0.9976580796252927
+          "value": 0.9875675675675676
         },
         "most_common_resulting_shot": "ABOVE_BREAK_3",
         "pass_share": {
@@ -1166,11 +1166,11 @@
           "method": "sum(3 if three else 2 for each real assisted make)",
           "metric": "points_generated",
           "reason": null,
-          "sample_size": 21,
+          "sample_size": 25,
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 55.0
+          "value": 66.0
         },
         "recipient_label": "B. Lopez",
         "recipient_leverage": {
@@ -1186,8 +1186,8 @@
         },
         "recipient_slug": "lopezbr01",
         "zone_breakdown": {
-          "ABOVE_BREAK_3": 13,
-          "MIDRANGE": 1,
+          "ABOVE_BREAK_3": 16,
+          "MIDRANGE": 2,
           "RIM": 5,
           "SHORT_PAINT": 2
         }
@@ -1198,22 +1198,22 @@
           "method": "recipient_assists / player_total_sampled_assists",
           "metric": "assist_share",
           "reason": null,
-          "sample_size": 71,
+          "sample_size": 87,
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 0.19718309859154928
+          "value": 0.1839080459770115
         },
         "assists": {
           "confidence": null,
           "method": null,
           "metric": "assists",
           "reason": null,
-          "sample_size": 71,
+          "sample_size": 87,
           "season": "2025-26",
           "source": "Basketball-Reference play-by-play (sampled)",
           "status": "OBSERVED",
-          "value": 14
+          "value": 16
         },
         "ast_per_pass": {
           "confidence": null,
@@ -1231,22 +1231,22 @@
           "method": "high_value assists to recipient / total assists to recipient (rim+three, sampled)",
           "metric": "high_value_assist_rate",
           "reason": null,
-          "sample_size": 14,
+          "sample_size": 16,
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 0.8571428571428571
+          "value": 0.875
         },
         "high_value_share_index": {
           "confidence": null,
           "method": "recipient's high_value_assist_rate / player's overall high_value_assist_rate (sampled assists only) -- an honest analog of 'shot leverage' restricted to the assisted-shot sample; NOT the spec's original pass-share-based formula, see module docstring",
           "metric": "high_value_share_index",
           "reason": null,
-          "sample_size": 14,
+          "sample_size": 16,
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 0.9976580796252927
+          "value": 1.0287162162162162
         },
         "most_common_resulting_shot": "ABOVE_BREAK_3",
         "pass_share": {
@@ -1276,11 +1276,11 @@
           "method": "sum(3 if three else 2 for each real assisted make)",
           "metric": "points_generated",
           "reason": null,
-          "sample_size": 14,
+          "sample_size": 16,
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 37.0
+          "value": 42.0
         },
         "recipient_label": "D. Jones",
         "recipient_leverage": {
@@ -1296,8 +1296,8 @@
         },
         "recipient_slug": "jonesde02",
         "zone_breakdown": {
-          "ABOVE_BREAK_3": 9,
-          "RIM": 3,
+          "ABOVE_BREAK_3": 10,
+          "RIM": 4,
           "SHORT_PAINT": 2
         }
       },
@@ -1307,18 +1307,128 @@
           "method": "recipient_assists / player_total_sampled_assists",
           "metric": "assist_share",
           "reason": null,
-          "sample_size": 71,
+          "sample_size": 87,
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 0.1267605633802817
+          "value": 0.11494252873563218
         },
         "assists": {
           "confidence": null,
           "method": null,
           "metric": "assists",
           "reason": null,
-          "sample_size": 71,
+          "sample_size": 87,
+          "season": "2025-26",
+          "source": "Basketball-Reference play-by-play (sampled)",
+          "status": "OBSERVED",
+          "value": 10
+        },
+        "ast_per_pass": {
+          "confidence": null,
+          "method": null,
+          "metric": "ast_per_pass",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "high_value_assist_rate": {
+          "confidence": null,
+          "method": "high_value assists to recipient / total assists to recipient (rim+three, sampled)",
+          "metric": "high_value_assist_rate",
+          "reason": null,
+          "sample_size": 10,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.7
+        },
+        "high_value_share_index": {
+          "confidence": null,
+          "method": "recipient's high_value_assist_rate / player's overall high_value_assist_rate (sampled assists only) -- an honest analog of 'shot leverage' restricted to the assisted-shot sample; NOT the spec's original pass-share-based formula, see module docstring",
+          "metric": "high_value_share_index",
+          "reason": null,
+          "sample_size": 10,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.822972972972973
+        },
+        "most_common_resulting_shot": "RIM",
+        "pass_share": {
+          "confidence": null,
+          "method": null,
+          "metric": "pass_share",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "passes": {
+          "confidence": null,
+          "method": null,
+          "metric": "passes",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "points_generated": {
+          "confidence": null,
+          "method": "sum(3 if three else 2 for each real assisted make)",
+          "metric": "points_generated",
+          "reason": null,
+          "sample_size": 10,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 22.0
+        },
+        "recipient_label": "J. Collins",
+        "recipient_leverage": {
+          "confidence": null,
+          "method": null,
+          "metric": "recipient_leverage",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "recipient_slug": "collijo01",
+        "zone_breakdown": {
+          "ABOVE_BREAK_3": 2,
+          "MIDRANGE": 1,
+          "RIM": 5,
+          "SHORT_PAINT": 2
+        }
+      },
+      {
+        "assist_share": {
+          "confidence": null,
+          "method": "recipient_assists / player_total_sampled_assists",
+          "metric": "assist_share",
+          "reason": null,
+          "sample_size": 87,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.10344827586206896
+        },
+        "assists": {
+          "confidence": null,
+          "method": null,
+          "metric": "assists",
+          "reason": null,
+          "sample_size": 87,
           "season": "2025-26",
           "source": "Basketball-Reference play-by-play (sampled)",
           "status": "OBSERVED",
@@ -1355,7 +1465,7 @@
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 1.1639344262295082
+          "value": 1.1756756756756757
         },
         "most_common_resulting_shot": "ABOVE_BREAK_3",
         "pass_share": {
@@ -1415,22 +1525,22 @@
           "method": "recipient_assists / player_total_sampled_assists",
           "metric": "assist_share",
           "reason": null,
-          "sample_size": 71,
+          "sample_size": 87,
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 0.09859154929577464
+          "value": 0.06896551724137931
         },
         "assists": {
           "confidence": null,
           "method": null,
           "metric": "assists",
           "reason": null,
-          "sample_size": 71,
+          "sample_size": 87,
           "season": "2025-26",
           "source": "Basketball-Reference play-by-play (sampled)",
           "status": "OBSERVED",
-          "value": 7
+          "value": 6
         },
         "ast_per_pass": {
           "confidence": null,
@@ -1448,22 +1558,22 @@
           "method": "high_value assists to recipient / total assists to recipient (rim+three, sampled)",
           "metric": "high_value_assist_rate",
           "reason": null,
-          "sample_size": 7,
+          "sample_size": 6,
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 0.7142857142857143
+          "value": 0.6666666666666666
         },
         "high_value_share_index": {
           "confidence": null,
           "method": "recipient's high_value_assist_rate / player's overall high_value_assist_rate (sampled assists only) -- an honest analog of 'shot leverage' restricted to the assisted-shot sample; NOT the spec's original pass-share-based formula, see module docstring",
           "metric": "high_value_share_index",
           "reason": null,
-          "sample_size": 7,
+          "sample_size": 6,
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 0.8313817330210773
+          "value": 0.7837837837837838
         },
         "most_common_resulting_shot": "RIM",
         "pass_share": {
@@ -1493,13 +1603,13 @@
           "method": "sum(3 if three else 2 for each real assisted make)",
           "metric": "points_generated",
           "reason": null,
-          "sample_size": 7,
+          "sample_size": 6,
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 16.0
+          "value": 13.0
         },
-        "recipient_label": "J. Collins",
+        "recipient_label": "J. Miller",
         "recipient_leverage": {
           "confidence": null,
           "method": null,
@@ -1511,11 +1621,11 @@
           "status": "UNAVAILABLE",
           "value": null
         },
-        "recipient_slug": "collijo01",
+        "recipient_slug": "millejo02",
         "zone_breakdown": {
-          "ABOVE_BREAK_3": 2,
-          "RIM": 3,
-          "SHORT_PAINT": 2
+          "ABOVE_BREAK_3": 1,
+          "MIDRANGE": 2,
+          "RIM": 3
         }
       },
       {
@@ -1524,18 +1634,127 @@
           "method": "recipient_assists / player_total_sampled_assists",
           "metric": "assist_share",
           "reason": null,
-          "sample_size": 71,
+          "sample_size": 87,
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 0.07042253521126761
+          "value": 0.05747126436781609
         },
         "assists": {
           "confidence": null,
           "method": null,
           "metric": "assists",
           "reason": null,
-          "sample_size": 71,
+          "sample_size": 87,
+          "season": "2025-26",
+          "source": "Basketball-Reference play-by-play (sampled)",
+          "status": "OBSERVED",
+          "value": 5
+        },
+        "ast_per_pass": {
+          "confidence": null,
+          "method": null,
+          "metric": "ast_per_pass",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "high_value_assist_rate": {
+          "confidence": null,
+          "method": "high_value assists to recipient / total assists to recipient (rim+three, sampled)",
+          "metric": "high_value_assist_rate",
+          "reason": null,
+          "sample_size": 5,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.8
+        },
+        "high_value_share_index": {
+          "confidence": null,
+          "method": "recipient's high_value_assist_rate / player's overall high_value_assist_rate (sampled assists only) -- an honest analog of 'shot leverage' restricted to the assisted-shot sample; NOT the spec's original pass-share-based formula, see module docstring",
+          "metric": "high_value_share_index",
+          "reason": null,
+          "sample_size": 5,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.9405405405405406
+        },
+        "most_common_resulting_shot": "ABOVE_BREAK_3",
+        "pass_share": {
+          "confidence": null,
+          "method": null,
+          "metric": "pass_share",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "passes": {
+          "confidence": null,
+          "method": null,
+          "metric": "passes",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "points_generated": {
+          "confidence": null,
+          "method": "sum(3 if three else 2 for each real assisted make)",
+          "metric": "points_generated",
+          "reason": null,
+          "sample_size": 5,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 13.0
+        },
+        "recipient_label": "K. Dunn",
+        "recipient_leverage": {
+          "confidence": null,
+          "method": null,
+          "metric": "recipient_leverage",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "recipient_slug": "dunnkr01",
+        "zone_breakdown": {
+          "ABOVE_BREAK_3": 3,
+          "RIM": 1,
+          "SHORT_PAINT": 1
+        }
+      },
+      {
+        "assist_share": {
+          "confidence": null,
+          "method": "recipient_assists / player_total_sampled_assists",
+          "metric": "assist_share",
+          "reason": null,
+          "sample_size": 87,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.05747126436781609
+        },
+        "assists": {
+          "confidence": null,
+          "method": null,
+          "metric": "assists",
+          "reason": null,
+          "sample_size": 87,
           "season": "2025-26",
           "source": "Basketball-Reference play-by-play (sampled)",
           "status": "OBSERVED",
@@ -1572,7 +1791,115 @@
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 1.1639344262295082
+          "value": 1.1756756756756757
+        },
+        "most_common_resulting_shot": "ABOVE_BREAK_3",
+        "pass_share": {
+          "confidence": null,
+          "method": null,
+          "metric": "pass_share",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "passes": {
+          "confidence": null,
+          "method": null,
+          "metric": "passes",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "points_generated": {
+          "confidence": null,
+          "method": "sum(3 if three else 2 for each real assisted make)",
+          "metric": "points_generated",
+          "reason": null,
+          "sample_size": 5,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 13.0
+        },
+        "recipient_label": "K. Sanders",
+        "recipient_leverage": {
+          "confidence": null,
+          "method": null,
+          "metric": "recipient_leverage",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "recipient_slug": "sandeko01",
+        "zone_breakdown": {
+          "ABOVE_BREAK_3": 3,
+          "RIM": 2
+        }
+      },
+      {
+        "assist_share": {
+          "confidence": null,
+          "method": "recipient_assists / player_total_sampled_assists",
+          "metric": "assist_share",
+          "reason": null,
+          "sample_size": 87,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 0.05747126436781609
+        },
+        "assists": {
+          "confidence": null,
+          "method": null,
+          "metric": "assists",
+          "reason": null,
+          "sample_size": 87,
+          "season": "2025-26",
+          "source": "Basketball-Reference play-by-play (sampled)",
+          "status": "OBSERVED",
+          "value": 5
+        },
+        "ast_per_pass": {
+          "confidence": null,
+          "method": null,
+          "metric": "ast_per_pass",
+          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
+          "sample_size": null,
+          "season": null,
+          "source": null,
+          "status": "UNAVAILABLE",
+          "value": null
+        },
+        "high_value_assist_rate": {
+          "confidence": null,
+          "method": "high_value assists to recipient / total assists to recipient (rim+three, sampled)",
+          "metric": "high_value_assist_rate",
+          "reason": null,
+          "sample_size": 5,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 1.0
+        },
+        "high_value_share_index": {
+          "confidence": null,
+          "method": "recipient's high_value_assist_rate / player's overall high_value_assist_rate (sampled assists only) -- an honest analog of 'shot leverage' restricted to the assisted-shot sample; NOT the spec's original pass-share-based formula, see module docstring",
+          "metric": "high_value_share_index",
+          "reason": null,
+          "sample_size": 5,
+          "season": "2025-26",
+          "source": null,
+          "status": "DERIVED",
+          "value": 1.1756756756756757
         },
         "most_common_resulting_shot": "RIM",
         "pass_share": {
@@ -1632,127 +1959,18 @@
           "method": "recipient_assists / player_total_sampled_assists",
           "metric": "assist_share",
           "reason": null,
-          "sample_size": 71,
+          "sample_size": 87,
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 0.07042253521126761
+          "value": 0.034482758620689655
         },
         "assists": {
           "confidence": null,
           "method": null,
           "metric": "assists",
           "reason": null,
-          "sample_size": 71,
-          "season": "2025-26",
-          "source": "Basketball-Reference play-by-play (sampled)",
-          "status": "OBSERVED",
-          "value": 5
-        },
-        "ast_per_pass": {
-          "confidence": null,
-          "method": null,
-          "metric": "ast_per_pass",
-          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
-          "sample_size": null,
-          "season": null,
-          "source": null,
-          "status": "UNAVAILABLE",
-          "value": null
-        },
-        "high_value_assist_rate": {
-          "confidence": null,
-          "method": "high_value assists to recipient / total assists to recipient (rim+three, sampled)",
-          "metric": "high_value_assist_rate",
-          "reason": null,
-          "sample_size": 5,
-          "season": "2025-26",
-          "source": null,
-          "status": "DERIVED",
-          "value": 0.6
-        },
-        "high_value_share_index": {
-          "confidence": null,
-          "method": "recipient's high_value_assist_rate / player's overall high_value_assist_rate (sampled assists only) -- an honest analog of 'shot leverage' restricted to the assisted-shot sample; NOT the spec's original pass-share-based formula, see module docstring",
-          "metric": "high_value_share_index",
-          "reason": null,
-          "sample_size": 5,
-          "season": "2025-26",
-          "source": null,
-          "status": "DERIVED",
-          "value": 0.6983606557377049
-        },
-        "most_common_resulting_shot": "MIDRANGE",
-        "pass_share": {
-          "confidence": null,
-          "method": null,
-          "metric": "pass_share",
-          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
-          "sample_size": null,
-          "season": null,
-          "source": null,
-          "status": "UNAVAILABLE",
-          "value": null
-        },
-        "passes": {
-          "confidence": null,
-          "method": null,
-          "metric": "passes",
-          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
-          "sample_size": null,
-          "season": null,
-          "source": null,
-          "status": "UNAVAILABLE",
-          "value": null
-        },
-        "points_generated": {
-          "confidence": null,
-          "method": "sum(3 if three else 2 for each real assisted make)",
-          "metric": "points_generated",
-          "reason": null,
-          "sample_size": 5,
-          "season": "2025-26",
-          "source": null,
-          "status": "DERIVED",
-          "value": 11.0
-        },
-        "recipient_label": "J. Miller",
-        "recipient_leverage": {
-          "confidence": null,
-          "method": null,
-          "metric": "recipient_leverage",
-          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
-          "sample_size": null,
-          "season": null,
-          "source": null,
-          "status": "UNAVAILABLE",
-          "value": null
-        },
-        "recipient_slug": "millejo02",
-        "zone_breakdown": {
-          "ABOVE_BREAK_3": 1,
-          "MIDRANGE": 2,
-          "RIM": 2
-        }
-      },
-      {
-        "assist_share": {
-          "confidence": null,
-          "method": "recipient_assists / player_total_sampled_assists",
-          "metric": "assist_share",
-          "reason": null,
-          "sample_size": 71,
-          "season": "2025-26",
-          "source": null,
-          "status": "DERIVED",
-          "value": 0.04225352112676056
-        },
-        "assists": {
-          "confidence": null,
-          "method": null,
-          "metric": "assists",
-          "reason": null,
-          "sample_size": 71,
+          "sample_size": 87,
           "season": "2025-26",
           "source": "Basketball-Reference play-by-play (sampled)",
           "status": "OBSERVED",
@@ -1789,7 +2007,7 @@
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 1.1639344262295082
+          "value": 1.1756756756756757
         },
         "most_common_resulting_shot": "ABOVE_BREAK_3",
         "pass_share": {
@@ -1825,7 +2043,7 @@
           "status": "DERIVED",
           "value": 9.0
         },
-        "recipient_label": "K. Sanders",
+        "recipient_label": "N. Batum",
         "recipient_leverage": {
           "confidence": null,
           "method": null,
@@ -1837,7 +2055,7 @@
           "status": "UNAVAILABLE",
           "value": null
         },
-        "recipient_slug": "sandeko01",
+        "recipient_slug": "batumni01",
         "zone_breakdown": {
           "ABOVE_BREAK_3": 3
         }
@@ -1848,126 +2066,18 @@
           "method": "recipient_assists / player_total_sampled_assists",
           "metric": "assist_share",
           "reason": null,
-          "sample_size": 71,
+          "sample_size": 87,
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 0.04225352112676056
+          "value": 0.022988505747126436
         },
         "assists": {
           "confidence": null,
           "method": null,
           "metric": "assists",
           "reason": null,
-          "sample_size": 71,
-          "season": "2025-26",
-          "source": "Basketball-Reference play-by-play (sampled)",
-          "status": "OBSERVED",
-          "value": 3
-        },
-        "ast_per_pass": {
-          "confidence": null,
-          "method": null,
-          "metric": "ast_per_pass",
-          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
-          "sample_size": null,
-          "season": null,
-          "source": null,
-          "status": "UNAVAILABLE",
-          "value": null
-        },
-        "high_value_assist_rate": {
-          "confidence": null,
-          "method": "high_value assists to recipient / total assists to recipient (rim+three, sampled)",
-          "metric": "high_value_assist_rate",
-          "reason": null,
-          "sample_size": 3,
-          "season": "2025-26",
-          "source": null,
-          "status": "DERIVED",
-          "value": 1.0
-        },
-        "high_value_share_index": {
-          "confidence": null,
-          "method": "recipient's high_value_assist_rate / player's overall high_value_assist_rate (sampled assists only) -- an honest analog of 'shot leverage' restricted to the assisted-shot sample; NOT the spec's original pass-share-based formula, see module docstring",
-          "metric": "high_value_share_index",
-          "reason": null,
-          "sample_size": 3,
-          "season": "2025-26",
-          "source": null,
-          "status": "DERIVED",
-          "value": 1.1639344262295082
-        },
-        "most_common_resulting_shot": "ABOVE_BREAK_3",
-        "pass_share": {
-          "confidence": null,
-          "method": null,
-          "metric": "pass_share",
-          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
-          "sample_size": null,
-          "season": null,
-          "source": null,
-          "status": "UNAVAILABLE",
-          "value": null
-        },
-        "passes": {
-          "confidence": null,
-          "method": null,
-          "metric": "passes",
-          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
-          "sample_size": null,
-          "season": null,
-          "source": null,
-          "status": "UNAVAILABLE",
-          "value": null
-        },
-        "points_generated": {
-          "confidence": null,
-          "method": "sum(3 if three else 2 for each real assisted make)",
-          "metric": "points_generated",
-          "reason": null,
-          "sample_size": 3,
-          "season": "2025-26",
-          "source": null,
-          "status": "DERIVED",
-          "value": 8.0
-        },
-        "recipient_label": "K. Dunn",
-        "recipient_leverage": {
-          "confidence": null,
-          "method": null,
-          "metric": "recipient_leverage",
-          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
-          "sample_size": null,
-          "season": null,
-          "source": null,
-          "status": "UNAVAILABLE",
-          "value": null
-        },
-        "recipient_slug": "dunnkr01",
-        "zone_breakdown": {
-          "ABOVE_BREAK_3": 2,
-          "RIM": 1
-        }
-      },
-      {
-        "assist_share": {
-          "confidence": null,
-          "method": "recipient_assists / player_total_sampled_assists",
-          "metric": "assist_share",
-          "reason": null,
-          "sample_size": 71,
-          "season": "2025-26",
-          "source": null,
-          "status": "DERIVED",
-          "value": 0.028169014084507043
-        },
-        "assists": {
-          "confidence": null,
-          "method": null,
-          "metric": "assists",
-          "reason": null,
-          "sample_size": 71,
+          "sample_size": 87,
           "season": "2025-26",
           "source": "Basketball-Reference play-by-play (sampled)",
           "status": "OBSERVED",
@@ -1993,7 +2103,7 @@
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 1.0
+          "value": 0.5
         },
         "high_value_share_index": {
           "confidence": null,
@@ -2004,7 +2114,7 @@
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 1.1639344262295082
+          "value": 0.5878378378378378
         },
         "most_common_resulting_shot": "ABOVE_BREAK_3",
         "pass_share": {
@@ -2038,114 +2148,7 @@
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 6.0
-        },
-        "recipient_label": "N. Batum",
-        "recipient_leverage": {
-          "confidence": null,
-          "method": null,
-          "metric": "recipient_leverage",
-          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
-          "sample_size": null,
-          "season": null,
-          "source": null,
-          "status": "UNAVAILABLE",
-          "value": null
-        },
-        "recipient_slug": "batumni01",
-        "zone_breakdown": {
-          "ABOVE_BREAK_3": 2
-        }
-      },
-      {
-        "assist_share": {
-          "confidence": null,
-          "method": "recipient_assists / player_total_sampled_assists",
-          "metric": "assist_share",
-          "reason": null,
-          "sample_size": 71,
-          "season": "2025-26",
-          "source": null,
-          "status": "DERIVED",
-          "value": 0.014084507042253521
-        },
-        "assists": {
-          "confidence": null,
-          "method": null,
-          "metric": "assists",
-          "reason": null,
-          "sample_size": 71,
-          "season": "2025-26",
-          "source": "Basketball-Reference play-by-play (sampled)",
-          "status": "OBSERVED",
-          "value": 1
-        },
-        "ast_per_pass": {
-          "confidence": null,
-          "method": null,
-          "metric": "ast_per_pass",
-          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
-          "sample_size": null,
-          "season": null,
-          "source": null,
-          "status": "UNAVAILABLE",
-          "value": null
-        },
-        "high_value_assist_rate": {
-          "confidence": null,
-          "method": "high_value assists to recipient / total assists to recipient (rim+three, sampled)",
-          "metric": "high_value_assist_rate",
-          "reason": null,
-          "sample_size": 1,
-          "season": "2025-26",
-          "source": null,
-          "status": "DERIVED",
-          "value": 0.0
-        },
-        "high_value_share_index": {
-          "confidence": null,
-          "method": "recipient's high_value_assist_rate / player's overall high_value_assist_rate (sampled assists only) -- an honest analog of 'shot leverage' restricted to the assisted-shot sample; NOT the spec's original pass-share-based formula, see module docstring",
-          "metric": "high_value_share_index",
-          "reason": null,
-          "sample_size": 1,
-          "season": "2025-26",
-          "source": null,
-          "status": "DERIVED",
-          "value": 0.0
-        },
-        "most_common_resulting_shot": "SHORT_PAINT",
-        "pass_share": {
-          "confidence": null,
-          "method": null,
-          "metric": "pass_share",
-          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
-          "sample_size": null,
-          "season": null,
-          "source": null,
-          "status": "UNAVAILABLE",
-          "value": null
-        },
-        "passes": {
-          "confidence": null,
-          "method": null,
-          "metric": "passes",
-          "reason": "Requires a total-pass count (not just assisted passes). Basketball-Reference play-by-play only records passes that became made-shot assists; no reachable source publishes non-scoring passes. See routing/recipients.py module docstring.",
-          "sample_size": null,
-          "season": null,
-          "source": null,
-          "status": "UNAVAILABLE",
-          "value": null
-        },
-        "points_generated": {
-          "confidence": null,
-          "method": "sum(3 if three else 2 for each real assisted make)",
-          "metric": "points_generated",
-          "reason": null,
-          "sample_size": 1,
-          "season": "2025-26",
-          "source": null,
-          "status": "DERIVED",
-          "value": 2.0
+          "value": 5.0
         },
         "recipient_label": "Y. Konan Niederh\u00e4user",
         "recipient_leverage": {
@@ -2161,6 +2164,7 @@
         },
         "recipient_slug": "konanya01",
         "zone_breakdown": {
+          "ABOVE_BREAK_3": 1,
           "SHORT_PAINT": 1
         }
       },
@@ -2170,18 +2174,18 @@
           "method": "recipient_assists / player_total_sampled_assists",
           "metric": "assist_share",
           "reason": null,
-          "sample_size": 71,
+          "sample_size": 87,
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 0.014084507042253521
+          "value": 0.011494252873563218
         },
         "assists": {
           "confidence": null,
           "method": null,
           "metric": "assists",
           "reason": null,
-          "sample_size": 71,
+          "sample_size": 87,
           "season": "2025-26",
           "source": "Basketball-Reference play-by-play (sampled)",
           "status": "OBSERVED",
@@ -2218,7 +2222,7 @@
           "season": "2025-26",
           "source": null,
           "status": "DERIVED",
-          "value": 1.1639344262295082
+          "value": 1.1756756756756757
         },
         "most_common_resulting_shot": "RIM",
         "pass_share": {
@@ -2272,30 +2276,30 @@
         }
       }
     ],
-    "sample_description": "71 real assisted-shot events across 25 of 83 real season games (most recent games sampled, chronological order preserved -- see sources/collect.py).",
-    "sample_size": 71
+    "sample_description": "87 real assisted-shot events across 25 of 65 real season games (most recent games sampled, chronological order preserved -- see sources/collect.py).",
+    "sample_size": 87
   },
   "research_summary": {
     "archetype": [
-      "ADVANTAGE_PROCESSOR",
+      "CONNECTOR",
       "FINISHER",
       "VERTICAL_GRAVITY_PROCESSOR"
     ],
     "best_recipients": [
       {
-        "assist_share": 0.29577464788732394,
-        "high_value_share_index": 0.9976580796252927,
+        "assist_share": 0.28735632183908044,
+        "high_value_share_index": 0.9875675675675676,
         "label": "B. Lopez"
       },
       {
-        "assist_share": 0.19718309859154928,
-        "high_value_share_index": 0.9976580796252927,
+        "assist_share": 0.1839080459770115,
+        "high_value_share_index": 1.0287162162162162,
         "label": "D. Jones"
       },
       {
-        "assist_share": 0.1267605633802817,
-        "high_value_share_index": 1.1639344262295082,
-        "label": "D. Garland"
+        "assist_share": 0.11494252873563218,
+        "high_value_share_index": 0.822972972972973,
+        "label": "J. Collins"
       }
     ],
     "caveats": [],
@@ -2469,11 +2473,11 @@
     },
     "monte_carlo": {
       "assists": {
-        "median": 3.3524261792640493,
-        "p10": 2.8844945362410996,
-        "p25": 3.1011107794225277,
-        "p75": 3.601766464498825,
-        "p90": 3.8485839944947053
+        "median": 4.097972620467958,
+        "p10": 3.5858257055981024,
+        "p25": 3.8258684357003423,
+        "p75": 4.368917107088119,
+        "p90": 4.632737599279885
       },
       "decision_touches": {
         "median": 29.87565788053075,
@@ -2485,21 +2489,21 @@
       "method": "Beta-posterior draws of per-touch rates, propagated through the scenario formula; reproducible via the fixed seed",
       "n_draws": 4000,
       "receiver_makes": {
-        "median": 3.330193670648748,
-        "p10": 2.8641168670717176,
-        "p25": 3.082813622193052,
-        "p75": 3.5897112945834913,
-        "p90": 3.8331620600540264
+        "median": 4.083406103439655,
+        "p10": 3.57362693172144,
+        "p25": 3.8121297284479017,
+        "p75": 4.367498709516978,
+        "p90": 4.629192149269822
       },
       "scenario_name": "NEUTRAL",
       "seed": 20260823,
       "status": "SIMULATED",
       "turnovers": {
-        "median": 1.9528636799428196,
-        "p10": 1.555889149379231,
-        "p25": 1.7353263867804878,
-        "p75": 2.172741729754715,
-        "p90": 2.3911287056401243
+        "median": 2.7439029708458627,
+        "p10": 2.2969660826376943,
+        "p25": 2.499653706828214,
+        "p75": 3.013313853183276,
+        "p90": 3.270479975156286
       }
     },
     "scenarios": {
@@ -2559,7 +2563,7 @@
           "season": null,
           "source": null,
           "status": "SIMULATED",
-          "value": 2.9520001105325857
+          "value": 3.617239572061056
         },
         "simulated_turnovers": {
           "confidence": null,
@@ -2651,7 +2655,7 @@
           "season": null,
           "source": null,
           "status": "SIMULATED",
-          "value": 3.340025974807447
+          "value": 4.09270788462321
         },
         "simulated_turnovers": {
           "confidence": null,
@@ -2743,7 +2747,7 @@
           "season": null,
           "source": null,
           "status": "SIMULATED",
-          "value": 3.57930013402076
+          "value": 4.385902981124031
         },
         "simulated_turnovers": {
           "confidence": null,
@@ -2781,5 +2785,5 @@
       }
     }
   },
-  "updated_at": "2026-08-23T19:28:40.329884+00:00"
+  "updated_at": "2026-08-23T21:14:58.242470+00:00"
 }

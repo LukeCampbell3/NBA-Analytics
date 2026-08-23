@@ -38,6 +38,7 @@ from __future__ import annotations
 import html as html_module
 import re
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -90,6 +91,17 @@ def _get(url: str, *, cache_key: str) -> str:
 # Player resolution
 # ---------------------------------------------------------------------
 
+def _ascii_fold(value: str) -> str:
+    """Strips diacritics for name matching (e.g. "Şengün" -> "Sengun",
+    "Dončić" -> "Doncic") -- real bball-ref search-result labels often
+    carry the player's real native-spelling diacritics even when the
+    caller's own player list uses the plain-ASCII form (matching this
+    repo's own Player-Predictor box-score naming), so a literal
+    substring match against the raw label silently fails for any such
+    player. Mirrors build/build_player.py::_slugify's normalization."""
+    return unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
+
+
 def resolve_player_slug(player_name: str) -> Optional[str]:
     """Real search against basketball-reference.com/search -- returns
     the player's real page slug (e.g. "queende01") or None if no real
@@ -99,10 +111,11 @@ def resolve_player_slug(player_name: str) -> Optional[str]:
     url = f"{BASE_URL}/search/search.fcgi?search={query}"
     html = _get(url, cache_key=f"search_{player_name.replace(' ', '_')}")
 
-    last_name_key = player_name.strip().split()[-1].lower().replace("-", "")
+    last_name_key = _ascii_fold(player_name.strip().split()[-1]).lower().replace("-", "")
     for match in re.finditer(r'href="(/players/([a-z])/([a-z0-9]+)\.html)"[^>]*>([^<]+)</a>', html):
         _, _, slug, label = match.groups()
-        if last_name_key in label.lower().replace("-", "").replace(".", "").replace(" ", "") or last_name_key in slug:
+        folded_label = _ascii_fold(html_module.unescape(label)).lower().replace("-", "").replace(".", "").replace(" ", "")
+        if last_name_key in folded_label or last_name_key in slug:
             return slug
     return None
 

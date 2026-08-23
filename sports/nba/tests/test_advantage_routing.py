@@ -607,3 +607,36 @@ def test_fetch_season_game_ids_excludes_inactive_and_dnp_rows(monkeypatch: pytes
     assert game_ids == ["202510240SAC", "202510280OKC"]
     assert "202510220PHO" not in game_ids  # Inactive row
     assert "202510260SAC" not in game_ids  # Did Not Play row
+
+
+# ---------------------------------------------------------------------
+# Player-search name resolution across diacritics (real bug: bball-ref's
+# search-result label often carries the player's real native-spelling
+# diacritics -- e.g. real "Alperen Şengün" -- even when the caller's own
+# player list uses the plain-ASCII form matching this repo's
+# Player-Predictor box-score naming, so a literal substring match against
+# the raw label silently failed and resolve_player_slug returned None.)
+# ---------------------------------------------------------------------
+
+_FIXTURE_SEARCH_HTML = """
+<div id="players">
+<div class="search-item"><div class="search-item-name">
+<a href="/players/s/sengual01.html">Alperen Şengün (2022-2026)</a>
+</div></div>
+<div class="search-item"><div class="search-item-name">
+<a href="/players/d/doncilu01.html">Luka Dončić (2018-2026)</a>
+</div></div>
+</div>
+"""
+
+
+def test_ascii_fold_strips_diacritics() -> None:
+    assert bball_ref_module._ascii_fold("Şengün") == "Sengun"
+    assert bball_ref_module._ascii_fold("Dončić") == "Doncic"
+    assert bball_ref_module._ascii_fold("Plain Name") == "Plain Name"
+
+
+def test_resolve_player_slug_matches_across_diacritics(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(bball_ref_module, "_get", lambda url, *, cache_key: _FIXTURE_SEARCH_HTML)
+    assert bball_ref_module.resolve_player_slug("Alperen Sengun") == "sengual01"
+    assert bball_ref_module.resolve_player_slug("Luka Doncic") == "doncilu01"
