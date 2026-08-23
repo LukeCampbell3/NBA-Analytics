@@ -39,6 +39,7 @@ class PredictionAboutPage {
             sportAccent: '#c02c3a',
             navLinks: [
                 { label: 'Board', href: '/nba/predictions/', active: false },
+                { label: 'Advantage Routing', href: '/nba/advantage-routing/', active: false },
                 { label: 'Method', href: '/nba/prediction-about/', active: true },
             ],
             showDisclaimer: true,
