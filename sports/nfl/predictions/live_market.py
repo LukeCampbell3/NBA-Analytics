@@ -24,6 +24,16 @@ TARGET_BY_MARKET = {
     "player_rush_yds": "rushing",
     "player_reception_yds": "receiving",
 }
+# Real team-level markets (moneyline winner, game total) -- a genuinely
+# different real shape from the player-prop markets above: h2h outcomes
+# are named after the two real teams with no line/point at all, and
+# totals outcomes carry no player identity. flatten_event_odds() above
+# is built specifically for two-sided PLAYER over/under markets and
+# structurally cannot parse either shape (requires a player name AND a
+# numeric point on every outcome) -- see flatten_event_team_market_odds
+# below instead. Spread is deliberately not included yet: the product
+# ask was moneyline + total; spread can be added the same way later.
+TEAM_MARKET_KEYS = ("h2h", "totals")
 SPORTSGAMEODDS_MARKETS = {
     "passing_yards": "player_pass_yds",
     "rushing_yards": "player_rush_yds",
@@ -138,6 +148,171 @@ def flatten_event_odds(
                 if row["over_price"] is not None and row["under_price"] is not None
             )
     return rows
+
+
+def flatten_event_team_market_odds(
+    event: dict[str, Any], *, fetched_at_utc: str
+) -> list[dict[str, Any]]:
+    """Real team-level markets for one event: moneyline (h2h) and game
+    total (totals). A genuinely different real shape from
+    flatten_event_odds's player-prop rows -- h2h outcomes are the two
+    real team names with no line, totals outcomes have no player
+    identity -- so this is a separate function rather than a branch
+    bolted onto the player-prop one, to keep the already-proven
+    player-prop path untouched.
+
+    Retains only a complete real observation per (market, book): h2h
+    needs both real team prices; totals needs both real Over and Under
+    prices at the same real line."""
+    home_team = str(event.get("home_team") or "").strip()
+    away_team = str(event.get("away_team") or "").strip()
+    rows: list[dict[str, Any]] = []
+
+    for bookmaker in event.get("bookmakers") or []:
+        bookmaker_key = str(bookmaker.get("key") or "").strip().lower()
+        if not bookmaker_key:
+            continue
+        for market in bookmaker.get("markets") or []:
+            market_key = str(market.get("key") or "").strip()
+            if market_key not in TEAM_MARKET_KEYS:
+                continue
+            snapshot_time = market.get("last_update") or fetched_at_utc
+            base_row = {
+                "event_id": str(event.get("id") or ""),
+                "commence_time_utc": event.get("commence_time"),
+                "home_team": home_team,
+                "away_team": away_team,
+                "market": market_key,
+                "bookmaker": bookmaker_key,
+                "bookmaker_title": bookmaker.get("title") or bookmaker_key,
+                "snapshot_time_utc": snapshot_time,
+                "fetched_at_utc": fetched_at_utc,
+                "source": "the_odds_api_live",
+            }
+
+            if market_key == "h2h":
+                prices: dict[str, float] = {}
+                for outcome in market.get("outcomes") or []:
+                    name = str(outcome.get("name") or "").strip()
+                    try:
+                        price = float(outcome.get("price"))
+                    except (TypeError, ValueError):
+                        continue
+                    if name and name in {home_team, away_team}:
+                        prices[name] = price
+                if home_team in prices and away_team in prices:
+                    rows.append(
+                        {
+                            **base_row,
+                            "target": "moneyline",
+                            "line": None,
+                            "home_moneyline": prices[home_team],
+                            "away_moneyline": prices[away_team],
+                        }
+                    )
+            elif market_key == "totals":
+                grouped: dict[float, dict[str, float]] = {}
+                for outcome in market.get("outcomes") or []:
+                    side = str(outcome.get("name") or "").strip().lower()
+                    point = outcome.get("point")
+                    if side not in {"over", "under"} or point is None:
+                        continue
+                    try:
+                        line = float(point)
+                        price = float(outcome.get("price"))
+                    except (TypeError, ValueError):
+                        continue
+                    grouped.setdefault(line, {})[side] = price
+                for line, sides in grouped.items():
+                    if "over" in sides and "under" in sides:
+                        rows.append(
+                            {
+                                **base_row,
+                                "target": "game_total",
+                                "line": line,
+                                "over_price": sides["over"],
+                                "under_price": sides["under"],
+                            }
+                        )
+    return rows
+
+
+def fetch_live_team_market_slate(
+    *,
+    api_key: str,
+    commence_from_utc: str,
+    commence_to_utc: str,
+    regions: str = "us",
+    markets: tuple[str, ...] = TEAM_MARKET_KEYS,
+    session: requests.Session | None = None,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Real live moneyline/game-total capture -- a separate function from
+    fetch_live_slate (not a parameterization of it) so the already-proven
+    player-prop path above is never touched by this addition. Same
+    events/odds request shape and audit contract as fetch_live_slate,
+    just wired to TEAM_MARKET_KEYS and flatten_event_team_market_odds."""
+    if not api_key.strip():
+        raise ValueError("A non-empty The Odds API key is required.")
+    active_session = session or requests.Session()
+    active_session.headers.update(
+        {"Accept": "application/json", "User-Agent": "NFL-Predictor/2.0"}
+    )
+    common = {
+        "apiKey": api_key.strip(),
+        "dateFormat": "iso",
+        "commenceTimeFrom": commence_from_utc,
+        "commenceTimeTo": commence_to_utc,
+    }
+    events, event_headers = _request_json(
+        active_session, f"/v4/sports/{SPORT_KEY}/events", common
+    )
+    if not isinstance(events, list):
+        raise ValueError("The Odds API events response must be a list.")
+
+    fetched_at = datetime.now(timezone.utc).isoformat()
+    rows: list[dict[str, Any]] = []
+    event_payloads: list[dict[str, Any]] = []
+    quota_headers = event_headers
+    for event in events:
+        event_id = str(event.get("id") or "")
+        if not event_id:
+            continue
+        payload, quota_headers = _request_json(
+            active_session,
+            f"/v4/sports/{SPORT_KEY}/events/{event_id}/odds",
+            {
+                "apiKey": api_key.strip(),
+                "regions": regions,
+                "markets": ",".join(markets),
+                "oddsFormat": "american",
+                "dateFormat": "iso",
+            },
+        )
+        if not isinstance(payload, dict):
+            continue
+        event_payloads.append(payload)
+        rows.extend(flatten_event_team_market_odds(payload, fetched_at_utc=fetched_at))
+
+    raw_hash = hashlib.sha256(
+        json.dumps(event_payloads, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    audit = {
+        "provider": "the_odds_api",
+        "sport_key": SPORT_KEY,
+        "fetched_at_utc": fetched_at,
+        "events_discovered": len(events),
+        "events_with_odds": len(event_payloads),
+        "complete_team_market_rows": len(rows),
+        "markets": list(markets),
+        "regions": regions,
+        "raw_source_sha256": raw_hash,
+        "quota": {
+            "remaining": quota_headers.get("x-requests-remaining"),
+            "used": quota_headers.get("x-requests-used"),
+            "last": quota_headers.get("x-requests-last"),
+        },
+    }
+    return rows, audit
 
 
 def fetch_live_slate(
