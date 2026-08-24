@@ -138,9 +138,11 @@ def test_build_historical_universe_carries_real_book_key_and_price_time(tmp_path
     row = universe.loc[universe["Target"] == "R"].iloc[0]
     assert row["Market_Over_Price"] == 125
     assert row["Market_Over_Book_Key"] == "draftkings"
+    assert row["Market_Over_Book"] == "DraftKings"
     assert row["Market_Over_Price_Time"] == "2026-07-29T18:00:00Z"
     assert row["Market_Under_Price"] == -155
     assert row["Market_Under_Book_Key"] == "draftkings"
+    assert row["Market_Under_Book"] == "DraftKings"
 
 
 def test_build_historical_universe_leaves_book_key_blank_when_unpriced(tmp_path: Path) -> None:
@@ -162,3 +164,56 @@ def test_build_historical_universe_leaves_book_key_blank_when_unpriced(tmp_path:
     row = universe.loc[universe["Target"] == "R"].iloc[0]
     assert row["Market_Over_Book_Key"] == ""
     assert row["Market_Under_Book_Key"] == ""
+    assert row["Market_Over_Book"] == ""
+    assert row["Market_Under_Book"] == ""
+
+
+def test_universe_row_is_actually_price_confirmed_by_build_candidate(tmp_path: Path) -> None:
+    """The real, shared consumer of this universe -- build_candidate(),
+    used by both the live selector and the walk-forward optimizer -- must
+    actually mark a real-priced universe row as price_confirmed. This is
+    the exact regression a previous version of this fix missed: book KEY
+    alone is not enough, build_candidate() also requires a non-empty book
+    TITLE (Market_Over_Book/Market_Under_Book)."""
+    from select_high_precision_predictions import build_candidate
+
+    data_dir = tmp_path / "processed"
+    _write_processed_player_file(data_dir, season=2026)
+
+    long_rows = [
+        {
+            "event_date_et": "2026-07-29",
+            "player_name_norm": "Example_Player",
+            "market_key": "batter_runs_scored",
+            "bookmaker_key": "draftkings",
+            "line": 0.5,
+            "over_price": 125,
+            "under_price": -155,
+            "fetched_at_utc": "2026-07-29T18:00:00Z",
+        },
+    ]
+    long_path = tmp_path / "history_player_props_long.csv"
+    pd.DataFrame(long_rows).to_csv(long_path, index=False)
+    price_lookup = optimizer.build_price_lookup(long_path)
+
+    universe = optimizer.build_historical_universe(
+        season=2026,
+        data_dir=data_dir,
+        manifest=tmp_path / "no_manifest.json",
+        sample_cache=tmp_path / "universe.csv",
+        refresh_sample_cache=True,
+        min_modeled_history_rows=1,
+        price_lookup=price_lookup,
+    )
+
+    row = universe.loc[universe["Target"] == "R"].iloc[0].to_dict()
+    candidate = build_candidate(
+        row,
+        calibration=None,
+        min_history_bucket_rows=0,
+        max_history_prior_weight=0.0,
+        history_prior_strength=1.0,
+        min_bet_profile_rows=0,
+    )
+    assert candidate is not None
+    assert candidate.price_confirmed is True

@@ -371,12 +371,15 @@ def build_historical_universe(
                         # the two prices above -- carried straight through
                         # from build_supplement_from_long()'s real,
                         # single-book price selection. build_candidate()
-                        # requires the book-key columns to be non-empty to
-                        # mark a row price_confirmed; without them (as when
-                        # this universe was built from the averaged wide
-                        # file) every row was silently unconfirmable.
+                        # requires BOTH the book-key AND the book-title
+                        # columns to be non-empty to mark a row
+                        # price_confirmed; without them (as when this
+                        # universe was built from the averaged wide file)
+                        # every row was silently unconfirmable.
                         "Market_Over_Book_Key": str(price_row.get(f"Market_{spec.target}_over_book_key", "") or ""),
                         "Market_Under_Book_Key": str(price_row.get(f"Market_{spec.target}_under_book_key", "") or ""),
+                        "Market_Over_Book": str(price_row.get(f"Market_{spec.target}_over_book", "") or ""),
+                        "Market_Under_Book": str(price_row.get(f"Market_{spec.target}_under_book", "") or ""),
                         "Market_Over_Price_Time": str(price_row.get(f"Market_{spec.target}_over_price_time", "") or ""),
                         "Market_Under_Price_Time": str(price_row.get(f"Market_{spec.target}_under_price_time", "") or ""),
                         "Edge": edge,
