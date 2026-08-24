@@ -89,6 +89,12 @@ jobs:
             tests/test_validate_nfl_publication.py \
             -q
 
+      - name: Settle previous day's NFL PARLAY_V2 plays
+        if: ${{ !inputs.build_only }}
+        run: >-
+          python -m sports.nfl.scripts.settle_parlay_v2_calibration
+          --run-date "${{ steps.run_date.outputs.value }}"
+
       - name: Capture complete NFL market slate
         if: ${{ !inputs.build_only }}
         run: >-
