@@ -67,7 +67,7 @@ def list_completed_game_ids_for_date(date_str: str, *, timeout_seconds: float = 
             response.raise_for_status()
             payload = response.json()
             break
-        except requests.exceptions.Timeout as exc:
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
             last_error = exc
             time.sleep(REQUEST_DELAY_SECONDS * (attempt + 1))
     if payload is None:
@@ -104,7 +104,7 @@ def fetch_game_summary(game_id: str, *, timeout_seconds: float = REQUEST_TIMEOUT
             response = requests.get(SUMMARY_URL, params={"event": game_id}, timeout=timeout_seconds)
             response.raise_for_status()
             return response.json()
-        except requests.exceptions.Timeout as exc:
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
             last_error = exc
             time.sleep(REQUEST_DELAY_SECONDS * (attempt + 1))
     raise last_error
