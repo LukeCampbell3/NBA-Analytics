@@ -148,11 +148,31 @@ jobs:
           # fails hard ("fatal: pathspec ... did not match any files"),
           # which under `set -e` fails this whole step. Only add each one
           # if it's actually on disk this run.
+          #
+          # The raw per-book, per-timestamp market-odds files are included
+          # here too: fetch_mlb_market_props.py (invoked by "Run MLB
+          # production pipeline" above) refreshes these every run with real
+          # (event_id, bookmaker_key, market_key, line, over_price,
+          # under_price, fetched_at_utc) rows, but until now nothing ever
+          # committed them -- the real decision-time price data was fetched
+          # fresh and then destroyed with the runner at the end of every
+          # job. Committing them here is what lets the walk-forward
+          # optimizer eventually rebuild a real, price-confirmed historical
+          # universe instead of the averaged/synthetic one it has today.
           for optional_path in \
             sports/mlb/parlay_v2/calibration/reports/calibration_ledger.jsonl \
             sports/mlb/parlay_v2/calibration/reports/pair_observation_ledger.jsonl \
             sports/mlb/parlay_v2/reports \
-            sports/mlb/research/parlay_certification_v2/reports
+            sports/mlb/research/parlay_certification_v2/reports \
+            sports/mlb/data/raw/market_odds/mlb/odds_api_io/latest_player_props_long.csv \
+            sports/mlb/data/raw/market_odds/mlb/odds_api_io/latest_player_props_long.parquet \
+            sports/mlb/data/raw/market_odds/mlb/odds_api_io/latest_player_props_wide.csv \
+            sports/mlb/data/raw/market_odds/mlb/odds_api_io/latest_player_props_wide.parquet \
+            sports/mlb/data/raw/market_odds/mlb/odds_api_io/history_player_props_long.csv \
+            sports/mlb/data/raw/market_odds/mlb/odds_api_io/history_player_props_long.parquet \
+            sports/mlb/data/raw/market_odds/mlb/odds_api_io/history_player_props_wide.csv \
+            sports/mlb/data/raw/market_odds/mlb/odds_api_io/history_player_props_wide.parquet \
+            sports/mlb/data/raw/market_odds/mlb/odds_api_io/latest_manifest.json
           do
             if [ -e "$optional_path" ]; then
               git add -f -- "$optional_path"
