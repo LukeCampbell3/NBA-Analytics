@@ -72,6 +72,20 @@ def test_extract_pitcher_game_row_returns_none_when_no_real_starter_flag() -> No
     assert fetcher.extract_pitcher_game_row(boxscore, game_pk=824940, date_str="2026-04-01") is None
 
 
+def test_extract_pitcher_game_row_normalizes_real_statsapi_espn_abbreviation_mismatches() -> None:
+    """StatsAPI and ESPN use different real abbreviations for the same
+    two real teams (Arizona: AZ/ARI, White Sox: CWS/CHW) -- found by
+    diffing the two real datasets' full abbreviation sets. Normalizing
+    to ESPN's convention here keeps this dataset joinable on
+    (date, home_team, away_team) against mlb_team_game_history.csv."""
+    boxscore = _fixture_boxscore()
+    boxscore["teams"]["home"]["team"]["abbreviation"] = "AZ"
+    boxscore["teams"]["away"]["team"]["abbreviation"] = "CWS"
+    row = fetcher.extract_pitcher_game_row(boxscore, game_pk=824940, date_str="2026-04-01")
+    assert row["home_team"] == "ARI"
+    assert row["away_team"] == "CHW"
+
+
 def test_extract_pitcher_game_row_returns_none_for_missing_team_abbreviation() -> None:
     boxscore = _fixture_boxscore()
     boxscore["teams"]["home"]["team"]["abbreviation"] = ""

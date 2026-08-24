@@ -50,6 +50,24 @@ BOXSCORE_URL_TEMPLATE = "https://statsapi.mlb.com/api/v1/game/{game_pk}/boxscore
 REQUEST_TIMEOUT_SECONDS = 20.0
 REQUEST_DELAY_SECONDS = 0.3
 
+# Real, VERIFIED mismatches between StatsAPI's and ESPN's team
+# abbreviations for the same two real MLB teams -- found by actually
+# diffing the two real datasets' full abbreviation sets (every other
+# team matches exactly), not guessed upfront. Same kind of real,
+# disclosed cross-source join gap as NFL's "LA" vs "LAR" case elsewhere
+# in this repo. Normalizing to ESPN's convention here (rather than in
+# the join) keeps this dataset directly joinable on (date, home_team,
+# away_team) against mlb_team_game_history.csv without a separate
+# mapping pass at read time.
+STATSAPI_TO_ESPN_TEAM_ABBREVIATION = {
+    "AZ": "ARI",   # Arizona Diamondbacks
+    "CWS": "CHW",  # Chicago White Sox
+}
+
+
+def _to_espn_abbreviation(statsapi_abbreviation: str) -> str:
+    return STATSAPI_TO_ESPN_TEAM_ABBREVIATION.get(statsapi_abbreviation, statsapi_abbreviation)
+
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_RAW_ROOT = REPO_ROOT / "sports" / "mlb" / "data" / "raw" / "statsapi_pitcher_boxscores"
 DEFAULT_OUTPUT_PATH = REPO_ROOT / "sports" / "mlb" / "data" / "reference" / "mlb_pitcher_game_data.csv"
@@ -188,8 +206,8 @@ def extract_pitcher_game_row(boxscore: dict[str, Any], *, game_pk: int, date_str
     teams = boxscore.get("teams", {}) or {}
     home_box = teams.get("home", {}) or {}
     away_box = teams.get("away", {}) or {}
-    home_team = (home_box.get("team") or {}).get("abbreviation", "")
-    away_team = (away_box.get("team") or {}).get("abbreviation", "")
+    home_team = _to_espn_abbreviation((home_box.get("team") or {}).get("abbreviation", ""))
+    away_team = _to_espn_abbreviation((away_box.get("team") or {}).get("abbreviation", ""))
     if not home_team or not away_team:
         return None
 
