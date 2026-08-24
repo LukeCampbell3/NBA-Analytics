@@ -217,6 +217,66 @@ def test_market_snapshot_prefers_major_book_standard_line_and_best_price(tmp_pat
     assert market["Market_R_under_book_key"] == "draftkings"
 
 
+def test_best_book_price_returns_the_real_fetch_timestamp_of_the_winning_offer() -> None:
+    rows = pd.DataFrame(
+        [
+            {"bookmaker_key": "draftkings", "over_price_num": 125.0, "fetched_at_utc": "2026-07-29T18:00:00Z"},
+            {"bookmaker_key": "fanduel", "over_price_num": 130.0, "fetched_at_utc": "2026-07-29T18:05:00Z"},
+        ]
+    )
+    price, book_key, book_title, fetched_at = generator._best_book_price(rows, "over_price_num")
+    assert price == 130.0
+    assert book_key == "fanduel"
+    assert fetched_at == "2026-07-29T18:05:00Z"
+
+
+def test_best_book_price_returns_empty_timestamp_when_column_missing() -> None:
+    rows = pd.DataFrame([{"bookmaker_key": "draftkings", "over_price_num": 125.0}])
+    price, book_key, _, fetched_at = generator._best_book_price(rows, "over_price_num")
+    assert price == 125.0
+    assert fetched_at == ""
+
+
+def test_market_snapshot_carries_the_winning_books_real_fetch_timestamp(tmp_path: Path) -> None:
+    """Every real, price-confirmed row must also carry WHEN that price was
+    fetched -- not just which book it came from -- so a historical archive
+    built from this snapshot can persist a genuine (book, price, timestamp)
+    tuple instead of just a price."""
+    rows = [
+        {
+            "event_date_et": "2026-07-29",
+            "player_name_norm": "Example_Player",
+            "market_key": "batter_runs_scored",
+            "bookmaker_key": "draftkings",
+            "line": 0.5,
+            "over_price": 125,
+            "under_price": -155,
+            "fetched_at_utc": "2026-07-29T18:00:00Z",
+        },
+        {
+            "event_date_et": "2026-07-29",
+            "player_name_norm": "Example_Player",
+            "market_key": "batter_runs_scored",
+            "bookmaker_key": "fanduel",
+            "line": 0.5,
+            "over_price": 130,
+            "under_price": -160,
+            "fetched_at_utc": "2026-07-29T18:00:00Z",
+        },
+    ]
+    pd.DataFrame(rows).to_csv(tmp_path / "latest_player_props_long.csv", index=False)
+
+    snapshot = generator.load_market_snapshot(tmp_path, pd.Timestamp("2026-07-29"))
+    market = snapshot.iloc[0]
+
+    assert market["Market_R_over_price"] == 130
+    assert market["Market_R_over_book_key"] == "fanduel"
+    assert market["Market_R_over_price_time"] == "2026-07-29T18:00:00Z"
+    assert market["Market_R_under_price"] == -155
+    assert market["Market_R_under_book_key"] == "draftkings"
+    assert market["Market_R_under_price_time"] == "2026-07-29T18:00:00Z"
+
+
 def test_market_snapshot_uses_requested_history_date_and_latest_capture(tmp_path: Path) -> None:
     pd.DataFrame(
         [

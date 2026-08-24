@@ -40,6 +40,7 @@ from sports.mlb.scripts.generate_daily_prediction_pool import (
     DEFAULT_DATA_DIR,
     DEFAULT_MANIFEST,
     TARGET_SPECS,
+    build_supplement_from_long,
     compute_walk_forward_metrics,
     discover_processed_files,
     normalize_player_id,
@@ -57,7 +58,17 @@ from sports.mlb.scripts.select_high_precision_predictions import (
 )
 
 
-DEFAULT_MARKET_WIDE = REPO_ROOT / "sports" / "mlb" / "data" / "raw" / "market_odds" / "mlb" / "odds_api_io" / "history_player_props_wide.csv"
+# history_player_props_long.csv is the real, per-book, per-timestamp market
+# archive (event_id, bookmaker_key, market_key, line, over_price,
+# under_price, fetched_at_utc). It replaced history_player_props_wide.csv
+# as this script's price source because the wide file's prices are a
+# consensus AVERAGE across books (fetch_mlb_market_props.py's
+# consensus_american_price()) with no book identity at all -- every row
+# built from it therefore failed build_candidate()'s price_confirmed check,
+# which requires a real Market_Over_Book_Key/Market_Under_Book_Key. Reusing
+# build_supplement_from_long() gives this historical universe the exact
+# same real, single-book, price-confirmed price the live daily board uses.
+DEFAULT_MARKET_LONG = REPO_ROOT / "sports" / "mlb" / "data" / "raw" / "market_odds" / "mlb" / "odds_api_io" / "history_player_props_long.csv"
 DEFAULT_SAMPLE_CACHE = SPORT_ROOT / "data" / "predictions" / "calibration" / "historical_pool_universe_2026.csv"
 DEFAULT_REPORT_JSON = SPORT_ROOT / "data" / "predictions" / "calibration" / "historical_pool_optimization_2026.json"
 
@@ -76,10 +87,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--data-dir", type=Path, default=DEFAULT_DATA_DIR, help="Processed MLB data root.")
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST, help="Processed MLB manifest path.")
     parser.add_argument(
-        "--market-history-wide",
+        "--market-history-long",
         type=Path,
-        default=DEFAULT_MARKET_WIDE,
-        help="Historical wide market-price snapshot CSV or parquet.",
+        default=DEFAULT_MARKET_LONG,
+        help=(
+            "Real, per-book, per-timestamp market-odds archive CSV or parquet "
+            "(event_id, bookmaker_key, market_key, line, over_price, "
+            "under_price, fetched_at_utc). NOT the _wide file -- its prices "
+            "are a book-blind consensus average, not a real executable price."
+        ),
     )
     parser.add_argument(
         "--sample-cache",
@@ -136,16 +152,31 @@ def parse_args() -> argparse.Namespace:
 
 
 def build_price_lookup(path: Path) -> dict[tuple[str, str], dict[str, Any]]:
+    """Builds the same (Market_Date, Player) -> price-row lookup
+    build_historical_universe() joins against, but from the real
+    per-book, per-timestamp long-format archive rather than the averaged
+    wide file -- reusing build_supplement_from_long() so this historical
+    universe and the live daily board always agree on what counts as a
+    real, price-confirmed decision-time price."""
     if not path.exists():
         return {}
     if path.suffix.lower() == ".parquet":
-        frame = pd.read_parquet(path)
+        long_df = pd.read_parquet(path)
     else:
-        frame = pd.read_csv(path)
+        long_df = pd.read_csv(path)
+    if long_df.empty or "event_date_et" not in long_df.columns or "player_name_norm" not in long_df.columns:
+        return {}
+
+    long_df = long_df.copy()
+    long_df["Market_Date"] = pd.to_datetime(long_df["event_date_et"], errors="coerce")
+    long_df = long_df.loc[long_df["Market_Date"].notna()].copy()
+    if long_df.empty:
+        return {}
+
+    frame = build_supplement_from_long(long_df)
     if frame.empty:
         return {}
 
-    frame = frame.copy()
     frame["Market_Date"] = pd.to_datetime(frame["Market_Date"], errors="coerce").dt.strftime("%Y-%m-%d")
     frame["Player"] = frame["Player"].astype(str)
     price_lookup: dict[tuple[str, str], dict[str, Any]] = {}
@@ -336,6 +367,18 @@ def build_historical_universe(
                         "Market_Line_Std": float(to_float(price_row.get(f"Market_{spec.target}_line_std")) or 0.0),
                         "Market_Over_Price": to_float(price_row.get(f"Market_{spec.target}_over_price")),
                         "Market_Under_Price": to_float(price_row.get(f"Market_{spec.target}_under_price")),
+                        # Real book identity + decision-time timestamp for
+                        # the two prices above -- carried straight through
+                        # from build_supplement_from_long()'s real,
+                        # single-book price selection. build_candidate()
+                        # requires the book-key columns to be non-empty to
+                        # mark a row price_confirmed; without them (as when
+                        # this universe was built from the averaged wide
+                        # file) every row was silently unconfirmable.
+                        "Market_Over_Book_Key": str(price_row.get(f"Market_{spec.target}_over_book_key", "") or ""),
+                        "Market_Under_Book_Key": str(price_row.get(f"Market_{spec.target}_under_book_key", "") or ""),
+                        "Market_Over_Price_Time": str(price_row.get(f"Market_{spec.target}_over_price_time", "") or ""),
+                        "Market_Under_Price_Time": str(price_row.get(f"Market_{spec.target}_under_price_time", "") or ""),
                         "Edge": edge,
                         "History_Rows": history_rows,
                         "Last_History_Date": pd.Timestamp(last_history_date).strftime("%Y-%m-%d") if pd.notna(last_history_date) else "",
@@ -545,7 +588,7 @@ def main() -> None:
     if args.bet_profile_cache_json is None:
         args.bet_profile_cache_json = default_bet_profile_cache_path(int(args.season))
 
-    price_lookup = build_price_lookup(args.market_history_wide.resolve())
+    price_lookup = build_price_lookup(args.market_history_long.resolve())
     universe = build_historical_universe(
         season=int(args.season),
         data_dir=args.data_dir.resolve(),

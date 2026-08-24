@@ -191,19 +191,26 @@ def valid_american_price(value: object) -> float | None:
     return price
 
 
-def _best_book_price(rows: pd.DataFrame, price_column: str) -> tuple[float | None, str, str]:
-    offers: list[tuple[float, int, str]] = []
+def _best_book_price(rows: pd.DataFrame, price_column: str) -> tuple[float | None, str, str, str]:
+    """Picks the single real, executable price for one side (over/under)
+    from a raw per-book DataFrame -- the same real decision-time price the
+    live board publishes. Also returns the winning offer's own real
+    `fetched_at_utc` (empty string if the column isn't present), so a
+    caller can persist a genuine (book, price, timestamp) tuple instead of
+    just the price."""
+    offers: list[tuple[float, int, str, str]] = []
     preference = {key: index for index, key in enumerate(PREFERRED_BOOKMAKER_KEYS)}
     for _, offer in rows.iterrows():
         book_key = str(offer.get("bookmaker_key", "")).strip().lower()
         price = valid_american_price(offer.get(price_column))
         if book_key not in preference or price is None:
             continue
-        offers.append((price, -preference[book_key], book_key))
+        fetched_at = str(offer.get("fetched_at_utc", "") or "")
+        offers.append((price, -preference[book_key], book_key, fetched_at))
     if not offers:
-        return None, "", ""
-    price, _, book_key = max(offers)
-    return price, book_key, BOOKMAKER_TITLES.get(book_key, book_key)
+        return None, "", "", ""
+    price, _, book_key, fetched_at = max(offers, key=lambda offer: offer[:3])
+    return price, book_key, BOOKMAKER_TITLES.get(book_key, book_key), fetched_at
 
 
 def select_bettable_market_line(market_part: pd.DataFrame, target: str) -> tuple[float, pd.DataFrame]:
@@ -443,6 +450,90 @@ def safe_div(num: float, den: float, default: float = 0.0) -> float:
     return float(num) / den
 
 
+def supplement_columns_for_target(target: str) -> list[str]:
+    return [
+        f"Market_{target}",
+        f"Market_{target}_books",
+        f"Market_{target}_book_keys",
+        f"Market_{target}_common_books",
+        f"Market_{target}_common_book_keys",
+        f"Market_{target}_over_price",
+        f"Market_{target}_under_price",
+        f"Market_{target}_over_price_time",
+        f"Market_{target}_under_price_time",
+        f"Market_{target}_over_book_key",
+        f"Market_{target}_over_book",
+        f"Market_{target}_under_book_key",
+        f"Market_{target}_under_book",
+        f"Market_{target}_line_std",
+        f"Market_Source_{target}",
+    ]
+
+
+def build_supplement_from_long(long_df: pd.DataFrame) -> pd.DataFrame:
+    """Collapses a real per-book, per-timestamp long-format market table
+    (event_id, bookmaker_key, market_key, line, over_price, under_price,
+    fetched_at_utc rows -- e.g. history_player_props_long.csv) into one
+    real, single-book, price-confirmed row per (Market_Date, Player) --
+    the SAME best-of-preferred-books price selection the live daily board
+    uses, including which book it came from and exactly when it was
+    fetched. Shared by load_market_snapshot() (today's live pool) and
+    optimize_prediction_pool.py's historical universe builder, so both
+    always agree on what a real, price-confirmed decision-time price is."""
+    if long_df.empty:
+        return pd.DataFrame()
+
+    long_df = long_df.copy()
+    long_df["Player"] = long_df["player_name_norm"].astype(str)
+    long_df["line_num"] = pd.to_numeric(long_df.get("line"), errors="coerce")
+    long_df["over_price_num"] = pd.to_numeric(long_df.get("over_price"), errors="coerce")
+    long_df["under_price_num"] = pd.to_numeric(long_df.get("under_price"), errors="coerce")
+
+    supplement_rows: list[dict[str, object]] = []
+    for (market_date, player), part in long_df.groupby(["Market_Date", "Player"], dropna=False):
+        row: dict[str, object] = {"Market_Date": market_date, "Player": player}
+        for target, market_key in TARGET_MARKET_KEYS.items():
+            market_part = part.loc[part["market_key"].astype(str) == market_key].copy()
+            if market_part.empty:
+                continue
+            try:
+                consensus_line, consensus_rows = select_bettable_market_line(market_part, target)
+            except ValueError:
+                continue
+            common_rows = consensus_rows.loc[
+                consensus_rows["bookmaker_key"].astype(str).str.lower().isin(PREFERRED_BOOKMAKER_KEYS)
+            ].copy()
+            over_price, over_book_key, over_book, over_price_time = _best_book_price(common_rows, "over_price_num")
+            under_price, under_book_key, under_book, under_price_time = _best_book_price(common_rows, "under_price_num")
+            exact_book_keys = sorted(
+                {
+                    str(value).strip().lower()
+                    for value in consensus_rows["bookmaker_key"].dropna()
+                    if str(value).strip()
+                }
+            )
+            common_book_keys = [key for key in PREFERRED_BOOKMAKER_KEYS if key in set(exact_book_keys)]
+            row[f"Market_{target}"] = consensus_line
+            row[f"Market_{target}_books"] = len(exact_book_keys)
+            row[f"Market_{target}_book_keys"] = "|".join(exact_book_keys)
+            row[f"Market_{target}_common_books"] = len(common_book_keys)
+            row[f"Market_{target}_common_book_keys"] = "|".join(common_book_keys)
+            row[f"Market_{target}_over_price"] = over_price if over_price is not None else float("nan")
+            row[f"Market_{target}_under_price"] = under_price if under_price is not None else float("nan")
+            row[f"Market_{target}_over_price_time"] = over_price_time
+            row[f"Market_{target}_under_price_time"] = under_price_time
+            row[f"Market_{target}_over_book_key"] = over_book_key
+            row[f"Market_{target}_over_book"] = over_book
+            row[f"Market_{target}_under_book_key"] = under_book_key
+            row[f"Market_{target}_under_book"] = under_book
+            line_std = pd.to_numeric(market_part["line_num"], errors="coerce").std(ddof=0)
+            row[f"Market_{target}_line_std"] = float(line_std) if pd.notna(line_std) else 0.0
+            row[f"Market_Source_{target}"] = "real"
+        supplement_rows.append(row)
+
+    return pd.DataFrame(supplement_rows)
+
+
 def load_market_snapshot(market_root: Path, requested_run_date: pd.Timestamp) -> pd.DataFrame:
     wide_candidates = [
         market_root / "latest_player_props_wide.parquet",
@@ -504,52 +595,7 @@ def load_market_snapshot(market_root: Path, requested_run_date: pd.Timestamp) ->
         if fetched.notna().any():
             long_df = long_df.loc[fetched == fetched.max()].copy()
 
-    long_df["Player"] = long_df["player_name_norm"].astype(str)
-    long_df["line_num"] = pd.to_numeric(long_df.get("line"), errors="coerce")
-    long_df["over_price_num"] = pd.to_numeric(long_df.get("over_price"), errors="coerce")
-    long_df["under_price_num"] = pd.to_numeric(long_df.get("under_price"), errors="coerce")
-
-    supplement_rows: list[dict[str, object]] = []
-    for (market_date, player), part in long_df.groupby(["Market_Date", "Player"], dropna=False):
-        row: dict[str, object] = {"Market_Date": market_date, "Player": player}
-        for target, market_key in TARGET_MARKET_KEYS.items():
-            market_part = part.loc[part["market_key"].astype(str) == market_key].copy()
-            if market_part.empty:
-                continue
-            try:
-                consensus_line, consensus_rows = select_bettable_market_line(market_part, target)
-            except ValueError:
-                continue
-            common_rows = consensus_rows.loc[
-                consensus_rows["bookmaker_key"].astype(str).str.lower().isin(PREFERRED_BOOKMAKER_KEYS)
-            ].copy()
-            over_price, over_book_key, over_book = _best_book_price(common_rows, "over_price_num")
-            under_price, under_book_key, under_book = _best_book_price(common_rows, "under_price_num")
-            exact_book_keys = sorted(
-                {
-                    str(value).strip().lower()
-                    for value in consensus_rows["bookmaker_key"].dropna()
-                    if str(value).strip()
-                }
-            )
-            common_book_keys = [key for key in PREFERRED_BOOKMAKER_KEYS if key in set(exact_book_keys)]
-            row[f"Market_{target}"] = consensus_line
-            row[f"Market_{target}_books"] = len(exact_book_keys)
-            row[f"Market_{target}_book_keys"] = "|".join(exact_book_keys)
-            row[f"Market_{target}_common_books"] = len(common_book_keys)
-            row[f"Market_{target}_common_book_keys"] = "|".join(common_book_keys)
-            row[f"Market_{target}_over_price"] = over_price if over_price is not None else float("nan")
-            row[f"Market_{target}_under_price"] = under_price if under_price is not None else float("nan")
-            row[f"Market_{target}_over_book_key"] = over_book_key
-            row[f"Market_{target}_over_book"] = over_book
-            row[f"Market_{target}_under_book_key"] = under_book_key
-            row[f"Market_{target}_under_book"] = under_book
-            line_std = pd.to_numeric(market_part["line_num"], errors="coerce").std(ddof=0)
-            row[f"Market_{target}_line_std"] = float(line_std) if pd.notna(line_std) else 0.0
-            row[f"Market_Source_{target}"] = "real"
-        supplement_rows.append(row)
-
-    supplement_df = pd.DataFrame(supplement_rows)
+    supplement_df = build_supplement_from_long(long_df)
     if supplement_df.empty:
         return wide_df
 
@@ -558,21 +604,7 @@ def load_market_snapshot(market_root: Path, requested_run_date: pd.Timestamp) ->
 
     merged = wide_df.merge(supplement_df, on=["Market_Date", "Player"], how="outer", suffixes=("", "__supp"))
     for target in TARGET_MARKET_KEYS:
-        for column in [
-            f"Market_{target}",
-            f"Market_{target}_books",
-            f"Market_{target}_book_keys",
-            f"Market_{target}_common_books",
-            f"Market_{target}_common_book_keys",
-            f"Market_{target}_over_price",
-            f"Market_{target}_under_price",
-            f"Market_{target}_over_book_key",
-            f"Market_{target}_over_book",
-            f"Market_{target}_under_book_key",
-            f"Market_{target}_under_book",
-            f"Market_{target}_line_std",
-            f"Market_Source_{target}",
-        ]:
+        for column in supplement_columns_for_target(target):
             supp_column = f"{column}__supp"
             if supp_column not in merged.columns:
                 continue
