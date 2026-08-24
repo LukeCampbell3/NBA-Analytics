@@ -1,0 +1,1561 @@
+{
+  "sport": "MLB",
+  "board_title": "MLB Prediction Bounties",
+  "run_date": "2026-08-22",
+  "through_date": "2026-08-21",
+  "model_run_id": "mlb_high_precision_selector_v2",
+  "policy_profile": "premium_evidence_gated_v8",
+  "publication_state": "withheld_current_pool",
+  "publication_status": "withheld",
+  "publication_message": "no plays passed publication filters",
+  "data_quality": {
+    "status": "withheld",
+    "lag_days": 1,
+    "review_threshold_days": 14,
+    "withhold_threshold_days": 60,
+    "reasons": [
+      "no plays passed publication filters"
+    ]
+  },
+  "generated_at_utc": "2026-08-22T17:41:36.220076+00:00",
+  "summary": {
+    "play_count": 0,
+    "source_play_count": 0,
+    "closed_game_cards_suppressed": 0,
+    "duplicate_cards_suppressed": 0,
+    "supported_rows": 1530,
+    "rows_after_filters": 0,
+    "rejected_rows": 1530,
+    "avg_expected_hit_rate": 0.0,
+    "avg_graded_hit_rate": 0.0,
+    "avg_edge": 0.0,
+    "avg_abs_edge": 0.0,
+    "avg_value_score": 0.0,
+    "avg_precision_score": 0.0,
+    "parlay_tagged_plays": 0,
+    "parlay_pairs": 0
+  },
+  "selection": {
+    "policy_version": "premium_evidence_gated_v8",
+    "historical_calibration_evidence_scope": "real_price_confirmed_markets_only_v1",
+    "matchup_network_enabled": true,
+    "matchup_network_version": "batter_pitcher_profile_network_v2",
+    "top_n": 3,
+    "daily_pick_soft_cap": 3,
+    "post_cap_min_selection_score": 0.8,
+    "min_abs_edge": 0.35,
+    "min_history_rows": 35,
+    "min_prediction": 0.1,
+    "min_hit_probability": 0.825,
+    "min_graded_hit_rate": 0.825,
+    "optimized_over_profile": "r_tb_over_moderate_edge_v1",
+    "optimized_over_profile_status": "probation",
+    "pitcher_k_over_profile": "pitcher_k_over_workload_v1",
+    "pitcher_k_over_profile_status": "probation",
+    "history_before_date": "",
+    "optimized_over_targets": [],
+    "over_min_abs_edge": null,
+    "over_max_abs_edge": null,
+    "over_min_model_hit_probability": null,
+    "over_max_model_hit_probability": null,
+    "over_min_expected_value": null,
+    "over_min_history_rows": null,
+    "pitcher_k_over_profile_enabled": false,
+    "pitcher_k_min_starter_history": 15,
+    "pitcher_k_min_projected_ip": 5.25,
+    "pitcher_k_min_projected_pitches": 75.0,
+    "pitcher_k_max_days_since_history": 14,
+    "pitcher_k_min_abs_edge": 0.15,
+    "pitcher_k_max_abs_edge": 1.0,
+    "pitcher_k_min_model_hit_probability": 0.5,
+    "pitcher_k_max_model_hit_probability": 0.65,
+    "pitcher_k_min_expected_value": 0.0,
+    "pitcher_k_min_american_price": -130.0,
+    "pitcher_k_max_american_price": 130.0,
+    "max_pitcher_k_picks": 1,
+    "core_min_american_price": -180.0,
+    "core_max_american_price": 125.0,
+    "over_max_american_price": null,
+    "min_over_picks": 0,
+    "max_over_picks": 3,
+    "max_under_picks": 0,
+    "max_push_probability": 0.1,
+    "max_days_since_history": 4,
+    "max_per_player": 1,
+    "max_per_game": 2,
+    "max_per_team": 2,
+    "max_per_market_bucket": 2,
+    "optimized_over_max_per_market_bucket": null,
+    "min_market_books": 5,
+    "min_common_market_books": 2,
+    "max_market_line_std": 0.0,
+    "min_expected_value": 0.0,
+    "allow_unpriced_side": false,
+    "allow_baseline": false,
+    "require_real_market_source": true,
+    "targets": [
+      "ER",
+      "H",
+      "HR",
+      "K",
+      "R",
+      "RBI",
+      "TB"
+    ],
+    "history_season": 2026,
+    "min_history_bucket_rows": 50,
+    "max_history_prior_weight": 0.35,
+    "history_prior_strength": 400.0,
+    "historical_calibration_enabled": true,
+    "min_bet_profile_rows": 12,
+    "max_bet_profile_prior_weight": 0.25,
+    "bet_profile_prior_strength": 80.0,
+    "min_market_availability_rows": 12,
+    "historical_bet_profiles_enabled": true,
+    "live_confidence_calibration_enabled": true,
+    "pick_survival_shadow_enabled": true,
+    "allow_synthetic_unders": false,
+    "prefer_confident_side": false,
+    "min_historical_bet_profile_support": 0,
+    "min_historical_bet_profile_win_rate": 0.0,
+    "min_historical_market_availability_support": 0,
+    "min_historical_market_availability_rate": 0.0
+  },
+  "filter_rejections": {
+    "edge_too_small": 1034,
+    "market_books_too_low": 300,
+    "history_too_short": 90,
+    "synthetic_market_source": 51,
+    "prediction_too_low": 55
+  },
+  "by_target": {},
+  "by_direction": {},
+  "parlay_summary": {
+    "selection_mode": "strict",
+    "candidate_pair_count": 0,
+    "selected_pair_count": 0,
+    "candidate_parlay_count": 0,
+    "selected_parlay_count": 0,
+    "tagged_play_count": 0,
+    "avg_projected_pair_hit_rate": null,
+    "best_projected_pair_hit_rate": null,
+    "avg_projected_parlay_hit_rate": null,
+    "best_projected_parlay_hit_rate": null,
+    "avg_expected_return_per_unit": null,
+    "best_expected_return_per_unit": null,
+    "same_sportsbook_required": true,
+    "min_leg_probability": 0.52,
+    "min_pair_probability": 0.38,
+    "min_legs_per_parlay": 2,
+    "max_legs_per_parlay": 2,
+    "fallback_min_leg_probability": 0.5,
+    "fallback_min_pair_probability": 0.34,
+    "fallback_min_legs_per_parlay": 2,
+    "fallback_max_legs_per_parlay": 2
+  },
+  "parlay_pairs": [],
+  "parlay_validation": {
+    "available": false,
+    "reason": "parlay validation rebuild disabled for fast web export"
+  },
+  "daily_parlay": {
+    "schema_version": 4,
+    "policy_version": "mlb_fanduel_public_betslip_parlay_v9",
+    "generated_at_utc": "2026-08-22T17:40:23.884182+00:00",
+    "run_date": "2026-08-22",
+    "status": "review",
+    "objective": "exact_set_search_with_role_survival_consensus_and_shadow_positive_ev_alternates",
+    "direction_policy": "OVER_ONLY",
+    "betslip_policy": {
+      "sportsbook_key": "fanduel",
+      "sportsbook": "FanDuel",
+      "status": "ready",
+      "construction": "direct_fanduel_public_market_ids_only",
+      "linked_ticket_count": 1
+    },
+    "allowed_leg_counts": [
+      2,
+      3,
+      4
+    ],
+    "gates": {
+      "min_leg_probability": 0.62,
+      "min_ticket_probability": 0.4,
+      "ticket_probability_floors": {
+        "2": 0.4,
+        "3": 0.25,
+        "4": 0.18
+      },
+      "ticket_max_decimal_prices": {
+        "2": 6.0,
+        "3": 10.0,
+        "4": 18.0
+      },
+      "min_combined_decimal_price": 1.8,
+      "min_expected_return_per_unit": 0.0,
+      "min_market_books": 1,
+      "min_common_market_books": 1,
+      "single_book_scope": "exact_fanduel_quote_with_provider_market_and_selection_ids",
+      "same_sportsbook_required": true,
+      "linked_sportsbook": "fanduel",
+      "direct_fanduel_public_selection_link_required_for_betslip": true,
+      "distinct_games_required": true,
+      "hit_survival": {
+        "model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+        "status": "development_shadow",
+        "evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+        "minimum_probability": 0.58,
+        "minimum_consensus_probability": 0.62,
+        "maximum_probability_disagreement": 0.16,
+        "probability_components": [
+          "role_survival_model",
+          "no_vig_market_probability",
+          "existing_calibrated_probability"
+        ],
+        "roi_claim": false
+      },
+      "latent_parlay": {
+        "model_version": "mlb_latent_parlay_set_attention_v3",
+        "status": "prospective_shadow",
+        "evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+        "ranking_effect": "none_on_authorized_ladder",
+        "shadow_ranking_policy": {
+          "2": "bounded_attention_joint_probability",
+          "3": "market_residual_uncertainty_penalized_product",
+          "4": "market_residual_uncertainty_penalized_product"
+        },
+        "maximum_legs": 4,
+        "in_support_required": true,
+        "roi_claim": false
+      },
+      "profit_boost": {
+        "status": "shadow_only",
+        "min_leg_probability": 0.18,
+        "min_ticket_probability": 0.1,
+        "min_combined_decimal_price": 4.0,
+        "max_combined_decimal_price": 15.0,
+        "min_expected_return_per_unit": 0.05,
+        "exact_sportsbook_alternate_price_required": true
+      }
+    },
+    "pool_candidate_count": 1530,
+    "eligible_anchor_count": 16,
+    "considered_anchor_count": 5,
+    "alternate_line_candidate_count": 10,
+    "filter_rejections": {
+      "history_too_short": 26,
+      "history_too_stale": 2,
+      "hit_survival_consensus_too_low": 25,
+      "hit_survival_probability_too_low": 16,
+      "leg_probability_too_low": 227,
+      "leg_value_too_low": 39,
+      "not_over": 882,
+      "official_game_closed": 2,
+      "price_outside_playable_range": 205,
+      "unconfirmed_market_price": 65,
+      "unsupported_anchor_target": 25
+    },
+    "selected_ticket": {
+      "leg_indices": [
+        2,
+        6
+      ],
+      "leg_keys": [
+        "2026-08-22|823422|Kyle Schwarber|H|OVER|ALT_1.5",
+        "2026-08-22|824073|Jac Caglianone|H|OVER|ALT_1.5"
+      ],
+      "leg_names": [
+        "Kyle Schwarber",
+        "Jac Caglianone"
+      ],
+      "leg_targets": [
+        "H",
+        "H"
+      ],
+      "leg_directions": [
+        "OVER",
+        "OVER"
+      ],
+      "leg_count": 2,
+      "projected_probability": 0.11985739876995015,
+      "independent_probability": 0.11985739876995015,
+      "pairwise_adjustment_factor": 1.001977614,
+      "parlay_score": 0.1473390432849699,
+      "combined_decimal_price": 14.080000000000002,
+      "combined_american_price": 1308.0000000000002,
+      "expected_return_per_unit": 0.6875921746808984,
+      "same_sportsbook_confirmed": true,
+      "sportsbook_key": "fanduel",
+      "sportsbook": "FanDuel",
+      "avg_leg_quality": 0.7658063974433924,
+      "same_player": false,
+      "same_game": false,
+      "same_team": false,
+      "same_target": true,
+      "same_market_bucket": true,
+      "mixed_direction": false,
+      "legs": [
+        {
+          "play_key": "2026-08-22|823422|Kyle Schwarber|H|OVER|ALT_1.5",
+          "player": "Kyle Schwarber",
+          "player_display_name": "Kyle Schwarber",
+          "player_id": "kyle_schwarber",
+          "player_type": "hitter",
+          "team": "PHI",
+          "opponent": "STL",
+          "game_id": "823422",
+          "market_date": "2026-08-22",
+          "commence_time_utc": "2026-08-22T22:05:00Z",
+          "game_status_code": "P",
+          "target": "H",
+          "direction": "OVER",
+          "prediction": 1.321648106945027,
+          "market_line": 1.5,
+          "market_source": "real",
+          "market_bucket": "H|OVER|1.5|ALT",
+          "historical_bucket_key": "H|OVER|1.5|ALT",
+          "estimated_graded_hit_rate": 0.33871971772177534,
+          "model_hit_probability": 0.38082713636784193,
+          "market_implied_probability": 0.6296296296296297,
+          "final_pool_quality_score": 0.7680853193214793,
+          "expected_value_per_unit": 0.49036675797581153,
+          "selected_side_price": 340.0,
+          "selected_sportsbook_key": "fanduel",
+          "selected_sportsbook": "FanDuel",
+          "price_confirmed": true,
+          "market_books": 1,
+          "market_common_books": 1,
+          "market_book_keys": [
+            "fanduel"
+          ],
+          "market_common_book_keys": [
+            "fanduel"
+          ],
+          "history_rows": 126,
+          "days_since_history": 1,
+          "selection_score": 0.7680853193214793,
+          "parlay_precision_eligible": true,
+          "line_variant": "alternate",
+          "hit_survival_probability": 0.6533405123242445,
+          "hit_survival_raw_probability": 0.7023235519463377,
+          "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+          "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+          "hit_survival_batting_order": 1.0,
+          "hit_survival_batting_order_source": "prior_start_proxy",
+          "latent_probability_disagreement": 0.09506408280153189,
+          "parlay_leg_probability": 0.6207931185620531,
+          "latent_leg_probability": 0.5264262266525797,
+          "latent_leg_raw_probability": 0.5664344293755335,
+          "latent_leg_ensemble_std": 0.023107815448837166,
+          "latent_support_fraction": 0.9090909090909091,
+          "latent_in_support": true,
+          "latent_model_version": "mlb_latent_parlay_set_attention_v3",
+          "latent_evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+          "latent_numeric_features": {
+            "baseline": 0.6,
+            "last_hits": 0.0,
+            "batting_order": 1.0,
+            "log_history_rows": 4.844187086458591,
+            "is_home": 1.0,
+            "batter_strength": 0.0,
+            "pitcher_vulnerability": 0.0,
+            "pitcher_uncertainty": 1.0,
+            "batter_vs_starter_games": 0.0,
+            "batter_vs_starter_lift": 0.0,
+            "archetype_neighbor_games": 0.0,
+            "archetype_neighbor_support": 0.0,
+            "archetype_neighbor_lift": 0.0,
+            "matchup_network_score": 0.0,
+            "matchup_network_confidence": 0.0,
+            "matchup_network_adjustment": 0.0
+          },
+          "latent_categorical_features": {
+            "player": "kyle_schwarber",
+            "pitcher": "0",
+            "team": "PHI",
+            "opponent": "138"
+          },
+          "base_market_line": 0.5,
+          "line_increment": 1.0,
+          "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182199789&selectionId=10885583",
+          "alternate_line_price_source": "fanduel_public",
+          "provider_source_market_id": "734.182199789:10885583",
+          "alternate_line_observed_at_utc": "2026-08-22T17:33:59.352836+00:00",
+          "alternate_line_books": 1,
+          "alternate_line_book_keys": [
+            "fanduel"
+          ],
+          "lineup_status": "unconfirmed",
+          "batting_order": "",
+          "official_game_status": "Scheduled",
+          "risk_flags": [
+            "lineup_unconfirmed"
+          ]
+        },
+        {
+          "play_key": "2026-08-22|824073|Jac Caglianone|H|OVER|ALT_1.5",
+          "player": "Jac Caglianone",
+          "player_display_name": "Jac Caglianone",
+          "player_id": "jac_caglianone",
+          "player_type": "hitter",
+          "team": "KC",
+          "opponent": "DET",
+          "game_id": "824073",
+          "market_date": "2026-08-22",
+          "commence_time_utc": "2026-08-22T23:15:00Z",
+          "game_status_code": "P",
+          "target": "H",
+          "direction": "OVER",
+          "prediction": 1.3729644751340913,
+          "market_line": 1.5,
+          "market_source": "real",
+          "market_bucket": "H|OVER|1.5|ALT",
+          "historical_bucket_key": "H|OVER|1.5|ALT",
+          "estimated_graded_hit_rate": 0.35385421190153776,
+          "model_hit_probability": 0.3987981044940767,
+          "market_implied_probability": 0.7058823529411765,
+          "final_pool_quality_score": 0.7635274755653056,
+          "expected_value_per_unit": 0.1323334780849208,
+          "selected_side_price": 220.0,
+          "selected_sportsbook_key": "fanduel",
+          "selected_sportsbook": "FanDuel",
+          "price_confirmed": true,
+          "market_books": 1,
+          "market_common_books": 1,
+          "market_book_keys": [
+            "fanduel"
+          ],
+          "market_common_book_keys": [
+            "fanduel"
+          ],
+          "history_rows": 127,
+          "days_since_history": 1,
+          "selection_score": 0.7635274755653056,
+          "parlay_precision_eligible": true,
+          "line_variant": "alternate",
+          "hit_survival_probability": 0.6234695706441664,
+          "hit_survival_raw_probability": 0.667519035137704,
+          "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+          "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+          "hit_survival_batting_order": 3.0,
+          "hit_survival_batting_order_source": "prior_start_proxy",
+          "latent_probability_disagreement": 0.11264101450979191,
+          "parlay_leg_probability": 0.6310499429971408,
+          "latent_leg_probability": 0.522985610027496,
+          "latent_leg_raw_probability": 0.5626288564755275,
+          "latent_leg_ensemble_std": 0.049201786931702365,
+          "latent_support_fraction": 1.0,
+          "latent_in_support": true,
+          "latent_model_version": "mlb_latent_parlay_set_attention_v3",
+          "latent_evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+          "latent_numeric_features": {
+            "baseline": 1.4,
+            "last_hits": 0.0,
+            "batting_order": 3.0,
+            "log_history_rows": 4.852030263919617,
+            "is_home": 1.0,
+            "batter_strength": 0.6262094667943808,
+            "pitcher_vulnerability": -0.45695232082732085,
+            "pitcher_uncertainty": 0.7598145089396566,
+            "batter_vs_starter_games": 0.0,
+            "batter_vs_starter_lift": 0.0,
+            "archetype_neighbor_games": 53.0,
+            "archetype_neighbor_support": 25.057113961796222,
+            "archetype_neighbor_lift": -0.03560131848872216,
+            "matchup_network_score": -0.06872856647384394,
+            "matchup_network_confidence": 0.564230680663723,
+            "matchup_network_adjustment": -0.0068728566473843945
+          },
+          "latent_categorical_features": {
+            "player": "jac_caglianone",
+            "pitcher": "623454",
+            "team": "KC",
+            "opponent": "116"
+          },
+          "base_market_line": 0.5,
+          "line_increment": 1.0,
+          "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182173090&selectionId=56949278",
+          "alternate_line_price_source": "fanduel_public",
+          "provider_source_market_id": "734.182173090:56949278",
+          "alternate_line_observed_at_utc": "2026-08-22T17:33:59.352836+00:00",
+          "alternate_line_books": 1,
+          "alternate_line_book_keys": [
+            "fanduel"
+          ],
+          "lineup_status": "unconfirmed",
+          "batting_order": "",
+          "official_game_status": "Scheduled",
+          "risk_flags": [
+            "lineup_unconfirmed"
+          ]
+        }
+      ],
+      "ticket_tier": "profit_boost",
+      "probability_floor": 0.1,
+      "maximum_decimal_price": 15.0,
+      "risk_adjusted_profit_score": 0.23804734908150116,
+      "evidence_status": "SHADOW_ALT_LINE_PRICE_CAPTURE",
+      "ticket_id": "profit_boost_2_leg",
+      "betslip": {
+        "sportsbook_key": "fanduel",
+        "sportsbook": "FanDuel",
+        "status": "ready",
+        "leg_count": 2,
+        "url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.182199789&selectionId%5B0%5D=10885583&marketId%5B1%5D=734.182173090&selectionId%5B1%5D=56949278",
+        "source": "direct_fanduel_public_market_ids"
+      },
+      "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.182199789&selectionId%5B0%5D=10885583&marketId%5B1%5D=734.182173090&selectionId%5B1%5D=56949278",
+      "status": "review",
+      "action_status": "review",
+      "risk_flags": [
+        "lineup_unconfirmed"
+      ],
+      "candidate_authorized": false,
+      "staking_enabled": false,
+      "authorization_status": "SHADOW_ONLY"
+    },
+    "profit_boost_ticket": {
+      "leg_indices": [
+        2,
+        6
+      ],
+      "leg_keys": [
+        "2026-08-22|823422|Kyle Schwarber|H|OVER|ALT_1.5",
+        "2026-08-22|824073|Jac Caglianone|H|OVER|ALT_1.5"
+      ],
+      "leg_names": [
+        "Kyle Schwarber",
+        "Jac Caglianone"
+      ],
+      "leg_targets": [
+        "H",
+        "H"
+      ],
+      "leg_directions": [
+        "OVER",
+        "OVER"
+      ],
+      "leg_count": 2,
+      "projected_probability": 0.11985739876995015,
+      "independent_probability": 0.11985739876995015,
+      "pairwise_adjustment_factor": 1.001977614,
+      "parlay_score": 0.1473390432849699,
+      "combined_decimal_price": 14.080000000000002,
+      "combined_american_price": 1308.0000000000002,
+      "expected_return_per_unit": 0.6875921746808984,
+      "same_sportsbook_confirmed": true,
+      "sportsbook_key": "fanduel",
+      "sportsbook": "FanDuel",
+      "avg_leg_quality": 0.7658063974433924,
+      "same_player": false,
+      "same_game": false,
+      "same_team": false,
+      "same_target": true,
+      "same_market_bucket": true,
+      "mixed_direction": false,
+      "legs": [
+        {
+          "play_key": "2026-08-22|823422|Kyle Schwarber|H|OVER|ALT_1.5",
+          "player": "Kyle Schwarber",
+          "player_display_name": "Kyle Schwarber",
+          "player_id": "kyle_schwarber",
+          "player_type": "hitter",
+          "team": "PHI",
+          "opponent": "STL",
+          "game_id": "823422",
+          "market_date": "2026-08-22",
+          "commence_time_utc": "2026-08-22T22:05:00Z",
+          "game_status_code": "P",
+          "target": "H",
+          "direction": "OVER",
+          "prediction": 1.321648106945027,
+          "market_line": 1.5,
+          "market_source": "real",
+          "market_bucket": "H|OVER|1.5|ALT",
+          "historical_bucket_key": "H|OVER|1.5|ALT",
+          "estimated_graded_hit_rate": 0.33871971772177534,
+          "model_hit_probability": 0.38082713636784193,
+          "market_implied_probability": 0.6296296296296297,
+          "final_pool_quality_score": 0.7680853193214793,
+          "expected_value_per_unit": 0.49036675797581153,
+          "selected_side_price": 340.0,
+          "selected_sportsbook_key": "fanduel",
+          "selected_sportsbook": "FanDuel",
+          "price_confirmed": true,
+          "market_books": 1,
+          "market_common_books": 1,
+          "market_book_keys": [
+            "fanduel"
+          ],
+          "market_common_book_keys": [
+            "fanduel"
+          ],
+          "history_rows": 126,
+          "days_since_history": 1,
+          "selection_score": 0.7680853193214793,
+          "parlay_precision_eligible": true,
+          "line_variant": "alternate",
+          "hit_survival_probability": 0.6533405123242445,
+          "hit_survival_raw_probability": 0.7023235519463377,
+          "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+          "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+          "hit_survival_batting_order": 1.0,
+          "hit_survival_batting_order_source": "prior_start_proxy",
+          "latent_probability_disagreement": 0.09506408280153189,
+          "parlay_leg_probability": 0.6207931185620531,
+          "latent_leg_probability": 0.5264262266525797,
+          "latent_leg_raw_probability": 0.5664344293755335,
+          "latent_leg_ensemble_std": 0.023107815448837166,
+          "latent_support_fraction": 0.9090909090909091,
+          "latent_in_support": true,
+          "latent_model_version": "mlb_latent_parlay_set_attention_v3",
+          "latent_evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+          "latent_numeric_features": {
+            "baseline": 0.6,
+            "last_hits": 0.0,
+            "batting_order": 1.0,
+            "log_history_rows": 4.844187086458591,
+            "is_home": 1.0,
+            "batter_strength": 0.0,
+            "pitcher_vulnerability": 0.0,
+            "pitcher_uncertainty": 1.0,
+            "batter_vs_starter_games": 0.0,
+            "batter_vs_starter_lift": 0.0,
+            "archetype_neighbor_games": 0.0,
+            "archetype_neighbor_support": 0.0,
+            "archetype_neighbor_lift": 0.0,
+            "matchup_network_score": 0.0,
+            "matchup_network_confidence": 0.0,
+            "matchup_network_adjustment": 0.0
+          },
+          "latent_categorical_features": {
+            "player": "kyle_schwarber",
+            "pitcher": "0",
+            "team": "PHI",
+            "opponent": "138"
+          },
+          "base_market_line": 0.5,
+          "line_increment": 1.0,
+          "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182199789&selectionId=10885583",
+          "alternate_line_price_source": "fanduel_public",
+          "provider_source_market_id": "734.182199789:10885583",
+          "alternate_line_observed_at_utc": "2026-08-22T17:33:59.352836+00:00",
+          "alternate_line_books": 1,
+          "alternate_line_book_keys": [
+            "fanduel"
+          ],
+          "lineup_status": "unconfirmed",
+          "batting_order": "",
+          "official_game_status": "Scheduled",
+          "risk_flags": [
+            "lineup_unconfirmed"
+          ]
+        },
+        {
+          "play_key": "2026-08-22|824073|Jac Caglianone|H|OVER|ALT_1.5",
+          "player": "Jac Caglianone",
+          "player_display_name": "Jac Caglianone",
+          "player_id": "jac_caglianone",
+          "player_type": "hitter",
+          "team": "KC",
+          "opponent": "DET",
+          "game_id": "824073",
+          "market_date": "2026-08-22",
+          "commence_time_utc": "2026-08-22T23:15:00Z",
+          "game_status_code": "P",
+          "target": "H",
+          "direction": "OVER",
+          "prediction": 1.3729644751340913,
+          "market_line": 1.5,
+          "market_source": "real",
+          "market_bucket": "H|OVER|1.5|ALT",
+          "historical_bucket_key": "H|OVER|1.5|ALT",
+          "estimated_graded_hit_rate": 0.35385421190153776,
+          "model_hit_probability": 0.3987981044940767,
+          "market_implied_probability": 0.7058823529411765,
+          "final_pool_quality_score": 0.7635274755653056,
+          "expected_value_per_unit": 0.1323334780849208,
+          "selected_side_price": 220.0,
+          "selected_sportsbook_key": "fanduel",
+          "selected_sportsbook": "FanDuel",
+          "price_confirmed": true,
+          "market_books": 1,
+          "market_common_books": 1,
+          "market_book_keys": [
+            "fanduel"
+          ],
+          "market_common_book_keys": [
+            "fanduel"
+          ],
+          "history_rows": 127,
+          "days_since_history": 1,
+          "selection_score": 0.7635274755653056,
+          "parlay_precision_eligible": true,
+          "line_variant": "alternate",
+          "hit_survival_probability": 0.6234695706441664,
+          "hit_survival_raw_probability": 0.667519035137704,
+          "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+          "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+          "hit_survival_batting_order": 3.0,
+          "hit_survival_batting_order_source": "prior_start_proxy",
+          "latent_probability_disagreement": 0.11264101450979191,
+          "parlay_leg_probability": 0.6310499429971408,
+          "latent_leg_probability": 0.522985610027496,
+          "latent_leg_raw_probability": 0.5626288564755275,
+          "latent_leg_ensemble_std": 0.049201786931702365,
+          "latent_support_fraction": 1.0,
+          "latent_in_support": true,
+          "latent_model_version": "mlb_latent_parlay_set_attention_v3",
+          "latent_evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+          "latent_numeric_features": {
+            "baseline": 1.4,
+            "last_hits": 0.0,
+            "batting_order": 3.0,
+            "log_history_rows": 4.852030263919617,
+            "is_home": 1.0,
+            "batter_strength": 0.6262094667943808,
+            "pitcher_vulnerability": -0.45695232082732085,
+            "pitcher_uncertainty": 0.7598145089396566,
+            "batter_vs_starter_games": 0.0,
+            "batter_vs_starter_lift": 0.0,
+            "archetype_neighbor_games": 53.0,
+            "archetype_neighbor_support": 25.057113961796222,
+            "archetype_neighbor_lift": -0.03560131848872216,
+            "matchup_network_score": -0.06872856647384394,
+            "matchup_network_confidence": 0.564230680663723,
+            "matchup_network_adjustment": -0.0068728566473843945
+          },
+          "latent_categorical_features": {
+            "player": "jac_caglianone",
+            "pitcher": "623454",
+            "team": "KC",
+            "opponent": "116"
+          },
+          "base_market_line": 0.5,
+          "line_increment": 1.0,
+          "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182173090&selectionId=56949278",
+          "alternate_line_price_source": "fanduel_public",
+          "provider_source_market_id": "734.182173090:56949278",
+          "alternate_line_observed_at_utc": "2026-08-22T17:33:59.352836+00:00",
+          "alternate_line_books": 1,
+          "alternate_line_book_keys": [
+            "fanduel"
+          ],
+          "lineup_status": "unconfirmed",
+          "batting_order": "",
+          "official_game_status": "Scheduled",
+          "risk_flags": [
+            "lineup_unconfirmed"
+          ]
+        }
+      ],
+      "ticket_tier": "profit_boost",
+      "probability_floor": 0.1,
+      "maximum_decimal_price": 15.0,
+      "risk_adjusted_profit_score": 0.23804734908150116,
+      "evidence_status": "SHADOW_ALT_LINE_PRICE_CAPTURE",
+      "ticket_id": "profit_boost_2_leg",
+      "betslip": {
+        "sportsbook_key": "fanduel",
+        "sportsbook": "FanDuel",
+        "status": "ready",
+        "leg_count": 2,
+        "url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.182199789&selectionId%5B0%5D=10885583&marketId%5B1%5D=734.182173090&selectionId%5B1%5D=56949278",
+        "source": "direct_fanduel_public_market_ids"
+      },
+      "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.182199789&selectionId%5B0%5D=10885583&marketId%5B1%5D=734.182173090&selectionId%5B1%5D=56949278",
+      "status": "review",
+      "action_status": "review",
+      "risk_flags": [
+        "lineup_unconfirmed"
+      ],
+      "candidate_authorized": false,
+      "staking_enabled": false,
+      "authorization_status": "SHADOW_ONLY"
+    },
+    "ticket_ladder": [
+      {
+        "leg_indices": [
+          2,
+          6
+        ],
+        "leg_keys": [
+          "2026-08-22|823422|Kyle Schwarber|H|OVER|ALT_1.5",
+          "2026-08-22|824073|Jac Caglianone|H|OVER|ALT_1.5"
+        ],
+        "leg_names": [
+          "Kyle Schwarber",
+          "Jac Caglianone"
+        ],
+        "leg_targets": [
+          "H",
+          "H"
+        ],
+        "leg_directions": [
+          "OVER",
+          "OVER"
+        ],
+        "leg_count": 2,
+        "projected_probability": 0.11985739876995015,
+        "independent_probability": 0.11985739876995015,
+        "pairwise_adjustment_factor": 1.001977614,
+        "parlay_score": 0.1473390432849699,
+        "combined_decimal_price": 14.080000000000002,
+        "combined_american_price": 1308.0000000000002,
+        "expected_return_per_unit": 0.6875921746808984,
+        "same_sportsbook_confirmed": true,
+        "sportsbook_key": "fanduel",
+        "sportsbook": "FanDuel",
+        "avg_leg_quality": 0.7658063974433924,
+        "same_player": false,
+        "same_game": false,
+        "same_team": false,
+        "same_target": true,
+        "same_market_bucket": true,
+        "mixed_direction": false,
+        "legs": [
+          {
+            "play_key": "2026-08-22|823422|Kyle Schwarber|H|OVER|ALT_1.5",
+            "player": "Kyle Schwarber",
+            "player_display_name": "Kyle Schwarber",
+            "player_id": "kyle_schwarber",
+            "player_type": "hitter",
+            "team": "PHI",
+            "opponent": "STL",
+            "game_id": "823422",
+            "market_date": "2026-08-22",
+            "commence_time_utc": "2026-08-22T22:05:00Z",
+            "game_status_code": "P",
+            "target": "H",
+            "direction": "OVER",
+            "prediction": 1.321648106945027,
+            "market_line": 1.5,
+            "market_source": "real",
+            "market_bucket": "H|OVER|1.5|ALT",
+            "historical_bucket_key": "H|OVER|1.5|ALT",
+            "estimated_graded_hit_rate": 0.33871971772177534,
+            "model_hit_probability": 0.38082713636784193,
+            "market_implied_probability": 0.6296296296296297,
+            "final_pool_quality_score": 0.7680853193214793,
+            "expected_value_per_unit": 0.49036675797581153,
+            "selected_side_price": 340.0,
+            "selected_sportsbook_key": "fanduel",
+            "selected_sportsbook": "FanDuel",
+            "price_confirmed": true,
+            "market_books": 1,
+            "market_common_books": 1,
+            "market_book_keys": [
+              "fanduel"
+            ],
+            "market_common_book_keys": [
+              "fanduel"
+            ],
+            "history_rows": 126,
+            "days_since_history": 1,
+            "selection_score": 0.7680853193214793,
+            "parlay_precision_eligible": true,
+            "line_variant": "alternate",
+            "hit_survival_probability": 0.6533405123242445,
+            "hit_survival_raw_probability": 0.7023235519463377,
+            "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+            "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+            "hit_survival_batting_order": 1.0,
+            "hit_survival_batting_order_source": "prior_start_proxy",
+            "latent_probability_disagreement": 0.09506408280153189,
+            "parlay_leg_probability": 0.6207931185620531,
+            "latent_leg_probability": 0.5264262266525797,
+            "latent_leg_raw_probability": 0.5664344293755335,
+            "latent_leg_ensemble_std": 0.023107815448837166,
+            "latent_support_fraction": 0.9090909090909091,
+            "latent_in_support": true,
+            "latent_model_version": "mlb_latent_parlay_set_attention_v3",
+            "latent_evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+            "latent_numeric_features": {
+              "baseline": 0.6,
+              "last_hits": 0.0,
+              "batting_order": 1.0,
+              "log_history_rows": 4.844187086458591,
+              "is_home": 1.0,
+              "batter_strength": 0.0,
+              "pitcher_vulnerability": 0.0,
+              "pitcher_uncertainty": 1.0,
+              "batter_vs_starter_games": 0.0,
+              "batter_vs_starter_lift": 0.0,
+              "archetype_neighbor_games": 0.0,
+              "archetype_neighbor_support": 0.0,
+              "archetype_neighbor_lift": 0.0,
+              "matchup_network_score": 0.0,
+              "matchup_network_confidence": 0.0,
+              "matchup_network_adjustment": 0.0
+            },
+            "latent_categorical_features": {
+              "player": "kyle_schwarber",
+              "pitcher": "0",
+              "team": "PHI",
+              "opponent": "138"
+            },
+            "base_market_line": 0.5,
+            "line_increment": 1.0,
+            "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182199789&selectionId=10885583",
+            "alternate_line_price_source": "fanduel_public",
+            "provider_source_market_id": "734.182199789:10885583",
+            "alternate_line_observed_at_utc": "2026-08-22T17:33:59.352836+00:00",
+            "alternate_line_books": 1,
+            "alternate_line_book_keys": [
+              "fanduel"
+            ],
+            "lineup_status": "unconfirmed",
+            "batting_order": "",
+            "official_game_status": "Scheduled",
+            "risk_flags": [
+              "lineup_unconfirmed"
+            ]
+          },
+          {
+            "play_key": "2026-08-22|824073|Jac Caglianone|H|OVER|ALT_1.5",
+            "player": "Jac Caglianone",
+            "player_display_name": "Jac Caglianone",
+            "player_id": "jac_caglianone",
+            "player_type": "hitter",
+            "team": "KC",
+            "opponent": "DET",
+            "game_id": "824073",
+            "market_date": "2026-08-22",
+            "commence_time_utc": "2026-08-22T23:15:00Z",
+            "game_status_code": "P",
+            "target": "H",
+            "direction": "OVER",
+            "prediction": 1.3729644751340913,
+            "market_line": 1.5,
+            "market_source": "real",
+            "market_bucket": "H|OVER|1.5|ALT",
+            "historical_bucket_key": "H|OVER|1.5|ALT",
+            "estimated_graded_hit_rate": 0.35385421190153776,
+            "model_hit_probability": 0.3987981044940767,
+            "market_implied_probability": 0.7058823529411765,
+            "final_pool_quality_score": 0.7635274755653056,
+            "expected_value_per_unit": 0.1323334780849208,
+            "selected_side_price": 220.0,
+            "selected_sportsbook_key": "fanduel",
+            "selected_sportsbook": "FanDuel",
+            "price_confirmed": true,
+            "market_books": 1,
+            "market_common_books": 1,
+            "market_book_keys": [
+              "fanduel"
+            ],
+            "market_common_book_keys": [
+              "fanduel"
+            ],
+            "history_rows": 127,
+            "days_since_history": 1,
+            "selection_score": 0.7635274755653056,
+            "parlay_precision_eligible": true,
+            "line_variant": "alternate",
+            "hit_survival_probability": 0.6234695706441664,
+            "hit_survival_raw_probability": 0.667519035137704,
+            "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+            "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+            "hit_survival_batting_order": 3.0,
+            "hit_survival_batting_order_source": "prior_start_proxy",
+            "latent_probability_disagreement": 0.11264101450979191,
+            "parlay_leg_probability": 0.6310499429971408,
+            "latent_leg_probability": 0.522985610027496,
+            "latent_leg_raw_probability": 0.5626288564755275,
+            "latent_leg_ensemble_std": 0.049201786931702365,
+            "latent_support_fraction": 1.0,
+            "latent_in_support": true,
+            "latent_model_version": "mlb_latent_parlay_set_attention_v3",
+            "latent_evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+            "latent_numeric_features": {
+              "baseline": 1.4,
+              "last_hits": 0.0,
+              "batting_order": 3.0,
+              "log_history_rows": 4.852030263919617,
+              "is_home": 1.0,
+              "batter_strength": 0.6262094667943808,
+              "pitcher_vulnerability": -0.45695232082732085,
+              "pitcher_uncertainty": 0.7598145089396566,
+              "batter_vs_starter_games": 0.0,
+              "batter_vs_starter_lift": 0.0,
+              "archetype_neighbor_games": 53.0,
+              "archetype_neighbor_support": 25.057113961796222,
+              "archetype_neighbor_lift": -0.03560131848872216,
+              "matchup_network_score": -0.06872856647384394,
+              "matchup_network_confidence": 0.564230680663723,
+              "matchup_network_adjustment": -0.0068728566473843945
+            },
+            "latent_categorical_features": {
+              "player": "jac_caglianone",
+              "pitcher": "623454",
+              "team": "KC",
+              "opponent": "116"
+            },
+            "base_market_line": 0.5,
+            "line_increment": 1.0,
+            "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182173090&selectionId=56949278",
+            "alternate_line_price_source": "fanduel_public",
+            "provider_source_market_id": "734.182173090:56949278",
+            "alternate_line_observed_at_utc": "2026-08-22T17:33:59.352836+00:00",
+            "alternate_line_books": 1,
+            "alternate_line_book_keys": [
+              "fanduel"
+            ],
+            "lineup_status": "unconfirmed",
+            "batting_order": "",
+            "official_game_status": "Scheduled",
+            "risk_flags": [
+              "lineup_unconfirmed"
+            ]
+          }
+        ],
+        "ticket_tier": "profit_boost",
+        "probability_floor": 0.1,
+        "maximum_decimal_price": 15.0,
+        "risk_adjusted_profit_score": 0.23804734908150116,
+        "evidence_status": "SHADOW_ALT_LINE_PRICE_CAPTURE",
+        "ticket_id": "profit_boost_2_leg",
+        "betslip": {
+          "sportsbook_key": "fanduel",
+          "sportsbook": "FanDuel",
+          "status": "ready",
+          "leg_count": 2,
+          "url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.182199789&selectionId%5B0%5D=10885583&marketId%5B1%5D=734.182173090&selectionId%5B1%5D=56949278",
+          "source": "direct_fanduel_public_market_ids"
+        },
+        "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.182199789&selectionId%5B0%5D=10885583&marketId%5B1%5D=734.182173090&selectionId%5B1%5D=56949278",
+        "status": "review",
+        "action_status": "review",
+        "risk_flags": [
+          "lineup_unconfirmed"
+        ],
+        "candidate_authorized": false,
+        "staking_enabled": false,
+        "authorization_status": "SHADOW_ONLY"
+      }
+    ],
+    "latent_shadow_ticket_ladder": [],
+    "latent_parlay_validation": {
+      "model_version": "mlb_latent_parlay_set_attention_v3",
+      "status": "development_shadow",
+      "evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+      "device": "NVIDIA GeForce RTX 4080 SUPER",
+      "cuda_version": "12.8",
+      "claim_scope": "synthetic H over 0.5 hit-chain ranking only; no executable price or ROI claim",
+      "leakage_exclusions": [
+        "same-game H, PA, AB, Team_PA_share, wOBA, xwOBA, ISO, Barrel%, HardHit%",
+        "historical H_market_gap and projection derived from same-game fields"
+      ],
+      "identity_contract": {
+        "player": "normalized player name shared by training and production",
+        "pitcher": "MLBAM identifier with normalized-name fallback",
+        "team": "team abbreviation",
+        "opponent": "team abbreviation"
+      },
+      "rows": 23046,
+      "dates": 125,
+      "partitions": {
+        "development": {
+          "start": "2026-03-30",
+          "end": "2026-06-24"
+        },
+        "calibration": {
+          "start": "2026-06-25",
+          "end": "2026-07-16"
+        },
+        "locked_holdout": {
+          "start": "2026-07-17",
+          "end": "2026-08-05"
+        }
+      },
+      "partition_rows": {
+        "development": 13303,
+        "calibration": 4488,
+        "locked_holdout": 5255
+      },
+      "sampled_tickets": {
+        "development": 17520,
+        "calibration": 6480,
+        "locked_holdout": 7200
+      },
+      "calibration": {
+        "legs": {
+          "rows": 4488,
+          "wins": 2528,
+          "hit_rate": 0.5632798573975044,
+          "mean_probability": 0.5625202655792236,
+          "brier_score": 0.2424343086651612,
+          "log_loss": 0.6778125853224081,
+          "roc_auc": 0.5708496472164816
+        },
+        "safe_rolling_baseline": {
+          "rows": 4488,
+          "wins": 2528,
+          "hit_rate": 0.5632798573975044,
+          "mean_probability": 0.5632797236126167,
+          "brier_score": 0.24418589648717387,
+          "log_loss": 0.6814756761962799,
+          "roc_auc": 0.5519312273960217
+        },
+        "sampled_tickets": {
+          "rows": 6480,
+          "wins": 1845,
+          "hit_rate": 0.2847222222222222,
+          "mean_probability": 0.28751012682914734,
+          "brier_score": 0.19658613861689764,
+          "log_loss": 0.5804600342416407,
+          "roc_auc": 0.6205273882296536
+        }
+      },
+      "locked_holdout": {
+        "legs": {
+          "rows": 5255,
+          "wins": 2891,
+          "hit_rate": 0.5501427212178878,
+          "mean_probability": 0.5631510615348816,
+          "brier_score": 0.24408094480171033,
+          "log_loss": 0.6811830883046901,
+          "roc_auc": 0.5704383491329941
+        },
+        "safe_rolling_baseline": {
+          "rows": 5255,
+          "wins": 2891,
+          "hit_rate": 0.5501427212178878,
+          "mean_probability": 0.5603725246530553,
+          "brier_score": 0.2444186750878317,
+          "log_loss": 0.6819304777519898,
+          "roc_auc": 0.5713790420237612
+        },
+        "daily_top_two_legs": {
+          "latent": {
+            "legs": 40,
+            "wins": 30,
+            "hit_rate": 0.75,
+            "wilson_95": [
+              0.598057409330299,
+              0.8581303210445048
+            ]
+          },
+          "safe_rolling_baseline": {
+            "legs": 40,
+            "wins": 25,
+            "hit_rate": 0.625,
+            "wilson_95": [
+              0.47032160054531913,
+              0.7577722646420829
+            ]
+          }
+        },
+        "sampled_tickets": {
+          "rows": 7200,
+          "wins": 1925,
+          "hit_rate": 0.2673611111111111,
+          "mean_probability": 0.28158947825431824,
+          "brier_score": 0.18543409529511665,
+          "log_loss": 0.5541604918377484,
+          "roc_auc": 0.6489663814858129
+        },
+        "daily_ranking": {
+          "2": {
+            "slates": 20,
+            "latent_ticket_wins": 10,
+            "latent_ticket_hit_rate": 0.5,
+            "latent_wilson_95": [
+              0.2992949144298199,
+              0.7007050855701801
+            ],
+            "independent_product_wins": 10,
+            "independent_product_hit_rate": 0.5,
+            "independent_wilson_95": [
+              0.2992949144298199,
+              0.7007050855701801
+            ]
+          },
+          "3": {
+            "slates": 20,
+            "latent_ticket_wins": 7,
+            "latent_ticket_hit_rate": 0.35,
+            "latent_wilson_95": [
+              0.18118954786794464,
+              0.5671494897805354
+            ],
+            "independent_product_wins": 8,
+            "independent_product_hit_rate": 0.4,
+            "independent_wilson_95": [
+              0.21880396741419272,
+              0.613422057684794
+            ]
+          },
+          "4": {
+            "slates": 20,
+            "latent_ticket_wins": 6,
+            "latent_ticket_hit_rate": 0.3,
+            "latent_wilson_95": [
+              0.14547527396899385,
+              0.5189767762289793
+            ],
+            "independent_product_wins": 6,
+            "independent_product_hit_rate": 0.3,
+            "independent_wilson_95": [
+              0.14547527396899385,
+              0.5189767762289793
+            ]
+          }
+        }
+      },
+      "deployment_fit": {
+        "status": "prospective_shadow_only",
+        "training_period": {
+          "start": "2026-03-30",
+          "end": "2026-07-16"
+        },
+        "probability_calibration_period": {
+          "start": "2026-07-17",
+          "end": "2026-08-05"
+        },
+        "training_rows": 17791,
+        "calibration_rows": 5255,
+        "calibration_legs": {
+          "rows": 5255,
+          "wins": 2891,
+          "hit_rate": 0.5501427212178878,
+          "mean_probability": 0.5305083394050598,
+          "brier_score": 0.2435080430484226,
+          "log_loss": 0.6800309584163625,
+          "roc_auc": 0.5774020224970311
+        },
+        "calibration_sampled_tickets": {
+          "rows": 7200,
+          "wins": 1927,
+          "hit_rate": 0.26763888888888887,
+          "mean_probability": 0.12740659713745117,
+          "brier_score": 0.2061659975211286,
+          "log_loss": 0.6245069055404697,
+          "roc_auc": 0.6564487149041671
+        },
+        "next_unseen_date": "2026-08-06"
+      },
+      "export_parity": {
+        "leg_probability_max_abs": 1.882963751587141e-08,
+        "leg_raw_probability_max_abs": 2.638824647682725e-08,
+        "ticket_probability_max_abs": 4.1938656991646894e-09,
+        "ticket_raw_probability_max_abs": 1.7148897024643617e-08
+      }
+    },
+    "hit_survival_validation": {
+      "model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+      "status": "development_shadow",
+      "evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+      "claim_scope": "hit-rate ranking and confidence diagnostic only; executable prices are required for ROI",
+      "features": [
+        "projection",
+        "baseline",
+        "last_hits",
+        "batting_order",
+        "history_rows",
+        "is_home"
+      ],
+      "training_rows": 15993,
+      "training_dates": 113,
+      "frozen_training_cutoff_exclusive": "2026-07-30",
+      "partitions": {
+        "development": {
+          "start": "2026-03-30",
+          "end": "2026-06-23"
+        },
+        "calibration": {
+          "start": "2026-06-24",
+          "end": "2026-07-10"
+        },
+        "locked_recent_holdout": {
+          "start": "2026-07-11",
+          "end": "2026-07-29"
+        }
+      },
+      "calibration": {
+        "rows": 3114,
+        "wins": 1714,
+        "hit_rate": 0.550417469492614,
+        "mean_probability": 0.5504251481713196,
+        "brier_score": 0.24259946235125276,
+        "log_loss": 0.6782192808296192
+      },
+      "locked_recent_holdout": {
+        "rows": 3190,
+        "wins": 1695,
+        "hit_rate": 0.5313479623824452,
+        "mean_probability": 0.5508849184708919,
+        "brier_score": 0.24141080951926325,
+        "log_loss": 0.6757913330805801,
+        "daily_top_two": {
+          "legs": 32,
+          "leg_wins": 23,
+          "slates": 15,
+          "ticket_wins": 10,
+          "leg_hit_rate": 0.71875,
+          "leg_hit_rate_wilson_95_low": 0.546251630618882,
+          "leg_hit_rate_wilson_95_high": 0.8443559315435214,
+          "ticket_hit_rate": 0.6666666666666666,
+          "ticket_hit_rate_wilson_95_low": 0.41713125151212976,
+          "ticket_hit_rate_wilson_95_high": 0.8482389930530876,
+          "mean_probability": 0.6712815868449499
+        },
+        "projection_baseline_daily_top_two": {
+          "legs": 32,
+          "leg_wins": 16,
+          "slates": 15,
+          "ticket_wins": 4,
+          "leg_hit_rate": 0.5,
+          "leg_hit_rate_wilson_95_low": 0.33630614316859386,
+          "leg_hit_rate_wilson_95_high": 0.6636938568314061,
+          "ticket_hit_rate": 0.26666666666666666,
+          "ticket_hit_rate_wilson_95_low": 0.1089727610318281,
+          "ticket_hit_rate_wilson_95_high": 0.5195088965768675,
+          "mean_probability": 0.7671999109910522
+        }
+      }
+    },
+    "validation": {
+      "method": "stored_pre_event_projection_real_price_confirmed_grading",
+      "price_validation": "real market, at least five books, selected OVER price confirmed; no parlay ROI claim",
+      "history_before_date": "2026-08-22",
+      "event_rows": 333,
+      "dates": 10,
+      "by_leg_count": [
+        {
+          "leg_count": 2,
+          "all_dates": {
+            "tickets": 9,
+            "dates": 9,
+            "hits": 8,
+            "hit_rate": 0.8888888888888888,
+            "win_rate_wilson_95_low": 0.5649937852319399,
+            "win_rate_wilson_95_high": 0.9801096286728695,
+            "mean_projected_probability": 0.8044273966557217,
+            "brier_score": 0.10312354211233236
+          },
+          "development": {
+            "tickets": 8,
+            "dates": 8,
+            "hits": 8,
+            "hit_rate": 1.0,
+            "win_rate_wilson_95_low": 0.6755843804891231,
+            "win_rate_wilson_95_high": 1.0,
+            "mean_projected_probability": 0.8094355379231893,
+            "brier_score": 0.042982775567192946
+          },
+          "fixed_recent_holdout": {
+            "tickets": 1,
+            "dates": 1,
+            "hits": 0,
+            "hit_rate": 0.0,
+            "win_rate_wilson_95_low": 0.0,
+            "win_rate_wilson_95_high": 0.7934567085261071,
+            "mean_projected_probability": 0.764362266515981,
+            "brier_score": 0.5842496744734477
+          }
+        },
+        {
+          "leg_count": 3,
+          "all_dates": {
+            "tickets": 9,
+            "dates": 9,
+            "hits": 7,
+            "hit_rate": 0.7777777777777778,
+            "win_rate_wilson_95_low": 0.4525833436728054,
+            "win_rate_wilson_95_high": 0.9367762376877727,
+            "mean_projected_probability": 0.6886033651133826,
+            "brier_score": 0.15276469649933794
+          },
+          "development": {
+            "tickets": 8,
+            "dates": 8,
+            "hits": 7,
+            "hit_rate": 0.875,
+            "win_rate_wilson_95_low": 0.5291051942301386,
+            "win_rate_wilson_95_high": 0.9775830911367038,
+            "mean_projected_probability": 0.694494311554102,
+            "brier_score": 0.12042388434189569
+          },
+          "fixed_recent_holdout": {
+            "tickets": 1,
+            "dates": 1,
+            "hits": 0,
+            "hit_rate": 0.0,
+            "win_rate_wilson_95_low": 0.0,
+            "win_rate_wilson_95_high": 0.7934567085261071,
+            "mean_projected_probability": 0.6414757935876271,
+            "brier_score": 0.41149119375887594
+          }
+        },
+        {
+          "leg_count": 4,
+          "all_dates": {
+            "tickets": 9,
+            "dates": 9,
+            "hits": 5,
+            "hit_rate": 0.5555555555555556,
+            "win_rate_wilson_95_low": 0.2666473457440297,
+            "win_rate_wilson_95_high": 0.811224570528086,
+            "mean_projected_probability": 0.577695433325778,
+            "brier_score": 0.26091561936381785
+          },
+          "development": {
+            "tickets": 8,
+            "dates": 8,
+            "hits": 5,
+            "hit_rate": 0.625,
+            "win_rate_wilson_95_low": 0.30573785458380187,
+            "win_rate_wilson_95_high": 0.863158240538479,
+            "mean_projected_probability": 0.5831899191495624,
+            "brier_score": 0.25792033381561763
+          },
+          "fixed_recent_holdout": {
+            "tickets": 1,
+            "dates": 1,
+            "hits": 0,
+            "hit_rate": 0.0,
+            "win_rate_wilson_95_low": 0.0,
+            "win_rate_wilson_95_high": 0.7934567085261071,
+            "mean_projected_probability": 0.5337395467355025,
+            "brier_score": 0.2848779037494197
+          }
+        }
+      ],
+      "alternate_line_margin_audit": {
+        "method": "synthetic_event_grading_without_alternate_price_history",
+        "claim_scope": "hit-rate diagnostic only; does not establish alternate-line ROI",
+        "rows": 333,
+        "base_hit_rate": 0.6276276276276276,
+        "one_unit_higher_hit_rate": 0.35135135135135137,
+        "two_units_higher_hit_rate": 0.25225225225225223,
+        "winner_margin_retention_one_unit": 0.5598086124401914,
+        "by_target": {
+          "R": {
+            "rows": 150,
+            "base_hit_rate": 0.5866666666666667,
+            "one_unit_higher_hit_rate": 0.18,
+            "winner_margin_retention_one_unit": 0.3068181818181818
+          },
+          "TB": {
+            "rows": 183,
+            "base_hit_rate": 0.6612021857923497,
+            "one_unit_higher_hit_rate": 0.4918032786885246,
+            "winner_margin_retention_one_unit": 0.743801652892562
+          }
+        }
+      }
+    },
+    "available": true,
+    "reason": "lineups are not yet confirmed"
+  },
+  "policy_governance": {
+    "schema_version": "MLB_POLICY_GOVERNANCE_STATUS_V1",
+    "generated_at_utc": "2026-08-22T17:38:38.047473+00:00",
+    "run_date": "2026-08-22",
+    "slate_id": "MLB_20260822",
+    "snapshot_id": "mlb_20260822_173359Z_2c156f01748c",
+    "capture_label": "FULL_SLATE_SNAPSHOT",
+    "complete_slate_capture_passed": true,
+    "candidate_authorization_enabled": false,
+    "staking_enabled": false,
+    "publication_mode": "SHADOW_RESEARCH_ONLY",
+    "certificate_status": "NO_ACTIVE_PROSPECTIVE_CERTIFICATE",
+    "authorization_reason": "Registered MLB policies remain in development and have no prospective certificate.",
+    "registered_policies": [
+      {
+        "policy_version": "MLB_SINGLES_OVER_POLICY_V1",
+        "policy_stage": "POLICY_DEVELOPMENT",
+        "policy_digest": "9fba82ab0f431dde6d02e0305d6498d2fbfa69b63ef34ee4f49b42b3bd7b87c4"
+      },
+      {
+        "policy_version": "MLB_FANDUEL_PUBLIC_BETSLIP_PARLAY_POLICY_V5",
+        "policy_stage": "POLICY_DEVELOPMENT",
+        "policy_digest": "af7432bf3d3ebecbe53f73bbba1cb1d94fb92f6c7af21ba029df0fd1f841fcd7"
+      }
+    ],
+    "historical_evidence_labels": [
+      "SELECTED_ONLY_HISTORY",
+      "SELECTED_ONLY_HISTORY"
+    ],
+    "full_policy_replay_available_for_snapshot": true,
+    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260822/governance/slates/MLB_20260822/mlb_20260822_173359Z_2c156f01748c/manifest.json"
+  },
+  "suppressed_closed_games": [],
+  "suppressed_duplicates": [],
+  "plays": [],
+  "parlays": {
+    "abstain_reason": "NO_STATE_SUPPORT",
+    "action": "ABSTAIN",
+    "calibration_as_of": "2026-08-22T17:40:24.605079+00:00",
+    "calibration_snapshot_id": "c9042add8391c084",
+    "calibration_snapshot_sha256": "c9042add8391c08476011be01ebccf48f4ef59dfec146fd31ecdf0d999bbedf2",
+    "decision_timestamp_utc": "2026-08-22T17:40:59.285497+00:00",
+    "eligibility_reason": "operationally_eligible",
+    "eligible": true,
+    "evidence_status": {
+      "note": "STATUS reflects the FROZEN POLICY's evidence state, never this slate's own candidates -- see manifest.CONCLUSION_REASONING.",
+      "state_machine_status": "FROZEN_PROSPECTIVE_INCONCLUSIVE"
+    },
+    "independent_slate_count": 15,
+    "independent_slate_count_required": 20,
+    "policy_status": "FROZEN_PROSPECTIVE_INCONCLUSIVE",
+    "policy_version": "PARLAY_POLICY_V2_TWO_LEG_SINGLE_ACTION",
+    "selected_parlay": null,
+    "selection_status": "ABSTAIN",
+    "shadow_candidate": {
+      "adapter_version": "PARLAY_V2_CANDIDATE_ADAPTER_V1",
+      "candidate_id": "20260822|Pete Crow-Armstrong|R|OVER|0.5|823100||Shohei Ohtani|TB|OVER|1.5|823910",
+      "joint_probability_estimate": 0.3090466867596071,
+      "joint_probability_method": "independence_binary_world_model",
+      "joint_score": 0.9999999999999999,
+      "leg_1": {
+        "book": "real",
+        "decimal_price": 1.8695652173913042,
+        "game_id": "823100",
+        "in_support": true,
+        "line": 0.5,
+        "model_probability_estimate": 0.5682522647779819,
+        "player": "Pete Crow-Armstrong",
+        "player_id": "pete_crow-armstrong",
+        "quote_timestamp": "20260822",
+        "side": "OVER",
+        "target": "R"
+      },
+      "leg_2": {
+        "book": "real",
+        "decimal_price": 1.8695652173913042,
+        "game_id": "823910",
+        "in_support": true,
+        "line": 1.5,
+        "model_probability_estimate": 0.5438547383182938,
+        "player": "Shohei Ohtani",
+        "player_id": "shohei_ohtani",
+        "quote_timestamp": "20260822",
+        "side": "OVER",
+        "target": "TB"
+      },
+      "predictive_version": "H_OVER_RANKER_V1+MULTI_TARGET",
+      "slate_id": "20260822",
+      "state_version": "MULTI_TARGET_BROAD_V1",
+      "support": {
+        "in_support": false,
+        "leg_1_support": true,
+        "leg_2_support": true,
+        "state_support": false
+      },
+      "world_diagnostics": {
+        "counterexample_count": 3,
+        "counterexample_mass": 0.6909533132403928,
+        "nonvacuous_world_certificate": false,
+        "retained_probability_mass": 0.9999999999999999,
+        "retained_world_count": 4
+      }
+    },
+    "shadow_candidate_note": "Best available candidate by descriptive joint score -- NOT a certified pick. The frozen policy has not authorized action on it; see policy_status.",
+    "shadow_execution_status": "NOT_EXECUTED",
+    "staking_authorized": false,
+    "system": "PARLAY_POLICY_V2",
+    "world_gate_mode": "OBSERVE_ONLY"
+  }
+}
