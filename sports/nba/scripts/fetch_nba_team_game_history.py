@@ -212,11 +212,23 @@ def extract_team_game_row(summary: dict[str, Any], *, game_id: str) -> Optional[
     return row
 
 
+def _trim_summary_for_storage(summary: dict[str, Any]) -> dict[str, Any]:
+    """ESPN's full real summary payload is ~700KB per game (box score,
+    play-by-play, news, videos, article text -- none of it needed here);
+    a full-season backfill of that would run into the hundreds of MB.
+    extract_team_game_row only ever reads `header` and `pickcenter`, so
+    that is all this durable archive keeps -- still the real, unmodified
+    values ESPN returned, just without the unrelated real fields this
+    pipeline has no use for."""
+    return {"header": summary.get("header"), "pickcenter": summary.get("pickcenter")}
+
+
 def persist_game_snapshot(game_id: str, summary: dict[str, Any], *, raw_root: Path = DEFAULT_RAW_ROOT) -> Path:
     game_dir = raw_root
     game_dir.mkdir(parents=True, exist_ok=True)
     out_path = game_dir / f"{game_id}.json"
-    out_path.write_text(json.dumps(summary, indent=2, sort_keys=True, default=str), encoding="utf-8")
+    trimmed = _trim_summary_for_storage(summary)
+    out_path.write_text(json.dumps(trimmed, indent=2, sort_keys=True, default=str), encoding="utf-8")
     return out_path
 
 
