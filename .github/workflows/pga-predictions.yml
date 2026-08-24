@@ -46,12 +46,10 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: requirements.txt
+          cache-dependency-path: sports/golf/requirements.txt
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+        run: python -m pip install -r sports/golf/requirements.txt
 
       - name: Run PGA golf tests
         run: python -m pytest sports/golf/tests/ -q
