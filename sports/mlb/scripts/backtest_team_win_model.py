@@ -58,6 +58,12 @@ def load_games(path: Path) -> list[dict[str, Any]]:
                 "market_away_moneyline": _to_float(row.get("market_away_moneyline")),
                 "market_run_total": _to_float(row.get("market_run_total")),
                 "total_runs": home_score + away_score,
+                # Real First 5 Innings runs (None for a real rain-shortened game
+                # with fewer than 5 real innings played on that side) -- carried
+                # through for game_simulation_model.py's real F5 calibration
+                # check; unused by this file's own moneyline/run-total backtest.
+                "home_innings_1_5": _to_float(row.get("home_innings_1_5")),
+                "away_innings_1_5": _to_float(row.get("away_innings_1_5")),
             }
         )
     return sorted(games, key=lambda g: (g["date"], g["game_id"]))

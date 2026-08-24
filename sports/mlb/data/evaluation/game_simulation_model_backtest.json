@@ -1,0 +1,29 @@
+{
+  "f5_share_used": 0.5571271412855572,
+  "first_5_innings_total": {
+    "graded_games": 312,
+    "note": "graded against a model-implied line -- no real historical F5 market price exists in this dataset",
+    "sim_brier_score": 0.2540687548477563,
+    "sim_over_pick_accuracy": 0.4967948717948718
+  },
+  "full_game_total": {
+    "graded_games": 312,
+    "sim_brier_score": 0.25758803330929464,
+    "sim_over_pick_accuracy": 0.5192307692307693
+  },
+  "holdout_games": 312,
+  "home_field_advantage_used": 0.020604395604395642,
+  "moneyline": {
+    "graded_games": 312,
+    "market_brier_score": 0.24126731623617786,
+    "market_priced_games": 312,
+    "sim_brier_score": 0.24516771116987188,
+    "sim_pick_accuracy": 0.5512820512820513
+  },
+  "num_trials_per_game": 20000,
+  "real_games_total": 1040,
+  "runs_dispersion_ratio_used": 2.242568968435305,
+  "starter_innings_share_used": 0.5765690376569038,
+  "status": "ok",
+  "train_games": 728
+}
