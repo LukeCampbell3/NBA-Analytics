@@ -76,6 +76,32 @@ def test_extracts_real_two_sided_run_total() -> None:
     assert row["under_price"] == -111.0
 
 
+def test_extracts_real_two_sided_first_5_innings_total() -> None:
+    """totals_1st_5_innings is a real, documented The Odds API market key
+    for baseball_mlb -- same outcome shape as the full-game totals
+    market, tagged with its own real target so it's never confused with
+    the full-game line."""
+    payload = _payload(
+        [
+            {
+                "key": "totals_1st_5_innings",
+                "outcomes": [
+                    {"name": "Over", "point": 4.5, "price": -115},
+                    {"name": "Under", "point": 4.5, "price": -105},
+                ],
+            }
+        ]
+    )
+    provider = TheOddsApiMlbTeamMarketProvider(api_key="fixture", fixture_payloads=[payload])
+    result = provider.collect_team_market_odds()
+    assert result["status"] == "success"
+    row = result["odds"][0]
+    assert row["target"] == "first_5_innings_total"
+    assert row["line"] == 4.5
+    assert row["over_price"] == -115.0
+    assert row["under_price"] == -105.0
+
+
 def test_ignores_player_prop_market_keys() -> None:
     payload = _payload(
         [

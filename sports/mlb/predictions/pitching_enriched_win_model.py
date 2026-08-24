@@ -124,6 +124,33 @@ def predict_run_total_enriched(
     side's expected runs = average of its own real scoring rate and the
     opponent's real runs-allowed figure), with the opponent's
     runs-allowed input replaced by its real pitching-enriched blend."""
+    sides = expected_runs_per_side_enriched(
+        home_team_stats, away_team_stats,
+        home_starter_stats=home_starter_stats, home_bullpen_stats=home_bullpen_stats,
+        away_starter_stats=away_starter_stats, away_bullpen_stats=away_bullpen_stats,
+        starter_innings_share=starter_innings_share,
+    )
+    if sides is None:
+        return None
+    home_expected, away_expected = sides
+    return home_expected + away_expected
+
+
+def expected_runs_per_side_enriched(
+    home_team_stats: Optional[base_model.TeamCumulativeStats],
+    away_team_stats: Optional[base_model.TeamCumulativeStats],
+    *,
+    home_starter_stats: Optional[PitcherCumulativeStats],
+    home_bullpen_stats: Optional[BullpenCumulativeStats],
+    away_starter_stats: Optional[PitcherCumulativeStats],
+    away_bullpen_stats: Optional[BullpenCumulativeStats],
+    starter_innings_share: Optional[float],
+) -> Optional[tuple[float, float]]:
+    """The real (home_expected_runs, away_expected_runs) pair underlying
+    both predict_run_total_enriched (their sum) and the joint game
+    simulator (game_simulation_model.py, which needs each side
+    separately as its real per-trial Monte Carlo mean) -- kept as one
+    real shared computation so the two never drift apart."""
     if home_team_stats is None or away_team_stats is None:
         return None
     home_avg_rs = home_team_stats.avg_runs_scored
@@ -138,4 +165,4 @@ def predict_run_total_enriched(
 
     home_expected = (home_avg_rs + away_runs_allowed) / 2.0
     away_expected = (away_avg_rs + home_runs_allowed) / 2.0
-    return home_expected + away_expected
+    return home_expected, away_expected

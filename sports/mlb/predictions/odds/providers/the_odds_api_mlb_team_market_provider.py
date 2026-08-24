@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """The Odds API v4 adapter for real MLB team-level markets: moneyline
-(h2h) and game run total (totals).
+(h2h), full-game run total (totals), and real First 5 Innings run total
+(totals_1st_5_innings -- a real, documented The Odds API market key for
+baseball_mlb, confirmed against their own published market-key
+reference, not guessed) -- the same real "First 5 Innings" market
+mlb_team_game_history.csv already tracks from real historical box
+scores, now with a real live price to grade same-game F5 candidates
+against.
 
 A separate provider class from TheOddsApiMlbProvider (the_odds_api_mlb_
 provider.py), not a modification of it: that class's _extract_payload is
@@ -30,7 +36,8 @@ from odds_contract import ensure_contract, stable_hash
 
 BASE_URL = "https://api.the-odds-api.com/v4"
 SPORT_KEY = "baseball_mlb"
-DEFAULT_MARKETS = ["h2h", "totals"]
+DEFAULT_MARKETS = ["h2h", "totals", "totals_1st_5_innings"]
+TOTALS_MARKET_TARGETS = {"totals": "game_total", "totals_1st_5_innings": "first_5_innings_total"}
 
 
 class TheOddsApiMlbTeamMarketProvider:
@@ -180,7 +187,7 @@ class TheOddsApiMlbTeamMarketProvider:
                                 "raw_record_hash": raw_hash,
                             }
                         )
-                elif market_key == "totals":
+                elif market_key in TOTALS_MARKET_TARGETS:
                     grouped: dict[float, dict[str, float]] = {}
                     for outcome in market.get("outcomes", []):
                         side = str(outcome.get("name", "")).strip().lower()
@@ -199,7 +206,7 @@ class TheOddsApiMlbTeamMarketProvider:
                             rows.append(
                                 {
                                     **base_row,
-                                    "target": "game_total",
+                                    "target": TOTALS_MARKET_TARGETS[market_key],
                                     "side": "",
                                     "line": line,
                                     "over_price": sides["over"],
