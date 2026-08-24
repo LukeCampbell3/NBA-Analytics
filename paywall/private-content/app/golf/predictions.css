@@ -1,0 +1,43 @@
+.golf-board { --golf-green: #1a6b3c; --golf-ink: #202020; }
+.golf-hero { position: relative; overflow: hidden; border-top: 5px solid var(--golf-green); }
+.golf-hero-topline, .golf-pick-topline, .golf-probability-row, .golf-price-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.golf-countdown, .golf-research-pill { display: inline-flex; align-items: center; min-height: 28px; padding: 0 10px; border: 1px solid color-mix(in srgb, var(--golf-green) 35%, var(--vault-line)); border-radius: 999px; color: var(--golf-green); background: color-mix(in srgb, var(--golf-green) 5%, white); font-size: .68rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.golf-event-meta { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; margin-top: 24px; border-top: 3px double var(--vault-line-strong); border-bottom: 1px solid var(--vault-line); }
+.golf-event-meta > div { min-width: 0; padding: 15px; border-left: 1px solid var(--vault-line); }
+.golf-event-meta > div:first-child { padding-left: 0; border-left: 0; }
+.golf-event-meta span, .golf-event-meta strong { display: block; }
+.golf-event-meta span { color: var(--vault-text-dim); font-size: .6rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.golf-event-meta strong { margin-top: 5px; color: var(--vault-text); font-size: .8rem; line-height: 1.35; }
+.golf-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; }
+.golf-section-heading h2 { margin-bottom: 0; }
+.golf-muted { color: var(--vault-text-muted); font-size: .78rem; line-height: 1.55; }
+.golf-picks-panel { border-top: 4px solid var(--golf-green); }
+.golf-pick-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 20px; }
+.golf-pick { position: relative; min-width: 0; padding: 18px; border: 1px solid var(--vault-line-strong); border-radius: 5px; background: linear-gradient(155deg, #fff 0%, var(--vault-card-face) 100%); box-shadow: 3px 3px 0 rgba(32, 32, 32, .06); }
+.golf-pick h3 { margin: 18px 0 4px; font-family: var(--vault-font-display); font-size: 1.3rem; }
+.golf-pick p { margin: 4px 0; color: var(--vault-text-muted); }
+.golf-pick-number { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: #fff; background: var(--golf-ink); font-size: .72rem; font-weight: 800; }
+.golf-authorized-badge { color: #087f5b; font-size: .68rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.golf-shadow-badge { color: var(--vault-text-dim); font-size: .68rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.golf-pick-market { min-height: 20px; font-size: .72rem; }
+.golf-probability-row { margin-top: 14px; color: var(--vault-text-muted); font-size: .72rem; }
+.golf-probability-row strong { color: var(--vault-text); font-variant-numeric: tabular-nums; }
+.golf-probability-track { height: 5px; margin-top: 5px; overflow: hidden; border-radius: 99px; background: var(--vault-bg-2); }
+.golf-probability-track span { display: block; min-width: 2px; height: 100%; border-radius: inherit; background: var(--golf-green); }
+.golf-probability-track.is-market span { background: var(--vault-text-dim); }
+.golf-price-row { display: grid; grid-template-columns: 1fr auto; margin-top: 18px; padding-top: 13px; border-top: 1px solid var(--vault-line); }
+.golf-price-row span, .golf-price-row small { color: var(--vault-text-dim); font-size: .65rem; }
+.golf-price-row strong { color: var(--golf-green); font-family: var(--vault-font-display); font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.golf-price-row small { grid-column: 1 / -1; }
+.golf-blocking-note { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--vault-line); color: var(--vault-text-dim); font-size: .65rem; }
+.golf-rank { display: inline-grid; place-items: center; min-width: 27px; height: 27px; margin-right: 8px; border-radius: 50%; background: var(--golf-ink); color: #fff; font-size: .72rem; }
+@media (max-width: 760px) {
+    .golf-pick-grid { grid-template-columns: 1fr; }
+    .golf-event-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .golf-section-heading { align-items: flex-start; flex-direction: column; }
+    .prediction-about-table { min-width: 760px; }
+}
+@media (min-width: 761px) and (max-width: 1040px) {
+    .golf-pick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .golf-event-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
