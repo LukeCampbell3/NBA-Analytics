@@ -1,27 +1,85 @@
 {
-  "provider": "rotowire",
-  "provider_alias_used": false,
-  "fetched_at_utc": "2026-07-30T00:28:52.112372+00:00",
-  "source_url": "https://www.rotowire.com/betting/mlb/player-props.php",
-  "page_date": "2026-07-29",
-  "event_date_requested": "2026-07-29",
-  "bundle_kinds": [
-    "bases",
-    "er",
-    "moneyline",
-    "runs",
-    "strikeouts"
+  "provider": "provider_chain",
+  "acquisition_mode": "provider_chain",
+  "successful_providers": [
+    "fanduel_public"
   ],
-  "bundle_rows": {
-    "moneyline": 170,
-    "strikeouts": 30,
-    "er": 33,
-    "bases": 320,
-    "runs": 320
-  },
-  "long_rows": 6122,
-  "wide_rows": 353,
+  "provider_state": "MLB_ODDS_PRIMARY_HEALTHY",
+  "terminal_status": "MLB_FRESH_ODDS_AVAILABLE",
+  "fetched_at_utc": "2026-08-24T13:15:18.979782+00:00",
+  "event_date_requested": "2026-08-24",
+  "canonical_rows": 2107,
+  "canonical_selected_rows": 2107,
+  "long_rows": 2088,
+  "wide_rows": 199,
+  "provider_results": [
+    {
+      "provider_name": "fanduel_public",
+      "provider_status": "success",
+      "collected_at": "2026-08-24T13:15:30.851189+00:00",
+      "is_live": true,
+      "is_cache": false,
+      "cache_age_minutes": 0.0,
+      "failure_reason": "",
+      "rows_collected": 2126,
+      "valid_rows": 2126,
+      "markets_covered": [
+        "batter_hits",
+        "batter_home_runs",
+        "batter_rbis",
+        "batter_runs_scored",
+        "batter_total_bases",
+        "pitcher_strikeouts"
+      ],
+      "validation": {
+        "rows": 2126,
+        "valid_rows": 2126,
+        "invalid_rows": 0,
+        "valid_record_rate": 1.0,
+        "rejection_reasons": {}
+      }
+    },
+    {
+      "provider_name": "the_odds_api",
+      "provider_status": "missing_credentials",
+      "collected_at": "2026-08-24T13:15:30.851239+00:00",
+      "is_live": false,
+      "is_cache": false,
+      "cache_age_minutes": 0.0,
+      "failure_reason": "THE_ODDS_API_KEY not set",
+      "rows_collected": 0,
+      "valid_rows": 0,
+      "markets_covered": [],
+      "validation": {}
+    },
+    {
+      "provider_name": "scrape",
+      "provider_status": "disabled",
+      "collected_at": "2026-08-24T13:15:30.851261+00:00",
+      "is_live": false,
+      "is_cache": false,
+      "cache_age_minutes": 0.0,
+      "failure_reason": "MLB scrape adapter is disabled",
+      "rows_collected": 0,
+      "valid_rows": 0,
+      "markets_covered": [],
+      "validation": {}
+    },
+    {
+      "provider_name": "existing_provider",
+      "provider_status": "missing_source",
+      "collected_at": "2026-08-24T13:15:30.851275+00:00",
+      "is_live": false,
+      "is_cache": false,
+      "cache_age_minutes": 0.0,
+      "failure_reason": "MLB_ODDS_EXISTING_PROVIDER_PATH not set",
+      "rows_collected": 0,
+      "valid_rows": 0,
+      "markets_covered": [],
+      "validation": {}
+    }
+  ],
   "errors": [],
-  "history_long_rows": 89792,
-  "history_wide_rows": 5090
+  "history_long_rows": 91880,
+  "history_wide_rows": 5289
 }
