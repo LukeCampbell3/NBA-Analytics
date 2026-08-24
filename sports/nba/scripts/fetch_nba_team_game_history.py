@@ -82,12 +82,26 @@ def fetch_season_calendar_dates(*, timeout_seconds: float = REQUEST_TIMEOUT_SECO
     return [str(entry)[:10] for entry in calendar if isinstance(entry, str)]
 
 
-def list_completed_game_ids_for_date(date_str: str, *, timeout_seconds: float = REQUEST_TIMEOUT_SECONDS) -> list[str]:
+def list_completed_game_ids_for_date(date_str: str, *, timeout_seconds: float = REQUEST_TIMEOUT_SECONDS, max_retries: int = 3) -> list[str]:
     """Real, completed (STATUS_FINAL) game ids for one real calendar
-    date. `date_str` is YYYY-MM-DD; ESPN's dates param wants YYYYMMDD."""
-    response = requests.get(SCOREBOARD_URL, params={"dates": date_str.replace("-", "")}, timeout=timeout_seconds)
-    response.raise_for_status()
-    payload = response.json()
+    date. `date_str` is YYYY-MM-DD; ESPN's dates param wants YYYYMMDD.
+    Retries on a real, transient network timeout -- a real read-timeout
+    hitting ESPN's public API mid-backfill is exactly what took down
+    this session's own MLB full-season backfill run -- never on a real
+    HTTP error status, which is a real signal to stop, not retry."""
+    last_error: Optional[Exception] = None
+    payload: Optional[dict[str, Any]] = None
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(SCOREBOARD_URL, params={"dates": date_str.replace("-", "")}, timeout=timeout_seconds)
+            response.raise_for_status()
+            payload = response.json()
+            break
+        except requests.exceptions.Timeout as exc:
+            last_error = exc
+            time.sleep(REQUEST_DELAY_SECONDS * (attempt + 1))
+    if payload is None:
+        raise last_error
     ids: list[str] = []
     for event in payload.get("events", []):
         status = event.get("status", {}).get("type", {})
@@ -113,10 +127,17 @@ def list_season_game_ids(*, max_dates: Optional[int] = None, timeout_seconds: fl
     return game_ids
 
 
-def fetch_game_summary(game_id: str, *, timeout_seconds: float = REQUEST_TIMEOUT_SECONDS) -> dict[str, Any]:
-    response = requests.get(SUMMARY_URL, params={"event": game_id}, timeout=timeout_seconds)
-    response.raise_for_status()
-    return response.json()
+def fetch_game_summary(game_id: str, *, timeout_seconds: float = REQUEST_TIMEOUT_SECONDS, max_retries: int = 3) -> dict[str, Any]:
+    last_error: Optional[Exception] = None
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(SUMMARY_URL, params={"event": game_id}, timeout=timeout_seconds)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.Timeout as exc:
+            last_error = exc
+            time.sleep(REQUEST_DELAY_SECONDS * (attempt + 1))
+    raise last_error
 
 
 def _quarter_scores(linescores: list[dict[str, Any]]) -> list[Optional[float]]:

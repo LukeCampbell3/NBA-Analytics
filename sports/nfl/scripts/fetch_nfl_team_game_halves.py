@@ -56,10 +56,20 @@ OUTPUT_COLUMNS = [
 ]
 
 
-def list_completed_game_ids_for_date(date_str: str, *, timeout_seconds: float = REQUEST_TIMEOUT_SECONDS) -> list[str]:
-    response = requests.get(SCOREBOARD_URL, params={"dates": date_str.replace("-", "")}, timeout=timeout_seconds)
-    response.raise_for_status()
-    payload = response.json()
+def list_completed_game_ids_for_date(date_str: str, *, timeout_seconds: float = REQUEST_TIMEOUT_SECONDS, max_retries: int = 3) -> list[str]:
+    last_error: Optional[Exception] = None
+    payload: Optional[dict[str, Any]] = None
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(SCOREBOARD_URL, params={"dates": date_str.replace("-", "")}, timeout=timeout_seconds)
+            response.raise_for_status()
+            payload = response.json()
+            break
+        except requests.exceptions.Timeout as exc:
+            last_error = exc
+            time.sleep(REQUEST_DELAY_SECONDS * (attempt + 1))
+    if payload is None:
+        raise last_error
     ids: list[str] = []
     for event in payload.get("events", []):
         status = event.get("status", {}).get("type", {})
@@ -85,10 +95,17 @@ def list_game_ids_in_date_range(start: date, end: date, *, timeout_seconds: floa
     return game_ids
 
 
-def fetch_game_summary(game_id: str, *, timeout_seconds: float = REQUEST_TIMEOUT_SECONDS) -> dict[str, Any]:
-    response = requests.get(SUMMARY_URL, params={"event": game_id}, timeout=timeout_seconds)
-    response.raise_for_status()
-    return response.json()
+def fetch_game_summary(game_id: str, *, timeout_seconds: float = REQUEST_TIMEOUT_SECONDS, max_retries: int = 3) -> dict[str, Any]:
+    last_error: Optional[Exception] = None
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(SUMMARY_URL, params={"event": game_id}, timeout=timeout_seconds)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.Timeout as exc:
+            last_error = exc
+            time.sleep(REQUEST_DELAY_SECONDS * (attempt + 1))
+    raise last_error
 
 
 def _quarter_scores(linescores: list[dict[str, Any]]) -> list[Optional[float]]:
