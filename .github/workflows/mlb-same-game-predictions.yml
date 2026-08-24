@@ -46,16 +46,20 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: requirements.txt
+          cache-dependency-path: sports/mlb/requirements-same-game.txt
 
       - name: Install dependencies
         run: |
-          python -m pip install -r requirements.txt
-          # Root requirements.txt (shared by MLB/NBA workflows) has never
-          # included pytest -- the same real gap this session already hit
-          # and fixed for PGA golf via its own requirements.txt. Scoped
-          # here rather than editing the shared root file.
-          python -m pip install pytest
+          # This same-game pipeline's own real imports are only requests/
+          # numpy/pandas (+pytest for tests) -- verified by grepping every
+          # module this workflow actually touches. Root requirements.txt
+          # (shared by the MLB/NBA player-prop workflows) drags in
+          # tensorflow/catboost/xgboost/scikit-learn/h5py/matplotlib/
+          # nba_api, none of which this pipeline uses; installing all of
+          # that was the real bulk of this workflow's runtime. Scoped
+          # requirements file here, same pattern PGA golf's own
+          # requirements.txt already established for the same reason.
+          python -m pip install -r sports/mlb/requirements-same-game.txt
 
       - name: Run MLB same-game combo tests
         run: |
