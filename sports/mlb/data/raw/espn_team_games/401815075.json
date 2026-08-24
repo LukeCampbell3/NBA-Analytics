@@ -1,0 +1,2110 @@
+{
+  "header": {
+    "competitions": [
+      {
+        "boxscoreAvailable": true,
+        "boxscoreMinutes": true,
+        "boxscoreSource": "full",
+        "broadcasts": [
+          {
+            "isNational": true,
+            "lang": "en",
+            "market": {
+              "id": "1",
+              "type": "National"
+            },
+            "media": {
+              "shortName": "MLB.TV"
+            },
+            "region": "us",
+            "type": {
+              "id": "4",
+              "shortName": "Streaming"
+            }
+          },
+          {
+            "isNational": false,
+            "lang": "en",
+            "market": {
+              "id": "2",
+              "type": "Home"
+            },
+            "media": {
+              "shortName": "Cardinals.TV"
+            },
+            "region": "us",
+            "type": {
+              "id": "4",
+              "shortName": "Streaming"
+            }
+          },
+          {
+            "isNational": false,
+            "lang": "en",
+            "market": {
+              "id": "3",
+              "type": "Away"
+            },
+            "media": {
+              "shortName": "Mariners.TV"
+            },
+            "region": "us",
+            "type": {
+              "id": "4",
+              "shortName": "Streaming"
+            }
+          },
+          {
+            "isNational": false,
+            "lang": "en",
+            "market": {
+              "id": "2",
+              "type": "Home"
+            },
+            "media": {
+              "shortName": "KMOV-TV"
+            },
+            "region": "us",
+            "type": {
+              "id": "1",
+              "shortName": "TV"
+            }
+          }
+        ],
+        "commentaryAvailable": false,
+        "competitors": [
+          {
+            "errors": 0,
+            "hits": 8,
+            "homeAway": "home",
+            "id": "24",
+            "linescores": [
+              {
+                "displayValue": "0",
+                "errors": 0,
+                "hits": 0
+              },
+              {
+                "displayValue": "0",
+                "errors": 0,
+                "hits": 1
+              },
+              {
+                "displayValue": "0",
+                "errors": 0,
+                "hits": 0
+              },
+              {
+                "displayValue": "2",
+                "errors": 0,
+                "hits": 2
+              },
+              {
+                "displayValue": "0",
+                "errors": 0,
+                "hits": 1
+              },
+              {
+                "displayValue": "0",
+                "errors": 0,
+                "hits": 0
+              },
+              {
+                "displayValue": "0",
+                "errors": 0,
+                "hits": 1
+              },
+              {
+                "displayValue": "0",
+                "errors": 0,
+                "hits": 2
+              },
+              {
+                "displayValue": "0",
+                "errors": 0,
+                "hits": 1
+              }
+            ],
+            "order": 0,
+            "possession": false,
+            "probables": [
+              {
+                "abbreviation": "SP",
+                "athlete": {
+                  "displayName": "Andre Pallante",
+                  "fullName": "Andre Pallante",
+                  "guid": "5ac1018a-9135-3239-9b4c-dc31c11826f8",
+                  "headshot": {
+                    "alt": "Andre Pallante",
+                    "href": "https://a.espncdn.com/i/headshots/mlb/players/full/4109034.png"
+                  },
+                  "id": "4109034",
+                  "jersey": "53",
+                  "lastName": "Pallante",
+                  "links": [
+                    {
+                      "href": "https://www.espn.com/mlb/player/_/id/4109034",
+                      "rel": [
+                        "playercard",
+                        "desktop",
+                        "athlete"
+                      ],
+                      "text": "Player Card"
+                    }
+                  ],
+                  "position": {
+                    "abbreviation": "SP",
+                    "displayName": "Starting Pitcher",
+                    "name": "Starting Pitcher"
+                  },
+                  "shortName": "A. Pallante",
+                  "status": {
+                    "abbreviation": "15 Day IL",
+                    "id": "25",
+                    "name": "15 Day IL",
+                    "type": "15-day-il"
+                  },
+                  "throws": {
+                    "abbreviation": "R",
+                    "displayValue": "Right",
+                    "type": "RIGHT"
+                  },
+                  "uid": "s:1~l:10~a:4109034"
+                },
+                "displayName": "Probable Starting Pitcher",
+                "name": "probableStartingPitcher",
+                "playerId": 4109034,
+                "shortDisplayName": "Starter",
+                "statistics": {
+                  "splits": {
+                    "categories": [
+                      {
+                        "abbreviation": "K",
+                        "displayValue": "97",
+                        "name": "strikeouts",
+                        "value": 97.0
+                      },
+                      {
+                        "abbreviation": "L",
+                        "displayValue": "6",
+                        "name": "losses",
+                        "value": 6.0
+                      },
+                      {
+                        "abbreviation": "H",
+                        "displayValue": "128",
+                        "name": "hits",
+                        "value": 128.0
+                      },
+                      {
+                        "abbreviation": "BB",
+                        "displayValue": "41",
+                        "name": "walks",
+                        "value": 41.0
+                      },
+                      {
+                        "abbreviation": "HR",
+                        "displayValue": "10",
+                        "name": "homeRuns",
+                        "value": 10.0
+                      },
+                      {
+                        "abbreviation": "W",
+                        "displayValue": "12",
+                        "name": "wins",
+                        "value": 12.0
+                      },
+                      {
+                        "abbreviation": "FI",
+                        "displayValue": "136",
+                        "name": "fullInnings",
+                        "value": 136.0
+                      },
+                      {
+                        "abbreviation": "PI",
+                        "displayValue": "0",
+                        "name": "partInnings",
+                        "value": 0.0
+                      },
+                      {
+                        "abbreviation": "ERA",
+                        "displayValue": "3.57",
+                        "name": "ERA",
+                        "value": 3.5735
+                      },
+                      {
+                        "abbreviation": "WHIP",
+                        "displayValue": "1.24",
+                        "name": "WHIP",
+                        "value": 1.2426
+                      }
+                    ]
+                  }
+                }
+              }
+            ],
+            "record": [
+              {
+                "displayValue": "14-11",
+                "summary": "14-11",
+                "type": "total"
+              },
+              {
+                "displayValue": "7-6",
+                "summary": "7-6",
+                "type": "home"
+              }
+            ],
+            "score": "2",
+            "team": {
+              "abbreviation": "STL",
+              "alternateColor": "001541",
+              "color": "be0a14",
+              "displayName": "St. Louis Cardinals",
+              "guid": "c781e7c6-2c5b-beaf-55b8-999c76f76661",
+              "id": "24",
+              "links": [
+                {
+                  "href": "https://www.espn.com/mlb/team/_/name/stl/st-louis-cardinals",
+                  "rel": [
+                    "clubhouse",
+                    "desktop",
+                    "team"
+                  ],
+                  "text": "Clubhouse"
+                }
+              ],
+              "location": "St. Louis",
+              "logos": [
+                {
+                  "alt": "",
+                  "height": 500,
+                  "href": "https://a.espncdn.com/i/teamlogos/mlb/500/stl.png",
+                  "lastUpdated": "2024-07-01T17:48Z",
+                  "rel": [
+                    "full",
+                    "default"
+                  ],
+                  "width": 500
+                },
+                {
+                  "alt": "",
+                  "height": 500,
+                  "href": "https://a.espncdn.com/i/teamlogos/mlb/500-dark/stl.png",
+                  "lastUpdated": "2024-07-01T17:49Z",
+                  "rel": [
+                    "full",
+                    "dark"
+                  ],
+                  "width": 500
+                },
+                {
+                  "alt": "",
+                  "height": 500,
+                  "href": "https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/stl.png",
+                  "lastUpdated": "2024-07-01T17:48Z",
+                  "rel": [
+                    "full",
+                    "scoreboard"
+                  ],
+                  "width": 500
+                },
+                {
+                  "alt": "",
+                  "height": 500,
+                  "href": "https://a.espncdn.com/i/teamlogos/mlb/500-dark/scoreboard/stl.png",
+                  "lastUpdated": "2024-07-01T17:49Z",
+                  "rel": [
+                    "full",
+                    "scoreboard",
+                    "dark"
+                  ],
+                  "width": 500
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/primary_logo_on_white_color.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "primary_logo_on_white_color"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/primary_logo_on_black_color.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "primary_logo_on_black_color"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/primary_logo_on_primary_color.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "primary_logo_on_primary_color"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/primary_logo_on_secondary_color.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "primary_logo_on_secondary_color"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/primary_logo_black.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "primary_logo_black"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/primary_logo_white.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "primary_logo_white"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/secondary_logo_on_white_color.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "secondary_logo_on_white_color"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/secondary_logo_on_black_color.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "secondary_logo_on_black_color"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/secondary_logo_on_primary_color.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "secondary_logo_on_primary_color"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/secondary_logo_on_secondary_color.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "secondary_logo_on_secondary_color"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/secondary_logo_black.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "secondary_logo_black"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/secondary_logo_white.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "secondary_logo_white"
+                  ],
+                  "width": 4096
+                }
+              ],
+              "name": "Cardinals",
+              "uid": "s:1~l:10~t:24"
+            },
+            "uid": "s:1~l:10~t:24",
+            "winner": false
+          },
+          {
+            "errors": 0,
+            "hits": 4,
+            "homeAway": "away",
+            "id": "12",
+            "linescores": [
+              {
+                "displayValue": "0",
+                "errors": 0,
+                "hits": 0
+              },
+              {
+                "displayValue": "1",
+                "errors": 0,
+                "hits": 2
+              },
+              {
+                "displayValue": "0",
+                "errors": 0,
+                "hits": 0
+              },
+              {
+                "displayValue": "1",
+                "errors": 0,
+                "hits": 1
+              },
+              {
+                "displayValue": "0",
+                "errors": 0,
+                "hits": 0
+              },
+              {
+                "displayValue": "1",
+                "errors": 0,
+                "hits": 1
+              },
+              {
+                "displayValue": "0",
+                "errors": 0,
+                "hits": 0
+              },
+              {
+                "displayValue": "0",
+                "errors": 0,
+                "hits": 0
+              },
+              {
+                "displayValue": "0",
+                "errors": 0,
+                "hits": 0
+              }
+            ],
+            "order": 1,
+            "possession": false,
+            "probables": [
+              {
+                "abbreviation": "SP",
+                "athlete": {
+                  "displayName": "George Kirby",
+                  "fullName": "George Kirby",
+                  "guid": "1a5ac7a8-3d43-3bba-ac79-580f0a46e25f",
+                  "headshot": {
+                    "alt": "George Kirby",
+                    "href": "https://a.espncdn.com/i/headshots/mlb/players/full/42406.png"
+                  },
+                  "id": "42406",
+                  "jersey": "68",
+                  "lastName": "Kirby",
+                  "links": [
+                    {
+                      "href": "https://www.espn.com/mlb/player/_/id/42406",
+                      "rel": [
+                        "playercard",
+                        "desktop",
+                        "athlete"
+                      ],
+                      "text": "Player Card"
+                    }
+                  ],
+                  "position": {
+                    "abbreviation": "SP",
+                    "displayName": "Starting Pitcher",
+                    "name": "Starting Pitcher"
+                  },
+                  "shortName": "G. Kirby",
+                  "status": {
+                    "abbreviation": "Active",
+                    "id": "1",
+                    "name": "Active",
+                    "type": "active"
+                  },
+                  "throws": {
+                    "abbreviation": "R",
+                    "displayValue": "Right",
+                    "type": "RIGHT"
+                  },
+                  "uid": "s:1~l:10~a:42406"
+                },
+                "displayName": "Probable Starting Pitcher",
+                "name": "probableStartingPitcher",
+                "playerId": 42406,
+                "shortDisplayName": "Starter",
+                "statistics": {
+                  "splits": {
+                    "categories": [
+                      {
+                        "abbreviation": "K",
+                        "displayValue": "117",
+                        "name": "strikeouts",
+                        "value": 117.0
+                      },
+                      {
+                        "abbreviation": "L",
+                        "displayValue": "10",
+                        "name": "losses",
+                        "value": 10.0
+                      },
+                      {
+                        "abbreviation": "H",
+                        "displayValue": "157",
+                        "name": "hits",
+                        "value": 157.0
+                      },
+                      {
+                        "abbreviation": "BB",
+                        "displayValue": "33",
+                        "name": "walks",
+                        "value": 33.0
+                      },
+                      {
+                        "abbreviation": "HR",
+                        "displayValue": "17",
+                        "name": "homeRuns",
+                        "value": 17.0
+                      },
+                      {
+                        "abbreviation": "W",
+                        "displayValue": "8",
+                        "name": "wins",
+                        "value": 8.0
+                      },
+                      {
+                        "abbreviation": "FI",
+                        "displayValue": "140",
+                        "name": "fullInnings",
+                        "value": 140.0
+                      },
+                      {
+                        "abbreviation": "PI",
+                        "displayValue": "0",
+                        "name": "partInnings",
+                        "value": 0.0
+                      },
+                      {
+                        "abbreviation": "ERA",
+                        "displayValue": "4.18",
+                        "name": "ERA",
+                        "value": 4.1785
+                      },
+                      {
+                        "abbreviation": "WHIP",
+                        "displayValue": "1.36",
+                        "name": "WHIP",
+                        "value": 1.3571
+                      }
+                    ]
+                  }
+                }
+              }
+            ],
+            "record": [
+              {
+                "displayValue": "12-15",
+                "summary": "12-15",
+                "type": "total"
+              },
+              {
+                "displayValue": "2-8",
+                "summary": "2-8",
+                "type": "road"
+              }
+            ],
+            "score": "3",
+            "team": {
+              "abbreviation": "SEA",
+              "alternateColor": "0c2c56",
+              "color": "005c5c",
+              "displayName": "Seattle Mariners",
+              "guid": "56d60582-088f-6848-5180-1fb04440cf87",
+              "id": "12",
+              "links": [
+                {
+                  "href": "https://www.espn.com/mlb/team/_/name/sea/seattle-mariners",
+                  "rel": [
+                    "clubhouse",
+                    "desktop",
+                    "team"
+                  ],
+                  "text": "Clubhouse"
+                }
+              ],
+              "location": "Seattle",
+              "logos": [
+                {
+                  "alt": "",
+                  "height": 500,
+                  "href": "https://a.espncdn.com/i/teamlogos/mlb/500/sea.png",
+                  "lastUpdated": "2024-07-01T17:48Z",
+                  "rel": [
+                    "full",
+                    "default"
+                  ],
+                  "width": 500
+                },
+                {
+                  "alt": "",
+                  "height": 500,
+                  "href": "https://a.espncdn.com/i/teamlogos/mlb/500-dark/sea.png",
+                  "lastUpdated": "2024-07-01T17:49Z",
+                  "rel": [
+                    "full",
+                    "dark"
+                  ],
+                  "width": 500
+                },
+                {
+                  "alt": "",
+                  "height": 500,
+                  "href": "https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/sea.png",
+                  "lastUpdated": "2024-07-01T17:48Z",
+                  "rel": [
+                    "full",
+                    "scoreboard"
+                  ],
+                  "width": 500
+                },
+                {
+                  "alt": "",
+                  "height": 500,
+                  "href": "https://a.espncdn.com/i/teamlogos/mlb/500-dark/scoreboard/sea.png",
+                  "lastUpdated": "2024-07-01T17:49Z",
+                  "rel": [
+                    "full",
+                    "scoreboard",
+                    "dark"
+                  ],
+                  "width": 500
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/primary_logo_on_white_color.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "primary_logo_on_white_color"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/primary_logo_on_black_color.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "primary_logo_on_black_color"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/primary_logo_on_primary_color.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "primary_logo_on_primary_color"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/primary_logo_on_secondary_color.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "primary_logo_on_secondary_color"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/primary_logo_black.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "primary_logo_black"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/primary_logo_white.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "primary_logo_white"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/secondary_logo_on_white_color.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "secondary_logo_on_white_color"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/secondary_logo_on_black_color.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "secondary_logo_on_black_color"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/secondary_logo_on_primary_color.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "secondary_logo_on_primary_color"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/secondary_logo_on_secondary_color.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "secondary_logo_on_secondary_color"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/secondary_logo_black.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "secondary_logo_black"
+                  ],
+                  "width": 4096
+                },
+                {
+                  "alt": "",
+                  "height": 4096,
+                  "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/secondary_logo_white.png",
+                  "lastUpdated": "2026-07-22T20:07Z",
+                  "rel": [
+                    "full",
+                    "secondary_logo_white"
+                  ],
+                  "width": 4096
+                }
+              ],
+              "name": "Mariners",
+              "uid": "s:1~l:10~t:12"
+            },
+            "uid": "s:1~l:10~t:12",
+            "winner": true
+          }
+        ],
+        "conferenceCompetition": false,
+        "date": "2026-04-25T00:15Z",
+        "id": "401815075",
+        "liveAvailable": false,
+        "neutralSite": false,
+        "onWatchESPN": false,
+        "playByPlaySource": "full",
+        "recent": false,
+        "series": [
+          {
+            "competitors": [
+              {
+                "id": "24",
+                "team": {
+                  "$ref": "http://sports.core.api.espn.pvt/v2/sports/baseball/leagues/mlb/seasons/2026/teams/24?lang=en&region=us"
+                },
+                "ties": 0,
+                "uid": "s:1~l:10~t:24",
+                "wins": 0
+              },
+              {
+                "id": "12",
+                "team": {
+                  "$ref": "http://sports.core.api.espn.pvt/v2/sports/baseball/leagues/mlb/seasons/2026/teams/12?lang=en&region=us"
+                },
+                "ties": 0,
+                "uid": "s:1~l:10~t:12",
+                "wins": 3
+              }
+            ],
+            "completed": true,
+            "description": "Current Series",
+            "events": [
+              {
+                "$ref": "http://sports.core.api.espn.pvt/v2/sports/baseball/leagues/mlb/events/401815075?lang=en&region=us",
+                "id": "401815075"
+              },
+              {
+                "$ref": "http://sports.core.api.espn.pvt/v2/sports/baseball/leagues/mlb/events/401815090?lang=en&region=us",
+                "id": "401815090"
+              },
+              {
+                "$ref": "http://sports.core.api.espn.pvt/v2/sports/baseball/leagues/mlb/events/401815105?lang=en&region=us",
+                "id": "401815105"
+              }
+            ],
+            "startDate": "2026-04-24T04:00Z",
+            "summary": "SEA wins series 3-0",
+            "title": "Current Series",
+            "totalCompetitions": 3,
+            "type": "current"
+          },
+          {
+            "competitors": [
+              {
+                "id": "24",
+                "team": {
+                  "$ref": "http://sports.core.api.espn.pvt/v2/sports/baseball/leagues/mlb/seasons/2026/teams/24?lang=en&region=us"
+                },
+                "ties": 0,
+                "uid": "s:1~l:10~t:24",
+                "wins": 0
+              },
+              {
+                "id": "12",
+                "team": {
+                  "$ref": "http://sports.core.api.espn.pvt/v2/sports/baseball/leagues/mlb/seasons/2026/teams/12?lang=en&region=us"
+                },
+                "ties": 0,
+                "uid": "s:1~l:10~t:12",
+                "wins": 1
+              }
+            ],
+            "completed": false,
+            "description": "Regular Season Series",
+            "events": [
+              {
+                "$ref": "http://sports.core.api.espn.pvt/v2/sports/baseball/leagues/mlb/events/401815075?lang=en&region=us",
+                "id": "401815075"
+              },
+              {
+                "$ref": "http://sports.core.api.espn.pvt/v2/sports/baseball/leagues/mlb/events/401815090?lang=en&region=us",
+                "id": "401815090"
+              },
+              {
+                "$ref": "http://sports.core.api.espn.pvt/v2/sports/baseball/leagues/mlb/events/401815105?lang=en&region=us",
+                "id": "401815105"
+              }
+            ],
+            "startDate": "2026-04-25T00:15Z",
+            "summary": "SEA leads series 1-0",
+            "title": "Regular Season Series",
+            "totalCompetitions": 3,
+            "type": "season"
+          }
+        ],
+        "status": {
+          "featuredAthletes": [
+            {
+              "athlete": {
+                "displayName": "George Kirby",
+                "fullName": "George Kirby",
+                "guid": "1a5ac7a8-3d43-3bba-ac79-580f0a46e25f",
+                "headshot": {
+                  "alt": "George Kirby",
+                  "href": "https://a.espncdn.com/i/headshots/mlb/players/full/42406.png"
+                },
+                "id": "42406",
+                "links": [
+                  {
+                    "href": "https://www.espn.com/mlb/player/_/id/42406",
+                    "language": "en-US",
+                    "rel": [
+                      "playercard",
+                      "desktop",
+                      "athlete"
+                    ],
+                    "shortText": "Player Card",
+                    "text": "Player Card"
+                  }
+                ],
+                "record": "4-2",
+                "saves": "0",
+                "shortName": "G. Kirby",
+                "uid": "s:1~l:10~a:42406"
+              },
+              "displayName": "Winning Pitcher",
+              "name": "winningPitcher",
+              "playerId": 42406,
+              "team": {
+                "id": "12",
+                "logos": [
+                  {
+                    "alt": "",
+                    "height": 500,
+                    "href": "https://a.espncdn.com/i/teamlogos/mlb/500/sea.png",
+                    "lastUpdated": "2024-07-01T17:48Z",
+                    "rel": [
+                      "full",
+                      "default"
+                    ],
+                    "width": 500
+                  },
+                  {
+                    "alt": "",
+                    "height": 500,
+                    "href": "https://a.espncdn.com/i/teamlogos/mlb/500-dark/sea.png",
+                    "lastUpdated": "2024-07-01T17:49Z",
+                    "rel": [
+                      "full",
+                      "dark"
+                    ],
+                    "width": 500
+                  },
+                  {
+                    "alt": "",
+                    "height": 500,
+                    "href": "https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/sea.png",
+                    "lastUpdated": "2024-07-01T17:48Z",
+                    "rel": [
+                      "full",
+                      "scoreboard"
+                    ],
+                    "width": 500
+                  },
+                  {
+                    "alt": "",
+                    "height": 500,
+                    "href": "https://a.espncdn.com/i/teamlogos/mlb/500-dark/scoreboard/sea.png",
+                    "lastUpdated": "2024-07-01T17:49Z",
+                    "rel": [
+                      "full",
+                      "scoreboard",
+                      "dark"
+                    ],
+                    "width": 500
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/primary_logo_on_white_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "primary_logo_on_white_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/primary_logo_on_black_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "primary_logo_on_black_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/primary_logo_on_primary_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "primary_logo_on_primary_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/primary_logo_on_secondary_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "primary_logo_on_secondary_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/primary_logo_black.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "primary_logo_black"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/primary_logo_white.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "primary_logo_white"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/secondary_logo_on_white_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "secondary_logo_on_white_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/secondary_logo_on_black_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "secondary_logo_on_black_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/secondary_logo_on_primary_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "secondary_logo_on_primary_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/secondary_logo_on_secondary_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "secondary_logo_on_secondary_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/secondary_logo_black.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "secondary_logo_black"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/secondary_logo_white.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "secondary_logo_white"
+                    ],
+                    "width": 4096
+                  }
+                ],
+                "name": "Mariners"
+              }
+            },
+            {
+              "athlete": {
+                "displayName": "Andre Pallante",
+                "fullName": "Andre Pallante",
+                "guid": "5ac1018a-9135-3239-9b4c-dc31c11826f8",
+                "headshot": {
+                  "alt": "Andre Pallante",
+                  "href": "https://a.espncdn.com/i/headshots/mlb/players/full/4109034.png"
+                },
+                "id": "4109034",
+                "links": [
+                  {
+                    "href": "https://www.espn.com/mlb/player/_/id/4109034",
+                    "language": "en-US",
+                    "rel": [
+                      "playercard",
+                      "desktop",
+                      "athlete"
+                    ],
+                    "shortText": "Player Card",
+                    "text": "Player Card"
+                  }
+                ],
+                "record": "2-2",
+                "saves": "0",
+                "shortName": "A. Pallante",
+                "uid": "s:1~l:10~a:4109034"
+              },
+              "displayName": "Losing Pitcher",
+              "name": "losingPitcher",
+              "playerId": 4109034,
+              "team": {
+                "id": "24",
+                "logos": [
+                  {
+                    "alt": "",
+                    "height": 500,
+                    "href": "https://a.espncdn.com/i/teamlogos/mlb/500/stl.png",
+                    "lastUpdated": "2024-07-01T17:48Z",
+                    "rel": [
+                      "full",
+                      "default"
+                    ],
+                    "width": 500
+                  },
+                  {
+                    "alt": "",
+                    "height": 500,
+                    "href": "https://a.espncdn.com/i/teamlogos/mlb/500-dark/stl.png",
+                    "lastUpdated": "2024-07-01T17:49Z",
+                    "rel": [
+                      "full",
+                      "dark"
+                    ],
+                    "width": 500
+                  },
+                  {
+                    "alt": "",
+                    "height": 500,
+                    "href": "https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/stl.png",
+                    "lastUpdated": "2024-07-01T17:48Z",
+                    "rel": [
+                      "full",
+                      "scoreboard"
+                    ],
+                    "width": 500
+                  },
+                  {
+                    "alt": "",
+                    "height": 500,
+                    "href": "https://a.espncdn.com/i/teamlogos/mlb/500-dark/scoreboard/stl.png",
+                    "lastUpdated": "2024-07-01T17:49Z",
+                    "rel": [
+                      "full",
+                      "scoreboard",
+                      "dark"
+                    ],
+                    "width": 500
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/primary_logo_on_white_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "primary_logo_on_white_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/primary_logo_on_black_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "primary_logo_on_black_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/primary_logo_on_primary_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "primary_logo_on_primary_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/primary_logo_on_secondary_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "primary_logo_on_secondary_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/primary_logo_black.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "primary_logo_black"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/primary_logo_white.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "primary_logo_white"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/secondary_logo_on_white_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "secondary_logo_on_white_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/secondary_logo_on_black_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "secondary_logo_on_black_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/secondary_logo_on_primary_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "secondary_logo_on_primary_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/secondary_logo_on_secondary_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "secondary_logo_on_secondary_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/secondary_logo_black.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "secondary_logo_black"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/c781e7c6-2c5b-beaf-55b8-999c76f76661/logos/secondary_logo_white.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "secondary_logo_white"
+                    ],
+                    "width": 4096
+                  }
+                ],
+                "name": "Cardinals"
+              }
+            },
+            {
+              "athlete": {
+                "displayName": "Andres Munoz",
+                "fullName": "Andres Munoz",
+                "guid": "5cb9b364-9ea7-b514-a67f-3fd0e6d193b7",
+                "headshot": {
+                  "alt": "Andres Munoz",
+                  "href": "https://a.espncdn.com/i/headshots/mlb/players/full/40939.png"
+                },
+                "id": "40939",
+                "links": [
+                  {
+                    "href": "https://www.espn.com/mlb/player/_/id/40939",
+                    "language": "en-US",
+                    "rel": [
+                      "playercard",
+                      "desktop",
+                      "athlete"
+                    ],
+                    "shortText": "Player Card",
+                    "text": "Player Card"
+                  }
+                ],
+                "record": "3-2",
+                "saves": "4",
+                "shortName": "A. Munoz",
+                "uid": "s:1~l:10~a:40939"
+              },
+              "displayName": "Saving Pitcher",
+              "name": "savingPitcher",
+              "playerId": 40939,
+              "team": {
+                "id": "12",
+                "logos": [
+                  {
+                    "alt": "",
+                    "height": 500,
+                    "href": "https://a.espncdn.com/i/teamlogos/mlb/500/sea.png",
+                    "lastUpdated": "2024-07-01T17:48Z",
+                    "rel": [
+                      "full",
+                      "default"
+                    ],
+                    "width": 500
+                  },
+                  {
+                    "alt": "",
+                    "height": 500,
+                    "href": "https://a.espncdn.com/i/teamlogos/mlb/500-dark/sea.png",
+                    "lastUpdated": "2024-07-01T17:49Z",
+                    "rel": [
+                      "full",
+                      "dark"
+                    ],
+                    "width": 500
+                  },
+                  {
+                    "alt": "",
+                    "height": 500,
+                    "href": "https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/sea.png",
+                    "lastUpdated": "2024-07-01T17:48Z",
+                    "rel": [
+                      "full",
+                      "scoreboard"
+                    ],
+                    "width": 500
+                  },
+                  {
+                    "alt": "",
+                    "height": 500,
+                    "href": "https://a.espncdn.com/i/teamlogos/mlb/500-dark/scoreboard/sea.png",
+                    "lastUpdated": "2024-07-01T17:49Z",
+                    "rel": [
+                      "full",
+                      "scoreboard",
+                      "dark"
+                    ],
+                    "width": 500
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/primary_logo_on_white_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "primary_logo_on_white_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/primary_logo_on_black_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "primary_logo_on_black_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/primary_logo_on_primary_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "primary_logo_on_primary_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/primary_logo_on_secondary_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "primary_logo_on_secondary_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/primary_logo_black.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "primary_logo_black"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/primary_logo_white.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "primary_logo_white"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/secondary_logo_on_white_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "secondary_logo_on_white_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/secondary_logo_on_black_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "secondary_logo_on_black_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/secondary_logo_on_primary_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "secondary_logo_on_primary_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/secondary_logo_on_secondary_color.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "secondary_logo_on_secondary_color"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/secondary_logo_black.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "secondary_logo_black"
+                    ],
+                    "width": 4096
+                  },
+                  {
+                    "alt": "",
+                    "height": 4096,
+                    "href": "https://a.espncdn.com/guid/56d60582-088f-6848-5180-1fb04440cf87/logos/secondary_logo_white.png",
+                    "lastUpdated": "2026-07-22T20:07Z",
+                    "rel": [
+                      "full",
+                      "secondary_logo_white"
+                    ],
+                    "width": 4096
+                  }
+                ],
+                "name": "Mariners"
+              }
+            }
+          ],
+          "periodPrefix": "End",
+          "type": {
+            "completed": true,
+            "description": "Final",
+            "detail": "Final",
+            "id": "3",
+            "name": "STATUS_FINAL",
+            "shortDetail": "Final",
+            "state": "post"
+          }
+        },
+        "uid": "s:1~l:10~e:401815075~c:401815075",
+        "wallclockAvailable": true
+      }
+    ],
+    "id": "401815075",
+    "league": {
+      "abbreviation": "MLB",
+      "id": "10",
+      "isTournament": false,
+      "links": [
+        {
+          "href": "https://www.espn.com/mlb/",
+          "rel": [
+            "index",
+            "desktop",
+            "league"
+          ],
+          "text": "Index"
+        },
+        {
+          "href": "sportscenter://x-callback-url/showClubhouse?uid=s:1~l:10",
+          "rel": [
+            "index",
+            "sportscenter",
+            "app",
+            "league"
+          ],
+          "text": "Index"
+        },
+        {
+          "href": "https://www.espn.com/mlb/schedule",
+          "rel": [
+            "schedule",
+            "desktop",
+            "league"
+          ],
+          "text": "Schedule"
+        },
+        {
+          "href": "sportscenter://x-callback-url/showClubhouse?uid=s:1~l:10&section=scores",
+          "rel": [
+            "schedule",
+            "sportscenter",
+            "app",
+            "league"
+          ],
+          "text": "Schedule"
+        },
+        {
+          "href": "https://www.espn.com/mlb/standings",
+          "rel": [
+            "standings",
+            "desktop",
+            "league"
+          ],
+          "text": "Standings"
+        },
+        {
+          "href": "sportscenter://x-callback-url/showClubhouse?uid=s:1~l:10&section=standings",
+          "rel": [
+            "standings",
+            "sportscenter",
+            "app",
+            "league"
+          ],
+          "text": "Standings"
+        },
+        {
+          "href": "https://www.espn.com/mlb/rankings",
+          "rel": [
+            "rankings",
+            "desktop",
+            "league"
+          ],
+          "text": "Rankings"
+        },
+        {
+          "href": "sportscenter://x-callback-url/showClubhouse?uid=s:1~l:10&section=rankings",
+          "rel": [
+            "rankings",
+            "sportscenter",
+            "app",
+            "league"
+          ],
+          "text": "Rankings"
+        },
+        {
+          "href": "https://www.espn.com/mlb/scoreboard",
+          "rel": [
+            "scores",
+            "desktop",
+            "league"
+          ],
+          "text": "Scores"
+        },
+        {
+          "href": "sportscenter://x-callback-url/showClubhouse?uid=s:1~l:10&section=scores",
+          "rel": [
+            "scores",
+            "sportscenter",
+            "app",
+            "league"
+          ],
+          "text": "Scores"
+        },
+        {
+          "href": "https://www.espn.com/mlb/stats",
+          "rel": [
+            "stats",
+            "desktop",
+            "league"
+          ],
+          "text": "Stats"
+        },
+        {
+          "href": "sportscenter://x-callback-url/showClubhouse?uid=s:1~l:10&section=stats",
+          "rel": [
+            "stats",
+            "sportscenter",
+            "app",
+            "league"
+          ],
+          "text": "Stats"
+        },
+        {
+          "href": "https://www.espn.com/mlb/teams",
+          "rel": [
+            "teams",
+            "desktop",
+            "league"
+          ],
+          "text": "Teams"
+        },
+        {
+          "href": "https://www.espn.com/mlb/players",
+          "rel": [
+            "athletes",
+            "desktop",
+            "league"
+          ],
+          "text": "Players"
+        },
+        {
+          "href": "https://www.espn.com/mlb/injuries",
+          "rel": [
+            "injuries",
+            "desktop",
+            "league"
+          ],
+          "text": "Injuries"
+        },
+        {
+          "href": "https://www.espn.com/mlb/odds",
+          "rel": [
+            "odds",
+            "desktop",
+            "league"
+          ],
+          "text": "Odds"
+        },
+        {
+          "href": "sportscenter://x-callback-url/showClubhouse?uid=s:1~l:10&section=odds",
+          "rel": [
+            "odds",
+            "sportscenter",
+            "app",
+            "league"
+          ],
+          "text": "Odds"
+        },
+        {
+          "href": "https://www.espn.com/mlb/playoff-bracket",
+          "rel": [
+            "playoff-bracket",
+            "desktop",
+            "league"
+          ],
+          "text": "Bracket"
+        },
+        {
+          "href": "sportscenter://x-callback-url/showClubhouse?uid=s:1~l:10&section=bracket",
+          "rel": [
+            "playoff-bracket",
+            "sportscenter",
+            "app",
+            "league"
+          ],
+          "text": "Bracket"
+        }
+      ],
+      "logos": [
+        {
+          "href": "https://a.espncdn.com/i/teamlogos/leagues/500/mlb.png",
+          "rel": [
+            "full",
+            "default"
+          ]
+        },
+        {
+          "href": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/leagues/500-dark/mlb.png&w=500&h=500&transparent=true",
+          "rel": [
+            "full",
+            "dark"
+          ]
+        }
+      ],
+      "midsizeName": "MLB",
+      "name": "Major League Baseball",
+      "shortName": "MLB",
+      "slug": "mlb",
+      "uid": "s:1~l:10"
+    },
+    "links": [
+      {
+        "href": "https://www.espn.com/mlb/game/_/gameId/401815075/mariners-cardinals",
+        "isExternal": false,
+        "isPremium": false,
+        "rel": [
+          "summary",
+          "desktop",
+          "event"
+        ],
+        "shortText": "Summary",
+        "text": "Gamecast"
+      },
+      {
+        "href": "https://www.espn.com/mlb/recap?gameId=401815075",
+        "isExternal": false,
+        "isPremium": false,
+        "rel": [
+          "recap",
+          "desktop",
+          "event"
+        ],
+        "shortText": "Recap",
+        "text": "Recap"
+      },
+      {
+        "href": "https://www.espn.com/mlb/boxscore/_/gameId/401815075",
+        "isExternal": false,
+        "isPremium": false,
+        "rel": [
+          "boxscore",
+          "desktop",
+          "event"
+        ],
+        "shortText": "Box Score",
+        "text": "Box Score"
+      },
+      {
+        "href": "https://www.espn.com/mlb/playbyplay/_/gameId/401815075",
+        "isExternal": false,
+        "isPremium": false,
+        "rel": [
+          "pbp",
+          "desktop",
+          "event"
+        ],
+        "shortText": "Play-by-Play",
+        "text": "Play-by-Play"
+      }
+    ],
+    "season": {
+      "current": true,
+      "type": 2,
+      "year": 2026
+    },
+    "timeValid": true,
+    "uid": "s:1~l:10~e:401815075",
+    "week": 17
+  },
+  "pickcenter": [
+    {
+      "awayTeamOdds": {
+        "favorite": true,
+        "favoriteAtOpen": true,
+        "moneyLine": -149,
+        "team": {
+          "$ref": "http://sports.core.api.espn.pvt/v2/sports/baseball/leagues/mlb/seasons/2026/teams/12?lang=en&region=us"
+        },
+        "teamId": "12",
+        "underdog": false
+      },
+      "details": "SEA -149",
+      "footer": {
+        "disclaimer": "GAMBLING PROBLEM? CALL 1-800-GAMBLER or 1-800-MY-RESET, (800) 327-5050 or visit gamblinghelplinema.org (MA). Call 877-8-HOPENY/text HOPENY (467369) (NY). Call 888-789-7777/visit ccpg.org (CT), or visit www.mdgamblinghelp.org (MD), 1-800-981-0023 (PR). 21+ and present in most states. (18+ DC/KY/NH/PR/WY). Void in ONT. Eligibility restrictions apply. Terms: draftkings.com/sportsbook. On behalf of Boot Hill Casino (KS). Pass-thru of per wager tax may apply in IL."
+      },
+      "header": {
+        "logo": {
+          "dark": "https://a.espncdn.com/i/espnbet/dark/espn-bet-square-off.svg",
+          "exclusivesLogoDark": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg",
+          "exclusivesLogoLight": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg",
+          "light": "https://a.espncdn.com/i/espnbet/espn-bet-square-off.svg"
+        },
+        "text": "Game Odds"
+      },
+      "homeTeamOdds": {
+        "favorite": false,
+        "favoriteAtOpen": false,
+        "moneyLine": 123,
+        "team": {
+          "$ref": "http://sports.core.api.espn.pvt/v2/sports/baseball/leagues/mlb/seasons/2026/teams/24?lang=en&region=us"
+        },
+        "teamId": "24",
+        "underdog": true
+      },
+      "link": {
+        "href": "https://sportsbook.draftkings.com",
+        "isExternal": true,
+        "isPremium": false,
+        "language": "en-US",
+        "rel": [
+          "main",
+          "desktop",
+          "bets"
+        ],
+        "text": "See More Odds"
+      },
+      "links": [
+        {
+          "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34039680%3Foutcomes%3D0ML84473895_1",
+          "isExternal": true,
+          "isPremium": false,
+          "language": "en-US",
+          "rel": [
+            "home",
+            "desktop",
+            "bets"
+          ],
+          "shortText": "Home Bet",
+          "text": "Home Bet"
+        },
+        {
+          "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34039680%3Foutcomes%3D0ML84473895_3",
+          "isExternal": true,
+          "isPremium": false,
+          "language": "en-US",
+          "rel": [
+            "away",
+            "desktop",
+            "bets"
+          ],
+          "shortText": "Away Bet",
+          "text": "Away Bet"
+        },
+        {
+          "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34039680%3Foutcomes%3D0HC84473895P150_1",
+          "isExternal": true,
+          "isPremium": false,
+          "language": "en-US",
+          "rel": [
+            "homeSpread",
+            "desktop",
+            "bets"
+          ],
+          "shortText": "Home Point Spread",
+          "text": "Home Point Spread"
+        },
+        {
+          "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34039680%3Foutcomes%3D0HC84473895N150_3",
+          "isExternal": true,
+          "isPremium": false,
+          "language": "en-US",
+          "rel": [
+            "awaySpread",
+            "desktop",
+            "bets"
+          ],
+          "shortText": "Away Point Spread",
+          "text": "Away Point Spread"
+        },
+        {
+          "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34039680%3Foutcomes%3D0OU84473895O800_1",
+          "isExternal": true,
+          "isPremium": false,
+          "language": "en-US",
+          "rel": [
+            "over",
+            "desktop",
+            "bets"
+          ],
+          "shortText": "Over Odds",
+          "text": "Over Odds"
+        },
+        {
+          "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34039680%3Foutcomes%3D0OU84473895U800_3",
+          "isExternal": true,
+          "isPremium": false,
+          "language": "en-US",
+          "rel": [
+            "under",
+            "desktop",
+            "bets"
+          ],
+          "shortText": "Under Odds",
+          "text": "Under Odds"
+        },
+        {
+          "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34039680",
+          "isExternal": true,
+          "isPremium": false,
+          "language": "en-US",
+          "rel": [
+            "game",
+            "desktop",
+            "bets"
+          ],
+          "shortText": "Game",
+          "text": "Game"
+        }
+      ],
+      "moneyline": {
+        "away": {
+          "close": {
+            "odds": "-149"
+          },
+          "open": {
+            "odds": "-149"
+          }
+        },
+        "displayName": "Moneyline",
+        "home": {
+          "close": {
+            "odds": "+123"
+          },
+          "open": {
+            "odds": "+123"
+          }
+        },
+        "shortDisplayName": "ML"
+      },
+      "overOdds": -112.0,
+      "overUnder": 8.0,
+      "pointSpread": {
+        "away": {
+          "close": {
+            "line": "-1.5",
+            "odds": "+113"
+          },
+          "open": {
+            "line": "-1.5",
+            "odds": "+109"
+          }
+        },
+        "displayName": "Runline",
+        "home": {
+          "close": {
+            "line": "+1.5",
+            "odds": "-136"
+          },
+          "open": {
+            "line": "+1.5",
+            "odds": "-131"
+          }
+        },
+        "shortDisplayName": "RL"
+      },
+      "provider": {
+        "id": "100",
+        "logos": [
+          {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Light.svg",
+            "rel": [
+              "light"
+            ]
+          },
+          {
+            "href": "https://a.espncdn.com/i/betting/Draftkings_Dark.svg",
+            "rel": [
+              "dark"
+            ]
+          }
+        ],
+        "name": "DraftKings",
+        "priority": 1
+      },
+      "spread": 1.5,
+      "total": {
+        "displayName": "Total Runs",
+        "over": {
+          "close": {
+            "line": "o8",
+            "odds": "-112"
+          },
+          "open": {
+            "line": "o8",
+            "odds": "-110"
+          }
+        },
+        "shortDisplayName": "Total",
+        "under": {
+          "close": {
+            "line": "u8",
+            "odds": "-108"
+          },
+          "open": {
+            "line": "u8",
+            "odds": "-110"
+          }
+        }
+      },
+      "underOdds": -108.0
+    }
+  ]
+}
