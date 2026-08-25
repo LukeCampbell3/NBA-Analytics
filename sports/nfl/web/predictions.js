@@ -10,10 +10,6 @@ class NflPredictionBoard {
             overall: document.getElementById("overallMetrics"),
             board: document.getElementById("currentBoard"),
             parlay: document.getElementById("dailyParlay"),
-            marketStatus: document.getElementById("marketReplayStatus"),
-            marketMetrics: document.getElementById("marketReplayMetrics"),
-            marketBaselines: document.getElementById("marketBaselines"),
-            marketWeekly: document.getElementById("marketWeekly"),
             weekPoolStatus: document.getElementById("weekPoolStatus"),
             weekPoolMetrics: document.getElementById("weekPoolMetrics"),
             weekProjectionPool: document.getElementById("weekProjectionPool"),
@@ -62,13 +58,13 @@ class NflPredictionBoard {
     mountShell() {
         if (!window.CardVaultShell) return;
         window.CardVaultShell.mount({
-            brandTitle: "Prediction Bounties",
+            brandTitle: "In The Cards Analytics",
             brandHref: "/",
             sportSlug: "nfl",
             sportAccent: "#b42318",
             navLinks: [
-                { label: "Picks", href: "/nfl/predictions/", active: true },
-                { label: "Fantasy Draft", href: "/nfl/fantasy/", active: false },
+                { label: "Predictions", href: "/nfl/predictions/", active: true },
+                { label: "Fantasy", href: "/nfl/fantasy/", active: false },
                 { label: "Method", href: "/nfl/prediction-about/", active: false },
             ],
             showDisclaimer: true,
@@ -111,7 +107,6 @@ class NflPredictionBoard {
         this.renderBoard(plays);
         this.renderParlay();
         this.renderParlayV2();
-        this.renderMarketReplay();
     }
 
     renderWeekPool() {
@@ -327,61 +322,6 @@ class NflPredictionBoard {
             message += ` (${parlay.independent_slate_count} of ${parlay.independent_slate_count_required} independent prior weeks so far.)`;
         }
         return message;
-    }
-
-    renderMarketReplay() {
-        const evidence = this.marketEvidence;
-        if (!evidence) {
-            this.elements.marketStatus.innerHTML = "<p>Locked market replay evidence is unavailable.</p>";
-            this.elements.marketMetrics.innerHTML = "";
-            this.elements.marketBaselines.innerHTML = "";
-            this.elements.marketWeekly.innerHTML = "";
-            return;
-        }
-        const final = evidence.final_test || {};
-        const policy = evidence.locked_policy || {};
-        const deployment = evidence.gates?.deployment || {};
-        const stats = evidence.statistical_evidence || {};
-        this.elements.marketStatus.innerHTML = `<p><strong>Singles passed the historical holdout; live authorization remains ${this.escape(deployment.status || "blocked")}.</strong> ${this.escape(deployment.reason || "Prospective evidence is required.")}</p>`;
-        const cards = [
-            ["Validated Market", (evidence.validated_targets || []).join(", ") || "n/a"],
-            ["Weekly Cap", this.formatInt(policy.weekly_top_n)],
-            ["Record", `${this.formatInt(final.wins)}-${this.formatInt(final.losses)}`],
-            ["Hit Rate", this.formatPct(final.hit_rate)],
-            ["ROI", this.formatSignedPct(final.roi)],
-            ["Profit", `${this.formatSignedNum(final.profit_units, 2)}u`],
-            ["Clustered Hit 95%", this.formatRange(stats.week_cluster_hit_rate_95, false)],
-            ["Clustered ROI 95%", this.formatRange(stats.week_cluster_roi_95, true)],
-        ];
-        this.elements.marketMetrics.innerHTML = cards.map(([label, value]) => `
-            <article class="prediction-about-metric-card"><span>${this.escape(label)}</span><strong>${this.escape(value)}</strong></article>
-        `).join("");
-
-        const baselines = evidence.baselines || {};
-        const baselineRows = [
-            ["Production selector", final],
-            ["Always under", baselines.always_under || {}],
-            ["Point projection side", baselines.point_projection_side || {}],
-        ].map(([label, row]) => `<tr>
-            <td>${this.escape(label)}</td><td>${this.escape(this.formatInt(row.graded_decisions))}</td>
-            <td>${this.escape(`${this.formatInt(row.wins)}-${this.formatInt(row.losses)}`)}</td>
-            <td>${this.escape(this.formatPct(row.hit_rate))}</td><td>${this.escape(this.formatSignedPct(row.roi))}</td>
-        </tr>`).join("");
-        this.elements.marketBaselines.innerHTML = `<table class="prediction-about-table">
-            <thead><tr><th>Policy</th><th>N</th><th>Record</th><th>Hit rate</th><th>ROI</th></tr></thead>
-            <tbody>${baselineRows}</tbody>
-        </table>`;
-
-        const weeklyRows = (evidence.weekly || []).map((row) => `<tr>
-            <td>W${this.escape(this.formatInt(row.week))}</td><td>${this.escape(this.formatInt(row.picks))}</td>
-            <td>${this.escape(`${this.formatInt(row.wins)}-${this.formatInt(row.losses)}`)}</td>
-            <td>${this.escape(this.formatPct(row.hit_rate))}</td><td>${this.escape(this.formatSignedPct(row.roi))}</td>
-            <td>${this.escape(`${this.formatSignedNum(row.profit_units, 2)}u`)}</td>
-        </tr>`).join("");
-        this.elements.marketWeekly.innerHTML = `<table class="prediction-about-table">
-            <thead><tr><th>Week</th><th>Picks</th><th>Record</th><th>Hit rate</th><th>ROI</th><th>Units</th></tr></thead>
-            <tbody>${weeklyRows}</tbody>
-        </table>`;
     }
 
     formatTime(value) {
