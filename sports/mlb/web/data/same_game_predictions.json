@@ -2,128 +2,2961 @@
   "candidate_authorized_count": 0,
   "games": [
     {
-      "away_starter_name": "Drew Rasmussen",
+      "away_starter_name": "Ian Seymour",
       "away_team": "TB",
       "candidate_authorized_count": 0,
-      "combo_candidates": [],
-      "date": "2026-08-24",
-      "game_id": "824235",
-      "home_starter_name": "Framber Valdez",
+      "combo_candidates": [
+        {
+          "away_team": "TB",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.84271186440678,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.028562440677965983,
+          "game_id": "824233",
+          "home_team": "DET",
+          "joint_residual": -0.005042879999999972,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.4876,
+            "no_vig_market_probability": 0.4630388460908047,
+            "price_american": 108,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 7.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5288,
+            "no_vig_market_probability": 0.5149751839808318,
+            "price_american": -118,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.25784288,
+          "naive_no_vig_combo_probability": 0.23845351495588418,
+          "probability_edge": 0.014346485044115842,
+          "real_joint_model_probability": 0.2528,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "TB",
+          "candidate_authorized": false,
+          "combo_decimal_price": 4.08,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.04201599999999994,
+          "game_id": "824233",
+          "home_team": "DET",
+          "joint_residual": 0.005042880000000055,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.4876,
+            "no_vig_market_probability": 0.4630388460908047,
+            "price_american": 108,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 7.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.47119999999999995,
+            "no_vig_market_probability": 0.4850248160191682,
+            "price_american": -104,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.22975711999999995,
+          "naive_no_vig_combo_probability": 0.2245853311349205,
+          "probability_edge": 0.010214668865079518,
+          "real_joint_model_probability": 0.2348,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "TB",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.3136938391175677,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.0854205004035512,
+          "game_id": "824233",
+          "home_team": "DET",
+          "joint_residual": 0.005042880000000027,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.5124,
+            "no_vig_market_probability": 0.5369611539091953,
+            "price_american": -126,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 7.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5288,
+            "no_vig_market_probability": 0.5149751839808318,
+            "price_american": -118,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.27095712,
+          "naive_no_vig_combo_probability": 0.27652166902494757,
+          "probability_edge": -0.0005216690249475464,
+          "real_joint_model_probability": 0.276,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "TB",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.5183150183150182,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.16827032967032973,
+          "game_id": "824233",
+          "home_team": "DET",
+          "joint_residual": -0.005042879999999972,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.5124,
+            "no_vig_market_probability": 0.5369611539091953,
+            "price_american": -126,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 7.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.47119999999999995,
+            "no_vig_market_probability": 0.4850248160191682,
+            "price_american": -104,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.24144287999999997,
+          "naive_no_vig_combo_probability": 0.26043948488424773,
+          "probability_edge": -0.02403948488424773,
+          "real_joint_model_probability": 0.2364,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        }
+      ],
+      "date": "2026-08-25",
+      "game_id": "824233",
+      "home_starter_name": "Jackson Jobe",
       "home_team": "DET",
-      "home_win_probability": 0.45605,
-      "status": "no_real_odds_priced_yet"
+      "home_win_probability": 0.4876,
+      "status": "ok"
     },
     {
-      "away_starter_name": "Ranger Suarez",
+      "away_starter_name": "Payton Tolle",
       "away_team": "BOS",
       "candidate_authorized_count": 0,
       "combo_candidates": [],
-      "date": "2026-08-24",
-      "game_id": "823828",
-      "home_starter_name": "Sandy Alcantara",
+      "date": "2026-08-25",
+      "game_id": "823826",
+      "home_starter_name": "",
       "home_team": "MIA",
-      "home_win_probability": 0.45965,
+      "home_win_probability": 0.4554,
       "status": "no_real_odds_priced_yet"
     },
     {
-      "away_starter_name": "Ryan Feltner",
+      "away_starter_name": "",
       "away_team": "COL",
       "candidate_authorized_count": 0,
-      "combo_candidates": [],
-      "date": "2026-08-24",
-      "game_id": "822695",
-      "home_starter_name": "Cade Cavalli",
+      "combo_candidates": [
+        {
+          "away_team": "COL",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.323717948717949,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": 0.2118275641025642,
+          "game_id": "822693",
+          "home_team": "WSH",
+          "joint_residual": 0.011873200000000028,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.579,
+            "no_vig_market_probability": 0.5671302866874822,
+            "price_american": -144,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.6092,
+            "no_vig_market_probability": 0.4850248160191682,
+            "price_american": -104,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.35272679999999995,
+          "naive_no_vig_combo_probability": 0.27507226295949416,
+          "probability_edge": 0.08952773704050582,
+          "real_joint_model_probability": 0.3646,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "COL",
+          "candidate_authorized": false,
+          "combo_decimal_price": 4.354615384615385,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": 0.06513892307692326,
+          "game_id": "822693",
+          "home_team": "WSH",
+          "joint_residual": -0.0118732,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.42100000000000004,
+            "no_vig_market_probability": 0.4328697133125178,
+            "price_american": 122,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.6092,
+            "no_vig_market_probability": 0.4850248160191682,
+            "price_american": -104,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.2564732,
+          "naive_no_vig_combo_probability": 0.20995255305967403,
+          "probability_edge": 0.03464744694032598,
+          "real_joint_model_probability": 0.2446,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "COL",
+          "candidate_authorized": false,
+          "combo_decimal_price": 4.101355932203389,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.2765208135593221,
+          "game_id": "822693",
+          "home_team": "WSH",
+          "joint_residual": 0.011873199999999973,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.42100000000000004,
+            "no_vig_market_probability": 0.4328697133125178,
+            "price_american": 122,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.39080000000000004,
+            "no_vig_market_probability": 0.5149751839808318,
+            "price_american": -118,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.16452680000000003,
+          "naive_no_vig_combo_probability": 0.22291716025284375,
+          "probability_edge": -0.04651716025284375,
+          "real_joint_model_probability": 0.1764,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "COL",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.1304143126177024,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.3288391713747646,
+          "game_id": "822693",
+          "home_team": "WSH",
+          "joint_residual": -0.0118732,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.579,
+            "no_vig_market_probability": 0.5671302866874822,
+            "price_american": -144,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.39080000000000004,
+            "no_vig_market_probability": 0.5149751839808318,
+            "price_american": -118,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.2262732,
+          "naive_no_vig_combo_probability": 0.292058023727988,
+          "probability_edge": -0.077658023727988,
+          "real_joint_model_probability": 0.2144,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        }
+      ],
+      "date": "2026-08-25",
+      "game_id": "822693",
+      "home_starter_name": "Andrew Alvarez",
       "home_team": "WSH",
-      "home_win_probability": 0.59375,
-      "status": "no_real_odds_priced_yet"
+      "home_win_probability": 0.579,
+      "status": "ok"
     },
     {
-      "away_starter_name": "Kumar Rocker",
+      "away_starter_name": "Ethan Pecko",
+      "away_team": "HOU",
+      "candidate_authorized_count": 0,
+      "combo_candidates": [
+        {
+          "away_team": "HOU",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.186160440906307,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": 0.11579338640538883,
+          "game_id": "823505",
+          "home_team": "NYY",
+          "joint_residual": -0.005148639999999982,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.6232,
+            "no_vig_market_probability": 0.5634920634920635,
+            "price_american": -142,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 9.0,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5702,
+            "no_vig_market_probability": 0.5108342361863489,
+            "price_american": -115,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.35534864,
+          "naive_no_vig_combo_probability": 0.2878510378510379,
+          "probability_edge": 0.06234896214896213,
+          "real_joint_model_probability": 0.3502,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "HOU",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.32729711602951,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.09164788732394369,
+          "game_id": "823505",
+          "home_team": "NYY",
+          "joint_residual": 0.005148640000000038,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.6232,
+            "no_vig_market_probability": 0.5634920634920635,
+            "price_american": -142,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 9.0,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.4298,
+            "no_vig_market_probability": 0.4891657638136511,
+            "price_american": -105,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.26785136,
+          "naive_no_vig_combo_probability": 0.2756410256410256,
+          "probability_edge": -0.002641025641025585,
+          "real_joint_model_probability": 0.273,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "HOU",
+          "candidate_authorized": false,
+          "combo_decimal_price": 4.113043478260869,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.09513043478260874,
+          "game_id": "823505",
+          "home_team": "NYY",
+          "joint_residual": 0.005148639999999982,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.3768,
+            "no_vig_market_probability": 0.43650793650793646,
+            "price_american": 120,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 9.0,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5702,
+            "no_vig_market_probability": 0.5108342361863489,
+            "price_american": -115,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.21485136000000002,
+          "naive_no_vig_combo_probability": 0.22298319833531102,
+          "probability_edge": -0.0029831983353110214,
+          "real_joint_model_probability": 0.22,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "HOU",
+          "candidate_authorized": false,
+          "combo_decimal_price": 4.295238095238095,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.3265066666666667,
+          "game_id": "823505",
+          "home_team": "NYY",
+          "joint_residual": -0.00514864000000001,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.3768,
+            "no_vig_market_probability": 0.43650793650793646,
+            "price_american": 120,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 9.0,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.4298,
+            "no_vig_market_probability": 0.4891657638136511,
+            "price_american": -105,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.16194864,
+          "naive_no_vig_combo_probability": 0.21352473817262546,
+          "probability_edge": -0.056724738172625466,
+          "real_joint_model_probability": 0.1568,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        }
+      ],
+      "date": "2026-08-25",
+      "game_id": "823505",
+      "home_starter_name": "Will Warren",
+      "home_team": "NYY",
+      "home_win_probability": 0.6232,
+      "status": "ok"
+    },
+    {
+      "away_starter_name": "Seth Lugo",
+      "away_team": "KC",
+      "candidate_authorized_count": 0,
+      "combo_candidates": [
+        {
+          "away_team": "KC",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.894545454545455,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": 0.04763272727272749,
+          "game_id": "822773",
+          "home_team": "TOR",
+          "joint_residual": -0.004134879999999952,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.5364,
+            "no_vig_market_probability": 0.47145769622833844,
+            "price_american": 104,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5092,
+            "no_vig_market_probability": 0.5,
+            "price_american": -110,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.27313487999999997,
+          "naive_no_vig_combo_probability": 0.23572884811416922,
+          "probability_edge": 0.033271151885830796,
+          "real_joint_model_probability": 0.269,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "KC",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.894545454545455,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": 0.04140145454545485,
+          "game_id": "822773",
+          "home_team": "TOR",
+          "joint_residual": 0.0041348800000000074,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.5364,
+            "no_vig_market_probability": 0.47145769622833844,
+            "price_american": 104,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.4908,
+            "no_vig_market_probability": 0.5,
+            "price_american": -110,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.26326512,
+          "naive_no_vig_combo_probability": 0.23572884811416922,
+          "probability_edge": 0.031671151885830806,
+          "real_joint_model_probability": 0.2674,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "KC",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.473919523099851,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.16556453055141584,
+          "game_id": "822773",
+          "home_team": "TOR",
+          "joint_residual": 0.0041348800000000074,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.4636,
+            "no_vig_market_probability": 0.5285423037716616,
+            "price_american": -122,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5092,
+            "no_vig_market_probability": 0.5,
+            "price_american": -110,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.23606512,
+          "naive_no_vig_combo_probability": 0.2642711518858308,
+          "probability_edge": -0.024071151885830783,
+          "real_joint_model_probability": 0.2402,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "KC",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.473919523099851,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.22392637853949338,
+          "game_id": "822773",
+          "home_team": "TOR",
+          "joint_residual": -0.004134880000000035,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.4636,
+            "no_vig_market_probability": 0.5285423037716616,
+            "price_american": -122,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.4908,
+            "no_vig_market_probability": 0.5,
+            "price_american": -110,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.22753488000000002,
+          "naive_no_vig_combo_probability": 0.2642711518858308,
+          "probability_edge": -0.04087115188583079,
+          "real_joint_model_probability": 0.2234,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        }
+      ],
+      "date": "2026-08-25",
+      "game_id": "822773",
+      "home_starter_name": "Max Scherzer",
+      "home_team": "TOR",
+      "home_win_probability": 0.4636,
+      "status": "ok"
+    },
+    {
+      "away_starter_name": "Kyle Harrison",
+      "away_team": "MIL",
+      "candidate_authorized_count": 0,
+      "combo_candidates": [
+        {
+          "away_team": "MIL",
+          "candidate_authorized": false,
+          "combo_decimal_price": 2.9429265330904677,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.06709228901032172,
+          "game_id": "823585",
+          "home_team": "NYM",
+          "joint_residual": 0.0028695200000000143,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.5988,
+            "no_vig_market_probability": 0.593369754159424,
+            "price_american": -162,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 7.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5246,
+            "no_vig_market_probability": 0.5236051502145922,
+            "price_american": -122,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.31413048,
+          "naive_no_vig_combo_probability": 0.3106914592594408,
+          "probability_edge": 0.006308540740559199,
+          "real_joint_model_probability": 0.317,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "MIL",
+          "candidate_authorized": false,
+          "combo_decimal_price": 4.720000000000001,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.08620799999999995,
+          "game_id": "823585",
+          "home_team": "NYM",
+          "joint_residual": 0.0028695199999999865,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.4012,
+            "no_vig_market_probability": 0.4066302458405761,
+            "price_american": 136,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 7.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.47540000000000004,
+            "no_vig_market_probability": 0.47639484978540775,
+            "price_american": 100,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.19073048,
+          "naive_no_vig_combo_probability": 0.1937165548854247,
+          "probability_edge": -0.00011655488542469672,
+          "real_joint_model_probability": 0.1936,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "MIL",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.234567901234568,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.08849876543209878,
+          "game_id": "823585",
+          "home_team": "NYM",
+          "joint_residual": -0.0028695200000000143,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.5988,
+            "no_vig_market_probability": 0.593369754159424,
+            "price_american": -162,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 7.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.47540000000000004,
+            "no_vig_market_probability": 0.47639484978540775,
+            "price_american": 100,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.28466952,
+          "naive_no_vig_combo_probability": 0.2826782948999831,
+          "probability_edge": -0.0008782948999830897,
+          "real_joint_model_probability": 0.2818,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "MIL",
+          "candidate_authorized": false,
+          "combo_decimal_price": 4.294426229508197,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.10847711475409827,
+          "game_id": "823585",
+          "home_team": "NYM",
+          "joint_residual": -0.0028695199999999865,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.4012,
+            "no_vig_market_probability": 0.4066302458405761,
+            "price_american": 136,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 7.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5246,
+            "no_vig_market_probability": 0.5236051502145922,
+            "price_american": -122,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.21046952,
+          "naive_no_vig_combo_probability": 0.21291369095515142,
+          "probability_edge": -0.005313690955151412,
+          "real_joint_model_probability": 0.2076,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        }
+      ],
+      "date": "2026-08-25",
+      "game_id": "823585",
+      "home_starter_name": "Zac Thornton",
+      "home_team": "NYM",
+      "home_win_probability": 0.4012,
+      "status": "ok"
+    },
+    {
+      "away_starter_name": "Tyler Glasnow",
+      "away_team": "LAD",
+      "candidate_authorized_count": 0,
+      "combo_candidates": [
+        {
+          "away_team": "LAD",
+          "candidate_authorized": false,
+          "combo_decimal_price": 4.225217391304347,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": 0.1602446956521737,
+          "game_id": "824881",
+          "home_team": "ATL",
+          "joint_residual": -3.7879999999990144e-05,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.4906,
+            "no_vig_market_probability": 0.4257656915258893,
+            "price_american": 126,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5598000000000001,
+            "no_vig_market_probability": 0.5108342361863489,
+            "price_american": -115,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.27463788,
+          "naive_no_vig_combo_probability": 0.2174956918249803,
+          "probability_edge": 0.05710430817501971,
+          "real_joint_model_probability": 0.2746,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "LAD",
+          "candidate_authorized": false,
+          "combo_decimal_price": 4.412380952380952,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.04692571428571446,
+          "game_id": "824881",
+          "home_team": "ATL",
+          "joint_residual": 3.78800000000179e-05,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.4906,
+            "no_vig_market_probability": 0.4257656915258893,
+            "price_american": 126,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.4402,
+            "no_vig_market_probability": 0.4891657638136511,
+            "price_american": -105,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.21596211999999998,
+          "naive_no_vig_combo_probability": 0.208269999700909,
+          "probability_edge": 0.007730000299090989,
+          "real_joint_model_probability": 0.216,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "LAD",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.132784958871915,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.10652972972972974,
+          "game_id": "824881",
+          "home_team": "ATL",
+          "joint_residual": 3.787999999993463e-05,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.5094000000000001,
+            "no_vig_market_probability": 0.5742343084741106,
+            "price_american": -148,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5598000000000001,
+            "no_vig_market_probability": 0.5108342361863489,
+            "price_american": -115,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.2851621200000001,
+          "naive_no_vig_combo_probability": 0.2933385443613686,
+          "probability_edge": -0.008138544361368572,
+          "real_joint_model_probability": 0.2852,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "LAD",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.2715572715572714,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.2665168597168597,
+          "game_id": "824881",
+          "home_team": "ATL",
+          "joint_residual": -3.78800000000179e-05,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.5094000000000001,
+            "no_vig_market_probability": 0.5742343084741106,
+            "price_american": -148,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.4402,
+            "no_vig_market_probability": 0.4891657638136511,
+            "price_american": -105,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.22423788000000003,
+          "naive_no_vig_combo_probability": 0.2808957641127421,
+          "probability_edge": -0.056695764112742075,
+          "real_joint_model_probability": 0.2242,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        }
+      ],
+      "date": "2026-08-25",
+      "game_id": "824881",
+      "home_starter_name": "Bryce Elder",
+      "home_team": "ATL",
+      "home_win_probability": 0.4906,
+      "status": "ok"
+    },
+    {
+      "away_starter_name": "Jacob deGrom",
       "away_team": "TEX",
       "candidate_authorized_count": 0,
-      "combo_candidates": [],
-      "date": "2026-08-24",
-      "game_id": "824557",
-      "home_starter_name": "Jos\u00e9 Urquidy",
+      "combo_candidates": [
+        {
+          "away_team": "TEX",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.7765217391304344,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": 0.11029739130434768,
+          "game_id": "824556",
+          "home_team": "CHW",
+          "joint_residual": -0.005650400000000055,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.511,
+            "no_vig_market_probability": 0.4757785467128028,
+            "price_american": 102,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.0,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5864,
+            "no_vig_market_probability": 0.5108342361863489,
+            "price_american": -115,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.29965040000000004,
+          "naive_no_vig_combo_probability": 0.24304397050388574,
+          "probability_edge": 0.05095602949611425,
+          "real_joint_model_probability": 0.294,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "TEX",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.427536231884058,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": 0.0022115942028986257,
+          "game_id": "824556",
+          "home_team": "CHW",
+          "joint_residual": 0.0056504,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.489,
+            "no_vig_market_probability": 0.5242214532871973,
+            "price_american": -120,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.0,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5864,
+            "no_vig_market_probability": 0.5108342361863489,
+            "price_american": -115,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.2867496,
+          "naive_no_vig_combo_probability": 0.2677902656824632,
+          "probability_edge": 0.02460973431753677,
+          "real_joint_model_probability": 0.2924,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "TEX",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.9438095238095237,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.1441933333333334,
+          "game_id": "824556",
+          "home_team": "CHW",
+          "joint_residual": 0.005650399999999972,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.511,
+            "no_vig_market_probability": 0.4757785467128028,
+            "price_american": 102,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.0,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.4136,
+            "no_vig_market_probability": 0.4891657638136511,
+            "price_american": -105,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.21134960000000003,
+          "naive_no_vig_combo_probability": 0.23273457620891708,
+          "probability_edge": -0.015734576208917078,
+          "real_joint_model_probability": 0.217,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "TEX",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.5793650793650795,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.29629682539682534,
+          "game_id": "824556",
+          "home_team": "CHW",
+          "joint_residual": -0.0056504,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.489,
+            "no_vig_market_probability": 0.5242214532871973,
+            "price_american": -120,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.0,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.4136,
+            "no_vig_market_probability": 0.4891657638136511,
+            "price_american": -105,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.2022504,
+          "naive_no_vig_combo_probability": 0.2564311876047341,
+          "probability_edge": -0.059831187604734104,
+          "real_joint_model_probability": 0.1966,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        }
+      ],
+      "date": "2026-08-25",
+      "game_id": "824556",
+      "home_starter_name": "Anthony Kay",
       "home_team": "CHW",
-      "home_win_probability": 0.5225,
+      "home_win_probability": 0.511,
+      "status": "ok"
+    },
+    {
+      "away_starter_name": "Chris Bassitt",
+      "away_team": "BAL",
+      "candidate_authorized_count": 0,
+      "combo_candidates": [],
+      "date": "2026-08-25",
+      "game_id": "823016",
+      "home_starter_name": "",
+      "home_team": "STL",
+      "home_win_probability": 0.5244,
       "status": "no_real_odds_priced_yet"
     },
     {
-      "away_starter_name": "Parker Messick",
+      "away_starter_name": "Gavin Williams",
       "away_team": "CLE",
       "candidate_authorized_count": 0,
-      "combo_candidates": [],
-      "date": "2026-08-24",
-      "game_id": "823992",
-      "home_starter_name": "George Klassen",
+      "combo_candidates": [
+        {
+          "away_team": "CLE",
+          "candidate_authorized": false,
+          "combo_decimal_price": 4.295238095238095,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": 0.09270857142857136,
+          "game_id": "823989",
+          "home_team": "LAA",
+          "joint_residual": -0.0013187199999999955,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.4912,
+            "no_vig_market_probability": 0.43650793650793646,
+            "price_american": 120,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 7.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5206,
+            "no_vig_market_probability": 0.4891657638136511,
+            "price_american": -105,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.25571872,
+          "naive_no_vig_combo_probability": 0.21352473817262546,
+          "probability_edge": 0.040875261827374554,
+          "real_joint_model_probability": 0.2544,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "CLE",
+          "candidate_authorized": false,
+          "combo_decimal_price": 4.113043478260869,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.02603130434782608,
+          "game_id": "823989",
+          "home_team": "LAA",
+          "joint_residual": 0.0013187199999999955,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.4912,
+            "no_vig_market_probability": 0.43650793650793646,
+            "price_american": 120,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 7.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.4794,
+            "no_vig_market_probability": 0.5108342361863489,
+            "price_american": -115,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.23548128000000002,
+          "naive_no_vig_combo_probability": 0.22298319833531102,
+          "probability_edge": 0.013816801664688988,
+          "real_joint_model_probability": 0.2368,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "CLE",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.32729711602951,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.11427350771294442,
+          "game_id": "823989",
+          "home_team": "LAA",
+          "joint_residual": 0.001318720000000051,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.5087999999999999,
+            "no_vig_market_probability": 0.5634920634920635,
+            "price_american": -142,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 7.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5206,
+            "no_vig_market_probability": 0.4891657638136511,
+            "price_american": -105,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.26488127999999994,
+          "naive_no_vig_combo_probability": 0.2756410256410256,
+          "probability_edge": -0.009441025641025613,
+          "real_joint_model_probability": 0.2662,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "CLE",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.186160440906307,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.22703747703612986,
+          "game_id": "823989",
+          "home_team": "LAA",
+          "joint_residual": -0.00131871999999994,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.5087999999999999,
+            "no_vig_market_probability": 0.5634920634920635,
+            "price_american": -142,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 7.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.4794,
+            "no_vig_market_probability": 0.5108342361863489,
+            "price_american": -115,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.24391871999999995,
+          "naive_no_vig_combo_probability": 0.2878510378510379,
+          "probability_edge": -0.04525103785103787,
+          "real_joint_model_probability": 0.2426,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        }
+      ],
+      "date": "2026-08-25",
+      "game_id": "823989",
+      "home_starter_name": "Walbert Ure\u00f1a",
       "home_team": "LAA",
-      "home_win_probability": 0.44265,
-      "status": "no_real_odds_priced_yet"
+      "home_win_probability": 0.4912,
+      "status": "ok"
     },
     {
-      "away_starter_name": "Kevin Gausman",
+      "away_starter_name": "Clay Holmes",
       "away_team": "CHC",
       "candidate_authorized_count": 0,
-      "combo_candidates": [],
-      "date": "2026-08-24",
-      "game_id": "825041",
-      "home_starter_name": "Merrill Kelly",
+      "combo_candidates": [
+        {
+          "away_team": "CHC",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.600644122383253,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": 0.1306022544283414,
+          "game_id": "825042",
+          "home_team": "ARI",
+          "joint_residual": -0.01112228000000004,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.5678000000000001,
+            "no_vig_market_probability": 0.5,
+            "price_american": -108,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5726,
+            "no_vig_market_probability": 0.5108342361863489,
+            "price_american": -115,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.32512228000000004,
+          "naive_no_vig_combo_probability": 0.25541711809317447,
+          "probability_edge": 0.058582881906825535,
+          "real_joint_model_probability": 0.314,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "CHC",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.760141093474427,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.045676190476190426,
+          "game_id": "825042",
+          "home_team": "ARI",
+          "joint_residual": 0.011122279999999984,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.5678000000000001,
+            "no_vig_market_probability": 0.5,
+            "price_american": -108,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.4274,
+            "no_vig_market_probability": 0.4891657638136511,
+            "price_american": -105,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.24267772000000004,
+          "naive_no_vig_combo_probability": 0.24458288190682556,
+          "probability_edge": 0.009217118093174465,
+          "real_joint_model_probability": 0.2538,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "CHC",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.600644122383253,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.06887342995169088,
+          "game_id": "825042",
+          "home_team": "ARI",
+          "joint_residual": 0.011122280000000012,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.4322,
+            "no_vig_market_probability": 0.5,
+            "price_american": -108,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5726,
+            "no_vig_market_probability": 0.5108342361863489,
+            "price_american": -115,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.24747771999999998,
+          "naive_no_vig_combo_probability": 0.25541711809317447,
+          "probability_edge": 0.00318288190682553,
+          "real_joint_model_probability": 0.2586,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "CHC",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.760141093474427,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.3472395061728395,
+          "game_id": "825042",
+          "home_team": "ARI",
+          "joint_residual": -0.011122279999999984,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.4322,
+            "no_vig_market_probability": 0.5,
+            "price_american": -108,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.4274,
+            "no_vig_market_probability": 0.4891657638136511,
+            "price_american": -105,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.18472228,
+          "naive_no_vig_combo_probability": 0.24458288190682556,
+          "probability_edge": -0.07098288190682556,
+          "real_joint_model_probability": 0.1736,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        }
+      ],
+      "date": "2026-08-25",
+      "game_id": "825042",
+      "home_starter_name": "Brandon Pfaadt",
       "home_team": "ARI",
-      "home_win_probability": 0.44105,
-      "status": "no_real_odds_priced_yet"
+      "home_win_probability": 0.4322,
+      "status": "ok"
     },
     {
-      "away_starter_name": "Braxton Ashcraft",
+      "away_starter_name": "Paul Skenes",
       "away_team": "PIT",
       "candidate_authorized_count": 0,
-      "combo_candidates": [],
-      "date": "2026-08-24",
-      "game_id": "823260",
-      "home_starter_name": "Robbie Ray",
+      "combo_candidates": [
+        {
+          "away_team": "PIT",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.744755244755245,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": 0.04853146853146861,
+          "game_id": "823259",
+          "home_team": "SD",
+          "joint_residual": 0.002860480000000054,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.5591999999999999,
+            "no_vig_market_probability": 0.4910905203136137,
+            "price_american": -104,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 7.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.4956,
+            "no_vig_market_probability": 0.5,
+            "price_american": -110,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.27713952,
+          "naive_no_vig_combo_probability": 0.24554526015680686,
+          "probability_edge": 0.034454739843193166,
+          "real_joint_model_probability": 0.28,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "PIT",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.744755244755245,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": 0.04553566433566436,
+          "game_id": "823259",
+          "home_team": "SD",
+          "joint_residual": -0.002860479999999943,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.5591999999999999,
+            "no_vig_market_probability": 0.4910905203136137,
+            "price_american": -104,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 7.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5044,
+            "no_vig_market_probability": 0.5,
+            "price_american": -110,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.28206047999999995,
+          "naive_no_vig_combo_probability": 0.24554526015680686,
+          "probability_edge": 0.03365473984319314,
+          "real_joint_model_probability": 0.2792,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "PIT",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.6136363636363638,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.18620909090909088,
+          "game_id": "823259",
+          "home_team": "SD",
+          "joint_residual": 0.0028604800000000263,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.4408,
+            "no_vig_market_probability": 0.5089094796863863,
+            "price_american": -112,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 7.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5044,
+            "no_vig_market_probability": 0.5,
+            "price_american": -110,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.22233951999999998,
+          "naive_no_vig_combo_probability": 0.25445473984319317,
+          "probability_edge": -0.029254739843193156,
+          "real_joint_model_probability": 0.2252,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "PIT",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.6136363636363638,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.22089999999999987,
+          "game_id": "823259",
+          "home_team": "SD",
+          "joint_residual": -0.0028604799999999986,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.4408,
+            "no_vig_market_probability": 0.5089094796863863,
+            "price_american": -112,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 7.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.4956,
+            "no_vig_market_probability": 0.5,
+            "price_american": -110,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.21846048,
+          "naive_no_vig_combo_probability": 0.25445473984319317,
+          "probability_edge": -0.03885473984319315,
+          "real_joint_model_probability": 0.2156,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        }
+      ],
+      "date": "2026-08-25",
+      "game_id": "823259",
+      "home_starter_name": "Michael King",
       "home_team": "SD",
-      "home_win_probability": 0.4665,
-      "status": "no_real_odds_priced_yet"
+      "home_win_probability": 0.4408,
+      "status": "ok"
     },
     {
-      "away_starter_name": "Zebby Matthews",
+      "away_starter_name": "Taj Bradley",
       "away_team": "MIN",
       "candidate_authorized_count": 0,
-      "combo_candidates": [],
-      "date": "2026-08-24",
-      "game_id": "824964",
-      "home_starter_name": "Jeffrey Springs",
+      "combo_candidates": [
+        {
+          "away_team": "MIN",
+          "candidate_authorized": false,
+          "combo_decimal_price": 4.412380952380952,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": 0.14721904761904736,
+          "game_id": "824962",
+          "home_team": "ATH",
+          "joint_residual": 0.0040572799999999964,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.4752,
+            "no_vig_market_probability": 0.4257656915258893,
+            "price_american": 126,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 9.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5386,
+            "no_vig_market_probability": 0.4891657638136511,
+            "price_american": -105,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.25594272,
+          "naive_no_vig_combo_probability": 0.208269999700909,
+          "probability_edge": 0.051730000299091,
+          "real_joint_model_probability": 0.26,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "MIN",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.2715572715572714,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.08854414414414413,
+          "game_id": "824962",
+          "home_team": "ATH",
+          "joint_residual": -0.004057279999999941,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.5247999999999999,
+            "no_vig_market_probability": 0.5742343084741106,
+            "price_american": -148,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 9.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5386,
+            "no_vig_market_probability": 0.4891657638136511,
+            "price_american": -105,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.28265727999999996,
+          "naive_no_vig_combo_probability": 0.2808957641127421,
+          "probability_edge": -0.0022957641127420714,
+          "real_joint_model_probability": 0.2786,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "MIN",
+          "candidate_authorized": false,
+          "combo_decimal_price": 4.225217391304347,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.09073321739130458,
+          "game_id": "824962",
+          "home_team": "ATH",
+          "joint_residual": -0.0040572799999999964,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.4752,
+            "no_vig_market_probability": 0.4257656915258893,
+            "price_american": 126,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 9.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.4614,
+            "no_vig_market_probability": 0.5108342361863489,
+            "price_american": -115,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.21925728,
+          "naive_no_vig_combo_probability": 0.2174956918249803,
+          "probability_edge": -0.002295691824980295,
+          "real_joint_model_probability": 0.2152,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "MIN",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.132784958871915,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.22870834312573451,
+          "game_id": "824962",
+          "home_team": "ATH",
+          "joint_residual": 0.004057280000000052,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.5247999999999999,
+            "no_vig_market_probability": 0.5742343084741106,
+            "price_american": -148,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 9.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.4614,
+            "no_vig_market_probability": 0.5108342361863489,
+            "price_american": -115,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.24214271999999995,
+          "naive_no_vig_combo_probability": 0.2933385443613686,
+          "probability_edge": -0.04713854436136858,
+          "real_joint_model_probability": 0.2462,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        }
+      ],
+      "date": "2026-08-25",
+      "game_id": "824962",
+      "home_starter_name": "Gage Jump",
       "home_team": "ATH",
-      "home_win_probability": 0.49915,
-      "status": "no_real_odds_priced_yet"
+      "home_win_probability": 0.4752,
+      "status": "ok"
     },
     {
-      "away_starter_name": "Zack Wheeler",
+      "away_starter_name": "Aaron Nola",
       "away_team": "PHI",
       "candidate_authorized_count": 0,
-      "combo_candidates": [],
-      "date": "2026-08-24",
-      "game_id": "823097",
-      "home_starter_name": "Logan Gilbert",
+      "combo_candidates": [
+        {
+          "away_team": "PHI",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.4130996839988508,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": 0.06693496121804077,
+          "game_id": "823098",
+          "home_team": "SEA",
+          "joint_residual": 0.004413800000000023,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.5474,
+            "no_vig_market_probability": 0.5198237885462554,
+            "price_american": -118,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 7.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.563,
+            "no_vig_market_probability": 0.5149751839808318,
+            "price_american": -118,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.30818619999999997,
+          "naive_no_vig_combo_probability": 0.26769635114422086,
+          "probability_edge": 0.04490364885577913,
+          "real_joint_model_probability": 0.3126,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "PHI",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.694915254237288,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.07479322033898306,
+          "game_id": "823098",
+          "home_team": "SEA",
+          "joint_residual": -0.004413799999999968,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.4526,
+            "no_vig_market_probability": 0.48017621145374445,
+            "price_american": 100,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 7.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.563,
+            "no_vig_market_probability": 0.5149751839808318,
+            "price_american": -118,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.2548138,
+          "naive_no_vig_combo_probability": 0.2472788328366108,
+          "probability_edge": 0.003121167163389199,
+          "real_joint_model_probability": 0.2504,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "PHI",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.623859191655802,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.1491178617992177,
+          "game_id": "823098",
+          "home_team": "SEA",
+          "joint_residual": -0.004413800000000023,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.5474,
+            "no_vig_market_probability": 0.5198237885462554,
+            "price_american": -118,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 7.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.43700000000000006,
+            "no_vig_market_probability": 0.4850248160191682,
+            "price_american": -104,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.23921380000000003,
+          "naive_no_vig_combo_probability": 0.2521274374020345,
+          "probability_edge": -0.017327437402034518,
+          "real_joint_model_probability": 0.2348,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "PHI",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.9230769230769234,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.20675384615384618,
+          "game_id": "823098",
+          "home_team": "SEA",
+          "joint_residual": 0.004413799999999968,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.4526,
+            "no_vig_market_probability": 0.48017621145374445,
+            "price_american": 100,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 7.5,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.43700000000000006,
+            "no_vig_market_probability": 0.4850248160191682,
+            "price_american": -104,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.19778620000000002,
+          "naive_no_vig_combo_probability": 0.2328973786171336,
+          "probability_edge": -0.03069737861713362,
+          "real_joint_model_probability": 0.2022,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        }
+      ],
+      "date": "2026-08-25",
+      "game_id": "823098",
+      "home_starter_name": "George Kirby",
       "home_team": "SEA",
-      "home_win_probability": 0.50665,
-      "status": "no_real_odds_priced_yet"
+      "home_win_probability": 0.5474,
+      "status": "ok"
     },
     {
-      "away_starter_name": "Chase Burns",
+      "away_starter_name": "Brady Singer",
       "away_team": "CIN",
       "candidate_authorized_count": 0,
-      "combo_candidates": [],
-      "date": "2026-08-24",
-      "game_id": "823183",
-      "home_starter_name": "Carson Whisenhunt",
+      "combo_candidates": [
+        {
+          "away_team": "CIN",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.744755244755245,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.0008993006993006647,
+          "game_id": "823181",
+          "home_team": "SF",
+          "joint_residual": 0.00030663999999996916,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.4998,
+            "no_vig_market_probability": 0.4910905203136137,
+            "price_american": -104,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.0,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5332,
+            "no_vig_market_probability": 0.5,
+            "price_american": -110,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.26649336,
+          "naive_no_vig_combo_probability": 0.24554526015680686,
+          "probability_edge": 0.02125473984319312,
+          "real_joint_model_probability": 0.2668,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "CIN",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.6136363636363638,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.03732727272727265,
+          "game_id": "823181",
+          "home_team": "SF",
+          "joint_residual": -0.00030663999999996916,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.5002,
+            "no_vig_market_probability": 0.5089094796863863,
+            "price_american": -112,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.0,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.5332,
+            "no_vig_market_probability": 0.5,
+            "price_american": -110,
+            "price_confirmed": true,
+            "side": "over",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.26670664,
+          "naive_no_vig_combo_probability": 0.25445473984319317,
+          "probability_edge": 0.011945260156806858,
+          "real_joint_model_probability": 0.2664,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "CIN",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.744755244755245,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.12747202797202783,
+          "game_id": "823181",
+          "home_team": "SF",
+          "joint_residual": -0.0003066399999999969,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.4998,
+            "no_vig_market_probability": 0.4910905203136137,
+            "price_american": -104,
+            "price_confirmed": true,
+            "side": "away",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.0,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.4668,
+            "no_vig_market_probability": 0.5,
+            "price_american": -110,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.23330664,
+          "naive_no_vig_combo_probability": 0.24554526015680686,
+          "probability_edge": -0.012545260156806848,
+          "real_joint_model_probability": 0.233,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        },
+        {
+          "away_team": "CIN",
+          "candidate_authorized": false,
+          "combo_decimal_price": 3.6136363636363638,
+          "event_date": "2026-08-25",
+          "expected_value_per_unit": -0.1551318181818181,
+          "game_id": "823181",
+          "home_team": "SF",
+          "joint_residual": 0.00030664000000002467,
+          "leg_a": {
+            "leg_authorized": false,
+            "line": null,
+            "market": "moneyline",
+            "market_books": 1,
+            "model_probability": 0.5002,
+            "no_vig_market_probability": 0.5089094796863863,
+            "price_american": -112,
+            "price_confirmed": true,
+            "side": "home",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "leg_b": {
+            "leg_authorized": false,
+            "line": 8.0,
+            "market": "game_total",
+            "market_books": 1,
+            "model_probability": 0.4668,
+            "no_vig_market_probability": 0.5,
+            "price_american": -110,
+            "price_confirmed": true,
+            "side": "under",
+            "sportsbook": "fanduel",
+            "support_blocking_dimensions": [
+              "market_support",
+              "line_support",
+              "state_support"
+            ]
+          },
+          "naive_independence_probability": 0.23349335999999998,
+          "naive_no_vig_combo_probability": 0.25445473984319317,
+          "probability_edge": -0.02065473984319316,
+          "real_joint_model_probability": 0.2338,
+          "support_blocking_dimensions": [
+            "line_support",
+            "market_support",
+            "state_support"
+          ]
+        }
+      ],
+      "date": "2026-08-25",
+      "game_id": "823181",
+      "home_starter_name": "Adrian Houser",
       "home_team": "SF",
-      "home_win_probability": 0.44435,
-      "status": "no_real_odds_priced_yet"
+      "home_win_probability": 0.5002,
+      "status": "ok"
     }
   ],
-  "generated_at_utc": "2026-08-24T21:35:07.840320+00:00",
-  "odds_status": "missing_credentials",
-  "run_date": "2026-08-24",
+  "generated_at_utc": "2026-08-25T02:46:46.991947+00:00",
+  "odds_sources": {
+    "fanduel_public": "success",
+    "the_odds_api": "missing_credentials"
+  },
+  "odds_status": "success",
+  "run_date": "2026-08-25",
   "status": "ok"
 }

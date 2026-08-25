@@ -49,6 +49,7 @@ run_tests() {
     sports/mlb/tests/test_select_mlb_same_game_bets.py \
     sports/mlb/tests/test_run_mlb_same_game_daily.py \
     sports/mlb/tests/test_the_odds_api_mlb_team_market_provider.py \
+    sports/mlb/tests/test_fanduel_public_mlb_team_market_provider.py \
     sports/mlb/tests/test_backtest_pitching_enriched_win_model.py \
     sports/mlb/tests/test_backtest_game_simulation_model.py \
     -q

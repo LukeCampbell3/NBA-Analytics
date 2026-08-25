@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import csv
 import sys
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -10,6 +10,7 @@ sys.path.insert(0, str(REPO_ROOT / "sports" / "mlb" / "scripts"))
 sys.path.insert(0, str(REPO_ROOT / "sports" / "mlb" / "predictions" / "odds" / "providers"))
 
 import run_mlb_same_game_daily as orchestrator  # noqa: E402
+from fanduel_public_mlb_team_market_provider import FanduelPublicMlbTeamMarketProvider  # noqa: E402
 from the_odds_api_mlb_team_market_provider import TheOddsApiMlbTeamMarketProvider  # noqa: E402
 
 
@@ -57,6 +58,8 @@ def test_extract_scheduled_games_handles_no_real_probable_pitcher_posted_yet() -
 
 
 def _fake_odds_provider() -> TheOddsApiMlbTeamMarketProvider:
+    """Real-shaped The Odds API fixture -- only source of a real F5 line
+    in these tests, since FanDuel's real public page doesn't expose one."""
     fixture = {
         "id": "evt1", "commence_time": "2026-06-20T22:00:00Z",
         "home_team": "Atlanta Braves", "away_team": "Athletics",
@@ -64,14 +67,57 @@ def _fake_odds_provider() -> TheOddsApiMlbTeamMarketProvider:
             {
                 "key": "draftkings", "title": "DraftKings", "last_update": "2026-06-20T20:00:00Z",
                 "markets": [
-                    {"key": "h2h", "outcomes": [{"name": "Atlanta Braves", "price": -150}, {"name": "Athletics", "price": 130}]},
-                    {"key": "totals", "outcomes": [{"name": "Over", "point": 8.5, "price": -110}, {"name": "Under", "point": 8.5, "price": -110}]},
                     {"key": "totals_1st_5_innings", "outcomes": [{"name": "Over", "point": 4.5, "price": -115}, {"name": "Under", "point": 4.5, "price": -105}]},
                 ],
             }
         ],
     }
     return TheOddsApiMlbTeamMarketProvider(api_key="fixture", fixture_payloads=[fixture])
+
+
+def _fake_fanduel_provider(*, empty: bool = False) -> FanduelPublicMlbTeamMarketProvider:
+    """Real-shaped FanDuel fixture (primary real, no-auth source of
+    moneyline + full-game total)."""
+    event_id = 999001
+    content_payload = {
+        "attachments": {
+            "events": {} if empty else {
+                str(event_id): {
+                    "eventId": event_id, "eventTypeId": 7511,
+                    "name": "Athletics @ Atlanta Braves",
+                    "openDate": "2026-06-20T22:00:00.000Z", "inPlay": False,
+                }
+            }
+        }
+    }
+    event_payloads = {} if empty else {
+        str(event_id): {
+            "attachments": {
+                "events": {str(event_id): {"eventId": event_id, "inPlay": False, "name": "Athletics @ Atlanta Braves"}},
+                "markets": {
+                    "m1": {
+                        "marketId": "m1", "eventId": event_id, "marketType": "MONEY_LINE", "marketStatus": "OPEN", "inPlay": False,
+                        "runners": [
+                            {"selectionId": 1, "runnerStatus": "ACTIVE", "result": {"type": "AWAY"}, "winRunnerOdds": {"americanDisplayOdds": {"americanOddsInt": 130}}},
+                            {"selectionId": 2, "runnerStatus": "ACTIVE", "result": {"type": "HOME"}, "winRunnerOdds": {"americanDisplayOdds": {"americanOddsInt": -150}}},
+                        ],
+                    },
+                    "m2": {
+                        "marketId": "m2", "eventId": event_id, "marketType": "TOTAL_POINTS_(OVER/UNDER)", "marketStatus": "OPEN", "inPlay": False,
+                        "runners": [
+                            {"selectionId": 3, "runnerStatus": "ACTIVE", "result": {"type": "OVER"}, "handicap": 8.5, "winRunnerOdds": {"americanDisplayOdds": {"americanOddsInt": -110}}},
+                            {"selectionId": 4, "runnerStatus": "ACTIVE", "result": {"type": "UNDER"}, "handicap": 8.5, "winRunnerOdds": {"americanDisplayOdds": {"americanOddsInt": -110}}},
+                        ],
+                    },
+                },
+            }
+        }
+    }
+    return FanduelPublicMlbTeamMarketProvider(
+        content_payload=content_payload, event_payloads=event_payloads,
+        now=datetime(2026, 6, 20, 12, tzinfo=timezone.utc),
+        sleep_fn=lambda _: None,
+    )
 
 
 def _write_historical_fixtures(tmp_path: Path) -> tuple[Path, Path]:
@@ -115,7 +161,7 @@ def test_build_daily_payload_reports_no_real_games_scheduled(tmp_path) -> None:
     payload = orchestrator.build_daily_payload(
         run_date=date(2026, 6, 20), team_universe_csv=team_csv, pitcher_universe_csv=pitcher_csv,
         calibration_ledger=None, num_trials=500,
-        schedule_payload={"dates": []}, odds_provider=_fake_odds_provider(),
+        schedule_payload={"dates": []}, fanduel_provider=_fake_fanduel_provider(), odds_api_provider=_fake_odds_provider(),
     )
     assert payload["status"] == "no_real_games_scheduled_today"
 
@@ -125,7 +171,7 @@ def test_build_daily_payload_produces_a_real_game_entry_with_combo_candidates(tm
     payload = orchestrator.build_daily_payload(
         run_date=date(2026, 6, 20), team_universe_csv=team_csv, pitcher_universe_csv=pitcher_csv,
         calibration_ledger=None, num_trials=2000,
-        schedule_payload=_schedule_payload(), odds_provider=_fake_odds_provider(),
+        schedule_payload=_schedule_payload(), fanduel_provider=_fake_fanduel_provider(), odds_api_provider=_fake_odds_provider(),
     )
     assert payload["status"] == "ok"
     assert len(payload["games"]) == 1
@@ -144,7 +190,7 @@ def test_build_daily_payload_reports_no_real_odds_priced_yet(tmp_path) -> None:
     payload = orchestrator.build_daily_payload(
         run_date=date(2026, 6, 20), team_universe_csv=team_csv, pitcher_universe_csv=pitcher_csv,
         calibration_ledger=None, num_trials=500,
-        schedule_payload=_schedule_payload(), odds_provider=empty_odds_provider,
+        schedule_payload=_schedule_payload(), fanduel_provider=_fake_fanduel_provider(empty=True), odds_api_provider=empty_odds_provider,
     )
     assert payload["games"][0]["status"] == "no_real_odds_priced_yet"
 

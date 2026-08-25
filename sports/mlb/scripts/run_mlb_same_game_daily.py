@@ -46,6 +46,7 @@ import team_win_model as base_model  # noqa: E402
 from backtest_pitching_enriched_win_model import flatten_starts_and_bullpen, load_pitcher_rows  # noqa: E402
 from backtest_team_win_model import load_games  # noqa: E402
 from calibration.store import CalibrationStore  # noqa: E402
+from fanduel_public_mlb_team_market_provider import FanduelPublicMlbTeamMarketProvider  # noqa: E402
 from fetch_mlb_pitcher_game_data import _to_espn_abbreviation  # noqa: E402
 from the_odds_api_mlb_team_market_provider import TheOddsApiMlbTeamMarketProvider  # noqa: E402
 
@@ -139,6 +140,36 @@ def _odds_rows_for_game(all_rows: list[dict[str, Any]], game: dict[str, Any]) ->
     ]
 
 
+def collect_team_market_odds_chain(
+    *,
+    fanduel_provider: Optional[FanduelPublicMlbTeamMarketProvider] = None,
+    odds_api_provider: Optional[TheOddsApiMlbTeamMarketProvider] = None,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Real provider UNION, not a fallback-only chain: FanDuel's real,
+    free, no-auth feed (moneyline + full-game total, confirmed live
+    before this was wired in -- see fanduel_public_mlb_team_market_
+    provider.py's own module docstring) is the primary source, and The
+    Odds API is always also consulted to add real F5-total rows FanDuel's
+    public page doesn't expose (a real THE_ODDS_API_KEY simply degrades
+    to `missing_credentials` and contributes nothing when unset, exactly
+    as it already did -- this never blocks on it). Rows from both real
+    sources are pooled; select_mlb_same_game_bets.py's own real-consensus-
+    line logic already handles multiple real books quoting the same
+    market."""
+    fanduel = fanduel_provider if fanduel_provider is not None else FanduelPublicMlbTeamMarketProvider()
+    fanduel_result = fanduel.collect_team_market_odds()
+    rows: list[dict[str, Any]] = list(fanduel_result.get("odds", [])) if fanduel_result.get("status") == "success" else []
+
+    odds_api = odds_api_provider if odds_api_provider is not None else TheOddsApiMlbTeamMarketProvider()
+    odds_api_result = odds_api.collect_team_market_odds()
+    if odds_api_result.get("status") == "success":
+        rows.extend(odds_api_result.get("odds", []))
+
+    sources = {"fanduel_public": fanduel_result.get("status"), "the_odds_api": odds_api_result.get("status")}
+    combined_status = "success" if rows else (fanduel_result.get("status") or odds_api_result.get("status"))
+    return {"status": combined_status, "sources": sources}, rows
+
+
 def build_daily_payload(
     *,
     run_date: date,
@@ -147,7 +178,8 @@ def build_daily_payload(
     calibration_ledger: Optional[Path] = DEFAULT_CALIBRATION_LEDGER,
     num_trials: int = NUM_TRIALS,
     schedule_payload: Optional[dict[str, Any]] = None,
-    odds_provider: Optional[TheOddsApiMlbTeamMarketProvider] = None,
+    fanduel_provider: Optional[FanduelPublicMlbTeamMarketProvider] = None,
+    odds_api_provider: Optional[TheOddsApiMlbTeamMarketProvider] = None,
 ) -> dict[str, Any]:
     generated_at = datetime.now(timezone.utc).isoformat()
     payload: dict[str, Any] = {
@@ -179,10 +211,11 @@ def build_daily_payload(
     runs_dispersion_ratio = sim.compute_empirical_runs_dispersion(historical_games)
     f5_share = sim.compute_empirical_f5_share(historical_games)
 
-    provider = odds_provider if odds_provider is not None else TheOddsApiMlbTeamMarketProvider()
-    odds_result = provider.collect_team_market_odds()
-    payload["odds_status"] = odds_result.get("status")
-    all_odds_rows = odds_result.get("odds", []) if odds_result.get("status") == "success" else []
+    odds_summary, all_odds_rows = collect_team_market_odds_chain(
+        fanduel_provider=fanduel_provider, odds_api_provider=odds_api_provider
+    )
+    payload["odds_status"] = odds_summary["status"]
+    payload["odds_sources"] = odds_summary["sources"]
 
     calibration_store = CalibrationStore(calibration_ledger) if calibration_ledger else None
     run_date_str = run_date.isoformat()
