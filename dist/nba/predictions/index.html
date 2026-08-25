@@ -5,75 +5,74 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="2026-27 NBA opening-night player projection pool and market-gated watchlists.">
-    <title>NBA Opening Night Pool | Prediction Bounties</title>
+    <title>NBA Predictions | In The Cards Analytics</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="/vault/vault-tokens.css?v=4">
-    <link rel="stylesheet" href="/vault/vault-components.css?v=7">
-    <link rel="stylesheet" href="/vault/prediction-pages.css?v=4">
+    <link rel="stylesheet" href="/vault/vault-tokens.css?v=9">
+    <link rel="stylesheet" href="/vault/vault-components.css?v=9">
+    <link rel="stylesheet" href="/vault/prediction-pages.css?v=9">
     <link rel="stylesheet" href="predictions.css?v=1">
 </head>
 <body class="vault-theme">
     <div id="vaultShellRoot"></div>
 
-    <main class="vault-shell prediction-about-page">
-        <section class="prediction-about-stage">
-            <div class="prediction-about-container">
-                <header class="prediction-about-sign">
-                    <p class="prediction-about-kicker">NBA Opening Model Pool</p>
-                    <div class="minimal-heading">
-                        <h1>2026-27 Opening Night Pool</h1>
-                        <button class="info-trigger" type="button" aria-label="About this pool" data-info="The page uses existing preseason simulations for a curated set of opening-night headliners. It is a research watchlist, not a final depth chart or a sportsbook pick board.">i</button>
-                    </div>
-                    <p class="prediction-page-lead">Headline player projections across the October 20 tripleheader, with PTS, REB, AST, and PRA ranges. Every market decision remains withheld until current rosters, availability, and authentic two-sided lines are available.</p>
-                    <p id="openingRunFacts" class="prediction-about-run-facts">Loading opening-night pool...</p>
-                </header>
+    <main class="vault-shell predictions-page">
+        <header class="vault-page-header">
+            <p class="vault-page-kicker">NBA &middot; 2026-27 Opening Night</p>
+            <div class="vault-heading-row">
+                <h1>Predictions</h1>
+                <button class="vault-info-trigger" type="button" aria-label="About this page" data-info="The page uses existing preseason simulations for a curated set of opening-night headliners. It is a research watchlist, not a final depth chart or a sportsbook pick board.">i</button>
+            </div>
+            <p class="prediction-page-lead">Headline player projections across the October 20 tripleheader, with PTS, REB, AST, and PRA ranges. Every market decision remains withheld until current rosters, availability, and authentic two-sided lines are available.</p>
+            <p id="openingRunFacts" class="prediction-run-meta">Loading opening-night pool...</p>
+        </header>
 
-                <section class="prediction-about-panel">
-                    <h2>Projection Status</h2>
-                    <div id="openingPoolStatus" class="prediction-about-callout"></div>
-                    <div id="openingPoolMetrics" class="prediction-about-metric-grid"></div>
-                </section>
+        <section class="pool-primary" aria-label="Today's signals">
+            <div class="pool-section-heading"><h2>Projection Status</h2></div>
+            <div id="openingPoolStatus" class="prediction-about-callout"></div>
+            <div id="openingPoolMetrics" class="prediction-about-metric-grid"></div>
 
-                <section class="prediction-about-panel">
-                    <h2>Opening Tripleheader</h2>
-                    <div id="openingGames" class="opening-game-grid"></div>
-                </section>
+            <div class="pool-section-heading" style="margin-top:32px;"><h2>Opening Tripleheader</h2></div>
+            <div id="openingGames" class="opening-game-grid"></div>
 
-                <section class="prediction-about-panel">
-                    <div class="opening-pool-heading">
-                        <h2>Headline Player Projections</h2>
-                        <div id="openingTargetFilters" class="opening-target-filters" role="group" aria-label="Filter projections by stat">
-                            <button type="button" class="is-active" data-target="PTS">PTS</button>
-                            <button type="button" data-target="REB">REB</button>
-                            <button type="button" data-target="AST">AST</button>
-                            <button type="button" data-target="PRA">PRA</button>
-                        </div>
-                    </div>
-                    <div id="openingProjectionPool" class="prediction-about-table-wrap"></div>
-                </section>
+            <div class="pool-section-heading opening-pool-heading" style="margin-top:32px;">
+                <h2>Headline Player Projections</h2>
+                <div id="openingTargetFilters" class="opening-target-filters" role="group" aria-label="Filter projections by stat">
+                    <button type="button" class="is-active" data-target="PTS">PTS</button>
+                    <button type="button" data-target="REB">REB</button>
+                    <button type="button" data-target="AST">AST</button>
+                    <button type="button" data-target="PRA">PRA</button>
+                </div>
+            </div>
+            <div id="openingProjectionPool" class="prediction-about-table-wrap"></div>
 
-                <section class="prediction-about-panel">
-                    <h2>Projection Watchlists</h2>
-                    <div id="openingWatchlistStatus" class="prediction-about-callout"></div>
-                    <div id="openingWatchlists" class="opening-watchlist-grid"></div>
-                </section>
-
-                <section class="prediction-about-panel">
-                    <h2>Current Executable Board</h2>
-                    <div id="predictionRunMeta" class="prediction-run-meta" aria-live="polite">Loading current board details...</div>
-                    <nav id="predictionDateNav" class="date-nav" aria-label="Prediction board date"></nav>
-                    <div id="predictionCards" class="vault-board" aria-live="polite"></div>
-                    <div id="predictionEmpty" class="vault-empty" style="display:none;" role="status">
-                        <h3>No predictions published</h3>
-                        <p>No analytical signals are available for this run.</p>
-                    </div>
-                </section>
+            <div class="pool-section-heading" style="margin-top:32px;">
+                <h2 id="predictionPoolTitle">Current Executable Board</h2>
+            </div>
+            <div id="predictionRunMeta" class="prediction-run-meta" aria-live="polite">Loading current board details...</div>
+            <nav id="predictionDateNav" class="date-nav" aria-label="Prediction board date"></nav>
+            <div id="predictionCards" class="vault-board" aria-live="polite" style="margin-top:16px;"></div>
+            <div id="predictionEmpty" class="vault-empty" style="display:none;" role="status">
+                <h3>No predictions published</h3>
+                <p>No analytical signals are available for this run.</p>
             </div>
         </section>
+
+        <section class="pool-secondary" aria-label="Watchlists">
+            <div class="pool-section-heading"><h2>Watchlists</h2></div>
+            <div id="openingWatchlistStatus" class="prediction-about-callout"></div>
+            <div id="openingWatchlists" class="opening-watchlist-grid"></div>
+        </section>
+
+        <footer class="pool-status">
+            <div class="pool-status__row">
+                <span class="prediction-run-meta__item">Research only -- review model status and evidence before treating any signal as executable.</span>
+                <a class="pool-status__link" href="/nba/prediction-about/">View methodology &rarr;</a>
+            </div>
+        </footer>
     </main>
 
-    <script src="/vault/vault-components.js?v=8"></script>
-    <script src="/vault/vault-shell.js?v=7"></script>
+    <script src="/vault/vault-components.js?v=9"></script>
+    <script src="/vault/vault-shell.js?v=9"></script>
     <script src="predictions.js?v=10"></script>
 </body>
 </html>

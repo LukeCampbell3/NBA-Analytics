@@ -3,37 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="NBA, MLB, and NFL prediction analytics with auditable model context.">
-    <title>Prediction Bounties | Sports model intelligence</title>
+    <meta name="description" content="Independent NBA, MLB, NFL, and F1 prediction models, with the evidence behind every prediction.">
+    <title>In The Cards Analytics | Independent sports models</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="vault/vault-tokens.css?v=4">
-    <link rel="stylesheet" href="vault/vault-components.css?v=7">
-    <link rel="stylesheet" href="vault/prediction-pages.css?v=2">
-    <link rel="stylesheet" href="styles.css?v=6">
+    <link rel="stylesheet" href="vault/vault-tokens.css?v=9">
+    <link rel="stylesheet" href="vault/vault-components.css?v=9">
+    <link rel="stylesheet" href="vault/prediction-pages.css?v=9">
+    <link rel="stylesheet" href="styles.css?v=9">
 </head>
 <body class="vault-theme">
     <div id="vaultShellRoot"></div>
     <main class="vault-shell site-shell">
-        <header class="desk-header">
-            <p class="desk-kicker">Independent sports modeling</p>
-            <div class="vault-heading-row"><h1>Find the signal. See the evidence.</h1></div>
-            <p>Daily model boards for NBA, MLB, and NFL markets—with methodology and freshness shown beside every published signal.</p>
-            <div class="desk-board-card__actions">
-                <a class="desk-board-card__primary" href="/nba/predictions/">NBA Predictions</a>
-                <a class="desk-board-card__secondary" href="/mlb/predictions/">MLB Predictions</a>
-                <a class="desk-board-card__secondary" href="/nfl/predictions/">NFL Predictions</a>
-            </div>
+        <header class="site-hero">
+            <h1>In The Cards Analytics</h1>
+            <p>Independent sports models, with the evidence behind every prediction.</p>
         </header>
-        <section class="desk-board-section" aria-labelledby="currentBoardsHeading">
-            <div class="desk-section-heading">
-                <div><p class="desk-section-kicker">Public workspaces</p><h2 id="currentBoardsHeading">Model desks</h2></div>
-                <p id="deskSummary" class="desk-summary" aria-live="polite">Loading catalog...</p>
-            </div>
-            <div id="sportsGrid" class="desk-board-grid" aria-live="polite"></div>
+        <section aria-labelledby="sportsHeading">
+            <h2 id="sportsHeading" class="visually-hidden">Sports</h2>
+            <p id="deskSummary" class="site-summary" aria-live="polite">Loading sports...</p>
+            <div id="sportsGrid" class="site-sport-grid" aria-live="polite"></div>
         </section>
     </main>
-    <script src="vault/vault-components.js?v=7"></script>
-    <script src="vault/vault-shell.js?v=7"></script>
-    <script src="app.js?v=6"></script>
+    <script src="vault/vault-components.js?v=9"></script>
+    <script src="vault/vault-shell.js?v=9"></script>
+    <script src="app.js?v=9"></script>
 </body>
 </html>

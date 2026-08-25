@@ -11,8 +11,6 @@ class F1PredictionBoard {
             table: document.getElementById("projectionTable"),
             plays: document.getElementById("plays"),
             picksSummary: document.getElementById("picksSummary"),
-            backtest: document.getElementById("backtest"),
-            prospective: document.getElementById("prospective"),
         };
         this.init();
     }
@@ -32,9 +30,9 @@ class F1PredictionBoard {
 
     mountShell() {
         window.CardVaultShell?.mount({
-            brandTitle: "Prediction Bounties", brandHref: "/", sportSlug: "f1", sportAccent: "#d00000",
+            brandTitle: "In The Cards Analytics", brandHref: "/", sportSlug: "f1", sportAccent: "#d00000",
             navLinks: [
-                { label: "Race Board", href: "/f1/predictions/", active: true },
+                { label: "Predictions", href: "/f1/predictions/", active: true },
                 { label: "Method", href: "/f1/prediction-about/", active: false },
             ],
             showDisclaimer: true,
@@ -62,24 +60,6 @@ class F1PredictionBoard {
         ]);
         this.renderPlays(plays);
         this.renderTable(projections);
-        const backtest = model.backtest || {};
-        this.el.backtest.innerHTML = this.cards([
-            ["Holdout races", backtest.holdout_races],
-            ["Top-pick winners", this.pct(backtest.winner_top_pick_accuracy)],
-            ["Winner Brier", this.num(backtest.winner_brier)],
-            ["Winner log loss", this.num(backtest.winner_log_loss)],
-            ["Podium Brier", this.num(backtest.podium_brier)],
-            ["Top-six Brier", this.num(backtest.top6_brier)],
-        ]);
-        const prospective = this.data.prospective_evaluation || {};
-        this.el.prospective.innerHTML = this.cards([
-            ["Settled snapshots", prospective.settled_snapshots],
-            ["Distinct races", prospective.settled_races],
-            ["Top-pick winners", this.pct(prospective.top_pick_accuracy)],
-            ["Winner Brier", this.num(prospective.winner_brier)],
-            ["Winner log loss", this.num(prospective.winner_log_loss)],
-            ["Shadow play hit rate", this.pct(prospective.play_hit_rate)],
-        ]);
     }
 
     renderEvent(event, projections, market) {

@@ -9,33 +9,32 @@ function mountShell() {
     window.CardVaultShell.mount({
         brandHref: "/",
         sportSlug: "",
-        brandTitle: "Prediction Bounties",
-        sportAccent: "#8a5820",
         navLinks: [],
         showDisclaimer: true,
     });
 }
 
-function renderSport(sport) {
+function renderSportCard(sport) {
     const cv = window.CardVault;
-    const href = `/${sport.slug}/predictions/`;
+    const href = sport.entry_href || `/${sport.slug}/predictions/`;
     return `
-        <article class="desk-board-card" style="--sport-accent:${cv.escapeAttr(sport.accent)};">
-            <div class="desk-board-card__topline">
-                ${cv.renderStatusPill("active", cv.escapeHtml(sport.status_label || "Available"))}
-                <span class="desk-board-card__run">Open access</span>
-            </div>
-            <div class="desk-board-card__feature">
-                <div>
-                    <p class="desk-board-card__eyebrow">${cv.escapeHtml(sport.slug)} model desk</p>
-                    <h3>${cv.escapeHtml(sport.title)}</h3>
-                    <p class="desk-board-card__tagline">${cv.escapeHtml(sport.tagline)}</p>
-                </div>
-            </div>
-            <p>${cv.escapeHtml(sport.summary)}</p>
-            <div class="desk-board-card__actions">
-                <a class="desk-board-card__primary" href="${cv.escapeAttr(href)}">View predictions</a>
-            </div>
+        <article class="sport-card" style="--card-accent:${cv.escapeAttr(sport.accent)};">
+            <h3>${cv.escapeHtml(sport.title)}</h3>
+            <p>${cv.escapeHtml(sport.tagline)}</p>
+            <a class="sport-card__link" href="${cv.escapeAttr(href)}">View ${cv.escapeHtml(sport.slug.toUpperCase())} &rarr;</a>
+        </article>`;
+}
+
+// Golf's model pipeline exists but has not published a live route yet
+// (no predictions.html, no generated data) -- shown honestly as
+// unavailable rather than either hidden or linked to a page that 404s.
+function renderComingSoonCard(label) {
+    const cv = window.CardVault;
+    return `
+        <article class="sport-card sport-card--unavailable">
+            <h3>${cv.escapeHtml(label)}</h3>
+            <p>Model in development. Not yet publishing predictions.</p>
+            <span class="sport-card__link">Coming soon</span>
         </article>`;
 }
 
@@ -45,10 +44,13 @@ async function init() {
     const summary = document.getElementById("deskSummary");
     try {
         const sports = await fetchSports();
-        grid.innerHTML = sports.map(renderSport).join("");
-        summary.textContent = `${sports.length} model desks available`;
+        const known = new Set(sports.map((s) => s.slug));
+        let html = sports.map(renderSportCard).join("");
+        if (!known.has("golf")) html += renderComingSoonCard("Golf");
+        grid.innerHTML = html;
+        summary.textContent = `${sports.length} sport${sports.length === 1 ? "" : "s"} publishing predictions`;
     } catch (error) {
-        grid.innerHTML = '<div class="desk-board-error">Model catalog is temporarily unavailable.</div>';
+        grid.innerHTML = '<div class="site-error">Sport catalog is temporarily unavailable.</div>';
         summary.textContent = "Catalog unavailable";
     }
 }

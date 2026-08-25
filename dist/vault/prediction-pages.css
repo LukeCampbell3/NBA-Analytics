@@ -1,9 +1,156 @@
 /**
- * Shared presentation for Prediction Bounties, prediction boards, and methods.
+ * In The Cards Analytics -- shared page presentation.
+ * Canonical source: sports/shared/web/vault/prediction-pages.css
+ * Owns: page header/kicker/lead, top nav, prediction cards, methodology
+ * panels/tables/metric grids, empty states, and their responsive rules.
+ * Sport CSS must not redefine these -- see sports/site/pipeline docs.
  */
 
 * {
   box-sizing: border-box;
+}
+
+/* Progressive disclosure: one native pattern used everywhere secondary
+   detail needs to exist without competing with the primary content. */
+details.disclosure {
+  margin-top: 12px;
+  border: 1px solid var(--vault-line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+details.disclosure > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  color: var(--vault-text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+details.disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.disclosure > summary::before {
+  content: "+";
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  color: var(--vault-text-dim);
+  font-weight: 700;
+}
+
+details.disclosure[open] > summary::before {
+  content: "-";
+}
+
+details.disclosure > summary:hover,
+details.disclosure > summary:focus-visible {
+  color: var(--vault-text);
+}
+
+details.disclosure .disclosure-body {
+  padding: 4px 14px 14px;
+  border-top: 1px solid var(--vault-line);
+  color: var(--vault-text-muted);
+  font-size: 0.86rem;
+  line-height: 1.6;
+}
+
+/* Reading width for methodology / research prose */
+.reading-width {
+  max-width: 780px;
+}
+
+/* Status vocabulary: one shared component, color is secondary to the label */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 24px;
+  padding: 2px 9px;
+  border: 1px solid var(--vault-line);
+  border-radius: 999px;
+  color: var(--vault-text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.status-pill::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-pill--qualified { color: var(--vault-status-active); border-color: color-mix(in srgb, var(--vault-status-active) 40%, var(--vault-line)); }
+.status-pill--shadow,
+.status-pill--research-only { color: var(--vault-status-stale); border-color: color-mix(in srgb, var(--vault-status-stale) 40%, var(--vault-line)); }
+.status-pill--pending { color: var(--vault-text-muted); }
+.status-pill--withheld,
+.status-pill--unavailable { color: var(--vault-status-withheld); border-color: color-mix(in srgb, var(--vault-status-withheld) 40%, var(--vault-line)); }
+
+/* Canonical prediction-pool skeleton, shared by every sport's
+   predictions.html: <main class="predictions-page"> > <header
+   class="vault-page-header"> (title/lead/freshness/date-nav), then
+   .pool-primary (today's signals), .pool-secondary (parlays/watchlists),
+   .pool-status (model status + link to methodology). Sport-specific
+   markup lives *inside* these, never replaces them -- see spec section 4. */
+.pool-primary,
+.pool-secondary {
+  margin-top: 40px;
+}
+
+.pool-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.pool-section-heading h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.pool-status {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--vault-line);
+}
+
+.pool-status__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pool-status__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  color: var(--vault-sport-accent);
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.pool-status__link:hover,
+.pool-status__link:focus-visible {
+  text-decoration: underline;
 }
 
 a,
@@ -961,599 +1108,3 @@ body.vault-theme .prediction-card__note {
   }
 }
 
-/* Bounty ledger theme */
-.vault-topbar {
-  border-bottom-color: #161512;
-  background: rgba(39, 36, 31, 0.98);
-  color: #f7efde;
-  box-shadow: 0 2px 0 rgba(154, 104, 31, 0.72);
-}
-
-.vault-brand {
-  color: #fff8e8;
-}
-
-.vault-brand-mark {
-  border: 1px solid #c59750;
-  border-radius: 50%;
-  background: #f3e5c9;
-  color: var(--vault-ink);
-  font-family: var(--vault-font-western);
-  font-weight: 400;
-  box-shadow: inset 0 0 0 3px #2d2923;
-}
-
-.vault-brand-kicker {
-  color: #cdbb9b;
-  letter-spacing: 0.13em;
-}
-
-.vault-brand-title {
-  color: #fff8e8;
-  font-family: var(--vault-font-display);
-}
-
-.vault-context-nav {
-  border-left-color: #5c5448;
-}
-
-.vault-nav-link,
-.vault-context-link {
-  color: #d8cdb9;
-}
-
-.vault-nav-link:hover,
-.vault-context-link:hover {
-  color: #fff8e8;
-  background: rgba(255, 248, 232, 0.08);
-}
-
-.vault-nav-link.is-active,
-.vault-context-link.is-active {
-  color: #fff8e8;
-  background: rgba(197, 151, 80, 0.13);
-}
-
-.vault-nav-link.is-active::after,
-.vault-context-link.is-active::after {
-  background: #c59750;
-}
-
-.vault-shell-info,
-.vault-menu-btn {
-  border-color: #6c6254;
-  background: #34302a;
-  color: #fff8e8;
-}
-
-.vault-info-trigger,
-.info-trigger {
-  border-color: var(--vault-line-strong);
-  background: var(--vault-panel);
-  color: var(--vault-text);
-}
-
-.vault-info-trigger::after,
-.info-trigger::after {
-  border-color: var(--vault-line-strong);
-  background: var(--vault-ink);
-  color: #fff8e8;
-}
-
-.vault-page-header,
-.prediction-about-sign {
-  margin-bottom: 30px;
-  padding: 0 0 25px;
-  border-bottom: 3px double var(--vault-line-strong);
-}
-
-.vault-page-kicker,
-.prediction-about-kicker,
-.desk-kicker,
-.desk-section-kicker {
-  color: var(--vault-sport-accent);
-  font-weight: 800;
-  letter-spacing: 0.14em;
-}
-
-.vault-page-header h1,
-.prediction-about-sign h1,
-.desk-header h1 {
-  font-family: var(--vault-font-western);
-  font-weight: 400;
-}
-
-.vault-page-header h1,
-.prediction-about-sign h1 {
-  font-size: 3.35rem;
-  line-height: 1.02;
-}
-
-.prediction-page-lead,
-.desk-header p {
-  color: var(--vault-text-muted);
-}
-
-.prediction-run-meta__item,
-.prediction-run-meta .vault-status-pill,
-.prediction-about-run-facts span {
-  min-height: 29px;
-  border-color: var(--vault-line);
-  border-radius: 2px;
-  background: rgba(255, 250, 240, 0.62);
-}
-
-.vault-status-pill {
-  border-radius: 2px;
-  background: rgba(255, 250, 240, 0.55);
-  font-weight: 800;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-.vault-board {
-  position: relative;
-  gap: 28px 24px;
-  padding: 34px;
-  border: 8px solid #3f2a1d;
-  border-radius: 3px;
-  background-color: #583923;
-  background-image:
-    linear-gradient(90deg, rgba(255, 224, 172, 0.045) 1px, transparent 1px),
-    repeating-linear-gradient(2deg, transparent 0 19px, rgba(35, 18, 10, 0.16) 20px, transparent 22px),
-    linear-gradient(92deg, #4b2f1d 0%, #68462c 24%, #53341f 51%, #6b482d 76%, #49301f 100%);
-  background-size: 23px 100%, 100% 53px, 100% 100%;
-  box-shadow:
-    inset 0 0 0 2px #8a6848,
-    inset 0 0 34px rgba(20, 9, 4, 0.46),
-    0 18px 34px rgba(45, 31, 19, 0.18);
-}
-
-.vault-board::before {
-  content: "";
-  position: absolute;
-  inset: 12px;
-  border: 1px solid rgba(248, 220, 173, 0.18);
-  pointer-events: none;
-}
-
-.prediction-card,
-body.vault-theme .prediction-card {
-  --poster-turn: 0deg;
-  gap: 15px;
-  padding: 27px 24px 19px;
-  border: 1px solid #8c6f49;
-  border-radius: 1px;
-  background-color: #ead5aa;
-  background-image:
-    radial-gradient(circle at 14% 18%, rgba(99, 62, 25, 0.12) 0 1px, transparent 2px),
-    radial-gradient(circle at 82% 73%, rgba(99, 62, 25, 0.1) 0 1px, transparent 2px),
-    linear-gradient(100deg, rgba(255, 248, 215, 0.42), transparent 34%, rgba(108, 69, 28, 0.05) 78%),
-    repeating-linear-gradient(0deg, rgba(91, 61, 28, 0.018) 0 1px, transparent 1px 4px);
-  background-size: 37px 41px, 43px 47px, 100% 100%, 100% 4px;
-  box-shadow:
-    2px 3px 0 rgba(43, 22, 10, 0.2),
-    0 13px 22px rgba(35, 17, 7, 0.3);
-  clip-path: polygon(1% 0, 98% 0.4%, 100% 3%, 99.3% 97%, 97% 100%, 2% 99.4%, 0 96%, 0.6% 2%);
-  overflow: hidden;
-  transform: rotate(var(--poster-turn));
-  transform-origin: 50% 9px;
-  transition: transform 220ms var(--vault-ease), box-shadow 220ms var(--vault-ease);
-}
-
-.prediction-card:nth-child(4n + 1) { --poster-turn: -0.55deg; }
-.prediction-card:nth-child(4n + 2) { --poster-turn: 0.4deg; }
-.prediction-card:nth-child(4n + 3) { --poster-turn: -0.25deg; }
-.prediction-card:nth-child(4n) { --poster-turn: 0.65deg; }
-
-.prediction-card:hover,
-body.vault-theme .prediction-card:hover,
-.prediction-card:focus-within,
-body.vault-theme .prediction-card:focus-within {
-  z-index: 3;
-  box-shadow: 4px 7px 0 rgba(43, 22, 10, 0.18), 0 22px 34px rgba(25, 12, 5, 0.38);
-  transform: rotate(0) translateY(-7px) scale(1.01);
-}
-
-.prediction-card::before,
-body.vault-theme .prediction-card::before {
-  display: block;
-  position: absolute;
-  inset: 9px;
-  width: auto;
-  border: 1px solid rgba(72, 43, 18, 0.3);
-  outline: 3px double rgba(72, 43, 18, 0.18);
-  outline-offset: -6px;
-  background: transparent;
-  pointer-events: none;
-}
-
-.prediction-card::after,
-body.vault-theme .prediction-card::after {
-  content: "";
-  display: block;
-  position: absolute;
-  z-index: 4;
-  top: 8px;
-  left: 50%;
-  width: 11px;
-  height: 11px;
-  border: 1px solid #2f2118;
-  border-radius: 50%;
-  background: radial-gradient(circle at 38% 32%, #d7bd8a 0 15%, #80633f 32%, #392a1f 72%);
-  box-shadow: 1px 2px 2px rgba(40, 20, 8, 0.38);
-  transform: translateX(-50%);
-}
-
-.prediction-card__header,
-body.vault-theme .prediction-card__header {
-  align-items: center;
-  flex-direction: column;
-  min-height: 96px;
-  gap: 9px;
-  padding-bottom: 12px;
-  border-bottom: 4px double rgba(68, 40, 18, 0.58);
-  text-align: center;
-}
-
-.prediction-card__bounty-heading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.prediction-card__rank,
-body.vault-theme .prediction-card__rank {
-  min-height: 0;
-  padding: 0;
-  border-radius: 0;
-  background: transparent;
-  color: #735c3c;
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
-.prediction-card__wanted {
-  color: #332416;
-  font-family: var(--vault-font-western);
-  font-size: clamp(1.7rem, 3vw, 2.25rem);
-  letter-spacing: 0.035em;
-  line-height: 1.05;
-  text-shadow: 0 1px rgba(255, 244, 208, 0.65);
-}
-
-.prediction-card__wanted-for {
-  color: #715936;
-  font-family: var(--vault-font-display);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-}
-
-.prediction-card__tags,
-body.vault-theme .prediction-card__tags {
-  justify-content: center;
-}
-
-.prediction-card__tag,
-body.vault-theme .prediction-card__tag {
-  min-height: 24px;
-  padding: 0 7px;
-  border: 2px solid currentColor;
-  border-radius: 2px;
-  background: rgba(234, 213, 170, 0.74);
-  color: #775635;
-  font-size: 0.61rem;
-  letter-spacing: 0.09em;
-  transform: rotate(-1.2deg);
-}
-
-.prediction-card__tag:nth-child(even) {
-  transform: rotate(1deg);
-}
-
-.prediction-card__tag--status {
-  color: var(--vault-status-active);
-}
-
-.prediction-card__identity,
-body.vault-theme .prediction-card__identity {
-  display: flex;
-  flex-direction: column;
-  gap: 11px;
-  text-align: center;
-}
-
-.prediction-card__photo,
-body.vault-theme .prediction-card__photo {
-  width: 116px;
-  height: 122px;
-  border: 4px double #705331;
-  border-radius: 1px;
-  background: #cdb88b;
-  box-shadow: 3px 4px 0 rgba(72, 45, 21, 0.2);
-}
-
-.prediction-card__photo-img,
-body.vault-theme .prediction-card__photo-img {
-  filter: grayscale(0.24) sepia(0.48) saturate(0.72) contrast(1.07);
-}
-
-.prediction-card__fallback,
-body.vault-theme .prediction-card__fallback {
-  background: linear-gradient(145deg, #d9c49b, #bca274);
-  color: #624c31;
-  font-family: var(--vault-font-display);
-}
-
-.prediction-card__name,
-body.vault-theme .prediction-card__name {
-  color: #332416;
-  font-family: var(--vault-font-western);
-  font-size: 1.22rem;
-  font-weight: 400;
-  letter-spacing: 0.015em;
-}
-
-.prediction-card__market,
-body.vault-theme .prediction-card__market {
-  display: inline-block;
-  margin-top: 7px;
-  padding: 4px 8px;
-  border-top: 1px solid currentColor;
-  border-bottom: 1px solid currentColor;
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-}
-
-.prediction-card__context,
-body.vault-theme .prediction-card__context {
-  color: #705b3f;
-  font-size: 0.71rem;
-}
-
-.prediction-card__signal,
-body.vault-theme .prediction-card__signal {
-  align-items: center;
-  padding: 10px 13px;
-  border: 3px double #654824;
-  border-radius: 0;
-  background: rgba(255, 241, 195, 0.35);
-  text-align: left;
-}
-
-.prediction-card__signal-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.prediction-card__reward {
-  color: #4a331d;
-  font-family: var(--vault-font-western);
-  font-size: 0.94rem;
-  line-height: 1;
-}
-
-.prediction-card__signal-label,
-body.vault-theme .prediction-card__signal-label {
-  max-width: none;
-  color: #765e3e;
-  font-size: 0.58rem;
-  letter-spacing: 0.1em;
-}
-
-.prediction-card__signal strong,
-body.vault-theme .prediction-card__signal strong {
-  color: var(--direction-color, var(--vault-sport-accent));
-  font-family: var(--vault-font-western);
-  font-size: 1.55rem;
-  font-weight: 400;
-}
-
-.prediction-card__metrics,
-body.vault-theme .prediction-card__metrics {
-  gap: 0;
-  border-top: 1px solid rgba(89, 59, 27, 0.42);
-  border-bottom: 1px solid rgba(89, 59, 27, 0.42);
-}
-
-.prediction-card__metrics div,
-body.vault-theme .prediction-card__metrics div {
-  padding: 9px 7px;
-  border: 0;
-  border-left: 1px solid rgba(89, 59, 27, 0.34);
-  border-radius: 0;
-  background: transparent;
-}
-
-.prediction-card__metrics div:first-child,
-body.vault-theme .prediction-card__metrics div:first-child {
-  border-left: 0;
-}
-
-.prediction-card__metrics dt,
-body.vault-theme .prediction-card__metrics dt {
-  color: #786344;
-}
-
-.prediction-card__metrics dd,
-body.vault-theme .prediction-card__metrics dd {
-  color: #3d2d1c;
-  font-family: var(--vault-font-display);
-}
-
-.prediction-card__note,
-body.vault-theme .prediction-card__note {
-  padding: 0 2px;
-  border: 0;
-  color: #624f35;
-  font-size: 0.76rem;
-  text-align: center;
-}
-
-.prediction-card__note span {
-  display: block;
-  margin-bottom: 4px;
-  color: #3e2d1c;
-  font-size: 0.58rem;
-  font-weight: 900;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.prediction-card__seal {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  margin-top: auto;
-  color: #7a6240;
-}
-
-.prediction-card__seal > span {
-  display: grid;
-  place-items: center;
-  width: 25px;
-  height: 25px;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-  font-family: var(--vault-font-display);
-  font-size: 0.55rem;
-  font-weight: 900;
-}
-
-.prediction-card__seal small {
-  font-size: 0.55rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.prediction-about-panel {
-  padding: 32px 0;
-  border-bottom: 1px solid var(--vault-line-strong);
-}
-
-.prediction-about-panel h2,
-.prediction-about-panel h3 {
-  font-family: var(--vault-font-display);
-}
-
-.prediction-about-panel h2 {
-  font-size: 1.45rem;
-}
-
-.prediction-about-metric-grid,
-.prediction-about-table-wrap {
-  border-color: var(--vault-line-strong);
-  border-radius: 4px;
-  background: rgba(248, 243, 232, 0.78);
-}
-
-.prediction-about-metric-card,
-.prediction-about-table th,
-.prediction-about-table td {
-  border-color: var(--vault-line);
-}
-
-.prediction-about-metric-card strong {
-  font-family: var(--vault-font-display);
-}
-
-.prediction-about-table th {
-  background: var(--vault-bg-2);
-}
-
-.prediction-about-callout {
-  border-color: var(--vault-line-strong);
-  border-left-color: var(--vault-sport-accent);
-  border-radius: 3px;
-  background: rgba(248, 243, 232, 0.82);
-}
-
-.vault-empty {
-  border-color: var(--vault-line-strong);
-  border-radius: 4px;
-  background: rgba(248, 243, 232, 0.52);
-}
-
-@media (max-width: 760px) {
-  .vault-navigation {
-    border-bottom-color: #161512;
-    background: var(--vault-ink);
-  }
-
-  .vault-context-nav {
-    border-top-color: #5c5448;
-  }
-
-  .vault-page-header h1,
-  .prediction-about-sign h1,
-  .desk-header h1 {
-    font-size: 2.35rem;
-  }
-
-  .vault-board {
-    gap: 22px;
-    padding: 24px;
-    border-width: 6px;
-  }
-}
-
-@media (max-width: 430px) {
-  .vault-board {
-    margin-inline: -6px;
-    padding: 18px 14px;
-    border-width: 5px;
-  }
-
-  .prediction-card,
-  body.vault-theme .prediction-card {
-    padding: 25px 19px 17px;
-  }
-
-  .prediction-card__identity,
-  body.vault-theme .prediction-card__identity {
-    display: flex;
-  }
-
-  .prediction-card__photo,
-  body.vault-theme .prediction-card__photo {
-    width: 104px;
-    height: 110px;
-  }
-
-  .prediction-card__wanted {
-    font-size: 1.82rem;
-  }
-
-  .prediction-card__metrics,
-  body.vault-theme .prediction-card__metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .prediction-card__metrics div:nth-child(odd),
-  body.vault-theme .prediction-card__metrics div:nth-child(odd) {
-    border-left: 0;
-  }
-
-  .prediction-card__metrics div:nth-child(n + 3),
-  body.vault-theme .prediction-card__metrics div:nth-child(n + 3) {
-    border-top: 1px solid rgba(89, 59, 27, 0.28);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .prediction-card,
-  body.vault-theme .prediction-card,
-  .prediction-card:hover,
-  body.vault-theme .prediction-card:hover {
-    transition: none;
-    transform: none;
-  }
-}

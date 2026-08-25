@@ -4,82 +4,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="2026 NFL Week 1 QB, RB, WR, and TE yardage projections with parlay watchlists.">
-    <title>NFL Week 1 Pool | Prediction Bounties</title>
+    <title>NFL Predictions | In The Cards Analytics</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="/vault/vault-tokens.css?v=4">
-    <link rel="stylesheet" href="/vault/vault-components.css?v=7">
-    <link rel="stylesheet" href="/vault/prediction-pages.css?v=4">
+    <link rel="stylesheet" href="/vault/vault-tokens.css?v=9">
+    <link rel="stylesheet" href="/vault/vault-components.css?v=9">
+    <link rel="stylesheet" href="/vault/prediction-pages.css?v=9">
     <link rel="stylesheet" href="predictions.css?v=1">
     <link rel="stylesheet" href="parlay-board.css?v=1">
 </head>
 <body class="vault-theme">
     <div id="vaultShellRoot"></div>
-    <main class="vault-shell prediction-about-page">
-        <section class="prediction-about-stage">
-            <div class="prediction-about-container">
-                <header class="prediction-about-sign">
-                    <p class="prediction-about-kicker">NFL Weekly Model Pool</p>
-                    <div class="minimal-heading">
-                        <h1>2026 Week 1 Pool</h1>
-                        <button class="info-trigger" type="button" aria-label="About this pool" data-info="Current QB, RB, WR, and TE primary-yardage projections use current teams, Week 1 opponents, depth roles, and the frozen yardage model. They are not sportsbook picks until authentic two-sided lines pass the execution policy.">i</button>
-                    </div>
-                    <p class="prediction-page-lead">Current quarterbacks, running backs, wide receivers, and tight ends across the opening slate, with target-specific projections and holdout-calibrated ranges. Parlay watchlists remain line-free until executable markets open.</p>
-                    <p id="runFacts" class="prediction-about-run-facts">Loading Week 1 pool...</p>
-                </header>
-
-                <section class="prediction-about-panel">
-                    <h2>Projection Status</h2>
-                    <div id="weekPoolStatus" class="prediction-about-callout"></div>
-                    <div id="weekPoolMetrics" class="prediction-about-metric-grid"></div>
-                </section>
-
-                <section class="prediction-about-panel">
-                    <div class="week-pool-heading"><h2>Week 1 Player Projections</h2><div id="weekPositionFilters" class="week-position-filters" role="group" aria-label="Filter projections by position"><button type="button" class="is-active" data-position="ALL">All</button><button type="button" data-position="QB">QB</button><button type="button" data-position="RB">RB</button><button type="button" data-position="WR">WR</button><button type="button" data-position="TE">TE</button></div></div>
-                    <div id="weekProjectionPool" class="prediction-about-table-wrap"></div>
-                </section>
-
-                <section class="prediction-about-panel">
-                    <h2>Week 1 Parlay Watchlists</h2>
-                    <div id="parlayWatchlistStatus" class="prediction-about-callout"></div>
-                    <div id="parlayWatchlists" class="week-parlay-grid"></div>
-                </section>
-
-                <section class="prediction-about-panel">
-                    <h2>Executable Bounty Board</h2>
-                    <div id="gateSummary" class="prediction-about-callout"></div>
-                    <div id="overallMetrics" class="prediction-about-metric-grid"></div>
-                    <div id="currentBoard" class="vault-board nfl-bounty-board"></div>
-                </section>
-
-                <section class="prediction-about-panel">
-                    <h2>Parlay Policy</h2>
-                    <div id="dailyParlay" class="prediction-about-callout"></div>
-                </section>
-
-                <section id="parlayV2Section" class="daily-parlay daily-parlay--v2" aria-labelledby="parlayV2Title" aria-live="polite">
-                    <div id="parlayV2Content"></div>
-                </section>
-
-                <section class="prediction-about-panel">
-                    <h2>Locked Singles Backtest</h2>
-                    <div id="marketReplayStatus" class="prediction-about-callout"></div>
-                    <div id="marketReplayMetrics" class="prediction-about-metric-grid"></div>
-                </section>
-
-                <section class="prediction-about-panel">
-                    <h2>Baseline Comparison</h2>
-                    <div id="marketBaselines" class="prediction-about-table-wrap"></div>
-                </section>
-
-                <section class="prediction-about-panel">
-                    <h2>2022 Weekly Replay</h2>
-                    <div id="marketWeekly" class="prediction-about-table-wrap"></div>
-                </section>
+    <main class="vault-shell predictions-page">
+        <header class="vault-page-header">
+            <p class="vault-page-kicker">NFL &middot; Week 1</p>
+            <div class="vault-heading-row">
+                <h1>Predictions</h1>
+                <button class="vault-info-trigger" type="button" aria-label="About this page" data-info="Current QB, RB, WR, and TE primary-yardage projections use current teams, Week 1 opponents, depth roles, and the frozen yardage model. They are not sportsbook picks until authentic two-sided lines pass the execution policy.">i</button>
             </div>
+            <p class="prediction-page-lead">Current quarterbacks, running backs, wide receivers, and tight ends across the opening slate, with target-specific projections and holdout-calibrated ranges.</p>
+            <p id="runFacts" class="prediction-run-meta">Loading Week 1 pool...</p>
+        </header>
+
+        <section class="pool-primary" aria-label="Today's signals">
+            <div class="pool-section-heading"><h2>Projection Status</h2></div>
+            <div id="weekPoolStatus" class="prediction-about-callout"></div>
+            <div id="weekPoolMetrics" class="prediction-about-metric-grid"></div>
+
+            <div class="pool-section-heading week-pool-heading" style="margin-top:32px;">
+                <h2>Player Projections</h2>
+                <div id="weekPositionFilters" class="week-position-filters" role="group" aria-label="Filter projections by position"><button type="button" class="is-active" data-position="ALL">All</button><button type="button" data-position="QB">QB</button><button type="button" data-position="RB">RB</button><button type="button" data-position="WR">WR</button><button type="button" data-position="TE">TE</button></div>
+            </div>
+            <div id="weekProjectionPool" class="prediction-about-table-wrap"></div>
+
+            <div class="pool-section-heading" style="margin-top:32px;"><h2>Qualified Signals</h2></div>
+            <div id="gateSummary" class="prediction-about-callout"></div>
+            <div id="overallMetrics" class="prediction-about-metric-grid"></div>
+            <div id="currentBoard" class="vault-board" style="margin-top:16px;"></div>
         </section>
+
+        <section class="pool-secondary" aria-label="Parlays and watchlists">
+            <div class="pool-section-heading"><h2>Parlays / Watchlists</h2></div>
+            <div id="parlayWatchlistStatus" class="prediction-about-callout"></div>
+            <div id="parlayWatchlists" class="week-parlay-grid"></div>
+            <div id="dailyParlay" class="prediction-about-callout" style="margin-top:16px;"></div>
+            <section id="parlayV2Section" class="daily-parlay daily-parlay--v2" aria-labelledby="parlayV2Title" aria-live="polite">
+                <div id="parlayV2Content"></div>
+            </section>
+        </section>
+
+        <footer class="pool-status">
+            <div class="pool-status__row">
+                <span class="prediction-run-meta__item">Research only -- review model status and evidence before treating any signal as executable.</span>
+                <a class="pool-status__link" href="/nfl/prediction-about/">View complete model evidence &rarr;</a>
+            </div>
+        </footer>
     </main>
-    <script src="/vault/vault-components.js?v=8"></script>
-    <script src="/vault/vault-shell.js?v=7"></script>
-    <script src="predictions.js?v=6"></script>
+    <script src="/vault/vault-components.js?v=9"></script>
+    <script src="/vault/vault-shell.js?v=9"></script>
+    <script src="predictions.js?v=7"></script>
 </body>
 </html>
