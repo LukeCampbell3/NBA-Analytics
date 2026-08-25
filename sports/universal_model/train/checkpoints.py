@@ -28,6 +28,15 @@ def save_checkpoint(path: Path, model: UniversalModel, optimizer, config, extra:
 def load_checkpoint(path: Path) -> tuple[UniversalModel, dict]:
     payload = torch.load(path, weights_only=False)
     model = UniversalModel(**payload["model_config"])
+    # model_config is a static construction-time dict (e.g. n_experts=8);
+    # it is NOT kept in sync with in-place DRM mutations (expert birth
+    # grows the real tensors without updating this dict), so a model built
+    # fresh from it can undercount experts relative to the saved weights.
+    # Resize any MoE/Switch layer to match the checkpoint's real shapes
+    # before loading -- same logic DRM rollback uses.
+    from sports.universal_model.drm_controller.mutations import resize_moe_layers_to_match
+
+    resize_moe_layers_to_match(model, payload["model_state"])
     model.load_state_dict(payload["model_state"])
     current = current_signature()
     saved = payload["dataset_signature"]

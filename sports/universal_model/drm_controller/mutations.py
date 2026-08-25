@@ -118,33 +118,36 @@ def snapshot(model: UniversalModel) -> dict:
     return copy.deepcopy(model.state_dict())
 
 
-def restore(model: UniversalModel, snap: dict) -> None:
-    """Exact rollback (spec section 28/61): a rejected mutation must
-    revert exactly, including any shape change from expert birth.
+def resize_moe_layers_to_match(model: UniversalModel, state_dict: dict) -> None:
+    """Rebuild every MoE/Switch layer's gate + expert bank (and this
+    package's own n_experts counters) to match ``state_dict``'s real
+    tensor shapes, in place, WITHOUT loading values yet.
+
+    Needed in two places: DRM rollback (a rejected expert-birth must
+    shrink back down) and checkpoint loading (a model built fresh from
+    ``model.config["n_experts"]`` does not know a later-committed DRM
+    expert birth grew that count -- ``model.config`` is a static
+    construction-time dict, not kept in sync with in-place mutations).
 
     A naive "just resize the raw weight tensors and load_state_dict" is
     NOT sufficient for the router's gate: it is an ``nn.Linear``, and
     ``add_expert()`` (moe.py) replaces that whole module with a new
-    ``nn.Linear`` of larger ``out_features``. If a rollback only resizes
-    ``.weight``/``.bias`` in place, the Linear module's own
-    ``in_features``/``out_features`` metadata (and this package's own
-    ``n_experts`` counters on Router/ExpertBank) go stale even though the
-    tensor shape is correct -- and the next expert-birth attempt then
-    reads that stale metadata and corrupts itself. So every MoE/Switch
-    layer's gate, expert bank, and n_experts counters are rebuilt from the
-    snapshot's real shapes explicitly, before the generic
-    ``load_state_dict`` call restores the actual values.
+    ``nn.Linear`` of larger ``out_features``. Resizing ``.weight``/
+    ``.bias`` in place instead leaves the Linear module's own
+    ``in_features``/``out_features`` metadata stale even though the tensor
+    shape is correct -- so the gate object itself is rebuilt here, not
+    just its parameters.
     """
     for name, module in model.named_modules():
         if not hasattr(module, "experts") or not hasattr(module, "router"):
             continue  # not a Switch/Top2MoEFFN layer
         w1_key = f"{name}.experts.w1"
-        if w1_key not in snap:
+        if w1_key not in state_dict:
             continue
-        target_n_experts = snap[w1_key].shape[0]
+        target_n_experts = state_dict[w1_key].shape[0]
         if module.experts.w1.shape[0] == target_n_experts:
             continue  # no shape drift for this layer
-        hidden_dim, inner = snap[w1_key].shape[1], snap[w1_key].shape[2]
+        hidden_dim, inner = state_dict[w1_key].shape[1], state_dict[w1_key].shape[2]
         device = module.experts.w1.device
         module.experts.w1 = torch.nn.Parameter(torch.zeros(target_n_experts, hidden_dim, inner, device=device))
         module.experts.b1 = torch.nn.Parameter(torch.zeros(target_n_experts, inner, device=device))
@@ -154,4 +157,9 @@ def restore(model: UniversalModel, snap: dict) -> None:
         module.router.gate = torch.nn.Linear(hidden_dim, target_n_experts, device=device)
         module.router.n_experts = target_n_experts
 
+
+def restore(model: UniversalModel, snap: dict) -> None:
+    """Exact rollback (spec section 28/61): a rejected mutation must
+    revert exactly, including any shape change from expert birth."""
+    resize_moe_layers_to_match(model, snap)
     model.load_state_dict(snap, strict=True)
