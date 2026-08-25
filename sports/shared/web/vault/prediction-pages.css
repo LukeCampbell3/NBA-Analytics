@@ -10,6 +10,16 @@
   box-sizing: border-box;
 }
 
+/* Defensive wrapping so a long unbroken token (a file path in <code>, a
+   policy identifier, a URL) can never force horizontal page overflow. */
+code,
+.prediction-about-panel > p,
+.prediction-about-list,
+.prediction-about-callout,
+.prediction-run-meta__item {
+  overflow-wrap: anywhere;
+}
+
 /* Progressive disclosure: one native pattern used everywhere secondary
    detail needs to exist without competing with the primary content. */
 details.disclosure {
@@ -455,6 +465,8 @@ button {
 }
 
 .date-nav {
+  width: 100%;
+  max-width: 100%;
   margin-top: 14px;
   overflow: hidden;
 }
@@ -467,6 +479,8 @@ button {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  max-width: 100%;
   padding: 2px 2px 8px;
   overflow-x: auto;
   overscroll-behavior-inline: contain;

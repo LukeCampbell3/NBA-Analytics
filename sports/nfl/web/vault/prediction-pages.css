@@ -10,6 +10,16 @@
   box-sizing: border-box;
 }
 
+/* Defensive wrapping so a long unbroken token (a file path in <code>, a
+   policy identifier, a URL) can never force horizontal page overflow. */
+code,
+.prediction-about-panel > p,
+.prediction-about-list,
+.prediction-about-callout,
+.prediction-run-meta__item {
+  overflow-wrap: anywhere;
+}
+
 /* Progressive disclosure: one native pattern used everywhere secondary
    detail needs to exist without competing with the primary content. */
 details.disclosure {
@@ -97,6 +107,61 @@ details.disclosure .disclosure-body {
 .status-pill--pending { color: var(--vault-text-muted); }
 .status-pill--withheld,
 .status-pill--unavailable { color: var(--vault-status-withheld); border-color: color-mix(in srgb, var(--vault-status-withheld) 40%, var(--vault-line)); }
+
+/* Canonical prediction-pool skeleton, shared by every sport's
+   predictions.html: <main class="predictions-page"> > <header
+   class="vault-page-header"> (title/lead/freshness/date-nav), then
+   .pool-primary (today's signals), .pool-secondary (parlays/watchlists),
+   .pool-status (model status + link to methodology). Sport-specific
+   markup lives *inside* these, never replaces them -- see spec section 4. */
+.pool-primary,
+.pool-secondary {
+  margin-top: 40px;
+}
+
+.pool-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.pool-section-heading h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.pool-status {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--vault-line);
+}
+
+.pool-status__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pool-status__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  color: var(--vault-sport-accent);
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.pool-status__link:hover,
+.pool-status__link:focus-visible {
+  text-decoration: underline;
+}
 
 a,
 button {
@@ -400,6 +465,8 @@ button {
 }
 
 .date-nav {
+  width: 100%;
+  max-width: 100%;
   margin-top: 14px;
   overflow: hidden;
 }
@@ -412,6 +479,8 @@ button {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  max-width: 100%;
   padding: 2px 2px 8px;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
