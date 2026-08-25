@@ -1,3 +1,20 @@
+// Shared engine for the split advantage-routing pages (Stats, Drive-Pass,
+// Post-Pass). Each page is a genuinely separate, bookmarkable route with
+// its own HTML -- not a query-string mode switch on one shared page -- but
+// they read the same per-player JSON and share the same real rendering
+// logic, so that logic lives here once instead of being copy-pasted three
+// times and drifting.
+//
+// Every render* method guards on the DOM elements it needs: a page that
+// doesn't include a given section's markup simply skips that method, so
+// the same engine safely powers a baseline-only page (Stats) and a
+// full mode-specific page (Drive-Pass / Post-Pass) with no page-specific
+// branching required beyond the fixed `mode` in AR_PAGE_CONFIG.
+//
+// The original bundled advantage-routing.html/.js page is left untouched
+// for backward compatibility with any existing links -- this is a
+// parallel implementation, not a replacement for it.
+
 const AR_DATA_ROOT = "data/advantage-routing";
 
 const AR_ZONE_COLORS = {
@@ -16,52 +33,47 @@ const AR_ZONE_LABELS = {
     ABOVE_BREAK_3: "Three (corner + above-break combined)",
 };
 
-class AdvantageRoutingPage {
-    constructor() {
-        this.elements = {
-            runFacts: document.getElementById("arRunFacts"),
-            playerSelect: document.getElementById("arPlayerSelect"),
-            modeTabs: document.getElementById("arModeTabs"),
-            dataUnavailableNotice: document.getElementById("arDataUnavailableNotice"),
-            baselineGrid: document.getElementById("arBaselineGrid"),
-            gravityChart: document.getElementById("arGravityChart"),
-            recipientNote: document.getElementById("arRecipientNote"),
-            recipientTableBody: document.getElementById("arRecipientTableBody"),
-            recipientTable: document.getElementById("arRecipientTable"),
-            halfCourt: document.getElementById("arHalfCourt"),
-            zoneLegend: document.getElementById("arZoneLegend"),
-            researchSummary: document.getElementById("arResearchSummary"),
-            usageSlider: document.getElementById("arUsageSlider"),
-            usageOut: document.getElementById("arUsageOut"),
-            passTendencySlider: document.getElementById("arPassTendencySlider"),
-            passTendencyOut: document.getElementById("arPassTendencyOut"),
-            advancedToggle: document.getElementById("arAdvancedToggle"),
-            advancedGroup: document.getElementById("arAdvancedGroup"),
-            elasticitySlider: document.getElementById("arElasticitySlider"),
-            elasticityOut: document.getElementById("arElasticityOut"),
-            retentionSlider: document.getElementById("arRetentionSlider"),
-            retentionOut: document.getElementById("arRetentionOut"),
-            turnoverSlider: document.getElementById("arTurnoverSlider"),
-            turnoverOut: document.getElementById("arTurnoverOut"),
-            saturationSlider: document.getElementById("arSaturationSlider"),
-            saturationOut: document.getElementById("arSaturationOut"),
-            resetButton: document.getElementById("arResetButton"),
-            causalityExplanation: document.getElementById("arCausalityExplanation"),
-            baselineColumn: document.getElementById("arBaselineColumn"),
-            simColumn: document.getElementById("arSimColumn"),
-            scenarioSelect: document.getElementById("arScenarioSelect"),
-            monteCarlo: document.getElementById("arMonteCarlo"),
-            compareSelectors: document.getElementById("arCompareSelectors"),
-            compareTable: document.getElementById("arCompareTable"),
-            provenance: document.getElementById("arProvenance"),
-        };
+class AdvantageAnalysisPage {
+    constructor(config) {
+        this.config = Object.assign({ mode: null, pageLabel: "", navHref: "" }, config || {});
+        this.elements = this.collectElements();
         this.players = [];
         this.playerCache = new Map();
         this.currentPlayer = null;
-        this.mode = "interior_hub";
-        this.compareSlugs = [];
         this.bindControls();
         this.init();
+    }
+
+    collectElements() {
+        const ids = [
+            "arRunFacts", "arPlayerSelect", "arDataUnavailableNotice",
+            "arBaselineGrid",
+            "arGravityChart",
+            "arRecipientNote", "arRecipientTableBody", "arRecipientTable",
+            "arHalfCourt", "arZoneLegend",
+            "arResearchSummary",
+            "arUsageSlider", "arUsageOut", "arPassTendencySlider", "arPassTendencyOut",
+            "arAdvancedToggle", "arAdvancedGroup",
+            "arElasticitySlider", "arElasticityOut", "arRetentionSlider", "arRetentionOut",
+            "arTurnoverSlider", "arTurnoverOut", "arSaturationSlider", "arSaturationOut",
+            "arResetButton", "arCausalityExplanation",
+            "arBaselineColumn", "arSimColumn", "arScenarioSelect", "arMonteCarlo",
+            "arCompareSelectors", "arCompareTable",
+            "arProvenance",
+        ];
+        const map = {};
+        ids.forEach((id) => { map[id] = document.getElementById(id); });
+        return map;
+    }
+
+    navLinks() {
+        return [
+            { label: "Board", href: "/nba/predictions/", active: this.config.pageLabel === "Board" },
+            { label: "Stats", href: "/nba/stats/", active: this.config.pageLabel === "Stats" },
+            { label: "Drive-Pass", href: "/nba/drive-pass/", active: this.config.pageLabel === "Drive-Pass" },
+            { label: "Post-Pass", href: "/nba/post-pass/", active: this.config.pageLabel === "Post-Pass" },
+            { label: "Method", href: "/nba/prediction-about/", active: this.config.pageLabel === "Method" },
+        ];
     }
 
     mountShell() {
@@ -71,13 +83,7 @@ class AdvantageRoutingPage {
             brandHref: "/",
             sportSlug: "nba",
             sportAccent: "#c02c3a",
-            navLinks: [
-                { label: "Board", href: "/nba/predictions/", active: false },
-                { label: "Stats", href: "/nba/stats/", active: false },
-                { label: "Drive-Pass", href: "/nba/drive-pass/", active: false },
-                { label: "Post-Pass", href: "/nba/post-pass/", active: false },
-                { label: "Method", href: "/nba/prediction-about/", active: false },
-            ],
+            navLinks: this.navLinks(),
             showDisclaimer: true,
         });
     }
@@ -93,61 +99,66 @@ class AdvantageRoutingPage {
             this.populateCompareSelectors();
             if (this.players.length) {
                 await this.selectPlayer(this.players[0].slug);
-            } else {
-                this.elements.runFacts.textContent = "No advantage-routing player artifacts are available yet.";
+            } else if (this.elements.arRunFacts) {
+                this.elements.arRunFacts.textContent = "No advantage-routing player artifacts are available yet.";
             }
         } catch (error) {
             console.error(error);
-            this.elements.runFacts.textContent = `Unable to load advantage-routing data: ${error.message}`;
+            if (this.elements.arRunFacts) {
+                this.elements.arRunFacts.textContent = `Unable to load advantage-routing data: ${error.message}`;
+            }
         }
     }
 
     bindControls() {
-        this.elements.playerSelect.addEventListener("change", (event) => this.selectPlayer(event.target.value));
+        if (this.elements.arPlayerSelect) {
+            this.elements.arPlayerSelect.addEventListener("change", (event) => this.selectPlayer(event.target.value));
+        }
 
-        this.elements.modeTabs.addEventListener("click", (event) => {
-            const button = event.target.closest("button[data-mode]");
-            if (!button) return;
-            this.mode = button.dataset.mode;
-            this.elements.modeTabs.querySelectorAll("button").forEach((b) => b.classList.toggle("is-active", b === button));
-            this.renderModeSpecific();
-        });
-
-        this.elements.advancedToggle.addEventListener("click", () => {
-            const expanded = this.elements.advancedToggle.getAttribute("aria-expanded") === "true";
-            this.elements.advancedToggle.setAttribute("aria-expanded", String(!expanded));
-            this.elements.advancedGroup.hidden = expanded;
-            this.elements.advancedToggle.textContent = expanded ? "Advanced controls" : "Hide advanced controls";
-        });
+        if (this.elements.arAdvancedToggle && this.elements.arAdvancedGroup) {
+            this.elements.arAdvancedToggle.addEventListener("click", () => {
+                const expanded = this.elements.arAdvancedToggle.getAttribute("aria-expanded") === "true";
+                this.elements.arAdvancedToggle.setAttribute("aria-expanded", String(!expanded));
+                this.elements.arAdvancedGroup.hidden = expanded;
+                this.elements.arAdvancedToggle.textContent = expanded ? "Advanced controls" : "Hide advanced controls";
+            });
+        }
 
         const sliders = [
-            this.elements.usageSlider, this.elements.passTendencySlider, this.elements.elasticitySlider,
-            this.elements.retentionSlider, this.elements.turnoverSlider, this.elements.saturationSlider,
-        ];
+            this.elements.arUsageSlider, this.elements.arPassTendencySlider, this.elements.arElasticitySlider,
+            this.elements.arRetentionSlider, this.elements.arTurnoverSlider, this.elements.arSaturationSlider,
+        ].filter(Boolean);
         sliders.forEach((slider) => slider.addEventListener("input", () => this.renderSimulation()));
 
-        this.elements.scenarioSelect.addEventListener("change", () => this.renderSimulation());
-        this.elements.resetButton.addEventListener("click", () => this.resetToBaseline());
-
-        this.elements.recipientTable.addEventListener("click", (event) => {
-            const th = event.target.closest("th[data-sort]");
-            if (!th) return;
-            this.sortRecipients(th.dataset.sort);
-        });
+        if (this.elements.arScenarioSelect) {
+            this.elements.arScenarioSelect.addEventListener("change", () => this.renderSimulation());
+        }
+        if (this.elements.arResetButton) {
+            this.elements.arResetButton.addEventListener("click", () => this.resetToBaseline());
+        }
+        if (this.elements.arRecipientTable) {
+            this.elements.arRecipientTable.addEventListener("click", (event) => {
+                const th = event.target.closest("th[data-sort]");
+                if (!th) return;
+                this.sortRecipients(th.dataset.sort);
+            });
+        }
     }
 
     populatePlayerSelect() {
-        this.elements.playerSelect.innerHTML = this.players
+        if (!this.elements.arPlayerSelect) return;
+        this.elements.arPlayerSelect.innerHTML = this.players
             .map((p) => `<option value="${this.escape(p.slug)}">${this.escape(p.name)}</option>`)
             .join("");
     }
 
     populateCompareSelectors() {
+        if (!this.elements.arCompareSelectors) return;
         const options = this.players.map((p) => `<option value="${this.escape(p.slug)}">${this.escape(p.name)}</option>`).join("");
-        this.elements.compareSelectors.innerHTML = [0, 1, 2, 3]
+        this.elements.arCompareSelectors.innerHTML = [0, 1, 2, 3]
             .map((i) => `<select data-compare-index="${i}"><option value="">-- none --</option>${options}</select>`)
             .join("");
-        this.elements.compareSelectors.querySelectorAll("select").forEach((select, i) => {
+        this.elements.arCompareSelectors.querySelectorAll("select").forEach((select, i) => {
             if (this.players[i]) select.value = this.players[i].slug;
             select.addEventListener("change", () => this.renderComparison());
         });
@@ -167,26 +178,30 @@ class AdvantageRoutingPage {
         try {
             const data = await this.loadPlayer(slug);
             this.currentPlayer = data;
-            this.elements.playerSelect.value = slug;
+            if (this.elements.arPlayerSelect) this.elements.arPlayerSelect.value = slug;
             this.render();
         } catch (error) {
             console.error(error);
-            this.elements.runFacts.textContent = `Unable to load ${slug}: ${error.message}`;
+            if (this.elements.arRunFacts) {
+                this.elements.arRunFacts.textContent = `Unable to load ${slug}: ${error.message}`;
+            }
         }
     }
 
     render() {
         const d = this.currentPlayer;
         if (!d) return;
-        const gp = this.metricValue(d.baseline.games_played);
-        const usg = this.metricValue(d.baseline.usage_pct);
-        this.elements.runFacts.innerHTML = [
-            `${this.escape(d.player.name)}`,
-            `${this.escape(d.player.season)}`,
-            `${this.formatNum(gp, 0)} real games`,
-            `${this.formatNum(usg, 1)}% real USG`,
-            `${d.recipients.sample_size} real sampled assists`,
-        ].map((item) => `<span>${item}</span>`).join("");
+        if (this.elements.arRunFacts) {
+            const gp = this.metricValue(d.baseline.games_played);
+            const usg = this.metricValue(d.baseline.usage_pct);
+            this.elements.arRunFacts.innerHTML = [
+                `${this.escape(d.player.name)}`,
+                `${this.escape(d.player.season)}`,
+                `${this.formatNum(gp, 0)} real games`,
+                `${this.formatNum(usg, 1)}% real USG`,
+                `${d.recipients.sample_size} real sampled assists`,
+            ].map((item) => `<span>${item}</span>`).join("");
+        }
 
         this.renderBaseline();
         this.renderGravity();
@@ -200,23 +215,25 @@ class AdvantageRoutingPage {
     }
 
     renderModeSpecific() {
+        if (!this.config.mode || !this.elements.arDataUnavailableNotice) return;
         const d = this.currentPlayer;
         if (!d) return;
-        const node = this.mode === "drive" ? d.drive : (this.mode === "post" ? d.post : d.interior_hub);
+        const node = this.config.mode === "drive" ? d.drive : (this.config.mode === "post" ? d.post : d.interior_hub);
         if (!node) return;
         const routingVector = node.routing_vector;
         if (routingVector && routingVector.status === "UNAVAILABLE") {
-            this.elements.dataUnavailableNotice.hidden = false;
-            this.elements.dataUnavailableNotice.innerHTML =
+            this.elements.arDataUnavailableNotice.hidden = false;
+            this.elements.arDataUnavailableNotice.innerHTML =
                 `<strong>Routing-state vector unavailable for this mode.</strong> ${this.escape(routingVector.reason || "")}`;
         } else {
-            this.elements.dataUnavailableNotice.hidden = true;
+            this.elements.arDataUnavailableNotice.hidden = true;
         }
     }
 
     // ---------------- baseline ----------------
 
     renderBaseline() {
+        if (!this.elements.arBaselineGrid) return;
         const b = this.currentPlayer.baseline;
         const cards = [
             ["USG%", b.usage_pct, (v) => this.formatNum(v, 1) + "%"],
@@ -228,7 +245,7 @@ class AdvantageRoutingPage {
             ["TOV / decision touch", b.tov_per_decision_touch, (v) => this.formatNum(v, 3)],
             ["Advantage-pass %", b.advantage_pass_pct, (v) => this.formatNum(v, 1) + "%"],
         ];
-        this.elements.baselineGrid.innerHTML = cards.map(([label, metric, fmt]) => this.metricCard(label, metric, fmt)).join("");
+        this.elements.arBaselineGrid.innerHTML = cards.map(([label, metric, fmt]) => this.metricCard(label, metric, fmt)).join("");
     }
 
     metricCard(label, metric, formatter) {
@@ -249,9 +266,10 @@ class AdvantageRoutingPage {
     // ---------------- gravity ----------------
 
     renderGravity() {
+        if (!this.elements.arGravityChart) return;
         const gravity = this.currentPlayer.gravity;
         const mechanisms = ["PAINT_FACEUP_GRAVITY", "VERTICAL_GRAVITY", "SHORT_ROLL_GRAVITY", "POP_GRAVITY", "PERIMETER_GRAVITY", "POST_SCORING_GRAVITY"];
-        this.elements.gravityChart.innerHTML = mechanisms.map((mech) => {
+        this.elements.arGravityChart.innerHTML = mechanisms.map((mech) => {
             const metrics = gravity.components[mech] || {};
             const values = Object.values(metrics).filter((m) => m.value !== null && m.value !== undefined && typeof m.value === "number");
             const anyReal = values.length > 0;
@@ -274,8 +292,9 @@ class AdvantageRoutingPage {
     // ---------------- recipients ----------------
 
     renderRecipients() {
+        if (!this.elements.arRecipientTableBody) return;
         const network = this.currentPlayer.recipients;
-        this.elements.recipientNote.textContent = network.sample_description || "";
+        if (this.elements.arRecipientNote) this.elements.arRecipientNote.textContent = network.sample_description || "";
         this._recipients = (network.recipients || []).slice();
         this._recipientSort = { key: "assists", dir: -1 };
         this.paintRecipientTable();
@@ -291,13 +310,14 @@ class AdvantageRoutingPage {
     }
 
     paintRecipientTable() {
+        if (!this.elements.arRecipientTableBody) return;
         const { key, dir } = this._recipientSort;
         const rows = this._recipients.slice().sort((a, b) => {
             const av = a[key] ? a[key].value : 0;
             const bv = b[key] ? b[key].value : 0;
             return dir * ((av || 0) - (bv || 0));
         });
-        this.elements.recipientTableBody.innerHTML = rows.map((r) => `
+        this.elements.arRecipientTableBody.innerHTML = rows.map((r) => `
             <tr>
                 <td>${this.formatNum(r.assists.value, 0)}</td>
                 <td>${this.escape(r.recipient_label)}</td>
@@ -306,14 +326,17 @@ class AdvantageRoutingPage {
                 <td>${this.escape(r.most_common_resulting_shot ? (AR_ZONE_LABELS[r.most_common_resulting_shot] || r.most_common_resulting_shot) : "n/a")}</td>
             </tr>
         `).join("");
-        this.elements.recipientTable.querySelectorAll("th[data-sort]").forEach((th) => {
-            th.classList.toggle("is-sorted", th.dataset.sort === key);
-        });
+        if (this.elements.arRecipientTable) {
+            this.elements.arRecipientTable.querySelectorAll("th[data-sort]").forEach((th) => {
+                th.classList.toggle("is-sorted", th.dataset.sort === key);
+            });
+        }
     }
 
     // ---------------- shot destination (half court) ----------------
 
     renderShotDestination() {
+        if (!this.elements.arHalfCourt) return;
         const network = this.currentPlayer.recipients;
         const zoneTotals = {};
         let total = 0;
@@ -324,7 +347,7 @@ class AdvantageRoutingPage {
             });
         });
 
-        const svg = this.elements.halfCourt;
+        const svg = this.elements.arHalfCourt;
         const zoneRegions = {
             RIM: { cx: 250, cy: 60, r: 45 },
             SHORT_PAINT: { cx: 250, cy: 130, r: 55 },
@@ -349,21 +372,24 @@ class AdvantageRoutingPage {
         });
         svg.innerHTML = svgContent;
 
-        this.elements.zoneLegend.innerHTML = Object.entries(AR_ZONE_LABELS).map(([zone, label]) => {
-            const count = zoneTotals[zone] || 0;
-            const share = total ? ((count / total) * 100).toFixed(1) : "0.0";
-            return `<span class="ar-zone-legend-item"><span class="ar-zone-swatch" style="background:${AR_ZONE_COLORS[zone]}"></span>${this.escape(label)}: ${count} (${share}%)</span>`;
-        }).join("");
+        if (this.elements.arZoneLegend) {
+            this.elements.arZoneLegend.innerHTML = Object.entries(AR_ZONE_LABELS).map(([zone, label]) => {
+                const count = zoneTotals[zone] || 0;
+                const share = total ? ((count / total) * 100).toFixed(1) : "0.0";
+                return `<span class="ar-zone-legend-item"><span class="ar-zone-swatch" style="background:${AR_ZONE_COLORS[zone]}"></span>${this.escape(label)}: ${count} (${share}%)</span>`;
+            }).join("");
+        }
     }
 
     // ---------------- research summary ----------------
 
     renderResearchSummary() {
+        if (!this.elements.arResearchSummary) return;
         const summary = this.currentPlayer.research_summary;
         const chips = (summary.archetype || []).map((a) => `<span class="ar-archetype-chip">${this.escape(a.replace(/_/g, " "))}</span>`).join("");
         const recipients = (summary.best_recipients || []).map((r) => `${this.escape(r.label)} (${this.formatNum((r.assist_share || 0) * 100, 1)}% of sampled assists)`).join(", ");
         const caveats = (summary.caveats || []).map((c) => `<p class="ar-caveat">${this.escape(c)}</p>`).join("");
-        this.elements.researchSummary.innerHTML = `
+        this.elements.arResearchSummary.innerHTML = `
             <div>${chips}<span class="ar-badge ar-badge--derived">confidence ${(summary.confidence * 100).toFixed(0)}%</span></div>
             <p>${this.escape(summary.simulation_finding)}</p>
             <p><strong>Primary gravity:</strong> ${this.escape((summary.primary_gravity || []).join(", ") || "n/a")}</p>
@@ -376,17 +402,18 @@ class AdvantageRoutingPage {
     // ---------------- simulation ----------------
 
     resetToBaseline() {
+        if (!this.elements.arUsageSlider) return;
         const b = this.currentPlayer.baseline;
         const usg = this.metricValue(b.usage_pct) || 15;
-        this.elements.usageSlider.min = Math.max(1, usg * 0.5).toFixed(1);
-        this.elements.usageSlider.max = Math.min(40, usg * 3).toFixed(1);
-        this.elements.usageSlider.value = usg;
-        this.elements.passTendencySlider.value = 0;
-        this.elements.elasticitySlider.value = 0.6;
-        this.elements.retentionSlider.value = 100;
-        this.elements.turnoverSlider.value = 0;
-        this.elements.saturationSlider.value = 55;
-        this.elements.scenarioSelect.value = "NEUTRAL";
+        this.elements.arUsageSlider.min = Math.max(1, usg * 0.5).toFixed(1);
+        this.elements.arUsageSlider.max = Math.min(40, usg * 3).toFixed(1);
+        this.elements.arUsageSlider.value = usg;
+        if (this.elements.arPassTendencySlider) this.elements.arPassTendencySlider.value = 0;
+        if (this.elements.arElasticitySlider) this.elements.arElasticitySlider.value = 0.6;
+        if (this.elements.arRetentionSlider) this.elements.arRetentionSlider.value = 100;
+        if (this.elements.arTurnoverSlider) this.elements.arTurnoverSlider.value = 0;
+        if (this.elements.arSaturationSlider) this.elements.arSaturationSlider.value = 55;
+        if (this.elements.arScenarioSelect) this.elements.arScenarioSelect.value = "NEUTRAL";
         this.renderSimulation();
     }
 
@@ -411,23 +438,24 @@ class AdvantageRoutingPage {
     }
 
     renderSimulation() {
+        if (!this.elements.arUsageSlider) return;
         const d = this.currentPlayer;
         if (!d) return;
         const b = d.baseline;
 
-        const targetUsage = parseFloat(this.elements.usageSlider.value);
-        const passTendencyChange = parseFloat(this.elements.passTendencySlider.value) / 100;
-        const elasticity = parseFloat(this.elements.elasticitySlider.value);
-        const retentionSliderValue = parseFloat(this.elements.retentionSlider.value) / 100;
-        const turnoverSliderValue = parseFloat(this.elements.turnoverSlider.value) / 100;
-        const saturationK = parseFloat(this.elements.saturationSlider.value) / 100;
+        const targetUsage = parseFloat(this.elements.arUsageSlider.value);
+        const passTendencyChange = parseFloat(this.elements.arPassTendencySlider.value) / 100;
+        const elasticity = parseFloat(this.elements.arElasticitySlider.value);
+        const retentionSliderValue = parseFloat(this.elements.arRetentionSlider.value) / 100;
+        const turnoverSliderValue = parseFloat(this.elements.arTurnoverSlider.value) / 100;
+        const saturationK = parseFloat(this.elements.arSaturationSlider.value) / 100;
 
-        this.elements.usageOut.textContent = `${targetUsage.toFixed(1)}%`;
-        this.elements.passTendencyOut.textContent = `${passTendencyChange >= 0 ? "+" : ""}${(passTendencyChange * 100).toFixed(0)}%`;
-        this.elements.elasticityOut.textContent = elasticity.toFixed(2);
-        this.elements.retentionOut.textContent = `${(retentionSliderValue * 100).toFixed(0)}%`;
-        this.elements.turnoverOut.textContent = `${turnoverSliderValue >= 0 ? "+" : ""}${(turnoverSliderValue * 100).toFixed(0)}%`;
-        this.elements.saturationOut.textContent = saturationK.toFixed(2);
+        this.elements.arUsageOut.textContent = `${targetUsage.toFixed(1)}%`;
+        this.elements.arPassTendencyOut.textContent = `${passTendencyChange >= 0 ? "+" : ""}${(passTendencyChange * 100).toFixed(0)}%`;
+        this.elements.arElasticityOut.textContent = elasticity.toFixed(2);
+        this.elements.arRetentionOut.textContent = `${(retentionSliderValue * 100).toFixed(0)}%`;
+        this.elements.arTurnoverOut.textContent = `${turnoverSliderValue >= 0 ? "+" : ""}${(turnoverSliderValue * 100).toFixed(0)}%`;
+        this.elements.arSaturationOut.textContent = saturationK.toFixed(2);
 
         const baseline = {
             usage_pct: this.metricValue(b.usage_pct),
@@ -437,7 +465,7 @@ class AdvantageRoutingPage {
             makesPerTouch: this.metricValue(b.makes_per_decision_touch),
         };
 
-        const advancedOpen = this.elements.advancedToggle.getAttribute("aria-expanded") === "true";
+        const advancedOpen = this.elements.arAdvancedToggle && this.elements.arAdvancedToggle.getAttribute("aria-expanded") === "true";
         const params = {
             targetUsage, elasticity, passTendencyChange, saturationK,
             retentionOverride: advancedOpen ? retentionSliderValue : null,
@@ -450,20 +478,24 @@ class AdvantageRoutingPage {
             + `Pass tendency is changed by ${passTendencyChange >= 0 ? "+" : ""}${(passTendencyChange * 100).toFixed(0)}%. `
             + `Role saturation retains ${(sim.retention * 100).toFixed(0)}% of baseline efficiency, and turnover risk changes by ${sim.turnoverGrowth >= 0 ? "+" : ""}${(sim.turnoverGrowth * 100).toFixed(0)}%. `
             + `This is a SIMULATED, conditional projection under these explicit assumptions -- never a forecast.`;
-        this.elements.causalityExplanation.textContent = explanation;
+        if (this.elements.arCausalityExplanation) this.elements.arCausalityExplanation.textContent = explanation;
 
-        this.elements.baselineColumn.innerHTML = [
-            ["Decision touches/G", baseline.decisionTouches, 1],
-            ["Assists/G", this.metricValue(b.ast_per_game), 2],
-            ["Turnovers/G", this.metricValue(b.tov_per_game), 2],
-        ].map(([label, value]) => this.bvsRow(label, value, null, 1)).join("");
+        if (this.elements.arBaselineColumn) {
+            this.elements.arBaselineColumn.innerHTML = [
+                ["Decision touches/G", baseline.decisionTouches, 1],
+                ["Assists/G", this.metricValue(b.ast_per_game), 2],
+                ["Turnovers/G", this.metricValue(b.tov_per_game), 2],
+            ].map(([label, value]) => this.bvsRow(label, value, null, 1)).join("");
+        }
 
-        this.elements.simColumn.innerHTML = [
-            ["Decision touches/G", sim.simDecisionTouches, this.metricValue(b.decision_touches_per_game)],
-            ["Assists/G", sim.simAssists, this.metricValue(b.ast_per_game)],
-            ["Receiver makes/G (assisted only)", sim.simMakes, null],
-            ["Turnovers/G", sim.simTurnovers, this.metricValue(b.tov_per_game)],
-        ].map(([label, value, baselineValue]) => this.bvsRow(label, value, baselineValue, 2)).join("");
+        if (this.elements.arSimColumn) {
+            this.elements.arSimColumn.innerHTML = [
+                ["Decision touches/G", sim.simDecisionTouches, this.metricValue(b.decision_touches_per_game)],
+                ["Assists/G", sim.simAssists, this.metricValue(b.ast_per_game)],
+                ["Receiver makes/G (assisted only)", sim.simMakes, null],
+                ["Turnovers/G", sim.simTurnovers, this.metricValue(b.tov_per_game)],
+            ].map(([label, value, baselineValue]) => this.bvsRow(label, value, baselineValue, 2)).join("");
+        }
 
         this.renderMonteCarlo();
     }
@@ -479,9 +511,10 @@ class AdvantageRoutingPage {
     }
 
     renderMonteCarlo() {
+        if (!this.elements.arMonteCarlo) return;
         const mc = this.currentPlayer.simulation_parameters && this.currentPlayer.simulation_parameters.monte_carlo;
         if (!mc || !mc.assists) {
-            this.elements.monteCarlo.innerHTML = `<p>${this.provenanceBadge("UNAVAILABLE")} No Monte Carlo result was computed for this player (insufficient real baseline data).</p>`;
+            this.elements.arMonteCarlo.innerHTML = `<p>${this.provenanceBadge("UNAVAILABLE")} No Monte Carlo result was computed for this player (insufficient real baseline data).</p>`;
             return;
         }
         const cards = [
@@ -489,7 +522,7 @@ class AdvantageRoutingPage {
             ["Turnovers/G", mc.turnovers],
             ["Receiver makes/G", mc.receiver_makes],
         ];
-        this.elements.monteCarlo.innerHTML = cards.map(([label, stats]) => {
+        this.elements.arMonteCarlo.innerHTML = cards.map(([label, stats]) => {
             const range = stats.p90 - stats.p10 || 1;
             const fillPct = 100;
             return `
@@ -505,10 +538,11 @@ class AdvantageRoutingPage {
     // ---------------- comparison ----------------
 
     async renderComparison() {
-        const selects = Array.from(this.elements.compareSelectors.querySelectorAll("select"));
+        if (!this.elements.arCompareSelectors || !this.elements.arCompareTable) return;
+        const selects = Array.from(this.elements.arCompareSelectors.querySelectorAll("select"));
         const slugs = selects.map((s) => s.value).filter(Boolean);
         if (!slugs.length) {
-            this.elements.compareTable.innerHTML = "";
+            this.elements.arCompareTable.innerHTML = "";
             return;
         }
         const players = await Promise.all(slugs.map((slug) => this.loadPlayer(slug).catch(() => null)));
@@ -524,14 +558,15 @@ class AdvantageRoutingPage {
         ];
         const header = `<thead><tr><th>Metric</th>${players.map((p) => `<th>${p ? this.escape(p.player.name) : "n/a"}</th>`).join("")}</tr></thead>`;
         const body = `<tbody>${rows.map(([label, fn]) => `<tr><td>${this.escape(label)}</td>${players.map((p) => `<td>${p ? this.escape(String(fn(p))) : "n/a"}</td>`).join("")}</tr>`).join("")}</tbody>`;
-        this.elements.compareTable.innerHTML = header + body;
+        this.elements.arCompareTable.innerHTML = header + body;
     }
 
     // ---------------- provenance ----------------
 
     renderProvenance() {
+        if (!this.elements.arProvenance) return;
         const prov = this.currentPlayer.provenance;
-        this.elements.provenance.innerHTML = `
+        this.elements.arProvenance.innerHTML = `
             <p><strong>Season:</strong> ${this.escape(prov.season)} &middot; <strong>Generated:</strong> ${this.escape(this.formatTime(prov.generated_at_utc))}</p>
             <p><strong>Box scores:</strong> <code>${this.escape(prov.box_score_source || "n/a")}</code></p>
             <p><strong>Basketball-Reference sample:</strong> ${prov.bball_ref_games_sampled ? prov.bball_ref_games_sampled.length : 0} of ${prov.bball_ref_games_available_total || 0} real games -- ${this.escape(prov.bball_ref_sampling_method || "")}</p>
@@ -563,4 +598,4 @@ class AdvantageRoutingPage {
     }
 }
 
-document.addEventListener("DOMContentLoaded", () => new AdvantageRoutingPage());
+document.addEventListener("DOMContentLoaded", () => new AdvantageAnalysisPage(window.AR_PAGE_CONFIG));

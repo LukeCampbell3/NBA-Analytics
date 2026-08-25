@@ -39,6 +39,9 @@ class PredictionAboutPage {
             sportAccent: '#c02c3a',
             navLinks: [
                 { label: 'Board', href: '/nba/predictions/', active: false },
+                { label: 'Stats', href: '/nba/stats/', active: false },
+                { label: 'Drive-Pass', href: '/nba/drive-pass/', active: false },
+                { label: 'Post-Pass', href: '/nba/post-pass/', active: false },
                 { label: 'Method', href: '/nba/prediction-about/', active: true },
             ],
             showDisclaimer: true,
