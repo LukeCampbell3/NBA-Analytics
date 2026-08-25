@@ -42,8 +42,8 @@ class NflFantasyDraftBoard {
         window.CardVaultShell.mount({
             brandTitle: "In The Cards Analytics", brandHref: "/", sportSlug: "nfl", sportAccent: "#b42318",
             navLinks: [
-                { label: "Picks", href: "/nfl/predictions/", active: false },
-                { label: "Fantasy Draft", href: "/nfl/fantasy/", active: true },
+                { label: "Predictions", href: "/nfl/predictions/", active: false },
+                { label: "Fantasy", href: "/nfl/fantasy/", active: true },
                 { label: "Method", href: "/nfl/prediction-about/", active: false },
             ],
             showDisclaimer: true,

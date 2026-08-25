@@ -145,7 +145,7 @@ class AdvantageRoutingPage {
     populateCompareSelectors() {
         const options = this.players.map((p) => `<option value="${this.escape(p.slug)}">${this.escape(p.name)}</option>`).join("");
         this.elements.compareSelectors.innerHTML = [0, 1, 2, 3]
-            .map((i) => `<select data-compare-index="${i}"><option value="">-- none --</option>${options}</select>`)
+            .map((i) => `<select data-compare-index="${i}" aria-label="Compare player ${i + 1}"><option value="">-- none --</option>${options}</select>`)
             .join("");
         this.elements.compareSelectors.querySelectorAll("select").forEach((select, i) => {
             if (this.players[i]) select.value = this.players[i].slug;
