@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="../">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Real, mode-independent box-score baseline stats per player -- usage, decision touches, assist and turnover rates.">
+    <title>Stats | In The Cards Analytics</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="/vault/vault-tokens.css?v=9">
+    <link rel="stylesheet" href="/vault/vault-components.css?v=9">
+    <link rel="stylesheet" href="/vault/prediction-pages.css?v=9">
+    <link rel="stylesheet" href="advantage-routing.css?v=1">
+</head>
+<body class="vault-theme">
+    <div id="vaultShellRoot"></div>
+
+    <main class="vault-shell prediction-about-page ar-page">
+        <section class="prediction-about-stage">
+            <div class="prediction-about-container">
+                <header class="prediction-about-sign">
+                    <p class="prediction-about-kicker">Advantage-Routing Research</p>
+                    <div class="minimal-heading">
+                        <h1>Stats</h1>
+                        <button class="info-trigger" type="button" aria-label="About this page" data-info="Real, mode-independent box-score baseline for the selected player -- usage rate, decision touches, and assist/turnover rates. Built from real box scores, never fabricated. Every number is labeled OBSERVED, DERIVED, RECONSTRUCTED, SIMULATED, or UNAVAILABLE. For mode-specific routing analysis, see Drive-Pass or Post-Pass.">i</button>
+                    </div>
+                    <p class="prediction-page-lead">The real, mode-independent box-score baseline for a player -- usage, decision touches, and assist/turnover rates. Every metric carries a provenance badge; nothing here is invented to fill a gap.</p>
+                    <p id="arRunFacts" class="prediction-about-run-facts">Loading...</p>
+                </header>
+
+                <section class="prediction-about-panel ar-controls-panel">
+                    <div class="ar-controls-row">
+                        <label class="ar-control">
+                            <span>Player</span>
+                            <select id="arPlayerSelect"></select>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="prediction-about-panel">
+                    <h2>Baseline Profile <span class="ar-badge ar-badge--observed">real box scores</span></h2>
+                    <div id="arBaselineGrid" class="prediction-about-metric-grid ar-baseline-grid"></div>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <script src="/vault/vault-components.js?v=9"></script>
+    <script src="/vault/vault-shell.js?v=9"></script>
+    <script>window.AR_PAGE_CONFIG = { mode: null, pageLabel: "Stats" };</script>
+    <script src="advantage-analysis-page.js?v=1"></script>
+</body>
+</html>

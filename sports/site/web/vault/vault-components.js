@@ -1,6 +1,11 @@
 /**
- * The Card Vault System — shared render helpers (vanilla JS)
- * Use across hub, sport workspaces, prediction boards, validation views.
+ * In The Cards Analytics -- shared render helpers (vanilla JS)
+ * Use across the landing page, prediction boards, and methodology views.
+ *
+ * renderPlayerCard / resolveVariant / variantLabel (a trading-card rarity
+ * system) and renderSportWorkspaceCard (workspace "door" cards) were
+ * removed here as dead code -- neither is referenced by any publicly
+ * shipped page; see the route audit.
  */
 (function initCardVault(global) {
   const CardVault = {};
@@ -35,54 +40,10 @@
     return `${n >= 0 ? "+" : ""}${pct}%`;
   };
 
-  /**
-   * Map analytical context to card classification (not gambling tiers).
-   * Future sports can pass explicit variant from payload.
-   */
-  CardVault.resolveVariant = function resolveVariant(ctx = {}) {
-    if (ctx.variant) return String(ctx.variant).toLowerCase().replace(/_/g, "-");
-    const confidence = Number(ctx.confidence);
-    const volatility = String(ctx.volatility || "").toLowerCase();
-    const sample = Number(ctx.sampleSize);
-    const signal = String(ctx.signalStrength || "").toLowerCase();
-    const isRookie = Boolean(ctx.rookie || ctx.lowSample);
-
-    if (ctx.premium || signal === "premium") return "patch";
-    if (ctx.star || signal === "star") return "manga";
-    if (isRookie || (Number.isFinite(sample) && sample < 15)) return "rookie";
-    if (volatility === "high") return "tiger-ice";
-    if (volatility === "unusual") return "zebra-ice";
-    if (Number.isFinite(confidence) && confidence >= 0.75) return "blue-ice";
-    if (Number.isFinite(confidence) && confidence >= 0.6) return "refractor";
-    if (ctx.historical) return "retro";
-    if (signal === "high-value") return "auto";
-    return "chrome";
-  };
-
-  CardVault.variantLabel = function variantLabel(variant) {
-    const labels = {
-      chrome: "Chrome",
-      refractor: "Refractor",
-      retro: "Retro",
-      "blue-ice": "Blue Ice",
-      "zebra-ice": "Zebra Ice",
-      "tiger-ice": "Tiger Ice",
-      rookie: "Rookie",
-      manga: "Manga",
-      auto: "Auto",
-      patch: "Patch",
-      "auto-patch": "Auto Patch",
-    };
-    return labels[variant] || "Chrome";
-  };
-
-  CardVault.confidenceBand = function confidenceBand(score) {
-    const n = Number(score);
-    if (!Number.isFinite(n)) return "c";
-    if (n >= 0.8) return "a";
-    if (n >= 0.65) return "b";
-    if (n >= 0.45) return "c";
-    return "d";
+  CardVault.formatSignedNumber = function formatSignedNumber(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "n/a";
+    return `${n >= 0 ? "+" : ""}${n.toFixed(2)}`;
   };
 
   CardVault.renderMetricChip = function renderMetricChip(label, value, tone = "") {
@@ -106,10 +67,40 @@
     `;
   };
 
+  CardVault.confidenceBand = function confidenceBand(score) {
+    const n = Number(score);
+    if (!Number.isFinite(n)) return "c";
+    if (n >= 0.8) return "a";
+    if (n >= 0.65) return "b";
+    if (n >= 0.45) return "c";
+    return "d";
+  };
+
+  /**
+   * One canonical status vocabulary, used everywhere a prediction's
+   * publication/authorization state is shown. Do not invent per-sport
+   * synonyms -- extend this map instead.
+   */
+  CardVault.STATUS_LABELS = {
+    qualified: "Qualified",
+    published: "Qualified",
+    ready: "Qualified",
+    shadow: "Shadow",
+    review: "Pending",
+    pending: "Pending",
+    withheld: "Withheld",
+    unavailable: "Unavailable",
+    "research-only": "Research Only",
+    research_only: "Research Only",
+    active: "Qualified",
+    stale: "Pending",
+    error: "Unavailable",
+  };
+
   CardVault.renderStatusPill = function renderStatusPill(status, label) {
-    const key = String(status || "active").toLowerCase();
-    const text = label || key;
-    return `<span class="vault-status-pill vault-status-pill--${CardVault.escapeAttr(key)}">${CardVault.escapeHtml(text)}</span>`;
+    const key = String(status || "pending").toLowerCase().replaceAll("_", "-");
+    const text = label || CardVault.STATUS_LABELS[key] || key;
+    return `<span class="status-pill status-pill--${CardVault.escapeAttr(key)}">${CardVault.escapeHtml(text)}</span>`;
   };
 
   CardVault.renderEvidenceBadge = function renderEvidenceBadge(count, label = "Evidence") {
@@ -133,126 +124,10 @@
 
   CardVault.renderSkeletonCard = function renderSkeletonCard(count = 1) {
     return Array.from({ length: count }, () => `
-      <article class="player-card player-card--skeleton" aria-hidden="true">
-        <div class="player-card__body">
-          <div class="player-card__shimmer" style="width:60%"></div>
-          <div class="player-card__shimmer" style="width:40%;margin-top:8px"></div>
-          <div class="player-card__shimmer" style="width:80%;margin-top:16px"></div>
-        </div>
+      <article class="prediction-card" aria-hidden="true">
+        <div class="prediction-card__note">Loading...</div>
       </article>
     `).join("");
-  };
-
-  CardVault.renderSportWorkspaceCard = function renderSportWorkspaceCard(sport) {
-    const pages = Array.isArray(sport.pages) ? sport.pages : [];
-    const chips = pages.slice(0, 4).map((p) => `
-      <a class="vault-metric-chip" href="${CardVault.escapeAttr(p.href)}">${CardVault.escapeHtml(p.label)}</a>
-    `).join("");
-    return `
-      <article class="vault-door" style="--sport-accent:${CardVault.escapeAttr(sport.accent)};">
-        <div class="vault-door-top">
-          ${CardVault.renderStatusPill(sport.status, sport.status_label)}
-          <span class="vault-metric-chip"><span class="vault-metric-chip__label">NS</span>/${CardVault.escapeHtml(sport.slug)}</span>
-        </div>
-        <h3>${CardVault.escapeHtml(sport.title)}</h3>
-        <p class="vault-door-tagline">${CardVault.escapeHtml(sport.tagline)}</p>
-        <p class="vault-page-lead">${CardVault.escapeHtml(sport.summary)}</p>
-        <div class="player-card__metrics" style="margin: var(--vault-space-4) 0;">
-          ${chips || CardVault.renderMetricChip("Pages", "0 published")}
-        </div>
-        <a class="vault-door-cta" href="${CardVault.escapeAttr(sport.entry_href)}">Open ${CardVault.escapeHtml(sport.title)} predictions</a>
-      </article>
-    `;
-  };
-
-  /**
-   * Living player card — core component
-   * @param {object} opts
-   */
-  CardVault.renderPlayerCard = function renderPlayerCard(opts) {
-    const {
-      variant: variantIn,
-      density = "default",
-      context = "board",
-      interactive = false,
-      href = "",
-      locked = false,
-      playerName = "Unknown",
-      team = "",
-      position = "",
-      opponent = "",
-      headshotUrl = "",
-      monogram = "",
-      signal = "",
-      why = "",
-      metrics = [],
-      confidence,
-      confidenceLabel = "Confidence band",
-      footer = "",
-      analyticalTag = "",
-      statusPill = null,
-    } = opts;
-
-    const variant = CardVault.resolveVariant({ ...opts, variant: variantIn });
-    const classification = CardVault.variantLabel(variant);
-    const premium = ["refractor", "blue-ice", "manga", "auto", "patch", "auto-patch"].includes(variant);
-    const densityClass = density === "compact" ? " player-card--compact" : density === "dossier" ? " player-card--dossier" : "";
-    const contextClass = context ? ` player-card--${CardVault.escapeAttr(context)}` : "";
-    const tag = analyticalTag || classification;
-
-    const avatar = headshotUrl
-      ? `<img class="player-card__avatar" src="${CardVault.escapeAttr(headshotUrl)}" alt="" loading="lazy" onerror="this.replaceWith(this.nextElementSibling)" /><div class="player-card__avatar player-card__avatar-fallback" hidden>${CardVault.escapeHtml(monogram || "?")}</div>`
-      : `<div class="player-card__avatar player-card__avatar-fallback">${CardVault.escapeHtml(monogram || "?")}</div>`;
-
-    const metricHtml = (metrics || []).map((m) => CardVault.renderMetricChip(m.label, m.value, m.tone || "")).join("");
-    const confHtml = confidence != null ? CardVault.renderConfidenceBand(confidence, confidenceLabel) : "";
-    const statusHtml = statusPill ? CardVault.renderStatusPill(statusPill.status, statusPill.label) : "";
-
-    const inner = `
-      <div class="player-card__edge" aria-hidden="true"></div>
-      <div class="player-card__foil" aria-hidden="true"></div>
-      ${locked ? '<div class="player-card__lock">Research preview</div>' : ""}
-      <div class="player-card__strip">
-        <span class="player-card__classification">${CardVault.escapeHtml(classification)}</span>
-        <span>${CardVault.escapeHtml(tag)}</span>
-      </div>
-      <div class="player-card__body">
-        <div class="player-card__identity">
-          ${avatar}
-          <div>
-            <h2 class="player-card__name">${CardVault.escapeHtml(playerName)}</h2>
-            <p class="player-card__meta">${CardVault.escapeHtml([team, position, opponent].filter(Boolean).join(" · "))}</p>
-          </div>
-        </div>
-        ${signal ? `<p class="player-card__signal">${CardVault.escapeHtml(signal)}</p>` : ""}
-        ${why ? `<p class="player-card__why">${CardVault.escapeHtml(why)}</p>` : ""}
-        <div class="player-card__metrics">${metricHtml}</div>
-      </div>
-      <div class="player-card__footer">
-        <span>${confHtml} ${statusHtml}</span>
-        <span>${CardVault.escapeHtml(footer)}</span>
-      </div>
-    `;
-
-    const classes = [
-      "player-card",
-      `player-card--${variant}`,
-      premium ? "player-card--premium" : "",
-      locked ? "player-card--locked" : "",
-      interactive ? "player-card--interactive" : "",
-      densityClass,
-      contextClass,
-    ].filter(Boolean).join(" ");
-
-    const aria = `Analytical card for ${playerName}. ${classification}. ${signal || ""}`;
-
-    if (interactive && href) {
-      return `<a class="${classes}" href="${CardVault.escapeAttr(href)}" aria-label="${CardVault.escapeAttr(aria)}">${inner}</a>`;
-    }
-    if (interactive) {
-      return `<button type="button" class="${classes}" aria-label="${CardVault.escapeAttr(aria)}">${inner}</button>`;
-    }
-    return `<article class="${classes}" aria-label="${CardVault.escapeAttr(aria)}">${inner}</article>`;
   };
 
   CardVault.formatTargetLabel = function formatTargetLabel(target) {
@@ -272,12 +147,18 @@
     return lookup[key] || key || "Market";
   };
 
-  /** Prediction board card — uses player card language (NBA + MLB payloads) */
+  /**
+   * Prediction card -- the primary decision unit on every sport's board.
+   * Leads with player / market / projection / model probability / edge /
+   * odds / status (see spec section 14). Everything lower-priority
+   * (support depth, policy identifiers, simulation metadata, push
+   * exposure, source detail) lives behind a <details> "Details" disclosure
+   * rather than crowding the card.
+   */
   CardVault.renderPredictionCard = function renderPredictionCard(play, index = 0) {
-    const tierRaw = String(play.confidence_tier || play.recommendation || "consider").toLowerCase();
     const directionRaw = String(play.direction || "").toUpperCase();
     const direction = directionRaw === "UNDER" ? "UNDER" : "OVER";
-    const displayName = String(play.player_display_name || play.player || "").replaceAll("_", " ").trim() || "Unknown Player";
+    const displayName = String(play.player_display_name || play.player || "").replaceAll("_", " ").trim() || "Unknown player";
     const headshotUrl = String(play.player_headshot_url || "").trim();
     const id = Number(play.player_id);
     const resolvedHeadshot = headshotUrl || (Number.isFinite(id) && id > 0
@@ -290,9 +171,6 @@
     if (play.candidate_authorized === false && !riskFlags.includes("policy_uncertified")) riskFlags.push("policy_uncertified");
     const actionStatus = String(play.action_status || play.publication_status || "").toLowerCase();
     const needsReview = actionStatus === "review" || riskFlags.length > 0 || play.model_estimate_status === "review";
-    const tier = needsReview
-      ? "review"
-      : (play.parlay_candidate ? "parlay" : (["elite", "strong", "consider", "pass"].includes(tierRaw) ? tierRaw : "consider"));
 
     const lineText = CardVault.formatNumber(play.market_line);
     const predText = CardVault.formatNumber(play.prediction);
@@ -321,98 +199,101 @@
         ? "Book line"
         : play.market_source ? "Benchmark line" : "";
     const footerParts = [play.market_date, gameText, sourceText].filter(Boolean);
-    const footer = footerParts.join(" - ");
+    const footer = footerParts.join(" · ");
 
     const riskLabels = {
       stale_history: "Stale data",
-      lineup_unconfirmed: "Lineup",
-      roster_unverified: "Roster",
+      lineup_unconfirmed: "Lineup unconfirmed",
+      roster_unverified: "Roster unverified",
       team_mismatch: "Team check",
       game_date_mismatch: "Date check",
       push_exposure: "Push risk",
-      policy_uncertified: "Shadow only",
+      policy_uncertified: "Shadow",
       multi_game_slate_review: "Slate check",
     };
 
-    const directionDelta = Number.isFinite(Number(edgeValue))
-      ? `${CardVault.formatNumber(Math.abs(Number(edgeValue)))} ${direction === "UNDER" ? "below" : "above"} the market line`
-      : `aligned to the ${direction} side of the market`;
-    const why = riskFlags.includes("policy_uncertified")
-      ? "Shadow notice only: this model candidate is not authorized for staking until prospective certification is active."
+    const statusKey = riskFlags.includes("policy_uncertified")
+      ? "shadow"
       : needsReview
-      ? "Review before action: stale data, lineup status, push exposure, or slate context may affect settlement."
+        ? "pending"
+        : (String(play.board_publication_status || play.publication_status || "ready").toLowerCase() === "ready"
+          || String(play.board_publication_status || play.publication_status || "").toLowerCase() === "published")
+          ? "qualified"
+          : "withheld";
+
+    const why = riskFlags.includes("policy_uncertified")
+      ? "Shadow: this candidate is not yet authorized for staking, pending certification evidence."
+      : needsReview
+      ? "Pending review: stale data, lineup status, push exposure, or slate context may affect settlement."
       : play.parlay_candidate
-      ? `Model lean pairs with ${String(play.parlay_partner_name || "another tagged leg").trim()} (${CardVault.formatPct(play.parlay_projected_hit_rate)} projected alignment).`
-      : `The model projection is ${directionDelta}.`;
+      ? `Pairs with ${String(play.parlay_partner_name || "another tagged leg").trim()} (${CardVault.formatPct(play.parlay_projected_hit_rate)} projected alignment).`
+      : Number.isFinite(Number(edgeValue))
+        ? `Model projection is ${CardVault.formatNumber(Math.abs(Number(edgeValue)))} ${direction === "UNDER" ? "below" : "above"} the market line.`
+        : `Model projection is aligned to the ${direction} side of the market.`;
 
     const photoHtml = resolvedHeadshot
       ? `<img class="prediction-card__photo-img" src="${CardVault.escapeAttr(resolvedHeadshot)}" alt="" loading="lazy" onerror="this.replaceWith(this.nextElementSibling)" /><span class="prediction-card__fallback">${CardVault.escapeHtml(monogram)}</span>`
       : `<span class="prediction-card__fallback">${CardVault.escapeHtml(monogram)}</span>`;
     const parlayTag = play.parlay_candidate && !needsReview ? '<span class="prediction-card__tag prediction-card__tag--parlay">Parlay</span>' : "";
-    const tierTag = needsReview ? "" : `<span class="prediction-card__tag">${CardVault.escapeHtml(tier)}</span>`;
-    const publicationStatus = String(play.board_publication_status || play.publication_status || "ready").toLowerCase();
-    const statusTag = needsReview
-      ? '<span class="prediction-card__tag prediction-card__tag--risk">Review</span>'
-      : publicationStatus !== "ready" && publicationStatus !== "published"
-        ? '<span class="prediction-card__tag prediction-card__tag--risk">Withheld</span>'
-        : '<span class="prediction-card__tag prediction-card__tag--status">Published</span>';
     const riskTags = riskFlags
-      .slice(0, 3)
+      .filter((flag) => flag !== "policy_uncertified")
+      .slice(0, 2)
       .map((flag) => `<span class="prediction-card__tag prediction-card__tag--risk">${CardVault.escapeHtml(riskLabels[flag] || flag.replaceAll("_", " "))}</span>`)
       .join("");
+
     const hitRate = modelProbability != null ? CardVault.formatPct(modelProbability) : "n/a";
-    const pushText = play.estimated_push_probability != null ? CardVault.formatPct(play.estimated_push_probability) : "n/a";
-    const valueScore = play.value_score != null ? CardVault.formatNumber(play.value_score) : "n/a";
-    const metrics = [
+    const oddsText = play.selected_side_price != null ? CardVault.formatSignedNumber(play.selected_side_price).replace(/\.00$/, "") : "n/a";
+    const pushText = play.estimated_push_probability != null ? CardVault.formatPct(play.estimated_push_probability) : null;
+    const valueScore = play.value_score != null ? CardVault.formatNumber(play.value_score) : null;
+
+    // Primary metrics: what the user needs first. Line/Projection/Model/Odds.
+    const primaryMetrics = [
       ...(lineText !== "n/a" ? [["Line", lineText]] : []),
       ...(predText !== "n/a" ? [["Projection", predText]] : []),
-      ...(edgeText !== "n/a" ? [["Edge", edgeText]] : []),
-      ...(hitRate !== "n/a" ? [["Model", hitRate]] : []),
-      ...(pushText !== "n/a" ? [["Push", pushText]] : []),
-      ...(valueScore !== "n/a" ? [["Value", valueScore]] : []),
-      ...(play.selected_side_price != null ? [["Odds", CardVault.formatSignedNumber(play.selected_side_price).replace(/\.00$/, "")]] : []),
-      ...(play.market_books != null ? [["Books", CardVault.formatNumber(play.market_books, 0)]] : []),
+      ...(hitRate !== "n/a" ? [["Model probability", hitRate]] : []),
+      ["Odds", oddsText],
     ];
-    const metricHtml = metrics
+    const primaryMetricHtml = primaryMetrics
       .map(([label, value]) => `<div><dt>${CardVault.escapeHtml(label)}</dt><dd>${CardVault.escapeHtml(value)}</dd></div>`)
       .join("");
-    const signalLabel = play.ev != null ? "Expected value" : edgeValue != null ? "Model edge" : "Model confidence";
 
-    const rank = String(play.rank || index + 1).padStart(2, "0");
+    // Secondary/audit detail: support depth, policy state, source, value
+    // score, push exposure -- behind progressive disclosure, not deleted.
+    const detailRows = [
+      ...(edgeText !== "n/a" ? [["Edge", edgeText]] : []),
+      ...(pushText ? [["Push probability", pushText]] : []),
+      ...(valueScore ? [["Value score", valueScore]] : []),
+      ...(play.market_books != null ? [["Books compared", CardVault.formatNumber(play.market_books, 0)]] : []),
+      ...(sourceText ? [["Source", sourceText]] : []),
+      ...(play.rank != null ? [["Rank", String(play.rank)]] : []),
+    ];
+    const detailHtml = detailRows.length
+      ? `<dl class="prediction-card__metrics" style="grid-template-columns:1fr;margin-top:8px;">${detailRows.map(([label, value]) => `<div><dt>${CardVault.escapeHtml(label)}</dt><dd>${CardVault.escapeHtml(value)}</dd></div>`).join("")}</dl>`
+      : "";
 
     return `
-      <article class="prediction-card prediction-card--${CardVault.escapeAttr(tier)}" data-direction="${CardVault.escapeAttr(direction)}" aria-label="Prediction card for ${CardVault.escapeAttr(displayName)} ${CardVault.escapeAttr(direction)} ${CardVault.escapeAttr(targetLabel)}">
+      <article class="prediction-card" data-direction="${CardVault.escapeAttr(direction)}" aria-label="Prediction for ${CardVault.escapeAttr(displayName)}, ${CardVault.escapeAttr(direction)} ${CardVault.escapeAttr(targetLabel)}">
         <header class="prediction-card__header">
-          <div class="prediction-card__bounty-heading">
-            <span class="prediction-card__rank">Notice ${CardVault.escapeHtml(rank)}</span>
-            <span class="prediction-card__wanted">Wanted</span>
-            <span class="prediction-card__wanted-for">For model value</span>
-          </div>
-          <div class="prediction-card__tags">${parlayTag}${tierTag}${statusTag}${riskTags}</div>
+          <span class="prediction-card__rank">${String(play.rank || index + 1)}</span>
+          <div class="prediction-card__tags">${parlayTag}${CardVault.renderStatusPill(statusKey)}${riskTags}</div>
         </header>
         <div class="prediction-card__identity">
           <div class="prediction-card__photo">${photoHtml}</div>
-          <div class="prediction-card__identity-copy">
+          <div>
             <h3 class="prediction-card__name">${CardVault.escapeHtml(displayName)}</h3>
             <p class="prediction-card__market">${CardVault.escapeHtml(direction)} ${CardVault.escapeHtml(targetLabel)}</p>
             ${footer ? `<p class="prediction-card__context">${CardVault.escapeHtml(footer)}</p>` : ""}
           </div>
         </div>
         <div class="prediction-card__signal">
-          <span class="prediction-card__signal-copy"><span class="prediction-card__reward">Reward</span><span class="prediction-card__signal-label">${CardVault.escapeHtml(signalLabel)}</span></span>
+          <span class="prediction-card__signal-label">${CardVault.escapeHtml(edgeValue != null ? "Edge" : "Model probability")}</span>
           <strong>${CardVault.escapeHtml(signalText)}</strong>
         </div>
-        <dl class="prediction-card__metrics">${metricHtml}</dl>
-        <p class="prediction-card__note"><span>Field note</span>${CardVault.escapeHtml(why)}</p>
-        <footer class="prediction-card__seal"><span aria-hidden="true">PB</span><small>Verified model notice</small></footer>
+        <dl class="prediction-card__metrics">${primaryMetricHtml}</dl>
+        <p class="prediction-card__note">${CardVault.escapeHtml(why)}</p>
+        ${detailHtml ? `<details class="disclosure"><summary>Details</summary><div class="disclosure-body">${detailHtml}</div></details>` : ""}
       </article>
     `;
-  };
-
-  CardVault.formatSignedNumber = function formatSignedNumber(value) {
-    const n = Number(value);
-    if (!Number.isFinite(n)) return "n/a";
-    return `${n >= 0 ? "+" : ""}${n.toFixed(2)}`;
   };
 
   global.CardVault = CardVault;

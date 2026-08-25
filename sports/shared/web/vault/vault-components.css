@@ -1,5 +1,11 @@
-﻿/**
- * Prediction Bounties shared components.
+/**
+ * In The Cards Analytics -- shared components.
+ * Canonical source: sports/shared/web/vault/
+ * Owns: app shell/topbar/nav, metric chips, confidence/status indicators,
+ * board grid, evidence table, empty state, prediction cards.
+ * `.player-card` (trading-card rarity variants) and `.vault-door`
+ * (workspace door cards) were removed here as dead CSS -- neither is
+ * referenced by any publicly shipped page; see route audit.
  */
 
 /* App shell */
@@ -22,7 +28,6 @@
   background: var(--vault-panel);
   border: 1px solid var(--vault-line);
   border-radius: var(--vault-radius-lg);
-  box-shadow: var(--vault-shadow-inset);
 }
 
 .vault-brand {
@@ -37,16 +42,15 @@
 
 .vault-brand-kicker {
   font-size: 0.65rem;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--vault-sport-accent);
   font-weight: 600;
 }
 
 .vault-brand-title {
-  font-family: var(--vault-font-display);
-  font-size: 1.35rem;
-  letter-spacing: 0.04em;
+  font-size: 1.1rem;
+  font-weight: 700;
   line-height: 1;
   margin: 0;
 }
@@ -81,44 +85,6 @@
   opacity: 0.5;
 }
 
-.vault-sport-switcher {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--vault-space-2);
-}
-
-.vault-sport-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  min-width: 44px;
-  padding: 0 var(--vault-space-3);
-  border-radius: var(--vault-radius-sm);
-  border: 1px solid var(--vault-line);
-  background: var(--vault-bg-2);
-  color: var(--vault-text-muted);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-decoration: none;
-  transition: border-color var(--vault-duration-fast), color var(--vault-duration-fast);
-}
-
-.vault-sport-pill:hover,
-.vault-sport-pill:focus-visible {
-  border-color: var(--vault-line-strong);
-  color: var(--vault-text);
-  outline: 2px solid var(--vault-sport-accent);
-  outline-offset: 2px;
-}
-
-.vault-sport-pill.is-active {
-  border-color: var(--vault-sport-accent);
-  color: var(--vault-text);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--vault-sport-accent) 40%, transparent);
-}
-
 .vault-menu-btn {
   display: none;
   min-width: 44px;
@@ -142,7 +108,7 @@
   border: 1px solid var(--vault-line-strong);
   background: var(--vault-bg-2);
   color: var(--vault-text);
-  font: 800 0.78rem/1 var(--vault-font-body);
+  font: 700 0.78rem/1 var(--vault-font-body);
   cursor: help;
   flex: 0 0 auto;
 }
@@ -160,13 +126,13 @@
   border-radius: var(--vault-radius-sm);
   background: var(--vault-panel-raised);
   color: var(--vault-text);
-  box-shadow: var(--vault-shadow-card);
+  box-shadow: var(--vault-shadow-lift);
   transform: translateX(-50%) translateY(4px);
   opacity: 0;
   pointer-events: none;
   text-align: left;
   white-space: normal;
-  font: 600 0.78rem/1.35 var(--vault-font-body);
+  font: 500 0.78rem/1.35 var(--vault-font-body);
   letter-spacing: 0;
   text-transform: none;
   transition: opacity var(--vault-duration-fast), transform var(--vault-duration-fast);
@@ -186,336 +152,6 @@
     align-items: center;
     justify-content: center;
   }
-  .vault-nav-drawer-links {
-    display: none;
-  }
-  .vault-nav-drawer-links.is-open {
-    display: flex;
-    flex-direction: column;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    margin-top: var(--vault-space-2);
-    padding: var(--vault-space-3);
-    background: var(--vault-panel-raised);
-    border: 1px solid var(--vault-line);
-    border-radius: var(--vault-radius-md);
-    z-index: 20;
-  }
-}
-
-/* Workspace cards */
-.vault-door-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--vault-space-5);
-}
-
-.vault-door {
-  position: relative;
-  padding: var(--vault-space-6);
-  border-radius: var(--vault-radius-lg);
-  background: linear-gradient(165deg, var(--vault-panel) 0%, var(--vault-bg-2) 100%);
-  border: 1px solid var(--vault-line);
-  box-shadow: var(--vault-shadow-card);
-  overflow: hidden;
-}
-
-.vault-door::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  background: var(--sport-accent, var(--vault-sport-accent));
-}
-
-.vault-door-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--vault-space-4);
-}
-
-.vault-door h3 {
-  font-family: var(--vault-font-display);
-  font-size: 1.75rem;
-  letter-spacing: 0.03em;
-  margin: 0 0 var(--vault-space-2);
-}
-
-.vault-door-tagline {
-  color: var(--vault-text-muted);
-  font-size: 0.9rem;
-  margin: 0 0 var(--vault-space-4);
-}
-
-.vault-door-cta {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 var(--vault-space-5);
-  border-radius: var(--vault-radius-sm);
-  background: color-mix(in srgb, var(--sport-accent, var(--vault-sport-accent)) 22%, var(--vault-panel));
-  border: 1px solid color-mix(in srgb, var(--sport-accent, var(--vault-sport-accent)) 50%, transparent);
-  color: var(--vault-text);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.vault-door-cta:hover,
-.vault-door-cta:focus-visible {
-  filter: brightness(1.08);
-  outline: 2px solid var(--sport-accent, var(--vault-sport-accent));
-  outline-offset: 2px;
-}
-
-/* Player card base */
-.player-card {
-  --card-accent: var(--vault-variant-chrome);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-height: 200px;
-  border-radius: var(--vault-radius-card);
-  background: linear-gradient(160deg, var(--vault-card-face) 0%, var(--vault-card-inner) 100%);
-  border: 1px solid var(--vault-line);
-  box-shadow: var(--vault-shadow-card);
-  overflow: hidden;
-  transition: transform var(--vault-duration) var(--vault-ease), box-shadow var(--vault-duration);
-}
-
-.player-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-}
-
-.player-card__edge {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  background: var(--card-accent);
-  z-index: 2;
-}
-
-.player-card__foil {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0;
-  background: linear-gradient(
-    105deg,
-    transparent 40%,
-    color-mix(in srgb, var(--card-accent) 25%, transparent) 48%,
-    transparent 56%
-  );
-}
-
-.player-card__strip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--vault-space-2);
-  padding: var(--vault-space-2) var(--vault-space-3);
-  font-size: 0.65rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  font-weight: 600;
-  color: var(--vault-text-muted);
-  border-bottom: 1px solid var(--vault-line);
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.player-card__classification {
-  color: var(--card-accent);
-}
-
-.player-card__body {
-  position: relative;
-  z-index: 1;
-  padding: var(--vault-space-4);
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--vault-space-3);
-}
-
-.player-card__identity {
-  display: flex;
-  gap: var(--vault-space-3);
-  align-items: flex-start;
-}
-
-.player-card__avatar {
-  width: 52px;
-  height: 68px;
-  border-radius: var(--vault-radius-sm);
-  object-fit: cover;
-  background: var(--vault-bg-2);
-  border: 1px solid var(--vault-line);
-  flex-shrink: 0;
-}
-
-.player-card__avatar-fallback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--vault-font-display);
-  font-size: 1.25rem;
-  color: var(--vault-text-muted);
-}
-
-.player-card__name {
-  font-family: var(--vault-font-display);
-  font-size: 1.5rem;
-  line-height: 1.05;
-  letter-spacing: 0.02em;
-  margin: 0;
-}
-
-.player-card__meta {
-  font-size: 0.78rem;
-  color: var(--vault-text-muted);
-  margin: 2px 0 0;
-}
-
-.player-card__signal {
-  font-size: 0.85rem;
-  color: var(--vault-text);
-}
-
-.player-card__why {
-  font-size: 0.8rem;
-  color: var(--vault-text-dim);
-  line-height: 1.45;
-}
-
-.player-card__metrics {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--vault-space-2);
-  margin-top: auto;
-}
-
-.player-card__footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--vault-space-2);
-  padding: var(--vault-space-3);
-  border-top: 1px solid var(--vault-line);
-  font-size: 0.75rem;
-  color: var(--vault-text-muted);
-}
-
-/* Density modifiers */
-.player-card--compact {
-  min-height: 160px;
-}
-.player-card--compact .player-card__name {
-  font-size: 1.2rem;
-}
-.player-card--compact .player-card__avatar {
-  width: 40px;
-  height: 52px;
-}
-
-.player-card--dossier {
-  min-height: auto;
-}
-
-.player-card--interactive {
-  cursor: pointer;
-  text-align: left;
-  width: 100%;
-  font: inherit;
-  color: inherit;
-}
-
-@media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .player-card--interactive:hover {
-    transform: perspective(800px) rotateX(1deg) rotateY(-1.5deg);
-    box-shadow: var(--vault-shadow-lift);
-  }
-  .player-card--premium:hover .player-card__foil {
-    opacity: 1;
-    animation: vault-shimmer 1.2s var(--vault-ease);
-  }
-}
-
-@keyframes vault-shimmer {
-  0% { transform: translateX(-120%); }
-  100% { transform: translateX(120%); }
-}
-
-.player-card:focus-visible {
-  outline: 2px solid var(--vault-sport-accent);
-  outline-offset: 3px;
-}
-
-/* Classification variants */
-.player-card--chrome { --card-accent: var(--vault-variant-chrome); }
-.player-card--refractor { --card-accent: var(--vault-variant-refractor); }
-.player-card--retro { --card-accent: var(--vault-variant-retro); }
-.player-card--blue-ice { --card-accent: var(--vault-variant-blue-ice); }
-.player-card--zebra-ice { --card-accent: var(--vault-variant-zebra-ice); }
-.player-card--tiger-ice { --card-accent: var(--vault-variant-tiger-ice); }
-.player-card--rookie { --card-accent: var(--vault-variant-rookie); }
-.player-card--manga { --card-accent: var(--vault-variant-manga); }
-.player-card--auto { --card-accent: var(--vault-variant-auto); }
-.player-card--patch,
-.player-card--auto-patch { --card-accent: var(--vault-variant-patch); }
-
-.player-card--refractor .player-card__foil,
-.player-card--blue-ice .player-card__foil,
-.player-card--manga .player-card__foil,
-.player-card--auto .player-card__foil,
-.player-card--patch .player-card__foil {
-  opacity: 0.35;
-}
-
-.player-card--premium {
-  border-color: color-mix(in srgb, var(--card-accent) 45%, var(--vault-line));
-}
-
-.player-card--locked {
-  filter: saturate(0.5);
-}
-.player-card--locked .player-card__lock {
-  display: flex;
-}
-
-.player-card__lock {
-  display: none;
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  align-items: center;
-  justify-content: center;
-  background: rgba(10, 14, 20, 0.72);
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-/* Skeleton */
-.player-card--skeleton .player-card__shimmer {
-  display: block;
-  height: 12px;
-  border-radius: 4px;
-  background: linear-gradient(90deg, var(--vault-bg-2) 0%, var(--vault-panel-raised) 50%, var(--vault-bg-2) 100%);
-  background-size: 200% 100%;
-  animation: vault-pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes vault-pulse {
-  0% { background-position: 100% 0; }
-  100% { background-position: -100% 0; }
 }
 
 /* Metric chip */
@@ -548,15 +184,13 @@
   gap: 6px;
   font-size: 0.72rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
 }
 
 .vault-confidence__bar {
   width: 48px;
   height: 4px;
   border-radius: 2px;
-  background: var(--vault-bg-0);
+  background: var(--vault-bg-1);
   overflow: hidden;
 }
 
@@ -571,7 +205,8 @@
 .vault-confidence--d .vault-confidence__fill { background: var(--vault-conf-d); width: 35%; }
 .vault-confidence--a .vault-confidence__fill { width: 92%; }
 
-/* Status pill */
+/* Status pill (legacy hook, kept for pages still calling renderStatusPill;
+   see also .status-pill in prediction-pages.css, the preferred component) */
 .vault-status-pill {
   display: inline-flex;
   align-items: center;
@@ -580,8 +215,6 @@
   border-radius: 999px;
   font-size: 0.68rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   border: 1px solid var(--vault-line);
 }
 
@@ -633,12 +266,12 @@
   padding: 0 var(--vault-space-3);
   border-radius: var(--vault-radius-sm);
   border: 1px solid var(--vault-line);
-  background: var(--vault-bg-2);
+  background: var(--vault-panel);
   color: var(--vault-text);
   font: inherit;
 }
 
-/* Evidence ledger table */
+/* Evidence table */
 .vault-ledger {
   width: 100%;
   border-collapse: collapse;
@@ -652,10 +285,10 @@
   z-index: 2;
   text-align: left;
   padding: var(--vault-space-3);
-  background: var(--vault-panel-raised);
+  background: var(--vault-bg-1);
   border-bottom: 1px solid var(--vault-line-strong);
   font-size: 0.7rem;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--vault-text-muted);
 }
@@ -667,7 +300,7 @@
 }
 
 .vault-ledger tbody tr:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--vault-bg-1);
 }
 
 .vault-ledger-row--expandable {
@@ -684,8 +317,8 @@
 }
 
 .vault-empty h3 {
-  font-family: var(--vault-font-display);
-  font-size: 1.5rem;
+  font-size: 1.3rem;
+  font-weight: 700;
   color: var(--vault-text);
   margin: 0 0 var(--vault-space-3);
 }
@@ -703,15 +336,14 @@
 }
 
 .vault-page-header h1 {
-  font-family: var(--vault-font-display);
-  font-size: 2.75rem;
-  letter-spacing: 0.03em;
+  font-size: 2rem;
+  font-weight: 700;
   margin: 0 0 var(--vault-space-2);
 }
 
 .vault-page-kicker {
   font-size: 0.7rem;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--vault-sport-accent);
   font-weight: 600;
@@ -746,9 +378,7 @@ body.vault-theme .predictions-page {
   padding: var(--vault-space-5);
   border: 1px solid var(--vault-line);
   border-radius: var(--vault-radius-card);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--vault-sport-accent) 4%, transparent), transparent 44%),
-    var(--vault-card-face);
+  background: var(--vault-card-face);
   color: var(--vault-text);
   box-shadow: var(--vault-shadow-card);
   overflow: hidden;
@@ -758,7 +388,7 @@ body.vault-theme .predictions-page {
   content: "";
   position: absolute;
   inset: 0 auto 0 0;
-  width: 4px;
+  width: 3px;
   background: var(--vault-sport-accent);
 }
 
@@ -788,13 +418,13 @@ body.vault-theme .predictions-page {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 38px;
-  min-height: 30px;
+  min-width: 30px;
+  min-height: 26px;
   border-radius: var(--vault-radius-sm);
   background: var(--vault-bg-2);
-  color: var(--vault-text);
-  font-size: 0.78rem;
-  font-weight: 800;
+  color: var(--vault-text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
@@ -812,12 +442,11 @@ body.vault-theme .predictions-page {
   padding: 0 8px;
   border: 1px solid var(--vault-line);
   border-radius: 999px;
-  background: var(--vault-panel-raised);
+  background: var(--vault-panel);
   color: var(--vault-text-muted);
   font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .prediction-card__tag--parlay {
@@ -833,14 +462,14 @@ body.vault-theme .predictions-page {
 
 .prediction-card__identity {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
-  gap: var(--vault-space-4);
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: var(--vault-space-3);
   align-items: center;
 }
 
 .prediction-card__photo {
-  width: 72px;
-  height: 72px;
+  width: 56px;
+  height: 56px;
   border: 1px solid var(--vault-line);
   border-radius: var(--vault-radius-sm);
   background: var(--vault-bg-2);
@@ -862,31 +491,28 @@ body.vault-theme .predictions-page {
   display: grid;
   place-items: center;
   color: var(--vault-text-muted);
-  font-size: 1.25rem;
-  font-weight: 800;
-  background: linear-gradient(180deg, var(--vault-panel-raised), var(--vault-bg-2));
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: var(--vault-bg-2);
 }
 
 .prediction-card__name {
   margin: 0;
   color: var(--vault-text);
-  font-family: var(--vault-font-display);
-  font-size: 1.1rem;
-  line-height: 1.18;
-  letter-spacing: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .prediction-card__market {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   color: var(--direction-color, var(--vault-sport-accent));
-  font-size: 0.85rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .prediction-card__context {
-  margin: 5px 0 0;
+  margin: 4px 0 0;
   color: var(--vault-text-dim);
   font-size: 0.76rem;
   line-height: 1.35;
@@ -898,22 +524,20 @@ body.vault-theme .predictions-page {
   justify-content: space-between;
   gap: var(--vault-space-3);
   padding: var(--vault-space-3);
-  border: 1px solid color-mix(in srgb, var(--direction-color, var(--vault-sport-accent)) 28%, var(--vault-line));
+  border: 1px solid var(--vault-line);
   border-radius: var(--vault-radius-sm);
-  background: color-mix(in srgb, var(--direction-color, var(--vault-sport-accent)) 7%, var(--vault-panel));
+  background: var(--vault-bg-1);
 }
 
 .prediction-card__signal-label {
   color: var(--vault-text-muted);
   font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 600;
 }
 
 .prediction-card__signal strong {
   color: var(--direction-color, var(--vault-sport-accent));
-  font-size: 1.45rem;
+  font-size: 1.4rem;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -927,10 +551,10 @@ body.vault-theme .predictions-page {
 
 .prediction-card__metrics div {
   min-width: 0;
-  padding: 9px 8px;
+  padding: 8px;
   border: 1px solid var(--vault-line);
   border-radius: var(--vault-radius-sm);
-  background: var(--vault-panel-raised);
+  background: var(--vault-bg-1);
 }
 
 .prediction-card__metrics dt,
@@ -941,16 +565,15 @@ body.vault-theme .predictions-page {
 .prediction-card__metrics dt {
   color: var(--vault-text-dim);
   font-size: 0.64rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .prediction-card__metrics dd {
-  margin-top: 4px;
+  margin-top: 3px;
   color: var(--vault-text);
   font-size: 0.86rem;
-  font-weight: 800;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
@@ -962,15 +585,6 @@ body.vault-theme .predictions-page {
 }
 
 @media (max-width: 560px) {
-  .prediction-card__identity {
-    grid-template-columns: 58px minmax(0, 1fr);
-  }
-
-  .prediction-card__photo {
-    width: 58px;
-    height: 58px;
-  }
-
   .prediction-card__metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

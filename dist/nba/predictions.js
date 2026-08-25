@@ -37,14 +37,15 @@ class DailyPredictionsPage {
         if (!window.CardVaultShell) return;
 
         window.CardVaultShell.mount({
-            brandTitle: 'Prediction Bounties',
+            brandTitle: 'In The Cards Analytics',
             brandHref: '/',
             sportSlug: 'nba',
             sportAccent: '#c02c3a',
             navLinks: [
                 { label: 'Board', href: '/nba/predictions/', active: true },
-                { label: 'Drive-Pass', href: '/nba/advantage-routing/?mode=drive', active: false },
-                { label: 'Post-Pass', href: '/nba/advantage-routing/?mode=post', active: false },
+                { label: 'Stats', href: '/nba/stats/', active: false },
+                { label: 'Drive-Pass', href: '/nba/drive-pass/', active: false },
+                { label: 'Post-Pass', href: '/nba/post-pass/', active: false },
                 { label: 'Method', href: '/nba/prediction-about/', active: false },
             ],
             showDisclaimer: true,

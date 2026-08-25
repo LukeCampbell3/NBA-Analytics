@@ -28,7 +28,10 @@ DEFAULT_OUTPUT_DIR = REPO_ROOT / "dist"
 DEFAULT_PRIVATE_SOURCE_DIR = REPO_ROOT / "paywall" / "private-app"
 DEFAULT_PRIVATE_OUTPUT_DIR = REPO_ROOT / "paywall" / "private-content" / "app"
 VAULT_SOURCE_DIR = SPORTS_ROOT / "shared" / "web" / "vault"
-PREDICTION_PAGE_STEMS = {"predictions", "prediction-about", "fantasy", "advantage-routing"}
+PREDICTION_PAGE_STEMS = {
+    "predictions", "prediction-about", "fantasy", "advantage-routing",
+    "stats", "drive-pass", "post-pass",
+}
 PREDICTION_TOP_LEVEL_FILES = {
     "predictions.html",
     "prediction-about.html",
@@ -42,6 +45,10 @@ PREDICTION_TOP_LEVEL_FILES = {
     "advantage-routing.html",
     "advantage-routing.js",
     "advantage-routing.css",
+    "stats.html",
+    "drive-pass.html",
+    "post-pass.html",
+    "advantage-analysis-page.js",
 }
 PREDICTION_DATA_FILES = {
     "daily_predictions.json",

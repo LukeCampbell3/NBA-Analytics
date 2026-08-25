@@ -73,14 +73,15 @@ class AdvantageRoutingPage {
     mountShell() {
         if (!window.CardVaultShell) return;
         window.CardVaultShell.mount({
-            brandTitle: "Prediction Bounties",
+            brandTitle: "In The Cards Analytics",
             brandHref: "/",
             sportSlug: "nba",
             sportAccent: "#c02c3a",
             navLinks: [
                 { label: "Board", href: "/nba/predictions/", active: false },
-                { label: "Drive-Pass", href: "/nba/advantage-routing/?mode=drive", active: this.mode === "drive" },
-                { label: "Post-Pass", href: "/nba/advantage-routing/?mode=post", active: this.mode === "post" },
+                { label: "Stats", href: "/nba/stats/", active: false },
+                { label: "Drive-Pass", href: "/nba/drive-pass/", active: false },
+                { label: "Post-Pass", href: "/nba/post-pass/", active: false },
                 { label: "Method", href: "/nba/prediction-about/", active: false },
             ],
             showDisclaimer: true,
@@ -157,7 +158,7 @@ class AdvantageRoutingPage {
     populateCompareSelectors() {
         const options = this.players.map((p) => `<option value="${this.escape(p.slug)}">${this.escape(p.name)}</option>`).join("");
         this.elements.compareSelectors.innerHTML = [0, 1, 2, 3]
-            .map((i) => `<select data-compare-index="${i}"><option value="">-- none --</option>${options}</select>`)
+            .map((i) => `<select data-compare-index="${i}" aria-label="Compare player ${i + 1}"><option value="">-- none --</option>${options}</select>`)
             .join("");
         this.elements.compareSelectors.querySelectorAll("select").forEach((select, i) => {
             if (this.players[i]) select.value = this.players[i].slug;

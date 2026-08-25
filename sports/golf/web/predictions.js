@@ -33,9 +33,9 @@ class GolfPredictionBoard {
 
     mountShell() {
         window.CardVaultShell?.mount({
-            brandTitle: "Prediction Bounties", brandHref: "/", sportSlug: "golf", sportAccent: "#1a6b3c",
+            brandTitle: "In The Cards Analytics", brandHref: "/", sportSlug: "golf", sportAccent: "#1a6b3c",
             navLinks: [
-                { label: "PGA Board", href: "/golf/predictions/", active: true },
+                { label: "Predictions", href: "/golf/predictions/", active: true },
             ],
             showDisclaimer: true,
         });

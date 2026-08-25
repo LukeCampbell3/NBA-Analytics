@@ -4,19 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex">
-    <title>Not found | Prediction Bounties</title>
-    <link rel="stylesheet" href="/vault/vault-tokens.css">
-    <link rel="stylesheet" href="/vault/vault-components.css">
-    <link rel="stylesheet" href="/styles.css">
+    <title>Page not found | In The Cards Analytics</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="/vault/vault-tokens.css?v=9">
+    <link rel="stylesheet" href="/vault/vault-components.css?v=9">
+    <link rel="stylesheet" href="/vault/prediction-pages.css?v=9">
+    <link rel="stylesheet" href="/styles.css?v=9">
 </head>
 <body class="vault-theme">
+    <div id="vaultShellRoot"></div>
     <main class="vault-shell site-shell">
-        <header class="desk-header">
-            <p class="desk-kicker">404</p>
-            <h1>That page is not available.</h1>
-            <p>No storage paths or private content details are exposed here.</p>
-            <a class="desk-board-card__secondary" href="/">Return home</a>
+        <header class="site-hero">
+            <h1>Page not found</h1>
+            <p>The page may have moved or no longer exists.</p>
+            <p><a class="sport-card__link" href="/" style="--card-accent: var(--vault-sport-accent);">Return home</a></p>
         </header>
     </main>
+    <script src="/vault/vault-components.js?v=9"></script>
+    <script src="/vault/vault-shell.js?v=9"></script>
+    <script>
+        if (window.CardVaultShell) {
+            window.CardVaultShell.mount({ brandHref: "/", sportSlug: "", navLinks: [], showDisclaimer: false });
+        }
+    </script>
 </body>
 </html>
