@@ -1,0 +1,32 @@
+{
+  "dense_baseline": {
+    "final_micro_brier": 0.18840813636779785,
+    "final_micro_log_loss": 0.5570306777954102,
+    "final_micro_auc": 0.7010175690729645,
+    "worst_sport_brier": 0.18840813636779785,
+    "total_params": 1241858,
+    "active_params": 1241666,
+    "wall_time_sec": 200.55504441261292,
+    "examples_per_sec": 957.3082570040086
+  },
+  "switch_baseline": {
+    "final_micro_brier": 0.19113373756408691,
+    "final_micro_log_loss": 0.5636823773384094,
+    "final_micro_auc": 0.6923822428854544,
+    "worst_sport_brier": 0.19113373756408691,
+    "total_params": 2282322,
+    "active_params": 1243218,
+    "wall_time_sec": 305.02395272254944,
+    "examples_per_sec": 629.4358140937126
+  },
+  "top2_moe": {
+    "final_micro_brier": 0.1904163807630539,
+    "final_micro_log_loss": 0.5619858503341675,
+    "final_micro_auc": 0.6955818359031095,
+    "worst_sport_brier": 0.1904163807630539,
+    "total_params": 2282322,
+    "active_params": 1391634,
+    "wall_time_sec": 319.81673431396484,
+    "examples_per_sec": 600.3219325337742
+  }
+}
