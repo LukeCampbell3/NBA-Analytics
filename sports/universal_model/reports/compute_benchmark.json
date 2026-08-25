@@ -1,0 +1,52 @@
+{
+  "gpu": "not available in this environment (torch.cuda.is_available()==False, CPU only)",
+  "per_model": {
+    "dense_baseline": {
+      "total_params": 1241858,
+      "active_params": 1241666,
+      "checkpoint_size_bytes": 14985229,
+      "single_example_latency_ms": 1.7123776500284293,
+      "batch64_latency_ms_per_example": 0.08432672187481671
+    },
+    "switch_baseline": {
+      "total_params": 2282322,
+      "active_params": 1243218,
+      "checkpoint_size_bytes": 27475527,
+      "single_example_latency_ms": 2.607211650001773,
+      "batch64_latency_ms_per_example": 0.15348768359260134
+    },
+    "top2_moe": {
+      "total_params": 2282322,
+      "active_params": 1391634,
+      "checkpoint_size_bytes": 27473441,
+      "single_example_latency_ms": 2.6541026000359125,
+      "batch64_latency_ms_per_example": 0.17937063828270539
+    },
+    "drm_final": {
+      "total_params": 2430932,
+      "active_params": 1391828,
+      "checkpoint_size_bytes": 9754022,
+      "single_example_latency_ms": 3.3677179999813234,
+      "batch64_latency_ms_per_example": 0.17655587500300385
+    }
+  },
+  "training_throughput": {
+    "dense_baseline": {
+      "examples_per_sec": 957.3082570040086,
+      "wall_time_sec": 200.55504441261292
+    },
+    "switch_baseline": {
+      "examples_per_sec": 629.4358140937126,
+      "wall_time_sec": 305.02395272254944
+    },
+    "top2_moe": {
+      "examples_per_sec": 600.3219325337742,
+      "wall_time_sec": 319.81673431396484
+    }
+  },
+  "dataset_compile_throughput": {
+    "elapsed_sec": 19.277066469192505,
+    "rows": 247753,
+    "rows_per_sec": 12852.214853123245
+  }
+}
