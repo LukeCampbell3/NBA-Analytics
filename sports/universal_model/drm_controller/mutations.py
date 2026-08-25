@@ -10,7 +10,11 @@ smallest three plus the last (widest) one:
     1. parameter_adaptation  (extra fine-tuning steps, no structural change)
     2. router_repair         (reset the gate's weights -- addresses collapse)
     3. expert_birth          (function-preserving, per moe.py)
-    4. shared_width_expansion (grow the shared attention hidden width)
+    4. shared_width_expansion (grow the shared hidden width; see
+       model/surgery.py -- approximately, not exactly, function-preserving
+       due to LayerNorm renormalizing over the enlarged dimension, so it is
+       gated purely by the bounded COMMIT/REJECT evaluation like a real
+       experiment, not treated as a guaranteed no-op like expert birth)
 
 "expert width/local repair", "expert merge/split", "additional MoE layer",
 and "added temporal/state capacity" are NOT implemented in this build --
@@ -23,24 +27,30 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Optional
 
 import torch
 
 from sports.universal_model.drm_controller.residuals import ResidualSignature
+from sports.universal_model.model.surgery import grow_hidden_dim
 from sports.universal_model.model.universal_model import UniversalModel
 
 ESCALATION_ORDER = ["parameter_adaptation", "router_repair", "expert_birth", "shared_width_expansion"]
 
 MAX_EXPERTS = 16
 MAX_SHARED_WIDTH = 192
+WIDTH_GROWTH_STEP = 32  # must be a multiple of n_heads
 
 
 @dataclass
 class MutationCandidate:
     tier: str
     description: str
-    apply: Callable[[UniversalModel], None]
+    # Returns None for an in-place mutation (existing model object is
+    # mutated directly, snapshot/restore via state_dict works normally),
+    # or a NEW UniversalModel for a replacing mutation (shared_width_
+    # expansion) -- see controller.py for how each is handled.
+    apply: Callable[[UniversalModel], Optional[UniversalModel]]
     param_delta_estimate: int
 
 
@@ -80,9 +90,21 @@ def propose_mutation(model: UniversalModel, residuals: list[ResidualSignature], 
                 apply=_birth_experts,
                 param_delta_estimate=_expert_param_estimate(model),
             )
-        if tier == "shared_width_expansion" and has_calibration_or_brier:
-            return None  # requires rebuilding the whole stem; deferred, see module docstring
+        if tier == "shared_width_expansion" and has_calibration_or_brier and model.config["hidden_dim"] + WIDTH_GROWTH_STEP <= MAX_SHARED_WIDTH:
+            return MutationCandidate(
+                tier=tier,
+                description=f"grow shared hidden_dim by {WIDTH_GROWTH_STEP} (approximately function-preserving, see model/surgery.py)",
+                apply=lambda m: grow_hidden_dim(m, WIDTH_GROWTH_STEP),
+                param_delta_estimate=_width_growth_param_estimate(model, WIDTH_GROWTH_STEP),
+            )
     return None
+
+
+def _width_growth_param_estimate(model: UniversalModel, delta: int) -> int:
+    """Cheap estimate: grow, count, discard -- used only for the budget
+    check before actually committing to the fine-tune+eval experiment."""
+    grown = grow_hidden_dim(model, delta)
+    return grown.total_parameters() - model.total_parameters()
 
 
 def _current_n_experts(model: UniversalModel) -> int:

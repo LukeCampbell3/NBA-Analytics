@@ -1,10 +1,11 @@
 """Stage 5 (spec section 33): bounded DRM structural development, starting
 from the trained Top-2 MoE checkpoint, using DERIVE/SELECT only.
 
-Run: python -m sports.universal_model.train.run_drm
+Run: python -m sports.universal_model.train.run_drm [--v2]
 """
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 
@@ -18,7 +19,12 @@ REPORTS_DIR = Path(__file__).resolve().parents[1] / "reports"
 
 
 def main() -> None:
-    model, payload = load_checkpoint(MANIFESTS_DIR / "checkpoints" / "top2_moe.pt")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--suffix", default="", help="e.g. '_v2' to read top2_moe_v2.pt and write drm_final_v2.*")
+    args = parser.parse_args()
+    suffix = args.suffix
+
+    model, payload = load_checkpoint(MANIFESTS_DIR / "checkpoints" / f"top2_moe{suffix}.pt")
     config = TrainConfig(**payload["train_config"])
 
     derive = UniversalDataset(split="DERIVE")
@@ -26,7 +32,7 @@ def main() -> None:
 
     pre_drm_config = dict(model.config)
 
-    budget = run_drm_development(
+    model, budget = run_drm_development(
         model,
         config,
         derive,
@@ -41,9 +47,9 @@ def main() -> None:
     report["post_drm_model_config"] = model.config
     report["post_drm_total_params"] = model.total_parameters()
     report["post_drm_active_params"] = model.active_parameters_per_token()
-    (REPORTS_DIR / "drm_mutation_history.json").write_text(json.dumps(report, indent=2))
+    (REPORTS_DIR / f"drm_mutation_history{suffix}.json").write_text(json.dumps(report, indent=2))
 
-    (MANIFESTS_DIR / "drm_final_config.json").write_text(
+    (MANIFESTS_DIR / f"drm_final_config{suffix}.json").write_text(
         json.dumps(
             {
                 "model_config": model.config,
@@ -54,7 +60,7 @@ def main() -> None:
             indent=2,
         )
     )
-    save_checkpoint(MANIFESTS_DIR / "checkpoints" / "drm_final.pt", model, None, config, extra={"drm_report": report})
+    save_checkpoint(MANIFESTS_DIR / "checkpoints" / f"drm_final{suffix}.pt", model, None, config, extra={"drm_report": report})
     print(json.dumps({k: v for k, v in report.items() if k != "mutations"}, indent=2))
     print(f"committed={report['committed_count']} rejected={report['rejected_count']}")
 

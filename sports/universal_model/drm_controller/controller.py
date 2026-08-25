@@ -65,7 +65,13 @@ def run_drm_development(
     max_mutation_attempts_per_cycle: int = 3,
     finetune_steps: int = 300,
     weights: ComplexityWeights = ComplexityWeights(),
-) -> DRMBudget:
+) -> tuple[UniversalModel, DRMBudget]:
+    """Returns ``(final_model, budget)``. ``model`` itself is mutated
+    in-place for router_repair/expert_birth (snapshot/restore via
+    state_dict works normally there), but shared_width_expansion replaces
+    the model object entirely (growing hidden_dim changes nearly every
+    parameter's shape) -- callers MUST use the returned model, not assume
+    the passed-in ``model`` reference reflects a committed width growth."""
     budget = DRMBudget(max_mutation_attempts_per_cycle=max_mutation_attempts_per_cycle)
     persistence_tracker: dict[str, int] = {}
     baseline_active_params = model.active_parameters_per_token()
@@ -100,11 +106,22 @@ def run_drm_development(
                 )
                 continue
 
-            snap = snapshot(model)
-            candidate.apply(model)
-            _finetune(model, derive, steps=finetune_steps, lr=1e-4, batch_size=config.batch_size, alpha=config.alpha, config=config)
-            eval_after = evaluate(model, select)
-            active_after = model.active_parameters_per_token()
+            # Two mutation kinds: in-place (apply() mutates `model` and
+            # returns None -- snapshot/restore via state_dict handles
+            # rollback) and replacing (apply() returns a NEW model object,
+            # e.g. shared_width_expansion -- rollback there is simply
+            # "keep using the pre-mutation model", no state_dict surgery
+            # needed since the old object was never touched).
+            snap = None
+            pre_mutation_model = model
+            replacement = candidate.apply(model)
+            working_model = replacement if replacement is not None else model
+            if replacement is None:
+                snap = snapshot(model)
+
+            _finetune(working_model, derive, steps=finetune_steps, lr=1e-4, batch_size=config.batch_size, alpha=config.alpha, config=config)
+            eval_after = evaluate(working_model, select)
+            active_after = working_model.active_parameters_per_token()
 
             loss_before = eval_before["micro_classification"]["log_loss"] or 1.0
             loss_after = eval_after["micro_classification"]["log_loss"] or 1.0
@@ -124,10 +141,14 @@ def run_drm_development(
                 status="PERMANENT" if commit else "REJECTED",
                 decision_reason=f"J_before={j_before:.6f} J_after={j_after:.6f}: {reason}",
             )
-            if not commit:
-                restore(model, snap)
-            else:
+            if commit:
+                model = working_model
                 baseline_active_params = active_after
+            elif snap is not None:
+                restore(pre_mutation_model, snap)
+                model = pre_mutation_model
+            else:
+                model = pre_mutation_model  # replacing mutation rejected: discard `working_model`, keep the old one untouched
             budget.record(record)
 
-    return budget
+    return model, budget
