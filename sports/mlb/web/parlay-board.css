@@ -171,6 +171,41 @@
     margin-bottom: var(--vault-space-4);
 }
 
+.same-game-parlay__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: var(--vault-space-5);
+    margin-top: var(--vault-space-3);
+}
+
+.same-game-parlay__card {
+    padding: var(--vault-space-4);
+    border: 1px solid var(--vault-line);
+    border-radius: 6px;
+}
+
+.same-game-parlay__card .daily-parlay__header {
+    margin-bottom: var(--vault-space-3);
+}
+
+.same-game-parlay__metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--vault-space-4);
+    margin-top: var(--vault-space-3);
+    font-size: 0.86rem;
+}
+
+.same-game-parlay__metrics span {
+    color: var(--vault-text-muted);
+}
+
+.same-game-parlay__metrics strong {
+    display: block;
+    color: var(--vault-text);
+    font-size: 1rem;
+}
+
 @media (max-width: 700px) {
     .daily-parlay__tabs {
         display: grid;
