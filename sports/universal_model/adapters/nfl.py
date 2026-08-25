@@ -119,7 +119,28 @@ class NFLAdapter(SportAdapter):
         return events, coverage
 
     def map_universal_features(self, events: list[UniversalEvent]) -> list[UniversalFeature]:
-        return []
+        """Level A recency feature: 'baseline' is a verified strictly-causal
+        shift(1) rolling average (see module docstring / feature_registry.py)
+        -- a real, non-circular recency prior applicable across sports."""
+        df = pd.read_csv(SOURCE_PATH)
+        features: list[UniversalFeature] = []
+        for event, row in zip(events, df.itertuples(index=False)):
+            r = row._asdict()
+            baseline = r.get("baseline")
+            features.append(
+                UniversalFeature(
+                    observation_id=event.observation_id,
+                    namespace="universal",
+                    semantic_family="recency",
+                    feature_name="universal.recency_prior",
+                    feature_type="numeric",
+                    value=float(baseline) if pd.notna(baseline) else None,
+                    missing=pd.isna(baseline),
+                    timestamp=event.feature_timestamp,
+                    provenance="derived",
+                )
+            )
+        return features
 
     def map_namespaced_features(self, events: list[UniversalEvent]) -> list[UniversalFeature]:
         return []

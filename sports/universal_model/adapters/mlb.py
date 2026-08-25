@@ -154,12 +154,53 @@ class MLBAdapter(SportAdapter):
         return events, coverage
 
     def map_universal_features(self, events: list[UniversalEvent]) -> list[UniversalFeature]:
-        # Populated by the compiler from feature_registry.json-allowed columns
-        # (History_Rows -> universal.support, Is_Home -> universal.role_state,
-        # Last_History_Date -> universal.recency, Market_* -> universal.market_state).
-        # Kept out of this adapter to avoid re-reading the source CSV twice;
-        # see data/compiler.py for the single-pass feature attachment.
-        return []
+        """Level A features not already structurally captured by
+        UniversalEvent itself (home_away/role/market_* are schema fields,
+        not re-emitted here). Reads the same source in the same row order
+        as build_observations() -- 1:1 positional zip with ``events``."""
+        df = pd.read_csv(SOURCE_PATH, low_memory=False)
+        features: list[UniversalFeature] = []
+        for event, row in zip(events, df.itertuples(index=False)):
+            r = row._asdict()
+            cutoff_dt = datetime.fromisoformat(event.prediction_cutoff_time)
+            if pd.notna(r["History_Rows"]):
+                features.append(
+                    UniversalFeature(
+                        observation_id=event.observation_id,
+                        namespace="universal",
+                        semantic_family="support",
+                        feature_name="universal.sample_support_rows",
+                        feature_type="numeric",
+                        value=float(r["History_Rows"]),
+                        missing=False,
+                        timestamp=event.feature_timestamp,
+                        provenance="observed",
+                    )
+                )
+            last_hist = r.get("Last_History_Date")
+            days_since = None
+            missing = True
+            if pd.notna(last_hist):
+                try:
+                    parsed = datetime.strptime(str(last_hist), "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                    days_since = (cutoff_dt - parsed).days
+                    missing = False
+                except ValueError:
+                    pass
+            features.append(
+                UniversalFeature(
+                    observation_id=event.observation_id,
+                    namespace="universal",
+                    semantic_family="recency",
+                    feature_name="universal.days_since_last_history",
+                    feature_type="numeric",
+                    value=float(days_since) if days_since is not None else None,
+                    missing=missing,
+                    timestamp=event.feature_timestamp,
+                    provenance="derived",
+                )
+            )
+        return features
 
     def map_namespaced_features(self, events: list[UniversalEvent]) -> list[UniversalFeature]:
         return []

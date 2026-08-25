@@ -1,0 +1,54 @@
+{
+  "generated_at": "2026-08-25T22:11:46.584108Z",
+  "schema_hash": "435e420869d72bd6",
+  "feature_registry_hash": "9d2d7a76e3bed63c",
+  "split_manifest_hash": "2aa7c599ff9e3007",
+  "sports_included": [
+    "mlb",
+    "nfl"
+  ],
+  "sports_excluded": {
+    "nba": {
+      "reason": "81 raw ESPN team-game files exist but are not settled/labeled per-observation rows; the one compiled backtest candidate (simulation_backtest_2025_preseason_rows.csv) has 0 data rows (header only). No settled, dated, per-observation outcome ledger exists for NBA in this repository. Excluded from DERIVE/SELECT/TEST training; adapter kept to demonstrate the SportAdapter contract requires no architecture change per sport.",
+      "row_count_available": 0,
+      "event_count_available": 81
+    },
+    "golf": {
+      "reason": "17 live current-tournament leaderboard snapshots exist; no historical settled per-golfer outcome ledger was found. Excluded from DERIVE/SELECT/TEST training.",
+      "row_count_available": 17,
+      "event_count_available": 0
+    },
+    "f1": {
+      "reason": "No sports/f1/data/raw directory exists in this repository; predictions/data_source.py fetches live without a persisted historical archive. No historical dataset is available to build observations from. Excluded from DERIVE/SELECT/TEST training.",
+      "row_count_available": 0,
+      "event_count_available": 0
+    }
+  },
+  "total_rows": 247753,
+  "total_events": 2578,
+  "per_sport_rows": {
+    "mlb": 242425,
+    "nfl": 5328
+  },
+  "per_sport_events": {
+    "mlb": 2034,
+    "nfl": 544
+  },
+  "source_hashes": {
+    "sports/mlb/data/predictions/calibration/historical_pool_universe_2026.csv": "b8f5994ad02ba4ae",
+    "sports/nfl/data/evaluation/backtest_rows.csv": "5a9a14948c71a661",
+    "sports/nba/data/raw/espn_team_games/401810791.json": "b900d4dde6b0a005",
+    "sports/nba/data/raw/espn_team_games/401810792.json": "72ea003311b78db2",
+    "sports/nba/data/raw/espn_team_games/401810793.json": "de9f78b15caff5dc",
+    "sports/nba/data/raw/espn_team_games/401810794.json": "c973e487a2bc0400",
+    "sports/nba/data/raw/espn_team_games/401810795.json": "931bd59a2d56e2a0",
+    "sports/nba/validation/production_shadow/player_simulation/backtests/2025_preseason/simulation_backtest_2025_preseason_rows.csv": "01ba4719c80b6fe9",
+    "sports/golf/data/raw/espn/401811957/latest_leaderboard.json": "0699a3536c319b8c",
+    "sports/golf/data/raw/espn/401811957/leaderboard_20260825T175812Z.json": "0699a3536c319b8c",
+    "sports/golf/data/raw/espn/401811959/latest_leaderboard.json": "2394e9091c1f695b",
+    "sports/golf/data/raw/espn/401811959/leaderboard_20260825T175812Z.json": "2394e9091c1f695b",
+    "sports/golf/data/raw/espn/401811960/latest_leaderboard.json": "9c3bec422439e804"
+  },
+  "dataset_dir": "sports/universal_model/manifests/dataset",
+  "leakage_audit_pass": true
+}
