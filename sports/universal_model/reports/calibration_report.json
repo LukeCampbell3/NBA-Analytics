@@ -1,0 +1,101 @@
+{
+  "n": 37040,
+  "ece_overall": 0.03194336339541697,
+  "reliability_curve": [
+    {
+      "bin": [
+        0.0,
+        0.1
+      ],
+      "n": 3567,
+      "mean_predicted": 0.07982753962278366,
+      "empirical_rate": 0.07485281676054001
+    },
+    {
+      "bin": [
+        0.1,
+        0.2
+      ],
+      "n": 6202,
+      "mean_predicted": 0.15226911008358002,
+      "empirical_rate": 0.13028055429458618
+    },
+    {
+      "bin": [
+        0.2,
+        0.30000000000000004
+      ],
+      "n": 7956,
+      "mean_predicted": 0.25085413455963135,
+      "empirical_rate": 0.24547511339187622
+    },
+    {
+      "bin": [
+        0.30000000000000004,
+        0.4
+      ],
+      "n": 7199,
+      "mean_predicted": 0.3507995903491974,
+      "empirical_rate": 0.3058758080005646
+    },
+    {
+      "bin": [
+        0.4,
+        0.5
+      ],
+      "n": 6606,
+      "mean_predicted": 0.44653165340423584,
+      "empirical_rate": 0.3923705816268921
+    },
+    {
+      "bin": [
+        0.5,
+        0.6000000000000001
+      ],
+      "n": 3131,
+      "mean_predicted": 0.5452795624732971,
+      "empirical_rate": 0.4956882894039154
+    },
+    {
+      "bin": [
+        0.6000000000000001,
+        0.7000000000000001
+      ],
+      "n": 2279,
+      "mean_predicted": 0.6441425085067749,
+      "empirical_rate": 0.5853444337844849
+    },
+    {
+      "bin": [
+        0.7000000000000001,
+        0.8
+      ],
+      "n": 100,
+      "mean_predicted": 0.7080339193344116,
+      "empirical_rate": 0.550000011920929
+    },
+    {
+      "bin": [
+        0.8,
+        0.9
+      ],
+      "n": 0,
+      "mean_predicted": null,
+      "empirical_rate": null
+    },
+    {
+      "bin": [
+        0.9,
+        1.0
+      ],
+      "n": 0,
+      "mean_predicted": null,
+      "empirical_rate": null
+    }
+  ],
+  "priced_subset": {
+    "n": 0,
+    "note": "rows with a real quoted market price (american_price not null); ~2.5% of MLB rows per reports/INVENTORY.md",
+    "ece": null
+  }
+}
