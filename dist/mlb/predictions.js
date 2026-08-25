@@ -375,25 +375,38 @@ class DailyPredictionsPage {
         }
 
         const games = data.games;
-        const gamesWithCombos = games.filter((game) => Array.isArray(game.combo_candidates) && game.combo_candidates.length);
         const authorizedCount = Number(data.candidate_authorized_count) || 0;
         const pricedCount = games.filter((game) => game.status === "ok").length;
         const statusFooter = `Policy: shadow_only_v1 / Games scheduled: ${games.length} / Priced: ${pricedCount} / Authorized: ${authorizedCount}`;
 
-        if (!gamesWithCombos.length) {
+        // Real candidates flattened across the whole slate -- only the single
+        // best (highest real model EV) combo is shown, matching the V2
+        // section's singular "Today's Shadow Candidate" framing above.
+        const allCombos = [];
+        for (const game of games) {
+            if (Array.isArray(game.combo_candidates)) {
+                for (const combo of game.combo_candidates) allCombos.push({ game, combo });
+            }
+        }
+
+        if (!allCombos.length) {
             const reason = data.odds_status && data.odds_status !== "success"
                 ? "Live market odds not yet available for today's slate."
                 : "No real cross-market combo cleared pricing for today's slate.";
             content.innerHTML = this.sameGameParlayHeader() + `
-                <p class="daily-parlay__empty">${this.escapeHtml(reason)} Same-game combos will appear here once real moneyline/total/F5 lines are posted and priced.</p>
+                <p class="daily-parlay__empty">${this.escapeHtml(reason)} A same-game combo will appear here once real moneyline/total/F5 lines are posted and priced.</p>
                 <p class="daily-parlay__state">${this.escapeHtml(statusFooter)}</p>
             `;
             return;
         }
 
-        const cards = gamesWithCombos.map((game) => this.renderSameGameCombo(game)).join("");
+        allCombos.sort((a, b) => (Number(b.combo.expected_value_per_unit) ?? -Infinity) - (Number(a.combo.expected_value_per_unit) ?? -Infinity));
+        const best = allCombos[0];
+        const extraCount = allCombos.length - 1;
+
         content.innerHTML = this.sameGameParlayHeader() + `
-            <div class="same-game-parlay__grid">${cards}</div>
+            <div class="same-game-parlay__grid">${this.renderSameGameCombo(best.game, best.combo)}</div>
+            ${extraCount > 0 ? `<p class="daily-parlay__state">+${extraCount} more real combo${extraCount === 1 ? "" : "s"} priced across today's slate</p>` : ""}
             <p class="daily-parlay__state">${this.escapeHtml(statusFooter)}</p>
         `;
     }
@@ -410,10 +423,7 @@ class DailyPredictionsPage {
         `;
     }
 
-    /** The single best real (highest-EV) combo for one game -- combo_candidates already arrives EV-sorted from the pipeline. */
-    renderSameGameCombo(game) {
-        const combo = game.combo_candidates[0];
-        const extraCount = game.combo_candidates.length - 1;
+    renderSameGameCombo(game, combo) {
         const matchup = `${this.escapeHtml(game.away_team || "")} @ ${this.escapeHtml(game.home_team || "")}`;
         const starters = `${this.escapeHtml(game.away_starter_name || "TBD")} vs ${this.escapeHtml(game.home_starter_name || "TBD")}`;
         const authorized = Boolean(combo.candidate_authorized);
@@ -442,7 +452,6 @@ class DailyPredictionsPage {
                     <span>Edge vs. naive market <strong>${edge}</strong></span>
                     <span>Model EV <strong>${ev}</strong></span>
                 </div>
-                ${extraCount > 0 ? `<p class="daily-parlay__state">+${extraCount} more real combo${extraCount === 1 ? "" : "s"} priced for this game</p>` : ""}
             </article>
         `;
     }
