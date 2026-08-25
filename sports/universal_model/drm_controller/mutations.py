@@ -120,21 +120,38 @@ def snapshot(model: UniversalModel) -> dict:
 
 def restore(model: UniversalModel, snap: dict) -> None:
     """Exact rollback (spec section 28/61): a rejected mutation must
-    revert exactly, including any shape change from expert birth -- so we
-    rebuild the model's expert/router tensors to the snapshot's shapes
-    before loading, rather than assuming shapes are unchanged."""
-    # Shape-safe restore: reconstruct parameter tensors directly from the
-    # snapshot's shapes for any MoE/Switch layer whose expert count grew.
-    own_state = model.state_dict()
-    for key, tensor in snap.items():
-        if key in own_state and own_state[key].shape != tensor.shape:
-            _resize_param(model, key, tensor.shape)
+    revert exactly, including any shape change from expert birth.
+
+    A naive "just resize the raw weight tensors and load_state_dict" is
+    NOT sufficient for the router's gate: it is an ``nn.Linear``, and
+    ``add_expert()`` (moe.py) replaces that whole module with a new
+    ``nn.Linear`` of larger ``out_features``. If a rollback only resizes
+    ``.weight``/``.bias`` in place, the Linear module's own
+    ``in_features``/``out_features`` metadata (and this package's own
+    ``n_experts`` counters on Router/ExpertBank) go stale even though the
+    tensor shape is correct -- and the next expert-birth attempt then
+    reads that stale metadata and corrupts itself. So every MoE/Switch
+    layer's gate, expert bank, and n_experts counters are rebuilt from the
+    snapshot's real shapes explicitly, before the generic
+    ``load_state_dict`` call restores the actual values.
+    """
+    for name, module in model.named_modules():
+        if not hasattr(module, "experts") or not hasattr(module, "router"):
+            continue  # not a Switch/Top2MoEFFN layer
+        w1_key = f"{name}.experts.w1"
+        if w1_key not in snap:
+            continue
+        target_n_experts = snap[w1_key].shape[0]
+        if module.experts.w1.shape[0] == target_n_experts:
+            continue  # no shape drift for this layer
+        hidden_dim, inner = snap[w1_key].shape[1], snap[w1_key].shape[2]
+        device = module.experts.w1.device
+        module.experts.w1 = torch.nn.Parameter(torch.zeros(target_n_experts, hidden_dim, inner, device=device))
+        module.experts.b1 = torch.nn.Parameter(torch.zeros(target_n_experts, inner, device=device))
+        module.experts.w2 = torch.nn.Parameter(torch.zeros(target_n_experts, inner, hidden_dim, device=device))
+        module.experts.b2 = torch.nn.Parameter(torch.zeros(target_n_experts, hidden_dim, device=device))
+        module.experts.n_experts = target_n_experts
+        module.router.gate = torch.nn.Linear(hidden_dim, target_n_experts, device=device)
+        module.router.n_experts = target_n_experts
+
     model.load_state_dict(snap, strict=True)
-
-
-def _resize_param(model: UniversalModel, dotted_name: str, shape: torch.Size) -> None:
-    module_path, _, param_name = dotted_name.rpartition(".")
-    module = model
-    for part in module_path.split("."):
-        module = getattr(module, part)
-    setattr(module, param_name, torch.nn.Parameter(torch.zeros(shape)))

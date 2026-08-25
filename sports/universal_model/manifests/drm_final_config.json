@@ -1,0 +1,118 @@
+{
+  "model_config": {
+    "hidden_dim": 96,
+    "n_heads": 4,
+    "block_types": [
+      "dense",
+      "dense",
+      "top2_moe",
+      "top2_moe"
+    ],
+    "n_experts": 8,
+    "ffn_mult": 4,
+    "dropout": 0.1
+  },
+  "committed_mutations": [
+    {
+      "mutation_id": "b822ceed",
+      "tier": "parameter_adaptation",
+      "description": "extra fine-tuning steps only, no structural change",
+      "residual_motivating_it": {
+        "sport": "mlb",
+        "target_family": "unmapped",
+        "semantic_feature_family": "market_state",
+        "error_type": "brier",
+        "magnitude": 0.1904163807630539,
+        "persistence": 1,
+        "sample_support": 35980
+      },
+      "before_metrics": {
+        "n": 35980,
+        "brier": 0.1904163807630539,
+        "log_loss": 0.5619858503341675,
+        "auc": 0.6955818359031095,
+        "ece": 0.03141135973912799
+      },
+      "after_metrics": {
+        "n": 35980,
+        "brier": 0.1893623322248459,
+        "log_loss": 0.5590728521347046,
+        "auc": 0.6989444523969686,
+        "ece": 0.02032227037871063
+      },
+      "param_delta": 0,
+      "compute_delta": 0.0,
+      "status": "PERMANENT",
+      "decision_reason": "J_before=0.585902 J_after=0.582989: J improved by 0.002913 (> min_improvement=0.0001)",
+      "timestamp": "2026-08-25T22:43:24.597086+00:00"
+    },
+    {
+      "mutation_id": "a403a45d",
+      "tier": "expert_birth",
+      "description": "function-preserving expert birth on all MoE/Switch layers",
+      "residual_motivating_it": {
+        "sport": "mlb",
+        "target_family": "unmapped",
+        "semantic_feature_family": "market_state",
+        "error_type": "brier",
+        "magnitude": 0.1893623322248459,
+        "persistence": 5,
+        "sample_support": 35980
+      },
+      "before_metrics": {
+        "n": 35980,
+        "brier": 0.1893623322248459,
+        "log_loss": 0.5590728521347046,
+        "auc": 0.6989444523969686,
+        "ece": 0.02032227037871063
+      },
+      "after_metrics": {
+        "n": 35980,
+        "brier": 0.18906114995479584,
+        "log_loss": 0.5584980845451355,
+        "auc": 0.699858441722577,
+        "ece": 0.020033971740842992
+      },
+      "param_delta": 194,
+      "compute_delta": 0.0001394044698534241,
+      "status": "PERMANENT",
+      "decision_reason": "J_before=0.582989 J_after=0.582418: J improved by 0.000571 (> min_improvement=0.0001)",
+      "timestamp": "2026-08-25T22:46:17.006084+00:00"
+    },
+    {
+      "mutation_id": "5d8326ce",
+      "tier": "parameter_adaptation",
+      "description": "extra fine-tuning steps only, no structural change",
+      "residual_motivating_it": {
+        "sport": "mlb",
+        "target_family": "unmapped",
+        "semantic_feature_family": "market_state",
+        "error_type": "brier",
+        "magnitude": 0.18906114995479584,
+        "persistence": 7,
+        "sample_support": 35980
+      },
+      "before_metrics": {
+        "n": 35980,
+        "brier": 0.18906114995479584,
+        "log_loss": 0.5584980845451355,
+        "auc": 0.699858441722577,
+        "ece": 0.020033971740842992
+      },
+      "after_metrics": {
+        "n": 35980,
+        "brier": 0.18908081948757172,
+        "log_loss": 0.5583398938179016,
+        "auc": 0.6988480872617855,
+        "ece": 0.013666873966955092
+      },
+      "param_delta": 0,
+      "compute_delta": 0.0,
+      "status": "PERMANENT",
+      "decision_reason": "J_before=0.582416 J_after=0.582258: J improved by 0.000158 (> min_improvement=0.0001)",
+      "timestamp": "2026-08-25T22:47:29.193471+00:00"
+    }
+  ],
+  "total_committed": 3,
+  "total_rejected": 3
+}

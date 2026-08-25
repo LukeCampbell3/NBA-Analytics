@@ -1,0 +1,235 @@
+{
+  "max_mutation_attempts_per_cycle": 3,
+  "max_total_param_growth": 2000000,
+  "total_param_growth_used": 194,
+  "mutations": [
+    {
+      "mutation_id": "b822ceed",
+      "tier": "parameter_adaptation",
+      "description": "extra fine-tuning steps only, no structural change",
+      "residual_motivating_it": {
+        "sport": "mlb",
+        "target_family": "unmapped",
+        "semantic_feature_family": "market_state",
+        "error_type": "brier",
+        "magnitude": 0.1904163807630539,
+        "persistence": 1,
+        "sample_support": 35980
+      },
+      "before_metrics": {
+        "n": 35980,
+        "brier": 0.1904163807630539,
+        "log_loss": 0.5619858503341675,
+        "auc": 0.6955818359031095,
+        "ece": 0.03141135973912799
+      },
+      "after_metrics": {
+        "n": 35980,
+        "brier": 0.1893623322248459,
+        "log_loss": 0.5590728521347046,
+        "auc": 0.6989444523969686,
+        "ece": 0.02032227037871063
+      },
+      "param_delta": 0,
+      "compute_delta": 0.0,
+      "status": "PERMANENT",
+      "decision_reason": "J_before=0.585902 J_after=0.582989: J improved by 0.002913 (> min_improvement=0.0001)",
+      "timestamp": "2026-08-25T22:43:24.597086+00:00"
+    },
+    {
+      "mutation_id": "806c2cbe",
+      "tier": "expert_birth",
+      "description": "function-preserving expert birth on all MoE/Switch layers",
+      "residual_motivating_it": {
+        "sport": "mlb",
+        "target_family": "unmapped",
+        "semantic_feature_family": "market_state",
+        "error_type": "brier",
+        "magnitude": 0.1893623322248459,
+        "persistence": 2,
+        "sample_support": 35980
+      },
+      "before_metrics": {
+        "n": 35980,
+        "brier": 0.1893623322248459,
+        "log_loss": 0.5590728521347046,
+        "auc": 0.6989444523969686,
+        "ece": 0.02032227037871063
+      },
+      "after_metrics": {
+        "n": 35980,
+        "brier": 0.18960726261138916,
+        "log_loss": 0.5595731735229492,
+        "auc": 0.7002982728274328,
+        "ece": 0.02706103633557047
+      },
+      "param_delta": 194,
+      "compute_delta": 0.0001394044698534241,
+      "status": "REJECTED",
+      "decision_reason": "J_before=0.582989 J_after=0.583493: J did not improve enough (delta=-0.000504, min_improvement=0.0001)",
+      "timestamp": "2026-08-25T22:44:18.196312+00:00"
+    },
+    {
+      "mutation_id": "d1df22a5",
+      "tier": "parameter_adaptation",
+      "description": "extra fine-tuning steps only, no structural change",
+      "residual_motivating_it": {
+        "sport": "mlb",
+        "target_family": "unmapped",
+        "semantic_feature_family": "market_state",
+        "error_type": "brier",
+        "magnitude": 0.1893623322248459,
+        "persistence": 4,
+        "sample_support": 35980
+      },
+      "before_metrics": {
+        "n": 35980,
+        "brier": 0.1893623322248459,
+        "log_loss": 0.5590728521347046,
+        "auc": 0.6989444523969686,
+        "ece": 0.02032227037871063
+      },
+      "after_metrics": {
+        "n": 35980,
+        "brier": 0.19063924252986908,
+        "log_loss": 0.5617577433586121,
+        "auc": 0.6984203160420629,
+        "ece": 0.03306461933911212
+      },
+      "param_delta": 0,
+      "compute_delta": 0.0,
+      "status": "REJECTED",
+      "decision_reason": "J_before=0.582989 J_after=0.585674: J did not improve enough (delta=-0.002685, min_improvement=0.0001)",
+      "timestamp": "2026-08-25T22:45:26.558441+00:00"
+    },
+    {
+      "mutation_id": "a403a45d",
+      "tier": "expert_birth",
+      "description": "function-preserving expert birth on all MoE/Switch layers",
+      "residual_motivating_it": {
+        "sport": "mlb",
+        "target_family": "unmapped",
+        "semantic_feature_family": "market_state",
+        "error_type": "brier",
+        "magnitude": 0.1893623322248459,
+        "persistence": 5,
+        "sample_support": 35980
+      },
+      "before_metrics": {
+        "n": 35980,
+        "brier": 0.1893623322248459,
+        "log_loss": 0.5590728521347046,
+        "auc": 0.6989444523969686,
+        "ece": 0.02032227037871063
+      },
+      "after_metrics": {
+        "n": 35980,
+        "brier": 0.18906114995479584,
+        "log_loss": 0.5584980845451355,
+        "auc": 0.699858441722577,
+        "ece": 0.020033971740842992
+      },
+      "param_delta": 194,
+      "compute_delta": 0.0001394044698534241,
+      "status": "PERMANENT",
+      "decision_reason": "J_before=0.582989 J_after=0.582418: J improved by 0.000571 (> min_improvement=0.0001)",
+      "timestamp": "2026-08-25T22:46:17.006084+00:00"
+    },
+    {
+      "mutation_id": "5d8326ce",
+      "tier": "parameter_adaptation",
+      "description": "extra fine-tuning steps only, no structural change",
+      "residual_motivating_it": {
+        "sport": "mlb",
+        "target_family": "unmapped",
+        "semantic_feature_family": "market_state",
+        "error_type": "brier",
+        "magnitude": 0.18906114995479584,
+        "persistence": 7,
+        "sample_support": 35980
+      },
+      "before_metrics": {
+        "n": 35980,
+        "brier": 0.18906114995479584,
+        "log_loss": 0.5584980845451355,
+        "auc": 0.699858441722577,
+        "ece": 0.020033971740842992
+      },
+      "after_metrics": {
+        "n": 35980,
+        "brier": 0.18908081948757172,
+        "log_loss": 0.5583398938179016,
+        "auc": 0.6988480872617855,
+        "ece": 0.013666873966955092
+      },
+      "param_delta": 0,
+      "compute_delta": 0.0,
+      "status": "PERMANENT",
+      "decision_reason": "J_before=0.582416 J_after=0.582258: J improved by 0.000158 (> min_improvement=0.0001)",
+      "timestamp": "2026-08-25T22:47:29.193471+00:00"
+    },
+    {
+      "mutation_id": "311f93da",
+      "tier": "expert_birth",
+      "description": "function-preserving expert birth on all MoE/Switch layers",
+      "residual_motivating_it": {
+        "sport": "mlb",
+        "target_family": "unmapped",
+        "semantic_feature_family": "market_state",
+        "error_type": "brier",
+        "magnitude": 0.18908081948757172,
+        "persistence": 8,
+        "sample_support": 35980
+      },
+      "before_metrics": {
+        "n": 35980,
+        "brier": 0.18908081948757172,
+        "log_loss": 0.5583398938179016,
+        "auc": 0.6988480872617855,
+        "ece": 0.013666873966955092
+      },
+      "after_metrics": {
+        "n": 35980,
+        "brier": 0.18984173238277435,
+        "log_loss": 0.5599305629730225,
+        "auc": 0.7014887794034775,
+        "ece": 0.032360086662735196
+      },
+      "param_delta": 194,
+      "compute_delta": 0.00013938503895596295,
+      "status": "REJECTED",
+      "decision_reason": "J_before=0.582258 J_after=0.583852: J did not improve enough (delta=-0.001594, min_improvement=0.0001)",
+      "timestamp": "2026-08-25T22:48:24.821559+00:00"
+    }
+  ],
+  "committed_count": 3,
+  "rejected_count": 3,
+  "pre_drm_model_config": {
+    "hidden_dim": 96,
+    "n_heads": 4,
+    "block_types": [
+      "dense",
+      "dense",
+      "top2_moe",
+      "top2_moe"
+    ],
+    "n_experts": 8,
+    "ffn_mult": 4,
+    "dropout": 0.1
+  },
+  "post_drm_model_config": {
+    "hidden_dim": 96,
+    "n_heads": 4,
+    "block_types": [
+      "dense",
+      "dense",
+      "top2_moe",
+      "top2_moe"
+    ],
+    "n_experts": 8,
+    "ffn_mult": 4,
+    "dropout": 0.1
+  },
+  "post_drm_total_params": 2430932,
+  "post_drm_active_params": 1391828
+}
