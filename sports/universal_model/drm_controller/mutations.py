@@ -156,6 +156,12 @@ def resize_moe_layers_to_match(model: UniversalModel, state_dict: dict) -> None:
         module.experts.n_experts = target_n_experts
         module.router.gate = torch.nn.Linear(hidden_dim, target_n_experts, device=device)
         module.router.n_experts = target_n_experts
+        if hasattr(module, "n_experts"):
+            # Top2MoEFFN/SwitchFFN keep their OWN n_experts counter too
+            # (incremented separately in add_expert()) -- must reset it
+            # here as well, or it silently drifts out of sync with the
+            # actual (correctly resized) experts/router state.
+            module.n_experts = target_n_experts
 
 
 def restore(model: UniversalModel, snap: dict) -> None:
