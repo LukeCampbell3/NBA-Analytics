@@ -1,0 +1,38 @@
+{
+  "sports/mlb/tests": {
+    "status": "FAIL",
+    "returncode": 1,
+    "elapsed_sec": 84.58063983917236,
+    "summary_tail": "\n    def test_predictions_html_has_the_parlay_v2_section_and_no_legacy_parlay_section():\n        html = (REPO_ROOT / \"sports\" / \"mlb\" / \"web\" / \"predictions.html\").read_text()\n        assert 'id=\"parlayV2Section\"' in html\n        # The legacy ticket system is no longer shown as its own \"parlay\"\n        # section -- its legs are folded into Solo Bets instead (see\n        # mergeLegacySoloBets), since that system was never V2-certified.\n        assert 'id=\"dailyParlaySection\"' not in html\n>       assert \"Solo bets\" in html\nE       assert 'Solo bets' in '<!DOCTYPE html>\\n<html lang=\"en\">\\n<head>\\n    <meta charset=\"UTF-8\">\\n    <meta name=\"viewport\" content=\"width=devic... <script src=\"vault/vault-shell.js?v=9\"></script>\\n    <script src=\"predictions.js?v=17\"></script>\\n</body>\\n</html>\\n'\n\nsports/mlb/tests/test_parlay_v2_integration.py:305: AssertionError\n=========================== short test summary info ============================\nFAILED sports/mlb/tests/test_parlay_v2_integration.py::test_predictions_html_has_the_parlay_v2_section_and_no_legacy_parlay_section\n1 failed, 416 passed in 84.07s (0:01:24)"
+  },
+  "sports/nba/tests": {
+    "status": "FAIL",
+    "returncode": 2,
+    "elapsed_sec": 2.438418388366699,
+    "summary_tail": "Traceback:\n/usr/lib/python3.11/importlib/__init__.py:126: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsports/nba/tests/test_structured_stack_inference.py:13: in <module>\n    import structured_stack_inference as ssi\nsports/nba/predictions/Player-Predictor/inference/structured_stack_inference.py:20: in <module>\n    import h5py\nE   ModuleNotFoundError: No module named 'h5py'\n=========================== short test summary info ============================\nERROR sports/nba/tests/test_market_snapshot_provenance_pipeline.py\nERROR sports/nba/tests/test_monetization_layer.py\nERROR sports/nba/tests/test_structured_stack_inference.py\n!!!!!!!!!!!!!!!!!!! Interrupted: 3 errors during collection !!!!!!!!!!!!!!!!!!!!\n3 errors in 1.97s"
+  },
+  "sports/nba/analytics/tests": {
+    "status": "PASS",
+    "returncode": 0,
+    "elapsed_sec": 0.633901834487915,
+    "summary_tail": ".......................                                                  [100%]\n23 passed in 0.36s"
+  },
+  "sports/nfl/tests": {
+    "status": "FAIL",
+    "returncode": 1,
+    "elapsed_sec": 39.94232439994812,
+    "summary_tail": "        if hasattr(filename, \"read\"):\n            fobj = filename\n            filename = getattr(fobj, \"name\", \"\")\n            with _validate_fileobject_and_memmap(fobj, filename, mmap_mode) as (fobj, _):\n                obj = _unpickle(fobj, ensure_native_byte_order=ensure_native_byte_order)\n        else:\n>           with open(filename, \"rb\") as f:\n                 ^^^^^^^^^^^^^^^^^^^^\nE           FileNotFoundError: [Errno 2] No such file or directory: '/home/user/NBA-Analytics/sports/nfl/model/nfl_pick_meta_selector.joblib'\n\n/usr/local/lib/python3.11/dist-packages/joblib/numpy_pickle.py:735: FileNotFoundError\n=========================== short test summary info ============================\nFAILED sports/nfl/tests/test_pick_meta.py::test_meta_artifact_is_nfl_only_and_applies_frozen_gates\nFAILED sports/nfl/tests/test_pick_meta.py::test_calibration_support_contains_every_recent_policy_selection\n2 failed, 112 passed in 39.49s"
+  },
+  "sports/golf/tests": {
+    "status": "PASS",
+    "returncode": 0,
+    "elapsed_sec": 0.37153053283691406,
+    "summary_tail": "..................................                                       [100%]\n34 passed in 0.18s"
+  },
+  "sports/f1/tests": {
+    "status": "PASS",
+    "returncode": 0,
+    "elapsed_sec": 1.4742558002471924,
+    "summary_tail": ".......                                                                  [100%]\n7 passed in 1.06s"
+  }
+}
