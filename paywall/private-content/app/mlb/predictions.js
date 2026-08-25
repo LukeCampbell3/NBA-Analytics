@@ -11,6 +11,8 @@ class DailyPredictionsPage {
             runMeta: document.getElementById("predictionRunMeta"),
             parlayV2Section: document.getElementById("parlayV2Section"),
             parlayV2Content: document.getElementById("parlayV2Content"),
+            sameGameParlaySection: document.getElementById("sameGameParlaySection"),
+            sameGameParlayContent: document.getElementById("sameGameParlayContent"),
             poolTitle: document.getElementById("predictionPoolTitle"),
             dateNav: document.getElementById("predictionDateNav"),
         };
@@ -23,6 +25,7 @@ class DailyPredictionsPage {
             this.elements.cards.innerHTML = window.CardVault.renderSkeletonCard(6);
         }
         this.loadDatesAndRender();
+        this.loadSameGameParlay();
     }
 
     mountShell() {
@@ -332,6 +335,148 @@ class DailyPredictionsPage {
                 </div>
             `;
         }).join("");
+    }
+
+    /**
+     * Same-Game Parlay -- real cross-market (moneyline + full total + F5
+     * total) combos, priced with a joint Monte Carlo simulation so the
+     * legs' real correlation is reflected rather than assumed away. This
+     * is a SEPARATE, brand-new policy from PARLAY_POLICY_V2 above: its
+     * own data/same_game_predictions.json, its own empty calibration
+     * ledger. Loaded independently of the main board (never blocks or
+     * fails the rest of the page if this file is missing/stale) --
+     * mirrors loadDateIndex()'s "optional" fetch pattern.
+     */
+    async loadSameGameParlay() {
+        const section = this.elements.sameGameParlaySection;
+        const content = this.elements.sameGameParlayContent;
+        if (!section || !content) return;
+        try {
+            const response = await fetch(`data/same_game_predictions.json?v=${Date.now()}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            this.sameGameData = await response.json();
+        } catch (_error) {
+            this.sameGameData = null;
+        }
+        this.renderSameGameParlay();
+    }
+
+    renderSameGameParlay() {
+        const section = this.elements.sameGameParlaySection;
+        const content = this.elements.sameGameParlayContent;
+        if (!section || !content) return;
+        const data = this.sameGameData;
+
+        if (!data || data.status !== "ok" || !Array.isArray(data.games) || !data.games.length) {
+            content.innerHTML = this.sameGameParlayHeader() + `
+                <p class="daily-parlay__empty">No MLB games scheduled today.</p>
+            `;
+            return;
+        }
+
+        const games = data.games;
+        const gamesWithCombos = games.filter((game) => Array.isArray(game.combo_candidates) && game.combo_candidates.length);
+        const authorizedCount = Number(data.candidate_authorized_count) || 0;
+        const pricedCount = games.filter((game) => game.status === "ok").length;
+        const statusFooter = `Policy: shadow_only_v1 / Games scheduled: ${games.length} / Priced: ${pricedCount} / Authorized: ${authorizedCount}`;
+
+        if (!gamesWithCombos.length) {
+            const reason = data.odds_status && data.odds_status !== "success"
+                ? "Live market odds not yet available for today's slate."
+                : "No real cross-market combo cleared pricing for today's slate.";
+            content.innerHTML = this.sameGameParlayHeader() + `
+                <p class="daily-parlay__empty">${this.escapeHtml(reason)} Same-game combos will appear here once real moneyline/total/F5 lines are posted and priced.</p>
+                <p class="daily-parlay__state">${this.escapeHtml(statusFooter)}</p>
+            `;
+            return;
+        }
+
+        const cards = gamesWithCombos.map((game) => this.renderSameGameCombo(game)).join("");
+        content.innerHTML = this.sameGameParlayHeader() + `
+            <div class="same-game-parlay__grid">${cards}</div>
+            <p class="daily-parlay__state">${this.escapeHtml(statusFooter)}</p>
+        `;
+    }
+
+    sameGameParlayHeader() {
+        return `
+            <div class="daily-parlay__header">
+                <div>
+                    <p class="vault-page-kicker">Real cross-market combos, priced with joint simulation</p>
+                    <h2 id="sameGameParlayTitle">Same-Game Parlay</h2>
+                </div>
+                ${window.CardVault ? window.CardVault.renderStatusPill("stale", "Shadow only") : ""}
+            </div>
+        `;
+    }
+
+    /** The single best real (highest-EV) combo for one game -- combo_candidates already arrives EV-sorted from the pipeline. */
+    renderSameGameCombo(game) {
+        const combo = game.combo_candidates[0];
+        const extraCount = game.combo_candidates.length - 1;
+        const matchup = `${this.escapeHtml(game.away_team || "")} @ ${this.escapeHtml(game.home_team || "")}`;
+        const starters = `${this.escapeHtml(game.away_starter_name || "TBD")} vs ${this.escapeHtml(game.home_starter_name || "TBD")}`;
+        const authorized = Boolean(combo.candidate_authorized);
+        const pillTone = authorized ? "active" : "stale";
+        const pillLabel = authorized ? "Selected -- shadow only" : "Shadow only";
+
+        const joint = this.formatPct(combo.real_joint_model_probability);
+        const edge = this.formatSignedPct(combo.probability_edge);
+        const ev = this.formatSignedPct(combo.expected_value_per_unit);
+
+        return `
+            <article class="same-game-parlay__card">
+                <div class="daily-parlay__header">
+                    <div>
+                        <strong>${matchup}</strong>
+                        <span>${starters}</span>
+                    </div>
+                    ${window.CardVault ? window.CardVault.renderStatusPill(pillTone, pillLabel) : ""}
+                </div>
+                <div class="daily-parlay__legs">
+                    ${this.renderSameGameLeg(combo.leg_a, game, 1)}
+                    ${this.renderSameGameLeg(combo.leg_b, game, 2)}
+                </div>
+                <div class="same-game-parlay__metrics">
+                    <span>Joint probability <strong>${joint}</strong></span>
+                    <span>Edge vs. naive market <strong>${edge}</strong></span>
+                    <span>Model EV <strong>${ev}</strong></span>
+                </div>
+                ${extraCount > 0 ? `<p class="daily-parlay__state">+${extraCount} more real combo${extraCount === 1 ? "" : "s"} priced for this game</p>` : ""}
+            </article>
+        `;
+    }
+
+    renderSameGameLeg(leg, game, index) {
+        if (!leg) return "";
+        return `
+            <div class="daily-parlay__leg">
+                <span class="daily-parlay__leg-number">${String(index).padStart(2, "0")}</span>
+                <div class="daily-parlay__leg-copy">
+                    <strong>${this.escapeHtml(this.formatSameGameLegLabel(leg, game))}</strong>
+                    <span>${this.escapeHtml(this.formatSameGameMarketLabel(leg.market))}</span>
+                </div>
+                <div class="daily-parlay__leg-market">
+                    <strong>${this.formatAmerican(leg.price_american)}</strong>
+                    <span>${this.escapeHtml(leg.sportsbook || "n/a")}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    formatSameGameLegLabel(leg, game) {
+        if (leg.market === "moneyline") {
+            const team = leg.side === "home" ? game.home_team : game.away_team;
+            return `${team || "?"} ML`;
+        }
+        const side = leg.side === "over" ? "Over" : "Under";
+        const line = this.formatNumber(leg.line, 1);
+        return `${side} ${line}`;
+    }
+
+    formatSameGameMarketLabel(market) {
+        const labels = { moneyline: "Moneyline", game_total: "Game Total", first_5_innings_total: "F5 Total" };
+        return labels[market] || String(market || "");
     }
 
     formatParlayV2StatusLabel(policyStatus) {

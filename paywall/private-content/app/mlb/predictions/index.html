@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="/vault/vault-tokens.css?v=4">
     <link rel="stylesheet" href="/vault/vault-components.css?v=7">
     <link rel="stylesheet" href="/vault/prediction-pages.css?v=4">
-    <link rel="stylesheet" href="parlay-board.css?v=4">
+    <link rel="stylesheet" href="parlay-board.css?v=5">
 </head>
 <body class="vault-theme">
     <div id="vaultShellRoot"></div>
@@ -37,6 +37,19 @@
             <div id="parlayV2Content"></div>
         </section>
 
+        <!-- Same-Game Parlay -- real cross-market (moneyline + full total +
+             F5 total) combos for today's slate, priced with the joint
+             probability read off a shared Monte Carlo simulation (real
+             dependence modeling, never an independence-product shortcut).
+             Sourced from its own data/same_game_predictions.json, entirely
+             separate from the legacy/V2 player-prop parlay products above.
+             This is a brand-new policy with an empty calibration ledger, so
+             every combo here is honestly "Shadow only" until real settled
+             evidence accumulates -- never presented as certified or a lock. -->
+        <section id="sameGameParlaySection" class="daily-parlay daily-parlay--same-game" aria-labelledby="sameGameParlayTitle" aria-live="polite">
+            <div id="sameGameParlayContent"></div>
+        </section>
+
         <div class="prediction-section-heading">
             <p class="vault-page-kicker">Solo bets</p>
             <h2 id="predictionPoolTitle">Current Pool</h2>
@@ -50,6 +63,6 @@
 
     <script src="/vault/vault-components.js?v=8"></script>
     <script src="/vault/vault-shell.js?v=7"></script>
-    <script src="predictions.js?v=15"></script>
+    <script src="predictions.js?v=16"></script>
 </body>
 </html>
