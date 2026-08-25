@@ -1,0 +1,14 @@
+{
+  "note": "single-sided implied probability from real American price (not vig-adjusted; see module docstring)",
+  "split_used": "SELECT (TEST has zero priced rows -- real market-price capture in this dataset only spans 2026-04-28..06-28, entirely before the TEST window; see module docstring)",
+  "n_rows_in_split": 36056,
+  "n_priced_subset": 2709,
+  "priced_fraction": 0.07513312624805858,
+  "market_only_metrics": {
+    "n": 2709,
+    "brier": 0.1884258636493289,
+    "log_loss": 0.5531204258569119,
+    "auc": 0.7021095518684068,
+    "ece": 0.013866685338951435
+  }
+}

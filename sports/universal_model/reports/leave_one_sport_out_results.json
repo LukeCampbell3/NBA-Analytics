@@ -1,0 +1,60 @@
+{
+  "mlb": {
+    "final_select_metrics": {
+      "micro_classification": {
+        "n": 35980,
+        "brier": 0.18846558034420013,
+        "log_loss": 0.557251513004303,
+        "auc": 0.699705022781531,
+        "ece": 0.009654317852969031
+      },
+      "macro_by_sport": {
+        "mlb": {
+          "n": 35980,
+          "brier": 0.18846558034420013,
+          "log_loss": 0.557251513004303,
+          "auc": 0.699705022781531,
+          "ece": 0.009654317852969031
+        }
+      },
+      "worst_sport_brier": 0.18846558034420013,
+      "regression": {
+        "n": 36056,
+        "mae": 0.6629617810249329,
+        "rmse": 0.9050546288490295
+      }
+    },
+    "total_params": 1241858,
+    "active_params": 1241666,
+    "wall_time_sec": 117.349680185318
+  },
+  "nfl": {
+    "final_select_metrics": {
+      "micro_classification": {
+        "n": 0,
+        "brier": null,
+        "log_loss": null,
+        "auc": null,
+        "ece": null
+      },
+      "macro_by_sport": {
+        "nfl": {
+          "n": 0,
+          "brier": null,
+          "log_loss": null,
+          "auc": null,
+          "ece": null
+        }
+      },
+      "worst_sport_brier": null,
+      "regression": {
+        "n": 924,
+        "mae": 0.5889338850975037,
+        "rmse": 0.8017208576202393
+      }
+    },
+    "total_params": 1241858,
+    "active_params": 1241666,
+    "wall_time_sec": 60.984938859939575
+  }
+}
