@@ -1,0 +1,273 @@
+{
+  "name": "dense_baseline_v2",
+  "config": {
+    "name": "dense_baseline_v2",
+    "hidden_dim": 128,
+    "n_heads": 4,
+    "block_types": [
+      "dense",
+      "dense",
+      "dense",
+      "dense"
+    ],
+    "n_experts": 8,
+    "ffn_mult": 4,
+    "dropout": 0.1,
+    "lr": 0.0003,
+    "batch_size": 64,
+    "steps": 3500,
+    "eval_every": 700,
+    "alpha": 0.5,
+    "seed": 1234,
+    "lambda_load_balance": 0.01,
+    "lambda_z_loss": 0.001,
+    "lambda_prob": 1.0,
+    "lambda_reg": 0.5
+  },
+  "history": [
+    {
+      "step": 700,
+      "train_loss": 0.8038551807403564,
+      "prob_loss": 0.5653857588768005,
+      "reg_loss": 0.4769388437271118,
+      "load_balance_loss": 0.0,
+      "router_z_loss": 0.0,
+      "select_metrics": {
+        "micro_classification": {
+          "n": 35980,
+          "brier": 0.19202253222465515,
+          "log_loss": 0.5656134486198425,
+          "auc": 0.6925641887294319,
+          "ece": 0.042205515311510115
+        },
+        "macro_by_sport": {
+          "mlb": {
+            "n": 35980,
+            "brier": 0.19202253222465515,
+            "log_loss": 0.5656134486198425,
+            "auc": 0.6925641887294319,
+            "ece": 0.042205515311510115
+          },
+          "nfl": {
+            "n": 0,
+            "brier": null,
+            "log_loss": null,
+            "auc": null,
+            "ece": null
+          }
+        },
+        "worst_sport_brier": 0.19202253222465515,
+        "regression": {
+          "n": 36980,
+          "mae": 0.647788405418396,
+          "rmse": 0.9015330672264099
+        }
+      },
+      "elapsed_sec": 50.15782594680786,
+      "examples_per_sec": 893.180658338545
+    },
+    {
+      "step": 1400,
+      "train_loss": 1.3578979969024658,
+      "prob_loss": 0.6017704606056213,
+      "reg_loss": 1.512255072593689,
+      "load_balance_loss": 0.0,
+      "router_z_loss": 0.0,
+      "select_metrics": {
+        "micro_classification": {
+          "n": 35980,
+          "brier": 0.19206105172634125,
+          "log_loss": 0.5651657581329346,
+          "auc": 0.6963834157782024,
+          "ece": 0.04873570868390311
+        },
+        "macro_by_sport": {
+          "mlb": {
+            "n": 35980,
+            "brier": 0.19206105172634125,
+            "log_loss": 0.5651657581329346,
+            "auc": 0.6963834157782024,
+            "ece": 0.04873570868390311
+          },
+          "nfl": {
+            "n": 0,
+            "brier": null,
+            "log_loss": null,
+            "auc": null,
+            "ece": null
+          }
+        },
+        "worst_sport_brier": 0.19206105172634125,
+        "regression": {
+          "n": 36980,
+          "mae": 0.6936341524124146,
+          "rmse": 0.9108264446258545
+        }
+      },
+      "elapsed_sec": 100.81286430358887,
+      "examples_per_sec": 888.7754615341319
+    },
+    {
+      "step": 2100,
+      "train_loss": 1.0091593265533447,
+      "prob_loss": 0.6430989503860474,
+      "reg_loss": 0.7321208119392395,
+      "load_balance_loss": 0.0,
+      "router_z_loss": 0.0,
+      "select_metrics": {
+        "micro_classification": {
+          "n": 35980,
+          "brier": 0.18978162109851837,
+          "log_loss": 0.5598575472831726,
+          "auc": 0.7002799753241739,
+          "ece": 0.031453075651089776
+        },
+        "macro_by_sport": {
+          "mlb": {
+            "n": 35980,
+            "brier": 0.18978162109851837,
+            "log_loss": 0.5598575472831726,
+            "auc": 0.7002799753241739,
+            "ece": 0.031453075651089776
+          },
+          "nfl": {
+            "n": 0,
+            "brier": null,
+            "log_loss": null,
+            "auc": null,
+            "ece": null
+          }
+        },
+        "worst_sport_brier": 0.18978162109851837,
+        "regression": {
+          "n": 36980,
+          "mae": 0.6793946027755737,
+          "rmse": 0.9065181612968445
+        }
+      },
+      "elapsed_sec": 151.33131003379822,
+      "examples_per_sec": 888.1176008453452
+    },
+    {
+      "step": 2800,
+      "train_loss": 0.8374242186546326,
+      "prob_loss": 0.5329878926277161,
+      "reg_loss": 0.608872652053833,
+      "load_balance_loss": 0.0,
+      "router_z_loss": 0.0,
+      "select_metrics": {
+        "micro_classification": {
+          "n": 35980,
+          "brier": 0.19009216129779816,
+          "log_loss": 0.560676097869873,
+          "auc": 0.6994816704742725,
+          "ece": 0.03350443171711018
+        },
+        "macro_by_sport": {
+          "mlb": {
+            "n": 35980,
+            "brier": 0.19009216129779816,
+            "log_loss": 0.560676097869873,
+            "auc": 0.6994816704742725,
+            "ece": 0.03350443171711018
+          },
+          "nfl": {
+            "n": 0,
+            "brier": null,
+            "log_loss": null,
+            "auc": null,
+            "ece": null
+          }
+        },
+        "worst_sport_brier": 0.19009216129779816,
+        "regression": {
+          "n": 36980,
+          "mae": 0.6653295755386353,
+          "rmse": 0.9026200771331787
+        }
+      },
+      "elapsed_sec": 200.25057458877563,
+      "examples_per_sec": 894.8438743208683
+    },
+    {
+      "step": 3500,
+      "train_loss": 0.8936596512794495,
+      "prob_loss": 0.5949363112449646,
+      "reg_loss": 0.5974466800689697,
+      "load_balance_loss": 0.0,
+      "router_z_loss": 0.0,
+      "select_metrics": {
+        "micro_classification": {
+          "n": 35980,
+          "brier": 0.18946406245231628,
+          "log_loss": 0.5592897534370422,
+          "auc": 0.7000370978386686,
+          "ece": 0.02649592926115908
+        },
+        "macro_by_sport": {
+          "mlb": {
+            "n": 35980,
+            "brier": 0.18946406245231628,
+            "log_loss": 0.5592897534370422,
+            "auc": 0.7000370978386686,
+            "ece": 0.02649592926115908
+          },
+          "nfl": {
+            "n": 0,
+            "brier": null,
+            "log_loss": null,
+            "auc": null,
+            "ece": null
+          }
+        },
+        "worst_sport_brier": 0.18946406245231628,
+        "regression": {
+          "n": 36980,
+          "mae": 0.661948025226593,
+          "rmse": 0.9020465612411499
+        }
+      },
+      "elapsed_sec": 238.02151250839233,
+      "examples_per_sec": 941.0619974616886
+    }
+  ],
+  "final_select_metrics": {
+    "micro_classification": {
+      "n": 35980,
+      "brier": 0.18946406245231628,
+      "log_loss": 0.5592897534370422,
+      "auc": 0.7000370978386686,
+      "ece": 0.02649592926115908
+    },
+    "macro_by_sport": {
+      "mlb": {
+        "n": 35980,
+        "brier": 0.18946406245231628,
+        "log_loss": 0.5592897534370422,
+        "auc": 0.7000370978386686,
+        "ece": 0.02649592926115908
+      },
+      "nfl": {
+        "n": 0,
+        "brier": null,
+        "log_loss": null,
+        "auc": null,
+        "ece": null
+      }
+    },
+    "worst_sport_brier": 0.18946406245231628,
+    "regression": {
+      "n": 36980,
+      "mae": 0.661948025226593,
+      "rmse": 0.9020465612411499
+    }
+  },
+  "total_params": 1885442,
+  "active_params": 1885186,
+  "wall_time_sec": 238.02157521247864,
+  "examples_per_sec": 941.0617495495712,
+  "sampler_effective_contribution": {
+    "nfl": 0.12535682476047916,
+    "mlb": 0.874643175239521
+  }
+}

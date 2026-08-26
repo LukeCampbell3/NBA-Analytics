@@ -23,6 +23,7 @@ class TrainConfig:
     lambda_z_loss: float = 0.001
     lambda_prob: float = 1.0
     lambda_reg: float = 0.5
+    use_scheduler: bool = False  # tested and rejected as a default -- see trainer.py
 
     def to_dict(self) -> dict:
         return asdict(self)

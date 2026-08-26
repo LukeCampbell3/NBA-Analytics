@@ -175,9 +175,9 @@ def grow_hidden_dim(model: UniversalModel, delta: int) -> UniversalModel:
                 ffn_new.router.gate.bias[:] = ffn_old.router.gate.bias
     _grow_layernorm(model.stem.final_norm, new_model.stem.final_norm)
 
-    _grow_linear_in_out(model.heads.prob_over_head[0], new_model.heads.prob_over_head[0])
-    _grow_linear_in(model.heads.prob_over_head[3], new_model.heads.prob_over_head[3])
-    _grow_linear_in_out(model.heads.z_head[0], new_model.heads.z_head[0])
-    _grow_linear_in(model.heads.z_head[3], new_model.heads.z_head[3])
+    # heads.py's heads are a single nn.Linear(hidden_dim, 1): input dim
+    # grows, output dim (1) does not.
+    _grow_linear_in(model.heads.prob_over_head, new_model.heads.prob_over_head)
+    _grow_linear_in(model.heads.z_head, new_model.heads.z_head)
 
     return new_model

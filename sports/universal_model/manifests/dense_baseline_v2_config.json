@@ -1,0 +1,24 @@
+{
+  "name": "dense_baseline_v2",
+  "hidden_dim": 128,
+  "n_heads": 4,
+  "block_types": [
+    "dense",
+    "dense",
+    "dense",
+    "dense"
+  ],
+  "n_experts": 8,
+  "ffn_mult": 4,
+  "dropout": 0.1,
+  "lr": 0.0003,
+  "batch_size": 64,
+  "steps": 3500,
+  "eval_every": 700,
+  "alpha": 0.5,
+  "seed": 1234,
+  "lambda_load_balance": 0.01,
+  "lambda_z_loss": 0.001,
+  "lambda_prob": 1.0,
+  "lambda_reg": 0.5
+}

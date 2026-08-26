@@ -21,6 +21,9 @@ REPORTS_DIR = Path(__file__).resolve().parents[1] / "reports"
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--suffix", default="", help="e.g. '_v2' to read top2_moe_v2.pt and write drm_final_v2.*")
+    parser.add_argument("--n-cycles", type=int, default=3)
+    parser.add_argument("--max-attempts", type=int, default=3)
+    parser.add_argument("--finetune-steps", type=int, default=300)
     args = parser.parse_args()
     suffix = args.suffix
 
@@ -37,9 +40,9 @@ def main() -> None:
         config,
         derive,
         select,
-        n_cycles=3,
-        max_mutation_attempts_per_cycle=3,
-        finetune_steps=300,
+        n_cycles=args.n_cycles,
+        max_mutation_attempts_per_cycle=args.max_attempts,
+        finetune_steps=args.finetune_steps,
     )
 
     report = budget.to_report()

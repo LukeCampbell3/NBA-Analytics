@@ -96,6 +96,29 @@ def train_on(config: TrainConfig, derive: UniversalDataset, select: UniversalDat
         dropout=config.dropout,
     )
     optimizer = torch.optim.AdamW(model.parameters(), lr=config.lr)
+    # Cosine-decay-with-warmup was tried here as part of a loss/MAE
+    # optimization pass and TESTED WORSE on this dataset/step-count: a
+    # like-for-like real run (same architecture as the original
+    # dense_baseline, flat-LR run) with the scheduler enabled scored
+    # SELECT brier=0.1891/MAE=0.6647 vs. the original flat-LR run's
+    # 0.1884/0.6447 (see git history). Plausible cause: cosine decay drives
+    # LR toward ~0 by the final step, so the exact checkpoint being scored
+    # is under-trained relative to a flat LR still actively updating at
+    # that point -- at only ~3000 steps, that tail matters. Kept as an
+    # opt-in (config.use_scheduler=False by default) rather than deleted,
+    # since it may still help at a longer step count; disabled by default
+    # because that is not what was measured to work.
+    scheduler = None
+    if config.use_scheduler:
+        warmup_steps = max(1, config.steps // 20)
+
+        def _lr_lambda(step: int) -> float:
+            if step < warmup_steps:
+                return step / warmup_steps
+            progress = (step - warmup_steps) / max(1, config.steps - warmup_steps)
+            return 0.5 * (1.0 + np.cos(np.pi * progress))
+
+        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=_lr_lambda)
 
     history = []
     t0 = time.time()
@@ -106,7 +129,11 @@ def train_on(config: TrainConfig, derive: UniversalDataset, select: UniversalDat
         losses = compute_losses(out, batch, config)
         optimizer.zero_grad()
         losses["total"].backward()
+        if config.use_scheduler:
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         optimizer.step()
+        if scheduler is not None:
+            scheduler.step()
         examples_seen += batch["y_over"].shape[0]
 
         if step % config.eval_every == 0 or step == config.steps:
