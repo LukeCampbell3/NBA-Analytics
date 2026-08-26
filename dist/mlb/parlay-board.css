@@ -1,8 +1,13 @@
+/* One simple container for the whole board (today's signals + every
+   parlay product) -- no separate sections/headings, see predictions.html. */
+.board {
+    margin-top: 40px;
+}
+
 .daily-parlay {
-    margin: 0 0 var(--vault-space-7);
-    padding: var(--vault-space-6) 0;
+    margin: var(--vault-space-6) 0 0;
+    padding: var(--vault-space-6) 0 0;
     border-top: 1px solid color-mix(in srgb, var(--vault-accent) 42%, var(--vault-line));
-    border-bottom: 1px solid var(--vault-line);
 }
 
 .daily-parlay__header,
@@ -17,12 +22,9 @@
     margin-bottom: var(--vault-space-5);
 }
 
-.daily-parlay__header h3,
+.daily-parlay__header strong,
 .prediction-section-heading h2 {
     margin: 0;
-    /* Sits inside the shared "Parlays" .pool-section-heading h2 (1.2rem) --
-       kept visibly subordinate to it, not competing as a second page-level
-       heading. */
     font-size: clamp(1.05rem, 1.6vw, 1.3rem);
     letter-spacing: 0;
 }

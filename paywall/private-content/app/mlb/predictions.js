@@ -9,11 +9,8 @@ class DailyPredictionsPage {
             cards: document.getElementById("predictionCards"),
             empty: document.getElementById("predictionEmpty"),
             runMeta: document.getElementById("predictionRunMeta"),
-            parlayV2Section: document.getElementById("parlayV2Section"),
             parlayV2Content: document.getElementById("parlayV2Content"),
-            sameGameParlaySection: document.getElementById("sameGameParlaySection"),
             sameGameParlayContent: document.getElementById("sameGameParlayContent"),
-            poolTitle: document.getElementById("predictionPoolTitle"),
             dateNav: document.getElementById("predictionDateNav"),
         };
         this.init();
@@ -109,10 +106,6 @@ class DailyPredictionsPage {
             return (Number(b.abs_edge) || Number(b.edge) || 0) - (Number(a.abs_edge) || Number(a.edge) || 0);
         });
         this.renderRunMeta();
-        const authorizationEnabled = Boolean(this.data?.policy_governance?.candidate_authorization_enabled);
-        if (this.elements.poolTitle) {
-            this.elements.poolTitle.textContent = authorizationEnabled ? "Authorized Pool" : "Shadow Candidate Pool";
-        }
     }
 
     /**
@@ -256,9 +249,8 @@ class DailyPredictionsPage {
      * 10) -- never "guaranteed" / "safe bet" / "proven winner" / "lock".
      */
     renderParlayV2() {
-        const section = this.elements.parlayV2Section;
         const content = this.elements.parlayV2Content;
-        if (!section || !content) return;
+        if (!content) return;
 
         const parlay = this.data?.parlays || {};
         const statusLabel = this.formatParlayV2StatusLabel(parlay.policy_status);
@@ -288,10 +280,7 @@ class DailyPredictionsPage {
             ` : `<p class="daily-parlay__empty">${this.escapeHtml(this.formatParlayV2AbstainReason(reason, parlay))}</p>`;
             content.innerHTML = `
                 <div class="daily-parlay__header">
-                    <div>
-                        <p class="vault-page-kicker">Theory-grounded 2-leg parlay</p>
-                        <h3 id="parlayV2Title">Today's V2 Shadow Candidate</h3>
-                    </div>
+                    <strong>2-Leg Parlay</strong>
                     ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Abstain") : ""}
                 </div>
                 ${shadowBlock}
@@ -302,10 +291,7 @@ class DailyPredictionsPage {
 
         content.innerHTML = `
             <div class="daily-parlay__header">
-                <div>
-                    <p class="vault-page-kicker">Theory-grounded 2-leg parlay</p>
-                    <h3 id="parlayV2Title">Today's V2 Shadow Candidate</h3>
-                </div>
+                <strong>2-Leg Parlay</strong>
                 ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Selected -- shadow only") : ""}
             </div>
             <div class="daily-parlay__legs">${this.renderParlayV2Legs(parlay.selected_parlay)}</div>
@@ -348,9 +334,8 @@ class DailyPredictionsPage {
      * mirrors loadDateIndex()'s "optional" fetch pattern.
      */
     async loadSameGameParlay() {
-        const section = this.elements.sameGameParlaySection;
         const content = this.elements.sameGameParlayContent;
-        if (!section || !content) return;
+        if (!content) return;
         try {
             const response = await fetch(`data/same_game_predictions.json?v=${Date.now()}`);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -362,9 +347,8 @@ class DailyPredictionsPage {
     }
 
     renderSameGameParlay() {
-        const section = this.elements.sameGameParlaySection;
         const content = this.elements.sameGameParlayContent;
-        if (!section || !content) return;
+        if (!content) return;
         const data = this.sameGameData;
 
         if (!data || data.status !== "ok" || !Array.isArray(data.games) || !data.games.length) {
@@ -414,10 +398,7 @@ class DailyPredictionsPage {
     sameGameParlayHeader() {
         return `
             <div class="daily-parlay__header">
-                <div>
-                    <p class="vault-page-kicker">Real cross-market combos, priced with joint simulation</p>
-                    <h3 id="sameGameParlayTitle">Same-Game Parlay</h3>
-                </div>
+                <strong>Same-Game Parlay</strong>
                 ${window.CardVault ? window.CardVault.renderStatusPill("stale", "Shadow only") : ""}
             </div>
         `;
