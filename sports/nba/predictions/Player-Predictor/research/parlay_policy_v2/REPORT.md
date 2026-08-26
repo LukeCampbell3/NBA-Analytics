@@ -7,20 +7,29 @@ NBA parlay candidates, plus a unit test suite
 (`sports/nba/tests/test_parlay_policy_v2.py`, 34 tests) that verifies the
 policy's mechanics against synthetic fixtures.
 
-**This report does not contain an NBA historical backtest**, and no numbers
-below should be read as measured NBA hit rates. This repository does not
-currently have a settled NBA two-leg parlay dataset carrying the full field
-set the policy requires per candidate: `joint_sigma`, `joint_lcb`, an actual
-sportsbook SGP quote (`actual_quote_decimal`), injury/role/support state, and
-a `shared_failure_risk` score. `sports/nba/tests/` and `sports/nba/data/`
-were checked and no such file exists yet. MLB and NFL both have a much larger
-`parlay_certification_v2` research program (`sports/mlb/parlay_v2/`,
-`sports/nfl/research/parlay_certification_v2/`) built up over many committed
-data-collection cycles; NBA does not yet have the equivalent candidate-level
-logging, so nothing here can honestly cite an NBA win-rate figure. The
-`sports/parlay_analysis.py` correlation-factor heuristic already in
-production for NBA is a different, simpler mechanism (static same-game/
-same-player/same-direction multipliers) and is untouched by this change.
+**This report does not contain an NBA historical hit-rate backtest of the new
+policy**, and no NBA-specific number below should be read as a measured NBA
+hit rate. This repository does not currently have a settled NBA two-leg
+parlay dataset carrying the full field set the policy requires per candidate:
+`joint_sigma`, `joint_lcb`, an actual sportsbook SGP quote
+(`actual_quote_decimal`), injury/role/support state, and a
+`shared_failure_risk` score. `sports/nba/tests/`, `sports/nba/data/`, and
+`sports/nba/validation/` were checked and no such file exists yet. MLB and
+NFL both have a much larger `parlay_certification_v2` research program
+(`sports/mlb/parlay_v2/`, `sports/nfl/research/parlay_certification_v2/`)
+built up over many committed data-collection cycles; NBA does not yet have
+the equivalent candidate-level logging, so nothing here can honestly cite an
+NBA hit-rate figure from the new policy. The `sports/parlay_analysis.py`
+correlation-factor heuristic already in production for NBA is a different,
+simpler mechanism (static same-game/same-player/same-direction multipliers)
+and is untouched by this change.
+
+What *is* real, in the "Real-data backtests" section below: (a) the current
+NBA strategy's own already-computed, real production validation numbers
+(small sample), and (b) the new policy's gate mechanism run against real,
+settled MLB leg-level data — the closest genuine substitute this repo has for
+"how does this mechanism do against real numbers," since MLB is the only
+sport here with a committed leg-level settled dataset.
 
 ## What the policy does
 
@@ -101,6 +110,125 @@ Run with:
 pip install --user numpy pandas pytest   # if not already present
 python3 -m pytest sports/nba/tests/test_parlay_policy_v2.py -q
 ```
+
+## Real-data backtests
+
+### Current NBA strategy, real production numbers (small sample)
+
+`real_data_summary_nba.py` reads the `parlay_validation` field already
+embedded in the real, committed daily production exports at
+`sports/nba/web/data/history/*.json` — computed by the live
+`sports/parlay_analysis.py::evaluate_historical_parlays` (the same CONTROL
+module NBA runs today) against real settled results, on a machine that also
+had the underlying leg-level CSV (not committed here). This script only
+aggregates that output; it computes nothing itself. Full output:
+`reports/real_data_summary_nba.json`.
+
+| snapshot | history rows | graded days | selected hit rate | baseline (all pairs) hit rate |
+|---|---:|---:|---:|---:|
+| 2026-04-26 | 326 | 3 | 1/3 = 33.3% | 2892/8822 = 32.8% |
+| 2026-04-27/28/29 | 27 | 2 | 0/2 = 0% | 83/161 = 51.6% |
+| 2026-04-30 | 326 | 3 | 1/3 = 33.3% | 4399/17265 = 25.5% |
+| 2026-05-01/02 | 326 | 3 | 1/3 = 33.3% | 3391/11683 = 29.0% |
+| 2026-05-26 | 27 | 2 | 0/2 = 0% | 211/486 = 43.4% |
+
+**This is too small to conclude anything about the current NBA strategy's
+real hit rate** — the largest graded sample across every committed snapshot
+is 3 selected parlays. Rows are cumulative, restated views from different
+runs, not independent samples to sum. This small-sample problem is itself
+the strongest argument for the new policy's Wilson-lower-bound selection
+criterion in `optimize_policy_grid` (Real-data backtests below shows what
+that criterion actually buys on a real, much larger sample).
+
+### New policy gate vs. current strategy, real settled MLB legs
+
+`real_data_backtest_mlb.py` runs the new policy's gate against
+`sports/mlb/data/predictions/backtests/mlb_walk_forward_backtest_rows.csv`
+(policy source `published_real_market`: 337 real, `market_source="real"`
+settled legs across 11 dates — real model probability, real settled
+win/loss/push, real American side price). This is MLB data, used here only
+because MLB is the one sport in this repo with a committed leg-level settled
+dataset; it is **not an NBA result**. Full output:
+`reports/real_data_backtest_mlb.json`.
+
+Only the probability-floor and real-quote-EV mechanism is exercised here —
+this dataset doesn't log per-candidate `joint_sigma`, `shared_failure_risk`,
+`compatible_state_score`, `shift_risk`, or lineup/role/injury/support state,
+so those gates run at pass-through defaults and are **not** being tested for
+real by this run (see the script's own `gates_not_exercised_...` output key).
+
+| | n | hit rate | Wilson 95% |
+|---|---:|---:|---:|
+| Current MLB strategy (`sports/parlay_analysis.py`), top pick/day | 9 | 8/9 = 88.9% | wide (n=9) |
+| Full real eligible 2-leg pool (CONTROL's own gates, ungated) | 5,012 | 2652/5012 = 52.9% | [51.5%, 54.3%] |
+| **New policy gate**, every eligible pick (41.1% coverage) | 2,061 | 1230/2061 = **59.7%** | **[57.5%, 61.8%]** |
+| New policy gate, top-EV pick/day (apples-to-apples with CONTROL) | 9 | 5/9 = 55.6% | wide (n=9) |
+
+Reading this honestly:
+
+- Applied broadly (not just one pick a day), the new gate selects 41% of the
+  real eligible pool and clears the ungated baseline by ~7 points on a
+  *much* tighter interval (n=2,061 vs n=9) — this is the real analog of the
+  "robust filtering" lift the earlier synthetic-fixture design discussion
+  assumed; here it's measured, not assumed.
+- CONTROL's own top-1-pick-per-day already does very well on this slice
+  (8/9), and the new policy's top-1-pick-per-day (5/9) does not beat it —
+  but both are n=9, Wilson intervals nearly span the full [0,1] range, and
+  this difference is not distinguishable from noise. Do not read 88.9% vs
+  55.6% as "CONTROL beats the new policy" — read it as "neither single-pick
+  comparison has enough data to say anything," which is exactly why the
+  broader, tighter 2,061-pair comparison above is the more trustworthy row.
+- Calibration check (real, not assumed): for the new-policy-selected subset,
+  mean predicted joint probability was 0.604 against an actual hit rate of
+  0.597 (Brier 0.237) — close, on this sample. This is the opposite finding
+  from a naive-independence-is-~5%-too-optimistic claim; it is not evidence
+  that dependency penalties are unnecessary in general (MLB's own
+  `joint_position_builder_v2/reports/calibration_summary.json` shows the
+  *broad* eligibility universe overconfident by 14.3 points versus its
+  *narrow*, CONTROL-matching universe's calibration gap of 0.4 points), only
+  that this particular real, narrow sample happened to calibrate well.
+- `mean_actual_quote_ev` (0.90) uses the model's own probability estimate
+  against the real decimal-price product — it is a modeled edge, not a
+  guaranteed realized return, and should not be read as " +90% ROI."
+
+### MLB comparison: what MLB's own equivalent research already found
+
+MLB has already built and run the direct analog of this NBA design
+(`sports/mlb/research/joint_position_builder_v2/`) against real MLB data at
+much larger scale than anything above:
+
+- `reports/calibration_summary.json`: on the **narrow** universe (matching
+  CONTROL's own eligibility exactly), predicted-vs-actual calibration gap was
+  0.37 points (1,470 pairs / 14 days). On the **broad** universe (adding
+  UNDER-direction and negative-edge legs), the gap widened to 14.3 points
+  (also 1,470 pairs / 14 days) — expanding the eligible universe made the
+  model measurably overconfident.
+- `reports/multi_target_broad_summary.json`: at full scale (619,191 priced
+  pairs / 11 days), realized mean return was slightly negative
+  (-0.98%, 90% bootstrap CI [-5.1%, +4.5%]) — modeled EV confidence was not
+  realized.
+- The program's own conclusion (`REPORT.md`): **`INSUFFICIENT_EVIDENCE`**,
+  **`production_authorized = False`**, specifically because no real
+  same-game SGP price coverage existed in the development window — the exact
+  same real-price gap this NBA policy's schema (`actual_quote_decimal`) is
+  built to enforce before promotion.
+- Separately, MLB's live `PARLAY_CERTIFICATION_V2` production program
+  (`sports/mlb/research/parlay_certification_v2/reports/program_alpha_ledger.json`)
+  has recorded **zero real evidence rows** as of this repo's last update — a
+  frozen world-gate bug made every real day abstain, and its alpha-spend was
+  retired and re-frozen under a new prospective policy version with no real
+  outcomes yet. Even MLB, with a much larger real-data foundation than NBA,
+  has not yet cleared its own promotion bar for the joint-state upgrade.
+
+**Bottom line for NBA:** the mechanism (gate-then-rank, real-quote EV,
+Wilson-lower-bound tuning) measurably beats an ungated baseline on the one
+real, large-enough sample available anywhere in this repo (MLB, 2,061
+pairs), and is unit-tested end to end. But neither NBA's own real production
+numbers (too small) nor MLB's own more mature research program (still
+`INSUFFICIENT_EVIDENCE`, still no real same-game price data) support
+promoting this to gate a live NBA board yet. The path is the same one MLB is
+still walking: real candidate-level logging, a frozen development/holdout
+split, then an independent prospective shadow block.
 
 ## What would be needed before this can gate a real NBA board
 
