@@ -24,7 +24,12 @@ def test_mlb_primary_policy_uses_validated_portfolio_limits() -> None:
     assert shared_daily_predictions.MLB_PARLAY_SELECTOR.name == "select_daily_parlay.py"
     assert shared_daily_predictions.MLB_GOVERNANCE_CAPTURE.name == "capture_complete_slate.py"
     top_n_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--top-n")
-    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[top_n_index + 1] == "3"
+    # Deliberately raised from 3 to 5 alongside live_board_confidence.py's
+    # max_abs_adjustment fix (see that constant's own comment) -- more
+    # real volume, same real per-pick quality bar; --daily-pick-soft-cap
+    # below still requires the 4th/5th pick to clear a real
+    # selection_score >= --post-cap-min-selection-score.
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[top_n_index + 1] == "5"
     index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--max-per-market-bucket")
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[index + 1] == "2"
     ev_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--min-expected-value")

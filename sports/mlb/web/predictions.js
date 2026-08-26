@@ -11,6 +11,7 @@ class DailyPredictionsPage {
             runMeta: document.getElementById("predictionRunMeta"),
             parlayV2Content: document.getElementById("parlayV2Content"),
             sameGameParlayContent: document.getElementById("sameGameParlayContent"),
+            pitcherParlayContent: document.getElementById("pitcherParlayContent"),
             dateNav: document.getElementById("predictionDateNav"),
         };
         this.init();
@@ -23,6 +24,7 @@ class DailyPredictionsPage {
         }
         this.loadDatesAndRender();
         this.loadSameGameParlay();
+        this.loadPitcherParlay();
     }
 
     mountShell() {
@@ -499,6 +501,111 @@ class DailyPredictionsPage {
     formatSameGameMarketLabel(market) {
         const labels = { moneyline: "Moneyline", game_total: "Game Total", first_5_innings_total: "F5 Total" };
         return labels[market] || String(market || "");
+    }
+
+    /**
+     * Pitcher Parlay -- real cross-game, pitcher-strikeouts-only 2-leg
+     * parlay (run_mlb_pitcher_parlay_daily.py / select_mlb_pitcher_
+     * parlay.py). Two different real starting pitchers in two different
+     * real games have no real shared game state, so unlike the same-game
+     * combo above, the real joint probability here really is the naive
+     * independence product of each leg's own real model probability --
+     * see that module's docstring. A brand-new, additive, own-payload
+     * product (pitcher_parlay_predictions.json), loaded independently of
+     * the rest of the page the same way the same-game combo is.
+     */
+    async loadPitcherParlay() {
+        const content = this.elements.pitcherParlayContent;
+        if (!content) return;
+        try {
+            const response = await fetch(`data/pitcher_parlay_predictions.json?v=${Date.now()}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            this.pitcherParlayData = await response.json();
+        } catch (_error) {
+            this.pitcherParlayData = null;
+        }
+        this.renderPitcherParlay();
+    }
+
+    renderPitcherParlay() {
+        const content = this.elements.pitcherParlayContent;
+        if (!content) return;
+        const data = this.pitcherParlayData;
+
+        if (!data || data.status !== "ok") {
+            content.innerHTML = this.pitcherParlayHeader() + `
+                <p class="daily-parlay__empty">${this.escapeHtml(this.formatPitcherParlayStatusReason(data))}</p>
+            `;
+            return;
+        }
+
+        const parlay = data.parlay;
+        if (!parlay) {
+            content.innerHTML = this.pitcherParlayHeader() + `
+                <p class="daily-parlay__empty">No real cross-game pitcher-strikeouts pair cleared pricing today.</p>
+                <p class="daily-parlay__state">${this.escapeHtml(`Real probable starters: ${data.real_starters_posted ?? 0} / Real priced legs: ${data.real_priced_legs ?? 0}`)}</p>
+            `;
+            return;
+        }
+
+        const authorized = Boolean(parlay.candidate_authorized);
+        const pillTone = authorized ? "active" : "stale";
+        const pillLabel = authorized ? "Selected -- shadow only" : "Shadow only";
+        const joint = this.formatPct(parlay.real_joint_model_probability);
+        const edge = parlay.probability_edge != null ? this.formatSignedPct(parlay.probability_edge) : "n/a";
+        const ev = parlay.expected_value_per_unit != null ? this.formatSignedPct(parlay.expected_value_per_unit) : "n/a";
+
+        content.innerHTML = this.pitcherParlayHeader(pillTone, pillLabel) + `
+            <div class="vault-board vault-board--legs">
+                ${this.renderPitcherKLeg(parlay.leg_a, 1)}
+                ${this.renderPitcherKLeg(parlay.leg_b, 2)}
+            </div>
+            <div class="same-game-parlay__metrics">
+                <span>Joint probability <strong>${joint}</strong></span>
+                <span>Edge vs. naive market <strong>${edge}</strong></span>
+                <span>Model EV <strong>${ev}</strong></span>
+            </div>
+            ${this.renderBetslipLink(parlay)}
+        `;
+    }
+
+    pitcherParlayHeader(pillTone = "stale", pillLabel = "Shadow only") {
+        return `
+            <div class="daily-parlay__header">
+                <strong>Pitcher Parlay</strong>
+                ${window.CardVault ? window.CardVault.renderStatusPill(pillTone, pillLabel) : ""}
+            </div>
+        `;
+    }
+
+    renderPitcherKLeg(leg, index) {
+        if (!leg || !window.CardVault) return "";
+        const name = String(leg.pitcher_name || "").trim() || "Unknown pitcher";
+        const nameParts = name.split(/\s+/).filter(Boolean);
+        const monogram = nameParts.length >= 2
+            ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase()
+            : (nameParts[0] || "NA").slice(0, 2).toUpperCase();
+        const side = leg.side === "under" ? "Under" : "Over";
+        const matchup = [leg.team, leg.opponent].filter(Boolean).join(" vs. ");
+        return window.CardVault.renderLegCard({
+            rank: index,
+            monogram,
+            name,
+            market: `${side} ${this.formatNumber(leg.line, 1)} Strikeouts`,
+            context: matchup,
+            metrics: [
+                ["Odds", this.formatAmerican(leg.price_american)],
+                ["Book", leg.sportsbook || ""],
+            ],
+        });
+    }
+
+    formatPitcherParlayStatusReason(data) {
+        const reasons = {
+            no_real_games_scheduled_today: "No MLB games scheduled today.",
+            no_real_probable_starters_posted_yet: "No real probable starters posted yet for today's slate.",
+        };
+        return reasons[data?.status] || "Pitcher parlay data is not available for this run.";
     }
 
     formatParlayV2StatusLabel(policyStatus) {

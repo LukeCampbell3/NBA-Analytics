@@ -170,8 +170,23 @@ MLB_PARLAY_BETSLIP_ENRICHER = REPO_ROOT / "sports" / "mlb" / "scripts" / "enrich
 MLB_HEADSHOT_CACHE = REPO_ROOT / "sports" / "mlb" / "scripts" / "update_mlb_player_headshot_cache.py"
 MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v8"
 MLB_PICK_SURVIVAL_TOP_K = 3
+# Was 3 -- raised now that the calibration correction above
+# (live_board_confidence.py's max_abs_adjustment) is no longer capped
+# far below what the real settled evidence supports, so a pick clearing
+# --min-hit-probability/--min-graded-hit-rate below reflects a real,
+# better-corrected estimate than before. Candidates are pre-sorted by
+# real quality (survival probability, selection score, EV, price-
+# confirmed, real books, historical win rates, calibrated hit
+# probability, abs edge -- see select_high_precision_predictions.py's
+# sort key) before this cap is ever applied, so raising it only ever
+# admits MORE of the picks that already cleared every real quality
+# gate -- never a worse one, and never in place of one. The existing
+# --daily-pick-soft-cap 3 / --post-cap-min-selection-score 0.80 below
+# stay unchanged, so the 4th and 5th pick (if any clear the gates that
+# day) must additionally clear a real selection_score >= 0.80 -- an
+# extra bar beyond what the first 3 need, not a loosened one.
 MLB_PRIMARY_POLICY_ARGS = [
-    "--top-n", "3",
+    "--top-n", "5",
     "--require-real-market-source",
     "--min-market-books", "5",
     "--min-common-market-books", "2",
