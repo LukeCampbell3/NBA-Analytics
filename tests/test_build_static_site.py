@@ -41,6 +41,20 @@ def test_prune_keeps_only_prediction_history_json(tmp_path: Path) -> None:
     assert not (history / "debug.txt").exists()
 
 
+def test_prune_keeps_real_headshot_cache_assets(tmp_path: Path) -> None:
+    headshots = tmp_path / "mlb" / "data" / "headshots"
+    headshots.mkdir(parents=True)
+    (headshots / "624413.jpg").write_bytes(b"real-image-bytes")
+    (headshots / "manifest.json").write_text('{"624413": {"filename": "624413.jpg"}}', encoding="utf-8")
+    (headshots / "debug.txt").write_text("debug", encoding="utf-8")
+
+    build_static_site.prune_non_prediction_assets(tmp_path / "mlb")
+
+    assert (headshots / "624413.jpg").exists()
+    assert (headshots / "manifest.json").exists()
+    assert not (headshots / "debug.txt").exists()
+
+
 def test_build_publishes_sport_routes_and_keeps_compatibility_copy(tmp_path: Path, monkeypatch) -> None:
     public_source = tmp_path / "public-source"
     private_source = tmp_path / "private-source"

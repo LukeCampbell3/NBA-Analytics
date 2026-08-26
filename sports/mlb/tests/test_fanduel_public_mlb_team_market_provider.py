@@ -111,6 +111,22 @@ def test_game_total_row_has_real_line_and_prices() -> None:
     assert total_row["under_price"] == -110
 
 
+def test_moneyline_row_has_real_per_selection_deeplinks() -> None:
+    provider = _provider()
+    result = provider.collect_team_market_odds()
+    ml_row = next(row for row in result["odds"] if row["target"] == "moneyline")
+    assert ml_row["home_moneyline_deeplink"] == "https://sportsbook.fanduel.com/addToBetslip?marketId=m1&selectionId=2"
+    assert ml_row["away_moneyline_deeplink"] == "https://sportsbook.fanduel.com/addToBetslip?marketId=m1&selectionId=1"
+
+
+def test_game_total_row_has_real_per_selection_deeplinks() -> None:
+    provider = _provider()
+    result = provider.collect_team_market_odds()
+    total_row = next(row for row in result["odds"] if row["target"] == "game_total")
+    assert total_row["over_deeplink"] == "https://sportsbook.fanduel.com/addToBetslip?marketId=m2&selectionId=3"
+    assert total_row["under_deeplink"] == "https://sportsbook.fanduel.com/addToBetslip?marketId=m2&selectionId=4"
+
+
 def test_ignores_real_per_inning_markets_not_in_the_team_market_set() -> None:
     provider = _provider()
     result = provider.collect_team_market_odds()

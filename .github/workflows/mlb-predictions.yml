@@ -142,6 +142,11 @@ jobs:
             sports/mlb/web/data/history/*.json \
             dist/mlb \
             paywall/private-content/app/mlb
+          # The headshot cache is lazily created (only once a real
+          # player's headshot has actually been fetched).
+          if [ -e sports/mlb/web/data/headshots ]; then
+            git add -f -- sports/mlb/web/data/headshots
+          fi
           # These PARLAY_V2 paths are lazily created (e.g. the pair-
           # observation ledger only exists once a real pair is first
           # admitted) -- `git add -f` on a literal nonexistent pathspec
@@ -208,6 +213,7 @@ jobs:
             dist/mlb/data/daily_predictions.json
             sports/mlb/web/data/daily_predictions.json
             sports/mlb/data/predictions/backtests/latent_daily_pool_replay_2026.json
+            sports/mlb/data/predictions/team_market_predictions.json
           if-no-files-found: warn
           retention-days: 14
 

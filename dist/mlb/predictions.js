@@ -9,11 +9,9 @@ class DailyPredictionsPage {
             cards: document.getElementById("predictionCards"),
             empty: document.getElementById("predictionEmpty"),
             runMeta: document.getElementById("predictionRunMeta"),
-            parlayV2Section: document.getElementById("parlayV2Section"),
             parlayV2Content: document.getElementById("parlayV2Content"),
-            sameGameParlaySection: document.getElementById("sameGameParlaySection"),
             sameGameParlayContent: document.getElementById("sameGameParlayContent"),
-            poolTitle: document.getElementById("predictionPoolTitle"),
+            pitcherParlayContent: document.getElementById("pitcherParlayContent"),
             dateNav: document.getElementById("predictionDateNav"),
         };
         this.init();
@@ -26,6 +24,7 @@ class DailyPredictionsPage {
         }
         this.loadDatesAndRender();
         this.loadSameGameParlay();
+        this.loadPitcherParlay();
     }
 
     mountShell() {
@@ -109,10 +108,6 @@ class DailyPredictionsPage {
             return (Number(b.abs_edge) || Number(b.edge) || 0) - (Number(a.abs_edge) || Number(a.edge) || 0);
         });
         this.renderRunMeta();
-        const authorizationEnabled = Boolean(this.data?.policy_governance?.candidate_authorization_enabled);
-        if (this.elements.poolTitle) {
-            this.elements.poolTitle.textContent = authorizationEnabled ? "Authorized Pool" : "Shadow Candidate Pool";
-        }
     }
 
     /**
@@ -256,9 +251,8 @@ class DailyPredictionsPage {
      * 10) -- never "guaranteed" / "safe bet" / "proven winner" / "lock".
      */
     renderParlayV2() {
-        const section = this.elements.parlayV2Section;
         const content = this.elements.parlayV2Content;
-        if (!section || !content) return;
+        if (!content) return;
 
         const parlay = this.data?.parlays || {};
         const statusLabel = this.formatParlayV2StatusLabel(parlay.policy_status);
@@ -284,14 +278,11 @@ class DailyPredictionsPage {
             const shadow = parlay.shadow_candidate;
             const shadowBlock = shadow ? `
                 <p class="daily-parlay__empty">Today's V2 shadow candidate -- not certified, no stake authorized</p>
-                <div class="daily-parlay__legs">${this.renderParlayV2Legs(shadow)}</div>
+                ${this.renderParlayV2Legs(shadow)}
+                ${this.renderBetslipLink(shadow)}
             ` : `<p class="daily-parlay__empty">${this.escapeHtml(this.formatParlayV2AbstainReason(reason, parlay))}</p>`;
             content.innerHTML = `
-                <div class="daily-parlay__header">
-                    <div>
-                        <p class="vault-page-kicker">Theory-grounded 2-leg parlay</p>
-                        <h2 id="parlayV2Title">Today's V2 Shadow Candidate</h2>
-                    </div>
+                <div class="daily-parlay__header daily-parlay__header--status-only">
                     ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Abstain") : ""}
                 </div>
                 ${shadowBlock}
@@ -301,15 +292,32 @@ class DailyPredictionsPage {
         }
 
         content.innerHTML = `
-            <div class="daily-parlay__header">
-                <div>
-                    <p class="vault-page-kicker">Theory-grounded 2-leg parlay</p>
-                    <h2 id="parlayV2Title">Today's V2 Shadow Candidate</h2>
-                </div>
+            <div class="daily-parlay__header daily-parlay__header--status-only">
                 ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Selected -- shadow only") : ""}
             </div>
-            <div class="daily-parlay__legs">${this.renderParlayV2Legs(parlay.selected_parlay)}</div>
+            ${this.renderParlayV2Legs(parlay.selected_parlay)}
+            ${this.renderBetslipLink(parlay.selected_parlay)}
             <p class="daily-parlay__state">${statusFooter}</p>
+        `;
+    }
+
+    /**
+     * "Add to Betslip" link for a V2 pair -- only rendered once every leg
+     * has resolved to a real, live FanDuel selection (see
+     * enrich_parlay_leg_betslip.py) and the URL itself re-validates
+     * against the same host/path allowlist safeFanDuelBetslipUrl already
+     * enforces. Never renders a link built from anything else.
+     */
+    renderBetslipLink(pair) {
+        if (!window.CardVault) return "";
+        const betslip = pair?.betslip;
+        if (!betslip || betslip.status !== "ready") return "";
+        const url = window.CardVault.safeFanDuelBetslipUrl(pair.betslip_url || betslip.url);
+        if (!url) return "";
+        return `
+            <div class="daily-parlay__actions">
+                <a class="daily-parlay__betslip-button" href="${this.escapeHtml(url)}" target="_blank" rel="noopener noreferrer">Add to FanDuel Betslip</a>
+            </div>
         `;
     }
 
@@ -323,18 +331,28 @@ class DailyPredictionsPage {
      * suggest a reliability this system has not established.
      */
     renderParlayV2Legs(pair) {
-        return [pair.leg_1, pair.leg_2].filter(Boolean).map((leg, index) => {
-            const target = window.CardVault ? window.CardVault.formatTargetLabel(leg.target) : String(leg.target || "");
-            return `
-                <div class="daily-parlay__leg">
-                    <span class="daily-parlay__leg-number">${String(index + 1).padStart(2, "0")}</span>
-                    <div class="daily-parlay__leg-copy">
-                        <strong>${this.escapeHtml(leg.player || "Unknown player")}</strong>
-                        <span>${this.escapeHtml(`${leg.side || ""} ${this.formatNumber(leg.line, 1)} ${target}`)}</span>
-                    </div>
-                </div>
-            `;
+        if (!window.CardVault) return "";
+        const legs = [pair.leg_1, pair.leg_2].filter(Boolean);
+        const cards = legs.map((leg, index) => {
+            const direction = String(leg.side || "").toUpperCase() === "UNDER" ? "UNDER" : "OVER";
+            const target = window.CardVault.formatTargetLabel(leg.target);
+            const displayName = String(leg.player || "").replaceAll("_", " ").trim() || "Unknown player";
+            const nameParts = displayName.split(/\s+/).filter(Boolean);
+            const monogram = nameParts.length >= 2
+                ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase()
+                : (nameParts[0] || "NA").slice(0, 2).toUpperCase();
+            const lineText = this.formatNumber(leg.line, 1);
+            return window.CardVault.renderLegCard({
+                rank: index + 1,
+                monogram,
+                photoUrl: String(leg.player_headshot_url || "").trim(),
+                photoFallbackUrl: String(leg.player_headshot_fallback_url || "").trim(),
+                name: displayName,
+                market: `${direction} ${target}`,
+                context: lineText !== "n/a" ? `Line ${lineText}` : "",
+            });
         }).join("");
+        return `<div class="vault-board vault-board--legs">${cards}</div>`;
     }
 
     /**
@@ -348,9 +366,8 @@ class DailyPredictionsPage {
      * mirrors loadDateIndex()'s "optional" fetch pattern.
      */
     async loadSameGameParlay() {
-        const section = this.elements.sameGameParlaySection;
         const content = this.elements.sameGameParlayContent;
-        if (!section || !content) return;
+        if (!content) return;
         try {
             const response = await fetch(`data/same_game_predictions.json?v=${Date.now()}`);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -362,9 +379,8 @@ class DailyPredictionsPage {
     }
 
     renderSameGameParlay() {
-        const section = this.elements.sameGameParlaySection;
         const content = this.elements.sameGameParlayContent;
-        if (!section || !content) return;
+        if (!content) return;
         const data = this.sameGameData;
 
         if (!data || data.status !== "ok" || !Array.isArray(data.games) || !data.games.length) {
@@ -413,11 +429,7 @@ class DailyPredictionsPage {
 
     sameGameParlayHeader() {
         return `
-            <div class="daily-parlay__header">
-                <div>
-                    <p class="vault-page-kicker">Real cross-market combos, priced with joint simulation</p>
-                    <h2 id="sameGameParlayTitle">Same-Game Parlay</h2>
-                </div>
+            <div class="daily-parlay__header daily-parlay__header--status-only">
                 ${window.CardVault ? window.CardVault.renderStatusPill("stale", "Shadow only") : ""}
             </div>
         `;
@@ -443,7 +455,7 @@ class DailyPredictionsPage {
                     </div>
                     ${window.CardVault ? window.CardVault.renderStatusPill(pillTone, pillLabel) : ""}
                 </div>
-                <div class="daily-parlay__legs">
+                <div class="vault-board vault-board--legs">
                     ${this.renderSameGameLeg(combo.leg_a, game, 1)}
                     ${this.renderSameGameLeg(combo.leg_b, game, 2)}
                 </div>
@@ -452,25 +464,25 @@ class DailyPredictionsPage {
                     <span>Edge vs. naive market <strong>${edge}</strong></span>
                     <span>Model EV <strong>${ev}</strong></span>
                 </div>
+                ${this.renderBetslipLink(combo)}
             </article>
         `;
     }
 
     renderSameGameLeg(leg, game, index) {
-        if (!leg) return "";
-        return `
-            <div class="daily-parlay__leg">
-                <span class="daily-parlay__leg-number">${String(index).padStart(2, "0")}</span>
-                <div class="daily-parlay__leg-copy">
-                    <strong>${this.escapeHtml(this.formatSameGameLegLabel(leg, game))}</strong>
-                    <span>${this.escapeHtml(this.formatSameGameMarketLabel(leg.market))}</span>
-                </div>
-                <div class="daily-parlay__leg-market">
-                    <strong>${this.formatAmerican(leg.price_american)}</strong>
-                    <span>${this.escapeHtml(leg.sportsbook || "n/a")}</span>
-                </div>
-            </div>
-        `;
+        if (!leg || !window.CardVault) return "";
+        const name = this.formatSameGameLegLabel(leg, game);
+        const monogram = name.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase() || "NA";
+        return window.CardVault.renderLegCard({
+            rank: index,
+            monogram,
+            name,
+            market: this.formatSameGameMarketLabel(leg.market),
+            metrics: [
+                ["Odds", this.formatAmerican(leg.price_american)],
+                ["Book", leg.sportsbook || ""],
+            ],
+        });
     }
 
     formatSameGameLegLabel(leg, game) {
@@ -486,6 +498,110 @@ class DailyPredictionsPage {
     formatSameGameMarketLabel(market) {
         const labels = { moneyline: "Moneyline", game_total: "Game Total", first_5_innings_total: "F5 Total" };
         return labels[market] || String(market || "");
+    }
+
+    /**
+     * Pitcher Parlay -- real cross-game, pitcher-strikeouts-only 2-leg
+     * parlay (run_mlb_pitcher_parlay_daily.py / select_mlb_pitcher_
+     * parlay.py). Two different real starting pitchers in two different
+     * real games have no real shared game state, so unlike the same-game
+     * combo above, the real joint probability here really is the naive
+     * independence product of each leg's own real model probability --
+     * see that module's docstring. A brand-new, additive, own-payload
+     * product (pitcher_parlay_predictions.json), loaded independently of
+     * the rest of the page the same way the same-game combo is.
+     */
+    async loadPitcherParlay() {
+        const content = this.elements.pitcherParlayContent;
+        if (!content) return;
+        try {
+            const response = await fetch(`data/pitcher_parlay_predictions.json?v=${Date.now()}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            this.pitcherParlayData = await response.json();
+        } catch (_error) {
+            this.pitcherParlayData = null;
+        }
+        this.renderPitcherParlay();
+    }
+
+    renderPitcherParlay() {
+        const content = this.elements.pitcherParlayContent;
+        if (!content) return;
+        const data = this.pitcherParlayData;
+
+        if (!data || data.status !== "ok") {
+            content.innerHTML = this.pitcherParlayHeader() + `
+                <p class="daily-parlay__empty">${this.escapeHtml(this.formatPitcherParlayStatusReason(data))}</p>
+            `;
+            return;
+        }
+
+        const parlay = data.parlay;
+        if (!parlay) {
+            content.innerHTML = this.pitcherParlayHeader() + `
+                <p class="daily-parlay__empty">No real cross-game pitcher-strikeouts pair cleared pricing today.</p>
+                <p class="daily-parlay__state">${this.escapeHtml(`Real probable starters: ${data.real_starters_posted ?? 0} / Real priced legs: ${data.real_priced_legs ?? 0}`)}</p>
+            `;
+            return;
+        }
+
+        const authorized = Boolean(parlay.candidate_authorized);
+        const pillTone = authorized ? "active" : "stale";
+        const pillLabel = authorized ? "Selected -- shadow only" : "Shadow only";
+        const joint = this.formatPct(parlay.real_joint_model_probability);
+        const edge = parlay.probability_edge != null ? this.formatSignedPct(parlay.probability_edge) : "n/a";
+        const ev = parlay.expected_value_per_unit != null ? this.formatSignedPct(parlay.expected_value_per_unit) : "n/a";
+
+        content.innerHTML = this.pitcherParlayHeader(pillTone, pillLabel) + `
+            <div class="vault-board vault-board--legs">
+                ${this.renderPitcherKLeg(parlay.leg_a, 1)}
+                ${this.renderPitcherKLeg(parlay.leg_b, 2)}
+            </div>
+            <div class="same-game-parlay__metrics">
+                <span>Joint probability <strong>${joint}</strong></span>
+                <span>Edge vs. naive market <strong>${edge}</strong></span>
+                <span>Model EV <strong>${ev}</strong></span>
+            </div>
+            ${this.renderBetslipLink(parlay)}
+        `;
+    }
+
+    pitcherParlayHeader(pillTone = "stale", pillLabel = "Shadow only") {
+        return `
+            <div class="daily-parlay__header daily-parlay__header--status-only">
+                ${window.CardVault ? window.CardVault.renderStatusPill(pillTone, pillLabel) : ""}
+            </div>
+        `;
+    }
+
+    renderPitcherKLeg(leg, index) {
+        if (!leg || !window.CardVault) return "";
+        const name = String(leg.pitcher_name || "").trim() || "Unknown pitcher";
+        const nameParts = name.split(/\s+/).filter(Boolean);
+        const monogram = nameParts.length >= 2
+            ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase()
+            : (nameParts[0] || "NA").slice(0, 2).toUpperCase();
+        const side = leg.side === "under" ? "Under" : "Over";
+        const matchup = [leg.team, leg.opponent].filter(Boolean).join(" vs. ");
+        return window.CardVault.renderLegCard({
+            rank: index,
+            monogram,
+            name,
+            market: `${side} ${this.formatNumber(leg.line, 1)} Strikeouts`,
+            context: matchup,
+            metrics: [
+                ["Odds", this.formatAmerican(leg.price_american)],
+                ["Book", leg.sportsbook || ""],
+            ],
+        });
+    }
+
+    formatPitcherParlayStatusReason(data) {
+        const reasons = {
+            no_real_games_scheduled_today: "No MLB games scheduled today.",
+            no_real_probable_starters_posted_yet: "No real probable starters posted yet for today's slate.",
+        };
+        return reasons[data?.status] || "Pitcher parlay data is not available for this run.";
     }
 
     formatParlayV2StatusLabel(policyStatus) {
@@ -552,18 +668,6 @@ class DailyPredictionsPage {
         if (!Number.isFinite(number)) return "n/a";
         const rounded = Math.round(number);
         return `${rounded > 0 ? "+" : ""}${rounded}`;
-    }
-
-    safeFanDuelBetslipUrl(value) {
-        try {
-            const url = new URL(String(value || ""));
-            const allowedHosts = new Set(["account.sportsbook.fanduel.com", "sportsbook.fanduel.com"]);
-            if (url.protocol !== "https:" || !allowedHosts.has(url.hostname.toLowerCase())) return "";
-            if (!url.pathname.toLowerCase().endsWith("/addtobetslip")) return "";
-            return url.toString();
-        } catch (_error) {
-            return "";
-        }
     }
 
     escapeHtml(value) {

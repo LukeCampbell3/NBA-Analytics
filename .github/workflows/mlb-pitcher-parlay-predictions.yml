@@ -1,0 +1,114 @@
+name: MLB Pitcher-Strikeouts Parlay Predictions
+
+on:
+  schedule:
+    # Daily during the real MLB regular season window (Mar-Oct), same
+    # season bound as mlb-predictions.yml/mlb-same-game-predictions.yml
+    # -- offset by another 20 minutes and its own concurrency group so
+    # this brand-new, additive pipeline never blocks or is blocked by
+    # either existing board's run.
+    - cron: "57 8 * 3-10 *"
+      timezone: "America/New_York"
+  workflow_dispatch:
+    inputs:
+      build_only:
+        description: "Run tests and rebuild the site from the existing publication without a live fetch"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: mlb-pitcher-parlay-predictions-static-deployment
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  PUBLISH_BRANCH: static-deployment
+  PYTHONUNBUFFERED: "1"
+  TZ: America/New_York
+
+jobs:
+  mlb-pitcher-parlay-predictions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout prediction frontend branch
+        uses: actions/checkout@v7
+        with:
+          ref: static-deployment
+          # Shallow on purpose -- see mlb-same-game-predictions.yml's own
+          # checkout step for the real cost measurement this mirrors.
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: sports/mlb/requirements-same-game.txt
+
+      # Every step below calls validate_pitcher_parlay_pipeline.sh -- the
+      # same script a developer runs locally before ever pushing, exactly
+      # mirroring mlb-same-game-predictions.yml's own validate-script
+      # convention so CI and local iteration never drift apart.
+      - name: Install dependencies
+        run: bash sports/mlb/scripts/validate_pitcher_parlay_pipeline.sh install
+
+      - name: Run MLB pitcher-parlay tests
+        run: bash sports/mlb/scripts/validate_pitcher_parlay_pipeline.sh test
+
+      - name: Run MLB pitcher-parlay daily pipeline
+        if: ${{ !inputs.build_only }}
+        run: bash sports/mlb/scripts/validate_pitcher_parlay_pipeline.sh pipeline
+
+      - name: Build static site
+        run: bash sports/mlb/scripts/validate_pitcher_parlay_pipeline.sh build
+
+      - name: Stage MLB pitcher-parlay publication
+        id: staged
+        run: |
+          set -euo pipefail
+          git add -f -- \
+            sports/mlb/web/data/pitcher_parlay_predictions.json \
+            dist/mlb/data/pitcher_parlay_predictions.json \
+            dist/data/sports.json \
+            paywall/private-content/app/mlb/data/pitcher_parlay_predictions.json
+          # The calibration ledger is lazily created (only once a real
+          # candidate/observation is first admitted) -- same guard every
+          # other sport's workflow uses for its own lazily-created
+          # PARLAY_V2 paths.
+          if [ -e sports/mlb/parlay_v2/calibration/reports/pitcher_parlay_calibration_ledger.jsonl ]; then
+            git add -f -- sports/mlb/parlay_v2/calibration/reports/pitcher_parlay_calibration_ledger.jsonl
+          fi
+          if git diff --cached --quiet; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            git diff --cached --stat
+          fi
+
+      - name: Commit and push MLB pitcher-parlay publication
+        if: steps.staged.outputs.has_changes == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "MLB pitcher-parlay predictions $(date -u +%F) [skip ci]"
+          if ! git push origin "HEAD:$PUBLISH_BRANCH"; then
+            git pull --rebase --autostash origin "$PUBLISH_BRANCH"
+            git push origin "HEAD:$PUBLISH_BRANCH"
+          fi
+
+      - name: Upload MLB pitcher-parlay publication diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mlb-pitcher-parlay-predictions-${{ github.run_id }}
+          path: |
+            sports/mlb/web/data/pitcher_parlay_predictions.json
+            dist/mlb/data/pitcher_parlay_predictions.json
+          if-no-files-found: warn
+          retention-days: 14

@@ -58,6 +58,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from calibration.pair_schema import build_pair_observation  # noqa: E402
 from calibration.store import CalibrationStore  # noqa: E402
 from calibration.support import evaluate_support  # noqa: E402
+from fanduel_betslip import FANDUEL_SPORTSBOOK_KEY, build_fanduel_betslip_url  # noqa: E402
 
 # Frozen selection policy -- same deliberately conservative posture golf's
 # board started from (brand-new, unproven pipeline, no real track record yet).
@@ -124,6 +125,7 @@ class SameGameLeg:
     price_confirmed: bool
     leg_authorized: bool
     support_blocking_dimensions: list[str] = field(default_factory=list)
+    sportsbook_deeplink: Optional[str] = None
 
     @property
     def decimal_price(self) -> Optional[float]:
@@ -154,6 +156,7 @@ class SameGameLeg:
             "market_books": self.market_books, "price_confirmed": self.price_confirmed,
             "leg_authorized": self.leg_authorized,
             "support_blocking_dimensions": self.support_blocking_dimensions,
+            "sportsbook_deeplink": self.sportsbook_deeplink,
         }
 
 
@@ -185,8 +188,8 @@ def _build_legs_for_market(
         home_price, away_price = best_row["home_moneyline"], best_row["away_moneyline"]
         no_vig_home, no_vig_away = no_vig_two_sided_probabilities(home_price, away_price)
         specs = [
-            ("home", home_price, no_vig_home, result.home_win_probability),
-            ("away", away_price, no_vig_away, 1.0 - result.home_win_probability),
+            ("home", home_price, no_vig_home, result.home_win_probability, best_row.get("home_moneyline_deeplink")),
+            ("away", away_price, no_vig_away, 1.0 - result.home_win_probability, best_row.get("away_moneyline_deeplink")),
         ]
         line = None
         books_for_market = len(by_book)
@@ -202,14 +205,14 @@ def _build_legs_for_market(
         no_vig_over, no_vig_under = no_vig_two_sided_probabilities(over_price, under_price)
         model_over = result.full_total_over_probability(consensus_line) if market == "game_total" else result.f5_total_over_probability(consensus_line)
         specs = [
-            ("over", over_price, no_vig_over, model_over),
-            ("under", under_price, no_vig_under, 1.0 - model_over),
+            ("over", over_price, no_vig_over, model_over, best_row.get("over_deeplink")),
+            ("under", under_price, no_vig_under, 1.0 - model_over, best_row.get("under_deeplink")),
         ]
         line = consensus_line
         books_for_market = len(by_book)
 
     legs: list[SameGameLeg] = []
-    for side, price, no_vig_probability, model_probability in specs:
+    for side, price, no_vig_probability, model_probability, deeplink in specs:
         price_confirmed = bool(price is not None and american_to_decimal(price) is not None and books_for_market >= min_real_books)
         # Mirrors golf's select_pga_bets.py: support starts UNMET (never
         # a default-True fallback) -- a leg is authorized only once a
@@ -236,6 +239,7 @@ def _build_legs_for_market(
                 price_american=price, sportsbook=best_book, market_books=books_for_market,
                 price_confirmed=price_confirmed, leg_authorized=authorized,
                 support_blocking_dimensions=blocking,
+                sportsbook_deeplink=deeplink,
             )
         )
     return legs
@@ -266,7 +270,33 @@ class SameGameComboCandidate:
         marginals."""
         return self.real_joint_model_probability - self.naive_independence_probability
 
+    @property
+    def betslip(self) -> dict[str, Any]:
+        """Real "Add to Betslip" deep link for this same-game combo --
+        this product IS a two-leg parlay (one real correlated wager
+        placed as two FanDuel selections in one slip), so it gets the
+        exact same real multi-leg deep link construction PARLAY_POLICY_V2
+        and the legacy ticket already use (fanduel_betslip.py). Only
+        ready when both real legs actually priced at FanDuel -- a combo
+        priced off a different book (or off two different books) has no
+        single real multi-leg link to offer, and is never faked into one."""
+        legs = [
+            {"selected_sportsbook_key": self.leg_a.sportsbook, "sportsbook_deeplink": self.leg_a.sportsbook_deeplink},
+            {"selected_sportsbook_key": self.leg_b.sportsbook, "sportsbook_deeplink": self.leg_b.sportsbook_deeplink},
+        ]
+        url = build_fanduel_betslip_url(legs)
+        if url is None:
+            return {
+                "sportsbook_key": FANDUEL_SPORTSBOOK_KEY, "sportsbook": "FanDuel", "status": "unavailable",
+                "reason": "one_or_more_legs_have_no_live_fanduel_selection",
+            }
+        return {
+            "sportsbook_key": FANDUEL_SPORTSBOOK_KEY, "sportsbook": "FanDuel", "status": "ready",
+            "leg_count": 2, "url": url, "source": "direct_fanduel_public_market_ids",
+        }
+
     def as_dict(self) -> dict[str, Any]:
+        betslip = self.betslip
         return {
             "game_id": self.game_id, "home_team": self.home_team, "away_team": self.away_team,
             "event_date": self.event_date,
@@ -280,7 +310,39 @@ class SameGameComboCandidate:
             "expected_value_per_unit": self.expected_value_per_unit,
             "candidate_authorized": self.candidate_authorized,
             "support_blocking_dimensions": self.support_blocking_dimensions,
+            "betslip": betslip,
+            "betslip_url": betslip.get("url"),
         }
+
+
+def build_single_leg_team_market_candidates(
+    game: dict[str, Any],
+    result: sim.GameSimulationResult,
+    market_odds: list[dict[str, Any]],
+    *,
+    calibration_store: Optional[CalibrationStore] = None,
+    calibration_as_of: Optional[str] = None,
+    min_real_books: int = MIN_REAL_BOOKS,
+) -> list[SameGameLeg]:
+    """Every real single-market leg (moneyline / game_total /
+    first_5_innings_total) this real game has a priced side for -- the
+    exact same real legs (same model, same real odds, same
+    calibration/support.py REQUIRED gate) `build_same_game_candidates`
+    below combines into cross-market pairs, exposed standalone so a
+    single-leg consumer (the main single-leg board) can use them without
+    needing a same-game partner. `leg.leg_authorized` is the only field
+    that should ever gate whether a leg is shown as a live pick -- it is
+    computed identically here and inside a combo, so a market/line/state
+    bucket's real evidence means the same thing everywhere it's used."""
+    legs: list[SameGameLeg] = []
+    for market in _MARKETS:
+        legs.extend(
+            _build_legs_for_market(
+                market, market_odds, result,
+                calibration_store=calibration_store, calibration_as_of=calibration_as_of, min_real_books=min_real_books,
+            )
+        )
+    return legs
 
 
 def build_same_game_candidates(

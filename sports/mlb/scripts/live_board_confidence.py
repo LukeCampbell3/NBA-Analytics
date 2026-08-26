@@ -27,7 +27,21 @@ DEFAULT_PUBLISHED_HISTORY_ROOT = SPORT_ROOT / "web" / "data" / "history"
 DEFAULT_PUBLISHED_CURRENT_JSON = SPORT_ROOT / "web" / "data" / "daily_predictions.json"
 TARGET_TO_ACTUAL_COL = {"H": "H", "TB": "TB", "R": "R", "HR": "HR", "RBI": "RBI", "K": "K", "ER": "ER"}
 DEFAULT_PRIOR_STRENGTH = 20.0
-DEFAULT_MAX_ABS_ADJUSTMENT = 0.05
+# Was 0.05 -- far too small a safety cap given what the real settled
+# history actually shows. validate_historical_final_pools.py's real
+# walk-forward report (source_file_count=25, through 2026-08-11) found
+# the live board's own avg_estimated_graded_hit_rate (~74%) sitting
+# ~16 points above its real priced hit rate (~39%) overall, and the
+# single largest real segment here (TB|OVER, 19 of 26 graded
+# calibration rows) specifically off by ~17.5 points -- both well past
+# the old 5-point ceiling, so the correction this function itself
+# already computes (credibility-weighted toward each segment's own real
+# win rate, shrunk by prior_strength for thin segments) was never
+# allowed to apply more than a third of the way. Raised to let a real,
+# well-evidenced segment correct most of the way to its measured rate;
+# min_segment_rows + the credibility weighting below still do the real
+# work of not over-reacting to a single thin/noisy segment.
+DEFAULT_MAX_ABS_ADJUSTMENT = 0.20
 DEFAULT_MIN_SEGMENT_ROWS = 3
 CURRENT_PROFILE_REQUIRED_COLUMN = "Selection_Profile"
 MAIN_BOARD_PATTERN = re.compile(r"^daily_prediction_pool_(\d{8})_high_precision_predictions\.csv$")

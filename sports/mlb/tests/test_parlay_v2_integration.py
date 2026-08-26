@@ -295,14 +295,19 @@ def test_frontend_payload_embedding_reads_real_v2_json(tmp_path):
     assert embedded["parlays"]["policy_status"] == "DEVELOPMENT"
 
 
-def test_predictions_html_has_the_parlay_v2_section_and_no_legacy_parlay_section():
+def test_predictions_html_has_the_parlay_v2_content_and_no_legacy_parlay_section():
     html = (REPO_ROOT / "sports" / "mlb" / "web" / "predictions.html").read_text()
-    assert 'id="parlayV2Section"' in html
+    # The board was later simplified into one plain container (no
+    # separate per-product sections/headings -- see predictions.html's
+    # own comment) -- parlayV2Content lives directly in #board rather
+    # than inside its own #parlayV2Section wrapper.
+    assert 'id="board"' in html
+    assert 'id="parlayV2Content"' in html
+    assert 'id="parlayV2Section"' not in html
     # The legacy ticket system is no longer shown as its own "parlay"
-    # section -- its legs are folded into Solo Bets instead (see
+    # section -- its legs are folded into the main board instead (see
     # mergeLegacySoloBets), since that system was never V2-certified.
     assert 'id="dailyParlaySection"' not in html
-    assert "Solo bets" in html
 
 
 def test_predictions_js_renders_parlay_v2_and_folds_legacy_legs_into_solo_bets():

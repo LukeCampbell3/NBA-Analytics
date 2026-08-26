@@ -33,6 +33,12 @@ DEFAULT_PRIVATE_OUTPUT_DIR = REPO_ROOT / "paywall" / "private-content" / "app"
 NBA_PREDICTOR_ROOT = REPO_ROOT / "sports" / "nba" / "predictions" / "Player-Predictor"
 NBA_RUNNER = NBA_PREDICTOR_ROOT / "scripts" / "run_daily_market_pipeline.py"
 NBA_EXPORTER = NBA_PREDICTOR_ROOT / "scripts" / "export_daily_predictions_web.py"
+# Real, deduplicated local headshot cache -- see
+# update_nba_player_headshot_cache.py's module docstring. Additive only:
+# downloads any real bettable player not already cached and rewrites the
+# board's player_headshot_url to point at the local copy (real remote URL
+# kept as fallback), never touches any other key.
+NBA_HEADSHOT_CACHE = NBA_PREDICTOR_ROOT / "scripts" / "update_nba_player_headshot_cache.py"
 NBA_WEB_JSON = REPO_ROOT / "sports" / "nba" / "web" / "data" / "daily_predictions.json"
 NBA_CARDS_JSON = REPO_ROOT / "sports" / "nba" / "web" / "data" / "cards.json"
 
@@ -130,10 +136,57 @@ MLB_LATENT_POOL_REPLAY_REPORT = REPO_ROOT / "sports" / "mlb" / "data" / "predict
 MLB_MAX_WINRATE_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_max_winrate_board.py"
 MLB_EXPORTER = REPO_ROOT / "sports" / "mlb" / "scripts" / "export_web_prediction_payload.py"
 MLB_WEB_JSON = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "daily_predictions.json"
+# Newest MLB predictor (real joint Monte Carlo game simulation +
+# starting-pitcher/bullpen enrichment, sports/mlb/predictions/
+# game_simulation_model.py + pitching_enriched_win_model.py) wired into
+# the main single-leg board. Additive only -- merges an
+# "mlb_team_market_plays" key into MLB_WEB_JSON, never touches "plays" or
+# any other key the exporter above just wrote. Reuses the exact same
+# real-data preparation and calibration/support.py REQUIRED gate as the
+# separate same-game combo pipeline (mlb-same-game-predictions.yml), so a
+# leg is authorized here iff it would be authorized there too -- see
+# generate_mlb_team_market_predictions.py's module docstring.
+MLB_TEAM_MARKET_PREDICTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "generate_mlb_team_market_predictions.py"
+# Real headshot enrichment for PARLAY_POLICY_V2 legs -- see
+# enrich_parlay_leg_headshots.py's module docstring. Additive only:
+# attaches player_headshot_url/player_headshot_fallback_url to the
+# already-exported parlays.selected_parlay / parlays.shadow_candidate leg
+# dicts, never touches any other key.
+MLB_PARLAY_HEADSHOT_ENRICHER = REPO_ROOT / "sports" / "mlb" / "scripts" / "enrich_parlay_leg_headshots.py"
+# Real FanDuel "Add to Betslip" deep links for PARLAY_POLICY_V2 pairs --
+# see enrich_parlay_leg_betslip.py's module docstring. Additive only:
+# attaches betslip/betslip_url to the already-exported
+# parlays.selected_parlay / parlays.shadow_candidate pairs (only when
+# every leg resolves to a real live FanDuel selection), never touches
+# any other key.
+MLB_PARLAY_BETSLIP_ENRICHER = REPO_ROOT / "sports" / "mlb" / "scripts" / "enrich_parlay_leg_betslip.py"
+# Real, deduplicated local headshot cache -- see
+# update_mlb_player_headshot_cache.py's module docstring. Additive only:
+# downloads any real bettable player not already cached and rewrites
+# every board's player_headshot_url to point at the local copy (real
+# remote URL kept as fallback), never touches any other key. Runs last
+# among the headshot-related steps so it sees every leg's real URL,
+# including the parlay-leg enrichment step just above.
+MLB_HEADSHOT_CACHE = REPO_ROOT / "sports" / "mlb" / "scripts" / "update_mlb_player_headshot_cache.py"
 MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v8"
 MLB_PICK_SURVIVAL_TOP_K = 3
+# Was 3 -- raised now that the calibration correction above
+# (live_board_confidence.py's max_abs_adjustment) is no longer capped
+# far below what the real settled evidence supports, so a pick clearing
+# --min-hit-probability/--min-graded-hit-rate below reflects a real,
+# better-corrected estimate than before. Candidates are pre-sorted by
+# real quality (survival probability, selection score, EV, price-
+# confirmed, real books, historical win rates, calibrated hit
+# probability, abs edge -- see select_high_precision_predictions.py's
+# sort key) before this cap is ever applied, so raising it only ever
+# admits MORE of the picks that already cleared every real quality
+# gate -- never a worse one, and never in place of one. The existing
+# --daily-pick-soft-cap 3 / --post-cap-min-selection-score 0.80 below
+# stay unchanged, so the 4th and 5th pick (if any clear the gates that
+# day) must additionally clear a real selection_score >= 0.80 -- an
+# extra bar beyond what the first 3 need, not a loosened one.
 MLB_PRIMARY_POLICY_ARGS = [
-    "--top-n", "3",
+    "--top-n", "5",
     "--require-real-market-source",
     "--min-market-books", "5",
     "--min-common-market-books", "2",
@@ -577,6 +630,7 @@ def run_nba(args: argparse.Namespace, output_dir: Path) -> None:
             str(NBA_CARDS_JSON),
         ]
         run_step("Export NBA Predictions From Existing Manifest", command)
+        run_nba_headshot_cache(args, nba_dist_json)
         return
 
     command = [
@@ -638,6 +692,24 @@ def run_nba(args: argparse.Namespace, output_dir: Path) -> None:
             str(NBA_CARDS_JSON),
         ],
     )
+    run_nba_headshot_cache(args, nba_dist_json)
+
+
+def run_nba_headshot_cache(args: argparse.Namespace, nba_dist_json: Path) -> None:
+    if not NBA_HEADSHOT_CACHE.exists():
+        return
+    try:
+        run_step(
+            "Cache NBA Player Headshots",
+            [
+                args.python,
+                str(NBA_HEADSHOT_CACHE),
+                "--daily-predictions-path", str(NBA_WEB_JSON),
+                "--daily-predictions-path", str(nba_dist_json),
+            ],
+        )
+    except Exception as exc:  # noqa: BLE001 -- deliberate: additive, never blocks singles publication
+        print(f"[warning] NBA headshot cache step failed, images fall back to their real remote CDN URL: {format_step_failure(exc)}")
 
 
 def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Path]:
@@ -1022,6 +1094,87 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
             str(mlb_dist_json),
         ],
     )
+
+    # Newest MLB predictor (real joint game simulation + pitcher/bullpen
+    # enrichment) wired into the main board -- see MLB_TEAM_MARKET_PREDICTOR
+    # above. Additive only: merges "mlb_team_market_plays" into both real
+    # published copies of daily_predictions.json the exporter just wrote,
+    # never touches "plays" or anything else in either file. Wrapped like
+    # PARLAY_POLICY_V2 above -- a real live-fetch failure here (schedule,
+    # odds, or a StatsAPI hiccup) must never block the player-prop board
+    # that already published successfully.
+    try:
+        # Same real, filename-derived effective run date the governance
+        # capture step above resolves from pool_csv -- args.run_date alone
+        # can be None (the pipeline's own --force-run default), so fall
+        # back to it only when the pool filename doesn't carry a real date.
+        team_market_digits = "".join(char for char in pool_csv.stem if char.isdigit())
+        team_market_run_date = (
+            datetime.strptime(team_market_digits[:8], "%Y%m%d").date().isoformat()
+            if len(team_market_digits) >= 8
+            else args.run_date
+        )
+        team_market_command = [args.python, str(MLB_TEAM_MARKET_PREDICTOR)]
+        if team_market_run_date:
+            team_market_command += ["--run-date", str(team_market_run_date)]
+        team_market_command += [
+            "--daily-predictions-path", str(MLB_WEB_JSON),
+            "--daily-predictions-path", str(mlb_dist_json),
+        ]
+        run_step("Generate MLB Team-Market Predictions (newest predictor)", team_market_command)
+    except Exception as exc:  # noqa: BLE001 -- deliberate: additive, never blocks singles publication
+        print(f"[warning] MLB team-market predictor step failed, main board keeps its existing player-prop plays only: {format_step_failure(exc)}")
+
+    # Real headshot enrichment for PARLAY_POLICY_V2 legs -- see
+    # MLB_PARLAY_HEADSHOT_ENRICHER above. Additive only, and a live
+    # MLB Stats API lookup failure here must never block the boards that
+    # already published successfully above.
+    try:
+        run_step(
+            "Enrich MLB Parlay Leg Headshots",
+            [
+                args.python,
+                str(MLB_PARLAY_HEADSHOT_ENRICHER),
+                "--daily-predictions-path", str(MLB_WEB_JSON),
+                "--daily-predictions-path", str(mlb_dist_json),
+            ],
+        )
+    except Exception as exc:  # noqa: BLE001 -- deliberate: additive, never blocks singles publication
+        print(f"[warning] MLB parlay leg headshot enrichment failed, legs fall back to their monogram: {format_step_failure(exc)}")
+
+    # Real FanDuel betslip deep links for PARLAY_POLICY_V2 pairs -- see
+    # MLB_PARLAY_BETSLIP_ENRICHER above. Additive only, and a live
+    # FanDuel public-feed failure here must never block the boards that
+    # already published successfully above.
+    try:
+        run_step(
+            "Enrich MLB Parlay Leg Betslip Links",
+            [
+                args.python,
+                str(MLB_PARLAY_BETSLIP_ENRICHER),
+                "--daily-predictions-path", str(MLB_WEB_JSON),
+                "--daily-predictions-path", str(mlb_dist_json),
+            ],
+        )
+    except Exception as exc:  # noqa: BLE001 -- deliberate: additive, never blocks singles publication
+        print(f"[warning] MLB parlay leg betslip enrichment failed, no betslip link will be shown: {format_step_failure(exc)}")
+
+    # Real, deduplicated local headshot cache -- see MLB_HEADSHOT_CACHE
+    # above. Additive only, and a real fetch failure for any one player
+    # here must never block the boards that already published above --
+    # that player's card simply keeps its real remote URL.
+    try:
+        run_step(
+            "Cache MLB Player Headshots",
+            [
+                args.python,
+                str(MLB_HEADSHOT_CACHE),
+                "--daily-predictions-path", str(MLB_WEB_JSON),
+                "--daily-predictions-path", str(mlb_dist_json),
+            ],
+        )
+    except Exception as exc:  # noqa: BLE001 -- deliberate: additive, never blocks singles publication
+        print(f"[warning] MLB headshot cache step failed, images fall back to their real remote CDN URL: {format_step_failure(exc)}")
 
     # Run max-winrate selector on the raw pool for the tightest possible board
     max_wr_csv = pool_csv.with_name(pool_csv.stem + "_max_winrate.csv")

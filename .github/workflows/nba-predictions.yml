@@ -104,6 +104,11 @@ jobs:
           git add -f -- \
             sports/nba/web/data/daily_predictions.json \
             dist/nba/data/daily_predictions.json
+          # The headshot cache is lazily created (only once a real board
+          # has a real player to fetch).
+          if [ -e sports/nba/web/data/headshots ]; then
+            git add -f -- sports/nba/web/data/headshots dist/nba/data/headshots
+          fi
           if git diff --cached --quiet; then
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
           else

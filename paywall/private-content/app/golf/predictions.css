@@ -15,6 +15,8 @@
 .golf-pick-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 20px; }
 .golf-pick { position: relative; min-width: 0; padding: 18px; border: 1px solid var(--vault-line-strong); border-radius: 5px; background: linear-gradient(155deg, #fff 0%, var(--vault-card-face) 100%); box-shadow: 3px 3px 0 rgba(32, 32, 32, .06); }
 .golf-pick h3 { margin: 18px 0 4px; font-family: var(--vault-font-display); font-size: 1.3rem; }
+.golf-pick-photo { margin-top: 12px; }
+.golf-pick-photo + h3 { margin-top: 10px; }
 .golf-pick p { margin: 4px 0; color: var(--vault-text-muted); }
 .golf-pick-number { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: #fff; background: var(--golf-ink); font-size: .72rem; font-weight: 800; }
 .golf-authorized-badge { color: #087f5b; font-size: .68rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }

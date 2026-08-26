@@ -23,6 +23,48 @@
     return CardVault.escapeHtml(value).replaceAll("`", "&#96;");
   };
 
+  /**
+   * Validates a real FanDuel "Add to Betslip" deep link before ever
+   * rendering it -- host/scheme/path allowlist only, never a generic
+   * open-redirect passthrough. Shared by every sport/product that
+   * renders one (single-leg plays, parlay pairs, same-game combos):
+   * every one of them is built server-side from FanDuel's own real
+   * odds feed (see sports/mlb/parlay_v2/fanduel_betslip.py and
+   * fanduel_public_mlb_provider.py), but this re-validates on the
+   * client too rather than trusting the payload blindly.
+   */
+  CardVault.safeFanDuelBetslipUrl = function safeFanDuelBetslipUrl(value) {
+    try {
+      const url = new URL(String(value || ""));
+      const allowedHosts = new Set(["account.sportsbook.fanduel.com", "sportsbook.fanduel.com"]);
+      if (url.protocol !== "https:" || !allowedHosts.has(url.hostname.toLowerCase())) return "";
+      if (!url.pathname.toLowerCase().endsWith("/addtobetslip")) return "";
+      return url.toString();
+    } catch (_error) {
+      return "";
+    }
+  };
+
+  /**
+   * Shared photo markup for both card renderers below. Chains a primary
+   * headshot URL to an optional fallback URL (e.g. MLB's secondary CDN
+   * mirror) and finally to the monogram -- each <img> falls through to
+   * the next element on its own onerror, so a broken or missing image
+   * never leaves a blank card. Never guesses a URL from an id: only
+   * real URLs supplied by the caller are ever rendered.
+   */
+  CardVault.renderPhotoHtml = function renderPhotoHtml(primaryUrl, fallbackUrl, monogram) {
+    const fallbackSpan = `<span class="prediction-card__fallback">${CardVault.escapeHtml(monogram)}</span>`;
+    if (!primaryUrl) return fallbackSpan;
+    // Flat chain of siblings: each <img>'s onerror swaps itself out for
+    // whatever comes next (the fallback image, or finally the monogram),
+    // so a broken/missing photo never leaves a blank card.
+    const img = (url) => `<img class="prediction-card__photo-img" src="${CardVault.escapeAttr(url)}" alt="" loading="lazy" onerror="this.replaceWith(this.nextElementSibling)" />`;
+    return fallbackUrl
+      ? `${img(primaryUrl)}${img(fallbackUrl)}${fallbackSpan}`
+      : `${img(primaryUrl)}${fallbackSpan}`;
+  };
+
   CardVault.formatNumber = function formatNumber(value, digits = 2) {
     const n = Number(value);
     return Number.isFinite(n) ? n.toFixed(digits) : "n/a";
@@ -159,11 +201,12 @@
     const directionRaw = String(play.direction || "").toUpperCase();
     const direction = directionRaw === "UNDER" ? "UNDER" : "OVER";
     const displayName = String(play.player_display_name || play.player || "").replaceAll("_", " ").trim() || "Unknown player";
-    const headshotUrl = String(play.player_headshot_url || "").trim();
-    const id = Number(play.player_id);
-    const resolvedHeadshot = headshotUrl || (Number.isFinite(id) && id > 0
-      ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${id}.png`
-      : "");
+    // Headshot URL comes only from the exporter's own real data --
+    // never guessed from a player_id, since the CDN path pattern that
+    // works for one sport (e.g. cdn.nba.com) is wrong for every other
+    // sport and would silently 404 or point at an unrelated image.
+    const resolvedHeadshot = String(play.player_headshot_url || "").trim();
+    const fallbackHeadshot = String(play.player_headshot_fallback_url || "").trim();
     const parts = displayName.split(/\s+/).filter(Boolean);
     const monogram = parts.length >= 2 ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase() : (parts[0] || "NA").slice(0, 2).toUpperCase();
 
@@ -231,9 +274,7 @@
         ? `Model projection is ${CardVault.formatNumber(Math.abs(Number(edgeValue)))} ${direction === "UNDER" ? "below" : "above"} the market line.`
         : `Model projection is aligned to the ${direction} side of the market.`;
 
-    const photoHtml = resolvedHeadshot
-      ? `<img class="prediction-card__photo-img" src="${CardVault.escapeAttr(resolvedHeadshot)}" alt="" loading="lazy" onerror="this.replaceWith(this.nextElementSibling)" /><span class="prediction-card__fallback">${CardVault.escapeHtml(monogram)}</span>`
-      : `<span class="prediction-card__fallback">${CardVault.escapeHtml(monogram)}</span>`;
+    const photoHtml = CardVault.renderPhotoHtml(resolvedHeadshot, fallbackHeadshot, monogram);
     const parlayTag = play.parlay_candidate && !needsReview ? '<span class="prediction-card__tag prediction-card__tag--parlay">Parlay</span>' : "";
     const riskTags = riskFlags
       .filter((flag) => flag !== "policy_uncertified")
@@ -271,6 +312,18 @@
       ? `<dl class="prediction-card__metrics" style="grid-template-columns:1fr;margin-top:8px;">${detailRows.map(([label, value]) => `<div><dt>${CardVault.escapeHtml(label)}</dt><dd>${CardVault.escapeHtml(value)}</dd></div>`).join("")}</dl>`
       : "";
 
+    // Real single-leg "Add to Betslip" link -- only when this exact play
+    // was actually priced at FanDuel (selected_sportsbook_key) AND
+    // carries FanDuel's own real deep link for that selection
+    // (sportsbook_deeplink). Re-validated against the host/path
+    // allowlist before ever rendering; never a guessed or generic link.
+    const betslipUrl = String(play.selected_sportsbook_key || "").trim().toLowerCase() === "fanduel"
+      ? CardVault.safeFanDuelBetslipUrl(play.sportsbook_deeplink)
+      : "";
+    const betslipHtml = betslipUrl
+      ? `<a class="prediction-card__betslip-link" href="${CardVault.escapeAttr(betslipUrl)}" target="_blank" rel="noopener noreferrer">Add to FanDuel Betslip</a>`
+      : "";
+
     return `
       <article class="prediction-card" data-direction="${CardVault.escapeAttr(direction)}" aria-label="Prediction for ${CardVault.escapeAttr(displayName)}, ${CardVault.escapeAttr(direction)} ${CardVault.escapeAttr(targetLabel)}">
         <header class="prediction-card__header">
@@ -291,7 +344,51 @@
         </div>
         <dl class="prediction-card__metrics">${primaryMetricHtml}</dl>
         <p class="prediction-card__note">${CardVault.escapeHtml(why)}</p>
+        ${betslipHtml}
         ${detailHtml ? `<details class="disclosure"><summary>Details</summary><div class="disclosure-body">${detailHtml}</div></details>` : ""}
+      </article>
+    `;
+  };
+
+  /**
+   * Same visual unit as renderPredictionCard (the same .prediction-card
+   * markup/CSS), for a pick that isn't a full board play -- a parlay leg,
+   * same-game combo leg, or anything else that's still fundamentally one
+   * pick and deserves the same card treatment a top-of-board pick gets,
+   * not a bare list row. Takes an already-normalized spec rather than a
+   * raw play/leg object: callers own the field mapping for their own
+   * data shape (a player-prop leg and a team-market leg look nothing
+   * alike), this only owns the shared rendering. Never fabricates a
+   * field -- pass only what's real; `metrics` and `context` are omitted
+   * cleanly when empty, exactly like renderPredictionCard's own optional
+   * rows.
+   */
+  CardVault.renderLegCard = function renderLegCard({
+    rank, statusTone = "", statusLabel = "", monogram = "", photoUrl = "", photoFallbackUrl = "",
+    name = "", market = "", context = "", metrics = [], note = "",
+  } = {}) {
+    const photoHtml = CardVault.renderPhotoHtml(photoUrl, photoFallbackUrl, monogram);
+    const metricHtml = metrics
+      .filter(([, value]) => value != null && value !== "")
+      .map(([label, value]) => `<div><dt>${CardVault.escapeHtml(label)}</dt><dd>${CardVault.escapeHtml(value)}</dd></div>`)
+      .join("");
+
+    return `
+      <article class="prediction-card" aria-label="${CardVault.escapeAttr(`${name}, ${market}`)}">
+        <header class="prediction-card__header">
+          <span class="prediction-card__rank">${CardVault.escapeHtml(String(rank ?? ""))}</span>
+          <div class="prediction-card__tags">${statusLabel ? CardVault.renderStatusPill(statusTone, statusLabel) : ""}</div>
+        </header>
+        <div class="prediction-card__identity">
+          <div class="prediction-card__photo">${photoHtml}</div>
+          <div>
+            <h3 class="prediction-card__name">${CardVault.escapeHtml(name)}</h3>
+            <p class="prediction-card__market">${CardVault.escapeHtml(market)}</p>
+            ${context ? `<p class="prediction-card__context">${CardVault.escapeHtml(context)}</p>` : ""}
+          </div>
+        </div>
+        ${metricHtml ? `<dl class="prediction-card__metrics">${metricHtml}</dl>` : ""}
+        ${note ? `<p class="prediction-card__note">${CardVault.escapeHtml(note)}</p>` : ""}
       </article>
     `;
   };

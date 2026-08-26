@@ -121,8 +121,16 @@ class GolfPredictionBoard {
             const badge = play.candidate_authorized
                 ? '<span class="golf-authorized-badge">Authorized</span>'
                 : '<span class="golf-shadow-badge">Shadow only</span>';
+            const nameParts = String(play.player_name || "").trim().split(/\s+/).filter(Boolean);
+            const monogram = nameParts.length >= 2
+                ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase()
+                : (nameParts[0] || "NA").slice(0, 2).toUpperCase();
+            const photoHtml = window.CardVault
+                ? window.CardVault.renderPhotoHtml(String(play.player_headshot_url || "").trim(), "", monogram)
+                : "";
             return `<article class="golf-pick">
                 <div class="golf-pick-topline"><span class="golf-pick-number">${index + 1}</span>${badge}</div>
+                ${photoHtml ? `<div class="golf-pick-photo prediction-card__photo">${photoHtml}</div>` : ""}
                 <h3>${this.escape(play.player_name)}</h3>
                 <p class="golf-pick-market">${this.escape(GOLF_MARKET_LABELS[play.market] || play.market)}</p>
                 <div class="golf-probability-row"><span>Model probability</span><strong>${this.pct(play.model_probability)}</strong></div>
