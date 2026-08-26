@@ -12,13 +12,13 @@
     "complete_market_observations": 0,
     "provider_audit": {
       "complete_two_sided_rows": 0,
-      "fetched_at_utc": "2026-08-25T15:11:45.004519+00:00",
+      "fetched_at_utc": "2026-08-26T15:01:22.132941+00:00",
       "provider": "provider_chain",
       "provider_attempts": [
         {
           "complete_two_sided_rows": 0,
-          "events_discovered": 0,
-          "events_with_odds": 0,
+          "events_discovered": 2,
+          "events_with_odds": 2,
           "provider": "sportsgameodds",
           "status": "no_props"
         },
@@ -29,20 +29,20 @@
       ],
       "raw_source_sha256": null,
       "replayed_from_snapshot": true,
-      "snapshot_sha256": "1385f1cd59af00b76a72d96f523838ac3e40e9e3637e8cf9b03ddc756ececd36",
+      "snapshot_sha256": "2996a4a31b59dc3405524aee8fac0ab3a54684853abf9b2337e8d908e4036d22",
       "status": "no_props"
     },
     "reason": "No complete two-sided regular-season NFL player-prop markets were available.",
     "status": "withheld"
   },
-  "generated_at_utc": "2026-08-25T15:11:48.016033Z",
+  "generated_at_utc": "2026-08-26T15:01:25.485324Z",
   "league": "NFL",
   "mode": "live_shadow",
   "parlays": {
     "abstain_reason": "OPERATIONALLY_INELIGIBLE",
     "action": "ABSTAIN",
-    "calibration_as_of": "2026-08-25T15:11:49.396140+00:00",
-    "decision_timestamp_utc": "2026-08-25T15:11:49.396155+00:00",
+    "calibration_as_of": "2026-08-26T15:01:26.963849+00:00",
+    "decision_timestamp_utc": "2026-08-26T15:01:26.963867+00:00",
     "eligibility_reason": "no_games_scheduled",
     "eligible": false,
     "evidence_status": {
@@ -71,7 +71,7 @@
   "policy_profile": "nfl_passing_loss_aware_meta_policy_v2",
   "publication_state": "withheld_current_pool",
   "publication_status": "withheld_current_pool",
-  "run_date": "2026-08-25",
+  "run_date": "2026-08-26",
   "schema_version": 2,
   "selection": {
     "american_price_range": [

@@ -1,247 +1,25 @@
 {
-  "sport": "MLB",
   "board_title": "MLB Prediction Bounties",
-  "run_date": "2026-08-26",
-  "through_date": "2026-08-25",
-  "model_run_id": "mlb_high_precision_selector_v2",
-  "policy_profile": "premium_evidence_gated_v8",
-  "publication_state": "withheld_current_pool",
-  "publication_status": "withheld",
-  "publication_message": "no plays passed publication filters",
-  "data_quality": {
-    "status": "withheld",
-    "lag_days": 1,
-    "review_threshold_days": 14,
-    "withhold_threshold_days": 60,
-    "reasons": [
-      "no plays passed publication filters"
-    ]
-  },
-  "generated_at_utc": "2026-08-26T13:23:49.956469+00:00",
-  "summary": {
-    "play_count": 0,
-    "source_play_count": 0,
-    "closed_game_cards_suppressed": 0,
-    "duplicate_cards_suppressed": 0,
-    "supported_rows": 1530,
-    "rows_after_filters": 0,
-    "rejected_rows": 1530,
-    "avg_expected_hit_rate": 0.0,
-    "avg_graded_hit_rate": 0.0,
-    "avg_edge": 0.0,
-    "avg_abs_edge": 0.0,
-    "avg_value_score": 0.0,
-    "avg_precision_score": 0.0,
-    "parlay_tagged_plays": 0,
-    "parlay_pairs": 0
-  },
-  "selection": {
-    "policy_version": "premium_evidence_gated_v8",
-    "historical_calibration_evidence_scope": "real_price_confirmed_markets_only_v1",
-    "matchup_network_enabled": true,
-    "matchup_network_version": "batter_pitcher_profile_network_v2",
-    "top_n": 3,
-    "daily_pick_soft_cap": 3,
-    "post_cap_min_selection_score": 0.8,
-    "min_abs_edge": 0.35,
-    "min_history_rows": 35,
-    "min_prediction": 0.1,
-    "min_hit_probability": 0.825,
-    "min_graded_hit_rate": 0.825,
-    "optimized_over_profile": "r_tb_over_moderate_edge_v1",
-    "optimized_over_profile_status": "probation",
-    "pitcher_k_over_profile": "pitcher_k_over_workload_v1",
-    "pitcher_k_over_profile_status": "probation",
-    "history_before_date": "",
-    "optimized_over_targets": [],
-    "over_min_abs_edge": null,
-    "over_max_abs_edge": null,
-    "over_min_model_hit_probability": null,
-    "over_max_model_hit_probability": null,
-    "over_min_expected_value": null,
-    "over_min_history_rows": null,
-    "pitcher_k_over_profile_enabled": false,
-    "pitcher_k_min_starter_history": 15,
-    "pitcher_k_min_projected_ip": 5.25,
-    "pitcher_k_min_projected_pitches": 75.0,
-    "pitcher_k_max_days_since_history": 14,
-    "pitcher_k_min_abs_edge": 0.15,
-    "pitcher_k_max_abs_edge": 1.0,
-    "pitcher_k_min_model_hit_probability": 0.5,
-    "pitcher_k_max_model_hit_probability": 0.65,
-    "pitcher_k_min_expected_value": 0.0,
-    "pitcher_k_min_american_price": -130.0,
-    "pitcher_k_max_american_price": 130.0,
-    "max_pitcher_k_picks": 1,
-    "core_min_american_price": -180.0,
-    "core_max_american_price": 125.0,
-    "over_max_american_price": null,
-    "min_over_picks": 0,
-    "max_over_picks": 3,
-    "max_under_picks": 0,
-    "max_push_probability": 0.1,
-    "max_days_since_history": 4,
-    "max_per_player": 1,
-    "max_per_game": 2,
-    "max_per_team": 2,
-    "max_per_market_bucket": 2,
-    "optimized_over_max_per_market_bucket": null,
-    "min_market_books": 5,
-    "min_common_market_books": 2,
-    "max_market_line_std": 0.0,
-    "min_expected_value": 0.0,
-    "allow_unpriced_side": false,
-    "allow_baseline": false,
-    "require_real_market_source": true,
-    "targets": [
-      "ER",
-      "H",
-      "HR",
-      "K",
-      "R",
-      "RBI",
-      "TB"
-    ],
-    "history_season": 2026,
-    "min_history_bucket_rows": 50,
-    "max_history_prior_weight": 0.35,
-    "history_prior_strength": 400.0,
-    "historical_calibration_enabled": true,
-    "min_bet_profile_rows": 12,
-    "max_bet_profile_prior_weight": 0.25,
-    "bet_profile_prior_strength": 80.0,
-    "min_market_availability_rows": 12,
-    "historical_bet_profiles_enabled": true,
-    "live_confidence_calibration_enabled": true,
-    "pick_survival_shadow_enabled": true,
-    "allow_synthetic_unders": false,
-    "prefer_confident_side": false,
-    "min_historical_bet_profile_support": 0,
-    "min_historical_bet_profile_win_rate": 0.0,
-    "min_historical_market_availability_support": 0,
-    "min_historical_market_availability_rate": 0.0
-  },
-  "filter_rejections": {
-    "market_books_too_low": 305,
-    "edge_too_small": 1024,
-    "history_too_short": 84,
-    "prediction_too_low": 45,
-    "synthetic_market_source": 72
-  },
-  "by_target": {},
   "by_direction": {},
-  "parlay_summary": {
-    "selection_mode": "strict",
-    "candidate_pair_count": 0,
-    "selected_pair_count": 0,
-    "candidate_parlay_count": 0,
-    "selected_parlay_count": 0,
-    "tagged_play_count": 0,
-    "avg_projected_pair_hit_rate": null,
-    "best_projected_pair_hit_rate": null,
-    "avg_projected_parlay_hit_rate": null,
-    "best_projected_parlay_hit_rate": null,
-    "avg_expected_return_per_unit": null,
-    "best_expected_return_per_unit": null,
-    "same_sportsbook_required": true,
-    "min_leg_probability": 0.52,
-    "min_pair_probability": 0.38,
-    "min_legs_per_parlay": 2,
-    "max_legs_per_parlay": 2,
-    "fallback_min_leg_probability": 0.5,
-    "fallback_min_pair_probability": 0.34,
-    "fallback_min_legs_per_parlay": 2,
-    "fallback_max_legs_per_parlay": 2
-  },
-  "parlay_pairs": [],
-  "parlay_validation": {
-    "available": false,
-    "reason": "parlay validation rebuild disabled for fast web export"
-  },
+  "by_target": {},
   "daily_parlay": {
-    "schema_version": 4,
-    "policy_version": "mlb_fanduel_public_betslip_parlay_v9",
-    "generated_at_utc": "2026-08-26T13:21:10.549649+00:00",
-    "run_date": "2026-08-26",
-    "status": "review",
-    "objective": "exact_set_search_with_role_survival_consensus_and_shadow_positive_ev_alternates",
-    "direction_policy": "OVER_ONLY",
-    "betslip_policy": {
-      "sportsbook_key": "fanduel",
-      "sportsbook": "FanDuel",
-      "status": "ready",
-      "construction": "direct_fanduel_public_market_ids_only",
-      "linked_ticket_count": 1
-    },
     "allowed_leg_counts": [
       2,
       3,
       4
     ],
-    "gates": {
-      "min_leg_probability": 0.62,
-      "min_ticket_probability": 0.4,
-      "ticket_probability_floors": {
-        "2": 0.4,
-        "3": 0.25,
-        "4": 0.18
-      },
-      "ticket_max_decimal_prices": {
-        "2": 6.0,
-        "3": 10.0,
-        "4": 18.0
-      },
-      "min_combined_decimal_price": 1.8,
-      "min_expected_return_per_unit": 0.0,
-      "min_market_books": 1,
-      "min_common_market_books": 1,
-      "single_book_scope": "exact_fanduel_quote_with_provider_market_and_selection_ids",
-      "same_sportsbook_required": true,
-      "linked_sportsbook": "fanduel",
-      "direct_fanduel_public_selection_link_required_for_betslip": true,
-      "distinct_games_required": true,
-      "hit_survival": {
-        "model_version": "mlb_parlay_hit_survival_role_hgb_v1",
-        "status": "development_shadow",
-        "evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
-        "minimum_probability": 0.58,
-        "minimum_consensus_probability": 0.62,
-        "maximum_probability_disagreement": 0.16,
-        "probability_components": [
-          "role_survival_model",
-          "no_vig_market_probability",
-          "existing_calibrated_probability"
-        ],
-        "roi_claim": false
-      },
-      "latent_parlay": {
-        "model_version": "mlb_latent_parlay_set_attention_v3",
-        "status": "prospective_shadow",
-        "evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
-        "ranking_effect": "none_on_authorized_ladder",
-        "shadow_ranking_policy": {
-          "2": "bounded_attention_joint_probability",
-          "3": "market_residual_uncertainty_penalized_product",
-          "4": "market_residual_uncertainty_penalized_product"
-        },
-        "maximum_legs": 4,
-        "in_support_required": true,
-        "roi_claim": false
-      },
-      "profit_boost": {
-        "status": "shadow_only",
-        "min_leg_probability": 0.18,
-        "min_ticket_probability": 0.1,
-        "min_combined_decimal_price": 4.0,
-        "max_combined_decimal_price": 15.0,
-        "min_expected_return_per_unit": 0.05,
-        "exact_sportsbook_alternate_price_required": true
-      }
-    },
-    "pool_candidate_count": 1530,
-    "eligible_anchor_count": 12,
-    "considered_anchor_count": 3,
     "alternate_line_candidate_count": 7,
+    "available": true,
+    "betslip_policy": {
+      "construction": "direct_fanduel_public_market_ids_only",
+      "linked_ticket_count": 1,
+      "sportsbook": "FanDuel",
+      "sportsbook_key": "fanduel",
+      "status": "ready"
+    },
+    "considered_anchor_count": 3,
+    "direction_policy": "OVER_ONLY",
+    "eligible_anchor_count": 12,
     "filter_rejections": {
       "history_too_short": 26,
       "history_too_stale": 2,
@@ -254,266 +32,375 @@
       "unconfirmed_market_price": 69,
       "unsupported_anchor_target": 33
     },
-    "selected_ticket": {
-      "leg_indices": [
-        2,
-        4
-      ],
-      "leg_keys": [
-        "2026-08-26|824234|Kevin McGonigle|H|OVER|ALT_1.5",
-        "2026-08-26|823255|Nick Gonzales|H|OVER|ALT_1.5"
-      ],
-      "leg_names": [
-        "Kevin McGonigle",
-        "Nick Gonzales"
-      ],
-      "leg_targets": [
-        "H",
-        "H"
-      ],
-      "leg_directions": [
-        "OVER",
-        "OVER"
-      ],
-      "leg_count": 2,
-      "projected_probability": 0.12201726225117773,
-      "independent_probability": 0.12201726225117773,
-      "pairwise_adjustment_factor": 1.001977614,
-      "parlay_score": 0.14993556966497879,
-      "combined_decimal_price": 12.16,
-      "combined_american_price": 1116.0,
-      "expected_return_per_unit": 0.4837299089743212,
-      "same_sportsbook_confirmed": true,
-      "sportsbook_key": "fanduel",
-      "sportsbook": "FanDuel",
-      "avg_leg_quality": 0.7644011438577076,
-      "same_player": false,
-      "same_game": false,
-      "same_team": false,
-      "same_target": true,
-      "same_market_bucket": true,
-      "mixed_direction": false,
-      "legs": [
-        {
-          "play_key": "2026-08-26|824234|Kevin McGonigle|H|OVER|ALT_1.5",
-          "player": "Kevin McGonigle",
-          "player_display_name": "Kevin McGonigle",
-          "player_id": "kevin_mcgonigle",
-          "player_type": "hitter",
-          "team": "DET",
-          "opponent": "TB",
-          "game_id": "824234",
-          "market_date": "2026-08-26",
-          "commence_time_utc": "2026-08-26T17:10:00Z",
-          "game_status_code": "P",
-          "target": "H",
-          "direction": "OVER",
-          "prediction": 1.2852867049157446,
-          "market_line": 1.5,
-          "market_source": "real",
-          "market_bucket": "H|OVER|1.5|ALT",
-          "historical_bucket_key": "H|OVER|1.5|ALT",
-          "estimated_graded_hit_rate": 0.3278699561343561,
-          "model_hit_probability": 0.367955335610347,
-          "market_implied_probability": 0.6774193548387096,
-          "final_pool_quality_score": 0.7538841135951694,
-          "expected_value_per_unit": 0.24590583331055305,
-          "selected_side_price": 280.0,
-          "selected_sportsbook_key": "fanduel",
-          "selected_sportsbook": "FanDuel",
-          "price_confirmed": true,
-          "market_books": 1,
-          "market_common_books": 1,
-          "market_book_keys": [
-            "fanduel"
-          ],
-          "market_common_book_keys": [
-            "fanduel"
-          ],
-          "history_rows": 139,
-          "days_since_history": 1,
-          "selection_score": 0.7538841135951694,
-          "parlay_precision_eligible": true,
-          "line_variant": "alternate",
-          "hit_survival_probability": 0.620151182318617,
-          "hit_survival_raw_probability": 0.6635989361034678,
-          "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
-          "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
-          "hit_survival_batting_order": 3.0,
-          "hit_survival_batting_order_source": "prior_start_proxy",
-          "latent_probability_disagreement": 0.09609077068188399,
-          "parlay_leg_probability": 0.6205859656324609,
-          "latent_leg_probability": 0.7474293865420659,
-          "latent_leg_raw_probability": 0.7737583888622076,
-          "latent_leg_ensemble_std": 0.0417716821324187,
-          "latent_support_fraction": 1.0,
-          "latent_in_support": true,
-          "latent_model_version": "mlb_latent_parlay_set_attention_v3",
-          "latent_evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
-          "latent_numeric_features": {
-            "baseline": 1.2,
-            "last_hits": 0.0,
-            "batting_order": 3.0,
-            "log_history_rows": 4.941642422609304,
-            "is_home": 1.0,
-            "batter_strength": 0.4176139736567549,
-            "pitcher_vulnerability": 0.4169106300562182,
-            "pitcher_uncertainty": 0.33720940161919744,
-            "batter_vs_starter_games": 1.0,
-            "batter_vs_starter_lift": 0.0962962962962963,
-            "archetype_neighbor_games": 52.0,
-            "archetype_neighbor_support": 26.29652315946741,
-            "archetype_neighbor_lift": -0.0949632674866596,
-            "matchup_network_score": 0.17978110627273639,
-            "matchup_network_confidence": 0.8274418483016484,
-            "matchup_network_adjustment": 0.017978110627273638
-          },
-          "latent_categorical_features": {
-            "player": "kevin_mcgonigle",
-            "pitcher": "642547",
-            "team": "DET",
-            "opponent": "139"
-          },
-          "base_market_line": 0.5,
-          "line_increment": 1.0,
-          "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182845170&selectionId=94749094",
-          "alternate_line_price_source": "fanduel_public",
-          "provider_source_market_id": "734.182845170:94749094",
-          "alternate_line_observed_at_utc": "2026-08-26T13:18:59.260855+00:00",
-          "alternate_line_books": 1,
-          "alternate_line_book_keys": [
-            "fanduel"
-          ],
-          "lineup_status": "unconfirmed",
-          "batting_order": "",
-          "official_game_status": "Scheduled",
-          "risk_flags": [
-            "lineup_unconfirmed"
-          ]
-        },
-        {
-          "play_key": "2026-08-26|823255|Nick Gonzales|H|OVER|ALT_1.5",
-          "player": "Nick Gonzales",
-          "player_display_name": "Nick Gonzales",
-          "player_id": "nick_gonzales",
-          "player_type": "hitter",
-          "team": "PIT",
-          "opponent": "SD",
-          "game_id": "823255",
-          "market_date": "2026-08-26",
-          "commence_time_utc": "2026-08-26T20:10:00Z",
-          "game_status_code": "P",
-          "target": "H",
-          "direction": "OVER",
-          "prediction": 1.4360477398796687,
-          "market_line": 1.5,
-          "market_source": "real",
-          "market_bucket": "H|OVER|1.5|ALT",
-          "historical_bucket_key": "H|OVER|1.5|ALT",
-          "estimated_graded_hit_rate": 0.37215139712641715,
-          "model_hit_probability": 0.42054703979710983,
-          "market_implied_probability": 0.7058823529411765,
-          "final_pool_quality_score": 0.7749181741202459,
-          "expected_value_per_unit": 0.19088447080453497,
-          "selected_side_price": 220.0,
-          "selected_sportsbook_key": "fanduel",
-          "selected_sportsbook": "FanDuel",
-          "price_confirmed": true,
-          "market_books": 1,
-          "market_common_books": 1,
-          "market_book_keys": [
-            "fanduel"
-          ],
-          "market_common_book_keys": [
-            "fanduel"
-          ],
-          "history_rows": 134,
-          "days_since_history": 1,
-          "selection_score": 0.7749181741202459,
-          "parlay_precision_eligible": true,
-          "line_variant": "alternate",
-          "hit_survival_probability": 0.6361862425045121,
-          "hit_survival_raw_probability": 0.6824449821603367,
-          "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
-          "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
-          "hit_survival_batting_order": 4.0,
-          "hit_survival_batting_order_source": "prior_start_proxy",
-          "latent_probability_disagreement": 0.11317960113875847,
-          "parlay_leg_probability": 0.6392619210434688,
-          "latent_leg_probability": 0.6412399479960498,
-          "latent_leg_raw_probability": 0.6747906894300749,
-          "latent_leg_ensemble_std": 0.0617918211990348,
-          "latent_support_fraction": 1.0,
-          "latent_in_support": true,
-          "latent_model_version": "mlb_latent_parlay_set_attention_v3",
-          "latent_evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
-          "latent_numeric_features": {
-            "baseline": 1.2,
-            "last_hits": 1.0,
-            "batting_order": 4.0,
-            "log_history_rows": 4.90527477843843,
-            "is_home": 0.0,
-            "batter_strength": 0.4342332341269841,
-            "pitcher_vulnerability": 0.39066238721824714,
-            "pitcher_uncertainty": 0.3734467044516285,
-            "batter_vs_starter_games": 0.0,
-            "batter_vs_starter_lift": 0.0,
-            "archetype_neighbor_games": 51.0,
-            "archetype_neighbor_support": 27.49028200610494,
-            "archetype_neighbor_lift": -0.014135693968840516,
-            "matchup_network_score": 0.10628761877802538,
-            "matchup_network_confidence": 0.8042527787046755,
-            "matchup_network_adjustment": 0.01062876187780254
-          },
-          "latent_categorical_features": {
-            "player": "nick_gonzales",
-            "pitcher": "681190",
-            "team": "PIT",
-            "opponent": "135"
-          },
-          "base_market_line": 0.5,
-          "line_increment": 1.0,
-          "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182881396&selectionId=57495785",
-          "alternate_line_price_source": "fanduel_public",
-          "provider_source_market_id": "734.182881396:57495785",
-          "alternate_line_observed_at_utc": "2026-08-26T13:18:59.260855+00:00",
-          "alternate_line_books": 1,
-          "alternate_line_book_keys": [
-            "fanduel"
-          ],
-          "lineup_status": "unconfirmed",
-          "batting_order": "",
-          "official_game_status": "Scheduled",
-          "risk_flags": [
-            "lineup_unconfirmed"
-          ]
-        }
-      ],
-      "ticket_tier": "profit_boost",
-      "probability_floor": 0.1,
-      "maximum_decimal_price": 15.0,
-      "risk_adjusted_profit_score": 0.16897154643317136,
-      "evidence_status": "SHADOW_ALT_LINE_PRICE_CAPTURE",
-      "ticket_id": "profit_boost_2_leg",
-      "betslip": {
-        "sportsbook_key": "fanduel",
-        "sportsbook": "FanDuel",
-        "status": "ready",
-        "leg_count": 2,
-        "url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.182845170&selectionId%5B0%5D=94749094&marketId%5B1%5D=734.182881396&selectionId%5B1%5D=57495785",
-        "source": "direct_fanduel_public_market_ids"
+    "gates": {
+      "direct_fanduel_public_selection_link_required_for_betslip": true,
+      "distinct_games_required": true,
+      "hit_survival": {
+        "evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+        "maximum_probability_disagreement": 0.16,
+        "minimum_consensus_probability": 0.62,
+        "minimum_probability": 0.58,
+        "model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+        "probability_components": [
+          "role_survival_model",
+          "no_vig_market_probability",
+          "existing_calibrated_probability"
+        ],
+        "roi_claim": false,
+        "status": "development_shadow"
       },
-      "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.182845170&selectionId%5B0%5D=94749094&marketId%5B1%5D=734.182881396&selectionId%5B1%5D=57495785",
-      "status": "review",
-      "action_status": "review",
-      "risk_flags": [
-        "lineup_unconfirmed"
-      ],
-      "candidate_authorized": false,
-      "staking_enabled": false,
-      "authorization_status": "SHADOW_ONLY"
+      "latent_parlay": {
+        "evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+        "in_support_required": true,
+        "maximum_legs": 4,
+        "model_version": "mlb_latent_parlay_set_attention_v3",
+        "ranking_effect": "none_on_authorized_ladder",
+        "roi_claim": false,
+        "shadow_ranking_policy": {
+          "2": "bounded_attention_joint_probability",
+          "3": "market_residual_uncertainty_penalized_product",
+          "4": "market_residual_uncertainty_penalized_product"
+        },
+        "status": "prospective_shadow"
+      },
+      "linked_sportsbook": "fanduel",
+      "min_combined_decimal_price": 1.8,
+      "min_common_market_books": 1,
+      "min_expected_return_per_unit": 0.0,
+      "min_leg_probability": 0.62,
+      "min_market_books": 1,
+      "min_ticket_probability": 0.4,
+      "profit_boost": {
+        "exact_sportsbook_alternate_price_required": true,
+        "max_combined_decimal_price": 15.0,
+        "min_combined_decimal_price": 4.0,
+        "min_expected_return_per_unit": 0.05,
+        "min_leg_probability": 0.18,
+        "min_ticket_probability": 0.1,
+        "status": "shadow_only"
+      },
+      "same_sportsbook_required": true,
+      "single_book_scope": "exact_fanduel_quote_with_provider_market_and_selection_ids",
+      "ticket_max_decimal_prices": {
+        "2": 6.0,
+        "3": 10.0,
+        "4": 18.0
+      },
+      "ticket_probability_floors": {
+        "2": 0.4,
+        "3": 0.25,
+        "4": 0.18
+      }
     },
+    "generated_at_utc": "2026-08-26T13:21:10.549649+00:00",
+    "hit_survival_validation": {
+      "calibration": {
+        "brier_score": 0.24259946235125276,
+        "hit_rate": 0.550417469492614,
+        "log_loss": 0.6782192808296192,
+        "mean_probability": 0.5504251481713196,
+        "rows": 3114,
+        "wins": 1714
+      },
+      "claim_scope": "hit-rate ranking and confidence diagnostic only; executable prices are required for ROI",
+      "evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+      "features": [
+        "projection",
+        "baseline",
+        "last_hits",
+        "batting_order",
+        "history_rows",
+        "is_home"
+      ],
+      "frozen_training_cutoff_exclusive": "2026-07-30",
+      "locked_recent_holdout": {
+        "brier_score": 0.24141080951926325,
+        "daily_top_two": {
+          "leg_hit_rate": 0.71875,
+          "leg_hit_rate_wilson_95_high": 0.8443559315435214,
+          "leg_hit_rate_wilson_95_low": 0.546251630618882,
+          "leg_wins": 23,
+          "legs": 32,
+          "mean_probability": 0.67128158684495,
+          "slates": 15,
+          "ticket_hit_rate": 0.6666666666666666,
+          "ticket_hit_rate_wilson_95_high": 0.8482389930530876,
+          "ticket_hit_rate_wilson_95_low": 0.41713125151212976,
+          "ticket_wins": 10
+        },
+        "hit_rate": 0.5313479623824452,
+        "log_loss": 0.6757913330805801,
+        "mean_probability": 0.5508849184708919,
+        "projection_baseline_daily_top_two": {
+          "leg_hit_rate": 0.5,
+          "leg_hit_rate_wilson_95_high": 0.6636938568314061,
+          "leg_hit_rate_wilson_95_low": 0.33630614316859386,
+          "leg_wins": 16,
+          "legs": 32,
+          "mean_probability": 0.7671999109910522,
+          "slates": 15,
+          "ticket_hit_rate": 0.26666666666666666,
+          "ticket_hit_rate_wilson_95_high": 0.5195088965768675,
+          "ticket_hit_rate_wilson_95_low": 0.1089727610318281,
+          "ticket_wins": 4
+        },
+        "rows": 3190,
+        "wins": 1695
+      },
+      "model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+      "partitions": {
+        "calibration": {
+          "end": "2026-07-10",
+          "start": "2026-06-24"
+        },
+        "development": {
+          "end": "2026-06-23",
+          "start": "2026-03-30"
+        },
+        "locked_recent_holdout": {
+          "end": "2026-07-29",
+          "start": "2026-07-11"
+        }
+      },
+      "status": "development_shadow",
+      "training_dates": 113,
+      "training_rows": 15993
+    },
+    "latent_parlay_validation": {
+      "calibration": {
+        "legs": {
+          "brier_score": 0.2424343086651612,
+          "hit_rate": 0.5632798573975044,
+          "log_loss": 0.6778125853224081,
+          "mean_probability": 0.5625202655792236,
+          "roc_auc": 0.5708496472164816,
+          "rows": 4488,
+          "wins": 2528
+        },
+        "safe_rolling_baseline": {
+          "brier_score": 0.24418589648717387,
+          "hit_rate": 0.5632798573975044,
+          "log_loss": 0.6814756761962799,
+          "mean_probability": 0.5632797236126167,
+          "roc_auc": 0.5519312273960217,
+          "rows": 4488,
+          "wins": 2528
+        },
+        "sampled_tickets": {
+          "brier_score": 0.19658613861689764,
+          "hit_rate": 0.2847222222222222,
+          "log_loss": 0.5804600342416407,
+          "mean_probability": 0.28751012682914734,
+          "roc_auc": 0.6205273882296536,
+          "rows": 6480,
+          "wins": 1845
+        }
+      },
+      "claim_scope": "synthetic H over 0.5 hit-chain ranking only; no executable price or ROI claim",
+      "cuda_version": "12.8",
+      "dates": 125,
+      "deployment_fit": {
+        "calibration_legs": {
+          "brier_score": 0.2435080430484226,
+          "hit_rate": 0.5501427212178878,
+          "log_loss": 0.6800309584163625,
+          "mean_probability": 0.5305083394050598,
+          "roc_auc": 0.5774020224970311,
+          "rows": 5255,
+          "wins": 2891
+        },
+        "calibration_rows": 5255,
+        "calibration_sampled_tickets": {
+          "brier_score": 0.2061659975211286,
+          "hit_rate": 0.26763888888888887,
+          "log_loss": 0.6245069055404697,
+          "mean_probability": 0.12740659713745117,
+          "roc_auc": 0.6564487149041671,
+          "rows": 7200,
+          "wins": 1927
+        },
+        "next_unseen_date": "2026-08-06",
+        "probability_calibration_period": {
+          "end": "2026-08-05",
+          "start": "2026-07-17"
+        },
+        "status": "prospective_shadow_only",
+        "training_period": {
+          "end": "2026-07-16",
+          "start": "2026-03-30"
+        },
+        "training_rows": 17791
+      },
+      "device": "NVIDIA GeForce RTX 4080 SUPER",
+      "evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+      "export_parity": {
+        "leg_probability_max_abs": 1.882963751587141e-08,
+        "leg_raw_probability_max_abs": 2.638824647682725e-08,
+        "ticket_probability_max_abs": 4.1938656991646894e-09,
+        "ticket_raw_probability_max_abs": 1.7148897024643617e-08
+      },
+      "identity_contract": {
+        "opponent": "team abbreviation",
+        "pitcher": "MLBAM identifier with normalized-name fallback",
+        "player": "normalized player name shared by training and production",
+        "team": "team abbreviation"
+      },
+      "leakage_exclusions": [
+        "same-game H, PA, AB, Team_PA_share, wOBA, xwOBA, ISO, Barrel%, HardHit%",
+        "historical H_market_gap and projection derived from same-game fields"
+      ],
+      "locked_holdout": {
+        "daily_ranking": {
+          "2": {
+            "independent_product_hit_rate": 0.5,
+            "independent_product_wins": 10,
+            "independent_wilson_95": [
+              0.2992949144298199,
+              0.7007050855701801
+            ],
+            "latent_ticket_hit_rate": 0.5,
+            "latent_ticket_wins": 10,
+            "latent_wilson_95": [
+              0.2992949144298199,
+              0.7007050855701801
+            ],
+            "slates": 20
+          },
+          "3": {
+            "independent_product_hit_rate": 0.4,
+            "independent_product_wins": 8,
+            "independent_wilson_95": [
+              0.21880396741419272,
+              0.613422057684794
+            ],
+            "latent_ticket_hit_rate": 0.35,
+            "latent_ticket_wins": 7,
+            "latent_wilson_95": [
+              0.18118954786794464,
+              0.5671494897805354
+            ],
+            "slates": 20
+          },
+          "4": {
+            "independent_product_hit_rate": 0.3,
+            "independent_product_wins": 6,
+            "independent_wilson_95": [
+              0.14547527396899385,
+              0.5189767762289793
+            ],
+            "latent_ticket_hit_rate": 0.3,
+            "latent_ticket_wins": 6,
+            "latent_wilson_95": [
+              0.14547527396899385,
+              0.5189767762289793
+            ],
+            "slates": 20
+          }
+        },
+        "daily_top_two_legs": {
+          "latent": {
+            "hit_rate": 0.75,
+            "legs": 40,
+            "wilson_95": [
+              0.598057409330299,
+              0.8581303210445048
+            ],
+            "wins": 30
+          },
+          "safe_rolling_baseline": {
+            "hit_rate": 0.625,
+            "legs": 40,
+            "wilson_95": [
+              0.47032160054531913,
+              0.7577722646420829
+            ],
+            "wins": 25
+          }
+        },
+        "legs": {
+          "brier_score": 0.24408094480171033,
+          "hit_rate": 0.5501427212178878,
+          "log_loss": 0.6811830883046901,
+          "mean_probability": 0.5631510615348816,
+          "roc_auc": 0.5704383491329941,
+          "rows": 5255,
+          "wins": 2891
+        },
+        "safe_rolling_baseline": {
+          "brier_score": 0.2444186750878317,
+          "hit_rate": 0.5501427212178878,
+          "log_loss": 0.6819304777519898,
+          "mean_probability": 0.5603725246530553,
+          "roc_auc": 0.5713790420237612,
+          "rows": 5255,
+          "wins": 2891
+        },
+        "sampled_tickets": {
+          "brier_score": 0.18543409529511665,
+          "hit_rate": 0.2673611111111111,
+          "log_loss": 0.5541604918377484,
+          "mean_probability": 0.28158947825431824,
+          "roc_auc": 0.6489663814858129,
+          "rows": 7200,
+          "wins": 1925
+        }
+      },
+      "model_version": "mlb_latent_parlay_set_attention_v3",
+      "partition_rows": {
+        "calibration": 4488,
+        "development": 13303,
+        "locked_holdout": 5255
+      },
+      "partitions": {
+        "calibration": {
+          "end": "2026-07-16",
+          "start": "2026-06-25"
+        },
+        "development": {
+          "end": "2026-06-24",
+          "start": "2026-03-30"
+        },
+        "locked_holdout": {
+          "end": "2026-08-05",
+          "start": "2026-07-17"
+        }
+      },
+      "rows": 23046,
+      "sampled_tickets": {
+        "calibration": 6480,
+        "development": 17520,
+        "locked_holdout": 7200
+      },
+      "status": "development_shadow"
+    },
+    "latent_shadow_ticket_ladder": [],
+    "objective": "exact_set_search_with_role_survival_consensus_and_shadow_positive_ev_alternates",
+    "policy_version": "mlb_fanduel_public_betslip_parlay_v9",
+    "pool_candidate_count": 1530,
     "profit_boost_ticket": {
+      "action_status": "review",
+      "authorization_status": "SHADOW_ONLY",
+      "avg_leg_quality": 0.7644011438577076,
+      "betslip": {
+        "leg_count": 2,
+        "source": "direct_fanduel_public_market_ids",
+        "sportsbook": "FanDuel",
+        "sportsbook_key": "fanduel",
+        "status": "ready",
+        "url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.182845170&selectionId%5B0%5D=94749094&marketId%5B1%5D=734.182881396&selectionId%5B1%5D=57495785"
+      },
+      "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.182845170&selectionId%5B0%5D=94749094&marketId%5B1%5D=734.182881396&selectionId%5B1%5D=57495785",
+      "candidate_authorized": false,
+      "combined_american_price": 1116.0,
+      "combined_decimal_price": 12.16,
+      "evidence_status": "SHADOW_ALT_LINE_PRICE_CAPTURE",
+      "expected_return_per_unit": 0.4837299089743212,
+      "independent_probability": 0.12201726225117773,
+      "leg_count": 2,
+      "leg_directions": [
+        "OVER",
+        "OVER"
+      ],
       "leg_indices": [
         2,
         4
@@ -530,250 +417,517 @@
         "H",
         "H"
       ],
-      "leg_directions": [
-        "OVER",
-        "OVER"
-      ],
-      "leg_count": 2,
-      "projected_probability": 0.12201726225117773,
-      "independent_probability": 0.12201726225117773,
-      "pairwise_adjustment_factor": 1.001977614,
-      "parlay_score": 0.14993556966497879,
-      "combined_decimal_price": 12.16,
-      "combined_american_price": 1116.0,
-      "expected_return_per_unit": 0.4837299089743212,
-      "same_sportsbook_confirmed": true,
-      "sportsbook_key": "fanduel",
-      "sportsbook": "FanDuel",
-      "avg_leg_quality": 0.7644011438577076,
-      "same_player": false,
-      "same_game": false,
-      "same_team": false,
-      "same_target": true,
-      "same_market_bucket": true,
-      "mixed_direction": false,
       "legs": [
         {
+          "alternate_line_book_keys": [
+            "fanduel"
+          ],
+          "alternate_line_books": 1,
+          "alternate_line_observed_at_utc": "2026-08-26T13:18:59.260855+00:00",
+          "alternate_line_price_source": "fanduel_public",
+          "base_market_line": 0.5,
+          "batting_order": "",
+          "commence_time_utc": "2026-08-26T17:10:00Z",
+          "days_since_history": 1,
+          "direction": "OVER",
+          "estimated_graded_hit_rate": 0.3278699561343561,
+          "expected_value_per_unit": 0.24590583331055305,
+          "final_pool_quality_score": 0.7538841135951694,
+          "game_id": "824234",
+          "game_status_code": "P",
+          "historical_bucket_key": "H|OVER|1.5|ALT",
+          "history_rows": 139,
+          "hit_survival_batting_order": 3.0,
+          "hit_survival_batting_order_source": "prior_start_proxy",
+          "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+          "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+          "hit_survival_probability": 0.620151182318617,
+          "hit_survival_raw_probability": 0.6635989361034678,
+          "latent_categorical_features": {
+            "opponent": "139",
+            "pitcher": "642547",
+            "player": "kevin_mcgonigle",
+            "team": "DET"
+          },
+          "latent_evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+          "latent_in_support": true,
+          "latent_leg_ensemble_std": 0.0417716821324187,
+          "latent_leg_probability": 0.7474293865420659,
+          "latent_leg_raw_probability": 0.7737583888622076,
+          "latent_model_version": "mlb_latent_parlay_set_attention_v3",
+          "latent_numeric_features": {
+            "archetype_neighbor_games": 52.0,
+            "archetype_neighbor_lift": -0.0949632674866596,
+            "archetype_neighbor_support": 26.29652315946741,
+            "baseline": 1.2,
+            "batter_strength": 0.4176139736567549,
+            "batter_vs_starter_games": 1.0,
+            "batter_vs_starter_lift": 0.0962962962962963,
+            "batting_order": 3.0,
+            "is_home": 1.0,
+            "last_hits": 0.0,
+            "log_history_rows": 4.941642422609304,
+            "matchup_network_adjustment": 0.017978110627273638,
+            "matchup_network_confidence": 0.8274418483016484,
+            "matchup_network_score": 0.17978110627273639,
+            "pitcher_uncertainty": 0.33720940161919744,
+            "pitcher_vulnerability": 0.4169106300562182
+          },
+          "latent_probability_disagreement": 0.09609077068188399,
+          "latent_support_fraction": 1.0,
+          "line_increment": 1.0,
+          "line_variant": "alternate",
+          "lineup_status": "unconfirmed",
+          "market_book_keys": [
+            "fanduel"
+          ],
+          "market_books": 1,
+          "market_bucket": "H|OVER|1.5|ALT",
+          "market_common_book_keys": [
+            "fanduel"
+          ],
+          "market_common_books": 1,
+          "market_date": "2026-08-26",
+          "market_implied_probability": 0.6774193548387096,
+          "market_line": 1.5,
+          "market_source": "real",
+          "model_hit_probability": 0.367955335610347,
+          "official_game_status": "Scheduled",
+          "opponent": "TB",
+          "parlay_leg_probability": 0.6205859656324609,
+          "parlay_precision_eligible": true,
           "play_key": "2026-08-26|824234|Kevin McGonigle|H|OVER|ALT_1.5",
           "player": "Kevin McGonigle",
           "player_display_name": "Kevin McGonigle",
           "player_id": "kevin_mcgonigle",
           "player_type": "hitter",
-          "team": "DET",
-          "opponent": "TB",
-          "game_id": "824234",
-          "market_date": "2026-08-26",
-          "commence_time_utc": "2026-08-26T17:10:00Z",
-          "game_status_code": "P",
-          "target": "H",
-          "direction": "OVER",
           "prediction": 1.2852867049157446,
-          "market_line": 1.5,
-          "market_source": "real",
-          "market_bucket": "H|OVER|1.5|ALT",
-          "historical_bucket_key": "H|OVER|1.5|ALT",
-          "estimated_graded_hit_rate": 0.3278699561343561,
-          "model_hit_probability": 0.367955335610347,
-          "market_implied_probability": 0.6774193548387096,
-          "final_pool_quality_score": 0.7538841135951694,
-          "expected_value_per_unit": 0.24590583331055305,
-          "selected_side_price": 280.0,
-          "selected_sportsbook_key": "fanduel",
-          "selected_sportsbook": "FanDuel",
           "price_confirmed": true,
-          "market_books": 1,
-          "market_common_books": 1,
-          "market_book_keys": [
-            "fanduel"
-          ],
-          "market_common_book_keys": [
-            "fanduel"
-          ],
-          "history_rows": 139,
-          "days_since_history": 1,
-          "selection_score": 0.7538841135951694,
-          "parlay_precision_eligible": true,
-          "line_variant": "alternate",
-          "hit_survival_probability": 0.620151182318617,
-          "hit_survival_raw_probability": 0.6635989361034678,
-          "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
-          "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
-          "hit_survival_batting_order": 3.0,
-          "hit_survival_batting_order_source": "prior_start_proxy",
-          "latent_probability_disagreement": 0.09609077068188399,
-          "parlay_leg_probability": 0.6205859656324609,
-          "latent_leg_probability": 0.7474293865420659,
-          "latent_leg_raw_probability": 0.7737583888622076,
-          "latent_leg_ensemble_std": 0.0417716821324187,
-          "latent_support_fraction": 1.0,
-          "latent_in_support": true,
-          "latent_model_version": "mlb_latent_parlay_set_attention_v3",
-          "latent_evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
-          "latent_numeric_features": {
-            "baseline": 1.2,
-            "last_hits": 0.0,
-            "batting_order": 3.0,
-            "log_history_rows": 4.941642422609304,
-            "is_home": 1.0,
-            "batter_strength": 0.4176139736567549,
-            "pitcher_vulnerability": 0.4169106300562182,
-            "pitcher_uncertainty": 0.33720940161919744,
-            "batter_vs_starter_games": 1.0,
-            "batter_vs_starter_lift": 0.0962962962962963,
-            "archetype_neighbor_games": 52.0,
-            "archetype_neighbor_support": 26.29652315946741,
-            "archetype_neighbor_lift": -0.0949632674866596,
-            "matchup_network_score": 0.17978110627273639,
-            "matchup_network_confidence": 0.8274418483016484,
-            "matchup_network_adjustment": 0.017978110627273638
-          },
-          "latent_categorical_features": {
-            "player": "kevin_mcgonigle",
-            "pitcher": "642547",
-            "team": "DET",
-            "opponent": "139"
-          },
-          "base_market_line": 0.5,
-          "line_increment": 1.0,
-          "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182845170&selectionId=94749094",
-          "alternate_line_price_source": "fanduel_public",
           "provider_source_market_id": "734.182845170:94749094",
-          "alternate_line_observed_at_utc": "2026-08-26T13:18:59.260855+00:00",
-          "alternate_line_books": 1,
+          "risk_flags": [
+            "lineup_unconfirmed"
+          ],
+          "selected_side_price": 280.0,
+          "selected_sportsbook": "FanDuel",
+          "selected_sportsbook_key": "fanduel",
+          "selection_score": 0.7538841135951694,
+          "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182845170&selectionId=94749094",
+          "target": "H",
+          "team": "DET"
+        },
+        {
           "alternate_line_book_keys": [
             "fanduel"
           ],
-          "lineup_status": "unconfirmed",
+          "alternate_line_books": 1,
+          "alternate_line_observed_at_utc": "2026-08-26T13:18:59.260855+00:00",
+          "alternate_line_price_source": "fanduel_public",
+          "base_market_line": 0.5,
           "batting_order": "",
+          "commence_time_utc": "2026-08-26T20:10:00Z",
+          "days_since_history": 1,
+          "direction": "OVER",
+          "estimated_graded_hit_rate": 0.37215139712641715,
+          "expected_value_per_unit": 0.19088447080453497,
+          "final_pool_quality_score": 0.7749181741202459,
+          "game_id": "823255",
+          "game_status_code": "P",
+          "historical_bucket_key": "H|OVER|1.5|ALT",
+          "history_rows": 134,
+          "hit_survival_batting_order": 4.0,
+          "hit_survival_batting_order_source": "prior_start_proxy",
+          "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+          "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+          "hit_survival_probability": 0.6361862425045121,
+          "hit_survival_raw_probability": 0.6824449821603367,
+          "latent_categorical_features": {
+            "opponent": "135",
+            "pitcher": "681190",
+            "player": "nick_gonzales",
+            "team": "PIT"
+          },
+          "latent_evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+          "latent_in_support": true,
+          "latent_leg_ensemble_std": 0.0617918211990348,
+          "latent_leg_probability": 0.6412399479960498,
+          "latent_leg_raw_probability": 0.6747906894300749,
+          "latent_model_version": "mlb_latent_parlay_set_attention_v3",
+          "latent_numeric_features": {
+            "archetype_neighbor_games": 51.0,
+            "archetype_neighbor_lift": -0.014135693968840516,
+            "archetype_neighbor_support": 27.49028200610494,
+            "baseline": 1.2,
+            "batter_strength": 0.4342332341269841,
+            "batter_vs_starter_games": 0.0,
+            "batter_vs_starter_lift": 0.0,
+            "batting_order": 4.0,
+            "is_home": 0.0,
+            "last_hits": 1.0,
+            "log_history_rows": 4.90527477843843,
+            "matchup_network_adjustment": 0.01062876187780254,
+            "matchup_network_confidence": 0.8042527787046755,
+            "matchup_network_score": 0.10628761877802538,
+            "pitcher_uncertainty": 0.3734467044516285,
+            "pitcher_vulnerability": 0.39066238721824714
+          },
+          "latent_probability_disagreement": 0.11317960113875847,
+          "latent_support_fraction": 1.0,
+          "line_increment": 1.0,
+          "line_variant": "alternate",
+          "lineup_status": "unconfirmed",
+          "market_book_keys": [
+            "fanduel"
+          ],
+          "market_books": 1,
+          "market_bucket": "H|OVER|1.5|ALT",
+          "market_common_book_keys": [
+            "fanduel"
+          ],
+          "market_common_books": 1,
+          "market_date": "2026-08-26",
+          "market_implied_probability": 0.7058823529411765,
+          "market_line": 1.5,
+          "market_source": "real",
+          "model_hit_probability": 0.42054703979710983,
           "official_game_status": "Scheduled",
-          "risk_flags": [
-            "lineup_unconfirmed"
-          ]
-        },
-        {
+          "opponent": "SD",
+          "parlay_leg_probability": 0.6392619210434688,
+          "parlay_precision_eligible": true,
           "play_key": "2026-08-26|823255|Nick Gonzales|H|OVER|ALT_1.5",
           "player": "Nick Gonzales",
           "player_display_name": "Nick Gonzales",
           "player_id": "nick_gonzales",
           "player_type": "hitter",
-          "team": "PIT",
-          "opponent": "SD",
-          "game_id": "823255",
-          "market_date": "2026-08-26",
-          "commence_time_utc": "2026-08-26T20:10:00Z",
-          "game_status_code": "P",
-          "target": "H",
-          "direction": "OVER",
           "prediction": 1.4360477398796687,
-          "market_line": 1.5,
-          "market_source": "real",
-          "market_bucket": "H|OVER|1.5|ALT",
-          "historical_bucket_key": "H|OVER|1.5|ALT",
-          "estimated_graded_hit_rate": 0.37215139712641715,
-          "model_hit_probability": 0.42054703979710983,
-          "market_implied_probability": 0.7058823529411765,
-          "final_pool_quality_score": 0.7749181741202459,
-          "expected_value_per_unit": 0.19088447080453497,
-          "selected_side_price": 220.0,
-          "selected_sportsbook_key": "fanduel",
-          "selected_sportsbook": "FanDuel",
           "price_confirmed": true,
-          "market_books": 1,
-          "market_common_books": 1,
-          "market_book_keys": [
-            "fanduel"
-          ],
-          "market_common_book_keys": [
-            "fanduel"
-          ],
-          "history_rows": 134,
-          "days_since_history": 1,
-          "selection_score": 0.7749181741202459,
-          "parlay_precision_eligible": true,
-          "line_variant": "alternate",
-          "hit_survival_probability": 0.6361862425045121,
-          "hit_survival_raw_probability": 0.6824449821603367,
-          "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
-          "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
-          "hit_survival_batting_order": 4.0,
-          "hit_survival_batting_order_source": "prior_start_proxy",
-          "latent_probability_disagreement": 0.11317960113875847,
-          "parlay_leg_probability": 0.6392619210434688,
-          "latent_leg_probability": 0.6412399479960498,
-          "latent_leg_raw_probability": 0.6747906894300749,
-          "latent_leg_ensemble_std": 0.0617918211990348,
-          "latent_support_fraction": 1.0,
-          "latent_in_support": true,
-          "latent_model_version": "mlb_latent_parlay_set_attention_v3",
-          "latent_evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
-          "latent_numeric_features": {
-            "baseline": 1.2,
-            "last_hits": 1.0,
-            "batting_order": 4.0,
-            "log_history_rows": 4.90527477843843,
-            "is_home": 0.0,
-            "batter_strength": 0.4342332341269841,
-            "pitcher_vulnerability": 0.39066238721824714,
-            "pitcher_uncertainty": 0.3734467044516285,
-            "batter_vs_starter_games": 0.0,
-            "batter_vs_starter_lift": 0.0,
-            "archetype_neighbor_games": 51.0,
-            "archetype_neighbor_support": 27.49028200610494,
-            "archetype_neighbor_lift": -0.014135693968840516,
-            "matchup_network_score": 0.10628761877802538,
-            "matchup_network_confidence": 0.8042527787046755,
-            "matchup_network_adjustment": 0.01062876187780254
-          },
-          "latent_categorical_features": {
-            "player": "nick_gonzales",
-            "pitcher": "681190",
-            "team": "PIT",
-            "opponent": "135"
-          },
-          "base_market_line": 0.5,
-          "line_increment": 1.0,
-          "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182881396&selectionId=57495785",
-          "alternate_line_price_source": "fanduel_public",
           "provider_source_market_id": "734.182881396:57495785",
-          "alternate_line_observed_at_utc": "2026-08-26T13:18:59.260855+00:00",
-          "alternate_line_books": 1,
-          "alternate_line_book_keys": [
-            "fanduel"
-          ],
-          "lineup_status": "unconfirmed",
-          "batting_order": "",
-          "official_game_status": "Scheduled",
           "risk_flags": [
             "lineup_unconfirmed"
-          ]
+          ],
+          "selected_side_price": 220.0,
+          "selected_sportsbook": "FanDuel",
+          "selected_sportsbook_key": "fanduel",
+          "selection_score": 0.7749181741202459,
+          "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182881396&selectionId=57495785",
+          "target": "H",
+          "team": "PIT"
         }
       ],
-      "ticket_tier": "profit_boost",
-      "probability_floor": 0.1,
       "maximum_decimal_price": 15.0,
+      "mixed_direction": false,
+      "pairwise_adjustment_factor": 1.001977614,
+      "parlay_score": 0.14993556966497879,
+      "probability_floor": 0.1,
+      "projected_probability": 0.12201726225117773,
       "risk_adjusted_profit_score": 0.16897154643317136,
-      "evidence_status": "SHADOW_ALT_LINE_PRICE_CAPTURE",
-      "ticket_id": "profit_boost_2_leg",
-      "betslip": {
-        "sportsbook_key": "fanduel",
-        "sportsbook": "FanDuel",
-        "status": "ready",
-        "leg_count": 2,
-        "url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.182845170&selectionId%5B0%5D=94749094&marketId%5B1%5D=734.182881396&selectionId%5B1%5D=57495785",
-        "source": "direct_fanduel_public_market_ids"
-      },
-      "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.182845170&selectionId%5B0%5D=94749094&marketId%5B1%5D=734.182881396&selectionId%5B1%5D=57495785",
-      "status": "review",
-      "action_status": "review",
       "risk_flags": [
         "lineup_unconfirmed"
       ],
-      "candidate_authorized": false,
+      "same_game": false,
+      "same_market_bucket": true,
+      "same_player": false,
+      "same_sportsbook_confirmed": true,
+      "same_target": true,
+      "same_team": false,
+      "sportsbook": "FanDuel",
+      "sportsbook_key": "fanduel",
       "staking_enabled": false,
-      "authorization_status": "SHADOW_ONLY"
+      "status": "review",
+      "ticket_id": "profit_boost_2_leg",
+      "ticket_tier": "profit_boost"
     },
+    "reason": "lineups are not yet confirmed",
+    "run_date": "2026-08-26",
+    "schema_version": 4,
+    "selected_ticket": {
+      "action_status": "review",
+      "authorization_status": "SHADOW_ONLY",
+      "avg_leg_quality": 0.7644011438577076,
+      "betslip": {
+        "leg_count": 2,
+        "source": "direct_fanduel_public_market_ids",
+        "sportsbook": "FanDuel",
+        "sportsbook_key": "fanduel",
+        "status": "ready",
+        "url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.182845170&selectionId%5B0%5D=94749094&marketId%5B1%5D=734.182881396&selectionId%5B1%5D=57495785"
+      },
+      "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.182845170&selectionId%5B0%5D=94749094&marketId%5B1%5D=734.182881396&selectionId%5B1%5D=57495785",
+      "candidate_authorized": false,
+      "combined_american_price": 1116.0,
+      "combined_decimal_price": 12.16,
+      "evidence_status": "SHADOW_ALT_LINE_PRICE_CAPTURE",
+      "expected_return_per_unit": 0.4837299089743212,
+      "independent_probability": 0.12201726225117773,
+      "leg_count": 2,
+      "leg_directions": [
+        "OVER",
+        "OVER"
+      ],
+      "leg_indices": [
+        2,
+        4
+      ],
+      "leg_keys": [
+        "2026-08-26|824234|Kevin McGonigle|H|OVER|ALT_1.5",
+        "2026-08-26|823255|Nick Gonzales|H|OVER|ALT_1.5"
+      ],
+      "leg_names": [
+        "Kevin McGonigle",
+        "Nick Gonzales"
+      ],
+      "leg_targets": [
+        "H",
+        "H"
+      ],
+      "legs": [
+        {
+          "alternate_line_book_keys": [
+            "fanduel"
+          ],
+          "alternate_line_books": 1,
+          "alternate_line_observed_at_utc": "2026-08-26T13:18:59.260855+00:00",
+          "alternate_line_price_source": "fanduel_public",
+          "base_market_line": 0.5,
+          "batting_order": "",
+          "commence_time_utc": "2026-08-26T17:10:00Z",
+          "days_since_history": 1,
+          "direction": "OVER",
+          "estimated_graded_hit_rate": 0.3278699561343561,
+          "expected_value_per_unit": 0.24590583331055305,
+          "final_pool_quality_score": 0.7538841135951694,
+          "game_id": "824234",
+          "game_status_code": "P",
+          "historical_bucket_key": "H|OVER|1.5|ALT",
+          "history_rows": 139,
+          "hit_survival_batting_order": 3.0,
+          "hit_survival_batting_order_source": "prior_start_proxy",
+          "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+          "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+          "hit_survival_probability": 0.620151182318617,
+          "hit_survival_raw_probability": 0.6635989361034678,
+          "latent_categorical_features": {
+            "opponent": "139",
+            "pitcher": "642547",
+            "player": "kevin_mcgonigle",
+            "team": "DET"
+          },
+          "latent_evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+          "latent_in_support": true,
+          "latent_leg_ensemble_std": 0.0417716821324187,
+          "latent_leg_probability": 0.7474293865420659,
+          "latent_leg_raw_probability": 0.7737583888622076,
+          "latent_model_version": "mlb_latent_parlay_set_attention_v3",
+          "latent_numeric_features": {
+            "archetype_neighbor_games": 52.0,
+            "archetype_neighbor_lift": -0.0949632674866596,
+            "archetype_neighbor_support": 26.29652315946741,
+            "baseline": 1.2,
+            "batter_strength": 0.4176139736567549,
+            "batter_vs_starter_games": 1.0,
+            "batter_vs_starter_lift": 0.0962962962962963,
+            "batting_order": 3.0,
+            "is_home": 1.0,
+            "last_hits": 0.0,
+            "log_history_rows": 4.941642422609304,
+            "matchup_network_adjustment": 0.017978110627273638,
+            "matchup_network_confidence": 0.8274418483016484,
+            "matchup_network_score": 0.17978110627273639,
+            "pitcher_uncertainty": 0.33720940161919744,
+            "pitcher_vulnerability": 0.4169106300562182
+          },
+          "latent_probability_disagreement": 0.09609077068188399,
+          "latent_support_fraction": 1.0,
+          "line_increment": 1.0,
+          "line_variant": "alternate",
+          "lineup_status": "unconfirmed",
+          "market_book_keys": [
+            "fanduel"
+          ],
+          "market_books": 1,
+          "market_bucket": "H|OVER|1.5|ALT",
+          "market_common_book_keys": [
+            "fanduel"
+          ],
+          "market_common_books": 1,
+          "market_date": "2026-08-26",
+          "market_implied_probability": 0.6774193548387096,
+          "market_line": 1.5,
+          "market_source": "real",
+          "model_hit_probability": 0.367955335610347,
+          "official_game_status": "Scheduled",
+          "opponent": "TB",
+          "parlay_leg_probability": 0.6205859656324609,
+          "parlay_precision_eligible": true,
+          "play_key": "2026-08-26|824234|Kevin McGonigle|H|OVER|ALT_1.5",
+          "player": "Kevin McGonigle",
+          "player_display_name": "Kevin McGonigle",
+          "player_headshot_fallback_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/805808/headshot/67/current",
+          "player_headshot_url": "data/headshots/805808.jpg",
+          "player_id": "kevin_mcgonigle",
+          "player_type": "hitter",
+          "prediction": 1.2852867049157446,
+          "price_confirmed": true,
+          "provider_source_market_id": "734.182845170:94749094",
+          "risk_flags": [
+            "lineup_unconfirmed"
+          ],
+          "selected_side_price": 280.0,
+          "selected_sportsbook": "FanDuel",
+          "selected_sportsbook_key": "fanduel",
+          "selection_score": 0.7538841135951694,
+          "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182845170&selectionId=94749094",
+          "target": "H",
+          "team": "DET"
+        },
+        {
+          "alternate_line_book_keys": [
+            "fanduel"
+          ],
+          "alternate_line_books": 1,
+          "alternate_line_observed_at_utc": "2026-08-26T13:18:59.260855+00:00",
+          "alternate_line_price_source": "fanduel_public",
+          "base_market_line": 0.5,
+          "batting_order": "",
+          "commence_time_utc": "2026-08-26T20:10:00Z",
+          "days_since_history": 1,
+          "direction": "OVER",
+          "estimated_graded_hit_rate": 0.37215139712641715,
+          "expected_value_per_unit": 0.19088447080453497,
+          "final_pool_quality_score": 0.7749181741202459,
+          "game_id": "823255",
+          "game_status_code": "P",
+          "historical_bucket_key": "H|OVER|1.5|ALT",
+          "history_rows": 134,
+          "hit_survival_batting_order": 4.0,
+          "hit_survival_batting_order_source": "prior_start_proxy",
+          "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+          "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+          "hit_survival_probability": 0.6361862425045121,
+          "hit_survival_raw_probability": 0.6824449821603367,
+          "latent_categorical_features": {
+            "opponent": "135",
+            "pitcher": "681190",
+            "player": "nick_gonzales",
+            "team": "PIT"
+          },
+          "latent_evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+          "latent_in_support": true,
+          "latent_leg_ensemble_std": 0.0617918211990348,
+          "latent_leg_probability": 0.6412399479960498,
+          "latent_leg_raw_probability": 0.6747906894300749,
+          "latent_model_version": "mlb_latent_parlay_set_attention_v3",
+          "latent_numeric_features": {
+            "archetype_neighbor_games": 51.0,
+            "archetype_neighbor_lift": -0.014135693968840516,
+            "archetype_neighbor_support": 27.49028200610494,
+            "baseline": 1.2,
+            "batter_strength": 0.4342332341269841,
+            "batter_vs_starter_games": 0.0,
+            "batter_vs_starter_lift": 0.0,
+            "batting_order": 4.0,
+            "is_home": 0.0,
+            "last_hits": 1.0,
+            "log_history_rows": 4.90527477843843,
+            "matchup_network_adjustment": 0.01062876187780254,
+            "matchup_network_confidence": 0.8042527787046755,
+            "matchup_network_score": 0.10628761877802538,
+            "pitcher_uncertainty": 0.3734467044516285,
+            "pitcher_vulnerability": 0.39066238721824714
+          },
+          "latent_probability_disagreement": 0.11317960113875847,
+          "latent_support_fraction": 1.0,
+          "line_increment": 1.0,
+          "line_variant": "alternate",
+          "lineup_status": "unconfirmed",
+          "market_book_keys": [
+            "fanduel"
+          ],
+          "market_books": 1,
+          "market_bucket": "H|OVER|1.5|ALT",
+          "market_common_book_keys": [
+            "fanduel"
+          ],
+          "market_common_books": 1,
+          "market_date": "2026-08-26",
+          "market_implied_probability": 0.7058823529411765,
+          "market_line": 1.5,
+          "market_source": "real",
+          "model_hit_probability": 0.42054703979710983,
+          "official_game_status": "Scheduled",
+          "opponent": "SD",
+          "parlay_leg_probability": 0.6392619210434688,
+          "parlay_precision_eligible": true,
+          "play_key": "2026-08-26|823255|Nick Gonzales|H|OVER|ALT_1.5",
+          "player": "Nick Gonzales",
+          "player_display_name": "Nick Gonzales",
+          "player_headshot_fallback_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/693304/headshot/67/current",
+          "player_headshot_url": "data/headshots/693304.jpg",
+          "player_id": "nick_gonzales",
+          "player_type": "hitter",
+          "prediction": 1.4360477398796687,
+          "price_confirmed": true,
+          "provider_source_market_id": "734.182881396:57495785",
+          "risk_flags": [
+            "lineup_unconfirmed"
+          ],
+          "selected_side_price": 220.0,
+          "selected_sportsbook": "FanDuel",
+          "selected_sportsbook_key": "fanduel",
+          "selection_score": 0.7749181741202459,
+          "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182881396&selectionId=57495785",
+          "target": "H",
+          "team": "PIT"
+        }
+      ],
+      "maximum_decimal_price": 15.0,
+      "mixed_direction": false,
+      "pairwise_adjustment_factor": 1.001977614,
+      "parlay_score": 0.14993556966497879,
+      "probability_floor": 0.1,
+      "projected_probability": 0.12201726225117773,
+      "risk_adjusted_profit_score": 0.16897154643317136,
+      "risk_flags": [
+        "lineup_unconfirmed"
+      ],
+      "same_game": false,
+      "same_market_bucket": true,
+      "same_player": false,
+      "same_sportsbook_confirmed": true,
+      "same_target": true,
+      "same_team": false,
+      "sportsbook": "FanDuel",
+      "sportsbook_key": "fanduel",
+      "staking_enabled": false,
+      "status": "review",
+      "ticket_id": "profit_boost_2_leg",
+      "ticket_tier": "profit_boost"
+    },
+    "status": "review",
     "ticket_ladder": [
       {
+        "action_status": "review",
+        "authorization_status": "SHADOW_ONLY",
+        "avg_leg_quality": 0.7644011438577076,
+        "betslip": {
+          "leg_count": 2,
+          "source": "direct_fanduel_public_market_ids",
+          "sportsbook": "FanDuel",
+          "sportsbook_key": "fanduel",
+          "status": "ready",
+          "url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.182845170&selectionId%5B0%5D=94749094&marketId%5B1%5D=734.182881396&selectionId%5B1%5D=57495785"
+        },
+        "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.182845170&selectionId%5B0%5D=94749094&marketId%5B1%5D=734.182881396&selectionId%5B1%5D=57495785",
+        "candidate_authorized": false,
+        "combined_american_price": 1116.0,
+        "combined_decimal_price": 12.16,
+        "evidence_status": "SHADOW_ALT_LINE_PRICE_CAPTURE",
+        "expected_return_per_unit": 0.4837299089743212,
+        "independent_probability": 0.12201726225117773,
+        "leg_count": 2,
+        "leg_directions": [
+          "OVER",
+          "OVER"
+        ],
         "leg_indices": [
           2,
           4
@@ -790,699 +944,404 @@
           "H",
           "H"
         ],
-        "leg_directions": [
-          "OVER",
-          "OVER"
-        ],
-        "leg_count": 2,
-        "projected_probability": 0.12201726225117773,
-        "independent_probability": 0.12201726225117773,
-        "pairwise_adjustment_factor": 1.001977614,
-        "parlay_score": 0.14993556966497879,
-        "combined_decimal_price": 12.16,
-        "combined_american_price": 1116.0,
-        "expected_return_per_unit": 0.4837299089743212,
-        "same_sportsbook_confirmed": true,
-        "sportsbook_key": "fanduel",
-        "sportsbook": "FanDuel",
-        "avg_leg_quality": 0.7644011438577076,
-        "same_player": false,
-        "same_game": false,
-        "same_team": false,
-        "same_target": true,
-        "same_market_bucket": true,
-        "mixed_direction": false,
         "legs": [
           {
+            "alternate_line_book_keys": [
+              "fanduel"
+            ],
+            "alternate_line_books": 1,
+            "alternate_line_observed_at_utc": "2026-08-26T13:18:59.260855+00:00",
+            "alternate_line_price_source": "fanduel_public",
+            "base_market_line": 0.5,
+            "batting_order": "",
+            "commence_time_utc": "2026-08-26T17:10:00Z",
+            "days_since_history": 1,
+            "direction": "OVER",
+            "estimated_graded_hit_rate": 0.3278699561343561,
+            "expected_value_per_unit": 0.24590583331055305,
+            "final_pool_quality_score": 0.7538841135951694,
+            "game_id": "824234",
+            "game_status_code": "P",
+            "historical_bucket_key": "H|OVER|1.5|ALT",
+            "history_rows": 139,
+            "hit_survival_batting_order": 3.0,
+            "hit_survival_batting_order_source": "prior_start_proxy",
+            "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+            "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+            "hit_survival_probability": 0.620151182318617,
+            "hit_survival_raw_probability": 0.6635989361034678,
+            "latent_categorical_features": {
+              "opponent": "139",
+              "pitcher": "642547",
+              "player": "kevin_mcgonigle",
+              "team": "DET"
+            },
+            "latent_evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+            "latent_in_support": true,
+            "latent_leg_ensemble_std": 0.0417716821324187,
+            "latent_leg_probability": 0.7474293865420659,
+            "latent_leg_raw_probability": 0.7737583888622076,
+            "latent_model_version": "mlb_latent_parlay_set_attention_v3",
+            "latent_numeric_features": {
+              "archetype_neighbor_games": 52.0,
+              "archetype_neighbor_lift": -0.0949632674866596,
+              "archetype_neighbor_support": 26.29652315946741,
+              "baseline": 1.2,
+              "batter_strength": 0.4176139736567549,
+              "batter_vs_starter_games": 1.0,
+              "batter_vs_starter_lift": 0.0962962962962963,
+              "batting_order": 3.0,
+              "is_home": 1.0,
+              "last_hits": 0.0,
+              "log_history_rows": 4.941642422609304,
+              "matchup_network_adjustment": 0.017978110627273638,
+              "matchup_network_confidence": 0.8274418483016484,
+              "matchup_network_score": 0.17978110627273639,
+              "pitcher_uncertainty": 0.33720940161919744,
+              "pitcher_vulnerability": 0.4169106300562182
+            },
+            "latent_probability_disagreement": 0.09609077068188399,
+            "latent_support_fraction": 1.0,
+            "line_increment": 1.0,
+            "line_variant": "alternate",
+            "lineup_status": "unconfirmed",
+            "market_book_keys": [
+              "fanduel"
+            ],
+            "market_books": 1,
+            "market_bucket": "H|OVER|1.5|ALT",
+            "market_common_book_keys": [
+              "fanduel"
+            ],
+            "market_common_books": 1,
+            "market_date": "2026-08-26",
+            "market_implied_probability": 0.6774193548387096,
+            "market_line": 1.5,
+            "market_source": "real",
+            "model_hit_probability": 0.367955335610347,
+            "official_game_status": "Scheduled",
+            "opponent": "TB",
+            "parlay_leg_probability": 0.6205859656324609,
+            "parlay_precision_eligible": true,
             "play_key": "2026-08-26|824234|Kevin McGonigle|H|OVER|ALT_1.5",
             "player": "Kevin McGonigle",
             "player_display_name": "Kevin McGonigle",
             "player_id": "kevin_mcgonigle",
             "player_type": "hitter",
-            "team": "DET",
-            "opponent": "TB",
-            "game_id": "824234",
-            "market_date": "2026-08-26",
-            "commence_time_utc": "2026-08-26T17:10:00Z",
-            "game_status_code": "P",
-            "target": "H",
-            "direction": "OVER",
             "prediction": 1.2852867049157446,
-            "market_line": 1.5,
-            "market_source": "real",
-            "market_bucket": "H|OVER|1.5|ALT",
-            "historical_bucket_key": "H|OVER|1.5|ALT",
-            "estimated_graded_hit_rate": 0.3278699561343561,
-            "model_hit_probability": 0.367955335610347,
-            "market_implied_probability": 0.6774193548387096,
-            "final_pool_quality_score": 0.7538841135951694,
-            "expected_value_per_unit": 0.24590583331055305,
-            "selected_side_price": 280.0,
-            "selected_sportsbook_key": "fanduel",
-            "selected_sportsbook": "FanDuel",
             "price_confirmed": true,
-            "market_books": 1,
-            "market_common_books": 1,
-            "market_book_keys": [
-              "fanduel"
-            ],
-            "market_common_book_keys": [
-              "fanduel"
-            ],
-            "history_rows": 139,
-            "days_since_history": 1,
-            "selection_score": 0.7538841135951694,
-            "parlay_precision_eligible": true,
-            "line_variant": "alternate",
-            "hit_survival_probability": 0.620151182318617,
-            "hit_survival_raw_probability": 0.6635989361034678,
-            "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
-            "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
-            "hit_survival_batting_order": 3.0,
-            "hit_survival_batting_order_source": "prior_start_proxy",
-            "latent_probability_disagreement": 0.09609077068188399,
-            "parlay_leg_probability": 0.6205859656324609,
-            "latent_leg_probability": 0.7474293865420659,
-            "latent_leg_raw_probability": 0.7737583888622076,
-            "latent_leg_ensemble_std": 0.0417716821324187,
-            "latent_support_fraction": 1.0,
-            "latent_in_support": true,
-            "latent_model_version": "mlb_latent_parlay_set_attention_v3",
-            "latent_evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
-            "latent_numeric_features": {
-              "baseline": 1.2,
-              "last_hits": 0.0,
-              "batting_order": 3.0,
-              "log_history_rows": 4.941642422609304,
-              "is_home": 1.0,
-              "batter_strength": 0.4176139736567549,
-              "pitcher_vulnerability": 0.4169106300562182,
-              "pitcher_uncertainty": 0.33720940161919744,
-              "batter_vs_starter_games": 1.0,
-              "batter_vs_starter_lift": 0.0962962962962963,
-              "archetype_neighbor_games": 52.0,
-              "archetype_neighbor_support": 26.29652315946741,
-              "archetype_neighbor_lift": -0.0949632674866596,
-              "matchup_network_score": 0.17978110627273639,
-              "matchup_network_confidence": 0.8274418483016484,
-              "matchup_network_adjustment": 0.017978110627273638
-            },
-            "latent_categorical_features": {
-              "player": "kevin_mcgonigle",
-              "pitcher": "642547",
-              "team": "DET",
-              "opponent": "139"
-            },
-            "base_market_line": 0.5,
-            "line_increment": 1.0,
-            "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182845170&selectionId=94749094",
-            "alternate_line_price_source": "fanduel_public",
             "provider_source_market_id": "734.182845170:94749094",
-            "alternate_line_observed_at_utc": "2026-08-26T13:18:59.260855+00:00",
-            "alternate_line_books": 1,
+            "risk_flags": [
+              "lineup_unconfirmed"
+            ],
+            "selected_side_price": 280.0,
+            "selected_sportsbook": "FanDuel",
+            "selected_sportsbook_key": "fanduel",
+            "selection_score": 0.7538841135951694,
+            "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182845170&selectionId=94749094",
+            "target": "H",
+            "team": "DET"
+          },
+          {
             "alternate_line_book_keys": [
               "fanduel"
             ],
-            "lineup_status": "unconfirmed",
+            "alternate_line_books": 1,
+            "alternate_line_observed_at_utc": "2026-08-26T13:18:59.260855+00:00",
+            "alternate_line_price_source": "fanduel_public",
+            "base_market_line": 0.5,
             "batting_order": "",
+            "commence_time_utc": "2026-08-26T20:10:00Z",
+            "days_since_history": 1,
+            "direction": "OVER",
+            "estimated_graded_hit_rate": 0.37215139712641715,
+            "expected_value_per_unit": 0.19088447080453497,
+            "final_pool_quality_score": 0.7749181741202459,
+            "game_id": "823255",
+            "game_status_code": "P",
+            "historical_bucket_key": "H|OVER|1.5|ALT",
+            "history_rows": 134,
+            "hit_survival_batting_order": 4.0,
+            "hit_survival_batting_order_source": "prior_start_proxy",
+            "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+            "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+            "hit_survival_probability": 0.6361862425045121,
+            "hit_survival_raw_probability": 0.6824449821603367,
+            "latent_categorical_features": {
+              "opponent": "135",
+              "pitcher": "681190",
+              "player": "nick_gonzales",
+              "team": "PIT"
+            },
+            "latent_evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+            "latent_in_support": true,
+            "latent_leg_ensemble_std": 0.0617918211990348,
+            "latent_leg_probability": 0.6412399479960498,
+            "latent_leg_raw_probability": 0.6747906894300749,
+            "latent_model_version": "mlb_latent_parlay_set_attention_v3",
+            "latent_numeric_features": {
+              "archetype_neighbor_games": 51.0,
+              "archetype_neighbor_lift": -0.014135693968840516,
+              "archetype_neighbor_support": 27.49028200610494,
+              "baseline": 1.2,
+              "batter_strength": 0.4342332341269841,
+              "batter_vs_starter_games": 0.0,
+              "batter_vs_starter_lift": 0.0,
+              "batting_order": 4.0,
+              "is_home": 0.0,
+              "last_hits": 1.0,
+              "log_history_rows": 4.90527477843843,
+              "matchup_network_adjustment": 0.01062876187780254,
+              "matchup_network_confidence": 0.8042527787046755,
+              "matchup_network_score": 0.10628761877802538,
+              "pitcher_uncertainty": 0.3734467044516285,
+              "pitcher_vulnerability": 0.39066238721824714
+            },
+            "latent_probability_disagreement": 0.11317960113875847,
+            "latent_support_fraction": 1.0,
+            "line_increment": 1.0,
+            "line_variant": "alternate",
+            "lineup_status": "unconfirmed",
+            "market_book_keys": [
+              "fanduel"
+            ],
+            "market_books": 1,
+            "market_bucket": "H|OVER|1.5|ALT",
+            "market_common_book_keys": [
+              "fanduel"
+            ],
+            "market_common_books": 1,
+            "market_date": "2026-08-26",
+            "market_implied_probability": 0.7058823529411765,
+            "market_line": 1.5,
+            "market_source": "real",
+            "model_hit_probability": 0.42054703979710983,
             "official_game_status": "Scheduled",
-            "risk_flags": [
-              "lineup_unconfirmed"
-            ]
-          },
-          {
+            "opponent": "SD",
+            "parlay_leg_probability": 0.6392619210434688,
+            "parlay_precision_eligible": true,
             "play_key": "2026-08-26|823255|Nick Gonzales|H|OVER|ALT_1.5",
             "player": "Nick Gonzales",
             "player_display_name": "Nick Gonzales",
             "player_id": "nick_gonzales",
             "player_type": "hitter",
-            "team": "PIT",
-            "opponent": "SD",
-            "game_id": "823255",
-            "market_date": "2026-08-26",
-            "commence_time_utc": "2026-08-26T20:10:00Z",
-            "game_status_code": "P",
-            "target": "H",
-            "direction": "OVER",
             "prediction": 1.4360477398796687,
-            "market_line": 1.5,
-            "market_source": "real",
-            "market_bucket": "H|OVER|1.5|ALT",
-            "historical_bucket_key": "H|OVER|1.5|ALT",
-            "estimated_graded_hit_rate": 0.37215139712641715,
-            "model_hit_probability": 0.42054703979710983,
-            "market_implied_probability": 0.7058823529411765,
-            "final_pool_quality_score": 0.7749181741202459,
-            "expected_value_per_unit": 0.19088447080453497,
-            "selected_side_price": 220.0,
-            "selected_sportsbook_key": "fanduel",
-            "selected_sportsbook": "FanDuel",
             "price_confirmed": true,
-            "market_books": 1,
-            "market_common_books": 1,
-            "market_book_keys": [
-              "fanduel"
-            ],
-            "market_common_book_keys": [
-              "fanduel"
-            ],
-            "history_rows": 134,
-            "days_since_history": 1,
-            "selection_score": 0.7749181741202459,
-            "parlay_precision_eligible": true,
-            "line_variant": "alternate",
-            "hit_survival_probability": 0.6361862425045121,
-            "hit_survival_raw_probability": 0.6824449821603367,
-            "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
-            "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
-            "hit_survival_batting_order": 4.0,
-            "hit_survival_batting_order_source": "prior_start_proxy",
-            "latent_probability_disagreement": 0.11317960113875847,
-            "parlay_leg_probability": 0.6392619210434688,
-            "latent_leg_probability": 0.6412399479960498,
-            "latent_leg_raw_probability": 0.6747906894300749,
-            "latent_leg_ensemble_std": 0.0617918211990348,
-            "latent_support_fraction": 1.0,
-            "latent_in_support": true,
-            "latent_model_version": "mlb_latent_parlay_set_attention_v3",
-            "latent_evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
-            "latent_numeric_features": {
-              "baseline": 1.2,
-              "last_hits": 1.0,
-              "batting_order": 4.0,
-              "log_history_rows": 4.90527477843843,
-              "is_home": 0.0,
-              "batter_strength": 0.4342332341269841,
-              "pitcher_vulnerability": 0.39066238721824714,
-              "pitcher_uncertainty": 0.3734467044516285,
-              "batter_vs_starter_games": 0.0,
-              "batter_vs_starter_lift": 0.0,
-              "archetype_neighbor_games": 51.0,
-              "archetype_neighbor_support": 27.49028200610494,
-              "archetype_neighbor_lift": -0.014135693968840516,
-              "matchup_network_score": 0.10628761877802538,
-              "matchup_network_confidence": 0.8042527787046755,
-              "matchup_network_adjustment": 0.01062876187780254
-            },
-            "latent_categorical_features": {
-              "player": "nick_gonzales",
-              "pitcher": "681190",
-              "team": "PIT",
-              "opponent": "135"
-            },
-            "base_market_line": 0.5,
-            "line_increment": 1.0,
-            "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182881396&selectionId=57495785",
-            "alternate_line_price_source": "fanduel_public",
             "provider_source_market_id": "734.182881396:57495785",
-            "alternate_line_observed_at_utc": "2026-08-26T13:18:59.260855+00:00",
-            "alternate_line_books": 1,
-            "alternate_line_book_keys": [
-              "fanduel"
-            ],
-            "lineup_status": "unconfirmed",
-            "batting_order": "",
-            "official_game_status": "Scheduled",
             "risk_flags": [
               "lineup_unconfirmed"
-            ]
+            ],
+            "selected_side_price": 220.0,
+            "selected_sportsbook": "FanDuel",
+            "selected_sportsbook_key": "fanduel",
+            "selection_score": 0.7749181741202459,
+            "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182881396&selectionId=57495785",
+            "target": "H",
+            "team": "PIT"
           }
         ],
-        "ticket_tier": "profit_boost",
-        "probability_floor": 0.1,
         "maximum_decimal_price": 15.0,
+        "mixed_direction": false,
+        "pairwise_adjustment_factor": 1.001977614,
+        "parlay_score": 0.14993556966497879,
+        "probability_floor": 0.1,
+        "projected_probability": 0.12201726225117773,
         "risk_adjusted_profit_score": 0.16897154643317136,
-        "evidence_status": "SHADOW_ALT_LINE_PRICE_CAPTURE",
-        "ticket_id": "profit_boost_2_leg",
-        "betslip": {
-          "sportsbook_key": "fanduel",
-          "sportsbook": "FanDuel",
-          "status": "ready",
-          "leg_count": 2,
-          "url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.182845170&selectionId%5B0%5D=94749094&marketId%5B1%5D=734.182881396&selectionId%5B1%5D=57495785",
-          "source": "direct_fanduel_public_market_ids"
-        },
-        "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.182845170&selectionId%5B0%5D=94749094&marketId%5B1%5D=734.182881396&selectionId%5B1%5D=57495785",
-        "status": "review",
-        "action_status": "review",
         "risk_flags": [
           "lineup_unconfirmed"
         ],
-        "candidate_authorized": false,
+        "same_game": false,
+        "same_market_bucket": true,
+        "same_player": false,
+        "same_sportsbook_confirmed": true,
+        "same_target": true,
+        "same_team": false,
+        "sportsbook": "FanDuel",
+        "sportsbook_key": "fanduel",
         "staking_enabled": false,
-        "authorization_status": "SHADOW_ONLY"
+        "status": "review",
+        "ticket_id": "profit_boost_2_leg",
+        "ticket_tier": "profit_boost"
       }
     ],
-    "latent_shadow_ticket_ladder": [],
-    "latent_parlay_validation": {
-      "model_version": "mlb_latent_parlay_set_attention_v3",
-      "status": "development_shadow",
-      "evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
-      "device": "NVIDIA GeForce RTX 4080 SUPER",
-      "cuda_version": "12.8",
-      "claim_scope": "synthetic H over 0.5 hit-chain ranking only; no executable price or ROI claim",
-      "leakage_exclusions": [
-        "same-game H, PA, AB, Team_PA_share, wOBA, xwOBA, ISO, Barrel%, HardHit%",
-        "historical H_market_gap and projection derived from same-game fields"
-      ],
-      "identity_contract": {
-        "player": "normalized player name shared by training and production",
-        "pitcher": "MLBAM identifier with normalized-name fallback",
-        "team": "team abbreviation",
-        "opponent": "team abbreviation"
-      },
-      "rows": 23046,
-      "dates": 125,
-      "partitions": {
-        "development": {
-          "start": "2026-03-30",
-          "end": "2026-06-24"
-        },
-        "calibration": {
-          "start": "2026-06-25",
-          "end": "2026-07-16"
-        },
-        "locked_holdout": {
-          "start": "2026-07-17",
-          "end": "2026-08-05"
-        }
-      },
-      "partition_rows": {
-        "development": 13303,
-        "calibration": 4488,
-        "locked_holdout": 5255
-      },
-      "sampled_tickets": {
-        "development": 17520,
-        "calibration": 6480,
-        "locked_holdout": 7200
-      },
-      "calibration": {
-        "legs": {
-          "rows": 4488,
-          "wins": 2528,
-          "hit_rate": 0.5632798573975044,
-          "mean_probability": 0.5625202655792236,
-          "brier_score": 0.2424343086651612,
-          "log_loss": 0.6778125853224081,
-          "roc_auc": 0.5708496472164816
-        },
-        "safe_rolling_baseline": {
-          "rows": 4488,
-          "wins": 2528,
-          "hit_rate": 0.5632798573975044,
-          "mean_probability": 0.5632797236126167,
-          "brier_score": 0.24418589648717387,
-          "log_loss": 0.6814756761962799,
-          "roc_auc": 0.5519312273960217
-        },
-        "sampled_tickets": {
-          "rows": 6480,
-          "wins": 1845,
-          "hit_rate": 0.2847222222222222,
-          "mean_probability": 0.28751012682914734,
-          "brier_score": 0.19658613861689764,
-          "log_loss": 0.5804600342416407,
-          "roc_auc": 0.6205273882296536
-        }
-      },
-      "locked_holdout": {
-        "legs": {
-          "rows": 5255,
-          "wins": 2891,
-          "hit_rate": 0.5501427212178878,
-          "mean_probability": 0.5631510615348816,
-          "brier_score": 0.24408094480171033,
-          "log_loss": 0.6811830883046901,
-          "roc_auc": 0.5704383491329941
-        },
-        "safe_rolling_baseline": {
-          "rows": 5255,
-          "wins": 2891,
-          "hit_rate": 0.5501427212178878,
-          "mean_probability": 0.5603725246530553,
-          "brier_score": 0.2444186750878317,
-          "log_loss": 0.6819304777519898,
-          "roc_auc": 0.5713790420237612
-        },
-        "daily_top_two_legs": {
-          "latent": {
-            "legs": 40,
-            "wins": 30,
-            "hit_rate": 0.75,
-            "wilson_95": [
-              0.598057409330299,
-              0.8581303210445048
-            ]
-          },
-          "safe_rolling_baseline": {
-            "legs": 40,
-            "wins": 25,
-            "hit_rate": 0.625,
-            "wilson_95": [
-              0.47032160054531913,
-              0.7577722646420829
-            ]
-          }
-        },
-        "sampled_tickets": {
-          "rows": 7200,
-          "wins": 1925,
-          "hit_rate": 0.2673611111111111,
-          "mean_probability": 0.28158947825431824,
-          "brier_score": 0.18543409529511665,
-          "log_loss": 0.5541604918377484,
-          "roc_auc": 0.6489663814858129
-        },
-        "daily_ranking": {
-          "2": {
-            "slates": 20,
-            "latent_ticket_wins": 10,
-            "latent_ticket_hit_rate": 0.5,
-            "latent_wilson_95": [
-              0.2992949144298199,
-              0.7007050855701801
-            ],
-            "independent_product_wins": 10,
-            "independent_product_hit_rate": 0.5,
-            "independent_wilson_95": [
-              0.2992949144298199,
-              0.7007050855701801
-            ]
-          },
-          "3": {
-            "slates": 20,
-            "latent_ticket_wins": 7,
-            "latent_ticket_hit_rate": 0.35,
-            "latent_wilson_95": [
-              0.18118954786794464,
-              0.5671494897805354
-            ],
-            "independent_product_wins": 8,
-            "independent_product_hit_rate": 0.4,
-            "independent_wilson_95": [
-              0.21880396741419272,
-              0.613422057684794
-            ]
-          },
-          "4": {
-            "slates": 20,
-            "latent_ticket_wins": 6,
-            "latent_ticket_hit_rate": 0.3,
-            "latent_wilson_95": [
-              0.14547527396899385,
-              0.5189767762289793
-            ],
-            "independent_product_wins": 6,
-            "independent_product_hit_rate": 0.3,
-            "independent_wilson_95": [
-              0.14547527396899385,
-              0.5189767762289793
-            ]
-          }
-        }
-      },
-      "deployment_fit": {
-        "status": "prospective_shadow_only",
-        "training_period": {
-          "start": "2026-03-30",
-          "end": "2026-07-16"
-        },
-        "probability_calibration_period": {
-          "start": "2026-07-17",
-          "end": "2026-08-05"
-        },
-        "training_rows": 17791,
-        "calibration_rows": 5255,
-        "calibration_legs": {
-          "rows": 5255,
-          "wins": 2891,
-          "hit_rate": 0.5501427212178878,
-          "mean_probability": 0.5305083394050598,
-          "brier_score": 0.2435080430484226,
-          "log_loss": 0.6800309584163625,
-          "roc_auc": 0.5774020224970311
-        },
-        "calibration_sampled_tickets": {
-          "rows": 7200,
-          "wins": 1927,
-          "hit_rate": 0.26763888888888887,
-          "mean_probability": 0.12740659713745117,
-          "brier_score": 0.2061659975211286,
-          "log_loss": 0.6245069055404697,
-          "roc_auc": 0.6564487149041671
-        },
-        "next_unseen_date": "2026-08-06"
-      },
-      "export_parity": {
-        "leg_probability_max_abs": 1.882963751587141e-08,
-        "leg_raw_probability_max_abs": 2.638824647682725e-08,
-        "ticket_probability_max_abs": 4.1938656991646894e-09,
-        "ticket_raw_probability_max_abs": 1.7148897024643617e-08
-      }
-    },
-    "hit_survival_validation": {
-      "model_version": "mlb_parlay_hit_survival_role_hgb_v1",
-      "status": "development_shadow",
-      "evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
-      "claim_scope": "hit-rate ranking and confidence diagnostic only; executable prices are required for ROI",
-      "features": [
-        "projection",
-        "baseline",
-        "last_hits",
-        "batting_order",
-        "history_rows",
-        "is_home"
-      ],
-      "training_rows": 15993,
-      "training_dates": 113,
-      "frozen_training_cutoff_exclusive": "2026-07-30",
-      "partitions": {
-        "development": {
-          "start": "2026-03-30",
-          "end": "2026-06-23"
-        },
-        "calibration": {
-          "start": "2026-06-24",
-          "end": "2026-07-10"
-        },
-        "locked_recent_holdout": {
-          "start": "2026-07-11",
-          "end": "2026-07-29"
-        }
-      },
-      "calibration": {
-        "rows": 3114,
-        "wins": 1714,
-        "hit_rate": 0.550417469492614,
-        "mean_probability": 0.5504251481713196,
-        "brier_score": 0.24259946235125276,
-        "log_loss": 0.6782192808296192
-      },
-      "locked_recent_holdout": {
-        "rows": 3190,
-        "wins": 1695,
-        "hit_rate": 0.5313479623824452,
-        "mean_probability": 0.5508849184708919,
-        "brier_score": 0.24141080951926325,
-        "log_loss": 0.6757913330805801,
-        "daily_top_two": {
-          "legs": 32,
-          "leg_wins": 23,
-          "slates": 15,
-          "ticket_wins": 10,
-          "leg_hit_rate": 0.71875,
-          "leg_hit_rate_wilson_95_low": 0.546251630618882,
-          "leg_hit_rate_wilson_95_high": 0.8443559315435214,
-          "ticket_hit_rate": 0.6666666666666666,
-          "ticket_hit_rate_wilson_95_low": 0.41713125151212976,
-          "ticket_hit_rate_wilson_95_high": 0.8482389930530876,
-          "mean_probability": 0.67128158684495
-        },
-        "projection_baseline_daily_top_two": {
-          "legs": 32,
-          "leg_wins": 16,
-          "slates": 15,
-          "ticket_wins": 4,
-          "leg_hit_rate": 0.5,
-          "leg_hit_rate_wilson_95_low": 0.33630614316859386,
-          "leg_hit_rate_wilson_95_high": 0.6636938568314061,
-          "ticket_hit_rate": 0.26666666666666666,
-          "ticket_hit_rate_wilson_95_low": 0.1089727610318281,
-          "ticket_hit_rate_wilson_95_high": 0.5195088965768675,
-          "mean_probability": 0.7671999109910522
-        }
-      }
-    },
     "validation": {
-      "method": "stored_pre_event_projection_real_price_confirmed_grading",
-      "price_validation": "real market, at least five books, selected OVER price confirmed; no parlay ROI claim",
-      "history_before_date": "2026-08-26",
-      "event_rows": 333,
-      "dates": 10,
-      "by_leg_count": [
-        {
-          "leg_count": 2,
-          "all_dates": {
-            "tickets": 9,
-            "dates": 9,
-            "hits": 8,
-            "hit_rate": 0.8888888888888888,
-            "win_rate_wilson_95_low": 0.5649937852319399,
-            "win_rate_wilson_95_high": 0.9801096286728695,
-            "mean_projected_probability": 0.8044273966557217,
-            "brier_score": 0.10312354211233236
-          },
-          "development": {
-            "tickets": 8,
-            "dates": 8,
-            "hits": 8,
-            "hit_rate": 1.0,
-            "win_rate_wilson_95_low": 0.6755843804891231,
-            "win_rate_wilson_95_high": 1.0,
-            "mean_projected_probability": 0.8094355379231893,
-            "brier_score": 0.042982775567192946
-          },
-          "fixed_recent_holdout": {
-            "tickets": 1,
-            "dates": 1,
-            "hits": 0,
-            "hit_rate": 0.0,
-            "win_rate_wilson_95_low": 0.0,
-            "win_rate_wilson_95_high": 0.7934567085261071,
-            "mean_projected_probability": 0.764362266515981,
-            "brier_score": 0.5842496744734477
-          }
-        },
-        {
-          "leg_count": 3,
-          "all_dates": {
-            "tickets": 9,
-            "dates": 9,
-            "hits": 7,
-            "hit_rate": 0.7777777777777778,
-            "win_rate_wilson_95_low": 0.4525833436728054,
-            "win_rate_wilson_95_high": 0.9367762376877727,
-            "mean_projected_probability": 0.6886033651133826,
-            "brier_score": 0.15276469649933794
-          },
-          "development": {
-            "tickets": 8,
-            "dates": 8,
-            "hits": 7,
-            "hit_rate": 0.875,
-            "win_rate_wilson_95_low": 0.5291051942301386,
-            "win_rate_wilson_95_high": 0.9775830911367038,
-            "mean_projected_probability": 0.694494311554102,
-            "brier_score": 0.12042388434189569
-          },
-          "fixed_recent_holdout": {
-            "tickets": 1,
-            "dates": 1,
-            "hits": 0,
-            "hit_rate": 0.0,
-            "win_rate_wilson_95_low": 0.0,
-            "win_rate_wilson_95_high": 0.7934567085261071,
-            "mean_projected_probability": 0.6414757935876271,
-            "brier_score": 0.41149119375887594
-          }
-        },
-        {
-          "leg_count": 4,
-          "all_dates": {
-            "tickets": 9,
-            "dates": 9,
-            "hits": 5,
-            "hit_rate": 0.5555555555555556,
-            "win_rate_wilson_95_low": 0.2666473457440297,
-            "win_rate_wilson_95_high": 0.811224570528086,
-            "mean_projected_probability": 0.577695433325778,
-            "brier_score": 0.26091561936381785
-          },
-          "development": {
-            "tickets": 8,
-            "dates": 8,
-            "hits": 5,
-            "hit_rate": 0.625,
-            "win_rate_wilson_95_low": 0.30573785458380187,
-            "win_rate_wilson_95_high": 0.863158240538479,
-            "mean_projected_probability": 0.5831899191495624,
-            "brier_score": 0.25792033381561763
-          },
-          "fixed_recent_holdout": {
-            "tickets": 1,
-            "dates": 1,
-            "hits": 0,
-            "hit_rate": 0.0,
-            "win_rate_wilson_95_low": 0.0,
-            "win_rate_wilson_95_high": 0.7934567085261071,
-            "mean_projected_probability": 0.5337395467355025,
-            "brier_score": 0.2848779037494197
-          }
-        }
-      ],
       "alternate_line_margin_audit": {
-        "method": "synthetic_event_grading_without_alternate_price_history",
-        "claim_scope": "hit-rate diagnostic only; does not establish alternate-line ROI",
-        "rows": 333,
         "base_hit_rate": 0.6276276276276276,
-        "one_unit_higher_hit_rate": 0.35135135135135137,
-        "two_units_higher_hit_rate": 0.25225225225225223,
-        "winner_margin_retention_one_unit": 0.5598086124401914,
         "by_target": {
           "R": {
-            "rows": 150,
             "base_hit_rate": 0.5866666666666667,
             "one_unit_higher_hit_rate": 0.18,
+            "rows": 150,
             "winner_margin_retention_one_unit": 0.3068181818181818
           },
           "TB": {
-            "rows": 183,
             "base_hit_rate": 0.6612021857923497,
             "one_unit_higher_hit_rate": 0.4918032786885246,
+            "rows": 183,
             "winner_margin_retention_one_unit": 0.743801652892562
           }
-        }
-      }
-    },
-    "available": true,
-    "reason": "lineups are not yet confirmed"
-  },
-  "policy_governance": {
-    "schema_version": "MLB_POLICY_GOVERNANCE_STATUS_V1",
-    "generated_at_utc": "2026-08-26T13:20:18.131729+00:00",
-    "run_date": "2026-08-26",
-    "slate_id": "MLB_20260826",
-    "snapshot_id": "mlb_20260826_131859Z_24f701b60457",
-    "capture_label": "FULL_SLATE_SNAPSHOT",
-    "complete_slate_capture_passed": true,
-    "candidate_authorization_enabled": false,
-    "staking_enabled": false,
-    "publication_mode": "SHADOW_RESEARCH_ONLY",
-    "certificate_status": "NO_ACTIVE_PROSPECTIVE_CERTIFICATE",
-    "authorization_reason": "Registered MLB policies remain in development and have no prospective certificate.",
-    "registered_policies": [
-      {
-        "policy_version": "MLB_SINGLES_OVER_POLICY_V1",
-        "policy_stage": "POLICY_DEVELOPMENT",
-        "policy_digest": "9fba82ab0f431dde6d02e0305d6498d2fbfa69b63ef34ee4f49b42b3bd7b87c4"
+        },
+        "claim_scope": "hit-rate diagnostic only; does not establish alternate-line ROI",
+        "method": "synthetic_event_grading_without_alternate_price_history",
+        "one_unit_higher_hit_rate": 0.35135135135135137,
+        "rows": 333,
+        "two_units_higher_hit_rate": 0.25225225225225223,
+        "winner_margin_retention_one_unit": 0.5598086124401914
       },
-      {
-        "policy_version": "MLB_FANDUEL_PUBLIC_BETSLIP_PARLAY_POLICY_V5",
-        "policy_stage": "POLICY_DEVELOPMENT",
-        "policy_digest": "af7432bf3d3ebecbe53f73bbba1cb1d94fb92f6c7af21ba029df0fd1f841fcd7"
-      }
-    ],
-    "historical_evidence_labels": [
-      "SELECTED_ONLY_HISTORY",
-      "SELECTED_ONLY_HISTORY"
-    ],
-    "full_policy_replay_available_for_snapshot": true,
-    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260826/governance/slates/MLB_20260826/mlb_20260826_131859Z_24f701b60457/manifest.json"
+      "by_leg_count": [
+        {
+          "all_dates": {
+            "brier_score": 0.10312354211233236,
+            "dates": 9,
+            "hit_rate": 0.8888888888888888,
+            "hits": 8,
+            "mean_projected_probability": 0.8044273966557217,
+            "tickets": 9,
+            "win_rate_wilson_95_high": 0.9801096286728695,
+            "win_rate_wilson_95_low": 0.5649937852319399
+          },
+          "development": {
+            "brier_score": 0.042982775567192946,
+            "dates": 8,
+            "hit_rate": 1.0,
+            "hits": 8,
+            "mean_projected_probability": 0.8094355379231893,
+            "tickets": 8,
+            "win_rate_wilson_95_high": 1.0,
+            "win_rate_wilson_95_low": 0.6755843804891231
+          },
+          "fixed_recent_holdout": {
+            "brier_score": 0.5842496744734477,
+            "dates": 1,
+            "hit_rate": 0.0,
+            "hits": 0,
+            "mean_projected_probability": 0.764362266515981,
+            "tickets": 1,
+            "win_rate_wilson_95_high": 0.7934567085261071,
+            "win_rate_wilson_95_low": 0.0
+          },
+          "leg_count": 2
+        },
+        {
+          "all_dates": {
+            "brier_score": 0.15276469649933794,
+            "dates": 9,
+            "hit_rate": 0.7777777777777778,
+            "hits": 7,
+            "mean_projected_probability": 0.6886033651133826,
+            "tickets": 9,
+            "win_rate_wilson_95_high": 0.9367762376877727,
+            "win_rate_wilson_95_low": 0.4525833436728054
+          },
+          "development": {
+            "brier_score": 0.12042388434189569,
+            "dates": 8,
+            "hit_rate": 0.875,
+            "hits": 7,
+            "mean_projected_probability": 0.694494311554102,
+            "tickets": 8,
+            "win_rate_wilson_95_high": 0.9775830911367038,
+            "win_rate_wilson_95_low": 0.5291051942301386
+          },
+          "fixed_recent_holdout": {
+            "brier_score": 0.41149119375887594,
+            "dates": 1,
+            "hit_rate": 0.0,
+            "hits": 0,
+            "mean_projected_probability": 0.6414757935876271,
+            "tickets": 1,
+            "win_rate_wilson_95_high": 0.7934567085261071,
+            "win_rate_wilson_95_low": 0.0
+          },
+          "leg_count": 3
+        },
+        {
+          "all_dates": {
+            "brier_score": 0.26091561936381785,
+            "dates": 9,
+            "hit_rate": 0.5555555555555556,
+            "hits": 5,
+            "mean_projected_probability": 0.577695433325778,
+            "tickets": 9,
+            "win_rate_wilson_95_high": 0.811224570528086,
+            "win_rate_wilson_95_low": 0.2666473457440297
+          },
+          "development": {
+            "brier_score": 0.25792033381561763,
+            "dates": 8,
+            "hit_rate": 0.625,
+            "hits": 5,
+            "mean_projected_probability": 0.5831899191495624,
+            "tickets": 8,
+            "win_rate_wilson_95_high": 0.863158240538479,
+            "win_rate_wilson_95_low": 0.30573785458380187
+          },
+          "fixed_recent_holdout": {
+            "brier_score": 0.2848779037494197,
+            "dates": 1,
+            "hit_rate": 0.0,
+            "hits": 0,
+            "mean_projected_probability": 0.5337395467355025,
+            "tickets": 1,
+            "win_rate_wilson_95_high": 0.7934567085261071,
+            "win_rate_wilson_95_low": 0.0
+          },
+          "leg_count": 4
+        }
+      ],
+      "dates": 10,
+      "event_rows": 333,
+      "history_before_date": "2026-08-26",
+      "method": "stored_pre_event_projection_real_price_confirmed_grading",
+      "price_validation": "real market, at least five books, selected OVER price confirmed; no parlay ROI claim"
+    }
   },
-  "suppressed_closed_games": [],
-  "suppressed_duplicates": [],
-  "plays": [],
+  "data_quality": {
+    "lag_days": 1,
+    "reasons": [
+      "no plays passed publication filters"
+    ],
+    "review_threshold_days": 14,
+    "status": "withheld",
+    "withhold_threshold_days": 60
+  },
+  "filter_rejections": {
+    "edge_too_small": 1024,
+    "history_too_short": 84,
+    "market_books_too_low": 305,
+    "prediction_too_low": 45,
+    "synthetic_market_source": 72
+  },
+  "generated_at_utc": "2026-08-26T13:23:49.956469+00:00",
+  "model_run_id": "mlb_high_precision_selector_v2",
+  "parlay_pairs": [],
+  "parlay_summary": {
+    "avg_expected_return_per_unit": null,
+    "avg_projected_pair_hit_rate": null,
+    "avg_projected_parlay_hit_rate": null,
+    "best_expected_return_per_unit": null,
+    "best_projected_pair_hit_rate": null,
+    "best_projected_parlay_hit_rate": null,
+    "candidate_pair_count": 0,
+    "candidate_parlay_count": 0,
+    "fallback_max_legs_per_parlay": 2,
+    "fallback_min_leg_probability": 0.5,
+    "fallback_min_legs_per_parlay": 2,
+    "fallback_min_pair_probability": 0.34,
+    "max_legs_per_parlay": 2,
+    "min_leg_probability": 0.52,
+    "min_legs_per_parlay": 2,
+    "min_pair_probability": 0.38,
+    "same_sportsbook_required": true,
+    "selected_pair_count": 0,
+    "selected_parlay_count": 0,
+    "selection_mode": "strict",
+    "tagged_play_count": 0
+  },
+  "parlay_validation": {
+    "available": false,
+    "reason": "parlay validation rebuild disabled for fast web export"
+  },
   "parlays": {
     "abstain_reason": "NO_STATE_SUPPORT",
     "action": "ABSTAIN",
@@ -1504,6 +1363,12 @@
     "selection_status": "ABSTAIN",
     "shadow_candidate": {
       "adapter_version": "PARLAY_V2_CANDIDATE_ADAPTER_V1",
+      "betslip": {
+        "reason": "one_or_more_legs_have_no_live_fanduel_selection",
+        "sportsbook": "FanDuel",
+        "sportsbook_key": "fanduel",
+        "status": "unavailable"
+      },
       "candidate_id": "20260826|Pete Alonso|R|OVER|0.5|823015||Pete Crow-Armstrong|TB|OVER|1.5|825039",
       "joint_probability_estimate": 0.31868374164311747,
       "joint_probability_method": "independence_binary_world_model",
@@ -1516,9 +1381,12 @@
         "line": 0.5,
         "model_probability_estimate": 0.5770836721271794,
         "player": "Pete Alonso",
+        "player_headshot_fallback_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/624413/headshot/67/current",
+        "player_headshot_url": "data/headshots/624413.jpg",
         "player_id": "pete_alonso",
         "quote_timestamp": "20260826",
         "side": "OVER",
+        "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182855258&selectionId=23552186",
         "target": "R"
       },
       "leg_2": {
@@ -1529,6 +1397,8 @@
         "line": 1.5,
         "model_probability_estimate": 0.552231430268027,
         "player": "Pete Crow-Armstrong",
+        "player_headshot_fallback_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/691718/headshot/67/current",
+        "player_headshot_url": "data/headshots/691718.jpg",
         "player_id": "pete_crow-armstrong",
         "quote_timestamp": "20260826",
         "side": "OVER",
@@ -1556,5 +1426,150 @@
     "staking_authorized": false,
     "system": "PARLAY_POLICY_V2",
     "world_gate_mode": "OBSERVE_ONLY"
-  }
+  },
+  "plays": [],
+  "policy_governance": {
+    "authorization_reason": "Registered MLB policies remain in development and have no prospective certificate.",
+    "candidate_authorization_enabled": false,
+    "capture_label": "FULL_SLATE_SNAPSHOT",
+    "certificate_status": "NO_ACTIVE_PROSPECTIVE_CERTIFICATE",
+    "complete_slate_capture_passed": true,
+    "full_policy_replay_available_for_snapshot": true,
+    "generated_at_utc": "2026-08-26T13:20:18.131729+00:00",
+    "historical_evidence_labels": [
+      "SELECTED_ONLY_HISTORY",
+      "SELECTED_ONLY_HISTORY"
+    ],
+    "publication_mode": "SHADOW_RESEARCH_ONLY",
+    "registered_policies": [
+      {
+        "policy_digest": "9fba82ab0f431dde6d02e0305d6498d2fbfa69b63ef34ee4f49b42b3bd7b87c4",
+        "policy_stage": "POLICY_DEVELOPMENT",
+        "policy_version": "MLB_SINGLES_OVER_POLICY_V1"
+      },
+      {
+        "policy_digest": "af7432bf3d3ebecbe53f73bbba1cb1d94fb92f6c7af21ba029df0fd1f841fcd7",
+        "policy_stage": "POLICY_DEVELOPMENT",
+        "policy_version": "MLB_FANDUEL_PUBLIC_BETSLIP_PARLAY_POLICY_V5"
+      }
+    ],
+    "run_date": "2026-08-26",
+    "schema_version": "MLB_POLICY_GOVERNANCE_STATUS_V1",
+    "slate_id": "MLB_20260826",
+    "snapshot_id": "mlb_20260826_131859Z_24f701b60457",
+    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260826/governance/slates/MLB_20260826/mlb_20260826_131859Z_24f701b60457/manifest.json",
+    "staking_enabled": false
+  },
+  "policy_profile": "premium_evidence_gated_v8",
+  "publication_message": "no plays passed publication filters",
+  "publication_state": "withheld_current_pool",
+  "publication_status": "withheld",
+  "run_date": "2026-08-26",
+  "selection": {
+    "allow_baseline": false,
+    "allow_synthetic_unders": false,
+    "allow_unpriced_side": false,
+    "bet_profile_prior_strength": 80.0,
+    "core_max_american_price": 125.0,
+    "core_min_american_price": -180.0,
+    "daily_pick_soft_cap": 3,
+    "historical_bet_profiles_enabled": true,
+    "historical_calibration_enabled": true,
+    "historical_calibration_evidence_scope": "real_price_confirmed_markets_only_v1",
+    "history_before_date": "",
+    "history_prior_strength": 400.0,
+    "history_season": 2026,
+    "live_confidence_calibration_enabled": true,
+    "matchup_network_enabled": true,
+    "matchup_network_version": "batter_pitcher_profile_network_v2",
+    "max_bet_profile_prior_weight": 0.25,
+    "max_days_since_history": 4,
+    "max_history_prior_weight": 0.35,
+    "max_market_line_std": 0.0,
+    "max_over_picks": 3,
+    "max_per_game": 2,
+    "max_per_market_bucket": 2,
+    "max_per_player": 1,
+    "max_per_team": 2,
+    "max_pitcher_k_picks": 1,
+    "max_push_probability": 0.1,
+    "max_under_picks": 0,
+    "min_abs_edge": 0.35,
+    "min_bet_profile_rows": 12,
+    "min_common_market_books": 2,
+    "min_expected_value": 0.0,
+    "min_graded_hit_rate": 0.825,
+    "min_historical_bet_profile_support": 0,
+    "min_historical_bet_profile_win_rate": 0.0,
+    "min_historical_market_availability_rate": 0.0,
+    "min_historical_market_availability_support": 0,
+    "min_history_bucket_rows": 50,
+    "min_history_rows": 35,
+    "min_hit_probability": 0.825,
+    "min_market_availability_rows": 12,
+    "min_market_books": 5,
+    "min_over_picks": 0,
+    "min_prediction": 0.1,
+    "optimized_over_max_per_market_bucket": null,
+    "optimized_over_profile": "r_tb_over_moderate_edge_v1",
+    "optimized_over_profile_status": "probation",
+    "optimized_over_targets": [],
+    "over_max_abs_edge": null,
+    "over_max_american_price": null,
+    "over_max_model_hit_probability": null,
+    "over_min_abs_edge": null,
+    "over_min_expected_value": null,
+    "over_min_history_rows": null,
+    "over_min_model_hit_probability": null,
+    "pick_survival_shadow_enabled": true,
+    "pitcher_k_max_abs_edge": 1.0,
+    "pitcher_k_max_american_price": 130.0,
+    "pitcher_k_max_days_since_history": 14,
+    "pitcher_k_max_model_hit_probability": 0.65,
+    "pitcher_k_min_abs_edge": 0.15,
+    "pitcher_k_min_american_price": -130.0,
+    "pitcher_k_min_expected_value": 0.0,
+    "pitcher_k_min_model_hit_probability": 0.5,
+    "pitcher_k_min_projected_ip": 5.25,
+    "pitcher_k_min_projected_pitches": 75.0,
+    "pitcher_k_min_starter_history": 15,
+    "pitcher_k_over_profile": "pitcher_k_over_workload_v1",
+    "pitcher_k_over_profile_enabled": false,
+    "pitcher_k_over_profile_status": "probation",
+    "policy_version": "premium_evidence_gated_v8",
+    "post_cap_min_selection_score": 0.8,
+    "prefer_confident_side": false,
+    "require_real_market_source": true,
+    "targets": [
+      "ER",
+      "H",
+      "HR",
+      "K",
+      "R",
+      "RBI",
+      "TB"
+    ],
+    "top_n": 3
+  },
+  "sport": "MLB",
+  "summary": {
+    "avg_abs_edge": 0.0,
+    "avg_edge": 0.0,
+    "avg_expected_hit_rate": 0.0,
+    "avg_graded_hit_rate": 0.0,
+    "avg_precision_score": 0.0,
+    "avg_value_score": 0.0,
+    "closed_game_cards_suppressed": 0,
+    "duplicate_cards_suppressed": 0,
+    "parlay_pairs": 0,
+    "parlay_tagged_plays": 0,
+    "play_count": 0,
+    "rejected_rows": 1530,
+    "rows_after_filters": 0,
+    "source_play_count": 0,
+    "supported_rows": 1530
+  },
+  "suppressed_closed_games": [],
+  "suppressed_duplicates": [],
+  "through_date": "2026-08-25"
 }
