@@ -7,10 +7,10 @@
     <meta name="description" content="Current MLB model predictions with market line, projection, edge, and publication status.">
     <title>MLB Predictions | In The Cards Analytics</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="/vault/vault-tokens.css?v=9">
+    <link rel="stylesheet" href="/vault/vault-tokens.css?v=10">
     <link rel="stylesheet" href="/vault/vault-components.css?v=9">
     <link rel="stylesheet" href="/vault/prediction-pages.css?v=9">
-    <link rel="stylesheet" href="parlay-board.css?v=5">
+    <link rel="stylesheet" href="parlay-board.css?v=7">
 </head>
 <body class="vault-theme">
     <div id="vaultShellRoot"></div>
@@ -27,20 +27,41 @@
             <nav id="predictionDateNav" class="date-nav" aria-label="Prediction board date"></nav>
         </header>
 
-        <!-- Everything on the board -- today's signals and every real
-             parlay product -- lives in this one simple container. No
-             separate sections, no per-product headings: each card carries
-             its own compact label and status pill, which is all the
-             distinction that's actually needed. -->
+        <!-- Two real, visually distinct groups: the single-leg board,
+             then every real parlay product broken out by its own real
+             construction (cross-market cross-game, same-game, pitcher-
+             strikeouts-only) -- each card still carries its own compact
+             label and status pill, this just adds the page-level
+             structure so a viewer can tell what kind of bet they're
+             looking at before reading a single card. -->
         <div id="board" class="board" aria-live="polite">
-            <div id="predictionCards" class="vault-board"></div>
-            <div id="predictionEmpty" class="vault-empty" style="display:none;" role="status">
-                <h3>No predictions published</h3>
-                <p>No analytical signals are available for this run.</p>
-            </div>
-            <div id="parlayV2Content" class="daily-parlay"></div>
-            <div id="sameGameParlayContent" class="daily-parlay"></div>
-            <div id="pitcherParlayContent" class="daily-parlay"></div>
+            <section class="board-section" aria-labelledby="singleBetsHeading">
+                <h2 id="singleBetsHeading" class="board-section__heading">Single Bets</h2>
+                <div id="predictionCards" class="vault-board"></div>
+                <div id="predictionEmpty" class="vault-empty" style="display:none;" role="status">
+                    <h3>No predictions published</h3>
+                    <p>No analytical signals are available for this run.</p>
+                </div>
+            </section>
+
+            <section class="board-section" aria-labelledby="parlaysHeading">
+                <h2 id="parlaysHeading" class="board-section__heading">Parlays</h2>
+
+                <div class="parlay-group">
+                    <p class="parlay-group__label">Cross-Market</p>
+                    <div id="parlayV2Content" class="daily-parlay"></div>
+                </div>
+
+                <div class="parlay-group">
+                    <p class="parlay-group__label">Same-Game</p>
+                    <div id="sameGameParlayContent" class="daily-parlay"></div>
+                </div>
+
+                <div class="parlay-group">
+                    <p class="parlay-group__label">Pitchers-Only</p>
+                    <div id="pitcherParlayContent" class="daily-parlay"></div>
+                </div>
+            </section>
         </div>
 
         <footer class="pool-status">
@@ -53,6 +74,6 @@
 
     <script src="/vault/vault-components.js?v=9"></script>
     <script src="/vault/vault-shell.js?v=9"></script>
-    <script src="predictions.js?v=18"></script>
+    <script src="predictions.js?v=19"></script>
 </body>
 </html>

@@ -282,8 +282,7 @@ class DailyPredictionsPage {
                 ${this.renderBetslipLink(shadow)}
             ` : `<p class="daily-parlay__empty">${this.escapeHtml(this.formatParlayV2AbstainReason(reason, parlay))}</p>`;
             content.innerHTML = `
-                <div class="daily-parlay__header">
-                    <strong>2-Leg Parlay</strong>
+                <div class="daily-parlay__header daily-parlay__header--status-only">
                     ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Abstain") : ""}
                 </div>
                 ${shadowBlock}
@@ -293,8 +292,7 @@ class DailyPredictionsPage {
         }
 
         content.innerHTML = `
-            <div class="daily-parlay__header">
-                <strong>2-Leg Parlay</strong>
+            <div class="daily-parlay__header daily-parlay__header--status-only">
                 ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Selected -- shadow only") : ""}
             </div>
             ${this.renderParlayV2Legs(parlay.selected_parlay)}
@@ -431,8 +429,7 @@ class DailyPredictionsPage {
 
     sameGameParlayHeader() {
         return `
-            <div class="daily-parlay__header">
-                <strong>Same-Game Parlay</strong>
+            <div class="daily-parlay__header daily-parlay__header--status-only">
                 ${window.CardVault ? window.CardVault.renderStatusPill("stale", "Shadow only") : ""}
             </div>
         `;
@@ -571,8 +568,7 @@ class DailyPredictionsPage {
 
     pitcherParlayHeader(pillTone = "stale", pillLabel = "Shadow only") {
         return `
-            <div class="daily-parlay__header">
-                <strong>Pitcher Parlay</strong>
+            <div class="daily-parlay__header daily-parlay__header--status-only">
                 ${window.CardVault ? window.CardVault.renderStatusPill(pillTone, pillLabel) : ""}
             </div>
         `;

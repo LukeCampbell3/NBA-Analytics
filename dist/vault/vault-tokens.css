@@ -55,6 +55,15 @@
 
   --vault-sport-accent: #9a681f;
   --vault-sport-surface: #181817;
+  /* Real bug fix: several parlay/betslip rules across mlb/nfl's
+     parlay-board.css and vault-components.css already referenced
+     --vault-accent (never --vault-sport-accent) -- that name was never
+     actually defined anywhere, so every one of those rules silently
+     fell back to its unstyled default (no border, no background) the
+     whole time. Aliased here rather than rewriting every call site, so
+     it now tracks the same per-sport accent vault-shell.js sets on
+     --vault-sport-accent. */
+  --vault-accent: var(--vault-sport-accent);
 
   /* Status vocabulary: meaning first, color secondary */
   --vault-status-active: #1f7a52;
