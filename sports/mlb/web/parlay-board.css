@@ -17,10 +17,13 @@
     margin-bottom: var(--vault-space-5);
 }
 
-.daily-parlay__header h2,
+.daily-parlay__header h3,
 .prediction-section-heading h2 {
     margin: 0;
-    font-size: clamp(1.35rem, 2vw, 1.8rem);
+    /* Sits inside the shared "Parlays" .pool-section-heading h2 (1.2rem) --
+       kept visibly subordinate to it, not competing as a second page-level
+       heading. */
+    font-size: clamp(1.05rem, 1.6vw, 1.3rem);
     letter-spacing: 0;
 }
 

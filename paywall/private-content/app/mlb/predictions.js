@@ -290,7 +290,7 @@ class DailyPredictionsPage {
                 <div class="daily-parlay__header">
                     <div>
                         <p class="vault-page-kicker">Theory-grounded 2-leg parlay</p>
-                        <h2 id="parlayV2Title">Today's V2 Shadow Candidate</h2>
+                        <h3 id="parlayV2Title">Today's V2 Shadow Candidate</h3>
                     </div>
                     ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Abstain") : ""}
                 </div>
@@ -304,7 +304,7 @@ class DailyPredictionsPage {
             <div class="daily-parlay__header">
                 <div>
                     <p class="vault-page-kicker">Theory-grounded 2-leg parlay</p>
-                    <h2 id="parlayV2Title">Today's V2 Shadow Candidate</h2>
+                    <h3 id="parlayV2Title">Today's V2 Shadow Candidate</h3>
                 </div>
                 ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Selected -- shadow only") : ""}
             </div>
@@ -416,7 +416,7 @@ class DailyPredictionsPage {
             <div class="daily-parlay__header">
                 <div>
                     <p class="vault-page-kicker">Real cross-market combos, priced with joint simulation</p>
-                    <h2 id="sameGameParlayTitle">Same-Game Parlay</h2>
+                    <h3 id="sameGameParlayTitle">Same-Game Parlay</h3>
                 </div>
                 ${window.CardVault ? window.CardVault.renderStatusPill("stale", "Shadow only") : ""}
             </div>

@@ -37,29 +37,33 @@
             </div>
         </section>
 
-        <!-- PARLAY_POLICY_V2 -- the only source of the (legacy) 2-leg
-             Parlays product. Sourced ONLY from payload.parlays. The
-             legacy ticket system's legs are folded into Today's Signals
-             above (see renderCards / buildSoloBetsFromLegacyParlay)
-             rather than shown as a separate "parlay" claim -- that
-             system was never V2-certified, so it never gets parlay
-             framing. -->
-        <section id="parlayV2Section" class="pool-secondary daily-parlay daily-parlay--v2" aria-labelledby="parlayV2Title" aria-live="polite">
-            <div class="pool-section-heading"><h2>Parlays</h2></div>
-            <div id="parlayV2Content"></div>
-        </section>
-
-        <!-- Same-Game Parlay -- real cross-market (moneyline + full total +
-             F5 total) combos for today's slate, priced with the joint
-             probability read off a shared Monte Carlo simulation (real
-             dependence modeling, never an independence-product shortcut).
-             Sourced from its own data/same_game_predictions.json, entirely
-             separate from the legacy/V2 player-prop parlay products above.
-             This is a brand-new policy with an empty calibration ledger, so
-             every combo here is honestly "Shadow only" until real settled
-             evidence accumulates -- never presented as certified or a lock. -->
-        <section id="sameGameParlaySection" class="pool-secondary daily-parlay daily-parlay--same-game" aria-labelledby="sameGameParlayTitle" aria-live="polite">
-            <div id="sameGameParlayContent"></div>
+        <!-- Parlays -- every real parlay product on this board lives under
+             this one group, never sectioned off as if they were different
+             kinds of thing:
+               1. PARLAY_POLICY_V2 (#parlayV2Content) -- the theory-grounded
+                  2-leg product. Sourced ONLY from payload.parlays. The
+                  legacy ticket system's legs are folded into Today's
+                  Signals above (see mergeLegacySoloBets) rather than shown
+                  here -- that system was never V2-certified, so it never
+                  gets parlay framing.
+               2. Same-Game Parlay (#sameGameParlayContent) -- real
+                  cross-market (moneyline + full total + F5 total) combos
+                  for today's slate, priced with the joint probability read
+                  off a shared Monte Carlo simulation (real dependence
+                  modeling, never an independence-product shortcut).
+                  Sourced from its own data/same_game_predictions.json, a
+                  brand-new policy with an empty calibration ledger, so
+                  every combo here is honestly "Shadow only" until real
+                  settled evidence accumulates -- never presented as
+                  certified or a lock. -->
+        <section class="pool-secondary" aria-labelledby="parlaysGroupTitle">
+            <div class="pool-section-heading"><h2 id="parlaysGroupTitle">Parlays</h2></div>
+            <div id="parlayV2Section" class="daily-parlay daily-parlay--v2" aria-labelledby="parlayV2Title" aria-live="polite">
+                <div id="parlayV2Content"></div>
+            </div>
+            <div id="sameGameParlaySection" class="daily-parlay daily-parlay--same-game" aria-labelledby="sameGameParlayTitle" aria-live="polite">
+                <div id="sameGameParlayContent"></div>
+            </div>
         </section>
 
         <footer class="pool-status">
