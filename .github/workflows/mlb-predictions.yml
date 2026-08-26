@@ -208,6 +208,7 @@ jobs:
             dist/mlb/data/daily_predictions.json
             sports/mlb/web/data/daily_predictions.json
             sports/mlb/data/predictions/backtests/latent_daily_pool_replay_2026.json
+            sports/mlb/data/predictions/team_market_predictions.json
           if-no-files-found: warn
           retention-days: 14
 

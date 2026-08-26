@@ -283,6 +283,36 @@ class SameGameComboCandidate:
         }
 
 
+def build_single_leg_team_market_candidates(
+    game: dict[str, Any],
+    result: sim.GameSimulationResult,
+    market_odds: list[dict[str, Any]],
+    *,
+    calibration_store: Optional[CalibrationStore] = None,
+    calibration_as_of: Optional[str] = None,
+    min_real_books: int = MIN_REAL_BOOKS,
+) -> list[SameGameLeg]:
+    """Every real single-market leg (moneyline / game_total /
+    first_5_innings_total) this real game has a priced side for -- the
+    exact same real legs (same model, same real odds, same
+    calibration/support.py REQUIRED gate) `build_same_game_candidates`
+    below combines into cross-market pairs, exposed standalone so a
+    single-leg consumer (the main single-leg board) can use them without
+    needing a same-game partner. `leg.leg_authorized` is the only field
+    that should ever gate whether a leg is shown as a live pick -- it is
+    computed identically here and inside a combo, so a market/line/state
+    bucket's real evidence means the same thing everywhere it's used."""
+    legs: list[SameGameLeg] = []
+    for market in _MARKETS:
+        legs.extend(
+            _build_legs_for_market(
+                market, market_odds, result,
+                calibration_store=calibration_store, calibration_as_of=calibration_as_of, min_real_books=min_real_books,
+            )
+        )
+    return legs
+
+
 def build_same_game_candidates(
     game: dict[str, Any],
     result: sim.GameSimulationResult,

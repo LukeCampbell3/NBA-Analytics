@@ -69,6 +69,38 @@ def test_build_legs_for_market_returns_empty_without_real_data() -> None:
     assert select._build_legs_for_market("moneyline", [], _result(), calibration_store=None, calibration_as_of=None, min_real_books=1) == []
 
 
+def test_build_single_leg_team_market_candidates_covers_every_priced_market() -> None:
+    legs = select.build_single_leg_team_market_candidates(_game(), _result(), _market_odds(), calibration_store=None, calibration_as_of=None)
+    assert {leg.market for leg in legs} == {"moneyline", "game_total", "first_5_innings_total"}
+    # two sides per market (home/away, over/under) for every one of the three real priced markets
+    assert len(legs) == 6
+
+
+def test_build_single_leg_team_market_candidates_matches_build_legs_for_market_exactly() -> None:
+    """The standalone extraction must be exactly the union of what
+    build_same_game_candidates already builds internally per market --
+    never a second, independently-derived copy of the same real legs."""
+    combined = select.build_single_leg_team_market_candidates(_game(), _result(), _market_odds(), calibration_store=None, calibration_as_of=None)
+    direct = [
+        leg
+        for market in ("moneyline", "game_total", "first_5_innings_total")
+        for leg in select._build_legs_for_market(market, _market_odds(), _result(), calibration_store=None, calibration_as_of=None, min_real_books=1)
+    ]
+    assert [leg.as_dict() for leg in combined] == [leg.as_dict() for leg in direct]
+
+
+def test_build_single_leg_team_market_candidates_default_unauthorized_with_no_calibration_evidence() -> None:
+    """Same honest shadow-only posture as every combo/single-leg board in
+    this repo: with no calibration_store, no leg is ever authorized."""
+    legs = select.build_single_leg_team_market_candidates(_game(), _result(), _market_odds(), calibration_store=None, calibration_as_of=None)
+    assert legs  # real legs were built
+    assert all(not leg.leg_authorized for leg in legs)
+
+
+def test_build_single_leg_team_market_candidates_returns_empty_without_real_data() -> None:
+    assert select.build_single_leg_team_market_candidates(_game(), _result(), [], calibration_store=None, calibration_as_of=None) == []
+
+
 def test_build_same_game_candidates_never_pairs_same_market_opposite_sides() -> None:
     combos = select.build_same_game_candidates(_game(), _result(), _market_odds())
     for combo in combos:

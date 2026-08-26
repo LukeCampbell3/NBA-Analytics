@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
@@ -170,28 +171,51 @@ def collect_team_market_odds_chain(
     return {"status": combined_status, "sources": sources}, rows
 
 
-def build_daily_payload(
+@dataclass
+class PreparedGame:
+    """One real scheduled game's shared, model-agnostic preparation: the
+    joint Monte Carlo simulation result and the real team-market odds
+    rows that apply to it -- everything a downstream consumer (a same-
+    game combo, or a standalone single-leg pick) needs, computed once.
+    `result`/`game_odds_rows` are None/[] when `entry` is already
+    terminal (an "insufficient_real_..." status) -- there was nothing to
+    simulate."""
+
+    game: dict[str, Any]
+    entry: dict[str, Any]
+    result: Optional["sim.GameSimulationResult"]
+    game_odds_rows: list[dict[str, Any]]
+
+
+def prepare_todays_game_simulations(
     *,
     run_date: date,
     team_universe_csv: Path = DEFAULT_TEAM_UNIVERSE,
     pitcher_universe_csv: Path = DEFAULT_PITCHER_UNIVERSE,
-    calibration_ledger: Optional[Path] = DEFAULT_CALIBRATION_LEDGER,
     num_trials: int = NUM_TRIALS,
     schedule_payload: Optional[dict[str, Any]] = None,
     fanduel_provider: Optional[FanduelPublicMlbTeamMarketProvider] = None,
     odds_api_provider: Optional[TheOddsApiMlbTeamMarketProvider] = None,
-) -> dict[str, Any]:
-    generated_at = datetime.now(timezone.utc).isoformat()
-    payload: dict[str, Any] = {
-        "status": "ok", "generated_at_utc": generated_at, "run_date": run_date.isoformat(),
-        "games": [],
-    }
+) -> tuple[str, dict[str, Any], list[PreparedGame]]:
+    """Shared real-data preparation: today's real schedule -> real
+    leakage-safe team/pitcher/bullpen history -> real joint Monte Carlo
+    game simulation -> real live team-market odds, for every real
+    scheduled game. Extracted so both the same-game combo pipeline
+    (build_daily_payload, below) and the standalone single-leg team-
+    market pipeline (generate_mlb_team_market_predictions.py) read from
+    identical real simulation results and real odds rows instead of each
+    independently re-deriving (and potentially drifting from) them.
 
+    Returns (top_level_status, odds_summary, prepared_games).
+    top_level_status is "no_real_games_scheduled_today" when there is
+    nothing to simulate, else "ok" -- an individual PreparedGame can
+    still carry its own terminal "insufficient_real_..." entry status
+    without changing this top-level status.
+    """
     schedule = schedule_payload if schedule_payload is not None else fetch_todays_schedule(run_date)
     games_today = extract_scheduled_games(schedule)
     if not games_today:
-        payload["status"] = "no_real_games_scheduled_today"
-        return payload
+        return "no_real_games_scheduled_today", {"status": None, "sources": {}}, []
 
     historical_games = load_games(team_universe_csv)
     pitcher_rows = load_pitcher_rows(pitcher_universe_csv)
@@ -214,13 +238,9 @@ def build_daily_payload(
     odds_summary, all_odds_rows = collect_team_market_odds_chain(
         fanduel_provider=fanduel_provider, odds_api_provider=odds_api_provider
     )
-    payload["odds_status"] = odds_summary["status"]
-    payload["odds_sources"] = odds_summary["sources"]
 
-    calibration_store = CalibrationStore(calibration_ledger) if calibration_ledger else None
     run_date_str = run_date.isoformat()
-
-    total_authorized = 0
+    prepared: list[PreparedGame] = []
     for game in games_today:
         entry: dict[str, Any] = {
             "game_id": game["game_id"], "date": game["date"],
@@ -236,7 +256,7 @@ def build_daily_payload(
             or away_team_stats.games_played < MIN_GAMES_PLAYED_FOR_PREDICTION
         ):
             entry["status"] = "insufficient_real_team_history"
-            payload["games"].append(entry)
+            prepared.append(PreparedGame(game=game, entry=entry, result=None, game_odds_rows=[]))
             continue
 
         home_starter_stats = pitching.stats_as_of(pitcher_history.get(game["home_starter_id"], []), run_date_str) if game["home_starter_id"] else None
@@ -252,7 +272,7 @@ def build_daily_payload(
         )
         if sides is None:
             entry["status"] = "insufficient_real_data_for_expected_runs"
-            payload["games"].append(entry)
+            prepared.append(PreparedGame(game=game, entry=entry, result=None, game_odds_rows=[]))
             continue
         home_expected, away_expected = sides
 
@@ -262,18 +282,60 @@ def build_daily_payload(
             home_field_advantage=home_field_advantage, num_trials=num_trials,
             seed=abs(hash((game["game_id"], run_date_str))) % (2**31),
         )
-
         game_odds_rows = _odds_rows_for_game(all_odds_rows, game)
+        entry["status"] = "ok" if game_odds_rows else "no_real_odds_priced_yet"
+        entry["home_win_probability"] = result.home_win_probability
+        prepared.append(PreparedGame(game=game, entry=entry, result=result, game_odds_rows=game_odds_rows))
+
+    return "ok", odds_summary, prepared
+
+
+def build_daily_payload(
+    *,
+    run_date: date,
+    team_universe_csv: Path = DEFAULT_TEAM_UNIVERSE,
+    pitcher_universe_csv: Path = DEFAULT_PITCHER_UNIVERSE,
+    calibration_ledger: Optional[Path] = DEFAULT_CALIBRATION_LEDGER,
+    num_trials: int = NUM_TRIALS,
+    schedule_payload: Optional[dict[str, Any]] = None,
+    fanduel_provider: Optional[FanduelPublicMlbTeamMarketProvider] = None,
+    odds_api_provider: Optional[TheOddsApiMlbTeamMarketProvider] = None,
+) -> dict[str, Any]:
+    generated_at = datetime.now(timezone.utc).isoformat()
+    payload: dict[str, Any] = {
+        "status": "ok", "generated_at_utc": generated_at, "run_date": run_date.isoformat(),
+        "games": [],
+    }
+
+    top_status, odds_summary, prepared_games = prepare_todays_game_simulations(
+        run_date=run_date, team_universe_csv=team_universe_csv, pitcher_universe_csv=pitcher_universe_csv,
+        num_trials=num_trials, schedule_payload=schedule_payload,
+        fanduel_provider=fanduel_provider, odds_api_provider=odds_api_provider,
+    )
+    if top_status != "ok":
+        payload["status"] = top_status
+        return payload
+
+    payload["odds_status"] = odds_summary["status"]
+    payload["odds_sources"] = odds_summary["sources"]
+
+    calibration_store = CalibrationStore(calibration_ledger) if calibration_ledger else None
+
+    total_authorized = 0
+    for prepared in prepared_games:
+        entry = dict(prepared.entry)
+        if prepared.result is None:
+            payload["games"].append(entry)
+            continue
+
         combos = select.build_same_game_candidates(
-            game, result, game_odds_rows,
+            prepared.game, prepared.result, prepared.game_odds_rows,
             calibration_store=calibration_store, calibration_as_of=generated_at,
         )
         top_combos = select.top_combo_candidates(combos)
         authorized_count = sum(1 for c in combos if c.candidate_authorized)
         total_authorized += authorized_count
 
-        entry["status"] = "ok" if game_odds_rows else "no_real_odds_priced_yet"
-        entry["home_win_probability"] = result.home_win_probability
         entry["combo_candidates"] = [c.as_dict() for c in top_combos]
         entry["candidate_authorized_count"] = authorized_count
         payload["games"].append(entry)

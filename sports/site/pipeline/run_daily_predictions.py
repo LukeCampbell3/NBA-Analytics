@@ -130,6 +130,17 @@ MLB_LATENT_POOL_REPLAY_REPORT = REPO_ROOT / "sports" / "mlb" / "data" / "predict
 MLB_MAX_WINRATE_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_max_winrate_board.py"
 MLB_EXPORTER = REPO_ROOT / "sports" / "mlb" / "scripts" / "export_web_prediction_payload.py"
 MLB_WEB_JSON = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "daily_predictions.json"
+# Newest MLB predictor (real joint Monte Carlo game simulation +
+# starting-pitcher/bullpen enrichment, sports/mlb/predictions/
+# game_simulation_model.py + pitching_enriched_win_model.py) wired into
+# the main single-leg board. Additive only -- merges an
+# "mlb_team_market_plays" key into MLB_WEB_JSON, never touches "plays" or
+# any other key the exporter above just wrote. Reuses the exact same
+# real-data preparation and calibration/support.py REQUIRED gate as the
+# separate same-game combo pipeline (mlb-same-game-predictions.yml), so a
+# leg is authorized here iff it would be authorized there too -- see
+# generate_mlb_team_market_predictions.py's module docstring.
+MLB_TEAM_MARKET_PREDICTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "generate_mlb_team_market_predictions.py"
 MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v8"
 MLB_PICK_SURVIVAL_TOP_K = 3
 MLB_PRIMARY_POLICY_ARGS = [
@@ -1022,6 +1033,36 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
             str(mlb_dist_json),
         ],
     )
+
+    # Newest MLB predictor (real joint game simulation + pitcher/bullpen
+    # enrichment) wired into the main board -- see MLB_TEAM_MARKET_PREDICTOR
+    # above. Additive only: merges "mlb_team_market_plays" into both real
+    # published copies of daily_predictions.json the exporter just wrote,
+    # never touches "plays" or anything else in either file. Wrapped like
+    # PARLAY_POLICY_V2 above -- a real live-fetch failure here (schedule,
+    # odds, or a StatsAPI hiccup) must never block the player-prop board
+    # that already published successfully.
+    try:
+        # Same real, filename-derived effective run date the governance
+        # capture step above resolves from pool_csv -- args.run_date alone
+        # can be None (the pipeline's own --force-run default), so fall
+        # back to it only when the pool filename doesn't carry a real date.
+        team_market_digits = "".join(char for char in pool_csv.stem if char.isdigit())
+        team_market_run_date = (
+            datetime.strptime(team_market_digits[:8], "%Y%m%d").date().isoformat()
+            if len(team_market_digits) >= 8
+            else args.run_date
+        )
+        team_market_command = [args.python, str(MLB_TEAM_MARKET_PREDICTOR)]
+        if team_market_run_date:
+            team_market_command += ["--run-date", str(team_market_run_date)]
+        team_market_command += [
+            "--daily-predictions-path", str(MLB_WEB_JSON),
+            "--daily-predictions-path", str(mlb_dist_json),
+        ]
+        run_step("Generate MLB Team-Market Predictions (newest predictor)", team_market_command)
+    except Exception as exc:  # noqa: BLE001 -- deliberate: additive, never blocks singles publication
+        print(f"[warning] MLB team-market predictor step failed, main board keeps its existing player-prop plays only: {format_step_failure(exc)}")
 
     # Run max-winrate selector on the raw pool for the tightest possible board
     max_wr_csv = pool_csv.with_name(pool_csv.stem + "_max_winrate.csv")
