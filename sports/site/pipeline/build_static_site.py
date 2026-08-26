@@ -238,10 +238,19 @@ def prune_non_prediction_assets(sport_output: Path) -> None:
                 and relative.parts[0] == "advantage-routing"
                 and relative.name.endswith(".json")
             )
+            # Real, deduplicated player headshot images -- see
+            # sports/shared/headshots/cache.py. One real image (+ the
+            # cache's own manifest.json) per real cached player id.
+            is_headshot_asset = (
+                len(relative.parts) == 2
+                and relative.parts[0] == "headshots"
+                and (relative.name == "manifest.json" or relative.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp", ".gif"})
+            )
             if (
                 data_file.name not in PREDICTION_DATA_FILES
                 and not is_history_payload
                 and not is_advantage_routing_payload
+                and not is_headshot_asset
             ):
                 data_file.unlink()
                 print(f"[prune] removed non-prediction data {data_file.relative_to(sport_output)}")

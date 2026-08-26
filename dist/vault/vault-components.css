@@ -584,6 +584,27 @@ body.vault-theme .predictions-page {
   line-height: 1.45;
 }
 
+.prediction-card__betslip-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  margin-top: var(--vault-space-3);
+  padding: 0 var(--vault-space-4);
+  border: 1px solid color-mix(in srgb, var(--vault-accent) 72%, var(--vault-line));
+  border-radius: 6px;
+  background: var(--vault-accent);
+  color: var(--vault-bg);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.prediction-card__betslip-link:hover,
+.prediction-card__betslip-link:focus-visible {
+  filter: brightness(1.08);
+}
+
 @media (max-width: 560px) {
   .prediction-card__metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));

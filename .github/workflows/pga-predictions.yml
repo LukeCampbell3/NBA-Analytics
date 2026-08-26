@@ -60,6 +60,13 @@ jobs:
           set -euo pipefail
           python sports/golf/scripts/run_pga_daily_predictions.py
 
+      - name: Cache golf player headshots
+        if: ${{ !inputs.build_only }}
+        run: |
+          set -euo pipefail
+          python sports/golf/scripts/update_golf_player_headshot_cache.py \
+            --daily-predictions-path sports/golf/web/data/daily_predictions.json
+
       - name: Build static site
         run: python sports/site/pipeline/build_static_site.py
 
@@ -73,6 +80,11 @@ jobs:
             dist/golf \
             dist/data/sports.json \
             paywall/private-content/app/golf
+          # The headshot cache is lazily created (only once a real,
+          # priced candidate carries a real headshot URL to fetch).
+          if [ -e sports/golf/web/data/headshots ]; then
+            git add -f -- sports/golf/web/data/headshots
+          fi
           # The calibration ledger is lazily created (only once a real
           # candidate is first admitted via a future settlement step) --
           # same guard every other sport's workflow uses for its own

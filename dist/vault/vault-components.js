@@ -24,6 +24,28 @@
   };
 
   /**
+   * Validates a real FanDuel "Add to Betslip" deep link before ever
+   * rendering it -- host/scheme/path allowlist only, never a generic
+   * open-redirect passthrough. Shared by every sport/product that
+   * renders one (single-leg plays, parlay pairs, same-game combos):
+   * every one of them is built server-side from FanDuel's own real
+   * odds feed (see sports/mlb/parlay_v2/fanduel_betslip.py and
+   * fanduel_public_mlb_provider.py), but this re-validates on the
+   * client too rather than trusting the payload blindly.
+   */
+  CardVault.safeFanDuelBetslipUrl = function safeFanDuelBetslipUrl(value) {
+    try {
+      const url = new URL(String(value || ""));
+      const allowedHosts = new Set(["account.sportsbook.fanduel.com", "sportsbook.fanduel.com"]);
+      if (url.protocol !== "https:" || !allowedHosts.has(url.hostname.toLowerCase())) return "";
+      if (!url.pathname.toLowerCase().endsWith("/addtobetslip")) return "";
+      return url.toString();
+    } catch (_error) {
+      return "";
+    }
+  };
+
+  /**
    * Shared photo markup for both card renderers below. Chains a primary
    * headshot URL to an optional fallback URL (e.g. MLB's secondary CDN
    * mirror) and finally to the monogram -- each <img> falls through to
@@ -290,6 +312,18 @@
       ? `<dl class="prediction-card__metrics" style="grid-template-columns:1fr;margin-top:8px;">${detailRows.map(([label, value]) => `<div><dt>${CardVault.escapeHtml(label)}</dt><dd>${CardVault.escapeHtml(value)}</dd></div>`).join("")}</dl>`
       : "";
 
+    // Real single-leg "Add to Betslip" link -- only when this exact play
+    // was actually priced at FanDuel (selected_sportsbook_key) AND
+    // carries FanDuel's own real deep link for that selection
+    // (sportsbook_deeplink). Re-validated against the host/path
+    // allowlist before ever rendering; never a guessed or generic link.
+    const betslipUrl = String(play.selected_sportsbook_key || "").trim().toLowerCase() === "fanduel"
+      ? CardVault.safeFanDuelBetslipUrl(play.sportsbook_deeplink)
+      : "";
+    const betslipHtml = betslipUrl
+      ? `<a class="prediction-card__betslip-link" href="${CardVault.escapeAttr(betslipUrl)}" target="_blank" rel="noopener noreferrer">Add to FanDuel Betslip</a>`
+      : "";
+
     return `
       <article class="prediction-card" data-direction="${CardVault.escapeAttr(direction)}" aria-label="Prediction for ${CardVault.escapeAttr(displayName)}, ${CardVault.escapeAttr(direction)} ${CardVault.escapeAttr(targetLabel)}">
         <header class="prediction-card__header">
@@ -310,6 +344,7 @@
         </div>
         <dl class="prediction-card__metrics">${primaryMetricHtml}</dl>
         <p class="prediction-card__note">${CardVault.escapeHtml(why)}</p>
+        ${betslipHtml}
         ${detailHtml ? `<details class="disclosure"><summary>Details</summary><div class="disclosure-body">${detailHtml}</div></details>` : ""}
       </article>
     `;

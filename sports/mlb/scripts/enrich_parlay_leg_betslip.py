@@ -27,31 +27,25 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import sys
 from pathlib import Path
 from typing import Any, Callable, Optional
-from urllib.parse import parse_qs, urlencode, urlparse
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 MLB_SCRIPTS_ROOT = REPO_ROOT / "sports" / "mlb" / "scripts"
 MLB_ODDS_PROVIDERS_ROOT = REPO_ROOT / "sports" / "mlb" / "predictions" / "odds" / "providers"
-for path in (MLB_SCRIPTS_ROOT, MLB_ODDS_PROVIDERS_ROOT):
+MLB_PARLAY_V2_ROOT = REPO_ROOT / "sports" / "mlb" / "parlay_v2"
+for path in (MLB_SCRIPTS_ROOT, MLB_ODDS_PROVIDERS_ROOT, MLB_PARLAY_V2_ROOT):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
 import export_web_prediction_payload as exporter  # noqa: E402
 from fanduel_public_mlb_provider import FanduelPublicMlbProvider  # noqa: E402
+from fanduel_betslip import (  # noqa: E402
+    FANDUEL_SPORTSBOOK_KEY,
+    build_fanduel_betslip_url,
+)
 
-# These few constants/functions are intentionally copied verbatim from
-# select_daily_parlay.py (not imported) -- that module's own import chain
-# pulls in the pick-survival ML stack (scikit-learn) for its selection
-# logic, which this pure URL-construction helper has no need for. Keep
-# these in sync with select_daily_parlay.py's originals if either changes.
-FANDUEL_SPORTSBOOK_KEY = "fanduel"
-FANDUEL_BETSLIP_ENDPOINT = "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip"
-FANDUEL_DEEPLINK_HOSTS = {"account.sportsbook.fanduel.com", "sportsbook.fanduel.com"}
-FANDUEL_ID_PATTERN = re.compile(r"^[0-9]+(?:\.[0-9]+)?$")
 TARGET_MARKET_TYPES = {
     "H": "batter_hits",
     "TB": "batter_total_bases",
@@ -59,54 +53,6 @@ TARGET_MARKET_TYPES = {
     "RBI": "batter_rbis",
     "K": "pitcher_strikeouts",
 }
-MIN_LEGS = 2
-
-
-def parse_fanduel_selection_deeplink(value: object) -> tuple[str, str] | None:
-    """Extract provider-issued FanDuel IDs without accepting arbitrary redirect URLs."""
-    try:
-        parsed = urlparse(str(value or "").strip())
-    except ValueError:
-        return None
-    if (
-        parsed.scheme.lower() != "https"
-        or (parsed.hostname or "").lower() not in FANDUEL_DEEPLINK_HOSTS
-        or not parsed.path.lower().endswith("/addtobetslip")
-    ):
-        return None
-    query = parse_qs(parsed.query, keep_blank_values=True)
-    market_ids = query.get("marketId") or query.get("marketId[0]") or []
-    selection_ids = query.get("selectionId") or query.get("selectionId[0]") or []
-    if len(market_ids) != 1 or len(selection_ids) != 1:
-        return None
-    market_id = str(market_ids[0]).strip()
-    selection_id = str(selection_ids[0]).strip()
-    if not FANDUEL_ID_PATTERN.fullmatch(market_id) or not FANDUEL_ID_PATTERN.fullmatch(selection_id):
-        return None
-    return market_id, selection_id
-
-
-def build_fanduel_betslip_url(legs: list[dict[str, Any]]) -> str | None:
-    selections: list[tuple[str, str]] = []
-    for leg in legs:
-        if str(leg.get("selected_sportsbook_key") or "").strip().lower() != FANDUEL_SPORTSBOOK_KEY:
-            return None
-        selection = parse_fanduel_selection_deeplink(leg.get("sportsbook_deeplink"))
-        if selection is None or selection in selections:
-            return None
-        selections.append(selection)
-    if len(selections) < MIN_LEGS:
-        return None
-    params: list[tuple[str, str]] = []
-    for index, (market_id, selection_id) in enumerate(selections):
-        params.extend(
-            [
-                (f"marketId[{index}]", market_id),
-                (f"selectionId[{index}]", selection_id),
-            ]
-        )
-    return f"{FANDUEL_BETSLIP_ENDPOINT}?{urlencode(params)}"
-
 
 PAIR_KEYS = ("selected_parlay", "shadow_candidate")
 LEG_KEYS = ("leg_1", "leg_2", "leg_3", "leg_4")
@@ -194,14 +140,31 @@ def enrich_pair(pair: dict[str, Any], odds_index: dict[tuple[str, str, float, st
     pair["betslip_url"] = url
 
 
+def enrich_single_play(play: dict[str, Any], odds_index: dict[tuple[str, str, float, str], str]) -> None:
+    """A real single-leg FanDuel deep link for one main-board pick --
+    same real (player, market, line, side) match as a parlay leg, just
+    attached directly rather than combined into a multi-leg URL. Fields
+    differ from a parlay leg dict (player_display_name/market_line/
+    direction vs. player/line/side), so this adapts rather than reusing
+    match_leg_to_deeplink's leg shape directly."""
+    normalized_leg = {
+        "player": play.get("player_display_name") or play.get("player"),
+        "target": play.get("target"),
+        "line": play.get("market_line"),
+        "side": play.get("direction"),
+    }
+    deeplink = match_leg_to_deeplink(normalized_leg, odds_index)
+    if deeplink:
+        play["sportsbook_deeplink"] = deeplink
+
+
 def enrich_payload(
     payload: dict[str, Any], *, odds_fetcher: Callable[[], dict[str, Any]] = None,
 ) -> dict[str, Any]:
     parlays = payload.get("parlays")
-    if not isinstance(parlays, dict):
-        return payload
-    pairs = [parlays.get(key) for key in PAIR_KEYS if isinstance(parlays.get(key), dict)]
-    if not pairs:
+    pairs = [parlays.get(key) for key in PAIR_KEYS if isinstance(parlays, dict) and isinstance(parlays.get(key), dict)]
+    plays = [p for p in (payload.get("plays") or []) if isinstance(p, dict)]
+    if not pairs and not plays:
         return payload
 
     fetch = odds_fetcher or (lambda: FanduelPublicMlbProvider().collect_player_props())
@@ -211,6 +174,8 @@ def enrich_payload(
     odds_index = build_odds_index(result.get("odds") or [])
     for pair in pairs:
         enrich_pair(pair, odds_index)
+    for play in plays:
+        enrich_single_play(play, odds_index)
     return payload
 
 

@@ -119,6 +119,35 @@ def test_enrich_payload_handles_missing_parlays_key():
     assert enrich.enrich_payload({}) == {}
 
 
+def test_enrich_single_play_attaches_real_deeplink_from_main_board_fields():
+    play = {"player_display_name": "Pete Alonso", "direction": "OVER", "target": "R", "market_line": 0.5}
+    rows = [_odds_row("Pete Alonso", "batter_runs_scored", 0.5, "over", "734.1", "111")]
+    index = enrich.build_odds_index(rows)
+
+    enrich.enrich_single_play(play, index)
+
+    assert play["sportsbook_deeplink"] == "https://sportsbook.fanduel.com/addToBetslip?marketId=734.1&selectionId=111"
+
+
+def test_enrich_single_play_leaves_deeplink_absent_when_no_live_match():
+    play = {"player_display_name": "Pete Alonso", "direction": "OVER", "target": "R", "market_line": 0.5}
+    enrich.enrich_single_play(play, {})
+    assert "sportsbook_deeplink" not in play
+
+
+def test_enrich_payload_attaches_deeplinks_to_main_board_plays():
+    payload = {
+        "plays": [
+            {"player_display_name": "Pete Alonso", "direction": "OVER", "target": "R", "market_line": 0.5},
+        ],
+    }
+    rows = [_odds_row("Pete Alonso", "batter_runs_scored", 0.5, "over", "734.1", "111")]
+
+    enrich.enrich_payload(payload, odds_fetcher=lambda: {"status": "success", "odds": rows})
+
+    assert payload["plays"][0]["sportsbook_deeplink"] == "https://sportsbook.fanduel.com/addToBetslip?marketId=734.1&selectionId=111"
+
+
 def test_enrich_file_round_trips_through_disk(tmp_path: Path):
     target = tmp_path / "daily_predictions.json"
     target.write_text(json.dumps({"parlays": {"shadow_candidate": _pair_with_two_legs()}}), encoding="utf-8")

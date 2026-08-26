@@ -299,11 +299,13 @@ def test_run_nba_exports_expected_same_day_manifest(tmp_path, monkeypatch) -> No
 
     shared_daily_predictions.run_nba(_default_args(), tmp_path / "dist")
 
-    assert len(commands) == 2
+    assert len(commands) == 3
     export_command = commands[1][1]
     assert export_command[:2] == ["python", str(tmp_path / "export_daily_predictions_web.py")]
     assert "--manifest" in export_command
     assert str(manifest_path) in export_command
+    # Real headshot cache step -- additive, runs after the export above.
+    assert commands[2][0] == "Cache NBA Player Headshots"
 
 
 def test_run_nba_forwards_scraped_live_market_configuration(tmp_path, monkeypatch) -> None:

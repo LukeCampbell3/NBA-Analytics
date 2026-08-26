@@ -33,6 +33,12 @@ DEFAULT_PRIVATE_OUTPUT_DIR = REPO_ROOT / "paywall" / "private-content" / "app"
 NBA_PREDICTOR_ROOT = REPO_ROOT / "sports" / "nba" / "predictions" / "Player-Predictor"
 NBA_RUNNER = NBA_PREDICTOR_ROOT / "scripts" / "run_daily_market_pipeline.py"
 NBA_EXPORTER = NBA_PREDICTOR_ROOT / "scripts" / "export_daily_predictions_web.py"
+# Real, deduplicated local headshot cache -- see
+# update_nba_player_headshot_cache.py's module docstring. Additive only:
+# downloads any real bettable player not already cached and rewrites the
+# board's player_headshot_url to point at the local copy (real remote URL
+# kept as fallback), never touches any other key.
+NBA_HEADSHOT_CACHE = NBA_PREDICTOR_ROOT / "scripts" / "update_nba_player_headshot_cache.py"
 NBA_WEB_JSON = REPO_ROOT / "sports" / "nba" / "web" / "data" / "daily_predictions.json"
 NBA_CARDS_JSON = REPO_ROOT / "sports" / "nba" / "web" / "data" / "cards.json"
 
@@ -154,6 +160,14 @@ MLB_PARLAY_HEADSHOT_ENRICHER = REPO_ROOT / "sports" / "mlb" / "scripts" / "enric
 # every leg resolves to a real live FanDuel selection), never touches
 # any other key.
 MLB_PARLAY_BETSLIP_ENRICHER = REPO_ROOT / "sports" / "mlb" / "scripts" / "enrich_parlay_leg_betslip.py"
+# Real, deduplicated local headshot cache -- see
+# update_mlb_player_headshot_cache.py's module docstring. Additive only:
+# downloads any real bettable player not already cached and rewrites
+# every board's player_headshot_url to point at the local copy (real
+# remote URL kept as fallback), never touches any other key. Runs last
+# among the headshot-related steps so it sees every leg's real URL,
+# including the parlay-leg enrichment step just above.
+MLB_HEADSHOT_CACHE = REPO_ROOT / "sports" / "mlb" / "scripts" / "update_mlb_player_headshot_cache.py"
 MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v8"
 MLB_PICK_SURVIVAL_TOP_K = 3
 MLB_PRIMARY_POLICY_ARGS = [
@@ -601,6 +615,7 @@ def run_nba(args: argparse.Namespace, output_dir: Path) -> None:
             str(NBA_CARDS_JSON),
         ]
         run_step("Export NBA Predictions From Existing Manifest", command)
+        run_nba_headshot_cache(args, nba_dist_json)
         return
 
     command = [
@@ -662,6 +677,24 @@ def run_nba(args: argparse.Namespace, output_dir: Path) -> None:
             str(NBA_CARDS_JSON),
         ],
     )
+    run_nba_headshot_cache(args, nba_dist_json)
+
+
+def run_nba_headshot_cache(args: argparse.Namespace, nba_dist_json: Path) -> None:
+    if not NBA_HEADSHOT_CACHE.exists():
+        return
+    try:
+        run_step(
+            "Cache NBA Player Headshots",
+            [
+                args.python,
+                str(NBA_HEADSHOT_CACHE),
+                "--daily-predictions-path", str(NBA_WEB_JSON),
+                "--daily-predictions-path", str(nba_dist_json),
+            ],
+        )
+    except Exception as exc:  # noqa: BLE001 -- deliberate: additive, never blocks singles publication
+        print(f"[warning] NBA headshot cache step failed, images fall back to their real remote CDN URL: {format_step_failure(exc)}")
 
 
 def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Path]:
@@ -1110,6 +1143,23 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
         )
     except Exception as exc:  # noqa: BLE001 -- deliberate: additive, never blocks singles publication
         print(f"[warning] MLB parlay leg betslip enrichment failed, no betslip link will be shown: {format_step_failure(exc)}")
+
+    # Real, deduplicated local headshot cache -- see MLB_HEADSHOT_CACHE
+    # above. Additive only, and a real fetch failure for any one player
+    # here must never block the boards that already published above --
+    # that player's card simply keeps its real remote URL.
+    try:
+        run_step(
+            "Cache MLB Player Headshots",
+            [
+                args.python,
+                str(MLB_HEADSHOT_CACHE),
+                "--daily-predictions-path", str(MLB_WEB_JSON),
+                "--daily-predictions-path", str(mlb_dist_json),
+            ],
+        )
+    except Exception as exc:  # noqa: BLE001 -- deliberate: additive, never blocks singles publication
+        print(f"[warning] MLB headshot cache step failed, images fall back to their real remote CDN URL: {format_step_failure(exc)}")
 
     # Run max-winrate selector on the raw pool for the tightest possible board
     max_wr_csv = pool_csv.with_name(pool_csv.stem + "_max_winrate.csv")

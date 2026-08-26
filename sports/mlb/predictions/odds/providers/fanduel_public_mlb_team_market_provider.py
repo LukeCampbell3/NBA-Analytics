@@ -214,6 +214,7 @@ class FanduelPublicMlbTeamMarketProvider:
 
     def _market_row(self, market: dict[str, Any], *, target: str, event_id: str, home_team: str, away_team: str, observed_at: str) -> Optional[dict[str, Any]]:
         runners = market.get("runners") or []
+        market_id = str(market.get("marketId") or "").strip()
         base_row = {
             "source": "fanduel_public", "sportsbook": "fanduel", "event_id": event_id,
             "external_event_id": event_id, "home_team": home_team, "away_team": away_team,
@@ -221,6 +222,7 @@ class FanduelPublicMlbTeamMarketProvider:
         }
         if target == "moneyline":
             home_price = away_price = None
+            home_deeplink = away_deeplink = None
             for runner in runners:
                 if not isinstance(runner, dict) or str(runner.get("runnerStatus") or "").upper() != "ACTIVE":
                     continue
@@ -228,16 +230,24 @@ class FanduelPublicMlbTeamMarketProvider:
                 side = str((runner.get("result") or {}).get("type") or "").upper()
                 if price is None or side not in {"HOME", "AWAY"}:
                     continue
+                selection_id = str(runner.get("selectionId") or "").strip()
+                deeplink = self._build_deeplink(market_id, selection_id)
                 if side == "HOME":
                     home_price = price
+                    home_deeplink = deeplink
                 else:
                     away_price = price
+                    away_deeplink = deeplink
             if home_price is None or away_price is None:
                 self._accounting["malformed_rows_rejected"] += 1
                 return None
-            return {**base_row, "side": "", "line": None, "home_moneyline": home_price, "away_moneyline": away_price}
+            return {
+                **base_row, "side": "", "line": None, "home_moneyline": home_price, "away_moneyline": away_price,
+                "home_moneyline_deeplink": home_deeplink, "away_moneyline_deeplink": away_deeplink,
+            }
 
         over_price = under_price = line = None
+        over_deeplink = under_deeplink = None
         for runner in runners:
             if not isinstance(runner, dict) or str(runner.get("runnerStatus") or "").upper() != "ACTIVE":
                 continue
@@ -250,14 +260,27 @@ class FanduelPublicMlbTeamMarketProvider:
             except (TypeError, ValueError):
                 continue
             line = handicap
+            selection_id = str(runner.get("selectionId") or "").strip()
+            deeplink = self._build_deeplink(market_id, selection_id)
             if side == "OVER":
                 over_price = price
+                over_deeplink = deeplink
             else:
                 under_price = price
+                under_deeplink = deeplink
         if over_price is None or under_price is None or line is None:
             self._accounting["malformed_rows_rejected"] += 1
             return None
-        return {**base_row, "side": "", "line": line, "over_price": over_price, "under_price": under_price}
+        return {
+            **base_row, "side": "", "line": line, "over_price": over_price, "under_price": under_price,
+            "over_deeplink": over_deeplink, "under_deeplink": under_deeplink,
+        }
+
+    @staticmethod
+    def _build_deeplink(market_id: str, selection_id: str) -> Optional[str]:
+        if not market_id or not selection_id:
+            return None
+        return f"https://sportsbook.fanduel.com/addToBetslip?marketId={market_id}&selectionId={selection_id}"
 
     @staticmethod
     def _price(runner: dict[str, Any]) -> Optional[int]:

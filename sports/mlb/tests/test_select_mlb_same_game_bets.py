@@ -18,9 +18,21 @@ def _game() -> dict:
 
 def _market_odds() -> list[dict]:
     return [
-        {"target": "moneyline", "sportsbook": "draftkings", "home_moneyline": -150, "away_moneyline": 130, "line": None},
-        {"target": "game_total", "sportsbook": "draftkings", "line": 8.5, "over_price": -110, "under_price": -110},
-        {"target": "game_total", "sportsbook": "fanduel", "line": 8.5, "over_price": -105, "under_price": -115},
+        {
+            "target": "moneyline", "sportsbook": "draftkings", "home_moneyline": -150, "away_moneyline": 130, "line": None,
+            "home_moneyline_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.1&selectionId=2",
+            "away_moneyline_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.1&selectionId=1",
+        },
+        {
+            "target": "game_total", "sportsbook": "draftkings", "line": 8.5, "over_price": -110, "under_price": -110,
+            "over_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.2&selectionId=3",
+            "under_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.2&selectionId=4",
+        },
+        {
+            "target": "game_total", "sportsbook": "fanduel", "line": 8.5, "over_price": -105, "under_price": -115,
+            "over_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=m3&selectionId=5",
+            "under_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=m3&selectionId=6",
+        },
         {"target": "first_5_innings_total", "sportsbook": "draftkings", "line": 4.5, "over_price": -115, "under_price": -105},
     ]
 
@@ -63,6 +75,29 @@ def test_build_legs_for_market_totals_uses_real_consensus_line() -> None:
     # best real over price between the two real books quoting 8.5 is -105 (fanduel)
     over_leg = next(leg for leg in legs if leg.side == "over")
     assert over_leg.price_american == -105
+
+
+def test_build_legs_for_market_moneyline_carries_real_per_side_deeplinks() -> None:
+    legs = select._build_legs_for_market("moneyline", _market_odds(), _result(), calibration_store=None, calibration_as_of=None, min_real_books=1)
+    home_leg = next(leg for leg in legs if leg.side == "home")
+    away_leg = next(leg for leg in legs if leg.side == "away")
+    assert home_leg.sportsbook_deeplink == "https://sportsbook.fanduel.com/addToBetslip?marketId=734.1&selectionId=2"
+    assert away_leg.sportsbook_deeplink == "https://sportsbook.fanduel.com/addToBetslip?marketId=734.1&selectionId=1"
+    assert home_leg.as_dict()["sportsbook_deeplink"] == home_leg.sportsbook_deeplink
+
+
+def test_build_legs_for_market_totals_carries_real_per_side_deeplinks_from_the_winning_book() -> None:
+    legs = select._build_legs_for_market("game_total", _market_odds(), _result(), calibration_store=None, calibration_as_of=None, min_real_books=1)
+    over_leg = next(leg for leg in legs if leg.side == "over")
+    under_leg = next(leg for leg in legs if leg.side == "under")
+    assert over_leg.sportsbook == "fanduel"  # -105 beats draftkings' -110
+    assert over_leg.sportsbook_deeplink == "https://sportsbook.fanduel.com/addToBetslip?marketId=m3&selectionId=5"
+    assert under_leg.sportsbook_deeplink == "https://sportsbook.fanduel.com/addToBetslip?marketId=m3&selectionId=6"
+
+
+def test_build_legs_for_market_leaves_deeplink_none_when_odds_row_has_none() -> None:
+    legs = select._build_legs_for_market("first_5_innings_total", _market_odds(), _result(), calibration_store=None, calibration_as_of=None, min_real_books=1)
+    assert all(leg.sportsbook_deeplink is None for leg in legs)
 
 
 def test_build_legs_for_market_returns_empty_without_real_data() -> None:
@@ -140,6 +175,40 @@ def test_build_same_game_candidates_stays_unauthorized_with_an_empty_real_calibr
     )
     assert all(not c.candidate_authorized for c in combos)
     assert all("market_support" in c.support_blocking_dimensions for c in combos)
+
+
+def test_combo_betslip_ready_when_both_real_legs_priced_at_fanduel() -> None:
+    market_odds = [
+        {
+            "target": "moneyline", "sportsbook": "fanduel", "home_moneyline": -150, "away_moneyline": 130, "line": None,
+            "home_moneyline_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.1&selectionId=2",
+            "away_moneyline_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.1&selectionId=1",
+        },
+        {
+            "target": "game_total", "sportsbook": "fanduel", "line": 8.5, "over_price": -105, "under_price": -115,
+            "over_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.2&selectionId=3",
+            "under_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.2&selectionId=4",
+        },
+    ]
+    combos = select.build_same_game_candidates(_game(), _result(), market_odds)
+    combo = next(c for c in combos if {c.leg_a.market, c.leg_b.market} == {"moneyline", "game_total"})
+
+    assert combo.betslip["status"] == "ready"
+    url = combo.betslip["url"]
+    assert url.startswith("https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?")
+    assert combo.as_dict()["betslip_url"] == url
+
+
+def test_combo_betslip_unavailable_when_a_leg_has_no_real_fanduel_selection() -> None:
+    """_market_odds()'s moneyline row is a draftkings-best price with no
+    FanDuel deeplink -- a combo built from it must never get a fake or
+    partial multi-leg link."""
+    combos = select.build_same_game_candidates(_game(), _result(), _market_odds())
+    combo = next(c for c in combos if {c.leg_a.market, c.leg_b.market} == {"moneyline", "game_total"})
+
+    assert combo.betslip["status"] == "unavailable"
+    assert "url" not in combo.betslip
+    assert combo.as_dict()["betslip_url"] is None
 
 
 def test_build_pair_observation_for_combo_has_no_real_quoted_sgp_price() -> None:

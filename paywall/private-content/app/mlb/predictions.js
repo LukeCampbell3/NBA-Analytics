@@ -309,9 +309,10 @@ class DailyPredictionsPage {
      * enforces. Never renders a link built from anything else.
      */
     renderBetslipLink(pair) {
+        if (!window.CardVault) return "";
         const betslip = pair?.betslip;
         if (!betslip || betslip.status !== "ready") return "";
-        const url = this.safeFanDuelBetslipUrl(pair.betslip_url || betslip.url);
+        const url = window.CardVault.safeFanDuelBetslipUrl(pair.betslip_url || betslip.url);
         if (!url) return "";
         return `
             <div class="daily-parlay__actions">
@@ -464,6 +465,7 @@ class DailyPredictionsPage {
                     <span>Edge vs. naive market <strong>${edge}</strong></span>
                     <span>Model EV <strong>${ev}</strong></span>
                 </div>
+                ${this.renderBetslipLink(combo)}
             </article>
         `;
     }
@@ -563,18 +565,6 @@ class DailyPredictionsPage {
         if (!Number.isFinite(number)) return "n/a";
         const rounded = Math.round(number);
         return `${rounded > 0 ? "+" : ""}${rounded}`;
-    }
-
-    safeFanDuelBetslipUrl(value) {
-        try {
-            const url = new URL(String(value || ""));
-            const allowedHosts = new Set(["account.sportsbook.fanduel.com", "sportsbook.fanduel.com"]);
-            if (url.protocol !== "https:" || !allowedHosts.has(url.hostname.toLowerCase())) return "";
-            if (!url.pathname.toLowerCase().endsWith("/addtobetslip")) return "";
-            return url.toString();
-        } catch (_error) {
-            return "";
-        }
     }
 
     escapeHtml(value) {
