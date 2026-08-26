@@ -1,0 +1,30 @@
+{
+  "run_dir": "sports/nba/validation/production_shadow/safe_state/20260527",
+  "actuals_source": "sports/nba/validation/production_shadow/safe_state/20260527/real_actuals_with_line_confirmation.csv",
+  "output_dir": "sports/nba/validation/production_shadow/safe_state/20260527",
+  "joined_board_dir": "sports/nba/validation/production_shadow/safe_state/20260527/settlement_joined_boards",
+  "joined_board_paths": {
+    "production_board_as_is": "sports/nba/validation/production_shadow/safe_state/20260527/settlement_joined_boards/production_board_as_is.csv",
+    "price_defense_only_board": "sports/nba/validation/production_shadow/safe_state/20260527/settlement_joined_boards/price_defense_only_board.csv",
+    "forecastable_price_board": "sports/nba/validation/production_shadow/safe_state/20260527/settlement_joined_boards/forecastable_price_board.csv",
+    "structural_misprice_board": "sports/nba/validation/production_shadow/safe_state/20260527/settlement_joined_boards/structural_misprice_board.csv",
+    "safe_state_core_board": "sports/nba/validation/production_shadow/safe_state/20260527/settlement_joined_boards/safe_state_core_board.csv",
+    "safe_state_near_core_board": "sports/nba/validation/production_shadow/safe_state/20260527/settlement_joined_boards/safe_state_near_core_board.csv",
+    "safe_state_expanded_board": "sports/nba/validation/production_shadow/safe_state/20260527/settlement_joined_boards/safe_state_expanded_board.csv",
+    "true_unstable_shadow_rejections": "sports/nba/validation/production_shadow/safe_state/20260527/settlement_joined_boards/true_unstable_shadow_rejections.csv",
+    "needs_more_sample_queue": "sports/nba/validation/production_shadow/safe_state/20260527/settlement_joined_boards/needs_more_sample_queue.csv"
+  },
+  "actual_rows": 47,
+  "output_paths": {
+    "metrics_csv": "sports/nba/validation/production_shadow/safe_state/20260527/safe_state_shadow_settlement_metrics.csv",
+    "rows_csv": "sports/nba/validation/production_shadow/safe_state/20260527/safe_state_settlement_rows.csv",
+    "status_audit_csv": "sports/nba/validation/production_shadow/safe_state/20260527/safe_state_settlement_status_audit.csv",
+    "status_audit_json": "sports/nba/validation/production_shadow/safe_state/20260527/safe_state_settlement_status_audit.json",
+    "report_json": "sports/nba/validation/production_shadow/safe_state/20260527/safe_state_shadow_settlement_report.json",
+    "evaluation_json": "sports/nba/validation/production_shadow/safe_state/20260527/safe_state_settlement_evaluation.json",
+    "evaluation_markdown": "sports/nba/validation/production_shadow/safe_state/20260527/safe_state_settlement_evaluation.md"
+  },
+  "settlement_status": "SETTLEMENT_EVALUATED",
+  "production_behavior_changed": false,
+  "promotion_claim": false
+}
