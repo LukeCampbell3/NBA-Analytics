@@ -276,7 +276,7 @@ class DailyPredictionsPage {
             const shadow = parlay.shadow_candidate;
             const shadowBlock = shadow ? `
                 <p class="daily-parlay__empty">Today's V2 shadow candidate -- not certified, no stake authorized</p>
-                <div class="daily-parlay__legs">${this.renderParlayV2Legs(shadow)}</div>
+                ${this.renderParlayV2Legs(shadow)}
             ` : `<p class="daily-parlay__empty">${this.escapeHtml(this.formatParlayV2AbstainReason(reason, parlay))}</p>`;
             content.innerHTML = `
                 <div class="daily-parlay__header">
@@ -294,7 +294,7 @@ class DailyPredictionsPage {
                 <strong>2-Leg Parlay</strong>
                 ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Selected -- shadow only") : ""}
             </div>
-            <div class="daily-parlay__legs">${this.renderParlayV2Legs(parlay.selected_parlay)}</div>
+            ${this.renderParlayV2Legs(parlay.selected_parlay)}
             <p class="daily-parlay__state">${statusFooter}</p>
         `;
     }
@@ -309,18 +309,26 @@ class DailyPredictionsPage {
      * suggest a reliability this system has not established.
      */
     renderParlayV2Legs(pair) {
-        return [pair.leg_1, pair.leg_2].filter(Boolean).map((leg, index) => {
-            const target = window.CardVault ? window.CardVault.formatTargetLabel(leg.target) : String(leg.target || "");
-            return `
-                <div class="daily-parlay__leg">
-                    <span class="daily-parlay__leg-number">${String(index + 1).padStart(2, "0")}</span>
-                    <div class="daily-parlay__leg-copy">
-                        <strong>${this.escapeHtml(leg.player || "Unknown player")}</strong>
-                        <span>${this.escapeHtml(`${leg.side || ""} ${this.formatNumber(leg.line, 1)} ${target}`)}</span>
-                    </div>
-                </div>
-            `;
+        if (!window.CardVault) return "";
+        const legs = [pair.leg_1, pair.leg_2].filter(Boolean);
+        const cards = legs.map((leg, index) => {
+            const direction = String(leg.side || "").toUpperCase() === "UNDER" ? "UNDER" : "OVER";
+            const target = window.CardVault.formatTargetLabel(leg.target);
+            const displayName = String(leg.player || "").replaceAll("_", " ").trim() || "Unknown player";
+            const nameParts = displayName.split(/\s+/).filter(Boolean);
+            const monogram = nameParts.length >= 2
+                ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase()
+                : (nameParts[0] || "NA").slice(0, 2).toUpperCase();
+            const lineText = this.formatNumber(leg.line, 1);
+            return window.CardVault.renderLegCard({
+                rank: index + 1,
+                monogram,
+                name: displayName,
+                market: `${direction} ${target}`,
+                context: lineText !== "n/a" ? `Line ${lineText}` : "",
+            });
         }).join("");
+        return `<div class="vault-board vault-board--legs">${cards}</div>`;
     }
 
     /**
@@ -424,7 +432,7 @@ class DailyPredictionsPage {
                     </div>
                     ${window.CardVault ? window.CardVault.renderStatusPill(pillTone, pillLabel) : ""}
                 </div>
-                <div class="daily-parlay__legs">
+                <div class="vault-board vault-board--legs">
                     ${this.renderSameGameLeg(combo.leg_a, game, 1)}
                     ${this.renderSameGameLeg(combo.leg_b, game, 2)}
                 </div>
@@ -438,20 +446,19 @@ class DailyPredictionsPage {
     }
 
     renderSameGameLeg(leg, game, index) {
-        if (!leg) return "";
-        return `
-            <div class="daily-parlay__leg">
-                <span class="daily-parlay__leg-number">${String(index).padStart(2, "0")}</span>
-                <div class="daily-parlay__leg-copy">
-                    <strong>${this.escapeHtml(this.formatSameGameLegLabel(leg, game))}</strong>
-                    <span>${this.escapeHtml(this.formatSameGameMarketLabel(leg.market))}</span>
-                </div>
-                <div class="daily-parlay__leg-market">
-                    <strong>${this.formatAmerican(leg.price_american)}</strong>
-                    <span>${this.escapeHtml(leg.sportsbook || "n/a")}</span>
-                </div>
-            </div>
-        `;
+        if (!leg || !window.CardVault) return "";
+        const name = this.formatSameGameLegLabel(leg, game);
+        const monogram = name.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase() || "NA";
+        return window.CardVault.renderLegCard({
+            rank: index,
+            monogram,
+            name,
+            market: this.formatSameGameMarketLabel(leg.market),
+            metrics: [
+                ["Odds", this.formatAmerican(leg.price_american)],
+                ["Book", leg.sportsbook || ""],
+            ],
+        });
     }
 
     formatSameGameLegLabel(leg, game) {

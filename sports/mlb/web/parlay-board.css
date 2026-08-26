@@ -10,8 +10,7 @@
     border-top: 1px solid color-mix(in srgb, var(--vault-accent) 42%, var(--vault-line));
 }
 
-.daily-parlay__header,
-.daily-parlay__leg {
+.daily-parlay__header {
     display: flex;
     align-items: center;
 }
@@ -80,7 +79,6 @@
 }
 
 .daily-parlay__metrics span,
-.daily-parlay__leg span,
 .daily-parlay__state,
 .daily-parlay__empty {
     color: var(--vault-text-muted);
@@ -127,43 +125,12 @@
     font-size: 1.05rem;
 }
 
-.daily-parlay__legs {
+/* Parlay legs -- same .prediction-card unit the top-of-board picks get
+   (CardVault.renderLegCard), just in a tighter grid sized for a
+   2-legged group instead of the full board's 3-column layout. */
+.vault-board--legs {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     margin-top: var(--vault-space-3);
-    border-top: 1px solid var(--vault-line);
-}
-
-.daily-parlay__leg {
-    min-height: 68px;
-    gap: var(--vault-space-4);
-    border-bottom: 1px solid var(--vault-line);
-}
-
-.daily-parlay__leg-number {
-    width: 34px;
-    flex: 0 0 34px;
-    font-variant-numeric: tabular-nums;
-}
-
-.daily-parlay__leg-copy {
-    min-width: 0;
-    flex: 1;
-}
-
-.daily-parlay__leg-copy strong,
-.daily-parlay__leg-copy span,
-.daily-parlay__leg-market strong,
-.daily-parlay__leg-market span {
-    display: block;
-}
-
-.daily-parlay__leg-copy strong,
-.daily-parlay__leg-market strong {
-    color: var(--vault-text);
-}
-
-.daily-parlay__leg-market {
-    min-width: 130px;
-    text-align: right;
 }
 
 .daily-parlay__state,
@@ -233,15 +200,6 @@
 
     .daily-parlay__metrics > div:nth-child(-n+2) {
         border-bottom: 1px solid var(--vault-line);
-    }
-
-    .daily-parlay__leg {
-        align-items: flex-start;
-        padding: var(--vault-space-3) 0;
-    }
-
-    .daily-parlay__leg-market {
-        min-width: 82px;
     }
 
     .daily-parlay__betslip-button {

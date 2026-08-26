@@ -296,5 +296,50 @@
     `;
   };
 
+  /**
+   * Same visual unit as renderPredictionCard (the same .prediction-card
+   * markup/CSS), for a pick that isn't a full board play -- a parlay leg,
+   * same-game combo leg, or anything else that's still fundamentally one
+   * pick and deserves the same card treatment a top-of-board pick gets,
+   * not a bare list row. Takes an already-normalized spec rather than a
+   * raw play/leg object: callers own the field mapping for their own
+   * data shape (a player-prop leg and a team-market leg look nothing
+   * alike), this only owns the shared rendering. Never fabricates a
+   * field -- pass only what's real; `metrics` and `context` are omitted
+   * cleanly when empty, exactly like renderPredictionCard's own optional
+   * rows.
+   */
+  CardVault.renderLegCard = function renderLegCard({
+    rank, statusTone = "", statusLabel = "", monogram = "", photoUrl = "",
+    name = "", market = "", context = "", metrics = [], note = "",
+  } = {}) {
+    const photoHtml = photoUrl
+      ? `<img class="prediction-card__photo-img" src="${CardVault.escapeAttr(photoUrl)}" alt="" loading="lazy" onerror="this.replaceWith(this.nextElementSibling)" /><span class="prediction-card__fallback">${CardVault.escapeHtml(monogram)}</span>`
+      : `<span class="prediction-card__fallback">${CardVault.escapeHtml(monogram)}</span>`;
+    const metricHtml = metrics
+      .filter(([, value]) => value != null && value !== "")
+      .map(([label, value]) => `<div><dt>${CardVault.escapeHtml(label)}</dt><dd>${CardVault.escapeHtml(value)}</dd></div>`)
+      .join("");
+
+    return `
+      <article class="prediction-card" aria-label="${CardVault.escapeAttr(`${name}, ${market}`)}">
+        <header class="prediction-card__header">
+          <span class="prediction-card__rank">${CardVault.escapeHtml(String(rank ?? ""))}</span>
+          <div class="prediction-card__tags">${statusLabel ? CardVault.renderStatusPill(statusTone, statusLabel) : ""}</div>
+        </header>
+        <div class="prediction-card__identity">
+          <div class="prediction-card__photo">${photoHtml}</div>
+          <div>
+            <h3 class="prediction-card__name">${CardVault.escapeHtml(name)}</h3>
+            <p class="prediction-card__market">${CardVault.escapeHtml(market)}</p>
+            ${context ? `<p class="prediction-card__context">${CardVault.escapeHtml(context)}</p>` : ""}
+          </div>
+        </div>
+        ${metricHtml ? `<dl class="prediction-card__metrics">${metricHtml}</dl>` : ""}
+        ${note ? `<p class="prediction-card__note">${CardVault.escapeHtml(note)}</p>` : ""}
+      </article>
+    `;
+  };
+
   global.CardVault = CardVault;
 })(typeof window !== "undefined" ? window : globalThis);
