@@ -141,6 +141,19 @@ MLB_WEB_JSON = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "daily_prediction
 # leg is authorized here iff it would be authorized there too -- see
 # generate_mlb_team_market_predictions.py's module docstring.
 MLB_TEAM_MARKET_PREDICTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "generate_mlb_team_market_predictions.py"
+# Real headshot enrichment for PARLAY_POLICY_V2 legs -- see
+# enrich_parlay_leg_headshots.py's module docstring. Additive only:
+# attaches player_headshot_url/player_headshot_fallback_url to the
+# already-exported parlays.selected_parlay / parlays.shadow_candidate leg
+# dicts, never touches any other key.
+MLB_PARLAY_HEADSHOT_ENRICHER = REPO_ROOT / "sports" / "mlb" / "scripts" / "enrich_parlay_leg_headshots.py"
+# Real FanDuel "Add to Betslip" deep links for PARLAY_POLICY_V2 pairs --
+# see enrich_parlay_leg_betslip.py's module docstring. Additive only:
+# attaches betslip/betslip_url to the already-exported
+# parlays.selected_parlay / parlays.shadow_candidate pairs (only when
+# every leg resolves to a real live FanDuel selection), never touches
+# any other key.
+MLB_PARLAY_BETSLIP_ENRICHER = REPO_ROOT / "sports" / "mlb" / "scripts" / "enrich_parlay_leg_betslip.py"
 MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v8"
 MLB_PICK_SURVIVAL_TOP_K = 3
 MLB_PRIMARY_POLICY_ARGS = [
@@ -1063,6 +1076,40 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
         run_step("Generate MLB Team-Market Predictions (newest predictor)", team_market_command)
     except Exception as exc:  # noqa: BLE001 -- deliberate: additive, never blocks singles publication
         print(f"[warning] MLB team-market predictor step failed, main board keeps its existing player-prop plays only: {format_step_failure(exc)}")
+
+    # Real headshot enrichment for PARLAY_POLICY_V2 legs -- see
+    # MLB_PARLAY_HEADSHOT_ENRICHER above. Additive only, and a live
+    # MLB Stats API lookup failure here must never block the boards that
+    # already published successfully above.
+    try:
+        run_step(
+            "Enrich MLB Parlay Leg Headshots",
+            [
+                args.python,
+                str(MLB_PARLAY_HEADSHOT_ENRICHER),
+                "--daily-predictions-path", str(MLB_WEB_JSON),
+                "--daily-predictions-path", str(mlb_dist_json),
+            ],
+        )
+    except Exception as exc:  # noqa: BLE001 -- deliberate: additive, never blocks singles publication
+        print(f"[warning] MLB parlay leg headshot enrichment failed, legs fall back to their monogram: {format_step_failure(exc)}")
+
+    # Real FanDuel betslip deep links for PARLAY_POLICY_V2 pairs -- see
+    # MLB_PARLAY_BETSLIP_ENRICHER above. Additive only, and a live
+    # FanDuel public-feed failure here must never block the boards that
+    # already published successfully above.
+    try:
+        run_step(
+            "Enrich MLB Parlay Leg Betslip Links",
+            [
+                args.python,
+                str(MLB_PARLAY_BETSLIP_ENRICHER),
+                "--daily-predictions-path", str(MLB_WEB_JSON),
+                "--daily-predictions-path", str(mlb_dist_json),
+            ],
+        )
+    except Exception as exc:  # noqa: BLE001 -- deliberate: additive, never blocks singles publication
+        print(f"[warning] MLB parlay leg betslip enrichment failed, no betslip link will be shown: {format_step_failure(exc)}")
 
     # Run max-winrate selector on the raw pool for the tightest possible board
     max_wr_csv = pool_csv.with_name(pool_csv.stem + "_max_winrate.csv")

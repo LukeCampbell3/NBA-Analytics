@@ -90,11 +90,13 @@ class PgaCandidate:
     price_confirmed: bool
     candidate_authorized: bool
     support_blocking_dimensions: list[str]
+    player_headshot_url: str = ""
 
     def as_dict(self) -> dict[str, Any]:
         return {
             "player_id": self.player_id,
             "player_name": self.player_name,
+            "player_headshot_url": self.player_headshot_url,
             "market": self.market,
             "model_probability": self.model_probability,
             "no_vig_market_probability": self.no_vig_market_probability,
@@ -128,6 +130,7 @@ def build_candidates(
     min_abs_edge: float = MIN_ABS_EDGE,
     min_expected_value: float = MIN_EXPECTED_VALUE,
     min_real_books: int = MIN_REAL_BOOKS,
+    player_headshots: Optional[dict[str, str]] = None,
 ) -> list[PgaCandidate]:
     """Builds one real candidate per (player, market) the model has a
     probability for AND the real market has a real price for. A market
@@ -136,6 +139,7 @@ def build_candidates(
     that market, never a fabricated one."""
     candidates: list[PgaCandidate] = []
     no_vig_cache: dict[tuple[str, str], dict[str, float]] = {}
+    headshots = player_headshots or {}
 
     for outcome in outcome_probabilities:
         for market, field_name in _TARGET_TO_PROBABILITY_FIELD.items():
@@ -195,6 +199,7 @@ def build_candidates(
                     price_confirmed=price_confirmed,
                     candidate_authorized=authorized,
                     support_blocking_dimensions=support_blocking,
+                    player_headshot_url=headshots.get(outcome.player_id, ""),
                 )
             )
 

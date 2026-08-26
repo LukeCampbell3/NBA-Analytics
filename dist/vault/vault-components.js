@@ -23,6 +23,26 @@
     return CardVault.escapeHtml(value).replaceAll("`", "&#96;");
   };
 
+  /**
+   * Shared photo markup for both card renderers below. Chains a primary
+   * headshot URL to an optional fallback URL (e.g. MLB's secondary CDN
+   * mirror) and finally to the monogram -- each <img> falls through to
+   * the next element on its own onerror, so a broken or missing image
+   * never leaves a blank card. Never guesses a URL from an id: only
+   * real URLs supplied by the caller are ever rendered.
+   */
+  CardVault.renderPhotoHtml = function renderPhotoHtml(primaryUrl, fallbackUrl, monogram) {
+    const fallbackSpan = `<span class="prediction-card__fallback">${CardVault.escapeHtml(monogram)}</span>`;
+    if (!primaryUrl) return fallbackSpan;
+    // Flat chain of siblings: each <img>'s onerror swaps itself out for
+    // whatever comes next (the fallback image, or finally the monogram),
+    // so a broken/missing photo never leaves a blank card.
+    const img = (url) => `<img class="prediction-card__photo-img" src="${CardVault.escapeAttr(url)}" alt="" loading="lazy" onerror="this.replaceWith(this.nextElementSibling)" />`;
+    return fallbackUrl
+      ? `${img(primaryUrl)}${img(fallbackUrl)}${fallbackSpan}`
+      : `${img(primaryUrl)}${fallbackSpan}`;
+  };
+
   CardVault.formatNumber = function formatNumber(value, digits = 2) {
     const n = Number(value);
     return Number.isFinite(n) ? n.toFixed(digits) : "n/a";
@@ -159,11 +179,12 @@
     const directionRaw = String(play.direction || "").toUpperCase();
     const direction = directionRaw === "UNDER" ? "UNDER" : "OVER";
     const displayName = String(play.player_display_name || play.player || "").replaceAll("_", " ").trim() || "Unknown player";
-    const headshotUrl = String(play.player_headshot_url || "").trim();
-    const id = Number(play.player_id);
-    const resolvedHeadshot = headshotUrl || (Number.isFinite(id) && id > 0
-      ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${id}.png`
-      : "");
+    // Headshot URL comes only from the exporter's own real data --
+    // never guessed from a player_id, since the CDN path pattern that
+    // works for one sport (e.g. cdn.nba.com) is wrong for every other
+    // sport and would silently 404 or point at an unrelated image.
+    const resolvedHeadshot = String(play.player_headshot_url || "").trim();
+    const fallbackHeadshot = String(play.player_headshot_fallback_url || "").trim();
     const parts = displayName.split(/\s+/).filter(Boolean);
     const monogram = parts.length >= 2 ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase() : (parts[0] || "NA").slice(0, 2).toUpperCase();
 
@@ -231,9 +252,7 @@
         ? `Model projection is ${CardVault.formatNumber(Math.abs(Number(edgeValue)))} ${direction === "UNDER" ? "below" : "above"} the market line.`
         : `Model projection is aligned to the ${direction} side of the market.`;
 
-    const photoHtml = resolvedHeadshot
-      ? `<img class="prediction-card__photo-img" src="${CardVault.escapeAttr(resolvedHeadshot)}" alt="" loading="lazy" onerror="this.replaceWith(this.nextElementSibling)" /><span class="prediction-card__fallback">${CardVault.escapeHtml(monogram)}</span>`
-      : `<span class="prediction-card__fallback">${CardVault.escapeHtml(monogram)}</span>`;
+    const photoHtml = CardVault.renderPhotoHtml(resolvedHeadshot, fallbackHeadshot, monogram);
     const parlayTag = play.parlay_candidate && !needsReview ? '<span class="prediction-card__tag prediction-card__tag--parlay">Parlay</span>' : "";
     const riskTags = riskFlags
       .filter((flag) => flag !== "policy_uncertified")
@@ -310,12 +329,10 @@
    * rows.
    */
   CardVault.renderLegCard = function renderLegCard({
-    rank, statusTone = "", statusLabel = "", monogram = "", photoUrl = "",
+    rank, statusTone = "", statusLabel = "", monogram = "", photoUrl = "", photoFallbackUrl = "",
     name = "", market = "", context = "", metrics = [], note = "",
   } = {}) {
-    const photoHtml = photoUrl
-      ? `<img class="prediction-card__photo-img" src="${CardVault.escapeAttr(photoUrl)}" alt="" loading="lazy" onerror="this.replaceWith(this.nextElementSibling)" /><span class="prediction-card__fallback">${CardVault.escapeHtml(monogram)}</span>`
-      : `<span class="prediction-card__fallback">${CardVault.escapeHtml(monogram)}</span>`;
+    const photoHtml = CardVault.renderPhotoHtml(photoUrl, photoFallbackUrl, monogram);
     const metricHtml = metrics
       .filter(([, value]) => value != null && value !== "")
       .map(([label, value]) => `<div><dt>${CardVault.escapeHtml(label)}</dt><dd>${CardVault.escapeHtml(value)}</dd></div>`)

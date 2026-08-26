@@ -232,7 +232,7 @@ class NflPredictionBoard {
             const shadow = parlay.shadow_candidate;
             const shadowBlock = shadow ? `
                 <p class="daily-parlay__empty">This week's V2 shadow candidate -- not certified, no stake authorized</p>
-                <div class="daily-parlay__legs">${this.renderParlayV2Legs(shadow)}</div>
+                ${this.renderParlayV2Legs(shadow)}
             ` : `<p class="daily-parlay__empty">${this.escape(this.formatParlayV2AbstainReason(reason, parlay))}</p>`;
             content.innerHTML = `
                 <div class="daily-parlay__header">
@@ -256,7 +256,7 @@ class NflPredictionBoard {
                 </div>
                 ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Selected -- shadow only") : ""}
             </div>
-            <div class="daily-parlay__legs">${this.renderParlayV2Legs(parlay.selected_parlay)}</div>
+            ${this.renderParlayV2Legs(parlay.selected_parlay)}
             <p class="daily-parlay__state">${statusFooter}</p>
         `;
     }
@@ -270,15 +270,26 @@ class NflPredictionBoard {
      * misleadingly suggest a reliability this system has not established.
      */
     renderParlayV2Legs(pair) {
-        return [pair.leg_1, pair.leg_2].filter(Boolean).map((leg, index) => `
-            <div class="daily-parlay__leg">
-                <span class="daily-parlay__leg-number">${String(index + 1).padStart(2, "0")}</span>
-                <div class="daily-parlay__leg-copy">
-                    <strong>${this.escape(leg.player || "Unknown player")}</strong>
-                    <span>${this.escape(`${leg.side || ""} ${this.formatNum(leg.line, 1)} ${String(leg.target || "").replaceAll("_", " ")}`)}</span>
-                </div>
-            </div>
-        `).join("");
+        if (!window.CardVault) return "";
+        const legs = [pair.leg_1, pair.leg_2].filter(Boolean);
+        const cards = legs.map((leg, index) => {
+            const displayName = String(leg.player || "").trim() || "Unknown player";
+            const nameParts = displayName.split(/\s+/).filter(Boolean);
+            const monogram = nameParts.length >= 2
+                ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase()
+                : (nameParts[0] || "NA").slice(0, 2).toUpperCase();
+            const lineText = this.formatNum(leg.line, 1);
+            return window.CardVault.renderLegCard({
+                rank: index + 1,
+                monogram,
+                photoUrl: String(leg.player_headshot_url || "").trim(),
+                photoFallbackUrl: String(leg.player_headshot_fallback_url || "").trim(),
+                name: displayName,
+                market: `${leg.side || ""} ${String(leg.target || "").replaceAll("_", " ")}`.trim(),
+                context: lineText !== "n/a" ? `Line ${lineText}` : "",
+            });
+        }).join("");
+        return `<div class="vault-board vault-board--legs">${cards}</div>`;
     }
 
     formatParlayV2StatusLabel(policyStatus) {

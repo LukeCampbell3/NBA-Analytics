@@ -118,9 +118,11 @@ def build_daily_payload(*, raw_root: Path, calibration_ledger: Path, num_simulat
     odds_rows = odds_result.get("odds", []) if odds_result.get("status") == "success" else []
 
     calibration_store = CalibrationStore(calibration_ledger) if calibration_ledger else None
+    player_headshots = {proj.player_id: proj.headshot_url for proj in projections if proj.headshot_url}
     candidates = select.build_candidates(
         outcome_probabilities, odds_rows, event_id=current_event.event_id,
         calibration_store=calibration_store, calibration_as_of=generated_at,
+        player_headshots=player_headshots,
     )
     top_candidates = select.top_candidates_per_market(candidates)
     payload["candidates"] = [c.as_dict() for c in top_candidates]

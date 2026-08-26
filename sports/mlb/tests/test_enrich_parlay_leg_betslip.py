@@ -1,0 +1,153 @@
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+MLB_SCRIPTS_ROOT = REPO_ROOT / "sports" / "mlb" / "scripts"
+MLB_ODDS_PROVIDERS_ROOT = REPO_ROOT / "sports" / "mlb" / "predictions" / "odds" / "providers"
+sys.path.insert(0, str(MLB_SCRIPTS_ROOT))
+sys.path.insert(0, str(MLB_ODDS_PROVIDERS_ROOT))
+
+import enrich_parlay_leg_betslip as enrich  # noqa: E402
+
+
+def _odds_row(player_name: str, market_type: str, line: float, side: str, market_id: str, selection_id: str) -> dict:
+    return {
+        "player_name": player_name,
+        "market_type": market_type,
+        "line": line,
+        "side": side,
+        "sportsbook_deeplink": f"https://sportsbook.fanduel.com/addToBetslip?marketId={market_id}&selectionId={selection_id}",
+    }
+
+
+def _pair_with_two_legs() -> dict:
+    return {
+        "leg_1": {"player": "Pete Alonso", "side": "OVER", "target": "R", "line": 0.5},
+        "leg_2": {"player": "Pete Crow-Armstrong", "side": "OVER", "target": "TB", "line": 1.5},
+    }
+
+
+def test_build_odds_index_keys_on_normalized_player_market_line_side():
+    rows = [_odds_row("Pete Alonso", "batter_runs_scored", 0.5, "over", "111.1", "222")]
+    index = enrich.build_odds_index(rows)
+    assert index[("pete alonso", "batter_runs_scored", 0.5, "over")].endswith("marketId=111.1&selectionId=222")
+
+
+def test_match_leg_to_deeplink_resolves_via_target_to_market_map():
+    rows = [_odds_row("Pete Alonso", "batter_runs_scored", 0.5, "over", "111.1", "222")]
+    index = enrich.build_odds_index(rows)
+    leg = {"player": "Pete Alonso", "side": "OVER", "target": "R", "line": 0.5}
+    assert enrich.match_leg_to_deeplink(leg, index) is not None
+
+
+def test_match_leg_to_deeplink_returns_none_for_unknown_target():
+    leg = {"player": "Pete Alonso", "side": "OVER", "target": "NOT_A_REAL_TARGET", "line": 0.5}
+    assert enrich.match_leg_to_deeplink(leg, {}) is None
+
+
+def test_enrich_pair_builds_real_multi_leg_url_when_both_legs_resolve():
+    pair = _pair_with_two_legs()
+    rows = [
+        _odds_row("Pete Alonso", "batter_runs_scored", 0.5, "over", "734.1", "111"),
+        _odds_row("Pete Crow-Armstrong", "batter_total_bases", 1.5, "over", "734.2", "222"),
+    ]
+    index = enrich.build_odds_index(rows)
+
+    enrich.enrich_pair(pair, index)
+
+    assert pair["betslip"]["status"] == "ready"
+    assert pair["betslip_url"].startswith("https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?")
+    assert "marketId%5B0%5D=734.1" in pair["betslip_url"]
+    assert "marketId%5B1%5D=734.2" in pair["betslip_url"]
+    assert pair["leg_1"]["sportsbook_deeplink"]
+    assert pair["leg_2"]["sportsbook_deeplink"]
+
+
+def test_enrich_pair_marks_unavailable_when_one_leg_has_no_live_match():
+    pair = _pair_with_two_legs()
+    rows = [_odds_row("Pete Alonso", "batter_runs_scored", 0.5, "over", "734.1", "111")]
+    index = enrich.build_odds_index(rows)
+
+    enrich.enrich_pair(pair, index)
+
+    assert pair["betslip"]["status"] == "unavailable"
+    assert pair["betslip"]["reason"] == "one_or_more_legs_have_no_live_fanduel_selection"
+    assert "betslip_url" not in pair
+
+
+def test_enrich_pair_noop_on_pair_with_no_leg_dicts():
+    pair = {"leg_1": None}
+    enrich.enrich_pair(pair, {})
+    assert "betslip" not in pair
+
+
+def test_enrich_payload_enriches_both_selected_and_shadow_pairs():
+    payload = {
+        "parlays": {
+            "selected_parlay": _pair_with_two_legs(),
+            "shadow_candidate": _pair_with_two_legs(),
+        }
+    }
+    rows = [
+        _odds_row("Pete Alonso", "batter_runs_scored", 0.5, "over", "734.1", "111"),
+        _odds_row("Pete Crow-Armstrong", "batter_total_bases", 1.5, "over", "734.2", "222"),
+    ]
+
+    def fake_fetcher():
+        return {"status": "success", "odds": rows}
+
+    enrich.enrich_payload(payload, odds_fetcher=fake_fetcher)
+
+    assert payload["parlays"]["selected_parlay"]["betslip"]["status"] == "ready"
+    assert payload["parlays"]["shadow_candidate"]["betslip"]["status"] == "ready"
+
+
+def test_enrich_payload_no_op_when_odds_fetch_fails():
+    payload = {"parlays": {"shadow_candidate": _pair_with_two_legs()}}
+
+    def failing_fetcher():
+        return {"status": "source_timeout"}
+
+    enrich.enrich_payload(payload, odds_fetcher=failing_fetcher)
+    assert "betslip" not in payload["parlays"]["shadow_candidate"]
+
+
+def test_enrich_payload_handles_missing_parlays_key():
+    assert enrich.enrich_payload({}) == {}
+
+
+def test_enrich_file_round_trips_through_disk(tmp_path: Path):
+    target = tmp_path / "daily_predictions.json"
+    target.write_text(json.dumps({"parlays": {"shadow_candidate": _pair_with_two_legs()}}), encoding="utf-8")
+    rows = [
+        _odds_row("Pete Alonso", "batter_runs_scored", 0.5, "over", "734.1", "111"),
+        _odds_row("Pete Crow-Armstrong", "batter_total_bases", 1.5, "over", "734.2", "222"),
+    ]
+
+    enrich.enrich_file(target, odds_fetcher=lambda: {"status": "success", "odds": rows})
+
+    written = json.loads(target.read_text(encoding="utf-8"))
+    assert written["parlays"]["shadow_candidate"]["betslip"]["status"] == "ready"
+
+
+def test_main_reports_ready_counts(tmp_path: Path, monkeypatch, capsys):
+    target = tmp_path / "daily_predictions.json"
+    target.write_text(json.dumps({"parlays": {"shadow_candidate": _pair_with_two_legs()}}), encoding="utf-8")
+    rows = [
+        _odds_row("Pete Alonso", "batter_runs_scored", 0.5, "over", "734.1", "111"),
+        _odds_row("Pete Crow-Armstrong", "batter_total_bases", 1.5, "over", "734.2", "222"),
+    ]
+    monkeypatch.setattr(
+        enrich.FanduelPublicMlbProvider, "collect_player_props",
+        lambda self: {"status": "success", "odds": rows},
+    )
+    monkeypatch.setattr(sys, "argv", ["enrich_parlay_leg_betslip.py", "--daily-predictions-path", str(target)])
+
+    exit_code = enrich.main()
+
+    assert exit_code == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["betslip_ready"][str(target)] == 1

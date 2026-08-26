@@ -65,6 +65,26 @@ def test_build_candidates_stays_unauthorized_with_no_calibration_ledger() -> Non
     assert winner_candidate.candidate_authorized is False  # no calibration_store passed -> no support -> never authorized
 
 
+def test_build_candidates_attaches_real_headshot_url_when_provided() -> None:
+    outcomes = [FieldOutcomeProbabilities("p1", "Scottie Scheffler", win_probability=0.30, top5_probability=0.6, top10_probability=0.75, top20_probability=0.9, make_cut_probability=None)]
+    odds = [_odds_row("Scottie Scheffler", "WINNER", 250.0), _odds_row("Someone Else", "WINNER", 900.0)]
+    candidates = select.build_candidates(
+        outcomes, odds, event_id="evt1",
+        player_headshots={"p1": "https://a.espncdn.com/i/headshots/golf/players/full/9478.png"},
+    )
+    winner_candidate = next(c for c in candidates if c.market == "WINNER")
+    assert winner_candidate.player_headshot_url == "https://a.espncdn.com/i/headshots/golf/players/full/9478.png"
+    assert winner_candidate.as_dict()["player_headshot_url"] == "https://a.espncdn.com/i/headshots/golf/players/full/9478.png"
+
+
+def test_build_candidates_headshot_url_empty_when_not_provided() -> None:
+    outcomes = [FieldOutcomeProbabilities("p1", "Scottie Scheffler", win_probability=0.30, top5_probability=0.6, top10_probability=0.75, top20_probability=0.9, make_cut_probability=None)]
+    odds = [_odds_row("Scottie Scheffler", "WINNER", 250.0), _odds_row("Someone Else", "WINNER", 900.0)]
+    candidates = select.build_candidates(outcomes, odds, event_id="evt1")
+    winner_candidate = next(c for c in candidates if c.market == "WINNER")
+    assert winner_candidate.player_headshot_url == ""
+
+
 def test_build_candidates_produces_no_candidate_for_unpriced_market() -> None:
     """MAKE_CUT probability exists (real, non-cut event reports None so
     this wouldn't apply, but simulate a cut event with no real market
