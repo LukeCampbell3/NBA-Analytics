@@ -400,6 +400,77 @@ neither sport showed negative transfer from pooling. This is evidence for
 the *representation-sharing* half of the mission's core hypothesis even
 though the *sparse-specialization* half did not show a benefit here.
 
+## OPTIMIZATION ATTEMPT (post-report addendum)
+
+After this report's initial version, a direct follow-up request asked to
+optimize the DRM representation specifically to lower loss/MAE further.
+Documented here in full rather than silently folded into the numbers
+above, because the honest answer is that it did not succeed — which is
+itself real evidence, not a gap in the work.
+
+**Architecture-scaling experiments (reverted).** Four real, matched-compute
+retrains tried the obvious lever — a 2-layer MLP head instead of a single
+Linear layer, hidden_dim 96→128, cosine LR scheduling with warmup, and more
+training steps. Every one scored worse on SELECT than the original dense
+baseline (brier 0.189–0.192 / MAE 0.659–0.662 vs. the original 0.1884 /
+0.6447). Rather than ship a regression on a "more capacity should help"
+assumption, all four changes were reverted; `model/heads.py` and
+`train/trainer.py` carry the tested-and-rejected numbers in their
+docstrings, and `config.use_scheduler` defaults to `False` accordingly.
+
+**`shared_width_expansion`, implemented for real.** The DRM tier
+previously stubbed out as "requires rebuilding the whole stem" was
+actually built (`model/surgery.py`): it grows hidden_dim with every new
+dimension wired to contribute exactly zero at birth (attention handled
+Q/K/V-block-aware so a naive copy doesn't corrupt the stacked
+`in_proj_weight` layout; LayerNorm is the one disclosed exception where
+growth is only approximately, not exactly, function-preserving). Building
+this surfaced and fixed a real bug: a third stale "how many experts do I
+have" counter (beyond the two already fixed earlier), caught by an actual
+rollback failing in a live test, not by inspection.
+
+**Two independent DRM searches, consistent result.** With
+`shared_width_expansion` now a real option, the DRM controller was run
+twice more against the original `top2_moe` checkpoint (first a 6-cycle/
+4-attempt search, then, after a container restart lost that run before
+completion, a 4-cycle/3-attempt rerun that did finish —
+`reports/drm_mutation_history_opt.json`). The rerun proposed
+`shared_width_expansion` 4 separate times; DRM's own bounded commit/reject
+evaluation **rejected it every single time** (J worsened by 0.012–0.016
+each time — the same direction of harm the reverted hand-forced hidden_dim
+increase above showed, now confirmed independently through DRM's own
+evidence-gated mechanism rather than a manual guess). `parameter_adaptation`
+and `expert_birth` again found real, small gains over the top2_moe
+baseline (3 committed / 9 rejected total; SELECT brier 0.1904 → 0.1896),
+consistent with the original DRM run's pattern.
+
+**But this rerun did not beat the already-frozen `drm_final`:**
+
+| | brier | log_loss | MAE | ECE |
+|---|---|---|---|---|
+| `drm_final` (original, frozen, TEST-evaluated) | 0.18908 | 0.55834 | 0.64930 | 0.01367 |
+| `drm_final_opt` (this rerun, SELECT only) | 0.18956 | 0.55960 | 0.65937 | 0.02072 |
+
+Every metric is very slightly worse. This is within the noise of a
+different random walk through the same bounded search space (each
+`parameter_adaptation`/`expert_birth` attempt involves stochastic
+fine-tuning), not a sign the mechanism is broken — `shared_width_expansion`
+being rejected 4/4 times here and 0/1 times in the original run is itself
+a consistent, convergent finding. Per this build's own discipline (TEST is
+touched only for a genuinely improved candidate), **no new TEST evaluation
+was run for `drm_final_opt`** — the original `drm_final.pt` and its TEST
+numbers reported above remain the official result.
+
+**Direct answer to "will loss and MAE decrease":** not from this attempt.
+Real, honest effort went into three independent directions (bigger
+capacity, LR scheduling, a second bounded DRM search with a new real
+structural option) and none beat the already-reported numbers. The
+data-honest conclusion is that at ~248K rows / 2 sports / CPU-only scale,
+this architecture is close to a local optimum that neither blind capacity
+increases nor additional bounded DRM search escape — consistent with, and
+reinforcing, this report's `DENSE_SHARED_MODEL_SUFFICIENT` label rather
+than contradicting it.
+
 ## REMAINING LIMITATIONS
 
 1. **DRM reference repository unavailable** — controller built from spec
