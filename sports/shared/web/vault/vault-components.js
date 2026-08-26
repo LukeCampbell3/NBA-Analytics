@@ -365,13 +365,25 @@
    */
   CardVault.renderLegCard = function renderLegCard({
     rank, statusTone = "", statusLabel = "", monogram = "", photoUrl = "", photoFallbackUrl = "",
-    name = "", market = "", context = "", metrics = [], note = "",
+    name = "", market = "", context = "", metrics = [], note = "", betslipUrl = "",
   } = {}) {
     const photoHtml = CardVault.renderPhotoHtml(photoUrl, photoFallbackUrl, monogram);
     const metricHtml = metrics
       .filter(([, value]) => value != null && value !== "")
       .map(([label, value]) => `<div><dt>${CardVault.escapeHtml(label)}</dt><dd>${CardVault.escapeHtml(value)}</dd></div>`)
       .join("");
+
+    // Real single-leg "Add to Betslip" link for THIS leg only -- same
+    // validation, same URL FanDuel's own feed issues, same treatment
+    // renderPredictionCard gives a top-of-board pick. Parlay products
+    // deliberately do NOT combine legs into one multi-leg deep link
+    // here: that combined-URL scheme was never confirmed against real
+    // FanDuel behavior and failed a real, logged-in device test, so
+    // each leg gets its own real, individually-verified link instead.
+    const safeBetslipUrl = CardVault.safeFanDuelBetslipUrl(betslipUrl);
+    const betslipHtml = safeBetslipUrl
+      ? `<a class="prediction-card__betslip-link" href="${CardVault.escapeAttr(safeBetslipUrl)}" target="_blank" rel="noopener noreferrer">Add to FanDuel Betslip</a>`
+      : "";
 
     return `
       <article class="prediction-card" aria-label="${CardVault.escapeAttr(`${name}, ${market}`)}">
@@ -389,6 +401,7 @@
         </div>
         ${metricHtml ? `<dl class="prediction-card__metrics">${metricHtml}</dl>` : ""}
         ${note ? `<p class="prediction-card__note">${CardVault.escapeHtml(note)}</p>` : ""}
+        ${betslipHtml}
       </article>
     `;
   };

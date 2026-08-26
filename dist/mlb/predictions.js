@@ -279,7 +279,6 @@ class DailyPredictionsPage {
             const shadowBlock = shadow ? `
                 <p class="daily-parlay__empty">Today's V2 shadow candidate -- not certified, no stake authorized</p>
                 ${this.renderParlayV2Legs(shadow)}
-                ${this.renderBetslipLink(shadow)}
             ` : `<p class="daily-parlay__empty">${this.escapeHtml(this.formatParlayV2AbstainReason(reason, parlay))}</p>`;
             content.innerHTML = `
                 <div class="daily-parlay__header daily-parlay__header--status-only">
@@ -296,28 +295,7 @@ class DailyPredictionsPage {
                 ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Selected -- shadow only") : ""}
             </div>
             ${this.renderParlayV2Legs(parlay.selected_parlay)}
-            ${this.renderBetslipLink(parlay.selected_parlay)}
             <p class="daily-parlay__state">${statusFooter}</p>
-        `;
-    }
-
-    /**
-     * "Add to Betslip" link for a V2 pair -- only rendered once every leg
-     * has resolved to a real, live FanDuel selection (see
-     * enrich_parlay_leg_betslip.py) and the URL itself re-validates
-     * against the same host/path allowlist safeFanDuelBetslipUrl already
-     * enforces. Never renders a link built from anything else.
-     */
-    renderBetslipLink(pair) {
-        if (!window.CardVault) return "";
-        const betslip = pair?.betslip;
-        if (!betslip || betslip.status !== "ready") return "";
-        const url = window.CardVault.safeFanDuelBetslipUrl(pair.betslip_url || betslip.url);
-        if (!url) return "";
-        return `
-            <div class="daily-parlay__actions">
-                <a class="daily-parlay__betslip-button" href="${this.escapeHtml(url)}" target="_blank" rel="noopener noreferrer">Add to FanDuel Betslip</a>
-            </div>
         `;
     }
 
@@ -350,6 +328,7 @@ class DailyPredictionsPage {
                 name: displayName,
                 market: `${direction} ${target}`,
                 context: lineText !== "n/a" ? `Line ${lineText}` : "",
+                betslipUrl: leg.sportsbook_deeplink || "",
             });
         }).join("");
         return `<div class="vault-board vault-board--legs">${cards}</div>`;
@@ -464,7 +443,6 @@ class DailyPredictionsPage {
                     <span>Edge vs. naive market <strong>${edge}</strong></span>
                     <span>Model EV <strong>${ev}</strong></span>
                 </div>
-                ${this.renderBetslipLink(combo)}
             </article>
         `;
     }
@@ -482,6 +460,7 @@ class DailyPredictionsPage {
                 ["Odds", this.formatAmerican(leg.price_american)],
                 ["Book", leg.sportsbook || ""],
             ],
+            betslipUrl: leg.sportsbook_deeplink || "",
         });
     }
 
@@ -562,7 +541,6 @@ class DailyPredictionsPage {
                 <span>Edge vs. naive market <strong>${edge}</strong></span>
                 <span>Model EV <strong>${ev}</strong></span>
             </div>
-            ${this.renderBetslipLink(parlay)}
         `;
     }
 
@@ -593,6 +571,7 @@ class DailyPredictionsPage {
                 ["Odds", this.formatAmerican(leg.price_american)],
                 ["Book", leg.sportsbook || ""],
             ],
+            betslipUrl: leg.sportsbook_deeplink || "",
         });
     }
 

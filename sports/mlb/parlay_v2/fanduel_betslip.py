@@ -1,20 +1,30 @@
 #!/usr/bin/env python3
-"""Real FanDuel multi-leg "Add to Betslip" URL construction -- pure,
+"""FanDuel multi-leg "Add to Betslip" URL construction -- pure,
 dependency-free (no sklearn/pandas/etc, safe to import from anywhere).
 
-This is the one real, already-production-proven construction this repo
-has for combining several real single-leg FanDuel deep links
+Combines several real single-leg FanDuel deep links
 (https://sportsbook.fanduel.com/addToBetslip?marketId=X&selectionId=Y,
 themselves built straight from FanDuel's own public odds feed -- see
-fanduel_public_mlb_provider.py / fanduel_public_mlb_team_market_provider.py)
-into one real multi-leg deep link
+fanduel_public_mlb_provider.py / fanduel_public_mlb_team_market_provider.py,
+and independently confirmed real -- this is the literal URL FanDuel's own
+feed returns) into a hypothesized multi-leg deep link
 (https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?
 marketId[0]=...&selectionId[0]=...&marketId[1]=...&selectionId[1]=...).
-Originally written for select_daily_parlay.py's legacy ticket; reused
-identically (never re-derived) by enrich_parlay_leg_betslip.py for
-PARLAY_POLICY_V2 pairs and by select_mlb_same_game_bets.py for same-game
-combos -- every real MLB parlay product this repo builds a deep link for
-goes through these same two functions.
+
+CAUTION -- this combined-URL scheme has NEVER been confirmed real. It was
+extrapolated from the single-leg format, not sourced from FanDuel's own
+API or any public documentation, and a real, logged-in device test of a
+same-game combo's build_fanduel_betslip_url() output failed with
+FanDuel's "Selection not added ... network issue, or it is no longer
+available" error (2026-08-26). No frontend renders this combined URL
+any more for exactly that reason -- every leg gets its own real,
+independently-verified single-leg link instead (see CardVault.
+renderLegCard's betslipUrl param). This function and its callers
+(select_daily_parlay.py's legacy ticket, enrich_parlay_leg_betslip.py,
+select_mlb_same_game_bets.py) still compute a `betslip`/`betslip_url`
+value for diagnostic/audit purposes, but that value should not be
+surfaced to a user as a working link until the real multi-leg scheme
+(if one exists) is actually found and confirmed.
 """
 from __future__ import annotations
 
