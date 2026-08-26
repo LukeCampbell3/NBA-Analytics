@@ -1,0 +1,113 @@
+{
+  "data_source": "sports/mlb/data/predictions/backtests/mlb_walk_forward_backtest_rows.csv",
+  "policy_source_filter": "published_real_market",
+  "real_settled_legs": 337,
+  "real_dates": 11,
+  "current_mlb_strategy_control": {
+    "available": true,
+    "sample_dates": 9,
+    "max_pairs_per_day": 1,
+    "max_parlays_per_day": 1,
+    "selected": {
+      "pair_count": 9,
+      "parlay_count": 9,
+      "graded_pair_count": 9,
+      "graded_parlay_count": 9,
+      "hit_pair_count": 8,
+      "hit_parlay_count": 8,
+      "miss_pair_count": 1,
+      "miss_parlay_count": 1,
+      "push_pair_count": 0,
+      "push_parlay_count": 0,
+      "unresolved_pair_count": 0,
+      "unresolved_parlay_count": 0,
+      "pair_hit_rate": 0.8888888888888888,
+      "parlay_hit_rate": 0.8888888888888888,
+      "avg_projected_pair_hit_rate": 0.6400000000000001,
+      "avg_projected_parlay_hit_rate": 0.6400000000000001
+    },
+    "baseline_all_pairs": {
+      "pair_count": 5207,
+      "parlay_count": 5207,
+      "graded_pair_count": 5057,
+      "graded_parlay_count": 5057,
+      "hit_pair_count": 2652,
+      "hit_parlay_count": 2652,
+      "miss_pair_count": 2405,
+      "miss_parlay_count": 2405,
+      "push_pair_count": 150,
+      "push_parlay_count": 150,
+      "unresolved_pair_count": 0,
+      "unresolved_parlay_count": 0,
+      "pair_hit_rate": 0.5244215938303342,
+      "parlay_hit_rate": 0.5244215938303342,
+      "avg_projected_pair_hit_rate": 0.5261767123670326,
+      "avg_projected_parlay_hit_rate": 0.5261767123670326
+    },
+    "baseline_all_parlays": {
+      "pair_count": 5207,
+      "parlay_count": 5207,
+      "graded_pair_count": 5057,
+      "graded_parlay_count": 5057,
+      "hit_pair_count": 2652,
+      "hit_parlay_count": 2652,
+      "miss_pair_count": 2405,
+      "miss_parlay_count": 2405,
+      "push_pair_count": 150,
+      "push_parlay_count": 150,
+      "unresolved_pair_count": 0,
+      "unresolved_parlay_count": 0,
+      "pair_hit_rate": 0.5244215938303342,
+      "parlay_hit_rate": 0.5244215938303342,
+      "avg_projected_pair_hit_rate": 0.5261767123670326,
+      "avg_projected_parlay_hit_rate": 0.5261767123670326
+    },
+    "hit_rate_lift_vs_all_pairs": 0.3644672950585547,
+    "hit_rate_lift_vs_all_parlays": 0.3644672950585547
+  },
+  "full_real_eligible_pair_pool": {
+    "n": 5012,
+    "wins": 2652,
+    "hit_rate": 0.5291300877893057,
+    "wilson95": [
+      0.5152941278099541,
+      0.542921428323005
+    ]
+  },
+  "new_policy_v2_gate": {
+    "eligible": 2061,
+    "of_pool": 5012,
+    "coverage": 0.41121308858739025,
+    "wins": 1230,
+    "hit_rate": 0.5967976710334789,
+    "wilson95": [
+      0.5754585677364085,
+      0.6177766069524432
+    ],
+    "mean_actual_quote_ev": 0.8999495467775739,
+    "brier_full_pool": 0.24288936241663564,
+    "brier_selected": 0.23749485910979087,
+    "mean_predicted_p_selected": 0.6039332958862483,
+    "rejection_reason_counts": {
+      "LEG_PROBABILITY": 2560,
+      "JOINT_PROBABILITY": 2951,
+      "JOINT_LCB": 2139
+    }
+  },
+  "new_policy_v2_one_pick_per_day": {
+    "n_days": 9,
+    "wins": 5,
+    "hit_rate": 0.5555555555555556,
+    "wilson95": [
+      0.26665129349549305,
+      0.8112214789023355
+    ]
+  },
+  "gates_not_exercised_not_logged_in_this_data": [
+    "JOINT_UNCERTAINTY (joint_sigma)",
+    "SHARED_FAILURE (shared_failure_risk)",
+    "STATE_COMPATIBILITY (compatible_state_score)",
+    "SHIFT_RISK (shift_risk)",
+    "LINEUP/ROLE/INJURY_UNCERTAINTY/OUT_OF_SUPPORT/JOINT_MODEL_UNRELIABLE (execution state)"
+  ]
+}

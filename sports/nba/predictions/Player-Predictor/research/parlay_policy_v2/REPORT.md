@@ -26,10 +26,15 @@ and is untouched by this change.
 
 What *is* real, in the "Real-data backtests" section below: (a) the current
 NBA strategy's own already-computed, real production validation numbers
-(small sample), and (b) the new policy's gate mechanism run against real,
-settled MLB leg-level data — the closest genuine substitute this repo has for
-"how does this mechanism do against real numbers," since MLB is the only
-sport here with a committed leg-level settled dataset.
+(small sample), (b) a real, unsettled shadow-annotation of an actual NBA
+board using this gate, and (c) the new policy's gate mechanism run against
+real, settled MLB leg-level data — the closest genuine substitute this repo
+has for "how does this mechanism do against real numbers," since MLB is the
+only sport here with a committed leg-level settled dataset. That MLB result
+has since been ported natively into MLB's own tree
+(`sports/mlb/research/parlay_policy_v2/`) as an additive, shadow-only
+package — see "MLB comparison" below for exactly what that does and does
+not authorize.
 
 ## What the policy does
 
@@ -140,6 +145,50 @@ the strongest argument for the new policy's Wilson-lower-bound selection
 criterion in `optimize_policy_grid` (Real-data backtests below shows what
 that criterion actually buys on a real, much larger sample).
 
+### Shadow-annotating a real NBA board (unsettled, prospective)
+
+`shadow_annotate_board.py` is the concrete answer to "what would be needed"
+item 1 below, done now instead of only documented: it reads a real,
+committed NBA board export (`sports/nba/web/data/history/*.json`'s `plays`
+array), builds every real cross-game 2-leg pair CONTROL's own gates
+(`sports/parlay_analysis.py`, sport="nba") would consider, and runs the new
+policy's eligibility gate on them. Every leg's probability comes from the
+real `expected_win_rate`; the per-leg uncertainty penalty uses
+`max(0, expected_win_rate - lcb_probability)` — the real, already-computed
+gap between the point estimate and production's own lower-confidence-bound
+estimate, used as a probability-scale proxy since the export's raw
+`uncertainty_sigma` is in stat units (points/rebounds/assists), not
+probability units, and is never fed into a probability-scale penalty. Price
+uses the real product-of-decimal-odds convention (see the MLB section
+below). **No `won` field exists anywhere in this output** — these plays
+haven't been settled yet, and the script never fabricates one.
+
+Running it against the most recent fully-populated snapshot
+(`sports/nba/web/data/history/2026-05-26.json`, 12 real plays):
+
+| | value |
+|---|---:|
+| Real candidate pairs (CONTROL's own gates) | 66 |
+| New-policy-eligible pairs | 0 |
+| Most common rejection reasons | `LEG_PROBABILITY`, `JOINT_LCB` |
+
+Zero eligible is a real result, not a bug: this board's `lcb_probability`
+values sit well below `expected_win_rate` for most plays, so the real
+uncertainty-gap proxy is large enough that nothing clears the default
+policy's floors. Two earlier snapshots (`2026-04-26/30`, `2026-05-01/02`)
+produce **zero candidate pairs at all**, not zero-eligible — those exports
+have `lcb_probability` and `market_side_price` as `None` for every play (an
+earlier pipeline vintage didn't populate them), and the script skips a leg
+rather than substituting a fabricated value. That gap in field coverage
+across snapshot vintages is itself useful information for what to keep
+logging consistently going forward.
+
+Full output: `reports/shadow_annotate_2026-05-26.json`. This doesn't move
+the "no NBA hit-rate claim" conclusion above — it's still unsettled — but it
+means the day a settled-results file shows up, these records (or fresh ones
+from this same script run daily) are already in the exact shape
+`real_data_summary_nba.py`'s "what would be needed" list calls for.
+
 ### New policy gate vs. current strategy, real settled MLB legs
 
 `real_data_backtest_mlb.py` runs the new policy's gate against
@@ -193,9 +242,19 @@ Reading this honestly:
 
 ### MLB comparison: what MLB's own equivalent research already found
 
-MLB has already built and run the direct analog of this NBA design
-(`sports/mlb/research/joint_position_builder_v2/`) against real MLB data at
-much larger scale than anything above:
+Following this real-data result, the gate mechanism itself has since been
+**ported and incorporated natively into MLB**, as its own additive,
+shadow-only package:
+`sports/mlb/research/parlay_policy_v2/` (mirrors this directory exactly —
+`policy.py`, `real_data_backtest.py`, `REPORT.md`,
+`sports/mlb/tests/test_parlay_policy_v2*.py`). It does not touch CONTROL or
+either of MLB's existing V2 programs, and is not production-authorized —
+see that package's own REPORT.md for the details and for why its
+`INSUFFICIENT_EVIDENCE` conclusion still governs.
+
+MLB has separately already built and run the direct, far more rigorous
+analog of this NBA design (`sports/mlb/research/joint_position_builder_v2/`)
+against real MLB data at much larger scale than anything above:
 
 - `reports/calibration_summary.json`: on the **narrow** universe (matching
   CONTROL's own eligibility exactly), predicted-vs-actual calibration gap was
@@ -235,6 +294,13 @@ split, then an independent prospective shadow block.
 1. Candidate-level logging that captures the full `REQUIRED_SELECTION_FIELDS`
    set for every settled two-leg NBA parlay, including the actual sportsbook
    SGP quote (not a synthetic product of leg prices).
+   `shadow_annotate_board.py` (above) now produces most of this shape daily
+   from the real board, prospectively — what's still missing is (a) a
+   settled `won` field once results land, (b) real
+   `joint_sigma`/`shared_failure_risk`/`compatible_state_score`/`shift_risk`/
+   lineup-role-injury-support state, none of which exist in the current
+   export, and (c) a real same-game SGP quote in place of the
+   product-of-decimal-odds proxy.
 2. A development/holdout date split, so `optimize_policy_grid` and
    `date_blocked_walk_forward` can be run for real instead of on synthetic
    fixtures, and a shared-failure-family rule (e.g. same-direction,
