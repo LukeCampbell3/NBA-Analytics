@@ -22,6 +22,21 @@ leg in the pair resolves to a real FanDuel selection -- attach the exact
 same multi-leg betslip URL shape select_daily_parlay.py already builds and
 validates. A pair where any leg can't be matched to a live FanDuel row is
 left without a betslip URL; nothing is ever guessed or partially built.
+
+Multi-region deep links (added 2026-08-27, real user report): FanDuel is a
+state-by-state licensed operator -- fanduel_public_mlb_provider.py's own
+`x-sportsbook-region` header changes which real marketId/selectionId
+FanDuel's API returns for the identical player/market/line, because each
+region is a genuinely separate sportsbook instance. A single-region link
+(the site previously fetched NJ only) loads FanDuel's domain fine for any
+viewer, but only actually adds to the betslip for a viewer whose real
+account is in that same region -- this is the real, confirmed root cause
+of "the link is there but doesn't add to my betslip". This module now
+additionally live-fetches every real FanDuel-licensed state
+(fanduel_regions.FANDUEL_LICENSED_STATES) and attaches a real
+`deeplinks_by_region` map to every leg/play alongside the original
+single-region `sportsbook_deeplink` (kept unchanged for backward
+compatibility) -- see build_multi_region_odds_indexes().
 """
 from __future__ import annotations
 
@@ -41,6 +56,7 @@ for path in (MLB_SCRIPTS_ROOT, MLB_ODDS_PROVIDERS_ROOT, MLB_PARLAY_V2_ROOT):
 
 import export_web_prediction_payload as exporter  # noqa: E402
 from fanduel_public_mlb_provider import FanduelPublicMlbProvider  # noqa: E402
+from fanduel_regions import DEFAULT_FALLBACK_REGION, FANDUEL_LICENSED_STATES  # noqa: E402
 from fanduel_betslip import (  # noqa: E402
     FANDUEL_SPORTSBOOK_KEY,
     build_fanduel_betslip_url,
@@ -79,6 +95,44 @@ def build_odds_index(odds_rows: list[dict[str, Any]]) -> dict[tuple[str, str, fl
     return index
 
 
+def build_multi_region_odds_indexes(
+    states: tuple[str, ...] = FANDUEL_LICENSED_STATES,
+    *,
+    provider_factory: Callable[[str], Any] = None,
+) -> dict[str, dict[tuple[str, str, float, str], str]]:
+    """Real per-state FanDuel odds indexes -- one real live fetch per
+    state (never per-leg; each state's full player-prop board is fetched
+    once and matched against every leg locally, the same efficient
+    pattern the single-region path already uses). A state whose real
+    fetch fails or returns no odds is simply absent from the result --
+    never a guessed/empty index standing in for a real one."""
+    factory = provider_factory or (lambda region: FanduelPublicMlbProvider(region=region))
+    indexes: dict[str, dict[tuple[str, str, float, str], str]] = {}
+    for state in states:
+        try:
+            result = factory(state).collect_player_props()
+        except Exception:
+            continue
+        if not isinstance(result, dict) or result.get("status") != "success":
+            continue
+        indexes[state] = build_odds_index(result.get("odds") or [])
+    return indexes
+
+
+def match_leg_to_regions(
+    leg: dict[str, Any], region_indexes: dict[str, dict[tuple[str, str, float, str], str]]
+) -> dict[str, str]:
+    """{state: deeplink} for every real FanDuel-licensed state that has a
+    live selection matching this leg -- a state with no match for this
+    leg is simply absent, never filled with a guess or the wrong link."""
+    deeplinks_by_region: dict[str, str] = {}
+    for state, odds_index in region_indexes.items():
+        deeplink = match_leg_to_deeplink(leg, odds_index)
+        if deeplink:
+            deeplinks_by_region[state] = deeplink
+    return deeplinks_by_region
+
+
 def match_leg_to_deeplink(leg: dict[str, Any], odds_index: dict[tuple[str, str, float, str], str]) -> Optional[str]:
     market_type = TARGET_MARKET_TYPES.get(str(leg.get("target") or "").strip())
     if not market_type:
@@ -96,7 +150,12 @@ def match_leg_to_deeplink(leg: dict[str, Any], odds_index: dict[tuple[str, str, 
     return odds_index.get(key)
 
 
-def enrich_pair(pair: dict[str, Any], odds_index: dict[tuple[str, str, float, str], str]) -> None:
+def enrich_pair(
+    pair: dict[str, Any],
+    odds_index: dict[tuple[str, str, float, str], str],
+    *,
+    region_indexes: dict[str, dict[tuple[str, str, float, str], str]] | None = None,
+) -> None:
     legs = [pair.get(key) for key in LEG_KEYS if isinstance(pair.get(key), dict)]
     if not legs:
         return
@@ -106,6 +165,8 @@ def enrich_pair(pair: dict[str, Any], odds_index: dict[tuple[str, str, float, st
         if deeplink:
             leg["sportsbook_deeplink"] = deeplink
         deeplinks.append(deeplink)
+        if region_indexes:
+            leg["deeplinks_by_region"] = match_leg_to_regions(leg, region_indexes)
 
     if not all(deeplinks):
         pair["betslip"] = {
@@ -140,7 +201,12 @@ def enrich_pair(pair: dict[str, Any], odds_index: dict[tuple[str, str, float, st
     pair["betslip_url"] = url
 
 
-def enrich_single_play(play: dict[str, Any], odds_index: dict[tuple[str, str, float, str], str]) -> None:
+def enrich_single_play(
+    play: dict[str, Any],
+    odds_index: dict[tuple[str, str, float, str], str],
+    *,
+    region_indexes: dict[str, dict[tuple[str, str, float, str], str]] | None = None,
+) -> None:
     """A real single-leg FanDuel deep link for one main-board pick --
     same real (player, market, line, side) match as a parlay leg, just
     attached directly rather than combined into a multi-leg URL. Fields
@@ -156,10 +222,15 @@ def enrich_single_play(play: dict[str, Any], odds_index: dict[tuple[str, str, fl
     deeplink = match_leg_to_deeplink(normalized_leg, odds_index)
     if deeplink:
         play["sportsbook_deeplink"] = deeplink
+    if region_indexes:
+        play["deeplinks_by_region"] = match_leg_to_regions(normalized_leg, region_indexes)
 
 
 def enrich_payload(
-    payload: dict[str, Any], *, odds_fetcher: Callable[[], dict[str, Any]] = None,
+    payload: dict[str, Any],
+    *,
+    odds_fetcher: Callable[[], dict[str, Any]] = None,
+    region_indexes: dict[str, dict[tuple[str, str, float, str], str]] | None = None,
 ) -> dict[str, Any]:
     parlays = payload.get("parlays")
     pairs = [parlays.get(key) for key in PAIR_KEYS if isinstance(parlays, dict) and isinstance(parlays.get(key), dict)]
@@ -173,15 +244,20 @@ def enrich_payload(
         return payload
     odds_index = build_odds_index(result.get("odds") or [])
     for pair in pairs:
-        enrich_pair(pair, odds_index)
+        enrich_pair(pair, odds_index, region_indexes=region_indexes)
     for play in plays:
-        enrich_single_play(play, odds_index)
+        enrich_single_play(play, odds_index, region_indexes=region_indexes)
     return payload
 
 
-def enrich_file(path: Path, *, odds_fetcher: Callable[[], dict[str, Any]] = None) -> dict[str, Any]:
+def enrich_file(
+    path: Path,
+    *,
+    odds_fetcher: Callable[[], dict[str, Any]] = None,
+    region_indexes: dict[str, dict[tuple[str, str, float, str], str]] | None = None,
+) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8"))
-    enrich_payload(payload, odds_fetcher=odds_fetcher)
+    enrich_payload(payload, odds_fetcher=odds_fetcher, region_indexes=region_indexes)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True, default=str), encoding="utf-8")
     return payload
 
@@ -192,23 +268,30 @@ def parse_args() -> argparse.Namespace:
         "--daily-predictions-path", type=Path, default=None, action="append",
         help="In-place enrich this daily_predictions.json's parlay pairs with a real FanDuel betslip URL. Repeatable.",
     )
+    parser.add_argument(
+        "--disable-multi-region-betslip", action="store_true",
+        help="Skip the real per-state (FANDUEL_LICENSED_STATES) fetch and only attach the single-region sportsbook_deeplink -- "
+        "for fast local iteration; the real pipeline leaves this enabled so every viewer's own state resolves.",
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
     targets = args.daily_predictions_path or []
+    region_indexes = None if args.disable_multi_region_betslip else build_multi_region_odds_indexes()
     ready_counts = {}
+    region_coverage = {state: len(index) for state, index in (region_indexes or {}).items()}
     for target in targets:
         if not target.exists():
             continue
-        payload = enrich_file(target)
+        payload = enrich_file(target, region_indexes=region_indexes)
         parlays = payload.get("parlays") or {}
         ready_counts[str(target)] = sum(
             1 for key in PAIR_KEYS
             if isinstance(parlays.get(key), dict) and (parlays[key].get("betslip") or {}).get("status") == "ready"
         )
-    print(json.dumps({"betslip_ready": ready_counts}, indent=2))
+    print(json.dumps({"betslip_ready": ready_counts, "region_coverage": region_coverage}, indent=2))
     return 0
 
 

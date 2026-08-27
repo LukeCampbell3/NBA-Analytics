@@ -14,12 +14,14 @@ class DailyPredictionsPage {
             pitcherParlayContent: document.getElementById("pitcherParlayContent"),
             highHitParlayContent: document.getElementById("highHitParlayContent"),
             dateNav: document.getElementById("predictionDateNav"),
+            regionPickerRoot: document.getElementById("fanduelRegionPickerRoot"),
         };
         this.init();
     }
 
     init() {
         this.mountShell();
+        this.mountFanduelRegionPicker();
         if (window.CardVault && this.elements.cards) {
             this.elements.cards.innerHTML = window.CardVault.renderSkeletonCard(6);
         }
@@ -27,6 +29,24 @@ class DailyPredictionsPage {
         this.loadSameGameParlay();
         this.loadPitcherParlay();
         this.loadHighHitParlay();
+    }
+
+    /**
+     * Mounts the shared "Betting from" state picker once, then re-renders
+     * every already-loaded section in place on change (no re-fetch --
+     * each section's real data is already cached on `this`; only which
+     * region's link resolves for each leg changes).
+     */
+    mountFanduelRegionPicker() {
+        if (!window.CardVault || !this.elements.regionPickerRoot) return;
+        this.elements.regionPickerRoot.innerHTML = window.CardVault.renderFanduelRegionPicker();
+        window.CardVault.bindFanduelRegionPicker(() => {
+            this.renderCards();
+            this.renderParlayV2();
+            this.renderSameGameParlay();
+            this.renderPitcherParlay();
+            this.renderHighHitParlay();
+        });
     }
 
     mountShell() {
@@ -333,6 +353,7 @@ class DailyPredictionsPage {
                 market: `${direction} ${target}`,
                 context: lineText !== "n/a" ? `Line ${lineText}` : "",
                 betslipUrl: leg.sportsbook_deeplink || "",
+                deeplinksByRegion: leg.deeplinks_by_region || null,
                 settlementRow: leg,
             });
         }).join("");
@@ -477,6 +498,7 @@ class DailyPredictionsPage {
                 ["Book", leg.sportsbook || ""],
             ],
             betslipUrl: leg.sportsbook_deeplink || "",
+            deeplinksByRegion: leg.deeplinks_by_region || null,
             settlementRow: leg,
         });
     }
@@ -594,6 +616,7 @@ class DailyPredictionsPage {
                 ["Book", leg.sportsbook || ""],
             ],
             betslipUrl: leg.sportsbook_deeplink || "",
+            deeplinksByRegion: leg.deeplinks_by_region || null,
             settlementRow: leg,
         });
     }

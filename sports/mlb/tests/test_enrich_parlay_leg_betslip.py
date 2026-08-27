@@ -162,6 +162,86 @@ def test_enrich_file_round_trips_through_disk(tmp_path: Path):
     assert written["parlays"]["shadow_candidate"]["betslip"]["status"] == "ready"
 
 
+def test_build_multi_region_odds_indexes_fetches_once_per_real_state():
+    calls: list[str] = []
+
+    def fake_factory(region: str):
+        calls.append(region)
+        rows = [_odds_row(f"Player {region}", "batter_runs_scored", 0.5, "over", f"{region}.1", f"{region}-1")]
+        return type("FakeProvider", (), {"collect_player_props": lambda self: {"status": "success", "odds": rows}})()
+
+    indexes = enrich.build_multi_region_odds_indexes(("NY", "PA"), provider_factory=fake_factory)
+
+    assert calls == ["NY", "PA"]
+    assert set(indexes) == {"NY", "PA"}
+    assert indexes["NY"][("player ny", "batter_runs_scored", 0.5, "over")].endswith("marketId=NY.1&selectionId=NY-1")
+
+
+def test_build_multi_region_odds_indexes_skips_a_state_whose_real_fetch_fails():
+    def fake_factory(region: str):
+        if region == "PA":
+            return type("FakeProvider", (), {"collect_player_props": lambda self: {"status": "source_timeout"}})()
+        rows = [_odds_row("Pete Alonso", "batter_runs_scored", 0.5, "over", "734.1", "111")]
+        return type("FakeProvider", (), {"collect_player_props": lambda self: {"status": "success", "odds": rows}})()
+
+    indexes = enrich.build_multi_region_odds_indexes(("NY", "PA"), provider_factory=fake_factory)
+
+    assert set(indexes) == {"NY"}  # PA's real fetch failed -- absent, never a guessed/empty stand-in
+
+
+def test_match_leg_to_regions_only_includes_states_with_a_real_match():
+    leg = {"player": "Pete Alonso", "side": "OVER", "target": "R", "line": 0.5}
+    region_indexes = {
+        "NY": enrich.build_odds_index([_odds_row("Pete Alonso", "batter_runs_scored", 0.5, "over", "NY.1", "111")]),
+        "PA": enrich.build_odds_index([]),  # no real PA match for this leg
+    }
+
+    deeplinks = enrich.match_leg_to_regions(leg, region_indexes)
+
+    assert deeplinks == {"NY": "https://sportsbook.fanduel.com/addToBetslip?marketId=NY.1&selectionId=111"}
+
+
+def test_enrich_pair_attaches_deeplinks_by_region_to_each_leg_when_region_indexes_given():
+    pair = _pair_with_two_legs()
+    rows = [
+        _odds_row("Pete Alonso", "batter_runs_scored", 0.5, "over", "734.1", "111"),
+        _odds_row("Pete Crow-Armstrong", "batter_total_bases", 1.5, "over", "734.2", "222"),
+    ]
+    index = enrich.build_odds_index(rows)
+    region_indexes = {"NY": index}
+
+    enrich.enrich_pair(pair, index, region_indexes=region_indexes)
+
+    assert pair["leg_1"]["deeplinks_by_region"]["NY"].endswith("marketId=734.1&selectionId=111")
+    assert pair["leg_2"]["deeplinks_by_region"]["NY"].endswith("marketId=734.2&selectionId=222")
+    # The original single-region field is untouched, for backward compat.
+    assert pair["leg_1"]["sportsbook_deeplink"]
+
+
+def test_enrich_pair_omits_deeplinks_by_region_when_no_region_indexes_given():
+    pair = _pair_with_two_legs()
+    rows = [
+        _odds_row("Pete Alonso", "batter_runs_scored", 0.5, "over", "734.1", "111"),
+        _odds_row("Pete Crow-Armstrong", "batter_total_bases", 1.5, "over", "734.2", "222"),
+    ]
+    index = enrich.build_odds_index(rows)
+
+    enrich.enrich_pair(pair, index)
+
+    assert "deeplinks_by_region" not in pair["leg_1"]
+
+
+def test_enrich_single_play_attaches_deeplinks_by_region():
+    play = {"player_display_name": "Pete Alonso", "direction": "OVER", "target": "R", "market_line": 0.5}
+    rows = [_odds_row("Pete Alonso", "batter_runs_scored", 0.5, "over", "734.1", "111")]
+    index = enrich.build_odds_index(rows)
+    region_indexes = {"NY": index}
+
+    enrich.enrich_single_play(play, index, region_indexes=region_indexes)
+
+    assert play["deeplinks_by_region"] == {"NY": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.1&selectionId=111"}
+
+
 def test_main_reports_ready_counts(tmp_path: Path, monkeypatch, capsys):
     target = tmp_path / "daily_predictions.json"
     target.write_text(json.dumps({"parlays": {"shadow_candidate": _pair_with_two_legs()}}), encoding="utf-8")
@@ -173,10 +253,14 @@ def test_main_reports_ready_counts(tmp_path: Path, monkeypatch, capsys):
         enrich.FanduelPublicMlbProvider, "collect_player_props",
         lambda self: {"status": "success", "odds": rows},
     )
-    monkeypatch.setattr(sys, "argv", ["enrich_parlay_leg_betslip.py", "--daily-predictions-path", str(target)])
+    monkeypatch.setattr(
+        sys, "argv",
+        ["enrich_parlay_leg_betslip.py", "--daily-predictions-path", str(target), "--disable-multi-region-betslip"],
+    )
 
     exit_code = enrich.main()
 
     assert exit_code == 0
     out = json.loads(capsys.readouterr().out)
     assert out["betslip_ready"][str(target)] == 1
+    assert out["region_coverage"] == {}

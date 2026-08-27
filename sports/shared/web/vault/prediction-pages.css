@@ -522,6 +522,39 @@ button {
   color: var(--vault-text);
 }
 
+.fanduel-region-picker-root:empty {
+  display: none;
+}
+
+.fanduel-region-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 0.8rem;
+}
+
+.fanduel-region-picker__label {
+  color: var(--vault-text-muted);
+  font-weight: 600;
+}
+
+.fanduel-region-picker__select {
+  min-height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--vault-line);
+  border-radius: 5px;
+  background: #ffffff;
+  color: var(--vault-text);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.fanduel-region-picker__select:hover {
+  border-color: var(--vault-line-strong);
+}
+
 .vault-board {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

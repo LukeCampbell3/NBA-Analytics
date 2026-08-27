@@ -46,6 +46,117 @@
   };
 
   /**
+   * FanDuel Sportsbook is a real, state-by-state licensed operator: each
+   * region is a genuinely separate sportsbook instance with its own real
+   * marketId/selectionId for the identical player/market/line (confirmed
+   * directly -- fanduel_public_mlb_provider.py's own real fetch returns a
+   * different marketId per region for the same real prop). A deep link
+   * built under one region only actually adds to a viewer's betslip if
+   * their real FanDuel account is in that same region -- this mirrors
+   * sports/mlb/predictions/odds/providers/fanduel_regions.py's real,
+   * verified list (kept in sync by hand; both are small, rarely-changing
+   * lists, not worth a build step to share).
+   */
+  CardVault.FANDUEL_STATE_NAMES = {
+    NY: "New York", PA: "Pennsylvania", OH: "Ohio", IL: "Illinois", MI: "Michigan",
+    NC: "North Carolina", VA: "Virginia", AZ: "Arizona", TN: "Tennessee", IN: "Indiana",
+    MA: "Massachusetts", MD: "Maryland", MO: "Missouri", CO: "Colorado", WV: "West Virginia",
+    LA: "Louisiana", KY: "Kentucky", CT: "Connecticut", IA: "Iowa", KS: "Kansas",
+    AR: "Arkansas", WY: "Wyoming", VT: "Vermont", NJ: "New Jersey", DC: "District of Columbia",
+  };
+  CardVault.FANDUEL_REGION_STORAGE_KEY = "itc_fanduel_region";
+
+  /**
+   * The viewer's own persisted state choice, per-browser (localStorage --
+   * private to this viewer, never sent anywhere, never seen by other
+   * viewers). Wrapped in try/catch: a private window, cleared site data,
+   * or a storage-blocking browser setting must never break the page --
+   * see the artifact/browser-storage discipline this repo already
+   * follows elsewhere. Returns "" (no selection) rather than guessing a
+   * default state for the viewer.
+   */
+  CardVault.getFanduelRegion = function getFanduelRegion() {
+    try {
+      const value = String(global.localStorage?.getItem(CardVault.FANDUEL_REGION_STORAGE_KEY) || "").toUpperCase();
+      return CardVault.FANDUEL_STATE_NAMES[value] ? value : "";
+    } catch (_error) {
+      return "";
+    }
+  };
+
+  CardVault.setFanduelRegion = function setFanduelRegion(state) {
+    try {
+      const normalized = String(state || "").toUpperCase();
+      if (normalized && CardVault.FANDUEL_STATE_NAMES[normalized]) {
+        global.localStorage?.setItem(CardVault.FANDUEL_REGION_STORAGE_KEY, normalized);
+      } else {
+        global.localStorage?.removeItem(CardVault.FANDUEL_REGION_STORAGE_KEY);
+      }
+    } catch (_error) { /* storage unavailable -- selection just won't persist this session */ }
+  };
+
+  /**
+   * A real link for the viewer's own selected state when one is
+   * available in `deeplinksByRegion` (the payload's real per-state map,
+   * see enrich_parlay_leg_betslip.py), else the original single-region
+   * `fallbackUrl` (which only actually resolves for a viewer whose real
+   * account happens to be in whichever region the pipeline fetched under
+   * -- historically NJ). Both are re-validated through
+   * safeFanDuelBetslipUrl before ever being rendered.
+   */
+  CardVault.resolveBetslipUrl = function resolveBetslipUrl(deeplinksByRegion, fallbackUrl) {
+    const region = CardVault.getFanduelRegion();
+    if (region && deeplinksByRegion && deeplinksByRegion[region]) {
+      const regional = CardVault.safeFanDuelBetslipUrl(deeplinksByRegion[region]);
+      if (regional) return regional;
+    }
+    return CardVault.safeFanDuelBetslipUrl(fallbackUrl);
+  };
+
+  /**
+   * A small, shared "Betting from" state picker -- one instance per page
+   * (mount it once near the top of the board). Selecting a state saves
+   * it via setFanduelRegion and re-renders whatever the page's own
+   * onChange callback does (typically "re-render the board"), so every
+   * already-rendered betslip link immediately resolves against the new
+   * region. Never assumes a default state for the viewer -- an empty
+   * selection just means every link falls back to the single-region
+   * `sportsbook_deeplink` field, exactly like before this feature existed.
+   */
+  CardVault.renderFanduelRegionPicker = function renderFanduelRegionPicker() {
+    const current = CardVault.getFanduelRegion();
+    const options = Object.entries(CardVault.FANDUEL_STATE_NAMES)
+      .sort((a, b) => a[1].localeCompare(b[1]))
+      .map(([code, name]) => `<option value="${CardVault.escapeAttr(code)}"${code === current ? " selected" : ""}>${CardVault.escapeHtml(name)}</option>`)
+      .join("");
+    return `
+      <label class="fanduel-region-picker">
+        <span class="fanduel-region-picker__label">Betting from</span>
+        <select id="fanduelRegionPicker" class="fanduel-region-picker__select" aria-label="Your state, for correct FanDuel betslip links">
+          <option value=""${current ? "" : " selected"}>Select your state</option>
+          ${options}
+        </select>
+      </label>
+    `;
+  };
+
+  /**
+   * Wires the picker's change event exactly once per page load. Call
+   * this after the picker HTML is in the DOM (it re-queries the element
+   * each time in case the board re-renders and recreates the node).
+   * `onChange` receives the newly selected state code ("" if cleared)
+   * and is where the caller re-renders its own board content.
+   */
+  CardVault.bindFanduelRegionPicker = function bindFanduelRegionPicker(onChange) {
+    document.addEventListener("change", (event) => {
+      if (event.target && event.target.id === "fanduelRegionPicker") {
+        CardVault.setFanduelRegion(event.target.value);
+        if (typeof onChange === "function") onChange(event.target.value);
+      }
+    });
+  };
+
+  /**
    * Shared photo markup for both card renderers below. Chains a primary
    * headshot URL to an optional fallback URL (e.g. MLB's secondary CDN
    * mirror) and finally to the monogram -- each <img> falls through to
@@ -422,10 +533,13 @@
     // Real single-leg "Add to Betslip" link -- only when this exact play
     // was actually priced at FanDuel (selected_sportsbook_key) AND
     // carries FanDuel's own real deep link for that selection
-    // (sportsbook_deeplink). Re-validated against the host/path
-    // allowlist before ever rendering; never a guessed or generic link.
+    // (sportsbook_deeplink). Resolves against the viewer's own selected
+    // state (deeplinks_by_region) when available, else falls back to the
+    // single-region link -- see resolveBetslipUrl. Re-validated against
+    // the host/path allowlist before ever rendering; never a guessed or
+    // generic link.
     const betslipUrl = String(play.selected_sportsbook_key || "").trim().toLowerCase() === "fanduel"
-      ? CardVault.safeFanDuelBetslipUrl(play.sportsbook_deeplink)
+      ? CardVault.resolveBetslipUrl(play.deeplinks_by_region, play.sportsbook_deeplink)
       : "";
     const betslipHtml = betslipUrl
       ? `<a class="prediction-card__betslip-link" href="${CardVault.escapeAttr(betslipUrl)}" target="_blank" rel="noopener noreferrer">Add to FanDuel Betslip</a>`
@@ -472,7 +586,7 @@
    */
   CardVault.renderLegCard = function renderLegCard({
     rank, statusTone = "", statusLabel = "", monogram = "", photoUrl = "", photoFallbackUrl = "",
-    name = "", market = "", context = "", metrics = [], note = "", betslipUrl = "", settlementRow = null,
+    name = "", market = "", context = "", metrics = [], note = "", betslipUrl = "", deeplinksByRegion = null, settlementRow = null,
   } = {}) {
     const photoHtml = CardVault.renderPhotoHtml(photoUrl, photoFallbackUrl, monogram);
     const metricHtml = metrics
@@ -487,7 +601,11 @@
     // here: that combined-URL scheme was never confirmed against real
     // FanDuel behavior and failed a real, logged-in device test, so
     // each leg gets its own real, individually-verified link instead.
-    const safeBetslipUrl = CardVault.safeFanDuelBetslipUrl(betslipUrl);
+    // Resolves against the viewer's own selected state when the caller
+    // passes a real deeplinksByRegion map -- see resolveBetslipUrl.
+    const safeBetslipUrl = deeplinksByRegion
+      ? CardVault.resolveBetslipUrl(deeplinksByRegion, betslipUrl)
+      : CardVault.safeFanDuelBetslipUrl(betslipUrl);
     const betslipHtml = safeBetslipUrl
       ? `<a class="prediction-card__betslip-link" href="${CardVault.escapeAttr(safeBetslipUrl)}" target="_blank" rel="noopener noreferrer">Add to FanDuel Betslip</a>`
       : "";
