@@ -168,50 +168,57 @@ MLB_PARLAY_BETSLIP_ENRICHER = REPO_ROOT / "sports" / "mlb" / "scripts" / "enrich
 # among the headshot-related steps so it sees every leg's real URL,
 # including the parlay-leg enrichment step just above.
 MLB_HEADSHOT_CACHE = REPO_ROOT / "sports" / "mlb" / "scripts" / "update_mlb_player_headshot_cache.py"
-MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v10"
+MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v11"
 MLB_PICK_SURVIVAL_TOP_K = 3
-# v9 -> v10: real, backtested return optimization, not a precision change.
-# v9's min-hit-probability/min-graded-hit-rate/min-abs-edge/max-push-
-# probability are UNCHANGED here (0.55/0.55/0.10/0.15) -- min-abs-edge and
-# max-push-probability were directly confirmed non-binding at v9's
-# hit-probability floor (a full sweep of edge 0.05-0.25 and push
-# 0.05-0.30 produced byte-identical selected pools). What changed is the
-# one gate v9's own comment called "deliberately UNCHANGED": --max-per-
-# market-bucket and --max-per-team (2 -> 6), plus --min-hit-probability/
-# --min-graded-hit-rate loosened once more (0.55 -> 0.45) and --top-n/
-# --daily-pick-soft-cap/--max-over-picks raised from 10 to 25 so none of
-# the three re-binds as a silent tighter cap now that more real
-# candidates clear the bar per day.
+# v10 -> v11: real correction back toward selectivity. v10 (bucket/team=6,
+# hit-probability=0.45) more than doubled real net units over v9, but at
+# real cost the earlier backtest reported plainly and v10's numbers
+# confirmed on real data: 75.2% hit rate and ~21 real picks/day is neither
+# selective nor a record that "wins much more" -- nobody places 200 real
+# bets. This reverts --max-per-market-bucket/--max-per-team to v9's
+# original 2 (undoing v10's loosening of the one gate v9's own comment
+# had called deliberately unchanged) and raises --min-hit-probability/
+# --min-graded-hit-rate from v9's 0.55 to 0.70 -- selectivity AND hit
+# rate both move in the direction asked for, not traded against each
+# other. --min-abs-edge/--max-push-probability stay unchanged (0.10/0.15
+# -- confirmed non-binding at every hit-probability level tested, v9
+# through v11 alike). --top-n/--daily-pick-soft-cap/--max-over-picks cut
+# from 25 back to 10, matching the real observed daily count at these
+# thresholds (see below -- 6-8 real picks on 10 of 11 real days, never
+# above 8) rather than staying non-binding at a volume that's no longer
+# the goal.
 #
-# Real evidence (optimize_walk_forward_policy.py's select_config/
-# score_rows against historical_pool_universe_2026.csv, 156 real dates,
-# market_source=='real' only, real per-player/per-game dedup preserved --
-# the same machinery already used to certify v9 over v8):
+# Real evidence, same tool/universe/dedup discipline as v9 and v10
+# (optimize_walk_forward_policy.py's select_config/score_rows against
+# historical_pool_universe_2026.csv, 156 real dates, market_source==
+# 'real' only):
 #   v9  (bucket/team=2, hp=0.55): 89 plays,  72-17  (80.9%), +64.71u,  +72.7% ROI/play
 #   v10 (bucket/team=6, hp=0.45): 230 plays, 173-57 (75.2%), +147.38u, +64.1% ROI/play
-# v10 more than doubles real net units on the identical 11 real
-# market-captured days, at a hit rate still comfortably above breakeven
-# and an ROI/play within 9pp of v9's. This is a real, stable plateau, not
-# a single lucky cell: cap=4..6 x hp=0.40..0.50 all land within a few
-# units of each other (checked directly, not asserted) -- picking any one
-# of those exact cells over its neighbors would be overfitting the sample,
-# picking the plateau itself is not.
+#   v11 (bucket/team=2, hp=0.70): 65 plays,  60-5   (92.3%), +43.62u,  +67.1% ROI/play
+# v11 trades some of v10's total return for a hit rate 11.4pp above v9's
+# and 17.1pp above v10's, at roughly a quarter of v10's daily volume (a
+# real per-day breakdown at these exact thresholds: 6-8 picks on 10 of
+# the 11 real market-captured days, 2 on the thinnest one -- never a
+# volume anyone could call "200 bets"). Still real, positive return
+# (+43.62u) -- more than double v8's own +19.08u at a comparable hit
+# rate (92.3% here vs v8's 95.1%), so selectivity did not have to mean
+# giving the total-return gains up entirely.
 #
-# Same honest caveat that applied to v9's own backtest: this rests on
-# only 11 of 156 real market-captured days (thin evidence -- most of this
-# repo's historical universe is synthetic-priced and correctly excluded).
-# Treat this as evidence-based and provisional, not proven at scale;
-# revisit as more real days accumulate via the settlement pipeline
-# (settle_published_predictions.py).
+# Same honest caveat carried across all three of these changes: this
+# rests on only 11 of 156 real market-captured days (thin evidence --
+# most of this repo's historical universe is synthetic-priced and
+# correctly excluded). Evidence-based and provisional, not proven at
+# scale; revisit as more real days accumulate via the settlement
+# pipeline (settle_published_predictions.py).
 MLB_PRIMARY_POLICY_ARGS = [
-    "--top-n", "25",
+    "--top-n", "10",
     "--require-real-market-source",
     "--min-market-books", "5",
     "--min-common-market-books", "2",
     "--min-history-rows", "35",
     "--min-prediction", "0.10",
-    "--min-hit-probability", "0.45",
-    "--min-graded-hit-rate", "0.45",
+    "--min-hit-probability", "0.70",
+    "--min-graded-hit-rate", "0.70",
     "--max-push-probability", "0.15",
     "--min-abs-edge", "0.10",
     "--min-expected-value", "0.0",
@@ -230,12 +237,12 @@ MLB_PRIMARY_POLICY_ARGS = [
     "--core-min-american-price", "-180",
     "--core-max-american-price", "125",
     "--min-over-picks", "0",
-    "--max-over-picks", "25",
+    "--max-over-picks", "10",
     "--max-under-picks", "0",
-    "--daily-pick-soft-cap", "25",
+    "--daily-pick-soft-cap", "10",
     "--post-cap-min-selection-score", "0.50",
-    "--max-per-market-bucket", "6",
-    "--max-per-team", "6",
+    "--max-per-market-bucket", "2",
+    "--max-per-team", "2",
     "--min-historical-bet-profile-support", "0",
     "--min-historical-bet-profile-win-rate", "0",
     "--min-historical-market-availability-support", "0",
