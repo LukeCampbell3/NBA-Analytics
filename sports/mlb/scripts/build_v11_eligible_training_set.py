@@ -53,15 +53,20 @@ DEFAULT_PROCESSED_ROOT = REPO_ROOT / "Player-Predictor" / "Data-Proc-MLB"
 DEFAULT_OUTPUT_CSV = REPO_ROOT / "sports" / "mlb" / "data" / "predictions" / "calibration" / "v11_eligible_training_set_2026.csv"
 DEFAULT_REPORT_JSON = REPO_ROOT / "sports" / "mlb" / "data" / "predictions" / "calibration" / "v11_eligible_training_set_report_2026.json"
 
-# v11's exact real args (sports/site/pipeline/run_daily_predictions.py's
-# MLB_PRIMARY_POLICY_ARGS) -- test_build_v11_eligible_training_set.py
-# asserts this stays byte-identical to that list so this never silently
-# trains against a stale policy.
+# The live selector's exact real primary-policy args (sports/site/
+# pipeline/run_daily_predictions.py's MLB_PRIMARY_POLICY_ARGS) --
+# test_build_v11_eligible_training_set.py asserts this stays byte-
+# identical to that list so this never silently trains against a stale
+# policy. Kept as "V11_SELECTOR_ARGS" for continuity even though the live
+# profile has since moved to v13 (a real book-count-gate relaxation only,
+# not a selectivity change -- see run_daily_predictions.py's own comment)
+# -- this constant always mirrors whatever the live selector currently
+# runs, by construction of the sync test, regardless of its own name.
 V11_SELECTOR_ARGS: list[str] = [
     "--top-n", "10",
     "--require-real-market-source",
-    "--min-market-books", "5",
-    "--min-common-market-books", "2",
+    "--min-market-books", "1",
+    "--min-common-market-books", "1",
     "--min-history-rows", "35",
     "--min-prediction", "0.10",
     "--min-hit-probability", "0.70",

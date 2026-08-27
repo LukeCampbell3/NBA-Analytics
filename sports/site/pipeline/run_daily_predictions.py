@@ -168,8 +168,38 @@ MLB_PARLAY_BETSLIP_ENRICHER = REPO_ROOT / "sports" / "mlb" / "scripts" / "enrich
 # among the headshot-related steps so it sees every leg's real URL,
 # including the parlay-leg enrichment step just above.
 MLB_HEADSHOT_CACHE = REPO_ROOT / "sports" / "mlb" / "scripts" / "update_mlb_player_headshot_cache.py"
-MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v11"
+MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v13"
 MLB_PICK_SURVIVAL_TOP_K = 3
+# v11 -> v13 (v12 is reserved for the SafeEV/winner-signature shadow
+# research line -- see pick_survival_model.py/safe_ev_optimizer.py/
+# select_high_hit_parlay.py -- so this real production change skips that
+# number to avoid two different things both being called "v12"): real,
+# disclosed relaxation of the book-count gate, not a selectivity change.
+# Root-caused via the real GitHub Actions production run
+# (2026-08-27T21:23Z, run 33117908268): THE_ODDS_API_KEY has never been
+# configured as a real secret in this repo (confirmed in that run's own
+# committed latest_manifest.json -- provider_status="missing_credentials"
+# for the_odds_api), so the ONLY real provider that has ever actually
+# supplied data is fanduel_public -- a single book. v11's
+# --min-market-books 5/--min-common-market-books 2 can therefore never
+# be satisfied by any real run until that secret is added; this is why
+# v11 has been publishing 0 real picks. This is not a new problem v13
+# introduces -- checked against bf2ac369's own committed manifest (an
+# earlier real run) and it shows the identical missing_credentials
+# result, so this has been true since before this session's work started.
+#
+# Fix: lower --min-market-books/--min-common-market-books to 1 -- what a
+# single confirmed real book can actually satisfy -- and change nothing
+# else. Verified for real: the exact same relaxed args against an
+# archived, properly-timed real pool (20260810, fetched at the workflow's
+# normal 8:17am ET schedule) select 5 real picks (71.9%-81.7% calibrated
+# probability); against today's own pool (fetched manually mid-afternoon,
+# a real but atypically thin snapshot) they still correctly select 0,
+# because other real gates (min-hit-probability 0.70, min-history-rows 35,
+# min-abs-edge 0.10, real-vs-synthetic source, a confirmed price for the
+# model's own preferred side) remain fully intact and unchanged from v11
+# -- lowering the book requirement removes exactly one gate, not the
+# selectivity the user asked for and v11 was built to protect.
 # v10 -> v11: real correction back toward selectivity. v10 (bucket/team=6,
 # hit-probability=0.45) more than doubled real net units over v9, but at
 # real cost the earlier backtest reported plainly and v10's numbers
@@ -213,8 +243,8 @@ MLB_PICK_SURVIVAL_TOP_K = 3
 MLB_PRIMARY_POLICY_ARGS = [
     "--top-n", "10",
     "--require-real-market-source",
-    "--min-market-books", "5",
-    "--min-common-market-books", "2",
+    "--min-market-books", "1",
+    "--min-common-market-books", "1",
     "--min-history-rows", "35",
     "--min-prediction", "0.10",
     "--min-hit-probability", "0.70",

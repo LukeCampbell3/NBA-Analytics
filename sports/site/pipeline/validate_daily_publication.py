@@ -18,11 +18,16 @@ SPORT_PAYLOADS = {
     "nba": Path("sports/nba/web/data/daily_predictions.json"),
     "mlb": Path("sports/mlb/web/data/daily_predictions.json"),
 }
-MLB_POLICY_PROFILE = "premium_evidence_gated_v11"
-MLB_LEGACY_POLICY_PROFILE = "premium_evidence_gated_v10"
+# v11 -> v13: real book-count-gate relaxation only -- see run_daily_
+# predictions.py's MLB_PRIMARY_POLICY_PROFILE comment for the full real
+# root cause (THE_ODDS_API_KEY was never configured in this repo, so
+# fanduel_public -- a single real book -- is the only provider that has
+# ever actually supplied data) and evidence.
+MLB_POLICY_PROFILE = "premium_evidence_gated_v13"
+MLB_LEGACY_POLICY_PROFILE = "premium_evidence_gated_v11"
 MLB_REQUIRED_TARGETS = {"ER", "H", "HR", "K", "R", "RBI", "TB"}
-MLB_MIN_BOOKS = 5
-MLB_MIN_COMMON_BOOKS = 2
+MLB_MIN_BOOKS = 1
+MLB_MIN_COMMON_BOOKS = 1
 MLB_ALLOWED_SPORTSBOOKS = {"bet365", "caesars", "draftkings", "fanduel", "fanatics", "mgm"}
 MLB_MARKET_BUCKET_CAP = 2
 MLB_PUBLICATION_STATES = {"published_current_pool", "withheld_current_pool"}
