@@ -15,6 +15,35 @@ sys.path.insert(0, str(MLB_SCRIPTS_ROOT))
 import select_high_precision_predictions as selector
 
 
+def test_main_runs_end_to_end_against_a_real_archived_pool_csv(tmp_path: Path, monkeypatch) -> None:
+    """Regression test for a real bug: prepare_and_filter_candidates()
+    was extracted from main() without also giving main() the extra
+    context (total candidate count, calibration/prior payloads) its own
+    write_summary_json() call still needed, so main() raised
+    `NameError: name 'candidates' is not defined` the first time it
+    actually ran end-to-end -- none of this file's other tests exercise
+    main() itself, only its internal pieces, so this real bug shipped
+    silently through a full local test run. This test calls the real
+    CLI entry point end-to-end against a real archived pool CSV and
+    just needs it to not crash and to write both real output files."""
+    pool_csv = REPO_ROOT / "sports" / "mlb" / "data" / "predictions" / "daily_runs" / "20260810" / "daily_prediction_pool_20260810.csv"
+    out_csv = tmp_path / "selected.csv"
+    summary_json = tmp_path / "summary.json"
+    argv = [
+        "select_high_precision_predictions.py",
+        "--pool-csv", str(pool_csv),
+        "--out-csv", str(out_csv),
+        "--summary-json", str(summary_json),
+        "--top-n", "10",
+    ]
+    monkeypatch.setattr(sys, "argv", argv)
+
+    selector.main()  # must not raise
+
+    assert out_csv.exists()
+    assert summary_json.exists()
+
+
 def test_supported_count_targets_cover_all_playable_count_props() -> None:
     assert selector.SUPPORTED_COUNT_TARGETS == {"H", "TB", "R", "HR", "RBI", "K", "ER"}
     assert set(selector.HISTORICAL_TARGET_SPECS) == selector.SUPPORTED_COUNT_TARGETS

@@ -2703,14 +2703,21 @@ def write_summary_json(
     path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
 
-def prepare_and_filter_candidates(args: argparse.Namespace) -> tuple[list[Candidate], Counter]:
+def prepare_candidates_full(
+    args: argparse.Namespace,
+) -> tuple[list[Candidate], Counter, int, dict | None, dict | None, dict | None, dict | None]:
     """Real end-to-end candidate build + structural filter (calibration/
     bet-profile/live-confidence/pick-survival loading, load_candidates,
     filter_candidates) -- everything main() does before diversification
-    ranking. Extracted so a second real caller (build_v11_eligible_
-    training_set.py, the v12 winner-signature training-set builder) gets
-    the exact same real gate logic the live selector runs, never a
-    hand-reconstructed approximation of it."""
+    ranking. Returns (eligible, rejected, total_candidates, calibration,
+    bet_profile_priors, live_confidence_calibration, pick_survival_model)
+    -- everything main() needs, including for write_summary_json(), so
+    main() never has to reach into this function's local state (the
+    NameError this docstring's own history warns about -- see git blame).
+    prepare_and_filter_candidates() below is a thin (eligible, rejected)
+    wrapper around this for callers that only need the filtered
+    candidates (build_v11_eligible_training_set.py, compare_v11_v12_
+    slates.py, select_high_hit_parlay.py)."""
     require_file(args.pool_csv)
     history_before_date = parse_date(args.history_before_date) if args.history_before_date else None
     if args.history_before_date and history_before_date is None:
@@ -2786,12 +2793,23 @@ def prepare_and_filter_candidates(args: argparse.Namespace) -> tuple[list[Candid
         pick_survival_model=pick_survival_model,
         winner_signature_model=winner_signature_model,
     )
-    return filter_candidates(candidates, args)
+    eligible, rejected = filter_candidates(candidates, args)
+    return eligible, rejected, len(candidates), calibration, bet_profile_priors, live_confidence_calibration, pick_survival_model
+
+
+def prepare_and_filter_candidates(args: argparse.Namespace) -> tuple[list[Candidate], Counter]:
+    """Thin (eligible, rejected) view of prepare_candidates_full() for
+    callers that only need the filtered candidates, not the summary-
+    report context -- see that function's docstring."""
+    eligible, rejected, *_ = prepare_candidates_full(args)
+    return eligible, rejected
 
 
 def main() -> None:
     args = parse_args()
-    eligible, rejected = prepare_and_filter_candidates(args)
+    eligible, rejected, total_candidates, calibration, bet_profile_priors, live_confidence_calibration, pick_survival_model = (
+        prepare_candidates_full(args)
+    )
 
     default_csv, default_summary = default_output_paths(args.pool_csv)
     if args.out_csv is None:
@@ -2806,7 +2824,7 @@ def main() -> None:
         args.summary_json,
         args,
         args.pool_csv,
-        len(candidates),
+        total_candidates,
         eligible,
         selected,
         rejected,
@@ -2820,7 +2838,7 @@ def main() -> None:
     print("MLB HIGH-PRECISION SELECTOR")
     print("=" * 88)
     print(f"Pool CSV:           {args.pool_csv}")
-    print(f"Supported rows:     {len(candidates)}")
+    print(f"Supported rows:     {total_candidates}")
     print(f"Rows after filters: {len(eligible)}")
     print(f"Rows selected:      {len(selected)}")
     print(f"Output CSV:         {args.out_csv}")
