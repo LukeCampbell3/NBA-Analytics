@@ -3,6 +3,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT / "sports" / "mlb" / "parlay_v2"))
 sys.path.insert(0, str(REPO_ROOT / "sports" / "mlb" / "predictions"))
@@ -159,6 +161,25 @@ def test_build_same_game_candidates_joint_residual_reflects_real_correlation() -
     combos = select.build_same_game_candidates(_game(), _result(), _market_odds())
     correlated_pair = next(c for c in combos if {c.leg_a.market, c.leg_b.market} == {"game_total", "first_5_innings_total"})
     assert abs(correlated_pair.joint_residual) > 0.001
+
+
+def test_build_same_game_candidates_naive_market_joint_raw_is_reciprocal_of_combo_price() -> None:
+    """naive_market_joint_raw_probability is the vig-included market
+    joint -- 1 / combo_decimal_price -- kept distinct from the de-vigged
+    naive_no_vig_combo_probability used for probability_edge."""
+    combos = select.build_same_game_candidates(_game(), _result(), _market_odds())
+    priced = [c for c in combos if c.combo_decimal_price]
+    assert priced  # real priced combos exist in the fixture
+    for combo in priced:
+        assert combo.naive_market_joint_raw_probability == pytest.approx(1.0 / combo.combo_decimal_price)
+        # Vig-included (raw) must be >= the de-vigged figure -- each raw
+        # single-side implied probability already carries the book's own
+        # margin (that's what "vig" means: both sides' raw implied
+        # probabilities sum to more than 100%), and de-vigging always
+        # normalizes that back down, never up.
+        if combo.naive_no_vig_combo_probability is not None:
+            assert combo.naive_market_joint_raw_probability >= combo.naive_no_vig_combo_probability - 1e-9
+    assert combo.as_dict()["naive_market_joint_raw_probability"] == combo.naive_market_joint_raw_probability
 
 
 def test_build_same_game_candidates_default_unauthorized_with_no_calibration_evidence() -> None:

@@ -210,6 +210,7 @@ class PitcherParlayCandidate:
     leg_b: PitcherKLeg
     naive_independence_probability: float  # the REAL, correct joint model here -- see module docstring
     naive_no_vig_combo_probability: Optional[float]
+    naive_market_joint_raw_probability: Optional[float]
     combo_decimal_price: Optional[float]
     probability_edge: Optional[float]
     expected_value_per_unit: Optional[float]
@@ -239,6 +240,7 @@ class PitcherParlayCandidate:
             "real_joint_model_probability": self.naive_independence_probability,
             "naive_independence_probability": self.naive_independence_probability,
             "naive_no_vig_combo_probability": self.naive_no_vig_combo_probability,
+            "naive_market_joint_raw_probability": self.naive_market_joint_raw_probability,
             "combo_decimal_price": self.combo_decimal_price,
             "probability_edge": self.probability_edge,
             "expected_value_per_unit": self.expected_value_per_unit,
@@ -278,6 +280,10 @@ def build_pitcher_parlay(
     )
     decimal_a, decimal_b = leg_a.decimal_price, leg_b.decimal_price
     combo_decimal_price = decimal_a * decimal_b if decimal_a is not None and decimal_b is not None else None
+    # Raw (vig-included) market joint -- see select_mlb_same_game_bets.py's
+    # own naive_market_joint_raw for why this is kept alongside the
+    # de-vigged naive_no_vig rather than in place of it.
+    naive_market_joint_raw = None if combo_decimal_price in (None, 0) else (1.0 / combo_decimal_price)
     probability_edge = joint_probability - naive_no_vig if naive_no_vig is not None else None
     expected_value = joint_probability * combo_decimal_price - 1.0 if combo_decimal_price is not None else None
 
@@ -289,6 +295,7 @@ def build_pitcher_parlay(
         leg_a=leg_a, leg_b=leg_b,
         naive_independence_probability=joint_probability,
         naive_no_vig_combo_probability=naive_no_vig,
+        naive_market_joint_raw_probability=naive_market_joint_raw,
         combo_decimal_price=combo_decimal_price,
         probability_edge=probability_edge,
         expected_value_per_unit=expected_value,

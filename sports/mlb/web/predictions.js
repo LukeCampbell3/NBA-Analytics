@@ -422,7 +422,9 @@ class DailyPredictionsPage {
         const pillLabel = authorized ? "Selected -- shadow only" : "Shadow only";
 
         const joint = this.formatPct(combo.real_joint_model_probability);
-        const edge = this.formatSignedPct(combo.probability_edge);
+        const rawMarketJoint = this.formatPct(combo.naive_market_joint_raw_probability);
+        const noVigMarketJoint = this.formatPct(combo.naive_no_vig_combo_probability);
+        const edge = this.formatSignedPp(combo.probability_edge);
         const ev = this.formatSignedPct(combo.expected_value_per_unit);
 
         return `
@@ -439,10 +441,18 @@ class DailyPredictionsPage {
                     ${this.renderSameGameLeg(combo.leg_b, game, 2)}
                 </div>
                 <div class="same-game-parlay__metrics">
-                    <span>Joint probability <strong>${joint}</strong></span>
-                    <span>Edge vs. naive market <strong>${edge}</strong></span>
-                    <span>Model EV <strong>${ev}</strong></span>
+                    <span>Model joint probability <strong>${joint}</strong></span>
+                    <span>Naive market joint (raw) <strong>${rawMarketJoint}</strong></span>
+                    <span>Naive market joint (no-vig) <strong>${noVigMarketJoint}</strong></span>
+                    <span>Joint edge vs. no-vig market <strong>${edge}</strong></span>
+                    <span>Synthetic-price EV <strong>${ev}</strong></span>
                 </div>
+                <!-- "Synthetic-price EV" -- this game's combo_decimal_price is
+                     the two real legs' own decimal prices multiplied together,
+                     never an actual FanDuel same-game-parlay quote (which
+                     would price the legs' real correlation into one number).
+                     Never call this figure "sportsbook executable EV" until a
+                     real SGP quote is captured and used instead. -->
             </article>
         `;
     }
@@ -528,7 +538,9 @@ class DailyPredictionsPage {
         const pillTone = authorized ? "active" : "stale";
         const pillLabel = authorized ? "Selected -- shadow only" : "Shadow only";
         const joint = this.formatPct(parlay.real_joint_model_probability);
-        const edge = parlay.probability_edge != null ? this.formatSignedPct(parlay.probability_edge) : "n/a";
+        const rawMarketJoint = this.formatPct(parlay.naive_market_joint_raw_probability);
+        const noVigMarketJoint = this.formatPct(parlay.naive_no_vig_combo_probability);
+        const edge = parlay.probability_edge != null ? this.formatSignedPp(parlay.probability_edge) : "n/a";
         const ev = parlay.expected_value_per_unit != null ? this.formatSignedPct(parlay.expected_value_per_unit) : "n/a";
 
         content.innerHTML = this.pitcherParlayHeader(pillTone, pillLabel) + `
@@ -537,8 +549,10 @@ class DailyPredictionsPage {
                 ${this.renderPitcherKLeg(parlay.leg_b, 2)}
             </div>
             <div class="same-game-parlay__metrics">
-                <span>Joint probability <strong>${joint}</strong></span>
-                <span>Edge vs. naive market <strong>${edge}</strong></span>
+                <span>Model joint probability <strong>${joint}</strong></span>
+                <span>Naive market joint (raw) <strong>${rawMarketJoint}</strong></span>
+                <span>Naive market joint (no-vig) <strong>${noVigMarketJoint}</strong></span>
+                <span>Joint edge vs. no-vig market <strong>${edge}</strong></span>
                 <span>Model EV <strong>${ev}</strong></span>
             </div>
         `;
@@ -640,6 +654,15 @@ class DailyPredictionsPage {
         const number = Number(value);
         if (!Number.isFinite(number)) return "n/a";
         return `${number >= 0 ? "+" : ""}${(number * 100).toFixed(1)}%`;
+    }
+
+    // Percentage-POINT formatter for a difference of two probabilities --
+    // deliberately distinct from formatSignedPct (a signed % return like
+    // EV), see vault-components.js's own CardVault.formatSignedPp.
+    formatSignedPp(value) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return "n/a";
+        return `${number >= 0 ? "+" : ""}${(number * 100).toFixed(1)} pp`;
     }
 
     formatAmerican(value) {

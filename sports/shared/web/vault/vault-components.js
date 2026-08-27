@@ -88,6 +88,32 @@
     return `${n >= 0 ? "+" : ""}${n.toFixed(2)}`;
   };
 
+  /**
+   * Real breakeven probability implied by a single American price -- pure
+   * arithmetic on a number the payload already carries (selected_side_
+   * price), never a guess or a second data source. This is the SAME
+   * side's own vig-included implied probability (not de-vigged against
+   * an opposite-side quote), which is exactly what "probability edge"
+   * needs: how much the model's own calibrated probability clears what
+   * this exact price requires to break even.
+   */
+  CardVault.impliedProbabilityFromAmerican = function impliedProbabilityFromAmerican(price) {
+    const n = Number(price);
+    if (!Number.isFinite(n) || n === 0) return null;
+    return n > 0 ? 100 / (n + 100) : -n / (-n + 100);
+  };
+
+  /** Signed percentage-POINT formatter -- for a difference of two
+   * probabilities (e.g. model probability minus breakeven probability),
+   * which is a distinct quantity from a signed percentage return (EV)
+   * and should never share formatSignedPct's "%" suffix. */
+  CardVault.formatSignedPp = function formatSignedPp(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "n/a";
+    const pp = (n * 100).toFixed(1);
+    return `${n >= 0 ? "+" : ""}${pp} pp`;
+  };
+
   CardVault.renderMetricChip = function renderMetricChip(label, value, tone = "") {
     const toneClass = tone ? ` vault-metric-chip--${CardVault.escapeAttr(tone)}` : "";
     return `
@@ -210,7 +236,25 @@
     const parts = displayName.split(/\s+/).filter(Boolean);
     const monogram = parts.length >= 2 ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase() : (parts[0] || "NA").slice(0, 2).toUpperCase();
 
-    const riskFlags = Array.isArray(play.risk_flags) ? play.risk_flags.map((flag) => String(flag || "").trim()).filter(Boolean) : [];
+    // "lineup_unconfirmed" is a real risk at publication time (this
+    // board is built once, hours before first pitch), but it goes
+    // stale the moment the real game actually starts -- whoever's
+    // playing is playing, so a still-showing "unconfirmed" badge past
+    // commence_time_utc is misleading rather than informative. Every
+    // OTHER risk flag (stale_history, roster_unverified, etc.) is
+    // unaffected -- this drops only the one flag that time itself
+    // resolves, using a real field (commence_time_utc) the payload
+    // already carries, never a guess.
+    const gameHasStarted = (() => {
+      const commence = Date.parse(String(play.commence_time_utc || ""));
+      return Number.isFinite(commence) && Date.now() >= commence;
+    })();
+    const riskFlags = Array.isArray(play.risk_flags)
+      ? play.risk_flags
+        .map((flag) => String(flag || "").trim())
+        .filter(Boolean)
+        .filter((flag) => flag !== "lineup_unconfirmed" || !gameHasStarted)
+      : [];
     if (play.candidate_authorized === false && !riskFlags.includes("policy_uncertified")) riskFlags.push("policy_uncertified");
     const actionStatus = String(play.action_status || play.publication_status || "").toLowerCase();
     const needsReview = actionStatus === "review" || riskFlags.length > 0 || play.model_estimate_status === "review";
@@ -223,11 +267,23 @@
     const modelProbability = play.estimated_graded_hit_rate != null
       ? play.estimated_graded_hit_rate
       : play.model_hit_probability;
+    // Real, distinct quantities: EV (expected return per unit staked)
+    // and probability edge (calibrated hit probability minus what this
+    // exact price requires to break even) are NOT the same number and
+    // must never share a label -- a high-EV, low-probability pick (see
+    // e.g. the pitcher-strikeouts parlay) is real and correct, but
+    // labeling its EV as "Edge" reads as a much stronger probability
+    // claim than the model is actually making.
+    const signalLabel = play.ev != null ? "Model EV" : edgeValue != null ? "Edge" : "Model probability";
     const signalText = play.ev != null
       ? CardVault.formatSignedPct(play.ev)
       : edgeValue != null
         ? CardVault.formatSignedNumber(edgeValue)
         : CardVault.formatPct(modelProbability);
+    const breakevenProbability = CardVault.impliedProbabilityFromAmerican(play.selected_side_price);
+    const probabilityEdge = modelProbability != null && breakevenProbability != null
+      ? Number(modelProbability) - breakevenProbability
+      : null;
 
     const gameText = [play.market_away_team, play.market_home_team].filter(Boolean).join(" @ ")
       || [play.team, play.opponent].filter(Boolean).join(" vs ");
@@ -287,11 +343,16 @@
     const pushText = play.estimated_push_probability != null ? CardVault.formatPct(play.estimated_push_probability) : null;
     const valueScore = play.value_score != null ? CardVault.formatNumber(play.value_score) : null;
 
-    // Primary metrics: what the user needs first. Line/Projection/Model/Odds.
+    // Primary metrics: what the user needs first. Line/Projection/Model/
+    // Prob. edge/Odds. "Prob. edge" is a real, distinct quantity from
+    // the EV shown above (see signalLabel/probabilityEdge) -- shown
+    // alongside it, never in place of it, so a viewer never has to
+    // infer probability edge from an EV number that isn't one.
     const primaryMetrics = [
       ...(lineText !== "n/a" ? [["Line", lineText]] : []),
       ...(predText !== "n/a" ? [["Projection", predText]] : []),
       ...(hitRate !== "n/a" ? [["Model probability", hitRate]] : []),
+      ...(probabilityEdge != null ? [["Prob. edge", CardVault.formatSignedPp(probabilityEdge)]] : []),
       ["Odds", oddsText],
     ];
     const primaryMetricHtml = primaryMetrics
@@ -339,7 +400,7 @@
           </div>
         </div>
         <div class="prediction-card__signal">
-          <span class="prediction-card__signal-label">${CardVault.escapeHtml(edgeValue != null ? "Edge" : "Model probability")}</span>
+          <span class="prediction-card__signal-label">${CardVault.escapeHtml(signalLabel)}</span>
           <strong>${CardVault.escapeHtml(signalText)}</strong>
         </div>
         <dl class="prediction-card__metrics">${primaryMetricHtml}</dl>

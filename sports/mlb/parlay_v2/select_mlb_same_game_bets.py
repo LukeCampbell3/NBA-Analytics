@@ -256,6 +256,7 @@ class SameGameComboCandidate:
     real_joint_model_probability: float
     naive_independence_probability: float
     naive_no_vig_combo_probability: Optional[float]
+    naive_market_joint_raw_probability: Optional[float]
     combo_decimal_price: Optional[float]
     probability_edge: Optional[float]
     expected_value_per_unit: Optional[float]
@@ -305,6 +306,7 @@ class SameGameComboCandidate:
             "naive_independence_probability": self.naive_independence_probability,
             "joint_residual": self.joint_residual,
             "naive_no_vig_combo_probability": self.naive_no_vig_combo_probability,
+            "naive_market_joint_raw_probability": self.naive_market_joint_raw_probability,
             "combo_decimal_price": self.combo_decimal_price,
             "probability_edge": self.probability_edge,
             "expected_value_per_unit": self.expected_value_per_unit,
@@ -390,6 +392,16 @@ def build_same_game_candidates(
                 if leg_a.decimal_price is not None and leg_b.decimal_price is not None:
                     combo_decimal = leg_a.decimal_price * leg_b.decimal_price
 
+                # Raw (vig-included) market joint -- the naive product of
+                # each leg's OWN quoted price, with no de-vigging at all.
+                # Kept alongside naive_market (de-vigged) rather than in
+                # place of it: probability_edge below is computed against
+                # the de-vigged figure (the fairer, preferred baseline),
+                # but a viewer reproducing "edge" from the raw displayed
+                # odds needs this real intermediate too, not just the
+                # final number.
+                naive_market_joint_raw = None if combo_decimal is None or combo_decimal == 0 else (1.0 / combo_decimal)
+
                 edge = None if naive_market is None else (real_joint - naive_market)
                 expected_value = None if combo_decimal is None else (real_joint * combo_decimal - 1.0)
                 price_confirmed = bool(leg_a.price_confirmed and leg_b.price_confirmed)
@@ -409,7 +421,8 @@ def build_same_game_candidates(
                         away_team=game.get("away_team", ""), event_date=game.get("date", ""),
                         leg_a=leg_a, leg_b=leg_b,
                         real_joint_model_probability=real_joint, naive_independence_probability=naive_independence,
-                        naive_no_vig_combo_probability=naive_market, combo_decimal_price=combo_decimal,
+                        naive_no_vig_combo_probability=naive_market,
+                        naive_market_joint_raw_probability=naive_market_joint_raw, combo_decimal_price=combo_decimal,
                         probability_edge=edge, expected_value_per_unit=expected_value,
                         candidate_authorized=authorized, support_blocking_dimensions=blocking,
                     )

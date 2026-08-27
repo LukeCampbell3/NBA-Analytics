@@ -3,6 +3,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT / "sports" / "mlb" / "parlay_v2"))
 sys.path.insert(0, str(REPO_ROOT / "sports" / "mlb" / "predictions"))
@@ -136,6 +138,30 @@ def test_build_pitcher_parlay_pairs_two_distinct_real_pitchers():
     assert combo is not None
     assert combo.leg_a.pitcher_id != combo.leg_b.pitcher_id
     assert abs(combo.naive_independence_probability - combo.leg_a.model_probability * combo.leg_b.model_probability) < 1e-9
+
+
+def test_build_pitcher_parlay_naive_market_joint_raw_is_reciprocal_of_combo_price():
+    """naive_market_joint_raw_probability is the vig-included market
+    joint -- 1 / combo_decimal_price -- kept distinct from the de-vigged
+    naive_no_vig_combo_probability used for probability_edge."""
+    starters = [_starter(pitcher_id=1, name="Real Pitcher One", game_id="g1"), _starter(pitcher_id=2, name="Real Pitcher Two", team="LAD", opponent="SD", game_id="g2")]
+    odds = [
+        _k_odds_row("Real Pitcher One", 5.5, "over", 120),
+        _k_odds_row("Real Pitcher One", 5.5, "under", -150),
+        _k_odds_row("Real Pitcher Two", 6.5, "over", 130),
+        _k_odds_row("Real Pitcher Two", 6.5, "under", -160),
+    ]
+    legs = select.build_pitcher_k_legs(starters, odds, season=2026, fetch_season_stats=_fake_projection())
+    combo = select.build_pitcher_parlay(legs)
+
+    assert combo is not None
+    assert combo.combo_decimal_price
+    assert combo.naive_market_joint_raw_probability == pytest.approx(1.0 / combo.combo_decimal_price)
+    # Vig-included (raw) must be >= the de-vigged figure -- see
+    # select_mlb_same_game_bets.py's own equivalent test for why.
+    if combo.naive_no_vig_combo_probability is not None:
+        assert combo.naive_market_joint_raw_probability >= combo.naive_no_vig_combo_probability - 1e-9
+    assert combo.as_dict()["naive_market_joint_raw_probability"] == combo.naive_market_joint_raw_probability
 
 
 def test_build_pitcher_parlay_never_pairs_two_legs_from_the_same_pitcher():

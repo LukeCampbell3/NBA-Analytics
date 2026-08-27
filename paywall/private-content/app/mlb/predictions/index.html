@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="/vault/vault-tokens.css?v=10">
     <link rel="stylesheet" href="/vault/vault-components.css?v=10">
     <link rel="stylesheet" href="/vault/prediction-pages.css?v=10">
-    <link rel="stylesheet" href="parlay-board.css?v=8">
+    <link rel="stylesheet" href="parlay-board.css?v=9">
 </head>
 <body class="vault-theme">
     <div id="vaultShellRoot"></div>
@@ -47,18 +47,30 @@
             <section class="board-section" aria-labelledby="parlaysHeading">
                 <h2 id="parlaysHeading" class="board-section__heading">Parlays</h2>
 
+                <!-- High-EV and high-hit-probability are different real
+                     quantities -- a candidate can carry a large positive
+                     EV while the model itself says it's more likely to
+                     lose than win (see e.g. a 45.7% joint-probability
+                     pitcher parlay with +101% EV). Cross-Market is the
+                     one frozen, high-hit-probability-gated policy;
+                     Same-Game and Pitchers-Only are real, additive,
+                     EV-oriented shadow products, never a claim that
+                     either is more likely to win than lose. -->
                 <div class="parlay-group">
                     <p class="parlay-group__label">Cross-Market</p>
+                    <p class="parlay-group__note">Frozen, high-hit-probability-gated policy</p>
                     <div id="parlayV2Content" class="daily-parlay"></div>
                 </div>
 
                 <div class="parlay-group">
                     <p class="parlay-group__label">Same-Game</p>
+                    <p class="parlay-group__note">EV-oriented shadow -- not a high-hit-probability claim</p>
                     <div id="sameGameParlayContent" class="daily-parlay"></div>
                 </div>
 
                 <div class="parlay-group">
                     <p class="parlay-group__label">Pitchers-Only</p>
+                    <p class="parlay-group__note">EV-oriented shadow -- not a high-hit-probability claim</p>
                     <div id="pitcherParlayContent" class="daily-parlay"></div>
                 </div>
             </section>
@@ -72,8 +84,8 @@
         </footer>
     </main>
 
-    <script src="/vault/vault-components.js?v=11"></script>
+    <script src="/vault/vault-components.js?v=12"></script>
     <script src="/vault/vault-shell.js?v=9"></script>
-    <script src="predictions.js?v=20"></script>
+    <script src="predictions.js?v=21"></script>
 </body>
 </html>
