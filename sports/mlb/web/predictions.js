@@ -472,6 +472,7 @@ class DailyPredictionsPage {
                 ["Book", leg.sportsbook || ""],
             ],
             betslipUrl: leg.sportsbook_deeplink || "",
+            settlementRow: leg,
         });
     }
 
@@ -587,6 +588,7 @@ class DailyPredictionsPage {
                 ["Book", leg.sportsbook || ""],
             ],
             betslipUrl: leg.sportsbook_deeplink || "",
+            settlementRow: leg,
         });
     }
 

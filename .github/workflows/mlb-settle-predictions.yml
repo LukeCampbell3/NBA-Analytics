@@ -78,6 +78,8 @@ jobs:
           git add -f -- \
             sports/mlb/web/data/daily_predictions.json \
             sports/mlb/web/data/history/*.json \
+            sports/mlb/web/data/same_game_predictions.json \
+            sports/mlb/web/data/pitcher_parlay_predictions.json \
             sports/mlb/data/predictions/settlement/mlb_settlement_report.json \
             dist/mlb \
             paywall/private-content/app/mlb

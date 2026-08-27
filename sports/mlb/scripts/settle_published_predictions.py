@@ -2,12 +2,23 @@
 """
 Settle published MLB predictions against real, final MLB Stats API results.
 
-Runs against the actual frontend-facing payloads -- sports/mlb/web/data/
-daily_predictions.json and every sports/mlb/web/data/history/<date>.json --
-and writes real win/loss/push outcomes directly onto each play/leg dict so
-the board (today's and every historical date a viewer browses to, since
-history/<date>.json is exactly what predictions.js fetches for that date)
-shows a real settled result once the underlying MLB game is final.
+Runs against every real published payload:
+    sports/mlb/web/data/daily_predictions.json (today's/yesterday's board)
+    sports/mlb/web/data/history/<date>.json (every archived date)
+    sports/mlb/web/data/same_game_predictions.json (Same-Game combos)
+    sports/mlb/web/data/pitcher_parlay_predictions.json (Pitchers-Only)
+and writes real win/loss/push outcomes directly onto each play/leg/combo
+dict. The first two are player-stat-vs-line rows, settled the same way
+(settle_row); the same-game product is team moneyline/total markets, not a
+player stat, so it goes through its own settle_team_market_row; the
+Pitchers-Only product is always the pitcher-strikeouts market with the
+target/role implied rather than present as a field, so it goes through
+settle_pitcher_k_row. The board (today's and every historical date a
+viewer browses to, since history/<date>.json is exactly what predictions.js
+fetches for that date) shows a real settled result once the underlying
+MLB game is final. Same-Game and Pitchers-Only have no history archive of
+their own today (see run()'s own comment), so settlement there only ever
+covers the currently-published file, not a persisted per-date record.
 
 Design principles (mirrors settle_mlb_production_shadow.py's own stated
 rule): appends outcome fields only, never modifies prediction-time fields.
@@ -168,15 +179,26 @@ def _row_spec(row: Dict[str, Any]) -> Tuple[Optional[str], Optional[str], Any, A
     return (str(game_id) if game_id is not None else None), player, target, line, direction, player_type
 
 
-def settle_row(row: Dict[str, Any], get_live_feed: Callable[[str], Dict[str, Any]], now_iso: str) -> bool:
-    """Mutates `row` in place, adding settlement_* fields only. Returns True
-    if the row was written to (resolved or a pending attempt was recorded),
-    False if it was left untouched (already resolved, or not a settleable
-    row at all -- e.g. missing a required field)."""
+def _settle_prop_row(
+    row: Dict[str, Any],
+    game_id: Optional[str],
+    player: Any,
+    target: Any,
+    line: Any,
+    direction: Any,
+    player_type: Any,
+    get_live_feed: Callable[[str], Dict[str, Any]],
+    now_iso: str,
+) -> bool:
+    """Shared core for any player-stat-vs-line row (a board play, a legacy
+    ticket leg, a PARLAY_POLICY_V2 leg, or a Pitchers-Only K leg -- see
+    settle_row and settle_pitcher_k_row, the two real callers). Mutates
+    `row` in place, adding settlement_* fields only. Returns True if the
+    row was written to (resolved or a pending attempt was recorded), False
+    if left untouched (already resolved, or not settleable -- e.g. missing
+    a required field)."""
     if row.get("settlement_status") in RESOLVED_STATUSES:
         return False
-
-    game_id, player, target, line, direction, player_type = _row_spec(row)
     if not game_id or not player or target is None or line is None or not direction:
         return False
 
@@ -217,6 +239,112 @@ def settle_row(row: Dict[str, Any], get_live_feed: Callable[[str], Dict[str, Any
     return True
 
 
+def settle_row(row: Dict[str, Any], get_live_feed: Callable[[str], Dict[str, Any]], now_iso: str) -> bool:
+    """Settles a board play / legacy ticket leg / PARLAY_POLICY_V2 leg --
+    every row shape that carries its own explicit target/market_line/
+    direction fields (see _row_spec)."""
+    game_id, player, target, line, direction, player_type = _row_spec(row)
+    return _settle_prop_row(row, game_id, player, target, line, direction, player_type, get_live_feed, now_iso)
+
+
+def settle_pitcher_k_row(row: Dict[str, Any], get_live_feed: Callable[[str], Dict[str, Any]], now_iso: str) -> bool:
+    """Settles a Pitchers-Only leg (pitcher_parlay_predictions.json's
+    parlay.leg_a/leg_b) -- that whole product IS the pitcher-strikeouts
+    market, so target/player_type are implied rather than present as
+    fields on the row itself (there is no batter_strikeouts leg anywhere
+    in this product to disambiguate against)."""
+    game_id = row.get("game_id")
+    player = row.get("pitcher_name")
+    line = row.get("line")
+    direction = row.get("side")
+    return _settle_prop_row(
+        row, str(game_id) if game_id is not None else None, player, "K", line, direction, "pitcher", get_live_feed, now_iso
+    )
+
+
+def resolve_team_market_outcome(leg: Dict[str, Any], feed: Dict[str, Any]) -> Tuple[Optional[str], Optional[float], str]:
+    """Grades a same-game team-market leg (moneyline / game_total /
+    first_5_innings_total -- see select_mlb_same_game_bets.py) from the
+    real final linescore. Returns (status, actual_value, reason): status
+    is None with a reason while still unresolved; actual_value is the real
+    combined-runs total for a totals leg, None for moneyline (there is no
+    single "stat value" for which-team-won)."""
+    market = str(leg.get("market", ""))
+    side = str(leg.get("side", "")).lower()
+    linescore = feed.get("liveData", {}).get("linescore", {})
+    teams = linescore.get("teams", {})
+    home_runs = teams.get("home", {}).get("runs")
+    away_runs = teams.get("away", {}).get("runs")
+    if home_runs is None or away_runs is None:
+        return None, None, "score_not_available"
+
+    if market == "moneyline":
+        if side not in ("home", "away"):
+            return None, None, "unsupported_side"
+        if home_runs == away_runs:
+            return None, None, "tie_unsettleable"
+        winner = "home" if home_runs > away_runs else "away"
+        return ("won" if side == winner else "lost"), None, ""
+
+    if market in ("game_total", "first_5_innings_total"):
+        if side not in ("over", "under"):
+            return None, None, "unsupported_side"
+        line = leg.get("line")
+        if line is None:
+            return None, None, "missing_line"
+        if market == "game_total":
+            total = home_runs + away_runs
+        else:
+            innings = linescore.get("innings", [])
+            if len(innings) < 5:
+                return None, None, "incomplete_f5_data"
+            total = sum((inn.get("home", {}).get("runs") or 0) + (inn.get("away", {}).get("runs") or 0) for inn in innings[:5])
+        direction = "OVER" if side == "over" else "UNDER"
+        return grade_outcome(float(total), float(line), direction), float(total), ""
+
+    return None, None, "unsupported_market"
+
+
+def settle_team_market_row(row: Dict[str, Any], game_id: Any, get_live_feed: Callable[[str], Dict[str, Any]], now_iso: str) -> bool:
+    """Settles a same-game combo leg (same_game_predictions.json's
+    games[].combo_candidates[].leg_a/leg_b) -- a team moneyline or total,
+    never a player stat, so this does not go through _settle_prop_row at
+    all. game_id is passed in explicitly rather than read off the leg:
+    in this product's real schema it lives one level up, on the parent
+    combo_candidates[] entry, not on leg_a/leg_b themselves."""
+    if row.get("settlement_status") in RESOLVED_STATUSES:
+        return False
+    if not game_id or not row.get("market") or not row.get("side"):
+        return False
+
+    def _pending(reason: str) -> bool:
+        row["settlement_status"] = "pending"
+        row["settlement_reason"] = reason
+        row["settlement_checked_at"] = now_iso
+        return True
+
+    try:
+        feed = get_live_feed(str(game_id))
+    except Exception as exc:
+        return _pending(f"fetch_error:{type(exc).__name__}")
+
+    status = feed.get("gameData", {}).get("status", {})
+    if not _is_final_status(status):
+        return _pending("game_not_final")
+
+    outcome, actual_value, reason = resolve_team_market_outcome(row, feed)
+    if outcome is None:
+        return _pending(reason or "team_market_unresolved")
+
+    row["settlement_status"] = outcome
+    if actual_value is not None:
+        row["settlement_actual_value"] = actual_value
+    row["settlement_source"] = "mlb_statsapi_live_feed"
+    row["settlement_checked_at"] = now_iso
+    row.pop("settlement_reason", None)
+    return True
+
+
 def iter_settleable_rows(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Every row actually rendered on the board or a historical date's
     board -- see predictions.js's mergeLegacySoloBets/renderParlayV2Legs.
@@ -246,10 +374,74 @@ def iter_settleable_rows(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
     return rows
 
 
-def settle_payload(payload: Dict[str, Any], get_live_feed: Callable[[str], Dict[str, Any]], now_iso: str) -> Dict[str, int]:
+def settle_same_game_payload(payload: Dict[str, Any], get_live_feed: Callable[[str], Dict[str, Any]], now_iso: str) -> Dict[str, int]:
+    """Settles every real combo candidate across the whole slate (same_game_
+    predictions.json's games[].combo_candidates[]) -- not just the single
+    highest-EV one predictions.js currently renders. Which combo is "the
+    displayed one" is a client-side sort over live data
+    (renderSameGameParlay's own allCombos.sort(...)), so settling the whole
+    real candidate pool here is more robust than trying to replicate that
+    selection server-side, and every one of these is a real, priced
+    candidate worth validating regardless. Kept separate from
+    settle_payload/iter_settleable_rows because a leg here needs its
+    game_id from its parent combo (see settle_team_market_row)."""
     counts = {"won": 0, "lost": 0, "push": 0, "pending": 0, "touched": 0}
-    for row in iter_settleable_rows(payload):
-        if settle_row(row, get_live_feed, now_iso):
+    for game in payload.get("games", []) or []:
+        if not isinstance(game, dict):
+            continue
+        for combo in game.get("combo_candidates", []) or []:
+            if not isinstance(combo, dict):
+                continue
+            game_id = combo.get("game_id")
+            for leg_key in ("leg_a", "leg_b"):
+                leg = combo.get(leg_key)
+                if not isinstance(leg, dict):
+                    continue
+                if settle_team_market_row(leg, game_id, get_live_feed, now_iso):
+                    counts["touched"] += 1
+                    status = leg.get("settlement_status")
+                    if status in counts:
+                        counts[status] += 1
+    return counts
+
+
+def settle_same_game_file(path: Path, get_live_feed: Callable[[str], Dict[str, Any]], now_iso: str) -> Optional[Dict[str, int]]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    counts = settle_same_game_payload(payload, get_live_feed, now_iso)
+    if counts["touched"] > 0:
+        path.write_text(json.dumps(payload, indent=2, sort_keys=False) + "\n", encoding="utf-8")
+    return counts
+
+
+def iter_pitcher_k_rows(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """The selected Pitchers-Only pair (pitcher_parlay_predictions.json's
+    parlay.leg_a/leg_b) -- the only two legs of this product actually
+    rendered (see renderPitcherParlay)."""
+    rows: List[Dict[str, Any]] = []
+    parlay = payload.get("parlay")
+    if isinstance(parlay, dict):
+        for leg_key in ("leg_a", "leg_b"):
+            leg = parlay.get(leg_key)
+            if isinstance(leg, dict):
+                rows.append(leg)
+    return rows
+
+
+def settle_payload(
+    payload: Dict[str, Any],
+    get_live_feed: Callable[[str], Dict[str, Any]],
+    now_iso: str,
+    iterate_rows: Callable[[Dict[str, Any]], List[Dict[str, Any]]] = iter_settleable_rows,
+    settle_one: Callable[[Dict[str, Any], Callable[[str], Dict[str, Any]], str], bool] = settle_row,
+) -> Dict[str, int]:
+    counts = {"won": 0, "lost": 0, "push": 0, "pending": 0, "touched": 0}
+    for row in iterate_rows(payload):
+        if settle_one(row, get_live_feed, now_iso):
             counts["touched"] += 1
             status = row.get("settlement_status")
             if status in counts:
@@ -257,14 +449,20 @@ def settle_payload(payload: Dict[str, Any], get_live_feed: Callable[[str], Dict[
     return counts
 
 
-def settle_file(path: Path, get_live_feed: Callable[[str], Dict[str, Any]], now_iso: str) -> Optional[Dict[str, int]]:
+def settle_file(
+    path: Path,
+    get_live_feed: Callable[[str], Dict[str, Any]],
+    now_iso: str,
+    iterate_rows: Callable[[Dict[str, Any]], List[Dict[str, Any]]] = iter_settleable_rows,
+    settle_one: Callable[[Dict[str, Any], Callable[[str], Dict[str, Any]], str], bool] = settle_row,
+) -> Optional[Dict[str, int]]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
     if not isinstance(payload, dict):
         return None
-    counts = settle_payload(payload, get_live_feed, now_iso)
+    counts = settle_payload(payload, get_live_feed, now_iso, iterate_rows=iterate_rows, settle_one=settle_one)
     if counts["touched"] > 0:
         path.write_text(json.dumps(payload, indent=2, sort_keys=False) + "\n", encoding="utf-8")
     return counts
@@ -288,6 +486,26 @@ def run(data_dir: Path, only_date: Optional[str] = None, request_timeout: float 
             counts = settle_file(daily_path, get_live_feed, now_iso)
             if counts is not None:
                 per_file["daily_predictions.json"] = counts
+                _merge_counts(total, counts)
+
+        # Same-Game and Pitchers-Only are their own, separately-loaded
+        # products (see predictions.js's loadSameGameParlay/
+        # loadPitcherParlay) with no history/ archive of their own -- each
+        # file only ever holds "today's" (soon to be "yesterday's, not yet
+        # overwritten") real candidates, so there is nothing date-scoped to
+        # iterate here the way there is for history/*.json.
+        same_game_path = data_dir / "same_game_predictions.json"
+        if same_game_path.exists():
+            counts = settle_same_game_file(same_game_path, get_live_feed, now_iso)
+            if counts is not None:
+                per_file["same_game_predictions.json"] = counts
+                _merge_counts(total, counts)
+
+        pitcher_parlay_path = data_dir / "pitcher_parlay_predictions.json"
+        if pitcher_parlay_path.exists():
+            counts = settle_file(pitcher_parlay_path, get_live_feed, now_iso, iterate_rows=iter_pitcher_k_rows, settle_one=settle_pitcher_k_row)
+            if counts is not None:
+                per_file["pitcher_parlay_predictions.json"] = counts
                 _merge_counts(total, counts)
 
     history_dir = data_dir / "history"

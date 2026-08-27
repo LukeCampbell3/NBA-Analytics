@@ -613,7 +613,11 @@
         "line_support",
         "state_support"
       ],
-      "team": "CLE"
+      "team": "CLE",
+      "settlement_status": "won",
+      "settlement_actual_value": 1.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-08-27T13:49:32.844200+00:00"
     },
     "leg_b": {
       "expected_value_per_unit": 0.41208970687738855,
@@ -636,7 +640,11 @@
         "line_support",
         "state_support"
       ],
-      "team": "CIN"
+      "team": "CIN",
+      "settlement_status": "lost",
+      "settlement_actual_value": 5.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-08-27T13:49:32.844200+00:00"
     },
     "naive_independence_probability": 0.45700402253034306,
     "naive_market_joint_raw_probability": 0.22727272727272727,
