@@ -18,13 +18,13 @@ SPORT_PAYLOADS = {
     "nba": Path("sports/nba/web/data/daily_predictions.json"),
     "mlb": Path("sports/mlb/web/data/daily_predictions.json"),
 }
-MLB_POLICY_PROFILE = "premium_evidence_gated_v9"
-MLB_LEGACY_POLICY_PROFILE = "premium_evidence_gated_v8"
+MLB_POLICY_PROFILE = "premium_evidence_gated_v10"
+MLB_LEGACY_POLICY_PROFILE = "premium_evidence_gated_v9"
 MLB_REQUIRED_TARGETS = {"ER", "H", "HR", "K", "R", "RBI", "TB"}
 MLB_MIN_BOOKS = 5
 MLB_MIN_COMMON_BOOKS = 2
 MLB_ALLOWED_SPORTSBOOKS = {"bet365", "caesars", "draftkings", "fanduel", "fanatics", "mgm"}
-MLB_MARKET_BUCKET_CAP = 2
+MLB_MARKET_BUCKET_CAP = 6
 MLB_PUBLICATION_STATES = {"published_current_pool", "withheld_current_pool"}
 MLB_CORE_SELECTION_PROFILE = "core_market_v1"
 MLB_OPTIMIZED_OVER_PROFILE = "r_tb_over_moderate_edge_v1"
@@ -34,15 +34,15 @@ MLB_PITCHER_K_OVER_PROFILE_STATUS = "probation"
 MLB_MATCHUP_NETWORK_VERSION = "batter_pitcher_profile_network_v2"
 MLB_MATCHUP_ADJUSTMENT_CAPS = {"H": 0.10, "TB": 0.16, "R": 0.05, "HR": 0.025, "RBI": 0.06}
 MLB_MAX_PITCHER_K_PICKS = 1
-MLB_DAILY_PICK_SOFT_CAP = 10
-MLB_DAILY_PICK_HARD_CAP = 10
+MLB_DAILY_PICK_SOFT_CAP = 25
+MLB_DAILY_PICK_HARD_CAP = 25
 MLB_POST_CAP_MIN_SELECTION_SCORE = 0.50
 MLB_CORE_MIN_AMERICAN_PRICE = -180.0
 MLB_CORE_MAX_AMERICAN_PRICE = 125.0
 MLB_MIN_OVER_PICKS = 0
-MLB_MAX_OVER_PICKS = 10
+MLB_MAX_OVER_PICKS = 25
 MLB_MAX_UNDER_PICKS = 0
-MLB_MIN_CORE_HIT_PROBABILITY = 0.55
+MLB_MIN_CORE_HIT_PROBABILITY = 0.45
 MLB_HISTORICAL_EVIDENCE_SCOPE = "real_price_confirmed_markets_only_v1"
 MLB_PARLAY_PROBABILITY_FLOORS = {2: 0.40, 3: 0.25, 4: 0.18}
 MLB_PARLAY_RELIABILITY_PROBABILITY_FLOORS = {2: 0.42, 3: 0.40, 4: 0.30}

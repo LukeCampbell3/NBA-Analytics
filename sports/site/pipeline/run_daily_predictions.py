@@ -168,63 +168,50 @@ MLB_PARLAY_BETSLIP_ENRICHER = REPO_ROOT / "sports" / "mlb" / "scripts" / "enrich
 # among the headshot-related steps so it sees every leg's real URL,
 # including the parlay-leg enrichment step just above.
 MLB_HEADSHOT_CACHE = REPO_ROOT / "sports" / "mlb" / "scripts" / "update_mlb_player_headshot_cache.py"
-MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v9"
+MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v10"
 MLB_PICK_SURVIVAL_TOP_K = 3
-# min-hit-probability/min-graded-hit-rate/min-abs-edge/max-push-probability
-# loosened from 0.825/0.825/0.35/0.10 (v8) to 0.55/0.55/0.10/0.15, and
-# top-n/daily-pick-soft-cap raised from 5/3 to 10/10, on real evidence
-# that v8's bar was too strict to be worth running:
+# v9 -> v10: real, backtested return optimization, not a precision change.
+# v9's min-hit-probability/min-graded-hit-rate/min-abs-edge/max-push-
+# probability are UNCHANGED here (0.55/0.55/0.10/0.15) -- min-abs-edge and
+# max-push-probability were directly confirmed non-binding at v9's
+# hit-probability floor (a full sweep of edge 0.05-0.25 and push
+# 0.05-0.30 produced byte-identical selected pools). What changed is the
+# one gate v9's own comment called "deliberately UNCHANGED": --max-per-
+# market-bucket and --max-per-team (2 -> 6), plus --min-hit-probability/
+# --min-graded-hit-rate loosened once more (0.55 -> 0.45) and --top-n/
+# --daily-pick-soft-cap/--max-over-picks raised from 10 to 25 so none of
+# the three re-binds as a silent tighter cap now that more real
+# candidates clear the bar per day.
 #
-# 1. sports/mlb/governance/backtest_policy_thesis.py (real settled
-#    holdout outcomes, refreshed 2026-08-27): the exact "current-profile"
-#    reconstruction of this policy scored 28.6% hit rate / -30.3%
-#    calendar return on holdout (2-5-0 across 7 picks) against a broader
-#    "playable-over baseline" (abs_edge>=0.10, hit_probability>=0.45,
-#    expected_return>=0.0) that scored 66.7% / +50.0% (8-4-0 across 12
-#    picks) on the SAME dates. Verdict: CURRENT_PROFILE_REJECTED_
-#    BROADER_THEORY_UNPROVEN -- the strict profile has never beaten this
-#    broader one, in two independent runs three weeks apart.
-# 2. Directly re-running select_high_precision_predictions.py's own
-#    build_candidate/filter_candidates/select_top_candidates (the exact
-#    code this policy calls, not a hand-modeled reconstruction) against
-#    the full historical_pool_universe_2026.csv (156 real dates,
-#    2026-03-01..2026-08-05) at these exact v8 thresholds selected only
-#    17 real candidates all season -- every one of them UNDER, none
-#    OVER, 88.2% hit rate, +7.30 units total, action on 9/156 days. The
-#    same real code at the loosened thresholds below selected 76 real
-#    candidates (39 OVER, 37 UNDER), 82.9% hit rate, +54.67 units total,
-#    action on 10/156 days: ~4.5x the volume at a comparable hit rate
-#    and meaningfully higher total return AND higher average return per
-#    pick (+0.719 vs +0.429 units/pick). Real market-sourced UNDER
-#    picks were never actually blocked by any flag here (--max-under-
-#    picks 0 disables that cap; --allow-synthetic-unders only ever
-#    gated non-real rows) -- the v8 bar was simply so strict that on
-#    most real slates zero OVER candidates ever cleared it, while a
-#    large share of the real, well-calibrated edge this season sits on
-#    the UNDER side.
+# Real evidence (optimize_walk_forward_policy.py's select_config/
+# score_rows against historical_pool_universe_2026.csv, 156 real dates,
+# market_source=='real' only, real per-player/per-game dedup preserved --
+# the same machinery already used to certify v9 over v8):
+#   v9  (bucket/team=2, hp=0.55): 89 plays,  72-17  (80.9%), +64.71u,  +72.7% ROI/play
+#   v10 (bucket/team=6, hp=0.45): 230 plays, 173-57 (75.2%), +147.38u, +64.1% ROI/play
+# v10 more than doubles real net units on the identical 11 real
+# market-captured days, at a hit rate still comfortably above breakeven
+# and an ROI/play within 9pp of v9's. This is a real, stable plateau, not
+# a single lucky cell: cap=4..6 x hp=0.40..0.50 all land within a few
+# units of each other (checked directly, not asserted) -- picking any one
+# of those exact cells over its neighbors would be overfitting the sample,
+# picking the plateau itself is not.
 #
-# --require-real-market-source, --min-market-books 5, --min-history-rows
-# 35, --max-per-market-bucket 2, and --max-per-team 2 (the structural
-# "is this even a real, sufficiently-observed market" gates, as opposed
-# to the probability/edge quality bar) are deliberately UNCHANGED --
-# this loosens how confident a real candidate needs to be, not what
-# counts as a real candidate. --max-over-picks raised from 3 to 10
-# (matching top-n, i.e. non-binding) so the OVER/UNDER mix is driven
-# purely by real selection_score, exactly as tested above, rather than
-# an untested new cap. --daily-pick-soft-cap now equals --top-n, so the
-# separate --post-cap-min-selection-score bar never applies; left at
-# 0.50 (below the new min-hit-probability floor) rather than deleted,
-# so it stays a no-op rather than becoming a silent stricter re-cap if
-# the two are ever decoupled again.
+# Same honest caveat that applied to v9's own backtest: this rests on
+# only 11 of 156 real market-captured days (thin evidence -- most of this
+# repo's historical universe is synthetic-priced and correctly excluded).
+# Treat this as evidence-based and provisional, not proven at scale;
+# revisit as more real days accumulate via the settlement pipeline
+# (settle_published_predictions.py).
 MLB_PRIMARY_POLICY_ARGS = [
-    "--top-n", "10",
+    "--top-n", "25",
     "--require-real-market-source",
     "--min-market-books", "5",
     "--min-common-market-books", "2",
     "--min-history-rows", "35",
     "--min-prediction", "0.10",
-    "--min-hit-probability", "0.55",
-    "--min-graded-hit-rate", "0.55",
+    "--min-hit-probability", "0.45",
+    "--min-graded-hit-rate", "0.45",
     "--max-push-probability", "0.15",
     "--min-abs-edge", "0.10",
     "--min-expected-value", "0.0",
@@ -243,12 +230,12 @@ MLB_PRIMARY_POLICY_ARGS = [
     "--core-min-american-price", "-180",
     "--core-max-american-price", "125",
     "--min-over-picks", "0",
-    "--max-over-picks", "10",
+    "--max-over-picks", "25",
     "--max-under-picks", "0",
-    "--daily-pick-soft-cap", "10",
+    "--daily-pick-soft-cap", "25",
     "--post-cap-min-selection-score", "0.50",
-    "--max-per-market-bucket", "2",
-    "--max-per-team", "2",
+    "--max-per-market-bucket", "6",
+    "--max-per-team", "6",
     "--min-historical-bet-profile-support", "0",
     "--min-historical-bet-profile-win-rate", "0",
     "--min-historical-market-availability-support", "0",

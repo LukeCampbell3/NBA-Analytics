@@ -73,9 +73,9 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
                 "selection": {
                     "matchup_network_enabled": True,
                     "matchup_network_version": MLB_MATCHUP_NETWORK_VERSION,
-                    "top_n": 10,
+                    "top_n": 25,
                     "targets": sorted(MLB_REQUIRED_TARGETS),
-                    "max_per_market_bucket": 2,
+                    "max_per_market_bucket": 6,
                     "optimized_over_max_per_market_bucket": None,
                     "min_expected_value": 0.0,
                     "min_market_books": 5,
@@ -110,12 +110,12 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
                     "core_min_american_price": -180.0,
                     "core_max_american_price": 125.0,
                     "min_over_picks": 0,
-                    "max_over_picks": 10,
+                    "max_over_picks": 25,
                     "max_under_picks": 0,
-                    "daily_pick_soft_cap": 10,
+                    "daily_pick_soft_cap": 25,
                     "post_cap_min_selection_score": 0.50,
-                    "min_hit_probability": 0.55,
-                    "min_graded_hit_rate": 0.55,
+                    "min_hit_probability": 0.45,
+                    "min_graded_hit_rate": 0.45,
                     "historical_calibration_evidence_scope": "real_price_confirmed_markets_only_v1",
                 },
             }
@@ -218,11 +218,11 @@ def test_validate_publication_allows_stale_payloads_when_requested(tmp_path: Pat
     ):
         payload_path = tmp_path / relative_path
         payload = json.loads(payload_path.read_text(encoding="utf-8"))
-        # v8 -- the accepted legacy profile during the v8->v9 transition
+        # v9 -- the accepted legacy profile during the v9->v10 transition
         # window (see validate_daily_publication.py's MLB_LEGACY_POLICY_
-        # PROFILE); it used the same max_under_picks=0 as v9, so no
+        # PROFILE); it used the same max_under_picks=0 as v10, so no
         # override is needed here any more.
-        payload["policy_profile"] = "premium_evidence_gated_v8"
+        payload["policy_profile"] = "premium_evidence_gated_v9"
         payload_path.write_text(json.dumps(payload), encoding="utf-8")
     route = tmp_path / "dist/mlb/predictions/index.html"
     route.parent.mkdir(parents=True, exist_ok=True)
@@ -278,7 +278,7 @@ def test_validate_publication_rejects_legacy_mlb_pool_policy(tmp_path: Path) -> 
     route.parent.mkdir(parents=True, exist_ok=True)
     route.write_text("ok", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="expected premium_evidence_gated_v9"):
+    with pytest.raises(ValueError, match="expected premium_evidence_gated_v10"):
         validate_publication(
             repo_root=tmp_path,
             output_dir=Path("dist"),
