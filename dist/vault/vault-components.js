@@ -190,6 +190,33 @@
     return `<span class="status-pill status-pill--${CardVault.escapeAttr(status)}">${CardVault.escapeHtml(label)}</span>`;
   };
 
+  /**
+   * Whole-parlay outcome from its legs' own settlement_status -- so a
+   * viewer can tell at a glance whether the real parlay itself hit, not
+   * just each individual leg (real sportsbook parlay logic: one real
+   * loss loses the whole parlay regardless of the other legs; a push
+   * leg drops out rather than counting as a loss). Returns null (render
+   * nothing) until every leg has a real resolved outcome, UNLESS a leg
+   * has already lost -- a parlay is real-lost the moment any one leg is,
+   * with no need to wait on the rest.
+   */
+  CardVault.combineLegSettlementStatuses = function combineLegSettlementStatuses(rows) {
+    const statuses = (rows || [])
+      .filter(Boolean)
+      .map((row) => String(row.settlement_status || "").toLowerCase());
+    if (!statuses.length) return null;
+    if (statuses.some((status) => status === "lost")) return "lost";
+    if (statuses.some((status) => status !== "won" && status !== "push")) return null;
+    return statuses.every((status) => status === "push") ? "push" : "won";
+  };
+
+  CardVault.PARLAY_SETTLEMENT_LABELS = { won: "Parlay Won", lost: "Parlay Lost", push: "Parlay Push" };
+  CardVault.renderParlaySettlementBadge = function renderParlaySettlementBadge(rows) {
+    const status = CardVault.combineLegSettlementStatuses(rows);
+    if (!status) return "";
+    return `<span class="status-pill status-pill--${CardVault.escapeAttr(status)}">${CardVault.escapeHtml(CardVault.PARLAY_SETTLEMENT_LABELS[status])}</span>`;
+  };
+
   CardVault.renderEvidenceBadge = function renderEvidenceBadge(count, label = "Evidence") {
     return `<span class="vault-evidence"><strong>${CardVault.escapeHtml(String(count ?? 0))}</strong> ${CardVault.escapeHtml(label)}</span>`;
   };

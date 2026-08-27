@@ -283,6 +283,7 @@ class DailyPredictionsPage {
             content.innerHTML = `
                 <div class="daily-parlay__header daily-parlay__header--status-only">
                     ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Abstain") : ""}
+                    ${shadow && window.CardVault ? window.CardVault.renderParlaySettlementBadge([shadow.leg_1, shadow.leg_2]) : ""}
                 </div>
                 ${shadowBlock}
                 <p class="daily-parlay__state">${this.escapeHtml(this.formatParlayV2AbstainReason(reason, parlay))} ${statusFooter}</p>
@@ -293,6 +294,7 @@ class DailyPredictionsPage {
         content.innerHTML = `
             <div class="daily-parlay__header daily-parlay__header--status-only">
                 ${window.CardVault ? window.CardVault.renderStatusPill(statusTone, "Selected -- shadow only") : ""}
+                ${window.CardVault ? window.CardVault.renderParlaySettlementBadge([parlay.selected_parlay.leg_1, parlay.selected_parlay.leg_2]) : ""}
             </div>
             ${this.renderParlayV2Legs(parlay.selected_parlay)}
             <p class="daily-parlay__state">${statusFooter}</p>
@@ -436,6 +438,7 @@ class DailyPredictionsPage {
                         <span>${starters}</span>
                     </div>
                     ${window.CardVault ? window.CardVault.renderStatusPill(pillTone, pillLabel) : ""}
+                    ${window.CardVault ? window.CardVault.renderParlaySettlementBadge([combo.leg_a, combo.leg_b]) : ""}
                 </div>
                 <div class="vault-board vault-board--legs">
                     ${this.renderSameGameLeg(combo.leg_a, game, 1)}
@@ -545,7 +548,7 @@ class DailyPredictionsPage {
         const edge = parlay.probability_edge != null ? this.formatSignedPp(parlay.probability_edge) : "n/a";
         const ev = parlay.expected_value_per_unit != null ? this.formatSignedPct(parlay.expected_value_per_unit) : "n/a";
 
-        content.innerHTML = this.pitcherParlayHeader(pillTone, pillLabel) + `
+        content.innerHTML = this.pitcherParlayHeader(pillTone, pillLabel, [parlay.leg_a, parlay.leg_b]) + `
             <div class="vault-board vault-board--legs">
                 ${this.renderPitcherKLeg(parlay.leg_a, 1)}
                 ${this.renderPitcherKLeg(parlay.leg_b, 2)}
@@ -560,10 +563,11 @@ class DailyPredictionsPage {
         `;
     }
 
-    pitcherParlayHeader(pillTone = "stale", pillLabel = "Shadow only") {
+    pitcherParlayHeader(pillTone = "stale", pillLabel = "Shadow only", legs = []) {
         return `
             <div class="daily-parlay__header daily-parlay__header--status-only">
                 ${window.CardVault ? window.CardVault.renderStatusPill(pillTone, pillLabel) : ""}
+                ${window.CardVault ? window.CardVault.renderParlaySettlementBadge(legs) : ""}
             </div>
         `;
     }
