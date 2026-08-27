@@ -22,6 +22,40 @@ REPO_ROOT = SCRIPT_PATH.parents[3]
 DEFAULT_PROCESSED_ROOT = REPO_ROOT / "Player-Predictor" / "Data-Proc-MLB"
 DEFAULT_OUTPUT_ROOT = SPORT_ROOT / "data" / "predictions" / "calibration"
 MODEL_VERSION = "mlb_pick_survival_logit_v2"
+# v12 Phase 1 (SafeEV veto): a second real model over a DIFFERENT, narrower
+# population -- rows that would have survived v11's own structural gates
+# (see build_v11_eligible_training_set.py) -- with a richer feature set
+# than pick_survival_model's own (this model's population already carries
+# real historical-bucket/bet-profile/market-availability enrichment that
+# build_historical_candidates() above doesn't compute). Never promotes a
+# bet on its own: see apply_winner_signature_model()'s safe_probability =
+# min(v11_probability, winner_signature_probability) -- negative authority
+# only, matching the proposal's own stated rule.
+WINNER_SIGNATURE_MODEL_VERSION = "mlb_winner_signature_logit_v1"
+WINNER_SIGNATURE_NUMERIC_FEATURES = (
+    "directional_edge",
+    "abs_edge",
+    "model_hit_probability",
+    "market_implied_probability",
+    "market_line_std",
+    "market_books",
+    "market_common_books",
+    "history_rows",
+    "historical_bucket_win_rate",
+    "historical_bucket_support",
+    "historical_bet_profile_win_rate",
+    "historical_bet_profile_roi",
+    "historical_bet_profile_support",
+    "historical_market_availability_rate",
+    "historical_market_availability_support",
+    "live_confidence_calibration_adjustment",
+    # Real "disagreement between independent probability estimators" --
+    # computed from quantities this repo already produces (the calibrated
+    # model probability, the real no-vig market-implied probability, and
+    # pick_survival_model's own shadow output), not a new estimator.
+    "model_market_disagreement",
+    "model_survival_disagreement",
+)
 TARGETS = ("H", "TB", "R", "HR", "RBI", "K", "ER")
 STANDARD_MARKET_LINES = {"H": 0.5, "TB": 1.5, "R": 0.5, "HR": 0.5, "RBI": 0.5}
 NUMERIC_FEATURES = (
@@ -236,22 +270,30 @@ def _design_matrix(
     *,
     means: dict[str, float] | None = None,
     scales: dict[str, float] | None = None,
+    numeric_features: tuple[str, ...] = NUMERIC_FEATURES,
+    categorical_features: tuple[str, ...] = CATEGORICAL_FEATURES,
 ) -> tuple[np.ndarray, dict[str, float], dict[str, float]]:
-    numeric = rows.loc[:, NUMERIC_FEATURES].apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan)
-    calculated_means = means or {name: float(numeric[name].median()) for name in NUMERIC_FEATURES}
+    numeric = rows.loc[:, numeric_features].apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan)
+    calculated_means = means or {name: float(numeric[name].median()) for name in numeric_features}
     numeric = numeric.fillna(calculated_means)
     calculated_scales = scales or {
-        name: max(float(numeric[name].std(ddof=0)), 1e-6) for name in NUMERIC_FEATURES
+        name: max(float(numeric[name].std(ddof=0)), 1e-6) for name in numeric_features
     }
-    columns = [((numeric[name] - calculated_means[name]) / calculated_scales[name]).to_numpy() for name in NUMERIC_FEATURES]
-    for key in CATEGORICAL_FEATURES:
+    columns = [((numeric[name] - calculated_means[name]) / calculated_scales[name]).to_numpy() for name in numeric_features]
+    for key in categorical_features:
         field, expected = key.split("=", 1)
         columns.append(rows[field].astype(str).str.lower().eq(expected.lower()).astype(float).to_numpy())
     return np.column_stack(columns), calculated_means, calculated_scales
 
 
-def _fit(rows: pd.DataFrame, c_value: float) -> tuple[LogisticRegression, dict[str, float], dict[str, float]]:
-    matrix, means, scales = _design_matrix(rows)
+def _fit(
+    rows: pd.DataFrame,
+    c_value: float,
+    *,
+    numeric_features: tuple[str, ...] = NUMERIC_FEATURES,
+    categorical_features: tuple[str, ...] = CATEGORICAL_FEATURES,
+) -> tuple[LogisticRegression, dict[str, float], dict[str, float]]:
+    matrix, means, scales = _design_matrix(rows, numeric_features=numeric_features, categorical_features=categorical_features)
     model = LogisticRegression(C=c_value, max_iter=2000, solver="lbfgs")
     model.fit(matrix, rows["win"].astype(int).to_numpy())
     return model, means, scales
@@ -262,8 +304,11 @@ def _predict(
     rows: pd.DataFrame,
     means: dict[str, float],
     scales: dict[str, float],
+    *,
+    numeric_features: tuple[str, ...] = NUMERIC_FEATURES,
+    categorical_features: tuple[str, ...] = CATEGORICAL_FEATURES,
 ) -> np.ndarray:
-    matrix, _, _ = _design_matrix(rows, means=means, scales=scales)
+    matrix, _, _ = _design_matrix(rows, means=means, scales=scales, numeric_features=numeric_features, categorical_features=categorical_features)
     return model.predict_proba(matrix)[:, 1]
 
 
@@ -374,12 +419,29 @@ def _probability_metrics(rows: pd.DataFrame, probabilities: np.ndarray) -> dict[
     }
 
 
-def train_survival_model(rows: pd.DataFrame, *, top_k: int = 3) -> dict[str, Any]:
+def train_survival_model(
+    rows: pd.DataFrame,
+    *,
+    top_k: int = 3,
+    numeric_features: tuple[str, ...] = NUMERIC_FEATURES,
+    categorical_features: tuple[str, ...] = CATEGORICAL_FEATURES,
+    model_version: str = MODEL_VERSION,
+    min_train_rows: int = MIN_TRAIN_ROWS,
+    min_train_dates: int = MIN_TRAIN_DATES,
+) -> dict[str, Any]:
+    """Real expanding-window walk-forward logistic training + rolling-
+    origin validation + fixed holdout + asymmetric promotion/deployment
+    gates. Feature set, model identity, and minimum-support bar are all
+    parameterized (defaulting to this module's own pick_survival_model
+    contract) so a second real model -- the v12 winner-signature model,
+    train_winner_signature_model() below -- gets the exact same rigor
+    through the same tested statistical core, never a hand-duplicated
+    approximation of it."""
     dates = sorted(rows["date"].unique())
-    if len(rows) < MIN_TRAIN_ROWS or len(dates) < MIN_TRAIN_DATES:
+    if len(rows) < min_train_rows or len(dates) < min_train_dates:
         return {
             "schema_version": 1,
-            "model_version": MODEL_VERSION,
+            "model_version": model_version,
             "status": "insufficient_support",
             "shadow_only": True,
             "training_rows": int(len(rows)),
@@ -393,7 +455,7 @@ def train_survival_model(rows: pd.DataFrame, *, top_k: int = 3) -> dict[str, Any
     if len(development_dates) <= initial_training_dates or holdout.empty:
         return {
             "schema_version": 1,
-            "model_version": MODEL_VERSION,
+            "model_version": model_version,
             "status": "insufficient_class_support",
             "shadow_only": True,
             "training_rows": int(len(rows)),
@@ -410,9 +472,9 @@ def train_survival_model(rows: pd.DataFrame, *, top_k: int = 3) -> dict[str, Any
             fold_validation = rows[rows["date"].eq(fold_date)]
             if fold_train["win"].nunique() < 2 or fold_validation.empty:
                 continue
-            model, means, scales = _fit(fold_train, c_value)
+            model, means, scales = _fit(fold_train, c_value, numeric_features=numeric_features, categorical_features=categorical_features)
             predicted = fold_validation.copy()
-            predicted["survival_probability"] = _predict(model, fold_validation, means, scales)
+            predicted["survival_probability"] = _predict(model, fold_validation, means, scales, numeric_features=numeric_features, categorical_features=categorical_features)
             fold_rows.append(predicted)
         if not fold_rows:
             continue
@@ -456,8 +518,8 @@ def train_survival_model(rows: pd.DataFrame, *, top_k: int = 3) -> dict[str, Any
     oof_probabilities = selected_oof["survival_probability"].astype(float).to_numpy()
     oof_baseline_probabilities = selected_oof["model_hit_probability"].astype(float).to_numpy()
     development = rows[rows["date"].isin(development_dates)]
-    holdout_model, holdout_means, holdout_scales = _fit(development, float(best["c"]))
-    holdout_probabilities = _predict(holdout_model, holdout, holdout_means, holdout_scales)
+    holdout_model, holdout_means, holdout_scales = _fit(development, float(best["c"]), numeric_features=numeric_features, categorical_features=categorical_features)
+    holdout_probabilities = _predict(holdout_model, holdout, holdout_means, holdout_scales, numeric_features=numeric_features, categorical_features=categorical_features)
     baseline_probabilities = holdout["model_hit_probability"].astype(float).to_numpy()
     validation_survival = evaluate_ranked(
         selected_oof, oof_probabilities, top_k=top_k, roi_weight=float(best["roi_weight"])
@@ -475,10 +537,10 @@ def train_survival_model(rows: pd.DataFrame, *, top_k: int = 3) -> dict[str, Any
         fold_test = rows[rows["date"].eq(dates[fold_index])]
         if fold_train["win"].nunique() < 2 or fold_test.empty:
             continue
-        rolling_model, rolling_means, rolling_scales = _fit(fold_train, float(best["c"]))
+        rolling_model, rolling_means, rolling_scales = _fit(fold_train, float(best["c"]), numeric_features=numeric_features, categorical_features=categorical_features)
         predicted = fold_test.copy()
         predicted["survival_probability"] = _predict(
-            rolling_model, fold_test, rolling_means, rolling_scales
+            rolling_model, fold_test, rolling_means, rolling_scales, numeric_features=numeric_features, categorical_features=categorical_features
         )
         rolling_parts.append(predicted)
     rolling = pd.concat(rolling_parts, ignore_index=True)
@@ -515,15 +577,15 @@ def train_survival_model(rows: pd.DataFrame, *, top_k: int = 3) -> dict[str, Any
         "fixed_holdout_roi_not_below_baseline": float(holdout_survival.get("roi") or -1.0)
         >= float(holdout_baseline.get("roi") or -1.0),
     }
-    final_model, means, scales = _fit(rows, float(best["c"]))
-    feature_names = [*NUMERIC_FEATURES, *CATEGORICAL_FEATURES]
+    final_model, means, scales = _fit(rows, float(best["c"]), numeric_features=numeric_features, categorical_features=categorical_features)
+    feature_names = [*numeric_features, *categorical_features]
     segment_support = {
         f"{target}|{direction}": int(len(segment))
         for (target, direction), segment in rows.groupby(["target", "direction"])
     }
     return {
         "schema_version": 1,
-        "model_version": MODEL_VERSION,
+        "model_version": model_version,
         "status": "shadow",
         "shadow_only": True,
         "objective": "expanding_window_daily_top_k_win_rate_with_bounded_roi_and_brier_tiebreak",
@@ -594,8 +656,8 @@ def train_survival_model(rows: pd.DataFrame, *, top_k: int = 3) -> dict[str, Any
             "checks": deployment_checks,
         },
         "feature_contract": {
-            "numeric_features": list(NUMERIC_FEATURES),
-            "categorical_features": list(CATEGORICAL_FEATURES),
+            "numeric_features": list(numeric_features),
+            "categorical_features": list(categorical_features),
             "means": means,
             "scales": scales,
             "coefficients": {name: float(value) for name, value in zip(feature_names, final_model.coef_[0])},
@@ -654,6 +716,132 @@ def apply_pick_survival_model(candidate: Any, payload: dict[str, Any] | None) ->
         and payload.get("deployment_gate", {}).get("authority") == "rank_tiebreaker"
     )
     return probability, expected_roi, MODEL_VERSION, segment_support, bool(rank_active)
+
+
+def _with_disagreement_features(rows: pd.DataFrame) -> pd.DataFrame:
+    rows = rows.copy()
+    model_probability = pd.to_numeric(rows.get("model_hit_probability"), errors="coerce")
+    market_probability = pd.to_numeric(rows.get("market_implied_probability"), errors="coerce")
+    survival_probability = pd.to_numeric(rows.get("survival_probability"), errors="coerce")
+    rows["model_market_disagreement"] = (model_probability - market_probability).abs()
+    rows["model_survival_disagreement"] = (model_probability - survival_probability).abs()
+    return rows
+
+
+def train_winner_signature_model(rows: pd.DataFrame, *, top_k: int = 3) -> dict[str, Any]:
+    """v12 Phase 1: trains P(win | v11-eligible) -- rows is expected to
+    already be the v11-eligible, real-settled population (see
+    build_v11_eligible_training_set.py), not the broader population
+    pick_survival_model's own build_historical_candidates() produces.
+    Reuses train_survival_model()'s exact statistical core (expanding-OOF
+    + rolling-origin + fixed holdout + asymmetric promotion/deployment
+    gates) with this model's own feature set and identity."""
+    enriched = _with_disagreement_features(rows)
+    return train_survival_model(
+        enriched,
+        top_k=top_k,
+        numeric_features=WINNER_SIGNATURE_NUMERIC_FEATURES,
+        categorical_features=CATEGORICAL_FEATURES,
+        model_version=WINNER_SIGNATURE_MODEL_VERSION,
+    )
+
+
+def candidate_winner_signature_features(candidate: Any) -> dict[str, float | str]:
+    raw = getattr(candidate, "raw", {}) or {}
+    model_probability = to_float(getattr(candidate, "calibrated_hit_probability", None))
+    market_probability = to_float(getattr(candidate, "market_implied_probability", None))
+    survival_probability = to_float(getattr(candidate, "survival_probability", None))
+    return {
+        "target": str(getattr(candidate, "target", "")).upper(),
+        "direction": str(getattr(candidate, "direction", "")).upper(),
+        "player_type": str(raw.get("Player_Type", "")).lower(),
+        "directional_edge": to_float(getattr(candidate, "edge", None)) or 0.0,
+        "abs_edge": to_float(getattr(candidate, "abs_edge", None)) or 0.0,
+        "model_hit_probability": model_probability if model_probability is not None else 0.0,
+        "market_implied_probability": market_probability if market_probability is not None else 0.0,
+        "market_line_std": to_float(getattr(candidate, "market_line_std", None)) or 0.0,
+        "market_books": float(getattr(candidate, "market_books", 0) or 0),
+        "market_common_books": float(getattr(candidate, "market_common_books", 0) or 0),
+        "history_rows": float(getattr(candidate, "history_rows", 0) or 0),
+        "historical_bucket_win_rate": to_float(getattr(candidate, "historical_bucket_win_rate", None)) or 0.0,
+        "historical_bucket_support": float(getattr(candidate, "historical_bucket_support", 0) or 0),
+        "historical_bet_profile_win_rate": to_float(getattr(candidate, "historical_bet_profile_win_rate", None)) or 0.0,
+        "historical_bet_profile_roi": to_float(getattr(candidate, "historical_bet_profile_roi", None)) or 0.0,
+        "historical_bet_profile_support": float(getattr(candidate, "historical_bet_profile_support", 0) or 0),
+        "historical_market_availability_rate": to_float(getattr(candidate, "historical_market_availability_rate", None)) or 0.0,
+        "historical_market_availability_support": float(getattr(candidate, "historical_market_availability_support", 0) or 0),
+        "live_confidence_calibration_adjustment": to_float(getattr(candidate, "live_confidence_calibration_adjustment", None)) or 0.0,
+        "model_market_disagreement": abs((model_probability or 0.0) - (market_probability or 0.0)),
+        "model_survival_disagreement": abs((model_probability or 0.0) - survival_probability) if survival_probability is not None else 0.0,
+    }
+
+
+def apply_winner_signature_model(
+    candidate: Any, payload: dict[str, Any] | None
+) -> tuple[float | None, float | None, float | None, float | None, bool, str, int]:
+    """Real, negative-authority-only SafeEV computation. Returns
+    (winner_signature_probability, safe_probability, safe_expected_value,
+    safe_probability_edge, safe_ev_veto, status, support). safe_probability
+    is ALWAYS min(v11's own calibrated_hit_probability, this model's
+    output) when both are real -- this model can flag a v11-eligible pick
+    as more fragile than its own probability implies, it can never raise
+    a pick's probability. safe_ev_veto is a visible flag only in this
+    phase, never a filter -- v11's actual selection is unaffected."""
+    v11_probability = to_float(getattr(candidate, "calibrated_hit_probability", None))
+    if not isinstance(payload, dict) or payload.get("status") not in {"shadow", "active"}:
+        return None, v11_probability, None, None, False, "disabled", 0
+    run_date = getattr(candidate, "run_date", None)
+    training_end = payload.get("training_end_date")
+    if isinstance(run_date, date) and training_end and training_end >= run_date.isoformat():
+        return None, v11_probability, None, None, False, "cutoff_violation", int(payload.get("training_rows", 0) or 0)
+    segment_key = f"{str(getattr(candidate, 'target', '')).upper()}|{str(getattr(candidate, 'direction', '')).upper()}"
+    segment_support = int(payload.get("segment_support", {}).get(segment_key, 0) or 0)
+    if segment_support < int(payload.get("minimum_segment_rows", MIN_SEGMENT_ROWS) or MIN_SEGMENT_ROWS):
+        return None, v11_probability, None, None, False, "insufficient_segment_support", segment_support
+
+    contract = payload.get("feature_contract", {})
+    features = candidate_winner_signature_features(candidate)
+    logit = float(contract.get("intercept", 0.0))
+    for name in contract.get("numeric_features", []):
+        mean = float(contract.get("means", {}).get(name, 0.0))
+        scale = max(float(contract.get("scales", {}).get(name, 1.0)), 1e-6)
+        value = float(features.get(name, mean))
+        logit += ((value - mean) / scale) * float(contract.get("coefficients", {}).get(name, 0.0))
+    for key in contract.get("categorical_features", []):
+        field, expected = key.split("=", 1)
+        active = float(str(features.get(field, "")).lower() == expected.lower())
+        logit += active * float(contract.get("coefficients", {}).get(key, 0.0))
+    winner_signature_probability = 1.0 / (1.0 + math.exp(-max(-30.0, min(30.0, logit))))
+
+    if v11_probability is None:
+        safe_probability = None
+    else:
+        safe_probability = min(v11_probability, winner_signature_probability)
+
+    decimal_price = None
+    side_price = to_float(getattr(candidate, "selected_side_price", None))
+    if side_price is not None:
+        profit = american_profit_per_unit(side_price)
+        decimal_price = None if profit is None else 1.0 + profit
+    safe_expected_value = None
+    safe_probability_edge = None
+    if safe_probability is not None and decimal_price is not None:
+        safe_expected_value = safe_probability * decimal_price - 1.0
+        safe_probability_edge = safe_probability - (1.0 / decimal_price)
+
+    veto_margin = 0.02  # a real, disclosed threshold -- not tuned against this phase's own thin holdout
+    safe_ev_veto = bool(
+        v11_probability is not None and safe_probability is not None and safe_probability < v11_probability - veto_margin
+    )
+    return (
+        winner_signature_probability,
+        safe_probability,
+        safe_expected_value,
+        safe_probability_edge,
+        safe_ev_veto,
+        "active" if bool(payload.get("status") == "active") else "shadow",
+        segment_support,
+    )
 
 
 def parse_args() -> argparse.Namespace:

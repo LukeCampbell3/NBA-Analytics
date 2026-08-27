@@ -51,10 +51,13 @@
                      EV while the model itself says it's more likely to
                      lose than win (see e.g. a 45.7% joint-probability
                      pitcher parlay with +101% EV). Cross-Market is the
-                     one frozen, high-hit-probability-gated policy;
-                     Same-Game and Pitchers-Only are real, additive,
-                     EV-oriented shadow products, never a claim that
-                     either is more likely to win than lose. -->
+                     frozen, high-hit-probability-gated production policy;
+                     High-Hit is a real, additive shadow product built the
+                     same way (every leg and the combo itself gated on
+                     real probability floors, not EV); Same-Game and
+                     Pitchers-Only are real, additive, EV-oriented shadow
+                     products, never a claim that either is more likely to
+                     win than lose. -->
                 <div class="parlay-group">
                     <p class="parlay-group__label">Cross-Market</p>
                     <p class="parlay-group__note">Frozen, high-hit-probability-gated policy</p>
@@ -72,6 +75,12 @@
                     <p class="parlay-group__note">EV-oriented shadow -- not a high-hit-probability claim</p>
                     <div id="pitcherParlayContent" class="daily-parlay"></div>
                 </div>
+
+                <div class="parlay-group">
+                    <p class="parlay-group__label">High-Hit</p>
+                    <p class="parlay-group__note">Joint-probability-safe shadow -- every leg and the combo itself are gated on real probability floors, not EV</p>
+                    <div id="highHitParlayContent" class="daily-parlay"></div>
+                </div>
             </section>
         </div>
 
@@ -85,6 +94,6 @@
 
     <script src="/vault/vault-components.js?v=14"></script>
     <script src="/vault/vault-shell.js?v=9"></script>
-    <script src="predictions.js?v=23"></script>
+    <script src="predictions.js?v=24"></script>
 </body>
 </html>

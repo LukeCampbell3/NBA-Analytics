@@ -12,6 +12,7 @@ class DailyPredictionsPage {
             parlayV2Content: document.getElementById("parlayV2Content"),
             sameGameParlayContent: document.getElementById("sameGameParlayContent"),
             pitcherParlayContent: document.getElementById("pitcherParlayContent"),
+            highHitParlayContent: document.getElementById("highHitParlayContent"),
             dateNav: document.getElementById("predictionDateNav"),
         };
         this.init();
@@ -25,6 +26,7 @@ class DailyPredictionsPage {
         this.loadDatesAndRender();
         this.loadSameGameParlay();
         this.loadPitcherParlay();
+        this.loadHighHitParlay();
     }
 
     mountShell() {
@@ -602,6 +604,110 @@ class DailyPredictionsPage {
             no_real_probable_starters_posted_yet: "No real probable starters posted yet for today's slate.",
         };
         return reasons[data?.status] || "Pitcher parlay data is not available for this run.";
+    }
+
+    /**
+     * High-Hit Parlay -- v12 Phase 3's HIGH_HIT_PARLAY_V1
+     * (select_high_hit_parlay.py): real cross-game combos built directly
+     * from today's own v11-eligible single-prop pool, joint-probability-
+     * safe (every leg independently clears v11's own probability floor;
+     * the combo itself must clear a real joint-probability floor). This
+     * is the one parlay group that IS a high-hit-probability claim -- see
+     * its own construction.leg_probability_floor / joint_probability_floor
+     * in the payload. A brand-new, additive, own-payload product
+     * (high_hit_parlay_predictions.json), loaded independently of the
+     * rest of the page the same way the other parlay products are.
+     */
+    async loadHighHitParlay() {
+        const content = this.elements.highHitParlayContent;
+        if (!content) return;
+        try {
+            const response = await fetch(`data/high_hit_parlay_predictions.json?v=${Date.now()}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            this.highHitParlayData = await response.json();
+        } catch (_error) {
+            this.highHitParlayData = null;
+        }
+        this.renderHighHitParlay();
+    }
+
+    renderHighHitParlay() {
+        const content = this.elements.highHitParlayContent;
+        if (!content) return;
+        const data = this.highHitParlayData;
+        const construction = data?.construction || {};
+        const legFloor = this.formatPct(construction.leg_probability_floor);
+        const jointFloor = this.formatPct(construction.joint_probability_floor);
+        const footer = `Leg floor: ${legFloor} / Combined floor: ${jointFloor} / Eligible legs today: ${data?.legs_eligible ?? 0}`;
+
+        if (!data || !Array.isArray(data.parlays) || !data.parlays.length) {
+            content.innerHTML = this.highHitParlayHeader() + `
+                <p class="daily-parlay__empty">No real combination of today's eligible legs cleared the combined-probability floor.</p>
+                <p class="daily-parlay__state">${this.escapeHtml(footer)}</p>
+            `;
+            return;
+        }
+
+        const cards = data.parlays.map((parlay) => this.renderHighHitCombo(parlay)).join("");
+        content.innerHTML = this.highHitParlayHeader() + `
+            <div class="same-game-parlay__grid">${cards}</div>
+            <p class="daily-parlay__state">${this.escapeHtml(footer)}</p>
+        `;
+    }
+
+    highHitParlayHeader() {
+        return `
+            <div class="daily-parlay__header daily-parlay__header--status-only">
+                ${window.CardVault ? window.CardVault.renderStatusPill("stale", "Shadow only") : ""}
+            </div>
+        `;
+    }
+
+    renderHighHitCombo(parlay) {
+        const joint = this.formatPct(parlay.joint_probability);
+        const price = this.formatNumber(parlay.decimal_price, 2);
+        const ev = this.formatSignedPct(parlay.expected_value_per_unit);
+        const legs = Array.isArray(parlay.legs) ? parlay.legs : [];
+
+        return `
+            <article class="same-game-parlay__card">
+                <div class="daily-parlay__header">
+                    <div><strong>${legs.length}-leg high-hit combo</strong></div>
+                    ${window.CardVault ? window.CardVault.renderParlaySettlementBadge(legs) : ""}
+                </div>
+                <div class="vault-board vault-board--legs">
+                    ${legs.map((leg, index) => this.renderHighHitLeg(leg, index + 1)).join("")}
+                </div>
+                <div class="same-game-parlay__metrics">
+                    <span>Joint probability <strong>${joint}</strong></span>
+                    <span>Combined decimal price <strong>${price}</strong></span>
+                    <span>Model EV <strong>${ev}</strong></span>
+                </div>
+            </article>
+        `;
+    }
+
+    renderHighHitLeg(leg, index) {
+        if (!leg || !window.CardVault) return "";
+        const name = String(leg.player || "").trim() || "Unknown player";
+        const nameParts = name.split(/\s+/).filter(Boolean);
+        const monogram = nameParts.length >= 2
+            ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase()
+            : (nameParts[0] || "NA").slice(0, 2).toUpperCase();
+        const side = String(leg.direction || "").toUpperCase() === "UNDER" ? "Under" : "Over";
+        return window.CardVault.renderLegCard({
+            rank: index,
+            monogram,
+            name,
+            market: `${side} ${this.formatNumber(leg.market_line, 1)} ${leg.target || ""}`.trim(),
+            context: leg.team || "",
+            metrics: [
+                ["Probability", this.formatPct(leg.probability)],
+                ["Odds", this.formatAmerican(leg.american_price)],
+                ["Book", leg.sportsbook || ""],
+            ],
+            settlementRow: leg,
+        });
     }
 
     formatParlayV2StatusLabel(policyStatus) {
