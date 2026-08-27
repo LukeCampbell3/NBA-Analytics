@@ -390,7 +390,11 @@
           "official_game_status": "Scheduled",
           "risk_flags": [
             "lineup_unconfirmed"
-          ]
+          ],
+          "settlement_status": "lost",
+          "settlement_actual_value": 1.0,
+          "settlement_source": "mlb_statsapi_live_feed",
+          "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
         },
         {
           "play_key": "2026-08-16|824965|Jake Burger|RBI|OVER|ALT_1.5",
@@ -465,7 +469,11 @@
           "official_game_status": "Scheduled",
           "risk_flags": [
             "lineup_unconfirmed"
-          ]
+          ],
+          "settlement_status": "won",
+          "settlement_actual_value": 2.0,
+          "settlement_source": "mlb_statsapi_live_feed",
+          "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
         }
       ],
       "ticket_tier": "profit_boost",

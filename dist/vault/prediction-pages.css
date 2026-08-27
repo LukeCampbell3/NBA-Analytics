@@ -108,6 +108,14 @@ details.disclosure .disclosure-body {
 .status-pill--withheld,
 .status-pill--unavailable { color: var(--vault-status-withheld); border-color: color-mix(in srgb, var(--vault-status-withheld) 40%, var(--vault-line)); }
 
+/* Real settled game outcome (see CardVault.renderSettlementBadge) --
+   deliberately separate colors from the publication/authorization
+   vocabulary above so a "Won"/"Lost" result is never visually confused
+   with a "Qualified"/"Withheld" publication state. */
+.status-pill--won { color: var(--vault-status-active); border-color: color-mix(in srgb, var(--vault-status-active) 40%, var(--vault-line)); }
+.status-pill--lost { color: var(--vault-status-error); border-color: color-mix(in srgb, var(--vault-status-error) 40%, var(--vault-line)); }
+.status-pill--push { color: var(--vault-status-planned); border-color: color-mix(in srgb, var(--vault-status-planned) 40%, var(--vault-line)); }
+
 /* Canonical prediction-pool skeleton, shared by every sport's
    predictions.html: <main class="predictions-page"> > <header
    class="vault-page-header"> (title/lead/freshness/date-nav), then

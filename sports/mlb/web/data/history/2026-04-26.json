@@ -112,9 +112,9 @@
     {
       "left_index": 1,
       "right_index": 6,
-      "left_key": "2026-04-26|823068|pedro pag├⌐s|tb|over",
+      "left_key": "2026-04-26|823068|pedro pag\u251c\u2310s|tb|over",
       "right_key": "2026-04-26|825094|ty france|tb|over",
-      "left_name": "Pedro Pag├⌐s",
+      "left_name": "Pedro Pag\u251c\u2310s",
       "right_name": "Ty France",
       "left_target": "TB",
       "right_target": "TB",
@@ -132,8 +132,8 @@
       "pair_rank": 2,
       "legs": [
         {
-          "play_key": "2026-04-26|823068|pedro pag├⌐s|tb|over",
-          "player": "Pedro Pag├⌐s",
+          "play_key": "2026-04-26|823068|pedro pag\u251c\u2310s|tb|over",
+          "player": "Pedro Pag\u251c\u2310s",
           "target": "TB",
           "direction": "OVER"
         },
@@ -245,13 +245,16 @@
       "parlay_score": 1.08,
       "parlay_projected_hit_rate": 1.0,
       "parlay_partner_key": "2026-04-26|822991|jake fraley|tb|over",
-      "parlay_partner_name": "Jake Fraley"
+      "parlay_partner_name": "Jake Fraley",
+      "settlement_status": "pending",
+      "settlement_reason": "player_not_found",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     },
     {
       "rank": 2,
-      "player": "Pedro Pag├⌐s",
-      "player_display_name": "Pedro Pag├⌐s",
-      "player_id": "pedro_pag├⌐s",
+      "player": "Pedro Pag\u251c\u2310s",
+      "player_display_name": "Pedro Pag\u251c\u2310s",
+      "player_id": "pedro_pag\u251c\u2310s",
       "player_mlbam_id": 686780,
       "player_headshot_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/686780/headshot/67/current",
       "team": "STL",
@@ -274,14 +277,17 @@
       "precision_score": 1.289776,
       "value_score": 2.543897432256,
       "confidence_tier": "elite",
-      "play_key": "2026-04-26|823068|pedro pag├⌐s|tb|over",
+      "play_key": "2026-04-26|823068|pedro pag\u251c\u2310s|tb|over",
       "parlay_tag": "parlay",
       "parlay_candidate": true,
       "parlay_pair_rank": 2,
       "parlay_score": 1.0018432190584576,
       "parlay_projected_hit_rate": 0.9276326102393125,
       "parlay_partner_key": "2026-04-26|825094|ty france|tb|over",
-      "parlay_partner_name": "Ty France"
+      "parlay_partner_name": "Ty France",
+      "settlement_status": "pending",
+      "settlement_reason": "lineup_role_mismatch",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     },
     {
       "rank": 3,
@@ -317,7 +323,11 @@
       "parlay_score": 1.08,
       "parlay_projected_hit_rate": 1.0,
       "parlay_partner_key": "2026-04-26|822911|max muncy|tb|over",
-      "parlay_partner_name": "Max Muncy"
+      "parlay_partner_name": "Max Muncy",
+      "settlement_status": "won",
+      "settlement_actual_value": 2.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     },
     {
       "rank": 4,
@@ -353,7 +363,11 @@
       "parlay_score": 0.9605058334195505,
       "parlay_projected_hit_rate": 0.8893572531662505,
       "parlay_partner_key": "2026-04-26|824852|caleb durbin|tb|over",
-      "parlay_partner_name": "Caleb Durbin"
+      "parlay_partner_name": "Caleb Durbin",
+      "settlement_status": "lost",
+      "settlement_actual_value": 0.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     },
     {
       "rank": 5,
@@ -389,7 +403,11 @@
       "parlay_score": null,
       "parlay_projected_hit_rate": null,
       "parlay_partner_key": null,
-      "parlay_partner_name": null
+      "parlay_partner_name": null,
+      "settlement_status": "lost",
+      "settlement_actual_value": 0.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     },
     {
       "rank": 6,
@@ -425,7 +443,11 @@
       "parlay_score": 0.9605058334195505,
       "parlay_projected_hit_rate": 0.8893572531662505,
       "parlay_partner_key": "2026-04-26|822824|david fry|tb|over",
-      "parlay_partner_name": "David Fry"
+      "parlay_partner_name": "David Fry",
+      "settlement_status": "won",
+      "settlement_actual_value": 1.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     },
     {
       "rank": 7,
@@ -460,8 +482,11 @@
       "parlay_pair_rank": 2,
       "parlay_score": 1.0018432190584576,
       "parlay_projected_hit_rate": 0.9276326102393125,
-      "parlay_partner_key": "2026-04-26|823068|pedro pag├⌐s|tb|over",
-      "parlay_partner_name": "Pedro Pag├⌐s"
+      "parlay_partner_key": "2026-04-26|823068|pedro pag\u251c\u2310s|tb|over",
+      "parlay_partner_name": "Pedro Pag\u251c\u2310s",
+      "settlement_status": "pending",
+      "settlement_reason": "lineup_role_mismatch",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     },
     {
       "rank": 8,
@@ -497,7 +522,11 @@
       "parlay_score": null,
       "parlay_projected_hit_rate": null,
       "parlay_partner_key": null,
-      "parlay_partner_name": null
+      "parlay_partner_name": null,
+      "settlement_status": "won",
+      "settlement_actual_value": 5.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     },
     {
       "rank": 9,
@@ -533,7 +562,11 @@
       "parlay_score": null,
       "parlay_projected_hit_rate": null,
       "parlay_partner_key": null,
-      "parlay_partner_name": null
+      "parlay_partner_name": null,
+      "settlement_status": "won",
+      "settlement_actual_value": 1.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     },
     {
       "rank": 10,
@@ -569,7 +602,11 @@
       "parlay_score": null,
       "parlay_projected_hit_rate": null,
       "parlay_partner_key": null,
-      "parlay_partner_name": null
+      "parlay_partner_name": null,
+      "settlement_status": "won",
+      "settlement_actual_value": 1.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     },
     {
       "rank": 11,
@@ -605,7 +642,10 @@
       "parlay_score": null,
       "parlay_projected_hit_rate": null,
       "parlay_partner_key": null,
-      "parlay_partner_name": null
+      "parlay_partner_name": null,
+      "settlement_status": "pending",
+      "settlement_reason": "lineup_role_mismatch",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     },
     {
       "rank": 12,
@@ -641,7 +681,11 @@
       "parlay_score": null,
       "parlay_projected_hit_rate": null,
       "parlay_partner_key": null,
-      "parlay_partner_name": null
+      "parlay_partner_name": null,
+      "settlement_status": "lost",
+      "settlement_actual_value": 0.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     },
     {
       "rank": 13,
@@ -677,13 +721,16 @@
       "parlay_score": null,
       "parlay_projected_hit_rate": null,
       "parlay_partner_key": null,
-      "parlay_partner_name": null
+      "parlay_partner_name": null,
+      "settlement_status": "pending",
+      "settlement_reason": "lineup_role_mismatch",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     },
     {
       "rank": 14,
-      "player": "Mois├⌐s Ballesteros",
-      "player_display_name": "Mois├⌐s Ballesteros",
-      "player_id": "mois├⌐s_ballesteros",
+      "player": "Mois\u251c\u2310s Ballesteros",
+      "player_display_name": "Mois\u251c\u2310s Ballesteros",
+      "player_id": "mois\u251c\u2310s_ballesteros",
       "player_mlbam_id": 694208,
       "player_headshot_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/694208/headshot/67/current",
       "team": "CHC",
@@ -706,14 +753,17 @@
       "precision_score": 1.024965,
       "value_score": 1.7275498084799998,
       "confidence_tier": "elite",
-      "play_key": "2026-04-26|823959|mois├⌐s ballesteros|tb|over",
+      "play_key": "2026-04-26|823959|mois\u251c\u2310s ballesteros|tb|over",
       "parlay_tag": "",
       "parlay_candidate": false,
       "parlay_pair_rank": null,
       "parlay_score": null,
       "parlay_projected_hit_rate": null,
       "parlay_partner_key": null,
-      "parlay_partner_name": null
+      "parlay_partner_name": null,
+      "settlement_status": "pending",
+      "settlement_reason": "lineup_role_mismatch",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     },
     {
       "rank": 15,
@@ -749,7 +799,11 @@
       "parlay_score": null,
       "parlay_projected_hit_rate": null,
       "parlay_partner_key": null,
-      "parlay_partner_name": null
+      "parlay_partner_name": null,
+      "settlement_status": "won",
+      "settlement_actual_value": 6.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     }
   ]
 }

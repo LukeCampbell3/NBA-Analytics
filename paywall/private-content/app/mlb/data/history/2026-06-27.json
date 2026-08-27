@@ -189,7 +189,11 @@
       "parlay_partner_key": null,
       "parlay_partner_name": null,
       "parlay_partner_keys": [],
-      "parlay_partner_names": []
+      "parlay_partner_names": [],
+      "settlement_status": "won",
+      "settlement_actual_value": 0.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     },
     {
       "rank": 2,
@@ -255,7 +259,10 @@
       "parlay_partner_key": null,
       "parlay_partner_name": null,
       "parlay_partner_keys": [],
-      "parlay_partner_names": []
+      "parlay_partner_names": [],
+      "settlement_status": "pending",
+      "settlement_reason": "lineup_role_mismatch",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     },
     {
       "rank": 3,
@@ -321,7 +328,11 @@
       "parlay_partner_key": null,
       "parlay_partner_name": null,
       "parlay_partner_keys": [],
-      "parlay_partner_names": []
+      "parlay_partner_names": [],
+      "settlement_status": "lost",
+      "settlement_actual_value": 5.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     }
   ]
 }

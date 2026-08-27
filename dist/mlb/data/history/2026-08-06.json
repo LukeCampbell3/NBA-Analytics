@@ -307,7 +307,11 @@
           "lineup_status": "confirmed",
           "batting_order": "700",
           "official_game_status": "Pre-Game",
-          "risk_flags": []
+          "risk_flags": [],
+          "settlement_status": "won",
+          "settlement_actual_value": 2.0,
+          "settlement_source": "mlb_statsapi_live_feed",
+          "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
         },
         {
           "play_key": "2026-08-06|823430|CJ Abrams|H|OVER",
@@ -358,7 +362,11 @@
           "lineup_status": "confirmed",
           "batting_order": "400",
           "official_game_status": "Pre-Game",
-          "risk_flags": []
+          "risk_flags": [],
+          "settlement_status": "lost",
+          "settlement_actual_value": 0.0,
+          "settlement_source": "mlb_statsapi_live_feed",
+          "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
         }
       ],
       "status": "ready",
@@ -625,15 +633,19 @@
       "parlay_partner_names": [],
       "candidate_authorized": false,
       "staking_enabled": false,
-      "authorization_status": "SHADOW_ONLY"
+      "authorization_status": "SHADOW_ONLY",
+      "settlement_status": "lost",
+      "settlement_actual_value": 0.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     },
     {
       "rank": 2,
       "source_rank": 2,
       "selection_profile": "r_tb_over_moderate_edge_v1",
-      "player": "Heriberto Hern├índez",
-      "player_display_name": "Heriberto Hern├índez",
-      "player_id": "heriberto_hern├índez",
+      "player": "Heriberto Hern\u251c\u00edndez",
+      "player_display_name": "Heriberto Hern\u251c\u00edndez",
+      "player_id": "heriberto_hern\u251c\u00edndez",
       "player_type": "hitter",
       "starter_confirmed": false,
       "starter_history_rows": 0,
@@ -641,7 +653,7 @@
       "projected_pitches": 0.0,
       "days_since_history": 1,
       "opposing_pitcher_id": 527048,
-      "opposing_pitcher": "mart├¡n p├⌐rez",
+      "opposing_pitcher": "mart\u251c\u00a1n p\u251c\u2310rez",
       "matchup_network_version": "batter_pitcher_profile_network_v2",
       "batter_profile_strength": 0.32358472222222184,
       "pitcher_profile_vulnerability": -0.0763661705941117,
@@ -724,7 +736,7 @@
       "confirmed_team": "MIA",
       "batting_order": "200",
       "risk_flags": [],
-      "play_key": "2026-08-06|824885|heriberto hern├índez|tb|over",
+      "play_key": "2026-08-06|824885|heriberto hern\u251c\u00edndez|tb|over",
       "parlay_tag": "",
       "parlay_candidate": false,
       "parlay_ticket_rank": null,
@@ -738,7 +750,11 @@
       "parlay_partner_names": [],
       "candidate_authorized": false,
       "staking_enabled": false,
-      "authorization_status": "SHADOW_ONLY"
+      "authorization_status": "SHADOW_ONLY",
+      "settlement_status": "lost",
+      "settlement_actual_value": 0.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     },
     {
       "rank": 3,
@@ -853,7 +869,11 @@
       "parlay_partner_names": [],
       "candidate_authorized": false,
       "staking_enabled": false,
-      "authorization_status": "SHADOW_ONLY"
+      "authorization_status": "SHADOW_ONLY",
+      "settlement_status": "won",
+      "settlement_actual_value": 4.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     }
   ]
 }

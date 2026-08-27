@@ -777,7 +777,11 @@
           "selection_score": 0.7538841135951694,
           "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182845170&selectionId=94749094",
           "target": "H",
-          "team": "DET"
+          "team": "DET",
+          "settlement_status": "lost",
+          "settlement_actual_value": 0.0,
+          "settlement_source": "mlb_statsapi_live_feed",
+          "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
         },
         {
           "alternate_line_book_keys": [
@@ -876,7 +880,11 @@
           "selection_score": 0.7749181741202459,
           "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182881396&selectionId=57495785",
           "target": "H",
-          "team": "PIT"
+          "team": "PIT",
+          "settlement_status": "lost",
+          "settlement_actual_value": 0.0,
+          "settlement_source": "mlb_statsapi_live_feed",
+          "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
         }
       ],
       "maximum_decimal_price": 15.0,
@@ -1387,7 +1395,11 @@
         "quote_timestamp": "20260826",
         "side": "OVER",
         "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.182855258&selectionId=23552186",
-        "target": "R"
+        "target": "R",
+        "settlement_status": "won",
+        "settlement_actual_value": 1.0,
+        "settlement_source": "mlb_statsapi_live_feed",
+        "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
       },
       "leg_2": {
         "book": "real",
@@ -1402,7 +1414,11 @@
         "player_id": "pete_crow-armstrong",
         "quote_timestamp": "20260826",
         "side": "OVER",
-        "target": "TB"
+        "target": "TB",
+        "settlement_status": "won",
+        "settlement_actual_value": 2.0,
+        "settlement_source": "mlb_statsapi_live_feed",
+        "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
       },
       "predictive_version": "H_OVER_RANKER_V1+MULTI_TARGET",
       "slate_id": "20260826",

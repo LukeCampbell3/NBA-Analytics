@@ -301,7 +301,11 @@
           "lineup_status": "confirmed",
           "batting_order": "600",
           "official_game_status": "Pre-Game",
-          "risk_flags": []
+          "risk_flags": [],
+          "settlement_status": "lost",
+          "settlement_actual_value": 0.0,
+          "settlement_source": "mlb_statsapi_live_feed",
+          "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
         },
         {
           "play_key": "2026-08-11|823019|Bryson Stott|H|OVER",
@@ -352,7 +356,11 @@
           "lineup_status": "confirmed",
           "batting_order": "600",
           "official_game_status": "Pre-Game",
-          "risk_flags": []
+          "risk_flags": [],
+          "settlement_status": "won",
+          "settlement_actual_value": 1.0,
+          "settlement_source": "mlb_statsapi_live_feed",
+          "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
         }
       ],
       "status": "ready",
@@ -632,7 +640,11 @@
       "parlay_partner_names": [],
       "candidate_authorized": false,
       "staking_enabled": false,
-      "authorization_status": "SHADOW_ONLY"
+      "authorization_status": "SHADOW_ONLY",
+      "settlement_status": "lost",
+      "settlement_actual_value": 2.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     }
   ]
 }

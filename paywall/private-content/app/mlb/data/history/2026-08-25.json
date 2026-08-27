@@ -389,7 +389,11 @@
           "official_game_status": "Scheduled",
           "risk_flags": [
             "lineup_unconfirmed"
-          ]
+          ],
+          "settlement_status": "lost",
+          "settlement_actual_value": 0.0,
+          "settlement_source": "mlb_statsapi_live_feed",
+          "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
         },
         {
           "play_key": "2026-08-25|825042|Alex Bregman|H|OVER|ALT_1.5",
@@ -486,7 +490,11 @@
           "official_game_status": "Scheduled",
           "risk_flags": [
             "lineup_unconfirmed"
-          ]
+          ],
+          "settlement_status": "lost",
+          "settlement_actual_value": 0.0,
+          "settlement_source": "mlb_statsapi_live_feed",
+          "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
         }
       ],
       "ticket_tier": "profit_boost",
@@ -1519,7 +1527,11 @@
         "player_id": "pete_alonso",
         "quote_timestamp": "20260825",
         "side": "OVER",
-        "target": "R"
+        "target": "R",
+        "settlement_status": "won",
+        "settlement_actual_value": 2.0,
+        "settlement_source": "mlb_statsapi_live_feed",
+        "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
       },
       "leg_2": {
         "book": "real",
@@ -1532,7 +1544,11 @@
         "player_id": "pete_crow-armstrong",
         "quote_timestamp": "20260825",
         "side": "OVER",
-        "target": "TB"
+        "target": "TB",
+        "settlement_status": "lost",
+        "settlement_actual_value": 0.0,
+        "settlement_source": "mlb_statsapi_live_feed",
+        "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
       },
       "predictive_version": "H_OVER_RANKER_V1+MULTI_TARGET",
       "slate_id": "20260825",

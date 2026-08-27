@@ -329,6 +329,7 @@ class DailyPredictionsPage {
                 market: `${direction} ${target}`,
                 context: lineText !== "n/a" ? `Line ${lineText}` : "",
                 betslipUrl: leg.sportsbook_deeplink || "",
+                settlementRow: leg,
             });
         }).join("");
         return `<div class="vault-board vault-board--legs">${cards}</div>`;

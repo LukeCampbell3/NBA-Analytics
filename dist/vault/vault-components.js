@@ -171,6 +171,25 @@
     return `<span class="status-pill status-pill--${CardVault.escapeAttr(key)}">${CardVault.escapeHtml(text)}</span>`;
   };
 
+  /**
+   * Real settled game outcome -- a distinct concept from the
+   * publication/authorization vocabulary above (STATUS_LABELS/
+   * renderStatusPill's own docstring scopes that map to "a prediction's
+   * publication/authorization state"). This reads settlement_status,
+   * written only by sports/mlb/scripts/settle_published_predictions.py
+   * once the real underlying MLB game is final and the real boxscore
+   * stat has been compared to the real market line -- never a guess, and
+   * never shown for a still-pending or never-attempted row (both render
+   * nothing here, exactly like every other optional badge in this file).
+   */
+  CardVault.SETTLEMENT_LABELS = { won: "Won", lost: "Lost", push: "Push" };
+  CardVault.renderSettlementBadge = function renderSettlementBadge(row) {
+    const status = String(row?.settlement_status || "").toLowerCase();
+    const label = CardVault.SETTLEMENT_LABELS[status];
+    if (!label) return "";
+    return `<span class="status-pill status-pill--${CardVault.escapeAttr(status)}">${CardVault.escapeHtml(label)}</span>`;
+  };
+
   CardVault.renderEvidenceBadge = function renderEvidenceBadge(count, label = "Evidence") {
     return `<span class="vault-evidence"><strong>${CardVault.escapeHtml(String(count ?? 0))}</strong> ${CardVault.escapeHtml(label)}</span>`;
   };
@@ -389,7 +408,7 @@
       <article class="prediction-card" data-direction="${CardVault.escapeAttr(direction)}" aria-label="Prediction for ${CardVault.escapeAttr(displayName)}, ${CardVault.escapeAttr(direction)} ${CardVault.escapeAttr(targetLabel)}">
         <header class="prediction-card__header">
           <span class="prediction-card__rank">${String(play.rank || index + 1)}</span>
-          <div class="prediction-card__tags">${parlayTag}${CardVault.renderStatusPill(statusKey)}${riskTags}</div>
+          <div class="prediction-card__tags">${parlayTag}${CardVault.renderStatusPill(statusKey)}${CardVault.renderSettlementBadge(play)}${riskTags}</div>
         </header>
         <div class="prediction-card__identity">
           <div class="prediction-card__photo">${photoHtml}</div>
@@ -426,7 +445,7 @@
    */
   CardVault.renderLegCard = function renderLegCard({
     rank, statusTone = "", statusLabel = "", monogram = "", photoUrl = "", photoFallbackUrl = "",
-    name = "", market = "", context = "", metrics = [], note = "", betslipUrl = "",
+    name = "", market = "", context = "", metrics = [], note = "", betslipUrl = "", settlementRow = null,
   } = {}) {
     const photoHtml = CardVault.renderPhotoHtml(photoUrl, photoFallbackUrl, monogram);
     const metricHtml = metrics
@@ -450,7 +469,7 @@
       <article class="prediction-card" aria-label="${CardVault.escapeAttr(`${name}, ${market}`)}">
         <header class="prediction-card__header">
           <span class="prediction-card__rank">${CardVault.escapeHtml(String(rank ?? ""))}</span>
-          <div class="prediction-card__tags">${statusLabel ? CardVault.renderStatusPill(statusTone, statusLabel) : ""}</div>
+          <div class="prediction-card__tags">${statusLabel ? CardVault.renderStatusPill(statusTone, statusLabel) : ""}${settlementRow ? CardVault.renderSettlementBadge(settlementRow) : ""}</div>
         </header>
         <div class="prediction-card__identity">
           <div class="prediction-card__photo">${photoHtml}</div>

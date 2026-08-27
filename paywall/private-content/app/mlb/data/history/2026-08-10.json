@@ -311,7 +311,11 @@
           "official_game_status": "Scheduled",
           "risk_flags": [
             "lineup_unconfirmed"
-          ]
+          ],
+          "settlement_status": "lost",
+          "settlement_actual_value": 0.0,
+          "settlement_source": "mlb_statsapi_live_feed",
+          "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
         },
         {
           "play_key": "2026-08-10|824887|Francisco Lindor|H|OVER",
@@ -364,7 +368,11 @@
           "official_game_status": "Scheduled",
           "risk_flags": [
             "lineup_unconfirmed"
-          ]
+          ],
+          "settlement_status": "won",
+          "settlement_actual_value": 3.0,
+          "settlement_source": "mlb_statsapi_live_feed",
+          "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
         }
       ],
       "status": "review",
@@ -635,7 +643,11 @@
       "parlay_partner_names": [],
       "candidate_authorized": false,
       "staking_enabled": false,
-      "authorization_status": "SHADOW_ONLY"
+      "authorization_status": "SHADOW_ONLY",
+      "settlement_status": "lost",
+      "settlement_actual_value": 0.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     },
     {
       "rank": 2,
@@ -750,7 +762,11 @@
       "parlay_partner_names": [],
       "candidate_authorized": false,
       "staking_enabled": false,
-      "authorization_status": "SHADOW_ONLY"
+      "authorization_status": "SHADOW_ONLY",
+      "settlement_status": "lost",
+      "settlement_actual_value": 4.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-08-27T13:01:42.726402+00:00"
     }
   ]
 }
