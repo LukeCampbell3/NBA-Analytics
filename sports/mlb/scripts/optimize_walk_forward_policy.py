@@ -177,8 +177,19 @@ def benchmark_configs() -> list[dict[str, Any]]:
 
 
 def select_config(ledger: pd.DataFrame, dates: set[str], config: dict[str, Any]) -> pd.DataFrame:
+    """Real bug fix (found while investigating an implausible 96-100%
+    holdout hit rate): this never filtered by market_source, and
+    broad_candidate_policy()'s own ledger is ~97.5% synthetic (non-real-
+    market) rows -- a config "optimized" against that ledger is mostly
+    measuring the model beating its own estimated lines, not a real,
+    executable market price. The real live selector ALWAYS runs with
+    --require-real-market-source (see MLB_PRIMARY_POLICY_ARGS in
+    run_daily_predictions.py); this tool exists to tune thresholds for
+    that real selector, so it must be evaluated on the same real-only
+    population, unconditionally -- never a configurable option that
+    could be silently left off again."""
     selected_indices: list[int] = []
-    relevant = ledger.loc[ledger["date"].isin(dates)].copy()
+    relevant = ledger.loc[ledger["date"].isin(dates) & ledger["market_source"].eq("real")].copy()
     relevant = relevant.loc[
         (relevant["hit_probability"] >= float(config["min_hit_probability"]))
         & (relevant["probability"] >= float(config["min_graded_hit_rate"]))
