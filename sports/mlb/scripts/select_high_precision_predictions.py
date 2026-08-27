@@ -37,9 +37,9 @@ except ImportError:
     from live_board_confidence import apply_live_board_calibration
 
 try:
-    from .pick_survival_model import apply_pick_survival_model
+    from .pick_survival_model import apply_pick_survival_model, apply_winner_signature_model
 except ImportError:
-    from pick_survival_model import apply_pick_survival_model
+    from pick_survival_model import apply_pick_survival_model, apply_winner_signature_model
 
 
 SCRIPT_PATH = Path(__file__).resolve()
@@ -166,6 +166,16 @@ class Candidate:
     survival_model_status: str = "disabled"
     survival_model_support: int = 0
     survival_rank_active: bool = False
+    # v12 Phase 1 (SafeEV veto) -- additive, shadow-only, never affects
+    # real selection. safe_probability is always min(calibrated_hit_
+    # probability, winner_signature_probability): negative authority only.
+    winner_signature_probability: float | None = None
+    safe_probability: float | None = None
+    safe_expected_value: float | None = None
+    safe_probability_edge: float | None = None
+    safe_ev_veto: bool = False
+    winner_signature_model_status: str = "disabled"
+    winner_signature_model_support: int = 0
 
 
 def parse_args() -> argparse.Namespace:
@@ -474,6 +484,17 @@ def parse_args() -> argparse.Namespace:
         help="Disable shadow pick-survival annotations.",
     )
     parser.add_argument(
+        "--winner-signature-cache-json",
+        type=Path,
+        default=None,
+        help="Shadow-only v12 winner-signature model (SafeEV veto); annotations never change selection ordering or eligibility.",
+    )
+    parser.add_argument(
+        "--disable-winner-signature-shadow",
+        action="store_true",
+        help="Disable shadow winner-signature/SafeEV annotations.",
+    )
+    parser.add_argument(
         "--allow-synthetic-unders",
         action="store_true",
         help="Allow synthetic under positions. Default behavior keeps synthetic fallback boards over-only.",
@@ -558,6 +579,10 @@ def default_pick_survival_cache_path(season: int) -> Path:
     return DEFAULT_CALIBRATION_ROOT / f"pick_survival_model_{int(season)}.json"
 
 
+def default_winner_signature_cache_path(season: int) -> Path:
+    return DEFAULT_CALIBRATION_ROOT / f"winner_signature_model_{int(season)}.json"
+
+
 def load_live_confidence_calibration(
     path: Path | None,
     run_date: date | None,
@@ -588,6 +613,14 @@ def load_pick_survival_model(path: Path | None, run_date: date | None) -> dict |
     if run_date is not None and cutoff is not None and cutoff > run_date:
         return None
     return payload
+
+
+def load_winner_signature_model(path: Path | None, run_date: date | None) -> dict | None:
+    """Same real load/cutoff-safety contract as load_pick_survival_model
+    -- a distinct function only so a future point-in-time training cutoff
+    for this model doesn't have to reuse pick_survival_model's own
+    history_before_date semantics by coincidence."""
+    return load_pick_survival_model(path, run_date)
 
 
 def parse_date(value: str) -> date | None:
@@ -1793,6 +1826,7 @@ def load_candidates(
     min_market_availability_rows: int = 12,
     prefer_confident_side: bool = False,
     pick_survival_model: dict | None = None,
+    winner_signature_model: dict | None = None,
 ) -> list[Candidate]:
     candidates: list[Candidate] = []
     with open(pool_csv, "r", encoding="utf-8", newline="") as handle:
@@ -1820,6 +1854,15 @@ def load_candidates(
                     candidate.survival_model_support,
                     candidate.survival_rank_active,
                 ) = apply_pick_survival_model(candidate, pick_survival_model)
+                (
+                    candidate.winner_signature_probability,
+                    candidate.safe_probability,
+                    candidate.safe_expected_value,
+                    candidate.safe_probability_edge,
+                    candidate.safe_ev_veto,
+                    candidate.winner_signature_model_status,
+                    candidate.winner_signature_model_support,
+                ) = apply_winner_signature_model(candidate, winner_signature_model)
                 candidates.append(candidate)
     return candidates
 
@@ -2660,8 +2703,14 @@ def write_summary_json(
     path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
 
-def main() -> None:
-    args = parse_args()
+def prepare_and_filter_candidates(args: argparse.Namespace) -> tuple[list[Candidate], Counter]:
+    """Real end-to-end candidate build + structural filter (calibration/
+    bet-profile/live-confidence/pick-survival loading, load_candidates,
+    filter_candidates) -- everything main() does before diversification
+    ranking. Extracted so a second real caller (build_v11_eligible_
+    training_set.py, the v12 winner-signature training-set builder) gets
+    the exact same real gate logic the live selector runs, never a
+    hand-reconstructed approximation of it."""
     require_file(args.pool_csv)
     history_before_date = parse_date(args.history_before_date) if args.history_before_date else None
     if args.history_before_date and history_before_date is None:
@@ -2676,12 +2725,8 @@ def main() -> None:
         args.live_confidence_cache_json = default_live_confidence_cache_path(args.history_season)
     if args.pick_survival_cache_json is None and history_before_date is None:
         args.pick_survival_cache_json = default_pick_survival_cache_path(args.history_season)
-
-    default_csv, default_summary = default_output_paths(args.pool_csv)
-    if args.out_csv is None:
-        args.out_csv = default_csv
-    if args.summary_json is None:
-        args.summary_json = default_summary
+    if getattr(args, "winner_signature_cache_json", None) is None and history_before_date is None:
+        args.winner_signature_cache_json = default_winner_signature_cache_path(args.history_season)
 
     calibration = None
     if not args.disable_historical_calibration:
@@ -2716,6 +2761,14 @@ def main() -> None:
             args.pick_survival_cache_json.resolve() if args.pick_survival_cache_json else None,
             pool_run_date,
         )
+    winner_signature_model = None
+    if not getattr(args, "disable_winner_signature_shadow", False):
+        pool_run_date = infer_pool_run_date(args.pool_csv)
+        winner_signature_cache_json = getattr(args, "winner_signature_cache_json", None)
+        winner_signature_model = load_winner_signature_model(
+            winner_signature_cache_json.resolve() if winner_signature_cache_json else None,
+            pool_run_date,
+        )
 
     candidates = load_candidates(
         args.pool_csv,
@@ -2731,8 +2784,21 @@ def main() -> None:
         min_market_availability_rows=int(args.min_market_availability_rows),
         prefer_confident_side=bool(args.prefer_confident_side),
         pick_survival_model=pick_survival_model,
+        winner_signature_model=winner_signature_model,
     )
-    eligible, rejected = filter_candidates(candidates, args)
+    return filter_candidates(candidates, args)
+
+
+def main() -> None:
+    args = parse_args()
+    eligible, rejected = prepare_and_filter_candidates(args)
+
+    default_csv, default_summary = default_output_paths(args.pool_csv)
+    if args.out_csv is None:
+        args.out_csv = default_csv
+    if args.summary_json is None:
+        args.summary_json = default_summary
+
     selected = select_top_candidates(eligible, args)
 
     write_selected_csv(args.out_csv, selected, args)
