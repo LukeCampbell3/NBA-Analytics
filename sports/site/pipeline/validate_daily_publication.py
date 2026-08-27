@@ -18,8 +18,8 @@ SPORT_PAYLOADS = {
     "nba": Path("sports/nba/web/data/daily_predictions.json"),
     "mlb": Path("sports/mlb/web/data/daily_predictions.json"),
 }
-MLB_POLICY_PROFILE = "premium_evidence_gated_v8"
-MLB_LEGACY_POLICY_PROFILE = "premium_evidence_gated_v7"
+MLB_POLICY_PROFILE = "premium_evidence_gated_v9"
+MLB_LEGACY_POLICY_PROFILE = "premium_evidence_gated_v8"
 MLB_REQUIRED_TARGETS = {"ER", "H", "HR", "K", "R", "RBI", "TB"}
 MLB_MIN_BOOKS = 5
 MLB_MIN_COMMON_BOOKS = 2
@@ -34,15 +34,15 @@ MLB_PITCHER_K_OVER_PROFILE_STATUS = "probation"
 MLB_MATCHUP_NETWORK_VERSION = "batter_pitcher_profile_network_v2"
 MLB_MATCHUP_ADJUSTMENT_CAPS = {"H": 0.10, "TB": 0.16, "R": 0.05, "HR": 0.025, "RBI": 0.06}
 MLB_MAX_PITCHER_K_PICKS = 1
-MLB_DAILY_PICK_SOFT_CAP = 3
-MLB_DAILY_PICK_HARD_CAP = 3
-MLB_POST_CAP_MIN_SELECTION_SCORE = 0.80
+MLB_DAILY_PICK_SOFT_CAP = 10
+MLB_DAILY_PICK_HARD_CAP = 10
+MLB_POST_CAP_MIN_SELECTION_SCORE = 0.50
 MLB_CORE_MIN_AMERICAN_PRICE = -180.0
 MLB_CORE_MAX_AMERICAN_PRICE = 125.0
 MLB_MIN_OVER_PICKS = 0
-MLB_MAX_OVER_PICKS = 3
+MLB_MAX_OVER_PICKS = 10
 MLB_MAX_UNDER_PICKS = 0
-MLB_MIN_CORE_HIT_PROBABILITY = 0.825
+MLB_MIN_CORE_HIT_PROBABILITY = 0.55
 MLB_HISTORICAL_EVIDENCE_SCOPE = "real_price_confirmed_markets_only_v1"
 MLB_PARLAY_PROBABILITY_FLOORS = {2: 0.40, 3: 0.25, 4: 0.18}
 MLB_PARLAY_RELIABILITY_PROBABILITY_FLOORS = {2: 0.42, 3: 0.40, 4: 0.30}
@@ -369,7 +369,11 @@ def validate_mlb_payload(
         raise ValueError(
             f"MLB {label} payload used policy {policy_profile or '<missing>'}; expected {MLB_POLICY_PROFILE}."
         )
-    maximum_under_picks = 1 if policy_profile == MLB_LEGACY_POLICY_PROFILE else MLB_MAX_UNDER_PICKS
+    # v8 (now the accepted legacy profile during the v8->v9 transition
+    # window) used the same max_under_picks=0 as v9, so this no longer
+    # needs to branch by profile -- see MLB_PRIMARY_POLICY_ARGS in
+    # run_daily_predictions.py for the real v9 evidence.
+    maximum_under_picks = MLB_MAX_UNDER_PICKS
     publication_state = str(payload.get("publication_state") or "")
     if publication_state not in MLB_PUBLICATION_STATES:
         raise ValueError(f"MLB {label} payload has invalid publication state {publication_state or '<missing>'}.")

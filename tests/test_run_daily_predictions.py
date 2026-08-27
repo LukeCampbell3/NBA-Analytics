@@ -24,20 +24,26 @@ def test_mlb_primary_policy_uses_validated_portfolio_limits() -> None:
     assert shared_daily_predictions.MLB_PARLAY_SELECTOR.name == "select_daily_parlay.py"
     assert shared_daily_predictions.MLB_GOVERNANCE_CAPTURE.name == "capture_complete_slate.py"
     top_n_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--top-n")
-    # Deliberately raised from 3 to 5 alongside live_board_confidence.py's
-    # max_abs_adjustment fix (see that constant's own comment) -- more
-    # real volume, same real per-pick quality bar; --daily-pick-soft-cap
-    # below still requires the 4th/5th pick to clear a real
-    # selection_score >= --post-cap-min-selection-score.
-    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[top_n_index + 1] == "5"
+    # Raised 5->10 and the probability/edge bar loosened 0.825/0.825/0.35
+    # ->0.55/0.55/0.10 on real evidence (see MLB_PRIMARY_POLICY_ARGS's own
+    # comment): the v8 bar was rejected by two independent real-settled-
+    # outcome backtests (governance/backtest_policy_thesis.py, and a
+    # direct re-run of select_high_precision_predictions.py's own
+    # candidate/filter/select functions against the full historical
+    # universe) -- v8 selected only 17 real picks all season (88.2% hit
+    # rate but essentially never fired), while these v9 thresholds
+    # selected 76 (82.9% hit rate, ~4.5x the volume, higher total AND
+    # average return). --daily-pick-soft-cap now equals --top-n, so
+    # --post-cap-min-selection-score never actually applies.
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[top_n_index + 1] == "10"
     index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--max-per-market-bucket")
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[index + 1] == "2"
     ev_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--min-expected-value")
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[ev_index + 1] == "0.0"
     hit_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--min-hit-probability")
     graded_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--min-graded-hit-rate")
-    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[hit_index + 1] == "0.825"
-    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[graded_index + 1] == "0.825"
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[hit_index + 1] == "0.55"
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[graded_index + 1] == "0.55"
     common_books_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--min-common-market-books")
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[common_books_index + 1] == "2"
     availability_rate_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index(
@@ -50,14 +56,19 @@ def test_mlb_primary_policy_uses_validated_portfolio_limits() -> None:
     max_over_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--max-over-picks")
     max_under_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--max-under-picks")
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[min_over_index + 1] == "0"
-    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[max_over_index + 1] == "3"
+    # Raised from 3 to 10 (== --top-n) so real selection_score, not an
+    # untested new direction cap, decides the OVER/UNDER mix -- the same
+    # v9 backtest above found real market-sourced UNDER picks make up a
+    # large share of the real, well-calibrated edge this season, and
+    # --max-under-picks 0 was already uncapped before this change too.
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[max_over_index + 1] == "10"
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[max_under_index + 1] == "0"
     soft_cap_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--daily-pick-soft-cap")
     expansion_score_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index(
         "--post-cap-min-selection-score"
     )
-    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[soft_cap_index + 1] == "3"
-    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[expansion_score_index + 1] == "0.80"
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[soft_cap_index + 1] == "10"
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[expansion_score_index + 1] == "0.50"
     core_min_price_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--core-min-american-price")
     core_price_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--core-max-american-price")
     assert "--enable-pitcher-k-over-profile" not in shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS
@@ -77,7 +88,7 @@ def test_mlb_primary_policy_uses_validated_portfolio_limits() -> None:
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[pitcher_cap_index + 1] == "1"
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[core_min_price_index + 1] == "-180"
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[core_price_index + 1] == "125"
-    assert shared_daily_predictions.MLB_PRIMARY_POLICY_PROFILE == "premium_evidence_gated_v8"
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_PROFILE == "premium_evidence_gated_v9"
     assert shared_daily_predictions.MLB_LATENT_POOL_REPLAY.name == "backtest_latent_daily_pools.py"
 
 
@@ -93,7 +104,7 @@ def test_annotate_mlb_summary_keeps_policy_identity_separate_from_publication_st
     )
 
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
-    assert summary["publication_strategy"] == "premium_evidence_gated_v8"
+    assert summary["publication_strategy"] == "premium_evidence_gated_v9"
     assert summary["publication_state"] == "withheld_current_pool"
 
 
