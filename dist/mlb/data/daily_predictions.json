@@ -8,7 +8,7 @@
       3,
       4
     ],
-    "alternate_line_candidate_count": 2,
+    "alternate_line_candidate_count": 1,
     "available": false,
     "betslip_policy": {
       "construction": "direct_fanduel_public_market_ids_only",
@@ -17,15 +17,15 @@
       "sportsbook_key": "fanduel",
       "status": "unavailable"
     },
-    "considered_anchor_count": 3,
+    "considered_anchor_count": 4,
     "direction_policy": "OVER_ONLY",
-    "eligible_anchor_count": 6,
+    "eligible_anchor_count": 7,
     "filter_rejections": {
       "history_too_short": 8,
       "history_too_stale": 1,
-      "hit_survival_consensus_too_low": 6,
+      "hit_survival_consensus_too_low": 4,
       "hit_survival_probability_too_low": 2,
-      "leg_probability_too_low": 67,
+      "leg_probability_too_low": 68,
       "leg_value_too_low": 5,
       "not_over": 422,
       "price_outside_playable_range": 59,
@@ -92,7 +92,7 @@
         "4": 0.18
       }
     },
-    "generated_at_utc": "2026-08-27T22:20:25.181685+00:00",
+    "generated_at_utc": "2026-08-27T22:36:39.708572+00:00",
     "hit_survival_validation": {
       "calibration": {
         "brier_score": 0.24259946235125276,
@@ -526,14 +526,17 @@
     "withhold_threshold_days": 60
   },
   "filter_rejections": {
+    "core_price_too_heavily_juiced": 31,
+    "core_price_too_long": 23,
     "edge_too_small": 153,
     "history_too_short": 99,
-    "market_books_too_low": 257,
+    "hit_probability_too_low": 48,
     "prediction_too_low": 21,
+    "side_price_unconfirmed": 155,
     "synthetic_market_source": 184
   },
-  "generated_at_utc": "2026-08-27T22:24:28.403036+00:00",
-  "mlb_team_market_generated_at_utc": "2026-08-27T22:24:28.900839+00:00",
+  "generated_at_utc": "2026-08-27T22:41:17.789588+00:00",
+  "mlb_team_market_generated_at_utc": "2026-08-27T22:41:18.278181+00:00",
   "mlb_team_market_plays": [],
   "mlb_team_market_status": "ok",
   "model_run_id": "mlb_high_precision_selector_v2",
@@ -567,9 +570,9 @@
   },
   "parlays": {
     "action": "ACT",
-    "calibration_as_of": "2026-08-27T22:24:04.379291+00:00",
-    "calibration_snapshot_id": "48eb775fe2588e6a",
-    "calibration_snapshot_sha256": "48eb775fe2588e6a453e2f8949c8a1ca72f92219842cea531ba8ca54b87934b8",
+    "calibration_as_of": "2026-08-27T22:40:48.947617+00:00",
+    "calibration_snapshot_id": "f8c20bb460bde25c",
+    "calibration_snapshot_sha256": "f8c20bb460bde25cded1bbe5b7a830f80600dc2b59cd3d58ea6134bbd4f2c82f",
     "decision_record": {
       "action": 1,
       "candidate_universe_size": 500,
@@ -587,7 +590,7 @@
       },
       "world_gate_mode": "OBSERVE_ONLY"
     },
-    "decision_timestamp_utc": "2026-08-27T22:24:24.660627+00:00",
+    "decision_timestamp_utc": "2026-08-27T22:41:14.371554+00:00",
     "eligibility_reason": "operationally_eligible",
     "eligible": true,
     "evidence_status": {
@@ -741,7 +744,7 @@
     "certificate_status": "NO_ACTIVE_PROSPECTIVE_CERTIFICATE",
     "complete_slate_capture_passed": true,
     "full_policy_replay_available_for_snapshot": true,
-    "generated_at_utc": "2026-08-27T22:19:12.073624+00:00",
+    "generated_at_utc": "2026-08-27T22:35:17.595768+00:00",
     "historical_evidence_labels": [
       "SELECTED_ONLY_HISTORY",
       "SELECTED_ONLY_HISTORY"
@@ -762,11 +765,11 @@
     "run_date": "2026-08-27",
     "schema_version": "MLB_POLICY_GOVERNANCE_STATUS_V1",
     "slate_id": "MLB_20260827",
-    "snapshot_id": "mlb_20260827_221819Z_4fa476d613ca",
-    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260827/governance/slates/MLB_20260827/mlb_20260827_221819Z_4fa476d613ca/manifest.json",
+    "snapshot_id": "mlb_20260827_223419Z_aa0edcf1eea2",
+    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260827/governance/slates/MLB_20260827/mlb_20260827_223419Z_aa0edcf1eea2/manifest.json",
     "staking_enabled": false
   },
-  "policy_profile": "premium_evidence_gated_v11",
+  "policy_profile": "premium_evidence_gated_v13",
   "publication_message": "no plays passed publication filters",
   "publication_state": "withheld_current_pool",
   "publication_status": "withheld",
@@ -802,7 +805,7 @@
     "max_under_picks": 0,
     "min_abs_edge": 0.1,
     "min_bet_profile_rows": 12,
-    "min_common_market_books": 2,
+    "min_common_market_books": 1,
     "min_expected_value": 0.0,
     "min_graded_hit_rate": 0.7,
     "min_historical_bet_profile_support": 0,
@@ -813,7 +816,7 @@
     "min_history_rows": 35,
     "min_hit_probability": 0.7,
     "min_market_availability_rows": 12,
-    "min_market_books": 5,
+    "min_market_books": 1,
     "min_over_picks": 0,
     "min_prediction": 0.1,
     "optimized_over_max_per_market_bucket": null,
@@ -842,7 +845,7 @@
     "pitcher_k_over_profile": "pitcher_k_over_workload_v1",
     "pitcher_k_over_profile_enabled": false,
     "pitcher_k_over_profile_status": "probation",
-    "policy_version": "premium_evidence_gated_v11",
+    "policy_version": "premium_evidence_gated_v13",
     "post_cap_min_selection_score": 0.5,
     "prefer_confident_side": false,
     "require_real_market_source": true,
