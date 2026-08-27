@@ -8,7 +8,7 @@
       3,
       4
     ],
-    "alternate_line_candidate_count": 3,
+    "alternate_line_candidate_count": 2,
     "available": false,
     "betslip_policy": {
       "construction": "direct_fanduel_public_market_ids_only",
@@ -17,19 +17,19 @@
       "sportsbook_key": "fanduel",
       "status": "unavailable"
     },
-    "considered_anchor_count": 5,
+    "considered_anchor_count": 3,
     "direction_policy": "OVER_ONLY",
-    "eligible_anchor_count": 7,
+    "eligible_anchor_count": 6,
     "filter_rejections": {
       "history_too_short": 8,
       "history_too_stale": 1,
-      "hit_survival_consensus_too_low": 5,
-      "hit_survival_probability_too_low": 1,
-      "leg_probability_too_low": 71,
+      "hit_survival_consensus_too_low": 6,
+      "hit_survival_probability_too_low": 2,
+      "leg_probability_too_low": 67,
       "leg_value_too_low": 5,
-      "not_over": 418,
+      "not_over": 422,
       "price_outside_playable_range": 59,
-      "unconfirmed_market_price": 122,
+      "unconfirmed_market_price": 121,
       "unsupported_anchor_target": 17
     },
     "gates": {
@@ -92,7 +92,7 @@
         "4": 0.18
       }
     },
-    "generated_at_utc": "2026-08-27T21:27:48.068331+00:00",
+    "generated_at_utc": "2026-08-27T22:20:25.181685+00:00",
     "hit_survival_validation": {
       "calibration": {
         "brier_score": 0.24259946235125276,
@@ -526,14 +526,14 @@
     "withhold_threshold_days": 60
   },
   "filter_rejections": {
-    "edge_too_small": 156,
+    "edge_too_small": 153,
     "history_too_short": 99,
-    "market_books_too_low": 255,
+    "market_books_too_low": 257,
     "prediction_too_low": 21,
-    "synthetic_market_source": 183
+    "synthetic_market_source": 184
   },
-  "generated_at_utc": "2026-08-27T21:32:18.010161+00:00",
-  "mlb_team_market_generated_at_utc": "2026-08-27T21:32:18.478868+00:00",
+  "generated_at_utc": "2026-08-27T22:24:28.403036+00:00",
+  "mlb_team_market_generated_at_utc": "2026-08-27T22:24:28.900839+00:00",
   "mlb_team_market_plays": [],
   "mlb_team_market_status": "ok",
   "model_run_id": "mlb_high_precision_selector_v2",
@@ -567,9 +567,9 @@
   },
   "parlays": {
     "action": "ACT",
-    "calibration_as_of": "2026-08-27T21:31:49.808945+00:00",
-    "calibration_snapshot_id": "0b47192ebc8dfac4",
-    "calibration_snapshot_sha256": "0b47192ebc8dfac4fef2bdcf9ac89ad0a4552645a002b67eafb8a29be2fd489e",
+    "calibration_as_of": "2026-08-27T22:24:04.379291+00:00",
+    "calibration_snapshot_id": "48eb775fe2588e6a",
+    "calibration_snapshot_sha256": "48eb775fe2588e6a453e2f8949c8a1ca72f92219842cea531ba8ca54b87934b8",
     "decision_record": {
       "action": 1,
       "candidate_universe_size": 500,
@@ -578,16 +578,16 @@
       "world_certificate_diagnostics": {
         "certified": false,
         "counterexample_count": 3,
-        "counterexample_mass": 0.7304778024926476,
+        "counterexample_mass": 0.726660381622612,
         "outside_probability_mass": 0.0,
         "retained_probability_mass": 1.0,
         "retained_world_count": 4,
         "version": "NONVACUOUS_WORLD_CERTIFICATE_V1",
-        "world_risk_rho": 0.7304778024926476
+        "world_risk_rho": 0.726660381622612
       },
       "world_gate_mode": "OBSERVE_ONLY"
     },
-    "decision_timestamp_utc": "2026-08-27T21:32:14.565903+00:00",
+    "decision_timestamp_utc": "2026-08-27T22:24:24.660627+00:00",
     "eligibility_reason": "operationally_eligible",
     "eligible": true,
     "evidence_status": {
@@ -606,16 +606,32 @@
         "sportsbook": "FanDuel",
         "sportsbook_key": "fanduel",
         "status": "ready",
-        "url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.183096116&selectionId%5B0%5D=14384441&marketId%5B1%5D=734.183103617&selectionId%5B1%5D=14361900"
+        "url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.183086174&selectionId%5B0%5D=24676176&marketId%5B1%5D=734.183096116&selectionId%5B1%5D=14384441"
       },
-      "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.183096116&selectionId%5B0%5D=14384441&marketId%5B1%5D=734.183103617&selectionId%5B1%5D=14361900",
-      "candidate_id": "20260827|Matt Olson|TB|OVER|1.5|824879||Rafael Devers|TB|OVER|1.5|823179",
-      "joint_probability_estimate": 0.2695221975073525,
+      "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.183086174&selectionId%5B0%5D=24676176&marketId%5B1%5D=734.183096116&selectionId%5B1%5D=14384441",
+      "candidate_id": "20260827|Yordan Alvarez|TB|OVER|1.5|823503||Matt Olson|TB|OVER|1.5|824879",
+      "joint_probability_estimate": 0.2733396183773879,
       "joint_probability_method": "independence_binary_world_model",
       "joint_score": 1.0,
       "leg_1": {
         "book": "real",
-        "decimal_price": 2.5,
+        "decimal_price": 1.9090909090909092,
+        "game_id": "823503",
+        "in_support": true,
+        "line": 1.5,
+        "model_probability_estimate": 0.503786058068622,
+        "player": "Yordan Alvarez",
+        "player_headshot_fallback_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/670541/headshot/67/current",
+        "player_headshot_url": "data/headshots/670541.jpg",
+        "player_id": "yordan_alvarez",
+        "quote_timestamp": "20260827",
+        "side": "OVER",
+        "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183086174&selectionId=24676176",
+        "target": "TB"
+      },
+      "leg_2": {
+        "book": "real",
+        "decimal_price": 2.65,
         "game_id": "824879",
         "in_support": true,
         "line": 1.5,
@@ -629,22 +645,6 @@
         "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183096116&selectionId=14384441",
         "target": "TB"
       },
-      "leg_2": {
-        "book": "real",
-        "decimal_price": 2.1,
-        "game_id": "823179",
-        "in_support": true,
-        "line": 1.5,
-        "model_probability_estimate": 0.4967502561474794,
-        "player": "Rafael Devers",
-        "player_headshot_fallback_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/646240/headshot/67/current",
-        "player_headshot_url": "data/headshots/646240.jpg",
-        "player_id": "rafael_devers",
-        "quote_timestamp": "20260827",
-        "side": "OVER",
-        "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183103617&selectionId=14361900",
-        "target": "TB"
-      },
       "predictive_version": "H_OVER_RANKER_V1+MULTI_TARGET",
       "slate_id": "20260827",
       "state_version": "MULTI_TARGET_BROAD_V1",
@@ -656,7 +656,7 @@
       },
       "world_diagnostics": {
         "counterexample_count": 3,
-        "counterexample_mass": 0.7304778024926476,
+        "counterexample_mass": 0.726660381622612,
         "nonvacuous_world_certificate": false,
         "retained_probability_mass": 1.0,
         "retained_world_count": 4
@@ -680,7 +680,7 @@
       "joint_score": 1.0,
       "leg_1": {
         "book": "real",
-        "decimal_price": 1.8695652173913042,
+        "decimal_price": 1.9090909090909092,
         "game_id": "823503",
         "in_support": true,
         "line": 1.5,
@@ -696,7 +696,7 @@
       },
       "leg_2": {
         "book": "real",
-        "decimal_price": 2.5,
+        "decimal_price": 2.65,
         "game_id": "824879",
         "in_support": true,
         "line": 1.5,
@@ -741,7 +741,7 @@
     "certificate_status": "NO_ACTIVE_PROSPECTIVE_CERTIFICATE",
     "complete_slate_capture_passed": true,
     "full_policy_replay_available_for_snapshot": true,
-    "generated_at_utc": "2026-08-27T21:26:27.305056+00:00",
+    "generated_at_utc": "2026-08-27T22:19:12.073624+00:00",
     "historical_evidence_labels": [
       "SELECTED_ONLY_HISTORY",
       "SELECTED_ONLY_HISTORY"
@@ -762,8 +762,8 @@
     "run_date": "2026-08-27",
     "schema_version": "MLB_POLICY_GOVERNANCE_STATUS_V1",
     "slate_id": "MLB_20260827",
-    "snapshot_id": "mlb_20260827_212451Z_ebe49e54f93f",
-    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260827/governance/slates/MLB_20260827/mlb_20260827_212451Z_ebe49e54f93f/manifest.json",
+    "snapshot_id": "mlb_20260827_221819Z_4fa476d613ca",
+    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260827/governance/slates/MLB_20260827/mlb_20260827_221819Z_4fa476d613ca/manifest.json",
     "staking_enabled": false
   },
   "policy_profile": "premium_evidence_gated_v11",
