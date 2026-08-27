@@ -78,8 +78,8 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
                     "max_per_market_bucket": 2,
                     "optimized_over_max_per_market_bucket": None,
                     "min_expected_value": 0.0,
-                    "min_market_books": 5,
-                    "min_common_market_books": 2,
+                    "min_market_books": 1,
+                    "min_common_market_books": 1,
                     "require_real_market_source": True,
                     "allow_unpriced_side": False,
                     "optimized_over_profile": "r_tb_over_moderate_edge_v1",
@@ -222,7 +222,7 @@ def test_validate_publication_allows_stale_payloads_when_requested(tmp_path: Pat
         # window (see validate_daily_publication.py's MLB_LEGACY_POLICY_
         # PROFILE); it used the same max_under_picks=0 as v11, so no
         # override is needed here any more.
-        payload["policy_profile"] = "premium_evidence_gated_v10"
+        payload["policy_profile"] = "premium_evidence_gated_v11"
         payload_path.write_text(json.dumps(payload), encoding="utf-8")
     route = tmp_path / "dist/mlb/predictions/index.html"
     route.parent.mkdir(parents=True, exist_ok=True)
@@ -278,7 +278,7 @@ def test_validate_publication_rejects_legacy_mlb_pool_policy(tmp_path: Path) -> 
     route.parent.mkdir(parents=True, exist_ok=True)
     route.write_text("ok", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="expected premium_evidence_gated_v11"):
+    with pytest.raises(ValueError, match="expected premium_evidence_gated_v13"):
         validate_publication(
             repo_root=tmp_path,
             output_dir=Path("dist"),
