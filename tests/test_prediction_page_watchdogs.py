@@ -24,3 +24,15 @@ def test_prediction_pages_have_self_contained_startup_watchdogs():
         assert "window.location.reload()" in html
         assert "localStorage" not in html
         assert "sessionStorage" not in html
+
+
+def test_mlb_watchdog_has_dependency_free_board_recovery():
+    html = (REPO_ROOT / "sports" / "mlb" / "web" / "predictions.html").read_text(encoding="utf-8")
+
+    assert 'fetch("data/daily_predictions.json"' in html
+    assert 'cache: "no-store"' in html
+    assert "Array.isArray(payload.plays)" in html
+    assert 'document.createElement("article")' in html
+    assert "Limited compatibility mode." in html
+    assert 'vault-components.js?v=17' in html
+    assert 'predictions.js?v=28' in html

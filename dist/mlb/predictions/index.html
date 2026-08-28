@@ -100,26 +100,68 @@
         (() => {
             const loadingText = "Loading board details...";
             const timeoutMs = 12000;
+            const showFailure = (status, cards, detail) => {
+                status.innerHTML = `<strong>Board did not finish loading.</strong> ${detail}`;
+                if (!cards) return;
+                cards.innerHTML = `<div class="vault-empty" role="alert">
+                    <h3>Predictions unavailable</h3>
+                    <p>The page stopped during startup. Your picks and account were not changed.</p>
+                    <button type="button" class="vault-button" data-prediction-reload>Reload predictions</button>
+                </div>`;
+                const reload = cards.querySelector("[data-prediction-reload]");
+                if (reload) reload.addEventListener("click", () => window.location.reload());
+            };
+
+            const recoverBoard = async (status, cards) => {
+                const response = await fetch("data/daily_predictions.json", {
+                    cache: "no-store",
+                    credentials: "same-origin",
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const payload = await response.json();
+                const plays = Array.isArray(payload.plays) ? payload.plays : [];
+                if (!plays.length) throw new Error("No prediction cards were published");
+
+                cards.innerHTML = "";
+                plays.forEach((play) => {
+                    const card = document.createElement("article");
+                    card.className = "prediction-card";
+                    const title = document.createElement("h3");
+                    title.textContent = play.player_display_name || play.player || "MLB prediction";
+                    const market = document.createElement("p");
+                    market.className = "prediction-card__market";
+                    const marketLine = play.market_line == null ? "" : play.market_line;
+                    market.textContent = `${play.direction || ""} ${marketLine} ${play.target || ""}`.trim();
+                    const detail = document.createElement("p");
+                    const probabilityValue = play.final_hit_probability == null
+                        ? play.estimated_hit_probability
+                        : play.final_hit_probability;
+                    const probability = Number(probabilityValue);
+                    detail.textContent = Number.isFinite(probability)
+                        ? `${(probability * 100).toFixed(1)}% model probability · ${play.authorization_status || "SHADOW_ONLY"}`
+                        : (play.authorization_status || "SHADOW_ONLY");
+                    card.append(title, market, detail);
+                    cards.appendChild(card);
+                });
+                status.innerHTML = `<strong>Limited compatibility mode.</strong>
+                    Loaded ${plays.length} signals directly because the full interface did not start.`;
+            };
+
             window.setTimeout(() => {
                 const status = document.getElementById("predictionRunMeta");
                 if (!status || status.textContent.trim() !== loadingText) return;
-
-                status.innerHTML = `<strong>Board did not finish loading.</strong>
-                    Reload the page to try again. If this keeps happening, allow site data and scripts for this site or turn off its content blocker.`;
                 const cards = document.getElementById("predictionCards");
-                if (cards) {
-                    cards.innerHTML = `<div class="vault-empty" role="alert">
-                        <h3>Predictions unavailable</h3>
-                        <p>The page stopped during startup. Your picks and account were not changed.</p>
-                        <button type="button" class="vault-button" data-prediction-reload>Reload predictions</button>
-                    </div>`;
-                    cards.querySelector("[data-prediction-reload]")?.addEventListener("click", () => window.location.reload());
-                }
+                if (!cards) return;
+                recoverBoard(status, cards).catch(() => showFailure(
+                    status,
+                    cards,
+                    "Reload the page to try again. If this keeps happening, allow site data and scripts for this site or turn off its content blocker."
+                ));
             }, timeoutMs);
         })();
     </script>
-    <script src="/vault/vault-components.js?v=16"></script>
+    <script src="/vault/vault-components.js?v=17"></script>
     <script src="/vault/vault-shell.js?v=9"></script>
-    <script src="predictions.js?v=27"></script>
+    <script src="predictions.js?v=28"></script>
 </body>
 </html>
