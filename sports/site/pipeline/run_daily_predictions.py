@@ -168,8 +168,48 @@ MLB_PARLAY_BETSLIP_ENRICHER = REPO_ROOT / "sports" / "mlb" / "scripts" / "enrich
 # among the headshot-related steps so it sees every leg's real URL,
 # including the parlay-leg enrichment step just above.
 MLB_HEADSHOT_CACHE = REPO_ROOT / "sports" / "mlb" / "scripts" / "update_mlb_player_headshot_cache.py"
-MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v13"
+MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v14"
 MLB_PICK_SURVIVAL_TOP_K = 3
+# v13 -> v14: real isotonic recalibration of hit probability, not another
+# threshold sweep. Root-caused by direct investigation (this repo's own
+# archived raw pools, every real graded candidate, not just the ones that
+# already clear a gate): --min-hit-probability 0.70 has always been
+# checked against calibrated_hit_probability, a real closed-form Poisson
+# probability blended with historical priors -- but that number is
+# consistently overconfident. Checked against a real n=6,084 sample of
+# every real, price-confirmed candidate this repo's archives can build,
+# bucketed by raw model_hit_probability: candidates in the 0.70-0.75
+# bucket (n=504) really won 63.3% of the time, not 70-75%; 0.80-0.85
+# (n=163) really won 71.2%. This is why v11's own real top-N board,
+# re-run against its 25 real archived raw pools, settles at 60.5% real
+# hit rate (43 real settled picks) rather than 70%+, and why v12's
+# SafeEV shadow line -- which re-weights among these same overconfident
+# numbers rather than fixing the number itself -- tests out WORSE
+# (52.9%-54.8%, see v12_v11_slate_comparison_2026.json), not better; v12
+# correctly never promoted out of shadow.
+#
+# hit_probability_calibration.py fits a real, one-dimensional isotonic
+# regression (model_hit_probability -> real empirical win rate) against
+# every real graded candidate select_high_precision_predictions.py's own
+# load_candidates() can build (27,914 rows harvested; 6,084 real+price-
+# confirmed used for the fit), with a genuine chronological holdout (the
+# most recent real dates, 2026-08-09 through 2026-08-11, never seen while
+# fitting) before promotion: holdout Brier score improved (0.2387 raw ->
+# 0.2373 calibrated) on 2,382 real holdout rows, clearing the model's own
+# promotion gate -- see hit_probability_isotonic_calibration_2026.json.
+# select_high_precision_predictions.py applies it with a negative-
+# authority-only rule identical to the SafeEV veto already established
+# here: final_hit_probability = min(calibrated_hit_probability,
+# historically_calibrated_hit_probability) -- this can only ever pull a
+# candidate's gated/displayed probability DOWN toward what real outcomes
+# support, never raise it above what the existing blend already computed.
+# --min-hit-probability/--min-graded-hit-rate stay at v11's 0.70 --the
+# number now means what it says, rather than being raised or lowered on
+# another small-sample guess. Expect real published volume to fall
+# further under this same 0.70 label; that is the honest, intended
+# effect, not a regression -- fewer real picks that actually clear a
+# real 70%, not more picks under a number that didn't hold up.
+#
 # v11 -> v13 (v12 is reserved for the SafeEV/winner-signature shadow
 # research line -- see pick_survival_model.py/safe_ev_optimizer.py/
 # select_high_hit_parlay.py -- so this real production change skips that

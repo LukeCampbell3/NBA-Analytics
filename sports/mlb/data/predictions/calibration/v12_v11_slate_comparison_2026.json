@@ -1,71 +1,73 @@
 {
   "schema_version": 1,
   "product_version": "premium_safe_ev_v12_shadow",
-  "compared_against": "premium_evidence_gated_v11",
+  "compared_against": "premium_evidence_gated_v14",
   "shadow_only": true,
   "archived_dates_scanned": 25,
   "dates_with_load_errors": {},
   "promotion_gate": {
     "rule": "ROI_v12 > ROI_v11 AND HitRate_v12 >= HitRate_v11 - margin",
     "hit_rate_margin": 0.05,
-    "decision": "remain_shadow",
-    "eligible_miss_budgets": []
+    "decision": "eligible",
+    "eligible_miss_budgets": [
+      1.0
+    ]
   },
   "v11": {
-    "picks": 43,
-    "settled": 42,
-    "wins": 25,
-    "hit_rate": 0.5952380952380952,
-    "roi": -0.0036900016309462276
+    "picks": 31,
+    "settled": 30,
+    "wins": 21,
+    "hit_rate": 0.7,
+    "roi": 0.18165571641600534
   },
   "v12_by_miss_budget": {
     "1.0": {
       "metrics": {
-        "picks": 35,
-        "settled": 34,
+        "picks": 27,
+        "settled": 26,
         "wins": 18,
-        "hit_rate": 0.5294117647058824,
-        "roi": -0.0680632509548165
+        "hit_rate": 0.6923076923076923,
+        "roi": 0.2116724159454366
       },
-      "promotion_gate_pass": false
+      "promotion_gate_pass": true
     },
     "1.5": {
       "metrics": {
-        "picks": 43,
-        "settled": 42,
-        "wins": 23,
-        "hit_rate": 0.5476190476190477,
-        "roi": -0.052085062896445544
+        "picks": 31,
+        "settled": 30,
+        "wins": 19,
+        "hit_rate": 0.6333333333333333,
+        "roi": 0.10715529301461577
       },
       "promotion_gate_pass": false
     },
     "2.0": {
       "metrics": {
-        "picks": 43,
-        "settled": 42,
-        "wins": 23,
-        "hit_rate": 0.5476190476190477,
-        "roi": -0.052085062896445544
+        "picks": 31,
+        "settled": 30,
+        "wins": 19,
+        "hit_rate": 0.6333333333333333,
+        "roi": 0.10715529301461577
       },
       "promotion_gate_pass": false
     },
     "2.5": {
       "metrics": {
-        "picks": 43,
-        "settled": 42,
-        "wins": 23,
-        "hit_rate": 0.5476190476190477,
-        "roi": -0.052085062896445544
+        "picks": 31,
+        "settled": 30,
+        "wins": 19,
+        "hit_rate": 0.6333333333333333,
+        "roi": 0.10715529301461577
       },
       "promotion_gate_pass": false
     },
     "3.0": {
       "metrics": {
-        "picks": 43,
-        "settled": 42,
-        "wins": 23,
-        "hit_rate": 0.5476190476190477,
-        "roi": -0.052085062896445544
+        "picks": 31,
+        "settled": 30,
+        "wins": 19,
+        "hit_rate": 0.6333333333333333,
+        "roi": 0.10715529301461577
       },
       "promotion_gate_pass": false
     }

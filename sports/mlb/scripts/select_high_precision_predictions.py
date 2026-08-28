@@ -37,9 +37,19 @@ except ImportError:
     from live_board_confidence import apply_live_board_calibration
 
 try:
-    from .pick_survival_model import apply_pick_survival_model, apply_winner_signature_model
+    from .pick_survival_model import (
+        apply_hit_probability_calibration,
+        apply_pick_survival_model,
+        apply_winner_signature_model,
+        load_hit_probability_calibration,
+    )
 except ImportError:
-    from pick_survival_model import apply_pick_survival_model, apply_winner_signature_model
+    from pick_survival_model import (
+        apply_hit_probability_calibration,
+        apply_pick_survival_model,
+        apply_winner_signature_model,
+        load_hit_probability_calibration,
+    )
 
 
 SCRIPT_PATH = Path(__file__).resolve()
@@ -176,6 +186,20 @@ class Candidate:
     safe_ev_veto: bool = False
     winner_signature_model_status: str = "disabled"
     winner_signature_model_support: int = 0
+    # Real isotonic recalibration of hit probability against real settled
+    # outcomes (hit_probability_calibration.py) -- found by direct
+    # investigation that calibrated_hit_probability is real but
+    # consistently overconfident (a real n=6,084 sample showed a "70%"
+    # candidate wins about 63% of the time). final_hit_probability is
+    # ALWAYS min(calibrated_hit_probability, historically_calibrated_hit_
+    # probability) when both are real -- negative authority only, same
+    # rule as the SafeEV veto above: this can only pull a candidate's
+    # gated/displayed probability DOWN toward what real outcomes support,
+    # never raise it.
+    historically_calibrated_hit_probability: float | None = None
+    hit_probability_calibration_status: str = "disabled"
+    hit_probability_calibration_support: int = 0
+    final_hit_probability: float = 0.0
 
 
 def parse_args() -> argparse.Namespace:
@@ -495,6 +519,21 @@ def parse_args() -> argparse.Namespace:
         help="Disable shadow winner-signature/SafeEV annotations.",
     )
     parser.add_argument(
+        "--hit-probability-calibration-cache-json",
+        type=Path,
+        default=None,
+        help=(
+            "Real isotonic hit-probability recalibration (hit_probability_calibration.py). "
+            "Negative-authority-only: final_hit_probability = min(calibrated_hit_probability, "
+            "this model's output) when the model is active; never raises a candidate's probability."
+        ),
+    )
+    parser.add_argument(
+        "--disable-hit-probability-calibration",
+        action="store_true",
+        help="Disable the real historical hit-probability recalibration.",
+    )
+    parser.add_argument(
         "--allow-synthetic-unders",
         action="store_true",
         help="Allow synthetic under positions. Default behavior keeps synthetic fallback boards over-only.",
@@ -581,6 +620,10 @@ def default_pick_survival_cache_path(season: int) -> Path:
 
 def default_winner_signature_cache_path(season: int) -> Path:
     return DEFAULT_CALIBRATION_ROOT / f"winner_signature_model_{int(season)}.json"
+
+
+def default_hit_probability_calibration_cache_path(season: int) -> Path:
+    return DEFAULT_CALIBRATION_ROOT / f"hit_probability_isotonic_calibration_{int(season)}.json"
 
 
 def load_live_confidence_calibration(
@@ -1687,6 +1730,12 @@ def build_candidate_for_direction(
         historical_prior_weight=historical_prior_weight,
         calibrated_hit_probability=calibrated_hit_probability,
         calibrated_graded_hit_rate=validated_graded_hit_rate,
+        # Safe default for any caller that builds a Candidate directly
+        # (tests, or a future script) without going through load_candidates()
+        # -- never a bare 0.0 that would silently fail every hit-probability
+        # gate. load_candidates() only ever lowers this, via
+        # apply_hit_probability_calibration()'s negative-authority-only rule.
+        final_hit_probability=calibrated_hit_probability,
         live_confidence_calibration_key=live_confidence_calibration_key,
         live_confidence_calibration_support=live_confidence_calibration_support,
         live_confidence_calibration_adjustment=live_confidence_calibration_adjustment,
@@ -1827,6 +1876,7 @@ def load_candidates(
     prefer_confident_side: bool = False,
     pick_survival_model: dict | None = None,
     winner_signature_model: dict | None = None,
+    hit_probability_calibration: dict | None = None,
 ) -> list[Candidate]:
     candidates: list[Candidate] = []
     with open(pool_csv, "r", encoding="utf-8", newline="") as handle:
@@ -1863,6 +1913,16 @@ def load_candidates(
                     candidate.winner_signature_model_status,
                     candidate.winner_signature_model_support,
                 ) = apply_winner_signature_model(candidate, winner_signature_model)
+                (
+                    candidate.historically_calibrated_hit_probability,
+                    candidate.hit_probability_calibration_status,
+                    candidate.hit_probability_calibration_support,
+                ) = apply_hit_probability_calibration(candidate.model_hit_probability, hit_probability_calibration)
+                candidate.final_hit_probability = (
+                    min(candidate.calibrated_hit_probability, candidate.historically_calibrated_hit_probability)
+                    if candidate.historically_calibrated_hit_probability is not None
+                    else candidate.calibrated_hit_probability
+                )
                 candidates.append(candidate)
     return candidates
 
@@ -2016,7 +2076,7 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
         ):
             rejected["market_line_too_volatile"] += 1
             continue
-        hit_probability = candidate.calibrated_hit_probability
+        hit_probability = candidate.final_hit_probability
         min_hit_probability = float(args.min_hit_probability)
         if use_optimized_over_profile:
             hit_probability = candidate.model_hit_probability
@@ -2362,6 +2422,9 @@ def write_selected_csv(path: Path, selected: list[Candidate], args: argparse.Nam
         "Selection_Score",
         "Confidence_Tier",
         "Market_Bucket",
+        "Historically_Calibrated_Hit_Probability",
+        "Hit_Probability_Calibration_Status",
+        "Final_Hit_Probability",
     ]
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8", newline="") as handle:
@@ -2466,6 +2529,11 @@ def write_selected_csv(path: Path, selected: list[Candidate], args: argparse.Nam
                     "Selection_Score": f"{candidate.selection_score:.6f}",
                     "Confidence_Tier": candidate.confidence_tier,
                     "Market_Bucket": candidate.market_bucket,
+                    "Historically_Calibrated_Hit_Probability": (
+                        "" if candidate.historically_calibrated_hit_probability is None else f"{candidate.historically_calibrated_hit_probability:.6f}"
+                    ),
+                    "Hit_Probability_Calibration_Status": candidate.hit_probability_calibration_status,
+                    "Final_Hit_Probability": f"{candidate.final_hit_probability:.6f}",
                 }
             )
 
@@ -2621,7 +2689,7 @@ def write_summary_json(
         "filter_rejections": dict(rejected),
         "avg_abs_edge": round(sum(candidate.abs_edge for candidate in selected) / len(selected), 6) if selected else 0.0,
         "avg_model_hit_probability": round(sum(candidate.model_hit_probability for candidate in selected) / len(selected), 6) if selected else 0.0,
-        "avg_hit_probability": round(sum(candidate.calibrated_hit_probability for candidate in selected) / len(selected), 6) if selected else 0.0,
+        "avg_hit_probability": round(sum(candidate.final_hit_probability for candidate in selected) / len(selected), 6) if selected else 0.0,
         "avg_model_graded_hit_rate": round(sum(candidate.model_graded_hit_rate for candidate in selected) / len(selected), 6) if selected else 0.0,
         "avg_graded_hit_rate": round(sum(candidate.calibrated_graded_hit_rate for candidate in selected) / len(selected), 6) if selected else 0.0,
         "avg_precision_score": round(sum(candidate.precision_score for candidate in selected) / len(selected), 6) if selected else 0.0,
@@ -2674,7 +2742,8 @@ def write_summary_json(
                 "projected_pitches": to_float(candidate.raw.get("Projected_Pitches"), 0.0),
                 "prediction": round(candidate.prediction, 4),
                 "model_hit_probability": round(candidate.model_hit_probability, 4),
-                "estimated_hit_probability": round(candidate.calibrated_hit_probability, 4),
+                "estimated_hit_probability": round(candidate.final_hit_probability, 4),
+                "hit_probability_calibration_status": candidate.hit_probability_calibration_status,
                 "historical_bucket_win_rate": round(candidate.historical_bucket_win_rate, 4),
                 "historical_bucket_support": int(candidate.historical_bucket_support),
                 "market_books": int(candidate.market_books),
@@ -2703,21 +2772,23 @@ def write_summary_json(
     path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
 
-def prepare_candidates_full(
+def prepare_candidates(
     args: argparse.Namespace,
-) -> tuple[list[Candidate], Counter, int, dict | None, dict | None, dict | None, dict | None]:
-    """Real end-to-end candidate build + structural filter (calibration/
-    bet-profile/live-confidence/pick-survival loading, load_candidates,
-    filter_candidates) -- everything main() does before diversification
-    ranking. Returns (eligible, rejected, total_candidates, calibration,
-    bet_profile_priors, live_confidence_calibration, pick_survival_model)
-    -- everything main() needs, including for write_summary_json(), so
-    main() never has to reach into this function's local state (the
-    NameError this docstring's own history warns about -- see git blame).
-    prepare_and_filter_candidates() below is a thin (eligible, rejected)
-    wrapper around this for callers that only need the filtered
-    candidates (build_v11_eligible_training_set.py, compare_v11_v12_
-    slates.py, select_high_hit_parlay.py)."""
+) -> tuple[list[Candidate], dict | None, dict | None, dict | None, dict | None]:
+    """Real candidate load only -- everything prepare_candidates_full()
+    below does up to but not including the structural filter_candidates()
+    call. Returns (candidates, calibration, bet_profile_priors,
+    live_confidence_calibration, pick_survival_model) for the FULL,
+    unfiltered candidate population (every row build_candidate() can
+    build a Candidate for, regardless of whether it would pass any
+    selection gate). Split out so a caller that needs every real
+    candidate -- not just the ones a particular policy's gates let
+    through -- can reuse the exact real loading logic main() uses
+    (calibration/priors/pick-survival/winner-signature state, then
+    load_candidates()) rather than a hand-approximated copy of it.
+    train_hit_probability_calibration.py is the reason this exists: it
+    fits a real calibration curve against every real graded row, not
+    just the ones v11/v13's structural gates already let through."""
     require_file(args.pool_csv)
     history_before_date = parse_date(args.history_before_date) if args.history_before_date else None
     if args.history_before_date and history_before_date is None:
@@ -2734,6 +2805,8 @@ def prepare_candidates_full(
         args.pick_survival_cache_json = default_pick_survival_cache_path(args.history_season)
     if getattr(args, "winner_signature_cache_json", None) is None and history_before_date is None:
         args.winner_signature_cache_json = default_winner_signature_cache_path(args.history_season)
+    if getattr(args, "hit_probability_calibration_cache_json", None) is None and history_before_date is None:
+        args.hit_probability_calibration_cache_json = default_hit_probability_calibration_cache_path(args.history_season)
 
     calibration = None
     if not args.disable_historical_calibration:
@@ -2776,6 +2849,14 @@ def prepare_candidates_full(
             winner_signature_cache_json.resolve() if winner_signature_cache_json else None,
             pool_run_date,
         )
+    hit_probability_calibration = None
+    if not getattr(args, "disable_hit_probability_calibration", False):
+        pool_run_date = infer_pool_run_date(args.pool_csv)
+        hit_probability_calibration_cache_json = getattr(args, "hit_probability_calibration_cache_json", None)
+        hit_probability_calibration = load_hit_probability_calibration(
+            hit_probability_calibration_cache_json.resolve() if hit_probability_calibration_cache_json else None,
+            pool_run_date,
+        )
 
     candidates = load_candidates(
         args.pool_csv,
@@ -2792,7 +2873,27 @@ def prepare_candidates_full(
         prefer_confident_side=bool(args.prefer_confident_side),
         pick_survival_model=pick_survival_model,
         winner_signature_model=winner_signature_model,
+        hit_probability_calibration=hit_probability_calibration,
     )
+    return candidates, calibration, bet_profile_priors, live_confidence_calibration, pick_survival_model
+
+
+def prepare_candidates_full(
+    args: argparse.Namespace,
+) -> tuple[list[Candidate], Counter, int, dict | None, dict | None, dict | None, dict | None]:
+    """Real end-to-end candidate build + structural filter (calibration/
+    bet-profile/live-confidence/pick-survival loading, load_candidates,
+    filter_candidates) -- everything main() does before diversification
+    ranking. Returns (eligible, rejected, total_candidates, calibration,
+    bet_profile_priors, live_confidence_calibration, pick_survival_model)
+    -- everything main() needs, including for write_summary_json(), so
+    main() never has to reach into this function's local state (the
+    NameError this docstring's own history warns about -- see git blame).
+    prepare_and_filter_candidates() below is a thin (eligible, rejected)
+    wrapper around this for callers that only need the filtered
+    candidates (build_v11_eligible_training_set.py, compare_v11_v12_
+    slates.py, select_high_hit_parlay.py)."""
+    candidates, calibration, bet_profile_priors, live_confidence_calibration, pick_survival_model = prepare_candidates(args)
     eligible, rejected = filter_candidates(candidates, args)
     return eligible, rejected, len(candidates), calibration, bet_profile_priors, live_confidence_calibration, pick_survival_model
 
@@ -2850,6 +2951,7 @@ def main() -> None:
                 f"{idx:>2}. {candidate.player} {candidate.target} {candidate.direction} "
                 f"(line {candidate.market_line:.1f}, pred {candidate.prediction:.3f}, "
                 f"model {candidate.model_hit_probability:.1%}, calibrated {candidate.calibrated_hit_probability:.1%}, "
+                f"final {candidate.final_hit_probability:.1%}, "
                 f"bucket {candidate.historical_bucket_win_rate:.1%} x {candidate.historical_bucket_support}, "
                 f"score {candidate.selection_score:.3f})"
             )

@@ -335,3 +335,85 @@ def test_ranked_evaluation_reports_game_diversified_parlay() -> None:
     assert metrics["diversified_parlay_constraint"] == "maximum_one_leg_per_game"
     assert metrics["diversified_parlay_days"] == 1
     assert metrics["diversified_parlay_roi"] == 3.0
+
+
+def _hit_probability_calibration_payload(status: str = "active", training_rows: int = 4000) -> dict:
+    # A simple, real monotonic step: everything above 0.5 gets pulled down
+    # by a fixed 0.10 -- enough to exercise interpolation without needing
+    # a real isotonic fit in these unit tests (train_hit_probability_
+    # calibration's own real fit is exercised separately, against real
+    # archived data, by test_hit_probability_calibration.py).
+    return {
+        "status": status,
+        "training_rows": training_rows,
+        "training_end_date": "2026-08-08",
+        "breakpoints": [[0.0, 0.0], [0.5, 0.40], [0.7, 0.60], [1.0, 0.90]],
+    }
+
+
+def test_apply_hit_probability_calibration_pulls_probability_down() -> None:
+    calibrated, status, training_rows = survival.apply_hit_probability_calibration(
+        0.70, _hit_probability_calibration_payload()
+    )
+
+    assert calibrated == pytest.approx(0.60)
+    assert status == "active"
+    assert training_rows == 4000
+
+
+def test_apply_hit_probability_calibration_interpolates_between_breakpoints() -> None:
+    calibrated, _, _ = survival.apply_hit_probability_calibration(0.60, _hit_probability_calibration_payload())
+
+    # Linear interpolation between (0.5, 0.40) and (0.7, 0.60): halfway in
+    # x is halfway in y.
+    assert calibrated == pytest.approx(0.50)
+
+
+def test_apply_hit_probability_calibration_disabled_without_a_payload() -> None:
+    assert survival.apply_hit_probability_calibration(0.70, None) == (None, "disabled", 0)
+
+
+def test_apply_hit_probability_calibration_disabled_on_shadow_status_that_is_not_shadow_or_active() -> None:
+    payload = _hit_probability_calibration_payload(status="shadow_no_holdout_improvement")
+    assert survival.apply_hit_probability_calibration(0.70, payload) == (None, "disabled", 0)
+
+
+def test_apply_hit_probability_calibration_disabled_without_breakpoints() -> None:
+    payload = _hit_probability_calibration_payload()
+    payload["breakpoints"] = []
+    assert survival.apply_hit_probability_calibration(0.70, payload) == (None, "disabled", 0)
+
+
+def test_apply_hit_probability_calibration_disabled_without_input_probability() -> None:
+    assert survival.apply_hit_probability_calibration(None, _hit_probability_calibration_payload()) == (None, "disabled", 0)
+
+
+def test_apply_hit_probability_calibration_clamps_to_zero_one() -> None:
+    payload = _hit_probability_calibration_payload()
+    payload["breakpoints"] = [[0.0, 0.05], [1.0, 0.95]]
+    calibrated, _, _ = survival.apply_hit_probability_calibration(1.5, payload)
+    assert calibrated == pytest.approx(0.95)
+    calibrated, _, _ = survival.apply_hit_probability_calibration(-0.5, payload)
+    assert calibrated == pytest.approx(0.05)
+
+
+def test_load_hit_probability_calibration_missing_path_returns_none(tmp_path: Path) -> None:
+    assert survival.load_hit_probability_calibration(None, date(2026, 8, 20)) is None
+    assert survival.load_hit_probability_calibration(tmp_path / "missing.json", date(2026, 8, 20)) is None
+
+
+def test_load_hit_probability_calibration_fails_closed_on_training_cutoff(tmp_path: Path) -> None:
+    import json
+
+    path = tmp_path / "hit_probability_isotonic_calibration_2026.json"
+    path.write_text(json.dumps(_hit_probability_calibration_payload()), encoding="utf-8")
+
+    # A run_date on or before training_end_date would leak that date's own
+    # outcome back into itself -- must fail closed to None.
+    assert survival.load_hit_probability_calibration(path, date(2026, 8, 8)) is None
+    assert survival.load_hit_probability_calibration(path, date(2026, 8, 1)) is None
+
+    # A run_date safely after training_end_date loads normally.
+    loaded = survival.load_hit_probability_calibration(path, date(2026, 8, 27))
+    assert loaded is not None
+    assert loaded["status"] == "active"

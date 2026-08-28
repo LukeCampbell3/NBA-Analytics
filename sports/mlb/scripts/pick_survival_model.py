@@ -844,6 +844,55 @@ def apply_winner_signature_model(
     )
 
 
+# Real isotonic recalibration of hit probability against real settled
+# outcomes -- see hit_probability_calibration.py for the training side
+# (harvest_calibration_rows/train_hit_probability_calibration), which
+# imports select_high_precision_predictions.py to build its training
+# rows. The apply/load side lives here instead, matching this module's
+# existing role as the dependency-free half of every shadow/veto model
+# select_high_precision_predictions.py applies -- putting it there
+# instead would create an import cycle (that module already imports
+# FROM this one).
+def apply_hit_probability_calibration(
+    model_hit_probability: float | None, payload: dict[str, Any] | None
+) -> tuple[float | None, str, int]:
+    """Real, negative-authority-only application: returns
+    (historically_calibrated_hit_probability, status, training_rows).
+    Callers combine this with the existing calibrated_hit_probability via
+    min(...) -- this can only ever pull a candidate's effective
+    probability DOWN toward what real settled outcomes actually support
+    (found by direct investigation: a real n=6,084 sample showed a "70%"
+    candidate wins about 63% of the time), never raise it. Returns
+    (None, "disabled", 0) if the model isn't active/shadow, has no
+    breakpoints, or the input probability is missing."""
+    if not isinstance(payload, dict) or payload.get("status") not in {"shadow", "active"}:
+        return None, "disabled", 0
+    breakpoints = payload.get("breakpoints") or []
+    if not breakpoints or model_hit_probability is None:
+        return None, "disabled", 0
+    xs = [float(point[0]) for point in breakpoints]
+    ys = [float(point[1]) for point in breakpoints]
+    calibrated = float(np.interp(float(model_hit_probability), xs, ys))
+    calibrated = max(0.0, min(1.0, calibrated))
+    return calibrated, str(payload.get("status")), int(payload.get("training_rows", 0) or 0)
+
+
+def load_hit_probability_calibration(path: Path | None, run_date: date | None) -> dict | None:
+    """Same real load/point-in-time-safety contract as load_pick_
+    survival_model(): a model trained using a given date's own outcome
+    can never be applied when replaying that same date."""
+    if path is None or not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    training_end = payload.get("training_end_date")
+    if isinstance(run_date, date) and training_end and str(training_end) >= run_date.isoformat():
+        return None
+    return payload
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--processed-root", type=Path, default=DEFAULT_PROCESSED_ROOT)

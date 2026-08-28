@@ -18,13 +18,15 @@ SPORT_PAYLOADS = {
     "nba": Path("sports/nba/web/data/daily_predictions.json"),
     "mlb": Path("sports/mlb/web/data/daily_predictions.json"),
 }
-# v11 -> v13: real book-count-gate relaxation only -- see run_daily_
-# predictions.py's MLB_PRIMARY_POLICY_PROFILE comment for the full real
-# root cause (THE_ODDS_API_KEY was never configured in this repo, so
-# fanduel_public -- a single real book -- is the only provider that has
-# ever actually supplied data) and evidence.
-MLB_POLICY_PROFILE = "premium_evidence_gated_v13"
-MLB_LEGACY_POLICY_PROFILE = "premium_evidence_gated_v11"
+# v13 -> v14: real isotonic hit-probability recalibration, not a
+# threshold change -- --min-hit-probability stays 0.70, but that number
+# is now checked against a real, holdout-validated recalibrated
+# probability instead of an overconfident raw blend. v11 -> v13: real
+# book-count-gate relaxation. See run_daily_predictions.py's
+# MLB_PRIMARY_POLICY_PROFILE comment for the full real root cause and
+# evidence behind both changes.
+MLB_POLICY_PROFILE = "premium_evidence_gated_v14"
+MLB_LEGACY_POLICY_PROFILE = "premium_evidence_gated_v13"
 MLB_REQUIRED_TARGETS = {"ER", "H", "HR", "K", "R", "RBI", "TB"}
 MLB_MIN_BOOKS = 1
 MLB_MIN_COMMON_BOOKS = 1
