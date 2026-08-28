@@ -52,8 +52,14 @@
             <div id="predictionCards" class="vault-board" aria-live="polite" style="margin-top:16px;"></div>
             <div id="predictionEmpty" class="vault-empty" style="display:none;" role="status">
                 <h3>No predictions published</h3>
-                <p>No analytical signals are available for this run.</p>
+                <p>No analytical signals are available for this run. The model is deliberately selective, so an empty board is a normal, honest outcome, not a fault -- see <a href="/nba/prediction-about/#accuracyOverview">real accuracy results</a> for evidence the policy holds up.</p>
             </div>
+        </section>
+
+        <section class="pool-secondary" aria-label="Parlay pairs">
+            <div class="pool-section-heading"><h2>Parlay Pairs</h2></div>
+            <div id="parlayPairsStatus" class="prediction-about-callout"></div>
+            <div id="parlayPairsBoard" class="prediction-about-table-wrap"></div>
         </section>
 
         <section class="pool-secondary" aria-label="Watchlists">
@@ -72,6 +78,6 @@
 
     <script src="/vault/vault-components.js?v=14"></script>
     <script src="/vault/vault-shell.js?v=9"></script>
-    <script src="predictions.js?v=12"></script>
+    <script src="predictions.js?v=13"></script>
 </body>
 </html>

@@ -20,6 +20,8 @@ class DailyPredictionsPage {
             openingProjectionPool: document.getElementById('openingProjectionPool'),
             openingWatchlistStatus: document.getElementById('openingWatchlistStatus'),
             openingWatchlists: document.getElementById('openingWatchlists'),
+            parlayPairsStatus: document.getElementById('parlayPairsStatus'),
+            parlayPairsBoard: document.getElementById('parlayPairsBoard'),
         };
         this.init();
     }
@@ -174,6 +176,7 @@ class DailyPredictionsPage {
         try {
             await this.load(date);
             this.renderCards();
+            this.renderParlayPairs();
             return true;
         } catch (error) {
             console.error(error);
@@ -206,7 +209,7 @@ class DailyPredictionsPage {
             if (parlayDiff !== 0) return parlayDiff;
             const evDiff = (Number(b.ev) || 0) - (Number(a.ev) || 0);
             if (Math.abs(evDiff) > 1e-9) return evDiff;
-            return (Number(b.abs_edge) || 0) - (Number(a.abs_edge) || 0);
+            return (Number(b.abs_edge) || Number(b.edge) || 0) - (Number(a.abs_edge) || Number(a.edge) || 0);
         });
         this.renderRunMeta();
     }
@@ -331,6 +334,58 @@ class DailyPredictionsPage {
         this.elements.cards.innerHTML = this.plays
             .map((play, index) => cv.renderPredictionCard(play, index))
             .join('');
+    }
+
+    /**
+     * parlay_pairs (from sports/parlay_analysis.py's annotate_parlay_board(),
+     * a shared pair-scoring pass distinct from MLB's daily_parlay ticket
+     * system) was already computed and published on every real NBA run but
+     * never rendered anywhere on this page -- every leg still appears
+     * individually on the board above, so this section only adds the
+     * pairing context, it never introduces a play that wasn't already
+     * visible as its own single card.
+     */
+    renderParlayPairs() {
+        const summary = this.data?.parlay_summary || {};
+        const gate = this.data?.parlay_safety_gate || null;
+        const pairs = Array.isArray(this.data?.parlay_pairs) ? this.data.parlay_pairs : [];
+
+        if (this.elements.parlayPairsStatus) {
+            const reasonText = gate && gate.reason && gate.reason !== 'passed'
+                ? ` Reason: ${this.escapeHtml(String(gate.reason).replaceAll('_', ' '))}.`
+                : '';
+            const headline = pairs.length
+                ? `<strong>${pairs.length} parlay pair${pairs.length === 1 ? '' : 's'} cleared the pair-selection safety gate.</strong>`
+                : '<strong>No parlay pairs are published for this run.</strong>';
+            this.elements.parlayPairsStatus.innerHTML = `<p>${headline}${reasonText} Pairing two legs is never a claim of guaranteed correlation -- each leg already cleared the same single-play gates on its own and appears above as its own card.</p>`;
+        }
+
+        if (!this.elements.parlayPairsBoard) return;
+        if (!pairs.length) {
+            this.elements.parlayPairsBoard.innerHTML = '';
+            return;
+        }
+
+        const body = pairs.map((pair) => {
+            const legs = Array.isArray(pair.legs) ? pair.legs : [];
+            const legsHtml = legs.map((leg) => {
+                const player = this.escapeHtml(leg.player || 'n/a');
+                const market = this.escapeHtml(`${leg.direction || ''} ${leg.target || ''}`.trim() || 'n/a');
+                const price = Number.isFinite(Number(leg.selected_side_price)) ? this.escapeHtml(String(leg.selected_side_price)) : 'n/a';
+                const book = this.escapeHtml(leg.selected_sportsbook || 'n/a');
+                return `<div>${player} &mdash; ${market} (${price} @ ${book})</div>`;
+            }).join('');
+            const projected = Number.isFinite(Number(pair.projected_probability))
+                ? `${this.formatNum(Number(pair.projected_probability) * 100, 1)}%`
+                : 'n/a';
+            return `<tr>
+                <td>${this.escapeHtml(this.formatInt(pair.pair_rank))}</td>
+                <td>${legsHtml || 'n/a'}</td>
+                <td>${this.escapeHtml(projected)}</td>
+            </tr>`;
+        }).join('');
+
+        this.elements.parlayPairsBoard.innerHTML = `<table class="prediction-about-table"><thead><tr><th>RK</th><th>Legs</th><th>Projected Hit Rate</th></tr></thead><tbody>${body}</tbody></table>`;
     }
 
     escapeHtml(value) {
