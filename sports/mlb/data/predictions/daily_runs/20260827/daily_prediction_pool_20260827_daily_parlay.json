@@ -1,0 +1,510 @@
+{
+  "schema_version": 4,
+  "policy_version": "mlb_fanduel_public_betslip_parlay_v9",
+  "generated_at_utc": "2026-08-28T01:57:30.048931+00:00",
+  "run_date": "2026-08-27",
+  "status": "withheld",
+  "objective": "exact_set_search_with_role_survival_consensus_and_shadow_positive_ev_alternates",
+  "direction_policy": "OVER_ONLY",
+  "betslip_policy": {
+    "sportsbook_key": "fanduel",
+    "sportsbook": "FanDuel",
+    "status": "unavailable",
+    "construction": "direct_fanduel_public_market_ids_only",
+    "linked_ticket_count": 0
+  },
+  "allowed_leg_counts": [
+    2,
+    3,
+    4
+  ],
+  "gates": {
+    "min_leg_probability": 0.62,
+    "min_ticket_probability": 0.4,
+    "ticket_probability_floors": {
+      "2": 0.4,
+      "3": 0.25,
+      "4": 0.18
+    },
+    "ticket_max_decimal_prices": {
+      "2": 6.0,
+      "3": 10.0,
+      "4": 18.0
+    },
+    "min_combined_decimal_price": 1.8,
+    "min_expected_return_per_unit": 0.0,
+    "min_market_books": 1,
+    "min_common_market_books": 1,
+    "single_book_scope": "exact_fanduel_quote_with_provider_market_and_selection_ids",
+    "same_sportsbook_required": true,
+    "linked_sportsbook": "fanduel",
+    "direct_fanduel_public_selection_link_required_for_betslip": true,
+    "distinct_games_required": true,
+    "hit_survival": {
+      "model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+      "status": "development_shadow",
+      "evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+      "minimum_probability": 0.58,
+      "minimum_consensus_probability": 0.62,
+      "maximum_probability_disagreement": 0.16,
+      "probability_components": [
+        "role_survival_model",
+        "no_vig_market_probability",
+        "existing_calibrated_probability"
+      ],
+      "roi_claim": false
+    },
+    "latent_parlay": {
+      "model_version": "mlb_latent_parlay_set_attention_v3",
+      "status": "prospective_shadow",
+      "evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+      "ranking_effect": "none_on_authorized_ladder",
+      "shadow_ranking_policy": {
+        "2": "bounded_attention_joint_probability",
+        "3": "market_residual_uncertainty_penalized_product",
+        "4": "market_residual_uncertainty_penalized_product"
+      },
+      "maximum_legs": 4,
+      "in_support_required": true,
+      "roi_claim": false
+    },
+    "profit_boost": {
+      "status": "shadow_only",
+      "min_leg_probability": 0.18,
+      "min_ticket_probability": 0.1,
+      "min_combined_decimal_price": 4.0,
+      "max_combined_decimal_price": 15.0,
+      "min_expected_return_per_unit": 0.05,
+      "exact_sportsbook_alternate_price_required": true
+    }
+  },
+  "pool_candidate_count": 714,
+  "eligible_anchor_count": 0,
+  "considered_anchor_count": 0,
+  "alternate_line_candidate_count": 0,
+  "filter_rejections": {
+    "history_too_short": 2,
+    "leg_probability_too_low": 12,
+    "leg_value_too_low": 4,
+    "not_over": 433,
+    "official_game_closed": 4,
+    "price_outside_playable_range": 7,
+    "unconfirmed_market_price": 235,
+    "unsupported_anchor_target": 17
+  },
+  "selected_ticket": null,
+  "profit_boost_ticket": null,
+  "ticket_ladder": [],
+  "latent_shadow_ticket_ladder": [],
+  "latent_parlay_validation": {
+    "model_version": "mlb_latent_parlay_set_attention_v3",
+    "status": "development_shadow",
+    "evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+    "device": "NVIDIA GeForce RTX 4080 SUPER",
+    "cuda_version": "12.8",
+    "claim_scope": "synthetic H over 0.5 hit-chain ranking only; no executable price or ROI claim",
+    "leakage_exclusions": [
+      "same-game H, PA, AB, Team_PA_share, wOBA, xwOBA, ISO, Barrel%, HardHit%",
+      "historical H_market_gap and projection derived from same-game fields"
+    ],
+    "identity_contract": {
+      "player": "normalized player name shared by training and production",
+      "pitcher": "MLBAM identifier with normalized-name fallback",
+      "team": "team abbreviation",
+      "opponent": "team abbreviation"
+    },
+    "rows": 23046,
+    "dates": 125,
+    "partitions": {
+      "development": {
+        "start": "2026-03-30",
+        "end": "2026-06-24"
+      },
+      "calibration": {
+        "start": "2026-06-25",
+        "end": "2026-07-16"
+      },
+      "locked_holdout": {
+        "start": "2026-07-17",
+        "end": "2026-08-05"
+      }
+    },
+    "partition_rows": {
+      "development": 13303,
+      "calibration": 4488,
+      "locked_holdout": 5255
+    },
+    "sampled_tickets": {
+      "development": 17520,
+      "calibration": 6480,
+      "locked_holdout": 7200
+    },
+    "calibration": {
+      "legs": {
+        "rows": 4488,
+        "wins": 2528,
+        "hit_rate": 0.5632798573975044,
+        "mean_probability": 0.5625202655792236,
+        "brier_score": 0.2424343086651612,
+        "log_loss": 0.6778125853224081,
+        "roc_auc": 0.5708496472164816
+      },
+      "safe_rolling_baseline": {
+        "rows": 4488,
+        "wins": 2528,
+        "hit_rate": 0.5632798573975044,
+        "mean_probability": 0.5632797236126167,
+        "brier_score": 0.24418589648717387,
+        "log_loss": 0.6814756761962799,
+        "roc_auc": 0.5519312273960217
+      },
+      "sampled_tickets": {
+        "rows": 6480,
+        "wins": 1845,
+        "hit_rate": 0.2847222222222222,
+        "mean_probability": 0.28751012682914734,
+        "brier_score": 0.19658613861689764,
+        "log_loss": 0.5804600342416407,
+        "roc_auc": 0.6205273882296536
+      }
+    },
+    "locked_holdout": {
+      "legs": {
+        "rows": 5255,
+        "wins": 2891,
+        "hit_rate": 0.5501427212178878,
+        "mean_probability": 0.5631510615348816,
+        "brier_score": 0.24408094480171033,
+        "log_loss": 0.6811830883046901,
+        "roc_auc": 0.5704383491329941
+      },
+      "safe_rolling_baseline": {
+        "rows": 5255,
+        "wins": 2891,
+        "hit_rate": 0.5501427212178878,
+        "mean_probability": 0.5603725246530553,
+        "brier_score": 0.2444186750878317,
+        "log_loss": 0.6819304777519898,
+        "roc_auc": 0.5713790420237612
+      },
+      "daily_top_two_legs": {
+        "latent": {
+          "legs": 40,
+          "wins": 30,
+          "hit_rate": 0.75,
+          "wilson_95": [
+            0.598057409330299,
+            0.8581303210445048
+          ]
+        },
+        "safe_rolling_baseline": {
+          "legs": 40,
+          "wins": 25,
+          "hit_rate": 0.625,
+          "wilson_95": [
+            0.47032160054531913,
+            0.7577722646420829
+          ]
+        }
+      },
+      "sampled_tickets": {
+        "rows": 7200,
+        "wins": 1925,
+        "hit_rate": 0.2673611111111111,
+        "mean_probability": 0.28158947825431824,
+        "brier_score": 0.18543409529511665,
+        "log_loss": 0.5541604918377484,
+        "roc_auc": 0.6489663814858129
+      },
+      "daily_ranking": {
+        "2": {
+          "slates": 20,
+          "latent_ticket_wins": 10,
+          "latent_ticket_hit_rate": 0.5,
+          "latent_wilson_95": [
+            0.2992949144298199,
+            0.7007050855701801
+          ],
+          "independent_product_wins": 10,
+          "independent_product_hit_rate": 0.5,
+          "independent_wilson_95": [
+            0.2992949144298199,
+            0.7007050855701801
+          ]
+        },
+        "3": {
+          "slates": 20,
+          "latent_ticket_wins": 7,
+          "latent_ticket_hit_rate": 0.35,
+          "latent_wilson_95": [
+            0.18118954786794464,
+            0.5671494897805354
+          ],
+          "independent_product_wins": 8,
+          "independent_product_hit_rate": 0.4,
+          "independent_wilson_95": [
+            0.21880396741419272,
+            0.613422057684794
+          ]
+        },
+        "4": {
+          "slates": 20,
+          "latent_ticket_wins": 6,
+          "latent_ticket_hit_rate": 0.3,
+          "latent_wilson_95": [
+            0.14547527396899385,
+            0.5189767762289793
+          ],
+          "independent_product_wins": 6,
+          "independent_product_hit_rate": 0.3,
+          "independent_wilson_95": [
+            0.14547527396899385,
+            0.5189767762289793
+          ]
+        }
+      }
+    },
+    "deployment_fit": {
+      "status": "prospective_shadow_only",
+      "training_period": {
+        "start": "2026-03-30",
+        "end": "2026-07-16"
+      },
+      "probability_calibration_period": {
+        "start": "2026-07-17",
+        "end": "2026-08-05"
+      },
+      "training_rows": 17791,
+      "calibration_rows": 5255,
+      "calibration_legs": {
+        "rows": 5255,
+        "wins": 2891,
+        "hit_rate": 0.5501427212178878,
+        "mean_probability": 0.5305083394050598,
+        "brier_score": 0.2435080430484226,
+        "log_loss": 0.6800309584163625,
+        "roc_auc": 0.5774020224970311
+      },
+      "calibration_sampled_tickets": {
+        "rows": 7200,
+        "wins": 1927,
+        "hit_rate": 0.26763888888888887,
+        "mean_probability": 0.12740659713745117,
+        "brier_score": 0.2061659975211286,
+        "log_loss": 0.6245069055404697,
+        "roc_auc": 0.6564487149041671
+      },
+      "next_unseen_date": "2026-08-06"
+    },
+    "export_parity": {
+      "leg_probability_max_abs": 1.882963751587141e-08,
+      "leg_raw_probability_max_abs": 2.638824647682725e-08,
+      "ticket_probability_max_abs": 4.1938656991646894e-09,
+      "ticket_raw_probability_max_abs": 1.7148897024643617e-08
+    }
+  },
+  "hit_survival_validation": {
+    "model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+    "status": "development_shadow",
+    "evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+    "claim_scope": "hit-rate ranking and confidence diagnostic only; executable prices are required for ROI",
+    "features": [
+      "projection",
+      "baseline",
+      "last_hits",
+      "batting_order",
+      "history_rows",
+      "is_home"
+    ],
+    "training_rows": 15993,
+    "training_dates": 113,
+    "frozen_training_cutoff_exclusive": "2026-07-30",
+    "partitions": {
+      "development": {
+        "start": "2026-03-30",
+        "end": "2026-06-23"
+      },
+      "calibration": {
+        "start": "2026-06-24",
+        "end": "2026-07-10"
+      },
+      "locked_recent_holdout": {
+        "start": "2026-07-11",
+        "end": "2026-07-29"
+      }
+    },
+    "calibration": {
+      "rows": 3114,
+      "wins": 1714,
+      "hit_rate": 0.550417469492614,
+      "mean_probability": 0.5504822699449573,
+      "brier_score": 0.2427361284894067,
+      "log_loss": 0.6784880389736997
+    },
+    "locked_recent_holdout": {
+      "rows": 3190,
+      "wins": 1695,
+      "hit_rate": 0.5313479623824452,
+      "mean_probability": 0.5505727741204153,
+      "brier_score": 0.24148337525216435,
+      "log_loss": 0.6759262240018022,
+      "daily_top_two": {
+        "legs": 32,
+        "leg_wins": 21,
+        "slates": 15,
+        "ticket_wins": 6,
+        "leg_hit_rate": 0.65625,
+        "leg_hit_rate_wilson_95_low": 0.4831077350878594,
+        "leg_hit_rate_wilson_95_high": 0.7958976664567146,
+        "ticket_hit_rate": 0.4,
+        "ticket_hit_rate_wilson_95_low": 0.19824228082594664,
+        "ticket_hit_rate_wilson_95_high": 0.642535572434923,
+        "mean_probability": 0.6744989268898502
+      },
+      "projection_baseline_daily_top_two": {
+        "legs": 32,
+        "leg_wins": 17,
+        "slates": 15,
+        "ticket_wins": 6,
+        "leg_hit_rate": 0.53125,
+        "leg_hit_rate_wilson_95_low": 0.3644923793257382,
+        "leg_hit_rate_wilson_95_high": 0.6913087009831766,
+        "ticket_hit_rate": 0.4,
+        "ticket_hit_rate_wilson_95_low": 0.19824228082594664,
+        "ticket_hit_rate_wilson_95_high": 0.642535572434923,
+        "mean_probability": 0.7678921143780982
+      }
+    }
+  },
+  "validation": {
+    "method": "stored_pre_event_projection_real_price_confirmed_grading",
+    "price_validation": "real market, at least five books, selected OVER price confirmed; no parlay ROI claim",
+    "history_before_date": "2026-08-27",
+    "event_rows": 328,
+    "dates": 10,
+    "by_leg_count": [
+      {
+        "leg_count": 2,
+        "all_dates": {
+          "tickets": 9,
+          "dates": 9,
+          "hits": 8,
+          "hit_rate": 0.8888888888888888,
+          "win_rate_wilson_95_low": 0.5649937852319399,
+          "win_rate_wilson_95_high": 0.9801096286728695,
+          "mean_projected_probability": 0.8044273966557217,
+          "brier_score": 0.10312354211233236
+        },
+        "development": {
+          "tickets": 8,
+          "dates": 8,
+          "hits": 8,
+          "hit_rate": 1.0,
+          "win_rate_wilson_95_low": 0.6755843804891231,
+          "win_rate_wilson_95_high": 1.0,
+          "mean_projected_probability": 0.8094355379231893,
+          "brier_score": 0.042982775567192946
+        },
+        "fixed_recent_holdout": {
+          "tickets": 1,
+          "dates": 1,
+          "hits": 0,
+          "hit_rate": 0.0,
+          "win_rate_wilson_95_low": 0.0,
+          "win_rate_wilson_95_high": 0.7934567085261071,
+          "mean_projected_probability": 0.764362266515981,
+          "brier_score": 0.5842496744734477
+        }
+      },
+      {
+        "leg_count": 3,
+        "all_dates": {
+          "tickets": 9,
+          "dates": 9,
+          "hits": 7,
+          "hit_rate": 0.7777777777777778,
+          "win_rate_wilson_95_low": 0.4525833436728054,
+          "win_rate_wilson_95_high": 0.9367762376877727,
+          "mean_projected_probability": 0.6886033651133826,
+          "brier_score": 0.15276469649933794
+        },
+        "development": {
+          "tickets": 8,
+          "dates": 8,
+          "hits": 7,
+          "hit_rate": 0.875,
+          "win_rate_wilson_95_low": 0.5291051942301386,
+          "win_rate_wilson_95_high": 0.9775830911367038,
+          "mean_projected_probability": 0.694494311554102,
+          "brier_score": 0.12042388434189569
+        },
+        "fixed_recent_holdout": {
+          "tickets": 1,
+          "dates": 1,
+          "hits": 0,
+          "hit_rate": 0.0,
+          "win_rate_wilson_95_low": 0.0,
+          "win_rate_wilson_95_high": 0.7934567085261071,
+          "mean_projected_probability": 0.6414757935876271,
+          "brier_score": 0.41149119375887594
+        }
+      },
+      {
+        "leg_count": 4,
+        "all_dates": {
+          "tickets": 9,
+          "dates": 9,
+          "hits": 5,
+          "hit_rate": 0.5555555555555556,
+          "win_rate_wilson_95_low": 0.2666473457440297,
+          "win_rate_wilson_95_high": 0.811224570528086,
+          "mean_projected_probability": 0.577695433325778,
+          "brier_score": 0.26091561936381785
+        },
+        "development": {
+          "tickets": 8,
+          "dates": 8,
+          "hits": 5,
+          "hit_rate": 0.625,
+          "win_rate_wilson_95_low": 0.30573785458380187,
+          "win_rate_wilson_95_high": 0.863158240538479,
+          "mean_projected_probability": 0.5831899191495624,
+          "brier_score": 0.25792033381561763
+        },
+        "fixed_recent_holdout": {
+          "tickets": 1,
+          "dates": 1,
+          "hits": 0,
+          "hit_rate": 0.0,
+          "win_rate_wilson_95_low": 0.0,
+          "win_rate_wilson_95_high": 0.7934567085261071,
+          "mean_projected_probability": 0.5337395467355025,
+          "brier_score": 0.2848779037494197
+        }
+      }
+    ],
+    "alternate_line_margin_audit": {
+      "method": "synthetic_event_grading_without_alternate_price_history",
+      "claim_scope": "hit-rate diagnostic only; does not establish alternate-line ROI",
+      "rows": 328,
+      "base_hit_rate": 0.625,
+      "one_unit_higher_hit_rate": 0.3475609756097561,
+      "two_units_higher_hit_rate": 0.25609756097560976,
+      "winner_margin_retention_one_unit": 0.5560975609756098,
+      "by_target": {
+        "R": {
+          "rows": 145,
+          "base_hit_rate": 0.5793103448275863,
+          "one_unit_higher_hit_rate": 0.16551724137931034,
+          "winner_margin_retention_one_unit": 0.2857142857142857
+        },
+        "TB": {
+          "rows": 183,
+          "base_hit_rate": 0.6612021857923497,
+          "one_unit_higher_hit_rate": 0.4918032786885246,
+          "winner_margin_retention_one_unit": 0.743801652892562
+        }
+      }
+    }
+  }
+}
