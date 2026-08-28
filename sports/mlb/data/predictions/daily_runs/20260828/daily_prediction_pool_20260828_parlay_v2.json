@@ -1,8 +1,8 @@
 {
   "action": "ACT",
-  "calibration_as_of": "2026-08-28T01:29:26.516059+00:00",
-  "calibration_snapshot_id": "e844f4b73a56672f",
-  "calibration_snapshot_sha256": "e844f4b73a56672fe23b73e871dfb0150b9cecc36ebc0ee8ffc56780b98bc6f2",
+  "calibration_as_of": "2026-08-28T11:55:56.403312+00:00",
+  "calibration_snapshot_id": "464fb05d2ec1501e",
+  "calibration_snapshot_sha256": "464fb05d2ec1501e8c6a10bd85f290e1b93cfabfe6940b16b1a80709d8e4757d",
   "decision_record": {
     "action": 1,
     "candidate_universe_size": 500,
@@ -11,16 +11,16 @@
     "world_certificate_diagnostics": {
       "certified": false,
       "counterexample_count": 3,
-      "counterexample_mass": 0.7065823095366839,
+      "counterexample_mass": 0.7028552079699706,
       "outside_probability_mass": 0.0,
       "retained_probability_mass": 1.0,
       "retained_world_count": 4,
       "version": "NONVACUOUS_WORLD_CERTIFICATE_V1",
-      "world_risk_rho": 0.7065823095366839
+      "world_risk_rho": 0.7028552079699706
     },
     "world_gate_mode": "OBSERVE_ONLY"
   },
-  "decision_timestamp_utc": "2026-08-28T01:30:01.907161+00:00",
+  "decision_timestamp_utc": "2026-08-28T11:56:21.085277+00:00",
   "eligibility_reason": "operationally_eligible",
   "eligible": true,
   "evidence_status": {
@@ -33,32 +33,32 @@
   "policy_version": "PARLAY_POLICY_V2_TWO_LEG_SINGLE_ACTION",
   "selected_parlay": {
     "adapter_version": "PARLAY_V2_CANDIDATE_ADAPTER_V1",
-    "candidate_id": "20260828|Pete Crow-Armstrong|TB|OVER|1.5|824638||Shohei Ohtani|TB|OVER|1.5|824231",
-    "joint_probability_estimate": 0.2934176904633161,
+    "candidate_id": "20260828|Alex Bregman|TB|OVER|1.5|824638||Pete Alonso|TB|OVER|1.5|824960",
+    "joint_probability_estimate": 0.29714479203002947,
     "joint_probability_method": "independence_binary_world_model",
     "joint_score": 1.0,
     "leg_1": {
       "book": "real",
-      "decimal_price": 1.7407407407407407,
+      "decimal_price": 2.3,
       "game_id": "824638",
       "in_support": true,
       "line": 1.5,
-      "model_probability_estimate": 0.5400275673721652,
-      "player": "Pete Crow-Armstrong",
-      "player_id": "pete_crow-armstrong",
+      "model_probability_estimate": 0.5243628020404033,
+      "player": "Alex Bregman",
+      "player_id": "alex_bregman",
       "quote_timestamp": "20260828",
       "side": "OVER",
       "target": "TB"
     },
     "leg_2": {
       "book": "real",
-      "decimal_price": 1.9090909090909092,
-      "game_id": "824231",
+      "decimal_price": 1.6896551724137931,
+      "game_id": "824960",
       "in_support": true,
       "line": 1.5,
-      "model_probability_estimate": 0.5433383556530633,
-      "player": "Shohei Ohtani",
-      "player_id": "shohei_ohtani",
+      "model_probability_estimate": 0.5666778628723816,
+      "player": "Pete Alonso",
+      "player_id": "pete_alonso",
       "quote_timestamp": "20260828",
       "side": "OVER",
       "target": "TB"
@@ -74,7 +74,7 @@
     },
     "world_diagnostics": {
       "counterexample_count": 3,
-      "counterexample_mass": 0.7065823095366839,
+      "counterexample_mass": 0.7028552079699706,
       "nonvacuous_world_certificate": false,
       "retained_probability_mass": 1.0,
       "retained_world_count": 4
@@ -83,32 +83,32 @@
   "selection_status": "SELECTED",
   "shadow_candidate": {
     "adapter_version": "PARLAY_V2_CANDIDATE_ADAPTER_V1",
-    "candidate_id": "20260828|Pete Crow-Armstrong|TB|OVER|1.5|824638||Shohei Ohtani|TB|OVER|1.5|824231",
-    "joint_probability_estimate": 0.2934176904633161,
+    "candidate_id": "20260828|Matt Olson|TB|OVER|1.5|824877||Pete Alonso|TB|OVER|1.5|824960",
+    "joint_probability_estimate": 0.3114313132692514,
     "joint_probability_method": "independence_binary_world_model",
     "joint_score": 1.0,
     "leg_1": {
       "book": "real",
-      "decimal_price": 1.7407407407407407,
-      "game_id": "824638",
+      "decimal_price": 1.8,
+      "game_id": "824877",
       "in_support": true,
       "line": 1.5,
-      "model_probability_estimate": 0.5400275673721652,
-      "player": "Pete Crow-Armstrong",
-      "player_id": "pete_crow-armstrong",
+      "model_probability_estimate": 0.5495738119902296,
+      "player": "Matt Olson",
+      "player_id": "matt_olson",
       "quote_timestamp": "20260828",
       "side": "OVER",
       "target": "TB"
     },
     "leg_2": {
       "book": "real",
-      "decimal_price": 1.9090909090909092,
-      "game_id": "824231",
+      "decimal_price": 1.6896551724137931,
+      "game_id": "824960",
       "in_support": true,
       "line": 1.5,
-      "model_probability_estimate": 0.5433383556530633,
-      "player": "Shohei Ohtani",
-      "player_id": "shohei_ohtani",
+      "model_probability_estimate": 0.5666778628723816,
+      "player": "Pete Alonso",
+      "player_id": "pete_alonso",
       "quote_timestamp": "20260828",
       "side": "OVER",
       "target": "TB"
@@ -124,7 +124,7 @@
     },
     "world_diagnostics": {
       "counterexample_count": 3,
-      "counterexample_mass": 0.7065823095366839,
+      "counterexample_mass": 0.6885686867307487,
       "nonvacuous_world_certificate": false,
       "retained_probability_mass": 1.0,
       "retained_world_count": 4
