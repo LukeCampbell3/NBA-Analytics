@@ -7,13 +7,15 @@
     "20260807",
     "20260808",
     "20260809",
-    "20260811"
+    "20260810",
+    "20260811",
+    "20260828"
   ],
   "dates_with_load_errors": {},
   "description": "Real, settled backtest of the current live policy's exact selection logic replayed against this repo's own archived raw daily pools -- not today's live board. Every pick, gate, and grade here is real; none are hypothetical or fabricated.",
-  "generated_at_utc": "2026-08-28T12:16:36.776374+00:00",
+  "generated_at_utc": "2026-08-28T13:31:57.196038+00:00",
   "is_live_board": false,
-  "model_version": "premium_evidence_gated_v15",
+  "model_version": "premium_evidence_gated_v16",
   "picks": [
     {
       "date": "2026-08-02",
@@ -86,6 +88,46 @@
       "target": "R"
     },
     {
+      "date": "2026-08-02",
+      "direction": "UNDER",
+      "final_hit_probability": 0.715,
+      "market_line": 0.5,
+      "player": "Jahmai Jones",
+      "result": null,
+      "side_price": -173.0,
+      "target": "R"
+    },
+    {
+      "date": "2026-08-02",
+      "direction": "OVER",
+      "final_hit_probability": 0.6137,
+      "market_line": 1.5,
+      "player": "Wyatt Langford",
+      "result": "loss",
+      "side_price": 120.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-02",
+      "direction": "OVER",
+      "final_hit_probability": 0.6136,
+      "market_line": 1.5,
+      "player": "Yordan Alvarez",
+      "result": "win",
+      "side_price": 100.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-02",
+      "direction": "OVER",
+      "final_hit_probability": 0.6062,
+      "market_line": 1.5,
+      "player": "CJ Abrams",
+      "result": "loss",
+      "side_price": 116.0,
+      "target": "TB"
+    },
+    {
       "date": "2026-08-03",
       "direction": "UNDER",
       "final_hit_probability": 0.7945,
@@ -128,6 +170,16 @@
     {
       "date": "2026-08-03",
       "direction": "UNDER",
+      "final_hit_probability": 0.7332,
+      "market_line": 1.5,
+      "player": "Nathan Lukes",
+      "result": "win",
+      "side_price": -176.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-03",
+      "direction": "UNDER",
       "final_hit_probability": 0.7267,
       "market_line": 1.5,
       "player": "Trent Grisham",
@@ -144,6 +196,46 @@
       "result": "win",
       "side_price": -152.0,
       "target": "R"
+    },
+    {
+      "date": "2026-08-03",
+      "direction": "UNDER",
+      "final_hit_probability": 0.687,
+      "market_line": 1.5,
+      "player": "Corey Seager",
+      "result": "win",
+      "side_price": -163.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-03",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6813,
+      "market_line": 1.5,
+      "player": "Jake Mangum",
+      "result": "win",
+      "side_price": -157.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-03",
+      "direction": "OVER",
+      "final_hit_probability": 0.6074,
+      "market_line": 1.5,
+      "player": "James Wood",
+      "result": "loss",
+      "side_price": 105.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-03",
+      "direction": "OVER",
+      "final_hit_probability": 0.6054,
+      "market_line": 1.5,
+      "player": "CJ Abrams",
+      "result": "loss",
+      "side_price": 111.0,
+      "target": "TB"
     },
     {
       "date": "2026-08-04",
@@ -266,6 +358,36 @@
       "target": "TB"
     },
     {
+      "date": "2026-08-04",
+      "direction": "OVER",
+      "final_hit_probability": 0.627,
+      "market_line": 1.5,
+      "player": "Yordan Alvarez",
+      "result": "loss",
+      "side_price": 105.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-04",
+      "direction": "OVER",
+      "final_hit_probability": 0.61,
+      "market_line": 1.5,
+      "player": "Wyatt Langford",
+      "result": "loss",
+      "side_price": 120.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-04",
+      "direction": "OVER",
+      "final_hit_probability": 0.6013,
+      "market_line": 1.5,
+      "player": "Matt Olson",
+      "result": "win",
+      "side_price": 107.0,
+      "target": "TB"
+    },
+    {
       "date": "2026-08-05",
       "direction": "UNDER",
       "final_hit_probability": 0.8495,
@@ -294,6 +416,66 @@
       "result": "loss",
       "side_price": -159.0,
       "target": "R"
+    },
+    {
+      "date": "2026-08-05",
+      "direction": "OVER",
+      "final_hit_probability": 0.667,
+      "market_line": 0.5,
+      "player": "Tim Tawa",
+      "result": "win",
+      "side_price": -138.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-05",
+      "direction": "OVER",
+      "final_hit_probability": 0.6613,
+      "market_line": 0.5,
+      "player": "Joe Mack",
+      "result": "loss",
+      "side_price": -128.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-05",
+      "direction": "OVER",
+      "final_hit_probability": 0.6666,
+      "market_line": 0.5,
+      "player": "Jackson Holliday",
+      "result": "loss",
+      "side_price": -120.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-05",
+      "direction": "OVER",
+      "final_hit_probability": 0.6631,
+      "market_line": 0.5,
+      "player": "Spencer Torkelson",
+      "result": "loss",
+      "side_price": -120.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-05",
+      "direction": "OVER",
+      "final_hit_probability": 0.6629,
+      "market_line": 0.5,
+      "player": "Ryan Kreidler",
+      "result": "loss",
+      "side_price": -140.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-05",
+      "direction": "OVER",
+      "final_hit_probability": 0.6646,
+      "market_line": 0.5,
+      "player": "Jakob Marsee",
+      "result": "win",
+      "side_price": -150.0,
+      "target": "H"
     },
     {
       "date": "2026-08-05",
@@ -358,6 +540,16 @@
     {
       "date": "2026-08-05",
       "direction": "UNDER",
+      "final_hit_probability": 0.705,
+      "market_line": 1.5,
+      "player": "Luis Rengifo",
+      "result": "win",
+      "side_price": -159.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-05",
+      "direction": "UNDER",
       "final_hit_probability": 0.7219,
       "market_line": 1.5,
       "player": "Nick Fortes",
@@ -366,14 +558,84 @@
       "target": "TB"
     },
     {
-      "date": "2026-08-07",
+      "date": "2026-08-05",
       "direction": "UNDER",
-      "final_hit_probability": 0.741,
+      "final_hit_probability": 0.6988,
+      "market_line": 1.5,
+      "player": "Brandon Marsh",
+      "result": "win",
+      "side_price": -145.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-05",
+      "direction": "OVER",
+      "final_hit_probability": 0.6103,
+      "market_line": 1.5,
+      "player": "CJ Abrams",
+      "result": "win",
+      "side_price": 120.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-07",
+      "direction": "OVER",
+      "final_hit_probability": 0.658,
       "market_line": 0.5,
-      "player": "Rhys Hoskins",
+      "player": "Braden Montgomery",
+      "result": "win",
+      "side_price": -141.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-07",
+      "direction": "OVER",
+      "final_hit_probability": 0.6589,
+      "market_line": 0.5,
+      "player": "Munetaka Murakami",
+      "result": "win",
+      "side_price": -155.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-07",
+      "direction": "OVER",
+      "final_hit_probability": 0.6616,
+      "market_line": 0.5,
+      "player": "Ryan Waldschmidt",
+      "result": "win",
+      "side_price": -131.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-07",
+      "direction": "OVER",
+      "final_hit_probability": 0.6689,
+      "market_line": 0.5,
+      "player": "Javier B\u00e1ez",
       "result": "loss",
+      "side_price": -166.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-07",
+      "direction": "OVER",
+      "final_hit_probability": 0.6529,
+      "market_line": 0.5,
+      "player": "Luke Keaschall",
+      "result": "win",
       "side_price": -148.0,
-      "target": "R"
+      "target": "H"
+    },
+    {
+      "date": "2026-08-07",
+      "direction": "OVER",
+      "final_hit_probability": 0.6612,
+      "market_line": 0.5,
+      "player": "Bryson Stott",
+      "result": "loss",
+      "side_price": -175.0,
+      "target": "H"
     },
     {
       "date": "2026-08-07",
@@ -408,12 +670,122 @@
     {
       "date": "2026-08-07",
       "direction": "UNDER",
+      "final_hit_probability": 0.7251,
+      "market_line": 0.5,
+      "player": "Jac Caglianone",
+      "result": "win",
+      "side_price": -173.0,
+      "target": "R"
+    },
+    {
+      "date": "2026-08-07",
+      "direction": "UNDER",
+      "final_hit_probability": 0.7245,
+      "market_line": 1.5,
+      "player": "Keibert Ruiz",
+      "result": null,
+      "side_price": -175.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-07",
+      "direction": "UNDER",
       "final_hit_probability": 0.7194,
       "market_line": 0.5,
       "player": "Alec Bohm",
       "result": "win",
       "side_price": -159.0,
       "target": "R"
+    },
+    {
+      "date": "2026-08-07",
+      "direction": "UNDER",
+      "final_hit_probability": 0.7208,
+      "market_line": 0.5,
+      "player": "Jake Cronenworth",
+      "result": "win",
+      "side_price": -170.0,
+      "target": "R"
+    },
+    {
+      "date": "2026-08-07",
+      "direction": "UNDER",
+      "final_hit_probability": 0.714,
+      "market_line": 0.5,
+      "player": "Blaze Jordan",
+      "result": "win",
+      "side_price": -177.0,
+      "target": "R"
+    },
+    {
+      "date": "2026-08-07",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6933,
+      "market_line": 1.5,
+      "player": "Jarren Duran",
+      "result": "loss",
+      "side_price": -150.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-07",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6817,
+      "market_line": 1.5,
+      "player": "Jake Mangum",
+      "result": "win",
+      "side_price": -148.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-07",
+      "direction": "UNDER",
+      "final_hit_probability": 0.7024,
+      "market_line": 1.5,
+      "player": "Trent Grisham",
+      "result": "win",
+      "side_price": -175.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-07",
+      "direction": "OVER",
+      "final_hit_probability": 0.6268,
+      "market_line": 1.5,
+      "player": "Yordan Alvarez",
+      "result": "loss",
+      "side_price": 105.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-07",
+      "direction": "OVER",
+      "final_hit_probability": 0.6075,
+      "market_line": 1.5,
+      "player": "CJ Abrams",
+      "result": "loss",
+      "side_price": -104.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-07",
+      "direction": "OVER",
+      "final_hit_probability": 0.6091,
+      "market_line": 1.5,
+      "player": "Shohei Ohtani",
+      "result": "loss",
+      "side_price": -119.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-07",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6649,
+      "market_line": 0.5,
+      "player": "Jared Triolo",
+      "result": "loss",
+      "side_price": 125.0,
+      "target": "H"
     },
     {
       "date": "2026-08-08",
@@ -427,6 +799,26 @@
     },
     {
       "date": "2026-08-08",
+      "direction": "OVER",
+      "final_hit_probability": 0.6629,
+      "market_line": 0.5,
+      "player": "Victor Mesa Jr",
+      "result": "win",
+      "side_price": -144.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-08",
+      "direction": "OVER",
+      "final_hit_probability": 0.6641,
+      "market_line": 0.5,
+      "player": "Ryan Waldschmidt",
+      "result": "loss",
+      "side_price": -110.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-08",
       "direction": "UNDER",
       "final_hit_probability": 0.7539,
       "market_line": 1.5,
@@ -437,6 +829,36 @@
     },
     {
       "date": "2026-08-08",
+      "direction": "OVER",
+      "final_hit_probability": 0.6647,
+      "market_line": 0.5,
+      "player": "Miguel Amaya",
+      "result": null,
+      "side_price": -140.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-08",
+      "direction": "OVER",
+      "final_hit_probability": 0.6542,
+      "market_line": 0.5,
+      "player": "Taylor Walls",
+      "result": "loss",
+      "side_price": -113.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-08",
+      "direction": "OVER",
+      "final_hit_probability": 0.6517,
+      "market_line": 0.5,
+      "player": "Nolan Arenado",
+      "result": "win",
+      "side_price": -135.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-08",
       "direction": "UNDER",
       "final_hit_probability": 0.7473,
       "market_line": 1.5,
@@ -444,6 +866,16 @@
       "result": "loss",
       "side_price": -157.0,
       "target": "TB"
+    },
+    {
+      "date": "2026-08-08",
+      "direction": "OVER",
+      "final_hit_probability": 0.6607,
+      "market_line": 0.5,
+      "player": "Eugenio Su\u00e1rez",
+      "result": "win",
+      "side_price": -180.0,
+      "target": "H"
     },
     {
       "date": "2026-08-08",
@@ -488,12 +920,32 @@
     {
       "date": "2026-08-08",
       "direction": "UNDER",
+      "final_hit_probability": 0.728,
+      "market_line": 0.5,
+      "player": "Rhys Hoskins",
+      "result": "loss",
+      "side_price": -173.0,
+      "target": "R"
+    },
+    {
+      "date": "2026-08-08",
+      "direction": "UNDER",
       "final_hit_probability": 0.7925,
       "market_line": 0.5,
       "player": "Drew Romo",
       "result": "win",
       "side_price": -161.0,
       "target": "H"
+    },
+    {
+      "date": "2026-08-08",
+      "direction": "UNDER",
+      "final_hit_probability": 0.7181,
+      "market_line": 0.5,
+      "player": "Jac Caglianone",
+      "result": "loss",
+      "side_price": -170.0,
+      "target": "R"
     },
     {
       "date": "2026-08-08",
@@ -508,12 +960,32 @@
     {
       "date": "2026-08-08",
       "direction": "UNDER",
+      "final_hit_probability": 0.7235,
+      "market_line": 0.5,
+      "player": "Dane Myers",
+      "result": "win",
+      "side_price": -175.0,
+      "target": "R"
+    },
+    {
+      "date": "2026-08-08",
+      "direction": "UNDER",
       "final_hit_probability": 0.7717,
       "market_line": 0.5,
       "player": "Leody Taveras",
       "result": "win",
       "side_price": -115.0,
       "target": "H"
+    },
+    {
+      "date": "2026-08-08",
+      "direction": "OVER",
+      "final_hit_probability": 0.6179,
+      "market_line": 1.5,
+      "player": "Yordan Alvarez",
+      "result": "loss",
+      "side_price": 108.0,
+      "target": "TB"
     },
     {
       "date": "2026-08-08",
@@ -538,12 +1010,42 @@
     {
       "date": "2026-08-09",
       "direction": "UNDER",
-      "final_hit_probability": 0.75,
+      "final_hit_probability": 0.6743,
       "market_line": 0.5,
-      "player": "Jimmy Crooks",
+      "player": "Bryan Torres",
       "result": "win",
-      "side_price": -176.0,
+      "side_price": -170.0,
       "target": "R"
+    },
+    {
+      "date": "2026-08-09",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6743,
+      "market_line": 0.5,
+      "player": "Nathan Church",
+      "result": "loss",
+      "side_price": -175.0,
+      "target": "R"
+    },
+    {
+      "date": "2026-08-09",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Cedric Mullins",
+      "result": "win",
+      "side_price": -147.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-09",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Victor Mesa Jr",
+      "result": "loss",
+      "side_price": -156.0,
+      "target": "H"
     },
     {
       "date": "2026-08-09",
@@ -556,6 +1058,446 @@
       "target": "H"
     },
     {
+      "date": "2026-08-09",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6177,
+      "market_line": 1.5,
+      "player": "Wade Meckler",
+      "result": "win",
+      "side_price": -170.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-09",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Miguel Rojas",
+      "result": "loss",
+      "side_price": -125.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-09",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Javier B\u00e1ez",
+      "result": null,
+      "side_price": -173.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-09",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Christian Walker",
+      "result": "loss",
+      "side_price": -174.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-09",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Griffin Conine",
+      "result": "win",
+      "side_price": -165.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-09",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6177,
+      "market_line": 0.5,
+      "player": "Lawrence Butler",
+      "result": "win",
+      "side_price": -170.0,
+      "target": "R"
+    },
+    {
+      "date": "2026-08-09",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6177,
+      "market_line": 1.5,
+      "player": "Trent Grisham",
+      "result": "loss",
+      "side_price": -164.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-09",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6177,
+      "market_line": 0.5,
+      "player": "Alec Bohm",
+      "result": "loss",
+      "side_price": -157.0,
+      "target": "R"
+    },
+    {
+      "date": "2026-08-09",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6177,
+      "market_line": 0.5,
+      "player": "Dane Myers",
+      "result": "win",
+      "side_price": -176.0,
+      "target": "R"
+    },
+    {
+      "date": "2026-08-09",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6087,
+      "market_line": 1.5,
+      "player": "Randal Grichuk",
+      "result": "loss",
+      "side_price": 117.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-09",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6177,
+      "market_line": 0.5,
+      "player": "Jake Cronenworth",
+      "result": "win",
+      "side_price": -143.0,
+      "target": "R"
+    },
+    {
+      "date": "2026-08-09",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6025,
+      "market_line": 1.5,
+      "player": "Dansby Swanson",
+      "result": "win",
+      "side_price": -154.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-09",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6025,
+      "market_line": 1.5,
+      "player": "Keibert Ruiz",
+      "result": "loss",
+      "side_price": -164.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-09",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6025,
+      "market_line": 1.5,
+      "player": "Ian Happ",
+      "result": "loss",
+      "side_price": -145.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-09",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6212,
+      "market_line": 0.5,
+      "player": "Jorge Polanco",
+      "result": null,
+      "side_price": 103.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-09",
+      "direction": "OVER",
+      "final_hit_probability": 0.6024,
+      "market_line": 1.5,
+      "player": "Shohei Ohtani",
+      "result": "loss",
+      "side_price": -115.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-09",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6177,
+      "market_line": 0.5,
+      "player": "Grant McCray",
+      "result": "win",
+      "side_price": -120.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-09",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6087,
+      "market_line": 0.5,
+      "player": "Luis Robert Jr",
+      "result": "loss",
+      "side_price": 121.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-10",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Ryan Waldschmidt",
+      "result": "win",
+      "side_price": -145.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-10",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6212,
+      "market_line": 1.5,
+      "player": "Jeff McNeil",
+      "result": "loss",
+      "side_price": -179.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-10",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Taylor Trammell",
+      "result": "loss",
+      "side_price": -133.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-10",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Brett Baty",
+      "result": "win",
+      "side_price": -131.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-10",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Jared Young",
+      "result": "win",
+      "side_price": -146.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-10",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6743,
+      "market_line": 0.5,
+      "player": "Cam Cauley",
+      "result": "win",
+      "side_price": -150.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-10",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6177,
+      "market_line": 1.5,
+      "player": "Lawrence Butler",
+      "result": "loss",
+      "side_price": -164.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-10",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "George Springer",
+      "result": "win",
+      "side_price": -176.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-10",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Kyle Tucker",
+      "result": "loss",
+      "side_price": -168.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-10",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6087,
+      "market_line": 0.5,
+      "player": "Austin Martin",
+      "result": "loss",
+      "side_price": -162.0,
+      "target": "R"
+    },
+    {
+      "date": "2026-08-10",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6743,
+      "market_line": 0.5,
+      "player": "Justin Foscue",
+      "result": "loss",
+      "side_price": 103.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-10",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6025,
+      "market_line": 1.5,
+      "player": "Mookie Betts",
+      "result": "loss",
+      "side_price": -164.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-10",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6025,
+      "market_line": 1.5,
+      "player": "Gunnar Henderson",
+      "result": "win",
+      "side_price": -132.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-10",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6025,
+      "market_line": 1.5,
+      "player": "Jarren Duran",
+      "result": "loss",
+      "side_price": -162.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-10",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6025,
+      "market_line": 1.5,
+      "player": "JJ Wetherholt",
+      "result": "win",
+      "side_price": -173.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-10",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 1.5,
+      "player": "Yordan Alvarez",
+      "result": "win",
+      "side_price": -113.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-10",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6177,
+      "market_line": 0.5,
+      "player": "Luis Lara",
+      "result": "loss",
+      "side_price": -101.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-11",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Zach McKinstry",
+      "result": "loss",
+      "side_price": -132.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-11",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Ceddanne Rafaela",
+      "result": "win",
+      "side_price": -165.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-11",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Richie Palacios",
+      "result": "win",
+      "side_price": -149.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-11",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6198,
+      "market_line": 0.5,
+      "player": "Carlos Cortes",
+      "result": "win",
+      "side_price": -179.0,
+      "target": "R"
+    },
+    {
+      "date": "2026-08-11",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Jake Bauers",
+      "result": "loss",
+      "side_price": -167.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-11",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Jazz Chisholm Jr",
+      "result": "win",
+      "side_price": -160.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-11",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Colt Keith",
+      "result": "loss",
+      "side_price": -170.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-11",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6177,
+      "market_line": 1.5,
+      "player": "Luis Robert Jr",
+      "result": "win",
+      "side_price": -176.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-11",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6177,
+      "market_line": 1.5,
+      "player": "Jackson Holliday",
+      "result": "win",
+      "side_price": -170.0,
+      "target": "TB"
+    },
+    {
       "date": "2026-08-11",
       "direction": "UNDER",
       "final_hit_probability": 0.75,
@@ -564,14 +1506,204 @@
       "result": "loss",
       "side_price": -149.0,
       "target": "H"
+    },
+    {
+      "date": "2026-08-11",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6177,
+      "market_line": 0.5,
+      "player": "Dylan Beavers",
+      "result": null,
+      "side_price": -173.0,
+      "target": "R"
+    },
+    {
+      "date": "2026-08-11",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6025,
+      "market_line": 1.5,
+      "player": "Mookie Betts",
+      "result": "loss",
+      "side_price": -173.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-11",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6743,
+      "market_line": 0.5,
+      "player": "Matt McLain",
+      "result": "loss",
+      "side_price": -124.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-11",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6025,
+      "market_line": 1.5,
+      "player": "Dylan Crews",
+      "result": "loss",
+      "side_price": -162.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-11",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6025,
+      "market_line": 1.5,
+      "player": "Corey Seager",
+      "result": "win",
+      "side_price": -132.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-11",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6025,
+      "market_line": 1.5,
+      "player": "Tim Tawa",
+      "result": "loss",
+      "side_price": -180.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-11",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6212,
+      "market_line": 0.5,
+      "player": "Dane Myers",
+      "result": "win",
+      "side_price": -102.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-11",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6177,
+      "market_line": 0.5,
+      "player": "Grant McCray",
+      "result": "win",
+      "side_price": -153.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-11",
+      "direction": "UNDER",
+      "final_hit_probability": 0.6177,
+      "market_line": 0.5,
+      "player": "Joe Mack",
+      "result": "win",
+      "side_price": -150.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-28",
+      "direction": "OVER",
+      "final_hit_probability": 0.6743,
+      "market_line": 0.5,
+      "player": "Brandon Lowe",
+      "result": null,
+      "side_price": -175.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-28",
+      "direction": "OVER",
+      "final_hit_probability": 0.6743,
+      "market_line": 0.5,
+      "player": "Spencer Horwitz",
+      "result": null,
+      "side_price": -155.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-28",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Kyle Tucker",
+      "result": null,
+      "side_price": -160.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-28",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Jake Cronenworth",
+      "result": null,
+      "side_price": -125.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-28",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Dylan Beavers",
+      "result": null,
+      "side_price": -150.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-28",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 0.5,
+      "player": "Mickey Moniak",
+      "result": null,
+      "side_price": -160.0,
+      "target": "H"
+    },
+    {
+      "date": "2026-08-28",
+      "direction": "OVER",
+      "final_hit_probability": 0.6087,
+      "market_line": 1.5,
+      "player": "Pete Alonso",
+      "result": null,
+      "side_price": -145.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-28",
+      "direction": "OVER",
+      "final_hit_probability": 0.6019,
+      "market_line": 1.5,
+      "player": "Shohei Ohtani",
+      "result": null,
+      "side_price": -115.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-28",
+      "direction": "OVER",
+      "final_hit_probability": 0.6025,
+      "market_line": 1.5,
+      "player": "Matt Olson",
+      "result": null,
+      "side_price": -125.0,
+      "target": "TB"
+    },
+    {
+      "date": "2026-08-28",
+      "direction": "OVER",
+      "final_hit_probability": 0.601,
+      "market_line": 1.5,
+      "player": "Pete Crow-Armstrong",
+      "result": null,
+      "side_price": -145.0,
+      "target": "TB"
     }
   ],
   "schema_version": 1,
   "summary": {
-    "hit_rate": 0.7115384615384616,
-    "picks": 55,
-    "roi": 0.18057045340922928,
-    "settled": 52,
-    "wins": 37
+    "hit_rate": 0.5771812080536913,
+    "picks": 168,
+    "roi": -0.033395994143081066,
+    "settled": 149,
+    "wins": 86
   }
 }

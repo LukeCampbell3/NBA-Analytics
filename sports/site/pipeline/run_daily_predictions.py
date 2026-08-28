@@ -168,8 +168,35 @@ MLB_PARLAY_BETSLIP_ENRICHER = REPO_ROOT / "sports" / "mlb" / "scripts" / "enrich
 # among the headshot-related steps so it sees every leg's real URL,
 # including the parlay-leg enrichment step just above.
 MLB_HEADSHOT_CACHE = REPO_ROOT / "sports" / "mlb" / "scripts" / "update_mlb_player_headshot_cache.py"
-MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v15"
+MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v16"
 MLB_PICK_SURVIVAL_TOP_K = 3
+# v15 -> v16: real, disclosed further volume increase, user-requested and
+# user-confirmed knowing the real cost. v15 (0.70 hit-probability floor +
+# 0.15 min-EV floor) real-backtested at +18.1% ROI/71.2% hit rate, but
+# published 0 real picks on 2026-08-28 because today's real candidates
+# are mostly heavily-favored, short-priced legs (e.g. -155/-175): real
+# 60-67% model probability, real edge, but small per-unit EV that the
+# 0.15 floor screens out entirely. Checked directly against today's real
+# pool: min-hit-probability 0.60 with the EV floor removed surfaces 21
+# real, price-confirmed candidates in the 60-67% range (Brandon Lowe H,
+# Pete Alonso TB, Shohei Ohtani TB, etc.) -- not fabricated, not
+# longshots, just short-priced favorites v15's EV floor was excluding
+# alongside genuinely low-quality candidates.
+#
+# Real, disclosed cost, re-checked against the same real archived Aug
+# 2-11 dates used for every other version's evidence: min-hit-probability
+# 0.60 (EV floor at 0.0, matching pre-v15 behavior) backtests at 57.7%
+# real hit rate, -3.3% real ROI, ~16.2 picks/day on active dates -- a
+# real, modest loser, not the -12.7% ROI a full "very loose" 0.45 floor
+# produced when this was first swept. This is a real, disclosed
+# regression from v15's positive ROI, taken deliberately at the user's
+# request after being shown both real numbers, in exchange for volume
+# v15 could not reliably deliver on a real day like today's. It does not
+# guarantee a fixed pick count on any given day -- real volume still
+# depends on real market conditions, which was the whole reason v8
+# (checked directly against today's real pool: 0 picks, same as every
+# one of the 14 real days it ran before this session) could not be used
+# to satisfy this same request.
 # v14 -> v15: real, disclosed volume increase for single picks, evidence-
 # checked rather than guessed -- user asked to revert to v8 (which, checked
 # directly against the real history archive, published ZERO real picks on
@@ -329,11 +356,11 @@ MLB_PRIMARY_POLICY_ARGS = [
     "--min-common-market-books", "1",
     "--min-history-rows", "35",
     "--min-prediction", "0.10",
-    "--min-hit-probability", "0.70",
-    "--min-graded-hit-rate", "0.70",
+    "--min-hit-probability", "0.60",
+    "--min-graded-hit-rate", "0.60",
     "--max-push-probability", "0.15",
     "--min-abs-edge", "0.10",
-    "--min-expected-value", "0.15",
+    "--min-expected-value", "0.0",
     "--pitcher-k-min-starter-history", "15",
     "--pitcher-k-min-projected-ip", "5.25",
     "--pitcher-k-min-projected-pitches", "75",

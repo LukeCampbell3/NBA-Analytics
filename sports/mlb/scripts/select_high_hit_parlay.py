@@ -217,7 +217,7 @@ def build_payload(candidates: list[Any], *, run_date: str) -> dict[str, Any]:
     return {
         "schema_version": 1,
         "product_version": PRODUCT_VERSION,
-        "compared_against": "premium_evidence_gated_v15",
+        "compared_against": "premium_evidence_gated_v16",
         "run_date": run_date,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "construction": {

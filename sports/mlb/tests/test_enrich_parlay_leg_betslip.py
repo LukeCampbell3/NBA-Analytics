@@ -172,7 +172,11 @@ def test_build_multi_region_odds_indexes_fetches_once_per_real_state():
 
     indexes = enrich.build_multi_region_odds_indexes(("NY", "PA"), provider_factory=fake_factory)
 
-    assert calls == ["NY", "PA"]
+    # Fetches run concurrently now (real, independent per-state HTTP calls
+    # -- see build_multi_region_odds_indexes' own docstring), so each real
+    # state is fetched exactly once, but not necessarily in submission
+    # order; only the real per-state count/identity is a contract here.
+    assert sorted(calls) == ["NY", "PA"]
     assert set(indexes) == {"NY", "PA"}
     assert indexes["NY"][("player ny", "batter_runs_scored", 0.5, "over")].endswith("marketId=NY.1&selectionId=NY-1")
 

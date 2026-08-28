@@ -43,6 +43,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Callable, Optional
 
@@ -95,27 +96,50 @@ def build_odds_index(odds_rows: list[dict[str, Any]]) -> dict[tuple[str, str, fl
     return index
 
 
+MULTI_REGION_FETCH_WORKERS = 10
+
+
 def build_multi_region_odds_indexes(
     states: tuple[str, ...] = FANDUEL_LICENSED_STATES,
     *,
     provider_factory: Callable[[str], Any] = None,
+    max_workers: int = MULTI_REGION_FETCH_WORKERS,
 ) -> dict[str, dict[tuple[str, str, float, str], str]]:
     """Real per-state FanDuel odds indexes -- one real live fetch per
     state (never per-leg; each state's full player-prop board is fetched
     once and matched against every leg locally, the same efficient
     pattern the single-region path already uses). A state whose real
     fetch fails or returns no odds is simply absent from the result --
-    never a guessed/empty index standing in for a real one."""
+    never a guessed/empty index standing in for a real one.
+
+    Fetches run concurrently (real, independent HTTP calls to distinct
+    per-state endpoints, each on its own real provider instance with no
+    shared mutable state -- safe to parallelize) rather than one-by-one,
+    since this real network-bound step was the actual bottleneck in a
+    real production run (observed: minutes, not seconds, once a run
+    actually had legs to enrich). Same real fetches, same real results,
+    same real fail-open-per-state behavior -- only the wall-clock time
+    changes."""
     factory = provider_factory or (lambda region: FanduelPublicMlbProvider(region=region))
     indexes: dict[str, dict[tuple[str, str, float, str], str]] = {}
-    for state in states:
+    if not states:
+        return indexes
+
+    def fetch_one(state: str) -> tuple[str, dict[tuple[str, str, float, str], str] | None]:
         try:
             result = factory(state).collect_player_props()
         except Exception:
-            continue
+            return state, None
         if not isinstance(result, dict) or result.get("status") != "success":
-            continue
-        indexes[state] = build_odds_index(result.get("odds") or [])
+            return state, None
+        return state, build_odds_index(result.get("odds") or [])
+
+    with ThreadPoolExecutor(max_workers=min(max_workers, len(states))) as pool:
+        futures = [pool.submit(fetch_one, state) for state in states]
+        for future in as_completed(futures):
+            state, index = future.result()
+            if index is not None:
+                indexes[state] = index
     return indexes
 
 

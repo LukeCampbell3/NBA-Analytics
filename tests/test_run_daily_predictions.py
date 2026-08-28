@@ -24,24 +24,24 @@ def test_mlb_primary_policy_uses_validated_portfolio_limits() -> None:
     assert shared_daily_predictions.MLB_PARLAY_SELECTOR.name == "select_daily_parlay.py"
     assert shared_daily_predictions.MLB_GOVERNANCE_CAPTURE.name == "capture_complete_slate.py"
     top_n_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--top-n")
-    # v14->v15: real, disclosed volume increase for single picks -- see
-    # MLB_PRIMARY_POLICY_ARGS's own comment for the real backtested sweep.
-    # --top-n/--daily-pick-soft-cap/--max-over-picks 10 -> 25 and
-    # --max-per-market-bucket/--max-per-team 2 -> 6 were the real volume
-    # bottleneck, independent of the probability floor: loosening them
-    # alone doubles real daily volume (3.9/day -> 8.2/day) at unchanged
-    # 70.5% hit rate / +16.2% ROI. --min-expected-value 0.0 -> 0.15 is a
-    # separate real ROI lever, swept independently (+16.2% -> +18.1% real
-    # ROI at the same 0.70 probability floor).
+    # v15->v16: real, disclosed further volume increase, taken at the
+    # user's explicit request after being shown the real backtested cost
+    # -- see MLB_PRIMARY_POLICY_ARGS's own comment for the real numbers.
+    # --min-hit-probability/--min-graded-hit-rate 0.70 -> 0.60 and
+    # --min-expected-value 0.15 -> 0.0 surface real, price-confirmed
+    # 60-67%-probability favorites v15's EV floor was screening out
+    # entirely; real backtested cost is -3.3% ROI (57.7% hit rate) versus
+    # v15's +18.1% ROI (71.2% hit rate) -- a real, disclosed regression,
+    # not an improvement, taken deliberately for volume.
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[top_n_index + 1] == "25"
     index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--max-per-market-bucket")
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[index + 1] == "6"
     ev_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--min-expected-value")
-    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[ev_index + 1] == "0.15"
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[ev_index + 1] == "0.0"
     hit_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--min-hit-probability")
     graded_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--min-graded-hit-rate")
-    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[hit_index + 1] == "0.70"
-    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[graded_index + 1] == "0.70"
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[hit_index + 1] == "0.60"
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[graded_index + 1] == "0.60"
     common_books_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--min-common-market-books")
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[common_books_index + 1] == "1"
     books_index = shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS.index("--min-market-books")
@@ -87,7 +87,7 @@ def test_mlb_primary_policy_uses_validated_portfolio_limits() -> None:
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[pitcher_cap_index + 1] == "1"
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[core_min_price_index + 1] == "-180"
     assert shared_daily_predictions.MLB_PRIMARY_POLICY_ARGS[core_price_index + 1] == "125"
-    assert shared_daily_predictions.MLB_PRIMARY_POLICY_PROFILE == "premium_evidence_gated_v15"
+    assert shared_daily_predictions.MLB_PRIMARY_POLICY_PROFILE == "premium_evidence_gated_v16"
     assert shared_daily_predictions.MLB_LATENT_POOL_REPLAY.name == "backtest_latent_daily_pools.py"
 
 
@@ -103,7 +103,7 @@ def test_annotate_mlb_summary_keeps_policy_identity_separate_from_publication_st
     )
 
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
-    assert summary["publication_strategy"] == "premium_evidence_gated_v15"
+    assert summary["publication_strategy"] == "premium_evidence_gated_v16"
     assert summary["publication_state"] == "withheld_current_pool"
 
 

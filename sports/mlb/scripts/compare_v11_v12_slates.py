@@ -153,7 +153,7 @@ def run_comparison(
     return {
         "schema_version": 1,
         "product_version": "premium_safe_ev_v12_shadow",
-        "compared_against": "premium_evidence_gated_v15",
+        "compared_against": "premium_evidence_gated_v16",
         "shadow_only": True,
         "archived_dates_scanned": dates_scanned,
         "dates_with_load_errors": errors,

@@ -77,7 +77,7 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
                     "targets": sorted(MLB_REQUIRED_TARGETS),
                     "max_per_market_bucket": 6,
                     "optimized_over_max_per_market_bucket": None,
-                    "min_expected_value": 0.15,
+                    "min_expected_value": 0.0,
                     "min_market_books": 1,
                     "min_common_market_books": 1,
                     "require_real_market_source": True,
@@ -114,8 +114,8 @@ def write_payload(path: Path, *, run_date: str, status: str = "ready", sport: st
                     "max_under_picks": 0,
                     "daily_pick_soft_cap": 25,
                     "post_cap_min_selection_score": 0.50,
-                    "min_hit_probability": 0.70,
-                    "min_graded_hit_rate": 0.70,
+                    "min_hit_probability": 0.60,
+                    "min_graded_hit_rate": 0.60,
                     "historical_calibration_evidence_scope": "real_price_confirmed_markets_only_v1",
                 },
             }
@@ -218,11 +218,11 @@ def test_validate_publication_allows_stale_payloads_when_requested(tmp_path: Pat
     ):
         payload_path = tmp_path / relative_path
         payload = json.loads(payload_path.read_text(encoding="utf-8"))
-        # v14 -- the accepted legacy profile during the v14->v15 transition
+        # v15 -- the accepted legacy profile during the v15->v16 transition
         # window (see validate_daily_publication.py's MLB_LEGACY_POLICY_
-        # PROFILE); it used the same max_under_picks=0 as v15, so no
+        # PROFILE); it used the same max_under_picks=0 as v16, so no
         # override is needed here any more.
-        payload["policy_profile"] = "premium_evidence_gated_v14"
+        payload["policy_profile"] = "premium_evidence_gated_v15"
         payload_path.write_text(json.dumps(payload), encoding="utf-8")
     route = tmp_path / "dist/mlb/predictions/index.html"
     route.parent.mkdir(parents=True, exist_ok=True)
@@ -278,7 +278,7 @@ def test_validate_publication_rejects_legacy_mlb_pool_policy(tmp_path: Path) -> 
     route.parent.mkdir(parents=True, exist_ok=True)
     route.write_text("ok", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="expected premium_evidence_gated_v15"):
+    with pytest.raises(ValueError, match="expected premium_evidence_gated_v16"):
         validate_publication(
             repo_root=tmp_path,
             output_dir=Path("dist"),
