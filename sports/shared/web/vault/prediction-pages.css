@@ -527,18 +527,11 @@ button {
 }
 
 .fanduel-region-picker {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-  font-size: 0.8rem;
-}
-
-.fanduel-region-picker label {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  margin-top: 10px;
+  font-size: 0.8rem;
 }
 
 .fanduel-region-picker__label {
@@ -560,28 +553,6 @@ button {
 
 .fanduel-region-picker__select:hover {
   border-color: var(--vault-line-strong);
-}
-
-.fanduel-region-picker__copy {
-  min-height: 32px;
-  padding: 0 10px;
-  border: 1px solid var(--vault-line);
-  border-radius: 5px;
-  background: #ffffff;
-  color: var(--vault-sport-accent);
-  font: inherit;
-  font-size: 0.78rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.fanduel-region-picker__copy:hover {
-  border-color: var(--vault-sport-accent);
-}
-
-.fanduel-region-picker__copy-status {
-  color: var(--vault-text-muted);
-  font-size: 0.76rem;
 }
 
 .vault-board {
