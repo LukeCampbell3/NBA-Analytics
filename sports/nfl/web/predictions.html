@@ -59,6 +59,30 @@
             </div>
         </footer>
     </main>
+    <script>
+        // Inline by design: this remains available when an external dependency
+        // is blocked or aborts during startup in a privacy-restricted browser.
+        (() => {
+            const loadingText = "Loading Week 1 pool...";
+            const timeoutMs = 12000;
+            window.setTimeout(() => {
+                const status = document.getElementById("runFacts");
+                if (!status || status.textContent.trim() !== loadingText) return;
+
+                status.innerHTML = `<strong>Predictions did not finish loading.</strong>
+                    Reload the page to try again. If this keeps happening, allow site data and scripts for this site or turn off its content blocker.`;
+                const board = document.getElementById("currentBoard");
+                if (board) {
+                    board.innerHTML = `<div class="vault-empty" role="alert">
+                        <h3>Predictions unavailable</h3>
+                        <p>The page stopped during startup. Your picks and account were not changed.</p>
+                        <button type="button" class="vault-button" data-prediction-reload>Reload predictions</button>
+                    </div>`;
+                    board.querySelector("[data-prediction-reload]")?.addEventListener("click", () => window.location.reload());
+                }
+            }, timeoutMs);
+        })();
+    </script>
     <script src="vault/vault-components.js?v=14"></script>
     <script src="vault/vault-shell.js?v=9"></script>
     <script src="predictions.js?v=7"></script>

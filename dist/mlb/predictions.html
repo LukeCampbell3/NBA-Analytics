@@ -92,6 +92,31 @@
         </footer>
     </main>
 
+    <script>
+        // Keep this watchdog inline: it must still run when an external script is
+        // blocked, fails to download, or aborts during startup (including storage
+        // access failures in privacy-restricted browsers).
+        (() => {
+            const loadingText = "Loading board details...";
+            const timeoutMs = 12000;
+            window.setTimeout(() => {
+                const status = document.getElementById("predictionRunMeta");
+                if (!status || status.textContent.trim() !== loadingText) return;
+
+                status.innerHTML = `<strong>Board did not finish loading.</strong>
+                    Reload the page to try again. If this keeps happening, allow site data and scripts for this site or turn off its content blocker.`;
+                const cards = document.getElementById("predictionCards");
+                if (cards) {
+                    cards.innerHTML = `<div class="vault-empty" role="alert">
+                        <h3>Predictions unavailable</h3>
+                        <p>The page stopped during startup. Your picks and account were not changed.</p>
+                        <button type="button" class="vault-button" data-prediction-reload>Reload predictions</button>
+                    </div>`;
+                    cards.querySelector("[data-prediction-reload]")?.addEventListener("click", () => window.location.reload());
+                }
+            }, timeoutMs);
+        })();
+    </script>
     <script src="/vault/vault-components.js?v=16"></script>
     <script src="/vault/vault-shell.js?v=9"></script>
     <script src="predictions.js?v=27"></script>
