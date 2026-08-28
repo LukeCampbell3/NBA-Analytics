@@ -132,6 +132,16 @@ class DailyPredictionsPage {
     mergeLegacySoloBets(basePlays) {
         const ticket = this.data?.daily_parlay?.selected_ticket;
         if (!ticket || !Array.isArray(ticket.legs) || !ticket.legs.length) return basePlays;
+        // Defense in depth: profit_boost is a deliberately permanent-
+        // shadow, alternate-line longshot product (real leg probability
+        // floor 0.18, real ticket floor 0.10 -- see select_daily_parlay.py)
+        // that must never be presented as a regular single pick, however
+        // it reaches this payload. The real backend fix keeps it out of
+        // selected_ticket already (select_daily_parlay.py's build_payload);
+        // this check is a second, independent guard against the same real
+        // failure mode (a sub-50%-probability leg shown with the same
+        // card format and prominence as a real hit-rate-gated pick).
+        if (String(ticket.ticket_tier || "").toLowerCase() === "profit_boost") return basePlays;
 
         const legKey = (item) => String(
             item?.play_key || `${item?.player || item?.player_display_name || ""}|${item?.target || ""}|${item?.market_line || ""}`

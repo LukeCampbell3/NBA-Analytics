@@ -9,7 +9,7 @@
       4
     ],
     "alternate_line_candidate_count": 6,
-    "available": true,
+    "available": false,
     "betslip_policy": {
       "construction": "direct_fanduel_public_market_ids_only",
       "linked_ticket_count": 1,
@@ -92,7 +92,7 @@
         "4": 0.18
       }
     },
-    "generated_at_utc": "2026-08-28T11:54:46.214635+00:00",
+    "generated_at_utc": "2026-08-28T12:29:52.307759+00:00",
     "hit_survival_validation": {
       "calibration": {
         "brier_score": 0.2427361284894067,
@@ -378,8 +378,6 @@
     "policy_version": "mlb_fanduel_public_betslip_parlay_v9",
     "pool_candidate_count": 1530,
     "profit_boost_ticket": {
-      "action_status": "review",
-      "authorization_status": "SHADOW_ONLY",
       "avg_leg_quality": 0.8763519720716586,
       "betslip": {
         "leg_count": 2,
@@ -390,7 +388,6 @@
         "url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.183256970&selectionId%5B0%5D=10885578&marketId%5B1%5D=734.183267642&selectionId%5B1%5D=20744342"
       },
       "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.183256970&selectionId%5B0%5D=10885578&marketId%5B1%5D=734.183267642&selectionId%5B1%5D=20744342",
-      "candidate_authorized": false,
       "combined_american_price": 1276.0,
       "combined_decimal_price": 13.76,
       "evidence_status": "SHADOW_ALT_LINE_PRICE_CAPTURE",
@@ -426,7 +423,6 @@
           "alternate_line_observed_at_utc": "2026-08-28T11:52:00.184518+00:00",
           "alternate_line_price_source": "fanduel_public",
           "base_market_line": 0.5,
-          "batting_order": "",
           "commence_time_utc": "2026-08-28T22:40:00Z",
           "days_since_history": 2,
           "direction": "OVER",
@@ -477,7 +473,6 @@
           "latent_support_fraction": 1.0,
           "line_increment": 1.0,
           "line_variant": "alternate",
-          "lineup_status": "unconfirmed",
           "market_book_keys": [
             "fanduel"
           ],
@@ -492,7 +487,6 @@
           "market_line": 1.5,
           "market_source": "real",
           "model_hit_probability": 0.44355343010226156,
-          "official_game_status": "Scheduled",
           "opponent": "DET",
           "parlay_leg_probability": 0.6620306495254146,
           "parlay_precision_eligible": true,
@@ -504,9 +498,6 @@
           "prediction": 1.5041224960173343,
           "price_confirmed": true,
           "provider_source_market_id": "734.183256970:10885578",
-          "risk_flags": [
-            "lineup_unconfirmed"
-          ],
           "selected_side_price": 220.0,
           "selected_sportsbook": "FanDuel",
           "selected_sportsbook_key": "fanduel",
@@ -523,7 +514,6 @@
           "alternate_line_observed_at_utc": "2026-08-28T11:52:00.184518+00:00",
           "alternate_line_price_source": "fanduel_public",
           "base_market_line": 0.5,
-          "batting_order": "",
           "commence_time_utc": "2026-08-29T00:15:00Z",
           "days_since_history": 2,
           "direction": "OVER",
@@ -574,7 +564,6 @@
           "latent_support_fraction": 1.0,
           "line_increment": 1.0,
           "line_variant": "alternate",
-          "lineup_status": "unconfirmed",
           "market_book_keys": [
             "fanduel"
           ],
@@ -589,7 +578,6 @@
           "market_line": 1.5,
           "market_source": "real",
           "model_hit_probability": 0.5040590004790209,
-          "official_game_status": "Scheduled",
           "opponent": "STL",
           "parlay_leg_probability": 0.6264375959137142,
           "parlay_precision_eligible": true,
@@ -601,9 +589,6 @@
           "prediction": 1.6913360580936634,
           "price_confirmed": true,
           "provider_source_market_id": "734.183267642:20744342",
-          "risk_flags": [
-            "lineup_unconfirmed"
-          ],
           "selected_side_price": 330.0,
           "selected_sportsbook": "FanDuel",
           "selected_sportsbook_key": "fanduel",
@@ -620,9 +605,6 @@
       "probability_floor": 0.1,
       "projected_probability": 0.1484784424437667,
       "risk_adjusted_profit_score": 0.40192257022650263,
-      "risk_flags": [
-        "lineup_unconfirmed"
-      ],
       "same_game": false,
       "same_market_bucket": true,
       "same_player": false,
@@ -631,281 +613,16 @@
       "same_team": false,
       "sportsbook": "FanDuel",
       "sportsbook_key": "fanduel",
-      "staking_enabled": false,
-      "status": "review",
       "ticket_id": "profit_boost_2_leg",
       "ticket_tier": "profit_boost"
     },
-    "reason": "lineups are not yet confirmed",
+    "reason": "no executable OVER-only ticket cleared the consistency gates",
     "run_date": "2026-08-28",
     "schema_version": 4,
-    "selected_ticket": {
-      "action_status": "review",
-      "authorization_status": "SHADOW_ONLY",
-      "avg_leg_quality": 0.8763519720716586,
-      "betslip": {
-        "leg_count": 2,
-        "source": "direct_fanduel_public_market_ids",
-        "sportsbook": "FanDuel",
-        "sportsbook_key": "fanduel",
-        "status": "ready",
-        "url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.183256970&selectionId%5B0%5D=10885578&marketId%5B1%5D=734.183267642&selectionId%5B1%5D=20744342"
-      },
-      "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.183256970&selectionId%5B0%5D=10885578&marketId%5B1%5D=734.183267642&selectionId%5B1%5D=20744342",
-      "candidate_authorized": false,
-      "combined_american_price": 1276.0,
-      "combined_decimal_price": 13.76,
-      "evidence_status": "SHADOW_ALT_LINE_PRICE_CAPTURE",
-      "expected_return_per_unit": 1.04306336802623,
-      "independent_probability": 0.1484784424437667,
-      "leg_count": 2,
-      "leg_directions": [
-        "OVER",
-        "OVER"
-      ],
-      "leg_indices": [
-        0,
-        2
-      ],
-      "leg_keys": [
-        "2026-08-28|824231|Freddie Freeman|H|OVER|ALT_1.5",
-        "2026-08-28|823013|Brandon Lowe|H|OVER|ALT_1.5"
-      ],
-      "leg_names": [
-        "Freddie Freeman",
-        "Brandon Lowe"
-      ],
-      "leg_targets": [
-        "H",
-        "H"
-      ],
-      "legs": [
-        {
-          "alternate_line_book_keys": [
-            "fanduel"
-          ],
-          "alternate_line_books": 1,
-          "alternate_line_observed_at_utc": "2026-08-28T11:52:00.184518+00:00",
-          "alternate_line_price_source": "fanduel_public",
-          "base_market_line": 0.5,
-          "batting_order": "",
-          "commence_time_utc": "2026-08-28T22:40:00Z",
-          "days_since_history": 2,
-          "direction": "OVER",
-          "estimated_graded_hit_rate": 0.36538943521009537,
-          "expected_value_per_unit": 0.16924619267230523,
-          "final_pool_quality_score": 0.8453217843349964,
-          "game_id": "824231",
-          "game_status_code": "P",
-          "historical_bucket_key": "H|OVER|1.5|ALT",
-          "history_rows": 143,
-          "hit_survival_batting_order": 2.0,
-          "hit_survival_batting_order_source": "prior_start_proxy",
-          "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
-          "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
-          "hit_survival_probability": 0.6615512144344168,
-          "hit_survival_raw_probability": 0.713165421437807,
-          "latent_categorical_features": {
-            "opponent": "116",
-            "pitcher": "623454",
-            "player": "freddie_freeman",
-            "team": "LAD"
-          },
-          "latent_evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
-          "latent_in_support": true,
-          "latent_leg_ensemble_std": 0.045168704404281376,
-          "latent_leg_probability": 0.5353022643978931,
-          "latent_leg_raw_probability": 0.5746477087356091,
-          "latent_model_version": "mlb_latent_parlay_set_attention_v3",
-          "latent_numeric_features": {
-            "archetype_neighbor_games": 51.0,
-            "archetype_neighbor_lift": -0.0938440874254644,
-            "archetype_neighbor_support": 27.44371966838723,
-            "baseline": 0.8,
-            "batter_strength": 0.49870505952380934,
-            "batter_vs_starter_games": 0.0,
-            "batter_vs_starter_lift": 0.0,
-            "batting_order": 2.0,
-            "is_home": 0.0,
-            "last_hits": 2.0,
-            "log_history_rows": 4.969813299576001,
-            "matchup_network_adjustment": -0.003807840273484442,
-            "matchup_network_confidence": 0.5777920836925631,
-            "matchup_network_score": -0.03807840273484442,
-            "pitcher_uncertainty": 0.7403514641479436,
-            "pitcher_vulnerability": -0.29406888209829385
-          },
-          "latent_probability_disagreement": 0.05036463386368051,
-          "latent_support_fraction": 1.0,
-          "line_increment": 1.0,
-          "line_variant": "alternate",
-          "lineup_status": "unconfirmed",
-          "market_book_keys": [
-            "fanduel"
-          ],
-          "market_books": 1,
-          "market_bucket": "H|OVER|1.5|ALT",
-          "market_common_book_keys": [
-            "fanduel"
-          ],
-          "market_common_books": 1,
-          "market_date": "2026-08-28",
-          "market_implied_probability": 0.7058823529411765,
-          "market_line": 1.5,
-          "market_source": "real",
-          "model_hit_probability": 0.44355343010226156,
-          "official_game_status": "Scheduled",
-          "opponent": "DET",
-          "parlay_leg_probability": 0.6620306495254146,
-          "parlay_precision_eligible": true,
-          "play_key": "2026-08-28|824231|Freddie Freeman|H|OVER|ALT_1.5",
-          "player": "Freddie Freeman",
-          "player_display_name": "Freddie Freeman",
-          "player_headshot_fallback_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/518692/headshot/67/current",
-          "player_headshot_url": "data/headshots/518692.jpg",
-          "player_id": "freddie_freeman",
-          "player_type": "hitter",
-          "prediction": 1.5041224960173343,
-          "price_confirmed": true,
-          "provider_source_market_id": "734.183256970:10885578",
-          "risk_flags": [
-            "lineup_unconfirmed"
-          ],
-          "selected_side_price": 220.0,
-          "selected_sportsbook": "FanDuel",
-          "selected_sportsbook_key": "fanduel",
-          "selection_score": 0.8453217843349964,
-          "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183256970&selectionId=10885578",
-          "target": "H",
-          "team": "LAD"
-        },
-        {
-          "alternate_line_book_keys": [
-            "fanduel"
-          ],
-          "alternate_line_books": 1,
-          "alternate_line_observed_at_utc": "2026-08-28T11:52:00.184518+00:00",
-          "alternate_line_price_source": "fanduel_public",
-          "base_market_line": 0.5,
-          "batting_order": "",
-          "commence_time_utc": "2026-08-29T00:15:00Z",
-          "days_since_history": 2,
-          "direction": "OVER",
-          "estimated_graded_hit_rate": 0.40635669271169006,
-          "expected_value_per_unit": 0.7473337786602672,
-          "final_pool_quality_score": 0.9073821598083209,
-          "game_id": "823013",
-          "game_status_code": "P",
-          "historical_bucket_key": "H|OVER|1.5|ALT",
-          "history_rows": 135,
-          "hit_survival_batting_order": 2.0,
-          "hit_survival_batting_order_source": "prior_start_proxy",
-          "hit_survival_evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
-          "hit_survival_model_version": "mlb_parlay_hit_survival_role_hgb_v1",
-          "hit_survival_probability": 0.6574875813393047,
-          "hit_survival_raw_probability": 0.7084720828765246,
-          "latent_categorical_features": {
-            "opponent": "138",
-            "pitcher": "0",
-            "player": "brandon_lowe",
-            "team": "PIT"
-          },
-          "latent_evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
-          "latent_in_support": true,
-          "latent_leg_ensemble_std": 0.02815536933326716,
-          "latent_leg_probability": 0.5322452028296961,
-          "latent_leg_raw_probability": 0.572064986847633,
-          "latent_model_version": "mlb_latent_parlay_set_attention_v3",
-          "latent_numeric_features": {
-            "archetype_neighbor_games": 50.0,
-            "archetype_neighbor_lift": -0.13739203533326283,
-            "archetype_neighbor_support": 30.09399524836719,
-            "baseline": 0.8,
-            "batter_strength": -0.35683726851851827,
-            "batter_vs_starter_games": 0.0,
-            "batter_vs_starter_lift": 0.0,
-            "batting_order": 2.0,
-            "is_home": 0.0,
-            "last_hits": 0.0,
-            "log_history_rows": 4.912654885736052,
-            "matchup_network_adjustment": 0.0,
-            "matchup_network_confidence": 0.5,
-            "matchup_network_score": 0.0,
-            "pitcher_uncertainty": 1.0,
-            "pitcher_vulnerability": 0.0
-          },
-          "latent_probability_disagreement": 0.09431815688973044,
-          "latent_support_fraction": 1.0,
-          "line_increment": 1.0,
-          "line_variant": "alternate",
-          "lineup_status": "unconfirmed",
-          "market_book_keys": [
-            "fanduel"
-          ],
-          "market_books": 1,
-          "market_bucket": "H|OVER|1.5|ALT",
-          "market_common_book_keys": [
-            "fanduel"
-          ],
-          "market_common_books": 1,
-          "market_date": "2026-08-28",
-          "market_implied_probability": 0.6363636363636364,
-          "market_line": 1.5,
-          "market_source": "real",
-          "model_hit_probability": 0.5040590004790209,
-          "official_game_status": "Scheduled",
-          "opponent": "STL",
-          "parlay_leg_probability": 0.6264375959137142,
-          "parlay_precision_eligible": true,
-          "play_key": "2026-08-28|823013|Brandon Lowe|H|OVER|ALT_1.5",
-          "player": "Brandon Lowe",
-          "player_display_name": "Brandon Lowe",
-          "player_headshot_fallback_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/664040/headshot/67/current",
-          "player_headshot_url": "data/headshots/664040.jpg",
-          "player_id": "brandon_lowe",
-          "player_type": "hitter",
-          "prediction": 1.6913360580936634,
-          "price_confirmed": true,
-          "provider_source_market_id": "734.183267642:20744342",
-          "risk_flags": [
-            "lineup_unconfirmed"
-          ],
-          "selected_side_price": 330.0,
-          "selected_sportsbook": "FanDuel",
-          "selected_sportsbook_key": "fanduel",
-          "selection_score": 0.9073821598083209,
-          "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183267642&selectionId=20744342",
-          "target": "H",
-          "team": "PIT"
-        }
-      ],
-      "maximum_decimal_price": 15.0,
-      "mixed_direction": false,
-      "pairwise_adjustment_factor": 1.001977614,
-      "parlay_score": 0.18812857353400086,
-      "probability_floor": 0.1,
-      "projected_probability": 0.1484784424437667,
-      "risk_adjusted_profit_score": 0.40192257022650263,
-      "risk_flags": [
-        "lineup_unconfirmed"
-      ],
-      "same_game": false,
-      "same_market_bucket": true,
-      "same_player": false,
-      "same_sportsbook_confirmed": true,
-      "same_target": true,
-      "same_team": false,
-      "sportsbook": "FanDuel",
-      "sportsbook_key": "fanduel",
-      "staking_enabled": false,
-      "status": "review",
-      "ticket_id": "profit_boost_2_leg",
-      "ticket_tier": "profit_boost"
-    },
-    "status": "review",
+    "selected_ticket": null,
+    "status": "withheld",
     "ticket_ladder": [
       {
-        "action_status": "review",
         "authorization_status": "SHADOW_ONLY",
         "avg_leg_quality": 0.8763519720716586,
         "betslip": {
@@ -953,7 +670,6 @@
             "alternate_line_observed_at_utc": "2026-08-28T11:52:00.184518+00:00",
             "alternate_line_price_source": "fanduel_public",
             "base_market_line": 0.5,
-            "batting_order": "",
             "commence_time_utc": "2026-08-28T22:40:00Z",
             "days_since_history": 2,
             "direction": "OVER",
@@ -1004,7 +720,6 @@
             "latent_support_fraction": 1.0,
             "line_increment": 1.0,
             "line_variant": "alternate",
-            "lineup_status": "unconfirmed",
             "market_book_keys": [
               "fanduel"
             ],
@@ -1019,7 +734,6 @@
             "market_line": 1.5,
             "market_source": "real",
             "model_hit_probability": 0.44355343010226156,
-            "official_game_status": "Scheduled",
             "opponent": "DET",
             "parlay_leg_probability": 0.6620306495254146,
             "parlay_precision_eligible": true,
@@ -1031,9 +745,6 @@
             "prediction": 1.5041224960173343,
             "price_confirmed": true,
             "provider_source_market_id": "734.183256970:10885578",
-            "risk_flags": [
-              "lineup_unconfirmed"
-            ],
             "selected_side_price": 220.0,
             "selected_sportsbook": "FanDuel",
             "selected_sportsbook_key": "fanduel",
@@ -1050,7 +761,6 @@
             "alternate_line_observed_at_utc": "2026-08-28T11:52:00.184518+00:00",
             "alternate_line_price_source": "fanduel_public",
             "base_market_line": 0.5,
-            "batting_order": "",
             "commence_time_utc": "2026-08-29T00:15:00Z",
             "days_since_history": 2,
             "direction": "OVER",
@@ -1101,7 +811,6 @@
             "latent_support_fraction": 1.0,
             "line_increment": 1.0,
             "line_variant": "alternate",
-            "lineup_status": "unconfirmed",
             "market_book_keys": [
               "fanduel"
             ],
@@ -1116,7 +825,6 @@
             "market_line": 1.5,
             "market_source": "real",
             "model_hit_probability": 0.5040590004790209,
-            "official_game_status": "Scheduled",
             "opponent": "STL",
             "parlay_leg_probability": 0.6264375959137142,
             "parlay_precision_eligible": true,
@@ -1128,9 +836,6 @@
             "prediction": 1.6913360580936634,
             "price_confirmed": true,
             "provider_source_market_id": "734.183267642:20744342",
-            "risk_flags": [
-              "lineup_unconfirmed"
-            ],
             "selected_side_price": 330.0,
             "selected_sportsbook": "FanDuel",
             "selected_sportsbook_key": "fanduel",
@@ -1147,9 +852,6 @@
         "probability_floor": 0.1,
         "projected_probability": 0.1484784424437667,
         "risk_adjusted_profit_score": 0.40192257022650263,
-        "risk_flags": [
-          "lineup_unconfirmed"
-        ],
         "same_game": false,
         "same_market_bucket": true,
         "same_player": false,
@@ -1159,7 +861,6 @@
         "sportsbook": "FanDuel",
         "sportsbook_key": "fanduel",
         "staking_enabled": false,
-        "status": "review",
         "ticket_id": "profit_boost_2_leg",
         "ticket_tier": "profit_boost"
       }
@@ -1315,8 +1016,8 @@
     "side_price_unconfirmed": 455,
     "synthetic_market_source": 126
   },
-  "generated_at_utc": "2026-08-28T11:57:38.029943+00:00",
-  "mlb_team_market_generated_at_utc": "2026-08-28T11:57:38.554956+00:00",
+  "generated_at_utc": "2026-08-28T12:29:53.560232+00:00",
+  "mlb_team_market_generated_at_utc": "2026-08-28T12:29:54.072375+00:00",
   "mlb_team_market_plays": [],
   "mlb_team_market_status": "ok",
   "model_run_id": "mlb_high_precision_selector_v2",

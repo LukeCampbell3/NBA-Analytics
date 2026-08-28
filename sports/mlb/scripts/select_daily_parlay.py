@@ -1207,6 +1207,21 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         )
         for shadow_ticket in latent_shadow_ladder:
             shadow_ticket["authorization"] = "shadow_only"
+    # Real, disclosed fix: `ticket` (selected_ticket -- the featured
+    # single-pick surface every frontend consumer treats as "the" daily
+    # parlay) is decided from the real consistency-tier ladder ONLY,
+    # before profit_boost is appended to it. profit_boost's own real
+    # thresholds (min_leg_probability=0.18) are deliberately far below a
+    # real single-pick bar -- it exists as a permanently-shadow,
+    # alternate-line bonus product (validate_daily_publication.py
+    # enforces it can never be candidate_authorized), never a fallback
+    # for "nothing real cleared the consistency bar today". Appending it
+    # to ticket_ladder AFTER `ticket` is chosen keeps it available via
+    # its own real ticket_ladder/profit_boost_ticket fields for a
+    # consumer that explicitly wants it, without silently promoting a
+    # sub-50%-probability longshot into the primary single-pick slot on
+    # a day the real consistency ladder is empty.
+    ticket = ticket_ladder[0] if ticket_ladder else None
     alternate_plays = build_alternate_line_plays(anchors, args.provider_observations.resolve())
     profit_boost_ticket = select_profit_boost_ticket(alternate_plays)
     if profit_boost_ticket is not None:
@@ -1214,7 +1229,6 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         ticket_ladder.append(profit_boost_ticket)
     for ladder_ticket in ticket_ladder:
         attach_fanduel_betslip(ladder_ticket)
-    ticket = ticket_ladder[0] if ticket_ladder else None
     validation = build_validation(args.history_dir.resolve(), season, run_date, float(args.min_leg_probability))
     return {
         "schema_version": 4,
