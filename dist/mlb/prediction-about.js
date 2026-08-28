@@ -7,6 +7,8 @@ class PredictionAboutPage {
             byTarget: document.getElementById("accuracyByTarget"),
             byDirection: document.getElementById("accuracyByDirection"),
             boardSummary: document.getElementById("boardSummary"),
+            backtestOverview: document.getElementById("backtestOverview"),
+            backtestPicks: document.getElementById("backtestPicks"),
         };
         this.init();
     }
@@ -27,6 +29,81 @@ class PredictionAboutPage {
             this.elements.byTarget.innerHTML = '<div class="prediction-about-empty">No target metrics available.</div>';
             this.elements.byDirection.innerHTML = '<div class="prediction-about-empty">No direction metrics available.</div>';
         }
+
+        // A separate, independent fetch -- real, disclosed historical
+        // backtest evidence, not part of today's live board payload, so a
+        // failure here must never block the run-facts/board-snapshot
+        // sections above.
+        try {
+            const response = await fetch(`data/v14_backtest_validation.json?v=${Date.now()}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            this.backtestData = await response.json();
+            this.renderBacktest();
+        } catch (error) {
+            console.error(error);
+            if (this.elements.backtestOverview) {
+                this.elements.backtestOverview.innerHTML = '<div class="prediction-about-empty">Backtest evidence unavailable.</div>';
+            }
+            if (this.elements.backtestPicks) {
+                this.elements.backtestPicks.innerHTML = "";
+            }
+        }
+    }
+
+    renderBacktest() {
+        const data = this.backtestData || {};
+        const summary = data.summary || {};
+        const picks = Array.isArray(data.picks) ? data.picks : [];
+        const dates = Array.isArray(data.dates_scanned) ? data.dates_scanned : [];
+        const dateRange = dates.length
+            ? `${this.formatRunStamp(dates[0])} to ${this.formatRunStamp(dates[dates.length - 1])}`
+            : "n/a";
+
+        const overviewItems = [
+            ["Real Picks", this.formatInt(summary.picks)],
+            ["Settled", this.formatInt(summary.settled)],
+            ["Wins", this.formatInt(summary.wins)],
+            ["Real Hit Rate", this.formatPct(summary.hit_rate)],
+            ["Real ROI", this.formatSignedPct(summary.roi)],
+            ["Dates Covered", dateRange],
+        ];
+        if (this.elements.backtestOverview) {
+            this.elements.backtestOverview.innerHTML = overviewItems.map(([label, value]) => `
+                <article class="prediction-about-metric-card">
+                    <span>${this.escapeHtml(label)}</span>
+                    <strong>${this.escapeHtml(value)}</strong>
+                </article>
+            `).join("");
+        }
+
+        if (!this.elements.backtestPicks) return;
+        if (!picks.length) {
+            this.elements.backtestPicks.innerHTML = '<div class="prediction-about-empty">No backtest picks available yet.</div>';
+            return;
+        }
+        const rows = picks.map((pick) => `
+            <tr>
+                <td>${this.escapeHtml(pick.date)}</td>
+                <td>${this.escapeHtml(pick.player)}</td>
+                <td>${this.escapeHtml(pick.target)} ${this.escapeHtml(pick.direction)} ${this.escapeHtml(this.formatNum(pick.market_line))}</td>
+                <td>${this.escapeHtml(this.formatPct(pick.final_hit_probability))}</td>
+                <td>${this.escapeHtml(pick.result ? pick.result.toUpperCase() : "unsettled")}</td>
+            </tr>
+        `).join("");
+        this.elements.backtestPicks.innerHTML = `
+            <table class="prediction-about-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Player</th>
+                        <th>Market</th>
+                        <th>Real Prob.</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        `;
     }
 
     mountShell() {
@@ -167,6 +244,15 @@ class PredictionAboutPage {
 
     formatSignedNum(value) {
         return Number.isFinite(Number(value)) ? `${Number(value) >= 0 ? "+" : ""}${Number(value).toFixed(3)}` : "n/a";
+    }
+
+    formatRunStamp(value) {
+        const match = /^(\d{4})(\d{2})(\d{2})$/.exec(String(value ?? ""));
+        return match ? `${match[1]}-${match[2]}-${match[3]}` : String(value ?? "n/a");
+    }
+
+    formatSignedPct(value) {
+        return Number.isFinite(Number(value)) ? `${Number(value) >= 0 ? "+" : ""}${(Number(value) * 100).toFixed(1)}%` : "n/a";
     }
 
     formatInt(value) {

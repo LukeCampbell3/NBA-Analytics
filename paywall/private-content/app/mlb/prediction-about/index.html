@@ -71,6 +71,19 @@
                 </section>
 
                 <section class="prediction-about-panel">
+                    <h2>Real Backtest Validation</h2>
+                    <p>
+                        The live board is empty on plenty of real days -- this policy is deliberately selective, and
+                        that is a correct outcome, not a bug. To see whether the current policy actually holds up,
+                        this replays its exact real selection logic against this repo's own archived raw daily pools
+                        and grades every pick against real settled results. Nothing here is a live pick for today;
+                        it is real, disclosed, historical evidence.
+                    </p>
+                    <div id="backtestOverview" class="prediction-about-metric-grid"></div>
+                    <div id="backtestPicks" class="prediction-about-table-wrap"></div>
+                </section>
+
+                <section class="prediction-about-panel">
                     <h2>What The Metrics Mean</h2>
                     <ul class="prediction-about-list">
                         <li><strong>Model Estimate:</strong> directional model output versus the line; not a guaranteed or calibrated confidence level.</li>
@@ -87,6 +100,6 @@
 
     <script src="/vault/vault-components.js?v=14"></script>
     <script src="/vault/vault-shell.js?v=9"></script>
-    <script src="prediction-about.js?v=5"></script>
+    <script src="prediction-about.js?v=6"></script>
 </body>
 </html>
