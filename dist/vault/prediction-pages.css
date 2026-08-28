@@ -522,37 +522,95 @@ button {
   color: var(--vault-text);
 }
 
-.fanduel-region-picker-root:empty {
-  display: none;
-}
-
-.fanduel-region-picker {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-  font-size: 0.8rem;
-}
-
-.fanduel-region-picker__label {
-  color: var(--vault-text-muted);
-  font-weight: 600;
-}
-
-.fanduel-region-picker__select {
-  min-height: 32px;
-  padding: 0 8px;
+/* The one-time "which state" prompt (CardVault.promptFanduelRegion) --
+   a native <dialog>, shown only the first time a viewer clicks a real
+   FanDuel betslip link and their state isn't known yet. */
+.fanduel-region-dialog {
+  width: min(360px, calc(100% - 32px));
+  padding: 20px;
   border: 1px solid var(--vault-line);
-  border-radius: 5px;
+  border-radius: var(--vault-radius-card);
+  background: #ffffff;
+  box-shadow: var(--vault-shadow-lift);
+}
+
+.fanduel-region-dialog::backdrop {
+  background: rgba(24, 24, 23, 0.45);
+}
+
+.fanduel-region-dialog__form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fanduel-region-dialog__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--vault-text);
+}
+
+.fanduel-region-dialog__note {
+  margin: 0;
+  color: var(--vault-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.fanduel-region-dialog__select {
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--vault-line);
+  border-radius: 6px;
   background: #ffffff;
   color: var(--vault-text);
   font: inherit;
-  font-size: 0.8rem;
+  font-size: 0.88rem;
   cursor: pointer;
 }
 
-.fanduel-region-picker__select:hover {
+.fanduel-region-dialog__select:hover {
   border-color: var(--vault-line-strong);
+}
+
+.fanduel-region-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.fanduel-region-dialog__cancel,
+.fanduel-region-dialog__continue {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fanduel-region-dialog__cancel {
+  border: 1px solid var(--vault-line);
+  background: #ffffff;
+  color: var(--vault-text-muted);
+}
+
+.fanduel-region-dialog__cancel:hover {
+  border-color: var(--vault-line-strong);
+  color: var(--vault-text);
+}
+
+.fanduel-region-dialog__continue {
+  border: 1px solid var(--vault-sport-accent);
+  background: var(--vault-sport-accent);
+  color: #ffffff;
+}
+
+.fanduel-region-dialog__continue:hover {
+  filter: brightness(0.94);
 }
 
 .vault-board {

@@ -9,7 +9,7 @@
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="/vault/vault-tokens.css?v=10">
     <link rel="stylesheet" href="/vault/vault-components.css?v=10">
-    <link rel="stylesheet" href="/vault/prediction-pages.css?v=12">
+    <link rel="stylesheet" href="/vault/prediction-pages.css?v=13">
     <link rel="stylesheet" href="parlay-board.css?v=9">
 </head>
 <body class="vault-theme">
@@ -23,13 +23,6 @@
                 <button class="vault-info-trigger" type="button" aria-label="About this page" data-info="Sorted model signals with market line, projection, model estimate, push exposure, and review status.">i</button>
             </div>
             <p class="prediction-page-lead">Today's player-market signals ranked by model value, with market context and publication status visible on every card.</p>
-            <!-- FanDuel is state-by-state licensed: a betslip link built
-                 for one state's real sportsbook instance only actually
-                 adds to a viewer's slip if their own real account is in
-                 that same state. This picker (per-browser, never sent
-                 anywhere) lets each viewer resolve every real link on
-                 this page against their own state instead. -->
-            <div id="fanduelRegionPickerRoot" class="fanduel-region-picker-root"></div>
             <div id="predictionRunMeta" class="prediction-run-meta" aria-live="polite">Loading board details...</div>
             <nav id="predictionDateNav" class="date-nav" aria-label="Prediction board date"></nav>
         </header>
@@ -100,8 +93,8 @@
         </footer>
     </main>
 
-    <script src="/vault/vault-components.js?v=15"></script>
+    <script src="/vault/vault-components.js?v=16"></script>
     <script src="/vault/vault-shell.js?v=9"></script>
-    <script src="predictions.js?v=25"></script>
+    <script src="predictions.js?v=26"></script>
 </body>
 </html>

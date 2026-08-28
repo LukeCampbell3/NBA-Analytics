@@ -114,45 +114,116 @@
   };
 
   /**
-   * A small, shared "Betting from" state picker -- one instance per page
-   * (mount it once near the top of the board). Selecting a state saves
-   * it via setFanduelRegion and re-renders whatever the page's own
-   * onChange callback does (typically "re-render the board"), so every
-   * already-rendered betslip link immediately resolves against the new
-   * region. Never assumes a default state for the viewer -- an empty
-   * selection just means every link falls back to the single-region
-   * `sportsbook_deeplink` field, exactly like before this feature existed.
+   * No persistent page-level control -- every real FanDuel betslip link
+   * on the page instead resolves itself the moment it's clicked:
+   *   - viewer's state already known (getFanduelRegion()) -> the correct
+   *     real regional link opens immediately, no interruption.
+   *   - not known yet -> the click is held, a one-time real prompt asks
+   *     which state to use, and once answered the same real click's link
+   *     opens -- the state is then remembered (localStorage) so every
+   *     later click across the whole site just works with no prompt.
+   * A single delegated document-level click listener (initFanduelBetslip
+   * Links, called once at page load) drives every link tagged
+   * data-fanduel-betslip="1" (see renderPredictionCard/renderLegCard);
+   * this file only needs to be loaded once for it to cover the whole page.
    */
-  CardVault.renderFanduelRegionPicker = function renderFanduelRegionPicker() {
-    const current = CardVault.getFanduelRegion();
-    const options = Object.entries(CardVault.FANDUEL_STATE_NAMES)
-      .sort((a, b) => a[1].localeCompare(b[1]))
-      .map(([code, name]) => `<option value="${CardVault.escapeAttr(code)}"${code === current ? " selected" : ""}>${CardVault.escapeHtml(name)}</option>`)
-      .join("");
-    return `
-      <label class="fanduel-region-picker">
-        <span class="fanduel-region-picker__label">Betting from</span>
-        <select id="fanduelRegionPicker" class="fanduel-region-picker__select" aria-label="Your state, for correct FanDuel betslip links">
-          <option value=""${current ? "" : " selected"}>Select your state</option>
-          ${options}
-        </select>
-      </label>
-    `;
+  CardVault.FANDUEL_BETSLIP_LINK_SELECTOR = '[data-fanduel-betslip="1"]';
+
+  CardVault.resolveFanduelBetslipHref = function resolveFanduelBetslipHref(element) {
+    const region = CardVault.getFanduelRegion();
+    let deeplinksByRegion = {};
+    try {
+      deeplinksByRegion = JSON.parse(element.dataset.deeplinksByRegion || "{}");
+    } catch (_error) { /* malformed/absent -- falls back below */ }
+    if (region && deeplinksByRegion[region]) {
+      const regional = CardVault.safeFanDuelBetslipUrl(deeplinksByRegion[region]);
+      if (regional) return regional;
+    }
+    return CardVault.safeFanDuelBetslipUrl(element.dataset.fallbackUrl || element.getAttribute("href"));
   };
 
   /**
-   * Wires the picker's change event exactly once per page load. Call
-   * this after the picker HTML is in the DOM (it re-queries the element
-   * each time in case the board re-renders and recreates the node).
-   * `onChange` receives the newly selected state code ("" if cleared)
-   * and is where the caller re-renders its own board content.
+   * Builds (once) and shows the real one-time "which state" prompt as a
+   * native <dialog> -- keyboard/ESC/focus-trap handled by the browser,
+   * no framework needed. Resolves with the chosen 2-letter state code,
+   * or "" if the viewer dismissed it without choosing.
    */
-  CardVault.bindFanduelRegionPicker = function bindFanduelRegionPicker(onChange) {
-    document.addEventListener("change", (event) => {
-      if (event.target && event.target.id === "fanduelRegionPicker") {
-        CardVault.setFanduelRegion(event.target.value);
-        if (typeof onChange === "function") onChange(event.target.value);
+  CardVault.promptFanduelRegion = function promptFanduelRegion() {
+    let dialog = document.getElementById("fanduelRegionDialog");
+    if (!dialog) {
+      const options = Object.entries(CardVault.FANDUEL_STATE_NAMES)
+        .sort((a, b) => a[1].localeCompare(b[1]))
+        .map(([code, name]) => `<option value="${CardVault.escapeAttr(code)}">${CardVault.escapeHtml(name)}</option>`)
+        .join("");
+      dialog = document.createElement("dialog");
+      dialog.id = "fanduelRegionDialog";
+      dialog.className = "fanduel-region-dialog";
+      dialog.innerHTML = `
+        <form method="dialog" class="fanduel-region-dialog__form">
+          <h3 class="fanduel-region-dialog__title">Which state is your FanDuel account in?</h3>
+          <p class="fanduel-region-dialog__note">FanDuel prices each state separately, so this makes sure the link actually adds the bet to your slip. Asked once -- your browser remembers it after this.</p>
+          <select class="fanduel-region-dialog__select" required>
+            <option value="" disabled selected>Select your state</option>
+            ${options}
+          </select>
+          <div class="fanduel-region-dialog__actions">
+            <button type="submit" value="cancel" formnovalidate class="fanduel-region-dialog__cancel">Not now</button>
+            <button type="submit" value="continue" class="fanduel-region-dialog__continue">Continue to FanDuel</button>
+          </div>
+        </form>
+      `;
+      document.body.appendChild(dialog);
+    }
+    const select = dialog.querySelector("select");
+    select.value = "";
+    return new Promise((resolve) => {
+      const onClose = () => {
+        dialog.removeEventListener("close", onClose);
+        resolve(dialog.returnValue === "continue" ? select.value : "");
+      };
+      dialog.addEventListener("close", onClose);
+      dialog.showModal();
+    });
+  };
+
+  /**
+   * The shared "Add to FanDuel Betslip" anchor markup -- used by both
+   * renderPredictionCard and renderLegCard so the click-resolution data
+   * attributes are built in exactly one place. `href` is the best link
+   * known at render time (progressive enhancement -- still a real,
+   * working link if JS never runs); the data attributes let
+   * initFanduelBetslipLinks() re-resolve it fresh at click time against
+   * whatever the viewer's region turns out to be by then.
+   */
+  CardVault.renderFanduelBetslipAnchor = function renderFanduelBetslipAnchor(fallbackUrl, deeplinksByRegion) {
+    const href = CardVault.resolveBetslipUrl(deeplinksByRegion, fallbackUrl);
+    if (!href) return "";
+    const dataAttrs = deeplinksByRegion
+      ? ` data-fanduel-betslip="1" data-fallback-url="${CardVault.escapeAttr(CardVault.safeFanDuelBetslipUrl(fallbackUrl))}" data-deeplinks-by-region="${CardVault.escapeAttr(JSON.stringify(deeplinksByRegion))}"`
+      : "";
+    return `<a class="prediction-card__betslip-link" href="${CardVault.escapeAttr(href)}"${dataAttrs} target="_blank" rel="noopener noreferrer">Add to FanDuel Betslip</a>`;
+  };
+
+  /**
+   * Wires every real betslip link on the page, exactly once. Delegated
+   * on document so it covers links added by a later re-render too --
+   * callers never need to re-bind anything.
+   */
+  CardVault.initFanduelBetslipLinks = function initFanduelBetslipLinks() {
+    if (CardVault._fanduelBetslipLinksInitialized) return;
+    CardVault._fanduelBetslipLinksInitialized = true;
+    document.addEventListener("click", async (event) => {
+      const link = event.target.closest?.(CardVault.FANDUEL_BETSLIP_LINK_SELECTOR);
+      if (!link) return;
+      event.preventDefault();
+
+      if (!CardVault.getFanduelRegion()) {
+        const chosen = await CardVault.promptFanduelRegion();
+        if (!chosen) return; // dismissed -- no link opened, nothing saved
+        CardVault.setFanduelRegion(chosen);
       }
+      const href = CardVault.resolveFanduelBetslipHref(link);
+      if (href) global.open(href, "_blank", "noopener,noreferrer");
     });
   };
 
@@ -533,16 +604,11 @@
     // Real single-leg "Add to Betslip" link -- only when this exact play
     // was actually priced at FanDuel (selected_sportsbook_key) AND
     // carries FanDuel's own real deep link for that selection
-    // (sportsbook_deeplink). Resolves against the viewer's own selected
-    // state (deeplinks_by_region) when available, else falls back to the
-    // single-region link -- see resolveBetslipUrl. Re-validated against
-    // the host/path allowlist before ever rendering; never a guessed or
-    // generic link.
-    const betslipUrl = String(play.selected_sportsbook_key || "").trim().toLowerCase() === "fanduel"
-      ? CardVault.resolveBetslipUrl(play.deeplinks_by_region, play.sportsbook_deeplink)
-      : "";
-    const betslipHtml = betslipUrl
-      ? `<a class="prediction-card__betslip-link" href="${CardVault.escapeAttr(betslipUrl)}" target="_blank" rel="noopener noreferrer">Add to FanDuel Betslip</a>`
+    // (sportsbook_deeplink). Resolved fresh at click time against the
+    // viewer's own state -- see renderFanduelBetslipAnchor /
+    // initFanduelBetslipLinks.
+    const betslipHtml = String(play.selected_sportsbook_key || "").trim().toLowerCase() === "fanduel"
+      ? CardVault.renderFanduelBetslipAnchor(play.sportsbook_deeplink, play.deeplinks_by_region)
       : "";
 
     return `
@@ -601,14 +667,9 @@
     // here: that combined-URL scheme was never confirmed against real
     // FanDuel behavior and failed a real, logged-in device test, so
     // each leg gets its own real, individually-verified link instead.
-    // Resolves against the viewer's own selected state when the caller
-    // passes a real deeplinksByRegion map -- see resolveBetslipUrl.
-    const safeBetslipUrl = deeplinksByRegion
-      ? CardVault.resolveBetslipUrl(deeplinksByRegion, betslipUrl)
-      : CardVault.safeFanDuelBetslipUrl(betslipUrl);
-    const betslipHtml = safeBetslipUrl
-      ? `<a class="prediction-card__betslip-link" href="${CardVault.escapeAttr(safeBetslipUrl)}" target="_blank" rel="noopener noreferrer">Add to FanDuel Betslip</a>`
-      : "";
+    // Resolved fresh at click time against the viewer's own state -- see
+    // renderFanduelBetslipAnchor / initFanduelBetslipLinks.
+    const betslipHtml = CardVault.renderFanduelBetslipAnchor(betslipUrl, deeplinksByRegion);
 
     return `
       <article class="prediction-card" aria-label="${CardVault.escapeAttr(`${name}, ${market}`)}">
