@@ -8,7 +8,7 @@ from types import SimpleNamespace
 MLB_SCRIPTS_ROOT = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(MLB_SCRIPTS_ROOT))
 
-import build_v14_backtest_report as report_builder  # noqa: E402
+import build_backtest_validation_report as report_builder  # noqa: E402
 import select_high_precision_predictions as shp  # noqa: E402
 
 

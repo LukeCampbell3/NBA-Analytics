@@ -35,7 +35,7 @@ class PredictionAboutPage {
         // failure here must never block the run-facts/board-snapshot
         // sections above.
         try {
-            const response = await fetch(`data/v14_backtest_validation.json?v=${Date.now()}`);
+            const response = await fetch(`data/mlb_backtest_validation.json?v=${Date.now()}`);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             this.backtestData = await response.json();
             this.renderBacktest();

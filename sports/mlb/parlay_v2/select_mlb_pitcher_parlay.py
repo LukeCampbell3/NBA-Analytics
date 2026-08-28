@@ -56,6 +56,12 @@ MIN_EXPECTED_VALUE = 0.0
 MIN_REAL_BOOKS = 1
 MIN_COMBO_ABS_EDGE = 0.05
 MIN_COMBO_EXPECTED_VALUE = 0.0
+# Real, disclosed hit-rate-first gate, matching select_mlb_same_game_bets.py's
+# own MIN_COMBO_JOINT_PROBABILITY: reuses HIGH_HIT_PARLAY_V1's own real
+# joint-probability floor (select_high_hit_parlay.py's JOINT_PROBABILITY_
+# FLOOR) rather than inventing a separate number -- same real, disclosed
+# default this repo's other real-money-adjacent MLB parlay products use.
+MIN_COMBO_JOINT_PROBABILITY = 0.50
 STATE_BUCKET = "mlb_pitcher_k_parlay_v1"
 
 
@@ -255,19 +261,25 @@ def build_pitcher_parlay(
     *,
     min_combo_abs_edge: float = MIN_COMBO_ABS_EDGE,
     min_combo_expected_value: float = MIN_COMBO_EXPECTED_VALUE,
+    min_combo_joint_probability: float = MIN_COMBO_JOINT_PROBABILITY,
 ) -> Optional[PitcherParlayCandidate]:
-    """Real best-EV leg per real distinct pitcher (price-confirmed only),
-    then the real best-combined-EV pair from two DIFFERENT real pitchers
-    (never two legs on the same start). None (never a fabricated pair)
-    with fewer than two real distinct priced pitchers."""
+    """Real best-hit-probability leg per real distinct pitcher (price-
+    confirmed only), then the real best-combined-hit-probability pair
+    from two DIFFERENT real pitchers (never two legs on the same start).
+    Hit-rate-first, not EV-first: a parlay is worthless if it doesn't
+    hit, so the model's own real probability -- not its price-weighted
+    EV -- decides which legs make the combo; min_combo_joint_probability
+    below is the real, disclosed floor on the combo actually hitting.
+    None (never a fabricated pair) with fewer than two real distinct
+    priced pitchers."""
     priced = [leg for leg in legs if leg.price_confirmed and leg.expected_value_per_unit is not None]
     best_by_pitcher: dict[int, PitcherKLeg] = {}
     for leg in priced:
         current = best_by_pitcher.get(leg.pitcher_id)
-        if current is None or (leg.expected_value_per_unit or -1.0) > (current.expected_value_per_unit or -1.0):
+        if current is None or leg.model_probability > current.model_probability:
             best_by_pitcher[leg.pitcher_id] = leg
 
-    candidates = sorted(best_by_pitcher.values(), key=lambda leg: leg.expected_value_per_unit or -1.0, reverse=True)
+    candidates = sorted(best_by_pitcher.values(), key=lambda leg: leg.model_probability, reverse=True)
     if len(candidates) < 2:
         return None
     leg_a, leg_b = candidates[0], candidates[1]
@@ -287,9 +299,12 @@ def build_pitcher_parlay(
     probability_edge = joint_probability - naive_no_vig if naive_no_vig is not None else None
     expected_value = joint_probability * combo_decimal_price - 1.0 if combo_decimal_price is not None else None
 
+    combo_joint_passed = joint_probability >= min_combo_joint_probability
     combo_edge_passed = probability_edge is not None and probability_edge >= min_combo_abs_edge
     combo_ev_passed = expected_value is not None and expected_value > min_combo_expected_value
-    candidate_authorized = bool(leg_a.leg_authorized and leg_b.leg_authorized and combo_edge_passed and combo_ev_passed)
+    candidate_authorized = bool(
+        leg_a.leg_authorized and leg_b.leg_authorized and combo_joint_passed and combo_edge_passed and combo_ev_passed
+    )
 
     return PitcherParlayCandidate(
         leg_a=leg_a, leg_b=leg_b,

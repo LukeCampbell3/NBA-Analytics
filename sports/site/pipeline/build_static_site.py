@@ -59,7 +59,7 @@ PREDICTION_DATA_FILES = {
     "same_game_predictions.json",
     "pitcher_parlay_predictions.json",
     "high_hit_parlay_predictions.json",
-    "v14_backtest_validation.json",
+    "mlb_backtest_validation.json",
 }
 HISTORY_DATA_FILE = re.compile(r"^\d{4}-\d{2}-\d{2}\.json$")
 

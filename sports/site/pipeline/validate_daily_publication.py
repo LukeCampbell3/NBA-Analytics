@@ -25,13 +25,13 @@ SPORT_PAYLOADS = {
 # book-count-gate relaxation. See run_daily_predictions.py's
 # MLB_PRIMARY_POLICY_PROFILE comment for the full real root cause and
 # evidence behind both changes.
-MLB_POLICY_PROFILE = "premium_evidence_gated_v14"
-MLB_LEGACY_POLICY_PROFILE = "premium_evidence_gated_v13"
+MLB_POLICY_PROFILE = "premium_evidence_gated_v15"
+MLB_LEGACY_POLICY_PROFILE = "premium_evidence_gated_v14"
 MLB_REQUIRED_TARGETS = {"ER", "H", "HR", "K", "R", "RBI", "TB"}
 MLB_MIN_BOOKS = 1
 MLB_MIN_COMMON_BOOKS = 1
 MLB_ALLOWED_SPORTSBOOKS = {"bet365", "caesars", "draftkings", "fanduel", "fanatics", "mgm"}
-MLB_MARKET_BUCKET_CAP = 2
+MLB_MARKET_BUCKET_CAP = 6
 MLB_PUBLICATION_STATES = {"published_current_pool", "withheld_current_pool"}
 MLB_CORE_SELECTION_PROFILE = "core_market_v1"
 MLB_OPTIMIZED_OVER_PROFILE = "r_tb_over_moderate_edge_v1"
@@ -41,15 +41,16 @@ MLB_PITCHER_K_OVER_PROFILE_STATUS = "probation"
 MLB_MATCHUP_NETWORK_VERSION = "batter_pitcher_profile_network_v2"
 MLB_MATCHUP_ADJUSTMENT_CAPS = {"H": 0.10, "TB": 0.16, "R": 0.05, "HR": 0.025, "RBI": 0.06}
 MLB_MAX_PITCHER_K_PICKS = 1
-MLB_DAILY_PICK_SOFT_CAP = 10
-MLB_DAILY_PICK_HARD_CAP = 10
+MLB_DAILY_PICK_SOFT_CAP = 25
+MLB_DAILY_PICK_HARD_CAP = 25
 MLB_POST_CAP_MIN_SELECTION_SCORE = 0.50
 MLB_CORE_MIN_AMERICAN_PRICE = -180.0
 MLB_CORE_MAX_AMERICAN_PRICE = 125.0
 MLB_MIN_OVER_PICKS = 0
-MLB_MAX_OVER_PICKS = 10
+MLB_MAX_OVER_PICKS = 25
 MLB_MAX_UNDER_PICKS = 0
 MLB_MIN_CORE_HIT_PROBABILITY = 0.70
+MLB_MIN_EXPECTED_VALUE = 0.15
 MLB_HISTORICAL_EVIDENCE_SCOPE = "real_price_confirmed_markets_only_v1"
 MLB_PARLAY_PROBABILITY_FLOORS = {2: 0.40, 3: 0.25, 4: 0.18}
 MLB_PARLAY_RELIABILITY_PROBABILITY_FLOORS = {2: 0.42, 3: 0.40, 4: 0.30}
@@ -400,11 +401,11 @@ def validate_mlb_payload(
             f"expected {sorted(MLB_REQUIRED_TARGETS)}, found {sorted(targets)}."
         )
     if int(selection.get("max_per_market_bucket", 0)) != MLB_MARKET_BUCKET_CAP:
-        raise ValueError(f"MLB {label} payload is not using the two-play market-bucket cap.")
+        raise ValueError(f"MLB {label} payload is not using the {MLB_MARKET_BUCKET_CAP}-play market-bucket cap.")
     if selection.get("optimized_over_max_per_market_bucket") is not None:
         raise ValueError(f"MLB {label} payload enabled the probationary OVER market-bucket cap.")
-    if as_float(selection.get("min_expected_value")) != 0.0:
-        raise ValueError(f"MLB {label} payload must require nonnegative expected value.")
+    if as_float(selection.get("min_expected_value")) != MLB_MIN_EXPECTED_VALUE:
+        raise ValueError(f"MLB {label} payload must require at least {MLB_MIN_EXPECTED_VALUE} expected value.")
     if int(selection.get("min_market_books", 0)) < MLB_MIN_BOOKS:
         raise ValueError(f"MLB {label} payload must require at least {MLB_MIN_BOOKS} market books.")
     if int(selection.get("min_common_market_books", 0)) < MLB_MIN_COMMON_BOOKS:

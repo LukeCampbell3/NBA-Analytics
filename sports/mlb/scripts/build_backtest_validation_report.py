@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
 Build a real, per-pick backtest validation report for the current live
-MLB policy (premium_evidence_gated_v14), for display on the site's
-methodology page (prediction-about.html) -- so a viewer can see real,
-settled, graded evidence that the policy works even on a day the live
-board itself has zero picks (a real, honest, and not uncommon outcome
-under this selective a policy -- see run_daily_predictions.py's own
-MLB_PRIMARY_POLICY_PROFILE comment).
+MLB policy, for display on the site's methodology page (prediction-
+about.html) -- so a viewer can see real, settled, graded evidence that
+the policy works even on a day the live board itself has zero picks (a
+real, honest, and not uncommon outcome under this selective a policy --
+see run_daily_predictions.py's own MLB_PRIMARY_POLICY_PROFILE comment).
 
 Reuses the exact real selection path every other real MLB backtest in
 this repo already uses -- build_v11_eligible_training_set.py's
@@ -34,6 +33,14 @@ from typing import Any
 
 SCRIPT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_ROOT))
+REPO_ROOT = SCRIPT_ROOT.parents[2]
+sys.path.insert(0, str(REPO_ROOT / "sports" / "site" / "pipeline"))
+
+# Imported before select_high_precision_predictions (below), which itself
+# inserts REPO_ROOT onto sys.path -- REPO_ROOT has its own unrelated
+# run_daily_predictions.py at its root, which would otherwise shadow the
+# real sports/site/pipeline one this import needs once that insert lands.
+from run_daily_predictions import MLB_PRIMARY_POLICY_PROFILE  # noqa: E402
 
 import select_high_precision_predictions as shp  # noqa: E402
 from build_v11_eligible_training_set import (  # noqa: E402
@@ -45,8 +52,7 @@ from build_v11_eligible_training_set import (  # noqa: E402
 from pick_survival_model import american_profit_per_unit, to_float  # noqa: E402
 from validate_historical_final_pools import build_actual_lookup, grade_result, normalize_player_key  # noqa: E402
 
-REPO_ROOT = SCRIPT_ROOT.parents[2]
-DEFAULT_OUTPUT_JSON = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "v14_backtest_validation.json"
+DEFAULT_OUTPUT_JSON = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "mlb_backtest_validation.json"
 
 
 def build_report(
@@ -109,7 +115,7 @@ def build_report(
     return {
         "schema_version": 1,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-        "model_version": "premium_evidence_gated_v14",
+        "model_version": MLB_PRIMARY_POLICY_PROFILE,
         "is_live_board": False,
         "description": (
             "Real, settled backtest of the current live policy's exact selection "

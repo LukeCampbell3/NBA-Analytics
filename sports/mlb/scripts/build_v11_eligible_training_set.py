@@ -8,12 +8,14 @@ daily_runs/<date>/, re-runs the exact real candidate build and structural
 filter the live selector runs (select_high_precision_predictions.py's own
 prepare_and_filter_candidates(), imported and called directly -- never a
 hand-reconstructed approximation of its gate logic) against that day's raw
-pool CSV, using v11's exact real thresholds. Keeps only rows v11 itself
-would have let through the structural gates (real market, 5+ books, 35+
-history rows, hit-probability >= 0.70, etc.) -- this is deliberately NOT
-the top-N/diversification-capped board, since "would this bet have been
-judged safe" and "did it make today's 10-pick board" are different
-questions; v12's winner-signature model wants the former population.
+pool CSV, using the live selector's exact real thresholds (kept as
+"v11" for continuity -- see V11_SELECTOR_ARGS below). Keeps only rows
+that would have let through the structural gates (real market, 1+
+confirmed book, 35+ history rows, real hit-probability >= 0.70, etc.)
+-- this is deliberately NOT the top-N/diversification-capped board,
+since "would this bet have been judged safe" and "did it make today's
+board" are different questions; v12's winner-signature model wants the
+former population.
 
 Attaches real settled outcomes via validate_historical_final_pools.py's own
 build_actual_lookup()/grade_result() (reused, not reimplemented) -- the
@@ -63,7 +65,7 @@ DEFAULT_REPORT_JSON = REPO_ROOT / "sports" / "mlb" / "data" / "predictions" / "c
 # -- this constant always mirrors whatever the live selector currently
 # runs, by construction of the sync test, regardless of its own name.
 V11_SELECTOR_ARGS: list[str] = [
-    "--top-n", "10",
+    "--top-n", "25",
     "--require-real-market-source",
     "--min-market-books", "1",
     "--min-common-market-books", "1",
@@ -73,7 +75,7 @@ V11_SELECTOR_ARGS: list[str] = [
     "--min-graded-hit-rate", "0.70",
     "--max-push-probability", "0.15",
     "--min-abs-edge", "0.10",
-    "--min-expected-value", "0.0",
+    "--min-expected-value", "0.15",
     "--pitcher-k-min-starter-history", "15",
     "--pitcher-k-min-projected-ip", "5.25",
     "--pitcher-k-min-projected-pitches", "75",
@@ -89,12 +91,12 @@ V11_SELECTOR_ARGS: list[str] = [
     "--core-min-american-price", "-180",
     "--core-max-american-price", "125",
     "--min-over-picks", "0",
-    "--max-over-picks", "10",
+    "--max-over-picks", "25",
     "--max-under-picks", "0",
-    "--daily-pick-soft-cap", "10",
+    "--daily-pick-soft-cap", "25",
     "--post-cap-min-selection-score", "0.50",
-    "--max-per-market-bucket", "2",
-    "--max-per-team", "2",
+    "--max-per-market-bucket", "6",
+    "--max-per-team", "6",
     "--min-historical-bet-profile-support", "0",
     "--min-historical-bet-profile-win-rate", "0",
     "--min-historical-market-availability-support", "0",

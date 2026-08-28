@@ -1,0 +1,740 @@
+{
+  "board_title": "MLB Prediction Bounties",
+  "by_direction": {},
+  "by_target": {},
+  "daily_parlay": {
+    "allowed_leg_counts": [
+      2,
+      3,
+      4
+    ],
+    "alternate_line_candidate_count": 0,
+    "available": false,
+    "betslip_policy": {
+      "construction": "direct_fanduel_public_market_ids_only",
+      "linked_ticket_count": 0,
+      "sportsbook": "FanDuel",
+      "sportsbook_key": "fanduel",
+      "status": "unavailable"
+    },
+    "considered_anchor_count": 0,
+    "direction_policy": "OVER_ONLY",
+    "eligible_anchor_count": 0,
+    "filter_rejections": {
+      "history_too_short": 2,
+      "leg_probability_too_low": 12,
+      "leg_value_too_low": 4,
+      "not_over": 433,
+      "official_game_closed": 4,
+      "price_outside_playable_range": 7,
+      "unconfirmed_market_price": 235,
+      "unsupported_anchor_target": 17
+    },
+    "gates": {
+      "direct_fanduel_public_selection_link_required_for_betslip": true,
+      "distinct_games_required": true,
+      "hit_survival": {
+        "evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+        "maximum_probability_disagreement": 0.16,
+        "minimum_consensus_probability": 0.62,
+        "minimum_probability": 0.58,
+        "model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+        "probability_components": [
+          "role_survival_model",
+          "no_vig_market_probability",
+          "existing_calibrated_probability"
+        ],
+        "roi_claim": false,
+        "status": "development_shadow"
+      },
+      "latent_parlay": {
+        "evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+        "in_support_required": true,
+        "maximum_legs": 4,
+        "model_version": "mlb_latent_parlay_set_attention_v3",
+        "ranking_effect": "none_on_authorized_ladder",
+        "roi_claim": false,
+        "shadow_ranking_policy": {
+          "2": "bounded_attention_joint_probability",
+          "3": "market_residual_uncertainty_penalized_product",
+          "4": "market_residual_uncertainty_penalized_product"
+        },
+        "status": "prospective_shadow"
+      },
+      "linked_sportsbook": "fanduel",
+      "min_combined_decimal_price": 1.8,
+      "min_common_market_books": 1,
+      "min_expected_return_per_unit": 0.0,
+      "min_leg_probability": 0.62,
+      "min_market_books": 1,
+      "min_ticket_probability": 0.4,
+      "profit_boost": {
+        "exact_sportsbook_alternate_price_required": true,
+        "max_combined_decimal_price": 15.0,
+        "min_combined_decimal_price": 4.0,
+        "min_expected_return_per_unit": 0.05,
+        "min_leg_probability": 0.18,
+        "min_ticket_probability": 0.1,
+        "status": "shadow_only"
+      },
+      "same_sportsbook_required": true,
+      "single_book_scope": "exact_fanduel_quote_with_provider_market_and_selection_ids",
+      "ticket_max_decimal_prices": {
+        "2": 6.0,
+        "3": 10.0,
+        "4": 18.0
+      },
+      "ticket_probability_floors": {
+        "2": 0.4,
+        "3": 0.25,
+        "4": 0.18
+      }
+    },
+    "generated_at_utc": "2026-08-28T01:57:30.048931+00:00",
+    "hit_survival_validation": {
+      "calibration": {
+        "brier_score": 0.2427361284894067,
+        "hit_rate": 0.550417469492614,
+        "log_loss": 0.6784880389736997,
+        "mean_probability": 0.5504822699449573,
+        "rows": 3114,
+        "wins": 1714
+      },
+      "claim_scope": "hit-rate ranking and confidence diagnostic only; executable prices are required for ROI",
+      "evidence_label": "SYNTHETIC_LINE_HIT_RATE_DIAGNOSTIC_NO_ROI_CLAIM",
+      "features": [
+        "projection",
+        "baseline",
+        "last_hits",
+        "batting_order",
+        "history_rows",
+        "is_home"
+      ],
+      "frozen_training_cutoff_exclusive": "2026-07-30",
+      "locked_recent_holdout": {
+        "brier_score": 0.24148337525216435,
+        "daily_top_two": {
+          "leg_hit_rate": 0.65625,
+          "leg_hit_rate_wilson_95_high": 0.7958976664567146,
+          "leg_hit_rate_wilson_95_low": 0.4831077350878594,
+          "leg_wins": 21,
+          "legs": 32,
+          "mean_probability": 0.6744989268898502,
+          "slates": 15,
+          "ticket_hit_rate": 0.4,
+          "ticket_hit_rate_wilson_95_high": 0.642535572434923,
+          "ticket_hit_rate_wilson_95_low": 0.19824228082594664,
+          "ticket_wins": 6
+        },
+        "hit_rate": 0.5313479623824452,
+        "log_loss": 0.6759262240018022,
+        "mean_probability": 0.5505727741204153,
+        "projection_baseline_daily_top_two": {
+          "leg_hit_rate": 0.53125,
+          "leg_hit_rate_wilson_95_high": 0.6913087009831766,
+          "leg_hit_rate_wilson_95_low": 0.3644923793257382,
+          "leg_wins": 17,
+          "legs": 32,
+          "mean_probability": 0.7678921143780982,
+          "slates": 15,
+          "ticket_hit_rate": 0.4,
+          "ticket_hit_rate_wilson_95_high": 0.642535572434923,
+          "ticket_hit_rate_wilson_95_low": 0.19824228082594664,
+          "ticket_wins": 6
+        },
+        "rows": 3190,
+        "wins": 1695
+      },
+      "model_version": "mlb_parlay_hit_survival_role_hgb_v1",
+      "partitions": {
+        "calibration": {
+          "end": "2026-07-10",
+          "start": "2026-06-24"
+        },
+        "development": {
+          "end": "2026-06-23",
+          "start": "2026-03-30"
+        },
+        "locked_recent_holdout": {
+          "end": "2026-07-29",
+          "start": "2026-07-11"
+        }
+      },
+      "status": "development_shadow",
+      "training_dates": 113,
+      "training_rows": 15993
+    },
+    "latent_parlay_validation": {
+      "calibration": {
+        "legs": {
+          "brier_score": 0.2424343086651612,
+          "hit_rate": 0.5632798573975044,
+          "log_loss": 0.6778125853224081,
+          "mean_probability": 0.5625202655792236,
+          "roc_auc": 0.5708496472164816,
+          "rows": 4488,
+          "wins": 2528
+        },
+        "safe_rolling_baseline": {
+          "brier_score": 0.24418589648717387,
+          "hit_rate": 0.5632798573975044,
+          "log_loss": 0.6814756761962799,
+          "mean_probability": 0.5632797236126167,
+          "roc_auc": 0.5519312273960217,
+          "rows": 4488,
+          "wins": 2528
+        },
+        "sampled_tickets": {
+          "brier_score": 0.19658613861689764,
+          "hit_rate": 0.2847222222222222,
+          "log_loss": 0.5804600342416407,
+          "mean_probability": 0.28751012682914734,
+          "roc_auc": 0.6205273882296536,
+          "rows": 6480,
+          "wins": 1845
+        }
+      },
+      "claim_scope": "synthetic H over 0.5 hit-chain ranking only; no executable price or ROI claim",
+      "cuda_version": "12.8",
+      "dates": 125,
+      "deployment_fit": {
+        "calibration_legs": {
+          "brier_score": 0.2435080430484226,
+          "hit_rate": 0.5501427212178878,
+          "log_loss": 0.6800309584163625,
+          "mean_probability": 0.5305083394050598,
+          "roc_auc": 0.5774020224970311,
+          "rows": 5255,
+          "wins": 2891
+        },
+        "calibration_rows": 5255,
+        "calibration_sampled_tickets": {
+          "brier_score": 0.2061659975211286,
+          "hit_rate": 0.26763888888888887,
+          "log_loss": 0.6245069055404697,
+          "mean_probability": 0.12740659713745117,
+          "roc_auc": 0.6564487149041671,
+          "rows": 7200,
+          "wins": 1927
+        },
+        "next_unseen_date": "2026-08-06",
+        "probability_calibration_period": {
+          "end": "2026-08-05",
+          "start": "2026-07-17"
+        },
+        "status": "prospective_shadow_only",
+        "training_period": {
+          "end": "2026-07-16",
+          "start": "2026-03-30"
+        },
+        "training_rows": 17791
+      },
+      "device": "NVIDIA GeForce RTX 4080 SUPER",
+      "evidence_label": "SYNTHETIC_H05_OUTCOME_SHADOW_NO_EXECUTABLE_ROI_CLAIM",
+      "export_parity": {
+        "leg_probability_max_abs": 1.882963751587141e-08,
+        "leg_raw_probability_max_abs": 2.638824647682725e-08,
+        "ticket_probability_max_abs": 4.1938656991646894e-09,
+        "ticket_raw_probability_max_abs": 1.7148897024643617e-08
+      },
+      "identity_contract": {
+        "opponent": "team abbreviation",
+        "pitcher": "MLBAM identifier with normalized-name fallback",
+        "player": "normalized player name shared by training and production",
+        "team": "team abbreviation"
+      },
+      "leakage_exclusions": [
+        "same-game H, PA, AB, Team_PA_share, wOBA, xwOBA, ISO, Barrel%, HardHit%",
+        "historical H_market_gap and projection derived from same-game fields"
+      ],
+      "locked_holdout": {
+        "daily_ranking": {
+          "2": {
+            "independent_product_hit_rate": 0.5,
+            "independent_product_wins": 10,
+            "independent_wilson_95": [
+              0.2992949144298199,
+              0.7007050855701801
+            ],
+            "latent_ticket_hit_rate": 0.5,
+            "latent_ticket_wins": 10,
+            "latent_wilson_95": [
+              0.2992949144298199,
+              0.7007050855701801
+            ],
+            "slates": 20
+          },
+          "3": {
+            "independent_product_hit_rate": 0.4,
+            "independent_product_wins": 8,
+            "independent_wilson_95": [
+              0.21880396741419272,
+              0.613422057684794
+            ],
+            "latent_ticket_hit_rate": 0.35,
+            "latent_ticket_wins": 7,
+            "latent_wilson_95": [
+              0.18118954786794464,
+              0.5671494897805354
+            ],
+            "slates": 20
+          },
+          "4": {
+            "independent_product_hit_rate": 0.3,
+            "independent_product_wins": 6,
+            "independent_wilson_95": [
+              0.14547527396899385,
+              0.5189767762289793
+            ],
+            "latent_ticket_hit_rate": 0.3,
+            "latent_ticket_wins": 6,
+            "latent_wilson_95": [
+              0.14547527396899385,
+              0.5189767762289793
+            ],
+            "slates": 20
+          }
+        },
+        "daily_top_two_legs": {
+          "latent": {
+            "hit_rate": 0.75,
+            "legs": 40,
+            "wilson_95": [
+              0.598057409330299,
+              0.8581303210445048
+            ],
+            "wins": 30
+          },
+          "safe_rolling_baseline": {
+            "hit_rate": 0.625,
+            "legs": 40,
+            "wilson_95": [
+              0.47032160054531913,
+              0.7577722646420829
+            ],
+            "wins": 25
+          }
+        },
+        "legs": {
+          "brier_score": 0.24408094480171033,
+          "hit_rate": 0.5501427212178878,
+          "log_loss": 0.6811830883046901,
+          "mean_probability": 0.5631510615348816,
+          "roc_auc": 0.5704383491329941,
+          "rows": 5255,
+          "wins": 2891
+        },
+        "safe_rolling_baseline": {
+          "brier_score": 0.2444186750878317,
+          "hit_rate": 0.5501427212178878,
+          "log_loss": 0.6819304777519898,
+          "mean_probability": 0.5603725246530553,
+          "roc_auc": 0.5713790420237612,
+          "rows": 5255,
+          "wins": 2891
+        },
+        "sampled_tickets": {
+          "brier_score": 0.18543409529511665,
+          "hit_rate": 0.2673611111111111,
+          "log_loss": 0.5541604918377484,
+          "mean_probability": 0.28158947825431824,
+          "roc_auc": 0.6489663814858129,
+          "rows": 7200,
+          "wins": 1925
+        }
+      },
+      "model_version": "mlb_latent_parlay_set_attention_v3",
+      "partition_rows": {
+        "calibration": 4488,
+        "development": 13303,
+        "locked_holdout": 5255
+      },
+      "partitions": {
+        "calibration": {
+          "end": "2026-07-16",
+          "start": "2026-06-25"
+        },
+        "development": {
+          "end": "2026-06-24",
+          "start": "2026-03-30"
+        },
+        "locked_holdout": {
+          "end": "2026-08-05",
+          "start": "2026-07-17"
+        }
+      },
+      "rows": 23046,
+      "sampled_tickets": {
+        "calibration": 6480,
+        "development": 17520,
+        "locked_holdout": 7200
+      },
+      "status": "development_shadow"
+    },
+    "latent_shadow_ticket_ladder": [],
+    "objective": "exact_set_search_with_role_survival_consensus_and_shadow_positive_ev_alternates",
+    "policy_version": "mlb_fanduel_public_betslip_parlay_v9",
+    "pool_candidate_count": 714,
+    "profit_boost_ticket": null,
+    "reason": "no executable OVER-only ticket cleared the consistency gates",
+    "run_date": "2026-08-27",
+    "schema_version": 4,
+    "selected_ticket": null,
+    "status": "withheld",
+    "ticket_ladder": [],
+    "validation": {
+      "alternate_line_margin_audit": {
+        "base_hit_rate": 0.625,
+        "by_target": {
+          "R": {
+            "base_hit_rate": 0.5793103448275863,
+            "one_unit_higher_hit_rate": 0.16551724137931034,
+            "rows": 145,
+            "winner_margin_retention_one_unit": 0.2857142857142857
+          },
+          "TB": {
+            "base_hit_rate": 0.6612021857923497,
+            "one_unit_higher_hit_rate": 0.4918032786885246,
+            "rows": 183,
+            "winner_margin_retention_one_unit": 0.743801652892562
+          }
+        },
+        "claim_scope": "hit-rate diagnostic only; does not establish alternate-line ROI",
+        "method": "synthetic_event_grading_without_alternate_price_history",
+        "one_unit_higher_hit_rate": 0.3475609756097561,
+        "rows": 328,
+        "two_units_higher_hit_rate": 0.25609756097560976,
+        "winner_margin_retention_one_unit": 0.5560975609756098
+      },
+      "by_leg_count": [
+        {
+          "all_dates": {
+            "brier_score": 0.10312354211233236,
+            "dates": 9,
+            "hit_rate": 0.8888888888888888,
+            "hits": 8,
+            "mean_projected_probability": 0.8044273966557217,
+            "tickets": 9,
+            "win_rate_wilson_95_high": 0.9801096286728695,
+            "win_rate_wilson_95_low": 0.5649937852319399
+          },
+          "development": {
+            "brier_score": 0.042982775567192946,
+            "dates": 8,
+            "hit_rate": 1.0,
+            "hits": 8,
+            "mean_projected_probability": 0.8094355379231893,
+            "tickets": 8,
+            "win_rate_wilson_95_high": 1.0,
+            "win_rate_wilson_95_low": 0.6755843804891231
+          },
+          "fixed_recent_holdout": {
+            "brier_score": 0.5842496744734477,
+            "dates": 1,
+            "hit_rate": 0.0,
+            "hits": 0,
+            "mean_projected_probability": 0.764362266515981,
+            "tickets": 1,
+            "win_rate_wilson_95_high": 0.7934567085261071,
+            "win_rate_wilson_95_low": 0.0
+          },
+          "leg_count": 2
+        },
+        {
+          "all_dates": {
+            "brier_score": 0.15276469649933794,
+            "dates": 9,
+            "hit_rate": 0.7777777777777778,
+            "hits": 7,
+            "mean_projected_probability": 0.6886033651133826,
+            "tickets": 9,
+            "win_rate_wilson_95_high": 0.9367762376877727,
+            "win_rate_wilson_95_low": 0.4525833436728054
+          },
+          "development": {
+            "brier_score": 0.12042388434189569,
+            "dates": 8,
+            "hit_rate": 0.875,
+            "hits": 7,
+            "mean_projected_probability": 0.694494311554102,
+            "tickets": 8,
+            "win_rate_wilson_95_high": 0.9775830911367038,
+            "win_rate_wilson_95_low": 0.5291051942301386
+          },
+          "fixed_recent_holdout": {
+            "brier_score": 0.41149119375887594,
+            "dates": 1,
+            "hit_rate": 0.0,
+            "hits": 0,
+            "mean_projected_probability": 0.6414757935876271,
+            "tickets": 1,
+            "win_rate_wilson_95_high": 0.7934567085261071,
+            "win_rate_wilson_95_low": 0.0
+          },
+          "leg_count": 3
+        },
+        {
+          "all_dates": {
+            "brier_score": 0.26091561936381785,
+            "dates": 9,
+            "hit_rate": 0.5555555555555556,
+            "hits": 5,
+            "mean_projected_probability": 0.577695433325778,
+            "tickets": 9,
+            "win_rate_wilson_95_high": 0.811224570528086,
+            "win_rate_wilson_95_low": 0.2666473457440297
+          },
+          "development": {
+            "brier_score": 0.25792033381561763,
+            "dates": 8,
+            "hit_rate": 0.625,
+            "hits": 5,
+            "mean_projected_probability": 0.5831899191495624,
+            "tickets": 8,
+            "win_rate_wilson_95_high": 0.863158240538479,
+            "win_rate_wilson_95_low": 0.30573785458380187
+          },
+          "fixed_recent_holdout": {
+            "brier_score": 0.2848779037494197,
+            "dates": 1,
+            "hit_rate": 0.0,
+            "hits": 0,
+            "mean_projected_probability": 0.5337395467355025,
+            "tickets": 1,
+            "win_rate_wilson_95_high": 0.7934567085261071,
+            "win_rate_wilson_95_low": 0.0
+          },
+          "leg_count": 4
+        }
+      ],
+      "dates": 10,
+      "event_rows": 328,
+      "history_before_date": "2026-08-27",
+      "method": "stored_pre_event_projection_real_price_confirmed_grading",
+      "price_validation": "real market, at least five books, selected OVER price confirmed; no parlay ROI claim"
+    }
+  },
+  "data_quality": {
+    "lag_days": 1,
+    "reasons": [
+      "no plays passed publication filters"
+    ],
+    "review_threshold_days": 14,
+    "status": "withheld",
+    "withhold_threshold_days": 60
+  },
+  "filter_rejections": {
+    "core_price_too_heavily_juiced": 9,
+    "core_price_too_long": 3,
+    "edge_too_small": 156,
+    "history_too_short": 104,
+    "hit_probability_too_low": 10,
+    "prediction_too_low": 20,
+    "side_price_unconfirmed": 40,
+    "synthetic_market_source": 372
+  },
+  "generated_at_utc": "2026-08-28T01:58:53.095645+00:00",
+  "mlb_team_market_generated_at_utc": "2026-08-28T01:58:53.665076+00:00",
+  "mlb_team_market_plays": [],
+  "mlb_team_market_status": "no_real_games_scheduled_today",
+  "model_run_id": "mlb_high_precision_selector_v2",
+  "parlay_pairs": [],
+  "parlay_summary": {
+    "avg_expected_return_per_unit": null,
+    "avg_projected_pair_hit_rate": null,
+    "avg_projected_parlay_hit_rate": null,
+    "best_expected_return_per_unit": null,
+    "best_projected_pair_hit_rate": null,
+    "best_projected_parlay_hit_rate": null,
+    "candidate_pair_count": 0,
+    "candidate_parlay_count": 0,
+    "fallback_max_legs_per_parlay": 2,
+    "fallback_min_leg_probability": 0.5,
+    "fallback_min_legs_per_parlay": 2,
+    "fallback_min_pair_probability": 0.34,
+    "max_legs_per_parlay": 2,
+    "min_leg_probability": 0.52,
+    "min_legs_per_parlay": 2,
+    "min_pair_probability": 0.38,
+    "same_sportsbook_required": true,
+    "selected_pair_count": 0,
+    "selected_parlay_count": 0,
+    "selection_mode": "strict",
+    "tagged_play_count": 0
+  },
+  "parlay_validation": {
+    "available": false,
+    "reason": "parlay validation rebuild disabled for fast web export"
+  },
+  "parlays": {
+    "abstain_reason": "NO_CANDIDATES",
+    "action": "ABSTAIN",
+    "calibration_as_of": "2026-08-28T01:57:30.883470+00:00",
+    "calibration_snapshot_id": "2907864be89c1332",
+    "calibration_snapshot_sha256": "2907864be89c133234bac3ebfd4cd867112461427826a37eea637c4c24eebc29",
+    "decision_timestamp_utc": "2026-08-28T01:58:02.973295+00:00",
+    "eligibility_reason": "operationally_eligible",
+    "eligible": true,
+    "evidence_status": {
+      "note": "STATUS reflects the FROZEN POLICY's evidence state, never this slate's own candidates -- see manifest.CONCLUSION_REASONING.",
+      "state_machine_status": "FROZEN_PROSPECTIVE_INCONCLUSIVE"
+    },
+    "independent_slate_count": 24,
+    "independent_slate_count_required": 20,
+    "policy_status": "FROZEN_PROSPECTIVE_INCONCLUSIVE",
+    "policy_version": "PARLAY_POLICY_V2_TWO_LEG_SINGLE_ACTION",
+    "selected_parlay": null,
+    "selection_status": "ABSTAIN",
+    "shadow_candidate": null,
+    "shadow_candidate_note": "Best available candidate by descriptive joint score -- NOT a certified pick. The frozen policy has not authorized action on it; see policy_status.",
+    "shadow_execution_status": "NOT_EXECUTED",
+    "staking_authorized": false,
+    "system": "PARLAY_POLICY_V2",
+    "world_gate_mode": "OBSERVE_ONLY"
+  },
+  "plays": [],
+  "policy_governance": {
+    "authorization_reason": "Registered MLB policies remain in development and have no prospective certificate.",
+    "candidate_authorization_enabled": false,
+    "capture_label": "FULL_SLATE_SNAPSHOT",
+    "certificate_status": "NO_ACTIVE_PROSPECTIVE_CERTIFICATE",
+    "complete_slate_capture_passed": true,
+    "full_policy_replay_available_for_snapshot": true,
+    "generated_at_utc": "2026-08-28T01:55:37.110343+00:00",
+    "historical_evidence_labels": [
+      "SELECTED_ONLY_HISTORY",
+      "SELECTED_ONLY_HISTORY"
+    ],
+    "publication_mode": "SHADOW_RESEARCH_ONLY",
+    "registered_policies": [
+      {
+        "policy_digest": "9fba82ab0f431dde6d02e0305d6498d2fbfa69b63ef34ee4f49b42b3bd7b87c4",
+        "policy_stage": "POLICY_DEVELOPMENT",
+        "policy_version": "MLB_SINGLES_OVER_POLICY_V1"
+      },
+      {
+        "policy_digest": "af7432bf3d3ebecbe53f73bbba1cb1d94fb92f6c7af21ba029df0fd1f841fcd7",
+        "policy_stage": "POLICY_DEVELOPMENT",
+        "policy_version": "MLB_FANDUEL_PUBLIC_BETSLIP_PARLAY_POLICY_V5"
+      }
+    ],
+    "run_date": "2026-08-27",
+    "schema_version": "MLB_POLICY_GOVERNANCE_STATUS_V1",
+    "slate_id": "MLB_20260827",
+    "snapshot_id": "mlb_20260827_012409Z_7ac5e4184769",
+    "snapshot_manifest": "/home/user/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260827/governance/slates/MLB_20260827/mlb_20260827_012409Z_7ac5e4184769/manifest.json",
+    "staking_enabled": false
+  },
+  "policy_profile": "premium_evidence_gated_v14",
+  "publication_message": "no plays passed publication filters",
+  "publication_state": "withheld_current_pool",
+  "publication_status": "withheld",
+  "run_date": "2026-08-27",
+  "selection": {
+    "allow_baseline": false,
+    "allow_synthetic_unders": false,
+    "allow_unpriced_side": false,
+    "bet_profile_prior_strength": 80.0,
+    "core_max_american_price": 125.0,
+    "core_min_american_price": -180.0,
+    "daily_pick_soft_cap": 10,
+    "historical_bet_profiles_enabled": true,
+    "historical_calibration_enabled": true,
+    "historical_calibration_evidence_scope": "real_price_confirmed_markets_only_v1",
+    "history_before_date": "",
+    "history_prior_strength": 400.0,
+    "history_season": 2026,
+    "live_confidence_calibration_enabled": true,
+    "matchup_network_enabled": true,
+    "matchup_network_version": "batter_pitcher_profile_network_v2",
+    "max_bet_profile_prior_weight": 0.25,
+    "max_days_since_history": 4,
+    "max_history_prior_weight": 0.35,
+    "max_market_line_std": 0.0,
+    "max_over_picks": 10,
+    "max_per_game": 2,
+    "max_per_market_bucket": 2,
+    "max_per_player": 1,
+    "max_per_team": 2,
+    "max_pitcher_k_picks": 1,
+    "max_push_probability": 0.15,
+    "max_under_picks": 0,
+    "min_abs_edge": 0.1,
+    "min_bet_profile_rows": 12,
+    "min_common_market_books": 1,
+    "min_expected_value": 0.0,
+    "min_graded_hit_rate": 0.7,
+    "min_historical_bet_profile_support": 0,
+    "min_historical_bet_profile_win_rate": 0.0,
+    "min_historical_market_availability_rate": 0.0,
+    "min_historical_market_availability_support": 0,
+    "min_history_bucket_rows": 50,
+    "min_history_rows": 35,
+    "min_hit_probability": 0.7,
+    "min_market_availability_rows": 12,
+    "min_market_books": 1,
+    "min_over_picks": 0,
+    "min_prediction": 0.1,
+    "optimized_over_max_per_market_bucket": null,
+    "optimized_over_profile": "r_tb_over_moderate_edge_v1",
+    "optimized_over_profile_status": "probation",
+    "optimized_over_targets": [],
+    "over_max_abs_edge": null,
+    "over_max_american_price": null,
+    "over_max_model_hit_probability": null,
+    "over_min_abs_edge": null,
+    "over_min_expected_value": null,
+    "over_min_history_rows": null,
+    "over_min_model_hit_probability": null,
+    "pick_survival_shadow_enabled": true,
+    "pitcher_k_max_abs_edge": 1.0,
+    "pitcher_k_max_american_price": 130.0,
+    "pitcher_k_max_days_since_history": 14,
+    "pitcher_k_max_model_hit_probability": 0.65,
+    "pitcher_k_min_abs_edge": 0.15,
+    "pitcher_k_min_american_price": -130.0,
+    "pitcher_k_min_expected_value": 0.0,
+    "pitcher_k_min_model_hit_probability": 0.5,
+    "pitcher_k_min_projected_ip": 5.25,
+    "pitcher_k_min_projected_pitches": 75.0,
+    "pitcher_k_min_starter_history": 15,
+    "pitcher_k_over_profile": "pitcher_k_over_workload_v1",
+    "pitcher_k_over_profile_enabled": false,
+    "pitcher_k_over_profile_status": "probation",
+    "policy_version": "premium_evidence_gated_v14",
+    "post_cap_min_selection_score": 0.5,
+    "prefer_confident_side": false,
+    "require_real_market_source": true,
+    "targets": [
+      "ER",
+      "H",
+      "HR",
+      "K",
+      "R",
+      "RBI",
+      "TB"
+    ],
+    "top_n": 10
+  },
+  "sport": "MLB",
+  "summary": {
+    "avg_abs_edge": 0.0,
+    "avg_edge": 0.0,
+    "avg_expected_hit_rate": 0.0,
+    "avg_graded_hit_rate": 0.0,
+    "avg_precision_score": 0.0,
+    "avg_value_score": 0.0,
+    "closed_game_cards_suppressed": 0,
+    "duplicate_cards_suppressed": 0,
+    "parlay_pairs": 0,
+    "parlay_tagged_plays": 0,
+    "play_count": 0,
+    "rejected_rows": 714,
+    "rows_after_filters": 0,
+    "source_play_count": 0,
+    "supported_rows": 714
+  },
+  "suppressed_closed_games": [],
+  "suppressed_duplicates": [],
+  "through_date": "2026-08-26"
+}

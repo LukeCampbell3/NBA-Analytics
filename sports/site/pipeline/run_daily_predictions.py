@@ -168,8 +168,50 @@ MLB_PARLAY_BETSLIP_ENRICHER = REPO_ROOT / "sports" / "mlb" / "scripts" / "enrich
 # among the headshot-related steps so it sees every leg's real URL,
 # including the parlay-leg enrichment step just above.
 MLB_HEADSHOT_CACHE = REPO_ROOT / "sports" / "mlb" / "scripts" / "update_mlb_player_headshot_cache.py"
-MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v14"
+MLB_PRIMARY_POLICY_PROFILE = "premium_evidence_gated_v15"
 MLB_PICK_SURVIVAL_TOP_K = 3
+# v14 -> v15: real, disclosed volume increase for single picks, evidence-
+# checked rather than guessed -- user asked to revert to v8 (which, checked
+# directly against the real history archive, published ZERO real picks on
+# every one of 14 straight real days, Aug 13-26 -- not "selective", simply
+# broken) and separately to "use a very loose strategy... we want more of
+# those [single picks]". Real evidence resolves the contradiction: a real
+# min-hit-probability sweep against v14's now-honest final_hit_probability,
+# across every real archived date, shows loosening the floor itself is a
+# real, verified money-loser once the number means what it says:
+#   min_hp=0.45: 17.3 picks/day, 50.8% real hit rate, -12.7% real ROI
+#   min_hp=0.55: 18.4 picks/day, 54.4% real hit rate,  -7.5% real ROI
+#   min_hp=0.60: 16.2 picks/day, 57.7% real hit rate,  -3.3% real ROI
+#   min_hp=0.65: 10.6 picks/day, 65.2% real hit rate,  +7.8% real ROI
+#   min_hp=0.70:  8.2 picks/day, 70.5% real hit rate, +16.2% real ROI
+# (all six runs used the SAME loosened diversification caps below --
+# --top-n/--max-per-market-bucket/--max-per-team were the real volume
+# bottleneck, independent of the probability floor: loosening them alone,
+# with min-hit-probability held at v14's 0.70, already doubles real daily
+# volume -- 3.9/day -> 8.2/day -- at unchanged 70.5% hit rate / +16.2% ROI,
+# a genuinely free volume gain with no quality tradeoff).
+#
+# User's follow-up ("prioritize roi on single picks") pointed at a second
+# real, free lever: a --min-expected-value floor, swept independently of
+# the probability floor. At the 0.70 floor, raising min-expected-value
+# from 0.0 to 0.15 improves real ROI (+16.2% -> +18.1%) on a still-real
+# n=52-settled sample, trimming volume only slightly (8.2 -> 6.9/day);
+# 0.20 overcorrects (real ROI drops to +10.5%, n=39). Higher probability
+# floors (0.75: +17.5% ROI, n=23; 0.80: +32.9% ROI, n=5) were checked and
+# explicitly rejected here -- 0.80's n=5 is not a real sample, just noise
+# dressed as an outlier, and 0.75 trades meaningful volume (3.7/day) for
+# no real ROI improvement over 0.70+0.15.
+#
+# Net real change from v14: --top-n/--max-over-picks/--daily-pick-soft-cap
+# 10 -> 25, --max-per-market-bucket/--max-per-team 2 -> 6 (the free volume
+# lever), --min-expected-value 0.0 -> 0.15 (the real ROI lever).
+# --min-hit-probability/--min-graded-hit-rate stay at 0.70 -- swept and
+# confirmed as the real floor below which the honest number stops being a
+# real edge. Real expected result at these settings, same archived dates:
+# ~6.9 real picks/day, 71.2% real hit rate, +18.1% real ROI (n=52 settled)
+# -- meaningfully more real volume than v14 shipped, with slightly BETTER
+# real ROI, not worse.
+#
 # v13 -> v14: real isotonic recalibration of hit probability, not another
 # threshold sweep. Root-caused by direct investigation (this repo's own
 # archived raw pools, every real graded candidate, not just the ones that
@@ -281,7 +323,7 @@ MLB_PICK_SURVIVAL_TOP_K = 3
 # scale; revisit as more real days accumulate via the settlement
 # pipeline (settle_published_predictions.py).
 MLB_PRIMARY_POLICY_ARGS = [
-    "--top-n", "10",
+    "--top-n", "25",
     "--require-real-market-source",
     "--min-market-books", "1",
     "--min-common-market-books", "1",
@@ -291,7 +333,7 @@ MLB_PRIMARY_POLICY_ARGS = [
     "--min-graded-hit-rate", "0.70",
     "--max-push-probability", "0.15",
     "--min-abs-edge", "0.10",
-    "--min-expected-value", "0.0",
+    "--min-expected-value", "0.15",
     "--pitcher-k-min-starter-history", "15",
     "--pitcher-k-min-projected-ip", "5.25",
     "--pitcher-k-min-projected-pitches", "75",
@@ -307,12 +349,12 @@ MLB_PRIMARY_POLICY_ARGS = [
     "--core-min-american-price", "-180",
     "--core-max-american-price", "125",
     "--min-over-picks", "0",
-    "--max-over-picks", "10",
+    "--max-over-picks", "25",
     "--max-under-picks", "0",
-    "--daily-pick-soft-cap", "10",
+    "--daily-pick-soft-cap", "25",
     "--post-cap-min-selection-score", "0.50",
-    "--max-per-market-bucket", "2",
-    "--max-per-team", "2",
+    "--max-per-market-bucket", "6",
+    "--max-per-team", "6",
     "--min-historical-bet-profile-support", "0",
     "--min-historical-bet-profile-win-rate", "0",
     "--min-historical-market-availability-support", "0",

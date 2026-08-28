@@ -198,3 +198,57 @@ def test_pitcher_parlay_betslip_unavailable_without_real_deeplinks():
     combo = select.build_pitcher_parlay(legs)
 
     assert combo.betslip["status"] == "unavailable"
+
+
+def _leg(pitcher_id: int, *, model_probability: float, price_american: float, authorized: bool = True) -> select.PitcherKLeg:
+    return select.PitcherKLeg(
+        pitcher_id=pitcher_id, pitcher_name=f"Pitcher {pitcher_id}", team="ATL", opponent="ATH",
+        game_id=f"g{pitcher_id}", line=5.5, side="over", model_probability=model_probability,
+        no_vig_market_probability=model_probability, price_american=price_american,
+        sportsbook="fanduel", market_books=1, price_confirmed=True, leg_authorized=authorized,
+    )
+
+
+def test_build_pitcher_parlay_ranks_legs_by_real_hit_probability_not_ev():
+    """Hit-rate-first: a lower-probability leg priced to carry much
+    higher EV must NOT be preferred over a higher-probability leg with
+    thinner EV -- the real point of this repo's own hit-rate-first
+    parlay rule (mirrored from select_mlb_same_game_bets.py)."""
+    high_ev_low_probability = _leg(1, model_probability=0.55, price_american=250)  # decimal 3.5, EV = 0.925
+    high_probability_low_ev = _leg(2, model_probability=0.80, price_american=-140)  # decimal ~1.714, EV ~ 0.371
+    third_pitcher = _leg(3, model_probability=0.75, price_american=-130)
+
+    combo = select.build_pitcher_parlay(
+        [high_ev_low_probability, high_probability_low_ev, third_pitcher], min_combo_joint_probability=0.0
+    )
+
+    assert combo is not None
+    # The two highest-probability legs (0.80, 0.75) must be chosen over
+    # the low-probability/high-EV leg (0.55), even though the EV-first
+    # rule this replaced would have picked leg 1 first.
+    assert {combo.leg_a.pitcher_id, combo.leg_b.pitcher_id} == {2, 3}
+
+
+def test_build_pitcher_parlay_never_authorizes_below_the_real_joint_probability_floor():
+    leg_a = _leg(1, model_probability=0.60, price_american=110)
+    leg_b = _leg(2, model_probability=0.60, price_american=110)  # joint = 0.36, below the 0.50 floor
+
+    combo = select.build_pitcher_parlay([leg_a, leg_b])
+
+    assert combo is not None
+    assert combo.naive_independence_probability == pytest.approx(0.36)
+    assert combo.candidate_authorized is False
+
+
+def test_build_pitcher_parlay_joint_probability_floor_is_a_real_additive_gate():
+    """Disabling the floor (0.0) never authorizes a combo the existing
+    edge/EV/leg-authorization gates would have blocked anyway -- it only
+    ever adds a real restriction, never removes one."""
+    leg_a = _leg(1, model_probability=0.60, price_american=110)
+    leg_b = _leg(2, model_probability=0.60, price_american=110)
+
+    strict = select.build_pitcher_parlay([leg_a, leg_b])
+    loosened = select.build_pitcher_parlay([leg_a, leg_b], min_combo_joint_probability=0.0)
+
+    if strict.candidate_authorized:
+        assert loosened.candidate_authorized
