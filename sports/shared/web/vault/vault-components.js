@@ -113,49 +113,6 @@
     return CardVault.safeFanDuelBetslipUrl(fallbackUrl);
   };
 
-  CardVault.FANDUEL_REGION_QUERY_PARAM = "fdstate";
-
-  /**
-   * Restores a state choice from a shared/bookmarked link -- no account
-   * or backend needed: the whole preference is a 2-letter code, small
-   * enough to just live in the URL itself
-   * (?fdstate=NY). A viewer opening such a link on a second device gets
-   * their state applied automatically, the same as if they'd picked it
-   * from the dropdown there. Call once, before the picker first renders,
-   * so its initial selected option already reflects the URL. Returns the
-   * applied state ("" if the URL carried none/an invalid one) -- never
-   * throws on a malformed URL.
-   */
-  CardVault.applyFanduelRegionFromUrl = function applyFanduelRegionFromUrl() {
-    try {
-      const fromUrl = String(new URLSearchParams(global.location?.search || "").get(CardVault.FANDUEL_REGION_QUERY_PARAM) || "").toUpperCase();
-      if (fromUrl && CardVault.FANDUEL_STATE_NAMES[fromUrl]) {
-        CardVault.setFanduelRegion(fromUrl);
-        return fromUrl;
-      }
-    } catch (_error) { /* malformed URL -- no-op, keeps whatever was already persisted */ }
-    return CardVault.getFanduelRegion();
-  };
-
-  /**
-   * The current page URL with the viewer's selected state encoded as
-   * ?fdstate=XX, replacing any existing value for that param -- what the
-   * "copy my link" control hands the viewer to bookmark or send to
-   * themselves on another device. Returns "" when no state is selected
-   * (nothing meaningful to share yet).
-   */
-  CardVault.fanduelRegionShareUrl = function fanduelRegionShareUrl() {
-    const region = CardVault.getFanduelRegion();
-    if (!region) return "";
-    try {
-      const url = new URL(global.location.href);
-      url.searchParams.set(CardVault.FANDUEL_REGION_QUERY_PARAM, region);
-      return url.toString();
-    } catch (_error) {
-      return "";
-    }
-  };
-
   /**
    * A small, shared "Betting from" state picker -- one instance per page
    * (mount it once near the top of the board). Selecting a state saves
@@ -165,9 +122,6 @@
    * region. Never assumes a default state for the viewer -- an empty
    * selection just means every link falls back to the single-region
    * `sportsbook_deeplink` field, exactly like before this feature existed.
-   * Includes a "Copy my link" control (visible once a state is picked)
-   * so the same choice can be restored on another device with no login
-   * and no dropdown -- just opening the copied link.
    */
   CardVault.renderFanduelRegionPicker = function renderFanduelRegionPicker() {
     const current = CardVault.getFanduelRegion();
@@ -175,56 +129,29 @@
       .sort((a, b) => a[1].localeCompare(b[1]))
       .map(([code, name]) => `<option value="${CardVault.escapeAttr(code)}"${code === current ? " selected" : ""}>${CardVault.escapeHtml(name)}</option>`)
       .join("");
-    const copyButton = current
-      ? `<button type="button" id="fanduelRegionCopyLink" class="fanduel-region-picker__copy">Copy my link</button>
-         <span id="fanduelRegionCopyStatus" class="fanduel-region-picker__copy-status" role="status" aria-live="polite"></span>`
-      : "";
     return `
-      <div class="fanduel-region-picker">
-        <label>
-          <span class="fanduel-region-picker__label">Betting from</span>
-          <select id="fanduelRegionPicker" class="fanduel-region-picker__select" aria-label="Your state, for correct FanDuel betslip links">
-            <option value=""${current ? "" : " selected"}>Select your state</option>
-            ${options}
-          </select>
-        </label>
-        ${copyButton}
-      </div>
+      <label class="fanduel-region-picker">
+        <span class="fanduel-region-picker__label">Betting from</span>
+        <select id="fanduelRegionPicker" class="fanduel-region-picker__select" aria-label="Your state, for correct FanDuel betslip links">
+          <option value=""${current ? "" : " selected"}>Select your state</option>
+          ${options}
+        </select>
+      </label>
     `;
   };
 
   /**
-   * Wires the picker's change event and the "Copy my link" button, each
-   * exactly once per page load (both delegate on document, so they still
-   * work after the picker's own HTML is replaced by a re-render).
+   * Wires the picker's change event exactly once per page load. Call
+   * this after the picker HTML is in the DOM (it re-queries the element
+   * each time in case the board re-renders and recreates the node).
    * `onChange` receives the newly selected state code ("" if cleared)
-   * and is where the caller re-renders its own board content -- also
-   * called after a URL-restored region is applied via
-   * applyFanduelRegionFromUrl, and after a successful copy (so the
-   * button appears/updates immediately without a page reload).
+   * and is where the caller re-renders its own board content.
    */
   CardVault.bindFanduelRegionPicker = function bindFanduelRegionPicker(onChange) {
     document.addEventListener("change", (event) => {
       if (event.target && event.target.id === "fanduelRegionPicker") {
         CardVault.setFanduelRegion(event.target.value);
         if (typeof onChange === "function") onChange(event.target.value);
-      }
-    });
-    document.addEventListener("click", (event) => {
-      if (!event.target || event.target.id !== "fanduelRegionCopyLink") return;
-      const url = CardVault.fanduelRegionShareUrl();
-      const status = document.getElementById("fanduelRegionCopyStatus");
-      if (!url) return;
-      const showResult = (message) => {
-        if (status) status.textContent = message;
-      };
-      if (global.navigator?.clipboard?.writeText) {
-        global.navigator.clipboard.writeText(url).then(
-          () => showResult("Copied!"),
-          () => showResult("Couldn't copy -- long-press/select the address bar instead."),
-        );
-      } else {
-        showResult("Copy isn't available here -- long-press/select the address bar instead.");
       }
     });
   };

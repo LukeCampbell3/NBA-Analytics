@@ -39,16 +39,8 @@ class DailyPredictionsPage {
      */
     mountFanduelRegionPicker() {
         if (!window.CardVault || !this.elements.regionPickerRoot) return;
-        // Applied BEFORE the first render so a shared/bookmarked link
-        // (?fdstate=NY) shows up already-selected, not just after the
-        // viewer notices and re-picks it themselves.
-        window.CardVault.applyFanduelRegionFromUrl();
         this.elements.regionPickerRoot.innerHTML = window.CardVault.renderFanduelRegionPicker();
         window.CardVault.bindFanduelRegionPicker(() => {
-            // Re-render the picker itself too -- the "Copy my link"
-            // control only shows once a state is actually selected, so
-            // this is what makes it appear right after that first pick.
-            this.elements.regionPickerRoot.innerHTML = window.CardVault.renderFanduelRegionPicker();
             this.renderCards();
             this.renderParlayV2();
             this.renderSameGameParlay();
