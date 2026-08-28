@@ -50,6 +50,7 @@ def _make_row(*, player, player_key, game_id, target, direction, line, over_pric
         "Prediction": pred, "Market_Line": line,
         "Market_Over_Price": over_price, "Market_Under_Price": under_price,
         "Model_Val_RMSE": rmse, "History_Rows": history_rows, "Market_Source": market_source,
+        "Player_Type": "hitter", "Opposing_Pitcher": "Test Starter",
         "Game_Date": "2026-08-21",
     }
 
@@ -185,6 +186,13 @@ def test_missing_price_excludes_candidate_from_economic_evaluation():
     ])
     rows = build_pregame_action_rows(pool, stamp="20260821", mode="broad", targets=("H",))
     assert rows.empty, "a row with no real price must never enter the action universe"
+
+
+def test_hitter_without_opposing_probable_starter_is_excluded():
+    row = _make_row(player="A", player_key="a", game_id="g1", target="H", direction="OVER", line=0.5)
+    row["Opposing_Pitcher"] = ""
+    rows = build_pregame_action_rows(pd.DataFrame([row]), stamp="20260821", mode="broad", targets=("H",))
+    assert rows.empty
 
 
 # ======================================================================

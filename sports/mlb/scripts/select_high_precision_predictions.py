@@ -1961,6 +1961,16 @@ def filter_candidates(candidates: Iterable[Candidate], args: argparse.Namespace)
         if not is_upcoming_status(row.get("Game_Status_Code", ""), row.get("Game_Status_Detail", "")):
             rejected["non_upcoming_status"] += 1
             continue
+        # A hitter projection is matchup-dependent. The publication
+        # validator already rejects a board whose hitter has no opposing
+        # probable starter; enforce the same invariant here so an invalid
+        # candidate can never reach selection in the first place.
+        if (
+            str(row.get("Player_Type", "")).strip().lower() == "hitter"
+            and not str(row.get("Opposing_Pitcher", "")).strip()
+        ):
+            rejected["opposing_probable_starter_missing"] += 1
+            continue
         min_abs_edge = float(args.min_abs_edge)
         if use_optimized_over_profile and getattr(args, "over_min_abs_edge", None) is not None:
             min_abs_edge = float(args.over_min_abs_edge)

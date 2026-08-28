@@ -92,6 +92,7 @@ def _row(
         "Player_Type": "hitter",
         "Team": team,
         "Opponent": "OPP",
+        "Opposing_Pitcher": "Test Starter",
         "Is_Home": "1",
         "Target": target,
         "Prediction": str(prediction),
@@ -675,6 +676,12 @@ def test_filter_candidates_requires_explicit_probationary_over_profile_opt_in() 
     assert kept == [candidate]
     assert rejected == Counter()
     assert selector.candidate_selection_profile(candidate, args) == selector.OPTIMIZED_OVER_SELECTION_PROFILE
+
+    candidate.raw["Opposing_Pitcher"] = ""
+    kept, rejected = selector.filter_candidates([candidate], args)
+    assert kept == []
+    assert rejected["opposing_probable_starter_missing"] == 1
+    candidate.raw["Opposing_Pitcher"] = "Test Starter"
 
     candidate.selected_side_price = 130.0
     kept, rejected = selector.filter_candidates([candidate], args)

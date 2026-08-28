@@ -1,8 +1,8 @@
 {
   "action": "ACT",
-  "calibration_as_of": "2026-08-28T13:36:06.279260+00:00",
-  "calibration_snapshot_id": "e3510e8e7e13a584",
-  "calibration_snapshot_sha256": "e3510e8e7e13a58401f447e12f5a2bbdc2857da05827852bfc242bea1ef2a9ae",
+  "calibration_as_of": "2026-08-28T15:15:51.009947+00:00",
+  "calibration_snapshot_id": "0833cfcecfa75193",
+  "calibration_snapshot_sha256": "0833cfcecfa751932b720b1fa81dc25a9e2ab4158e5eac812c3621f3db7069f2",
   "decision_record": {
     "action": 1,
     "candidate_universe_size": 500,
@@ -11,16 +11,16 @@
     "world_certificate_diagnostics": {
       "certified": false,
       "counterexample_count": 3,
-      "counterexample_mass": 0.7028552079699706,
+      "counterexample_mass": 0.7118239360167775,
       "outside_probability_mass": 0.0,
       "retained_probability_mass": 1.0,
       "retained_world_count": 4,
       "version": "NONVACUOUS_WORLD_CERTIFICATE_V1",
-      "world_risk_rho": 0.7028552079699706
+      "world_risk_rho": 0.7118239360167775
     },
     "world_gate_mode": "OBSERVE_ONLY"
   },
-  "decision_timestamp_utc": "2026-08-28T13:36:33.355861+00:00",
+  "decision_timestamp_utc": "2026-08-28T15:16:10.324224+00:00",
   "eligibility_reason": "operationally_eligible",
   "eligible": true,
   "evidence_status": {
@@ -33,8 +33,8 @@
   "policy_version": "PARLAY_POLICY_V2_TWO_LEG_SINGLE_ACTION",
   "selected_parlay": {
     "adapter_version": "PARLAY_V2_CANDIDATE_ADAPTER_V1",
-    "candidate_id": "20260828|Alex Bregman|TB|OVER|1.5|824638||Pete Alonso|TB|OVER|1.5|824960",
-    "joint_probability_estimate": 0.29714479203002947,
+    "candidate_id": "20260828|Alex Bregman|TB|OVER|1.5|824638||Matt Olson|TB|OVER|1.5|824877",
+    "joint_probability_estimate": 0.2881760639832226,
     "joint_probability_method": "independence_binary_world_model",
     "joint_score": 1.0,
     "leg_1": {
@@ -52,13 +52,13 @@
     },
     "leg_2": {
       "book": "real",
-      "decimal_price": 1.6666666666666665,
-      "game_id": "824960",
+      "decimal_price": 1.8,
+      "game_id": "824877",
       "in_support": true,
       "line": 1.5,
-      "model_probability_estimate": 0.5666778628723816,
-      "player": "Pete Alonso",
-      "player_id": "pete_alonso",
+      "model_probability_estimate": 0.5495738119902296,
+      "player": "Matt Olson",
+      "player_id": "matt_olson",
       "quote_timestamp": "20260828",
       "side": "OVER",
       "target": "TB"
@@ -74,7 +74,7 @@
     },
     "world_diagnostics": {
       "counterexample_count": 3,
-      "counterexample_mass": 0.7028552079699706,
+      "counterexample_mass": 0.7118239360167775,
       "nonvacuous_world_certificate": false,
       "retained_probability_mass": 1.0,
       "retained_world_count": 4
@@ -83,11 +83,24 @@
   "selection_status": "SELECTED",
   "shadow_candidate": {
     "adapter_version": "PARLAY_V2_CANDIDATE_ADAPTER_V1",
-    "candidate_id": "20260828|Matt Olson|TB|OVER|1.5|824877||Pete Alonso|TB|OVER|1.5|824960",
-    "joint_probability_estimate": 0.3114313132692514,
+    "candidate_id": "20260828|Shohei Ohtani|TB|OVER|1.5|824231||Matt Olson|TB|OVER|1.5|824877",
+    "joint_probability_estimate": 0.29860453131675707,
     "joint_probability_method": "independence_binary_world_model",
     "joint_score": 1.0,
     "leg_1": {
+      "book": "real",
+      "decimal_price": 1.9523809523809523,
+      "game_id": "824231",
+      "in_support": true,
+      "line": 1.5,
+      "model_probability_estimate": 0.5433383556530633,
+      "player": "Shohei Ohtani",
+      "player_id": "shohei_ohtani",
+      "quote_timestamp": "20260828",
+      "side": "OVER",
+      "target": "TB"
+    },
+    "leg_2": {
       "book": "real",
       "decimal_price": 1.8,
       "game_id": "824877",
@@ -100,19 +113,6 @@
       "side": "OVER",
       "target": "TB"
     },
-    "leg_2": {
-      "book": "real",
-      "decimal_price": 1.6666666666666665,
-      "game_id": "824960",
-      "in_support": true,
-      "line": 1.5,
-      "model_probability_estimate": 0.5666778628723816,
-      "player": "Pete Alonso",
-      "player_id": "pete_alonso",
-      "quote_timestamp": "20260828",
-      "side": "OVER",
-      "target": "TB"
-    },
     "predictive_version": "H_OVER_RANKER_V1+MULTI_TARGET",
     "slate_id": "20260828",
     "state_version": "MULTI_TARGET_BROAD_V1",
@@ -124,7 +124,7 @@
     },
     "world_diagnostics": {
       "counterexample_count": 3,
-      "counterexample_mass": 0.6885686867307487,
+      "counterexample_mass": 0.7013954686832429,
       "nonvacuous_world_certificate": false,
       "retained_probability_mass": 1.0,
       "retained_world_count": 4

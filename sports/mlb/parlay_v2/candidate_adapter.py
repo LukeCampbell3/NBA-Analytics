@@ -265,6 +265,15 @@ def build_pregame_action_rows(
         bias = frozen_bias(target)
         target_rows = pool_csv[pool_csv.get("Target", "").astype(str).str.strip().str.upper() == target]
         for _, row in target_rows.iterrows():
+            raw_player_type = row.get("Player_Type", "hitter")
+            player_type = "hitter" if pd.isna(raw_player_type) else str(raw_player_type or "hitter").strip().lower()
+            opposing_pitcher = row.get("Opposing_Pitcher", "")
+            starter_missing = pd.isna(opposing_pitcher) or not str(opposing_pitcher or "").strip()
+            if player_type != "pitcher" and starter_missing:
+                # Hitter probabilities are matchup-dependent. Keep the parlay
+                # action universe aligned with the singles/publication gate so
+                # an unresolved probable starter cannot re-enter as a leg.
+                continue
             prediction = _to_float(row.get("Prediction"))
             market_line = _to_float(row.get("Market_Line"))
             if prediction is None or market_line is None:

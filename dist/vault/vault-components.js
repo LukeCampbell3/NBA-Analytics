@@ -65,6 +65,7 @@
     AR: "Arkansas", WY: "Wyoming", VT: "Vermont", NJ: "New Jersey", DC: "District of Columbia",
   };
   CardVault.FANDUEL_REGION_STORAGE_KEY = "itc_fanduel_region";
+  CardVault._fanduelRegionMemory = "";
 
   /**
    * The viewer's own persisted state choice, per-browser (localStorage --
@@ -78,15 +79,23 @@
   CardVault.getFanduelRegion = function getFanduelRegion() {
     try {
       const value = String(global.localStorage?.getItem(CardVault.FANDUEL_REGION_STORAGE_KEY) || "").toUpperCase();
-      return CardVault.FANDUEL_STATE_NAMES[value] ? value : "";
+      if (CardVault.FANDUEL_STATE_NAMES[value]) {
+        CardVault._fanduelRegionMemory = value;
+        return value;
+      }
     } catch (_error) {
-      return "";
+      // Fall through to the in-memory choice. Storage restrictions must
+      // not make the just-selected state disappear before URL resolution.
     }
+    return CardVault.FANDUEL_STATE_NAMES[CardVault._fanduelRegionMemory]
+      ? CardVault._fanduelRegionMemory
+      : "";
   };
 
   CardVault.setFanduelRegion = function setFanduelRegion(state) {
+    const normalized = String(state || "").toUpperCase();
+    CardVault._fanduelRegionMemory = CardVault.FANDUEL_STATE_NAMES[normalized] ? normalized : "";
     try {
-      const normalized = String(state || "").toUpperCase();
       if (normalized && CardVault.FANDUEL_STATE_NAMES[normalized]) {
         global.localStorage?.setItem(CardVault.FANDUEL_REGION_STORAGE_KEY, normalized);
       } else {
@@ -215,15 +224,29 @@
     document.addEventListener("click", async (event) => {
       const link = event.target.closest?.(CardVault.FANDUEL_BETSLIP_LINK_SELECTOR);
       if (!link) return;
-      event.preventDefault();
 
+      // When the state is already known, preserve the browser's native
+      // anchor navigation. Updating href inside the trusted click keeps
+      // target=_blank/app handoff eligible on Safari instead of routing it
+      // through a later window.open() call that its popup blocker can reject.
+      if (CardVault.getFanduelRegion()) {
+        const href = CardVault.resolveFanduelBetslipHref(link);
+        if (href) link.href = href;
+        return;
+      }
+
+      event.preventDefault();
       if (!CardVault.getFanduelRegion()) {
         const chosen = await CardVault.promptFanduelRegion();
         if (!chosen) return; // dismissed -- no link opened, nothing saved
         CardVault.setFanduelRegion(chosen);
       }
       const href = CardVault.resolveFanduelBetslipHref(link);
-      if (href) global.open(href, "_blank", "noopener,noreferrer");
+      // The state dialog makes this asynchronous, so opening a new window
+      // here is no longer reliably covered by the original user activation
+      // on iOS Safari. Same-tab navigation is not popup-blocked and lets
+      // FanDuel perform its normal web/app handoff.
+      if (href) global.location.assign(href);
     });
   };
 
