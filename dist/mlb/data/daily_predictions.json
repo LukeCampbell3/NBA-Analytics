@@ -3,18 +3,14 @@
   "board_title": "MLB Prediction Bounties",
   "by_direction": {
     "OVER": {
-      "count": 3,
+      "count": 1,
       "share": 1.0
     }
   },
   "by_target": {
-    "H": {
-      "count": 2,
-      "share": 0.6666666666666666
-    },
     "TB": {
       "count": 1,
-      "share": 0.3333333333333333
+      "share": 1.0
     }
   },
   "daily_parlay": {
@@ -23,7 +19,7 @@
       3,
       4
     ],
-    "alternate_line_candidate_count": 2,
+    "alternate_line_candidate_count": 1,
     "available": false,
     "betslip_policy": {
       "construction": "direct_fanduel_public_market_ids_only",
@@ -32,21 +28,22 @@
       "sportsbook_key": "fanduel",
       "status": "unavailable"
     },
-    "considered_anchor_count": 6,
+    "considered_anchor_count": 4,
     "direction_policy": "OVER_ONLY",
-    "eligible_anchor_count": 8,
+    "eligible_anchor_count": 6,
     "filter_rejections": {
-      "history_too_short": 10,
-      "history_too_stale": 9,
-      "hit_survival_consensus_too_low": 5,
-      "hit_survival_probability_too_low": 4,
-      "leg_probability_too_low": 100,
-      "leg_value_too_low": 19,
-      "not_over": 999,
-      "official_game_closed": 9,
-      "price_outside_playable_range": 93,
-      "unconfirmed_market_price": 431,
-      "unsupported_anchor_target": 49
+      "history_too_short": 3,
+      "history_too_stale": 7,
+      "hit_survival_consensus_too_low": 2,
+      "hit_survival_probability_too_low": 1,
+      "leg_probability_too_low": 62,
+      "leg_value_too_low": 14,
+      "not_in_posted_lineup": 1,
+      "not_over": 988,
+      "official_game_closed": 5,
+      "price_outside_playable_range": 54,
+      "unconfirmed_market_price": 543,
+      "unsupported_anchor_target": 48
     },
     "gates": {
       "direct_fanduel_public_selection_link_required_for_betslip": true,
@@ -108,7 +105,7 @@
         "4": 0.18
       }
     },
-    "generated_at_utc": "2026-08-29T22:16:02.811713+00:00",
+    "generated_at_utc": "2026-08-29T23:20:34.483893+00:00",
     "hit_survival_validation": {
       "calibration": {
         "brier_score": 0.24259946235125276,
@@ -137,7 +134,7 @@
           "leg_hit_rate_wilson_95_low": 0.546251630618882,
           "leg_wins": 23,
           "legs": 32,
-          "mean_probability": 0.6712815868449499,
+          "mean_probability": 0.67128158684495,
           "slates": 15,
           "ticket_hit_rate": 0.6666666666666666,
           "ticket_hit_rate_wilson_95_high": 0.8482389930530876,
@@ -392,7 +389,7 @@
     "latent_shadow_ticket_ladder": [],
     "objective": "exact_set_search_with_role_survival_consensus_and_shadow_positive_ev_alternates",
     "policy_version": "mlb_fanduel_public_betslip_parlay_v9",
-    "pool_candidate_count": 1736,
+    "pool_candidate_count": 1734,
     "profit_boost_ticket": null,
     "reason": "no executable OVER-only ticket cleared the consistency gates",
     "run_date": "2026-08-29",
@@ -540,19 +537,18 @@
     "withhold_threshold_days": 60
   },
   "filter_rejections": {
-    "core_price_too_heavily_juiced": 54,
-    "core_price_too_long": 39,
-    "edge_too_small": 372,
-    "expected_value_too_low": 1,
-    "history_too_short": 183,
-    "hit_probability_too_low": 57,
-    "opposing_probable_starter_missing": 45,
-    "prediction_too_low": 50,
-    "side_price_unconfirmed": 216,
-    "synthetic_market_source": 711
+    "core_price_too_heavily_juiced": 43,
+    "core_price_too_long": 19,
+    "edge_too_small": 394,
+    "expected_value_too_low": 2,
+    "history_too_short": 181,
+    "hit_probability_too_low": 41,
+    "prediction_too_low": 54,
+    "side_price_unconfirmed": 128,
+    "synthetic_market_source": 867
   },
-  "generated_at_utc": "2026-08-29T22:22:17.706985+00:00",
-  "mlb_team_market_generated_at_utc": "2026-08-29T22:22:18.232808+00:00",
+  "generated_at_utc": "2026-08-29T23:25:49.341124+00:00",
+  "mlb_team_market_generated_at_utc": "2026-08-29T23:25:49.799841+00:00",
   "mlb_team_market_plays": [],
   "mlb_team_market_status": "ok",
   "model_run_id": "mlb_high_precision_selector_v2",
@@ -586,9 +582,9 @@
   },
   "parlays": {
     "action": "ACT",
-    "calibration_as_of": "2026-08-29T22:21:36.408412+00:00",
-    "calibration_snapshot_id": "c037a84ff4220891",
-    "calibration_snapshot_sha256": "c037a84ff4220891a4700fe94f559f34f8228fe1b6d930aaafd50ecc9c3c73a1",
+    "calibration_as_of": "2026-08-29T23:25:21.295481+00:00",
+    "calibration_snapshot_id": "db6edeebf350562f",
+    "calibration_snapshot_sha256": "db6edeebf350562f93f69f7dabc0781a6a6e4692b51747a0201ec54764ad941f",
     "decision_record": {
       "action": 1,
       "candidate_universe_size": 500,
@@ -597,16 +593,16 @@
       "world_certificate_diagnostics": {
         "certified": false,
         "counterexample_count": 3,
-        "counterexample_mass": 0.7205331280692259,
+        "counterexample_mass": 0.7150638445777637,
         "outside_probability_mass": 0.0,
         "retained_probability_mass": 1.0,
         "retained_world_count": 4,
         "version": "NONVACUOUS_WORLD_CERTIFICATE_V1",
-        "world_risk_rho": 0.7205331280692259
+        "world_risk_rho": 0.7150638445777637
       },
       "world_gate_mode": "OBSERVE_ONLY"
     },
-    "decision_timestamp_utc": "2026-08-29T22:22:03.407774+00:00",
+    "decision_timestamp_utc": "2026-08-29T23:25:43.412494+00:00",
     "eligibility_reason": "operationally_eligible",
     "eligible": true,
     "evidence_status": {
@@ -626,14 +622,14 @@
         "joint_probability_below_50pct",
         "expected_value_below_5pct"
       ],
-      "combined_decimal_price": 2.989389920424403,
+      "combined_decimal_price": 3.6666666666666665,
       "evidence_note": "The frozen V2 research action remains authoritative for its prospective evidence stream. This overlay only controls whether that research action is presented as a tight-quality public candidate.",
-      "expected_value_per_unit": -0.16456454995760628,
+      "expected_value_per_unit": 0.044765903214866176,
       "frozen_policy_mutated": false,
-      "joint_probability": 0.27946687193077413,
+      "joint_probability": 0.28493615542223627,
       "leg_probabilities": [
-        0.4920583845087833,
-        0.5679546995419313
+        0.5016881727575174,
+        0.5679546995419311
       ],
       "reason": "tight_quality_gates_failed",
       "thresholds": {
@@ -653,135 +649,16 @@
         "sportsbook": "FanDuel",
         "sportsbook_key": "fanduel",
         "status": "ready",
-        "url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.183472016&selectionId%5B0%5D=47989104&marketId%5B1%5D=734.183472356&selectionId%5B1%5D=23552186"
-      },
-      "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.183472016&selectionId%5B0%5D=47989104&marketId%5B1%5D=734.183472356&selectionId%5B1%5D=23552186",
-      "candidate_id": "20260829|Corbin Carroll|R|OVER|0.5|823177||Pete Alonso|TB|OVER|1.5|824961",
-      "joint_probability_estimate": 0.27946687193077413,
-      "joint_probability_method": "independence_binary_world_model",
-      "joint_score": 1.0,
-      "leg_1": {
-        "book": "real",
-        "decimal_price": 1.7692307692307692,
-        "deeplinks_by_region": {
-          "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.183798355&selectionId=47989104",
-          "AZ": "https://sportsbook.fanduel.com/addToBetslip?marketId=704.183537346&selectionId=47989104",
-          "CO": "https://sportsbook.fanduel.com/addToBetslip?marketId=708.183592720&selectionId=47989104",
-          "CT": "https://sportsbook.fanduel.com/addToBetslip?marketId=709.183305571&selectionId=47989104",
-          "DC": "https://sportsbook.fanduel.com/addToBetslip?marketId=711.183627596&selectionId=47989104",
-          "IA": "https://sportsbook.fanduel.com/addToBetslip?marketId=719.183600769&selectionId=47989104",
-          "IL": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.183609908&selectionId=47989104",
-          "IN": "https://sportsbook.fanduel.com/addToBetslip?marketId=718.183605918&selectionId=47989104",
-          "KS": "https://sportsbook.fanduel.com/addToBetslip?marketId=720.183425340&selectionId=47989104",
-          "KY": "https://sportsbook.fanduel.com/addToBetslip?marketId=721.183608397&selectionId=47989104",
-          "LA": "https://sportsbook.fanduel.com/addToBetslip?marketId=722.183254244&selectionId=47989104",
-          "MA": "https://sportsbook.fanduel.com/addToBetslip?marketId=725.183598147&selectionId=47989104",
-          "MD": "https://sportsbook.fanduel.com/addToBetslip?marketId=724.183607262&selectionId=47989104",
-          "MI": "https://sportsbook.fanduel.com/addToBetslip?marketId=726.183593108&selectionId=47989104",
-          "MO": "https://sportsbook.fanduel.com/addToBetslip?marketId=729.183984679&selectionId=47989104",
-          "NC": "https://sportsbook.fanduel.com/addToBetslip?marketId=737.183601842&selectionId=47989104",
-          "NJ": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183472016&selectionId=47989104",
-          "NY": "https://sportsbook.fanduel.com/addToBetslip?marketId=736.183247924&selectionId=47989104",
-          "OH": "https://sportsbook.fanduel.com/addToBetslip?marketId=739.183469928&selectionId=47989104",
-          "PA": "https://sportsbook.fanduel.com/addToBetslip?marketId=742.183468427&selectionId=47989104",
-          "TN": "https://sportsbook.fanduel.com/addToBetslip?marketId=747.183560516&selectionId=47989104",
-          "VA": "https://sportsbook.fanduel.com/addToBetslip?marketId=751.183566939&selectionId=47989104",
-          "VT": "https://sportsbook.fanduel.com/addToBetslip?marketId=750.183573375&selectionId=47989104",
-          "WV": "https://sportsbook.fanduel.com/addToBetslip?marketId=754.183613699&selectionId=47989104",
-          "WY": "https://sportsbook.fanduel.com/addToBetslip?marketId=756.183409739&selectionId=47989104"
-        },
-        "game_id": "823177",
-        "in_support": true,
-        "line": 0.5,
-        "model_probability_estimate": 0.4920583845087833,
-        "player": "Corbin Carroll",
-        "player_headshot_fallback_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/682998/headshot/67/current",
-        "player_headshot_url": "data/headshots/682998.jpg",
-        "player_id": "corbin_carroll",
-        "quote_timestamp": "20260829",
-        "side": "OVER",
-        "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183472016&selectionId=47989104",
-        "target": "R"
-      },
-      "leg_2": {
-        "book": "real",
-        "decimal_price": 1.6896551724137931,
-        "deeplinks_by_region": {
-          "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.183798697&selectionId=23552186",
-          "AZ": "https://sportsbook.fanduel.com/addToBetslip?marketId=704.183537690&selectionId=23552186",
-          "CO": "https://sportsbook.fanduel.com/addToBetslip?marketId=708.183593034&selectionId=23552186",
-          "CT": "https://sportsbook.fanduel.com/addToBetslip?marketId=709.183305903&selectionId=23552186",
-          "DC": "https://sportsbook.fanduel.com/addToBetslip?marketId=711.183627923&selectionId=23552186",
-          "IA": "https://sportsbook.fanduel.com/addToBetslip?marketId=719.183601099&selectionId=23552186",
-          "IL": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.183610261&selectionId=23552186",
-          "IN": "https://sportsbook.fanduel.com/addToBetslip?marketId=718.183606262&selectionId=23552186",
-          "KS": "https://sportsbook.fanduel.com/addToBetslip?marketId=720.183425686&selectionId=23552186",
-          "KY": "https://sportsbook.fanduel.com/addToBetslip?marketId=721.183608725&selectionId=23552186",
-          "LA": "https://sportsbook.fanduel.com/addToBetslip?marketId=722.183254587&selectionId=23552186",
-          "MA": "https://sportsbook.fanduel.com/addToBetslip?marketId=725.183598485&selectionId=23552186",
-          "MD": "https://sportsbook.fanduel.com/addToBetslip?marketId=724.183607618&selectionId=23552186",
-          "MI": "https://sportsbook.fanduel.com/addToBetslip?marketId=726.183593463&selectionId=23552186",
-          "MO": "https://sportsbook.fanduel.com/addToBetslip?marketId=729.183985015&selectionId=23552186",
-          "NC": "https://sportsbook.fanduel.com/addToBetslip?marketId=737.183602192&selectionId=23552186",
-          "NJ": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183472356&selectionId=23552186",
-          "NY": "https://sportsbook.fanduel.com/addToBetslip?marketId=736.183248263&selectionId=23552186",
-          "OH": "https://sportsbook.fanduel.com/addToBetslip?marketId=739.183470269&selectionId=23552186",
-          "PA": "https://sportsbook.fanduel.com/addToBetslip?marketId=742.183468781&selectionId=23552186",
-          "TN": "https://sportsbook.fanduel.com/addToBetslip?marketId=747.183560862&selectionId=23552186",
-          "VA": "https://sportsbook.fanduel.com/addToBetslip?marketId=751.183567287&selectionId=23552186",
-          "VT": "https://sportsbook.fanduel.com/addToBetslip?marketId=750.183573724&selectionId=23552186",
-          "WV": "https://sportsbook.fanduel.com/addToBetslip?marketId=754.183614040&selectionId=23552186",
-          "WY": "https://sportsbook.fanduel.com/addToBetslip?marketId=756.183410060&selectionId=23552186"
-        },
-        "game_id": "824961",
-        "in_support": true,
-        "line": 1.5,
-        "model_probability_estimate": 0.5679546995419313,
-        "player": "Pete Alonso",
-        "player_headshot_fallback_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/624413/headshot/67/current",
-        "player_headshot_url": "data/headshots/624413.jpg",
-        "player_id": "pete_alonso",
-        "quote_timestamp": "20260829",
-        "side": "OVER",
-        "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183472356&selectionId=23552186",
-        "target": "TB"
-      },
-      "predictive_version": "H_OVER_RANKER_V1+MULTI_TARGET",
-      "slate_id": "20260829",
-      "state_version": "MULTI_TARGET_BROAD_V1",
-      "support": {
-        "in_support": false,
-        "leg_1_support": true,
-        "leg_2_support": true,
-        "state_support": false
-      },
-      "world_diagnostics": {
-        "counterexample_count": 3,
-        "counterexample_mass": 0.7205331280692259,
-        "nonvacuous_world_certificate": false,
-        "retained_probability_mass": 1.0,
-        "retained_world_count": 4
-      }
-    },
-    "selection_status": "SELECTED",
-    "shadow_candidate": {
-      "adapter_version": "PARLAY_V2_CANDIDATE_ADAPTER_V1",
-      "betslip": {
-        "leg_count": 2,
-        "source": "direct_fanduel_public_market_ids",
-        "sportsbook": "FanDuel",
-        "sportsbook_key": "fanduel",
-        "status": "ready",
         "url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.183471972&selectionId%5B0%5D=14361900&marketId%5B1%5D=734.183472356&selectionId%5B1%5D=23552186"
       },
       "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.183471972&selectionId%5B0%5D=14361900&marketId%5B1%5D=734.183472356&selectionId%5B1%5D=23552186",
       "candidate_id": "20260829|Rafael Devers|TB|OVER|1.5|823177||Pete Alonso|TB|OVER|1.5|824961",
-      "joint_probability_estimate": 0.28493615542223644,
+      "joint_probability_estimate": 0.28493615542223627,
       "joint_probability_method": "independence_binary_world_model",
       "joint_score": 1.0,
       "leg_1": {
         "book": "real",
-        "decimal_price": 2.15,
+        "decimal_price": 2.2,
         "deeplinks_by_region": {
           "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.183798295&selectionId=14361900",
           "AZ": "https://sportsbook.fanduel.com/addToBetslip?marketId=704.183537312&selectionId=14361900",
@@ -812,7 +689,7 @@
         "game_id": "823177",
         "in_support": true,
         "line": 1.5,
-        "model_probability_estimate": 0.5016881727575175,
+        "model_probability_estimate": 0.5016881727575174,
         "player": "Rafael Devers",
         "player_headshot_fallback_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/646240/headshot/67/current",
         "player_headshot_url": "data/headshots/646240.jpg",
@@ -824,7 +701,7 @@
       },
       "leg_2": {
         "book": "real",
-        "decimal_price": 1.6896551724137931,
+        "decimal_price": 1.6666666666666665,
         "deeplinks_by_region": {
           "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.183798697&selectionId=23552186",
           "AZ": "https://sportsbook.fanduel.com/addToBetslip?marketId=704.183537690&selectionId=23552186",
@@ -855,7 +732,7 @@
         "game_id": "824961",
         "in_support": true,
         "line": 1.5,
-        "model_probability_estimate": 0.5679546995419313,
+        "model_probability_estimate": 0.5679546995419311,
         "player": "Pete Alonso",
         "player_headshot_fallback_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/624413/headshot/67/current",
         "player_headshot_url": "data/headshots/624413.jpg",
@@ -876,7 +753,126 @@
       },
       "world_diagnostics": {
         "counterexample_count": 3,
-        "counterexample_mass": 0.7150638445777635,
+        "counterexample_mass": 0.7150638445777637,
+        "nonvacuous_world_certificate": false,
+        "retained_probability_mass": 1.0,
+        "retained_world_count": 4
+      }
+    },
+    "selection_status": "SELECTED",
+    "shadow_candidate": {
+      "adapter_version": "PARLAY_V2_CANDIDATE_ADAPTER_V1",
+      "betslip": {
+        "leg_count": 2,
+        "source": "direct_fanduel_public_market_ids",
+        "sportsbook": "FanDuel",
+        "sportsbook_key": "fanduel",
+        "status": "ready",
+        "url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.183471972&selectionId%5B0%5D=14361900&marketId%5B1%5D=734.183472356&selectionId%5B1%5D=23552186"
+      },
+      "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.183471972&selectionId%5B0%5D=14361900&marketId%5B1%5D=734.183472356&selectionId%5B1%5D=23552186",
+      "candidate_id": "20260829|Rafael Devers|TB|OVER|1.5|823177||Pete Alonso|TB|OVER|1.5|824961",
+      "joint_probability_estimate": 0.28493615542223627,
+      "joint_probability_method": "independence_binary_world_model",
+      "joint_score": 1.0,
+      "leg_1": {
+        "book": "real",
+        "decimal_price": 2.2,
+        "deeplinks_by_region": {
+          "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.183798295&selectionId=14361900",
+          "AZ": "https://sportsbook.fanduel.com/addToBetslip?marketId=704.183537312&selectionId=14361900",
+          "CO": "https://sportsbook.fanduel.com/addToBetslip?marketId=708.183592678&selectionId=14361900",
+          "CT": "https://sportsbook.fanduel.com/addToBetslip?marketId=709.183305496&selectionId=14361900",
+          "DC": "https://sportsbook.fanduel.com/addToBetslip?marketId=711.183627541&selectionId=14361900",
+          "IA": "https://sportsbook.fanduel.com/addToBetslip?marketId=719.183600710&selectionId=14361900",
+          "IL": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.183609878&selectionId=14361900",
+          "IN": "https://sportsbook.fanduel.com/addToBetslip?marketId=718.183605877&selectionId=14361900",
+          "KS": "https://sportsbook.fanduel.com/addToBetslip?marketId=720.183425296&selectionId=14361900",
+          "KY": "https://sportsbook.fanduel.com/addToBetslip?marketId=721.183608340&selectionId=14361900",
+          "LA": "https://sportsbook.fanduel.com/addToBetslip?marketId=722.183254206&selectionId=14361900",
+          "MA": "https://sportsbook.fanduel.com/addToBetslip?marketId=725.183598107&selectionId=14361900",
+          "MD": "https://sportsbook.fanduel.com/addToBetslip?marketId=724.183607231&selectionId=14361900",
+          "MI": "https://sportsbook.fanduel.com/addToBetslip?marketId=726.183593075&selectionId=14361900",
+          "MO": "https://sportsbook.fanduel.com/addToBetslip?marketId=729.183984634&selectionId=14361900",
+          "NC": "https://sportsbook.fanduel.com/addToBetslip?marketId=737.183601809&selectionId=14361900",
+          "NJ": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183471972&selectionId=14361900",
+          "NY": "https://sportsbook.fanduel.com/addToBetslip?marketId=736.183247883&selectionId=14361900",
+          "OH": "https://sportsbook.fanduel.com/addToBetslip?marketId=739.183469868&selectionId=14361900",
+          "PA": "https://sportsbook.fanduel.com/addToBetslip?marketId=742.183468386&selectionId=14361900",
+          "TN": "https://sportsbook.fanduel.com/addToBetslip?marketId=747.183560485&selectionId=14361900",
+          "VA": "https://sportsbook.fanduel.com/addToBetslip?marketId=751.183566895&selectionId=14361900",
+          "VT": "https://sportsbook.fanduel.com/addToBetslip?marketId=750.183573322&selectionId=14361900",
+          "WV": "https://sportsbook.fanduel.com/addToBetslip?marketId=754.183613655&selectionId=14361900",
+          "WY": "https://sportsbook.fanduel.com/addToBetslip?marketId=756.183409690&selectionId=14361900"
+        },
+        "game_id": "823177",
+        "in_support": true,
+        "line": 1.5,
+        "model_probability_estimate": 0.5016881727575174,
+        "player": "Rafael Devers",
+        "player_headshot_fallback_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/646240/headshot/67/current",
+        "player_headshot_url": "data/headshots/646240.jpg",
+        "player_id": "rafael_devers",
+        "quote_timestamp": "20260829",
+        "side": "OVER",
+        "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183471972&selectionId=14361900",
+        "target": "TB"
+      },
+      "leg_2": {
+        "book": "real",
+        "decimal_price": 1.6666666666666665,
+        "deeplinks_by_region": {
+          "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.183798697&selectionId=23552186",
+          "AZ": "https://sportsbook.fanduel.com/addToBetslip?marketId=704.183537690&selectionId=23552186",
+          "CO": "https://sportsbook.fanduel.com/addToBetslip?marketId=708.183593034&selectionId=23552186",
+          "CT": "https://sportsbook.fanduel.com/addToBetslip?marketId=709.183305903&selectionId=23552186",
+          "DC": "https://sportsbook.fanduel.com/addToBetslip?marketId=711.183627923&selectionId=23552186",
+          "IA": "https://sportsbook.fanduel.com/addToBetslip?marketId=719.183601099&selectionId=23552186",
+          "IL": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.183610261&selectionId=23552186",
+          "IN": "https://sportsbook.fanduel.com/addToBetslip?marketId=718.183606262&selectionId=23552186",
+          "KS": "https://sportsbook.fanduel.com/addToBetslip?marketId=720.183425686&selectionId=23552186",
+          "KY": "https://sportsbook.fanduel.com/addToBetslip?marketId=721.183608725&selectionId=23552186",
+          "LA": "https://sportsbook.fanduel.com/addToBetslip?marketId=722.183254587&selectionId=23552186",
+          "MA": "https://sportsbook.fanduel.com/addToBetslip?marketId=725.183598485&selectionId=23552186",
+          "MD": "https://sportsbook.fanduel.com/addToBetslip?marketId=724.183607618&selectionId=23552186",
+          "MI": "https://sportsbook.fanduel.com/addToBetslip?marketId=726.183593463&selectionId=23552186",
+          "MO": "https://sportsbook.fanduel.com/addToBetslip?marketId=729.183985015&selectionId=23552186",
+          "NC": "https://sportsbook.fanduel.com/addToBetslip?marketId=737.183602192&selectionId=23552186",
+          "NJ": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183472356&selectionId=23552186",
+          "NY": "https://sportsbook.fanduel.com/addToBetslip?marketId=736.183248263&selectionId=23552186",
+          "OH": "https://sportsbook.fanduel.com/addToBetslip?marketId=739.183470269&selectionId=23552186",
+          "PA": "https://sportsbook.fanduel.com/addToBetslip?marketId=742.183468781&selectionId=23552186",
+          "TN": "https://sportsbook.fanduel.com/addToBetslip?marketId=747.183560862&selectionId=23552186",
+          "VA": "https://sportsbook.fanduel.com/addToBetslip?marketId=751.183567287&selectionId=23552186",
+          "VT": "https://sportsbook.fanduel.com/addToBetslip?marketId=750.183573724&selectionId=23552186",
+          "WV": "https://sportsbook.fanduel.com/addToBetslip?marketId=754.183614040&selectionId=23552186",
+          "WY": "https://sportsbook.fanduel.com/addToBetslip?marketId=756.183410060&selectionId=23552186"
+        },
+        "game_id": "824961",
+        "in_support": true,
+        "line": 1.5,
+        "model_probability_estimate": 0.5679546995419311,
+        "player": "Pete Alonso",
+        "player_headshot_fallback_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/624413/headshot/67/current",
+        "player_headshot_url": "data/headshots/624413.jpg",
+        "player_id": "pete_alonso",
+        "quote_timestamp": "20260829",
+        "side": "OVER",
+        "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183472356&selectionId=23552186",
+        "target": "TB"
+      },
+      "predictive_version": "H_OVER_RANKER_V1+MULTI_TARGET",
+      "slate_id": "20260829",
+      "state_version": "MULTI_TARGET_BROAD_V1",
+      "support": {
+        "in_support": false,
+        "leg_1_support": true,
+        "leg_2_support": true,
+        "state_support": false
+      },
+      "world_diagnostics": {
+        "counterexample_count": 3,
+        "counterexample_mass": 0.7150638445777637,
         "nonvacuous_world_certificate": false,
         "retained_probability_mass": 1.0,
         "retained_world_count": 4
@@ -896,7 +892,7 @@
     "certificate_status": "NO_ACTIVE_PROSPECTIVE_CERTIFICATE",
     "complete_slate_capture_passed": true,
     "full_policy_replay_available_for_snapshot": true,
-    "generated_at_utc": "2026-08-29T22:14:35.053423+00:00",
+    "generated_at_utc": "2026-08-29T23:19:16.307817+00:00",
     "historical_evidence_labels": [
       "SELECTED_ONLY_HISTORY",
       "SELECTED_ONLY_HISTORY"
@@ -917,11 +913,11 @@
     "run_date": "2026-08-29",
     "schema_version": "MLB_POLICY_GOVERNANCE_STATUS_V1",
     "slate_id": "MLB_20260829",
-    "snapshot_id": "mlb_20260829_221242Z_83da5228ce23",
-    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260829/governance/slates/MLB_20260829/mlb_20260829_221242Z_83da5228ce23/manifest.json",
+    "snapshot_id": "mlb_20260829_231818Z_a0eaf6824495",
+    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260829/governance/slates/MLB_20260829/mlb_20260829_231818Z_a0eaf6824495/manifest.json",
     "staking_enabled": false
   },
-  "policy_profile": "premium_tight_quality_v17_shadow",
+  "policy_profile": "premium_confidence_value_frontier_v19_shadow",
   "publication_message": "Board passed publication checks.",
   "publication_state": "published_current_pool",
   "publication_status": "ready",
@@ -1014,53 +1010,41 @@
   },
   "sport": "MLB",
   "summary": {
-    "avg_abs_edge": 0.6020483333333334,
-    "avg_edge": 0.6020483333333334,
-    "avg_expected_hit_rate": 0.6416620000000001,
-    "avg_graded_hit_rate": 0.6416620000000001,
-    "avg_precision_score": 0.6425693333333334,
-    "avg_value_score": 0.384783851188,
-    "closed_game_cards_suppressed": 3,
+    "avg_abs_edge": 0.837172,
+    "avg_edge": 0.837172,
+    "avg_expected_hit_rate": 0.608504,
+    "avg_graded_hit_rate": 0.608504,
+    "avg_precision_score": 0.619804,
+    "avg_value_score": 0.518882554288,
+    "closed_game_cards_suppressed": 2,
     "duplicate_cards_suppressed": 0,
     "parlay_pairs": 0,
     "parlay_tagged_plays": 0,
-    "play_count": 3,
-    "rejected_rows": 1728,
-    "rows_after_filters": 8,
-    "source_play_count": 6,
-    "supported_rows": 1736
+    "play_count": 1,
+    "rejected_rows": 1729,
+    "rows_after_filters": 5,
+    "source_play_count": 3,
+    "supported_rows": 1734
   },
   "suppressed_closed_games": [
     {
       "direction": "OVER",
-      "game_id": "823539",
+      "game_id": "823177",
       "market_date": "2026-08-29",
       "market_line": 0.5,
       "official_game_status": "Final",
-      "opponent": "NYY",
-      "player": "Caleb Durbin",
+      "opponent": "SF",
+      "player": "Ildemaro Vargas",
       "reason": "game is no longer open for pregame predictions",
       "target": "H",
-      "team": "BOS"
-    },
-    {
-      "direction": "OVER",
-      "game_id": "823539",
-      "market_date": "2026-08-29",
-      "market_line": 0.5,
-      "official_game_status": "Final",
-      "opponent": "NYY",
-      "player": "Wilyer Abreu",
-      "reason": "game is no longer open for pregame predictions",
-      "target": "H",
-      "team": "BOS"
+      "team": "AZ"
     },
     {
       "direction": "OVER",
       "game_id": "823177",
       "market_date": "2026-08-29",
       "market_line": 0.5,
-      "official_game_status": "In Progress",
+      "official_game_status": "Final",
       "opponent": "SF",
       "player": "Ryan Waldschmidt",
       "reason": "game is no longer open for pregame predictions",
@@ -1079,58 +1063,33 @@
     ],
     "calibration_model_version": "mlb_hit_probability_isotonic_v1",
     "calibration_status": "active",
-    "evidence_note": "0.65 is the first previously tested final-probability floor in the repo's archived sweep with positive ROI (+7.8%); the 0.60 configuration was -3.3%. This overlay is a new shadow publication policy and does not retroactively alter frozen evidence.",
-    "final_probability_floor": 0.65,
-    "input_plays": 3,
+    "confidence_floor": 0.6,
+    "dynamic_probability_gate": "balanced_probability >= max(0.60, exact_price_break_even_probability + 0.01)",
+    "evidence_note": "v19 preserves the validated 60% base confidence regime, requires a one-point probability edge over the exact confirmed price, and weights isotonic negative authority by demonstrated holdout Brier improvement. No relative rank, quota, or board-size target can reject an otherwise eligible play. This remains a shadow publication policy.",
+    "input_plays": 1,
     "minimum_final_expected_value": 0.0,
+    "minimum_probability_edge": 0.01,
     "parlay_v2_unchanged": true,
-    "probability_source": "min(existing_estimate, active_isotonic_model_probability_calibration)",
+    "pick_count_constraint": "none; every play is evaluated independently",
+    "probability_source": "existing_evidence_estimate with evidence-weighted negative-only isotonic adjustment",
     "published_plays": 0,
-    "ranking_after_gates": "final_price_ev_desc_then_final_probability_desc",
-    "rejected_plays": 3,
+    "ranking_after_gates": "final_price_ev_desc_then_final_probability_desc; ranking_does_not_limit_publication",
+    "rejected_plays": 1,
     "rejections": [
       {
-        "final_ev": -0.053189577717879466,
-        "final_probability": 0.6025157232704403,
-        "line": 0.5,
-        "play_key": "2026-08-29|823741|christian yelich|h|over",
-        "player": "Christian Yelich",
-        "pre_tight_ev": 0.052366,
-        "pre_tight_probability": 0.669687,
-        "reasons": [
-          "final_hit_probability_below_65pct",
-          "final_price_ev_negative"
-        ],
-        "target": "H"
-      },
-      {
-        "final_ev": -0.06275331935709283,
-        "final_probability": 0.6025157232704403,
-        "line": 0.5,
-        "play_key": "2026-08-29|823741|garrett mitchell|h|over",
-        "player": "Garrett Mitchell",
-        "pre_tight_ev": 0.006126,
-        "pre_tight_probability": 0.646795,
-        "reasons": [
-          "final_hit_probability_below_65pct",
-          "final_price_ev_negative"
-        ],
-        "target": "H"
-      },
-      {
-        "final_ev": 0.028161931034482945,
+        "final_ev": 0.014173333333333371,
         "final_probability": 0.608504,
         "line": 1.5,
         "play_key": "2026-08-29|824961|pete alonso|tb|over",
         "player": "Pete Alonso",
-        "pre_tight_ev": 0.028162,
+        "pre_tight_ev": 0.014173,
         "pre_tight_probability": 0.608504,
         "reasons": [
-          "final_hit_probability_below_65pct"
+          "dynamic_probability_edge_below_1pct"
         ],
         "target": "TB"
       }
     ],
-    "version": "premium_tight_quality_v17_shadow"
+    "version": "premium_confidence_value_frontier_v19_shadow"
   }
 }
