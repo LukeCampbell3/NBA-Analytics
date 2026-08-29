@@ -1,23 +1,6 @@
 #!/usr/bin/env bash
 # Single source of truth for validating the MLB pitcher-strikeouts-only
-# parlay pipeline -- CI (.github/workflows/mlb-pitcher-parlay-
-# predictions.yml) invokes this same script, mirroring
-# validate_same_game_pipeline.sh's exact reasoning (see that file's
-# header) so CI is a confirmation, never a debugger.
-#
-# Usage:
-#   sports/mlb/scripts/validate_pitcher_parlay_pipeline.sh <stage> [args...]
-#
-# Stages:
-#   install   Install the pipeline's real, scoped dependency set (same
-#             set same-game already uses -- no new dependency needed).
-#   test      Run the pitcher-parlay test suite (does NOT install --
-#             run `install` first, or use `fast`/`all`).
-#   pipeline  Run the real daily orchestrator. Extra args are passed
-#             through (e.g. `--calibration-ledger /tmp/x.jsonl`).
-#   build     Rebuild the static site from the current publication.
-#   fast      install + test only -- no real network hit.
-#   all       install + test + pipeline (real live fetch) + build.
+# parlay pipeline. CI and local iteration call this same script.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
@@ -37,12 +20,13 @@ run_tests() {
     sports/mlb/tests/test_pitcher_strikeout_model.py \
     sports/mlb/tests/test_select_mlb_pitcher_parlay.py \
     sports/mlb/tests/test_run_mlb_pitcher_parlay_daily.py \
+    sports/mlb/tests/test_parlay_quality_selectors.py \
     -q
 }
 
 run_pipeline() {
-  echo "[pipeline] run_mlb_pitcher_parlay_daily.py (real live schedule + odds fetch)"
-  python sports/mlb/scripts/run_mlb_pitcher_parlay_daily.py "$@"
+  echo "[pipeline] run_mlb_pitcher_parlay_quality_daily.py (alt-line frontier; probability floors -> EV)"
+  python sports/mlb/scripts/run_mlb_pitcher_parlay_quality_daily.py "$@"
 }
 
 run_build() {
