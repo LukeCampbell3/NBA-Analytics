@@ -36,8 +36,8 @@ SPORT_PAYLOADS = {
 # overlay was wired into the daily refresh, so validate_mlb_payload()
 # rejected every real v17 payload as "unexpected policy" and no v17
 # data could publish at all until this was fixed.
-MLB_POLICY_PROFILE = "premium_price_aware_quality_v18_shadow"
-MLB_LEGACY_POLICY_PROFILE = "premium_tight_quality_v17_shadow"
+MLB_POLICY_PROFILE = "premium_confidence_value_frontier_v19_shadow"
+MLB_LEGACY_POLICY_PROFILE = "premium_price_aware_quality_v18_shadow"
 MLB_REQUIRED_TARGETS = {"ER", "H", "HR", "K", "R", "RBI", "TB"}
 MLB_MIN_BOOKS = 1
 MLB_MIN_COMMON_BOOKS = 1
