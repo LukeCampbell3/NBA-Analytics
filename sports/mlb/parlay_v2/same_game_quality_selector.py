@@ -2,19 +2,19 @@ from __future__ import annotations
 
 """Quality-first shadow selection for MLB same-game combinations.
 
-This module deliberately does not change the joint game simulator, market
-pricing, calibration store, or authorization rules in
-``select_mlb_same_game_bets``.  It only controls which already-built shadow
-candidate is promoted to the public headline.
+The joint simulator, market provider, calibration store, and authorization
+rules remain unchanged. This module only decides which already-built shadow
+candidate can become the public headline.
 
-The policy is selective-prediction shaped:
+A headline candidate must now clear all three distinct tests before ranking:
 
-    joint hit probability floor -> positive edge/EV -> maximize EV
+    joint hit probability >= 50%
+    model edge vs no-vig joint market >= 3 percentage points
+    synthetic-price model EV >= 5%
 
-A low-probability/high-EV combination remains useful research evidence, but it
-must not displace a probability-safe combination on the headline card.  If no
-combination clears the joint floor, the headline pool is empty (ABSTAIN) and
-the EV-only candidates remain available as exploratory diagnostics.
+The last value is explicitly synthetic until a real combined FanDuel SGP quote
+is captured. These are deliberately conservative SHADOW presentation gates,
+not a retrospectively certified production rule.
 """
 
 from typing import Iterable
@@ -24,6 +24,8 @@ from select_mlb_same_game_bets import MIN_COMBO_JOINT_PROBABILITY, SameGameCombo
 
 DEFAULT_MAX_HEADLINE_CANDIDATES = 10
 DEFAULT_MAX_EXPLORATORY_CANDIDATES = 10
+MIN_HEADLINE_PROBABILITY_EDGE = 0.03
+MIN_HEADLINE_EXPECTED_VALUE = 0.05
 
 
 def _finite_value(value, default: float = float("-inf")) -> float:
@@ -38,17 +40,11 @@ def quality_safe_candidates(
     candidates: Iterable[SameGameComboCandidate],
     *,
     min_joint_probability: float = MIN_COMBO_JOINT_PROBABILITY,
-    require_positive_edge: bool = True,
-    require_positive_ev: bool = True,
+    min_probability_edge: float = MIN_HEADLINE_PROBABILITY_EDGE,
+    min_expected_value: float = MIN_HEADLINE_EXPECTED_VALUE,
     max_candidates: int = DEFAULT_MAX_HEADLINE_CANDIDATES,
 ) -> list[SameGameComboCandidate]:
-    """Return only combinations suitable for the headline shadow pool.
-
-    The probability constraint is applied *before* EV ranking.  This is the
-    key distinction from the legacy display selector, which ranked every
-    priced combination by EV and could headline a candidate that the policy's
-    own 50% joint-probability gate would never authorize.
-    """
+    """Return only combinations suitable for the tighter headline pool."""
 
     survivors: list[SameGameComboCandidate] = []
     for candidate in candidates:
@@ -57,15 +53,14 @@ def quality_safe_candidates(
         ev = _finite_value(candidate.expected_value_per_unit)
         if joint < min_joint_probability:
             continue
-        if require_positive_edge and edge <= 0.0:
+        if edge < min_probability_edge:
             continue
-        if require_positive_ev and ev <= 0.0:
+        if ev < min_expected_value:
             continue
         survivors.append(candidate)
 
-    # Once the hit-rate floor is satisfied, optimize price efficiency.
-    # Joint probability is the first tie-break so two equal-EV choices prefer
-    # the more reliable one, followed by model-vs-market probability edge.
+    # Probability safety is a gate, not the ranking objective. Once all three
+    # thresholds pass, use price efficiency first, then reliability and edge.
     survivors.sort(
         key=lambda candidate: (
             _finite_value(candidate.expected_value_per_unit),
@@ -83,18 +78,18 @@ def exploratory_ev_candidates(
     min_joint_probability: float = MIN_COMBO_JOINT_PROBABILITY,
     max_candidates: int = DEFAULT_MAX_EXPLORATORY_CANDIDATES,
 ) -> list[SameGameComboCandidate]:
-    """Keep low-joint/high-EV combinations for research, never headline.
-
-    This preserves the information value of combinations such as a 25% joint
-    event with a large modeled edge without presenting that event as the
-    system's best same-game parlay.
-    """
+    """Keep rejected positive-EV combinations for research, never headline."""
 
     exploratory = [
         candidate
         for candidate in candidates
         if candidate.expected_value_per_unit is not None
-        and _finite_value(candidate.real_joint_model_probability) < min_joint_probability
+        and _finite_value(candidate.expected_value_per_unit) > 0.0
+        and (
+            _finite_value(candidate.real_joint_model_probability) < min_joint_probability
+            or _finite_value(candidate.probability_edge) < MIN_HEADLINE_PROBABILITY_EDGE
+            or _finite_value(candidate.expected_value_per_unit) < MIN_HEADLINE_EXPECTED_VALUE
+        )
     ]
     exploratory.sort(
         key=lambda candidate: (
