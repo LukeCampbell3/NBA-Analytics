@@ -218,10 +218,10 @@ def test_validate_publication_allows_stale_payloads_when_requested(tmp_path: Pat
     ):
         payload_path = tmp_path / relative_path
         payload = json.loads(payload_path.read_text(encoding="utf-8"))
-        # v16 -- the accepted legacy profile during the v16->v17 transition
+        # v17 -- the accepted legacy profile during the v17->v18 transition
         # window (see validate_daily_publication.py's MLB_LEGACY_POLICY_
         # PROFILE).
-        payload["policy_profile"] = "premium_evidence_gated_v16"
+        payload["policy_profile"] = "premium_tight_quality_v17_shadow"
         payload_path.write_text(json.dumps(payload), encoding="utf-8")
     route = tmp_path / "dist/mlb/predictions/index.html"
     route.parent.mkdir(parents=True, exist_ok=True)
@@ -277,7 +277,7 @@ def test_validate_publication_rejects_legacy_mlb_pool_policy(tmp_path: Path) -> 
     route.parent.mkdir(parents=True, exist_ok=True)
     route.write_text("ok", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="expected premium_tight_quality_v17_shadow"):
+    with pytest.raises(ValueError, match="expected premium_price_aware_quality_v18_shadow"):
         validate_publication(
             repo_root=tmp_path,
             output_dir=Path("dist"),
