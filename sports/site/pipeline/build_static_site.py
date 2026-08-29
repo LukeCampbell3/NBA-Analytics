@@ -42,6 +42,7 @@ PREDICTION_TOP_LEVEL_FILES = {
     "fantasy.js",
     "fantasy.css",
     "parlay-board.css",
+    "predictions-roi-overrides.js",
     "advantage-routing.html",
     "advantage-routing.js",
     "advantage-routing.css",
@@ -60,6 +61,7 @@ PREDICTION_DATA_FILES = {
     "pitcher_parlay_predictions.json",
     "high_hit_parlay_predictions.json",
     "mlb_backtest_validation.json",
+    "betting_system_status.json",
 }
 HISTORY_DATA_FILE = re.compile(r"^\d{4}-\d{2}-\d{2}\.json$")
 

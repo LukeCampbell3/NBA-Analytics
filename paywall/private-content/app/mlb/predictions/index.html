@@ -48,17 +48,9 @@
                 <h2 id="parlaysHeading" class="board-section__heading">Parlays</h2>
 
                 <!-- High-EV and high-hit-probability are different real
-                     quantities -- a candidate can carry a large positive
-                     EV while the model itself says it's more likely to
-                     lose than win (see e.g. a 45.7% joint-probability
-                     pitcher parlay with +101% EV). Cross-Market is the
-                     frozen, high-hit-probability-gated production policy;
-                     High-Hit is a real, additive shadow product built the
-                     same way (every leg and the combo itself gated on
-                     real probability floors, not EV); Same-Game and
-                     Pitchers-Only are real, additive, EV-oriented shadow
-                     products, never a claim that either is more likely to
-                     win than lose. -->
+                     quantities. Cross-Market remains the frozen production
+                     policy. Same-Game and Pitchers-Only are shadow research
+                     products with their own explicit selection gates. -->
                 <div class="parlay-group">
                     <p class="parlay-group__label">Cross-Market</p>
                     <p class="parlay-group__note">Frozen, high-hit-probability-gated policy</p>
@@ -67,13 +59,13 @@
 
                 <div class="parlay-group">
                     <p class="parlay-group__label">Same-Game</p>
-                    <p class="parlay-group__note">EV-oriented shadow -- not a high-hit-probability claim</p>
+                    <p class="parlay-group__note">Joint-probability-gated shadow -- EV ranks only after the combo clears the hit-probability floor</p>
                     <div id="sameGameParlayContent" class="daily-parlay"></div>
                 </div>
 
                 <div class="parlay-group">
                     <p class="parlay-group__label">Pitchers-Only</p>
-                    <p class="parlay-group__note">EV-oriented shadow -- not a high-hit-probability claim</p>
+                    <p class="parlay-group__note">ROI-oriented shadow -- alternate K lines must clear probability, individual EV, price, combined payout, and joint-probability floors</p>
                     <div id="pitcherParlayContent" class="daily-parlay"></div>
                 </div>
 
@@ -163,5 +155,6 @@
     <script src="/vault/vault-components.js?v=17"></script>
     <script src="/vault/vault-shell.js?v=9"></script>
     <script src="predictions.js?v=28"></script>
+    <script src="predictions-roi-overrides.js?v=1"></script>
 </body>
 </html>

@@ -77,6 +77,71 @@
         `;
     };
 
+    // The same-game combo pipeline now publishes real, priced combos under
+    // a NEW field (game.exploratory_ev_candidates) once none clear the
+    // tighter headline gate (game.combo_candidates then stays empty by
+    // design -- see same_game_quality_selector.py). The base renderer only
+    // ever knew about combo_candidates, so a real slate with real priced
+    // combos was rendering as "no combo cleared pricing" even though real
+    // exploratory candidates existed. This shows the best real exploratory
+    // candidate, honestly labeled as not clearing the tight quality gate,
+    // reusing the existing renderSameGameCombo() card layout verbatim.
+    const originalRenderSameGameParlay = DailyPredictionsPage.prototype.renderSameGameParlay;
+    DailyPredictionsPage.prototype.renderSameGameParlay = function renderSameGameParlayWithExploratory() {
+        const content = this.elements?.sameGameParlayContent;
+        const data = this.sameGameData;
+        if (!content || !data || data.status !== "ok" || !Array.isArray(data.games) || !data.games.length) {
+            return originalRenderSameGameParlay.call(this);
+        }
+
+        const games = data.games;
+        const headlineCombos = [];
+        for (const game of games) {
+            if (Array.isArray(game.combo_candidates)) {
+                for (const combo of game.combo_candidates) headlineCombos.push({ game, combo });
+            }
+        }
+        if (headlineCombos.length) {
+            return originalRenderSameGameParlay.call(this);
+        }
+
+        const exploratory = [];
+        for (const game of games) {
+            if (Array.isArray(game.exploratory_ev_candidates)) {
+                for (const combo of game.exploratory_ev_candidates) exploratory.push({ game, combo });
+            }
+        }
+
+        const authorizedCount = Number(data.candidate_authorized_count) || 0;
+        const exploratoryCount = Number(data.exploratory_candidate_count) || exploratory.length;
+        const policyName = (data.selection_policy && typeof data.selection_policy === "object")
+            ? (data.selection_policy.name || "same_game_quality_v1")
+            : (data.selection_policy || "same_game_quality_v1");
+        const statusFooter = `Policy: ${this.escapeHtml(policyName)} / Games scheduled: ${games.length} / Exploratory candidates: ${exploratoryCount} / Authorized: ${authorizedCount}`;
+
+        if (!exploratory.length) {
+            const reason = data.odds_status && data.odds_status !== "success"
+                ? "Live market odds not yet available for today's slate."
+                : "No real cross-market combo cleared pricing for today's slate.";
+            content.innerHTML = this.sameGameParlayHeader() + `
+                <p class="daily-parlay__empty">${this.escapeHtml(reason)} A same-game combo will appear here once real moneyline/total/F5 lines are posted and priced.</p>
+                <p class="daily-parlay__state">${this.escapeHtml(statusFooter)}</p>
+            `;
+            return;
+        }
+
+        exploratory.sort((a, b) => (Number(b.combo.expected_value_per_unit) ?? -Infinity) - (Number(a.combo.expected_value_per_unit) ?? -Infinity));
+        const best = exploratory[0];
+        const extraCount = exploratory.length - 1;
+
+        content.innerHTML = this.sameGameParlayHeader() + `
+            <p class="daily-parlay__empty">No combo cleared today's tight headline gate (&ge;50% joint probability, &ge;3pp edge, &ge;5% synthetic EV) -- this is the best real priced combo below that bar, shown for transparency, not as a published pick.</p>
+            <div class="same-game-parlay__grid">${this.renderSameGameCombo(best.game, best.combo)}</div>
+            ${extraCount > 0 ? `<p class="daily-parlay__state">+${extraCount} more real exploratory combo${extraCount === 1 ? "" : "s"} priced across today's slate</p>` : ""}
+            <p class="daily-parlay__state">${this.escapeHtml(statusFooter)}</p>
+        `;
+    };
+
     // HIGH_HIT_PARLAY_ROI_V2 now includes price and EV gates. Extend its
     // footer so users can see that "high-hit" is no longer synonymous with
     // accepting tiny payouts.

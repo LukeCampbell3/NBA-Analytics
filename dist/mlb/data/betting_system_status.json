@@ -1,0 +1,41 @@
+{
+  "sport": "MLB",
+  "system": "mlb_production_shadow_v1",
+  "updated_at": "2026-06-05T00:00:00Z",
+  "model_version": "distribution_v1_mlb_cdf",
+  "validated_metrics": {
+    "markets": ["pitcher_strikeouts", "batter_hits", "batter_total_bases", "batter_rbis", "batter_runs", "batter_strikeouts", "pitcher_hits_allowed", "pitcher_earned_runs"],
+    "books": ["betmgm", "bovada", "caesars", "consensus", "draftkings", "espnbet", "fanduel"],
+    "provider": "sportsgameodds",
+    "live_entry_rows_collected": 5402,
+    "unique_market_offers": 5402
+  },
+  "pipeline_status": {
+    "staking_enabled": false,
+    "live_action_enabled": false,
+    "production_ready": false,
+    "system_mode": "production_shadow",
+    "terminal_state": "MLB_WAITING_FOR_CLOSE_LINES",
+    "evidence_stage": "entry_collection_active"
+  },
+  "evidence_summary": {
+    "total_live_entry_rows": 5402,
+    "total_real_clv_rows": 0,
+    "total_settled_gold_rows": 0,
+    "market_type_breakdown": {
+      "batter_hits": 713,
+      "batter_total_bases": 658,
+      "batter_runs": 558,
+      "batter_rbis": 535,
+      "batter_strikeouts": 85,
+      "pitcher_strikeouts": 63,
+      "pitcher_hits_allowed": 47,
+      "pitcher_earned_runs": 42
+    }
+  },
+  "promotion_blockers": [
+    "settled_gold_rows < 500",
+    "real_clv_rows < 500",
+    "staking disabled (hardcoded)"
+  ]
+}

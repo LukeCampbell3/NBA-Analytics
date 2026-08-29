@@ -335,12 +335,6 @@ def build_daily_payload(
         top_combos = select.top_combo_candidates(combos)
         authorized_count = sum(1 for c in combos if c.candidate_authorized)
         total_authorized += authorized_count
-        print(
-            f"[diag] game={prepared.game.get('game_id')} rows={len(prepared.game_odds_rows)} "
-            f"raw_combos={len(combos)} ev_none={sum(1 for c in combos if c.expected_value_per_unit is None)} "
-            f"top_combos={len(top_combos)}",
-            file=sys.stderr,
-        )
 
         entry["combo_candidates"] = [c.as_dict() for c in top_combos]
         entry["candidate_authorized_count"] = authorized_count

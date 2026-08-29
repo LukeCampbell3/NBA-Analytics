@@ -27,6 +27,13 @@
             <nav id="predictionDateNav" class="date-nav" aria-label="Prediction board date"></nav>
         </header>
 
+        <!-- Two real, visually distinct groups: the single-leg board,
+             then every real parlay product broken out by its own real
+             construction (cross-market cross-game, same-game, pitcher-
+             strikeouts-only) -- each card still carries its own compact
+             label and status pill, this just adds the page-level
+             structure so a viewer can tell what kind of bet they're
+             looking at before reading a single card. -->
         <div id="board" class="board" aria-live="polite">
             <section class="board-section" aria-labelledby="singleBetsHeading">
                 <h2 id="singleBetsHeading" class="board-section__heading">Single Bets</h2>
@@ -40,6 +47,10 @@
             <section class="board-section" aria-labelledby="parlaysHeading">
                 <h2 id="parlaysHeading" class="board-section__heading">Parlays</h2>
 
+                <!-- High-EV and high-hit-probability are different real
+                     quantities. Cross-Market remains the frozen production
+                     policy. Same-Game and Pitchers-Only are shadow research
+                     products with their own explicit selection gates. -->
                 <div class="parlay-group">
                     <p class="parlay-group__label">Cross-Market</p>
                     <p class="parlay-group__note">Frozen, high-hit-probability-gated policy</p>
@@ -75,6 +86,9 @@
     </main>
 
     <script>
+        // Keep this watchdog inline: it must still run when an external script is
+        // blocked, fails to download, or aborts during startup (including storage
+        // access failures in privacy-restricted browsers).
         (() => {
             const loadingText = "Loading board details...";
             const timeoutMs = 12000;
