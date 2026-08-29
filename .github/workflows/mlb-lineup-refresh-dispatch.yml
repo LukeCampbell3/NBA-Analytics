@@ -1,0 +1,37 @@
+name: MLB Lineup Window Refresh
+
+on:
+  schedule:
+    # Keep the existing 08:17 ET discovery run in mlb-predictions.yml.
+    # These later refreshes let the same production pipeline re-evaluate
+    # confirmed batting orders and fresh prices near the major MLB start windows.
+    - cron: "17 11 * 3-10 *"
+      timezone: "America/New_York"
+    - cron: "17 14 * 3-10 *"
+      timezone: "America/New_York"
+    - cron: "17 17 * 3-10 *"
+      timezone: "America/New_York"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch-production-refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch canonical MLB production workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_DATE: ${{ github.event.repository.updated_at }}
+        run: |
+          set -euo pipefail
+          run_date="$(TZ=America/New_York date +%F)"
+          gh workflow run mlb-predictions.yml \
+            --repo "${GITHUB_REPOSITORY}" \
+            --ref static-deployment \
+            -f run_date="$run_date" \
+            -f build_only=false
+          echo "Dispatched canonical MLB refresh for $run_date"
