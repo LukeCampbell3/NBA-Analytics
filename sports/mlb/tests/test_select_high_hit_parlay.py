@@ -31,32 +31,33 @@ def _leg(name, *, game_id, safe_probability, american_price=-110.0, target="TB",
     )
 
 
-def test_eligible_legs_excludes_low_probability_and_unconfirmed_price() -> None:
+def test_eligible_legs_excludes_low_probability_unconfirmed_and_price_traps() -> None:
     good = _leg("Good", game_id="1", safe_probability=0.80)
     low_probability = _leg("Low", game_id="2", safe_probability=0.60)
     unconfirmed = _leg("Unconfirmed", game_id="3", safe_probability=0.85, price_confirmed=False)
+    ultra_short = _leg("UltraShort", game_id="4", safe_probability=0.95, american_price=-600)
 
-    legs = high_hit.eligible_legs([good, low_probability, unconfirmed])
+    legs = high_hit.eligible_legs([good, low_probability, unconfirmed, ultra_short])
 
     assert legs == [good]
 
 
 def test_build_combos_only_builds_cross_game_combinations() -> None:
     a = _leg("A", game_id="1", safe_probability=0.80)
-    b = _leg("B", game_id="1", safe_probability=0.80)  # same game as A -- must never pair with it
+    b = _leg("B", game_id="1", safe_probability=0.80)
     c = _leg("C", game_id="2", safe_probability=0.80)
 
     combos = high_hit.build_combos([a, b, c], joint_probability_floor=0.0)
 
-    pairs = [{candidate.player for candidate in combo["legs"]} for combo in combos if combo["leg_count"] == 2]
+    pairs = [{candidate.player for candidate in combo["legs"]} for combo in combos]
     assert {"A", "B"} not in pairs
     assert {"A", "C"} in pairs
     assert {"B", "C"} in pairs
 
 
-def test_build_combos_computes_real_joint_probability_and_price() -> None:
-    a = _leg("A", game_id="1", safe_probability=0.80, american_price=-110.0)  # decimal 1.909090...
-    b = _leg("B", game_id="2", safe_probability=0.75, american_price=120.0)  # decimal 2.2
+def test_build_combos_computes_real_joint_probability_price_and_ev() -> None:
+    a = _leg("A", game_id="1", safe_probability=0.80, american_price=-110.0)
+    b = _leg("B", game_id="2", safe_probability=0.75, american_price=120.0)
 
     combos = high_hit.build_combos([a, b], joint_probability_floor=0.0)
 
@@ -69,31 +70,34 @@ def test_build_combos_computes_real_joint_probability_and_price() -> None:
     assert combo["expected_value_per_unit"] == pytest.approx(combo["joint_probability"] * combo["decimal_price"] - 1.0)
 
 
-def test_build_combos_respects_the_joint_probability_floor() -> None:
+def test_build_combos_respects_joint_probability_floor() -> None:
     a = _leg("A", game_id="1", safe_probability=0.70)
-    b = _leg("B", game_id="2", safe_probability=0.70)  # joint = 0.49
-
-    combos = high_hit.build_combos([a, b], joint_probability_floor=0.50)
-
-    assert combos == []
+    b = _leg("B", game_id="2", safe_probability=0.70)
+    assert high_hit.build_combos([a, b], joint_probability_floor=0.50) == []
 
 
-def test_select_high_hit_parlays_ranks_probability_first_and_diversifies_legs() -> None:
-    # Four legs across four games, all real, all clearing the leg floor.
-    a = _leg("A", game_id="1", safe_probability=0.90)
-    b = _leg("B", game_id="2", safe_probability=0.90)
-    c = _leg("C", game_id="3", safe_probability=0.72)
-    d = _leg("D", game_id="4", safe_probability=0.72)
+def test_build_combos_requires_meaningful_combined_payout() -> None:
+    a = _leg("A", game_id="1", safe_probability=0.90, american_price=-400)
+    b = _leg("B", game_id="2", safe_probability=0.90, american_price=-400)
+    # 1.25 * 1.25 = 1.5625, despite an 81% model joint probability.
+    assert high_hit.build_combos([a, b]) == []
 
-    selected = high_hit.select_high_hit_parlays(
-        [a, b, c, d], leg_probability_floor=0.70, joint_probability_floor=0.50, max_published=5
-    )
 
-    # A+B (joint 0.81) must rank above C+D (joint ~0.5184).
-    assert selected[0]["joint_probability"] > selected[1]["joint_probability"]
-    top_players = {candidate.player for candidate in selected[0]["legs"]}
-    assert top_players == {"A", "B"}
-    # No published leg is reused across two different published parlays.
+def test_select_high_hit_parlays_ranks_ev_after_probability_and_price_gates() -> None:
+    # Higher-probability A+B clears all gates, but C+D has better expected
+    # return at still-safe probabilities. V2 should choose C+D first.
+    a = _leg("A", game_id="1", safe_probability=0.90, american_price=-180)
+    b = _leg("B", game_id="2", safe_probability=0.90, american_price=-180)
+    c = _leg("C", game_id="3", safe_probability=0.75, american_price=100)
+    d = _leg("D", game_id="4", safe_probability=0.75, american_price=100)
+
+    selected = high_hit.select_high_hit_parlays([a, b, c, d], max_published=5)
+
+    assert len(selected) == 2
+    assert {candidate.player for candidate in selected[0]["legs"]} == {"C", "D"}
+    assert selected[0]["joint_probability"] < selected[1]["joint_probability"]
+    assert selected[0]["expected_value_per_unit"] > selected[1]["expected_value_per_unit"]
+
     seen: set[str] = set()
     for combo in selected:
         players = {candidate.player for candidate in combo["legs"]}
@@ -101,10 +105,18 @@ def test_select_high_hit_parlays_ranks_probability_first_and_diversifies_legs() 
         seen |= players
 
 
-def test_select_high_hit_parlays_returns_nothing_when_no_combo_clears_the_floor() -> None:
+def test_policy_never_expands_to_three_legs() -> None:
+    candidates = [
+        _leg("A", game_id="1", safe_probability=0.85, american_price=-110),
+        _leg("B", game_id="2", safe_probability=0.85, american_price=-110),
+        _leg("C", game_id="3", safe_probability=0.85, american_price=-110),
+    ]
+    combos = high_hit.build_combos(candidates, max_legs=3)
+    assert combos
+    assert all(combo["leg_count"] == 2 for combo in combos)
+
+
+def test_select_high_hit_parlays_returns_nothing_when_no_combo_clears_floor() -> None:
     a = _leg("A", game_id="1", safe_probability=0.71)
-    b = _leg("B", game_id="2", safe_probability=0.71)  # joint ~0.504 -- still below a strict floor
-
-    selected = high_hit.select_high_hit_parlays([a, b], joint_probability_floor=0.99)
-
-    assert selected == []
+    b = _leg("B", game_id="2", safe_probability=0.71)
+    assert high_hit.select_high_hit_parlays([a, b], joint_probability_floor=0.99) == []
