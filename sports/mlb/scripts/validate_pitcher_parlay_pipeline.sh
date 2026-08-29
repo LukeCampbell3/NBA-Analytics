@@ -27,6 +27,9 @@ run_tests() {
 run_pipeline() {
   echo "[pipeline] run_mlb_pitcher_parlay_quality_daily.py (alt-line frontier; probability floors -> EV)"
   python sports/mlb/scripts/run_mlb_pitcher_parlay_quality_daily.py "$@"
+  echo "[pipeline] enrich_pitcher_parlay_betslip.py (real multi-region FanDuel betslip links)"
+  python sports/mlb/scripts/enrich_pitcher_parlay_betslip.py || \
+    echo "[pipeline] betslip enrichment failed -- non-fatal, published legs keep their single-region link"
 }
 
 run_build() {

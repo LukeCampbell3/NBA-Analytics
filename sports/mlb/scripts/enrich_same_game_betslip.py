@@ -30,12 +30,34 @@ is left without a deeplink; nothing is ever guessed or partially built.
 
 Never touches any other field (probability, EV, pricing, authorization)
 on any combo.
+
+Multi-region deep links (added 2026-08-29, real user report -- the exact
+same class of bug enrich_parlay_leg_betslip.py fixed for PARLAY_POLICY_V2
+pairs and the main single-bet board on 2026-08-27, never extended to this
+product): FanDuel is a state-by-state licensed operator -- each region is
+a genuinely separate sportsbook instance with its own real marketId/
+selectionId for the identical player/market/line (see fanduel_regions.py).
+The single-region deeplink this module already attached only actually
+adds to the betslip for a viewer whose real FanDuel account is in
+whichever region the pipeline happened to fetch under (NJ by default) --
+every other real user got "Selection not added" on an otherwise correctly
+formatted link. This now additionally live-fetches every real FanDuel-
+licensed state (fanduel_regions.FANDUEL_LICENSED_STATES) and attaches a
+real `deeplinks_by_region` map to each leg alongside the original
+single-region `sportsbook_deeplink` (kept unchanged for backward
+compatibility) -- see build_multi_region_deeplink_indexes(). Also now
+covers `exploratory_ev_candidates`, not just `combo_candidates`: the
+tight-quality headline gate (same_game_quality_selector.py) frequently
+leaves combo_candidates empty while exploratory_ev_candidates carries the
+real, priced, published-to-viewers combos -- those need real working
+links exactly as much as a headline combo does.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Callable, Optional
 
@@ -49,9 +71,12 @@ for path in (MLB_SCRIPTS_ROOT, MLB_ODDS_PROVIDERS_ROOT, MLB_PARLAY_V2_ROOT):
 
 from fanduel_betslip import FANDUEL_SPORTSBOOK_KEY, build_fanduel_betslip_url  # noqa: E402
 from fanduel_public_mlb_team_market_provider import FanduelPublicMlbTeamMarketProvider  # noqa: E402
+from fanduel_regions import FANDUEL_LICENSED_STATES  # noqa: E402
 from run_mlb_same_game_daily import STATSAPI_FULL_NAME_TO_ESPN_ABBREVIATION  # noqa: E402
 
 DEFAULT_SAME_GAME_PREDICTIONS_PATH = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "same_game_predictions.json"
+COMBO_LIST_KEYS = ("combo_candidates", "exploratory_ev_candidates")
+MULTI_REGION_FETCH_WORKERS = 10
 
 
 def _index_key(home_team: str, away_team: str, market: str) -> tuple[str, str, str]:
@@ -87,19 +112,88 @@ def match_leg_to_deeplink(leg: dict[str, Any], row: Optional[dict[str, Any]]) ->
     return None
 
 
-def enrich_combo(combo: dict[str, Any], deeplink_index: dict[tuple[str, str, str], dict[str, Any]]) -> bool:
+def build_multi_region_deeplink_indexes(
+    states: tuple[str, ...] = FANDUEL_LICENSED_STATES,
+    *,
+    provider_factory: Callable[[str], Any] = None,
+    max_workers: int = MULTI_REGION_FETCH_WORKERS,
+) -> dict[str, dict[tuple[str, str, str], dict[str, Any]]]:
+    """Real per-state {(home_espn, away_espn, market): row} indexes --
+    one real live fetch per state (never per-leg), same real fail-open-
+    per-state contract as enrich_parlay_leg_betslip.build_multi_region_
+    odds_indexes(): a state whose real fetch fails or returns no odds is
+    simply absent from the result, never a guessed/empty index. Fetches
+    run concurrently since this is real network-bound work."""
+    factory = provider_factory or (lambda region: FanduelPublicMlbTeamMarketProvider(region=region))
+    indexes: dict[str, dict[tuple[str, str, str], dict[str, Any]]] = {}
+    if not states:
+        return indexes
+
+    def fetch_one(state: str) -> tuple[str, dict[tuple[str, str, str], dict[str, Any]] | None]:
+        try:
+            result = factory(state).collect_team_market_odds()
+        except Exception:
+            return state, None
+        if not isinstance(result, dict) or result.get("status") != "success":
+            return state, None
+        index: dict[tuple[str, str, str], dict[str, Any]] = {}
+        for row in result.get("odds") or []:
+            home_espn = STATSAPI_FULL_NAME_TO_ESPN_ABBREVIATION.get(str(row.get("home_team") or ""))
+            away_espn = STATSAPI_FULL_NAME_TO_ESPN_ABBREVIATION.get(str(row.get("away_team") or ""))
+            if not home_espn or not away_espn:
+                continue
+            index[_index_key(home_espn, away_espn, row.get("target"))] = row
+        return state, index
+
+    with ThreadPoolExecutor(max_workers=min(max_workers, len(states))) as pool:
+        futures = [pool.submit(fetch_one, state) for state in states]
+        for future in as_completed(futures):
+            state, index = future.result()
+            if index is not None:
+                indexes[state] = index
+    return indexes
+
+
+def match_combo_leg_to_regions(
+    leg: dict[str, Any],
+    home_team: str,
+    away_team: str,
+    region_indexes: dict[str, dict[tuple[str, str, str], dict[str, Any]]],
+) -> dict[str, str]:
+    """{state: deeplink} for every real FanDuel-licensed state whose live
+    board has a selection matching this leg -- a state with no match is
+    simply absent, never filled with a guess or the wrong link."""
+    deeplinks_by_region: dict[str, str] = {}
+    for state, index in region_indexes.items():
+        row = index.get(_index_key(home_team, away_team, leg.get("market")))
+        deeplink = match_leg_to_deeplink(leg, row)
+        if deeplink:
+            deeplinks_by_region[state] = deeplink
+    return deeplinks_by_region
+
+
+def enrich_combo(
+    combo: dict[str, Any],
+    deeplink_index: dict[tuple[str, str, str], dict[str, Any]],
+    *,
+    region_indexes: dict[str, dict[tuple[str, str, str], dict[str, Any]]] | None = None,
+) -> bool:
     leg_a, leg_b = combo.get("leg_a"), combo.get("leg_b")
     if not isinstance(leg_a, dict) or not isinstance(leg_b, dict):
         return False
 
-    row_a = deeplink_index.get(_index_key(combo.get("home_team"), combo.get("away_team"), leg_a.get("market")))
-    row_b = deeplink_index.get(_index_key(combo.get("home_team"), combo.get("away_team"), leg_b.get("market")))
+    home_team, away_team = combo.get("home_team"), combo.get("away_team")
+    row_a = deeplink_index.get(_index_key(home_team, away_team, leg_a.get("market")))
+    row_b = deeplink_index.get(_index_key(home_team, away_team, leg_b.get("market")))
     deeplink_a = match_leg_to_deeplink(leg_a, row_a)
     deeplink_b = match_leg_to_deeplink(leg_b, row_b)
     if deeplink_a:
         leg_a["sportsbook_deeplink"] = deeplink_a
     if deeplink_b:
         leg_b["sportsbook_deeplink"] = deeplink_b
+    if region_indexes:
+        leg_a["deeplinks_by_region"] = match_combo_leg_to_regions(leg_a, home_team, away_team, region_indexes)
+        leg_b["deeplinks_by_region"] = match_combo_leg_to_regions(leg_b, home_team, away_team, region_indexes)
 
     if not (deeplink_a and deeplink_b):
         combo["betslip"] = {
@@ -138,17 +232,24 @@ def enrich_combo(combo: dict[str, Any], deeplink_index: dict[tuple[str, str, str
     return True
 
 
-def enrich_payload(
-    payload: dict[str, Any], *, odds_fetcher: Callable[[], dict[str, Any]] = None,
-) -> dict[str, Any]:
-    games = payload.get("games")
-    combos = [
+def _all_combos(games: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    return [
         combo
         for game in (games or [])
         if isinstance(game, dict)
-        for combo in (game.get("combo_candidates") or [])
+        for key in COMBO_LIST_KEYS
+        for combo in (game.get(key) or [])
         if isinstance(combo, dict)
     ]
+
+
+def enrich_payload(
+    payload: dict[str, Any],
+    *,
+    odds_fetcher: Callable[[], dict[str, Any]] = None,
+    region_indexes: dict[str, dict[tuple[str, str, str], dict[str, Any]]] | None = None,
+) -> dict[str, Any]:
+    combos = _all_combos(payload.get("games"))
     if not combos:
         return payload
 
@@ -165,13 +266,18 @@ def enrich_payload(
         deeplink_index[_index_key(home_espn, away_espn, row.get("target"))] = row
 
     for combo in combos:
-        enrich_combo(combo, deeplink_index)
+        enrich_combo(combo, deeplink_index, region_indexes=region_indexes)
     return payload
 
 
-def enrich_file(path: Path, *, odds_fetcher: Callable[[], dict[str, Any]] = None) -> dict[str, Any]:
+def enrich_file(
+    path: Path,
+    *,
+    odds_fetcher: Callable[[], dict[str, Any]] = None,
+    region_indexes: dict[str, dict[tuple[str, str, str], dict[str, Any]]] | None = None,
+) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8"))
-    enrich_payload(payload, odds_fetcher=odds_fetcher)
+    enrich_payload(payload, odds_fetcher=odds_fetcher, region_indexes=region_indexes)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True, default=str), encoding="utf-8")
     return payload
 
@@ -182,26 +288,28 @@ def parse_args() -> argparse.Namespace:
         "--same-game-predictions-path", type=Path, default=None, action="append",
         help="In-place enrich this same_game_predictions.json's combos with a real FanDuel betslip URL. Repeatable.",
     )
+    parser.add_argument(
+        "--disable-multi-region-betslip", action="store_true",
+        help="Skip the real per-state (FANDUEL_LICENSED_STATES) fetch and only attach the single-region sportsbook_deeplink -- "
+        "for fast local iteration; the real pipeline leaves this enabled so every viewer's own state resolves.",
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
     targets = args.same_game_predictions_path or [DEFAULT_SAME_GAME_PREDICTIONS_PATH]
+    region_indexes = None if args.disable_multi_region_betslip else build_multi_region_deeplink_indexes()
+    region_coverage = {state: len(index) for state, index in (region_indexes or {}).items()}
     ready_counts = {}
     for target in targets:
         if not target.exists():
             continue
-        payload = enrich_file(target)
-        combos = [
-            combo
-            for game in (payload.get("games") or [])
-            if isinstance(game, dict)
-            for combo in (game.get("combo_candidates") or [])
-            if isinstance(combo, dict)
-        ]
-        ready_counts[str(target)] = sum(1 for combo in combos if (combo.get("betslip") or {}).get("status") == "ready")
-    print(json.dumps({"betslip_ready": ready_counts}, indent=2))
+        payload = enrich_file(target, region_indexes=region_indexes)
+        ready_counts[str(target)] = sum(
+            1 for combo in _all_combos(payload.get("games")) if (combo.get("betslip") or {}).get("status") == "ready"
+        )
+    print(json.dumps({"betslip_ready": ready_counts, "region_coverage": region_coverage}, indent=2))
     return 0
 
 

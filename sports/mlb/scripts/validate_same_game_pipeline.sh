@@ -36,6 +36,9 @@ run_tests() {
 run_pipeline() {
   echo "[pipeline] run_mlb_same_game_quality_daily.py (joint probability + material edge/EV gates)"
   python sports/mlb/scripts/run_mlb_same_game_quality_daily.py "$@"
+  echo "[pipeline] enrich_same_game_betslip.py (real multi-region FanDuel betslip links)"
+  python sports/mlb/scripts/enrich_same_game_betslip.py || \
+    echo "[pipeline] betslip enrichment failed -- non-fatal, published combos keep their single-region link"
 }
 
 run_build() {

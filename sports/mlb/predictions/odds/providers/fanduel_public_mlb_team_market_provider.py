@@ -59,12 +59,20 @@ class FanduelPublicMlbTeamMarketProvider:
         event_payloads: Optional[dict[str, dict[str, Any]]] = None,
         now: Optional[datetime] = None,
         sleep_fn: Callable[[float], None] = time.sleep,
+        region: Optional[str] = None,
     ):
         self.content_payload = content_payload
         self.event_payloads = event_payloads or {}
         self.now = now
         self.sleep_fn = sleep_fn
-        self.region = str(os.environ.get("MLB_FANDUEL_REGION", "NJ")).strip().upper()
+        # Explicit `region` takes precedence so a caller can construct
+        # several real instances for several real FanDuel-licensed states
+        # in one process (see enrich_same_game_betslip.py's multi-region
+        # fetch) without mutating os.environ between them; omitting it
+        # keeps the original env-var-only behavior every existing caller
+        # already relies on -- mirrors FanduelPublicMlbProvider's identical
+        # `region` param.
+        self.region = str(region if region is not None else os.environ.get("MLB_FANDUEL_REGION", "NJ")).strip().upper()
         self.public_key = str(os.environ.get("MLB_FANDUEL_PUBLIC_APP_KEY", PUBLIC_WEB_APPLICATION_KEY)).strip()
         self.enabled = os.environ.get("MLB_FANDUEL_PUBLIC_ENABLED", "1") != "0"
         self.timeout = float(os.environ.get("MLB_FANDUEL_TIMEOUT_SECONDS", "20"))

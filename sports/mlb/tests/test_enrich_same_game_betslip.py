@@ -156,10 +156,118 @@ def test_main_reports_ready_counts(tmp_path: Path, monkeypatch, capsys):
         enrich.FanduelPublicMlbTeamMarketProvider, "collect_team_market_odds",
         lambda self: {"status": "success", "odds": rows},
     )
-    monkeypatch.setattr(sys, "argv", ["enrich_same_game_betslip.py", "--same-game-predictions-path", str(target)])
+    monkeypatch.setattr(
+        sys, "argv",
+        ["enrich_same_game_betslip.py", "--same-game-predictions-path", str(target), "--disable-multi-region-betslip"],
+    )
 
     exit_code = enrich.main()
 
     assert exit_code == 0
     out = json.loads(capsys.readouterr().out)
     assert out["betslip_ready"][str(target)] == 1
+    assert out["region_coverage"] == {}
+
+
+# -- Multi-region deep links --------------------------------------------
+
+
+def test_build_multi_region_deeplink_indexes_fetches_once_per_real_state():
+    calls: list[str] = []
+
+    def fake_factory(region: str):
+        calls.append(region)
+        rows = [_moneyline_row("Detroit Tigers", "Tampa Bay Rays", f"https://sportsbook.fanduel.com/addToBetslip?marketId=1&selectionId={region}-11", f"https://sportsbook.fanduel.com/addToBetslip?marketId=1&selectionId={region}-12")]
+
+        class _FakeProvider:
+            def collect_team_market_odds(self):
+                return {"status": "success", "odds": rows}
+
+        return _FakeProvider()
+
+    indexes = enrich.build_multi_region_deeplink_indexes(("NY", "PA"), provider_factory=fake_factory)
+
+    assert sorted(calls) == ["NY", "PA"]
+    assert indexes["NY"][("DET", "TB", "moneyline")]["away_moneyline_deeplink"].endswith("NY-12")
+    assert indexes["PA"][("DET", "TB", "moneyline")]["away_moneyline_deeplink"].endswith("PA-12")
+
+
+def test_build_multi_region_deeplink_indexes_skips_a_state_whose_real_fetch_fails():
+    def fake_factory(region: str):
+        if region == "PA":
+            raise RuntimeError("real network failure")
+
+        class _FakeProvider:
+            def collect_team_market_odds(self):
+                return {"status": "success", "odds": []}
+
+        return _FakeProvider()
+
+    indexes = enrich.build_multi_region_deeplink_indexes(("NY", "PA"), provider_factory=fake_factory)
+
+    assert "NY" in indexes
+    assert "PA" not in indexes
+
+
+def test_match_combo_leg_to_regions_only_includes_states_with_a_real_match():
+    leg = {"market": "moneyline", "side": "away"}
+    region_indexes = {
+        "NY": {("DET", "TB", "moneyline"): _moneyline_row("Detroit Tigers", "Tampa Bay Rays", "https://sportsbook.fanduel.com/addToBetslip?marketId=1&selectionId=11", "https://sportsbook.fanduel.com/addToBetslip?marketId=1&selectionId=12")},
+        "PA": {},
+    }
+
+    deeplinks = enrich.match_combo_leg_to_regions(leg, "DET", "TB", region_indexes)
+
+    assert deeplinks == {"NY": "https://sportsbook.fanduel.com/addToBetslip?marketId=1&selectionId=12"}
+
+
+def test_enrich_combo_attaches_deeplinks_by_region_to_each_leg_when_region_indexes_given():
+    combo = _combo()
+    index = {
+        ("DET", "TB", "moneyline"): _moneyline_row("Detroit Tigers", "Tampa Bay Rays", "https://sportsbook.fanduel.com/addToBetslip?marketId=1&selectionId=11", "https://sportsbook.fanduel.com/addToBetslip?marketId=1&selectionId=12"),
+        ("DET", "TB", "game_total"): _total_row("Detroit Tigers", "Tampa Bay Rays", 7.5, "https://sportsbook.fanduel.com/addToBetslip?marketId=2&selectionId=21", "https://sportsbook.fanduel.com/addToBetslip?marketId=2&selectionId=22"),
+    }
+    region_indexes = {"NY": index}
+
+    enrich.enrich_combo(combo, index, region_indexes=region_indexes)
+
+    assert combo["leg_a"]["deeplinks_by_region"]["NY"].endswith("selectionId=12")
+    assert combo["leg_b"]["deeplinks_by_region"]["NY"].endswith("selectionId=21")
+    # The original single-region field is untouched, for backward compat.
+    assert combo["leg_a"]["sportsbook_deeplink"].endswith("selectionId=12")
+
+
+def test_enrich_combo_omits_deeplinks_by_region_when_no_region_indexes_given():
+    combo = _combo()
+    index = {
+        ("DET", "TB", "moneyline"): _moneyline_row("Detroit Tigers", "Tampa Bay Rays", "https://sportsbook.fanduel.com/addToBetslip?marketId=1&selectionId=11", "https://sportsbook.fanduel.com/addToBetslip?marketId=1&selectionId=12"),
+        ("DET", "TB", "game_total"): _total_row("Detroit Tigers", "Tampa Bay Rays", 7.5, "https://sportsbook.fanduel.com/addToBetslip?marketId=2&selectionId=21", "https://sportsbook.fanduel.com/addToBetslip?marketId=2&selectionId=22"),
+    }
+
+    enrich.enrich_combo(combo, index)
+
+    assert "deeplinks_by_region" not in combo["leg_a"]
+
+
+# -- exploratory_ev_candidates coverage ----------------------------------
+
+
+def test_enrich_payload_also_enriches_exploratory_candidates_when_headline_is_empty():
+    payload = {
+        "games": [
+            {
+                "game_id": "824234",
+                "combo_candidates": [],
+                "exploratory_ev_candidates": [_combo(home_team="DET", away_team="TB")],
+            },
+        ],
+    }
+    rows = [
+        _moneyline_row("Detroit Tigers", "Tampa Bay Rays", "https://sportsbook.fanduel.com/addToBetslip?marketId=1&selectionId=11", "https://sportsbook.fanduel.com/addToBetslip?marketId=1&selectionId=12"),
+        _total_row("Detroit Tigers", "Tampa Bay Rays", 7.5, "https://sportsbook.fanduel.com/addToBetslip?marketId=2&selectionId=21", "https://sportsbook.fanduel.com/addToBetslip?marketId=2&selectionId=22"),
+    ]
+
+    enrich.enrich_payload(payload, odds_fetcher=lambda: {"status": "success", "odds": rows})
+
+    combo = payload["games"][0]["exploratory_ev_candidates"][0]
+    assert combo["betslip"]["status"] == "ready"
