@@ -322,14 +322,25 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--max-over-picks",
         type=int,
-        default=0,
-        help="Maximum OVER picks on the board. Set 0 to disable the cap.",
+        default=-1,
+        help="Maximum OVER picks on the board. 0 blocks OVER picks entirely; "
+        "-1 (default) means no cap. (Real bug fixed 2026-08-29: this used to "
+        "default to 0 with '0 disables the cap' semantics, so an explicit "
+        "--max-over-picks 0 -- intended to mean 'no OVER picks' -- silently "
+        "meant 'unlimited' instead. -1 is now the disabled sentinel.)",
     )
     parser.add_argument(
         "--max-under-picks",
         type=int,
-        default=0,
-        help="Maximum UNDER picks on the board. Set 0 to disable the cap.",
+        default=-1,
+        help="Maximum UNDER picks on the board. 0 blocks UNDER picks entirely; "
+        "-1 (default) means no cap. (Real bug fixed 2026-08-29: run_daily_"
+        "predictions.py has always passed --max-under-picks 0 intending "
+        "'no UNDER picks', but the old '0 disables the cap' semantics meant "
+        "this silently allowed unlimited UNDERs instead -- confirmed via a "
+        "real bankroll-loss audit that found live UNDER picks despite this "
+        "flag. -1 is now the disabled sentinel; 0 does what it always looked "
+        "like it should.)",
     )
     parser.add_argument("--max-push-probability", type=float, default=0.24, help="Maximum push probability.")
     parser.add_argument("--max-days-since-history", type=int, default=4, help="Maximum staleness of last history row.")
@@ -2269,10 +2280,20 @@ def select_top_candidates(candidates: list[Candidate], args: argparse.Namespace)
             market_bucket_cap = int(args.optimized_over_max_per_market_bucket)
         if market_bucket_cap > 0 and by_market_bucket[candidate.market_bucket] >= market_bucket_cap:
             return False
-        max_over_picks = max(0, int(getattr(args, "max_over_picks", 0)))
+        # Real bug fixed 2026-08-29: max(0, ...) used to clamp a negative
+        # "disabled" sentinel up to 0, and 0 itself meant "disabled" -- so
+        # an explicit --max-over-picks/--max-under-picks 0 (intended to mean
+        # "block this direction entirely") silently meant "unlimited"
+        # instead. -1 (the new default, via the getattr fallback below too)
+        # is the real disabled sentinel; a literal 0 now really means zero.
+        max_over_picks = int(getattr(args, "max_over_picks", -1))
+        if candidate.direction == "OVER" and max_over_picks == 0:
+            return False
         if candidate.direction == "OVER" and max_over_picks > 0 and by_direction["OVER"] >= max_over_picks:
             return False
-        max_under_picks = max(0, int(getattr(args, "max_under_picks", 0)))
+        max_under_picks = int(getattr(args, "max_under_picks", -1))
+        if candidate.direction == "UNDER" and max_under_picks == 0:
+            return False
         if candidate.direction == "UNDER" and max_under_picks > 0 and by_direction["UNDER"] >= max_under_picks:
             return False
         profile = candidate_selection_profile(candidate, args)

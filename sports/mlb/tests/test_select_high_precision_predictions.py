@@ -956,6 +956,115 @@ def test_select_top_candidates_caps_under_fallback_positions() -> None:
     assert Counter(candidate.direction for candidate in selected) == {"OVER": 3, "UNDER": 1}
 
 
+def _direction_candidates(direction_target: str, count: int) -> list:
+    candidates = []
+    for idx in range(count):
+        candidate = selector.build_candidate(
+            _row(
+                player=f"{direction_target} Player {idx}",
+                team=f"T{idx}",
+                game_id=f"{direction_target.lower()}_{idx}",
+                target="TB",
+                prediction=0.20 if direction_target == "Under" else 0.75,
+                line=1.5 if direction_target == "Under" else 0.5,
+                edge=-1.30 if direction_target == "Under" else 0.25,
+            ),
+            calibration=None,
+            min_history_bucket_rows=50,
+            max_history_prior_weight=0.35,
+            history_prior_strength=400.0,
+        )
+        assert candidate is not None
+        candidates.append(candidate)
+    return candidates
+
+
+def test_max_under_picks_zero_blocks_every_under_pick() -> None:
+    """Real bug, fixed 2026-08-29: max_under_picks used max(0, ...) plus a
+    '> 0' gate, so an explicit --max-under-picks 0 (run_daily_predictions.py
+    has always passed exactly this, intending 'no UNDER picks') silently
+    meant 'unlimited' instead of 'zero' -- confirmed live via a real
+    bankroll-loss audit that found UNDER picks despite this flag. 0 must
+    now really mean zero."""
+    candidates = _direction_candidates("Under", 3)
+
+    selected = selector.select_top_candidates(
+        candidates,
+        selector.argparse.Namespace(
+            top_n=10,
+            max_under_picks=0,
+            max_per_player=1,
+            max_per_game=2,
+            max_per_team=3,
+            max_per_market_bucket=10,
+        ),
+    )
+
+    assert selected == []
+
+
+def test_max_under_picks_negative_one_means_unlimited() -> None:
+    """The new disabled sentinel (-1, also the new default) must still
+    allow every real UNDER candidate through, unlike the literal 0 case
+    above -- this is the real behavior the old (buggy) default preserved
+    for every caller that never touches this flag."""
+    candidates = _direction_candidates("Under", 3)
+
+    selected = selector.select_top_candidates(
+        candidates,
+        selector.argparse.Namespace(
+            top_n=10,
+            max_under_picks=-1,
+            max_per_player=1,
+            max_per_game=2,
+            max_per_team=3,
+            max_per_market_bucket=10,
+        ),
+    )
+
+    assert len(selected) == 3
+
+
+def test_max_over_picks_zero_blocks_every_over_pick() -> None:
+    """Same real fix, mirrored for OVER for consistent semantics."""
+    candidates = _direction_candidates("Over", 3)
+
+    selected = selector.select_top_candidates(
+        candidates,
+        selector.argparse.Namespace(
+            top_n=10,
+            max_over_picks=0,
+            max_per_player=1,
+            max_per_game=2,
+            max_per_team=3,
+            max_per_market_bucket=10,
+        ),
+    )
+
+    assert selected == []
+
+
+def test_max_over_and_under_picks_default_to_unlimited_when_omitted() -> None:
+    """A caller that never sets max_over_picks/max_under_picks at all (the
+    real, common case -- most Namespace fixtures in this file omit both)
+    must keep seeing unlimited picks in both directions, matching every
+    other test in this file that doesn't pass these flags."""
+    candidates = _direction_candidates("Over", 2) + _direction_candidates("Under", 2)
+
+    selected = selector.select_top_candidates(
+        candidates,
+        selector.argparse.Namespace(
+            top_n=10,
+            max_per_player=1,
+            max_per_game=2,
+            max_per_team=3,
+            max_per_market_bucket=10,
+        ),
+    )
+
+    assert len(selected) == 4
+
+
 def test_lookup_historical_bet_profile_prior_prefers_line_probability_bucket() -> None:
     priors = {
         "bet_profiles_target_probability": {
