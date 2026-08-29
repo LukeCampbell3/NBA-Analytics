@@ -2,10 +2,14 @@
 """Quality-gated daily MLB same-game shadow publication.
 
 Reuses the existing real schedule/history/joint Monte Carlo/odds preparation
-and same-game candidate builder unchanged. Publication is now deliberately
-strict: >=50% model joint probability, >=3 percentage points edge versus the
-no-vig market joint, and >=5% synthetic-price EV before a candidate can become
-the headline. Low-quality positive-EV candidates remain diagnostics only.
+and same-game candidate builder unchanged. Publication is deliberately
+strict: >=3 percentage points edge versus the no-vig market joint, and >=5%
+synthetic-price EV before a candidate can become the headline. Low-quality
+positive-EV candidates remain diagnostics only. (A third gate -- >=50% model
+joint probability -- was removed 2026-08-29: real production data showed no
+same-game combo had ever reached even 36% joint probability, so that floor
+never once let a candidate through; see same_game_quality_selector.py's
+module docstring for the full real evidence.)
 """
 
 from __future__ import annotations
@@ -66,8 +70,7 @@ def build_daily_payload(
         "run_date": run_date.isoformat(),
         "games": [],
         "selection_policy": {
-            "name": "same_game_tight_quality_v3_shadow",
-            "joint_probability_floor": select.MIN_COMBO_JOINT_PROBABILITY,
+            "name": "same_game_tight_quality_v4_shadow",
             "minimum_probability_edge_vs_no_vig": MIN_HEADLINE_PROBABILITY_EDGE,
             "minimum_synthetic_price_ev": MIN_HEADLINE_EXPECTED_VALUE,
             "ranking_after_gates": "expected_value_per_unit_desc_then_joint_probability_desc",

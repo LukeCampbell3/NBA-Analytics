@@ -22,14 +22,18 @@ from pitcher_alt_line_frontier import (  # noqa: E402
 from same_game_quality_selector import exploratory_ev_candidates, quality_safe_candidates  # noqa: E402
 
 
-def test_same_game_headline_rejects_low_joint_high_ev_candidate() -> None:
+def test_same_game_headline_accepts_a_low_joint_high_ev_candidate() -> None:
+    """Real evidence removed the joint-probability gate 2026-08-29 (see
+    same_game_quality_selector.py's module docstring): a real same-game
+    combo has never once reached even 36% joint probability, so edge and
+    EV alone decide headline eligibility now -- ranked by EV first."""
     low_joint_high_ev = SimpleNamespace(
         real_joint_model_probability=0.247,
         probability_edge=0.081,
         expected_value_per_unit=0.389,
     )
     safe_lower_ev = SimpleNamespace(
-        real_joint_model_probability=0.56,
+        real_joint_model_probability=0.28,
         probability_edge=0.06,
         expected_value_per_unit=0.12,
     )
@@ -37,14 +41,14 @@ def test_same_game_headline_rejects_low_joint_high_ev_candidate() -> None:
     headline = quality_safe_candidates([low_joint_high_ev, safe_lower_ev])
     exploratory = exploratory_ev_candidates([low_joint_high_ev, safe_lower_ev])
 
-    assert headline == [safe_lower_ev]
-    assert exploratory == [low_joint_high_ev]
+    assert headline == [low_joint_high_ev, safe_lower_ev]  # EV desc
+    assert exploratory == []
 
 
-def test_same_game_headline_abstains_when_no_combo_clears_joint_floor() -> None:
+def test_same_game_headline_abstains_when_no_combo_clears_edge_or_ev_floor() -> None:
     candidates = [
-        SimpleNamespace(real_joint_model_probability=0.49, probability_edge=0.20, expected_value_per_unit=0.80),
-        SimpleNamespace(real_joint_model_probability=0.31, probability_edge=0.10, expected_value_per_unit=0.50),
+        SimpleNamespace(real_joint_model_probability=0.30, probability_edge=0.01, expected_value_per_unit=0.80),
+        SimpleNamespace(real_joint_model_probability=0.31, probability_edge=0.10, expected_value_per_unit=0.02),
     ]
     assert quality_safe_candidates(candidates) == []
 

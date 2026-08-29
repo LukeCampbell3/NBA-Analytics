@@ -135,7 +135,7 @@
         const extraCount = exploratory.length - 1;
 
         content.innerHTML = this.sameGameParlayHeader() + `
-            <p class="daily-parlay__empty">No combo cleared today's tight headline gate (&ge;50% joint probability, &ge;3pp edge, &ge;5% synthetic EV) -- this is the best real priced combo below that bar, shown for transparency, not as a published pick.</p>
+            <p class="daily-parlay__empty">No combo cleared today's headline gate (&ge;3pp edge, &ge;5% synthetic EV) -- this is the best real priced combo below that bar, shown for transparency, not as a published pick.</p>
             <div class="same-game-parlay__grid">${this.renderSameGameCombo(best.game, best.combo)}</div>
             ${extraCount > 0 ? `<p class="daily-parlay__state">+${extraCount} more real exploratory combo${extraCount === 1 ? "" : "s"} priced across today's slate</p>` : ""}
             <p class="daily-parlay__state">${this.escapeHtml(statusFooter)}</p>

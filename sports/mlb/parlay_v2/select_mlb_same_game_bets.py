@@ -60,25 +60,24 @@ from calibration.store import CalibrationStore  # noqa: E402
 from calibration.support import evaluate_support  # noqa: E402
 from fanduel_betslip import FANDUEL_SPORTSBOOK_KEY, build_fanduel_betslip_url  # noqa: E402
 
-# Same deliberately conservative posture golf's board started from
-# (brand-new, unproven pipeline, no real track record yet). MIN_COMBO_
-# JOINT_PROBABILITY is a real, disclosed addition: parlays should be
-# gated on hit rate first (a viewer who can't afford to lose a leg needs
-# to know the combo is actually likely to hit), with EV/edge as a
-# secondary filter on TOP of that -- not the other way around. Reuses
-# HIGH_HIT_PARLAY_V1's own real joint-probability floor
-# (select_high_hit_parlay.py's JOINT_PROBABILITY_FLOOR) for consistency
-# across this repo's parlay products; there is no real settled same-game
-# track record yet to fit a same-game-specific number against (the
-# calibration ledger is still empty -- see this module's own docstring),
-# so this is the same real, disclosed default every other real-money-
-# adjacent MLB parlay product in this repo already uses, not a guess.
+# A same-game combo's joint probability used to carry its own 50% floor
+# here too (borrowed from HIGH_HIT_PARLAY_V1's JOINT_PROBABILITY_FLOOR,
+# which gates two independent PLAYER-PROP legs -- each individually much
+# more likely to hit on its own). Removed 2026-08-29 after checking every
+# real day of production data since this product's odds source went
+# live (2026-08-25 through 2026-08-29, 253 real priced combos): the real
+# joint probability for a moneyline x game-total/F5-total combo -- two
+# TEAM/GAME-level legs, a structurally lower-ceiling combo shape -- never
+# once reached even 36%, let alone 50%. The borrowed floor wasn't
+# conservative, it was unsatisfiable: candidate_authorized had never
+# once been True for a same-game combo since launch. Edge and EV remain
+# the real bar for this product; a real same-game-specific probability
+# floor can be added later if a settled track record ever justifies one.
 MIN_ABS_EDGE = 0.05
 MIN_EXPECTED_VALUE = 0.0
 MIN_REAL_BOOKS = 1
 MIN_COMBO_ABS_EDGE = 0.05
 MIN_COMBO_EXPECTED_VALUE = 0.0
-MIN_COMBO_JOINT_PROBABILITY = 0.50
 
 # (market, side) -> which the real leg needs from a market_odds row and how
 # to read its probability/mask off a GameSimulationResult.
@@ -371,7 +370,6 @@ def build_same_game_candidates(
     min_expected_value: float = MIN_EXPECTED_VALUE,
     min_combo_abs_edge: float = MIN_COMBO_ABS_EDGE,
     min_combo_expected_value: float = MIN_COMBO_EXPECTED_VALUE,
-    min_combo_joint_probability: float = MIN_COMBO_JOINT_PROBABILITY,
 ) -> list[SameGameComboCandidate]:
     """`game`: {"game_id", "date", "home_team", "away_team"}. `market_odds`:
     real rows from TheOddsApiMlbTeamMarketProvider for this one game
@@ -423,7 +421,6 @@ def build_same_game_candidates(
                     price_confirmed
                     and leg_a.leg_authorized
                     and leg_b.leg_authorized
-                    and real_joint >= min_combo_joint_probability
                     and edge is not None and edge >= min_combo_abs_edge
                     and expected_value is not None and expected_value > min_combo_expected_value
                 )

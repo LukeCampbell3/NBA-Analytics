@@ -198,34 +198,17 @@ def test_build_same_game_candidates_stays_unauthorized_with_an_empty_real_calibr
     assert all("market_support" in c.support_blocking_dimensions for c in combos)
 
 
-def test_build_same_game_candidates_never_authorizes_below_the_real_joint_probability_floor() -> None:
-    """Real hit-rate-first gate: no combo authorizes below
-    MIN_COMBO_JOINT_PROBABILITY, however strong its edge/EV, once a
-    threshold that high can never be cleared by any real combo -- this
-    is the same real, disclosed rule HIGH_HIT_PARLAY_V1 already applies
-    to its own legs/joint, now extended to same-game combos."""
-    combos = select.build_same_game_candidates(
-        _game(), _result(), _market_odds(), min_combo_joint_probability=1.01
-    )
-    assert combos  # real candidates still get built and reported
-    assert all(not c.candidate_authorized for c in combos)
-
-
-def test_build_same_game_candidates_joint_probability_floor_is_a_real_additive_gate() -> None:
-    """Disabling the floor (0.0) never authorizes a combo the existing
-    edge/EV/support gates would have blocked anyway -- it only ever adds
-    a real restriction, never removes one."""
-    baseline = {
-        (c.leg_a.market, c.leg_b.market, c.leg_a.side, c.leg_b.side): c.candidate_authorized
-        for c in select.build_same_game_candidates(_game(), _result(), _market_odds())
-    }
-    loosened = {
-        (c.leg_a.market, c.leg_b.market, c.leg_a.side, c.leg_b.side): c.candidate_authorized
-        for c in select.build_same_game_candidates(_game(), _result(), _market_odds(), min_combo_joint_probability=0.0)
-    }
-    for key, was_authorized in baseline.items():
-        if was_authorized:
-            assert loosened[key]
+def test_build_same_game_candidates_no_longer_accepts_a_joint_probability_floor_kwarg() -> None:
+    """Real evidence removed this gate 2026-08-29: every real day of
+    production data since this product's odds source went live
+    (2026-08-25 through 2026-08-29, 253 real priced combos) never once
+    reached even 36% real joint probability, so the borrowed 50% floor
+    (from HIGH_HIT_PARLAY_V1's independent-player-prop-leg gate) had
+    never once let a same-game combo authorize. Edge and EV are the
+    real bar now -- this asserts the removed kwarg is actually gone,
+    not silently ignored."""
+    with pytest.raises(TypeError):
+        select.build_same_game_candidates(_game(), _result(), _market_odds(), min_combo_joint_probability=1.01)
 
 
 def test_combo_betslip_ready_when_both_real_legs_priced_at_fanduel() -> None:
