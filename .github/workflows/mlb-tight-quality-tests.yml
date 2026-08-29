@@ -1,0 +1,49 @@
+name: MLB Tight Quality Tests
+
+on:
+  push:
+    branches: [static-deployment]
+    paths:
+      - 'sports/mlb/parlay_v2/**'
+      - 'sports/mlb/scripts/apply_tight_quality_overlay.py'
+      - 'sports/mlb/scripts/apply_parlay_v2_public_quality_overlay.py'
+      - 'sports/mlb/scripts/select_high_hit_parlay.py'
+      - 'sports/mlb/tests/test_parlay_quality_selectors.py'
+      - 'sports/mlb/tests/test_tight_quality_overlay.py'
+      - 'sports/mlb/tests/test_parlay_v2_public_quality_overlay.py'
+      - 'sports/mlb/tests/test_same_game_tight_quality.py'
+      - 'sports/mlb/tests/test_select_high_hit_parlay.py'
+      - 'run_daily_predictions.py'
+      - '.github/workflows/mlb-tight-quality-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tight-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: static-deployment
+          fetch-depth: 1
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+      - name: Run tight MLB selector regressions
+        run: |
+          python -m pytest \
+            sports/mlb/tests/test_tight_quality_overlay.py \
+            sports/mlb/tests/test_parlay_v2_public_quality_overlay.py \
+            sports/mlb/tests/test_same_game_tight_quality.py \
+            sports/mlb/tests/test_parlay_quality_selectors.py \
+            sports/mlb/tests/test_select_high_hit_parlay.py \
+            -q
