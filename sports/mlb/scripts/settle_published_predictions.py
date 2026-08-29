@@ -346,8 +346,12 @@ def settle_team_market_row(row: Dict[str, Any], game_id: Any, get_live_feed: Cal
 
 
 def iter_settleable_rows(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Every row actually rendered on the board or a historical date's
-    board -- see predictions.js's mergeLegacySoloBets/renderParlayV2Legs.
+    """Every real published row worth tracking a settled outcome for --
+    plays and PARLAY_POLICY_V2 legs are rendered on the board (see
+    predictions.js's renderParlayV2Legs); the legacy daily_parlay ticket's
+    legs no longer are (mergeLegacySoloBets removed 2026-08-29), but are
+    still settled here since real settled outcomes for that system remain
+    valuable for audit/backtest review even once it's off the board.
     profit_boost_ticket and ticket_ladder are real payload fields but are
     never rendered anywhere on the frontend, so they are deliberately left
     out here."""

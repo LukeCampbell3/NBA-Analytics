@@ -61,11 +61,14 @@ def find_leg_dicts(payload: dict[str, Any]) -> list[dict[str, Any]]:
             if isinstance(leg, dict) and str(leg.get("player") or "").strip():
                 legs.append(leg)
 
-    # The legacy daily_parlay ticket's legs get folded into the main
-    # board's plays client-side (see predictions.js's mergeLegacySoloBets)
-    # and rendered with the exact same renderPredictionCard as every
-    # other pick -- they need the exact same real headshot treatment, not
-    # just the newer V2 pairs above.
+    # The legacy daily_parlay ticket's legs are no longer rendered on the
+    # frontend at all (predictions.js's mergeLegacySoloBets was removed
+    # 2026-08-29 -- its 62% leg floor was looser than the real singles
+    # policy's 65% floor, so a merged leg could appear as a Solo Bet the
+    # singles policy itself would have rejected). This enrichment is left
+    # unchanged rather than removed here since that's a separate, real
+    # decision about the enrichment pipeline this leg-visibility fix
+    # didn't touch -- flagged as dead work worth trimming in a follow-up.
     ticket = (payload.get("daily_parlay") or {}).get("selected_ticket")
     if isinstance(ticket, dict) and isinstance(ticket.get("legs"), list):
         for leg in ticket["legs"]:

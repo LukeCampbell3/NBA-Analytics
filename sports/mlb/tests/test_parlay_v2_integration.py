@@ -312,19 +312,28 @@ def test_predictions_html_has_the_parlay_v2_content_and_no_legacy_parlay_section
     assert 'id="board"' in html
     assert 'id="parlayV2Content"' in html
     assert 'id="parlayV2Section"' not in html
-    # The legacy ticket system is no longer shown as its own "parlay"
-    # section -- its legs are folded into the main board instead (see
-    # mergeLegacySoloBets), since that system was never V2-certified.
+    # The legacy ticket system was never V2-certified and is no longer
+    # shown anywhere on the page at all (it used to be folded into the
+    # main board via mergeLegacySoloBets, removed 2026-08-29).
     assert 'id="dailyParlaySection"' not in html
 
 
-def test_predictions_js_renders_parlay_v2_and_folds_legacy_legs_into_solo_bets():
+def test_predictions_js_renders_parlay_v2_and_no_longer_folds_legacy_legs_into_solo_bets():
+    """mergeLegacySoloBets removed 2026-08-29 (real user-reported policy
+    inconsistency): the legacy ticket's own leg-probability floor (62%,
+    select_daily_parlay.py's MIN_LEG_PROBABILITY) is looser than the real
+    singles publication policy's floor (65%, premium_tight_quality_v17_
+    shadow), so a merged leg could appear as a Solo Bet the singles
+    policy itself would have rejected. A parlay research leg is not an
+    independently selected straight bet -- daily_parlay is no longer
+    read by the frontend at all."""
     js = (REPO_ROOT / "sports" / "mlb" / "web" / "predictions.js").read_text()
     assert "renderParlayV2" in js
     assert "this.data?.parlays" in js
     assert "renderDailyParlay" not in js  # legacy ticket renderer removed, not just unused
-    assert "mergeLegacySoloBets" in js
-    assert "this.data?.daily_parlay" in js  # legacy data still READ, just no longer given its own "parlay" section
+    assert "mergeLegacySoloBets" not in js
+    assert "this.data?.daily_parlay" not in js  # the only real code reference is gone
+    assert "this.data.daily_parlay" not in js
 
 
 # ======================================================================

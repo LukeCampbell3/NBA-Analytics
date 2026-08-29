@@ -107,7 +107,7 @@ class DailyPredictionsPage {
         const basePlays = Array.isArray(this.data.plays)
             ? this.data.plays.map((play) => ({ ...play, board_publication_status: publicationStatus }))
             : [];
-        this.plays = this.mergeLegacySoloBets(basePlays);
+        this.plays = basePlays;
         this.plays.sort((a, b) => {
             const parlayDiff = Number(Boolean(b.parlay_candidate)) - Number(Boolean(a.parlay_candidate));
             if (parlayDiff !== 0) return parlayDiff;
@@ -116,52 +116,6 @@ class DailyPredictionsPage {
             return (Number(b.abs_edge) || Number(b.edge) || 0) - (Number(a.abs_edge) || Number(a.edge) || 0);
         });
         this.renderRunMeta();
-    }
-
-    /**
-     * The legacy parlay ticket system (daily_parlay) is CONTROL/diagnostic
-     * only -- it has never been V2-certified, so its legs are never shown
-     * bundled as a "parlay" claim. Instead each leg is folded into Solo
-     * Bets as an individual, unauthorized candidate (candidate_authorized
-     * always follows the ticket's own value, so an unauthorized ticket's
-     * legs correctly render with the same "Shadow only" treatment as any
-     * other uncertified single play). Skips a leg already present in the
-     * base singles pool (matched by play_key, falling back to
-     * player+target+market_line) so nothing is shown twice.
-     */
-    mergeLegacySoloBets(basePlays) {
-        const ticket = this.data?.daily_parlay?.selected_ticket;
-        if (!ticket || !Array.isArray(ticket.legs) || !ticket.legs.length) return basePlays;
-        // Defense in depth: profit_boost is a deliberately permanent-
-        // shadow, alternate-line longshot product (real leg probability
-        // floor 0.18, real ticket floor 0.10 -- see select_daily_parlay.py)
-        // that must never be presented as a regular single pick, however
-        // it reaches this payload. The real backend fix keeps it out of
-        // selected_ticket already (select_daily_parlay.py's build_payload);
-        // this check is a second, independent guard against the same real
-        // failure mode (a sub-50%-probability leg shown with the same
-        // card format and prominence as a real hit-rate-gated pick).
-        if (String(ticket.ticket_tier || "").toLowerCase() === "profit_boost") return basePlays;
-
-        const legKey = (item) => String(
-            item?.play_key || `${item?.player || item?.player_display_name || ""}|${item?.target || ""}|${item?.market_line || ""}`
-        );
-        const existingKeys = new Set(basePlays.map(legKey));
-        const candidateAuthorized = Boolean(ticket.candidate_authorized);
-
-        const legacyPlays = ticket.legs
-            .filter((leg) => !existingKeys.has(legKey(leg)))
-            .map((leg) => ({
-                ...leg,
-                candidate_authorized: candidateAuthorized,
-                action_status: leg.action_status || ticket.status,
-                ev: leg.ev != null ? leg.ev : leg.expected_value_per_unit,
-                edge: leg.edge != null ? leg.edge : (Number.isFinite(Number(leg.prediction)) && Number.isFinite(Number(leg.market_line))
-                    ? Number(leg.prediction) - Number(leg.market_line)
-                    : undefined),
-                parlay_candidate: false, // deliberately not tagged "parlay" -- see method docstring
-            }));
-        return [...basePlays, ...legacyPlays];
     }
 
     renderDateNav() {
@@ -262,9 +216,14 @@ class DailyPredictionsPage {
     }
 
     /**
-     * PARLAY_POLICY_V2 -- the only "parlay" product path (the legacy
-     * ticket system's legs are folded into Solo Bets, see
-     * mergeLegacySoloBets). Reads ONLY this.data.parlays. Status
+     * PARLAY_POLICY_V2 -- the only "parlay" product path. The legacy
+     * ticket system (daily_parlay.selected_ticket) is CONTROL/diagnostic
+     * only and is no longer surfaced on this page at all (removed
+     * 2026-08-29: its 62% leg-probability floor is looser than the real
+     * singles publication policy's 65% floor, so a merged leg could
+     * appear as a Solo Bet the singles policy itself would have
+     * rejected -- a real parlay research leg is not an independently
+     * selected straight bet). Reads ONLY this.data.parlays. Status
      * language is restricted to the allowed vocabulary (mission section
      * 10) -- never "guaranteed" / "safe bet" / "proven winner" / "lock".
      */
