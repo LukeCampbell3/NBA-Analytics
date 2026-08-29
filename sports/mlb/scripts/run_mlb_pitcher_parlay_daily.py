@@ -36,6 +36,7 @@ for path in (
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
+import parlay_quality_frontier as quality  # noqa: E402
 import select_mlb_pitcher_parlay as select  # noqa: E402
 from calibration.store import CalibrationStore  # noqa: E402
 from fanduel_public_mlb_provider import FanduelPublicMlbProvider  # noqa: E402
@@ -81,6 +82,7 @@ def build_daily_payload(
     payload: dict[str, Any] = {
         "status": "ok", "generated_at_utc": generated_at, "run_date": run_date.isoformat(),
         "model": "mlb_pitcher_k_parlay_v1",
+        "selection_policy": "pitcher_alt_line_value_frontier_v1",
     }
 
     schedule = schedule_payload if schedule_payload is not None else fetch_todays_schedule(run_date)
@@ -101,21 +103,40 @@ def build_daily_payload(
     odds_rows = odds_result.get("odds", []) if odds_result.get("status") == "success" else []
 
     calibration_store = CalibrationStore(calibration_ledger) if calibration_ledger else None
-    legs = select.build_pitcher_k_legs(
+    # Keep every real FanDuel strikeout rung.  The legacy builder reduces a
+    # pitcher to one consensus line before selection, which is appropriate for
+    # a canonical market view but prevents the parlay from asking whether a
+    # higher alt-over line can keep the hit-rate floor while materially
+    # improving price/EV.
+    legs = quality.build_pitcher_alt_line_legs(
         starters, odds_rows, season=run_date.year,
         calibration_store=calibration_store, calibration_as_of=generated_at,
         fetch_season_stats=fetch_season_stats,
     )
     payload["legs"] = [leg.as_dict() for leg in legs]
     payload["real_priced_legs"] = sum(1 for leg in legs if leg.price_confirmed)
+    payload["real_priced_pitchers"] = len({leg.pitcher_id for leg in legs if leg.price_confirmed})
 
-    combo = select.build_pitcher_parlay(legs)
+    frontier = quality.select_pitcher_value_frontier(legs)
+    payload["quality_frontier"] = frontier.diagnostics()
+    combo = frontier.candidate
     if combo is None:
         payload["parlay"] = None
-        payload["parlay_status"] = "no_real_pair_from_two_distinct_priced_starters"
+        payload["parlay_status"] = "no_probability_safe_pair_from_two_distinct_priced_starters"
         return payload
 
-    payload["parlay"] = combo.as_dict()
+    parlay = combo.as_dict()
+    parlay["selection_mode"] = frontier.selection_mode
+    parlay["quality_frontier"] = frontier.diagnostics()
+    parlay["price_efficient"] = frontier.selection_mode == "frontier_value"
+    parlay["economic_decision"] = (
+        "positive_ev_probability_safe_shadow"
+        if frontier.selection_mode == "frontier_value"
+        else "no_bet_price_fail_probability_research_only"
+    )
+    payload["parlay"] = parlay
+    # Preserve the long-standing ready/not-ready payload contract for the
+    # frontend; selection_mode/economic_decision carry the richer distinction.
     payload["parlay_status"] = "ready"
     return payload
 
@@ -147,6 +168,7 @@ def main() -> int:
                 "real_starters_posted": payload.get("real_starters_posted", 0),
                 "real_priced_legs": payload.get("real_priced_legs", 0),
                 "parlay_status": payload.get("parlay_status"),
+                "selection_mode": (payload.get("quality_frontier") or {}).get("selection_mode"),
                 "written": str(out_path),
             },
             indent=2,
