@@ -26,7 +26,7 @@ SPORT_PAYLOADS = {
 # MLB_PRIMARY_POLICY_PROFILE comment for the full real root cause and
 # evidence behind both changes.
 #
-# v16 -> v17 (2026-08-29): apply_tight_quality_overlay.py additively
+# v17 -> v18 (2026-08-29): replace the fixed 65% publication floor with an\n# exact-price break-even gate; each play remains independently eligible and\n# the overlay imposes no count quota.\n#\n# v16 -> v17 (2026-08-29): apply_tight_quality_overlay.py additively
 # recalculates each published single's probability/EV and filters out
 # lineup_unconfirmed/lineup_role_mismatch cards, then overwrites the
 # payload's top-level policy_profile with its own name (preserving the
@@ -36,8 +36,8 @@ SPORT_PAYLOADS = {
 # overlay was wired into the daily refresh, so validate_mlb_payload()
 # rejected every real v17 payload as "unexpected policy" and no v17
 # data could publish at all until this was fixed.
-MLB_POLICY_PROFILE = "premium_tight_quality_v17_shadow"
-MLB_LEGACY_POLICY_PROFILE = "premium_evidence_gated_v16"
+MLB_POLICY_PROFILE = "premium_price_aware_quality_v18_shadow"
+MLB_LEGACY_POLICY_PROFILE = "premium_tight_quality_v17_shadow"
 MLB_REQUIRED_TARGETS = {"ER", "H", "HR", "K", "R", "RBI", "TB"}
 MLB_MIN_BOOKS = 1
 MLB_MIN_COMMON_BOOKS = 1
