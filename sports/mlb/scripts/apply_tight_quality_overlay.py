@@ -10,7 +10,9 @@ uses evidence that already existed before the current slate:
 * a card carrying ``lineup_unconfirmed`` is not suitable for the tight board.
 
 The overlay therefore recalculates each published single's final probability
-and price EV, filters the public ``plays`` list, and preserves an audit summary.
+and derives a price-specific break-even gate from its exact confirmed odds. Each
+play is evaluated independently; there is no fixed probability floor, top-N
+quota, or board-size target. The public ``plays`` list and audit are then updated.
 It never changes PARLAY_POLICY_V2, settlement records, or staking authority.
 """
 
@@ -30,8 +32,7 @@ PAYLOAD_PATHS = (
     REPO_ROOT / "paywall" / "private-content" / "app" / "mlb" / "data" / "daily_predictions.json",
 )
 
-OVERLAY_VERSION = "premium_tight_quality_v17_shadow"
-MIN_FINAL_HIT_PROBABILITY = 0.65
+OVERLAY_VERSION = "premium_price_aware_quality_v18_shadow"
 MIN_FINAL_EXPECTED_VALUE = 0.0
 BLOCKING_RISK_FLAGS = frozenset({"lineup_unconfirmed", "lineup_role_mismatch"})
 
@@ -126,10 +127,10 @@ def tighten_play(play: dict[str, Any], calibration: dict[str, Any] | None) -> tu
     if implied is None and decimal is not None:
         implied = 1.0 / decimal
     tightened["market_implied_probability"] = implied
-    tightened["probability_edge"] = probability - implied if implied is not None else None
-
-    if probability < MIN_FINAL_HIT_PROBABILITY:
-        reasons.append("final_hit_probability_below_65pct")
+    probability_margin = probability - implied if implied is not None else None
+    tightened["probability_edge"] = probability_margin
+    tightened["dynamic_break_even_probability"] = implied
+    tightened["dynamic_probability_margin"] = probability_margin
     if final_ev is None or final_ev < MIN_FINAL_EXPECTED_VALUE:
         reasons.append("final_price_ev_negative")
     if not bool(play.get("price_confirmed", False)):
@@ -189,19 +190,23 @@ def apply_overlay(payload: dict[str, Any], calibration: dict[str, Any] | None) -
         "authority": "shadow_publication_filter",
         "base_policy_unchanged": True,
         "parlay_v2_unchanged": True,
-        "final_probability_floor": MIN_FINAL_HIT_PROBABILITY,
+        "dynamic_probability_gate": "final_probability >= exact_price_break_even_probability",
+        "fixed_probability_floor": None,
         "minimum_final_expected_value": MIN_FINAL_EXPECTED_VALUE,
+        "pick_count_constraint": "none; every play is evaluated independently",
         "blocking_risk_flags": sorted(BLOCKING_RISK_FLAGS),
         "probability_source": "min(existing_estimate, active_isotonic_model_probability_calibration)",
-        "ranking_after_gates": "final_price_ev_desc_then_final_probability_desc",
+        "ranking_after_gates": "final_price_ev_desc_then_final_probability_desc; ranking_does_not_limit_publication",
         "input_plays": len(original),
         "published_plays": len(kept),
         "rejected_plays": len(rejected),
         "rejections": rejected,
         "evidence_note": (
-            "0.65 is the first previously tested final-probability floor in the repo's archived sweep "
-            "with positive ROI (+7.8%); the 0.60 configuration was -3.3%. This overlay is a new "
-            "shadow publication policy and does not retroactively alter frozen evidence."
+            "The archived fixed-floor sweep is retained as historical evidence, but it does not justify "
+            "applying one probability threshold across different prices. v18 instead requires each "
+            "conservatively recalibrated probability to clear the break-even probability of its exact "
+            "confirmed price. No relative rank, quota, or board-size target can reject an otherwise "
+            "eligible play. This remains a shadow publication policy."
         ),
         "calibration_model_version": calibration.get("model_version") if calibration else None,
         "calibration_status": calibration.get("status") if calibration else "unavailable",
