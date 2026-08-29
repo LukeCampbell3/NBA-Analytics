@@ -32,7 +32,9 @@ PAYLOAD_PATHS = (
     REPO_ROOT / "paywall" / "private-content" / "app" / "mlb" / "data" / "daily_predictions.json",
 )
 
-OVERLAY_VERSION = "premium_price_aware_quality_v18_shadow"
+OVERLAY_VERSION = "premium_confidence_value_frontier_v19_shadow"
+MIN_BALANCED_HIT_PROBABILITY = 0.60
+MIN_PROBABILITY_EDGE = 0.01
 MIN_FINAL_EXPECTED_VALUE = 0.0
 BLOCKING_RISK_FLAGS = frozenset({"lineup_unconfirmed", "lineup_role_mismatch"})
 
@@ -85,6 +87,23 @@ def load_active_calibration(path: Path = CALIBRATION_PATH) -> dict[str, Any] | N
     return payload
 
 
+def calibration_authority_weight(calibration: dict[str, Any] | None) -> float:
+    """Scale negative authority to the calibration's demonstrated holdout lift.
+
+    A newly active calibrator should not receive a full veto merely because its
+    Brier score is microscopically better on a small number of dates. A one-point
+    absolute Brier improvement earns full authority; smaller improvements are
+    proportional. The weight is always bounded and can never raise probability.
+    """
+    if calibration is None:
+        return 0.0
+    metrics = calibration.get("holdout_metrics") or {}
+    improvement = _finite(metrics.get("brier_improvement"))
+    if improvement is None or improvement <= 0.0:
+        return 0.0
+    return max(0.0, min(1.0, improvement / 0.01))
+
+
 def final_probability(play: dict[str, Any], calibration: dict[str, Any] | None) -> tuple[float | None, float | None]:
     current = _finite(play.get("final_hit_probability"))
     if current is None:
@@ -96,7 +115,12 @@ def final_probability(play: dict[str, Any], calibration: dict[str, Any] | None) 
     model_probability = _finite(play.get("model_hit_probability"))
     if calibration is not None and model_probability is not None:
         historical = interpolate_breakpoints(model_probability, calibration["breakpoints"])
-        current = min(current, historical)
+        # Negative authority only, but proportional to demonstrated out-of-time
+        # calibration improvement. This preserves the base selector's multiple
+        # evidence streams instead of letting a marginal global map replace them.
+        if historical < current:
+            weight = calibration_authority_weight(calibration)
+            current -= weight * (current - historical)
     return max(0.0, min(1.0, current)), historical
 
 
@@ -112,6 +136,7 @@ def tighten_play(play: dict[str, Any], calibration: dict[str, Any] | None) -> tu
     previous_probability = _finite(play.get("estimated_hit_probability"))
     tightened["pre_tight_hit_probability"] = previous_probability
     tightened["historically_calibrated_hit_probability"] = historical
+    tightened["calibration_authority_weight"] = calibration_authority_weight(calibration)
     tightened["final_hit_probability"] = probability
     # Existing frontend consumes estimated_hit_probability. Make that public
     # contract conservative instead of continuing to display the superseded
@@ -131,6 +156,15 @@ def tighten_play(play: dict[str, Any], calibration: dict[str, Any] | None) -> tu
     tightened["probability_edge"] = probability_margin
     tightened["dynamic_break_even_probability"] = implied
     tightened["dynamic_probability_margin"] = probability_margin
+    tightened["required_dynamic_probability"] = (
+        max(MIN_BALANCED_HIT_PROBABILITY, implied + MIN_PROBABILITY_EDGE)
+        if implied is not None
+        else None
+    )
+    if probability < MIN_BALANCED_HIT_PROBABILITY:
+        reasons.append("balanced_hit_probability_below_60pct")
+    if probability_margin is None or probability_margin < MIN_PROBABILITY_EDGE:
+        reasons.append("dynamic_probability_edge_below_1pct")
     if final_ev is None or final_ev < MIN_FINAL_EXPECTED_VALUE:
         reasons.append("final_price_ev_negative")
     if not bool(play.get("price_confirmed", False)):
@@ -190,23 +224,23 @@ def apply_overlay(payload: dict[str, Any], calibration: dict[str, Any] | None) -
         "authority": "shadow_publication_filter",
         "base_policy_unchanged": True,
         "parlay_v2_unchanged": True,
-        "dynamic_probability_gate": "final_probability >= exact_price_break_even_probability",
-        "fixed_probability_floor": None,
+        "dynamic_probability_gate": "balanced_probability >= max(0.60, exact_price_break_even_probability + 0.01)",
+        "confidence_floor": MIN_BALANCED_HIT_PROBABILITY,
+        "minimum_probability_edge": MIN_PROBABILITY_EDGE,
         "minimum_final_expected_value": MIN_FINAL_EXPECTED_VALUE,
         "pick_count_constraint": "none; every play is evaluated independently",
         "blocking_risk_flags": sorted(BLOCKING_RISK_FLAGS),
-        "probability_source": "min(existing_estimate, active_isotonic_model_probability_calibration)",
+        "probability_source": "existing_evidence_estimate with evidence-weighted negative-only isotonic adjustment",
         "ranking_after_gates": "final_price_ev_desc_then_final_probability_desc; ranking_does_not_limit_publication",
         "input_plays": len(original),
         "published_plays": len(kept),
         "rejected_plays": len(rejected),
         "rejections": rejected,
         "evidence_note": (
-            "The archived fixed-floor sweep is retained as historical evidence, but it does not justify "
-            "applying one probability threshold across different prices. v18 instead requires each "
-            "conservatively recalibrated probability to clear the break-even probability of its exact "
-            "confirmed price. No relative rank, quota, or board-size target can reject an otherwise "
-            "eligible play. This remains a shadow publication policy."
+            "v19 preserves the validated 60% base confidence regime, requires a one-point probability "
+            "edge over the exact confirmed price, and weights isotonic negative authority by demonstrated "
+            "holdout Brier improvement. No relative rank, quota, or board-size target can reject an "
+            "otherwise eligible play. This remains a shadow publication policy."
         ),
         "calibration_model_version": calibration.get("model_version") if calibration else None,
         "calibration_status": calibration.get("status") if calibration else "unavailable",
