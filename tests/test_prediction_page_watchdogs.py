@@ -35,4 +35,4 @@ def test_mlb_watchdog_has_dependency_free_board_recovery():
     assert 'document.createElement("article")' in html
     assert "Limited compatibility mode." in html
     assert 'vault-components.js?v=17' in html
-    assert 'predictions.js?v=28' in html
+    assert 'predictions.js?v=29' in html
