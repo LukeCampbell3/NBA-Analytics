@@ -2,11 +2,10 @@
 """Quality-gated daily MLB same-game shadow publication.
 
 Reuses the existing real schedule/history/joint Monte Carlo/odds preparation
-and the existing same-game candidate builder unchanged.  The only behavioral
-change is publication selection: the public headline pool must first clear the
-existing 50% joint-probability floor and retain positive model edge/EV.
-Low-joint/high-EV candidates remain in an exploratory diagnostics field rather
-than becoming the headline shadow pick.
+and same-game candidate builder unchanged. Publication is now deliberately
+strict: >=50% model joint probability, >=3 percentage points edge versus the
+no-vig market joint, and >=5% synthetic-price EV before a candidate can become
+the headline. Low-quality positive-EV candidates remain diagnostics only.
 """
 
 from __future__ import annotations
@@ -30,14 +29,18 @@ for path in (
 
 import select_mlb_same_game_bets as select  # noqa: E402
 from calibration.store import CalibrationStore  # noqa: E402
-from same_game_quality_selector import exploratory_ev_candidates, quality_safe_candidates  # noqa: E402
+from same_game_quality_selector import (  # noqa: E402
+    MIN_HEADLINE_EXPECTED_VALUE,
+    MIN_HEADLINE_PROBABILITY_EDGE,
+    exploratory_ev_candidates,
+    quality_safe_candidates,
+)
 from run_mlb_same_game_daily import (  # noqa: E402
     DEFAULT_CALIBRATION_LEDGER,
     DEFAULT_PITCHER_UNIVERSE,
     DEFAULT_TEAM_UNIVERSE,
     DEFAULT_WEB_DATA_ROOT,
     NUM_TRIALS,
-    PreparedGame,
     prepare_todays_game_simulations,
     write_web_payload,
 )
@@ -63,12 +66,14 @@ def build_daily_payload(
         "run_date": run_date.isoformat(),
         "games": [],
         "selection_policy": {
-            "name": "same_game_joint_probability_then_ev_v2",
+            "name": "same_game_tight_quality_v3_shadow",
             "joint_probability_floor": select.MIN_COMBO_JOINT_PROBABILITY,
-            "positive_edge_required": True,
-            "positive_ev_required": True,
-            "ranking_after_gates": "expected_value_per_unit_desc",
-            "exploratory_low_joint_candidates_are_headline_eligible": False,
+            "minimum_probability_edge_vs_no_vig": MIN_HEADLINE_PROBABILITY_EDGE,
+            "minimum_synthetic_price_ev": MIN_HEADLINE_EXPECTED_VALUE,
+            "ranking_after_gates": "expected_value_per_unit_desc_then_joint_probability_desc",
+            "actual_combined_sgp_quote_captured": False,
+            "authority": "shadow_only",
+            "exploratory_rejected_candidates_are_headline_eligible": False,
         },
     }
 
@@ -113,9 +118,6 @@ def build_daily_payload(
         total_quality_safe += len(safe)
         total_exploratory += len(exploratory)
 
-        # Existing frontend reads combo_candidates.  Deliberately put only
-        # probability-safe candidates there; exploratory EV candidates are
-        # retained under a separate key and are not surfaced as the headline.
         entry["combo_candidates"] = [combo.as_dict() for combo in safe]
         entry["exploratory_ev_candidates"] = [combo.as_dict() for combo in exploratory]
         entry["candidate_authorized_count"] = authorized_count
@@ -126,7 +128,7 @@ def build_daily_payload(
     payload["candidate_authorized_count"] = total_authorized
     payload["quality_safe_candidate_count"] = total_quality_safe
     payload["exploratory_candidate_count"] = total_exploratory
-    payload["headline_status"] = "ready" if total_quality_safe else "abstain_no_probability_safe_combo"
+    payload["headline_status"] = "ready" if total_quality_safe else "abstain_no_tight_quality_combo"
     return payload
 
 
