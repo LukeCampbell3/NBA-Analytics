@@ -25,6 +25,7 @@ run_tests() {
     sports/mlb/tests/test_select_mlb_same_game_bets.py \
     sports/mlb/tests/test_run_mlb_same_game_daily.py \
     sports/mlb/tests/test_parlay_quality_selectors.py \
+    sports/mlb/tests/test_same_game_tight_quality.py \
     sports/mlb/tests/test_the_odds_api_mlb_team_market_provider.py \
     sports/mlb/tests/test_fanduel_public_mlb_team_market_provider.py \
     sports/mlb/tests/test_backtest_pitching_enriched_win_model.py \
@@ -33,7 +34,7 @@ run_tests() {
 }
 
 run_pipeline() {
-  echo "[pipeline] run_mlb_same_game_quality_daily.py (joint-probability gate -> EV ranking)"
+  echo "[pipeline] run_mlb_same_game_quality_daily.py (joint probability + material edge/EV gates)"
   python sports/mlb/scripts/run_mlb_same_game_quality_daily.py "$@"
 }
 
