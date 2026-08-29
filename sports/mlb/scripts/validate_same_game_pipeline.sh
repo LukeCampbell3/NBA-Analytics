@@ -1,31 +1,7 @@
 #!/usr/bin/env bash
-# Single source of truth for validating the MLB same-game combo pipeline
-# -- CI (.github/workflows/mlb-same-game-predictions.yml) invokes this
-# same script for its install/test/pipeline/build steps, so there is
-# never a hand-maintained second copy of these commands that can drift
-# from what's actually verified locally. Built after this pipeline's
-# first real CI iterations exposed two real, fixable gaps (a missing
-# pytest install, then an unnecessarily heavy dependency set) one at a
-# time via slow, one-at-a-time CI round-trips -- this script exists so
-# that never needs to happen again: run `fast` locally (install + test,
-# a few seconds on a warm pip cache) before ever pushing, and CI becomes
-# a confirmation, not a debugger.
-#
-# Usage:
-#   sports/mlb/scripts/validate_same_game_pipeline.sh <stage> [args...]
-#
-# Stages:
-#   install   Install the pipeline's real, scoped dependency set.
-#   test      Run the same-game combo test suite (does NOT install --
-#             run `install` first, or use `fast`/`all`).
-#   pipeline  Run the real daily orchestrator. Extra args are passed
-#             through (e.g. `--calibration-ledger /tmp/x.jsonl`).
-#   build     Rebuild the static site from the current publication.
-#   fast      install + test only -- the sub-minute local loop meant to
-#             replace a real CI round-trip during iteration. Does NOT
-#             hit any real network (no live schedule/odds fetch).
-#   all       install + test + pipeline (real live fetch) + build -- the
-#             full real end-to-end check, still entirely local.
+# Single source of truth for validating the MLB same-game combo pipeline.
+# CI and local iteration call this same script so the verified command path
+# cannot drift from production.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
@@ -48,6 +24,7 @@ run_tests() {
     sports/mlb/tests/test_game_simulation_model.py \
     sports/mlb/tests/test_select_mlb_same_game_bets.py \
     sports/mlb/tests/test_run_mlb_same_game_daily.py \
+    sports/mlb/tests/test_parlay_quality_selectors.py \
     sports/mlb/tests/test_the_odds_api_mlb_team_market_provider.py \
     sports/mlb/tests/test_fanduel_public_mlb_team_market_provider.py \
     sports/mlb/tests/test_backtest_pitching_enriched_win_model.py \
@@ -56,8 +33,8 @@ run_tests() {
 }
 
 run_pipeline() {
-  echo "[pipeline] run_mlb_same_game_daily.py (real live schedule + odds fetch)"
-  python sports/mlb/scripts/run_mlb_same_game_daily.py "$@"
+  echo "[pipeline] run_mlb_same_game_quality_daily.py (joint-probability gate -> EV ranking)"
+  python sports/mlb/scripts/run_mlb_same_game_quality_daily.py "$@"
 }
 
 run_build() {
