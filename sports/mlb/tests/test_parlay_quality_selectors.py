@@ -13,6 +13,9 @@ sys.path.insert(0, str(REPO_ROOT / "sports" / "mlb" / "predictions"))
 import pitcher_strikeout_model as k_model  # noqa: E402
 import select_mlb_pitcher_parlay as legacy_pitcher  # noqa: E402
 from pitcher_alt_line_frontier import (  # noqa: E402
+    MIN_COMBO_DECIMAL_PRICE,
+    MIN_LEG_DECIMAL_PRICE,
+    MIN_LEG_PROBABILITY,
     build_pitcher_k_alt_line_legs,
     build_pitcher_parlay_frontier,
 )
@@ -124,29 +127,50 @@ def _leg(
     )
 
 
-def test_pitcher_frontier_prefers_positive_ev_pair_over_max_probability_negative_ev_pair() -> None:
-    # Mirrors the structural shape of the 2026-08-28 board: Cease and
-    # Brown had the two highest hit probabilities but extremely short
-    # prices; Hancock was only slightly lower probability at a much more
-    # efficient price.  This test uses only pre-event model/price fields.
-    cease = _leg(1, probability=0.9343621783, price=-2500)
-    brown = _leg(2, probability=0.9071067708, price=-2200)
-    hancock = _leg(3, probability=0.8918332911, price=-400)
+def test_pitcher_frontier_uses_harder_roi_line_instead_of_minus_2500_undercut() -> None:
+    # Same pitcher, two real thresholds: legacy max-hit logic wants the
+    # 93.4%-probability -2500 undercut. The ROI frontier must instead use the
+    # harder 76.5%-probability line because it clears the probability floor,
+    # has positive EV, and contributes a real payout.
+    cease_undercut = _leg(1, probability=0.9343621783, price=-2500, line=4.5)
+    cease_roi_line = _leg(1, probability=0.7653472459, price=-150, line=6.5)
+    brown_undercut = _leg(2, probability=0.9071067708, price=-2200, line=2.5)
+    second_roi_pitcher = _leg(3, probability=0.78, price=-150, line=4.5)
 
-    legacy = legacy_pitcher.build_pitcher_parlay([cease, brown, hancock])
-    frontier = build_pitcher_parlay_frontier([cease, brown, hancock])
+    legacy = legacy_pitcher.build_pitcher_parlay(
+        [cease_undercut, cease_roi_line, brown_undercut, second_roi_pitcher]
+    )
+    frontier = build_pitcher_parlay_frontier(
+        [cease_undercut, cease_roi_line, brown_undercut, second_roi_pitcher]
+    )
 
     assert legacy is not None and frontier is not None
     assert {legacy.leg_a.pitcher_id, legacy.leg_b.pitcher_id} == {1, 2}
-    assert legacy.expected_value_per_unit == pytest.approx(-0.078, abs=0.002)
+    assert legacy.leg_a.line == pytest.approx(4.5)
 
     assert {frontier.leg_a.pitcher_id, frontier.leg_b.pitcher_id} == {1, 3}
-    assert frontier.naive_independence_probability > 0.80
-    assert frontier.expected_value_per_unit is not None
-    assert frontier.expected_value_per_unit > 0.08
+    cease_selected = frontier.leg_a if frontier.leg_a.pitcher_id == 1 else frontier.leg_b
+    assert cease_selected.line == pytest.approx(6.5)
+    assert cease_selected.price_american == -150
+    assert cease_selected.decimal_price >= MIN_LEG_DECIMAL_PRICE
+    assert frontier.combo_decimal_price >= MIN_COMBO_DECIMAL_PRICE
+    assert frontier.naive_independence_probability >= 0.50
+    assert frontier.expected_value_per_unit is not None and frontier.expected_value_per_unit >= 0.05
 
 
-def test_pitcher_frontier_never_trades_below_probability_floors_for_roi() -> None:
+def test_pitcher_frontier_abstains_instead_of_falling_back_to_ultra_short_negative_ev_pair() -> None:
+    cease = _leg(1, probability=0.9343621783, price=-2500)
+    brown = _leg(2, probability=0.9071067708, price=-2200)
+
+    legacy = legacy_pitcher.build_pitcher_parlay([cease, brown])
+    frontier = build_pitcher_parlay_frontier([cease, brown])
+
+    assert legacy is not None
+    assert legacy.expected_value_per_unit is not None and legacy.expected_value_per_unit < 0.0
+    assert frontier is None
+
+
+def test_pitcher_frontier_never_trades_below_probability_floor_for_roi() -> None:
     safe_a = _leg(1, probability=0.82, price=-180)
     safe_b = _leg(2, probability=0.80, price=-170)
     tempting_longshot = _leg(3, probability=0.55, price=300)
@@ -155,9 +179,20 @@ def test_pitcher_frontier_never_trades_below_probability_floors_for_roi() -> Non
 
     assert frontier is not None
     assert {frontier.leg_a.pitcher_id, frontier.leg_b.pitcher_id} == {1, 2}
-    assert frontier.leg_a.model_probability >= 0.70
-    assert frontier.leg_b.model_probability >= 0.70
+    assert frontier.leg_a.model_probability >= MIN_LEG_PROBABILITY
+    assert frontier.leg_b.model_probability >= MIN_LEG_PROBABILITY
     assert frontier.naive_independence_probability >= 0.50
+
+
+def test_pitcher_frontier_requires_meaningful_combined_payout() -> None:
+    # Individually acceptable -500 favorites still do not make a useful ROI
+    # parlay together: 1.20 * 1.20 = 1.44 decimal, below the +100 floor.
+    short_a = _leg(1, probability=0.85, price=-500)
+    short_b = _leg(2, probability=0.85, price=-500)
+
+    assert short_a.expected_value_per_unit > 0.0
+    assert short_b.expected_value_per_unit > 0.0
+    assert build_pitcher_parlay_frontier([short_a, short_b]) is None
 
 
 def test_pitcher_frontier_requires_different_games_for_independence_claim() -> None:
