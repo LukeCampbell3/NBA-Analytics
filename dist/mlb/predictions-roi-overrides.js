@@ -1,12 +1,9 @@
-// Additive frontend corrections for the ROI-oriented MLB pitcher parlay.
+// Additive frontend corrections for the tighter MLB publication policies.
 // Loaded after predictions.js and before DOMContentLoaded fires, so these
-// prototype overrides apply to the page instance created by predictions.js
-// without duplicating or rewriting the full board implementation.
+// prototype overrides apply without duplicating the full board implementation.
 (() => {
     if (typeof DailyPredictionsPage === "undefined") return;
 
-    // Number(null) === 0 in JavaScript. Missing no-vig data from a one-sided
-    // alternate market is unknown, not 0%, so preserve missingness explicitly.
     DailyPredictionsPage.prototype.formatPct = function formatPct(value) {
         if (value === null || value === undefined || value === "") return "n/a";
         const number = Number(value);
@@ -28,15 +25,48 @@
             name,
             market: `${side} ${this.formatNumber(leg.line, 1)} Strikeouts`,
             context: matchup,
-            metrics: [
-                ["Probability", this.formatPct(leg.model_probability)],
-                ["Leg EV", this.formatSignedPct(leg.expected_value_per_unit)],
-                ["Odds", this.formatAmerican(leg.price_american)],
-                ["Book", leg.sportsbook || ""],
-            ],
+            metrics: [["Probability", this.formatPct(leg.model_probability)], ["Leg EV", this.formatSignedPct(leg.expected_value_per_unit)], ["Odds", this.formatAmerican(leg.price_american)], ["Book", leg.sportsbook || ""]],
             betslipUrl: leg.sportsbook_deeplink || "",
             deeplinksByRegion: leg.deeplinks_by_region || null,
             settlementRow: leg,
         });
+    };
+
+    const originalRenderParlayV2 = DailyPredictionsPage.prototype.renderParlayV2;
+    DailyPredictionsPage.prototype.renderParlayV2 = function renderParlayV2TightQuality() {
+        const parlay = this.data?.parlays || {};
+        const quality = parlay.public_quality_overlay;
+        if (!quality || quality.action !== "ABSTAIN") return originalRenderParlayV2.call(this);
+        const content = this.elements?.parlayV2Content;
+        if (!content) return;
+        const pair = parlay.selected_parlay || parlay.shadow_candidate;
+        const legs = pair ? [pair.leg_1, pair.leg_2].filter(Boolean) : [];
+        const reasons = Array.isArray(quality.blocking_reasons) ? quality.blocking_reasons.map((reason) => String(reason).replaceAll("_", " ")).join("; ") : "tight quality gates failed";
+        content.innerHTML = `
+            <div class="daily-parlay__header daily-parlay__header--status-only">
+                ${window.CardVault ? window.CardVault.renderStatusPill("withheld", "Tight-quality abstain") : ""}
+                ${window.CardVault ? window.CardVault.renderParlaySettlementBadge(legs) : ""}
+            </div>
+            <p class="daily-parlay__empty">The frozen V2 research decision is preserved for prospective evidence, but this pair is withheld from the tighter public candidate set.</p>
+            ${pair ? this.renderParlayV2Legs(pair) : ""}
+            <div class="same-game-parlay__metrics">
+                <span>Research joint probability <strong>${this.formatPct(quality.joint_probability)}</strong></span>
+                <span>Combined decimal price <strong>${this.formatNumber(quality.combined_decimal_price, 2)}</strong></span>
+                <span>Price-adjusted model EV <strong>${this.formatSignedPct(quality.expected_value_per_unit)}</strong></span>
+            </div>
+            <p class="daily-parlay__state">Tight gate: ${this.escapeHtml(reasons)}. Frozen policy action was not modified.</p>`;
+    };
+
+    const originalRenderHighHitParlay = DailyPredictionsPage.prototype.renderHighHitParlay;
+    DailyPredictionsPage.prototype.renderHighHitParlay = function renderHighHitParlayRoiAware() {
+        originalRenderHighHitParlay.call(this);
+        const content = this.elements?.highHitParlayContent;
+        const construction = this.highHitParlayData?.construction || {};
+        if (!content || !this.highHitParlayData) return;
+        const state = content.querySelector(".daily-parlay__state:last-child");
+        if (!state) return;
+        const minPrice = Number(construction.min_combined_decimal_price);
+        const minEv = Number(construction.min_expected_value_per_unit);
+        if (Number.isFinite(minPrice) && Number.isFinite(minEv)) state.textContent += ` / Min payout: ${minPrice.toFixed(2)} / Min EV: ${(minEv * 100).toFixed(1)}%`;
     };
 })();
