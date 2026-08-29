@@ -55,11 +55,26 @@ def test_tight_play_recalculates_ev_after_probability_haircut() -> None:
     assert tightened["expected_value_per_unit"] < play["expected_value_per_unit"]
 
 
-def test_tight_overlay_rejects_sub_65pct_final_probability_even_when_raw_estimate_is_high() -> None:
-    play = _play(model_p=0.70, estimated_p=0.78, price=-150)
+def test_dynamic_gate_accepts_sub_65pct_probability_when_exact_price_has_positive_value() -> None:
+    play = _play(model_p=0.70, estimated_p=0.78, price=100)
     tightened, reasons = tight.tighten_play(play, _calibration())
     assert tightened["final_hit_probability"] < 0.65
-    assert "final_hit_probability_below_65pct" in reasons
+    assert tightened["dynamic_break_even_probability"] == pytest.approx(0.50)
+    assert tightened["dynamic_probability_margin"] > 0.0
+    assert reasons == []
+
+
+def test_dynamic_gate_has_no_pick_count_or_relative_rank_constraint() -> None:
+    payload = {
+        "policy_profile": "premium_evidence_gated_v16",
+        "plays": [
+            _play(model_p=0.70, estimated_p=0.78, price=100, player=f"play_{index}")
+            for index in range(30)
+        ],
+    }
+    result = tight.apply_overlay(payload, _calibration())
+    assert len(result["plays"]) == 30
+    assert result["tight_quality_overlay"]["pick_count_constraint"].startswith("none")
 
 
 def test_tight_overlay_rejects_lineup_unconfirmed() -> None:
