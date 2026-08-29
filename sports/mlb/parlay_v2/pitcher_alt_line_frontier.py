@@ -1,25 +1,30 @@
 from __future__ import annotations
 
-"""Probability-safe, price-efficient pitcher strikeout alt-line frontier.
+"""ROI-aware pitcher strikeout alt-line frontier.
 
 The FanDuel provider already exposes both standard pitcher-K totals and
-one-sided alternate strikeout thresholds.  The legacy pitcher-parlay selector
+one-sided alternate strikeout thresholds. The legacy pitcher-parlay selector
 collapsed those real prices to one consensus line per pitcher and then chose
-the two highest-probability pitchers before looking at price.  That is useful
-for a pure hit-rate diagnostic but can select extremely expensive negative-EV
-legs even when a slightly harder real alt line or another nearly-as-likely
-pitcher offers substantially better payout.
+the two highest-probability pitchers before looking at price. That can create
+an apparently "safe" parlay made from brutally expensive legs such as -2500
+or -2200, even when harder real lines retain strong model probability and pay
+materially better.
 
-This additive selector keeps the model and support rules unchanged, enumerates
-every real line, and solves the constrained problem we actually want:
+This additive selector keeps the predictive model and calibration evidence
+unchanged, enumerates every real line, and solves the constrained problem we
+actually want for the ROI-oriented pitcher board:
 
     maximize quoted-price model EV
-    subject to each leg probability >= 70%
+    subject to each leg probability >= 60%
+               each leg model EV >= 0%
+               each leg decimal price >= 1.20  (no worse than -500)
                combined probability >= 50%
+               combined decimal price >= 2.00  (at least +100)
+               combined model EV >= 5%
                two distinct games/pitchers
 
-If no positive-EV pair survives, the least-bad probability-safe pair is
-returned as a high-hit/price-fail diagnostic; authorization remains false.
+If nothing clears those constraints, the board abstains. It does not fall
+back to an ultra-short negative-EV pair merely to manufacture a selection.
 """
 
 import math
@@ -29,7 +34,6 @@ from calibration.store import CalibrationStore
 from calibration.support import evaluate_support
 from select_mlb_pitcher_parlay import (
     MIN_COMBO_ABS_EDGE,
-    MIN_COMBO_EXPECTED_VALUE,
     MIN_COMBO_JOINT_PROBABILITY,
     MIN_REAL_BOOKS,
     STATE_BUCKET,
@@ -42,7 +46,13 @@ from select_mlb_pitcher_parlay import (
 import pitcher_strikeout_model as k_model
 
 
-MIN_LEG_PROBABILITY = 0.70
+# ROI-oriented SHADOW selection gates. These are intentionally separate from
+# the frozen/certification gates used elsewhere in the repo.
+MIN_LEG_PROBABILITY = 0.60
+MIN_LEG_EXPECTED_VALUE = 0.0
+MIN_LEG_DECIMAL_PRICE = 1.20  # equivalent to -500 American odds
+MIN_COMBO_DECIMAL_PRICE = 2.00  # at least +100 combined payout
+MIN_COMBO_EXPECTED_VALUE = 0.05
 
 
 def _best_price(rows: list[dict[str, Any]]) -> Optional[dict[str, Any]]:
@@ -194,6 +204,9 @@ def _pair_candidate(
     probability_edge = joint_probability - naive_no_vig if naive_no_vig is not None else None
     expected_value = joint_probability * combo_decimal_price - 1.0 if combo_decimal_price is not None else None
 
+    # Authorization still obeys the original calibration/support discipline.
+    # One-sided alternate thresholds may have no no-vig counterpart, so they
+    # remain shadow-only until their own evidence path is mature.
     edge_passed = probability_edge is not None and probability_edge >= min_combo_abs_edge
     ev_passed = expected_value is not None and expected_value > min_combo_expected_value
     authorized = bool(
@@ -220,19 +233,33 @@ def build_pitcher_parlay_frontier(
     legs: list[PitcherKLeg],
     *,
     min_leg_probability: float = MIN_LEG_PROBABILITY,
+    min_leg_expected_value: float = MIN_LEG_EXPECTED_VALUE,
+    min_leg_decimal_price: float = MIN_LEG_DECIMAL_PRICE,
     min_combo_joint_probability: float = MIN_COMBO_JOINT_PROBABILITY,
+    min_combo_decimal_price: float = MIN_COMBO_DECIMAL_PRICE,
     min_combo_abs_edge: float = MIN_COMBO_ABS_EDGE,
     min_combo_expected_value: float = MIN_COMBO_EXPECTED_VALUE,
 ) -> Optional[PitcherParlayCandidate]:
-    """Maximize EV among all real probability-safe alt-line pairs."""
+    """Maximize EV among all real ROI-eligible, probability-safe pairs.
 
-    eligible = [
-        leg
-        for leg in legs
-        if leg.price_confirmed
-        and leg.expected_value_per_unit is not None
-        and leg.model_probability >= min_leg_probability
-    ]
+    This intentionally rejects an ultra-short favorite even if it raises raw
+    hit probability. A leg must contribute both probability and price value.
+    """
+
+    eligible = []
+    for leg in legs:
+        decimal = leg.decimal_price
+        leg_ev = leg.expected_value_per_unit
+        if not leg.price_confirmed or decimal is None or leg_ev is None:
+            continue
+        if leg.model_probability < min_leg_probability:
+            continue
+        if leg_ev < min_leg_expected_value:
+            continue
+        if decimal < min_leg_decimal_price:
+            continue
+        eligible.append(leg)
+
     if len({leg.pitcher_id for leg in eligible}) < 2:
         return None
 
@@ -248,6 +275,13 @@ def build_pitcher_parlay_frontier(
             joint_probability = leg_a.model_probability * leg_b.model_probability
             if joint_probability < min_combo_joint_probability:
                 continue
+            decimal_a, decimal_b = leg_a.decimal_price, leg_b.decimal_price
+            if decimal_a is None or decimal_b is None:
+                continue
+            combo_decimal = decimal_a * decimal_b
+            if combo_decimal < min_combo_decimal_price:
+                continue
+
             candidate = _pair_candidate(
                 leg_a,
                 leg_b,
@@ -255,20 +289,24 @@ def build_pitcher_parlay_frontier(
                 min_combo_expected_value=min_combo_expected_value,
                 min_combo_joint_probability=min_combo_joint_probability,
             )
-            if candidate.expected_value_per_unit is not None:
-                pairs.append(candidate)
+            if candidate.expected_value_per_unit is None:
+                continue
+            if candidate.expected_value_per_unit < min_combo_expected_value:
+                continue
+            pairs.append(candidate)
 
     if not pairs:
         return None
 
-    positive_ev = [candidate for candidate in pairs if (candidate.expected_value_per_unit or 0.0) > 0.0]
-    pool = positive_ev if positive_ev else pairs
-    pool.sort(
+    # ROI is the primary objective once every probability and payout gate has
+    # passed. If EV ties, prefer the bigger actual payout, then the higher hit
+    # probability. This is intentionally different from the old max-hit rule.
+    pairs.sort(
         key=lambda candidate: (
-            float(candidate.expected_value_per_unit if candidate.expected_value_per_unit is not None else -math.inf),
-            float(candidate.naive_independence_probability),
+            float(candidate.expected_value_per_unit),
             float(candidate.combo_decimal_price or 0.0),
+            float(candidate.naive_independence_probability),
         ),
         reverse=True,
     )
-    return pool[0]
+    return pairs[0]
