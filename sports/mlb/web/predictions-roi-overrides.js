@@ -1,7 +1,6 @@
-// Additive frontend corrections for the ROI-oriented MLB pitcher parlay.
+// Additive frontend corrections for the tighter MLB publication policies.
 // Loaded after predictions.js and before DOMContentLoaded fires, so these
-// prototype overrides apply to the page instance created by predictions.js
-// without duplicating or rewriting the full board implementation.
+// prototype overrides apply without duplicating the full board implementation.
 (() => {
     if (typeof DailyPredictionsPage === "undefined") return;
 
@@ -38,5 +37,61 @@
             deeplinksByRegion: leg.deeplinks_by_region || null,
             settlementRow: leg,
         });
+    };
+
+    // PARLAY_POLICY_V2 remains frozen for its research stream. The new public
+    // quality overlay can only WITHHOLD presentation; it never changes the
+    // recorded frozen action. Show that distinction explicitly.
+    const originalRenderParlayV2 = DailyPredictionsPage.prototype.renderParlayV2;
+    DailyPredictionsPage.prototype.renderParlayV2 = function renderParlayV2TightQuality() {
+        const parlay = this.data?.parlays || {};
+        const quality = parlay.public_quality_overlay;
+        if (!quality || quality.action !== "ABSTAIN") {
+            return originalRenderParlayV2.call(this);
+        }
+
+        const content = this.elements?.parlayV2Content;
+        if (!content) return;
+        const pair = parlay.selected_parlay || parlay.shadow_candidate;
+        const legs = pair ? [pair.leg_1, pair.leg_2].filter(Boolean) : [];
+        const joint = this.formatPct(quality.joint_probability);
+        const ev = this.formatSignedPct(quality.expected_value_per_unit);
+        const price = this.formatNumber(quality.combined_decimal_price, 2);
+        const reasons = Array.isArray(quality.blocking_reasons)
+            ? quality.blocking_reasons.map((reason) => String(reason).replaceAll("_", " ")).join("; ")
+            : "tight quality gates failed";
+
+        content.innerHTML = `
+            <div class="daily-parlay__header daily-parlay__header--status-only">
+                ${window.CardVault ? window.CardVault.renderStatusPill("withheld", "Tight-quality abstain") : ""}
+                ${window.CardVault ? window.CardVault.renderParlaySettlementBadge(legs) : ""}
+            </div>
+            <p class="daily-parlay__empty">The frozen V2 research decision is preserved for prospective evidence, but this pair is withheld from the tighter public candidate set.</p>
+            ${pair ? this.renderParlayV2Legs(pair) : ""}
+            <div class="same-game-parlay__metrics">
+                <span>Research joint probability <strong>${joint}</strong></span>
+                <span>Combined decimal price <strong>${price}</strong></span>
+                <span>Price-adjusted model EV <strong>${ev}</strong></span>
+            </div>
+            <p class="daily-parlay__state">Tight gate: ${this.escapeHtml(reasons)}. Frozen policy action was not modified.</p>
+        `;
+    };
+
+    // HIGH_HIT_PARLAY_ROI_V2 now includes price and EV gates. Extend its
+    // footer so users can see that "high-hit" is no longer synonymous with
+    // accepting tiny payouts.
+    const originalRenderHighHitParlay = DailyPredictionsPage.prototype.renderHighHitParlay;
+    DailyPredictionsPage.prototype.renderHighHitParlay = function renderHighHitParlayRoiAware() {
+        originalRenderHighHitParlay.call(this);
+        const content = this.elements?.highHitParlayContent;
+        const construction = this.highHitParlayData?.construction || {};
+        if (!content || !this.highHitParlayData) return;
+        const state = content.querySelector(".daily-parlay__state:last-child");
+        if (!state) return;
+        const minPrice = Number(construction.min_combined_decimal_price);
+        const minEv = Number(construction.min_expected_value_per_unit);
+        if (Number.isFinite(minPrice) && Number.isFinite(minEv)) {
+            state.textContent += ` / Min payout: ${minPrice.toFixed(2)} / Min EV: ${(minEv * 100).toFixed(1)}%`;
+        }
     };
 })();
