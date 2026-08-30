@@ -7,6 +7,9 @@ on:
       - 'sports/mlb/scripts/balanced_market_ensemble_v4.py'
       - 'sports/mlb/scripts/enrich_parlay_leg_betslip.py'
       - 'sports/mlb/scripts/export_web_prediction_payload.py'
+      - 'sports/mlb/scripts/select_high_hit_parlay.py'
+      - 'sports/mlb/web/predictions.js'
+      - 'sports/mlb/web/predictions.html'
       - 'sports/site/pipeline/run_daily_predictions.py'
       - '.github/workflows/mlb-predictions.yml'
   schedule:
