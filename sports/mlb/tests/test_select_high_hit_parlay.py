@@ -120,3 +120,11 @@ def test_select_high_hit_parlays_returns_nothing_when_no_combo_clears_floor() ->
     a = _leg("A", game_id="1", safe_probability=0.71)
     b = _leg("B", game_id="2", safe_probability=0.71)
     assert high_hit.select_high_hit_parlays([a, b], joint_probability_floor=0.99) == []
+
+
+def test_best_shadow_fallback_preserves_safe_legs_when_product_gate_abstains() -> None:
+    a = _leg("A", game_id="1", safe_probability=0.72, american_price=-110)
+    b = _leg("B", game_id="2", safe_probability=0.71, american_price=-110)
+    fallback = high_hit.best_shadow_fallback([a, b])
+    assert fallback is not None
+    assert fallback["joint_probability"] == pytest.approx(0.72 * 0.71)

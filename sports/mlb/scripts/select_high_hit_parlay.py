@@ -224,9 +224,26 @@ def combo_payload(combo: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def build_payload(candidates: list[Any], *, run_date: str) -> dict[str, Any]:
+def best_shadow_fallback(legs: list[Any]) -> dict[str, Any] | None:
+    """Best real cross-game high-hit pair when the product gate abstains."""
+    candidates = []
+    for pair in itertools.combinations(legs, 2):
+        if len({str(getattr(candidate, "game_id", "")) for candidate in pair}) != 2:
+            continue
+        probabilities = [_probability(candidate) for candidate in pair]
+        prices = [_decimal_price(candidate) for candidate in pair]
+        if any(value is None for value in probabilities + prices):
+            continue
+        joint_probability = probabilities[0] * probabilities[1]
+        decimal_price = prices[0] * prices[1]
+        candidates.append({"legs": list(pair), "leg_count": 2, "joint_probability": joint_probability, "decimal_price": decimal_price, "expected_value_per_unit": joint_probability * decimal_price - 1.0})
+    return max(candidates, key=lambda combo: (combo["joint_probability"], combo["expected_value_per_unit"], combo["decimal_price"])) if candidates else None
+
+
+def build_payload(candidates: list[Any], *, run_date: str):
     eligible = eligible_legs(candidates)
     selected = select_high_hit_parlays(candidates)
+    fallback = None if selected else best_shadow_fallback(eligible)
     return {
         "schema_version": 2,
         "product_version": PRODUCT_VERSION,
@@ -250,6 +267,7 @@ def build_payload(candidates: list[Any], *, run_date: str) -> dict[str, Any]:
         "candidates_considered": len(candidates),
         "legs_eligible": len(eligible),
         "parlays": [combo_payload(combo) for combo in selected],
+        "shadow_fallback": ({**combo_payload(fallback), "authorization_status": "SHADOW_ONLY", "selection_status": "WITHHELD_PRODUCT_GATES"} if fallback else None),
         "abstain_reason": None if selected else "no_pair_cleared_probability_price_and_ev_floors",
     }
 
