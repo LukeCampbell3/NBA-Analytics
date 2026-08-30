@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "sport": "f1",
-  "run_date": "2026-08-29",
-  "generated_at_utc": "2026-08-29T19:26:20.348057+00:00",
+  "run_date": "2026-08-30",
+  "generated_at_utc": "2026-08-30T14:53:00.735574+00:00",
   "mode": "live_shadow",
   "publication_status": "shadow_current_pool",
   "event": {
@@ -61,28 +61,28 @@
   "market": {
     "provider": "free_exchange_consensus",
     "status": "success",
-    "fetched_at_utc": "2026-08-29T19:26:27.700129+00:00",
+    "fetched_at_utc": "2026-08-30T14:53:08.094472+00:00",
     "observations": 22,
     "credential_required": false,
     "sources": [
       {
         "provider": "polymarket",
         "status": "no_markets",
-        "fetched_at_utc": "2026-08-29T19:26:22.402581+00:00",
+        "fetched_at_utc": "2026-08-30T14:53:02.681626+00:00",
         "events_discovered": 7,
         "observations": 0,
         "credential_required": false,
-        "raw_source_sha256": "ecbd6b947001bc1fc289fa9a169d623b69c04f7afdf7e8454227ccf037342554"
+        "raw_source_sha256": "a82ab6b897c03ead40fb08dcfc34f3c65b984f2f9de5d558bd1c0e90341a3c4a"
       },
       {
         "provider": "kalshi",
         "status": "success",
-        "fetched_at_utc": "2026-08-29T19:26:27.690333+00:00",
+        "fetched_at_utc": "2026-08-30T14:53:08.084108+00:00",
         "series_discovered": 29,
         "events_discovered": 6,
         "observations": 22,
         "credential_required": false,
-        "raw_source_sha256": "4ea1b8d40e4ff5132a76c161c4bce939375dc1a676bd3237d6367b93c943da91"
+        "raw_source_sha256": "a8c43aa60d252fca297eb9dbf1b35e7c5e9e69522629628a679ff15e492f9cf4"
       }
     ],
     "provider_attempts": [
@@ -142,10 +142,10 @@
       "podium_probability": 0.29192495812935465,
       "top6_probability": 0.6216338643829639,
       "model_rank": 2,
-      "market_probability": 0.11,
-      "edge": 0.0035461896948442845,
-      "best_price": 809,
-      "best_decimal_price": 9.090909090909092,
+      "market_probability": 0.1,
+      "edge": 0.01354618969484428,
+      "best_price": 900,
+      "best_decimal_price": 10.0,
       "best_book": "Kalshi",
       "book_count": 1
     },
@@ -160,10 +160,10 @@
       "podium_probability": 0.29704140511922517,
       "top6_probability": 0.587256240316735,
       "model_rank": 3,
-      "market_probability": 0.32,
-      "edge": -0.22413627658318425,
-      "best_price": 212,
-      "best_decimal_price": 3.125,
+      "market_probability": 0.33,
+      "edge": -0.23413627658318426,
+      "best_price": 203,
+      "best_decimal_price": 3.0303030303030303,
       "best_book": "Kalshi",
       "book_count": 1
     },
