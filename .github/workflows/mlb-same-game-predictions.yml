@@ -1,13 +1,9 @@
 name: MLB Same-Game Combo Predictions
 
 on:
-  schedule:
-    # Daily during the real MLB regular season window (Mar-Oct), same
-    # season bound as mlb-predictions.yml -- offset by 20 minutes and its
-    # own concurrency group so this brand-new, additive pipeline never
-    # blocks or is blocked by the existing live single-leg board's run.
-    - cron: "37 8 * 3-10 *"
-      timezone: "America/New_York"
+  # Daily generation is synchronized inside mlb-predictions.yml. Keep this
+  # workflow only as an explicit diagnostic/manual rerun so it cannot publish
+  # a different odds snapshot over the unified daily slate.
   workflow_dispatch:
     inputs:
       build_only:

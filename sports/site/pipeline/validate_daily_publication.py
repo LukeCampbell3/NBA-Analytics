@@ -374,12 +374,34 @@ def validate_fanduel_betslip(ticket: dict[str, Any], betslip: dict[str, Any], *,
         raise ValueError(f"MLB {label} betslip does not contain exactly one unique selection per leg.")
 
 
+def validate_mlb_v4_shadow(payload: dict[str, Any], *, label: str) -> None:
+    v4_shadow = payload.get("v4_singles_shadow")
+    if not isinstance(v4_shadow, dict):
+        raise ValueError(f"MLB {label} payload is missing the every-slate V4 singles report.")
+    if str(v4_shadow.get("status") or "").strip().upper() == "UNAVAILABLE":
+        raise ValueError(f"MLB {label} payload published without a completed V4 singles score.")
+    if bool(v4_shadow.get("publication_authority", False)):
+        raise ValueError(f"MLB {label} V4 singles must remain shadow-only.")
+    v4_plays = v4_shadow.get("plays")
+    if not isinstance(v4_plays, list):
+        raise ValueError(f"MLB {label} V4 singles plays must be a list.")
+    if int(v4_shadow.get("eligible_count") or 0) != len(v4_plays):
+        raise ValueError(f"MLB {label} V4 eligible count does not match its displayed singles.")
+    for index, play in enumerate(v4_plays, start=1):
+        if not isinstance(play, dict) or str(play.get("authorization_status")) != "SHADOW_ONLY":
+            raise ValueError(f"MLB {label} V4 single {index} is not explicitly shadow-only.")
+        if str(play.get("sportsbook") or "").lower() == "fanduel":
+            if _parse_fanduel_selection_url(play.get("sportsbook_deeplink")) is None:
+                raise ValueError(f"MLB {label} V4 FanDuel single {index} is missing its real deep link.")
+
+
 def validate_mlb_payload(
     payload: dict[str, Any],
     *,
     label: str,
     allow_legacy_policy: bool = False,
 ) -> None:
+    validate_mlb_v4_shadow(payload, label=label)
     policy_profile = str(payload.get("policy_profile") or "")
     accepted_profiles = {MLB_POLICY_PROFILE}
     if allow_legacy_policy:
@@ -698,6 +720,13 @@ def validate_publication(
         elif sport == "mlb" and not allow_stale_payloads:
             validate_mlb_payload(source_payload, label="source")
             validate_mlb_payload(public_payload, label="public")
+            for product_file in ("same_game_predictions.json", "pitcher_parlay_predictions.json"):
+                product_source = load_json(source_path.parent / product_file)
+                product_public = load_json(public_path.parent / product_file)
+                if str(product_source.get("run_date") or "") != expected_date:
+                    raise ValueError(f"MLB source {product_file} is not synchronized to {expected_date}.")
+                if str(product_public.get("run_date") or "") != expected_date:
+                    raise ValueError(f"MLB public {product_file} is not synchronized to {expected_date}.")
         elif sport == "mlb" and allow_stale_payloads and (source_payload or public_payload):
             validate_mlb_payload(source_payload, label="source", allow_legacy_policy=True)
             validate_mlb_payload(public_payload, label="public", allow_legacy_policy=True)

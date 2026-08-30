@@ -246,6 +246,22 @@ def test_enrich_single_play_attaches_deeplinks_by_region():
     assert play["deeplinks_by_region"] == {"NY": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.1&selectionId=111"}
 
 
+def test_enrich_payload_attaches_real_links_to_v4_shadow_singles():
+    play = {"player": "JP Crawford", "direction": "OVER", "target": "H", "line": 0.5}
+    payload = {"plays": [], "v4_singles_shadow": {"plays": [play]}}
+    rows = [_odds_row("JP Crawford", "batter_hits", 0.5, "over", "734.3", "333")]
+    index = enrich.build_odds_index(rows)
+
+    enrich.enrich_payload(
+        payload,
+        odds_fetcher=lambda: {"status": "success", "odds": rows},
+        region_indexes={"NY": index},
+    )
+
+    assert play["sportsbook_deeplink"].endswith("marketId=734.3&selectionId=333")
+    assert play["deeplinks_by_region"]["NY"].endswith("marketId=734.3&selectionId=333")
+
+
 def test_main_reports_ready_counts(tmp_path: Path, monkeypatch, capsys):
     target = tmp_path / "daily_predictions.json"
     target.write_text(json.dumps({"parlays": {"shadow_candidate": _pair_with_two_legs()}}), encoding="utf-8")

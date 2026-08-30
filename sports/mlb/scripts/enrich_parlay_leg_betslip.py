@@ -240,7 +240,7 @@ def enrich_single_play(
     normalized_leg = {
         "player": play.get("player_display_name") or play.get("player"),
         "target": play.get("target"),
-        "line": play.get("market_line"),
+        "line": play.get("market_line") if play.get("market_line") is not None else play.get("line"),
         "side": play.get("direction"),
     }
     deeplink = match_leg_to_deeplink(normalized_leg, odds_index)
@@ -259,6 +259,9 @@ def enrich_payload(
     parlays = payload.get("parlays")
     pairs = [parlays.get(key) for key in PAIR_KEYS if isinstance(parlays, dict) and isinstance(parlays.get(key), dict)]
     plays = [p for p in (payload.get("plays") or []) if isinstance(p, dict)]
+    v4_shadow = payload.get("v4_singles_shadow")
+    if isinstance(v4_shadow, dict):
+        plays.extend(p for p in (v4_shadow.get("plays") or []) if isinstance(p, dict))
     if not pairs and not plays:
         return payload
 

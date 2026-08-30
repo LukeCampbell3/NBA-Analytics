@@ -267,6 +267,8 @@ class DailyPredictionsPage {
                 ["Edge", this.formatSignedPp(play.probability_edge)],
                 ["EV", this.formatSignedPct(play.decision_ev)],
             ],
+            betslipUrl: play.sportsbook_deeplink || "",
+            deeplinksByRegion: play.deeplinks_by_region || null,
             settlementRow: play,
         });
     }
