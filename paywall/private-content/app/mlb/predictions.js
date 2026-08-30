@@ -418,9 +418,9 @@ class DailyPredictionsPage {
         // section's singular "Today's Shadow Candidate" framing above.
         const allCombos = [];
         for (const game of games) {
-            if (Array.isArray(game.combo_candidates)) {
-                for (const combo of game.combo_candidates) allCombos.push({ game, combo });
-            }
+            const strict = Array.isArray(game.combo_candidates) ? game.combo_candidates : [];
+            const fallback = strict.length ? [] : (Array.isArray(game.exploratory_ev_candidates) ? game.exploratory_ev_candidates : []);
+            for (const combo of [...strict, ...fallback]) allCombos.push({ game, combo, withheld: !strict.includes(combo) });
         }
 
         if (!allCombos.length) {
@@ -437,9 +437,11 @@ class DailyPredictionsPage {
         allCombos.sort((a, b) => (Number(b.combo.expected_value_per_unit) ?? -Infinity) - (Number(a.combo.expected_value_per_unit) ?? -Infinity));
         const best = allCombos[0];
         const extraCount = allCombos.length - 1;
+        const withheld = best.withheld ? "Best real priced fallback — withheld from the tight-quality set." : "";
 
         content.innerHTML = this.sameGameParlayHeader() + `
             <div class="same-game-parlay__grid">${this.renderSameGameCombo(best.game, best.combo)}</div>
+            ${withheld ? `<p class="daily-parlay__state">${this.escapeHtml(withheld)}</p>` : ""}
             ${extraCount > 0 ? `<p class="daily-parlay__state">+${extraCount} more real combo${extraCount === 1 ? "" : "s"} priced across today's slate</p>` : ""}
             <p class="daily-parlay__state">${this.escapeHtml(statusFooter)}</p>
         `;
@@ -458,7 +460,7 @@ class DailyPredictionsPage {
         const starters = `${this.escapeHtml(game.away_starter_name || "TBD")} vs ${this.escapeHtml(game.home_starter_name || "TBD")}`;
         const authorized = Boolean(combo.candidate_authorized);
         const pillTone = authorized ? "active" : "stale";
-        const pillLabel = authorized ? "Selected -- shadow only" : "Shadow only";
+        const pillLabel = isWithheldFallback ? "Withheld fallback — shadow only" : (authorized ? "Selected -- shadow only" : "Shadow only");
 
         const joint = this.formatPct(combo.real_joint_model_probability);
         const rawMarketJoint = this.formatPct(combo.naive_market_joint_raw_probability);
@@ -567,7 +569,8 @@ class DailyPredictionsPage {
             return;
         }
 
-        const parlay = data.parlay;
+        const parlay = data.parlay || data.max_hit_control;
+        const isWithheldFallback = !data.parlay && Boolean(data.max_hit_control);
         if (!parlay) {
             content.innerHTML = this.pitcherParlayHeader() + `
                 <p class="daily-parlay__empty">No real cross-game pitcher-strikeouts pair cleared pricing today.</p>
@@ -676,7 +679,9 @@ class DailyPredictionsPage {
         const jointFloor = this.formatPct(construction.joint_probability_floor);
         const footer = `Leg floor: ${legFloor} / Combined floor: ${jointFloor} / Eligible legs today: ${data?.legs_eligible ?? 0}`;
 
-        if (!data || !Array.isArray(data.parlays) || !data.parlays.length) {
+        const published = Array.isArray(data?.parlays) ? data.parlays : [];
+        const fallback = data?.shadow_fallback;
+        if (!data || (!published.length && !fallback)) {
             content.innerHTML = this.highHitParlayHeader() + `
                 <p class="daily-parlay__empty">No real combination of today's eligible legs cleared the combined-probability floor.</p>
                 <p class="daily-parlay__state">${this.escapeHtml(footer)}</p>
@@ -684,7 +689,7 @@ class DailyPredictionsPage {
             return;
         }
 
-        const cards = data.parlays.map((parlay) => this.renderHighHitCombo(parlay)).join("");
+        const cards = (published.length ? published : [fallback]).map((parlay) => this.renderHighHitCombo(parlay)).join("");
         content.innerHTML = this.highHitParlayHeader() + `
             <div class="same-game-parlay__grid">${cards}</div>
             <p class="daily-parlay__state">${this.escapeHtml(footer)}</p>
@@ -708,7 +713,7 @@ class DailyPredictionsPage {
         return `
             <article class="same-game-parlay__card">
                 <div class="daily-parlay__header">
-                    <div><strong>${legs.length}-leg high-hit combo</strong></div>
+                    <div><strong>${legs.length}-leg high-hit combo</strong>${parlay.selection_status === "WITHHELD_PRODUCT_GATES" ? " — withheld fallback" : ""}</div>
                     ${window.CardVault ? window.CardVault.renderParlaySettlementBadge(legs) : ""}
                 </div>
                 <div class="vault-board vault-board--legs">

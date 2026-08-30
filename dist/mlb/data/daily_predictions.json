@@ -32,14 +32,10 @@
     "direction_policy": "OVER_ONLY",
     "eligible_anchor_count": 0,
     "filter_rejections": {
-      "history_too_short": 3,
-      "history_too_stale": 4,
-      "leg_probability_too_low": 45,
-      "leg_value_too_low": 4,
-      "not_over": 861,
-      "official_game_closed": 6,
-      "price_outside_playable_range": 28,
-      "unconfirmed_market_price": 443,
+      "leg_probability_too_low": 21,
+      "not_over": 851,
+      "price_outside_playable_range": 15,
+      "unconfirmed_market_price": 507,
       "unsupported_anchor_target": 34
     },
     "gates": {
@@ -102,7 +98,7 @@
         "4": 0.18
       }
     },
-    "generated_at_utc": "2026-08-30T20:07:03.946751+00:00",
+    "generated_at_utc": "2026-08-30T20:50:23.408214+00:00",
     "hit_survival_validation": {
       "calibration": {
         "brier_score": 0.24259946235125276,
@@ -534,17 +530,17 @@
     "withhold_threshold_days": 60
   },
   "filter_rejections": {
-    "core_price_too_heavily_juiced": 24,
-    "core_price_too_long": 13,
-    "edge_too_small": 308,
-    "history_too_short": 153,
-    "hit_probability_too_low": 29,
-    "prediction_too_low": 59,
-    "side_price_unconfirmed": 102,
-    "synthetic_market_source": 738
+    "core_price_too_heavily_juiced": 4,
+    "core_price_too_long": 9,
+    "edge_too_small": 316,
+    "history_too_short": 151,
+    "hit_probability_too_low": 12,
+    "prediction_too_low": 56,
+    "side_price_unconfirmed": 27,
+    "synthetic_market_source": 852
   },
-  "generated_at_utc": "2026-08-30T20:12:47.351556+00:00",
-  "mlb_team_market_generated_at_utc": "2026-08-30T20:12:47.814976+00:00",
+  "generated_at_utc": "2026-08-30T20:56:05.375463+00:00",
+  "mlb_team_market_generated_at_utc": "2026-08-30T20:56:05.843027+00:00",
   "mlb_team_market_plays": [],
   "mlb_team_market_status": "ok",
   "model_run_id": "mlb_high_precision_selector_v2",
@@ -577,28 +573,12 @@
     "reason": "parlay validation rebuild disabled for fast web export"
   },
   "parlays": {
-    "action": "ACT",
-    "calibration_as_of": "2026-08-30T20:12:19.507003+00:00",
-    "calibration_snapshot_id": "96ea263523d0c650",
-    "calibration_snapshot_sha256": "96ea263523d0c6505e363da121fcd140c80d5e862ac5490a2b4a6853a5f0b89d",
-    "decision_record": {
-      "action": 1,
-      "candidate_universe_size": 311,
-      "eligible": true,
-      "policy_version": "PARLAY_POLICY_V2_TWO_LEG_SINGLE_ACTION",
-      "world_certificate_diagnostics": {
-        "certified": false,
-        "counterexample_count": 3,
-        "counterexample_mass": 0.6787791956912078,
-        "outside_probability_mass": 0.0,
-        "retained_probability_mass": 1.0,
-        "retained_world_count": 4,
-        "version": "NONVACUOUS_WORLD_CERTIFICATE_V1",
-        "world_risk_rho": 0.6787791956912078
-      },
-      "world_gate_mode": "OBSERVE_ONLY"
-    },
-    "decision_timestamp_utc": "2026-08-30T20:12:44.716126+00:00",
+    "abstain_reason": "NO_CANDIDATES",
+    "action": "ABSTAIN",
+    "calibration_as_of": "2026-08-30T20:55:39.505033+00:00",
+    "calibration_snapshot_id": "13d7489ea327d66f",
+    "calibration_snapshot_sha256": "13d7489ea327d66fdb763c4f4e7e90e07ae51de4a16662075fce57a602121609",
+    "decision_timestamp_utc": "2026-08-30T20:56:04.616805+00:00",
     "eligibility_reason": "operationally_eligible",
     "eligible": true,
     "evidence_status": {
@@ -611,211 +591,15 @@
     "policy_version": "PARLAY_POLICY_V2_TWO_LEG_SINGLE_ACTION",
     "public_quality_overlay": {
       "action": "ABSTAIN",
-      "authority": "public_presentation_only_shadow",
-      "blocking_reasons": [
-        "leg_1_probability_below_70pct",
-        "leg_2_probability_below_70pct",
-        "joint_probability_below_50pct",
-        "expected_value_below_5pct"
-      ],
-      "combined_decimal_price": 2.9487179487179485,
-      "evidence_note": "The frozen V2 research action remains authoritative for its prospective evidence stream. This overlay only controls whether that research action is presented as a tight-quality public candidate.",
-      "expected_value_per_unit": -0.05281044883304875,
       "frozen_policy_mutated": false,
-      "joint_probability": 0.3212208043087922,
-      "leg_probabilities": [
-        0.5728621351467894,
-        0.5607296845103631
-      ],
-      "reason": "tight_quality_gates_failed",
-      "thresholds": {
-        "in_support_required": true,
-        "min_combined_decimal_price": 2.0,
-        "min_expected_value_per_unit": 0.05,
-        "min_joint_probability": 0.5,
-        "min_leg_probability": 0.7
-      },
+      "reason": "no_pair_available",
       "version": "PARLAY_V2_PUBLIC_QUALITY_OVERLAY_V1"
     },
-    "selected_parlay": {
-      "adapter_version": "PARLAY_V2_CANDIDATE_ADAPTER_V1",
-      "betslip": {
-        "reason": "one_or_more_legs_have_no_live_fanduel_selection",
-        "sportsbook": "FanDuel",
-        "sportsbook_key": "fanduel",
-        "status": "unavailable"
-      },
-      "candidate_id": "20260830|Pete Alonso|TB|OVER|1.5|824959||Pete Crow-Armstrong|TB|OVER|1.5|824636",
-      "joint_probability_estimate": 0.3212208043087922,
-      "joint_probability_method": "independence_binary_world_model",
-      "joint_score": 1.0,
-      "leg_1": {
-        "book": "real",
-        "decimal_price": 1.6666666666666665,
-        "deeplinks_by_region": {},
-        "game_id": "824959",
-        "in_support": true,
-        "line": 1.5,
-        "model_probability_estimate": 0.5728621351467894,
-        "player": "Pete Alonso",
-        "player_headshot_fallback_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/624413/headshot/67/current",
-        "player_headshot_url": "data/headshots/624413.jpg",
-        "player_id": "pete_alonso",
-        "quote_timestamp": "20260830",
-        "side": "OVER",
-        "target": "TB"
-      },
-      "leg_2": {
-        "book": "real",
-        "decimal_price": 1.7692307692307692,
-        "deeplinks_by_region": {
-          "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.183868544&selectionId=60489486",
-          "AZ": "https://sportsbook.fanduel.com/addToBetslip?marketId=704.183607540&selectionId=60489486",
-          "CO": "https://sportsbook.fanduel.com/addToBetslip?marketId=708.183662889&selectionId=60489486",
-          "CT": "https://sportsbook.fanduel.com/addToBetslip?marketId=709.183375748&selectionId=60489486",
-          "DC": "https://sportsbook.fanduel.com/addToBetslip?marketId=711.183697758&selectionId=60489486",
-          "IA": "https://sportsbook.fanduel.com/addToBetslip?marketId=719.183670922&selectionId=60489486",
-          "IL": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.183680102&selectionId=60489486",
-          "IN": "https://sportsbook.fanduel.com/addToBetslip?marketId=718.183676091&selectionId=60489486",
-          "KS": "https://sportsbook.fanduel.com/addToBetslip?marketId=720.183495520&selectionId=60489486",
-          "KY": "https://sportsbook.fanduel.com/addToBetslip?marketId=721.183678574&selectionId=60489486",
-          "LA": "https://sportsbook.fanduel.com/addToBetslip?marketId=722.183324423&selectionId=60489486",
-          "MA": "https://sportsbook.fanduel.com/addToBetslip?marketId=725.183668322&selectionId=60489486",
-          "MD": "https://sportsbook.fanduel.com/addToBetslip?marketId=724.183677466&selectionId=60489486",
-          "MI": "https://sportsbook.fanduel.com/addToBetslip?marketId=726.183663288&selectionId=60489486",
-          "MO": "https://sportsbook.fanduel.com/addToBetslip?marketId=729.184054856&selectionId=60489486",
-          "NC": "https://sportsbook.fanduel.com/addToBetslip?marketId=737.183672025&selectionId=60489486",
-          "NJ": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183542207&selectionId=60489486",
-          "NY": "https://sportsbook.fanduel.com/addToBetslip?marketId=736.183318114&selectionId=60489486",
-          "OH": "https://sportsbook.fanduel.com/addToBetslip?marketId=739.183540081&selectionId=60489486",
-          "PA": "https://sportsbook.fanduel.com/addToBetslip?marketId=742.183538629&selectionId=60489486",
-          "TN": "https://sportsbook.fanduel.com/addToBetslip?marketId=747.183630709&selectionId=60489486",
-          "VA": "https://sportsbook.fanduel.com/addToBetslip?marketId=751.183637133&selectionId=60489486",
-          "VT": "https://sportsbook.fanduel.com/addToBetslip?marketId=750.183643548&selectionId=60489486",
-          "WV": "https://sportsbook.fanduel.com/addToBetslip?marketId=754.183683843&selectionId=60489486",
-          "WY": "https://sportsbook.fanduel.com/addToBetslip?marketId=756.183479923&selectionId=60489486"
-        },
-        "game_id": "824636",
-        "in_support": true,
-        "line": 1.5,
-        "model_probability_estimate": 0.5607296845103631,
-        "player": "Pete Crow-Armstrong",
-        "player_headshot_fallback_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/691718/headshot/67/current",
-        "player_headshot_url": "data/headshots/691718.jpg",
-        "player_id": "pete_crow-armstrong",
-        "quote_timestamp": "20260830",
-        "side": "OVER",
-        "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183542207&selectionId=60489486",
-        "target": "TB"
-      },
-      "predictive_version": "H_OVER_RANKER_V1+MULTI_TARGET",
-      "slate_id": "20260830",
-      "state_version": "MULTI_TARGET_BROAD_V1",
-      "support": {
-        "in_support": false,
-        "leg_1_support": true,
-        "leg_2_support": true,
-        "state_support": false
-      },
-      "world_diagnostics": {
-        "counterexample_count": 3,
-        "counterexample_mass": 0.6787791956912078,
-        "nonvacuous_world_certificate": false,
-        "retained_probability_mass": 1.0,
-        "retained_world_count": 4
-      }
-    },
-    "selection_status": "SELECTED",
-    "shadow_candidate": {
-      "adapter_version": "PARLAY_V2_CANDIDATE_ADAPTER_V1",
-      "betslip": {
-        "reason": "one_or_more_legs_have_no_live_fanduel_selection",
-        "sportsbook": "FanDuel",
-        "sportsbook_key": "fanduel",
-        "status": "unavailable"
-      },
-      "candidate_id": "20260830|Pete Alonso|TB|OVER|1.5|824959||Pete Crow-Armstrong|TB|OVER|1.5|824636",
-      "joint_probability_estimate": 0.3212208043087922,
-      "joint_probability_method": "independence_binary_world_model",
-      "joint_score": 1.0,
-      "leg_1": {
-        "book": "real",
-        "decimal_price": 1.6666666666666665,
-        "deeplinks_by_region": {},
-        "game_id": "824959",
-        "in_support": true,
-        "line": 1.5,
-        "model_probability_estimate": 0.5728621351467894,
-        "player": "Pete Alonso",
-        "player_headshot_fallback_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/624413/headshot/67/current",
-        "player_headshot_url": "data/headshots/624413.jpg",
-        "player_id": "pete_alonso",
-        "quote_timestamp": "20260830",
-        "side": "OVER",
-        "target": "TB"
-      },
-      "leg_2": {
-        "book": "real",
-        "decimal_price": 1.7692307692307692,
-        "deeplinks_by_region": {
-          "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.183868544&selectionId=60489486",
-          "AZ": "https://sportsbook.fanduel.com/addToBetslip?marketId=704.183607540&selectionId=60489486",
-          "CO": "https://sportsbook.fanduel.com/addToBetslip?marketId=708.183662889&selectionId=60489486",
-          "CT": "https://sportsbook.fanduel.com/addToBetslip?marketId=709.183375748&selectionId=60489486",
-          "DC": "https://sportsbook.fanduel.com/addToBetslip?marketId=711.183697758&selectionId=60489486",
-          "IA": "https://sportsbook.fanduel.com/addToBetslip?marketId=719.183670922&selectionId=60489486",
-          "IL": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.183680102&selectionId=60489486",
-          "IN": "https://sportsbook.fanduel.com/addToBetslip?marketId=718.183676091&selectionId=60489486",
-          "KS": "https://sportsbook.fanduel.com/addToBetslip?marketId=720.183495520&selectionId=60489486",
-          "KY": "https://sportsbook.fanduel.com/addToBetslip?marketId=721.183678574&selectionId=60489486",
-          "LA": "https://sportsbook.fanduel.com/addToBetslip?marketId=722.183324423&selectionId=60489486",
-          "MA": "https://sportsbook.fanduel.com/addToBetslip?marketId=725.183668322&selectionId=60489486",
-          "MD": "https://sportsbook.fanduel.com/addToBetslip?marketId=724.183677466&selectionId=60489486",
-          "MI": "https://sportsbook.fanduel.com/addToBetslip?marketId=726.183663288&selectionId=60489486",
-          "MO": "https://sportsbook.fanduel.com/addToBetslip?marketId=729.184054856&selectionId=60489486",
-          "NC": "https://sportsbook.fanduel.com/addToBetslip?marketId=737.183672025&selectionId=60489486",
-          "NJ": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183542207&selectionId=60489486",
-          "NY": "https://sportsbook.fanduel.com/addToBetslip?marketId=736.183318114&selectionId=60489486",
-          "OH": "https://sportsbook.fanduel.com/addToBetslip?marketId=739.183540081&selectionId=60489486",
-          "PA": "https://sportsbook.fanduel.com/addToBetslip?marketId=742.183538629&selectionId=60489486",
-          "TN": "https://sportsbook.fanduel.com/addToBetslip?marketId=747.183630709&selectionId=60489486",
-          "VA": "https://sportsbook.fanduel.com/addToBetslip?marketId=751.183637133&selectionId=60489486",
-          "VT": "https://sportsbook.fanduel.com/addToBetslip?marketId=750.183643548&selectionId=60489486",
-          "WV": "https://sportsbook.fanduel.com/addToBetslip?marketId=754.183683843&selectionId=60489486",
-          "WY": "https://sportsbook.fanduel.com/addToBetslip?marketId=756.183479923&selectionId=60489486"
-        },
-        "game_id": "824636",
-        "in_support": true,
-        "line": 1.5,
-        "model_probability_estimate": 0.5607296845103631,
-        "player": "Pete Crow-Armstrong",
-        "player_headshot_fallback_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/691718/headshot/67/current",
-        "player_headshot_url": "data/headshots/691718.jpg",
-        "player_id": "pete_crow-armstrong",
-        "quote_timestamp": "20260830",
-        "side": "OVER",
-        "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183542207&selectionId=60489486",
-        "target": "TB"
-      },
-      "predictive_version": "H_OVER_RANKER_V1+MULTI_TARGET",
-      "slate_id": "20260830",
-      "state_version": "MULTI_TARGET_BROAD_V1",
-      "support": {
-        "in_support": false,
-        "leg_1_support": true,
-        "leg_2_support": true,
-        "state_support": false
-      },
-      "world_diagnostics": {
-        "counterexample_count": 3,
-        "counterexample_mass": 0.6787791956912078,
-        "nonvacuous_world_certificate": false,
-        "retained_probability_mass": 1.0,
-        "retained_world_count": 4
-      }
-    },
+    "selected_parlay": null,
+    "selection_status": "ABSTAIN",
+    "shadow_candidate": null,
     "shadow_candidate_note": "Best available candidate by descriptive joint score -- NOT a certified pick. The frozen policy has not authorized action on it; see policy_status.",
-    "shadow_execution_status": "EXECUTED_SHADOW",
+    "shadow_execution_status": "NOT_EXECUTED",
     "staking_authorized": false,
     "system": "PARLAY_POLICY_V2",
     "world_gate_mode": "OBSERVE_ONLY"
@@ -973,7 +757,7 @@
     "certificate_status": "NO_ACTIVE_PROSPECTIVE_CERTIFICATE",
     "complete_slate_capture_passed": true,
     "full_policy_replay_available_for_snapshot": true,
-    "generated_at_utc": "2026-08-30T20:05:39.860997+00:00",
+    "generated_at_utc": "2026-08-30T20:48:56.901058+00:00",
     "historical_evidence_labels": [
       "SELECTED_ONLY_HISTORY",
       "SELECTED_ONLY_HISTORY"
@@ -994,8 +778,8 @@
     "run_date": "2026-08-30",
     "schema_version": "MLB_POLICY_GOVERNANCE_STATUS_V1",
     "slate_id": "MLB_20260830",
-    "snapshot_id": "mlb_20260830_200408Z_824cc6547bb9",
-    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260830/governance/slates/MLB_20260830/mlb_20260830_200408Z_824cc6547bb9/manifest.json",
+    "snapshot_id": "mlb_20260830_204811Z_a607ef952a93",
+    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260830/governance/slates/MLB_20260830/mlb_20260830_204811Z_a607ef952a93/manifest.json",
     "staking_enabled": false
   },
   "policy_profile": "premium_confidence_value_frontier_v19_shadow",
@@ -1097,30 +881,17 @@
     "avg_graded_hit_rate": 0.613848,
     "avg_precision_score": 0.64361,
     "avg_value_score": 0.56519706287,
-    "closed_game_cards_suppressed": 1,
+    "closed_game_cards_suppressed": 0,
     "duplicate_cards_suppressed": 0,
     "parlay_pairs": 0,
     "parlay_tagged_plays": 0,
     "play_count": 1,
-    "rejected_rows": 1426,
-    "rows_after_filters": 2,
-    "source_play_count": 2,
+    "rejected_rows": 1427,
+    "rows_after_filters": 1,
+    "source_play_count": 1,
     "supported_rows": 1428
   },
-  "suppressed_closed_games": [
-    {
-      "direction": "OVER",
-      "game_id": "824959",
-      "market_date": "2026-08-30",
-      "market_line": 1.5,
-      "official_game_status": "In Progress",
-      "opponent": "ATH",
-      "player": "Pete Alonso",
-      "reason": "game is no longer open for pregame predictions",
-      "target": "TB",
-      "team": "BAL"
-    }
-  ],
+  "suppressed_closed_games": [],
   "suppressed_duplicates": [],
   "through_date": "2026-08-29",
   "tight_quality_overlay": {
