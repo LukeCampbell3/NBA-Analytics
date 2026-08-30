@@ -60,6 +60,7 @@ PREDICTION_DATA_FILES = {
     "same_game_predictions.json",
     "pitcher_parlay_predictions.json",
     "high_hit_parlay_predictions.json",
+    "exotic_market_predictions.json",
     "mlb_backtest_validation.json",
     "betting_system_status.json",
 }
