@@ -392,7 +392,14 @@ def validate_mlb_v4_shadow(payload: dict[str, Any], *, label: str) -> None:
             raise ValueError(f"MLB {label} V4 single {index} is not explicitly shadow-only.")
         if str(play.get("sportsbook") or "").lower() == "fanduel":
             if _parse_fanduel_selection_url(play.get("sportsbook_deeplink")) is None:
-                raise ValueError(f"MLB {label} V4 FanDuel single {index} is missing its real deep link.")
+                # A late rerun can correctly reconstruct an already-started slate
+                # after FanDuel has removed its live player-prop selection. Keep
+                # that completed shadow score visible, but require an explicit,
+                # auditable market-unavailable state instead of fabricating a URL.
+                if str(play.get("execution_status") or "") != "MARKET_UNAVAILABLE":
+                    raise ValueError(f"MLB {label} V4 FanDuel single {index} is missing its real deep link.")
+                if str(play.get("execution_reason") or "") != "no_live_fanduel_selection":
+                    raise ValueError(f"MLB {label} V4 FanDuel single {index} has no auditable live-market reason.")
 
 
 def validate_mlb_payload(

@@ -256,10 +256,19 @@ def enrich_single_play(
         "side": play.get("direction"),
     }
     deeplink = match_leg_to_deeplink(normalized_leg, odds_index)
+    regional_links = match_leg_to_regions(normalized_leg, region_indexes) if region_indexes else {}
+    if not deeplink and regional_links:
+        deeplink = regional_links.get(DEFAULT_FALLBACK_REGION) or next(iter(regional_links.values()))
     if deeplink:
         play["sportsbook_deeplink"] = deeplink
+        play["execution_status"] = "LIVE_SELECTION_AVAILABLE"
+        play.pop("execution_reason", None)
+    else:
+        play.pop("sportsbook_deeplink", None)
+        play["execution_status"] = "MARKET_UNAVAILABLE"
+        play["execution_reason"] = "no_live_fanduel_selection"
     if region_indexes:
-        play["deeplinks_by_region"] = match_leg_to_regions(normalized_leg, region_indexes)
+        play["deeplinks_by_region"] = regional_links
 
 
 def enrich_payload(

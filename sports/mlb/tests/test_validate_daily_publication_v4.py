@@ -51,6 +51,16 @@ def test_v4_every_slate_contract_rejects_fanduel_play_without_link() -> None:
         validate_mlb_v4_shadow(_payload(deeplink=None), label="test")
 
 
+def test_v4_every_slate_contract_allows_expired_live_market_without_fabricating_link() -> None:
+    payload = _payload(deeplink=None)
+    payload["v4_singles_shadow"]["plays"][0].update(
+        execution_status="MARKET_UNAVAILABLE",
+        execution_reason="no_live_fanduel_selection",
+    )
+
+    validate_mlb_v4_shadow(payload, label="test")
+
+
 def test_v4_every_slate_contract_allows_honest_zero_pick_abstention() -> None:
     payload = {
         "v4_singles_shadow": {
