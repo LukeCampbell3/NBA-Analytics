@@ -13,6 +13,7 @@ on:
       - 'sports/mlb/scripts/simulate_local_node_selector_v2.py'
       - 'sports/mlb/scripts/balanced_ranking_v3.py'
       - 'sports/mlb/scripts/prospective_balanced_ranking_v3.py'
+      - 'sports/mlb/scripts/balanced_market_ensemble_v4.py'
       - 'sports/mlb/tests/test_parlay_quality_selectors.py'
       - 'sports/mlb/tests/test_tight_quality_overlay.py'
       - 'sports/mlb/tests/test_local_node_selector.py'
@@ -20,6 +21,7 @@ on:
       - 'sports/mlb/tests/test_simulate_local_node_selector_v2.py'
       - 'sports/mlb/tests/test_balanced_ranking_v3.py'
       - 'sports/mlb/tests/test_prospective_balanced_ranking_v3.py'
+      - 'sports/mlb/tests/test_balanced_market_ensemble_v4.py'
       - 'sports/mlb/tests/test_parlay_v2_public_quality_overlay.py'
       - 'sports/mlb/tests/test_same_game_tight_quality.py'
       - 'sports/mlb/tests/test_select_high_hit_parlay.py'
@@ -57,6 +59,7 @@ jobs:
             sports/mlb/tests/test_simulate_local_node_selector_v2.py \
             sports/mlb/tests/test_balanced_ranking_v3.py \
             sports/mlb/tests/test_prospective_balanced_ranking_v3.py \
+            sports/mlb/tests/test_balanced_market_ensemble_v4.py \
             sports/mlb/tests/test_parlay_v2_public_quality_overlay.py \
             sports/mlb/tests/test_same_game_tight_quality.py \
             sports/mlb/tests/test_parlay_quality_selectors.py \

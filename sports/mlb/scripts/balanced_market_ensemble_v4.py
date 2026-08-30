@@ -1,0 +1,236 @@
+#!/usr/bin/env python3
+"""V4 shadow selector: market-anchored, slate-cross-fitted probability blend.
+
+V4 asks whether balanced probability adds incremental information to the exact
+market probability. It has one fitted parameter, constrained to [0, 1]:
+
+    logit(P_ensemble) = logit(P_market)
+                       + w * (logit(P_balanced) - logit(P_market))
+
+The weight minimizes equal-slate log loss using strictly earlier settled
+slates. A lower confidence bound from leave-one-slate-out calibration
+residuals can only reduce the actionable probability; it can never manufacture
+positive edge. Price is considered last. There is no pick quota.
+
+This module is shadow-only and has no publication authority.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import math
+import statistics
+from dataclasses import asdict, dataclass
+from typing import Any, Iterable
+
+from local_node_selector_v2 import one_sided_mean_lcb
+
+
+V4_VERSION = "balanced_market_ensemble_v4_shadow"
+TARGET = "H"
+DIRECTION = "OVER"
+LINE = 0.5
+WEIGHT_GRID_STEP = 0.01
+MIN_TRAINING_SLATES = 4
+PROMOTION_MIN_SLATES = 30
+CONFIDENCE = 0.975
+MIN_PROBABILITY_EDGE = 0.01
+MIN_SAFE_EV = 0.0
+
+
+def _spec_hash() -> str:
+    payload = {
+        "version": V4_VERSION,
+        "family": [TARGET, DIRECTION, LINE],
+        "weight_range": [0.0, 1.0],
+        "weight_grid_step": WEIGHT_GRID_STEP,
+        "loss": "equal_slate_log_loss",
+        "uncertainty": "leave_one_slate_out_residual_one_sided_lcb_negative_authority_only",
+        "min_training_slates": MIN_TRAINING_SLATES,
+        "promotion_min_slates": PROMOTION_MIN_SLATES,
+        "confidence": CONFIDENCE,
+        "minimum_probability_edge": MIN_PROBABILITY_EDGE,
+        "minimum_safe_ev": MIN_SAFE_EV,
+        "pick_quota": None,
+    }
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+# Frozen at V4 creation. CI recomputes the specification and fails if a
+# critical constant/formula descriptor changes without an explicit new study.
+PREREGISTRATION_SPEC_HASH = "77e0b62983ae4a3c838629bf02ab34aa4f2b421ee4cff1ee868c0245cc5abdab"
+
+
+@dataclass(frozen=True)
+class V4Fit:
+    training_slates: int
+    training_rows: int
+    balanced_weight: float
+    market_weight: float
+    equal_slate_log_loss: float
+    cross_fitted_slate_residuals: tuple[float, ...]
+    residual_lcb: float | None
+    safe_calibration_adjustment: float
+
+
+@dataclass(frozen=True)
+class V4Score:
+    candidate_id: str
+    ensemble_probability: float
+    safe_probability: float
+    market_probability: float
+    price: float
+    safe_ev: float
+    probability_edge: float
+    eligible: bool
+    reasons: tuple[str, ...]
+
+
+def _clip_probability(value: float) -> float:
+    return min(1.0 - 1e-9, max(1e-9, float(value)))
+
+
+def _logit(value: float) -> float:
+    p = _clip_probability(value)
+    return math.log(p / (1.0 - p))
+
+
+def _sigmoid(value: float) -> float:
+    if value >= 0:
+        z = math.exp(-value)
+        return 1.0 / (1.0 + z)
+    z = math.exp(value)
+    return z / (1.0 + z)
+
+
+def blend_probability(balanced: float, market: float, weight: float) -> float:
+    if not 0.0 <= weight <= 1.0:
+        raise ValueError("balanced weight must be in [0, 1]")
+    return _sigmoid(_logit(market) + weight * (_logit(balanced) - _logit(market)))
+
+
+def american_to_decimal(price: float) -> float:
+    if -100.0 < price < 100.0:
+        raise ValueError("invalid American price")
+    return 1.0 + (price / 100.0 if price > 0 else 100.0 / abs(price))
+
+
+def _valid_rows(rows: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    valid = []
+    for row in rows:
+        try:
+            balanced = float(row["balanced_probability"])
+            market = float(row["market_probability"])
+            outcome = int(row["win"])
+            slate = str(row.get("date") or row.get("slate_date") or "")
+        except (KeyError, TypeError, ValueError):
+            continue
+        if slate and outcome in {0, 1} and 0.0 < balanced < 1.0 and 0.0 < market < 1.0:
+            valid.append({**row, "date": slate, "win": outcome})
+    return valid
+
+
+def equal_slate_log_loss(rows: Iterable[dict[str, Any]], weight: float) -> float:
+    by_slate: dict[str, list[float]] = {}
+    for row in _valid_rows(rows):
+        p = blend_probability(float(row["balanced_probability"]), float(row["market_probability"]), weight)
+        y = int(row["win"])
+        loss = -(y * math.log(p) + (1 - y) * math.log(1 - p))
+        by_slate.setdefault(row["date"], []).append(loss)
+    if not by_slate:
+        return math.inf
+    return statistics.fmean(statistics.fmean(losses) for losses in by_slate.values())
+
+
+def select_weight(rows: Iterable[dict[str, Any]]) -> tuple[float, float]:
+    materialized = list(rows)
+    candidates = [round(index * WEIGHT_GRID_STEP, 10) for index in range(round(1.0 / WEIGHT_GRID_STEP) + 1)]
+    scored = [(equal_slate_log_loss(materialized, weight), weight) for weight in candidates]
+    # A tie goes to the market anchor (smaller balanced weight).
+    loss, weight = min(scored, key=lambda item: (item[0], item[1]))
+    return weight, loss
+
+
+def fit(rows: Iterable[dict[str, Any]], *, before_date: str) -> V4Fit:
+    prior = [row for row in _valid_rows(rows) if row["date"] < before_date]
+    dates = sorted({row["date"] for row in prior})
+    weight, loss = select_weight(prior)
+    cross_fitted_residuals: list[float] = []
+    for held_out in dates:
+        training = [row for row in prior if row["date"] != held_out]
+        held_rows = [row for row in prior if row["date"] == held_out]
+        if not training or not held_rows:
+            continue
+        held_weight, _ = select_weight(training)
+        cross_fitted_residuals.append(
+            statistics.fmean(
+                int(row["win"])
+                - blend_probability(float(row["balanced_probability"]), float(row["market_probability"]), held_weight)
+                for row in held_rows
+            )
+        )
+    residual_lcb = one_sided_mean_lcb(cross_fitted_residuals, confidence=CONFIDENCE)
+    # Positive retrospective residuals are not permission to inflate a new
+    # candidate. Only demonstrated/uncertain overconfidence has authority.
+    safe_adjustment = min(0.0, residual_lcb) if residual_lcb is not None else 0.0
+    return V4Fit(
+        training_slates=len(dates),
+        training_rows=len(prior),
+        balanced_weight=weight,
+        market_weight=1.0 - weight,
+        equal_slate_log_loss=loss,
+        cross_fitted_slate_residuals=tuple(cross_fitted_residuals),
+        residual_lcb=residual_lcb,
+        safe_calibration_adjustment=safe_adjustment,
+    )
+
+
+def score(candidate: dict[str, Any], fitted: V4Fit) -> V4Score:
+    balanced = float(candidate["balanced_probability"])
+    market = float(candidate["market_probability"])
+    price = float(candidate.get("price", candidate.get("selected_side_price")))
+    ensemble = blend_probability(balanced, market, fitted.balanced_weight)
+    safe = _clip_probability(ensemble + fitted.safe_calibration_adjustment)
+    safe_ev = safe * american_to_decimal(price) - 1.0
+    edge = safe - market
+    reasons: list[str] = []
+    if fitted.training_slates < MIN_TRAINING_SLATES:
+        reasons.append("insufficient_prior_slates")
+    if edge < MIN_PROBABILITY_EDGE:
+        reasons.append("safe_probability_edge_below_1pct")
+    if safe_ev <= MIN_SAFE_EV:
+        reasons.append("safe_ev_not_positive")
+    return V4Score(
+        candidate_id=str(candidate.get("candidate_id") or ""),
+        ensemble_probability=ensemble,
+        safe_probability=safe,
+        market_probability=market,
+        price=price,
+        safe_ev=safe_ev,
+        probability_edge=edge,
+        eligible=not reasons,
+        reasons=tuple(reasons),
+    )
+
+
+def run_shadow(candidates: Iterable[dict[str, Any]], history: Iterable[dict[str, Any]], *, slate_date: str) -> dict[str, Any]:
+    fitted = fit(history, before_date=slate_date)
+    scores = [score(candidate, fitted) for candidate in candidates]
+    eligible = sorted((item for item in scores if item.eligible), key=lambda item: (-item.safe_ev, -item.safe_probability, item.candidate_id))
+    status = "SHADOW_ONLY"
+    if fitted.training_slates < MIN_TRAINING_SLATES:
+        status = "INSUFFICIENT_PRIOR_SLATES"
+    return {
+        "version": V4_VERSION,
+        "preregistration_spec_hash": PREREGISTRATION_SPEC_HASH,
+        "status": status,
+        "publication_authority": False,
+        "pick_count_constraint": "none",
+        "slate_date": slate_date,
+        "fit": asdict(fitted),
+        "candidate_count": len(scores),
+        "eligible_count": len(eligible),
+        "eligible": [asdict(item) for item in eligible],
+        "scores": [asdict(item) for item in scores],
+    }
