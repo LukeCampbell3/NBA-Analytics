@@ -43,6 +43,14 @@ def test_match_leg_to_deeplink_resolves_via_target_to_market_map():
     assert enrich.match_leg_to_deeplink(leg, index) is not None
 
 
+def test_match_leg_to_deeplink_resolves_punctuated_initials_to_canonical_roster_name():
+    rows = [_odds_row("J.P. Crawford", "batter_hits", 0.5, "over", "734.3", "333")]
+    index = enrich.build_odds_index(rows)
+    leg = {"player": "JP Crawford", "side": "OVER", "target": "H", "line": 0.5}
+
+    assert enrich.match_leg_to_deeplink(leg, index).endswith("marketId=734.3&selectionId=333")
+
+
 def test_match_leg_to_deeplink_returns_none_for_unknown_target():
     leg = {"player": "Pete Alonso", "side": "OVER", "target": "NOT_A_REAL_TARGET", "line": 0.5}
     assert enrich.match_leg_to_deeplink(leg, {}) is None

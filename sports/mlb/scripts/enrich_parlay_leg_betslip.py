@@ -93,7 +93,15 @@ def build_odds_index(odds_rows: list[dict[str, Any]]) -> dict[tuple[str, str, fl
             str(row.get("side") or "").strip().lower(),
         )
         index[key] = deeplink
+        compact_player = _compact_player_name(row.get("player_name"))
+        if compact_player:
+            index[(compact_player, key[1], line, key[3])] = deeplink
     return index
+
+
+def _compact_player_name(value: Any) -> str:
+    """Name key that makes initial punctuation immaterial for link matching."""
+    return "".join(char for char in exporter.normalize_player_name(value) if char.isalnum())
 
 
 MULTI_REGION_FETCH_WORKERS = 10
@@ -171,7 +179,11 @@ def match_leg_to_deeplink(leg: dict[str, Any], odds_index: dict[tuple[str, str, 
         line,
         str(leg.get("side") or "").strip().lower(),
     )
-    return odds_index.get(key)
+    deeplink = odds_index.get(key)
+    if deeplink:
+        return deeplink
+    compact_key = (_compact_player_name(leg.get("player")), *key[1:])
+    return odds_index.get(compact_key)
 
 
 def enrich_pair(

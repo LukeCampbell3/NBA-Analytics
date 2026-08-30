@@ -5,6 +5,7 @@ on:
     branches: [static-deployment]
     paths:
       - 'sports/mlb/scripts/balanced_market_ensemble_v4.py'
+      - 'sports/mlb/scripts/enrich_parlay_leg_betslip.py'
       - 'sports/mlb/scripts/export_web_prediction_payload.py'
       - 'sports/site/pipeline/run_daily_predictions.py'
       - '.github/workflows/mlb-predictions.yml'
