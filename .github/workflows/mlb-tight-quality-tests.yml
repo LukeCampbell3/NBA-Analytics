@@ -31,7 +31,7 @@ on:
       - 'sports/mlb/tests/test_parlay_v2_public_quality_overlay.py'
       - 'sports/mlb/tests/test_same_game_tight_quality.py'
       - 'sports/mlb/tests/test_select_high_hit_parlay.py'
-      - 'run_daily_predictions.py'
+      - 'sports/site/pipeline/run_daily_predictions.py'
       - '.github/workflows/mlb-tight-quality-tests.yml'
   workflow_dispatch:
 
