@@ -1,6 +1,6 @@
 {
   "candidate_authorized_count": 0,
-  "exploratory_candidate_count": 0,
+  "exploratory_candidate_count": 1,
   "games": [
     {
       "away_starter_name": "Chase Burns",
@@ -19,12 +19,12 @@
           },
           "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.183448776&selectionId%5B0%5D=29167&marketId%5B1%5D=734.183515655&selectionId%5B1%5D=7017906",
           "candidate_authorized": false,
-          "combo_decimal_price": 4.8,
+          "combo_decimal_price": 4.96,
           "event_date": "2026-08-30",
-          "expected_value_per_unit": 0.5640799999999999,
+          "expected_value_per_unit": 0.627872,
           "game_id": "824636",
           "home_team": "CHC",
-          "joint_residual": 0.0020756399999999897,
+          "joint_residual": -0.00019998749999999843,
           "leg_a": {
             "deeplinks_by_region": {
               "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.183775118&selectionId=29167",
@@ -57,9 +57,9 @@
             "line": null,
             "market": "moneyline",
             "market_books": 1,
-            "model_probability": 0.5044,
-            "no_vig_market_probability": 0.40983606557377045,
-            "price_american": 140,
+            "model_probability": 0.50895,
+            "no_vig_market_probability": 0.3958587088915956,
+            "price_american": 148,
             "price_confirmed": true,
             "side": "away",
             "sportsbook": "fanduel",
@@ -102,7 +102,7 @@
             "line": 9.0,
             "market": "game_total",
             "market_books": 1,
-            "model_probability": 0.6419,
+            "model_probability": 0.64525,
             "no_vig_market_probability": 0.47639484978540775,
             "price_american": 100,
             "price_confirmed": true,
@@ -115,17 +115,21 @@
               "state_support"
             ]
           },
-          "naive_independence_probability": 0.32377436,
-          "naive_market_joint_raw_probability": 0.20833333333333334,
-          "naive_no_vig_combo_probability": 0.19524379089565888,
-          "probability_edge": 0.1306062091043411,
-          "real_joint_model_probability": 0.32585,
+          "naive_independence_probability": 0.3283999875,
+          "naive_market_joint_raw_probability": 0.20161290322580647,
+          "naive_no_vig_combo_probability": 0.18858505015865712,
+          "probability_edge": 0.13961494984134287,
+          "real_joint_model_probability": 0.3282,
           "support_blocking_dimensions": [
             "line_support",
             "market_support",
             "state_support"
           ]
-        },
+        }
+      ],
+      "date": "2026-08-30",
+      "exploratory_candidate_count": 1,
+      "exploratory_ev_candidates": [
         {
           "away_team": "CIN",
           "betslip": {
@@ -138,12 +142,12 @@
           },
           "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.183448776&selectionId%5B0%5D=29166&marketId%5B1%5D=734.183515655&selectionId%5B1%5D=7017906",
           "candidate_authorized": false,
-          "combo_decimal_price": 3.333333333333333,
+          "combo_decimal_price": 3.25,
           "event_date": "2026-08-30",
-          "expected_value_per_unit": 0.05349999999999988,
+          "expected_value_per_unit": 0.030412499999999953,
           "game_id": "824636",
           "home_team": "CHC",
-          "joint_residual": -0.0020756399999999897,
+          "joint_residual": 0.00019998749999999843,
           "leg_a": {
             "deeplinks_by_region": {
               "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.183775118&selectionId=29166",
@@ -176,9 +180,9 @@
             "line": null,
             "market": "moneyline",
             "market_books": 1,
-            "model_probability": 0.4956,
-            "no_vig_market_probability": 0.5901639344262295,
-            "price_american": -150,
+            "model_probability": 0.49105,
+            "no_vig_market_probability": 0.6041412911084043,
+            "price_american": -160,
             "price_confirmed": true,
             "side": "home",
             "sportsbook": "fanduel",
@@ -221,7 +225,7 @@
             "line": 9.0,
             "market": "game_total",
             "market_books": 1,
-            "model_probability": 0.6419,
+            "model_probability": 0.64525,
             "no_vig_market_probability": 0.47639484978540775,
             "price_american": 100,
             "price_confirmed": true,
@@ -234,11 +238,11 @@
               "state_support"
             ]
           },
-          "naive_independence_probability": 0.31812564,
-          "naive_market_joint_raw_probability": 0.30000000000000004,
-          "naive_no_vig_combo_probability": 0.28115105888974884,
-          "probability_edge": 0.03489894111025116,
-          "real_joint_model_probability": 0.31605,
+          "naive_independence_probability": 0.3168500125,
+          "naive_market_joint_raw_probability": 0.3076923076923077,
+          "naive_no_vig_combo_probability": 0.2878097996267506,
+          "probability_edge": 0.029240200373249425,
+          "real_joint_model_probability": 0.31705,
           "support_blocking_dimensions": [
             "line_support",
             "market_support",
@@ -246,25 +250,22 @@
           ]
         }
       ],
-      "date": "2026-08-30",
-      "exploratory_candidate_count": 0,
-      "exploratory_ev_candidates": [],
       "game_id": "824636",
       "home_starter_name": "Shota Imanaga",
       "home_team": "CHC",
-      "home_win_probability": 0.4956,
-      "quality_safe_candidate_count": 2,
+      "home_win_probability": 0.49105,
+      "quality_safe_candidate_count": 1,
       "status": "ok"
     }
   ],
-  "generated_at_utc": "2026-08-30T21:34:44.148464+00:00",
+  "generated_at_utc": "2026-08-30T23:29:45.239422+00:00",
   "headline_status": "ready",
   "odds_sources": {
     "fanduel_public": "success",
     "the_odds_api": "missing_credentials"
   },
   "odds_status": "success",
-  "quality_safe_candidate_count": 2,
+  "quality_safe_candidate_count": 1,
   "run_date": "2026-08-30",
   "selection_policy": {
     "actual_combined_sgp_quote_captured": false,
