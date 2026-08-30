@@ -10,10 +10,12 @@ on:
       - 'sports/mlb/scripts/select_high_hit_parlay.py'
       - 'sports/mlb/scripts/local_node_selector.py'
       - 'sports/mlb/scripts/local_node_selector_v2.py'
+      - 'sports/mlb/scripts/simulate_local_node_selector_v2.py'
       - 'sports/mlb/tests/test_parlay_quality_selectors.py'
       - 'sports/mlb/tests/test_tight_quality_overlay.py'
       - 'sports/mlb/tests/test_local_node_selector.py'
       - 'sports/mlb/tests/test_local_node_selector_v2.py'
+      - 'sports/mlb/tests/test_simulate_local_node_selector_v2.py'
       - 'sports/mlb/tests/test_parlay_v2_public_quality_overlay.py'
       - 'sports/mlb/tests/test_same_game_tight_quality.py'
       - 'sports/mlb/tests/test_select_high_hit_parlay.py'
@@ -48,6 +50,7 @@ jobs:
             sports/mlb/tests/test_tight_quality_overlay.py \
             sports/mlb/tests/test_local_node_selector.py \
             sports/mlb/tests/test_local_node_selector_v2.py \
+            sports/mlb/tests/test_simulate_local_node_selector_v2.py \
             sports/mlb/tests/test_parlay_v2_public_quality_overlay.py \
             sports/mlb/tests/test_same_game_tight_quality.py \
             sports/mlb/tests/test_parlay_quality_selectors.py \

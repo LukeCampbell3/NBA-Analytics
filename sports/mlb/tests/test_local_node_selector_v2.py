@@ -52,7 +52,7 @@ def _candidate(**overrides) -> dict:
 
 
 def test_v2_uses_only_strictly_prior_same_family_analogues() -> None:
-    history = [_row(slate, 0) for slate in range(1, 9)]
+    history = [_row(slate, 0) for slate in range(1, 16)]
     history += [
         _row(9, 0, target="HR"),
         _row(10, 0, direction="UNDER"),
@@ -63,8 +63,8 @@ def test_v2_uses_only_strictly_prior_same_family_analogues() -> None:
 
     score = selector.score_candidate(_candidate(), history)
 
-    assert score.independent_slates == 8
-    assert score.neighbor_rows == 8
+    assert score.independent_slates == 15
+    assert score.neighbor_rows == 15
     assert score.family == ("H", "OVER", 0.5, "")
 
 
@@ -72,31 +72,31 @@ def test_high_hit_region_with_negative_residual_is_rejected() -> None:
     # Seven wins in ten rows is a good absolute hit rate, but 70% outcomes
     # against 72% balanced probability are negative calibration evidence.
     history = []
-    for slate in range(1, 11):
-        history.append(_row(slate, 0, balanced=0.72, market=0.74, win=1 if slate <= 7 else 0))
+    for slate in range(1, 16):
+        history.append(_row(slate, 0, balanced=0.72, market=0.74, win=1 if slate <= 10 else 0))
 
     score = selector.score_candidate(
         _candidate(balanced_probability=0.72, market_probability=0.74, price=-130),
         history,
     )
 
-    assert score.mean_slate_hit_rate == pytest.approx(0.70)
-    assert score.mean_slate_residual == pytest.approx(-0.02)
+    assert score.mean_slate_hit_rate == pytest.approx(10 / 15)
+    assert score.mean_slate_residual == pytest.approx(10 / 15 - 0.72)
     assert score.eligible is False
     assert "residual_lcb_not_meaningful" in score.reasons
 
 
 def test_positive_slate_clustered_residual_produces_only_lcb_correction() -> None:
-    # Ten independent slates, each 4/5, create a stable +28pp residual over
+    # Fifteen independent slates, each 4/5, create a stable +28pp residual over
     # balanced P=.52. The usable correction is the lower bound, not +.28.
     history = []
-    for slate in range(1, 11):
+    for slate in range(1, 16):
         history.extend(_row(slate, index, win=1 if index < 4 else 0) for index in range(5))
 
     score = selector.score_candidate(_candidate(price=110), history)
 
-    assert score.independent_slates == 10
-    assert score.neighbor_rows == 50
+    assert score.independent_slates == 15
+    assert score.neighbor_rows == 75
     assert score.mean_slate_residual == pytest.approx(0.28)
     assert score.residual_lcb == pytest.approx(0.28)
     assert score.safe_correction == pytest.approx(0.28)
@@ -110,21 +110,21 @@ def test_slates_are_equal_weighted_despite_different_row_counts() -> None:
     # one-row winning slate, rather than five times the influence.
     history = []
     history.extend(_row(1, index, win=0) for index in range(5))
-    history.extend(_row(slate, 0, win=1) for slate in range(2, 10))
+    history.extend(_row(slate, 0, win=1) for slate in range(2, 16))
 
     score = selector.score_candidate(_candidate(price=110), history, min_residual_lcb=-1.0)
 
-    expected = ((0.0 - 0.52) + 8 * (1.0 - 0.52)) / 9
-    assert score.independent_slates == 9
-    assert score.neighbor_rows == 13
+    expected = ((0.0 - 0.52) + 14 * (1.0 - 0.52)) / 15
+    assert score.independent_slates == 15
+    assert score.neighbor_rows == 19
     assert score.mean_slate_residual == pytest.approx(expected)
 
 
 def test_minimum_independent_slates_forces_abstention() -> None:
-    history = [_row(slate, 0) for slate in range(1, 8)]
+    history = [_row(slate, 0) for slate in range(1, 15)]
     score = selector.score_candidate(_candidate(price=110), history)
 
-    assert score.independent_slates == 7
+    assert score.independent_slates == 14
     assert score.eligible is False
     assert "insufficient_independent_slates" in score.reasons
 
@@ -150,7 +150,7 @@ def test_support_lcb_caps_recovered_probability() -> None:
 
 def test_ev_ranks_only_nodes_that_clear_residual_evidence() -> None:
     history = []
-    for slate in range(1, 11):
+    for slate in range(1, 16):
         history.extend(_row(slate, index, win=1 if index < 4 else 0) for index in range(5))
     candidates = [
         _candidate(candidate_id="short_price", price=-140),
@@ -172,5 +172,15 @@ def test_ev_ranks_only_nodes_that_clear_residual_evidence() -> None:
 
 
 def test_student_t_critical_matches_known_small_sample_value() -> None:
-    assert selector._student_t_critical_95(7) == pytest.approx(1.8946, abs=0.003)
+    assert selector._student_t_critical(0.975, 14) == pytest.approx(2.1448, abs=0.006)
 
+
+def test_selector_applies_simultaneous_candidate_scan_confidence() -> None:
+    history = []
+    for slate in range(1, 16):
+        history.extend(_row(slate, index, win=1 if index < 4 else 0) for index in range(5))
+    candidates = [_candidate(candidate_id=f"candidate_{index}", price=110) for index in range(4)]
+
+    _, scores = selector.select_node(candidates, history)
+
+    assert all(score.confidence_level == pytest.approx(1.0 - 0.05 / 4) for score in scores)

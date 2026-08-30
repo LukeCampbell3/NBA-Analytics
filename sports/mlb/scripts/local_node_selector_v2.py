@@ -9,9 +9,11 @@ residual that could justify recovery::
 
 Only strictly earlier, same-family propositions are comparable. Residuals and
 hit rates are first averaged within slate, then slates receive equal weight.
-The usable correction is the one-sided 95% lower confidence bound on the mean
-slate residual, not its point estimate. A separate slate-clustered hit-rate
-lower bound caps the recovered probability.
+The usable correction is a conservative one-sided lower confidence bound on
+the mean slate residual, not its point estimate. A separate slate-clustered
+hit-rate lower bound caps the recovered probability. When multiple candidate
+regions are scanned, select_node() applies Bonferroni simultaneous coverage so
+the act of choosing a survivor cannot silently consume the error budget.
 
 This module is deliberately disconnected from publication and v19.
 """
@@ -24,7 +26,8 @@ from dataclasses import dataclass
 from typing import Any, Iterable
 
 
-ONE_SIDED_95_Z = 1.6448536269514722
+DEFAULT_CONFIDENCE = 0.975
+DEFAULT_FAMILYWISE_ALPHA = 0.05
 
 
 @dataclass(frozen=True)
@@ -33,6 +36,7 @@ class ResidualNodeScore:
     family: tuple[str, str, float, str] | None
     neighbor_rows: int
     independent_slates: int
+    confidence_level: float
     mean_slate_residual: float | None
     residual_lcb: float | None
     mean_slate_hit_rate: float | None
@@ -71,11 +75,17 @@ def proposition_family(row: dict[str, Any]) -> tuple[str, str, float, str] | Non
     return target, direction, round(line, 6), construction
 
 
-def _student_t_critical_95(df: int) -> float:
-    """Accurate Cornish-Fisher approximation for one-sided t(.95, df)."""
+def _normal_quantile(probability: float) -> float:
+    return statistics.NormalDist().inv_cdf(probability)
+
+
+def _student_t_critical(confidence: float, df: int) -> float:
+    """Cornish-Fisher approximation for a one-sided Student-t quantile."""
     if df <= 0:
         return math.inf
-    z = ONE_SIDED_95_Z
+    if not 0.5 < confidence < 1.0:
+        raise ValueError("confidence must be between 0.5 and 1.0")
+    z = _normal_quantile(confidence)
     inv = 1.0 / df
     return (
         z
@@ -85,13 +95,13 @@ def _student_t_critical_95(df: int) -> float:
     )
 
 
-def one_sided_mean_lcb(values: Iterable[float]) -> float | None:
+def one_sided_mean_lcb(values: Iterable[float], *, confidence: float = DEFAULT_CONFIDENCE) -> float | None:
     observations = [float(value) for value in values if _finite(value) is not None]
     if len(observations) < 2:
         return None
     mean = statistics.fmean(observations)
     standard_error = statistics.stdev(observations) / math.sqrt(len(observations))
-    return mean - _student_t_critical_95(len(observations) - 1) * standard_error
+    return mean - _student_t_critical(confidence, len(observations) - 1) * standard_error
 
 
 def _distance(
@@ -118,13 +128,14 @@ def score_candidate(
     candidate: dict[str, Any],
     prior_history: Iterable[dict[str, Any]],
     *,
-    min_independent_slates: int = 8,
+    min_independent_slates: int = 15,
     min_residual_lcb: float = 0.02,
-    max_neighbors_per_slate: int = 5,
+    max_neighbors_per_slate: int = 20,
     max_distance: float = 2.0,
     balanced_scale: float = 0.05,
     market_scale: float = 0.05,
     market_weight: float = 1.0,
+    confidence: float = DEFAULT_CONFIDENCE,
 ) -> ResidualNodeScore:
     candidate_id = str(candidate.get("candidate_id") or candidate.get("play_key") or "")
     family = proposition_family(candidate)
@@ -133,7 +144,7 @@ def score_candidate(
     reasons: list[str] = []
     if family is None or balanced is None or market is None:
         return ResidualNodeScore(
-            candidate_id, family, 0, 0, None, None, None, None, None, None, None,
+            candidate_id, family, 0, 0, confidence, None, None, None, None, None, None, None,
             False, ("candidate_evidence_unavailable",),
         )
     if balanced_scale <= 0 or market_scale <= 0 or market_weight < 0:
@@ -177,9 +188,9 @@ def score_candidate(
         reasons.append("insufficient_independent_slates")
 
     mean_residual = statistics.fmean(slate_residuals) if slate_residuals else None
-    residual_lcb = one_sided_mean_lcb(slate_residuals)
+    residual_lcb = one_sided_mean_lcb(slate_residuals, confidence=confidence)
     mean_hit_rate = statistics.fmean(slate_hit_rates) if slate_hit_rates else None
-    support_lcb = one_sided_mean_lcb(slate_hit_rates)
+    support_lcb = one_sided_mean_lcb(slate_hit_rates, confidence=confidence)
     support_probability = None if support_lcb is None else max(0.0, min(1.0, support_lcb))
 
     if residual_lcb is None or residual_lcb <= min_residual_lcb:
@@ -203,6 +214,7 @@ def score_candidate(
         family=family,
         neighbor_rows=neighbor_rows,
         independent_slates=independent_slates,
+        confidence_level=confidence,
         mean_slate_residual=mean_residual,
         residual_lcb=residual_lcb,
         mean_slate_hit_rate=mean_hit_rate,
@@ -220,8 +232,32 @@ def select_node(
     prior_history: Iterable[dict[str, Any]],
     **score_kwargs: Any,
 ) -> tuple[dict[str, Any] | None, list[ResidualNodeScore]]:
+    candidate_rows = list(candidates)
     history = list(prior_history)
-    pairs = [(candidate, score_candidate(candidate, history, **score_kwargs)) for candidate in candidates]
+    familywise_alpha = score_kwargs.pop("familywise_alpha", DEFAULT_FAMILYWISE_ALPHA)
+    base_confidence = float(score_kwargs.pop("confidence", DEFAULT_CONFIDENCE))
+    testable_hypotheses = sum(
+        proposition_family(candidate) is not None
+        and _finite(candidate.get("balanced_probability")) is not None
+        and _finite(candidate.get("market_probability")) is not None
+        for candidate in candidate_rows
+    )
+    if familywise_alpha is None:
+        simultaneous_confidence = base_confidence
+    else:
+        if not 0.0 < float(familywise_alpha) < 0.5:
+            raise ValueError("familywise_alpha must be in (0, 0.5) or None")
+        simultaneous_confidence = max(
+            base_confidence,
+            1.0 - float(familywise_alpha) / max(1, testable_hypotheses),
+        )
+    pairs = [
+        (
+            candidate,
+            score_candidate(candidate, history, confidence=simultaneous_confidence, **score_kwargs),
+        )
+        for candidate in candidate_rows
+    ]
     eligible = [(candidate, score) for candidate, score in pairs if score.eligible]
     if not eligible:
         return None, [score for _, score in pairs]
@@ -234,4 +270,3 @@ def select_node(
         reverse=True,
     )
     return eligible[0][0], [score for _, score in pairs]
-
