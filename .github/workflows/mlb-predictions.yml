@@ -132,6 +132,16 @@ jobs:
           bash sports/mlb/scripts/validate_same_game_pipeline.sh pipeline --run-date "$RUN_DATE"
           bash sports/mlb/scripts/validate_pitcher_parlay_pipeline.sh pipeline --run-date "$RUN_DATE"
           python sports/mlb/scripts/build_exotic_market_shadow.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          payload = json.loads(Path("sports/mlb/web/data/exotic_market_predictions.json").read_text())
+          assert payload["policy"] == "EXOTIC_MARKETS_V1_SHADOW"
+          assert payload["run_date"] == __import__("os").environ["RUN_DATE"]
+          assert payload["publication_authority"] is False
+          assert isinstance(payload["candidates"], list)
+          assert isinstance(payload["market_registry"], list) and payload["market_registry"]
+          PY
 
           args=(
             --run-date "$RUN_DATE"
@@ -245,9 +255,11 @@ jobs:
             dist/mlb/data/daily_predictions.json
             dist/mlb/data/same_game_predictions.json
             dist/mlb/data/pitcher_parlay_predictions.json
+            dist/mlb/data/exotic_market_predictions.json
             sports/mlb/web/data/daily_predictions.json
             sports/mlb/web/data/same_game_predictions.json
             sports/mlb/web/data/pitcher_parlay_predictions.json
+            sports/mlb/web/data/exotic_market_predictions.json
             sports/mlb/data/predictions/backtests/latent_daily_pool_replay_2026.json
             sports/mlb/data/predictions/team_market_predictions.json
           if-no-files-found: warn
