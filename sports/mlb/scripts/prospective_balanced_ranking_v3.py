@@ -172,16 +172,34 @@ def settle_snapshot(
     if as_of_date <= date.fromisoformat(slate_date):
         raise ValueError("settlement must occur strictly after the slate date")
     lookup = build_actual_lookup(processed_root)
+    completed_games = {
+        (str(key[0]), str(key[3]))
+        for key in lookup
+        if isinstance(key, tuple) and len(key) == 4
+    }
     results: list[dict[str, Any]] = []
     for row in snapshot["candidates"]:
         key = (slate_date, normalize_player_key(row["player"]), row["target"], str(row["game_id"]))
         actual = lookup.get(key)
         if actual is None:
-            return None
+            # Once this game is represented in the finalized results store,
+            # an absent player/target observation is a non-participating bet
+            # rather than evidence that the entire slate is still pending.
+            # Preserve it as a void so the immutable candidate set remains
+            # auditable, but never feed it to ranking inference.
+            if (slate_date, str(row["game_id"])) not in completed_games:
+                return None
+            results.append({"candidate_id": row["candidate_id"], "result": "void", "win": None})
+            continue
         result = grade_result(actual, float(row["line"]), row["direction"])
-        if result not in {"win", "loss"}:
-            return None
-        results.append({"candidate_id": row["candidate_id"], "result": result, "win": int(result == "win")})
+        if result not in {"win", "loss", "push"}:
+            raise RuntimeError(f"unsupported grade {result!r} for {row['candidate_id']}")
+        normalized_result = "void" if result == "push" else result
+        results.append({
+            "candidate_id": row["candidate_id"],
+            "result": normalized_result,
+            "win": None if normalized_result == "void" else int(normalized_result == "win"),
+        })
     results.sort(key=lambda row: row["candidate_id"])
     payload = {
         "schema": SCHEMA,
@@ -190,13 +208,15 @@ def settle_snapshot(
         "settled_at_utc": settled_at_utc,
         "snapshot_identity_sha256": snapshot["identity_sha256"],
         "candidate_count": len(results),
+        "graded_count": sum(row["result"] in {"win", "loss"} for row in results),
+        "void_count": sum(row["result"] == "void" for row in results),
         "results": results,
     }
     path = artifact_path(root, slate_date, SETTLEMENT_NAME)
     status = _write_immutable(
         path,
         payload,
-        ("schema", "record_type", "slate_date", "snapshot_identity_sha256", "candidate_count", "results"),
+        ("schema", "record_type", "slate_date", "snapshot_identity_sha256", "candidate_count", "graded_count", "void_count", "results"),
     )
     return path, status
 
@@ -216,12 +236,17 @@ def load_settled_rows(root: Path) -> list[dict[str, Any]]:
         if set(outcomes) != expected:
             raise RuntimeError(f"settlement candidate set mismatch: {settlement_path}")
         for candidate in snapshot["candidates"]:
+            outcome = outcomes[candidate["candidate_id"]]
+            if outcome.get("result") == "void":
+                continue
+            if outcome.get("result") not in {"win", "loss"} or outcome.get("win") not in {0, 1}:
+                raise RuntimeError(f"invalid graded outcome in {settlement_path}")
             rows.append(
                 {
                     "candidate_id": candidate["candidate_id"],
                     "date": snapshot["slate_date"],
                     "game_id": candidate["game_id"],
-                    "win": int(outcomes[candidate["candidate_id"]]["win"]),
+                    "win": int(outcome["win"]),
                     **{field: float(candidate[field]) for field in ranking.SCORE_FIELDS},
                 }
             )

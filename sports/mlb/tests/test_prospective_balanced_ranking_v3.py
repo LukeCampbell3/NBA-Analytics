@@ -75,7 +75,10 @@ def test_loader_rejects_wrong_hash_and_counts_slates_not_rows(tmp_path: Path, mo
     settlement_path = snapshot_path.with_name(prospective.SETTLEMENT_NAME)
     settlement_path.write_text(json.dumps({
         "snapshot_identity_sha256": snapshot["identity_sha256"],
-        "results": [{"candidate_id": row["candidate_id"], "win": index % 2} for index, row in enumerate(snapshot["candidates"])],
+        "results": [
+            {"candidate_id": row["candidate_id"], "result": "win" if index % 2 else "loss", "win": index % 2}
+            for index, row in enumerate(snapshot["candidates"])
+        ],
     }))
     rows = prospective.load_settled_rows(tmp_path / "evidence")
     assert len(rows) == 2
@@ -95,3 +98,43 @@ def test_snapshot_keeps_rejected_candidates_and_filters_other_families(tmp_path:
     payload = prospective.build_snapshot(tmp_path / "pool.csv", observed_at_utc="x")
     assert payload["candidate_count"] == 1
     assert payload["candidates"][0]["v19_eligible"] is False
+
+
+def test_completed_game_nonparticipant_is_void_not_slate_blocker(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _patch_candidates(monkeypatch, [_candidate("Played"), _candidate("DNP")])
+    snapshot_path, _ = prospective.capture(
+        tmp_path / "pool.csv", tmp_path / "evidence", observed_at_utc="2026-08-30T12:00:00Z"
+    )
+    # The played candidate proves the date/game has reached the finalized
+    # result store; the absent candidate is therefore a DNP/void, not lag.
+    monkeypatch.setattr(
+        prospective,
+        "build_actual_lookup",
+        lambda _: {("2026-08-30", "played", "H", "game-1"): 1.0},
+    )
+    monkeypatch.setattr(prospective, "grade_result", lambda *_: "win")
+    settlement_path, _ = prospective.settle_snapshot(
+        snapshot_path,
+        tmp_path / "evidence",
+        settled_at_utc="2026-08-31T12:00:00Z",
+        as_of_date=date(2026, 8, 31),
+    )
+    settlement = json.loads(settlement_path.read_text())
+    assert settlement["candidate_count"] == 2
+    assert settlement["graded_count"] == 1
+    assert settlement["void_count"] == 1
+    assert len(prospective.load_settled_rows(tmp_path / "evidence")) == 1
+
+
+def test_missing_entire_game_keeps_settlement_pending(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _patch_candidates(monkeypatch, [_candidate("Unknown")])
+    snapshot_path, _ = prospective.capture(
+        tmp_path / "pool.csv", tmp_path / "evidence", observed_at_utc="2026-08-30T12:00:00Z"
+    )
+    monkeypatch.setattr(prospective, "build_actual_lookup", lambda _: {})
+    assert prospective.settle_snapshot(
+        snapshot_path,
+        tmp_path / "evidence",
+        settled_at_utc="2026-08-31T12:00:00Z",
+        as_of_date=date(2026, 8, 31),
+    ) is None
