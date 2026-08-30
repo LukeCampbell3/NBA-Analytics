@@ -17,11 +17,13 @@ This module is shadow-only and has no publication authority.
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import math
 import statistics
 from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Any, Iterable
 
 from local_node_selector_v2 import one_sided_mean_lcb
@@ -234,3 +236,57 @@ def run_shadow(candidates: Iterable[dict[str, Any]], history: Iterable[dict[str,
         "eligible": [asdict(item) for item in eligible],
         "scores": [asdict(item) for item in scores],
     }
+
+
+def run_prospective_snapshot(snapshot_path: Path, evidence_root: Path, output_path: Path) -> dict[str, Any]:
+    """Score one immutable snapshot using only earlier settled snapshots."""
+    # Local import avoids making the pure scoring API depend on filesystem
+    # evidence collection during normal unit-test imports.
+    from prospective_balanced_ranking_v3 import load_settled_rows
+
+    snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    slate_date = str(snapshot["slate_date"])
+    history = [row for row in load_settled_rows(evidence_root) if str(row["date"]) < slate_date]
+    candidates = [
+        {**candidate, "price": candidate["selected_side_price"]}
+        for candidate in snapshot["candidates"]
+    ]
+    report = run_shadow(candidates, history, slate_date=slate_date)
+    report.update(
+        {
+            "record_type": "prospective_pregame_shadow_decision",
+            "snapshot_identity_sha256": snapshot["identity_sha256"],
+            "strictly_prior_settled_slates": len({row["date"] for row in history}),
+            "strictly_prior_settled_rows": len(history),
+            "v19_publication_unchanged": True,
+        }
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    encoded = json.dumps(report, indent=2, sort_keys=True) + "\n"
+    if output_path.exists():
+        existing = json.loads(output_path.read_text(encoding="utf-8"))
+        # A pregame decision for a frozen snapshot is immutable. Operational
+        # retries may reproduce it, but may not rewrite its scientific state.
+        if json.dumps(existing, sort_keys=True) != json.dumps(report, sort_keys=True):
+            raise RuntimeError(f"immutable V4 shadow report conflict: {output_path}")
+    else:
+        output_path.write_text(encoded, encoding="utf-8")
+    return report
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--snapshot", type=Path, required=True)
+    parser.add_argument("--evidence-root", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    report = run_prospective_snapshot(args.snapshot, args.evidence_root, args.output)
+    print(
+        f"V4 {report['status']}: {report['eligible_count']} eligible from "
+        f"{report['candidate_count']} candidates; {report['strictly_prior_settled_slates']} prior slates"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

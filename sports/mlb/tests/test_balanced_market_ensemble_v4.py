@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import json
 from pathlib import Path
 
 import pytest
@@ -88,3 +89,50 @@ def test_no_pick_quota_all_supported_candidates_survive() -> None:
 
 def test_spec_hash_matches_frozen_constants() -> None:
     assert v4.PREREGISTRATION_SPEC_HASH == v4._spec_hash()
+
+
+def test_prospective_runner_uses_prior_settlements_and_is_immutable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    snapshot = {
+        "slate_date": "2026-08-30",
+        "identity_sha256": "frozen-snapshot",
+        "candidates": [{
+            "candidate_id": "today", "balanced_probability": 0.7,
+            "market_probability": 0.6, "selected_side_price": -150,
+        }],
+    }
+    snapshot_path = tmp_path / "snapshot.json"
+    snapshot_path.write_text(json.dumps(snapshot))
+    history = [
+        _row(f"2026-08-0{day}", day % 2, 0.65, 0.6)
+        for day in range(1, 5)
+    ]
+    # Same-day/future rows returned by a compromised loader still cannot
+    # enter fitting; the runner applies its own strict temporal boundary.
+    history += [_row("2026-08-30", 1, 0.99, 0.1), _row("2026-08-31", 1, 0.99, 0.1)]
+    import prospective_balanced_ranking_v3 as prospective
+    monkeypatch.setattr(prospective, "load_settled_rows", lambda _: history)
+    output = tmp_path / "v4.json"
+    first = v4.run_prospective_snapshot(snapshot_path, tmp_path, output)
+    second = v4.run_prospective_snapshot(snapshot_path, tmp_path, output)
+    assert first == second
+    assert first["strictly_prior_settled_slates"] == 4
+    assert first["strictly_prior_settled_rows"] == 4
+    assert first["snapshot_identity_sha256"] == "frozen-snapshot"
+    assert first["publication_authority"] is False
+    assert first["v19_publication_unchanged"] is True
+
+
+def test_prospective_report_conflict_fails_closed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    snapshot_path = tmp_path / "snapshot.json"
+    snapshot_path.write_text(json.dumps({
+        "slate_date": "2026-08-30", "identity_sha256": "hash",
+        "candidates": [{"candidate_id": "x", "balanced_probability": 0.7, "market_probability": 0.6, "selected_side_price": -150}],
+    }))
+    import prospective_balanced_ranking_v3 as prospective
+    monkeypatch.setattr(prospective, "load_settled_rows", lambda _: [])
+    output = tmp_path / "v4.json"
+    v4.run_prospective_snapshot(snapshot_path, tmp_path, output)
+    altered = json.loads(output.read_text()); altered["eligible_count"] = 99
+    output.write_text(json.dumps(altered))
+    with pytest.raises(RuntimeError, match="immutable V4 shadow report conflict"):
+        v4.run_prospective_snapshot(snapshot_path, tmp_path, output)

@@ -53,6 +53,7 @@ MLB_PROVIDER_OBSERVATIONS = REPO_ROOT / "sports" / "mlb" / "data" / "raw" / "mar
 MLB_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_high_precision_predictions.py"
 MLB_BALANCED_RANKING_V3_PROSPECTIVE = REPO_ROOT / "sports" / "mlb" / "scripts" / "prospective_balanced_ranking_v3.py"
 MLB_BALANCED_RANKING_V3_ROOT = REPO_ROOT / "sports" / "mlb" / "data" / "predictions" / "balanced_ranking_v3_prospective"
+MLB_BALANCED_MARKET_ENSEMBLE_V4 = REPO_ROOT / "sports" / "mlb" / "scripts" / "balanced_market_ensemble_v4.py"
 MLB_PARLAY_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_daily_parlay.py"
 # PARLAY_POLICY_V2 -- a SEPARATE product path (mission: MLB dual-path
 # integration). Runs additively alongside, never in place of,
@@ -1092,6 +1093,22 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
                 args.python, str(MLB_BALANCED_RANKING_V3_PROSPECTIVE), "capture",
                 "--pool-csv", str(pool_csv),
                 "--root", str(MLB_BALANCED_RANKING_V3_ROOT),
+            ],
+        )
+        v4_slate_date = (
+            datetime.strptime(pool_digits[:8], "%Y%m%d").date()
+            if len(pool_digits) >= 8
+            else resolve_effective_run_date(args.run_date)
+        )
+        v4_snapshot = MLB_BALANCED_RANKING_V3_ROOT / v4_slate_date.isoformat() / "snapshot.json"
+        v4_report = MLB_BALANCED_RANKING_V3_ROOT / v4_slate_date.isoformat() / "v4_shadow_report.json"
+        run_step(
+            "Score MLB Balanced-Market Ensemble V4 Shadow",
+            [
+                args.python, str(MLB_BALANCED_MARKET_ENSEMBLE_V4),
+                "--snapshot", str(v4_snapshot),
+                "--evidence-root", str(MLB_BALANCED_RANKING_V3_ROOT),
+                "--output", str(v4_report),
             ],
         )
     except Exception as exc:  # noqa: BLE001 -- shadow evidence must not block publication
