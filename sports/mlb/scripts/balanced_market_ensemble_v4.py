@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""V4 shadow selector: market-anchored, slate-cross-fitted probability blend.
+"""V4 optimized singles shadow selector with separate diagnostics and action.
 
 V4 asks whether balanced probability adds incremental information to the exact
 market probability. It has one fitted parameter, constrained to [0, 1]:
@@ -7,10 +7,13 @@ market probability. It has one fitted parameter, constrained to [0, 1]:
     logit(P_ensemble) = logit(P_market)
                        + w * (logit(P_balanced) - logit(P_market))
 
-The weight minimizes equal-slate log loss using strictly earlier settled
-slates. A lower confidence bound from leave-one-slate-out calibration
-residuals can only reduce the actionable probability; it can never manufacture
-positive edge. Price is considered last. There is no pick quota.
+The market blend remains a calibration diagnostic. It failed to add actionable
+value in the frozen functional replay, so it does not control singles. The
+shadow singles action instead reuses the independently specified confidence /
+exact-price frontier: balanced probability >= 60%, at least one percentage
+point above exact break-even, and positive EV. Price is considered last and
+there is no pick quota. This keeps V4 from being tuned into the failed market-
+favorite ranking while still testing every supported straight bet.
 
 This module is shadow-only and has no publication authority.
 """
@@ -29,7 +32,7 @@ from typing import Any, Iterable
 from local_node_selector_v2 import one_sided_mean_lcb
 
 
-V4_VERSION = "balanced_market_ensemble_v4_shadow"
+V4_VERSION = "balanced_value_frontier_v4_optimized_singles_shadow"
 TARGET = "H"
 DIRECTION = "OVER"
 LINE = 0.5
@@ -39,6 +42,7 @@ PROMOTION_MIN_SLATES = 30
 CONFIDENCE = 0.975
 MIN_PROBABILITY_EDGE = 0.01
 MIN_SAFE_EV = 0.0
+MIN_BALANCED_PROBABILITY = 0.60
 
 
 def _spec_hash() -> str:
@@ -54,6 +58,10 @@ def _spec_hash() -> str:
         "confidence": CONFIDENCE,
         "minimum_probability_edge": MIN_PROBABILITY_EDGE,
         "minimum_safe_ev": MIN_SAFE_EV,
+        "singles_action_probability": "balanced_probability",
+        "singles_action_minimum_probability": MIN_BALANCED_PROBABILITY,
+        "singles_action_gate": "balanced_probability >= market_probability + 0.01 AND decision_ev > 0",
+        "market_ensemble_role": "diagnostic_only_after_functional_backtest_rejected_incremental_action_value",
         "pick_quota": None,
     }
     return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
@@ -61,7 +69,7 @@ def _spec_hash() -> str:
 
 # Frozen at V4 creation. CI recomputes the specification and fails if a
 # critical constant/formula descriptor changes without an explicit new study.
-PREREGISTRATION_SPEC_HASH = "77e0b62983ae4a3c838629bf02ab34aa4f2b421ee4cff1ee868c0245cc5abdab"
+PREREGISTRATION_SPEC_HASH = "e902fd8ba0628655528d9795a69c99b97a505a1ad1dcc9a217af9b50503fecad"
 
 
 @dataclass(frozen=True)
@@ -79,12 +87,15 @@ class V4Fit:
 @dataclass(frozen=True)
 class V4Score:
     candidate_id: str
+    balanced_probability: float
     ensemble_probability: float
     safe_probability: float
     market_probability: float
     price: float
     safe_ev: float
     probability_edge: float
+    decision_probability: float
+    decision_ev: float
     eligible: bool
     reasons: tuple[str, ...]
 
@@ -196,21 +207,26 @@ def score(candidate: dict[str, Any], fitted: V4Fit) -> V4Score:
     safe = _clip_probability(ensemble + fitted.safe_calibration_adjustment)
     safe_ev = safe * american_to_decimal(price) - 1.0
     edge = safe - market
+    decision_ev = balanced * american_to_decimal(price) - 1.0
+    decision_edge = balanced - market
     reasons: list[str] = []
-    if fitted.training_slates < MIN_TRAINING_SLATES:
-        reasons.append("insufficient_prior_slates")
-    if edge < MIN_PROBABILITY_EDGE:
-        reasons.append("safe_probability_edge_below_1pct")
-    if safe_ev <= MIN_SAFE_EV:
-        reasons.append("safe_ev_not_positive")
+    if balanced < MIN_BALANCED_PROBABILITY:
+        reasons.append("balanced_probability_below_60pct")
+    if decision_edge < MIN_PROBABILITY_EDGE:
+        reasons.append("balanced_probability_edge_below_1pct")
+    if decision_ev <= MIN_SAFE_EV:
+        reasons.append("decision_ev_not_positive")
     return V4Score(
         candidate_id=str(candidate.get("candidate_id") or ""),
+        balanced_probability=balanced,
         ensemble_probability=ensemble,
         safe_probability=safe,
         market_probability=market,
         price=price,
         safe_ev=safe_ev,
-        probability_edge=edge,
+        probability_edge=decision_edge,
+        decision_probability=balanced,
+        decision_ev=decision_ev,
         eligible=not reasons,
         reasons=tuple(reasons),
     )
@@ -218,8 +234,31 @@ def score(candidate: dict[str, Any], fitted: V4Fit) -> V4Score:
 
 def run_shadow(candidates: Iterable[dict[str, Any]], history: Iterable[dict[str, Any]], *, slate_date: str) -> dict[str, Any]:
     fitted = fit(history, before_date=slate_date)
-    scores = [score(candidate, fitted) for candidate in candidates]
-    eligible = sorted((item for item in scores if item.eligible), key=lambda item: (-item.safe_ev, -item.safe_probability, item.candidate_id))
+    candidate_list = list(candidates)
+    scores = [score(candidate, fitted) for candidate in candidate_list]
+    eligible = sorted((item for item in scores if item.eligible), key=lambda item: (-item.decision_ev, -item.decision_probability, item.candidate_id))
+    candidate_by_id = {str(candidate.get("candidate_id") or ""): candidate for candidate in candidate_list}
+    frontend_plays = []
+    for rank, item in enumerate(eligible, start=1):
+        candidate = candidate_by_id.get(item.candidate_id, {})
+        frontend_plays.append(
+            {
+                "rank": rank,
+                "candidate_id": item.candidate_id,
+                "player": str(candidate.get("player") or ""),
+                "game_id": str(candidate.get("game_id") or ""),
+                "target": str(candidate.get("target") or TARGET),
+                "direction": str(candidate.get("direction") or DIRECTION),
+                "line": float(candidate.get("line", LINE)),
+                "sportsbook": str(candidate.get("selected_sportsbook_key") or ""),
+                "american_price": item.price,
+                "balanced_probability": item.balanced_probability,
+                "market_probability": item.market_probability,
+                "probability_edge": item.probability_edge,
+                "decision_ev": item.decision_ev,
+                "authorization_status": "SHADOW_ONLY",
+            }
+        )
     status = "SHADOW_ONLY"
     if fitted.training_slates < MIN_TRAINING_SLATES:
         status = "INSUFFICIENT_PRIOR_SLATES"
@@ -228,12 +267,16 @@ def run_shadow(candidates: Iterable[dict[str, Any]], history: Iterable[dict[str,
         "preregistration_spec_hash": PREREGISTRATION_SPEC_HASH,
         "status": status,
         "publication_authority": False,
+        "market_ensemble_role": "diagnostic_only",
+        "singles_action_probability": "balanced_probability",
+        "dynamic_gate": "P_balanced >= max(0.60, exact_price_break_even + 0.01) and EV(P_balanced, price) > 0",
         "pick_count_constraint": "none",
         "slate_date": slate_date,
         "fit": asdict(fitted),
         "candidate_count": len(scores),
         "eligible_count": len(eligible),
         "eligible": [asdict(item) for item in eligible],
+        "frontend_plays": frontend_plays,
         "scores": [asdict(item) for item in scores],
     }
 

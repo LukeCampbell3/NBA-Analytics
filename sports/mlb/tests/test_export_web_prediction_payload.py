@@ -12,6 +12,26 @@ sys.path.insert(0, str(MLB_SCRIPTS_ROOT))
 import export_web_prediction_payload as exporter
 
 
+def test_v4_shadow_embedding_is_additive_and_never_authorizes(tmp_path: Path) -> None:
+    report = tmp_path / "v4.json"
+    report.write_text(json.dumps({
+        "version": "v4-test", "status": "SHADOW_ONLY", "publication_authority": True,
+        "candidate_count": 4, "eligible_count": 1, "strictly_prior_settled_slates": 3,
+        "frontend_plays": [{"player": "A", "authorization_status": "SHADOW_ONLY"}],
+    }))
+    original = {"plays": [{"player": "production"}]}
+    embedded = exporter.embed_v4_singles_shadow(original, report)
+    assert embedded["plays"] == original["plays"]
+    assert embedded["v4_singles_shadow"]["publication_authority"] is False
+    assert embedded["v4_singles_shadow"]["eligible_count"] == 1
+
+
+def test_missing_v4_report_has_honest_frontend_state(tmp_path: Path) -> None:
+    embedded = exporter.embed_v4_singles_shadow({"plays": []}, tmp_path / "missing.json")
+    assert embedded["v4_singles_shadow"]["status"] == "UNAVAILABLE"
+    assert embedded["v4_singles_shadow"]["plays"] == []
+
+
 def test_infer_run_date_ignores_unrelated_version_digits(tmp_path: Path) -> None:
     selected = tmp_path / "network_v2" / "daily_prediction_pool_20260806_selected.csv"
     summary = {"pool_csv": str(selected.with_name("daily_prediction_pool_20260806.csv"))}

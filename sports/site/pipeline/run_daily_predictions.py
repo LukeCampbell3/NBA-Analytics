@@ -1072,6 +1072,13 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
         extra_args=MLB_PRIMARY_POLICY_ARGS,
         refresh_history=bool(args.mlb_refresh_history_caches),
     )
+    v4_slate_date = (
+        datetime.strptime(pool_digits[:8], "%Y%m%d").date()
+        if len(pool_digits) >= 8
+        else resolve_effective_run_date(args.run_date)
+    )
+    v4_snapshot = MLB_BALANCED_RANKING_V3_ROOT / v4_slate_date.isoformat() / "snapshot.json"
+    v4_report = MLB_BALANCED_RANKING_V3_ROOT / v4_slate_date.isoformat() / "v4_optimized_singles_shadow_report.json"
     # BALANCED_RANKING_V3 prospective shadow evidence. Capture the entire
     # real-priced H OVER 0.5 comparison slate after calibration, including
     # candidates rejected by v19. Settlement is a distinct later-date record;
@@ -1095,13 +1102,6 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
                 "--root", str(MLB_BALANCED_RANKING_V3_ROOT),
             ],
         )
-        v4_slate_date = (
-            datetime.strptime(pool_digits[:8], "%Y%m%d").date()
-            if len(pool_digits) >= 8
-            else resolve_effective_run_date(args.run_date)
-        )
-        v4_snapshot = MLB_BALANCED_RANKING_V3_ROOT / v4_slate_date.isoformat() / "snapshot.json"
-        v4_report = MLB_BALANCED_RANKING_V3_ROOT / v4_slate_date.isoformat() / "v4_shadow_report.json"
         run_step(
             "Score MLB Balanced-Market Ensemble V4 Shadow",
             [
@@ -1296,6 +1296,8 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
             str(parlay_v2_json),
             "--governance-json",
             str(governance_status_json),
+            "--v4-shadow-json",
+            str(v4_report),
             "--output",
             str(MLB_WEB_JSON),
             "--output-dist",

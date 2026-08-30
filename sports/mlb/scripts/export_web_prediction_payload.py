@@ -67,6 +67,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--parlay-json", type=Path, default=None, help="Adaptive daily parlay JSON (legacy_parlay_control / old_parlay_diagnostic -- see sports/mlb/parlay_v2/legacy_control.py).")
     parser.add_argument("--parlay-v2-json", type=Path, default=None, help="PARLAY_POLICY_V2 output JSON (sports/mlb/parlay_v2/run_parlay_v2.py) -- the ONLY source for the new Parlays tab's `parlays` key. Purely additive: never read by the singles/legacy-parlay code above.")
     parser.add_argument("--governance-json", type=Path, default=None, help="Policy-governance status JSON.")
+    parser.add_argument("--v4-shadow-json", type=Path, default=None, help="Optimized V4 singles shadow report; additive frontend evidence only.")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUT, help="Destination web payload JSON.")
     parser.add_argument(
         "--output-dist",
@@ -196,6 +197,36 @@ def load_policy_governance(path: Path | None, *, run_date: str) -> dict[str, obj
     payload["candidate_authorization_enabled"] = bool(payload.get("candidate_authorization_enabled", False))
     payload["staking_enabled"] = False
     return payload
+
+
+def embed_v4_singles_shadow(payload: dict[str, object], path: Path | None) -> dict[str, object]:
+    """Add sanitized V4 shadow evidence without modifying production plays."""
+    result = dict(payload)
+    v4_shadow = _load_json_file(path)
+    if isinstance(v4_shadow, dict):
+        result["v4_singles_shadow"] = {
+            "version": v4_shadow.get("version"),
+            "status": v4_shadow.get("status"),
+            "publication_authority": False,
+            "dynamic_gate": v4_shadow.get("dynamic_gate"),
+            "candidate_count": int(v4_shadow.get("candidate_count") or 0),
+            "eligible_count": int(v4_shadow.get("eligible_count") or 0),
+            "strictly_prior_settled_slates": int(v4_shadow.get("strictly_prior_settled_slates") or 0),
+            "plays": v4_shadow.get("frontend_plays") if isinstance(v4_shadow.get("frontend_plays"), list) else [],
+            "evidence_status": "FUNCTIONAL_BACKTEST_LIMITED_PROSPECTIVE_UNCERTIFIED",
+        }
+    else:
+        result["v4_singles_shadow"] = {
+            "version": "balanced_value_frontier_v4_optimized_singles_shadow",
+            "status": "UNAVAILABLE",
+            "publication_authority": False,
+            "candidate_count": 0,
+            "eligible_count": 0,
+            "strictly_prior_settled_slates": 0,
+            "plays": [],
+            "evidence_status": "NO_CURRENT_V4_REPORT",
+        }
+    return result
 
 
 def to_float(value: str, default: float = 0.0) -> float:
@@ -1296,6 +1327,8 @@ def main() -> None:
     from sports.mlb.parlay_v2.frontend_payload import embed_parlays_v2
 
     payload = embed_parlays_v2(payload, args.parlay_v2_json)
+
+    payload = embed_v4_singles_shadow(payload, args.v4_shadow_json)
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")

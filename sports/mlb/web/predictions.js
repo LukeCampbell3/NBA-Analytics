@@ -13,6 +13,7 @@ class DailyPredictionsPage {
             sameGameParlayContent: document.getElementById("sameGameParlayContent"),
             pitcherParlayContent: document.getElementById("pitcherParlayContent"),
             highHitParlayContent: document.getElementById("highHitParlayContent"),
+            v4SinglesContent: document.getElementById("v4SinglesContent"),
             dateNav: document.getElementById("predictionDateNav"),
         };
         this.init();
@@ -79,6 +80,7 @@ class DailyPredictionsPage {
         try {
             await this.load(date);
             this.renderParlayV2();
+            this.renderV4Singles();
             this.renderCards();
             return true;
         } catch (error) {
@@ -213,6 +215,60 @@ class DailyPredictionsPage {
         this.elements.cards.innerHTML = this.plays
             .map((play, index) => cv.renderPredictionCard(play, index))
             .join("");
+    }
+
+    renderV4Singles() {
+        const content = this.elements.v4SinglesContent;
+        if (!content) return;
+        const shadow = this.data?.v4_singles_shadow || {};
+        const plays = Array.isArray(shadow.plays) ? shadow.plays : [];
+        const priorSlates = Number(shadow.strictly_prior_settled_slates) || 0;
+        const footer = `Policy: ${shadow.version || "V4 unavailable"} / Evidence: ${shadow.evidence_status || "uncertified"} / Prior prospective slates: ${priorSlates} / Execution: not authorized`;
+        if (!plays.length) {
+            const reason = String(shadow.status || "UNAVAILABLE").toUpperCase() === "UNAVAILABLE"
+                ? "No current V4 report is available."
+                : "No single bet cleared the V4 confidence, exact-price edge, and positive-EV gates.";
+            content.innerHTML = `
+                <div class="daily-parlay__header daily-parlay__header--status-only">
+                    ${window.CardVault ? window.CardVault.renderStatusPill("stale", "Shadow — abstain") : ""}
+                </div>
+                <p class="daily-parlay__empty">${this.escapeHtml(reason)}</p>
+                <p class="daily-parlay__state">${this.escapeHtml(footer)}</p>
+            `;
+            return;
+        }
+        content.innerHTML = `
+            <div class="daily-parlay__header daily-parlay__header--status-only">
+                ${window.CardVault ? window.CardVault.renderStatusPill("stale", `${plays.length} shadow candidate${plays.length === 1 ? "" : "s"}`) : ""}
+            </div>
+            <div class="vault-board vault-board--legs">
+                ${plays.map((play, index) => this.renderV4Single(play, index + 1)).join("")}
+            </div>
+            <p class="daily-parlay__state">${this.escapeHtml(footer)}</p>
+        `;
+    }
+
+    renderV4Single(play, index) {
+        if (!window.CardVault) return "";
+        const name = String(play.player || "").trim() || "Unknown player";
+        const parts = name.split(/\s+/).filter(Boolean);
+        const monogram = parts.length >= 2
+            ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+            : (parts[0] || "NA").slice(0, 2).toUpperCase();
+        return window.CardVault.renderLegCard({
+            rank: index,
+            monogram,
+            name,
+            market: `${String(play.direction || "OVER").toUpperCase()} ${this.formatNumber(play.line, 1)} ${play.target || "H"}`,
+            context: "V4 singles shadow — no stake authorized",
+            metrics: [
+                ["P balanced", this.formatPct(play.balanced_probability)],
+                ["Price", this.formatAmerican(play.american_price)],
+                ["Edge", this.formatSignedPp(play.probability_edge)],
+                ["EV", this.formatSignedPct(play.decision_ev)],
+            ],
+            settlementRow: play,
+        });
     }
 
     /**

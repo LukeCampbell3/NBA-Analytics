@@ -71,7 +71,7 @@ def test_price_cannot_rescue_unsupported_probability_edge() -> None:
     fitted = v4.V4Fit(10, 100, 0.5, 0.5, 0.6, (0.0,) * 10, 0.0, 0.0)
     scored = v4.score({"candidate_id": "x", "balanced_probability": 0.602, "market_probability": 0.6, "price": 200}, fitted)
     assert scored.eligible is False
-    assert "safe_probability_edge_below_1pct" in scored.reasons
+    assert "balanced_probability_edge_below_1pct" in scored.reasons
 
 
 def test_no_pick_quota_all_supported_candidates_survive() -> None:
@@ -85,6 +85,8 @@ def test_no_pick_quota_all_supported_candidates_survive() -> None:
     # directly: every independently supported candidate is eligible.
     assert all(v4.score(candidate, fitted).eligible for candidate in candidates)
     assert report["pick_count_constraint"] == "none"
+    assert len(report["frontend_plays"]) == 50
+    assert all(play["authorization_status"] == "SHADOW_ONLY" for play in report["frontend_plays"])
 
 
 def test_spec_hash_matches_frozen_constants() -> None:
