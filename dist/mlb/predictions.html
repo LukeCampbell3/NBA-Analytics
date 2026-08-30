@@ -41,6 +41,11 @@
                     <h3>No predictions published</h3>
                     <p>No analytical signals are available for this run. The model is deliberately selective, so an empty board is a normal, honest outcome, not a fault -- see <a href="/mlb/prediction-about/#backtestOverview">real backtest results</a> for evidence the policy holds up.</p>
                 </div>
+                <div class="parlay-group" aria-labelledby="v4SinglesHeading">
+                    <p id="v4SinglesHeading" class="parlay-group__label">V4 Optimized Singles</p>
+                    <p class="parlay-group__note">Shadow only — dynamic confidence/value frontier; no stake or publication authority</p>
+                    <div id="v4SinglesContent" class="daily-parlay"></div>
+                </div>
             </section>
 
             <section class="board-section" aria-labelledby="parlaysHeading">
@@ -153,7 +158,7 @@
     </script>
     <script src="/vault/vault-components.js?v=17"></script>
     <script src="/vault/vault-shell.js?v=9"></script>
-    <script src="predictions.js?v=29"></script>
+    <script src="predictions.js?v=30"></script>
     <script src="predictions-roi-overrides.js?v=3"></script>
 </body>
 </html>
