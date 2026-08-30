@@ -208,6 +208,45 @@ def test_preregistration_spec_hash_matches_current_constants() -> None:
     )
 
 
+def test_describe_bottleneck_classifies_the_three_realistic_gaps() -> None:
+    """The primary_bottleneck label in every report must not be silently
+    swapped from a real diagnostic into a hopeful one. This exercises the
+    three most likely real gaps and one 'no-data-at-all' case, so a future
+    edit that reclassifies (say) a price-capture gap as
+    'no_material_bottleneck' fails CI immediately."""
+    # Nothing on disk at all.
+    assert ranking._describe_bottleneck({}) == "no_pool_csvs_available"
+    # Pool CSVs exist but the H OVER 0.5 family filter matches nothing.
+    only_totals = {
+        "20260805": {"total_candidates": 100, "family_h_over_0_5": 0,
+                     "family_real_priced": 0, "family_real_priced_settled": 0},
+    }
+    assert ranking._describe_bottleneck(only_totals) == "family_scope_filter"
+    # Family matches exist but zero real_priced -- the exact bottleneck
+    # every real archived date before 2026-08-05 shows.
+    no_prices = {
+        f"20260{7:d}0{d}": {"total_candidates": 1500, "family_h_over_0_5": 200,
+                            "family_real_priced": 0, "family_real_priced_settled": 0}
+        for d in range(1, 10)
+    }
+    assert ranking._describe_bottleneck(no_prices) == "upstream_price_capture"
+    # Prices exist but the settlement lookup can't find them.
+    no_settlements = {
+        f"20260{8:d}0{d}": {"total_candidates": 1500, "family_h_over_0_5": 200,
+                            "family_real_priced": 200, "family_real_priced_settled": 0}
+        for d in range(1, 10)
+    }
+    assert ranking._describe_bottleneck(no_settlements) == "upstream_settlement_lookup"
+    # Enough real settled data on enough real dates -- no material bottleneck.
+    plenty = {
+        f"20260{month:d}{day:02d}": {"total_candidates": 1500, "family_h_over_0_5": 200,
+                                     "family_real_priced": 200, "family_real_priced_settled": 200}
+        for month in (7, 8)
+        for day in range(1, 22)
+    }
+    assert ranking._describe_bottleneck(plenty) == "no_material_bottleneck"
+
+
 def test_report_surfaces_the_v4_reserve_and_spec_hash() -> None:
     """Every real run report must carry the reserve slate list and the
     spec hash, so a downstream reviewer can verify at any later date

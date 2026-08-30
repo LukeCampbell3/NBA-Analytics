@@ -337,10 +337,20 @@ def summarize(metrics: list[SlateRankingMetric], *, phase: str) -> dict[str, Any
     }
 
 
-def harvest_rows() -> tuple[list[dict[str, Any]], dict[str, str]]:
+def harvest_rows() -> tuple[list[dict[str, Any]], dict[str, str], dict[str, dict[str, int]]]:
+    """Returns (rows, per-date load_errors, per-date funnel diagnostics).
+
+    The funnel diagnostics record, for each date on disk, how many
+    candidates existed at each successive filter stage
+    (total -> H OVER 0.5 family -> real+priced -> settled). This makes
+    the honest reason a run has few evaluable dates visible in the
+    report itself, rather than requiring a separate probe: e.g. an
+    upstream `price_confirmed` capture gap or a settlement lookup gap
+    both show up here directly."""
     actual_lookup = build_actual_lookup(DEFAULT_PROCESSED_ROOT)
     rows: list[dict[str, Any]] = []
     errors: dict[str, str] = {}
+    funnel: dict[str, dict[str, int]] = {}
     for pool in find_raw_pool_csvs(DEFAULT_DAILY_RUNS_ROOT):
         date = pool.parent.name
         try:
@@ -348,16 +358,26 @@ def harvest_rows() -> tuple[list[dict[str, Any]], dict[str, str]]:
         except Exception as exc:
             errors[date] = f"{type(exc).__name__}: {exc}"
             continue
+        family_count = 0
+        real_priced_count = 0
+        settled_count = 0
         for candidate in candidates:
-            if not (
-                candidate.market_source == "real"
-                and candidate.price_confirmed
-                and candidate.target == TARGET
+            in_family = (
+                candidate.target == TARGET
                 and candidate.direction == DIRECTION
                 and abs(candidate.market_line - LINE) < 1e-9
-                and candidate.selected_side_price is not None
-            ):
+            )
+            if not in_family:
                 continue
+            family_count += 1
+            is_real_priced = (
+                candidate.market_source == "real"
+                and candidate.price_confirmed
+                and candidate.selected_side_price is not None
+            )
+            if not is_real_priced:
+                continue
+            real_priced_count += 1
             lookup_key = (
                 candidate.run_date.isoformat(),
                 normalize_player_key(candidate.player),
@@ -370,6 +390,7 @@ def harvest_rows() -> tuple[list[dict[str, Any]], dict[str, str]]:
             result = grade_result(actual, candidate.market_line, candidate.direction)
             if result not in {"win", "loss"}:
                 continue
+            settled_count += 1
             balanced = float(candidate.final_hit_probability)
             market = float(candidate.market_implied_probability)
             price = float(candidate.selected_side_price)
@@ -390,7 +411,42 @@ def harvest_rows() -> tuple[list[dict[str, Any]], dict[str, str]]:
                 # EV then reproduces v19's first ranking axis within each group.
                 "v19_order_score": base_ev + (1000.0 if v19_eligible else 0.0),
             })
-    return rows, errors
+        funnel[date] = {
+            "total_candidates": len(candidates),
+            "family_h_over_0_5": family_count,
+            "family_real_priced": real_priced_count,
+            "family_real_priced_settled": settled_count,
+        }
+    return rows, errors, funnel
+
+
+def _describe_bottleneck(funnel: dict[str, dict[str, int]]) -> str:
+    """Which staged filter is throwing away the most per-date opportunities?
+
+    Returned as a plain-language label the report reviewer can act on:
+    "upstream_price_capture" points at market-data ingestion gaps outside
+    V3; "upstream_settlement_lookup" points at a lookup key mismatch in
+    the processed data; "family_scope_filter" is the intended narrowness
+    (H OVER 0.5 only); "insufficient_history" says the archive itself is
+    too thin. Diagnostic label only -- it never changes what V3 accepts."""
+    if not funnel:
+        return "no_pool_csvs_available"
+    with_family = sum(1 for v in funnel.values() if v["family_h_over_0_5"] > 0)
+    with_priced = sum(1 for v in funnel.values() if v["family_real_priced"] > 0)
+    with_settled = sum(1 for v in funnel.values() if v["family_real_priced_settled"] > 0)
+    if with_settled == 0 and with_priced == 0 and with_family == 0:
+        return "family_scope_filter"
+    if with_family > 0 and with_priced == 0:
+        return "upstream_price_capture"
+    price_gap = with_family - with_priced
+    settle_gap = with_priced - with_settled
+    if price_gap > settle_gap and price_gap > 0:
+        return "upstream_price_capture"
+    if settle_gap > 0:
+        return "upstream_settlement_lookup"
+    if with_settled < MIN_LOCKED_SLATES + V4_RESERVE_MOST_RECENT_SLATES:
+        return "insufficient_history"
+    return "no_material_bottleneck"
 
 
 def _partition_dates(all_dates: list[str]) -> tuple[list[str], list[str], list[str]]:
@@ -415,7 +471,7 @@ def _partition_dates(all_dates: list[str]) -> tuple[list[str], list[str], list[s
 
 
 def run() -> dict[str, Any]:
-    rows, errors = harvest_rows()
+    rows, errors, funnel = harvest_rows()
     dates = sorted({row["date"] for row in rows})
     derivation_dates, locked_dates, reserve_dates = _partition_dates(dates)
     derivation_metrics = evaluate_rows([row for row in rows if row["date"] in derivation_dates])
@@ -456,6 +512,14 @@ def run() -> dict[str, Any]:
         "locked_dates": locked_dates,
         "v4_reserve_dates": reserve_dates,
         "load_errors": errors,
+        "harvest_diagnostics": {
+            "per_date_funnel": funnel,
+            "dates_with_any_candidates": sum(1 for v in funnel.values() if v["total_candidates"] > 0),
+            "dates_with_family_h_over_0_5": sum(1 for v in funnel.values() if v["family_h_over_0_5"] > 0),
+            "dates_with_family_real_priced": sum(1 for v in funnel.values() if v["family_real_priced"] > 0),
+            "dates_with_family_real_priced_settled": sum(1 for v in funnel.values() if v["family_real_priced_settled"] > 0),
+            "primary_bottleneck": _describe_bottleneck(funnel),
+        },
         "derivation": summarize(derivation_metrics, phase="derivation"),
         "locked": summarize(locked_metrics, phase="locked"),
         "locked_slate_metrics": [asdict(metric) for metric in locked_metrics],

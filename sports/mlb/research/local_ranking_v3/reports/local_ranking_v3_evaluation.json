@@ -1,0 +1,405 @@
+{
+  "dates": [
+    "2026-08-05",
+    "2026-08-07",
+    "2026-08-08",
+    "2026-08-09",
+    "2026-08-10",
+    "2026-08-11"
+  ],
+  "derivation": {
+    "independent_slates": 0,
+    "paired_comparisons": {
+      "base_ev": {
+        "delta_bootstrap_lcb": null,
+        "delta_lcb": null,
+        "left": "balanced_probability",
+        "mean_concordance_delta": null,
+        "paired_slates": 0,
+        "right": "base_ev"
+      },
+      "market_probability": {
+        "delta_bootstrap_lcb": null,
+        "delta_lcb": null,
+        "left": "balanced_probability",
+        "mean_concordance_delta": null,
+        "paired_slates": 0,
+        "right": "market_probability"
+      },
+      "v19_order_score": {
+        "delta_bootstrap_lcb": null,
+        "delta_lcb": null,
+        "left": "balanced_probability",
+        "mean_concordance_delta": null,
+        "paired_slates": 0,
+        "right": "v19_order_score"
+      }
+    },
+    "phase": "derivation",
+    "score_summaries": {
+      "balanced_probability": {
+        "auc_defined_slates": 0,
+        "comparable_pairs_descriptive_only": 0,
+        "concordance_bootstrap_lcb": null,
+        "concordance_lcb": null,
+        "mean_slate_concordance": null,
+        "mean_top_1_hit_rate": null,
+        "mean_top_1_lift": null,
+        "mean_top_3_hit_rate": null,
+        "mean_top_3_lift": null,
+        "mean_top_5_hit_rate": null,
+        "mean_top_5_lift": null,
+        "slates": 0
+      },
+      "base_ev": {
+        "auc_defined_slates": 0,
+        "comparable_pairs_descriptive_only": 0,
+        "concordance_bootstrap_lcb": null,
+        "concordance_lcb": null,
+        "mean_slate_concordance": null,
+        "mean_top_1_hit_rate": null,
+        "mean_top_1_lift": null,
+        "mean_top_3_hit_rate": null,
+        "mean_top_3_lift": null,
+        "mean_top_5_hit_rate": null,
+        "mean_top_5_lift": null,
+        "slates": 0
+      },
+      "market_probability": {
+        "auc_defined_slates": 0,
+        "comparable_pairs_descriptive_only": 0,
+        "concordance_bootstrap_lcb": null,
+        "concordance_lcb": null,
+        "mean_slate_concordance": null,
+        "mean_top_1_hit_rate": null,
+        "mean_top_1_lift": null,
+        "mean_top_3_hit_rate": null,
+        "mean_top_3_lift": null,
+        "mean_top_5_hit_rate": null,
+        "mean_top_5_lift": null,
+        "slates": 0
+      },
+      "v19_order_score": {
+        "auc_defined_slates": 0,
+        "comparable_pairs_descriptive_only": 0,
+        "concordance_bootstrap_lcb": null,
+        "concordance_lcb": null,
+        "mean_slate_concordance": null,
+        "mean_top_1_hit_rate": null,
+        "mean_top_1_lift": null,
+        "mean_top_3_hit_rate": null,
+        "mean_top_3_lift": null,
+        "mean_top_5_hit_rate": null,
+        "mean_top_5_lift": null,
+        "slates": 0
+      }
+    },
+    "status": "DERIVATION_ONLY"
+  },
+  "derivation_dates": [],
+  "harvest_diagnostics": {
+    "dates_with_any_candidates": 27,
+    "dates_with_family_h_over_0_5": 26,
+    "dates_with_family_real_priced": 8,
+    "dates_with_family_real_priced_settled": 6,
+    "per_date_funnel": {
+      "20260405": {
+        "family_h_over_0_5": 0,
+        "family_real_priced": 0,
+        "family_real_priced_settled": 0,
+        "total_candidates": 3
+      },
+      "20260410": {
+        "family_h_over_0_5": 3,
+        "family_real_priced": 0,
+        "family_real_priced_settled": 0,
+        "total_candidates": 354
+      },
+      "20260426": {
+        "family_h_over_0_5": 137,
+        "family_real_priced": 0,
+        "family_real_priced_settled": 0,
+        "total_candidates": 1632
+      },
+      "20260427": {
+        "family_h_over_0_5": 112,
+        "family_real_priced": 0,
+        "family_real_priced_settled": 0,
+        "total_candidates": 816
+      },
+      "20260429": {
+        "family_h_over_0_5": 157,
+        "family_real_priced": 0,
+        "family_real_priced_settled": 0,
+        "total_candidates": 1575
+      },
+      "20260501": {
+        "family_h_over_0_5": 151,
+        "family_real_priced": 0,
+        "family_real_priced_settled": 0,
+        "total_candidates": 1515
+      },
+      "20260619": {
+        "family_h_over_0_5": 162,
+        "family_real_priced": 0,
+        "family_real_priced_settled": 0,
+        "total_candidates": 1521
+      },
+      "20260620": {
+        "family_h_over_0_5": 192,
+        "family_real_priced": 0,
+        "family_real_priced_settled": 0,
+        "total_candidates": 1541
+      },
+      "20260621": {
+        "family_h_over_0_5": 218,
+        "family_real_priced": 0,
+        "family_real_priced_settled": 0,
+        "total_candidates": 1690
+      },
+      "20260626": {
+        "family_h_over_0_5": 223,
+        "family_real_priced": 0,
+        "family_real_priced_settled": 0,
+        "total_candidates": 1673
+      },
+      "20260627": {
+        "family_h_over_0_5": 200,
+        "family_real_priced": 0,
+        "family_real_priced_settled": 0,
+        "total_candidates": 1619
+      },
+      "20260729": {
+        "family_h_over_0_5": 242,
+        "family_real_priced": 0,
+        "family_real_priced_settled": 0,
+        "total_candidates": 1837
+      },
+      "20260730": {
+        "family_h_over_0_5": 143,
+        "family_real_priced": 0,
+        "family_real_priced_settled": 0,
+        "total_candidates": 1093
+      },
+      "20260731": {
+        "family_h_over_0_5": 222,
+        "family_real_priced": 0,
+        "family_real_priced_settled": 0,
+        "total_candidates": 1647
+      },
+      "20260801": {
+        "family_h_over_0_5": 230,
+        "family_real_priced": 0,
+        "family_real_priced_settled": 0,
+        "total_candidates": 1730
+      },
+      "20260802": {
+        "family_h_over_0_5": 218,
+        "family_real_priced": 0,
+        "family_real_priced_settled": 0,
+        "total_candidates": 1631
+      },
+      "20260803": {
+        "family_h_over_0_5": 106,
+        "family_real_priced": 0,
+        "family_real_priced_settled": 0,
+        "total_candidates": 894
+      },
+      "20260804": {
+        "family_h_over_0_5": 216,
+        "family_real_priced": 0,
+        "family_real_priced_settled": 0,
+        "total_candidates": 1653
+      },
+      "20260805": {
+        "family_h_over_0_5": 236,
+        "family_real_priced": 206,
+        "family_real_priced_settled": 190,
+        "total_candidates": 1627
+      },
+      "20260806": {
+        "family_h_over_0_5": 153,
+        "family_real_priced": 0,
+        "family_real_priced_settled": 0,
+        "total_candidates": 1122
+      },
+      "20260807": {
+        "family_h_over_0_5": 235,
+        "family_real_priced": 221,
+        "family_real_priced_settled": 205,
+        "total_candidates": 1575
+      },
+      "20260808": {
+        "family_h_over_0_5": 233,
+        "family_real_priced": 223,
+        "family_real_priced_settled": 208,
+        "total_candidates": 1565
+      },
+      "20260809": {
+        "family_h_over_0_5": 226,
+        "family_real_priced": 216,
+        "family_real_priced_settled": 192,
+        "total_candidates": 1617
+      },
+      "20260810": {
+        "family_h_over_0_5": 148,
+        "family_real_priced": 144,
+        "family_real_priced_settled": 133,
+        "total_candidates": 1045
+      },
+      "20260811": {
+        "family_h_over_0_5": 233,
+        "family_real_priced": 219,
+        "family_real_priced_settled": 202,
+        "total_candidates": 1585
+      },
+      "20260827": {
+        "family_h_over_0_5": 94,
+        "family_real_priced": 17,
+        "family_real_priced_settled": 0,
+        "total_candidates": 714
+      },
+      "20260828": {
+        "family_h_over_0_5": 241,
+        "family_real_priced": 221,
+        "family_real_priced_settled": 0,
+        "total_candidates": 1534
+      }
+    },
+    "primary_bottleneck": "upstream_price_capture"
+  },
+  "limitations": [
+    "Archived candidates are reconstructed with currently available calibration state because full point-in-time candidate snapshots do not exist.",
+    "Retrospective locked results are therefore diagnostic; prospective frozen slates are required for certification.",
+    "Slate clustering subsumes shared-game dependence for primary inference."
+  ],
+  "load_errors": {},
+  "locked": {
+    "independent_slates": 0,
+    "paired_comparisons": {
+      "base_ev": {
+        "delta_bootstrap_lcb": null,
+        "delta_lcb": null,
+        "left": "balanced_probability",
+        "mean_concordance_delta": null,
+        "paired_slates": 0,
+        "right": "base_ev"
+      },
+      "market_probability": {
+        "delta_bootstrap_lcb": null,
+        "delta_lcb": null,
+        "left": "balanced_probability",
+        "mean_concordance_delta": null,
+        "paired_slates": 0,
+        "right": "market_probability"
+      },
+      "v19_order_score": {
+        "delta_bootstrap_lcb": null,
+        "delta_lcb": null,
+        "left": "balanced_probability",
+        "mean_concordance_delta": null,
+        "paired_slates": 0,
+        "right": "v19_order_score"
+      }
+    },
+    "phase": "locked",
+    "score_summaries": {
+      "balanced_probability": {
+        "auc_defined_slates": 0,
+        "comparable_pairs_descriptive_only": 0,
+        "concordance_bootstrap_lcb": null,
+        "concordance_lcb": null,
+        "mean_slate_concordance": null,
+        "mean_top_1_hit_rate": null,
+        "mean_top_1_lift": null,
+        "mean_top_3_hit_rate": null,
+        "mean_top_3_lift": null,
+        "mean_top_5_hit_rate": null,
+        "mean_top_5_lift": null,
+        "slates": 0
+      },
+      "base_ev": {
+        "auc_defined_slates": 0,
+        "comparable_pairs_descriptive_only": 0,
+        "concordance_bootstrap_lcb": null,
+        "concordance_lcb": null,
+        "mean_slate_concordance": null,
+        "mean_top_1_hit_rate": null,
+        "mean_top_1_lift": null,
+        "mean_top_3_hit_rate": null,
+        "mean_top_3_lift": null,
+        "mean_top_5_hit_rate": null,
+        "mean_top_5_lift": null,
+        "slates": 0
+      },
+      "market_probability": {
+        "auc_defined_slates": 0,
+        "comparable_pairs_descriptive_only": 0,
+        "concordance_bootstrap_lcb": null,
+        "concordance_lcb": null,
+        "mean_slate_concordance": null,
+        "mean_top_1_hit_rate": null,
+        "mean_top_1_lift": null,
+        "mean_top_3_hit_rate": null,
+        "mean_top_3_lift": null,
+        "mean_top_5_hit_rate": null,
+        "mean_top_5_lift": null,
+        "slates": 0
+      },
+      "v19_order_score": {
+        "auc_defined_slates": 0,
+        "comparable_pairs_descriptive_only": 0,
+        "concordance_bootstrap_lcb": null,
+        "concordance_lcb": null,
+        "mean_slate_concordance": null,
+        "mean_top_1_hit_rate": null,
+        "mean_top_1_lift": null,
+        "mean_top_3_hit_rate": null,
+        "mean_top_3_lift": null,
+        "mean_top_5_hit_rate": null,
+        "mean_top_5_lift": null,
+        "slates": 0
+      }
+    },
+    "status": "INSUFFICIENT_INDEPENDENT_SLATES"
+  },
+  "locked_dates": [],
+  "locked_slate_metrics": [],
+  "preregistration": {
+    "acceptance": [
+      "balanced concordance LCB > 0.5 AND slate-clustered bootstrap agrees",
+      "balanced-minus-market concordance LCB > 0 AND slate-clustered bootstrap agrees",
+      "balanced-minus-v19 concordance LCB > 0 AND slate-clustered bootstrap agrees",
+      "locked_slates >= 30 for RANKING_SIGNAL_ACCEPTED (else SHADOW_ELIGIBLE_PENDING_MORE_SLATES)"
+    ],
+    "bootstrap_lower_quantile": 0.025000000000000022,
+    "bootstrap_resamples": 10000,
+    "confidence": 0.975,
+    "derivation_slates": 4,
+    "family": [
+      "H",
+      "OVER",
+      0.5
+    ],
+    "minimum_locked_slates": 8,
+    "pair_count_is_independent_evidence": false,
+    "primary_estimand": "equal-slate mean within-slate winner-loser concordance",
+    "promotion_min_slates": 30,
+    "slate_is_independent_evidence": true,
+    "spec_hash": "88bc499be03520db9b12f0951dfed9fd1fa5da4b003eb055523dd4beddcb02a2",
+    "v4_reserve_most_recent_slates": 10
+  },
+  "publication_authority": false,
+  "rows": 1130,
+  "v19_unchanged": true,
+  "v2_unchanged": true,
+  "v4_reserve_dates": [
+    "2026-08-05",
+    "2026-08-07",
+    "2026-08-08",
+    "2026-08-09",
+    "2026-08-10",
+    "2026-08-11"
+  ],
+  "version": "balanced_probability_within_slate_ranking_v3_preregistered"
+}
