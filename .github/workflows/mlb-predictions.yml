@@ -8,8 +8,11 @@ on:
       - 'sports/mlb/scripts/enrich_parlay_leg_betslip.py'
       - 'sports/mlb/scripts/export_web_prediction_payload.py'
       - 'sports/mlb/scripts/select_high_hit_parlay.py'
+      - 'sports/mlb/scripts/build_exotic_market_shadow.py'
+      - 'sports/mlb/tests/test_build_exotic_market_shadow.py'
       - 'sports/mlb/web/predictions.js'
       - 'sports/mlb/web/predictions.html'
+      - 'sports/site/pipeline/build_static_site.py'
       - 'sports/site/pipeline/run_daily_predictions.py'
       - '.github/workflows/mlb-predictions.yml'
   schedule:
@@ -128,6 +131,7 @@ jobs:
           bash sports/mlb/scripts/validate_pitcher_parlay_pipeline.sh test
           bash sports/mlb/scripts/validate_same_game_pipeline.sh pipeline --run-date "$RUN_DATE"
           bash sports/mlb/scripts/validate_pitcher_parlay_pipeline.sh pipeline --run-date "$RUN_DATE"
+          python sports/mlb/scripts/build_exotic_market_shadow.py
 
           args=(
             --run-date "$RUN_DATE"
@@ -161,6 +165,7 @@ jobs:
             sports/mlb/web/data/daily_predictions.json \
             sports/mlb/web/data/same_game_predictions.json \
             sports/mlb/web/data/pitcher_parlay_predictions.json \
+            sports/mlb/web/data/exotic_market_predictions.json \
             sports/mlb/web/data/history/index.json \
             sports/mlb/web/data/history/*.json \
             dist/mlb \
