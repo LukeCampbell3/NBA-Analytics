@@ -51,6 +51,8 @@ MLB_GENERATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "generate_daily_predi
 MLB_GOVERNANCE_CAPTURE = REPO_ROOT / "sports" / "mlb" / "governance" / "capture_complete_slate.py"
 MLB_PROVIDER_OBSERVATIONS = REPO_ROOT / "sports" / "mlb" / "data" / "raw" / "market_odds" / "mlb" / "odds_api_io" / "latest_provider_observations.csv"
 MLB_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_high_precision_predictions.py"
+MLB_BALANCED_RANKING_V3_PROSPECTIVE = REPO_ROOT / "sports" / "mlb" / "scripts" / "prospective_balanced_ranking_v3.py"
+MLB_BALANCED_RANKING_V3_ROOT = REPO_ROOT / "sports" / "mlb" / "data" / "predictions" / "balanced_ranking_v3_prospective"
 MLB_PARLAY_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_daily_parlay.py"
 # PARLAY_POLICY_V2 -- a SEPARATE product path (mission: MLB dual-path
 # integration). Runs additively alongside, never in place of,
@@ -1069,6 +1071,31 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
         extra_args=MLB_PRIMARY_POLICY_ARGS,
         refresh_history=bool(args.mlb_refresh_history_caches),
     )
+    # BALANCED_RANKING_V3 prospective shadow evidence. Capture the entire
+    # real-priced H OVER 0.5 comparison slate after calibration, including
+    # candidates rejected by v19. Settlement is a distinct later-date record;
+    # neither operation reads or writes the public payload. This remains
+    # best-effort so research collection can never block singles publication.
+    try:
+        run_step(
+            "Settle Prior MLB Balanced-Ranking V3 Snapshots",
+            [
+                args.python, str(MLB_BALANCED_RANKING_V3_PROSPECTIVE), "settle",
+                "--root", str(MLB_BALANCED_RANKING_V3_ROOT),
+                "--processed-root", str(args.mlb_data_dir.resolve()),
+                "--as-of-date", resolve_effective_run_date(args.run_date).isoformat(),
+            ],
+        )
+        run_step(
+            "Capture MLB Balanced-Ranking V3 Pregame Snapshot",
+            [
+                args.python, str(MLB_BALANCED_RANKING_V3_PROSPECTIVE), "capture",
+                "--pool-csv", str(pool_csv),
+                "--root", str(MLB_BALANCED_RANKING_V3_ROOT),
+            ],
+        )
+    except Exception as exc:  # noqa: BLE001 -- shadow evidence must not block publication
+        print(f"[warning] Balanced-ranking V3 prospective collection failed: {format_step_failure(exc)}")
     standard_selected_csv, standard_summary_json = derive_mlb_selector_outputs(pool_csv)
     market_profile = load_mlb_market_profile(pool_csv) if pool_csv.exists() else {
         "rows": 0,

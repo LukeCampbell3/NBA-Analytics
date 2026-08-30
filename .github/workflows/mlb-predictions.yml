@@ -177,7 +177,8 @@ jobs:
             sports/mlb/data/raw/market_odds/mlb/odds_api_io/history_player_props_long.parquet \
             sports/mlb/data/raw/market_odds/mlb/odds_api_io/history_player_props_wide.csv \
             sports/mlb/data/raw/market_odds/mlb/odds_api_io/history_player_props_wide.parquet \
-            sports/mlb/data/raw/market_odds/mlb/odds_api_io/latest_manifest.json
+            sports/mlb/data/raw/market_odds/mlb/odds_api_io/latest_manifest.json \
+            sports/mlb/data/predictions/balanced_ranking_v3_prospective
           do
             if [ -e "$optional_path" ]; then
               git add -f -- "$optional_path"
