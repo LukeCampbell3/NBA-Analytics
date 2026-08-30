@@ -1,0 +1,103 @@
+{
+  "authorization_status": "SHADOW_ONLY",
+  "candidate_count": 1,
+  "candidates": [
+    {
+      "authorization_status": "SHADOW_ONLY",
+      "away_team": "CIN",
+      "deeplinks_by_region": {
+        "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.183841997&selectionId=7017906",
+        "AZ": "https://sportsbook.fanduel.com/addToBetslip?marketId=704.183580988&selectionId=7017906",
+        "CO": "https://sportsbook.fanduel.com/addToBetslip?marketId=708.183636352&selectionId=7017906",
+        "CT": "https://sportsbook.fanduel.com/addToBetslip?marketId=709.183349200&selectionId=7017906",
+        "DC": "https://sportsbook.fanduel.com/addToBetslip?marketId=711.183671225&selectionId=7017906",
+        "IA": "https://sportsbook.fanduel.com/addToBetslip?marketId=719.183644396&selectionId=7017906",
+        "IL": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.183653557&selectionId=7017906",
+        "IN": "https://sportsbook.fanduel.com/addToBetslip?marketId=718.183649560&selectionId=7017906",
+        "KS": "https://sportsbook.fanduel.com/addToBetslip?marketId=720.183468981&selectionId=7017906",
+        "KY": "https://sportsbook.fanduel.com/addToBetslip?marketId=721.183652021&selectionId=7017906",
+        "LA": "https://sportsbook.fanduel.com/addToBetslip?marketId=722.183297885&selectionId=7017906",
+        "MA": "https://sportsbook.fanduel.com/addToBetslip?marketId=725.183641784&selectionId=7017906",
+        "MD": "https://sportsbook.fanduel.com/addToBetslip?marketId=724.183650914&selectionId=7017906",
+        "MI": "https://sportsbook.fanduel.com/addToBetslip?marketId=726.183636747&selectionId=7017906",
+        "MO": "https://sportsbook.fanduel.com/addToBetslip?marketId=729.184028316&selectionId=7017906",
+        "NC": "https://sportsbook.fanduel.com/addToBetslip?marketId=737.183645488&selectionId=7017906",
+        "NJ": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183515655&selectionId=7017906",
+        "NY": "https://sportsbook.fanduel.com/addToBetslip?marketId=736.183291562&selectionId=7017906",
+        "OH": "https://sportsbook.fanduel.com/addToBetslip?marketId=739.183513566&selectionId=7017906",
+        "PA": "https://sportsbook.fanduel.com/addToBetslip?marketId=742.183512079&selectionId=7017906",
+        "TN": "https://sportsbook.fanduel.com/addToBetslip?marketId=747.183604161&selectionId=7017906",
+        "VA": "https://sportsbook.fanduel.com/addToBetslip?marketId=751.183610583&selectionId=7017906",
+        "VT": "https://sportsbook.fanduel.com/addToBetslip?marketId=750.183617011&selectionId=7017906",
+        "WV": "https://sportsbook.fanduel.com/addToBetslip?marketId=754.183657326&selectionId=7017906",
+        "WY": "https://sportsbook.fanduel.com/addToBetslip?marketId=756.183453374&selectionId=7017906"
+      },
+      "event_date": "2026-08-30",
+      "expected_value_per_unit": 0.2629365384615385,
+      "game_id": "824636",
+      "home_team": "CHC",
+      "line": 9.0,
+      "market": "game_total",
+      "model_probability": 0.64385,
+      "price_american": -104,
+      "publication_authority": false,
+      "side": "under",
+      "sportsbook": "fanduel",
+      "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183515655&selectionId=7017906",
+      "support_blocking_dimensions": [
+        "market_support",
+        "line_support",
+        "state_support"
+      ]
+    }
+  ],
+  "generated_at_utc": "2026-08-30T21:06:50.264159+00:00",
+  "market_registry": [
+    {
+      "market": "game_total_runs",
+      "readiness": "SCORABLE_SHADOW",
+      "reason": "Existing joint game simulation and live total price.",
+      "source_market": "game_total"
+    },
+    {
+      "market": "first_5_total_runs",
+      "readiness": "SCORABLE_SHADOW",
+      "reason": "Existing first-five simulation and live total price.",
+      "source_market": "first_5_innings_total"
+    },
+    {
+      "market": "team_total_runs",
+      "readiness": "DISCOVERY",
+      "reason": "Requires live team-total parsing and a team-specific run distribution.",
+      "source_market": null
+    },
+    {
+      "market": "team_hits",
+      "readiness": "MODEL_REQUIRED",
+      "reason": "Requires a calibrated team-hit count model and box-score settlement.",
+      "source_market": null
+    },
+    {
+      "market": "pitcher_strikeouts_inning",
+      "readiness": "EVENT_MODEL_REQUIRED",
+      "reason": "Requires pitch/play sequence data and inning settlement.",
+      "source_market": null
+    },
+    {
+      "market": "pitcher_pitches_inning",
+      "readiness": "EVENT_MODEL_REQUIRED",
+      "reason": "Requires pitch counts by inning and pitcher-removal rules.",
+      "source_market": null
+    },
+    {
+      "market": "plate_appearance_pitch_count",
+      "readiness": "EVENT_MODEL_REQUIRED",
+      "reason": "Requires an exact plate-appearance identifier and pitch-event model.",
+      "source_market": null
+    }
+  ],
+  "policy": "EXOTIC_MARKETS_V1_SHADOW",
+  "publication_authority": false,
+  "run_date": "2026-08-30",
+  "status": "ok"
+}

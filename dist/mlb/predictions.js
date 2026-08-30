@@ -14,6 +14,7 @@ class DailyPredictionsPage {
             pitcherParlayContent: document.getElementById("pitcherParlayContent"),
             highHitParlayContent: document.getElementById("highHitParlayContent"),
             v4SinglesContent: document.getElementById("v4SinglesContent"),
+            exoticMarketsContent: document.getElementById("exoticMarketsContent"),
             dateNav: document.getElementById("predictionDateNav"),
         };
         this.init();
@@ -34,6 +35,7 @@ class DailyPredictionsPage {
         this.loadSameGameParlay();
         this.loadPitcherParlay();
         this.loadHighHitParlay();
+        this.loadExoticMarkets();
     }
 
     mountShell() {
@@ -440,7 +442,7 @@ class DailyPredictionsPage {
         const withheld = best.withheld ? "Best real priced fallback — withheld from the tight-quality set." : "";
 
         content.innerHTML = this.sameGameParlayHeader() + `
-            <div class="same-game-parlay__grid">${this.renderSameGameCombo(best.game, best.combo)}</div>
+            <div class="same-game-parlay__grid">${this.renderSameGameCombo(best.game, best.combo, best.withheld)}</div>
             ${withheld ? `<p class="daily-parlay__state">${this.escapeHtml(withheld)}</p>` : ""}
             ${extraCount > 0 ? `<p class="daily-parlay__state">+${extraCount} more real combo${extraCount === 1 ? "" : "s"} priced across today's slate</p>` : ""}
             <p class="daily-parlay__state">${this.escapeHtml(statusFooter)}</p>
@@ -455,7 +457,7 @@ class DailyPredictionsPage {
         `;
     }
 
-    renderSameGameCombo(game, combo) {
+    renderSameGameCombo(game, combo, isWithheldFallback = false) {
         const matchup = `${this.escapeHtml(game.away_team || "")} @ ${this.escapeHtml(game.home_team || "")}`;
         const starters = `${this.escapeHtml(game.away_starter_name || "TBD")} vs ${this.escapeHtml(game.home_starter_name || "TBD")}`;
         const authorized = Boolean(combo.candidate_authorized);
@@ -748,6 +750,64 @@ class DailyPredictionsPage {
                 ["Book", leg.sportsbook || ""],
             ],
             settlementRow: leg,
+        });
+    }
+
+    async loadExoticMarkets() {
+        const content = this.elements.exoticMarketsContent;
+        if (!content) return;
+        try {
+            const response = await fetch(`data/exotic_market_predictions.json?v=${Date.now()}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            this.exoticMarketsData = await response.json();
+        } catch (_error) {
+            this.exoticMarketsData = null;
+        }
+        this.renderExoticMarkets();
+    }
+
+    renderExoticMarkets() {
+        const content = this.elements.exoticMarketsContent;
+        if (!content) return;
+        const data = this.exoticMarketsData;
+        if (!data || data.status !== "ok") {
+            content.innerHTML = `<p class="daily-parlay__empty">No current exotic-market report is available.</p>`;
+            return;
+        }
+        const candidates = Array.isArray(data.candidates) ? data.candidates.slice(0, 6) : [];
+        const registry = Array.isArray(data.market_registry) ? data.market_registry : [];
+        const cards = candidates.map((candidate, index) => this.renderExoticCandidate(candidate, index + 1)).join("");
+        const blocked = registry
+            .filter((market) => !String(market.readiness || "").startsWith("SCORABLE"))
+            .map((market) => `${market.market}: ${market.readiness}`)
+            .join(" / ");
+        content.innerHTML = `
+            <div class="daily-parlay__header daily-parlay__header--status-only">
+                ${window.CardVault ? window.CardVault.renderStatusPill("stale", "Shadow only") : ""}
+            </div>
+            ${cards ? `<div class="vault-board vault-board--legs">${cards}</div>` : `<p class="daily-parlay__empty">No matching real total lines are priced yet.</p>`}
+            <p class="daily-parlay__state">Policy: ${this.escapeHtml(data.policy || "EXOTIC_MARKETS_V1_SHADOW")} / Scored: ${candidates.length} / Execution: not authorized</p>
+            <p class="daily-parlay__state">Model gates: ${this.escapeHtml(blocked || "none")}</p>
+        `;
+    }
+
+    renderExoticCandidate(candidate, index) {
+        if (!window.CardVault) return "";
+        const matchup = `${candidate.away_team || "?"} @ ${candidate.home_team || "?"}`;
+        const side = String(candidate.side || "").toLowerCase() === "under" ? "Under" : "Over";
+        return window.CardVault.renderLegCard({
+            rank: index,
+            monogram: "XM",
+            name: `${side} ${this.formatNumber(candidate.line, 1)}`,
+            market: this.formatSameGameMarketLabel(candidate.market),
+            context: matchup,
+            metrics: [
+                ["Probability", this.formatPct(candidate.model_probability)],
+                ["Diagnostic EV", this.formatSignedPct(candidate.expected_value_per_unit)],
+                ["Odds", this.formatAmerican(candidate.price_american)],
+            ],
+            betslipUrl: candidate.sportsbook_deeplink || "",
+            deeplinksByRegion: candidate.deeplinks_by_region || null,
         });
     }
 
