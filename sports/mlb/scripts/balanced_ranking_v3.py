@@ -8,12 +8,33 @@ is incrementally better than market probability and the v19 policy order.
 Candidate pairs improve measurement within a slate; they are never counted as
 independent evidence. All inference equal-weights independent slates. The first
 four available slates are derivation-only. Later slates are locked evaluation,
-with at least eight required before any acceptance decision.
+with at least eight slates required before any acceptance decision can be
+computed at all, and at least PROMOTION_MIN_SLATES required before an
+ACCEPTED status can be assigned (the intermediate window returns
+SHADOW_ELIGIBLE_PENDING_MORE_SLATES so a real ranking signal is visible while
+its slate-level evidence base is still accumulating). The most recent
+V4_RESERVE_MOST_RECENT_SLATES slates before the run date are held back
+entirely and belong to no evaluation phase, so a future study never has to
+compete with a data source V3 has already touched.
+
+Every LCB check is redundantly confirmed by a slate-clustered paired
+bootstrap of the same statistic; if the LCB says pass and the bootstrap says
+fail (or vice versa) the run reports BOOTSTRAP_LCB_DISAGREEMENT rather than
+picking a winner between the two methods -- disagreement itself is a
+promotion-blocking finding, not a tie-breaker.
+
+The frozen critical spec values (family, slate thresholds, confidence,
+reserve size, acceptance rules) are hashed into PREREGISTRATION_SPEC_HASH.
+An accompanying test recomputes that hash and fails CI if any of them are
+edited without an accompanying update to the hash constant -- silent
+loosening of the preregistration is a promotion-invalidating event by
+construction rather than by convention.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import sys
@@ -43,7 +64,24 @@ DIRECTION = "OVER"
 LINE = 0.5
 DERIVATION_SLATES = 4
 MIN_LOCKED_SLATES = 8
+# ACCEPTED status is reserved for runs that also have a real, thicker slate
+# base -- 30 is the classical CLT threshold and matches the user's own
+# framing that same-slate pairwise ranking is cheaper than V2's absolute
+# residual estimation (which needed 93-158 slates), but a slate list of 8
+# is still on the thin end for a promotion claim about live production.
+PROMOTION_MIN_SLATES = 30
 CONFIDENCE = 0.975
+# One-sided coverage for the paired slate-clustered bootstrap that
+# redundantly confirms each LCB decision. Same value as CONFIDENCE so
+# both methods target the same nominal coverage; disagreement is then a
+# methodological finding, not a design difference.
+BOOTSTRAP_LOWER_QUANTILE = 1.0 - CONFIDENCE
+BOOTSTRAP_RESAMPLES = 10_000
+# Reserved future-study slates: the last N real evaluated dates in the
+# input row set are dropped from BOTH derivation and locked partitions,
+# so a follow-up preregistration in the same problem family has clean
+# forward-only slates that V3 has never observed.
+V4_RESERVE_MOST_RECENT_SLATES = 10
 TOP_K = (1, 3, 5)
 SCORE_FIELDS = (
     "balanced_probability",
@@ -51,6 +89,41 @@ SCORE_FIELDS = (
     "base_ev",
     "v19_order_score",
 )
+
+
+def _preregistration_spec_hash() -> str:
+    """SHA-256 of the frozen critical constants. Any silent edit to these
+    values changes the hash and fails the accompanying test in
+    test_balanced_ranking_v3.py -- a promotion-invalidating event by
+    construction."""
+    payload = json.dumps(
+        {
+            "V3_VERSION": V3_VERSION,
+            "TARGET": TARGET,
+            "DIRECTION": DIRECTION,
+            "LINE": LINE,
+            "DERIVATION_SLATES": DERIVATION_SLATES,
+            "MIN_LOCKED_SLATES": MIN_LOCKED_SLATES,
+            "PROMOTION_MIN_SLATES": PROMOTION_MIN_SLATES,
+            "CONFIDENCE": CONFIDENCE,
+            "BOOTSTRAP_LOWER_QUANTILE": BOOTSTRAP_LOWER_QUANTILE,
+            "BOOTSTRAP_RESAMPLES": BOOTSTRAP_RESAMPLES,
+            "V4_RESERVE_MOST_RECENT_SLATES": V4_RESERVE_MOST_RECENT_SLATES,
+            "TOP_K": list(TOP_K),
+            "SCORE_FIELDS": list(SCORE_FIELDS),
+            "acceptance_rules": [
+                "balanced concordance LCB > 0.5 AND bootstrap agrees",
+                "balanced-minus-market concordance LCB > 0 AND bootstrap agrees",
+                "balanced-minus-v19 concordance LCB > 0 AND bootstrap agrees",
+                "locked_slates >= PROMOTION_MIN_SLATES for ACCEPTED (else SHADOW_ELIGIBLE_PENDING_MORE_SLATES)",
+            ],
+        },
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+PREREGISTRATION_SPEC_HASH = _preregistration_spec_hash()
 
 
 @dataclass(frozen=True)
@@ -146,6 +219,23 @@ def evaluate_rows(rows: list[dict[str, Any]]) -> list[SlateRankingMetric]:
     ]
 
 
+def _slate_clustered_bootstrap_lower(values: list[float], *, resamples: int = BOOTSTRAP_RESAMPLES, seed: int = 20260830) -> float | None:
+    """One-sided lower confidence bound on the mean, computed by resampling
+    slates (never candidates) with replacement. Deterministic given the
+    seed so the same locked slate list always produces the same bound --
+    a run whose bound flips is a real numerical drift, not RNG jitter.
+
+    Returns None on an empty list so the surrounding summary can report
+    "not computable" rather than a fake zero."""
+    if not values:
+        return None
+    rng = np.random.default_rng(seed)
+    array = np.asarray(values, dtype=float)
+    idx = rng.integers(0, array.size, size=(resamples, array.size))
+    means = array[idx].mean(axis=1)
+    return float(np.quantile(means, BOOTSTRAP_LOWER_QUANTILE))
+
+
 def _score_summary(metrics: list[SlateRankingMetric], score: str) -> dict[str, Any]:
     selected = [metric for metric in metrics if metric.score == score]
     defined = [metric for metric in selected if metric.concordance is not None]
@@ -156,6 +246,7 @@ def _score_summary(metrics: list[SlateRankingMetric], score: str) -> dict[str, A
         "comparable_pairs_descriptive_only": sum(metric.comparable_pairs for metric in defined),
         "mean_slate_concordance": float(np.mean(concordance)) if concordance else None,
         "concordance_lcb": one_sided_mean_lcb(concordance, confidence=CONFIDENCE),
+        "concordance_bootstrap_lcb": _slate_clustered_bootstrap_lower(concordance),
         "mean_top_1_hit_rate": float(np.mean([metric.top_1_hit_rate for metric in selected])) if selected else None,
         "mean_top_3_hit_rate": float(np.mean([metric.top_3_hit_rate for metric in selected])) if selected else None,
         "mean_top_5_hit_rate": float(np.mean([metric.top_5_hit_rate for metric in selected])) if selected else None,
@@ -176,7 +267,21 @@ def _paired_delta(metrics: list[SlateRankingMetric], left: str, right: str) -> d
         "paired_slates": len(delta),
         "mean_concordance_delta": float(np.mean(delta)) if delta else None,
         "delta_lcb": one_sided_mean_lcb(delta, confidence=CONFIDENCE),
+        "delta_bootstrap_lcb": _slate_clustered_bootstrap_lower(delta),
     }
+
+
+def _both_agree_above(threshold: float, lcb: float | None, bootstrap_lcb: float | None) -> tuple[bool, bool]:
+    """Return (agreement_ok, both_pass). Two-method agreement is required
+    to promote: if LCB and bootstrap disagree about whether the value
+    clears `threshold`, agreement_ok is False and the caller must report
+    BOOTSTRAP_LCB_DISAGREEMENT rather than treating either method as
+    authoritative."""
+    if lcb is None or bootstrap_lcb is None:
+        return True, False  # neither method has a signal; not disagreement, just no pass
+    lcb_passes = lcb > threshold
+    boot_passes = bootstrap_lcb > threshold
+    return lcb_passes == boot_passes, (lcb_passes and boot_passes)
 
 
 def summarize(metrics: list[SlateRankingMetric], *, phase: str) -> dict[str, Any]:
@@ -191,16 +296,38 @@ def summarize(metrics: list[SlateRankingMetric], *, phase: str) -> dict[str, Any
     elif locked_slates < MIN_LOCKED_SLATES:
         status = "INSUFFICIENT_INDEPENDENT_SLATES"
     else:
-        balanced_lcb = score_summaries["balanced_probability"]["concordance_lcb"]
-        market_lcb = comparisons["market_probability"]["delta_lcb"]
-        v19_lcb = comparisons["v19_order_score"]["delta_lcb"]
-        status = (
-            "RANKING_SIGNAL_ACCEPTED"
-            if balanced_lcb is not None and balanced_lcb > 0.5
-            and market_lcb is not None and market_lcb > 0.0
-            and v19_lcb is not None and v19_lcb > 0.0
-            else "RANKING_SIGNAL_NOT_ACCEPTED"
+        # Redundant two-method check for every production-relevant claim.
+        # Every one of the three must (a) have both methods agree and
+        # (b) have both methods pass their threshold. Disagreement on any
+        # one is a promotion-blocking finding by itself.
+        balanced_agree, balanced_pass = _both_agree_above(
+            0.5,
+            score_summaries["balanced_probability"]["concordance_lcb"],
+            score_summaries["balanced_probability"]["concordance_bootstrap_lcb"],
         )
+        market_agree, market_pass = _both_agree_above(
+            0.0,
+            comparisons["market_probability"]["delta_lcb"],
+            comparisons["market_probability"]["delta_bootstrap_lcb"],
+        )
+        v19_agree, v19_pass = _both_agree_above(
+            0.0,
+            comparisons["v19_order_score"]["delta_lcb"],
+            comparisons["v19_order_score"]["delta_bootstrap_lcb"],
+        )
+        if not (balanced_agree and market_agree and v19_agree):
+            status = "BOOTSTRAP_LCB_DISAGREEMENT"
+        elif not (balanced_pass and market_pass and v19_pass):
+            status = "RANKING_SIGNAL_NOT_ACCEPTED"
+        elif locked_slates < PROMOTION_MIN_SLATES:
+            # Every ranking check cleared; the only thing holding promotion
+            # back is the slate count. Report this explicitly so the signal
+            # is visible while its evidence base is still accumulating,
+            # rather than being silently collapsed into the same
+            # NOT_ACCEPTED bucket that failing-signal runs use.
+            status = "SHADOW_ELIGIBLE_PENDING_MORE_SLATES"
+        else:
+            status = "RANKING_SIGNAL_ACCEPTED"
     return {
         "phase": phase,
         "status": status,
@@ -266,11 +393,31 @@ def harvest_rows() -> tuple[list[dict[str, Any]], dict[str, str]]:
     return rows, errors
 
 
+def _partition_dates(all_dates: list[str]) -> tuple[list[str], list[str], list[str]]:
+    """Split the harvested slates into (derivation, locked, v4_reserve).
+
+    The reserve is the trailing V4_RESERVE_MOST_RECENT_SLATES dates; they
+    are dropped from both derivation and locked partitions here so a
+    follow-up preregistration in the same family has genuinely unseen
+    forward slates to work with. When fewer real dates exist than the
+    reserve is meant to hold, every date reserves and both other
+    partitions come back empty -- the correct behavior, not a bug: a
+    thin history should not be raided to give V3 something to grade."""
+    ordered = sorted(all_dates)
+    if V4_RESERVE_MOST_RECENT_SLATES <= 0 or len(ordered) <= V4_RESERVE_MOST_RECENT_SLATES:
+        reserve = list(ordered)
+        return [], [], reserve
+    reserve = ordered[-V4_RESERVE_MOST_RECENT_SLATES:]
+    evaluable = ordered[:-V4_RESERVE_MOST_RECENT_SLATES]
+    derivation = evaluable[:DERIVATION_SLATES]
+    locked = evaluable[DERIVATION_SLATES:]
+    return derivation, locked, reserve
+
+
 def run() -> dict[str, Any]:
     rows, errors = harvest_rows()
     dates = sorted({row["date"] for row in rows})
-    derivation_dates = dates[:DERIVATION_SLATES]
-    locked_dates = dates[DERIVATION_SLATES:]
+    derivation_dates, locked_dates, reserve_dates = _partition_dates(dates)
     derivation_metrics = evaluate_rows([row for row in rows if row["date"] in derivation_dates])
     locked_metrics = evaluate_rows([row for row in rows if row["date"] in locked_dates])
     return {
@@ -282,12 +429,18 @@ def run() -> dict[str, Any]:
             "family": [TARGET, DIRECTION, LINE],
             "derivation_slates": DERIVATION_SLATES,
             "minimum_locked_slates": MIN_LOCKED_SLATES,
+            "promotion_min_slates": PROMOTION_MIN_SLATES,
+            "v4_reserve_most_recent_slates": V4_RESERVE_MOST_RECENT_SLATES,
             "confidence": CONFIDENCE,
+            "bootstrap_lower_quantile": BOOTSTRAP_LOWER_QUANTILE,
+            "bootstrap_resamples": BOOTSTRAP_RESAMPLES,
+            "spec_hash": PREREGISTRATION_SPEC_HASH,
             "primary_estimand": "equal-slate mean within-slate winner-loser concordance",
             "acceptance": [
-                "balanced concordance LCB > 0.5",
-                "balanced-minus-market concordance LCB > 0",
-                "balanced-minus-v19 concordance LCB > 0",
+                "balanced concordance LCB > 0.5 AND slate-clustered bootstrap agrees",
+                "balanced-minus-market concordance LCB > 0 AND slate-clustered bootstrap agrees",
+                "balanced-minus-v19 concordance LCB > 0 AND slate-clustered bootstrap agrees",
+                f"locked_slates >= {PROMOTION_MIN_SLATES} for RANKING_SIGNAL_ACCEPTED (else SHADOW_ELIGIBLE_PENDING_MORE_SLATES)",
             ],
             "pair_count_is_independent_evidence": False,
             "slate_is_independent_evidence": True,
@@ -301,6 +454,7 @@ def run() -> dict[str, Any]:
         "dates": dates,
         "derivation_dates": derivation_dates,
         "locked_dates": locked_dates,
+        "v4_reserve_dates": reserve_dates,
         "load_errors": errors,
         "derivation": summarize(derivation_metrics, phase="derivation"),
         "locked": summarize(locked_metrics, phase="locked"),
