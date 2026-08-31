@@ -90,8 +90,9 @@ Prior frozen implementation CI: GitHub Actions run `33347254031`, successful.
 Local promotion validation: **783 MLB tests passed**, frontend syntax and all
 six failure-state simulations passed, workflow YAML parsed, and the isolated
 static build produced byte-identical public/compatibility unified artifacts.
-Promotion-branch CI is recorded after the promotion branch is pushed; it does
-not override the failed historical gate.
+Promotion branch hardening commit: `f8183b405af3f691d6d4a15063aaf5ccc3045505`.
+Remote CI is recorded after this report-triggering commit completes; it does not
+override the failed historical gate.
 
 ## 30–31. Authority and rollback
 
