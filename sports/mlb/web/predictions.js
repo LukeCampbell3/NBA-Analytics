@@ -44,22 +44,63 @@ class DailyPredictionsPage {
         const target = this.elements.unifiedEngineContent;
         if (!target) return;
         try {
-            const response = await fetch(`data/unified_predictions.json?v=${Date.now()}`);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            this.renderUnifiedEngine(await response.json());
-        } catch (_) {
-            target.innerHTML = this.renderUnifiedNotice("Unified shadow unavailable", "The legacy production board remains active.");
+            const manifest = await this.fetchUnifiedJson(`data/mlb_engine_manifest.json?v=${Date.now()}`);
+            const payload = await this.fetchUnifiedJson(`data/unified_predictions.json?v=${Date.now()}`);
+            this.validateUnifiedPayload(payload, manifest);
+            this.renderUnifiedEngine(payload, manifest);
+        } catch (error) {
+            target.innerHTML = this.renderUnifiedNotice("Unified data unavailable", `${error.message || "Load failed"}. The legacy production board remains active.`);
         }
+    }
+
+    async fetchUnifiedJson(url, timeoutMs = 8000) {
+        if (window.MlbUnifiedContract) {
+            return window.MlbUnifiedContract.fetchJson(url, { timeoutMs });
+        }
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            const response = await fetch(url, { cache: "no-store", credentials: "same-origin", signal: controller.signal });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const payload = await response.json();
+            if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Malformed or empty JSON");
+            return payload;
+        } catch (error) {
+            if (error?.name === "AbortError") throw new Error("Prediction request timed out");
+            throw error;
+        } finally {
+            clearTimeout(timeout);
+        }
+    }
+
+    easternDate() {
+        const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
+        const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+        return `${value.year}-${value.month}-${value.day}`;
+    }
+
+    validateUnifiedPayload(payload, manifest) {
+        if (window.MlbUnifiedContract) {
+            return window.MlbUnifiedContract.validate(payload, manifest, { today: this.easternDate() });
+        }
+        if (payload.schema_version !== "unified_mlb_v1") throw new Error("Unified schema mismatch");
+        if (!payload.generation_id || !payload.generated_at_utc || !payload.policy_hash || !payload.run_date) throw new Error("Unified artifact is incomplete");
+        if (payload.policy_hash !== manifest.policy_hash) throw new Error("Unified policy hash mismatch");
+        if (payload.run_date !== this.easternDate()) throw new Error("Predictions not yet generated for today's slate");
+        const generated = Date.parse(payload.generated_at_utc);
+        if (!Number.isFinite(generated) || Date.now() - generated > 30 * 60 * 60 * 1000) throw new Error("Unified artifact is stale");
+        if (!Array.isArray(payload.singles) || !payload.parlays || !payload.evidence) throw new Error("Unified artifact contract is incomplete");
     }
 
     renderUnifiedNotice(title, detail) {
         return `<article class="parlay-ticket"><div class="parlay-ticket__header"><strong>${this.escapeHtml(title)}</strong><span class="vault-status vault-status--stale">Shadow</span></div><p>${this.escapeHtml(detail)}</p></article>`;
     }
 
-    renderUnifiedEngine(payload) {
+    renderUnifiedEngine(payload, manifest) {
         const target = this.elements.unifiedEngineContent;
         if (!target) return;
         const evidence = payload?.evidence || {};
+        const unifiedActive = manifest?.active_engine === "unified";
         const singles = Array.isArray(payload?.singles) ? payload.singles : [];
         const classes = [
             ["2-Leg", payload?.parlays?.two_leg],
@@ -73,7 +114,7 @@ class DailyPredictionsPage {
             const list = Array.isArray(tickets) ? tickets : [];
             return `<div class="parlay-group"><p class="parlay-group__label">Best Qualified ${label}</p>${list.length ? list.map((ticket) => this.renderUnifiedTicket(ticket)).join("") : this.renderUnifiedNotice(`${label} abstain`, "The independently evaluated safe set produced no qualified ticket.")}</div>`;
         }).join("");
-        target.innerHTML = `<p class="parlay-group__note">Evidence: ${this.escapeHtml(evidence.state || "DEVELOPMENT")} / Execution: ${evidence.publication_authority ? "authorized" : "not authorized"}</p><div class="parlay-group"><p class="parlay-group__label">Singles</p>${singleHtml}</div>${parlayHtml}`;
+        target.innerHTML = `<p class="parlay-group__note">Engine: ${unifiedActive ? "Unified active" : "Legacy active / unified shadow"} · Evidence: ${this.escapeHtml(evidence.state || "DEVELOPMENT")} · Execution: ${evidence.publication_authority && unifiedActive ? "authorized" : "not authorized"}</p><div class="parlay-group"><p class="parlay-group__label">Singles</p>${singleHtml}</div>${parlayHtml}`;
     }
 
     renderUnifiedSingle(candidate) {

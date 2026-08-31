@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "policy_commit": "7c56729a9914eb9f903edffe9ca58b1a0a749ad4",
+  "locked_before_outcome_scoring": true,
+  "permitted_certification_fidelities": [
+    "EXACT",
+    "RECONSTRUCTED_HIGH_FIDELITY"
+  ],
+  "sample_sufficiency": {
+    "minimum_independent_slates": 20,
+    "minimum_selected_singles_per_capability": 50,
+    "minimum_parlay_tickets_per_leg_class": 30,
+    "minimum_effective_sample_size": 30
+  },
+  "calibration_requirements": {
+    "maximum_ece": 0.08,
+    "maximum_brier_increase_vs_market": 0.0,
+    "maximum_log_loss_increase_vs_market": 0.02,
+    "minimum_calibration_slope": 0.7,
+    "maximum_calibration_slope": 1.3,
+    "slope_minimum_sample": 100
+  },
+  "economic_requirements": {
+    "minimum_realized_roi": 0.0,
+    "minimum_slate_clustered_roi_lcb": -0.02,
+    "maximum_drawdown_units": 10.0,
+    "maximum_single_source_return_share": 0.5
+  },
+  "selector_discrimination": {
+    "require_accepted_return_not_worse_than_rejected": true,
+    "minimum_boundary_comparison_count": 20
+  },
+  "capability_requirements": {
+    "same_game_parlays": {
+      "common_world_masks_required": true,
+      "real_combined_price_required": true
+    },
+    "cross_game_parlays": {
+      "real_leg_prices_required": true
+    },
+    "event_markets": {
+      "exact_event_identity_required": true,
+      "event_model_required": true
+    }
+  },
+  "canary_requirements": {
+    "artifact_schema_valid": true,
+    "artifact_fresh": true,
+    "frontend_terminal_state": true,
+    "distribution_in_support": true,
+    "deep_links_nonfatal": true
+  },
+  "artifact_freshness": {
+    "maximum_age_hours": 30,
+    "slate_date_must_match": true
+  },
+  "operational_health": {
+    "maximum_consecutive_generation_failures": 2,
+    "maximum_identity_failure_rate": 0.1,
+    "older_generation_overwrite_forbidden": true,
+    "atomic_write_required": true
+  },
+  "rollback_triggers": [
+    "SCHEMA_INCOMPATIBLE",
+    "ARTIFACT_STALE",
+    "MODEL_CORRUPTED",
+    "IDENTITY_FAILURE_RATE_EXCEEDED",
+    "ACCOUNTING_INVARIANT_FAILED",
+    "DEPENDENCY_ENGINE_FAILED",
+    "FRONTEND_CONTRACT_FAILED",
+    "SETTLEMENT_CORRUPTION",
+    "REQUIRED_CI_FAILED"
+  ]
+}

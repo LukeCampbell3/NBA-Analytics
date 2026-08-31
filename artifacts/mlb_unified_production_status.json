@@ -1,0 +1,49 @@
+{
+  "active_engine": "legacy",
+  "capabilities": {
+    "batter_hits": "VALIDATION_ONLY",
+    "batter_home_runs": "VALIDATION_ONLY",
+    "batter_rbis": "VALIDATION_ONLY",
+    "batter_runs_scored": "VALIDATION_ONLY",
+    "batter_total_bases": "VALIDATION_ONLY",
+    "first_5_innings_total": "VALIDATION_ONLY",
+    "game_total": "VALIDATION_ONLY",
+    "moneyline": "VALIDATION_ONLY",
+    "parlay_2_leg": "VALIDATION_ONLY",
+    "parlay_3_leg": "VALIDATION_ONLY",
+    "parlay_4_leg": "VALIDATION_ONLY",
+    "pitcher_outs": "VALIDATION_ONLY",
+    "pitcher_pitches_inning": "BLOCKED",
+    "pitcher_strikeouts": "VALIDATION_ONLY",
+    "pitcher_strikeouts_inning": "BLOCKED",
+    "plate_appearance_pitch_count": "BLOCKED",
+    "runs_inning": "BLOCKED",
+    "same_game_parlays": "SHADOW",
+    "team_hits": "BLOCKED",
+    "team_runs_inning": "BLOCKED",
+    "team_total": "VALIDATION_ONLY"
+  },
+  "engine": "unified_mlb",
+  "historical_validation": {
+    "eligible_slates": 1,
+    "hit_rate": null,
+    "max_drawdown_units": null,
+    "roi": null,
+    "selected_singles": 8,
+    "status": "HISTORICAL_VALIDATION_FAIL"
+  },
+  "implementation_commit": "c871e1652064184ac2cdd36a8f576d8eb237229b",
+  "live_canary": {
+    "artifact_valid": false,
+    "distribution_valid": false,
+    "frontend_valid": false,
+    "generation_id": null,
+    "status": "NOT_AUTHORIZED_AFTER_HISTORICAL_GATE_FAILURE"
+  },
+  "policy_commit": "7c56729a9914eb9f903edffe9ca58b1a0a749ad4",
+  "policy_hash": "5f8b247e7781717ffb39a01f581dd36c7466f9da061aa7519c5ab6777b73b67b",
+  "production_authorized": false,
+  "rollback_available": true,
+  "rollback_reference": "static-deployment@c42bf2c1579d140b72efc5597fb9d074834ddfb4",
+  "state": "UNIFIED_MLB_SHADOW_ONLY"
+}

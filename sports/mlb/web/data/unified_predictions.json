@@ -112,7 +112,7 @@
       "settlement": null,
       "status": "EVENT_MODEL_REQUIRED"
     },
-    "team_total_runs": {
+    "team_total": {
       "blocker": "Exact two-sided quote support is incomplete",
       "model": "team_run_distribution",
       "requires_event_identity": false,
@@ -1089,18 +1089,22 @@
       "same_game_predictions": "LOADED"
     }
   },
+  "engine_state": "LOCKED_HISTORICAL_VALIDATION_FAILED",
   "evidence": {
     "publication_authority": false,
     "state": "DEVELOPMENT"
   },
   "exotic": [],
-  "generated_at_utc": "2026-08-31T01:12:58.162083Z",
+  "generated_at_utc": "2026-08-31T02:20:42.900057Z",
+  "generation_id": "50a19dcf6115d12951de448d",
+  "model_version": "compatibility_models_at_source_artifact",
   "parlays": {
     "four_leg": [],
     "three_leg": [],
     "two_leg": []
   },
-  "run_date": "2026-08-31",
+  "policy_hash": "5f8b247e7781717ffb39a01f581dd36c7466f9da061aa7519c5ab6777b73b67b",
+  "run_date": "2026-08-30",
   "same_game_parlays": [],
   "schema_version": "unified_mlb_v1",
   "singles": [
