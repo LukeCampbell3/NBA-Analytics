@@ -53,7 +53,16 @@ def adapt_legacy_play(play: dict) -> BetCandidate:
         lineup_status="CONFIRMED" if lineup == "CONFIRMED" else ("NOT_APPLICABLE" if market.startswith("pitcher_") else lineup),
         role_status=role if market.startswith("pitcher_") else "CONFIRMED", identity_status=identity,
         evidence_state=EvidenceState.PROSPECTIVE_SHADOW, publication_authority=False,
-        source_payload={"adapter": "legacy_play", "probability_semantics": "already_conservative", "deeplink": deeplink},
+        source_payload={
+            "adapter": "legacy_play", "probability_semantics": "already_conservative", "deeplink": deeplink,
+            "quote_timestamp": play.get("quote_timestamp") or play.get("odds_snapshot_time") or play.get("selected_side_price_time"),
+            "player_status": play.get("player_status"),
+            "historical_bucket_support": play.get("historical_bucket_support"),
+            "ood_status": play.get("ood_status") or play.get("support_status"),
+            "uncertainty_components": play.get("uncertainty_components"),
+            "model_version": play.get("model_version") or play.get("matchup_network_version"),
+            "calibrator_version": play.get("calibrator_version") or play.get("live_confidence_calibration_key"),
+        },
     )
 
 
