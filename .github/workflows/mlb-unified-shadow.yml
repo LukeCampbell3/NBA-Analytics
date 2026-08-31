@@ -28,6 +28,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Locked replay reads committed point-in-time snapshots from Git
+          # history; a shallow checkout would silently erase that evidence.
+          fetch-depth: 0
       - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
