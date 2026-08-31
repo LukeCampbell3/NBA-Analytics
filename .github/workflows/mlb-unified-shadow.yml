@@ -15,6 +15,8 @@ on:
       - 'sports/mlb/web/predictions.js'
       - 'sports/mlb/web/predictions.html'
       - '.github/workflows/mlb-unified-shadow.yml'
+  pull_request:
+    branches: [unified-mlb-engine]
   workflow_dispatch:
 
 permissions:
