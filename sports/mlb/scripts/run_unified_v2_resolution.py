@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+import sys
 from collections import Counter
 from pathlib import Path
 from statistics import mean
@@ -9,12 +10,16 @@ from typing import Any
 
 import pandas as pd
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 from sports.mlb.unified.production_state import atomic_write_json
 from sports.mlb.unified.promotion_validation import _decimal_price, _win, build_corpus
 from sports.mlb.unified.v2_policy import UnifiedPolicyV2, implied_probability, poisson_binomial_cdf
 
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = REPO_ROOT
 
 
 def _proper_scores(row: dict[str, Any]) -> dict[str, float]:
