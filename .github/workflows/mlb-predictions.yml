@@ -9,6 +9,7 @@ on:
       - 'sports/mlb/scripts/export_web_prediction_payload.py'
       - 'sports/mlb/scripts/select_high_hit_parlay.py'
       - 'sports/mlb/scripts/build_exotic_market_shadow.py'
+      - 'sports/mlb/scripts/run_pinned_v2_1_daily_shadow.py'
       - 'sports/mlb/tests/test_build_exotic_market_shadow.py'
       - 'sports/mlb/web/predictions.js'
       - 'sports/mlb/web/predictions.html'
@@ -98,6 +99,8 @@ jobs:
             echo "### MLB prediction run"
             echo "- Date: $run_date (America/New_York)"
             echo "- Weekly history refresh: $refresh_history"
+            echo "- V2.1 challenger commit: cc205ac42491f913a83c3118ee4f2df860b52a4e"
+            echo "- V2.1 authority: prospective shadow only"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Restore incremental MLB state
@@ -125,8 +128,8 @@ jobs:
             exit 0
           fi
 
-          # Generate all MLB products from the same resolved slate date.
-          # These scripts also attach real regional FanDuel deep links.
+          # Generate all existing MLB products from the same resolved slate date.
+          # These remain the legacy-authoritative publication path.
           bash sports/mlb/scripts/validate_same_game_pipeline.sh test
           bash sports/mlb/scripts/validate_pitcher_parlay_pipeline.sh test
           bash sports/mlb/scripts/validate_same_game_pipeline.sh pipeline --run-date "$RUN_DATE"
@@ -134,10 +137,11 @@ jobs:
           python sports/mlb/scripts/build_exotic_market_shadow.py
           python - <<'PY'
           import json
+          import os
           from pathlib import Path
           payload = json.loads(Path("sports/mlb/web/data/exotic_market_predictions.json").read_text())
           assert payload["policy"] == "EXOTIC_MARKETS_V1_SHADOW"
-          assert payload["run_date"] == __import__("os").environ["RUN_DATE"]
+          assert payload["run_date"] == os.environ["RUN_DATE"]
           assert payload["publication_authority"] is False
           assert isinstance(payload["candidates"], list)
           assert isinstance(payload["market_registry"], list) and payload["market_registry"]
@@ -154,6 +158,30 @@ jobs:
             args+=(--mlb-refresh-history-caches)
           fi
           python run_daily_predictions.py "${args[@]}"
+
+      - name: Run frozen V2.1 daily shadow pool
+        if: inputs.build_only != true
+        env:
+          RUN_DATE: ${{ steps.run-config.outputs.run_date }}
+        run: |
+          set -euo pipefail
+          python sports/mlb/scripts/run_pinned_v2_1_daily_shadow.py --run-date "$RUN_DATE"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(Path("sports/mlb/web/data/daily_predictions.json").read_text())
+          shadow = payload.get("v2_1_shadow")
+          assert isinstance(shadow, dict), "V2.1 shadow payload missing"
+          assert shadow["run_date"] == os.environ["RUN_DATE"]
+          assert shadow["policy"] == "UNIFIED_MLB_V2_1"
+          assert shadow["policy_hash"] == "80f335d2501d54502909d7f8587ebfef56d725a67d44ae125f9df4337d489b1c"
+          assert shadow["baseline_policy_hash"] == "52deb038a076b39a1bc840b77ae26648d9e4ffa20194135e7d48b9761edbc611"
+          assert shadow["implementation_commit"] == "cc205ac42491f913a83c3118ee4f2df860b52a4e"
+          assert shadow["production_authorized"] is False
+          PY
+          node --check sports/mlb/web/predictions.js
 
       - name: Validate MLB publication
         env:
@@ -180,28 +208,11 @@ jobs:
             sports/mlb/web/data/history/*.json \
             dist/mlb \
             paywall/private-content/app/mlb
-          # The headshot cache is lazily created (only once a real
-          # player's headshot has actually been fetched).
+
           if [ -e sports/mlb/web/data/headshots ]; then
             git add -f -- sports/mlb/web/data/headshots
           fi
-          # These PARLAY_V2 paths are lazily created (e.g. the pair-
-          # observation ledger only exists once a real pair is first
-          # admitted) -- `git add -f` on a literal nonexistent pathspec
-          # fails hard ("fatal: pathspec ... did not match any files"),
-          # which under `set -e` fails this whole step. Only add each one
-          # if it's actually on disk this run.
-          #
-          # The raw per-book, per-timestamp market-odds files are included
-          # here too: fetch_mlb_market_props.py (invoked by "Run MLB
-          # production pipeline" above) refreshes these every run with real
-          # (event_id, bookmaker_key, market_key, line, over_price,
-          # under_price, fetched_at_utc) rows, but until now nothing ever
-          # committed them -- the real decision-time price data was fetched
-          # fresh and then destroyed with the runner at the end of every
-          # job. Committing them here is what lets the walk-forward
-          # optimizer eventually rebuild a real, price-confirmed historical
-          # universe instead of the averaged/synthetic one it has today.
+
           for optional_path in \
             sports/mlb/parlay_v2/calibration/reports/calibration_ledger.jsonl \
             sports/mlb/parlay_v2/calibration/reports/pair_observation_ledger.jsonl \
@@ -219,12 +230,14 @@ jobs:
             sports/mlb/data/raw/market_odds/mlb/odds_api_io/history_player_props_wide.csv \
             sports/mlb/data/raw/market_odds/mlb/odds_api_io/history_player_props_wide.parquet \
             sports/mlb/data/raw/market_odds/mlb/odds_api_io/latest_manifest.json \
-            sports/mlb/data/predictions/balanced_ranking_v3_prospective
+            sports/mlb/data/predictions/balanced_ranking_v3_prospective \
+            sports/mlb/data/predictions/unified/v2_1_evidence.jsonl
           do
             if [ -e "$optional_path" ]; then
               git add -f -- "$optional_path"
             fi
           done
+
           if git diff --cached --quiet; then
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
           else
@@ -260,19 +273,15 @@ jobs:
             sports/mlb/web/data/same_game_predictions.json
             sports/mlb/web/data/pitcher_parlay_predictions.json
             sports/mlb/web/data/exotic_market_predictions.json
+            sports/mlb/data/predictions/unified/v2_1_evidence.jsonl
             sports/mlb/data/predictions/backtests/latent_daily_pool_replay_2026.json
             sports/mlb/data/predictions/team_market_predictions.json
           if-no-files-found: warn
           retention-days: 14
 
   # Shadow-only research job: measures whether MLB's pregame prop-line path
-  # carries incremental evidence beyond the pool's existing day-of score
-  # (sports/mlb/conditional_chain/, a scoped port of
-  # sports/nba/conditional_chain's newest path-evidence layer). It never
-  # reads or writes anything the mlb-predictions job publishes, never
-  # affects pool selection, and a failure here must never fail this
-  # workflow -- see continue-on-error below and the module's own
-  # production_authorized=False invariant (sports/mlb/conditional_chain/README.md).
+  # carries incremental evidence beyond the pool's existing day-of score.
+  # It never affects publication and failure is deliberately non-blocking.
   mlb-path-evidence-shadow:
     needs: mlb-predictions
     if: always()
@@ -319,10 +328,6 @@ jobs:
       - name: Run MLB path-conditioned shadow replay
         run: |
           set -euo pipefail
-          # No mechanism has passed prospective real-path confirmation yet;
-          # this stays INSUFFICIENT_REAL_PATH_EVENTS/path_authorized=false
-          # until sports/mlb/conditional_chain separately earns one -- it is
-          # never set true by this workflow.
           cat > /tmp/mlb_path_evidence_shadow/path_certificate.json <<'JSON'
           {"status": "INSUFFICIENT_REAL_PATH_EVENTS", "path_authorized": false}
           JSON
