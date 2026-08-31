@@ -68,7 +68,10 @@
               "market_support",
               "line_support",
               "state_support"
-            ]
+            ],
+            "settlement_status": "won",
+            "settlement_source": "mlb_statsapi_live_feed",
+            "settlement_checked_at": "2026-08-31T14:56:20.442106+00:00"
           },
           "leg_b": {
             "deeplinks_by_region": {
@@ -113,7 +116,11 @@
               "market_support",
               "line_support",
               "state_support"
-            ]
+            ],
+            "settlement_status": "lost",
+            "settlement_actual_value": 12.0,
+            "settlement_source": "mlb_statsapi_live_feed",
+            "settlement_checked_at": "2026-08-31T14:56:20.442106+00:00"
           },
           "naive_independence_probability": 0.3283999875,
           "naive_market_joint_raw_probability": 0.20161290322580647,
