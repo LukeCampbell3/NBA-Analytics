@@ -34,6 +34,12 @@
              structure so a viewer can tell what kind of bet they're
              looking at before reading a single card. -->
         <div id="board" class="board" aria-live="polite">
+            <section class="board-section" aria-labelledby="unifiedHeading">
+                <p class="board-section__eyebrow">Development Shadow</p>
+                <h2 id="unifiedHeading" class="board-section__heading">Unified MLB Engine</h2>
+                <p class="parlay-group__note">One conservative probability/value contract. This surface has no publication or staking authority while migration validation is incomplete.</p>
+                <div id="unifiedEngineContent" class="daily-parlay"></div>
+            </section>
             <section class="board-section" aria-labelledby="singleBetsHeading">
                 <h2 id="singleBetsHeading" class="board-section__heading">Single Bets</h2>
                 <div id="predictionCards" class="vault-board"></div>
@@ -165,7 +171,7 @@
     </script>
     <script src="vault/vault-components.js?v=17"></script>
     <script src="vault/vault-shell.js?v=9"></script>
-    <script src="predictions.js?v=33"></script>
+    <script src="predictions.js?v=34"></script>
     <script src="predictions-roi-overrides.js?v=3"></script>
 </body>
 </html>

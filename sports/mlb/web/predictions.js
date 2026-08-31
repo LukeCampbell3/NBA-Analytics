@@ -15,6 +15,7 @@ class DailyPredictionsPage {
             highHitParlayContent: document.getElementById("highHitParlayContent"),
             v4SinglesContent: document.getElementById("v4SinglesContent"),
             exoticMarketsContent: document.getElementById("exoticMarketsContent"),
+            unifiedEngineContent: document.getElementById("unifiedEngineContent"),
             dateNav: document.getElementById("predictionDateNav"),
         };
         this.init();
@@ -36,6 +37,53 @@ class DailyPredictionsPage {
         this.loadPitcherParlay();
         this.loadHighHitParlay();
         this.loadExoticMarkets();
+        this.loadUnifiedEngine();
+    }
+
+    async loadUnifiedEngine() {
+        const target = this.elements.unifiedEngineContent;
+        if (!target) return;
+        try {
+            const response = await fetch(`data/unified_predictions.json?v=${Date.now()}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            this.renderUnifiedEngine(await response.json());
+        } catch (_) {
+            target.innerHTML = this.renderUnifiedNotice("Unified shadow unavailable", "The legacy production board remains active.");
+        }
+    }
+
+    renderUnifiedNotice(title, detail) {
+        return `<article class="parlay-ticket"><div class="parlay-ticket__header"><strong>${this.escapeHtml(title)}</strong><span class="vault-status vault-status--stale">Shadow</span></div><p>${this.escapeHtml(detail)}</p></article>`;
+    }
+
+    renderUnifiedEngine(payload) {
+        const target = this.elements.unifiedEngineContent;
+        if (!target) return;
+        const evidence = payload?.evidence || {};
+        const singles = Array.isArray(payload?.singles) ? payload.singles : [];
+        const classes = [
+            ["2-Leg", payload?.parlays?.two_leg],
+            ["3-Leg", payload?.parlays?.three_leg],
+            ["4-Leg", payload?.parlays?.four_leg],
+        ];
+        const singleHtml = singles.length
+            ? `<div class="unified-ticket-grid">${singles.map((candidate) => this.renderUnifiedSingle(candidate)).join("")}</div>`
+            : this.renderUnifiedNotice("Singles abstain", "No candidate cleared probability, uncertainty, support, identity, price, and conservative-EV gates.");
+        const parlayHtml = classes.map(([label, tickets]) => {
+            const list = Array.isArray(tickets) ? tickets : [];
+            return `<div class="parlay-group"><p class="parlay-group__label">Best Qualified ${label}</p>${list.length ? list.map((ticket) => this.renderUnifiedTicket(ticket)).join("") : this.renderUnifiedNotice(`${label} abstain`, "The independently evaluated safe set produced no qualified ticket.")}</div>`;
+        }).join("");
+        target.innerHTML = `<p class="parlay-group__note">Evidence: ${this.escapeHtml(evidence.state || "DEVELOPMENT")} / Execution: ${evidence.publication_authority ? "authorized" : "not authorized"}</p><div class="parlay-group"><p class="parlay-group__label">Singles</p>${singleHtml}</div>${parlayHtml}`;
+    }
+
+    renderUnifiedSingle(candidate) {
+        return `<article class="parlay-ticket"><div class="parlay-ticket__header"><strong>${this.escapeHtml(candidate.subject_id || candidate.team || "Candidate")}</strong><span class="vault-status vault-status--stale">Shadow</span></div><p>${this.escapeHtml(String(candidate.side || "").toUpperCase())} ${this.escapeHtml(candidate.market_type)} ${this.escapeHtml(candidate.line ?? "")}</p><dl class="parlay-ticket__metrics"><div><dt>Usable probability</dt><dd>${this.formatPct(candidate.usable_probability)}</dd></div><div><dt>Price</dt><dd>${this.formatAmerican(candidate.american_price)}</dd></div><div><dt>Break-even</dt><dd>${this.formatPct(candidate.market_break_even_probability)}</dd></div><div><dt>Edge</dt><dd>${this.formatSignedPp(candidate.probability_edge)}</dd></div><div><dt>Conservative EV</dt><dd>${this.formatSignedPct(candidate.conservative_expected_value)}</dd></div></dl></article>`;
+    }
+
+    renderUnifiedTicket(ticket) {
+        const legs = Array.isArray(ticket.legs) ? ticket.legs : [];
+        const legHtml = legs.map((leg, index) => `<li><strong>${index + 1}. ${this.escapeHtml(leg.subject_id || leg.team || "Leg")}</strong><span>${this.escapeHtml(String(leg.side || "").toUpperCase())} ${this.escapeHtml(leg.market_type)} ${this.escapeHtml(leg.line ?? "")} · ${this.formatPct(leg.usable_probability)} · ${this.formatAmerican(leg.american_price)}</span></li>`).join("");
+        return `<article class="parlay-ticket"><div class="parlay-ticket__header"><strong>${ticket.leg_count}-Leg ${ticket.ticket_type === "same_game" ? "Same-Game" : "Parlay"}</strong><span class="vault-status vault-status--stale">Shadow</span></div><ol class="parlay-ticket__legs">${legHtml}</ol><dl class="parlay-ticket__metrics"><div><dt>Joint probability</dt><dd>${this.formatPct(ticket.joint_probability)}</dd></div><div><dt>Break-even</dt><dd>${this.formatPct(ticket.break_even_probability)}</dd></div><div><dt>Joint edge</dt><dd>${this.formatSignedPp(ticket.probability_edge)}</dd></div><div><dt>Conservative EV</dt><dd>${this.formatSignedPct(ticket.conservative_expected_value)}</dd></div><div><dt>Dependency delta</dt><dd>${this.formatSignedPp(ticket.dependency_delta)}</dd></div></dl></article>`;
     }
 
     mountShell() {

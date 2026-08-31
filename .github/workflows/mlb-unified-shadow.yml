@@ -1,0 +1,56 @@
+name: MLB Unified Shadow Gates
+
+on:
+  push:
+    branches: [unified-mlb-engine]
+    paths:
+      - 'sports/mlb/unified/**'
+      - 'sports/mlb/tests/test_unified_*.py'
+      - 'sports/mlb/scripts/run_unified_mlb_shadow.py'
+      - 'sports/mlb/scripts/benchmark_unified_engine.py'
+      - 'sports/mlb/web/predictions.js'
+      - 'sports/mlb/web/predictions.html'
+      - '.github/workflows/mlb-unified-shadow.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unified-shadow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pytest
+      - name: Run unified contracts
+        run: python -m pytest -q sports/mlb/tests/test_unified_*.py
+      - name: Validate frontend syntax
+        run: node --check sports/mlb/web/predictions.js
+      - name: Build fail-closed shadow artifact
+        run: |
+          python sports/mlb/scripts/run_unified_mlb_shadow.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          payload = json.loads(Path("sports/mlb/web/data/unified_predictions.json").read_text())
+          assert payload["schema_version"] == "unified_mlb_v1"
+          assert payload["evidence"]["publication_authority"] is False
+          assert set(payload["parlays"]) == {"two_leg", "three_leg", "four_leg"}
+          PY
+      - name: Benchmark compact simulation
+        run: python sports/mlb/scripts/benchmark_unified_engine.py
+      - uses: actions/upload-artifact@v7
+        with:
+          name: unified-mlb-shadow
+          path: |
+            sports/mlb/web/data/unified_predictions.json
+            sports/mlb/unified/PERFORMANCE_REPORT.json

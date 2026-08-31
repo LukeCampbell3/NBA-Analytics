@@ -224,3 +224,22 @@
         border-bottom: 1px solid var(--vault-line);
     }
 }
+.unified-ticket-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.parlay-ticket {
+    border: 1px solid var(--vault-border, #d9e2df);
+    border-radius: 14px;
+    padding: 1rem;
+    background: var(--vault-surface, #fff);
+}
+
+.parlay-ticket__header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.parlay-ticket__legs { display: grid; gap: .7rem; padding-left: 1.25rem; }
+.parlay-ticket__legs li span { display: block; color: var(--vault-text-muted, #66736f); }
+.parlay-ticket__metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); gap: .75rem; margin: 1rem 0 0; }
+.parlay-ticket__metrics dt { font-size: .75rem; color: var(--vault-text-muted, #66736f); }
+.parlay-ticket__metrics dd { margin: .15rem 0 0; font-weight: 700; }

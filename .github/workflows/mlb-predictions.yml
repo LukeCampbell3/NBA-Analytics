@@ -12,6 +12,8 @@ on:
       - 'sports/mlb/tests/test_build_exotic_market_shadow.py'
       - 'sports/mlb/web/predictions.js'
       - 'sports/mlb/web/predictions.html'
+      - 'sports/mlb/unified/**'
+      - 'sports/mlb/scripts/run_unified_mlb_shadow.py'
       - 'sports/site/pipeline/build_static_site.py'
       - 'sports/site/pipeline/run_daily_predictions.py'
       - '.github/workflows/mlb-predictions.yml'
@@ -155,6 +157,22 @@ jobs:
           fi
           python run_daily_predictions.py "${args[@]}"
 
+          # Unified migration remains shadow-only. It consumes the completed
+          # legacy artifacts, cannot authorize publication/staking, and writes
+          # one coherent artifact for side-by-side validation.
+          python sports/mlb/scripts/run_unified_mlb_shadow.py --run-date "$RUN_DATE"
+          python - <<'PY'
+          import json, os, shutil
+          from pathlib import Path
+          source = Path("sports/mlb/web/data/unified_predictions.json")
+          payload = json.loads(source.read_text())
+          assert payload["run_date"] == os.environ["RUN_DATE"]
+          assert payload["evidence"]["publication_authority"] is False
+          for target in (Path("dist/mlb/data/unified_predictions.json"), Path("paywall/private-content/app/mlb/data/unified_predictions.json")):
+              target.parent.mkdir(parents=True, exist_ok=True)
+              shutil.copy2(source, target)
+          PY
+
       - name: Validate MLB publication
         env:
           RUN_DATE: ${{ steps.run-config.outputs.run_date }}
@@ -176,6 +194,7 @@ jobs:
             sports/mlb/web/data/same_game_predictions.json \
             sports/mlb/web/data/pitcher_parlay_predictions.json \
             sports/mlb/web/data/exotic_market_predictions.json \
+            sports/mlb/web/data/unified_predictions.json \
             sports/mlb/web/data/history/index.json \
             sports/mlb/web/data/history/*.json \
             dist/mlb \
@@ -256,10 +275,12 @@ jobs:
             dist/mlb/data/same_game_predictions.json
             dist/mlb/data/pitcher_parlay_predictions.json
             dist/mlb/data/exotic_market_predictions.json
+            dist/mlb/data/unified_predictions.json
             sports/mlb/web/data/daily_predictions.json
             sports/mlb/web/data/same_game_predictions.json
             sports/mlb/web/data/pitcher_parlay_predictions.json
             sports/mlb/web/data/exotic_market_predictions.json
+            sports/mlb/web/data/unified_predictions.json
             sports/mlb/data/predictions/backtests/latent_daily_pool_replay_2026.json
             sports/mlb/data/predictions/team_market_predictions.json
           if-no-files-found: warn
