@@ -23,7 +23,7 @@
       3,
       4
     ],
-    "alternate_line_candidate_count": 1,
+    "alternate_line_candidate_count": 3,
     "available": false,
     "betslip_policy": {
       "construction": "direct_fanduel_public_market_ids_only",
@@ -32,19 +32,19 @@
       "sportsbook_key": "fanduel",
       "status": "unavailable"
     },
-    "considered_anchor_count": 2,
+    "considered_anchor_count": 3,
     "direction_policy": "OVER_ONLY",
-    "eligible_anchor_count": 3,
+    "eligible_anchor_count": 5,
     "filter_rejections": {
-      "history_too_short": 15,
-      "history_too_stale": 234,
-      "hit_survival_consensus_too_low": 5,
-      "hit_survival_probability_too_low": 4,
-      "leg_probability_too_low": 91,
+      "history_too_short": 13,
+      "history_too_stale": 243,
+      "hit_survival_consensus_too_low": 4,
+      "hit_survival_probability_too_low": 1,
+      "leg_probability_too_low": 86,
       "leg_value_too_low": 24,
-      "not_over": 691,
-      "price_outside_playable_range": 62,
-      "unconfirmed_market_price": 63,
+      "not_over": 689,
+      "price_outside_playable_range": 66,
+      "unconfirmed_market_price": 59,
       "unsupported_anchor_target": 34
     },
     "gates": {
@@ -107,7 +107,7 @@
         "4": 0.18
       }
     },
-    "generated_at_utc": "2026-08-31T17:23:53.416223+00:00",
+    "generated_at_utc": "2026-08-31T19:15:26.768457+00:00",
     "hit_survival_validation": {
       "calibration": {
         "brier_score": 0.24259946235125276,
@@ -391,7 +391,7 @@
     "latent_shadow_ticket_ladder": [],
     "objective": "exact_set_search_with_role_survival_consensus_and_shadow_positive_ev_alternates",
     "policy_version": "mlb_fanduel_public_betslip_parlay_v9",
-    "pool_candidate_count": 1226,
+    "pool_candidate_count": 1224,
     "profit_boost_ticket": null,
     "reason": "no executable OVER-only ticket cleared the consistency gates",
     "run_date": "2026-08-31",
@@ -539,20 +539,20 @@
     "withhold_threshold_days": 60
   },
   "filter_rejections": {
-    "core_price_too_heavily_juiced": 98,
-    "core_price_too_long": 53,
-    "edge_too_small": 240,
-    "expected_value_too_low": 7,
-    "history_too_short": 145,
-    "history_too_stale": 8,
-    "hit_probability_too_low": 116,
-    "opposing_probable_starter_missing": 90,
-    "prediction_too_low": 37,
-    "side_price_unconfirmed": 315,
-    "synthetic_market_source": 114
+    "core_price_too_heavily_juiced": 115,
+    "core_price_too_long": 60,
+    "edge_too_small": 257,
+    "expected_value_too_low": 4,
+    "history_too_short": 136,
+    "history_too_stale": 5,
+    "hit_probability_too_low": 120,
+    "opposing_probable_starter_missing": 45,
+    "prediction_too_low": 36,
+    "side_price_unconfirmed": 337,
+    "synthetic_market_source": 106
   },
-  "generated_at_utc": "2026-08-31T17:28:10.058752+00:00",
-  "mlb_team_market_generated_at_utc": "2026-08-31T17:28:10.452983+00:00",
+  "generated_at_utc": "2026-08-31T19:19:49.080879+00:00",
+  "mlb_team_market_generated_at_utc": "2026-08-31T19:19:49.460345+00:00",
   "mlb_team_market_plays": [],
   "mlb_team_market_status": "ok",
   "model_run_id": "mlb_high_precision_selector_v2",
@@ -586,9 +586,9 @@
   },
   "parlays": {
     "action": "ACT",
-    "calibration_as_of": "2026-08-31T17:27:10.076712+00:00",
-    "calibration_snapshot_id": "bdfabf413d125dc9",
-    "calibration_snapshot_sha256": "bdfabf413d125dc983bcdfdb1bd48c2b95a4cd34fef0c8c816752020c9bb4b23",
+    "calibration_as_of": "2026-08-31T19:18:37.447975+00:00",
+    "calibration_snapshot_id": "6b815d7a3603821d",
+    "calibration_snapshot_sha256": "6b815d7a3603821d1f718c23fcea38195b7819f1ecd1398743ba6d6989b458d0",
     "decision_record": {
       "action": 1,
       "candidate_universe_size": 500,
@@ -606,7 +606,7 @@
       },
       "world_gate_mode": "OBSERVE_ONLY"
     },
-    "decision_timestamp_utc": "2026-08-31T17:27:29.628969+00:00",
+    "decision_timestamp_utc": "2026-08-31T19:18:57.242970+00:00",
     "eligibility_reason": "operationally_eligible",
     "eligible": true,
     "evidence_status": {
@@ -625,9 +625,9 @@
         "leg_2_probability_below_70pct",
         "joint_probability_below_50pct"
       ],
-      "combined_decimal_price": 3.573529411764706,
+      "combined_decimal_price": 3.692857142857143,
       "evidence_note": "The frozen V2 research action remains authoritative for its prospective evidence stream. This overlay only controls whether that research action is presented as a tight-quality public candidate.",
-      "expected_value_per_unit": 0.055765549197807074,
+      "expected_value_per_unit": 0.0910198015166992,
       "frozen_policy_mutated": false,
       "joint_probability": 0.2954405652076168,
       "leg_probabilities": [
@@ -661,7 +661,7 @@
       "joint_score": 1.0,
       "leg_1": {
         "book": "real",
-        "decimal_price": 2.25,
+        "decimal_price": 2.35,
         "deeplinks_by_region": {
           "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184043651&selectionId=11497449",
           "AZ": "https://sportsbook.fanduel.com/addToBetslip?marketId=704.183782611&selectionId=11497449",
@@ -704,7 +704,7 @@
       },
       "leg_2": {
         "book": "real",
-        "decimal_price": 1.5882352941176472,
+        "decimal_price": 1.5714285714285714,
         "deeplinks_by_region": {
           "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184102981&selectionId=23552186",
           "AZ": "https://sportsbook.fanduel.com/addToBetslip?marketId=704.183841944&selectionId=23552186",
@@ -823,7 +823,7 @@
       },
       "leg_2": {
         "book": "real",
-        "decimal_price": 1.5882352941176472,
+        "decimal_price": 1.5714285714285714,
         "deeplinks_by_region": {
           "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184102981&selectionId=23552186",
           "AZ": "https://sportsbook.fanduel.com/addToBetslip?marketId=704.183841944&selectionId=23552186",
@@ -895,7 +895,7 @@
     "certificate_status": "NO_ACTIVE_PROSPECTIVE_CERTIFICATE",
     "complete_slate_capture_passed": true,
     "full_policy_replay_available_for_snapshot": true,
-    "generated_at_utc": "2026-08-31T17:21:56.101524+00:00",
+    "generated_at_utc": "2026-08-31T19:13:33.768618+00:00",
     "historical_evidence_labels": [
       "SELECTED_ONLY_HISTORY",
       "SELECTED_ONLY_HISTORY"
@@ -916,8 +916,8 @@
     "run_date": "2026-08-31",
     "schema_version": "MLB_POLICY_GOVERNANCE_STATUS_V1",
     "slate_id": "MLB_20260831",
-    "snapshot_id": "mlb_20260831_172111Z_32776f40aa09",
-    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260831/governance/slates/MLB_20260831/mlb_20260831_172111Z_32776f40aa09/manifest.json",
+    "snapshot_id": "mlb_20260831_191240Z_3983ff86543c",
+    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260831/governance/slates/MLB_20260831/mlb_20260831_191240Z_3983ff86543c/manifest.json",
     "staking_enabled": false
   },
   "policy_profile": "premium_confidence_value_frontier_v19_shadow",
@@ -1017,17 +1017,17 @@
     "avg_edge": 0.7021533333333334,
     "avg_expected_hit_rate": 0.641473,
     "avg_graded_hit_rate": 0.641473,
-    "avg_precision_score": 0.7526426666666666,
-    "avg_value_score": 0.5264305866263334,
+    "avg_precision_score": 0.7527469999999999,
+    "avg_value_score": 0.5265632797946665,
     "closed_game_cards_suppressed": 0,
     "duplicate_cards_suppressed": 0,
     "parlay_pairs": 0,
     "parlay_tagged_plays": 0,
     "play_count": 3,
-    "rejected_rows": 1223,
+    "rejected_rows": 1221,
     "rows_after_filters": 3,
     "source_play_count": 3,
-    "supported_rows": 1226
+    "supported_rows": 1224
   },
   "suppressed_closed_games": [],
   "suppressed_duplicates": [],
@@ -1055,12 +1055,12 @@
     "rejected_plays": 3,
     "rejections": [
       {
-        "final_ev": 0.04470583396982519,
+        "final_ev": 0.057667444813123137,
         "final_probability": 0.6428958978275847,
         "line": 0.5,
         "play_key": "2026-08-31|823663|spencer torkelson|h|over",
         "player": "Spencer Torkelson",
-        "pre_tight_ev": 0.050979,
+        "pre_tight_ev": 0.064019,
         "pre_tight_probability": 0.646757,
         "reasons": [
           "lineup_unconfirmed"
@@ -1068,16 +1068,15 @@
         "target": "H"
       },
       {
-        "final_ev": 0.013659954229932936,
+        "final_ev": 0.00240956628065514,
         "final_probability": 0.6311467639544865,
         "line": 0.5,
         "play_key": "2026-08-31|823663|trevor larnach|h|over",
         "player": "Trevor Larnach",
-        "pre_tight_ev": 0.020711,
+        "pre_tight_ev": 0.009382,
         "pre_tight_probability": 0.635537,
         "reasons": [
-          "dynamic_probability_edge_below_1pct",
-          "lineup_unconfirmed"
+          "dynamic_probability_edge_below_1pct"
         ],
         "target": "H"
       },
@@ -1103,21 +1102,21 @@
     "certification_started": false,
     "decision": "NO_RELIABLE_EDGE_FOUND",
     "fully_valid_candidates": 0,
-    "generated_at_utc": "2026-08-31T17:29:55.438042Z",
+    "generated_at_utc": "2026-08-31T19:22:10.735841Z",
     "implementation_commit": "cc205ac42491f913a83c3118ee4f2df860b52a4e",
-    "normalized_candidates": 98,
+    "normalized_candidates": 99,
     "policy": "UNIFIED_MLB_V2_1",
     "policy_hash": "80f335d2501d54502909d7f8587ebfef56d725a67d44ae125f9df4337d489b1c",
     "production_authorized": false,
     "rejection_count_by_reason": {
-      "CAPABILITY_NOT_SUPPORTED": 95,
-      "LINEUP_INVALID": 98,
-      "PLAYER_STATUS_INVALID": 98,
-      "PROBABILITY_UNAVAILABLE": 98,
-      "QUOTE_FRESHNESS_UNPROVABLE": 98,
-      "SUPPORT_INVALID": 98,
-      "UNCERTAINTY_COMPONENTS_UNAVAILABLE": 98,
-      "UNCERTAINTY_INVALID": 98
+      "CAPABILITY_NOT_SUPPORTED": 96,
+      "LINEUP_INVALID": 99,
+      "PLAYER_STATUS_INVALID": 99,
+      "PROBABILITY_UNAVAILABLE": 99,
+      "QUOTE_FRESHNESS_UNPROVABLE": 99,
+      "SUPPORT_INVALID": 99,
+      "UNCERTAINTY_COMPONENTS_UNAVAILABLE": 99,
+      "UNCERTAINTY_INVALID": 99
     },
     "run_date": "2026-08-31",
     "schema_version": "mlb_v2_1_shadow_web_v1",
