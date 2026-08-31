@@ -92,4 +92,7 @@ jobs:
             sports/mlb/tests/test_unified_validation.py \
             -q
       - name: Validate MLB frontend JavaScript syntax
-        run: node --check sports/mlb/web/predictions.js
+        run: |
+          node --check sports/mlb/web/predictions.js
+          node --check sports/mlb/web/unified-contract.js
+          node sports/mlb/tests/unified_frontend_failure_test.js

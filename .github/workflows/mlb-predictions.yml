@@ -33,7 +33,7 @@ on:
         type: boolean
 
 concurrency:
-  group: mlb-predictions-static-deployment
+  group: mlb-production-static-deployment
   cancel-in-progress: false
 
 permissions:
@@ -171,6 +171,10 @@ jobs:
           for target in (Path("dist/mlb/data/unified_predictions.json"), Path("paywall/private-content/app/mlb/data/unified_predictions.json")):
               target.parent.mkdir(parents=True, exist_ok=True)
               shutil.copy2(source, target)
+          manifest = Path("sports/mlb/web/data/mlb_engine_manifest.json")
+          for target in (Path("dist/mlb/data/mlb_engine_manifest.json"), Path("paywall/private-content/app/mlb/data/mlb_engine_manifest.json")):
+              target.parent.mkdir(parents=True, exist_ok=True)
+              shutil.copy2(manifest, target)
           PY
 
       - name: Validate MLB publication
@@ -195,6 +199,8 @@ jobs:
             sports/mlb/web/data/pitcher_parlay_predictions.json \
             sports/mlb/web/data/exotic_market_predictions.json \
             sports/mlb/web/data/unified_predictions.json \
+            sports/mlb/web/data/mlb_engine_manifest.json \
+            sports/mlb/data/predictions/unified/evidence.jsonl \
             sports/mlb/web/data/history/index.json \
             sports/mlb/web/data/history/*.json \
             dist/mlb \
@@ -276,11 +282,13 @@ jobs:
             dist/mlb/data/pitcher_parlay_predictions.json
             dist/mlb/data/exotic_market_predictions.json
             dist/mlb/data/unified_predictions.json
+            dist/mlb/data/mlb_engine_manifest.json
             sports/mlb/web/data/daily_predictions.json
             sports/mlb/web/data/same_game_predictions.json
             sports/mlb/web/data/pitcher_parlay_predictions.json
             sports/mlb/web/data/exotic_market_predictions.json
             sports/mlb/web/data/unified_predictions.json
+            sports/mlb/web/data/mlb_engine_manifest.json
             sports/mlb/data/predictions/backtests/latent_daily_pool_replay_2026.json
             sports/mlb/data/predictions/team_market_predictions.json
           if-no-files-found: warn

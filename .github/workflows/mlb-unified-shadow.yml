@@ -2,12 +2,16 @@ name: MLB Unified Shadow Gates
 
 on:
   push:
-    branches: [unified-mlb-engine]
+    branches: [unified-mlb-engine, unified-mlb-production-promotion]
     paths:
       - 'sports/mlb/unified/**'
       - 'sports/mlb/tests/test_unified_*.py'
       - 'sports/mlb/scripts/run_unified_mlb_shadow.py'
+      - 'sports/mlb/scripts/run_unified_promotion_validation.py'
+      - 'sports/mlb/scripts/benchmark_unified_production_path.py'
       - 'sports/mlb/scripts/benchmark_unified_engine.py'
+      - 'config/mlb_unified_promotion_policy.json'
+      - 'artifacts/mlb_engine_manifest.json'
       - 'sports/mlb/web/predictions.js'
       - 'sports/mlb/web/predictions.html'
       - '.github/workflows/mlb-unified-shadow.yml'
@@ -34,9 +38,13 @@ jobs:
       - name: Run unified contracts
         run: python -m pytest -q sports/mlb/tests/test_unified_*.py
       - name: Validate frontend syntax
-        run: node --check sports/mlb/web/predictions.js
+        run: |
+          node --check sports/mlb/web/predictions.js
+          node --check sports/mlb/web/unified-contract.js
+          node sports/mlb/tests/unified_frontend_failure_test.js
       - name: Build fail-closed shadow artifact
         run: |
+          python sports/mlb/scripts/run_unified_promotion_validation.py
           python sports/mlb/scripts/run_unified_mlb_shadow.py
           python - <<'PY'
           import json
@@ -44,6 +52,7 @@ jobs:
           payload = json.loads(Path("sports/mlb/web/data/unified_predictions.json").read_text())
           assert payload["schema_version"] == "unified_mlb_v1"
           assert payload["evidence"]["publication_authority"] is False
+          assert payload["policy_hash"]
           assert set(payload["parlays"]) == {"two_leg", "three_leg", "four_leg"}
           PY
       - name: Benchmark compact simulation
