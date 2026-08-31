@@ -22,6 +22,206 @@
     "team_runs_inning": "BLOCKED",
     "team_total": "VALIDATION_ONLY"
   },
+  "capability_results": {
+    "batter_hits": {
+      "eligible_slates": 0,
+      "failures": [
+        "INDEPENDENT_SLATES:0<20",
+        "SELECTED_SINGLES:0<50"
+      ],
+      "metrics": {
+        "bets": 0,
+        "brier": null,
+        "ece": null,
+        "hit_rate": null,
+        "log_loss": null,
+        "max_drawdown_units": null,
+        "roi": null,
+        "slate_clustered_roi_lcb": null
+      },
+      "selected_singles": 0
+    },
+    "batter_home_runs": {
+      "eligible_slates": 0,
+      "failures": [
+        "INDEPENDENT_SLATES:0<20",
+        "SELECTED_SINGLES:0<50"
+      ],
+      "metrics": {
+        "bets": 0,
+        "brier": null,
+        "ece": null,
+        "hit_rate": null,
+        "log_loss": null,
+        "max_drawdown_units": null,
+        "roi": null,
+        "slate_clustered_roi_lcb": null
+      },
+      "selected_singles": 0
+    },
+    "batter_rbis": {
+      "eligible_slates": 0,
+      "failures": [
+        "INDEPENDENT_SLATES:0<20",
+        "SELECTED_SINGLES:0<50"
+      ],
+      "metrics": {
+        "bets": 0,
+        "brier": null,
+        "ece": null,
+        "hit_rate": null,
+        "log_loss": null,
+        "max_drawdown_units": null,
+        "roi": null,
+        "slate_clustered_roi_lcb": null
+      },
+      "selected_singles": 0
+    },
+    "batter_runs_scored": {
+      "eligible_slates": 0,
+      "failures": [
+        "INDEPENDENT_SLATES:0<20",
+        "SELECTED_SINGLES:0<50"
+      ],
+      "metrics": {
+        "bets": 0,
+        "brier": null,
+        "ece": null,
+        "hit_rate": null,
+        "log_loss": null,
+        "max_drawdown_units": null,
+        "roi": null,
+        "slate_clustered_roi_lcb": null
+      },
+      "selected_singles": 0
+    },
+    "batter_total_bases": {
+      "eligible_slates": 0,
+      "failures": [
+        "INDEPENDENT_SLATES:0<20",
+        "SELECTED_SINGLES:0<50"
+      ],
+      "metrics": {
+        "bets": 0,
+        "brier": null,
+        "ece": null,
+        "hit_rate": null,
+        "log_loss": null,
+        "max_drawdown_units": null,
+        "roi": null,
+        "slate_clustered_roi_lcb": null
+      },
+      "selected_singles": 0
+    },
+    "first_5_innings_total": {
+      "eligible_slates": 0,
+      "failures": [
+        "INDEPENDENT_SLATES:0<20",
+        "SELECTED_SINGLES:0<50"
+      ],
+      "metrics": {
+        "bets": 0,
+        "brier": null,
+        "ece": null,
+        "hit_rate": null,
+        "log_loss": null,
+        "max_drawdown_units": null,
+        "roi": null,
+        "slate_clustered_roi_lcb": null
+      },
+      "selected_singles": 0
+    },
+    "game_total": {
+      "eligible_slates": 0,
+      "failures": [
+        "INDEPENDENT_SLATES:0<20",
+        "SELECTED_SINGLES:0<50"
+      ],
+      "metrics": {
+        "bets": 0,
+        "brier": null,
+        "ece": null,
+        "hit_rate": null,
+        "log_loss": null,
+        "max_drawdown_units": null,
+        "roi": null,
+        "slate_clustered_roi_lcb": null
+      },
+      "selected_singles": 0
+    },
+    "moneyline": {
+      "eligible_slates": 0,
+      "failures": [
+        "INDEPENDENT_SLATES:0<20",
+        "SELECTED_SINGLES:0<50"
+      ],
+      "metrics": {
+        "bets": 0,
+        "brier": null,
+        "ece": null,
+        "hit_rate": null,
+        "log_loss": null,
+        "max_drawdown_units": null,
+        "roi": null,
+        "slate_clustered_roi_lcb": null
+      },
+      "selected_singles": 0
+    },
+    "pitcher_outs": {
+      "eligible_slates": 0,
+      "failures": [
+        "INDEPENDENT_SLATES:0<20",
+        "SELECTED_SINGLES:0<50"
+      ],
+      "metrics": {
+        "bets": 0,
+        "brier": null,
+        "ece": null,
+        "hit_rate": null,
+        "log_loss": null,
+        "max_drawdown_units": null,
+        "roi": null,
+        "slate_clustered_roi_lcb": null
+      },
+      "selected_singles": 0
+    },
+    "pitcher_strikeouts": {
+      "eligible_slates": 0,
+      "failures": [
+        "INDEPENDENT_SLATES:0<20",
+        "SELECTED_SINGLES:0<50"
+      ],
+      "metrics": {
+        "bets": 0,
+        "brier": null,
+        "ece": null,
+        "hit_rate": null,
+        "log_loss": null,
+        "max_drawdown_units": null,
+        "roi": null,
+        "slate_clustered_roi_lcb": null
+      },
+      "selected_singles": 0
+    },
+    "team_total": {
+      "eligible_slates": 0,
+      "failures": [
+        "INDEPENDENT_SLATES:0<20",
+        "SELECTED_SINGLES:0<50"
+      ],
+      "metrics": {
+        "bets": 0,
+        "brier": null,
+        "ece": null,
+        "hit_rate": null,
+        "log_loss": null,
+        "max_drawdown_units": null,
+        "roi": null,
+        "slate_clustered_roi_lcb": null
+      },
+      "selected_singles": 0
+    }
+  },
   "eligible_candidates": 0,
   "eligible_slates": 0,
   "evidence_state": "LOCKED_HISTORICAL_VALIDATION",
@@ -32,14 +232,14 @@
     "SELECTED_SINGLES:0<50"
   ],
   "metrics": {
+    "bets": 0,
     "brier": null,
-    "calibration_intercept": null,
-    "calibration_slope": null,
     "ece": null,
     "hit_rate": null,
     "log_loss": null,
     "max_drawdown_units": null,
-    "roi": null
+    "roi": null,
+    "slate_clustered_roi_lcb": null
   },
   "policy_commit": "7c56729a9914eb9f903edffe9ca58b1a0a749ad4",
   "policy_hash": "5f8b247e7781717ffb39a01f581dd36c7466f9da061aa7519c5ab6777b73b67b",

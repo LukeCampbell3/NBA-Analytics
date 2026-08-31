@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from sports.mlb.unified.evidence_ledger import append_generation
+from sports.mlb.unified.evidence_ledger import append_generation, append_revision, read_ledger
 from sports.mlb.unified.pipeline import validate_payload, write_payload
 
 
@@ -28,6 +28,16 @@ def test_evidence_append_is_idempotent_and_collision_safe(tmp_path):
     assert append_generation(path, row) is False
     with pytest.raises(ValueError, match="collision"):
         append_generation(path, {**row, "x":1})
+
+
+def test_settlement_revision_is_append_only_and_hash_linked(tmp_path):
+    path = tmp_path / "ledger.jsonl"
+    append_generation(path, {"generation_id":"g1","generated_at_utc":"2026-08-31T12:00:00Z","revision":1})
+    revision = {"generation_id":"g1","revision":2,"supersedes_revision":1,"settlement":{"c1":"won"}}
+    assert append_revision(path, revision) is True
+    assert len(read_ledger(path)) == 2
+    with pytest.raises(ValueError, match="revision must be 3"):
+        append_revision(path, revision)
 
 
 def test_selected_negative_ev_or_missing_probability_is_invalid():

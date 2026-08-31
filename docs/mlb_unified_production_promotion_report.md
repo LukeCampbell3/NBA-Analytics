@@ -18,8 +18,13 @@ thresholds.
 ## 6–9. Data inventory, fidelity, temporal audit and replay
 
 The repository contains 242,425 settled historical pool candidates spanning
-156 slates from March 1 through August 5, 2026. Those rows cannot reproduce the
-frozen unified selector because they lack its final/usable probability,
+156 slates from March 1 through August 5, 2026. A second recovery audit also
+found 134 selected-only high-precision rows across 25 slates (41 priced; only
+8 preserving the frozen final probability) and 170,127 immutable full-universe
+rows across 8 slates (0 settled; 0 with confirmed lineup state). Those sources
+do not contain the required fields in the same replayable observations. The
+larger settled pool cannot reproduce the frozen unified selector because it
+lacks its final/usable probability,
 uncertainty, lineup/role status, and exact calibration state. They are
 `RECONSTRUCTED_WEAK` and diagnostic only.
 
@@ -87,12 +92,17 @@ The public production site remains on the unchanged legacy baseline.
 ## 29. CI
 
 Prior frozen implementation CI: GitHub Actions run `33347254031`, successful.
-Local promotion validation: **783 MLB tests passed**, frontend syntax and all
+The former unconditional certification failure was removed, and the evidence
+ledger now preserves complete candidate/ticket state plus append-only,
+hash-linked settlement revisions. A synthetic fully qualified corpus proves
+that capability certification is reachable when every predeclared gate passes.
+
+Local promotion validation: **785 MLB tests passed**, frontend syntax and all
 six failure-state simulations passed, workflow YAML parsed, and the isolated
 static build produced byte-identical public/compatibility unified artifacts.
-Promotion branch hardening commit: `f8183b405af3f691d6d4a15063aaf5ccc3045505`.
-Remote promotion CI: GitHub Actions run `33350640171`, successful. It validates
-the shadow/promotion branch and does not override the failed historical gate.
+Prior promotion-branch GitHub Actions runs `33350640171` and `33350760088`
+passed. The evidence-recovery repair receives a new CI run after push; none of
+these software checks overrides the failed historical gate.
 
 ## 30–31. Authority and rollback
 

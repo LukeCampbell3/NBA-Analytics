@@ -32,6 +32,20 @@ frozen-policy candidate from August 30. Its settlement is not preserved in the
 repository artifact. It is therefore valid prospective input evidence but not
 a gradable locked observation.
 
+## Recovery audit
+
+The initial zero-row result was re-audited against additional committed
+sources. The repository contains 134 selected-only high-precision rows across
+25 slates, but only 41 have real prices and only 8 preserve the frozen final
+probability. It also contains 170,127 immutable full-universe rows across 8
+slates; those rows remain unsettled and preserve no confirmed lineup states.
+The sources therefore cannot be combined into `RECONSTRUCTED_HIGH_FIDELITY`
+records without inventing missing prediction-time state.
+
+The certification engine's unconditional-failure path was removed and tested
+with a synthetic corpus that clears every predeclared capability gate. The
+current failure is now exclusively an evidence-sufficiency result.
+
 ## Capability decision
 
 Aggregate player and game markets remain `VALIDATION_ONLY`. Same-game parlays

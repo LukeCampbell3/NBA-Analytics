@@ -13,8 +13,24 @@
     "settlement",
     "target"
   ],
-  "generated_at_utc": "2026-08-31T02:20:42.641361Z",
+  "generated_at_utc": "2026-08-31T02:45:50.950402Z",
   "sources": {
+    "daily_runs:high_precision_prediction_artifacts": {
+      "fidelity": "RECONSTRUCTED_WEAK",
+      "independent_slates": 25,
+      "priced_rows": 41,
+      "reason": "Selected-only artifacts do not preserve the full rejected control pool, prediction-time lineup state, and frozen final probability on enough rows.",
+      "rows": 134,
+      "rows_with_frozen_final_probability": 8
+    },
+    "daily_runs:immutable_governance_candidate_universes": {
+      "fidelity": "PARTIAL",
+      "independent_slates": 8,
+      "lineup_confirmed_rows": 0,
+      "reason": "Full timestamped candidate universes exist, but only across eight slates and their committed rows remain unsettled with lineup state unavailable.",
+      "rows": 170127,
+      "settled_rows": 0
+    },
     "git_history:sports/mlb/web/data/daily_predictions.json": {
       "deduplicated_candidates": 4,
       "exact_settled_candidates": 0,

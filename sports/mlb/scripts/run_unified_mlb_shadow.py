@@ -44,9 +44,10 @@ def main() -> int:
         "engine_state": payload["engine_state"],
         "source_status": result.source_status,
         "candidate_count": len(result.candidates),
+        "candidates": [candidate.to_dict() for candidate in result.candidates],
         "accepted_single_ids": [candidate.candidate_id for candidate in result.singles],
         "rejected": [{"candidate_id": candidate.candidate_id, "reasons": candidate.rejection_reasons} for candidate in result.rejected],
-        "tickets": {str(count): [ticket.ticket_id for ticket in tickets] for count, (tickets, _) in result.tickets.items()},
+        "tickets": {str(count): [ticket.to_dict() for ticket in tickets] for count, (tickets, _) in result.tickets.items()},
         "settlement": None,
         "revision": 1,
     })
