@@ -32,19 +32,21 @@ Immutable Git history preserves one deduplicated `EXACT` pregame unified
 candidate. Its postgame settlement is now recorded separately from the frozen
 snapshot using the finalized official MLB StatsAPI feed and response hash.
 Pete Crow-Armstrong recorded 8 total bases, so the preserved TB OVER 1.5
-candidate settled as won. The locked corpus consequently has 1 eligible
-settled candidate across 1 slate. No prediction-time field or quote was
-backfilled from the outcome.
+candidate settled as won. A workflow-artifact recovery admitted seven more
+unique exact candidates from three retained Aug. 30 frontend artifacts. The
+locked corpus consequently has 8 eligible settled candidates across 1 slate.
+No prediction-time field or quote was backfilled from the outcome.
 
 Locked result: `HISTORICAL_VALIDATION_FAIL`.
 
 ## 10–20. Statistical and economic results
 
-Calibration, selector discrimination, accepted/rejected controls, aggregate singles,
+The recovered slate went 3–5 (37.5%) for −37.4% flat-stake ROI. Calibration,
+selector discrimination, accepted/rejected controls, aggregate singles,
 2-leg, 3-leg, 4-leg, concentration, bankroll, baselines and ablations are all
-`UNAVAILABLE` for certification because the exact eligible sample contains
-only one observation. Metrics are stored as `null`, not promoted from an
-uninformative denominator.
+remain unavailable for certification because the exact sample contains only
+one independent slate. Descriptive metrics are retained but not promoted into
+inferential evidence.
 
 The predeclared gate required at least 20 independent slates, 50 selected
 singles per capability and 30 tickets per parlay class, plus calibration,
@@ -55,7 +57,7 @@ were not changed after the inventory result.
 
 | Capability | State | Reason |
 |---|---|---|
-| H, TB, R, RBI, HR, pitcher K | VALIDATION_ONLY | TB has 1 exact settled observation; all remain below sample gates |
+| H, TB, R, RBI, HR, pitcher K | VALIDATION_ONLY | H has 6 and TB has 2 exact observations; all remain below capability gates |
 | Pitcher outs, ML, game total, F5, team total | VALIDATION_ONLY | insufficient unified calibration/evidence |
 | Cross-game 2/3/4-leg | VALIDATION_ONLY | no eligible ticket corpus |
 | Same-game parlays | SHADOW | no certified common-world ticket corpus and real combined-price evidence |
@@ -96,12 +98,14 @@ The public production site remains on the unchanged legacy baseline.
 ## 29. CI
 
 Prior frozen implementation CI: GitHub Actions run `33347254031`, successful.
+Historical replay checkpoint `c871e165` passed run `33353124131`; it remains
+the first full-history replay infrastructure checkpoint.
 The former unconditional certification failure was removed, and the evidence
 ledger now preserves complete candidate/ticket state plus append-only,
 hash-linked settlement revisions. A synthetic fully qualified corpus proves
 that capability certification is reachable when every predeclared gate passes.
 
-Local promotion validation: **785 MLB tests passed**, frontend syntax and all
+Current recovery validation: **788 MLB tests passed**, frontend syntax and all
 six failure-state simulations passed, workflow YAML parsed, and the isolated
 static build produced byte-identical public/compatibility unified artifacts.
 Prior promotion-branch GitHub Actions runs `33350640171` and `33350760088`

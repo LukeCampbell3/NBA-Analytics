@@ -10,13 +10,12 @@ Frozen policy hash: `5f8b247e7781717ffb39a01f581dd36c7466f9da061aa7519c5ab6777b7
 | Measure | Locked result | Predeclared requirement |
 |---|---:|---:|
 | Eligible independent slates | 1 | 20 |
-| Eligible selected singles | 1 | 50 per capability |
+| Eligible selected singles | 8 | 50 per capability |
 | Eligible 2/3/4-leg tickets | 0 / 0 / 0 | 30 per class |
 
-No inferential hit-rate, ROI, calibration, drawdown, discrimination,
-concentration, bankroll, baseline, or ablation statistic is reported because
-one observation cannot satisfy the predeclared sample gates. `null` is the
-correct certification value.
+Eight exact observations are descriptively graded at 3–5 (37.5% hit rate) and
+−37.4% flat-stake ROI. Because all eight belong to one slate, these values do
+not support an inferential claim or promotion decision.
 
 ## Evidence inventory
 
@@ -47,8 +46,10 @@ records without inventing missing prediction-time state.
 
 The certification engine's unconditional-failure path was removed and tested
 with a synthetic corpus that clears every predeclared capability gate. The
-current failure is now exclusively an evidence-sufficiency result: one slate
-and one TB selection remain below the frozen 20-slate/50-selection gates.
+recovery audit also admitted seven exact observations from three retained
+GitHub Actions artifacts. The current failure remains an evidence-sufficiency
+result: one slate, six H selections, and two TB selections remain below the
+frozen 20-slate/50-selection-per-capability gates.
 
 ## Capability decision
 

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "checkpoint": "c871e1652064184ac2cdd36a8f576d8eb237229b",
+  "checkpoint_workflow_run": 33353124131,
+  "result": "EXACT_CORPUS_EXPANDED",
+  "exact_observations_before": 1,
+  "exact_observations_after": 8,
+  "independent_slates": 1,
+  "capability_counts": {"batter_hits": 6, "batter_total_bases": 2},
+  "settled_results": {"wins": 3, "losses": 5, "hit_rate": 0.375},
+  "sources": [
+    {"source": "committed Git history daily_predictions.json", "status": "ADMITTED", "exact_observations": 1},
+    {"source": "GitHub Actions artifacts 9734123174, 9735656814, 9737132236", "status": "ADMITTED", "artifact_candidate_rows": 9, "deduplicated_exact_observations": 7},
+    {"source": "August 28-29 v16 frontend artifacts", "status": "DIAGNOSTIC_ONLY", "candidate_rows_reviewed": 13, "reason": "final_hit_probability was not preserved; the frozen EXACT contract was not weakened"},
+    {"source": "path-evidence reservoir", "status": "DIAGNOSTIC_ONLY", "candidate_rows": 146, "reason": "rows lack the frozen quote/probability/lineup decision intersection"},
+    {"source": "historical_pool_universe_2026.csv", "status": "DIAGNOSTIC_ONLY", "candidate_rows": 242425, "reason": "missing frozen usable probability, uncertainty, lineup/role and exact calibration state"}
+  ],
+  "promotion_status": "INSUFFICIENT_SAMPLE",
+  "promotion_blockers": ["INDEPENDENT_SLATES:1<20", "BATTER_HITS_SELECTIONS:6<50", "BATTER_TOTAL_BASES_SELECTIONS:2<50"]
+}

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import math
 import subprocess
 from collections import Counter
@@ -28,6 +29,9 @@ class SnapshotCandidate:
     play: dict[str, Any]
     fidelity: str
     reason: str
+    source_kind: str = "GIT_OBJECT"
+    source_artifact_id: int | None = None
+    source_sha256: str | None = None
 
 
 REQUIRED_FROZEN_FIELDS = {
@@ -88,6 +92,65 @@ def committed_daily_snapshots(repo_root: Path) -> list[SnapshotCandidate]:
     return list(deduped.values())
 
 
+def recovered_workflow_snapshots(repo_root: Path) -> list[SnapshotCandidate]:
+    """Load preserved GitHub Actions outputs without relaxing the EXACT contract."""
+    path = repo_root / "sports/mlb/data/predictions/unified/recovered_workflow_snapshots.json"
+    if not path.exists():
+        return []
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    candidates: list[SnapshotCandidate] = []
+    for artifact in payload.get("artifacts", []):
+        if len(str(artifact.get("artifact_zip_sha256") or "")) != 64:
+            raise ValueError("recovered workflow artifact hash is invalid")
+        if not artifact.get("artifact_id") or not artifact.get("workflow_run_id"):
+            raise ValueError("recovered workflow artifact identity is incomplete")
+        head_sha = str(artifact.get("head_sha") or "")
+        if len(head_sha) != 40:
+            raise ValueError("recovered workflow head SHA is invalid")
+        # The referenced workflow commit must remain reachable in repository history.
+        _git(repo_root, "cat-file", "-e", f"{head_sha}^{{commit}}")
+        run_date = str(artifact.get("run_date") or "")
+        generated_at = str(artifact.get("generated_at_utc") or "")
+        created_at = str(artifact.get("artifact_created_at_utc") or "")
+        generated, created = _parse_time(generated_at), _parse_time(created_at)
+        if generated is None or created is None or generated > created:
+            raise ValueError("recovered workflow artifact timestamps are invalid")
+        for play in artifact.get("plays", []):
+            expected_hash = str(play.get("source_candidate_sha256") or "")
+            play_without_hash = dict(play)
+            play_without_hash.pop("source_candidate_sha256", None)
+            canonical_without_hash = json.dumps(play_without_hash, sort_keys=True, separators=(",", ":")).encode()
+            if expected_hash and hashlib.sha256(canonical_without_hash).hexdigest() != expected_hash:
+                raise ValueError("recovered workflow candidate hash mismatch")
+            missing = sorted(field for field in REQUIRED_FROZEN_FIELDS if play.get(field) is None)
+            start = _parse_time(play.get("commence_time_utc"))
+            if missing:
+                fidelity, reason = "RECONSTRUCTED_WEAK", f"MISSING_FROZEN_FIELDS:{','.join(missing)}"
+            elif start is None or generated >= start or created >= start:
+                fidelity, reason = "UNUSABLE", "WORKFLOW_ARTIFACT_NOT_PREGAME"
+            else:
+                fidelity, reason = "EXACT", "ARCHIVED_WORKFLOW_PREGAME_FROZEN_INPUTS"
+            candidates.append(SnapshotCandidate(
+                head_sha, created_at, run_date, generated_at, play, fidelity, reason,
+                source_kind="GITHUB_ACTIONS_ARTIFACT",
+                source_artifact_id=int(artifact["artifact_id"]),
+                source_sha256=str(artifact["artifact_zip_sha256"]),
+            ))
+    return candidates
+
+
+def historical_snapshots(repo_root: Path) -> list[SnapshotCandidate]:
+    candidates = committed_daily_snapshots(repo_root) + recovered_workflow_snapshots(repo_root)
+    deduped: dict[tuple, SnapshotCandidate] = {}
+    for row in sorted(candidates, key=lambda value: value.generated_at):
+        play = row.play
+        key = (row.run_date, play.get("game_id"), play.get("player_id") or play.get("player"), play.get("target"), play.get("direction"), play.get("market_line"))
+        prior = deduped.get(key)
+        if prior is None or (prior.fidelity != "EXACT" and row.fidelity == "EXACT"):
+            deduped[key] = row
+    return list(deduped.values())
+
+
 def historical_inventory(repo_root: Path) -> dict[str, Any]:
     universe_path = repo_root / "sports/mlb/data/predictions/calibration/historical_pool_universe_2026.csv"
     universe_frame = pd.read_csv(universe_path, low_memory=False)
@@ -95,8 +158,10 @@ def historical_inventory(repo_root: Path) -> dict[str, Any]:
     for column in universe_frame.columns:
         present = int(universe_frame[column].notna().sum())
         fields[column] = {"present": present, "total": int(len(universe_frame)), "fraction": present / len(universe_frame) if len(universe_frame) else 0.0}
-    snapshot_rows = committed_daily_snapshots(repo_root)
-    fidelity = Counter(row.fidelity for row in snapshot_rows)
+    committed_rows = committed_daily_snapshots(repo_root)
+    snapshot_rows = historical_snapshots(repo_root)
+    workflow_rows = recovered_workflow_snapshots(repo_root)
+    fidelity = Counter(row.fidelity for row in committed_rows)
     external_settlements = load_historical_settlements(repo_root)
     settlement_present = 0
     for row in snapshot_rows:
@@ -142,9 +207,19 @@ def historical_inventory(repo_root: Path) -> dict[str, Any]:
                 "reason": "Settled predictions and sparse quote timestamps exist, but frozen final/usable probability, lineup, role, calibration and uncertainty state do not.",
             },
             "git_history:sports/mlb/web/data/daily_predictions.json": {
-                "deduplicated_candidates": len(snapshot_rows),
+                "deduplicated_candidates": len(committed_rows),
                 "fidelity_counts": dict(fidelity),
                 "exact_settled_candidates": settlement_present,
+            },
+            "github_actions:recovered_mlb_frontend_artifacts": {
+                "artifacts": len({row.source_artifact_id for row in workflow_rows}),
+                "candidate_rows": len(workflow_rows),
+                "deduplicated_exact_candidates_admitted": sum(
+                    row.source_kind == "GITHUB_ACTIONS_ARTIFACT" and row.fidelity == "EXACT"
+                    for row in snapshot_rows
+                ),
+                "fidelity": "EXACT",
+                "reason": "Archived workflow outputs preserve full pregame candidate payloads, artifact and candidate hashes, exact quote/probability/lineup state, and timestamps before each event start.",
             },
             "daily_runs:high_precision_prediction_artifacts": {
                 "rows": archived_rows, "independent_slates": len(archived_slate_dates),
@@ -168,7 +243,7 @@ def build_corpus(repo_root: Path) -> tuple[list[dict[str, Any]], list[dict[str, 
     eligible: list[dict[str, Any]] = []
     exclusions: list[dict[str, Any]] = []
     external_settlements = load_historical_settlements(repo_root)
-    for snapshot in committed_daily_snapshots(repo_root):
+    for snapshot in historical_snapshots(repo_root):
         play = snapshot.play
         key = settlement_key(source_commit=snapshot.commit, game_id=play.get("game_id"), player_id=play.get("player_id") or play.get("player"), market=play.get("target"), side=play.get("direction"), line=play.get("market_line"))
         settlement_record = external_settlements.get(key)
@@ -178,6 +253,12 @@ def build_corpus(repo_root: Path) -> tuple[list[dict[str, Any]], list[dict[str, 
         record = {
             "source_commit": snapshot.commit,
             "source_commit_time": snapshot.commit_time,
+            "source_kind": snapshot.source_kind,
+            "source_artifact_id": snapshot.source_artifact_id,
+            "source_observation_sha256": snapshot.source_sha256,
+            "snapshot_candidate_sha256": hashlib.sha256(
+                json.dumps(play, sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest(),
             "event_date": snapshot.run_date,
             "generation_timestamp": snapshot.generated_at,
             "game_id": play.get("game_id"),
