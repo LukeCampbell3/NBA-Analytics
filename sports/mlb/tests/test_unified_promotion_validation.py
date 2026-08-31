@@ -27,11 +27,14 @@ def test_recovered_workflow_outputs_preserve_exact_pregame_contract():
     assert all(row.source_kind == "GITHUB_ACTIONS_ARTIFACT" for row in rows)
 
 
-def test_locked_validation_contains_eight_exact_observations_but_fails_sample_gate():
+def test_locked_validation_reclassifies_eight_exact_candidates_when_full_gate_proof_is_missing():
     root = __import__("pathlib").Path(__file__).resolve().parents[3]
-    eligible, _ = build_corpus(root)
-    assert len(eligible) == 8
-    pca = next(row for row in eligible if row["player_id"] == "pete_crow-armstrong")
+    eligible, exclusions = build_corpus(root)
+    assert len(eligible) == 0
+    diagnostic = [row for row in exclusions if row.get("evidence_class") == "EXACT_CANDIDATE_ONLY"]
+    assert len(diagnostic) == 8
+    assert all(row["qualification_gate_audit"]["quote_freshness"]["status"] == "UNPROVABLE" for row in diagnostic)
+    pca = next(row for row in diagnostic if row["player_id"] == "pete_crow-armstrong")
     assert pca["settlement"] == "won"
     assert pca["actual_value"] == 8
     assert pca["usable_probability"] == pytest.approx(0.613848)
@@ -41,11 +44,11 @@ def test_locked_validation_contains_eight_exact_observations_but_fails_sample_ga
     result = run_promotion_validation(root)
     cert = result["certification"]
     assert cert["status"] == "HISTORICAL_VALIDATION_FAIL"
-    assert cert["selected_singles"] == 8
-    assert cert["capability_results"]["batter_hits"]["selected_singles"] == 6
-    assert cert["capability_results"]["batter_total_bases"]["selected_singles"] == 2
-    assert "INDEPENDENT_SLATES:1<20" in cert["failures"]
-    assert "SELECTED_SINGLES:8<50" in cert["failures"]
+    assert cert["selected_singles"] == 0
+    assert cert["capability_results"]["batter_hits"]["selected_singles"] == 0
+    assert cert["capability_results"]["batter_total_bases"]["selected_singles"] == 0
+    assert "INDEPENDENT_SLATES:0<20" in cert["failures"]
+    assert "SELECTED_SINGLES:0<50" in cert["failures"]
     status = json.loads((root / "artifacts/mlb_unified_production_status.json").read_text())
     assert status["active_engine"] == "legacy"
     assert status["production_authorized"] is False

@@ -2,12 +2,13 @@ name: MLB Unified Shadow Gates
 
 on:
   push:
-    branches: [unified-mlb-engine, unified-mlb-production-promotion]
+    branches: [unified-mlb-engine, unified-mlb-production-promotion, unified-mlb-v2-resolution]
     paths:
       - 'sports/mlb/unified/**'
       - 'sports/mlb/tests/test_unified_*.py'
       - 'sports/mlb/scripts/run_unified_mlb_shadow.py'
       - 'sports/mlb/scripts/run_unified_promotion_validation.py'
+      - 'sports/mlb/scripts/run_unified_v2_resolution.py'
       - 'sports/mlb/scripts/benchmark_unified_production_path.py'
       - 'sports/mlb/scripts/benchmark_unified_engine.py'
       - 'config/mlb_unified_promotion_policy.json'
@@ -51,6 +52,7 @@ jobs:
       - name: Build fail-closed shadow artifact
         run: |
           python sports/mlb/scripts/run_unified_promotion_validation.py
+          python sports/mlb/scripts/run_unified_v2_resolution.py
           python sports/mlb/scripts/run_unified_mlb_shadow.py
           python - <<'PY'
           import json
@@ -69,3 +71,6 @@ jobs:
           path: |
             sports/mlb/web/data/unified_predictions.json
             sports/mlb/unified/PERFORMANCE_REPORT.json
+            artifacts/mlb_unified_failure_analysis.json
+            artifacts/mlb_unified_v2_policy_manifest.json
+            artifacts/mlb_unified_v2_status.json

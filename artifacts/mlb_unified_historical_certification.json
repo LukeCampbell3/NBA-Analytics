@@ -24,33 +24,22 @@
   },
   "capability_results": {
     "batter_hits": {
-      "eligible_slates": 1,
+      "eligible_slates": 0,
       "failures": [
-        "INDEPENDENT_SLATES:1<20",
-        "SELECTED_SINGLES:6<50",
-        "ECE_REQUIREMENT_FAILED",
-        "BRIER_VS_MARKET_REQUIREMENT_FAILED",
-        "ROI_REQUIREMENT_FAILED",
-        "SLATE_CLUSTERED_ROI_LCB_FAILED",
-        "SOURCE_CONCENTRATION_REQUIREMENT_FAILED",
-        "REJECTED_CONTROL_COUNT:0<20"
+        "INDEPENDENT_SLATES:0<20",
+        "SELECTED_SINGLES:0<50"
       ],
       "metrics": {
-        "bets": 6,
-        "brier": 0.31817782157496577,
-        "brier_increase_vs_market": 0.0026454925087311953,
-        "ece": 0.42983137751421224,
-        "hit_rate": 0.3333333333333333,
-        "log_loss": 0.8334913917205192,
-        "log_loss_increase_vs_market": 0.0052007496004893294,
-        "market_brier": 0.3155323290662346,
-        "market_log_loss": 0.8282906421200299,
-        "max_drawdown_units": -4.0,
-        "maximum_single_source_return_share": 1.0,
-        "roi": -0.4603174603174603,
+        "bets": 0,
+        "brier": null,
+        "ece": null,
+        "hit_rate": null,
+        "log_loss": null,
+        "max_drawdown_units": null,
+        "roi": null,
         "slate_clustered_roi_lcb": null
       },
-      "selected_singles": 6
+      "selected_singles": 0
     },
     "batter_home_runs": {
       "eligible_slates": 0,
@@ -107,32 +96,22 @@
       "selected_singles": 0
     },
     "batter_total_bases": {
-      "eligible_slates": 1,
+      "eligible_slates": 0,
       "failures": [
-        "INDEPENDENT_SLATES:1<20",
-        "SELECTED_SINGLES:2<50",
-        "ECE_REQUIREMENT_FAILED",
-        "ROI_REQUIREMENT_FAILED",
-        "SLATE_CLUSTERED_ROI_LCB_FAILED",
-        "SOURCE_CONCENTRATION_REQUIREMENT_FAILED",
-        "REJECTED_CONTROL_COUNT:0<20"
+        "INDEPENDENT_SLATES:0<20",
+        "SELECTED_SINGLES:0<50"
       ],
       "metrics": {
-        "bets": 2,
-        "brier": 0.26206192813249995,
-        "brier_increase_vs_market": -0.012456030279598351,
-        "ece": 0.1131145,
-        "hit_rate": 0.5,
-        "log_loss": 0.7178701595223247,
-        "log_loss_increase_vs_market": -0.02554763564855933,
-        "market_brier": 0.2745179584120983,
-        "market_log_loss": 0.743417795170884,
-        "max_drawdown_units": -1.0,
-        "maximum_single_source_return_share": 1.0,
-        "roi": -0.11538461538461542,
+        "bets": 0,
+        "brier": null,
+        "ece": null,
+        "hit_rate": null,
+        "log_loss": null,
+        "max_drawdown_units": null,
+        "roi": null,
         "slate_clustered_roi_lcb": null
       },
-      "selected_singles": 2
+      "selected_singles": 0
     },
     "first_5_innings_total": {
       "eligible_slates": 0,
@@ -243,33 +222,29 @@
       "selected_singles": 0
     }
   },
-  "eligible_candidates": 8,
-  "eligible_slates": 1,
+  "eligible_candidates": 0,
+  "eligible_slates": 0,
   "evidence_state": "LOCKED_HISTORICAL_VALIDATION",
-  "excluded_candidates": 3,
+  "excluded_candidates": 320,
   "failures": [
-    "CAPABILITY_LEVEL_SAMPLE_REQUIREMENTS_NOT_MET",
-    "INDEPENDENT_SLATES:1<20",
-    "SELECTED_SINGLES:8<50"
+    "FROZEN_USABLE_PROBABILITY_HISTORY_UNAVAILABLE",
+    "INDEPENDENT_SLATES:0<20",
+    "SELECTED_SINGLES:0<50"
   ],
   "metrics": {
-    "bets": 8,
-    "brier": 0.30414884821434934,
-    "brier_increase_vs_market": -0.0011298881883511913,
-    "ece": 0.3506521581356592,
-    "hit_rate": 0.375,
-    "log_loss": 0.8045860836709706,
-    "log_loss_increase_vs_market": -0.0024863467117727245,
-    "market_brier": 0.30527873640270053,
-    "market_log_loss": 0.8070724303827433,
-    "max_drawdown_units": -5.0,
-    "roi": -0.3740842490842491,
+    "bets": 0,
+    "brier": null,
+    "ece": null,
+    "hit_rate": null,
+    "log_loss": null,
+    "max_drawdown_units": null,
+    "roi": null,
     "slate_clustered_roi_lcb": null
   },
   "policy_commit": "7c56729a9914eb9f903edffe9ca58b1a0a749ad4",
   "policy_hash": "5f8b247e7781717ffb39a01f581dd36c7466f9da061aa7519c5ab6777b73b67b",
   "schema_version": 1,
-  "selected_singles": 8,
+  "selected_singles": 0,
   "status": "HISTORICAL_VALIDATION_FAIL",
   "thresholds_modified_after_lock": false
 }

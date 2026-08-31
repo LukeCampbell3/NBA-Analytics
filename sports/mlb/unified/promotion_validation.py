@@ -41,6 +41,39 @@ REQUIRED_FROZEN_FIELDS = {
 }
 
 
+def frozen_v1_gate_audit(play: dict[str, Any], candidate: Any) -> dict[str, dict[str, Any]]:
+    """Prove every advertised V1 gate; absence of proof fails certification closed.
+
+    V1 did not carry a quote timestamp.  Artifact creation time proves that a
+    candidate payload was pregame, but it does not prove the age of the quote
+    used by the decision.  That distinction is material for certification.
+    """
+    probability = candidate.usable_probability
+    support = float(play.get("historical_bucket_support") or 0)
+    deeplink = str(play.get("sportsbook_deeplink") or "")
+    market = str(play.get("target") or "").upper()
+    price = play.get("selected_side_price")
+    uncertainty = candidate.uncertainty
+    gates = {
+        "probability": {"status": "PASS" if probability is not None and probability >= .60 else "FAIL", "value": probability},
+        "support": {"status": "PASS" if support >= 50 else "FAIL", "value": support},
+        "uncertainty": {"status": "PASS" if uncertainty is not None else "FAIL", "value": uncertainty,
+                        "note": "V1 compatibility adapter assigns zero because final_hit_probability was documented as already conservative."},
+        "edge": {"status": "PASS" if candidate.probability_edge is not None and candidate.probability_edge >= .01 else "FAIL", "value": candidate.probability_edge},
+        "conservative_ev": {"status": "PASS" if candidate.conservative_expected_value is not None and candidate.conservative_expected_value > 0 else "FAIL", "value": candidate.conservative_expected_value},
+        "price": {"status": "PASS" if price is not None and (float(price) <= -100 or float(price) >= 100) else "FAIL", "value": price},
+        "identity": {"status": "PASS" if candidate.identity_status == "CONFIRMED" else "FAIL", "value": candidate.identity_status},
+        "quote_freshness": {"status": "UNPROVABLE", "value": play.get("quote_timestamp"),
+                            "note": "No per-quote timestamp was preserved; market_date and artifact time are not quote time."},
+        "market_capability": {"status": "PASS" if market in {"H", "TB"} else "FAIL", "value": market},
+        "lineup": {"status": "PASS" if candidate.lineup_status == "CONFIRMED" else "FAIL", "value": candidate.lineup_status},
+        "player_status": {"status": "UNPROVABLE", "value": play.get("player_status"),
+                          "note": "Confirmed lineup is not a separately preserved injury/player-status assertion."},
+        "exact_selection": {"status": "PASS" if "marketId=" in deeplink and "selectionId=" in deeplink else "FAIL", "value": bool(deeplink)},
+    }
+    return gates
+
+
 def _parse_time(value: Any) -> datetime | None:
     if not value:
         return None
@@ -285,15 +318,23 @@ def build_corpus(repo_root: Path) -> tuple[list[dict[str, Any]], list[dict[str, 
             exclusions.append(record)
             continue
         candidate = decide(adapt_legacy_play(play), DecisionPolicy())
+        gate_audit = frozen_v1_gate_audit(play, candidate)
+        fully_qualified = all(item["status"] == "PASS" for item in gate_audit.values()) and not candidate.rejection_reasons
         record.update({
             "usable_probability": candidate.usable_probability,
             "uncertainty": candidate.uncertainty,
             "probability_edge": candidate.probability_edge,
             "conservative_expected_value": candidate.conservative_expected_value,
-            "eligible": not candidate.rejection_reasons,
+            "eligible": fully_qualified,
             "rejection_reasons": candidate.rejection_reasons,
+            "qualification_gate_audit": gate_audit,
+            "evidence_class": "EXACT_CERTIFICATION_ELIGIBLE" if fully_qualified else "EXACT_CANDIDATE_ONLY",
         })
-        eligible.append(record)
+        if fully_qualified:
+            eligible.append(record)
+        else:
+            record["exclusion_reason"] = "FROZEN_POLICY_QUALIFICATION_NOT_FULLY_PROVABLE"
+            exclusions.append(record)
     return eligible, exclusions
 
 
