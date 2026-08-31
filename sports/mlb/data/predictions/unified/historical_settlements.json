@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "settlements": [
+    {
+      "source_commit": "578b3faa03bc611313c4115ae4ef513454adf694",
+      "event_date": "2026-08-30",
+      "game_id": "824636",
+      "player_id": "pete_crow-armstrong",
+      "player_mlbam_id": 691718,
+      "market": "TB",
+      "side": "OVER",
+      "line": 1.5,
+      "actual_value": 8,
+      "settlement": "won",
+      "source_type": "MLB_STATSAPI_FINAL_FEED",
+      "source_url": "https://statsapi.mlb.com/api/v1.1/game/824636/feed/live",
+      "source_sha256": "3581bdb4884d0042ff1d346ffefa7378dcb7abe737aba163e7ad86232b428c1b",
+      "game_finalized_at_utc": "2026-08-31T02:36:16.316Z",
+      "retrieved_at_utc": "2026-08-31T03:05:17Z",
+      "source_fields": "liveData.boxscore.teams.home.players.ID691718.stats.batting.totalBases",
+      "source_summary": "2-5 | 2 HR, K, 2 RBI"
+    }
+  ]
+}

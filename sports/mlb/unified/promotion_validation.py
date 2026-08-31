@@ -16,6 +16,7 @@ from .decision import DecisionPolicy, decide
 from .market_registry import CAPABILITIES
 from .policy_manifest import FROZEN_POLICY_COMMIT, build_policy_manifest
 from .production_state import CapabilityAuthority, EngineState, atomic_write_json, build_engine_manifest
+from .historical_settlements import load_historical_settlements, settlement_key, validate_historical_settlement
 
 
 @dataclass(frozen=True)
@@ -96,7 +97,12 @@ def historical_inventory(repo_root: Path) -> dict[str, Any]:
         fields[column] = {"present": present, "total": int(len(universe_frame)), "fraction": present / len(universe_frame) if len(universe_frame) else 0.0}
     snapshot_rows = committed_daily_snapshots(repo_root)
     fidelity = Counter(row.fidelity for row in snapshot_rows)
-    settlement_present = sum(bool(row.play.get("settlement") or row.play.get("result")) for row in snapshot_rows if row.fidelity == "EXACT")
+    external_settlements = load_historical_settlements(repo_root)
+    settlement_present = 0
+    for row in snapshot_rows:
+        play = row.play
+        key = settlement_key(source_commit=row.commit, game_id=play.get("game_id"), player_id=play.get("player_id") or play.get("player"), market=play.get("target"), side=play.get("direction"), line=play.get("market_line"))
+        settlement_present += int(row.fidelity == "EXACT" and bool(play.get("settlement") or play.get("result") or external_settlements.get(key)))
     daily_root = repo_root / "sports/mlb/data/predictions/daily_runs"
     archived_rows = archived_priced = archived_final_probability = 0
     archived_slate_dates: set[str] = set()
@@ -161,9 +167,14 @@ def historical_inventory(repo_root: Path) -> dict[str, Any]:
 def build_corpus(repo_root: Path) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     eligible: list[dict[str, Any]] = []
     exclusions: list[dict[str, Any]] = []
+    external_settlements = load_historical_settlements(repo_root)
     for snapshot in committed_daily_snapshots(repo_root):
         play = snapshot.play
-        settlement = play.get("settlement") or play.get("result")
+        key = settlement_key(source_commit=snapshot.commit, game_id=play.get("game_id"), player_id=play.get("player_id") or play.get("player"), market=play.get("target"), side=play.get("direction"), line=play.get("market_line"))
+        settlement_record = external_settlements.get(key)
+        if settlement_record:
+            validate_historical_settlement(settlement_record, snapshot.generated_at)
+        settlement = play.get("settlement") or play.get("result") or (settlement_record or {}).get("settlement")
         record = {
             "source_commit": snapshot.commit,
             "source_commit_time": snapshot.commit_time,
@@ -178,6 +189,9 @@ def build_corpus(repo_root: Path) -> tuple[list[dict[str, Any]], list[dict[str, 
             "raw_probability": play.get("estimated_hit_probability"),
             "calibrated_probability": play.get("final_hit_probability"),
             "settlement": settlement,
+            "settlement_source": (settlement_record or {}).get("source_type"),
+            "settlement_source_sha256": (settlement_record or {}).get("source_sha256"),
+            "actual_value": (settlement_record or {}).get("actual_value"),
             "fidelity": snapshot.fidelity,
             "fidelity_reason": snapshot.reason,
         }

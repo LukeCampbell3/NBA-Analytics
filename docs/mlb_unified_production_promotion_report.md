@@ -29,18 +29,22 @@ uncertainty, lineup/role status, and exact calibration state. They are
 `RECONSTRUCTED_WEAK` and diagnostic only.
 
 Immutable Git history preserves one deduplicated `EXACT` pregame unified
-candidate, but not its settlement. The locked corpus consequently has 0
-eligible settled candidates across 0 slates. No future outcome or present-day
-quote was used to fill missing state.
+candidate. Its postgame settlement is now recorded separately from the frozen
+snapshot using the finalized official MLB StatsAPI feed and response hash.
+Pete Crow-Armstrong recorded 8 total bases, so the preserved TB OVER 1.5
+candidate settled as won. The locked corpus consequently has 1 eligible
+settled candidate across 1 slate. No prediction-time field or quote was
+backfilled from the outcome.
 
 Locked result: `HISTORICAL_VALIDATION_FAIL`.
 
 ## 10–20. Statistical and economic results
 
-Calibration, selector discrimination, accepted/rejected controls, singles,
+Calibration, selector discrimination, accepted/rejected controls, aggregate singles,
 2-leg, 3-leg, 4-leg, concentration, bankroll, baselines and ablations are all
-`UNAVAILABLE` for certification because the exact eligible sample is empty.
-Metrics are stored as `null`, not zero.
+`UNAVAILABLE` for certification because the exact eligible sample contains
+only one observation. Metrics are stored as `null`, not promoted from an
+uninformative denominator.
 
 The predeclared gate required at least 20 independent slates, 50 selected
 singles per capability and 30 tickets per parlay class, plus calibration,
@@ -51,7 +55,7 @@ were not changed after the inventory result.
 
 | Capability | State | Reason |
 |---|---|---|
-| H, TB, R, RBI, HR, pitcher K | VALIDATION_ONLY | frozen settled replay unavailable |
+| H, TB, R, RBI, HR, pitcher K | VALIDATION_ONLY | TB has 1 exact settled observation; all remain below sample gates |
 | Pitcher outs, ML, game total, F5, team total | VALIDATION_ONLY | insufficient unified calibration/evidence |
 | Cross-game 2/3/4-leg | VALIDATION_ONLY | no eligible ticket corpus |
 | Same-game parlays | SHADOW | no certified common-world ticket corpus and real combined-price evidence |

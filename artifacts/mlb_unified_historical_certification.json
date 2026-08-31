@@ -96,22 +96,31 @@
       "selected_singles": 0
     },
     "batter_total_bases": {
-      "eligible_slates": 0,
+      "eligible_slates": 1,
       "failures": [
-        "INDEPENDENT_SLATES:0<20",
-        "SELECTED_SINGLES:0<50"
+        "INDEPENDENT_SLATES:1<20",
+        "SELECTED_SINGLES:1<50",
+        "ECE_REQUIREMENT_FAILED",
+        "SLATE_CLUSTERED_ROI_LCB_FAILED",
+        "SOURCE_CONCENTRATION_REQUIREMENT_FAILED",
+        "REJECTED_CONTROL_COUNT:0<20"
       ],
       "metrics": {
-        "bets": 0,
-        "brier": null,
-        "ece": null,
-        "hit_rate": null,
-        "log_loss": null,
-        "max_drawdown_units": null,
-        "roi": null,
+        "bets": 1,
+        "brier": 0.14911336710400003,
+        "brier_increase_vs_market": -0.039922549720196515,
+        "ece": 0.38615200000000005,
+        "hit_rate": 1.0,
+        "log_loss": 0.488007938485545,
+        "log_loss_increase_vs_market": -0.0825369199820678,
+        "market_brier": 0.18903591682419654,
+        "market_log_loss": 0.5705448584676128,
+        "max_drawdown_units": 0.0,
+        "maximum_single_source_return_share": 1.0,
+        "roi": 0.7692307692307692,
         "slate_clustered_roi_lcb": null
       },
-      "selected_singles": 0
+      "selected_singles": 1
     },
     "first_5_innings_total": {
       "eligible_slates": 0,
@@ -222,29 +231,33 @@
       "selected_singles": 0
     }
   },
-  "eligible_candidates": 0,
-  "eligible_slates": 0,
+  "eligible_candidates": 1,
+  "eligible_slates": 1,
   "evidence_state": "LOCKED_HISTORICAL_VALIDATION",
-  "excluded_candidates": 4,
+  "excluded_candidates": 3,
   "failures": [
-    "FROZEN_USABLE_PROBABILITY_HISTORY_UNAVAILABLE",
-    "INDEPENDENT_SLATES:0<20",
-    "SELECTED_SINGLES:0<50"
+    "CAPABILITY_LEVEL_SAMPLE_REQUIREMENTS_NOT_MET",
+    "INDEPENDENT_SLATES:1<20",
+    "SELECTED_SINGLES:1<50"
   ],
   "metrics": {
-    "bets": 0,
-    "brier": null,
-    "ece": null,
-    "hit_rate": null,
-    "log_loss": null,
-    "max_drawdown_units": null,
-    "roi": null,
+    "bets": 1,
+    "brier": 0.14911336710400003,
+    "brier_increase_vs_market": -0.039922549720196515,
+    "ece": 0.38615200000000005,
+    "hit_rate": 1.0,
+    "log_loss": 0.488007938485545,
+    "log_loss_increase_vs_market": -0.0825369199820678,
+    "market_brier": 0.18903591682419654,
+    "market_log_loss": 0.5705448584676128,
+    "max_drawdown_units": 0.0,
+    "roi": 0.7692307692307692,
     "slate_clustered_roi_lcb": null
   },
   "policy_commit": "7c56729a9914eb9f903edffe9ca58b1a0a749ad4",
   "policy_hash": "5f8b247e7781717ffb39a01f581dd36c7466f9da061aa7519c5ab6777b73b67b",
   "schema_version": 1,
-  "selected_singles": 0,
+  "selected_singles": 1,
   "status": "HISTORICAL_VALIDATION_FAIL",
   "thresholds_modified_after_lock": false
 }

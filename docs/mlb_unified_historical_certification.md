@@ -9,14 +9,14 @@ Frozen policy hash: `5f8b247e7781717ffb39a01f581dd36c7466f9da061aa7519c5ab6777b7
 
 | Measure | Locked result | Predeclared requirement |
 |---|---:|---:|
-| Eligible independent slates | 0 | 20 |
-| Eligible selected singles | 0 | 50 per capability |
+| Eligible independent slates | 1 | 20 |
+| Eligible selected singles | 1 | 50 per capability |
 | Eligible 2/3/4-leg tickets | 0 / 0 / 0 | 30 per class |
 
-No hit-rate, ROI, calibration, drawdown, discrimination, concentration,
-bankroll, baseline, or ablation statistic is reported because the denominator
-is zero. `null` is the correct value; manufacturing a reconstructed probability
-would test a different policy.
+No inferential hit-rate, ROI, calibration, drawdown, discrimination,
+concentration, bankroll, baseline, or ablation statistic is reported because
+one observation cannot satisfy the predeclared sample gates. `null` is the
+correct certification value.
 
 ## Evidence inventory
 
@@ -28,9 +28,12 @@ importantly, no row retains the frozen unified decision's final/usable
 probability, uncertainty, lineup/role validation and exact calibration state.
 
 Git history of `daily_predictions.json` retains one deduplicated exact pregame
-frozen-policy candidate from August 30. Its settlement is not preserved in the
-repository artifact. It is therefore valid prospective input evidence but not
-a gradable locked observation.
+frozen-policy candidate from August 30. A separate immutable settlement record
+now links that snapshot to MLB StatsAPI game 824636: Pete Crow-Armstrong recorded
+8 total bases, settling TB OVER 1.5 as won. The official response hash, source
+path, final-play timestamp, and retrieval timestamp are preserved without
+modifying the prediction-time record. This creates one gradable exact
+observation.
 
 ## Recovery audit
 
@@ -44,7 +47,8 @@ records without inventing missing prediction-time state.
 
 The certification engine's unconditional-failure path was removed and tested
 with a synthetic corpus that clears every predeclared capability gate. The
-current failure is now exclusively an evidence-sufficiency result.
+current failure is now exclusively an evidence-sufficiency result: one slate
+and one TB selection remain below the frozen 20-slate/50-selection gates.
 
 ## Capability decision
 
