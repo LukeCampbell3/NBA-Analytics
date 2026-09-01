@@ -3,18 +3,18 @@
   "board_title": "MLB Prediction Bounties",
   "by_direction": {
     "OVER": {
-      "count": 9,
+      "count": 8,
       "share": 1.0
     }
   },
   "by_target": {
     "H": {
       "count": 6,
-      "share": 0.6666666666666666
+      "share": 0.75
     },
     "TB": {
-      "count": 3,
-      "share": 0.3333333333333333
+      "count": 2,
+      "share": 0.25
     }
   },
   "daily_parlay": {
@@ -23,7 +23,7 @@
       3,
       4
     ],
-    "alternate_line_candidate_count": 2,
+    "alternate_line_candidate_count": 1,
     "available": true,
     "betslip_policy": {
       "construction": "direct_fanduel_public_market_ids_only",
@@ -32,19 +32,19 @@
       "sportsbook_key": "fanduel",
       "status": "ready"
     },
-    "considered_anchor_count": 3,
+    "considered_anchor_count": 2,
     "direction_policy": "OVER_ONLY",
-    "eligible_anchor_count": 3,
+    "eligible_anchor_count": 2,
     "filter_rejections": {
       "history_too_short": 28,
-      "history_too_stale": 300,
-      "hit_survival_consensus_too_low": 8,
-      "hit_survival_probability_too_low": 4,
-      "leg_probability_too_low": 107,
-      "leg_value_too_low": 20,
-      "not_over": 874,
-      "price_outside_playable_range": 88,
-      "unconfirmed_market_price": 60,
+      "history_too_stale": 305,
+      "hit_survival_consensus_too_low": 9,
+      "hit_survival_probability_too_low": 5,
+      "leg_probability_too_low": 105,
+      "leg_value_too_low": 19,
+      "not_over": 873,
+      "price_outside_playable_range": 90,
+      "unconfirmed_market_price": 56,
       "unsupported_anchor_target": 38
     },
     "gates": {
@@ -107,7 +107,7 @@
         "4": 0.18
       }
     },
-    "generated_at_utc": "2026-09-01T13:18:52.816760+00:00",
+    "generated_at_utc": "2026-09-01T16:48:29.653139+00:00",
     "hit_survival_validation": {
       "calibration": {
         "brier_score": 0.24259946235125276,
@@ -399,7 +399,7 @@
     "selected_ticket": {
       "action_status": "review",
       "authorization_status": "SHADOW_ONLY",
-      "avg_leg_quality": 0.7770915930801867,
+      "avg_leg_quality": 0.7799190452127744,
       "betslip": {
         "leg_count": 2,
         "source": "direct_fanduel_public_market_ids",
@@ -410,9 +410,9 @@
       },
       "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.183894170&selectionId%5B0%5D=17813530&marketId%5B1%5D=734.183893983&selectionId%5B1%5D=60489486",
       "candidate_authorized": false,
-      "combined_american_price": 145.96273291925468,
-      "combined_decimal_price": 2.459627329192547,
-      "expected_return_per_unit": 0.09431953404305649,
+      "combined_american_price": 158.26086956521738,
+      "combined_decimal_price": 2.5826086956521737,
+      "expected_return_per_unit": 0.14903551074520927,
       "independent_probability": 0.4449127398508386,
       "latent_set": {
         "distinct_targets": 2,
@@ -535,7 +535,7 @@
           "selected_sportsbook_key": "fanduel",
           "selection_score": 0.8434853382941995,
           "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183894170&selectionId=17813530",
-          "sportsbook_deeplink_observed_at_utc": "2026-09-01T13:15:33.609836+00:00",
+          "sportsbook_deeplink_observed_at_utc": "2026-09-01T16:45:08.090004+00:00",
           "sportsbook_deeplink_source": "fanduel_public",
           "target": "H",
           "team": "DET"
@@ -546,8 +546,8 @@
           "days_since_history": 3,
           "direction": "OVER",
           "estimated_graded_hit_rate": 0.6474311218733868,
-          "expected_value_per_unit": 0.10988192321152024,
-          "final_pool_quality_score": 0.7106978478661738,
+          "expected_value_per_unit": 0.16537601937209634,
+          "final_pool_quality_score": 0.7163527521313494,
           "game_id": "824633",
           "game_status_code": "P",
           "historical_bucket_key": "TB|OVER|1.5",
@@ -580,7 +580,7 @@
           ],
           "market_common_books": 1,
           "market_date": "2026-09-01",
-          "market_implied_probability": 0.5833333333333334,
+          "market_implied_probability": 0.5555555555555556,
           "market_line": 1.5,
           "market_source": "real",
           "model_hit_probability": 0.6926411939278765,
@@ -601,12 +601,12 @@
           "risk_flags": [
             "lineup_unconfirmed"
           ],
-          "selected_side_price": -140.0,
+          "selected_side_price": -125.0,
           "selected_sportsbook": "FanDuel",
           "selected_sportsbook_key": "fanduel",
-          "selection_score": 0.7106978478661738,
+          "selection_score": 0.7163527521313494,
           "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183893983&selectionId=60489486",
-          "sportsbook_deeplink_observed_at_utc": "2026-09-01T13:15:33.609836+00:00",
+          "sportsbook_deeplink_observed_at_utc": "2026-09-01T16:45:08.090004+00:00",
           "sportsbook_deeplink_source": "fanduel_public",
           "target": "TB",
           "team": "CHC"
@@ -615,7 +615,7 @@
       "maximum_decimal_price": 6.0,
       "mixed_direction": false,
       "pairwise_adjustment_factor": 1.124554,
-      "parlay_score": 0.5346270365193413,
+      "parlay_score": 0.551670241361227,
       "probability_floor": 0.4,
       "projected_probability": 0.4449127398508386,
       "reliability_profile": {
@@ -658,7 +658,7 @@
       {
         "action_status": "review",
         "authorization_status": "SHADOW_ONLY",
-        "avg_leg_quality": 0.7770915930801867,
+        "avg_leg_quality": 0.7799190452127744,
         "betslip": {
           "leg_count": 2,
           "source": "direct_fanduel_public_market_ids",
@@ -669,9 +669,9 @@
         },
         "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.183894170&selectionId%5B0%5D=17813530&marketId%5B1%5D=734.183893983&selectionId%5B1%5D=60489486",
         "candidate_authorized": false,
-        "combined_american_price": 145.96273291925468,
-        "combined_decimal_price": 2.459627329192547,
-        "expected_return_per_unit": 0.09431953404305649,
+        "combined_american_price": 158.26086956521738,
+        "combined_decimal_price": 2.5826086956521737,
+        "expected_return_per_unit": 0.14903551074520927,
         "independent_probability": 0.4449127398508386,
         "latent_set": {
           "distinct_targets": 2,
@@ -792,7 +792,7 @@
             "selected_sportsbook_key": "fanduel",
             "selection_score": 0.8434853382941995,
             "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183894170&selectionId=17813530",
-            "sportsbook_deeplink_observed_at_utc": "2026-09-01T13:15:33.609836+00:00",
+            "sportsbook_deeplink_observed_at_utc": "2026-09-01T16:45:08.090004+00:00",
             "sportsbook_deeplink_source": "fanduel_public",
             "target": "H",
             "team": "DET"
@@ -803,8 +803,8 @@
             "days_since_history": 3,
             "direction": "OVER",
             "estimated_graded_hit_rate": 0.6474311218733868,
-            "expected_value_per_unit": 0.10988192321152024,
-            "final_pool_quality_score": 0.7106978478661738,
+            "expected_value_per_unit": 0.16537601937209634,
+            "final_pool_quality_score": 0.7163527521313494,
             "game_id": "824633",
             "game_status_code": "P",
             "historical_bucket_key": "TB|OVER|1.5",
@@ -837,7 +837,7 @@
             ],
             "market_common_books": 1,
             "market_date": "2026-09-01",
-            "market_implied_probability": 0.5833333333333334,
+            "market_implied_probability": 0.5555555555555556,
             "market_line": 1.5,
             "market_source": "real",
             "model_hit_probability": 0.6926411939278765,
@@ -856,12 +856,12 @@
             "risk_flags": [
               "lineup_unconfirmed"
             ],
-            "selected_side_price": -140.0,
+            "selected_side_price": -125.0,
             "selected_sportsbook": "FanDuel",
             "selected_sportsbook_key": "fanduel",
-            "selection_score": 0.7106978478661738,
+            "selection_score": 0.7163527521313494,
             "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.183893983&selectionId=60489486",
-            "sportsbook_deeplink_observed_at_utc": "2026-09-01T13:15:33.609836+00:00",
+            "sportsbook_deeplink_observed_at_utc": "2026-09-01T16:45:08.090004+00:00",
             "sportsbook_deeplink_source": "fanduel_public",
             "target": "TB",
             "team": "CHC"
@@ -870,7 +870,7 @@
         "maximum_decimal_price": 6.0,
         "mixed_direction": false,
         "pairwise_adjustment_factor": 1.124554,
-        "parlay_score": 0.5346270365193413,
+        "parlay_score": 0.551670241361227,
         "probability_floor": 0.4,
         "projected_probability": 0.4449127398508386,
         "reliability_profile": {
@@ -1049,20 +1049,19 @@
     "withhold_threshold_days": 60
   },
   "filter_rejections": {
-    "core_price_too_heavily_juiced": 132,
-    "core_price_too_long": 71,
-    "edge_too_small": 311,
-    "expected_value_too_low": 7,
-    "history_too_short": 140,
-    "history_too_stale": 7,
-    "hit_probability_too_low": 162,
-    "opposing_probable_starter_missing": 45,
-    "prediction_too_low": 54,
-    "side_price_unconfirmed": 431,
-    "synthetic_market_source": 158
+    "core_price_too_heavily_juiced": 133,
+    "core_price_too_long": 75,
+    "edge_too_small": 322,
+    "expected_value_too_low": 6,
+    "history_too_short": 142,
+    "history_too_stale": 12,
+    "hit_probability_too_low": 165,
+    "prediction_too_low": 55,
+    "side_price_unconfirmed": 449,
+    "synthetic_market_source": 160
   },
-  "generated_at_utc": "2026-09-01T13:26:08.588751+00:00",
-  "mlb_team_market_generated_at_utc": "2026-09-01T13:26:09.058757+00:00",
+  "generated_at_utc": "2026-09-01T16:55:54.646558+00:00",
+  "mlb_team_market_generated_at_utc": "2026-09-01T16:55:55.121835+00:00",
   "mlb_team_market_plays": [],
   "mlb_team_market_status": "ok",
   "model_run_id": "mlb_high_precision_selector_v2",
@@ -1096,9 +1095,9 @@
   },
   "parlays": {
     "action": "ACT",
-    "calibration_as_of": "2026-09-01T13:24:00.616401+00:00",
-    "calibration_snapshot_id": "9b0aa667e25fdb77",
-    "calibration_snapshot_sha256": "9b0aa667e25fdb77fc97c3fd15fdecd600d35add9c433f83c4d128140ed73552",
+    "calibration_as_of": "2026-09-01T16:53:40.313990+00:00",
+    "calibration_snapshot_id": "2f0df8ce57657d80",
+    "calibration_snapshot_sha256": "2f0df8ce57657d807a8244e24b145bd666198acb8a7b8fd22b728fe5d9e492cb",
     "decision_record": {
       "action": 1,
       "candidate_universe_size": 500,
@@ -1116,7 +1115,7 @@
       },
       "world_gate_mode": "OBSERVE_ONLY"
     },
-    "decision_timestamp_utc": "2026-09-01T13:24:38.518069+00:00",
+    "decision_timestamp_utc": "2026-09-01T16:54:18.566350+00:00",
     "eligibility_reason": "operationally_eligible",
     "eligible": true,
     "evidence_status": {
@@ -1135,9 +1134,9 @@
         "leg_2_probability_below_70pct",
         "joint_probability_below_50pct"
       ],
-      "combined_decimal_price": 3.9166666666666665,
+      "combined_decimal_price": 4.003703703703703,
       "evidence_note": "The frozen V2 research action remains authoritative for its prospective evidence stream. This overlay only controls whether that research action is presented as a tight-quality public candidate.",
-      "expected_value_per_unit": 0.15890193217308246,
+      "expected_value_per_unit": 0.18465530844359535,
       "frozen_policy_mutated": false,
       "joint_probability": 0.2958898550229147,
       "leg_probabilities": [
@@ -1171,7 +1170,7 @@
       "joint_score": 1.0,
       "leg_1": {
         "book": "real",
-        "decimal_price": 2.25,
+        "decimal_price": 2.3,
         "deeplinks_by_region": {
           "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184220335&selectionId=11497449",
           "AZ": "https://sportsbook.fanduel.com/addToBetslip?marketId=704.183959278&selectionId=11497449",
@@ -1290,7 +1289,7 @@
       "joint_score": 1.0000000000000002,
       "leg_1": {
         "book": "real",
-        "decimal_price": 1.5882352941176472,
+        "decimal_price": 1.5714285714285714,
         "deeplinks_by_region": {
           "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184218990&selectionId=17511224",
           "AZ": "https://sportsbook.fanduel.com/addToBetslip?marketId=704.183958011&selectionId=17511224",
@@ -1333,7 +1332,7 @@
       },
       "leg_2": {
         "book": "real",
-        "decimal_price": 1.7142857142857144,
+        "decimal_price": 1.8,
         "deeplinks_by_region": {
           "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184220335&selectionId=60489486",
           "AZ": "https://sportsbook.fanduel.com/addToBetslip?marketId=704.183959278&selectionId=60489486",
@@ -1405,7 +1404,7 @@
     "certificate_status": "NO_ACTIVE_PROSPECTIVE_CERTIFICATE",
     "complete_slate_capture_passed": true,
     "full_policy_replay_available_for_snapshot": true,
-    "generated_at_utc": "2026-09-01T13:16:40.168732+00:00",
+    "generated_at_utc": "2026-09-01T16:46:15.899751+00:00",
     "historical_evidence_labels": [
       "SELECTED_ONLY_HISTORY",
       "SELECTED_ONLY_HISTORY"
@@ -1426,8 +1425,8 @@
     "run_date": "2026-09-01",
     "schema_version": "MLB_POLICY_GOVERNANCE_STATUS_V1",
     "slate_id": "MLB_20260901",
-    "snapshot_id": "mlb_20260901_131533Z_0debe90066ed",
-    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260901/governance/slates/MLB_20260901/mlb_20260901_131533Z_0debe90066ed/manifest.json",
+    "snapshot_id": "mlb_20260901_164508Z_67607c7d8a76",
+    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260901/governance/slates/MLB_20260901/mlb_20260901_164508Z_67607c7d8a76/manifest.json",
     "staking_enabled": false
   },
   "policy_profile": "premium_confidence_value_frontier_v19_shadow",
@@ -1523,20 +1522,20 @@
   },
   "sport": "MLB",
   "summary": {
-    "avg_abs_edge": 0.7020839999999999,
-    "avg_edge": 0.7020839999999999,
-    "avg_expected_hit_rate": 0.6387769999999999,
-    "avg_graded_hit_rate": 0.6387769999999999,
-    "avg_precision_score": 0.7440572222222223,
-    "avg_value_score": 0.5265757426592221,
+    "avg_abs_edge": 0.714543625,
+    "avg_edge": 0.714543625,
+    "avg_expected_hit_rate": 0.6430471249999999,
+    "avg_graded_hit_rate": 0.6430471249999999,
+    "avg_precision_score": 0.75365775,
+    "avg_value_score": 0.5425111938764999,
     "closed_game_cards_suppressed": 0,
     "duplicate_cards_suppressed": 0,
     "parlay_pairs": 0,
     "parlay_tagged_plays": 0,
-    "play_count": 9,
-    "rejected_rows": 1518,
-    "rows_after_filters": 12,
-    "source_play_count": 9,
+    "play_count": 8,
+    "rejected_rows": 1519,
+    "rows_after_filters": 11,
+    "source_play_count": 8,
     "supported_rows": 1530
   },
   "suppressed_closed_games": [],
@@ -1554,7 +1553,7 @@
     "confidence_floor": 0.6,
     "dynamic_probability_gate": "balanced_probability >= max(0.60, exact_price_break_even_probability + 0.01)",
     "evidence_note": "v19 preserves the validated 60% base confidence regime, requires a one-point probability edge over the exact confirmed price, and weights isotonic negative authority by demonstrated holdout Brier improvement. No relative rank, quota, or board-size target can reject an otherwise eligible play. This remains a shadow publication policy.",
-    "input_plays": 9,
+    "input_plays": 8,
     "minimum_final_expected_value": 0.0,
     "minimum_probability_edge": 0.01,
     "parlay_v2_unchanged": true,
@@ -1562,7 +1561,7 @@
     "probability_source": "existing_evidence_estimate with evidence-weighted negative-only isotonic adjustment",
     "published_plays": 0,
     "ranking_after_gates": "final_price_ev_desc_then_final_probability_desc; ranking_does_not_limit_publication",
-    "rejected_plays": 9,
+    "rejected_plays": 8,
     "rejections": [
       {
         "final_ev": 0.08617899973883292,
@@ -1578,12 +1577,12 @@
         "target": "H"
       },
       {
-        "final_ev": 0.07932412121212118,
+        "final_ev": 0.10560103225806428,
         "final_probability": 0.672032,
         "line": 0.5,
         "play_key": "2026-09-01|823661|eduardo valencia|h|over",
         "player": "Eduardo Valencia",
-        "pre_tight_ev": 0.079325,
+        "pre_tight_ev": 0.105602,
         "pre_tight_probability": 0.672032,
         "reasons": [
           "lineup_unconfirmed"
@@ -1604,12 +1603,12 @@
         "target": "H"
       },
       {
-        "final_ev": 0.10171923053505516,
+        "final_ev": 0.08497577718345872,
         "final_probability": 0.6329025366903509,
         "line": 0.5,
         "play_key": "2026-09-01|823908|alek thomas|h|over",
         "player": "Alek Thomas",
-        "pre_tight_ev": 0.109831,
+        "pre_tight_ev": 0.092964,
         "pre_tight_probability": 0.637562,
         "reasons": [
           "lineup_unconfirmed"
@@ -1630,32 +1629,31 @@
         "target": "H"
       },
       {
-        "final_ev": -0.003768977050129352,
-        "final_probability": 0.6202947878744478,
-        "line": 0.5,
-        "play_key": "2026-09-01|824472|jose trevino|h|over",
-        "player": "Jose Trevino",
-        "pre_tight_ev": 0.000609,
-        "pre_tight_probability": 0.623021,
-        "reasons": [
-          "dynamic_probability_edge_below_1pct",
-          "final_price_ev_negative",
-          "lineup_unconfirmed"
-        ],
-        "target": "H"
-      },
-      {
-        "final_ev": 0.10310906575647127,
+        "final_ev": 0.15826451904429462,
         "final_probability": 0.6434802883579415,
         "line": 1.5,
         "play_key": "2026-09-01|824633|pete crow-armstrong|tb|over",
         "player": "Pete Crow-Armstrong",
-        "pre_tight_ev": 0.109882,
+        "pre_tight_ev": 0.165376,
         "pre_tight_probability": 0.647431,
         "reasons": [
           "lineup_unconfirmed"
         ],
         "target": "TB"
+      },
+      {
+        "final_ev": 0.007979030295977685,
+        "final_probability": 0.6202947878744478,
+        "line": 0.5,
+        "play_key": "2026-09-01|824472|jose trevino|h|over",
+        "player": "Jose Trevino",
+        "pre_tight_ev": 0.012409,
+        "pre_tight_probability": 0.623021,
+        "reasons": [
+          "dynamic_probability_edge_below_1pct",
+          "lineup_unconfirmed"
+        ],
+        "target": "H"
       },
       {
         "final_ev": 0.06728591801173645,
@@ -1665,19 +1663,6 @@
         "player": "Matt Olson",
         "pre_tight_ev": 0.070117,
         "pre_tight_probability": 0.614748,
-        "reasons": [
-          "lineup_unconfirmed"
-        ],
-        "target": "TB"
-      },
-      {
-        "final_ev": 0.35975772026908115,
-        "final_probability": 0.6043367645640361,
-        "line": 1.5,
-        "play_key": "2026-09-01|824633|alex bregman|tb|over",
-        "player": "Alex Bregman",
-        "pre_tight_ev": 0.360386,
-        "pre_tight_probability": 0.604616,
         "reasons": [
           "lineup_unconfirmed"
         ],
@@ -1692,21 +1677,21 @@
     "certification_started": false,
     "decision": "NO_RELIABLE_EDGE_FOUND",
     "fully_valid_candidates": 0,
-    "generated_at_utc": "2026-09-01T13:27:56.144316Z",
+    "generated_at_utc": "2026-09-01T16:57:44.606009Z",
     "implementation_commit": "cc205ac42491f913a83c3118ee4f2df860b52a4e",
-    "normalized_candidates": 105,
+    "normalized_candidates": 106,
     "policy": "UNIFIED_MLB_V2_1",
     "policy_hash": "80f335d2501d54502909d7f8587ebfef56d725a67d44ae125f9df4337d489b1c",
     "production_authorized": false,
     "rejection_count_by_reason": {
-      "CAPABILITY_NOT_SUPPORTED": 105,
-      "LINEUP_INVALID": 105,
-      "PLAYER_STATUS_INVALID": 105,
-      "PROBABILITY_UNAVAILABLE": 105,
-      "QUOTE_FRESHNESS_UNPROVABLE": 105,
-      "SUPPORT_INVALID": 105,
-      "UNCERTAINTY_COMPONENTS_UNAVAILABLE": 105,
-      "UNCERTAINTY_INVALID": 105
+      "CAPABILITY_NOT_SUPPORTED": 106,
+      "LINEUP_INVALID": 106,
+      "PLAYER_STATUS_INVALID": 106,
+      "PROBABILITY_UNAVAILABLE": 106,
+      "QUOTE_FRESHNESS_UNPROVABLE": 106,
+      "SUPPORT_INVALID": 106,
+      "UNCERTAINTY_COMPONENTS_UNAVAILABLE": 106,
+      "UNCERTAINTY_INVALID": 106
     },
     "run_date": "2026-09-01",
     "schema_version": "mlb_v2_1_shadow_web_v1",
