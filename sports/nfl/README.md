@@ -85,6 +85,18 @@ because they failed the target-level holdout gate.
 python sports/nfl/scripts/train_nfl_predictor.py
 ```
 
+Run the isolated six-target audit (pass/receive/rush yards and touchdowns) with
+2021-2024 chronological model selection and an untouched 2025 holdout:
+
+```bash
+python sports/nfl/scripts/backtest_nfl_six_targets.py
+```
+
+The audit compares every target with its strictly lagged five-game baseline,
+uses whole-week bootstrap intervals, and separately compares yardage challengers
+with the existing latent-hybrid incumbent. Beating the simple baseline does not
+authorize replacing an incumbent model or publishing a wager.
+
 The default run uses nflverse weekly statistics from 2018-2024, aggregates the
 official 2025 play-by-play release into the same contract, selects architectures
 on 2021-2024, and evaluates 2025. Generated outputs:
