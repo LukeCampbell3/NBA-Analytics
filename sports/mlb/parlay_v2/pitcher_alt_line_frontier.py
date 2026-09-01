@@ -18,13 +18,21 @@ actually want for the ROI-oriented pitcher board:
     subject to each leg probability >= 60%
                each leg model EV >= 0%
                each leg decimal price >= 1.20  (no worse than -500)
+               two-sided model/market gap <= 15 percentage points
                combined probability >= 50%
                combined decimal price >= 2.00  (at least +100)
                combined model EV >= 5%
                two distinct games/pitchers
 
+The market-disagreement guard is negative authority only. A real two-sided
+line that disagrees with the season-Poisson projection by more than 15 points
+is treated as an unresolved reliability conflict rather than a giant edge.
+One-sided alternate lines retain their existing shadow-only evidence behavior
+because no exact no-vig comparison exists at that threshold.
+
 If nothing clears those constraints, the board abstains. It does not fall
-back to an ultra-short negative-EV pair merely to manufacture a selection.
+back to an ultra-short negative-EV or unresolved-overconfidence pair merely to
+manufacture a selection.
 """
 
 import math
@@ -51,6 +59,7 @@ import pitcher_strikeout_model as k_model
 MIN_LEG_PROBABILITY = 0.60
 MIN_LEG_EXPECTED_VALUE = 0.0
 MIN_LEG_DECIMAL_PRICE = 1.20  # equivalent to -500 American odds
+MAX_TWO_SIDED_MODEL_MARKET_GAP = 0.15
 MIN_COMBO_DECIMAL_PRICE = 2.00  # at least +100 combined payout
 MIN_COMBO_EXPECTED_VALUE = 0.05
 
@@ -235,6 +244,7 @@ def build_pitcher_parlay_frontier(
     min_leg_probability: float = MIN_LEG_PROBABILITY,
     min_leg_expected_value: float = MIN_LEG_EXPECTED_VALUE,
     min_leg_decimal_price: float = MIN_LEG_DECIMAL_PRICE,
+    max_two_sided_model_market_gap: float = MAX_TWO_SIDED_MODEL_MARKET_GAP,
     min_combo_joint_probability: float = MIN_COMBO_JOINT_PROBABILITY,
     min_combo_decimal_price: float = MIN_COMBO_DECIMAL_PRICE,
     min_combo_abs_edge: float = MIN_COMBO_ABS_EDGE,
@@ -244,6 +254,9 @@ def build_pitcher_parlay_frontier(
 
     This intentionally rejects an ultra-short favorite even if it raises raw
     hit probability. A leg must contribute both probability and price value.
+    When an exact two-sided market exists, a model/market disagreement larger
+    than the reliability ceiling is treated as unresolved model risk instead
+    of actionable edge.
     """
 
     eligible = []
@@ -257,6 +270,11 @@ def build_pitcher_parlay_frontier(
         if leg_ev < min_leg_expected_value:
             continue
         if decimal < min_leg_decimal_price:
+            continue
+        if (
+            leg.no_vig_market_probability is not None
+            and abs(leg.model_probability - leg.no_vig_market_probability) > max_two_sided_model_market_gap
+        ):
             continue
         eligible.append(leg)
 
@@ -298,9 +316,9 @@ def build_pitcher_parlay_frontier(
     if not pairs:
         return None
 
-    # ROI is the primary objective once every probability and payout gate has
-    # passed. If EV ties, prefer the bigger actual payout, then the higher hit
-    # probability. This is intentionally different from the old max-hit rule.
+    # ROI is the primary objective once every probability, reliability, and
+    # payout gate has passed. If EV ties, prefer the bigger actual payout,
+    # then the higher hit probability.
     pairs.sort(
         key=lambda candidate: (
             float(candidate.expected_value_per_unit),
