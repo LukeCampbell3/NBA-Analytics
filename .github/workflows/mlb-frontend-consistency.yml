@@ -1,0 +1,202 @@
+name: MLB Frontend Consistency
+
+on:
+  push:
+    branches: [static-deployment]
+    paths:
+      - '.github/workflows/mlb-frontend-consistency.yml'
+  workflow_run:
+    workflows: ["MLB Predictions and Frontend"]
+    types: [completed]
+
+concurrency:
+  group: mlb-frontend-consistency-static-deployment
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  PUBLISH_BRANCH: static-deployment
+  PYTHONUNBUFFERED: "1"
+  TZ: America/New_York
+
+jobs:
+  synchronize-mlb-frontend:
+    # The push event exists so creation/edits of this workflow validate it
+    # immediately. Normal operation is chained only from a successful canonical
+    # MLB Predictions and Frontend run.
+    if: github.event_name == 'push' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout latest static deployment
+        uses: actions/checkout@v7
+        with:
+          ref: static-deployment
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            sports/mlb/requirements-same-game.txt
+
+      - name: Install MLB dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -r sports/mlb/requirements-same-game.txt
+
+      - name: Resolve published MLB run date
+        id: run-config
+        run: |
+          set -euo pipefail
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from datetime import date
+          from pathlib import Path
+
+          payload = json.loads(Path("sports/mlb/web/data/daily_predictions.json").read_text(encoding="utf-8"))
+          run_date = str(payload.get("run_date") or "").strip()
+          date.fromisoformat(run_date)
+          print(f"run_date={run_date}")
+          print(f"run_stamp={run_date.replace('-', '')}")
+          PY
+
+      - name: Restore exact-day MLB prediction state
+        uses: actions/cache@v5
+        with:
+          path: |
+            Player-Predictor/Data-Proc-MLB
+            sports/mlb/data/predictions/daily_runs
+            sports/mlb/data/predictions/calibration/*.json
+          key: mlb-frontend-sync-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/decision_engine/matchup_network.py', 'sports/mlb/scripts/backtest_latent_daily_pools.py') }}-${{ steps.run-config.outputs.run_stamp }}-${{ github.run_id }}
+          restore-keys: |
+            mlb-daily-v4-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/decision_engine/matchup_network.py', 'sports/mlb/scripts/backtest_latent_daily_pools.py') }}-${{ steps.run-config.outputs.run_stamp }}-
+            mlb-frontend-sync-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/decision_engine/matchup_network.py', 'sports/mlb/scripts/backtest_latent_daily_pools.py') }}-${{ steps.run-config.outputs.run_stamp }}-
+
+      - name: Regenerate current High-Hit product
+        env:
+          RUN_DATE: ${{ steps.run-config.outputs.run_date }}
+          RUN_STAMP: ${{ steps.run-config.outputs.run_stamp }}
+        run: |
+          set -euo pipefail
+          pool="sports/mlb/data/predictions/daily_runs/${RUN_STAMP}/daily_prediction_pool_${RUN_STAMP}.csv"
+          if [[ ! -s "$pool" ]]; then
+            echo "Expected exact-day MLB pool is unavailable: $pool" >&2
+            exit 1
+          fi
+          python sports/mlb/scripts/select_high_hit_parlay.py \
+            --pool-csv "$pool" \
+            --run-date "$RUN_DATE" \
+            --out-json sports/mlb/web/data/high_hit_parlay_predictions.json
+
+      - name: Rebuild static frontend from current MLB source artifacts
+        run: |
+          set -euo pipefail
+          python sports/site/pipeline/build_static_site.py \
+            --output dist \
+            --private-output paywall/private-content/app
+          node --check sports/mlb/web/predictions.js
+
+      - name: Verify complete MLB frontend synchronization
+        env:
+          RUN_DATE: ${{ steps.run-config.outputs.run_date }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          run_date = os.environ["RUN_DATE"]
+          product_files = (
+              "daily_predictions.json",
+              "same_game_predictions.json",
+              "pitcher_parlay_predictions.json",
+              "exotic_market_predictions.json",
+              "high_hit_parlay_predictions.json",
+          )
+          roots = (
+              Path("sports/mlb/web/data"),
+              Path("dist/mlb/data"),
+              Path("paywall/private-content/app/mlb/data"),
+          )
+
+          for filename in product_files:
+              paths = [root / filename for root in roots]
+              for path in paths:
+                  if not path.is_file():
+                      raise SystemExit(f"missing MLB frontend product: {path}")
+                  payload = json.loads(path.read_text(encoding="utf-8"))
+                  actual_date = str(payload.get("run_date") or "")
+                  if actual_date != run_date:
+                      raise SystemExit(
+                          f"stale MLB frontend product {path}: expected {run_date}, found {actual_date or '<missing>'}"
+                      )
+              source_bytes = paths[0].read_bytes()
+              if paths[1].read_bytes() != source_bytes:
+                  raise SystemExit(f"public dist diverged from MLB source artifact: {filename}")
+              if paths[2].read_bytes() != source_bytes:
+                  raise SystemExit(f"protected dist diverged from MLB source artifact: {filename}")
+
+          source_js = Path("sports/mlb/web/predictions.js").read_bytes()
+          if Path("dist/mlb/predictions.js").read_bytes() != source_js:
+              raise SystemExit("MLB frontend JavaScript was not copied into dist")
+          if Path("paywall/private-content/app/mlb/predictions.js").read_bytes() != source_js:
+              raise SystemExit("MLB frontend JavaScript was not copied into protected output")
+
+          print(f"MLB frontend synchronization verified for {run_date}: {len(product_files)} current products")
+          PY
+
+      - name: Stage synchronized MLB frontend
+        id: staged
+        run: |
+          set -euo pipefail
+          git add -f -- \
+            sports/mlb/web/data/high_hit_parlay_predictions.json \
+            dist/mlb \
+            paywall/private-content/app/mlb
+
+          if git diff --cached --quiet; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            git diff --cached --stat
+          fi
+
+      - name: Commit synchronized MLB frontend
+        if: steps.staged.outputs.has_changes == 'true'
+        env:
+          RUN_DATE: ${{ steps.run-config.outputs.run_date }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "MLB frontend sync $RUN_DATE [skip ci]"
+          if ! git push origin "HEAD:$PUBLISH_BRANCH"; then
+            git pull --rebase --autostash origin "$PUBLISH_BRANCH"
+            git push origin "HEAD:$PUBLISH_BRANCH"
+          fi
+
+      - name: Upload synchronized MLB frontend proof
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mlb-frontend-consistency-${{ steps.run-config.outputs.run_stamp || github.run_id }}
+          path: |
+            sports/mlb/web/data/high_hit_parlay_predictions.json
+            dist/mlb/data/daily_predictions.json
+            dist/mlb/data/same_game_predictions.json
+            dist/mlb/data/pitcher_parlay_predictions.json
+            dist/mlb/data/exotic_market_predictions.json
+            dist/mlb/data/high_hit_parlay_predictions.json
+            dist/mlb/predictions.js
+          if-no-files-found: error
+          retention-days: 14
