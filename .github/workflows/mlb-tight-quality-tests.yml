@@ -17,6 +17,8 @@ on:
       - 'sports/mlb/scripts/backtest_balanced_market_ensemble_v4.py'
       - 'sports/mlb/scripts/export_web_prediction_payload.py'
       - 'sports/mlb/scripts/enrich_parlay_leg_betslip.py'
+      - 'sports/mlb/scripts/build_exotic_market_shadow.py'
+      - 'sports/mlb/scripts/validate_v4_live_players.py'
       - 'sports/site/pipeline/validate_daily_publication.py'
       - 'sports/mlb/web/predictions.js'
       - 'sports/mlb/web/predictions.html'
@@ -35,6 +37,9 @@ on:
       - 'sports/mlb/tests/test_parlay_v2_public_quality_overlay.py'
       - 'sports/mlb/tests/test_same_game_tight_quality.py'
       - 'sports/mlb/tests/test_select_high_hit_parlay.py'
+      - 'sports/mlb/tests/test_build_exotic_market_shadow.py'
+      - 'sports/mlb/tests/test_validate_v4_live_players.py'
+      - 'sports/mlb/tests/test_pitcher_parlay_reliability.py'
       - 'sports/site/pipeline/run_daily_predictions.py'
       - '.github/workflows/mlb-predictions.yml'
       - '.github/workflows/mlb-same-game-predictions.yml'
@@ -81,6 +86,9 @@ jobs:
             sports/mlb/tests/test_same_game_tight_quality.py \
             sports/mlb/tests/test_parlay_quality_selectors.py \
             sports/mlb/tests/test_select_high_hit_parlay.py \
+            sports/mlb/tests/test_build_exotic_market_shadow.py \
+            sports/mlb/tests/test_validate_v4_live_players.py \
+            sports/mlb/tests/test_pitcher_parlay_reliability.py \
             -q
       - name: Validate MLB frontend JavaScript syntax
         run: node --check sports/mlb/web/predictions.js
