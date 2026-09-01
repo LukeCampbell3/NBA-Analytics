@@ -67,10 +67,20 @@ def test_live_gate_enriches_confirmed_starter_and_rejects_nonstarter_and_wrong_g
     assert shadow["plays"][0]["player_id"] == 101
     assert shadow["plays"][0]["team"] == "NYY"
     assert shadow["plays"][0]["opponent"] == "LAA"
+    assert shadow["plays"][0]["is_home"] == "0"
     assert shadow["plays"][0]["lineup_status"] == "CONFIRMED_STARTER"
     reasons = {row["player"]: row["reason"] for row in shadow["identity_rejections"]}
     assert reasons["Denzer Guzman"] == "PLAYER_NOT_IN_STARTING_LINEUP"
     assert reasons["David Hamilton"] == "PLAYER_GAME_IDENTITY_MISMATCH"
+
+
+def test_live_gate_rejects_carried_team_or_home_away_conflict() -> None:
+    wrong_team = _play("Josh Lowe")
+    wrong_team.update({"team": "LAA", "opponent": "NYY", "is_home": "1"})
+    payload = {"v4_singles_shadow": {"eligible_count": 1, "plays": [wrong_team]}}
+    updated = apply_live_identity_gate(payload, fetch_json=lambda _: _feed())
+    assert updated["v4_singles_shadow"]["plays"] == []
+    assert updated["v4_singles_shadow"]["identity_rejections"][0]["reason"] == "TEAM_GAME_IDENTITY_MISMATCH"
 
 
 def test_live_gate_fails_closed_when_selection_link_is_missing() -> None:
