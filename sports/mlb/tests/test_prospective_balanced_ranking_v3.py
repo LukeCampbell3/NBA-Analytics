@@ -17,6 +17,8 @@ import prospective_balanced_ranking_v3 as prospective  # noqa: E402
 def _candidate(player: str = "A Hitter", probability: float = 0.62) -> SimpleNamespace:
     return SimpleNamespace(
         run_date=date(2026, 8, 30), game_id="game-1", player=player,
+        player_id="player-123", team="NYY",
+        raw={"Team_ID": "147", "Opponent": "LAA", "Opponent_ID": "108", "Is_Home": "0"},
         target="H", direction="OVER", market_line=0.5, market_source="real",
         price_confirmed=True, selected_side_price=-120.0,
         final_hit_probability=probability, market_implied_probability=0.545,
@@ -36,7 +38,14 @@ def test_snapshot_is_pregame_only_and_contains_full_ranking_fields(tmp_path: Pat
     assert "result" not in encoded
     assert '"win"' not in encoded
     assert payload["candidate_count"] == 1
-    assert set(prospective.ranking.SCORE_FIELDS) <= set(payload["candidates"][0])
+    row = payload["candidates"][0]
+    assert set(prospective.ranking.SCORE_FIELDS) <= set(row)
+    assert row["player_id"] == "player-123"
+    assert row["team"] == "NYY"
+    assert row["team_id"] == "147"
+    assert row["opponent"] == "LAA"
+    assert row["opponent_id"] == "108"
+    assert row["is_home"] == "0"
 
 
 def test_capture_is_idempotent_but_conflicting_scientific_content_fails(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
