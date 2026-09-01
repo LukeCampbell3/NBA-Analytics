@@ -200,15 +200,20 @@ def build_features(stats: pd.DataFrame, spec: TargetSpec) -> tuple[pd.DataFrame,
         "position_TE",
         "position_OTHER",
     ]
+    # Target keys are report identities, not feature-routing controls.  Infer
+    # the football role from the actual outcome column so yardage and touchdown
+    # variants use the same strictly lagged context without special-casing every
+    # report key.
+    role = spec.target.split("_", 1)[0]
     context_candidates = {
         "passing": ["completions", "passing_tds", "interceptions", "passing_epa"],
         "rushing": ["rushing_tds", "rushing_epa"],
         "receiving": ["receptions", "receiving_tds", "receiving_epa", "target_share", "air_yards_share", "wopr"],
-    }[spec.key]
+    }[role]
     for column in context_candidates:
         for window in (3, 5):
             feature = f"{column}_roll{window}"
-            if feature in frame.columns:
+            if feature in frame.columns and feature not in features:
                 features.append(feature)
 
     frame["baseline_prediction"] = frame[f"{spec.target}_roll5"]
