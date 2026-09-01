@@ -89,6 +89,33 @@ def test_no_pick_quota_all_supported_candidates_survive() -> None:
     assert all(play["authorization_status"] == "SHADOW_ONLY" for play in report["frontend_plays"])
 
 
+def test_v4_frontend_rows_preserve_snapshot_identity_metadata() -> None:
+    candidate = {
+        "candidate_id": "identity-row",
+        "player": "Josh Lowe",
+        "player_id": "player-123",
+        "team": "NYY",
+        "team_id": "147",
+        "opponent": "LAA",
+        "opponent_id": "108",
+        "is_home": "0",
+        "game_id": "823982",
+        "commence_time_utc": "2026-08-31T20:00:00Z",
+        "target": "H",
+        "direction": "OVER",
+        "line": .5,
+        "balanced_probability": .70,
+        "market_probability": .60,
+        "price": -125,
+        "selected_sportsbook_key": "fanduel",
+    }
+    report = v4.run_shadow([candidate], [], slate_date="2026-08-31")
+    assert len(report["frontend_plays"]) == 1
+    play = report["frontend_plays"][0]
+    for field in ("player_id", "team", "team_id", "opponent", "opponent_id", "is_home", "game_id", "commence_time_utc"):
+        assert play[field] == candidate[field]
+
+
 def test_spec_hash_matches_frozen_constants() -> None:
     assert v4.PREREGISTRATION_SPEC_HASH == v4._spec_hash()
 
