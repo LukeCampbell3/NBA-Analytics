@@ -6,6 +6,11 @@ written later to a separate, hash-linked settlement file. Existing artifacts
 are append-only: an identical rerun is idempotent and any conflicting rerun
 fails closed.
 
+Player/team/game identity fields from the decision-time pool are retained in
+future snapshots so downstream V4 publication does not lose the exact identity
+contract before the live validation overlay runs. Historical snapshots remain
+valid and load unchanged because the extra fields are additive.
+
 This is a shadow research path. It does not read or write the public payload.
 """
 
@@ -92,6 +97,23 @@ def candidate_id(candidate: Any) -> str:
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:24]
 
 
+def _identity_field(candidate: Any, attribute: str, raw_key: str) -> str:
+    """Read an identity field without making old/test Candidate objects fail.
+
+    The selected Candidate exposes player_id/team directly while opponent and
+    numeric team IDs currently remain in its original CSV row. Keeping this
+    helper fail-soft preserves backward compatibility for historical tests and
+    old snapshots; the separate live publication gate remains fail-closed.
+    """
+    value = getattr(candidate, attribute, None)
+    if value not in (None, ""):
+        return str(value)
+    raw = getattr(candidate, "raw", None)
+    if isinstance(raw, dict):
+        return str(raw.get(raw_key, "") or "")
+    return ""
+
+
 def build_snapshot(pool_csv: Path, *, observed_at_utc: str, source_commit: str | None = None) -> dict[str, Any]:
     candidates, *_ = shp.prepare_candidates(parse_v11_args(pool_csv))
     rows: list[dict[str, Any]] = []
@@ -117,6 +139,12 @@ def build_snapshot(pool_csv: Path, *, observed_at_utc: str, source_commit: str |
                 "game_id": str(candidate.game_id),
                 "commence_time_utc": str(getattr(candidate, "commence_time_utc", "") or ""),
                 "player": str(candidate.player),
+                "player_id": _identity_field(candidate, "player_id", "Player_ID"),
+                "team": _identity_field(candidate, "team", "Team"),
+                "team_id": _identity_field(candidate, "team_id", "Team_ID"),
+                "opponent": _identity_field(candidate, "opponent", "Opponent"),
+                "opponent_id": _identity_field(candidate, "opponent_id", "Opponent_ID"),
+                "is_home": _identity_field(candidate, "is_home", "Is_Home"),
                 "target": candidate.target,
                 "direction": candidate.direction,
                 "line": float(candidate.market_line),
