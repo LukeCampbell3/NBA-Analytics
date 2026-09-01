@@ -3,8 +3,10 @@
 
 The immutable V4 snapshot remains untouched. This overlay is negative authority
 only: before a V4 research candidate is rendered on the live board, resolve its
-player against the exact MLB game, require a confirmed starting batting-order
-role for batter props, and require a live sportsbook selection/deeplink.
+player against the exact MLB game, require the carried team/opponent/home-away
+identity to agree with that game when those fields are present, require a
+confirmed starting batting-order role for batter props, and require a live
+sportsbook selection/deeplink.
 
 This prevents wrong-game identities and non-starting/zero-PA candidates from
 being presented as current picks while preserving the frozen research record.
@@ -96,7 +98,24 @@ def _validate_play(play: dict[str, Any], context: dict[str, Any] | None) -> tupl
     opposite = "home" if side == "away" else "away"
     side_state = (context.get("sides") or {}).get(side) or {}
     opposite_state = (context.get("sides") or {}).get(opposite) or {}
+    actual_team = str(side_state.get("team") or match.get("team") or "").upper()
+    actual_opponent = str(opposite_state.get("team") or "").upper()
     target = str(play.get("target") or "").upper()
+
+    # Once the V3/V4 pipeline carries identity metadata, conflicts are evidence
+    # of an upstream mapping bug. Reject them rather than silently overwriting
+    # the bad values and hiding the failure.
+    carried_team = str(play.get("team") or "").strip().upper()
+    carried_opponent = str(play.get("opponent") or "").strip().upper()
+    carried_is_home = str(play.get("is_home") or "").strip()
+    if carried_team and actual_team and carried_team != actual_team:
+        return None, "TEAM_GAME_IDENTITY_MISMATCH"
+    if carried_opponent and actual_opponent and carried_opponent != actual_opponent:
+        return None, "OPPONENT_GAME_IDENTITY_MISMATCH"
+    if carried_is_home in {"0", "1"}:
+        expected_is_home = "1" if side == "home" else "0"
+        if carried_is_home != expected_is_home:
+            return None, "HOME_AWAY_IDENTITY_MISMATCH"
 
     if target in BATTER_STARTER_REQUIRED_TARGETS:
         starting_ids = set(side_state.get("starting_ids") or set())
@@ -116,8 +135,9 @@ def _validate_play(play: dict[str, Any], context: dict[str, Any] | None) -> tupl
     enriched.update(
         {
             "player_id": int(match["player_id"]),
-            "team": str(side_state.get("team") or match.get("team") or ""),
-            "opponent": str(opposite_state.get("team") or ""),
+            "team": actual_team,
+            "opponent": actual_opponent,
+            "is_home": "1" if side == "home" else "0",
             "identity_status": "VALIDATED",
             "lineup_status": "CONFIRMED_STARTER" if target in BATTER_STARTER_REQUIRED_TARGETS else "VALIDATED_ROSTER",
             "execution_status": "LIVE_SELECTION_AVAILABLE",
@@ -170,7 +190,7 @@ def apply_live_identity_gate(
     updated_shadow["model_eligible_count"] = int(shadow.get("eligible_count") or len(plays))
     updated_shadow["eligible_count"] = len(valid)
     updated_shadow["plays"] = valid
-    updated_shadow["live_identity_gate"] = "REQUIRE_EXACT_GAME_PLAYER_MATCH_AND_CONFIRMED_STARTER_FOR_BATTER_PROPS"
+    updated_shadow["live_identity_gate"] = "REQUIRE_EXACT_GAME_PLAYER_TEAM_MATCH_AND_CONFIRMED_STARTER_FOR_BATTER_PROPS"
     updated_shadow["identity_rejections"] = rejected
     updated_shadow["identity_rejection_count"] = len(rejected)
     updated["v4_singles_shadow"] = updated_shadow
