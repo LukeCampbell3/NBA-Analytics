@@ -64,10 +64,12 @@ def test_live_gate_enriches_confirmed_starter_and_rejects_nonstarter_and_wrong_g
 
     assert len(shadow["plays"]) == 1
     assert shadow["plays"][0]["player"] == "Josh Lowe"
+    assert shadow["plays"][0]["player_display_name"] == "Josh Lowe"
     assert shadow["plays"][0]["player_id"] == 101
     assert shadow["plays"][0]["team"] == "NYY"
     assert shadow["plays"][0]["opponent"] == "LAA"
     assert shadow["plays"][0]["is_home"] == "0"
+    assert shadow["plays"][0]["batting_order_position"] == 1
     assert shadow["plays"][0]["lineup_status"] == "CONFIRMED_STARTER"
     reasons = {row["player"]: row["reason"] for row in shadow["identity_rejections"]}
     assert reasons["Denzer Guzman"] == "PLAYER_NOT_IN_STARTING_LINEUP"
@@ -98,3 +100,31 @@ def test_live_gate_fails_closed_when_starting_lineup_is_not_available() -> None:
     updated = apply_live_identity_gate(payload, fetch_json=lambda _: feed)
     assert updated["v4_singles_shadow"]["plays"] == []
     assert updated["v4_singles_shadow"]["identity_rejections"][0]["reason"] == "STARTING_LINEUP_UNCONFIRMED"
+
+
+def test_primary_single_surface_uses_same_identity_and_lineup_gate() -> None:
+    payload = {
+        "plays": [
+            _play("Josh Lowe"),
+            _play("Denzer Guzman"),
+            _play("David Hamilton"),
+        ]
+    }
+    updated = apply_live_identity_gate(payload, fetch_json=lambda _: _feed())
+
+    assert [row["player"] for row in updated["plays"]] == ["Josh Lowe"]
+    assert updated["plays"][0]["identity_status"] == "VALIDATED"
+    assert updated["plays"][0]["batting_order_position"] == 1
+    assert updated["model_eligible_primary_count"] == 3
+    reasons = {row["player"]: row["reason"] for row in updated["live_identity_rejections"]}
+    assert reasons["Denzer Guzman"] == "PLAYER_NOT_IN_STARTING_LINEUP"
+    assert reasons["David Hamilton"] == "PLAYER_GAME_IDENTITY_MISMATCH"
+
+
+def test_primary_surface_accepts_player_display_name_when_player_field_is_missing() -> None:
+    play = _play("Josh Lowe")
+    play["player_display_name"] = play.pop("player")
+    updated = apply_live_identity_gate({"plays": [play]}, fetch_json=lambda _: _feed())
+    assert len(updated["plays"]) == 1
+    assert updated["plays"][0]["player"] == "Josh Lowe"
+    assert updated["plays"][0]["player_display_name"] == "Josh Lowe"

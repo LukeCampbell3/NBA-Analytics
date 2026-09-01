@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Daily MLB pitcher-K parlay using the ROI-aware alt-line frontier.
 
-The predictive model and calibration evidence are unchanged. This runner
-expands every real FanDuel strikeout threshold already captured by the public
-provider, rejects undercut/negative-value legs, enforces real hit-probability
-and payout floors, then selects the highest quoted-price model EV among the
-survivors. It writes the same pitcher_parlay_predictions.json contract
-consumed by the frontend.
+The runner expands every real FanDuel strikeout threshold already captured by
+the public provider, rejects undercut/negative-value legs, enforces probability,
+market-reliability, and payout floors, then selects the highest quoted-price
+model EV among survivors. The legacy max-hit pair is retained only under
+``diagnostics``; it is never emitted in the top-level field the frontend used as
+a fallback. Therefore an ROI/reliability abstention stays an abstention.
 """
 
 from __future__ import annotations
@@ -32,6 +32,7 @@ import select_mlb_pitcher_parlay as legacy_select  # noqa: E402
 from calibration.store import CalibrationStore  # noqa: E402
 from fanduel_public_mlb_provider import FanduelPublicMlbProvider  # noqa: E402
 from pitcher_alt_line_frontier import (  # noqa: E402
+    MAX_TWO_SIDED_MODEL_MARKET_GAP,
     MIN_COMBO_DECIMAL_PRICE,
     MIN_COMBO_EXPECTED_VALUE,
     MIN_LEG_DECIMAL_PRICE,
@@ -54,10 +55,11 @@ def _serialize_parlay(combo) -> Optional[dict[str, Any]]:
     if combo is None:
         return None
     result = combo.as_dict()
-    result["selection_objective"] = "max_ev_after_probability_and_payout_gates"
+    result["selection_objective"] = "max_ev_after_probability_reliability_and_payout_gates"
     result["leg_probability_floor"] = MIN_LEG_PROBABILITY
     result["leg_expected_value_floor"] = MIN_LEG_EXPECTED_VALUE
     result["leg_decimal_price_floor"] = MIN_LEG_DECIMAL_PRICE
+    result["max_two_sided_model_market_gap"] = MAX_TWO_SIDED_MODEL_MARKET_GAP
     result["joint_probability_floor"] = legacy_select.MIN_COMBO_JOINT_PROBABILITY
     result["combo_decimal_price_floor"] = MIN_COMBO_DECIMAL_PRICE
     result["combo_expected_value_floor"] = MIN_COMBO_EXPECTED_VALUE
@@ -75,12 +77,28 @@ def _serialize_parlay(combo) -> Optional[dict[str, Any]]:
         and combo.leg_b.decimal_price is not None
         and combo.leg_b.decimal_price >= MIN_LEG_DECIMAL_PRICE
     )
-    # Frontend's historical Number(null) behavior rendered missing no-vig
-    # probability as 0.0%. Missing means genuinely unavailable for one-sided
-    # alt thresholds, so omit the field instead of fabricating zero.
     if result.get("naive_no_vig_combo_probability") is None:
         result.pop("naive_no_vig_combo_probability", None)
     return result
+
+
+def _two_sided_reliability_rejection_count(legs) -> int:
+    return sum(
+        1
+        for leg in legs
+        if leg.no_vig_market_probability is not None
+        and abs(leg.model_probability - leg.no_vig_market_probability) > MAX_TWO_SIDED_MODEL_MARKET_GAP
+    )
+
+
+def _store_legacy_max_hit_diagnostic(payload: dict[str, Any], max_hit_control) -> None:
+    """Keep legacy comparison evidence without exposing a frontend fallback."""
+    payload.pop("max_hit_control", None)
+    payload["diagnostics"] = {
+        **(payload.get("diagnostics") or {}),
+        "legacy_max_hit_control": _serialize_parlay(max_hit_control),
+        "legacy_max_hit_control_publication_authority": False,
+    }
 
 
 def build_daily_payload(
@@ -97,17 +115,19 @@ def build_daily_payload(
         "generated_at_utc": generated_at,
         "run_date": run_date.isoformat(),
         "model": "mlb_pitcher_k_parlay_v1",
-        "selector": "pitcher_alt_line_roi_frontier_v3",
+        "selector": "pitcher_alt_line_roi_frontier_v4",
         "selection_policy": {
             "leg_probability_floor": MIN_LEG_PROBABILITY,
             "leg_expected_value_floor": MIN_LEG_EXPECTED_VALUE,
             "leg_decimal_price_floor": MIN_LEG_DECIMAL_PRICE,
+            "max_two_sided_model_market_gap": MAX_TWO_SIDED_MODEL_MARKET_GAP,
             "joint_probability_floor": legacy_select.MIN_COMBO_JOINT_PROBABILITY,
             "combo_decimal_price_floor": MIN_COMBO_DECIMAL_PRICE,
             "combo_expected_value_floor": MIN_COMBO_EXPECTED_VALUE,
-            "objective": "maximize_actual_price_model_ev_after_probability_ev_and_payout_gates",
+            "objective": "maximize_actual_price_model_ev_after_probability_reliability_ev_and_payout_gates",
             "cross_game_only": True,
             "undercut_fallback_allowed": False,
+            "legacy_max_hit_frontend_fallback_allowed": False,
         },
     }
 
@@ -142,25 +162,23 @@ def build_daily_payload(
     payload["distinct_real_lines"] = len(
         {(leg.pitcher_id, leg.line, leg.side) for leg in legs if leg.price_confirmed}
     )
+    payload["two_sided_reliability_rejected_legs"] = _two_sided_reliability_rejection_count(legs)
 
     combo = build_pitcher_parlay_frontier(legs)
 
-    # Keep the old max-hit rule as a diagnostic control whether or not the ROI
-    # selector abstains. This makes the cost of refusing undercut odds visible
-    # prospectively rather than hiding it.
     max_hit_control = legacy_select.build_pitcher_parlay(
         legs,
         min_combo_joint_probability=legacy_select.MIN_COMBO_JOINT_PROBABILITY,
     )
-    payload["max_hit_control"] = _serialize_parlay(max_hit_control)
+    _store_legacy_max_hit_diagnostic(payload, max_hit_control)
 
     if combo is None:
         payload["parlay"] = None
-        payload["parlay_status"] = "abstain_no_roi_efficient_probability_safe_pair"
+        payload["parlay_status"] = "abstain_no_roi_efficient_probability_reliable_pair"
         return payload
 
     payload["parlay"] = _serialize_parlay(combo)
-    payload["parlay_status"] = "roi_efficient_probability_safe_shadow"
+    payload["parlay_status"] = "roi_efficient_probability_reliable_shadow"
 
     if max_hit_control is not None and max_hit_control.expected_value_per_unit is not None:
         payload["selection_ev_lift_vs_max_hit_control"] = (
@@ -197,6 +215,7 @@ def main() -> int:
                 "real_starters_posted": payload.get("real_starters_posted", 0),
                 "real_priced_legs": payload.get("real_priced_legs", 0),
                 "distinct_real_lines": payload.get("distinct_real_lines", 0),
+                "two_sided_reliability_rejected_legs": payload.get("two_sided_reliability_rejected_legs", 0),
                 "parlay_status": payload.get("parlay_status"),
                 "selection_ev_lift_vs_max_hit_control": payload.get("selection_ev_lift_vs_max_hit_control"),
                 "selection_decimal_price_lift_vs_max_hit_control": payload.get("selection_decimal_price_lift_vs_max_hit_control"),

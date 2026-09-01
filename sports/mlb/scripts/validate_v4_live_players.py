@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""Fail-closed publication-time identity/lineup gate for V4 MLB singles.
+"""Fail-closed publication-time identity/lineup gate for MLB batter picks.
 
-The immutable V4 snapshot remains untouched. This overlay is negative authority
-only: before a V4 research candidate is rendered on the live board, resolve its
-player against the exact MLB game, require the carried team/opponent/home-away
-identity to agree with that game when those fields are present, require a
-confirmed starting batting-order role for batter props, and require a live
-sportsbook selection/deeplink.
+This module is publication-only negative authority. It does not alter frozen
+model evidence. Before a current batter pick is rendered, resolve the player
+against the exact MLB game, require carried team/opponent/home-away identity to
+agree with that game when present, require a confirmed starting batting-order
+role, and require a live sportsbook selection/deeplink.
 
-This prevents wrong-game identities and non-starting/zero-PA candidates from
-being presented as current picks while preserving the frozen research record.
+Both the primary ``plays`` surface and the V4 shadow surface pass through the
+same gate. This prevents a valid V4 overlay from coexisting with stale or
+incomplete primary player rows and keeps player/game/lineup identity consistent
+across the whole published singles board.
 """
 from __future__ import annotations
 
@@ -37,8 +38,21 @@ def _normalize_name(value: Any) -> str:
     return re.sub(r"[^a-z0-9]+", "", text)
 
 
+def _play_name(play: dict[str, Any]) -> str:
+    return str(play.get("player") or play.get("player_display_name") or "").strip()
+
+
+def _has_live_selection(play: dict[str, Any]) -> bool:
+    return bool(
+        play.get("sportsbook_deeplink")
+        or play.get("selected_sportsbook_deeplink")
+        or play.get("deeplinks_by_region")
+        or play.get("selected_deeplinks_by_region")
+    )
+
+
 def _fetch_json(url: str, *, timeout: float = 15.0) -> dict[str, Any]:
-    request = Request(url, headers={"User-Agent": "NBA-Analytics/1.0 (+v4-live-identity-gate)"})
+    request = Request(url, headers={"User-Agent": "NBA-Analytics/1.0 (+live-player-identity-gate)"})
     with urlopen(request, timeout=timeout) as response:
         return json.loads(response.read().decode("utf-8"))
 
@@ -54,7 +68,9 @@ def build_game_context(feed: dict[str, Any]) -> dict[str, Any]:
         team = teams.get(side) or {}
         box_team = boxscore.get(side) or {}
         abbreviation = str(team.get("abbreviation") or team.get("teamCode") or "").upper()
-        starting_ids = {int(value) for value in (box_team.get("battingOrder") or []) if str(value).isdigit()}
+        batting_order = [int(value) for value in (box_team.get("battingOrder") or []) if str(value).isdigit()]
+        starting_order = {player_id: index + 1 for index, player_id in enumerate(batting_order)}
+        starting_ids = set(starting_order)
         roster_ids: set[int] = set()
         side_players: list[dict[str, Any]] = []
         for player_row in (box_team.get("players") or {}).values():
@@ -74,12 +90,14 @@ def build_game_context(feed: dict[str, Any]) -> dict[str, Any]:
                 "side": side,
                 "team": abbreviation,
                 "is_starter": player_id in starting_ids,
+                "batting_order_position": starting_order.get(player_id),
             }
             side_players.append(entry)
             context["players_by_name"].setdefault(_normalize_name(name), []).append(entry)
         context["sides"][side] = {
             "team": abbreviation,
             "starting_ids": starting_ids,
+            "starting_order": starting_order,
             "roster_ids": roster_ids,
             "players": side_players,
         }
@@ -89,7 +107,11 @@ def build_game_context(feed: dict[str, Any]) -> dict[str, Any]:
 def _validate_play(play: dict[str, Any], context: dict[str, Any] | None) -> tuple[dict[str, Any] | None, str | None]:
     if context is None:
         return None, "GAME_CONTEXT_UNAVAILABLE"
-    matches = list((context.get("players_by_name") or {}).get(_normalize_name(play.get("player")), []))
+
+    player_name = _play_name(play)
+    if not player_name:
+        return None, "PLAYER_NAME_MISSING"
+    matches = list((context.get("players_by_name") or {}).get(_normalize_name(player_name), []))
     if len(matches) != 1:
         return None, "PLAYER_GAME_IDENTITY_MISMATCH" if not matches else "PLAYER_IDENTITY_AMBIGUOUS"
 
@@ -102,12 +124,10 @@ def _validate_play(play: dict[str, Any], context: dict[str, Any] | None) -> tupl
     actual_opponent = str(opposite_state.get("team") or "").upper()
     target = str(play.get("target") or "").upper()
 
-    # Once the V3/V4 pipeline carries identity metadata, conflicts are evidence
-    # of an upstream mapping bug. Reject them rather than silently overwriting
-    # the bad values and hiding the failure.
     carried_team = str(play.get("team") or "").strip().upper()
     carried_opponent = str(play.get("opponent") or "").strip().upper()
     carried_is_home = str(play.get("is_home") or "").strip()
+    carried_player_id = str(play.get("player_id") or "").strip()
     if carried_team and actual_team and carried_team != actual_team:
         return None, "TEAM_GAME_IDENTITY_MISMATCH"
     if carried_opponent and actual_opponent and carried_opponent != actual_opponent:
@@ -116,6 +136,8 @@ def _validate_play(play: dict[str, Any], context: dict[str, Any] | None) -> tupl
         expected_is_home = "1" if side == "home" else "0"
         if carried_is_home != expected_is_home:
             return None, "HOME_AWAY_IDENTITY_MISMATCH"
+    if carried_player_id.isdigit() and int(carried_player_id) != int(match["player_id"]):
+        return None, "PLAYER_IDENTITY_MISMATCH"
 
     if target in BATTER_STARTER_REQUIRED_TARGETS:
         starting_ids = set(side_state.get("starting_ids") or set())
@@ -125,19 +147,21 @@ def _validate_play(play: dict[str, Any], context: dict[str, Any] | None) -> tupl
             return None, "PLAYER_NOT_IN_STARTING_LINEUP"
 
     execution_status = str(play.get("execution_status") or "").upper()
-    has_deeplink = bool(play.get("sportsbook_deeplink") or play.get("deeplinks_by_region"))
     if execution_status and execution_status != "LIVE_SELECTION_AVAILABLE":
         return None, "LIVE_SELECTION_UNAVAILABLE"
-    if not has_deeplink:
+    if not _has_live_selection(play):
         return None, "LIVE_SELECTION_UNAVAILABLE"
 
     enriched = dict(play)
     enriched.update(
         {
+            "player": str(match.get("player") or player_name),
+            "player_display_name": str(match.get("player") or player_name),
             "player_id": int(match["player_id"]),
             "team": actual_team,
             "opponent": actual_opponent,
             "is_home": "1" if side == "home" else "0",
+            "batting_order_position": match.get("batting_order_position"),
             "identity_status": "VALIDATED",
             "lineup_status": "CONFIRMED_STARTER" if target in BATTER_STARTER_REQUIRED_TARGETS else "VALIDATED_ROSTER",
             "execution_status": "LIVE_SELECTION_AVAILABLE",
@@ -146,25 +170,19 @@ def _validate_play(play: dict[str, Any], context: dict[str, Any] | None) -> tupl
     return enriched, None
 
 
-def apply_live_identity_gate(
-    payload: dict[str, Any],
+def _gate_plays(
+    plays: list[dict[str, Any]],
     *,
-    fetch_json: Callable[[str], dict[str, Any]] = _fetch_json,
-) -> dict[str, Any]:
-    shadow = payload.get("v4_singles_shadow")
-    if not isinstance(shadow, dict):
-        return payload
-    plays = list(shadow.get("plays") or [])
-    if not plays:
-        return payload
-
-    game_contexts: dict[str, dict[str, Any] | None] = {}
+    fetch_json: Callable[[str], dict[str, Any]],
+    game_contexts: dict[str, dict[str, Any] | None],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     valid: list[dict[str, Any]] = []
     rejected: list[dict[str, Any]] = []
     for play in plays:
         game_id = str(play.get("game_id") or "").strip()
+        player_name = _play_name(play)
         if not game_id:
-            rejected.append({"player": play.get("player"), "game_id": game_id, "reason": "GAME_ID_MISSING"})
+            rejected.append({"player": player_name, "game_id": game_id, "target": play.get("target"), "reason": "GAME_ID_MISSING"})
             continue
         if game_id not in game_contexts:
             try:
@@ -173,27 +191,46 @@ def apply_live_identity_gate(
                 game_contexts[game_id] = None
         enriched, reason = _validate_play(play, game_contexts[game_id])
         if enriched is None:
-            rejected.append({
-                "player": play.get("player"),
-                "game_id": game_id,
-                "target": play.get("target"),
-                "reason": reason,
-            })
+            rejected.append({"player": player_name, "game_id": game_id, "target": play.get("target"), "reason": reason})
         else:
             valid.append(enriched)
 
     for rank, play in enumerate(valid, start=1):
         play["rank"] = rank
+    return valid, rejected
 
+
+def apply_live_identity_gate(
+    payload: dict[str, Any],
+    *,
+    fetch_json: Callable[[str], dict[str, Any]] = _fetch_json,
+) -> dict[str, Any]:
     updated = dict(payload)
-    updated_shadow = dict(shadow)
-    updated_shadow["model_eligible_count"] = int(shadow.get("eligible_count") or len(plays))
-    updated_shadow["eligible_count"] = len(valid)
-    updated_shadow["plays"] = valid
-    updated_shadow["live_identity_gate"] = "REQUIRE_EXACT_GAME_PLAYER_TEAM_MATCH_AND_CONFIRMED_STARTER_FOR_BATTER_PROPS"
-    updated_shadow["identity_rejections"] = rejected
-    updated_shadow["identity_rejection_count"] = len(rejected)
-    updated["v4_singles_shadow"] = updated_shadow
+    game_contexts: dict[str, dict[str, Any] | None] = {}
+
+    primary_plays = list(payload.get("plays") or []) if isinstance(payload.get("plays"), list) else []
+    if primary_plays:
+        valid, rejected = _gate_plays(primary_plays, fetch_json=fetch_json, game_contexts=game_contexts)
+        updated["model_eligible_primary_count"] = len(primary_plays)
+        updated["plays"] = valid
+        updated["live_identity_rejections"] = rejected
+        updated["live_identity_rejection_count"] = len(rejected)
+        updated["live_identity_gate"] = "REQUIRE_EXACT_GAME_PLAYER_TEAM_MATCH_CONFIRMED_STARTER_AND_LIVE_SELECTION"
+
+    shadow = payload.get("v4_singles_shadow")
+    if isinstance(shadow, dict):
+        plays = list(shadow.get("plays") or [])
+        if plays:
+            valid, rejected = _gate_plays(plays, fetch_json=fetch_json, game_contexts=game_contexts)
+            updated_shadow = dict(shadow)
+            updated_shadow["model_eligible_count"] = int(shadow.get("eligible_count") or len(plays))
+            updated_shadow["eligible_count"] = len(valid)
+            updated_shadow["plays"] = valid
+            updated_shadow["live_identity_gate"] = "REQUIRE_EXACT_GAME_PLAYER_TEAM_MATCH_CONFIRMED_STARTER_AND_LIVE_SELECTION"
+            updated_shadow["identity_rejections"] = rejected
+            updated_shadow["identity_rejection_count"] = len(rejected)
+            updated["v4_singles_shadow"] = updated_shadow
+
     return updated
 
 
@@ -207,8 +244,10 @@ def main() -> int:
     shadow = updated.get("v4_singles_shadow") or {}
     print(json.dumps({
         "status": "ok",
+        "primary_live_candidates": len(updated.get("plays") or []),
+        "primary_identity_rejections": int(updated.get("live_identity_rejection_count") or 0),
         "v4_live_candidates": len(shadow.get("plays") or []),
-        "identity_rejections": int(shadow.get("identity_rejection_count") or 0),
+        "v4_identity_rejections": int(shadow.get("identity_rejection_count") or 0),
     }))
     return 0
 

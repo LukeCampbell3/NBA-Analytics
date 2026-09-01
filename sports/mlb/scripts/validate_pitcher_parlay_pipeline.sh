@@ -22,6 +22,7 @@ run_tests() {
     sports/mlb/tests/test_run_mlb_pitcher_parlay_daily.py \
     sports/mlb/tests/test_parlay_quality_selectors.py \
     sports/mlb/tests/test_pitcher_parlay_reliability.py \
+    sports/mlb/tests/test_pitcher_parlay_publication_contract.py \
     -q
 }
 

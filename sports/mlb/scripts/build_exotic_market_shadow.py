@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Build a fail-closed, non-authoritative MLB exotic-market research board.
 
-Only one actionable research side is surfaced for a canonical game/market/line.
-Opposite sides and non-positive-EV rows remain auditable in diagnostics instead
-of appearing as duplicate game picks with betslip calls to action.
+Only one positive-EV research side is surfaced for a canonical game/market/line.
+Opposite sides, non-positive-EV rows, and any game proposition already used by
+the headline same-game parlay remain auditable in diagnostics instead of
+appearing as duplicate NYY/LAA-style game picks with a second betslip CTA.
 """
 from __future__ import annotations
 
@@ -34,14 +35,35 @@ def american_to_decimal(price: int | float) -> float:
 
 
 def _canonical_market_key(row: dict[str, Any]) -> tuple[Any, ...]:
-    """One sportsbook proposition regardless of side/price.
-
-    A total's OVER and UNDER are two sides of the same proposition. Showing
-    both as separate research picks is confusing and can create duplicate
-    NYY/LAA-style entries on the board. Keep one winning side per proposition
-    after scoring, while preserving every rejected side in diagnostics.
-    """
+    """One sportsbook proposition regardless of side/price."""
     return (row.get("game_id"), row.get("market"), row.get("line"))
+
+
+def _headline_same_game_market_keys(source: dict[str, Any]) -> set[tuple[Any, ...]]:
+    """Return canonical game propositions already visible in the headline SGP.
+
+    The frontend chooses one global same-game combo: strict candidates for a
+    game take precedence over exploratory candidates, then the highest model EV
+    wins across the slate. Mirror that exact choice here so a total already
+    shown inside the featured parlay is not repeated as a standalone exotic
+    card.
+    """
+    choices: list[tuple[dict[str, Any], dict[str, Any]]] = []
+    for game in source.get("games", []):
+        strict = list(game.get("combo_candidates") or [])
+        fallback = [] if strict else list(game.get("exploratory_ev_candidates") or [])
+        for combo in strict + fallback:
+            if isinstance(combo, dict):
+                choices.append((game, combo))
+    if not choices:
+        return set()
+    game, combo = max(choices, key=lambda item: float(item[1].get("expected_value_per_unit") or float("-inf")))
+    keys: set[tuple[Any, ...]] = set()
+    for leg in (combo.get("leg_a"), combo.get("leg_b")):
+        if not isinstance(leg, dict) or leg.get("market") not in SUPPORTED:
+            continue
+        keys.add((game.get("game_id"), leg.get("market"), leg.get("line")))
+    return keys
 
 
 def build_payload(source: dict[str, Any]) -> dict[str, Any]:
@@ -75,29 +97,37 @@ def build_payload(source: dict[str, Any]) -> dict[str, Any]:
                     "support_blocking_dimensions": leg.get("support_blocking_dimensions") or [],
                 })
 
+    headline_keys = _headline_same_game_market_keys(source)
     by_market: dict[tuple[Any, ...], list[dict[str, Any]]] = {}
     for row in raw_candidates:
         by_market.setdefault(_canonical_market_key(row), []).append(row)
 
     candidates: list[dict[str, Any]] = []
     diagnostic_rejections: list[dict[str, Any]] = []
-    for rows in by_market.values():
+    for market_key, rows in by_market.items():
         rows.sort(
             key=lambda row: (row["expected_value_per_unit"], row["model_probability"]),
             reverse=True,
         )
+
+        if market_key in headline_keys:
+            for row in rows:
+                diagnostic_rejections.append({
+                    **row,
+                    "rejection_reason": "ALREADY_FEATURED_IN_SAME_GAME_PARLAY",
+                })
+            continue
+
         best = rows[0]
         if best["expected_value_per_unit"] > 0.0:
             candidates.append(best)
-            rejected = rows[1:]
-            for row in rejected:
+            for row in rows[1:]:
                 diagnostic_rejections.append({
                     **row,
                     "rejection_reason": "DOMINATED_OPPOSITE_SIDE_OR_DUPLICATE_MARKET",
                 })
         else:
-            rejected = rows
-            for row in rejected:
+            for row in rows:
                 diagnostic_rejections.append({
                     **row,
                     "rejection_reason": "NON_POSITIVE_MODEL_EV",
@@ -114,7 +144,8 @@ def build_payload(source: dict[str, Any]) -> dict[str, Any]:
         "run_date": source.get("run_date"), "candidates": candidates, "candidate_count": len(candidates),
         "diagnostic_rejections": diagnostic_rejections,
         "diagnostic_rejection_count": len(diagnostic_rejections),
-        "dedupe_policy": "one_positive_ev_side_per_game_market_line",
+        "dedupe_policy": "one_positive_ev_side_per_game_market_line_and_exclude_featured_sgp_propositions",
+        "headline_sgp_excluded_market_count": len(headline_keys),
         "market_registry": [
             {"market": market, "source_market": source_market, "readiness": readiness, "reason": reason}
             for market, source_market, readiness, reason in MARKET_REGISTRY
@@ -134,6 +165,7 @@ def main() -> int:
         "status": payload["status"],
         "candidate_count": payload["candidate_count"],
         "diagnostic_rejection_count": payload["diagnostic_rejection_count"],
+        "headline_sgp_excluded_market_count": payload["headline_sgp_excluded_market_count"],
     }))
     return 0
 
