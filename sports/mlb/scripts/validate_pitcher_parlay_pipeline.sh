@@ -21,11 +21,12 @@ run_tests() {
     sports/mlb/tests/test_select_mlb_pitcher_parlay.py \
     sports/mlb/tests/test_run_mlb_pitcher_parlay_daily.py \
     sports/mlb/tests/test_parlay_quality_selectors.py \
+    sports/mlb/tests/test_pitcher_parlay_reliability.py \
     -q
 }
 
 run_pipeline() {
-  echo "[pipeline] run_mlb_pitcher_parlay_quality_daily.py (alt-line frontier; probability floors -> EV)"
+  echo "[pipeline] run_mlb_pitcher_parlay_quality_daily.py (alt-line frontier; probability floors -> reliability -> EV)"
   python sports/mlb/scripts/run_mlb_pitcher_parlay_quality_daily.py "$@"
   echo "[pipeline] enrich_pitcher_parlay_betslip.py (real multi-region FanDuel betslip links)"
   python sports/mlb/scripts/enrich_pitcher_parlay_betslip.py || \
