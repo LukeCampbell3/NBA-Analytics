@@ -15,6 +15,11 @@ point above exact break-even, and positive EV. Price is considered last and
 there is no pick quota. This keeps V4 from being tuned into the failed market-
 favorite ranking while still testing every supported straight bet.
 
+Future V3 snapshots carry player/team/game identity metadata end-to-end. V4
+copies those fields into its live-facing shadow rows; a separate publication-
+time validator remains negative authority and verifies the identity against the
+exact MLB game feed before a card may render.
+
 This module is shadow-only and has no publication authority.
 """
 
@@ -246,7 +251,14 @@ def run_shadow(candidates: Iterable[dict[str, Any]], history: Iterable[dict[str,
                 "rank": rank,
                 "candidate_id": item.candidate_id,
                 "player": str(candidate.get("player") or ""),
+                "player_id": str(candidate.get("player_id") or ""),
+                "team": str(candidate.get("team") or ""),
+                "team_id": str(candidate.get("team_id") or ""),
+                "opponent": str(candidate.get("opponent") or ""),
+                "opponent_id": str(candidate.get("opponent_id") or ""),
+                "is_home": str(candidate.get("is_home") or ""),
                 "game_id": str(candidate.get("game_id") or ""),
+                "commence_time_utc": str(candidate.get("commence_time_utc") or ""),
                 "target": str(candidate.get("target") or TARGET),
                 "direction": str(candidate.get("direction") or DIRECTION),
                 "line": float(candidate.get("line", LINE)),
