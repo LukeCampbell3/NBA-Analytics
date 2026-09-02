@@ -3,37 +3,37 @@
   "league": "NFL",
   "season": 2026,
   "week": 1,
-  "generated_at_utc": "2026-09-02T16:56:25.581062Z",
+  "generated_at_utc": "2026-09-02T17:57:48.428920Z",
   "status": "projection_pool_ready",
   "market_status": "lines_available",
-  "market_observations": 970,
+  "market_observations": 984,
   "market_audit": {
     "provider": "rotowire_public_nfl_props",
     "sport_key": "americanfootball_nfl",
     "source_url": "https://www.rotowire.com/betting/nfl/player-props.php",
-    "fetched_at_utc": "2026-09-02T16:53:00.159769+00:00",
+    "fetched_at_utc": "2026-09-02T17:54:10.322708+00:00",
     "rotowire_week": 1,
     "bundle_rows": {
-      "firsttd": 391,
+      "firsttd": 403,
       "passyds": 32,
-      "recyds": 129,
+      "recyds": 131,
       "rushyds": 68
     },
     "observations_by_market": {
-      "player_pass_yds": 164,
-      "player_rush_yds": 299,
-      "player_reception_yds": 507
+      "player_reception_yds": 516,
+      "player_rush_yds": 302,
+      "player_pass_yds": 166
     },
     "observations_by_book": {
       "betr": 79,
-      "betrivers": 163,
-      "caesars": 167,
+      "betrivers": 170,
+      "caesars": 170,
       "draftkings": 177,
-      "fanatics": 198,
-      "fanduel": 154,
+      "fanatics": 201,
+      "fanduel": 155,
       "thescore": 32
     },
-    "complete_two_sided_rows": 970,
+    "complete_two_sided_rows": 984,
     "first_td_best_prices": [
       {
         "event_id": "2978635",
@@ -45,7 +45,7 @@
         "away_team": "NO",
         "bookmaker": "draftkings",
         "price": 295.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -58,7 +58,7 @@
         "away_team": "ATL",
         "bookmaker": "caesars",
         "price": 375.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -71,7 +71,7 @@
         "away_team": "BAL",
         "bookmaker": "fanduel",
         "price": 420.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -84,7 +84,7 @@
         "away_team": "BAL",
         "bookmaker": "caesars",
         "price": 380.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -97,20 +97,7 @@
         "away_team": "ARI",
         "bookmaker": "draftkings",
         "price": 390.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978648",
-        "provider_player_id": "18487",
-        "player": "Ashton Jeanty",
-        "team": "LV",
-        "opponent": "MIA",
-        "home_team": "LV",
-        "away_team": "MIA",
-        "bookmaker": "draftkings",
-        "price": 400.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -123,85 +110,20 @@
         "away_team": "CHI",
         "bookmaker": "betrivers",
         "price": 460.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
-        "event_id": "2978391",
-        "provider_player_id": "15306",
-        "player": "Javonte Williams",
-        "team": "DAL",
-        "opponent": "NYG",
-        "home_team": "NYG",
-        "away_team": "DAL",
-        "bookmaker": "draftkings",
-        "price": 425.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978631",
-        "provider_player_id": "12507",
-        "player": "Saquon Barkley",
-        "team": "PHI",
-        "opponent": "WAS",
-        "home_team": "PHI",
-        "away_team": "WAS",
-        "bookmaker": "caesars",
-        "price": 500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978394",
-        "provider_player_id": "15807",
-        "player": "Kyren Williams",
-        "team": "LAR",
-        "opponent": "SF",
-        "home_team": "LAR",
-        "away_team": "SF",
-        "bookmaker": "caesars",
-        "price": 500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978652",
-        "provider_player_id": "15810",
-        "player": "Breece Hall",
-        "team": "NYJ",
-        "opponent": "TEN",
-        "home_team": "TEN",
-        "away_team": "NYJ",
-        "bookmaker": "caesars",
-        "price": 500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978621",
-        "provider_player_id": "16934",
-        "player": "Chase Brown",
-        "team": "CIN",
-        "opponent": "TB",
-        "home_team": "CIN",
-        "away_team": "TB",
-        "bookmaker": "fanduel",
-        "price": 550.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978394",
-        "provider_player_id": "11690",
-        "player": "Christian McCaffrey",
-        "team": "SF",
-        "opponent": "LAR",
-        "home_team": "LAR",
-        "away_team": "SF",
-        "bookmaker": "caesars",
-        "price": 500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "event_id": "2978648",
+        "provider_player_id": "18487",
+        "player": "Ashton Jeanty",
+        "team": "LV",
+        "opponent": "MIA",
+        "home_team": "LV",
+        "away_team": "MIA",
+        "bookmaker": "betrivers",
+        "price": 390.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -214,7 +136,85 @@
         "away_team": "MIA",
         "bookmaker": "caesars",
         "price": 450.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978391",
+        "provider_player_id": "15306",
+        "player": "Javonte Williams",
+        "team": "DAL",
+        "opponent": "NYG",
+        "home_team": "NYG",
+        "away_team": "DAL",
+        "bookmaker": "draftkings",
+        "price": 425.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978631",
+        "provider_player_id": "12507",
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opponent": "WAS",
+        "home_team": "PHI",
+        "away_team": "WAS",
+        "bookmaker": "caesars",
+        "price": 500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978394",
+        "provider_player_id": "15807",
+        "player": "Kyren Williams",
+        "team": "LAR",
+        "opponent": "SF",
+        "home_team": "LAR",
+        "away_team": "SF",
+        "bookmaker": "caesars",
+        "price": 500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978652",
+        "provider_player_id": "15810",
+        "player": "Breece Hall",
+        "team": "NYJ",
+        "opponent": "TEN",
+        "home_team": "TEN",
+        "away_team": "NYJ",
+        "bookmaker": "caesars",
+        "price": 500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978621",
+        "provider_player_id": "16934",
+        "player": "Chase Brown",
+        "team": "CIN",
+        "opponent": "TB",
+        "home_team": "CIN",
+        "away_team": "TB",
+        "bookmaker": "fanduel",
+        "price": 550.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978394",
+        "provider_player_id": "11690",
+        "player": "Christian McCaffrey",
+        "team": "SF",
+        "opponent": "LAR",
+        "home_team": "LAR",
+        "away_team": "SF",
+        "bookmaker": "caesars",
+        "price": 500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -227,7 +227,7 @@
         "away_team": "DEN",
         "bookmaker": "fanduel",
         "price": 500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -240,7 +240,7 @@
         "away_team": "NYJ",
         "bookmaker": "draftkings",
         "price": 600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -253,7 +253,7 @@
         "away_team": "BUF",
         "bookmaker": "draftkings",
         "price": 600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -266,7 +266,7 @@
         "away_team": "GB",
         "bookmaker": "fanduel",
         "price": 600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -279,7 +279,7 @@
         "away_team": "TB",
         "bookmaker": "caesars",
         "price": 600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -292,7 +292,7 @@
         "away_team": "BUF",
         "bookmaker": "fanduel",
         "price": 600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -305,7 +305,7 @@
         "away_team": "NE",
         "bookmaker": "betrivers",
         "price": 700.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -318,7 +318,7 @@
         "away_team": "ATL",
         "bookmaker": "fanduel",
         "price": 750.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -331,7 +331,7 @@
         "away_team": "CLE",
         "bookmaker": "fanduel",
         "price": 600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -344,7 +344,7 @@
         "away_team": "ATL",
         "bookmaker": "fanduel",
         "price": 650.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -357,20 +357,20 @@
         "away_team": "NO",
         "bookmaker": "caesars",
         "price": 700.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
-        "event_id": "2978391",
-        "provider_player_id": "18514",
-        "player": "Cam Skattebo",
-        "team": "NYG",
-        "opponent": "DAL",
-        "home_team": "NYG",
-        "away_team": "DAL",
-        "bookmaker": "draftkings",
-        "price": 650.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "event_id": "2978648",
+        "provider_player_id": "19300",
+        "player": "Mike Washington",
+        "team": "LV",
+        "opponent": "MIA",
+        "home_team": "LV",
+        "away_team": "MIA",
+        "bookmaker": "betrivers",
+        "price": 575.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -383,7 +383,7 @@
         "away_team": "CHI",
         "bookmaker": "draftkings",
         "price": 750.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -396,7 +396,7 @@
         "away_team": "WAS",
         "bookmaker": "fanduel",
         "price": 750.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -409,7 +409,7 @@
         "away_team": "CLE",
         "bookmaker": "caesars",
         "price": 750.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -422,7 +422,20 @@
         "away_team": "NE",
         "bookmaker": "caesars",
         "price": 650.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978391",
+        "provider_player_id": "18514",
+        "player": "Cam Skattebo",
+        "team": "NYG",
+        "opponent": "DAL",
+        "home_team": "NYG",
+        "away_team": "DAL",
+        "bookmaker": "draftkings",
+        "price": 650.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -435,7 +448,7 @@
         "away_team": "NE",
         "bookmaker": "caesars",
         "price": 800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -448,7 +461,7 @@
         "away_team": "SF",
         "bookmaker": "draftkings",
         "price": 750.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -461,7 +474,7 @@
         "away_team": "BUF",
         "bookmaker": "fanduel",
         "price": 750.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -474,7 +487,7 @@
         "away_team": "MIA",
         "bookmaker": "draftkings",
         "price": 800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -487,7 +500,7 @@
         "away_team": "DEN",
         "bookmaker": "draftkings",
         "price": 750.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -500,7 +513,7 @@
         "away_team": "NO",
         "bookmaker": "betrivers",
         "price": 700.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -513,7 +526,7 @@
         "away_team": "ARI",
         "bookmaker": "caesars",
         "price": 800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -526,7 +539,7 @@
         "away_team": "TB",
         "bookmaker": "caesars",
         "price": 800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -539,7 +552,7 @@
         "away_team": "SF",
         "bookmaker": "draftkings",
         "price": 850.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -552,7 +565,7 @@
         "away_team": "WAS",
         "bookmaker": "caesars",
         "price": 800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -565,7 +578,7 @@
         "away_team": "TB",
         "bookmaker": "draftkings",
         "price": 800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -578,7 +591,7 @@
         "away_team": "ARI",
         "bookmaker": "betrivers",
         "price": 850.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -591,7 +604,7 @@
         "away_team": "DAL",
         "bookmaker": "draftkings",
         "price": 800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -604,7 +617,7 @@
         "away_team": "GB",
         "bookmaker": "caesars",
         "price": 800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -617,7 +630,7 @@
         "away_team": "CLE",
         "bookmaker": "betrivers",
         "price": 1050.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -630,7 +643,7 @@
         "away_team": "DEN",
         "bookmaker": "betrivers",
         "price": 800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -643,7 +656,7 @@
         "away_team": "CLE",
         "bookmaker": "fanduel",
         "price": 900.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -656,7 +669,7 @@
         "away_team": "CLE",
         "bookmaker": "caesars",
         "price": 900.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -669,7 +682,7 @@
         "away_team": "SF",
         "bookmaker": "fanduel",
         "price": 1000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -682,7 +695,7 @@
         "away_team": "NE",
         "bookmaker": "draftkings",
         "price": 1000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -695,7 +708,7 @@
         "away_team": "CLE",
         "bookmaker": "betrivers",
         "price": 1200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -708,7 +721,7 @@
         "away_team": "CHI",
         "bookmaker": "draftkings",
         "price": 1000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -721,7 +734,7 @@
         "away_team": "BUF",
         "bookmaker": "draftkings",
         "price": 1000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -734,280 +747,7 @@
         "away_team": "GB",
         "bookmaker": "draftkings",
         "price": 1100.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978395",
-        "provider_player_id": "17968",
-        "player": "George Holani",
-        "team": "SEA",
-        "opponent": "NE",
-        "home_team": "SEA",
-        "away_team": "NE",
-        "bookmaker": "fanduel",
-        "price": 1500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978657",
-        "provider_player_id": "15868",
-        "player": "Drake London",
-        "team": "ATL",
-        "opponent": "PIT",
-        "home_team": "PIT",
-        "away_team": "ATL",
-        "bookmaker": "draftkings",
-        "price": 1100.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978635",
-        "provider_player_id": "15849",
-        "player": "Jameson Williams",
-        "team": "DET",
-        "opponent": "NO",
-        "home_team": "DET",
-        "away_team": "NO",
-        "bookmaker": "caesars",
-        "price": 1000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978439",
-        "provider_player_id": "18522",
-        "player": "RJ Harvey",
-        "team": "DEN",
-        "opponent": "KC",
-        "home_team": "KC",
-        "away_team": "DEN",
-        "bookmaker": "fanduel",
-        "price": 1200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978627",
-        "provider_player_id": "11763",
-        "player": "Aaron Jones",
-        "team": "MIN",
-        "opponent": "GB",
-        "home_team": "MIN",
-        "away_team": "GB",
-        "bookmaker": "betrivers",
-        "price": 850.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978641",
-        "provider_player_id": "19235",
-        "player": "Jeremiyah Love",
-        "team": "ARI",
-        "opponent": "LAC",
-        "home_team": "LAC",
-        "away_team": "ARI",
-        "bookmaker": "fanduel",
-        "price": 1200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978657",
-        "provider_player_id": "13424",
-        "player": "DK Metcalf",
-        "team": "PIT",
-        "opponent": "ATL",
-        "home_team": "PIT",
-        "away_team": "ATL",
-        "bookmaker": "draftkings",
-        "price": 1100.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978391",
-        "provider_player_id": "15853",
-        "player": "George Pickens",
-        "team": "DAL",
-        "opponent": "NYG",
-        "home_team": "NYG",
-        "away_team": "DAL",
-        "bookmaker": "draftkings",
-        "price": 950.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978652",
-        "provider_player_id": "16941",
-        "player": "Tyjae Spears",
-        "team": "TEN",
-        "opponent": "NYJ",
-        "home_team": "TEN",
-        "away_team": "NYJ",
-        "bookmaker": "fanduel",
-        "price": 1300.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978652",
-        "provider_player_id": "15829",
-        "player": "Garrett Wilson",
-        "team": "NYJ",
-        "opponent": "TEN",
-        "home_team": "TEN",
-        "away_team": "NYJ",
-        "bookmaker": "caesars",
-        "price": 1000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978638",
-        "provider_player_id": "15357",
-        "player": "Trevor Lawrence",
-        "team": "JAX",
-        "opponent": "CLE",
-        "home_team": "JAX",
-        "away_team": "CLE",
-        "bookmaker": "betrivers",
-        "price": 1150.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978657",
-        "provider_player_id": "14378",
-        "player": "Michael Pittman",
-        "team": "PIT",
-        "opponent": "ATL",
-        "home_team": "PIT",
-        "away_team": "ATL",
-        "bookmaker": "caesars",
-        "price": 1100.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978394",
-        "provider_player_id": "9253",
-        "player": "Mike Evans",
-        "team": "SF",
-        "opponent": "LAR",
-        "home_team": "LAR",
-        "away_team": "SF",
-        "bookmaker": "betrivers",
-        "price": 1200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978638",
-        "provider_player_id": "17716",
-        "player": "Brian Thomas",
-        "team": "JAX",
-        "opponent": "CLE",
-        "home_team": "JAX",
-        "away_team": "CLE",
-        "bookmaker": "betrivers",
-        "price": 1000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978439",
-        "provider_player_id": "8783",
-        "player": "Travis Kelce",
-        "team": "KC",
-        "opponent": "DEN",
-        "home_team": "KC",
-        "away_team": "DEN",
-        "bookmaker": "caesars",
-        "price": 950.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978631",
-        "provider_player_id": "15406",
-        "player": "DeVonta Smith",
-        "team": "PHI",
-        "opponent": "WAS",
-        "home_team": "PHI",
-        "away_team": "WAS",
-        "bookmaker": "caesars",
-        "price": 1000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978635",
-        "provider_player_id": "15895",
-        "player": "Chris Olave",
-        "team": "NO",
-        "opponent": "DET",
-        "home_team": "DET",
-        "away_team": "NO",
-        "bookmaker": "draftkings",
-        "price": 1200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978622",
-        "provider_player_id": "16919",
-        "player": "Zay Flowers",
-        "team": "BAL",
-        "opponent": "IND",
-        "home_team": "IND",
-        "away_team": "BAL",
-        "bookmaker": "draftkings",
-        "price": 1100.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978622",
-        "provider_player_id": "12561",
-        "player": "Lamar Jackson",
-        "team": "BAL",
-        "opponent": "IND",
-        "home_team": "IND",
-        "away_team": "BAL",
-        "bookmaker": "draftkings",
-        "price": 1300.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978395",
-        "provider_player_id": "11863",
-        "player": "Cooper Kupp",
-        "team": "SEA",
-        "opponent": "NE",
-        "home_team": "SEA",
-        "away_team": "NE",
-        "bookmaker": "thescore",
-        "price": 1300.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978622",
-        "provider_player_id": "18534",
-        "player": "Tyler Warren",
-        "team": "IND",
-        "opponent": "BAL",
-        "home_team": "IND",
-        "away_team": "BAL",
-        "bookmaker": "betrivers",
-        "price": 1300.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1020,7 +760,33 @@
         "away_team": "CHI",
         "bookmaker": "draftkings",
         "price": 1200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978395",
+        "provider_player_id": "17968",
+        "player": "George Holani",
+        "team": "SEA",
+        "opponent": "NE",
+        "home_team": "SEA",
+        "away_team": "NE",
+        "bookmaker": "fanduel",
+        "price": 1500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978657",
+        "provider_player_id": "15868",
+        "player": "Drake London",
+        "team": "ATL",
+        "opponent": "PIT",
+        "home_team": "PIT",
+        "away_team": "ATL",
+        "bookmaker": "draftkings",
+        "price": 1100.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1033,46 +799,7 @@
         "away_team": "CHI",
         "bookmaker": "betrivers",
         "price": 1050.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978391",
-        "provider_player_id": "17704",
-        "player": "Malik Nabers",
-        "team": "NYG",
-        "opponent": "DAL",
-        "home_team": "NYG",
-        "away_team": "DAL",
-        "bookmaker": "draftkings",
-        "price": 1000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978652",
-        "provider_player_id": "17702",
-        "player": "Braelon Allen",
-        "team": "NYJ",
-        "opponent": "TEN",
-        "home_team": "TEN",
-        "away_team": "NYJ",
-        "bookmaker": "fanduel",
-        "price": 1300.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978635",
-        "provider_player_id": "17033",
-        "player": "Sam LaPorta",
-        "team": "DET",
-        "opponent": "NO",
-        "home_team": "DET",
-        "away_team": "NO",
-        "bookmaker": "caesars",
-        "price": 1200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1085,98 +812,98 @@
         "away_team": "CHI",
         "bookmaker": "betrivers",
         "price": 1000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
-        "event_id": "2978395",
-        "provider_player_id": "18517",
-        "player": "TreVeyon Henderson",
-        "team": "NE",
-        "opponent": "SEA",
-        "home_team": "SEA",
-        "away_team": "NE",
-        "bookmaker": "draftkings",
-        "price": 1500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "event_id": "2978635",
+        "provider_player_id": "15849",
+        "player": "Jameson Williams",
+        "team": "DET",
+        "opponent": "NO",
+        "home_team": "DET",
+        "away_team": "NO",
+        "bookmaker": "caesars",
+        "price": 1000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
-        "event_id": "2978625",
-        "provider_player_id": "18449",
-        "player": "Woody Marks",
-        "team": "HOU",
-        "opponent": "BUF",
-        "home_team": "HOU",
-        "away_team": "BUF",
-        "bookmaker": "draftkings",
-        "price": 1300.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978621",
-        "provider_player_id": "15222",
-        "player": "Kenny Gainwell",
-        "team": "TB",
-        "opponent": "CIN",
-        "home_team": "CIN",
-        "away_team": "TB",
+        "event_id": "2978439",
+        "provider_player_id": "18522",
+        "player": "RJ Harvey",
+        "team": "DEN",
+        "opponent": "KC",
+        "home_team": "KC",
+        "away_team": "DEN",
         "bookmaker": "fanduel",
-        "price": 1400.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "price": 1200.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978627",
+        "provider_player_id": "11763",
+        "player": "Aaron Jones",
+        "team": "MIN",
+        "opponent": "GB",
+        "home_team": "MIN",
+        "away_team": "GB",
+        "bookmaker": "betrivers",
+        "price": 850.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978641",
+        "provider_player_id": "19235",
+        "player": "Jeremiyah Love",
+        "team": "ARI",
+        "opponent": "LAC",
+        "home_team": "LAC",
+        "away_team": "ARI",
+        "bookmaker": "fanduel",
+        "price": 1200.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978657",
+        "provider_player_id": "13424",
+        "player": "DK Metcalf",
+        "team": "PIT",
+        "opponent": "ATL",
+        "home_team": "PIT",
+        "away_team": "ATL",
+        "bookmaker": "draftkings",
+        "price": 1100.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978391",
+        "provider_player_id": "15853",
+        "player": "George Pickens",
+        "team": "DAL",
+        "opponent": "NYG",
+        "home_team": "NYG",
+        "away_team": "DAL",
+        "bookmaker": "draftkings",
+        "price": 950.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
         "event_id": "2978652",
-        "provider_player_id": "15838",
-        "player": "Wan'Dale Robinson",
+        "provider_player_id": "16941",
+        "player": "Tyjae Spears",
         "team": "TEN",
         "opponent": "NYJ",
         "home_team": "TEN",
         "away_team": "NYJ",
         "bookmaker": "fanduel",
-        "price": 1400.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978621",
-        "provider_player_id": "18549",
-        "player": "Emeka Egbuka",
-        "team": "TB",
-        "opponent": "CIN",
-        "home_team": "CIN",
-        "away_team": "TB",
-        "bookmaker": "draftkings",
-        "price": 1500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978631",
-        "provider_player_id": "17692",
-        "player": "Jayden Daniels",
-        "team": "WAS",
-        "opponent": "PHI",
-        "home_team": "PHI",
-        "away_team": "WAS",
-        "bookmaker": "draftkings",
-        "price": 1400.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978391",
-        "provider_player_id": "18574",
-        "player": "Jaxson Dart",
-        "team": "NYG",
-        "opponent": "DAL",
-        "home_team": "NYG",
-        "away_team": "DAL",
-        "bookmaker": "draftkings",
-        "price": 1200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "price": 1300.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1189,7 +916,176 @@
         "away_team": "CHI",
         "bookmaker": "caesars",
         "price": 1100.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978652",
+        "provider_player_id": "15829",
+        "player": "Garrett Wilson",
+        "team": "NYJ",
+        "opponent": "TEN",
+        "home_team": "TEN",
+        "away_team": "NYJ",
+        "bookmaker": "caesars",
+        "price": 1000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978638",
+        "provider_player_id": "15357",
+        "player": "Trevor Lawrence",
+        "team": "JAX",
+        "opponent": "CLE",
+        "home_team": "JAX",
+        "away_team": "CLE",
+        "bookmaker": "betrivers",
+        "price": 1150.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978657",
+        "provider_player_id": "14378",
+        "player": "Michael Pittman",
+        "team": "PIT",
+        "opponent": "ATL",
+        "home_team": "PIT",
+        "away_team": "ATL",
+        "bookmaker": "caesars",
+        "price": 1100.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978394",
+        "provider_player_id": "9253",
+        "player": "Mike Evans",
+        "team": "SF",
+        "opponent": "LAR",
+        "home_team": "LAR",
+        "away_team": "SF",
+        "bookmaker": "betrivers",
+        "price": 1100.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978638",
+        "provider_player_id": "17716",
+        "player": "Brian Thomas",
+        "team": "JAX",
+        "opponent": "CLE",
+        "home_team": "JAX",
+        "away_team": "CLE",
+        "bookmaker": "betrivers",
+        "price": 1000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978439",
+        "provider_player_id": "8783",
+        "player": "Travis Kelce",
+        "team": "KC",
+        "opponent": "DEN",
+        "home_team": "KC",
+        "away_team": "DEN",
+        "bookmaker": "caesars",
+        "price": 950.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978631",
+        "provider_player_id": "15406",
+        "player": "DeVonta Smith",
+        "team": "PHI",
+        "opponent": "WAS",
+        "home_team": "PHI",
+        "away_team": "WAS",
+        "bookmaker": "caesars",
+        "price": 1000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978635",
+        "provider_player_id": "15895",
+        "player": "Chris Olave",
+        "team": "NO",
+        "opponent": "DET",
+        "home_team": "DET",
+        "away_team": "NO",
+        "bookmaker": "draftkings",
+        "price": 1200.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978622",
+        "provider_player_id": "16919",
+        "player": "Zay Flowers",
+        "team": "BAL",
+        "opponent": "IND",
+        "home_team": "IND",
+        "away_team": "BAL",
+        "bookmaker": "draftkings",
+        "price": 1100.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978622",
+        "provider_player_id": "12561",
+        "player": "Lamar Jackson",
+        "team": "BAL",
+        "opponent": "IND",
+        "home_team": "IND",
+        "away_team": "BAL",
+        "bookmaker": "draftkings",
+        "price": 1300.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978395",
+        "provider_player_id": "11863",
+        "player": "Cooper Kupp",
+        "team": "SEA",
+        "opponent": "NE",
+        "home_team": "SEA",
+        "away_team": "NE",
+        "bookmaker": "thescore",
+        "price": 1300.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978622",
+        "provider_player_id": "18534",
+        "player": "Tyler Warren",
+        "team": "IND",
+        "opponent": "BAL",
+        "home_team": "IND",
+        "away_team": "BAL",
+        "bookmaker": "betrivers",
+        "price": 1300.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978391",
+        "provider_player_id": "17704",
+        "player": "Malik Nabers",
+        "team": "NYG",
+        "opponent": "DAL",
+        "home_team": "NYG",
+        "away_team": "DAL",
+        "bookmaker": "draftkings",
+        "price": 1000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1202,7 +1098,124 @@
         "away_team": "CHI",
         "bookmaker": "caesars",
         "price": 1100.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978652",
+        "provider_player_id": "17702",
+        "player": "Braelon Allen",
+        "team": "NYJ",
+        "opponent": "TEN",
+        "home_team": "TEN",
+        "away_team": "NYJ",
+        "bookmaker": "fanduel",
+        "price": 1300.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978635",
+        "provider_player_id": "17033",
+        "player": "Sam LaPorta",
+        "team": "DET",
+        "opponent": "NO",
+        "home_team": "DET",
+        "away_team": "NO",
+        "bookmaker": "caesars",
+        "price": 1200.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978395",
+        "provider_player_id": "18517",
+        "player": "TreVeyon Henderson",
+        "team": "NE",
+        "opponent": "SEA",
+        "home_team": "SEA",
+        "away_team": "NE",
+        "bookmaker": "draftkings",
+        "price": 1500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978625",
+        "provider_player_id": "18449",
+        "player": "Woody Marks",
+        "team": "HOU",
+        "opponent": "BUF",
+        "home_team": "HOU",
+        "away_team": "BUF",
+        "bookmaker": "draftkings",
+        "price": 1300.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978621",
+        "provider_player_id": "15222",
+        "player": "Kenny Gainwell",
+        "team": "TB",
+        "opponent": "CIN",
+        "home_team": "CIN",
+        "away_team": "TB",
+        "bookmaker": "fanduel",
+        "price": 1400.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978652",
+        "provider_player_id": "15838",
+        "player": "Wan'Dale Robinson",
+        "team": "TEN",
+        "opponent": "NYJ",
+        "home_team": "TEN",
+        "away_team": "NYJ",
+        "bookmaker": "fanduel",
+        "price": 1400.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978621",
+        "provider_player_id": "18549",
+        "player": "Emeka Egbuka",
+        "team": "TB",
+        "opponent": "CIN",
+        "home_team": "CIN",
+        "away_team": "TB",
+        "bookmaker": "draftkings",
+        "price": 1500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978631",
+        "provider_player_id": "17692",
+        "player": "Jayden Daniels",
+        "team": "WAS",
+        "opponent": "PHI",
+        "home_team": "PHI",
+        "away_team": "WAS",
+        "bookmaker": "draftkings",
+        "price": 1400.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978391",
+        "provider_player_id": "18574",
+        "player": "Jaxson Dart",
+        "team": "NYG",
+        "opponent": "DAL",
+        "home_team": "NYG",
+        "away_team": "DAL",
+        "bookmaker": "draftkings",
+        "price": 1200.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1215,7 +1228,7 @@
         "away_team": "WAS",
         "bookmaker": "caesars",
         "price": 1200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1228,7 +1241,7 @@
         "away_team": "BAL",
         "bookmaker": "draftkings",
         "price": 1300.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1241,7 +1254,7 @@
         "away_team": "NE",
         "bookmaker": "caesars",
         "price": 1400.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1254,7 +1267,7 @@
         "away_team": "TB",
         "bookmaker": "fanduel",
         "price": 1600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1267,7 +1280,7 @@
         "away_team": "SF",
         "bookmaker": "fanduel",
         "price": 1800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1280,7 +1293,7 @@
         "away_team": "SF",
         "bookmaker": "fanduel",
         "price": 1700.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1291,9 +1304,9 @@
         "opponent": "GB",
         "home_team": "MIN",
         "away_team": "GB",
-        "bookmaker": "draftkings",
-        "price": 1400.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "bookmaker": "caesars",
+        "price": 1300.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1306,7 +1319,7 @@
         "away_team": "ARI",
         "bookmaker": "caesars",
         "price": 1200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1319,7 +1332,7 @@
         "away_team": "WAS",
         "bookmaker": "draftkings",
         "price": 1200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1332,7 +1345,7 @@
         "away_team": "GB",
         "bookmaker": "draftkings",
         "price": 1300.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1345,7 +1358,7 @@
         "away_team": "DEN",
         "bookmaker": "betrivers",
         "price": 1200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1358,7 +1371,7 @@
         "away_team": "NYJ",
         "bookmaker": "fanduel",
         "price": 1300.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1371,7 +1384,7 @@
         "away_team": "DEN",
         "bookmaker": "draftkings",
         "price": 1300.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1384,7 +1397,7 @@
         "away_team": "ATL",
         "bookmaker": "draftkings",
         "price": 1700.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1397,7 +1410,7 @@
         "away_team": "NE",
         "bookmaker": "thescore",
         "price": 1800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1410,7 +1423,7 @@
         "away_team": "BAL",
         "bookmaker": "betrivers",
         "price": 1600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1422,8 +1435,8 @@
         "home_team": "LAR",
         "away_team": "SF",
         "bookmaker": "betrivers",
-        "price": 1500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "price": 1600.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1436,7 +1449,7 @@
         "away_team": "DAL",
         "bookmaker": "caesars",
         "price": 1300.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1449,7 +1462,7 @@
         "away_team": "ARI",
         "bookmaker": "caesars",
         "price": 1400.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1462,7 +1475,7 @@
         "away_team": "ARI",
         "bookmaker": "draftkings",
         "price": 1500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1473,9 +1486,9 @@
         "opponent": "MIA",
         "home_team": "LV",
         "away_team": "MIA",
-        "bookmaker": "draftkings",
-        "price": 1300.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "bookmaker": "betrivers",
+        "price": 1400.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1488,7 +1501,7 @@
         "away_team": "GB",
         "bookmaker": "fanduel",
         "price": 1400.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1499,9 +1512,9 @@
         "opponent": "LV",
         "home_team": "LV",
         "away_team": "MIA",
-        "bookmaker": "fanduel",
+        "bookmaker": "draftkings",
         "price": 1400.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1514,7 +1527,7 @@
         "away_team": "DEN",
         "bookmaker": "draftkings",
         "price": 1300.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1527,7 +1540,7 @@
         "away_team": "NE",
         "bookmaker": "thescore",
         "price": 1800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1540,7 +1553,7 @@
         "away_team": "CLE",
         "bookmaker": "draftkings",
         "price": 2200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1553,7 +1566,7 @@
         "away_team": "NYJ",
         "bookmaker": "fanduel",
         "price": 1900.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1566,7 +1579,7 @@
         "away_team": "NE",
         "bookmaker": "thescore",
         "price": 1400.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1579,7 +1592,7 @@
         "away_team": "TB",
         "bookmaker": "fanduel",
         "price": 1800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1592,7 +1605,7 @@
         "away_team": "SF",
         "bookmaker": "fanduel",
         "price": 5500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1605,7 +1618,7 @@
         "away_team": "ATL",
         "bookmaker": "betrivers",
         "price": 1800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1618,7 +1631,7 @@
         "away_team": "TB",
         "bookmaker": "fanduel",
         "price": 1900.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1631,7 +1644,7 @@
         "away_team": "CLE",
         "bookmaker": "draftkings",
         "price": 1800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1644,7 +1657,7 @@
         "away_team": "WAS",
         "bookmaker": "draftkings",
         "price": 1500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1657,7 +1670,7 @@
         "away_team": "BUF",
         "bookmaker": "fanduel",
         "price": 1500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1670,7 +1683,7 @@
         "away_team": "GB",
         "bookmaker": "fanduel",
         "price": 1400.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1683,7 +1696,7 @@
         "away_team": "NO",
         "bookmaker": "betrivers",
         "price": 1300.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1696,7 +1709,7 @@
         "away_team": "TB",
         "bookmaker": "fanduel",
         "price": 1800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1709,7 +1722,7 @@
         "away_team": "NYJ",
         "bookmaker": "draftkings",
         "price": 1800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1722,7 +1735,7 @@
         "away_team": "NE",
         "bookmaker": "thescore",
         "price": 2000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -1735,683 +1748,7 @@
         "away_team": "NE",
         "bookmaker": "draftkings",
         "price": 2500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978627",
-        "provider_player_id": "18500",
-        "player": "Matthew Golden",
-        "team": "GB",
-        "opponent": "MIN",
-        "home_team": "MIN",
-        "away_team": "GB",
-        "bookmaker": "fanduel",
-        "price": 1700.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978625",
-        "provider_player_id": "16697",
-        "player": "Dalton Kincaid",
-        "team": "BUF",
-        "opponent": "HOU",
-        "home_team": "HOU",
-        "away_team": "BUF",
-        "bookmaker": "fanduel",
-        "price": 1600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978391",
-        "provider_player_id": "16033",
-        "player": "Isaiah Likely",
-        "team": "NYG",
-        "opponent": "DAL",
-        "home_team": "NYG",
-        "away_team": "DAL",
-        "bookmaker": "betrivers",
-        "price": 1600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978622",
-        "provider_player_id": "16022",
-        "player": "Alec Pierce",
-        "team": "IND",
-        "opponent": "BAL",
-        "home_team": "IND",
-        "away_team": "BAL",
-        "bookmaker": "betrivers",
-        "price": 1400.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978627",
-        "provider_player_id": "16977",
-        "player": "Jayden Reed",
-        "team": "GB",
-        "opponent": "MIN",
-        "home_team": "MIN",
-        "away_team": "GB",
-        "bookmaker": "draftkings",
-        "price": 1600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978657",
-        "provider_player_id": "15907",
-        "player": "Brian Robinson",
-        "team": "ATL",
-        "opponent": "PIT",
-        "home_team": "PIT",
-        "away_team": "ATL",
-        "bookmaker": "fanduel",
-        "price": 1900.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978625",
-        "provider_player_id": "12514",
-        "player": "Dalton Schultz",
-        "team": "HOU",
-        "opponent": "BUF",
-        "home_team": "HOU",
-        "away_team": "BUF",
-        "bookmaker": "draftkings",
-        "price": 1600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978631",
-        "provider_player_id": "16658",
-        "player": "Dontayvion Wicks",
-        "team": "PHI",
-        "opponent": "WAS",
-        "home_team": "PHI",
-        "away_team": "WAS",
-        "bookmaker": "fanduel",
-        "price": 1800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978635",
-        "provider_player_id": "14630",
-        "player": "Juwan Johnson",
-        "team": "NO",
-        "opponent": "DET",
-        "home_team": "DET",
-        "away_team": "NO",
-        "bookmaker": "draftkings",
-        "price": 1900.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978635",
-        "provider_player_id": "17975",
-        "player": "Devaughn Vele",
-        "team": "NO",
-        "opponent": "DET",
-        "home_team": "DET",
-        "away_team": "NO",
-        "bookmaker": "betrivers",
-        "price": 2200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978635",
-        "provider_player_id": "18642",
-        "player": "Isaac TeSlaa",
-        "team": "DET",
-        "opponent": "NO",
-        "home_team": "DET",
-        "away_team": "NO",
-        "bookmaker": "fanduel",
-        "price": 2700.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978652",
-        "provider_player_id": "18503",
-        "player": "Gunnar Helm",
-        "team": "TEN",
-        "opponent": "NYJ",
-        "home_team": "TEN",
-        "away_team": "NYJ",
-        "bookmaker": "betrivers",
-        "price": 2200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978661",
-        "provider_player_id": "17976",
-        "player": "Jalen Coker",
-        "team": "CAR",
-        "opponent": "CHI",
-        "home_team": "CAR",
-        "away_team": "CHI",
-        "bookmaker": "draftkings",
-        "price": 1800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978641",
-        "provider_player_id": "18481",
-        "player": "Oronde Gadsden",
-        "team": "LAC",
-        "opponent": "ARI",
-        "home_team": "LAC",
-        "away_team": "ARI",
-        "bookmaker": "draftkings",
-        "price": 2200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978641",
-        "provider_player_id": "18478",
-        "player": "Tre' Harris",
-        "team": "LAC",
-        "opponent": "ARI",
-        "home_team": "LAC",
-        "away_team": "ARI",
-        "bookmaker": "draftkings",
-        "price": 1600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978641",
-        "provider_player_id": "17674",
-        "player": "Marvin Harrison",
-        "team": "ARI",
-        "opponent": "LAC",
-        "home_team": "LAC",
-        "away_team": "ARI",
-        "bookmaker": "draftkings",
-        "price": 1800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978439",
-        "provider_player_id": "19240",
-        "player": "Emmett Johnson",
-        "team": "KC",
-        "opponent": "DEN",
-        "home_team": "KC",
-        "away_team": "DEN",
-        "bookmaker": "betrivers",
-        "price": 1800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978635",
-        "provider_player_id": "11732",
-        "player": "Alvin Kamara",
-        "team": "NO",
-        "opponent": "DET",
-        "home_team": "DET",
-        "away_team": "NO",
-        "bookmaker": "betrivers",
-        "price": 1500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978641",
-        "provider_player_id": "15924",
-        "player": "Charlie Kolar",
-        "team": "LAC",
-        "opponent": "ARI",
-        "home_team": "LAC",
-        "away_team": "ARI",
-        "bookmaker": "draftkings",
-        "price": 1900.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978641",
-        "provider_player_id": "11734",
-        "player": "David Njoku",
-        "team": "LAC",
-        "opponent": "ARI",
-        "home_team": "LAC",
-        "away_team": "ARI",
-        "bookmaker": "draftkings",
-        "price": 2000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978635",
-        "provider_player_id": "17584",
-        "player": "Jacob Saylors",
-        "team": "DET",
-        "opponent": "NO",
-        "home_team": "DET",
-        "away_team": "NO",
-        "bookmaker": "betr",
-        "price": 1854.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978625",
-        "provider_player_id": "15892",
-        "player": "Khalil Shakir",
-        "team": "BUF",
-        "opponent": "HOU",
-        "home_team": "HOU",
-        "away_team": "BUF",
-        "bookmaker": "draftkings",
-        "price": 1600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978648",
-        "provider_player_id": "17863",
-        "player": "Malik Washington",
-        "team": "MIA",
-        "opponent": "LV",
-        "home_team": "LV",
-        "away_team": "MIA",
-        "bookmaker": "caesars",
-        "price": 1600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978621",
-        "provider_player_id": "16032",
-        "player": "Cade Otton",
-        "team": "TB",
-        "opponent": "CIN",
-        "home_team": "CIN",
-        "away_team": "TB",
-        "bookmaker": "draftkings",
-        "price": 2200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978622",
-        "provider_player_id": "15210",
-        "player": "Rashod Bateman",
-        "team": "BAL",
-        "opponent": "IND",
-        "home_team": "IND",
-        "away_team": "BAL",
-        "bookmaker": "fanduel",
-        "price": 2500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978627",
-        "provider_player_id": "16741",
-        "player": "Chris Brooks",
-        "team": "GB",
-        "opponent": "MIN",
-        "home_team": "MIN",
-        "away_team": "GB",
-        "bookmaker": "caesars",
-        "price": 2000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978625",
-        "provider_player_id": "16932",
-        "player": "Xavier Hutchinson",
-        "team": "HOU",
-        "opponent": "BUF",
-        "home_team": "HOU",
-        "away_team": "BUF",
-        "bookmaker": "caesars",
-        "price": 2500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978391",
-        "provider_player_id": "17967",
-        "player": "Tyrone Tracy",
-        "team": "NYG",
-        "opponent": "DAL",
-        "home_team": "NYG",
-        "away_team": "DAL",
-        "bookmaker": "betrivers",
-        "price": 1600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978641",
-        "provider_player_id": "16957",
-        "player": "Michael Wilson",
-        "team": "ARI",
-        "opponent": "LAC",
-        "home_team": "LAC",
-        "away_team": "ARI",
-        "bookmaker": "draftkings",
-        "price": 2200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978394",
-        "provider_player_id": "17688",
-        "player": "Jordan Whittington",
-        "team": "LAR",
-        "opponent": "SF",
-        "home_team": "LAR",
-        "away_team": "SF",
-        "bookmaker": "fanduel",
-        "price": 3500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978638",
-        "provider_player_id": "18578",
-        "player": "Travis Hunter",
-        "team": "JAX",
-        "opponent": "CLE",
-        "home_team": "JAX",
-        "away_team": "CLE",
-        "bookmaker": "fanduel",
-        "price": 2500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978394",
-        "provider_player_id": "18497",
-        "player": "Terrance Ferguson",
-        "team": "LAR",
-        "opponent": "SF",
-        "home_team": "LAR",
-        "away_team": "SF",
-        "bookmaker": "betrivers",
-        "price": 2200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978394",
-        "provider_player_id": "14463",
-        "player": "Colby Parkinson",
-        "team": "LAR",
-        "opponent": "SF",
-        "home_team": "LAR",
-        "away_team": "SF",
-        "bookmaker": "betrivers",
-        "price": 2000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978621",
-        "provider_player_id": "17763",
-        "player": "Jalen McMillan",
-        "team": "TB",
-        "opponent": "CIN",
-        "home_team": "CIN",
-        "away_team": "TB",
-        "bookmaker": "betrivers",
-        "price": 2000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978625",
-        "provider_player_id": "16795",
-        "player": "Kayshon Boutte",
-        "team": "HOU",
-        "opponent": "BUF",
-        "home_team": "HOU",
-        "away_team": "BUF",
-        "bookmaker": "draftkings",
-        "price": 1900.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978652",
-        "provider_player_id": "17057",
-        "player": "Isaiah Davis",
-        "team": "NYJ",
-        "opponent": "TEN",
-        "home_team": "TEN",
-        "away_team": "NYJ",
-        "bookmaker": "betrivers",
-        "price": 2900.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978631",
-        "provider_player_id": "10133",
-        "player": "Stefon Diggs",
-        "team": "WAS",
-        "opponent": "PHI",
-        "home_team": "PHI",
-        "away_team": "WAS",
-        "bookmaker": "caesars",
-        "price": 2000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978391",
-        "provider_player_id": "19313",
-        "player": "Malachi Fields",
-        "team": "NYG",
-        "opponent": "DAL",
-        "home_team": "NYG",
-        "away_team": "DAL",
-        "bookmaker": "betrivers",
-        "price": 2200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978641",
-        "provider_player_id": "14446",
-        "player": "Justin Herbert",
-        "team": "LAC",
-        "opponent": "ARI",
-        "home_team": "LAC",
-        "away_team": "ARI",
-        "bookmaker": "fanduel",
-        "price": 1900.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978627",
-        "provider_player_id": "14376",
-        "player": "Jauan Jennings",
-        "team": "MIN",
-        "opponent": "GB",
-        "home_team": "MIN",
-        "away_team": "GB",
-        "bookmaker": "draftkings",
-        "price": 1900.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978627",
-        "provider_player_id": "18515",
-        "player": "Kaleb Johnson",
-        "team": "GB",
-        "opponent": "MIN",
-        "home_team": "MIN",
-        "away_team": "GB",
-        "bookmaker": "caesars",
-        "price": 2100.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978648",
-        "provider_player_id": "16025",
-        "player": "Jalen Nailor",
-        "team": "LV",
-        "opponent": "MIA",
-        "home_team": "LV",
-        "away_team": "MIA",
-        "bookmaker": "caesars",
-        "price": 1700.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978622",
-        "provider_player_id": "13427",
-        "player": "Justice Hill",
-        "team": "BAL",
-        "opponent": "IND",
-        "home_team": "IND",
-        "away_team": "BAL",
-        "bookmaker": "fanduel",
-        "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978652",
-        "provider_player_id": "18535",
-        "player": "Mason Taylor",
-        "team": "NYJ",
-        "opponent": "TEN",
-        "home_team": "TEN",
-        "away_team": "NYJ",
-        "bookmaker": "betrivers",
-        "price": 2000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978657",
-        "provider_player_id": "16889",
-        "player": "Darnell Washington",
-        "team": "PIT",
-        "opponent": "ATL",
-        "home_team": "PIT",
-        "away_team": "ATL",
-        "bookmaker": "fanduel",
-        "price": 2500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978638",
-        "provider_player_id": "19298",
-        "player": "Denzel Boston",
-        "team": "CLE",
-        "opponent": "JAX",
-        "home_team": "JAX",
-        "away_team": "CLE",
-        "bookmaker": "draftkings",
-        "price": 2500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978638",
-        "provider_player_id": "19242",
-        "player": "KC Concepcion",
-        "team": "CLE",
-        "opponent": "JAX",
-        "home_team": "JAX",
-        "away_team": "CLE",
-        "bookmaker": "draftkings",
-        "price": 2500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978627",
-        "provider_player_id": "13610",
-        "player": "T.J. Hockenson",
-        "team": "MIN",
-        "opponent": "GB",
-        "home_team": "MIN",
-        "away_team": "GB",
-        "bookmaker": "draftkings",
-        "price": 1900.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978631",
-        "provider_player_id": "19231",
-        "player": "Makai Lemon",
-        "team": "PHI",
-        "opponent": "WAS",
-        "home_team": "PHI",
-        "away_team": "WAS",
-        "bookmaker": "caesars",
-        "price": 2000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978648",
-        "provider_player_id": "16666",
-        "player": "Michael Mayer",
-        "team": "LV",
-        "opponent": "MIA",
-        "home_team": "LV",
-        "away_team": "MIA",
-        "bookmaker": "draftkings",
-        "price": 2000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978635",
-        "provider_player_id": "17037",
-        "player": "Tyler Shough",
-        "team": "NO",
-        "opponent": "DET",
-        "home_team": "DET",
-        "away_team": "NO",
-        "bookmaker": "draftkings",
-        "price": 2500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978391",
-        "provider_player_id": "13449",
-        "player": "Devin Singletary",
-        "team": "NYG",
-        "opponent": "DAL",
-        "home_team": "NYG",
-        "away_team": "DAL",
-        "bookmaker": "betrivers",
-        "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -2424,124 +1761,553 @@
         "away_team": "CHI",
         "bookmaker": "betrivers",
         "price": 2000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978627",
+        "provider_player_id": "18500",
+        "player": "Matthew Golden",
+        "team": "GB",
+        "opponent": "MIN",
+        "home_team": "MIN",
+        "away_team": "GB",
+        "bookmaker": "fanduel",
+        "price": 1700.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978625",
+        "provider_player_id": "16697",
+        "player": "Dalton Kincaid",
+        "team": "BUF",
+        "opponent": "HOU",
+        "home_team": "HOU",
+        "away_team": "BUF",
+        "bookmaker": "fanduel",
+        "price": 1600.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978391",
+        "provider_player_id": "16033",
+        "player": "Isaiah Likely",
+        "team": "NYG",
+        "opponent": "DAL",
+        "home_team": "NYG",
+        "away_team": "DAL",
+        "bookmaker": "betrivers",
+        "price": 1600.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
         "event_id": "2978622",
-        "provider_player_id": "8627",
-        "player": "Keenan Allen",
+        "provider_player_id": "16022",
+        "player": "Alec Pierce",
         "team": "IND",
         "opponent": "BAL",
         "home_team": "IND",
         "away_team": "BAL",
         "bookmaker": "betrivers",
+        "price": 1400.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978627",
+        "provider_player_id": "16977",
+        "player": "Jayden Reed",
+        "team": "GB",
+        "opponent": "MIN",
+        "home_team": "MIN",
+        "away_team": "GB",
+        "bookmaker": "draftkings",
+        "price": 1600.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978657",
+        "provider_player_id": "15907",
+        "player": "Brian Robinson",
+        "team": "ATL",
+        "opponent": "PIT",
+        "home_team": "PIT",
+        "away_team": "ATL",
+        "bookmaker": "fanduel",
         "price": 1900.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978625",
+        "provider_player_id": "12514",
+        "player": "Dalton Schultz",
+        "team": "HOU",
+        "opponent": "BUF",
+        "home_team": "HOU",
+        "away_team": "BUF",
+        "bookmaker": "draftkings",
+        "price": 1600.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978631",
+        "provider_player_id": "16658",
+        "player": "Dontayvion Wicks",
+        "team": "PHI",
+        "opponent": "WAS",
+        "home_team": "PHI",
+        "away_team": "WAS",
+        "bookmaker": "fanduel",
+        "price": 1800.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978635",
+        "provider_player_id": "14630",
+        "player": "Juwan Johnson",
+        "team": "NO",
+        "opponent": "DET",
+        "home_team": "DET",
+        "away_team": "NO",
+        "bookmaker": "draftkings",
+        "price": 1900.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978635",
+        "provider_player_id": "17975",
+        "player": "Devaughn Vele",
+        "team": "NO",
+        "opponent": "DET",
+        "home_team": "DET",
+        "away_team": "NO",
+        "bookmaker": "betrivers",
+        "price": 2200.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978661",
+        "provider_player_id": "17976",
+        "player": "Jalen Coker",
+        "team": "CAR",
+        "opponent": "CHI",
+        "home_team": "CAR",
+        "away_team": "CHI",
+        "bookmaker": "draftkings",
+        "price": 1800.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978635",
+        "provider_player_id": "18642",
+        "player": "Isaac TeSlaa",
+        "team": "DET",
+        "opponent": "NO",
+        "home_team": "DET",
+        "away_team": "NO",
+        "bookmaker": "fanduel",
+        "price": 2700.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978652",
+        "provider_player_id": "18503",
+        "player": "Gunnar Helm",
+        "team": "TEN",
+        "opponent": "NYJ",
+        "home_team": "TEN",
+        "away_team": "NYJ",
+        "bookmaker": "betrivers",
+        "price": 2200.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978641",
+        "provider_player_id": "18481",
+        "player": "Oronde Gadsden",
+        "team": "LAC",
+        "opponent": "ARI",
+        "home_team": "LAC",
+        "away_team": "ARI",
+        "bookmaker": "draftkings",
+        "price": 2200.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978641",
+        "provider_player_id": "18478",
+        "player": "Tre' Harris",
+        "team": "LAC",
+        "opponent": "ARI",
+        "home_team": "LAC",
+        "away_team": "ARI",
+        "bookmaker": "draftkings",
+        "price": 1600.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978641",
+        "provider_player_id": "17674",
+        "player": "Marvin Harrison",
+        "team": "ARI",
+        "opponent": "LAC",
+        "home_team": "LAC",
+        "away_team": "ARI",
+        "bookmaker": "draftkings",
+        "price": 1800.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978439",
+        "provider_player_id": "19240",
+        "player": "Emmett Johnson",
+        "team": "KC",
+        "opponent": "DEN",
+        "home_team": "KC",
+        "away_team": "DEN",
+        "bookmaker": "betrivers",
+        "price": 1800.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978635",
+        "provider_player_id": "11732",
+        "player": "Alvin Kamara",
+        "team": "NO",
+        "opponent": "DET",
+        "home_team": "DET",
+        "away_team": "NO",
+        "bookmaker": "betrivers",
+        "price": 1500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978641",
+        "provider_player_id": "15924",
+        "player": "Charlie Kolar",
+        "team": "LAC",
+        "opponent": "ARI",
+        "home_team": "LAC",
+        "away_team": "ARI",
+        "bookmaker": "draftkings",
+        "price": 1900.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978641",
+        "provider_player_id": "11734",
+        "player": "David Njoku",
+        "team": "LAC",
+        "opponent": "ARI",
+        "home_team": "LAC",
+        "away_team": "ARI",
+        "bookmaker": "draftkings",
+        "price": 2000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978635",
+        "provider_player_id": "17584",
+        "player": "Jacob Saylors",
+        "team": "DET",
+        "opponent": "NO",
+        "home_team": "DET",
+        "away_team": "NO",
+        "bookmaker": "betr",
+        "price": 1854.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978625",
+        "provider_player_id": "15892",
+        "player": "Khalil Shakir",
+        "team": "BUF",
+        "opponent": "HOU",
+        "home_team": "HOU",
+        "away_team": "BUF",
+        "bookmaker": "draftkings",
+        "price": 1600.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
         "event_id": "2978648",
-        "provider_player_id": "15891",
-        "player": "Greg Dulcich",
+        "provider_player_id": "17863",
+        "player": "Malik Washington",
         "team": "MIA",
         "opponent": "LV",
         "home_team": "LV",
         "away_team": "MIA",
         "bookmaker": "caesars",
-        "price": 2000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "price": 1600.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
-        "event_id": "2978391",
-        "provider_player_id": "17974",
-        "player": "Ryan Flournoy",
-        "team": "DAL",
-        "opponent": "NYG",
-        "home_team": "NYG",
-        "away_team": "DAL",
-        "bookmaker": "betrivers",
-        "price": 2400.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978439",
-        "provider_player_id": "16995",
-        "player": "Bo Nix",
-        "team": "DEN",
-        "opponent": "KC",
-        "home_team": "KC",
-        "away_team": "DEN",
+        "event_id": "2978621",
+        "provider_player_id": "16032",
+        "player": "Cade Otton",
+        "team": "TB",
+        "opponent": "CIN",
+        "home_team": "CIN",
+        "away_team": "TB",
         "bookmaker": "draftkings",
         "price": 2200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978391",
-        "provider_player_id": "13522",
-        "player": "Darius Slayton",
-        "team": "NYG",
-        "opponent": "DAL",
-        "home_team": "NYG",
-        "away_team": "DAL",
-        "bookmaker": "draftkings",
-        "price": 2200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978652",
-        "provider_player_id": "18641",
-        "player": "Chimere Dike",
-        "team": "TEN",
-        "opponent": "NYJ",
-        "home_team": "TEN",
-        "away_team": "NYJ",
-        "bookmaker": "fanduel",
-        "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
         "event_id": "2978622",
-        "provider_player_id": "13491",
-        "player": "Daniel Jones",
-        "team": "IND",
-        "opponent": "BAL",
+        "provider_player_id": "15210",
+        "player": "Rashod Bateman",
+        "team": "BAL",
+        "opponent": "IND",
         "home_team": "IND",
         "away_team": "BAL",
         "bookmaker": "fanduel",
-        "price": 2700.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "price": 2500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978627",
+        "provider_player_id": "16741",
+        "player": "Chris Brooks",
+        "team": "GB",
+        "opponent": "MIN",
+        "home_team": "MIN",
+        "away_team": "GB",
+        "bookmaker": "caesars",
+        "price": 2000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978625",
+        "provider_player_id": "16932",
+        "player": "Xavier Hutchinson",
+        "team": "HOU",
+        "opponent": "BUF",
+        "home_team": "HOU",
+        "away_team": "BUF",
+        "bookmaker": "caesars",
+        "price": 2500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978391",
+        "provider_player_id": "17967",
+        "player": "Tyrone Tracy",
+        "team": "NYG",
+        "opponent": "DAL",
+        "home_team": "NYG",
+        "away_team": "DAL",
+        "bookmaker": "betrivers",
+        "price": 1600.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978641",
+        "provider_player_id": "16957",
+        "player": "Michael Wilson",
+        "team": "ARI",
+        "opponent": "LAC",
+        "home_team": "LAC",
+        "away_team": "ARI",
+        "bookmaker": "draftkings",
+        "price": 2200.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978394",
+        "provider_player_id": "17688",
+        "player": "Jordan Whittington",
+        "team": "LAR",
+        "opponent": "SF",
+        "home_team": "LAR",
+        "away_team": "SF",
+        "bookmaker": "fanduel",
+        "price": 3500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978638",
+        "provider_player_id": "18578",
+        "player": "Travis Hunter",
+        "team": "JAX",
+        "opponent": "CLE",
+        "home_team": "JAX",
+        "away_team": "CLE",
+        "bookmaker": "fanduel",
+        "price": 2500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978394",
+        "provider_player_id": "18497",
+        "player": "Terrance Ferguson",
+        "team": "LAR",
+        "opponent": "SF",
+        "home_team": "LAR",
+        "away_team": "SF",
+        "bookmaker": "betrivers",
+        "price": 2000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978394",
+        "provider_player_id": "14463",
+        "player": "Colby Parkinson",
+        "team": "LAR",
+        "opponent": "SF",
+        "home_team": "LAR",
+        "away_team": "SF",
+        "bookmaker": "caesars",
+        "price": 2000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978621",
+        "provider_player_id": "17763",
+        "player": "Jalen McMillan",
+        "team": "TB",
+        "opponent": "CIN",
+        "home_team": "CIN",
+        "away_team": "TB",
+        "bookmaker": "betrivers",
+        "price": 2000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978625",
+        "provider_player_id": "16795",
+        "player": "Kayshon Boutte",
+        "team": "HOU",
+        "opponent": "BUF",
+        "home_team": "HOU",
+        "away_team": "BUF",
+        "bookmaker": "draftkings",
+        "price": 1900.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978652",
+        "provider_player_id": "17057",
+        "player": "Isaiah Davis",
+        "team": "NYJ",
+        "opponent": "TEN",
+        "home_team": "TEN",
+        "away_team": "NYJ",
+        "bookmaker": "betrivers",
+        "price": 2900.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
         "event_id": "2978631",
-        "provider_player_id": "16705",
-        "player": "Tank Bigsby",
-        "team": "PHI",
-        "opponent": "WAS",
+        "provider_player_id": "10133",
+        "player": "Stefon Diggs",
+        "team": "WAS",
+        "opponent": "PHI",
         "home_team": "PHI",
         "away_team": "WAS",
-        "bookmaker": "draftkings",
-        "price": 2800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "bookmaker": "caesars",
+        "price": 2000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
-        "event_id": "2978395",
-        "provider_player_id": "17772",
-        "player": "Tory Horton",
-        "team": "SEA",
-        "opponent": "NE",
-        "home_team": "SEA",
-        "away_team": "NE",
+        "event_id": "2978391",
+        "provider_player_id": "19313",
+        "player": "Malachi Fields",
+        "team": "NYG",
+        "opponent": "DAL",
+        "home_team": "NYG",
+        "away_team": "DAL",
         "bookmaker": "betrivers",
-        "price": 2500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "price": 2200.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978641",
+        "provider_player_id": "14446",
+        "player": "Justin Herbert",
+        "team": "LAC",
+        "opponent": "ARI",
+        "home_team": "LAC",
+        "away_team": "ARI",
+        "bookmaker": "fanduel",
+        "price": 1900.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978627",
+        "provider_player_id": "14376",
+        "player": "Jauan Jennings",
+        "team": "MIN",
+        "opponent": "GB",
+        "home_team": "MIN",
+        "away_team": "GB",
+        "bookmaker": "draftkings",
+        "price": 1900.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978627",
+        "provider_player_id": "18515",
+        "player": "Kaleb Johnson",
+        "team": "GB",
+        "opponent": "MIN",
+        "home_team": "MIN",
+        "away_team": "GB",
+        "bookmaker": "caesars",
+        "price": 2100.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978648",
+        "provider_player_id": "16025",
+        "player": "Jalen Nailor",
+        "team": "LV",
+        "opponent": "MIA",
+        "home_team": "LV",
+        "away_team": "MIA",
+        "bookmaker": "betrivers",
+        "price": 1800.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -2554,215 +2320,241 @@
         "away_team": "CHI",
         "bookmaker": "betrivers",
         "price": 2500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
         "event_id": "2978622",
-        "provider_player_id": "19230",
-        "player": "Ja'Kobi Lane",
+        "provider_player_id": "13427",
+        "player": "Justice Hill",
         "team": "BAL",
         "opponent": "IND",
         "home_team": "IND",
         "away_team": "BAL",
         "bookmaker": "fanduel",
         "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978439",
-        "provider_player_id": "18529",
-        "player": "Brashard Smith",
-        "team": "KC",
-        "opponent": "DEN",
-        "home_team": "KC",
-        "away_team": "DEN",
-        "bookmaker": "draftkings",
-        "price": 2500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978648",
-        "provider_player_id": "16010",
-        "player": "Jalen Tolbert",
-        "team": "MIA",
-        "opponent": "LV",
-        "home_team": "LV",
-        "away_team": "MIA",
-        "bookmaker": "draftkings",
-        "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978641",
-        "provider_player_id": "17821",
-        "player": "Kimani Vidal",
-        "team": "LAC",
-        "opponent": "ARI",
-        "home_team": "LAC",
-        "away_team": "ARI",
-        "bookmaker": "betrivers",
-        "price": 2000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
         "event_id": "2978652",
-        "provider_player_id": "19279",
-        "player": "Kenyon Sadiq",
+        "provider_player_id": "18535",
+        "player": "Mason Taylor",
         "team": "NYJ",
         "opponent": "TEN",
         "home_team": "TEN",
         "away_team": "NYJ",
         "bookmaker": "betrivers",
-        "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "price": 2000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
         "event_id": "2978657",
-        "provider_player_id": "15850",
-        "player": "Jahan Dotson",
-        "team": "ATL",
-        "opponent": "PIT",
+        "provider_player_id": "16889",
+        "player": "Darnell Washington",
+        "team": "PIT",
+        "opponent": "ATL",
         "home_team": "PIT",
         "away_team": "ATL",
+        "bookmaker": "fanduel",
+        "price": 2500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978638",
+        "provider_player_id": "19298",
+        "player": "Denzel Boston",
+        "team": "CLE",
+        "opponent": "JAX",
+        "home_team": "JAX",
+        "away_team": "CLE",
         "bookmaker": "draftkings",
-        "price": 2800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "price": 2500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978638",
+        "provider_player_id": "19242",
+        "player": "KC Concepcion",
+        "team": "CLE",
+        "opponent": "JAX",
+        "home_team": "JAX",
+        "away_team": "CLE",
+        "bookmaker": "draftkings",
+        "price": 2500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978648",
+        "provider_player_id": "15891",
+        "player": "Greg Dulcich",
+        "team": "MIA",
+        "opponent": "LV",
+        "home_team": "LV",
+        "away_team": "MIA",
+        "bookmaker": "caesars",
+        "price": 2000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978627",
+        "provider_player_id": "13610",
+        "player": "T.J. Hockenson",
+        "team": "MIN",
+        "opponent": "GB",
+        "home_team": "MIN",
+        "away_team": "GB",
+        "bookmaker": "draftkings",
+        "price": 1900.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978631",
+        "provider_player_id": "19231",
+        "player": "Makai Lemon",
+        "team": "PHI",
+        "opponent": "WAS",
+        "home_team": "PHI",
+        "away_team": "WAS",
+        "bookmaker": "caesars",
+        "price": 2000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978648",
+        "provider_player_id": "16666",
+        "player": "Michael Mayer",
+        "team": "LV",
+        "opponent": "MIA",
+        "home_team": "LV",
+        "away_team": "MIA",
+        "bookmaker": "betrivers",
+        "price": 2400.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978635",
+        "provider_player_id": "17037",
+        "player": "Tyler Shough",
+        "team": "NO",
+        "opponent": "DET",
+        "home_team": "DET",
+        "away_team": "NO",
+        "bookmaker": "draftkings",
+        "price": 2500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978391",
+        "provider_player_id": "13449",
+        "player": "Devin Singletary",
+        "team": "NYG",
+        "opponent": "DAL",
+        "home_team": "NYG",
+        "away_team": "DAL",
+        "bookmaker": "betrivers",
+        "price": 3000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978622",
+        "provider_player_id": "8627",
+        "player": "Keenan Allen",
+        "team": "IND",
+        "opponent": "BAL",
+        "home_team": "IND",
+        "away_team": "BAL",
+        "bookmaker": "betrivers",
+        "price": 1900.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978391",
+        "provider_player_id": "17974",
+        "player": "Ryan Flournoy",
+        "team": "DAL",
+        "opponent": "NYG",
+        "home_team": "NYG",
+        "away_team": "DAL",
+        "bookmaker": "betrivers",
+        "price": 2400.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978439",
+        "provider_player_id": "16995",
+        "player": "Bo Nix",
+        "team": "DEN",
+        "opponent": "KC",
+        "home_team": "KC",
+        "away_team": "DEN",
+        "bookmaker": "draftkings",
+        "price": 2200.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978391",
+        "provider_player_id": "13522",
+        "player": "Darius Slayton",
+        "team": "NYG",
+        "opponent": "DAL",
+        "home_team": "NYG",
+        "away_team": "DAL",
+        "bookmaker": "draftkings",
+        "price": 2200.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
         "event_id": "2978652",
-        "provider_player_id": "16997",
-        "player": "Cam Ward",
+        "provider_player_id": "18641",
+        "player": "Chimere Dike",
         "team": "TEN",
         "opponent": "NYJ",
         "home_team": "TEN",
         "away_team": "NYJ",
         "bookmaker": "fanduel",
         "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
-        "event_id": "2978394",
-        "provider_player_id": "15834",
-        "player": "Brock Purdy",
-        "team": "SF",
-        "opponent": "LAR",
-        "home_team": "LAR",
-        "away_team": "SF",
-        "bookmaker": "draftkings",
-        "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978395",
-        "provider_player_id": "16751",
-        "player": "DeMario Douglas",
-        "team": "NE",
-        "opponent": "SEA",
-        "home_team": "SEA",
-        "away_team": "NE",
-        "bookmaker": "draftkings",
-        "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978394",
-        "provider_player_id": "10854",
-        "player": "Tyler Higbee",
-        "team": "LAR",
-        "opponent": "SF",
-        "home_team": "LAR",
-        "away_team": "SF",
+        "event_id": "2978622",
+        "provider_player_id": "13491",
+        "player": "Daniel Jones",
+        "team": "IND",
+        "opponent": "BAL",
+        "home_team": "IND",
+        "away_team": "BAL",
         "bookmaker": "fanduel",
-        "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978652",
-        "provider_player_id": "17977",
-        "player": "Isaiah Williams",
-        "team": "NYJ",
-        "opponent": "TEN",
-        "home_team": "TEN",
-        "away_team": "NYJ",
-        "bookmaker": "fanduel",
-        "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978394",
-        "provider_player_id": "17030",
-        "player": "Davis Allen",
-        "team": "LAR",
-        "opponent": "SF",
-        "home_team": "LAR",
-        "away_team": "SF",
-        "bookmaker": "draftkings",
-        "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978648",
-        "provider_player_id": "18457",
-        "player": "Jack Bech",
-        "team": "LV",
-        "opponent": "MIA",
-        "home_team": "LV",
-        "away_team": "MIA",
-        "bookmaker": "draftkings",
-        "price": 2500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978657",
-        "provider_player_id": "19263",
-        "player": "Germie Bernard",
-        "team": "PIT",
-        "opponent": "ATL",
-        "home_team": "PIT",
-        "away_team": "ATL",
-        "bookmaker": "draftkings",
-        "price": 2500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "price": 2700.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
         "event_id": "2978631",
-        "provider_player_id": "13502",
-        "player": "Hollywood Brown",
+        "provider_player_id": "16705",
+        "player": "Tank Bigsby",
         "team": "PHI",
         "opponent": "WAS",
         "home_team": "PHI",
         "away_team": "WAS",
         "bookmaker": "draftkings",
         "price": 2800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978625",
-        "provider_player_id": "17792",
-        "player": "Ray Davis",
-        "team": "BUF",
-        "opponent": "HOU",
-        "home_team": "HOU",
-        "away_team": "BUF",
-        "bookmaker": "draftkings",
-        "price": 3500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -2775,137 +2567,124 @@
         "away_team": "MIA",
         "bookmaker": "draftkings",
         "price": 2200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
-        "event_id": "2978439",
-        "provider_player_id": "17719",
-        "player": "Troy Franklin",
-        "team": "DEN",
-        "opponent": "KC",
-        "home_team": "KC",
-        "away_team": "DEN",
-        "bookmaker": "draftkings",
-        "price": 4500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978621",
-        "provider_player_id": "19320",
-        "player": "Ted Hurst",
-        "team": "TB",
-        "opponent": "CIN",
-        "home_team": "CIN",
-        "away_team": "TB",
+        "event_id": "2978395",
+        "provider_player_id": "17772",
+        "player": "Tory Horton",
+        "team": "SEA",
+        "opponent": "NE",
+        "home_team": "SEA",
+        "away_team": "NE",
         "bookmaker": "betrivers",
-        "price": 2200.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "price": 2500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
-        "event_id": "2978631",
-        "provider_player_id": "16042",
-        "player": "Chig Okonkwo",
-        "team": "WAS",
-        "opponent": "PHI",
-        "home_team": "PHI",
-        "away_team": "WAS",
+        "event_id": "2978622",
+        "provider_player_id": "19230",
+        "player": "Ja'Kobi Lane",
+        "team": "BAL",
+        "opponent": "IND",
+        "home_team": "IND",
+        "away_team": "BAL",
         "bookmaker": "fanduel",
-        "price": 2700.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "price": 3000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
-        "event_id": "2978638",
-        "provider_player_id": "18467",
-        "player": "Dylan Sampson",
-        "team": "CLE",
-        "opponent": "JAX",
-        "home_team": "JAX",
-        "away_team": "CLE",
-        "bookmaker": "fanduel",
-        "price": 3300.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "event_id": "2978648",
+        "provider_player_id": "17818",
+        "player": "Dylan Laube",
+        "team": "LV",
+        "opponent": "MIA",
+        "home_team": "LV",
+        "away_team": "MIA",
+        "bookmaker": "betrivers",
+        "price": 2000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
         "event_id": "2978439",
-        "provider_player_id": "15831",
-        "player": "Tyquan Thornton",
+        "provider_player_id": "18529",
+        "player": "Brashard Smith",
         "team": "KC",
         "opponent": "DEN",
         "home_team": "KC",
         "away_team": "DEN",
-        "bookmaker": "fanduel",
-        "price": 2700.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978621",
-        "provider_player_id": "16728",
-        "player": "Sean Tucker",
-        "team": "TB",
-        "opponent": "CIN",
-        "home_team": "CIN",
-        "away_team": "TB",
-        "bookmaker": "draftkings",
-        "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978661",
-        "provider_player_id": "16807",
-        "player": "Bryce Young",
-        "team": "CAR",
-        "opponent": "CHI",
-        "home_team": "CAR",
-        "away_team": "CHI",
         "bookmaker": "draftkings",
         "price": 2500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
-        "event_id": "2978621",
-        "provider_player_id": "12619",
-        "player": "Baker Mayfield",
-        "team": "TB",
-        "opponent": "CIN",
-        "home_team": "CIN",
-        "away_team": "TB",
-        "bookmaker": "fanduel",
-        "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "event_id": "2978648",
+        "provider_player_id": "16010",
+        "player": "Jalen Tolbert",
+        "team": "MIA",
+        "opponent": "LV",
+        "home_team": "LV",
+        "away_team": "MIA",
+        "bookmaker": "betrivers",
+        "price": 2800.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
-        "event_id": "2978439",
-        "provider_player_id": "11805",
-        "player": "Evan Engram",
-        "team": "DEN",
-        "opponent": "KC",
-        "home_team": "KC",
-        "away_team": "DEN",
+        "event_id": "2978641",
+        "provider_player_id": "17821",
+        "player": "Kimani Vidal",
+        "team": "LAC",
+        "opponent": "ARI",
+        "home_team": "LAC",
+        "away_team": "ARI",
+        "bookmaker": "betrivers",
+        "price": 2000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978652",
+        "provider_player_id": "19279",
+        "player": "Kenyon Sadiq",
+        "team": "NYJ",
+        "opponent": "TEN",
+        "home_team": "TEN",
+        "away_team": "NYJ",
+        "bookmaker": "betrivers",
+        "price": 4000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978657",
+        "provider_player_id": "15850",
+        "player": "Jahan Dotson",
+        "team": "ATL",
+        "opponent": "PIT",
+        "home_team": "PIT",
+        "away_team": "ATL",
         "bookmaker": "draftkings",
         "price": 2800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
-        "event_id": "2978391",
-        "provider_player_id": "17021",
-        "player": "Theo Johnson",
-        "team": "NYG",
-        "opponent": "DAL",
-        "home_team": "NYG",
-        "away_team": "DAL",
-        "bookmaker": "betrivers",
+        "event_id": "2978652",
+        "provider_player_id": "16997",
+        "player": "Cam Ward",
+        "team": "TEN",
+        "opponent": "NYJ",
+        "home_team": "TEN",
+        "away_team": "NYJ",
+        "bookmaker": "fanduel",
         "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -2918,7 +2697,215 @@
         "away_team": "CHI",
         "bookmaker": "draftkings",
         "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978394",
+        "provider_player_id": "15834",
+        "player": "Brock Purdy",
+        "team": "SF",
+        "opponent": "LAR",
+        "home_team": "LAR",
+        "away_team": "SF",
+        "bookmaker": "draftkings",
+        "price": 3000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978395",
+        "provider_player_id": "16751",
+        "player": "DeMario Douglas",
+        "team": "NE",
+        "opponent": "SEA",
+        "home_team": "SEA",
+        "away_team": "NE",
+        "bookmaker": "draftkings",
+        "price": 3000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978394",
+        "provider_player_id": "10854",
+        "player": "Tyler Higbee",
+        "team": "LAR",
+        "opponent": "SF",
+        "home_team": "LAR",
+        "away_team": "SF",
+        "bookmaker": "fanduel",
+        "price": 4000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978652",
+        "provider_player_id": "17977",
+        "player": "Isaiah Williams",
+        "team": "NYJ",
+        "opponent": "TEN",
+        "home_team": "TEN",
+        "away_team": "NYJ",
+        "bookmaker": "fanduel",
+        "price": 3000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978661",
+        "provider_player_id": "16807",
+        "player": "Bryce Young",
+        "team": "CAR",
+        "opponent": "CHI",
+        "home_team": "CAR",
+        "away_team": "CHI",
+        "bookmaker": "draftkings",
+        "price": 2500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978394",
+        "provider_player_id": "17030",
+        "player": "Davis Allen",
+        "team": "LAR",
+        "opponent": "SF",
+        "home_team": "LAR",
+        "away_team": "SF",
+        "bookmaker": "draftkings",
+        "price": 4000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978648",
+        "provider_player_id": "18457",
+        "player": "Jack Bech",
+        "team": "LV",
+        "opponent": "MIA",
+        "home_team": "LV",
+        "away_team": "MIA",
+        "bookmaker": "betrivers",
+        "price": 2900.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978657",
+        "provider_player_id": "19263",
+        "player": "Germie Bernard",
+        "team": "PIT",
+        "opponent": "ATL",
+        "home_team": "PIT",
+        "away_team": "ATL",
+        "bookmaker": "draftkings",
+        "price": 2500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978631",
+        "provider_player_id": "13502",
+        "player": "Hollywood Brown",
+        "team": "PHI",
+        "opponent": "WAS",
+        "home_team": "PHI",
+        "away_team": "WAS",
+        "bookmaker": "caesars",
+        "price": 2800.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978625",
+        "provider_player_id": "17792",
+        "player": "Ray Davis",
+        "team": "BUF",
+        "opponent": "HOU",
+        "home_team": "HOU",
+        "away_team": "BUF",
+        "bookmaker": "draftkings",
+        "price": 3500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978439",
+        "provider_player_id": "17719",
+        "player": "Troy Franklin",
+        "team": "DEN",
+        "opponent": "KC",
+        "home_team": "KC",
+        "away_team": "DEN",
+        "bookmaker": "draftkings",
+        "price": 4500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978621",
+        "provider_player_id": "19320",
+        "player": "Ted Hurst",
+        "team": "TB",
+        "opponent": "CIN",
+        "home_team": "CIN",
+        "away_team": "TB",
+        "bookmaker": "betrivers",
+        "price": 2200.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978631",
+        "provider_player_id": "16042",
+        "player": "Chig Okonkwo",
+        "team": "WAS",
+        "opponent": "PHI",
+        "home_team": "PHI",
+        "away_team": "WAS",
+        "bookmaker": "fanduel",
+        "price": 2700.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978638",
+        "provider_player_id": "18467",
+        "player": "Dylan Sampson",
+        "team": "CLE",
+        "opponent": "JAX",
+        "home_team": "JAX",
+        "away_team": "CLE",
+        "bookmaker": "fanduel",
+        "price": 3300.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978439",
+        "provider_player_id": "15831",
+        "player": "Tyquan Thornton",
+        "team": "KC",
+        "opponent": "DEN",
+        "home_team": "KC",
+        "away_team": "DEN",
+        "bookmaker": "fanduel",
+        "price": 2700.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978621",
+        "provider_player_id": "16728",
+        "player": "Sean Tucker",
+        "team": "TB",
+        "opponent": "CIN",
+        "home_team": "CIN",
+        "away_team": "TB",
+        "bookmaker": "draftkings",
+        "price": 3000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -2931,7 +2918,46 @@
         "away_team": "CHI",
         "bookmaker": "draftkings",
         "price": 2800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978621",
+        "provider_player_id": "12619",
+        "player": "Baker Mayfield",
+        "team": "TB",
+        "opponent": "CIN",
+        "home_team": "CIN",
+        "away_team": "TB",
+        "bookmaker": "fanduel",
+        "price": 3000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978439",
+        "provider_player_id": "11805",
+        "player": "Evan Engram",
+        "team": "DEN",
+        "opponent": "KC",
+        "home_team": "KC",
+        "away_team": "DEN",
+        "bookmaker": "draftkings",
+        "price": 2800.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978391",
+        "provider_player_id": "17021",
+        "player": "Theo Johnson",
+        "team": "NYG",
+        "opponent": "DAL",
+        "home_team": "NYG",
+        "away_team": "DAL",
+        "bookmaker": "betrivers",
+        "price": 3000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -2944,7 +2970,7 @@
         "away_team": "CLE",
         "bookmaker": "draftkings",
         "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -2957,7 +2983,7 @@
         "away_team": "BAL",
         "bookmaker": "fanduel",
         "price": 5000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -2970,7 +2996,7 @@
         "away_team": "NO",
         "bookmaker": "betrivers",
         "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -2983,7 +3009,7 @@
         "away_team": "NYJ",
         "bookmaker": "betrivers",
         "price": 2400.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -2996,7 +3022,7 @@
         "away_team": "GB",
         "bookmaker": "betrivers",
         "price": 2400.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3009,7 +3035,7 @@
         "away_team": "BUF",
         "bookmaker": "draftkings",
         "price": 2500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3022,7 +3048,7 @@
         "away_team": "DEN",
         "bookmaker": "draftkings",
         "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3035,7 +3061,7 @@
         "away_team": "BUF",
         "bookmaker": "caesars",
         "price": 2500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3048,7 +3074,7 @@
         "away_team": "NO",
         "bookmaker": "betrivers",
         "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3061,7 +3087,7 @@
         "away_team": "NO",
         "bookmaker": "betrivers",
         "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3074,7 +3100,7 @@
         "away_team": "DEN",
         "bookmaker": "draftkings",
         "price": 2800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3087,7 +3113,7 @@
         "away_team": "DEN",
         "bookmaker": "draftkings",
         "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3100,7 +3126,7 @@
         "away_team": "DAL",
         "bookmaker": "draftkings",
         "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3113,7 +3139,7 @@
         "away_team": "CHI",
         "bookmaker": "betrivers",
         "price": 2500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3126,7 +3152,7 @@
         "away_team": "NYJ",
         "bookmaker": "draftkings",
         "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3139,7 +3165,20 @@
         "away_team": "ATL",
         "bookmaker": "draftkings",
         "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978648",
+        "provider_player_id": "17800",
+        "player": "Jaylen Wright",
+        "team": "MIA",
+        "opponent": "LV",
+        "home_team": "LV",
+        "away_team": "MIA",
+        "bookmaker": "betrivers",
+        "price": 2500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3152,7 +3191,7 @@
         "away_team": "ATL",
         "bookmaker": "draftkings",
         "price": 3500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3165,7 +3204,7 @@
         "away_team": "SF",
         "bookmaker": "draftkings",
         "price": 3500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3178,7 +3217,7 @@
         "away_team": "SF",
         "bookmaker": "draftkings",
         "price": 4500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3191,7 +3230,7 @@
         "away_team": "BUF",
         "bookmaker": "draftkings",
         "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3204,7 +3243,7 @@
         "away_team": "BUF",
         "bookmaker": "fanduel",
         "price": 3300.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3217,7 +3256,7 @@
         "away_team": "DAL",
         "bookmaker": "draftkings",
         "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3230,7 +3269,7 @@
         "away_team": "TB",
         "bookmaker": "betrivers",
         "price": 3500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3243,7 +3282,7 @@
         "away_team": "SF",
         "bookmaker": "betrivers",
         "price": 5000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3256,7 +3295,7 @@
         "away_team": "WAS",
         "bookmaker": "betrivers",
         "price": 2800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3269,7 +3308,7 @@
         "away_team": "NYJ",
         "bookmaker": "betrivers",
         "price": 2800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3282,7 +3321,7 @@
         "away_team": "BAL",
         "bookmaker": "betrivers",
         "price": 2800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3295,7 +3334,7 @@
         "away_team": "TB",
         "bookmaker": "betrivers",
         "price": 2800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3308,7 +3347,7 @@
         "away_team": "GB",
         "bookmaker": "draftkings",
         "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3321,7 +3360,7 @@
         "away_team": "CHI",
         "bookmaker": "betrivers",
         "price": 2800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3334,7 +3373,20 @@
         "away_team": "CHI",
         "bookmaker": "betrivers",
         "price": 2800.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978648",
+        "provider_player_id": "19309",
+        "player": "Chris Bell",
+        "team": "MIA",
+        "opponent": "LV",
+        "home_team": "LV",
+        "away_team": "MIA",
+        "bookmaker": "betrivers",
+        "price": 2900.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3347,7 +3399,7 @@
         "away_team": "BUF",
         "bookmaker": "betrivers",
         "price": 3500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3360,7 +3412,7 @@
         "away_team": "DAL",
         "bookmaker": "draftkings",
         "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3373,7 +3425,7 @@
         "away_team": "NO",
         "bookmaker": "draftkings",
         "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3384,9 +3436,9 @@
         "opponent": "SF",
         "home_team": "LAR",
         "away_team": "SF",
-        "bookmaker": "betrivers",
+        "bookmaker": "draftkings",
         "price": 4500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3399,7 +3451,20 @@
         "away_team": "WAS",
         "bookmaker": "draftkings",
         "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978648",
+        "provider_player_id": "19322",
+        "player": "Kevin Coleman",
+        "team": "MIA",
+        "opponent": "LV",
+        "home_team": "LV",
+        "away_team": "MIA",
+        "bookmaker": "betrivers",
+        "price": 3000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3412,7 +3477,7 @@
         "away_team": "NE",
         "bookmaker": "betrivers",
         "price": 5000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3425,7 +3490,7 @@
         "away_team": "DEN",
         "bookmaker": "draftkings",
         "price": 3500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3438,7 +3503,7 @@
         "away_team": "BUF",
         "bookmaker": "fanduel",
         "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3451,7 +3516,7 @@
         "away_team": "GB",
         "bookmaker": "betrivers",
         "price": 3000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3464,7 +3529,7 @@
         "away_team": "NE",
         "bookmaker": "fanduel",
         "price": 5000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3477,7 +3542,7 @@
         "away_team": "NYJ",
         "bookmaker": "betrivers",
         "price": 4500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3490,267 +3555,7 @@
         "away_team": "CLE",
         "bookmaker": "draftkings",
         "price": 7000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978638",
-        "provider_player_id": "10126",
-        "player": "Ameer Abdullah",
-        "team": "JAX",
-        "opponent": "CLE",
-        "home_team": "JAX",
-        "away_team": "CLE",
-        "bookmaker": "betrivers",
-        "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978439",
-        "provider_player_id": "19631",
-        "player": "Cyrus Allen",
-        "team": "KC",
-        "opponent": "DEN",
-        "home_team": "KC",
-        "away_team": "DEN",
-        "bookmaker": "fanduel",
-        "price": 4500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978641",
-        "provider_player_id": "11847",
-        "player": "Kendrick Bourne",
-        "team": "ARI",
-        "opponent": "LAC",
-        "home_team": "LAC",
-        "away_team": "ARI",
-        "bookmaker": "betrivers",
-        "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978657",
-        "provider_player_id": "19262",
-        "player": "Zachariah Branch",
-        "team": "ATL",
-        "opponent": "PIT",
-        "home_team": "PIT",
-        "away_team": "ATL",
-        "bookmaker": "betrivers",
-        "price": 3300.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978661",
-        "provider_player_id": "16772",
-        "player": "Roschon Johnson",
-        "team": "CHI",
-        "opponent": "CAR",
-        "home_team": "CAR",
-        "away_team": "CHI",
-        "bookmaker": "betrivers",
-        "price": 3300.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978627",
-        "provider_player_id": "13786",
-        "player": "Josh Oliver",
-        "team": "MIN",
-        "opponent": "GB",
-        "home_team": "MIN",
-        "away_team": "GB",
-        "bookmaker": "betrivers",
-        "price": 3300.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978395",
-        "provider_player_id": "18540",
-        "player": "Elijah Arroyo",
-        "team": "SEA",
-        "opponent": "NE",
-        "home_team": "SEA",
-        "away_team": "NE",
-        "bookmaker": "fanduel",
-        "price": 6500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978394",
-        "provider_player_id": "8930",
-        "player": "Kyle Juszczyk",
-        "team": "SF",
-        "opponent": "LAR",
-        "home_team": "LAR",
-        "away_team": "SF",
-        "bookmaker": "betrivers",
-        "price": 7000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978638",
-        "provider_player_id": "18476",
-        "player": "LeQuint Allen",
-        "team": "JAX",
-        "opponent": "CLE",
-        "home_team": "JAX",
-        "away_team": "CLE",
-        "bookmaker": "betrivers",
-        "price": 3400.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978622",
-        "provider_player_id": "18443",
-        "player": "DJ Giddens",
-        "team": "IND",
-        "opponent": "BAL",
-        "home_team": "IND",
-        "away_team": "BAL",
-        "bookmaker": "betrivers",
-        "price": 3400.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978657",
-        "provider_player_id": "19335",
-        "player": "Eli Heidenreich",
-        "team": "PIT",
-        "opponent": "ATL",
-        "home_team": "PIT",
-        "away_team": "ATL",
-        "bookmaker": "betrivers",
-        "price": 3400.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978631",
-        "provider_player_id": "19237",
-        "player": "Antonio Williams",
-        "team": "WAS",
-        "opponent": "PHI",
-        "home_team": "PHI",
-        "away_team": "WAS",
-        "bookmaker": "draftkings",
-        "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978621",
-        "provider_player_id": "19447",
-        "player": "Colbie Young",
-        "team": "CIN",
-        "opponent": "TB",
-        "home_team": "CIN",
-        "away_team": "TB",
-        "bookmaker": "betrivers",
-        "price": 3400.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978652",
-        "provider_player_id": "8743",
-        "player": "Geno Smith",
-        "team": "NYJ",
-        "opponent": "TEN",
-        "home_team": "TEN",
-        "away_team": "NYJ",
-        "bookmaker": "fanduel",
-        "price": 6000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978391",
-        "provider_player_id": "9255",
-        "player": "Odell Beckham",
-        "team": "NYG",
-        "opponent": "DAL",
-        "home_team": "NYG",
-        "away_team": "DAL",
-        "bookmaker": "betrivers",
-        "price": 3500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978394",
-        "provider_player_id": "19607",
-        "player": "Kaelon Black",
-        "team": "SF",
-        "opponent": "LAR",
-        "home_team": "LAR",
-        "away_team": "SF",
-        "bookmaker": "betrivers",
-        "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978391",
-        "provider_player_id": "15828",
-        "player": "Malik Davis",
-        "team": "DAL",
-        "opponent": "NYG",
-        "home_team": "NYG",
-        "away_team": "DAL",
-        "bookmaker": "betrivers",
-        "price": 3500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978661",
-        "provider_player_id": "18506",
-        "player": "Trevor Etienne",
-        "team": "CAR",
-        "opponent": "CHI",
-        "home_team": "CAR",
-        "away_team": "CHI",
-        "bookmaker": "betrivers",
-        "price": 3500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978439",
-        "provider_player_id": "15459",
-        "player": "Noah Gray",
-        "team": "KC",
-        "opponent": "DEN",
-        "home_team": "KC",
-        "away_team": "DEN",
-        "bookmaker": "draftkings",
-        "price": 5000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978391",
-        "provider_player_id": "15468",
-        "player": "Najee Harris",
-        "team": "NYG",
-        "opponent": "DAL",
-        "home_team": "NYG",
-        "away_team": "DAL",
-        "bookmaker": "betrivers",
-        "price": 3500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3763,7 +3568,280 @@
         "away_team": "CHI",
         "bookmaker": "draftkings",
         "price": 4500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978638",
+        "provider_player_id": "10126",
+        "player": "Ameer Abdullah",
+        "team": "JAX",
+        "opponent": "CLE",
+        "home_team": "JAX",
+        "away_team": "CLE",
+        "bookmaker": "betrivers",
+        "price": 4000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978439",
+        "provider_player_id": "19631",
+        "player": "Cyrus Allen",
+        "team": "KC",
+        "opponent": "DEN",
+        "home_team": "KC",
+        "away_team": "DEN",
+        "bookmaker": "fanduel",
+        "price": 4500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978641",
+        "provider_player_id": "11847",
+        "player": "Kendrick Bourne",
+        "team": "ARI",
+        "opponent": "LAC",
+        "home_team": "LAC",
+        "away_team": "ARI",
+        "bookmaker": "betrivers",
+        "price": 4000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978657",
+        "provider_player_id": "19262",
+        "player": "Zachariah Branch",
+        "team": "ATL",
+        "opponent": "PIT",
+        "home_team": "PIT",
+        "away_team": "ATL",
+        "bookmaker": "betrivers",
+        "price": 3300.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978648",
+        "provider_player_id": "18450",
+        "player": "Ollie Gordon",
+        "team": "MIA",
+        "opponent": "LV",
+        "home_team": "LV",
+        "away_team": "MIA",
+        "bookmaker": "betrivers",
+        "price": 3300.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978661",
+        "provider_player_id": "16772",
+        "player": "Roschon Johnson",
+        "team": "CHI",
+        "opponent": "CAR",
+        "home_team": "CAR",
+        "away_team": "CHI",
+        "bookmaker": "betrivers",
+        "price": 3300.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978627",
+        "provider_player_id": "13786",
+        "player": "Josh Oliver",
+        "team": "MIN",
+        "opponent": "GB",
+        "home_team": "MIN",
+        "away_team": "GB",
+        "bookmaker": "betrivers",
+        "price": 3300.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978395",
+        "provider_player_id": "18540",
+        "player": "Elijah Arroyo",
+        "team": "SEA",
+        "opponent": "NE",
+        "home_team": "SEA",
+        "away_team": "NE",
+        "bookmaker": "fanduel",
+        "price": 6500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978394",
+        "provider_player_id": "8930",
+        "player": "Kyle Juszczyk",
+        "team": "SF",
+        "opponent": "LAR",
+        "home_team": "LAR",
+        "away_team": "SF",
+        "bookmaker": "betrivers",
+        "price": 7000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978638",
+        "provider_player_id": "18476",
+        "player": "LeQuint Allen",
+        "team": "JAX",
+        "opponent": "CLE",
+        "home_team": "JAX",
+        "away_team": "CLE",
+        "bookmaker": "betrivers",
+        "price": 3400.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978622",
+        "provider_player_id": "18443",
+        "player": "DJ Giddens",
+        "team": "IND",
+        "opponent": "BAL",
+        "home_team": "IND",
+        "away_team": "BAL",
+        "bookmaker": "betrivers",
+        "price": 3400.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978657",
+        "provider_player_id": "19335",
+        "player": "Eli Heidenreich",
+        "team": "PIT",
+        "opponent": "ATL",
+        "home_team": "PIT",
+        "away_team": "ATL",
+        "bookmaker": "betrivers",
+        "price": 3400.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978631",
+        "provider_player_id": "19237",
+        "player": "Antonio Williams",
+        "team": "WAS",
+        "opponent": "PHI",
+        "home_team": "PHI",
+        "away_team": "WAS",
+        "bookmaker": "draftkings",
+        "price": 4000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978621",
+        "provider_player_id": "19447",
+        "player": "Colbie Young",
+        "team": "CIN",
+        "opponent": "TB",
+        "home_team": "CIN",
+        "away_team": "TB",
+        "bookmaker": "betrivers",
+        "price": 3400.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978652",
+        "provider_player_id": "8743",
+        "player": "Geno Smith",
+        "team": "NYJ",
+        "opponent": "TEN",
+        "home_team": "TEN",
+        "away_team": "NYJ",
+        "bookmaker": "fanduel",
+        "price": 6000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978391",
+        "provider_player_id": "9255",
+        "player": "Odell Beckham",
+        "team": "NYG",
+        "opponent": "DAL",
+        "home_team": "NYG",
+        "away_team": "DAL",
+        "bookmaker": "betrivers",
+        "price": 3500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978394",
+        "provider_player_id": "19607",
+        "player": "Kaelon Black",
+        "team": "SF",
+        "opponent": "LAR",
+        "home_team": "LAR",
+        "away_team": "SF",
+        "bookmaker": "betrivers",
+        "price": 4000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978391",
+        "provider_player_id": "15828",
+        "player": "Malik Davis",
+        "team": "DAL",
+        "opponent": "NYG",
+        "home_team": "NYG",
+        "away_team": "DAL",
+        "bookmaker": "betrivers",
+        "price": 3500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978661",
+        "provider_player_id": "18506",
+        "player": "Trevor Etienne",
+        "team": "CAR",
+        "opponent": "CHI",
+        "home_team": "CAR",
+        "away_team": "CHI",
+        "bookmaker": "betrivers",
+        "price": 3500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978439",
+        "provider_player_id": "15459",
+        "player": "Noah Gray",
+        "team": "KC",
+        "opponent": "DEN",
+        "home_team": "KC",
+        "away_team": "DEN",
+        "bookmaker": "draftkings",
+        "price": 5000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978391",
+        "provider_player_id": "15468",
+        "player": "Najee Harris",
+        "team": "NYG",
+        "opponent": "DAL",
+        "home_team": "NYG",
+        "away_team": "DAL",
+        "bookmaker": "betrivers",
+        "price": 3500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3774,9 +3852,9 @@
         "opponent": "MIN",
         "home_team": "MIN",
         "away_team": "GB",
-        "bookmaker": "betrivers",
-        "price": 4500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "bookmaker": "draftkings",
+        "price": 5500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3789,7 +3867,7 @@
         "away_team": "DAL",
         "bookmaker": "betrivers",
         "price": 4500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3802,7 +3880,7 @@
         "away_team": "GB",
         "bookmaker": "betrivers",
         "price": 3500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3815,7 +3893,7 @@
         "away_team": "CHI",
         "bookmaker": "betrivers",
         "price": 3500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3828,7 +3906,7 @@
         "away_team": "ARI",
         "bookmaker": "betrivers",
         "price": 3500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3841,7 +3919,7 @@
         "away_team": "TB",
         "bookmaker": "betrivers",
         "price": 3500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3854,7 +3932,7 @@
         "away_team": "TB",
         "bookmaker": "betrivers",
         "price": 5000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3867,7 +3945,7 @@
         "away_team": "NE",
         "bookmaker": "fanduel",
         "price": 8000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3880,7 +3958,7 @@
         "away_team": "ARI",
         "bookmaker": "draftkings",
         "price": 5500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3893,7 +3971,7 @@
         "away_team": "ARI",
         "bookmaker": "betrivers",
         "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3906,7 +3984,7 @@
         "away_team": "GB",
         "bookmaker": "betrivers",
         "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3919,7 +3997,7 @@
         "away_team": "ATL",
         "bookmaker": "betrivers",
         "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3932,7 +4010,7 @@
         "away_team": "ARI",
         "bookmaker": "betrivers",
         "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3945,7 +4023,7 @@
         "away_team": "GB",
         "bookmaker": "betrivers",
         "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3958,7 +4036,7 @@
         "away_team": "BUF",
         "bookmaker": "betrivers",
         "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3971,7 +4049,7 @@
         "away_team": "CLE",
         "bookmaker": "betr",
         "price": 4089.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3984,7 +4062,7 @@
         "away_team": "ATL",
         "bookmaker": "betrivers",
         "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -3997,7 +4075,7 @@
         "away_team": "DEN",
         "bookmaker": "betrivers",
         "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4010,7 +4088,7 @@
         "away_team": "BAL",
         "bookmaker": "betrivers",
         "price": 4000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4023,7 +4101,7 @@
         "away_team": "CLE",
         "bookmaker": "betrivers",
         "price": 8000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4036,7 +4114,20 @@
         "away_team": "BAL",
         "bookmaker": "betrivers",
         "price": 4500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978648",
+        "provider_player_id": "19432",
+        "player": "Malik Benson",
+        "team": "LV",
+        "opponent": "MIA",
+        "home_team": "LV",
+        "away_team": "MIA",
+        "bookmaker": "betrivers",
+        "price": 4500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4049,7 +4140,7 @@
         "away_team": "NO",
         "bookmaker": "betrivers",
         "price": 4500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4062,7 +4153,7 @@
         "away_team": "CLE",
         "bookmaker": "betrivers",
         "price": 4500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4075,7 +4166,7 @@
         "away_team": "NO",
         "bookmaker": "betrivers",
         "price": 4500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4088,7 +4179,7 @@
         "away_team": "BUF",
         "bookmaker": "betrivers",
         "price": 4500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4101,7 +4192,7 @@
         "away_team": "CHI",
         "bookmaker": "betrivers",
         "price": 4500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4114,7 +4205,7 @@
         "away_team": "ATL",
         "bookmaker": "draftkings",
         "price": 5500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4127,7 +4218,7 @@
         "away_team": "DEN",
         "bookmaker": "betrivers",
         "price": 4500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4140,7 +4231,7 @@
         "away_team": "BAL",
         "bookmaker": "betrivers",
         "price": 4500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4153,7 +4244,7 @@
         "away_team": "WAS",
         "bookmaker": "betrivers",
         "price": 4500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4166,7 +4257,7 @@
         "away_team": "ATL",
         "bookmaker": "betrivers",
         "price": 4500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4179,7 +4270,7 @@
         "away_team": "BAL",
         "bookmaker": "betrivers",
         "price": 4500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4192,7 +4283,7 @@
         "away_team": "ATL",
         "bookmaker": "draftkings",
         "price": 11000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4205,20 +4296,7 @@
         "away_team": "TB",
         "bookmaker": "betrivers",
         "price": 5000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
-        "source": "rotowire_public_nfl_props"
-      },
-      {
-        "event_id": "2978394",
-        "provider_player_id": "15229",
-        "player": "Tutu Atwell",
-        "team": "LAR",
-        "opponent": "SF",
-        "home_team": "LAR",
-        "away_team": "SF",
-        "bookmaker": "betrivers",
-        "price": 5000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4231,7 +4309,7 @@
         "away_team": "WAS",
         "bookmaker": "betrivers",
         "price": 5000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4244,7 +4322,20 @@
         "away_team": "CLE",
         "bookmaker": "betrivers",
         "price": 5000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978648",
+        "provider_player_id": "19450",
+        "player": "Will Kacmarek",
+        "team": "MIA",
+        "opponent": "LV",
+        "home_team": "LV",
+        "away_team": "MIA",
+        "bookmaker": "betrivers",
+        "price": 5000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4257,7 +4348,7 @@
         "away_team": "WAS",
         "bookmaker": "betrivers",
         "price": 5000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4270,7 +4361,7 @@
         "away_team": "BAL",
         "bookmaker": "betrivers",
         "price": 5000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4283,7 +4374,7 @@
         "away_team": "WAS",
         "bookmaker": "betrivers",
         "price": 5000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4296,7 +4387,7 @@
         "away_team": "NYJ",
         "bookmaker": "betrivers",
         "price": 5000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4309,7 +4400,7 @@
         "away_team": "GB",
         "bookmaker": "betrivers",
         "price": 5000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4322,7 +4413,7 @@
         "away_team": "NE",
         "bookmaker": "fanduel",
         "price": 7500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4335,7 +4426,7 @@
         "away_team": "NYJ",
         "bookmaker": "betrivers",
         "price": 5000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4348,7 +4439,7 @@
         "away_team": "DAL",
         "bookmaker": "betrivers",
         "price": 5000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4361,7 +4452,7 @@
         "away_team": "SF",
         "bookmaker": "betrivers",
         "price": 10000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4374,7 +4465,20 @@
         "away_team": "NE",
         "bookmaker": "fanduel",
         "price": 10000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978394",
+        "provider_player_id": "15229",
+        "player": "Tutu Atwell",
+        "team": "LAR",
+        "opponent": "SF",
+        "home_team": "LAR",
+        "away_team": "SF",
+        "bookmaker": "betrivers",
+        "price": 5500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4387,7 +4491,7 @@
         "away_team": "BUF",
         "bookmaker": "betrivers",
         "price": 5500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4400,7 +4504,7 @@
         "away_team": "WAS",
         "bookmaker": "betrivers",
         "price": 5500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4411,9 +4515,9 @@
         "opponent": "MIA",
         "home_team": "LV",
         "away_team": "MIA",
-        "bookmaker": "draftkings",
+        "bookmaker": "betrivers",
         "price": 8000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4426,7 +4530,7 @@
         "away_team": "CHI",
         "bookmaker": "betrivers",
         "price": 5500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4439,7 +4543,7 @@
         "away_team": "ARI",
         "bookmaker": "betrivers",
         "price": 5500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4452,7 +4556,7 @@
         "away_team": "NO",
         "bookmaker": "betrivers",
         "price": 5500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4465,7 +4569,7 @@
         "away_team": "SF",
         "bookmaker": "betrivers",
         "price": 5500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4478,7 +4582,7 @@
         "away_team": "NO",
         "bookmaker": "fanduel",
         "price": 8000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4491,7 +4595,7 @@
         "away_team": "ARI",
         "bookmaker": "betrivers",
         "price": 5500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4504,7 +4608,7 @@
         "away_team": "NO",
         "bookmaker": "betrivers",
         "price": 5500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4517,7 +4621,7 @@
         "away_team": "NYJ",
         "bookmaker": "betrivers",
         "price": 5500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4530,7 +4634,7 @@
         "away_team": "BUF",
         "bookmaker": "betrivers",
         "price": 5500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4543,7 +4647,7 @@
         "away_team": "CLE",
         "bookmaker": "betrivers",
         "price": 5500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4556,7 +4660,7 @@
         "away_team": "BUF",
         "bookmaker": "betrivers",
         "price": 6000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4569,7 +4673,7 @@
         "away_team": "WAS",
         "bookmaker": "betrivers",
         "price": 6000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4582,7 +4686,7 @@
         "away_team": "TB",
         "bookmaker": "betrivers",
         "price": 6000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4595,7 +4699,7 @@
         "away_team": "TB",
         "bookmaker": "betrivers",
         "price": 6000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4608,7 +4712,7 @@
         "away_team": "DAL",
         "bookmaker": "betrivers",
         "price": 6000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4621,7 +4725,7 @@
         "away_team": "BUF",
         "bookmaker": "betrivers",
         "price": 6000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4634,7 +4738,7 @@
         "away_team": "ATL",
         "bookmaker": "betrivers",
         "price": 6000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4647,7 +4751,7 @@
         "away_team": "NYJ",
         "bookmaker": "betrivers",
         "price": 6600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4660,7 +4764,7 @@
         "away_team": "ARI",
         "bookmaker": "betrivers",
         "price": 6600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4673,7 +4777,7 @@
         "away_team": "ARI",
         "bookmaker": "betrivers",
         "price": 6600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4686,7 +4790,7 @@
         "away_team": "NO",
         "bookmaker": "betrivers",
         "price": 6600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4699,7 +4803,20 @@
         "away_team": "NE",
         "bookmaker": "betrivers",
         "price": 6600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978648",
+        "provider_player_id": "19681",
+        "player": "Seydou Traore",
+        "team": "MIA",
+        "opponent": "LV",
+        "home_team": "LV",
+        "away_team": "MIA",
+        "bookmaker": "betrivers",
+        "price": 6600.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4712,7 +4829,7 @@
         "away_team": "ATL",
         "bookmaker": "betrivers",
         "price": 6600.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4725,7 +4842,7 @@
         "away_team": "BUF",
         "bookmaker": "betrivers",
         "price": 7000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4738,7 +4855,7 @@
         "away_team": "CHI",
         "bookmaker": "betrivers",
         "price": 7000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4751,7 +4868,7 @@
         "away_team": "ARI",
         "bookmaker": "betrivers",
         "price": 7000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4764,7 +4881,7 @@
         "away_team": "CHI",
         "bookmaker": "betrivers",
         "price": 7000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4777,7 +4894,7 @@
         "away_team": "GB",
         "bookmaker": "betrivers",
         "price": 7000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4790,7 +4907,7 @@
         "away_team": "ATL",
         "bookmaker": "betrivers",
         "price": 7500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4803,7 +4920,7 @@
         "away_team": "ARI",
         "bookmaker": "betrivers",
         "price": 7500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4816,7 +4933,7 @@
         "away_team": "BAL",
         "bookmaker": "betrivers",
         "price": 7500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4829,7 +4946,7 @@
         "away_team": "WAS",
         "bookmaker": "betrivers",
         "price": 7500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4842,7 +4959,7 @@
         "away_team": "BAL",
         "bookmaker": "betrivers",
         "price": 7500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4855,7 +4972,7 @@
         "away_team": "WAS",
         "bookmaker": "betrivers",
         "price": 7500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4868,7 +4985,7 @@
         "away_team": "CHI",
         "bookmaker": "betrivers",
         "price": 7500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4881,7 +4998,20 @@
         "away_team": "BAL",
         "bookmaker": "betrivers",
         "price": 7500.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978648",
+        "provider_player_id": "15922",
+        "player": "Dareke Young",
+        "team": "LV",
+        "opponent": "MIA",
+        "home_team": "LV",
+        "away_team": "MIA",
+        "bookmaker": "betrivers",
+        "price": 7500.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4894,7 +5024,7 @@
         "away_team": "BAL",
         "bookmaker": "betrivers",
         "price": 8000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4907,7 +5037,7 @@
         "away_team": "NYJ",
         "bookmaker": "betrivers",
         "price": 8000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4920,7 +5050,7 @@
         "away_team": "NE",
         "bookmaker": "draftkings",
         "price": 14000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4933,7 +5063,7 @@
         "away_team": "NE",
         "bookmaker": "betrivers",
         "price": 8000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4946,7 +5076,7 @@
         "away_team": "DAL",
         "bookmaker": "betrivers",
         "price": 8000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4959,7 +5089,7 @@
         "away_team": "NYJ",
         "bookmaker": "betrivers",
         "price": 8000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4972,7 +5102,7 @@
         "away_team": "SF",
         "bookmaker": "betrivers",
         "price": 8000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4985,7 +5115,7 @@
         "away_team": "WAS",
         "bookmaker": "betrivers",
         "price": 8000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -4998,7 +5128,7 @@
         "away_team": "SF",
         "bookmaker": "betrivers",
         "price": 9000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -5011,7 +5141,7 @@
         "away_team": "NE",
         "bookmaker": "betrivers",
         "price": 10000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -5024,7 +5154,7 @@
         "away_team": "NYJ",
         "bookmaker": "betrivers",
         "price": 10000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -5037,7 +5167,20 @@
         "away_team": "NE",
         "bookmaker": "betrivers",
         "price": 10000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978648",
+        "provider_player_id": "15916",
+        "player": "Connor Heyward",
+        "team": "LV",
+        "opponent": "MIA",
+        "home_team": "LV",
+        "away_team": "MIA",
+        "bookmaker": "betrivers",
+        "price": 10000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -5050,7 +5193,7 @@
         "away_team": "NE",
         "bookmaker": "betrivers",
         "price": 10000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -5063,7 +5206,7 @@
         "away_team": "BAL",
         "bookmaker": "betrivers",
         "price": 10000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -5076,7 +5219,20 @@
         "away_team": "WAS",
         "bookmaker": "betrivers",
         "price": 10000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
+        "source": "rotowire_public_nfl_props"
+      },
+      {
+        "event_id": "2978648",
+        "provider_player_id": "12858",
+        "player": "Ian Thomas",
+        "team": "LV",
+        "opponent": "MIA",
+        "home_team": "LV",
+        "away_team": "MIA",
+        "bookmaker": "betrivers",
+        "price": 10000.0,
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -5089,7 +5245,7 @@
         "away_team": "DAL",
         "bookmaker": "betrivers",
         "price": 11000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -5102,7 +5258,7 @@
         "away_team": "WAS",
         "bookmaker": "betrivers",
         "price": 11000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       },
       {
@@ -5115,7 +5271,7 @@
         "away_team": "DAL",
         "bookmaker": "betrivers",
         "price": 15000.0,
-        "snapshot_time_utc": "2026-09-02T16:53:00.159769+00:00",
+        "snapshot_time_utc": "2026-09-02T17:54:10.322708+00:00",
         "source": "rotowire_public_nfl_props"
       }
     ],
@@ -5131,7 +5287,7 @@
       {
         "provider": "rotowire",
         "status": "success",
-        "complete_two_sided_rows": 970,
+        "complete_two_sided_rows": 984,
         "events_discovered": null,
         "events_with_odds": null
       }
