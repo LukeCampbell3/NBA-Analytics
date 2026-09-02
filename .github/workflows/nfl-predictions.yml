@@ -6,6 +6,8 @@ on:
     paths:
       - '.github/workflows/nfl-predictions.yml'
       - 'sports/nfl/**'
+      - 'sports/site/pipeline/validate_nfl_publication.py'
+      - 'tests/test_validate_nfl_publication.py'
   schedule:
     - cron: "15 14 * 1-2,8-12 *"
   workflow_dispatch:
