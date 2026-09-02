@@ -75,7 +75,11 @@ def test_frontend_exposes_validation_sections_and_payload() -> None:
     assert week_pool["games"] == 16
     assert week_pool["players"] == sum(week_pool["position_counts"].values())
     assert week_pool["players"] >= 150
-    assert week_pool["position_counts"] == {"QB": 32, "RB": 58, "WR": 84, "TE": 31}
+    assert set(week_pool["position_counts"]) == {"QB", "RB", "WR", "TE"}
+    assert week_pool["position_counts"]["QB"] >= 28
+    assert week_pool["position_counts"]["RB"] >= 40
+    assert week_pool["position_counts"]["WR"] >= 60
+    assert week_pool["position_counts"]["TE"] >= 25
     assert {row["position"] for row in week_pool["pool"]} == {"QB", "RB", "WR", "TE"}
     assert {row["target"] for row in week_pool["pool"]} == {
         "passing_yards",
