@@ -76,6 +76,7 @@ def _validate_live_payload(payload: dict[str, Any], *, run_date: str | None) -> 
         if play.get("market_source") not in {
             "the_odds_api_live",
             "sportsgameodds_live",
+            "rotowire_public_nfl_props",
         }:
             raise ValueError(f"NFL live play {index} lacks a true live market source.")
         if not bool(play.get("price_confirmed")):

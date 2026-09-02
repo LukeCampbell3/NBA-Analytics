@@ -191,7 +191,12 @@ def test_validate_nfl_publication_rejects_authorized_live_pick(tmp_path: Path) -
         validate_nfl_publication(repo_root=repo_root, output_dir=output)
 
 
-def test_validate_nfl_publication_accepts_sportsgameodds_source(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "market_source", ["sportsgameodds_live", "rotowire_public_nfl_props"]
+)
+def test_validate_nfl_publication_accepts_live_market_sources(
+    tmp_path: Path, market_source: str
+) -> None:
     repo_root, output = make_publication(tmp_path)
     payload = {
         "schema_version": 2,
@@ -216,7 +221,7 @@ def test_validate_nfl_publication_accepts_sportsgameodds_source(tmp_path: Path) 
         "plays": [
             {
                 "target": "passing",
-                "market_source": "sportsgameodds_live",
+                "market_source": market_source,
                 "price_confirmed": True,
                 "selected_side_price": -110,
                 "model_hit_probability": 0.64,
