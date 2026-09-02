@@ -77,7 +77,11 @@ class NflPredictionBoard {
     }
 
     render() {
-        const plays = Array.isArray(this.data.plays) ? this.data.plays : [];
+        const dailyPlays = Array.isArray(this.data.plays) ? this.data.plays : [];
+        const weekSingles = Array.isArray(this.weekMarketBoard?.best_available_singles)
+            ? this.weekMarketBoard.best_available_singles
+            : [];
+        const plays = dailyPlays.length ? dailyPlays : weekSingles;
         const quality = this.data.data_quality || {};
         const selection = this.data.selection || {};
         const shadow = this.data.mode === "live_shadow";
@@ -99,8 +103,12 @@ class NflPredictionBoard {
 
         this.renderParlayWatchlists();
 
-        const withheld = this.data.publication_status !== "shadow_current_pool";
-        if (this.elements.gate) this.elements.gate.innerHTML = `<p><strong>${withheld ? "No current pick published." : "Current candidates found."}</strong> ${this.escape(quality.reason || "These candidates passed the frozen model and execution gates but are not authorized for staking while prospective certification is inactive.")}</p>`;
+        const backtestQualified = !dailyPlays.length && weekSingles.length;
+        const withheld = this.data.publication_status !== "shadow_current_pool" && !backtestQualified;
+        const gateReason = backtestQualified
+            ? "These Week 1 passing candidates passed the frozen loss-aware historical rule. They remain shadow-only while prospective certification is inactive."
+            : (quality.reason || "These candidates passed the frozen model and execution gates but are not authorized for staking while prospective certification is inactive.");
+        if (this.elements.gate) this.elements.gate.innerHTML = `<p><strong>${withheld ? "No current pick published." : "Current candidates found."}</strong> ${this.escape(gateReason)}</p>`;
         const evidence = this.data.historical_evidence || this.marketEvidence?.final_test || {};
         const cards = [
             ["Candidates", this.formatInt(plays.length)],
@@ -163,9 +171,13 @@ class NflPredictionBoard {
         const data = this.weekPool || {};
         const policy = data.parlay_policy || {};
         const livePools = this.weekMarketBoard?.pools || {};
+        const poolStatuses = this.weekMarketBoard?.pool_status || {};
         const marketTickets = Object.entries(livePools).map(([name, legs]) => ({
             name: name.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()),
-            note: "RotoWire Week 1 prices joined to the frozen projection pool.",
+            note: poolStatuses[name] === "BACKTEST_VALIDATED_LEGS_SHADOW_PARLAY"
+                ? "Legs pass the frozen passing-market backtest; the combined ticket remains shadow-only."
+                : "Best research comparison only; this capability has not demonstrated a reliable historical edge.",
+            status: poolStatuses[name] || "RESEARCH_ONLY",
             legs: Array.isArray(legs) ? legs : [],
             marketBacked: true,
         })).filter((ticket) => ticket.legs.length);
@@ -184,7 +196,7 @@ class NflPredictionBoard {
                 <span class="week-parlay-projection"><strong>${this.escape(leg.side ? `${leg.side} ${this.formatNum(leg.line, 1)}` : this.formatNum(leg.projection, 1))}</strong><small>${this.escape(leg.side ? `${leg.bookmaker} ${this.formatOdds(leg.price)}` : "projected")}</small></span>
             </div>`).join("");
             return `<article class="week-parlay-card">
-                <header><div><h3>${this.escape(ticket.name)}</h3><p>${this.escape(ticket.note)}</p></div><span class="week-parlay-status">Awaiting lines</span></header>
+                <header><div><h3>${this.escape(ticket.name)}</h3><p>${this.escape(ticket.note)}</p></div><span class="week-parlay-status">${this.escape(ticket.status.replaceAll("_", " "))}</span></header>
                 <div class="week-parlay-legs">${legs}</div>
             </article>`;
         }).join("");
@@ -207,7 +219,10 @@ class NflPredictionBoard {
             player_display_name: play.player,
             target: play.target || "passing_yards",
             market_line: play.line,
-            model_hit_probability: play.model_hit_probability,
+            direction: play.direction || play.side,
+            model_hit_probability: play.model_hit_probability ?? play.raw_model_probability,
+            selected_side_price: play.selected_side_price ?? play.price,
+            selected_sportsbook_key: play.selected_sportsbook_key || play.bookmaker,
             candidate_authorized: this.data?.candidate_authorized === true && play.candidate_authorized !== false,
             action_status: this.data?.candidate_authorized === true ? play.action_status : "review",
             board_publication_status: this.data?.publication_status,

@@ -1,0 +1,197 @@
+{
+  "schema_version": 1,
+  "artifact_type": "nfl_week_market_policy_backtest",
+  "policy_version": "nfl_pick_meta_policy_v1",
+  "evidence_as_of_utc": "2026-01-05T01:20:00Z",
+  "policy": {
+    "minimum_side_probability": 0.58,
+    "minimum_no_vig_advantage": 0.1,
+    "minimum_price": -130,
+    "maximum_price": 130,
+    "weekly_cap": 6
+  },
+  "ranking_rule": "Within each week: estimated side probability, then no-vig advantage.",
+  "design": {
+    "policy_selected_on": "2025 weeks 1-12 development only",
+    "locked_period": "2025 weeks 13-18",
+    "stress_periods": [
+      2021,
+      2022
+    ],
+    "capability_transfer_rule": "A capability receives authority only when every evaluated period has positive ROI and recent evidence has at least 50 decisions.",
+    "parlays": "No authority; locked 2022 replay was 2-16."
+  },
+  "capabilities": {
+    "passing": {
+      "state": "BACKTEST_VALIDATED_SHADOW",
+      "selection_authority": true,
+      "periods": {
+        "stress_2021": {
+          "bets": 48,
+          "graded_decisions": 48,
+          "wins": 31,
+          "losses": 17,
+          "pushes": 0,
+          "hit_rate": 0.6458,
+          "hit_rate_wilson_95": [
+            0.5044,
+            0.7657
+          ],
+          "roi": 0.2014,
+          "profit_units": 9.6695,
+          "distinct_weeks": 8,
+          "over_bets": 0,
+          "under_bets": 48
+        },
+        "stress_2022": {
+          "bets": 103,
+          "graded_decisions": 103,
+          "wins": 55,
+          "losses": 48,
+          "pushes": 0,
+          "hit_rate": 0.534,
+          "hit_rate_wilson_95": [
+            0.4382,
+            0.6274
+          ],
+          "roi": 0.0055,
+          "profit_units": 0.5663,
+          "distinct_weeks": 18,
+          "over_bets": 15,
+          "under_bets": 88
+        },
+        "confirmation_2025": {
+          "bets": 99,
+          "graded_decisions": 99,
+          "wins": 64,
+          "losses": 35,
+          "pushes": 0,
+          "hit_rate": 0.6465,
+          "hit_rate_wilson_95": [
+            0.5484,
+            0.7336
+          ],
+          "roi": 0.212,
+          "profit_units": 20.9921,
+          "distinct_weeks": 18,
+          "over_bets": 19,
+          "under_bets": 80
+        }
+      }
+    },
+    "rushing": {
+      "state": "NO_RELIABLE_EDGE_FOUND",
+      "selection_authority": false,
+      "periods": {
+        "stress_2021": {
+          "bets": 47,
+          "graded_decisions": 47,
+          "wins": 23,
+          "losses": 24,
+          "pushes": 0,
+          "hit_rate": 0.4894,
+          "hit_rate_wilson_95": [
+            0.3528,
+            0.6276
+          ],
+          "roi": -0.0757,
+          "profit_units": -3.5597,
+          "distinct_weeks": 8,
+          "over_bets": 10,
+          "under_bets": 37
+        },
+        "stress_2022": {
+          "bets": 101,
+          "graded_decisions": 101,
+          "wins": 52,
+          "losses": 49,
+          "pushes": 0,
+          "hit_rate": 0.5149,
+          "hit_rate_wilson_95": [
+            0.4186,
+            0.61
+          ],
+          "roi": -0.0207,
+          "profit_units": -2.0943,
+          "distinct_weeks": 18,
+          "over_bets": 8,
+          "under_bets": 93
+        },
+        "confirmation_2025": {
+          "bets": 80,
+          "graded_decisions": 80,
+          "wins": 43,
+          "losses": 37,
+          "pushes": 0,
+          "hit_rate": 0.5375,
+          "hit_rate_wilson_95": [
+            0.429,
+            0.6425
+          ],
+          "roi": 0.0239,
+          "profit_units": 1.9106,
+          "distinct_weeks": 18,
+          "over_bets": 15,
+          "under_bets": 65
+        }
+      }
+    },
+    "receiving": {
+      "state": "NO_RELIABLE_EDGE_FOUND",
+      "selection_authority": false,
+      "periods": {
+        "stress_2021": {
+          "bets": 48,
+          "graded_decisions": 48,
+          "wins": 25,
+          "losses": 23,
+          "pushes": 0,
+          "hit_rate": 0.5208,
+          "hit_rate_wilson_95": [
+            0.3833,
+            0.6553
+          ],
+          "roi": -0.0254,
+          "profit_units": -1.2213,
+          "distinct_weeks": 8,
+          "over_bets": 0,
+          "under_bets": 48
+        },
+        "stress_2022": {
+          "bets": 108,
+          "graded_decisions": 108,
+          "wins": 47,
+          "losses": 61,
+          "pushes": 0,
+          "hit_rate": 0.4352,
+          "hit_rate_wilson_95": [
+            0.3455,
+            0.5293
+          ],
+          "roi": -0.1738,
+          "profit_units": -18.7736,
+          "distinct_weeks": 18,
+          "over_bets": 0,
+          "under_bets": 108
+        },
+        "confirmation_2025": {
+          "bets": 79,
+          "graded_decisions": 79,
+          "wins": 37,
+          "losses": 42,
+          "pushes": 0,
+          "hit_rate": 0.4684,
+          "hit_rate_wilson_95": [
+            0.3624,
+            0.5773
+          ],
+          "roi": -0.1069,
+          "profit_units": -8.4432,
+          "distinct_weeks": 18,
+          "over_bets": 10,
+          "under_bets": 69
+        }
+      }
+    }
+  }
+}

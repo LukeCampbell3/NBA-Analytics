@@ -39,7 +39,14 @@ def _normal_over(mean: float, p10: float, p90: float, line: float) -> float:
     return 0.5 * math.erfc(z / math.sqrt(2))
 
 
-def build_board(pool_payload: dict[str, Any], snapshot: dict[str, Any]) -> dict[str, Any]:
+def build_board(
+    pool_payload: dict[str, Any],
+    snapshot: dict[str, Any],
+    backtest: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    backtest = backtest or {}
+    policy = backtest.get("policy", {})
+    capabilities = backtest.get("capabilities", {})
     projection_by_key = {
         (_name(row["player"]), _team(row.get("team")), TARGET_BY_POSITION.get(str(row.get("position")))): row
         for row in pool_payload.get("pool", [])
@@ -64,11 +71,21 @@ def build_board(pool_payload: dict[str, Any], snapshot: dict[str, Any]) -> dict[
         price = float(offer["over_price"] if side == "OVER" else offer["under_price"])
         disagreement = abs(probability - market_probability)
         support_status = "OUT_OF_SUPPORT" if disagreement > 0.15 else "IN_SUPPORT"
+        capability = str(offer["target"])
+        evidence = capabilities.get(capability, {})
+        policy_eligible = bool(
+            evidence.get("selection_authority")
+            and probability >= float(policy.get("minimum_side_probability", 1.0))
+            and probability - market_probability >= float(policy.get("minimum_no_vig_advantage", 1.0))
+            and float(policy.get("minimum_price", 1.0)) <= price <= float(policy.get("maximum_price", -1.0))
+            and support_status == "IN_SUPPORT"
+        )
         candidates.append({
             "player": projection["player"], "player_id": projection["player_id"],
             "position": projection["position"], "team": projection["team"],
             "opponent": projection["opponent"], "game_id": projection["game_id"],
             "kickoff_utc": projection["kickoff_utc"], "market": offer["market"],
+            "target": capability,
             "side": side, "line": float(offer["line"]), "bookmaker": offer["bookmaker"],
             "price": price, "projection": float(projection["projection"]),
             "raw_model_probability": round(probability, 6),
@@ -77,19 +94,32 @@ def build_board(pool_payload: dict[str, Any], snapshot: dict[str, Any]) -> dict[
             "raw_model_ev": round(probability * _decimal(price) - 1, 6),
             "absolute_model_market_disagreement": round(disagreement, 6),
             "support_status": support_status,
+            "capability_backtest_state": evidence.get("state", "NO_BACKTEST_EVIDENCE"),
+            "policy_eligible": policy_eligible,
             "snapshot_time_utc": offer["snapshot_time_utc"],
             "source": offer["source"],
-            "selection_status": "RESEARCH_ONLY_UNCALIBRATED",
+            "selection_status": (
+                "BACKTEST_VALIDATED_SHADOW" if policy_eligible
+                else "RESEARCH_ONLY_NO_RELIABLE_EDGE"
+            ),
             "candidate_authorized": False,
         })
-    candidates.sort(key=lambda row: (-row["raw_model_probability"], -row["raw_model_ev"], row["player"]))
+    candidates.sort(
+        key=lambda row: (
+            -row["raw_model_probability"], -row["raw_probability_edge"], row["player"]
+        )
+    )
 
-    def best_unique(position_set: set[str], *, same_game: bool = False, limit: int = 2) -> list[dict[str, Any]]:
+    def best_unique(
+        position_set: set[str], *, same_game: bool = False, limit: int = 2,
+        require_authority: bool = True, distinct_games: bool = True,
+    ) -> list[dict[str, Any]]:
         eligible = [
             row for row in candidates
             if row["position"] in position_set
             and row["raw_model_ev"] > 0
             and row["support_status"] == "IN_SUPPORT"
+            and (row["policy_eligible"] or not require_authority)
         ]
         if same_game:
             game_counts: dict[str, int] = {}
@@ -102,7 +132,9 @@ def build_board(pool_payload: dict[str, Any], snapshot: dict[str, Any]) -> dict[
             eligible = [row for row in eligible if row["game_id"] == game]
         selected, players, games = [], set(), set()
         for row in eligible:
-            if row["player_id"] in players or (not same_game and row["game_id"] in games):
+            if row["player_id"] in players or (
+                distinct_games and not same_game and row["game_id"] in games
+            ):
                 continue
             selected.append(row); players.add(row["player_id"]); games.add(row["game_id"])
             if len(selected) == limit:
@@ -111,9 +143,17 @@ def build_board(pool_payload: dict[str, Any], snapshot: dict[str, Any]) -> dict[
 
     categories = {
         "passer_parlay": best_unique({"QB"}),
-        "rusher_parlay": best_unique({"RB"}),
-        "receiver_parlay": best_unique({"WR", "TE"}),
-        "same_game_parlay": best_unique({"QB", "RB", "WR", "TE"}, same_game=True),
+        "rusher_parlay": best_unique({"RB"}, require_authority=False),
+        "receiver_parlay": best_unique({"WR", "TE"}, require_authority=False),
+        "same_game_parlay": best_unique(
+            {"QB", "RB", "WR", "TE"}, same_game=True, require_authority=False
+        ),
+    }
+    pool_status = {
+        "passer_parlay": "BACKTEST_VALIDATED_LEGS_SHADOW_PARLAY",
+        "rusher_parlay": "WITHHELD_NO_RELIABLE_EDGE",
+        "receiver_parlay": "WITHHELD_NO_RELIABLE_EDGE",
+        "same_game_parlay": "WITHHELD_NO_VALIDATED_JOINT_POLICY",
     }
     first_td = snapshot.get("audit", {}).get("first_td_best_prices", [])
     return {
@@ -127,9 +167,22 @@ def build_board(pool_payload: dict[str, Any], snapshot: dict[str, Any]) -> dict[
             "warning": "These probabilities are not market-calibrated or certification-authorized.",
             "support_rule": "Absolute model-market disagreement above 15pp is retained but excluded as OUT_OF_SUPPORT.",
             "parlay_probability": "WITHHELD_NO_DEPENDENCY_MODEL_OR_EXECUTABLE_COMBINED_QUOTE",
+            "ranking": backtest.get("ranking_rule", "UNVALIDATED_RAW_PROBABILITY_THEN_EV"),
+        },
+        "backtest": {
+            "artifact_type": backtest.get("artifact_type"),
+            "policy_version": backtest.get("policy_version"),
+            "evidence_as_of_utc": backtest.get("evidence_as_of_utc"),
+            "capabilities": capabilities,
         },
         "candidate_count": len(candidates), "candidates": candidates,
         "pools": categories,
+        "pool_status": pool_status,
+        "best_available_singles": [
+            row for row in best_unique(
+                {"QB"}, limit=int(policy.get("weekly_cap", 6)), distinct_games=False
+            )
+        ],
         "first_touchdown_odds_only": first_td,
     }
 
@@ -138,9 +191,19 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pool", type=Path, default=NFL_ROOT / "web/data/week_1_pool.json")
     parser.add_argument("--snapshot", type=Path, required=True)
+    parser.add_argument(
+        "--backtest-evidence", type=Path,
+        default=NFL_ROOT / "data/evaluation/week_market_policy_backtest.json",
+    )
     parser.add_argument("--output", type=Path, default=NFL_ROOT / "web/data/week_1_market_board.json")
     args = parser.parse_args()
-    payload = build_board(json.loads(args.pool.read_text()), json.loads(args.snapshot.read_text()))
+    backtest = (
+        json.loads(args.backtest_evidence.read_text())
+        if args.backtest_evidence.is_file() else {}
+    )
+    payload = build_board(
+        json.loads(args.pool.read_text()), json.loads(args.snapshot.read_text()), backtest
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, indent=2) + "\n")
     print(json.dumps({"output": str(args.output), "candidates": payload["candidate_count"]}, indent=2))

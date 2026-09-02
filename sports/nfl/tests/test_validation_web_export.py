@@ -41,7 +41,10 @@ def test_committed_validation_payload_matches_locked_replay() -> None:
 
 def test_frontend_exposes_validation_sections_and_payload() -> None:
     index_html = (NFL_ROOT / "web" / "index.html").read_text(encoding="utf-8")
-    predictions_html = (NFL_ROOT / "web" / "predictions.html").read_text(
+    projections_html = (NFL_ROOT / "web" / "projections.html").read_text(
+        encoding="utf-8"
+    )
+    picks_html = (NFL_ROOT / "web" / "picks.html").read_text(
         encoding="utf-8"
     )
     predictions_js = (NFL_ROOT / "web" / "predictions.js").read_text(
@@ -61,10 +64,11 @@ def test_frontend_exposes_validation_sections_and_payload() -> None:
         encoding="utf-8"
     )
 
-    assert 'url=predictions/' in index_html
-    assert 'id="weekProjectionPool"' in predictions_html
-    assert 'id="weekPositionFilters"' in predictions_html
-    assert 'id="parlayWatchlists"' in predictions_html
+    assert 'url=projections/' in index_html
+    assert 'id="weekProjectionPool"' in projections_html
+    assert 'id="weekPositionFilters"' in projections_html
+    assert 'id="parlayWatchlists"' in picks_html
+    assert 'id="currentBoard"' in picks_html
     assert 'id="rankingTable"' in fantasy_html
     assert 'id="confidenceMetrics"' in fantasy_html
     assert "data/fantasy_draft_rankings.json" in fantasy_js

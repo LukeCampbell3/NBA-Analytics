@@ -88,10 +88,13 @@ jobs:
           set -euo pipefail
           python sports/nfl/scripts/backtest_nfl_daily_policy.py
           python sports/nfl/scripts/train_nfl_pick_meta_selector.py
+          python sports/nfl/scripts/backtest_nfl_week_market_policy.py
           python -m pytest \
             sports/nfl/tests/test_live_market.py \
             sports/nfl/tests/test_pick_meta.py \
             sports/nfl/tests/test_daily_policy_backtest.py \
+            sports/nfl/tests/test_week_market_board.py \
+            sports/nfl/tests/test_week_market_policy_backtest.py \
             sports/nfl/tests/test_validation_web_export.py \
             tests/test_validate_nfl_publication.py \
             -q
@@ -202,6 +205,7 @@ jobs:
           git add -f -- \
             sports/nfl/data/evaluation/daily_policy_backtest.json \
             sports/nfl/data/evaluation/pick_meta_backtest.json \
+            sports/nfl/data/evaluation/week_market_policy_backtest.json \
             sports/nfl/data/evaluation/fantasy_draft_validation.json \
             sports/nfl/data/reference/current_depth_chart.csv \
             sports/nfl/data/reference/current_depth_chart_manifest.json \
@@ -263,6 +267,7 @@ jobs:
           path: |
             sports/nfl/data/evaluation/daily_policy_backtest.json
             sports/nfl/data/evaluation/pick_meta_backtest.json
+            sports/nfl/data/evaluation/week_market_policy_backtest.json
             sports/nfl/data/evaluation/fantasy_draft_validation.json
             sports/nfl/data/reference/current_depth_chart_manifest.json
             sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}/${{ github.run_id }}.json
