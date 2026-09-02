@@ -29,11 +29,13 @@ DEFAULT_PRIVATE_SOURCE_DIR = REPO_ROOT / "paywall" / "private-app"
 DEFAULT_PRIVATE_OUTPUT_DIR = REPO_ROOT / "paywall" / "private-content" / "app"
 VAULT_SOURCE_DIR = SPORTS_ROOT / "shared" / "web" / "vault"
 PREDICTION_PAGE_STEMS = {
-    "predictions", "prediction-about", "fantasy", "advantage-routing",
+    "predictions", "projections", "picks", "prediction-about", "fantasy", "advantage-routing",
     "stats", "drive-pass", "post-pass",
 }
 PREDICTION_TOP_LEVEL_FILES = {
     "predictions.html",
+    "projections.html",
+    "picks.html",
     "prediction-about.html",
     "fantasy.html",
     "predictions.js",
@@ -201,6 +203,10 @@ def discover_pages(slug: str, source_dir: Path, metadata: Dict[str, object]) -> 
         stem = html_file.stem.lower()
         if stem not in PREDICTION_PAGE_STEMS:
             continue
+        # Keep /predictions/ as a compatibility redirect when a sport has
+        # adopted the clearer /projections/ route, but do not advertise both.
+        if stem == "predictions" and (source_dir / "projections.html").is_file():
+            continue
         label = str(route_labels.get(stem) or ("Overview" if stem == "index" else titleize_stem(stem)))
         href = f"/{slug}/" if stem == "index" else f"/{slug}/{stem}/"
         pages.append({
@@ -306,7 +312,7 @@ def discover_sports() -> List[Dict[str, object]]:
         slug = sport_dir.name.lower()
         metadata = load_site_metadata(sport_dir)
         pages = discover_pages(slug, source_dir, metadata)
-        if not any(page.get("slug") == "predictions" for page in pages):
+        if not any(page.get("slug") in {"predictions", "projections"} for page in pages):
             continue
         sports.append(
             {
@@ -381,8 +387,8 @@ def build_static_site(
                 "surface": sport["surface"],
                 "pages": public_pages,
                 "entry_href": next(
-                    (page["href"] for page in public_pages if page.get("slug") == "predictions"),
-                    f"/{slug}/predictions/",
+                    (page["href"] for page in public_pages if page.get("slug") in {"projections", "predictions"}),
+                    f"/{slug}/projections/",
                 ),
             }
         )

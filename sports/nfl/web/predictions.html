@@ -3,88 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="2026 NFL Week 1 QB, RB, WR, and TE yardage projections with parlay watchlists.">
-    <title>NFL Predictions | In The Cards Analytics</title>
-    <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="vault/vault-tokens.css?v=10">
-    <link rel="stylesheet" href="vault/vault-components.css?v=10">
-    <link rel="stylesheet" href="vault/prediction-pages.css?v=11">
-    <link rel="stylesheet" href="predictions.css?v=1">
-    <link rel="stylesheet" href="parlay-board.css?v=1">
+    <meta http-equiv="refresh" content="0; url=/nfl/projections/">
+    <link rel="canonical" href="/nfl/projections/">
+    <title>NFL Projections | In The Cards Analytics</title>
 </head>
-<body class="vault-theme">
-    <div id="vaultShellRoot"></div>
-    <main class="vault-shell predictions-page">
-        <header class="vault-page-header">
-            <p class="vault-page-kicker">NFL &middot; Week 1</p>
-            <div class="vault-heading-row">
-                <h1>Predictions</h1>
-                <button class="vault-info-trigger" type="button" aria-label="About this page" data-info="Current QB, RB, WR, and TE primary-yardage projections use current teams, Week 1 opponents, depth roles, and the frozen yardage model. They are not sportsbook picks until authentic two-sided lines pass the execution policy.">i</button>
-            </div>
-            <p class="prediction-page-lead">Current quarterbacks, running backs, wide receivers, and tight ends across the opening slate, with target-specific projections and holdout-calibrated ranges.</p>
-            <p id="runFacts" class="prediction-run-meta">Loading Week 1 pool...</p>
-        </header>
-
-        <section class="pool-primary" aria-label="Today's signals">
-            <div class="pool-section-heading"><h2>Projection Status</h2></div>
-            <div id="weekPoolStatus" class="prediction-about-callout"></div>
-            <div id="weekPoolMetrics" class="prediction-about-metric-grid"></div>
-
-            <div class="pool-section-heading week-pool-heading" style="margin-top:32px;">
-                <h2>Player Projections</h2>
-                <div id="weekPositionFilters" class="week-position-filters" role="group" aria-label="Filter projections by position"><button type="button" class="is-active" data-position="ALL">All</button><button type="button" data-position="QB">QB</button><button type="button" data-position="RB">RB</button><button type="button" data-position="WR">WR</button><button type="button" data-position="TE">TE</button></div>
-            </div>
-            <div id="weekProjectionPool" class="prediction-about-table-wrap"></div>
-
-            <div class="pool-section-heading" style="margin-top:32px;"><h2>Qualified Signals</h2></div>
-            <div id="gateSummary" class="prediction-about-callout"></div>
-            <div id="overallMetrics" class="prediction-about-metric-grid"></div>
-            <div id="currentBoard" class="vault-board" style="margin-top:16px;"></div>
-        </section>
-
-        <section class="pool-secondary" aria-label="Parlays and watchlists">
-            <div class="pool-section-heading"><h2>Parlays / Watchlists</h2></div>
-            <div id="parlayWatchlistStatus" class="prediction-about-callout"></div>
-            <div id="parlayWatchlists" class="week-parlay-grid"></div>
-            <div id="dailyParlay" class="prediction-about-callout" style="margin-top:16px;"></div>
-            <section id="parlayV2Section" class="daily-parlay daily-parlay--v2" aria-labelledby="parlayV2Title" aria-live="polite">
-                <div id="parlayV2Content"></div>
-            </section>
-        </section>
-
-        <footer class="pool-status">
-            <div class="pool-status__row">
-                <span class="prediction-run-meta__item">Research only -- review model status and evidence before treating any signal as executable.</span>
-                <a class="pool-status__link" href="/nfl/prediction-about/">View complete model evidence &rarr;</a>
-            </div>
-        </footer>
-    </main>
-    <script>
-        // Inline by design: this remains available when an external dependency
-        // is blocked or aborts during startup in a privacy-restricted browser.
-        (() => {
-            const loadingText = "Loading Week 1 pool...";
-            const timeoutMs = 12000;
-            window.setTimeout(() => {
-                const status = document.getElementById("runFacts");
-                if (!status || status.textContent.trim() !== loadingText) return;
-
-                status.innerHTML = `<strong>Predictions did not finish loading.</strong>
-                    Reload the page to try again. If this keeps happening, allow site data and scripts for this site or turn off its content blocker.`;
-                const board = document.getElementById("currentBoard");
-                if (board) {
-                    board.innerHTML = `<div class="vault-empty" role="alert">
-                        <h3>Predictions unavailable</h3>
-                        <p>The page stopped during startup. Your picks and account were not changed.</p>
-                        <button type="button" class="vault-button" data-prediction-reload>Reload predictions</button>
-                    </div>`;
-                    board.querySelector("[data-prediction-reload]")?.addEventListener("click", () => window.location.reload());
-                }
-            }, timeoutMs);
-        })();
-    </script>
-    <script src="vault/vault-components.js?v=14"></script>
-    <script src="vault/vault-shell.js?v=9"></script>
-    <script src="predictions.js?v=7"></script>
+<body>
+    <p>NFL Predictions has moved to <a href="/nfl/projections/">NFL Projections</a>.</p>
 </body>
 </html>

@@ -13,7 +13,7 @@
   const DEFAULT_SPORTS = [
     { slug: "nba", label: "NBA", href: "/nba/predictions/" },
     { slug: "mlb", label: "MLB", href: "/mlb/predictions/" },
-    { slug: "nfl", label: "NFL", href: "/nfl/predictions/" },
+    { slug: "nfl", label: "NFL", href: "/nfl/projections/" },
     { slug: "f1", label: "F1", href: "/f1/predictions/" },
   ];
 

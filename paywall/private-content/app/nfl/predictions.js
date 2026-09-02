@@ -3,7 +3,9 @@ class NflPredictionBoard {
         this.data = null;
         this.marketEvidence = null;
         this.weekPool = null;
+        this.weekMarketBoard = null;
         this.position = "ALL";
+        this.pageMode = document.body?.dataset?.nflPage === "picks" ? "picks" : "projections";
         this.elements = {
             runFacts: document.getElementById("runFacts"),
             gate: document.getElementById("gateSummary"),
@@ -38,20 +40,22 @@ class NflPredictionBoard {
     async init() {
         this.mountShell();
         try {
-            const [dailyResponse, marketResponse, weekResponse] = await Promise.all([
+            const [dailyResponse, marketResponse, weekResponse, weekMarketResponse] = await Promise.all([
                 fetch(`data/daily_predictions.json?v=${Date.now()}`),
                 fetch(`data/market_validation_summary.json?v=${Date.now()}`),
                 fetch(`data/week_1_pool.json?v=${Date.now()}`),
+                fetch(`data/week_1_market_board.json?v=${Date.now()}`),
             ]);
             if (!dailyResponse.ok) throw new Error(`HTTP ${dailyResponse.status}`);
             if (!weekResponse.ok) throw new Error(`Week pool HTTP ${weekResponse.status}`);
             this.data = await dailyResponse.json();
             this.marketEvidence = marketResponse.ok ? await marketResponse.json() : null;
             this.weekPool = await weekResponse.json();
+            this.weekMarketBoard = weekMarketResponse.ok ? await weekMarketResponse.json() : null;
             this.render();
         } catch (error) {
             console.error(error);
-            this.elements.runFacts.textContent = `Unable to load NFL picks: ${error.message}`;
+            if (this.elements.runFacts) this.elements.runFacts.textContent = `Unable to load NFL ${this.pageMode}: ${error.message}`;
         }
     }
 
@@ -63,7 +67,8 @@ class NflPredictionBoard {
             sportSlug: "nfl",
             sportAccent: "#b42318",
             navLinks: [
-                { label: "Predictions", href: "/nfl/predictions/", active: true },
+                { label: "Projections", href: "/nfl/projections/", active: this.pageMode === "projections" },
+                { label: "Picks", href: "/nfl/picks/", active: this.pageMode === "picks" },
                 { label: "Fantasy", href: "/nfl/fantasy/", active: false },
                 { label: "Method", href: "/nfl/prediction-about/", active: false },
             ],
@@ -77,7 +82,7 @@ class NflPredictionBoard {
         const selection = this.data.selection || {};
         const shadow = this.data.mode === "live_shadow";
         const week = this.weekPool || {};
-        this.elements.runFacts.innerHTML = [
+        if (this.elements.runFacts) this.elements.runFacts.innerHTML = [
             `${this.escape(week.season || "NFL")} Week ${this.escape(week.week || "n/a")}`,
             `Generated ${this.escape(this.formatTime(week.generated_at_utc))}`,
             `${this.escape(this.formatInt(week.games))} games`,
@@ -87,11 +92,15 @@ class NflPredictionBoard {
             shadow ? "Shadow mode" : "Historical report",
         ].map((item) => `<span>${item}</span>`).join("");
 
-        this.renderWeekPool();
+        if (this.pageMode === "projections") {
+            this.renderWeekPool();
+            return;
+        }
+
         this.renderParlayWatchlists();
 
         const withheld = this.data.publication_status !== "shadow_current_pool";
-        this.elements.gate.innerHTML = `<p><strong>${withheld ? "No current pick published." : "Current candidates found."}</strong> ${this.escape(quality.reason || "These candidates passed the frozen model and execution gates but are not authorized for staking while prospective certification is inactive.")}</p>`;
+        if (this.elements.gate) this.elements.gate.innerHTML = `<p><strong>${withheld ? "No current pick published." : "Current candidates found."}</strong> ${this.escape(quality.reason || "These candidates passed the frozen model and execution gates but are not authorized for staking while prospective certification is inactive.")}</p>`;
         const evidence = this.data.historical_evidence || this.marketEvidence?.final_test || {};
         const cards = [
             ["Candidates", this.formatInt(plays.length)],
@@ -101,7 +110,7 @@ class NflPredictionBoard {
             ["Locked Hit Rate", this.formatPct(evidence.hit_rate)],
             ["Locked ROI", this.formatSignedPct(evidence.roi)],
         ];
-        this.elements.overall.innerHTML = cards.map(([label, value]) => `
+        if (this.elements.overall) this.elements.overall.innerHTML = cards.map(([label, value]) => `
             <article class="prediction-about-metric-card"><span>${this.escape(label)}</span><strong>${this.escape(value)}</strong></article>
         `).join("");
         this.renderBoard(plays);
@@ -110,6 +119,7 @@ class NflPredictionBoard {
     }
 
     renderWeekPool() {
+        if (!this.elements.weekPoolStatus || !this.elements.weekPoolMetrics || !this.elements.weekProjectionPool) return;
         const data = this.weekPool || {};
         const pool = Array.isArray(data.pool) ? data.pool : [];
         const visiblePool = this.position === "ALL"
@@ -149,10 +159,20 @@ class NflPredictionBoard {
     }
 
     renderParlayWatchlists() {
+        if (!this.elements.parlayWatchlistStatus || !this.elements.parlayWatchlists) return;
         const data = this.weekPool || {};
         const policy = data.parlay_policy || {};
-        const watchlists = Array.isArray(data.parlay_watchlists) ? data.parlay_watchlists : [];
-        this.elements.parlayWatchlistStatus.innerHTML = `<p><strong>Projection templates only — not bets.</strong> ${this.escape(policy.reason || "Authentic two-sided lines are required before any leg can be evaluated.")} No line, direction, odds, or staking authorization has been assigned.</p>`;
+        const livePools = this.weekMarketBoard?.pools || {};
+        const marketTickets = Object.entries(livePools).map(([name, legs]) => ({
+            name: name.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()),
+            note: "RotoWire Week 1 prices joined to the frozen projection pool.",
+            legs: Array.isArray(legs) ? legs : [],
+            marketBacked: true,
+        })).filter((ticket) => ticket.legs.length);
+        const watchlists = marketTickets.length ? marketTickets : (Array.isArray(data.parlay_watchlists) ? data.parlay_watchlists : []);
+        this.elements.parlayWatchlistStatus.innerHTML = marketTickets.length
+            ? `<p><strong>Week 1 market-backed shadow pools.</strong> Real two-sided RotoWire odds are attached, but joint probabilities and execution remain withheld until dependency calibration and an executable combined quote exist.</p>`
+            : `<p><strong>Projection templates only — not bets.</strong> ${this.escape(policy.reason || "Authentic two-sided lines are required before any leg can be evaluated.")} No line, direction, odds, or staking authorization has been assigned.</p>`;
         if (!watchlists.length) {
             this.elements.parlayWatchlists.innerHTML = "<p>No Week 1 parlay watchlists are available.</p>";
             return;
@@ -161,7 +181,7 @@ class NflPredictionBoard {
             const legs = (ticket.legs || []).map((leg) => `<div class="week-parlay-leg">
                 <span class="week-parlay-position">${this.escape(leg.position)}</span>
                 <span><strong>${this.escape(leg.player)}</strong><small>${this.escape(`${leg.team} vs ${leg.opponent} · ${String(leg.target || "").replaceAll("_", " ")}`)}</small></span>
-                <span class="week-parlay-projection"><strong>${this.escape(this.formatNum(leg.projection, 1))}</strong><small>projected</small></span>
+                <span class="week-parlay-projection"><strong>${this.escape(leg.side ? `${leg.side} ${this.formatNum(leg.line, 1)}` : this.formatNum(leg.projection, 1))}</strong><small>${this.escape(leg.side ? `${leg.bookmaker} ${this.formatOdds(leg.price)}` : "projected")}</small></span>
             </div>`).join("");
             return `<article class="week-parlay-card">
                 <header><div><h3>${this.escape(ticket.name)}</h3><p>${this.escape(ticket.note)}</p></div><span class="week-parlay-status">Awaiting lines</span></header>
@@ -171,6 +191,7 @@ class NflPredictionBoard {
     }
 
     renderBoard(plays) {
+        if (!this.elements.board) return;
         if (!plays.length) {
             this.elements.board.innerHTML = "<p>No playable passing-yard candidate survived this slate.</p>";
             return;
@@ -194,6 +215,7 @@ class NflPredictionBoard {
     }
 
     renderParlay() {
+        if (!this.elements.parlay) return;
         const parlay = this.data.daily_parlay || {};
         const ticket = parlay.selected_ticket;
         if (!ticket) {

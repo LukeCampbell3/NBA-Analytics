@@ -3,7 +3,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         window.CardVaultShell.mount({
             brandTitle: "In The Cards Analytics", brandHref: "/", sportSlug: "nfl", sportAccent: "#b42318",
             navLinks: [
-                { label: "Predictions", href: "/nfl/predictions/", active: false },
+                { label: "Projections", href: "/nfl/projections/", active: false },
+                { label: "Picks", href: "/nfl/picks/", active: false },
                 { label: "Fantasy", href: "/nfl/fantasy/", active: false },
                 { label: "Method", href: "/nfl/prediction-about/", active: true },
             ],
