@@ -1,6 +1,11 @@
 name: NFL Predictions and Frontend
 
 on:
+  push:
+    branches: [static-deployment]
+    paths:
+      - '.github/workflows/nfl-predictions.yml'
+      - 'sports/nfl/**'
   schedule:
     - cron: "15 14 * 1-2,8-12 *"
   workflow_dispatch:
