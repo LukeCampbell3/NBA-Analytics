@@ -10,6 +10,7 @@ on:
       - 'sports/mlb/scripts/run_unified_promotion_validation.py'
       - 'sports/mlb/scripts/run_unified_v2_resolution.py'
       - 'sports/mlb/scripts/run_v2_1_challenger.py'
+      - 'sports/mlb/scripts/audit_daily_mlb_slate.py'
       - 'sports/mlb/scripts/benchmark_unified_production_path.py'
       - 'sports/mlb/scripts/benchmark_unified_engine.py'
       - 'config/mlb_unified_promotion_policy.json'
@@ -55,6 +56,7 @@ jobs:
           python sports/mlb/scripts/run_unified_promotion_validation.py
           python sports/mlb/scripts/run_unified_v2_resolution.py
           python sports/mlb/scripts/run_v2_1_challenger.py
+          python sports/mlb/scripts/audit_daily_mlb_slate.py --run-date "$(python -c 'import json; print(json.load(open("sports/mlb/web/data/daily_predictions.json"))["run_date"])')"
           python sports/mlb/scripts/run_unified_mlb_shadow.py
           python - <<'PY'
           import json
@@ -81,4 +83,5 @@ jobs:
             artifacts/mlb_v2_boundary_diagnostics.json
             artifacts/mlb_v2_challenger_status.json
             artifacts/mlb_v2_1_policy_manifest.json
+            artifacts/mlb_slate_integrity_audit.json
             sports/mlb/data/predictions/unified/v2_1_evidence.jsonl

@@ -22,6 +22,7 @@ from sports.mlb.unified.v2_1_challenger import (
     BASELINE_POLICY_HASH, UnifiedPolicyV21, select_challenger,
 )
 from sports.mlb.unified.v2_evidence import capture_policy_generation, canonical_hash
+from sports.mlb.unified.candidate_contract import from_bet_candidate, terminal_decision
 
 
 def _mean(values: list[float | None]) -> float | None:
@@ -31,40 +32,23 @@ def _mean(values: list[float | None]) -> float | None:
 
 def normalize(candidate: Any, *, slate_id: str, prediction_time: str) -> dict[str, Any]:
     source = dict(candidate.source_payload or {})
-    capability = candidate.market_type
-    quote_time = source.get("quote_timestamp") or source.get("odds_snapshot_time")
-    player_status = source.get("player_status")
-    support_score = source.get("historical_bucket_support") or source.get("support_size")
-    market_probability = candidate.no_vig_probability or candidate.market_break_even_probability
-    raw_probability = candidate.raw_probability
-    calibrated = candidate.calibrated_probability
-    odds = candidate.american_price
+    contract = from_bet_candidate(candidate, slate_id=slate_id, prediction_time=prediction_time)
+    row = contract.to_dict()
+    raw_probability = contract.raw_structural_probability
+    calibrated = contract.calibrated_probability
+    odds = contract.quoted_odds
     decimal = candidate.decimal_price
-    raw_ev = raw_probability * decimal - 1 if raw_probability is not None and decimal else None
-    calibrated_ev = calibrated * decimal - 1 if calibrated is not None and decimal else None
-    market_id = candidate.sportsbook_market_id
-    selection_id = candidate.sportsbook_selection_id
     return {
-        "candidate_id": candidate.candidate_id, "slate_id": slate_id,
-        "event_id": candidate.game_id, "player_id": candidate.subject_id,
-        "capability": capability, "market_id": market_id, "selection_id": selection_id,
-        "line": candidate.line, "sportsbook": candidate.sportsbook,
-        "quoted_odds": odds, "quote_timestamp": quote_time,
+        **row, "event_id": contract.game_id, "capability": contract.market_type,
+        "quote_timestamp": contract.odds_snapshot_time,
         "prediction_timestamp": prediction_time, "decision_timestamp": prediction_time,
-        "lineup_status": candidate.lineup_status, "player_status": player_status,
         "model_version": source.get("model_version") or "compatibility_models_at_source_artifact",
         "calibrator_version": source.get("calibrator_version") or "legacy_source_calibrator",
-        "raw_probability": raw_probability, "calibrated_probability": calibrated,
-        "usable_probability": candidate.usable_probability,
-        "market_implied_probability": market_probability, "no_vig_market_probability": candidate.no_vig_probability,
-        "uncertainty": candidate.uncertainty,
-        "uncertainty_components": source.get("uncertainty_components"),
-        "support_score": support_score, "support_status": candidate.support_status,
-        "ood_status": source.get("ood_status") or "UNMEASURED",
-        "identity_status": candidate.identity_status,
-        "edge": candidate.probability_edge, "raw_ev": raw_ev, "calibrated_ev": calibrated_ev,
+        "raw_probability": raw_probability, "uncertainty": candidate.uncertainty,
+        "edge": candidate.probability_edge,
+        "raw_ev": raw_probability * decimal - 1 if raw_probability is not None and decimal else None,
+        "calibrated_ev": calibrated * decimal - 1 if calibrated is not None and decimal else None,
         "conservative_ev": candidate.conservative_expected_value,
-        "market_type": candidate.market_type, "side": candidate.side,
     }
 
 
@@ -149,7 +133,7 @@ def run(data_dir: Path, run_date: str) -> dict[str, Any]:
         "production_authorized": False, "certification_started": False,
         "normalized_candidates": len(normalized), "admissible": len(challenger["admissible"]),
         "selected": len(selected), "disagreements": len(disagreements),
-        "blockers": sorted(rejection_counts), "decision": "NO_RELIABLE_EDGE_FOUND",
+        "blockers": sorted(rejection_counts), "decision": terminal_decision(challenger_rows),
     }
     return {"daily": daily, "baseline": baseline, "challenger": challenger_rows,
             "disagreements": disagreements, "status": status}
@@ -168,7 +152,7 @@ def _write_markdown(path: Path, title: str, result: dict[str, Any]) -> None:
     lines.extend(f"- `{key}`: {value}" for key, value in daily["rejection_count_by_reason"].items())
     lines += ["", "## Scientific status", "",
               "No historical outcome was used to tune V2.1. Current inputs do not preserve quote time, independent player status, measured uncertainty components, or OOD state, so the challenger abstains. Coverage-risk, rank, Top-K, boundary, and uncertainty-discrimination claims remain `INSUFFICIENT_PROSPECTIVE_EVIDENCE` until settled all-candidate slates accumulate.", "",
-              "Parlays remain shadow-only.", "", "## Final decision", "", "NO_RELIABLE_EDGE_FOUND", ""]
+              "Parlays remain shadow-only.", "", "## Final decision", "", status["decision"], ""]
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
@@ -199,7 +183,7 @@ def _write_high_efficiency(path: Path, result: dict[str, Any]) -> None:
              "V2.1 is a fail-closed prospective shadow challenger. It does not use the eight consumed V1 outcomes for fitting.", ""]
     for index, (question, answer) in enumerate(questions, 1):
         lines += [f"## {index}. {question}", "", answer, ""]
-    lines += ["## Final decision", "", "NO_RELIABLE_EDGE_FOUND", ""]
+    lines += ["## Final decision", "", status["decision"], ""]
     path.write_text("\n".join(lines), encoding="utf-8")
 
 

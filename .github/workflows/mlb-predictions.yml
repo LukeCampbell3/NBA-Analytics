@@ -161,6 +161,10 @@ jobs:
           # legacy artifacts, cannot authorize publication/staking, and writes
           # one coherent artifact for side-by-side validation.
           python sports/mlb/scripts/run_unified_mlb_shadow.py --run-date "$RUN_DATE"
+          # Frozen V2 baseline and V2.1 challenger consume the exact same
+          # completed daily pool. Neither has publication authority.
+          python sports/mlb/scripts/run_v2_1_challenger.py --run-date "$RUN_DATE"
+          python sports/mlb/scripts/audit_daily_mlb_slate.py --run-date "$RUN_DATE" --fail-on-integrity
           python - <<'PY'
           import json, os, shutil
           from pathlib import Path
@@ -201,6 +205,15 @@ jobs:
             sports/mlb/web/data/unified_predictions.json \
             sports/mlb/web/data/mlb_engine_manifest.json \
             sports/mlb/data/predictions/unified/evidence.jsonl \
+            sports/mlb/data/predictions/unified/v2_1_evidence.jsonl \
+            artifacts/mlb_v2_daily_evidence.json \
+            artifacts/mlb_v2_challenger_status.json \
+            artifacts/mlb_slate_integrity_audit.json \
+            docs/mlb_v2_daily_evidence.md \
+            docs/mlb_v2_selector_efficiency_report.md \
+            docs/mlb_v2_challenger_report.md \
+            docs/mlb_v2_high_efficiency_selection_report.md \
+            docs/mlb_slate_integrity_audit.md \
             sports/mlb/web/data/history/index.json \
             sports/mlb/web/data/history/*.json \
             dist/mlb \

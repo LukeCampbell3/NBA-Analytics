@@ -76,4 +76,4 @@ NOT ESTABLISHED; certification has not started.
 
 ## Final decision
 
-NO_RELIABLE_EDGE_FOUND
+DATA_CONTRACT_INCOMPLETE
