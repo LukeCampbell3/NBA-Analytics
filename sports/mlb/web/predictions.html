@@ -44,7 +44,12 @@
                 <p class="parlay-group__note">Frozen V2.1 challenger evaluated on every daily pool. It has no publication or staking authority unless it independently earns promotion.</p>
                 <div id="v21ShadowContent" class="daily-parlay" aria-live="polite">Loading V2.1 shadow pool...</div>
             </section>
-
+            <section class="board-section" aria-labelledby="unifiedHeading">
+                <p class="board-section__eyebrow">Development Shadow</p>
+                <h2 id="unifiedHeading" class="board-section__heading">Unified MLB Engine</h2>
+                <p class="parlay-group__note">One conservative probability/value contract. This surface has no publication or staking authority while migration validation is incomplete.</p>
+                <div id="unifiedEngineContent" class="daily-parlay"></div>
+            </section>
             <section class="board-section" aria-labelledby="singleBetsHeading">
                 <h2 id="singleBetsHeading" class="board-section__heading">Single Bets</h2>
                 <div id="predictionCards" class="vault-board"></div>
@@ -176,7 +181,8 @@
     </script>
     <script src="vault/vault-components.js?v=17"></script>
     <script src="vault/vault-shell.js?v=9"></script>
-    <script src="predictions.js?v=33"></script>
+    <script src="unified-contract.js?v=1"></script>
+    <script src="predictions.js?v=35"></script>
     <script src="predictions-roi-overrides.js?v=3"></script>
     <script>
         // Independent freshness/V2.1 guard. This intentionally does not rely on

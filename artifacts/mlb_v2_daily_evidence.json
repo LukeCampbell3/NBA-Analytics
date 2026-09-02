@@ -1,0 +1,65 @@
+{
+  "abstention_count": 1,
+  "admissible_candidates": 0,
+  "capabilities": {
+    "batter_hits": {
+      "actual_wins": 0,
+      "exact_candidates": 0,
+      "exact_qualified_selections": 0,
+      "expected_wins": 0.0,
+      "independent_slates": 0,
+      "losses": 0,
+      "wins": 0
+    },
+    "batter_total_bases": {
+      "actual_wins": 0,
+      "exact_candidates": 0,
+      "exact_qualified_selections": 0,
+      "expected_wins": 0.0,
+      "independent_slates": 0,
+      "losses": 0,
+      "wins": 0
+    },
+    "pitcher_strikeouts": {
+      "actual_wins": 0,
+      "exact_candidates": 0,
+      "exact_qualified_selections": 0,
+      "expected_wins": 0.0,
+      "independent_slates": 0,
+      "losses": 0,
+      "wins": 0
+    }
+  },
+  "fully_valid_candidates": 0,
+  "generated_at_utc": "2026-09-02T10:52:31.787260Z",
+  "means": {
+    "conservative_ev": null,
+    "edge": 0.048630608695652056,
+    "market_probability": 0.5718304964933938,
+    "raw_probability": 0.5496823459643553,
+    "support": 401.0,
+    "uncertainty": null,
+    "usable_probability": 0.613848
+  },
+  "normalized_candidates": 19,
+  "ood_count": 19,
+  "rejection_count_by_reason": {
+    "CAPABILITY_NOT_SUPPORTED": 16,
+    "LINEUP_INVALID": 18,
+    "PLAYER_STATUS_INVALID": 19,
+    "PROBABILITY_UNAVAILABLE": 18,
+    "QUOTE_FRESHNESS_UNPROVABLE": 19,
+    "SUPPORT_INVALID": 18,
+    "UNCERTAINTY_COMPONENTS_UNAVAILABLE": 19,
+    "UNCERTAINTY_INVALID": 19
+  },
+  "run_date": "2026-08-30",
+  "schema_version": 1,
+  "selected_bets": 0,
+  "slate_id": "MLB_20260830",
+  "source_status": {
+    "daily_predictions": "LOADED",
+    "pitcher_parlay_predictions": "LOADED",
+    "same_game_predictions": "LOADED"
+  }
+}

@@ -37,6 +37,7 @@ PREDICTION_TOP_LEVEL_FILES = {
     "prediction-about.html",
     "fantasy.html",
     "predictions.js",
+    "unified-contract.js",
     "predictions.css",
     "prediction-about.js",
     "fantasy.js",
@@ -61,6 +62,8 @@ PREDICTION_DATA_FILES = {
     "pitcher_parlay_predictions.json",
     "high_hit_parlay_predictions.json",
     "exotic_market_predictions.json",
+    "unified_predictions.json",
+    "mlb_engine_manifest.json",
     "mlb_backtest_validation.json",
     "betting_system_status.json",
 }

@@ -20,7 +20,7 @@ on:
         type: string
 
 concurrency:
-  group: mlb-predictions-static-deployment
+  group: mlb-production-static-deployment
   cancel-in-progress: false
 
 permissions:

@@ -1,0 +1,24 @@
+{
+  "calibrator_hashes": [],
+  "decision_policy": {
+    "evidence_state": "DEVELOPMENT",
+    "maximum_quote_age_seconds": 600,
+    "maximum_uncertainty": 0.1,
+    "minimum_conservative_ev": 0.0,
+    "minimum_probability_edge": 0.01,
+    "minimum_support": 50,
+    "minimum_usable_probability": 0.6,
+    "name": "UNIFIED_POLICY_V2",
+    "out_of_support_fails_closed": true,
+    "production_authorized": false,
+    "require_exact_selection_ids": true,
+    "require_two_sided_no_vig_market": true
+  },
+  "feature_version": "legacy_compatibility_diagnostic_only",
+  "locked_validation_started": false,
+  "model_hashes": [],
+  "parlay_rules": "SHADOW_ONLY_UNTIL_SINGLE_CERTIFICATION",
+  "policy": "UNIFIED_POLICY_V2",
+  "policy_hash": "52deb038a076b39a1bc840b77ae26648d9e4ffa20194135e7d48b9761edbc611",
+  "schema_version": 2
+}

@@ -17,6 +17,8 @@ on:
       - 'sports/mlb/tests/test_pitcher_parlay_reliability.py'
       - 'sports/mlb/web/predictions.js'
       - 'sports/mlb/web/predictions.html'
+      - 'sports/mlb/unified/**'
+      - 'sports/mlb/scripts/run_unified_mlb_shadow.py'
       - 'sports/site/pipeline/build_static_site.py'
       - 'sports/site/pipeline/run_daily_predictions.py'
       - '.github/workflows/mlb-predictions.yml'
@@ -36,7 +38,7 @@ on:
         type: boolean
 
 concurrency:
-  group: mlb-predictions-static-deployment
+  group: mlb-production-static-deployment
   cancel-in-progress: false
 
 permissions:
@@ -201,6 +203,30 @@ jobs:
           PY
           node --check sports/mlb/web/predictions.js
 
+          # Unified migration remains shadow-only. It consumes the completed
+          # legacy artifacts, cannot authorize publication/staking, and writes
+          # one coherent artifact for side-by-side validation.
+          python sports/mlb/scripts/run_unified_mlb_shadow.py --run-date "$RUN_DATE"
+          # Frozen V2 baseline and V2.1 challenger consume the exact same
+          # completed daily pool. Neither has publication authority.
+          python sports/mlb/scripts/run_v2_1_challenger.py --run-date "$RUN_DATE"
+          python sports/mlb/scripts/audit_daily_mlb_slate.py --run-date "$RUN_DATE" --fail-on-integrity
+          python - <<'PY'
+          import json, os, shutil
+          from pathlib import Path
+          source = Path("sports/mlb/web/data/unified_predictions.json")
+          payload = json.loads(source.read_text())
+          assert payload["run_date"] == os.environ["RUN_DATE"]
+          assert payload["evidence"]["publication_authority"] is False
+          for target in (Path("dist/mlb/data/unified_predictions.json"), Path("paywall/private-content/app/mlb/data/unified_predictions.json")):
+              target.parent.mkdir(parents=True, exist_ok=True)
+              shutil.copy2(source, target)
+          manifest = Path("sports/mlb/web/data/mlb_engine_manifest.json")
+          for target in (Path("dist/mlb/data/mlb_engine_manifest.json"), Path("paywall/private-content/app/mlb/data/mlb_engine_manifest.json")):
+              target.parent.mkdir(parents=True, exist_ok=True)
+              shutil.copy2(manifest, target)
+          PY
+
       - name: Validate MLB publication
         env:
           RUN_DATE: ${{ steps.run-config.outputs.run_date }}
@@ -222,6 +248,18 @@ jobs:
             sports/mlb/web/data/same_game_predictions.json \
             sports/mlb/web/data/pitcher_parlay_predictions.json \
             sports/mlb/web/data/exotic_market_predictions.json \
+            sports/mlb/web/data/unified_predictions.json \
+            sports/mlb/web/data/mlb_engine_manifest.json \
+            sports/mlb/data/predictions/unified/evidence.jsonl \
+            sports/mlb/data/predictions/unified/v2_1_evidence.jsonl \
+            artifacts/mlb_v2_daily_evidence.json \
+            artifacts/mlb_v2_challenger_status.json \
+            artifacts/mlb_slate_integrity_audit.json \
+            docs/mlb_v2_daily_evidence.md \
+            docs/mlb_v2_selector_efficiency_report.md \
+            docs/mlb_v2_challenger_report.md \
+            docs/mlb_v2_high_efficiency_selection_report.md \
+            docs/mlb_slate_integrity_audit.md \
             sports/mlb/web/data/history/index.json \
             sports/mlb/web/data/history/*.json \
             dist/mlb \
@@ -287,11 +325,15 @@ jobs:
             dist/mlb/data/same_game_predictions.json
             dist/mlb/data/pitcher_parlay_predictions.json
             dist/mlb/data/exotic_market_predictions.json
+            dist/mlb/data/unified_predictions.json
+            dist/mlb/data/mlb_engine_manifest.json
             sports/mlb/web/data/daily_predictions.json
             sports/mlb/web/data/same_game_predictions.json
             sports/mlb/web/data/pitcher_parlay_predictions.json
             sports/mlb/web/data/exotic_market_predictions.json
             sports/mlb/data/predictions/unified/v2_1_evidence.jsonl
+            sports/mlb/web/data/unified_predictions.json
+            sports/mlb/web/data/mlb_engine_manifest.json
             sports/mlb/data/predictions/backtests/latent_daily_pool_replay_2026.json
             sports/mlb/data/predictions/team_market_predictions.json
           if-no-files-found: warn

@@ -138,7 +138,10 @@ def main() -> int:
     for target in targets:
         if not target.exists():
             continue
-        payload = enrich_file(target)
+        # Resolve the dependency at call time so tests and production wrappers
+        # can replace the repository resolver without being defeated by the
+        # function definition's bound default argument.
+        payload = enrich_file(target, person_id_resolver=exporter.search_person_id_by_name)
         legs = find_leg_dicts(payload)
         enriched_counts[str(target)] = sum(1 for leg in legs if leg.get("player_headshot_url"))
     print(json.dumps({"enriched": enriched_counts}, indent=2))

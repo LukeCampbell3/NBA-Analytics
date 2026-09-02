@@ -1,0 +1,27 @@
+{
+  "evidence_state": "DEVELOPMENT",
+  "seed": 17,
+  "results": [
+    {
+      "trials": 5000,
+      "seconds_per_game": 0.03129942899977323,
+      "peak_memory_mb": 1.4769811630249023,
+      "game_over_8_5_probability": 0.485
+    },
+    {
+      "trials": 10000,
+      "seconds_per_game": 0.006196966000061366,
+      "peak_memory_mb": 1.03106689453125,
+      "game_over_8_5_probability": 0.4804
+    },
+    {
+      "trials": 50000,
+      "seconds_per_game": 0.03957947500020964,
+      "peak_memory_mb": 5.15087890625,
+      "game_over_8_5_probability": 0.48866
+    }
+  ],
+  "convergence_10000_to_50000": 0.00825999999999999,
+  "full_slate_15_games_10000_trials_seconds": 0.060195785999894724,
+  "full_slate_peak_memory_mb": 1.03363037109375
+}

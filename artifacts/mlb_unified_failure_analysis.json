@@ -1,0 +1,837 @@
+{
+  "development_diagnostic": {
+    "capabilities": {
+      "H": {
+        "mae": 0.7078129343027525,
+        "mean_prediction_error": 0.046915249839067544,
+        "real_priced_rows": 71,
+        "rmse": 0.8895821246264553,
+        "rows": 42451,
+        "slates": 156
+      },
+      "TB": {
+        "mae": 1.0577293148982414,
+        "mean_prediction_error": 0.0034262226854915277,
+        "real_priced_rows": 1803,
+        "rmse": 1.4398191661924444,
+        "rows": 42451,
+        "slates": 156
+      }
+    },
+    "date_max": "2026-08-05",
+    "date_min": "2026-03-01",
+    "evidence_class": "RECONSTRUCTED_DIAGNOSTIC",
+    "independent_slates": 156,
+    "limitations": [
+      "No frozen usable probability or calibration state",
+      "Sparse/missing real two-sided prices",
+      "No prediction-time lineup/player-status state",
+      "Cannot certify selector ROI or incremental probability skill"
+    ],
+    "rows": 84902
+  },
+  "evidence_disposition": "CONSUMED_LOCKED_DIAGNOSTIC_EVIDENCE",
+  "loss_taxonomy_counts": {
+    "MARKET_PRIOR_ERROR": 4,
+    "SELECTION_BOUNDARY_ERROR": 4,
+    "UNCERTAINTY_UNDERESTIMATION": 5
+  },
+  "observations": [
+    {
+      "actual_value": 1,
+      "book": "fanduel",
+      "brier_contribution": 0.11048106467479743,
+      "calibrated_probability": 0.6676130798680588,
+      "conservative_expected_value": 0.11268846644676467,
+      "eligible": false,
+      "event_date": "2026-08-30",
+      "evidence_class": "EXACT_CANDIDATE_ONLY",
+      "exclusion_reason": "FROZEN_POLICY_QUALIFICATION_NOT_FULLY_PROVABLE",
+      "expected_win": 0.6676130798680588,
+      "failure_taxonomy": [],
+      "fidelity": "EXACT",
+      "fidelity_reason": "ARCHIVED_WORKFLOW_PREGAME_FROZEN_INPUTS",
+      "game_id": "822766",
+      "generation_timestamp": "2026-08-30T14:56:05.110963+00:00",
+      "implied_market_probability": 0.6000000000000001,
+      "line": 0.5,
+      "log_loss_contribution": 0.40404649501361867,
+      "market": "H",
+      "player_id": "cal_raleigh",
+      "probability_edge": 0.06761307986805876,
+      "probability_residual": 0.33238692013194115,
+      "qualification_gate_audit": {
+        "conservative_ev": {
+          "status": "PASS",
+          "value": 0.11268846644676467
+        },
+        "edge": {
+          "status": "PASS",
+          "value": 0.06761307986805876
+        },
+        "exact_selection": {
+          "status": "PASS",
+          "value": true
+        },
+        "identity": {
+          "status": "PASS",
+          "value": "CONFIRMED"
+        },
+        "lineup": {
+          "status": "PASS",
+          "value": "CONFIRMED"
+        },
+        "market_capability": {
+          "status": "PASS",
+          "value": "H"
+        },
+        "player_status": {
+          "note": "Confirmed lineup is not a separately preserved injury/player-status assertion.",
+          "status": "UNPROVABLE",
+          "value": null
+        },
+        "price": {
+          "status": "PASS",
+          "value": -150.0
+        },
+        "probability": {
+          "status": "PASS",
+          "value": 0.6676130798680588
+        },
+        "quote_freshness": {
+          "note": "No per-quote timestamp was preserved; market_date and artifact time are not quote time.",
+          "status": "UNPROVABLE",
+          "value": null
+        },
+        "support": {
+          "status": "PASS",
+          "value": 56.0
+        },
+        "uncertainty": {
+          "note": "V1 compatibility adapter assigns zero because final_hit_probability was documented as already conservative.",
+          "status": "PASS",
+          "value": 0.0
+        }
+      },
+      "quoted_odds": -150.0,
+      "raw_probability": 0.6676130798680588,
+      "rejection_reasons": [],
+      "settlement": "won",
+      "settlement_source": "MLB_STATSAPI_FINAL_FEED",
+      "settlement_source_sha256": "2940423e0ad027aacf7fcbe42a7f19b5cfe8c033cdd1900845b1fa9a83bd3e48",
+      "snapshot_candidate_sha256": "3c9f4c8c17362f8be46eb88793e120fded91a6bd002a443b658823fd70e8f26d",
+      "source_artifact_id": 9734123174,
+      "source_commit": "657b66cbd133354b41b4c7fd139af4f3f1d4d169",
+      "source_commit_time": "2026-08-30T14:59:19Z",
+      "source_kind": "GITHUB_ACTIONS_ARTIFACT",
+      "source_observation_sha256": "ba8ba00ee9e0831d2a0fb3ee96ddb07d6ce7ed2f3872a177c4dcd9f5948466e7",
+      "uncertainty": 0.0,
+      "usable_probability": 0.6676130798680588
+    },
+    {
+      "actual_value": 1,
+      "book": "fanduel",
+      "brier_contribution": 0.0870797666827721,
+      "calibrated_probability": 0.7049071897135206,
+      "conservative_expected_value": 0.10771129812124669,
+      "eligible": false,
+      "event_date": "2026-08-30",
+      "evidence_class": "EXACT_CANDIDATE_ONLY",
+      "exclusion_reason": "FROZEN_POLICY_QUALIFICATION_NOT_FULLY_PROVABLE",
+      "expected_win": 0.7049071897135206,
+      "failure_taxonomy": [],
+      "fidelity": "EXACT",
+      "fidelity_reason": "ARCHIVED_WORKFLOW_PREGAME_FROZEN_INPUTS",
+      "game_id": "824876",
+      "generation_timestamp": "2026-08-30T14:56:05.110963+00:00",
+      "implied_market_probability": 0.6363636363636364,
+      "line": 0.5,
+      "log_loss_contribution": 0.3496891306323615,
+      "market": "H",
+      "player_id": "austin_riley",
+      "probability_edge": 0.06854355334988427,
+      "probability_residual": 0.2950928102864794,
+      "qualification_gate_audit": {
+        "conservative_ev": {
+          "status": "PASS",
+          "value": 0.10771129812124669
+        },
+        "edge": {
+          "status": "PASS",
+          "value": 0.06854355334988427
+        },
+        "exact_selection": {
+          "status": "PASS",
+          "value": true
+        },
+        "identity": {
+          "status": "PASS",
+          "value": "CONFIRMED"
+        },
+        "lineup": {
+          "status": "PASS",
+          "value": "CONFIRMED"
+        },
+        "market_capability": {
+          "status": "PASS",
+          "value": "H"
+        },
+        "player_status": {
+          "note": "Confirmed lineup is not a separately preserved injury/player-status assertion.",
+          "status": "UNPROVABLE",
+          "value": null
+        },
+        "price": {
+          "status": "PASS",
+          "value": -175.0
+        },
+        "probability": {
+          "status": "PASS",
+          "value": 0.7049071897135206
+        },
+        "quote_freshness": {
+          "note": "No per-quote timestamp was preserved; market_date and artifact time are not quote time.",
+          "status": "UNPROVABLE",
+          "value": null
+        },
+        "support": {
+          "status": "PASS",
+          "value": 56.0
+        },
+        "uncertainty": {
+          "note": "V1 compatibility adapter assigns zero because final_hit_probability was documented as already conservative.",
+          "status": "PASS",
+          "value": 0.0
+        }
+      },
+      "quoted_odds": -175.0,
+      "raw_probability": 0.7049071897135206,
+      "rejection_reasons": [],
+      "settlement": "won",
+      "settlement_source": "MLB_STATSAPI_FINAL_FEED",
+      "settlement_source_sha256": "d0b21a084598365557e23172e64a6553941dfde00f4c5d5cbe05fc973395b7a9",
+      "snapshot_candidate_sha256": "84f03374fbd4a9b3c4e3d9f07ff49e39f43ab65dc20f823c9177513fe512ae10",
+      "source_artifact_id": 9734123174,
+      "source_commit": "657b66cbd133354b41b4c7fd139af4f3f1d4d169",
+      "source_commit_time": "2026-08-30T14:59:19Z",
+      "source_kind": "GITHUB_ACTIONS_ARTIFACT",
+      "source_observation_sha256": "ba8ba00ee9e0831d2a0fb3ee96ddb07d6ce7ed2f3872a177c4dcd9f5948466e7",
+      "uncertainty": 0.0,
+      "usable_probability": 0.7049071897135206
+    },
+    {
+      "actual_value": 0,
+      "book": "fanduel",
+      "brier_contribution": 0.4402515484024959,
+      "calibrated_probability": 0.6635145427211795,
+      "conservative_expected_value": 0.03213373312183476,
+      "eligible": false,
+      "event_date": "2026-08-30",
+      "evidence_class": "EXACT_CANDIDATE_ONLY",
+      "exclusion_reason": "FROZEN_POLICY_QUALIFICATION_NOT_FULLY_PROVABLE",
+      "expected_win": 0.6635145427211795,
+      "failure_taxonomy": [
+        "MARKET_PRIOR_ERROR",
+        "SELECTION_BOUNDARY_ERROR",
+        "UNCERTAINTY_UNDERESTIMATION"
+      ],
+      "fidelity": "EXACT",
+      "fidelity_reason": "ARCHIVED_WORKFLOW_PREGAME_FROZEN_INPUTS",
+      "game_id": "823502",
+      "generation_timestamp": "2026-08-30T14:56:05.110963+00:00",
+      "implied_market_probability": 0.6428571428571428,
+      "line": 0.5,
+      "log_loss_contribution": 1.0892003484276347,
+      "market": "H",
+      "player_id": "caleb_durbin",
+      "probability_edge": 0.020657399864036696,
+      "probability_residual": -0.6635145427211795,
+      "qualification_gate_audit": {
+        "conservative_ev": {
+          "status": "PASS",
+          "value": 0.03213373312183476
+        },
+        "edge": {
+          "status": "PASS",
+          "value": 0.020657399864036696
+        },
+        "exact_selection": {
+          "status": "PASS",
+          "value": true
+        },
+        "identity": {
+          "status": "PASS",
+          "value": "CONFIRMED"
+        },
+        "lineup": {
+          "status": "PASS",
+          "value": "CONFIRMED"
+        },
+        "market_capability": {
+          "status": "PASS",
+          "value": "H"
+        },
+        "player_status": {
+          "note": "Confirmed lineup is not a separately preserved injury/player-status assertion.",
+          "status": "UNPROVABLE",
+          "value": null
+        },
+        "price": {
+          "status": "PASS",
+          "value": -180.0
+        },
+        "probability": {
+          "status": "PASS",
+          "value": 0.6635145427211795
+        },
+        "quote_freshness": {
+          "note": "No per-quote timestamp was preserved; market_date and artifact time are not quote time.",
+          "status": "UNPROVABLE",
+          "value": null
+        },
+        "support": {
+          "status": "PASS",
+          "value": 56.0
+        },
+        "uncertainty": {
+          "note": "V1 compatibility adapter assigns zero because final_hit_probability was documented as already conservative.",
+          "status": "PASS",
+          "value": 0.0
+        }
+      },
+      "quoted_odds": -180.0,
+      "raw_probability": 0.6635145427211795,
+      "rejection_reasons": [],
+      "settlement": "lost",
+      "settlement_source": "MLB_STATSAPI_FINAL_FEED",
+      "settlement_source_sha256": "b8f76447cf078af7817cd0d42de752c6aa388f058b4f912044b54fc02938511f",
+      "snapshot_candidate_sha256": "e337c90e0b5fc18692bca982243c8d21b32c3b2be3619e8e1bee2f5f0109e2e2",
+      "source_artifact_id": 9734123174,
+      "source_commit": "657b66cbd133354b41b4c7fd139af4f3f1d4d169",
+      "source_commit_time": "2026-08-30T14:59:19Z",
+      "source_kind": "GITHUB_ACTIONS_ARTIFACT",
+      "source_observation_sha256": "ba8ba00ee9e0831d2a0fb3ee96ddb07d6ce7ed2f3872a177c4dcd9f5948466e7",
+      "uncertainty": 0.0,
+      "usable_probability": 0.6635145427211795
+    },
+    {
+      "actual_value": 0,
+      "book": "fanduel",
+      "brier_contribution": 0.41118104719991416,
+      "calibrated_probability": 0.6412340034651267,
+      "conservative_expected_value": 0.05493336053940201,
+      "eligible": false,
+      "event_date": "2026-08-30",
+      "evidence_class": "EXACT_CANDIDATE_ONLY",
+      "exclusion_reason": "FROZEN_POLICY_QUALIFICATION_NOT_FULLY_PROVABLE",
+      "expected_win": 0.6412340034651267,
+      "failure_taxonomy": [
+        "UNCERTAINTY_UNDERESTIMATION"
+      ],
+      "fidelity": "EXACT",
+      "fidelity_reason": "ARCHIVED_WORKFLOW_PREGAME_FROZEN_INPUTS",
+      "game_id": "823010",
+      "generation_timestamp": "2026-08-30T16:55:09.329750+00:00",
+      "implied_market_probability": 0.607843137254902,
+      "line": 0.5,
+      "log_loss_contribution": 1.0250849232581487,
+      "market": "H",
+      "player_id": "spencer_horwitz",
+      "probability_edge": 0.03339086621022469,
+      "probability_residual": -0.6412340034651267,
+      "qualification_gate_audit": {
+        "conservative_ev": {
+          "status": "PASS",
+          "value": 0.05493336053940201
+        },
+        "edge": {
+          "status": "PASS",
+          "value": 0.03339086621022469
+        },
+        "exact_selection": {
+          "status": "PASS",
+          "value": true
+        },
+        "identity": {
+          "status": "PASS",
+          "value": "CONFIRMED"
+        },
+        "lineup": {
+          "status": "PASS",
+          "value": "CONFIRMED"
+        },
+        "market_capability": {
+          "status": "PASS",
+          "value": "H"
+        },
+        "player_status": {
+          "note": "Confirmed lineup is not a separately preserved injury/player-status assertion.",
+          "status": "UNPROVABLE",
+          "value": null
+        },
+        "price": {
+          "status": "PASS",
+          "value": -155.0
+        },
+        "probability": {
+          "status": "PASS",
+          "value": 0.6412340034651267
+        },
+        "quote_freshness": {
+          "note": "No per-quote timestamp was preserved; market_date and artifact time are not quote time.",
+          "status": "UNPROVABLE",
+          "value": null
+        },
+        "support": {
+          "status": "PASS",
+          "value": 56.0
+        },
+        "uncertainty": {
+          "note": "V1 compatibility adapter assigns zero because final_hit_probability was documented as already conservative.",
+          "status": "PASS",
+          "value": 0.0
+        }
+      },
+      "quoted_odds": -155.0,
+      "raw_probability": 0.6412340034651267,
+      "rejection_reasons": [],
+      "settlement": "lost",
+      "settlement_source": "MLB_STATSAPI_FINAL_FEED",
+      "settlement_source_sha256": "61626cfd53ad2dd121546dc25cc61a587f3210524dbdf5a05200955e18df5a55",
+      "snapshot_candidate_sha256": "baef6f97bda1c428148cd39d7a00c9090a833a7f7fd60d614c6f0d311850756c",
+      "source_artifact_id": 9735656814,
+      "source_commit": "abca0d5260dfe27c16a4a4d3823d7ec3aa31c37a",
+      "source_commit_time": "2026-08-30T16:58:32Z",
+      "source_kind": "GITHUB_ACTIONS_ARTIFACT",
+      "source_observation_sha256": "07a37b98ada1ef28a935b4881e81b7c2fa7f0034288f84d46d2f64b42daf4dd9",
+      "uncertainty": 0.0,
+      "usable_probability": 0.6412340034651267
+    },
+    {
+      "actual_value": 0,
+      "book": "fanduel",
+      "brier_contribution": 0.426691630375174,
+      "calibrated_probability": 0.6532163733214087,
+      "conservative_expected_value": 0.026482872362213694,
+      "eligible": false,
+      "event_date": "2026-08-30",
+      "evidence_class": "EXACT_CANDIDATE_ONLY",
+      "exclusion_reason": "FROZEN_POLICY_QUALIFICATION_NOT_FULLY_PROVABLE",
+      "expected_win": 0.6532163733214087,
+      "failure_taxonomy": [
+        "MARKET_PRIOR_ERROR",
+        "SELECTION_BOUNDARY_ERROR",
+        "UNCERTAINTY_UNDERESTIMATION"
+      ],
+      "fidelity": "EXACT",
+      "fidelity_reason": "ARCHIVED_WORKFLOW_PREGAME_FROZEN_INPUTS",
+      "game_id": "823662",
+      "generation_timestamp": "2026-08-30T16:55:09.329750+00:00",
+      "implied_market_probability": 0.6363636363636364,
+      "line": 0.5,
+      "log_loss_contribution": 1.0590542477664486,
+      "market": "H",
+      "player_id": "munetaka_murakami",
+      "probability_edge": 0.01685273695777234,
+      "probability_residual": -0.6532163733214087,
+      "qualification_gate_audit": {
+        "conservative_ev": {
+          "status": "PASS",
+          "value": 0.026482872362213694
+        },
+        "edge": {
+          "status": "PASS",
+          "value": 0.01685273695777234
+        },
+        "exact_selection": {
+          "status": "PASS",
+          "value": true
+        },
+        "identity": {
+          "status": "PASS",
+          "value": "CONFIRMED"
+        },
+        "lineup": {
+          "status": "PASS",
+          "value": "CONFIRMED"
+        },
+        "market_capability": {
+          "status": "PASS",
+          "value": "H"
+        },
+        "player_status": {
+          "note": "Confirmed lineup is not a separately preserved injury/player-status assertion.",
+          "status": "UNPROVABLE",
+          "value": null
+        },
+        "price": {
+          "status": "PASS",
+          "value": -175.0
+        },
+        "probability": {
+          "status": "PASS",
+          "value": 0.6532163733214087
+        },
+        "quote_freshness": {
+          "note": "No per-quote timestamp was preserved; market_date and artifact time are not quote time.",
+          "status": "UNPROVABLE",
+          "value": null
+        },
+        "support": {
+          "status": "PASS",
+          "value": 56.0
+        },
+        "uncertainty": {
+          "note": "V1 compatibility adapter assigns zero because final_hit_probability was documented as already conservative.",
+          "status": "PASS",
+          "value": 0.0
+        }
+      },
+      "quoted_odds": -175.0,
+      "raw_probability": 0.6532163733214087,
+      "rejection_reasons": [],
+      "settlement": "lost",
+      "settlement_source": "MLB_STATSAPI_FINAL_FEED",
+      "settlement_source_sha256": "f655810d3cb279fb8df70aa786456c29378d4dc655383d8c58fc9b7074851df8",
+      "snapshot_candidate_sha256": "5caece9dfcc33c8a948b682447bfebfef5d5eb246f7df399787f23764ca26ff3",
+      "source_artifact_id": 9735656814,
+      "source_commit": "abca0d5260dfe27c16a4a4d3823d7ec3aa31c37a",
+      "source_commit_time": "2026-08-30T16:58:32Z",
+      "source_kind": "GITHUB_ACTIONS_ARTIFACT",
+      "source_observation_sha256": "07a37b98ada1ef28a935b4881e81b7c2fa7f0034288f84d46d2f64b42daf4dd9",
+      "uncertainty": 0.0,
+      "usable_probability": 0.6532163733214087
+    },
+    {
+      "actual_value": 0,
+      "book": "fanduel",
+      "brier_contribution": 0.4333818721146411,
+      "calibrated_probability": 0.6583174554230209,
+      "conservative_expected_value": 0.024049375102477066,
+      "eligible": false,
+      "event_date": "2026-08-30",
+      "evidence_class": "EXACT_CANDIDATE_ONLY",
+      "exclusion_reason": "FROZEN_POLICY_QUALIFICATION_NOT_FULLY_PROVABLE",
+      "expected_win": 0.6583174554230209,
+      "failure_taxonomy": [
+        "MARKET_PRIOR_ERROR",
+        "SELECTION_BOUNDARY_ERROR",
+        "UNCERTAINTY_UNDERESTIMATION"
+      ],
+      "fidelity": "EXACT",
+      "fidelity_reason": "ARCHIVED_WORKFLOW_PREGAME_FROZEN_INPUTS",
+      "game_id": "823662",
+      "generation_timestamp": "2026-08-30T16:55:09.329750+00:00",
+      "implied_market_probability": 0.6428571428571428,
+      "line": 0.5,
+      "log_loss_contribution": 1.0738732052249031,
+      "market": "H",
+      "player_id": "brenton_doyle",
+      "probability_edge": 0.015460312565878098,
+      "probability_residual": -0.6583174554230209,
+      "qualification_gate_audit": {
+        "conservative_ev": {
+          "status": "PASS",
+          "value": 0.024049375102477066
+        },
+        "edge": {
+          "status": "PASS",
+          "value": 0.015460312565878098
+        },
+        "exact_selection": {
+          "status": "PASS",
+          "value": true
+        },
+        "identity": {
+          "status": "PASS",
+          "value": "CONFIRMED"
+        },
+        "lineup": {
+          "status": "PASS",
+          "value": "CONFIRMED"
+        },
+        "market_capability": {
+          "status": "PASS",
+          "value": "H"
+        },
+        "player_status": {
+          "note": "Confirmed lineup is not a separately preserved injury/player-status assertion.",
+          "status": "UNPROVABLE",
+          "value": null
+        },
+        "price": {
+          "status": "PASS",
+          "value": -180.0
+        },
+        "probability": {
+          "status": "PASS",
+          "value": 0.6583174554230209
+        },
+        "quote_freshness": {
+          "note": "No per-quote timestamp was preserved; market_date and artifact time are not quote time.",
+          "status": "UNPROVABLE",
+          "value": null
+        },
+        "support": {
+          "status": "PASS",
+          "value": 56.0
+        },
+        "uncertainty": {
+          "note": "V1 compatibility adapter assigns zero because final_hit_probability was documented as already conservative.",
+          "status": "PASS",
+          "value": 0.0
+        }
+      },
+      "quoted_odds": -180.0,
+      "raw_probability": 0.6583174554230209,
+      "rejection_reasons": [],
+      "settlement": "lost",
+      "settlement_source": "MLB_STATSAPI_FINAL_FEED",
+      "settlement_source_sha256": "f655810d3cb279fb8df70aa786456c29378d4dc655383d8c58fc9b7074851df8",
+      "snapshot_candidate_sha256": "088fcf230a4d8db2d4379d32144a42f3b36902467c301cd1896e1646afefb217",
+      "source_artifact_id": 9735656814,
+      "source_commit": "abca0d5260dfe27c16a4a4d3823d7ec3aa31c37a",
+      "source_commit_time": "2026-08-30T16:58:32Z",
+      "source_kind": "GITHUB_ACTIONS_ARTIFACT",
+      "source_observation_sha256": "07a37b98ada1ef28a935b4881e81b7c2fa7f0034288f84d46d2f64b42daf4dd9",
+      "uncertainty": 0.0,
+      "usable_probability": 0.6583174554230209
+    },
+    {
+      "actual_value": 1,
+      "book": "fanduel",
+      "brier_contribution": 0.37501048916099994,
+      "calibrated_probability": 0.612381,
+      "conservative_expected_value": 0.020634999999999737,
+      "eligible": false,
+      "event_date": "2026-08-30",
+      "evidence_class": "EXACT_CANDIDATE_ONLY",
+      "exclusion_reason": "FROZEN_POLICY_QUALIFICATION_NOT_FULLY_PROVABLE",
+      "expected_win": 0.612381,
+      "failure_taxonomy": [
+        "MARKET_PRIOR_ERROR",
+        "SELECTION_BOUNDARY_ERROR",
+        "UNCERTAINTY_UNDERESTIMATION"
+      ],
+      "fidelity": "EXACT",
+      "fidelity_reason": "ARCHIVED_WORKFLOW_PREGAME_FROZEN_INPUTS",
+      "game_id": "824959",
+      "generation_timestamp": "2026-08-30T18:48:49.725698+00:00",
+      "implied_market_probability": 0.6000000000000001,
+      "line": 1.5,
+      "log_loss_contribution": 0.9477323805591044,
+      "market": "TB",
+      "player_id": "pete_alonso",
+      "probability_edge": 0.012380999999999864,
+      "probability_residual": -0.612381,
+      "qualification_gate_audit": {
+        "conservative_ev": {
+          "status": "PASS",
+          "value": 0.020634999999999737
+        },
+        "edge": {
+          "status": "PASS",
+          "value": 0.012380999999999864
+        },
+        "exact_selection": {
+          "status": "PASS",
+          "value": true
+        },
+        "identity": {
+          "status": "PASS",
+          "value": "CONFIRMED"
+        },
+        "lineup": {
+          "status": "PASS",
+          "value": "CONFIRMED"
+        },
+        "market_capability": {
+          "status": "PASS",
+          "value": "TB"
+        },
+        "player_status": {
+          "note": "Confirmed lineup is not a separately preserved injury/player-status assertion.",
+          "status": "UNPROVABLE",
+          "value": null
+        },
+        "price": {
+          "status": "PASS",
+          "value": -150.0
+        },
+        "probability": {
+          "status": "PASS",
+          "value": 0.612381
+        },
+        "quote_freshness": {
+          "note": "No per-quote timestamp was preserved; market_date and artifact time are not quote time.",
+          "status": "UNPROVABLE",
+          "value": null
+        },
+        "support": {
+          "status": "PASS",
+          "value": 401.0
+        },
+        "uncertainty": {
+          "note": "V1 compatibility adapter assigns zero because final_hit_probability was documented as already conservative.",
+          "status": "PASS",
+          "value": 0.0
+        }
+      },
+      "quoted_odds": -150.0,
+      "raw_probability": 0.612381,
+      "rejection_reasons": [],
+      "settlement": "lost",
+      "settlement_source": "MLB_STATSAPI_FINAL_FEED",
+      "settlement_source_sha256": "2beea499065e308a5685d21f0e76cea360d9afeb0fdd6d18556cbc4c3e6ba031",
+      "snapshot_candidate_sha256": "0598501a4a01290bf08708f20ae0020e1b1caa8ec004391b495634f9856aa166",
+      "source_artifact_id": 9737132236,
+      "source_commit": "bf7d729477847e8567166d448372b00a3da4f181",
+      "source_commit_time": "2026-08-30T18:51:49Z",
+      "source_kind": "GITHUB_ACTIONS_ARTIFACT",
+      "source_observation_sha256": "a7111cccd97ff31cc13a644cfea88b30690fb8e953e9b42bf2667cef19897b0d",
+      "uncertainty": 0.0,
+      "usable_probability": 0.612381
+    },
+    {
+      "actual_value": 8,
+      "book": "fanduel",
+      "brier_contribution": 0.14911336710400003,
+      "calibrated_probability": 0.613848,
+      "conservative_expected_value": 0.08603876923076914,
+      "eligible": false,
+      "event_date": "2026-08-30",
+      "evidence_class": "EXACT_CANDIDATE_ONLY",
+      "exclusion_reason": "FROZEN_POLICY_QUALIFICATION_NOT_FULLY_PROVABLE",
+      "expected_win": 0.613848,
+      "failure_taxonomy": [],
+      "fidelity": "EXACT",
+      "fidelity_reason": "COMMITTED_PREGAME_FROZEN_INPUTS",
+      "game_id": "824636",
+      "generation_timestamp": "2026-08-30T20:12:47.351556+00:00",
+      "implied_market_probability": 0.5652173913043479,
+      "line": 1.5,
+      "log_loss_contribution": 0.488007938485545,
+      "market": "TB",
+      "player_id": "pete_crow-armstrong",
+      "probability_edge": 0.048630608695652056,
+      "probability_residual": 0.38615200000000005,
+      "qualification_gate_audit": {
+        "conservative_ev": {
+          "status": "PASS",
+          "value": 0.08603876923076914
+        },
+        "edge": {
+          "status": "PASS",
+          "value": 0.048630608695652056
+        },
+        "exact_selection": {
+          "status": "PASS",
+          "value": true
+        },
+        "identity": {
+          "status": "PASS",
+          "value": "CONFIRMED"
+        },
+        "lineup": {
+          "status": "PASS",
+          "value": "CONFIRMED"
+        },
+        "market_capability": {
+          "status": "PASS",
+          "value": "TB"
+        },
+        "player_status": {
+          "note": "Confirmed lineup is not a separately preserved injury/player-status assertion.",
+          "status": "UNPROVABLE",
+          "value": null
+        },
+        "price": {
+          "status": "PASS",
+          "value": -130.0
+        },
+        "probability": {
+          "status": "PASS",
+          "value": 0.613848
+        },
+        "quote_freshness": {
+          "note": "No per-quote timestamp was preserved; market_date and artifact time are not quote time.",
+          "status": "UNPROVABLE",
+          "value": null
+        },
+        "support": {
+          "status": "PASS",
+          "value": 401.0
+        },
+        "uncertainty": {
+          "note": "V1 compatibility adapter assigns zero because final_hit_probability was documented as already conservative.",
+          "status": "PASS",
+          "value": 0.0
+        }
+      },
+      "quoted_odds": -130.0,
+      "raw_probability": 0.613848,
+      "rejection_reasons": [],
+      "settlement": "won",
+      "settlement_source": "MLB_STATSAPI_FINAL_FEED",
+      "settlement_source_sha256": "3581bdb4884d0042ff1d346ffefa7378dcb7abe737aba163e7ad86232b428c1b",
+      "snapshot_candidate_sha256": "f6aa1bbaf4bbd8b2f51749a94ff2b5c046af04ca0e668b743ff5d0927555431f",
+      "source_artifact_id": null,
+      "source_commit": "578b3faa03bc611313c4115ae4ef513454adf694",
+      "source_commit_time": "2026-08-30T16:14:26-04:00",
+      "source_kind": "GIT_OBJECT",
+      "source_observation_sha256": null,
+      "uncertainty": 0.0,
+      "usable_probability": 0.613848
+    }
+  ],
+  "qualification_audit": {
+    "conclusion": "The eight rows are exact pregame candidates but cannot prove the complete advertised frozen qualification contract.",
+    "exact_records_reviewed": 8,
+    "fully_qualified": 0,
+    "reclassified_exact_candidate_only": 8,
+    "systemic_blockers": [
+      "QUOTE_FRESHNESS_UNPROVABLE",
+      "PLAYER_STATUS_UNPROVABLE"
+    ]
+  },
+  "schema_version": 1,
+  "summaries": {
+    "batter_hits": {
+      "actual_wins": 2,
+      "brier": 0.31817782157496577,
+      "expected_minus_actual": 1.9888026445123153,
+      "expected_wins": 3.9888026445123153,
+      "log_loss": 0.8334913917205192,
+      "mean_predicted_probability": 0.6648004407520526,
+      "observations": 6,
+      "observed_hit_rate": 0.3333333333333333,
+      "poisson_binomial_p_w_le_observed": 0.10175776340317937,
+      "roi": -0.46031746031746035
+    },
+    "batter_total_bases": {
+      "actual_wins": 1,
+      "brier": 0.26206192813249995,
+      "expected_minus_actual": 0.226229,
+      "expected_wins": 1.226229,
+      "log_loss": 0.7178701595223247,
+      "mean_predicted_probability": 0.6131145,
+      "observations": 2,
+      "observed_hit_rate": 0.5,
+      "poisson_binomial_p_w_le_observed": 0.624091147912,
+      "roi": -0.11538461538461542
+    },
+    "combined": {
+      "actual_wins": 3,
+      "brier": 0.30414884821434934,
+      "expected_minus_actual": 2.2150316445123153,
+      "expected_wins": 5.215031644512315,
+      "log_loss": 0.8045860836709706,
+      "mean_predicted_probability": 0.6518789555640394,
+      "observations": 8,
+      "observed_hit_rate": 0.375,
+      "poisson_binomial_p_w_le_observed": 0.10349046269763798,
+      "roi": -0.3740842490842491
+    }
+  },
+  "v1_policy": "BASELINE_POLICY_V1"
+}

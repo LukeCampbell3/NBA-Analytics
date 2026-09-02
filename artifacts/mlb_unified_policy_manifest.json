@@ -1,0 +1,210 @@
+{
+  "calibrator_artifacts": [],
+  "capabilities": {
+    "batter_hits": {
+      "blocker": null,
+      "model": "legacy_player_projection",
+      "requires_event_identity": false,
+      "settlement": "H",
+      "status": "SUPPORTED"
+    },
+    "batter_home_runs": {
+      "blocker": null,
+      "model": "legacy_player_projection",
+      "requires_event_identity": false,
+      "settlement": "HR",
+      "status": "SUPPORTED"
+    },
+    "batter_rbis": {
+      "blocker": null,
+      "model": "legacy_player_projection",
+      "requires_event_identity": false,
+      "settlement": "RBI",
+      "status": "SUPPORTED"
+    },
+    "batter_runs_scored": {
+      "blocker": null,
+      "model": "legacy_player_projection",
+      "requires_event_identity": false,
+      "settlement": "R",
+      "status": "SUPPORTED"
+    },
+    "batter_total_bases": {
+      "blocker": null,
+      "model": "legacy_player_projection",
+      "requires_event_identity": false,
+      "settlement": "TB",
+      "status": "SUPPORTED"
+    },
+    "first_5_innings_total": {
+      "blocker": null,
+      "model": "game_simulation_model",
+      "requires_event_identity": false,
+      "settlement": "first_5_total",
+      "status": "SHADOW_ONLY"
+    },
+    "game_total": {
+      "blocker": null,
+      "model": "game_simulation_model",
+      "requires_event_identity": false,
+      "settlement": "game_total",
+      "status": "SHADOW_ONLY"
+    },
+    "moneyline": {
+      "blocker": null,
+      "model": "game_simulation_model",
+      "requires_event_identity": false,
+      "settlement": "moneyline",
+      "status": "SHADOW_ONLY"
+    },
+    "pitcher_outs": {
+      "blocker": "Calibration/quote support is sparse",
+      "model": "pitcher_workload",
+      "requires_event_identity": false,
+      "settlement": "pitcher_outs",
+      "status": "SHADOW_ONLY"
+    },
+    "pitcher_pitches_inning": {
+      "blocker": "Inning pitch trajectory model unavailable",
+      "model": null,
+      "requires_event_identity": true,
+      "settlement": null,
+      "status": "EVENT_MODEL_REQUIRED"
+    },
+    "pitcher_strikeouts": {
+      "blocker": null,
+      "model": "pitcher_strikeout_model",
+      "requires_event_identity": false,
+      "settlement": "K",
+      "status": "SUPPORTED"
+    },
+    "pitcher_strikeouts_inning": {
+      "blocker": "Inning K trajectory model unavailable",
+      "model": null,
+      "requires_event_identity": true,
+      "settlement": null,
+      "status": "EVENT_MODEL_REQUIRED"
+    },
+    "plate_appearance_pitch_count": {
+      "blocker": "Exact PA ordinal cannot be resolved",
+      "model": null,
+      "requires_event_identity": true,
+      "settlement": null,
+      "status": "EVENT_IDENTITY_UNAVAILABLE"
+    },
+    "runs_inning": {
+      "blocker": "Pitch/play trajectory model unavailable",
+      "model": null,
+      "requires_event_identity": true,
+      "settlement": null,
+      "status": "EVENT_MODEL_REQUIRED"
+    },
+    "team_hits": {
+      "blocker": "TEAM_HITS_GENERATIVE_MODEL_REQUIRED",
+      "model": null,
+      "requires_event_identity": false,
+      "settlement": null,
+      "status": "MODEL_REQUIRED"
+    },
+    "team_runs_inning": {
+      "blocker": "Pitch/play trajectory model unavailable",
+      "model": null,
+      "requires_event_identity": true,
+      "settlement": null,
+      "status": "EVENT_MODEL_REQUIRED"
+    },
+    "team_total": {
+      "blocker": "Exact two-sided quote support is incomplete",
+      "model": "team_run_distribution",
+      "requires_event_identity": false,
+      "settlement": "team_runs",
+      "status": "DISCOVERY"
+    }
+  },
+  "compatibility_probability": {
+    "field": "final_hit_probability",
+    "missing_behavior": "FAIL_CLOSED",
+    "semantic": "legacy post-calibration conservative probability"
+  },
+  "decision_policy": {
+    "minimum_conservative_ev": 0.0,
+    "minimum_probability_edge": 0.01,
+    "minimum_usable_probability": 0.6,
+    "require_exact_selection_ids": false,
+    "uncertainty_multiplier": 1.0,
+    "valid_identity_states": [
+      "CONFIRMED"
+    ],
+    "valid_lineup_states": [
+      "CONFIRMED",
+      "NOT_APPLICABLE"
+    ],
+    "valid_role_states": [
+      "CONFIRMED",
+      "NOT_APPLICABLE"
+    ],
+    "valid_support_states": [
+      "IN_SUPPORT",
+      "SUPPORTED"
+    ]
+  },
+  "market_conditioning": {
+    "authority": "DEVELOPMENT",
+    "minimum_effective_sample_fraction": 0.5,
+    "minimum_identification_level": 2,
+    "weight_clip": [
+      0.25,
+      4.0
+    ]
+  },
+  "model_artifact_note": "Frozen unified code consumes compatibility probabilities; no separate unified model/calibrator artifact is loaded.",
+  "model_artifacts": [],
+  "policy_commit": "7c56729a9914eb9f903edffe9ca58b1a0a749ad4",
+  "policy_file_sha256": {
+    "sports/mlb/unified/adapters.py": "5b7e41c928f0e4e85a9dba93d0024a2e91d2786947c4ffb501624eb26f70612d",
+    "sports/mlb/unified/decision.py": "4c254b655dd385e6a2995c59e0e76a685346e11e2bd53e42eeb6a283b4e0ce90",
+    "sports/mlb/unified/market_conditioning.py": "05695d531b49b49b136ed0886b87174a414d9068f3eb1aa058b08c1bda14932f",
+    "sports/mlb/unified/market_registry.py": "9e396766ec6e559abf510c0480837a32879060eae7ad32bafabb0a784c575267",
+    "sports/mlb/unified/parlay.py": "2fd6790a5f650317658928e2aa4767d137671bc42ffdfc0327ac3948d2076348",
+    "sports/mlb/unified/schemas.py": "35c66d43bda8d13dc7e87ac62e6dce21978e118cf161349e30773a4402978cfe"
+  },
+  "policy_hash": "9b76168519494758d1a638496bd8198ec1b8fda5fdef158ce76d788d05d86643",
+  "schema_version": 1,
+  "staking": {
+    "automatic_scaling": false,
+    "martingale": false,
+    "production_staking_authorized": false
+  },
+  "ticket_policies": {
+    "2": {
+      "leg_count": 2,
+      "minimum_combined_decimal_price": 1.5,
+      "minimum_joint_probability": 0.45,
+      "minimum_leg_decimal_price": 1.2,
+      "minimum_leg_ev": 0.0,
+      "minimum_leg_probability": 0.6,
+      "minimum_ticket_ev": 0.0,
+      "top_k": 20
+    },
+    "3": {
+      "leg_count": 3,
+      "minimum_combined_decimal_price": 1.5,
+      "minimum_joint_probability": 0.3,
+      "minimum_leg_decimal_price": 1.2,
+      "minimum_leg_ev": 0.0,
+      "minimum_leg_probability": 0.6,
+      "minimum_ticket_ev": 0.0,
+      "top_k": 20
+    },
+    "4": {
+      "leg_count": 4,
+      "minimum_combined_decimal_price": 1.5,
+      "minimum_joint_probability": 0.2,
+      "minimum_leg_decimal_price": 1.2,
+      "minimum_leg_ev": 0.0,
+      "minimum_leg_probability": 0.6,
+      "minimum_ticket_ev": 0.0,
+      "top_k": 20
+    }
+  }
+}

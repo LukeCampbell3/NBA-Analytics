@@ -1,0 +1,235 @@
+{
+  "certification_eligible_rows": 8,
+  "frozen_replay_requirements": [
+    "commence_time_utc",
+    "direction",
+    "final_hit_probability",
+    "game_id",
+    "historical_bucket_support",
+    "lineup_status",
+    "market_line",
+    "player",
+    "selected_side_price",
+    "settlement",
+    "target"
+  ],
+  "generated_at_utc": "2026-09-02T11:02:56.177960Z",
+  "sources": {
+    "daily_runs:high_precision_prediction_artifacts": {
+      "fidelity": "RECONSTRUCTED_WEAK",
+      "independent_slates": 25,
+      "priced_rows": 41,
+      "reason": "Selected-only artifacts do not preserve the full rejected control pool, prediction-time lineup state, and frozen final probability on enough rows.",
+      "rows": 134,
+      "rows_with_frozen_final_probability": 8
+    },
+    "daily_runs:immutable_governance_candidate_universes": {
+      "fidelity": "PARTIAL",
+      "independent_slates": 8,
+      "lineup_confirmed_rows": 0,
+      "reason": "Full timestamped candidate universes exist, but only across eight slates and their committed rows remain unsettled with lineup state unavailable.",
+      "rows": 170127,
+      "settled_rows": 0
+    },
+    "git_history:sports/mlb/web/data/daily_predictions.json": {
+      "deduplicated_candidates": 324,
+      "exact_settled_candidates": 8,
+      "fidelity_counts": {
+        "EXACT": 12,
+        "RECONSTRUCTED_WEAK": 312
+      }
+    },
+    "github_actions:recovered_mlb_frontend_artifacts": {
+      "artifacts": 3,
+      "candidate_rows": 9,
+      "deduplicated_exact_candidates_admitted": 7,
+      "fidelity": "EXACT",
+      "reason": "Archived workflow outputs preserve full pregame candidate payloads, artifact and candidate hashes, exact quote/probability/lineup state, and timestamps before each event start."
+    },
+    "sports/mlb/data/predictions/calibration/historical_pool_universe_2026.csv": {
+      "date_max": "2026-08-05",
+      "date_min": "2026-03-01",
+      "fidelity": "RECONSTRUCTED_WEAK",
+      "field_availability": {
+        "Actual": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Commence_Time_UTC": {
+          "fraction": 0.0,
+          "present": 0,
+          "total": 242425
+        },
+        "Edge": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Game_Date": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Game_ID": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Game_Status_Code": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Game_Status_Detail": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "History_Rows": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Is_Home": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Last_History_Date": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Market_Books": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Market_Line": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Market_Line_Std": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Market_Over_Book": {
+          "fraction": 0.025183046302980305,
+          "present": 6105,
+          "total": 242425
+        },
+        "Market_Over_Book_Key": {
+          "fraction": 0.025183046302980305,
+          "present": 6105,
+          "total": 242425
+        },
+        "Market_Over_Price": {
+          "fraction": 0.025183046302980305,
+          "present": 6105,
+          "total": 242425
+        },
+        "Market_Over_Price_Time": {
+          "fraction": 0.025183046302980305,
+          "present": 6105,
+          "total": 242425
+        },
+        "Market_Source": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Market_Under_Book": {
+          "fraction": 0.01221821181808807,
+          "present": 2962,
+          "total": 242425
+        },
+        "Market_Under_Book_Key": {
+          "fraction": 0.01221821181808807,
+          "present": 2962,
+          "total": 242425
+        },
+        "Market_Under_Price": {
+          "fraction": 0.01221821181808807,
+          "present": 2962,
+          "total": 242425
+        },
+        "Market_Under_Price_Time": {
+          "fraction": 0.01221821181808807,
+          "present": 2962,
+          "total": 242425
+        },
+        "Model_Members": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Model_Selected": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Model_Val_MAE": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Model_Val_RMSE": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Opponent": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Player": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Player_ID": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Player_Type": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Prediction": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Prediction_Run_Date": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Result": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Target": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        },
+        "Team": {
+          "fraction": 1.0,
+          "present": 242425,
+          "total": 242425
+        }
+      },
+      "independent_slates": 156,
+      "reason": "Settled predictions and sparse quote timestamps exist, but frozen final/usable probability, lineup, role, calibration and uncertainty state do not.",
+      "rows": 242425
+    }
+  }
+}
