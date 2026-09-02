@@ -105,7 +105,7 @@ jobs:
             echo "### MLB prediction run"
             echo "- Date: $run_date (America/New_York)"
             echo "- Weekly history refresh: $refresh_history"
-            echo "- V2.1 challenger commit: cc205ac42491f913a83c3118ee4f2df860b52a4e"
+            echo "- V2.1 challenger commit: 55b7d07c1e4b58b362cf5f7afccdbf81ee76d9f0"
             echo "- V2.1 authority: prospective shadow only"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -192,7 +192,7 @@ jobs:
           assert shadow["policy"] == "UNIFIED_MLB_V2_1"
           assert shadow["policy_hash"] == "80f335d2501d54502909d7f8587ebfef56d725a67d44ae125f9df4337d489b1c"
           assert shadow["baseline_policy_hash"] == "52deb038a076b39a1bc840b77ae26648d9e4ffa20194135e7d48b9761edbc611"
-          assert shadow["implementation_commit"] == "cc205ac42491f913a83c3118ee4f2df860b52a4e"
+          assert shadow["implementation_commit"] == "55b7d07c1e4b58b362cf5f7afccdbf81ee76d9f0"
           assert shadow["production_authorized"] is False
           v4 = payload.get("v4_singles_shadow") or {}
           for play in v4.get("plays") or []:
@@ -207,10 +207,11 @@ jobs:
           # legacy artifacts, cannot authorize publication/staking, and writes
           # one coherent artifact for side-by-side validation.
           python sports/mlb/scripts/run_unified_mlb_shadow.py --run-date "$RUN_DATE"
-          # Frozen V2 baseline and V2.1 challenger consume the exact same
-          # completed daily pool. Neither has publication authority.
-          python sports/mlb/scripts/run_v2_1_challenger.py --run-date "$RUN_DATE"
-          python sports/mlb/scripts/audit_daily_mlb_slate.py --run-date "$RUN_DATE" --fail-on-integrity
+          # The pinned runner above already executed V2.1 at its immutable
+          # implementation commit and appended the all-candidate evidence.
+          # Audit that evidence without allowing a shadow-data deficiency to
+          # suppress the legacy-authoritative board.
+          python sports/mlb/scripts/audit_daily_mlb_slate.py --run-date "$RUN_DATE"
           python - <<'PY'
           import json, os, shutil
           from pathlib import Path

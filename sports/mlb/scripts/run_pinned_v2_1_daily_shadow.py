@@ -32,7 +32,7 @@ DAILY_JSON = REPO_ROOT / "sports/mlb/web/data/daily_predictions.json"
 EVIDENCE_LEDGER = REPO_ROOT / "sports/mlb/data/predictions/unified/v2_1_evidence.jsonl"
 STATIC_BUILDER = REPO_ROOT / "sports/site/pipeline/build_static_site.py"
 V21_BRANCH = "unified-mlb-v2-resolution"
-V21_COMMIT = "cc205ac42491f913a83c3118ee4f2df860b52a4e"
+V21_COMMIT = "55b7d07c1e4b58b362cf5f7afccdbf81ee76d9f0"
 V21_POLICY_HASH = "80f335d2501d54502909d7f8587ebfef56d725a67d44ae125f9df4337d489b1c"
 V2_BASELINE_POLICY_HASH = "52deb038a076b39a1bc840b77ae26648d9e4ffa20194135e7d48b9761edbc611"
 
