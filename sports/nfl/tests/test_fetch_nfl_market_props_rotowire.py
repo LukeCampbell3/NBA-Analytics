@@ -161,6 +161,8 @@ def test_build_observations_correctly_resolves_home_and_away_from_at_prefix() ->
     )
     assert observations[0]["home_team"] == "LV"
     assert observations[0]["away_team"] == "MIA"
+    assert observations[0]["provider_team"] == "MIA"
+    assert observations[0]["provider_opponent"] == "LV"
 
     home_row = _passyds_row("fanduel", "225.5", "-113", "-108", team="DAL", opp="PHI")
     observations = scraper.build_observations(

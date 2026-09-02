@@ -13,10 +13,16 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[3]
 NFL_ROOT = REPO_ROOT / "sports/nfl"
 TARGET_BY_POSITION = {"QB": "passing", "RB": "rushing", "WR": "receiving", "TE": "receiving"}
+TEAM_ALIASES = {"LAR": "LA", "JAC": "JAX"}
 
 
 def _name(value: Any) -> str:
     return "".join(character for character in str(value).lower() if character.isalnum())
+
+
+def _team(value: Any) -> str:
+    raw = str(value or "").strip().upper()
+    return TEAM_ALIASES.get(raw, raw)
 
 
 def _implied(price: float) -> float:
@@ -35,12 +41,14 @@ def _normal_over(mean: float, p10: float, p90: float, line: float) -> float:
 
 def build_board(pool_payload: dict[str, Any], snapshot: dict[str, Any]) -> dict[str, Any]:
     projection_by_key = {
-        (_name(row["player"]), TARGET_BY_POSITION.get(str(row.get("position")))): row
+        (_name(row["player"]), _team(row.get("team")), TARGET_BY_POSITION.get(str(row.get("position")))): row
         for row in pool_payload.get("pool", [])
     }
     candidates = []
     for offer in snapshot.get("observations", []):
-        projection = projection_by_key.get((_name(offer.get("player")), offer.get("target")))
+        projection = projection_by_key.get(
+            (_name(offer.get("player")), _team(offer.get("provider_team")), offer.get("target"))
+        )
         if projection is None:
             continue
         over_probability = _normal_over(

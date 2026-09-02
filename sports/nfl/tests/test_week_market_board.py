@@ -8,7 +8,8 @@ def test_builds_position_and_same_game_shadow_pools() -> None:
         {"player":"C QB","player_id":"q2","position":"QB","team":"C","opponent":"D","game_id":"g2","kickoff_utc":"2026-09-11T00:00:00Z","projection":270,"p10":190,"p90":350},
     ]}
     def offer(player, target, market, line, event):
-        return {"player":player,"target":target,"market":market,"line":line,"over_price":100,"under_price":-120,"bookmaker":"draftkings","snapshot_time_utc":"2026-09-02T00:00:00Z","source":"rotowire_public_player_props","event_id":event}
+        team = {"A QB": "A", "A WR": "A", "C QB": "C"}[player]
+        return {"player":player,"provider_team":team,"target":target,"market":market,"line":line,"over_price":100,"under_price":-120,"bookmaker":"draftkings","snapshot_time_utc":"2026-09-02T00:00:00Z","source":"rotowire_public_nfl_props","event_id":event}
     snapshot = {"audit":{"fetched_at_utc":"2026-09-02T00:00:00Z","source_url":"https://example.test","first_td_best_prices":[]},"observations":[
         offer("A QB","passing","player_pass_yds",250,"g1"),
         offer("A WR","receiving","player_reception_yds",70,"g1"),
@@ -20,3 +21,18 @@ def test_builds_position_and_same_game_shadow_pools() -> None:
     assert len(result["pools"]["same_game_parlay"]) == 2
     assert result["candidate_authorized"] is False
     assert "WITHHELD" in result["methodology"]["parlay_probability"]
+
+
+def test_rejects_name_match_when_provider_team_disagrees() -> None:
+    pool = {"season": 2026, "week": 1, "pool": [{
+        "player":"A Receiver","player_id":"w","position":"WR","team":"SF",
+        "opponent":"LA","game_id":"g","kickoff_utc":"2026-09-10T00:00:00Z",
+        "projection":60,"p10":20,"p90":100,
+    }]}
+    snapshot = {"audit":{},"observations":[{
+        "player":"A Receiver","provider_team":"MIN","target":"receiving",
+        "market":"player_reception_yds","line":50,"over_price":-110,
+        "under_price":-110,"bookmaker":"fanduel","snapshot_time_utc":"2026-09-02T00:00:00Z",
+        "source":"rotowire_public_nfl_props",
+    }]}
+    assert build_board(pool, snapshot)["candidate_count"] == 0
