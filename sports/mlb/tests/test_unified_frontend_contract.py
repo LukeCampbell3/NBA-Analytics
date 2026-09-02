@@ -27,3 +27,19 @@ def test_static_builder_preserves_unified_runtime_contract():
     assert '"unified-contract.js"' in builder
     assert '"unified_predictions.json"' in builder
     assert '"mlb_engine_manifest.json"' in builder
+
+
+def test_public_mlb_board_never_substitutes_or_links_stale_picks():
+    html = (ROOT / "mlb/web/predictions.html").read_text()
+    js = (ROOT / "mlb/web/predictions.js").read_text()
+
+    assert "await this.loadDateIndex()" not in js
+    assert "this.availableDates[0]" not in js
+    assert "Older picks are never substituted for today's board." in js
+    assert "this.assertCurrentArtifact(payload, \"MLB board\")" in js
+    assert "MLB board publication is withheld or under review" in js
+    assert "is more than 8 hours old" in js
+    assert 'cache: "no-store"' in js
+    assert "no picks are displayed or linked." in html
+    assert "yesterday's picks are never substituted" in html
+    assert 'predictions.js?v=36' in html

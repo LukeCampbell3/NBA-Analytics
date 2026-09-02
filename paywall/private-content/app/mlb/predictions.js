@@ -5,6 +5,7 @@ class DailyPredictionsPage {
         this.availableDates = [];
         this.activeDate = null;
         this.currentDate = null;
+        this.maxCurrentArtifactAgeMs = 8 * 60 * 60 * 1000;
         this.elements = {
             cards: document.getElementById("predictionCards"),
             empty: document.getElementById("predictionEmpty"),
@@ -33,11 +34,6 @@ class DailyPredictionsPage {
             this.elements.cards.innerHTML = window.CardVault.renderSkeletonCard(6);
         }
         this.loadDatesAndRender();
-        this.loadSameGameParlay();
-        this.loadPitcherParlay();
-        this.loadHighHitParlay();
-        this.loadExoticMarkets();
-        this.loadUnifiedEngine();
     }
 
     async loadUnifiedEngine() {
@@ -144,12 +140,19 @@ class DailyPredictionsPage {
     }
 
     async loadDatesAndRender() {
-        await this.loadDateIndex();
         const currentLoaded = await this.loadAndRender(null);
-        if (!currentLoaded && this.availableDates.length) {
-            await this.loadAndRender(this.availableDates[0]);
+        if (currentLoaded) {
+            await Promise.all([
+                this.loadSameGameParlay(),
+                this.loadPitcherParlay(),
+                this.loadHighHitParlay(),
+                this.loadExoticMarkets(),
+                this.loadUnifiedEngine(),
+            ]);
+        } else {
+            this.renderDependentProductsUnavailable();
         }
-        this.renderDateNav();
+        if (this.elements.dateNav) this.elements.dateNav.innerHTML = "";
     }
 
     async loadDateIndex() {
@@ -176,13 +179,17 @@ class DailyPredictionsPage {
             return true;
         } catch (error) {
             console.error(error);
+            this.data = null;
+            this.plays = [];
+            this.renderFreshnessAlert("Current MLB picks unavailable", error.message || "Freshness verification failed.");
             if (window.CardVault && this.elements.cards) {
                 this.elements.cards.innerHTML = window.CardVault.renderEmptyState(
-                    "Board unavailable",
-                    `Unable to load MLB predictions: ${error.message}`,
-                    "Check that data/daily_predictions.json exists for this build."
+                    "No current picks are displayed",
+                    `The latest MLB board could not be verified for today: ${error.message}`,
+                    "Refresh later. Older picks are never substituted for today's board."
                 );
             }
+            if (this.elements.empty) this.elements.empty.style.display = "none";
             return false;
         }
     }
@@ -191,9 +198,21 @@ class DailyPredictionsPage {
         const url = date
             ? `data/history/${date}.json?v=${Date.now()}`
             : `data/daily_predictions.json?v=${Date.now()}`;
-        const response = await fetch(url);
+        const response = await fetch(url, {
+            cache: "no-store",
+            credentials: "same-origin",
+            headers: { "Cache-Control": "no-cache" },
+        });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        this.data = await response.json();
+        const payload = await response.json();
+        if (!date) {
+            this.assertCurrentArtifact(payload, "MLB board");
+            if (String(payload.publication_status || "").toLowerCase() !== "ready") {
+                throw new Error("MLB board publication is withheld or under review");
+            }
+            if (!Array.isArray(payload.plays)) throw new Error("MLB board has no valid plays collection");
+        }
+        this.data = payload;
         this.activeDate = this.data?.run_date || date || null;
         if (!date) this.currentDate = this.activeDate;
         const publicationStatus = String(this.data?.publication_status || "ready").toLowerCase();
@@ -209,6 +228,47 @@ class DailyPredictionsPage {
             return (Number(b.abs_edge) || Number(b.edge) || 0) - (Number(a.abs_edge) || Number(a.edge) || 0);
         });
         this.renderRunMeta();
+        if (!date) this.renderFreshnessAlert("", "");
+    }
+
+    assertCurrentArtifact(payload, label = "MLB artifact") {
+        if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+            throw new Error(`${label} is malformed`);
+        }
+        const today = this.easternDate();
+        const runDate = String(payload.run_date || "");
+        if (runDate !== today) {
+            throw new Error(`${label} is for ${runDate || "an unknown date"}, not today's ${today} slate`);
+        }
+        const generatedAt = Date.parse(payload.generated_at_utc || "");
+        if (!Number.isFinite(generatedAt)) throw new Error(`${label} has no valid generation timestamp`);
+        const ageMs = Date.now() - generatedAt;
+        if (ageMs < -15 * 60 * 1000) throw new Error(`${label} has an invalid future timestamp`);
+        if (ageMs > this.maxCurrentArtifactAgeMs) throw new Error(`${label} is more than 8 hours old`);
+        return payload;
+    }
+
+    renderFreshnessAlert(title, detail) {
+        const target = document.getElementById("predictionFreshnessAlert");
+        if (!target) return;
+        target.innerHTML = title ? this.renderUnifiedNotice(title, detail) : "";
+    }
+
+    renderDependentProductsUnavailable() {
+        const message = this.renderUnifiedNotice(
+            "Unavailable until today's board is verified",
+            "No picks or betslip actions are shown because the current MLB slate failed freshness validation."
+        );
+        [
+            this.elements.parlayV2Content,
+            this.elements.sameGameParlayContent,
+            this.elements.pitcherParlayContent,
+            this.elements.highHitParlayContent,
+            this.elements.v4SinglesContent,
+            this.elements.exoticMarketsContent,
+            this.elements.unifiedEngineContent,
+            document.getElementById("v21ShadowContent"),
+        ].filter(Boolean).forEach((target) => { target.innerHTML = message; });
     }
 
     renderDateNav() {
@@ -481,6 +541,7 @@ class DailyPredictionsPage {
             const response = await fetch(`data/same_game_predictions.json?v=${Date.now()}`);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             this.sameGameData = await response.json();
+            this.assertCurrentArtifact(this.sameGameData, "Same-game parlay board");
         } catch (_error) {
             this.sameGameData = null;
         }
@@ -642,6 +703,7 @@ class DailyPredictionsPage {
             const response = await fetch(`data/pitcher_parlay_predictions.json?v=${Date.now()}`);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             this.pitcherParlayData = await response.json();
+            this.assertCurrentArtifact(this.pitcherParlayData, "Pitcher parlay board");
         } catch (_error) {
             this.pitcherParlayData = null;
         }
@@ -755,6 +817,7 @@ class DailyPredictionsPage {
             const response = await fetch(`data/high_hit_parlay_predictions.json?v=${Date.now()}`);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             this.highHitParlayData = await response.json();
+            this.assertCurrentArtifact(this.highHitParlayData, "High-hit parlay board");
         } catch (_error) {
             this.highHitParlayData = null;
         }
@@ -849,6 +912,7 @@ class DailyPredictionsPage {
             const response = await fetch(`data/exotic_market_predictions.json?v=${Date.now()}`);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             this.exoticMarketsData = await response.json();
+            this.assertCurrentArtifact(this.exoticMarketsData, "Exotic-market board");
         } catch (_error) {
             this.exoticMarketsData = null;
         }

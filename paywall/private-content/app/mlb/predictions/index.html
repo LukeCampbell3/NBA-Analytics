@@ -139,6 +139,19 @@
                 });
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const payload = await response.json();
+                const parts = new Intl.DateTimeFormat("en-US", {
+                    timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit",
+                }).formatToParts(new Date());
+                const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+                const today = `${values.year}-${values.month}-${values.day}`;
+                if (String(payload?.run_date || "") !== today) throw new Error("The published slate is not today's slate");
+                const generatedAt = Date.parse(payload?.generated_at_utc || "");
+                if (!Number.isFinite(generatedAt) || Date.now() - generatedAt > 8 * 60 * 60 * 1000) {
+                    throw new Error("The published slate is stale");
+                }
+                if (String(payload?.publication_status || "").toLowerCase() !== "ready") {
+                    throw new Error("The published slate is withheld or under review");
+                }
                 const plays = Array.isArray(payload.plays) ? payload.plays : [];
                 if (!plays.length) throw new Error("No prediction cards were published");
 
@@ -183,7 +196,7 @@
     <script src="/vault/vault-components.js?v=17"></script>
     <script src="/vault/vault-shell.js?v=9"></script>
     <script src="unified-contract.js?v=1"></script>
-    <script src="predictions.js?v=35"></script>
+    <script src="predictions.js?v=36"></script>
     <script src="predictions-roi-overrides.js?v=3"></script>
     <script>
         // Independent freshness/V2.1 guard. This intentionally does not rely on
@@ -259,14 +272,28 @@
                 const payload = await response.json();
                 const today = easternDate();
                 const runDate = String(payload?.run_date || "");
+                const generatedAt = Date.parse(payload?.generated_at_utc || "");
+                const isFresh = runDate === today
+                    && Number.isFinite(generatedAt)
+                    && Date.now() - generatedAt <= 8 * 60 * 60 * 1000
+                    && generatedAt - Date.now() <= 15 * 60 * 1000
+                    && String(payload?.publication_status || "").toLowerCase() === "ready"
+                    && Array.isArray(payload?.plays);
 
                 if (freshness) {
-                    freshness.innerHTML = runDate === today
-                        ? ""
-                        : notice(
-                            "Stale MLB board",
-                            `Latest published pool is ${runDate || "unknown"}; today is ${today}. Older picks are shown for reference only.`
-                        );
+                    freshness.innerHTML = isFresh ? "" : notice(
+                        "Current MLB picks unavailable",
+                        `Latest published pool is ${runDate || "unknown"}; today is ${today}. It is missing, stale, or invalid, so no picks are displayed or linked.`
+                    );
+                }
+
+                if (!isFresh) {
+                    const board = document.getElementById("board");
+                    if (board) board.innerHTML = `<section class="board-section">${notice(
+                        "No current picks are displayed",
+                        "Today's MLB board has not been published yet. Refresh later; yesterday's picks are never substituted."
+                    )}</section>`;
+                    return;
                 }
 
                 if (!target) return;
