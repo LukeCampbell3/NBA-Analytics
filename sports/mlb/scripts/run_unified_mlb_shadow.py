@@ -33,7 +33,10 @@ def main() -> int:
     manifest = json.loads(args.engine_manifest.read_text(encoding="utf-8"))
     payload = export_payload(result, run_date=run_date, repo_root=REPO_ROOT, engine_state=manifest["production_state"])
     if payload["policy_hash"] != manifest["policy_hash"]:
-        raise ValueError("artifact policy hash does not match engine manifest")
+        raise ValueError(
+            "artifact policy hash does not match engine manifest: "
+            f"runtime={payload['policy_hash']} manifest={manifest['policy_hash']}"
+        )
     write_payload(payload, args.output)
     atomic_write_json(args.manifest_output, manifest)
     append_generation(args.evidence_ledger, {
