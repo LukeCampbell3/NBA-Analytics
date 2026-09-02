@@ -6,11 +6,11 @@ Publication integrity: **FAIL**
 
 ## Issues
 
-- `LINEUP_ROLE_INVALID`: 2
-- `QUOTE_FRESHNESS_UNPROVABLE`: 237
+- `LINEUP_ROLE_INVALID`: 3
+- `QUOTE_FRESHNESS_UNPROVABLE`: 340
 
 ## Canonical statuses
 
-- `BLOCKED_DATA`: 237
+- `BLOCKED_DATA`: 340
 
 Research-only, support-blocked, identity-invalid, stale, or non-positive-EV rows have no execution authority.
