@@ -1,6 +1,6 @@
 {
   "candidate_authorized_count": 0,
-  "exploratory_candidate_count": 2,
+  "exploratory_candidate_count": 0,
   "games": [
     {
       "away_starter_name": "Landen Roupp",
@@ -10,21 +10,18 @@
         {
           "away_team": "SF",
           "betslip": {
-            "leg_count": 2,
-            "source": "direct_fanduel_public_market_ids",
+            "reason": "one_or_more_legs_have_no_live_fanduel_selection",
             "sportsbook": "FanDuel",
             "sportsbook_key": "fanduel",
-            "status": "ready",
-            "url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.184297892&selectionId%5B0%5D=29178&marketId%5B1%5D=734.184297893&selectionId%5B1%5D=7017905"
+            "status": "unavailable"
           },
-          "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.184297892&selectionId%5B0%5D=29178&marketId%5B1%5D=734.184297893&selectionId%5B1%5D=7017905",
           "candidate_authorized": false,
-          "combo_decimal_price": 4.505454545454546,
+          "combo_decimal_price": 4.430175438596492,
           "event_date": "2026-09-02",
-          "expected_value_per_unit": 0.13965472727272732,
+          "expected_value_per_unit": 0.2076658245614036,
           "game_id": "823339",
           "home_team": "PIT",
-          "joint_residual": 0.000612687500000042,
+          "joint_residual": 0.0036852650000000486,
           "leg_a": {
             "deeplinks_by_region": {
               "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184624236&selectionId=29178",
@@ -57,7 +54,7 @@
             "line": null,
             "market": "moneyline",
             "market_books": 1,
-            "model_probability": 0.48224999999999996,
+            "model_probability": 0.48114999999999997,
             "no_vig_market_probability": 0.4066302458405761,
             "price_american": 136,
             "price_confirmed": true,
@@ -71,55 +68,29 @@
             ]
           },
           "leg_b": {
-            "deeplinks_by_region": {
-              "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184624235&selectionId=7017905",
-              "AZ": "https://sportsbook.fanduel.com/addToBetslip?marketId=704.184363254&selectionId=7017905",
-              "CO": "https://sportsbook.fanduel.com/addToBetslip?marketId=708.184418595&selectionId=7017905",
-              "CT": "https://sportsbook.fanduel.com/addToBetslip?marketId=709.184131433&selectionId=7017905",
-              "DC": "https://sportsbook.fanduel.com/addToBetslip?marketId=711.184453460&selectionId=7017905",
-              "IA": "https://sportsbook.fanduel.com/addToBetslip?marketId=719.184426660&selectionId=7017905",
-              "IL": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.184435791&selectionId=7017905",
-              "IN": "https://sportsbook.fanduel.com/addToBetslip?marketId=718.184431810&selectionId=7017905",
-              "KS": "https://sportsbook.fanduel.com/addToBetslip?marketId=720.184251206&selectionId=7017905",
-              "KY": "https://sportsbook.fanduel.com/addToBetslip?marketId=721.184434269&selectionId=7017905",
-              "LA": "https://sportsbook.fanduel.com/addToBetslip?marketId=722.184080146&selectionId=7017905",
-              "MA": "https://sportsbook.fanduel.com/addToBetslip?marketId=725.184424043&selectionId=7017905",
-              "MD": "https://sportsbook.fanduel.com/addToBetslip?marketId=724.184433149&selectionId=7017905",
-              "MI": "https://sportsbook.fanduel.com/addToBetslip?marketId=726.184418927&selectionId=7017905",
-              "MO": "https://sportsbook.fanduel.com/addToBetslip?marketId=729.184810582&selectionId=7017905",
-              "NC": "https://sportsbook.fanduel.com/addToBetslip?marketId=737.184427707&selectionId=7017905",
-              "NJ": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.184297893&selectionId=7017905",
-              "NY": "https://sportsbook.fanduel.com/addToBetslip?marketId=736.184073746&selectionId=7017905",
-              "OH": "https://sportsbook.fanduel.com/addToBetslip?marketId=739.184295829&selectionId=7017905",
-              "PA": "https://sportsbook.fanduel.com/addToBetslip?marketId=742.184294318&selectionId=7017905",
-              "TN": "https://sportsbook.fanduel.com/addToBetslip?marketId=747.184386397&selectionId=7017905",
-              "VA": "https://sportsbook.fanduel.com/addToBetslip?marketId=751.184392813&selectionId=7017905",
-              "VT": "https://sportsbook.fanduel.com/addToBetslip?marketId=750.184399227&selectionId=7017905",
-              "WV": "https://sportsbook.fanduel.com/addToBetslip?marketId=754.184439539&selectionId=7017905",
-              "WY": "https://sportsbook.fanduel.com/addToBetslip?marketId=756.184235639&selectionId=7017905"
-            },
+            "deeplinks_by_region": {},
             "leg_authorized": false,
-            "line": 8.5,
+            "line": 9.0,
             "market": "game_total",
             "market_books": 1,
-            "model_probability": 0.52325,
-            "no_vig_market_probability": 0.5,
-            "price_american": -110,
+            "model_probability": 0.5589,
+            "no_vig_market_probability": 0.5086640097036909,
+            "price_american": -114,
             "price_confirmed": true,
-            "side": "over",
+            "side": "under",
             "sportsbook": "fanduel",
-            "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.184297893&selectionId=7017905",
+            "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.184060057&selectionId=7017906",
             "support_blocking_dimensions": [
               "market_support",
               "line_support",
               "state_support"
             ]
           },
-          "naive_independence_probability": 0.25233731249999997,
-          "naive_market_joint_raw_probability": 0.22195318805488295,
-          "naive_no_vig_combo_probability": 0.20331512292028805,
-          "probability_edge": 0.04963487707971195,
-          "real_joint_model_probability": 0.25295,
+          "naive_independence_probability": 0.26891473499999996,
+          "naive_market_joint_raw_probability": 0.2257246950736575,
+          "naive_no_vig_combo_probability": 0.206838171316065,
+          "probability_edge": 0.06576182868393501,
+          "real_joint_model_probability": 0.2726,
           "support_blocking_dimensions": [
             "line_support",
             "market_support",
@@ -128,132 +99,12 @@
         }
       ],
       "date": "2026-09-02",
-      "exploratory_candidate_count": 1,
-      "exploratory_ev_candidates": [
-        {
-          "away_team": "SF",
-          "betslip": {
-            "leg_count": 2,
-            "source": "direct_fanduel_public_market_ids",
-            "sportsbook": "FanDuel",
-            "sportsbook_key": "fanduel",
-            "status": "ready",
-            "url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.184297892&selectionId%5B0%5D=29178&marketId%5B1%5D=734.184297893&selectionId%5B1%5D=7017906"
-          },
-          "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.184297892&selectionId%5B0%5D=29178&marketId%5B1%5D=734.184297893&selectionId%5B1%5D=7017906",
-          "candidate_authorized": false,
-          "combo_decimal_price": 4.505454545454546,
-          "event_date": "2026-09-02",
-          "expected_value_per_unit": 0.03310072727272728,
-          "game_id": "823339",
-          "home_team": "PIT",
-          "joint_residual": -0.0006126874999999865,
-          "leg_a": {
-            "deeplinks_by_region": {
-              "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184624236&selectionId=29178",
-              "AZ": "https://sportsbook.fanduel.com/addToBetslip?marketId=704.184363255&selectionId=29178",
-              "CO": "https://sportsbook.fanduel.com/addToBetslip?marketId=708.184418597&selectionId=29178",
-              "CT": "https://sportsbook.fanduel.com/addToBetslip?marketId=709.184131432&selectionId=29178",
-              "DC": "https://sportsbook.fanduel.com/addToBetslip?marketId=711.184453461&selectionId=29178",
-              "IA": "https://sportsbook.fanduel.com/addToBetslip?marketId=719.184426659&selectionId=29178",
-              "IL": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.184435794&selectionId=29178",
-              "IN": "https://sportsbook.fanduel.com/addToBetslip?marketId=718.184431812&selectionId=29178",
-              "KS": "https://sportsbook.fanduel.com/addToBetslip?marketId=720.184251208&selectionId=29178",
-              "KY": "https://sportsbook.fanduel.com/addToBetslip?marketId=721.184434267&selectionId=29178",
-              "LA": "https://sportsbook.fanduel.com/addToBetslip?marketId=722.184080148&selectionId=29178",
-              "MA": "https://sportsbook.fanduel.com/addToBetslip?marketId=725.184424041&selectionId=29178",
-              "MD": "https://sportsbook.fanduel.com/addToBetslip?marketId=724.184433150&selectionId=29178",
-              "MI": "https://sportsbook.fanduel.com/addToBetslip?marketId=726.184418925&selectionId=29178",
-              "MO": "https://sportsbook.fanduel.com/addToBetslip?marketId=729.184810584&selectionId=29178",
-              "NC": "https://sportsbook.fanduel.com/addToBetslip?marketId=737.184427710&selectionId=29178",
-              "NJ": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.184297892&selectionId=29178",
-              "NY": "https://sportsbook.fanduel.com/addToBetslip?marketId=736.184073745&selectionId=29178",
-              "OH": "https://sportsbook.fanduel.com/addToBetslip?marketId=739.184295826&selectionId=29178",
-              "PA": "https://sportsbook.fanduel.com/addToBetslip?marketId=742.184294320&selectionId=29178",
-              "TN": "https://sportsbook.fanduel.com/addToBetslip?marketId=747.184386394&selectionId=29178",
-              "VA": "https://sportsbook.fanduel.com/addToBetslip?marketId=751.184392815&selectionId=29178",
-              "VT": "https://sportsbook.fanduel.com/addToBetslip?marketId=750.184399224&selectionId=29178",
-              "WV": "https://sportsbook.fanduel.com/addToBetslip?marketId=754.184439538&selectionId=29178",
-              "WY": "https://sportsbook.fanduel.com/addToBetslip?marketId=756.184235641&selectionId=29178"
-            },
-            "leg_authorized": false,
-            "line": null,
-            "market": "moneyline",
-            "market_books": 1,
-            "model_probability": 0.48224999999999996,
-            "no_vig_market_probability": 0.4066302458405761,
-            "price_american": 136,
-            "price_confirmed": true,
-            "side": "away",
-            "sportsbook": "fanduel",
-            "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.184297892&selectionId=29178",
-            "support_blocking_dimensions": [
-              "market_support",
-              "line_support",
-              "state_support"
-            ]
-          },
-          "leg_b": {
-            "deeplinks_by_region": {
-              "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184624235&selectionId=7017906",
-              "AZ": "https://sportsbook.fanduel.com/addToBetslip?marketId=704.184363254&selectionId=7017906",
-              "CO": "https://sportsbook.fanduel.com/addToBetslip?marketId=708.184418595&selectionId=7017906",
-              "CT": "https://sportsbook.fanduel.com/addToBetslip?marketId=709.184131433&selectionId=7017906",
-              "DC": "https://sportsbook.fanduel.com/addToBetslip?marketId=711.184453460&selectionId=7017906",
-              "IA": "https://sportsbook.fanduel.com/addToBetslip?marketId=719.184426660&selectionId=7017906",
-              "IL": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.184435791&selectionId=7017906",
-              "IN": "https://sportsbook.fanduel.com/addToBetslip?marketId=718.184431810&selectionId=7017906",
-              "KS": "https://sportsbook.fanduel.com/addToBetslip?marketId=720.184251206&selectionId=7017906",
-              "KY": "https://sportsbook.fanduel.com/addToBetslip?marketId=721.184434269&selectionId=7017906",
-              "LA": "https://sportsbook.fanduel.com/addToBetslip?marketId=722.184080146&selectionId=7017906",
-              "MA": "https://sportsbook.fanduel.com/addToBetslip?marketId=725.184424043&selectionId=7017906",
-              "MD": "https://sportsbook.fanduel.com/addToBetslip?marketId=724.184433149&selectionId=7017906",
-              "MI": "https://sportsbook.fanduel.com/addToBetslip?marketId=726.184418927&selectionId=7017906",
-              "MO": "https://sportsbook.fanduel.com/addToBetslip?marketId=729.184810582&selectionId=7017906",
-              "NC": "https://sportsbook.fanduel.com/addToBetslip?marketId=737.184427707&selectionId=7017906",
-              "NJ": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.184297893&selectionId=7017906",
-              "NY": "https://sportsbook.fanduel.com/addToBetslip?marketId=736.184073746&selectionId=7017906",
-              "OH": "https://sportsbook.fanduel.com/addToBetslip?marketId=739.184295829&selectionId=7017906",
-              "PA": "https://sportsbook.fanduel.com/addToBetslip?marketId=742.184294318&selectionId=7017906",
-              "TN": "https://sportsbook.fanduel.com/addToBetslip?marketId=747.184386397&selectionId=7017906",
-              "VA": "https://sportsbook.fanduel.com/addToBetslip?marketId=751.184392813&selectionId=7017906",
-              "VT": "https://sportsbook.fanduel.com/addToBetslip?marketId=750.184399227&selectionId=7017906",
-              "WV": "https://sportsbook.fanduel.com/addToBetslip?marketId=754.184439539&selectionId=7017906",
-              "WY": "https://sportsbook.fanduel.com/addToBetslip?marketId=756.184235639&selectionId=7017906"
-            },
-            "leg_authorized": false,
-            "line": 8.5,
-            "market": "game_total",
-            "market_books": 1,
-            "model_probability": 0.47675,
-            "no_vig_market_probability": 0.5,
-            "price_american": -110,
-            "price_confirmed": true,
-            "side": "under",
-            "sportsbook": "fanduel",
-            "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.184297893&selectionId=7017906",
-            "support_blocking_dimensions": [
-              "market_support",
-              "line_support",
-              "state_support"
-            ]
-          },
-          "naive_independence_probability": 0.2299126875,
-          "naive_market_joint_raw_probability": 0.22195318805488295,
-          "naive_no_vig_combo_probability": 0.20331512292028805,
-          "probability_edge": 0.02598487707971195,
-          "real_joint_model_probability": 0.2293,
-          "support_blocking_dimensions": [
-            "line_support",
-            "market_support",
-            "state_support"
-          ]
-        }
-      ],
+      "exploratory_candidate_count": 0,
+      "exploratory_ev_candidates": [],
       "game_id": "823339",
       "home_starter_name": "Bubba Chandler",
       "home_team": "PIT",
-      "home_win_probability": 0.51775,
+      "home_win_probability": 0.51885,
       "quality_safe_candidate_count": 1,
       "status": "ok"
     },
@@ -276,10 +127,10 @@
           "candidate_authorized": false,
           "combo_decimal_price": 4.658181818181818,
           "event_date": "2026-09-02",
-          "expected_value_per_unit": 0.240240909090909,
+          "expected_value_per_unit": 0.24117254545454547,
           "game_id": "822931",
           "home_team": "TB",
-          "joint_residual": 0.002320999999999962,
+          "joint_residual": 0.0027257750000000414,
           "leg_a": {
             "deeplinks_by_region": {
               "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184295009&selectionId=29174",
@@ -312,7 +163,7 @@
             "line": null,
             "market": "moneyline",
             "market_books": 1,
-            "model_probability": 0.45504999999999995,
+            "model_probability": 0.45904999999999996,
             "no_vig_market_probability": 0.39324543141337037,
             "price_american": 144,
             "price_confirmed": true,
@@ -357,7 +208,7 @@
             "line": 8.0,
             "market": "game_total",
             "market_books": 1,
-            "model_probability": 0.5800000000000001,
+            "model_probability": 0.5745,
             "no_vig_market_probability": 0.5,
             "price_american": -110,
             "price_confirmed": true,
@@ -370,11 +221,11 @@
               "state_support"
             ]
           },
-          "naive_independence_probability": 0.263929,
+          "naive_independence_probability": 0.263724225,
           "naive_market_joint_raw_probability": 0.21467603434816548,
           "naive_no_vig_combo_probability": 0.19662271570668519,
-          "probability_edge": 0.0696272842933148,
-          "real_joint_model_probability": 0.26625,
+          "probability_edge": 0.06982728429331483,
+          "real_joint_model_probability": 0.26645,
           "support_blocking_dimensions": [
             "line_support",
             "market_support",
@@ -388,7 +239,7 @@
       "game_id": "822931",
       "home_starter_name": "Griffin Jax",
       "home_team": "TB",
-      "home_win_probability": 0.54495,
+      "home_win_probability": 0.54095,
       "quality_safe_candidate_count": 1,
       "status": "ok"
     },
@@ -403,7 +254,7 @@
       "game_id": "824390",
       "home_starter_name": "Joey Cantillo",
       "home_team": "CLE",
-      "home_win_probability": 0.47245,
+      "home_win_probability": 0.46925,
       "quality_safe_candidate_count": 0,
       "status": "ok"
     },
@@ -418,7 +269,7 @@
       "game_id": "823660",
       "home_starter_name": "Dean Kremer",
       "home_team": "MIN",
-      "home_win_probability": 0.4869,
+      "home_win_probability": 0.4855,
       "quality_safe_candidate_count": 0,
       "status": "ok"
     },
@@ -441,10 +292,10 @@
           "candidate_authorized": false,
           "combo_decimal_price": 3.82967032967033,
           "event_date": "2026-09-02",
-          "expected_value_per_unit": 0.2159203296703298,
+          "expected_value_per_unit": 0.20672912087912088,
           "game_id": "824068",
           "home_team": "KC",
-          "joint_residual": 0.0010125799999999852,
+          "joint_residual": 0.0015718375000000062,
           "leg_a": {
             "deeplinks_by_region": {
               "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184625254&selectionId=29179",
@@ -477,7 +328,7 @@
             "line": null,
             "market": "moneyline",
             "market_books": 1,
-            "model_probability": 0.5036,
+            "model_probability": 0.49905,
             "no_vig_market_probability": 0.4910905203136137,
             "price_american": -104,
             "price_confirmed": true,
@@ -522,7 +373,7 @@
             "line": 9.0,
             "market": "game_total",
             "market_books": 1,
-            "model_probability": 0.62845,
+            "model_probability": 0.62825,
             "no_vig_market_probability": 0.4891657638136511,
             "price_american": -105,
             "price_confirmed": true,
@@ -535,11 +386,11 @@
               "state_support"
             ]
           },
-          "naive_independence_probability": 0.31648742,
+          "naive_independence_probability": 0.3135281625,
           "naive_market_joint_raw_probability": 0.2611190817790531,
           "naive_no_vig_combo_probability": 0.24022466947085222,
-          "probability_edge": 0.07727533052914778,
-          "real_joint_model_probability": 0.3175,
+          "probability_edge": 0.07487533052914777,
+          "real_joint_model_probability": 0.3151,
           "support_blocking_dimensions": [
             "line_support",
             "market_support",
@@ -560,10 +411,10 @@
           "candidate_authorized": false,
           "combo_decimal_price": 3.695578231292517,
           "event_date": "2026-09-02",
-          "expected_value_per_unit": 0.14914005102040817,
+          "expected_value_per_unit": 0.1572703231292516,
           "game_id": "824068",
           "home_team": "KC",
-          "joint_residual": -0.0010125799999999296,
+          "joint_residual": -0.0015718375000000062,
           "leg_a": {
             "deeplinks_by_region": {
               "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184625254&selectionId=6266193",
@@ -596,7 +447,7 @@
             "line": null,
             "market": "moneyline",
             "market_books": 1,
-            "model_probability": 0.49639999999999995,
+            "model_probability": 0.50095,
             "no_vig_market_probability": 0.5089094796863863,
             "price_american": -112,
             "price_confirmed": true,
@@ -641,7 +492,7 @@
             "line": 9.0,
             "market": "game_total",
             "market_books": 1,
-            "model_probability": 0.62845,
+            "model_probability": 0.62825,
             "no_vig_market_probability": 0.4891657638136511,
             "price_american": -105,
             "price_confirmed": true,
@@ -654,11 +505,11 @@
               "state_support"
             ]
           },
-          "naive_independence_probability": 0.31196257999999993,
+          "naive_independence_probability": 0.3147218375,
           "naive_market_joint_raw_probability": 0.27059364933271973,
           "naive_no_vig_combo_probability": 0.24894109434279893,
-          "probability_edge": 0.062008905657201074,
-          "real_joint_model_probability": 0.31095,
+          "probability_edge": 0.06420890565720105,
+          "real_joint_model_probability": 0.31315,
           "support_blocking_dimensions": [
             "line_support",
             "market_support",
@@ -672,7 +523,7 @@
       "game_id": "824068",
       "home_starter_name": "Noah Cameron",
       "home_team": "KC",
-      "home_win_probability": 0.5036,
+      "home_win_probability": 0.49905,
       "quality_safe_candidate_count": 2,
       "status": "ok"
     },
@@ -695,10 +546,10 @@
           "candidate_authorized": false,
           "combo_decimal_price": 3.615334632878493,
           "event_date": "2026-09-02",
-          "expected_value_per_unit": 0.238252111760884,
+          "expected_value_per_unit": 0.22397153996101382,
           "game_id": "824634",
           "home_team": "CHC",
-          "joint_residual": -0.010294515000000004,
+          "joint_residual": -0.007836445000000025,
           "leg_a": {
             "deeplinks_by_region": {
               "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184625648&selectionId=29172",
@@ -731,7 +582,7 @@
             "line": null,
             "market": "moneyline",
             "market_books": 1,
-            "model_probability": 0.6529,
+            "model_probability": 0.6451,
             "no_vig_market_probability": 0.5,
             "price_american": -108,
             "price_confirmed": true,
@@ -776,7 +627,7 @@
             "line": 8.5,
             "market": "game_total",
             "market_books": 1,
-            "model_probability": 0.54035,
+            "model_probability": 0.53695,
             "no_vig_market_probability": 0.5086640097036909,
             "price_american": -114,
             "price_confirmed": true,
@@ -789,11 +640,11 @@
               "state_support"
             ]
           },
-          "naive_independence_probability": 0.35279451500000003,
+          "naive_independence_probability": 0.34638644500000004,
           "naive_market_joint_raw_probability": 0.2765995686556434,
           "naive_no_vig_combo_probability": 0.25433200485184543,
-          "probability_edge": 0.0881679951481546,
-          "real_joint_model_probability": 0.3425,
+          "probability_edge": 0.08421799514815459,
+          "real_joint_model_probability": 0.33855,
           "support_blocking_dimensions": [
             "line_support",
             "market_support",
@@ -814,10 +665,10 @@
           "candidate_authorized": false,
           "combo_decimal_price": 3.742837176799441,
           "event_date": "2026-09-02",
-          "expected_value_per_unit": 0.1617766596785466,
+          "expected_value_per_unit": 0.14736673654786858,
           "game_id": "824634",
           "home_team": "CHC",
-          "joint_residual": 0.010294515000000004,
+          "joint_residual": 0.00783644499999997,
           "leg_a": {
             "deeplinks_by_region": {
               "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184625648&selectionId=29172",
@@ -850,7 +701,7 @@
             "line": null,
             "market": "moneyline",
             "market_books": 1,
-            "model_probability": 0.6529,
+            "model_probability": 0.6451,
             "no_vig_market_probability": 0.5,
             "price_american": -108,
             "price_confirmed": true,
@@ -895,7 +746,7 @@
             "line": 8.5,
             "market": "game_total",
             "market_books": 1,
-            "model_probability": 0.45965,
+            "model_probability": 0.46305,
             "no_vig_market_probability": 0.49133599029630914,
             "price_american": -106,
             "price_confirmed": true,
@@ -908,11 +759,11 @@
               "state_support"
             ]
           },
-          "naive_independence_probability": 0.300105485,
+          "naive_independence_probability": 0.298713555,
           "naive_market_joint_raw_probability": 0.26717699775952203,
           "naive_no_vig_combo_probability": 0.24566799514815457,
-          "probability_edge": 0.06473200485184544,
-          "real_joint_model_probability": 0.3104,
+          "probability_edge": 0.06088200485184542,
+          "real_joint_model_probability": 0.30655,
           "support_blocking_dimensions": [
             "line_support",
             "market_support",
@@ -926,7 +777,7 @@
       "game_id": "824634",
       "home_starter_name": "David Peterson",
       "home_team": "CHC",
-      "home_win_probability": 0.3471,
+      "home_win_probability": 0.3549,
       "quality_safe_candidate_count": 2,
       "status": "ok"
     },
@@ -946,10 +797,10 @@
           "candidate_authorized": false,
           "combo_decimal_price": 4.625283018867925,
           "event_date": "2026-09-02",
-          "expected_value_per_unit": 0.46297701886792475,
+          "expected_value_per_unit": 0.4363816415094339,
           "game_id": "824147",
           "home_team": "HOU",
-          "joint_residual": -0.0013200800000000568,
+          "joint_residual": -0.0038461974999999815,
           "leg_a": {
             "deeplinks_by_region": {
               "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184624808&selectionId=5408012",
@@ -982,7 +833,7 @@
             "line": null,
             "market": "moneyline",
             "market_books": 1,
-            "model_probability": 0.6043000000000001,
+            "model_probability": 0.60005,
             "no_vig_market_probability": 0.4034723071280108,
             "price_american": 138,
             "price_confirmed": true,
@@ -1001,7 +852,7 @@
             "line": 8.5,
             "market": "game_total",
             "market_books": 1,
-            "model_probability": 0.5256000000000001,
+            "model_probability": 0.52395,
             "no_vig_market_probability": 0.49133599029630914,
             "price_american": -106,
             "price_confirmed": true,
@@ -1014,11 +865,11 @@
               "state_support"
             ]
           },
-          "naive_independence_probability": 0.3176200800000001,
+          "naive_independence_probability": 0.3143961975,
           "naive_market_joint_raw_probability": 0.21620298604878843,
           "naive_no_vig_combo_probability": 0.1982404655798778,
-          "probability_edge": 0.11805953442012224,
-          "real_joint_model_probability": 0.3163,
+          "probability_edge": 0.1123095344201222,
+          "real_joint_model_probability": 0.31055,
           "support_blocking_dimensions": [
             "line_support",
             "market_support",
@@ -1036,10 +887,10 @@
           "candidate_authorized": false,
           "combo_decimal_price": 4.467719298245614,
           "event_date": "2026-09-02",
-          "expected_value_per_unit": 0.28670315789473677,
+          "expected_value_per_unit": 0.2934047368421051,
           "game_id": "824147",
           "home_team": "HOU",
-          "joint_residual": 0.0013200799999999457,
+          "joint_residual": 0.0038461974999999815,
           "leg_a": {
             "deeplinks_by_region": {
               "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184624808&selectionId=5408012",
@@ -1072,7 +923,7 @@
             "line": null,
             "market": "moneyline",
             "market_books": 1,
-            "model_probability": 0.6043000000000001,
+            "model_probability": 0.60005,
             "no_vig_market_probability": 0.4034723071280108,
             "price_american": 138,
             "price_confirmed": true,
@@ -1091,7 +942,7 @@
             "line": 8.5,
             "market": "game_total",
             "market_books": 1,
-            "model_probability": 0.4744,
+            "model_probability": 0.47605,
             "no_vig_market_probability": 0.5086640097036909,
             "price_american": -114,
             "price_confirmed": true,
@@ -1104,11 +955,11 @@
               "state_support"
             ]
           },
-          "naive_independence_probability": 0.28667992000000003,
+          "naive_independence_probability": 0.2856538025,
           "naive_market_joint_raw_probability": 0.22382784889656798,
           "naive_no_vig_combo_probability": 0.205231841548133,
-          "probability_edge": 0.08276815845186697,
-          "real_joint_model_probability": 0.288,
+          "probability_edge": 0.08426815845186697,
+          "real_joint_model_probability": 0.2895,
           "support_blocking_dimensions": [
             "line_support",
             "market_support",
@@ -1122,7 +973,7 @@
       "game_id": "824147",
       "home_starter_name": "Hayden Wesneski",
       "home_team": "HOU",
-      "home_win_probability": 0.3957,
+      "home_win_probability": 0.39995,
       "quality_safe_candidate_count": 2,
       "status": "ok"
     },
@@ -1145,10 +996,10 @@
           "candidate_authorized": false,
           "combo_decimal_price": 3.033132530120482,
           "event_date": "2026-09-02",
-          "expected_value_per_unit": 0.22068418674698775,
+          "expected_value_per_unit": 0.1900495481927711,
           "game_id": "823983",
           "home_team": "LAA",
-          "joint_residual": 0.00707904999999992,
+          "joint_residual": 0.007169925000000021,
           "leg_a": {
             "deeplinks_by_region": {
               "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184295014&selectionId=29161",
@@ -1181,7 +1032,7 @@
             "line": null,
             "market": "moneyline",
             "market_books": 1,
-            "model_probability": 0.6245,
+            "model_probability": 0.6131,
             "no_vig_market_probability": 0.5996387718242023,
             "price_american": -166,
             "price_confirmed": true,
@@ -1226,7 +1077,7 @@
             "line": 6.5,
             "market": "game_total",
             "market_books": 1,
-            "model_probability": 0.6331,
+            "model_probability": 0.62825,
             "no_vig_market_probability": 0.5043297540699689,
             "price_american": -112,
             "price_confirmed": true,
@@ -1239,21 +1090,17 @@
               "state_support"
             ]
           },
-          "naive_independence_probability": 0.39537095000000005,
+          "naive_independence_probability": 0.38518007499999996,
           "naive_market_joint_raw_probability": 0.32969215491559084,
           "naive_no_vig_combo_probability": 0.30241567432491817,
-          "probability_edge": 0.1000343256750818,
-          "real_joint_model_probability": 0.40245,
+          "probability_edge": 0.0899343256750818,
+          "real_joint_model_probability": 0.39235,
           "support_blocking_dimensions": [
             "line_support",
             "market_support",
             "state_support"
           ]
-        }
-      ],
-      "date": "2026-09-02",
-      "exploratory_candidate_count": 1,
-      "exploratory_ev_candidates": [
+        },
         {
           "away_team": "NYY",
           "betslip": {
@@ -1268,10 +1115,10 @@
           "candidate_authorized": false,
           "combo_decimal_price": 4.542857142857143,
           "event_date": "2026-09-02",
-          "expected_value_per_unit": 0.04780999999999991,
+          "expected_value_per_unit": 0.07166000000000006,
           "game_id": "823983",
           "home_team": "LAA",
-          "joint_residual": -0.007079050000000003,
+          "joint_residual": -0.007169924999999994,
           "leg_a": {
             "deeplinks_by_region": {
               "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184295014&selectionId=1093236",
@@ -1304,7 +1151,7 @@
             "line": null,
             "market": "moneyline",
             "market_books": 1,
-            "model_probability": 0.3755,
+            "model_probability": 0.3869,
             "no_vig_market_probability": 0.4003612281757977,
             "price_american": 140,
             "price_confirmed": true,
@@ -1349,7 +1196,7 @@
             "line": 6.5,
             "market": "game_total",
             "market_books": 1,
-            "model_probability": 0.6331,
+            "model_probability": 0.62825,
             "no_vig_market_probability": 0.5043297540699689,
             "price_american": -112,
             "price_confirmed": true,
@@ -1362,11 +1209,11 @@
               "state_support"
             ]
           },
-          "naive_independence_probability": 0.23772905,
+          "naive_independence_probability": 0.243069925,
           "naive_market_joint_raw_probability": 0.22012578616352202,
           "naive_no_vig_combo_probability": 0.2019140797450508,
-          "probability_edge": 0.0287359202549492,
-          "real_joint_model_probability": 0.23065,
+          "probability_edge": 0.0339859202549492,
+          "real_joint_model_probability": 0.2359,
           "support_blocking_dimensions": [
             "line_support",
             "market_support",
@@ -1374,11 +1221,14 @@
           ]
         }
       ],
+      "date": "2026-09-02",
+      "exploratory_candidate_count": 0,
+      "exploratory_ev_candidates": [],
       "game_id": "823983",
       "home_starter_name": "Reid Detmers",
       "home_team": "LAA",
-      "home_win_probability": 0.3755,
-      "quality_safe_candidate_count": 1,
+      "home_win_probability": 0.3869,
+      "quality_safe_candidate_count": 2,
       "status": "ok"
     },
     {
@@ -1400,10 +1250,10 @@
           "candidate_authorized": false,
           "combo_decimal_price": 6.373728813559322,
           "event_date": "2026-09-02",
-          "expected_value_per_unit": 0.4181546610169491,
+          "expected_value_per_unit": 0.4187920338983051,
           "game_id": "823906",
           "home_team": "LAD",
-          "joint_residual": -0.0034886075000000183,
+          "joint_residual": -0.004786507500000037,
           "leg_a": {
             "deeplinks_by_region": {
               "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184626112&selectionId=50291",
@@ -1436,7 +1286,7 @@
             "line": null,
             "market": "moneyline",
             "market_books": 1,
-            "model_probability": 0.40715,
+            "model_probability": 0.41115,
             "no_vig_market_probability": 0.2787456445993032,
             "price_american": 245,
             "price_confirmed": true,
@@ -1481,7 +1331,7 @@
             "line": 7.5,
             "market": "game_total",
             "market_books": 1,
-            "model_probability": 0.55505,
+            "model_probability": 0.55305,
             "no_vig_market_probability": 0.5149751839808318,
             "price_american": -118,
             "price_confirmed": true,
@@ -1494,11 +1344,11 @@
               "state_support"
             ]
           },
-          "naive_independence_probability": 0.22598860750000002,
+          "naive_independence_probability": 0.22738650750000003,
           "naive_market_joint_raw_probability": 0.15689403004919558,
           "naive_no_vig_combo_probability": 0.14354708961138168,
-          "probability_edge": 0.07895291038861832,
-          "real_joint_model_probability": 0.2225,
+          "probability_edge": 0.07905291038861831,
+          "real_joint_model_probability": 0.2226,
           "support_blocking_dimensions": [
             "line_support",
             "market_support",
@@ -1519,10 +1369,10 @@
           "candidate_authorized": false,
           "combo_decimal_price": 6.767307692307693,
           "event_date": "2026-09-02",
-          "expected_value_per_unit": 0.24958336538461556,
+          "expected_value_per_unit": 0.2759758653846154,
           "game_id": "823906",
           "home_team": "LAD",
-          "joint_residual": 0.0034886075000000183,
+          "joint_residual": 0.004786507500000009,
           "leg_a": {
             "deeplinks_by_region": {
               "AR": "https://sportsbook.fanduel.com/addToBetslip?marketId=705.184626112&selectionId=50291",
@@ -1555,7 +1405,7 @@
             "line": null,
             "market": "moneyline",
             "market_books": 1,
-            "model_probability": 0.40715,
+            "model_probability": 0.41115,
             "no_vig_market_probability": 0.2787456445993032,
             "price_american": 245,
             "price_confirmed": true,
@@ -1600,7 +1450,7 @@
             "line": 7.5,
             "market": "game_total",
             "market_books": 1,
-            "model_probability": 0.44494999999999996,
+            "model_probability": 0.44694999999999996,
             "no_vig_market_probability": 0.4850248160191682,
             "price_american": -104,
             "price_confirmed": true,
@@ -1613,11 +1463,11 @@
               "state_support"
             ]
           },
-          "naive_independence_probability": 0.1811613925,
+          "naive_independence_probability": 0.1837634925,
           "naive_market_joint_raw_probability": 0.14776925262858767,
           "naive_no_vig_combo_probability": 0.13519855498792147,
-          "probability_edge": 0.04945144501207854,
-          "real_joint_model_probability": 0.18465,
+          "probability_edge": 0.05335144501207853,
+          "real_joint_model_probability": 0.18855,
           "support_blocking_dimensions": [
             "line_support",
             "market_support",
@@ -1631,19 +1481,19 @@
       "game_id": "823906",
       "home_starter_name": "Yoshinobu Yamamoto",
       "home_team": "LAD",
-      "home_win_probability": 0.59285,
+      "home_win_probability": 0.58885,
       "quality_safe_candidate_count": 2,
       "status": "ok"
     }
   ],
-  "generated_at_utc": "2026-09-02T21:07:37.467650+00:00",
+  "generated_at_utc": "2026-09-02T21:55:08.162116+00:00",
   "headline_status": "ready",
   "odds_sources": {
     "fanduel_public": "success",
     "the_odds_api": "missing_credentials"
   },
   "odds_status": "success",
-  "quality_safe_candidate_count": 11,
+  "quality_safe_candidate_count": 12,
   "run_date": "2026-09-02",
   "selection_policy": {
     "actual_combined_sgp_quote_captured": false,
