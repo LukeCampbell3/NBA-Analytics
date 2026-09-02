@@ -2,14 +2,15 @@
 
 Run date: `2026-09-02`
 
-Publication integrity: **PASS**
+Publication integrity: **FAIL**
 
 ## Issues
 
-- `QUOTE_FRESHNESS_UNPROVABLE`: 122
+- `LINEUP_ROLE_INVALID`: 2
+- `QUOTE_FRESHNESS_UNPROVABLE`: 237
 
 ## Canonical statuses
 
-- `BLOCKED_DATA`: 122
+- `BLOCKED_DATA`: 237
 
 Research-only, support-blocked, identity-invalid, stale, or non-positive-EV rows have no execution authority.
