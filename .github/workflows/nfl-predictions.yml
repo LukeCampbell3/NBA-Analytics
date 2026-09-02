@@ -27,7 +27,7 @@ env:
   PYTHONUNBUFFERED: "1"
   THE_ODDS_API_KEY: ${{ secrets.THE_ODDS_API_KEY }}
   SPORTSGAMEODDS_API_KEY: ${{ secrets.SPORTSGAMEODDS_API_KEY }}
-  NFL_ODDS_PROVIDER_PRIORITY: ${{ vars.NFL_ODDS_PROVIDER_PRIORITY || 'sportsgameodds,the_odds_api' }}
+  NFL_ODDS_PROVIDER_PRIORITY: rotowire,sportsgameodds,the_odds_api
 
 jobs:
   nfl-predictions:
@@ -173,6 +173,13 @@ jobs:
           else
             python sports/nfl/scripts/build_nfl_week_pool.py --season 2026 --week 1
           fi
+          if [[ -f "$LIVE_SNAPSHOT" ]]; then
+            python sports/nfl/scripts/build_nfl_week_market_board.py \
+              --snapshot "$LIVE_SNAPSHOT"
+          elif [[ -f "$WEEK_SNAPSHOT" ]]; then
+            python sports/nfl/scripts/build_nfl_week_market_board.py \
+              --snapshot "$WEEK_SNAPSHOT"
+          fi
           python sports/site/pipeline/build_static_site.py
           if [[ "${{ inputs.build_only }}" == "true" ]]; then
             python sports/site/pipeline/validate_nfl_publication.py
@@ -195,10 +202,12 @@ jobs:
             sports/nfl/web/data/daily_predictions.json \
             sports/nfl/web/data/fantasy_draft_rankings.json \
             sports/nfl/web/data/week_1_pool.json \
+            sports/nfl/web/data/week_1_market_board.json \
             sports/nfl/web/data/market_validation_summary.json \
             dist/nfl/data/daily_predictions.json \
             dist/nfl/data/fantasy_draft_rankings.json \
             dist/nfl/data/week_1_pool.json \
+            dist/nfl/data/week_1_market_board.json \
             dist/nfl/data/market_validation_summary.json
           SNAPSHOT="sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}/${{ github.run_id }}.json"
           if [[ "${{ inputs.build_only }}" != "true" && -f "$SNAPSHOT" ]]; then
@@ -253,6 +262,7 @@ jobs:
             sports/nfl/web/data/daily_predictions.json
             sports/nfl/web/data/fantasy_draft_rankings.json
             sports/nfl/web/data/week_1_pool.json
+            sports/nfl/web/data/week_1_market_board.json
             sports/nfl/web/data/market_validation_summary.json
             dist/nfl/data/daily_predictions.json
             dist/nfl/data/market_validation_summary.json

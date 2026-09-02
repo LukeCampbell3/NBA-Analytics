@@ -212,7 +212,7 @@ def main() -> int:
         provider_priority = tuple(
             value.strip()
             for value in os.getenv(
-                "NFL_ODDS_PROVIDER_PRIORITY", "sportsgameodds,the_odds_api"
+                "NFL_ODDS_PROVIDER_PRIORITY", "rotowire,sportsgameodds,the_odds_api"
             ).split(",")
             if value.strip()
         )

@@ -47,6 +47,8 @@ TEAM_ALIASES = {
     "Tennessee Titans": "TEN",
     "Washington Commanders": "WAS",
 }
+TEAM_ALIASES.update({team: team for team in set(TEAM_ALIASES.values())})
+TEAM_ALIASES.update({"LAR": "LA", "JAC": "JAX"})
 
 
 def attach_schedule_identity(markets: pd.DataFrame, schedule: pd.DataFrame) -> pd.DataFrame:
@@ -61,17 +63,46 @@ def attach_schedule_identity(markets: pd.DataFrame, schedule: pd.DataFrame) -> p
         home = TEAM_ALIASES.get(str(row.get("home_team") or ""))
         away = TEAM_ALIASES.get(str(row.get("away_team") or ""))
         candidates = schedule_frame
+        provider_aliases = {"LAR": "LA", "JAC": "JAX"}
+        provider_team_raw = str(row.get("provider_team") or "")
+        provider_opponent_raw = str(row.get("provider_opponent") or "")
+        provider_team = provider_aliases.get(provider_team_raw, provider_team_raw)
+        provider_opponent = provider_aliases.get(provider_opponent_raw, provider_opponent_raw)
+        provider_season = pd.to_numeric(row.get("provider_season"), errors="coerce")
+        provider_week = pd.to_numeric(row.get("rotowire_week"), errors="coerce")
+        if provider_team and provider_opponent:
+            pair = {provider_team, provider_opponent}
+            candidates = candidates.loc[
+                schedule_frame.apply(
+                    lambda game: {str(game["home_team"]), str(game["away_team"])} == pair,
+                    axis=1,
+                )
+            ]
+            if pd.notna(provider_season):
+                candidates = candidates.loc[candidates["season"].eq(int(provider_season))]
+        if pd.notna(provider_week):
+            candidates = candidates.loc[candidates["week"].eq(int(provider_week))]
         if home and away:
             candidates = candidates.loc[
                 candidates["home_team"].astype(str).eq(home)
                 & candidates["away_team"].astype(str).eq(away)
             ]
-        if candidates.empty or pd.isna(starts.loc[index]):
+        if candidates.empty:
             identities.append({"season": None, "week": None, "home_abbr": home, "away_abbr": away})
             continue
-        deltas = (candidates["commence_time_utc"] - starts.loc[index]).abs()
-        match = candidates.loc[deltas.idxmin()]
-        if deltas.min() > pd.Timedelta(hours=18):
+        if pd.isna(starts.loc[index]):
+            if len(candidates) != 1:
+                identities.append({"season": None, "week": None, "home_abbr": home, "away_abbr": away})
+                continue
+            match = candidates.iloc[0]
+            frame.loc[index, "commence_time_utc"] = match["commence_time_utc"]
+        else:
+            deltas = (candidates["commence_time_utc"] - starts.loc[index]).abs()
+            match = candidates.loc[deltas.idxmin()]
+            if deltas.min() > pd.Timedelta(hours=18):
+                identities.append({"season": None, "week": None, "home_abbr": home, "away_abbr": away})
+                continue
+        if match is None:
             identities.append({"season": None, "week": None, "home_abbr": home, "away_abbr": away})
             continue
         identities.append(

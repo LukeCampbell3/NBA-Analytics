@@ -11,6 +11,11 @@ from typing import Any
 
 import requests
 
+from sports.nfl.scripts.fetch_nfl_market_props_rotowire import (
+    build_snapshot as build_rotowire_snapshot,
+    fetch_page as fetch_rotowire_page,
+)
+
 
 SPORT_KEY = "americanfootball_nfl"
 SPORTSGAMEODDS_API_URL = "https://api.sportsgameodds.com/v2/events"
@@ -578,7 +583,11 @@ def fetch_available_live_slate(
     attempts: list[dict[str, Any]] = []
     for provider in provider_priority:
         try:
-            if provider == "sportsgameodds":
+            if provider == "rotowire":
+                snapshot = build_rotowire_snapshot(fetch_rotowire_page())
+                rows, audit = snapshot["observations"], snapshot["audit"]
+                audit["status"] = "success" if rows else "no_props"
+            elif provider == "sportsgameodds":
                 if not sportsgameodds_api_key:
                     attempts.append({"provider": provider, "status": "missing_credentials"})
                     continue

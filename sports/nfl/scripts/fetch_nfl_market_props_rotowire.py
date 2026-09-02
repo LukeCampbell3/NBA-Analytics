@@ -74,6 +74,10 @@ ROTOWIRE_PROP_MAP: dict[str, tuple[str, str]] = {
     "rushyds": ("player_rush_yds", "rushing"),
     "recyds": ("player_reception_yds", "receiving"),
 }
+# Retained for a separate odds-only research surface. These rows never enter
+# build_observations and therefore cannot be mistaken for modeled two-sided
+# candidates.
+ROTOWIRE_RESEARCH_INVENTORY_PROPS = {"firsttd"}
 
 ROTOWIRE_BOOK_TITLES: dict[str, str] = {
     "betr": "betr",
@@ -181,7 +185,7 @@ def extract_rotowire_nfl_page_payload(html: str) -> tuple[int | None, dict[str, 
         if not prop_match:
             continue
         prop = str(prop_match.group(1)).strip().lower()
-        if prop not in ROTOWIRE_PROP_MAP:
+        if prop not in ROTOWIRE_PROP_MAP and prop not in ROTOWIRE_RESEARCH_INVENTORY_PROPS:
             continue
         try:
             rows = json.loads(_extract_data_array_literal(script_text))
@@ -300,6 +304,30 @@ def build_snapshot(html: str, *, fetched_at_utc: str | None = None) -> dict[str,
     ts = fetched_at_utc or utc_now_iso()
     week, bundles = extract_rotowire_nfl_page_payload(html)
     observations = build_observations(week=week, bundles=bundles, fetched_at_utc=ts)
+    first_td_best_prices = []
+    for row in bundles.get("firsttd", []):
+        offers = []
+        for book in _rotowire_book_keys_for_prop(row, "firsttd"):
+            price = _numeric_price(row.get(f"{book}_firsttd"))
+            if price is not None:
+                offers.append((book, price))
+        if not offers:
+            continue
+        book, price = max(offers, key=lambda item: item[1])
+        home_team, away_team = _rotowire_matchup(row)
+        first_td_best_prices.append({
+            "event_id": str(row.get("gameID") or ""),
+            "provider_player_id": str(row.get("playerID") or ""),
+            "player": str(row.get("name") or "").strip(),
+            "team": str(row.get("team") or "").strip(),
+            "opponent": str(row.get("opp") or "").strip().lstrip("@"),
+            "home_team": home_team,
+            "away_team": away_team,
+            "bookmaker": book,
+            "price": price,
+            "snapshot_time_utc": ts,
+            "source": "rotowire_public_nfl_props",
+        })
     audit = {
         "provider": "rotowire_public_nfl_props",
         "sport_key": "americanfootball_nfl",
@@ -318,6 +346,7 @@ def build_snapshot(html: str, *, fetched_at_utc: str | None = None) -> dict[str,
             for book in sorted({obs["bookmaker"] for obs in observations})
         },
         "complete_two_sided_rows": len(observations),
+        "first_td_best_prices": first_td_best_prices,
         "markets": sorted({pair[0] for pair in ROTOWIRE_PROP_MAP.values()}),
         "regions": "public_rotowire_scrape",
         "raw_source_sha256": None,

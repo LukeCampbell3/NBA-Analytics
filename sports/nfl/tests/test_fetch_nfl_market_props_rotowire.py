@@ -74,7 +74,7 @@ def test_extract_page_payload_reads_week_and_props() -> None:
     assert bundles["passyds"][0]["name"] == "Malik Willis"
 
 
-def test_extract_page_payload_ignores_unsupported_prop_blocks() -> None:
+def test_extract_page_payload_retains_first_td_inventory_but_ignores_other_unsupported_blocks() -> None:
     """rotowire NFL page carries 25+ real prop blocks; only three are
     currently mapped to a real downstream predictor. Everything else must
     be silently dropped, not emitted as observations the pipeline would
@@ -87,7 +87,11 @@ def test_extract_page_payload_ignores_unsupported_prop_blocks() -> None:
     )
     week, bundles = scraper.extract_rotowire_nfl_page_payload(html)
     assert week == 1
-    assert set(bundles) == {"passyds"}
+    assert set(bundles) == {"firsttd", "passyds"}
+    observations = scraper.build_observations(
+        week=1, bundles=bundles, fetched_at_utc="2026-09-02T00:00:00Z"
+    )
+    assert {row["market"] for row in observations} == {"player_pass_yds"}
 
 
 def test_build_observations_requires_both_sides_at_the_same_line() -> None:
