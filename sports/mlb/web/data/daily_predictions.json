@@ -3,18 +3,18 @@
   "board_title": "MLB Prediction Bounties",
   "by_direction": {
     "OVER": {
-      "count": 5,
+      "count": 4,
       "share": 1.0
     }
   },
   "by_target": {
     "H": {
-      "count": 4,
-      "share": 0.8
+      "count": 3,
+      "share": 0.75
     },
     "TB": {
       "count": 1,
-      "share": 0.2
+      "share": 0.25
     }
   },
   "daily_parlay": {
@@ -38,12 +38,13 @@
     "filter_rejections": {
       "history_too_short": 20,
       "history_too_stale": 18,
-      "hit_survival_consensus_too_low": 6,
+      "hit_survival_consensus_too_low": 5,
       "hit_survival_probability_too_low": 4,
-      "leg_probability_too_low": 132,
+      "leg_probability_too_low": 134,
       "leg_value_too_low": 25,
       "not_over": 856,
-      "price_outside_playable_range": 115,
+      "official_game_closed": 1,
+      "price_outside_playable_range": 113,
       "unconfirmed_market_price": 311,
       "unsupported_anchor_target": 40
     },
@@ -107,7 +108,7 @@
         "4": 0.18
       }
     },
-    "generated_at_utc": "2026-09-02T22:00:31.609441+00:00",
+    "generated_at_utc": "2026-09-02T22:27:31.285210+00:00",
     "hit_survival_validation": {
       "calibration": {
         "brier_score": 0.24259946235125276,
@@ -539,23 +540,23 @@
     "withhold_threshold_days": 60
   },
   "filter_rejections": {
-    "core_price_too_heavily_juiced": 61,
+    "core_price_too_heavily_juiced": 62,
     "core_price_too_long": 57,
     "edge_too_small": 328,
     "expected_value_too_low": 2,
     "history_too_short": 177,
     "history_too_stale": 1,
-    "hit_probability_too_low": 82,
+    "hit_probability_too_low": 81,
     "opposing_probable_starter_missing": 45,
     "prediction_too_low": 40,
     "side_price_unconfirmed": 246,
     "synthetic_market_source": 485
   },
-  "generated_at_utc": "2026-09-02T22:05:48.316591+00:00",
+  "generated_at_utc": "2026-09-02T22:32:52.817942+00:00",
   "live_identity_gate": "REQUIRE_EXACT_GAME_PLAYER_TEAM_MATCH_CONFIRMED_STARTER_AND_LIVE_SELECTION",
   "live_identity_rejection_count": 0,
   "live_identity_rejections": [],
-  "mlb_team_market_generated_at_utc": "2026-09-02T22:05:48.780224+00:00",
+  "mlb_team_market_generated_at_utc": "2026-09-02T22:32:53.290045+00:00",
   "mlb_team_market_plays": [],
   "mlb_team_market_status": "ok",
   "model_eligible_primary_count": 2,
@@ -590,9 +591,9 @@
   },
   "parlays": {
     "action": "ACT",
-    "calibration_as_of": "2026-09-02T22:05:02.151163+00:00",
-    "calibration_snapshot_id": "4037556c8ad6cbd6",
-    "calibration_snapshot_sha256": "4037556c8ad6cbd697279dda8b9d46b138066db3f039aa36ede52a2a85fc7af6",
+    "calibration_as_of": "2026-09-02T22:32:01.531046+00:00",
+    "calibration_snapshot_id": "bddb986ef9a8a714",
+    "calibration_snapshot_sha256": "bddb986ef9a8a714610ea5602e1f20dddd00aeade4d4b3b6ffaee5fadffc0732",
     "decision_record": {
       "action": 1,
       "candidate_universe_size": 500,
@@ -610,7 +611,7 @@
       },
       "world_gate_mode": "OBSERVE_ONLY"
     },
-    "decision_timestamp_utc": "2026-09-02T22:05:24.868373+00:00",
+    "decision_timestamp_utc": "2026-09-02T22:32:24.275601+00:00",
     "eligibility_reason": "operationally_eligible",
     "eligible": true,
     "evidence_status": {
@@ -1194,7 +1195,7 @@
     "certificate_status": "NO_ACTIVE_PROSPECTIVE_CERTIFICATE",
     "complete_slate_capture_passed": true,
     "full_policy_replay_available_for_snapshot": true,
-    "generated_at_utc": "2026-09-02T21:58:39.080948+00:00",
+    "generated_at_utc": "2026-09-02T22:25:37.439747+00:00",
     "historical_evidence_labels": [
       "SELECTED_ONLY_HISTORY",
       "SELECTED_ONLY_HISTORY"
@@ -1215,8 +1216,8 @@
     "run_date": "2026-09-02",
     "schema_version": "MLB_POLICY_GOVERNANCE_STATUS_V1",
     "slate_id": "MLB_20260902",
-    "snapshot_id": "mlb_20260902_215739Z_ba90a8cfa707",
-    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260902/governance/slates/MLB_20260902/mlb_20260902_215739Z_ba90a8cfa707/manifest.json",
+    "snapshot_id": "mlb_20260902_222437Z_abbf4bdb3ab3",
+    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260902/governance/slates/MLB_20260902/mlb_20260902_222437Z_abbf4bdb3ab3/manifest.json",
     "staking_enabled": false
   },
   "policy_profile": "premium_confidence_value_frontier_v19_shadow",
@@ -1312,23 +1313,36 @@
   },
   "sport": "MLB",
   "summary": {
-    "avg_abs_edge": 0.6475194,
-    "avg_edge": 0.6475194,
-    "avg_expected_hit_rate": 0.6370566,
-    "avg_graded_hit_rate": 0.6370566,
-    "avg_precision_score": 0.7665458,
-    "avg_value_score": 0.4951370405184,
-    "closed_game_cards_suppressed": 0,
+    "avg_abs_edge": 0.6532417500000001,
+    "avg_edge": 0.6532417500000001,
+    "avg_expected_hit_rate": 0.6355215,
+    "avg_graded_hit_rate": 0.6355215,
+    "avg_precision_score": 0.76403575,
+    "avg_value_score": 0.49765157235300006,
+    "closed_game_cards_suppressed": 1,
     "duplicate_cards_suppressed": 0,
     "parlay_pairs": 0,
     "parlay_tagged_plays": 0,
-    "play_count": 5,
+    "play_count": 4,
     "rejected_rows": 1524,
     "rows_after_filters": 6,
     "source_play_count": 5,
     "supported_rows": 1530
   },
-  "suppressed_closed_games": [],
+  "suppressed_closed_games": [
+    {
+      "direction": "OVER",
+      "game_id": "823339",
+      "market_date": "2026-09-02",
+      "market_line": 0.5,
+      "official_game_status": "Warmup",
+      "opponent": "SF",
+      "player": "Oneil Cruz",
+      "reason": "game is no longer open for pregame predictions",
+      "target": "H",
+      "team": "PIT"
+    }
+  ],
   "suppressed_duplicates": [],
   "through_date": "2026-09-01",
   "tight_quality_overlay": {
@@ -1343,7 +1357,7 @@
     "confidence_floor": 0.6,
     "dynamic_probability_gate": "balanced_probability >= max(0.60, exact_price_break_even_probability + 0.01)",
     "evidence_note": "v19 preserves the validated 60% base confidence regime, requires a one-point probability edge over the exact confirmed price, and weights isotonic negative authority by demonstrated holdout Brier improvement. No relative rank, quota, or board-size target can reject an otherwise eligible play. This remains a shadow publication policy.",
-    "input_plays": 5,
+    "input_plays": 4,
     "minimum_final_expected_value": 0.0,
     "minimum_probability_edge": 0.01,
     "parlay_v2_unchanged": true,
@@ -1351,7 +1365,7 @@
     "probability_source": "existing_evidence_estimate with evidence-weighted negative-only isotonic adjustment",
     "published_plays": 2,
     "ranking_after_gates": "final_price_ev_desc_then_final_probability_desc; ranking_does_not_limit_publication",
-    "rejected_plays": 3,
+    "rejected_plays": 2,
     "rejections": [
       {
         "final_ev": 0.014277557805133956,
@@ -1361,19 +1375,6 @@
         "player": "Royce Lewis",
         "pre_tight_ev": 0.020961,
         "pre_tight_probability": 0.649702,
-        "reasons": [
-          "dynamic_probability_edge_below_1pct"
-        ],
-        "target": "H"
-      },
-      {
-        "final_ev": 0.0035299778958519656,
-        "final_probability": 0.638609985933724,
-        "line": 0.5,
-        "play_key": "2026-09-02|823339|oneil cruz|h|over",
-        "player": "Oneil Cruz",
-        "pre_tight_ev": 0.010737,
-        "pre_tight_probability": 0.643197,
         "reasons": [
           "dynamic_probability_edge_below_1pct"
         ],
@@ -1402,21 +1403,21 @@
     "certification_started": false,
     "decision": "DATA_CONTRACT_INCOMPLETE",
     "fully_valid_candidates": 0,
-    "generated_at_utc": "2026-09-02T22:07:57.676090Z",
+    "generated_at_utc": "2026-09-02T22:35:01.272221Z",
     "implementation_commit": "55b7d07c1e4b58b362cf5f7afccdbf81ee76d9f0",
-    "normalized_candidates": 79,
+    "normalized_candidates": 59,
     "policy": "UNIFIED_MLB_V2_1",
     "policy_hash": "80f335d2501d54502909d7f8587ebfef56d725a67d44ae125f9df4337d489b1c",
     "production_authorized": false,
     "rejection_count_by_reason": {
-      "CAPABILITY_NOT_SUPPORTED": 77,
-      "LINEUP_INVALID": 79,
-      "PLAYER_STATUS_INVALID": 79,
-      "PROBABILITY_UNAVAILABLE": 77,
-      "QUOTE_FRESHNESS_UNPROVABLE": 79,
-      "SUPPORT_INVALID": 77,
-      "UNCERTAINTY_COMPONENTS_UNAVAILABLE": 79,
-      "UNCERTAINTY_INVALID": 79
+      "CAPABILITY_NOT_SUPPORTED": 57,
+      "LINEUP_INVALID": 59,
+      "PLAYER_STATUS_INVALID": 59,
+      "PROBABILITY_UNAVAILABLE": 57,
+      "QUOTE_FRESHNESS_UNPROVABLE": 59,
+      "SUPPORT_INVALID": 57,
+      "UNCERTAINTY_COMPONENTS_UNAVAILABLE": 59,
+      "UNCERTAINTY_INVALID": 59
     },
     "run_date": "2026-09-02",
     "schema_version": "mlb_v2_1_shadow_web_v1",
