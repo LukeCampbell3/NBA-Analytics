@@ -38,12 +38,12 @@
     "filter_rejections": {
       "history_too_short": 10,
       "history_too_stale": 24,
-      "hit_survival_consensus_too_low": 9,
+      "hit_survival_consensus_too_low": 10,
       "hit_survival_probability_too_low": 5,
-      "leg_probability_too_low": 122,
-      "leg_value_too_low": 35,
+      "leg_probability_too_low": 123,
+      "leg_value_too_low": 34,
       "not_over": 553,
-      "price_outside_playable_range": 86,
+      "price_outside_playable_range": 85,
       "unconfirmed_market_price": 47,
       "unsupported_anchor_target": 25
     },
@@ -107,7 +107,7 @@
         "4": 0.18
       }
     },
-    "generated_at_utc": "2026-09-03T11:13:12.737297+00:00",
+    "generated_at_utc": "2026-09-03T11:44:20.066724+00:00",
     "hit_survival_validation": {
       "calibration": {
         "brier_score": 0.24259946235125276,
@@ -136,7 +136,7 @@
           "leg_hit_rate_wilson_95_low": 0.546251630618882,
           "leg_wins": 23,
           "legs": 32,
-          "mean_probability": 0.67128158684495,
+          "mean_probability": 0.6712815868449499,
           "slates": 15,
           "ticket_hit_rate": 0.6666666666666666,
           "ticket_hit_rate_wilson_95_high": 0.8482389930530876,
@@ -539,18 +539,18 @@
     "withhold_threshold_days": 60
   },
   "filter_rejections": {
-    "core_price_too_heavily_juiced": 73,
+    "core_price_too_heavily_juiced": 71,
     "core_price_too_long": 45,
     "edge_too_small": 192,
-    "expected_value_too_low": 5,
+    "expected_value_too_low": 6,
     "history_too_short": 96,
     "hit_probability_too_low": 84,
     "prediction_too_low": 27,
     "side_price_unconfirmed": 281,
     "synthetic_market_source": 103
   },
-  "generated_at_utc": "2026-09-03T11:17:14.449831+00:00",
-  "mlb_team_market_generated_at_utc": "2026-09-03T11:17:14.811277+00:00",
+  "generated_at_utc": "2026-09-03T11:50:40.070289+00:00",
+  "mlb_team_market_generated_at_utc": "2026-09-03T11:50:40.562665+00:00",
   "mlb_team_market_plays": [],
   "mlb_team_market_status": "ok",
   "model_run_id": "mlb_high_precision_selector_v2",
@@ -584,9 +584,9 @@
   },
   "parlays": {
     "action": "ACT",
-    "calibration_as_of": "2026-09-03T11:16:35.106722+00:00",
-    "calibration_snapshot_id": "4180ea4943b2e5a9",
-    "calibration_snapshot_sha256": "4180ea4943b2e5a9ad4874adc54f75818baee5a6effb92c4909cd0b4b6fc55c8",
+    "calibration_as_of": "2026-09-03T11:49:41.699049+00:00",
+    "calibration_snapshot_id": "2a01afb58870b0c9",
+    "calibration_snapshot_sha256": "2a01afb58870b0c9b14bcc65bd6be1a72dc2fc8f30943cb6b129f9121dcc6440",
     "decision_record": {
       "action": 1,
       "candidate_universe_size": 500,
@@ -595,16 +595,16 @@
       "world_certificate_diagnostics": {
         "certified": false,
         "counterexample_count": 3,
-        "counterexample_mass": 0.7216341655938111,
-        "outside_probability_mass": 0.0,
-        "retained_probability_mass": 1.0,
+        "counterexample_mass": 0.7216341655938112,
+        "outside_probability_mass": -2.220446049250313e-16,
+        "retained_probability_mass": 1.0000000000000002,
         "retained_world_count": 4,
         "version": "NONVACUOUS_WORLD_CERTIFICATE_V1",
-        "world_risk_rho": 0.7216341655938111
+        "world_risk_rho": 0.721634165593811
       },
       "world_gate_mode": "OBSERVE_ONLY"
     },
-    "decision_timestamp_utc": "2026-09-03T11:16:52.337833+00:00",
+    "decision_timestamp_utc": "2026-09-03T11:50:10.199263+00:00",
     "eligibility_reason": "operationally_eligible",
     "eligible": true,
     "evidence_status": {
@@ -625,11 +625,11 @@
       ],
       "combined_decimal_price": 5.3,
       "evidence_note": "The frozen V2 research action remains authoritative for its prospective evidence stream. This overlay only controls whether that research action is presented as a tight-quality public candidate.",
-      "expected_value_per_unit": 0.47533892235280106,
+      "expected_value_per_unit": 0.4753389223528013,
       "frozen_policy_mutated": false,
-      "joint_probability": 0.2783658344061889,
+      "joint_probability": 0.27836583440618895,
       "leg_probabilities": [
-        0.5155418821830424,
+        0.5155418821830425,
         0.5399480508304376
       ],
       "reason": "tight_quality_gates_failed",
@@ -654,9 +654,9 @@
       },
       "betslip_url": "https://account.sportsbook.fanduel.com/sportsbook/addToBetslip?marketId%5B0%5D=734.184332785&selectionId%5B0%5D=11497449&marketId%5B1%5D=734.184333471&selectionId%5B1%5D=17511224",
       "candidate_id": "20260903|Alex Bregman|TB|OVER|1.5|824632||Shohei Ohtani|TB|OVER|1.5|823907",
-      "joint_probability_estimate": 0.2783658344061889,
+      "joint_probability_estimate": 0.27836583440618895,
       "joint_probability_method": "independence_binary_world_model",
-      "joint_score": 1.0,
+      "joint_score": 1.0000000000000002,
       "leg_1": {
         "book": "real",
         "decimal_price": 2.65,
@@ -690,7 +690,7 @@
         "game_id": "824632",
         "in_support": true,
         "line": 1.5,
-        "model_probability_estimate": 0.5155418821830424,
+        "model_probability_estimate": 0.5155418821830425,
         "player": "Alex Bregman",
         "player_headshot_fallback_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/608324/headshot/67/current",
         "player_headshot_url": "data/headshots/608324.jpg",
@@ -754,9 +754,9 @@
       },
       "world_diagnostics": {
         "counterexample_count": 3,
-        "counterexample_mass": 0.7216341655938111,
+        "counterexample_mass": 0.7216341655938112,
         "nonvacuous_world_certificate": false,
-        "retained_probability_mass": 1.0,
+        "retained_probability_mass": 1.0000000000000002,
         "retained_world_count": 4
       }
     },
@@ -809,7 +809,7 @@
         "game_id": "824796",
         "in_support": true,
         "line": 1.5,
-        "model_probability_estimate": 0.5534607107964828,
+        "model_probability_estimate": 0.553460710796483,
         "player": "Pete Alonso",
         "player_headshot_fallback_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/624413/headshot/67/current",
         "player_headshot_url": "data/headshots/624413.jpg",
@@ -893,7 +893,7 @@
     "certificate_status": "NO_ACTIVE_PROSPECTIVE_CERTIFICATE",
     "complete_slate_capture_passed": true,
     "full_policy_replay_available_for_snapshot": true,
-    "generated_at_utc": "2026-09-03T11:11:30.096149+00:00",
+    "generated_at_utc": "2026-09-03T11:41:44.499384+00:00",
     "historical_evidence_labels": [
       "SELECTED_ONLY_HISTORY",
       "SELECTED_ONLY_HISTORY"
@@ -914,8 +914,8 @@
     "run_date": "2026-09-03",
     "schema_version": "MLB_POLICY_GOVERNANCE_STATUS_V1",
     "slate_id": "MLB_20260903",
-    "snapshot_id": "mlb_20260903_111050Z_02a9094e6de3",
-    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260903/governance/slates/MLB_20260903/mlb_20260903_111050Z_02a9094e6de3/manifest.json",
+    "snapshot_id": "mlb_20260903_114054Z_d4febd644f5c",
+    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260903/governance/slates/MLB_20260903/mlb_20260903_114054Z_d4febd644f5c/manifest.json",
     "staking_enabled": false
   },
   "policy_profile": "premium_confidence_value_frontier_v19_shadow",
@@ -1011,19 +1011,19 @@
   },
   "sport": "MLB",
   "summary": {
-    "avg_abs_edge": 0.6042737777777778,
-    "avg_edge": 0.6042737777777778,
-    "avg_expected_hit_rate": 0.6284576666666666,
-    "avg_graded_hit_rate": 0.6284576666666666,
-    "avg_precision_score": 0.7375191111111111,
-    "avg_value_score": 0.44363884247055557,
+    "avg_abs_edge": 0.6254700000000001,
+    "avg_edge": 0.6254700000000001,
+    "avg_expected_hit_rate": 0.6309045555555556,
+    "avg_graded_hit_rate": 0.6309045555555556,
+    "avg_precision_score": 0.7403553333333333,
+    "avg_value_score": 0.46140545809144456,
     "closed_game_cards_suppressed": 0,
     "duplicate_cards_suppressed": 0,
     "parlay_pairs": 0,
     "parlay_tagged_plays": 0,
     "play_count": 9,
-    "rejected_rows": 906,
-    "rows_after_filters": 12,
+    "rejected_rows": 905,
+    "rows_after_filters": 13,
     "source_play_count": 9,
     "supported_rows": 918
   },
@@ -1052,6 +1052,20 @@
     "ranking_after_gates": "final_price_ev_desc_then_final_probability_desc; ranking_does_not_limit_publication",
     "rejected_plays": 9,
     "rejections": [
+      {
+        "final_ev": 0.0012215521519964856,
+        "final_probability": 0.6436424263834263,
+        "line": 0.5,
+        "play_key": "2026-09-03|824632|jake bauers|h|over",
+        "player": "Jake Bauers",
+        "pre_tight_ev": 0.007406,
+        "pre_tight_probability": 0.647618,
+        "reasons": [
+          "dynamic_probability_edge_below_1pct",
+          "lineup_unconfirmed"
+        ],
+        "target": "H"
+      },
       {
         "final_ev": 0.04590118370318952,
         "final_probability": 0.6275407102219137,
@@ -1121,20 +1135,6 @@
         "target": "H"
       },
       {
-        "final_ev": 0.01160708537826527,
-        "final_probability": 0.6225274371558556,
-        "line": 0.5,
-        "play_key": "2026-09-03|823907|kyle tucker|h|over",
-        "player": "Kyle Tucker",
-        "pre_tight_ev": 0.016593,
-        "pre_tight_probability": 0.625596,
-        "reasons": [
-          "dynamic_probability_edge_below_1pct",
-          "lineup_unconfirmed"
-        ],
-        "target": "H"
-      },
-      {
         "final_ev": 0.22331943249043862,
         "final_probability": 0.6407863693997535,
         "line": 1.5,
@@ -1182,7 +1182,7 @@
     "certification_started": false,
     "decision": "DATA_CONTRACT_INCOMPLETE",
     "fully_valid_candidates": 0,
-    "generated_at_utc": "2026-09-03T11:18:30.755845Z",
+    "generated_at_utc": "2026-09-03T11:52:01.460404Z",
     "implementation_commit": "55b7d07c1e4b58b362cf5f7afccdbf81ee76d9f0",
     "normalized_candidates": 73,
     "policy": "UNIFIED_MLB_V2_1",
