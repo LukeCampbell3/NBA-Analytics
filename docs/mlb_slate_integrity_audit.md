@@ -1,16 +1,15 @@
 # MLB slate integrity audit
 
-Run date: `2026-09-02`
+Run date: `2026-09-03`
 
-Publication integrity: **FAIL**
+Publication integrity: **PASS**
 
 ## Issues
 
-- `LINEUP_ROLE_INVALID`: 11
-- `QUOTE_FRESHNESS_UNPROVABLE`: 691
+- `QUOTE_FRESHNESS_UNPROVABLE`: 73
 
 ## Canonical statuses
 
-- `BLOCKED_DATA`: 691
+- `BLOCKED_DATA`: 73
 
 Research-only, support-blocked, identity-invalid, stale, or non-positive-EV rows have no execution authority.

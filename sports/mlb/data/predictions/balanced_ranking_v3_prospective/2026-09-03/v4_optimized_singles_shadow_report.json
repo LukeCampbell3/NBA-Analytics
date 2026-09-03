@@ -1,0 +1,2079 @@
+{
+  "candidate_count": 117,
+  "dynamic_gate": "P_balanced >= max(0.60, exact_price_break_even + 0.01) and EV(P_balanced, price) > 0",
+  "eligible": [],
+  "eligible_count": 0,
+  "fit": {
+    "balanced_weight": 0.07,
+    "cross_fitted_slate_residuals": [],
+    "equal_slate_log_loss": 0.646887501561701,
+    "market_weight": 0.9299999999999999,
+    "residual_lcb": null,
+    "safe_calibration_adjustment": 0.0,
+    "training_rows": 198,
+    "training_slates": 1
+  },
+  "frontend_plays": [],
+  "market_ensemble_role": "diagnostic_only",
+  "pick_count_constraint": "none",
+  "preregistration_spec_hash": "e902fd8ba0628655528d9795a69c99b97a505a1ad1dcc9a217af9b50503fecad",
+  "publication_authority": false,
+  "record_type": "prospective_pregame_shadow_decision",
+  "scores": [
+    {
+      "balanced_probability": 0.43795620437956206,
+      "candidate_id": "01fab71a4af954a7932b2f49",
+      "decision_ev": -0.2966157929661579,
+      "decision_probability": 0.43795620437956206,
+      "eligible": false,
+      "ensemble_probability": 0.6102251582965958,
+      "market_probability": 0.6226415094339622,
+      "price": -165.0,
+      "probability_edge": -0.18468530505440017,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.019941412432740058,
+      "safe_probability": 0.6102251582965958
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "0bde293c84df73038b1a73f4",
+      "decision_ev": -0.08850185453959025,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6570551710250565,
+      "market_probability": 0.6610169491525424,
+      "price": -195.0,
+      "probability_edge": -0.05850122588210205,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.005993459218504249,
+      "safe_probability": 0.6570551710250565
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "0d6b65a5f6f20203053d8dcc",
+      "decision_ev": -0.043063263041065225,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6277558498972543,
+      "market_probability": 0.6296296296296297,
+      "price": -170.0,
+      "probability_edge": -0.02711390635918931,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.002976003104360747,
+      "safe_probability": 0.6277558498972543
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "0f0aaf4ce67f42cf9e2f8f91",
+      "decision_ev": -0.2025078369905956,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.6784864515481784,
+      "market_probability": 0.6875,
+      "price": -220.0,
+      "probability_edge": -0.1392241379310345,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.013110615929922242,
+      "safe_probability": 0.6784864515481784
+    },
+    {
+      "balanced_probability": 0.3808411214953271,
+      "candidate_id": "0f7ae3950497e3b0448df78f",
+      "decision_ev": -0.3144859813084112,
+      "decision_probability": 0.3808411214953271,
+      "eligible": false,
+      "ensemble_probability": 0.5432677424607062,
+      "market_probability": 0.5555555555555556,
+      "price": -125.0,
+      "probability_edge": -0.17471443406022846,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.022118063570728874,
+      "safe_probability": 0.5432677424607062
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "16df5cde3e497341a5291938",
+      "decision_ev": -0.11057202755315942,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6724129451607246,
+      "market_probability": 0.6774193548387096,
+      "price": -210.0,
+      "probability_edge": -0.07490363156826929,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.007390414286549407,
+      "safe_probability": 0.6724129451607246
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "172c1dee890a80f951e51d2f",
+      "decision_ev": -0.11057202755315942,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6724129451607246,
+      "market_probability": 0.6774193548387096,
+      "price": -210.0,
+      "probability_edge": -0.07490363156826929,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.007390414286549407,
+      "safe_probability": 0.6724129451607246
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "17bae0683222f23026d2a169",
+      "decision_ev": -0.1775862068965517,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.6588528616611228,
+      "market_probability": 0.6666666666666666,
+      "price": -200.0,
+      "probability_edge": -0.11839080459770113,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.011720707508315886,
+      "safe_probability": 0.6588528616611228
+    },
+    {
+      "balanced_probability": 0.3786008230452675,
+      "candidate_id": "1aa13f7a24bbc5d4d2e5f94b",
+      "decision_ev": -0.33016777461221913,
+      "decision_probability": 0.3786008230452675,
+      "eligible": false,
+      "ensemble_probability": 0.5521383738865309,
+      "market_probability": 0.5652173913043478,
+      "price": -130.0,
+      "probability_edge": -0.1866165682590803,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.023139800046906966,
+      "safe_probability": 0.5521383738865309
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "1c5a1b6a754d415ba0f66e27",
+      "decision_ev": -0.0323232323232322,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6212455020338284,
+      "market_probability": 0.6226415094339622,
+      "price": -165.0,
+      "probability_edge": -0.020125786163521897,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.0022420724911240697,
+      "safe_probability": 0.6212455020338284
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "22089a618c3e09018a8a52ab",
+      "decision_ev": -0.14643605870020948,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6991604122776549,
+      "market_probability": 0.7058823529411765,
+      "price": -240.0,
+      "probability_edge": -0.10336662967073618,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.009522749273322195,
+      "safe_probability": 0.6991604122776549
+    },
+    {
+      "balanced_probability": 0.4186046511627907,
+      "candidate_id": "22b57b1e6a7ac7ef6cb49cd7",
+      "decision_ev": -0.25939177101967803,
+      "decision_probability": 0.4186046511627907,
+      "eligible": false,
+      "ensemble_probability": 0.5550270805679879,
+      "market_probability": 0.5652173913043478,
+      "price": -130.0,
+      "probability_edge": -0.14661274014155706,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.018029011302790665,
+      "safe_probability": 0.5550270805679879
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "2425e80e837c431167035964",
+      "decision_ev": -0.08850185453959025,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6570551710250565,
+      "market_probability": 0.6610169491525424,
+      "price": -195.0,
+      "probability_edge": -0.05850122588210205,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.005993459218504249,
+      "safe_probability": 0.6570551710250565
+    },
+    {
+      "balanced_probability": 0.3808411214953271,
+      "candidate_id": "2517c926d8e4dc1bfbd661b4",
+      "decision_ev": -0.3951346893897745,
+      "decision_probability": 0.3808411214953271,
+      "eligible": false,
+      "ensemble_probability": 0.6128874176116517,
+      "market_probability": 0.6296296296296297,
+      "price": -170.0,
+      "probability_edge": -0.24878850813430253,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.026590572028553194,
+      "safe_probability": 0.6128874176116517
+    },
+    {
+      "balanced_probability": 0.3786008230452675,
+      "candidate_id": "253cdaf0c77667517f6eb101",
+      "decision_ev": -0.40505584950029394,
+      "decision_probability": 0.3786008230452675,
+      "eligible": false,
+      "ensemble_probability": 0.6191066871198007,
+      "market_probability": 0.6363636363636364,
+      "price": -175.0,
+      "probability_edge": -0.25776281331836887,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.027118063097456124,
+      "safe_probability": 0.6191066871198007
+    },
+    {
+      "balanced_probability": 0.6177156177156177,
+      "candidate_id": "2812e8c5bf647f3ab673d24c",
+      "decision_ev": -0.21533421533421548,
+      "decision_probability": 0.6177156177156177,
+      "eligible": false,
+      "ensemble_probability": 0.7773587043555854,
+      "market_probability": 0.7872340425531915,
+      "price": -370.0,
+      "probability_edge": -0.16951842483757384,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.0125443485212835,
+      "safe_probability": 0.7773587043555854
+    },
+    {
+      "balanced_probability": 0.4186046511627907,
+      "candidate_id": "29e83b6d8874bd4173c77c12",
+      "decision_ev": -0.3113278319579895,
+      "decision_probability": 0.4186046511627907,
+      "eligible": false,
+      "ensemble_probability": 0.5949777006133756,
+      "market_probability": 0.6078431372549019,
+      "price": -155.0,
+      "probability_edge": -0.1892384860921112,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.021165718345736995,
+      "safe_probability": 0.5949777006133756
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "2a0285731c1966dbbd39e8e2",
+      "decision_ev": -0.11057202755315942,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6724129451607246,
+      "market_probability": 0.6774193548387096,
+      "price": -210.0,
+      "probability_edge": -0.07490363156826929,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.007390414286549407,
+      "safe_probability": 0.6724129451607246
+    },
+    {
+      "balanced_probability": 0.3786008230452675,
+      "candidate_id": "2a912e7473a604ede5365704",
+      "decision_ev": -0.30589849108367617,
+      "decision_probability": 0.3786008230452675,
+      "eligible": false,
+      "ensemble_probability": 0.5336676425478412,
+      "market_probability": 0.5454545454545454,
+      "price": -120.0,
+      "probability_edge": -0.16685372240927793,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.021609321995624486,
+      "safe_probability": 0.5336676425478412
+    },
+    {
+      "balanced_probability": 0.6177156177156177,
+      "candidate_id": "2bff6076b2e78b905e9f84ec",
+      "decision_ev": -0.08813408813408818,
+      "decision_probability": 0.6177156177156177,
+      "eligible": false,
+      "ensemble_probability": 0.6733975460504595,
+      "market_probability": 0.6774193548387096,
+      "price": -210.0,
+      "probability_edge": -0.05970373712309196,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.005936955830273982,
+      "safe_probability": 0.6733975460504595
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "2c27d38e0d4a840d8631217d",
+      "decision_ev": -0.06275331935709283,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6400908970685024,
+      "market_probability": 0.6428571428571429,
+      "price": -180.0,
+      "probability_edge": -0.040341419586702565,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.004303049004551807,
+      "safe_probability": 0.6400908970685024
+    },
+    {
+      "balanced_probability": 0.6177156177156177,
+      "candidate_id": "2d8585518032bf1ada375c03",
+      "decision_ev": -0.13519813519813528,
+      "decision_probability": 0.6177156177156177,
+      "eligible": false,
+      "ensemble_probability": 0.7080104456584619,
+      "market_probability": 0.7142857142857143,
+      "price": -250.0,
+      "probability_edge": -0.09657009657009663,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.008785376078153329,
+      "safe_probability": 0.7080104456584619
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "2e1c73e4fb4e452d4bff35bc",
+      "decision_ev": -0.12361349342481398,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6818707619300093,
+      "market_probability": 0.6875,
+      "price": -220.0,
+      "probability_edge": -0.08498427672955966,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.008187982647259173,
+      "safe_probability": 0.6818707619300093
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "3433d7dd4d2b7d9a0b378ead",
+      "decision_ev": -0.043063263041065225,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6277558498972543,
+      "market_probability": 0.6296296296296297,
+      "price": -170.0,
+      "probability_edge": -0.02711390635918931,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.002976003104360747,
+      "safe_probability": 0.6277558498972543
+    },
+    {
+      "balanced_probability": 0.3556581986143187,
+      "candidate_id": "35e1b345fd654a87c6cd28dd",
+      "decision_ev": -0.39030023094688215,
+      "decision_probability": 0.3556581986143187,
+      "eligible": false,
+      "ensemble_probability": 0.5674171889563907,
+      "market_probability": 0.5833333333333334,
+      "price": -140.0,
+      "probability_edge": -0.22767513471901468,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.0272848189319016,
+      "safe_probability": 0.5674171889563907
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "372866a2d4e9d792438a0f03",
+      "decision_ev": -0.12920892494929004,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.6241132063522618,
+      "market_probability": 0.6296296296296297,
+      "price": -170.0,
+      "probability_edge": -0.08135376756066415,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.008761378146407761,
+      "safe_probability": 0.6241132063522618
+    },
+    {
+      "balanced_probability": 0.6177156177156177,
+      "candidate_id": "37411dbdfe595d1fd496722c",
+      "decision_ev": -0.12490287490287488,
+      "decision_probability": 0.6177156177156177,
+      "eligible": false,
+      "ensemble_probability": 0.7001004760593449,
+      "market_probability": 0.7058823529411765,
+      "price": -240.0,
+      "probability_edge": -0.08816673522555885,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.008190992249261342,
+      "safe_probability": 0.7001004760593449
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "3ac24b835586719b59ee89d0",
+      "decision_ev": -0.21334332833583214,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.6874371774246989,
+      "market_probability": 0.696969696969697,
+      "price": -230.0,
+      "probability_edge": -0.14869383490073151,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.013677093260214712,
+      "safe_probability": 0.6874371774246989
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "3b1b4d3e62e3a21361fa5565",
+      "decision_ev": -0.23241379310344834,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.703852226111128,
+      "market_probability": 0.7142857142857143,
+      "price": -250.0,
+      "probability_edge": -0.1660098522167488,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.01460688344442096,
+      "safe_probability": 0.703852226111128
+    },
+    {
+      "balanced_probability": 0.6086956521739131,
+      "candidate_id": "42abfada422f2b2d7101f724",
+      "decision_ev": -0.18140929535232375,
+      "decision_probability": 0.6086956521739131,
+      "eligible": false,
+      "ensemble_probability": 0.7351886170587434,
+      "market_probability": 0.7435897435897436,
+      "price": -290.0,
+      "probability_edge": -0.13489409141583053,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.011298066714103716,
+      "safe_probability": 0.7351886170587434
+    },
+    {
+      "balanced_probability": 0.43795620437956206,
+      "candidate_id": "43b6d680ddd615ec8eb9beef",
+      "decision_ev": -0.34306569343065685,
+      "decision_probability": 0.43795620437956206,
+      "eligible": false,
+      "ensemble_probability": 0.6518462702118356,
+      "market_probability": 0.6666666666666666,
+      "price": -200.0,
+      "probability_edge": -0.22871046228710457,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.02223059468224653,
+      "safe_probability": 0.6518462702118356
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "45b1b9e4bccccb9fa248a9b1",
+      "decision_ev": -0.11943573667711604,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.6175779607662194,
+      "market_probability": 0.6226415094339622,
+      "price": -165.0,
+      "probability_edge": -0.07436564736499673,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.008132366042132522,
+      "safe_probability": 0.6175779607662194
+    },
+    {
+      "balanced_probability": 0.43795620437956206,
+      "candidate_id": "4946dfbaecaaece776802e06",
+      "decision_ev": -0.3315405301575106,
+      "decision_probability": 0.43795620437956206,
+      "eligible": false,
+      "ensemble_probability": 0.6409435695414214,
+      "market_probability": 0.6551724137931034,
+      "price": -190.0,
+      "probability_edge": -0.21721620941354136,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.02171770964730424,
+      "safe_probability": 0.6409435695414214
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "4be4e219054d071605c575a4",
+      "decision_ev": -0.08037073816617013,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6515912755006107,
+      "market_probability": 0.6551724137931034,
+      "price": -190.0,
+      "probability_edge": -0.052656690522663085,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.005465947920120673,
+      "safe_probability": 0.6515912755006107
+    },
+    {
+      "balanced_probability": 0.6177156177156177,
+      "candidate_id": "4bedab4fc0d24ef1601eb7dd",
+      "decision_ev": -0.08813408813408818,
+      "decision_probability": 0.6177156177156177,
+      "eligible": false,
+      "ensemble_probability": 0.6733975460504595,
+      "market_probability": 0.6774193548387096,
+      "price": -210.0,
+      "probability_edge": -0.05970373712309196,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.005936955830273982,
+      "safe_probability": 0.6733975460504595
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "4e671d2927279592b26bee17",
+      "decision_ev": -0.09799777530589548,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.6037551884229874,
+      "market_probability": 0.6078431372549019,
+      "price": -155.0,
+      "probability_edge": -0.05956727518593641,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.006725335175085334,
+      "safe_probability": 0.6037551884229874
+    },
+    {
+      "balanced_probability": 0.6177156177156177,
+      "candidate_id": "4f750370657f3871e6dbccd3",
+      "decision_ev": -0.13519813519813528,
+      "decision_probability": 0.6177156177156177,
+      "eligible": false,
+      "ensemble_probability": 0.7080104456584619,
+      "market_probability": 0.7142857142857143,
+      "price": -250.0,
+      "probability_edge": -0.09657009657009663,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.008785376078153329,
+      "safe_probability": 0.7080104456584619
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "532d2f5e2a11c6de3471c46f",
+      "decision_ev": -0.11943573667711604,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.6175779607662194,
+      "market_probability": 0.6226415094339622,
+      "price": -165.0,
+      "probability_edge": -0.07436564736499673,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.008132366042132522,
+      "safe_probability": 0.6175779607662194
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "5681daa6e14045e3cfc3dd0a",
+      "decision_ev": -0.23241379310344834,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.703852226111128,
+      "market_probability": 0.7142857142857143,
+      "price": -250.0,
+      "probability_edge": -0.1660098522167488,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.01460688344442096,
+      "safe_probability": 0.703852226111128
+    },
+    {
+      "balanced_probability": 0.3786008230452675,
+      "candidate_id": "584a40344099c73318140bd9",
+      "decision_ev": -0.35097001763668423,
+      "decision_probability": 0.3786008230452675,
+      "eligible": false,
+      "ensemble_probability": 0.5691134066279601,
+      "market_probability": 0.5833333333333334,
+      "price": -140.0,
+      "probability_edge": -0.20473251028806588,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.02437701720921126,
+      "safe_probability": 0.5691134066279601
+    },
+    {
+      "balanced_probability": 0.3786008230452675,
+      "candidate_id": "59f0a3374d259eca584f69ed",
+      "decision_ev": -0.35097001763668423,
+      "decision_probability": 0.3786008230452675,
+      "eligible": false,
+      "ensemble_probability": 0.5691134066279601,
+      "market_probability": 0.5833333333333334,
+      "price": -140.0,
+      "probability_edge": -0.20473251028806588,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.02437701720921126,
+      "safe_probability": 0.5691134066279601
+    },
+    {
+      "balanced_probability": 0.43795620437956206,
+      "candidate_id": "5a2bc2204d16bc0be6b0f7ea",
+      "decision_ev": -0.3374508702975856,
+      "decision_probability": 0.43795620437956206,
+      "eligible": false,
+      "ensemble_probability": 0.6464838521429523,
+      "market_probability": 0.6610169491525424,
+      "price": -195.0,
+      "probability_edge": -0.22306074477298032,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.021985967270918283,
+      "safe_probability": 0.6464838521429523
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "5b5c1230dc262747429eda9f",
+      "decision_ev": -0.15535880708294503,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.6423738127447333,
+      "market_probability": 0.6491228070175439,
+      "price": -185.0,
+      "probability_edge": -0.10084694494857838,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.010397099285140654,
+      "safe_probability": 0.6423738127447333
+    },
+    {
+      "balanced_probability": 0.6086956521739131,
+      "candidate_id": "609dc9178ad31d8d9ab2cab0",
+      "decision_ev": -0.15719063545150502,
+      "decision_probability": 0.6086956521739131,
+      "eligible": false,
+      "ensemble_probability": 0.7149512084778153,
+      "market_probability": 0.7222222222222222,
+      "price": -260.0,
+      "probability_edge": -0.11352657004830913,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.010067557492255741,
+      "safe_probability": 0.7149512084778153
+    },
+    {
+      "balanced_probability": 0.6177156177156177,
+      "candidate_id": "61908ee93aa39d486501d393",
+      "decision_ev": -0.16927899686520376,
+      "decision_probability": 0.6177156177156177,
+      "eligible": false,
+      "ensemble_probability": 0.7357065756954055,
+      "market_probability": 0.7435897435897436,
+      "price": -290.0,
+      "probability_edge": -0.12587412587412594,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.010601501651006373,
+      "safe_probability": 0.7357065756954055
+    },
+    {
+      "balanced_probability": 0.6177156177156177,
+      "candidate_id": "627a8466b33a7e94cb68f3cd",
+      "decision_ev": -0.12490287490287488,
+      "decision_probability": 0.6177156177156177,
+      "eligible": false,
+      "ensemble_probability": 0.7001004760593449,
+      "market_probability": 0.7058823529411765,
+      "price": -240.0,
+      "probability_edge": -0.08816673522555885,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.008190992249261342,
+      "safe_probability": 0.7001004760593449
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "6346c560b8419d3f8ad752d4",
+      "decision_ev": -0.08037073816617013,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6515912755006107,
+      "market_probability": 0.6551724137931034,
+      "price": -190.0,
+      "probability_edge": -0.052656690522663085,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.005465947920120673,
+      "safe_probability": 0.6515912755006107
+    },
+    {
+      "balanced_probability": 0.6177156177156177,
+      "candidate_id": "64a37562c4df4c9a6303f0c6",
+      "decision_ev": -0.1616716616716617,
+      "decision_probability": 0.6177156177156177,
+      "eligible": false,
+      "ensemble_probability": 0.7293123431054284,
+      "market_probability": 0.7368421052631579,
+      "price": -280.0,
+      "probability_edge": -0.11912648754754018,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.01021896292834723,
+      "safe_probability": 0.7293123431054284
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "652cec6bc0575adde688827f",
+      "decision_ev": -0.11943573667711604,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.6175779607662194,
+      "market_probability": 0.6226415094339622,
+      "price": -165.0,
+      "probability_edge": -0.07436564736499673,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.008132366042132522,
+      "safe_probability": 0.6175779607662194
+    },
+    {
+      "balanced_probability": 0.6086956521739131,
+      "candidate_id": "6615293c91ea0796b6e0e9f6",
+      "decision_ev": -0.15719063545150502,
+      "decision_probability": 0.6086956521739131,
+      "eligible": false,
+      "ensemble_probability": 0.7149512084778153,
+      "market_probability": 0.7222222222222222,
+      "price": -260.0,
+      "probability_edge": -0.11352657004830913,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.010067557492255741,
+      "safe_probability": 0.7149512084778153
+    },
+    {
+      "balanced_probability": 0.6712152499154506,
+      "candidate_id": "6b103735716488dd1dd7eb34",
+      "decision_ev": -0.10504633344606595,
+      "decision_probability": 0.6712152499154506,
+      "eligible": false,
+      "ensemble_probability": 0.7449138969626875,
+      "market_probability": 0.75,
+      "price": -300.0,
+      "probability_edge": -0.07878475008454944,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.00678147071641666,
+      "safe_probability": 0.7449138969626875
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "6c99ffd6107da6f35af4099d",
+      "decision_ev": -0.17055702917771887,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.6535410030213741,
+      "market_probability": 0.6610169491525424,
+      "price": -195.0,
+      "probability_edge": -0.11274108708357689,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.011309764659972577,
+      "safe_probability": 0.6535410030213741
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "731755389a95ea3d1e5853b7",
+      "decision_ev": -0.1471264367816092,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.6364990650115002,
+      "market_probability": 0.6428571428571429,
+      "price": -180.0,
+      "probability_edge": -0.0945812807881774,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.009890343315444139,
+      "safe_probability": 0.6364990650115002
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "759abc00b8f7aef54a361c37",
+      "decision_ev": -0.12361349342481398,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6818707619300093,
+      "market_probability": 0.6875,
+      "price": -220.0,
+      "probability_edge": -0.08498427672955966,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.008187982647259173,
+      "safe_probability": 0.6818707619300093
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "7784b4fea8328e13e6353453",
+      "decision_ev": -0.08037073816617013,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6515912755006107,
+      "market_probability": 0.6551724137931034,
+      "price": -190.0,
+      "probability_edge": -0.052656690522663085,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.005465947920120673,
+      "safe_probability": 0.6515912755006107
+    },
+    {
+      "balanced_probability": 0.3556581986143187,
+      "candidate_id": "7ccd868e750db877b10af2dc",
+      "decision_ev": -0.4220554272517322,
+      "decision_probability": 0.3556581986143187,
+      "eligible": false,
+      "ensemble_probability": 0.597607266534626,
+      "market_probability": 0.6153846153846154,
+      "price": -160.0,
+      "probability_edge": -0.25972641677029673,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.028888191881232705,
+      "safe_probability": 0.597607266534626
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "7e3431833a6e22b145277b25",
+      "decision_ev": -0.0862068965517242,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.596437245888647,
+      "market_probability": 0.6,
+      "price": -150.0,
+      "probability_edge": -0.051724137931034475,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.0059379235189217505,
+      "safe_probability": 0.596437245888647
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "853397908000b756c4410fc3",
+      "decision_ev": -0.08037073816617013,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6515912755006107,
+      "market_probability": 0.6551724137931034,
+      "price": -190.0,
+      "probability_edge": -0.052656690522663085,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.005465947920120673,
+      "safe_probability": 0.6515912755006107
+    },
+    {
+      "balanced_probability": 0.4186046511627907,
+      "candidate_id": "87e65130d263476c19d4fa50",
+      "decision_ev": -0.24651162790697667,
+      "decision_probability": 0.4186046511627907,
+      "eligible": false,
+      "ensemble_probability": 0.5460015964544414,
+      "market_probability": 0.5555555555555556,
+      "price": -125.0,
+      "probability_edge": -0.13695090439276486,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.017197126382005545,
+      "safe_probability": 0.5460015964544414
+    },
+    {
+      "balanced_probability": 0.3556581986143187,
+      "candidate_id": "894867abab4cd55c6023cac4",
+      "decision_ev": -0.39030023094688215,
+      "decision_probability": 0.3556581986143187,
+      "eligible": false,
+      "ensemble_probability": 0.5674171889563907,
+      "market_probability": 0.5833333333333334,
+      "price": -140.0,
+      "probability_edge": -0.22767513471901468,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.0272848189319016,
+      "safe_probability": 0.5674171889563907
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "8a82278ddb85cd0c39505c80",
+      "decision_ev": -0.043063263041065225,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6277558498972543,
+      "market_probability": 0.6296296296296297,
+      "price": -170.0,
+      "probability_edge": -0.02711390635918931,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.002976003104360747,
+      "safe_probability": 0.6277558498972543
+    },
+    {
+      "balanced_probability": 0.6086956521739131,
+      "candidate_id": "8acfd46313ec178c8fb3d29e",
+      "decision_ev": -0.1266540642722117,
+      "decision_probability": 0.6086956521739131,
+      "eligible": false,
+      "ensemble_probability": 0.6911569635505355,
+      "market_probability": 0.696969696969697,
+      "price": -230.0,
+      "probability_edge": -0.08827404479578393,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.00834000881879704,
+      "safe_probability": 0.6911569635505355
+    },
+    {
+      "balanced_probability": 0.3808411214953271,
+      "candidate_id": "8c6a7e3c189a30934c4e9132",
+      "decision_ev": -0.42385573927630005,
+      "decision_probability": 0.3808411214953271,
+      "eligible": false,
+      "ensemble_probability": 0.6426909190534522,
+      "market_probability": 0.6610169491525424,
+      "price": -195.0,
+      "probability_edge": -0.28017582765721527,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.02772399425246974,
+      "safe_probability": 0.6426909190534522
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "8e756cbc1fcb6c822d45e727",
+      "decision_ev": -0.020911949685534448,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6144888012283879,
+      "market_probability": 0.6153846153846154,
+      "price": -160.0,
+      "probability_edge": -0.012868892114175079,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.0014556980038696876,
+      "safe_probability": 0.6144888012283879
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "94f39aea1cf65096623c33ab",
+      "decision_ev": -0.17055702917771887,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.6535410030213741,
+      "market_probability": 0.6610169491525424,
+      "price": -195.0,
+      "probability_edge": -0.11274108708357689,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.011309764659972577,
+      "safe_probability": 0.6535410030213741
+    },
+    {
+      "balanced_probability": 0.43795620437956206,
+      "candidate_id": "971dbc28a713221d798b67e9",
+      "decision_ev": -0.3374508702975856,
+      "decision_probability": 0.43795620437956206,
+      "eligible": false,
+      "ensemble_probability": 0.6464838521429523,
+      "market_probability": 0.6610169491525424,
+      "price": -195.0,
+      "probability_edge": -0.22306074477298032,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.021985967270918283,
+      "safe_probability": 0.6464838521429523
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "98462d176c9d170feb1106af",
+      "decision_ev": -0.11057202755315942,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6724129451607246,
+      "market_probability": 0.6774193548387096,
+      "price": -210.0,
+      "probability_edge": -0.07490363156826929,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.007390414286549407,
+      "safe_probability": 0.6724129451607246
+    },
+    {
+      "balanced_probability": 0.6177156177156177,
+      "candidate_id": "9e5d93f52716940e94c41eb7",
+      "decision_ev": -0.11371237458193995,
+      "decision_probability": 0.6177156177156177,
+      "eligible": false,
+      "ensemble_probability": 0.6917249330779159,
+      "market_probability": 0.696969696969697,
+      "price": -230.0,
+      "probability_edge": -0.07925407925407935,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.007525096018642374,
+      "safe_probability": 0.6917249330779159
+    },
+    {
+      "balanced_probability": 0.4186046511627907,
+      "candidate_id": "9e70153469518c72f5448bca",
+      "decision_ev": -0.27131782945736427,
+      "decision_probability": 0.4186046511627907,
+      "eligible": false,
+      "ensemble_probability": 0.5636778334201457,
+      "market_probability": 0.574468085106383,
+      "price": -135.0,
+      "probability_edge": -0.1558634339435923,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.01878303071307985,
+      "safe_probability": 0.5636778334201457
+    },
+    {
+      "balanced_probability": 0.43795620437956206,
+      "candidate_id": "9eadf132100b75eb36ada94a",
+      "decision_ev": -0.1970802919708028,
+      "decision_probability": 0.43795620437956206,
+      "eligible": false,
+      "ensemble_probability": 0.5379510635718642,
+      "market_probability": 0.5454545454545454,
+      "price": -120.0,
+      "probability_edge": -0.10749834107498335,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.013756383451582255,
+      "safe_probability": 0.5379510635718642
+    },
+    {
+      "balanced_probability": 0.3808411214953271,
+      "candidate_id": "a2b0bd60d335b3854120937d",
+      "decision_ev": -0.4460492778249787,
+      "decision_probability": 0.3808411214953271,
+      "eligible": false,
+      "ensemble_probability": 0.668020750534693,
+      "market_probability": 0.6875,
+      "price": -220.0,
+      "probability_edge": -0.3066588785046729,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.02833345376771923,
+      "safe_probability": 0.668020750534693
+    },
+    {
+      "balanced_probability": 0.6177156177156177,
+      "candidate_id": "a63966c277614e60cba6feaf",
+      "decision_ev": -0.1447014523937602,
+      "decision_probability": 0.6177156177156177,
+      "eligible": false,
+      "ensemble_probability": 0.715493432367038,
+      "market_probability": 0.7222222222222222,
+      "price": -260.0,
+      "probability_edge": -0.10450660450660454,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.009316785953332074,
+      "safe_probability": 0.715493432367038
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "a792f7ab2bc83a8c7fda995a",
+      "decision_ev": -0.1471264367816092,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.6364990650115002,
+      "market_probability": 0.6428571428571429,
+      "price": -180.0,
+      "probability_edge": -0.0945812807881774,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.009890343315444139,
+      "safe_probability": 0.6364990650115002
+    },
+    {
+      "balanced_probability": 0.4186046511627907,
+      "candidate_id": "aa1e469f405c588b4e145712",
+      "decision_ev": -0.31976744186046513,
+      "decision_probability": 0.4186046511627907,
+      "eligible": false,
+      "ensemble_probability": 0.6020725116068575,
+      "market_probability": 0.6153846153846154,
+      "price": -160.0,
+      "probability_edge": -0.1967799642218247,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.02163216863885653,
+      "safe_probability": 0.6020725116068575
+    },
+    {
+      "balanced_probability": 0.6177156177156177,
+      "candidate_id": "ae01f86f61fc38f23ec83827",
+      "decision_ev": -0.13519813519813528,
+      "decision_probability": 0.6177156177156177,
+      "eligible": false,
+      "ensemble_probability": 0.7080104456584619,
+      "market_probability": 0.7142857142857143,
+      "price": -250.0,
+      "probability_edge": -0.09657009657009663,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.008785376078153329,
+      "safe_probability": 0.7080104456584619
+    },
+    {
+      "balanced_probability": 0.6177156177156177,
+      "candidate_id": "af531e56e6fed0347b5d2e29",
+      "decision_ev": -0.16927899686520376,
+      "decision_probability": 0.6177156177156177,
+      "eligible": false,
+      "ensemble_probability": 0.7357065756954055,
+      "market_probability": 0.7435897435897436,
+      "price": -290.0,
+      "probability_edge": -0.12587412587412594,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.010601501651006373,
+      "safe_probability": 0.7357065756954055
+    },
+    {
+      "balanced_probability": 0.3556581986143187,
+      "candidate_id": "af7b902589686d38ca3ec4aa",
+      "decision_ev": -0.3056197074672826,
+      "decision_probability": 0.3556581986143187,
+      "eligible": false,
+      "ensemble_probability": 0.500944176407483,
+      "market_probability": 0.5121951219512195,
+      "price": -105.0,
+      "probability_edge": -0.15653692333690084,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.021966131775866482,
+      "safe_probability": 0.500944176407483
+    },
+    {
+      "balanced_probability": 0.6177156177156177,
+      "candidate_id": "b14a69a0b9a46c6f52027fad",
+      "decision_ev": -0.153500820167487,
+      "decision_probability": 0.6177156177156177,
+      "eligible": false,
+      "ensemble_probability": 0.7225838186323847,
+      "market_probability": 0.7297297297297297,
+      "price": -270.0,
+      "probability_edge": -0.11201411201411204,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.009792544837102457,
+      "safe_probability": 0.7225838186323847
+    },
+    {
+      "balanced_probability": 0.3808411214953271,
+      "candidate_id": "b20c660ed99dcef9617c8841",
+      "decision_ev": -0.32620416966211363,
+      "decision_probability": 0.3808411214953271,
+      "eligible": false,
+      "ensemble_probability": 0.5523030118137896,
+      "market_probability": 0.5652173913043478,
+      "price": -130.0,
+      "probability_edge": -0.18437626980902067,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.02284851756021844,
+      "safe_probability": 0.5523030118137896
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "b2470fdc2541846c3fe3a849",
+      "decision_ev": -0.06275331935709283,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6400908970685024,
+      "market_probability": 0.6428571428571429,
+      "price": -180.0,
+      "probability_edge": -0.040341419586702565,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.004303049004551807,
+      "safe_probability": 0.6400908970685024
+    },
+    {
+      "balanced_probability": 0.6,
+      "candidate_id": "b2b2311a74f00dfae70b9b4c",
+      "decision_ev": -0.08421052631578962,
+      "decision_probability": 0.6,
+      "eligible": false,
+      "ensemble_probability": 0.6514245040341139,
+      "market_probability": 0.6551724137931034,
+      "price": -190.0,
+      "probability_edge": -0.05517241379310345,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.005720493842668373,
+      "safe_probability": 0.6514245040341139
+    },
+    {
+      "balanced_probability": 0.6177156177156177,
+      "candidate_id": "b75c526f6d799801b53dd51d",
+      "decision_ev": -0.11371237458193995,
+      "decision_probability": 0.6177156177156177,
+      "eligible": false,
+      "ensemble_probability": 0.6917249330779159,
+      "market_probability": 0.696969696969697,
+      "price": -230.0,
+      "probability_edge": -0.07925407925407935,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.007525096018642374,
+      "safe_probability": 0.6917249330779159
+    },
+    {
+      "balanced_probability": 0.3786008230452675,
+      "candidate_id": "bc2f7a17ecdf47cb8dc99737",
+      "decision_ev": -0.24279835390946503,
+      "decision_probability": 0.3786008230452675,
+      "eligible": false,
+      "ensemble_probability": 0.4913297721319152,
+      "market_probability": 0.5,
+      "price": 100.0,
+      "probability_edge": -0.12139917695473251,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.017340455736169602,
+      "safe_probability": 0.4913297721319152
+    },
+    {
+      "balanced_probability": 0.4186046511627907,
+      "candidate_id": "bcca1b57b6c64bbfab43cf2d",
+      "decision_ev": -0.31976744186046513,
+      "decision_probability": 0.4186046511627907,
+      "eligible": false,
+      "ensemble_probability": 0.6020725116068575,
+      "market_probability": 0.6153846153846154,
+      "price": -160.0,
+      "probability_edge": -0.1967799642218247,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.02163216863885653,
+      "safe_probability": 0.6020725116068575
+    },
+    {
+      "balanced_probability": 0.45454545454545453,
+      "candidate_id": "c0cb794c1766b3fa8a5de177",
+      "decision_ev": -0.2521994134897362,
+      "decision_probability": 0.45454545454545453,
+      "eligible": false,
+      "ensemble_probability": 0.5974411713833999,
+      "market_probability": 0.6078431372549019,
+      "price": -155.0,
+      "probability_edge": -0.15329768270944738,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.017112911595051794,
+      "safe_probability": 0.5974411713833999
+    },
+    {
+      "balanced_probability": 0.6714937839884919,
+      "candidate_id": "c2607cc8a920f95f714ca0b5",
+      "decision_ev": -0.09695663532582122,
+      "decision_probability": 0.6714937839884919,
+      "eligible": false,
+      "ensemble_probability": 0.7388938836407372,
+      "market_probability": 0.7435897435897436,
+      "price": -290.0,
+      "probability_edge": -0.0720959596012517,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.006315122000387974,
+      "safe_probability": 0.7388938836407372
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "c2ac8e146fc4d91c9f501fbc",
+      "decision_ev": -0.11057202755315942,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6724129451607246,
+      "market_probability": 0.6774193548387096,
+      "price": -210.0,
+      "probability_edge": -0.07490363156826929,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.007390414286549407,
+      "safe_probability": 0.6724129451607246
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "c3e8777b417ce8d7c777c0cf",
+      "decision_ev": -0.16315789473684217,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.648051108897236,
+      "market_probability": 0.6551724137931034,
+      "price": -190.0,
+      "probability_edge": -0.10689655172413792,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.010869360104218795,
+      "safe_probability": 0.648051108897236
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "c4c110f0aaa2f2692cb368c1",
+      "decision_ev": -0.08037073816617013,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6515912755006107,
+      "market_probability": 0.6551724137931034,
+      "price": -190.0,
+      "probability_edge": -0.052656690522663085,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.005465947920120673,
+      "safe_probability": 0.6515912755006107
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "c5b250e1ad0e9f6c6c0bb822",
+      "decision_ev": -0.020911949685534448,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6144888012283879,
+      "market_probability": 0.6153846153846154,
+      "price": -160.0,
+      "probability_edge": -0.012868892114175079,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.0014556980038696876,
+      "safe_probability": 0.6144888012283879
+    },
+    {
+      "balanced_probability": 0.43795620437956206,
+      "candidate_id": "c808ce4039b9c31ceaaa8758",
+      "decision_ev": -0.2600050339793606,
+      "decision_probability": 0.43795620437956206,
+      "eligible": false,
+      "ensemble_probability": 0.5812950215952418,
+      "market_probability": 0.5918367346938775,
+      "price": -145.0,
+      "probability_edge": -0.15388053031431548,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.017811860063212115,
+      "safe_probability": 0.5812950215952418
+    },
+    {
+      "balanced_probability": 0.6177156177156177,
+      "candidate_id": "c8abdc3bfeaffccdec95b5d5",
+      "decision_ev": -0.11371237458193995,
+      "decision_probability": 0.6177156177156177,
+      "eligible": false,
+      "ensemble_probability": 0.6917249330779159,
+      "market_probability": 0.696969696969697,
+      "price": -230.0,
+      "probability_edge": -0.07925407925407935,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.007525096018642374,
+      "safe_probability": 0.6917249330779159
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "ccbfa305e4a4291dfa442759",
+      "decision_ev": -0.0862068965517242,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.596437245888647,
+      "market_probability": 0.6,
+      "price": -150.0,
+      "probability_edge": -0.051724137931034475,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.0059379235189217505,
+      "safe_probability": 0.596437245888647
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "cd5103452425f1079b126d6a",
+      "decision_ev": -0.0323232323232322,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6212455020338284,
+      "market_probability": 0.6226415094339622,
+      "price": -165.0,
+      "probability_edge": -0.020125786163521897,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.0022420724911240697,
+      "safe_probability": 0.6212455020338284
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "ceac3cad17187bbb3ba96899",
+      "decision_ev": -0.008764455264759552,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6074710369662536,
+      "market_probability": 0.6078431372549019,
+      "price": -155.0,
+      "probability_edge": -0.005327413984461571,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.0006121649910022509,
+      "safe_probability": 0.6074710369662536
+    },
+    {
+      "balanced_probability": 0.43795620437956206,
+      "candidate_id": "cf66280de88ddf32c153fde7",
+      "decision_ev": -0.27007299270072993,
+      "decision_probability": 0.43795620437956206,
+      "eligible": false,
+      "ensemble_probability": 0.5889485139570898,
+      "market_probability": 0.6,
+      "price": -150.0,
+      "probability_edge": -0.1620437956204379,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.018419143404850402,
+      "safe_probability": 0.5889485139570898
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "cfa5a1b94d2c2b8590cca840",
+      "decision_ev": -0.14643605870020948,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6991604122776549,
+      "market_probability": 0.7058823529411765,
+      "price": -240.0,
+      "probability_edge": -0.10336662967073618,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.009522749273322195,
+      "safe_probability": 0.6991604122776549
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "d517e9b2bffe4d574ce77beb",
+      "decision_ev": -0.08037073816617013,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6515912755006107,
+      "market_probability": 0.6551724137931034,
+      "price": -190.0,
+      "probability_edge": -0.052656690522663085,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.005465947920120673,
+      "safe_probability": 0.6515912755006107
+    },
+    {
+      "balanced_probability": 0.43795620437956206,
+      "candidate_id": "d7d96e10a27c6f55336a6430",
+      "decision_ev": -0.3935991016282987,
+      "decision_probability": 0.43795620437956206,
+      "eligible": false,
+      "ensemble_probability": 0.7049877162714451,
+      "market_probability": 0.7222222222222222,
+      "price": -260.0,
+      "probability_edge": -0.28426601784266015,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.023863162085691503,
+      "safe_probability": 0.7049877162714451
+    },
+    {
+      "balanced_probability": 0.6177156177156177,
+      "candidate_id": "d871eaa66b8c8c5aef7c842f",
+      "decision_ev": -0.05717089927616259,
+      "decision_probability": 0.6177156177156177,
+      "eligible": false,
+      "ensemble_probability": 0.6526061261427032,
+      "market_probability": 0.6551724137931034,
+      "price": -190.0,
+      "probability_edge": -0.037456796077485754,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.003916965361137281,
+      "safe_probability": 0.6526061261427032
+    },
+    {
+      "balanced_probability": 0.6177156177156177,
+      "candidate_id": "d88ea3a7c7d4a5f2e036b007",
+      "decision_ev": -0.08813408813408818,
+      "decision_probability": 0.6177156177156177,
+      "eligible": false,
+      "ensemble_probability": 0.6733975460504595,
+      "market_probability": 0.6774193548387096,
+      "price": -210.0,
+      "probability_edge": -0.05970373712309196,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.005936955830273982,
+      "safe_probability": 0.6733975460504595
+    },
+    {
+      "balanced_probability": 0.3786008230452675,
+      "candidate_id": "d996e12d4b855955b9861066",
+      "decision_ev": -0.44930789375233815,
+      "decision_probability": 0.3786008230452675,
+      "eligible": false,
+      "ensemble_probability": 0.6678730770032377,
+      "market_probability": 0.6875,
+      "price": -220.0,
+      "probability_edge": -0.3088991769547325,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.028548251631654198,
+      "safe_probability": 0.6678730770032377
+    },
+    {
+      "balanced_probability": 0.3898305084745763,
+      "candidate_id": "dd6974c0bde48bced2de218e",
+      "decision_ev": -0.43297380585516176,
+      "decision_probability": 0.3898305084745763,
+      "eligible": false,
+      "ensemble_probability": 0.6686096928108202,
+      "market_probability": 0.6875,
+      "price": -220.0,
+      "probability_edge": -0.2976694915254237,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.0274768104569888,
+      "safe_probability": 0.6686096928108202
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "de4083acd055cfdeb71cc0b7",
+      "decision_ev": -0.11943573667711604,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.6175779607662194,
+      "market_probability": 0.6226415094339622,
+      "price": -165.0,
+      "probability_edge": -0.07436564736499673,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.008132366042132522,
+      "safe_probability": 0.6175779607662194
+    },
+    {
+      "balanced_probability": 0.3808411214953271,
+      "candidate_id": "e2c16d201affdfa6ae2f9b15",
+      "decision_ev": -0.37345492915284895,
+      "decision_probability": 0.3808411214953271,
+      "eligible": false,
+      "ensemble_probability": 0.5923185597245126,
+      "market_probability": 0.6078431372549019,
+      "price": -155.0,
+      "probability_edge": -0.2270020157595748,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.025540434001608325,
+      "safe_probability": 0.5923185597245126
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "e3e59d1398d52f5add5d3665",
+      "decision_ev": 0.004192872117400492,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6001762740762533,
+      "market_probability": 0.6,
+      "price": -150.0,
+      "probability_edge": 0.002515723270440362,
+      "reasons": [
+        "balanced_probability_edge_below_1pct"
+      ],
+      "safe_ev": 0.0002937901270887444,
+      "safe_probability": 0.6001762740762533
+    },
+    {
+      "balanced_probability": 0.43795620437956206,
+      "candidate_id": "e44fe8c8a77cbd699b4f9e3b",
+      "decision_ev": -0.2966157929661579,
+      "decision_probability": 0.43795620437956206,
+      "eligible": false,
+      "ensemble_probability": 0.6102251582965958,
+      "market_probability": 0.6226415094339622,
+      "price": -165.0,
+      "probability_edge": -0.18468530505440017,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.019941412432740058,
+      "safe_probability": 0.6102251582965958
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "e579a4b6642493c528ac8d87",
+      "decision_ev": -0.13842364532019713,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.6304160685382783,
+      "market_probability": 0.6363636363636364,
+      "price": -175.0,
+      "probability_edge": -0.08808777429467085,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.009346178011277018,
+      "safe_probability": 0.6304160685382783
+    },
+    {
+      "balanced_probability": 0.3898305084745763,
+      "candidate_id": "e656735bbbc8a6170b5aa9a7",
+      "decision_ev": -0.3214061519146265,
+      "decision_probability": 0.3898305084745763,
+      "eligible": false,
+      "ensemble_probability": 0.5616190619526629,
+      "market_probability": 0.574468085106383,
+      "price": -135.0,
+      "probability_edge": -0.18463757663180674,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.022366818082401707,
+      "safe_probability": 0.5616190619526629
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "e92408cdeaa59633958d7016",
+      "decision_ev": -0.06275331935709283,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6400908970685024,
+      "market_probability": 0.6428571428571429,
+      "price": -180.0,
+      "probability_edge": -0.040341419586702565,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.004303049004551807,
+      "safe_probability": 0.6400908970685024
+    },
+    {
+      "balanced_probability": 0.6212121212121212,
+      "candidate_id": "ebe5ad9cc36f8ce4806abe7b",
+      "decision_ev": -0.13030303030303036,
+      "decision_probability": 0.6212121212121212,
+      "eligible": false,
+      "ensemble_probability": 0.7082250485718329,
+      "market_probability": 0.7142857142857143,
+      "price": -250.0,
+      "probability_edge": -0.09307359307359309,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.008484931999434009,
+      "safe_probability": 0.7082250485718329
+    },
+    {
+      "balanced_probability": 0.6025157232704403,
+      "candidate_id": "ed8356fc2a2aae2e186ef970",
+      "decision_ev": -0.13552091878589,
+      "decision_probability": 0.6025157232704403,
+      "eligible": false,
+      "ensemble_probability": 0.6907702115483964,
+      "market_probability": 0.696969696969697,
+      "price": -230.0,
+      "probability_edge": -0.09445397369925668,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.008894913865344467,
+      "safe_probability": 0.6907702115483964
+    },
+    {
+      "balanced_probability": 0.6177156177156177,
+      "candidate_id": "eddc67011866d31725230d3b",
+      "decision_ev": -0.11371237458193995,
+      "decision_probability": 0.6177156177156177,
+      "eligible": false,
+      "ensemble_probability": 0.6917249330779159,
+      "market_probability": 0.696969696969697,
+      "price": -230.0,
+      "probability_edge": -0.07925407925407935,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.007525096018642374,
+      "safe_probability": 0.6917249330779159
+    },
+    {
+      "balanced_probability": 0.43795620437956206,
+      "candidate_id": "f1293b2fa7da747c9c10d59c",
+      "decision_ev": -0.40563086548488003,
+      "decision_probability": 0.43795620437956206,
+      "eligible": false,
+      "ensemble_probability": 0.7191165838715771,
+      "market_probability": 0.7368421052631579,
+      "price": -280.0,
+      "probability_edge": -0.2988859008835958,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.024056064745716754,
+      "safe_probability": 0.7191165838715771
+    },
+    {
+      "balanced_probability": 0.6177156177156177,
+      "candidate_id": "f92123e0882bf07aef32fde6",
+      "decision_ev": -0.12490287490287488,
+      "decision_probability": 0.6177156177156177,
+      "eligible": false,
+      "ensemble_probability": 0.7001004760593449,
+      "market_probability": 0.7058823529411765,
+      "price": -240.0,
+      "probability_edge": -0.08816673522555885,
+      "reasons": [
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.008190992249261342,
+      "safe_probability": 0.7001004760593449
+    },
+    {
+      "balanced_probability": 0.5482758620689655,
+      "candidate_id": "f92ffccdc7c6800952113762",
+      "decision_ev": -0.15535880708294503,
+      "decision_probability": 0.5482758620689655,
+      "eligible": false,
+      "ensemble_probability": 0.6423738127447333,
+      "market_probability": 0.6491228070175439,
+      "price": -185.0,
+      "probability_edge": -0.10084694494857838,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.010397099285140654,
+      "safe_probability": 0.6423738127447333
+    },
+    {
+      "balanced_probability": 0.43795620437956206,
+      "candidate_id": "ff598e4606f904da574acd62",
+      "decision_ev": -0.3716280545858458,
+      "decision_probability": 0.43795620437956206,
+      "eligible": false,
+      "ensemble_probability": 0.6807331757526075,
+      "market_probability": 0.696969696969697,
+      "price": -230.0,
+      "probability_edge": -0.25901349259013495,
+      "reasons": [
+        "balanced_probability_below_60pct",
+        "balanced_probability_edge_below_1pct",
+        "decision_ev_not_positive"
+      ],
+      "safe_ev": -0.02329587826799795,
+      "safe_probability": 0.6807331757526075
+    }
+  ],
+  "singles_action_probability": "balanced_probability",
+  "slate_date": "2026-09-03",
+  "snapshot_identity_sha256": "cfc0a1d95d1da1f72877a2002b2f77db07dd32aa4a59ddc03b77d6b25ea207d7",
+  "status": "INSUFFICIENT_PRIOR_SLATES",
+  "strictly_prior_settled_rows": 198,
+  "strictly_prior_settled_slates": 1,
+  "v19_publication_unchanged": true,
+  "version": "balanced_value_frontier_v4_optimized_singles_shadow"
+}
