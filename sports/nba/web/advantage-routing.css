@@ -31,9 +31,17 @@
 }
 
 .ar-controls-panel {
-    position: sticky;
-    top: 0;
-    z-index: 5;
+    /* Rendered as an ordinary panel that scrolls with the page. The
+       earlier `position: sticky; top: 0;` glued this section (the
+       Player selector plus its "routing-state vector unavailable"
+       notice) to the top of the viewport, so scrolling down through
+       the Shot Destination / Recipient Network / Research Summary
+       sections kept it pinned overhead the entire time -- distracting
+       and covered up the sections the viewer was actually reading.
+       The panel still has the same panel chrome (background, border)
+       via the shared .prediction-about-panel styles applied on the
+       element in the HTML, so removing sticky here changes only the
+       scroll behavior, not the visual treatment. */
     background: var(--vault-panel);
     border-bottom: 1px solid var(--vault-line);
 }

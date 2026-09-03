@@ -17,11 +17,24 @@
 
 const AR_DATA_ROOT = "data/advantage-routing";
 
+// Zones as actually populated by the real classifier
+// (sports/nba/analytics/advantage_routing/routing/states.py --
+// classify_shot_zone_from_text). CORNER_3 is deliberately absent
+// because Basketball-Reference play-by-play text does not report
+// corner-vs-above-break; every real 3PA is placed in ABOVE_BREAK_3 by
+// convention (with an explicit caveat carried on the classification
+// result), not because the corner was ruled out. Rendering a
+// permanently-zero "Corner 3" bubble alongside a "combined" above-
+// break entry would misread as "this player never gets assisted for
+// a corner 3" -- which is not what the data says. Keeping the legend
+// and the SVG restricted to the zones the classifier can actually
+// emit makes the graphic honest at the per-player level and matches
+// the section note above the graphic ("corner-3 and above-break-3
+// cannot be distinguished from this source and are shown combined").
 const AR_ZONE_COLORS = {
     RIM: "#c02c3a",
     SHORT_PAINT: "#e0793f",
     MIDRANGE: "#c9a227",
-    CORNER_3: "#2f9e6b",
     ABOVE_BREAK_3: "#3a7bd5",
 };
 
@@ -29,8 +42,7 @@ const AR_ZONE_LABELS = {
     RIM: "Rim",
     SHORT_PAINT: "Short paint",
     MIDRANGE: "Midrange",
-    CORNER_3: "Corner 3",
-    ABOVE_BREAK_3: "Three (corner + above-break combined)",
+    ABOVE_BREAK_3: "Three-point (any location -- corner and above-break not distinguishable from this source)",
 };
 
 class AdvantageAnalysisPage {
@@ -348,12 +360,16 @@ class AdvantageAnalysisPage {
         });
 
         const svg = this.elements.arHalfCourt;
+        // ABOVE_BREAK_3 stands in for the entire real 3PA population
+        // this data source can identify (see AR_ZONE_LABELS above and
+        // routing/states.py) -- widened here so its bubble spans the
+        // three-point arc rather than sitting only above the break,
+        // which would otherwise misread as excluding the corners.
         const zoneRegions = {
             RIM: { cx: 250, cy: 60, r: 45 },
             SHORT_PAINT: { cx: 250, cy: 130, r: 55 },
             MIDRANGE: { cx: 250, cy: 230, r: 90 },
-            CORNER_3: { cx: 60, cy: 380, r: 45 },
-            ABOVE_BREAK_3: { cx: 250, cy: 380, r: 90 },
+            ABOVE_BREAK_3: { cx: 250, cy: 380, r: 130 },
         };
         let svgContent = `
             <rect x="10" y="10" width="480" height="450" fill="none" stroke="currentColor" stroke-opacity="0.25"/>
