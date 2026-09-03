@@ -979,6 +979,7 @@ class DailyPredictionsPage {
             ],
             betslipUrl: candidate.sportsbook_deeplink || "",
             deeplinksByRegion: candidate.deeplinks_by_region || null,
+            settlementRow: candidate,
         });
     }
 
