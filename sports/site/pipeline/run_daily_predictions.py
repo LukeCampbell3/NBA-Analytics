@@ -973,7 +973,10 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
 
     pool_digits = "".join(char for char in pool_csv.stem if char.isdigit())
     governance_status_json = pool_csv.parent / "governance" / "governance_status.json"
-    if len(pool_digits) >= 8:
+    provider_snapshot_ready = MLB_PROVIDER_OBSERVATIONS.exists() and (
+        not market_fetch_failed or bool(args.mlb_skip_fetch_market)
+    )
+    if len(pool_digits) >= 8 and provider_snapshot_ready:
         pool_date = datetime.strptime(pool_digits[:8], "%Y%m%d").date()
         run_step(
             "Capture Immutable MLB Complete Slate",
@@ -989,6 +992,13 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
                 "--run-date",
                 pool_date.isoformat(),
             ],
+        )
+    elif len(pool_digits) >= 8:
+        pool_date = datetime.strptime(pool_digits[:8], "%Y%m%d").date()
+        print(
+            "[warning] Skipping immutable MLB complete-slate capture because a "
+            "fresh provider observation file is unavailable. Publication remains "
+            "fail-closed through the missing governance artifact."
         )
     if len(pool_digits) >= 8 and MLB_CONFIDENCE_CALIBRATOR.exists():
         run_step(

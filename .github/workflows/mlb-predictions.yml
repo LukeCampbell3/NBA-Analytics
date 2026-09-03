@@ -19,7 +19,6 @@ on:
       - 'sports/mlb/web/predictions.html'
       - 'sports/mlb/unified/**'
       - 'sports/mlb/scripts/run_unified_mlb_shadow.py'
-      - 'sports/site/pipeline/build_static_site.py'
       - 'sports/site/pipeline/run_daily_predictions.py'
       - '.github/workflows/mlb-predictions.yml'
   schedule:
@@ -138,7 +137,11 @@ jobs:
           # These remain the legacy-authoritative publication path.
           bash sports/mlb/scripts/validate_same_game_pipeline.sh test
           bash sports/mlb/scripts/validate_pitcher_parlay_pipeline.sh test
-          python -m pytest sports/mlb/tests/test_build_exotic_market_shadow.py sports/mlb/tests/test_validate_v4_live_players.py -q
+          python -m pytest \
+            sports/mlb/tests/test_build_exotic_market_shadow.py \
+            sports/mlb/tests/test_validate_v4_live_players.py \
+            tests/test_run_daily_predictions.py \
+            -q
           bash sports/mlb/scripts/validate_same_game_pipeline.sh pipeline --run-date "$RUN_DATE"
           bash sports/mlb/scripts/validate_pitcher_parlay_pipeline.sh pipeline --run-date "$RUN_DATE"
           python sports/mlb/scripts/build_exotic_market_shadow.py

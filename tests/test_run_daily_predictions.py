@@ -160,7 +160,10 @@ def test_run_mlb_continues_when_market_fetch_fails(monkeypatch: pytest.MonkeyPat
     monkeypatch.setattr(shared_daily_predictions, "MLB_EXPORTER", tmp_path / "export_web_prediction_payload.py")
     monkeypatch.setattr(shared_daily_predictions, "MLB_WEB_JSON", tmp_path / "web" / "data" / "daily_predictions.json")
 
+    executed_labels: list[str] = []
+
     def fake_run_step(label: str, command: list[str], cwd: Path = shared_daily_predictions.REPO_ROOT) -> None:
+        executed_labels.append(label)
         if label == "Fetch MLB Market Props":
             raise subprocess.CalledProcessError(1, command)
         if label == "Select MLB High-Precision Prediction Board":
@@ -205,6 +208,7 @@ def test_run_mlb_continues_when_market_fetch_fails(monkeypatch: pytest.MonkeyPat
     assert pool_csv_out == pool_csv
     assert selected_csv_out.exists()
     assert summary_json_out.exists()
+    assert "Capture Immutable MLB Complete Slate" not in executed_labels
 
 
 class FrozenDateTime(datetime):
