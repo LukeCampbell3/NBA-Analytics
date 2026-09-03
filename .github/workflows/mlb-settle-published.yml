@@ -32,8 +32,8 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install settlement dependency
-        run: python -m pip install requests
+      - name: Install settlement dependencies
+        run: python -m pip install requests pytest
 
       - name: Validate settlement behavior
         run: python -m pytest sports/mlb/tests/test_settle_published_predictions.py -q
