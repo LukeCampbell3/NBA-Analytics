@@ -6,10 +6,10 @@ Publication integrity: **PASS**
 
 ## Issues
 
-- `QUOTE_FRESHNESS_UNPROVABLE`: 73
+- `QUOTE_FRESHNESS_UNPROVABLE`: 146
 
 ## Canonical statuses
 
-- `BLOCKED_DATA`: 73
+- `BLOCKED_DATA`: 146
 
 Research-only, support-blocked, identity-invalid, stale, or non-positive-EV rows have no execution authority.
