@@ -43,6 +43,30 @@ def test_builds_position_and_same_game_shadow_pools() -> None:
     assert result["pool_status"]["receiver_parlay"] == "WITHHELD_NO_RELIABLE_EDGE"
     assert result["candidate_authorized"] is False
     assert "WITHHELD" in result["methodology"]["parlay_probability"]
+    assert result["line_ladder_count"] == 0
+
+
+def test_preserves_multi_book_lines_as_diagnostic_survival_curve() -> None:
+    pool = {"season": 2026, "week": 1, "pool": [{
+        "player":"A QB", "player_id":"q", "position":"QB", "team":"A",
+        "opponent":"B", "game_id":"g1", "kickoff_utc":"2026-09-10T00:00:00Z",
+        "projection":250, "p10":170, "p90":330,
+    }]}
+    def offer(book: str, line: float, over: float, under: float) -> dict:
+        return {"player":"A QB", "provider_team":"A", "target":"passing",
+                "market":"player_pass_yds", "line":line, "over_price":over,
+                "under_price":under, "bookmaker":book,
+                "snapshot_time_utc":"2026-09-02T00:00:00Z", "source":"rotowire"}
+    snapshot = {"audit":{}, "observations":[
+        offer("fanduel", 240.5, -110, -110),
+        offer("draftkings", 250.5, 105, -125),
+    ]}
+    result = build_board(pool, snapshot, BACKTEST)
+    assert result["line_ladder_count"] == 1
+    ladder = result["line_ladders"][0]
+    assert ladder["distinct_lines"] == [240.5, 250.5]
+    assert ladder["selection_authority"] is False
+    assert all("survival_probability_delta" in point for point in ladder["points"])
 
 
 def test_rejects_name_match_when_provider_team_disagrees() -> None:
