@@ -11,9 +11,13 @@ on:
       - 'sports/mlb/scripts/build_exotic_market_shadow.py'
       - 'sports/mlb/scripts/validate_v4_live_players.py'
       - 'sports/mlb/scripts/run_pinned_v2_1_daily_shadow.py'
+      - 'sports/mlb/scripts/preserve_published_predictions.py'
+      - 'sports/mlb/scripts/settle_published_predictions.py'
       - 'sports/mlb/parlay_v2/pitcher_alt_line_frontier.py'
       - 'sports/mlb/tests/test_build_exotic_market_shadow.py'
       - 'sports/mlb/tests/test_validate_v4_live_players.py'
+      - 'sports/mlb/tests/test_preserve_published_predictions.py'
+      - 'sports/mlb/tests/test_settle_published_predictions.py'
       - 'sports/mlb/tests/test_pitcher_parlay_reliability.py'
       - 'sports/mlb/web/predictions.js'
       - 'sports/mlb/web/predictions.html'
@@ -131,6 +135,17 @@ jobs:
           restore-keys: |
             mlb-daily-v4-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/decision_engine/matchup_network.py', 'sports/mlb/scripts/backtest_latent_daily_pools.py') }}-${{ steps.run-config.outputs.run_stamp }}-
             mlb-daily-v4-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/decision_engine/matchup_network.py', 'sports/mlb/scripts/backtest_latent_daily_pools.py') }}-
+
+      - name: Preserve and validate prior published MLB picks
+        if: inputs.build_only != true
+        run: |
+          set -euo pipefail
+          python -m pytest \
+            sports/mlb/tests/test_preserve_published_predictions.py \
+            sports/mlb/tests/test_settle_published_predictions.py \
+            -q
+          python sports/mlb/scripts/preserve_published_predictions.py
+          python sports/mlb/scripts/settle_published_predictions.py
 
       - name: Run MLB production pipeline
         env:
@@ -254,6 +269,12 @@ jobs:
           fi
           python sports/site/pipeline/validate_daily_publication.py "${args[@]}"
 
+      - name: Preserve current MLB publication
+        if: inputs.build_only != true
+        run: |
+          set -euo pipefail
+          python sports/mlb/scripts/preserve_published_predictions.py
+
       - name: Stage MLB publication and feedback state
         id: staged
         run: |
@@ -277,6 +298,8 @@ jobs:
             docs/mlb_slate_integrity_audit.md \
             sports/mlb/web/data/history/index.json \
             sports/mlb/web/data/history/*.json \
+            sports/mlb/web/data/history/runs \
+            sports/mlb/data/predictions/settlement/mlb_settlement_report.json \
             dist/mlb \
             paywall/private-content/app/mlb
 

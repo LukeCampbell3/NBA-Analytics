@@ -270,6 +270,30 @@ def test_run_settles_daily_predictions_and_every_history_file(tmp_path):
     assert json.loads((tmp_path / "report.json").read_text(encoding="utf-8"))["total"]["won"] == 2
 
 
+def test_run_settles_same_day_publication_snapshots_only_after_final(tmp_path):
+    data_dir = tmp_path / "data"
+    runs_dir = data_dir / "history" / "runs" / "2026-09-03"
+    runs_dir.mkdir(parents=True)
+    snapshot = runs_dir / "20260903T120000.000000Z.json"
+    snapshot.write_text(json.dumps({"run_date": "2026-09-03", "plays": [_play(game_id="9")]}), encoding="utf-8")
+
+    feeds = {"9": _final_feed("Carlos Cortes", "batting", "totalBases", 1.0, final=False)}
+    original = settle.make_live_feed_fetcher
+    settle.make_live_feed_fetcher = lambda **_: lambda game_id: feeds[game_id]
+    try:
+        first = settle.run(data_dir=data_dir)
+        assert first["total"]["pending"] == 1
+        assert json.loads(snapshot.read_text())["plays"][0]["settlement_reason"] == "game_not_final"
+
+        feeds["9"] = _final_feed("Carlos Cortes", "batting", "totalBases", 1.0, final=True)
+        second = settle.run(data_dir=data_dir)
+    finally:
+        settle.make_live_feed_fetcher = original
+
+    assert second["total"]["won"] == 1
+    assert json.loads(snapshot.read_text())["plays"][0]["settlement_status"] == "won"
+
+
 def test_run_with_only_date_settles_a_single_history_file_and_skips_daily(tmp_path):
     data_dir = tmp_path / "data"
     history_dir = data_dir / "history"

@@ -523,6 +523,19 @@ def run(data_dir: Path, only_date: Optional[str] = None, request_timeout: float 
                 per_file[f"history/{path.name}"] = counts
                 _merge_counts(total, counts)
 
+        # Per-publication snapshots preserve same-day boards that a later run
+        # replaced. Settle these exact snapshots too, but only after StatsAPI
+        # reports the underlying game as final.
+        run_files = sorted((history_dir / "runs").glob("????-??-??/*.json"))
+        if only_date is not None:
+            run_files = [p for p in run_files if p.parent.name == only_date]
+        for path in run_files:
+            counts = settle_file(path, get_live_feed, now_iso)
+            if counts is not None and counts["touched"] > 0:
+                relative = path.relative_to(data_dir).as_posix()
+                per_file[relative] = counts
+                _merge_counts(total, counts)
+
     report = {
         "generated_at_utc": now_iso,
         "total": total,
