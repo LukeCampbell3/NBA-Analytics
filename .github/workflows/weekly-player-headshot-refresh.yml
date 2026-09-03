@@ -1,14 +1,16 @@
 name: Weekly Player Headshot Refresh
 
-# The daily prediction workflows (mlb/nba/pga-predictions.yml) already
-# cache each real bettable player's headshot the first time that player
-# appears on a board -- see sports/{mlb,nba,golf}/*/update_*_player_
+# The daily prediction workflows (mlb-predictions.yml, nba-predictions.yml)
+# already cache each real bettable player's headshot the first time that
+# player appears on a board -- see sports/{mlb,nba}/*/update_*_player_
 # headshot_cache.py. This weekly job re-fetches every real player id
 # already in each sport's cache (force-refresh), so a stale or since-
 # updated real photo (a trade, a new season image, a roster change) gets
 # refreshed on a real cadence instead of only ever being fetched once.
 # Never adds a fabricated entry -- an id whose real re-fetch fails simply
 # keeps its previously cached real image.
+# Golf refresh removed alongside the golf pages being removed from the
+# site; the golf headshot cache is no longer fed into any live board.
 
 on:
   schedule:
@@ -75,18 +77,10 @@ jobs:
               --force-refresh
           fi
 
-      - name: Refresh golf player headshots
-        if: always()
-        continue-on-error: true
-        run: |
-          set -euo pipefail
-          if [ -e sports/golf/web/data/daily_predictions.json ]; then
-            python sports/golf/scripts/update_golf_player_headshot_cache.py \
-              --daily-predictions-path sports/golf/web/data/daily_predictions.json \
-              --daily-predictions-path dist/golf/data/daily_predictions.json \
-              --daily-predictions-path paywall/private-content/app/golf/data/daily_predictions.json \
-              --force-refresh
-          fi
+      # Golf headshot refresh removed alongside the golf page removal --
+      # sports/golf/web/ no longer exists, so its --daily-predictions-path
+      # inputs would resolve to nothing and the step's stage below has no
+      # golf paths to `git add -f` any more.
 
       - name: Stage refreshed headshots
         id: staged
@@ -95,10 +89,8 @@ jobs:
           for path in \
             sports/mlb/web/data/headshots dist/mlb/data/headshots paywall/private-content/app/mlb/data/headshots \
             sports/nba/web/data/headshots dist/nba/data/headshots \
-            sports/golf/web/data/headshots dist/golf/data/headshots paywall/private-content/app/golf/data/headshots \
             sports/mlb/web/data/daily_predictions.json dist/mlb/data/daily_predictions.json paywall/private-content/app/mlb/data/daily_predictions.json \
-            sports/nba/web/data/daily_predictions.json dist/nba/data/daily_predictions.json \
-            sports/golf/web/data/daily_predictions.json dist/golf/data/daily_predictions.json paywall/private-content/app/golf/data/daily_predictions.json
+            sports/nba/web/data/daily_predictions.json dist/nba/data/daily_predictions.json
           do
             if [ -e "$path" ]; then
               git add -f -- "$path"

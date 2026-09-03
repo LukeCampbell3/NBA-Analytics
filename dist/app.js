@@ -25,29 +25,13 @@ function renderSportCard(sport) {
         </article>`;
 }
 
-// Golf's model pipeline exists but has not published a live route yet
-// (no predictions.html, no generated data) -- shown honestly as
-// unavailable rather than either hidden or linked to a page that 404s.
-function renderComingSoonCard(label) {
-    const cv = window.CardVault;
-    return `
-        <article class="sport-card sport-card--unavailable">
-            <h3>${cv.escapeHtml(label)}</h3>
-            <p>Model in development. Not yet publishing predictions.</p>
-            <span class="sport-card__link">Coming soon</span>
-        </article>`;
-}
-
 async function init() {
     mountShell();
     const grid = document.getElementById("sportsGrid");
     const summary = document.getElementById("deskSummary");
     try {
         const sports = await fetchSports();
-        const known = new Set(sports.map((s) => s.slug));
-        let html = sports.map(renderSportCard).join("");
-        if (!known.has("golf")) html += renderComingSoonCard("Golf");
-        grid.innerHTML = html;
+        grid.innerHTML = sports.map(renderSportCard).join("");
         summary.textContent = `${sports.length} sport${sports.length === 1 ? "" : "s"} publishing predictions`;
     } catch (error) {
         grid.innerHTML = '<div class="site-error">Sport catalog is temporarily unavailable.</div>';
