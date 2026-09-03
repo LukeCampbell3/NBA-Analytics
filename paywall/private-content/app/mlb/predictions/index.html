@@ -31,26 +31,7 @@
             <nav id="predictionDateNav" class="date-nav" aria-label="Prediction board date"></nav>
         </header>
 
-        <!-- Two real, visually distinct groups: the single-leg board,
-             then every real parlay product broken out by its own real
-             construction (cross-market cross-game, same-game, pitcher-
-             strikeouts-only) -- each card still carries its own compact
-             label and status pill, this just adds the page-level
-             structure so a viewer can tell what kind of bet they're
-             looking at before reading a single card. -->
         <div id="board" class="board" aria-live="polite">
-            <section class="board-section" aria-labelledby="v21ShadowHeading">
-                <p class="board-section__eyebrow">Prospective Shadow</p>
-                <h2 id="v21ShadowHeading" class="board-section__heading">V2.1 Daily Pool</h2>
-                <p class="parlay-group__note">Frozen V2.1 challenger evaluated on every daily pool. It has no publication or staking authority unless it independently earns promotion.</p>
-                <div id="v21ShadowContent" class="daily-parlay" aria-live="polite">Loading V2.1 shadow pool...</div>
-            </section>
-            <section class="board-section" aria-labelledby="unifiedHeading">
-                <p class="board-section__eyebrow">Development Shadow</p>
-                <h2 id="unifiedHeading" class="board-section__heading">Unified MLB Engine</h2>
-                <p class="parlay-group__note">One conservative probability/value contract. This surface has no publication or staking authority while migration validation is incomplete.</p>
-                <div id="unifiedEngineContent" class="daily-parlay"></div>
-            </section>
             <section class="board-section" aria-labelledby="singleBetsHeading">
                 <h2 id="singleBetsHeading" class="board-section__heading">Single Bets</h2>
                 <div id="predictionCards" class="vault-board"></div>
@@ -58,56 +39,22 @@
                     <h3>No predictions published</h3>
                     <p>No analytical signals are available for this run. The model is deliberately selective, so an empty board is a normal, honest outcome, not a fault -- see <a href="/mlb/prediction-about/#backtestOverview">real backtest results</a> for evidence the policy holds up.</p>
                 </div>
-                <div class="parlay-group" aria-labelledby="v4SinglesHeading">
-                    <p id="v4SinglesHeading" class="parlay-group__label">V4 Optimized Singles</p>
-                    <p class="parlay-group__note">Shadow only — dynamic confidence/value frontier; no stake or publication authority</p>
-                    <div id="v4SinglesContent" class="daily-parlay"></div>
-                </div>
             </section>
 
             <section class="board-section" aria-labelledby="parlaysHeading">
                 <h2 id="parlaysHeading" class="board-section__heading">Parlays</h2>
 
-                <!-- High-EV and high-hit-probability are different real
-                     quantities. Cross-Market remains the frozen production
-                     policy. Same-Game and Pitchers-Only are shadow research
-                     products with their own explicit selection gates. -->
                 <div class="parlay-group">
                     <p class="parlay-group__label">Cross-Market</p>
                     <p class="parlay-group__note">Frozen, high-hit-probability-gated policy</p>
                     <div id="parlayV2Content" class="daily-parlay"></div>
                 </div>
-
-                <div class="parlay-group">
-                    <p class="parlay-group__label">Same-Game</p>
-                    <p class="parlay-group__note">Edge/EV-gated shadow -- ranked by price efficiency after the combo clears the edge and EV floors</p>
-                    <div id="sameGameParlayContent" class="daily-parlay"></div>
-                </div>
-
-                <div class="parlay-group">
-                    <p class="parlay-group__label">Pitchers-Only</p>
-                    <p class="parlay-group__note">ROI-oriented shadow -- alternate K lines must clear probability, individual EV, price, combined payout, and joint-probability floors</p>
-                    <div id="pitcherParlayContent" class="daily-parlay"></div>
-                </div>
-
-                <div class="parlay-group">
-                    <p class="parlay-group__label">High-Hit</p>
-                    <p class="parlay-group__note">Joint-probability-safe shadow -- every leg and the combo itself are gated on real probability floors, not EV</p>
-                    <div id="highHitParlayContent" class="daily-parlay"></div>
-                </div>
-            </section>
-
-            <section class="board-section" aria-labelledby="exoticMarketsHeading">
-                <p class="board-section__eyebrow">Research Board</p>
-                <h2 id="exoticMarketsHeading" class="board-section__heading">Exotic Markets</h2>
-                <p class="parlay-group__note">Shadow only — matching run-total models are scored; pitch-sequence and team-hit markets remain blocked until their own models and settlement paths exist.</p>
-                <div id="exoticMarketsContent" class="daily-parlay"></div>
             </section>
         </div>
 
         <footer class="pool-status">
             <div class="pool-status__row">
-                <span class="prediction-run-meta__item">Research only -- review model status and evidence before treating any signal as executable.</span>
+                <span class="prediction-run-meta__item">Only the published board is shown here. Shadow research remains on the methodology page.</span>
                 <a class="pool-status__link" href="/mlb/prediction-about/">View methodology &rarr;</a>
             </div>
         </footer>
@@ -196,7 +143,7 @@
     <script src="/vault/vault-components.js?v=17"></script>
     <script src="/vault/vault-shell.js?v=9"></script>
     <script src="unified-contract.js?v=1"></script>
-    <script src="predictions.js?v=37"></script>
+    <script src="predictions.js?v=38"></script>
     <script src="predictions-roi-overrides.js?v=3"></script>
     <script>
         // Independent freshness/V2.1 guard. This intentionally does not rely on

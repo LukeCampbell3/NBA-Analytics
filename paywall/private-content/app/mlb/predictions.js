@@ -140,6 +140,7 @@ class DailyPredictionsPage {
     }
 
     async loadDatesAndRender() {
+        await this.loadDateIndex();
         const currentLoaded = await this.loadAndRender(null);
         if (currentLoaded) {
             await Promise.all([
@@ -152,7 +153,7 @@ class DailyPredictionsPage {
         } else {
             this.renderDependentProductsUnavailable();
         }
-        if (this.elements.dateNav) this.elements.dateNav.innerHTML = "";
+        this.renderDateNav();
     }
 
     async loadDateIndex() {
@@ -311,7 +312,7 @@ class DailyPredictionsPage {
     formatDateLabel(dateValue) {
         try {
             const displayDate = new Date(`${dateValue}T12:00:00`);
-            const today = new Date().toISOString().slice(0, 10);
+            const today = this.easternDate();
             if (dateValue === this.currentDate) return dateValue === today ? "Today" : "Current";
             return displayDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
         } catch (_) {
@@ -325,8 +326,9 @@ class DailyPredictionsPage {
         const policy = this.data?.policy_profile || "n/a";
         const publicationStatus = String(this.data?.publication_status || "ready").toLowerCase();
         const authorizationEnabled = Boolean(this.data?.policy_governance?.candidate_authorization_enabled);
-        const publicationLabel = !authorizationEnabled ? "Shadow only" : publicationStatus === "ready" ? "Published" : publicationStatus === "review" ? "Review" : "Withheld";
-        const publicationTone = !authorizationEnabled ? "stale" : publicationStatus === "ready" ? "active" : publicationStatus === "review" ? "stale" : "withheld";
+        const viewingArchive = Boolean(this.activeDate && this.currentDate && this.activeDate !== this.currentDate);
+        const publicationLabel = viewingArchive ? "Archived" : !authorizationEnabled ? "Shadow only" : publicationStatus === "ready" ? "Published" : publicationStatus === "review" ? "Review" : "Withheld";
+        const publicationTone = viewingArchive ? "stale" : !authorizationEnabled ? "stale" : publicationStatus === "ready" ? "active" : publicationStatus === "review" ? "stale" : "withheld";
         const stale = publicationStatus !== "ready";
         const quality = this.data?.data_quality || {};
         const lagText = Number.isFinite(Number(quality.lag_days)) ? `${Number(quality.lag_days)}d` : "n/a";
