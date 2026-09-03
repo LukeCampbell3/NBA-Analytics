@@ -461,6 +461,15 @@
       PASSING_YARDS: "Passing Yards",
       RUSHING_YARDS: "Rushing Yards",
       RECEIVING_YARDS: "Receiving Yards",
+      // Real NFL play `target` values are the short `passing`/`rushing`/
+      // `receiving` stems (see sports/nfl/predictions/daily_policy.py --
+      // `str(best["target"])` from the training frame's stem), never the
+      // suffixed variants above. Map them explicitly so the card reads
+      // "Passing Yards" like the MLB/NBA rows above, instead of a raw
+      // upper-case "PASSING".
+      PASSING: "Passing Yards",
+      RUSHING: "Rushing Yards",
+      RECEIVING: "Receiving Yards",
     };
     const key = String(target || "").toUpperCase();
     return lookup[key] || key || "Market";
@@ -510,7 +519,14 @@
     const actionStatus = String(play.action_status || play.publication_status || "").toLowerCase();
     const needsReview = actionStatus === "review" || riskFlags.length > 0 || play.model_estimate_status === "review";
 
-    const lineText = CardVault.formatNumber(play.market_line);
+    // Field-name aliases: some sports' exporters emit `line` (NFL's
+    // live_market path) while others emit `market_line` (MLB/NBA). Both
+    // are the real, published market line for the leg -- accept either
+    // here so the shared card renders identically regardless of which
+    // sport's real data shape flows in, instead of every sport needing
+    // its own inline field-coercion adapter at the call site.
+    const marketLineValue = play.market_line != null ? play.market_line : play.line;
+    const lineText = CardVault.formatNumber(marketLineValue);
     const predText = CardVault.formatNumber(play.prediction);
     const targetLabel = CardVault.formatTargetLabel(play.target);
     const edgeValue = play.abs_edge != null ? play.abs_edge : play.edge;
@@ -658,6 +674,48 @@
         ${detailHtml ? `<details class="disclosure"><summary>Details</summary><div class="disclosure-body">${detailHtml}</div></details>` : ""}
       </article>
     `;
+  };
+
+  /**
+   * Envelope-aware wrapper around renderPredictionCard. Some sports'
+   * exporters (currently NFL) publish their full per-play detail even
+   * when the envelope-level `candidate_authorized` gate is false, so the
+   * viewer sees the same board with a "review" state pill instead of an
+   * empty page -- as opposed to MLB/NBA which fail-closed at the exporter
+   * and simply emit no plays when the slate is withheld.
+   *
+   * That envelope gate used to live as an inline `{...play, ...coerced}`
+   * spread at the NFL call site, which meant a viewer of the NFL picks
+   * page saw a slightly different card than an MLB viewer would have of
+   * the same underlying play -- the field flow was invisible from the
+   * shared renderer's perspective, and any future sport that needed the
+   * same fail-open behavior would have had to hand-copy the same
+   * adapter. This helper centralizes it: every sport that adopts it
+   * renders identically shaped cards, and MLB/NBA (fail-closed, no
+   * envelope needed) keep calling renderPredictionCard directly.
+   *
+   * The envelope carries only what's actually envelope-scoped:
+   *   candidate_authorized -- when false, forces `action_status="review"`
+   *     and `candidate_authorized=false` on every play so the shared
+   *     renderer's own risk-pill logic paints them as Shadow.
+   *   publication_status -- flowed down as `board_publication_status` so
+   *     the renderer's Ready/Withheld distinction matches the envelope.
+   * Anything else on the envelope is ignored -- per-play fields belong
+   * on the play, not smuggled through here.
+   */
+  CardVault.renderPredictionCardWithEnvelope = function renderPredictionCardWithEnvelope(play, index = 0, envelope = null) {
+    if (!envelope) return CardVault.renderPredictionCard(play, index);
+    const envelopeAuthorized = envelope.candidate_authorized === true;
+    const envelopePublicationStatus = envelope.publication_status;
+    const gated = {
+      ...play,
+      candidate_authorized: envelopeAuthorized && play.candidate_authorized !== false,
+      action_status: envelopeAuthorized ? play.action_status : "review",
+    };
+    if (envelopePublicationStatus !== undefined && gated.board_publication_status === undefined) {
+      gated.board_publication_status = envelopePublicationStatus;
+    }
+    return CardVault.renderPredictionCard(gated, index);
   };
 
   /**

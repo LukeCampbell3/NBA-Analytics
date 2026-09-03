@@ -223,20 +223,19 @@ class NflPredictionBoard {
             this.elements.board.innerHTML = "<p>The bounty notices could not be loaded.</p>";
             return;
         }
-        this.elements.board.innerHTML = plays.map((play, index) => cv.renderPredictionCard({
-            ...play,
-            rank: play.rank || index + 1,
-            player_display_name: play.player,
-            target: play.target || "passing_yards",
-            market_line: play.line,
-            direction: play.direction || play.side,
-            model_hit_probability: play.model_hit_probability ?? play.raw_model_probability,
-            selected_side_price: play.selected_side_price ?? play.price,
-            selected_sportsbook_key: play.selected_sportsbook_key || play.bookmaker,
-            candidate_authorized: this.data?.candidate_authorized === true && play.candidate_authorized !== false,
-            action_status: this.data?.candidate_authorized === true ? play.action_status : "review",
-            board_publication_status: this.data?.publication_status,
-        }, index)).join("");
+        // Shared, envelope-aware card renderer: identical HTML shape to
+        // every other sport's picks board (MLB, NBA). NFL fails-open at
+        // the envelope level (plays are still emitted when the slate is
+        // withheld), so we hand the envelope's own gating fields to the
+        // shared helper -- see CardVault.renderPredictionCardWithEnvelope
+        // for why this can't be inlined here without silently making the
+        // NFL card diverge from the other sports.
+        this.elements.board.innerHTML = plays
+            .map((play, index) => cv.renderPredictionCardWithEnvelope(play, index, {
+                candidate_authorized: this.data?.candidate_authorized,
+                publication_status: this.data?.publication_status,
+            }))
+            .join("");
     }
 
     renderPickHistory() {
