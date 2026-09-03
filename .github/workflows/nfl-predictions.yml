@@ -1,15 +1,14 @@
 name: NFL Predictions and Frontend
 
 on:
-  push:
-    branches: [static-deployment]
-    paths:
-      - '.github/workflows/nfl-predictions.yml'
-      - 'sports/nfl/**'
-      - 'sports/site/pipeline/validate_nfl_publication.py'
-      - 'tests/test_validate_nfl_publication.py'
+  # Publish once near each normal NFL kickoff window. Repository pushes no
+  # longer rebuild the live board and unexpectedly replace already shown picks.
   schedule:
-    - cron: "15 14 * 1-2,8-12 *"
+    - cron: "30 23 * 9 3"          # opening-week Wednesday window
+    - cron: "30 23 * 9-12 4"       # Thursday evening games
+    - cron: "30 16 * 1-2,9-12 0"   # Sunday early window
+    - cron: "30 23 * 1,9-12 1"     # Monday evening games
+    - cron: "0 20 * 1 6"           # Saturday postseason window
   workflow_dispatch:
     inputs:
       run_date:
@@ -95,6 +94,7 @@ jobs:
             sports/nfl/tests/test_daily_policy_backtest.py \
             sports/nfl/tests/test_week_market_board.py \
             sports/nfl/tests/test_week_market_policy_backtest.py \
+            sports/nfl/tests/test_pick_publication_history.py \
             sports/nfl/tests/test_validation_web_export.py \
             tests/test_validate_nfl_publication.py \
             -q
@@ -110,6 +110,7 @@ jobs:
         run: >-
           python sports/nfl/scripts/run_nfl_daily_predictions.py
           --run-date "${{ steps.run_date.outputs.value }}"
+          --window-days 1
           --snapshot-output
           "sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}/${{ github.run_id }}.json"
           --capture-only
@@ -154,6 +155,7 @@ jobs:
         run: >-
           python sports/nfl/scripts/run_nfl_daily_predictions.py
           --run-date "${{ steps.run_date.outputs.value }}"
+          --window-days 1
           --market-input
           "sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}/${{ github.run_id }}.json"
           --snapshot-output
@@ -190,6 +192,8 @@ jobs:
             python sports/nfl/scripts/build_nfl_week_market_board.py \
               --snapshot "$WEEK_SNAPSHOT"
           fi
+          python sports/nfl/scripts/update_pick_publication_history.py \
+            --recover-git-history-if-empty
           python sports/site/pipeline/build_static_site.py
           if [[ "${{ inputs.build_only }}" == "true" ]]; then
             python sports/site/pipeline/validate_nfl_publication.py
@@ -214,11 +218,14 @@ jobs:
             sports/nfl/web/data/fantasy_draft_rankings.json \
             sports/nfl/web/data/week_1_pool.json \
             sports/nfl/web/data/week_1_market_board.json \
+            sports/nfl/web/data/pick_history.json \
             sports/nfl/web/data/market_validation_summary.json \
             dist/nfl/data/daily_predictions.json \
             dist/nfl/data/fantasy_draft_rankings.json \
             dist/nfl/data/week_1_pool.json \
             dist/nfl/data/week_1_market_board.json \
+            dist/nfl/data/pick_history.json \
+            paywall/private-content/app/nfl/data/pick_history.json \
             dist/nfl/data/market_validation_summary.json
           SNAPSHOT="sports/nfl/data/production/snapshots/${{ steps.run_date.outputs.value }}/${{ github.run_id }}.json"
           if [[ "${{ inputs.build_only }}" != "true" && -f "$SNAPSHOT" ]]; then
@@ -275,8 +282,11 @@ jobs:
             sports/nfl/web/data/fantasy_draft_rankings.json
             sports/nfl/web/data/week_1_pool.json
             sports/nfl/web/data/week_1_market_board.json
+            sports/nfl/web/data/pick_history.json
             sports/nfl/web/data/market_validation_summary.json
             dist/nfl/data/daily_predictions.json
             dist/nfl/data/market_validation_summary.json
+            dist/nfl/data/pick_history.json
+            paywall/private-content/app/nfl/data/pick_history.json
           if-no-files-found: warn
           retention-days: 14

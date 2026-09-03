@@ -37,6 +37,9 @@ def make_publication(tmp_path: Path) -> tuple[Path, Path]:
         tmp_path / "sports/nfl/web/data/market_validation_summary.json", validation
     )
     write_payload(output / "nfl/data/market_validation_summary.json", validation)
+    history = {"schema_version": 1, "summary": {}, "snapshots": [], "picks": []}
+    write_payload(tmp_path / "sports/nfl/web/data/pick_history.json", history)
+    write_payload(output / "nfl/data/pick_history.json", history)
     write_payload(
         tmp_path / "sports/nfl/data/evaluation/daily_policy_backtest.json",
         {"gates": {"singles": {"status": "passed"}, "parlay": {"status": "failed"}}},
@@ -50,9 +53,10 @@ def make_publication(tmp_path: Path) -> tuple[Path, Path]:
             "deployment": {"status": "shadow_only"},
         },
     )
-    route = output / "nfl/predictions/index.html"
-    route.parent.mkdir(parents=True, exist_ok=True)
-    route.write_text("<!doctype html>", encoding="utf-8")
+    for route_name in ("predictions", "projections", "picks"):
+        route = output / f"nfl/{route_name}/index.html"
+        route.parent.mkdir(parents=True, exist_ok=True)
+        route.write_text("<!doctype html>", encoding="utf-8")
     return tmp_path, output
 
 

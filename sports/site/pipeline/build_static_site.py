@@ -60,6 +60,7 @@ PREDICTION_DATA_FILES = {
     "fantasy_draft_rankings.json",
     "week_1_pool.json",
     "week_1_market_board.json",
+    "pick_history.json",
     "opening_night_pool.json",
     "same_game_predictions.json",
     "pitcher_parlay_predictions.json",

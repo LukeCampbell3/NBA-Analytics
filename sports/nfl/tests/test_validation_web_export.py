@@ -69,6 +69,7 @@ def test_frontend_exposes_validation_sections_and_payload() -> None:
     assert 'id="weekPositionFilters"' in projections_html
     assert 'id="parlayWatchlists"' in picks_html
     assert 'id="currentBoard"' in picks_html
+    assert 'id="pickHistory"' in picks_html
     assert 'id="rankingTable"' in fantasy_html
     assert 'id="confidenceMetrics"' in fantasy_html
     assert "data/fantasy_draft_rankings.json" in fantasy_js
@@ -101,5 +102,8 @@ def test_frontend_exposes_validation_sections_and_payload() -> None:
         assert all(leg["direction"] is None for leg in ticket["legs"])
     assert "data/market_validation_summary.json" in predictions_js
     assert "data/daily_predictions.json" in predictions_js
+    assert "data/pick_history.json" in predictions_js
+    assert "isNearKickoff" in predictions_js
+    assert "same-day market snapshot close to kickoff" in predictions_js
     assert 'id="marketMethodFacts"' in about_html
     assert 'id="marketLimitations"' in about_html

@@ -13,6 +13,7 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DAILY_PAYLOAD = Path("sports/nfl/web/data/daily_predictions.json")
 VALIDATION_PAYLOAD = Path("sports/nfl/web/data/market_validation_summary.json")
+PICK_HISTORY_PAYLOAD = Path("sports/nfl/web/data/pick_history.json")
 DAILY_POLICY_EVIDENCE = Path("sports/nfl/data/evaluation/daily_policy_backtest.json")
 META_POLICY_EVIDENCE = Path("sports/nfl/data/evaluation/pick_meta_backtest.json")
 LIVE_POLICY_VERSION = "nfl_passing_loss_aware_meta_policy_v2"
@@ -109,9 +110,10 @@ def validate_nfl_publication(
     *, repo_root: Path, output_dir: Path, run_date: str | None = None
 ) -> str:
     resolved_output = output_dir if output_dir.is_absolute() else repo_root / output_dir
-    route = resolved_output / "nfl" / "predictions" / "index.html"
-    if not route.is_file():
-        raise FileNotFoundError(f"NFL prediction route is missing: {route}")
+    for route_name in ("predictions", "projections", "picks"):
+        route = resolved_output / "nfl" / route_name / "index.html"
+        if not route.is_file():
+            raise FileNotFoundError(f"NFL {route_name} route is missing: {route}")
 
     source_daily = load_json(repo_root / DAILY_PAYLOAD)
     public_daily = load_json(resolved_output / "nfl/data/daily_predictions.json")
@@ -119,11 +121,17 @@ def validate_nfl_publication(
     public_validation = load_json(
         resolved_output / "nfl/data/market_validation_summary.json"
     )
+    source_history = load_json(repo_root / PICK_HISTORY_PAYLOAD)
+    public_history = load_json(resolved_output / "nfl/data/pick_history.json")
 
     if source_daily != public_daily:
         raise ValueError("NFL daily source and public payloads differ.")
     if source_validation != public_validation:
         raise ValueError("NFL validation source and public payloads differ.")
+    if source_history != public_history:
+        raise ValueError("NFL pick-history source and public payloads differ.")
+    if source_history.get("schema_version") != 1 or not isinstance(source_history.get("picks"), list):
+        raise ValueError("NFL pick-history payload has an invalid contract.")
 
     schema_version = int(source_daily.get("schema_version") or 1)
     if schema_version >= 2:

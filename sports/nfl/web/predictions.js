@@ -4,6 +4,7 @@ class NflPredictionBoard {
         this.marketEvidence = null;
         this.weekPool = null;
         this.weekMarketBoard = null;
+        this.pickHistory = null;
         this.position = "ALL";
         this.pageMode = document.body?.dataset?.nflPage === "picks" ? "picks" : "projections";
         this.elements = {
@@ -20,6 +21,8 @@ class NflPredictionBoard {
             parlayWatchlists: document.getElementById("parlayWatchlists"),
             parlayV2Section: document.getElementById("parlayV2Section"),
             parlayV2Content: document.getElementById("parlayV2Content"),
+            pickHistorySummary: document.getElementById("pickHistorySummary"),
+            pickHistory: document.getElementById("pickHistory"),
         };
         this.bindControls();
         this.init();
@@ -40,11 +43,12 @@ class NflPredictionBoard {
     async init() {
         this.mountShell();
         try {
-            const [dailyResponse, marketResponse, weekResponse, weekMarketResponse] = await Promise.all([
+            const [dailyResponse, marketResponse, weekResponse, weekMarketResponse, historyResponse] = await Promise.all([
                 fetch(`data/daily_predictions.json?v=${Date.now()}`),
                 fetch(`data/market_validation_summary.json?v=${Date.now()}`),
                 fetch(`data/week_1_pool.json?v=${Date.now()}`),
                 fetch(`data/week_1_market_board.json?v=${Date.now()}`),
+                fetch(`data/pick_history.json?v=${Date.now()}`),
             ]);
             if (!dailyResponse.ok) throw new Error(`HTTP ${dailyResponse.status}`);
             if (!weekResponse.ok) throw new Error(`Week pool HTTP ${weekResponse.status}`);
@@ -52,6 +56,7 @@ class NflPredictionBoard {
             this.marketEvidence = marketResponse.ok ? await marketResponse.json() : null;
             this.weekPool = await weekResponse.json();
             this.weekMarketBoard = weekMarketResponse.ok ? await weekMarketResponse.json() : null;
+            this.pickHistory = historyResponse.ok ? await historyResponse.json() : null;
             this.render();
         } catch (error) {
             console.error(error);
@@ -77,10 +82,12 @@ class NflPredictionBoard {
     }
 
     render() {
-        const dailyPlays = Array.isArray(this.data.plays) ? this.data.plays : [];
-        const weekSingles = Array.isArray(this.weekMarketBoard?.best_available_singles)
+        const generatedAt = this.data.generated_at_utc || this.weekMarketBoard?.generated_at_utc;
+        const dailyPlays = (Array.isArray(this.data.plays) ? this.data.plays : [])
+            .filter((play) => this.isNearKickoff(play, generatedAt));
+        const weekSingles = (Array.isArray(this.weekMarketBoard?.best_available_singles)
             ? this.weekMarketBoard.best_available_singles
-            : [];
+            : []).filter((play) => this.isNearKickoff(play, generatedAt));
         const plays = dailyPlays.length ? dailyPlays : weekSingles;
         const quality = this.data.data_quality || {};
         const selection = this.data.selection || {};
@@ -104,8 +111,10 @@ class NflPredictionBoard {
         this.renderParlayWatchlists();
 
         const backtestQualified = !dailyPlays.length && weekSingles.length;
-        const withheld = this.data.publication_status !== "shadow_current_pool" && !backtestQualified;
-        const gateReason = backtestQualified
+        const withheld = !plays.length || (this.data.publication_status !== "shadow_current_pool" && !backtestQualified);
+        const gateReason = !plays.length
+            ? "Picks are published only from a same-day market snapshot close to kickoff. Earlier weekly candidates remain projections, not current picks."
+            : backtestQualified
             ? "These Week 1 passing candidates passed the frozen loss-aware historical rule. They remain shadow-only while prospective certification is inactive."
             : (quality.reason || "These candidates passed the frozen model and execution gates but are not authorized for staking while prospective certification is inactive.");
         if (this.elements.gate) this.elements.gate.innerHTML = `<p><strong>${withheld ? "No current pick published." : "Current candidates found."}</strong> ${this.escape(gateReason)}</p>`;
@@ -122,6 +131,7 @@ class NflPredictionBoard {
             <article class="prediction-about-metric-card"><span>${this.escape(label)}</span><strong>${this.escape(value)}</strong></article>
         `).join("");
         this.renderBoard(plays);
+        this.renderPickHistory();
         this.renderParlay();
         this.renderParlayV2();
     }
@@ -229,11 +239,50 @@ class NflPredictionBoard {
         }, index)).join("");
     }
 
+    renderPickHistory() {
+        const summaryTarget = this.elements.pickHistorySummary;
+        const historyTarget = this.elements.pickHistory;
+        if (!summaryTarget || !historyTarget) return;
+        const summary = this.pickHistory?.summary || {};
+        const records = Array.isArray(this.pickHistory?.picks) ? this.pickHistory.picks : [];
+        const removed = records
+            .filter((record) => record.status && record.status !== "ACTIVE")
+            .sort((a, b) => String(b.status_changed_at_utc || "").localeCompare(String(a.status_changed_at_utc || "")));
+        summaryTarget.innerHTML = `<p><strong>${this.escape(this.formatInt(summary.snapshots))} immutable board snapshots tracked.</strong> ${this.escape(this.formatInt(summary.ACTIVE || 0))} active · ${this.escape(this.formatInt(summary.REMOVED_BEFORE_KICKOFF || 0))} removed before kickoff · ${this.escape(this.formatInt(summary.LOCKED_AFTER_KICKOFF || 0))} locked after kickoff. A removed pick remains here because it was genuinely shown on an earlier board.</p>`;
+        if (!removed.length) {
+            historyTarget.innerHTML = "<p>No previously published picks have been removed yet.</p>";
+            return;
+        }
+        const rows = removed.slice(0, 50).map((record) => {
+            const pick = record.pick || {};
+            const status = record.status === "LOCKED_AFTER_KICKOFF" ? "Game started" : "Removed pregame";
+            const market = `${pick.side || ""} ${this.formatNum(pick.line, 1)} ${String(pick.market || "").replaceAll("_", " ")}`.trim();
+            return `<tr>
+                <td><strong>${this.escape(pick.player || "Unknown")}</strong><br><small>${this.escape([pick.team, pick.opponent].filter(Boolean).join(" vs "))}</small></td>
+                <td>${this.escape(market)}</td>
+                <td>${this.escape(String(pick.product || "").replaceAll("_", " "))}</td>
+                <td>${this.escape(status)}</td>
+                <td>${this.escape(this.formatTime(record.first_published_at_utc))}</td>
+                <td>${this.escape(this.formatTime(record.status_changed_at_utc))}</td>
+            </tr>`;
+        }).join("");
+        historyTarget.innerHTML = `<table class="prediction-about-table"><thead><tr><th>Player</th><th>Published pick</th><th>Board</th><th>Lifecycle</th><th>First shown</th><th>Changed</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    isNearKickoff(play, generatedAt) {
+        const kickoff = Date.parse(play?.game_start_utc || play?.kickoff_utc || "");
+        const generated = Date.parse(generatedAt || "");
+        if (!Number.isFinite(kickoff) || !Number.isFinite(generated)) return false;
+        const hoursUntilKickoff = (kickoff - generated) / 3600000;
+        return hoursUntilKickoff >= -1 && hoursUntilKickoff <= 12;
+    }
+
     renderParlay() {
         if (!this.elements.parlay) return;
         const parlay = this.data.daily_parlay || {};
         const ticket = parlay.selected_ticket;
-        if (!ticket) {
+        const currentTicket = ticket && (ticket.legs || []).every((leg) => this.isNearKickoff(leg, this.data.generated_at_utc));
+        if (!currentTicket) {
             this.elements.parlay.innerHTML = `<p><strong>Withheld.</strong> ${this.escape(parlay.reason || "No distinct-game ticket was available.")}</p>`;
             return;
         }
