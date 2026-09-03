@@ -171,8 +171,23 @@ class PoolReport:
     calibration_gap_mean_across_populated_bins: Optional[float] = None
 
 
-def summarize_pool(name: str, rows: list[dict[str, Any]]) -> PoolReport:
-    joints = [_finite(r.get("predicted_joint_probability")) for r in rows]
+def summarize_pool(
+    name: str,
+    rows: list[dict[str, Any]],
+    *,
+    joint_calibrator: Any | None = None,
+) -> PoolReport:
+    """Summarize a pool. If joint_calibrator is provided, every row's
+    predicted_joint_probability is passed through it before summary --
+    both distributions and calibration bins use the calibrated value.
+    Rows are NOT mutated."""
+    def _joint_of(row: dict[str, Any]) -> Optional[float]:
+        raw = _finite(row.get("predicted_joint_probability"))
+        if raw is None:
+            return None
+        return float(joint_calibrator.calibrate(raw)) if joint_calibrator is not None else raw
+
+    joints = [_joint_of(r) for r in rows]
     joints = [x for x in joints if x is not None]
     prices = [_finite(r.get("quoted_pair_price")) for r in rows]
     prices = [x for x in prices if x is not None]
@@ -188,7 +203,17 @@ def summarize_pool(name: str, rows: list[dict[str, Any]]) -> PoolReport:
     wins = sum(1 for r in rows if r.get("both_win"))
     hit_rate = (wins / len(rows)) if rows else None
 
-    bins = _calibration_bins(rows)
+    if joint_calibrator is not None:
+        # Re-shape rows with calibrated joint on the fly so calibration
+        # bins bucket by the calibrated value the caller cares about.
+        bin_rows = [
+            dict(r, predicted_joint_probability=_joint_of(r))
+            for r in rows
+            if _joint_of(r) is not None
+        ]
+    else:
+        bin_rows = rows
+    bins = _calibration_bins(bin_rows)
     gaps = [b.calibration_gap for b in bins if b.calibration_gap is not None]
     mean_gap = statistics.fmean(gaps) if gaps else None
 
@@ -234,14 +259,12 @@ def _interpret(real: PoolReport, synth: PoolReport) -> list[str]:
     """Turn the numbers into short, honest headlines a reader can act on.
 
     Rules of engagement (this module never picks an interpretation):
-    * The comparisons are what they are; every string here starts from
-      a comparison already present in the report and adds no new
-      inference.
-    * If both pools show similar calibration gaps but very different
-      hit rates, the imbalance is more likely upstream (interpretation
-      A). If the synthetic pool shows a small calibration gap while
-      the real pool shows a large one, the joint model is being
-      pessimistic (interpretation B). Anything else, say so.
+    * Every string here starts from a comparison already present in
+      the report and adds no new inference beyond a labelling of
+      which pool is over-, under-, or well-calibrated.
+    * `abs(gap) < 0.02` counts as "well calibrated" -- ~2 pp per
+      decile is close enough that reweighting will not measurably move
+      the promotion decision.
     """
     notes: list[str] = []
     if real.hit_rate is not None and synth.hit_rate is not None:
@@ -259,27 +282,46 @@ def _interpret(real: PoolReport, synth: PoolReport) -> list[str]:
             f"Mean per-decile calibration gap (predicted - actual): real {real_gap:+.4f}, "
             f"synthetic {synth_gap:+.4f}, difference {delta:+.4f}."
         )
-        if abs(delta) < 0.02:
+        real_well = abs(real_gap) < 0.02
+        synth_well = abs(synth_gap) < 0.02
+        if real_well and synth_well:
             notes.append(
-                "Calibration is comparable across pools; the hit-rate gap is more "
-                "consistent with interpretation (A) -- upstream selector -- than with "
-                "interpretation (B) -- joint-model pessimism."
+                "Both pools well-calibrated (|gap| < 2 pp); the hit-rate gap is a pool-"
+                "composition fact, not a model-quality one, and consistent with "
+                "interpretation (A) -- upstream selector shapes the pool, not the model."
+            )
+        elif real_well and not synth_well:
+            notes.append(
+                "Real pool is well-calibrated; synthetic pool is not. The calibrator (if "
+                "one was applied) resolved the real-pool miscalibration; a calibrator fit "
+                "on the real pool will not generalize to the broader synthetic pool because "
+                "the two pools have different predicted-probability distributions."
+            )
+        elif synth_well and not real_well:
+            notes.append(
+                "Synthetic pool is well-calibrated; real pool is not. This is the diagnosis "
+                "the branch's `pair_ledger_calibration.py` was built to resolve -- fit a "
+                "beta calibrator on the real ledger and re-run with --with-calibrator."
             )
         elif real_gap > synth_gap + 0.02:
             notes.append(
                 "The real pool's joint model over-predicts hit rate MORE than the synthetic "
-                "pool's does. This is unusual -- the real ledger was already the more-"
-                "conservative pool by construction, so a larger positive gap here suggests "
-                "the frozen production model is not being pessimistic (interpretation B is "
-                "not supported); the gap likely reflects a different upstream sampling issue."
+                "pool's does. The real ledger was already the more-conservative pool by "
+                "construction, so a larger positive gap here suggests the frozen production "
+                "model is miscalibrated in a way the naive-independence baseline is not. "
+                "Interpretation (B) is not supported by this data."
             )
         elif synth_gap > real_gap + 0.02:
             notes.append(
                 "The synthetic pool's independence-assumed joint over-predicts hit rate "
-                "MORE than the real pool's calibrated joint does. This supports "
-                "interpretation (B): the real joint model is correctly capturing "
-                "correlation the naive independence baseline misses. The hit-rate gap is "
-                "at least partly a synthetic-optimism artefact, not upstream selection alone."
+                "MORE than the real pool's joint does. This supports interpretation (B): "
+                "the real joint model is correctly capturing correlation the naive "
+                "independence baseline misses."
+            )
+        else:
+            notes.append(
+                "Both pools miscalibrated in the same direction and roughly the same amount; "
+                "no clean discrimination between interpretations from calibration alone."
             )
     if real.per_leg_model_probability_distribution.n == 0:
         notes.append(
@@ -295,11 +337,18 @@ def build_report(
     *,
     real_ledger: Path,
     synthetic_ledger: Path,
+    joint_calibrator: Any | None = None,
 ) -> PoolGapReport:
     real_rows = _load_jsonl(real_ledger)
     synth_rows = _load_jsonl(synthetic_ledger)
-    real_pool = summarize_pool("REAL_PAIR_OBSERVATION_LEDGER", real_rows)
-    synth_pool = summarize_pool("SYNTHETIC_CROSS_GAME_PAIR_LEDGER", synth_rows)
+    real_pool = summarize_pool(
+        "REAL_PAIR_OBSERVATION_LEDGER", real_rows,
+        joint_calibrator=joint_calibrator,
+    )
+    synth_pool = summarize_pool(
+        "SYNTHETIC_CROSS_GAME_PAIR_LEDGER", synth_rows,
+        joint_calibrator=joint_calibrator,
+    )
     hit_rate_gap = None
     if real_pool.hit_rate is not None and synth_pool.hit_rate is not None:
         hit_rate_gap = 100 * (synth_pool.hit_rate - real_pool.hit_rate)
@@ -323,21 +372,56 @@ def build_report(
 
 
 def _cli() -> None:
-    parser = argparse.ArgumentParser(description="Investigate the real-vs-synthetic pair-pool hit-rate gap.")
+    parser = argparse.ArgumentParser(description="Investigate the real-vs-synthetic pair-pool hit-rate gap, before and (optionally) after calibration.")
     parser.add_argument("--real", type=Path, default=REPO_ROOT / DEFAULT_REAL_LEDGER)
     parser.add_argument("--synthetic", type=Path, default=REPO_ROOT / DEFAULT_SYNTHETIC_LEDGER)
     parser.add_argument("--out", type=Path, default=REPO_ROOT / DEFAULT_REPORT)
+    parser.add_argument(
+        "--with-calibrator", action="store_true",
+        help="Also fit a beta calibrator on the real ledger and rerun the pool comparison after applying it. "
+             "Reports BEFORE and AFTER side-by-side so the resolution is visible.",
+    )
     args = parser.parse_args()
 
-    report = build_report(real_ledger=args.real, synthetic_ledger=args.synthetic)
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(report.to_dict(), indent=2, sort_keys=True, default=str))
-    print(f"wrote {args.out}")
-    print(f"\nreal pool: {report.real_pool.row_count} rows, hit rate {report.real_pool.hit_rate}")
-    print(f"synthetic pool: {report.synthetic_pool.row_count} rows, hit rate {report.synthetic_pool.hit_rate}")
-    print(f"\nheadline gap: {report.hit_rate_gap_percentage_points:+.1f} pp" if report.hit_rate_gap_percentage_points is not None else "no gap comparable")
-    for note in report.interpretation_notes:
+    before = build_report(real_ledger=args.real, synthetic_ledger=args.synthetic)
+    payload = {"before_calibration": before.to_dict()}
+    print("=== BEFORE calibration ===")
+    print(f"real pool: {before.real_pool.row_count} rows, hit rate {before.real_pool.hit_rate}")
+    print(f"synthetic pool: {before.synthetic_pool.row_count} rows, hit rate {before.synthetic_pool.hit_rate}")
+    if before.hit_rate_gap_percentage_points is not None:
+        print(f"headline gap: {before.hit_rate_gap_percentage_points:+.1f} pp")
+    for note in before.interpretation_notes:
         print(f"  - {note}")
+
+    if args.with_calibrator:
+        # Local import to keep the module importable without scipy for
+        # callers that only need the raw investigation.
+        from .pair_ledger_calibration import fit_beta_calibrator
+        rows = _load_jsonl(args.real)
+        calibrator = fit_beta_calibrator(rows)
+        print(f"\n=== fitted BETA CALIBRATOR (in-sample on real ledger) ===")
+        print(f"  slope={calibrator.slope:+.4f}  intercept={calibrator.intercept:+.4f}  n_fitted={calibrator.n_fitted_pairs}")
+        after = build_report(
+            real_ledger=args.real, synthetic_ledger=args.synthetic,
+            joint_calibrator=calibrator,
+        )
+        payload["calibrator"] = {
+            "slope": calibrator.slope,
+            "intercept": calibrator.intercept,
+            "n_fitted_pairs": calibrator.n_fitted_pairs,
+        }
+        payload["after_calibration"] = after.to_dict()
+        print("\n=== AFTER calibration ===")
+        print(f"real pool: {after.real_pool.row_count} rows, hit rate {after.real_pool.hit_rate}")
+        print(f"synthetic pool: {after.synthetic_pool.row_count} rows, hit rate {after.synthetic_pool.hit_rate}")
+        if after.hit_rate_gap_percentage_points is not None:
+            print(f"headline gap: {after.hit_rate_gap_percentage_points:+.1f} pp")
+        for note in after.interpretation_notes:
+            print(f"  - {note}")
+
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(json.dumps(payload, indent=2, sort_keys=True, default=str))
+    print(f"\nwrote {args.out}")
 
 
 if __name__ == "__main__":

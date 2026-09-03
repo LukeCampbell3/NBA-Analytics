@@ -188,6 +188,7 @@ def promotion_confidence_components(
     payload: Mapping[str, Any],
     *,
     penalties: PromotionPenalties | None = None,
+    joint_calibrator: "Any | None" = None,
 ) -> PromotionConfidenceComponents:
     """Compute the explainable promotion-confidence components for a payload.
 
@@ -196,11 +197,21 @@ def promotion_confidence_components(
     None only when the payload lacks either a calibrated joint
     probability or a combined decimal price -- both required for a
     price-vs-probability comparison to even be defined.
+
+    If `joint_calibrator` is passed (any object with a `.calibrate(p)`
+    method -- see JointProbabilityCalibrator in
+    pair_ledger_calibration.py), the overlay's raw joint probability is
+    passed through it before the margin is computed. The recalibrated
+    value is what lands in `calibrated_joint_probability` -- that field
+    name is finally being used correctly, since without a calibrator
+    the payload's "conservative" joint is only nominally calibrated.
     """
     penalties = penalties or PromotionPenalties()
     overlay = _extract_overlay(payload)
 
     joint = _finite(overlay.get("joint_probability"))
+    if joint is not None and joint_calibrator is not None:
+        joint = float(joint_calibrator.calibrate(joint))
     price = _finite(overlay.get("combined_decimal_price"))
     legs = [
         _finite(p)
@@ -289,6 +300,7 @@ def decide_coherent_promotion(
     *,
     thresholds: PromotionThresholds | None = None,
     penalties: PromotionPenalties | None = None,
+    joint_calibrator: "Any | None" = None,
 ) -> CoherentPromotionDecision:
     """Return the coherent shadow decision for a persisted payload.
 
@@ -319,7 +331,9 @@ def decide_coherent_promotion(
     selected = parlays.get("selected_parlay") or {}
     candidate_id = selected.get("candidate_id")
 
-    components = promotion_confidence_components(payload, penalties=penalties)
+    components = promotion_confidence_components(
+        payload, penalties=penalties, joint_calibrator=joint_calibrator,
+    )
 
     blocking: list[str] = []
 

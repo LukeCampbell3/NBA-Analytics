@@ -37,6 +37,13 @@ from .promotion_confidence import (
     default_thresholds,
     promotion_confidence_components,
 )
+from .pair_ledger_calibration import (
+    BetaCalibrator,
+    IdentityCalibrator,
+    JointProbabilityCalibrator,
+    apply_calibrator_to_row,
+    fit_beta_calibrator,
+)
 from .pair_schema_v2 import (
     PAIR_OBSERVATION_SCHEMA_VERSION_V2,
     MarketDisagreementProfile,
@@ -50,7 +57,10 @@ from .same_game_penalty import (
 )
 
 __all__ = [
+    "BetaCalibrator",
     "CoherentPromotionDecision",
+    "IdentityCalibrator",
+    "JointProbabilityCalibrator",
     "MarketDisagreementProfile",
     "PAIR_OBSERVATION_SCHEMA_VERSION_V2",
     "PairObservationV2",
@@ -58,9 +68,11 @@ __all__ = [
     "PromotionPenalties",
     "PromotionThresholds",
     "SameGamePenaltyProfile",
+    "apply_calibrator_to_row",
     "apply_same_game_penalty",
     "decide_coherent_promotion",
     "default_thresholds",
+    "fit_beta_calibrator",
     "market_disagreement_deduction",
     "promotion_confidence_components",
     "same_game_shared_failure_deduction",

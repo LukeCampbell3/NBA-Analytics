@@ -1,0 +1,522 @@
+{
+  "generated_at_utc": "2026-09-03T15:45:16.074643+00:00",
+  "global_calibrator": {
+    "intercept": -4.700344085031165,
+    "n_fitted_pairs": 3120,
+    "slope": -1.578241421306769
+  },
+  "in_sample_mean_gap_calibrated": 0.0005492916485208277,
+  "in_sample_mean_gap_raw": 0.12002458238907249,
+  "leave_one_slate_out_folds": [
+    {
+      "calibrator": {
+        "intercept": -4.412831645405172,
+        "n_fitted_pairs": 2340,
+        "slope": -1.4153387944781242
+      },
+      "decile_rows": [
+        {
+          "decile_index": 0,
+          "decile_lower": 0.0,
+          "decile_upper": 0.1,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 1,
+          "decile_lower": 0.1,
+          "decile_upper": 0.2,
+          "gap_calibrated": 0.012670417540119855,
+          "gap_raw": 0.08970055909155297,
+          "mean_actual": 0.08609271523178808,
+          "mean_calibrated": 0.09876313277190793,
+          "mean_predicted": 0.17579327432334105,
+          "n_pairs": 453
+        },
+        {
+          "decile_index": 2,
+          "decile_lower": 0.2,
+          "decile_upper": 0.3,
+          "gap_calibrated": 0.01784808015482233,
+          "gap_raw": 0.17461035451259266,
+          "mean_actual": 0.04892966360856269,
+          "mean_calibrated": 0.06677774376338502,
+          "mean_predicted": 0.22354001812115534,
+          "n_pairs": 327
+        },
+        {
+          "decile_index": 3,
+          "decile_lower": 0.3,
+          "decile_upper": 0.4,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 4,
+          "decile_lower": 0.4,
+          "decile_upper": 0.5,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 5,
+          "decile_lower": 0.5,
+          "decile_upper": 0.6,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 6,
+          "decile_lower": 0.6,
+          "decile_upper": 0.7,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 7,
+          "decile_lower": 0.7,
+          "decile_upper": 0.8,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 8,
+          "decile_lower": 0.8,
+          "decile_upper": 0.9,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 9,
+          "decile_lower": 0.9,
+          "decile_upper": 1.0,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        }
+      ],
+      "held_out_pair_count": 780,
+      "held_out_slate": "20260824",
+      "mean_gap_calibrated": 0.015259248847471093,
+      "mean_gap_raw": 0.1321554568020728,
+      "train_pair_count": 2340,
+      "train_slate_count": 3
+    },
+    {
+      "calibrator": {
+        "intercept": -5.356005548187757,
+        "n_fitted_pairs": 2340,
+        "slope": -2.1049675035676483
+      },
+      "decile_rows": [
+        {
+          "decile_index": 0,
+          "decile_lower": 0.0,
+          "decile_upper": 0.1,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 1,
+          "decile_lower": 0.1,
+          "decile_upper": 0.2,
+          "gap_calibrated": 0.05179836927225639,
+          "gap_raw": 0.11162701033996869,
+          "mean_actual": 0.06237424547283702,
+          "mean_calibrated": 0.11417261474509341,
+          "mean_predicted": 0.1740012558128057,
+          "n_pairs": 497
+        },
+        {
+          "decile_index": 2,
+          "decile_lower": 0.2,
+          "decile_upper": 0.3,
+          "gap_calibrated": 0.014868056913602608,
+          "gap_raw": 0.1713068598364538,
+          "mean_actual": 0.04946996466431095,
+          "mean_calibrated": 0.06433802157791356,
+          "mean_predicted": 0.22077682450076475,
+          "n_pairs": 283
+        },
+        {
+          "decile_index": 3,
+          "decile_lower": 0.3,
+          "decile_upper": 0.4,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 4,
+          "decile_lower": 0.4,
+          "decile_upper": 0.5,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 5,
+          "decile_lower": 0.5,
+          "decile_upper": 0.6,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 6,
+          "decile_lower": 0.6,
+          "decile_upper": 0.7,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 7,
+          "decile_lower": 0.7,
+          "decile_upper": 0.8,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 8,
+          "decile_lower": 0.8,
+          "decile_upper": 0.9,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 9,
+          "decile_lower": 0.9,
+          "decile_upper": 1.0,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        }
+      ],
+      "held_out_pair_count": 780,
+      "held_out_slate": "20260825",
+      "mean_gap_calibrated": 0.0333332130929295,
+      "mean_gap_raw": 0.14146693508821123,
+      "train_pair_count": 2340,
+      "train_slate_count": 3
+    },
+    {
+      "calibrator": {
+        "intercept": -3.631297307923435,
+        "n_fitted_pairs": 2340,
+        "slope": -0.8342940031532127
+      },
+      "decile_rows": [
+        {
+          "decile_index": 0,
+          "decile_lower": 0.0,
+          "decile_upper": 0.1,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 1,
+          "decile_lower": 0.1,
+          "decile_upper": 0.2,
+          "gap_calibrated": -0.032918669072880755,
+          "gap_raw": 0.057803999953650334,
+          "mean_actual": 0.12009803921568628,
+          "mean_calibrated": 0.08717937014280552,
+          "mean_predicted": 0.1779020391693366,
+          "n_pairs": 408
+        },
+        {
+          "decile_index": 2,
+          "decile_lower": 0.2,
+          "decile_upper": 0.3,
+          "gap_calibrated": 0.02479761266166114,
+          "gap_raw": 0.17610356671932587,
+          "mean_actual": 0.0456989247311828,
+          "mean_calibrated": 0.07049653739284394,
+          "mean_predicted": 0.22180249145050868,
+          "n_pairs": 372
+        },
+        {
+          "decile_index": 3,
+          "decile_lower": 0.3,
+          "decile_upper": 0.4,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 4,
+          "decile_lower": 0.4,
+          "decile_upper": 0.5,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 5,
+          "decile_lower": 0.5,
+          "decile_upper": 0.6,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 6,
+          "decile_lower": 0.6,
+          "decile_upper": 0.7,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 7,
+          "decile_lower": 0.7,
+          "decile_upper": 0.8,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 8,
+          "decile_lower": 0.8,
+          "decile_upper": 0.9,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 9,
+          "decile_lower": 0.9,
+          "decile_upper": 1.0,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        }
+      ],
+      "held_out_pair_count": 780,
+      "held_out_slate": "20260826",
+      "mean_gap_calibrated": -0.004060528205609808,
+      "mean_gap_raw": 0.11695378333648809,
+      "train_pair_count": 2340,
+      "train_slate_count": 3
+    },
+    {
+      "calibrator": {
+        "intercept": -5.484014716232991,
+        "n_fitted_pairs": 2340,
+        "slope": -2.0039625908281335
+      },
+      "decile_rows": [
+        {
+          "decile_index": 0,
+          "decile_lower": 0.0,
+          "decile_upper": 0.1,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 1,
+          "decile_lower": 0.1,
+          "decile_upper": 0.2,
+          "gap_calibrated": -0.04076892928893269,
+          "gap_raw": 0.0509959581009885,
+          "mean_actual": 0.12574850299401197,
+          "mean_calibrated": 0.08497957370507928,
+          "mean_predicted": 0.17674446109500047,
+          "n_pairs": 501
+        },
+        {
+          "decile_index": 2,
+          "decile_lower": 0.2,
+          "decile_upper": 0.3,
+          "gap_calibrated": -0.04911742116887088,
+          "gap_raw": 0.11860409605941571,
+          "mean_actual": 0.1003584229390681,
+          "mean_calibrated": 0.05124100177019723,
+          "mean_predicted": 0.21896251899848382,
+          "n_pairs": 279
+        },
+        {
+          "decile_index": 3,
+          "decile_lower": 0.3,
+          "decile_upper": 0.4,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 4,
+          "decile_lower": 0.4,
+          "decile_upper": 0.5,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 5,
+          "decile_lower": 0.5,
+          "decile_upper": 0.6,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 6,
+          "decile_lower": 0.6,
+          "decile_upper": 0.7,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 7,
+          "decile_lower": 0.7,
+          "decile_upper": 0.8,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 8,
+          "decile_lower": 0.8,
+          "decile_upper": 0.9,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        },
+        {
+          "decile_index": 9,
+          "decile_lower": 0.9,
+          "decile_upper": 1.0,
+          "gap_calibrated": null,
+          "gap_raw": null,
+          "mean_actual": null,
+          "mean_calibrated": null,
+          "mean_predicted": null,
+          "n_pairs": 0
+        }
+      ],
+      "held_out_pair_count": 780,
+      "held_out_slate": "20260901",
+      "mean_gap_calibrated": -0.04494317522890179,
+      "mean_gap_raw": 0.08480002708020211,
+      "train_pair_count": 2340,
+      "train_slate_count": 3
+    }
+  ],
+  "ledger_path": "/home/user/NBA-Analytics/sports/mlb/parlay_v2/calibration/reports/pair_observation_ledger.jsonl",
+  "oos_mean_gap_calibrated": -0.00010281037352775132,
+  "oos_mean_gap_raw": 0.11884405057674356,
+  "slates_covered": [
+    "20260824",
+    "20260825",
+    "20260826",
+    "20260901"
+  ],
+  "total_settled_rows": 3120
+}

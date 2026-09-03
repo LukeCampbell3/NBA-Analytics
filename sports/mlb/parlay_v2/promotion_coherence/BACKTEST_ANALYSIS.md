@@ -194,22 +194,82 @@ Both findings are pinned by regression tests:
 If either flips direction on a future run, the corresponding test
 fails loudly and this document gets rewritten.
 
+## Resolution — beta calibration on the real ledger
+
+`pair_ledger_calibration.py` fits a 2-parameter beta calibrator
+(logit-space slope + intercept) on the real pair ledger's
+`predicted_joint_probability` → `both_win` pairs, then
+`PromotionConfidenceComponents` optionally passes the raw joint
+through it before computing the margin.
+
+Result — headline table now reads:
+
+| pool | rows | hit rate | mean per-decile calibration gap (raw → calibrated) |
+|:---|---:|---:|---:|
+| Real pair ledger | 3,120 | 8.2% | +0.1200 → **+0.0114** |
+| Synthetic pool  | 18,020 | 28.1% | +0.0180 → −0.1479 (over-corrected; expected) |
+| Δ (real − synth) | | | +0.102 → +0.159 |
+
+Under **leave-one-slate-out** cross-validation (fit on 3 slates,
+scored on the held-out 1), the picture is the same:
+
+| fold | held-out slate | raw gap | calibrated gap |
+|:---|---|---:|---:|
+| 1 | 20260824 | +0.132 | +0.015 |
+| 2 | 20260825 | +0.142 | +0.033 |
+| 3 | 20260826 | +0.117 | −0.004 |
+| 4 | 20260901 | +0.085 | −0.045 |
+| mean | | **+0.119** | **−0.0001** |
+
+**The real-pool miscalibration is resolved.** The calibrator over-
+corrects on the synthetic pool — expected, since the two pools have
+different predicted-joint distributions and the calibrator was fitted
+on the real one.
+
+A second finding falls out of the fit: the calibrator's global slope
+is **−1.58** (with intercept −4.70). A negative slope means the raw
+joint model's confidence has *negative* correlation with actual
+outcome within the range it operates ([0.14, 0.29]). That is a
+consequential structural finding about the frozen production joint
+model, pinned by
+`test_global_calibrator_slope_indicates_narrow_range_correction` and
+worth an independent investigation of its own.
+
+### How to consume the calibrator
+
+`decide_coherent_promotion(payload, joint_calibrator=cal)` threads the
+calibrator through; `PromotionConfidenceComponents.calibrated_joint_
+probability` then carries the calibrated value, and `promotion_margin`
+uses it. Deletion of the calibrator argument returns the earlier
+behavior exactly, so this is opt-in with zero effect on existing call
+paths.
+
+To rebuild the calibrator:
+
+```
+python3 -m sports.mlb.parlay_v2.promotion_coherence.pair_ledger_calibration
+```
+
+To rerun the pool-gap investigation before-and-after:
+
+```
+python3 -m sports.mlb.parlay_v2.promotion_coherence.investigate_pool_gap --with-calibrator
+```
+
 ## What to do next
 
-1. **Ship the shadow layer as it stands.** It's a clean win on the Sept 2
-   regression, it reduces exposure on 3,120 real settled pairs, and it
+1. **Ship the shadow layer.** It's a clean win on the Sept 2
+   regression, reduces exposure on 3,120 real settled pairs,
    demonstrates real predictive value on 18,020 synthetic cross-game
-   pairs.
-2. **Do not force the real ledger to promote the rule.** The real-ledger
-   evidence supports a "less-bad publication" claim, nothing more. The
-   next real improvement will come from adding the missing signals — a
-   per-leg probability floor (available on the normal-parlay overlay
-   path), a market-disagreement penalty (needs no-vig market probability
-   captured at decision time), and a same-game-specific shared-failure
-   penalty (already justified by the ledger evidence of 100% below
-   break-even on same-game pairs).
-3. **Investigate the pair-ledger / singles-ledger gap.** The 18-percentage-
-   point hit-rate gap between the real pair pool and the broader synthetic
-   pool deserves its own investigation independent of the promotion rule —
-   whichever interpretation above turns out to be right, the finding is
-   consequential for the whole system, not just the promotion gate.
+   pairs, and now carries a calibrator that resolves the +12 pp
+   miscalibration under leave-one-slate-out.
+2. **Investigate the negative-slope finding.** The fitted calibrator
+   has slope −1.58: the raw joint model's confidence is inverted
+   relative to actual outcome inside its operating range. That is a
+   deeper problem than miscalibration, and it deserves its own
+   investigation (not addressable by any calibrator).
+3. **Recompute the calibrator on new slates as they land.** As the
+   real ledger grows past 10 slates
+   (`ledger_maturity.py` reports readiness), the calibrator's OOS
+   confidence widens and the fit becomes actionable for a production
+   flip.
