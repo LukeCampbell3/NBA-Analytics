@@ -12,11 +12,13 @@ on:
       - 'sports/mlb/scripts/validate_v4_live_players.py'
       - 'sports/mlb/scripts/run_pinned_v2_1_daily_shadow.py'
       - 'sports/mlb/scripts/preserve_published_predictions.py'
+      - 'sports/mlb/scripts/apply_publication_protocol.py'
       - 'sports/mlb/scripts/settle_published_predictions.py'
       - 'sports/mlb/parlay_v2/pitcher_alt_line_frontier.py'
       - 'sports/mlb/tests/test_build_exotic_market_shadow.py'
       - 'sports/mlb/tests/test_validate_v4_live_players.py'
       - 'sports/mlb/tests/test_preserve_published_predictions.py'
+      - 'sports/mlb/tests/test_apply_publication_protocol.py'
       - 'sports/mlb/tests/test_settle_published_predictions.py'
       - 'sports/mlb/tests/test_pitcher_parlay_reliability.py'
       - 'sports/mlb/web/predictions.js'
@@ -26,13 +28,6 @@ on:
       - 'sports/mlb/scripts/run_unified_mlb_shadow.py'
       - 'sports/site/pipeline/run_daily_predictions.py'
       - '.github/workflows/mlb-predictions.yml'
-  schedule:
-    - cron: "17 8 * 3-10 *"
-      timezone: "America/New_York"
-    - cron: "30 18 * 3-10 *"
-      timezone: "America/New_York"
-    - cron: "30 23 * 3-10 *"
-      timezone: "America/New_York"
   workflow_dispatch:
     inputs:
       run_date:
@@ -44,6 +39,16 @@ on:
         required: false
         default: false
         type: boolean
+      publication_mode:
+        description: "Publication authority for this run"
+        required: true
+        default: "DISCOVER"
+        type: choice
+        options:
+          - DISCOVER
+          - PUBLISH
+          - REFRESH
+          - LATE_ADD
 
 concurrency:
   group: mlb-production-static-deployment
@@ -96,6 +101,7 @@ jobs:
         id: run-config
         env:
           INPUT_RUN_DATE: ${{ inputs.run_date }}
+          INPUT_PUBLICATION_MODE: ${{ inputs.publication_mode }}
         run: |
           set -euo pipefail
           if [[ -n "$INPUT_RUN_DATE" ]]; then
@@ -116,10 +122,21 @@ jobs:
           echo "run_date=$run_date" >> "$GITHUB_OUTPUT"
           echo "run_stamp=${run_date//-/}" >> "$GITHUB_OUTPUT"
           echo "refresh_history=$refresh_history" >> "$GITHUB_OUTPUT"
+          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+            publication_mode="DISCOVER"
+          else
+            publication_mode="${INPUT_PUBLICATION_MODE:-DISCOVER}"
+          fi
+          case "$publication_mode" in
+            DISCOVER|PUBLISH|REFRESH|LATE_ADD) ;;
+            *) echo "Invalid publication mode: $publication_mode" >&2; exit 2 ;;
+          esac
+          echo "publication_mode=$publication_mode" >> "$GITHUB_OUTPUT"
           {
             echo "### MLB prediction run"
             echo "- Date: $run_date (America/New_York)"
             echo "- Weekly history refresh: $refresh_history"
+            echo "- Publication mode: $publication_mode"
             echo "- V2.1 challenger commit: 55b7d07c1e4b58b362cf5f7afccdbf81ee76d9f0"
             echo "- V2.1 authority: prospective shadow only"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -142,11 +159,13 @@ jobs:
         run: |
           set -euo pipefail
           python -m pytest \
+            sports/mlb/tests/test_apply_publication_protocol.py \
             sports/mlb/tests/test_preserve_published_predictions.py \
             sports/mlb/tests/test_settle_published_predictions.py \
             -q
           python sports/mlb/scripts/preserve_published_predictions.py
           python sports/mlb/scripts/settle_published_predictions.py
+          cp sports/mlb/web/data/daily_predictions.json /tmp/mlb_prior_public_board.json
 
       - name: Run MLB production pipeline
         env:
@@ -270,6 +289,30 @@ jobs:
           fi
           python sports/site/pipeline/validate_daily_publication.py "${args[@]}"
 
+      - name: Apply immutable MLB publication boundary
+        if: inputs.build_only != true
+        env:
+          PUBLICATION_MODE: ${{ steps.run-config.outputs.publication_mode }}
+        run: |
+          set -euo pipefail
+          python sports/mlb/scripts/apply_publication_protocol.py \
+            --mode "$PUBLICATION_MODE" \
+            --prior-board /tmp/mlb_prior_public_board.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          board = json.loads(Path("sports/mlb/web/data/daily_predictions.json").read_text())
+          protocol = board["publication_protocol"]
+          assert protocol["issued_picks_immutable"] is True
+          assert protocol["public_pick_retention"] == 1.0
+          print(json.dumps(protocol, indent=2))
+          PY
+          python sports/site/pipeline/build_static_site.py \
+            --output dist \
+            --private-output paywall/private-content/app
+          cmp sports/mlb/web/data/daily_predictions.json dist/mlb/data/daily_predictions.json
+          cmp sports/mlb/web/data/daily_predictions.json paywall/private-content/app/mlb/data/daily_predictions.json
+
       - name: Preserve current MLB publication
         if: inputs.build_only != true
         run: |
@@ -289,6 +332,7 @@ jobs:
           set -euo pipefail
           git add -f -- \
             sports/mlb/web/data/daily_predictions.json \
+            sports/mlb/web/data/latest_candidates.json \
             sports/mlb/web/data/same_game_predictions.json \
             sports/mlb/web/data/pitcher_parlay_predictions.json \
             sports/mlb/web/data/exotic_market_predictions.json \
@@ -306,6 +350,7 @@ jobs:
             docs/mlb_slate_integrity_audit.md \
             sports/mlb/web/data/history/index.json \
             sports/mlb/web/data/history/*.json \
+            sports/mlb/web/data/history/issued \
             sports/mlb/web/data/history/runs \
             sports/mlb/web/data/history/products \
             sports/mlb/data/predictions/settlement/mlb_settlement_report.json \
@@ -356,7 +401,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "MLB predictions $RUN_DATE [skip ci]"
+          git commit -m "MLB ${{ steps.run-config.outputs.publication_mode }} $RUN_DATE [skip ci]"
           if ! git push origin "HEAD:$PUBLISH_BRANCH"; then
             git pull --rebase --autostash origin "$PUBLISH_BRANCH"
             git push origin "HEAD:$PUBLISH_BRANCH"
@@ -369,12 +414,14 @@ jobs:
           name: mlb-frontend-${{ steps.run-config.outputs.run_stamp || github.run_id }}
           path: |
             dist/mlb/data/daily_predictions.json
+            dist/mlb/data/latest_candidates.json
             dist/mlb/data/same_game_predictions.json
             dist/mlb/data/pitcher_parlay_predictions.json
             dist/mlb/data/exotic_market_predictions.json
             dist/mlb/data/unified_predictions.json
             dist/mlb/data/mlb_engine_manifest.json
             sports/mlb/web/data/daily_predictions.json
+            sports/mlb/web/data/latest_candidates.json
             sports/mlb/web/data/same_game_predictions.json
             sports/mlb/web/data/pitcher_parlay_predictions.json
             sports/mlb/web/data/exotic_market_predictions.json

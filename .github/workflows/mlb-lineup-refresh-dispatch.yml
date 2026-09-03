@@ -1,37 +1,57 @@
-name: MLB Lineup Window Refresh
+name: MLB Publication Schedule
 
 on:
   schedule:
-    # Keep the existing 08:17 ET discovery run in mlb-predictions.yml.
-    # These later refreshes let the same production pipeline re-evaluate
-    # confirmed batting orders and fresh prices near the major MLB start windows.
-    - cron: "17 11 * 3-10 *"
+    # High-frequency inference, low-frequency issuance. Times are Eastern.
+    - cron: "15 8 * 3-10 *"
       timezone: "America/New_York"
-    - cron: "17 14 * 3-10 *"
+    - cron: "30 11 * 3-10 *"
       timezone: "America/New_York"
-    - cron: "17 17 * 3-10 *"
+    - cron: "30 14 * 3-10 *"
+      timezone: "America/New_York"
+    - cron: "30 17 * 3-10 *"
       timezone: "America/New_York"
   workflow_dispatch:
+    inputs:
+      publication_mode:
+        description: "Mode to dispatch manually"
+        required: true
+        default: "DISCOVER"
+        type: choice
+        options: [DISCOVER, PUBLISH, REFRESH, LATE_ADD]
 
 permissions:
   actions: write
   contents: read
 
 jobs:
-  dispatch-production-refresh:
+  dispatch-canonical-mode:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Dispatch canonical MLB production workflow
         env:
           GH_TOKEN: ${{ github.token }}
-          RUN_DATE: ${{ github.event.repository.updated_at }}
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+          INPUT_MODE: ${{ inputs.publication_mode }}
         run: |
           set -euo pipefail
           run_date="$(TZ=America/New_York date +%F)"
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            mode="${INPUT_MODE:-DISCOVER}"
+          else
+            case "$EVENT_SCHEDULE" in
+              "15 8 * 3-10 *") mode=DISCOVER ;;
+              "30 11 * 3-10 *") mode=PUBLISH ;;
+              "30 14 * 3-10 *") mode=REFRESH ;;
+              "30 17 * 3-10 *") mode=LATE_ADD ;;
+              *) echo "Unknown MLB publication schedule: $EVENT_SCHEDULE" >&2; exit 2 ;;
+            esac
+          fi
           gh workflow run mlb-predictions.yml \
             --repo "${GITHUB_REPOSITORY}" \
             --ref static-deployment \
             -f run_date="$run_date" \
-            -f build_only=false
-          echo "Dispatched canonical MLB refresh for $run_date"
+            -f build_only=false \
+            -f publication_mode="$mode"
+          echo "Dispatched canonical MLB $mode run for $run_date"
