@@ -1,11 +1,11 @@
 {
-  "generated_at_utc": "2026-09-03T11:39:03.913854+00:00",
+  "generated_at_utc": "2026-09-03T12:14:40.787141+00:00",
   "total": {
-    "won": 2,
-    "lost": 2,
-    "push": 0,
+    "won": 69,
+    "lost": 56,
+    "push": 2,
     "pending": 48,
-    "touched": 52
+    "touched": 175
   },
   "files_touched": {
     "daily_predictions.json": {
@@ -28,6 +28,20 @@
       "push": 0,
       "pending": 2,
       "touched": 2
+    },
+    "high_hit_parlay_predictions.json": {
+      "won": 0,
+      "lost": 0,
+      "push": 0,
+      "pending": 0,
+      "touched": 0
+    },
+    "exotic_market_predictions.json": {
+      "won": 0,
+      "lost": 0,
+      "push": 0,
+      "pending": 4,
+      "touched": 4
     },
     "history/2026-04-10.json": {
       "won": 0,
@@ -93,18 +107,81 @@
       "touched": 1
     },
     "history/2026-09-02.json": {
-      "won": 2,
-      "lost": 2,
+      "won": 3,
+      "lost": 3,
       "push": 0,
       "pending": 0,
-      "touched": 4
+      "touched": 6
     },
-    "history/runs/2026-09-03/20260903T111714.449831Z.json": {
-      "won": 0,
+    "history/runs/2026-09-02/recovered-c28cfe25/daily_predictions.json": {
+      "won": 2,
+      "lost": 3,
+      "push": 0,
+      "pending": 0,
+      "touched": 5
+    },
+    "history/runs/2026-09-02/recovered-c28cfe25/exotic_market_predictions.json": {
+      "won": 2,
       "lost": 0,
       "push": 0,
-      "pending": 4,
-      "touched": 4
+      "pending": 0,
+      "touched": 2
+    },
+    "history/runs/2026-09-02/recovered-c28cfe25/same_game_predictions.json": {
+      "won": 7,
+      "lost": 5,
+      "push": 0,
+      "pending": 0,
+      "touched": 12
+    },
+    "history/runs/2026-09-02/recovered-richest/daily_predictions.json": {
+      "won": 3,
+      "lost": 3,
+      "push": 0,
+      "pending": 0,
+      "touched": 6
+    },
+    "history/runs/2026-09-02/recovered-richest/exotic_market_predictions.json": {
+      "won": 5,
+      "lost": 6,
+      "push": 1,
+      "pending": 0,
+      "touched": 12
+    },
+    "history/runs/2026-09-02/recovered-richest/pitcher_parlay_predictions.json": {
+      "won": 1,
+      "lost": 1,
+      "push": 0,
+      "pending": 0,
+      "touched": 2
+    },
+    "history/runs/2026-09-02/recovered-richest/same_game_predictions.json": {
+      "won": 20,
+      "lost": 14,
+      "push": 0,
+      "pending": 0,
+      "touched": 34
+    },
+    "history/products/2026-09-02/exotic_market_predictions.json": {
+      "won": 5,
+      "lost": 6,
+      "push": 1,
+      "pending": 0,
+      "touched": 12
+    },
+    "history/products/2026-09-02/pitcher_parlay_predictions.json": {
+      "won": 1,
+      "lost": 1,
+      "push": 0,
+      "pending": 0,
+      "touched": 2
+    },
+    "history/products/2026-09-02/same_game_predictions.json": {
+      "won": 20,
+      "lost": 14,
+      "push": 0,
+      "pending": 0,
+      "touched": 34
     }
   }
 }

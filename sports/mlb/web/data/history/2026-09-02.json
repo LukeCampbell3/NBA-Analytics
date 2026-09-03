@@ -705,7 +705,11 @@
         "quote_timestamp": "20260902",
         "side": "OVER",
         "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.184104241&selectionId=20744342",
-        "target": "TB"
+        "target": "TB",
+        "settlement_status": "won",
+        "settlement_actual_value": 2.0,
+        "settlement_source": "mlb_statsapi_live_feed",
+        "settlement_checked_at": "2026-09-03T12:14:40.787141+00:00"
       },
       "leg_2": {
         "book": "real",
@@ -748,7 +752,11 @@
         "quote_timestamp": "20260902",
         "side": "OVER",
         "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.184103080&selectionId=60489486",
-        "target": "TB"
+        "target": "TB",
+        "settlement_status": "lost",
+        "settlement_actual_value": 1.0,
+        "settlement_source": "mlb_statsapi_live_feed",
+        "settlement_checked_at": "2026-09-03T12:14:40.787141+00:00"
       },
       "predictive_version": "H_OVER_RANKER_V1+MULTI_TARGET",
       "slate_id": "20260902",
@@ -824,7 +832,11 @@
         "quote_timestamp": "20260902",
         "side": "OVER",
         "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.184103535&selectionId=94749094",
-        "target": "R"
+        "target": "R",
+        "settlement_status": "won",
+        "settlement_actual_value": 1.0,
+        "settlement_source": "mlb_statsapi_live_feed",
+        "settlement_checked_at": "2026-09-03T12:14:40.787141+00:00"
       },
       "leg_2": {
         "book": "real",
@@ -867,7 +879,11 @@
         "quote_timestamp": "20260902",
         "side": "OVER",
         "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.184103080&selectionId=60489486",
-        "target": "TB"
+        "target": "TB",
+        "settlement_status": "lost",
+        "settlement_actual_value": 1.0,
+        "settlement_source": "mlb_statsapi_live_feed",
+        "settlement_checked_at": "2026-09-03T12:14:40.787141+00:00"
       },
       "predictive_version": "H_OVER_RANKER_V1+MULTI_TARGET",
       "slate_id": "20260902",
@@ -1038,7 +1054,11 @@
       "starter_history_rows": 0,
       "target": "TB",
       "team": "CHC",
-      "value_score": 0.598935414282
+      "value_score": 0.598935414282,
+      "settlement_status": "lost",
+      "settlement_actual_value": 1.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-09-03T12:14:40.787141+00:00"
     },
     {
       "abs_edge": 0.499419,
@@ -1185,7 +1205,11 @@
       "starter_history_rows": 0,
       "target": "H",
       "team": "MIN",
-      "value_score": 0.379727243622
+      "value_score": 0.379727243622,
+      "settlement_status": "won",
+      "settlement_actual_value": 1.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-09-03T12:14:40.787141+00:00"
     }
   ],
   "policy_governance": {
