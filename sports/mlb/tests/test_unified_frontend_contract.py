@@ -44,7 +44,12 @@ def test_public_mlb_board_separates_current_picks_from_explicit_history_navigati
     assert 'cache: "no-store"' in js
     assert "no picks are displayed or linked." in html
     assert "yesterday's picks are never substituted" in html
-    assert 'predictions.js?v=38' in html
+    assert 'predictions.js?v=39' in html
+    assert 'id="sameGameParlayContent"' in html
+    assert 'id="pitcherParlayContent"' in html
+    assert 'id="highHitParlayContent"' in html
+    assert 'id="exoticMarketsContent"' in html
+    assert 'data/history/products/${date}/${filename}' in js
     assert 'this.renderRunMeta();' in js
 
 

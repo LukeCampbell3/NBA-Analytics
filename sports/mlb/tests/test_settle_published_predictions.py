@@ -272,9 +272,9 @@ def test_run_settles_daily_predictions_and_every_history_file(tmp_path):
 
 def test_run_settles_same_day_publication_snapshots_only_after_final(tmp_path):
     data_dir = tmp_path / "data"
-    runs_dir = data_dir / "history" / "runs" / "2026-09-03"
+    runs_dir = data_dir / "history" / "runs" / "2026-09-03" / "20260903T120000.000000Z"
     runs_dir.mkdir(parents=True)
-    snapshot = runs_dir / "20260903T120000.000000Z.json"
+    snapshot = runs_dir / "daily_predictions.json"
     snapshot.write_text(json.dumps({"run_date": "2026-09-03", "plays": [_play(game_id="9")]}), encoding="utf-8")
 
     feeds = {"9": _final_feed("Carlos Cortes", "batting", "totalBases", 1.0, final=False)}

@@ -436,6 +436,25 @@ def iter_pitcher_k_rows(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
     return rows
 
 
+def iter_high_hit_rows(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = []
+    for parlay in payload.get("parlays", []) or []:
+        if isinstance(parlay, dict):
+            rows.extend(row for row in parlay.get("legs", []) or [] if isinstance(row, dict))
+    fallback = payload.get("shadow_fallback")
+    if isinstance(fallback, dict):
+        rows.extend(row for row in fallback.get("legs", []) or [] if isinstance(row, dict))
+    return rows
+
+
+def iter_exotic_rows(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+    return [row for row in payload.get("candidates", []) or [] if isinstance(row, dict)]
+
+
+def settle_exotic_row(row: Dict[str, Any], get_live_feed: Callable[[str], Dict[str, Any]], now_iso: str) -> bool:
+    return settle_team_market_row(row, row.get("game_id"), get_live_feed, now_iso)
+
+
 def settle_payload(
     payload: Dict[str, Any],
     get_live_feed: Callable[[str], Dict[str, Any]],
@@ -512,6 +531,20 @@ def run(data_dir: Path, only_date: Optional[str] = None, request_timeout: float 
                 per_file["pitcher_parlay_predictions.json"] = counts
                 _merge_counts(total, counts)
 
+        high_hit_path = data_dir / "high_hit_parlay_predictions.json"
+        if high_hit_path.exists():
+            counts = settle_file(high_hit_path, get_live_feed, now_iso, iterate_rows=iter_high_hit_rows)
+            if counts is not None:
+                per_file["high_hit_parlay_predictions.json"] = counts
+                _merge_counts(total, counts)
+
+        exotic_path = data_dir / "exotic_market_predictions.json"
+        if exotic_path.exists():
+            counts = settle_file(exotic_path, get_live_feed, now_iso, iterate_rows=iter_exotic_rows, settle_one=settle_exotic_row)
+            if counts is not None:
+                per_file["exotic_market_predictions.json"] = counts
+                _merge_counts(total, counts)
+
     history_dir = data_dir / "history"
     if history_dir.exists():
         history_files = sorted(history_dir.glob("????-??-??.json"))
@@ -526,11 +559,39 @@ def run(data_dir: Path, only_date: Optional[str] = None, request_timeout: float 
         # Per-publication snapshots preserve same-day boards that a later run
         # replaced. Settle these exact snapshots too, but only after StatsAPI
         # reports the underlying game as final.
-        run_files = sorted((history_dir / "runs").glob("????-??-??/*.json"))
+        run_files = sorted((history_dir / "runs").glob("????-??-??/*/*.json"))
         if only_date is not None:
             run_files = [p for p in run_files if p.parent.name == only_date]
         for path in run_files:
-            counts = settle_file(path, get_live_feed, now_iso)
+            if path.name == "same_game_predictions.json":
+                counts = settle_same_game_file(path, get_live_feed, now_iso)
+            elif path.name == "pitcher_parlay_predictions.json":
+                counts = settle_file(path, get_live_feed, now_iso, iterate_rows=iter_pitcher_k_rows, settle_one=settle_pitcher_k_row)
+            elif path.name == "high_hit_parlay_predictions.json":
+                counts = settle_file(path, get_live_feed, now_iso, iterate_rows=iter_high_hit_rows)
+            elif path.name == "exotic_market_predictions.json":
+                counts = settle_file(path, get_live_feed, now_iso, iterate_rows=iter_exotic_rows, settle_one=settle_exotic_row)
+            else:
+                counts = settle_file(path, get_live_feed, now_iso)
+            if counts is not None and counts["touched"] > 0:
+                relative = path.relative_to(data_dir).as_posix()
+                per_file[relative] = counts
+                _merge_counts(total, counts)
+
+        product_files = sorted((history_dir / "products").glob("????-??-??/*.json"))
+        if only_date is not None:
+            product_files = [p for p in product_files if p.parent.name == only_date]
+        for path in product_files:
+            if path.name == "same_game_predictions.json":
+                counts = settle_same_game_file(path, get_live_feed, now_iso)
+            elif path.name == "pitcher_parlay_predictions.json":
+                counts = settle_file(path, get_live_feed, now_iso, iterate_rows=iter_pitcher_k_rows, settle_one=settle_pitcher_k_row)
+            elif path.name == "high_hit_parlay_predictions.json":
+                counts = settle_file(path, get_live_feed, now_iso, iterate_rows=iter_high_hit_rows)
+            elif path.name == "exotic_market_predictions.json":
+                counts = settle_file(path, get_live_feed, now_iso, iterate_rows=iter_exotic_rows, settle_one=settle_exotic_row)
+            else:
+                continue
             if counts is not None and counts["touched"] > 0:
                 relative = path.relative_to(data_dir).as_posix()
                 per_file[relative] = counts

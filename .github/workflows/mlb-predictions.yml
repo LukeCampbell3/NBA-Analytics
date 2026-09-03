@@ -274,6 +274,13 @@ jobs:
         run: |
           set -euo pipefail
           python sports/mlb/scripts/preserve_published_predictions.py
+          python - <<'PY'
+          import shutil
+          from pathlib import Path
+          source = Path("sports/mlb/web/data/history")
+          for target in (Path("dist/mlb/data/history"), Path("paywall/private-content/app/mlb/data/history")):
+              shutil.copytree(source, target, dirs_exist_ok=True)
+          PY
 
       - name: Stage MLB publication and feedback state
         id: staged
@@ -299,6 +306,7 @@ jobs:
             sports/mlb/web/data/history/index.json \
             sports/mlb/web/data/history/*.json \
             sports/mlb/web/data/history/runs \
+            sports/mlb/web/data/history/products \
             sports/mlb/data/predictions/settlement/mlb_settlement_report.json \
             dist/mlb \
             paywall/private-content/app/mlb

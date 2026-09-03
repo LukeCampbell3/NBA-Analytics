@@ -143,17 +143,26 @@ class DailyPredictionsPage {
         await this.loadDateIndex();
         const currentLoaded = await this.loadAndRender(null);
         if (currentLoaded) {
-            await Promise.all([
-                this.loadSameGameParlay(),
-                this.loadPitcherParlay(),
-                this.loadHighHitParlay(),
-                this.loadExoticMarkets(),
-                this.loadUnifiedEngine(),
-            ]);
+            await this.loadPickProducts(null);
         } else {
             this.renderDependentProductsUnavailable();
         }
         this.renderDateNav();
+    }
+
+    productUrl(filename, date = null) {
+        return date
+            ? `data/history/products/${date}/${filename}?v=${Date.now()}`
+            : `data/${filename}?v=${Date.now()}`;
+    }
+
+    async loadPickProducts(date = null) {
+        await Promise.all([
+            this.loadSameGameParlay(date),
+            this.loadPitcherParlay(date),
+            this.loadHighHitParlay(date),
+            this.loadExoticMarkets(date),
+        ]);
     }
 
     async loadDateIndex() {
@@ -303,7 +312,9 @@ class DailyPredictionsPage {
                         ? window.CardVault.renderSkeletonCard(4)
                         : "";
                 }
-                await this.loadAndRender(date === this.currentDate ? null : date);
+                const archiveDate = date === this.currentDate ? null : date;
+                const loaded = await this.loadAndRender(archiveDate);
+                if (loaded) await this.loadPickProducts(archiveDate);
                 this.renderDateNav();
             });
         });
@@ -541,14 +552,14 @@ class DailyPredictionsPage {
      * fails the rest of the page if this file is missing/stale) --
      * mirrors loadDateIndex()'s "optional" fetch pattern.
      */
-    async loadSameGameParlay() {
+    async loadSameGameParlay(date = null) {
         const content = this.elements.sameGameParlayContent;
         if (!content) return;
         try {
-            const response = await fetch(`data/same_game_predictions.json?v=${Date.now()}`);
+            const response = await fetch(this.productUrl("same_game_predictions.json", date));
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             this.sameGameData = await response.json();
-            this.assertCurrentArtifact(this.sameGameData, "Same-game parlay board");
+            if (!date) this.assertCurrentArtifact(this.sameGameData, "Same-game parlay board");
         } catch (_error) {
             this.sameGameData = null;
         }
@@ -703,14 +714,14 @@ class DailyPredictionsPage {
      * product (pitcher_parlay_predictions.json), loaded independently of
      * the rest of the page the same way the same-game combo is.
      */
-    async loadPitcherParlay() {
+    async loadPitcherParlay(date = null) {
         const content = this.elements.pitcherParlayContent;
         if (!content) return;
         try {
-            const response = await fetch(`data/pitcher_parlay_predictions.json?v=${Date.now()}`);
+            const response = await fetch(this.productUrl("pitcher_parlay_predictions.json", date));
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             this.pitcherParlayData = await response.json();
-            this.assertCurrentArtifact(this.pitcherParlayData, "Pitcher parlay board");
+            if (!date) this.assertCurrentArtifact(this.pitcherParlayData, "Pitcher parlay board");
         } catch (_error) {
             this.pitcherParlayData = null;
         }
@@ -817,14 +828,14 @@ class DailyPredictionsPage {
      * (high_hit_parlay_predictions.json), loaded independently of the
      * rest of the page the same way the other parlay products are.
      */
-    async loadHighHitParlay() {
+    async loadHighHitParlay(date = null) {
         const content = this.elements.highHitParlayContent;
         if (!content) return;
         try {
-            const response = await fetch(`data/high_hit_parlay_predictions.json?v=${Date.now()}`);
+            const response = await fetch(this.productUrl("high_hit_parlay_predictions.json", date));
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             this.highHitParlayData = await response.json();
-            this.assertCurrentArtifact(this.highHitParlayData, "High-hit parlay board");
+            if (!date) this.assertCurrentArtifact(this.highHitParlayData, "High-hit parlay board");
         } catch (_error) {
             this.highHitParlayData = null;
         }
@@ -912,14 +923,14 @@ class DailyPredictionsPage {
         });
     }
 
-    async loadExoticMarkets() {
+    async loadExoticMarkets(date = null) {
         const content = this.elements.exoticMarketsContent;
         if (!content) return;
         try {
-            const response = await fetch(`data/exotic_market_predictions.json?v=${Date.now()}`);
+            const response = await fetch(this.productUrl("exotic_market_predictions.json", date));
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             this.exoticMarketsData = await response.json();
-            this.assertCurrentArtifact(this.exoticMarketsData, "Exotic-market board");
+            if (!date) this.assertCurrentArtifact(this.exoticMarketsData, "Exotic-market board");
         } catch (_error) {
             this.exoticMarketsData = null;
         }
