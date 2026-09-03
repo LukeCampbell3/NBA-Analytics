@@ -80,6 +80,7 @@ def compute_promotion_margin(
     *,
     apply_same_game_penalty: bool = False,
     same_game_profile: Any | None = None,
+    joint_calibrator: Any | None = None,
 ) -> Optional[float]:
     """Promotion margin for one pair-observation row.
 
@@ -89,11 +90,23 @@ def compute_promotion_margin(
     cross-game rows), using `SameGamePenaltyProfile` defaults unless a
     custom `same_game_profile` is passed. Nothing here silently applies
     a penalty; the flag is explicit at every call site.
+
+    `joint_calibrator` (optional) is any object with a `.calibrate(p)`
+    method (see JointProbabilityCalibrator). If a
+    SliceConditionedCalibrator is passed, its `.calibrate_from_row`
+    method is used automatically so the per-row slice picks its own
+    sub-calibrator.
     """
     joint = _finite(row.get("predicted_joint_probability"))
     break_even = _break_even(row.get("quoted_pair_price"))
     if joint is None or break_even is None:
         return None
+    if joint_calibrator is not None:
+        calibrate_from_row = getattr(joint_calibrator, "calibrate_from_row", None)
+        if callable(calibrate_from_row):
+            joint = float(calibrate_from_row(joint, row))
+        else:
+            joint = float(joint_calibrator.calibrate(joint))
     deduction = 0.0
     if apply_same_game_penalty:
         # Local import to keep this module standalone when the same-
@@ -151,6 +164,7 @@ def _apply_floor(
     *,
     apply_same_game_penalty: bool = False,
     same_game_profile: Any | None = None,
+    joint_calibrator: Any | None = None,
 ) -> list[dict[str, Any]]:
     admitted: list[dict[str, Any]] = []
     for row in rows:
@@ -158,6 +172,7 @@ def _apply_floor(
             row,
             apply_same_game_penalty=apply_same_game_penalty,
             same_game_profile=same_game_profile,
+            joint_calibrator=joint_calibrator,
         )
         if margin is None:
             continue
@@ -172,6 +187,7 @@ def sweep_floors(
     *,
     apply_same_game_penalty: bool = False,
     same_game_profile: Any | None = None,
+    joint_calibrator: Any | None = None,
 ) -> list[FloorResult]:
     total = len(rows)
     return [
@@ -181,6 +197,7 @@ def sweep_floors(
                 rows, f,
                 apply_same_game_penalty=apply_same_game_penalty,
                 same_game_profile=same_game_profile,
+                joint_calibrator=joint_calibrator,
             ),
             total_count=total,
         )

@@ -256,20 +256,77 @@ To rerun the pool-gap investigation before-and-after:
 python3 -m sports.mlb.parlay_v2.promotion_coherence.investigate_pool_gap --with-calibrator
 ```
 
+## Resolving the negative-slope finding
+
+`discriminative_power.py` computes rank-based AUC (ROC) on the raw
+joint predictions, sliced by market pair type, same-game, price
+bucket, and slate. On the current ledger:
+
+| slice | n | hit rate | AUC | verdict (n≥100, |AUC−0.5|>0.03) |
+|:---|---:|---:|---:|:---|
+| global | 3,120 | 8.2% | **0.4238** | INVERTED |
+| R\|R | 1,060 | 9.8% | **0.5284** | flat / near-signal |
+| R\|TB | 1,546 | 8.1% | **0.4090** | INVERTED |
+| TB\|TB | 514 | 5.4% | **0.2724** | INVERTED |
+
+No slice at n≥100 exceeds AUC 0.53. The global negative slope is a
+mix; TB-heavy slices carry strongly-inverted "signal," R|R is flat.
+
+`slice_conditioned_calibrator.py` fits **one BetaCalibrator per
+market pair type** (falls back to the global fit for keys with
+fewer than 100 pairs). This removes the negative-slope inversion
+per slice — each slice's calibrator matches that slice's own base
+rate and any residual per-slice signal.
+
+## System validation — end-to-end leave-one-slate-out backtest
+
+`validate_system.py` runs a LOSO backtest of **three strategies**
+against the real ledger, at floors −0.05 to +0.10 in 1 pp steps:
+
+- **RAW** — no calibration
+- **GLOBAL_BETA** — single beta calibrator fit on the training slates
+- **SLICE_CONDITIONED_BETA** — per-market beta calibrators
+
+Aggregated across the 4 folds:
+
+| strategy | best-return floor | admitted | hit rate | total unit-return |
+|:---|:---:|---:|---:|---:|
+| RAW | +0.05 | 117 | 5.1% | −73.21 |
+| GLOBAL_BETA | −0.05 | 173 | 4.6% | −114.58 |
+| SLICE_CONDITIONED_BETA | **+0.00** | **22** | **18.2%** | **+5.67** |
+
+**The slice-conditioned strategy is the only one that produces a
+positive-return OOS cell.** At floor 0.00 it admits 22 pairs across
+4 folds, hits 4/22 (18.2% — 2.2× the raw baseline), and produces
++5.67 in total unit-return. Floors near it (−0.03 through +0.01) show
+the same signal: hit rates 10–18% vs raw baseline 6–8%.
+
+### Push-threshold decision
+
+The system-validation `ThresholdVerdict` requires ALL of:
+
+1. positive-return floor cell (met: +5.67)
+2. strictly beats RAW at the same floor (met: RAW at 0.00 = −509.26)
+3. **≥ 100 admitted pairs across LOSO folds** (**NOT met**: 22)
+
+**Honest verdict: does NOT exceed the strict push threshold.**
+The signal is real and consistent across floors, but the sample at
+the winning floor is only 22 pairs — below the anti-cherry-pick
+guard. Publishing this as production would be over-claiming.
+
+Pinned by `test_no_strategy_exceeds_strict_push_threshold_yet`. When
+the pair ledger reaches ~10 slates the admitted counts will roughly
+2.5× and the threshold likely crosses; `ledger_maturity.py`'s status
+flip triggers the rerun.
+
 ## What to do next
 
-1. **Ship the shadow layer.** It's a clean win on the Sept 2
-   regression, reduces exposure on 3,120 real settled pairs,
-   demonstrates real predictive value on 18,020 synthetic cross-game
-   pairs, and now carries a calibrator that resolves the +12 pp
-   miscalibration under leave-one-slate-out.
-2. **Investigate the negative-slope finding.** The fitted calibrator
-   has slope −1.58: the raw joint model's confidence is inverted
-   relative to actual outcome inside its operating range. That is a
-   deeper problem than miscalibration, and it deserves its own
-   investigation (not addressable by any calibrator).
-3. **Recompute the calibrator on new slates as they land.** As the
-   real ledger grows past 10 slates
-   (`ledger_maturity.py` reports readiness), the calibrator's OOS
-   confidence widens and the fit becomes actionable for a production
-   flip.
+1. **Do not promote to production yet.** The evidence is promising
+   but the strict admission-count guard is not met. Honest hold.
+2. **Grow the real ledger** (`ledger_maturity.py` reports readiness).
+   When admitted-per-fold roughly 3×, the winning-floor cell will
+   likely cross the 100-pair guard.
+3. **Investigate the R|R slice specifically.** It is the only slice
+   whose AUC is at least 0.5 — that is where the model's residual
+   signal lives, and where a targeted calibrator or model refit
+   would pay off first.

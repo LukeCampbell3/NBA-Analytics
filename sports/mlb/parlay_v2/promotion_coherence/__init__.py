@@ -44,6 +44,11 @@ from .pair_ledger_calibration import (
     apply_calibrator_to_row,
     fit_beta_calibrator,
 )
+from .slice_conditioned_calibrator import (
+    SliceConditionedCalibrator,
+    default_slice_key,
+    fit_slice_conditioned_calibrator,
+)
 from .pair_schema_v2 import (
     PAIR_OBSERVATION_SCHEMA_VERSION_V2,
     MarketDisagreementProfile,
@@ -68,11 +73,14 @@ __all__ = [
     "PromotionPenalties",
     "PromotionThresholds",
     "SameGamePenaltyProfile",
+    "SliceConditionedCalibrator",
     "apply_calibrator_to_row",
     "apply_same_game_penalty",
     "decide_coherent_promotion",
+    "default_slice_key",
     "default_thresholds",
     "fit_beta_calibrator",
+    "fit_slice_conditioned_calibrator",
     "market_disagreement_deduction",
     "promotion_confidence_components",
     "same_game_shared_failure_deduction",

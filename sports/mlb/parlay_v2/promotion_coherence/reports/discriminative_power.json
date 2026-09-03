@@ -1,0 +1,148 @@
+{
+  "by_market_pair_type": [
+    {
+      "auc": 0.5283834888960411,
+      "hit_rate": 0.09811320754716982,
+      "inverted_signal_flag": false,
+      "n": 1060,
+      "n_positive": 104,
+      "positive_signal_flag": false,
+      "slice_key": "market_pair_type=R|R"
+    },
+    {
+      "auc": 0.4090133708655876,
+      "hit_rate": 0.08085381630012936,
+      "inverted_signal_flag": true,
+      "n": 1546,
+      "n_positive": 125,
+      "positive_signal_flag": false,
+      "slice_key": "market_pair_type=R|TB"
+    },
+    {
+      "auc": 0.2724132863021752,
+      "hit_rate": 0.054474708171206226,
+      "inverted_signal_flag": true,
+      "n": 514,
+      "n_positive": 28,
+      "positive_signal_flag": false,
+      "slice_key": "market_pair_type=TB|TB"
+    }
+  ],
+  "by_price_bucket": [
+    {
+      "auc": 0.47890709741725546,
+      "hit_rate": 0.07995846313603323,
+      "inverted_signal_flag": false,
+      "n": 963,
+      "n_positive": 77,
+      "positive_signal_flag": false,
+      "slice_key": "price_bucket=<10.0"
+    },
+    {
+      "auc": 0.12857142857142856,
+      "hit_rate": 0.14634146341463414,
+      "inverted_signal_flag": false,
+      "n": 41,
+      "n_positive": 6,
+      "positive_signal_flag": false,
+      "slice_key": "price_bucket=<3.0"
+    },
+    {
+      "auc": 0.4142520414176277,
+      "hit_rate": 0.07621121393576484,
+      "inverted_signal_flag": true,
+      "n": 1837,
+      "n_positive": 140,
+      "positive_signal_flag": false,
+      "slice_key": "price_bucket=<5.0"
+    },
+    {
+      "auc": 0.3813925570228091,
+      "hit_rate": 0.12186379928315412,
+      "inverted_signal_flag": true,
+      "n": 279,
+      "n_positive": 34,
+      "positive_signal_flag": false,
+      "slice_key": "price_bucket=no_quote"
+    }
+  ],
+  "by_same_game": [
+    {
+      "auc": 0.4293816181180993,
+      "hit_rate": 0.07849348820837733,
+      "inverted_signal_flag": true,
+      "n": 2841,
+      "n_positive": 223,
+      "positive_signal_flag": false,
+      "slice_key": "same_game=False"
+    },
+    {
+      "auc": 0.3813925570228091,
+      "hit_rate": 0.12186379928315412,
+      "inverted_signal_flag": true,
+      "n": 279,
+      "n_positive": 34,
+      "positive_signal_flag": false,
+      "slice_key": "same_game=True"
+    }
+  ],
+  "by_slate": [
+    {
+      "auc": 0.3933793103448276,
+      "hit_rate": 0.07051282051282051,
+      "inverted_signal_flag": true,
+      "n": 780,
+      "n_positive": 55,
+      "positive_signal_flag": false,
+      "slice_key": "slate_id=20260824"
+    },
+    {
+      "auc": 0.5165230536659108,
+      "hit_rate": 0.057692307692307696,
+      "inverted_signal_flag": false,
+      "n": 780,
+      "n_positive": 45,
+      "positive_signal_flag": false,
+      "slice_key": "slate_id=20260825"
+    },
+    {
+      "auc": 0.31552924199983023,
+      "hit_rate": 0.08461538461538462,
+      "inverted_signal_flag": true,
+      "n": 780,
+      "n_positive": 66,
+      "positive_signal_flag": false,
+      "slice_key": "slate_id=20260826"
+    },
+    {
+      "auc": 0.47721654252858897,
+      "hit_rate": 0.11666666666666667,
+      "inverted_signal_flag": false,
+      "n": 780,
+      "n_positive": 91,
+      "positive_signal_flag": false,
+      "slice_key": "slate_id=20260901"
+    }
+  ],
+  "generated_at_utc": "2026-09-03T16:39:44.267944+00:00",
+  "global": {
+    "auc": 0.42381464301683497,
+    "hit_rate": 0.08237179487179487,
+    "inverted_signal_flag": true,
+    "n": 3120,
+    "n_positive": 257,
+    "positive_signal_flag": false,
+    "slice_key": "global"
+  },
+  "inverted_signal_slices": [
+    "market_pair_type=R|TB",
+    "market_pair_type=TB|TB",
+    "same_game=False",
+    "same_game=True",
+    "price_bucket=<5.0",
+    "price_bucket=no_quote"
+  ],
+  "ledger_path": "/home/user/NBA-Analytics/sports/mlb/parlay_v2/calibration/reports/pair_observation_ledger.jsonl",
+  "positive_signal_slices": [],
+  "row_count": 3120
+}
