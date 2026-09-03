@@ -87,7 +87,13 @@ def build_board(
             "kickoff_utc": projection["kickoff_utc"], "market": offer["market"],
             "target": capability,
             "side": side, "line": float(offer["line"]), "bookmaker": offer["bookmaker"],
+            "over_price": float(offer["over_price"]),
+            "under_price": float(offer["under_price"]),
             "price": price, "projection": float(projection["projection"]),
+            "projection_minus_line": round(float(projection["projection"]) - float(offer["line"]), 6),
+            "model_over_probability": round(over_probability, 6),
+            "no_vig_market_over_probability": round(no_vig_over, 6),
+            "survival_probability_delta": round(over_probability - no_vig_over, 6),
             "raw_model_probability": round(probability, 6),
             "no_vig_market_probability": round(market_probability, 6),
             "raw_probability_edge": round(probability - market_probability, 6),
@@ -109,6 +115,55 @@ def build_board(
             -row["raw_model_probability"], -row["raw_probability_edge"], row["player"]
         )
     )
+
+    # Preserve every book x threshold observation.  This is a diagnostic
+    # survival curve, not a source of new selection authority: alternates and
+    # small cross-book line differences remain research-only until settled
+    # ladder evidence and dependency calibration exist.
+    ladder_groups: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
+    for row in candidates:
+        key = (row["player_id"], row["target"], row["game_id"])
+        ladder_groups.setdefault(key, []).append(row)
+    line_ladders = []
+    for rows in ladder_groups.values():
+        distinct_lines = sorted({float(row["line"]) for row in rows})
+        if len(distinct_lines) < 2:
+            continue
+        ordered = sorted(rows, key=lambda row: (row["line"], row["bookmaker"]))
+        deltas = [float(row["survival_probability_delta"]) for row in ordered]
+        if all(delta > 0 for delta in deltas):
+            pattern = "MODEL_DISTRIBUTION_HIGHER"
+        elif all(delta < 0 for delta in deltas):
+            pattern = "MODEL_DISTRIBUTION_LOWER"
+        elif deltas[0] > 0 and deltas[-1] < 0:
+            pattern = "MODEL_TAIL_COMPRESSED"
+        elif deltas[0] < 0 and deltas[-1] > 0:
+            pattern = "MODEL_UPPER_TAIL_HEAVIER"
+        else:
+            pattern = "MIXED_BOOK_DISAGREEMENT"
+        first = ordered[0]
+        line_ladders.append({
+            "player": first["player"],
+            "player_id": first["player_id"],
+            "team": first["team"],
+            "opponent": first["opponent"],
+            "position": first["position"],
+            "target": first["target"],
+            "projection": first["projection"],
+            "distinct_lines": distinct_lines,
+            "pattern": pattern,
+            "selection_authority": False,
+            "points": [{
+                "line": row["line"],
+                "bookmaker": row["bookmaker"],
+                "over_price": row["over_price"],
+                "under_price": row["under_price"],
+                "model_over_probability": row["model_over_probability"],
+                "no_vig_market_over_probability": row["no_vig_market_over_probability"],
+                "survival_probability_delta": row["survival_probability_delta"],
+            } for row in ordered],
+        })
+    line_ladders.sort(key=lambda row: (-len(row["distinct_lines"]), row["player"], row["target"]))
 
     def best_unique(
         position_set: set[str], *, same_game: bool = False, limit: int = 2,
@@ -168,6 +223,11 @@ def build_board(
             "support_rule": "Absolute model-market disagreement above 15pp is retained but excluded as OUT_OF_SUPPORT.",
             "parlay_probability": "WITHHELD_NO_DEPENDENCY_MODEL_OR_EXECUTABLE_COMBINED_QUOTE",
             "ranking": backtest.get("ranking_rule", "UNVALIDATED_RAW_PROBABILITY_THEN_EV"),
+            "line_ladder": (
+                "Every available book x threshold is preserved. D(L) equals model over "
+                "probability minus the two-sided no-vig market over probability. Ladder "
+                "patterns are diagnostic only and do not grant selection authority."
+            ),
         },
         "backtest": {
             "artifact_type": backtest.get("artifact_type"),
@@ -176,6 +236,8 @@ def build_board(
             "capabilities": capabilities,
         },
         "candidate_count": len(candidates), "candidates": candidates,
+        "line_ladders": line_ladders,
+        "line_ladder_count": len(line_ladders),
         "pools": categories,
         "pool_status": pool_status,
         "best_available_singles": [
