@@ -42,4 +42,4 @@ def test_public_mlb_board_never_substitutes_or_links_stale_picks():
     assert 'cache: "no-store"' in js
     assert "no picks are displayed or linked." in html
     assert "yesterday's picks are never substituted" in html
-    assert 'predictions.js?v=36' in html
+    assert 'predictions.js?v=37' in html

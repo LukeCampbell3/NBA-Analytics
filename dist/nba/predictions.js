@@ -180,6 +180,22 @@ class DailyPredictionsPage {
             return true;
         } catch (error) {
             console.error(error);
+            // Replace the static "Loading board details..." placeholder
+            // in the page header when the load fails. Matches MLB's
+            // failure-path handling so the header never stays stuck on
+            // its loading text next to a rendered board-unavailable
+            // notice below.
+            if (this.elements.runMeta) {
+                const runMeta = this.elements.runMeta;
+                if (window.CardVault) {
+                    runMeta.innerHTML = `
+                        ${window.CardVault.renderStatusPill('withheld', 'Board unavailable')}
+                        <span class="prediction-run-meta__item">Today's NBA board could not be loaded.</span>
+                    `;
+                } else {
+                    runMeta.textContent = "Board unavailable -- today's NBA predictions could not be loaded.";
+                }
+            }
             if (window.CardVault && this.elements.cards) {
                 this.elements.cards.innerHTML = window.CardVault.renderEmptyState(
                     'Board unavailable',

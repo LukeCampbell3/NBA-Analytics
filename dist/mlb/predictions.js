@@ -182,6 +182,24 @@ class DailyPredictionsPage {
             this.data = null;
             this.plays = [];
             this.renderFreshnessAlert("Current MLB picks unavailable", error.message || "Freshness verification failed.");
+            // Replace the static "Loading board details..." placeholder
+            // in the page header with a real, honest state pill -- without
+            // this, the header stays stuck on the loading text forever
+            // when today's board hasn't been published yet, next to the
+            // "no current picks" notice below. The freshness alert and
+            // the board notice already say what's wrong; the header just
+            // needs to stop claiming the page is still loading.
+            if (this.elements.runMeta) {
+                const runMeta = this.elements.runMeta;
+                if (window.CardVault) {
+                    runMeta.innerHTML = `
+                        ${window.CardVault.renderStatusPill("withheld", "Not yet published")}
+                        <span class="prediction-run-meta__item">Today's MLB board has not been verified for the current slate.</span>
+                    `;
+                } else {
+                    runMeta.textContent = "Not yet published -- today's MLB board has not been verified.";
+                }
+            }
             if (window.CardVault && this.elements.cards) {
                 this.elements.cards.innerHTML = window.CardVault.renderEmptyState(
                     "No current picks are displayed",
