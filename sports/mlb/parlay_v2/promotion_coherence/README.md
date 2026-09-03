@@ -81,3 +81,29 @@ tuning candidates without touching this code.
    guarded by the coherent decision.
 3. Wire the concrete deductions (market-disagreement, shared-failure,
    fragility) into `PromotionPenalties` as more graded data accumulates.
+
+## Next-steps status (from the promotion-coherence proposal)
+
+1. **Grow the pair ledger past 10 slates** — `synthesize_pairs.py`
+   cross-joins settled singles into 18,020 synthetic cross-game pair
+   observations across 25 slates (see `BACKTEST_ANALYSIS.md` for the
+   full read). The synthetic ledger is not the real production
+   candidate universe, and every row is flagged `is_synthetic: true`
+   so no consumer can accidentally mix it with real evidence, but it
+   raises `strict_dominance_over_baseline` to decision-quality
+   confidence on the broader-than-production pool.
+2. **Per-leg model probability + no-vig market probability capture** —
+   `pair_schema_v2.py` defines the additive v2 pair-observation shape
+   and `market_disagreement_deduction()`. The live pair-ingest still
+   writes v1 rows (test regression proves it), so the deduction is
+   currently 0.0 on every real row. The synthetic ledger already
+   populates the per-leg model probabilities; once no-vig market
+   probability capture lands upstream, market-disagreement becomes
+   a real signal without any further code change here.
+3. **Same-game shared-failure penalty as a first-class deduction** —
+   `same_game_penalty.py` defines `SameGamePenaltyProfile` and
+   `same_game_shared_failure_deduction()`. Wired into
+   `PromotionPenalties.from_pair_row`, and reported in the backtest
+   as a side-by-side slice so the effect is visible. Defaults are
+   conservative-but-real, grounded in the ledger evidence
+   (100% same-game below break-even in the real pair ledger).

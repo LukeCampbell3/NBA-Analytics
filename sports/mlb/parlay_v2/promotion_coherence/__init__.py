@@ -31,17 +31,37 @@ Scope guarantees:
 from .promotion_confidence import (
     CoherentPromotionDecision,
     PromotionConfidenceComponents,
+    PromotionPenalties,
     PromotionThresholds,
     decide_coherent_promotion,
     default_thresholds,
     promotion_confidence_components,
 )
+from .pair_schema_v2 import (
+    PAIR_OBSERVATION_SCHEMA_VERSION_V2,
+    MarketDisagreementProfile,
+    PairObservationV2,
+    market_disagreement_deduction,
+)
+from .same_game_penalty import (
+    SameGamePenaltyProfile,
+    apply_same_game_penalty,
+    same_game_shared_failure_deduction,
+)
 
 __all__ = [
     "CoherentPromotionDecision",
+    "MarketDisagreementProfile",
+    "PAIR_OBSERVATION_SCHEMA_VERSION_V2",
+    "PairObservationV2",
     "PromotionConfidenceComponents",
+    "PromotionPenalties",
     "PromotionThresholds",
+    "SameGamePenaltyProfile",
+    "apply_same_game_penalty",
     "decide_coherent_promotion",
     "default_thresholds",
+    "market_disagreement_deduction",
     "promotion_confidence_components",
+    "same_game_shared_failure_deduction",
 ]

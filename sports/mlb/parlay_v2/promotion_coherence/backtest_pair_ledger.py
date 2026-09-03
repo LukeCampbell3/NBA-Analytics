@@ -75,12 +75,32 @@ def _break_even(price: Any) -> Optional[float]:
     return 1.0 / p
 
 
-def compute_promotion_margin(row: dict[str, Any]) -> Optional[float]:
+def compute_promotion_margin(
+    row: dict[str, Any],
+    *,
+    apply_same_game_penalty: bool = False,
+    same_game_profile: Any | None = None,
+) -> Optional[float]:
+    """Promotion margin for one pair-observation row.
+
+    Default is the raw `predicted_joint - break_even` -- deductions
+    stay zero unless the caller asks for one. `apply_same_game_penalty`
+    subtracts the shared-failure deduction on same-game rows (zero on
+    cross-game rows), using `SameGamePenaltyProfile` defaults unless a
+    custom `same_game_profile` is passed. Nothing here silently applies
+    a penalty; the flag is explicit at every call site.
+    """
     joint = _finite(row.get("predicted_joint_probability"))
     break_even = _break_even(row.get("quoted_pair_price"))
     if joint is None or break_even is None:
         return None
-    return joint - break_even
+    deduction = 0.0
+    if apply_same_game_penalty:
+        # Local import to keep this module standalone when the same-
+        # game penalty is not requested.
+        from .same_game_penalty import same_game_shared_failure_deduction
+        deduction = same_game_shared_failure_deduction(row, profile=same_game_profile)
+    return joint - deduction - break_even
 
 
 # --- backtest -----------------------------------------------------------
@@ -125,10 +145,20 @@ class FloorResult:
         )
 
 
-def _apply_floor(rows: list[dict[str, Any]], floor: float) -> list[dict[str, Any]]:
+def _apply_floor(
+    rows: list[dict[str, Any]],
+    floor: float,
+    *,
+    apply_same_game_penalty: bool = False,
+    same_game_profile: Any | None = None,
+) -> list[dict[str, Any]]:
     admitted: list[dict[str, Any]] = []
     for row in rows:
-        margin = compute_promotion_margin(row)
+        margin = compute_promotion_margin(
+            row,
+            apply_same_game_penalty=apply_same_game_penalty,
+            same_game_profile=same_game_profile,
+        )
         if margin is None:
             continue
         if margin >= floor:
@@ -136,9 +166,26 @@ def _apply_floor(rows: list[dict[str, Any]], floor: float) -> list[dict[str, Any
     return admitted
 
 
-def sweep_floors(rows: list[dict[str, Any]], floors: Iterable[float]) -> list[FloorResult]:
+def sweep_floors(
+    rows: list[dict[str, Any]],
+    floors: Iterable[float],
+    *,
+    apply_same_game_penalty: bool = False,
+    same_game_profile: Any | None = None,
+) -> list[FloorResult]:
     total = len(rows)
-    return [FloorResult.build(floor=f, admitted=_apply_floor(rows, f), total_count=total) for f in floors]
+    return [
+        FloorResult.build(
+            floor=f,
+            admitted=_apply_floor(
+                rows, f,
+                apply_same_game_penalty=apply_same_game_penalty,
+                same_game_profile=same_game_profile,
+            ),
+            total_count=total,
+        )
+        for f in floors
+    ]
 
 
 @dataclass
@@ -205,9 +252,15 @@ def _strict_dominance(baseline: FloorResult, sweep: list[FloorResult]) -> Option
 def build_slice_report(
     *, name: str, filter_description: str,
     rows: list[dict[str, Any]], floors: Iterable[float],
+    apply_same_game_penalty: bool = False,
+    same_game_profile: Any | None = None,
 ) -> SliceReport:
     floors = list(floors)
-    sweep = sweep_floors(rows, floors)
+    sweep = sweep_floors(
+        rows, floors,
+        apply_same_game_penalty=apply_same_game_penalty,
+        same_game_profile=same_game_profile,
+    )
     # Baseline = the smallest floor in the sweep, which admits every
     # scored pair.
     baseline = min(sweep, key=lambda r: r.floor) if sweep else FloorResult.build(
@@ -278,6 +331,7 @@ def build_report(
     settled = _rows_settled(rows)
     floors_list = list(floors)
 
+    same_game_rows = [r for r in settled if r.get("same_game")]
     slices: list[SliceReport] = [
         build_slice_report(name="ALL_SETTLED_PAIRS",
                            filter_description="every settled pair-observation row",
@@ -287,10 +341,37 @@ def build_report(
                            rows=[r for r in settled if not r.get("same_game")],
                            floors=floors_list),
         build_slice_report(name="SAME_GAME_PAIRS",
-                           filter_description="settled pairs with same_game=True",
-                           rows=[r for r in settled if r.get("same_game")],
-                           floors=floors_list),
+                           filter_description="settled pairs with same_game=True (no shared-failure deduction)",
+                           rows=same_game_rows, floors=floors_list),
     ]
+    if same_game_rows:
+        slices.append(
+            build_slice_report(
+                name="SAME_GAME_PAIRS_WITH_SHARED_FAILURE_PENALTY",
+                filter_description=(
+                    "settled pairs with same_game=True, promotion margin adjusted by "
+                    "SameGamePenaltyProfile() defaults (base 0.05 + optional 0.03 same-team + "
+                    "optional 0.02 total-market, capped at 0.15). Reported side-by-side with "
+                    "the raw same-game slice above so the effect of turning the deduction on is visible."
+                ),
+                rows=same_game_rows, floors=floors_list,
+                apply_same_game_penalty=True,
+            )
+        )
+    if settled:
+        slices.append(
+            build_slice_report(
+                name="ALL_SETTLED_PAIRS_WITH_SHARED_FAILURE_PENALTY",
+                filter_description=(
+                    "every settled row, promotion margin adjusted by SameGamePenaltyProfile() "
+                    "on same-game rows only (cross-game rows unchanged). Compare directly with "
+                    "ALL_SETTLED_PAIRS above -- the delta at every floor is the impact of adding "
+                    "the shared-failure deduction as a first-class penalty."
+                ),
+                rows=settled, floors=floors_list,
+                apply_same_game_penalty=True,
+            )
+        )
     market_counts: dict[str, int] = {}
     for r in settled:
         market_counts[r.get("market_pair_type") or "UNKNOWN"] = (

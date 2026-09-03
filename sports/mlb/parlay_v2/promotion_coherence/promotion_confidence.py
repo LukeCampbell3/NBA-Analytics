@@ -91,7 +91,8 @@ class PromotionPenalties:
     """Explicit deductions applied to the calibrated joint probability.
 
     Every field defaults to 0.0 so this module never invents a penalty
-    silently. A tuner passes concrete values (or a subclass returns
+    silently. A tuner passes concrete values (or a helper -- e.g.
+    `same_game_penalty.same_game_shared_failure_deduction` -- returns
     payload-derived numbers) once shadow results support it. Values are
     absolute probability points, capped [0.0, 1.0] individually.
     """
@@ -100,6 +101,45 @@ class PromotionPenalties:
     market_disagreement_deduction: float = 0.0
     shared_failure_deduction: float = 0.0
     fragility_deduction: float = 0.0
+
+    @classmethod
+    def from_pair_row(
+        cls,
+        row: "Mapping[str, Any]",
+        *,
+        same_game_profile: "Any | None" = None,
+        market_disagreement_profile: "Any | None" = None,
+    ) -> "PromotionPenalties":
+        """Build a PromotionPenalties from a pair-observation row.
+
+        Populates:
+
+            * shared_failure_deduction -- from
+              `same_game_penalty.same_game_shared_failure_deduction`.
+              Zero for cross-game rows.
+            * market_disagreement_deduction -- from
+              `pair_schema_v2.market_disagreement_deduction`. Zero when
+              either leg's model or no-vig market probability is
+              missing (v1 rows, or v2 rows with only partial capture).
+
+        `uncertainty_deduction` and `fragility_deduction` stay at 0.0
+        until their respective signals are wired.
+
+        Local imports keep `promotion_confidence` free of any
+        dependency on the penalty subpackage when callers don't want
+        it and avoid subpackage load-order cycles.
+        """
+        from .pair_schema_v2 import market_disagreement_deduction
+        from .same_game_penalty import same_game_shared_failure_deduction
+
+        return cls(
+            shared_failure_deduction=same_game_shared_failure_deduction(
+                row, profile=same_game_profile,
+            ),
+            market_disagreement_deduction=market_disagreement_deduction(
+                row, profile=market_disagreement_profile,
+            ),
+        )
 
 
 def _clip01(value: float) -> float:
