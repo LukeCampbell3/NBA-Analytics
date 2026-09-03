@@ -1,0 +1,26 @@
+{
+  "schema_version": 2,
+  "product_version": "HIGH_HIT_PARLAY_ROI_V2",
+  "authority": "shadow_only",
+  "compared_against": "premium_tight_quality_v17_shadow",
+  "run_date": "2026-09-03",
+  "generated_at_utc": "2026-09-03T12:41:57.899615+00:00",
+  "construction": {
+    "leg_probability_floor": 0.7,
+    "joint_probability_floor": 0.5,
+    "min_leg_decimal_price": 1.2,
+    "min_leg_expected_value": 0.0,
+    "min_combined_decimal_price": 2.0,
+    "min_expected_value_per_unit": 0.05,
+    "max_legs": 2,
+    "cross_game_only": true,
+    "joint_probability_method": "product_of_leg_probabilities_cross_game_independence",
+    "price_method": "product_of_leg_decimal_prices",
+    "ranking_after_gates": "expected_value_desc_then_joint_probability_desc"
+  },
+  "candidates_considered": 14,
+  "legs_eligible": 0,
+  "parlays": [],
+  "shadow_fallback": null,
+  "abstain_reason": "no_pair_cleared_probability_price_and_ev_floors"
+}
