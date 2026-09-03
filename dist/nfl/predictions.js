@@ -203,7 +203,7 @@ class NflPredictionBoard {
             const legs = (ticket.legs || []).map((leg) => `<div class="week-parlay-leg">
                 <span class="week-parlay-position">${this.escape(leg.position)}</span>
                 <span><strong>${this.escape(leg.player)}</strong><small>${this.escape(`${leg.team} vs ${leg.opponent} · ${String(leg.target || "").replaceAll("_", " ")}`)}</small></span>
-                <span class="week-parlay-projection"><strong>${this.escape(leg.side ? `${leg.side} ${this.formatNum(leg.line, 1)}` : this.formatNum(leg.projection, 1))}</strong><small>${this.escape(leg.side ? `${leg.bookmaker} ${this.formatOdds(leg.price)}` : "projected")}</small></span>
+                <span class="week-parlay-projection"><strong>${this.escape(leg.side ? `${leg.side} ${this.formatNum(leg.line, 1)}` : this.formatNum(leg.projection, 1))}</strong><small>${this.escape(leg.side ? `${leg.bookmaker} ${this.formatOdds(leg.price)} · proj ${this.formatNum(leg.projection, 1)} · edge ${this.formatSignedPct(leg.raw_probability_edge)}` : "projected")}</small></span>
             </div>`).join("");
             return `<article class="week-parlay-card">
                 <header><div><h3>${this.escape(ticket.name)}</h3><p>${this.escape(ticket.note)}</p></div><span class="week-parlay-status">${this.escape(ticket.status.replaceAll("_", " "))}</span></header>
@@ -438,6 +438,7 @@ class NflPredictionBoard {
     formatNum(value, places = 2) { return Number.isFinite(Number(value)) ? Number(value).toFixed(places) : "n/a"; }
     formatInt(value) { return Number.isFinite(Number(value)) ? String(Math.round(Number(value))) : "n/a"; }
     formatAmerican(value) { return Number.isFinite(Number(value)) ? `${Number(value) > 0 ? "+" : ""}${Math.round(Number(value))}` : "n/a"; }
+    formatOdds(value) { return this.formatAmerican(value); }
     formatPriceRange(values) { return Array.isArray(values) && values.length === 2 ? `${this.formatAmerican(values[0])} to ${this.formatAmerican(values[1])}` : "n/a"; }
     escape(value) {
         return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;")
