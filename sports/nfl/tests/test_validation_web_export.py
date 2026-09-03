@@ -105,5 +105,6 @@ def test_frontend_exposes_validation_sections_and_payload() -> None:
     assert "data/pick_history.json" in predictions_js
     assert "isNearKickoff" in predictions_js
     assert "same-day market snapshot close to kickoff" in predictions_js
+    assert "formatOdds(value) { return this.formatAmerican(value); }" in predictions_js
     assert 'id="marketMethodFacts"' in about_html
     assert 'id="marketLimitations"' in about_html
