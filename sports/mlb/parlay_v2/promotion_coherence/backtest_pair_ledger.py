@@ -45,6 +45,7 @@ from typing import Any, Iterable, Optional
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 DEFAULT_LEDGER = "sports/mlb/parlay_v2/calibration/reports/pair_observation_ledger.jsonl"
+DEFAULT_SYNTHETIC_LEDGER = "sports/mlb/parlay_v2/promotion_coherence/reports/synthetic_cross_game_pair_ledger.jsonl"
 DEFAULT_REPORT = "sports/mlb/parlay_v2/promotion_coherence/reports/pair_ledger_backtest.json"
 
 # Sweep in 1 percentage-point steps across a range wide enough to include
@@ -352,9 +353,18 @@ def _print_slice(slice_: SliceReport) -> None:
 
 def _cli() -> None:
     parser = argparse.ArgumentParser(
-        description="Backtest the promotion-margin rule against the real settled pair observation ledger.",
+        description="Backtest the promotion-margin rule against the real settled pair observation ledger, and optionally against a synthetic cross-game ledger for scale.",
     )
     parser.add_argument("--ledger", type=Path, default=REPO_ROOT / DEFAULT_LEDGER)
+    parser.add_argument(
+        "--synthetic-ledger", type=Path, default=REPO_ROOT / DEFAULT_SYNTHETIC_LEDGER,
+        help="Optional synthetic cross-game pair ledger to backtest side-by-side. "
+             "Missing file is skipped, not an error -- the synthetic ledger is generated separately.",
+    )
+    parser.add_argument(
+        "--skip-synthetic", action="store_true",
+        help="Only backtest the real pair-observation ledger, even if the synthetic ledger is present.",
+    )
     parser.add_argument("--out", type=Path, default=REPO_ROOT / DEFAULT_REPORT)
     parser.add_argument("--floor-min", type=float, default=-0.10)
     parser.add_argument("--floor-max", type=float, default=+0.10)
@@ -370,15 +380,35 @@ def _cli() -> None:
         floors.append(round(x, 4))
         x += step
 
-    report = build_report(ledger_path=args.ledger, floors=floors)
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(report.to_dict(), indent=2, sort_keys=True, default=str))
-
-    print(f"wrote {args.out}")
-    print(f"ledger rows: {report.ledger_row_count}  settled: {report.settled_row_count}")
-    print(f"floors swept: {report.floors_swept}")
-    for s in report.slices:
+    reports: list[tuple[str, LedgerBacktestReport]] = []
+    print(f"=== REAL pair-observation ledger ===")
+    real_report = build_report(ledger_path=args.ledger, floors=floors)
+    reports.append(("real", real_report))
+    print(f"ledger rows: {real_report.ledger_row_count}  settled: {real_report.settled_row_count}")
+    for s in real_report.slices:
         _print_slice(s)
+
+    if not args.skip_synthetic and args.synthetic_ledger.exists():
+        print(f"\n=== SYNTHETIC cross-game pair ledger ===")
+        print(f"(from settled singles -- exploratory, not real pair observations)")
+        synth_report = build_report(ledger_path=args.synthetic_ledger, floors=floors)
+        reports.append(("synthetic", synth_report))
+        print(f"ledger rows: {synth_report.ledger_row_count}  settled: {synth_report.settled_row_count}")
+        for s in synth_report.slices:
+            _print_slice(s)
+    else:
+        if args.skip_synthetic:
+            print("\n(--skip-synthetic set; synthetic ledger not evaluated)")
+        else:
+            print(f"\n(no synthetic ledger at {args.synthetic_ledger} -- run "
+                  f"`python -m sports.mlb.parlay_v2.promotion_coherence.synthesize_pairs` to generate one)")
+
+    out_payload = {
+        report_name: r.to_dict() for report_name, r in reports
+    }
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(json.dumps(out_payload, indent=2, sort_keys=True, default=str))
+    print(f"\nwrote {args.out}")
 
 
 if __name__ == "__main__":

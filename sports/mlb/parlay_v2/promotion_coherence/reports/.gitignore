@@ -1,0 +1,4 @@
+# Derived-only artifacts too large to check in. All are deterministic
+# outputs of scripts in the parent directory; regenerate with:
+#   python -m sports.mlb.parlay_v2.promotion_coherence.synthesize_pairs
+synthetic_cross_game_pair_ledger.jsonl

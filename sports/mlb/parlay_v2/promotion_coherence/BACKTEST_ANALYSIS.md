@@ -113,19 +113,103 @@ subgroup.
   required per-leg model/market probabilities and starter/game-script
   signals are not persisted in it.
 
+## Synthetic ledger — grown from settled singles
+
+`synthesize_pairs.py` cross-joins settled singles from the 9,051-row
+singles calibration ledger (25 slates, back to 2026-04-29) into
+**18,020 synthetic cross-game pair observations**, capped at 800 per
+slate and 6 singles per game so no single dominates. Every row is
+flagged `is_synthetic: true` and stored in a separate file. This is
+exploratory evidence, never production data — the flags exist so a
+reader cannot accidentally treat it otherwise.
+
+### SYNTHETIC ALL_SETTLED_PAIRS (18,020 rows)
+
+| floor | admitted | share | hit rate | total return / unit | mean return / unit |
+|:-----:|---------:|------:|---------:|--------------------:|-------------------:|
+| −0.10 (baseline) | 16,596 | 92.1% | 26.1% | −1,522.78 | −0.092 |
+| −0.02 | 11,442 | 63.5% | 25.9% |   −89.52 | −0.008 |
+| −0.01 | 10,473 | 58.1% | 26.1% |  **+144.79** | **+0.014** |
+|  0.00 |  9,477 | 52.6% | 26.3% |  +362.02 | +0.038 |
+| +0.05 |  5,038 | 28.0% | 27.4% | +1,124.39 | +0.223 |
+| +0.06 |  4,479 | 24.9% | 27.6% | **+1,196.45** | +0.267 |
+| +0.10 |  2,842 | 15.8% | 26.3% | +1,142.04 | +0.402 |
+
+`strict_dominance_over_baseline` flag fires cleanly on this pool at
+floor +0.06.
+
+### Why the two ledgers disagree — read carefully
+
+The real pair ledger's average hit rate is 7–8%. The synthetic
+ledger's is 26%. That gap is real, not a bug, and it is important:
+
+- The real pair-observation ledger is the pool the frozen
+  `PARLAY_POLICY_V2_PROSPECTIVE_003` policy actually scored — a narrow,
+  deliberately-selected candidate universe with predicted joint
+  probabilities [0.14, 0.29].
+- The synthetic ledger is the pool of "any two cross-game singles that
+  the production system had a real quote and probability for," which
+  covers a much wider quality range.
+
+Two interpretations of the gap are consistent with the data and both
+are honest:
+
+1. **The production candidate selector is systematically choosing
+   worse pairs than the broader admitted-singles pool would offer.**
+   The margin rule works fine on a broader pool but the upstream
+   selector is discarding the good pairs.
+2. **The independence-assumed synthetic joint is optimistic** relative
+   to a proper joint model that accounts for shared-game context. The
+   hit rate on synthetic pairs reflects singles hit rates well because
+   the singles are from different games and are actually close to
+   independent, but the joint model in the real pair ledger may be
+   correctly-conservative about correlated failure.
+
+Interpretation (1) argues for revisiting the upstream candidate
+selector; interpretation (2) argues that the real ledger's pessimism
+is the calibrated truth. This backtest cannot distinguish them from
+the current data, and the honest report says so.
+
+### What the synthetic ledger actually supports
+
+- **The promotion-margin rule has real predictive value on a broader-
+  than-production pool.** At floor +0.06 on the synthetic ledger the
+  strict-dominance flag fires with a +1,196-unit-return improvement
+  over baseline across 4,479 admitted pairs.
+- **The rule alone does not automatically translate to production
+  ROI**, because the production candidate pool is systematically
+  narrower and worse-performing than the synthetic pool. Adopting the
+  margin rule on the current production pool would reduce exposure
+  (real ledger evidence, above) but not turn the pool positive.
+- **The full promotion-coherence proposal is right to layer several
+  signals**: market-disagreement, fragility, per-leg floors, shared-
+  failure. No single margin rule can rescue a systematically-
+  negative-EV upstream pool.
+
+Both findings are pinned by regression tests:
+
+- `test_real_ledger_margin_gate_reduces_exposure_but_stays_negative`
+- `test_synthetic_ledger_backtest_flips_positive_above_zero_floor`
+
+If either flips direction on a future run, the corresponding test
+fails loudly and this document gets rewritten.
+
 ## What to do next
 
 1. **Ship the shadow layer as it stands.** It's a clean win on the Sept 2
-   regression, and it demonstrably reduces exposure on 3,120 real
-   settled pairs.
-2. **Do not force this data to promote the rule.** The current backtest
-   supports a "less-bad publication" claim, nothing more. The next real
-   improvement will come from adding the missing signals — a per-leg
-   probability floor (available on the normal-parlay overlay path), a
-   market-disagreement penalty (needs no-vig market probability captured
-   at decision time), and a same-game-specific shared-failure penalty
-   (needs game-script, total-line, and bullpen signals).
-3. **Keep the pair ledger growing.** Four slates is enough to see
-   direction but not enough for a serious calibration decision. As the
-   ledger extends past 10 slates the `strict_dominance_over_baseline`
-   diagnostic in the report becomes worth acting on, not just noting.
+   regression, it reduces exposure on 3,120 real settled pairs, and it
+   demonstrates real predictive value on 18,020 synthetic cross-game
+   pairs.
+2. **Do not force the real ledger to promote the rule.** The real-ledger
+   evidence supports a "less-bad publication" claim, nothing more. The
+   next real improvement will come from adding the missing signals — a
+   per-leg probability floor (available on the normal-parlay overlay
+   path), a market-disagreement penalty (needs no-vig market probability
+   captured at decision time), and a same-game-specific shared-failure
+   penalty (already justified by the ledger evidence of 100% below
+   break-even on same-game pairs).
+3. **Investigate the pair-ledger / singles-ledger gap.** The 18-percentage-
+   point hit-rate gap between the real pair pool and the broader synthetic
+   pool deserves its own investigation independent of the promotion rule —
+   whichever interpretation above turns out to be right, the finding is
+   consequential for the whole system, not just the promotion gate.
