@@ -42,4 +42,13 @@ def test_public_mlb_board_never_substitutes_or_links_stale_picks():
     assert 'cache: "no-store"' in js
     assert "no picks are displayed or linked." in html
     assert "yesterday's picks are never substituted" in html
-    assert 'predictions.js?v=36' in html
+    assert 'predictions.js?v=37' in html
+    assert 'this.renderRunMeta();' in js
+
+
+def test_mlb_workflow_has_morning_final_and_next_slate_publications():
+    workflow = (ROOT.parent / ".github/workflows/mlb-predictions.yml").read_text()
+    assert 'cron: "17 8 * 3-10 *"' in workflow
+    assert 'cron: "30 18 * 3-10 *"' in workflow
+    assert 'cron: "30 23 * 3-10 *"' in workflow
+    assert 'date -d tomorrow +%F' in workflow

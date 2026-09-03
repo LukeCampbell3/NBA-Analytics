@@ -179,8 +179,12 @@ class DailyPredictionsPage {
             return true;
         } catch (error) {
             console.error(error);
-            this.data = null;
             this.plays = [];
+            if (this.data) {
+                this.renderRunMeta();
+            } else if (this.elements.runMeta) {
+                this.elements.runMeta.textContent = "MLB board unavailable";
+            }
             this.renderFreshnessAlert("Current MLB picks unavailable", error.message || "Freshness verification failed.");
             if (window.CardVault && this.elements.cards) {
                 this.elements.cards.innerHTML = window.CardVault.renderEmptyState(
@@ -205,16 +209,17 @@ class DailyPredictionsPage {
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const payload = await response.json();
+        this.data = payload;
+        this.activeDate = payload?.run_date || date || null;
+        if (!date) this.currentDate = this.activeDate;
         if (!date) {
             this.assertCurrentArtifact(payload, "MLB board");
+            this.renderRunMeta();
             if (String(payload.publication_status || "").toLowerCase() !== "ready") {
                 throw new Error("MLB board publication is withheld or under review");
             }
             if (!Array.isArray(payload.plays)) throw new Error("MLB board has no valid plays collection");
         }
-        this.data = payload;
-        this.activeDate = this.data?.run_date || date || null;
-        if (!date) this.currentDate = this.activeDate;
         const publicationStatus = String(this.data?.publication_status || "ready").toLowerCase();
         const basePlays = Array.isArray(this.data.plays)
             ? this.data.plays.map((play) => ({ ...play, board_publication_status: publicationStatus }))

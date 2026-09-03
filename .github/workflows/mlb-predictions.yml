@@ -24,6 +24,10 @@ on:
   schedule:
     - cron: "17 8 * 3-10 *"
       timezone: "America/New_York"
+    - cron: "30 18 * 3-10 *"
+      timezone: "America/New_York"
+    - cron: "30 23 * 3-10 *"
+      timezone: "America/New_York"
   workflow_dispatch:
     inputs:
       run_date:
@@ -89,7 +93,14 @@ jobs:
           INPUT_RUN_DATE: ${{ inputs.run_date }}
         run: |
           set -euo pipefail
-          run_date="${INPUT_RUN_DATE:-$(date +%F)}"
+          if [[ -n "$INPUT_RUN_DATE" ]]; then
+            run_date="$INPUT_RUN_DATE"
+          elif [[ "$(date +%H)" -ge 23 ]]; then
+            # The overnight publication prepares the next Eastern slate.
+            run_date="$(date -d tomorrow +%F)"
+          else
+            run_date="$(date +%F)"
+          fi
           RUN_DATE_CANDIDATE="$run_date" python -c \
             'import os; from datetime import date; date.fromisoformat(os.environ["RUN_DATE_CANDIDATE"])'
           weekday="$(date -d "$run_date" +%u)"
