@@ -78,6 +78,20 @@ class PairObservation:
     row_hash: str
     schema_version: str = SCHEMA_VERSION
 
+    # ---- optional per-leg capture (additive, backward compat) ----------
+    # All None on legacy rows. Populated when the ingest can derive them
+    # (see pair_ingest._pair_side_capture). Consumed by the shadow
+    # promotion_coherence layer -- most immediately, the market-
+    # disagreement deduction (pair_schema_v2.market_disagreement_
+    # deduction). Never included in observation_id / row_hash so a
+    # re-ingest of a legacy slate with new capture does not double-admit.
+    leg_1_marginal_probability: float | None = None
+    leg_2_marginal_probability: float | None = None
+    leg_1_decimal_price: float | None = None
+    leg_2_decimal_price: float | None = None
+    leg_1_no_vig_market_probability: float | None = None
+    leg_2_no_vig_market_probability: float | None = None
+
     def as_dict(self) -> dict:
         return asdict(self)
 
@@ -114,6 +128,17 @@ def build_pair_observation(
     leg_2_result: int | None,
     settlement_status: str,
     settlement_timestamp: str,
+    # ---- optional per-leg capture (additive, backward compat) -------
+    # Any caller that passes None (or omits) keeps producing v1-shape
+    # rows. observation_id / row_hash never include these, so admitting
+    # a legacy pair with new capture does not double-admit -- the
+    # store's dedupe still skips it.
+    leg_1_marginal_probability: float | None = None,
+    leg_2_marginal_probability: float | None = None,
+    leg_1_decimal_price: float | None = None,
+    leg_2_decimal_price: float | None = None,
+    leg_1_no_vig_market_probability: float | None = None,
+    leg_2_no_vig_market_probability: float | None = None,
 ) -> PairObservation:
     pair_id = build_pair_id(leg_1_event_id, leg_2_event_id)
     both_win = bool(leg_1_result) and bool(leg_2_result) if (leg_1_result is not None and leg_2_result is not None) else None
@@ -161,4 +186,10 @@ def build_pair_observation(
         settlement_status=settlement_status,
         settlement_timestamp=settlement_timestamp,
         row_hash=row_hash,
+        leg_1_marginal_probability=leg_1_marginal_probability,
+        leg_2_marginal_probability=leg_2_marginal_probability,
+        leg_1_decimal_price=leg_1_decimal_price,
+        leg_2_decimal_price=leg_2_decimal_price,
+        leg_1_no_vig_market_probability=leg_1_no_vig_market_probability,
+        leg_2_no_vig_market_probability=leg_2_no_vig_market_probability,
     )

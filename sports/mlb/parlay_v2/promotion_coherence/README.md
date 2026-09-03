@@ -91,15 +91,20 @@ tuning candidates without touching this code.
    candidate universe, and every row is flagged `is_synthetic: true`
    so no consumer can accidentally mix it with real evidence, but it
    raises `strict_dominance_over_baseline` to decision-quality
-   confidence on the broader-than-production pool.
+   confidence on the broader-than-production pool. Real-ledger
+   maturity is tracked by `ledger_maturity.py`.
 2. **Per-leg model probability + no-vig market probability capture** —
    `pair_schema_v2.py` defines the additive v2 pair-observation shape
-   and `market_disagreement_deduction()`. The live pair-ingest still
-   writes v1 rows (test regression proves it), so the deduction is
-   currently 0.0 on every real row. The synthetic ledger already
-   populates the per-leg model probabilities; once no-vig market
-   probability capture lands upstream, market-disagreement becomes
-   a real signal without any further code change here.
+   and `market_disagreement_deduction()`. On the **testing branch**
+   (`claude/mlb-promotion-coherence-testing-ym6k28`), the live
+   `calibration/pair_schema.py` and `calibration/pair_ingest.py`
+   are extended additively (six new optional per-leg fields,
+   backward compatible; observation_id / row_hash unchanged so
+   dedupe still works). New ingests now populate no-vig market
+   probability from the source CSV's both-side prices where they
+   exist. Every real ledger row today is v1 (regression test pins
+   this), but new prospective slates run through the extended ingest
+   will start carrying real no-vig probabilities.
 3. **Same-game shared-failure penalty as a first-class deduction** —
    `same_game_penalty.py` defines `SameGamePenaltyProfile` and
    `same_game_shared_failure_deduction()`. Wired into
@@ -107,3 +112,26 @@ tuning candidates without touching this code.
    as a side-by-side slice so the effect is visible. Defaults are
    conservative-but-real, grounded in the ledger evidence
    (100% same-game below break-even in the real pair ledger).
+
+## Testing-branch additions (`claude/mlb-promotion-coherence-testing-ym6k28`)
+
+* `investigate_pool_gap.py` — instrument the 18-pp hit-rate gap
+  between the real and synthetic pools. Reports predicted-joint
+  distributions, calibration bins (decile of predicted joint ->
+  actual hit rate), and interpretation notes. Current finding on
+  this branch: **the real pool's joint model over-predicts hit rate
+  by ~12 pp per decile; the synthetic pool is nearly calibrated at
+  ~2 pp. This is direct evidence against interpretation (B) — the
+  frozen production model is not being conservatively pessimistic;
+  it is miscalibrated in a way the naive-independence baseline is
+  not.** Pinned by `test_real_ledger_joint_model_over_predicts_
+  hit_rate` and `test_synthetic_ledger_is_more_calibrated_than_
+  real_ledger`.
+* `ledger_maturity.py` — machine-checkable readiness monitor for
+  the real pair ledger. Reports slate count, no-vig capture rate,
+  and decision-quality readiness. Currently: 4/10 slates; not ready.
+* Additive schema + ingest changes to
+  `sports/mlb/parlay_v2/calibration/{pair_schema,pair_ingest}.py`
+  land no-vig capture at decision time with 18 dedicated tests
+  covering backward compat, no-vig math, deduplication safety, and
+  a real-slate smoke test.

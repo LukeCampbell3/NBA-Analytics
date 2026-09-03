@@ -1,0 +1,243 @@
+{
+  "calibration_gap_delta": 0.1020685925385453,
+  "generated_at_utc": "2026-09-03T15:16:14.377150+00:00",
+  "hit_rate_gap_percentage_points": 19.903775007826063,
+  "interpretation_notes": [
+    "Hit-rate gap: synthetic 0.281 - real 0.082 = +0.199 (+19.9 pp).",
+    "Mean per-decile calibration gap (predicted - actual): real +0.1200, synthetic +0.0180, difference +0.1021.",
+    "The real pool's joint model over-predicts hit rate MORE than the synthetic pool's does. This is unusual -- the real ledger was already the more-conservative pool by construction, so a larger positive gap here suggests the frozen production model is not being pessimistic (interpretation B is not supported); the gap likely reflects a different upstream sampling issue.",
+    "Real ledger carries zero per-leg model probabilities today (v1 schema); as pair-ingest v1.1 capture matures on prospective slates, this comparison grows a fourth axis (per-leg calibration) that will further discriminate the interpretations."
+  ],
+  "real_ledger_path": "/home/user/NBA-Analytics/sports/mlb/parlay_v2/calibration/reports/pair_observation_ledger.jsonl",
+  "real_pool": {
+    "calibration_bins": [
+      {
+        "calibration_gap": null,
+        "decile_lower": 0.0,
+        "decile_upper": 0.1,
+        "mean_actual_hit_rate": null,
+        "mean_predicted_joint": null,
+        "n_pairs": 0
+      },
+      {
+        "calibration_gap": 0.0781312449688663,
+        "decile_lower": 0.1,
+        "decile_upper": 0.2,
+        "mean_actual_hit_rate": 0.0979020979020979,
+        "mean_predicted_joint": 0.1760333428709642,
+        "n_pairs": 1859
+      },
+      {
+        "calibration_gap": 0.16191791980927867,
+        "decile_lower": 0.2,
+        "decile_upper": 0.3,
+        "mean_actual_hit_rate": 0.05947660586835844,
+        "mean_predicted_joint": 0.22139452567763712,
+        "n_pairs": 1261
+      },
+      {
+        "calibration_gap": null,
+        "decile_lower": 0.3,
+        "decile_upper": 0.4,
+        "mean_actual_hit_rate": null,
+        "mean_predicted_joint": null,
+        "n_pairs": 0
+      },
+      {
+        "calibration_gap": null,
+        "decile_lower": 0.4,
+        "decile_upper": 0.5,
+        "mean_actual_hit_rate": null,
+        "mean_predicted_joint": null,
+        "n_pairs": 0
+      },
+      {
+        "calibration_gap": null,
+        "decile_lower": 0.5,
+        "decile_upper": 0.6,
+        "mean_actual_hit_rate": null,
+        "mean_predicted_joint": null,
+        "n_pairs": 0
+      },
+      {
+        "calibration_gap": null,
+        "decile_lower": 0.6,
+        "decile_upper": 0.7,
+        "mean_actual_hit_rate": null,
+        "mean_predicted_joint": null,
+        "n_pairs": 0
+      },
+      {
+        "calibration_gap": null,
+        "decile_lower": 0.7,
+        "decile_upper": 0.8,
+        "mean_actual_hit_rate": null,
+        "mean_predicted_joint": null,
+        "n_pairs": 0
+      },
+      {
+        "calibration_gap": null,
+        "decile_lower": 0.8,
+        "decile_upper": 0.9,
+        "mean_actual_hit_rate": null,
+        "mean_predicted_joint": null,
+        "n_pairs": 0
+      },
+      {
+        "calibration_gap": null,
+        "decile_lower": 0.9,
+        "decile_upper": 1.0,
+        "mean_actual_hit_rate": null,
+        "mean_predicted_joint": null,
+        "n_pairs": 0
+      }
+    ],
+    "calibration_gap_mean_across_populated_bins": 0.12002458238907249,
+    "combined_price_distribution": {
+      "max": 9.3,
+      "mean": 4.719275765732902,
+      "min": 2.6117216117216118,
+      "n": 2841,
+      "p25": 3.980769230769231,
+      "p50": 4.515,
+      "p75": 5.28
+    },
+    "hit_rate": 0.08237179487179487,
+    "name": "REAL_PAIR_OBSERVATION_LEDGER",
+    "per_leg_model_probability_distribution": {
+      "max": null,
+      "mean": null,
+      "min": null,
+      "n": 0,
+      "p25": null,
+      "p50": null,
+      "p75": null
+    },
+    "predicted_joint_distribution": {
+      "max": 0.28862302501657955,
+      "mean": 0.19436682092199453,
+      "min": 0.1397112909570613,
+      "n": 3120,
+      "p25": 0.17398490795695806,
+      "p50": 0.19279586810727242,
+      "p75": 0.2122097955824914
+    },
+    "row_count": 3120
+  },
+  "synthetic_ledger_path": "/home/user/NBA-Analytics/sports/mlb/parlay_v2/promotion_coherence/reports/synthetic_cross_game_pair_ledger.jsonl",
+  "synthetic_pool": {
+    "calibration_bins": [
+      {
+        "calibration_gap": null,
+        "decile_lower": 0.0,
+        "decile_upper": 0.1,
+        "mean_actual_hit_rate": null,
+        "mean_predicted_joint": null,
+        "n_pairs": 0
+      },
+      {
+        "calibration_gap": 0.042220640617548794,
+        "decile_lower": 0.1,
+        "decile_upper": 0.2,
+        "mean_actual_hit_rate": 0.13680026498840675,
+        "mean_predicted_joint": 0.17902090560595554,
+        "n_pairs": 3019
+      },
+      {
+        "calibration_gap": 0.06152166797574998,
+        "decile_lower": 0.2,
+        "decile_upper": 0.3,
+        "mean_actual_hit_rate": 0.18388356407525736,
+        "mean_predicted_joint": 0.24540523205100734,
+        "n_pairs": 5634
+      },
+      {
+        "calibration_gap": 0.0517530900322164,
+        "decile_lower": 0.3,
+        "decile_upper": 0.4,
+        "mean_actual_hit_rate": 0.2932106441183785,
+        "mean_predicted_joint": 0.3449637341505949,
+        "n_pairs": 4021
+      },
+      {
+        "calibration_gap": 0.06500079462342179,
+        "decile_lower": 0.4,
+        "decile_upper": 0.5,
+        "mean_actual_hit_rate": 0.3824497257769653,
+        "mean_predicted_joint": 0.4474505204003871,
+        "n_pairs": 2735
+      },
+      {
+        "calibration_gap": 0.08199479745170501,
+        "decile_lower": 0.5,
+        "decile_upper": 0.6,
+        "mean_actual_hit_rate": 0.46304485154769426,
+        "mean_predicted_joint": 0.5450396489993993,
+        "n_pairs": 1583
+      },
+      {
+        "calibration_gap": 0.06549681673475738,
+        "decile_lower": 0.6,
+        "decile_upper": 0.7,
+        "mean_actual_hit_rate": 0.5787965616045845,
+        "mean_predicted_joint": 0.6442933783393419,
+        "n_pairs": 698
+      },
+      {
+        "calibration_gap": -0.02660939687757291,
+        "decile_lower": 0.7,
+        "decile_upper": 0.8,
+        "mean_actual_hit_rate": 0.7642857142857142,
+        "mean_predicted_joint": 0.7376763174081413,
+        "n_pairs": 280
+      },
+      {
+        "calibration_gap": -0.0881095941203478,
+        "decile_lower": 0.8,
+        "decile_upper": 0.9,
+        "mean_actual_hit_rate": 0.9166666666666666,
+        "mean_predicted_joint": 0.8285570725463188,
+        "n_pairs": 48
+      },
+      {
+        "calibration_gap": -0.09166490778273406,
+        "decile_lower": 0.9,
+        "decile_upper": 1.0,
+        "mean_actual_hit_rate": 1.0,
+        "mean_predicted_joint": 0.9083350922172659,
+        "n_pairs": 2
+      }
+    ],
+    "calibration_gap_mean_across_populated_bins": 0.017955989850527175,
+    "combined_price_distribution": {
+      "max": 161.9857142857143,
+      "mean": 4.051618630549595,
+      "min": 1.0337142857142856,
+      "n": 18020,
+      "p25": 2.5688839124999996,
+      "p50": 3.5811900848484846,
+      "p75": 4.545887052
+    },
+    "hit_rate": 0.2814095449500555,
+    "name": "SYNTHETIC_CROSS_GAME_PAIR_LEDGER",
+    "per_leg_model_probability_distribution": {
+      "max": 0.9723048470381199,
+      "mean": 0.5764298625995863,
+      "min": 0.32828973839766046,
+      "n": 36040,
+      "p25": 0.4482536881850605,
+      "p50": 0.5426371437803104,
+      "p75": 0.6911244600955175
+    },
+    "predicted_joint_distribution": {
+      "max": 0.9121068456274233,
+      "mean": 0.33821336629867943,
+      "min": 0.1355065113034761,
+      "n": 18020,
+      "p25": 0.21892578470785343,
+      "p50": 0.3064016038974924,
+      "p75": 0.42769891943161026
+    },
+    "row_count": 18020
+  }
+}
