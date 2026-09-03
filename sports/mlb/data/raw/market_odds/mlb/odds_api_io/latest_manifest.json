@@ -6,23 +6,23 @@
   ],
   "provider_state": "MLB_ODDS_PRIMARY_HEALTHY",
   "terminal_status": "MLB_FRESH_ODDS_AVAILABLE",
-  "fetched_at_utc": "2026-09-03T23:19:39.311721+00:00",
+  "fetched_at_utc": "2026-09-03T23:40:54.488069+00:00",
   "event_date_requested": "2026-09-03",
-  "canonical_rows": 1161,
-  "canonical_selected_rows": 1161,
-  "long_rows": 1153,
-  "wide_rows": 80,
+  "canonical_rows": 864,
+  "canonical_selected_rows": 864,
+  "long_rows": 858,
+  "wide_rows": 60,
   "provider_results": [
     {
       "provider_name": "fanduel_public",
       "provider_status": "success",
-      "collected_at": "2026-09-03T23:19:57.856027+00:00",
+      "collected_at": "2026-09-03T23:41:12.436439+00:00",
       "is_live": true,
       "is_cache": false,
       "cache_age_minutes": 0.0,
       "failure_reason": "",
-      "rows_collected": 1169,
-      "valid_rows": 1169,
+      "rows_collected": 888,
+      "valid_rows": 888,
       "markets_covered": [
         "batter_hits",
         "batter_home_runs",
@@ -32,8 +32,8 @@
         "pitcher_strikeouts"
       ],
       "validation": {
-        "rows": 1169,
-        "valid_rows": 1169,
+        "rows": 888,
+        "valid_rows": 888,
         "invalid_rows": 0,
         "valid_record_rate": 1.0,
         "rejection_reasons": {}
@@ -42,7 +42,7 @@
     {
       "provider_name": "the_odds_api",
       "provider_status": "missing_credentials",
-      "collected_at": "2026-09-03T23:19:57.856073+00:00",
+      "collected_at": "2026-09-03T23:41:12.436484+00:00",
       "is_live": false,
       "is_cache": false,
       "cache_age_minutes": 0.0,
@@ -55,7 +55,7 @@
     {
       "provider_name": "scrape",
       "provider_status": "disabled",
-      "collected_at": "2026-09-03T23:19:57.856107+00:00",
+      "collected_at": "2026-09-03T23:41:12.436503+00:00",
       "is_live": false,
       "is_cache": false,
       "cache_age_minutes": 0.0,
@@ -68,7 +68,7 @@
     {
       "provider_name": "existing_provider",
       "provider_status": "missing_source",
-      "collected_at": "2026-09-03T23:19:57.856121+00:00",
+      "collected_at": "2026-09-03T23:41:12.436517+00:00",
       "is_live": false,
       "is_cache": false,
       "cache_age_minutes": 0.0,
@@ -80,6 +80,6 @@
     }
   ],
   "errors": [],
-  "history_long_rows": 195441,
-  "history_wide_rows": 14240
+  "history_long_rows": 196299,
+  "history_wide_rows": 14300
 }

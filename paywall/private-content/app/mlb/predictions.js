@@ -343,6 +343,11 @@ class DailyPredictionsPage {
         const stale = publicationStatus !== "ready";
         const quality = this.data?.data_quality || {};
         const lagText = Number.isFinite(Number(quality.lag_days)) ? `${Number(quality.lag_days)}d` : "n/a";
+        const officialCount = this.plays.filter((play) => play.issuance_board === "OFFICIAL" || play.issuance_board === "LEGACY_IMPORT").length;
+        const lateAddCount = this.plays.filter((play) => play.issuance_board === "LATE_ADD").length;
+        const issuanceText = this.data?.publication_protocol
+            ? `<span class="prediction-run-meta__item">Official <strong>${officialCount}</strong></span><span class="prediction-run-meta__item">Late adds <strong>${lateAddCount}</strong></span>`
+            : "";
 
         if (this.elements.runMeta && window.CardVault) {
             this.elements.runMeta.innerHTML = `
@@ -351,6 +356,7 @@ class DailyPredictionsPage {
                 <span class="prediction-run-meta__item">Data through <strong>${this.escapeHtml(throughDate)}</strong></span>
                 <span class="prediction-run-meta__item">Lag <strong>${this.escapeHtml(lagText)}</strong></span>
                 <span class="prediction-run-meta__item">Signals <strong>${this.plays.length}</strong></span>
+                ${issuanceText}
                 <span class="prediction-run-meta__item">Policy <strong>${this.escapeHtml(policy)}</strong></span>
             `;
         } else if (this.elements.runMeta) {
@@ -381,9 +387,14 @@ class DailyPredictionsPage {
             this.elements.empty.style.display = "none";
         }
 
-        this.elements.cards.innerHTML = this.plays
-            .map((play, index) => cv.renderPredictionCard(play, index))
-            .join("");
+        const official = this.plays.filter((play) => play.issuance_board !== "LATE_ADD");
+        const lateAdds = this.plays.filter((play) => play.issuance_board === "LATE_ADD");
+        const renderGroup = (label, plays, offset = 0) => plays.length
+            ? `<section class="prediction-issuance-group"><h3>${this.escapeHtml(label)}</h3>${plays.map((play, index) => cv.renderPredictionCard(play, offset + index)).join("")}</section>`
+            : "";
+        this.elements.cards.innerHTML = this.data?.publication_protocol
+            ? `${renderGroup("11:30 Official Board", official)}${renderGroup("5:30 Late Adds", lateAdds, official.length)}`
+            : this.plays.map((play, index) => cv.renderPredictionCard(play, index)).join("");
     }
 
     renderV4Singles() {

@@ -32,16 +32,15 @@
     "direction_policy": "OVER_ONLY",
     "eligible_anchor_count": 1,
     "filter_rejections": {
-      "history_too_short": 8,
-      "history_too_stale": 8,
+      "history_too_short": 7,
+      "history_too_stale": 5,
       "hit_survival_consensus_too_low": 5,
       "hit_survival_probability_too_low": 1,
-      "leg_probability_too_low": 44,
-      "leg_value_too_low": 13,
-      "not_over": 563,
-      "official_game_closed": 3,
-      "price_outside_playable_range": 34,
-      "unconfirmed_market_price": 213,
+      "leg_probability_too_low": 29,
+      "leg_value_too_low": 7,
+      "not_over": 565,
+      "price_outside_playable_range": 26,
+      "unconfirmed_market_price": 247,
       "unsupported_anchor_target": 25
     },
     "gates": {
@@ -104,7 +103,7 @@
         "4": 0.18
       }
     },
-    "generated_at_utc": "2026-09-03T23:22:41.072161+00:00",
+    "generated_at_utc": "2026-09-03T23:44:20.182269+00:00",
     "hit_survival_validation": {
       "calibration": {
         "brier_score": 0.24259946235125276,
@@ -536,18 +535,18 @@
     "withhold_threshold_days": 60
   },
   "filter_rejections": {
-    "core_price_too_heavily_juiced": 25,
-    "core_price_too_long": 13,
-    "edge_too_small": 192,
-    "expected_value_too_low": 4,
-    "history_too_short": 94,
-    "hit_probability_too_low": 34,
+    "core_price_too_heavily_juiced": 15,
+    "core_price_too_long": 14,
+    "edge_too_small": 193,
+    "expected_value_too_low": 2,
+    "history_too_short": 97,
+    "hit_probability_too_low": 25,
     "prediction_too_low": 32,
-    "side_price_unconfirmed": 108,
-    "synthetic_market_source": 412
+    "side_price_unconfirmed": 75,
+    "synthetic_market_source": 463
   },
-  "generated_at_utc": "2026-09-03T23:27:29.727728+00:00",
-  "mlb_team_market_generated_at_utc": "2026-09-03T23:27:30.182811+00:00",
+  "generated_at_utc": "2026-09-03T23:50:07.197913+00:00",
+  "mlb_team_market_generated_at_utc": "2026-09-03T23:50:07.663273+00:00",
   "mlb_team_market_plays": [],
   "mlb_team_market_status": "ok",
   "model_run_id": "mlb_high_precision_selector_v2",
@@ -581,12 +580,12 @@
   },
   "parlays": {
     "action": "ACT",
-    "calibration_as_of": "2026-09-03T23:27:06.437476+00:00",
-    "calibration_snapshot_id": "f55a4974a7b0ce3c",
-    "calibration_snapshot_sha256": "f55a4974a7b0ce3c9170cfcd9606406d142faffc757c398ffbc229b1e005a69f",
+    "calibration_as_of": "2026-09-03T23:49:38.856101+00:00",
+    "calibration_snapshot_id": "70fbdbb416eb6fcb",
+    "calibration_snapshot_sha256": "70fbdbb416eb6fcbf07d42fef09e1cd078986b45ff94af1f70f6c52fa92f222e",
     "decision_record": {
       "action": 1,
-      "candidate_universe_size": 381,
+      "candidate_universe_size": 206,
       "eligible": true,
       "policy_version": "PARLAY_POLICY_V2_TWO_LEG_SINGLE_ACTION",
       "world_certificate_diagnostics": {
@@ -601,7 +600,7 @@
       },
       "world_gate_mode": "OBSERVE_ONLY"
     },
-    "decision_timestamp_utc": "2026-09-03T23:27:26.580521+00:00",
+    "decision_timestamp_utc": "2026-09-03T23:50:04.020349+00:00",
     "eligibility_reason": "operationally_eligible",
     "eligible": true,
     "evidence_status": {
@@ -890,7 +889,7 @@
     "certificate_status": "NO_ACTIVE_PROSPECTIVE_CERTIFICATE",
     "complete_slate_capture_passed": true,
     "full_policy_replay_available_for_snapshot": true,
-    "generated_at_utc": "2026-09-03T23:20:29.783983+00:00",
+    "generated_at_utc": "2026-09-03T23:41:45.381585+00:00",
     "historical_evidence_labels": [
       "SELECTED_ONLY_HISTORY",
       "SELECTED_ONLY_HISTORY"
@@ -911,13 +910,23 @@
     "run_date": "2026-09-03",
     "schema_version": "MLB_POLICY_GOVERNANCE_STATUS_V1",
     "slate_id": "MLB_20260903",
-    "snapshot_id": "mlb_20260903_231939Z_f93815affeed",
-    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260903/governance/slates/MLB_20260903/mlb_20260903_231939Z_f93815affeed/manifest.json",
+    "snapshot_id": "mlb_20260903_234054Z_917ccb4775bf",
+    "snapshot_manifest": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/daily_runs/20260903/governance/slates/MLB_20260903/mlb_20260903_234054Z_917ccb4775bf/manifest.json",
     "staking_enabled": false
   },
   "policy_profile": "premium_confidence_value_frontier_v19_shadow",
   "publication_message": "Board passed publication checks.",
-  "publication_state": "published_current_pool",
+  "publication_protocol": {
+    "added_this_run": 0,
+    "candidate_count": 0,
+    "candidate_source": "latest_candidates.json",
+    "issued_count": 0,
+    "issued_picks_immutable": true,
+    "issued_source": "history/issued/2026-09-03.json",
+    "mode": "DISCOVER",
+    "public_pick_retention": 1.0
+  },
+  "publication_state": "PRELIMINARY_DISCOVERY",
   "publication_status": "ready",
   "run_date": "2026-09-03",
   "selection": {
@@ -1014,42 +1023,17 @@
     "avg_graded_hit_rate": 0.6286754999999999,
     "avg_precision_score": 0.7489095,
     "avg_value_score": 0.3848046723535,
-    "closed_game_cards_suppressed": 2,
+    "closed_game_cards_suppressed": 0,
     "duplicate_cards_suppressed": 0,
     "parlay_pairs": 0,
     "parlay_tagged_plays": 0,
     "play_count": 2,
-    "rejected_rows": 914,
-    "rows_after_filters": 4,
-    "source_play_count": 4,
+    "rejected_rows": 916,
+    "rows_after_filters": 2,
+    "source_play_count": 2,
     "supported_rows": 918
   },
-  "suppressed_closed_games": [
-    {
-      "direction": "OVER",
-      "game_id": "824069",
-      "market_date": "2026-09-03",
-      "market_line": 0.5,
-      "official_game_status": "Warmup",
-      "opponent": "KC",
-      "player": "Joe Mack",
-      "reason": "game is no longer open for pregame predictions",
-      "target": "H",
-      "team": "MIA"
-    },
-    {
-      "direction": "OVER",
-      "game_id": "824069",
-      "market_date": "2026-09-03",
-      "market_line": 0.5,
-      "official_game_status": "Warmup",
-      "opponent": "MIA",
-      "player": "Kyle Isbel",
-      "reason": "game is no longer open for pregame predictions",
-      "target": "H",
-      "team": "KC"
-    }
-  ],
+  "suppressed_closed_games": [],
   "suppressed_duplicates": [],
   "through_date": "2026-09-01",
   "tight_quality_overlay": {
@@ -1111,21 +1095,21 @@
     "certification_started": false,
     "decision": "DATA_CONTRACT_INCOMPLETE",
     "fully_valid_candidates": 0,
-    "generated_at_utc": "2026-09-03T23:29:27.672013Z",
+    "generated_at_utc": "2026-09-03T23:52:21.870911Z",
     "implementation_commit": "55b7d07c1e4b58b362cf5f7afccdbf81ee76d9f0",
-    "normalized_candidates": 27,
+    "normalized_candidates": 15,
     "policy": "UNIFIED_MLB_V2_1",
     "policy_hash": "80f335d2501d54502909d7f8587ebfef56d725a67d44ae125f9df4337d489b1c",
     "production_authorized": false,
     "rejection_count_by_reason": {
-      "CAPABILITY_NOT_SUPPORTED": 27,
-      "LINEUP_INVALID": 27,
-      "PLAYER_STATUS_INVALID": 27,
-      "PROBABILITY_UNAVAILABLE": 27,
-      "QUOTE_FRESHNESS_UNPROVABLE": 27,
-      "SUPPORT_INVALID": 27,
-      "UNCERTAINTY_COMPONENTS_UNAVAILABLE": 27,
-      "UNCERTAINTY_INVALID": 27
+      "CAPABILITY_NOT_SUPPORTED": 15,
+      "LINEUP_INVALID": 15,
+      "PLAYER_STATUS_INVALID": 15,
+      "PROBABILITY_UNAVAILABLE": 15,
+      "QUOTE_FRESHNESS_UNPROVABLE": 15,
+      "SUPPORT_INVALID": 15,
+      "UNCERTAINTY_COMPONENTS_UNAVAILABLE": 15,
+      "UNCERTAINTY_INVALID": 15
     },
     "run_date": "2026-09-03",
     "schema_version": "mlb_v2_1_shadow_web_v1",
