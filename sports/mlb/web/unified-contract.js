@@ -143,7 +143,18 @@
         return new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     };
 
-    const renderProducts = async (record) => {
+    const renderProducts = async (_record) => {
+        // Product decision: the "Previous Parlays & Exotic Picks" section is
+        // no longer shown on the frontend. This function is intentionally a
+        // no-op that also removes any stale copy the browser or a page load
+        // order may have painted, so the section disappears cleanly.
+        const stale = document.getElementById("previousPublishedProducts");
+        if (stale) stale.remove();
+        return;
+
+        // The pre-existing renderer below is kept for reference so this can
+        // be reinstated by removing the `return` above. It never runs today.
+        // eslint-disable-next-line no-unreachable
         if (typeof DailyPredictionsPage === "undefined") return;
         const anchor = document.getElementById("previousPublishedPicks") || document.getElementById("board");
         if (!anchor) return;
