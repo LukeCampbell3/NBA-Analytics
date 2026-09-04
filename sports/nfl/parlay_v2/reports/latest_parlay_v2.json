@@ -1,10 +1,10 @@
 {
   "abstain_reason": "NO_LEG_MARKET_SUPPORT",
   "action": "ABSTAIN",
-  "calibration_as_of": "2026-09-02T22:35:09.058606+00:00",
-  "calibration_snapshot_id": "6b691168859ad0dd",
-  "calibration_snapshot_sha256": "6b691168859ad0ddca8738ff07c7df00b984d6bc54e7558c0d921f404622e19b",
-  "decision_timestamp_utc": "2026-09-02T22:35:09.126753+00:00",
+  "calibration_as_of": "2026-09-04T01:13:07.622129+00:00",
+  "calibration_snapshot_id": "e334655fc78e75e3",
+  "calibration_snapshot_sha256": "e334655fc78e75e3137a7f60acc3f94190d0b1d5ca9c673853862f901b876c0f",
+  "decision_timestamp_utc": "2026-09-04T01:13:07.694530+00:00",
   "eligibility_reason": "operationally_eligible",
   "eligible": true,
   "evidence_status": {
@@ -19,8 +19,8 @@
   "selection_status": "ABSTAIN",
   "shadow_candidate": {
     "adapter_version": "NFL_PARLAY_V2_CANDIDATE_ADAPTER_V1",
-    "candidate_id": "2026-W36|Jalen Hurts|player_pass_yds|OVER|214.5|2978631||Kirk Cousins|player_pass_yds|OVER|213.5|2978648",
-    "joint_probability_estimate": 0.41367071298799996,
+    "candidate_id": "2026-W36|Jalen Hurts|player_pass_yds|OVER|214.5|2978631||Kirk Cousins|player_pass_yds|OVER|212.5|2978648",
+    "joint_probability_estimate": 0.413837487284,
     "joint_probability_method": "independence_binary_world_model",
     "joint_score": 1.0,
     "leg_1": {
@@ -32,20 +32,20 @@
       "model_probability_estimate": 0.646412,
       "player": "Jalen Hurts",
       "player_id": "00-0036389",
-      "quote_timestamp": "2026-09-02T22:33:46.908609+00:00",
+      "quote_timestamp": "2026-09-04T01:12:03.529240+00:00",
       "side": "OVER",
       "target": "player_pass_yds"
     },
     "leg_2": {
-      "book": "betrivers",
+      "book": "caesars",
       "decimal_price": 1.8771929824561404,
       "event_id": "2978648",
       "in_support": true,
-      "line": 213.5,
-      "model_probability_estimate": 0.639949,
+      "line": 212.5,
+      "model_probability_estimate": 0.640207,
       "player": "Kirk Cousins",
       "player_id": "00-0029604",
-      "quote_timestamp": "2026-09-02T22:33:46.908609+00:00",
+      "quote_timestamp": "2026-09-04T01:12:03.529240+00:00",
       "side": "OVER",
       "target": "player_pass_yds"
     },
@@ -60,7 +60,7 @@
     "week_id": "2026-W36",
     "world_diagnostics": {
       "counterexample_count": 3,
-      "counterexample_mass": 0.586329287012,
+      "counterexample_mass": 0.586162512716,
       "nonvacuous_world_certificate": false,
       "retained_probability_mass": 1.0,
       "retained_world_count": 4
