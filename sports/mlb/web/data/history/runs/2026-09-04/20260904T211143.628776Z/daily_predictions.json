@@ -793,7 +793,10 @@
           "sportsbook_deeplink_observed_at_utc": "2026-09-04T21:01:34.482168+00:00",
           "sportsbook_deeplink_source": "fanduel_public",
           "target": "H",
-          "team": "CWS"
+          "team": "CWS",
+          "settlement_status": "pending",
+          "settlement_reason": "game_not_final",
+          "settlement_checked_at": "2026-09-04T23:09:59.306234+00:00"
         },
         {
           "batting_order": "100",
@@ -862,7 +865,10 @@
           "sportsbook_deeplink_observed_at_utc": "2026-09-04T21:01:34.482168+00:00",
           "sportsbook_deeplink_source": "fanduel_public",
           "target": "TB",
-          "team": "CHC"
+          "team": "CHC",
+          "settlement_status": "pending",
+          "settlement_reason": "game_not_final",
+          "settlement_checked_at": "2026-09-04T23:09:59.306234+00:00"
         }
       ],
       "maximum_decimal_price": 6.0,
@@ -1715,7 +1721,10 @@
         "quote_timestamp": "20260904",
         "side": "OVER",
         "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.184538137&selectionId=11497449",
-        "target": "TB"
+        "target": "TB",
+        "settlement_status": "pending",
+        "settlement_reason": "game_not_final",
+        "settlement_checked_at": "2026-09-04T23:09:59.306234+00:00"
       },
       "leg_2": {
         "book": "real",
@@ -1758,7 +1767,10 @@
         "quote_timestamp": "20260904",
         "side": "OVER",
         "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.184552970&selectionId=17511224",
-        "target": "TB"
+        "target": "TB",
+        "settlement_status": "pending",
+        "settlement_reason": "game_not_final",
+        "settlement_checked_at": "2026-09-04T23:09:59.306234+00:00"
       },
       "predictive_version": "H_OVER_RANKER_V1+MULTI_TARGET",
       "slate_id": "20260904",
@@ -1834,7 +1846,10 @@
         "quote_timestamp": "20260904",
         "side": "OVER",
         "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.184537522&selectionId=23552186",
-        "target": "TB"
+        "target": "TB",
+        "settlement_status": "pending",
+        "settlement_reason": "game_not_final",
+        "settlement_checked_at": "2026-09-04T23:09:59.306234+00:00"
       },
       "leg_2": {
         "book": "real",
@@ -1877,7 +1892,10 @@
         "quote_timestamp": "20260904",
         "side": "OVER",
         "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.184538137&selectionId=60489486",
-        "target": "TB"
+        "target": "TB",
+        "settlement_status": "pending",
+        "settlement_reason": "game_not_final",
+        "settlement_checked_at": "2026-09-04T23:09:59.306234+00:00"
       },
       "predictive_version": "H_OVER_RANKER_V1+MULTI_TARGET",
       "slate_id": "20260904",
@@ -2053,7 +2071,11 @@
       "starter_history_rows": 0,
       "target": "H",
       "team": "CLE",
-      "value_score": 0.527602721706
+      "value_score": 0.527602721706,
+      "settlement_status": "won",
+      "settlement_actual_value": 2.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-09-04T23:09:59.306234+00:00"
     }
   ],
   "policy_governance": {
