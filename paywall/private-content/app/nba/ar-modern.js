@@ -1,21 +1,32 @@
 /**
- * Drive-Pass -- modernized frontend controller.
+ * Advantage-Routing (Modern) -- shared frontend controller.
  *
- * Standalone page controller (Drive-Pass only). The shared
- * `advantage-analysis-page.js` engine that also powers the Post-Pass page
- * is intentionally NOT modified; Post-Pass keeps using it verbatim while
- * Drive-Pass gets this dedicated modern implementation.
+ * One implementation for both the Drive-Pass and Post-Pass pages. The
+ * host page selects mode via `window.AR_MODERN_CONFIG` before loading
+ * this script:
  *
- * Reads the same per-player artifacts under `data/advantage-routing/` --
- * no server or data changes -- and renders them into a mobile-first,
- * savant / craftednba-inspired layout with a hero card, section tabs,
- * a real half-court zone chart, and a live simulator.
+ *   window.AR_MODERN_CONFIG = {
+ *     mode: "drive" | "post",
+ *     pageLabel: "Drive-Pass" | "Post-Pass",
+ *     modeLabel: "drive" | "post",
+ *   };
+ *
+ * The legacy `advantage-analysis-page.js` engine is intentionally left in
+ * place for any other route that still points at it. Reads the same
+ * per-player artifacts under `data/advantage-routing/` -- no data or
+ * server changes -- and renders them into a mobile-first, savant /
+ * craftednba-inspired layout with a hero card, section tabs, a real
+ * half-court zone chart, and a live simulator.
  */
 (function () {
     "use strict";
 
     const DATA_ROOT = "data/advantage-routing";
-    const MODE = "drive";
+    const CONFIG = Object.assign(
+        { mode: "drive", pageLabel: "Drive-Pass", modeLabel: "drive" },
+        (typeof window !== "undefined" && window.AR_MODERN_CONFIG) || {}
+    );
+    const MODE = CONFIG.mode;
 
     const ZONE_LABELS = {
         RIM: "Rim",
@@ -26,11 +37,11 @@
     };
 
     const ZONE_VAR = {
-        RIM: "--dp-zone-rim",
-        SHORT_PAINT: "--dp-zone-short",
-        MIDRANGE: "--dp-zone-mid",
-        CORNER_3: "--dp-zone-c3",
-        ABOVE_BREAK_3: "--dp-zone-ab3",
+        RIM: "--arm-zone-rim",
+        SHORT_PAINT: "--arm-zone-short",
+        MIDRANGE: "--arm-zone-mid",
+        CORNER_3: "--arm-zone-c3",
+        ABOVE_BREAK_3: "--arm-zone-ab3",
     };
 
     const ZONE_ORDER = ["RIM", "SHORT_PAINT", "MIDRANGE", "CORNER_3", "ABOVE_BREAK_3"];
@@ -72,18 +83,18 @@
 
     function badgeClass(status) {
         return {
-            OBSERVED: "dp-badge--observed",
-            DERIVED: "dp-badge--derived",
-            RECONSTRUCTED: "dp-badge--reconstructed",
-            SIMULATED: "dp-badge--simulated",
-            UNAVAILABLE: "dp-badge--unavailable",
-        }[status] || "dp-badge--unavailable";
+            OBSERVED: "arm-badge--observed",
+            DERIVED: "arm-badge--derived",
+            RECONSTRUCTED: "arm-badge--reconstructed",
+            SIMULATED: "arm-badge--simulated",
+            UNAVAILABLE: "arm-badge--unavailable",
+        }[status] || "arm-badge--unavailable";
     }
 
     function badge(status, opts = {}) {
         const cls = badgeClass(status);
         const label = opts.short ? status.slice(0, 3) : status;
-        return `<span class="dp-badge ${cls}" title="${esc(status || "n/a")}">${esc(label || "n/a")}</span>`;
+        return `<span class="arm-badge ${cls}" title="${esc(status || "n/a")}">${esc(label || "n/a")}</span>`;
     }
 
     function initialsFromName(name) {
@@ -216,7 +227,7 @@
             parts.push(`<text x="${scale(pos.fx, "x")}" y="${scale(pos.fy, "y")}"
                 text-anchor="middle" dominant-baseline="middle"
                 font-size="18" font-weight="700"
-                fill="currentColor" style="paint-order: stroke; stroke: var(--dp-bg-soft); stroke-width: 3px; stroke-linejoin: round;">${c}</text>`);
+                fill="currentColor" style="paint-order: stroke; stroke: var(--arm-bg-soft); stroke-width: 3px; stroke-linejoin: round;">${c}</text>`);
         });
 
         svgEl.setAttribute("viewBox", `0 0 ${W} ${H}`);
@@ -225,7 +236,7 @@
 
     // ---------------- controller ----------------
 
-    class DrivePassPage {
+    class ARModernPage {
         constructor() {
             this.el = this.collect();
             this.players = [];
@@ -242,20 +253,20 @@
 
         collect() {
             const ids = [
-                "dpSearch", "dpPlayerSelect", "dpHeroAvatar", "dpHeroName", "dpHeroMeta",
-                "dpStatStrip", "dpUnavailable", "dpTabs",
-                "dpOverviewGrid",
-                "dpGravityChart",
-                "dpRecipientSort", "dpRecipientsList",
-                "dpCourt", "dpCourtLegend",
-                "dpSummary",
-                "dpUsage", "dpUsageOut", "dpPass", "dpPassOut",
-                "dpElast", "dpElastOut", "dpRet", "dpRetOut",
-                "dpTov", "dpTovOut", "dpSat", "dpSatOut",
-                "dpAdvancedBtn", "dpAdvancedGroup", "dpResetBtn",
-                "dpCausality", "dpBvsBaseline", "dpBvsSim", "dpScenario", "dpMonteCarlo",
-                "dpCompareChips", "dpCompareTableWrap", "dpCompareAdd",
-                "dpProvenance",
+                "armSearch", "armPlayerSelect", "armHeroAvatar", "armHeroName", "armHeroMeta",
+                "armStatStrip", "armUnavailable", "armTabs",
+                "armOverviewGrid",
+                "armGravityChart",
+                "armRecipientSort", "armRecipientsList",
+                "armCourt", "armCourtLegend",
+                "armSummary",
+                "armUsage", "armUsageOut", "armPass", "armPassOut",
+                "armElast", "armElastOut", "armRet", "armRetOut",
+                "armTov", "armTovOut", "armSat", "armSatOut",
+                "armAdvancedBtn", "armAdvancedGroup", "armResetBtn",
+                "armCausality", "armBvsBaseline", "armBvsSim", "armScenario", "armMonteCarlo",
+                "armCompareChips", "armCompareTableWrap", "armCompareAdd",
+                "armProvenance",
             ];
             const map = {};
             ids.forEach((id) => { map[id] = document.getElementById(id); });
@@ -272,8 +283,8 @@
                 navLinks: [
                     { label: "Board", href: "/nba/predictions/" },
                     { label: "Stats", href: "/nba/stats/" },
-                    { label: "Drive-Pass", href: "/nba/drive-pass/", active: true },
-                    { label: "Post-Pass", href: "/nba/post-pass/" },
+                    { label: "Drive-Pass", href: "/nba/drive-pass/", active: CONFIG.pageLabel === "Drive-Pass" },
+                    { label: "Post-Pass", href: "/nba/post-pass/", active: CONFIG.pageLabel === "Post-Pass" },
                     { label: "Method", href: "/nba/prediction-about/" },
                 ],
                 showDisclaimer: true,
@@ -281,22 +292,22 @@
         }
 
         bind() {
-            if (this.el.dpPlayerSelect) {
-                this.el.dpPlayerSelect.addEventListener("change", (e) => this.selectPlayer(e.target.value));
+            if (this.el.armPlayerSelect) {
+                this.el.armPlayerSelect.addEventListener("change", (e) => this.selectPlayer(e.target.value));
             }
-            if (this.el.dpSearch) {
-                this.el.dpSearch.addEventListener("input", () => this.filterPlayers());
+            if (this.el.armSearch) {
+                this.el.armSearch.addEventListener("input", () => this.filterPlayers());
             }
-            if (this.el.dpTabs) {
-                this.el.dpTabs.addEventListener("click", (e) => {
-                    const btn = e.target.closest(".dp-tab");
+            if (this.el.armTabs) {
+                this.el.armTabs.addEventListener("click", (e) => {
+                    const btn = e.target.closest(".arm-tab");
                     if (!btn) return;
                     this.setSection(btn.dataset.section);
                 });
             }
-            if (this.el.dpRecipientSort) {
-                this.el.dpRecipientSort.addEventListener("click", (e) => {
-                    const btn = e.target.closest(".dp-sort-chip");
+            if (this.el.armRecipientSort) {
+                this.el.armRecipientSort.addEventListener("click", (e) => {
+                    const btn = e.target.closest(".arm-sort-chip");
                     if (!btn) return;
                     const key = btn.dataset.sort;
                     if (this.recipientSort.key === key) {
@@ -307,34 +318,34 @@
                     this.renderRecipients();
                 });
             }
-            if (this.el.dpAdvancedBtn && this.el.dpAdvancedGroup) {
-                this.el.dpAdvancedBtn.addEventListener("click", () => {
-                    const open = this.el.dpAdvancedBtn.getAttribute("aria-expanded") === "true";
-                    this.el.dpAdvancedBtn.setAttribute("aria-expanded", String(!open));
-                    this.el.dpAdvancedGroup.hidden = open;
-                    this.el.dpAdvancedBtn.textContent = open ? "Show advanced controls" : "Hide advanced controls";
+            if (this.el.armAdvancedBtn && this.el.armAdvancedGroup) {
+                this.el.armAdvancedBtn.addEventListener("click", () => {
+                    const open = this.el.armAdvancedBtn.getAttribute("aria-expanded") === "true";
+                    this.el.armAdvancedBtn.setAttribute("aria-expanded", String(!open));
+                    this.el.armAdvancedGroup.hidden = open;
+                    this.el.armAdvancedBtn.textContent = open ? "Show advanced controls" : "Hide advanced controls";
                 });
             }
-            [this.el.dpUsage, this.el.dpPass, this.el.dpElast, this.el.dpRet,
-             this.el.dpTov, this.el.dpSat, this.el.dpScenario].filter(Boolean).forEach((c) =>
+            [this.el.armUsage, this.el.armPass, this.el.armElast, this.el.armRet,
+             this.el.armTov, this.el.armSat, this.el.armScenario].filter(Boolean).forEach((c) =>
                 c.addEventListener("input", () => this.renderSimulation())
             );
-            if (this.el.dpScenario) {
-                this.el.dpScenario.addEventListener("change", () => this.renderSimulation());
+            if (this.el.armScenario) {
+                this.el.armScenario.addEventListener("change", () => this.renderSimulation());
             }
-            if (this.el.dpResetBtn) {
-                this.el.dpResetBtn.addEventListener("click", () => this.resetSimToBaseline());
+            if (this.el.armResetBtn) {
+                this.el.armResetBtn.addEventListener("click", () => this.resetSimToBaseline());
             }
-            if (this.el.dpCompareAdd) {
-                this.el.dpCompareAdd.addEventListener("click", () => this.addCompareSlot());
+            if (this.el.armCompareAdd) {
+                this.el.armCompareAdd.addEventListener("click", () => this.addCompareSlot());
             }
-            if (this.el.dpCompareChips) {
-                this.el.dpCompareChips.addEventListener("click", (e) => {
+            if (this.el.armCompareChips) {
+                this.el.armCompareChips.addEventListener("click", (e) => {
                     const btn = e.target.closest("[data-remove-slug]");
                     if (!btn) return;
                     this.removeCompareSlug(btn.dataset.removeSlug);
                 });
-                this.el.dpCompareChips.addEventListener("change", (e) => {
+                this.el.armCompareChips.addEventListener("change", (e) => {
                     const sel = e.target.closest("select[data-compare-select]");
                     if (!sel) return;
                     const slug = sel.value;
@@ -357,36 +368,36 @@
                     // Preselect first player
                     this.compareSlugs = this.players.slice(0, 2).map((p) => p.slug);
                     await this.selectPlayer(this.players[0].slug);
-                } else if (this.el.dpHeroMeta) {
-                    this.el.dpHeroMeta.textContent = "No advantage-routing artifacts are available yet.";
+                } else if (this.el.armHeroMeta) {
+                    this.el.armHeroMeta.textContent = "No advantage-routing artifacts are available yet.";
                 }
             } catch (e) {
                 console.error(e);
-                if (this.el.dpHeroMeta) {
-                    this.el.dpHeroMeta.textContent = `Unable to load advantage-routing data: ${e.message}`;
+                if (this.el.armHeroMeta) {
+                    this.el.armHeroMeta.textContent = `Unable to load advantage-routing data: ${e.message}`;
                 }
             }
         }
 
         populateSelect() {
-            if (!this.el.dpPlayerSelect) return;
-            this.el.dpPlayerSelect.innerHTML = this.players
+            if (!this.el.armPlayerSelect) return;
+            this.el.armPlayerSelect.innerHTML = this.players
                 .map((p) => `<option value="${esc(p.slug)}">${esc(p.name)}</option>`).join("");
         }
 
         filterPlayers() {
-            if (!this.el.dpPlayerSelect || !this.el.dpSearch) return;
-            const q = this.el.dpSearch.value.toLowerCase().trim();
+            if (!this.el.armPlayerSelect || !this.el.armSearch) return;
+            const q = this.el.armSearch.value.toLowerCase().trim();
             const matches = this.players.filter((p) => !q || p.name.toLowerCase().includes(q));
-            const preserveValue = this.el.dpPlayerSelect.value;
-            this.el.dpPlayerSelect.innerHTML = matches
+            const preserveValue = this.el.armPlayerSelect.value;
+            this.el.armPlayerSelect.innerHTML = matches
                 .map((p) => `<option value="${esc(p.slug)}">${esc(p.name)}</option>`).join("");
             // Prefer to keep the current player if still in the filtered set,
             // otherwise auto-select the first match.
             if (matches.some((p) => p.slug === preserveValue)) {
-                this.el.dpPlayerSelect.value = preserveValue;
+                this.el.armPlayerSelect.value = preserveValue;
             } else if (matches.length) {
-                this.el.dpPlayerSelect.value = matches[0].slug;
+                this.el.armPlayerSelect.value = matches[0].slug;
                 this.selectPlayer(matches[0].slug);
             }
         }
@@ -404,14 +415,14 @@
             try {
                 const data = await this.loadPlayer(slug);
                 this.currentPlayer = data;
-                if (this.el.dpPlayerSelect && this.el.dpPlayerSelect.value !== slug) {
-                    this.el.dpPlayerSelect.value = slug;
+                if (this.el.armPlayerSelect && this.el.armPlayerSelect.value !== slug) {
+                    this.el.armPlayerSelect.value = slug;
                 }
                 this.renderAll();
             } catch (e) {
                 console.error(e);
-                if (this.el.dpHeroMeta) {
-                    this.el.dpHeroMeta.textContent = `Unable to load ${slug}: ${e.message}`;
+                if (this.el.armHeroMeta) {
+                    this.el.armHeroMeta.textContent = `Unable to load ${slug}: ${e.message}`;
                 }
             }
         }
@@ -419,12 +430,12 @@
         setSection(id) {
             if (!id) return;
             this.activeSection = id;
-            document.querySelectorAll(".dp-tab").forEach((t) => {
+            document.querySelectorAll(".arm-tab").forEach((t) => {
                 t.classList.toggle("is-active", t.dataset.section === id);
                 t.setAttribute("aria-selected", String(t.dataset.section === id));
             });
             document.querySelectorAll("[data-panel]").forEach((p) => {
-                p.classList.toggle("dp-panel-hidden", p.dataset.panel !== id);
+                p.classList.toggle("arm-panel-hidden", p.dataset.panel !== id);
             });
         }
 
@@ -448,21 +459,21 @@
         renderHero() {
             const d = this.currentPlayer;
             const b = d.baseline;
-            if (this.el.dpHeroName) this.el.dpHeroName.textContent = d.player.name;
-            if (this.el.dpHeroMeta) {
+            if (this.el.armHeroName) this.el.armHeroName.textContent = d.player.name;
+            if (this.el.armHeroMeta) {
                 const gp = metricValue(b.games_played);
                 const mpg = metricValue(b.minutes_per_game);
-                this.el.dpHeroMeta.innerHTML = [
+                this.el.armHeroMeta.innerHTML = [
                     `<strong>${esc(d.player.season)}</strong> season`,
                     `<strong>${num(gp, 0)}</strong> real games`,
                     `<strong>${num(mpg, 1)}</strong> MPG`,
                     `Sampled <strong>${d.recipients.sample_size}</strong> assists`,
                 ].map((s) => `<span>${s}</span>`).join("");
             }
-            if (this.el.dpHeroAvatar) {
-                this.el.dpHeroAvatar.textContent = initialsFromName(d.player.name);
+            if (this.el.armHeroAvatar) {
+                this.el.armHeroAvatar.textContent = initialsFromName(d.player.name);
             }
-            if (this.el.dpStatStrip) {
+            if (this.el.armStatStrip) {
                 const tiles = [
                     { label: "USG%", metric: b.usage_pct, format: (v) => `${num(v, 1)}%` },
                     { label: "Decision Touches/G", metric: b.decision_touches_per_game, format: (v) => num(v, 1) },
@@ -470,32 +481,33 @@
                     { label: "TOV/G", metric: b.tov_per_game, format: (v) => num(v, 1) },
                     { label: "AST/Touch", metric: b.ast_per_decision_touch, format: (v) => num(v, 3) },
                 ];
-                this.el.dpStatStrip.innerHTML = tiles.map((t) => {
+                this.el.armStatStrip.innerHTML = tiles.map((t) => {
                     const v = metricValue(t.metric);
                     const display = v === null ? "n/a" : t.format(v);
-                    return `<div class="dp-stat-tile" title="${esc(t.metric?.method || t.metric?.source || "")}">
-                        <span class="dp-stat-tile__label">${esc(t.label)}</span>
-                        <span class="dp-stat-tile__value">${esc(display)}</span>
+                    return `<div class="arm-stat-tile" title="${esc(t.metric?.method || t.metric?.source || "")}">
+                        <span class="arm-stat-tile__label">${esc(t.label)}</span>
+                        <span class="arm-stat-tile__value">${esc(display)}</span>
                     </div>`;
                 }).join("");
             }
         }
 
         renderModeNotice() {
-            if (!this.el.dpUnavailable) return;
-            const node = this.currentPlayer.drive;
+            if (!this.el.armUnavailable) return;
+            const node = this.currentPlayer[MODE];
             const rv = node && node.routing_vector;
             if (rv && rv.status === "UNAVAILABLE") {
-                this.el.dpUnavailable.hidden = false;
-                this.el.dpUnavailable.innerHTML =
-                    `<strong>Drive routing-state vector unavailable.</strong> ${esc(rv.reason || "")}`;
+                this.el.armUnavailable.hidden = false;
+                const modeWord = CONFIG.modeLabel.charAt(0).toUpperCase() + CONFIG.modeLabel.slice(1);
+                this.el.armUnavailable.innerHTML =
+                    `<strong>${esc(modeWord)} routing-state vector unavailable.</strong> ${esc(rv.reason || "")}`;
             } else {
-                this.el.dpUnavailable.hidden = true;
+                this.el.armUnavailable.hidden = true;
             }
         }
 
         renderOverview() {
-            if (!this.el.dpOverviewGrid) return;
+            if (!this.el.armOverviewGrid) return;
             const b = this.currentPlayer.baseline;
             const cards = [
                 ["USG%", b.usage_pct, (v) => `${num(v, 1)}%`],
@@ -507,21 +519,21 @@
                 ["Advantage-pass %", b.advantage_pass_pct, (v) => `${num(v, 1)}%`],
                 ["Minutes/G", b.minutes_per_game, (v) => num(v, 1)],
             ];
-            this.el.dpOverviewGrid.innerHTML = cards.map(([label, metric, fmt]) => {
+            this.el.armOverviewGrid.innerHTML = cards.map(([label, metric, fmt]) => {
                 const v = metricValue(metric);
                 const value = v === null ? "n/a" : fmt(v);
                 const title = metric?.status === "UNAVAILABLE"
                     ? (metric.reason || "")
                     : (metric?.method || metric?.source || "");
-                return `<article class="dp-metric-card" title="${esc(title)}">
-                    <div class="dp-metric-card__label">${esc(label)} ${badge(metric?.status, { short: true })}</div>
-                    <div class="dp-metric-card__value">${esc(value)}</div>
+                return `<article class="arm-metric-card" title="${esc(title)}">
+                    <div class="arm-metric-card__label">${esc(label)} ${badge(metric?.status, { short: true })}</div>
+                    <div class="arm-metric-card__value">${esc(value)}</div>
                 </article>`;
             }).join("");
         }
 
         renderGravity() {
-            if (!this.el.dpGravityChart) return;
+            if (!this.el.armGravityChart) return;
             const gravity = this.currentPlayer.gravity;
             const rows = GRAVITY_MECHANISMS.map((mech) => {
                 const metrics = gravity.components[mech.key] || {};
@@ -536,26 +548,26 @@
                     const val = m.value === null || m.value === undefined
                         ? "n/a"
                         : (typeof m.value === "number" ? m.value.toFixed(3) : String(m.value));
-                    return `<span class="dp-chip" title="${esc(m.method || m.source || m.reason || "")}">
+                    return `<span class="arm-chip" title="${esc(m.method || m.source || m.reason || "")}">
                         ${esc(name.toLowerCase().replaceAll("_", " "))}: <strong>${esc(val)}</strong>
                         ${badge(m.status, { short: true })}
                     </span>`;
                 }).join("");
                 const badgeHtml = badge(primary ? primary.status : "UNAVAILABLE", { short: true });
-                return `<div class="dp-gravity-row">
-                    <div class="dp-gravity-name">${esc(mech.label)} ${badgeHtml}</div>
-                    <div class="dp-gravity-bar">
-                        <div class="dp-gravity-bar__fill${anyReal ? "" : " dp-gravity-bar__fill--muted"}"
+                return `<div class="arm-gravity-row">
+                    <div class="arm-gravity-name">${esc(mech.label)} ${badgeHtml}</div>
+                    <div class="arm-gravity-bar">
+                        <div class="arm-gravity-bar__fill${anyReal ? "" : " arm-gravity-bar__fill--muted"}"
                              style="width:${anyReal ? barWidth.toFixed(1) : 100}%"></div>
                     </div>
-                    <div class="dp-gravity-components">${chips || `<span class="dp-chip">no components published</span>`}</div>
+                    <div class="arm-gravity-components">${chips || `<span class="arm-chip">no components published</span>`}</div>
                 </div>`;
             }).join("");
-            this.el.dpGravityChart.innerHTML = rows;
+            this.el.armGravityChart.innerHTML = rows;
         }
 
         renderRecipients() {
-            if (!this.el.dpRecipientsList) return;
+            if (!this.el.armRecipientsList) return;
             const network = this.currentPlayer.recipients;
             const recipients = (network.recipients || []).slice();
             const { key, dir } = this.recipientSort;
@@ -570,21 +582,21 @@
                 (m, r) => Math.max(m, r.assists?.value || 0), 0
             ) || 1;
 
-            if (this.el.dpRecipientSort) {
-                this.el.dpRecipientSort.innerHTML = RECIPIENT_SORTS.map((s) => {
+            if (this.el.armRecipientSort) {
+                this.el.armRecipientSort.innerHTML = RECIPIENT_SORTS.map((s) => {
                     const active = s.key === key;
-                    return `<button class="dp-sort-chip${active ? " is-active" : ""}"
+                    return `<button class="arm-sort-chip${active ? " is-active" : ""}"
                         data-sort="${esc(s.key)}" data-dir="${esc(dir)}" type="button">${esc(s.label)}</button>`;
                 }).join("");
             }
 
             if (!recipients.length) {
-                this.el.dpRecipientsList.innerHTML =
-                    `<p class="dp-caveat">No sampled recipients in this artifact.</p>`;
+                this.el.armRecipientsList.innerHTML =
+                    `<p class="arm-caveat">No sampled recipients in this artifact.</p>`;
                 return;
             }
 
-            this.el.dpRecipientsList.innerHTML = recipients.map((r) => {
+            this.el.armRecipientsList.innerHTML = recipients.map((r) => {
                 const assists = r.assists?.value || 0;
                 const share = (r.assist_share?.value || 0) * 100;
                 const hv = r.high_value_share_index?.value;
@@ -592,13 +604,13 @@
                     ? (ZONE_LABELS[r.most_common_resulting_shot] || r.most_common_resulting_shot)
                     : "n/a";
                 const pct = (assists / maxAssists) * 100;
-                return `<div class="dp-recipient-row">
-                    <div class="dp-recipient-row__name">${esc(r.recipient_label)}</div>
-                    <div class="dp-recipient-row__num">${num(assists, 0)} ast</div>
-                    <div class="dp-recipient-row__bar">
-                        <div class="dp-recipient-row__bar-fill" style="width:${pct.toFixed(1)}%"></div>
+                return `<div class="arm-recipient-row">
+                    <div class="arm-recipient-row__name">${esc(r.recipient_label)}</div>
+                    <div class="arm-recipient-row__num">${num(assists, 0)} ast</div>
+                    <div class="arm-recipient-row__bar">
+                        <div class="arm-recipient-row__bar-fill" style="width:${pct.toFixed(1)}%"></div>
                     </div>
-                    <div class="dp-recipient-row__meta">
+                    <div class="arm-recipient-row__meta">
                         <span>Share <strong>${num(share, 1)}%</strong></span>
                         <span>High-value idx <strong>${hv === null || hv === undefined ? "n/a" : num(hv, 2)}</strong></span>
                         <span>Common shot <strong>${esc(zoneLabel)}</strong></span>
@@ -608,7 +620,7 @@
         }
 
         renderShotDest() {
-            if (!this.el.dpCourt) return;
+            if (!this.el.armCourt) return;
             const network = this.currentPlayer.recipients;
             const zoneTotals = {};
             let total = 0;
@@ -619,14 +631,14 @@
                 });
             });
 
-            drawCourt(this.el.dpCourt, zoneTotals, total);
+            drawCourt(this.el.armCourt, zoneTotals, total);
 
-            if (this.el.dpCourtLegend) {
-                this.el.dpCourtLegend.innerHTML = ZONE_ORDER.map((zone) => {
+            if (this.el.armCourtLegend) {
+                this.el.armCourtLegend.innerHTML = ZONE_ORDER.map((zone) => {
                     const c = zoneTotals[zone] || 0;
                     const share = total ? ((c / total) * 100).toFixed(1) : "0.0";
-                    return `<div class="dp-legend-item">
-                        <span class="dp-legend-swatch" style="background: var(${ZONE_VAR[zone]});"></span>
+                    return `<div class="arm-legend-item">
+                        <span class="arm-legend-swatch" style="background: var(${ZONE_VAR[zone]});"></span>
                         <span>${esc(ZONE_LABELS[zone])}</span>
                         <strong>${c} &middot; ${share}%</strong>
                     </div>`;
@@ -635,18 +647,18 @@
         }
 
         renderSummary() {
-            if (!this.el.dpSummary) return;
+            if (!this.el.armSummary) return;
             const s = this.currentPlayer.research_summary || {};
             const chips = (s.archetype || []).map(
-                (a) => `<span class="dp-archetype">${esc(a.replaceAll("_", " "))}</span>`
+                (a) => `<span class="arm-archetype">${esc(a.replaceAll("_", " "))}</span>`
             ).join("");
             const conf = Number.isFinite(s.confidence) ? `${(s.confidence * 100).toFixed(0)}%` : "n/a";
             const receivers = (s.best_recipients || []).map(
                 (r) => `${esc(r.label)} <strong>(${num((r.assist_share || 0) * 100, 1)}%)</strong>`
             ).join(", ");
-            const caveats = (s.caveats || []).map((c) => `<p class="dp-caveat">${esc(c)}</p>`).join("");
-            this.el.dpSummary.innerHTML = `
-                <div>${chips || ""}<span class="dp-badge dp-badge--derived">Confidence ${conf}</span></div>
+            const caveats = (s.caveats || []).map((c) => `<p class="arm-caveat">${esc(c)}</p>`).join("");
+            this.el.armSummary.innerHTML = `
+                <div>${chips || ""}<span class="arm-badge arm-badge--derived">Confidence ${conf}</span></div>
                 <p>${esc(s.simulation_finding || "")}</p>
                 <p><strong>Primary gravity:</strong> ${esc((s.primary_gravity || []).join(", ") || "n/a")}</p>
                 <p><strong>Highest-leverage recipients (sampled):</strong> ${receivers || "n/a"}</p>
@@ -658,18 +670,18 @@
         // ---------------- simulator ----------------
 
         resetSimToBaseline() {
-            if (!this.el.dpUsage) return;
+            if (!this.el.armUsage) return;
             const b = this.currentPlayer.baseline;
             const usg = metricValue(b.usage_pct) || 15;
-            this.el.dpUsage.min = Math.max(1, usg * 0.5).toFixed(1);
-            this.el.dpUsage.max = Math.min(40, usg * 3).toFixed(1);
-            this.el.dpUsage.value = usg;
-            if (this.el.dpPass) this.el.dpPass.value = 0;
-            if (this.el.dpElast) this.el.dpElast.value = 0.6;
-            if (this.el.dpRet) this.el.dpRet.value = 100;
-            if (this.el.dpTov) this.el.dpTov.value = 0;
-            if (this.el.dpSat) this.el.dpSat.value = 55;
-            if (this.el.dpScenario) this.el.dpScenario.value = "NEUTRAL";
+            this.el.armUsage.min = Math.max(1, usg * 0.5).toFixed(1);
+            this.el.armUsage.max = Math.min(40, usg * 3).toFixed(1);
+            this.el.armUsage.value = usg;
+            if (this.el.armPass) this.el.armPass.value = 0;
+            if (this.el.armElast) this.el.armElast.value = 0.6;
+            if (this.el.armRet) this.el.armRet.value = 100;
+            if (this.el.armTov) this.el.armTov.value = 0;
+            if (this.el.armSat) this.el.armSat.value = 55;
+            if (this.el.armScenario) this.el.armScenario.value = "NEUTRAL";
             this.renderSimulation();
         }
 
@@ -702,33 +714,33 @@
             let delta = "";
             if (baselineValue !== null && baselineValue !== undefined && Number.isFinite(value)) {
                 const d = value - baselineValue;
-                const cls = d > 0 ? "dp-delta-up" : (d < 0 ? "dp-delta-down" : "");
+                const cls = d > 0 ? "arm-delta-up" : (d < 0 ? "arm-delta-down" : "");
                 delta = ` <span class="${cls}">(${d >= 0 ? "+" : ""}${d.toFixed(digits)})</span>`;
             }
-            return `<div class="dp-bvs-row"><span>${esc(label)}</span><span class="dp-num">${num(value, digits)}${delta}</span></div>`;
+            return `<div class="arm-bvs-row"><span>${esc(label)}</span><span class="arm-num">${num(value, digits)}${delta}</span></div>`;
         }
 
         renderSimulation() {
-            if (!this.el.dpUsage) return;
+            if (!this.el.armUsage) return;
             const d = this.currentPlayer;
             if (!d) return;
             const b = d.baseline;
 
-            const targetUsage = parseFloat(this.el.dpUsage.value);
-            const passTendencyChange = parseFloat(this.el.dpPass.value) / 100;
-            const elasticity = parseFloat(this.el.dpElast.value);
-            const retentionSlider = parseFloat(this.el.dpRet.value) / 100;
-            const turnoverSlider = parseFloat(this.el.dpTov.value) / 100;
-            const saturationK = parseFloat(this.el.dpSat.value) / 100;
+            const targetUsage = parseFloat(this.el.armUsage.value);
+            const passTendencyChange = parseFloat(this.el.armPass.value) / 100;
+            const elasticity = parseFloat(this.el.armElast.value);
+            const retentionSlider = parseFloat(this.el.armRet.value) / 100;
+            const turnoverSlider = parseFloat(this.el.armTov.value) / 100;
+            const saturationK = parseFloat(this.el.armSat.value) / 100;
 
-            if (this.el.dpUsageOut) this.el.dpUsageOut.textContent = `${targetUsage.toFixed(1)}%`;
-            if (this.el.dpPassOut) this.el.dpPassOut.textContent =
+            if (this.el.armUsageOut) this.el.armUsageOut.textContent = `${targetUsage.toFixed(1)}%`;
+            if (this.el.armPassOut) this.el.armPassOut.textContent =
                 `${passTendencyChange >= 0 ? "+" : ""}${(passTendencyChange * 100).toFixed(0)}%`;
-            if (this.el.dpElastOut) this.el.dpElastOut.textContent = elasticity.toFixed(2);
-            if (this.el.dpRetOut) this.el.dpRetOut.textContent = `${(retentionSlider * 100).toFixed(0)}%`;
-            if (this.el.dpTovOut) this.el.dpTovOut.textContent =
+            if (this.el.armElastOut) this.el.armElastOut.textContent = elasticity.toFixed(2);
+            if (this.el.armRetOut) this.el.armRetOut.textContent = `${(retentionSlider * 100).toFixed(0)}%`;
+            if (this.el.armTovOut) this.el.armTovOut.textContent =
                 `${turnoverSlider >= 0 ? "+" : ""}${(turnoverSlider * 100).toFixed(0)}%`;
-            if (this.el.dpSatOut) this.el.dpSatOut.textContent = saturationK.toFixed(2);
+            if (this.el.armSatOut) this.el.armSatOut.textContent = saturationK.toFixed(2);
 
             const baseline = {
                 usage_pct: metricValue(b.usage_pct),
@@ -738,8 +750,8 @@
                 makesPerTouch: metricValue(b.makes_per_decision_touch),
             };
 
-            const advancedOpen = this.el.dpAdvancedBtn &&
-                this.el.dpAdvancedBtn.getAttribute("aria-expanded") === "true";
+            const advancedOpen = this.el.armAdvancedBtn &&
+                this.el.armAdvancedBtn.getAttribute("aria-expanded") === "true";
             const params = {
                 targetUsage, elasticity, passTendencyChange, saturationK,
                 retentionOverride: advancedOpen ? retentionSlider : null,
@@ -747,8 +759,8 @@
             };
             const sim = this.simulateLive(baseline, params);
 
-            if (this.el.dpCausality) {
-                this.el.dpCausality.innerHTML =
+            if (this.el.armCausality) {
+                this.el.armCausality.innerHTML =
                     `Target usage <strong>${targetUsage.toFixed(1)}%</strong> vs. current
                     <strong>${num(baseline.usage_pct, 1)}%</strong>. With decision-touch elasticity
                     <strong>${elasticity.toFixed(2)}</strong>, ${(elasticity * 100).toFixed(0)}% of the
@@ -762,15 +774,15 @@
                     never a forecast.`;
             }
 
-            if (this.el.dpBvsBaseline) {
-                this.el.dpBvsBaseline.innerHTML = [
+            if (this.el.armBvsBaseline) {
+                this.el.armBvsBaseline.innerHTML = [
                     ["Decision touches/G", baseline.decisionTouches, null, 1],
                     ["Assists/G", metricValue(b.ast_per_game), null, 2],
                     ["Turnovers/G", metricValue(b.tov_per_game), null, 2],
                 ].map(([l, v, bv, dg]) => this.bvsRow(l, v, bv, dg)).join("");
             }
-            if (this.el.dpBvsSim) {
-                this.el.dpBvsSim.innerHTML = [
+            if (this.el.armBvsSim) {
+                this.el.armBvsSim.innerHTML = [
                     ["Decision touches/G", sim.simDecisionTouches, metricValue(b.decision_touches_per_game), 1],
                     ["Assists/G", sim.simAssists, metricValue(b.ast_per_game), 2],
                     ["Receiver makes/G", sim.simMakes, null, 2],
@@ -782,12 +794,12 @@
         }
 
         renderMonteCarlo() {
-            if (!this.el.dpMonteCarlo) return;
+            if (!this.el.armMonteCarlo) return;
             const mc = this.currentPlayer.simulation_parameters &&
                        this.currentPlayer.simulation_parameters.monte_carlo;
             if (!mc || !mc.assists) {
-                this.el.dpMonteCarlo.innerHTML =
-                    `<p class="dp-caveat">${badge("UNAVAILABLE")} No Monte Carlo result available for this player.</p>`;
+                this.el.armMonteCarlo.innerHTML =
+                    `<p class="arm-caveat">${badge("UNAVAILABLE")} No Monte Carlo result available for this player.</p>`;
                 return;
             }
             const cards = [
@@ -796,20 +808,20 @@
                 ["Receiver makes/G", mc.receiver_makes],
             ];
             const cardsHtml = cards.map(([label, stats]) => `
-                <div class="dp-mc-card">
-                    <span class="dp-mc-card__label">${esc(label)}</span>
-                    <span class="dp-mc-card__value">${num(stats.median, 2)}</span>
-                    <span class="dp-mc-card__range">P10 ${num(stats.p10, 2)} &ndash; P90 ${num(stats.p90, 2)}</span>
-                    <div class="dp-mc-card__bar"><div class="dp-mc-card__bar-fill" style="width: 100%"></div></div>
+                <div class="arm-mc-card">
+                    <span class="arm-mc-card__label">${esc(label)}</span>
+                    <span class="arm-mc-card__value">${num(stats.median, 2)}</span>
+                    <span class="arm-mc-card__range">P10 ${num(stats.p10, 2)} &ndash; P90 ${num(stats.p90, 2)}</span>
+                    <div class="arm-mc-card__bar"><div class="arm-mc-card__bar-fill" style="width: 100%"></div></div>
                 </div>`).join("");
-            this.el.dpMonteCarlo.innerHTML = cardsHtml
-                + `<p class="dp-caveat" style="grid-column: 1 / -1">${mc.n_draws} draws, seed ${mc.seed} (reproducible).</p>`;
+            this.el.armMonteCarlo.innerHTML = cardsHtml
+                + `<p class="arm-caveat" style="grid-column: 1 / -1">${mc.n_draws} draws, seed ${mc.seed} (reproducible).</p>`;
         }
 
         // ---------------- compare ----------------
 
         addCompareSlot() {
-            if (!this.el.dpCompareChips) return;
+            if (!this.el.armCompareChips) return;
             // Only allow adding when we have players remaining
             const notPicked = this.players.find((p) => !this.compareSlugs.includes(p.slug));
             if (!notPicked) return;
@@ -823,11 +835,11 @@
         }
 
         async renderCompare() {
-            if (!this.el.dpCompareChips || !this.el.dpCompareTableWrap) return;
+            if (!this.el.armCompareChips || !this.el.armCompareTableWrap) return;
             const bySlug = Object.fromEntries(this.players.map((p) => [p.slug, p]));
             const chipsHtml = this.compareSlugs.map((slug) => {
                 const p = bySlug[slug];
-                return `<span class="dp-compare-chip">
+                return `<span class="arm-compare-chip">
                     ${esc(p ? p.name : slug)}
                     <button type="button" aria-label="Remove ${esc(p ? p.name : slug)}"
                             data-remove-slug="${esc(slug)}">×</button>
@@ -835,20 +847,20 @@
             }).join("");
             const remaining = this.players.filter((p) => !this.compareSlugs.includes(p.slug));
             const addSelect = remaining.length
-                ? `<label class="dp-compare-chip" style="padding: 0;">
-                    <select data-compare-select class="dp-select"
+                ? `<label class="arm-compare-chip" style="padding: 0;">
+                    <select data-compare-select class="arm-select"
                             style="border: 0; background: transparent; min-height: 34px;
                                    padding: 0 26px 0 12px;">
                         <option value="">+ add player</option>
                         ${remaining.map((p) => `<option value="${esc(p.slug)}">${esc(p.name)}</option>`).join("")}
                     </select>
                 </label>`
-                : `<span class="dp-compare-add" aria-disabled="true">All players added</span>`;
-            this.el.dpCompareChips.innerHTML = chipsHtml + addSelect;
+                : `<span class="arm-compare-add" aria-disabled="true">All players added</span>`;
+            this.el.armCompareChips.innerHTML = chipsHtml + addSelect;
 
             if (!this.compareSlugs.length) {
-                this.el.dpCompareTableWrap.innerHTML =
-                    `<div class="dp-compare-empty">Add players above to build a side-by-side comparison.</div>`;
+                this.el.armCompareTableWrap.innerHTML =
+                    `<div class="arm-compare-empty">Add players above to build a side-by-side comparison.</div>`;
                 return;
             }
             const loaded = await Promise.all(
@@ -875,15 +887,15 @@
                     ${loaded.map((p) => `<td>${p ? esc(String(fn(p))) : "n/a"}</td>`).join("")}
                 </tr>`).join("")
             }</tbody>`;
-            this.el.dpCompareTableWrap.innerHTML =
-                `<div class="dp-compare-scroll"><table class="dp-compare-table">${header}${body}</table></div>`;
+            this.el.armCompareTableWrap.innerHTML =
+                `<div class="arm-compare-scroll"><table class="arm-compare-table">${header}${body}</table></div>`;
         }
 
         renderProvenance() {
-            if (!this.el.dpProvenance) return;
+            if (!this.el.armProvenance) return;
             const p = this.currentPlayer.provenance || {};
             const sampled = p.bball_ref_games_sampled ? p.bball_ref_games_sampled.length : 0;
-            this.el.dpProvenance.innerHTML = `
+            this.el.armProvenance.innerHTML = `
                 <p><strong>Season:</strong> ${esc(p.season)} &middot; <strong>Generated:</strong> ${esc(formatTime(p.generated_at_utc))}</p>
                 <p><strong>Box scores:</strong> <code>${esc(p.box_score_source || "n/a")}</code></p>
                 <p><strong>Basketball-Reference sample:</strong> ${sampled} of ${p.bball_ref_games_available_total || 0} real games &mdash; ${esc(p.bball_ref_sampling_method || "")}</p>
@@ -892,5 +904,5 @@
         }
     }
 
-    document.addEventListener("DOMContentLoaded", () => new DrivePassPage());
+    document.addEventListener("DOMContentLoaded", () => new ARModernPage());
 })();
