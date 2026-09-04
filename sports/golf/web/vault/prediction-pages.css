@@ -108,6 +108,14 @@ details.disclosure .disclosure-body {
 .status-pill--withheld,
 .status-pill--unavailable { color: var(--vault-status-withheld); border-color: color-mix(in srgb, var(--vault-status-withheld) 40%, var(--vault-line)); }
 
+/* Real settled game outcome (see CardVault.renderSettlementBadge) --
+   deliberately separate colors from the publication/authorization
+   vocabulary above so a "Won"/"Lost" result is never visually confused
+   with a "Qualified"/"Withheld" publication state. */
+.status-pill--won { color: var(--vault-status-active); border-color: color-mix(in srgb, var(--vault-status-active) 40%, var(--vault-line)); }
+.status-pill--lost { color: var(--vault-status-error); border-color: color-mix(in srgb, var(--vault-status-error) 40%, var(--vault-line)); }
+.status-pill--push { color: var(--vault-status-planned); border-color: color-mix(in srgb, var(--vault-status-planned) 40%, var(--vault-line)); }
+
 /* Canonical prediction-pool skeleton, shared by every sport's
    predictions.html: <main class="predictions-page"> > <header
    class="vault-page-header"> (title/lead/freshness/date-nav), then
@@ -514,6 +522,97 @@ button {
   color: var(--vault-text);
 }
 
+/* The one-time "which state" prompt (CardVault.promptFanduelRegion) --
+   a native <dialog>, shown only the first time a viewer clicks a real
+   FanDuel betslip link and their state isn't known yet. */
+.fanduel-region-dialog {
+  width: min(360px, calc(100% - 32px));
+  padding: 20px;
+  border: 1px solid var(--vault-line);
+  border-radius: var(--vault-radius-card);
+  background: #ffffff;
+  box-shadow: var(--vault-shadow-lift);
+}
+
+.fanduel-region-dialog::backdrop {
+  background: rgba(24, 24, 23, 0.45);
+}
+
+.fanduel-region-dialog__form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fanduel-region-dialog__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--vault-text);
+}
+
+.fanduel-region-dialog__note {
+  margin: 0;
+  color: var(--vault-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.fanduel-region-dialog__select {
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--vault-line);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--vault-text);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.fanduel-region-dialog__select:hover {
+  border-color: var(--vault-line-strong);
+}
+
+.fanduel-region-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.fanduel-region-dialog__cancel,
+.fanduel-region-dialog__continue {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fanduel-region-dialog__cancel {
+  border: 1px solid var(--vault-line);
+  background: #ffffff;
+  color: var(--vault-text-muted);
+}
+
+.fanduel-region-dialog__cancel:hover {
+  border-color: var(--vault-line-strong);
+  color: var(--vault-text);
+}
+
+.fanduel-region-dialog__continue {
+  border: 1px solid var(--vault-sport-accent);
+  background: var(--vault-sport-accent);
+  color: #ffffff;
+}
+
+.fanduel-region-dialog__continue:hover {
+  filter: brightness(0.94);
+}
+
 .vault-board {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -651,14 +750,58 @@ body.vault-theme .prediction-card__photo {
   border-radius: 6px;
   background: var(--vault-bg-1);
   overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
 }
 
 .prediction-card__photo-img,
 body.vault-theme .prediction-card__photo-img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center top;
+  /* Centered on both axes so the subject sits in the middle of the
+   * avatar (was `center top`, which anchored the head against the top
+   * edge and cropped uneven amounts off the sides). */
+  object-position: center;
+  margin: auto;
+}
+
+/* Team-logo variant: use `contain` so the whole logo shows (never
+ * cropped) and give it breathing room from the frame. */
+.prediction-card__photo-img--logo,
+body.vault-theme .prediction-card__photo-img--logo {
+  object-fit: contain;
+  padding: 4px;
+  background: transparent;
+}
+
+/* Dual-logo layout for game-total legs (two teams, no single subject). */
+.prediction-card__photo-dual,
+body.vault-theme .prediction-card__photo-dual {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 2px;
+  align-items: center;
+  justify-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+  box-sizing: border-box;
+}
+.prediction-card__photo-dual > .prediction-card__photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 0;
+}
+.prediction-card__photo-dual-at,
+body.vault-theme .prediction-card__photo-dual-at {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--vault-text-muted);
 }
 
 .prediction-card__fallback,

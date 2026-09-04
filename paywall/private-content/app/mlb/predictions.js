@@ -438,6 +438,10 @@ class DailyPredictionsPage {
         return window.CardVault.renderLegCard({
             rank: index,
             monogram,
+            sport: "mlb",
+            teamCode: play.team || "",
+            photoUrl: String(play.player_headshot_url || "").trim(),
+            photoFallbackUrl: String(play.player_headshot_fallback_url || "").trim(),
             name,
             market: `${String(play.direction || "OVER").toUpperCase()} ${this.formatNumber(play.line, 1)} ${play.target || "H"}`,
             context: "V4 singles shadow — no stake authorized",
@@ -684,9 +688,21 @@ class DailyPredictionsPage {
         if (!leg || !window.CardVault) return "";
         const name = this.formatSameGameLegLabel(leg, game);
         const monogram = name.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase() || "NA";
+        // Every same-game-parlay leg is a team-market leg (moneyline / full
+        // total / first-five total). Resolve the team logo(s) so the card
+        // shows the team the pick is on instead of an anonymous monogram.
+        const market = String(leg.market || "").toLowerCase();
+        const isMoneyline = market === "moneyline";
+        const teamCode = isMoneyline
+            ? (String(leg.side).toLowerCase() === "home" ? game.home_team : game.away_team)
+            : "";
+        const teamCodes = !isMoneyline ? [game.away_team, game.home_team].filter(Boolean) : null;
         return window.CardVault.renderLegCard({
             rank: index,
             monogram,
+            sport: "mlb",
+            teamCode,
+            teamCodes,
             name,
             market: this.formatSameGameMarketLabel(leg.market),
             metrics: [
@@ -805,6 +821,12 @@ class DailyPredictionsPage {
         const matchup = [leg.team, leg.opponent].filter(Boolean).join(" vs. ");
         return window.CardVault.renderLegCard({
             rank: index,
+            // If the payload has no pitcher headshot, fall through to the
+            // pitcher's team logo before showing the raw initials.
+            sport: "mlb",
+            teamCode: leg.team || "",
+            photoUrl: String(leg.pitcher_headshot_url || leg.player_headshot_url || "").trim(),
+            photoFallbackUrl: String(leg.pitcher_headshot_fallback_url || leg.player_headshot_fallback_url || "").trim(),
             monogram,
             name,
             market: `${side} ${this.formatNumber(leg.line, 1)} Strikeouts`,
@@ -922,6 +944,10 @@ class DailyPredictionsPage {
         return window.CardVault.renderLegCard({
             rank: index,
             monogram,
+            sport: "mlb",
+            teamCode: leg.team || "",
+            photoUrl: String(leg.player_headshot_url || "").trim(),
+            photoFallbackUrl: String(leg.player_headshot_fallback_url || "").trim(),
             name,
             market: `${side} ${this.formatNumber(leg.market_line, 1)} ${leg.target || ""}`.trim(),
             context: leg.team || "",
@@ -977,9 +1003,22 @@ class DailyPredictionsPage {
         if (!window.CardVault) return "";
         const matchup = `${candidate.away_team || "?"} @ ${candidate.home_team || "?"}`;
         const side = String(candidate.side || "").toLowerCase() === "under" ? "Under" : "Over";
+        // Team-market exotic (game_total / team_total / moneyline / runline):
+        // render the team logo(s) via the leg card, using the two team codes
+        // the payload carries. For team_total / moneyline, pick the side's
+        // team; for game_total, show both.
+        const market = String(candidate.market || "").toLowerCase();
+        const isGameTotal = market === "game_total" || market === "total_runs";
+        const teamCodes = isGameTotal ? [candidate.away_team, candidate.home_team].filter(Boolean) : null;
+        const teamCode = !isGameTotal
+            ? (candidate.team || (String(candidate.side || "").toLowerCase() === "away" ? candidate.away_team : candidate.home_team) || "")
+            : "";
         return window.CardVault.renderLegCard({
             rank: index,
-            monogram: "XM",
+            monogram: (teamCode || (teamCodes && teamCodes[0]) || "XM").toString().slice(0, 3).toUpperCase(),
+            sport: "mlb",
+            teamCode,
+            teamCodes,
             name: `${side} ${this.formatNumber(candidate.line, 1)}`,
             market: this.formatSameGameMarketLabel(candidate.market),
             context: matchup,

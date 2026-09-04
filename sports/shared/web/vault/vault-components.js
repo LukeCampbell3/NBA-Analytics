@@ -251,23 +251,79 @@
   };
 
   /**
+   * Team-logo CDN mapping. ESPN's team logo path is stable across all
+   * four sports we ship, keyed on the same team abbreviation the payload
+   * already carries (BOS, LAL, KC, PHI, ...). Never a guess: returns
+   * empty when we don't have a mapping for the sport or the code.
+   */
+  CardVault.TEAM_LOGO_HOSTS = {
+    mlb: "https://a.espncdn.com/i/teamlogos/mlb/500/{code}.png",
+    nba: "https://a.espncdn.com/i/teamlogos/nba/500/{code}.png",
+    nfl: "https://a.espncdn.com/i/teamlogos/nfl/500/{code}.png",
+    ncaaf: "https://a.espncdn.com/i/teamlogos/ncaa/500/{code}.png",
+  };
+  CardVault.resolveTeamLogoUrl = function resolveTeamLogoUrl(sport, teamCode) {
+    const s = String(sport || "").toLowerCase().trim();
+    const c = String(teamCode || "").toLowerCase().trim();
+    const tpl = CardVault.TEAM_LOGO_HOSTS[s];
+    if (!tpl || !c) return "";
+    return tpl.replace("{code}", c);
+  };
+
+  /**
    * Shared photo markup for both card renderers below. Chains a primary
    * headshot URL to an optional fallback URL (e.g. MLB's secondary CDN
-   * mirror) and finally to the monogram -- each <img> falls through to
-   * the next element on its own onerror, so a broken or missing image
-   * never leaves a blank card. Never guesses a URL from an id: only
-   * real URLs supplied by the caller are ever rendered.
+   * mirror), then optionally to one or two team logos (for team-market
+   * legs -- moneyline, game total, team total -- where no player exists),
+   * and finally to the monogram. Each <img> falls through to the next
+   * element on its own onerror, so a broken or missing image never
+   * leaves a blank card. Never guesses a URL from an id: only real URLs
+   * supplied by the caller (or derived from a real team abbreviation via
+   * resolveTeamLogoUrl) are ever rendered.
+   *
+   * `logoOptions` -- optional { sport, teamCode, teamCodes }:
+   *   - teamCode  : one team (moneyline / team_total)
+   *   - teamCodes : two teams (game_total, drawn as a "vs" composite)
+   *   Requires sport (mlb / nba / nfl / ncaaf) to resolve the CDN.
    */
-  CardVault.renderPhotoHtml = function renderPhotoHtml(primaryUrl, fallbackUrl, monogram) {
+  CardVault.renderPhotoHtml = function renderPhotoHtml(primaryUrl, fallbackUrl, monogram, logoOptions) {
+    const escAttr = CardVault.escapeAttr;
     const fallbackSpan = `<span class="prediction-card__fallback">${CardVault.escapeHtml(monogram)}</span>`;
+
+    // Team-logo image(s) as the last visual fallback before the monogram.
+    let logoHtml = "";
+    if (logoOptions && typeof logoOptions === "object") {
+      const { sport, teamCode, teamCodes } = logoOptions;
+      const codes = Array.isArray(teamCodes) && teamCodes.length
+        ? teamCodes.filter(Boolean).slice(0, 2)
+        : (teamCode ? [teamCode] : []);
+      const urls = codes
+        .map((code) => CardVault.resolveTeamLogoUrl(sport, code))
+        .filter(Boolean);
+      if (urls.length === 2) {
+        logoHtml = `<span class="prediction-card__photo-dual" aria-hidden="true">
+          <img class="prediction-card__photo-img prediction-card__photo-img--logo" src="${escAttr(urls[0])}" alt="" loading="lazy" onerror="this.style.display='none'" />
+          <span class="prediction-card__photo-dual-at">vs</span>
+          <img class="prediction-card__photo-img prediction-card__photo-img--logo" src="${escAttr(urls[1])}" alt="" loading="lazy" onerror="this.style.display='none'" />
+        </span>`;
+      } else if (urls.length === 1) {
+        logoHtml = `<img class="prediction-card__photo-img prediction-card__photo-img--logo" src="${escAttr(urls[0])}" alt="" loading="lazy" onerror="this.replaceWith(this.nextElementSibling)" />`;
+      }
+    }
+
+    // If no player headshot at all, prefer the team logo (when derived).
+    if (!primaryUrl && logoHtml) return `${logoHtml}${fallbackSpan}`;
     if (!primaryUrl) return fallbackSpan;
+
     // Flat chain of siblings: each <img>'s onerror swaps itself out for
-    // whatever comes next (the fallback image, or finally the monogram),
-    // so a broken/missing photo never leaves a blank card.
-    const img = (url) => `<img class="prediction-card__photo-img" src="${CardVault.escapeAttr(url)}" alt="" loading="lazy" onerror="this.replaceWith(this.nextElementSibling)" />`;
-    return fallbackUrl
-      ? `${img(primaryUrl)}${img(fallbackUrl)}${fallbackSpan}`
-      : `${img(primaryUrl)}${fallbackSpan}`;
+    // whatever comes next (the fallback image, then the logo, then the
+    // monogram), so a broken/missing photo never leaves a blank card.
+    const img = (url) => `<img class="prediction-card__photo-img" src="${escAttr(url)}" alt="" loading="lazy" onerror="this.replaceWith(this.nextElementSibling)" />`;
+    const parts = [img(primaryUrl)];
+    if (fallbackUrl) parts.push(img(fallbackUrl));
+    if (logoHtml) parts.push(logoHtml);
+    parts.push(fallbackSpan);
+    return parts.join("");
   };
 
   CardVault.formatNumber = function formatNumber(value, digits = 2) {
@@ -581,7 +637,25 @@
         ? `Model projection is ${CardVault.formatNumber(Math.abs(Number(edgeValue)))} ${direction === "UNDER" ? "below" : "above"} the market line.`
         : `Model projection is aligned to the ${direction} side of the market.`;
 
-    const photoHtml = CardVault.renderPhotoHtml(resolvedHeadshot, fallbackHeadshot, monogram);
+    // Team-market plays (moneyline / game total / team total) have no
+    // player headshot -- resolve a team logo instead of leaving an empty
+    // monogram-only avatar. Team markets are detected from a lowercased
+    // market/target field OR from the play having a team but no player.
+    const marketBucket = String(play.market_type || play.market || play.target || "").toLowerCase();
+    const isTeamMarket = /(moneyline|game_total|team_total|runline|spread|game total|team total)/.test(marketBucket);
+    const sportKey = String(play.sport || "").toLowerCase();
+    const primaryTeamCode = String(
+      play.team || play.subject_id || (play.side === "away" ? play.market_away_team : play.market_home_team) || ""
+    ).trim();
+    const bothTeamCodes = [play.market_away_team || play.away_team, play.market_home_team || play.home_team].filter(Boolean);
+    const logoOptions = isTeamMarket || !resolvedHeadshot
+      ? {
+          sport: sportKey,
+          teamCode: primaryTeamCode,
+          teamCodes: (isTeamMarket && /(game_total|game total)/.test(marketBucket) && bothTeamCodes.length === 2) ? bothTeamCodes : null,
+        }
+      : null;
+    const photoHtml = CardVault.renderPhotoHtml(resolvedHeadshot, fallbackHeadshot, monogram, logoOptions);
     const parlayTag = play.parlay_candidate && !needsReview ? '<span class="prediction-card__tag prediction-card__tag--parlay">Parlay</span>' : "";
     const riskTags = riskFlags
       .filter((flag) => flag !== "policy_uncertified")
@@ -676,8 +750,12 @@
   CardVault.renderLegCard = function renderLegCard({
     rank, statusTone = "", statusLabel = "", monogram = "", photoUrl = "", photoFallbackUrl = "",
     name = "", market = "", context = "", metrics = [], note = "", betslipUrl = "", deeplinksByRegion = null, settlementRow = null,
+    // Team-market legs (moneyline / game total / team total) never have a
+    // player headshot -- pass sport + team code(s) and we draw the team
+    // logo(s) instead of the raw monogram.
+    sport = "", teamCode = "", teamCodes = null,
   } = {}) {
-    const photoHtml = CardVault.renderPhotoHtml(photoUrl, photoFallbackUrl, monogram);
+    const photoHtml = CardVault.renderPhotoHtml(photoUrl, photoFallbackUrl, monogram, { sport, teamCode, teamCodes });
     const metricHtml = metrics
       .filter(([, value]) => value != null && value !== "")
       .map(([label, value]) => `<div><dt>${CardVault.escapeHtml(label)}</dt><dd>${CardVault.escapeHtml(value)}</dd></div>`)
