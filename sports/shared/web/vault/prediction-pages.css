@@ -750,14 +750,58 @@ body.vault-theme .prediction-card__photo {
   border-radius: 6px;
   background: var(--vault-bg-1);
   overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
 }
 
 .prediction-card__photo-img,
 body.vault-theme .prediction-card__photo-img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center top;
+  /* Centered on both axes so the subject sits in the middle of the
+   * avatar (was `center top`, which anchored the head against the top
+   * edge and cropped uneven amounts off the sides). */
+  object-position: center;
+  margin: auto;
+}
+
+/* Team-logo variant: use `contain` so the whole logo shows (never
+ * cropped) and give it breathing room from the frame. */
+.prediction-card__photo-img--logo,
+body.vault-theme .prediction-card__photo-img--logo {
+  object-fit: contain;
+  padding: 4px;
+  background: transparent;
+}
+
+/* Dual-logo layout for game-total legs (two teams, no single subject). */
+.prediction-card__photo-dual,
+body.vault-theme .prediction-card__photo-dual {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 2px;
+  align-items: center;
+  justify-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+  box-sizing: border-box;
+}
+.prediction-card__photo-dual > .prediction-card__photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 0;
+}
+.prediction-card__photo-dual-at,
+body.vault-theme .prediction-card__photo-dual-at {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--vault-text-muted);
 }
 
 .prediction-card__fallback,
