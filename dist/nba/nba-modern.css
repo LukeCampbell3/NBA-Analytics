@@ -52,9 +52,93 @@
 /* Dark theme only, by product design. Do not add a light-mode override
  * here without an explicit product decision. */
 
-/* Paint the page ground: without this, the vault-theme body's off-white
- * shows around the shell. Applied whenever .nbam-app is a body descendant. */
-body:has(.nbam-app) { background: var(--nbam-bg, #0d1117); }
+/* Paint the page ground and the vault-shell top nav in the dark palette
+ * on every modernized page (matches .arm-app and .nbam-app). Without
+ * these, the vault-theme body shows an off-white gap around the shell
+ * and above every panel, and the top nav paints as a white bar. */
+body:has(.nbam-app),
+body:has(.arm-app) {
+  background: #0d1117;
+}
+
+body:has(.nbam-app) .vault-topbar,
+body:has(.arm-app) .vault-topbar,
+body:has(.nbam-app) header.vault-topbar,
+body:has(.arm-app) header.vault-topbar {
+  background: #151d29;
+  border-color: #24304a;
+  color: #e8ecf3;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.03), 0 6px 20px rgba(0,0,0,0.35);
+}
+body:has(.nbam-app) .vault-brand-title,
+body:has(.arm-app) .vault-brand-title {
+  color: #e8ecf3;
+}
+body:has(.nbam-app) .vault-brand-kicker,
+body:has(.arm-app) .vault-brand-kicker {
+  color: #9aa4b6;
+}
+body:has(.nbam-app) .vault-nav-link,
+body:has(.arm-app) .vault-nav-link,
+body:has(.nbam-app) .vault-context-link,
+body:has(.arm-app) .vault-context-link {
+  color: #9aa4b6;
+}
+body:has(.nbam-app) .vault-nav-link:hover,
+body:has(.arm-app) .vault-nav-link:hover,
+body:has(.nbam-app) .vault-context-link:hover,
+body:has(.arm-app) .vault-context-link:hover {
+  color: #e8ecf3;
+}
+body:has(.nbam-app) .vault-nav-link.is-active,
+body:has(.arm-app) .vault-nav-link.is-active,
+body:has(.nbam-app) .vault-context-link.is-active,
+body:has(.arm-app) .vault-context-link.is-active {
+  color: #e8ecf3;
+  background: color-mix(in srgb, #ff3b57 18%, transparent);
+}
+body:has(.nbam-app) .vault-nav-link:hover,
+body:has(.arm-app) .vault-nav-link:hover,
+body:has(.nbam-app) .vault-context-link:hover,
+body:has(.arm-app) .vault-context-link:hover {
+  background: color-mix(in srgb, #4c9dff 14%, transparent);
+}
+body:has(.nbam-app) .vault-nav-link.is-active::after,
+body:has(.arm-app) .vault-nav-link.is-active::after,
+body:has(.nbam-app) .vault-context-link.is-active::after,
+body:has(.arm-app) .vault-context-link.is-active::after {
+  background: #ff3b57;
+}
+body:has(.nbam-app) .vault-menu-btn,
+body:has(.arm-app) .vault-menu-btn {
+  background: #131a24;
+  color: #e8ecf3;
+  border-color: #24304a;
+}
+body:has(.nbam-app) .vault-shell-info,
+body:has(.arm-app) .vault-shell-info,
+body:has(.nbam-app) .vault-topbar .vault-info-trigger,
+body:has(.arm-app) .vault-topbar .vault-info-trigger {
+  background: #131a24;
+  color: #9aa4b6;
+  border-color: #24304a;
+}
+/* Divider between the primary (sport) nav and the context (section) nav */
+body:has(.nbam-app) .vault-primary-nav,
+body:has(.arm-app) .vault-primary-nav,
+body:has(.nbam-app) .vault-context-nav,
+body:has(.arm-app) .vault-context-nav {
+  border-color: #24304a;
+}
+/* The info tooltip that appears from the top-nav trigger */
+body:has(.nbam-app) .vault-shell-info::after,
+body:has(.arm-app) .vault-shell-info::after,
+body:has(.nbam-app) .vault-topbar .vault-info-trigger::after,
+body:has(.arm-app) .vault-topbar .vault-info-trigger::after {
+  background: #1a2333;
+  color: #e8ecf3;
+  border-color: #24304a;
+}
 
 /* ---------------- layout primitives ---------------- */
 
