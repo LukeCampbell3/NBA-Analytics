@@ -3,156 +3,217 @@
 <head>
     <base href="../">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Drive-pass advantage-routing analysis: where a player's created advantage goes when he drives, which teammates benefit, and how usage/pass-tendency scenarios change that routing.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="color-scheme" content="dark light">
+    <meta name="theme-color" content="#0d1117" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f4f6fa" media="(prefers-color-scheme: light)">
+    <meta name="description" content="Drive-pass advantage-routing: where a player's created advantage goes when he drives, which teammates benefit, and how usage / pass-tendency scenarios change that routing.">
     <title>Drive-Pass | In The Cards Analytics</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="/vault/vault-tokens.css?v=10">
-    <link rel="stylesheet" href="/vault/vault-components.css?v=10">
-    <link rel="stylesheet" href="/vault/prediction-pages.css?v=11">
-    <link rel="stylesheet" href="advantage-routing.css?v=1">
+    <link rel="stylesheet" href="vault/vault-tokens.css?v=10">
+    <link rel="stylesheet" href="vault/vault-components.css?v=10">
+    <link rel="stylesheet" href="vault/prediction-pages.css?v=11">
+    <link rel="stylesheet" href="drive-pass-modern.css?v=1">
 </head>
 <body class="vault-theme">
     <div id="vaultShellRoot"></div>
 
-    <main class="vault-shell prediction-about-page ar-page">
-        <section class="prediction-about-stage">
-            <div class="prediction-about-container">
-                <header class="prediction-about-sign">
-                    <p class="prediction-about-kicker">Advantage-Routing Research</p>
-                    <div class="minimal-heading">
-                        <h1>Drive-Pass</h1>
-                        <button class="info-trigger" type="button" aria-label="About this page" data-info="When a player creates an advantage off the drive, this page traces where he routes the ball, what shot type it creates, and which teammates benefit -- built from real box scores and real play-by-play, never fabricated. Every number is labeled OBSERVED, DERIVED, RECONSTRUCTED, SIMULATED, or UNAVAILABLE.">i</button>
-                    </div>
-                    <p class="prediction-page-lead">Not a dashboard of assists -- an auditable model of who creates advantage off the drive, who receives it, and what it becomes. Every metric below carries a provenance badge; nothing here is invented to fill a gap.</p>
-                    <p id="arRunFacts" class="prediction-about-run-facts">Loading...</p>
-                </header>
+    <main class="dp-app">
+        <div class="dp-page">
+            <!-- Kicker + page intro -->
+            <p class="dp-kicker">Advantage-Routing &middot; Drive</p>
+            <h1 class="dp-h1">
+                Drive-Pass
+                <button class="dp-info-btn" type="button"
+                        title="When a player creates an advantage off the drive, this page traces where the ball routes, what shot type it creates, and which teammates benefit — built from real box scores and real play-by-play. Every number is labeled OBSERVED, DERIVED, RECONSTRUCTED, SIMULATED, or UNAVAILABLE.">i</button>
+            </h1>
+            <p class="dp-lead">
+                Not a dashboard of assists — an auditable model of who creates advantage off the drive,
+                who receives it, and what it becomes. Every metric carries a provenance badge; nothing
+                here is invented to fill a gap.
+            </p>
 
-                <section class="prediction-about-panel ar-controls-panel">
-                    <div class="ar-controls-row">
-                        <label class="ar-control">
-                            <span>Player</span>
-                            <select id="arPlayerSelect"></select>
-                        </label>
-                    </div>
-                    <div id="arDataUnavailableNotice" class="ar-notice" hidden></div>
-                </section>
-
-                <section class="prediction-about-panel">
-                    <h2>Scoring Gravity</h2>
-                    <p class="ar-section-note">Not raw FG% -- separated into mechanisms. Bars show real/derived component values; a mechanism with no reachable real signal is shown explicitly as unavailable, never guessed.</p>
-                    <div id="arGravityChart" class="ar-gravity-chart"></div>
-                </section>
-
-                <section class="prediction-about-panel">
-                    <h2>Recipient Network</h2>
-                    <p class="ar-section-note" id="arRecipientNote"></p>
-                    <div class="ar-table-scroll">
-                        <table class="prediction-about-table ar-recipient-table" id="arRecipientTable">
-                            <thead>
-                                <tr>
-                                    <th data-sort="assists">Assists <span class="ar-sort-caret"></span></th>
-                                    <th>Recipient</th>
-                                    <th data-sort="assist_share">Share <span class="ar-sort-caret"></span></th>
-                                    <th data-sort="high_value_share_index">High-value index <span class="ar-sort-caret"></span></th>
-                                    <th>Most common shot</th>
-                                </tr>
-                            </thead>
-                            <tbody id="arRecipientTableBody"></tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <section class="prediction-about-panel">
-                    <h2>Shot Destination <span class="ar-badge ar-badge--derived">zone aggregate</span></h2>
-                    <p class="ar-section-note">Resulting shot zones from real assisted-shot events. Classified from a real reported distance + 2pt/3pt flag, not exact tracking coordinates -- corner-3 and above-break-3 cannot be distinguished from this source and are shown combined.</p>
-                    <div class="ar-court-wrap">
-                        <svg id="arHalfCourt" viewBox="0 0 500 470" class="ar-half-court" role="img" aria-label="NBA half court, zone-aggregate shot destinations"></svg>
-                        <div id="arZoneLegend" class="ar-zone-legend"></div>
-                    </div>
-                </section>
-
-                <section class="prediction-about-panel">
-                    <h2>Research Summary</h2>
-                    <div id="arResearchSummary" class="ar-research-summary"></div>
-                </section>
-
-                <section class="prediction-about-panel ar-sim-panel">
-                    <h2>Role &amp; Pass-Tendency Simulator <span class="ar-badge ar-badge--simulated">simulated</span></h2>
-                    <p class="ar-section-note">Usage is not passing. Moving these sliders never directly scales assists -- it changes decision-touch volume and pass tendency, which then flow through separate, disclosed conversion rates.</p>
-
-                    <div class="ar-slider-group">
-                        <label class="ar-slider">
-                            <span class="ar-slider-label">Offensive Role / Usage <output id="arUsageOut"></output></span>
-                            <input type="range" id="arUsageSlider" min="5" max="40" step="0.5">
-                        </label>
-                        <label class="ar-slider">
-                            <span class="ar-slider-label">Pass Tendency <output id="arPassTendencyOut"></output></span>
-                            <input type="range" id="arPassTendencySlider" min="-50" max="50" step="5">
-                        </label>
-                    </div>
-
-                    <button type="button" id="arAdvancedToggle" class="ar-advanced-toggle" aria-expanded="false">Advanced controls</button>
-                    <div class="ar-slider-group ar-advanced-group" id="arAdvancedGroup" hidden>
-                        <label class="ar-slider">
-                            <span class="ar-slider-label">Decision-Touch Elasticity <output id="arElasticityOut"></output></span>
-                            <input type="range" id="arElasticitySlider" min="0" max="1" step="0.05">
-                        </label>
-                        <label class="ar-slider">
-                            <span class="ar-slider-label">Efficiency Retention <output id="arRetentionOut"></output></span>
-                            <input type="range" id="arRetentionSlider" min="50" max="100" step="1">
-                        </label>
-                        <label class="ar-slider">
-                            <span class="ar-slider-label">Turnover Growth <output id="arTurnoverOut"></output></span>
-                            <input type="range" id="arTurnoverSlider" min="-50" max="100" step="5">
-                        </label>
-                        <label class="ar-slider">
-                            <span class="ar-slider-label">Saturation k <output id="arSaturationOut"></output></span>
-                            <input type="range" id="arSaturationSlider" min="10" max="150" step="5">
-                        </label>
-                    </div>
-
-                    <button type="button" id="arResetButton" class="ar-reset-button">Reset to baseline</button>
-
-                    <p id="arCausalityExplanation" class="ar-causality"></p>
-
-                    <div class="ar-baseline-vs-sim">
-                        <div class="ar-bvs-column">
-                            <h3>Baseline</h3>
-                            <div id="arBaselineColumn" class="ar-bvs-metrics"></div>
-                        </div>
-                        <div class="ar-bvs-column ar-bvs-column--sim">
-                            <h3>Simulated <span class="ar-scenario-select"><select id="arScenarioSelect" aria-label="Simulation scenario"><option value="NEUTRAL">Neutral</option><option value="OPTIMISTIC">Optimistic</option><option value="CONSERVATIVE">Conservative</option></select></span></h3>
-                            <div id="arSimColumn" class="ar-bvs-metrics"></div>
-                        </div>
-                    </div>
-
-                    <div class="ar-mc-panel">
-                        <h3>Uncertainty range (Monte Carlo, Neutral scenario) <span class="ar-badge ar-badge--simulated">simulated</span></h3>
-                        <div id="arMonteCarlo" class="ar-mc-grid"></div>
-                    </div>
-                </section>
-
-                <section class="prediction-about-panel">
-                    <h2>Compare Players</h2>
-                    <p class="ar-section-note">Profiles, not rankings -- select up to four players.</p>
-                    <div id="arCompareSelectors" class="ar-compare-selectors"></div>
-                    <div class="ar-table-scroll">
-                        <table class="prediction-about-table" id="arCompareTable"></table>
-                    </div>
-                </section>
-
-                <section class="prediction-about-panel">
-                    <h2>Data Provenance</h2>
-                    <div id="arProvenance" class="ar-provenance"></div>
-                </section>
+            <!-- Sticky player toolbar -->
+            <div class="dp-toolbar" role="search">
+                <label class="dp-search" aria-label="Search players">
+                    <input id="dpSearch" type="search" placeholder="Search a player…" autocomplete="off">
+                </label>
+                <select id="dpPlayerSelect" class="dp-select" aria-label="Player"></select>
             </div>
-        </section>
+
+            <!-- Hero identity + key stats -->
+            <section class="dp-hero" aria-labelledby="dpHeroName">
+                <div class="dp-hero-avatar" id="dpHeroAvatar" aria-hidden="true"></div>
+                <div class="dp-hero-body">
+                    <h2 class="dp-hero-name" id="dpHeroName">—</h2>
+                    <div class="dp-hero-meta" id="dpHeroMeta">Loading…</div>
+                    <div class="dp-stat-strip" id="dpStatStrip"></div>
+                </div>
+            </section>
+
+            <!-- Mode notice: shown only when routing_vector is UNAVAILABLE -->
+            <div id="dpUnavailable" class="dp-notice" hidden></div>
+
+            <!-- Section tabs -->
+            <nav class="dp-tabs" role="tablist" id="dpTabs" aria-label="Drive-Pass sections">
+                <button class="dp-tab is-active" data-section="overview" role="tab" aria-selected="true" type="button">Overview</button>
+                <button class="dp-tab" data-section="gravity"   role="tab" aria-selected="false" type="button">Scoring Gravity</button>
+                <button class="dp-tab" data-section="recipients" role="tab" aria-selected="false" type="button">Recipients</button>
+                <button class="dp-tab" data-section="court"     role="tab" aria-selected="false" type="button">Shot Zones</button>
+                <button class="dp-tab" data-section="summary"   role="tab" aria-selected="false" type="button">Findings</button>
+                <button class="dp-tab" data-section="simulator" role="tab" aria-selected="false" type="button">Simulator</button>
+                <button class="dp-tab" data-section="compare"   role="tab" aria-selected="false" type="button">Compare</button>
+                <button class="dp-tab" data-section="sources"   role="tab" aria-selected="false" type="button">Sources</button>
+            </nav>
+
+            <!-- Overview -->
+            <section class="dp-panel" data-panel="overview">
+                <div class="dp-panel-head">
+                    <h2>Baseline snapshot</h2>
+                    <p>Season totals and rate metrics. Provenance badge on each metric names the source of truth.</p>
+                </div>
+                <div class="dp-overview-grid" id="dpOverviewGrid"></div>
+            </section>
+
+            <!-- Gravity -->
+            <section class="dp-panel dp-panel-hidden" data-panel="gravity">
+                <div class="dp-panel-head">
+                    <h2>Scoring Gravity</h2>
+                    <p>Not raw FG% — separated into mechanisms. Bars show real / derived component values; a mechanism with no reachable real signal is shown explicitly as unavailable, never guessed.</p>
+                </div>
+                <div class="dp-gravity" id="dpGravityChart"></div>
+            </section>
+
+            <!-- Recipients -->
+            <section class="dp-panel dp-panel-hidden" data-panel="recipients">
+                <div class="dp-panel-head">
+                    <h2>Recipient Network</h2>
+                    <p>Real sampled recipients from play-by-play. Sort by assists, share, or how high-value the destination shots are.</p>
+                </div>
+                <div class="dp-sort-chips" id="dpRecipientSort" role="tablist" aria-label="Sort recipients"></div>
+                <div class="dp-recipients" id="dpRecipientsList"></div>
+            </section>
+
+            <!-- Shot destination -->
+            <section class="dp-panel dp-panel-hidden" data-panel="court">
+                <div class="dp-panel-head">
+                    <h2>Shot Zones <span class="dp-badge dp-badge--derived">zone aggregate</span></h2>
+                    <p>Resulting shot zones from real assisted-shot events. Classified from a real reported distance + 2pt/3pt flag — corner-3 and above-break-3 are shown separately as zone estimates.</p>
+                </div>
+                <div class="dp-court-layout">
+                    <div class="dp-court-wrap">
+                        <svg id="dpCourt" class="dp-court" viewBox="0 0 500 470"
+                             role="img" aria-label="NBA half court, zone-aggregate shot destinations"></svg>
+                    </div>
+                    <div class="dp-court-legend" id="dpCourtLegend" aria-label="Zone legend"></div>
+                </div>
+            </section>
+
+            <!-- Findings -->
+            <section class="dp-panel dp-panel-hidden" data-panel="summary">
+                <div class="dp-panel-head">
+                    <h2>Findings</h2>
+                    <p>What the artifact concludes about this player's drive-pass profile, including caveats.</p>
+                </div>
+                <div class="dp-summary-body" id="dpSummary"></div>
+            </section>
+
+            <!-- Simulator -->
+            <section class="dp-panel dp-panel-hidden" data-panel="simulator">
+                <div class="dp-panel-head">
+                    <h2>Role &amp; Pass-Tendency Simulator <span class="dp-badge dp-badge--simulated">simulated</span></h2>
+                    <p>Usage is not passing. Moving these sliders never directly scales assists — it changes decision-touch volume and pass tendency, which then flow through separate, disclosed conversion rates.</p>
+                </div>
+
+                <div class="dp-slider-grid">
+                    <label class="dp-slider">
+                        <span class="dp-slider-head"><strong>Offensive Role / Usage</strong><output id="dpUsageOut">—</output></span>
+                        <input id="dpUsage" type="range" min="5" max="40" step="0.5">
+                    </label>
+                    <label class="dp-slider">
+                        <span class="dp-slider-head"><strong>Pass Tendency</strong><output id="dpPassOut">—</output></span>
+                        <input id="dpPass" type="range" min="-50" max="50" step="5">
+                    </label>
+                </div>
+
+                <div class="dp-sim-actions">
+                    <button id="dpAdvancedBtn" class="dp-btn dp-btn--ghost" type="button" aria-expanded="false">Show advanced controls</button>
+                    <button id="dpResetBtn" class="dp-btn dp-btn--primary" type="button">Reset to baseline</button>
+                </div>
+
+                <div id="dpAdvancedGroup" class="dp-slider-grid" hidden>
+                    <label class="dp-slider">
+                        <span class="dp-slider-head"><strong>Decision-Touch Elasticity</strong><output id="dpElastOut">—</output></span>
+                        <input id="dpElast" type="range" min="0" max="1" step="0.05">
+                    </label>
+                    <label class="dp-slider">
+                        <span class="dp-slider-head"><strong>Efficiency Retention</strong><output id="dpRetOut">—</output></span>
+                        <input id="dpRet" type="range" min="50" max="100" step="1">
+                    </label>
+                    <label class="dp-slider">
+                        <span class="dp-slider-head"><strong>Turnover Growth</strong><output id="dpTovOut">—</output></span>
+                        <input id="dpTov" type="range" min="-50" max="100" step="5">
+                    </label>
+                    <label class="dp-slider">
+                        <span class="dp-slider-head"><strong>Saturation k</strong><output id="dpSatOut">—</output></span>
+                        <input id="dpSat" type="range" min="10" max="150" step="5">
+                    </label>
+                </div>
+
+                <p id="dpCausality" class="dp-callout"></p>
+
+                <div class="dp-bvs">
+                    <div class="dp-bvs-col">
+                        <h3>Baseline</h3>
+                        <div class="dp-bvs-rows" id="dpBvsBaseline"></div>
+                    </div>
+                    <div class="dp-bvs-col dp-bvs-col--sim">
+                        <h3>
+                            Simulated
+                            <select id="dpScenario" class="dp-bvs-scenario" aria-label="Simulation scenario">
+                                <option value="NEUTRAL">Neutral</option>
+                                <option value="OPTIMISTIC">Optimistic</option>
+                                <option value="CONSERVATIVE">Conservative</option>
+                            </select>
+                        </h3>
+                        <div class="dp-bvs-rows" id="dpBvsSim"></div>
+                    </div>
+                </div>
+
+                <div class="dp-panel-head" style="margin-top: 8px;">
+                    <h2 style="font-size: 0.95rem;">Uncertainty range <span class="dp-badge dp-badge--simulated">Monte Carlo</span></h2>
+                </div>
+                <div id="dpMonteCarlo" class="dp-mc-grid"></div>
+            </section>
+
+            <!-- Compare -->
+            <section class="dp-panel dp-panel-hidden" data-panel="compare">
+                <div class="dp-panel-head">
+                    <h2>Compare players</h2>
+                    <p>Profiles, not rankings. Pick any subset of players to see side-by-side baseline and archetype.</p>
+                </div>
+                <div class="dp-compare-chips" id="dpCompareChips"></div>
+                <div id="dpCompareTableWrap"></div>
+                <button id="dpCompareAdd" class="dp-btn" type="button" hidden>+ add a slot</button>
+            </section>
+
+            <!-- Sources / Provenance -->
+            <section class="dp-panel dp-panel-hidden" data-panel="sources">
+                <div class="dp-panel-head">
+                    <h2>Data provenance</h2>
+                    <p>Every source, every reachability caveat, in full. Nothing is inferred.</p>
+                </div>
+                <div class="dp-provenance" id="dpProvenance"></div>
+            </section>
+
+            <p class="dp-footer">
+                Built on real box scores and real Basketball-Reference play-by-play. No mock data.
+            </p>
+        </div>
     </main>
 
-    <script src="/vault/vault-components.js?v=14"></script>
-    <script src="/vault/vault-shell.js?v=9"></script>
-    <script>window.AR_PAGE_CONFIG = { mode: "drive", pageLabel: "Drive-Pass" };</script>
-    <script src="advantage-analysis-page.js?v=1"></script>
+    <script src="vault/vault-components.js?v=14"></script>
+    <script src="vault/vault-shell.js?v=9"></script>
+    <script src="drive-pass-modern.js?v=1"></script>
 </body>
 </html>
