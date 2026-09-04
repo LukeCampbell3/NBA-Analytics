@@ -53,88 +53,270 @@
  * here without an explicit product decision. */
 
 /* Paint the page ground and the vault-shell top nav in the dark palette
- * on every modernized page (matches .arm-app and .nbam-app). Without
- * these, the vault-theme body shows an off-white gap around the shell
- * and above every panel, and the top nav paints as a white bar. */
-body:has(.nbam-app),
-body:has(.arm-app) {
-  background: #0d1117;
+ * on every modernized page. Uses :is() so the same rule fires whether
+ * .nbam-app / .arm-app is on <body> itself (non-NBA sport pages that
+ * opt in via <body class="vault-theme nbam-app">) or on a descendant
+ * <main class="arm-app|nbam-app"> (NBA modernized pages). !important on
+ * body-level color/bg beats body.vault-theme, which sets the same
+ * properties at equal specificity in vault-tokens.css. */
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) {
+  background: #0d1117 !important;
+  background-color: #0d1117 !important;
+  color: #e8ecf3 !important;
 }
 
-body:has(.nbam-app) .vault-topbar,
-body:has(.arm-app) .vault-topbar,
-body:has(.nbam-app) header.vault-topbar,
-body:has(.arm-app) header.vault-topbar {
+/* Redefine the shared vault tokens so every legacy vault component
+ * (sport-cards on the landing, MLB/NFL/F1/Golf panels, prediction-cards,
+ * status pills, etc.) recolors automatically to the modern dark palette.
+ * Doing this at :root under a body-scope selector keeps the change
+ * page-local so other sports that opt out stay on the light palette. */
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) {
+  --vault-bg-0: #0d1117;
+  --vault-bg-1: #131a24;
+  --vault-bg-2: #151d29;
+  --vault-panel: #151d29;
+  --vault-panel-raised: #1a2333;
+  --vault-card-face: #151d29;
+  --vault-card-inner: #131a24;
+  --vault-line: #24304a;
+  --vault-line-strong: #2f3d5d;
+  --vault-text: #e8ecf3;
+  --vault-text-muted: #9aa4b6;
+  --vault-text-dim: #6b7488;
+  --vault-ink: #e8ecf3;
+  /* Keep the sport-accent per page (NBA red vs MLB blue etc.) but ensure
+   * shadows read on a dark ground. */
+  --vault-shadow-card: 0 1px 0 rgba(255,255,255,0.04), 0 6px 20px rgba(0,0,0,0.35);
+  --vault-shadow-lift: 0 10px 40px rgba(0,0,0,0.5);
+  /* Fallback aliases some sport CSS reads with var(--x, #fff) — define
+   * them so the #fff fallback never kicks in and paints a white surface
+   * over the dark ground. */
+  --vault-surface: #151d29;
+  --vault-border: #24304a;
+  --vault-muted: #9aa4b6;
+  --vault-fg: #e8ecf3;
+}
+
+/* Broad recolor for cards/panels/tickets in the sport stack that inline
+ * a light background via a fallback color. Text stays legible on the
+ * dark ground everywhere. */
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app))
+  :is(
+    .parlay-ticket,
+    .parlay-group,
+    .parlay-board__section,
+    .prediction-card,
+    .prediction-freshness-alert,
+    .prediction-play-card,
+    .prediction-daily-parlay,
+    .daily-parlay,
+    .daily-parlay__empty,
+    .daily-parlay__header,
+    .f1-hero,
+    .f1-driver-card,
+    .f1-market-row,
+    .fantasy-card,
+    .fantasy-picks-row,
+    .picks-card,
+    .picks-table-wrap,
+    .site-error,
+    .sport-card
+  ) {
+  background: #151d29 !important;
+  border-color: #24304a;
+  color: #e8ecf3;
+}
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app))
+  :is(
+    .parlay-ticket,
+    .parlay-group,
+    .parlay-board__section,
+    .prediction-freshness-alert,
+    .sport-card,
+    .fantasy-card,
+    .picks-card
+  ) h1,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app))
+  :is(
+    .parlay-ticket,
+    .parlay-group,
+    .parlay-board__section,
+    .prediction-freshness-alert,
+    .sport-card,
+    .fantasy-card,
+    .picks-card
+  ) h2,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app))
+  :is(
+    .parlay-ticket,
+    .parlay-group,
+    .parlay-board__section,
+    .prediction-freshness-alert,
+    .sport-card,
+    .fantasy-card,
+    .picks-card
+  ) h3,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app))
+  :is(
+    .parlay-ticket,
+    .parlay-group,
+    .parlay-board__section,
+    .prediction-freshness-alert,
+    .sport-card,
+    .fantasy-card,
+    .picks-card
+  ) strong {
+  color: #e8ecf3;
+}
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app))
+  :is(
+    .parlay-ticket,
+    .parlay-group,
+    .prediction-freshness-alert,
+    .daily-parlay__empty,
+    .sport-card,
+    .fantasy-card,
+    .picks-card
+  ) p,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app))
+  :is(
+    .parlay-ticket,
+    .parlay-group,
+    .prediction-freshness-alert,
+    .daily-parlay__empty,
+    .sport-card,
+    .fantasy-card,
+    .picks-card
+  ) dt {
+  color: #9aa4b6;
+}
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app))
+  :is(
+    .parlay-ticket,
+    .parlay-group,
+    .prediction-freshness-alert,
+    .sport-card,
+    .fantasy-card,
+    .picks-card
+  ) dd {
+  color: #e8ecf3;
+}
+
+/* .vault-status is the sport-side status pill (MLB / NFL / F1) — keep
+ * transparent so it reads on the dark panel; keep sport-specific color. */
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-status {
+  display: inline-flex; align-items: center;
+  padding: 3px 8px; border-radius: 999px;
+  font-size: 0.66rem; font-weight: 800;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  background: color-mix(in srgb, #ffb547 18%, transparent);
+  color: #ffb547;
+  border: 1px solid color-mix(in srgb, #ffb547 40%, transparent);
+}
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-status--active,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-status--qualified,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-status--won {
+  background: color-mix(in srgb, #35d29a 18%, transparent);
+  color: #35d29a;
+  border-color: color-mix(in srgb, #35d29a 40%, transparent);
+}
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-status--stale,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-status--shadow {
+  background: color-mix(in srgb, #b78bff 18%, transparent);
+  color: #b78bff;
+  border-color: color-mix(in srgb, #b78bff 40%, transparent);
+}
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-status--error,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-status--lost {
+  background: color-mix(in srgb, #ff3b57 20%, transparent);
+  color: #ff3b57;
+  border-color: color-mix(in srgb, #ff3b57 45%, transparent);
+}
+
+/* F1: predictions.css inlines `linear-gradient(#fff → --vault-card-face)`
+ * on every panel/card; force the dark panel color. */
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .f1-board,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .f1-hero,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .f1-picks-panel,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .f1-pick-grid,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .f1-pick,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .f1-section-heading,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .f1-event-meta {
+  background: #151d29 !important;
+  color: #e8ecf3;
+  border-color: #24304a !important;
+}
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .f1-hero { background: linear-gradient(160deg, #1a2333 0%, #151d29 100%) !important; }
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .f1-countdown {
+  background: color-mix(in srgb, #ff3b57 18%, transparent) !important;
+  color: #ff3b57;
+  border: 1px solid color-mix(in srgb, #ff3b57 45%, transparent);
+}
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .f1-pick strong,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .f1-pick h3,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .f1-pick h4,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .f1-pick-team { color: #e8ecf3; }
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .f1-muted { color: #9aa4b6; }
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .f1-probability-track {
+  background: #24304a !important;
+}
+
+/* NFL picks: same treatment for any lingering white panels. */
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) [class^="picks-"],
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) [class*=" picks-"],
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) [class^="fantasy-"],
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) [class*=" fantasy-"] {
+  color: #e8ecf3;
+  border-color: #24304a;
+}
+
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-topbar {
   background: #151d29;
   border-color: #24304a;
   color: #e8ecf3;
   box-shadow: 0 1px 0 rgba(255,255,255,0.03), 0 6px 20px rgba(0,0,0,0.35);
 }
-body:has(.nbam-app) .vault-brand-title,
-body:has(.arm-app) .vault-brand-title {
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-brand-title {
   color: #e8ecf3;
 }
-body:has(.nbam-app) .vault-brand-kicker,
-body:has(.arm-app) .vault-brand-kicker {
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-brand-kicker {
   color: #9aa4b6;
 }
-body:has(.nbam-app) .vault-nav-link,
-body:has(.arm-app) .vault-nav-link,
-body:has(.nbam-app) .vault-context-link,
-body:has(.arm-app) .vault-context-link {
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-nav-link,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-context-link {
   color: #9aa4b6;
 }
-body:has(.nbam-app) .vault-nav-link:hover,
-body:has(.arm-app) .vault-nav-link:hover,
-body:has(.nbam-app) .vault-context-link:hover,
-body:has(.arm-app) .vault-context-link:hover {
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-nav-link:hover,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-context-link:hover {
   color: #e8ecf3;
+  background: color-mix(in srgb, #4c9dff 14%, transparent);
 }
-body:has(.nbam-app) .vault-nav-link.is-active,
-body:has(.arm-app) .vault-nav-link.is-active,
-body:has(.nbam-app) .vault-context-link.is-active,
-body:has(.arm-app) .vault-context-link.is-active {
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-nav-link.is-active,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-context-link.is-active {
   color: #e8ecf3;
   background: color-mix(in srgb, #ff3b57 18%, transparent);
 }
-body:has(.nbam-app) .vault-nav-link:hover,
-body:has(.arm-app) .vault-nav-link:hover,
-body:has(.nbam-app) .vault-context-link:hover,
-body:has(.arm-app) .vault-context-link:hover {
-  background: color-mix(in srgb, #4c9dff 14%, transparent);
-}
-body:has(.nbam-app) .vault-nav-link.is-active::after,
-body:has(.arm-app) .vault-nav-link.is-active::after,
-body:has(.nbam-app) .vault-context-link.is-active::after,
-body:has(.arm-app) .vault-context-link.is-active::after {
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-nav-link.is-active::after,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-context-link.is-active::after {
   background: #ff3b57;
 }
-body:has(.nbam-app) .vault-menu-btn,
-body:has(.arm-app) .vault-menu-btn {
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-menu-btn {
   background: #131a24;
   color: #e8ecf3;
   border-color: #24304a;
 }
-body:has(.nbam-app) .vault-shell-info,
-body:has(.arm-app) .vault-shell-info,
-body:has(.nbam-app) .vault-topbar .vault-info-trigger,
-body:has(.arm-app) .vault-topbar .vault-info-trigger {
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-shell-info,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-topbar .vault-info-trigger {
   background: #131a24;
   color: #9aa4b6;
   border-color: #24304a;
 }
-/* Divider between the primary (sport) nav and the context (section) nav */
-body:has(.nbam-app) .vault-primary-nav,
-body:has(.arm-app) .vault-primary-nav,
-body:has(.nbam-app) .vault-context-nav,
-body:has(.arm-app) .vault-context-nav {
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-primary-nav,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-context-nav {
   border-color: #24304a;
 }
-/* The info tooltip that appears from the top-nav trigger */
-body:has(.nbam-app) .vault-shell-info::after,
-body:has(.arm-app) .vault-shell-info::after,
-body:has(.nbam-app) .vault-topbar .vault-info-trigger::after,
-body:has(.arm-app) .vault-topbar .vault-info-trigger::after {
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-shell-info::after,
+body:is(.nbam-app, .arm-app, :has(.nbam-app), :has(.arm-app)) .vault-topbar .vault-info-trigger::after {
   background: #1a2333;
   color: #e8ecf3;
   border-color: #24304a;
