@@ -52,21 +52,8 @@
   padding: 0 0 96px;
 }
 
-@media (prefers-color-scheme: light) {
-  .arm-app:not([data-force-theme="dark"]) {
-    --arm-bg: #f4f6fa;
-    --arm-bg-soft: #eceff5;
-    --arm-panel: #ffffff;
-    --arm-panel-raised: #ffffff;
-    --arm-line: #dee3ed;
-    --arm-line-soft: #e6eaf1;
-    --arm-text: #171a21;
-    --arm-text-muted: #545a6b;
-    --arm-text-dim: #7a8090;
-    --arm-shadow-1: 0 1px 0 rgba(0,0,0,0.02), 0 4px 16px rgba(17,24,39,0.08);
-    --arm-shadow-2: 0 10px 40px rgba(17,24,39,0.12);
-  }
-}
+/* Dark theme only, by product design. Do not add a light-mode override
+ * here without an explicit product decision. */
 
 /* ---------------- layout ---------------- */
 

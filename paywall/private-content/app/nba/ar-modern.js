@@ -282,7 +282,7 @@
                 sportAccent: "#c02c3a",
                 navLinks: [
                     { label: "Board", href: "/nba/predictions/" },
-                    { label: "Stats", href: "/nba/stats/" },
+                    { label: "Stats", href: "/nba/stats/", active: CONFIG.pageLabel === "Stats" },
                     { label: "Drive-Pass", href: "/nba/drive-pass/", active: CONFIG.pageLabel === "Drive-Pass" },
                     { label: "Post-Pass", href: "/nba/post-pass/", active: CONFIG.pageLabel === "Post-Pass" },
                     { label: "Method", href: "/nba/prediction-about/" },

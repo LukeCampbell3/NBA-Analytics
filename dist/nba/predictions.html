@@ -2,78 +2,86 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0d1117">
     <meta name="description" content="2026-27 NBA opening-night player projection pool and market-gated watchlists.">
     <title>NBA Predictions | In The Cards Analytics</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="/vault/vault-tokens.css?v=10">
-    <link rel="stylesheet" href="/vault/vault-components.css?v=10">
-    <link rel="stylesheet" href="/vault/prediction-pages.css?v=11">
+    <link rel="stylesheet" href="vault/vault-tokens.css?v=10">
+    <link rel="stylesheet" href="vault/vault-components.css?v=10">
+    <link rel="stylesheet" href="vault/prediction-pages.css?v=11">
     <link rel="stylesheet" href="predictions.css?v=1">
+    <link rel="stylesheet" href="nba-modern.css?v=3">
 </head>
 <body class="vault-theme">
     <div id="vaultShellRoot"></div>
 
-    <main class="vault-shell predictions-page">
-        <header class="vault-page-header">
-            <p class="vault-page-kicker">NBA &middot; 2026-27 Opening Night</p>
-            <div class="vault-heading-row">
-                <h1>Predictions</h1>
-                <button class="vault-info-trigger" type="button" aria-label="About this page" data-info="The page uses existing preseason simulations for a curated set of opening-night headliners. It is a research watchlist, not a final depth chart or a sportsbook pick board.">i</button>
-            </div>
-            <p class="prediction-page-lead">Headline player projections across the October 20 tripleheader, with PTS, REB, AST, and PRA ranges. Every market decision remains withheld until current rosters, availability, and authentic two-sided lines are available.</p>
-            <p id="openingRunFacts" class="prediction-run-meta">Loading opening-night pool...</p>
-        </header>
+    <main class="nbam-app">
+        <div class="nbam-page">
+            <p class="nbam-kicker">NBA &middot; 2026-27 Opening Night</p>
+            <h1 class="nbam-h1">
+                Predictions
+                <button class="info-trigger" type="button" aria-label="About this page"
+                        data-info="The page uses existing preseason simulations for a curated set of opening-night headliners. It is a research watchlist, not a final depth chart or a sportsbook pick board.">i</button>
+            </h1>
+            <p class="nbam-lead">
+                Headline player projections across the October 20 tripleheader, with PTS, REB, AST, and PRA ranges.
+                Every market decision remains withheld until current rosters, availability, and authentic
+                two-sided lines are available.
+            </p>
+            <p id="openingRunFacts" class="nbam-run-meta">Loading opening-night pool…</p>
 
-        <section class="pool-primary" aria-label="Today's signals">
-            <div class="pool-section-heading"><h2>Projection Status</h2></div>
-            <div id="openingPoolStatus" class="prediction-about-callout"></div>
-            <div id="openingPoolMetrics" class="prediction-about-metric-grid"></div>
+            <section class="pool-primary" aria-label="Today's signals">
+                <div class="pool-section-heading"><h2>Projection Status</h2></div>
+                <div id="openingPoolStatus" class="prediction-about-callout"></div>
+                <div id="openingPoolMetrics" class="prediction-about-metric-grid"></div>
 
-            <div class="pool-section-heading" style="margin-top:32px;"><h2>Opening Tripleheader</h2></div>
-            <div id="openingGames" class="opening-game-grid"></div>
+                <div class="pool-section-heading" style="margin-top:24px;"><h2>Opening Tripleheader</h2></div>
+                <div id="openingGames" class="opening-game-grid"></div>
 
-            <div class="pool-section-heading opening-pool-heading" style="margin-top:32px;">
-                <h2>Headline Player Projections</h2>
-                <div id="openingTargetFilters" class="opening-target-filters" role="group" aria-label="Filter projections by stat">
-                    <button type="button" class="is-active" data-target="PTS">PTS</button>
-                    <button type="button" data-target="REB">REB</button>
-                    <button type="button" data-target="AST">AST</button>
-                    <button type="button" data-target="PRA">PRA</button>
+                <div class="pool-section-heading" style="margin-top:24px;">
+                    <h2>Headline Player Projections</h2>
+                    <div id="openingTargetFilters" class="opening-target-filters" role="group" aria-label="Filter projections by stat">
+                        <button type="button" class="is-active" data-target="PTS">PTS</button>
+                        <button type="button" data-target="REB">REB</button>
+                        <button type="button" data-target="AST">AST</button>
+                        <button type="button" data-target="PRA">PRA</button>
+                    </div>
                 </div>
-            </div>
-            <div id="openingProjectionPool" class="prediction-about-table-wrap"></div>
+                <div id="openingProjectionPool" class="prediction-about-table-wrap"></div>
 
-            <div class="pool-section-heading" style="margin-top:32px;">
-                <h2 id="predictionPoolTitle">Current Executable Board</h2>
-            </div>
-            <div id="predictionRunMeta" class="prediction-run-meta" aria-live="polite">Loading current board details...</div>
-            <nav id="predictionDateNav" class="date-nav" aria-label="Prediction board date"></nav>
-            <div id="predictionCards" class="vault-board" aria-live="polite" style="margin-top:16px;"></div>
-            <div id="predictionEmpty" class="vault-empty" style="display:none;" role="status">
-                <h3>No predictions published</h3>
-                <p>No analytical signals are available for this run. The model is deliberately selective, so an empty board is a normal, honest outcome, not a fault -- see <a href="/nba/prediction-about/#accuracyOverview">real accuracy results</a> for evidence the policy holds up.</p>
-            </div>
-        </section>
+                <div class="pool-section-heading" style="margin-top:24px;">
+                    <h2 id="predictionPoolTitle">Current Executable Board</h2>
+                </div>
+                <div id="predictionRunMeta" class="nbam-run-meta" aria-live="polite">Loading current board details…</div>
+                <nav id="predictionDateNav" class="date-nav" aria-label="Prediction board date"></nav>
+                <div id="predictionCards" class="vault-board" aria-live="polite"></div>
+                <div id="predictionEmpty" class="vault-empty" style="display:none;" role="status">
+                    <h3>No predictions published</h3>
+                    <p>No analytical signals are available for this run. The model is deliberately selective, so an empty board is a normal, honest outcome, not a fault — see <a href="/nba/prediction-about/#accuracyOverview">real accuracy results</a> for evidence the policy holds up.</p>
+                </div>
+            </section>
 
-        <section class="pool-secondary" aria-label="Parlay pairs">
-            <div class="pool-section-heading"><h2>Parlay Pairs</h2></div>
-            <div id="parlayPairsStatus" class="prediction-about-callout"></div>
-            <div id="parlayPairsBoard" class="prediction-about-table-wrap"></div>
-        </section>
+            <section class="pool-secondary" aria-label="Parlay pairs">
+                <div class="pool-section-heading"><h2>Parlay Pairs</h2></div>
+                <div id="parlayPairsStatus" class="prediction-about-callout"></div>
+                <div id="parlayPairsBoard" class="prediction-about-table-wrap"></div>
+            </section>
 
-        <section class="pool-secondary" aria-label="Watchlists">
-            <div class="pool-section-heading"><h2>Watchlists</h2></div>
-            <div id="openingWatchlistStatus" class="prediction-about-callout"></div>
-            <div id="openingWatchlists" class="opening-watchlist-grid"></div>
-        </section>
+            <section class="pool-secondary" aria-label="Watchlists">
+                <div class="pool-section-heading"><h2>Watchlists</h2></div>
+                <div id="openingWatchlistStatus" class="prediction-about-callout"></div>
+                <div id="openingWatchlists" class="opening-watchlist-grid"></div>
+            </section>
 
-        <footer class="pool-status">
-            <div class="pool-status__row">
-                <span class="prediction-run-meta__item">Research only -- review model status and evidence before treating any signal as executable.</span>
-                <a class="pool-status__link" href="/nba/prediction-about/">View methodology &rarr;</a>
-            </div>
-        </footer>
+            <footer class="pool-status">
+                <div class="pool-status__row">
+                    <span>Research only — review model status and evidence before treating any signal as executable.</span>
+                    <a class="pool-status__link" href="/nba/prediction-about/">View methodology →</a>
+                </div>
+            </footer>
+        </div>
     </main>
 
     <script>
@@ -84,8 +92,8 @@
             window.setTimeout(() => {
                 const poolStatus = document.getElementById("openingRunFacts");
                 const boardStatus = document.getElementById("predictionRunMeta");
-                const poolLoading = poolStatus?.textContent.trim() === "Loading opening-night pool...";
-                const boardLoading = boardStatus?.textContent.trim() === "Loading current board details...";
+                const poolLoading = poolStatus?.textContent.trim() === "Loading opening-night pool…";
+                const boardLoading = boardStatus?.textContent.trim() === "Loading current board details…";
                 if (!poolLoading && !boardLoading) return;
 
                 const message = `<strong>Predictions did not finish loading.</strong>
@@ -104,8 +112,8 @@
             }, timeoutMs);
         })();
     </script>
-    <script src="/vault/vault-components.js?v=14"></script>
-    <script src="/vault/vault-shell.js?v=9"></script>
+    <script src="vault/vault-components.js?v=14"></script>
+    <script src="vault/vault-shell.js?v=9"></script>
     <script src="predictions.js?v=13"></script>
 </body>
 </html>
