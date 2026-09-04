@@ -160,3 +160,180 @@
         }
     };
 })();
+
+// Keep the last published MLB board visible alongside the live board. The
+// preservation pipeline maintains data/history/<run_date>.json as the richest
+// board users actually saw, so later inference/refresh runs cannot erase it.
+(() => {
+    const fetchJson = async (path) => {
+        const separator = path.includes("?") ? "&" : "?";
+        const response = await fetch(`${path}${separator}v=${Date.now()}`, {
+            cache: "no-store",
+            credentials: "same-origin",
+            headers: { "Cache-Control": "no-cache" },
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const payload = await response.json();
+        if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+            throw new Error("Malformed MLB history payload");
+        }
+        return payload;
+    };
+
+    const escapeHtml = (value) => String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+    const playKey = (play) => [
+        play?.issuance_id,
+        play?.player_id,
+        play?.player,
+        play?.game_id,
+        play?.target || play?.market_type,
+        play?.direction || play?.side,
+        play?.line ?? play?.market_line,
+    ].filter((value) => value !== null && value !== undefined && value !== "").join("|");
+
+    const boardFingerprint = (payload) => {
+        const plays = Array.isArray(payload?.plays) ? payload.plays : [];
+        return plays.map(playKey).sort().join("||");
+    };
+
+    const hasDistinctPicks = (candidate, current) => {
+        const candidatePlays = Array.isArray(candidate?.plays) ? candidate.plays : [];
+        if (!candidatePlays.length) return false;
+        const currentPlays = Array.isArray(current?.plays) ? current.plays : [];
+        if (candidatePlays.length !== currentPlays.length) return true;
+        return boardFingerprint(candidate) !== boardFingerprint(current);
+    };
+
+    const findPreviousBoard = async (current) => {
+        const runDate = String(current?.run_date || "").trim();
+        if (runDate) {
+            try {
+                const sameDay = await fetchJson(`data/history/${runDate}.json`);
+                if (hasDistinctPicks(sameDay, current)) {
+                    return { payload: sameDay, sameDay: true };
+                }
+            } catch (_) { /* same-day archive may not exist yet */ }
+        }
+
+        try {
+            const index = await fetchJson("data/history/index.json");
+            const dates = Array.isArray(index?.dates) ? index.dates.map(String) : [];
+            for (const date of dates) {
+                if (!date || date === runDate) continue;
+                try {
+                    const archived = await fetchJson(`data/history/${date}.json`);
+                    if (Array.isArray(archived?.plays) && archived.plays.length) {
+                        return { payload: archived, sameDay: false };
+                    }
+                } catch (_) { /* try the next preserved date */ }
+            }
+        } catch (_) { /* history index is optional */ }
+        return null;
+    };
+
+    const settlementBucket = (play) => {
+        const status = String(play?.settlement_status || play?.outcome || play?.result || "pending").trim().toLowerCase();
+        if (["won", "win", "w"].includes(status)) return "won";
+        if (["lost", "loss", "lose", "l"].includes(status)) return "lost";
+        if (["push", "pushed", "tie", "void"].includes(status)) return "push";
+        return "pending";
+    };
+
+    const resultSummary = (plays) => {
+        const counts = { won: 0, lost: 0, push: 0, pending: 0 };
+        for (const play of plays) counts[settlementBucket(play)] += 1;
+        return `${counts.won}W · ${counts.lost}L · ${counts.push} Push · ${counts.pending} Pending`;
+    };
+
+    const archiveLabel = (payload, sameDay) => {
+        if (sameDay) return "Earlier today";
+        const date = String(payload?.run_date || "");
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return date || "Previous slate";
+        try {
+            return new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+        } catch (_) {
+            return date;
+        }
+    };
+
+    const sanitizedArchivedPlay = (play) => ({
+        ...play,
+        sportsbook_deeplink: "",
+        deeplinks_by_region: null,
+        betslip_url: "",
+        board_publication_status: "archived",
+    });
+
+    const fallbackCard = (play) => {
+        const name = play?.player_display_name || play?.player || "MLB pick";
+        const side = String(play?.direction || play?.side || "").toUpperCase();
+        const line = play?.market_line ?? play?.line ?? "";
+        const market = play?.target || play?.market_type || "";
+        const status = settlementBucket(play);
+        const actual = play?.settlement_actual_value;
+        const result = status === "pending"
+            ? "Pending"
+            : `${status === "won" ? "Won" : status === "lost" ? "Lost" : "Push"}${actual === null || actual === undefined ? "" : ` · Actual ${actual}`}`;
+        return `<article class="prediction-card"><h3>${escapeHtml(name)}</h3><p class="prediction-card__market">${escapeHtml(`${side} ${line} ${market}`.trim())}</p><p>${escapeHtml(result)}</p></article>`;
+    };
+
+    const renderPreviousBoard = (record) => {
+        const board = document.getElementById("board");
+        if (!board || !record?.payload) return;
+        const payload = record.payload;
+        const plays = Array.isArray(payload.plays) ? payload.plays : [];
+        if (!plays.length) return;
+
+        let section = document.getElementById("previousPublishedPicks");
+        if (!section) {
+            section = document.createElement("section");
+            section.id = "previousPublishedPicks";
+            section.className = "board-section";
+            section.setAttribute("aria-labelledby", "previousPublishedPicksHeading");
+            board.insertAdjacentElement("afterend", section);
+        }
+
+        const label = archiveLabel(payload, record.sameDay);
+        section.innerHTML = `
+            <h2 id="previousPublishedPicksHeading" class="board-section__heading">Previous Published Picks</h2>
+            <p class="parlay-group__note"><strong>${escapeHtml(label)}</strong> · ${escapeHtml(resultSummary(plays))}</p>
+            <p class="parlay-group__note">Preserved publication snapshot. Results update as games are settled; archived sportsbook links are disabled.</p>
+            <div id="previousPredictionCards" class="vault-board"></div>
+        `;
+
+        const target = section.querySelector("#previousPredictionCards");
+        if (!target) return;
+        if (window.CardVault?.renderPredictionCard) {
+            target.innerHTML = plays
+                .map((play, index) => window.CardVault.renderPredictionCard(sanitizedArchivedPlay(play), index))
+                .join("");
+        } else {
+            target.innerHTML = plays.map(fallbackCard).join("");
+        }
+    };
+
+    const loadPreviousBoard = async () => {
+        let current = {};
+        try {
+            current = await fetchJson("data/daily_predictions.json");
+        } catch (_) { /* previous results should survive a current-board load failure */ }
+        const record = await findPreviousBoard(current);
+        if (record) renderPreviousBoard(record);
+    };
+
+    const start = () => window.setTimeout(() => {
+        loadPreviousBoard().catch((error) => console.warn("Previous MLB picks unavailable", error));
+    }, 0);
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", start, { once: true });
+    } else {
+        start();
+    }
+})();
