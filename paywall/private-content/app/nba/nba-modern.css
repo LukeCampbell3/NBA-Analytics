@@ -1,0 +1,998 @@
+/**
+ * NBA Modern -- shared design system (savant / craftednba inspired).
+ *
+ * Extends the ar-modern look (Drive-Pass / Post-Pass) into a reusable
+ * system for the rest of the NBA site: Stats, PAR, Board, Methodology,
+ * Landing. Everything is scoped under `.nbam-app`, applied to a top
+ * container on each page, so a page can opt in without changing vault
+ * base styles or affecting other sports.
+ *
+ * Vault-populated DOM (`.prediction-card`, `.par-table`, `.opening-game-card`,
+ * `.prediction-about-panel`, etc.) is restyled here under the `.nbam-app`
+ * scope so the same JS keeps working.
+ */
+
+/* ---------------- tokens (dark first, light auto) ---------------- */
+
+.nbam-app {
+  --nbam-bg: #0d1117;
+  --nbam-bg-soft: #131a24;
+  --nbam-panel: #151d29;
+  --nbam-panel-raised: #1a2333;
+  --nbam-line: #24304a;
+  --nbam-line-soft: #1c2638;
+  --nbam-text: #e8ecf3;
+  --nbam-text-muted: #9aa4b6;
+  --nbam-text-dim: #6b7488;
+
+  --nbam-accent: #ff3b57;
+  --nbam-accent-2: #4c9dff;
+  --nbam-accent-3: #35d29a;
+  --nbam-accent-4: #ffb547;
+  --nbam-accent-5: #b78bff;
+  --nbam-accent-6: #8a94a8;
+
+  --nbam-over: #35d29a;
+  --nbam-under: #ff8f4c;
+
+  --nbam-radius: 12px;
+  --nbam-radius-sm: 8px;
+  --nbam-radius-pill: 999px;
+
+  --nbam-shadow-1: 0 1px 0 rgba(255,255,255,0.04), 0 6px 20px rgba(0,0,0,0.35);
+  --nbam-font: "Source Sans 3", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --nbam-mono: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+
+  color: var(--nbam-text);
+  background: var(--nbam-bg);
+  font-family: var(--nbam-font);
+  min-height: 100vh;
+  padding: 0 0 96px;
+}
+/* Dark theme only, by product design. Do not add a light-mode override
+ * here without an explicit product decision. */
+
+/* Paint the page ground and the vault-shell top nav in the dark palette
+ * on every modernized page (matches .arm-app and .nbam-app). Without
+ * these, the vault-theme body shows an off-white gap around the shell
+ * and above every panel, and the top nav paints as a white bar. */
+body:has(.nbam-app),
+body:has(.arm-app) {
+  background: #0d1117;
+}
+
+body:has(.nbam-app) .vault-topbar,
+body:has(.arm-app) .vault-topbar,
+body:has(.nbam-app) header.vault-topbar,
+body:has(.arm-app) header.vault-topbar {
+  background: #151d29;
+  border-color: #24304a;
+  color: #e8ecf3;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.03), 0 6px 20px rgba(0,0,0,0.35);
+}
+body:has(.nbam-app) .vault-brand-title,
+body:has(.arm-app) .vault-brand-title {
+  color: #e8ecf3;
+}
+body:has(.nbam-app) .vault-brand-kicker,
+body:has(.arm-app) .vault-brand-kicker {
+  color: #9aa4b6;
+}
+body:has(.nbam-app) .vault-nav-link,
+body:has(.arm-app) .vault-nav-link,
+body:has(.nbam-app) .vault-context-link,
+body:has(.arm-app) .vault-context-link {
+  color: #9aa4b6;
+}
+body:has(.nbam-app) .vault-nav-link:hover,
+body:has(.arm-app) .vault-nav-link:hover,
+body:has(.nbam-app) .vault-context-link:hover,
+body:has(.arm-app) .vault-context-link:hover {
+  color: #e8ecf3;
+}
+body:has(.nbam-app) .vault-nav-link.is-active,
+body:has(.arm-app) .vault-nav-link.is-active,
+body:has(.nbam-app) .vault-context-link.is-active,
+body:has(.arm-app) .vault-context-link.is-active {
+  color: #e8ecf3;
+  background: color-mix(in srgb, #ff3b57 18%, transparent);
+}
+body:has(.nbam-app) .vault-nav-link:hover,
+body:has(.arm-app) .vault-nav-link:hover,
+body:has(.nbam-app) .vault-context-link:hover,
+body:has(.arm-app) .vault-context-link:hover {
+  background: color-mix(in srgb, #4c9dff 14%, transparent);
+}
+body:has(.nbam-app) .vault-nav-link.is-active::after,
+body:has(.arm-app) .vault-nav-link.is-active::after,
+body:has(.nbam-app) .vault-context-link.is-active::after,
+body:has(.arm-app) .vault-context-link.is-active::after {
+  background: #ff3b57;
+}
+body:has(.nbam-app) .vault-menu-btn,
+body:has(.arm-app) .vault-menu-btn {
+  background: #131a24;
+  color: #e8ecf3;
+  border-color: #24304a;
+}
+body:has(.nbam-app) .vault-shell-info,
+body:has(.arm-app) .vault-shell-info,
+body:has(.nbam-app) .vault-topbar .vault-info-trigger,
+body:has(.arm-app) .vault-topbar .vault-info-trigger {
+  background: #131a24;
+  color: #9aa4b6;
+  border-color: #24304a;
+}
+/* Divider between the primary (sport) nav and the context (section) nav */
+body:has(.nbam-app) .vault-primary-nav,
+body:has(.arm-app) .vault-primary-nav,
+body:has(.nbam-app) .vault-context-nav,
+body:has(.arm-app) .vault-context-nav {
+  border-color: #24304a;
+}
+/* The info tooltip that appears from the top-nav trigger */
+body:has(.nbam-app) .vault-shell-info::after,
+body:has(.arm-app) .vault-shell-info::after,
+body:has(.nbam-app) .vault-topbar .vault-info-trigger::after,
+body:has(.arm-app) .vault-topbar .vault-info-trigger::after {
+  background: #1a2333;
+  color: #e8ecf3;
+  border-color: #24304a;
+}
+
+/* ---------------- layout primitives ---------------- */
+
+.nbam-app .nbam-page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 16px;
+}
+@media (min-width: 720px) { .nbam-app .nbam-page { padding: 24px; } }
+
+.nbam-app .nbam-kicker {
+  display: inline-flex; align-items: center; gap: 8px;
+  color: var(--nbam-text-muted);
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  margin: 0 0 8px;
+}
+.nbam-app .nbam-kicker::before {
+  content: ""; width: 22px; height: 2px;
+  background: var(--nbam-accent); border-radius: 2px;
+}
+
+.nbam-app .nbam-h1 {
+  margin: 0 0 8px;
+  font-size: 1.65rem; font-weight: 800; letter-spacing: -0.01em;
+  color: var(--nbam-text);
+}
+@media (min-width: 720px) { .nbam-app .nbam-h1 { font-size: 2.1rem; } }
+
+.nbam-app .nbam-lead {
+  max-width: 68ch; margin: 0 0 20px;
+  color: var(--nbam-text-muted);
+  font-size: 0.95rem; line-height: 1.55;
+}
+
+.nbam-app .nbam-run-meta {
+  display: flex; flex-wrap: wrap; gap: 6px 14px;
+  margin: 0 0 20px;
+  color: var(--nbam-text-muted); font-size: 0.85rem;
+}
+.nbam-app .nbam-run-meta strong { color: var(--nbam-text); font-weight: 700; }
+
+/* ---------------- hero ---------------- */
+
+.nbam-app .nbam-hero {
+  position: relative;
+  padding: 20px;
+  margin: 0 0 20px;
+  background: linear-gradient(160deg, var(--nbam-panel-raised) 0%, var(--nbam-panel) 100%);
+  border: 1px solid var(--nbam-line); border-radius: var(--nbam-radius);
+  box-shadow: var(--nbam-shadow-1); overflow: hidden;
+}
+.nbam-app .nbam-hero::before {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 4px;
+  background: linear-gradient(180deg, var(--nbam-accent), var(--nbam-accent-2));
+}
+
+.nbam-app .nbam-stat-strip {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+  margin-top: 12px;
+}
+@media (min-width: 560px) { .nbam-app .nbam-stat-strip { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 900px) { .nbam-app .nbam-stat-strip { grid-template-columns: repeat(5, 1fr); } }
+
+.nbam-app .nbam-stat-tile {
+  padding: 10px 12px;
+  background: var(--nbam-bg-soft);
+  border: 1px solid var(--nbam-line-soft); border-radius: var(--nbam-radius-sm);
+  min-width: 0;
+}
+.nbam-app .nbam-stat-tile > span:first-child {
+  display: block; font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--nbam-text-dim); margin: 0 0 2px;
+}
+.nbam-app .nbam-stat-tile > strong {
+  display: block;
+  font-size: 1.35rem; font-weight: 800; letter-spacing: -0.01em;
+  color: var(--nbam-text); font-variant-numeric: tabular-nums;
+}
+
+/* ---------------- panels ---------------- */
+
+.nbam-app .nbam-panel,
+.nbam-app .prediction-about-panel {
+  padding: 18px;
+  margin: 0 0 16px;
+  background: var(--nbam-panel);
+  border: 1px solid var(--nbam-line);
+  border-radius: var(--nbam-radius);
+  box-shadow: var(--nbam-shadow-1);
+  color: var(--nbam-text);
+}
+@media (min-width: 720px) {
+  .nbam-app .nbam-panel,
+  .nbam-app .prediction-about-panel { padding: 22px; }
+}
+.nbam-app .nbam-panel > h2,
+.nbam-app .prediction-about-panel > h2 {
+  margin: 0 0 12px;
+  font-size: 1.1rem; font-weight: 800; letter-spacing: -0.005em;
+  color: var(--nbam-text);
+}
+.nbam-app .nbam-panel > p,
+.nbam-app .prediction-about-panel > p {
+  color: var(--nbam-text-muted); font-size: 0.9rem; line-height: 1.55;
+}
+.nbam-app .prediction-about-panel h3 { color: var(--nbam-text); }
+
+/* Kicker & headings from vault, retinted for dark ground */
+.nbam-app .vault-page-kicker,
+.nbam-app .prediction-about-kicker {
+  color: var(--nbam-text-muted);
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  margin: 0 0 8px; padding-left: 30px; position: relative;
+}
+.nbam-app .vault-page-kicker::before,
+.nbam-app .prediction-about-kicker::before {
+  content: ""; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 22px; height: 2px; background: var(--nbam-accent); border-radius: 2px;
+}
+.nbam-app .vault-page-header h1,
+.nbam-app .prediction-about-sign h1,
+.nbam-app .minimal-heading h1 {
+  color: var(--nbam-text);
+  font-size: 1.85rem; font-weight: 800; letter-spacing: -0.02em;
+  margin: 0 0 8px;
+}
+@media (min-width: 720px) {
+  .nbam-app .vault-page-header h1,
+  .nbam-app .prediction-about-sign h1,
+  .nbam-app .minimal-heading h1 { font-size: 2.2rem; }
+}
+.nbam-app .prediction-page-lead,
+.nbam-app .vault-page-header p {
+  color: var(--nbam-text-muted);
+  font-size: 0.95rem; line-height: 1.55;
+}
+.nbam-app .prediction-about-run-facts,
+.nbam-app .prediction-run-meta,
+.nbam-app .vault-freshness {
+  color: var(--nbam-text-muted); font-size: 0.85rem;
+}
+.nbam-app .prediction-run-meta__item {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 28px; padding: 0 10px;
+  margin: 0 4px 6px 0;
+  background: var(--nbam-bg-soft);
+  border: 1px solid var(--nbam-line-soft);
+  border-radius: var(--nbam-radius-pill);
+  color: var(--nbam-text-muted);
+  font-size: 0.75rem; font-weight: 600;
+}
+.nbam-app .prediction-run-meta__item strong {
+  color: var(--nbam-text); font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.nbam-app .prediction-run-meta .vault-status-pill {
+  background: color-mix(in srgb, var(--nbam-accent-4) 15%, var(--nbam-bg-soft));
+}
+
+/* Info trigger dot */
+.nbam-app .vault-info-trigger,
+.nbam-app .info-trigger {
+  min-height: 24px; min-width: 24px; padding: 0; margin-left: 6px;
+  border: 1px solid var(--nbam-line); border-radius: 50%;
+  background: var(--nbam-bg-soft); color: var(--nbam-text-muted);
+  font: inherit; font-weight: 700; font-size: 0.78rem;
+  vertical-align: middle; cursor: help;
+}
+.nbam-app .vault-info-trigger:hover,
+.nbam-app .info-trigger:hover { color: var(--nbam-text); border-color: var(--nbam-accent-2); }
+
+/* ---------------- metric grid ---------------- */
+
+.nbam-app .prediction-about-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin: 8px 0 4px;
+}
+.nbam-app .prediction-about-metric-card {
+  padding: 14px;
+  background: var(--nbam-bg-soft);
+  border: 1px solid var(--nbam-line-soft);
+  border-radius: var(--nbam-radius-sm);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.nbam-app .prediction-about-metric-card > span,
+.nbam-app .prediction-about-metric-card > span:first-child {
+  color: var(--nbam-text-muted);
+  font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+.nbam-app .prediction-about-metric-card > strong {
+  color: var(--nbam-text);
+  font-size: 1.5rem; font-weight: 800; letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Callout */
+.nbam-app .prediction-about-callout {
+  padding: 12px 14px;
+  border-left: 3px solid var(--nbam-accent-2);
+  background: color-mix(in srgb, var(--nbam-accent-2) 8%, transparent);
+  color: var(--nbam-text);
+  font-size: 0.9rem; line-height: 1.55;
+  border-radius: 0 var(--nbam-radius-sm) var(--nbam-radius-sm) 0;
+  margin: 8px 0 12px;
+}
+.nbam-app .prediction-about-callout strong { color: var(--nbam-text); }
+
+/* ---------------- tables (savant style) ---------------- */
+
+.nbam-app .prediction-about-table-wrap,
+.nbam-app .par-table-wrap {
+  overflow-x: auto;
+  background: var(--nbam-bg-soft);
+  border: 1px solid var(--nbam-line-soft);
+  border-radius: var(--nbam-radius-sm);
+}
+.nbam-app .prediction-about-table tbody tr:hover td,
+.nbam-app .par-table tbody tr:hover td {
+  background: color-mix(in srgb, var(--nbam-accent-2) 6%, transparent);
+}
+.nbam-app .prediction-about-table td,
+.nbam-app .par-table td { color: var(--nbam-text); }
+.nbam-app .prediction-about-table td a,
+.nbam-app .par-table td a { color: var(--nbam-accent-2); text-decoration: none; }
+.nbam-app .prediction-about-table td a:hover,
+.nbam-app .par-table td a:hover { text-decoration: underline; }
+
+.nbam-app .prediction-about-table,
+.nbam-app .par-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  min-width: 480px;
+  color: var(--nbam-text);
+}
+.nbam-app .prediction-about-table th,
+.nbam-app .par-table th,
+.nbam-app .prediction-about-table td,
+.nbam-app .par-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--nbam-line-soft);
+  text-align: left; vertical-align: top;
+}
+.nbam-app .prediction-about-table th,
+.nbam-app .par-table th {
+  color: var(--nbam-text-muted);
+  font-weight: 700; font-size: 0.72rem;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  background: var(--nbam-bg-soft);
+  position: sticky; top: 0; z-index: 1;
+}
+.nbam-app .prediction-about-table td,
+.nbam-app .par-table td { font-variant-numeric: tabular-nums; }
+.nbam-app .prediction-about-table tbody tr:hover td,
+.nbam-app .par-table tbody tr:hover td {
+  background: color-mix(in srgb, var(--nbam-accent-2) 6%, transparent);
+}
+
+/* ---------------- lists ---------------- */
+
+.nbam-app .prediction-about-list {
+  color: var(--nbam-text);
+  font-size: 0.92rem; line-height: 1.6;
+  padding-left: 20px; margin: 0;
+}
+.nbam-app .prediction-about-list li { margin-bottom: 6px; }
+.nbam-app .prediction-about-list strong { color: var(--nbam-text); }
+.nbam-app .prediction-about-split-grid {
+  display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 12px;
+}
+@media (min-width: 900px) {
+  .nbam-app .prediction-about-split-grid { grid-template-columns: 1fr 1fr; }
+}
+.nbam-app .prediction-about-split-grid > article {
+  padding: 14px;
+  background: var(--nbam-bg-soft);
+  border: 1px solid var(--nbam-line-soft);
+  border-radius: var(--nbam-radius-sm);
+}
+.nbam-app .prediction-about-split-grid h3 {
+  margin: 0 0 8px; color: var(--nbam-text);
+  font-size: 0.85rem; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase;
+}
+
+/* ---------------- board (prediction cards) ---------------- */
+
+.nbam-app .vault-board {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+@media (min-width: 640px) { .nbam-app .vault-board { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1080px) { .nbam-app .vault-board { grid-template-columns: repeat(3, 1fr); } }
+
+.nbam-app .prediction-card {
+  position: relative;
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 16px;
+  background: var(--nbam-panel);
+  border: 1px solid var(--nbam-line);
+  border-radius: var(--nbam-radius);
+  box-shadow: var(--nbam-shadow-1);
+  color: var(--nbam-text);
+  overflow: hidden;
+}
+.nbam-app .prediction-card::before {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 3px;
+  background: var(--nbam-over);
+}
+.nbam-app .prediction-card[data-direction="UNDER"]::before { background: var(--nbam-under); }
+
+.nbam-app .prediction-card__header {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--nbam-text-muted);
+}
+.nbam-app .prediction-card__rank {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 26px; height: 26px; padding: 0 8px;
+  background: var(--nbam-bg-soft);
+  border: 1px solid var(--nbam-line-soft);
+  border-radius: var(--nbam-radius-pill);
+  font-weight: 800; font-size: 0.78rem;
+  color: var(--nbam-text);
+}
+.nbam-app .prediction-card__tags {
+  display: flex; flex-wrap: wrap; gap: 4px; margin-left: auto;
+}
+.nbam-app .prediction-card__tag {
+  padding: 3px 8px; border-radius: var(--nbam-radius-pill);
+  font-size: 0.66rem; font-weight: 800;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  background: var(--nbam-bg-soft); color: var(--nbam-text-muted);
+  border: 1px solid var(--nbam-line-soft);
+}
+.nbam-app .prediction-card__tag--parlay {
+  background: color-mix(in srgb, var(--nbam-accent-5) 20%, transparent);
+  border-color: color-mix(in srgb, var(--nbam-accent-5) 60%, transparent);
+  color: var(--nbam-accent-5);
+}
+.nbam-app .prediction-card__tag--risk {
+  background: color-mix(in srgb, var(--nbam-accent-4) 18%, transparent);
+  border-color: color-mix(in srgb, var(--nbam-accent-4) 55%, transparent);
+  color: var(--nbam-accent-4);
+}
+
+.nbam-app .prediction-card__identity {
+  display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: center;
+}
+.nbam-app .prediction-card__photo {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--nbam-bg-soft);
+  border: 1px solid var(--nbam-line-soft);
+  overflow: hidden; display: grid; place-items: center;
+  font-weight: 800; font-size: 1.1rem; color: var(--nbam-text-muted);
+}
+.nbam-app .prediction-card__photo-img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.nbam-app .prediction-card__fallback {
+  color: var(--nbam-text-muted);
+}
+.nbam-app .prediction-card__name {
+  margin: 0; font-size: 1rem; font-weight: 800; color: var(--nbam-text);
+}
+.nbam-app .prediction-card__market {
+  margin: 2px 0 0; color: var(--nbam-text-muted);
+  font-size: 0.78rem; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase;
+}
+.nbam-app .prediction-card__context {
+  margin: 4px 0 0; color: var(--nbam-text-dim); font-size: 0.78rem;
+}
+
+.nbam-app .prediction-card__signal {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 10px 12px;
+  background: var(--nbam-bg-soft);
+  border: 1px solid var(--nbam-line-soft);
+  border-radius: var(--nbam-radius-sm);
+}
+.nbam-app .prediction-card__signal-label {
+  color: var(--nbam-text-muted); font-size: 0.72rem;
+  font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.nbam-app .prediction-card__signal strong {
+  color: var(--nbam-accent-3);
+  font-size: 1.4rem; font-weight: 800; letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.nbam-app .prediction-card[data-direction="UNDER"] .prediction-card__signal strong {
+  color: var(--nbam-under);
+}
+
+.nbam-app .prediction-card__metrics {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px;
+  margin: 0; padding: 0;
+}
+.nbam-app .prediction-card__metrics > div {
+  display: flex; flex-direction: column; gap: 2px;
+}
+.nbam-app .prediction-card__metrics dt {
+  color: var(--nbam-text-muted); font-size: 0.7rem;
+  font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+}
+.nbam-app .prediction-card__metrics dd {
+  margin: 0; color: var(--nbam-text);
+  font-size: 0.95rem; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.nbam-app .prediction-card__note {
+  margin: 0; color: var(--nbam-text-muted);
+  font-size: 0.82rem; line-height: 1.5;
+}
+
+/* Sweep any lingering hard-coded white surfaces from the vault stack.
+ * These target specific vault/prediction-pages classes that inline
+ * `background: #ffffff`. Safe because .nbam-app is our modern dark scope. */
+.nbam-app .prediction-about-back-link,
+.nbam-app .prediction-about-note,
+.nbam-app .prediction-about-info-badge,
+.nbam-app .vault-input,
+.nbam-app .vault-select,
+.nbam-app .vault-pill,
+.nbam-app .prediction-play-card,
+.nbam-app .vault-toolbar,
+.nbam-app .prediction-run-meta > * {
+  background-color: transparent !important;
+  color: var(--nbam-text-muted);
+  border-color: var(--nbam-line) !important;
+}
+.nbam-app select,
+.nbam-app input[type="text"],
+.nbam-app input[type="number"],
+.nbam-app input[type="search"] {
+  background-color: var(--nbam-bg-soft);
+  color: var(--nbam-text);
+  border-color: var(--nbam-line);
+}
+.nbam-app details.disclosure {
+  border: 1px solid var(--nbam-line-soft);
+  border-radius: var(--nbam-radius-sm);
+  background: var(--nbam-bg-soft);
+  color: var(--nbam-text-muted);
+}
+.nbam-app details.disclosure > summary {
+  padding: 8px 12px; color: var(--nbam-text-muted);
+  cursor: pointer; font-size: 0.82rem; font-weight: 600;
+  list-style: none;
+}
+.nbam-app details.disclosure > summary::-webkit-details-marker { display: none; }
+.nbam-app details.disclosure[open] > summary { color: var(--nbam-text); border-bottom: 1px solid var(--nbam-line-soft); }
+.nbam-app .disclosure-body { padding: 8px 12px 12px; }
+
+/* Status pills */
+.nbam-app .vault-status-pill {
+  padding: 3px 8px; border-radius: var(--nbam-radius-pill);
+  font-size: 0.66rem; font-weight: 800;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+.nbam-app .vault-status-pill--qualified,
+.nbam-app .vault-status-pill--active {
+  background: color-mix(in srgb, var(--nbam-accent-3) 20%, transparent);
+  color: var(--nbam-accent-3);
+  border: 1px solid color-mix(in srgb, var(--nbam-accent-3) 55%, transparent);
+}
+.nbam-app .vault-status-pill--pending {
+  background: color-mix(in srgb, var(--nbam-accent-4) 18%, transparent);
+  color: var(--nbam-accent-4);
+  border: 1px solid color-mix(in srgb, var(--nbam-accent-4) 55%, transparent);
+}
+.nbam-app .vault-status-pill--shadow {
+  background: color-mix(in srgb, var(--nbam-accent-5) 18%, transparent);
+  color: var(--nbam-accent-5);
+  border: 1px solid color-mix(in srgb, var(--nbam-accent-5) 55%, transparent);
+}
+.nbam-app .vault-status-pill--withheld,
+.nbam-app .vault-status-pill--unavailable {
+  background: var(--nbam-bg-soft); color: var(--nbam-text-muted);
+  border: 1px solid var(--nbam-line-soft);
+}
+
+/* Opening tripleheader cards & watchlists */
+.nbam-app .opening-game-grid {
+  display: grid; gap: 10px; grid-template-columns: 1fr;
+  margin: 8px 0 4px;
+}
+@media (min-width: 640px) { .nbam-app .opening-game-grid { grid-template-columns: repeat(3, 1fr); } }
+.nbam-app .opening-game-card {
+  padding: 14px;
+  background: var(--nbam-bg-soft);
+  border: 1px solid var(--nbam-line-soft);
+  border-radius: var(--nbam-radius-sm);
+  color: var(--nbam-text);
+}
+.nbam-app .opening-game-card__matchup {
+  margin: 6px 0; font-weight: 800; color: var(--nbam-text); font-size: 1rem;
+}
+.nbam-app .opening-game-card__time { color: var(--nbam-text-muted); font-size: 0.78rem; margin: 0; }
+.nbam-app .opening-game-card__time + .opening-game-card__matchup { margin-top: 2px; }
+
+.nbam-app .opening-watchlist-grid {
+  display: grid; gap: 12px; grid-template-columns: 1fr;
+}
+@media (min-width: 720px) { .nbam-app .opening-watchlist-grid { grid-template-columns: 1fr 1fr; } }
+.nbam-app .opening-watchlist-card {
+  padding: 14px;
+  background: var(--nbam-bg-soft);
+  border: 1px solid var(--nbam-line-soft);
+  border-radius: var(--nbam-radius-sm);
+  color: var(--nbam-text);
+}
+.nbam-app .opening-watchlist-card h3 {
+  margin: 0 0 4px; color: var(--nbam-text);
+  font-size: 0.95rem; font-weight: 800;
+}
+.nbam-app .opening-watchlist-card__note {
+  margin: 0 0 10px; color: var(--nbam-text-muted); font-size: 0.85rem;
+}
+.nbam-app .opening-watchlist-legs {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.nbam-app .opening-watchlist-leg {
+  display: flex; justify-content: space-between; gap: 10px;
+  padding: 8px 10px;
+  background: var(--nbam-panel);
+  border: 1px solid var(--nbam-line-soft);
+  border-radius: var(--nbam-radius-sm);
+  align-items: center;
+}
+.nbam-app .opening-watchlist-leg strong { color: var(--nbam-text); font-variant-numeric: tabular-nums; }
+.nbam-app .opening-watchlist-leg small { color: var(--nbam-text-muted); font-size: 0.72rem; }
+.nbam-app .opening-watchlist-leg__projection {
+  display: flex; flex-direction: column; align-items: flex-end;
+}
+
+/* Filter row for opening-target-filters */
+.nbam-app .opening-target-filters {
+  display: flex; gap: 4px; padding: 4px;
+  background: var(--nbam-bg-soft);
+  border: 1px solid var(--nbam-line-soft);
+  border-radius: var(--nbam-radius);
+  width: fit-content;
+}
+.nbam-app .opening-target-filters button {
+  padding: 8px 14px; border: 0; background: transparent;
+  color: var(--nbam-text-muted);
+  font: inherit; font-weight: 700; font-size: 0.85rem;
+  border-radius: var(--nbam-radius-sm); cursor: pointer;
+}
+.nbam-app .opening-target-filters button:hover { color: var(--nbam-text); }
+.nbam-app .opening-target-filters button.is-active {
+  color: var(--nbam-text);
+  background: color-mix(in srgb, var(--nbam-accent) 22%, transparent);
+  box-shadow: inset 0 -2px 0 var(--nbam-accent);
+}
+
+/* Pool section heading */
+.nbam-app .pool-section-heading {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin: 24px 0 12px; flex-wrap: wrap;
+}
+.nbam-app .pool-section-heading h2 {
+  margin: 0; color: var(--nbam-text);
+  font-size: 1.15rem; font-weight: 800; letter-spacing: -0.005em;
+}
+.nbam-app .pool-primary,
+.nbam-app .pool-secondary {
+  padding: 18px;
+  margin: 0 0 16px;
+  background: var(--nbam-panel);
+  border: 1px solid var(--nbam-line);
+  border-radius: var(--nbam-radius);
+  box-shadow: var(--nbam-shadow-1);
+}
+@media (min-width: 720px) {
+  .nbam-app .pool-primary,
+  .nbam-app .pool-secondary { padding: 22px; }
+}
+
+/* Date navigation */
+.nbam-app .date-nav {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  padding: 4px;
+  background: var(--nbam-bg-soft);
+  border: 1px solid var(--nbam-line-soft);
+  border-radius: var(--nbam-radius);
+  margin: 12px 0 4px;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.nbam-app .date-nav__btn {
+  padding: 8px 12px; border: 0; background: transparent;
+  color: var(--nbam-text-muted);
+  font: inherit; font-weight: 600; font-size: 0.82rem;
+  border-radius: var(--nbam-radius-sm); cursor: pointer;
+  white-space: nowrap;
+}
+.nbam-app .date-nav__btn:hover { color: var(--nbam-text); }
+.nbam-app .date-nav__btn.is-active,
+.nbam-app .date-nav__btn[aria-current="true"] {
+  color: var(--nbam-text);
+  background: color-mix(in srgb, var(--nbam-accent-2) 22%, transparent);
+}
+
+/* Inline empty states (from prediction-about.js, predictions.js) */
+.nbam-app .prediction-about-empty {
+  padding: 10px 14px;
+  background: var(--nbam-bg-soft);
+  border: 1px dashed var(--nbam-line);
+  border-radius: var(--nbam-radius-sm);
+  color: var(--nbam-text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* Empty state */
+.nbam-app .vault-empty {
+  padding: 24px;
+  background: var(--nbam-bg-soft);
+  border: 1px dashed var(--nbam-line);
+  border-radius: var(--nbam-radius);
+  color: var(--nbam-text-muted);
+  text-align: center;
+}
+.nbam-app .vault-empty h3 { color: var(--nbam-text); margin: 0 0 8px; }
+.nbam-app .vault-empty p { margin: 0; }
+.nbam-app .vault-empty a { color: var(--nbam-accent-2); }
+
+.nbam-app .vault-button {
+  min-height: 40px; padding: 0 16px;
+  background: var(--nbam-accent); color: #fff;
+  border: 0; border-radius: var(--nbam-radius-sm);
+  font: inherit; font-weight: 700; cursor: pointer;
+  margin-top: 12px;
+}
+
+/* Pool status footer */
+.nbam-app .pool-status {
+  padding: 14px; margin: 24px 0 0;
+  border-top: 1px solid var(--nbam-line);
+  color: var(--nbam-text-dim); font-size: 0.82rem;
+}
+.nbam-app .pool-status__row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  justify-content: space-between;
+}
+.nbam-app .pool-status__link {
+  color: var(--nbam-accent-2); text-decoration: none;
+  font-weight: 700; font-size: 0.85rem;
+}
+.nbam-app .pool-status__link:hover { text-decoration: underline; }
+
+/* ---------------- PAR page specifics ---------------- */
+
+.nbam-app .par-shell {
+  max-width: 1280px; margin: 0 auto; padding: 16px;
+}
+@media (min-width: 720px) { .nbam-app .par-shell { padding: 24px; } }
+
+.nbam-app .par-topbar {
+  position: relative;
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 20px;
+  margin: 0 0 20px;
+  background: linear-gradient(160deg, var(--nbam-panel-raised) 0%, var(--nbam-panel) 100%);
+  border: 1px solid var(--nbam-line);
+  border-radius: var(--nbam-radius);
+  box-shadow: var(--nbam-shadow-1); overflow: hidden;
+}
+@media (min-width: 720px) {
+  .nbam-app .par-topbar { flex-direction: row; align-items: flex-start; padding: 28px; gap: 20px; }
+}
+.nbam-app .par-topbar::before {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 4px;
+  background: linear-gradient(180deg, var(--nbam-accent), var(--nbam-accent-2));
+}
+.nbam-app .par-proof-badge {
+  align-self: flex-start;
+  padding: 6px 12px; border-radius: var(--nbam-radius-pill);
+  background: color-mix(in srgb, var(--nbam-accent-3) 18%, transparent);
+  color: var(--nbam-accent-3);
+  font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+  border: 1px solid color-mix(in srgb, var(--nbam-accent-3) 45%, transparent);
+}
+
+.nbam-app .par-view {
+  padding: 18px;
+  background: var(--nbam-panel);
+  border: 1px solid var(--nbam-line);
+  border-radius: var(--nbam-radius);
+  box-shadow: var(--nbam-shadow-1);
+  margin: 0 0 16px;
+}
+@media (min-width: 720px) { .nbam-app .par-view { padding: 22px; } }
+
+.nbam-app .par-controls {
+  display: grid; grid-template-columns: 1fr; gap: 8px;
+  margin: 0 0 14px;
+}
+@media (min-width: 640px) {
+  .nbam-app .par-controls {
+    grid-template-columns: 2fr 1fr 1fr 1fr auto auto;
+    gap: 8px;
+  }
+}
+.nbam-app .par-controls input,
+.nbam-app .par-controls select {
+  min-height: 40px; padding: 0 12px;
+  background: var(--nbam-bg-soft);
+  border: 1px solid var(--nbam-line);
+  border-radius: var(--nbam-radius-sm);
+  color: var(--nbam-text);
+  font: inherit; min-width: 0;
+}
+.nbam-app .par-controls select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--nbam-text-muted) 50%),
+                    linear-gradient(-45deg, transparent 50%, var(--nbam-text-muted) 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 32px;
+}
+.nbam-app .par-controls input:focus-visible,
+.nbam-app .par-controls select:focus-visible {
+  outline: 2px solid var(--nbam-accent-2); outline-offset: 1px;
+}
+.nbam-app .par-minutes-filter {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--nbam-text-muted); font-size: 0.85rem;
+}
+.nbam-app .par-minutes-filter input { max-width: 90px; }
+
+.nbam-app .par-back-button {
+  min-height: 38px; padding: 0 14px; margin: 0 0 12px;
+  background: var(--nbam-bg-soft);
+  border: 1px solid var(--nbam-line);
+  color: var(--nbam-text); font: inherit; font-weight: 600;
+  border-radius: var(--nbam-radius-sm); cursor: pointer;
+}
+.nbam-app .par-back-button:hover { border-color: var(--nbam-accent-2); }
+
+/* Savant-style percentile bar */
+.nbam-app .nbam-perc {
+  display: inline-block; width: 100%; height: 8px;
+  background: var(--nbam-line-soft);
+  border-radius: var(--nbam-radius-pill);
+  overflow: hidden; position: relative; margin-top: 4px;
+}
+.nbam-app .nbam-perc__fill {
+  position: absolute; left: 0; top: 0; height: 100%;
+  background: linear-gradient(90deg, var(--nbam-accent), var(--nbam-accent-2));
+  border-radius: var(--nbam-radius-pill);
+}
+
+/* ---------------- landing tile ---------------- */
+
+.nbam-app .nbam-tile-grid {
+  display: grid; grid-template-columns: 1fr; gap: 12px;
+}
+@media (min-width: 620px) { .nbam-app .nbam-tile-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1000px) { .nbam-app .nbam-tile-grid { grid-template-columns: repeat(3, 1fr); } }
+
+.nbam-app .nbam-tile {
+  position: relative;
+  display: block; padding: 20px;
+  background: var(--nbam-panel);
+  border: 1px solid var(--nbam-line);
+  border-radius: var(--nbam-radius);
+  box-shadow: var(--nbam-shadow-1);
+  color: var(--nbam-text);
+  text-decoration: none;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), border-color 160ms;
+  overflow: hidden;
+}
+.nbam-app .nbam-tile::before {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 3px;
+  background: var(--nbam-accent);
+  transition: width 160ms;
+}
+.nbam-app .nbam-tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--nbam-accent-2);
+}
+.nbam-app .nbam-tile:hover::before { width: 5px; }
+
+.nbam-app .nbam-tile__kicker {
+  color: var(--nbam-text-muted);
+  font-size: 0.68rem; font-weight: 800;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  margin: 0 0 6px;
+}
+.nbam-app .nbam-tile__title {
+  color: var(--nbam-text);
+  font-size: 1.25rem; font-weight: 800; letter-spacing: -0.01em;
+  margin: 0 0 6px;
+}
+.nbam-app .nbam-tile__body {
+  color: var(--nbam-text-muted);
+  font-size: 0.9rem; line-height: 1.5;
+  margin: 0 0 12px;
+}
+.nbam-app .nbam-tile__arrow {
+  color: var(--nbam-accent-2);
+  font-weight: 700; font-size: 0.85rem;
+}
+
+/* ---------------- section tabs (reused pattern) ---------------- */
+
+.nbam-app .nbam-tabs {
+  display: flex; gap: 2px;
+  overflow-x: auto; scrollbar-width: none;
+  padding: 4px; margin: 0 0 16px;
+  background: var(--nbam-panel);
+  border: 1px solid var(--nbam-line);
+  border-radius: var(--nbam-radius);
+}
+.nbam-app .nbam-tabs::-webkit-scrollbar { display: none; }
+.nbam-app .nbam-tab {
+  flex: 0 0 auto;
+  padding: 10px 14px; border: 0;
+  border-radius: var(--nbam-radius-sm);
+  background: transparent; color: var(--nbam-text-muted);
+  font: inherit; font-weight: 600; font-size: 0.87rem;
+  cursor: pointer; white-space: nowrap;
+  transition: background 120ms, color 120ms;
+}
+.nbam-app .nbam-tab:hover,
+.nbam-app .nbam-tab:focus-visible {
+  color: var(--nbam-text);
+  background: color-mix(in srgb, var(--nbam-accent-2) 12%, transparent);
+  outline: none;
+}
+.nbam-app .nbam-tab.is-active {
+  color: var(--nbam-text);
+  background: color-mix(in srgb, var(--nbam-accent) 18%, transparent);
+  box-shadow: inset 0 -2px 0 var(--nbam-accent);
+}
+.nbam-app .nbam-panel-hidden { display: none; }
+
+/* ---------------- footer ---------------- */
+
+.nbam-app .nbam-footer {
+  margin: 40px 0 0;
+  padding: 20px 0 0;
+  border-top: 1px solid var(--nbam-line);
+  color: var(--nbam-text-dim);
+  font-size: 0.78rem; line-height: 1.6;
+  text-align: center;
+}

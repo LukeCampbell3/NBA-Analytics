@@ -3,51 +3,98 @@
 <head>
     <base href="../">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0d1117">
     <meta name="description" content="Real, mode-independent box-score baseline stats per player -- usage, decision touches, assist and turnover rates.">
     <title>Stats | In The Cards Analytics</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="/vault/vault-tokens.css?v=10">
-    <link rel="stylesheet" href="/vault/vault-components.css?v=10">
-    <link rel="stylesheet" href="/vault/prediction-pages.css?v=11">
-    <link rel="stylesheet" href="advantage-routing.css?v=1">
+    <link rel="stylesheet" href="vault/vault-tokens.css?v=10">
+    <link rel="stylesheet" href="vault/vault-components.css?v=10">
+    <link rel="stylesheet" href="vault/prediction-pages.css?v=11">
+    <link rel="stylesheet" href="ar-modern.css?v=3">
+    <link rel="stylesheet" href="nba-modern.css?v=5">
 </head>
 <body class="vault-theme">
     <div id="vaultShellRoot"></div>
 
-    <main class="vault-shell prediction-about-page ar-page">
-        <section class="prediction-about-stage">
-            <div class="prediction-about-container">
-                <header class="prediction-about-sign">
-                    <p class="prediction-about-kicker">Advantage-Routing Research</p>
-                    <div class="minimal-heading">
-                        <h1>Stats</h1>
-                        <button class="info-trigger" type="button" aria-label="About this page" data-info="Real, mode-independent box-score baseline for the selected player -- usage rate, decision touches, and assist/turnover rates. Built from real box scores, never fabricated. Every number is labeled OBSERVED, DERIVED, RECONSTRUCTED, SIMULATED, or UNAVAILABLE. For mode-specific routing analysis, see Drive-Pass or Post-Pass.">i</button>
-                    </div>
-                    <p class="prediction-page-lead">The real, mode-independent box-score baseline for a player -- usage, decision touches, and assist/turnover rates. Every metric carries a provenance badge; nothing here is invented to fill a gap.</p>
-                    <p id="arRunFacts" class="prediction-about-run-facts">Loading...</p>
-                </header>
+    <main class="arm-app">
+        <div class="arm-page">
+            <p class="arm-kicker">Advantage-Routing &middot; Stats</p>
+            <h1 class="arm-h1">
+                Stats
+                <button class="arm-info-btn" type="button"
+                        title="Real, mode-independent box-score baseline for the selected player — usage rate, decision touches, and assist/turnover rates. Built from real box scores, never fabricated. Every number is labeled OBSERVED, DERIVED, RECONSTRUCTED, SIMULATED, or UNAVAILABLE. For mode-specific routing analysis, see Drive-Pass or Post-Pass.">i</button>
+            </h1>
+            <p class="arm-lead">
+                The real, mode-independent box-score baseline for a player — usage, decision touches,
+                and assist / turnover rates. Every metric carries a provenance badge; nothing here
+                is invented to fill a gap.
+            </p>
 
-                <section class="prediction-about-panel ar-controls-panel">
-                    <div class="ar-controls-row">
-                        <label class="ar-control">
-                            <span>Player</span>
-                            <select id="arPlayerSelect"></select>
-                        </label>
-                    </div>
-                </section>
-
-                <section class="prediction-about-panel">
-                    <h2>Baseline Profile <span class="ar-badge ar-badge--observed">real box scores</span></h2>
-                    <div id="arBaselineGrid" class="prediction-about-metric-grid ar-baseline-grid"></div>
-                </section>
+            <div class="arm-toolbar" role="search">
+                <label class="arm-search" aria-label="Search players">
+                    <input id="armSearch" type="search" placeholder="Search a player…" autocomplete="off">
+                </label>
+                <select id="armPlayerSelect" class="arm-select" aria-label="Player"></select>
             </div>
-        </section>
+
+            <section class="arm-hero" aria-labelledby="armHeroName">
+                <div class="arm-hero-avatar" id="armHeroAvatar" aria-hidden="true"></div>
+                <div class="arm-hero-body">
+                    <h2 class="arm-hero-name" id="armHeroName">—</h2>
+                    <div class="arm-hero-meta" id="armHeroMeta">Loading…</div>
+                    <div class="arm-stat-strip" id="armStatStrip"></div>
+                </div>
+            </section>
+
+            <nav class="arm-tabs" role="tablist" aria-label="Stats sections">
+                <button class="arm-tab is-active" data-section="overview" role="tab" aria-selected="true" type="button">Overview</button>
+                <button class="arm-tab" data-section="summary" role="tab" aria-selected="false" type="button">Findings</button>
+                <button class="arm-tab" data-section="compare" role="tab" aria-selected="false" type="button">Compare</button>
+                <button class="arm-tab" data-section="sources" role="tab" aria-selected="false" type="button">Sources</button>
+            </nav>
+
+            <section class="arm-panel" data-panel="overview">
+                <div class="arm-panel-head">
+                    <h2>Baseline snapshot <span class="arm-badge arm-badge--observed">real box scores</span></h2>
+                    <p>Season totals and rate metrics — mode-independent (usage, decision touches, AST/TOV). For mode-specific routing, see Drive-Pass or Post-Pass.</p>
+                </div>
+                <div class="arm-overview-grid" id="armOverviewGrid"></div>
+            </section>
+
+            <section class="arm-panel arm-panel-hidden" data-panel="summary">
+                <div class="arm-panel-head">
+                    <h2>Research summary</h2>
+                    <p>Archetype, primary gravity, and caveats produced by the artifact pipeline.</p>
+                </div>
+                <div class="arm-summary-body" id="armSummary"></div>
+            </section>
+
+            <section class="arm-panel arm-panel-hidden" data-panel="compare">
+                <div class="arm-panel-head">
+                    <h2>Compare players</h2>
+                    <p>Pick any subset of players to see baselines side-by-side.</p>
+                </div>
+                <div class="arm-compare-chips" id="armCompareChips"></div>
+                <div id="armCompareTableWrap"></div>
+            </section>
+
+            <section class="arm-panel arm-panel-hidden" data-panel="sources">
+                <div class="arm-panel-head">
+                    <h2>Data provenance</h2>
+                    <p>Every source, every reachability caveat.</p>
+                </div>
+                <div class="arm-provenance" id="armProvenance"></div>
+            </section>
+
+            <p class="arm-footer">Built on real box scores. No mock data.</p>
+        </div>
     </main>
 
-    <script src="/vault/vault-components.js?v=14"></script>
-    <script src="/vault/vault-shell.js?v=9"></script>
-    <script>window.AR_PAGE_CONFIG = { mode: null, pageLabel: "Stats" };</script>
-    <script src="advantage-analysis-page.js?v=1"></script>
+    <script src="vault/vault-components.js?v=14"></script>
+    <script src="vault/vault-shell.js?v=9"></script>
+    <script>window.AR_MODERN_CONFIG = { mode: "stats", pageLabel: "Stats", modeLabel: "stats" };</script>
+    <script src="ar-modern.js?v=2"></script>
 </body>
 </html>
