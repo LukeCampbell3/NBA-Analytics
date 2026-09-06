@@ -51,8 +51,8 @@ def pitcher(**overrides):
         xwoba_allowed=0.315,
         xba_allowed=0.245,
         xslg_allowed=0.405,
-        hard_hit_allowed=0.37,
-        barrel_allowed=0.07,
+        hard_hit_rate_allowed=0.37,
+        barrel_rate_allowed=0.07,
         gb_rate=0.45,
         xfip=3.60,
         siera=3.55,
@@ -62,12 +62,13 @@ def pitcher(**overrides):
     return replace(base, **overrides)
 
 
-def context(*, b=None, p=None, target_runs=4.8, order=2, defense_status="AVERAGE_CONTEXT_RESIDUAL_ONLY", defense_residual=0.0):
+def context(*, b=None, p=None, target_runs=4.8, order=2, defense_status="AVERAGE_CONTEXT_RESIDUAL_ONLY", defense_residual=0.0, temperature_f=72.0):
     return AdvancedCandidateContext(
         game_id="game",
         run_date="2026-09-05",
         batter=b or batter(),
         pitcher=p or pitcher(),
+        direct_matchup=None,
         batting_order=order,
         is_home=False,
         team_expected_runs=target_runs,
@@ -76,6 +77,7 @@ def context(*, b=None, p=None, target_runs=4.8, order=2, defense_status="AVERAGE
         defense_status=defense_status,
         data_freshness_status="FRESH",
         missing_components=(),
+        temperature_f=temperature_f,
     )
 
 
@@ -140,6 +142,31 @@ def test_game_state_changes_effective_pa_opportunity_feature():
     strong, _ = state(context(target_runs=6.2, order=1))
     assert strong.signals["pa_opportunity"] > weak.signals["pa_opportunity"]
     assert strong.effective_features["pa_opportunity"] > weak.effective_features["pa_opportunity"]
+
+
+def test_rolling_form_changes_game_specific_contact_state_without_replacing_season_prior():
+    hot_rolling = {
+        "last_15": {"pa": 15, "k_rate": 0.10, "whiff_rate": 0.10, "xwoba_contact": 0.470, "xslg_contact": 0.700, "hard_hit_rate": 0.62, "barrel_rate": 0.18},
+        "last_30": {"pa": 30, "k_rate": 0.13, "whiff_rate": 0.12, "xwoba_contact": 0.430, "xslg_contact": 0.640, "hard_hit_rate": 0.56, "barrel_rate": 0.15},
+        "last_60": {"pa": 60, "k_rate": 0.16, "whiff_rate": 0.15, "xwoba_contact": 0.400, "xslg_contact": 0.590, "hard_hit_rate": 0.51, "barrel_rate": 0.13},
+    }
+    cold_rolling = {
+        "last_15": {"pa": 15, "k_rate": 0.34, "whiff_rate": 0.33, "xwoba_contact": 0.240, "xslg_contact": 0.310, "hard_hit_rate": 0.25, "barrel_rate": 0.03},
+        "last_30": {"pa": 30, "k_rate": 0.30, "whiff_rate": 0.29, "xwoba_contact": 0.270, "xslg_contact": 0.340, "hard_hit_rate": 0.29, "barrel_rate": 0.04},
+        "last_60": {"pa": 60, "k_rate": 0.27, "whiff_rate": 0.26, "xwoba_contact": 0.300, "xslg_contact": 0.380, "hard_hit_rate": 0.33, "barrel_rate": 0.05},
+    }
+    hot, _ = state(context(b=batter(rolling=hot_rolling)))
+    cold, _ = state(context(b=batter(rolling=cold_rolling)))
+    assert hot.signals["strikeout_contact"] > cold.signals["strikeout_contact"]
+    assert hot.signals["contact_quality"] > cold.signals["contact_quality"]
+    assert hot.activations["contact_quality"] >= cold.activations["contact_quality"]
+
+
+def test_warm_weather_changes_power_context_but_not_pa_opportunity():
+    cold, _ = state(context(temperature_f=45.0), "TB")
+    warm, _ = state(context(temperature_f=95.0), "TB")
+    assert warm.signals["power_tb"] > cold.signals["power_tb"]
+    assert warm.signals["pa_opportunity"] == cold.signals["pa_opportunity"]
 
 
 def test_shadow_model_can_raise_candidate_but_not_production_probability():
