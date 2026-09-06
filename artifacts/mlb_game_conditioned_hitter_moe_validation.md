@@ -1,26 +1,17 @@
-# MLB Game-Conditioned Hitter MoE Validation
+# MLB Game-Conditioned Hitter MoE Non-Regression Validation
 
 Model: `game_conditioned_hitter_moe_v2`
 
-Evidence class: `ROLLING_ORIGIN_HIGH_FIDELITY_DIAGNOSTIC_NOT_CERTIFICATION`
+Evidence: `ROLLING_ORIGIN_HIGH_FIDELITY_DIAGNOSTIC_NOT_CERTIFICATION`
 
-The model fits target-specific residuals in logit space around the legacy/structural prior. Every validation prediction comes from an expanding-window fit using strictly earlier dates.
+This report requires the new residual model to beat the prior in rolling-origin probability scoring and to preserve or improve supported pick hit-rate slices after replaying the live negative-only authority rule.
 
-Positive publication authority remains disabled because this corpus does not preserve exact pregame snapshots of every advanced live feature. A target receives negative-only authority only if aggregate Brier and log-loss improve and at least 60% of expanding-window folds improve both.
+| Target | OOF | Folds pass | Prior Brier | Candidate | Production | Prior LL | Candidate | Production | Pick guard | Authority |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---|
+| H | 1126 | 2/6 | 0.2479 | 0.2492 | 0.2479 | 0.7147 | 0.7171 | 0.7147 | PASS | False |
+| TB | 1126 | 2/6 | 0.1502 | 0.1487 | 0.1502 | 0.4514 | 0.4491 | 0.4514 | PASS | False |
+| HR | 1126 | 3/6 | 0.0619 | 0.0630 | 0.0619 | 0.2115 | 0.2069 | 0.2115 | PASS | False |
 
-| Target | Fit rows | OOF rows | Folds pass | Prior Brier | Candidate Brier | Prior LogLoss | Candidate LogLoss | Gate |
-|---|---:|---:|---:|---:|---:|---:|---:|---|
-| H | 300 | 260 | 1/5 | 0.2447 | 0.2479 | 0.6797 | 0.6877 | DID_NOT_CLEAR_DIAGNOSTIC_IMPROVEMENT_GATE |
-| TB | 300 | 260 | 5/5 | 0.1656 | 0.1606 | 0.4897 | 0.4785 | IMPROVED_DIAGNOSTIC_ONLY |
-| HR | 300 | 260 | 2/5 | 0.0496 | 0.0495 | 0.1792 | 0.1744 | DID_NOT_CLEAR_DIAGNOSTIC_IMPROVEMENT_GATE |
+A target that fails any gate has zero production authority, so its production probability is the previous prior unchanged. Positive/bidirectional authority remains disabled until exact point-in-time locked or prospective advanced-feature evidence exists.
 
-## Experts
-
-- strikeout/contact compatibility
-- contact quality / expected contact
-- power / total-base / home-run tail
-- specific defensive conversion residual
-- plate-appearance opportunity
-- starter-removal / bullpen transition
-
-Live production additionally uses exact-day Savant pitch-type matchup information, xFIP/SIERA when available, team scoring state, park/weather state, and support/uncertainty shrinkage. This historical fit is diagnostic initialization, not certification.
+No ROI claim is made because this processed-history replay does not preserve exact decision-time prices for every observation.
