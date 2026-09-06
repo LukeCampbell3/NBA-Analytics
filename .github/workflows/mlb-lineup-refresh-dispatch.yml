@@ -1,57 +1,48 @@
-name: MLB Publication Schedule
+name: MLB Publication Manual Dispatch
 
 on:
-  schedule:
-    # High-frequency inference, low-frequency issuance. Times are Eastern.
-    - cron: "15 8 * 3-10 *"
-      timezone: "America/New_York"
-    - cron: "30 11 * 3-10 *"
-      timezone: "America/New_York"
-    - cron: "30 14 * 3-10 *"
-      timezone: "America/New_York"
-    - cron: "30 17 * 3-10 *"
-      timezone: "America/New_York"
   workflow_dispatch:
     inputs:
+      run_date:
+        description: "Eastern slate date (YYYY-MM-DD); defaults to today"
+        required: false
+        type: string
       publication_mode:
-        description: "Mode to dispatch manually"
+        description: "Manual publication mode"
         required: true
-        default: "DISCOVER"
+        default: "REFRESH"
         type: choice
-        options: [DISCOVER, PUBLISH, REFRESH, LATE_ADD]
+        options: [PUBLISH, REFRESH, LATE_ADD]
 
 permissions:
   actions: write
   contents: read
 
+env:
+  TZ: America/New_York
+
 jobs:
-  dispatch-canonical-mode:
+  dispatch-authoritative-worker:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Dispatch canonical MLB production workflow
+      - name: Dispatch authoritative MLB worker
         env:
           GH_TOKEN: ${{ github.token }}
-          EVENT_SCHEDULE: ${{ github.event.schedule }}
+          INPUT_RUN_DATE: ${{ inputs.run_date }}
           INPUT_MODE: ${{ inputs.publication_mode }}
         run: |
           set -euo pipefail
-          run_date="$(TZ=America/New_York date +%F)"
-          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-            mode="${INPUT_MODE:-DISCOVER}"
-          else
-            case "$EVENT_SCHEDULE" in
-              "15 8 * 3-10 *") mode=DISCOVER ;;
-              "30 11 * 3-10 *") mode=PUBLISH ;;
-              "30 14 * 3-10 *") mode=REFRESH ;;
-              "30 17 * 3-10 *") mode=LATE_ADD ;;
-              *) echo "Unknown MLB publication schedule: $EVENT_SCHEDULE" >&2; exit 2 ;;
-            esac
-          fi
-          gh workflow run mlb-predictions.yml \
-            --repo "${GITHUB_REPOSITORY}" \
+          run_date="${INPUT_RUN_DATE:-$(date +%F)}"
+          python -c "from datetime import date; date.fromisoformat('$run_date')"
+          mode="${INPUT_MODE:-REFRESH}"
+          case "$mode" in
+            PUBLISH|REFRESH|LATE_ADD) ;;
+            *) echo "Unsupported publication mode: $mode" >&2; exit 2 ;;
+          esac
+          gh workflow run mlb-publication-worker.yml \
+            --repo "$GITHUB_REPOSITORY" \
             --ref static-deployment \
             -f run_date="$run_date" \
-            -f build_only=false \
             -f publication_mode="$mode"
-          echo "Dispatched canonical MLB $mode run for $run_date"
+          echo "Dispatched authoritative MLB $mode for $run_date"
