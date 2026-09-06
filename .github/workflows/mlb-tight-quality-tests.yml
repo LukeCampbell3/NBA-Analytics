@@ -21,6 +21,7 @@ on:
       - 'sports/mlb/scripts/build_exotic_market_shadow.py'
       - 'sports/mlb/scripts/validate_v4_live_players.py'
       - 'sports/mlb/scripts/run_sequential_pa_hitter_model.py'
+      - 'sports/mlb/scripts/fit_game_conditioned_hitter_moe.py'
       - 'sports/mlb/scripts/run_unified_mlb_shadow.py'
       - 'sports/site/pipeline/validate_daily_publication.py'
       - 'sports/mlb/web/predictions.js'
@@ -30,6 +31,7 @@ on:
       - 'sports/mlb/tests/test_advanced_mlb_profiles.py'
       - 'sports/mlb/tests/test_advanced_source_refresh.py'
       - 'sports/mlb/tests/test_sequential_pa_model.py'
+      - 'sports/mlb/tests/test_game_conditioned_hitter_moe.py'
       - 'sports/mlb/tests/test_sequential_pa_identity_hydration.py'
       - 'sports/mlb/tests/test_unified_runtime_manifest_drift.py'
       - 'sports/mlb/tests/test_parlay_quality_selectors.py'
@@ -88,6 +90,7 @@ jobs:
             sports/mlb/tests/test_advanced_mlb_profiles.py \
             sports/mlb/tests/test_advanced_source_refresh.py \
             sports/mlb/tests/test_sequential_pa_model.py \
+            sports/mlb/tests/test_game_conditioned_hitter_moe.py \
             sports/mlb/tests/test_sequential_pa_identity_hydration.py \
             sports/mlb/tests/test_unified_runtime_manifest_drift.py \
             sports/mlb/tests/test_tight_quality_overlay.py \
