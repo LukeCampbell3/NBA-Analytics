@@ -1,0 +1,29 @@
+name: MLB Publication Recovery Trigger
+
+on:
+  push:
+    branches: [static-deployment]
+    paths:
+      - '.github/workflows/mlb-publication-recovery-trigger.yml'
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  recover-current-slate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch authoritative worker
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TZ: America/New_York
+        run: |
+          set -euo pipefail
+          run_date="$(date +%F)"
+          gh workflow run mlb-publication-worker.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref static-deployment \
+            -f run_date="$run_date" \
+            -f publication_mode=PUBLISH
+          echo "Dispatched authoritative MLB PUBLISH for $run_date"
