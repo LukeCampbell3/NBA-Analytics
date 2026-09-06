@@ -46,11 +46,11 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install numpy pandas scipy requests pytest pyarrow
 
-      - name: Run authority hardening tests
-        run: >-
-          python -m pytest -q
-          sports/mlb/tests/test_game_conditioned_authority.py
-          sports/mlb/tests/test_game_conditioned_hitter_moe.py
+      - name: Run independent authority tests
+        run: python -m pytest -q sports/mlb/tests/test_game_conditioned_authority.py
+
+      - name: Run existing game-conditioned MoE tests
+        run: python -m pytest -q sports/mlb/tests/test_game_conditioned_hitter_moe.py
 
       - name: Recompute committed authority claims
         run: >-
