@@ -1,0 +1,24 @@
+name: MLB Cancel Stale Legacy Run
+
+on:
+  push:
+    branches: [static-deployment]
+    paths:
+      - '.github/workflows/mlb-cancel-stale-run.yml'
+
+permissions:
+  actions: write
+  contents: read
+
+env:
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  cancel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel stale pre-authority run
+        run: |
+          set -euo pipefail
+          gh run cancel 34047823747 --repo "$GITHUB_REPOSITORY" || true
+          echo "Cancellation requested for stale legacy run 34047823747."
