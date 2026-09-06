@@ -1,0 +1,108 @@
+name: MLB Authoritative Frontend Handoff
+
+on:
+  workflow_run:
+    workflows: ["MLB Authoritative Publication Worker"]
+    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: mlb-authoritative-frontend-handoff
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  PUBLISH_BRANCH: static-deployment
+  TZ: America/New_York
+
+jobs:
+  synchronize:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout latest authoritative branch
+        uses: actions/checkout@v7
+        with:
+          ref: static-deployment
+          fetch-depth: 0
+
+      - name: Verify source publication before build
+        id: source
+        run: |
+          set -euo pipefail
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from datetime import datetime
+          from pathlib import Path
+          from zoneinfo import ZoneInfo
+
+          today = datetime.now(ZoneInfo('America/New_York')).date().isoformat()
+          board = json.loads(Path('sports/mlb/web/data/daily_predictions.json').read_text())
+          protocol = board.get('publication_protocol') or {}
+          assert board.get('run_date') == today, (board.get('run_date'), today)
+          assert str(board.get('publication_status') or '').lower() == 'ready'
+          assert isinstance(board.get('plays'), list)
+          assert protocol.get('issued_picks_immutable') is True, protocol
+          assert protocol.get('public_pick_retention') == 1.0, protocol
+          assert Path(f'sports/mlb/web/data/history/{today}.json').exists()
+          assert 'predictions-roi-overrides.js?v=6' in Path('sports/mlb/web/predictions.html').read_text()
+          print(f'run_date={today}')
+          PY
+
+      - name: Build latest static frontend
+        run: |
+          set -euo pipefail
+          python sports/site/pipeline/build_static_site.py \
+            --output dist \
+            --private-output paywall/private-content/app
+
+      - name: Verify source public and protected parity
+        env:
+          RUN_DATE: ${{ steps.source.outputs.run_date }}
+        run: |
+          set -euo pipefail
+          cmp sports/mlb/web/data/daily_predictions.json dist/mlb/data/daily_predictions.json
+          cmp sports/mlb/web/data/daily_predictions.json paywall/private-content/app/mlb/data/daily_predictions.json
+          cmp sports/mlb/web/predictions.html dist/mlb/predictions.html
+          cmp sports/mlb/web/predictions-roi-overrides.js dist/mlb/predictions-roi-overrides.js
+          cmp sports/mlb/web/predictions-roi-overrides.js paywall/private-content/app/mlb/predictions-roi-overrides.js
+          python - <<'PY'
+          import json, os
+          from datetime import date, timedelta
+          from pathlib import Path
+
+          run_date = os.environ['RUN_DATE']
+          source = json.loads(Path('sports/mlb/web/data/daily_predictions.json').read_text())
+          public = json.loads(Path('dist/mlb/data/daily_predictions.json').read_text())
+          assert source.get('run_date') == public.get('run_date') == run_date
+          assert source.get('plays') == public.get('plays')
+          prior = (date.fromisoformat(run_date) - timedelta(days=1)).isoformat()
+          history = json.loads(Path(f'dist/mlb/data/history/{prior}.json').read_text())
+          assert history.get('run_date') == prior
+          assert isinstance(history.get('plays'), list) and history.get('plays')
+          assert 'predictions-roi-overrides.js?v=6' in Path('dist/mlb/predictions.html').read_text()
+          seq = Path('sports/mlb/web/data/sequential_pa_hitter_predictions.json')
+          if seq.exists():
+              assert Path('dist/mlb/data/sequential_pa_hitter_predictions.json').exists()
+              assert seq.read_bytes() == Path('dist/mlb/data/sequential_pa_hitter_predictions.json').read_bytes()
+          print(f'Frontend handoff verified: current={run_date}, previous={prior}, immutable plays={len(source.get("plays") or [])}')
+          PY
+
+      - name: Commit synchronized frontend
+        run: |
+          set -euo pipefail
+          git add -f -- dist/mlb paywall/private-content/app/mlb
+          if git diff --cached --quiet; then
+            echo 'Frontend already synchronized.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "MLB authoritative frontend handoff ${{ steps.source.outputs.run_date }} [skip ci]"
+          if ! git push origin "HEAD:$PUBLISH_BRANCH"; then
+            git pull --rebase --autostash origin "$PUBLISH_BRANCH"
+            git push origin "HEAD:$PUBLISH_BRANCH"
+          fi
