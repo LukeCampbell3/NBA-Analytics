@@ -4,7 +4,7 @@
   "targets": {
     "H": {
       "checks": {
-        "brier_gain": -0.0013638019693824888,
+        "brier_gain": -0.0013756094010998199,
         "exact_certification": {
           "exact_evidence": false,
           "exact_selection_count": 0,
@@ -19,7 +19,7 @@
         "fit_rows": 1206,
         "fold_count": 6,
         "fold_pass_rate": 0.3333333333333333,
-        "logloss_gain": -0.0024046217152760008,
+        "logloss_gain": -0.002438284055491846,
         "rolling_origin_design": true,
         "thresholds": {
           "min_brier_gain": 0.0025,
@@ -30,7 +30,22 @@
           "min_validation_rows": 50
         },
         "train_serve_feature_parity_proven": false,
-        "training_feature_contract": {},
+        "training_feature_contract": {
+          "live_only_or_not_exactly_replayable_features": [
+            "pitch_compatibility_score",
+            "direct_matchup_process",
+            "handedness_split_interaction",
+            "batter_chase_rate",
+            "batter_avg_ev",
+            "batter_ev90",
+            "sweet_spot_rates",
+            "live_weather_state",
+            "specific_defense_state"
+          ],
+          "parity_proven": false,
+          "required_evidence_source": "mlb_game_conditioned_pregame_snapshot_v1",
+          "status": "HISTORICAL_PROCESSED_CORPUS_DOES_NOT_PRESERVE_FULL_LIVE_FEATURE_STATE"
+        },
         "validation_rows": 1126
       },
       "claimed_negative_authority": false,
@@ -53,7 +68,7 @@
     },
     "HR": {
       "checks": {
-        "brier_gain": -0.001156616507066173,
+        "brier_gain": -0.0011575542091950622,
         "exact_certification": {
           "exact_evidence": false,
           "exact_selection_count": 0,
@@ -68,7 +83,7 @@
         "fit_rows": 1206,
         "fold_count": 6,
         "fold_pass_rate": 0.5,
-        "logloss_gain": 0.004564591469123885,
+        "logloss_gain": 0.0045618161963841275,
         "rolling_origin_design": true,
         "thresholds": {
           "min_brier_gain": 0.0025,
@@ -79,7 +94,22 @@
           "min_validation_rows": 50
         },
         "train_serve_feature_parity_proven": false,
-        "training_feature_contract": {},
+        "training_feature_contract": {
+          "live_only_or_not_exactly_replayable_features": [
+            "pitch_compatibility_score",
+            "direct_matchup_process",
+            "handedness_split_interaction",
+            "batter_chase_rate",
+            "batter_avg_ev",
+            "batter_ev90",
+            "sweet_spot_rates",
+            "live_weather_state",
+            "specific_defense_state"
+          ],
+          "parity_proven": false,
+          "required_evidence_source": "mlb_game_conditioned_pregame_snapshot_v1",
+          "status": "HISTORICAL_PROCESSED_CORPUS_DOES_NOT_PRESERVE_FULL_LIVE_FEATURE_STATE"
+        },
         "validation_rows": 1126
       },
       "claimed_negative_authority": false,
@@ -101,7 +131,7 @@
     },
     "TB": {
       "checks": {
-        "brier_gain": 0.0014627975678346838,
+        "brier_gain": 0.001474931569141913,
         "exact_certification": {
           "exact_evidence": false,
           "exact_selection_count": 0,
@@ -116,7 +146,7 @@
         "fit_rows": 1206,
         "fold_count": 6,
         "fold_pass_rate": 0.3333333333333333,
-        "logloss_gain": 0.002278988219243938,
+        "logloss_gain": 0.002304588054883705,
         "rolling_origin_design": true,
         "thresholds": {
           "min_brier_gain": 0.0025,
@@ -127,7 +157,22 @@
           "min_validation_rows": 50
         },
         "train_serve_feature_parity_proven": false,
-        "training_feature_contract": {},
+        "training_feature_contract": {
+          "live_only_or_not_exactly_replayable_features": [
+            "pitch_compatibility_score",
+            "direct_matchup_process",
+            "handedness_split_interaction",
+            "batter_chase_rate",
+            "batter_avg_ev",
+            "batter_ev90",
+            "sweet_spot_rates",
+            "live_weather_state",
+            "specific_defense_state"
+          ],
+          "parity_proven": false,
+          "required_evidence_source": "mlb_game_conditioned_pregame_snapshot_v1",
+          "status": "HISTORICAL_PROCESSED_CORPUS_DOES_NOT_PRESERVE_FULL_LIVE_FEATURE_STATE"
+        },
         "validation_rows": 1126
       },
       "claimed_negative_authority": false,
