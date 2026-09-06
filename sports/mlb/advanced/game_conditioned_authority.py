@@ -1,15 +1,15 @@
 """Independent promotion/authority checks for the game-conditioned hitter MoE.
 
-The runtime scorer intentionally consumes a compact model artifact.  This module
+The runtime scorer intentionally consumes a compact model artifact. This module
 recomputes whether an artifact is *allowed* to move the baseline probability
 rather than trusting booleans embedded in that artifact.
 
-Negative authority means the residual adapter may lower (and, subject to the
-runtime positive-authority guard, otherwise alter) the baseline when rolling-
-origin validation demonstrates repeatable out-of-sample improvement.
+Negative authority means the residual adapter may lower the baseline when
+rolling-origin validation demonstrates repeatable out-of-sample improvement
+*and* the feature contract used in validation matches the live scoring path.
 
 Positive authority is deliberately harder: it additionally requires exact,
-point-in-time certification evidence.  Diagnostic/reconstructed evidence can
+point-in-time certification evidence. Diagnostic/reconstructed evidence can
 never grant it.
 """
 
@@ -107,21 +107,38 @@ def _is_exact_evidence(report: Mapping[str, Any], cert: Mapping[str, Any]) -> bo
     )
 
 
+def _train_serve_parity(report: Mapping[str, Any]) -> tuple[bool, Mapping[str, Any]]:
+    """Return whether validation and live scoring use the same feature contract.
+
+    This is intentionally fail-closed. A historical fit that omits live-only
+    pitch compatibility, direct matchup, handedness interactions, chase/EV
+    state, or arsenal-velocity state cannot authorize a live residual merely
+    because aggregate validation metrics looked favorable.
+    """
+
+    contract = _mapping(report.get("training_feature_contract"))
+    explicit = report.get("train_serve_feature_parity_proven")
+    if explicit is None:
+        explicit = contract.get("parity_proven")
+    return _bool(explicit), contract
+
+
 def validate_target_authority(
     report: Mapping[str, Any],
     target: str,
 ) -> AuthorityDecision:
     """Recompute authority for one market target from auditable metrics.
 
-    This function is fail-closed.  Missing validation metrics do not count as
-    evidence.  It supports both the committed validation-report shape and the
-    compact runtime model-artifact shape.
+    This function is fail-closed. Missing validation metrics or feature-parity
+    evidence do not count as evidence. It supports both the committed
+    validation-report shape and the compact runtime model-artifact shape.
     """
 
     target = str(target).upper()
     target_payload = _mapping(_mapping(report.get("targets")).get(target))
     validation = _validation_payload(target_payload)
     cert = _exact_certificate(report, target_payload)
+    parity_proven, feature_contract = _train_serve_parity(report)
 
     min_fit_rows = int(_threshold(report, "min_rows_to_fit", DEFAULT_MIN_FIT_ROWS))
     min_validation_rows = int(
@@ -173,6 +190,8 @@ def validate_target_authority(
         "brier_gain": brier_gain,
         "logloss_gain": logloss_gain,
         "rolling_origin_design": rolling_origin,
+        "train_serve_feature_parity_proven": parity_proven,
+        "training_feature_contract": dict(feature_contract),
         "thresholds": {
             "min_fit_rows": min_fit_rows,
             "min_validation_rows": min_validation_rows,
@@ -200,6 +219,8 @@ def validate_target_authority(
         negative_failures.append("LOGLOSS_GAIN_BELOW_GATE")
     if not rolling_origin:
         negative_failures.append("STRICT_PRIOR_DATE_VALIDATION_NOT_PROVEN")
+    if not parity_proven:
+        negative_failures.append("TRAIN_SERVE_FEATURE_PARITY_NOT_PROVEN")
 
     negative_allowed = not negative_failures
 
@@ -287,7 +308,7 @@ def audit_authority_report(report: Mapping[str, Any]) -> Dict[str, Any]:
             violations.append(f"{target}:INVALID_POSITIVE_AUTHORITY_CLAIM")
 
     return {
-        "schema_version": "mlb_game_conditioned_authority_audit_v1",
+        "schema_version": "mlb_game_conditioned_authority_audit_v2",
         "valid": not violations,
         "violations": violations,
         "targets": decisions,
