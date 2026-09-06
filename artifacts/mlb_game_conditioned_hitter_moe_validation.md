@@ -4,22 +4,23 @@ Model: `game_conditioned_hitter_moe_v2`
 
 Evidence class: `ROLLING_ORIGIN_HIGH_FIDELITY_DIAGNOSTIC_NOT_CERTIFICATION`
 
-The model fits a residual in logit space around the legacy probability. Global coefficients are learned on earlier games only; per-game expert activations change each expert's effective weight for the current matchup.
+The model fits target-specific residuals in logit space around the legacy/structural prior. Every validation prediction comes from an expanding-window fit using strictly earlier dates.
 
-Positive publication authority remains disabled because this historical corpus does not contain exact pregame snapshots of every Savant/FanGraphs feature used live.
+Positive publication authority remains disabled because this corpus does not preserve exact pregame snapshots of every advanced live feature. A target receives negative-only authority only if aggregate Brier and log-loss improve and at least 60% of expanding-window folds improve both.
 
-| Target | Train | Validation | Prior Brier | Candidate Brier | Prior LogLoss | Candidate LogLoss | Diagnostic gate |
-|---|---:|---:|---:|---:|---:|---:|---|
-| H | 99 | 301 | 0.2463 | 0.2492 | 0.6909 | 0.6984 | DID_NOT_CLEAR_DIAGNOSTIC_IMPROVEMENT_GATE |
-| TB | 99 | 301 | 0.1609 | 0.1582 | 0.4794 | 0.4731 | IMPROVED_DIAGNOSTIC_ONLY |
+| Target | Fit rows | OOF rows | Folds pass | Prior Brier | Candidate Brier | Prior LogLoss | Candidate LogLoss | Gate |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| H | 300 | 260 | 1/5 | 0.2447 | 0.2479 | 0.6797 | 0.6877 | DID_NOT_CLEAR_DIAGNOSTIC_IMPROVEMENT_GATE |
+| TB | 300 | 260 | 5/5 | 0.1656 | 0.1606 | 0.4897 | 0.4785 | IMPROVED_DIAGNOSTIC_ONLY |
+| HR | 300 | 260 | 2/5 | 0.0496 | 0.0495 | 0.1792 | 0.1744 | DID_NOT_CLEAR_DIAGNOSTIC_IMPROVEMENT_GATE |
 
 ## Experts
 
 - strikeout/contact compatibility
 - contact quality / expected contact
-- power and total-base tail
+- power / total-base / home-run tail
 - specific defensive conversion residual
 - plate-appearance opportunity
 - starter-removal / bullpen transition
 
-Live production additionally uses exact-day Savant pitch-type matchup information, xFIP/SIERA when available, team scoring state, park/weather state, and support/uncertainty shrinkage. This historical fit is a conservative initialization, not certification.
+Live production additionally uses exact-day Savant pitch-type matchup information, xFIP/SIERA when available, team scoring state, park/weather state, and support/uncertainty shrinkage. This historical fit is diagnostic initialization, not certification.
