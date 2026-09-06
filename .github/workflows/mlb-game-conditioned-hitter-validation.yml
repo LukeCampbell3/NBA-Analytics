@@ -1,0 +1,97 @@
+name: MLB Game-Conditioned Hitter Validation
+
+on:
+  push:
+    branches: [static-deployment]
+    paths:
+      - 'sports/mlb/advanced/game_conditioned_moe.py'
+      - 'sports/mlb/advanced/integration.py'
+      - 'sports/mlb/advanced/schema.py'
+      - 'sports/mlb/scripts/fit_game_conditioned_hitter_moe.py'
+      - 'sports/mlb/tests/test_game_conditioned_hitter_moe.py'
+      - '.github/workflows/mlb-game-conditioned-hitter-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mlb-game-conditioned-hitter-validation-static-deployment
+  cancel-in-progress: true
+
+jobs:
+  validate-and-fit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: static-deployment
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            sports/mlb/requirements-same-game.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt -r sports/mlb/requirements-same-game.txt pytest
+      - name: Validate game-conditioned mechanics
+        run: |
+          python -m pytest \
+            sports/mlb/tests/test_sequential_pa_model.py \
+            sports/mlb/tests/test_game_conditioned_hitter_moe.py \
+            sports/mlb/tests/test_sequential_pa_identity_hydration.py \
+            -q
+      - name: Fit rolling-origin residual model
+        run: |
+          python sports/mlb/scripts/fit_game_conditioned_hitter_moe.py \
+            --season 2026 \
+            --max-rows 800 \
+            --trials 900 \
+            --min-history 20
+      - name: Enforce authority and artifact contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('sports/mlb/data/predictions/calibration/game_conditioned_hitter_moe_v2.json')
+          payload = json.loads(path.read_text())
+          assert payload['schema_version'] == 'mlb_game_conditioned_hitter_moe_v2'
+          assert payload['model_version'] == 'game_conditioned_hitter_moe_v2'
+          assert payload['evidence_class'] == 'ROLLING_ORIGIN_HIGH_FIDELITY_DIAGNOSTIC_NOT_CERTIFICATION'
+          for target in ('H', 'TB'):
+              model = payload['targets'][target]
+              assert model['positive_authority'] is False
+              assert set(model['coefficients']) == {
+                  'strikeout_contact', 'contact_quality', 'power_tb',
+                  'defense_conversion', 'pa_opportunity', 'bullpen_transition'
+              }
+              assert model['validation']['validation_rows'] >= 10
+          PY
+      - name: Commit fitted diagnostic artifact
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            sports/mlb/data/predictions/calibration/game_conditioned_hitter_moe_v2.json \
+            artifacts/mlb_game_conditioned_hitter_moe_validation.json \
+            artifacts/mlb_game_conditioned_hitter_moe_validation.md
+          if git diff --cached --quiet; then
+            echo 'No fitted-artifact changes.'
+            exit 0
+          fi
+          git commit -m 'MLB game-conditioned hitter residual fit [skip ci]'
+          git pull --rebase origin static-deployment
+          git push origin HEAD:static-deployment
+      - uses: actions/upload-artifact@v7
+        with:
+          name: mlb-game-conditioned-hitter-validation
+          path: |
+            sports/mlb/data/predictions/calibration/game_conditioned_hitter_moe_v2.json
+            artifacts/mlb_game_conditioned_hitter_moe_validation.json
+            artifacts/mlb_game_conditioned_hitter_moe_validation.md
+          retention-days: 30
