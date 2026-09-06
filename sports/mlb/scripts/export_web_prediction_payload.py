@@ -243,6 +243,42 @@ def to_int(value: str, default: int = 0) -> int:
         return default
 
 
+def _json_dict(value: object) -> dict[str, object] | None:
+    if isinstance(value, dict):
+        return value
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        parsed = json.loads(text)
+    except (TypeError, json.JSONDecodeError):
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
+def _finite_or_none(value: object) -> float | None:
+    result = to_float(value, default=float("nan"))
+    return result if math.isfinite(result) else None
+
+
+def _sequential_v21_uncertainty(row: dict[str, str], lineup_status: str) -> dict[str, float] | None:
+    if str(row.get("Sequential_PA_Status", "")).strip().upper() != "READY":
+        return None
+    source = _json_dict(row.get("Sequential_PA_Uncertainty_Components")) or {}
+    def risk(name: str, default: float = 0.0) -> float:
+        return max(0.0, min(1.0, to_float(source.get(name), default=default)))
+    return {
+        "model": 0.025 * max(risk("batter_sample"), risk("pitcher_sample")),
+        "calibration": 0.030,
+        "market_disagreement": 0.020,
+        "player_role": 0.005,
+        "lineup": 0.0 if lineup_status == "confirmed" else 0.050,
+        "opportunity": 0.020 * risk("expected_pa", 0.25),
+        "data_support": 0.025 * max(risk("contact_quality_missing"), risk("advanced_pitching_missing")),
+        "distribution_shift": 0.020 * risk("data_freshness"),
+    }
+
+
 def valid_american_price(value: object) -> float | None:
     price = to_float(value, default=float("nan"))
     if not math.isfinite(price) or (-100.0 < price < 100.0) or abs(price - round(price)) > 1e-6:
@@ -1164,6 +1200,25 @@ def main() -> None:
                 "matchup_network_score": to_float(row.get("Matchup_Network_Score")),
                 "matchup_network_confidence": to_float(row.get("Matchup_Network_Confidence")),
                 "matchup_network_adjustment": to_float(row.get("Matchup_Network_Adjustment")),
+                "model_version": row.get("Probability_Model_Version") or row.get("Sequential_PA_Model_Version") or row.get("Matchup_Network_Version", ""),
+                "probability_authority": row.get("Probability_Authority", ""),
+                "raw_structural_probability": _finite_or_none(row.get("Sequential_PA_Raw_Probability")),
+                "calibrated_probability": _finite_or_none(row.get("Sequential_PA_Calibrated_Probability")),
+                "usable_probability": _finite_or_none(row.get("Sequential_PA_Usable_Probability")),
+                "probability_lcb": _finite_or_none(row.get("Sequential_PA_Probability_LCB")),
+                "uncertainty": _finite_or_none(row.get("Sequential_PA_Uncertainty")),
+                "uncertainty_components": _sequential_v21_uncertainty(row, lineup_status),
+                "support_status": row.get("Sequential_PA_Support_Status", ""),
+                "ood_status": "IN_SUPPORT" if str(row.get("Sequential_PA_Status", "")).strip().upper() == "READY" and str(row.get("Sequential_PA_Support_Status", "")).strip().upper() == "SUPPORTED" else "UNMEASURED",
+                "expected_plate_appearances": _finite_or_none(row.get("Sequential_PA_Expected_PA")),
+                "expected_at_bats": _finite_or_none(row.get("Sequential_PA_Expected_AB")),
+                "expected_hits_sequential": _finite_or_none(row.get("Sequential_PA_Expected_H")),
+                "expected_tb_sequential": _finite_or_none(row.get("Sequential_PA_Expected_TB")),
+                "p_h_0": _finite_or_none(row.get("Sequential_PA_P_H_0")),
+                "sequential_pa_status": row.get("Sequential_PA_Status", ""),
+                "sequential_pa_calibration_status": row.get("Sequential_PA_Calibration_Status", ""),
+                "selected_side_price_time": row.get("Market_Over_Price_Time" if direction == "OVER" else "Market_Under_Price_Time", ""),
+                "player_status": "ACTIVE" if lineup_status == "confirmed" else "UNKNOWN",
                 "player_mlbam_id": resolved_player_id,
                 "player_headshot_url": build_headshot_url(resolved_player_id),
                 "player_headshot_fallback_url": build_headshot_fallback_url(resolved_player_id),

@@ -221,6 +221,17 @@ def run(run_date: str) -> dict[str, Any]:
         _run(["git", "fetch", "--no-tags", "origin", V21_BRANCH])
         _run(["git", "cat-file", "-e", f"{V21_COMMIT}^{{commit}}"])
         _run(["git", "worktree", "add", "--detach", str(worktree), V21_COMMIT])
+        # Preserve the frozen policy/scoring implementation, but overlay the
+        # current adapter/contract modules so newly resolved canonical facts
+        # actually reach that policy. This repairs plumbing, not thresholds.
+        for relative in (
+            Path("sports/mlb/unified/adapters.py"),
+            Path("sports/mlb/unified/candidate_contract.py"),
+        ):
+            source = REPO_ROOT / relative
+            target = worktree / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, target)
         EVIDENCE_LEDGER.parent.mkdir(parents=True, exist_ok=True)
         _run(
             [

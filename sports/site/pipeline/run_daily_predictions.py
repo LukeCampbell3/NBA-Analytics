@@ -48,6 +48,8 @@ MLB_MANIFEST = MLB_DATA_DIR / "update_manifest_2026.json"
 MLB_MARKET_FETCHER = REPO_ROOT / "Player-Predictor" / "scripts" / "fetch_mlb_market_props.py"
 MLB_DATA_UPDATER = REPO_ROOT / "Player-Predictor" / "scripts" / "update_mlb_processed_data.py"
 MLB_GENERATOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "generate_daily_prediction_pool.py"
+# Incremental Statcast/FanGraphs enrichment + sequential nightly H/TB model.
+MLB_SEQUENTIAL_PA_ENRICHER = REPO_ROOT / "sports" / "mlb" / "scripts" / "run_sequential_pa_hitter_model.py"
 MLB_GOVERNANCE_CAPTURE = REPO_ROOT / "sports" / "mlb" / "governance" / "capture_complete_slate.py"
 MLB_PROVIDER_OBSERVATIONS = REPO_ROOT / "sports" / "mlb" / "data" / "raw" / "market_odds" / "mlb" / "odds_api_io" / "latest_provider_observations.csv"
 MLB_SELECTOR = REPO_ROOT / "sports" / "mlb" / "scripts" / "select_high_precision_predictions.py"
@@ -968,6 +970,22 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
             used_generated_pool = True
         else:
             pool_csv = find_latest_mlb_pool_csv(MLB_DAILY_RUNS_ROOT, preferred_run_stamp)
+
+    # Enrich the exact current raw pool before any selector/parlay
+    # consumes it. A source outage leaves the advanced model unavailable and
+    # preserves the legacy fallback; it never silently reuses stale evidence.
+    if MLB_SEQUENTIAL_PA_ENRICHER.exists():
+        sequential_run_date = resolve_effective_run_date(args.run_date).isoformat()
+        try:
+            run_step(
+                "Refresh MLB Advanced H/TB Data + Sequential PA Model",
+                [args.python, str(MLB_SEQUENTIAL_PA_ENRICHER), "--pool-csv", str(pool_csv), "--run-date", sequential_run_date],
+            )
+        except Exception as exc:
+            print(
+                "[warning] MLB sequential-PA advanced model unavailable; H/TB remains on the existing calibrated fallback. "
+                f"{format_step_failure(exc)}"
+            )
 
     mlb_dist_json = Path(getattr(args, "private_output_dir", DEFAULT_PRIVATE_OUTPUT_DIR)).resolve() / "mlb" / "data" / "daily_predictions.json"
 

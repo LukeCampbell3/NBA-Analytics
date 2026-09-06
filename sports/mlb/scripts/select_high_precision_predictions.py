@@ -1641,6 +1641,30 @@ def build_candidate_for_direction(
         MAX_CALIBRATED_PROBABILITY,
         validated_graded_hit_rate * max(0.0, 1.0 - push_probability),
     )
+
+    # H/TB OVER rows with complete advanced evidence are now driven by the
+    # sequential nightly distribution. Until independently calibrated, the new
+    # model has negative authority only: it may lower/veto legacy confidence,
+    # never increase it.
+    sequential_status = str(row.get("Sequential_PA_Status", "")).strip().upper()
+    if target in {"H", "TB"} and direction == "OVER" and sequential_status == "READY":
+        sequential_raw = to_float(row.get("Sequential_PA_Raw_Probability"), default=float("nan"))
+        sequential_calibrated = to_float(row.get("Sequential_PA_Calibrated_Probability"), default=float("nan"))
+        sequential_usable = to_float(row.get("Sequential_PA_Usable_Probability"), default=float("nan"))
+        if all(math.isfinite(value) and 0.0 <= value <= 1.0 for value in (sequential_raw, sequential_calibrated, sequential_usable)):
+            legacy_calibrated_probability = calibrated_hit_probability
+            legacy_graded_probability = validated_graded_hit_rate
+            model_hit_probability = sequential_raw
+            model_graded_hit_rate = sequential_raw
+            push_probability = 0.0
+            calibrated_hit_probability = min(
+                legacy_calibrated_probability,
+                sequential_calibrated,
+                sequential_usable,
+            )
+            validated_graded_hit_rate = min(legacy_graded_probability, sequential_usable)
+            row["Probability_Model_Version"] = str(row.get("Sequential_PA_Model_Version") or "sequential_pa_contact_model_v1")
+            row["Probability_Authority"] = "NEGATIVE_AUTHORITY_UNTIL_INDEPENDENT_ADVANCED_MODEL_CALIBRATION"
     (
         historical_market_availability_key,
         historical_market_availability_rate,
@@ -1924,16 +1948,37 @@ def load_candidates(
                     candidate.winner_signature_model_status,
                     candidate.winner_signature_model_support,
                 ) = apply_winner_signature_model(candidate, winner_signature_model)
-                (
-                    candidate.historically_calibrated_hit_probability,
-                    candidate.hit_probability_calibration_status,
-                    candidate.hit_probability_calibration_support,
-                ) = apply_hit_probability_calibration(candidate.model_hit_probability, hit_probability_calibration)
-                candidate.final_hit_probability = (
-                    min(candidate.calibrated_hit_probability, candidate.historically_calibrated_hit_probability)
-                    if candidate.historically_calibrated_hit_probability is not None
-                    else candidate.calibrated_hit_probability
+                sequential_ready = (
+                    candidate.target in {"H", "TB"}
+                    and candidate.direction == "OVER"
+                    and str(candidate.raw.get("Sequential_PA_Status", "")).strip().upper() == "READY"
                 )
+                sequential_usable = to_float(candidate.raw.get("Sequential_PA_Usable_Probability"), default=float("nan"))
+                if sequential_ready and math.isfinite(sequential_usable) and 0.0 <= sequential_usable <= 1.0:
+                    # The frozen isotonic curve was fitted against the legacy
+                    # Poisson probability. Do not apply it to a different model
+                    # class. The sequential model's own uncertainty haircut is
+                    # downward-only until a locked recalibrator is validated.
+                    candidate.historically_calibrated_hit_probability = None
+                    candidate.hit_probability_calibration_status = str(
+                        candidate.raw.get("Sequential_PA_Calibration_Status")
+                        or "UNCALIBRATED_NEGATIVE_AUTHORITY_ONLY"
+                    )
+                    candidate.hit_probability_calibration_support = int(
+                        1000 * clamp01(to_float(candidate.raw.get("Sequential_PA_Support"), default=0.0))
+                    )
+                    candidate.final_hit_probability = min(candidate.calibrated_hit_probability, sequential_usable)
+                else:
+                    (
+                        candidate.historically_calibrated_hit_probability,
+                        candidate.hit_probability_calibration_status,
+                        candidate.hit_probability_calibration_support,
+                    ) = apply_hit_probability_calibration(candidate.model_hit_probability, hit_probability_calibration)
+                    candidate.final_hit_probability = (
+                        min(candidate.calibrated_hit_probability, candidate.historically_calibrated_hit_probability)
+                        if candidate.historically_calibrated_hit_probability is not None
+                        else candidate.calibrated_hit_probability
+                    )
                 candidates.append(candidate)
     return candidates
 
@@ -2456,6 +2501,36 @@ def write_selected_csv(path: Path, selected: list[Candidate], args: argparse.Nam
         "Historically_Calibrated_Hit_Probability",
         "Hit_Probability_Calibration_Status",
         "Final_Hit_Probability",
+        "Player_MLBAM_ID",
+        "Sequential_Batting_Order",
+        "Market_Over_Price_Time",
+        "Market_Under_Price_Time",
+        "Probability_Model_Version",
+        "Probability_Authority",
+        "Sequential_PA_Model_Version",
+        "Sequential_PA_Status",
+        "Sequential_PA_Raw_Probability",
+        "Sequential_PA_Calibrated_Probability",
+        "Sequential_PA_Usable_Probability",
+        "Sequential_PA_Probability_LCB",
+        "Sequential_PA_Probability_SE",
+        "Sequential_PA_Uncertainty",
+        "Sequential_PA_Support",
+        "Sequential_PA_Support_Status",
+        "Sequential_PA_Calibration_Status",
+        "Sequential_PA_Expected_PA",
+        "Sequential_PA_Expected_AB",
+        "Sequential_PA_Expected_H",
+        "Sequential_PA_Expected_TB",
+        "Sequential_PA_P_H_0",
+        "Sequential_PA_P_H_1",
+        "Sequential_PA_P_H_GE_2",
+        "Sequential_PA_P_TB_0",
+        "Sequential_PA_P_TB_1",
+        "Sequential_PA_P_TB_GE_2",
+        "Sequential_PA_P_HR_GE_1",
+        "Sequential_PA_Uncertainty_Components",
+        "Sequential_PA_Diagnostics",
     ]
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8", newline="") as handle:
@@ -2565,6 +2640,36 @@ def write_selected_csv(path: Path, selected: list[Candidate], args: argparse.Nam
                     ),
                     "Hit_Probability_Calibration_Status": candidate.hit_probability_calibration_status,
                     "Final_Hit_Probability": f"{candidate.final_hit_probability:.6f}",
+                    "Player_MLBAM_ID": candidate.raw.get("Player_MLBAM_ID", ""),
+                    "Sequential_Batting_Order": candidate.raw.get("Sequential_Batting_Order", ""),
+                    "Market_Over_Price_Time": candidate.raw.get("Market_Over_Price_Time", ""),
+                    "Market_Under_Price_Time": candidate.raw.get("Market_Under_Price_Time", ""),
+                    "Probability_Model_Version": candidate.raw.get("Probability_Model_Version", ""),
+                    "Probability_Authority": candidate.raw.get("Probability_Authority", ""),
+                    "Sequential_PA_Model_Version": candidate.raw.get("Sequential_PA_Model_Version", ""),
+                    "Sequential_PA_Status": candidate.raw.get("Sequential_PA_Status", ""),
+                    "Sequential_PA_Raw_Probability": candidate.raw.get("Sequential_PA_Raw_Probability", ""),
+                    "Sequential_PA_Calibrated_Probability": candidate.raw.get("Sequential_PA_Calibrated_Probability", ""),
+                    "Sequential_PA_Usable_Probability": candidate.raw.get("Sequential_PA_Usable_Probability", ""),
+                    "Sequential_PA_Probability_LCB": candidate.raw.get("Sequential_PA_Probability_LCB", ""),
+                    "Sequential_PA_Probability_SE": candidate.raw.get("Sequential_PA_Probability_SE", ""),
+                    "Sequential_PA_Uncertainty": candidate.raw.get("Sequential_PA_Uncertainty", ""),
+                    "Sequential_PA_Support": candidate.raw.get("Sequential_PA_Support", ""),
+                    "Sequential_PA_Support_Status": candidate.raw.get("Sequential_PA_Support_Status", ""),
+                    "Sequential_PA_Calibration_Status": candidate.raw.get("Sequential_PA_Calibration_Status", ""),
+                    "Sequential_PA_Expected_PA": candidate.raw.get("Sequential_PA_Expected_PA", ""),
+                    "Sequential_PA_Expected_AB": candidate.raw.get("Sequential_PA_Expected_AB", ""),
+                    "Sequential_PA_Expected_H": candidate.raw.get("Sequential_PA_Expected_H", ""),
+                    "Sequential_PA_Expected_TB": candidate.raw.get("Sequential_PA_Expected_TB", ""),
+                    "Sequential_PA_P_H_0": candidate.raw.get("Sequential_PA_P_H_0", ""),
+                    "Sequential_PA_P_H_1": candidate.raw.get("Sequential_PA_P_H_1", ""),
+                    "Sequential_PA_P_H_GE_2": candidate.raw.get("Sequential_PA_P_H_GE_2", ""),
+                    "Sequential_PA_P_TB_0": candidate.raw.get("Sequential_PA_P_TB_0", ""),
+                    "Sequential_PA_P_TB_1": candidate.raw.get("Sequential_PA_P_TB_1", ""),
+                    "Sequential_PA_P_TB_GE_2": candidate.raw.get("Sequential_PA_P_TB_GE_2", ""),
+                    "Sequential_PA_P_HR_GE_1": candidate.raw.get("Sequential_PA_P_HR_GE_1", ""),
+                    "Sequential_PA_Uncertainty_Components": candidate.raw.get("Sequential_PA_Uncertainty_Components", ""),
+                    "Sequential_PA_Diagnostics": candidate.raw.get("Sequential_PA_Diagnostics", ""),
                 }
             )
 

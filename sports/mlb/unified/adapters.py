@@ -26,6 +26,17 @@ def _selection_ids(url: str | None) -> tuple[str | None, str | None]:
 def adapt_legacy_play(play: dict) -> BetCandidate:
     market = TARGET_MARKETS.get(str(play.get("target", "")).upper(), str(play.get("target", "")).lower())
     final_probability = play.get("final_hit_probability")
+    structural_probability = play.get("raw_structural_probability")
+    if structural_probability is None:
+        structural_probability = play.get("model_hit_probability")
+    calibrated_probability = play.get("calibrated_probability")
+    if calibrated_probability is None:
+        calibrated_probability = final_probability
+    usable_probability = play.get("usable_probability")
+    uncertainty_components = play.get("uncertainty_components")
+    uncertainty = play.get("uncertainty")
+    if uncertainty is None and final_probability is not None and not uncertainty_components:
+        uncertainty = 0.0
     price = play.get("selected_side_price", play.get("american_price"))
     deeplink = play.get("sportsbook_deeplink")
     market_id, selection_id = _selection_ids(deeplink)
@@ -47,9 +58,11 @@ def adapt_legacy_play(play: dict) -> BetCandidate:
         sportsbook=str(play.get("selected_sportsbook_key") or play.get("sportsbook") or ""),
         sportsbook_market_id=market_id, sportsbook_selection_id=selection_id,
         american_price=float(price) if price is not None else None, decimal_price=american_to_decimal(price),
-        structural_probability=play.get("model_hit_probability"), market_conditioned_probability=None,
-        raw_probability=play.get("estimated_hit_probability"), calibrated_probability=final_probability,
-        uncertainty=uncertainty, usable_probability=None, support_status=support,
+        structural_probability=structural_probability,
+        market_conditioned_probability=play.get("market_conditioned_probability"),
+        raw_probability=play.get("estimated_hit_probability"), calibrated_probability=calibrated_probability,
+        uncertainty=uncertainty, usable_probability=usable_probability,
+        support_status=(str(play.get("support_status") or "").upper() or support),
         lineup_status="CONFIRMED" if lineup == "CONFIRMED" else ("NOT_APPLICABLE" if market.startswith("pitcher_") else lineup),
         role_status=role if market.startswith("pitcher_") else "CONFIRMED", identity_status=identity,
         evidence_state=EvidenceState.PROSPECTIVE_SHADOW, publication_authority=False,
@@ -59,7 +72,10 @@ def adapt_legacy_play(play: dict) -> BetCandidate:
             "player_status": play.get("player_status"),
             "historical_bucket_support": play.get("historical_bucket_support"),
             "ood_status": play.get("ood_status") or play.get("support_status"),
-            "uncertainty_components": play.get("uncertainty_components"),
+            "uncertainty_components": uncertainty_components,
+            "expected_plate_appearances": play.get("expected_plate_appearances"),
+            "pa_probability_3_plus": play.get("pa_probability_3_plus"),
+            "settlement_identity": f"{play.get('game_id')}:{play.get('player_mlbam_id') or play.get('player_id') or play.get('player')}:game",
             "model_version": play.get("model_version") or play.get("matchup_network_version"),
             "calibrator_version": play.get("calibrator_version") or play.get("live_confidence_calibration_key"),
         },
