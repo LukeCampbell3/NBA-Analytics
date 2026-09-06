@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
+from .game_conditioned_authority import validate_target_authority
 from .schema import AdvancedCandidateContext
 from .sequential_pa_model import SequentialPAResult
 
@@ -435,13 +436,6 @@ def _target_payload(artifact: Mapping[str, Any], target: str) -> Mapping[str, An
     return payload if isinstance(payload, Mapping) else DEFAULT_ARTIFACT["targets"][target]
 
 
-def _diagnostic_gate_passed(validation: Mapping[str, Any]) -> bool:
-    explicit = validation.get("statistical_gate_passed")
-    if explicit is not None:
-        return bool(explicit)
-    return str(validation.get("status") or "") == "IMPROVED_DIAGNOSTIC_ONLY"
-
-
 def condition_probability(
     prior_probability: float,
     *,
@@ -479,14 +473,10 @@ def condition_probability(
     candidate = logistic(logit(prior) + residual)
 
     validation = dict(payload.get("validation") or {})
-    diagnostic_gate = _diagnostic_gate_passed(validation)
-    evidence_class = str(model.get("evidence_class") or "NONE")
-    exact_evidence = evidence_class in {
-        "EXACT_POINT_IN_TIME_PROSPECTIVE",
-        "EXACT_POINT_IN_TIME_LOCKED_VALIDATION",
-    }
-    positive_authority = bool(payload.get("positive_authority", False)) and exact_evidence and diagnostic_gate
-    negative_authority = diagnostic_gate
+    authority = validate_target_authority(model, target)
+    validation["independent_authority_audit"] = authority.to_dict()
+    positive_authority = authority.positive_authority_allowed
+    negative_authority = authority.negative_authority_allowed
 
     uncertainty = _clamp01(float(sequential_uncertainty))
     validation_brier = _finite(validation.get("candidate_brier"), _finite(validation.get("prior_brier"), 0.25))
@@ -500,7 +490,7 @@ def condition_probability(
         authority_status = "PROMOTED_RESIDUAL_POSITIVE_AND_NEGATIVE_AUTHORITY"
     elif negative_authority:
         production = min(prior, lower_bound)
-        authority_status = "DIAGNOSTICALLY_VALIDATED_NEGATIVE_AUTHORITY_ONLY"
+        authority_status = "INDEPENDENTLY_VALIDATED_NEGATIVE_AUTHORITY_ONLY"
     else:
         production = prior
         authority_status = "SHADOW_ONLY_NO_PRODUCTION_AUTHORITY"
