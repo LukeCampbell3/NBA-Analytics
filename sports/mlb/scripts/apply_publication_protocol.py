@@ -64,6 +64,57 @@ def _issued_play(play: dict[str, Any], run_date: str, board: str, number: int, i
     return result
 
 
+def _retain_prior_public_board_for_discovery(
+    *,
+    generated: dict[str, Any],
+    run_date: str,
+    board_path: Path,
+    candidates_path: Path,
+    prior_board_path: Path | None,
+) -> dict[str, Any] | None:
+    """Keep DISCOVER strictly candidate-only when a public board already exists.
+
+    A scheduled discovery may target the current or next slate. It is allowed to
+    refresh ``latest_candidates.json`` but must never advance ``daily_predictions``
+    away from the last issued board. Same-date legacy boards without the issuance
+    protocol are intentionally left to the migration path below so they can be
+    imported into the append-only ledger exactly once.
+    """
+    if prior_board_path is None or not prior_board_path.exists():
+        return None
+
+    prior = _read(prior_board_path)
+    prior_run_date = str(prior.get("run_date") or "")
+    prior_protocol = prior.get("publication_protocol") or {}
+    prior_is_protocol_managed = prior_protocol.get("issued_picks_immutable") is True
+
+    # A different-date prior board is the currently visible slate and must stay
+    # visible until an explicit PUBLISH for the new run date. A same-date issued
+    # board is likewise immutable during discovery. Same-date legacy data flows
+    # through the migration block instead.
+    if prior_run_date == run_date and not prior_is_protocol_managed:
+        return None
+
+    if not prior_run_date:
+        return None
+
+    board_path.write_text(json.dumps(prior, indent=2, sort_keys=True), encoding="utf-8")
+    issued_count = int(prior_protocol.get("issued_count") or len(prior.get("plays") or []))
+    return {
+        "mode": "DISCOVER",
+        "candidate_count": len(generated.get("plays") or []),
+        "issued_count": issued_count,
+        "added_this_run": 0,
+        "public_pick_retention": 1.0,
+        "issued_picks_immutable": bool(prior_is_protocol_managed or prior.get("plays") is not None),
+        "candidate_source": candidates_path.name,
+        "issued_source": prior_protocol.get("issued_source"),
+        "public_board_mutated": False,
+        "public_board_retained_from": prior_run_date,
+        "candidate_run_date": run_date,
+    }
+
+
 def apply_protocol(
     board_path: Path,
     candidates_path: Path,
@@ -79,6 +130,19 @@ def apply_protocol(
     run_date = _run_date(generated)
     candidates_path.parent.mkdir(parents=True, exist_ok=True)
     candidates_path.write_text(json.dumps(generated, indent=2, sort_keys=True), encoding="utf-8")
+
+    # DISCOVER is not a publication action. Preserve whatever issued board was
+    # already visible—even when discovery is preparing tomorrow's slate.
+    if mode == "DISCOVER":
+        retained = _retain_prior_public_board_for_discovery(
+            generated=generated,
+            run_date=run_date,
+            board_path=board_path,
+            candidates_path=candidates_path,
+            prior_board_path=prior_board_path,
+        )
+        if retained is not None:
+            return retained
 
     ledger_path = issued_root / f"{run_date}.json"
     ledger_path.parent.mkdir(parents=True, exist_ok=True)
@@ -128,6 +192,7 @@ def apply_protocol(
         "issued_picks_immutable": True,
         "candidate_source": candidates_path.name,
         "issued_source": str(ledger_path.relative_to(board_path.parent)),
+        "public_board_mutated": True,
     }
     public["publication_state"] = "PRELIMINARY_DISCOVERY" if not ledger["issued_picks"] else "ISSUED_BOARD"
     board_path.write_text(json.dumps(public, indent=2, sort_keys=True), encoding="utf-8")
