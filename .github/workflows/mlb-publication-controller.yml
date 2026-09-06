@@ -88,35 +88,35 @@ jobs:
           prior = (run_date - timedelta(days=1)).isoformat()
           path = Path(f'sports/mlb/web/data/history/{prior}.json')
           if not path.exists():
-              print(f'No prior-day history file at {path}; production workflow will run preservation/settlement catch-up.')
+              print(f'No prior-day history file at {path}; publication worker will run preservation/settlement catch-up.')
               raise SystemExit(0)
           payload = json.loads(path.read_text())
           plays = payload.get('plays') or []
           unresolved = [row for row in plays if row.get('settlement_status') not in {'won','lost','push'}]
           if unresolved:
-              print(f'Prior board has {len(unresolved)} unresolved plays; production workflow will settle before replacing daily board.')
+              print(f'Prior board has {len(unresolved)} unresolved plays; publication worker will settle before issuing the new board.')
           else:
               print(f'Prior board preserved and settled: {len(plays)} plays.')
           PY
 
-      - name: Dispatch production workflow
+      - name: Dispatch authoritative publication worker
         id: dispatch
         env:
           RUN_DATE: ${{ steps.config.outputs.run_date }}
           PUBLICATION_MODE: ${{ steps.config.outputs.mode }}
         run: |
           set -euo pipefail
-          before="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow mlb-predictions.yml --event workflow_dispatch --branch static-deployment --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
-          gh workflow run mlb-predictions.yml \
+          workflow='mlb-publication-worker.yml'
+          before="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$workflow" --event workflow_dispatch --branch static-deployment --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
+          gh workflow run "$workflow" \
             --repo "$GITHUB_REPOSITORY" \
             --ref static-deployment \
             -f run_date="$RUN_DATE" \
-            -f build_only=false \
             -f publication_mode="$PUBLICATION_MODE"
 
           run_id=''
           for _ in $(seq 1 90); do
-            candidate="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow mlb-predictions.yml --event workflow_dispatch --branch static-deployment --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
+            candidate="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$workflow" --event workflow_dispatch --branch static-deployment --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
             if [[ "$candidate" != '0' && "$candidate" != "$before" ]]; then
               run_id="$candidate"
               break
@@ -125,7 +125,7 @@ jobs:
           done
           test -n "$run_id"
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
-          echo "Dispatched production run $run_id"
+          echo "Dispatched authoritative publication run $run_id"
           gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status
 
       - name: Verify frontend handoff
@@ -165,17 +165,12 @@ jobs:
           assert not unresolved, f'prior-day unresolved plays: {len(unresolved)}'
 
           seq_path = Path('sports/mlb/web/data/sequential_pa_hitter_predictions.json')
-          seq_current = None
-          game_conditioned_candidates = None
-          game_conditioned_schema = None
-          if seq_path.exists():
-              seq = json.loads(seq_path.read_text())
-              seq_current = seq.get('run_date') == run_date
-              assert seq_current, seq.get('run_date')
-              assert seq.get('schema_version') == 'mlb_sequential_pa_frontend_v1'
-              game_conditioned_schema = seq.get('game_conditioned_schema_version')
-              assert game_conditioned_schema == 'mlb_game_conditioned_hitter_frontend_v2'
-              game_conditioned_candidates = len(seq.get('candidates') or [])
+          assert seq_path.exists(), 'game-conditioned payload missing from authoritative publication'
+          seq = json.loads(seq_path.read_text())
+          assert seq.get('run_date') == run_date, seq.get('run_date')
+          assert seq.get('schema_version') == 'mlb_sequential_pa_frontend_v1'
+          assert seq.get('game_conditioned_schema_version') == 'mlb_game_conditioned_hitter_frontend_v2'
+          assert seq.get('model_version') == 'game_conditioned_hitter_moe_v2'
 
           print(json.dumps({
               'run_date': run_date,
@@ -186,8 +181,8 @@ jobs:
               'prior_date': prior,
               'prior_settled_plays': len(prior_plays),
               'dist_current': True,
-              'sequential_pa_current': seq_current,
-              'game_conditioned_schema': game_conditioned_schema,
-              'sequential_pa_candidates': game_conditioned_candidates,
+              'game_conditioned_model': seq.get('model_version'),
+              'game_conditioned_schema': seq.get('game_conditioned_schema_version'),
+              'game_conditioned_candidates': len(seq.get('candidates') or []),
           }, indent=2))
           PY
