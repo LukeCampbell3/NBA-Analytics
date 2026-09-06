@@ -81,13 +81,23 @@ def _game_identity_index(payload: dict[str, Any]) -> dict[str, Any]:
     return {"people": people, "probable_ids": probable_ids, "team_abbrev": team_abbrev, "batting_order": batting_order}
 
 
+def _nullable_int_column(frame: pd.DataFrame, column: str) -> pd.Series:
+    """Return a pandas nullable-integer column suitable for MLBAM IDs.
+
+    Pandas 3 may infer CSV columns containing blanks as Arrow-backed strings.
+    Assigning an integer MLBAM ID into that dtype raises instead of widening.
+    Normalize the canonical identity fields before live-feed hydration so the
+    production path is deterministic across pandas storage backends.
+    """
+    if column not in frame.columns:
+        return pd.Series(pd.NA, index=frame.index, dtype="Int64")
+    return pd.to_numeric(frame[column], errors="coerce").astype("Int64")
+
+
 def hydrate_pool_identities(frame: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, Any]]:
     result = frame.copy()
-    for column in ("Player_MLBAM_ID", "Sequential_Batting_Order"):
-        if column not in result.columns:
-            result[column] = ""
-    if "Opposing_Pitcher_ID" not in result.columns:
-        result["Opposing_Pitcher_ID"] = ""
+    for column in ("Player_MLBAM_ID", "Sequential_Batting_Order", "Opposing_Pitcher_ID"):
+        result[column] = _nullable_int_column(result, column)
 
     diagnostics = {"games_requested": 0, "games_resolved": 0, "identity_failures": []}
     game_cache: dict[str, dict[str, Any]] = {}
