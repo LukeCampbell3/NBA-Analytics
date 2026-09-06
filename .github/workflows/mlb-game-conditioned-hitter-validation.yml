@@ -42,107 +42,112 @@ jobs:
           python - <<'PY'
           from pathlib import Path
 
-          def replace_once(path: str, old: str, new: str) -> None:
-              file = Path(path)
-              text = file.read_text(encoding='utf-8')
-              count = text.count(old)
-              if count == 0 and new in text:
-                  return
-              assert count == 1, (path, count, old[:120])
-              file.write_text(text.replace(old, new, 1), encoding='utf-8')
+          selector = Path('sports/mlb/scripts/select_high_precision_predictions.py')
+          text = selector.read_text(encoding='utf-8')
 
-          selector = 'sports/mlb/scripts/select_high_precision_predictions.py'
-          replace_once(
-              selector,
-              '''    # H/TB OVER rows with complete advanced evidence are now driven by the
-    # sequential nightly distribution. Until independently calibrated, the new
-    # model has negative authority only: it may lower/veto legacy confidence,
-    # never increase it.
-    sequential_status = str(row.get("Sequential_PA_Status", "")).strip().upper()
-    if target in {"H", "TB"} and direction == "OVER" and sequential_status == "READY":''',
-              '''    # H/TB/HR OVER rows may use the game-conditioned distribution only
-    # when that target's expanding-window validation explicitly grants authority.
-    # Shadow-only targets remain on the legacy production path even though their
-    # candidate residuals are retained for diagnostics.
-    sequential_status = str(row.get("Sequential_PA_Status", "")).strip().upper()
-    sequential_authority = str(row.get("Sequential_PA_Calibration_Status", "")).strip().upper()
-    sequential_authorized = sequential_authority in {
-        "DIAGNOSTICALLY_VALIDATED_NEGATIVE_AUTHORITY_ONLY",
-        "PROMOTED_RESIDUAL_POSITIVE_AND_NEGATIVE_AUTHORITY",
-    }
-    if target in {"H", "TB", "HR"} and direction == "OVER" and sequential_status == "READY" and sequential_authorized:''',
-          )
-          replace_once(
-              selector,
-              '''            calibrated_hit_probability = min(
-                legacy_calibrated_probability,
-                sequential_calibrated,
-                sequential_usable,
-            )
-            validated_graded_hit_rate = min(legacy_graded_probability, sequential_usable)
-            row["Probability_Model_Version"] = str(row.get("Sequential_PA_Model_Version") or "sequential_pa_contact_model_v1")
-            row["Probability_Authority"] = "NEGATIVE_AUTHORITY_UNTIL_INDEPENDENT_ADVANCED_MODEL_CALIBRATION"''',
-              '''            if sequential_authority == "PROMOTED_RESIDUAL_POSITIVE_AND_NEGATIVE_AUTHORITY":
-                calibrated_hit_probability = min(MAX_CALIBRATED_PROBABILITY, sequential_usable)
-                validated_graded_hit_rate = min(MAX_CALIBRATED_PROBABILITY, sequential_usable)
-            else:
-                calibrated_hit_probability = min(
-                    legacy_calibrated_probability,
-                    sequential_calibrated,
-                    sequential_usable,
-                )
-                validated_graded_hit_rate = min(legacy_graded_probability, sequential_usable)
-            row["Probability_Model_Version"] = str(row.get("Sequential_PA_Model_Version") or "game_conditioned_hitter_moe_v2")
-            row["Probability_Authority"] = sequential_authority''',
-          )
-          replace_once(
-              selector,
-              '''                sequential_ready = (
-                    candidate.target in {"H", "TB"}
-                    and candidate.direction == "OVER"
-                    and str(candidate.raw.get("Sequential_PA_Status", "")).strip().upper() == "READY"
-                )''',
-              '''                sequential_authority = str(candidate.raw.get("Sequential_PA_Calibration_Status", "")).strip().upper()
-                sequential_ready = (
-                    candidate.target in {"H", "TB", "HR"}
-                    and candidate.direction == "OVER"
-                    and str(candidate.raw.get("Sequential_PA_Status", "")).strip().upper() == "READY"
-                    and sequential_authority in {
-                        "DIAGNOSTICALLY_VALIDATED_NEGATIVE_AUTHORITY_ONLY",
-                        "PROMOTED_RESIDUAL_POSITIVE_AND_NEGATIVE_AUTHORITY",
-                    }
-                )''',
-          )
-          replace_once(
-              selector,
-              '''                    # The frozen isotonic curve was fitted against the legacy
-                    # Poisson probability. Do not apply it to a different model
-                    # class. The sequential model's own uncertainty haircut is
-                    # downward-only until a locked recalibrator is validated.''',
-              '''                    # The frozen isotonic curve was fitted against the legacy
-                    # Poisson probability. Skip it only when the target-specific
-                    # game-conditioned authority contract is actually active.''',
-          )
+          old = '\n'.join([
+              '    sequential_status = str(row.get("Sequential_PA_Status", "")).strip().upper()',
+              '    if target in {"H", "TB"} and direction == "OVER" and sequential_status == "READY":',
+          ])
+          new = '\n'.join([
+              '    sequential_status = str(row.get("Sequential_PA_Status", "")).strip().upper()',
+              '    sequential_authority = str(row.get("Sequential_PA_Calibration_Status", "")).strip().upper()',
+              '    sequential_authorized = sequential_authority in {',
+              '        "DIAGNOSTICALLY_VALIDATED_NEGATIVE_AUTHORITY_ONLY",',
+              '        "PROMOTED_RESIDUAL_POSITIVE_AND_NEGATIVE_AUTHORITY",',
+              '    }',
+              '    if target in {"H", "TB", "HR"} and direction == "OVER" and sequential_status == "READY" and sequential_authorized:',
+          ])
+          if old in text:
+              text = text.replace(old, new, 1)
+          assert new in text
+
+          old = '\n'.join([
+              '            calibrated_hit_probability = min(',
+              '                legacy_calibrated_probability,',
+              '                sequential_calibrated,',
+              '                sequential_usable,',
+              '            )',
+              '            validated_graded_hit_rate = min(legacy_graded_probability, sequential_usable)',
+              '            row["Probability_Model_Version"] = str(row.get("Sequential_PA_Model_Version") or "sequential_pa_contact_model_v1")',
+              '            row["Probability_Authority"] = "NEGATIVE_AUTHORITY_UNTIL_INDEPENDENT_ADVANCED_MODEL_CALIBRATION"',
+          ])
+          new = '\n'.join([
+              '            if sequential_authority == "PROMOTED_RESIDUAL_POSITIVE_AND_NEGATIVE_AUTHORITY":',
+              '                calibrated_hit_probability = min(MAX_CALIBRATED_PROBABILITY, sequential_usable)',
+              '                validated_graded_hit_rate = min(MAX_CALIBRATED_PROBABILITY, sequential_usable)',
+              '            else:',
+              '                calibrated_hit_probability = min(',
+              '                    legacy_calibrated_probability,',
+              '                    sequential_calibrated,',
+              '                    sequential_usable,',
+              '                )',
+              '                validated_graded_hit_rate = min(legacy_graded_probability, sequential_usable)',
+              '            row["Probability_Model_Version"] = str(row.get("Sequential_PA_Model_Version") or "game_conditioned_hitter_moe_v2")',
+              '            row["Probability_Authority"] = sequential_authority',
+          ])
+          if old in text:
+              text = text.replace(old, new, 1)
+          assert new in text
+
+          old = '\n'.join([
+              '                sequential_ready = (',
+              '                    candidate.target in {"H", "TB"}',
+              '                    and candidate.direction == "OVER"',
+              '                    and str(candidate.raw.get("Sequential_PA_Status", "")).strip().upper() == "READY"',
+              '                )',
+          ])
+          new = '\n'.join([
+              '                sequential_authority = str(candidate.raw.get("Sequential_PA_Calibration_Status", "")).strip().upper()',
+              '                sequential_ready = (',
+              '                    candidate.target in {"H", "TB", "HR"}',
+              '                    and candidate.direction == "OVER"',
+              '                    and str(candidate.raw.get("Sequential_PA_Status", "")).strip().upper() == "READY"',
+              '                    and sequential_authority in {',
+              '                        "DIAGNOSTICALLY_VALIDATED_NEGATIVE_AUTHORITY_ONLY",',
+              '                        "PROMOTED_RESIDUAL_POSITIVE_AND_NEGATIVE_AUTHORITY",',
+              '                    }',
+              '                )',
+          ])
+          if old in text:
+              text = text.replace(old, new, 1)
+          assert new in text
+
+          old = '                    candidate.final_hit_probability = min(candidate.calibrated_hit_probability, sequential_usable)'
+          new = '\n'.join([
+              '                    candidate.final_hit_probability = (',
+              '                        sequential_usable',
+              '                        if sequential_authority == "PROMOTED_RESIDUAL_POSITIVE_AND_NEGATIVE_AUTHORITY"',
+              '                        else min(candidate.calibrated_hit_probability, sequential_usable)',
+              '                    )',
+          ])
+          if old in text:
+              text = text.replace(old, new, 1)
+          assert new in text
+
+          selector.write_text(text, encoding='utf-8')
+
+          canonical = Path('.github/workflows/mlb-predictions.yml')
+          workflow = canonical.read_text(encoding='utf-8')
+          workflow = workflow.replace('H/TB source', 'H/TB/HR source')
+          workflow = workflow.replace('mlb_sequential_pa_frontend_v1', 'mlb_game_conditioned_hitter_frontend_v2')
+          canonical.write_text(workflow, encoding='utf-8')
 
           daily = Path('sports/site/pipeline/run_daily_predictions.py')
-          daily_text = daily.read_text(encoding='utf-8')
-          daily.write_text(daily_text.replace('H/TB', 'H/TB/HR'), encoding='utf-8')
-
-          production_workflow = Path('.github/workflows/mlb-predictions.yml')
-          workflow_text = production_workflow.read_text(encoding='utf-8')
-          workflow_text = workflow_text.replace('H/TB', 'H/TB/HR')
-          workflow_text = workflow_text.replace(
-              'assert p["schema_version"] == "mlb_sequential_pa_frontend_v1"',
-              'assert p["schema_version"] == "mlb_game_conditioned_hitter_frontend_v2"',
-          )
-          production_workflow.write_text(workflow_text, encoding='utf-8')
-
-          selector_text = Path(selector).read_text(encoding='utf-8')
-          assert 'target in {"H", "TB", "HR"}' in selector_text
-          assert 'candidate.target in {"H", "TB", "HR"}' in selector_text
-          assert 'SHADOW_ONLY_NO_PRODUCTION_AUTHORITY' not in selector_text or True
-          assert 'mlb_game_conditioned_hitter_frontend_v2' in production_workflow.read_text(encoding='utf-8')
+          daily_text = daily.read_text(encoding='utf-8').replace('H/TB Data + Sequential PA Model', 'H/TB/HR Data + Game-Conditioned Sequential PA Model')
+          daily_text = daily_text.replace('H/TB remains on the existing calibrated fallback', 'H/TB/HR remains on the existing calibrated fallback')
+          daily.write_text(daily_text, encoding='utf-8')
           PY
+      - name: Compile and test production wiring
+        run: |
+          python -m py_compile \
+            sports/mlb/scripts/select_high_precision_predictions.py \
+            sports/site/pipeline/run_daily_predictions.py
+          python -m pytest \
+            sports/mlb/tests/test_sequential_pa_model.py \
+            sports/mlb/tests/test_game_conditioned_hitter_moe.py \
+            sports/mlb/tests/test_sequential_pa_identity_hydration.py \
+            -q
       - name: Commit production selector wiring
         run: |
           git config user.name 'github-actions[bot]'
@@ -156,16 +161,6 @@ jobs:
             git pull --rebase origin static-deployment
             git push origin HEAD:static-deployment
           fi
-      - name: Validate game-conditioned mechanics
-        run: |
-          python -m pytest \
-            sports/mlb/tests/test_sequential_pa_model.py \
-            sports/mlb/tests/test_game_conditioned_hitter_moe.py \
-            sports/mlb/tests/test_sequential_pa_identity_hydration.py \
-            -q
-          python -m py_compile \
-            sports/mlb/scripts/select_high_precision_predictions.py \
-            sports/site/pipeline/run_daily_predictions.py
       - name: Fit expanding-window residual model
         run: |
           python sports/mlb/scripts/fit_game_conditioned_hitter_moe.py \
@@ -181,18 +176,13 @@ jobs:
           import json
           from pathlib import Path
 
-          path = Path('sports/mlb/data/predictions/calibration/game_conditioned_hitter_moe_v2.json')
-          payload = json.loads(path.read_text())
+          payload = json.loads(Path('sports/mlb/data/predictions/calibration/game_conditioned_hitter_moe_v2.json').read_text())
           assert payload['schema_version'] == 'mlb_game_conditioned_hitter_moe_v2'
           assert payload['model_version'] == 'game_conditioned_hitter_moe_v2'
           assert payload['evidence_class'] == 'ROLLING_ORIGIN_HIGH_FIDELITY_DIAGNOSTIC_NOT_CERTIFICATION'
           assert payload['validation_design'] == 'expanding_window_strictly_prior_dates'
           assert set(payload['targets']) >= {'H', 'TB', 'HR'}
-
-          expected_experts = {
-              'strikeout_contact', 'contact_quality', 'power_tb',
-              'defense_conversion', 'pa_opportunity', 'bullpen_transition'
-          }
+          expected_experts = {'strikeout_contact', 'contact_quality', 'power_tb', 'defense_conversion', 'pa_opportunity', 'bullpen_transition'}
           for target in ('H', 'TB', 'HR'):
               model = payload['targets'][target]
               validation = model['validation']
@@ -215,13 +205,11 @@ jobs:
             sports/mlb/data/predictions/calibration/game_conditioned_hitter_moe_v2.json \
             artifacts/mlb_game_conditioned_hitter_moe_validation.json \
             artifacts/mlb_game_conditioned_hitter_moe_validation.md
-          if git diff --cached --quiet; then
-            echo 'No fitted-artifact changes.'
-            exit 0
+          if ! git diff --cached --quiet; then
+            git commit -m 'MLB game-conditioned hitter residual fit [skip ci]'
+            git pull --rebase origin static-deployment
+            git push origin HEAD:static-deployment
           fi
-          git commit -m 'MLB game-conditioned hitter residual fit [skip ci]'
-          git pull --rebase origin static-deployment
-          git push origin HEAD:static-deployment
       - uses: actions/upload-artifact@v7
         with:
           name: mlb-game-conditioned-hitter-validation
