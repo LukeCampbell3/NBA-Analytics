@@ -56,35 +56,67 @@ jobs:
           from pathlib import Path
 
           path = Path('.github/workflows/mlb-predictions.yml')
-          text = path.read_text()
-          text = text.replace(
-              '# Morning discovery, late-day final refresh, and overnight next-slate prep.',
-              '# Morning discovery, afternoon authoritative publish, and evening immutable refresh.'
-          )
-          old_env = '''        env:\n          INPUT_RUN_DATE: ${{ inputs.run_date }}\n          INPUT_PUBLICATION_MODE: ${{ inputs.publication_mode }}\n'''
-          new_env = '''        env:\n          INPUT_RUN_DATE: ${{ inputs.run_date }}\n          INPUT_PUBLICATION_MODE: ${{ inputs.publication_mode }}\n          EVENT_SCHEDULE: ${{ github.event.schedule }}\n'''
-          if old_env not in text:
-              raise SystemExit('run-config env block not found')
-          text = text.replace(old_env, new_env, 1)
+          lines = path.read_text().splitlines()
 
-          old_mode = '''          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then\n            publication_mode="DISCOVER"\n          else\n            publication_mode="${INPUT_PUBLICATION_MODE:-DISCOVER}"\n          fi\n'''
-          new_mode = '''          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then\n            publication_mode="${INPUT_PUBLICATION_MODE:-DISCOVER}"\n          elif [[ "${GITHUB_EVENT_NAME}" == "schedule" ]]; then\n            case "$EVENT_SCHEDULE" in\n              "17 8 * 3-10 *") publication_mode="DISCOVER" ;;\n              "30 18 * 3-10 *") publication_mode="PUBLISH" ;;\n              "30 23 * 3-10 *") publication_mode="REFRESH" ;;\n              *) publication_mode="DISCOVER" ;;\n            esac\n          else\n            publication_mode="DISCOVER"\n          fi\n'''
-          if old_mode not in text:
-              raise SystemExit('publication-mode block not found')
-          text = text.replace(old_mode, new_mode, 1)
-          path.write_text(text)
+          for i, line in enumerate(lines):
+              if 'Morning discovery, late-day final refresh, and overnight next-slate prep.' in line:
+                  lines[i] = line.replace(
+                      'Morning discovery, late-day final refresh, and overnight next-slate prep.',
+                      'Morning discovery, afternoon authoritative publish, and evening immutable refresh.'
+                  )
+
+          if not any(line.strip().startswith('EVENT_SCHEDULE:') for line in lines):
+              env_index = next(
+                  i for i, line in enumerate(lines)
+                  if line.strip().startswith('INPUT_PUBLICATION_MODE:')
+              )
+              github_schedule_expression = '$' + '{{ github.event.schedule }}'
+              lines.insert(env_index + 1, f'          EVENT_SCHEDULE: {github_schedule_expression}')
+
+          old_start = next(
+              (i for i, line in enumerate(lines) if 'if [[ "${GITHUB_EVENT_NAME}" == "push" ]]' in line),
+              None,
+          )
+          if old_start is not None:
+              expected = lines[old_start:old_start + 5]
+              if len(expected) != 5 or expected[-1].strip() != 'fi':
+                  raise SystemExit(f'unexpected publication mode block: {expected}')
+              replacement = [
+                  '          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then',
+                  '            publication_mode="${INPUT_PUBLICATION_MODE:-DISCOVER}"',
+                  '          elif [[ "${GITHUB_EVENT_NAME}" == "schedule" ]]; then',
+                  '            case "$EVENT_SCHEDULE" in',
+                  '              "17 8 * 3-10 *") publication_mode="DISCOVER" ;;',
+                  '              "30 18 * 3-10 *") publication_mode="PUBLISH" ;;',
+                  '              "30 23 * 3-10 *") publication_mode="REFRESH" ;;',
+                  '              *) publication_mode="DISCOVER" ;;',
+                  '            esac',
+                  '          else',
+                  '            publication_mode="DISCOVER"',
+                  '          fi',
+              ]
+              lines[old_start:old_start + 5] = replacement
+          elif not any('publication_mode="PUBLISH"' in line and '30 18' in line for line in lines):
+              raise SystemExit('could not find old or repaired publication-mode block')
+
+          path.write_text('\n'.join(lines) + '\n')
           PY
 
           git diff -- .github/workflows/mlb-predictions.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add .github/workflows/mlb-predictions.yml
-          git commit -m 'MLB: restore scheduled publication handoff [skip ci]'
-          git push origin HEAD:static-deployment
+          if git diff --cached --quiet; then
+            echo 'Scheduled publication handoff already repaired.'
+          else
+            git commit -m 'MLB: restore scheduled publication handoff [skip ci]'
+            git push origin HEAD:static-deployment
+          fi
 
       - name: Dispatch September 6 authoritative run
         run: |
           set -euo pipefail
+          git fetch origin static-deployment
           before="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow mlb-predictions.yml --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
           gh workflow run mlb-predictions.yml \
             --repo "$GITHUB_REPOSITORY" \
