@@ -1,0 +1,98 @@
+name: MLB Recover September 6 Official Slate
+
+on:
+  push:
+    branches: [static-deployment]
+    paths:
+      - '.github/workflows/mlb-recover-september6.yml'
+
+permissions:
+  actions: write
+  contents: read
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  RUN_DATE: '2026-09-06'
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 145
+    steps:
+      - name: Dispatch authoritative publish
+        id: dispatch
+        run: |
+          set -euo pipefail
+          before="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow mlb-predictions.yml --event workflow_dispatch --branch static-deployment --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
+          gh workflow run mlb-predictions.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref static-deployment \
+            -f run_date="$RUN_DATE" \
+            -f build_only=false \
+            -f publication_mode=PUBLISH
+          run_id=''
+          for _ in $(seq 1 90); do
+            candidate="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow mlb-predictions.yml --event workflow_dispatch --branch static-deployment --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
+            if [[ "$candidate" != '0' && "$candidate" != "$before" ]]; then
+              run_id="$candidate"
+              break
+            fi
+            sleep 2
+          done
+          test -n "$run_id"
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "September 6 recovery run: $run_id"
+          gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status
+
+      - name: Verify source, deployment, retention, and new system
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch static-deployment "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" repo
+          cd repo
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          today = '2026-09-06'
+          yesterday = '2026-09-05'
+          board = json.loads(Path('sports/mlb/web/data/daily_predictions.json').read_text())
+          protocol = board.get('publication_protocol') or {}
+          assert board.get('run_date') == today, board.get('run_date')
+          assert str(board.get('publication_status') or '').lower() == 'ready'
+          assert isinstance(board.get('plays'), list)
+          assert protocol.get('mode') == 'PUBLISH', protocol
+          assert protocol.get('issued_picks_immutable') is True, protocol
+          assert protocol.get('public_pick_retention') == 1.0, protocol
+
+          deployed = json.loads(Path('dist/mlb/data/daily_predictions.json').read_text())
+          assert deployed.get('run_date') == today
+          assert deployed.get('plays') == board.get('plays')
+
+          prior = json.loads(Path(f'sports/mlb/web/data/history/{yesterday}.json').read_text())
+          prior_plays = prior.get('plays') or []
+          assert prior_plays
+          assert all(row.get('settlement_status') in {'won','lost','push'} for row in prior_plays)
+          index = json.loads(Path('sports/mlb/web/data/history/index.json').read_text())
+          assert yesterday in index.get('dates', [])
+
+          seq = json.loads(Path('sports/mlb/web/data/sequential_pa_hitter_predictions.json').read_text())
+          assert seq.get('run_date') == today
+          assert seq.get('schema_version') == 'mlb_sequential_pa_frontend_v1'
+          assert seq.get('game_conditioned_schema_version') == 'mlb_game_conditioned_hitter_frontend_v2'
+          assert seq.get('model_version') == 'game_conditioned_hitter_moe_v2'
+          assert seq.get('data_freshness_status') in {'FRESH','DEGRADED'}
+
+          print(json.dumps({
+              'run_date': today,
+              'published_plays': len(board.get('plays') or []),
+              'publication_mode': protocol.get('mode'),
+              'immutable': protocol.get('issued_picks_immutable'),
+              'prior_date': yesterday,
+              'prior_settled_plays': len(prior_plays),
+              'history_index_contains_prior': True,
+              'game_conditioned_model': seq.get('model_version'),
+              'game_conditioned_schema': seq.get('game_conditioned_schema_version'),
+              'game_conditioned_candidates': len(seq.get('candidates') or []),
+              'dist_matches_source': True,
+          }, indent=2))
+          PY
