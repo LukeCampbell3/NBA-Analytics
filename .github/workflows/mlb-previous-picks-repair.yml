@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  repair-previous-picks:
+  repair:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -21,208 +21,17 @@ jobs:
           ref: static-deployment
           fetch-depth: 0
 
-      - name: Patch history selection and archive indexing
+      - name: Run repair
+        run: python sports/mlb/scripts/repair_previous_picks_frontend.py
+
+      - name: Test repair
         run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-
-          roi = Path('sports/mlb/web/predictions-roi-overrides.js')
-          text = roi.read_text()
-          old = '''    const findPreviousBoard = async (current) => {
-        const runDate = String(current?.run_date || "").trim();
-        if (runDate) {
-            try {
-                const sameDay = await fetchJson(`data/history/${runDate}.json`);
-                if (hasDistinctPicks(sameDay, current)) {
-                    return { payload: sameDay, sameDay: true };
-                }
-            } catch (_) { /* same-day archive may not exist yet */ }
-        }
-
-        try {
-            const index = await fetchJson("data/history/index.json");
-            const dates = Array.isArray(index?.dates) ? index.dates.map(String) : [];
-            for (const date of dates) {
-                if (!date || date === runDate) continue;
-                try {
-                    const archived = await fetchJson(`data/history/${date}.json`);
-                    if (Array.isArray(archived?.plays) && archived.plays.length) {
-                        return { payload: archived, sameDay: false };
-                    }
-                } catch (_) { /* try the next preserved date */ }
-            }
-        } catch (_) { /* history index is optional */ }
-        return null;
-    };
-'''
-          new = '''    const easternDate = () => {
-        const parts = new Intl.DateTimeFormat("en-US", {
-            timeZone: "America/New_York",
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-        }).formatToParts(new Date());
-        const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-        return `${values.year}-${values.month}-${values.day}`;
-    };
-
-    const findPreviousBoard = async (current) => {
-        const runDate = String(current?.run_date || "").trim();
-        const today = easternDate();
-
-        // Only compare a same-day archive against the live board when the live
-        // board is actually today's slate. If daily_predictions.json is stale,
-        // its run_date is itself a valid previous slate and must not be skipped.
-        if (runDate && runDate === today) {
-            try {
-                const sameDay = await fetchJson(`data/history/${runDate}.json`);
-                if (hasDistinctPicks(sameDay, current)) {
-                    return { payload: sameDay, sameDay: true };
-                }
-            } catch (_) { /* same-day archive may not exist yet */ }
-        }
-
-        try {
-            const index = await fetchJson("data/history/index.json");
-            const dates = Array.isArray(index?.dates)
-                ? index.dates.map(String).filter((date) => /^\\d{4}-\\d{2}-\\d{2}$/.test(date)).sort().reverse()
-                : [];
-            for (const date of dates) {
-                // "Previous" is chronological relative to today, not relative
-                // to whatever stale run_date happens to be in the live payload.
-                if (!date || date >= today) continue;
-                try {
-                    const archived = await fetchJson(`data/history/${date}.json`);
-                    if (Array.isArray(archived?.plays) && archived.plays.length) {
-                        return { payload: archived, sameDay: false };
-                    }
-                } catch (_) { /* try the next preserved date */ }
-            }
-        } catch (_) { /* history index is optional */ }
-
-        // Fail useful: if the index is stale but the live file itself is an
-        // older slate, show that stale file as the previous board rather than
-        // jumping back another day.
-        if (runDate && runDate < today && Array.isArray(current?.plays) && current.plays.length) {
-            return { payload: current, sameDay: false };
-        }
-        return null;
-    };
-'''
-          if old not in text:
-              raise SystemExit('previous-board selector block not found')
-          roi.write_text(text.replace(old, new, 1))
-
-          preserve = Path('sports/mlb/scripts/preserve_published_predictions.py')
-          ptext = preserve.read_text()
-          anchor = '''def preserve_all(board_path: Path, history_dir: Path) -> list[Path]:
-'''
-          helper = '''def refresh_history_index(history_dir: Path) -> Path:
-    """Rebuild the user-facing date index from actual dated archives.
-
-    The archive files are the authority.  Keeping index.json derived from them
-    prevents a preserved slate from becoming invisible simply because a later
-    publication run did not refresh the navigation index.
-    """
-    history_dir.mkdir(parents=True, exist_ok=True)
-    dates: list[str] = []
-    for path in history_dir.glob("????-??-??.json"):
-        try:
-            dates.append(_valid_date(path.stem))
-        except ValueError:
-            continue
-    dates = sorted(set(dates), reverse=True)
-    target = history_dir / "index.json"
-    payload = {
-        "dates": dates,
-        "updated_at_utc": datetime.now(timezone.utc).isoformat(),
-    }
-    target.write_text(json.dumps(payload, indent=2) + "\\n", encoding="utf-8")
-    return target
-
-
-'''
-          if 'def refresh_history_index(' not in ptext:
-              if anchor not in ptext:
-                  raise SystemExit('preserve_all anchor not found')
-              ptext = ptext.replace(anchor, helper + anchor, 1)
-          old_return = '''    for filename in PRODUCT_FILENAMES:
-        target = preserve(board_path.parent / filename, history_dir, product=True)
-        if target:
-            preserved.append(target)
-    return preserved
-'''
-          new_return = '''    for filename in PRODUCT_FILENAMES:
-        target = preserve(board_path.parent / filename, history_dir, product=True)
-        if target:
-            preserved.append(target)
-    refresh_history_index(history_dir)
-    return preserved
-'''
-          if old_return in ptext:
-              ptext = ptext.replace(old_return, new_return, 1)
-          elif 'refresh_history_index(history_dir)' not in ptext:
-              raise SystemExit('preserve_all return block not found')
-          preserve.write_text(ptext)
-
-          test = Path('sports/mlb/tests/test_preserve_published_predictions.py')
-          ttext = test.read_text()
-          if 'test_preserve_all_refreshes_history_index' not in ttext:
-              ttext += '''\n\ndef test_preserve_all_refreshes_history_index(tmp_path: Path) -> None:\n    data = tmp_path / "data"\n    data.mkdir()\n    history = data / "history"\n    history.mkdir()\n    (history / "2026-09-04.json").write_text(json.dumps({"run_date": "2026-09-04", "plays": [{"player": "Old"}]}))\n    base = {"run_date": "2026-09-05", "generated_at_utc": "2026-09-05T18:00:00Z"}\n    (data / "daily_predictions.json").write_text(json.dumps({**base, "plays": [{"player": "Yesterday"}]}))\n    for filename in preserve.PRODUCT_FILENAMES:\n        (data / filename).write_text(json.dumps(base))\n\n    preserve.preserve_all(data / "daily_predictions.json", history)\n\n    index = json.loads((history / "index.json").read_text())\n    assert index["dates"][:2] == ["2026-09-05", "2026-09-04"]\n'''
-          test.write_text(ttext)
-
-          # Bust the browser cache for the corrected additive override.
-          for html_path in [
-              Path('sports/mlb/web/predictions.html'),
-              Path('dist/mlb/predictions.html'),
-              Path('paywall/private-content/app/mlb/predictions.html'),
-          ]:
-              if not html_path.exists():
-                  continue
-              htext = html_path.read_text()
-              htext = htext.replace('predictions-roi-overrides.js?v=4', 'predictions-roi-overrides.js?v=5')
-              html_path.write_text(htext)
-          PY
-
-          # Rebuild index from actual dated archives, including 2026-09-05.
-          python sports/mlb/scripts/preserve_published_predictions.py
-
-          # Keep all deployed surfaces byte-identical to source for this fix.
-          cp sports/mlb/web/predictions-roi-overrides.js dist/mlb/predictions-roi-overrides.js
-          cp sports/mlb/web/predictions-roi-overrides.js paywall/private-content/app/mlb/predictions-roi-overrides.js
-          cp sports/mlb/web/data/history/index.json dist/mlb/data/history/index.json
-          cp sports/mlb/web/data/history/index.json paywall/private-content/app/mlb/data/history/index.json
-
-      - name: Verify September 5 is the previous published slate
-        run: |
-          set -euo pipefail
+          python -m pip install pytest
           python -m pytest sports/mlb/tests/test_preserve_published_predictions.py -q
           node --check sports/mlb/web/predictions-roi-overrides.js
-          python - <<'PY'
-          import json
-          from pathlib import Path
+          python sports/mlb/scripts/repair_previous_picks_frontend.py
 
-          for root in [
-              Path('sports/mlb/web/data/history'),
-              Path('dist/mlb/data/history'),
-              Path('paywall/private-content/app/mlb/data/history'),
-          ]:
-              index = json.loads((root / 'index.json').read_text())
-              assert index['dates'][0] == '2026-09-05', index['dates'][:3]
-              payload = json.loads((root / '2026-09-05.json').read_text())
-              assert payload.get('run_date') == '2026-09-05'
-              plays = payload.get('plays') or []
-              assert plays, f'no September 5 plays in {root}'
-              assert all(p.get('settlement_status') in {'won','lost','push'} for p in plays)
-          js = Path('sports/mlb/web/predictions-roi-overrides.js').read_text()
-          assert 'date >= today' in js
-          assert 'runDate && runDate < today' in js
-          assert 'predictions-roi-overrides.js?v=5' in Path('sports/mlb/web/predictions.html').read_text()
-          print('September 5 is now the newest previous slate on all deployed surfaces.')
-          PY
-
-      - name: Commit repaired frontend history
+      - name: Commit repaired frontend
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
