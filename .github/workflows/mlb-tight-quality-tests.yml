@@ -5,6 +5,7 @@ on:
     branches: [static-deployment]
     paths:
       - 'sports/mlb/parlay_v2/**'
+      - 'sports/mlb/advanced/**'
       - 'sports/mlb/scripts/apply_tight_quality_overlay.py'
       - 'sports/mlb/scripts/apply_parlay_v2_public_quality_overlay.py'
       - 'sports/mlb/scripts/select_high_hit_parlay.py'
@@ -19,11 +20,15 @@ on:
       - 'sports/mlb/scripts/enrich_parlay_leg_betslip.py'
       - 'sports/mlb/scripts/build_exotic_market_shadow.py'
       - 'sports/mlb/scripts/validate_v4_live_players.py'
+      - 'sports/mlb/scripts/run_sequential_pa_hitter_model.py'
       - 'sports/site/pipeline/validate_daily_publication.py'
       - 'sports/mlb/web/predictions.js'
       - 'sports/mlb/web/predictions.html'
       - 'sports/mlb/unified/**'
       - 'sports/mlb/tests/test_unified_*.py'
+      - 'sports/mlb/tests/test_advanced_mlb_profiles.py'
+      - 'sports/mlb/tests/test_sequential_pa_model.py'
+      - 'sports/mlb/tests/test_sequential_pa_identity_hydration.py'
       - 'sports/mlb/tests/test_parlay_quality_selectors.py'
       - 'sports/mlb/tests/test_tight_quality_overlay.py'
       - 'sports/mlb/tests/test_local_node_selector.py'
@@ -43,6 +48,8 @@ on:
       - 'sports/mlb/tests/test_validate_v4_live_players.py'
       - 'sports/mlb/tests/test_pitcher_parlay_reliability.py'
       - 'sports/site/pipeline/run_daily_predictions.py'
+      - 'requirements.txt'
+      - 'sports/mlb/requirements-same-game.txt'
       - '.github/workflows/mlb-predictions.yml'
       - '.github/workflows/mlb-same-game-predictions.yml'
       - '.github/workflows/mlb-pitcher-parlay-predictions.yml'
@@ -65,14 +72,19 @@ jobs:
         with:
           python-version: '3.11'
           cache: pip
-          cache-dependency-path: requirements.txt
+          cache-dependency-path: |
+            requirements.txt
+            sports/mlb/requirements-same-game.txt
       - name: Install test dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt pytest
+          python -m pip install -r requirements.txt -r sports/mlb/requirements-same-game.txt pytest
       - name: Run tight MLB selector regressions
         run: |
           python -m pytest \
+            sports/mlb/tests/test_advanced_mlb_profiles.py \
+            sports/mlb/tests/test_sequential_pa_model.py \
+            sports/mlb/tests/test_sequential_pa_identity_hydration.py \
             sports/mlb/tests/test_tight_quality_overlay.py \
             sports/mlb/tests/test_local_node_selector.py \
             sports/mlb/tests/test_local_node_selector_v2.py \
