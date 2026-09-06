@@ -11,37 +11,37 @@
   "targets": {
     "H": {
       "coefficients": {
-        "bullpen_transition": 0.21266304105359385,
-        "contact_quality": 0.23723330873263748,
+        "bullpen_transition": 0.21794361555347977,
+        "contact_quality": 0.24668015831012924,
         "defense_conversion": 0.0,
-        "pa_opportunity": -0.1000058517335933,
-        "power_tb": -0.3952918912080971,
-        "strikeout_contact": 0.07460906894532778
+        "pa_opportunity": -0.08876347416961371,
+        "power_tb": -0.3731464129859062,
+        "strikeout_contact": 0.06922813313025337
       },
       "feature_means": {
         "bullpen_transition": -0.08960609874626355,
-        "contact_quality": 0.11614172482776537,
+        "contact_quality": 0.13327868789130443,
         "defense_conversion": 0.0,
         "pa_opportunity": -0.08668660813878436,
-        "power_tb": 0.12750146257054887,
+        "power_tb": 0.08719344763959018,
         "strikeout_contact": 0.07010583224633557
       },
       "feature_scales": {
         "bullpen_transition": 0.35480726197462065,
-        "contact_quality": 0.19079057616096096,
+        "contact_quality": 0.21801969085825199,
         "defense_conversion": 1.0,
         "pa_opportunity": 0.2546898325716736,
-        "power_tb": 0.32179003116127025,
+        "power_tb": 0.255460626750713,
         "strikeout_contact": 0.34950918996899444
       },
-      "intercept": -0.36148968834445894,
+      "intercept": -0.35556945781323673,
       "positive_authority": false,
       "prior_legacy_weight": 0.72,
       "validation": {
         "brier_improved": false,
-        "candidate_brier": 0.24930365470273022,
-        "candidate_ece": 0.09038734863267033,
-        "candidate_log_loss": 0.6986932435552666,
+        "candidate_brier": 0.24916882903811488,
+        "candidate_ece": 0.10091302294714222,
+        "candidate_log_loss": 0.6983667832143385,
         "cutoff_date": "2026-08-01",
         "log_loss_improved": false,
         "positive_authority_blocker": "FULL_EXACT_POINT_IN_TIME_ADVANCED_FEATURE_SNAPSHOTS_NOT_AVAILABLE_FOR_THIS_FIT",
@@ -56,37 +56,37 @@
     },
     "TB": {
       "coefficients": {
-        "bullpen_transition": 0.2032679022651834,
-        "contact_quality": -0.08091578755404698,
+        "bullpen_transition": 0.2057290308253095,
+        "contact_quality": -0.07353618379261803,
         "defense_conversion": 0.0,
-        "pa_opportunity": -0.02955045075134785,
-        "power_tb": -0.26614629496337594,
-        "strikeout_contact": 0.22797935683271647
+        "pa_opportunity": -0.026376921142186184,
+        "power_tb": -0.20886151704750316,
+        "strikeout_contact": 0.22190928753175668
       },
       "feature_means": {
         "bullpen_transition": -0.08960609874626355,
-        "contact_quality": 0.11614172482776537,
+        "contact_quality": 0.11956911744047313,
         "defense_conversion": 0.0,
         "pa_opportunity": -0.08668660813878436,
-        "power_tb": 0.21960241290406016,
+        "power_tb": 0.1502461048637189,
         "strikeout_contact": 0.07010583224633557
       },
       "feature_scales": {
         "bullpen_transition": 0.35480726197462065,
-        "contact_quality": 0.19079057616096096,
+        "contact_quality": 0.19622805362026424,
         "defense_conversion": 1.0,
         "pa_opportunity": 0.2546898325716736,
-        "power_tb": 0.5231087582650459,
+        "power_tb": 0.42975462634288203,
         "strikeout_contact": 0.34950918996899444
       },
-      "intercept": -0.23691279234430762,
+      "intercept": -0.228742889545751,
       "positive_authority": false,
       "prior_legacy_weight": 0.72,
       "validation": {
         "brier_improved": true,
-        "candidate_brier": 0.15828381274475029,
-        "candidate_ece": 0.08746829783992545,
-        "candidate_log_loss": 0.47342519624205376,
+        "candidate_brier": 0.15816155872613555,
+        "candidate_ece": 0.0873040624182956,
+        "candidate_log_loss": 0.47312640149732,
         "cutoff_date": "2026-08-01",
         "log_loss_improved": true,
         "positive_authority_blocker": "FULL_EXACT_POINT_IN_TIME_ADVANCED_FEATURE_SNAPSHOTS_NOT_AVAILABLE_FOR_THIS_FIT",

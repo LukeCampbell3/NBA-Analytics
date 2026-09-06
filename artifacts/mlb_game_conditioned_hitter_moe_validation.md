@@ -10,8 +10,8 @@ Positive publication authority remains disabled because this historical corpus d
 
 | Target | Train | Validation | Prior Brier | Candidate Brier | Prior LogLoss | Candidate LogLoss | Diagnostic gate |
 |---|---:|---:|---:|---:|---:|---:|---|
-| H | 99 | 301 | 0.2463 | 0.2493 | 0.6909 | 0.6987 | DID_NOT_CLEAR_DIAGNOSTIC_IMPROVEMENT_GATE |
-| TB | 99 | 301 | 0.1609 | 0.1583 | 0.4794 | 0.4734 | IMPROVED_DIAGNOSTIC_ONLY |
+| H | 99 | 301 | 0.2463 | 0.2492 | 0.6909 | 0.6984 | DID_NOT_CLEAR_DIAGNOSTIC_IMPROVEMENT_GATE |
+| TB | 99 | 301 | 0.1609 | 0.1582 | 0.4794 | 0.4731 | IMPROVED_DIAGNOSTIC_ONLY |
 
 ## Experts
 
