@@ -1,0 +1,378 @@
+{
+  "architecture": {
+    "defense": "zero-centered residual from average Statcast expected-result context; no fabricated OAA",
+    "game_state": "batting-order/team-run opportunity plus sequential starter-to-bullpen transition",
+    "hits_over_0_5_identity": "P(H>=1) = 1 - P(H=0)",
+    "non_hr_contact_tree": [
+      "OUT",
+      "1B",
+      "2B",
+      "3B",
+      "ROE_OTHER"
+    ],
+    "pa_ab_separate": true,
+    "pa_event_tree": [
+      "K",
+      "BB",
+      "HBP",
+      "HR",
+      "NON_HR_CONTACT",
+      "OTHER"
+    ],
+    "sprint_speed": "not re-applied as a full residual when Statcast expected metrics are used",
+    "tb_over_1_5_identity": "P(TB>=2) = directly simulated fraction with TB >= 2"
+  },
+  "authority": {
+    "can_raise_legacy_probability": false,
+    "can_veto_overconfident_h_tb": true,
+    "promotion_status": "NEGATIVE_AUTHORITY_UNTIL_INDEPENDENT_ADVANCED_MODEL_CALIBRATION"
+  },
+  "daily_production_test": {
+    "blocked_reason_counts": {},
+    "blocked_rows": null,
+    "data_freshness_status": null,
+    "evaluated_h_tb_rows": null,
+    "frontend_candidate_rows": 0,
+    "modeled_rows": null,
+    "public_play_count": 3,
+    "status_counts": {}
+  },
+  "data": {
+    "batter_profiles": null,
+    "cache": {},
+    "candidate_identities": null,
+    "direct_matchups": null,
+    "effective_as_of_date": null,
+    "failures": [],
+    "fetched_at_utc": null,
+    "freshness_policy": {},
+    "lookback_start_date": null,
+    "pitcher_profiles": null,
+    "source_status": {},
+    "sources": []
+  },
+  "generated_at_utc": "2026-09-06T01:02:32.448157+00:00",
+  "github_actions": {
+    "parent_workflow_name": "MLB Sequential PA Validation",
+    "parent_workflow_run_id": "34002521414",
+    "report_workflow": "MLB Sequential PA Final Report",
+    "report_workflow_run_id": "34002586455"
+  },
+  "historical_validation": {
+    "available": true,
+    "economic_evidence": {
+      "reason": "exact decision-time prices are not fabricated for processed-history replay",
+      "roi_claim": false
+    },
+    "evidence_class": "ROLLING_ORIGIN_HIGH_FIDELITY_DIAGNOSTIC_NOT_CERTIFICATION",
+    "rows": 240,
+    "targets": {
+      "H": {
+        "brier_delta_raw_minus_legacy": 0.027025461525000072,
+        "legacy": {
+          "brier": 0.26109959980833325,
+          "calibration_bins": [
+            {
+              "hit_rate": 0.0,
+              "lower": 0.0,
+              "mean_probability": 0.0,
+              "n": 2,
+              "upper": 0.1
+            },
+            {
+              "hit_rate": 0.6,
+              "lower": 0.2,
+              "mean_probability": 0.2344145251294413,
+              "n": 5,
+              "upper": 0.30000000000000004
+            },
+            {
+              "hit_rate": 0.2777777777777778,
+              "lower": 0.30000000000000004,
+              "mean_probability": 0.34639021453180047,
+              "n": 18,
+              "upper": 0.4
+            },
+            {
+              "hit_rate": 0.4,
+              "lower": 0.4,
+              "mean_probability": 0.46326655300737574,
+              "n": 20,
+              "upper": 0.5
+            },
+            {
+              "hit_rate": 0.5357142857142857,
+              "lower": 0.5,
+              "mean_probability": 0.5527646923785337,
+              "n": 28,
+              "upper": 0.6
+            },
+            {
+              "hit_rate": 0.4583333333333333,
+              "lower": 0.6000000000000001,
+              "mean_probability": 0.6468284313086833,
+              "n": 24,
+              "upper": 0.7000000000000001
+            },
+            {
+              "hit_rate": 0.5625,
+              "lower": 0.7000000000000001,
+              "mean_probability": 0.7498312413601131,
+              "n": 16,
+              "upper": 0.8
+            },
+            {
+              "hit_rate": 0.5714285714285714,
+              "lower": 0.8,
+              "mean_probability": 0.835088017024824,
+              "n": 7,
+              "upper": 0.9
+            }
+          ],
+          "ece": 0.1181041001251303,
+          "log_loss": 0.7203142713543681,
+          "mae_count": 0.7372513114993384
+        },
+        "log_loss_delta_raw_minus_legacy": 0.05404728847427065,
+        "observed_hit_rate": 0.4583333333333333,
+        "rows": 120,
+        "sequential_raw": {
+          "brier": 0.2881250613333333,
+          "calibration_bins": [
+            {
+              "hit_rate": 0.5,
+              "lower": 0.4,
+              "mean_probability": 0.4898,
+              "n": 2,
+              "upper": 0.5
+            },
+            {
+              "hit_rate": 0.5714285714285714,
+              "lower": 0.5,
+              "mean_probability": 0.5679714285714286,
+              "n": 14,
+              "upper": 0.6
+            },
+            {
+              "hit_rate": 0.425,
+              "lower": 0.6000000000000001,
+              "mean_probability": 0.658575,
+              "n": 80,
+              "upper": 0.7000000000000001
+            },
+            {
+              "hit_rate": 0.5,
+              "lower": 0.7000000000000001,
+              "mean_probability": 0.7172666666666666,
+              "n": 24,
+              "upper": 0.8
+            }
+          ],
+          "ece": 0.19974333333333333,
+          "log_loss": 0.7743615598286387,
+          "mae_count": 0.7240483333333333
+        },
+        "sequential_usable": {
+          "brier": 0.2700498635387454,
+          "calibration_bins": [
+            {
+              "hit_rate": 0.25,
+              "lower": 0.4,
+              "mean_probability": 0.4499949149208548,
+              "n": 4,
+              "upper": 0.5
+            },
+            {
+              "hit_rate": 0.4523809523809524,
+              "lower": 0.5,
+              "mean_probability": 0.5608974399022463,
+              "n": 42,
+              "upper": 0.6
+            },
+            {
+              "hit_rate": 0.47297297297297297,
+              "lower": 0.6000000000000001,
+              "mean_probability": 0.6377164132658045,
+              "n": 74,
+              "upper": 0.7000000000000001
+            }
+          ],
+          "ece": 0.14623905597706083,
+          "log_loss": 0.734594950283266
+        },
+        "verdict": "REGRESSES_PREDICTIVE_PROBABILITY"
+      },
+      "TB": {
+        "brier_delta_raw_minus_legacy": 0.049957580940172136,
+        "legacy": {
+          "brier": 0.1482480793931612,
+          "calibration_bins": [
+            {
+              "hit_rate": 0.0,
+              "lower": 0.0,
+              "mean_probability": 0.05111703530328573,
+              "n": 32,
+              "upper": 0.1
+            },
+            {
+              "hit_rate": 0.19047619047619047,
+              "lower": 0.1,
+              "mean_probability": 0.1490064259890133,
+              "n": 21,
+              "upper": 0.2
+            },
+            {
+              "hit_rate": 0.1875,
+              "lower": 0.2,
+              "mean_probability": 0.24581884616653035,
+              "n": 16,
+              "upper": 0.30000000000000004
+            },
+            {
+              "hit_rate": 0.07692307692307693,
+              "lower": 0.30000000000000004,
+              "mean_probability": 0.3428778436285857,
+              "n": 13,
+              "upper": 0.4
+            },
+            {
+              "hit_rate": 0.23076923076923078,
+              "lower": 0.4,
+              "mean_probability": 0.451067885321503,
+              "n": 13,
+              "upper": 0.5
+            },
+            {
+              "hit_rate": 0.3333333333333333,
+              "lower": 0.5,
+              "mean_probability": 0.5377695383495342,
+              "n": 9,
+              "upper": 0.6
+            },
+            {
+              "hit_rate": 0.14285714285714285,
+              "lower": 0.6000000000000001,
+              "mean_probability": 0.6362755265720753,
+              "n": 7,
+              "upper": 0.7000000000000001
+            },
+            {
+              "hit_rate": 0.7142857142857143,
+              "lower": 0.7000000000000001,
+              "mean_probability": 0.7603961147921108,
+              "n": 7,
+              "upper": 0.8
+            },
+            {
+              "hit_rate": 0.0,
+              "lower": 0.8,
+              "mean_probability": 0.8455069633246912,
+              "n": 1,
+              "upper": 0.9
+            },
+            {
+              "hit_rate": 1.0,
+              "lower": 0.9,
+              "mean_probability": 0.9232572547378805,
+              "n": 1,
+              "upper": 1.0
+            }
+          ],
+          "ece": 0.13583236035194518,
+          "log_loss": 0.4448677937458413,
+          "mae_count": 0.9475570297356286
+        },
+        "log_loss_delta_raw_minus_legacy": 0.14247763054334117,
+        "observed_hit_rate": 0.175,
+        "rows": 120,
+        "sequential_raw": {
+          "brier": 0.19820566033333334,
+          "calibration_bins": [
+            {
+              "hit_rate": 0.16666666666666666,
+              "lower": 0.2,
+              "mean_probability": 0.28733333333333333,
+              "n": 6,
+              "upper": 0.30000000000000004
+            },
+            {
+              "hit_rate": 0.19607843137254902,
+              "lower": 0.30000000000000004,
+              "mean_probability": 0.3565843137254902,
+              "n": 51,
+              "upper": 0.4
+            },
+            {
+              "hit_rate": 0.16129032258064516,
+              "lower": 0.4,
+              "mean_probability": 0.4383806451612904,
+              "n": 62,
+              "upper": 0.5
+            },
+            {
+              "hit_rate": 0.0,
+              "lower": 0.5,
+              "mean_probability": 0.504,
+              "n": 1,
+              "upper": 0.6
+            }
+          ],
+          "ece": 0.22161166666666673,
+          "log_loss": 0.5873454242891825,
+          "mae_count": 1.354425
+        },
+        "sequential_usable": {
+          "brier": 0.17763697113859495,
+          "calibration_bins": [
+            {
+              "hit_rate": 0.14285714285714285,
+              "lower": 0.2,
+              "mean_probability": 0.2703851789114745,
+              "n": 28,
+              "upper": 0.30000000000000004
+            },
+            {
+              "hit_rate": 0.18181818181818182,
+              "lower": 0.30000000000000004,
+              "mean_probability": 0.35576150788869987,
+              "n": 77,
+              "upper": 0.4
+            },
+            {
+              "hit_rate": 0.2,
+              "lower": 0.4,
+              "mean_probability": 0.421498183966268,
+              "n": 15,
+              "upper": 0.5
+            }
+          ],
+          "ece": 0.16905744897037664,
+          "log_loss": 0.543525085682443
+        },
+        "verdict": "REGRESSES_PREDICTIVE_PROBABILITY"
+      }
+    },
+    "zero_hit": {
+      "observed_zero_hit_rate": 0.5416666666666666,
+      "predicted_zero_hit_rate": 0.34307,
+      "rows": 120
+    }
+  },
+  "limitations": [
+    "Specific fielder OAA/location assignment remains non-authoritative when reliable fielder/location data are unavailable.",
+    "Direct BvP is strongly shrunk because samples are usually small.",
+    "Rolling-origin replay lacks complete historical pitch-level xFIP/SIERA/OAA snapshots and is diagnostic rather than certification.",
+    "No historical ROI claim is made without exact preserved decision-time prices.",
+    "The sequential model remains negative-authority until independent calibration evidence earns promotion."
+  ],
+  "model_version": "sequential_pa_contact_model_v1",
+  "publication": {
+    "all_exist": false,
+    "byte_identical": false,
+    "protected": "paywall/private-content/app/mlb/data/sequential_pa_hitter_predictions.json",
+    "public": "dist/mlb/data/sequential_pa_hitter_predictions.json",
+    "source": "sports/mlb/web/data/sequential_pa_hitter_predictions.json"
+  },
+  "run_date": "2026-09-05",
+  "schema_version": "mlb_sequential_pa_model_final_validation_v1"
+}
