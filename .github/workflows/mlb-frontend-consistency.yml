@@ -23,9 +23,6 @@ env:
 
 jobs:
   synchronize-mlb-frontend:
-    # The push event exists so creation/edits of this workflow validate it
-    # immediately. Normal operation is chained only from a successful canonical
-    # MLB Predictions and Frontend run.
     if: github.event_name == 'push' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -76,10 +73,11 @@ jobs:
             Player-Predictor/Data-Proc-MLB
             sports/mlb/data/predictions/daily_runs
             sports/mlb/data/predictions/calibration/*.json
-          key: mlb-frontend-sync-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/decision_engine/matchup_network.py', 'sports/mlb/scripts/backtest_latent_daily_pools.py') }}-${{ steps.run-config.outputs.run_stamp }}-${{ github.run_id }}
+            sports/mlb/data/advanced
+          key: mlb-frontend-sync-v5-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/decision_engine/matchup_network.py', 'sports/mlb/advanced/data_layer.py', 'sports/mlb/advanced/production_refresh.py', 'sports/mlb/advanced/sequential_pa_model.py') }}-${{ steps.run-config.outputs.run_stamp }}-${{ github.run_id }}
           restore-keys: |
-            mlb-daily-v4-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/decision_engine/matchup_network.py', 'sports/mlb/scripts/backtest_latent_daily_pools.py') }}-${{ steps.run-config.outputs.run_stamp }}-
-            mlb-frontend-sync-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/decision_engine/matchup_network.py', 'sports/mlb/scripts/backtest_latent_daily_pools.py') }}-${{ steps.run-config.outputs.run_stamp }}-
+            mlb-daily-v5-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/decision_engine/matchup_network.py', 'sports/mlb/advanced/data_layer.py', 'sports/mlb/advanced/production_refresh.py', 'sports/mlb/advanced/sequential_pa_model.py', 'sports/mlb/scripts/backtest_latent_daily_pools.py') }}-${{ steps.run-config.outputs.run_stamp }}-
+            mlb-frontend-sync-v5-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/decision_engine/matchup_network.py', 'sports/mlb/advanced/data_layer.py', 'sports/mlb/advanced/production_refresh.py', 'sports/mlb/advanced/sequential_pa_model.py') }}-${{ steps.run-config.outputs.run_stamp }}-
 
       - name: Regenerate current High-Hit product
         env:
@@ -112,6 +110,7 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           import json
+          import math
           import os
           from pathlib import Path
 
@@ -122,6 +121,7 @@ jobs:
               "pitcher_parlay_predictions.json",
               "exotic_market_predictions.json",
               "high_hit_parlay_predictions.json",
+              "sequential_pa_hitter_predictions.json",
           )
           roots = (
               Path("sports/mlb/web/data"),
@@ -146,13 +146,41 @@ jobs:
               if paths[2].read_bytes() != source_bytes:
                   raise SystemExit(f"protected dist diverged from MLB source artifact: {filename}")
 
+          sequential = json.loads((roots[0] / "sequential_pa_hitter_predictions.json").read_text(encoding="utf-8"))
+          if sequential.get("schema_version") != "mlb_sequential_pa_frontend_v1":
+              raise SystemExit("malformed sequential PA payload: schema version")
+          if not str(sequential.get("model_version") or "").strip():
+              raise SystemExit("malformed sequential PA payload: missing model version")
+          freshness = str(sequential.get("data_freshness_status") or "")
+          if freshness not in {"FRESH", "DEGRADED"}:
+              raise SystemExit(f"sequential PA data freshness is not publishable: {freshness or '<missing>'}")
+          source_status = sequential.get("source_status") or {}
+          savant = source_status.get("baseball_savant_statcast") or {}
+          if not savant:
+              raise SystemExit("sequential PA payload lacks Baseball Savant source status")
+          if savant.get("status") not in {"SUCCESS", "DEGRADED", "NO_REAL_HTB_CANDIDATES"}:
+              raise SystemExit(f"unverifiable Baseball Savant status: {savant.get('status')}")
+          if not sequential.get("effective_as_of_date"):
+              raise SystemExit("sequential PA payload lacks effective as-of date")
+          for row in sequential.get("candidates") or []:
+              for key in ("raw_probability", "usable_probability", "lcb", "p_h_0"):
+                  value = row.get(key)
+                  if value is None:
+                      continue
+                  number = float(value)
+                  if not math.isfinite(number) or not 0.0 <= number <= 1.0:
+                      raise SystemExit(f"invalid sequential PA probability {key}={value}")
+
           source_js = Path("sports/mlb/web/predictions.js").read_bytes()
           if Path("dist/mlb/predictions.js").read_bytes() != source_js:
               raise SystemExit("MLB frontend JavaScript was not copied into dist")
           if Path("paywall/private-content/app/mlb/predictions.js").read_bytes() != source_js:
               raise SystemExit("MLB frontend JavaScript was not copied into protected output")
 
-          print(f"MLB frontend synchronization verified for {run_date}: {len(product_files)} current products")
+          print(
+              f"MLB frontend synchronization verified for {run_date}: {len(product_files)} current products; "
+              f"Savant={savant.get('status')} freshness={freshness}"
+          )
           PY
 
       - name: Stage synchronized MLB frontend
@@ -161,8 +189,12 @@ jobs:
           set -euo pipefail
           git add -f -- \
             sports/mlb/web/data/high_hit_parlay_predictions.json \
+            sports/mlb/web/data/sequential_pa_hitter_predictions.json \
             dist/mlb \
             paywall/private-content/app/mlb
+          for optional in artifacts/mlb_sequential_pa_model_validation.json artifacts/mlb_sequential_pa_model_validation.md; do
+            if [ -f "$optional" ]; then git add -f -- "$optional"; fi
+          done
 
           if git diff --cached --quiet; then
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
@@ -192,11 +224,16 @@ jobs:
           name: mlb-frontend-consistency-${{ steps.run-config.outputs.run_stamp || github.run_id }}
           path: |
             sports/mlb/web/data/high_hit_parlay_predictions.json
+            sports/mlb/web/data/sequential_pa_hitter_predictions.json
+            artifacts/mlb_sequential_pa_model_validation.json
+            artifacts/mlb_sequential_pa_model_validation.md
             dist/mlb/data/daily_predictions.json
             dist/mlb/data/same_game_predictions.json
             dist/mlb/data/pitcher_parlay_predictions.json
             dist/mlb/data/exotic_market_predictions.json
             dist/mlb/data/high_hit_parlay_predictions.json
+            dist/mlb/data/sequential_pa_hitter_predictions.json
+            paywall/private-content/app/mlb/data/sequential_pa_hitter_predictions.json
             dist/mlb/predictions.js
           if-no-files-found: error
           retention-days: 14
