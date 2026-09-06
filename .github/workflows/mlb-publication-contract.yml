@@ -16,6 +16,7 @@ on:
       - '.github/workflows/mlb-publication-controller.yml'
       - '.github/workflows/mlb-publication-worker.yml'
       - '.github/workflows/mlb-publication-watchdog.yml'
+      - '.github/workflows/mlb-lineup-refresh-dispatch.yml'
       - '.github/workflows/mlb-publication-contract.yml'
   workflow_dispatch:
 
@@ -63,6 +64,8 @@ jobs:
           controller = Path('.github/workflows/mlb-publication-controller.yml').read_text()
           worker = Path('.github/workflows/mlb-publication-worker.yml').read_text()
           watchdog = Path('.github/workflows/mlb-publication-watchdog.yml').read_text()
+          manual = Path('.github/workflows/mlb-lineup-refresh-dispatch.yml').read_text()
+          legacy = Path('.github/workflows/mlb-predictions.yml').read_text()
           protocol = Path('sports/mlb/scripts/apply_publication_protocol.py').read_text()
           builder = Path('sports/site/pipeline/build_static_site.py').read_text()
 
@@ -76,10 +79,15 @@ jobs:
           assert "cron: '15 22 * 3-10 *'" in watchdog
           assert 'workflow_dispatch:' in worker
           assert 'schedule:' not in worker
+          assert 'workflow_dispatch:' in manual
+          assert 'schedule:' not in manual
+          assert 'mlb-publication-worker.yml' in manual
+          # Legacy scheduled runs are permitted for research discovery only.
+          assert 'publication_mode="${INPUT_PUBLICATION_MODE:-DISCOVER}"' in legacy
           assert '_retain_prior_public_board_for_discovery' in protocol
           assert 'public_board_mutated' in protocol
           assert 'candidate_run_date' in protocol
           assert '"latest_candidates.json"' in builder
           assert '"sequential_pa_hitter_predictions.json"' in builder
-          print('MLB authority topology and static export contract are protected.')
+          print('MLB single publication scheduler, immutable retention, and static export are protected.')
           PY
