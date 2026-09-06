@@ -94,6 +94,25 @@ def preserve(board_path: Path, history_dir: Path, *, product: bool = False) -> P
     return target
 
 
+def refresh_history_index(history_dir: Path) -> Path:
+    """Derive user-facing history navigation from the dated archive files."""
+    history_dir.mkdir(parents=True, exist_ok=True)
+    dates: list[str] = []
+    for path in history_dir.glob("????-??-??.json"):
+        try:
+            dates.append(_valid_date(path.stem))
+        except ValueError:
+            continue
+    dates = sorted(set(dates), reverse=True)
+    target = history_dir / "index.json"
+    payload = {
+        "dates": dates,
+        "updated_at_utc": datetime.now(timezone.utc).isoformat(),
+    }
+    target.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return target
+
+
 def preserve_all(board_path: Path, history_dir: Path) -> list[Path]:
     preserved: list[Path] = []
     primary = preserve(board_path, history_dir)
@@ -103,6 +122,7 @@ def preserve_all(board_path: Path, history_dir: Path) -> list[Path]:
         target = preserve(board_path.parent / filename, history_dir, product=True)
         if target:
             preserved.append(target)
+    refresh_history_index(history_dir)
     return preserved
 
 

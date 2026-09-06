@@ -210,9 +210,25 @@
         return boardFingerprint(candidate) !== boardFingerprint(current);
     };
 
+    const easternDate = () => {
+        const parts = new Intl.DateTimeFormat("en-US", {
+            timeZone: "America/New_York",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+        }).formatToParts(new Date());
+        const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+        return `${values.year}-${values.month}-${values.day}`;
+    };
+
     const findPreviousBoard = async (current) => {
         const runDate = String(current?.run_date || "").trim();
-        if (runDate) {
+        const today = easternDate();
+
+        // Same-day comparison only applies when the live artifact is actually
+        // today's slate. A stale live file is itself historical evidence and
+        // must not cause its date to be skipped.
+        if (runDate && runDate === today) {
             try {
                 const sameDay = await fetchJson(`data/history/${runDate}.json`);
                 if (hasDistinctPicks(sameDay, current)) {
@@ -223,9 +239,13 @@
 
         try {
             const index = await fetchJson("data/history/index.json");
-            const dates = Array.isArray(index?.dates) ? index.dates.map(String) : [];
+            const dates = Array.isArray(index?.dates)
+                ? index.dates.map(String).filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date)).sort().reverse()
+                : [];
             for (const date of dates) {
-                if (!date || date === runDate) continue;
+                // Previous is chronological relative to today, not relative
+                // to a potentially stale daily_predictions.json run_date.
+                if (!date || date >= today) continue;
                 try {
                     const archived = await fetchJson(`data/history/${date}.json`);
                     if (Array.isArray(archived?.plays) && archived.plays.length) {
@@ -234,6 +254,12 @@
                 } catch (_) { /* try the next preserved date */ }
             }
         } catch (_) { /* history index is optional */ }
+
+        // If the index itself is stale, prefer the older live artifact over
+        // jumping back another calendar day.
+        if (runDate && runDate < today && Array.isArray(current?.plays) && current.plays.length) {
+            return { payload: current, sameDay: false };
+        }
         return null;
     };
 

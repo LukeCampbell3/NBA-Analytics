@@ -80,3 +80,20 @@ def test_preserve_all_archives_each_pick_product(tmp_path: Path) -> None:
     assert len(preserved) == 5
     for filename in preserve.PRODUCT_FILENAMES:
         assert (data / "history" / "products" / "2026-09-03" / filename).exists()
+
+
+def test_preserve_all_refreshes_history_index(tmp_path: Path) -> None:
+    data = tmp_path / "data"
+    data.mkdir()
+    history = data / "history"
+    history.mkdir()
+    (history / "2026-09-04.json").write_text(json.dumps({"run_date": "2026-09-04", "plays": [{"player": "Old"}]}))
+    base = {"run_date": "2026-09-05", "generated_at_utc": "2026-09-05T18:00:00Z"}
+    (data / "daily_predictions.json").write_text(json.dumps({**base, "plays": [{"player": "Yesterday"}]}))
+    for filename in preserve.PRODUCT_FILENAMES:
+        (data / filename).write_text(json.dumps(base))
+
+    preserve.preserve_all(data / "daily_predictions.json", history)
+
+    index = json.loads((history / "index.json").read_text())
+    assert index["dates"][:2] == ["2026-09-05", "2026-09-04"]
