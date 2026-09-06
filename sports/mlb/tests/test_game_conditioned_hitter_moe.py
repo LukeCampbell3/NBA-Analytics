@@ -91,28 +91,48 @@ def fitted_artifact(*, positive=False, gate=True, evidence_class="ROLLING_ORIGIN
         "pa_opportunity": 0.14,
         "bullpen_transition": 0.10,
     }
+    exact = str(evidence_class).startswith("EXACT_POINT_IN_TIME")
+    target_payload = {
+        "intercept": 0.0,
+        "coefficients": coefficients,
+        "feature_means": {name: 0.0 for name in EXPERT_NAMES},
+        "feature_scales": {name: 1.0 for name in EXPERT_NAMES},
+        "positive_authority": positive,
+        "validation": {
+            "fit_rows": 600,
+            "validation_rows": 240,
+            "fold_count": 5,
+            "fold_pass_rate": 0.80 if gate else 0.20,
+            "prior_brier": 0.24,
+            "candidate_brier": 0.22 if gate else 0.25,
+            "prior_log_loss": 0.66,
+            "candidate_log_loss": 0.62 if gate else 0.68,
+            "statistical_gate_passed": gate,
+            "negative_authority_allowed": gate,
+            "status": "IMPROVED_DIAGNOSTIC_ONLY" if gate else "DID_NOT_CLEAR_DIAGNOSTIC_IMPROVEMENT_GATE",
+        },
+    }
+    if exact:
+        target_payload["exact_certification"] = {
+            "evidence_class": "EXACT_CERTIFICATION_ELIGIBLE",
+            "exact_selection_count": 50,
+            "independent_slates": 20,
+            "point_in_time_integrity_passed": True,
+            "locked_policy_hash": "test-locked-policy-hash",
+        }
     return {
         "schema_version": "mlb_game_conditioned_hitter_moe_v2",
         "model_version": MODEL_VERSION,
         "training_status": "FITTED_TEST",
         "evidence_class": evidence_class,
-        "max_abs_residual_logit": 0.35,
-        "targets": {
-            target: {
-                "intercept": 0.0,
-                "coefficients": coefficients,
-                "feature_means": {name: 0.0 for name in EXPERT_NAMES},
-                "feature_scales": {name: 1.0 for name in EXPERT_NAMES},
-                "positive_authority": positive,
-                "validation": {
-                    "prior_brier": 0.24,
-                    "candidate_brier": 0.22 if gate else 0.25,
-                    "statistical_gate_passed": gate,
-                    "status": "IMPROVED_DIAGNOSTIC_ONLY" if gate else "DID_NOT_CLEAR_DIAGNOSTIC_IMPROVEMENT_GATE",
-                },
-            }
-            for target in TARGETS
+        "validation_design": "expanding_window_strictly_prior_dates",
+        "train_serve_feature_parity_proven": True,
+        "training_feature_contract": {
+            "parity_proven": True,
+            "status": "TEST_PARITY_PROVEN",
         },
+        "max_abs_residual_logit": 0.35,
+        "targets": {target: dict(target_payload) for target in TARGETS},
     }
 
 
@@ -199,7 +219,7 @@ def test_diagnostic_pass_allows_negative_only_authority_without_exact_evidence()
     assert result.candidate_probability > 0.62
     assert result.production_probability <= 0.62
     assert result.positive_authority is False
-    assert result.authority_status == "DIAGNOSTICALLY_VALIDATED_NEGATIVE_AUTHORITY_ONLY"
+    assert result.authority_status == "INDEPENDENTLY_VALIDATED_NEGATIVE_AUTHORITY_ONLY"
     assert abs(sum(result.expert_weights.values()) - 1.0) < 1e-12
 
 
