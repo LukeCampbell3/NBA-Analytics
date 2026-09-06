@@ -1,14 +1,10 @@
 name: MLB Publication Controller
 
 on:
-  push:
-    branches: [static-deployment]
-    paths:
-      - '.github/workflows/mlb-publication-controller.yml'
   schedule:
     # GitHub cron is UTC. During EDT these are 11:30 AM and 5:30 PM Eastern.
-    # PUBLISH establishes the immutable daily board; REFRESH updates supporting
-    # data while apply_publication_protocol keeps issued picks unchanged.
+    # PUBLISH establishes the immutable official board. LATE_ADD may append
+    # newly qualified lineup-window picks but can never remove or rewrite picks.
     - cron: '30 15 * 3-10 *'
     - cron: '30 21 * 3-10 *'
   workflow_dispatch:
@@ -24,8 +20,12 @@ on:
         type: choice
         options:
           - PUBLISH
-          - REFRESH
           - LATE_ADD
+          - REFRESH
+
+concurrency:
+  group: mlb-publication-controller
+  cancel-in-progress: false
 
 permissions:
   actions: write
@@ -59,15 +59,14 @@ jobs:
 
           if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
             mode="${INPUT_PUBLICATION_MODE:-PUBLISH}"
-          elif [[ "${GITHUB_EVENT_NAME}" == "schedule" && "$EVENT_SCHEDULE" == "30 21 * 3-10 *" ]]; then
-            mode="REFRESH"
+          elif [[ "$EVENT_SCHEDULE" == "30 21 * 3-10 *" ]]; then
+            mode="LATE_ADD"
           else
-            # Creation/update push is also the one-shot bootstrap for the current day.
             mode="PUBLISH"
           fi
 
           case "$mode" in
-            PUBLISH|REFRESH|LATE_ADD) ;;
+            PUBLISH|LATE_ADD|REFRESH) ;;
             *) echo "unsupported mode: $mode" >&2; exit 2 ;;
           esac
           echo "run_date=$run_date" >> "$GITHUB_OUTPUT"
@@ -146,13 +145,15 @@ jobs:
           mode = os.environ['PUBLICATION_MODE']
           board = json.loads(Path('sports/mlb/web/data/daily_predictions.json').read_text())
           assert board.get('run_date') == run_date, (board.get('run_date'), run_date)
+          assert str(board.get('publication_status') or '').lower() == 'ready'
           protocol = board.get('publication_protocol') or {}
           assert protocol.get('issued_picks_immutable') is True, protocol
-          if mode == 'PUBLISH':
-              assert protocol.get('mode') == 'PUBLISH', protocol
+          assert protocol.get('public_pick_retention') == 1.0, protocol
+          assert protocol.get('mode') == mode, (protocol, mode)
 
           dist = json.loads(Path('dist/mlb/data/daily_predictions.json').read_text())
           assert dist.get('run_date') == run_date
+          assert dist.get('plays') == board.get('plays')
 
           prior = (date.fromisoformat(run_date) - timedelta(days=1)).isoformat()
           prior_source = Path(f'sports/mlb/web/data/history/{prior}.json')
@@ -166,21 +167,27 @@ jobs:
           seq_path = Path('sports/mlb/web/data/sequential_pa_hitter_predictions.json')
           seq_current = None
           game_conditioned_candidates = None
+          game_conditioned_schema = None
           if seq_path.exists():
               seq = json.loads(seq_path.read_text())
               seq_current = seq.get('run_date') == run_date
               assert seq_current, seq.get('run_date')
+              assert seq.get('schema_version') == 'mlb_sequential_pa_frontend_v1'
+              game_conditioned_schema = seq.get('game_conditioned_schema_version')
+              assert game_conditioned_schema == 'mlb_game_conditioned_hitter_frontend_v2'
               game_conditioned_candidates = len(seq.get('candidates') or [])
 
           print(json.dumps({
               'run_date': run_date,
               'publication_mode': protocol.get('mode'),
               'issued_count': protocol.get('issued_count'),
+              'added_this_run': protocol.get('added_this_run'),
               'candidate_count': protocol.get('candidate_count'),
               'prior_date': prior,
               'prior_settled_plays': len(prior_plays),
               'dist_current': True,
               'sequential_pa_current': seq_current,
+              'game_conditioned_schema': game_conditioned_schema,
               'sequential_pa_candidates': game_conditioned_candidates,
           }, indent=2))
           PY
