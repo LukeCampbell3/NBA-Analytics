@@ -8,6 +8,7 @@ import hashlib
 import json
 import math
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -58,6 +59,44 @@ def _canonical_hash(payload: dict[str, Any]) -> str:
 
 def outcome_key(row: dict[str, Any]) -> str:
     return f"{row['season']}|{row['game_id']}|{row['player_id']}"
+
+
+def load_outcome_ledger(path: Path = DEFAULT_LEDGER) -> dict[str, dict[str, Any]]:
+    """Load and independently verify the canonical historical outcome ledger."""
+    opener = gzip.open if path.suffix == ".gz" else open
+    indexed: dict[str, dict[str, Any]] = {}
+    with opener(path, "rt", encoding="utf-8") as handle:  # type: ignore[arg-type]
+        for line_number, line in enumerate(handle, start=1):
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            if row.get("schema_version") != SCHEMA_VERSION:
+                raise ValueError(f"unexpected outcome schema at line {line_number}: {row.get('schema_version')}")
+            identity_and_result = {
+                key: row[key]
+                for key in (
+                    "schema_version", "evidence_class", "season", "date", "game_id",
+                    "player_id", "player", "team", "opponent", "realized", "outcomes",
+                )
+            }
+            expected_hash = _canonical_hash(identity_and_result)
+            if row.get("outcome_sha256") != expected_hash:
+                raise ValueError(f"outcome hash mismatch at line {line_number}")
+            key = outcome_key(row)
+            if key in indexed:
+                raise OutcomeConflictError(f"duplicate outcome ledger key: {key}")
+            indexed[key] = row
+    return indexed
+
+
+def lookup_outcome(
+    ledger: dict[str, dict[str, Any]],
+    *,
+    season: int,
+    game_id: str,
+    player_id: int,
+) -> dict[str, Any] | None:
+    return ledger.get(f"{int(season)}|{str(game_id).strip()}|{int(player_id)}")
 
 
 def _validate_counts(*, hits: int, total_bases: int, home_runs: int, at_bats: int, plate_appearances: int) -> list[str]:
@@ -137,8 +176,7 @@ def build_outcome_record(raw: dict[str, Any], *, source_file: str, source_row: i
         "realized": realized,
         "outcomes": outcomes,
     }
-    record = {
-        **identity_and_result,
+    metadata = {
         "source": {
             "kind": "processed_historical_game_log",
             "file": source_file,
@@ -148,9 +186,8 @@ def build_outcome_record(raw: dict[str, Any], *, source_file: str, source_row: i
         "market_data_included": False,
         "settlement_timestamp_available": False,
         "certification_use": "OUTCOME_LABEL_ONLY",
-        "outcome_sha256": _canonical_hash(identity_and_result),
     }
-    return record, None
+    return {**identity_and_result, **metadata, "outcome_sha256": _canonical_hash(identity_and_result)}, None
 
 
 def collect_outcomes(data_root: Path, *, season: int) -> tuple[list[dict[str, Any]], dict[str, int]]:
@@ -172,6 +209,7 @@ def collect_outcomes(data_root: Path, *, season: int) -> tuple[list[dict[str, An
                     if previous is None:
                         indexed[key] = record
                         continue
+                    # Provenance can legitimately differ when duplicate source rows are present.
                     if previous["outcome_sha256"] != record["outcome_sha256"]:
                         raise OutcomeConflictError(f"conflicting realized outcome for {key}: {previous['source']} vs {record['source']}")
                     skipped["EXACT_DUPLICATE"] = skipped.get("EXACT_DUPLICATE", 0) + 1
