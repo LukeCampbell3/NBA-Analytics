@@ -1,0 +1,26 @@
+name: MLB Trigger Final Frontend Handoff
+
+on:
+  push:
+    branches: [static-deployment]
+    paths:
+      - '.github/workflows/mlb-frontend-handoff-trigger.yml'
+
+permissions:
+  actions: write
+  contents: read
+
+env:
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch latest-head frontend handoff
+        run: |
+          set -euo pipefail
+          gh workflow run mlb-authoritative-frontend-handoff.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref static-deployment
+          echo "Dispatched final MLB authoritative frontend handoff."
