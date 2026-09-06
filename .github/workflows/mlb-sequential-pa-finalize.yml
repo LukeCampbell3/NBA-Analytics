@@ -1,0 +1,86 @@
+name: MLB Sequential PA Final Report
+
+on:
+  workflow_run:
+    workflows:
+      - "MLB Predictions and Frontend"
+      - "MLB Sequential PA Validation"
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mlb-sequential-pa-final-report-static-deployment
+  cancel-in-progress: false
+
+jobs:
+  build-final-report:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout latest static deployment
+        uses: actions/checkout@v7
+        with:
+          ref: static-deployment
+          fetch-depth: 0
+
+      - name: Build merged final report
+        env:
+          PARENT_WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+          PARENT_WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+        run: |
+          set -euo pipefail
+          python sports/mlb/scripts/build_sequential_pa_final_validation_report.py \
+            --out-json artifacts/mlb_sequential_pa_model_validation.json \
+            --out-md artifacts/mlb_sequential_pa_model_validation.md
+
+      - name: Validate final report contract
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = json.loads(Path('artifacts/mlb_sequential_pa_model_validation.json').read_text())
+          assert p['schema_version'] == 'mlb_sequential_pa_model_final_validation_v1'
+          assert p['architecture']['pa_ab_separate'] is True
+          assert p['architecture']['hits_over_0_5_identity'].startswith('P(H>=1)')
+          assert p['architecture']['tb_over_1_5_identity'].startswith('P(TB>=2)')
+          assert p['authority'].get('can_raise_legacy_probability') is False
+          print(json.dumps({
+              'run_date': p.get('run_date'),
+              'historical_available': p['historical_validation']['available'],
+              'publication': p['publication'],
+          }, indent=2))
+          PY
+
+      - name: Commit final report
+        run: |
+          set -euo pipefail
+          git add -f -- \
+            artifacts/mlb_sequential_pa_model_validation.json \
+            artifacts/mlb_sequential_pa_model_validation.md
+          if git diff --cached --quiet; then
+            echo 'Final validation report already current.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'MLB sequential PA final validation report [skip ci]'
+          if ! git push origin HEAD:static-deployment; then
+            git pull --rebase --autostash origin static-deployment
+            git push origin HEAD:static-deployment
+          fi
+
+      - name: Upload final report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mlb-sequential-pa-final-${{ github.run_id }}
+          path: |
+            artifacts/mlb_sequential_pa_model_validation.json
+            artifacts/mlb_sequential_pa_model_validation.md
+          if-no-files-found: error
+          retention-days: 30
