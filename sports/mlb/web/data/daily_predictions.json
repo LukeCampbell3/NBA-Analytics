@@ -698,7 +698,11 @@
         "quote_timestamp": "20260905",
         "side": "OVER",
         "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.184714942&selectionId=48302205",
-        "target": "R"
+        "target": "R",
+        "settlement_status": "lost",
+        "settlement_actual_value": 0.0,
+        "settlement_source": "mlb_statsapi_live_feed",
+        "settlement_checked_at": "2026-09-06T11:34:35.777867+00:00"
       },
       "leg_2": {
         "book": "real",
@@ -714,7 +718,11 @@
         "player_id": "fernando_tatis_jr",
         "quote_timestamp": "20260905",
         "side": "OVER",
-        "target": "TB"
+        "target": "TB",
+        "settlement_status": "lost",
+        "settlement_actual_value": 0.0,
+        "settlement_source": "mlb_statsapi_live_feed",
+        "settlement_checked_at": "2026-09-06T11:34:35.777867+00:00"
       },
       "predictive_version": "H_OVER_RANKER_V1+MULTI_TARGET",
       "slate_id": "20260905",
@@ -760,7 +768,11 @@
         "player_id": "miguel_vargas",
         "quote_timestamp": "20260905",
         "side": "OVER",
-        "target": "R"
+        "target": "R",
+        "settlement_status": "won",
+        "settlement_actual_value": 1.0,
+        "settlement_source": "mlb_statsapi_live_feed",
+        "settlement_checked_at": "2026-09-06T11:34:35.777867+00:00"
       },
       "leg_2": {
         "book": "real",
@@ -776,7 +788,11 @@
         "player_id": "fernando_tatis_jr",
         "quote_timestamp": "20260905",
         "side": "OVER",
-        "target": "TB"
+        "target": "TB",
+        "settlement_status": "lost",
+        "settlement_actual_value": 0.0,
+        "settlement_source": "mlb_statsapi_live_feed",
+        "settlement_checked_at": "2026-09-06T11:34:35.777867+00:00"
       },
       "predictive_version": "H_OVER_RANKER_V1+MULTI_TARGET",
       "slate_id": "20260905",
@@ -952,7 +968,11 @@
       "starter_history_rows": 0,
       "target": "TB",
       "team": "CHC",
-      "value_score": 0.61616874228
+      "value_score": 0.61616874228,
+      "settlement_status": "lost",
+      "settlement_actual_value": 1.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-09-06T11:34:35.777867+00:00"
     },
     {
       "abs_edge": 0.666014,
@@ -1104,7 +1124,11 @@
       "starter_history_rows": 0,
       "target": "H",
       "team": "ATH",
-      "value_score": 0.50433577143
+      "value_score": 0.50433577143,
+      "settlement_status": "won",
+      "settlement_actual_value": 1.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-09-06T11:34:35.777867+00:00"
     },
     {
       "abs_edge": 0.698184,
@@ -1256,7 +1280,11 @@
       "starter_history_rows": 0,
       "target": "H",
       "team": "ATH",
-      "value_score": 0.533121433272
+      "value_score": 0.533121433272,
+      "settlement_status": "won",
+      "settlement_actual_value": 1.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-09-06T11:34:35.777867+00:00"
     }
   ],
   "policy_governance": {

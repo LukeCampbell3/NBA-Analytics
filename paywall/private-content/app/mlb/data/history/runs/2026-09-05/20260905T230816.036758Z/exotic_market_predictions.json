@@ -22,7 +22,11 @@
         "market_support",
         "line_support",
         "state_support"
-      ]
+      ],
+      "settlement_status": "lost",
+      "settlement_actual_value": 17.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-09-06T11:34:35.777867+00:00"
     },
     {
       "authorization_status": "SHADOW_ONLY",
@@ -70,7 +74,11 @@
         "market_support",
         "line_support",
         "state_support"
-      ]
+      ],
+      "settlement_status": "won",
+      "settlement_actual_value": 8.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-09-06T11:34:35.777867+00:00"
     }
   ],
   "dedupe_policy": "one_positive_ev_side_per_game_market_line_and_exclude_featured_sgp_propositions",
