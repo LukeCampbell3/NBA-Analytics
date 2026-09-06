@@ -28,7 +28,7 @@ FanGraphs status: `UNAVAILABLE`
 
 Effective as-of date: `2026-09-05`
 
-Profile coverage: 0 batter profiles, 19 pitcher profiles, 0 direct BvP process profiles.
+Profile coverage: 0 batter profiles, 21 pitcher profiles, 0 direct BvP process profiles.
 
 Raw Statcast data are cached by pybaseball and processed same-as-of partitions are cached rather than committed as large raw datasets. Every profile partition is dated and carries source, fetch, and effective timestamps.
 
