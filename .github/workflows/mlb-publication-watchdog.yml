@@ -3,7 +3,7 @@ name: MLB Publication Watchdog
 on:
   schedule:
     # EDT: 12:15 PM and 1:15 PM verify the 11:30 official publish;
-    # 6:15 PM verifies the 5:30 supporting refresh without replacing picks.
+    # 6:15 PM verifies the 5:30 append-only late-add pass.
     - cron: '15 16 * 3-10 *'
     - cron: '15 17 * 3-10 *'
     - cron: '15 22 * 3-10 *'
@@ -16,6 +16,7 @@ permissions:
 env:
   GH_TOKEN: ${{ github.token }}
   TZ: America/New_York
+  EVENT_SCHEDULE: ${{ github.event.schedule }}
 
 concurrency:
   group: mlb-publication-watchdog
@@ -32,7 +33,7 @@ jobs:
           ref: static-deployment
           fetch-depth: 1
 
-      - name: Verify current official slate
+      - name: Verify scheduled publication state
         id: health
         run: |
           set -euo pipefail
@@ -44,6 +45,7 @@ jobs:
           from zoneinfo import ZoneInfo
 
           today = datetime.now(ZoneInfo('America/New_York')).date().isoformat()
+          expected_mode = 'LATE_ADD' if os.environ.get('EVENT_SCHEDULE') == '15 22 * 3-10 *' else 'PUBLISH'
           path = Path('sports/mlb/web/data/daily_predictions.json')
           healthy = False
           reason = 'missing daily_predictions.json'
@@ -56,37 +58,41 @@ jobs:
                       and str(board.get('publication_status') or '').lower() == 'ready'
                       and isinstance(board.get('plays'), list)
                       and protocol.get('issued_picks_immutable') is True
-                      and protocol.get('mode') in {'PUBLISH', 'LATE_ADD', 'REFRESH'}
+                      and protocol.get('public_pick_retention') == 1.0
+                      and protocol.get('mode') == expected_mode
                   )
                   reason = (
                       f"run_date={board.get('run_date')} status={board.get('publication_status')} "
-                      f"mode={protocol.get('mode')} immutable={protocol.get('issued_picks_immutable')}"
+                      f"mode={protocol.get('mode')} expected={expected_mode} "
+                      f"immutable={protocol.get('issued_picks_immutable')}"
                   )
               except Exception as exc:
                   reason = f'payload error: {exc}'
           with open(os.environ['GITHUB_OUTPUT'], 'a') as handle:
               handle.write(f'today={today}\n')
+              handle.write(f'expected_mode={expected_mode}\n')
               handle.write(f'healthy={str(healthy).lower()}\n')
           print(f'MLB publication health: {healthy}; {reason}')
           PY
 
-      - name: Recover missing official slate
+      - name: Recover missing scheduled publication
         if: steps.health.outputs.healthy != 'true'
         env:
           RUN_DATE: ${{ steps.health.outputs.today }}
+          PUBLICATION_MODE: ${{ steps.health.outputs.expected_mode }}
         run: |
           set -euo pipefail
-          before="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow mlb-predictions.yml --event workflow_dispatch --branch static-deployment --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
-          gh workflow run mlb-predictions.yml \
+          workflow='mlb-publication-worker.yml'
+          before="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$workflow" --event workflow_dispatch --branch static-deployment --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
+          gh workflow run "$workflow" \
             --repo "$GITHUB_REPOSITORY" \
             --ref static-deployment \
             -f run_date="$RUN_DATE" \
-            -f build_only=false \
-            -f publication_mode=PUBLISH
+            -f publication_mode="$PUBLICATION_MODE"
 
           run_id=''
           for _ in $(seq 1 90); do
-            candidate="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow mlb-predictions.yml --event workflow_dispatch --branch static-deployment --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
+            candidate="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$workflow" --event workflow_dispatch --branch static-deployment --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
             if [[ "$candidate" != '0' && "$candidate" != "$before" ]]; then
               run_id="$candidate"
               break
@@ -94,13 +100,14 @@ jobs:
             sleep 2
           done
           test -n "$run_id"
-          echo "Watchdog recovery run: $run_id"
+          echo "Watchdog recovery run: $run_id ($PUBLICATION_MODE)"
           gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status
 
       - name: Verify recovered branch state
         if: always()
         env:
           RUN_DATE: ${{ steps.health.outputs.today }}
+          EXPECTED_MODE: ${{ steps.health.outputs.expected_mode }}
         run: |
           set -euo pipefail
           git fetch origin static-deployment
@@ -109,18 +116,23 @@ jobs:
           import json, os
           from pathlib import Path
           today = os.environ['RUN_DATE']
+          expected_mode = os.environ['EXPECTED_MODE']
           board = json.loads(Path('sports/mlb/web/data/daily_predictions.json').read_text())
           protocol = board.get('publication_protocol') or {}
           assert board.get('run_date') == today, (board.get('run_date'), today)
           assert str(board.get('publication_status') or '').lower() == 'ready'
           assert isinstance(board.get('plays'), list)
           assert protocol.get('issued_picks_immutable') is True, protocol
+          assert protocol.get('public_pick_retention') == 1.0, protocol
+          assert protocol.get('mode') == expected_mode, (protocol, expected_mode)
           dist = json.loads(Path('dist/mlb/data/daily_predictions.json').read_text())
           assert dist.get('run_date') == today
+          assert dist.get('plays') == board.get('plays')
           assert (dist.get('publication_protocol') or {}).get('issued_picks_immutable') is True
           print(json.dumps({
               'run_date': today,
               'issued_count': protocol.get('issued_count'),
+              'added_this_run': protocol.get('added_this_run'),
               'candidate_count': protocol.get('candidate_count'),
               'mode': protocol.get('mode'),
               'immutable': True,
