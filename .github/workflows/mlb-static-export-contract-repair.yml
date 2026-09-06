@@ -1,0 +1,66 @@
+name: MLB Static Export Contract Repair
+
+on:
+  push:
+    branches: [static-deployment]
+    paths:
+      - '.github/workflows/mlb-static-export-contract-repair.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout static deployment
+        uses: actions/checkout@v7
+        with:
+          ref: static-deployment
+          fetch-depth: 0
+
+      - name: Add advanced MLB payload to static allowlist
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('sports/site/pipeline/build_static_site.py')
+          text = path.read_text()
+          needle = '    "mlb_engine_manifest.json",\n'
+          insert = '    "mlb_engine_manifest.json",\n    "sequential_pa_hitter_predictions.json",\n'
+          if '"sequential_pa_hitter_predictions.json"' not in text:
+              if needle not in text:
+                  raise SystemExit('static prediction allowlist anchor not found')
+              text = text.replace(needle, insert, 1)
+          path.write_text(text)
+          PY
+
+      - name: Verify static export contract
+        run: |
+          set -euo pipefail
+          python -m pip install pytest
+          python -m pytest sports/site/tests/test_mlb_advanced_frontend_artifact.py -q
+          python -m py_compile sports/site/pipeline/build_static_site.py
+          rm -rf /tmp/mlb-static-public /tmp/mlb-static-private
+          python sports/site/pipeline/build_static_site.py \
+            --output /tmp/mlb-static-public \
+            --private-output /tmp/mlb-static-private
+          test -f /tmp/mlb-static-public/mlb/data/sequential_pa_hitter_predictions.json
+          test -f /tmp/mlb-static-private/mlb/data/sequential_pa_hitter_predictions.json
+          cmp sports/mlb/web/data/sequential_pa_hitter_predictions.json /tmp/mlb-static-public/mlb/data/sequential_pa_hitter_predictions.json
+          cmp sports/mlb/web/data/sequential_pa_hitter_predictions.json /tmp/mlb-static-private/mlb/data/sequential_pa_hitter_predictions.json
+
+      - name: Commit repair
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sports/site/pipeline/build_static_site.py
+          if git diff --cached --quiet; then
+            echo 'Static export contract already repaired.'
+            exit 0
+          fi
+          git commit -m 'MLB: retain game-conditioned payload in static export [skip ci]'
+          git push origin HEAD:static-deployment
