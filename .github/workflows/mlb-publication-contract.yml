@@ -38,7 +38,7 @@ jobs:
       - name: Test immutable publication state machine
         run: |
           set -euo pipefail
-          python -m pip install pytest
+          python -m pip install pytest requests
           python -m pytest \
             sports/mlb/tests/test_apply_publication_protocol.py \
             sports/mlb/tests/test_discovery_public_retention.py \
