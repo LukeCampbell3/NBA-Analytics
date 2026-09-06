@@ -1,0 +1,134 @@
+name: MLB Sequential PA Bootstrap
+
+on:
+  push:
+    branches: [static-deployment]
+    paths:
+      - '.github/workflows/mlb-sequential-pa-bootstrap.yml'
+      - 'sports/mlb/scripts/apply_sequential_pa_source_patch_v2.py'
+  workflow_dispatch:
+
+concurrency:
+  group: mlb-sequential-pa-bootstrap-static-deployment
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  PYTHONUNBUFFERED: "1"
+  TZ: America/New_York
+
+jobs:
+  patch-test-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout static deployment
+        uses: actions/checkout@v7
+        with:
+          ref: static-deployment
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            sports/mlb/requirements-same-game.txt
+            sports/mlb/requirements-advanced.txt
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -r sports/mlb/requirements-same-game.txt
+          python -m pip install -r sports/mlb/requirements-advanced.txt
+
+      - name: Apply production wiring
+        run: |
+          set -euo pipefail
+          python sports/mlb/scripts/apply_sequential_pa_source_patch_v2.py
+          git diff --check
+          python -m compileall -q \
+            sports/mlb/advanced \
+            sports/mlb/scripts/run_sequential_pa_hitter_model.py \
+            sports/mlb/scripts/select_high_precision_predictions.py \
+            sports/mlb/scripts/export_web_prediction_payload.py \
+            sports/mlb/unified/adapters.py \
+            sports/mlb/scripts/run_pinned_v2_1_daily_shadow.py \
+            sports/site/pipeline/run_daily_predictions.py
+
+      - name: Run sequential PA and integration regression tests
+        run: |
+          set -euo pipefail
+          python -m pytest \
+            sports/mlb/tests/test_sequential_pa_model.py \
+            sports/mlb/tests/test_advanced_mlb_profiles.py \
+            sports/mlb/tests/test_validate_v4_live_players.py \
+            sports/mlb/tests/test_apply_publication_protocol.py \
+            sports/mlb/tests/test_preserve_published_predictions.py \
+            sports/mlb/tests/test_settle_published_predictions.py \
+            tests/test_run_daily_predictions.py \
+            -q
+
+      - name: Validate workflow YAML can be parsed
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import yaml
+          for name in (
+              ".github/workflows/mlb-predictions.yml",
+              ".github/workflows/mlb-frontend-consistency.yml",
+              ".github/workflows/mlb-sequential-pa-bootstrap.yml",
+          ):
+              value = yaml.safe_load(Path(name).read_text(encoding="utf-8"))
+              assert isinstance(value, dict), name
+          print("workflow YAML parsed")
+          PY
+
+      - name: Commit wired production sources
+        id: staged
+        run: |
+          set -euo pipefail
+          git add -- \
+            sports/mlb/scripts/select_high_precision_predictions.py \
+            sports/site/pipeline/run_daily_predictions.py \
+            sports/mlb/scripts/export_web_prediction_payload.py \
+            sports/mlb/unified/adapters.py \
+            sports/mlb/scripts/run_pinned_v2_1_daily_shadow.py \
+            .github/workflows/mlb-predictions.yml \
+            .github/workflows/mlb-frontend-consistency.yml
+          if git diff --cached --quiet; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            git diff --cached --stat
+          fi
+
+      - name: Push production wiring
+        if: steps.staged.outputs.has_changes == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Wire sequential PA H-TB model into MLB production"
+          if ! git push origin HEAD:static-deployment; then
+            git pull --rebase --autostash origin static-deployment
+            git push origin HEAD:static-deployment
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Sequential PA bootstrap"
+            echo "- New model: sequential_pa_contact_model_v1"
+            echo "- Current authority: negative-only pending independent calibration"
+            echo "- Legacy H/TB remains fallback when advanced data is unavailable/weak"
+            echo "- Frozen V2.1 policy receives current canonical adapter/contract plumbing"
+          } >> "$GITHUB_STEP_SUMMARY"
