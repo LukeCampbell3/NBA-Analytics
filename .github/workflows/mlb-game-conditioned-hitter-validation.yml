@@ -5,13 +5,16 @@ on:
     branches: [static-deployment]
     paths:
       - 'sports/mlb/advanced/game_conditioned_moe.py'
+      - 'sports/mlb/advanced/game_conditioned_authority.py'
       - 'sports/mlb/advanced/integration.py'
       - 'sports/mlb/advanced/schema.py'
       - 'sports/mlb/advanced/sequential_pa_model.py'
       - 'sports/mlb/scripts/fit_game_conditioned_hitter_moe.py'
       - 'sports/mlb/scripts/fit_game_conditioned_hitter_moe_nonregression.py'
+      - 'sports/mlb/scripts/validate_game_conditioned_authority.py'
       - 'sports/mlb/scripts/run_sequential_pa_hitter_model.py'
       - 'sports/mlb/scripts/select_high_precision_predictions.py'
+      - 'sports/mlb/tests/test_game_conditioned_authority.py'
       - 'sports/mlb/tests/test_game_conditioned_hitter_moe.py'
       - 'sports/mlb/tests/test_sequential_pa_model.py'
       - 'sports/mlb/tests/test_sequential_pa_identity_hydration.py'
@@ -50,8 +53,10 @@ jobs:
         run: |
           python -m py_compile \
             sports/mlb/advanced/game_conditioned_moe.py \
+            sports/mlb/advanced/game_conditioned_authority.py \
             sports/mlb/scripts/fit_game_conditioned_hitter_moe.py \
             sports/mlb/scripts/fit_game_conditioned_hitter_moe_nonregression.py \
+            sports/mlb/scripts/validate_game_conditioned_authority.py \
             sports/mlb/scripts/select_high_precision_predictions.py \
             sports/site/pipeline/run_daily_predictions.py
 
@@ -60,6 +65,7 @@ jobs:
           python -m pytest \
             sports/mlb/tests/test_sequential_pa_model.py \
             sports/mlb/tests/test_game_conditioned_hitter_moe.py \
+            sports/mlb/tests/test_game_conditioned_authority.py \
             sports/mlb/tests/test_sequential_pa_identity_hydration.py \
             -q
           python - <<'PY'
@@ -134,6 +140,12 @@ jobs:
                   assert validation['selection_non_regression']['supported_threshold_count'] >= 1
           PY
 
+      - name: Independently recompute model authority
+        run: |
+          python sports/mlb/scripts/validate_game_conditioned_authority.py \
+            --artifact sports/mlb/data/predictions/calibration/game_conditioned_hitter_moe_v2.json \
+            --output artifacts/mlb_game_conditioned_authority_audit.json
+
       - name: Commit validation evidence
         run: |
           set -euo pipefail
@@ -142,7 +154,8 @@ jobs:
           git add -f -- \
             sports/mlb/data/predictions/calibration/game_conditioned_hitter_moe_v2.json \
             artifacts/mlb_game_conditioned_hitter_moe_validation.json \
-            artifacts/mlb_game_conditioned_hitter_moe_validation.md
+            artifacts/mlb_game_conditioned_hitter_moe_validation.md \
+            artifacts/mlb_game_conditioned_authority_audit.json
           if git diff --cached --quiet; then
             echo 'No validation evidence change.'
             exit 0
@@ -162,5 +175,6 @@ jobs:
             sports/mlb/data/predictions/calibration/game_conditioned_hitter_moe_v2.json
             artifacts/mlb_game_conditioned_hitter_moe_validation.json
             artifacts/mlb_game_conditioned_hitter_moe_validation.md
+            artifacts/mlb_game_conditioned_authority_audit.json
           if-no-files-found: error
           retention-days: 30
