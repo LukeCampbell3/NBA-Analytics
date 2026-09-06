@@ -45,7 +45,7 @@ Source/dist/protected sequential artifacts all exist: **False**; byte-identical:
 
 ## GitHub Actions
 
-Parent `MLB Sequential PA Validation` run `34004127573`; report run `34004195714`.
+Parent `MLB Sequential PA Validation` run `34004921331`; report run `34004986710`.
 
 ## Limitations
 
