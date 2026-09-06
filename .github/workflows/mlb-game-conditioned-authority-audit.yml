@@ -40,10 +40,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
-      - name: Install test dependency
-        run: python -m pip install --upgrade pip pytest
+      - name: Install MLB validation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas scipy requests pytest pyarrow
 
       - name: Run authority hardening tests
         run: >-
