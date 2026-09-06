@@ -12,6 +12,10 @@ from typing import Any
 if str(Path(__file__).resolve().parents[3]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
+from sports.mlb.advanced.game_conditioned_authority import (
+    DEFAULT_MIN_BRIER_GAIN,
+    DEFAULT_MIN_LOGLOSS_GAIN,
+)
 from sports.mlb.advanced.game_conditioned_moe import EXPERT_NAMES, MODEL_VERSION, SCHEMA_VERSION, TARGETS
 from sports.mlb.scripts import fit_game_conditioned_hitter_moe as base
 
@@ -26,6 +30,22 @@ SELECTION_THRESHOLDS = {
     "HR": (0.05, 0.10, 0.15, 0.20, 0.30),
 }
 TOP_FRACTIONS = (0.10, 0.20, 0.30)
+
+# Historical processed-game logs do not preserve these exact live feature
+# values at decision time. They can be explored diagnostically, but the fit is
+# forbidden from granting production residual authority until snapshot-backed
+# replay represents the same feature contract.
+LIVE_FEATURES_REQUIRING_EXACT_REPLAY = (
+    "pitch_compatibility_score",
+    "direct_matchup_process",
+    "handedness_split_interaction",
+    "batter_chase_rate",
+    "batter_avg_ev",
+    "batter_ev90",
+    "sweet_spot_rates",
+    "live_weather_state",
+    "specific_defense_state",
+)
 
 
 def _game_key(row: dict[str, Any]) -> tuple[str, str]:
@@ -57,7 +77,11 @@ def _apply_production_guard(
     candidate_gate_passed: bool,
     calibration_risk: float,
 ) -> list[dict[str, Any]]:
-    """Replay live negative-only authority exactly enough for non-regression tests."""
+    """Replay the negative-only probability guard for diagnostic testing.
+
+    Passing this replay is necessary but not sufficient for production
+    authority. Exact train/serve feature parity is checked separately.
+    """
     guarded: list[dict[str, Any]] = []
     for row in rows:
         prior = max(1e-5, min(1.0 - 1e-5, float(row["prior_probability"])))
@@ -170,9 +194,11 @@ def _target_fit(rows: list[dict[str, Any]], *, target: str, ridge: float, folds:
                 "fit_rows": len(subset),
                 "validation_rows": len(predictions),
                 "candidate_improvement_gate_passed": False,
+                "diagnostic_non_regression_gate_passed": False,
                 "production_non_regression_gate_passed": False,
                 "statistical_gate_passed": False,
                 "negative_authority_allowed": False,
+                "negative_authority_blocker": "TRAIN_SERVE_FEATURE_PARITY_NOT_PROVEN",
             },
         }
 
@@ -180,9 +206,11 @@ def _target_fit(rows: list[dict[str, Any]], *, target: str, ridge: float, folds:
     candidate_metrics = base._metrics(predictions, "candidate_probability")
     fold_pass_count = sum(bool(fold["both_improved"]) for fold in fold_diagnostics)
     fold_pass_rate = fold_pass_count / max(1, len(fold_diagnostics))
+    brier_gain = float(prior_metrics["brier"]) - float(candidate_metrics["brier"])
+    logloss_gain = float(prior_metrics["log_loss"]) - float(candidate_metrics["log_loss"])
     candidate_gate = bool(
-        candidate_metrics["brier"] < prior_metrics["brier"]
-        and candidate_metrics["log_loss"] < prior_metrics["log_loss"]
+        brier_gain >= DEFAULT_MIN_BRIER_GAIN
+        and logloss_gain >= DEFAULT_MIN_LOGLOSS_GAIN
         and len(fold_diagnostics) >= 3
         and fold_pass_rate >= 0.60
     )
@@ -199,7 +227,7 @@ def _target_fit(rows: list[dict[str, Any]], *, target: str, ridge: float, folds:
         production_metrics["brier"] <= prior_metrics["brier"] + 1e-12
         and production_metrics["log_loss"] <= prior_metrics["log_loss"] + 1e-12
     )
-    production_gate = bool(candidate_gate and probability_non_regression and selection["passed"])
+    diagnostic_non_regression_gate = bool(candidate_gate and probability_non_regression and selection["passed"])
 
     intercept, coefficients, means, scales = base._fit_target_parameters(subset, ridge=ridge)
     sources: dict[str, int] = {}
@@ -207,10 +235,10 @@ def _target_fit(rows: list[dict[str, Any]], *, target: str, ridge: float, folds:
         source = str(row.get("prior_source") or "UNKNOWN")
         sources[source] = sources.get(source, 0) + 1
 
-    if production_gate:
-        status = "IMPROVED_AND_PICK_NON_REGRESSIVE_DIAGNOSTIC_ONLY"
+    if diagnostic_non_regression_gate:
+        status = "IMPROVED_AND_PICK_NON_REGRESSIVE_SHADOW_ONLY"
     elif candidate_gate:
-        status = "CANDIDATE_IMPROVED_BUT_PRODUCTION_NON_REGRESSION_FAILED"
+        status = "CANDIDATE_IMPROVED_BUT_DIAGNOSTIC_NON_REGRESSION_FAILED"
     else:
         status = "DID_NOT_CLEAR_DIAGNOSTIC_IMPROVEMENT_GATE"
 
@@ -239,13 +267,19 @@ def _target_fit(rows: list[dict[str, Any]], *, target: str, ridge: float, folds:
             "prior_ece": prior_metrics["ece"],
             "candidate_ece": candidate_metrics["ece"],
             "production_ece": production_metrics["ece"],
+            "brier_gain": brier_gain,
+            "logloss_gain": logloss_gain,
             "candidate_improvement_gate_passed": candidate_gate,
             "production_probability_non_regression": probability_non_regression,
             "selection_non_regression": selection,
-            "production_non_regression_gate_passed": production_gate,
-            "statistical_gate_passed": production_gate,
-            "negative_authority_allowed": production_gate,
-            "positive_authority_blocker": "FULL_EXACT_POINT_IN_TIME_ADVANCED_FEATURE_SNAPSHOTS_NOT_AVAILABLE_FOR_THIS_FIT",
+            "diagnostic_non_regression_gate_passed": diagnostic_non_regression_gate,
+            # Production authority is fail-closed independently of the diagnostic
+            # replay because exact train/serve feature parity is not proven here.
+            "production_non_regression_gate_passed": diagnostic_non_regression_gate,
+            "statistical_gate_passed": False,
+            "negative_authority_allowed": False,
+            "negative_authority_blocker": "TRAIN_SERVE_FEATURE_PARITY_NOT_PROVEN",
+            "positive_authority_blocker": "EXACT_POINT_IN_TIME_CERTIFICATION_AND_FEATURE_PARITY_REQUIRED",
         },
     }
 
@@ -258,24 +292,25 @@ def _markdown(payload: dict[str, Any]) -> str:
         "",
         f"Evidence: `{payload['evidence_class']}`",
         "",
-        "This report requires the new residual model to beat the prior in rolling-origin probability scoring and to preserve or improve supported pick hit-rate slices after replaying the live negative-only authority rule.",
+        "This report requires the new residual model to beat the prior in rolling-origin probability scoring and to preserve or improve supported pick hit-rate slices after replaying the negative-only guard. Passing that diagnostic still does not grant production authority without exact train/serve feature parity.",
         "",
-        "| Target | OOF | Folds pass | Prior Brier | Candidate | Production | Prior LL | Candidate | Production | Pick guard | Authority |",
+        "| Target | OOF | Folds pass | Prior Brier | Candidate | Guarded | Prior LL | Candidate | Guarded | Diagnostic NR | Authority |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---|",
     ]
     for target in TARGETS:
         val = payload["targets"][target]["validation"]
         fmt = lambda value: "n/a" if value is None else f"{float(value):.4f}"
-        selection = val.get("selection_non_regression") or {}
         lines.append(
             f"| {target} | {val.get('validation_rows', 0)} | {val.get('folds_both_improved', 0)}/{val.get('fold_count', 0)} | "
             f"{fmt(val.get('prior_brier'))} | {fmt(val.get('candidate_brier'))} | {fmt(val.get('production_brier'))} | "
             f"{fmt(val.get('prior_log_loss'))} | {fmt(val.get('candidate_log_loss'))} | {fmt(val.get('production_log_loss'))} | "
-            f"{selection.get('status', 'n/a')} | {val.get('negative_authority_allowed', False)} |"
+            f"{val.get('diagnostic_non_regression_gate_passed', False)} | {val.get('negative_authority_allowed', False)} |"
         )
     lines += [
         "",
-        "A target that fails any gate has zero production authority, so its production probability is the previous prior unchanged. Positive/bidirectional authority remains disabled until exact point-in-time locked or prospective advanced-feature evidence exists.",
+        "Historical diagnostic passes remain shadow-only because the processed corpus does not preserve the exact live pitch-compatibility, direct-matchup, handedness-split, chase/EV, weather, and defense feature state. New content-addressed pregame snapshots are the evidence source for closing that gap.",
+        "",
+        "Positive/bidirectional authority additionally requires locked exact point-in-time certification with the frozen policy hash and sufficient independent slates/selections.",
         "",
         "No ROI claim is made because this processed-history replay does not preserve exact decision-time prices for every observation.",
         "",
@@ -337,8 +372,23 @@ def main() -> int:
         "architecture": "global_residual_coefficients_x_game_specific_expert_activations",
         "prior": "legacy_probability_when_preserved_else_structural_probability; live blends no-vig market when available",
         "validation_design": "broad_scan_deterministic_cross_player_sample_plus_expanding_window_strictly_prior_dates",
+        "train_serve_feature_parity_proven": False,
+        "training_feature_contract": {
+            "parity_proven": False,
+            "status": "HISTORICAL_PROCESSED_CORPUS_DOES_NOT_PRESERVE_FULL_LIVE_FEATURE_STATE",
+            "live_only_or_not_exactly_replayable_features": list(LIVE_FEATURES_REQUIRING_EXACT_REPLAY),
+            "required_evidence_source": "mlb_game_conditioned_pregame_snapshot_v1",
+        },
+        "controls": {
+            "gate_min_brier_gain": DEFAULT_MIN_BRIER_GAIN,
+            "gate_min_logloss_gain": DEFAULT_MIN_LOGLOSS_GAIN,
+            "gate_min_fold_pass_rate": 0.60,
+            "min_folds": 3,
+            "min_rows_to_fit": 300,
+            "min_validation_rows": 50,
+        },
         "targets": targets,
-        "promotion_rule": "negative authority requires OOF Brier+log-loss lift, >=60% fold pass, guarded production probability non-regression, and supported pick threshold/rank hit-rate non-regression; positive authority additionally requires exact point-in-time advanced-feature evidence",
+        "promotion_rule": "diagnostic lift requires minimum OOF Brier/log-loss gains, >=60% fold pass, guarded probability non-regression, and supported threshold/rank hit-rate non-regression; production negative authority additionally requires exact train/serve feature parity; positive authority additionally requires locked point-in-time certification",
         "economic_evidence": {
             "roi_claim": False,
             "reason": "exact decision-time prices are not preserved for every processed-history observation",
@@ -356,6 +406,7 @@ def main() -> int:
         "games": len(game_keys),
         "players": payload["players"],
         "dates": payload["dates"],
+        "train_serve_feature_parity_proven": False,
         "targets": {target: targets[target]["validation"] for target in TARGETS},
     }, indent=2))
     return 0
