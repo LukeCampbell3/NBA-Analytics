@@ -42,6 +42,14 @@ def _finite(value: Any, default: float) -> float:
     return out if math.isfinite(out) else float(default)
 
 
+def _optional_finite(value: Any) -> float | None:
+    try:
+        out = float(value)
+    except (TypeError, ValueError):
+        return None
+    return out if math.isfinite(out) else None
+
+
 def logit(probability: float) -> float:
     p = _clamp(float(probability), 1e-6, 1.0 - 1e-6)
     return math.log(p / (1.0 - p))
@@ -57,6 +65,61 @@ def logistic(value: float) -> float:
 
 def _mean(values: list[float]) -> float:
     return sum(values) / len(values) if values else 0.0
+
+
+def _direct_matchup_state(context: AdvancedCandidateContext) -> dict[str, float]:
+    """Build heavily-shrunk direct BvP process signals.
+
+    Direct batter/pitcher history is intentionally never allowed to dominate a
+    game state.  The stored shrinkage weight is multiplied by a small-sample
+    support term and capped at 0.30 before it can affect any expert.
+    """
+
+    direct = context.direct_matchup
+    if direct is None or int(direct.pa or 0) <= 0:
+        return {
+            "weight": 0.0,
+            "strikeout_contact": 0.0,
+            "contact_quality": 0.0,
+            "power_tb": 0.0,
+        }
+
+    pa = max(1, int(direct.pa or 0))
+    stored_weight = _clamp(_finite(direct.shrinkage_weight, 0.0), 0.0, 1.0)
+    sample_support = _clamp(pa / 24.0, 0.0, 1.0)
+    weight = min(0.30, stored_weight * sample_support)
+
+    strikeout_terms = [(0.225 - (float(direct.strikeouts or 0) / pa)) / 0.12]
+    direct_whiff = _optional_finite(direct.whiff_rate)
+    if direct_whiff is not None:
+        strikeout_terms.append((0.235 - direct_whiff) / 0.12)
+
+    contact_terms: list[float] = []
+    direct_xwoba = _optional_finite(direct.xwoba_contact)
+    direct_xba = _optional_finite(direct.xba_contact)
+    direct_ev = _optional_finite(direct.avg_ev)
+    if direct_xwoba is not None:
+        contact_terms.append((direct_xwoba - 0.320) / 0.075)
+    if direct_xba is not None:
+        contact_terms.append((direct_xba - 0.250) / 0.055)
+    if direct_ev is not None:
+        contact_terms.append((direct_ev - 88.5) / 5.5)
+
+    power_terms: list[float] = []
+    direct_xslg = _optional_finite(direct.xslg_contact)
+    direct_barrel = _optional_finite(direct.barrel_rate)
+    if direct_xslg is not None:
+        power_terms.append((direct_xslg - 0.420) / 0.17)
+    if direct_barrel is not None:
+        power_terms.append((direct_barrel - 0.075) / 0.075)
+    power_terms.append(((float(direct.home_runs or 0) / pa) - 0.030) / 0.035)
+
+    return {
+        "weight": weight,
+        "strikeout_contact": _clamp(_mean(strikeout_terms), -2.0, 2.0),
+        "contact_quality": _clamp(_mean(contact_terms), -2.0, 2.0),
+        "power_tb": _clamp(_mean(power_terms), -2.0, 2.0),
+    }
 
 
 _ROLLING_ALIASES = {
@@ -198,11 +261,14 @@ def build_expert_state(
 
     batter = context.batter
     pitcher = context.pitcher
+    direct_state = _direct_matchup_state(context)
+    direct_weight = direct_state["weight"]
 
     batter_k = _finite(batter.k_rate, 0.225)
     pitcher_k = _finite(pitcher.k_rate, 0.225)
     batter_whiff = _finite(batter.whiff_rate, 0.235)
     pitcher_whiff = _finite(pitcher.whiff_rate, 0.235)
+    batter_chase = _finite(batter.chase_rate, 0.285)
     pitcher_kbb = _finite(pitcher.k_minus_bb_rate, pitcher_k - _finite(pitcher.bb_rate, 0.085))
 
     batter_recent_k = _profile_recent(batter, "k_rate", batter_k)
@@ -215,12 +281,14 @@ def build_expert_state(
         (0.225 - pitcher_k) / 0.10,
         (0.235 - batter_whiff) / 0.12,
         (0.235 - pitcher_whiff) / 0.12,
+        (0.285 - batter_chase) / 0.11,
         (0.140 - pitcher_kbb) / 0.12,
         (batter_k - batter_recent_k) / 0.08,
         (pitcher_k - pitcher_recent_k) / 0.08,
         (batter_whiff - batter_recent_whiff) / 0.09,
         (pitcher_whiff - pitcher_recent_whiff) / 0.09,
     ])
+    strikeout_contact += direct_weight * direct_state["strikeout_contact"]
 
     batter_xwoba = _finite(batter.xwoba, _finite(batter.woba, 0.320))
     pitcher_xwoba = _finite(pitcher.xwoba_allowed, 0.320)
@@ -228,6 +296,11 @@ def build_expert_state(
     pitcher_xba = _finite(pitcher.xba_allowed, 0.250)
     batter_hard = _finite(batter.hard_hit_rate, 0.38)
     pitcher_hard = _finite(pitcher.hard_hit_rate_allowed, 0.38)
+    batter_avg_ev = _finite(batter.avg_ev, 88.5)
+    pitcher_avg_ev = _finite(pitcher.avg_ev_allowed, 88.5)
+    batter_ev90 = _finite(batter.ev90, 104.0)
+    batter_sweet = _finite(batter.sweet_spot_rate, 0.33)
+    pitcher_sweet = _finite(pitcher.sweet_spot_rate_allowed, 0.33)
 
     batter_recent_xwoba = _profile_recent(batter, "xwoba", batter_xwoba)
     pitcher_recent_xwoba = _profile_recent(pitcher, "xwoba", pitcher_xwoba)
@@ -250,10 +323,16 @@ def build_expert_state(
         (pitcher_xba - 0.250) / 0.055,
         (batter_hard - 0.38) / 0.13,
         (pitcher_hard - 0.38) / 0.13,
+        (batter_avg_ev - 88.5) / 5.5,
+        (pitcher_avg_ev - 88.5) / 5.5,
+        (batter_ev90 - 104.0) / 7.0,
+        (batter_sweet - 0.33) / 0.12,
+        (pitcher_sweet - 0.33) / 0.12,
         _clamp(pitch_compatibility_score, -1.5, 1.5),
         _clamp(batter_quality_trend, -1.5, 1.5),
         _clamp(pitcher_quality_trend_for_hitter, -1.5, 1.5),
     ])
+    contact_quality += direct_weight * direct_state["contact_quality"]
 
     batter_xslg = _finite(batter.xslg, 0.420)
     pitcher_xslg = _finite(pitcher.xslg_allowed, 0.420)
@@ -288,11 +367,16 @@ def build_expert_state(
         (pitcher_barrel - 0.075) / 0.075,
         (batter_hr - 0.030) / 0.035,
         (pitcher_hr - 0.030) / 0.035,
+        (batter_avg_ev - 88.5) / 5.5,
+        (pitcher_avg_ev - 88.5) / 5.5,
+        (batter_ev90 - 104.0) / 7.0,
+        (batter_sweet - 0.33) / 0.12,
         (0.43 - pitcher_gb) / 0.18,
         (float(context.park_factor or 1.0) - 1.0) / 0.10,
         _clamp(power_trend, -1.5, 1.5),
         0.35 * weather_power_signal,
     ])
+    power_tb += direct_weight * direct_state["power_tb"]
 
     specific_defense = str(context.defense_status or "").upper().startswith("SPECIFIC")
     defense_conversion = (
@@ -349,7 +433,7 @@ def build_expert_state(
 
     activations = {
         "strikeout_contact": _clamp(
-            0.85 + 0.55 * high_k_relevance + 0.08 * abs(pitcher_k - pitcher_recent_k) / 0.08,
+            0.85 + 0.55 * high_k_relevance + 0.08 * abs(pitcher_k - pitcher_recent_k) / 0.08 + 0.10 * direct_weight,
             0.55,
             1.75,
         ),
@@ -358,11 +442,12 @@ def build_expert_state(
             + 0.35 * low_k_contact_relevance
             + 0.15 * abs(pitch_compatibility_score)
             + 0.10 * coherent_batter_form
-            + 0.10 * coherent_pitcher_decline,
+            + 0.10 * coherent_pitcher_decline
+            + 0.10 * direct_weight,
             0.50,
             1.70,
         ),
-        "power_tb": _clamp(power_base + 0.18 * abs(power_tb) + 0.08 * coherent_batter_form, 0.55, 1.90),
+        "power_tb": _clamp(power_base + 0.18 * abs(power_tb) + 0.08 * coherent_batter_form + 0.10 * direct_weight, 0.55, 1.90),
         "defense_conversion": defense_base,
         "pa_opportunity": _clamp(0.90 + 0.18 * abs(pa_opportunity), 0.70, 1.45),
         "bullpen_transition": _clamp(0.65 + 0.65 * (1.0 - starter_fraction), 0.55, 1.35),
@@ -383,6 +468,11 @@ def build_expert_state(
         * (1.0 - 0.55 * _clamp01(sequential.uncertainty))
     )
 
+    batter_hand = str(batter.handedness or "").strip().upper()
+    pitcher_hand = str(pitcher.handedness or "").strip().upper()
+    handedness_available = bool(batter_hand and pitcher_hand)
+    handedness_matchup = f"{batter_hand}_VS_{pitcher_hand}" if handedness_available else "UNKNOWN"
+
     diagnostics = {
         "target": target,
         "batter_k_rate": batter_k,
@@ -393,10 +483,16 @@ def build_expert_state(
         "batter_recent_whiff_rate": batter_recent_whiff,
         "pitcher_whiff_rate": pitcher_whiff,
         "pitcher_recent_whiff_rate": pitcher_recent_whiff,
+        "batter_chase_rate": batter_chase,
         "batter_xwoba": batter_xwoba,
         "batter_recent_xwoba": batter_recent_xwoba,
         "pitcher_xwoba_allowed": pitcher_xwoba,
         "pitcher_recent_xwoba_allowed": pitcher_recent_xwoba,
+        "batter_avg_ev": batter_avg_ev,
+        "pitcher_avg_ev_allowed": pitcher_avg_ev,
+        "batter_ev90": batter_ev90,
+        "batter_sweet_spot_rate": batter_sweet,
+        "pitcher_sweet_spot_rate_allowed": pitcher_sweet,
         "batter_hr_rate": batter_hr,
         "batter_recent_hr_rate": batter_recent_hr,
         "pitcher_hr_rate_allowed_proxy": pitcher_hr,
@@ -408,9 +504,15 @@ def build_expert_state(
         "pitcher_siera": pitcher.siera,
         "pitch_compatibility_score": pitch_compatibility_score,
         "pitch_context_available": bool(batter.pitch_type_xwoba and pitcher.arsenal),
-        "batter_handedness": batter.handedness,
-        "pitcher_handedness": pitcher.handedness,
-        "handedness_context_available": bool(str(batter.handedness or "").strip() and str(pitcher.handedness or "").strip()),
+        "direct_matchup_pa": int(context.direct_matchup.pa) if context.direct_matchup is not None else 0,
+        "direct_matchup_weight": direct_weight,
+        "direct_matchup_strikeout_contact_signal": direct_state["strikeout_contact"],
+        "direct_matchup_contact_quality_signal": direct_state["contact_quality"],
+        "direct_matchup_power_signal": direct_state["power_tb"],
+        "batter_handedness": batter_hand,
+        "pitcher_handedness": pitcher_hand,
+        "handedness_context_available": handedness_available,
+        "handedness_matchup": handedness_matchup,
         "temperature_f": temperature_f,
         "weather_power_signal": weather_power_signal,
         "expected_pa": expected_pa,
