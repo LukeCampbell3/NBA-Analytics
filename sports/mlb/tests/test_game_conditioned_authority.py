@@ -45,6 +45,11 @@ def _report(target_payload=None):
     return {
         "validation_design": "expanding_window_strictly_prior_dates",
         "evidence_class": "ROLLING_ORIGIN_HIGH_FIDELITY_DIAGNOSTIC_NOT_CERTIFICATION",
+        "train_serve_feature_parity_proven": True,
+        "training_feature_contract": {
+            "parity_proven": True,
+            "status": "TEST_PARITY_PROVEN",
+        },
         "targets": {
             "H": target_payload,
             "TB": _valid_target(),
@@ -84,6 +89,21 @@ def test_negative_authority_requires_strict_prior_date_validation_design():
 
     assert decision.negative_authority_allowed is False
     assert "STRICT_PRIOR_DATE_VALIDATION_NOT_PROVEN" in decision.reasons
+
+
+def test_negative_authority_requires_train_serve_feature_parity():
+    report = _report()
+    report["train_serve_feature_parity_proven"] = False
+    report["training_feature_contract"] = {
+        "parity_proven": False,
+        "live_only_features": ["pitch_compatibility"],
+    }
+
+    decision = validate_target_authority(report, "TB")
+
+    assert decision.negative_authority_allowed is False
+    assert "TRAIN_SERVE_FEATURE_PARITY_NOT_PROVEN" in decision.reasons
+    assert decision.checks["train_serve_feature_parity_proven"] is False
 
 
 def test_positive_authority_is_blocked_without_exact_pit_certificate():
@@ -128,17 +148,47 @@ def test_audit_detects_forged_authority_claim():
     assert "H:INVALID_NEGATIVE_AUTHORITY_CLAIM" in audit["violations"]
 
 
-def test_committed_validation_report_preserves_only_supported_authority():
+def test_audit_detects_authority_claim_when_live_features_were_not_trained():
+    report = _report()
+    report["train_serve_feature_parity_proven"] = False
+    report["training_feature_contract"] = {
+        "parity_proven": False,
+        "live_only_features": [
+            "pitch_compatibility",
+            "direct_matchup",
+            "handedness_interaction",
+        ],
+    }
+
+    audit = audit_authority_report(report)
+
+    assert audit["valid"] is False
+    assert set(audit["violations"]) == {
+        "H:INVALID_NEGATIVE_AUTHORITY_CLAIM",
+        "TB:INVALID_NEGATIVE_AUTHORITY_CLAIM",
+        "HR:INVALID_NEGATIVE_AUTHORITY_CLAIM",
+    }
+
+
+def test_committed_validation_report_is_fail_closed_and_claim_consistent():
     path = ROOT / "artifacts" / "mlb_game_conditioned_hitter_moe_validation.json"
     report = json.loads(path.read_text(encoding="utf-8"))
 
     audit = audit_authority_report(report)
 
+    # The broad committed fit currently has no production residual authority.
+    # This test intentionally avoids pinning a transient target result; it checks
+    # that any claim present in the artifact is independently supportable.
     assert audit["valid"] is True
-    assert audit["targets"]["H"]["negative_authority_allowed"] is False
-    assert audit["targets"]["HR"]["negative_authority_allowed"] is False
-    assert audit["targets"]["TB"]["negative_authority_allowed"] is True
-    assert all(
-        not target["positive_authority_allowed"]
-        for target in audit["targets"].values()
-    )
+    for target in ("H", "TB", "HR"):
+        decision = audit["targets"][target]
+        validation = report["targets"][target]["validation"]
+        claimed = bool(
+            validation.get("negative_authority_allowed", False)
+            or validation.get("statistical_gate_passed", False)
+        )
+        assert decision["claimed_negative_authority"] is claimed
+        assert decision["claimed_positive_authority"] is bool(
+            report["targets"][target].get("positive_authority", False)
+        )
+        assert decision["positive_authority_allowed"] is False
