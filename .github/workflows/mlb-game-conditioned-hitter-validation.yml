@@ -124,14 +124,15 @@ jobs:
           if old in text:
               text = text.replace(old, new, 1)
           assert new in text
-
           selector.write_text(text, encoding='utf-8')
 
           canonical = Path('.github/workflows/mlb-predictions.yml')
           workflow = canonical.read_text(encoding='utf-8')
           workflow = workflow.replace('H/TB source', 'H/TB/HR source')
           workflow = workflow.replace('mlb_sequential_pa_frontend_v1', 'mlb_game_conditioned_hitter_frontend_v2')
-          canonical.write_text(workflow, encoding='utf-8')
+          staged = Path('artifacts/mlb-predictions-patched.yml')
+          staged.parent.mkdir(parents=True, exist_ok=True)
+          staged.write_text(workflow, encoding='utf-8')
 
           daily = Path('sports/site/pipeline/run_daily_predictions.py')
           daily_text = daily.read_text(encoding='utf-8').replace('H/TB Data + Sequential PA Model', 'H/TB/HR Data + Game-Conditioned Sequential PA Model')
@@ -155,7 +156,7 @@ jobs:
           git add \
             sports/mlb/scripts/select_high_precision_predictions.py \
             sports/site/pipeline/run_daily_predictions.py \
-            .github/workflows/mlb-predictions.yml
+            artifacts/mlb-predictions-patched.yml
           if ! git diff --cached --quiet; then
             git commit -m 'Gate H TB HR selector by validated model authority [skip ci]'
             git pull --rebase origin static-deployment
@@ -217,4 +218,5 @@ jobs:
             sports/mlb/data/predictions/calibration/game_conditioned_hitter_moe_v2.json
             artifacts/mlb_game_conditioned_hitter_moe_validation.json
             artifacts/mlb_game_conditioned_hitter_moe_validation.md
+            artifacts/mlb-predictions-patched.yml
           retention-days: 30
