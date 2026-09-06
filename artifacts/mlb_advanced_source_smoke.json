@@ -1,0 +1,95 @@
+{
+  "baseball_savant": {
+    "arsenal_pitch_types": [
+      "CH",
+      "CU",
+      "FC",
+      "FF",
+      "SI",
+      "SL",
+      "ST"
+    ],
+    "batter_fields": {
+      "avg_ev": 84.04629629629629,
+      "ba": null,
+      "barrel_rate": 0.08148148148148149,
+      "bb_rate": 0.11282051282051282,
+      "chase_rate": 0.3127853881278539,
+      "contact_rate": 0.7859007832898173,
+      "hard_hit_rate": 0.3,
+      "k_rate": 0.2717948717948718,
+      "slg": null,
+      "sweet_spot_rate": 0.32592592592592595,
+      "whiff_rate": 0.21409921671018275,
+      "woba": 0.42774869109947655,
+      "xba": 0.3741196581196582,
+      "xslg": 0.817940170940171,
+      "xwoba": 0.5075847457627118
+    },
+    "batter_profile_present": true,
+    "batter_sample_pa": null,
+    "direct_bvp_present": false,
+    "pitcher_fields": {
+      "avg_ev_allowed": 84.52314814814815,
+      "barrel_rate_allowed": 0.037037037037037035,
+      "csw_rate": 0.29525483304042177,
+      "era": null,
+      "fip": null,
+      "hard_hit_rate_allowed": 0.28703703703703703,
+      "siera": null,
+      "whiff_rate": 0.18835616438356165,
+      "xba_allowed": 0.3398034188034188,
+      "xera": null,
+      "xfip": null,
+      "xslg_allowed": 0.5148376068376067,
+      "xwoba_allowed": 0.3633305084745762
+    },
+    "pitcher_profile_present": true,
+    "pitcher_sample_pa": null,
+    "status": "SUCCESS"
+  },
+  "candidate": {
+    "Game_ID": "823823",
+    "Market_Source": "real",
+    "Opposing_Pitcher": "ryan gusto",
+    "Opposing_Pitcher_ID": 687473,
+    "Player": "Pete Crow-Armstrong",
+    "Player_MLBAM_ID": 691718,
+    "Player_Type": "hitter",
+    "Target": "TB",
+    "Team": "CHC"
+  },
+  "effective_as_of_date": "2026-09-04",
+  "failures": [],
+  "fangraphs": {
+    "available_fields": [],
+    "error": "HTTPError: Error accessing 'https://www.fangraphs.com/leaders-legacy.aspx'. Received status code 403",
+    "pitcher_siera": null,
+    "pitcher_xfip": null,
+    "rows": 0,
+    "status": "UNAVAILABLE"
+  },
+  "generated_at_utc": "2026-09-06T01:33:18.133712+00:00",
+  "run_date": "2026-09-05",
+  "schema_version": "mlb_advanced_source_smoke_v1",
+  "source_status": {
+    "baseball_savant_statcast": {
+      "covered_entities": 2,
+      "effective_as_of_date": "2026-09-04",
+      "failures": 0,
+      "required_entities": 2,
+      "status": "SUCCESS"
+    },
+    "fangraphs": {
+      "effective_as_of_date": "2026-09-04",
+      "error": "HTTPError: Error accessing 'https://www.fangraphs.com/leaders-legacy.aspx'. Received status code 403",
+      "required_for_base_statcast_model": false,
+      "rows": 0,
+      "status": "UNAVAILABLE"
+    },
+    "mlb_stats_api_identity": {
+      "effective_as_of_date": "2026-09-05",
+      "status": "RESOLVED_BEFORE_ADVANCED_REFRESH"
+    }
+  }
+}
