@@ -1,0 +1,84 @@
+name: MLB Game-Conditioned Frontend Compatibility Repair
+
+on:
+  push:
+    branches: [static-deployment]
+    paths:
+      - '.github/workflows/mlb-game-conditioned-schema-compat.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout static deployment
+        uses: actions/checkout@v7
+        with:
+          ref: static-deployment
+          fetch-depth: 0
+
+      - name: Apply compatibility envelope
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('sports/mlb/scripts/run_sequential_pa_hitter_model.py')
+          text = path.read_text()
+
+          constants_anchor = 'SNAPSHOT_SCHEMA_VERSION = "mlb_game_conditioned_pregame_snapshot_v1"\n'
+          constants = (
+              'SNAPSHOT_SCHEMA_VERSION = "mlb_game_conditioned_pregame_snapshot_v1"\n'
+              'FRONTEND_SCHEMA_VERSION = "mlb_sequential_pa_frontend_v1"\n'
+              'GAME_CONDITIONED_SCHEMA_EXTENSION = "mlb_game_conditioned_hitter_frontend_v2"\n'
+          )
+          if 'FRONTEND_SCHEMA_VERSION =' not in text:
+              if constants_anchor not in text:
+                  raise SystemExit('schema constants anchor not found')
+              text = text.replace(constants_anchor, constants, 1)
+
+          old = '        "schema_version": "mlb_game_conditioned_hitter_frontend_v2",\n'
+          new = (
+              '        # Backward-compatible envelope for the existing publication worker.\n'
+              '        # The payload remains explicitly identifiable as the v2 game-conditioned extension.\n'
+              '        "schema_version": FRONTEND_SCHEMA_VERSION,\n'
+              '        "schema_extensions": [GAME_CONDITIONED_SCHEMA_EXTENSION],\n'
+              '        "game_conditioned_schema_version": GAME_CONDITIONED_SCHEMA_EXTENSION,\n'
+          )
+          if old in text:
+              text = text.replace(old, new, 1)
+          elif '"game_conditioned_schema_version": GAME_CONDITIONED_SCHEMA_EXTENSION' not in text:
+              raise SystemExit('frontend schema block not found')
+          path.write_text(text)
+
+          test = Path('sports/mlb/tests/test_game_conditioned_frontend_compatibility.py')
+          test.write_text('''from sports.mlb.scripts.run_sequential_pa_hitter_model import (\n    FRONTEND_SCHEMA_VERSION,\n    GAME_CONDITIONED_SCHEMA_EXTENSION,\n)\n\n\ndef test_game_conditioned_frontend_keeps_worker_compatibility_envelope():\n    assert FRONTEND_SCHEMA_VERSION == "mlb_sequential_pa_frontend_v1"\n    assert GAME_CONDITIONED_SCHEMA_EXTENSION == "mlb_game_conditioned_hitter_frontend_v2"\n''')
+          PY
+
+      - name: Test compatibility contract
+        run: |
+          set -euo pipefail
+          python -m pip install pytest numpy pandas requests scikit-learn
+          python -m pytest \
+            sports/mlb/tests/test_game_conditioned_frontend_compatibility.py \
+            sports/mlb/tests/test_game_conditioned_runtime_authority.py \
+            sports/mlb/tests/test_game_conditioned_pregame_snapshot.py \
+            -q
+          python -m py_compile sports/mlb/scripts/run_sequential_pa_hitter_model.py
+
+      - name: Commit compatibility repair
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sports/mlb/scripts/run_sequential_pa_hitter_model.py sports/mlb/tests/test_game_conditioned_frontend_compatibility.py
+          if git diff --cached --quiet; then
+            echo 'Compatibility repair already applied.'
+            exit 0
+          fi
+          git commit -m 'MLB: keep game-conditioned v2 compatible with publication worker [skip ci]'
+          git push origin HEAD:static-deployment
