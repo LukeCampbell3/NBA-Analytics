@@ -4,17 +4,25 @@ on:
   push:
     branches: [static-deployment]
     paths:
+      - 'sports/mlb/advanced/**'
       - 'sports/mlb/scripts/balanced_market_ensemble_v4.py'
       - 'sports/mlb/scripts/enrich_parlay_leg_betslip.py'
       - 'sports/mlb/scripts/export_web_prediction_payload.py'
       - 'sports/mlb/scripts/select_high_hit_parlay.py'
       - 'sports/mlb/scripts/build_exotic_market_shadow.py'
       - 'sports/mlb/scripts/validate_v4_live_players.py'
+      - 'sports/mlb/scripts/run_sequential_pa_hitter_model.py'
       - 'sports/mlb/scripts/run_pinned_v2_1_daily_shadow.py'
+      - 'sports/mlb/scripts/run_unified_mlb_shadow.py'
       - 'sports/mlb/scripts/preserve_published_predictions.py'
       - 'sports/mlb/scripts/apply_publication_protocol.py'
       - 'sports/mlb/scripts/settle_published_predictions.py'
       - 'sports/mlb/parlay_v2/pitcher_alt_line_frontier.py'
+      - 'sports/mlb/tests/test_advanced_mlb_profiles.py'
+      - 'sports/mlb/tests/test_advanced_source_refresh.py'
+      - 'sports/mlb/tests/test_sequential_pa_model.py'
+      - 'sports/mlb/tests/test_sequential_pa_identity_hydration.py'
+      - 'sports/mlb/tests/test_unified_runtime_manifest_drift.py'
       - 'sports/mlb/tests/test_build_exotic_market_shadow.py'
       - 'sports/mlb/tests/test_validate_v4_live_players.py'
       - 'sports/mlb/tests/test_preserve_published_predictions.py'
@@ -25,9 +33,14 @@ on:
       - 'sports/mlb/web/predictions.html'
       - 'sports/mlb/web/data/history/**'
       - 'sports/mlb/unified/**'
-      - 'sports/mlb/scripts/run_unified_mlb_shadow.py'
       - 'sports/site/pipeline/run_daily_predictions.py'
+      - 'sports/mlb/requirements-same-game.txt'
       - '.github/workflows/mlb-predictions.yml'
+  schedule:
+    # Morning discovery, late-day final refresh, and overnight next-slate prep.
+    - cron: "17 8 * 3-10 *"
+    - cron: "30 18 * 3-10 *"
+    - cron: "30 23 * 3-10 *"
   workflow_dispatch:
     inputs:
       run_date:
@@ -137,6 +150,8 @@ jobs:
             echo "- Date: $run_date (America/New_York)"
             echo "- Weekly history refresh: $refresh_history"
             echo "- Publication mode: $publication_mode"
+            echo "- Advanced H/TB source: Baseball Savant Statcast + FanGraphs-compatible pitching"
+            echo "- Advanced cutoff: strictly before run date"
             echo "- V2.1 challenger commit: 55b7d07c1e4b58b362cf5f7afccdbf81ee76d9f0"
             echo "- V2.1 authority: prospective shadow only"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -149,10 +164,11 @@ jobs:
             Player-Predictor/Data-Proc-MLB
             sports/mlb/data/predictions/daily_runs
             sports/mlb/data/predictions/calibration/*.json
-          key: mlb-daily-v4-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/decision_engine/matchup_network.py', 'sports/mlb/scripts/backtest_latent_daily_pools.py') }}-${{ steps.run-config.outputs.run_stamp }}-${{ github.run_id }}
+            sports/mlb/data/advanced
+          key: mlb-daily-v5-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/decision_engine/matchup_network.py', 'sports/mlb/advanced/data_layer.py', 'sports/mlb/advanced/production_refresh.py', 'sports/mlb/advanced/sequential_pa_model.py', 'sports/mlb/scripts/backtest_latent_daily_pools.py') }}-${{ steps.run-config.outputs.run_stamp }}-${{ github.run_id }}
           restore-keys: |
-            mlb-daily-v4-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/decision_engine/matchup_network.py', 'sports/mlb/scripts/backtest_latent_daily_pools.py') }}-${{ steps.run-config.outputs.run_stamp }}-
-            mlb-daily-v4-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/decision_engine/matchup_network.py', 'sports/mlb/scripts/backtest_latent_daily_pools.py') }}-
+            mlb-daily-v5-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/decision_engine/matchup_network.py', 'sports/mlb/advanced/data_layer.py', 'sports/mlb/advanced/production_refresh.py', 'sports/mlb/advanced/sequential_pa_model.py', 'sports/mlb/scripts/backtest_latent_daily_pools.py') }}-${{ steps.run-config.outputs.run_stamp }}-
+            mlb-daily-v5-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/decision_engine/matchup_network.py', 'sports/mlb/advanced/data_layer.py', 'sports/mlb/advanced/production_refresh.py', 'sports/mlb/advanced/sequential_pa_model.py', 'sports/mlb/scripts/backtest_latent_daily_pools.py') }}-
 
       - name: Preserve and validate prior published MLB picks
         if: inputs.build_only != true
@@ -179,11 +195,14 @@ jobs:
             exit 0
           fi
 
-          # Generate all existing MLB products from the same resolved slate date.
-          # These remain the legacy-authoritative publication path.
           bash sports/mlb/scripts/validate_same_game_pipeline.sh test
           bash sports/mlb/scripts/validate_pitcher_parlay_pipeline.sh test
           python -m pytest \
+            sports/mlb/tests/test_advanced_mlb_profiles.py \
+            sports/mlb/tests/test_advanced_source_refresh.py \
+            sports/mlb/tests/test_sequential_pa_model.py \
+            sports/mlb/tests/test_sequential_pa_identity_hydration.py \
+            sports/mlb/tests/test_unified_runtime_manifest_drift.py \
             sports/mlb/tests/test_build_exotic_market_shadow.py \
             sports/mlb/tests/test_validate_v4_live_players.py \
             tests/test_run_daily_predictions.py \
@@ -217,6 +236,25 @@ jobs:
             args+=(--mlb-refresh-history-caches)
           fi
           python run_daily_predictions.py "${args[@]}"
+
+          # Prove the advanced product is current and structurally valid whenever generated.
+          if [ -f sports/mlb/web/data/sequential_pa_hitter_predictions.json ]; then
+            python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p = json.loads(Path("sports/mlb/web/data/sequential_pa_hitter_predictions.json").read_text())
+          assert p["run_date"] == os.environ["RUN_DATE"]
+          assert p["model_version"]
+          assert p["schema_version"] == "mlb_sequential_pa_frontend_v1"
+          assert p["data_freshness_status"] in {"FRESH", "DEGRADED"}
+          for row in p.get("candidates") or []:
+              for key in ("raw_probability", "usable_probability", "lcb", "p_h_0"):
+                  value = row.get(key)
+                  if value is not None:
+                      assert 0.0 <= float(value) <= 1.0, (key, value)
+          PY
+          fi
+
           # Publication-only negative authority: immutable V4 evidence remains
           # untouched, while wrong-game, nonstarter, and unlinked players are
           # removed from the live board and accepted rows gain team/opponent IDs.
@@ -252,14 +290,7 @@ jobs:
           PY
           node --check sports/mlb/web/predictions.js
 
-          # Unified migration remains shadow-only. It consumes the completed
-          # legacy artifacts, cannot authorize publication/staking, and writes
-          # one coherent artifact for side-by-side validation.
           python sports/mlb/scripts/run_unified_mlb_shadow.py --run-date "$RUN_DATE"
-          # The pinned runner above already executed V2.1 at its immutable
-          # implementation commit and appended the all-candidate evidence.
-          # Audit that evidence without allowing a shadow-data deficiency to
-          # suppress the legacy-authoritative board.
           python sports/mlb/scripts/audit_daily_mlb_slate.py --run-date "$RUN_DATE"
           python - <<'PY'
           import json, os, shutil
@@ -312,6 +343,10 @@ jobs:
             --private-output paywall/private-content/app
           cmp sports/mlb/web/data/daily_predictions.json dist/mlb/data/daily_predictions.json
           cmp sports/mlb/web/data/daily_predictions.json paywall/private-content/app/mlb/data/daily_predictions.json
+          if [ -f sports/mlb/web/data/sequential_pa_hitter_predictions.json ]; then
+            cmp sports/mlb/web/data/sequential_pa_hitter_predictions.json dist/mlb/data/sequential_pa_hitter_predictions.json
+            cmp sports/mlb/web/data/sequential_pa_hitter_predictions.json paywall/private-content/app/mlb/data/sequential_pa_hitter_predictions.json
+          fi
 
       - name: Preserve current MLB publication
         if: inputs.build_only != true
@@ -357,11 +392,10 @@ jobs:
             dist/mlb \
             paywall/private-content/app/mlb
 
-          if [ -e sports/mlb/web/data/headshots ]; then
-            git add -f -- sports/mlb/web/data/headshots
-          fi
-
           for optional_path in \
+            sports/mlb/web/data/sequential_pa_hitter_predictions.json \
+            artifacts/mlb_sequential_pa_model_validation.json \
+            artifacts/mlb_sequential_pa_model_validation.md \
             sports/mlb/parlay_v2/calibration/reports/calibration_ledger.jsonl \
             sports/mlb/parlay_v2/calibration/reports/pair_observation_ledger.jsonl \
             sports/mlb/parlay_v2/calibration/reports/same_game_calibration_ledger.jsonl \
@@ -385,6 +419,10 @@ jobs:
               git add -f -- "$optional_path"
             fi
           done
+
+          if [ -e sports/mlb/web/data/headshots ]; then
+            git add -f -- sports/mlb/web/data/headshots
+          fi
 
           if git diff --cached --quiet; then
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
@@ -418,6 +456,7 @@ jobs:
             dist/mlb/data/same_game_predictions.json
             dist/mlb/data/pitcher_parlay_predictions.json
             dist/mlb/data/exotic_market_predictions.json
+            dist/mlb/data/sequential_pa_hitter_predictions.json
             dist/mlb/data/unified_predictions.json
             dist/mlb/data/mlb_engine_manifest.json
             sports/mlb/web/data/daily_predictions.json
@@ -425,6 +464,10 @@ jobs:
             sports/mlb/web/data/same_game_predictions.json
             sports/mlb/web/data/pitcher_parlay_predictions.json
             sports/mlb/web/data/exotic_market_predictions.json
+            sports/mlb/web/data/sequential_pa_hitter_predictions.json
+            artifacts/mlb_sequential_pa_model_validation.json
+            artifacts/mlb_sequential_pa_model_validation.md
+            sports/mlb/data/advanced/${{ steps.run-config.outputs.run_stamp }}/manifest.json
             sports/mlb/data/predictions/unified/v2_1_evidence.jsonl
             sports/mlb/web/data/unified_predictions.json
             sports/mlb/web/data/mlb_engine_manifest.json
@@ -433,9 +476,6 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-  # Shadow-only research job: measures whether MLB's pregame prop-line path
-  # carries incremental evidence beyond the pool's existing day-of score.
-  # It never affects publication and failure is deliberately non-blocking.
   mlb-path-evidence-shadow:
     needs: mlb-predictions
     if: always()
