@@ -1,0 +1,53 @@
+{
+  "contract": {
+    "allowed_use": "historical outcome labels for retrospective validation and later settlement joins",
+    "join_key": [
+      "season",
+      "game_id",
+      "player_id"
+    ],
+    "market_data_included": false,
+    "not_sufficient_for": "point-in-time feature certification or exact decision-time price certification",
+    "outcome_fields": [
+      "H",
+      "TB",
+      "HR",
+      "PA",
+      "AB"
+    ],
+    "pregame_features_included": false
+  },
+  "evidence_class": "HISTORICAL_REALIZED_OUTCOME_LABEL_NOT_PREGAME_FEATURE_EVIDENCE",
+  "first_date": "2026-03-01",
+  "hitter_games": 47297,
+  "last_date": "2026-08-27",
+  "schema_version": "mlb_game_conditioned_historical_outcomes_v1",
+  "season": 2026,
+  "skipped": {
+    "NON_HITTER": 17603,
+    "ZERO_PA": 1610
+  },
+  "targets": {
+    "H": {
+      "clears": 26194,
+      "line": 0.5,
+      "observed_clear_rate": 0.5538194811510244,
+      "rows": 47297
+    },
+    "HR": {
+      "clears": 4912,
+      "line": 0.5,
+      "observed_clear_rate": 0.1038543670845931,
+      "rows": 47297
+    },
+    "TB": {
+      "clears": 14761,
+      "line": 1.5,
+      "observed_clear_rate": 0.31209167600482063,
+      "rows": 47297
+    }
+  },
+  "unique_dates": 178,
+  "unique_games": 2333,
+  "unique_players": 679
+}
