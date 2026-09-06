@@ -21,14 +21,17 @@ on:
       - 'sports/mlb/scripts/build_exotic_market_shadow.py'
       - 'sports/mlb/scripts/validate_v4_live_players.py'
       - 'sports/mlb/scripts/run_sequential_pa_hitter_model.py'
+      - 'sports/mlb/scripts/run_unified_mlb_shadow.py'
       - 'sports/site/pipeline/validate_daily_publication.py'
       - 'sports/mlb/web/predictions.js'
       - 'sports/mlb/web/predictions.html'
       - 'sports/mlb/unified/**'
       - 'sports/mlb/tests/test_unified_*.py'
       - 'sports/mlb/tests/test_advanced_mlb_profiles.py'
+      - 'sports/mlb/tests/test_advanced_source_refresh.py'
       - 'sports/mlb/tests/test_sequential_pa_model.py'
       - 'sports/mlb/tests/test_sequential_pa_identity_hydration.py'
+      - 'sports/mlb/tests/test_unified_runtime_manifest_drift.py'
       - 'sports/mlb/tests/test_parlay_quality_selectors.py'
       - 'sports/mlb/tests/test_tight_quality_overlay.py'
       - 'sports/mlb/tests/test_local_node_selector.py'
@@ -83,8 +86,10 @@ jobs:
         run: |
           python -m pytest \
             sports/mlb/tests/test_advanced_mlb_profiles.py \
+            sports/mlb/tests/test_advanced_source_refresh.py \
             sports/mlb/tests/test_sequential_pa_model.py \
             sports/mlb/tests/test_sequential_pa_identity_hydration.py \
+            sports/mlb/tests/test_unified_runtime_manifest_drift.py \
             sports/mlb/tests/test_tight_quality_overlay.py \
             sports/mlb/tests/test_local_node_selector.py \
             sports/mlb/tests/test_local_node_selector_v2.py \
