@@ -11,6 +11,8 @@ on:
       - 'sports/mlb/tests/test_discovery_public_retention.py'
       - 'sports/mlb/tests/test_preserve_published_predictions.py'
       - 'sports/mlb/tests/test_settle_published_predictions.py'
+      - 'sports/site/pipeline/build_static_site.py'
+      - 'sports/site/tests/test_mlb_prediction_data_exports.py'
       - '.github/workflows/mlb-publication-controller.yml'
       - '.github/workflows/mlb-publication-worker.yml'
       - '.github/workflows/mlb-publication-watchdog.yml'
@@ -44,11 +46,13 @@ jobs:
             sports/mlb/tests/test_discovery_public_retention.py \
             sports/mlb/tests/test_preserve_published_predictions.py \
             sports/mlb/tests/test_settle_published_predictions.py \
+            sports/site/tests/test_mlb_prediction_data_exports.py \
             -q
           python -m py_compile \
             sports/mlb/scripts/apply_publication_protocol.py \
             sports/mlb/scripts/preserve_published_predictions.py \
-            sports/mlb/scripts/settle_published_predictions.py
+            sports/mlb/scripts/settle_published_predictions.py \
+            sports/site/pipeline/build_static_site.py
 
       - name: Verify schedule and authority topology
         run: |
@@ -60,6 +64,7 @@ jobs:
           worker = Path('.github/workflows/mlb-publication-worker.yml').read_text()
           watchdog = Path('.github/workflows/mlb-publication-watchdog.yml').read_text()
           protocol = Path('sports/mlb/scripts/apply_publication_protocol.py').read_text()
+          builder = Path('sports/site/pipeline/build_static_site.py').read_text()
 
           assert "cron: '30 15 * 3-10 *'" in controller
           assert "cron: '30 21 * 3-10 *'" in controller
@@ -74,5 +79,7 @@ jobs:
           assert '_retain_prior_public_board_for_discovery' in protocol
           assert 'public_board_mutated' in protocol
           assert 'candidate_run_date' in protocol
-          print('MLB authority topology: controller -> isolated worker; watchdog -> isolated worker; DISCOVER is non-public.')
+          assert '"latest_candidates.json"' in builder
+          assert '"sequential_pa_hitter_predictions.json"' in builder
+          print('MLB authority topology and static export contract are protected.')
           PY
