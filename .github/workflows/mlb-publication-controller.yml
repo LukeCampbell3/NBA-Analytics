@@ -1,0 +1,186 @@
+name: MLB Publication Controller
+
+on:
+  push:
+    branches: [static-deployment]
+    paths:
+      - '.github/workflows/mlb-publication-controller.yml'
+  schedule:
+    # GitHub cron is UTC. During EDT these are 11:30 AM and 5:30 PM Eastern.
+    # PUBLISH establishes the immutable daily board; REFRESH updates supporting
+    # data while apply_publication_protocol keeps issued picks unchanged.
+    - cron: '30 15 * 3-10 *'
+    - cron: '30 21 * 3-10 *'
+  workflow_dispatch:
+    inputs:
+      run_date:
+        description: 'Eastern run date (YYYY-MM-DD); defaults to today'
+        required: false
+        type: string
+      publication_mode:
+        description: 'Publication authority'
+        required: true
+        default: 'PUBLISH'
+        type: choice
+        options:
+          - PUBLISH
+          - REFRESH
+          - LATE_ADD
+
+permissions:
+  actions: write
+  contents: read
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  TZ: America/New_York
+
+jobs:
+  dispatch-authoritative-mlb-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 145
+    steps:
+      - name: Checkout static deployment
+        uses: actions/checkout@v7
+        with:
+          ref: static-deployment
+          fetch-depth: 1
+
+      - name: Resolve publication request
+        id: config
+        env:
+          INPUT_RUN_DATE: ${{ inputs.run_date }}
+          INPUT_PUBLICATION_MODE: ${{ inputs.publication_mode }}
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          set -euo pipefail
+          run_date="${INPUT_RUN_DATE:-$(date +%F)}"
+          python -c "from datetime import date; date.fromisoformat('$run_date')"
+
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            mode="${INPUT_PUBLICATION_MODE:-PUBLISH}"
+          elif [[ "${GITHUB_EVENT_NAME}" == "schedule" && "$EVENT_SCHEDULE" == "30 21 * 3-10 *" ]]; then
+            mode="REFRESH"
+          else
+            # Creation/update push is also the one-shot bootstrap for the current day.
+            mode="PUBLISH"
+          fi
+
+          case "$mode" in
+            PUBLISH|REFRESH|LATE_ADD) ;;
+            *) echo "unsupported mode: $mode" >&2; exit 2 ;;
+          esac
+          echo "run_date=$run_date" >> "$GITHUB_OUTPUT"
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "MLB publication request: $run_date $mode"
+
+      - name: Verify prior-day history before publish
+        if: steps.config.outputs.mode == 'PUBLISH'
+        env:
+          RUN_DATE: ${{ steps.config.outputs.run_date }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from datetime import date, timedelta
+          from pathlib import Path
+
+          run_date = date.fromisoformat(os.environ['RUN_DATE'])
+          prior = (run_date - timedelta(days=1)).isoformat()
+          path = Path(f'sports/mlb/web/data/history/{prior}.json')
+          if not path.exists():
+              print(f'No prior-day history file at {path}; production workflow will run preservation/settlement catch-up.')
+              raise SystemExit(0)
+          payload = json.loads(path.read_text())
+          plays = payload.get('plays') or []
+          unresolved = [row for row in plays if row.get('settlement_status') not in {'won','lost','push'}]
+          if unresolved:
+              print(f'Prior board has {len(unresolved)} unresolved plays; production workflow will settle before replacing daily board.')
+          else:
+              print(f'Prior board preserved and settled: {len(plays)} plays.')
+          PY
+
+      - name: Dispatch production workflow
+        id: dispatch
+        env:
+          RUN_DATE: ${{ steps.config.outputs.run_date }}
+          PUBLICATION_MODE: ${{ steps.config.outputs.mode }}
+        run: |
+          set -euo pipefail
+          before="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow mlb-predictions.yml --event workflow_dispatch --branch static-deployment --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
+          gh workflow run mlb-predictions.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref static-deployment \
+            -f run_date="$RUN_DATE" \
+            -f build_only=false \
+            -f publication_mode="$PUBLICATION_MODE"
+
+          run_id=''
+          for _ in $(seq 1 90); do
+            candidate="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow mlb-predictions.yml --event workflow_dispatch --branch static-deployment --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
+            if [[ "$candidate" != '0' && "$candidate" != "$before" ]]; then
+              run_id="$candidate"
+              break
+            fi
+            sleep 2
+          done
+          test -n "$run_id"
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "Dispatched production run $run_id"
+          gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status
+
+      - name: Verify frontend handoff
+        env:
+          RUN_DATE: ${{ steps.config.outputs.run_date }}
+          PUBLICATION_MODE: ${{ steps.config.outputs.mode }}
+        run: |
+          set -euo pipefail
+          git fetch origin static-deployment
+          git reset --hard origin/static-deployment
+          python - <<'PY'
+          import json, os
+          from datetime import date, timedelta
+          from pathlib import Path
+
+          run_date = os.environ['RUN_DATE']
+          mode = os.environ['PUBLICATION_MODE']
+          board = json.loads(Path('sports/mlb/web/data/daily_predictions.json').read_text())
+          assert board.get('run_date') == run_date, (board.get('run_date'), run_date)
+          protocol = board.get('publication_protocol') or {}
+          assert protocol.get('issued_picks_immutable') is True, protocol
+          if mode == 'PUBLISH':
+              assert protocol.get('mode') == 'PUBLISH', protocol
+
+          dist = json.loads(Path('dist/mlb/data/daily_predictions.json').read_text())
+          assert dist.get('run_date') == run_date
+
+          prior = (date.fromisoformat(run_date) - timedelta(days=1)).isoformat()
+          prior_source = Path(f'sports/mlb/web/data/history/{prior}.json')
+          prior_dist = Path(f'dist/mlb/data/history/{prior}.json')
+          assert prior_source.exists() and prior_dist.exists(), prior
+          prior_payload = json.loads(prior_source.read_text())
+          prior_plays = prior_payload.get('plays') or []
+          unresolved = [row for row in prior_plays if row.get('settlement_status') not in {'won','lost','push'}]
+          assert not unresolved, f'prior-day unresolved plays: {len(unresolved)}'
+
+          seq_path = Path('sports/mlb/web/data/sequential_pa_hitter_predictions.json')
+          seq_current = None
+          game_conditioned_candidates = None
+          if seq_path.exists():
+              seq = json.loads(seq_path.read_text())
+              seq_current = seq.get('run_date') == run_date
+              assert seq_current, seq.get('run_date')
+              game_conditioned_candidates = len(seq.get('candidates') or [])
+
+          print(json.dumps({
+              'run_date': run_date,
+              'publication_mode': protocol.get('mode'),
+              'issued_count': protocol.get('issued_count'),
+              'candidate_count': protocol.get('candidate_count'),
+              'prior_date': prior,
+              'prior_settled_plays': len(prior_plays),
+              'dist_current': True,
+              'sequential_pa_current': seq_current,
+              'sequential_pa_candidates': game_conditioned_candidates,
+          }, indent=2))
+          PY
