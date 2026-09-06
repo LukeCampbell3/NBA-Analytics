@@ -1,0 +1,117 @@
+name: MLB Game-Conditioned Outcome-Joined Validation
+
+on:
+  push:
+    branches: [static-deployment]
+    paths:
+      - 'sports/mlb/scripts/fit_game_conditioned_hitter_moe_outcome_joined.py'
+      - 'sports/mlb/scripts/collect_historical_game_conditioned_outcomes.py'
+      - 'sports/mlb/tests/test_game_conditioned_outcome_joined.py'
+      - 'sports/mlb/data/predictions/backtests/game_conditioned_historical_outcomes_2026.jsonl.gz'
+      - '.github/workflows/mlb-game-conditioned-outcome-joined-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mlb-game-conditioned-outcome-joined-validation-static-deployment
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout static deployment
+        uses: actions/checkout@v7
+        with:
+          ref: static-deployment
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: python -m pip install pytest numpy pandas scipy requests
+
+      - name: Compile joined validator
+        run: python -m py_compile sports/mlb/scripts/fit_game_conditioned_hitter_moe_outcome_joined.py
+
+      - name: Test outcome isolation contract
+        run: python -m pytest -q sports/mlb/tests/test_game_conditioned_outcome_joined.py sports/mlb/tests/test_historical_game_conditioned_outcomes.py
+
+      - name: Run broad outcome-joined validation
+        run: >-
+          python sports/mlb/scripts/fit_game_conditioned_hitter_moe_outcome_joined.py
+          --season 2026
+          --max-games 6000
+          --trials 300
+          --min-history 20
+          --folds 6
+          --min-train-rows 300
+          --ridge 1.5
+
+      - name: Validate joined report contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('artifacts/mlb_game_conditioned_outcome_joined_validation.json')
+          report = json.loads(path.read_text())
+          join = report['outcome_join']
+          assert report['training_status'] == 'FITTED_OUTCOME_JOINED_STRICT_HISTORY_SHADOW'
+          assert report['evidence_class'] == 'OUTCOME_JOINED_STRICT_HISTORY_DIAGNOSTIC_NOT_CERTIFICATION'
+          assert report['train_serve_feature_parity_proven'] is False
+          assert report['negative_authority_allowed'] is False
+          assert report['positive_authority'] is False
+          assert join['outcome_ledger_rows'] >= 40000
+          assert join['joined_hitter_games'] >= 5000
+          assert join['joined_target_examples'] == join['joined_hitter_games'] * 3
+          assert join['outcomes_read_from_feature_row'] is False
+          assert join['current_game_realized_columns_masked'] is True
+          assert join['current_game_target_derived_columns_masked'] is True
+          assert join['current_row_market_gap_or_rolling_used_in_prior'] is False
+          assert join['identity_mismatches'] == 0
+          for target in ('H', 'TB', 'HR'):
+              val = report['targets'][target]['validation']
+              assert val['fit_rows'] >= 5000
+              assert val['validation_rows'] >= 1000
+              assert val['negative_authority_allowed'] is False
+              assert val['statistical_gate_passed'] is False
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+
+      - name: Commit joined validation evidence
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f -- \
+            sports/mlb/data/predictions/calibration/game_conditioned_hitter_moe_outcome_joined_shadow_v3.json \
+            artifacts/mlb_game_conditioned_outcome_joined_validation.json \
+            artifacts/mlb_game_conditioned_outcome_joined_validation.md
+          if git diff --cached --quiet; then
+            echo 'Joined validation evidence unchanged.'
+            exit 0
+          fi
+          git commit -m 'MLB outcome-joined game-conditioned validation [skip ci]'
+          if ! git push origin HEAD:static-deployment; then
+            git pull --rebase --autostash origin static-deployment
+            git push origin HEAD:static-deployment
+          fi
+
+      - name: Upload joined validation evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mlb-game-conditioned-outcome-joined-${{ github.run_id }}
+          path: |
+            sports/mlb/data/predictions/calibration/game_conditioned_hitter_moe_outcome_joined_shadow_v3.json
+            artifacts/mlb_game_conditioned_outcome_joined_validation.json
+            artifacts/mlb_game_conditioned_outcome_joined_validation.md
+          if-no-files-found: warn
+          retention-days: 30
