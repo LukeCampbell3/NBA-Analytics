@@ -14,6 +14,7 @@ import requests
 from .data_layer import DEFAULT_ADVANCED_ROOT, load_profile_partition, refresh_advanced_profiles
 from .game_conditioned_moe import (
     MODEL_VERSION as GAME_CONDITIONED_MODEL_VERSION,
+    TARGETS as GAME_CONDITIONED_TARGETS,
     build_expert_state,
     choose_prior_probability,
     condition_probability,
@@ -195,8 +196,6 @@ def _team_expected_runs_map(frame: pd.DataFrame, run_date: str) -> dict[tuple[st
                 if game_id and away and away_runs is not None:
                     output[(game_id, away)] = away_runs
 
-    # Leakage-safe fallback: sum player run expectations already present in the
-    # current pregame pool. This changes PA opportunity only, not contact skill.
     if {"Game_ID", "Team", "Target", "Prediction"}.issubset(frame.columns):
         run_rows = frame.loc[frame["Target"].astype(str).str.upper().eq("R")].copy()
         run_rows["_prediction"] = pd.to_numeric(run_rows["Prediction"], errors="coerce")
@@ -315,8 +314,6 @@ def enrich_pool_with_sequential_pa(
     for column, default in columns.items():
         if column not in output.columns:
             output[column] = default
-    # Normalize pre-existing CSV columns as well. Pandas 3 can restore a blank
-    # enrichment column as Arrow string and reject later float assignments.
     for column in _numeric_columns():
         output[column] = pd.to_numeric(output[column], errors="coerce").astype(float)
 
@@ -324,9 +321,10 @@ def enrich_pool_with_sequential_pa(
     ready = 0
     blocked = 0
     rows_report: list[dict[str, Any]] = []
+    supported_targets = set(GAME_CONDITIONED_TARGETS)
     for index, row in output.iterrows():
         target = str(row.get("Target") or "").upper()
-        if target not in {"H", "TB"} or str(row.get("Player_Type") or "").lower() != "hitter":
+        if target not in supported_targets or str(row.get("Player_Type") or "").lower() != "hitter":
             continue
         evaluated += 1
         output.at[index, "Sequential_PA_Model_Version"] = GAME_CONDITIONED_MODEL_VERSION
@@ -396,7 +394,8 @@ def enrich_pool_with_sequential_pa(
             data_freshness_status=freshness, missing_components=tuple(context_missing),
             temperature_f=temperature_f,
         )
-        market_line = float(_float(row.get("Market_Line"), 0.5) or 0.5)
+        default_line = 1.5 if target == "TB" else 0.5
+        market_line = float(_float(row.get("Market_Line"), default_line) or default_line)
         structural = simulate_hitter_market(context, target=target, market_line=market_line, side="OVER", trials=trials)
         pitch_compatibility, pitch_detail = _pitch_compatibility_score(batter, pitcher)
         expert_state = build_expert_state(
@@ -483,7 +482,8 @@ def enrich_pool_with_sequential_pa(
             "game_conditioned_probability": conditioned.candidate_probability,
             "usable_probability": conditioned.production_probability,
             "lcb": min(conditioned.production_probability, conditioned.lower_bound_probability),
-            "p_h_0": structural.p_h_0, "expected_pa": structural.expected_pa,
+            "p_h_0": structural.p_h_0, "p_hr_ge_1": structural.p_hr_ge_1,
+            "expected_pa": structural.expected_pa,
             "expected_h": structural.expected_hits, "expected_tb": structural.expected_tb,
             "support": structural.support, "uncertainty": structural.uncertainty,
             "authority": conditioned.authority_status,
@@ -492,10 +492,16 @@ def enrich_pool_with_sequential_pa(
         })
 
     output.to_csv(pool_csv, index=False)
-    target_authority = {
-        target: bool((((model_artifact.get("targets") or {}).get(target) or {}).get("positive_authority", False)))
-        for target in ("H", "TB")
-    } if isinstance(model_artifact, dict) else {"H": False, "TB": False}
+    target_validation = {}
+    for target in GAME_CONDITIONED_TARGETS:
+        model = ((model_artifact.get("targets") or {}).get(target) or {}) if isinstance(model_artifact, dict) else {}
+        validation = model.get("validation") or {}
+        target_validation[target] = {
+            "positive_authority": bool(model.get("positive_authority", False)),
+            "diagnostic_gate_passed": bool(validation.get("statistical_gate_passed", False)),
+            "validation_status": validation.get("status"),
+        }
+
     report = {
         "schema_version": "mlb_game_conditioned_hitter_daily_enrichment_v2",
         "model_version": GAME_CONDITIONED_MODEL_VERSION,
@@ -503,7 +509,7 @@ def enrich_pool_with_sequential_pa(
         "run_date": run_date,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "pool_csv": str(pool_csv),
-        "evaluated_h_tb_rows": evaluated,
+        "evaluated_h_tb_hr_rows": evaluated,
         "modeled_rows": ready,
         "blocked_rows": blocked,
         "data_freshness_status": freshness,
@@ -512,15 +518,15 @@ def enrich_pool_with_sequential_pa(
         "model_artifact": {
             "training_status": model_artifact.get("training_status") if isinstance(model_artifact, dict) else None,
             "evidence_class": model_artifact.get("evidence_class") if isinstance(model_artifact, dict) else None,
-            "target_positive_authority_flags": target_authority,
+            "target_authority": target_validation,
         },
         "authority": {
             "raw_probability_source": "sequential_plate_appearance_simulation",
             "calibrated_probability_source": "legacy_market_logit_prior_plus_game_conditioned_residual_moe",
             "per_game_weighting": "global_coefficients_x_game_specific_expert_activation",
             "promotion_status": "TARGET_SPECIFIC_EVIDENCE_GATED",
-            "can_raise_legacy_probability": False,
-            "can_veto_overconfident_h_tb": True,
+            "positive_adjustment_requires_exact_point_in_time_evidence": True,
+            "negative_adjustment_requires_expanding_window_diagnostic_gate": True,
         },
         "rows": rows_report,
     }
