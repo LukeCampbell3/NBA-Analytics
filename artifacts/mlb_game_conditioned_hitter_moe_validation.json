@@ -1,0 +1,104 @@
+{
+  "architecture": "global_residual_coefficients_x_game_specific_expert_activations",
+  "evidence_class": "ROLLING_ORIGIN_HIGH_FIDELITY_DIAGNOSTIC_NOT_CERTIFICATION",
+  "max_abs_residual_logit": 0.35,
+  "model_version": "game_conditioned_hitter_moe_v2",
+  "prior": "legacy_probability_with_live_no_vig_market_blend_when_available",
+  "promotion_rule": "positive authority requires exact point-in-time advanced-feature evidence and target-specific Brier+log-loss improvement",
+  "rows": 800,
+  "schema_version": "mlb_game_conditioned_hitter_moe_v2",
+  "season": 2026,
+  "targets": {
+    "H": {
+      "coefficients": {
+        "bullpen_transition": 0.21266304105359385,
+        "contact_quality": 0.23723330873263748,
+        "defense_conversion": 0.0,
+        "pa_opportunity": -0.1000058517335933,
+        "power_tb": -0.3952918912080971,
+        "strikeout_contact": 0.07460906894532778
+      },
+      "feature_means": {
+        "bullpen_transition": -0.08960609874626355,
+        "contact_quality": 0.11614172482776537,
+        "defense_conversion": 0.0,
+        "pa_opportunity": -0.08668660813878436,
+        "power_tb": 0.12750146257054887,
+        "strikeout_contact": 0.07010583224633557
+      },
+      "feature_scales": {
+        "bullpen_transition": 0.35480726197462065,
+        "contact_quality": 0.19079057616096096,
+        "defense_conversion": 1.0,
+        "pa_opportunity": 0.2546898325716736,
+        "power_tb": 0.32179003116127025,
+        "strikeout_contact": 0.34950918996899444
+      },
+      "intercept": -0.36148968834445894,
+      "positive_authority": false,
+      "prior_legacy_weight": 0.72,
+      "validation": {
+        "brier_improved": false,
+        "candidate_brier": 0.24930365470273022,
+        "candidate_ece": 0.09038734863267033,
+        "candidate_log_loss": 0.6986932435552666,
+        "cutoff_date": "2026-08-01",
+        "log_loss_improved": false,
+        "positive_authority_blocker": "FULL_EXACT_POINT_IN_TIME_ADVANCED_FEATURE_SNAPSHOTS_NOT_AVAILABLE_FOR_THIS_FIT",
+        "prior_brier": 0.24627363719358214,
+        "prior_ece": 0.09545912110582669,
+        "prior_log_loss": 0.6909476343913975,
+        "statistical_gate_passed": false,
+        "status": "DID_NOT_CLEAR_DIAGNOSTIC_IMPROVEMENT_GATE",
+        "train_rows": 99,
+        "validation_rows": 301
+      }
+    },
+    "TB": {
+      "coefficients": {
+        "bullpen_transition": 0.2032679022651834,
+        "contact_quality": -0.08091578755404698,
+        "defense_conversion": 0.0,
+        "pa_opportunity": -0.02955045075134785,
+        "power_tb": -0.26614629496337594,
+        "strikeout_contact": 0.22797935683271647
+      },
+      "feature_means": {
+        "bullpen_transition": -0.08960609874626355,
+        "contact_quality": 0.11614172482776537,
+        "defense_conversion": 0.0,
+        "pa_opportunity": -0.08668660813878436,
+        "power_tb": 0.21960241290406016,
+        "strikeout_contact": 0.07010583224633557
+      },
+      "feature_scales": {
+        "bullpen_transition": 0.35480726197462065,
+        "contact_quality": 0.19079057616096096,
+        "defense_conversion": 1.0,
+        "pa_opportunity": 0.2546898325716736,
+        "power_tb": 0.5231087582650459,
+        "strikeout_contact": 0.34950918996899444
+      },
+      "intercept": -0.23691279234430762,
+      "positive_authority": false,
+      "prior_legacy_weight": 0.72,
+      "validation": {
+        "brier_improved": true,
+        "candidate_brier": 0.15828381274475029,
+        "candidate_ece": 0.08746829783992545,
+        "candidate_log_loss": 0.47342519624205376,
+        "cutoff_date": "2026-08-01",
+        "log_loss_improved": true,
+        "positive_authority_blocker": "FULL_EXACT_POINT_IN_TIME_ADVANCED_FEATURE_SNAPSHOTS_NOT_AVAILABLE_FOR_THIS_FIT",
+        "prior_brier": 0.16094463875491258,
+        "prior_ece": 0.08966119769901759,
+        "prior_log_loss": 0.4794455817602714,
+        "statistical_gate_passed": true,
+        "status": "IMPROVED_DIAGNOSTIC_ONLY",
+        "train_rows": 99,
+        "validation_rows": 301
+      }
+    }
+  },
+  "training_status": "FITTED_ROLLING_ORIGIN_RESIDUAL_MOE"
+}
