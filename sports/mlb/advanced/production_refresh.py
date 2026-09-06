@@ -23,6 +23,15 @@ def _valid_same_day_partition(manifest: dict[str, Any], run_day: date) -> bool:
     )
 
 
+def _manifest_path(path: Path) -> str:
+    """Return stable repo-relative paths in production and explicit paths in smoke/temp runs."""
+    resolved = path.resolve()
+    try:
+        return str(resolved.relative_to(base.REPO_ROOT.resolve()))
+    except ValueError:
+        return str(resolved)
+
+
 def _fangraphs_map_with_status(fn: Any, season: int) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
     try:
         frame = fn(season, season, qual=0)
@@ -105,7 +114,6 @@ def refresh_advanced_profiles_incremental(
         fangraphs_status = dict(old_fg_status)
         fangraphs_status["status"] = "REUSED_SAME_ASOF" if old_fg_status.get("status") == "SUCCESS" else old_fg_status.get("status", "UNAVAILABLE")
     else:
-        # No new pitcher requires FanGraphs this refresh; do not make a needless live call.
         fangraphs_status = {"status": "NOT_NEEDED_NO_NEW_PITCHERS", "rows": 0, "required_for_base_statcast_model": False}
 
     failures: list[dict[str, Any]] = []
@@ -124,8 +132,6 @@ def refresh_advanced_profiles_incremental(
         if pitcher_id > 0:
             by_pitcher.setdefault(pitcher_id, identity)
 
-    # Fetch each missing batter once. Also fetch a reused batter only when a new
-    # direct BvP process pair requires the underlying pitch-level history.
     bvp_batters = {int(key.split(":", 1)[0]) for key in missing_matchup_keys}
     batter_fetch_ids = sorted(set(missing_batters) | bvp_batters)
     for batter_id in batter_fetch_ids:
@@ -246,9 +252,9 @@ def refresh_advanced_profiles_incremental(
             "new_date_requires_new_partition": True,
         },
         "paths": {
-            "batter_profiles": str(batter_path.relative_to(base.REPO_ROOT)),
-            "pitcher_profiles": str(pitcher_path.relative_to(base.REPO_ROOT)),
-            "bvp_process": str(matchup_path.relative_to(base.REPO_ROOT)),
+            "batter_profiles": _manifest_path(batter_path),
+            "pitcher_profiles": _manifest_path(pitcher_path),
+            "bvp_process": _manifest_path(matchup_path),
         },
         "freshness_policy": {
             "max_profile_age_days": base.MAX_PROFILE_AGE_DAYS,
