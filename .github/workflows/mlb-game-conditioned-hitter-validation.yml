@@ -9,6 +9,7 @@ on:
       - 'sports/mlb/advanced/schema.py'
       - 'sports/mlb/advanced/sequential_pa_model.py'
       - 'sports/mlb/scripts/fit_game_conditioned_hitter_moe.py'
+      - 'sports/mlb/scripts/run_sequential_pa_hitter_model.py'
       - 'sports/mlb/tests/test_game_conditioned_hitter_moe.py'
       - '.github/workflows/mlb-game-conditioned-hitter-validation.yml'
   workflow_dispatch:
