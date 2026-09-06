@@ -11,6 +11,7 @@ if str(Path(__file__).resolve().parents[3]) not in sys.path:
 
 from sports.mlb.advanced.data_layer import DEFAULT_ADVANCED_ROOT
 from sports.mlb.advanced.integration import enrich_pool_with_sequential_pa
+from sports.mlb.advanced.production_refresh import refresh_advanced_profiles_incremental
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_JSON = REPO_ROOT / "artifacts" / "mlb_sequential_pa_model_validation.json"
@@ -33,6 +34,7 @@ def parse_args() -> argparse.Namespace:
 
 def markdown(report: dict) -> str:
     manifest = report.get("advanced_manifest") or {}
+    source_status = manifest.get("source_status") or {}
     rows = report.get("rows") or []
     ready = [row for row in rows if row.get("status") in {"READY", "WEAK_SUPPORT"}]
     blocked = [row for row in rows if row.get("status") == "BLOCKED_DATA"]
@@ -50,9 +52,15 @@ def markdown(report: dict) -> str:
         "",
         f"Sources: `{', '.join(manifest.get('sources') or [])}`",
         "",
+        f"Baseball Savant / Statcast status: `{(source_status.get('baseball_savant_statcast') or {}).get('status', 'UNKNOWN')}`",
+        "",
+        f"FanGraphs status: `{(source_status.get('fangraphs') or {}).get('status', 'UNKNOWN')}`",
+        "",
+        f"Effective as-of date: `{manifest.get('effective_as_of_date')}`",
+        "",
         f"Profile coverage: {manifest.get('batter_profiles', 0)} batter profiles, {manifest.get('pitcher_profiles', 0)} pitcher profiles, {manifest.get('direct_matchups', 0)} direct BvP process profiles.",
         "",
-        "Raw Statcast data are cached in the GitHub Actions cache rather than committed as a large repository artifact. Every profile partition is dated and carries fetch/effective timestamps.",
+        "Raw Statcast data are cached by pybaseball and processed same-as-of partitions are cached in GitHub Actions rather than committed as a large repository artifact. Every profile partition is dated and carries source, fetch, and effective timestamps.",
         "",
         "## Architecture",
         "",
@@ -107,11 +115,17 @@ def markdown(report: dict) -> str:
 
 def main() -> int:
     args = parse_args()
+    if not args.no_refresh:
+        refresh_advanced_profiles_incremental(
+            pool_csv=args.pool_csv,
+            run_date=args.run_date,
+            advanced_root=args.advanced_root,
+        )
     report = enrich_pool_with_sequential_pa(
         pool_csv=args.pool_csv,
         run_date=args.run_date,
         advanced_root=args.advanced_root,
-        refresh_data=not args.no_refresh,
+        refresh_data=False,
         trials=args.trials,
     )
     args.report_json.parent.mkdir(parents=True, exist_ok=True)
@@ -126,6 +140,8 @@ def main() -> int:
         "publication_authority": False,
         "authority": report.get("authority"),
         "data_freshness_status": report.get("data_freshness_status"),
+        "source_status": (report.get("advanced_manifest") or {}).get("source_status") or {},
+        "effective_as_of_date": (report.get("advanced_manifest") or {}).get("effective_as_of_date"),
         "evaluated_h_tb_rows": report.get("evaluated_h_tb_rows"),
         "modeled_rows": report.get("modeled_rows"),
         "blocked_rows": report.get("blocked_rows"),
@@ -138,7 +154,11 @@ def main() -> int:
         ],
     }
     args.web_json.write_text(json.dumps(web, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(json.dumps({key: report.get(key) for key in ("run_date", "model_version", "evaluated_h_tb_rows", "modeled_rows", "blocked_rows", "data_freshness_status")}, indent=2))
+    print(json.dumps({
+        **{key: report.get(key) for key in ("run_date", "model_version", "evaluated_h_tb_rows", "modeled_rows", "blocked_rows", "data_freshness_status")},
+        "source_status": web["source_status"],
+        "effective_as_of_date": web["effective_as_of_date"],
+    }, indent=2))
     return 0
 
 
