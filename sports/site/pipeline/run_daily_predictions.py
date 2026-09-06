@@ -978,12 +978,12 @@ def run_mlb(args: argparse.Namespace, output_dir: Path) -> tuple[Path, Path, Pat
         sequential_run_date = resolve_effective_run_date(args.run_date).isoformat()
         try:
             run_step(
-                "Refresh MLB Advanced H/TB Data + Sequential PA Model",
+                "Refresh MLB Advanced H/TB/HR Data + Game-Conditioned Sequential PA Model",
                 [args.python, str(MLB_SEQUENTIAL_PA_ENRICHER), "--pool-csv", str(pool_csv), "--run-date", sequential_run_date],
             )
         except Exception as exc:
             print(
-                "[warning] MLB sequential-PA advanced model unavailable; H/TB remains on the existing calibrated fallback. "
+                "[warning] MLB sequential-PA advanced model unavailable; H/TB/HR remains on the existing calibrated fallback. "
                 f"{format_step_failure(exc)}"
             )
 

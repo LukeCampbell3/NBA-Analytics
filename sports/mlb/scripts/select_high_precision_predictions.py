@@ -1647,7 +1647,12 @@ def build_candidate_for_direction(
     # model has negative authority only: it may lower/veto legacy confidence,
     # never increase it.
     sequential_status = str(row.get("Sequential_PA_Status", "")).strip().upper()
-    if target in {"H", "TB"} and direction == "OVER" and sequential_status == "READY":
+    sequential_authority = str(row.get("Sequential_PA_Calibration_Status", "")).strip().upper()
+    sequential_authorized = sequential_authority in {
+        "DIAGNOSTICALLY_VALIDATED_NEGATIVE_AUTHORITY_ONLY",
+        "PROMOTED_RESIDUAL_POSITIVE_AND_NEGATIVE_AUTHORITY",
+    }
+    if target in {"H", "TB", "HR"} and direction == "OVER" and sequential_status == "READY" and sequential_authorized:
         sequential_raw = to_float(row.get("Sequential_PA_Raw_Probability"), default=float("nan"))
         sequential_calibrated = to_float(row.get("Sequential_PA_Calibrated_Probability"), default=float("nan"))
         sequential_usable = to_float(row.get("Sequential_PA_Usable_Probability"), default=float("nan"))
@@ -1657,14 +1662,18 @@ def build_candidate_for_direction(
             model_hit_probability = sequential_raw
             model_graded_hit_rate = sequential_raw
             push_probability = 0.0
-            calibrated_hit_probability = min(
-                legacy_calibrated_probability,
-                sequential_calibrated,
-                sequential_usable,
-            )
-            validated_graded_hit_rate = min(legacy_graded_probability, sequential_usable)
-            row["Probability_Model_Version"] = str(row.get("Sequential_PA_Model_Version") or "sequential_pa_contact_model_v1")
-            row["Probability_Authority"] = "NEGATIVE_AUTHORITY_UNTIL_INDEPENDENT_ADVANCED_MODEL_CALIBRATION"
+            if sequential_authority == "PROMOTED_RESIDUAL_POSITIVE_AND_NEGATIVE_AUTHORITY":
+                calibrated_hit_probability = min(MAX_CALIBRATED_PROBABILITY, sequential_usable)
+                validated_graded_hit_rate = min(MAX_CALIBRATED_PROBABILITY, sequential_usable)
+            else:
+                calibrated_hit_probability = min(
+                    legacy_calibrated_probability,
+                    sequential_calibrated,
+                    sequential_usable,
+                )
+                validated_graded_hit_rate = min(legacy_graded_probability, sequential_usable)
+            row["Probability_Model_Version"] = str(row.get("Sequential_PA_Model_Version") or "game_conditioned_hitter_moe_v2")
+            row["Probability_Authority"] = sequential_authority
     (
         historical_market_availability_key,
         historical_market_availability_rate,
@@ -1948,10 +1957,15 @@ def load_candidates(
                     candidate.winner_signature_model_status,
                     candidate.winner_signature_model_support,
                 ) = apply_winner_signature_model(candidate, winner_signature_model)
+                sequential_authority = str(candidate.raw.get("Sequential_PA_Calibration_Status", "")).strip().upper()
                 sequential_ready = (
-                    candidate.target in {"H", "TB"}
+                    candidate.target in {"H", "TB", "HR"}
                     and candidate.direction == "OVER"
                     and str(candidate.raw.get("Sequential_PA_Status", "")).strip().upper() == "READY"
+                    and sequential_authority in {
+                        "DIAGNOSTICALLY_VALIDATED_NEGATIVE_AUTHORITY_ONLY",
+                        "PROMOTED_RESIDUAL_POSITIVE_AND_NEGATIVE_AUTHORITY",
+                    }
                 )
                 sequential_usable = to_float(candidate.raw.get("Sequential_PA_Usable_Probability"), default=float("nan"))
                 if sequential_ready and math.isfinite(sequential_usable) and 0.0 <= sequential_usable <= 1.0:
@@ -1967,7 +1981,11 @@ def load_candidates(
                     candidate.hit_probability_calibration_support = int(
                         1000 * clamp01(to_float(candidate.raw.get("Sequential_PA_Support"), default=0.0))
                     )
-                    candidate.final_hit_probability = min(candidate.calibrated_hit_probability, sequential_usable)
+                    candidate.final_hit_probability = (
+                        sequential_usable
+                        if sequential_authority == "PROMOTED_RESIDUAL_POSITIVE_AND_NEGATIVE_AUTHORITY"
+                        else min(candidate.calibrated_hit_probability, sequential_usable)
+                    )
                 else:
                     (
                         candidate.historically_calibrated_hit_probability,
