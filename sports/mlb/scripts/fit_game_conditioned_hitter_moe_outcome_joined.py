@@ -53,6 +53,22 @@ def _mask_current_game(row: pd.Series) -> pd.Series:
     return masked
 
 
+def _sort_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    frame = frame.copy()
+    frame["_date"] = pd.to_datetime(frame.get("Date"), errors="coerce")
+    if "Game_Index" in frame.columns:
+        frame["_game_index_sort"] = pd.to_numeric(frame["Game_Index"], errors="coerce").fillna(-1)
+    else:
+        frame["_game_index_sort"] = -1
+    if "Game_ID" not in frame.columns:
+        frame["Game_ID"] = ""
+    return (
+        frame.loc[frame["_date"].notna()]
+        .sort_values(["_date", "_game_index_sort", "Game_ID"], kind="mergesort")
+        .reset_index(drop=True)
+    )
+
+
 def _candidate_rank(date: str, game_id: str, player_id: int) -> str:
     return hashlib.sha256(f"{date}|{game_id}|{player_id}".encode("utf-8")).hexdigest()
 
@@ -69,14 +85,16 @@ def _discover_candidates(
     for path in sorted(data_root.glob(f"*/{season}_processed_processed.csv")):
         stats["files_seen"] += 1
         try:
-            frame = pd.read_csv(path, usecols=lambda column: column in {"Date", "Player", "Player_MLBAM_ID", "Player_Type", "Game_ID"})
+            frame = pd.read_csv(
+                path,
+                usecols=lambda column: column in {"Date", "Player", "Player_MLBAM_ID", "Player_Type", "Game_ID", "Game_Index"},
+            )
         except Exception:
             continue
         if frame.empty or str(frame.iloc[0].get("Player_Type") or "").strip().lower() != "hitter":
             continue
         stats["hitter_files"] += 1
-        frame["_date"] = pd.to_datetime(frame.get("Date"), errors="coerce")
-        frame = frame.loc[frame["_date"].notna()].sort_values("_date").reset_index(drop=True)
+        frame = _sort_frame(frame)
         if len(frame) <= min_history:
             continue
         fallback_player_id = stats["hitter_files"]
@@ -130,13 +148,17 @@ def _collect_joined_examples(
             frame = pd.read_csv(path)
         except Exception:
             continue
-        frame["_date"] = pd.to_datetime(frame.get("Date"), errors="coerce")
-        frame = frame.loc[frame["_date"].notna()].sort_values("_date").reset_index(drop=True)
+        frame = _sort_frame(frame)
         for candidate in sorted(selected, key=lambda item: item["idx"]):
             idx = int(candidate["idx"])
             if idx >= len(frame):
+                identity_mismatches += 1
                 continue
             raw_row = frame.iloc[idx]
+            raw_game_id = str(raw_row.get("Game_ID") or "").strip()
+            if raw_game_id != str(candidate["game_id"]):
+                identity_mismatches += 1
+                continue
             label = lookup_outcome(
                 ledger,
                 season=season,
@@ -147,8 +169,8 @@ def _collect_joined_examples(
                 identity_mismatches += 1
                 continue
 
-            # This is the critical boundary: history may contain prior outcomes,
-            # but the current game row is stripped of realized/target-derived data.
+            # Prior games may inform form. The current game is stripped of all
+            # realized and target-derived data before any feature is constructed.
             row = _mask_current_game(raw_row)
             history = frame.iloc[:idx]
             as_of_date = candidate["date"]
@@ -159,7 +181,7 @@ def _collect_joined_examples(
             batting_order = int(base.finite(row.get("Batting_Order"), 6) or 6)
             team_runs = base.finite(row.get("Team_Expected_Runs"), base.finite(row.get("Expected_Team_Runs")))
             context = AdvancedCandidateContext(
-                game_id=str(candidate["game_id"]),
+                game_id=raw_game_id,
                 run_date=as_of_date,
                 batter=batter,
                 pitcher=pitcher,
@@ -187,13 +209,13 @@ def _collect_joined_examples(
                 if outcome not in {0, 1} or actual is None:
                     continue
                 sequential = simulate_hitter_market(context, target=target, market_line=line, trials=trials)
-                # Do not use current-row market_gap/rolling fields. The historical
-                # diagnostic prior is the strict-history structural model only.
+                # The historical prior is reconstructed from strictly earlier
+                # player history plus current non-outcome game context only.
                 prior = max(1e-5, min(1.0 - 1e-5, float(sequential.raw_structural_probability)))
                 state = build_expert_state(context, sequential, target=target, pitch_compatibility_score=0.0)
                 examples.append({
                     "date": as_of_date,
-                    "game_id": str(candidate["game_id"]),
+                    "game_id": raw_game_id,
                     "player_id": player_id,
                     "player": player_name,
                     "target": target,
@@ -222,13 +244,15 @@ def _collect_joined_examples(
         "joined_target_examples": len(examples),
         "identity_mismatches": identity_mismatches,
         "join_key": ["season", "game_id", "player_id"],
+        "row_order_key": ["Date", "Game_Index", "Game_ID"],
+        "game_id_equality_required_before_feature_build": True,
         "outcomes_read_from_feature_row": False,
         "current_game_realized_columns_masked": True,
         "current_game_target_derived_columns_masked": True,
         "prior_source": "STRICT_HISTORY_SEQUENTIAL_STRUCTURAL",
         "current_row_market_gap_or_rolling_used_in_prior": False,
     }
-    return sorted(examples, key=lambda row: (row["date"], row["player"], row["target"])), join
+    return sorted(examples, key=lambda row: (row["date"], row["game_id"], row["player"], row["target"])), join
 
 
 def _markdown(payload: dict[str, Any]) -> str:
@@ -240,7 +264,7 @@ def _markdown(payload: dict[str, Any]) -> str:
         "",
         f"Sampled hitter-games: **{join['sampled_hitter_games']:,}**; joined: **{join['joined_hitter_games']:,}**; target examples: **{join['joined_target_examples']:,}**.",
         "",
-        "The current game outcome is resolved only through the separate hash-verified outcome ledger. Current-game H/TB/HR/PA/AB and target-derived rolling/gap fields are masked before feature construction. Historical prior outcomes remain available only through strictly earlier games.",
+        "The current game outcome is resolved only through the separate hash-verified outcome ledger. Current-game H/TB/HR/PA/AB and target-derived rolling/gap fields are masked before feature construction. Historical prior outcomes remain available only through strictly earlier games. Doubleheaders are ordered by Date + Game_Index + Game_ID and require exact Game_ID equality before feature construction.",
         "",
         "| Target | Fit rows | OOF rows | Folds pass | Prior Brier | Candidate | Brier gain | Prior LL | Candidate | LL gain | Diagnostic NR |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|",
