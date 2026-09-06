@@ -5,7 +5,7 @@ on:
     branches: [static-deployment]
     paths:
       - '.github/workflows/mlb-sequential-pa-bootstrap.yml'
-      - 'sports/mlb/scripts/apply_sequential_pa_source_patch_v2.py'
+      - 'sports/mlb/scripts/apply_sequential_pa_source_patch_v3.py'
   workflow_dispatch:
 
 concurrency:
@@ -48,10 +48,10 @@ jobs:
           python -m pip install -r sports/mlb/requirements-same-game.txt
           python -m pip install -r sports/mlb/requirements-advanced.txt
 
-      - name: Apply production wiring
+      - name: Apply production source wiring
         run: |
           set -euo pipefail
-          python sports/mlb/scripts/apply_sequential_pa_source_patch_v2.py
+          python sports/mlb/scripts/apply_sequential_pa_source_patch_v3.py
           git diff --check
           python -m compileall -q \
             sports/mlb/advanced \
@@ -75,22 +75,6 @@ jobs:
             tests/test_run_daily_predictions.py \
             -q
 
-      - name: Validate workflow YAML can be parsed
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          import yaml
-          for name in (
-              ".github/workflows/mlb-predictions.yml",
-              ".github/workflows/mlb-frontend-consistency.yml",
-              ".github/workflows/mlb-sequential-pa-bootstrap.yml",
-          ):
-              value = yaml.safe_load(Path(name).read_text(encoding="utf-8"))
-              assert isinstance(value, dict), name
-          print("workflow YAML parsed")
-          PY
-
       - name: Commit wired production sources
         id: staged
         run: |
@@ -100,9 +84,7 @@ jobs:
             sports/site/pipeline/run_daily_predictions.py \
             sports/mlb/scripts/export_web_prediction_payload.py \
             sports/mlb/unified/adapters.py \
-            sports/mlb/scripts/run_pinned_v2_1_daily_shadow.py \
-            .github/workflows/mlb-predictions.yml \
-            .github/workflows/mlb-frontend-consistency.yml
+            sports/mlb/scripts/run_pinned_v2_1_daily_shadow.py
           if git diff --cached --quiet; then
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
           else
@@ -131,4 +113,5 @@ jobs:
             echo "- Current authority: negative-only pending independent calibration"
             echo "- Legacy H/TB remains fallback when advanced data is unavailable/weak"
             echo "- Frozen V2.1 policy receives current canonical adapter/contract plumbing"
+            echo "- Workflow definitions are not pushed by GITHUB_TOKEN; daily dependency is carried by requirements-same-game.txt"
           } >> "$GITHUB_STEP_SUMMARY"
