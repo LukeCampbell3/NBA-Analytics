@@ -83,10 +83,8 @@ def expected_pa_distribution(
 ) -> dict[int, float]:
     """Pregame PA distribution, separated from per-PA quality.
 
-    This is intentionally conservative and transparent. Batting order drives
-    the largest opportunity shift; team scoring environment adjusts only the
-    opportunity count, never per-contact hit quality. A supplied recent PA
-    share acts as a bounded secondary signal.
+    Batting order drives the largest opportunity shift; team scoring environment
+    adjusts only opportunity count, never per-contact hit quality.
     """
     order = int(_clip(float(batting_order or 6), 1.0, 9.0))
     order_bonus = (5.0 - order) * 0.095
@@ -119,9 +117,6 @@ def pa_event_probabilities(
     hbp = matchup_rate(batter.hbp_rate, pitcher.hbp_rate, LEAGUE_HBP_RATE, shrink=0.35 + 0.45 * support)
     hr = matchup_rate(batter.hr_rate, pitcher.hr_rate, LEAGUE_HR_RATE, shrink=0.40 + 0.55 * support)
 
-    # Later trips through the order generally shift a small amount of mass away
-    # from K and toward damage. This is a bounded state effect, not a claim of a
-    # universal fixed TTO coefficient.
     tto = max(1, int(times_through_order))
     if tto >= 2:
         k -= 0.008 * (tto - 1)
@@ -138,8 +133,6 @@ def pa_event_probabilities(
         hbp = (1.0 - w) * hbp + w * direct_hbp
         hr = (1.0 - w) * hr + w * direct_hr
 
-    # Once a reliever is likely, shrink pitcher-specific rates toward league
-    # average rather than fabricating a named bullpen arm.
     r = _clip(reliever_blend, 0.0, 1.0)
     k = (1.0 - r) * k + r * LEAGUE_K_RATE
     bb = (1.0 - r) * bb + r * LEAGUE_BB_RATE
@@ -177,8 +170,6 @@ def contact_outcome_probabilities(
         w = _clip(direct_matchup.shrinkage_weight, 0.0, 0.35)
         p_hit = (1.0 - w) * p_hit + w * float(direct_matchup.xba_contact)
 
-    # xBA is an average-context expected result. Defense and park are only
-    # zero-centered residuals around it, never a second full conversion model.
     park_delta = _clip((float(park_factor) - 1.0) * 0.018, -0.025, 0.025)
     p_hit = _clip(p_hit + _clip(defense_residual, -0.05, 0.05) + park_delta, 0.08, 0.72)
 
@@ -192,8 +183,6 @@ def contact_outcome_probabilities(
     )
     shares /= shares.sum()
 
-    # Use xSLG disagreement to tilt the non-HR hit mix toward or away from
-    # extra bases without changing the hit probability itself.
     bxslg = batter.xslg if batter.xslg is not None else LEAGUE_CONTACT_XSLG
     pxslg = pitcher.xslg_allowed if pitcher.xslg_allowed is not None else LEAGUE_CONTACT_XSLG
     xslg = _weighted_optional(bxslg, pxslg, 0.58, 0.42, LEAGUE_CONTACT_XSLG)
@@ -211,10 +200,6 @@ def contact_outcome_probabilities(
 
 
 def _starter_reliever_blend(pitcher: PitcherProcessProfile, pa_index: int) -> tuple[int, float]:
-    # Batter's first two trips are overwhelmingly starter-facing when the
-    # probable starter has normal projected workload. After that, gradually
-    # transfer probability mass to a league-average bullpen state instead of
-    # pretending the same pitcher faces every PA.
     projected_ip = pitcher.projected_ip if pitcher.projected_ip is not None else 5.4
     tto = 1 if pa_index <= 1 else 2 if pa_index <= 2 else 3
     if pa_index <= 2:
@@ -285,6 +270,10 @@ def simulate_hitter_market(
     trials: int = DEFAULT_TRIALS,
     pa_share: float | None = None,
 ) -> SequentialPAResult:
+    target_key = str(target).upper()
+    if target_key not in {"H", "TB", "HR"}:
+        raise ValueError(f"unsupported hitter market target: {target_key}")
+
     trials = int(_clip(int(trials), MIN_TRIALS, MAX_TRIALS))
     rng = np.random.default_rng(_seed(context))
     pa_dist = expected_pa_distribution(
@@ -371,16 +360,13 @@ def simulate_hitter_market(
     p_hr = float(np.mean(home_runs >= 1))
     p_h_over = 1.0 - p_h0
     p_tb_over = p_tb2
-    target_key = str(target).upper()
-    raw = _market_clear_from_totals(hits if target_key == "H" else total_bases, market_line, side)
+
+    target_values = {"H": hits, "TB": total_bases, "HR": home_runs}
+    raw = _market_clear_from_totals(target_values[target_key], market_line, side)
     mc_se = math.sqrt(max(1e-12, raw * (1.0 - raw) / trials))
     parts = uncertainty_components(context, mc_standard_error=mc_se)
     uncertainty = aggregate_uncertainty(parts)
 
-    # v1 has no independently certified recalibrator yet. Keep calibrated equal
-    # to raw and impose only a negative-authority uncertainty haircut. This
-    # prevents the new model from acquiring false certainty before prospective
-    # calibration evidence exists.
     calibrated = raw
     haircut = min(0.12, 0.16 * uncertainty)
     usable = _clip(calibrated - haircut, 0.01, 0.99)
@@ -389,8 +375,9 @@ def simulate_hitter_market(
     support_status = "SUPPORTED" if support >= 0.55 and context.data_freshness_status == "FRESH" else "WEAK"
 
     market_clear = {
-        f"H|OVER|0.5": p_h_over,
-        f"TB|OVER|1.5": p_tb_over,
+        "H|OVER|0.5": p_h_over,
+        "TB|OVER|1.5": p_tb_over,
+        "HR|OVER|0.5": p_hr,
         f"{target_key}|{str(side).upper()}|{float(market_line):.1f}": raw,
     }
     return SequentialPAResult(
