@@ -1,0 +1,744 @@
+{
+  "architecture": "strict_history_structural_prior_plus_game_conditioned_residual_moe",
+  "controls": {
+    "folds": 6,
+    "max_games": 6000,
+    "min_history": 20,
+    "min_train_rows": 300,
+    "ridge": 1.5,
+    "trials": 300
+  },
+  "dates": 147,
+  "evidence_class": "OUTCOME_JOINED_STRICT_HISTORY_DIAGNOSTIC_NOT_CERTIFICATION",
+  "games": 6000,
+  "model_version": "game_conditioned_hitter_moe_v2",
+  "negative_authority_allowed": false,
+  "outcome_join": {
+    "current_game_realized_columns_masked": true,
+    "current_game_target_derived_columns_masked": true,
+    "current_row_market_gap_or_rolling_used_in_prior": false,
+    "discovery": {
+      "eligible_rows": 36105,
+      "files_seen": 1190,
+      "hitter_files": 680,
+      "ledger_matches": 34835,
+      "missing_outcome": 1270
+    },
+    "identity_mismatches": 0,
+    "join_key": [
+      "season",
+      "game_id",
+      "player_id"
+    ],
+    "joined_hitter_games": 6000,
+    "joined_target_examples": 18000,
+    "outcome_evidence_class": "HISTORICAL_REALIZED_OUTCOME_LABEL_NOT_PREGAME_FEATURE_EVIDENCE",
+    "outcome_ledger_rows": 47297,
+    "outcome_schema_version": "mlb_game_conditioned_historical_outcomes_v1",
+    "outcomes_read_from_feature_row": false,
+    "prior_source": "STRICT_HISTORY_SEQUENTIAL_STRUCTURAL",
+    "sampled_hitter_games": 6000
+  },
+  "players": 514,
+  "positive_authority": false,
+  "promotion_rule": "Outcome-joined historical lift is diagnostic. Production authority remains fail-closed until exact snapshot-backed train/serve parity and certification thresholds pass.",
+  "rows": 18000,
+  "schema_version": "mlb_game_conditioned_hitter_moe_v2",
+  "season": 2026,
+  "statistical_gate_passed": false,
+  "targets": {
+    "H": {
+      "coefficients": {
+        "bullpen_transition": -0.04063648152495986,
+        "contact_quality": -0.07913943212117266,
+        "defense_conversion": 0.0,
+        "pa_opportunity": 0.07505252066450589,
+        "power_tb": 0.005207612067579977,
+        "strikeout_contact": 0.001837622819145118
+      },
+      "feature_means": {
+        "bullpen_transition": -0.07496424389232444,
+        "contact_quality": 0.13831450948190804,
+        "defense_conversion": 0.0,
+        "pa_opportunity": -0.03947606142381658,
+        "power_tb": 0.06961107323315338,
+        "strikeout_contact": 0.10381704879201387
+      },
+      "feature_scales": {
+        "bullpen_transition": 0.3169827146333512,
+        "contact_quality": 0.1554631177773394,
+        "defense_conversion": 1.0,
+        "pa_opportunity": 0.25186349291195576,
+        "power_tb": 0.09030015228962715,
+        "strikeout_contact": 0.3145462275194304
+      },
+      "intercept": -0.3447644215473822,
+      "positive_authority": false,
+      "prior_legacy_weight": 0.72,
+      "validation": {
+        "brier_gain": 0.0046973427761929365,
+        "candidate_brier": 0.24383924504867077,
+        "candidate_ece": 0.03855802155285691,
+        "candidate_improvement_gate_passed": true,
+        "candidate_log_loss": 0.6810838237949558,
+        "diagnostic_non_regression_gate_passed": false,
+        "fit_rows": 6000,
+        "fold_count": 6,
+        "fold_pass_rate": 1.0,
+        "folds": [
+          {
+            "both_improved": true,
+            "candidate_brier": 0.24616210272727346,
+            "candidate_log_loss": 0.6858237309647814,
+            "fold": 1,
+            "prior_brier": 0.25181426243575417,
+            "prior_log_loss": 0.6983175234859684,
+            "train_rows": 313,
+            "validation_end": "2026-05-07",
+            "validation_rows": 895,
+            "validation_start": "2026-04-16"
+          },
+          {
+            "both_improved": true,
+            "candidate_brier": 0.2462413291577222,
+            "candidate_log_loss": 0.6862361808562643,
+            "fold": 2,
+            "prior_brier": 0.2523937932113821,
+            "prior_log_loss": 0.6997380038195765,
+            "train_rows": 1208,
+            "validation_end": "2026-05-29",
+            "validation_rows": 984,
+            "validation_start": "2026-05-08"
+          },
+          {
+            "both_improved": true,
+            "candidate_brier": 0.23792563999860886,
+            "candidate_log_loss": 0.6687648782096695,
+            "fold": 3,
+            "prior_brier": 0.24047898106406082,
+            "prior_log_loss": 0.6746752236898343,
+            "train_rows": 2192,
+            "validation_end": "2026-06-20",
+            "validation_rows": 921,
+            "validation_start": "2026-05-30"
+          },
+          {
+            "both_improved": true,
+            "candidate_brier": 0.2439702164620762,
+            "candidate_log_loss": 0.681336122230158,
+            "fold": 4,
+            "prior_brier": 0.2480510994700687,
+            "prior_log_loss": 0.6905212796866497,
+            "train_rows": 3113,
+            "validation_end": "2026-07-12",
+            "validation_rows": 1019,
+            "validation_start": "2026-06-21"
+          },
+          {
+            "both_improved": true,
+            "candidate_brier": 0.24796132156669815,
+            "candidate_log_loss": 0.6894742068368738,
+            "fold": 5,
+            "prior_brier": 0.2539151485714286,
+            "prior_log_loss": 0.7024921667324259,
+            "train_rows": 4132,
+            "validation_end": "2026-08-05",
+            "validation_rows": 938,
+            "validation_start": "2026-07-14"
+          },
+          {
+            "both_improved": true,
+            "candidate_brier": 0.24061758292101632,
+            "candidate_log_loss": 0.6745315025260715,
+            "fold": 6,
+            "prior_brier": 0.24438784546236558,
+            "prior_log_loss": 0.6831462171302529,
+            "train_rows": 5070,
+            "validation_end": "2026-08-27",
+            "validation_rows": 930,
+            "validation_start": "2026-08-06"
+          }
+        ],
+        "folds_both_improved": 6,
+        "logloss_gain": 0.01046129289637332,
+        "negative_authority_allowed": false,
+        "negative_authority_blocker": "TRAIN_SERVE_FEATURE_PARITY_NOT_PROVEN",
+        "positive_authority_blocker": "EXACT_POINT_IN_TIME_CERTIFICATION_AND_FEATURE_PARITY_REQUIRED",
+        "prior_brier": 0.2485365878248637,
+        "prior_ece": 0.07958790223316338,
+        "prior_log_loss": 0.6915451166913291,
+        "prior_sources": {
+          "STRICT_HISTORY_SEQUENTIAL_STRUCTURAL": 6000
+        },
+        "production_brier": 0.2430198613170012,
+        "production_ece": 0.026871263152232157,
+        "production_log_loss": 0.6792760925021685,
+        "production_non_regression_gate_passed": false,
+        "production_probability_non_regression": true,
+        "selection_non_regression": {
+          "passed": false,
+          "rank_checks": [
+            {
+              "count": 569,
+              "non_regressive": true,
+              "prior_hit_rate": 0.632688927943761,
+              "production_hit_rate": 0.6414762741652021,
+              "top_fraction": 0.1
+            },
+            {
+              "count": 1138,
+              "non_regressive": true,
+              "prior_hit_rate": 0.6221441124780316,
+              "production_hit_rate": 0.6309314586994728,
+              "top_fraction": 0.2
+            },
+            {
+              "count": 1707,
+              "non_regressive": false,
+              "prior_hit_rate": 0.6215582893966022,
+              "production_hit_rate": 0.6180433509080258,
+              "top_fraction": 0.3
+            }
+          ],
+          "status": "FAIL",
+          "supported_threshold_count": 5,
+          "threshold_checks": [
+            {
+              "non_regressive": true,
+              "prior_hit_rate": 0.5827246165084002,
+              "prior_selected": 5476,
+              "production_hit_rate": 0.5937971139349558,
+              "production_selected": 4643,
+              "supported": true,
+              "threshold": 0.55,
+              "vetoed": 833,
+              "vetoed_hit_rate": 0.5210084033613446
+            },
+            {
+              "non_regressive": true,
+              "prior_hit_rate": 0.5875388198757764,
+              "prior_selected": 5152,
+              "production_hit_rate": 0.6025507548152004,
+              "production_selected": 3842,
+              "supported": true,
+              "threshold": 0.58,
+              "vetoed": 1310,
+              "vetoed_hit_rate": 0.5435114503816794
+            },
+            {
+              "non_regressive": true,
+              "prior_hit_rate": 0.590241885466198,
+              "prior_selected": 4837,
+              "production_hit_rate": 0.6102709514807814,
+              "production_selected": 3174,
+              "supported": true,
+              "threshold": 0.6,
+              "vetoed": 1663,
+              "vetoed_hit_rate": 0.5520144317498497
+            },
+            {
+              "non_regressive": true,
+              "prior_hit_rate": 0.6091781643671266,
+              "prior_selected": 3334,
+              "production_hit_rate": 0.6287822878228783,
+              "production_selected": 1355,
+              "supported": true,
+              "threshold": 0.65,
+              "vetoed": 1979,
+              "vetoed_hit_rate": 0.595755432036382
+            },
+            {
+              "non_regressive": false,
+              "prior_hit_rate": 0.6259659969088099,
+              "prior_selected": 1294,
+              "production_hit_rate": 0.6244343891402715,
+              "production_selected": 221,
+              "supported": true,
+              "threshold": 0.7,
+              "vetoed": 1073,
+              "vetoed_hit_rate": 0.6262814538676608
+            }
+          ]
+        },
+        "statistical_gate_passed": false,
+        "status": "CANDIDATE_IMPROVED_BUT_DIAGNOSTIC_NON_REGRESSION_FAILED",
+        "validation_rows": 5687
+      }
+    },
+    "HR": {
+      "coefficients": {
+        "bullpen_transition": -0.027695224007178488,
+        "contact_quality": -0.027574069306816756,
+        "defense_conversion": 0.0,
+        "pa_opportunity": 0.10933411371723394,
+        "power_tb": -0.04459094258058665,
+        "strikeout_contact": 0.0015437943743344456
+      },
+      "feature_means": {
+        "bullpen_transition": -0.07496424389232444,
+        "contact_quality": 0.10499878821741174,
+        "defense_conversion": 0.0,
+        "pa_opportunity": -0.03947606142381658,
+        "power_tb": 0.15212993137670322,
+        "strikeout_contact": 0.10381704879201387
+      },
+      "feature_scales": {
+        "bullpen_transition": 0.3169827146333512,
+        "contact_quality": 0.11919017890329593,
+        "defense_conversion": 1.0,
+        "pa_opportunity": 0.25186349291195576,
+        "power_tb": 0.19025746583636954,
+        "strikeout_contact": 0.3145462275194304
+      },
+      "intercept": -0.19923997163769985,
+      "positive_authority": false,
+      "prior_legacy_weight": 0.72,
+      "validation": {
+        "brier_gain": 0.0003575279166363049,
+        "candidate_brier": 0.09615982777177587,
+        "candidate_ece": 0.007563874499374044,
+        "candidate_improvement_gate_passed": false,
+        "candidate_log_loss": 0.3399277056208871,
+        "diagnostic_non_regression_gate_passed": false,
+        "fit_rows": 6000,
+        "fold_count": 6,
+        "fold_pass_rate": 0.6666666666666666,
+        "folds": [
+          {
+            "both_improved": true,
+            "candidate_brier": 0.08969608624185858,
+            "candidate_log_loss": 0.3237970147871321,
+            "fold": 1,
+            "prior_brier": 0.09108207521787709,
+            "prior_log_loss": 0.32880538907570317,
+            "train_rows": 313,
+            "validation_end": "2026-05-07",
+            "validation_rows": 895,
+            "validation_start": "2026-04-16"
+          },
+          {
+            "both_improved": true,
+            "candidate_brier": 0.08663589563622615,
+            "candidate_log_loss": 0.3117369474554047,
+            "fold": 2,
+            "prior_brier": 0.08692458764227641,
+            "prior_log_loss": 0.31287358460935394,
+            "train_rows": 1208,
+            "validation_end": "2026-05-29",
+            "validation_rows": 984,
+            "validation_start": "2026-05-08"
+          },
+          {
+            "both_improved": false,
+            "candidate_brier": 0.10986452938904995,
+            "candidate_log_loss": 0.3762903104361017,
+            "fold": 3,
+            "prior_brier": 0.1095418087296417,
+            "prior_log_loss": 0.3747940500154493,
+            "train_rows": 2192,
+            "validation_end": "2026-06-20",
+            "validation_rows": 921,
+            "validation_start": "2026-05-30"
+          },
+          {
+            "both_improved": false,
+            "candidate_brier": 0.11348487469031202,
+            "candidate_log_loss": 0.388335431785421,
+            "fold": 4,
+            "prior_brier": 0.11346937232580961,
+            "prior_log_loss": 0.38756690430347235,
+            "train_rows": 3113,
+            "validation_end": "2026-07-12",
+            "validation_rows": 1019,
+            "validation_start": "2026-06-21"
+          },
+          {
+            "both_improved": true,
+            "candidate_brier": 0.08535566454466435,
+            "candidate_log_loss": 0.30954855856274355,
+            "fold": 5,
+            "prior_brier": 0.08583918541577824,
+            "prior_log_loss": 0.31200389463469214,
+            "train_rows": 4132,
+            "validation_end": "2026-08-05",
+            "validation_rows": 938,
+            "validation_start": "2026-07-14"
+          },
+          {
+            "both_improved": true,
+            "candidate_brier": 0.09079923637197995,
+            "candidate_log_loss": 0.3268684392500389,
+            "fold": 6,
+            "prior_brier": 0.09119515922580645,
+            "prior_log_loss": 0.3283908926220563,
+            "train_rows": 5070,
+            "validation_end": "2026-08-27",
+            "validation_rows": 930,
+            "validation_start": "2026-08-06"
+          }
+        ],
+        "folds_both_improved": 4,
+        "logloss_gain": 0.001258791536433046,
+        "negative_authority_allowed": false,
+        "negative_authority_blocker": "TRAIN_SERVE_FEATURE_PARITY_NOT_PROVEN",
+        "positive_authority_blocker": "EXACT_POINT_IN_TIME_CERTIFICATION_AND_FEATURE_PARITY_REQUIRED",
+        "prior_brier": 0.09651735568841217,
+        "prior_ece": 0.018657042377351846,
+        "prior_log_loss": 0.34118649715732013,
+        "prior_sources": {
+          "STRICT_HISTORY_SEQUENTIAL_STRUCTURAL": 6000
+        },
+        "production_brier": 0.09651735568841217,
+        "production_ece": 0.018657042377351846,
+        "production_log_loss": 0.34118649715732013,
+        "production_non_regression_gate_passed": false,
+        "production_probability_non_regression": true,
+        "selection_non_regression": {
+          "passed": true,
+          "rank_checks": [
+            {
+              "count": 569,
+              "non_regressive": true,
+              "prior_hit_rate": 0.15114235500878734,
+              "production_hit_rate": 0.15114235500878734,
+              "top_fraction": 0.1
+            },
+            {
+              "count": 1138,
+              "non_regressive": true,
+              "prior_hit_rate": 0.15817223198594024,
+              "production_hit_rate": 0.15817223198594024,
+              "top_fraction": 0.2
+            },
+            {
+              "count": 1707,
+              "non_regressive": true,
+              "prior_hit_rate": 0.1411833626244874,
+              "production_hit_rate": 0.1411833626244874,
+              "top_fraction": 0.3
+            }
+          ],
+          "status": "PASS",
+          "supported_threshold_count": 4,
+          "threshold_checks": [
+            {
+              "non_regressive": true,
+              "prior_hit_rate": 0.10870712401055409,
+              "prior_selected": 5685,
+              "production_hit_rate": 0.10870712401055409,
+              "production_selected": 5685,
+              "supported": true,
+              "threshold": 0.05,
+              "vetoed": 0,
+              "vetoed_hit_rate": null
+            },
+            {
+              "non_regressive": true,
+              "prior_hit_rate": 0.12211764705882353,
+              "prior_selected": 4250,
+              "production_hit_rate": 0.12211764705882353,
+              "production_selected": 4250,
+              "supported": true,
+              "threshold": 0.1,
+              "vetoed": 0,
+              "vetoed_hit_rate": null
+            },
+            {
+              "non_regressive": true,
+              "prior_hit_rate": 0.14741035856573706,
+              "prior_selected": 1506,
+              "production_hit_rate": 0.14741035856573706,
+              "production_selected": 1506,
+              "supported": true,
+              "threshold": 0.15,
+              "vetoed": 0,
+              "vetoed_hit_rate": null
+            },
+            {
+              "non_regressive": true,
+              "prior_hit_rate": 0.16591928251121077,
+              "prior_selected": 223,
+              "production_hit_rate": 0.16591928251121077,
+              "production_selected": 223,
+              "supported": true,
+              "threshold": 0.2,
+              "vetoed": 0,
+              "vetoed_hit_rate": null
+            },
+            {
+              "non_regressive": null,
+              "prior_hit_rate": 0.0,
+              "prior_selected": 1,
+              "production_hit_rate": 0.0,
+              "production_selected": 1,
+              "supported": false,
+              "threshold": 0.3,
+              "vetoed": 0,
+              "vetoed_hit_rate": null
+            }
+          ]
+        },
+        "statistical_gate_passed": false,
+        "status": "DID_NOT_CLEAR_DIAGNOSTIC_IMPROVEMENT_GATE",
+        "validation_rows": 5687
+      }
+    },
+    "TB": {
+      "coefficients": {
+        "bullpen_transition": -0.03728826005490299,
+        "contact_quality": -0.10192593901663004,
+        "defense_conversion": 0.0,
+        "pa_opportunity": 0.09798582309186266,
+        "power_tb": 0.030131748113342897,
+        "strikeout_contact": 0.005587054741264598
+      },
+      "feature_means": {
+        "bullpen_transition": -0.07496424389232444,
+        "contact_quality": 0.12403634322569525,
+        "defense_conversion": 0.0,
+        "pa_opportunity": -0.03947606142381658,
+        "power_tb": 0.12737427393363845,
+        "strikeout_contact": 0.10381704879201387
+      },
+      "feature_scales": {
+        "bullpen_transition": 0.3169827146333512,
+        "contact_quality": 0.1398680127545967,
+        "defense_conversion": 1.0,
+        "pa_opportunity": 0.25186349291195576,
+        "power_tb": 0.16024996492902027,
+        "strikeout_contact": 0.3145462275194304
+      },
+      "intercept": -0.33265374999223035,
+      "positive_authority": false,
+      "prior_legacy_weight": 0.72,
+      "validation": {
+        "brier_gain": 0.004667536474195377,
+        "candidate_brier": 0.2201985849747232,
+        "candidate_ece": 0.03507540785526674,
+        "candidate_improvement_gate_passed": true,
+        "candidate_log_loss": 0.6318552562761082,
+        "diagnostic_non_regression_gate_passed": false,
+        "fit_rows": 6000,
+        "fold_count": 6,
+        "fold_pass_rate": 1.0,
+        "folds": [
+          {
+            "both_improved": true,
+            "candidate_brier": 0.21782414693629687,
+            "candidate_log_loss": 0.6269711948186417,
+            "fold": 1,
+            "prior_brier": 0.22421572746368715,
+            "prior_log_loss": 0.6406643667738995,
+            "train_rows": 313,
+            "validation_end": "2026-05-07",
+            "validation_rows": 895,
+            "validation_start": "2026-04-16"
+          },
+          {
+            "both_improved": true,
+            "candidate_brier": 0.21294782390973208,
+            "candidate_log_loss": 0.6159813145456223,
+            "fold": 2,
+            "prior_brier": 0.21895960711382112,
+            "prior_log_loss": 0.6291935517031662,
+            "train_rows": 1208,
+            "validation_end": "2026-05-29",
+            "validation_rows": 984,
+            "validation_start": "2026-05-08"
+          },
+          {
+            "both_improved": true,
+            "candidate_brier": 0.2313960350589725,
+            "candidate_log_loss": 0.6557760228223978,
+            "fold": 3,
+            "prior_brier": 0.23279739652551576,
+            "prior_log_loss": 0.6582478494184059,
+            "train_rows": 2192,
+            "validation_end": "2026-06-20",
+            "validation_rows": 921,
+            "validation_start": "2026-05-30"
+          },
+          {
+            "both_improved": true,
+            "candidate_brier": 0.22063097443672394,
+            "candidate_log_loss": 0.632687016066047,
+            "fold": 4,
+            "prior_brier": 0.2245715906182532,
+            "prior_log_loss": 0.6410837890782565,
+            "train_rows": 3113,
+            "validation_end": "2026-07-12",
+            "validation_rows": 1019,
+            "validation_start": "2026-06-21"
+          },
+          {
+            "both_improved": true,
+            "candidate_brier": 0.2142265385387984,
+            "candidate_log_loss": 0.6194251346977574,
+            "fold": 5,
+            "prior_brier": 0.21964577714285716,
+            "prior_log_loss": 0.6311112145830274,
+            "train_rows": 4132,
+            "validation_end": "2026-08-05",
+            "validation_rows": 938,
+            "validation_start": "2026-07-14"
+          },
+          {
+            "both_improved": true,
+            "candidate_brier": 0.224615997985334,
+            "candidate_log_loss": 0.64128757723594,
+            "fold": 6,
+            "prior_brier": 0.2294749582795699,
+            "prior_log_loss": 0.6513872241913023,
+            "train_rows": 5070,
+            "validation_end": "2026-08-27",
+            "validation_rows": 930,
+            "validation_start": "2026-08-06"
+          }
+        ],
+        "folds_both_improved": 6,
+        "logloss_gain": 0.009924970785689213,
+        "negative_authority_allowed": false,
+        "negative_authority_blocker": "TRAIN_SERVE_FEATURE_PARITY_NOT_PROVEN",
+        "positive_authority_blocker": "EXACT_POINT_IN_TIME_CERTIFICATION_AND_FEATURE_PARITY_REQUIRED",
+        "prior_brier": 0.22486612144891857,
+        "prior_ece": 0.07467399331809389,
+        "prior_log_loss": 0.6417802270617974,
+        "prior_sources": {
+          "STRICT_HISTORY_SEQUENTIAL_STRUCTURAL": 6000
+        },
+        "production_brier": 0.21949084375309652,
+        "production_ece": 0.023309199062484225,
+        "production_log_loss": 0.6303425001597456,
+        "production_non_regression_gate_passed": false,
+        "production_probability_non_regression": true,
+        "selection_non_regression": {
+          "passed": false,
+          "rank_checks": [
+            {
+              "count": 569,
+              "non_regressive": true,
+              "prior_hit_rate": 0.38488576449912126,
+              "production_hit_rate": 0.39191564147627417,
+              "top_fraction": 0.1
+            },
+            {
+              "count": 1138,
+              "non_regressive": true,
+              "prior_hit_rate": 0.3804920913884007,
+              "production_hit_rate": 0.3875219683655536,
+              "top_fraction": 0.2
+            },
+            {
+              "count": 1707,
+              "non_regressive": true,
+              "prior_hit_rate": 0.37141183362624486,
+              "production_hit_rate": 0.37492677211482134,
+              "top_fraction": 0.3
+            }
+          ],
+          "status": "FAIL",
+          "supported_threshold_count": 2,
+          "threshold_checks": [
+            {
+              "non_regressive": true,
+              "prior_hit_rate": 0.3575757575757576,
+              "prior_selected": 3135,
+              "production_hit_rate": 0.3821138211382114,
+              "production_selected": 1353,
+              "supported": true,
+              "threshold": 0.4,
+              "vetoed": 1782,
+              "vetoed_hit_rate": 0.3389450056116723
+            },
+            {
+              "non_regressive": false,
+              "prior_hit_rate": 0.41025641025641024,
+              "prior_selected": 234,
+              "production_hit_rate": 0.375,
+              "production_selected": 16,
+              "supported": true,
+              "threshold": 0.5,
+              "vetoed": 218,
+              "vetoed_hit_rate": 0.41284403669724773
+            },
+            {
+              "non_regressive": null,
+              "prior_hit_rate": 0.21428571428571427,
+              "prior_selected": 14,
+              "production_hit_rate": 0.0,
+              "production_selected": 3,
+              "supported": false,
+              "threshold": 0.55,
+              "vetoed": 11,
+              "vetoed_hit_rate": 0.2727272727272727
+            },
+            {
+              "non_regressive": null,
+              "prior_hit_rate": 0.25,
+              "prior_selected": 4,
+              "production_hit_rate": null,
+              "production_selected": 0,
+              "supported": false,
+              "threshold": 0.58,
+              "vetoed": 4,
+              "vetoed_hit_rate": 0.25
+            },
+            {
+              "non_regressive": null,
+              "prior_hit_rate": null,
+              "prior_selected": 0,
+              "production_hit_rate": null,
+              "production_selected": 0,
+              "supported": false,
+              "threshold": 0.6,
+              "vetoed": 0,
+              "vetoed_hit_rate": null
+            }
+          ]
+        },
+        "statistical_gate_passed": false,
+        "status": "CANDIDATE_IMPROVED_BUT_DIAGNOSTIC_NON_REGRESSION_FAILED",
+        "validation_rows": 5687
+      }
+    }
+  },
+  "train_serve_feature_parity_proven": false,
+  "training_feature_contract": {
+    "current_game_realized_columns_masked": [
+      "H",
+      "TB",
+      "HR",
+      "R",
+      "RBI",
+      "PA",
+      "AB",
+      "H_market_gap",
+      "TB_market_gap",
+      "HR_market_gap",
+      "R_market_gap",
+      "RBI_market_gap",
+      "H_rolling_avg",
+      "TB_rolling_avg",
+      "HR_rolling_avg",
+      "R_rolling_avg",
+      "RBI_rolling_avg"
+    ],
+    "current_row_rolling_or_market_gap_prior": false,
+    "live_not_exactly_replayable_features": [
+      "pitch_compatibility_score",
+      "direct_matchup_process",
+      "handedness_split_interaction",
+      "batter_chase_rate",
+      "batter_avg_ev",
+      "batter_ev90",
+      "sweet_spot_rates",
+      "live_weather_state",
+      "specific_defense_state"
+    ],
+    "outcome_join_after_feature_boundary": true,
+    "parity_proven": false,
+    "required_evidence_source_for_authority": "mlb_game_conditioned_pregame_snapshot_v1"
+  },
+  "training_status": "FITTED_OUTCOME_JOINED_STRICT_HISTORY_SHADOW",
+  "validation_design": "deterministic_cross_corpus_hash_sample_plus_expanding_window_strictly_prior_dates"
+}
