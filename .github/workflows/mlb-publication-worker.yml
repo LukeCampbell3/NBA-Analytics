@@ -1,0 +1,309 @@
+name: MLB Authoritative Publication Worker
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_date:
+        description: 'Eastern slate date (YYYY-MM-DD)'
+        required: true
+        type: string
+      publication_mode:
+        description: 'Immutable publication mode'
+        required: true
+        default: 'PUBLISH'
+        type: choice
+        options:
+          - PUBLISH
+          - LATE_ADD
+          - REFRESH
+
+concurrency:
+  group: mlb-production-static-deployment
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  PUBLISH_BRANCH: static-deployment
+  PYTHONUNBUFFERED: '1'
+  TZ: America/New_York
+  MLB_ODDS_PROVIDER_PRIORITY: ${{ vars.MLB_ODDS_PROVIDER_PRIORITY || 'fanduel_public,the_odds_api,scrape,existing_provider,fresh_cache' }}
+  MLB_ODDS_MAX_AGE_SECONDS: ${{ vars.MLB_ODDS_MAX_AGE_SECONDS || '3600' }}
+  MLB_ODDS_SCRAPE_ENABLED: ${{ vars.MLB_ODDS_SCRAPE_ENABLED || '0' }}
+  MLB_ODDS_SCRAPE_AUTHORIZED: ${{ vars.MLB_ODDS_SCRAPE_AUTHORIZED || '0' }}
+  MLB_ODDS_SCRAPE_SOURCE: ${{ vars.MLB_ODDS_SCRAPE_SOURCE }}
+  THE_ODDS_API_KEY: ${{ secrets.THE_ODDS_API_KEY }}
+  MLB_FANDUEL_REGION: ${{ vars.MLB_FANDUEL_REGION || 'NJ' }}
+  MLB_FANDUEL_RATE_LIMIT_RPS: ${{ vars.MLB_FANDUEL_RATE_LIMIT_RPS || '2' }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout static deployment
+        uses: actions/checkout@v7
+        with:
+          ref: static-deployment
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            sports/mlb/requirements-same-game.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -r sports/mlb/requirements-same-game.txt
+
+      - name: Validate request
+        id: config
+        env:
+          RUN_DATE: ${{ inputs.run_date }}
+          PUBLICATION_MODE: ${{ inputs.publication_mode }}
+        run: |
+          set -euo pipefail
+          python -c "from datetime import date; date.fromisoformat('$RUN_DATE')"
+          case "$PUBLICATION_MODE" in
+            PUBLISH|LATE_ADD|REFRESH) ;;
+            *) echo "Unsupported mode: $PUBLICATION_MODE" >&2; exit 2 ;;
+          esac
+          weekday="$(date -d "$RUN_DATE" +%u)"
+          refresh_history=false
+          if [[ "$weekday" == '1' ]]; then refresh_history=true; fi
+          echo "run_stamp=${RUN_DATE//-/}" >> "$GITHUB_OUTPUT"
+          echo "refresh_history=$refresh_history" >> "$GITHUB_OUTPUT"
+          echo "Authoritative MLB worker: $RUN_DATE $PUBLICATION_MODE"
+
+      - name: Restore incremental MLB state
+        uses: actions/cache@v5
+        with:
+          path: |
+            Player-Predictor/Data-Proc-MLB
+            sports/mlb/data/predictions/daily_runs
+            sports/mlb/data/predictions/calibration/*.json
+            sports/mlb/data/advanced
+          key: mlb-authoritative-v1-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/advanced/data_layer.py', 'sports/mlb/advanced/production_refresh.py', 'sports/mlb/advanced/sequential_pa_model.py', 'sports/mlb/advanced/game_conditioned_moe.py') }}-${{ steps.config.outputs.run_stamp }}-${{ github.run_id }}
+          restore-keys: |
+            mlb-authoritative-v1-${{ runner.os }}-${{ hashFiles('Player-Predictor/scripts/update_mlb_processed_data.py', 'sports/mlb/advanced/data_layer.py', 'sports/mlb/advanced/production_refresh.py', 'sports/mlb/advanced/sequential_pa_model.py', 'sports/mlb/advanced/game_conditioned_moe.py') }}-${{ steps.config.outputs.run_stamp }}-
+            mlb-daily-v5-${{ runner.os }}-
+
+      - name: Preserve and settle prior publication
+        run: |
+          set -euo pipefail
+          python -m pytest \
+            sports/mlb/tests/test_apply_publication_protocol.py \
+            sports/mlb/tests/test_preserve_published_predictions.py \
+            sports/mlb/tests/test_settle_published_predictions.py \
+            -q
+          python sports/mlb/scripts/preserve_published_predictions.py
+          python sports/mlb/scripts/settle_published_predictions.py
+          cp sports/mlb/web/data/daily_predictions.json /tmp/mlb_prior_public_board.json
+
+      - name: Validate core pipelines
+        run: |
+          set -euo pipefail
+          bash sports/mlb/scripts/validate_same_game_pipeline.sh test
+          bash sports/mlb/scripts/validate_pitcher_parlay_pipeline.sh test
+          python -m pytest \
+            sports/mlb/tests/test_advanced_mlb_profiles.py \
+            sports/mlb/tests/test_advanced_source_refresh.py \
+            sports/mlb/tests/test_sequential_pa_model.py \
+            sports/mlb/tests/test_sequential_pa_identity_hydration.py \
+            sports/mlb/tests/test_game_conditioned_runtime_authority.py \
+            sports/mlb/tests/test_game_conditioned_pregame_snapshot.py \
+            sports/mlb/tests/test_game_conditioned_frontend_compatibility.py \
+            sports/mlb/tests/test_build_exotic_market_shadow.py \
+            sports/mlb/tests/test_validate_v4_live_players.py \
+            tests/test_run_daily_predictions.py \
+            -q
+
+      - name: Build current slate
+        env:
+          RUN_DATE: ${{ inputs.run_date }}
+          REFRESH_HISTORY: ${{ steps.config.outputs.refresh_history }}
+        run: |
+          set -euo pipefail
+          bash sports/mlb/scripts/validate_same_game_pipeline.sh pipeline --run-date "$RUN_DATE"
+          bash sports/mlb/scripts/validate_pitcher_parlay_pipeline.sh pipeline --run-date "$RUN_DATE"
+          python sports/mlb/scripts/build_exotic_market_shadow.py
+
+          args=(
+            --run-date "$RUN_DATE"
+            --skip-nba
+            --mlb-market-provider provider_chain
+            --mlb-fallback-policy exact_only
+            --mlb-incremental-update
+          )
+          if [[ "$REFRESH_HISTORY" == 'true' ]]; then
+            args+=(--mlb-refresh-history-caches)
+          fi
+          python run_daily_predictions.py "${args[@]}"
+          python sports/mlb/scripts/validate_v4_live_players.py
+
+      - name: Validate authoritative candidate slate
+        env:
+          RUN_DATE: ${{ inputs.run_date }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+
+          run_date = os.environ['RUN_DATE']
+          board_path = Path('sports/mlb/web/data/daily_predictions.json')
+          board = json.loads(board_path.read_text())
+          assert board.get('run_date') == run_date, (board.get('run_date'), run_date)
+          assert str(board.get('publication_status') or '').lower() == 'ready', board.get('publication_status')
+          assert isinstance(board.get('plays'), list)
+
+          seq_path = Path('sports/mlb/web/data/sequential_pa_hitter_predictions.json')
+          assert seq_path.exists(), 'game-conditioned sequential payload missing'
+          seq = json.loads(seq_path.read_text())
+          assert seq.get('run_date') == run_date
+          assert seq.get('schema_version') == 'mlb_sequential_pa_frontend_v1'
+          assert seq.get('game_conditioned_schema_version') == 'mlb_game_conditioned_hitter_frontend_v2'
+          assert 'mlb_game_conditioned_hitter_frontend_v2' in (seq.get('schema_extensions') or [])
+          assert seq.get('model_version') == 'game_conditioned_hitter_moe_v2'
+          assert seq.get('data_freshness_status') in {'FRESH', 'DEGRADED'}
+          for row in seq.get('candidates') or []:
+              for key in ('raw_probability', 'usable_probability', 'lcb', 'p_h_0'):
+                  value = row.get(key)
+                  if value is not None:
+                      assert 0.0 <= float(value) <= 1.0, (key, value)
+
+          print(json.dumps({
+              'run_date': run_date,
+              'candidate_plays': len(board.get('plays') or []),
+              'game_conditioned_rows': len(seq.get('candidates') or []),
+              'model_version': seq.get('model_version'),
+              'schema_extension': seq.get('game_conditioned_schema_version'),
+              'freshness': seq.get('data_freshness_status'),
+          }, indent=2))
+          PY
+          python sports/site/pipeline/validate_daily_publication.py --run-date "$RUN_DATE" --sports mlb
+
+      - name: Apply immutable issuance boundary
+        env:
+          PUBLICATION_MODE: ${{ inputs.publication_mode }}
+        run: |
+          set -euo pipefail
+          python sports/mlb/scripts/apply_publication_protocol.py \
+            --mode "$PUBLICATION_MODE" \
+            --prior-board /tmp/mlb_prior_public_board.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          board = json.loads(Path('sports/mlb/web/data/daily_predictions.json').read_text())
+          protocol = board.get('publication_protocol') or {}
+          assert protocol.get('issued_picks_immutable') is True, protocol
+          assert protocol.get('public_pick_retention') == 1.0, protocol
+          assert protocol.get('mode') in {'PUBLISH','LATE_ADD','REFRESH'}
+          print(json.dumps(protocol, indent=2))
+          PY
+
+      - name: Build and verify deployed frontend
+        env:
+          RUN_DATE: ${{ inputs.run_date }}
+        run: |
+          set -euo pipefail
+          python sports/site/pipeline/build_static_site.py \
+            --output dist \
+            --private-output paywall/private-content/app
+          cmp sports/mlb/web/data/daily_predictions.json dist/mlb/data/daily_predictions.json
+          cmp sports/mlb/web/data/daily_predictions.json paywall/private-content/app/mlb/data/daily_predictions.json
+          if [ -f sports/mlb/web/data/sequential_pa_hitter_predictions.json ]; then
+            cmp sports/mlb/web/data/sequential_pa_hitter_predictions.json dist/mlb/data/sequential_pa_hitter_predictions.json
+            cmp sports/mlb/web/data/sequential_pa_hitter_predictions.json paywall/private-content/app/mlb/data/sequential_pa_hitter_predictions.json
+          fi
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          run_date = os.environ['RUN_DATE']
+          for path in [
+              Path('sports/mlb/web/data/daily_predictions.json'),
+              Path('dist/mlb/data/daily_predictions.json'),
+              Path('paywall/private-content/app/mlb/data/daily_predictions.json'),
+          ]:
+              payload = json.loads(path.read_text())
+              assert payload.get('run_date') == run_date, (path, payload.get('run_date'))
+              assert (payload.get('publication_protocol') or {}).get('issued_picks_immutable') is True
+          PY
+
+      - name: Preserve issued slate and history index
+        run: |
+          set -euo pipefail
+          python sports/mlb/scripts/preserve_published_predictions.py
+          python - <<'PY'
+          import shutil
+          from pathlib import Path
+          source = Path('sports/mlb/web/data/history')
+          for target in (Path('dist/mlb/data/history'), Path('paywall/private-content/app/mlb/data/history')):
+              shutil.copytree(source, target, dirs_exist_ok=True)
+          PY
+
+      - name: Stage authoritative publication
+        id: staged
+        run: |
+          set -euo pipefail
+          paths=(
+            sports/mlb/web/data/daily_predictions.json
+            sports/mlb/web/data/latest_candidates.json
+            sports/mlb/web/data/same_game_predictions.json
+            sports/mlb/web/data/pitcher_parlay_predictions.json
+            sports/mlb/web/data/high_hit_parlay_predictions.json
+            sports/mlb/web/data/exotic_market_predictions.json
+            sports/mlb/web/data/sequential_pa_hitter_predictions.json
+            sports/mlb/web/data/history
+            sports/mlb/data/predictions/settlement/mlb_settlement_report.json
+            artifacts/mlb_sequential_pa_model_validation.json
+            artifacts/mlb_sequential_pa_model_validation.md
+            dist/mlb
+            paywall/private-content/app/mlb
+          )
+          for path in "${paths[@]}"; do
+            if [ -e "$path" ]; then git add -f -- "$path"; fi
+          done
+          if git diff --cached --quiet; then
+            echo 'has_changes=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'has_changes=true' >> "$GITHUB_OUTPUT"
+            git diff --cached --stat
+          fi
+
+      - name: Commit authoritative publication
+        if: steps.staged.outputs.has_changes == 'true'
+        env:
+          RUN_DATE: ${{ inputs.run_date }}
+          PUBLICATION_MODE: ${{ inputs.publication_mode }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "MLB $PUBLICATION_MODE $RUN_DATE authoritative [skip ci]"
+          if ! git push origin "HEAD:$PUBLISH_BRANCH"; then
+            git pull --rebase --autostash origin "$PUBLISH_BRANCH"
+            git push origin "HEAD:$PUBLISH_BRANCH"
+          fi
+
+      - name: Upload authoritative payload
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mlb-authoritative-${{ steps.config.outputs.run_stamp }}-${{ inputs.publication_mode }}
+          path: |
+            sports/mlb/web/data/daily_predictions.json
+            sports/mlb/web/data/sequential_pa_hitter_predictions.json
+            dist/mlb/data/daily_predictions.json
+            dist/mlb/data/sequential_pa_hitter_predictions.json
+            artifacts/mlb_sequential_pa_model_validation.json
+            artifacts/mlb_sequential_pa_model_validation.md
+          if-no-files-found: warn
+          retention-days: 14
