@@ -56,6 +56,8 @@ PREDICTION_TOP_LEVEL_FILES = {
 }
 PREDICTION_DATA_FILES = {
     "daily_predictions.json",
+    "latest_candidates.json",
+    "sequential_pa_hitter_predictions.json",
     "market_validation_summary.json",
     "fantasy_draft_rankings.json",
     "week_1_pool.json",
