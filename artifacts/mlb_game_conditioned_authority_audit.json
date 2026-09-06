@@ -1,0 +1,154 @@
+{
+  "schema_version": "mlb_game_conditioned_authority_audit_v2",
+  "source": "/home/runner/work/NBA-Analytics/NBA-Analytics/sports/mlb/data/predictions/calibration/game_conditioned_hitter_moe_v2.json",
+  "targets": {
+    "H": {
+      "checks": {
+        "brier_gain": -0.0013638020527977357,
+        "exact_certification": {
+          "exact_evidence": false,
+          "exact_selection_count": 0,
+          "independent_slates": 0,
+          "locked_policy_hash_present": false,
+          "point_in_time_integrity_passed": false,
+          "thresholds": {
+            "min_exact_selections": 50,
+            "min_independent_slates": 20
+          }
+        },
+        "fit_rows": 1206,
+        "fold_count": 6,
+        "fold_pass_rate": 0.3333333333333333,
+        "logloss_gain": -0.0024046220942061103,
+        "rolling_origin_design": true,
+        "thresholds": {
+          "min_brier_gain": 0.0025,
+          "min_fit_rows": 300,
+          "min_fold_pass_rate": 0.6,
+          "min_folds": 3,
+          "min_logloss_gain": 0.0025,
+          "min_validation_rows": 50
+        },
+        "train_serve_feature_parity_proven": false,
+        "training_feature_contract": {},
+        "validation_rows": 1126
+      },
+      "claimed_negative_authority": false,
+      "claimed_positive_authority": false,
+      "negative_authority_allowed": false,
+      "positive_authority_allowed": false,
+      "reasons": [
+        "FOLD_PASS_RATE_BELOW_GATE",
+        "BRIER_GAIN_BELOW_GATE",
+        "LOGLOSS_GAIN_BELOW_GATE",
+        "TRAIN_SERVE_FEATURE_PARITY_NOT_PROVEN",
+        "NEGATIVE_AUTHORITY_GATE_NOT_CLEARED",
+        "EXACT_CERTIFICATION_EVIDENCE_REQUIRED",
+        "INSUFFICIENT_EXACT_SELECTIONS",
+        "INSUFFICIENT_INDEPENDENT_SLATES",
+        "POINT_IN_TIME_INTEGRITY_NOT_PROVEN",
+        "LOCKED_POLICY_HASH_MISSING"
+      ],
+      "target": "H"
+    },
+    "HR": {
+      "checks": {
+        "brier_gain": -0.0011566164184565256,
+        "exact_certification": {
+          "exact_evidence": false,
+          "exact_selection_count": 0,
+          "independent_slates": 0,
+          "locked_policy_hash_present": false,
+          "point_in_time_integrity_passed": false,
+          "thresholds": {
+            "min_exact_selections": 50,
+            "min_independent_slates": 20
+          }
+        },
+        "fit_rows": 1206,
+        "fold_count": 6,
+        "fold_pass_rate": 0.5,
+        "logloss_gain": 0.004564591696340242,
+        "rolling_origin_design": true,
+        "thresholds": {
+          "min_brier_gain": 0.0025,
+          "min_fit_rows": 300,
+          "min_fold_pass_rate": 0.6,
+          "min_folds": 3,
+          "min_logloss_gain": 0.0025,
+          "min_validation_rows": 50
+        },
+        "train_serve_feature_parity_proven": false,
+        "training_feature_contract": {},
+        "validation_rows": 1126
+      },
+      "claimed_negative_authority": false,
+      "claimed_positive_authority": false,
+      "negative_authority_allowed": false,
+      "positive_authority_allowed": false,
+      "reasons": [
+        "FOLD_PASS_RATE_BELOW_GATE",
+        "BRIER_GAIN_BELOW_GATE",
+        "TRAIN_SERVE_FEATURE_PARITY_NOT_PROVEN",
+        "NEGATIVE_AUTHORITY_GATE_NOT_CLEARED",
+        "EXACT_CERTIFICATION_EVIDENCE_REQUIRED",
+        "INSUFFICIENT_EXACT_SELECTIONS",
+        "INSUFFICIENT_INDEPENDENT_SLATES",
+        "POINT_IN_TIME_INTEGRITY_NOT_PROVEN",
+        "LOCKED_POLICY_HASH_MISSING"
+      ],
+      "target": "HR"
+    },
+    "TB": {
+      "checks": {
+        "brier_gain": 0.0014627974739552518,
+        "exact_certification": {
+          "exact_evidence": false,
+          "exact_selection_count": 0,
+          "independent_slates": 0,
+          "locked_policy_hash_present": false,
+          "point_in_time_integrity_passed": false,
+          "thresholds": {
+            "min_exact_selections": 50,
+            "min_independent_slates": 20
+          }
+        },
+        "fit_rows": 1206,
+        "fold_count": 6,
+        "fold_pass_rate": 0.3333333333333333,
+        "logloss_gain": 0.00227898803173604,
+        "rolling_origin_design": true,
+        "thresholds": {
+          "min_brier_gain": 0.0025,
+          "min_fit_rows": 300,
+          "min_fold_pass_rate": 0.6,
+          "min_folds": 3,
+          "min_logloss_gain": 0.0025,
+          "min_validation_rows": 50
+        },
+        "train_serve_feature_parity_proven": false,
+        "training_feature_contract": {},
+        "validation_rows": 1126
+      },
+      "claimed_negative_authority": false,
+      "claimed_positive_authority": false,
+      "negative_authority_allowed": false,
+      "positive_authority_allowed": false,
+      "reasons": [
+        "FOLD_PASS_RATE_BELOW_GATE",
+        "BRIER_GAIN_BELOW_GATE",
+        "LOGLOSS_GAIN_BELOW_GATE",
+        "TRAIN_SERVE_FEATURE_PARITY_NOT_PROVEN",
+        "NEGATIVE_AUTHORITY_GATE_NOT_CLEARED",
+        "EXACT_CERTIFICATION_EVIDENCE_REQUIRED",
+        "INSUFFICIENT_EXACT_SELECTIONS",
+        "INSUFFICIENT_INDEPENDENT_SLATES",
+        "POINT_IN_TIME_INTEGRITY_NOT_PROVEN",
+        "LOCKED_POLICY_HASH_MISSING"
+      ],
+      "target": "TB"
+    }
+  },
+  "valid": true,
+  "violations": []
+}
