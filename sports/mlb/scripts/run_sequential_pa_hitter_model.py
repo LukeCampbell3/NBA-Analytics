@@ -20,7 +20,7 @@ DEFAULT_WEB = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "sequential_pa_hit
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Refresh advanced MLB data and enrich H/TB rows with game-conditioned sequential PA probabilities.")
+    parser = argparse.ArgumentParser(description="Refresh advanced MLB data and enrich H/TB/HR rows with game-conditioned sequential PA probabilities.")
     parser.add_argument("--pool-csv", type=Path, required=True)
     parser.add_argument("--run-date", required=True)
     parser.add_argument("--advanced-root", type=Path, default=DEFAULT_ADVANCED_ROOT)
@@ -36,21 +36,35 @@ def markdown(report: dict) -> str:
     manifest = report.get("advanced_manifest") or {}
     source_status = manifest.get("source_status") or {}
     model_artifact = report.get("model_artifact") or {}
+    target_authority = model_artifact.get("target_authority") or {}
     rows = report.get("rows") or []
     ready = [row for row in rows if row.get("status") in {"READY", "WEAK_SUPPORT"}]
     blocked = [row for row in rows if row.get("status") == "BLOCKED_DATA"]
     lines = [
-        "# MLB Game-Conditioned Sequential PA H/TB Validation",
+        "# MLB Game-Conditioned Sequential PA H/TB/HR Validation",
         "",
         f"- Run date: `{report.get('run_date')}`",
         f"- Probability model: `{report.get('model_version')}`",
         f"- Structural simulator: `{report.get('structural_model_version')}`",
         f"- Residual fit: `{model_artifact.get('training_status')}`",
         f"- Evidence class: `{model_artifact.get('evidence_class')}`",
-        f"- Evaluated H/TB rows: **{report.get('evaluated_h_tb_rows', 0)}**",
+        f"- Evaluated H/TB/HR rows: **{report.get('evaluated_h_tb_hr_rows', 0)}**",
         f"- Modeled rows: **{report.get('modeled_rows', 0)}**",
         f"- Blocked rows: **{report.get('blocked_rows', 0)}**",
         f"- Data freshness: `{report.get('data_freshness_status')}`",
+        "",
+        "## Target authority",
+        "",
+        "| Target | Diagnostic gate | Positive authority | Validation status |",
+        "|---|---|---|---|",
+    ]
+    for target in ("H", "TB", "HR"):
+        authority = target_authority.get(target) or {}
+        lines.append(
+            f"| {target} | {bool(authority.get('diagnostic_gate_passed'))} | "
+            f"{bool(authority.get('positive_authority'))} | {authority.get('validation_status') or 'UNVALIDATED'} |"
+        )
+    lines += [
         "",
         "## Data",
         "",
@@ -68,29 +82,30 @@ def markdown(report: dict) -> str:
         "",
         "## Architecture",
         "",
-        "`legacy/no-vig prior -> game state -> expert activations -> residual logit -> sequential PA distribution -> uncertainty/authority gate`",
+        "`legacy/no-vig prior -> game state -> expert activations -> residual logit -> sequential PA distribution -> target-specific uncertainty/authority gate`",
         "",
-        "Six experts are evaluated per game: strikeout/contact, contact quality, power/TB, defensive conversion, PA opportunity, and starter-removal/bullpen transition. Global residual coefficients are multiplied by game-specific activations, so a high-K matchup emphasizes contact survival while a low-K matchup can emphasize batted-ball quality. TB gives more relevance to the power-tail expert than H.",
+        "Six experts are evaluated per game: strikeout/contact, contact quality, power/TB/HR, defensive conversion, PA opportunity, and starter-removal/bullpen transition. Global residual coefficients are multiplied by game-specific activations, so a high-K matchup emphasizes contact survival while a low-K matchup can emphasize batted-ball quality. Power relevance increases from H to TB to HR.",
         "",
-        "The underlying event tree remains `PA -> K | BB | HBP | HR | NON_HR_CONTACT | OTHER`, followed by a non-HR contact outcome distribution. PA and AB are tracked separately and later PA transition away from the starter.",
+        "The event tree is `PA -> K | BB | HBP | HR | NON_HR_CONTACT | OTHER`, followed by a non-HR contact outcome distribution. PA and AB are tracked separately and later PA transition away from the starter. H, TB and HR probabilities are calculated from their own simulated outcome arrays rather than from point projections.",
         "",
         "## Probability authority",
         "",
-        "The structural simulator still directly estimates `P(H=0)`, `P(H>=1)` and the TB tail. It no longer replaces the calibrated prior outright. The game-conditioned layer learns a bounded residual around the legacy/no-vig prior in logit space.",
+        "The structural simulator directly estimates `P(H>=1)`, `P(TB>=2)` and `P(HR>=1)`. The game-conditioned layer learns a bounded residual around the legacy/no-vig prior in logit space.",
         "",
-        "Until exact point-in-time advanced-feature validation clears the target-specific Brier and log-loss gates, a positive residual remains shadow-only. A negative residual may lower/veto an overconfident H/TB candidate.",
+        "A target that fails expanding-window Brier/log-loss validation is shadow-only and cannot change production probability. A target that clears the diagnostic gate may apply conservative negative-only authority. Positive residual authority additionally requires exact point-in-time advanced-feature evidence.",
         "",
         "## Current modeled rows",
         "",
-        "| Player | Target | Prior P | Conditioned P | Production P | P(0H) | E[PA] | E[H] | E[TB] | Support |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| Player | Target | Prior P | Conditioned P | Production P | P(0H) | P(HR>=1) | E[PA] | E[H] | E[TB] | Support |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for row in ready[:50]:
         lines.append(
             f"| {row.get('player','')} | {row.get('target','')} | {float(row.get('prior_probability') or 0):.3f} | "
             f"{float(row.get('game_conditioned_probability') or 0):.3f} | {float(row.get('usable_probability') or 0):.3f} | "
-            f"{float(row.get('p_h_0') or 0):.3f} | {float(row.get('expected_pa') or 0):.2f} | "
-            f"{float(row.get('expected_h') or 0):.2f} | {float(row.get('expected_tb') or 0):.2f} | {float(row.get('support') or 0):.2f} |"
+            f"{float(row.get('p_h_0') or 0):.3f} | {float(row.get('p_hr_ge_1') or 0):.3f} | "
+            f"{float(row.get('expected_pa') or 0):.2f} | {float(row.get('expected_h') or 0):.2f} | "
+            f"{float(row.get('expected_tb') or 0):.2f} | {float(row.get('support') or 0):.2f} |"
         )
     lines.extend([
         "",
@@ -100,7 +115,9 @@ def markdown(report: dict) -> str:
         "",
         "## Validation status",
         "",
-        "The residual trainer uses a temporal split: coefficients are fit on earlier dates and scored on later dates. Historical proxy evidence may initialize shadow residuals but cannot unlock positive authority because the older processed corpus does not preserve every exact Savant/FanGraphs pregame state. Exact/prospective evidence is required for promotion.",
+        "Residual validation uses expanding-window folds. Every held-out block is scored with coefficients fit only on strictly earlier dates. Aggregate Brier and log loss must both improve, at least three folds must exist, and at least 60% of folds must improve both metrics before negative-only authority is allowed.",
+        "",
+        "Historical proxy evidence may initialize shadow residuals but cannot unlock positive authority because the processed corpus does not preserve every exact Savant/FanGraphs pregame state. Exact point-in-time evidence is required for promotion.",
         "",
         "## Known limitations",
         "",
@@ -108,7 +125,8 @@ def markdown(report: dict) -> str:
         "- Direct BvP remains heavily shrunk because sample sizes are usually small.",
         "- FanGraphs xFIP/SIERA availability is source-dependent and missingness lowers evidence strength.",
         "- Bullpen identity is still a transition toward neutral relief state until named-reliever distributions are supported.",
-        "- Weather is consumed when present; missing weather is an uncertainty component rather than an invented value.",
+        "- Weather currently consumes temperature when present; wind/humidity are not invented when absent.",
+        "- Handedness is preserved in game state, but no fixed platoon coefficient is fabricated without split evidence.",
         "",
     ])
     return "\n".join(lines)
@@ -135,13 +153,13 @@ def main() -> int:
         "data_freshness_status": report.get("data_freshness_status"),
         "source_status": (report.get("advanced_manifest") or {}).get("source_status") or {},
         "effective_as_of_date": (report.get("advanced_manifest") or {}).get("effective_as_of_date"),
-        "evaluated_h_tb_rows": report.get("evaluated_h_tb_rows"),
+        "evaluated_h_tb_hr_rows": report.get("evaluated_h_tb_hr_rows"),
         "modeled_rows": report.get("modeled_rows"),
         "blocked_rows": report.get("blocked_rows"),
         "candidates": [
             {key: row.get(key) for key in (
                 "player", "target", "status", "raw_probability", "prior_probability", "game_conditioned_probability",
-                "usable_probability", "lcb", "p_h_0", "expected_pa", "expected_h", "expected_tb", "support", "uncertainty",
+                "usable_probability", "lcb", "p_h_0", "p_hr_ge_1", "expected_pa", "expected_h", "expected_tb", "support", "uncertainty",
                 "authority", "expert_weights", "pitch_compatibility"
             )}
             for row in (report.get("rows") or [])
@@ -149,7 +167,7 @@ def main() -> int:
     }
     args.web_json.write_text(json.dumps(web, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps({
-        **{key: report.get(key) for key in ("run_date", "model_version", "structural_model_version", "evaluated_h_tb_rows", "modeled_rows", "blocked_rows", "data_freshness_status")},
+        **{key: report.get(key) for key in ("run_date", "model_version", "structural_model_version", "evaluated_h_tb_hr_rows", "modeled_rows", "blocked_rows", "data_freshness_status")},
         "source_status": web["source_status"],
         "effective_as_of_date": web["effective_as_of_date"],
         "model_artifact": web["model_artifact"],
