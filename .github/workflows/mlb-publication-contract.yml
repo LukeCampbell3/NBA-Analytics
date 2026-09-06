@@ -1,0 +1,78 @@
+name: MLB Publication Reliability Contract
+
+on:
+  push:
+    branches: [static-deployment]
+    paths:
+      - 'sports/mlb/scripts/apply_publication_protocol.py'
+      - 'sports/mlb/scripts/preserve_published_predictions.py'
+      - 'sports/mlb/scripts/settle_published_predictions.py'
+      - 'sports/mlb/tests/test_apply_publication_protocol.py'
+      - 'sports/mlb/tests/test_discovery_public_retention.py'
+      - 'sports/mlb/tests/test_preserve_published_predictions.py'
+      - 'sports/mlb/tests/test_settle_published_predictions.py'
+      - '.github/workflows/mlb-publication-controller.yml'
+      - '.github/workflows/mlb-publication-worker.yml'
+      - '.github/workflows/mlb-publication-watchdog.yml'
+      - '.github/workflows/mlb-publication-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout static deployment
+        uses: actions/checkout@v7
+        with:
+          ref: static-deployment
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Test immutable publication state machine
+        run: |
+          set -euo pipefail
+          python -m pip install pytest
+          python -m pytest \
+            sports/mlb/tests/test_apply_publication_protocol.py \
+            sports/mlb/tests/test_discovery_public_retention.py \
+            sports/mlb/tests/test_preserve_published_predictions.py \
+            sports/mlb/tests/test_settle_published_predictions.py \
+            -q
+          python -m py_compile \
+            sports/mlb/scripts/apply_publication_protocol.py \
+            sports/mlb/scripts/preserve_published_predictions.py \
+            sports/mlb/scripts/settle_published_predictions.py
+
+      - name: Verify schedule and authority topology
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          controller = Path('.github/workflows/mlb-publication-controller.yml').read_text()
+          worker = Path('.github/workflows/mlb-publication-worker.yml').read_text()
+          watchdog = Path('.github/workflows/mlb-publication-watchdog.yml').read_text()
+          protocol = Path('sports/mlb/scripts/apply_publication_protocol.py').read_text()
+
+          assert "cron: '30 15 * 3-10 *'" in controller
+          assert "cron: '30 21 * 3-10 *'" in controller
+          assert 'mode="LATE_ADD"' in controller
+          assert "workflow='mlb-publication-worker.yml'" in controller
+          assert "workflow='mlb-publication-worker.yml'" in watchdog
+          assert "cron: '15 16 * 3-10 *'" in watchdog
+          assert "cron: '15 17 * 3-10 *'" in watchdog
+          assert "cron: '15 22 * 3-10 *'" in watchdog
+          assert 'workflow_dispatch:' in worker
+          assert 'schedule:' not in worker
+          assert '_retain_prior_public_board_for_discovery' in protocol
+          assert 'public_board_mutated' in protocol
+          assert 'candidate_run_date' in protocol
+          print('MLB authority topology: controller -> isolated worker; watchdog -> isolated worker; DISCOVER is non-public.')
+          PY
