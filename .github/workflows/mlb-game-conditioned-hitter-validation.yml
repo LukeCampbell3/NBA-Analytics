@@ -16,6 +16,9 @@ on:
       - 'sports/mlb/scripts/select_high_precision_predictions.py'
       - 'sports/mlb/tests/test_game_conditioned_authority.py'
       - 'sports/mlb/tests/test_game_conditioned_hitter_moe.py'
+      - 'sports/mlb/tests/test_game_conditioned_matchup_state.py'
+      - 'sports/mlb/tests/test_game_conditioned_pregame_snapshot.py'
+      - 'sports/mlb/tests/test_game_conditioned_runtime_authority.py'
       - 'sports/mlb/tests/test_sequential_pa_model.py'
       - 'sports/mlb/tests/test_sequential_pa_identity_hydration.py'
       - '.github/workflows/mlb-game-conditioned-hitter-validation.yml'
@@ -56,6 +59,7 @@ jobs:
             sports/mlb/advanced/game_conditioned_authority.py \
             sports/mlb/scripts/fit_game_conditioned_hitter_moe.py \
             sports/mlb/scripts/fit_game_conditioned_hitter_moe_nonregression.py \
+            sports/mlb/scripts/run_sequential_pa_hitter_model.py \
             sports/mlb/scripts/validate_game_conditioned_authority.py \
             sports/mlb/scripts/select_high_precision_predictions.py \
             sports/site/pipeline/run_daily_predictions.py
@@ -66,6 +70,9 @@ jobs:
             sports/mlb/tests/test_sequential_pa_model.py \
             sports/mlb/tests/test_game_conditioned_hitter_moe.py \
             sports/mlb/tests/test_game_conditioned_authority.py \
+            sports/mlb/tests/test_game_conditioned_matchup_state.py \
+            sports/mlb/tests/test_game_conditioned_pregame_snapshot.py \
+            sports/mlb/tests/test_game_conditioned_runtime_authority.py \
             sports/mlb/tests/test_sequential_pa_identity_hydration.py \
             -q
           python - <<'PY'
@@ -92,7 +99,7 @@ jobs:
             --folds 6 \
             --min-train-rows 80
 
-      - name: Enforce non-regression authority contract
+      - name: Enforce diagnostic-versus-authority contract
         run: |
           python - <<'PY'
           import json
@@ -104,6 +111,9 @@ jobs:
           assert payload['training_status'] == 'FITTED_EXPANDING_WINDOW_RESIDUAL_MOE_NON_REGRESSION_GATED'
           assert payload['evidence_class'] == 'ROLLING_ORIGIN_HIGH_FIDELITY_DIAGNOSTIC_NOT_CERTIFICATION'
           assert payload['validation_design'] == 'broad_scan_deterministic_cross_player_sample_plus_expanding_window_strictly_prior_dates'
+          assert payload['train_serve_feature_parity_proven'] is False
+          assert payload['training_feature_contract']['parity_proven'] is False
+          assert payload['training_feature_contract']['required_evidence_source'] == 'mlb_game_conditioned_pregame_snapshot_v1'
           assert payload['economic_evidence']['roi_claim'] is False
           assert payload['games'] >= 300
           assert payload['players'] >= 20
@@ -124,15 +134,22 @@ jobs:
               assert model['positive_authority'] is False
               assert set(model['coefficients']) == expected_experts
               assert validation['validation_rows'] >= 50
-              gate = bool(validation.get('statistical_gate_passed', False))
-              assert bool(validation.get('negative_authority_allowed', False)) == gate
-              assert bool(validation.get('production_non_regression_gate_passed', False)) == gate
-              if gate:
+
+              # The historical corpus may pass diagnostic non-regression, but it
+              # cannot grant runtime authority until exact train/serve parity is
+              # backed by preserved pregame feature snapshots.
+              diagnostic_gate = bool(validation.get('diagnostic_non_regression_gate_passed', False))
+              assert bool(validation.get('production_non_regression_gate_passed', False)) == diagnostic_gate
+              assert validation.get('statistical_gate_passed', False) is False
+              assert validation.get('negative_authority_allowed', False) is False
+              assert validation.get('negative_authority_blocker') == 'TRAIN_SERVE_FEATURE_PARITY_NOT_PROVEN'
+
+              if diagnostic_gate:
                   assert validation['candidate_improvement_gate_passed'] is True
                   assert validation['fold_count'] >= 3
                   assert validation['fold_pass_rate'] >= 0.60
-                  assert validation['candidate_brier'] < validation['prior_brier']
-                  assert validation['candidate_log_loss'] < validation['prior_log_loss']
+                  assert validation['brier_gain'] >= payload['controls']['gate_min_brier_gain']
+                  assert validation['logloss_gain'] >= payload['controls']['gate_min_logloss_gain']
                   assert validation['production_brier'] <= validation['prior_brier'] + 1e-12
                   assert validation['production_log_loss'] <= validation['prior_log_loss'] + 1e-12
                   assert validation['production_probability_non_regression'] is True
