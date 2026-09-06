@@ -11,6 +11,7 @@ from .sequential_pa_model import SequentialPAResult
 
 MODEL_VERSION = "game_conditioned_hitter_moe_v2"
 SCHEMA_VERSION = "mlb_game_conditioned_hitter_moe_v2"
+TARGETS = ("H", "TB", "HR")
 EXPERT_NAMES = (
     "strikeout_contact",
     "contact_quality",
@@ -71,12 +72,11 @@ _ROLLING_ALIASES = {
 
 
 def _profile_recent(profile: Any, key: str, default: float) -> float:
-    """Build a support-weighted recent-state estimate from nested Statcast windows.
+    """Build a support-weighted recent-state estimate from overlapping windows.
 
-    The short windows intentionally never receive full authority on their own.
-    last-15/30/60 are overlapping views, so their weights are capped and then
-    blended back toward the season/default value. This supplies state movement
-    without turning one hot week into a new player skill estimate.
+    The rolling windows are deliberately anchored to season skill. They can
+    change today's latent state when multiple windows agree, but no short sample
+    can replace the global prior by itself.
     """
 
     rolling = getattr(profile, "rolling", None) or {}
@@ -90,9 +90,8 @@ def _profile_recent(profile: Any, key: str, default: float) -> float:
         data = rolling.get(window)
         if not isinstance(data, Mapping):
             continue
-        value = data.get(metric_key)
         try:
-            parsed = float(value)
+            parsed = float(data.get(metric_key))
         except (TypeError, ValueError):
             continue
         if not math.isfinite(parsed):
@@ -105,7 +104,6 @@ def _profile_recent(profile: Any, key: str, default: float) -> float:
     if weight_sum <= 1e-9:
         return float(default)
     recent = weighted / weight_sum
-    # Season skill remains a material anchor even when every rolling window is full.
     recent_authority = _clamp(0.35 + 0.30 * weight_sum, 0.35, 0.65)
     return (1.0 - recent_authority) * float(default) + recent_authority * recent
 
@@ -140,30 +138,24 @@ class GameConditionedProbability:
     validation: dict[str, Any]
 
 
+def _empty_target() -> dict[str, Any]:
+    return {
+        "intercept": 0.0,
+        "coefficients": {name: 0.0 for name in EXPERT_NAMES},
+        "feature_means": {name: 0.0 for name in EXPERT_NAMES},
+        "feature_scales": {name: 1.0 for name in EXPERT_NAMES},
+        "positive_authority": False,
+        "validation": {"status": "UNVALIDATED", "statistical_gate_passed": False},
+    }
+
+
 DEFAULT_ARTIFACT: dict[str, Any] = {
     "schema_version": SCHEMA_VERSION,
     "model_version": MODEL_VERSION,
     "training_status": "UNFITTED_SAFE_PRIOR_ONLY",
     "evidence_class": "NONE",
     "max_abs_residual_logit": 0.35,
-    "targets": {
-        "H": {
-            "intercept": 0.0,
-            "coefficients": {name: 0.0 for name in EXPERT_NAMES},
-            "feature_means": {name: 0.0 for name in EXPERT_NAMES},
-            "feature_scales": {name: 1.0 for name in EXPERT_NAMES},
-            "positive_authority": False,
-            "validation": {"status": "UNVALIDATED"},
-        },
-        "TB": {
-            "intercept": 0.0,
-            "coefficients": {name: 0.0 for name in EXPERT_NAMES},
-            "feature_means": {name: 0.0 for name in EXPERT_NAMES},
-            "feature_scales": {name: 1.0 for name in EXPERT_NAMES},
-            "positive_authority": False,
-            "validation": {"status": "UNVALIDATED"},
-        },
-    },
+    "targets": {target: _empty_target() for target in TARGETS},
 }
 
 
@@ -175,10 +167,19 @@ def load_model_artifact(path: Path | None = None) -> dict[str, Any]:
         return json.loads(json.dumps(DEFAULT_ARTIFACT))
     if not isinstance(payload, dict) or payload.get("schema_version") != SCHEMA_VERSION:
         return json.loads(json.dumps(DEFAULT_ARTIFACT))
-    targets = payload.get("targets") or {}
-    if not all(target in targets for target in ("H", "TB")):
+    targets = payload.get("targets")
+    if not isinstance(targets, dict):
         return json.loads(json.dumps(DEFAULT_ARTIFACT))
-    return payload
+
+    # Backward-compatible migration: an H/TB artifact remains usable while the
+    # first HR-aware validation fit is being generated. Missing targets are
+    # neutral and therefore cannot acquire production authority.
+    migrated = json.loads(json.dumps(payload))
+    migrated_targets = migrated.setdefault("targets", {})
+    for target in TARGETS:
+        if not isinstance(migrated_targets.get(target), dict):
+            migrated_targets[target] = _empty_target()
+    return migrated
 
 
 def build_expert_state(
@@ -188,14 +189,12 @@ def build_expert_state(
     target: str,
     pitch_compatibility_score: float = 0.0,
 ) -> ExpertState:
-    """Build game-specific expert signals and relevance gates.
-
-    Signals are centered roughly around league-neutral state. Activations encode
-    how relevant an expert is for this matchup. The fitted model learns global
-    coefficients; effective per-game weights are coefficient x activation.
-    """
+    """Build game-specific expert signals and relevance gates."""
 
     target = str(target).upper()
+    if target not in TARGETS:
+        raise ValueError(f"unsupported game-conditioned target: {target}")
+
     batter = context.batter
     pitcher = context.pitcher
 
@@ -210,8 +209,6 @@ def build_expert_state(
     batter_recent_whiff = _profile_recent(batter, "whiff_rate", batter_whiff)
     pitcher_recent_whiff = _profile_recent(pitcher, "whiff_rate", pitcher_whiff)
 
-    # Positive means contact survival conditions favor the hitter. The trend
-    # terms answer whether today's state is moving away from the season prior.
     strikeout_contact = _mean([
         (0.225 - batter_k) / 0.10,
         (0.225 - pitcher_k) / 0.10,
@@ -230,6 +227,7 @@ def build_expert_state(
     pitcher_xba = _finite(pitcher.xba_allowed, 0.250)
     batter_hard = _finite(batter.hard_hit_rate, 0.38)
     pitcher_hard = _finite(pitcher.hard_hit_rate_allowed, 0.38)
+
     batter_recent_xwoba = _profile_recent(batter, "xwoba", batter_xwoba)
     pitcher_recent_xwoba = _profile_recent(pitcher, "xwoba", pitcher_xwoba)
     batter_recent_hard = _profile_recent(batter, "hard_hit_rate", batter_hard)
@@ -243,6 +241,7 @@ def build_expert_state(
         (pitcher_recent_xwoba - pitcher_xwoba) / 0.060,
         (pitcher_recent_hard - pitcher_hard) / 0.10,
     ])
+
     contact_quality = _mean([
         (batter_xwoba - 0.320) / 0.075,
         (pitcher_xwoba - 0.320) / 0.075,
@@ -260,16 +259,25 @@ def build_expert_state(
     batter_barrel = _finite(batter.barrel_rate, 0.075)
     pitcher_barrel = _finite(pitcher.barrel_rate_allowed, 0.075)
     pitcher_gb = _finite(pitcher.gb_rate, 0.43)
+    batter_hr = _finite(batter.hr_rate, 0.030)
+    pitcher_hr = _finite(pitcher.hr_rate, 0.030)
+
     batter_recent_xslg = _profile_recent(batter, "xslg", batter_xslg)
     pitcher_recent_xslg = _profile_recent(pitcher, "xslg", pitcher_xslg)
     batter_recent_barrel = _profile_recent(batter, "barrel_rate", batter_barrel)
     pitcher_recent_barrel = _profile_recent(pitcher, "barrel_rate", pitcher_barrel)
+    batter_recent_hr = _profile_recent(batter, "hr_rate", batter_hr)
+    pitcher_recent_hr = _profile_recent(pitcher, "hr_rate", pitcher_hr)
+
     power_trend = _mean([
         (batter_recent_xslg - batter_xslg) / 0.14,
         (pitcher_recent_xslg - pitcher_xslg) / 0.14,
         (batter_recent_barrel - batter_barrel) / 0.06,
         (pitcher_recent_barrel - pitcher_barrel) / 0.06,
+        (batter_recent_hr - batter_hr) / 0.025,
+        (pitcher_recent_hr - pitcher_hr) / 0.025,
     ])
+
     temperature_f = context.temperature_f
     weather_power_signal = 0.0 if temperature_f is None else _clamp((float(temperature_f) - 72.0) / 30.0, -1.0, 1.0)
     power_tb = _mean([
@@ -277,6 +285,8 @@ def build_expert_state(
         (pitcher_xslg - 0.420) / 0.17,
         (batter_barrel - 0.075) / 0.075,
         (pitcher_barrel - 0.075) / 0.075,
+        (batter_hr - 0.030) / 0.035,
+        (pitcher_hr - 0.030) / 0.035,
         (0.43 - pitcher_gb) / 0.18,
         (float(context.park_factor or 1.0) - 1.0) / 0.10,
         _clamp(power_trend, -1.5, 1.5),
@@ -284,7 +294,11 @@ def build_expert_state(
     ])
 
     specific_defense = str(context.defense_status or "").upper().startswith("SPECIFIC")
-    defense_conversion = _clamp(float(context.defense_residual or 0.0) / 0.035, -2.0, 2.0) if specific_defense else 0.0
+    defense_conversion = (
+        _clamp(float(context.defense_residual or 0.0) / 0.035, -2.0, 2.0)
+        if specific_defense and target != "HR"
+        else 0.0
+    )
 
     expected_pa = _finite(sequential.expected_pa, 4.2)
     team_runs = _finite(context.team_expected_runs, 4.5)
@@ -315,18 +329,40 @@ def build_expert_state(
         "bullpen_transition": _clamp(bullpen_transition, -2.5, 2.5),
     }
 
-    high_k_relevance = _clamp(abs(pitcher_recent_k - 0.225) / 0.12 + abs(batter_recent_k - 0.225) / 0.12, 0.0, 1.6)
+    high_k_relevance = _clamp(
+        abs(pitcher_recent_k - 0.225) / 0.12 + abs(batter_recent_k - 0.225) / 0.12,
+        0.0,
+        1.6,
+    )
     low_k_contact_relevance = _clamp((0.255 - pitcher_recent_k) / 0.10, 0.0, 1.4)
     coherent_batter_form = _clamp(max(0.0, batter_quality_trend) + max(0.0, power_trend), 0.0, 1.5)
-    coherent_pitcher_decline = _clamp(max(0.0, pitcher_quality_trend_for_hitter) + max(0.0, pitcher_k - pitcher_recent_k) / 0.08, 0.0, 1.5)
-    pitch_context_available = bool(batter.pitch_type_xwoba and pitcher.arsenal)
-    handedness_known = bool(str(batter.handedness or "").strip() and str(pitcher.handedness or "").strip())
+    coherent_pitcher_decline = _clamp(
+        max(0.0, pitcher_quality_trend_for_hitter) + max(0.0, pitcher_k - pitcher_recent_k) / 0.08,
+        0.0,
+        1.5,
+    )
+
+    power_base = {"H": 0.72, "TB": 1.35, "HR": 1.62}[target]
+    contact_base = {"H": 1.00, "TB": 0.88, "HR": 0.72}[target]
+    defense_base = 0.10 if target == "HR" else (1.20 if specific_defense else 0.25)
 
     activations = {
-        "strikeout_contact": _clamp(0.85 + 0.55 * high_k_relevance + 0.08 * abs(pitcher_k - pitcher_recent_k) / 0.08, 0.55, 1.75),
-        "contact_quality": _clamp(0.85 + 0.35 * low_k_contact_relevance + 0.15 * abs(pitch_compatibility_score) + 0.10 * coherent_batter_form + 0.10 * coherent_pitcher_decline, 0.60, 1.70),
-        "power_tb": _clamp((1.35 if target == "TB" else 0.72) + 0.18 * abs(power_tb) + 0.08 * coherent_batter_form, 0.55, 1.80),
-        "defense_conversion": 1.20 if specific_defense else 0.25,
+        "strikeout_contact": _clamp(
+            0.85 + 0.55 * high_k_relevance + 0.08 * abs(pitcher_k - pitcher_recent_k) / 0.08,
+            0.55,
+            1.75,
+        ),
+        "contact_quality": _clamp(
+            contact_base
+            + 0.35 * low_k_contact_relevance
+            + 0.15 * abs(pitch_compatibility_score)
+            + 0.10 * coherent_batter_form
+            + 0.10 * coherent_pitcher_decline,
+            0.50,
+            1.70,
+        ),
+        "power_tb": _clamp(power_base + 0.18 * abs(power_tb) + 0.08 * coherent_batter_form, 0.55, 1.90),
+        "defense_conversion": defense_base,
         "pa_opportunity": _clamp(0.90 + 0.18 * abs(pa_opportunity), 0.70, 1.45),
         "bullpen_transition": _clamp(0.65 + 0.65 * (1.0 - starter_fraction), 0.55, 1.35),
     }
@@ -339,7 +375,12 @@ def build_expert_state(
     ])
     missing_penalty = min(0.45, 0.055 * len(context.missing_components or ()))
     freshness = 1.0 if context.data_freshness_status == "FRESH" else 0.72 if context.data_freshness_status == "DEGRADED" else 0.35
-    evidence_strength = _clamp01(profile_support * freshness * (1.0 - missing_penalty) * (1.0 - 0.55 * _clamp01(sequential.uncertainty)))
+    evidence_strength = _clamp01(
+        profile_support
+        * freshness
+        * (1.0 - missing_penalty)
+        * (1.0 - 0.55 * _clamp01(sequential.uncertainty))
+    )
 
     diagnostics = {
         "target": target,
@@ -355,16 +396,20 @@ def build_expert_state(
         "batter_recent_xwoba": batter_recent_xwoba,
         "pitcher_xwoba_allowed": pitcher_xwoba,
         "pitcher_recent_xwoba_allowed": pitcher_recent_xwoba,
+        "batter_hr_rate": batter_hr,
+        "batter_recent_hr_rate": batter_recent_hr,
+        "pitcher_hr_rate_allowed_proxy": pitcher_hr,
+        "pitcher_recent_hr_rate_allowed_proxy": pitcher_recent_hr,
         "batter_quality_trend": batter_quality_trend,
         "pitcher_quality_trend_for_hitter": pitcher_quality_trend_for_hitter,
         "power_trend": power_trend,
         "pitcher_xfip": pitcher.xfip,
         "pitcher_siera": pitcher.siera,
         "pitch_compatibility_score": pitch_compatibility_score,
-        "pitch_context_available": pitch_context_available,
+        "pitch_context_available": bool(batter.pitch_type_xwoba and pitcher.arsenal),
         "batter_handedness": batter.handedness,
         "pitcher_handedness": pitcher.handedness,
-        "handedness_context_available": handedness_known,
+        "handedness_context_available": bool(str(batter.handedness or "").strip() and str(pitcher.handedness or "").strip()),
         "temperature_f": temperature_f,
         "weather_power_signal": weather_power_signal,
         "expected_pa": expected_pa,
@@ -375,15 +420,26 @@ def build_expert_state(
         "profile_support": profile_support,
         "missing_component_count": len(context.missing_components or ()),
     }
-    return ExpertState(signals=signals, activations=activations, effective_features=effective, evidence_strength=evidence_strength, diagnostics=diagnostics)
+    return ExpertState(
+        signals=signals,
+        activations=activations,
+        effective_features=effective,
+        evidence_strength=evidence_strength,
+        diagnostics=diagnostics,
+    )
 
 
 def _target_payload(artifact: Mapping[str, Any], target: str) -> Mapping[str, Any]:
     targets = artifact.get("targets") if isinstance(artifact, Mapping) else None
     payload = (targets or {}).get(target) if isinstance(targets, Mapping) else None
-    if not isinstance(payload, Mapping):
-        return DEFAULT_ARTIFACT["targets"][target]
-    return payload
+    return payload if isinstance(payload, Mapping) else DEFAULT_ARTIFACT["targets"][target]
+
+
+def _diagnostic_gate_passed(validation: Mapping[str, Any]) -> bool:
+    explicit = validation.get("statistical_gate_passed")
+    if explicit is not None:
+        return bool(explicit)
+    return str(validation.get("status") or "") == "IMPROVED_DIAGNOSTIC_ONLY"
 
 
 def condition_probability(
@@ -395,8 +451,9 @@ def condition_probability(
     sequential_uncertainty: float = 0.0,
 ) -> GameConditionedProbability:
     target = str(target).upper()
-    if target not in {"H", "TB"}:
+    if target not in TARGETS:
         raise ValueError(f"unsupported game-conditioned target: {target}")
+
     model = artifact if isinstance(artifact, Mapping) else DEFAULT_ARTIFACT
     payload = _target_payload(model, target)
     coefficients = payload.get("coefficients") or {}
@@ -422,12 +479,14 @@ def condition_probability(
     candidate = logistic(logit(prior) + residual)
 
     validation = dict(payload.get("validation") or {})
-    positive_authority = bool(payload.get("positive_authority", False))
+    diagnostic_gate = _diagnostic_gate_passed(validation)
     evidence_class = str(model.get("evidence_class") or "NONE")
-    positive_authority = positive_authority and evidence_class in {
+    exact_evidence = evidence_class in {
         "EXACT_POINT_IN_TIME_PROSPECTIVE",
         "EXACT_POINT_IN_TIME_LOCKED_VALIDATION",
     }
+    positive_authority = bool(payload.get("positive_authority", False)) and exact_evidence and diagnostic_gate
+    negative_authority = diagnostic_gate
 
     uncertainty = _clamp01(float(sequential_uncertainty))
     validation_brier = _finite(validation.get("candidate_brier"), _finite(validation.get("prior_brier"), 0.25))
@@ -439,9 +498,12 @@ def condition_probability(
     if positive_authority:
         production = lower_bound
         authority_status = "PROMOTED_RESIDUAL_POSITIVE_AND_NEGATIVE_AUTHORITY"
+    elif negative_authority:
+        production = min(prior, lower_bound)
+        authority_status = "DIAGNOSTICALLY_VALIDATED_NEGATIVE_AUTHORITY_ONLY"
     else:
-        production = min(prior, candidate, lower_bound)
-        authority_status = "SHADOW_RESIDUAL_NEGATIVE_AUTHORITY_ONLY"
+        production = prior
+        authority_status = "SHADOW_ONLY_NO_PRODUCTION_AUTHORITY"
 
     absolute = {name: abs(contributions[name]) for name in EXPERT_NAMES}
     total = sum(absolute.values())
@@ -511,12 +573,20 @@ def choose_prior_probability(
     under_price: Any = None,
     legacy_weight: float = 0.72,
 ) -> tuple[float, dict[str, Any]]:
-    """Build a stable pre-residual prior from legacy structure + no-vig market."""
+    """Build the pre-residual prior from legacy structure plus no-vig market."""
 
     legacy = poisson_over_probability(legacy_projection, market_line)
     market = no_vig_over_probability(over_price, under_price)
     if market is None:
-        return legacy, {"legacy_probability": legacy, "market_no_vig_probability": None, "legacy_weight": 1.0}
+        return legacy, {
+            "legacy_probability": legacy,
+            "market_no_vig_probability": None,
+            "legacy_weight": 1.0,
+        }
     weight = _clamp(float(legacy_weight), 0.20, 0.95)
     prior = logistic(weight * logit(legacy) + (1.0 - weight) * logit(market))
-    return prior, {"legacy_probability": legacy, "market_no_vig_probability": market, "legacy_weight": weight}
+    return prior, {
+        "legacy_probability": legacy,
+        "market_no_vig_probability": market,
+        "legacy_weight": weight,
+    }
