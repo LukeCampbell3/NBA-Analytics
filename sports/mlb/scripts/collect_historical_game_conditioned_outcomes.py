@@ -8,7 +8,6 @@ import hashlib
 import json
 import math
 import sys
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -125,7 +124,7 @@ def build_outcome_record(raw: dict[str, Any], *, source_file: str, source_row: i
         "TB_OVER_1_5": int(total_bases >= 2),
         "HR_OVER_0_5": int(home_runs >= 1),
     }
-    base = {
+    identity_and_result = {
         "schema_version": SCHEMA_VERSION,
         "evidence_class": EVIDENCE_CLASS,
         "season": int(season),
@@ -137,6 +136,9 @@ def build_outcome_record(raw: dict[str, Any], *, source_file: str, source_row: i
         "opponent": opponent,
         "realized": realized,
         "outcomes": outcomes,
+    }
+    record = {
+        **identity_and_result,
         "source": {
             "kind": "processed_historical_game_log",
             "file": source_file,
@@ -146,8 +148,9 @@ def build_outcome_record(raw: dict[str, Any], *, source_file: str, source_row: i
         "market_data_included": False,
         "settlement_timestamp_available": False,
         "certification_use": "OUTCOME_LABEL_ONLY",
+        "outcome_sha256": _canonical_hash(identity_and_result),
     }
-    return {**base, "outcome_sha256": _canonical_hash(base)}, None
+    return record, None
 
 
 def collect_outcomes(data_root: Path, *, season: int) -> tuple[list[dict[str, Any]], dict[str, int]]:
