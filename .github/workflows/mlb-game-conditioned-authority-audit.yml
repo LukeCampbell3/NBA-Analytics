@@ -8,9 +8,11 @@ on:
       - 'sports/mlb/advanced/game_conditioned_authority.py'
       - 'sports/mlb/advanced/game_conditioned_moe.py'
       - 'sports/mlb/scripts/fit_game_conditioned_hitter_moe.py'
+      - 'sports/mlb/scripts/run_sequential_pa_hitter_model.py'
       - 'sports/mlb/scripts/validate_game_conditioned_authority.py'
       - 'sports/mlb/tests/test_game_conditioned_authority.py'
       - 'sports/mlb/tests/test_game_conditioned_hitter_moe.py'
+      - 'sports/mlb/tests/test_game_conditioned_pregame_snapshot.py'
       - 'artifacts/mlb_game_conditioned_hitter_moe_validation.json'
       - '.github/workflows/mlb-game-conditioned-authority-audit.yml'
   pull_request:
@@ -18,9 +20,11 @@ on:
       - 'sports/mlb/advanced/game_conditioned_authority.py'
       - 'sports/mlb/advanced/game_conditioned_moe.py'
       - 'sports/mlb/scripts/fit_game_conditioned_hitter_moe.py'
+      - 'sports/mlb/scripts/run_sequential_pa_hitter_model.py'
       - 'sports/mlb/scripts/validate_game_conditioned_authority.py'
       - 'sports/mlb/tests/test_game_conditioned_authority.py'
       - 'sports/mlb/tests/test_game_conditioned_hitter_moe.py'
+      - 'sports/mlb/tests/test_game_conditioned_pregame_snapshot.py'
       - 'artifacts/mlb_game_conditioned_hitter_moe_validation.json'
       - '.github/workflows/mlb-game-conditioned-authority-audit.yml'
   workflow_dispatch:
@@ -48,6 +52,9 @@ jobs:
 
       - name: Run independent authority tests
         run: python -m pytest -q sports/mlb/tests/test_game_conditioned_authority.py
+
+      - name: Run immutable pregame snapshot tests
+        run: python -m pytest -q sports/mlb/tests/test_game_conditioned_pregame_snapshot.py
 
       - name: Run existing game-conditioned MoE tests
         run: python -m pytest -q sports/mlb/tests/test_game_conditioned_hitter_moe.py
