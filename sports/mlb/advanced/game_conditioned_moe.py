@@ -57,22 +57,57 @@ def _mean(values: list[float]) -> float:
     return sum(values) / len(values) if values else 0.0
 
 
+_ROLLING_ALIASES = {
+    "xwoba": "xwoba_contact",
+    "xba": "xba_contact",
+    "xslg": "xslg_contact",
+    "hard_hit_rate": "hard_hit_rate",
+    "barrel_rate": "barrel_rate",
+    "k_rate": "k_rate",
+    "bb_rate": "bb_rate",
+    "hr_rate": "hr_rate",
+    "whiff_rate": "whiff_rate",
+}
+
+
 def _profile_recent(profile: Any, key: str, default: float) -> float:
+    """Build a support-weighted recent-state estimate from nested Statcast windows.
+
+    The short windows intentionally never receive full authority on their own.
+    last-15/30/60 are overlapping views, so their weights are capped and then
+    blended back toward the season/default value. This supplies state movement
+    without turning one hot week into a new player skill estimate.
+    """
+
     rolling = getattr(profile, "rolling", None) or {}
-    # Prefer a short-but-supported state estimate when the source supplies one.
-    # The data layer may expose either scalar keys or nested windows.
-    aliases = (key, f"last_15_{key}", f"last30_{key}", f"recent_{key}")
-    for alias in aliases:
-        value = rolling.get(alias) if isinstance(rolling, Mapping) else None
-        if isinstance(value, Mapping):
-            value = value.get("value") or value.get("mean")
+    if not isinstance(rolling, Mapping):
+        return float(default)
+    metric_key = _ROLLING_ALIASES.get(key, key)
+    windows = (("last_15", 0.45, 15.0), ("last_30", 0.32, 30.0), ("last_60", 0.23, 60.0))
+    weighted = 0.0
+    weight_sum = 0.0
+    for window, base_weight, expected_pa in windows:
+        data = rolling.get(window)
+        if not isinstance(data, Mapping):
+            continue
+        value = data.get(metric_key)
         try:
             parsed = float(value)
         except (TypeError, ValueError):
             continue
-        if math.isfinite(parsed):
-            return parsed
-    return float(default)
+        if not math.isfinite(parsed):
+            continue
+        sample_pa = _finite(data.get("pa"), 0.0)
+        support = _clamp(sample_pa / expected_pa, 0.0, 1.0)
+        weight = base_weight * support
+        weighted += weight * parsed
+        weight_sum += weight
+    if weight_sum <= 1e-9:
+        return float(default)
+    recent = weighted / weight_sum
+    # Season skill remains a material anchor even when every rolling window is full.
+    recent_authority = _clamp(0.35 + 0.30 * weight_sum, 0.35, 0.65)
+    return (1.0 - recent_authority) * float(default) + recent_authority * recent
 
 
 @dataclass(frozen=True)
@@ -156,7 +191,7 @@ def build_expert_state(
     """Build game-specific expert signals and relevance gates.
 
     Signals are centered roughly around league-neutral state. Activations encode
-    how relevant an expert is *for this matchup*. The fitted model learns global
+    how relevant an expert is for this matchup. The fitted model learns global
     coefficients; effective per-game weights are coefficient x activation.
     """
 
@@ -170,21 +205,44 @@ def build_expert_state(
     pitcher_whiff = _finite(pitcher.whiff_rate, 0.235)
     pitcher_kbb = _finite(pitcher.k_minus_bb_rate, pitcher_k - _finite(pitcher.bb_rate, 0.085))
 
-    # Positive means contact conditions favor the hitter.
+    batter_recent_k = _profile_recent(batter, "k_rate", batter_k)
+    pitcher_recent_k = _profile_recent(pitcher, "k_rate", pitcher_k)
+    batter_recent_whiff = _profile_recent(batter, "whiff_rate", batter_whiff)
+    pitcher_recent_whiff = _profile_recent(pitcher, "whiff_rate", pitcher_whiff)
+
+    # Positive means contact survival conditions favor the hitter. The trend
+    # terms answer whether today's state is moving away from the season prior.
     strikeout_contact = _mean([
         (0.225 - batter_k) / 0.10,
         (0.225 - pitcher_k) / 0.10,
         (0.235 - batter_whiff) / 0.12,
         (0.235 - pitcher_whiff) / 0.12,
         (0.140 - pitcher_kbb) / 0.12,
+        (batter_k - batter_recent_k) / 0.08,
+        (pitcher_k - pitcher_recent_k) / 0.08,
+        (batter_whiff - batter_recent_whiff) / 0.09,
+        (pitcher_whiff - pitcher_recent_whiff) / 0.09,
     ])
 
     batter_xwoba = _finite(batter.xwoba, _finite(batter.woba, 0.320))
     pitcher_xwoba = _finite(pitcher.xwoba_allowed, 0.320)
-    batter_xba = _finite(batter.xba, _finite(batter.ba, 0.250))
+    batter_xba = _finite(batter.xba, 0.250)
     pitcher_xba = _finite(pitcher.xba_allowed, 0.250)
     batter_hard = _finite(batter.hard_hit_rate, 0.38)
-    pitcher_hard = _finite(pitcher.hard_hit_allowed, 0.38)
+    pitcher_hard = _finite(pitcher.hard_hit_rate_allowed, 0.38)
+    batter_recent_xwoba = _profile_recent(batter, "xwoba", batter_xwoba)
+    pitcher_recent_xwoba = _profile_recent(pitcher, "xwoba", pitcher_xwoba)
+    batter_recent_hard = _profile_recent(batter, "hard_hit_rate", batter_hard)
+    pitcher_recent_hard = _profile_recent(pitcher, "hard_hit_rate", pitcher_hard)
+
+    batter_quality_trend = _mean([
+        (batter_recent_xwoba - batter_xwoba) / 0.060,
+        (batter_recent_hard - batter_hard) / 0.10,
+    ])
+    pitcher_quality_trend_for_hitter = _mean([
+        (pitcher_recent_xwoba - pitcher_xwoba) / 0.060,
+        (pitcher_recent_hard - pitcher_hard) / 0.10,
+    ])
     contact_quality = _mean([
         (batter_xwoba - 0.320) / 0.075,
         (pitcher_xwoba - 0.320) / 0.075,
@@ -193,13 +251,27 @@ def build_expert_state(
         (batter_hard - 0.38) / 0.13,
         (pitcher_hard - 0.38) / 0.13,
         _clamp(pitch_compatibility_score, -1.5, 1.5),
+        _clamp(batter_quality_trend, -1.5, 1.5),
+        _clamp(pitcher_quality_trend_for_hitter, -1.5, 1.5),
     ])
 
-    batter_xslg = _finite(batter.xslg, _finite(batter.slg, 0.420))
+    batter_xslg = _finite(batter.xslg, 0.420)
     pitcher_xslg = _finite(pitcher.xslg_allowed, 0.420)
     batter_barrel = _finite(batter.barrel_rate, 0.075)
-    pitcher_barrel = _finite(pitcher.barrel_allowed, 0.075)
+    pitcher_barrel = _finite(pitcher.barrel_rate_allowed, 0.075)
     pitcher_gb = _finite(pitcher.gb_rate, 0.43)
+    batter_recent_xslg = _profile_recent(batter, "xslg", batter_xslg)
+    pitcher_recent_xslg = _profile_recent(pitcher, "xslg", pitcher_xslg)
+    batter_recent_barrel = _profile_recent(batter, "barrel_rate", batter_barrel)
+    pitcher_recent_barrel = _profile_recent(pitcher, "barrel_rate", pitcher_barrel)
+    power_trend = _mean([
+        (batter_recent_xslg - batter_xslg) / 0.14,
+        (pitcher_recent_xslg - pitcher_xslg) / 0.14,
+        (batter_recent_barrel - batter_barrel) / 0.06,
+        (pitcher_recent_barrel - pitcher_barrel) / 0.06,
+    ])
+    temperature_f = context.temperature_f
+    weather_power_signal = 0.0 if temperature_f is None else _clamp((float(temperature_f) - 72.0) / 30.0, -1.0, 1.0)
     power_tb = _mean([
         (batter_xslg - 0.420) / 0.17,
         (pitcher_xslg - 0.420) / 0.17,
@@ -207,6 +279,8 @@ def build_expert_state(
         (pitcher_barrel - 0.075) / 0.075,
         (0.43 - pitcher_gb) / 0.18,
         (float(context.park_factor or 1.0) - 1.0) / 0.10,
+        _clamp(power_trend, -1.5, 1.5),
+        0.35 * weather_power_signal,
     ])
 
     specific_defense = str(context.defense_status or "").upper().startswith("SPECIFIC")
@@ -230,8 +304,6 @@ def build_expert_state(
         (3.90 - _finite(pitcher.siera, _finite(pitcher.era, 4.10))) / 1.35,
         (0.320 - pitcher_xwoba) / 0.075,
     ])
-    # A strong starter leaving early helps the hitter relative to assuming the
-    # starter owns every PA; a weak starter leaving early removes an advantage.
     bullpen_transition = starter_quality * (1.0 - starter_fraction) * max(0.6, expected_pa / 4.2)
 
     signals = {
@@ -243,19 +315,28 @@ def build_expert_state(
         "bullpen_transition": _clamp(bullpen_transition, -2.5, 2.5),
     }
 
-    high_k_relevance = _clamp(abs(pitcher_k - 0.225) / 0.12 + abs(batter_k - 0.225) / 0.12, 0.0, 1.6)
-    low_k_contact_relevance = _clamp((0.255 - pitcher_k) / 0.10, 0.0, 1.4)
+    high_k_relevance = _clamp(abs(pitcher_recent_k - 0.225) / 0.12 + abs(batter_recent_k - 0.225) / 0.12, 0.0, 1.6)
+    low_k_contact_relevance = _clamp((0.255 - pitcher_recent_k) / 0.10, 0.0, 1.4)
+    coherent_batter_form = _clamp(max(0.0, batter_quality_trend) + max(0.0, power_trend), 0.0, 1.5)
+    coherent_pitcher_decline = _clamp(max(0.0, pitcher_quality_trend_for_hitter) + max(0.0, pitcher_k - pitcher_recent_k) / 0.08, 0.0, 1.5)
+    pitch_context_available = bool(batter.pitch_type_xwoba and pitcher.arsenal)
+    handedness_known = bool(str(batter.handedness or "").strip() and str(pitcher.handedness or "").strip())
+
     activations = {
-        "strikeout_contact": _clamp(0.85 + 0.55 * high_k_relevance, 0.55, 1.75),
-        "contact_quality": _clamp(0.85 + 0.35 * low_k_contact_relevance + 0.15 * abs(pitch_compatibility_score), 0.60, 1.60),
-        "power_tb": _clamp((1.35 if target == "TB" else 0.72) + 0.18 * abs(power_tb), 0.55, 1.75),
+        "strikeout_contact": _clamp(0.85 + 0.55 * high_k_relevance + 0.08 * abs(pitcher_k - pitcher_recent_k) / 0.08, 0.55, 1.75),
+        "contact_quality": _clamp(0.85 + 0.35 * low_k_contact_relevance + 0.15 * abs(pitch_compatibility_score) + 0.10 * coherent_batter_form + 0.10 * coherent_pitcher_decline, 0.60, 1.70),
+        "power_tb": _clamp((1.35 if target == "TB" else 0.72) + 0.18 * abs(power_tb) + 0.08 * coherent_batter_form, 0.55, 1.80),
         "defense_conversion": 1.20 if specific_defense else 0.25,
         "pa_opportunity": _clamp(0.90 + 0.18 * abs(pa_opportunity), 0.70, 1.45),
         "bullpen_transition": _clamp(0.65 + 0.65 * (1.0 - starter_fraction), 0.55, 1.35),
     }
     effective = {name: signals[name] * activations[name] for name in EXPERT_NAMES}
 
-    profile_support = _mean([_clamp01(_finite(batter.support, 0.0)), _clamp01(_finite(pitcher.support, 0.0)), _clamp01(_finite(sequential.support, 0.0))])
+    profile_support = _mean([
+        _clamp01(_finite(batter.support, 0.0)),
+        _clamp01(_finite(pitcher.support, 0.0)),
+        _clamp01(_finite(sequential.support, 0.0)),
+    ])
     missing_penalty = min(0.45, 0.055 * len(context.missing_components or ()))
     freshness = 1.0 if context.data_freshness_status == "FRESH" else 0.72 if context.data_freshness_status == "DEGRADED" else 0.35
     evidence_strength = _clamp01(profile_support * freshness * (1.0 - missing_penalty) * (1.0 - 0.55 * _clamp01(sequential.uncertainty)))
@@ -263,12 +344,29 @@ def build_expert_state(
     diagnostics = {
         "target": target,
         "batter_k_rate": batter_k,
+        "batter_recent_k_rate": batter_recent_k,
         "pitcher_k_rate": pitcher_k,
+        "pitcher_recent_k_rate": pitcher_recent_k,
+        "batter_whiff_rate": batter_whiff,
+        "batter_recent_whiff_rate": batter_recent_whiff,
+        "pitcher_whiff_rate": pitcher_whiff,
+        "pitcher_recent_whiff_rate": pitcher_recent_whiff,
         "batter_xwoba": batter_xwoba,
+        "batter_recent_xwoba": batter_recent_xwoba,
         "pitcher_xwoba_allowed": pitcher_xwoba,
+        "pitcher_recent_xwoba_allowed": pitcher_recent_xwoba,
+        "batter_quality_trend": batter_quality_trend,
+        "pitcher_quality_trend_for_hitter": pitcher_quality_trend_for_hitter,
+        "power_trend": power_trend,
         "pitcher_xfip": pitcher.xfip,
         "pitcher_siera": pitcher.siera,
         "pitch_compatibility_score": pitch_compatibility_score,
+        "pitch_context_available": pitch_context_available,
+        "batter_handedness": batter.handedness,
+        "pitcher_handedness": pitcher.handedness,
+        "handedness_context_available": handedness_known,
+        "temperature_f": temperature_f,
+        "weather_power_signal": weather_power_signal,
         "expected_pa": expected_pa,
         "team_expected_runs": context.team_expected_runs,
         "specific_defense": specific_defense,
@@ -326,9 +424,6 @@ def condition_probability(
     validation = dict(payload.get("validation") or {})
     positive_authority = bool(payload.get("positive_authority", False))
     evidence_class = str(model.get("evidence_class") or "NONE")
-    # Exact/prospective evidence is required before a residual may increase a
-    # public probability. Historical proxy fitting can still learn useful
-    # downward vetoes and shadow ranking adjustments.
     positive_authority = positive_authority and evidence_class in {
         "EXACT_POINT_IN_TIME_PROSPECTIVE",
         "EXACT_POINT_IN_TIME_LOCKED_VALIDATION",
@@ -416,12 +511,7 @@ def choose_prior_probability(
     under_price: Any = None,
     legacy_weight: float = 0.72,
 ) -> tuple[float, dict[str, Any]]:
-    """Build a stable pre-residual prior from legacy structure + no-vig market.
-
-    Blending occurs in logit space so neither source can dominate merely because
-    its probability is near an endpoint. The selector later remains free to use
-    its more deeply calibrated legacy probability as an additional cap.
-    """
+    """Build a stable pre-residual prior from legacy structure + no-vig market."""
 
     legacy = poisson_over_probability(legacy_projection, market_line)
     market = no_vig_over_probability(over_price, under_price)
