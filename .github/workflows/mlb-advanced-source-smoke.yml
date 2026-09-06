@@ -1,0 +1,100 @@
+name: MLB Advanced Source Smoke
+
+on:
+  push:
+    branches: [static-deployment]
+    paths:
+      - '.github/workflows/mlb-advanced-source-smoke.yml'
+      - 'sports/mlb/scripts/smoke_advanced_mlb_sources.py'
+      - 'sports/mlb/advanced/**'
+      - 'sports/mlb/requirements-same-game.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mlb-advanced-source-smoke-static-deployment
+  cancel-in-progress: true
+
+jobs:
+  source-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout static deployment
+        uses: actions/checkout@v7
+        with:
+          ref: static-deployment
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            sports/mlb/requirements-same-game.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt -r sports/mlb/requirements-same-game.txt
+
+      - name: Pull one active matchup from Baseball Savant and FanGraphs
+        run: |
+          set -euo pipefail
+          python sports/mlb/scripts/smoke_advanced_mlb_sources.py \
+            --lookback-days 45 \
+            --output artifacts/mlb_advanced_source_smoke.json
+
+      - name: Validate source evidence
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = json.loads(Path('artifacts/mlb_advanced_source_smoke.json').read_text())
+          assert p['schema_version'] == 'mlb_advanced_source_smoke_v1'
+          assert p['baseball_savant']['status'] == 'SUCCESS'
+          assert p['baseball_savant']['batter_profile_present'] is True
+          assert p['baseball_savant']['pitcher_profile_present'] is True
+          assert p['effective_as_of_date'] < p['run_date']
+          assert p['fangraphs']['status'] in {'SUCCESS', 'UNAVAILABLE'}
+          if p['fangraphs']['status'] == 'SUCCESS':
+              assert p['fangraphs']['available_fields']
+          print(json.dumps({
+              'candidate': p['candidate'],
+              'effective_as_of_date': p['effective_as_of_date'],
+              'savant': p['baseball_savant']['status'],
+              'fangraphs': p['fangraphs']['status'],
+              'fangraphs_fields': p['fangraphs']['available_fields'],
+              'arsenal_pitch_types': p['baseball_savant']['arsenal_pitch_types'],
+          }, indent=2))
+          PY
+
+      - name: Commit smoke evidence
+        run: |
+          set -euo pipefail
+          git add -f -- artifacts/mlb_advanced_source_smoke.json
+          if git diff --cached --quiet; then
+            echo 'Source smoke evidence already current.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'MLB advanced source smoke evidence [skip ci]'
+          if ! git push origin HEAD:static-deployment; then
+            git pull --rebase --autostash origin static-deployment
+            git push origin HEAD:static-deployment
+          fi
+
+      - name: Upload smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mlb-advanced-source-smoke-${{ github.run_id }}
+          path: artifacts/mlb_advanced_source_smoke.json
+          if-no-files-found: error
+          retention-days: 30
