@@ -25,6 +25,8 @@ DEFAULT_PREGAME_ROOT = REPO_ROOT / "sports" / "mlb" / "web" / "data" / "history"
 
 SNAPSHOT_MARKETS = {"H", "TB", "HR"}
 SNAPSHOT_SCHEMA_VERSION = "mlb_game_conditioned_pregame_snapshot_v1"
+FRONTEND_SCHEMA_VERSION = "mlb_sequential_pa_frontend_v1"
+GAME_CONDITIONED_SCHEMA_EXTENSION = "mlb_game_conditioned_hitter_frontend_v2"
 
 
 def _json_object(value: Any) -> dict[str, Any]:
@@ -302,7 +304,11 @@ def main() -> int:
     args.report_json.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     args.report_md.write_text(markdown(report), encoding="utf-8")
     web = {
-        "schema_version": "mlb_game_conditioned_hitter_frontend_v2",
+        # Backward-compatible envelope for the existing publication worker.
+        # The payload remains explicitly identifiable as the v2 game-conditioned extension.
+        "schema_version": FRONTEND_SCHEMA_VERSION,
+        "schema_extensions": [GAME_CONDITIONED_SCHEMA_EXTENSION],
+        "game_conditioned_schema_version": GAME_CONDITIONED_SCHEMA_EXTENSION,
         "run_date": args.run_date,
         "model_version": report.get("model_version"),
         "structural_model_version": report.get("structural_model_version"),
