@@ -12,6 +12,7 @@ on:
       - 'sports/mlb/scripts/validate_game_conditioned_authority.py'
       - 'sports/mlb/tests/test_game_conditioned_authority.py'
       - 'sports/mlb/tests/test_game_conditioned_hitter_moe.py'
+      - 'sports/mlb/tests/test_game_conditioned_matchup_state.py'
       - 'sports/mlb/tests/test_game_conditioned_pregame_snapshot.py'
       - 'sports/mlb/tests/test_game_conditioned_runtime_authority.py'
       - 'artifacts/mlb_game_conditioned_hitter_moe_validation.json'
@@ -25,6 +26,7 @@ on:
       - 'sports/mlb/scripts/validate_game_conditioned_authority.py'
       - 'sports/mlb/tests/test_game_conditioned_authority.py'
       - 'sports/mlb/tests/test_game_conditioned_hitter_moe.py'
+      - 'sports/mlb/tests/test_game_conditioned_matchup_state.py'
       - 'sports/mlb/tests/test_game_conditioned_pregame_snapshot.py'
       - 'sports/mlb/tests/test_game_conditioned_runtime_authority.py'
       - 'artifacts/mlb_game_conditioned_hitter_moe_validation.json'
@@ -57,6 +59,9 @@ jobs:
 
       - name: Run runtime authority tests
         run: python -m pytest -q sports/mlb/tests/test_game_conditioned_runtime_authority.py
+
+      - name: Run expanded matchup-state tests
+        run: python -m pytest -q sports/mlb/tests/test_game_conditioned_matchup_state.py
 
       - name: Run immutable pregame snapshot tests
         run: python -m pytest -q sports/mlb/tests/test_game_conditioned_pregame_snapshot.py
