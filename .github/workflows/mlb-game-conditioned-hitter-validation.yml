@@ -7,6 +7,7 @@ on:
       - 'sports/mlb/advanced/game_conditioned_moe.py'
       - 'sports/mlb/advanced/integration.py'
       - 'sports/mlb/advanced/schema.py'
+      - 'sports/mlb/advanced/sequential_pa_model.py'
       - 'sports/mlb/scripts/fit_game_conditioned_hitter_moe.py'
       - 'sports/mlb/tests/test_game_conditioned_hitter_moe.py'
       - '.github/workflows/mlb-game-conditioned-hitter-validation.yml'
@@ -42,31 +43,46 @@ jobs:
             sports/mlb/tests/test_game_conditioned_hitter_moe.py \
             sports/mlb/tests/test_sequential_pa_identity_hydration.py \
             -q
-      - name: Fit rolling-origin residual model
+      - name: Fit expanding-window residual model
         run: |
           python sports/mlb/scripts/fit_game_conditioned_hitter_moe.py \
             --season 2026 \
-            --max-rows 800 \
+            --max-games 300 \
             --trials 900 \
-            --min-history 20
+            --min-history 20 \
+            --folds 5 \
+            --min-train-rows 40
       - name: Enforce authority and artifact contract
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
+
           path = Path('sports/mlb/data/predictions/calibration/game_conditioned_hitter_moe_v2.json')
           payload = json.loads(path.read_text())
           assert payload['schema_version'] == 'mlb_game_conditioned_hitter_moe_v2'
           assert payload['model_version'] == 'game_conditioned_hitter_moe_v2'
           assert payload['evidence_class'] == 'ROLLING_ORIGIN_HIGH_FIDELITY_DIAGNOSTIC_NOT_CERTIFICATION'
-          for target in ('H', 'TB'):
+          assert payload['validation_design'] == 'expanding_window_strictly_prior_dates'
+          assert set(payload['targets']) >= {'H', 'TB', 'HR'}
+
+          expected_experts = {
+              'strikeout_contact', 'contact_quality', 'power_tb',
+              'defense_conversion', 'pa_opportunity', 'bullpen_transition'
+          }
+          for target in ('H', 'TB', 'HR'):
               model = payload['targets'][target]
+              validation = model['validation']
               assert model['positive_authority'] is False
-              assert set(model['coefficients']) == {
-                  'strikeout_contact', 'contact_quality', 'power_tb',
-                  'defense_conversion', 'pa_opportunity', 'bullpen_transition'
-              }
-              assert model['validation']['validation_rows'] >= 10
+              assert set(model['coefficients']) == expected_experts
+              assert validation['validation_rows'] >= 10
+              gate = bool(validation.get('statistical_gate_passed', False))
+              assert bool(validation.get('negative_authority_allowed', False)) == gate
+              if gate:
+                  assert validation['brier_improved'] is True
+                  assert validation['log_loss_improved'] is True
+                  assert validation['fold_count'] >= 3
+                  assert validation['fold_pass_rate'] >= 0.60
           PY
       - name: Commit fitted diagnostic artifact
         run: |
