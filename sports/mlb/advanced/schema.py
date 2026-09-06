@@ -127,6 +127,7 @@ class AdvancedCandidateContext:
     defense_status: str
     data_freshness_status: str
     missing_components: tuple[str, ...] = field(default_factory=tuple)
+    temperature_f: float | None = None
 
 
 @dataclass(frozen=True)
