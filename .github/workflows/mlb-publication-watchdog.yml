@@ -1,0 +1,129 @@
+name: MLB Publication Watchdog
+
+on:
+  schedule:
+    # EDT: 12:15 PM and 1:15 PM verify the 11:30 official publish;
+    # 6:15 PM verifies the 5:30 supporting refresh without replacing picks.
+    - cron: '15 16 * 3-10 *'
+    - cron: '15 17 * 3-10 *'
+    - cron: '15 22 * 3-10 *'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  TZ: America/New_York
+
+concurrency:
+  group: mlb-publication-watchdog
+  cancel-in-progress: false
+
+jobs:
+  verify-and-recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 145
+    steps:
+      - name: Checkout static deployment
+        uses: actions/checkout@v7
+        with:
+          ref: static-deployment
+          fetch-depth: 1
+
+      - name: Verify current official slate
+        id: health
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime
+          from pathlib import Path
+          from zoneinfo import ZoneInfo
+
+          today = datetime.now(ZoneInfo('America/New_York')).date().isoformat()
+          path = Path('sports/mlb/web/data/daily_predictions.json')
+          healthy = False
+          reason = 'missing daily_predictions.json'
+          if path.exists():
+              try:
+                  board = json.loads(path.read_text())
+                  protocol = board.get('publication_protocol') or {}
+                  healthy = (
+                      board.get('run_date') == today
+                      and str(board.get('publication_status') or '').lower() == 'ready'
+                      and isinstance(board.get('plays'), list)
+                      and protocol.get('issued_picks_immutable') is True
+                      and protocol.get('mode') in {'PUBLISH', 'LATE_ADD', 'REFRESH'}
+                  )
+                  reason = (
+                      f"run_date={board.get('run_date')} status={board.get('publication_status')} "
+                      f"mode={protocol.get('mode')} immutable={protocol.get('issued_picks_immutable')}"
+                  )
+              except Exception as exc:
+                  reason = f'payload error: {exc}'
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as handle:
+              handle.write(f'today={today}\n')
+              handle.write(f'healthy={str(healthy).lower()}\n')
+          print(f'MLB publication health: {healthy}; {reason}')
+          PY
+
+      - name: Recover missing official slate
+        if: steps.health.outputs.healthy != 'true'
+        env:
+          RUN_DATE: ${{ steps.health.outputs.today }}
+        run: |
+          set -euo pipefail
+          before="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow mlb-predictions.yml --event workflow_dispatch --branch static-deployment --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
+          gh workflow run mlb-predictions.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref static-deployment \
+            -f run_date="$RUN_DATE" \
+            -f build_only=false \
+            -f publication_mode=PUBLISH
+
+          run_id=''
+          for _ in $(seq 1 90); do
+            candidate="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow mlb-predictions.yml --event workflow_dispatch --branch static-deployment --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
+            if [[ "$candidate" != '0' && "$candidate" != "$before" ]]; then
+              run_id="$candidate"
+              break
+            fi
+            sleep 2
+          done
+          test -n "$run_id"
+          echo "Watchdog recovery run: $run_id"
+          gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status
+
+      - name: Verify recovered branch state
+        if: always()
+        env:
+          RUN_DATE: ${{ steps.health.outputs.today }}
+        run: |
+          set -euo pipefail
+          git fetch origin static-deployment
+          git reset --hard origin/static-deployment
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          today = os.environ['RUN_DATE']
+          board = json.loads(Path('sports/mlb/web/data/daily_predictions.json').read_text())
+          protocol = board.get('publication_protocol') or {}
+          assert board.get('run_date') == today, (board.get('run_date'), today)
+          assert str(board.get('publication_status') or '').lower() == 'ready'
+          assert isinstance(board.get('plays'), list)
+          assert protocol.get('issued_picks_immutable') is True, protocol
+          dist = json.loads(Path('dist/mlb/data/daily_predictions.json').read_text())
+          assert dist.get('run_date') == today
+          assert (dist.get('publication_protocol') or {}).get('issued_picks_immutable') is True
+          print(json.dumps({
+              'run_date': today,
+              'issued_count': protocol.get('issued_count'),
+              'candidate_count': protocol.get('candidate_count'),
+              'mode': protocol.get('mode'),
+              'immutable': True,
+              'source_and_dist_current': True,
+          }, indent=2))
+          PY
