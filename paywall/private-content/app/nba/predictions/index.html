@@ -60,7 +60,7 @@
                 <div id="predictionCards" class="vault-board" aria-live="polite"></div>
                 <div id="predictionEmpty" class="vault-empty" style="display:none;" role="status">
                     <h3>No predictions published</h3>
-                    <p>No analytical signals are available for this run. The model is deliberately selective, so an empty board is a normal, honest outcome, not a fault — see <a href="/nba/prediction-about/#accuracyOverview">real accuracy results</a> for evidence the policy holds up.</p>
+                    <p>No predictions are published for this run. The model is deliberately selective, so an empty board is a normal outcome.</p>
                 </div>
             </section>
 
@@ -76,6 +76,15 @@
                 <div id="openingWatchlists" class="opening-watchlist-grid"></div>
             </section>
 
+            <section class="pool-secondary" aria-label="NBA computer vision">
+                <div class="pool-section-heading"><h2>NBA-CV</h2></div>
+                <div class="prediction-about-callout">
+                    <strong>See possessions through the model.</strong>
+                    <p>Open real-broadcast computer-vision examples for drive/pass reads, post pass-outs, defender spacing, and possession-level overlays without running the CV stack locally.</p>
+                    <p style="margin-top:12px;"><a class="pool-status__link" href="/nba/predictions/nba-cv/">Open NBA-CV broadcast viewer →</a></p>
+                </div>
+            </section>
+
             <footer class="pool-status">
                 <div class="pool-status__row">
                     <span>Research only — review model status and evidence before treating any signal as executable.</span>
@@ -86,8 +95,6 @@
     </main>
 
     <script>
-        // Inline by design: this remains available when an external dependency
-        // is blocked or aborts during startup in a privacy-restricted browser.
         (() => {
             const timeoutMs = 12000;
             window.setTimeout(() => {
@@ -96,7 +103,6 @@
                 const poolLoading = poolStatus?.textContent.trim() === "Loading opening-night pool…";
                 const boardLoading = boardStatus?.textContent.trim() === "Loading current board details…";
                 if (!poolLoading && !boardLoading) return;
-
                 const message = `<strong>Predictions did not finish loading.</strong>
                     Reload the page to try again. If this keeps happening, allow site data and scripts for this site or turn off its content blocker.`;
                 if (poolLoading) poolStatus.innerHTML = message;
