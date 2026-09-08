@@ -13,111 +13,74 @@
     <link rel="stylesheet" href="vault/prediction-pages.css?v=12">
     <link rel="stylesheet" href="predictions.css?v=1">
     <link rel="stylesheet" href="nba-modern.css?v=9">
+    <style id="nba-production-nav-fallback">
+        #vaultShellRoot { position: sticky; top: 0; z-index: 1000; }
+        .nba-static-site-nav { background: rgba(13,17,23,.98); border-bottom: 1px solid #24304a; color: #e8ecf3; font-family: "Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+        .nba-static-site-nav__inner { width: min(100% - 32px, 1240px); margin: 0 auto; padding: max(10px, env(safe-area-inset-top)) 0 10px; }
+        .nba-static-site-nav__row { display: flex; align-items: center; gap: 6px; min-width: 0; overflow-x: auto; overscroll-behavior-inline: contain; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+        .nba-static-site-nav__row + .nba-static-site-nav__row { margin-top: 8px; padding-top: 8px; border-top: 1px solid #1c2638; }
+        .nba-static-site-nav__brand, .nba-static-site-nav__link { flex: 0 0 auto; display: inline-flex; align-items: center; min-height: 38px; padding: 0 11px; border-radius: 8px; color: #9aa4b6; text-decoration: none; font-size: .82rem; font-weight: 700; white-space: nowrap; }
+        .nba-static-site-nav__brand { color: #e8ecf3; padding-left: 0; margin-right: 8px; font-size: .95rem; font-weight: 800; }
+        .nba-static-site-nav__link:hover, .nba-static-site-nav__link:focus-visible { color: #fff; background: #151d29; outline: none; }
+        .nba-static-site-nav__link.is-active { color: #fff; background: rgba(255,59,87,.14); box-shadow: inset 0 -2px 0 #ff3b57; }
+        @media (max-width:720px) { .nba-static-site-nav__inner { width: calc(100% - 20px); } .nba-static-site-nav__brand, .nba-static-site-nav__link { min-height: 42px; } }
+    </style>
 </head>
 <body class="vault-theme">
-    <div id="vaultShellRoot"></div>
+    <div id="vaultShellRoot">
+        <header class="nba-static-site-nav" data-nba-static-nav role="banner">
+            <div class="nba-static-site-nav__inner">
+                <nav class="nba-static-site-nav__row" aria-label="Sports">
+                    <a class="nba-static-site-nav__brand" href="/">In The Cards Analytics</a>
+                    <a class="nba-static-site-nav__link" href="/">Overview</a>
+                    <a class="nba-static-site-nav__link is-active" href="/nba/predictions/">NBA</a>
+                    <a class="nba-static-site-nav__link" href="/mlb/predictions/">MLB</a>
+                    <a class="nba-static-site-nav__link" href="/nfl/projections/">NFL</a>
+                    <a class="nba-static-site-nav__link" href="/f1/predictions/">F1</a>
+                </nav>
+                <nav class="nba-static-site-nav__row" aria-label="NBA pages">
+                    <a class="nba-static-site-nav__link is-active" href="/nba/predictions/" aria-current="page">Board</a>
+                    <a class="nba-static-site-nav__link" href="/nba/stats/">Stats</a>
+                    <a class="nba-static-site-nav__link" href="/nba/drive-pass/">Drive-Pass</a>
+                    <a class="nba-static-site-nav__link" href="/nba/post-pass/">Post-Pass</a>
+                    <a class="nba-static-site-nav__link" href="/nba/advantage-routing/">Advantage Routing</a>
+                    <a class="nba-static-site-nav__link" href="/nba/prediction-about/">Method</a>
+                    <a class="nba-static-site-nav__link" href="/nba/predictions/nba-cv/">NBA-CV</a>
+                </nav>
+            </div>
+        </header>
+    </div>
 
     <main class="nbam-app">
         <div class="nbam-page">
             <p class="nbam-kicker">NBA &middot; 2026-27 Opening Night</p>
-            <h1 class="nbam-h1">
-                Predictions
-                <button class="info-trigger" type="button" aria-label="About this page"
-                        data-info="The page uses existing preseason simulations for a curated set of opening-night headliners. It is a research watchlist, not a final depth chart or a sportsbook pick board.">i</button>
-            </h1>
-            <p class="nbam-lead">
-                Headline player projections across the October 20 tripleheader, with PTS, REB, AST, and PRA ranges.
-                Every market decision remains withheld until current rosters, availability, and authentic
-                two-sided lines are available.
-            </p>
+            <h1 class="nbam-h1">Predictions <button class="info-trigger" type="button" aria-label="About this page" data-info="The page uses existing preseason simulations for a curated set of opening-night headliners. It is a research watchlist, not a final depth chart or a sportsbook pick board.">i</button></h1>
+            <p class="nbam-lead">Headline player projections across the October 20 tripleheader, with PTS, REB, AST, and PRA ranges. Every market decision remains withheld until current rosters, availability, and authentic two-sided lines are available.</p>
             <p id="openingRunFacts" class="nbam-run-meta">Loading opening-night pool…</p>
 
             <section class="pool-primary" aria-label="Today's signals">
                 <div class="pool-section-heading"><h2>Projection Status</h2></div>
                 <div id="openingPoolStatus" class="prediction-about-callout"></div>
                 <div id="openingPoolMetrics" class="prediction-about-metric-grid"></div>
-
                 <div class="pool-section-heading" style="margin-top:24px;"><h2>Opening Tripleheader</h2></div>
                 <div id="openingGames" class="opening-game-grid"></div>
-
-                <div class="pool-section-heading" style="margin-top:24px;">
-                    <h2>Headline Player Projections</h2>
-                    <div id="openingTargetFilters" class="opening-target-filters" role="group" aria-label="Filter projections by stat">
-                        <button type="button" class="is-active" data-target="PTS">PTS</button>
-                        <button type="button" data-target="REB">REB</button>
-                        <button type="button" data-target="AST">AST</button>
-                        <button type="button" data-target="PRA">PRA</button>
-                    </div>
-                </div>
+                <div class="pool-section-heading" style="margin-top:24px;"><h2>Headline Player Projections</h2><div id="openingTargetFilters" class="opening-target-filters" role="group" aria-label="Filter projections by stat"><button type="button" class="is-active" data-target="PTS">PTS</button><button type="button" data-target="REB">REB</button><button type="button" data-target="AST">AST</button><button type="button" data-target="PRA">PRA</button></div></div>
                 <div id="openingProjectionPool" class="prediction-about-table-wrap"></div>
-
-                <div class="pool-section-heading" style="margin-top:24px;">
-                    <h2 id="predictionPoolTitle">Current Executable Board</h2>
-                </div>
+                <div class="pool-section-heading" style="margin-top:24px;"><h2 id="predictionPoolTitle">Current Executable Board</h2></div>
                 <div id="predictionRunMeta" class="nbam-run-meta" aria-live="polite">Loading current board details…</div>
                 <nav id="predictionDateNav" class="date-nav" aria-label="Prediction board date"></nav>
                 <div id="predictionCards" class="vault-board" aria-live="polite"></div>
-                <div id="predictionEmpty" class="vault-empty" style="display:none;" role="status">
-                    <h3>No predictions published</h3>
-                    <p>No analytical signals are available for this run. The model is deliberately selective, so an empty board is a normal, honest outcome, not a fault — see <a href="/nba/prediction-about/#accuracyOverview">real accuracy results</a> for evidence the policy holds up.</p>
-                </div>
+                <div id="predictionEmpty" class="vault-empty" style="display:none;" role="status"><h3>No predictions published</h3><p>No analytical signals are available for this run. The model is deliberately selective, so an empty board is a normal, honest outcome, not a fault — see <a href="/nba/prediction-about/#accuracyOverview">real accuracy results</a> for evidence the policy holds up.</p></div>
             </section>
 
-            <section class="pool-secondary" aria-label="Parlay pairs">
-                <div class="pool-section-heading"><h2>Parlay Pairs</h2></div>
-                <div id="parlayPairsStatus" class="prediction-about-callout"></div>
-                <div id="parlayPairsBoard" class="prediction-about-table-wrap"></div>
-            </section>
-
-            <section class="pool-secondary" aria-label="Watchlists">
-                <div class="pool-section-heading"><h2>Watchlists</h2></div>
-                <div id="openingWatchlistStatus" class="prediction-about-callout"></div>
-                <div id="openingWatchlists" class="opening-watchlist-grid"></div>
-            </section>
-
-            <section class="pool-secondary" aria-label="NBA computer vision">
-                <div class="pool-section-heading"><h2>NBA-CV</h2></div>
-                <div class="prediction-about-callout">
-                    <strong>See possessions through the model.</strong>
-                    <p>Open real-broadcast computer-vision examples for drive/pass reads, post pass-outs, defender spacing, and possession-level overlays without running the CV stack locally.</p>
-                    <p style="margin-top:12px;"><a class="pool-status__link" href="/nba/predictions/nba-cv/">Open NBA-CV broadcast viewer →</a></p>
-                </div>
-            </section>
-
-            <footer class="pool-status">
-                <div class="pool-status__row">
-                    <span>Research only — review model status and evidence before treating any signal as executable.</span>
-                    <a class="pool-status__link" href="/nba/prediction-about/">View methodology →</a>
-                </div>
-            </footer>
+            <section class="pool-secondary" aria-label="Parlay pairs"><div class="pool-section-heading"><h2>Parlay Pairs</h2></div><div id="parlayPairsStatus" class="prediction-about-callout"></div><div id="parlayPairsBoard" class="prediction-about-table-wrap"></div></section>
+            <section class="pool-secondary" aria-label="Watchlists"><div class="pool-section-heading"><h2>Watchlists</h2></div><div id="openingWatchlistStatus" class="prediction-about-callout"></div><div id="openingWatchlists" class="opening-watchlist-grid"></div></section>
+            <section class="pool-secondary" aria-label="NBA computer vision"><div class="pool-section-heading"><h2>NBA-CV</h2></div><div class="prediction-about-callout"><strong>See possessions through the model.</strong><p>Open real-broadcast computer-vision examples for drive/pass reads, post pass-outs, defender spacing, and possession-level overlays without running the CV stack locally.</p><p style="margin-top:12px;"><a class="pool-status__link" href="/nba/predictions/nba-cv/">Open NBA-CV broadcast viewer →</a></p></div></section>
+            <footer class="pool-status"><div class="pool-status__row"><span>Research only — review model status and evidence before treating any signal as executable.</span><a class="pool-status__link" href="/nba/prediction-about/">View methodology →</a></div></footer>
         </div>
     </main>
 
-    <script>
-        (() => {
-            const timeoutMs = 12000;
-            window.setTimeout(() => {
-                const poolStatus = document.getElementById("openingRunFacts");
-                const boardStatus = document.getElementById("predictionRunMeta");
-                const poolLoading = poolStatus?.textContent.trim() === "Loading opening-night pool…";
-                const boardLoading = boardStatus?.textContent.trim() === "Loading current board details…";
-                if (!poolLoading && !boardLoading) return;
-                const message = `<strong>Predictions did not finish loading.</strong>
-                    Reload the page to try again. If this keeps happening, allow site data and scripts for this site or turn off its content blocker.`;
-                if (poolLoading) poolStatus.innerHTML = message;
-                if (boardLoading) boardStatus.innerHTML = message;
-                const cards = document.getElementById("predictionCards");
-                if (cards) {
-                    cards.innerHTML = `<div class="vault-empty" role="alert">
-                        <h3>Predictions unavailable</h3>
-                        <p>The page stopped during startup. Your picks and account were not changed.</p>
-                        <button type="button" class="vault-button" data-prediction-reload>Reload predictions</button>
-                    </div>`;
-                    cards.querySelector("[data-prediction-reload]")?.addEventListener("click", () => window.location.reload());
-                }
-            }, timeoutMs);
-        })();
-    </script>
+    <script>(()=>{const timeoutMs=12000;window.setTimeout(()=>{const poolStatus=document.getElementById("openingRunFacts");const boardStatus=document.getElementById("predictionRunMeta");const poolLoading=poolStatus?.textContent.trim()==="Loading opening-night pool…";const boardLoading=boardStatus?.textContent.trim()==="Loading current board details…";if(!poolLoading&&!boardLoading)return;const message=`<strong>Predictions did not finish loading.</strong> Reload the page to try again. If this keeps happening, allow site data and scripts for this site or turn off its content blocker.`;if(poolLoading)poolStatus.innerHTML=message;if(boardLoading)boardStatus.innerHTML=message;const cards=document.getElementById("predictionCards");if(cards){cards.innerHTML=`<div class="vault-empty" role="alert"><h3>Predictions unavailable</h3><p>The page stopped during startup. Your picks and account were not changed.</p><button type="button" class="vault-button" data-prediction-reload>Reload predictions</button></div>`;cards.querySelector("[data-prediction-reload]")?.addEventListener("click",()=>window.location.reload())}},timeoutMs)})();</script>
     <script src="vault/vault-components.js?v=15"></script>
     <script src="vault/vault-shell.js?v=9"></script>
     <script src="predictions.js?v=13"></script>
