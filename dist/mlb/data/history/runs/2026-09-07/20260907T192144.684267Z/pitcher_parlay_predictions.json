@@ -1697,7 +1697,11 @@
       "sportsbook": "fanduel",
       "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.185050713&selectionId=85206080",
       "support_blocking_dimensions": [],
-      "team": "CIN"
+      "team": "CIN",
+      "settlement_status": "lost",
+      "settlement_actual_value": 5.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-09-08T12:01:58.166061+00:00"
     },
     "leg_b": {
       "deeplinks_by_region": {
@@ -1743,7 +1747,11 @@
       "sportsbook": "fanduel",
       "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.185024328&selectionId=39832617",
       "support_blocking_dimensions": [],
-      "team": "TOR"
+      "team": "TOR",
+      "settlement_status": "won",
+      "settlement_actual_value": 6.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-09-08T12:01:58.166061+00:00"
     },
     "leg_decimal_price_floor": 1.2,
     "leg_expected_value_floor": 0.0,
