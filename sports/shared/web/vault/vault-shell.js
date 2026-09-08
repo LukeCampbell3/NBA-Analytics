@@ -1,21 +1,37 @@
 /**
  * In The Cards Analytics -- application shell (global nav).
- * One implementation, reused by every page. Sport JS must not implement
- * its own navigation -- call CardVaultShell.mount() instead.
+ * One implementation, reused by every page. Sport JS may provide page-specific
+ * context, but the shared shell guarantees that an empty navigation root never
+ * leaves a user stranded.
  */
 (function initPredictionDeskShell(global) {
   const CardVaultShell = {};
 
-  // Static fallback so the top nav is correct on first paint (no flash of
-  // a missing sport). /data/sports.json (built from each sport's
-  // site.json) is the metadata source of truth and is fetched right after
-  // to pick up any sport added since this file last shipped.
   const DEFAULT_SPORTS = [
     { slug: "nba", label: "NBA", href: "/nba/predictions/" },
     { slug: "mlb", label: "MLB", href: "/mlb/predictions/" },
     { slug: "nfl", label: "NFL", href: "/nfl/projections/" },
     { slug: "f1", label: "F1", href: "/f1/predictions/" },
   ];
+
+  const SPORT_CONTEXT_LINKS = {
+    nba: [
+      { label: "Board", href: "/nba/predictions/" },
+      { label: "Stats", href: "/nba/stats/" },
+      { label: "Drive-Pass", href: "/nba/drive-pass/" },
+      { label: "Post-Pass", href: "/nba/post-pass/" },
+      { label: "Advantage Routing", href: "/nba/advantage-routing/" },
+      { label: "Method", href: "/nba/prediction-about/" },
+      { label: "NBA-CV", href: "/nba/predictions/nba-cv/" },
+    ],
+  };
+
+  const SPORT_ACCENTS = {
+    nba: "#ff3b57",
+    mlb: "#1f6f43",
+    nfl: "#244a82",
+    f1: "#b72b2b",
+  };
 
   CardVaultShell.escapeHtml = function escapeHtml(value) {
     return global.CardVault ? global.CardVault.escapeHtml(value) : String(value ?? "");
@@ -27,6 +43,11 @@
     let path = url.pathname.toLowerCase().replace(/\/index\.html$/, "/");
     path = path.replace(/\.html$/, "/").replace(/\/+$/, "/");
     return path || "/";
+  };
+
+  CardVaultShell.inferSportSlug = function inferSportSlug(value) {
+    const path = CardVaultShell.normalizePath(value || global.location?.pathname || "/");
+    return path.split("/").filter(Boolean)[0] || "";
   };
 
   function renderNav(root, config, sports) {
@@ -95,12 +116,23 @@
     const root = document.getElementById("vaultShellRoot");
     if (!root) return;
 
-    renderNav(root, config, config.sports || DEFAULT_SPORTS);
+    // A literal fallback header is intentionally authoritative. This means a
+    // cached or partially-loaded controller cannot erase navigation that was
+    // already present in the HTML response.
+    if (root.querySelector("[data-nba-static-nav]")) return;
 
-    // Metadata-driven refresh: pick up the live sport catalog (built from
-    // each sport's site.json) so a newly published sport appears in the
-    // global nav everywhere without editing this file. Falls back silently
-    // to the static list above if the catalog can't be fetched.
+    const sportSlug = config.sportSlug || CardVaultShell.inferSportSlug();
+    const resolvedConfig = {
+      ...config,
+      sportSlug,
+      sportAccent: config.sportAccent || SPORT_ACCENTS[sportSlug] || "#9a681f",
+      navLinks: Array.isArray(config.navLinks) && config.navLinks.length
+        ? config.navLinks
+        : (SPORT_CONTEXT_LINKS[sportSlug] || []),
+    };
+
+    renderNav(root, resolvedConfig, config.sports || DEFAULT_SPORTS);
+
     if (!config.sports) {
       fetch("/data/sports.json", { cache: "no-store" })
         .then((response) => (response.ok ? response.json() : null))
@@ -109,7 +141,9 @@
           const sports = catalog
             .filter((sport) => sport && sport.slug && (sport.status === "active" || sport.status === "shadow"))
             .map((sport) => ({ slug: sport.slug, label: String(sport.slug).toUpperCase(), href: sport.entry_href || `/${sport.slug}/predictions/` }));
-          if (sports.length) renderNav(root, config, sports);
+          if (sports.length && !root.querySelector("[data-nba-static-nav]")) {
+            renderNav(root, resolvedConfig, sports);
+          }
         })
         .catch(() => {});
     }
@@ -123,6 +157,24 @@
       return { label: page.label, href, active: Boolean(slug && path.includes(slug)) };
     });
   };
+
+  function autoMount() {
+    const root = document.getElementById("vaultShellRoot");
+    if (!root || root.children.length) return;
+    CardVaultShell.mount({
+      brandTitle: "In The Cards Analytics",
+      brandHref: "/",
+      sportSlug: CardVaultShell.inferSportSlug(),
+      showDisclaimer: true,
+    });
+  }
+
+  const scheduleAutoMount = () => global.setTimeout(autoMount, 0);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", scheduleAutoMount, { once: true });
+  } else {
+    scheduleAutoMount();
+  }
 
   global.CardVaultShell = CardVaultShell;
 })(typeof window !== "undefined" ? window : globalThis);
