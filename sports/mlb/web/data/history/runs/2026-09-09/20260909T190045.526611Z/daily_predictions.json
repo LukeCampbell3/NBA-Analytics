@@ -705,7 +705,10 @@
         "quote_timestamp": "20260909",
         "side": "OVER",
         "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.185402525&selectionId=11604591",
-        "target": "TB"
+        "target": "TB",
+        "settlement_status": "pending",
+        "settlement_reason": "game_not_final",
+        "settlement_checked_at": "2026-09-09T23:25:51.133774+00:00"
       },
       "leg_2": {
         "book": "real",
@@ -748,7 +751,10 @@
         "quote_timestamp": "20260909",
         "side": "OVER",
         "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.185405617&selectionId=60489486",
-        "target": "TB"
+        "target": "TB",
+        "settlement_status": "pending",
+        "settlement_reason": "game_not_final",
+        "settlement_checked_at": "2026-09-09T23:25:51.133774+00:00"
       },
       "predictive_version": "H_OVER_RANKER_V1+MULTI_TARGET",
       "slate_id": "20260909",
@@ -824,7 +830,10 @@
         "quote_timestamp": "20260909",
         "side": "OVER",
         "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.185398483&selectionId=23552186",
-        "target": "TB"
+        "target": "TB",
+        "settlement_status": "pending",
+        "settlement_reason": "game_not_final",
+        "settlement_checked_at": "2026-09-09T23:25:51.133774+00:00"
       },
       "leg_2": {
         "book": "real",
@@ -867,7 +876,10 @@
         "quote_timestamp": "20260909",
         "side": "OVER",
         "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.185405617&selectionId=60489486",
-        "target": "TB"
+        "target": "TB",
+        "settlement_status": "pending",
+        "settlement_reason": "game_not_final",
+        "settlement_checked_at": "2026-09-09T23:25:51.133774+00:00"
       },
       "predictive_version": "H_OVER_RANKER_V1+MULTI_TARGET",
       "slate_id": "20260909",
@@ -1062,7 +1074,11 @@
       "uncertainty": null,
       "uncertainty_components": null,
       "usable_probability": null,
-      "value_score": 0.48835779250800004
+      "value_score": 0.48835779250800004,
+      "settlement_status": "won",
+      "settlement_actual_value": 2.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-09-09T23:25:51.133774+00:00"
     }
   ],
   "policy_governance": {
