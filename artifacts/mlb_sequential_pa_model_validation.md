@@ -1,13 +1,13 @@
 # MLB Game-Conditioned Sequential PA H/TB/HR Validation
 
-- Run date: `2026-09-09`
+- Run date: `2026-09-10`
 - Probability model: `game_conditioned_hitter_moe_v2`
 - Structural simulator: `sequential_pa_contact_model_v1`
 - Residual fit: `FITTED_EXPANDING_WINDOW_RESIDUAL_MOE_NON_REGRESSION_GATED`
 - Evidence class: `ROLLING_ORIGIN_HIGH_FIDELITY_DIAGNOSTIC_NOT_CERTIFICATION`
-- Evaluated H/TB/HR rows: **810**
+- Evaluated H/TB/HR rows: **270**
 - Modeled rows: **0**
-- Blocked rows: **810**
+- Blocked rows: **270**
 - Data freshness: `FRESH`
 
 ## Target authority
@@ -26,9 +26,9 @@ Baseball Savant / Statcast status: `SUCCESS`
 
 FanGraphs status: `UNAVAILABLE`
 
-Effective as-of date: `2026-09-08`
+Effective as-of date: `2026-09-09`
 
-Profile coverage: 0 batter profiles, 15 pitcher profiles, 0 direct BvP process profiles.
+Profile coverage: 0 batter profiles, 5 pitcher profiles, 0 direct BvP process profiles.
 
 Raw Statcast data are cached by pybaseball and processed same-as-of partitions are cached rather than committed as large raw datasets. Every profile partition is dated and carries source, fetch, and effective timestamps.
 
@@ -55,7 +55,7 @@ Every live run now writes a content-addressed, outcome-free pregame feature snap
 
 ## Blocked/degraded data
 
-810 rows were fail-closed because required MLBAM identity, Statcast profile, pitcher profile, or freshness evidence was unavailable.
+270 rows were fail-closed because required MLBAM identity, Statcast profile, pitcher profile, or freshness evidence was unavailable.
 
 ## Validation status
 
