@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-09-10T01:16:42.514600Z",
+  "generated_at_utc": "2026-09-11T01:23:04.820695Z",
   "summary": {
-    "snapshots": 40,
-    "total_picks": 55,
+    "snapshots": 41,
+    "total_picks": 61,
     "ACTIVE": 14,
-    "REMOVED_BEFORE_KICKOFF": 40,
+    "REMOVED_BEFORE_KICKOFF": 46,
     "LOCKED_AFTER_KICKOFF": 1
   },
   "snapshots": [
@@ -455,15 +455,242 @@
         "fef7a733d18905dec4f3"
       ],
       "pick_count": 14
+    },
+    {
+      "publication_id": "464b7d5a29881ae7c63f",
+      "run_date": "2026-09-10",
+      "generated_at_utc": "2026-09-11T01:23:04.820695Z",
+      "source": "current_publication",
+      "pick_ids": [
+        "242b3ed0309bd70acfcd",
+        "264ce48ce14ace98f8dc",
+        "319d954441d58a9c532d",
+        "3b2f2541a0bb40fc476d",
+        "3de67ac31e1794af9d3c",
+        "3f9b470e27d799576999",
+        "45a880044e13e43401fc",
+        "4af30015af65626a4261",
+        "6e7a89f3b513204a1f76",
+        "a91d6cccab2323fd3a69",
+        "b1da1d860781d2b9f48a",
+        "c779a3003cd1735ee49d",
+        "c910d8dd5bf35a973260",
+        "e8150e238fa631833b49"
+      ],
+      "pick_count": 14
     }
   ],
   "picks": [
     {
+      "pick_id": "45a880044e13e43401fc",
+      "first_published_at_utc": "2026-09-11T01:23:04.820695Z",
+      "last_published_at_utc": "2026-09-11T01:23:04.820695Z",
+      "status": "ACTIVE",
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
+      "appearances": 1,
+      "pick": {
+        "pick_id": "45a880044e13e43401fc",
+        "product": "qualified_single",
+        "player": "Jalen Hurts",
+        "player_id": "00-0036389",
+        "event_id": "2978631",
+        "team": "PHI",
+        "opponent": "WAS",
+        "market": "player_pass_yds",
+        "side": "OVER",
+        "line": 211.5,
+        "book": "draftkings",
+        "price": -112.0,
+        "projection": 204.75,
+        "model_probability": 0.647181,
+        "kickoff_utc": "2026-09-13 20:25:00+00:00",
+        "selection_status": "review",
+        "candidate_authorized": false
+      },
+      "events": [
+        {
+          "at_utc": "2026-09-11T01:23:04.820695Z",
+          "event": "PUBLISHED",
+          "source": "current_publication"
+        }
+      ]
+    },
+    {
+      "pick_id": "e8150e238fa631833b49",
+      "first_published_at_utc": "2026-09-11T01:23:04.820695Z",
+      "last_published_at_utc": "2026-09-11T01:23:04.820695Z",
+      "status": "ACTIVE",
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
+      "appearances": 1,
+      "pick": {
+        "pick_id": "e8150e238fa631833b49",
+        "product": "qualified_single",
+        "player": "Josh Allen",
+        "player_id": "00-0034857",
+        "event_id": "2978625",
+        "team": "BUF",
+        "opponent": "HOU",
+        "market": "player_pass_yds",
+        "side": "OVER",
+        "line": 224.5,
+        "book": "thescore",
+        "price": -105.0,
+        "projection": 228.38,
+        "model_probability": 0.63453,
+        "kickoff_utc": "2026-09-13 17:00:00+00:00",
+        "selection_status": "review",
+        "candidate_authorized": false
+      },
+      "events": [
+        {
+          "at_utc": "2026-09-11T01:23:04.820695Z",
+          "event": "PUBLISHED",
+          "source": "current_publication"
+        }
+      ]
+    },
+    {
+      "pick_id": "b1da1d860781d2b9f48a",
+      "first_published_at_utc": "2026-09-11T01:23:04.820695Z",
+      "last_published_at_utc": "2026-09-11T01:23:04.820695Z",
+      "status": "ACTIVE",
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
+      "appearances": 1,
+      "pick": {
+        "pick_id": "b1da1d860781d2b9f48a",
+        "product": "qualified_single",
+        "player": "Kirk Cousins",
+        "player_id": "00-0029604",
+        "event_id": "2978648",
+        "team": "LV",
+        "opponent": "MIA",
+        "market": "player_pass_yds",
+        "side": "OVER",
+        "line": 207.5,
+        "book": "caesars",
+        "price": -114.0,
+        "projection": 225.98,
+        "model_probability": 0.641499,
+        "kickoff_utc": "2026-09-13 20:25:00+00:00",
+        "selection_status": "review",
+        "candidate_authorized": false
+      },
+      "events": [
+        {
+          "at_utc": "2026-09-11T01:23:04.820695Z",
+          "event": "PUBLISHED",
+          "source": "current_publication"
+        }
+      ]
+    },
+    {
+      "pick_id": "3b2f2541a0bb40fc476d",
+      "first_published_at_utc": "2026-09-11T01:23:04.820695Z",
+      "last_published_at_utc": "2026-09-11T01:23:04.820695Z",
+      "status": "ACTIVE",
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
+      "appearances": 1,
+      "pick": {
+        "pick_id": "3b2f2541a0bb40fc476d",
+        "product": "passer_parlay",
+        "player": "Daniel Jones",
+        "player_id": "00-0035710",
+        "event_id": "2026_01_BAL_IND",
+        "team": "IND",
+        "opponent": "BAL",
+        "market": "player_pass_yds",
+        "side": "UNDER",
+        "line": 229.5,
+        "book": "betrivers",
+        "price": -117.0,
+        "projection": 198.3,
+        "model_probability": 0.649889,
+        "kickoff_utc": "2026-09-13T17:00:00Z",
+        "selection_status": "BACKTEST_VALIDATED_SHADOW",
+        "candidate_authorized": false
+      },
+      "events": [
+        {
+          "at_utc": "2026-09-11T01:23:04.820695Z",
+          "event": "PUBLISHED",
+          "source": "current_publication"
+        }
+      ]
+    },
+    {
+      "pick_id": "a91d6cccab2323fd3a69",
+      "first_published_at_utc": "2026-09-11T01:23:04.820695Z",
+      "last_published_at_utc": "2026-09-11T01:23:04.820695Z",
+      "status": "ACTIVE",
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
+      "appearances": 1,
+      "pick": {
+        "pick_id": "a91d6cccab2323fd3a69",
+        "product": "rusher_parlay",
+        "player": "Ashton Jeanty",
+        "player_id": "00-0040122",
+        "event_id": "2026_01_MIA_LV",
+        "team": "LV",
+        "opponent": "MIA",
+        "market": "player_rush_yds",
+        "side": "UNDER",
+        "line": 63.5,
+        "book": "caesars",
+        "price": -128.0,
+        "projection": 54.3,
+        "model_probability": 0.645467,
+        "kickoff_utc": "2026-09-13T20:25:00Z",
+        "selection_status": "RESEARCH_ONLY_NO_RELIABLE_EDGE",
+        "candidate_authorized": false
+      },
+      "events": [
+        {
+          "at_utc": "2026-09-11T01:23:04.820695Z",
+          "event": "PUBLISHED",
+          "source": "current_publication"
+        }
+      ]
+    },
+    {
+      "pick_id": "c910d8dd5bf35a973260",
+      "first_published_at_utc": "2026-09-11T01:23:04.820695Z",
+      "last_published_at_utc": "2026-09-11T01:23:04.820695Z",
+      "status": "ACTIVE",
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
+      "appearances": 1,
+      "pick": {
+        "pick_id": "c910d8dd5bf35a973260",
+        "product": "rusher_parlay",
+        "player": "Cam Skattebo",
+        "player_id": "00-0040715",
+        "event_id": "2026_01_DAL_NYG",
+        "team": "NYG",
+        "opponent": "DAL",
+        "market": "player_rush_yds",
+        "side": "UNDER",
+        "line": 49.5,
+        "book": "betr",
+        "price": -112.0,
+        "projection": 40.3,
+        "model_probability": 0.645247,
+        "kickoff_utc": "2026-09-14T00:20:00Z",
+        "selection_status": "RESEARCH_ONLY_NO_RELIABLE_EDGE",
+        "candidate_authorized": false
+      },
+      "events": [
+        {
+          "at_utc": "2026-09-11T01:23:04.820695Z",
+          "event": "PUBLISHED",
+          "source": "current_publication"
+        }
+      ]
+    },
+    {
       "pick_id": "06aaa81574bc6fcd8333",
       "first_published_at_utc": "2026-09-10T01:16:42.514600Z",
       "last_published_at_utc": "2026-09-10T01:16:42.514600Z",
-      "status": "ACTIVE",
-      "status_changed_at_utc": "2026-09-10T01:16:42.514600Z",
+      "status": "REMOVED_BEFORE_KICKOFF",
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
       "appearances": 1,
       "pick": {
         "pick_id": "06aaa81574bc6fcd8333",
@@ -489,16 +716,22 @@
           "at_utc": "2026-09-10T01:16:42.514600Z",
           "event": "PUBLISHED",
           "source": "current_publication"
+        },
+        {
+          "at_utc": "2026-09-11T01:23:04.820695Z",
+          "event": "REMOVED_BEFORE_KICKOFF",
+          "source": "current_publication"
         }
-      ]
+      ],
+      "removal_reason": "NO_LONGER_SELECTED_ON_REFRESH"
     },
     {
       "pick_id": "264ce48ce14ace98f8dc",
       "first_published_at_utc": "2026-09-10T01:16:42.514600Z",
-      "last_published_at_utc": "2026-09-10T01:16:42.514600Z",
+      "last_published_at_utc": "2026-09-11T01:23:04.820695Z",
       "status": "ACTIVE",
-      "status_changed_at_utc": "2026-09-10T01:16:42.514600Z",
-      "appearances": 1,
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
+      "appearances": 2,
       "pick": {
         "pick_id": "264ce48ce14ace98f8dc",
         "product": "qualified_single",
@@ -524,14 +757,15 @@
           "event": "PUBLISHED",
           "source": "current_publication"
         }
-      ]
+      ],
+      "removal_reason": null
     },
     {
       "pick_id": "ee1236c8ef4eb2246f65",
       "first_published_at_utc": "2026-09-10T01:16:42.514600Z",
       "last_published_at_utc": "2026-09-10T01:16:42.514600Z",
-      "status": "ACTIVE",
-      "status_changed_at_utc": "2026-09-10T01:16:42.514600Z",
+      "status": "REMOVED_BEFORE_KICKOFF",
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
       "appearances": 1,
       "pick": {
         "pick_id": "ee1236c8ef4eb2246f65",
@@ -557,15 +791,21 @@
           "at_utc": "2026-09-10T01:16:42.514600Z",
           "event": "PUBLISHED",
           "source": "current_publication"
+        },
+        {
+          "at_utc": "2026-09-11T01:23:04.820695Z",
+          "event": "REMOVED_BEFORE_KICKOFF",
+          "source": "current_publication"
         }
-      ]
+      ],
+      "removal_reason": "NO_LONGER_SELECTED_ON_REFRESH"
     },
     {
       "pick_id": "14f3d31c1d029d8e3403",
       "first_published_at_utc": "2026-09-10T01:16:42.514600Z",
       "last_published_at_utc": "2026-09-10T01:16:42.514600Z",
-      "status": "ACTIVE",
-      "status_changed_at_utc": "2026-09-10T01:16:42.514600Z",
+      "status": "REMOVED_BEFORE_KICKOFF",
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
       "appearances": 1,
       "pick": {
         "pick_id": "14f3d31c1d029d8e3403",
@@ -591,16 +831,22 @@
           "at_utc": "2026-09-10T01:16:42.514600Z",
           "event": "PUBLISHED",
           "source": "current_publication"
+        },
+        {
+          "at_utc": "2026-09-11T01:23:04.820695Z",
+          "event": "REMOVED_BEFORE_KICKOFF",
+          "source": "current_publication"
         }
-      ]
+      ],
+      "removal_reason": "NO_LONGER_SELECTED_ON_REFRESH"
     },
     {
       "pick_id": "4af30015af65626a4261",
       "first_published_at_utc": "2026-09-10T01:16:42.514600Z",
-      "last_published_at_utc": "2026-09-10T01:16:42.514600Z",
+      "last_published_at_utc": "2026-09-11T01:23:04.820695Z",
       "status": "ACTIVE",
-      "status_changed_at_utc": "2026-09-10T01:16:42.514600Z",
-      "appearances": 1,
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
+      "appearances": 2,
       "pick": {
         "pick_id": "4af30015af65626a4261",
         "product": "passer_parlay",
@@ -626,15 +872,16 @@
           "event": "PUBLISHED",
           "source": "current_publication"
         }
-      ]
+      ],
+      "removal_reason": null
     },
     {
       "pick_id": "6e7a89f3b513204a1f76",
       "first_published_at_utc": "2026-09-10T01:16:42.514600Z",
-      "last_published_at_utc": "2026-09-10T01:16:42.514600Z",
+      "last_published_at_utc": "2026-09-11T01:23:04.820695Z",
       "status": "ACTIVE",
-      "status_changed_at_utc": "2026-09-10T01:16:42.514600Z",
-      "appearances": 1,
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
+      "appearances": 2,
       "pick": {
         "pick_id": "6e7a89f3b513204a1f76",
         "product": "receiver_parlay",
@@ -660,14 +907,15 @@
           "event": "PUBLISHED",
           "source": "current_publication"
         }
-      ]
+      ],
+      "removal_reason": null
     },
     {
       "pick_id": "454c8143929479788ac7",
       "first_published_at_utc": "2026-09-10T01:16:42.514600Z",
       "last_published_at_utc": "2026-09-10T01:16:42.514600Z",
-      "status": "ACTIVE",
-      "status_changed_at_utc": "2026-09-10T01:16:42.514600Z",
+      "status": "REMOVED_BEFORE_KICKOFF",
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
       "appearances": 1,
       "pick": {
         "pick_id": "454c8143929479788ac7",
@@ -693,15 +941,21 @@
           "at_utc": "2026-09-10T01:16:42.514600Z",
           "event": "PUBLISHED",
           "source": "current_publication"
+        },
+        {
+          "at_utc": "2026-09-11T01:23:04.820695Z",
+          "event": "REMOVED_BEFORE_KICKOFF",
+          "source": "current_publication"
         }
-      ]
+      ],
+      "removal_reason": "NO_LONGER_SELECTED_ON_REFRESH"
     },
     {
       "pick_id": "f12857bf3982fc640c4d",
       "first_published_at_utc": "2026-09-10T01:16:42.514600Z",
       "last_published_at_utc": "2026-09-10T01:16:42.514600Z",
-      "status": "ACTIVE",
-      "status_changed_at_utc": "2026-09-10T01:16:42.514600Z",
+      "status": "REMOVED_BEFORE_KICKOFF",
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
       "appearances": 1,
       "pick": {
         "pick_id": "f12857bf3982fc640c4d",
@@ -727,15 +981,21 @@
           "at_utc": "2026-09-10T01:16:42.514600Z",
           "event": "PUBLISHED",
           "source": "current_publication"
+        },
+        {
+          "at_utc": "2026-09-11T01:23:04.820695Z",
+          "event": "REMOVED_BEFORE_KICKOFF",
+          "source": "current_publication"
         }
-      ]
+      ],
+      "removal_reason": "NO_LONGER_SELECTED_ON_REFRESH"
     },
     {
       "pick_id": "fef7a733d18905dec4f3",
       "first_published_at_utc": "2026-09-10T01:16:42.514600Z",
       "last_published_at_utc": "2026-09-10T01:16:42.514600Z",
-      "status": "ACTIVE",
-      "status_changed_at_utc": "2026-09-10T01:16:42.514600Z",
+      "status": "REMOVED_BEFORE_KICKOFF",
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
       "appearances": 1,
       "pick": {
         "pick_id": "fef7a733d18905dec4f3",
@@ -761,8 +1021,14 @@
           "at_utc": "2026-09-10T01:16:42.514600Z",
           "event": "PUBLISHED",
           "source": "current_publication"
+        },
+        {
+          "at_utc": "2026-09-11T01:23:04.820695Z",
+          "event": "REMOVED_BEFORE_KICKOFF",
+          "source": "current_publication"
         }
-      ]
+      ],
+      "removal_reason": "NO_LONGER_SELECTED_ON_REFRESH"
     },
     {
       "pick_id": "4facbc10472b5fef016b",
@@ -1048,8 +1314,8 @@
       "pick_id": "f70153301b2d66f21552",
       "first_published_at_utc": "2026-09-06T18:27:47.292299Z",
       "last_published_at_utc": "2026-09-10T01:16:42.514600Z",
-      "status": "ACTIVE",
-      "status_changed_at_utc": "2026-09-10T01:16:42.514600Z",
+      "status": "REMOVED_BEFORE_KICKOFF",
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
       "appearances": 2,
       "pick": {
         "pick_id": "f70153301b2d66f21552",
@@ -1085,9 +1351,14 @@
           "at_utc": "2026-09-10T01:16:42.514600Z",
           "event": "REPUBLISHED",
           "source": "current_publication"
+        },
+        {
+          "at_utc": "2026-09-11T01:23:04.820695Z",
+          "event": "REMOVED_BEFORE_KICKOFF",
+          "source": "current_publication"
         }
       ],
-      "removal_reason": null
+      "removal_reason": "NO_LONGER_SELECTED_ON_REFRESH"
     },
     {
       "pick_id": "674f868932612fc439c4",
@@ -1132,10 +1403,10 @@
     {
       "pick_id": "319d954441d58a9c532d",
       "first_published_at_utc": "2026-09-06T18:27:47.292299Z",
-      "last_published_at_utc": "2026-09-08T01:18:23.166799Z",
-      "status": "REMOVED_BEFORE_KICKOFF",
-      "status_changed_at_utc": "2026-09-10T01:16:42.514600Z",
-      "appearances": 2,
+      "last_published_at_utc": "2026-09-11T01:23:04.820695Z",
+      "status": "ACTIVE",
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
+      "appearances": 3,
       "pick": {
         "pick_id": "319d954441d58a9c532d",
         "product": "qualified_single",
@@ -1165,9 +1436,14 @@
           "at_utc": "2026-09-10T01:16:42.514600Z",
           "event": "REMOVED_BEFORE_KICKOFF",
           "source": "current_publication"
+        },
+        {
+          "at_utc": "2026-09-11T01:23:04.820695Z",
+          "event": "REPUBLISHED",
+          "source": "current_publication"
         }
       ],
-      "removal_reason": "NO_LONGER_SELECTED_ON_REFRESH"
+      "removal_reason": null
     },
     {
       "pick_id": "c8f5f6914401ea236b8b",
@@ -1293,8 +1569,8 @@
       "pick_id": "a60affbed3a2f19bd1a1",
       "first_published_at_utc": "2026-09-06T18:27:47.292299Z",
       "last_published_at_utc": "2026-09-10T01:16:42.514600Z",
-      "status": "ACTIVE",
-      "status_changed_at_utc": "2026-09-10T01:16:42.514600Z",
+      "status": "REMOVED_BEFORE_KICKOFF",
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
       "appearances": 3,
       "pick": {
         "pick_id": "a60affbed3a2f19bd1a1",
@@ -1320,17 +1596,22 @@
           "at_utc": "2026-09-06T18:27:47.292299Z",
           "event": "PUBLISHED",
           "source": "current_publication"
+        },
+        {
+          "at_utc": "2026-09-11T01:23:04.820695Z",
+          "event": "REMOVED_BEFORE_KICKOFF",
+          "source": "current_publication"
         }
       ],
-      "removal_reason": null
+      "removal_reason": "NO_LONGER_SELECTED_ON_REFRESH"
     },
     {
       "pick_id": "3de67ac31e1794af9d3c",
       "first_published_at_utc": "2026-09-06T18:27:47.292299Z",
-      "last_published_at_utc": "2026-09-06T18:27:47.292299Z",
-      "status": "REMOVED_BEFORE_KICKOFF",
-      "status_changed_at_utc": "2026-09-08T01:18:23.166799Z",
-      "appearances": 1,
+      "last_published_at_utc": "2026-09-11T01:23:04.820695Z",
+      "status": "ACTIVE",
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
+      "appearances": 2,
       "pick": {
         "pick_id": "3de67ac31e1794af9d3c",
         "product": "receiver_parlay",
@@ -1343,7 +1624,7 @@
         "side": "OVER",
         "line": 15.5,
         "book": "fanatics",
-        "price": -150.0,
+        "price": -155.0,
         "projection": 28.3,
         "model_probability": 0.696172,
         "kickoff_utc": "2026-09-13T17:00:00Z",
@@ -1360,17 +1641,22 @@
           "at_utc": "2026-09-08T01:18:23.166799Z",
           "event": "REMOVED_BEFORE_KICKOFF",
           "source": "current_publication"
+        },
+        {
+          "at_utc": "2026-09-11T01:23:04.820695Z",
+          "event": "REPUBLISHED",
+          "source": "current_publication"
         }
       ],
-      "removal_reason": "NO_LONGER_SELECTED_ON_REFRESH"
+      "removal_reason": null
     },
     {
       "pick_id": "c779a3003cd1735ee49d",
       "first_published_at_utc": "2026-09-06T18:27:47.292299Z",
-      "last_published_at_utc": "2026-09-06T18:27:47.292299Z",
-      "status": "REMOVED_BEFORE_KICKOFF",
-      "status_changed_at_utc": "2026-09-08T01:18:23.166799Z",
-      "appearances": 1,
+      "last_published_at_utc": "2026-09-11T01:23:04.820695Z",
+      "status": "ACTIVE",
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
+      "appearances": 2,
       "pick": {
         "pick_id": "c779a3003cd1735ee49d",
         "product": "same_game_parlay",
@@ -1383,7 +1669,7 @@
         "side": "OVER",
         "line": 15.5,
         "book": "fanatics",
-        "price": -150.0,
+        "price": -155.0,
         "projection": 28.3,
         "model_probability": 0.696172,
         "kickoff_utc": "2026-09-13T17:00:00Z",
@@ -1400,17 +1686,22 @@
           "at_utc": "2026-09-08T01:18:23.166799Z",
           "event": "REMOVED_BEFORE_KICKOFF",
           "source": "current_publication"
+        },
+        {
+          "at_utc": "2026-09-11T01:23:04.820695Z",
+          "event": "REPUBLISHED",
+          "source": "current_publication"
         }
       ],
-      "removal_reason": "NO_LONGER_SELECTED_ON_REFRESH"
+      "removal_reason": null
     },
     {
       "pick_id": "242b3ed0309bd70acfcd",
       "first_published_at_utc": "2026-09-06T18:27:47.292299Z",
-      "last_published_at_utc": "2026-09-06T18:27:47.292299Z",
-      "status": "REMOVED_BEFORE_KICKOFF",
-      "status_changed_at_utc": "2026-09-08T01:18:23.166799Z",
-      "appearances": 1,
+      "last_published_at_utc": "2026-09-11T01:23:04.820695Z",
+      "status": "ACTIVE",
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
+      "appearances": 2,
       "pick": {
         "pick_id": "242b3ed0309bd70acfcd",
         "product": "same_game_parlay",
@@ -1440,9 +1731,14 @@
           "at_utc": "2026-09-08T01:18:23.166799Z",
           "event": "REMOVED_BEFORE_KICKOFF",
           "source": "current_publication"
+        },
+        {
+          "at_utc": "2026-09-11T01:23:04.820695Z",
+          "event": "REPUBLISHED",
+          "source": "current_publication"
         }
       ],
-      "removal_reason": "NO_LONGER_SELECTED_ON_REFRESH"
+      "removal_reason": null
     },
     {
       "pick_id": "581478375467bfe38373",
@@ -1568,8 +1864,8 @@
       "pick_id": "889e30e26c1bc96ec15f",
       "first_published_at_utc": "2026-09-04T01:12:09.405568Z",
       "last_published_at_utc": "2026-09-10T01:16:42.514600Z",
-      "status": "ACTIVE",
-      "status_changed_at_utc": "2026-09-10T01:16:42.514600Z",
+      "status": "REMOVED_BEFORE_KICKOFF",
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
       "appearances": 2,
       "pick": {
         "pick_id": "889e30e26c1bc96ec15f",
@@ -1605,9 +1901,14 @@
           "at_utc": "2026-09-10T01:16:42.514600Z",
           "event": "REPUBLISHED",
           "source": "current_publication"
+        },
+        {
+          "at_utc": "2026-09-11T01:23:04.820695Z",
+          "event": "REMOVED_BEFORE_KICKOFF",
+          "source": "current_publication"
         }
       ],
-      "removal_reason": null
+      "removal_reason": "NO_LONGER_SELECTED_ON_REFRESH"
     },
     {
       "pick_id": "205ea2202b88e87c5a76",
@@ -2092,10 +2393,10 @@
     {
       "pick_id": "3f9b470e27d799576999",
       "first_published_at_utc": "2026-09-02T16:38:40.965835Z",
-      "last_published_at_utc": "2026-09-10T01:16:42.514600Z",
+      "last_published_at_utc": "2026-09-11T01:23:04.820695Z",
       "status": "ACTIVE",
-      "status_changed_at_utc": "2026-09-10T01:16:42.514600Z",
-      "appearances": 8,
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
+      "appearances": 9,
       "pick": {
         "pick_id": "3f9b470e27d799576999",
         "product": "qualified_single",
@@ -2488,8 +2789,8 @@
       "pick_id": "7d87d40632c6be16d143",
       "first_published_at_utc": "2026-09-02T16:38:40.965835Z",
       "last_published_at_utc": "2026-09-10T01:16:42.514600Z",
-      "status": "ACTIVE",
-      "status_changed_at_utc": "2026-09-10T01:16:42.514600Z",
+      "status": "REMOVED_BEFORE_KICKOFF",
+      "status_changed_at_utc": "2026-09-11T01:23:04.820695Z",
       "appearances": 3,
       "pick": {
         "pick_id": "7d87d40632c6be16d143",
@@ -2525,9 +2826,14 @@
           "at_utc": "2026-09-10T01:16:42.514600Z",
           "event": "REPUBLISHED",
           "source": "current_publication"
+        },
+        {
+          "at_utc": "2026-09-11T01:23:04.820695Z",
+          "event": "REMOVED_BEFORE_KICKOFF",
+          "source": "current_publication"
         }
       ],
-      "removal_reason": null
+      "removal_reason": "NO_LONGER_SELECTED_ON_REFRESH"
     },
     {
       "pick_id": "75338d85418a78cc3aae",
