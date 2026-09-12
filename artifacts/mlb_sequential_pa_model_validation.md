@@ -1,6 +1,6 @@
 # MLB Game-Conditioned Sequential PA H/TB/HR Validation
 
-- Run date: `2026-09-11`
+- Run date: `2026-09-12`
 - Probability model: `game_conditioned_hitter_moe_v2`
 - Structural simulator: `sequential_pa_contact_model_v1`
 - Residual fit: `FITTED_EXPANDING_WINDOW_RESIDUAL_MOE_NON_REGRESSION_GATED`
@@ -26,9 +26,9 @@ Baseball Savant / Statcast status: `SUCCESS`
 
 FanGraphs status: `UNAVAILABLE`
 
-Effective as-of date: `2026-09-10`
+Effective as-of date: `2026-09-11`
 
-Profile coverage: 0 batter profiles, 17 pitcher profiles, 0 direct BvP process profiles.
+Profile coverage: 0 batter profiles, 8 pitcher profiles, 0 direct BvP process profiles.
 
 Raw Statcast data are cached by pybaseball and processed same-as-of partitions are cached rather than committed as large raw datasets. Every profile partition is dated and carries source, fetch, and effective timestamps.
 
