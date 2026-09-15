@@ -673,7 +673,11 @@
         "player_id": "alex_bregman",
         "quote_timestamp": "20260913",
         "side": "OVER",
-        "target": "TB"
+        "target": "TB",
+        "settlement_status": "won",
+        "settlement_actual_value": 2.0,
+        "settlement_source": "mlb_statsapi_live_feed",
+        "settlement_checked_at": "2026-09-15T19:09:58.458922+00:00"
       },
       "leg_2": {
         "book": "real",
@@ -716,7 +720,10 @@
         "quote_timestamp": "20260913",
         "side": "OVER",
         "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.186112046&selectionId=14361900",
-        "target": "TB"
+        "target": "TB",
+        "settlement_status": "pending",
+        "settlement_reason": "player_not_found",
+        "settlement_checked_at": "2026-09-15T19:09:58.458922+00:00"
       },
       "predictive_version": "H_OVER_RANKER_V1+MULTI_TARGET",
       "slate_id": "20260913",
@@ -762,7 +769,11 @@
         "player_id": "pete_crow-armstrong",
         "quote_timestamp": "20260913",
         "side": "OVER",
-        "target": "TB"
+        "target": "TB",
+        "settlement_status": "lost",
+        "settlement_actual_value": 0.0,
+        "settlement_source": "mlb_statsapi_live_feed",
+        "settlement_checked_at": "2026-09-15T19:09:58.458922+00:00"
       },
       "leg_2": {
         "book": "real",
@@ -805,7 +816,10 @@
         "quote_timestamp": "20260913",
         "side": "OVER",
         "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.186112046&selectionId=14361900",
-        "target": "TB"
+        "target": "TB",
+        "settlement_status": "pending",
+        "settlement_reason": "player_not_found",
+        "settlement_checked_at": "2026-09-15T19:09:58.458922+00:00"
       },
       "predictive_version": "H_OVER_RANKER_V1+MULTI_TARGET",
       "slate_id": "20260913",
@@ -1000,7 +1014,11 @@
       "uncertainty": null,
       "uncertainty_components": null,
       "usable_probability": null,
-      "value_score": 0.429523574538
+      "value_score": 0.429523574538,
+      "settlement_status": "lost",
+      "settlement_actual_value": 0.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-09-15T19:09:58.458922+00:00"
     }
   ],
   "policy_governance": {
