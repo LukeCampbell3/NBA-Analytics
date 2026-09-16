@@ -1,0 +1,38 @@
+name: MLB PCA A* Edge Backtest
+
+on:
+  push:
+    branches: [mlb-pca-astar-edge-search]
+    paths:
+      - 'sports/mlb/research/pca_edge_search/**'
+      - '.github/workflows/mlb-pca-astar-backtest.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install research dependencies
+        run: python -m pip install --upgrade pip numpy pandas scikit-learn
+      - name: Run chronological walk-forward PCA+A* backtest
+        run: |
+          python sports/mlb/research/pca_edge_search/backtest_walk_forward.py \
+            --input sports/mlb/data/predictions/backtests/mlb_walk_forward_backtest_rows.csv \
+            --output-json sports/mlb/research/pca_edge_search/reports/walk_forward_backtest.json \
+            --output-csv sports/mlb/research/pca_edge_search/reports/walk_forward_scored_rows.csv
+          cat sports/mlb/research/pca_edge_search/reports/walk_forward_backtest.json
+      - name: Upload research report
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlb-pca-astar-backtest
+          path: |
+            sports/mlb/research/pca_edge_search/reports/walk_forward_backtest.json
+            sports/mlb/research/pca_edge_search/reports/walk_forward_scored_rows.csv
