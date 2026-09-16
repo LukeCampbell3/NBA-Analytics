@@ -1,0 +1,39 @@
+name: MLB PCA A* Edge Backtest
+
+on:
+  push:
+    branches: [mlb-pca-astar-edge-search]
+    paths:
+      - 'sports/mlb/research/pca_edge_search/**'
+      - '.github/workflows/mlb-pca-astar-edge-backtest.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip numpy
+      - name: Run PCA + A* locked holdout backtest
+        run: |
+          python sports/mlb/research/pca_edge_search/backtest_walk_forward.py \
+            --source sports/mlb/data/predictions/backtests/mlb_walk_forward_backtest_rows.csv \
+            --output-dir pca_astar_backtest_output
+      - name: Print summary
+        if: always()
+        run: cat pca_astar_backtest_output/summary.json || true
+      - name: Upload backtest artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlb-pca-astar-edge-backtest
+          path: pca_astar_backtest_output/
+          if-no-files-found: warn
