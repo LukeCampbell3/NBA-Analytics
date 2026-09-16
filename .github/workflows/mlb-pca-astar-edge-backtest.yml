@@ -22,24 +22,29 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: python -m pip install --upgrade pip numpy pandas scikit-learn
-      - name: Run PCA + A* chronological walk-forward backtest
+      - name: Inspect broad historical universe
         run: |
           mkdir -p pca_astar_backtest_output
+          python sports/mlb/research/pca_edge_search/inspect_historical_universe.py \
+            --input sports/mlb/data/predictions/calibration/historical_pool_universe_2026.csv \
+            --output pca_astar_backtest_output/universe_schema.json
+      - name: Run existing chronological walk-forward smoke backtest
+        run: |
           python sports/mlb/research/pca_edge_search/backtest_walk_forward.py \
             --input sports/mlb/data/predictions/backtests/mlb_walk_forward_backtest_rows.csv \
             --output-json pca_astar_backtest_output/summary.json \
             --output-csv pca_astar_backtest_output/scored_rows.csv
-      - name: Print summary
-        run: cat pca_astar_backtest_output/summary.json
-      - name: Persist auditable summary to research branch
+      - name: Persist auditable research outputs
         run: |
           mkdir -p sports/mlb/data/evaluation/pca_astar_edge
           cp pca_astar_backtest_output/summary.json sports/mlb/data/evaluation/pca_astar_edge/latest_summary.json
+          cp pca_astar_backtest_output/universe_schema.json sports/mlb/data/evaluation/pca_astar_edge/universe_schema.json
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add sports/mlb/data/evaluation/pca_astar_edge/latest_summary.json
+          git add sports/mlb/data/evaluation/pca_astar_edge/latest_summary.json \
+                  sports/mlb/data/evaluation/pca_astar_edge/universe_schema.json
           if ! git diff --cached --quiet; then
-            git commit -m 'research: record PCA A* edge backtest summary [skip ci]'
+            git commit -m 'research: record PCA A* backtest diagnostics [skip ci]'
             git push
           fi
       - name: Upload backtest artifacts
