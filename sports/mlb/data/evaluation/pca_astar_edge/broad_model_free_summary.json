@@ -1,0 +1,386 @@
+{
+  "status": "LOCKED_CHRONOLOGICAL_RESEARCH_BACKTEST",
+  "strategy": "MODEL_FREE_PCA_ASTAR_MARKET_RESIDUAL_EDGE",
+  "semantics": {
+    "astar_success": "EDGE_FOUND means a short frozen PCA path reaches a supported development residual region; it does not mean the wager will win.",
+    "settlement": "Holdout outcomes are used only after selection for evaluation."
+  },
+  "source": {
+    "source_rows": 242425,
+    "real_two_sided_contracts_before_dedupe": 2933,
+    "real_two_sided_contracts": 2933,
+    "expanded_side_states": 5866,
+    "unique_real_market_dates": 11,
+    "first_real_market_date": "2026-04-27",
+    "last_real_market_date": "2026-07-29",
+    "same_book_two_sided_contracts": 592
+  },
+  "split": {
+    "development_dates": 8,
+    "holdout_dates": 3,
+    "development_start": "2026-04-27",
+    "development_end": "2026-06-21",
+    "holdout_start": "2026-06-26",
+    "holdout_end": "2026-07-29",
+    "development_side_states": 4312,
+    "holdout_side_states": 1546
+  },
+  "config": {
+    "n_components": 4,
+    "graph_k": 8,
+    "local_k": 24,
+    "min_support": 20,
+    "edge_threshold": 0.03,
+    "shrinkage": 12.0,
+    "z_confidence": 1.645,
+    "ood_quantile": 0.95,
+    "path_radius_multiplier": 3.0,
+    "initial_train_dates": 4,
+    "same_book_max_quote_gap_minutes": 15.0
+  },
+  "features": [
+    "log_History_Rows",
+    "days_since_history",
+    "log_Market_Books",
+    "Market_Line",
+    "Market_Line_Std",
+    "Is_Home",
+    "is_pitcher",
+    "pt_prior_mean",
+    "pt_prior_std",
+    "line_minus_prior_mean",
+    "line_z",
+    "no_vig_market_probability"
+  ],
+  "excluded_outcome_model_fields": [
+    "Prediction",
+    "Edge",
+    "Model_Selected",
+    "Model_Members",
+    "Model_Val_MAE",
+    "Model_Val_RMSE"
+  ],
+  "pca_explained_variance_ratio": [
+    0.30897679854162186,
+    0.17465234109016742,
+    0.09391835928274572,
+    0.09010815577750772
+  ],
+  "pca_explained_variance_sum": 0.6676556546920428,
+  "development_edge_goal_nodes": 81,
+  "astar_vs_dijkstra": {
+    "sampled_starts": 300,
+    "exact_status_and_path_cost_matches": 300,
+    "exact_match_rate": 1.0,
+    "astar_mean_expansions": 33.99666666666667,
+    "dijkstra_mean_expansions": 33.99666666666667,
+    "expansion_reduction": 0.0
+  },
+  "holdout": {
+    "eligible_side_states": 1454,
+    "strict_local_edge": {
+      "plays": 82,
+      "wins": 38,
+      "losses": 44,
+      "dates": 3,
+      "hit_rate": 0.4634146341463415,
+      "mean_no_vig_market_probability": 0.44001501362043655,
+      "realized_residual": 0.02339962052590494,
+      "net_units": 2.744735817148755,
+      "roi_per_play": 0.0334723880140092,
+      "market_brier": 0.22390785116319317,
+      "empirical_brier": 0.2484261025597412,
+      "poisson_binomial_tail_p": 0.36275811495294813,
+      "residual_ci95": [
+        -0.1438227177131633,
+        0.12837972333045178
+      ],
+      "roi_ci95": [
+        -0.3169389985645356,
+        0.2582830225599447
+      ]
+    },
+    "astar_path_edge": {
+      "plays": 43,
+      "wins": 21,
+      "losses": 22,
+      "dates": 3,
+      "hit_rate": 0.4883720930232558,
+      "mean_no_vig_market_probability": 0.5231334287917943,
+      "realized_residual": -0.03476133576853846,
+      "net_units": -4.779563001306872,
+      "roi_per_play": -0.11115262793736913,
+      "market_brier": 0.23292870167304247,
+      "empirical_brier": 0.2692741055623306,
+      "poisson_binomial_tail_p": 0.7369746635036407,
+      "residual_ci95": [
+        -0.07916590837341664,
+        0.028687656043518195
+      ],
+      "roi_ci95": [
+        -0.185797767138623,
+        -0.0011014527162785863
+      ]
+    },
+    "astar_incremental_additions": {
+      "plays": 16,
+      "wins": 6,
+      "losses": 10,
+      "dates": 3,
+      "hit_rate": 0.375,
+      "mean_no_vig_market_probability": 0.4605768679304896,
+      "realized_residual": -0.08557686793048958,
+      "net_units": -4.849602807738401,
+      "roi_per_play": -0.30310017548365004,
+      "market_brier": 0.18180013343856985,
+      "empirical_brier": 0.2292843202362459,
+      "poisson_binomial_tail_p": 0.8339575709448804,
+      "residual_ci95": [
+        -0.14982018148590875,
+        0.05613880924157677
+      ],
+      "roi_ci95": [
+        -0.39125000000000004,
+        -0.11952861952861953
+      ]
+    },
+    "astar_overlap_with_strict": {
+      "plays": 27,
+      "wins": 15,
+      "losses": 12,
+      "dates": 3,
+      "hit_rate": 0.5555555555555556,
+      "mean_no_vig_market_probability": 0.5602039833762711,
+      "realized_residual": -0.004648427820715506,
+      "net_units": 0.07003980643152796,
+      "roi_per_play": 0.002594066904871406,
+      "market_brier": 0.2632271124786559,
+      "empirical_brier": 0.2929717561259364,
+      "poisson_binomial_tail_p": 0.6017358367515601,
+      "residual_ci95": [
+        -0.11299208777716496,
+        0.08900304891137856
+      ],
+      "roi_ci95": [
+        -0.20236505404112387,
+        0.1683372579801151
+      ]
+    },
+    "selection_overlap": {
+      "strict_contracts": 82,
+      "astar_contracts": 43,
+      "overlap_contracts": 27,
+      "astar_added_contracts": 16
+    },
+    "strict_by_target": {
+      "ER": {
+        "plays": 2,
+        "wins": 2,
+        "losses": 0,
+        "dates": 2,
+        "hit_rate": 1.0,
+        "mean_no_vig_market_probability": 0.40328432027594585,
+        "realized_residual": 0.5967156797240541,
+        "net_units": 2.74,
+        "roi_per_play": 1.37,
+        "market_brier": 0.35761586194074985,
+        "empirical_brier": 0.16288102353351666,
+        "poisson_binomial_tail_p": 0.16109198346822184,
+        "residual_ci95": [
+          0.5573931732905905,
+          0.636038186157518
+        ],
+        "roi_ci95": [
+          1.14,
+          1.6
+        ]
+      },
+      "K": {
+        "plays": 3,
+        "wins": 2,
+        "losses": 1,
+        "dates": 2,
+        "hit_rate": 0.6666666666666666,
+        "mean_no_vig_market_probability": 0.360533257253502,
+        "realized_residual": 0.30613340941316464,
+        "net_units": 3.46,
+        "roi_per_play": 1.1533333333333333,
+        "market_brier": 0.3734851075001285,
+        "empirical_brier": 0.2630565091807597,
+        "poisson_binomial_tail_p": 0.29453395733608995,
+        "residual_ci95": [
+          -0.44145698973567077,
+          0.6799286089875825
+        ],
+        "roi_ci95": [
+          -1.0,
+          2.23
+        ]
+      },
+      "R": {
+        "plays": 72,
+        "wins": 33,
+        "losses": 39,
+        "dates": 3,
+        "hit_rate": 0.4583333333333333,
+        "mean_no_vig_market_probability": 0.4474474431222708,
+        "realized_residual": 0.01088589021106251,
+        "net_units": -0.7052641828512406,
+        "roi_per_play": -0.009795335872933898,
+        "market_brier": 0.21645993798399993,
+        "empirical_brier": 0.24640896575643692,
+        "poisson_binomial_tail_p": 0.4693407543662184,
+        "residual_ci95": [
+          -0.13432458911778916,
+          0.11462823833851582
+        ],
+        "roi_ci95": [
+          -0.28589077122655987,
+          0.19232345435422254
+        ]
+      },
+      "TB": {
+        "plays": 5,
+        "wins": 1,
+        "losses": 4,
+        "dates": 3,
+        "hit_rate": 0.2,
+        "mean_no_vig_market_probability": 0.3953693599519818,
+        "realized_residual": -0.1953693599519818,
+        "net_units": -2.75,
+        "roi_per_play": -0.55,
+        "market_brier": 0.18792824283039175,
+        "empirical_brier": 0.3029126601652028,
+        "poisson_binomial_tail_p": 0.9194928471334258,
+        "residual_ci95": [
+          -0.3970248999478681,
+          0.08499227347361238
+        ],
+        "roi_ci95": [
+          -1.0,
+          0.125
+        ]
+      }
+    },
+    "astar_by_target": {
+      "ER": {
+        "plays": 1,
+        "wins": 1,
+        "losses": 0,
+        "dates": 1,
+        "hit_rate": 1.0,
+        "mean_no_vig_market_probability": 0.44260682670940954,
+        "realized_residual": 0.5573931732905905,
+        "net_units": 1.14,
+        "roi_per_play": 1.14,
+        "market_brier": 0.31068714963095423,
+        "empirical_brier": 0.15054474949643118,
+        "poisson_binomial_tail_p": 0.44260682670940954,
+        "residual_ci95": [
+          null,
+          null
+        ],
+        "roi_ci95": [
+          null,
+          null
+        ]
+      },
+      "R": {
+        "plays": 26,
+        "wins": 16,
+        "losses": 10,
+        "dates": 3,
+        "hit_rate": 0.6153846153846154,
+        "mean_no_vig_market_probability": 0.5976358663451141,
+        "realized_residual": 0.0177487490395013,
+        "net_units": 0.6604369986931271,
+        "roi_per_play": 0.025401423026658734,
+        "market_brier": 0.2433535777530119,
+        "empirical_brier": 0.26299608317768486,
+        "poisson_binomial_tail_p": 0.5116386392698797,
+        "residual_ci95": [
+          -0.05522391307540786,
+          0.2019658482505281
+        ],
+        "roi_ci95": [
+          -0.12764046479138183,
+          0.4242801857813963
+        ]
+      },
+      "TB": {
+        "plays": 16,
+        "wins": 4,
+        "losses": 12,
+        "dates": 3,
+        "hit_rate": 0.25,
+        "mean_no_vig_market_probability": 0.40709988039779826,
+        "realized_residual": -0.15709988039779826,
+        "net_units": -6.58,
+        "roi_per_play": -0.41125,
+        "market_brier": 0.21112837504572265,
+        "empirical_brier": 0.28689647669149876,
+        "poisson_binomial_tail_p": 0.9418048736377623,
+        "residual_ci95": [
+          -0.4143538425455398,
+          -0.07811061217680088
+        ],
+        "roi_ci95": [
+          -1.0,
+          -0.20888888888888887
+        ]
+      }
+    },
+    "astar_by_side": {
+      "OVER": {
+        "plays": 21,
+        "wins": 7,
+        "losses": 14,
+        "dates": 3,
+        "hit_rate": 0.3333333333333333,
+        "mean_no_vig_market_probability": 0.395842398450648,
+        "realized_residual": -0.06250906511731469,
+        "net_units": -3.4400000000000004,
+        "roi_per_play": -0.16380952380952382,
+        "market_brier": 0.2335626190716876,
+        "empirical_brier": 0.27656137533077685,
+        "poisson_binomial_tail_p": 0.789370377991551,
+        "residual_ci95": [
+          -0.4143538425455398,
+          -0.018919445117179245
+        ],
+        "roi_ci95": [
+          -1.0,
+          -0.06999999999999999
+        ]
+      },
+      "UNDER": {
+        "plays": 22,
+        "wins": 14,
+        "losses": 8,
+        "dates": 3,
+        "hit_rate": 0.6363636363636364,
+        "mean_no_vig_market_probability": 0.6446385032083429,
+        "realized_residual": -0.008274866844706574,
+        "net_units": -1.3395630013068733,
+        "roi_per_play": -0.060889227332130605,
+        "market_brier": 0.23232359870160846,
+        "empirical_brier": 0.26231807532881385,
+        "poisson_binomial_tail_p": 0.6275683008696502,
+        "residual_ci95": [
+          -0.05522391307540786,
+          0.10485901790063379
+        ],
+        "roi_ci95": [
+          -0.12764046479138183,
+          0.10913622293767569
+        ]
+      }
+    }
+  },
+  "limitations": [
+    "No Prediction, Edge, model-selection, model-error, or other outcome-model fields are used in the PCA representation.",
+    "Two-sided probabilities normalize the stored over/under prices. When the best over and under prices come from different books, this is a composite market surface rather than a single-book vig removal.",
+    "Player history features use only games strictly prior to each candidate date. The PCA basis, residual topology, thresholds, and path rule are frozen at the development boundary.",
+    "This is retrospective research and does not establish future profitability."
+  ]
+}
