@@ -1,0 +1,147 @@
+{
+  "status": "DEVELOPMENT_WALK_FORWARD_BACKTEST",
+  "semantics": {
+    "astar_success": "EDGE_FOUND: a frozen development region clears the residual goal; this is not a bet win",
+    "settlement": "evaluated only after the chronological selection step"
+  },
+  "features": [
+    "log_history_rows",
+    "days_since_history",
+    "historical_bet_profile_win_rate",
+    "log_historical_bet_profile_support",
+    "historical_market_availability_rate",
+    "log_historical_market_availability_support",
+    "books",
+    "line",
+    "market_break_even_probability"
+  ],
+  "excluded_outcome_model_features": [
+    "model_hit_probability",
+    "hit_probability",
+    "probability",
+    "abs_edge",
+    "expected_value_per_unit",
+    "selection_score"
+  ],
+  "market_probability": "American side_price converted to break-even probability; includes vig because a complete two-sided quote is not present for every exported row",
+  "config": {
+    "n_components": 4,
+    "graph_k": 8,
+    "local_k": 24,
+    "min_support": 20,
+    "edge_threshold": 0.03,
+    "z_confidence": 1.645,
+    "shrinkage": 12.0,
+    "ood_quantile": 0.95,
+    "path_radius_multiplier": 6.0
+  },
+  "pipeline": {
+    "input_rows": 7077,
+    "eligible_before_dedupe": 632,
+    "deduplicated_rows": 386,
+    "duplicates_removed": 246,
+    "unique_dates": 11
+  },
+  "folds": [
+    {
+      "fold": 1,
+      "train_rows": 382,
+      "test_rows": 4,
+      "train_dates": 10,
+      "test_dates": 1,
+      "features": [
+        "log_history_rows",
+        "days_since_history",
+        "historical_bet_profile_win_rate",
+        "log_historical_bet_profile_support",
+        "historical_market_availability_rate",
+        "log_historical_market_availability_support",
+        "books",
+        "line",
+        "market_break_even_probability"
+      ],
+      "components": 4,
+      "explained_variance_ratio_sum": 0.7646924355230245,
+      "edge_goal_nodes": 174,
+      "strict_selected": 4,
+      "astar_selected": 4,
+      "search_check": {
+        "starts": 100,
+        "status_and_cost_matches": 100,
+        "exact_match_rate": 1.0,
+        "edge_found_rate": 0.73,
+        "astar_mean_expansions": 7.14,
+        "dijkstra_mean_expansions": 7.28,
+        "expansion_reduction": 0.019230769230769273
+      }
+    }
+  ],
+  "all_holdout": {
+    "plays": 4,
+    "wins": 2,
+    "losses": 2,
+    "hit_rate": 0.5,
+    "mean_market_break_even_probability": 0.49367760822209944,
+    "realized_residual": 0.00632239177790056,
+    "units": 1.2147745944940755,
+    "roi": 0.3036936486235189,
+    "dates_with_plays": 1
+  },
+  "eligible_holdout": {
+    "plays": 4,
+    "wins": 2,
+    "losses": 2,
+    "hit_rate": 0.5,
+    "mean_market_break_even_probability": 0.49367760822209944,
+    "realized_residual": 0.00632239177790056,
+    "units": 1.2147745944940755,
+    "roi": 0.3036936486235189,
+    "dates_with_plays": 1
+  },
+  "strict_local_edge": {
+    "plays": 4,
+    "wins": 2,
+    "losses": 2,
+    "hit_rate": 0.5,
+    "mean_market_break_even_probability": 0.49367760822209944,
+    "realized_residual": 0.00632239177790056,
+    "units": 1.2147745944940755,
+    "roi": 0.3036936486235189,
+    "dates_with_plays": 1,
+    "roi_ci95": [
+      null,
+      null
+    ],
+    "residual_ci95": [
+      null,
+      null
+    ],
+    "poisson_binomial_tail_p": 0.7153014012429393
+  },
+  "astar_path_edge": {
+    "plays": 4,
+    "wins": 2,
+    "losses": 2,
+    "hit_rate": 0.5,
+    "mean_market_break_even_probability": 0.49367760822209944,
+    "realized_residual": 0.00632239177790056,
+    "units": 1.2147745944940755,
+    "roi": 0.3036936486235189,
+    "dates_with_plays": 1,
+    "roi_ci95": [
+      null,
+      null
+    ],
+    "residual_ci95": [
+      null,
+      null
+    ],
+    "poisson_binomial_tail_p": 0.7153014012429393
+  },
+  "limitations": [
+    "The walk-forward artifact contains policy-selected rows rather than the complete candidate universe, so residual selection bias remains after contract deduplication.",
+    "One-sided break-even probability includes vig where a paired opposite-side quote is unavailable.",
+    "Historical profile fields are prior-only empirical summaries from the existing walk-forward export; they are not future settlement labels.",
+    "Research result only; no production authority."
+  ]
+}
