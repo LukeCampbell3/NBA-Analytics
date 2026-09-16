@@ -14,7 +14,7 @@ permissions:
 jobs:
   backtest:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -22,17 +22,25 @@ jobs:
           python-version: '3.11'
       - name: Install research dependencies
         run: python -m pip install --upgrade pip numpy pandas scikit-learn
-      - name: Run chronological walk-forward PCA+A* backtest
+      - name: Run paired real-market historical-universe backtest
+        run: |
+          python sports/mlb/research/pca_edge_search/backtest_historical_universe.py \
+            --input sports/mlb/data/predictions/calibration/historical_pool_universe_2026.csv \
+            --output-json sports/mlb/research/pca_edge_search/reports/historical_universe_backtest.json \
+            --output-csv sports/mlb/research/pca_edge_search/reports/historical_universe_scored_rows.csv
+          cat sports/mlb/research/pca_edge_search/reports/historical_universe_backtest.json
+      - name: Run policy-row diagnostic backtest
         run: |
           python sports/mlb/research/pca_edge_search/backtest_walk_forward.py \
             --input sports/mlb/data/predictions/backtests/mlb_walk_forward_backtest_rows.csv \
             --output-json sports/mlb/research/pca_edge_search/reports/walk_forward_backtest.json \
             --output-csv sports/mlb/research/pca_edge_search/reports/walk_forward_scored_rows.csv
-          cat sports/mlb/research/pca_edge_search/reports/walk_forward_backtest.json
-      - name: Upload research report
+      - name: Upload research reports
         uses: actions/upload-artifact@v4
         with:
           name: mlb-pca-astar-backtest
           path: |
+            sports/mlb/research/pca_edge_search/reports/historical_universe_backtest.json
+            sports/mlb/research/pca_edge_search/reports/historical_universe_scored_rows.csv
             sports/mlb/research/pca_edge_search/reports/walk_forward_backtest.json
             sports/mlb/research/pca_edge_search/reports/walk_forward_scored_rows.csv
