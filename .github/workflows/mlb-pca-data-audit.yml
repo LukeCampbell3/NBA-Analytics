@@ -1,0 +1,73 @@
+name: MLB PCA Historical Data Audit
+
+on:
+  push:
+    branches: [mlb-pca-astar-edge-search]
+    paths:
+      - '.github/workflows/mlb-pca-data-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --upgrade pip pandas numpy
+      - name: Audit historical universes
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import pandas as pd
+          import numpy as np
+
+          paths = [
+              Path('sports/mlb/data/predictions/calibration/historical_pool_universe_2026.csv'),
+              Path('sports/mlb/data/predictions/calibration/historical_pool_universe_2026_with_positions.csv'),
+          ]
+          out = {}
+          tokens = ('date','time','odds','price','market','prob','result','actual','hit','target','direction','side','line','player','game','history','support','edge','book')
+          for path in paths:
+              if not path.exists():
+                  out[str(path)] = {'exists': False}
+                  continue
+              df = pd.read_csv(path, low_memory=False)
+              interesting = [c for c in df.columns if any(t in c.lower() for t in tokens)]
+              s = {'exists': True, 'rows': int(len(df)), 'columns': list(df.columns), 'interesting_columns': interesting, 'interesting_non_null': {c:int(df[c].notna().sum()) for c in interesting}}
+              dates = {}
+              for c in interesting:
+                  if 'date' in c.lower() or 'time' in c.lower():
+                      parsed = pd.to_datetime(df[c], errors='coerce', utc=True)
+                      if parsed.notna().any():
+                          dates[c] = {'non_null':int(parsed.notna().sum()), 'min':str(parsed.min()), 'max':str(parsed.max()), 'unique_days':int(parsed.dt.date.nunique())}
+              s['date_ranges'] = dates
+              cats = {}
+              for c in interesting:
+                  if any(t in c.lower() for t in ('target','market','direction','side','result','settlement','book')):
+                      vals = df[c].dropna().astype(str).value_counts().head(20)
+                      cats[c] = {str(k):int(v) for k,v in vals.items()}
+              s['categorical_top_values'] = cats
+              nums = {}
+              for c in interesting:
+                  if any(t in c.lower() for t in ('odds','price','prob','actual','line','edge','support')):
+                      x = pd.to_numeric(df[c], errors='coerce').dropna()
+                      if len(x):
+                          nums[c] = {'n':int(len(x)), 'min':float(x.min()), 'median':float(x.median()), 'max':float(x.max())}
+              s['numeric_ranges'] = nums
+              out[str(path)] = s
+          dest=Path('sports/mlb/research/pca_edge_search/reports/historical_data_audit.json')
+          dest.parent.mkdir(parents=True,exist_ok=True)
+          dest.write_text(json.dumps(out,indent=2,default=str)+'\n')
+          print('AUDIT_REPORT='+json.dumps(out,sort_keys=True,default=str))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mlb-pca-historical-data-audit
+          path: sports/mlb/research/pca_edge_search/reports/historical_data_audit.json
