@@ -4,7 +4,7 @@ from __future__ import annotations
 
 This keeps the original backtest implementation auditable while replacing the
 three pieces that could inflate evidence through alternate-line duplication:
-book-key cleaning, graph neighbors, and local residual support.  Every search
+book-key cleaning, graph neighbors, and local residual support. Every search
 neighbor/support observation must come from a distinct historical player-game.
 """
 
@@ -12,6 +12,7 @@ import argparse
 import importlib.util
 import json
 import math
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,7 @@ HERE = Path(__file__).resolve().parent
 BASE_PATH = HERE / "backtest_historical_universe.py"
 spec = importlib.util.spec_from_file_location("pca_astar_base", BASE_PATH)
 base = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = base
 assert spec.loader is not None
 spec.loader.exec_module(base)
 
@@ -78,7 +80,6 @@ def build_graph(z: np.ndarray, labels: list[tuple[str, str]], k: int):
     adj: list[list[tuple[int, float]]] = [[] for _ in range(n)]
     nearest = np.full(n, np.nan)
     partition_median_edge: dict[tuple[str, str], float] = {}
-    # The current caller passes the training frame through a temporary module global.
     train = _TRAIN_FRAME
     for label in sorted(set(labels)):
         ids = np.array([i for i, x in enumerate(labels) if x == label], dtype=int)
@@ -192,8 +193,6 @@ _original_fit_and_score = base.fit_and_score
 def fit_and_score(train: pd.DataFrame, test: pd.DataFrame, cfg):
     global _TRAIN_FRAME
     _TRAIN_FRAME = train.reset_index(drop=True)
-    # Base implementation calls its module globals at runtime; all integrity-sensitive
-    # functions are patched below before delegating.
     return _original_fit_and_score(_TRAIN_FRAME, test.reset_index(drop=True), cfg)
 
 
@@ -215,7 +214,7 @@ def run(input_path: Path, output_json: Path, output_csv: Path):
             "settlement": "derived after frozen selection from Actual versus Market_Line",
             "support_unit": "unique historical player-game; alternate lines from one event cannot multiply support",
         },
-        "config": asdict(cfg),
+        "config": base.asdict(cfg),
         "primary_same_book_two_sided": strict_report,
         "secondary_any_two_sided": broad_report,
         "limitations": [
