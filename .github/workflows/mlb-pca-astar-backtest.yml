@@ -28,7 +28,12 @@ jobs:
             --input sports/mlb/data/predictions/calibration/historical_pool_universe_2026.csv \
             --output-json sports/mlb/research/pca_edge_search/reports/historical_universe_backtest.json \
             --output-csv sports/mlb/research/pca_edge_search/reports/historical_universe_scored_rows.csv
-          cat sports/mlb/research/pca_edge_search/reports/historical_universe_backtest.json
+      - name: Analyze A* as strategy confirmation overlay
+        run: |
+          python sports/mlb/research/pca_edge_search/analyze_strategy_overlay.py \
+            --input-csv sports/mlb/research/pca_edge_search/reports/historical_universe_scored_rows.csv \
+            --output-json sports/mlb/research/pca_edge_search/reports/strategy_overlay_analysis.json
+          cat sports/mlb/research/pca_edge_search/reports/strategy_overlay_analysis.json
       - name: Run policy-row diagnostic backtest
         run: |
           python sports/mlb/research/pca_edge_search/backtest_walk_forward.py \
@@ -42,5 +47,6 @@ jobs:
           path: |
             sports/mlb/research/pca_edge_search/reports/historical_universe_backtest.json
             sports/mlb/research/pca_edge_search/reports/historical_universe_scored_rows.csv
+            sports/mlb/research/pca_edge_search/reports/strategy_overlay_analysis.json
             sports/mlb/research/pca_edge_search/reports/walk_forward_backtest.json
             sports/mlb/research/pca_edge_search/reports/walk_forward_scored_rows.csv
