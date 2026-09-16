@@ -21,12 +21,14 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install dependencies
-        run: python -m pip install --upgrade pip numpy
-      - name: Run PCA + A* locked holdout backtest
+        run: python -m pip install --upgrade pip numpy pandas scikit-learn
+      - name: Run PCA + A* chronological walk-forward backtest
         run: |
+          mkdir -p pca_astar_backtest_output
           python sports/mlb/research/pca_edge_search/backtest_walk_forward.py \
-            --source sports/mlb/data/predictions/backtests/mlb_walk_forward_backtest_rows.csv \
-            --output-dir pca_astar_backtest_output
+            --input sports/mlb/data/predictions/backtests/mlb_walk_forward_backtest_rows.csv \
+            --output-json pca_astar_backtest_output/summary.json \
+            --output-csv pca_astar_backtest_output/scored_rows.csv
       - name: Print summary
         if: always()
         run: cat pca_astar_backtest_output/summary.json || true
