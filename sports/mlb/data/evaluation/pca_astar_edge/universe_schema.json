@@ -1,0 +1,385 @@
+{
+  "rows": 242425,
+  "columns": [
+    "Prediction_Run_Date",
+    "Game_Date",
+    "Commence_Time_UTC",
+    "Game_ID",
+    "Game_Status_Code",
+    "Game_Status_Detail",
+    "Player",
+    "Player_ID",
+    "Player_Type",
+    "Team",
+    "Opponent",
+    "Is_Home",
+    "Target",
+    "Prediction",
+    "Market_Line",
+    "Market_Source",
+    "Market_Books",
+    "Market_Line_Std",
+    "Market_Over_Price",
+    "Market_Under_Price",
+    "Market_Over_Book_Key",
+    "Market_Under_Book_Key",
+    "Market_Over_Book",
+    "Market_Under_Book",
+    "Market_Over_Price_Time",
+    "Market_Under_Price_Time",
+    "Edge",
+    "History_Rows",
+    "Last_History_Date",
+    "Model_Selected",
+    "Model_Members",
+    "Model_Val_MAE",
+    "Model_Val_RMSE",
+    "Result",
+    "Actual"
+  ],
+  "column_count": 35,
+  "min_date": null,
+  "max_date": null,
+  "real_rows": 0,
+  "price_confirmed_rows": 0,
+  "real_price_confirmed_rows": 242425,
+  "feature_presence": {
+    "history_rows": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "days_since_history": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "historical_bet_profile_win_rate": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "historical_bet_profile_support": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "historical_market_availability_rate": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "historical_market_availability_support": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "books": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "line": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "side_price": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "actual": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "result": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "player_id": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "game_id": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "target": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "direction": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "market_source": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "price_confirmed": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "units": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "american_odds": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "odds": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "quoted_odds": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "model_hit_probability": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "hit_probability": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "probability": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "selection_score": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    },
+    "abs_edge": {
+      "present": false,
+      "nonnull": 0,
+      "nonnull_rate": 0.0
+    }
+  },
+  "selected_unique_values": {
+    "Target": [
+      "ER",
+      "H",
+      "HR",
+      "K",
+      "R",
+      "RBI",
+      "TB"
+    ],
+    "Market_Source": [
+      "real",
+      "synthetic"
+    ],
+    "Result": [
+      "loss",
+      "push",
+      "win"
+    ]
+  },
+  "sample_records": [
+    {
+      "Prediction_Run_Date": "2026-03-15",
+      "Game_Date": "2026-03-15",
+      "Commence_Time_UTC": NaN,
+      "Game_ID": 831509,
+      "Game_Status_Code": "P",
+      "Game_Status_Detail": "Scheduled",
+      "Player": "AJ Blubaugh",
+      "Player_ID": "aj_blubaugh",
+      "Player_Type": "pitcher",
+      "Team": "HOU",
+      "Opponent": "MIA",
+      "Is_Home": 1,
+      "Target": "K",
+      "Prediction": 0.0,
+      "Market_Line": 2.5,
+      "Market_Source": "synthetic",
+      "Market_Books": 0,
+      "Market_Line_Std": 0.0,
+      "Market_Over_Price": NaN,
+      "Market_Under_Price": NaN,
+      "Market_Over_Book_Key": NaN,
+      "Market_Under_Book_Key": NaN,
+      "Market_Over_Book": NaN,
+      "Market_Under_Book": NaN,
+      "Market_Over_Price_Time": NaN,
+      "Market_Under_Price_Time": NaN,
+      "Edge": -2.5,
+      "History_Rows": 1,
+      "Last_History_Date": "2026-03-04",
+      "Model_Selected": "baseline",
+      "Model_Members": "baseline",
+      "Model_Val_MAE": 0.0,
+      "Model_Val_RMSE": 0.0,
+      "Result": "loss",
+      "Actual": 3.0
+    },
+    {
+      "Prediction_Run_Date": "2026-03-15",
+      "Game_Date": "2026-03-15",
+      "Commence_Time_UTC": NaN,
+      "Game_ID": 831509,
+      "Game_Status_Code": "P",
+      "Game_Status_Detail": "Scheduled",
+      "Player": "AJ Blubaugh",
+      "Player_ID": "aj_blubaugh",
+      "Player_Type": "pitcher",
+      "Team": "HOU",
+      "Opponent": "MIA",
+      "Is_Home": 1,
+      "Target": "ER",
+      "Prediction": 0.0,
+      "Market_Line": 0.5,
+      "Market_Source": "synthetic",
+      "Market_Books": 0,
+      "Market_Line_Std": 0.0,
+      "Market_Over_Price": NaN,
+      "Market_Under_Price": NaN,
+      "Market_Over_Book_Key": NaN,
+      "Market_Under_Book_Key": NaN,
+      "Market_Over_Book": NaN,
+      "Market_Under_Book": NaN,
+      "Market_Over_Price_Time": NaN,
+      "Market_Under_Price_Time": NaN,
+      "Edge": -0.5,
+      "History_Rows": 1,
+      "Last_History_Date": "2026-03-04",
+      "Model_Selected": "baseline",
+      "Model_Members": "baseline",
+      "Model_Val_MAE": 0.0,
+      "Model_Val_RMSE": 0.0,
+      "Result": "win",
+      "Actual": 0.0
+    },
+    {
+      "Prediction_Run_Date": "2026-03-18",
+      "Game_Date": "2026-03-18",
+      "Commence_Time_UTC": NaN,
+      "Game_ID": 831556,
+      "Game_Status_Code": "P",
+      "Game_Status_Detail": "Scheduled",
+      "Player": "AJ Blubaugh",
+      "Player_ID": "aj_blubaugh",
+      "Player_Type": "pitcher",
+      "Team": "HOU",
+      "Opponent": "STL",
+      "Is_Home": 0,
+      "Target": "K",
+      "Prediction": 1.5,
+      "Market_Line": 2.5,
+      "Market_Source": "synthetic",
+      "Market_Books": 0,
+      "Market_Line_Std": 0.0,
+      "Market_Over_Price": NaN,
+      "Market_Under_Price": NaN,
+      "Market_Over_Book_Key": NaN,
+      "Market_Under_Book_Key": NaN,
+      "Market_Over_Book": NaN,
+      "Market_Under_Book": NaN,
+      "Market_Over_Price_Time": NaN,
+      "Market_Under_Price_Time": NaN,
+      "Edge": -1.0,
+      "History_Rows": 2,
+      "Last_History_Date": "2026-03-15",
+      "Model_Selected": "baseline",
+      "Model_Members": "baseline",
+      "Model_Val_MAE": 1.5,
+      "Model_Val_RMSE": 2.1213203435596424,
+      "Result": "win",
+      "Actual": 1.0
+    },
+    {
+      "Prediction_Run_Date": "2026-03-18",
+      "Game_Date": "2026-03-18",
+      "Commence_Time_UTC": NaN,
+      "Game_ID": 831556,
+      "Game_Status_Code": "P",
+      "Game_Status_Detail": "Scheduled",
+      "Player": "AJ Blubaugh",
+      "Player_ID": "aj_blubaugh",
+      "Player_Type": "pitcher",
+      "Team": "HOU",
+      "Opponent": "STL",
+      "Is_Home": 0,
+      "Target": "ER",
+      "Prediction": 0.0,
+      "Market_Line": 0.5,
+      "Market_Source": "synthetic",
+      "Market_Books": 0,
+      "Market_Line_Std": 0.0,
+      "Market_Over_Price": NaN,
+      "Market_Under_Price": NaN,
+      "Market_Over_Book_Key": NaN,
+      "Market_Under_Book_Key": NaN,
+      "Market_Over_Book": NaN,
+      "Market_Under_Book": NaN,
+      "Market_Over_Price_Time": NaN,
+      "Market_Under_Price_Time": NaN,
+      "Edge": -0.5,
+      "History_Rows": 2,
+      "Last_History_Date": "2026-03-15",
+      "Model_Selected": "baseline",
+      "Model_Members": "baseline",
+      "Model_Val_MAE": 0.0,
+      "Model_Val_RMSE": 0.0,
+      "Result": "win",
+      "Actual": 0.0
+    },
+    {
+      "Prediction_Run_Date": "2026-03-22",
+      "Game_Date": "2026-03-22",
+      "Commence_Time_UTC": NaN,
+      "Game_ID": 831496,
+      "Game_Status_Code": "P",
+      "Game_Status_Detail": "Scheduled",
+      "Player": "AJ Blubaugh",
+      "Player_ID": "aj_blubaugh",
+      "Player_Type": "pitcher",
+      "Team": "HOU",
+      "Opponent": "STL",
+      "Is_Home": 1,
+      "Target": "K",
+      "Prediction": 1.3333333333333333,
+      "Market_Line": 2.5,
+      "Market_Source": "synthetic",
+      "Market_Books": 0,
+      "Market_Line_Std": 0.0,
+      "Market_Over_Price": NaN,
+      "Market_Under_Price": NaN,
+      "Market_Over_Book_Key": NaN,
+      "Market_Under_Book_Key": NaN,
+      "Market_Over_Book": NaN,
+      "Market_Under_Book": NaN,
+      "Market_Over_Price_Time": NaN,
+      "Market_Under_Price_Time": NaN,
+      "Edge": -1.1666666666666667,
+      "History_Rows": 3,
+      "Last_History_Date": "2026-03-18",
+      "Model_Selected": "baseline",
+      "Model_Members": "baseline",
+      "Model_Val_MAE": 1.1666666666666667,
+      "Model_Val_RMSE": 1.7559422921421233,
+      "Result": "win",
+      "Actual": 1.0
+    }
+  ]
+}
