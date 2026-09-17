@@ -1,7 +1,7 @@
 import numpy as np
 
 from sports.mlb.parlay_v2.robust_parlay_search import (
-    CERTIFIED_PAIR,
+    ROBUST_PAIR_CANDIDATE,
     UNSUPPORTED,
     JointDependencyEvidence,
     LegProbabilityEvidence,
@@ -46,29 +46,25 @@ def test_uncertainty_rejects_attractive_point_estimate():
     a = leg("A", "G1", 0.68, 1.55, s1)
     b = leg("B", "G2", 0.66, 1.55, s2)
     v = value_two_leg_parlay(
-        "AB",
-        a,
-        b,
+        "AB", a, b,
         JointDependencyEvidence("INDEPENDENT", support_count=5000),
         combined_decimal_price=2.60,
         policy=policy(),
     )
     assert v.ev_mean > 0
     assert v.ev_lcb < 0
-    assert v.classification != CERTIFIED_PAIR
+    assert v.classification != ROBUST_PAIR_CANDIDATE
     assert "LOWER_BOUND_EV_NOT_POSITIVE" in v.classification_reasons
 
 
-def test_strong_pair_can_certify_and_beats_singles():
+def test_strong_pair_can_pass_robust_gates_and_beat_singles():
     rng = np.random.default_rng(1)
     s1 = np.clip(rng.normal(0.82, 0.015, 2000), 0.75, 0.9)
     s2 = np.clip(rng.normal(0.80, 0.015, 2000), 0.73, 0.9)
     a = leg("A", "G1", 0.82, 1.40, s1)
     b = leg("B", "G2", 0.80, 1.40, s2)
     v = value_two_leg_parlay(
-        "AB",
-        a,
-        b,
+        "AB", a, b,
         JointDependencyEvidence("INDEPENDENT", support_count=5000),
         combined_decimal_price=2.25,
         policy=policy(),
@@ -77,7 +73,7 @@ def test_strong_pair_can_certify_and_beats_singles():
     assert v.ev_lcb > 0
     assert v.p_ev_positive >= 0.80
     assert v.growth_advantage > 0
-    assert v.classification == CERTIFIED_PAIR
+    assert v.classification == ROBUST_PAIR_CANDIDATE
 
 
 def test_same_game_without_common_world_is_unsupported():
@@ -85,9 +81,7 @@ def test_same_game_without_common_world_is_unsupported():
     a = leg("A", "G1", 0.78, 1.50, s)
     b = leg("B", "G1", 0.78, 1.50, s)
     v = value_two_leg_parlay(
-        "AB",
-        a,
-        b,
+        "AB", a, b,
         JointDependencyEvidence("INDEPENDENT", support_count=5000),
         combined_decimal_price=2.4,
         policy=policy(),
@@ -105,9 +99,7 @@ def test_common_world_dependence_changes_joint_probability():
     worlds = np.array([[1, 1]] * 600 + [[1, 0]] * 100 + [[0, 1]] * 100 + [[0, 0]] * 200)
     rng.shuffle(worlds)
     v = value_two_leg_parlay(
-        "AB",
-        a,
-        b,
+        "AB", a, b,
         JointDependencyEvidence("COMMON_WORLD", common_world_outcomes=worlds, support_count=1000),
         combined_decimal_price=2.0,
         policy=policy(max_dependency_burden=0.5),
@@ -116,7 +108,7 @@ def test_common_world_dependence_changes_joint_probability():
     assert v.dependency_burden > 0.15
 
 
-def test_lpa_selects_best_certified_and_repairs_after_update():
+def test_lpa_selects_best_robust_pair_and_repairs_after_update():
     rng = np.random.default_rng(4)
     s = np.clip(rng.normal(0.82, 0.01, 1500), 0.77, 0.88)
     a = leg("A", "G1", 0.82, 1.40, s)
@@ -125,9 +117,9 @@ def test_lpa_selects_best_certified_and_repairs_after_update():
     dep = JointDependencyEvidence("INDEPENDENT", support_count=5000)
     v1 = value_two_leg_parlay("AB", a, b, dep, combined_decimal_price=2.20, policy=policy())
     v2 = value_two_leg_parlay("AC", a, c, dep, combined_decimal_price=2.30, policy=policy())
-    assert v1.classification == CERTIFIED_PAIR
-    assert v2.classification == CERTIFIED_PAIR
-    search = LPAParlaySearch([v1, v2], policy=policy(), mode="certified")
+    assert v1.classification == ROBUST_PAIR_CANDIDATE
+    assert v2.classification == ROBUST_PAIR_CANDIDATE
+    search = LPAParlaySearch([v1, v2], policy=policy(), mode="robust")
     r1 = search.result()
     assert r1.selected_pair_id == "AC"
     first_expansions = search.expansions
@@ -141,18 +133,16 @@ def test_lpa_selects_best_certified_and_repairs_after_update():
     assert repair_expansions <= first_expansions
 
 
-def test_non_pca_certified_pair_cannot_be_certified():
+def test_non_pca_certified_pair_cannot_pass_robust_gates():
     rng = np.random.default_rng(5)
     s = np.clip(rng.normal(0.82, 0.01, 1000), 0.78, 0.87)
     a = leg("A", "G1", 0.82, 1.40, s, cert=False)
     b = leg("B", "G2", 0.82, 1.40, s, cert=True)
     v = value_two_leg_parlay(
-        "AB",
-        a,
-        b,
+        "AB", a, b,
         JointDependencyEvidence("INDEPENDENT", support_count=5000),
         combined_decimal_price=2.3,
         policy=policy(),
     )
-    assert v.classification != CERTIFIED_PAIR
+    assert v.classification != ROBUST_PAIR_CANDIDATE
     assert "PCA_EDGE_NOT_CERTIFIED" in v.classification_reasons
